@@ -93,6 +93,7 @@
         .alert { padding: 12px 15px; border-radius: 8px; margin-bottom: 15px; font-size: 0.9em; }
         .alert-success { background: #d4edda; color: #155724; }
         .alert-error { background: #f8d7da; color: #721c24; }
+        .alert-info { background: #cce5ff; color: #004085; }
         .log-item { padding: 10px; border-left: 3px solid #3498db; margin-bottom: 8px; background: #f8f9fa; border-radius: 0 8px 8px 0; }
         .alerta-fraude { padding: 15px; border-radius: 10px; margin-bottom: 10px; border-left: 4px solid; }
         .alerta-fraude.critico { background: #ffeaea; border-left-color: #c0392b; }
@@ -115,6 +116,18 @@
         .corrida-despacho { background: #f8f9fa; border-radius: 10px; padding: 15px; margin-bottom: 10px; border-left: 4px solid #3498db; }
         .corrida-despacho.aguardando { border-left-color: #f39c12; }
         .corrida-despacho.aceita { border-left-color: #27ae60; }
+        .faixa-item { background: #f8f9fa; border-radius: 10px; padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .faixa-item.alta { border-left: 4px solid #e74c3c; }
+        .faixa-item.media { border-left: 4px solid #f39c12; }
+        .faixa-item.normal { border-left: 4px solid #27ae60; }
+        .faixa-info h4 { margin: 0 0 5px 0; }
+        .faixa-info small { color: #666; }
+        .faixa-valores { text-align: right; }
+        .faixa-valores .mult { font-size: 1.3em; font-weight: bold; }
+        .tabs { display: flex; gap: 5px; margin-bottom: 20px; flex-wrap: wrap; }
+        .tab { padding: 10px 20px; background: #f0f2f5; border: none; border-radius: 8px; cursor: pointer; font-weight: 500; }
+        .tab.active { background: #3498db; color: white; }
+        .tab:hover:not(.active) { background: #e0e0e0; }
     </style>
 </head>
 <body>
@@ -141,6 +154,7 @@
             
             <div class="menu-section">Financeiro</div>
             <div class="menu-item" data-page="faturamento">💰 Faturamento</div>
+            <div class="menu-item" data-page="precos">💵 Preços Dinâmicos</div>
             <div class="menu-item" data-page="ranking">🏆 Ranking</div>
             
             <div class="menu-section">Segurança</div>
@@ -154,7 +168,6 @@
             <div class="menu-section">Sistema</div>
             <div class="menu-item" data-page="usuarios">👤 Usuários Admin</div>
             <div class="menu-item" data-page="areas">🗺️ Áreas Cobertura</div>
-            <div class="menu-item" data-page="precos">💵 Preços</div>
             <div class="menu-item" data-page="config">⚙️ Configurações</div>
             <div class="menu-item" data-page="logs">📜 Logs</div>
         </nav>
@@ -189,7 +202,6 @@
                     <div class="card red"><h3>Offline</h3><div class="value" id="mapaOffline">0</div></div>
                 </div>
                 <div class="panel"><div id="mapaLeaflet"></div></div>
-                <button class="btn btn-primary" onclick="atualizarMapa()">🔄 Atualizar</button>
             </div>
 
             <!-- CORRIDAS -->
@@ -198,7 +210,7 @@
                 <div class="search-bar">
                     <input type="text" id="buscaCorrida" placeholder="Buscar...">
                     <select id="filtroCorrida"><option value="">Todos</option><option value="pendente">Pendente</option><option value="aceita">Aceita</option><option value="em_andamento">Em Andamento</option><option value="finalizada">Finalizada</option><option value="cancelada">Cancelada</option></select>
-                    <button class="btn btn-primary" onclick="carregarCorridas()">🔍 Buscar</button>
+                    <button class="btn btn-primary" onclick="carregarCorridas()">🔍</button>
                 </div>
                 <div class="panel"><table><thead><tr><th>ID</th><th>Cliente</th><th>Origem</th><th>Destino</th><th>Valor</th><th>Status</th><th>Ações</th></tr></thead><tbody id="corridasTable"></tbody></table></div>
             </div>
@@ -207,47 +219,18 @@
             <div id="despacho" class="page">
                 <h2 style="margin-bottom:20px;">📡 Central de Despacho</h2>
                 <div class="cards">
-                    <div class="card blue"><div class="card-icon">📡</div><h3>Modo Atual</h3><div class="value" id="modoDespachoAtual">-</div></div>
-                    <div class="card orange"><div class="card-icon">⏳</div><h3>Aguardando Aceite</h3><div class="value" id="aguardandoAceite">0</div></div>
-                    <div class="card green"><div class="card-icon">✅</div><h3>Aceitas Hoje</h3><div class="value" id="aceitasHoje">0</div></div>
-                    <div class="card purple"><div class="card-icon">👨‍✈️</div><h3>Motoristas Online</h3><div class="value" id="motoristasDespacho">0</div></div>
+                    <div class="card blue"><h3>Modo Atual</h3><div class="value" id="modoDespachoAtual">-</div></div>
+                    <div class="card orange"><h3>Aguardando</h3><div class="value" id="aguardandoAceite">0</div></div>
+                    <div class="card green"><h3>Aceitas</h3><div class="value" id="aceitasHoje">0</div></div>
+                    <div class="card purple"><h3>Online</h3><div class="value" id="motoristasDespacho">0</div></div>
                 </div>
-
                 <div class="panel">
                     <h2>⚙️ Modo de Despacho</h2>
-                    <p style="color:#666;margin-bottom:20px;">Escolha como as corridas serão enviadas aos motoristas</p>
-                    
-                    <div class="modo-card" id="modoBroadcast" onclick="setModoDespacho('broadcast')">
-                        <h3><span class="modo-icon">📢</span> Broadcast (Todos)</h3>
-                        <p>Envia a corrida para TODOS os motoristas disponíveis. O primeiro que aceitar leva a corrida.</p>
-                        <p style="margin-top:10px;"><strong>✅ Vantagem:</strong> Mais rápido para encontrar motorista</p>
-                    </div>
-                    
-                    <div class="modo-card" id="modoProximo" onclick="setModoDespacho('proximo')">
-                        <h3><span class="modo-icon">📍</span> Motorista Mais Próximo</h3>
-                        <p>Envia a corrida apenas para o motorista mais próximo do cliente. Se recusar, passa para o próximo.</p>
-                        <p style="margin-top:10px;"><strong>✅ Vantagem:</strong> Menor tempo de espera do cliente</p>
-                    </div>
-
-                    <div class="form-group" style="margin-top:20px;">
-                        <label>Tempo para aceitar (segundos)</label>
-                        <input type="number" id="tempoAceite" value="30" style="width:100px;">
-                        <button class="btn btn-primary" onclick="salvarTempoAceite()" style="margin-left:10px;">Salvar</button>
-                    </div>
+                    <div class="modo-card" id="modoBroadcast" onclick="setModoDespacho('broadcast')"><h3><span class="modo-icon">📢</span> Broadcast</h3><p>Envia para TODOS, primeiro aceita.</p></div>
+                    <div class="modo-card" id="modoProximo" onclick="setModoDespacho('proximo')"><h3><span class="modo-icon">📍</span> Mais Próximo</h3><p>Envia para o mais perto do cliente.</p></div>
+                    <div class="form-group" style="margin-top:15px;"><label>Tempo aceite (seg)</label><input type="number" id="tempoAceite" value="30" style="width:100px;"><button class="btn btn-primary" onclick="salvarTempoAceite()" style="margin-left:10px;">Salvar</button></div>
                 </div>
-
-                <div class="panel">
-                    <h2>🚗 Corridas Pendentes</h2>
-                    <div id="corridasPendentesDespacho"></div>
-                </div>
-
-                <div class="panel">
-                    <h2>👨‍✈️ Motoristas Disponíveis</h2>
-                    <table>
-                        <thead><tr><th>Nome</th><th>Distância Centro</th><th>Status</th><th>Ações</th></tr></thead>
-                        <tbody id="motoristasDespachoTable"></tbody>
-                    </table>
-                </div>
+                <div class="panel"><h2>🚗 Pendentes</h2><div id="corridasPendentesDespacho"></div></div>
             </div>
 
             <!-- MOTORISTAS -->
@@ -256,10 +239,10 @@
                 <div class="search-bar">
                     <input type="text" id="buscaMotorista" placeholder="Buscar...">
                     <select id="filtroStatusMotorista"><option value="">Todos</option><option value="disponivel">Disponível</option><option value="em_corrida">Em Corrida</option><option value="offline">Offline</option></select>
-                    <button class="btn btn-primary" onclick="carregarMotoristas()">🔍 Buscar</button>
+                    <button class="btn btn-primary" onclick="carregarMotoristas()">🔍</button>
                     <button class="btn btn-success" onclick="abrirModalMotorista()">+ Novo</button>
                 </div>
-                <div class="panel"><table><thead><tr><th>Nome</th><th>WhatsApp</th><th>Veículo</th><th>Placa</th><th>Status</th><th>Avaliação</th><th>Ações</th></tr></thead><tbody id="motoristasTable"></tbody></table></div>
+                <div class="panel"><table><thead><tr><th>Nome</th><th>WhatsApp</th><th>Veículo</th><th>Placa</th><th>Status</th><th>Ações</th></tr></thead><tbody id="motoristasTable"></tbody></table></div>
             </div>
 
             <!-- CLIENTES -->
@@ -267,30 +250,29 @@
                 <h2 style="margin-bottom:20px;">👥 Clientes</h2>
                 <div class="search-bar">
                     <input type="text" id="buscaCliente" placeholder="Buscar...">
-                    <button class="btn btn-primary" onclick="carregarClientes()">🔍 Buscar</button>
+                    <button class="btn btn-primary" onclick="carregarClientes()">🔍</button>
                     <button class="btn btn-success" onclick="abrirModalCliente()">+ Novo</button>
                 </div>
-                <div class="panel"><table><thead><tr><th>Nome</th><th>Telefone</th><th>Corridas</th><th>Nível</th><th>Status</th><th>Ações</th></tr></thead><tbody id="clientesTable"></tbody></table></div>
+                <div class="panel"><table><thead><tr><th>Nome</th><th>Telefone</th><th>Corridas</th><th>Status</th><th>Ações</th></tr></thead><tbody id="clientesTable"></tbody></table></div>
             </div>
 
             <!-- ROTAS -->
             <div id="rotas" class="page">
-                <h2 style="margin-bottom:20px;">📍 Calcular Rota e Preço</h2>
+                <h2 style="margin-bottom:20px;">📍 Calcular Rota</h2>
                 <div class="panel">
-                    <h2>🗺️ Simulador de Corrida</h2>
                     <div class="form-row">
-                        <div class="form-group"><label>Origem</label><input type="text" id="rotaOrigem" placeholder="Ex: Rua das Flores, 123 - Osasco"></div>
-                        <div class="form-group"><label>Destino</label><input type="text" id="rotaDestino" placeholder="Ex: Av. Brasil, 456 - São Paulo"></div>
+                        <div class="form-group"><label>Origem</label><input type="text" id="rotaOrigem" placeholder="Rua das Flores, 123 - Osasco"></div>
+                        <div class="form-group"><label>Destino</label><input type="text" id="rotaDestino" placeholder="Av. Brasil, 456 - São Paulo"></div>
                     </div>
-                    <button class="btn btn-primary" onclick="calcularRota()">📍 Calcular Rota</button>
-                    <button class="btn btn-success" onclick="encontrarMotoristaProximo()">🚗 Encontrar Motorista</button>
+                    <button class="btn btn-primary" onclick="calcularRota()">📍 Calcular</button>
+                    <button class="btn btn-success" onclick="encontrarMotoristaProximo()">🚗 Motorista Próximo</button>
                     <div id="resultadoRota" class="rota-info" style="display:none;">
-                        <h4>📊 Resultado</h4>
                         <div class="rota-detalhe"><span>Distância:</span><strong id="rotaDistancia">-</strong></div>
                         <div class="rota-detalhe"><span>Tempo:</span><strong id="rotaTempo">-</strong></div>
                         <div class="rota-detalhe"><span>💰 Valor:</span><strong id="rotaPreco" style="color:#27ae60;font-size:1.3em;">-</strong></div>
+                        <div class="rota-detalhe"><span>Faixa:</span><strong id="rotaFaixa">-</strong></div>
                     </div>
-                    <div id="motoristaProximo" class="rota-info" style="display:none;margin-top:10px;"><h4>🚗 Motorista Próximo</h4><div id="motoristaProximoInfo"></div></div>
+                    <div id="motoristaProximo" class="rota-info" style="display:none;"><div id="motoristaProximoInfo"></div></div>
                 </div>
                 <div class="panel"><div id="mapaGoogle"></div></div>
             </div>
@@ -305,6 +287,64 @@
                     <div class="card orange"><h3>Comissão</h3><div class="value">R$ <span id="fatComissao">0</span></div></div>
                 </div>
                 <div class="panel"><h2>📈 Faturamento - 30 dias</h2><div class="chart-container"><canvas id="chartFaturamento"></canvas></div></div>
+            </div>
+
+            <!-- PREÇOS DINÂMICOS -->
+            <div id="precos" class="page">
+                <h2 style="margin-bottom:20px;">💵 Preços Dinâmicos</h2>
+                
+                <div class="cards">
+                    <div class="card green"><h3>Taxa Base</h3><div class="value">R$ <span id="precoTaxaBase">5.00</span></div></div>
+                    <div class="card blue"><h3>Preço/Km</h3><div class="value">R$ <span id="precoKmAtual">2.50</span></div></div>
+                    <div class="card orange"><h3>Mínimo</h3><div class="value">R$ <span id="precoMinimo">15.00</span></div></div>
+                    <div class="card purple"><h3>Faixa Atual</h3><div class="value" id="faixaAtualNome">Normal</div></div>
+                </div>
+
+                <div class="panel">
+                    <h2>💰 Valores Base</h2>
+                    <div class="form-row">
+                        <div class="form-group"><label>Taxa Base (R$)</label><input type="number" id="taxaBase" step="0.01" value="5.00"></div>
+                        <div class="form-group"><label>Preço/Km (R$)</label><input type="number" id="precoKm" step="0.01" value="2.50"></div>
+                        <div class="form-group"><label>Taxa Mínima (R$)</label><input type="number" id="taxaMinima" step="0.01" value="15.00"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>Taxa Bandeira 2 (R$)</label><input type="number" id="taxaBandeira2" step="0.01" value="3.00"></div>
+                        <div class="form-group"><label>Preço/Minuto Parado (R$)</label><input type="number" id="precoMinuto" step="0.01" value="0.50"></div>
+                    </div>
+                    <button class="btn btn-success" onclick="salvarConfigPreco()">💾 Salvar Valores Base</button>
+                </div>
+
+                <div class="panel">
+                    <h2>⏰ Faixas de Horário por Dia</h2>
+                    <p style="color:#666;margin-bottom:15px;">Configure multiplicadores e taxas adicionais para cada horário do dia.</p>
+                    
+                    <div class="tabs" id="tabsDias">
+                        <button class="tab active" onclick="selecionarDia('segunda')">Seg</button>
+                        <button class="tab" onclick="selecionarDia('terca')">Ter</button>
+                        <button class="tab" onclick="selecionarDia('quarta')">Qua</button>
+                        <button class="tab" onclick="selecionarDia('quinta')">Qui</button>
+                        <button class="tab" onclick="selecionarDia('sexta')">Sex</button>
+                        <button class="tab" onclick="selecionarDia('sabado')">Sáb</button>
+                        <button class="tab" onclick="selecionarDia('domingo')">Dom</button>
+                    </div>
+
+                    <div style="margin-bottom:15px;">
+                        <button class="btn btn-success" onclick="abrirModalFaixa()">+ Nova Faixa</button>
+                        <button class="btn btn-purple" onclick="abrirModalCopiarFaixas()">📋 Copiar Faixas</button>
+                    </div>
+
+                    <div id="faixasHorario"></div>
+                </div>
+
+                <div class="panel">
+                    <h2>🧮 Simulador de Preço</h2>
+                    <div class="form-row">
+                        <div class="form-group"><label>Distância (km)</label><input type="number" id="simularKm" value="5" step="0.1"></div>
+                        <div class="form-group"><label>Dia</label><select id="simularDia"><option value="segunda">Segunda</option><option value="terca">Terça</option><option value="quarta">Quarta</option><option value="quinta">Quinta</option><option value="sexta">Sexta</option><option value="sabado">Sábado</option><option value="domingo">Domingo</option></select></div>
+                    </div>
+                    <button class="btn btn-primary" onclick="simularPrecos()">🧮 Simular Todas Faixas</button>
+                    <div id="resultadoSimulacao" style="margin-top:15px;"></div>
+                </div>
             </div>
 
             <!-- RANKING -->
@@ -323,11 +363,8 @@
                     <div class="card yellow"><h3>Pendentes</h3><div class="value" id="fraudePendentes">0</div></div>
                     <div class="card green"><h3>Resolvidos</h3><div class="value" id="fraudeResolvidos">0</div></div>
                 </div>
-                <div class="search-bar">
-                    <select id="filtroFraudeStatus"><option value="">Todos</option><option value="pendente">Pendentes</option><option value="resolvido">Resolvidos</option></select>
-                    <button class="btn btn-primary" onclick="carregarAntiFraude()">🔍</button>
-                </div>
-                <div class="panel"><h2>🚨 Alertas</h2><div id="alertasFraudeLista"></div></div>
+                <div class="search-bar"><select id="filtroFraudeStatus"><option value="">Todos</option><option value="pendente">Pendentes</option><option value="resolvido">Resolvidos</option></select><button class="btn btn-primary" onclick="carregarAntiFraude()">🔍</button></div>
+                <div class="panel"><div id="alertasFraudeLista"></div></div>
             </div>
 
             <!-- BLACKLIST -->
@@ -350,12 +387,8 @@
                     <div class="card yellow"><h3>Andamento</h3><div class="value" id="recAndamento">0</div></div>
                     <div class="card green"><h3>Resolvidas</h3><div class="value" id="recResolvidas">0</div></div>
                 </div>
-                <div class="search-bar">
-                    <select id="filtroReclamacao"><option value="">Todas</option><option value="pendente">Pendentes</option><option value="resolvida">Resolvidas</option></select>
-                    <button class="btn btn-primary" onclick="carregarReclamacoes()">🔍</button>
-                    <button class="btn btn-success" onclick="abrirModalReclamacao()">+ Nova</button>
-                </div>
-                <div class="panel"><table><thead><tr><th>Data</th><th>Cliente</th><th>Assunto</th><th>Prioridade</th><th>Status</th><th>Ações</th></tr></thead><tbody id="reclamacoesTable"></tbody></table></div>
+                <div class="search-bar"><select id="filtroReclamacao"><option value="">Todas</option><option value="pendente">Pendentes</option><option value="resolvida">Resolvidas</option></select><button class="btn btn-primary" onclick="carregarReclamacoes()">🔍</button><button class="btn btn-success" onclick="abrirModalReclamacao()">+ Nova</button></div>
+                <div class="panel"><table><thead><tr><th>Data</th><th>Cliente</th><th>Assunto</th><th>Status</th><th>Ações</th></tr></thead><tbody id="reclamacoesTable"></tbody></table></div>
             </div>
 
             <!-- WHATSAPP -->
@@ -380,28 +413,14 @@
                     <div class="card purple"><h3>Sessões</h3><div class="value" id="usrSessoes">0</div></div>
                 </div>
                 <button class="btn btn-success" onclick="abrirModalUsuario()" style="margin-bottom:20px;">+ Novo</button>
-                <div class="panel"><table><thead><tr><th>Nome</th><th>Login</th><th>Email</th><th>Nível</th><th>Último Acesso</th><th>Status</th><th>Ações</th></tr></thead><tbody id="usuariosTable"></tbody></table></div>
+                <div class="panel"><table><thead><tr><th>Nome</th><th>Login</th><th>Email</th><th>Nível</th><th>Status</th><th>Ações</th></tr></thead><tbody id="usuariosTable"></tbody></table></div>
             </div>
 
             <!-- ÁREAS -->
             <div id="areas" class="page">
                 <h2 style="margin-bottom:20px;">🗺️ Áreas de Cobertura</h2>
-                <button class="btn btn-success" onclick="abrirModalArea()" style="margin-bottom:20px;">+ Nova Área</button>
-                <div class="panel"><table><thead><tr><th>Nome</th><th>Cidade</th><th>Bairros</th><th>Taxa</th><th>Status</th><th>Ações</th></tr></thead><tbody id="areasTable"></tbody></table></div>
-            </div>
-
-            <!-- PREÇOS -->
-            <div id="precos" class="page">
-                <h2 style="margin-bottom:20px;">💵 Preços</h2>
-                <div class="panel">
-                    <h2>Valores Base</h2>
-                    <div class="form-row">
-                        <div class="form-group"><label>Taxa Base (R$)</label><input type="number" id="taxaBase" step="0.01"></div>
-                        <div class="form-group"><label>Preço/Km (R$)</label><input type="number" id="precoKm" step="0.01"></div>
-                        <div class="form-group"><label>Taxa Mínima (R$)</label><input type="number" id="taxaMinima" step="0.01"></div>
-                    </div>
-                    <button class="btn btn-primary" onclick="salvarConfigPreco()">💾 Salvar</button>
-                </div>
+                <button class="btn btn-success" onclick="abrirModalArea()" style="margin-bottom:20px;">+ Nova</button>
+                <div class="panel"><table><thead><tr><th>Nome</th><th>Cidade</th><th>Bairros</th><th>Taxa</th><th>Ações</th></tr></thead><tbody id="areasTable"></tbody></table></div>
             </div>
 
             <!-- CONFIG -->
@@ -411,12 +430,8 @@
                     <h2>Tempos e Limites</h2>
                     <div class="form-row">
                         <div class="form-group"><label>Tempo Espera (min)</label><input type="number" id="cfgTempoEspera" value="10"></div>
-                        <div class="form-group"><label>Tempo Aceite (min)</label><input type="number" id="cfgTempoAceite" value="5"></div>
                         <div class="form-group"><label>Raio Busca (km)</label><input type="number" id="cfgRaioBusca" value="15"></div>
-                    </div>
-                    <div class="form-row">
                         <div class="form-group"><label>Comissão (%)</label><input type="number" id="cfgComissao" value="15"></div>
-                        <div class="form-group"><label>Avaliação Mínima</label><input type="number" id="cfgAvaliacaoMin" step="0.1" value="3.0"></div>
                     </div>
                     <button class="btn btn-success" onclick="salvarConfiguracoes()">💾 Salvar</button>
                 </div>
@@ -430,45 +445,30 @@
                     <div class="card green"><h3>Hoje</h3><div class="value" id="logHoje">0</div></div>
                     <div class="card red"><h3>Erros</h3><div class="value" id="logErros">0</div></div>
                 </div>
-                <div class="search-bar">
-                    <select id="filtroLogTipo"><option value="">Todos</option><option value="login">Login</option><option value="despacho">Despacho</option><option value="erro">Erro</option></select>
-                    <button class="btn btn-primary" onclick="carregarLogs()">🔍</button>
-                </div>
+                <div class="search-bar"><select id="filtroLogTipo"><option value="">Todos</option><option value="login">Login</option><option value="config">Config</option><option value="despacho">Despacho</option></select><button class="btn btn-primary" onclick="carregarLogs()">🔍</button></div>
                 <div class="panel"><div id="logsLista"></div></div>
             </div>
         </main>
     </div>
 
     <!-- MODAIS -->
-    <div class="modal" id="modalMotorista">
-        <div class="modal-content">
-            <div class="modal-header"><h3>📋 Novo Motorista</h3><button class="modal-close" onclick="fecharModal('modalMotorista')">&times;</button></div>
-            <div id="formMotoristaAlert"></div>
-            <form id="formMotorista">
-                <div class="form-group"><label>Nome *</label><input type="text" id="motNome" required></div>
-                <div class="form-row"><div class="form-group"><label>WhatsApp *</label><input type="text" id="motWhatsApp" required></div><div class="form-group"><label>CPF</label><input type="text" id="motCPF"></div></div>
-                <div class="form-row"><div class="form-group"><label>CNH *</label><input type="text" id="motCNH" required></div><div class="form-group"><label>Validade</label><input type="date" id="motCNHValidade"></div></div>
-                <div class="form-group"><label>Endereço</label><input type="text" id="motEndereco"></div>
-                <hr class="divider">
-                <div class="form-row"><div class="form-group"><label>Modelo *</label><input type="text" id="motVeiculoModelo" required></div><div class="form-group"><label>Cor *</label><input type="text" id="motVeiculoCor" required></div></div>
-                <div class="form-row"><div class="form-group"><label>Placa *</label><input type="text" id="motVeiculoPlaca" required></div><div class="form-group"><label>Ano</label><input type="number" id="motVeiculoAno"></div></div>
-                <button type="submit" class="btn btn-success" style="width:100%;padding:12px;">✅ Cadastrar</button>
-            </form>
-            <div id="tokenMotoristaBox" class="token-box" style="display:none;"><h4>🎉 Cadastrado!</h4><p>Token:</p><code id="tokenGerado"></code><p><strong>Senha:</strong> <span id="senhaGerada"></span></p></div>
-        </div>
-    </div>
+    <div class="modal" id="modalMotorista"><div class="modal-content"><div class="modal-header"><h3>📋 Novo Motorista</h3><button class="modal-close" onclick="fecharModal('modalMotorista')">&times;</button></div><div id="formMotoristaAlert"></div><form id="formMotorista"><div class="form-group"><label>Nome *</label><input type="text" id="motNome" required></div><div class="form-row"><div class="form-group"><label>WhatsApp *</label><input type="text" id="motWhatsApp" required></div><div class="form-group"><label>CPF</label><input type="text" id="motCPF"></div></div><div class="form-row"><div class="form-group"><label>CNH *</label><input type="text" id="motCNH" required></div><div class="form-group"><label>Validade</label><input type="date" id="motCNHValidade"></div></div><hr class="divider"><div class="form-row"><div class="form-group"><label>Modelo *</label><input type="text" id="motVeiculoModelo" required></div><div class="form-group"><label>Cor *</label><input type="text" id="motVeiculoCor" required></div></div><div class="form-row"><div class="form-group"><label>Placa *</label><input type="text" id="motVeiculoPlaca" required></div><div class="form-group"><label>Ano</label><input type="number" id="motVeiculoAno"></div></div><button type="submit" class="btn btn-success" style="width:100%;padding:12px;">✅ Cadastrar</button></form><div id="tokenMotoristaBox" class="token-box" style="display:none;"><h4>🎉 Cadastrado!</h4><code id="tokenGerado"></code><p>Senha: <span id="senhaGerada"></span></p></div></div></div>
 
     <div class="modal" id="modalCliente"><div class="modal-content"><div class="modal-header"><h3>Novo Cliente</h3><button class="modal-close" onclick="fecharModal('modalCliente')">&times;</button></div><form id="formCliente"><div class="form-group"><label>Nome</label><input type="text" id="cliNome" required></div><div class="form-group"><label>WhatsApp</label><input type="text" id="cliTelefone" required></div><button type="submit" class="btn btn-success" style="width:100%;">Salvar</button></form></div></div>
 
-    <div class="modal" id="modalReclamacao"><div class="modal-content"><div class="modal-header"><h3>📞 Nova Reclamação</h3><button class="modal-close" onclick="fecharModal('modalReclamacao')">&times;</button></div><form id="formReclamacao"><div class="form-row"><div class="form-group"><label>Cliente</label><input type="text" id="recClienteNome" required></div><div class="form-group"><label>Telefone</label><input type="text" id="recClienteTel" required></div></div><div class="form-row"><div class="form-group"><label>Tipo</label><select id="recTipo"><option value="motorista">Motorista</option><option value="cobranca">Cobrança</option><option value="outro">Outro</option></select></div><div class="form-group"><label>Prioridade</label><select id="recPrioridade"><option value="baixa">Baixa</option><option value="media">Média</option><option value="alta">Alta</option></select></div></div><div class="form-group"><label>Assunto</label><input type="text" id="recAssunto" required></div><div class="form-group"><label>Descrição</label><textarea id="recDescricao" rows="3"></textarea></div><button type="submit" class="btn btn-success" style="width:100%;">📩 Registrar</button></form></div></div>
+    <div class="modal" id="modalReclamacao"><div class="modal-content"><div class="modal-header"><h3>📞 Nova Reclamação</h3><button class="modal-close" onclick="fecharModal('modalReclamacao')">&times;</button></div><form id="formReclamacao"><div class="form-row"><div class="form-group"><label>Cliente</label><input type="text" id="recClienteNome" required></div><div class="form-group"><label>Telefone</label><input type="text" id="recClienteTel" required></div></div><div class="form-group"><label>Assunto</label><input type="text" id="recAssunto" required></div><div class="form-group"><label>Descrição</label><textarea id="recDescricao" rows="3"></textarea></div><button type="submit" class="btn btn-success" style="width:100%;">📩 Registrar</button></form></div></div>
 
     <div class="modal" id="modalArea"><div class="modal-content"><div class="modal-header"><h3>🗺️ Nova Área</h3><button class="modal-close" onclick="fecharModal('modalArea')">&times;</button></div><form id="formArea"><div class="form-group"><label>Nome</label><input type="text" id="areaNome" required></div><div class="form-group"><label>Cidade</label><input type="text" id="areaCidade" required></div><div class="form-group"><label>Bairros</label><input type="text" id="areaBairros" placeholder="Separados por vírgula"></div><div class="form-group"><label>Taxa Extra</label><input type="number" id="areaTaxa" step="0.01" value="0"></div><button type="submit" class="btn btn-success" style="width:100%;">💾 Salvar</button></form></div></div>
 
     <div class="modal" id="modalBlacklist"><div class="modal-content"><div class="modal-header"><h3>🚫 Blacklist</h3><button class="modal-close" onclick="fecharModal('modalBlacklist')">&times;</button></div><form id="formBlacklist"><div class="form-group"><label>Tipo</label><select id="blTipo"><option value="telefone">Telefone</option><option value="cpf">CPF</option></select></div><div class="form-group"><label>Valor</label><input type="text" id="blValor" required></div><div class="form-group"><label>Motivo</label><textarea id="blMotivo" rows="2" required></textarea></div><button type="submit" class="btn btn-danger" style="width:100%;">🚫 Bloquear</button></form></div></div>
 
-    <div class="modal" id="modalUsuario"><div class="modal-content"><div class="modal-header"><h3>👤 Novo Usuário</h3><button class="modal-close" onclick="fecharModal('modalUsuario')">&times;</button></div><div id="formUsuarioAlert"></div><form id="formUsuario"><div class="form-group"><label>Nome *</label><input type="text" id="usrNome" required></div><div class="form-row"><div class="form-group"><label>Login *</label><input type="text" id="usrLogin" required></div><div class="form-group"><label>Email *</label><input type="email" id="usrEmail" required></div></div><div class="form-row"><div class="form-group"><label>Senha</label><input type="text" id="usrSenha" placeholder="Vazio = 123456"></div><div class="form-group"><label>Telefone</label><input type="text" id="usrTelefone"></div></div><div class="form-group"><label>Nível *</label><select id="usrNivel"><option value="admin">Administrador</option><option value="gerente">Gerente</option><option value="operador" selected>Operador</option><option value="financeiro">Financeiro</option><option value="atendimento">Atendimento</option></select></div><button type="submit" class="btn btn-success" style="width:100%;padding:12px;">✅ Criar</button></form><div id="usuarioCriado" class="token-box" style="display:none;"><h4>🎉 Criado!</h4><p>Login: <strong id="novoUsrLogin"></strong></p><p>Senha: <strong id="novoUsrSenha"></strong></p></div></div></div>
+    <div class="modal" id="modalUsuario"><div class="modal-content"><div class="modal-header"><h3>👤 Novo Usuário</h3><button class="modal-close" onclick="fecharModal('modalUsuario')">&times;</button></div><div id="formUsuarioAlert"></div><form id="formUsuario"><div class="form-group"><label>Nome *</label><input type="text" id="usrNome" required></div><div class="form-row"><div class="form-group"><label>Login *</label><input type="text" id="usrLogin" required></div><div class="form-group"><label>Email *</label><input type="email" id="usrEmail" required></div></div><div class="form-row"><div class="form-group"><label>Senha</label><input type="text" id="usrSenha" placeholder="Vazio = 123456"></div><div class="form-group"><label>Nível</label><select id="usrNivel"><option value="admin">Admin</option><option value="gerente">Gerente</option><option value="operador" selected>Operador</option><option value="financeiro">Financeiro</option></select></div></div><button type="submit" class="btn btn-success" style="width:100%;padding:12px;">✅ Criar</button></form><div id="usuarioCriado" class="token-box" style="display:none;"><h4>🎉 Criado!</h4><p>Login: <strong id="novoUsrLogin"></strong></p><p>Senha: <strong id="novoUsrSenha"></strong></p></div></div></div>
 
-    <div class="modal" id="modalDespachoManual"><div class="modal-content"><div class="modal-header"><h3>📡 Enviar Corrida Manual</h3><button class="modal-close" onclick="fecharModal('modalDespachoManual')">&times;</button></div><div class="form-group"><label>Selecione o Motorista</label><select id="motoristaDespachoManual" style="width:100%;padding:10px;"></select></div><button class="btn btn-success" onclick="enviarCorridaManual()" style="width:100%;margin-top:15px;">📤 Enviar para Motorista</button></div></div>
+    <div class="modal" id="modalFaixa"><div class="modal-content"><div class="modal-header"><h3>⏰ Nova Faixa de Horário</h3><button class="modal-close" onclick="fecharModal('modalFaixa')">&times;</button></div><form id="formFaixa"><div class="form-group"><label>Nome da Faixa</label><input type="text" id="faixaNome" placeholder="Ex: Pico Manhã" required></div><div class="form-row"><div class="form-group"><label>Hora Início</label><input type="time" id="faixaInicio" required></div><div class="form-group"><label>Hora Fim</label><input type="time" id="faixaFim" required></div></div><div class="form-row"><div class="form-group"><label>Multiplicador</label><input type="number" id="faixaMult" step="0.1" value="1.0" min="0.5" max="3.0"></div><div class="form-group"><label>Taxa Adicional (R$)</label><input type="number" id="faixaTaxa" step="0.50" value="0" min="0"></div></div><div class="alert alert-info">🟢 1.0x = Normal | 🟡 1.2-1.3x = Moderado | 🔴 1.5x+ = Alta demanda</div><button type="submit" class="btn btn-success" style="width:100%;">💾 Salvar Faixa</button></form></div></div>
+
+    <div class="modal" id="modalCopiarFaixas"><div class="modal-content"><div class="modal-header"><h3>📋 Copiar Faixas</h3><button class="modal-close" onclick="fecharModal('modalCopiarFaixas')">&times;</button></div><div class="form-group"><label>Copiar de</label><select id="copiarOrigem"><option value="segunda">Segunda</option><option value="terca">Terça</option><option value="quarta">Quarta</option><option value="quinta">Quinta</option><option value="sexta">Sexta</option><option value="sabado">Sábado</option><option value="domingo">Domingo</option></select></div><div class="form-group"><label>Para</label><select id="copiarDestino"><option value="segunda">Segunda</option><option value="terca">Terça</option><option value="quarta">Quarta</option><option value="quinta">Quinta</option><option value="sexta">Sexta</option><option value="sabado">Sábado</option><option value="domingo">Domingo</option></select></div><button class="btn btn-purple" onclick="copiarFaixas()" style="width:100%;">📋 Copiar</button></div></div>
+
+    <div class="modal" id="modalDespachoManual"><div class="modal-content"><div class="modal-header"><h3>📡 Enviar Manual</h3><button class="modal-close" onclick="fecharModal('modalDespachoManual')">&times;</button></div><div class="form-group"><label>Motorista</label><select id="motoristaDespachoManual"></select></div><button class="btn btn-success" onclick="enviarCorridaManual()" style="width:100%;margin-top:15px;">📤 Enviar</button></div></div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="app.js"></script>

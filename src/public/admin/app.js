@@ -17,7 +17,7 @@ document.querySelectorAll('.menu-item').forEach(item => {
 });
 
 function carregarPagina(p) {
-    const fn = { dashboard:carregarDashboard, mapa:carregarMapa, corridas:carregarCorridas, despacho:carregarDespacho, motoristas:carregarMotoristas, clientes:carregarClientes, rotas:carregarRotas, faturamento:carregarFaturamento, ranking:carregarRanking, antifraude:carregarAntiFraude, blacklist:carregarBlacklist, reclamacoes:carregarReclamacoes, whatsapp:carregarWhatsApp, usuarios:carregarUsuarios, areas:carregarAreas, precos:carregarPrecos, config:carregarConfig, logs:carregarLogs };
+    const fn = { dashboard:carregarDashboard, mapa:carregarMapa, corridas:carregarCorridas, despacho:carregarDespacho, motoristas:carregarMotoristas, clientes:carregarClientes, rotas:carregarRotas, faturamento:carregarFaturamento, precos:carregarPrecos, ranking:carregarRanking, antifraude:carregarAntiFraude, blacklist:carregarBlacklist, reclamacoes:carregarReclamacoes, whatsapp:carregarWhatsApp, usuarios:carregarUsuarios, areas:carregarAreas, config:carregarConfig, logs:carregarLogs };
     if (fn[p]) fn[p]();
 }
 
@@ -76,14 +76,7 @@ async function carregarCorridas() {
     document.getElementById('corridasTable').innerHTML = c.length ? c.map(x=>`<tr><td>${x.id.slice(-6)}</td><td>${x.clienteNome||'-'}</td><td>${(x.origem?.endereco||x.origem||'-').toString().slice(0,20)}...</td><td>${(x.destino?.endereco||x.destino||'-').toString().slice(0,20)}...</td><td>R$ ${(x.precoFinal||x.precoEstimado||0).toFixed(2)}</td><td><span class="badge ${getStatusColor(x.status)}">${formatStatus(x.status)}</span></td><td>${x.status==='pendente'?`<button class="btn btn-primary btn-sm" onclick="despacharCorrida('${x.id}')">📡</button> <button class="btn btn-danger btn-sm" onclick="cancelarCorrida('${x.id}')">✕</button>`:''}</td></tr>`).join('') : '<tr><td colspan="7" style="text-align:center;color:#999">Nenhuma</td></tr>';
 }
 async function cancelarCorrida(id) { if (confirm('Cancelar?')) { await api('/api/corridas/'+id+'/cancelar','PUT',{motivo:'Admin'}); carregarCorridas(); carregarDashboard(); }}
-async function despacharCorrida(id) {
-    const modo = await api('/api/despacho/config');
-    if (confirm(`Despachar corrida no modo "${modo.modo.toUpperCase()}"?`)) {
-        const r = await api('/api/despacho/despachar/'+id, 'POST');
-        if (r.sucesso) { alert(`✅ Corrida despachada!\nModo: ${r.modo}\n${r.modo==='broadcast'?'Notificados: '+r.motoristasNotificados:'Motorista: '+r.motorista?.nome}`); carregarCorridas(); carregarDespacho(); }
-        else alert('❌ '+r.error);
-    }
-}
+async function despacharCorrida(id) { const r = await api('/api/despacho/despachar/'+id, 'POST'); if (r.sucesso) { alert(`✅ Despachada! Modo: ${r.modo}`); carregarCorridas(); } else alert('❌ '+r.error); }
 
 // DESPACHO
 let corridaDespachoManual = null;
@@ -91,85 +84,18 @@ async function carregarDespacho() {
     const cfg = await api('/api/despacho/config');
     const st = await api('/api/despacho/estatisticas');
     const mots = await api('/api/motoristas/estatisticas');
-    
     document.getElementById('modoDespachoAtual').textContent = cfg.modo === 'broadcast' ? 'Broadcast' : 'Próximo';
     document.getElementById('aguardandoAceite').textContent = st.aguardandoAceite || 0;
     document.getElementById('aceitasHoje').textContent = st.aceitas || 0;
     document.getElementById('motoristasDespacho').textContent = mots.disponiveis || 0;
     document.getElementById('tempoAceite').value = cfg.tempoAceiteSegundos || 30;
-    
-    // Marcar modo ativo
     document.getElementById('modoBroadcast').classList.toggle('active', cfg.modo === 'broadcast');
     document.getElementById('modoProximo').classList.toggle('active', cfg.modo === 'proximo');
-    
-    // Carregar corridas pendentes
     const corridas = await api('/api/corridas?status=pendente');
-    document.getElementById('corridasPendentesDespacho').innerHTML = corridas.length ? corridas.map(c=>`
-        <div class="corrida-despacho aguardando">
-            <div style="display:flex;justify-content:space-between;align-items:center;">
-                <div>
-                    <strong>${c.clienteNome || 'Cliente'}</strong><br>
-                    <small>📍 ${(c.origem?.endereco||c.origem||'').toString().slice(0,30)}...</small><br>
-                    <small>🏁 ${(c.destino?.endereco||c.destino||'').toString().slice(0,30)}...</small>
-                </div>
-                <div style="text-align:right;">
-                    <div style="font-size:1.3em;color:#27ae60;font-weight:bold;">R$ ${(c.precoEstimado||0).toFixed(2)}</div>
-                    <button class="btn btn-primary btn-sm" onclick="despacharCorrida('${c.id}')">📡 Despachar</button>
-                    <button class="btn btn-purple btn-sm" onclick="abrirDespachoManual('${c.id}')">👤 Manual</button>
-                </div>
-            </div>
-        </div>
-    `).join('') : '<p style="color:#999;padding:20px;text-align:center;">Nenhuma corrida pendente</p>';
-    
-    // Carregar motoristas disponíveis
-    const motoristas = await api('/api/gps-integrado');
-    const disponiveis = motoristas.filter(m => m.status === 'disponivel');
-    document.getElementById('motoristasDespachoTable').innerHTML = disponiveis.length ? disponiveis.map(m=>`
-        <tr>
-            <td><strong>${m.nome || m.nomeCompleto}</strong></td>
-            <td>${m.latitude ? '📍 Online' : '❓ Sem GPS'}</td>
-            <td><span class="badge green">Disponível</span></td>
-            <td><button class="btn btn-primary btn-sm" onclick="verLocalizacao(${m.latitude},${m.longitude},'${m.nome}')">🗺️</button></td>
-        </tr>
-    `).join('') : '<tr><td colspan="4" style="text-align:center;color:#999;">Nenhum disponível</td></tr>';
+    document.getElementById('corridasPendentesDespacho').innerHTML = corridas.length ? corridas.map(c=>`<div class="corrida-despacho aguardando"><div style="display:flex;justify-content:space-between;align-items:center;"><div><strong>${c.clienteNome||'Cliente'}</strong><br><small>📍 ${(c.origem?.endereco||c.origem||'').toString().slice(0,30)}...</small></div><div><button class="btn btn-primary btn-sm" onclick="despacharCorrida('${c.id}')">📡 Despachar</button></div></div></div>`).join('') : '<p style="color:#999;text-align:center;">Nenhuma pendente</p>';
 }
-
-async function setModoDespacho(modo) {
-    await api('/api/despacho/config', 'PUT', { modo });
-    carregarDespacho();
-}
-
-async function salvarTempoAceite() {
-    const tempo = document.getElementById('tempoAceite').value;
-    await api('/api/despacho/config', 'PUT', { tempoAceiteSegundos: parseInt(tempo) });
-    alert('✅ Tempo salvo!');
-}
-
-function abrirDespachoManual(corridaId) {
-    corridaDespachoManual = corridaId;
-    api('/api/gps-integrado').then(mots => {
-        const disponiveis = mots.filter(m => m.status === 'disponivel');
-        document.getElementById('motoristaDespachoManual').innerHTML = disponiveis.length ? 
-            disponiveis.map(m => `<option value="${m.motoristaId}">${m.nome || m.nomeCompleto}</option>`).join('') : 
-            '<option value="">Nenhum disponível</option>';
-        document.getElementById('modalDespachoManual').classList.add('active');
-    });
-}
-
-async function enviarCorridaManual() {
-    const motoristaId = document.getElementById('motoristaDespachoManual').value;
-    if (!motoristaId) { alert('Selecione um motorista'); return; }
-    
-    const r = await api('/api/despacho/enviar-para-motorista', 'POST', { corridaId: corridaDespachoManual, motoristaId });
-    if (r.sucesso) { alert('✅ Corrida enviada para o motorista!'); fecharModal('modalDespachoManual'); carregarDespacho(); carregarCorridas(); }
-    else alert('❌ ' + r.error);
-}
-
-function verLocalizacao(lat, lng, nome) {
-    if (!lat || !lng) { alert('Motorista sem localização GPS'); return; }
-    if (mapaLeaflet) { mapaLeaflet.setView([lat, lng], 15); }
-    alert(`📍 ${nome}\nLat: ${lat}\nLng: ${lng}`);
-}
+async function setModoDespacho(modo) { await api('/api/despacho/config', 'PUT', { modo }); carregarDespacho(); }
+async function salvarTempoAceite() { const tempo = document.getElementById('tempoAceite').value; await api('/api/despacho/config', 'PUT', { tempoAceiteSegundos: parseInt(tempo) }); alert('✅ Salvo!'); }
 
 // MOTORISTAS
 async function carregarMotoristas() {
@@ -177,14 +103,14 @@ async function carregarMotoristas() {
     const s = document.getElementById('filtroStatusMotorista').value;
     let url = '/api/motoristas?'; if (b) url+='busca='+b+'&'; if (s) url+='status='+s;
     const m = await api(url);
-    document.getElementById('motoristasTable').innerHTML = m.length ? m.map(x=>`<tr><td><strong>${x.nomeCompleto||x.nome}</strong></td><td>📱 ${x.whatsapp}</td><td>${x.veiculo?.modelo||''} ${x.veiculo?.cor||''}</td><td><strong>${x.veiculo?.placa||'-'}</strong></td><td><span class="badge ${getStatusColor(x.status)}">${formatStatus(x.status)}</span></td><td>⭐ ${(x.avaliacao||5).toFixed(1)}</td><td><button class="btn btn-danger btn-sm" onclick="desativarMotorista('${x.id}')">🗑️</button></td></tr>`).join('') : '<tr><td colspan="7" style="text-align:center;color:#999">Nenhum</td></tr>';
+    document.getElementById('motoristasTable').innerHTML = m.length ? m.map(x=>`<tr><td><strong>${x.nomeCompleto||x.nome}</strong></td><td>📱 ${x.whatsapp}</td><td>${x.veiculo?.modelo||''} ${x.veiculo?.cor||''}</td><td><strong>${x.veiculo?.placa||'-'}</strong></td><td><span class="badge ${getStatusColor(x.status)}">${formatStatus(x.status)}</span></td><td><button class="btn btn-danger btn-sm" onclick="desativarMotorista('${x.id}')">🗑️</button></td></tr>`).join('') : '<tr><td colspan="6" style="text-align:center;color:#999">Nenhum</td></tr>';
 }
 function abrirModalMotorista() { document.getElementById('formMotorista').reset(); document.getElementById('formMotorista').style.display='block'; document.getElementById('tokenMotoristaBox').style.display='none'; document.getElementById('formMotoristaAlert').innerHTML=''; document.getElementById('modalMotorista').classList.add('active'); }
-document.getElementById('formMotorista').addEventListener('submit', async(e)=>{ e.preventDefault(); const d={nomeCompleto:document.getElementById('motNome').value.trim(),whatsapp:document.getElementById('motWhatsApp').value.trim(),cpf:document.getElementById('motCPF').value.trim(),cnh:document.getElementById('motCNH').value.trim(),cnhValidade:document.getElementById('motCNHValidade').value,endereco:document.getElementById('motEndereco').value.trim(),veiculo:{modelo:document.getElementById('motVeiculoModelo').value.trim(),cor:document.getElementById('motVeiculoCor').value.trim(),placa:document.getElementById('motVeiculoPlaca').value.trim().toUpperCase(),ano:parseInt(document.getElementById('motVeiculoAno').value)||2020}}; if(!d.nomeCompleto||!d.whatsapp||!d.cnh||!d.veiculo.modelo||!d.veiculo.cor||!d.veiculo.placa){document.getElementById('formMotoristaAlert').innerHTML='<div class="alert alert-error">Preencha campos obrigatórios</div>';return;} const r=await api('/api/motoristas','POST',d); if(r.error){document.getElementById('formMotoristaAlert').innerHTML=`<div class="alert alert-error">${r.error}</div>`;return;} document.getElementById('formMotorista').style.display='none'; document.getElementById('tokenGerado').textContent=r.motorista.token; document.getElementById('senhaGerada').textContent=r.motorista.senhaGerada; document.getElementById('tokenMotoristaBox').style.display='block'; carregarMotoristas(); });
+document.getElementById('formMotorista').addEventListener('submit', async(e)=>{ e.preventDefault(); const d={nomeCompleto:document.getElementById('motNome').value.trim(),whatsapp:document.getElementById('motWhatsApp').value.trim(),cpf:document.getElementById('motCPF').value.trim(),cnh:document.getElementById('motCNH').value.trim(),cnhValidade:document.getElementById('motCNHValidade').value,veiculo:{modelo:document.getElementById('motVeiculoModelo').value.trim(),cor:document.getElementById('motVeiculoCor').value.trim(),placa:document.getElementById('motVeiculoPlaca').value.trim().toUpperCase(),ano:parseInt(document.getElementById('motVeiculoAno').value)||2020}}; if(!d.nomeCompleto||!d.whatsapp||!d.cnh||!d.veiculo.modelo||!d.veiculo.cor||!d.veiculo.placa){document.getElementById('formMotoristaAlert').innerHTML='<div class="alert alert-error">Preencha campos obrigatórios</div>';return;} const r=await api('/api/motoristas','POST',d); if(r.error){document.getElementById('formMotoristaAlert').innerHTML=`<div class="alert alert-error">${r.error}</div>`;return;} document.getElementById('formMotorista').style.display='none'; document.getElementById('tokenGerado').textContent=r.motorista.token; document.getElementById('senhaGerada').textContent=r.motorista.senhaGerada; document.getElementById('tokenMotoristaBox').style.display='block'; carregarMotoristas(); });
 async function desativarMotorista(id) { if (confirm('Desativar?')) { await api('/api/motoristas/'+id,'DELETE'); carregarMotoristas(); }}
 
 // CLIENTES
-async function carregarClientes() { const b=document.getElementById('buscaCliente').value; const c=await api('/api/clientes'+(b?'?busca='+b:'')); document.getElementById('clientesTable').innerHTML=c.length?c.map(x=>`<tr><td>${x.nome}</td><td>📱 ${x.telefone}</td><td>${x.corridasRealizadas||0}</td><td><span class="badge blue">${x.nivel?.nome||'Novo'}</span></td><td><span class="badge ${x.bloqueado?'red':'green'}">${x.bloqueado?'Bloqueado':'Ativo'}</span></td><td>${x.bloqueado?`<button class="btn btn-success btn-sm" onclick="desbloquearCliente('${x.id}')">Desbloquear</button>`:`<button class="btn btn-danger btn-sm" onclick="bloquearCliente('${x.id}')">Bloquear</button>`}</td></tr>`).join(''):'<tr><td colspan="6" style="text-align:center;color:#999">Nenhum</td></tr>'; }
+async function carregarClientes() { const b=document.getElementById('buscaCliente').value; const c=await api('/api/clientes'+(b?'?busca='+b:'')); document.getElementById('clientesTable').innerHTML=c.length?c.map(x=>`<tr><td>${x.nome}</td><td>📱 ${x.telefone}</td><td>${x.corridasRealizadas||0}</td><td><span class="badge ${x.bloqueado?'red':'green'}">${x.bloqueado?'Bloqueado':'Ativo'}</span></td><td>${x.bloqueado?`<button class="btn btn-success btn-sm" onclick="desbloquearCliente('${x.id}')">Desbloquear</button>`:`<button class="btn btn-danger btn-sm" onclick="bloquearCliente('${x.id}')">Bloquear</button>`}</td></tr>`).join(''):'<tr><td colspan="5" style="text-align:center;color:#999">Nenhum</td></tr>'; }
 function abrirModalCliente() { document.getElementById('formCliente').reset(); document.getElementById('modalCliente').classList.add('active'); }
 document.getElementById('formCliente').addEventListener('submit',async(e)=>{ e.preventDefault(); await api('/api/clientes','POST',{nome:document.getElementById('cliNome').value,telefone:document.getElementById('cliTelefone').value}); fecharModal('modalCliente'); carregarClientes(); });
 async function bloquearCliente(id) { if(confirm('Bloquear?')){ await api('/api/clientes/'+id+'/bloquear','PUT',{motivo:'Admin'}); carregarClientes(); }}
@@ -199,16 +125,20 @@ async function calcularRota() {
     if (!origem || !destino) { alert('Preencha origem e destino'); return; }
     const r = await api('/api/maps/calcular-preco','POST',{origem,destino});
     if (!r.sucesso) { alert(r.error || 'Erro'); return; }
+    
+    // Buscar faixa atual para mostrar
+    const faixa = await api('/api/preco-dinamico/faixa-atual');
+    
     document.getElementById('rotaDistancia').textContent = r.distancia.texto;
     document.getElementById('rotaTempo').textContent = r.duracao.texto;
     document.getElementById('rotaPreco').textContent = 'R$ ' + r.preco.total.toFixed(2);
+    document.getElementById('rotaFaixa').textContent = faixa.nome + (faixa.multiplicador > 1 ? ` (${faixa.multiplicador}x)` : ' (normal)');
     document.getElementById('resultadoRota').style.display = 'block';
+    
     if (mapaRotaLeaflet) {
         mapaRotaLeaflet.eachLayer(l => { if (l instanceof L.Marker || l instanceof L.Polyline) mapaRotaLeaflet.removeLayer(l); });
-        const icO = L.divIcon({html:'<div style="background:#27ae60;width:30px;height:30px;border-radius:50%;border:3px solid white;display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;">A</div>',className:'',iconSize:[30,30]});
-        const icD = L.divIcon({html:'<div style="background:#e74c3c;width:30px;height:30px;border-radius:50%;border:3px solid white;display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;">B</div>',className:'',iconSize:[30,30]});
-        L.marker([r.origem.latitude,r.origem.longitude],{icon:icO}).addTo(mapaRotaLeaflet);
-        L.marker([r.destino.latitude,r.destino.longitude],{icon:icD}).addTo(mapaRotaLeaflet);
+        L.marker([r.origem.latitude,r.origem.longitude]).addTo(mapaRotaLeaflet).bindPopup('Origem');
+        L.marker([r.destino.latitude,r.destino.longitude]).addTo(mapaRotaLeaflet).bindPopup('Destino');
         L.polyline([[r.origem.latitude,r.origem.longitude],[r.destino.latitude,r.destino.longitude]],{color:'#3498db',weight:4,dashArray:'10,10'}).addTo(mapaRotaLeaflet);
         mapaRotaLeaflet.fitBounds([[r.origem.latitude,r.origem.longitude],[r.destino.latitude,r.destino.longitude]],{padding:[50,50]});
     }
@@ -219,19 +149,169 @@ async function encontrarMotoristaProximo() {
     const geo = await api('/api/maps/geocodificar','POST',{endereco:origem});
     if (!geo.sucesso) { alert('Erro ao localizar'); return; }
     const r = await api('/api/maps/motorista-proximo','POST',{latitude:geo.latitude,longitude:geo.longitude});
-    if (!r.sucesso) { document.getElementById('motoristaProximoInfo').innerHTML = '<p style="color:#e74c3c">'+r.error+'</p>'; }
-    else { document.getElementById('motoristaProximoInfo').innerHTML = `<div class="rota-detalhe"><span>Nome:</span><strong>${r.motorista.nome}</strong></div><div class="rota-detalhe"><span>Distância:</span><strong>${r.distanciaKm.toFixed(1)} km</strong></div><div class="rota-detalhe"><span>Tempo:</span><strong>~${r.tempoEstimadoMinutos} min</strong></div>`; }
+    document.getElementById('motoristaProximoInfo').innerHTML = r.sucesso ? `<p><strong>${r.motorista.nome}</strong> - ${r.distanciaKm.toFixed(1)} km (~${r.tempoEstimadoMinutos} min)</p>` : `<p style="color:#e74c3c">${r.error}</p>`;
     document.getElementById('motoristaProximo').style.display = 'block';
 }
 
 // FATURAMENTO
 async function carregarFaturamento() { const r=await api('/api/estatisticas/faturamento-resumo'); document.getElementById('fatHoje').textContent=(r.hoje?.bruto||0).toFixed(2); document.getElementById('fatSemana').textContent=(r.semana?.bruto||0).toFixed(2); document.getElementById('fatMes').textContent=(r.mes?.bruto||0).toFixed(2); document.getElementById('fatComissao').textContent=(r.mes?.comissao||0).toFixed(2); const d=await api('/api/estatisticas/faturamento-por-dia?dias=30'); criarGraficoFaturamento(d); }
 
+// ==================== PREÇOS DINÂMICOS ====================
+let diaSelecionado = 'segunda';
+
+async function carregarPrecos() {
+    // Carregar config base
+    const cfg = await api('/api/preco-dinamico/config');
+    document.getElementById('taxaBase').value = cfg.taxaBase || 5;
+    document.getElementById('precoKm').value = cfg.precoKm || 2.5;
+    document.getElementById('taxaMinima').value = cfg.taxaMinima || 15;
+    document.getElementById('taxaBandeira2').value = cfg.taxaBandeira2 || 3;
+    document.getElementById('precoMinuto').value = cfg.precoMinuto || 0.5;
+    
+    document.getElementById('precoTaxaBase').textContent = (cfg.taxaBase || 5).toFixed(2);
+    document.getElementById('precoKmAtual').textContent = (cfg.precoKm || 2.5).toFixed(2);
+    document.getElementById('precoMinimo').textContent = (cfg.taxaMinima || 15).toFixed(2);
+    
+    // Faixa atual
+    const faixaAtual = await api('/api/preco-dinamico/faixa-atual');
+    document.getElementById('faixaAtualNome').textContent = faixaAtual.nome + (faixaAtual.multiplicador > 1 ? ` (${faixaAtual.multiplicador}x)` : '');
+    
+    // Carregar faixas do dia selecionado
+    carregarFaixasDia(diaSelecionado);
+}
+
+function selecionarDia(dia) {
+    diaSelecionado = dia;
+    document.querySelectorAll('#tabsDias .tab').forEach(t => t.classList.remove('active'));
+    event.target.classList.add('active');
+    carregarFaixasDia(dia);
+}
+
+async function carregarFaixasDia(dia) {
+    const faixas = await api('/api/preco-dinamico/faixas?dia=' + dia);
+    
+    if (!faixas.length) {
+        document.getElementById('faixasHorario').innerHTML = '<p style="color:#999;text-align:center;padding:20px;">Nenhuma faixa configurada para este dia.</p>';
+        return;
+    }
+    
+    document.getElementById('faixasHorario').innerHTML = faixas.map(f => {
+        const nivel = f.multiplicador >= 1.4 ? 'alta' : f.multiplicador >= 1.2 ? 'media' : 'normal';
+        const cor = nivel === 'alta' ? '#e74c3c' : nivel === 'media' ? '#f39c12' : '#27ae60';
+        return `
+            <div class="faixa-item ${nivel}">
+                <div class="faixa-info">
+                    <h4>${f.nome}</h4>
+                    <small>⏰ ${f.horaInicio} - ${f.horaFim}</small>
+                </div>
+                <div class="faixa-valores">
+                    <div class="mult" style="color:${cor}">${f.multiplicador}x</div>
+                    ${f.taxaAdicional > 0 ? `<small>+R$ ${f.taxaAdicional.toFixed(2)}</small>` : '<small>Sem taxa extra</small>'}
+                </div>
+                <div>
+                    <button class="btn btn-primary btn-sm" onclick="editarFaixa('${f.id}')">✏️</button>
+                    <button class="btn btn-danger btn-sm" onclick="excluirFaixa('${f.id}')">🗑️</button>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+async function salvarConfigPreco() {
+    const cfg = {
+        taxaBase: parseFloat(document.getElementById('taxaBase').value),
+        precoKm: parseFloat(document.getElementById('precoKm').value),
+        taxaMinima: parseFloat(document.getElementById('taxaMinima').value),
+        taxaBandeira2: parseFloat(document.getElementById('taxaBandeira2').value),
+        precoMinuto: parseFloat(document.getElementById('precoMinuto').value)
+    };
+    await api('/api/preco-dinamico/config', 'PUT', cfg);
+    alert('✅ Valores base salvos!');
+    carregarPrecos();
+}
+
+function abrirModalFaixa() {
+    document.getElementById('formFaixa').reset();
+    document.getElementById('faixaMult').value = '1.0';
+    document.getElementById('faixaTaxa').value = '0';
+    document.getElementById('modalFaixa').classList.add('active');
+}
+
+document.getElementById('formFaixa').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const dados = {
+        diaSemana: diaSelecionado,
+        nome: document.getElementById('faixaNome').value,
+        horaInicio: document.getElementById('faixaInicio').value,
+        horaFim: document.getElementById('faixaFim').value,
+        multiplicador: parseFloat(document.getElementById('faixaMult').value),
+        taxaAdicional: parseFloat(document.getElementById('faixaTaxa').value)
+    };
+    await api('/api/preco-dinamico/faixas', 'POST', dados);
+    fecharModal('modalFaixa');
+    carregarFaixasDia(diaSelecionado);
+    alert('✅ Faixa criada!');
+});
+
+async function editarFaixa(id) {
+    const mult = prompt('Novo multiplicador (ex: 1.5):');
+    if (mult) {
+        const taxa = prompt('Taxa adicional em R$ (ex: 2.00):') || '0';
+        await api('/api/preco-dinamico/faixas/' + id, 'PUT', {
+            multiplicador: parseFloat(mult),
+            taxaAdicional: parseFloat(taxa)
+        });
+        carregarFaixasDia(diaSelecionado);
+    }
+}
+
+async function excluirFaixa(id) {
+    if (confirm('Excluir esta faixa?')) {
+        await api('/api/preco-dinamico/faixas/' + id, 'DELETE');
+        carregarFaixasDia(diaSelecionado);
+    }
+}
+
+function abrirModalCopiarFaixas() {
+    document.getElementById('copiarOrigem').value = diaSelecionado;
+    document.getElementById('modalCopiarFaixas').classList.add('active');
+}
+
+async function copiarFaixas() {
+    const origem = document.getElementById('copiarOrigem').value;
+    const destino = document.getElementById('copiarDestino').value;
+    if (origem === destino) { alert('Selecione dias diferentes'); return; }
+    await api('/api/preco-dinamico/faixas/copiar', 'POST', { diaOrigem: origem, diaDestino: destino });
+    fecharModal('modalCopiarFaixas');
+    alert('✅ Faixas copiadas!');
+}
+
+async function simularPrecos() {
+    const km = parseFloat(document.getElementById('simularKm').value);
+    const dia = document.getElementById('simularDia').value;
+    const r = await api(`/api/preco-dinamico/simular/${km}/${dia}`);
+    
+    document.getElementById('resultadoSimulacao').innerHTML = `
+        <h4>📊 Preços para ${km} km (${dia})</h4>
+        <table style="width:100%;margin-top:10px;">
+            <thead><tr><th>Faixa</th><th>Horário</th><th>Mult.</th><th>Preço</th></tr></thead>
+            <tbody>
+                ${r.map(f => `<tr>
+                    <td>${f.faixa}</td>
+                    <td>${f.horario}</td>
+                    <td>${f.multiplicador}x</td>
+                    <td><strong style="color:#27ae60">R$ ${f.precoFinal.toFixed(2)}</strong></td>
+                </tr>`).join('')}
+            </tbody>
+        </table>
+    `;
+}
+
 // RANKING
-async function carregarRanking() { const p=document.getElementById('rankingPeriodo').value; const m=await api('/api/estatisticas/ranking-motoristas?limite=10&periodo='+p); document.getElementById('rankingLista').innerHTML=m.length?m.map((x,i)=>`<div class="ranking-item"><div class="ranking-pos ${i===0?'gold':i===1?'silver':i===2?'bronze':'normal'}">${x.posicao}</div><div class="ranking-info"><h4>${x.nome}</h4><small>${x.corridasRealizadas} corridas | ${x.kmRodados.toFixed(1)} km</small></div><div class="ranking-stats"><div class="valor">R$ ${x.faturamento.toFixed(2)}</div></div></div>`).join(''):'<p style="color:#999">Sem dados</p>'; }
+async function carregarRanking() { const p=document.getElementById('rankingPeriodo').value; const m=await api('/api/estatisticas/ranking-motoristas?limite=10&periodo='+p); document.getElementById('rankingLista').innerHTML=m.length?m.map((x,i)=>`<div class="ranking-item"><div class="ranking-pos ${i===0?'gold':i===1?'silver':i===2?'bronze':'normal'}">${x.posicao}</div><div class="ranking-info"><h4>${x.nome}</h4><small>${x.corridasRealizadas} corridas</small></div><div class="ranking-stats"><div class="valor">R$ ${x.faturamento.toFixed(2)}</div></div></div>`).join(''):'<p style="color:#999">Sem dados</p>'; }
 
 // ANTI-FRAUDE
-async function carregarAntiFraude() { const st=await api('/api/antifraude/estatisticas'); document.getElementById('fraudeCriticos').textContent=st.alertas?.porNivel?.critico||0; document.getElementById('fraudeAltos').textContent=st.alertas?.porNivel?.alto||0; document.getElementById('fraudePendentes').textContent=st.alertas?.pendentes||0; document.getElementById('fraudeResolvidos').textContent=st.alertas?.resolvidos||0; let url='/api/antifraude/alertas?'; const fs=document.getElementById('filtroFraudeStatus').value; if(fs)url+='status='+fs; const a=await api(url); document.getElementById('alertasFraudeLista').innerHTML=a.length?a.map(x=>`<div class="alerta-fraude ${x.nivel}"><div class="alerta-header"><div><strong>${x.entidadeNome}</strong> <span class="badge ${x.nivel==='critico'||x.nivel==='alto'?'red':'orange'}">${x.nivel.toUpperCase()}</span></div><small>${new Date(x.dataCriacao).toLocaleString('pt-BR')}</small></div><div class="alerta-motivos"><ul>${x.motivos.map(m=>`<li>⚠️ ${m}</li>`).join('')}</ul></div>${x.status!=='resolvido'?`<button class="btn btn-success btn-sm" onclick="resolverAlerta('${x.id}')">✅ Resolver</button>`:''}</div>`).join(''):'<p style="color:#999;padding:20px;">Nenhum</p>'; }
+async function carregarAntiFraude() { const st=await api('/api/antifraude/estatisticas'); document.getElementById('fraudeCriticos').textContent=st.alertas?.porNivel?.critico||0; document.getElementById('fraudeAltos').textContent=st.alertas?.porNivel?.alto||0; document.getElementById('fraudePendentes').textContent=st.alertas?.pendentes||0; document.getElementById('fraudeResolvidos').textContent=st.alertas?.resolvidos||0; let url='/api/antifraude/alertas?'; const fs=document.getElementById('filtroFraudeStatus').value; if(fs)url+='status='+fs; const a=await api(url); document.getElementById('alertasFraudeLista').innerHTML=a.length?a.map(x=>`<div class="alerta-fraude ${x.nivel}"><div class="alerta-header"><div><strong>${x.entidadeNome}</strong> <span class="badge ${x.nivel==='critico'||x.nivel==='alto'?'red':'orange'}">${x.nivel.toUpperCase()}</span></div></div><div class="alerta-motivos"><ul>${x.motivos.map(m=>`<li>⚠️ ${m}</li>`).join('')}</ul></div>${x.status!=='resolvido'?`<button class="btn btn-success btn-sm" onclick="resolverAlerta('${x.id}')">✅ Resolver</button>`:''}</div>`).join(''):'<p style="color:#999;padding:20px;">Nenhum</p>'; }
 async function resolverAlerta(id) { const r=prompt('Resolução:'); if(r){await api('/api/antifraude/alertas/'+id+'/resolver','PUT',{resolucao:r}); carregarAntiFraude();} }
 
 // BLACKLIST
@@ -241,9 +321,9 @@ document.getElementById('formBlacklist').addEventListener('submit',async(e)=>{ e
 async function removerBlacklist(id) { if(confirm('Remover?')){ await api('/api/antifraude/blacklist/'+id,'DELETE'); carregarBlacklist(); }}
 
 // RECLAMAÇÕES
-async function carregarReclamacoes() { const st=await api('/api/reclamacoes/estatisticas'); document.getElementById('recPendentes').textContent=st.pendentes||0; document.getElementById('recAndamento').textContent=st.emAndamento||0; document.getElementById('recResolvidas').textContent=st.resolvidas||0; const f=document.getElementById('filtroReclamacao').value; const r=await api('/api/reclamacoes'+(f?'?status='+f:'')); document.getElementById('reclamacoesTable').innerHTML=r.length?r.map(x=>`<tr><td>${new Date(x.dataAbertura).toLocaleDateString('pt-BR')}</td><td>${x.clienteNome}</td><td>${x.assunto}</td><td><span class="badge ${x.prioridade==='alta'?'red':'yellow'}">${x.prioridade}</span></td><td><span class="badge ${x.status==='resolvida'?'green':'yellow'}">${x.status}</span></td><td>${x.status!=='resolvida'?`<button class="btn btn-success btn-sm" onclick="resolverReclamacao('${x.id}')">✓</button>`:''}</td></tr>`).join(''):'<tr><td colspan="6" style="text-align:center;color:#999">Nenhuma</td></tr>'; }
+async function carregarReclamacoes() { const st=await api('/api/reclamacoes/estatisticas'); document.getElementById('recPendentes').textContent=st.pendentes||0; document.getElementById('recAndamento').textContent=st.emAndamento||0; document.getElementById('recResolvidas').textContent=st.resolvidas||0; const f=document.getElementById('filtroReclamacao').value; const r=await api('/api/reclamacoes'+(f?'?status='+f:'')); document.getElementById('reclamacoesTable').innerHTML=r.length?r.map(x=>`<tr><td>${new Date(x.dataAbertura).toLocaleDateString('pt-BR')}</td><td>${x.clienteNome}</td><td>${x.assunto}</td><td><span class="badge ${x.status==='resolvida'?'green':'yellow'}">${x.status}</span></td><td>${x.status!=='resolvida'?`<button class="btn btn-success btn-sm" onclick="resolverReclamacao('${x.id}')">✓</button>`:''}</td></tr>`).join(''):'<tr><td colspan="5" style="text-align:center;color:#999">Nenhuma</td></tr>'; }
 function abrirModalReclamacao() { document.getElementById('formReclamacao').reset(); document.getElementById('modalReclamacao').classList.add('active'); }
-document.getElementById('formReclamacao').addEventListener('submit',async(e)=>{ e.preventDefault(); await api('/api/reclamacoes','POST',{clienteNome:document.getElementById('recClienteNome').value,clienteTelefone:document.getElementById('recClienteTel').value,tipo:document.getElementById('recTipo').value,prioridade:document.getElementById('recPrioridade').value,assunto:document.getElementById('recAssunto').value,descricao:document.getElementById('recDescricao').value}); fecharModal('modalReclamacao'); carregarReclamacoes(); });
+document.getElementById('formReclamacao').addEventListener('submit',async(e)=>{ e.preventDefault(); await api('/api/reclamacoes','POST',{clienteNome:document.getElementById('recClienteNome').value,clienteTelefone:document.getElementById('recClienteTel').value,assunto:document.getElementById('recAssunto').value,descricao:document.getElementById('recDescricao').value}); fecharModal('modalReclamacao'); carregarReclamacoes(); });
 async function resolverReclamacao(id) { const r=prompt('Resolução:'); if(r){await api('/api/reclamacoes/'+id+'/resolver','PUT',{resolucao:r}); carregarReclamacoes();} }
 
 // WHATSAPP
@@ -251,30 +331,26 @@ async function carregarWhatsApp() { const c=await api('/api/config/whatsapp'); d
 async function salvarConfigWhatsApp() { await api('/api/config/whatsapp','PUT',{apiUrl:document.getElementById('whatsappApiUrl').value,apiKey:document.getElementById('whatsappApiKey').value,instancia:document.getElementById('whatsappInstancia').value}); alert('Salvo!'); }
 
 // USUÁRIOS
-async function carregarUsuarios() { const st=await api('/api/usuarios/estatisticas'); document.getElementById('usrTotal').textContent=st.total||0; document.getElementById('usrAtivos').textContent=st.ativos||0; document.getElementById('usrSessoes').textContent=st.sessoesAtivas||0; const u=await api('/api/usuarios'); document.getElementById('usuariosTable').innerHTML=u.length?u.map(x=>`<tr><td><div style="display:flex;align-items:center;gap:10px;"><div class="user-avatar">${x.nome.charAt(0)}</div><strong>${x.nome}</strong></div></td><td>${x.login}</td><td>${x.email}</td><td><span class="badge ${x.nivel==='admin'?'red':x.nivel==='gerente'?'purple':'blue'}">${x.nivel}</span></td><td>${x.ultimoAcesso?new Date(x.ultimoAcesso).toLocaleString('pt-BR'):'Nunca'}</td><td><span class="badge ${x.ativo?'green':'red'}">${x.ativo?'Ativo':'Inativo'}</span></td><td>${x.login!=='admin'?`<button class="btn btn-warning btn-sm" onclick="toggleUsuario('${x.id}',${x.ativo})">${x.ativo?'Desativar':'Ativar'}</button>`:''}</td></tr>`).join(''):'<tr><td colspan="7">Nenhum</td></tr>'; }
+async function carregarUsuarios() { const st=await api('/api/usuarios/estatisticas'); document.getElementById('usrTotal').textContent=st.total||0; document.getElementById('usrAtivos').textContent=st.ativos||0; document.getElementById('usrSessoes').textContent=st.sessoesAtivas||0; const u=await api('/api/usuarios'); document.getElementById('usuariosTable').innerHTML=u.length?u.map(x=>`<tr><td><div style="display:flex;align-items:center;gap:10px;"><div class="user-avatar">${x.nome.charAt(0)}</div><strong>${x.nome}</strong></div></td><td>${x.login}</td><td>${x.email}</td><td><span class="badge ${x.nivel==='admin'?'red':x.nivel==='gerente'?'purple':'blue'}">${x.nivel}</span></td><td><span class="badge ${x.ativo?'green':'red'}">${x.ativo?'Ativo':'Inativo'}</span></td><td>${x.login!=='admin'?`<button class="btn btn-warning btn-sm" onclick="toggleUsuario('${x.id}',${x.ativo})">${x.ativo?'Desativar':'Ativar'}</button>`:''}</td></tr>`).join(''):'<tr><td colspan="6">Nenhum</td></tr>'; }
 function abrirModalUsuario() { document.getElementById('formUsuario').reset(); document.getElementById('formUsuario').style.display='block'; document.getElementById('usuarioCriado').style.display='none'; document.getElementById('formUsuarioAlert').innerHTML=''; document.getElementById('modalUsuario').classList.add('active'); }
-document.getElementById('formUsuario').addEventListener('submit',async(e)=>{ e.preventDefault(); const d={nome:document.getElementById('usrNome').value,login:document.getElementById('usrLogin').value,email:document.getElementById('usrEmail').value,senha:document.getElementById('usrSenha').value||null,telefone:document.getElementById('usrTelefone').value,nivel:document.getElementById('usrNivel').value}; const r=await api('/api/usuarios','POST',d); if(r.error){document.getElementById('formUsuarioAlert').innerHTML=`<div class="alert alert-error">${r.error}</div>`;return;} document.getElementById('formUsuario').style.display='none'; document.getElementById('novoUsrLogin').textContent=r.login; document.getElementById('novoUsrSenha').textContent=r.senhaGerada||d.senha||'123456'; document.getElementById('usuarioCriado').style.display='block'; carregarUsuarios(); });
+document.getElementById('formUsuario').addEventListener('submit',async(e)=>{ e.preventDefault(); const d={nome:document.getElementById('usrNome').value,login:document.getElementById('usrLogin').value,email:document.getElementById('usrEmail').value,senha:document.getElementById('usrSenha').value||null,nivel:document.getElementById('usrNivel').value}; const r=await api('/api/usuarios','POST',d); if(r.error){document.getElementById('formUsuarioAlert').innerHTML=`<div class="alert alert-error">${r.error}</div>`;return;} document.getElementById('formUsuario').style.display='none'; document.getElementById('novoUsrLogin').textContent=r.login; document.getElementById('novoUsrSenha').textContent=r.senhaGerada||d.senha||'123456'; document.getElementById('usuarioCriado').style.display='block'; carregarUsuarios(); });
 async function toggleUsuario(id,ativo) { await api('/api/usuarios/'+id+'/'+(ativo?'desativar':'ativar'),'PUT'); carregarUsuarios(); }
 
 // ÁREAS
-async function carregarAreas() { const a=await api('/api/config/areas'); document.getElementById('areasTable').innerHTML=a.length?a.map(x=>`<tr><td><strong>${x.nome}</strong></td><td>${x.cidade}</td><td>${x.bairros?.join(', ')||'-'}</td><td>R$ ${(x.taxaExtra||0).toFixed(2)}</td><td><span class="badge ${x.ativo?'green':'red'}">${x.ativo?'Ativo':'Inativo'}</span></td><td><button class="btn btn-danger btn-sm" onclick="excluirArea('${x.id}')">🗑️</button></td></tr>`).join(''):'<tr><td colspan="6">Nenhuma</td></tr>'; }
+async function carregarAreas() { const a=await api('/api/config/areas'); document.getElementById('areasTable').innerHTML=a.length?a.map(x=>`<tr><td><strong>${x.nome}</strong></td><td>${x.cidade}</td><td>${x.bairros?.join(', ')||'-'}</td><td>R$ ${(x.taxaExtra||0).toFixed(2)}</td><td><button class="btn btn-danger btn-sm" onclick="excluirArea('${x.id}')">🗑️</button></td></tr>`).join(''):'<tr><td colspan="5">Nenhuma</td></tr>'; }
 function abrirModalArea() { document.getElementById('formArea').reset(); document.getElementById('modalArea').classList.add('active'); }
 document.getElementById('formArea').addEventListener('submit',async(e)=>{ e.preventDefault(); await api('/api/config/areas','POST',{nome:document.getElementById('areaNome').value,cidade:document.getElementById('areaCidade').value,bairros:document.getElementById('areaBairros').value.split(',').map(b=>b.trim()).filter(b=>b),taxaExtra:parseFloat(document.getElementById('areaTaxa').value)||0}); fecharModal('modalArea'); carregarAreas(); });
 async function excluirArea(id) { if(confirm('Excluir?')){ await api('/api/config/areas/'+id,'DELETE'); carregarAreas(); }}
 
-// PREÇOS
-async function carregarPrecos() { const c=await api('/api/preco-dinamico/config'); document.getElementById('taxaBase').value=c.taxaBase||5; document.getElementById('precoKm').value=c.precoKm||2.5; document.getElementById('taxaMinima').value=c.taxaMinima||15; }
-async function salvarConfigPreco() { await api('/api/preco-dinamico/config','PUT',{taxaBase:parseFloat(document.getElementById('taxaBase').value),precoKm:parseFloat(document.getElementById('precoKm').value),taxaMinima:parseFloat(document.getElementById('taxaMinima').value)}); alert('Salvo!'); }
-
 // CONFIG
-async function carregarConfig() { const c=await api('/api/config'); document.getElementById('cfgTempoEspera').value=c.tempoMaximoEspera||10; document.getElementById('cfgTempoAceite').value=c.tempoMaximoAceite||5; document.getElementById('cfgRaioBusca').value=c.raioMaximoBusca||15; document.getElementById('cfgComissao').value=c.comissaoEmpresa||15; document.getElementById('cfgAvaliacaoMin').value=c.avaliacaoMinima||3; }
-async function salvarConfiguracoes() { await api('/api/config','PUT',{tempoMaximoEspera:parseInt(document.getElementById('cfgTempoEspera').value),tempoMaximoAceite:parseInt(document.getElementById('cfgTempoAceite').value),raioMaximoBusca:parseInt(document.getElementById('cfgRaioBusca').value),comissaoEmpresa:parseInt(document.getElementById('cfgComissao').value),avaliacaoMinima:parseFloat(document.getElementById('cfgAvaliacaoMin').value)}); alert('Salvo!'); }
+async function carregarConfig() { const c=await api('/api/config'); document.getElementById('cfgTempoEspera').value=c.tempoMaximoEspera||10; document.getElementById('cfgRaioBusca').value=c.raioMaximoBusca||15; document.getElementById('cfgComissao').value=c.comissaoEmpresa||15; }
+async function salvarConfiguracoes() { await api('/api/config','PUT',{tempoMaximoEspera:parseInt(document.getElementById('cfgTempoEspera').value),raioMaximoBusca:parseInt(document.getElementById('cfgRaioBusca').value),comissaoEmpresa:parseInt(document.getElementById('cfgComissao').value)}); alert('Salvo!'); }
 
 // LOGS
-async function carregarLogs() { const st=await api('/api/logs/estatisticas'); document.getElementById('logTotal').textContent=st.total||0; document.getElementById('logHoje').textContent=st.hoje||0; document.getElementById('logErros').textContent=st.porTipo?.erro||0; const f=document.getElementById('filtroLogTipo').value; const l=await api('/api/logs?limite=50'+(f?'&tipo='+f:'')); document.getElementById('logsLista').innerHTML=l.length?l.map(x=>`<div class="log-item ${x.tipo}"><span style="color:#999;font-size:0.85em;">${new Date(x.dataHora).toLocaleString('pt-BR')}</span> <strong>${x.acao}</strong> <span style="color:#3498db;">- ${x.usuarioNome}</span></div>`).join(''):'<p style="color:#999">Nenhum</p>'; }
+async function carregarLogs() { const st=await api('/api/logs/estatisticas'); document.getElementById('logTotal').textContent=st.total||0; document.getElementById('logHoje').textContent=st.hoje||0; document.getElementById('logErros').textContent=st.porTipo?.erro||0; const f=document.getElementById('filtroLogTipo').value; const l=await api('/api/logs?limite=50'+(f?'&tipo='+f:'')); document.getElementById('logsLista').innerHTML=l.length?l.map(x=>`<div class="log-item ${x.tipo}"><span style="color:#999;font-size:0.85em;">${new Date(x.dataHora).toLocaleString('pt-BR')}</span> <strong>${x.acao}</strong> - ${x.usuarioNome}</div>`).join(''):'<p style="color:#999">Nenhum</p>'; }
 
 // HELPERS
-function getStatusColor(s) { return {disponivel:'green',online:'green',finalizada:'green',resolvida:'green',em_corrida:'blue',em_andamento:'blue',aceita:'blue',buscando_motorista:'blue',pendente:'yellow',a_caminho:'yellow',media:'yellow',offline:'red',cancelada:'red',bloqueado:'red',alta:'red'}[s]||'blue'; }
+function getStatusColor(s) { return {disponivel:'green',online:'green',finalizada:'green',resolvida:'green',em_corrida:'blue',em_andamento:'blue',aceita:'blue',buscando_motorista:'blue',pendente:'yellow',a_caminho:'yellow',offline:'red',cancelada:'red',bloqueado:'red'}[s]||'blue'; }
 function formatStatus(s) { return {disponivel:'Disponível',em_corrida:'Em Corrida',offline:'Offline',pendente:'Pendente',aceita:'Aceita',em_andamento:'Em Andamento',finalizada:'Finalizada',cancelada:'Cancelada',resolvida:'Resolvida',buscando_motorista:'Buscando'}[s]||s; }
 function fecharModal(id) { document.getElementById(id).classList.remove('active'); if(id==='modalMotorista'){document.getElementById('formMotorista').style.display='block';document.getElementById('tokenMotoristaBox').style.display='none';} if(id==='modalUsuario'){document.getElementById('formUsuario').style.display='block';document.getElementById('usuarioCriado').style.display='none';} }
 document.querySelectorAll('.modal').forEach(m=>m.addEventListener('click',(e)=>{if(e.target===m)fecharModal(m.id);}));
