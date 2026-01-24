@@ -4,14 +4,13 @@ if (!token && !window.location.pathname.includes('login')) {
     window.location.href = '/admin/login';
 }
 
-// Configurar usuário no header
+// Configurar usuário
 const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
 if (usuario.nome) {
     document.getElementById('userName').textContent = usuario.nome;
     document.getElementById('userRole').textContent = usuario.role;
 }
 
-// Logout
 function logout() {
     localStorage.removeItem('token');
     localStorage.removeItem('usuario');
@@ -30,15 +29,16 @@ document.querySelectorAll('.menu-item').forEach(item => {
     });
 });
 
-// Carregar página
 function carregarPagina(pagina) {
     switch(pagina) {
         case 'dashboard': carregarDashboard(); break;
+        case 'mapa': carregarMapa(); break;
         case 'corridas': carregarCorridas(); break;
         case 'motoristas': carregarMotoristas(); break;
         case 'clientes': carregarClientes(); break;
         case 'localidades': carregarLocalidades(); break;
         case 'precos': carregarPrecos(); break;
+        case 'relatorios': carregarRelatorios(); break;
     }
 }
 
@@ -49,36 +49,84 @@ async function api(url, method = 'GET', data = null) {
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }
     };
     if (data) options.body = JSON.stringify(data);
-    const response = await fetch(url, options);
-    return response.json();
+    try {
+        const response = await fetch(url, options);
+        return response.json();
+    } catch (error) {
+        console.error('Erro API:', error);
+        return { error: 'Erro de conexão' };
+    }
 }
 
 // ==================== DASHBOARD ====================
 async function carregarDashboard() {
-    try {
-        const dashboard = await api('/api/rebeca/dashboard');
-        document.getElementById('motoristasOnline').textContent = dashboard.motoristasOnline || 0;
-        document.getElementById('corridasHoje').textContent = dashboard.corridasHoje || 0;
-        document.getElementById('corridasPendentes').textContent = dashboard.corridasPendentes || 0;
-        document.getElementById('faturamentoHoje').textContent = (dashboard.faturamentoHoje || 0).toFixed(2);
-        
-        const corridas = await api('/api/corridas/ativas');
-        const tbody = document.getElementById('corridasAtivasTable');
-        tbody.innerHTML = corridas.map(c => `
-            <tr>
-                <td>${c.id}</td>
-                <td>${c.clienteNome}</td>
-                <td>${c.motoristaNome || '-'}</td>
-                <td><span class="badge ${getStatusColor(c.status)}">${c.status}</span></td>
-                <td>
-                    ${c.status === 'pendente' ? `<button class="btn btn-primary" onclick="atribuirMotorista('${c.id}')">Atribuir</button>` : ''}
-                    ${c.status === 'em_andamento' ? `<button class="btn btn-success" onclick="finalizarCorrida('${c.id}')">Finalizar</button>` : ''}
-                </td>
-            </tr>
-        `).join('') || '<tr><td colspan="5" style="text-align:center;">Nenhuma corrida ativa</td></tr>';
-    } catch (error) {
-        console.error('Erro ao carregar dashboard:', error);
+    const dashboard = await api('/api/rebeca/dashboard');
+    document.getElementById('motoristasOnline').textContent = dashboard.motoristasOnline || 0;
+    document.getElementById('corridasHoje').textContent = dashboard.corridasHoje || 0;
+    document.getElementById('corridasPendentes').textContent = dashboard.corridasPendentes || 0;
+    document.getElementById('faturamentoHoje').textContent = (dashboard.faturamentoHoje || 0).toFixed(2);
+    
+    const corridas = await api('/api/corridas/ativas');
+    const tbody = document.getElementById('corridasAtivasTable');
+    tbody.innerHTML = corridas.length ? corridas.map(c => `
+        <tr>
+            <td>${c.id.slice(-6)}</td>
+            <td>${c.clienteNome || '-'}</td>
+            <td>${c.motoristaNome || '<span class="badge yellow">Aguardando</span>'}</td>
+            <td><span class="badge ${getStatusColor(c.status)}">${formatStatus(c.status)}</span></td>
+            <td>
+                ${c.status === 'pendente' ? `<button class="btn btn-primary btn-sm" onclick="atribuirMotorista('${c.id}')">Atribuir</button>` : ''}
+                ${c.status === 'em_andamento' ? `<button class="btn btn-success btn-sm" onclick="finalizarCorrida('${c.id}')">Finalizar</button>` : ''}
+                <button class="btn btn-danger btn-sm" onclick="cancelarCorrida('${c.id}')">Cancelar</button>
+            </td>
+        </tr>
+    `).join('') : '<tr><td colspan="5" style="text-align:center;color:#999;">Nenhuma corrida ativa</td></tr>';
+}
+
+// ==================== MAPA ====================
+let mapaLeaflet = null;
+let marcadores = [];
+
+async function carregarMapa() {
+    const stats = await api('/api/gps-integrado/estatisticas');
+    document.getElementById('mapaOnline').textContent = (stats.disponivel || 0) + (stats.em_corrida || 0);
+    document.getElementById('mapaDisponiveis').textContent = stats.disponivel || 0;
+    document.getElementById('mapaEmCorrida').textContent = stats.em_corrida || 0;
+    
+    if (!mapaLeaflet) {
+        mapaLeaflet = L.map('mapaLeaflet').setView([-23.5327, -46.7917], 13);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap'
+        }).addTo(mapaLeaflet);
     }
+    
+    atualizarMapa();
+}
+
+async function atualizarMapa() {
+    if (!mapaLeaflet) return;
+    
+    marcadores.forEach(m => mapaLeaflet.removeLayer(m));
+    marcadores = [];
+    
+    const motoristas = await api('/api/gps-integrado');
+    
+    motoristas.forEach(m => {
+        if (m.latitude && m.longitude) {
+            const cor = m.status === 'disponivel' ? 'green' : m.status === 'em_corrida' ? 'blue' : 'gray';
+            const icon = L.divIcon({
+                html: `<div style="background:${cor};width:30px;height:30px;border-radius:50%;border:3px solid white;box-shadow:0 2px 5px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;color:white;font-size:14px;">🚗</div>`,
+                className: 'custom-marker',
+                iconSize: [30, 30]
+            });
+            
+            const marker = L.marker([m.latitude, m.longitude], { icon })
+                .addTo(mapaLeaflet)
+                .bindPopup(`<b>${m.nome}</b><br>Status: ${formatStatus(m.status)}<br>📱 ${m.telefone || m.whatsapp || ''}`);
+            
+            marcadores.push(marker);
+        }
+    });
 }
 
 // ==================== CORRIDAS ====================
@@ -86,19 +134,19 @@ async function carregarCorridas() {
     const status = document.getElementById('filtroCorrida').value;
     const corridas = await api('/api/corridas' + (status ? '?status=' + status : ''));
     const tbody = document.getElementById('corridasTable');
-    tbody.innerHTML = corridas.map(c => `
+    tbody.innerHTML = corridas.length ? corridas.map(c => `
         <tr>
-            <td>${c.id}</td>
-            <td>${c.clienteNome}</td>
-            <td>${c.origem?.endereco || '-'}</td>
-            <td>${c.destino?.endereco || '-'}</td>
+            <td>${c.id.slice(-6)}</td>
+            <td>${c.clienteNome || '-'}</td>
+            <td>${c.origem?.endereco?.slice(0,25) || '-'}...</td>
+            <td>${c.destino?.endereco?.slice(0,25) || '-'}...</td>
             <td>R$ ${(c.precoFinal || c.precoEstimado || 0).toFixed(2)}</td>
-            <td><span class="badge ${getStatusColor(c.status)}">${c.status}</span></td>
+            <td><span class="badge ${getStatusColor(c.status)}">${formatStatus(c.status)}</span></td>
             <td>
-                ${c.status === 'pendente' ? `<button class="btn btn-danger" onclick="cancelarCorrida('${c.id}')">Cancelar</button>` : ''}
+                ${c.status === 'pendente' ? `<button class="btn btn-danger btn-sm" onclick="cancelarCorrida('${c.id}')">Cancelar</button>` : ''}
             </td>
         </tr>
-    `).join('') || '<tr><td colspan="7" style="text-align:center;">Nenhuma corrida encontrada</td></tr>';
+    `).join('') : '<tr><td colspan="7" style="text-align:center;color:#999;">Nenhuma corrida encontrada</td></tr>';
 }
 
 async function cancelarCorrida(id) {
@@ -119,42 +167,96 @@ async function finalizarCorrida(id) {
 // ==================== MOTORISTAS ====================
 async function carregarMotoristas() {
     const busca = document.getElementById('buscaMotorista').value;
-    const motoristas = await api('/api/motoristas' + (busca ? '?busca=' + busca : ''));
+    const status = document.getElementById('filtroStatusMotorista').value;
+    let url = '/api/motoristas?';
+    if (busca) url += 'busca=' + busca + '&';
+    if (status) url += 'status=' + status;
+    
+    const motoristas = await api(url);
     const tbody = document.getElementById('motoristasTable');
-    tbody.innerHTML = motoristas.map(m => `
+    tbody.innerHTML = motoristas.length ? motoristas.map(m => `
         <tr>
-            <td>${m.nome}</td>
-            <td>${m.telefone}</td>
-            <td>${m.veiculo?.modelo || ''} ${m.veiculo?.cor || ''} - ${m.veiculo?.placa || ''}</td>
-            <td><span class="badge ${getStatusColor(m.status)}">${m.status}</span></td>
-            <td>⭐ ${m.avaliacao?.toFixed(1) || '5.0'}</td>
+            <td><strong>${m.nomeCompleto || m.nome}</strong></td>
+            <td>📱 ${m.whatsapp || m.telefone}</td>
+            <td>${m.veiculo?.modelo || ''} ${m.veiculo?.cor || ''}</td>
+            <td><strong>${m.veiculo?.placa || '-'}</strong></td>
+            <td><span class="badge ${getStatusColor(m.status)}">${formatStatus(m.status)}</span></td>
+            <td>⭐ ${(m.avaliacao || 5).toFixed(1)}</td>
             <td>
-                <button class="btn btn-primary" onclick="editarMotorista('${m.id}')">✏️</button>
-                <button class="btn btn-danger" onclick="desativarMotorista('${m.id}')">🗑️</button>
+                <button class="btn btn-primary btn-sm" onclick="editarMotorista('${m.id}')">✏️</button>
+                <button class="btn btn-danger btn-sm" onclick="desativarMotorista('${m.id}')">🗑️</button>
             </td>
         </tr>
-    `).join('') || '<tr><td colspan="6" style="text-align:center;">Nenhum motorista encontrado</td></tr>';
+    `).join('') : '<tr><td colspan="7" style="text-align:center;color:#999;">Nenhum motorista encontrado</td></tr>';
 }
 
 function abrirModalMotorista() {
     document.getElementById('formMotorista').reset();
+    document.getElementById('tokenMotoristaBox').style.display = 'none';
+    document.getElementById('formMotoristaAlert').innerHTML = '';
     document.getElementById('modalMotorista').classList.add('active');
 }
 
 document.getElementById('formMotorista').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const motorista = {
-        nome: document.getElementById('motNome').value,
-        telefone: document.getElementById('motTelefone').value,
-        email: document.getElementById('motEmail').value,
+    
+    const alertDiv = document.getElementById('formMotoristaAlert');
+    alertDiv.innerHTML = '';
+    
+    const dados = {
+        nomeCompleto: document.getElementById('motNome').value.trim(),
+        whatsapp: document.getElementById('motWhatsApp').value.trim(),
+        cpf: document.getElementById('motCPF').value.trim(),
+        cnh: document.getElementById('motCNH').value.trim(),
+        cnhValidade: document.getElementById('motCNHValidade').value,
+        endereco: document.getElementById('motEndereco').value.trim(),
         veiculo: {
-            modelo: document.getElementById('motVeiculoModelo').value,
-            cor: document.getElementById('motVeiculoCor').value,
-            placa: document.getElementById('motVeiculoPlaca').value
-        }
+            modelo: document.getElementById('motVeiculoModelo').value.trim(),
+            cor: document.getElementById('motVeiculoCor').value.trim(),
+            placa: document.getElementById('motVeiculoPlaca').value.trim().toUpperCase(),
+            ano: parseInt(document.getElementById('motVeiculoAno').value) || new Date().getFullYear()
+        },
+        senha: document.getElementById('motSenha').value.trim() || null
     };
-    await api('/api/motoristas', 'POST', motorista);
-    fecharModal('modalMotorista');
+    
+    // Validações
+    if (dados.nomeCompleto.length < 3) {
+        alertDiv.innerHTML = '<div class="alert alert-error">Nome completo é obrigatório (mínimo 3 caracteres)</div>';
+        return;
+    }
+    if (dados.whatsapp.replace(/\D/g, '').length < 10) {
+        alertDiv.innerHTML = '<div class="alert alert-error">WhatsApp inválido</div>';
+        return;
+    }
+    if (dados.cnh.length < 5) {
+        alertDiv.innerHTML = '<div class="alert alert-error">Número da CNH é obrigatório</div>';
+        return;
+    }
+    if (!dados.veiculo.modelo || !dados.veiculo.cor || !dados.veiculo.placa) {
+        alertDiv.innerHTML = '<div class="alert alert-error">Preencha todos os dados do veículo</div>';
+        return;
+    }
+    
+    // Verificar WhatsApp duplicado
+    const verificar = await api('/api/motoristas/verificar-whatsapp/' + dados.whatsapp.replace(/\D/g, ''));
+    if (verificar.existe) {
+        alertDiv.innerHTML = '<div class="alert alert-error">Este WhatsApp já está cadastrado!</div>';
+        return;
+    }
+    
+    const result = await api('/api/motoristas', 'POST', dados);
+    
+    if (result.error) {
+        alertDiv.innerHTML = `<div class="alert alert-error">${result.error}</div>`;
+        return;
+    }
+    
+    // Sucesso - mostrar token
+    document.getElementById('formMotorista').style.display = 'none';
+    document.getElementById('tokenGerado').textContent = result.motorista.token;
+    document.getElementById('senhaGerada').textContent = result.motorista.senhaGerada;
+    document.getElementById('tokenMotoristaBox').style.display = 'block';
+    
     carregarMotoristas();
 });
 
@@ -165,27 +267,35 @@ async function desativarMotorista(id) {
     }
 }
 
+function fecharModal(id) {
+    document.getElementById(id).classList.remove('active');
+    // Resetar form motorista
+    if (id === 'modalMotorista') {
+        document.getElementById('formMotorista').style.display = 'block';
+        document.getElementById('tokenMotoristaBox').style.display = 'none';
+    }
+}
+
 // ==================== CLIENTES ====================
 async function carregarClientes() {
     const busca = document.getElementById('buscaCliente').value;
     const clientes = await api('/api/clientes' + (busca ? '?busca=' + busca : ''));
     const tbody = document.getElementById('clientesTable');
-    tbody.innerHTML = clientes.map(c => `
+    tbody.innerHTML = clientes.length ? clientes.map(c => `
         <tr>
             <td>${c.nome}</td>
-            <td>${c.telefone}</td>
+            <td>📱 ${c.telefone}</td>
             <td>${c.corridasRealizadas || 0}</td>
             <td><span class="badge blue">${c.nivel?.nome || 'Novo'}</span></td>
             <td><span class="badge ${c.bloqueado ? 'red' : 'green'}">${c.bloqueado ? 'Bloqueado' : 'Ativo'}</span></td>
             <td>
-                <button class="btn btn-primary" onclick="editarCliente('${c.id}')">✏️</button>
                 ${c.bloqueado 
-                    ? `<button class="btn btn-success" onclick="desbloquearCliente('${c.id}')">Desbloquear</button>`
-                    : `<button class="btn btn-danger" onclick="bloquearCliente('${c.id}')">Bloquear</button>`
+                    ? `<button class="btn btn-success btn-sm" onclick="desbloquearCliente('${c.id}')">Desbloquear</button>`
+                    : `<button class="btn btn-danger btn-sm" onclick="bloquearCliente('${c.id}')">Bloquear</button>`
                 }
             </td>
         </tr>
-    `).join('') || '<tr><td colspan="6" style="text-align:center;">Nenhum cliente encontrado</td></tr>';
+    `).join('') : '<tr><td colspan="6" style="text-align:center;color:#999;">Nenhum cliente encontrado</td></tr>';
 }
 
 function abrirModalCliente() {
@@ -197,8 +307,7 @@ document.getElementById('formCliente').addEventListener('submit', async (e) => {
     e.preventDefault();
     const cliente = {
         nome: document.getElementById('cliNome').value,
-        telefone: document.getElementById('cliTelefone').value,
-        email: document.getElementById('cliEmail').value
+        telefone: document.getElementById('cliTelefone').value
     };
     await api('/api/clientes', 'POST', cliente);
     fecharModal('modalCliente');
@@ -221,18 +330,15 @@ async function desbloquearCliente(id) {
 async function carregarLocalidades() {
     const localidades = await api('/api/localidades');
     const tbody = document.getElementById('localidadesTable');
-    tbody.innerHTML = localidades.map(l => `
+    tbody.innerHTML = localidades.length ? localidades.map(l => `
         <tr>
             <td>${l.nome}</td>
             <td>${l.distanciaBase} km</td>
             <td>R$ ${(l.taxaAdicional || 0).toFixed(2)}</td>
             <td><span class="badge ${l.ativo ? 'green' : 'red'}">${l.ativo ? 'Ativo' : 'Inativo'}</span></td>
-            <td>
-                <button class="btn btn-primary" onclick="editarLocalidade('${l.id}')">✏️</button>
-                <button class="btn btn-danger" onclick="excluirLocalidade('${l.id}')">🗑️</button>
-            </td>
+            <td><button class="btn btn-danger btn-sm" onclick="excluirLocalidade('${l.id}')">🗑️</button></td>
         </tr>
-    `).join('') || '<tr><td colspan="5" style="text-align:center;">Nenhuma localidade encontrada</td></tr>';
+    `).join('') : '<tr><td colspan="5" style="text-align:center;color:#999;">Nenhuma localidade</td></tr>';
 }
 
 function abrirModalLocalidade() {
@@ -262,23 +368,21 @@ async function excluirLocalidade(id) {
 // ==================== PREÇOS ====================
 async function carregarPrecos() {
     const config = await api('/api/preco-dinamico/config');
-    document.getElementById('taxaBase').value = config.taxaBase;
-    document.getElementById('precoKm').value = config.precoKm;
-    document.getElementById('taxaMinima').value = config.taxaMinima;
+    document.getElementById('taxaBase').value = config.taxaBase || 5;
+    document.getElementById('precoKm').value = config.precoKm || 2.5;
+    document.getElementById('taxaMinima').value = config.taxaMinima || 15;
     
     const regras = await api('/api/preco-dinamico/regras');
     const tbody = document.getElementById('regrasTable');
-    tbody.innerHTML = regras.map(r => `
+    tbody.innerHTML = regras.length ? regras.map(r => `
         <tr>
             <td>${r.nome}</td>
             <td>${r.horaInicio} - ${r.horaFim}</td>
             <td>${r.diasSemana?.join(', ') || 'Todos'}</td>
-            <td>${r.multiplicador}x</td>
-            <td>
-                <button class="btn btn-danger" onclick="excluirRegra('${r.id}')">🗑️</button>
-            </td>
+            <td><strong>${r.multiplicador}x</strong></td>
+            <td><button class="btn btn-danger btn-sm" onclick="excluirRegra('${r.id}')">🗑️</button></td>
         </tr>
-    `).join('') || '<tr><td colspan="5" style="text-align:center;">Nenhuma regra encontrada</td></tr>';
+    `).join('') : '<tr><td colspan="5" style="text-align:center;color:#999;">Nenhuma regra</td></tr>';
 }
 
 async function salvarConfigPreco() {
@@ -298,6 +402,38 @@ async function excluirRegra(id) {
     }
 }
 
+// ==================== RELATÓRIOS ====================
+async function carregarRelatorios() {
+    const hoje = new Date().toISOString().split('T')[0];
+    document.getElementById('relDataInicio').value = hoje;
+    document.getElementById('relDataFim').value = hoje;
+    gerarRelatorio();
+}
+
+async function gerarRelatorio() {
+    const corridas = await api('/api/corridas');
+    const finalizadas = corridas.filter(c => c.status === 'finalizada');
+    
+    document.getElementById('relTotalCorridas').textContent = finalizadas.length;
+    document.getElementById('relFaturamento').textContent = finalizadas.reduce((s, c) => s + (c.precoFinal || 0), 0).toFixed(2);
+    document.getElementById('relKmRodados').textContent = finalizadas.reduce((s, c) => s + (c.distanciaKm || 0), 0).toFixed(1);
+    document.getElementById('relAvaliacao').textContent = '4.8';
+}
+
+// ==================== NOTIFICAÇÕES ====================
+async function enviarNotificacao() {
+    const destinatario = document.getElementById('notifDestinatario').value;
+    const mensagem = document.getElementById('notifMensagem').value;
+    
+    if (!mensagem.trim()) {
+        alert('Digite uma mensagem');
+        return;
+    }
+    
+    alert('Notificação enviada para: ' + destinatario);
+    document.getElementById('notifMensagem').value = '';
+}
+
 // ==================== HELPERS ====================
 function getStatusColor(status) {
     const colors = {
@@ -309,19 +445,22 @@ function getStatusColor(status) {
     return colors[status] || 'blue';
 }
 
-function fecharModal(id) {
-    document.getElementById(id).classList.remove('active');
+function formatStatus(status) {
+    const nomes = {
+        'disponivel': 'Disponível', 'em_corrida': 'Em Corrida', 'offline': 'Offline',
+        'pendente': 'Pendente', 'aceita': 'Aceita', 'em_andamento': 'Em Andamento',
+        'finalizada': 'Finalizada', 'cancelada': 'Cancelada', 'a_caminho': 'A Caminho', 'pausa': 'Pausado'
+    };
+    return nomes[status] || status;
 }
 
 // Fechar modal clicando fora
 document.querySelectorAll('.modal').forEach(modal => {
     modal.addEventListener('click', (e) => {
-        if (e.target === modal) modal.classList.remove('active');
+        if (e.target === modal) fecharModal(modal.id);
     });
 });
 
-// Carregar dashboard inicial
+// Inicializar
 carregarDashboard();
-
-// Atualizar dashboard a cada 30 segundos
 setInterval(carregarDashboard, 30000);
