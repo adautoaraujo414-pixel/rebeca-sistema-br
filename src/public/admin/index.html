@@ -94,20 +94,27 @@
         .alert-success { background: #d4edda; color: #155724; }
         .alert-error { background: #f8d7da; color: #721c24; }
         .log-item { padding: 10px; border-left: 3px solid #3498db; margin-bottom: 8px; background: #f8f9fa; border-radius: 0 8px 8px 0; }
-        .log-item.erro { border-left-color: #e74c3c; }
-        .log-item.login { border-left-color: #27ae60; }
         .alerta-fraude { padding: 15px; border-radius: 10px; margin-bottom: 10px; border-left: 4px solid; }
         .alerta-fraude.critico { background: #ffeaea; border-left-color: #c0392b; }
         .alerta-fraude.alto { background: #fff5f5; border-left-color: #e74c3c; }
         .alerta-fraude.medio { background: #fff8e6; border-left-color: #f39c12; }
         .alerta-fraude.baixo { background: #e8f8f5; border-left-color: #27ae60; }
         .alerta-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-        .alerta-motivos { font-size: 0.9em; color: #666; margin-bottom: 10px; }
+        .alerta-motivos { font-size: 0.9em; color: #666; }
         .alerta-motivos li { margin: 3px 0; }
         .rota-info { background: #f8f9fa; padding: 15px; border-radius: 10px; margin-top: 15px; }
         .rota-info h4 { margin-bottom: 10px; }
         .rota-detalhe { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee; }
         .user-avatar { width: 40px; height: 40px; border-radius: 50%; background: #3498db; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        .modo-card { padding: 20px; border: 3px solid #e0e0e0; border-radius: 12px; cursor: pointer; transition: all 0.3s; margin-bottom: 15px; }
+        .modo-card:hover { border-color: #3498db; }
+        .modo-card.active { border-color: #27ae60; background: #f0fff4; }
+        .modo-card h3 { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+        .modo-card p { color: #666; font-size: 0.9em; margin: 0; }
+        .modo-icon { font-size: 2em; }
+        .corrida-despacho { background: #f8f9fa; border-radius: 10px; padding: 15px; margin-bottom: 10px; border-left: 4px solid #3498db; }
+        .corrida-despacho.aguardando { border-left-color: #f39c12; }
+        .corrida-despacho.aceita { border-left-color: #27ae60; }
     </style>
 </head>
 <body>
@@ -127,6 +134,7 @@
             
             <div class="menu-section">Operações</div>
             <div class="menu-item" data-page="corridas">🚗 Corridas</div>
+            <div class="menu-item" data-page="despacho">📡 Despacho</div>
             <div class="menu-item" data-page="motoristas">👨‍✈️ Motoristas</div>
             <div class="menu-item" data-page="clientes">👥 Clientes</div>
             <div class="menu-item" data-page="rotas">📍 Calcular Rota</div>
@@ -147,7 +155,6 @@
             <div class="menu-item" data-page="usuarios">👤 Usuários Admin</div>
             <div class="menu-item" data-page="areas">🗺️ Áreas Cobertura</div>
             <div class="menu-item" data-page="precos">💵 Preços</div>
-            <div class="menu-item" data-page="mapconfig">🔑 Config Maps</div>
             <div class="menu-item" data-page="config">⚙️ Configurações</div>
             <div class="menu-item" data-page="logs">📜 Logs</div>
         </nav>
@@ -196,6 +203,53 @@
                 <div class="panel"><table><thead><tr><th>ID</th><th>Cliente</th><th>Origem</th><th>Destino</th><th>Valor</th><th>Status</th><th>Ações</th></tr></thead><tbody id="corridasTable"></tbody></table></div>
             </div>
 
+            <!-- DESPACHO -->
+            <div id="despacho" class="page">
+                <h2 style="margin-bottom:20px;">📡 Central de Despacho</h2>
+                <div class="cards">
+                    <div class="card blue"><div class="card-icon">📡</div><h3>Modo Atual</h3><div class="value" id="modoDespachoAtual">-</div></div>
+                    <div class="card orange"><div class="card-icon">⏳</div><h3>Aguardando Aceite</h3><div class="value" id="aguardandoAceite">0</div></div>
+                    <div class="card green"><div class="card-icon">✅</div><h3>Aceitas Hoje</h3><div class="value" id="aceitasHoje">0</div></div>
+                    <div class="card purple"><div class="card-icon">👨‍✈️</div><h3>Motoristas Online</h3><div class="value" id="motoristasDespacho">0</div></div>
+                </div>
+
+                <div class="panel">
+                    <h2>⚙️ Modo de Despacho</h2>
+                    <p style="color:#666;margin-bottom:20px;">Escolha como as corridas serão enviadas aos motoristas</p>
+                    
+                    <div class="modo-card" id="modoBroadcast" onclick="setModoDespacho('broadcast')">
+                        <h3><span class="modo-icon">📢</span> Broadcast (Todos)</h3>
+                        <p>Envia a corrida para TODOS os motoristas disponíveis. O primeiro que aceitar leva a corrida.</p>
+                        <p style="margin-top:10px;"><strong>✅ Vantagem:</strong> Mais rápido para encontrar motorista</p>
+                    </div>
+                    
+                    <div class="modo-card" id="modoProximo" onclick="setModoDespacho('proximo')">
+                        <h3><span class="modo-icon">📍</span> Motorista Mais Próximo</h3>
+                        <p>Envia a corrida apenas para o motorista mais próximo do cliente. Se recusar, passa para o próximo.</p>
+                        <p style="margin-top:10px;"><strong>✅ Vantagem:</strong> Menor tempo de espera do cliente</p>
+                    </div>
+
+                    <div class="form-group" style="margin-top:20px;">
+                        <label>Tempo para aceitar (segundos)</label>
+                        <input type="number" id="tempoAceite" value="30" style="width:100px;">
+                        <button class="btn btn-primary" onclick="salvarTempoAceite()" style="margin-left:10px;">Salvar</button>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <h2>🚗 Corridas Pendentes</h2>
+                    <div id="corridasPendentesDespacho"></div>
+                </div>
+
+                <div class="panel">
+                    <h2>👨‍✈️ Motoristas Disponíveis</h2>
+                    <table>
+                        <thead><tr><th>Nome</th><th>Distância Centro</th><th>Status</th><th>Ações</th></tr></thead>
+                        <tbody id="motoristasDespachoTable"></tbody>
+                    </table>
+                </div>
+            </div>
+
             <!-- MOTORISTAS -->
             <div id="motoristas" class="page">
                 <h2 style="margin-bottom:20px;">👨‍✈️ Motoristas</h2>
@@ -219,7 +273,7 @@
                 <div class="panel"><table><thead><tr><th>Nome</th><th>Telefone</th><th>Corridas</th><th>Nível</th><th>Status</th><th>Ações</th></tr></thead><tbody id="clientesTable"></tbody></table></div>
             </div>
 
-            <!-- ROTAS / GOOGLE MAPS -->
+            <!-- ROTAS -->
             <div id="rotas" class="page">
                 <h2 style="margin-bottom:20px;">📍 Calcular Rota e Preço</h2>
                 <div class="panel">
@@ -233,13 +287,10 @@
                     <div id="resultadoRota" class="rota-info" style="display:none;">
                         <h4>📊 Resultado</h4>
                         <div class="rota-detalhe"><span>Distância:</span><strong id="rotaDistancia">-</strong></div>
-                        <div class="rota-detalhe"><span>Tempo Estimado:</span><strong id="rotaTempo">-</strong></div>
-                        <div class="rota-detalhe"><span>💰 Valor da Corrida:</span><strong id="rotaPreco" style="color:#27ae60;font-size:1.3em;">-</strong></div>
+                        <div class="rota-detalhe"><span>Tempo:</span><strong id="rotaTempo">-</strong></div>
+                        <div class="rota-detalhe"><span>💰 Valor:</span><strong id="rotaPreco" style="color:#27ae60;font-size:1.3em;">-</strong></div>
                     </div>
-                    <div id="motoristaProximo" class="rota-info" style="display:none;margin-top:10px;">
-                        <h4>🚗 Motorista Mais Próximo</h4>
-                        <div id="motoristaProximoInfo"></div>
-                    </div>
+                    <div id="motoristaProximo" class="rota-info" style="display:none;margin-top:10px;"><h4>🚗 Motorista Próximo</h4><div id="motoristaProximoInfo"></div></div>
                 </div>
                 <div class="panel"><div id="mapaGoogle"></div></div>
             </div>
@@ -259,9 +310,7 @@
             <!-- RANKING -->
             <div id="ranking" class="page">
                 <h2 style="margin-bottom:20px;">🏆 Ranking</h2>
-                <div class="search-bar">
-                    <select id="rankingPeriodo" onchange="carregarRanking()"><option value="semana">Semana</option><option value="mes" selected>Mês</option><option value="ano">Ano</option></select>
-                </div>
+                <div class="search-bar"><select id="rankingPeriodo" onchange="carregarRanking()"><option value="semana">Semana</option><option value="mes" selected>Mês</option><option value="ano">Ano</option></select></div>
                 <div class="panel"><div id="rankingLista"></div></div>
             </div>
 
@@ -275,9 +324,8 @@
                     <div class="card green"><h3>Resolvidos</h3><div class="value" id="fraudeResolvidos">0</div></div>
                 </div>
                 <div class="search-bar">
-                    <select id="filtroFraudeStatus"><option value="">Todos</option><option value="pendente">Pendentes</option><option value="analisando">Analisando</option><option value="resolvido">Resolvidos</option></select>
-                    <select id="filtroFraudeNivel"><option value="">Níveis</option><option value="critico">Crítico</option><option value="alto">Alto</option><option value="medio">Médio</option></select>
-                    <button class="btn btn-primary" onclick="carregarAntiFraude()">🔍 Filtrar</button>
+                    <select id="filtroFraudeStatus"><option value="">Todos</option><option value="pendente">Pendentes</option><option value="resolvido">Resolvidos</option></select>
+                    <button class="btn btn-primary" onclick="carregarAntiFraude()">🔍</button>
                 </div>
                 <div class="panel"><h2>🚨 Alertas</h2><div id="alertasFraudeLista"></div></div>
             </div>
@@ -313,10 +361,7 @@
             <!-- WHATSAPP -->
             <div id="whatsapp" class="page">
                 <h2 style="margin-bottom:20px;">💬 WhatsApp</h2>
-                <div class="panel">
-                    <h2>Status</h2>
-                    <div id="whatsappStatus"><p><span class="status-indicator offline"></span> Desconectado</p></div>
-                </div>
+                <div class="panel"><h2>Status</h2><div id="whatsappStatus"><p><span class="status-indicator offline"></span> Desconectado</p></div></div>
                 <div class="panel">
                     <h2>⚙️ Config API</h2>
                     <div class="form-group"><label>URL</label><input type="text" id="whatsappApiUrl"></div>
@@ -326,21 +371,16 @@
                 </div>
             </div>
 
-            <!-- USUÁRIOS ADMIN -->
+            <!-- USUÁRIOS -->
             <div id="usuarios" class="page">
-                <h2 style="margin-bottom:20px;">👤 Usuários Administrativos</h2>
+                <h2 style="margin-bottom:20px;">👤 Usuários Admin</h2>
                 <div class="cards">
                     <div class="card blue"><h3>Total</h3><div class="value" id="usrTotal">0</div></div>
                     <div class="card green"><h3>Ativos</h3><div class="value" id="usrAtivos">0</div></div>
                     <div class="card purple"><h3>Sessões</h3><div class="value" id="usrSessoes">0</div></div>
                 </div>
-                <button class="btn btn-success" onclick="abrirModalUsuario()" style="margin-bottom:20px;">+ Novo Usuário</button>
-                <div class="panel">
-                    <table>
-                        <thead><tr><th>Nome</th><th>Login</th><th>Email</th><th>Nível</th><th>Último Acesso</th><th>Status</th><th>Ações</th></tr></thead>
-                        <tbody id="usuariosTable"></tbody>
-                    </table>
-                </div>
+                <button class="btn btn-success" onclick="abrirModalUsuario()" style="margin-bottom:20px;">+ Novo</button>
+                <div class="panel"><table><thead><tr><th>Nome</th><th>Login</th><th>Email</th><th>Nível</th><th>Último Acesso</th><th>Status</th><th>Ações</th></tr></thead><tbody id="usuariosTable"></tbody></table></div>
             </div>
 
             <!-- ÁREAS -->
@@ -361,32 +401,6 @@
                         <div class="form-group"><label>Taxa Mínima (R$)</label><input type="number" id="taxaMinima" step="0.01"></div>
                     </div>
                     <button class="btn btn-primary" onclick="salvarConfigPreco()">💾 Salvar</button>
-                </div>
-            </div>
-
-            <!-- CONFIG MAPS -->
-            <div id="mapconfig" class="page">
-                <h2 style="margin-bottom:20px;">🔑 Configuração Google Maps</h2>
-                <div class="panel">
-                    <h2>API Key do Google Maps</h2>
-                    <p style="color:#666;margin-bottom:15px;">Configure sua chave de API do Google Maps para habilitar rotas, geocodificação e cálculo de distâncias em tempo real.</p>
-                    <div class="form-group">
-                        <label>Google Maps API Key</label>
-                        <input type="text" id="googleMapsKey" placeholder="AIzaSy...">
-                    </div>
-                    <button class="btn btn-success" onclick="salvarApiKeyMaps()">💾 Salvar API Key</button>
-                    <button class="btn btn-primary" onclick="testarApiMaps()">🧪 Testar Conexão</button>
-                    <div id="mapsStatus" style="margin-top:15px;"></div>
-                </div>
-                <div class="panel">
-                    <h2>ℹ️ Como obter a API Key</h2>
-                    <ol style="padding-left:20px;color:#666;line-height:1.8;">
-                        <li>Acesse <a href="https://console.cloud.google.com" target="_blank">Google Cloud Console</a></li>
-                        <li>Crie um projeto ou selecione um existente</li>
-                        <li>Ative as APIs: Maps JavaScript, Directions, Geocoding, Places</li>
-                        <li>Vá em Credenciais e crie uma API Key</li>
-                        <li>Copie e cole a chave acima</li>
-                    </ol>
                 </div>
             </div>
 
@@ -417,7 +431,7 @@
                     <div class="card red"><h3>Erros</h3><div class="value" id="logErros">0</div></div>
                 </div>
                 <div class="search-bar">
-                    <select id="filtroLogTipo"><option value="">Todos</option><option value="login">Login</option><option value="usuario">Usuário</option><option value="antifraude">Anti-Fraude</option><option value="erro">Erro</option></select>
+                    <select id="filtroLogTipo"><option value="">Todos</option><option value="login">Login</option><option value="despacho">Despacho</option><option value="erro">Erro</option></select>
                     <button class="btn btn-primary" onclick="carregarLogs()">🔍</button>
                 </div>
                 <div class="panel"><div id="logsLista"></div></div>
@@ -432,118 +446,29 @@
             <div id="formMotoristaAlert"></div>
             <form id="formMotorista">
                 <div class="form-group"><label>Nome *</label><input type="text" id="motNome" required></div>
-                <div class="form-row">
-                    <div class="form-group"><label>WhatsApp *</label><input type="text" id="motWhatsApp" required></div>
-                    <div class="form-group"><label>CPF</label><input type="text" id="motCPF"></div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group"><label>CNH *</label><input type="text" id="motCNH" required></div>
-                    <div class="form-group"><label>Validade</label><input type="date" id="motCNHValidade"></div>
-                </div>
+                <div class="form-row"><div class="form-group"><label>WhatsApp *</label><input type="text" id="motWhatsApp" required></div><div class="form-group"><label>CPF</label><input type="text" id="motCPF"></div></div>
+                <div class="form-row"><div class="form-group"><label>CNH *</label><input type="text" id="motCNH" required></div><div class="form-group"><label>Validade</label><input type="date" id="motCNHValidade"></div></div>
                 <div class="form-group"><label>Endereço</label><input type="text" id="motEndereco"></div>
                 <hr class="divider">
-                <div class="form-row">
-                    <div class="form-group"><label>Modelo *</label><input type="text" id="motVeiculoModelo" required></div>
-                    <div class="form-group"><label>Cor *</label><input type="text" id="motVeiculoCor" required></div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group"><label>Placa *</label><input type="text" id="motVeiculoPlaca" required></div>
-                    <div class="form-group"><label>Ano</label><input type="number" id="motVeiculoAno"></div>
-                </div>
+                <div class="form-row"><div class="form-group"><label>Modelo *</label><input type="text" id="motVeiculoModelo" required></div><div class="form-group"><label>Cor *</label><input type="text" id="motVeiculoCor" required></div></div>
+                <div class="form-row"><div class="form-group"><label>Placa *</label><input type="text" id="motVeiculoPlaca" required></div><div class="form-group"><label>Ano</label><input type="number" id="motVeiculoAno"></div></div>
                 <button type="submit" class="btn btn-success" style="width:100%;padding:12px;">✅ Cadastrar</button>
             </form>
             <div id="tokenMotoristaBox" class="token-box" style="display:none;"><h4>🎉 Cadastrado!</h4><p>Token:</p><code id="tokenGerado"></code><p><strong>Senha:</strong> <span id="senhaGerada"></span></p></div>
         </div>
     </div>
 
-    <div class="modal" id="modalCliente">
-        <div class="modal-content">
-            <div class="modal-header"><h3>Novo Cliente</h3><button class="modal-close" onclick="fecharModal('modalCliente')">&times;</button></div>
-            <form id="formCliente">
-                <div class="form-group"><label>Nome</label><input type="text" id="cliNome" required></div>
-                <div class="form-group"><label>WhatsApp</label><input type="text" id="cliTelefone" required></div>
-                <button type="submit" class="btn btn-success" style="width:100%;">Salvar</button>
-            </form>
-        </div>
-    </div>
+    <div class="modal" id="modalCliente"><div class="modal-content"><div class="modal-header"><h3>Novo Cliente</h3><button class="modal-close" onclick="fecharModal('modalCliente')">&times;</button></div><form id="formCliente"><div class="form-group"><label>Nome</label><input type="text" id="cliNome" required></div><div class="form-group"><label>WhatsApp</label><input type="text" id="cliTelefone" required></div><button type="submit" class="btn btn-success" style="width:100%;">Salvar</button></form></div></div>
 
-    <div class="modal" id="modalReclamacao">
-        <div class="modal-content">
-            <div class="modal-header"><h3>📞 Nova Reclamação</h3><button class="modal-close" onclick="fecharModal('modalReclamacao')">&times;</button></div>
-            <form id="formReclamacao">
-                <div class="form-row">
-                    <div class="form-group"><label>Cliente</label><input type="text" id="recClienteNome" required></div>
-                    <div class="form-group"><label>Telefone</label><input type="text" id="recClienteTel" required></div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group"><label>Tipo</label><select id="recTipo"><option value="motorista">Motorista</option><option value="cobranca">Cobrança</option><option value="outro">Outro</option></select></div>
-                    <div class="form-group"><label>Prioridade</label><select id="recPrioridade"><option value="baixa">Baixa</option><option value="media">Média</option><option value="alta">Alta</option></select></div>
-                </div>
-                <div class="form-group"><label>Assunto</label><input type="text" id="recAssunto" required></div>
-                <div class="form-group"><label>Descrição</label><textarea id="recDescricao" rows="3"></textarea></div>
-                <button type="submit" class="btn btn-success" style="width:100%;">📩 Registrar</button>
-            </form>
-        </div>
-    </div>
+    <div class="modal" id="modalReclamacao"><div class="modal-content"><div class="modal-header"><h3>📞 Nova Reclamação</h3><button class="modal-close" onclick="fecharModal('modalReclamacao')">&times;</button></div><form id="formReclamacao"><div class="form-row"><div class="form-group"><label>Cliente</label><input type="text" id="recClienteNome" required></div><div class="form-group"><label>Telefone</label><input type="text" id="recClienteTel" required></div></div><div class="form-row"><div class="form-group"><label>Tipo</label><select id="recTipo"><option value="motorista">Motorista</option><option value="cobranca">Cobrança</option><option value="outro">Outro</option></select></div><div class="form-group"><label>Prioridade</label><select id="recPrioridade"><option value="baixa">Baixa</option><option value="media">Média</option><option value="alta">Alta</option></select></div></div><div class="form-group"><label>Assunto</label><input type="text" id="recAssunto" required></div><div class="form-group"><label>Descrição</label><textarea id="recDescricao" rows="3"></textarea></div><button type="submit" class="btn btn-success" style="width:100%;">📩 Registrar</button></form></div></div>
 
-    <div class="modal" id="modalArea">
-        <div class="modal-content">
-            <div class="modal-header"><h3>🗺️ Nova Área</h3><button class="modal-close" onclick="fecharModal('modalArea')">&times;</button></div>
-            <form id="formArea">
-                <div class="form-group"><label>Nome</label><input type="text" id="areaNome" required></div>
-                <div class="form-group"><label>Cidade</label><input type="text" id="areaCidade" required></div>
-                <div class="form-group"><label>Bairros</label><input type="text" id="areaBairros" placeholder="Separados por vírgula"></div>
-                <div class="form-group"><label>Taxa Extra</label><input type="number" id="areaTaxa" step="0.01" value="0"></div>
-                <button type="submit" class="btn btn-success" style="width:100%;">💾 Salvar</button>
-            </form>
-        </div>
-    </div>
+    <div class="modal" id="modalArea"><div class="modal-content"><div class="modal-header"><h3>🗺️ Nova Área</h3><button class="modal-close" onclick="fecharModal('modalArea')">&times;</button></div><form id="formArea"><div class="form-group"><label>Nome</label><input type="text" id="areaNome" required></div><div class="form-group"><label>Cidade</label><input type="text" id="areaCidade" required></div><div class="form-group"><label>Bairros</label><input type="text" id="areaBairros" placeholder="Separados por vírgula"></div><div class="form-group"><label>Taxa Extra</label><input type="number" id="areaTaxa" step="0.01" value="0"></div><button type="submit" class="btn btn-success" style="width:100%;">💾 Salvar</button></form></div></div>
 
-    <div class="modal" id="modalBlacklist">
-        <div class="modal-content">
-            <div class="modal-header"><h3>🚫 Blacklist</h3><button class="modal-close" onclick="fecharModal('modalBlacklist')">&times;</button></div>
-            <form id="formBlacklist">
-                <div class="form-group"><label>Tipo</label><select id="blTipo"><option value="telefone">Telefone</option><option value="cpf">CPF</option></select></div>
-                <div class="form-group"><label>Valor</label><input type="text" id="blValor" required></div>
-                <div class="form-group"><label>Motivo</label><textarea id="blMotivo" rows="2" required></textarea></div>
-                <button type="submit" class="btn btn-danger" style="width:100%;">🚫 Bloquear</button>
-            </form>
-        </div>
-    </div>
+    <div class="modal" id="modalBlacklist"><div class="modal-content"><div class="modal-header"><h3>🚫 Blacklist</h3><button class="modal-close" onclick="fecharModal('modalBlacklist')">&times;</button></div><form id="formBlacklist"><div class="form-group"><label>Tipo</label><select id="blTipo"><option value="telefone">Telefone</option><option value="cpf">CPF</option></select></div><div class="form-group"><label>Valor</label><input type="text" id="blValor" required></div><div class="form-group"><label>Motivo</label><textarea id="blMotivo" rows="2" required></textarea></div><button type="submit" class="btn btn-danger" style="width:100%;">🚫 Bloquear</button></form></div></div>
 
-    <div class="modal" id="modalUsuario">
-        <div class="modal-content">
-            <div class="modal-header"><h3>👤 Novo Usuário Admin</h3><button class="modal-close" onclick="fecharModal('modalUsuario')">&times;</button></div>
-            <div id="formUsuarioAlert"></div>
-            <form id="formUsuario">
-                <div class="form-group"><label>Nome Completo *</label><input type="text" id="usrNome" required></div>
-                <div class="form-row">
-                    <div class="form-group"><label>Login *</label><input type="text" id="usrLogin" required></div>
-                    <div class="form-group"><label>Email *</label><input type="email" id="usrEmail" required></div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group"><label>Senha</label><input type="text" id="usrSenha" placeholder="Vazio = 123456"></div>
-                    <div class="form-group"><label>Telefone</label><input type="text" id="usrTelefone"></div>
-                </div>
-                <div class="form-group">
-                    <label>Nível de Acesso *</label>
-                    <select id="usrNivel" required>
-                        <option value="admin">Administrador (acesso total)</option>
-                        <option value="gerente">Gerente (operações + relatórios)</option>
-                        <option value="operador" selected>Operador (corridas + motoristas)</option>
-                        <option value="financeiro">Financeiro (relatórios + preços)</option>
-                        <option value="atendimento">Atendimento (clientes + reclamações)</option>
-                    </select>
-                </div>
-                <button type="submit" class="btn btn-success" style="width:100%;padding:12px;">✅ Criar Usuário</button>
-            </form>
-            <div id="usuarioCriado" class="token-box" style="display:none;">
-                <h4>🎉 Usuário Criado!</h4>
-                <p>Login: <strong id="novoUsrLogin"></strong></p>
-                <p>Senha: <strong id="novoUsrSenha"></strong></p>
-            </div>
-        </div>
-    </div>
+    <div class="modal" id="modalUsuario"><div class="modal-content"><div class="modal-header"><h3>👤 Novo Usuário</h3><button class="modal-close" onclick="fecharModal('modalUsuario')">&times;</button></div><div id="formUsuarioAlert"></div><form id="formUsuario"><div class="form-group"><label>Nome *</label><input type="text" id="usrNome" required></div><div class="form-row"><div class="form-group"><label>Login *</label><input type="text" id="usrLogin" required></div><div class="form-group"><label>Email *</label><input type="email" id="usrEmail" required></div></div><div class="form-row"><div class="form-group"><label>Senha</label><input type="text" id="usrSenha" placeholder="Vazio = 123456"></div><div class="form-group"><label>Telefone</label><input type="text" id="usrTelefone"></div></div><div class="form-group"><label>Nível *</label><select id="usrNivel"><option value="admin">Administrador</option><option value="gerente">Gerente</option><option value="operador" selected>Operador</option><option value="financeiro">Financeiro</option><option value="atendimento">Atendimento</option></select></div><button type="submit" class="btn btn-success" style="width:100%;padding:12px;">✅ Criar</button></form><div id="usuarioCriado" class="token-box" style="display:none;"><h4>🎉 Criado!</h4><p>Login: <strong id="novoUsrLogin"></strong></p><p>Senha: <strong id="novoUsrSenha"></strong></p></div></div></div>
+
+    <div class="modal" id="modalDespachoManual"><div class="modal-content"><div class="modal-header"><h3>📡 Enviar Corrida Manual</h3><button class="modal-close" onclick="fecharModal('modalDespachoManual')">&times;</button></div><div class="form-group"><label>Selecione o Motorista</label><select id="motoristaDespachoManual" style="width:100%;padding:10px;"></select></div><button class="btn btn-success" onclick="enviarCorridaManual()" style="width:100%;margin-top:15px;">📤 Enviar para Motorista</button></div></div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="app.js"></script>

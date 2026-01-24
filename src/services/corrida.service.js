@@ -136,3 +136,30 @@ const CorridaService = {
 };
 
 module.exports = CorridaService;
+
+// Método para atribuir motorista
+CorridaService.atribuirMotorista = (corridaId, motoristaId, motoristaNome) => {
+    const corrida = corridas.get(corridaId);
+    if (!corrida) return null;
+    
+    corrida.motoristaId = motoristaId;
+    corrida.motoristaNome = motoristaNome;
+    corrida.dataAceite = new Date().toISOString();
+    corridas.set(corridaId, corrida);
+    
+    return corrida;
+};
+
+// Método para atualizar status
+CorridaService.atualizarStatus = (corridaId, novoStatus) => {
+    const corrida = corridas.get(corridaId);
+    if (!corrida) return null;
+    
+    corrida.status = novoStatus;
+    if (novoStatus === 'finalizada') {
+        corrida.dataFinalizacao = new Date().toISOString();
+    }
+    corridas.set(corridaId, corrida);
+    
+    return corrida;
+};

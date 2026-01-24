@@ -30,6 +30,7 @@ const logsRoutes = require('./routes/logs.routes');
 const estatisticasRoutes = require('./routes/estatisticas.routes');
 const antifraudeRoutes = require('./routes/antifraude.routes');
 const mapsRoutes = require('./routes/maps.routes');
+const despachoRoutes = require('./routes/despacho.routes');
 
 // Registrar rotas
 app.use('/api/auth', authRoutes);
@@ -52,6 +53,7 @@ app.use('/api/logs', logsRoutes);
 app.use('/api/estatisticas', estatisticasRoutes);
 app.use('/api/antifraude', antifraudeRoutes);
 app.use('/api/maps', mapsRoutes);
+app.use('/api/despacho', despachoRoutes);
 
 // Rotas admin
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public/admin/index.html')));
@@ -61,10 +63,10 @@ app.get('/admin/login', (req, res) => res.sendFile(path.join(__dirname, 'public/
 app.get('/api/health', (req, res) => {
     res.json({ 
         status: 'ok', 
-        versao: '2.7.0',
+        versao: '2.8.0',
         funcionalidades: [
-            'Dashboard', 'Gráficos', 'Ranking', 'Anti-Fraude', 'Blacklist',
-            'Google Maps', 'Multi-Usuários', 'Níveis de Acesso', 'Rotas', 'Geocoding'
+            'Dashboard', 'Gráficos', 'Anti-Fraude', 'Google Maps',
+            'Multi-Usuários', 'Despacho Inteligente', 'Broadcast', 'Motorista Próximo'
         ]
     });
 });
@@ -73,9 +75,10 @@ app.use((req, res) => res.status(404).json({ error: 'Rota não encontrada' }));
 
 app.listen(PORT, () => {
     console.log('=================================');
-    console.log('🚀 UBMAX Rebeca v2.7.0');
+    console.log('🚀 UBMAX Rebeca v2.8.0');
     console.log('=================================');
     console.log('📡 Porta:', PORT);
+    console.log('🚗 Despacho: BROADCAST / PRÓXIMO');
     console.log('🗺️  Google Maps: INTEGRADO');
     console.log('👥 Multi-Usuários: ATIVO');
     console.log('🛡️  Anti-Fraude: ATIVO');
