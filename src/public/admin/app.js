@@ -30,7 +30,7 @@ async function api(url, method='GET', data=null) {
 // GRÁFICOS
 let chartCorridas=null, chartFaturamento=null;
 function criarGraficoCorridas(d) { const ctx=document.getElementById('chartCorridas'); if(!ctx)return; if(chartCorridas)chartCorridas.destroy(); chartCorridas=new Chart(ctx,{type:'bar',data:{labels:d.map(x=>x.diaSemana),datasets:[{label:'Finalizadas',data:d.map(x=>x.finalizadas),backgroundColor:'#27ae60'},{label:'Canceladas',data:d.map(x=>x.canceladas),backgroundColor:'#e74c3c'}]},options:{responsive:true,maintainAspectRatio:false}}); }
-function criarGraficoFaturamento(d) { const ctx=document.getElementById('chartFaturamento'); if(!ctx)return; if(chartFaturamento)chartFaturamento.destroy(); chartFaturamento=new Chart(ctx,{type:'line',data:{labels:d.map(x=>x.dataFormatada),datasets:[{label:'Faturamento',data:d.map(x=>x.faturamentoBruto),borderColor:'#27ae60',fill:true,backgroundColor:'rgba(39,174,96,0.1)'},{label:'Comissão',data:d.map(x=>x.comissaoEmpresa),borderColor:'#9b59b6',fill:true,backgroundColor:'rgba(155,89,182,0.1)'}]},options:{responsive:true,maintainAspectRatio:false}}); }
+function criarGraficoFaturamento(d) { const ctx=document.getElementById('chartFaturamento'); if(!ctx)return; if(chartFaturamento)chartFaturamento.destroy(); chartFaturamento=new Chart(ctx,{type:'line',data:{labels:d.map(x=>x.dataFormatada),datasets:[{label:'Faturamento',data:d.map(x=>x.faturamentoBruto),borderColor:'#27ae60',fill:true,backgroundColor:'rgba(39,174,96,0.1)'}]},options:{responsive:true,maintainAspectRatio:false}}); }
 
 // DASHBOARD
 async function carregarDashboard() {
@@ -79,7 +79,6 @@ async function cancelarCorrida(id) { if (confirm('Cancelar?')) { await api('/api
 async function despacharCorrida(id) { const r = await api('/api/despacho/despachar/'+id, 'POST'); if (r.sucesso) { alert(`✅ Despachada! Modo: ${r.modo}`); carregarCorridas(); } else alert('❌ '+r.error); }
 
 // DESPACHO
-let corridaDespachoManual = null;
 async function carregarDespacho() {
     const cfg = await api('/api/despacho/config');
     const st = await api('/api/despacho/estatisticas');
@@ -125,16 +124,13 @@ async function calcularRota() {
     if (!origem || !destino) { alert('Preencha origem e destino'); return; }
     const r = await api('/api/maps/calcular-preco','POST',{origem,destino});
     if (!r.sucesso) { alert(r.error || 'Erro'); return; }
-    
-    // Buscar faixa atual para mostrar
     const faixa = await api('/api/preco-dinamico/faixa-atual');
-    
     document.getElementById('rotaDistancia').textContent = r.distancia.texto;
     document.getElementById('rotaTempo').textContent = r.duracao.texto;
     document.getElementById('rotaPreco').textContent = 'R$ ' + r.preco.total.toFixed(2);
-    document.getElementById('rotaFaixa').textContent = faixa.nome + (faixa.multiplicador > 1 ? ` (${faixa.multiplicador}x)` : ' (normal)');
+    document.getElementById('rotaFaixa').textContent = faixa.nome;
+    document.getElementById('rotaTipo').textContent = faixa.tipo === 'fixo' ? `💵 FIXO R$ ${faixa.valorFixo}` : `📊 ${faixa.multiplicador}x`;
     document.getElementById('resultadoRota').style.display = 'block';
-    
     if (mapaRotaLeaflet) {
         mapaRotaLeaflet.eachLayer(l => { if (l instanceof L.Marker || l instanceof L.Polyline) mapaRotaLeaflet.removeLayer(l); });
         L.marker([r.origem.latitude,r.origem.longitude]).addTo(mapaRotaLeaflet).bindPopup('Origem');
@@ -158,25 +154,29 @@ async function carregarFaturamento() { const r=await api('/api/estatisticas/fatu
 
 // ==================== PREÇOS DINÂMICOS ====================
 let diaSelecionado = 'segunda';
+let tipoPrecoSelecionado = 'multiplicador';
+let tipoPrecoEditSelecionado = 'multiplicador';
 
 async function carregarPrecos() {
-    // Carregar config base
     const cfg = await api('/api/preco-dinamico/config');
     document.getElementById('taxaBase').value = cfg.taxaBase || 5;
     document.getElementById('precoKm').value = cfg.precoKm || 2.5;
     document.getElementById('taxaMinima').value = cfg.taxaMinima || 15;
     document.getElementById('taxaBandeira2').value = cfg.taxaBandeira2 || 3;
     document.getElementById('precoMinuto').value = cfg.precoMinuto || 0.5;
-    
     document.getElementById('precoTaxaBase').textContent = (cfg.taxaBase || 5).toFixed(2);
     document.getElementById('precoKmAtual').textContent = (cfg.precoKm || 2.5).toFixed(2);
     document.getElementById('precoMinimo').textContent = (cfg.taxaMinima || 15).toFixed(2);
     
-    // Faixa atual
     const faixaAtual = await api('/api/preco-dinamico/faixa-atual');
-    document.getElementById('faixaAtualNome').textContent = faixaAtual.nome + (faixaAtual.multiplicador > 1 ? ` (${faixaAtual.multiplicador}x)` : '');
+    let faixaTexto = faixaAtual.nome;
+    if (faixaAtual.tipo === 'fixo' && faixaAtual.valorFixo > 0) {
+        faixaTexto += ` (R$${faixaAtual.valorFixo})`;
+    } else if (faixaAtual.multiplicador > 1) {
+        faixaTexto += ` (${faixaAtual.multiplicador}x)`;
+    }
+    document.getElementById('faixaAtualNome').textContent = faixaTexto;
     
-    // Carregar faixas do dia selecionado
     carregarFaixasDia(diaSelecionado);
 }
 
@@ -191,25 +191,35 @@ async function carregarFaixasDia(dia) {
     const faixas = await api('/api/preco-dinamico/faixas?dia=' + dia);
     
     if (!faixas.length) {
-        document.getElementById('faixasHorario').innerHTML = '<p style="color:#999;text-align:center;padding:20px;">Nenhuma faixa configurada para este dia.</p>';
+        document.getElementById('faixasHorario').innerHTML = '<p style="color:#999;text-align:center;padding:20px;">Nenhuma faixa configurada.</p>';
         return;
     }
     
     document.getElementById('faixasHorario').innerHTML = faixas.map(f => {
-        const nivel = f.multiplicador >= 1.4 ? 'alta' : f.multiplicador >= 1.2 ? 'media' : 'normal';
-        const cor = nivel === 'alta' ? '#e74c3c' : nivel === 'media' ? '#f39c12' : '#27ae60';
+        const isFixo = f.tipo === 'fixo' && f.valorFixo > 0;
+        let nivel = 'normal';
+        let cor = '#27ae60';
+        let valorTexto = '';
+        
+        if (isFixo) {
+            nivel = 'fixo';
+            cor = '#9b59b6';
+            valorTexto = `<div class="mult" style="color:${cor}">R$ ${f.valorFixo.toFixed(2)}</div><small>💵 VALOR FIXO</small>`;
+        } else {
+            nivel = f.multiplicador >= 1.4 ? 'alta' : f.multiplicador >= 1.2 ? 'media' : 'normal';
+            cor = nivel === 'alta' ? '#e74c3c' : nivel === 'media' ? '#f39c12' : '#27ae60';
+            valorTexto = `<div class="mult" style="color:${cor}">${f.multiplicador}x</div>${f.taxaAdicional > 0 ? `<small>+R$ ${f.taxaAdicional.toFixed(2)}</small>` : '<small>Sem taxa extra</small>'}`;
+        }
+        
         return `
             <div class="faixa-item ${nivel}">
                 <div class="faixa-info">
-                    <h4>${f.nome}</h4>
+                    <h4>${f.nome} ${isFixo ? '💵' : ''}</h4>
                     <small>⏰ ${f.horaInicio} - ${f.horaFim}</small>
                 </div>
-                <div class="faixa-valores">
-                    <div class="mult" style="color:${cor}">${f.multiplicador}x</div>
-                    ${f.taxaAdicional > 0 ? `<small>+R$ ${f.taxaAdicional.toFixed(2)}</small>` : '<small>Sem taxa extra</small>'}
-                </div>
+                <div class="faixa-valores">${valorTexto}</div>
                 <div>
-                    <button class="btn btn-primary btn-sm" onclick="editarFaixa('${f.id}')">✏️</button>
+                    <button class="btn btn-primary btn-sm" onclick="abrirEditarFaixa('${f.id}')">✏️</button>
                     <button class="btn btn-danger btn-sm" onclick="excluirFaixa('${f.id}')">🗑️</button>
                 </div>
             </div>
@@ -230,22 +240,51 @@ async function salvarConfigPreco() {
     carregarPrecos();
 }
 
+// TIPO DE PREÇO - CRIAR
+function selecionarTipoPreco(tipo) {
+    tipoPrecoSelecionado = tipo;
+    document.getElementById('faixaTipo').value = tipo;
+    
+    document.getElementById('tipoMult').classList.toggle('active', tipo === 'multiplicador');
+    document.getElementById('tipoFixo').classList.toggle('active', tipo === 'fixo');
+    
+    document.getElementById('camposMultiplicador').classList.toggle('active', tipo === 'multiplicador');
+    document.getElementById('camposFixo').classList.toggle('active', tipo === 'fixo');
+}
+
+// TIPO DE PREÇO - EDITAR
+function selecionarTipoPrecoEdit(tipo) {
+    tipoPrecoEditSelecionado = tipo;
+    document.getElementById('editFaixaTipo').value = tipo;
+    
+    document.getElementById('editTipoMult').classList.toggle('active', tipo === 'multiplicador');
+    document.getElementById('editTipoFixo').classList.toggle('active', tipo === 'fixo');
+    
+    document.getElementById('editCamposMultiplicador').classList.toggle('active', tipo === 'multiplicador');
+    document.getElementById('editCamposFixo').classList.toggle('active', tipo === 'fixo');
+}
+
 function abrirModalFaixa() {
     document.getElementById('formFaixa').reset();
+    selecionarTipoPreco('multiplicador');
     document.getElementById('faixaMult').value = '1.0';
     document.getElementById('faixaTaxa').value = '0';
+    document.getElementById('faixaValorFixo').value = '30';
     document.getElementById('modalFaixa').classList.add('active');
 }
 
 document.getElementById('formFaixa').addEventListener('submit', async (e) => {
     e.preventDefault();
+    const tipo = document.getElementById('faixaTipo').value;
     const dados = {
         diaSemana: diaSelecionado,
         nome: document.getElementById('faixaNome').value,
         horaInicio: document.getElementById('faixaInicio').value,
         horaFim: document.getElementById('faixaFim').value,
-        multiplicador: parseFloat(document.getElementById('faixaMult').value),
-        taxaAdicional: parseFloat(document.getElementById('faixaTaxa').value)
+        tipo: tipo,
+        multiplicador: tipo === 'multiplicador' ? parseFloat(document.getElementById('faixaMult').value) : 1.0,
+        taxaAdicional: tipo === 'multiplicador' ? parseFloat(document.getElementById('faixaTaxa').value) : 0,
+        valorFixo: tipo === 'fixo' ? parseFloat(document.getElementById('faixaValorFixo').value) : 0
     };
     await api('/api/preco-dinamico/faixas', 'POST', dados);
     fecharModal('modalFaixa');
@@ -253,17 +292,42 @@ document.getElementById('formFaixa').addEventListener('submit', async (e) => {
     alert('✅ Faixa criada!');
 });
 
-async function editarFaixa(id) {
-    const mult = prompt('Novo multiplicador (ex: 1.5):');
-    if (mult) {
-        const taxa = prompt('Taxa adicional em R$ (ex: 2.00):') || '0';
-        await api('/api/preco-dinamico/faixas/' + id, 'PUT', {
-            multiplicador: parseFloat(mult),
-            taxaAdicional: parseFloat(taxa)
-        });
-        carregarFaixasDia(diaSelecionado);
-    }
+async function abrirEditarFaixa(id) {
+    const faixa = await api('/api/preco-dinamico/faixas/' + id);
+    if (!faixa || faixa.error) { alert('Faixa não encontrada'); return; }
+    
+    document.getElementById('editFaixaId').value = faixa.id;
+    document.getElementById('editFaixaNome').value = faixa.nome;
+    document.getElementById('editFaixaInicio').value = faixa.horaInicio;
+    document.getElementById('editFaixaFim').value = faixa.horaFim;
+    document.getElementById('editFaixaMult').value = faixa.multiplicador || 1.0;
+    document.getElementById('editFaixaTaxa').value = faixa.taxaAdicional || 0;
+    document.getElementById('editFaixaValorFixo').value = faixa.valorFixo || 30;
+    
+    const tipo = (faixa.tipo === 'fixo' && faixa.valorFixo > 0) ? 'fixo' : 'multiplicador';
+    selecionarTipoPrecoEdit(tipo);
+    
+    document.getElementById('modalEditarFaixa').classList.add('active');
 }
+
+document.getElementById('formEditarFaixa').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const id = document.getElementById('editFaixaId').value;
+    const tipo = document.getElementById('editFaixaTipo').value;
+    const dados = {
+        nome: document.getElementById('editFaixaNome').value,
+        horaInicio: document.getElementById('editFaixaInicio').value,
+        horaFim: document.getElementById('editFaixaFim').value,
+        tipo: tipo,
+        multiplicador: tipo === 'multiplicador' ? parseFloat(document.getElementById('editFaixaMult').value) : 1.0,
+        taxaAdicional: tipo === 'multiplicador' ? parseFloat(document.getElementById('editFaixaTaxa').value) : 0,
+        valorFixo: tipo === 'fixo' ? parseFloat(document.getElementById('editFaixaValorFixo').value) : 0
+    };
+    await api('/api/preco-dinamico/faixas/' + id, 'PUT', dados);
+    fecharModal('modalEditarFaixa');
+    carregarFaixasDia(diaSelecionado);
+    alert('✅ Faixa atualizada!');
+});
 
 async function excluirFaixa(id) {
     if (confirm('Excluir esta faixa?')) {
@@ -294,12 +358,12 @@ async function simularPrecos() {
     document.getElementById('resultadoSimulacao').innerHTML = `
         <h4>📊 Preços para ${km} km (${dia})</h4>
         <table style="width:100%;margin-top:10px;">
-            <thead><tr><th>Faixa</th><th>Horário</th><th>Mult.</th><th>Preço</th></tr></thead>
+            <thead><tr><th>Faixa</th><th>Horário</th><th>Tipo</th><th>Preço</th></tr></thead>
             <tbody>
                 ${r.map(f => `<tr>
                     <td>${f.faixa}</td>
                     <td>${f.horario}</td>
-                    <td>${f.multiplicador}x</td>
+                    <td>${f.tipo === 'fixo' ? '<span class="badge purple">FIXO</span>' : `<span class="badge blue">${f.multiplicador}x</span>`}</td>
                     <td><strong style="color:#27ae60">R$ ${f.precoFinal.toFixed(2)}</strong></td>
                 </tr>`).join('')}
             </tbody>
@@ -311,7 +375,7 @@ async function simularPrecos() {
 async function carregarRanking() { const p=document.getElementById('rankingPeriodo').value; const m=await api('/api/estatisticas/ranking-motoristas?limite=10&periodo='+p); document.getElementById('rankingLista').innerHTML=m.length?m.map((x,i)=>`<div class="ranking-item"><div class="ranking-pos ${i===0?'gold':i===1?'silver':i===2?'bronze':'normal'}">${x.posicao}</div><div class="ranking-info"><h4>${x.nome}</h4><small>${x.corridasRealizadas} corridas</small></div><div class="ranking-stats"><div class="valor">R$ ${x.faturamento.toFixed(2)}</div></div></div>`).join(''):'<p style="color:#999">Sem dados</p>'; }
 
 // ANTI-FRAUDE
-async function carregarAntiFraude() { const st=await api('/api/antifraude/estatisticas'); document.getElementById('fraudeCriticos').textContent=st.alertas?.porNivel?.critico||0; document.getElementById('fraudeAltos').textContent=st.alertas?.porNivel?.alto||0; document.getElementById('fraudePendentes').textContent=st.alertas?.pendentes||0; document.getElementById('fraudeResolvidos').textContent=st.alertas?.resolvidos||0; let url='/api/antifraude/alertas?'; const fs=document.getElementById('filtroFraudeStatus').value; if(fs)url+='status='+fs; const a=await api(url); document.getElementById('alertasFraudeLista').innerHTML=a.length?a.map(x=>`<div class="alerta-fraude ${x.nivel}"><div class="alerta-header"><div><strong>${x.entidadeNome}</strong> <span class="badge ${x.nivel==='critico'||x.nivel==='alto'?'red':'orange'}">${x.nivel.toUpperCase()}</span></div></div><div class="alerta-motivos"><ul>${x.motivos.map(m=>`<li>⚠️ ${m}</li>`).join('')}</ul></div>${x.status!=='resolvido'?`<button class="btn btn-success btn-sm" onclick="resolverAlerta('${x.id}')">✅ Resolver</button>`:''}</div>`).join(''):'<p style="color:#999;padding:20px;">Nenhum</p>'; }
+async function carregarAntiFraude() { const st=await api('/api/antifraude/estatisticas'); document.getElementById('fraudeCriticos').textContent=st.alertas?.porNivel?.critico||0; document.getElementById('fraudeAltos').textContent=st.alertas?.porNivel?.alto||0; document.getElementById('fraudePendentes').textContent=st.alertas?.pendentes||0; document.getElementById('fraudeResolvidos').textContent=st.alertas?.resolvidos||0; const a=await api('/api/antifraude/alertas'); document.getElementById('alertasFraudeLista').innerHTML=a.length?a.map(x=>`<div class="alerta-fraude ${x.nivel}"><div class="alerta-header"><strong>${x.entidadeNome}</strong> <span class="badge ${x.nivel==='critico'?'red':'orange'}">${x.nivel}</span></div><div class="alerta-motivos"><ul>${x.motivos.map(m=>`<li>⚠️ ${m}</li>`).join('')}</ul></div>${x.status!=='resolvido'?`<button class="btn btn-success btn-sm" onclick="resolverAlerta('${x.id}')">✅ Resolver</button>`:''}</div>`).join(''):'<p style="color:#999;padding:20px;">Nenhum</p>'; }
 async function resolverAlerta(id) { const r=prompt('Resolução:'); if(r){await api('/api/antifraude/alertas/'+id+'/resolver','PUT',{resolucao:r}); carregarAntiFraude();} }
 
 // BLACKLIST
@@ -321,17 +385,17 @@ document.getElementById('formBlacklist').addEventListener('submit',async(e)=>{ e
 async function removerBlacklist(id) { if(confirm('Remover?')){ await api('/api/antifraude/blacklist/'+id,'DELETE'); carregarBlacklist(); }}
 
 // RECLAMAÇÕES
-async function carregarReclamacoes() { const st=await api('/api/reclamacoes/estatisticas'); document.getElementById('recPendentes').textContent=st.pendentes||0; document.getElementById('recAndamento').textContent=st.emAndamento||0; document.getElementById('recResolvidas').textContent=st.resolvidas||0; const f=document.getElementById('filtroReclamacao').value; const r=await api('/api/reclamacoes'+(f?'?status='+f:'')); document.getElementById('reclamacoesTable').innerHTML=r.length?r.map(x=>`<tr><td>${new Date(x.dataAbertura).toLocaleDateString('pt-BR')}</td><td>${x.clienteNome}</td><td>${x.assunto}</td><td><span class="badge ${x.status==='resolvida'?'green':'yellow'}">${x.status}</span></td><td>${x.status!=='resolvida'?`<button class="btn btn-success btn-sm" onclick="resolverReclamacao('${x.id}')">✓</button>`:''}</td></tr>`).join(''):'<tr><td colspan="5" style="text-align:center;color:#999">Nenhuma</td></tr>'; }
+async function carregarReclamacoes() { const st=await api('/api/reclamacoes/estatisticas'); document.getElementById('recPendentes').textContent=st.pendentes||0; document.getElementById('recAndamento').textContent=st.emAndamento||0; document.getElementById('recResolvidas').textContent=st.resolvidas||0; const r=await api('/api/reclamacoes'); document.getElementById('reclamacoesTable').innerHTML=r.length?r.map(x=>`<tr><td>${new Date(x.dataAbertura).toLocaleDateString('pt-BR')}</td><td>${x.clienteNome}</td><td>${x.assunto}</td><td><span class="badge ${x.status==='resolvida'?'green':'yellow'}">${x.status}</span></td><td>${x.status!=='resolvida'?`<button class="btn btn-success btn-sm" onclick="resolverReclamacao('${x.id}')">✓</button>`:''}</td></tr>`).join(''):'<tr><td colspan="5" style="text-align:center;color:#999">Nenhuma</td></tr>'; }
 function abrirModalReclamacao() { document.getElementById('formReclamacao').reset(); document.getElementById('modalReclamacao').classList.add('active'); }
 document.getElementById('formReclamacao').addEventListener('submit',async(e)=>{ e.preventDefault(); await api('/api/reclamacoes','POST',{clienteNome:document.getElementById('recClienteNome').value,clienteTelefone:document.getElementById('recClienteTel').value,assunto:document.getElementById('recAssunto').value,descricao:document.getElementById('recDescricao').value}); fecharModal('modalReclamacao'); carregarReclamacoes(); });
 async function resolverReclamacao(id) { const r=prompt('Resolução:'); if(r){await api('/api/reclamacoes/'+id+'/resolver','PUT',{resolucao:r}); carregarReclamacoes();} }
 
 // WHATSAPP
-async function carregarWhatsApp() { const c=await api('/api/config/whatsapp'); document.getElementById('whatsappApiUrl').value=c.apiUrl||''; document.getElementById('whatsappApiKey').value=c.apiKey||''; document.getElementById('whatsappInstancia').value=c.instancia||'rebeca-taxi'; document.getElementById('whatsappStatus').innerHTML=c.conectado?'<p><span class="status-indicator online"></span> Conectado</p>':'<p><span class="status-indicator offline"></span> Desconectado</p>'; }
+async function carregarWhatsApp() { const c=await api('/api/config/whatsapp'); document.getElementById('whatsappApiUrl').value=c.apiUrl||''; document.getElementById('whatsappApiKey').value=c.apiKey||''; document.getElementById('whatsappInstancia').value=c.instancia||''; document.getElementById('whatsappStatus').innerHTML=c.conectado?'<p><span class="status-indicator online"></span> Conectado</p>':'<p><span class="status-indicator offline"></span> Desconectado</p>'; }
 async function salvarConfigWhatsApp() { await api('/api/config/whatsapp','PUT',{apiUrl:document.getElementById('whatsappApiUrl').value,apiKey:document.getElementById('whatsappApiKey').value,instancia:document.getElementById('whatsappInstancia').value}); alert('Salvo!'); }
 
 // USUÁRIOS
-async function carregarUsuarios() { const st=await api('/api/usuarios/estatisticas'); document.getElementById('usrTotal').textContent=st.total||0; document.getElementById('usrAtivos').textContent=st.ativos||0; document.getElementById('usrSessoes').textContent=st.sessoesAtivas||0; const u=await api('/api/usuarios'); document.getElementById('usuariosTable').innerHTML=u.length?u.map(x=>`<tr><td><div style="display:flex;align-items:center;gap:10px;"><div class="user-avatar">${x.nome.charAt(0)}</div><strong>${x.nome}</strong></div></td><td>${x.login}</td><td>${x.email}</td><td><span class="badge ${x.nivel==='admin'?'red':x.nivel==='gerente'?'purple':'blue'}">${x.nivel}</span></td><td><span class="badge ${x.ativo?'green':'red'}">${x.ativo?'Ativo':'Inativo'}</span></td><td>${x.login!=='admin'?`<button class="btn btn-warning btn-sm" onclick="toggleUsuario('${x.id}',${x.ativo})">${x.ativo?'Desativar':'Ativar'}</button>`:''}</td></tr>`).join(''):'<tr><td colspan="6">Nenhum</td></tr>'; }
+async function carregarUsuarios() { const st=await api('/api/usuarios/estatisticas'); document.getElementById('usrTotal').textContent=st.total||0; document.getElementById('usrAtivos').textContent=st.ativos||0; document.getElementById('usrSessoes').textContent=st.sessoesAtivas||0; const u=await api('/api/usuarios'); document.getElementById('usuariosTable').innerHTML=u.length?u.map(x=>`<tr><td><div style="display:flex;align-items:center;gap:10px;"><div class="user-avatar">${x.nome.charAt(0)}</div><strong>${x.nome}</strong></div></td><td>${x.login}</td><td>${x.email}</td><td><span class="badge ${x.nivel==='admin'?'red':'blue'}">${x.nivel}</span></td><td><span class="badge ${x.ativo?'green':'red'}">${x.ativo?'Ativo':'Inativo'}</span></td><td>${x.login!=='admin'?`<button class="btn btn-warning btn-sm" onclick="toggleUsuario('${x.id}',${x.ativo})">${x.ativo?'Desativar':'Ativar'}</button>`:''}</td></tr>`).join(''):'<tr><td colspan="6">Nenhum</td></tr>'; }
 function abrirModalUsuario() { document.getElementById('formUsuario').reset(); document.getElementById('formUsuario').style.display='block'; document.getElementById('usuarioCriado').style.display='none'; document.getElementById('formUsuarioAlert').innerHTML=''; document.getElementById('modalUsuario').classList.add('active'); }
 document.getElementById('formUsuario').addEventListener('submit',async(e)=>{ e.preventDefault(); const d={nome:document.getElementById('usrNome').value,login:document.getElementById('usrLogin').value,email:document.getElementById('usrEmail').value,senha:document.getElementById('usrSenha').value||null,nivel:document.getElementById('usrNivel').value}; const r=await api('/api/usuarios','POST',d); if(r.error){document.getElementById('formUsuarioAlert').innerHTML=`<div class="alert alert-error">${r.error}</div>`;return;} document.getElementById('formUsuario').style.display='none'; document.getElementById('novoUsrLogin').textContent=r.login; document.getElementById('novoUsrSenha').textContent=r.senhaGerada||d.senha||'123456'; document.getElementById('usuarioCriado').style.display='block'; carregarUsuarios(); });
 async function toggleUsuario(id,ativo) { await api('/api/usuarios/'+id+'/'+(ativo?'desativar':'ativar'),'PUT'); carregarUsuarios(); }
@@ -347,7 +411,7 @@ async function carregarConfig() { const c=await api('/api/config'); document.get
 async function salvarConfiguracoes() { await api('/api/config','PUT',{tempoMaximoEspera:parseInt(document.getElementById('cfgTempoEspera').value),raioMaximoBusca:parseInt(document.getElementById('cfgRaioBusca').value),comissaoEmpresa:parseInt(document.getElementById('cfgComissao').value)}); alert('Salvo!'); }
 
 // LOGS
-async function carregarLogs() { const st=await api('/api/logs/estatisticas'); document.getElementById('logTotal').textContent=st.total||0; document.getElementById('logHoje').textContent=st.hoje||0; document.getElementById('logErros').textContent=st.porTipo?.erro||0; const f=document.getElementById('filtroLogTipo').value; const l=await api('/api/logs?limite=50'+(f?'&tipo='+f:'')); document.getElementById('logsLista').innerHTML=l.length?l.map(x=>`<div class="log-item ${x.tipo}"><span style="color:#999;font-size:0.85em;">${new Date(x.dataHora).toLocaleString('pt-BR')}</span> <strong>${x.acao}</strong> - ${x.usuarioNome}</div>`).join(''):'<p style="color:#999">Nenhum</p>'; }
+async function carregarLogs() { const st=await api('/api/logs/estatisticas'); document.getElementById('logTotal').textContent=st.total||0; document.getElementById('logHoje').textContent=st.hoje||0; document.getElementById('logErros').textContent=st.porTipo?.erro||0; const l=await api('/api/logs?limite=50'); document.getElementById('logsLista').innerHTML=l.length?l.map(x=>`<div class="log-item"><span style="color:#999;font-size:0.85em;">${new Date(x.dataHora).toLocaleString('pt-BR')}</span> <strong>${x.acao}</strong> - ${x.usuarioNome||'Sistema'}</div>`).join(''):'<p style="color:#999">Nenhum</p>'; }
 
 // HELPERS
 function getStatusColor(s) { return {disponivel:'green',online:'green',finalizada:'green',resolvida:'green',em_corrida:'blue',em_andamento:'blue',aceita:'blue',buscando_motorista:'blue',pendente:'yellow',a_caminho:'yellow',offline:'red',cancelada:'red',bloqueado:'red'}[s]||'blue'; }
