@@ -11,6 +11,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // Importar rotas
 const authRoutes = require('./routes/auth.routes');
+const usuariosRoutes = require('./routes/usuarios.routes');
 const motoristaRoutes = require('./routes/motorista.routes');
 const motoristaAppRoutes = require('./routes/motorista-app.routes');
 const corridaRoutes = require('./routes/corrida.routes');
@@ -28,9 +29,11 @@ const reclamacoesRoutes = require('./routes/reclamacoes.routes');
 const logsRoutes = require('./routes/logs.routes');
 const estatisticasRoutes = require('./routes/estatisticas.routes');
 const antifraudeRoutes = require('./routes/antifraude.routes');
+const mapsRoutes = require('./routes/maps.routes');
 
 // Registrar rotas
 app.use('/api/auth', authRoutes);
+app.use('/api/usuarios', usuariosRoutes);
 app.use('/api/motoristas', motoristaRoutes);
 app.use('/api/motorista-app', motoristaAppRoutes);
 app.use('/api/corridas', corridaRoutes);
@@ -48,6 +51,7 @@ app.use('/api/reclamacoes', reclamacoesRoutes);
 app.use('/api/logs', logsRoutes);
 app.use('/api/estatisticas', estatisticasRoutes);
 app.use('/api/antifraude', antifraudeRoutes);
+app.use('/api/maps', mapsRoutes);
 
 // Rotas admin
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public/admin/index.html')));
@@ -57,8 +61,11 @@ app.get('/admin/login', (req, res) => res.sendFile(path.join(__dirname, 'public/
 app.get('/api/health', (req, res) => {
     res.json({ 
         status: 'ok', 
-        versao: '2.6.0',
-        funcionalidades: ['Dashboard', 'Gráficos', 'Ranking', 'Reclamações', 'Áreas', 'Logs', 'Anti-Fraude', 'Blacklist']
+        versao: '2.7.0',
+        funcionalidades: [
+            'Dashboard', 'Gráficos', 'Ranking', 'Anti-Fraude', 'Blacklist',
+            'Google Maps', 'Multi-Usuários', 'Níveis de Acesso', 'Rotas', 'Geocoding'
+        ]
     });
 });
 
@@ -66,9 +73,11 @@ app.use((req, res) => res.status(404).json({ error: 'Rota não encontrada' }));
 
 app.listen(PORT, () => {
     console.log('=================================');
-    console.log('🚀 UBMAX Rebeca v2.6.0');
+    console.log('🚀 UBMAX Rebeca v2.7.0');
     console.log('=================================');
     console.log('📡 Porta:', PORT);
+    console.log('🗺️  Google Maps: INTEGRADO');
+    console.log('👥 Multi-Usuários: ATIVO');
     console.log('🛡️  Anti-Fraude: ATIVO');
     console.log('⚙️  Admin: /admin');
     console.log('=================================');

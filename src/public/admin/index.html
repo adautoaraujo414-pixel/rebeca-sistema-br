@@ -66,6 +66,7 @@
         .search-bar { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
         .search-bar input, .search-bar select { flex: 1; min-width: 150px; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; }
         #mapaLeaflet { height: 400px; border-radius: 10px; }
+        #mapaGoogle { height: 400px; border-radius: 10px; background: #e0e0e0; }
         .chart-container { height: 300px; position: relative; }
         .ranking-item { display: flex; align-items: center; padding: 12px; border-bottom: 1px solid #f0f2f5; }
         .ranking-pos { width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 15px; color: white; }
@@ -89,7 +90,6 @@
         .token-box { background: linear-gradient(135deg, #27ae60, #2ecc71); border-radius: 12px; padding: 20px; margin-top: 20px; color: white; text-align: center; }
         .token-box code { background: rgba(0,0,0,0.3); padding: 12px 20px; border-radius: 8px; font-size: 1em; display: block; margin: 10px 0; word-break: break-all; }
         .divider { border: none; border-top: 2px solid #eee; margin: 20px 0; }
-        .section-title { font-size: 1em; color: #1a1a2e; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
         .alert { padding: 12px 15px; border-radius: 8px; margin-bottom: 15px; font-size: 0.9em; }
         .alert-success { background: #d4edda; color: #155724; }
         .alert-error { background: #f8d7da; color: #721c24; }
@@ -104,6 +104,10 @@
         .alerta-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
         .alerta-motivos { font-size: 0.9em; color: #666; margin-bottom: 10px; }
         .alerta-motivos li { margin: 3px 0; }
+        .rota-info { background: #f8f9fa; padding: 15px; border-radius: 10px; margin-top: 15px; }
+        .rota-info h4 { margin-bottom: 10px; }
+        .rota-detalhe { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee; }
+        .user-avatar { width: 40px; height: 40px; border-radius: 50%; background: #3498db; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -125,6 +129,7 @@
             <div class="menu-item" data-page="corridas">🚗 Corridas</div>
             <div class="menu-item" data-page="motoristas">👨‍✈️ Motoristas</div>
             <div class="menu-item" data-page="clientes">👥 Clientes</div>
+            <div class="menu-item" data-page="rotas">📍 Calcular Rota</div>
             
             <div class="menu-section">Financeiro</div>
             <div class="menu-item" data-page="faturamento">💰 Faturamento</div>
@@ -138,9 +143,11 @@
             <div class="menu-item" data-page="reclamacoes">📞 Reclamações</div>
             <div class="menu-item" data-page="whatsapp">💬 WhatsApp</div>
             
-            <div class="menu-section">Configurações</div>
+            <div class="menu-section">Sistema</div>
+            <div class="menu-item" data-page="usuarios">👤 Usuários Admin</div>
             <div class="menu-item" data-page="areas">🗺️ Áreas Cobertura</div>
             <div class="menu-item" data-page="precos">💵 Preços</div>
+            <div class="menu-item" data-page="mapconfig">🔑 Config Maps</div>
             <div class="menu-item" data-page="config">⚙️ Configurações</div>
             <div class="menu-item" data-page="logs">📜 Logs</div>
         </nav>
@@ -175,6 +182,7 @@
                     <div class="card red"><h3>Offline</h3><div class="value" id="mapaOffline">0</div></div>
                 </div>
                 <div class="panel"><div id="mapaLeaflet"></div></div>
+                <button class="btn btn-primary" onclick="atualizarMapa()">🔄 Atualizar</button>
             </div>
 
             <!-- CORRIDAS -->
@@ -211,6 +219,31 @@
                 <div class="panel"><table><thead><tr><th>Nome</th><th>Telefone</th><th>Corridas</th><th>Nível</th><th>Status</th><th>Ações</th></tr></thead><tbody id="clientesTable"></tbody></table></div>
             </div>
 
+            <!-- ROTAS / GOOGLE MAPS -->
+            <div id="rotas" class="page">
+                <h2 style="margin-bottom:20px;">📍 Calcular Rota e Preço</h2>
+                <div class="panel">
+                    <h2>🗺️ Simulador de Corrida</h2>
+                    <div class="form-row">
+                        <div class="form-group"><label>Origem</label><input type="text" id="rotaOrigem" placeholder="Ex: Rua das Flores, 123 - Osasco"></div>
+                        <div class="form-group"><label>Destino</label><input type="text" id="rotaDestino" placeholder="Ex: Av. Brasil, 456 - São Paulo"></div>
+                    </div>
+                    <button class="btn btn-primary" onclick="calcularRota()">📍 Calcular Rota</button>
+                    <button class="btn btn-success" onclick="encontrarMotoristaProximo()">🚗 Encontrar Motorista</button>
+                    <div id="resultadoRota" class="rota-info" style="display:none;">
+                        <h4>📊 Resultado</h4>
+                        <div class="rota-detalhe"><span>Distância:</span><strong id="rotaDistancia">-</strong></div>
+                        <div class="rota-detalhe"><span>Tempo Estimado:</span><strong id="rotaTempo">-</strong></div>
+                        <div class="rota-detalhe"><span>💰 Valor da Corrida:</span><strong id="rotaPreco" style="color:#27ae60;font-size:1.3em;">-</strong></div>
+                    </div>
+                    <div id="motoristaProximo" class="rota-info" style="display:none;margin-top:10px;">
+                        <h4>🚗 Motorista Mais Próximo</h4>
+                        <div id="motoristaProximoInfo"></div>
+                    </div>
+                </div>
+                <div class="panel"><div id="mapaGoogle"></div></div>
+            </div>
+
             <!-- FATURAMENTO -->
             <div id="faturamento" class="page">
                 <h2 style="margin-bottom:20px;">💰 Faturamento</h2>
@@ -234,41 +267,31 @@
 
             <!-- ANTI-FRAUDE -->
             <div id="antifraude" class="page">
-                <h2 style="margin-bottom:20px;">🛡️ Central Anti-Fraude</h2>
+                <h2 style="margin-bottom:20px;">🛡️ Anti-Fraude</h2>
                 <div class="cards">
-                    <div class="card red"><div class="card-icon">🚨</div><h3>Alertas Críticos</h3><div class="value" id="fraudeCriticos">0</div></div>
-                    <div class="card orange"><div class="card-icon">⚠️</div><h3>Alertas Altos</h3><div class="value" id="fraudeAltos">0</div></div>
-                    <div class="card yellow"><div class="card-icon">📋</div><h3>Pendentes</h3><div class="value" id="fraudePendentes">0</div></div>
-                    <div class="card green"><div class="card-icon">✅</div><h3>Resolvidos Hoje</h3><div class="value" id="fraudeResolvidos">0</div></div>
+                    <div class="card red"><h3>Críticos</h3><div class="value" id="fraudeCriticos">0</div></div>
+                    <div class="card orange"><h3>Altos</h3><div class="value" id="fraudeAltos">0</div></div>
+                    <div class="card yellow"><h3>Pendentes</h3><div class="value" id="fraudePendentes">0</div></div>
+                    <div class="card green"><h3>Resolvidos</h3><div class="value" id="fraudeResolvidos">0</div></div>
                 </div>
                 <div class="search-bar">
-                    <select id="filtroFraudeStatus"><option value="">Todos Status</option><option value="pendente">Pendentes</option><option value="analisando">Analisando</option><option value="resolvido">Resolvidos</option></select>
-                    <select id="filtroFraudeNivel"><option value="">Todos Níveis</option><option value="critico">Crítico</option><option value="alto">Alto</option><option value="medio">Médio</option><option value="baixo">Baixo</option></select>
-                    <select id="filtroFraudeTipo"><option value="">Todos Tipos</option><option value="motorista">Motorista</option><option value="cliente">Cliente</option><option value="corrida">Corrida</option></select>
+                    <select id="filtroFraudeStatus"><option value="">Todos</option><option value="pendente">Pendentes</option><option value="analisando">Analisando</option><option value="resolvido">Resolvidos</option></select>
+                    <select id="filtroFraudeNivel"><option value="">Níveis</option><option value="critico">Crítico</option><option value="alto">Alto</option><option value="medio">Médio</option></select>
                     <button class="btn btn-primary" onclick="carregarAntiFraude()">🔍 Filtrar</button>
                 </div>
-                <div class="panel">
-                    <h2>🚨 Alertas de Fraude</h2>
-                    <div id="alertasFraudeLista"></div>
-                </div>
-                <div class="panel">
-                    <h2>📊 Regras de Detecção</h2>
-                    <table><thead><tr><th>Regra</th><th>Tipo</th><th>Condição</th><th>Pontos</th><th>Status</th></tr></thead><tbody id="regrasTable"></tbody></table>
-                </div>
+                <div class="panel"><h2>🚨 Alertas</h2><div id="alertasFraudeLista"></div></div>
             </div>
 
             <!-- BLACKLIST -->
             <div id="blacklist" class="page">
                 <h2 style="margin-bottom:20px;">🚫 Blacklist</h2>
                 <div class="cards">
-                    <div class="card red"><h3>Total Bloqueados</h3><div class="value" id="blacklistTotal">0</div></div>
+                    <div class="card red"><h3>Total</h3><div class="value" id="blacklistTotal">0</div></div>
                     <div class="card orange"><h3>Telefones</h3><div class="value" id="blacklistTelefones">0</div></div>
                     <div class="card purple"><h3>CPFs</h3><div class="value" id="blacklistCPFs">0</div></div>
                 </div>
-                <button class="btn btn-danger" onclick="abrirModalBlacklist()" style="margin-bottom:20px;">+ Adicionar à Blacklist</button>
-                <div class="panel">
-                    <table><thead><tr><th>Tipo</th><th>Valor</th><th>Motivo</th><th>Data</th><th>Ações</th></tr></thead><tbody id="blacklistTable"></tbody></table>
-                </div>
+                <button class="btn btn-danger" onclick="abrirModalBlacklist()" style="margin-bottom:20px;">+ Adicionar</button>
+                <div class="panel"><table><thead><tr><th>Tipo</th><th>Valor</th><th>Motivo</th><th>Data</th><th>Ações</th></tr></thead><tbody id="blacklistTable"></tbody></table></div>
             </div>
 
             <!-- RECLAMAÇÕES -->
@@ -276,12 +299,12 @@
                 <h2 style="margin-bottom:20px;">📞 Reclamações</h2>
                 <div class="cards">
                     <div class="card red"><h3>Pendentes</h3><div class="value" id="recPendentes">0</div></div>
-                    <div class="card yellow"><h3>Em Andamento</h3><div class="value" id="recAndamento">0</div></div>
+                    <div class="card yellow"><h3>Andamento</h3><div class="value" id="recAndamento">0</div></div>
                     <div class="card green"><h3>Resolvidas</h3><div class="value" id="recResolvidas">0</div></div>
                 </div>
                 <div class="search-bar">
-                    <select id="filtroReclamacao"><option value="">Todas</option><option value="pendente">Pendentes</option><option value="em_andamento">Em Andamento</option><option value="resolvida">Resolvidas</option></select>
-                    <button class="btn btn-primary" onclick="carregarReclamacoes()">🔍 Filtrar</button>
+                    <select id="filtroReclamacao"><option value="">Todas</option><option value="pendente">Pendentes</option><option value="resolvida">Resolvidas</option></select>
+                    <button class="btn btn-primary" onclick="carregarReclamacoes()">🔍</button>
                     <button class="btn btn-success" onclick="abrirModalReclamacao()">+ Nova</button>
                 </div>
                 <div class="panel"><table><thead><tr><th>Data</th><th>Cliente</th><th>Assunto</th><th>Prioridade</th><th>Status</th><th>Ações</th></tr></thead><tbody id="reclamacoesTable"></tbody></table></div>
@@ -291,16 +314,32 @@
             <div id="whatsapp" class="page">
                 <h2 style="margin-bottom:20px;">💬 WhatsApp</h2>
                 <div class="panel">
-                    <h2>Status da Conexão</h2>
-                    <div id="whatsappStatus"><p><span class="status-indicator offline"></span> <strong>Desconectado</strong></p></div>
+                    <h2>Status</h2>
+                    <div id="whatsappStatus"><p><span class="status-indicator offline"></span> Desconectado</p></div>
                 </div>
                 <div class="panel">
-                    <h2>⚙️ Configuração API</h2>
-                    <div class="form-group"><label>URL da API</label><input type="text" id="whatsappApiUrl" placeholder="https://sua-api.com"></div>
+                    <h2>⚙️ Config API</h2>
+                    <div class="form-group"><label>URL</label><input type="text" id="whatsappApiUrl"></div>
                     <div class="form-group"><label>API Key</label><input type="password" id="whatsappApiKey"></div>
                     <div class="form-group"><label>Instância</label><input type="text" id="whatsappInstancia" value="rebeca-taxi"></div>
                     <button class="btn btn-success" onclick="salvarConfigWhatsApp()">💾 Salvar</button>
-                    <button class="btn btn-primary" onclick="testarWhatsApp()">🔄 Testar</button>
+                </div>
+            </div>
+
+            <!-- USUÁRIOS ADMIN -->
+            <div id="usuarios" class="page">
+                <h2 style="margin-bottom:20px;">👤 Usuários Administrativos</h2>
+                <div class="cards">
+                    <div class="card blue"><h3>Total</h3><div class="value" id="usrTotal">0</div></div>
+                    <div class="card green"><h3>Ativos</h3><div class="value" id="usrAtivos">0</div></div>
+                    <div class="card purple"><h3>Sessões</h3><div class="value" id="usrSessoes">0</div></div>
+                </div>
+                <button class="btn btn-success" onclick="abrirModalUsuario()" style="margin-bottom:20px;">+ Novo Usuário</button>
+                <div class="panel">
+                    <table>
+                        <thead><tr><th>Nome</th><th>Login</th><th>Email</th><th>Nível</th><th>Último Acesso</th><th>Status</th><th>Ações</th></tr></thead>
+                        <tbody id="usuariosTable"></tbody>
+                    </table>
                 </div>
             </div>
 
@@ -322,6 +361,32 @@
                         <div class="form-group"><label>Taxa Mínima (R$)</label><input type="number" id="taxaMinima" step="0.01"></div>
                     </div>
                     <button class="btn btn-primary" onclick="salvarConfigPreco()">💾 Salvar</button>
+                </div>
+            </div>
+
+            <!-- CONFIG MAPS -->
+            <div id="mapconfig" class="page">
+                <h2 style="margin-bottom:20px;">🔑 Configuração Google Maps</h2>
+                <div class="panel">
+                    <h2>API Key do Google Maps</h2>
+                    <p style="color:#666;margin-bottom:15px;">Configure sua chave de API do Google Maps para habilitar rotas, geocodificação e cálculo de distâncias em tempo real.</p>
+                    <div class="form-group">
+                        <label>Google Maps API Key</label>
+                        <input type="text" id="googleMapsKey" placeholder="AIzaSy...">
+                    </div>
+                    <button class="btn btn-success" onclick="salvarApiKeyMaps()">💾 Salvar API Key</button>
+                    <button class="btn btn-primary" onclick="testarApiMaps()">🧪 Testar Conexão</button>
+                    <div id="mapsStatus" style="margin-top:15px;"></div>
+                </div>
+                <div class="panel">
+                    <h2>ℹ️ Como obter a API Key</h2>
+                    <ol style="padding-left:20px;color:#666;line-height:1.8;">
+                        <li>Acesse <a href="https://console.cloud.google.com" target="_blank">Google Cloud Console</a></li>
+                        <li>Crie um projeto ou selecione um existente</li>
+                        <li>Ative as APIs: Maps JavaScript, Directions, Geocoding, Places</li>
+                        <li>Vá em Credenciais e crie uma API Key</li>
+                        <li>Copie e cole a chave acima</li>
+                    </ol>
                 </div>
             </div>
 
@@ -352,8 +417,8 @@
                     <div class="card red"><h3>Erros</h3><div class="value" id="logErros">0</div></div>
                 </div>
                 <div class="search-bar">
-                    <select id="filtroLogTipo"><option value="">Todos</option><option value="login">Login</option><option value="config">Config</option><option value="antifraude">Anti-Fraude</option><option value="erro">Erro</option></select>
-                    <button class="btn btn-primary" onclick="carregarLogs()">🔍 Filtrar</button>
+                    <select id="filtroLogTipo"><option value="">Todos</option><option value="login">Login</option><option value="usuario">Usuário</option><option value="antifraude">Anti-Fraude</option><option value="erro">Erro</option></select>
+                    <button class="btn btn-primary" onclick="carregarLogs()">🔍</button>
                 </div>
                 <div class="panel"><div id="logsLista"></div></div>
             </div>
@@ -366,14 +431,14 @@
             <div class="modal-header"><h3>📋 Novo Motorista</h3><button class="modal-close" onclick="fecharModal('modalMotorista')">&times;</button></div>
             <div id="formMotoristaAlert"></div>
             <form id="formMotorista">
-                <div class="form-group"><label>Nome Completo *</label><input type="text" id="motNome" required></div>
+                <div class="form-group"><label>Nome *</label><input type="text" id="motNome" required></div>
                 <div class="form-row">
                     <div class="form-group"><label>WhatsApp *</label><input type="text" id="motWhatsApp" required></div>
                     <div class="form-group"><label>CPF</label><input type="text" id="motCPF"></div>
                 </div>
                 <div class="form-row">
                     <div class="form-group"><label>CNH *</label><input type="text" id="motCNH" required></div>
-                    <div class="form-group"><label>Validade CNH</label><input type="date" id="motCNHValidade"></div>
+                    <div class="form-group"><label>Validade</label><input type="date" id="motCNHValidade"></div>
                 </div>
                 <div class="form-group"><label>Endereço</label><input type="text" id="motEndereco"></div>
                 <hr class="divider">
@@ -385,7 +450,6 @@
                     <div class="form-group"><label>Placa *</label><input type="text" id="motVeiculoPlaca" required></div>
                     <div class="form-group"><label>Ano</label><input type="number" id="motVeiculoAno"></div>
                 </div>
-                <div class="form-group"><label>Senha</label><input type="text" id="motSenha" placeholder="Vazio = gerar"></div>
                 <button type="submit" class="btn btn-success" style="width:100%;padding:12px;">✅ Cadastrar</button>
             </form>
             <div id="tokenMotoristaBox" class="token-box" style="display:none;"><h4>🎉 Cadastrado!</h4><p>Token:</p><code id="tokenGerado"></code><p><strong>Senha:</strong> <span id="senhaGerada"></span></p></div>
@@ -412,11 +476,11 @@
                     <div class="form-group"><label>Telefone</label><input type="text" id="recClienteTel" required></div>
                 </div>
                 <div class="form-row">
-                    <div class="form-group"><label>Tipo</label><select id="recTipo"><option value="motorista">Motorista</option><option value="cobranca">Cobrança</option><option value="app">App</option><option value="outro">Outro</option></select></div>
-                    <div class="form-group"><label>Prioridade</label><select id="recPrioridade"><option value="baixa">Baixa</option><option value="media" selected>Média</option><option value="alta">Alta</option></select></div>
+                    <div class="form-group"><label>Tipo</label><select id="recTipo"><option value="motorista">Motorista</option><option value="cobranca">Cobrança</option><option value="outro">Outro</option></select></div>
+                    <div class="form-group"><label>Prioridade</label><select id="recPrioridade"><option value="baixa">Baixa</option><option value="media">Média</option><option value="alta">Alta</option></select></div>
                 </div>
                 <div class="form-group"><label>Assunto</label><input type="text" id="recAssunto" required></div>
-                <div class="form-group"><label>Descrição</label><textarea id="recDescricao" rows="3" required></textarea></div>
+                <div class="form-group"><label>Descrição</label><textarea id="recDescricao" rows="3"></textarea></div>
                 <button type="submit" class="btn btn-success" style="width:100%;">📩 Registrar</button>
             </form>
         </div>
@@ -428,8 +492,8 @@
             <form id="formArea">
                 <div class="form-group"><label>Nome</label><input type="text" id="areaNome" required></div>
                 <div class="form-group"><label>Cidade</label><input type="text" id="areaCidade" required></div>
-                <div class="form-group"><label>Bairros (vírgula)</label><input type="text" id="areaBairros"></div>
-                <div class="form-group"><label>Taxa Extra (R$)</label><input type="number" id="areaTaxa" step="0.01" value="0"></div>
+                <div class="form-group"><label>Bairros</label><input type="text" id="areaBairros" placeholder="Separados por vírgula"></div>
+                <div class="form-group"><label>Taxa Extra</label><input type="number" id="areaTaxa" step="0.01" value="0"></div>
                 <button type="submit" class="btn btn-success" style="width:100%;">💾 Salvar</button>
             </form>
         </div>
@@ -437,13 +501,47 @@
 
     <div class="modal" id="modalBlacklist">
         <div class="modal-content">
-            <div class="modal-header"><h3>🚫 Adicionar à Blacklist</h3><button class="modal-close" onclick="fecharModal('modalBlacklist')">&times;</button></div>
+            <div class="modal-header"><h3>🚫 Blacklist</h3><button class="modal-close" onclick="fecharModal('modalBlacklist')">&times;</button></div>
             <form id="formBlacklist">
-                <div class="form-group"><label>Tipo</label><select id="blTipo"><option value="telefone">Telefone</option><option value="cpf">CPF</option><option value="dispositivo">Dispositivo</option></select></div>
-                <div class="form-group"><label>Valor</label><input type="text" id="blValor" required placeholder="Ex: 11999990000"></div>
-                <div class="form-group"><label>Motivo</label><textarea id="blMotivo" rows="3" required placeholder="Motivo do bloqueio..."></textarea></div>
+                <div class="form-group"><label>Tipo</label><select id="blTipo"><option value="telefone">Telefone</option><option value="cpf">CPF</option></select></div>
+                <div class="form-group"><label>Valor</label><input type="text" id="blValor" required></div>
+                <div class="form-group"><label>Motivo</label><textarea id="blMotivo" rows="2" required></textarea></div>
                 <button type="submit" class="btn btn-danger" style="width:100%;">🚫 Bloquear</button>
             </form>
+        </div>
+    </div>
+
+    <div class="modal" id="modalUsuario">
+        <div class="modal-content">
+            <div class="modal-header"><h3>👤 Novo Usuário Admin</h3><button class="modal-close" onclick="fecharModal('modalUsuario')">&times;</button></div>
+            <div id="formUsuarioAlert"></div>
+            <form id="formUsuario">
+                <div class="form-group"><label>Nome Completo *</label><input type="text" id="usrNome" required></div>
+                <div class="form-row">
+                    <div class="form-group"><label>Login *</label><input type="text" id="usrLogin" required></div>
+                    <div class="form-group"><label>Email *</label><input type="email" id="usrEmail" required></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Senha</label><input type="text" id="usrSenha" placeholder="Vazio = 123456"></div>
+                    <div class="form-group"><label>Telefone</label><input type="text" id="usrTelefone"></div>
+                </div>
+                <div class="form-group">
+                    <label>Nível de Acesso *</label>
+                    <select id="usrNivel" required>
+                        <option value="admin">Administrador (acesso total)</option>
+                        <option value="gerente">Gerente (operações + relatórios)</option>
+                        <option value="operador" selected>Operador (corridas + motoristas)</option>
+                        <option value="financeiro">Financeiro (relatórios + preços)</option>
+                        <option value="atendimento">Atendimento (clientes + reclamações)</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-success" style="width:100%;padding:12px;">✅ Criar Usuário</button>
+            </form>
+            <div id="usuarioCriado" class="token-box" style="display:none;">
+                <h4>🎉 Usuário Criado!</h4>
+                <p>Login: <strong id="novoUsrLogin"></strong></p>
+                <p>Senha: <strong id="novoUsrSenha"></strong></p>
+            </div>
         </div>
     </div>
 
