@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+require('./config/database');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -9,7 +10,6 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Rotas
 const authRoutes = require('./routes/auth.routes');
 const usuariosRoutes = require('./routes/usuarios.routes');
 const motoristaRoutes = require('./routes/motorista.routes');
@@ -61,19 +61,20 @@ app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'adm
 app.get('/admin/login', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'login.html')));
 
 app.get('/health', (req, res) => {
+    const mongoose = require('mongoose');
     const IAService = require('./services/ia.service');
     res.json({ 
         status: 'ok', 
-        versao: '3.0.0',
-        ia: IAService.isAtivo() ? 'ATIVA (Claude)' : 'Desativada - Configure ANTHROPIC_API_KEY',
-        funcionalidades: ['IA Claude', 'Auto-Detect', 'GPS', 'Favoritos', 'Rastreamento']
+        versao: '3.1.0',
+        banco: mongoose.connection.readyState === 1 ? 'MongoDB CONECTADO' : 'Desconectado',
+        ia: IAService.isAtivo() ? 'ATIVA (Claude)' : 'Desativada',
+        funcionalidades: ['MongoDB', 'IA Claude', 'GPS', 'Favoritos', 'Rastreamento']
     });
 });
 
 app.use((req, res) => res.status(404).json({ error: 'Rota não encontrada' }));
 
 app.listen(PORT, () => {
-    console.log('🚀 UBMAX Rebeca v3.0.0 + IA Claude');
+    console.log('🚀 UBMAX v3.1.0 - MongoDB + IA');
     console.log('📡 Porta:', PORT);
-    console.log('🤖 IA:', process.env.ANTHROPIC_API_KEY ? 'Configurada' : 'Não configurada');
 });
