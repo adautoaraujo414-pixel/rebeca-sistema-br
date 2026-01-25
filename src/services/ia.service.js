@@ -5,11 +5,16 @@ let clienteAnthropic = null;
 const configIA = {
     apiKey: process.env.ANTHROPIC_API_KEY || '',
     modelo: 'claude-3-haiku-20240307',
-    ativo: false
+    ativo: !!process.env.ANTHROPIC_API_KEY
 };
 
+// Inicializar se tiver API Key
+if (configIA.apiKey) {
+    clienteAnthropic = new Anthropic({ apiKey: configIA.apiKey });
+    console.log('🤖 IA Claude inicializada!');
+}
+
 const IAService = {
-    // ==================== CONFIG ====================
     getConfig: () => ({
         modelo: configIA.modelo,
         ativo: configIA.ativo,
@@ -17,62 +22,56 @@ const IAService = {
     }),
 
     setApiKey: (apiKey) => {
-        configIA.apiKey = apiKey;
-        configIA.ativo = !!apiKey;
-        if (apiKey) {
-            clienteAnthropic = new Anthropic({ apiKey });
+        configIA.apiKey = apiKey || process.env.ANTHROPIC_API_KEY || '';
+        configIA.ativo = !!configIA.apiKey;
+        if (configIA.apiKey) {
+            clienteAnthropic = new Anthropic({ apiKey: configIA.apiKey });
         }
         return { sucesso: true, ativo: configIA.ativo };
     },
 
     setConfig: (config) => {
-        if (config.apiKey !== undefined) IAService.setApiKey(config.apiKey);
+        if (config.apiKey !== undefined && config.apiKey) IAService.setApiKey(config.apiKey);
         if (config.modelo) configIA.modelo = config.modelo;
-        if (config.ativo !== undefined) configIA.ativo = config.ativo;
+        if (config.ativo !== undefined) configIA.ativo = config.ativo && !!configIA.apiKey;
         return IAService.getConfig();
     },
 
-    isAtivo: () => configIA.ativo && !!configIA.apiKey,
+    isAtivo: () => configIA.ativo && !!configIA.apiKey && !!clienteAnthropic,
 
-    // ==================== ANALISAR MENSAGEM ====================
     async analisarMensagem(mensagem, contexto = {}) {
-        if (!IAService.isAtivo()) {
-            return { usarIA: false };
-        }
+        if (!IAService.isAtivo()) return { usarIA: false };
 
         try {
-            const prompt = `Você é um assistente de análise de mensagens para um app de táxi/transporte chamado UBMAX.
+            const prompt = `Você é um assistente de análise para um app de táxi UBMAX.
 
-Analise a mensagem do cliente e extraia as informações em JSON.
+Analise a mensagem e extraia informações em JSON.
 
-CONTEXTO DO CLIENTE:
+CONTEXTO:
 - Nome: ${contexto.nome || 'Cliente'}
-- Telefone: ${contexto.telefone || 'N/A'}
-- Etapa atual: ${contexto.etapa || 'inicio'}
-- Tem favoritos: Casa=${contexto.temCasa ? 'Sim' : 'Não'}, Trabalho=${contexto.temTrabalho ? 'Sim' : 'Não'}
+- Etapa: ${contexto.etapa || 'inicio'}
+- Favoritos: Casa=${contexto.temCasa ? 'Sim' : 'Não'}, Trabalho=${contexto.temTrabalho ? 'Sim' : 'Não'}
 
-MENSAGEM DO CLIENTE:
-"${mensagem}"
+MENSAGEM: "${mensagem}"
 
-Responda APENAS com JSON válido (sem markdown):
+Responda APENAS JSON válido:
 {
-  "intencao": "pedir_corrida|cotacao|cancelar|historico|precos|favoritos|atendente|rastrear|saudacao|outro",
-  "origem": "endereço extraído ou null",
-  "destino": "endereço extraído ou null",
+  "intencao": "pedir_corrida|cotacao|cancelar|historico|precos|favoritos|atendente|rastrear|saudacao|pergunta|outro",
+  "origem": "endereço ou null",
+  "destino": "endereço ou null",
   "usarFavorito": "casa|trabalho|null",
-  "observacao": "informação extra para motorista ou null",
+  "observacao": "referência para motorista ou null",
   "pergunta": "pergunta do cliente ou null",
   "sentimento": "positivo|neutro|negativo|urgente",
   "confianca": 0.0 a 1.0
 }
 
 REGRAS:
-- Se mencionar "casa", "minha casa", "em casa" → usarFavorito: "casa"
-- Se mencionar "trabalho", "empresa", "escritório" → usarFavorito: "trabalho"
-- Se pedir corrida/carro/taxi/uber → intencao: "pedir_corrida"
-- Se perguntar preço/valor/quanto → intencao: "cotacao" ou "precos"
-- Se mencionar endereço → extraia em "origem" ou "destino"
-- Se tiver referência como "casa azul", "perto do mercado" → coloque em "observacao"`;
+- "casa", "minha casa", "em casa", "voltar pra casa" → usarFavorito: "casa"
+- "trabalho", "empresa", "escritório" → usarFavorito: "trabalho"
+- pedir corrida/carro/taxi/uber/me busca → intencao: "pedir_corrida"
+- preço/valor/quanto custa/tabela → intencao: "precos" ou "cotacao"
+- referências como "casa azul", "perto do mercado" → observacao`;
 
             const response = await clienteAnthropic.messages.create({
                 model: configIA.modelo,
@@ -80,77 +79,28 @@ REGRAS:
                 messages: [{ role: 'user', content: prompt }]
             });
 
-            const textoResposta = response.content[0].text.trim();
-            
-            // Tentar parsear JSON
             try {
-                const analise = JSON.parse(textoResposta);
+                const analise = JSON.parse(response.content[0].text.trim());
                 analise.usarIA = true;
                 return analise;
             } catch (e) {
-                // Se não conseguir parsear, extrair informações básicas
-                console.log('Erro ao parsear resposta IA:', textoResposta);
                 return { usarIA: false };
             }
-
         } catch (error) {
-            console.error('Erro na IA:', error.message);
+            console.error('Erro IA:', error.message);
             return { usarIA: false, erro: error.message };
         }
     },
 
-    // ==================== GERAR RESPOSTA NATURAL ====================
-    async gerarResposta(contexto, dados) {
-        if (!IAService.isAtivo()) {
-            return null;
-        }
-
-        try {
-            const prompt = `Você é a Rebeca, assistente virtual simpática do UBMAX (app de táxi).
-
-Gere uma resposta curta e amigável para o cliente.
-
-SITUAÇÃO:
-${JSON.stringify(contexto, null, 2)}
-
-DADOS:
-${JSON.stringify(dados, null, 2)}
-
-REGRAS:
-- Seja breve (máximo 3 linhas)
-- Use emojis moderadamente
-- Seja simpática mas profissional
-- Use *negrito* para destacar valores
-- Não invente informações
-
-Responda apenas com a mensagem, sem explicações.`;
-
-            const response = await clienteAnthropic.messages.create({
-                model: configIA.modelo,
-                max_tokens: 300,
-                messages: [{ role: 'user', content: prompt }]
-            });
-
-            return response.content[0].text.trim();
-
-        } catch (error) {
-            console.error('Erro ao gerar resposta:', error.message);
-            return null;
-        }
-    },
-
-    // ==================== EXTRAIR ENDEREÇO DE TEXTO ====================
     async extrairEndereco(texto) {
-        if (!IAService.isAtivo()) {
-            return { encontrado: false };
-        }
+        if (!IAService.isAtivo()) return { encontrado: false };
 
         try {
-            const prompt = `Extraia o endereço da seguinte mensagem. Se não houver endereço claro, retorne encontrado: false.
+            const prompt = `Extraia endereço da mensagem. Se não houver, retorne encontrado: false.
 
 Mensagem: "${texto}"
 
-Responda APENAS com JSON:
+JSON apenas:
 {
   "encontrado": true/false,
   "endereco": "endereço formatado ou null",
@@ -168,33 +118,28 @@ Responda APENAS com JSON:
             });
 
             return JSON.parse(response.content[0].text.trim());
-
         } catch (error) {
             return { encontrado: false, erro: error.message };
         }
     },
 
-    // ==================== RESPONDER PERGUNTA ====================
     async responderPergunta(pergunta, infoEmpresa = {}) {
-        if (!IAService.isAtivo()) {
-            return null;
-        }
+        if (!IAService.isAtivo()) return null;
 
         try {
-            const prompt = `Você é a Rebeca, assistente do UBMAX (táxi/transporte).
+            const prompt = `Você é a Rebeca, assistente do UBMAX (táxi).
 
-INFORMAÇÕES DA EMPRESA:
+INFO DA EMPRESA:
 - Taxa base: R$ ${infoEmpresa.taxaBase || 5}
-- Preço por km: R$ ${infoEmpresa.precoKm || 2.50}
+- Por km: R$ ${infoEmpresa.precoKm || 2.50}
 - Mínimo: R$ ${infoEmpresa.taxaMinima || 15}
 - Horário: 24 horas
 - Pagamento: Dinheiro, Pix, Cartão
 - Área: Osasco e região
 
-PERGUNTA DO CLIENTE:
-"${pergunta}"
+PERGUNTA: "${pergunta}"
 
-Responda de forma breve e útil (máximo 4 linhas). Se não souber, sugira falar com atendente.`;
+Responda breve (máx 4 linhas). Se não souber, sugira falar com atendente.`;
 
             const response = await clienteAnthropic.messages.create({
                 model: configIA.modelo,
@@ -203,31 +148,27 @@ Responda de forma breve e útil (máximo 4 linhas). Se não souber, sugira falar
             });
 
             return response.content[0].text.trim();
-
         } catch (error) {
             return null;
         }
     },
 
-    // ==================== TESTAR CONEXÃO ====================
     async testarConexao() {
-        if (!configIA.apiKey) {
-            return { sucesso: false, erro: 'API Key não configurada' };
-        }
+        if (!configIA.apiKey) return { sucesso: false, erro: 'API Key não configurada' };
 
         try {
+            if (!clienteAnthropic) {
+                clienteAnthropic = new Anthropic({ apiKey: configIA.apiKey });
+            }
+            
             const response = await clienteAnthropic.messages.create({
                 model: configIA.modelo,
                 max_tokens: 50,
                 messages: [{ role: 'user', content: 'Responda apenas: OK' }]
             });
 
-            return { 
-                sucesso: true, 
-                modelo: configIA.modelo,
-                resposta: response.content[0].text 
-            };
-
+            configIA.ativo = true;
+            return { sucesso: true, modelo: configIA.modelo, resposta: response.content[0].text };
         } catch (error) {
             return { sucesso: false, erro: error.message };
         }
