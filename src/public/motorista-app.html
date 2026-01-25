@@ -2,179 +2,645 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>UBMAX Motorista</title>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#1a1a2e">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', sans-serif; background: #1a1a2e; color: white; min-height: 100vh; }
-        .container { max-width: 500px; margin: 0 auto; padding: 20px; }
-        .header { text-align: center; padding: 20px 0; border-bottom: 1px solid #333; margin-bottom: 20px; }
-        .header h1 { color: #00d4ff; font-size: 24px; }
-        .status-bar { display: flex; justify-content: space-between; align-items: center; background: #252542; padding: 15px; border-radius: 10px; margin-bottom: 20px; }
-        .status-indicator { display: flex; align-items: center; gap: 10px; }
+        body { font-family: 'Segoe UI', sans-serif; background: #1a1a2e; color: #fff; min-height: 100vh; overflow-x: hidden; }
+        
+        /* Header */
+        .header { background: linear-gradient(135deg, #16213e, #1a1a2e); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; position: sticky; top: 0; z-index: 100; }
+        .header h1 { font-size: 18px; color: #00d4ff; display: flex; align-items: center; gap: 10px; }
+        .header-actions { display: flex; gap: 10px; }
+        .header-btn { background: #252542; border: none; color: #fff; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 16px; }
+        
+        /* Status Bar */
+        .status-bar { background: #252542; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
+        .status-left { display: flex; align-items: center; gap: 15px; }
         .status-dot { width: 12px; height: 12px; border-radius: 50%; }
-        .status-dot.online { background: #00ff88; box-shadow: 0 0 10px #00ff88; }
-        .status-dot.offline { background: #ff4444; }
+        .status-dot.disponivel { background: #00ff88; box-shadow: 0 0 10px #00ff88; animation: pulse 2s infinite; }
         .status-dot.em_corrida { background: #ffaa00; box-shadow: 0 0 10px #ffaa00; }
-        .gps-status { font-size: 12px; color: #888; }
-        .gps-status.ativo { color: #00ff88; }
-        .btn { width: 100%; padding: 15px; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; margin-bottom: 10px; transition: all 0.3s; }
-        .btn-primary { background: linear-gradient(135deg, #00d4ff, #0099cc); color: white; }
-        .btn-success { background: linear-gradient(135deg, #00ff88, #00cc6a); color: white; }
-        .btn-danger { background: linear-gradient(135deg, #ff4444, #cc0000); color: white; }
-        .btn-warning { background: linear-gradient(135deg, #ffaa00, #cc8800); color: white; }
-        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        .card { background: #252542; border-radius: 15px; padding: 20px; margin-bottom: 20px; }
-        .card-title { font-size: 14px; color: #888; margin-bottom: 10px; }
-        .card-value { font-size: 24px; font-weight: bold; color: #00d4ff; }
-        .corrida-card { background: linear-gradient(135deg, #252542, #1a1a2e); border: 2px solid #00d4ff; }
+        .status-dot.offline { background: #ff4444; }
+        .status-text { font-size: 14px; }
+        .status-toggle { background: linear-gradient(135deg, #00d4ff, #0099cc); border: none; color: #fff; padding: 10px 20px; border-radius: 25px; font-weight: bold; cursor: pointer; }
+        .status-toggle.offline { background: linear-gradient(135deg, #00ff88, #00cc6a); }
+        .status-toggle.online { background: linear-gradient(135deg, #ff4444, #cc0000); }
+        
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+        
+        /* GPS Info */
+        .gps-bar { background: #1e1e3f; padding: 10px 20px; display: flex; justify-content: space-between; font-size: 12px; color: #888; }
+        .gps-bar.ativo { color: #00ff88; }
+        
+        /* Cards Dashboard */
+        .dashboard { padding: 15px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        .dash-card { background: linear-gradient(135deg, #252542, #1e1e3f); padding: 15px; border-radius: 12px; text-align: center; }
+        .dash-card .icon { font-size: 24px; margin-bottom: 5px; }
+        .dash-card .value { font-size: 22px; font-weight: bold; color: #00d4ff; }
+        .dash-card .label { font-size: 11px; color: #888; margin-top: 3px; }
+        .dash-card.green .value { color: #00ff88; }
+        .dash-card.orange .value { color: #ffaa00; }
+        
+        /* Nova Corrida Popup */
+        .nova-corrida-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); z-index: 1000; display: none; justify-content: center; align-items: center; padding: 20px; }
+        .nova-corrida-overlay.active { display: flex; }
+        .nova-corrida-card { background: linear-gradient(135deg, #252542, #1a1a2e); border: 3px solid #00d4ff; border-radius: 20px; width: 100%; max-width: 400px; overflow: hidden; animation: slideUp 0.3s ease; }
+        @keyframes slideUp { from { transform: translateY(100px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        
+        .corrida-header { background: linear-gradient(135deg, #00d4ff, #0099cc); padding: 15px; text-align: center; }
+        .corrida-header h2 { font-size: 18px; margin-bottom: 5px; }
+        .corrida-valor { font-size: 32px; font-weight: bold; }
+        .corrida-distancia { font-size: 14px; opacity: 0.9; }
+        
+        .timer-bar { height: 6px; background: #333; }
+        .timer-progress { height: 100%; background: linear-gradient(90deg, #00ff88, #ffaa00, #ff4444); transition: width 0.1s linear; }
+        
+        .corrida-body { padding: 20px; }
         .corrida-info { margin-bottom: 15px; }
-        .corrida-info label { font-size: 12px; color: #888; display: block; }
-        .corrida-info span { font-size: 16px; }
-        .login-form { display: none; }
-        .login-form.active { display: block; }
-        .input { width: 100%; padding: 15px; border: 1px solid #333; border-radius: 10px; background: #1a1a2e; color: white; font-size: 16px; margin-bottom: 15px; }
-        .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .hidden { display: none !important; }
-        .coords { font-size: 11px; color: #666; margin-top: 5px; }
-        .pulse { animation: pulse 2s infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-        .notification { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #00d4ff; color: white; padding: 15px 30px; border-radius: 10px; z-index: 1000; display: none; }
+        .corrida-info label { font-size: 11px; color: #888; display: block; margin-bottom: 3px; }
+        .corrida-info span { font-size: 15px; display: block; }
+        .corrida-info .obs { background: #1a1a2e; padding: 8px 12px; border-radius: 8px; margin-top: 5px; font-size: 13px; color: #ffaa00; }
+        
+        .corrida-cliente { display: flex; align-items: center; gap: 15px; padding: 15px; background: #1a1a2e; border-radius: 12px; margin-bottom: 15px; }
+        .cliente-avatar { width: 50px; height: 50px; background: #00d4ff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; }
+        .cliente-info h3 { font-size: 16px; margin-bottom: 3px; }
+        .cliente-info span { font-size: 12px; color: #888; }
+        
+        .corrida-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .btn-aceitar { background: linear-gradient(135deg, #00ff88, #00cc6a); border: none; color: #fff; padding: 15px; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; }
+        .btn-recusar { background: linear-gradient(135deg, #ff4444, #cc0000); border: none; color: #fff; padding: 15px; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; }
+        
+        /* Corrida Ativa */
+        .corrida-ativa { display: none; padding: 15px; }
+        .corrida-ativa.active { display: block; }
+        .corrida-ativa-card { background: linear-gradient(135deg, #252542, #1e1e3f); border: 2px solid #00d4ff; border-radius: 15px; overflow: hidden; }
+        .corrida-ativa-header { background: #00d4ff; color: #000; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; }
+        .corrida-ativa-body { padding: 15px; }
+        
+        .rota-item { display: flex; gap: 15px; margin-bottom: 15px; }
+        .rota-icon { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+        .rota-icon.origem { background: #00ff88; color: #000; }
+        .rota-icon.destino { background: #ff4444; color: #fff; }
+        .rota-content { flex: 1; }
+        .rota-content label { font-size: 11px; color: #888; }
+        .rota-content p { font-size: 14px; margin-top: 3px; }
+        .rota-content .obs { font-size: 12px; color: #ffaa00; margin-top: 5px; }
+        
+        .corrida-ativa-actions { display: grid; gap: 10px; padding: 15px; }
+        .btn-action { padding: 15px; border: none; border-radius: 12px; font-size: 15px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .btn-navegar { background: linear-gradient(135deg, #4285f4, #1a73e8); color: #fff; }
+        .btn-cheguei { background: linear-gradient(135deg, #ffaa00, #ff8800); color: #fff; }
+        .btn-iniciar { background: linear-gradient(135deg, #00d4ff, #0099cc); color: #fff; }
+        .btn-finalizar { background: linear-gradient(135deg, #00ff88, #00cc6a); color: #fff; }
+        .btn-ligar { background: linear-gradient(135deg, #9c27b0, #7b1fa2); color: #fff; }
+        .btn-cancelar { background: transparent; border: 2px solid #ff4444; color: #ff4444; }
+        
+        /* Menu Flutuante */
+        .fab-container { position: fixed; bottom: 80px; right: 20px; z-index: 500; }
+        .fab-btn { width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, #00d4ff, #0099cc); border: none; color: #fff; font-size: 24px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,212,255,0.4); }
+        .fab-menu { position: absolute; bottom: 70px; right: 0; background: #252542; border-radius: 12px; padding: 10px; display: none; min-width: 200px; box-shadow: 0 5px 20px rgba(0,0,0,0.5); }
+        .fab-menu.active { display: block; }
+        .fab-item { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 8px; cursor: pointer; transition: background 0.2s; }
+        .fab-item:hover { background: #1a1a2e; }
+        .fab-item span { font-size: 14px; }
+        
+        /* Bottom Nav */
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #252542; display: flex; border-top: 1px solid #333; z-index: 100; }
+        .nav-item { flex: 1; padding: 12px 5px; text-align: center; cursor: pointer; transition: all 0.2s; }
+        .nav-item.active { background: #1a1a2e; color: #00d4ff; }
+        .nav-item .icon { font-size: 20px; display: block; }
+        .nav-item .label { font-size: 10px; margin-top: 3px; }
+        
+        /* Pages */
+        .page { display: none; padding-bottom: 70px; }
+        .page.active { display: block; }
+        
+        /* Chat */
+        .chat-container { height: calc(100vh - 180px); display: flex; flex-direction: column; }
+        .chat-messages { flex: 1; overflow-y: auto; padding: 15px; }
+        .chat-msg { margin-bottom: 15px; max-width: 80%; }
+        .chat-msg.sent { margin-left: auto; }
+        .chat-msg .bubble { padding: 12px 15px; border-radius: 15px; font-size: 14px; }
+        .chat-msg.received .bubble { background: #252542; border-bottom-left-radius: 5px; }
+        .chat-msg.sent .bubble { background: #00d4ff; color: #000; border-bottom-right-radius: 5px; }
+        .chat-msg .meta { font-size: 11px; color: #666; margin-top: 5px; }
+        .chat-msg.sent .meta { text-align: right; }
+        .chat-input-container { padding: 15px; background: #252542; display: flex; gap: 10px; }
+        .chat-input { flex: 1; background: #1a1a2e; border: 1px solid #333; border-radius: 25px; padding: 12px 20px; color: #fff; font-size: 14px; }
+        .chat-send { width: 45px; height: 45px; border-radius: 50%; background: #00d4ff; border: none; color: #000; font-size: 18px; cursor: pointer; }
+        
+        /* Caixa/Financeiro */
+        .financeiro-header { padding: 20px; background: linear-gradient(135deg, #252542, #1e1e3f); text-align: center; }
+        .financeiro-saldo { font-size: 36px; font-weight: bold; color: #00ff88; }
+        .financeiro-label { font-size: 12px; color: #888; margin-top: 5px; }
+        .financeiro-actions { display: flex; gap: 10px; padding: 15px; }
+        .fin-btn { flex: 1; padding: 15px; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; }
+        .fin-btn.entrada { background: #00ff88; color: #000; }
+        .fin-btn.saida { background: #ff4444; color: #fff; }
+        .transacoes-list { padding: 15px; }
+        .transacao-item { display: flex; justify-content: space-between; padding: 15px; background: #252542; border-radius: 10px; margin-bottom: 10px; }
+        .transacao-item .valor.positivo { color: #00ff88; }
+        .transacao-item .valor.negativo { color: #ff4444; }
+        
+        /* Relatórios */
+        .relatorio-card { background: #252542; margin: 15px; border-radius: 12px; padding: 20px; }
+        .relatorio-periodo { display: flex; gap: 10px; margin-bottom: 20px; }
+        .periodo-btn { flex: 1; padding: 10px; background: #1a1a2e; border: 1px solid #333; border-radius: 8px; color: #fff; cursor: pointer; }
+        .periodo-btn.active { background: #00d4ff; color: #000; border-color: #00d4ff; }
+        .relatorio-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .rel-stat { text-align: center; padding: 15px; background: #1a1a2e; border-radius: 10px; }
+        .rel-stat .value { font-size: 24px; font-weight: bold; color: #00d4ff; }
+        .rel-stat .label { font-size: 12px; color: #888; margin-top: 5px; }
+        
+        /* Emergência */
+        .emergencia-list { padding: 15px; }
+        .emergencia-item { display: flex; align-items: center; gap: 15px; padding: 15px; background: #252542; border-radius: 12px; margin-bottom: 10px; }
+        .emergencia-icon { width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; }
+        .emergencia-icon.admin { background: #00d4ff; }
+        .emergencia-icon.mecanico { background: #ffaa00; }
+        .emergencia-icon.guincho { background: #ff4444; }
+        .emergencia-icon.borracheiro { background: #9c27b0; }
+        .emergencia-info { flex: 1; }
+        .emergencia-info h3 { font-size: 16px; }
+        .emergencia-info span { font-size: 12px; color: #888; }
+        .emergencia-call { width: 45px; height: 45px; border-radius: 50%; background: #00ff88; border: none; font-size: 20px; cursor: pointer; }
+        
+        /* Avaria */
+        .avaria-form { padding: 15px; }
+        .avaria-foto { width: 100%; height: 200px; background: #252542; border: 2px dashed #333; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; margin-bottom: 15px; }
+        .avaria-foto img { max-width: 100%; max-height: 100%; object-fit: cover; border-radius: 10px; }
+        .avaria-textarea { width: 100%; background: #252542; border: 1px solid #333; border-radius: 12px; padding: 15px; color: #fff; font-size: 14px; min-height: 100px; resize: none; margin-bottom: 15px; }
+        
+        /* Modal */
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 2000; display: none; justify-content: center; align-items: center; padding: 20px; }
+        .modal-overlay.active { display: flex; }
+        .modal-content { background: #252542; border-radius: 15px; width: 100%; max-width: 400px; max-height: 80vh; overflow-y: auto; }
+        .modal-header { padding: 15px 20px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; }
+        .modal-header h3 { font-size: 18px; }
+        .modal-close { background: none; border: none; color: #fff; font-size: 24px; cursor: pointer; }
+        .modal-body { padding: 20px; }
+        
+        /* Login */
+        .login-container { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; padding: 30px; }
+        .login-logo { text-align: center; margin-bottom: 40px; }
+        .login-logo h1 { font-size: 32px; color: #00d4ff; }
+        .login-logo p { color: #888; margin-top: 10px; }
+        .login-form { background: #252542; padding: 30px; border-radius: 20px; }
+        .login-input { width: 100%; background: #1a1a2e; border: 1px solid #333; border-radius: 12px; padding: 15px; color: #fff; font-size: 16px; margin-bottom: 15px; }
+        .login-input:focus { border-color: #00d4ff; outline: none; }
+        .login-btn { width: 100%; background: linear-gradient(135deg, #00d4ff, #0099cc); border: none; padding: 15px; border-radius: 12px; color: #fff; font-size: 16px; font-weight: bold; cursor: pointer; }
+        
+        /* Notificação Toast */
+        .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #00d4ff; color: #000; padding: 15px 25px; border-radius: 10px; z-index: 3000; display: none; font-weight: bold; }
+        .toast.success { background: #00ff88; }
+        .toast.error { background: #ff4444; color: #fff; }
+        .toast.active { display: block; animation: slideDown 0.3s ease; }
+        @keyframes slideDown { from { transform: translate(-50%, -100%); } to { transform: translate(-50%, 0); } }
+        
+        /* Som */
+        .sound-enabled { }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>🚗 UBMAX Motorista</h1>
+    <!-- Login Section -->
+    <div id="loginSection" class="login-container">
+        <div class="login-logo">
+            <h1>🚗 UBMAX</h1>
+            <p>Motorista</p>
         </div>
-
-        <!-- Login -->
-        <div id="loginSection" class="login-form active">
-            <div class="card">
-                <h2 style="margin-bottom: 20px; text-align: center;">Entrar</h2>
-                <input type="tel" id="loginWhatsapp" class="input" placeholder="WhatsApp (11999999999)">
-                <input type="password" id="loginSenha" class="input" placeholder="Senha">
-                <button class="btn btn-primary" onclick="fazerLogin()">ENTRAR</button>
-            </div>
-        </div>
-
-        <!-- App Principal -->
-        <div id="appSection" class="hidden">
-            <div class="status-bar">
-                <div class="status-indicator">
-                    <div id="statusDot" class="status-dot offline"></div>
-                    <span id="statusText">Offline</span>
-                </div>
-                <div>
-                    <div id="gpsStatus" class="gps-status">📍 GPS desativado</div>
-                    <div id="coordsDisplay" class="coords"></div>
-                </div>
-            </div>
-
-            <!-- Botão Status -->
-            <button id="btnStatus" class="btn btn-success" onclick="toggleStatus()">FICAR ONLINE</button>
-
-            <!-- Corrida Ativa -->
-            <div id="corridaAtiva" class="card corrida-card hidden">
-                <h3 style="margin-bottom: 15px; color: #00d4ff;">🚗 CORRIDA ATIVA</h3>
-                <div class="corrida-info">
-                    <label>Cliente</label>
-                    <span id="corridaCliente">-</span>
-                </div>
-                <div class="corrida-info">
-                    <label>📍 Origem</label>
-                    <span id="corridaOrigem">-</span>
-                </div>
-                <div class="corrida-info">
-                    <label>🏁 Destino</label>
-                    <span id="corridaDestino">-</span>
-                </div>
-                <div class="corrida-info">
-                    <label>💰 Valor</label>
-                    <span id="corridaValor">-</span>
-                </div>
-                <button id="btnIniciar" class="btn btn-warning" onclick="iniciarCorrida()">INICIAR CORRIDA</button>
-                <button id="btnFinalizar" class="btn btn-success hidden" onclick="finalizarCorrida()">FINALIZAR CORRIDA</button>
-                <button class="btn btn-danger" onclick="cancelarCorrida()">CANCELAR</button>
-            </div>
-
-            <!-- Nova Corrida Disponível -->
-            <div id="novaCorrida" class="card corrida-card hidden pulse">
-                <h3 style="margin-bottom: 15px; color: #ffaa00;">🔔 NOVA CORRIDA!</h3>
-                <div class="corrida-info">
-                    <label>Cliente</label>
-                    <span id="novaCorridaCliente">-</span>
-                </div>
-                <div class="corrida-info">
-                    <label>📍 Origem</label>
-                    <span id="novaCorridaOrigem">-</span>
-                </div>
-                <div class="corrida-info">
-                    <label>🏁 Destino</label>
-                    <span id="novaCorridaDestino">-</span>
-                </div>
-                <div class="corrida-info">
-                    <label>💰 Valor Estimado</label>
-                    <span id="novaCorridaValor">-</span>
-                </div>
-                <button class="btn btn-success" onclick="aceitarCorrida()">✅ ACEITAR</button>
-                <button class="btn btn-danger" onclick="recusarCorrida()">❌ RECUSAR</button>
-            </div>
-
-            <!-- Estatísticas -->
-            <div class="stats">
-                <div class="card">
-                    <div class="card-title">Corridas Hoje</div>
-                    <div id="corridasHoje" class="card-value">0</div>
-                </div>
-                <div class="card">
-                    <div class="card-title">Ganhos Hoje</div>
-                    <div id="ganhosHoje" class="card-value">R$ 0</div>
-                </div>
-            </div>
-
-            <button class="btn btn-danger" onclick="fazerLogout()" style="margin-top: 20px;">SAIR</button>
+        <div class="login-form">
+            <input type="tel" id="loginWhatsapp" class="login-input" placeholder="WhatsApp (ex: 11999999999)">
+            <input type="password" id="loginSenha" class="login-input" placeholder="Senha">
+            <button class="login-btn" onclick="fazerLogin()">ENTRAR</button>
         </div>
     </div>
 
-    <div id="notification" class="notification"></div>
+    <!-- App Section -->
+    <div id="appSection" style="display:none;">
+        <!-- Header -->
+        <div class="header">
+            <h1>🚗 UBMAX</h1>
+            <div class="header-actions">
+                <button class="header-btn" onclick="toggleSound()">🔔</button>
+                <button class="header-btn" onclick="abrirPerfil()">👤</button>
+            </div>
+        </div>
+
+        <!-- Status Bar -->
+        <div class="status-bar">
+            <div class="status-left">
+                <div id="statusDot" class="status-dot offline"></div>
+                <div>
+                    <div id="statusText" class="status-text">Offline</div>
+                    <div id="gpsInfo" class="gps-bar">📍 Aguardando GPS...</div>
+                </div>
+            </div>
+            <button id="statusToggle" class="status-toggle offline" onclick="toggleStatus()">FICAR ONLINE</button>
+        </div>
+
+        <!-- Pages Container -->
+        <div id="pagesContainer">
+            <!-- HOME PAGE -->
+            <div id="pageHome" class="page active">
+                <!-- Dashboard Cards -->
+                <div class="dashboard">
+                    <div class="dash-card green">
+                        <div class="icon">💰</div>
+                        <div id="ganhosHoje" class="value">R$ 0</div>
+                        <div class="label">Ganhos Hoje</div>
+                    </div>
+                    <div class="dash-card">
+                        <div class="icon">🚗</div>
+                        <div id="corridasHoje" class="value">0</div>
+                        <div class="label">Corridas Hoje</div>
+                    </div>
+                    <div class="dash-card orange">
+                        <div class="icon">⏱️</div>
+                        <div id="horasOnline" class="value">0h</div>
+                        <div class="label">Online Hoje</div>
+                    </div>
+                    <div class="dash-card">
+                        <div class="icon">⭐</div>
+                        <div id="avaliacao" class="value">5.0</div>
+                        <div class="label">Avaliação</div>
+                    </div>
+                </div>
+
+                <!-- Corrida Ativa -->
+                <div id="corridaAtiva" class="corrida-ativa">
+                    <div class="corrida-ativa-card">
+                        <div class="corrida-ativa-header">
+                            <span>🚗 CORRIDA EM ANDAMENTO</span>
+                            <span id="corridaValorAtiva">R$ 0,00</span>
+                        </div>
+                        <div class="corrida-ativa-body">
+                            <div class="corrida-cliente">
+                                <div class="cliente-avatar">👤</div>
+                                <div class="cliente-info">
+                                    <h3 id="clienteNomeAtiva">Cliente</h3>
+                                    <span id="clienteCorridasAtiva">0 corridas</span>
+                                </div>
+                            </div>
+                            <div class="rota-item">
+                                <div class="rota-icon origem">A</div>
+                                <div class="rota-content">
+                                    <label>BUSCAR EM</label>
+                                    <p id="origemAtiva">-</p>
+                                    <div id="obsOrigemAtiva" class="obs" style="display:none;"></div>
+                                </div>
+                            </div>
+                            <div class="rota-item">
+                                <div class="rota-icon destino">B</div>
+                                <div class="rota-content">
+                                    <label>LEVAR ATÉ</label>
+                                    <p id="destinoAtiva">-</p>
+                                    <div id="obsDestinoAtiva" class="obs" style="display:none;"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="corrida-ativa-actions">
+                            <button id="btnNavegar" class="btn-action btn-navegar" onclick="navegarAteCliente()">🗺️ NAVEGAR</button>
+                            <button id="btnLigarCliente" class="btn-action btn-ligar" onclick="ligarCliente()">📞 LIGAR CENTRAL</button>
+                            <button id="btnCheguei" class="btn-action btn-cheguei" onclick="chegueiLocal()">📍 CHEGUEI NO LOCAL</button>
+                            <button id="btnIniciar" class="btn-action btn-iniciar" onclick="iniciarCorrida()" style="display:none;">▶️ INICIAR CORRIDA</button>
+                            <button id="btnFinalizar" class="btn-action btn-finalizar" onclick="finalizarCorrida()" style="display:none;">✅ FINALIZAR CORRIDA</button>
+                            <button class="btn-action btn-cancelar" onclick="cancelarCorrida()">✖️ CANCELAR</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sem corrida ativa -->
+                <div id="semCorrida" style="text-align:center; padding:40px 20px; color:#888;">
+                    <div style="font-size:60px; margin-bottom:20px;">🚗</div>
+                    <h3 style="color:#fff; margin-bottom:10px;">Aguardando corridas</h3>
+                    <p>Fique online para receber solicitações</p>
+                </div>
+            </div>
+
+            <!-- CHAT PAGE -->
+            <div id="pageChat" class="page">
+                <div class="chat-container">
+                    <div id="chatMessages" class="chat-messages">
+                        <!-- Mensagens aparecem aqui -->
+                    </div>
+                    <div class="chat-input-container">
+                        <input type="text" id="chatInput" class="chat-input" placeholder="Digite sua mensagem...">
+                        <button class="chat-send" onclick="enviarMensagem()">➤</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FINANCEIRO PAGE -->
+            <div id="pageFinanceiro" class="page">
+                <div class="financeiro-header">
+                    <div class="financeiro-label">Saldo do Dia</div>
+                    <div id="saldoDia" class="financeiro-saldo">R$ 0,00</div>
+                </div>
+                <div class="financeiro-actions">
+                    <button class="fin-btn entrada" onclick="registrarEntrada()">+ Entrada</button>
+                    <button class="fin-btn saida" onclick="registrarSaida()">- Saída</button>
+                </div>
+                <div class="transacoes-list" id="transacoesList">
+                    <!-- Transações aparecem aqui -->
+                </div>
+            </div>
+
+            <!-- RELATÓRIOS PAGE -->
+            <div id="pageRelatorios" class="page">
+                <div class="relatorio-card">
+                    <div class="relatorio-periodo">
+                        <button class="periodo-btn active" onclick="setPeriodo('hoje')">Hoje</button>
+                        <button class="periodo-btn" onclick="setPeriodo('semana')">Semana</button>
+                        <button class="periodo-btn" onclick="setPeriodo('mes')">Mês</button>
+                    </div>
+                    <div class="relatorio-stats">
+                        <div class="rel-stat">
+                            <div id="relCorridas" class="value">0</div>
+                            <div class="label">Corridas</div>
+                        </div>
+                        <div class="rel-stat">
+                            <div id="relFaturamento" class="value">R$ 0</div>
+                            <div class="label">Faturamento</div>
+                        </div>
+                        <div class="rel-stat">
+                            <div id="relMedia" class="value">R$ 0</div>
+                            <div class="label">Média/Corrida</div>
+                        </div>
+                        <div class="rel-stat">
+                            <div id="relHoras" class="value">0h</div>
+                            <div class="label">Horas Online</div>
+                        </div>
+                    </div>
+                </div>
+                <div style="padding:15px;">
+                    <h3 style="margin-bottom:15px;">📊 Melhores Semanas</h3>
+                    <div id="melhoresSemanas"></div>
+                </div>
+            </div>
+
+            <!-- MENU/MAIS PAGE -->
+            <div id="pageMenu" class="page">
+                <div style="padding:15px;">
+                    <h3 style="margin-bottom:15px;">⚙️ Menu</h3>
+                    
+                    <div class="emergencia-item" onclick="abrirEmergencia()">
+                        <div class="emergencia-icon admin">🆘</div>
+                        <div class="emergencia-info">
+                            <h3>Contatos de Emergência</h3>
+                            <span>Admin, Mecânico, Guincho...</span>
+                        </div>
+                        <span>›</span>
+                    </div>
+                    
+                    <div class="emergencia-item" onclick="abrirAvaria()">
+                        <div class="emergencia-icon" style="background:#ff4444;">📸</div>
+                        <div class="emergencia-info">
+                            <h3>Reportar Avaria</h3>
+                            <span>Tire foto e envie para o admin</span>
+                        </div>
+                        <span>›</span>
+                    </div>
+                    
+                    <div class="emergencia-item" onclick="abrirReferencias()">
+                        <div class="emergencia-icon" style="background:#9c27b0;">📍</div>
+                        <div class="emergencia-info">
+                            <h3>Adicionar Referência</h3>
+                            <span>Cadastre pontos de referência</span>
+                        </div>
+                        <span>›</span>
+                    </div>
+                    
+                    <div class="emergencia-item" onclick="verValoresHorario()">
+                        <div class="emergencia-icon" style="background:#00d4ff;">💰</div>
+                        <div class="emergencia-info">
+                            <h3>Tabela de Preços</h3>
+                            <span>Valores por horário</span>
+                        </div>
+                        <span>›</span>
+                    </div>
+                    
+                    <div class="emergencia-item" onclick="fazerLogout()" style="border:1px solid #ff4444;">
+                        <div class="emergencia-icon" style="background:#ff4444;">🚪</div>
+                        <div class="emergencia-info">
+                            <h3>Sair</h3>
+                            <span>Desconectar da conta</span>
+                        </div>
+                        <span>›</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Navigation -->
+        <div class="bottom-nav">
+            <div class="nav-item active" onclick="showPage('pageHome')">
+                <span class="icon">🏠</span>
+                <span class="label">Início</span>
+            </div>
+            <div class="nav-item" onclick="showPage('pageChat')">
+                <span class="icon">💬</span>
+                <span class="label">Chat</span>
+            </div>
+            <div class="nav-item" onclick="showPage('pageFinanceiro')">
+                <span class="icon">💰</span>
+                <span class="label">Caixa</span>
+            </div>
+            <div class="nav-item" onclick="showPage('pageRelatorios')">
+                <span class="icon">📊</span>
+                <span class="label">Relatório</span>
+            </div>
+            <div class="nav-item" onclick="showPage('pageMenu')">
+                <span class="icon">☰</span>
+                <span class="label">Menu</span>
+            </div>
+        </div>
+
+        <!-- FAB Menu -->
+        <div class="fab-container">
+            <div id="fabMenu" class="fab-menu">
+                <div class="fab-item" onclick="abrirEmergencia()">🆘 <span>Emergência</span></div>
+                <div class="fab-item" onclick="abrirAvaria()">📸 <span>Reportar Avaria</span></div>
+                <div class="fab-item" onclick="abrirReferencias()">📍 <span>Add Referência</span></div>
+            </div>
+            <button class="fab-btn" onclick="toggleFab()">+</button>
+        </div>
+    </div>
+
+    <!-- Nova Corrida Overlay -->
+    <div id="novaCorridaOverlay" class="nova-corrida-overlay">
+        <div class="nova-corrida-card">
+            <div class="corrida-header">
+                <h2>🔔 NOVA CORRIDA!</h2>
+                <div id="novaCorridaValor" class="corrida-valor">R$ 25,00</div>
+                <div id="novaCorridaDistancia" class="corrida-distancia">📍 2.5 km de você</div>
+            </div>
+            <div class="timer-bar">
+                <div id="timerProgress" class="timer-progress" style="width:100%;"></div>
+            </div>
+            <div class="corrida-body">
+                <div class="corrida-cliente">
+                    <div class="cliente-avatar">👤</div>
+                    <div class="cliente-info">
+                        <h3 id="novaCorridaCliente">Cliente</h3>
+                        <span id="novaCorridaClienteInfo">⭐ 5.0 • 10 corridas</span>
+                    </div>
+                </div>
+                <div class="corrida-info">
+                    <label>📍 BUSCAR EM</label>
+                    <span id="novaCorridaOrigem">-</span>
+                    <div id="novaCorridaObsOrigem" class="obs" style="display:none;"></div>
+                </div>
+                <div class="corrida-info">
+                    <label>🏁 LEVAR ATÉ</label>
+                    <span id="novaCorridaDestino">-</span>
+                </div>
+                <div class="corrida-actions">
+                    <button class="btn-recusar" onclick="recusarCorrida()">✖️ RECUSAR</button>
+                    <button class="btn-aceitar" onclick="aceitarCorrida()">✅ ACEITAR</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Emergência -->
+    <div id="modalEmergencia" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>🆘 Contatos de Emergência</h3>
+                <button class="modal-close" onclick="fecharModal('modalEmergencia')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="listaEmergencia" class="emergencia-list">
+                    <!-- Carregado via JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Avaria -->
+    <div id="modalAvaria" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>📸 Reportar Avaria</h3>
+                <button class="modal-close" onclick="fecharModal('modalAvaria')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="avaria-form">
+                    <div class="avaria-foto" onclick="tirarFoto()">
+                        <span id="fotoPreview">📷 Toque para tirar foto</span>
+                        <input type="file" id="inputFoto" accept="image/*" capture="environment" style="display:none;" onchange="previewFoto(this)">
+                    </div>
+                    <textarea id="avariaDescricao" class="avaria-textarea" placeholder="Descreva o problema..."></textarea>
+                    <button class="btn-action btn-finalizar" onclick="enviarAvaria()" style="width:100%;">📤 ENVIAR PARA ADMIN</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Referência -->
+    <div id="modalReferencia" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>📍 Adicionar Referência</h3>
+                <button class="modal-close" onclick="fecharModal('modalReferencia')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="text" class="login-input" id="refNome" placeholder="Nome do local (ex: Padaria do João)">
+                <input type="text" class="login-input" id="refEndereco" placeholder="Endereço ou descrição">
+                <select class="login-input" id="refCategoria">
+                    <option value="">Selecione a categoria</option>
+                    <option value="comercio">Comércio</option>
+                    <option value="residencia">Residência</option>
+                    <option value="ponto_taxi">Ponto de Táxi</option>
+                    <option value="hospital">Hospital/UBS</option>
+                    <option value="escola">Escola</option>
+                    <option value="outro">Outro</option>
+                </select>
+                <button class="btn-action btn-finalizar" onclick="salvarReferencia()" style="width:100%;">💾 SALVAR</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Entrada/Saída -->
+    <div id="modalCaixa" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalCaixaTitulo">💰 Registrar</h3>
+                <button class="modal-close" onclick="fecharModal('modalCaixa')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="number" class="login-input" id="caixaValor" placeholder="Valor (R$)" step="0.01">
+                <input type="text" class="login-input" id="caixaDescricao" placeholder="Descrição">
+                <button id="btnSalvarCaixa" class="btn-action btn-finalizar" onclick="salvarCaixa()" style="width:100%;">💾 SALVAR</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Preços -->
+    <div id="modalPrecos" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>💰 Tabela de Preços</h3>
+                <button class="modal-close" onclick="fecharModal('modalPrecos')">&times;</button>
+            </div>
+            <div class="modal-body" id="tabelaPrecos">
+                <!-- Carregado via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="toast"></div>
+
+    <!-- Audio -->
+    <audio id="somNovaCorrida" preload="auto">
+        <source src="data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAABhgC7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7//////////////////////////////////////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAAAAAAAAAAAAYYNBrQ+AAAAAAAAAAAAAAAAAAAAAP/7UGQAD/AAADSAAAAANIAAAGkAAAABKQMc/gAAA0gAAAGoAAAAwMDAAAExMMA4DgOA5/5c/8uD/ygOA4f/l/5cH/+sAwMD/y4P/+XP/Lg//5cHAcBwfB8HwfB8AAAAD/+1JkMo/wAABpAAAAA0gAAAGkAAAAQZTBPNOQAArYGCeachABAAH/Lh/5f+XDg/+X/lw4P/+sHwfB8H/+XBwfB8HwfB//5cOA4Dg4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/7UmRoD/AAAGkAAAADSAAANIAAAARhsME09BACtgYJp5CEAEAAAMDA/8v/Lh/5f/8uD4PgoD/y/8uH/l/5cHAcBwHAcBwHAcBwHAcBwHB8HwfB8HwfB8HwfB8HwfB8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/7UGR+j/AAAGkAAAADSAAANIAAAAQgAAANIAAADSAAAANIAAABExERADARAwMRMQAAAQA0REBNEwMA0BAQAAAAAAAA0BANAQENaqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqo=" type="audio/mpeg">
+    </audio>
 
     <script>
+        // ========== VARIÁVEIS GLOBAIS ==========
         let motorista = null;
         let token = localStorage.getItem('motoristaToken');
-        let gpsInterval = null;
-        let checkCorridaInterval = null;
         let corridaAtual = null;
+        let gpsInterval = null;
+        let checkInterval = null;
+        let timerInterval = null;
+        let tempoRestante = 30;
+        let somAtivo = true;
+        let minhaLatitude = null;
+        let minhaLongitude = null;
 
-        // Inicialização
+        // ========== INICIALIZAÇÃO ==========
         if (token) {
             carregarMotorista();
         }
 
+        // ========== LOGIN ==========
         async function fazerLogin() {
             const whatsapp = document.getElementById('loginWhatsapp').value;
             const senha = document.getElementById('loginSenha').value;
+            if (!whatsapp) return toast('Digite o WhatsApp', 'error');
 
             try {
                 const res = await fetch('/api/motorista-app/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ whatsapp, senha })
+                    body: JSON.stringify({ whatsapp, senha: senha || '123456' })
                 });
                 const data = await res.json();
-
                 if (data.sucesso) {
                     motorista = data.motorista;
                     token = data.token;
                     localStorage.setItem('motoristaToken', token);
-                    mostrarApp();
-                    iniciarGPS();
-                    showNotification('Login realizado com sucesso!');
+                    iniciarApp();
+                    toast('Bem-vindo, ' + motorista.nomeCompleto + '!', 'success');
                 } else {
-                    alert(data.erro || 'Erro no login');
+                    toast(data.erro || 'Erro no login', 'error');
                 }
             } catch (e) {
-                alert('Erro de conexão');
+                toast('Erro de conexão', 'error');
             }
         }
 
@@ -184,11 +650,9 @@
                     headers: { 'Authorization': token }
                 });
                 const data = await res.json();
-
                 if (data.motorista) {
                     motorista = data.motorista;
-                    mostrarApp();
-                    iniciarGPS();
+                    iniciarApp();
                 } else {
                     fazerLogout();
                 }
@@ -197,91 +661,82 @@
             }
         }
 
-        function mostrarApp() {
-            document.getElementById('loginSection').classList.remove('active');
-            document.getElementById('appSection').classList.remove('hidden');
+        function iniciarApp() {
+            document.getElementById('loginSection').style.display = 'none';
+            document.getElementById('appSection').style.display = 'block';
             atualizarStatusUI();
-            iniciarCheckCorrida();
+            iniciarGPS();
+            iniciarChecks();
+            carregarDashboard();
+            carregarChat();
+            verificarCorridaAtiva();
         }
 
         function fazerLogout() {
             localStorage.removeItem('motoristaToken');
             motorista = null;
             token = null;
-            pararGPS();
-            document.getElementById('loginSection').classList.add('active');
-            document.getElementById('appSection').classList.add('hidden');
+            pararIntervalos();
+            document.getElementById('loginSection').style.display = 'flex';
+            document.getElementById('appSection').style.display = 'none';
         }
 
-        // GPS
+        // ========== GPS ==========
         function iniciarGPS() {
             if (!navigator.geolocation) {
-                document.getElementById('gpsStatus').textContent = '❌ GPS não suportado';
+                document.getElementById('gpsInfo').textContent = '❌ GPS não suportado';
                 return;
             }
 
             navigator.geolocation.getCurrentPosition(
-                (pos) => {
-                    document.getElementById('gpsStatus').textContent = '📍 GPS ativo';
-                    document.getElementById('gpsStatus').classList.add('ativo');
-                    enviarGPS(pos.coords.latitude, pos.coords.longitude);
-                },
+                (pos) => atualizarGPS(pos),
                 (err) => {
-                    document.getElementById('gpsStatus').textContent = '❌ GPS negado';
-                    alert('Por favor, permita o acesso à localização para usar o app.');
+                    document.getElementById('gpsInfo').textContent = '❌ Permita o GPS';
+                    toast('Permita acesso à localização', 'error');
                 },
                 { enableHighAccuracy: true }
             );
 
-            // Enviar GPS a cada 10 segundos
             gpsInterval = setInterval(() => {
                 navigator.geolocation.getCurrentPosition(
-                    (pos) => enviarGPS(pos.coords.latitude, pos.coords.longitude),
-                    () => {}
+                    (pos) => atualizarGPS(pos),
+                    () => {},
+                    { enableHighAccuracy: true }
                 );
             }, 10000);
         }
 
-        async function enviarGPS(latitude, longitude) {
-            document.getElementById('coordsDisplay').textContent = `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
-            
-            if (!token) return;
+        async function atualizarGPS(pos) {
+            minhaLatitude = pos.coords.latitude;
+            minhaLongitude = pos.coords.longitude;
+            document.getElementById('gpsInfo').textContent = '📍 GPS ativo';
+            document.getElementById('gpsInfo').classList.add('ativo');
 
-            try {
-                await fetch('/api/motorista-app/gps', {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'Authorization': token 
-                    },
-                    body: JSON.stringify({ latitude, longitude })
-                });
-            } catch (e) {}
+            if (token && motorista?.status !== 'offline') {
+                try {
+                    await fetch('/api/motorista-app/gps', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': token },
+                        body: JSON.stringify({ latitude: minhaLatitude, longitude: minhaLongitude })
+                    });
+                } catch (e) {}
+            }
         }
 
-        function pararGPS() {
-            if (gpsInterval) clearInterval(gpsInterval);
-            if (checkCorridaInterval) clearInterval(checkCorridaInterval);
-        }
-
-        // Status Online/Offline
+        // ========== STATUS ==========
         async function toggleStatus() {
             const novoStatus = motorista.status === 'disponivel' ? 'offline' : 'disponivel';
-            
             try {
                 const res = await fetch('/api/motorista-app/status', {
                     method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'Authorization': token 
-                    },
+                    headers: { 'Content-Type': 'application/json', 'Authorization': token },
                     body: JSON.stringify({ status: novoStatus })
                 });
                 const data = await res.json();
-
                 if (data.sucesso) {
                     motorista.status = novoStatus;
                     atualizarStatusUI();
+                    toast(novoStatus === 'disponivel' ? 'Você está ONLINE!' : 'Você está OFFLINE', 'success');
                 }
             } catch (e) {}
         }
@@ -289,117 +744,215 @@
         function atualizarStatusUI() {
             const dot = document.getElementById('statusDot');
             const text = document.getElementById('statusText');
-            const btn = document.getElementById('btnStatus');
+            const btn = document.getElementById('statusToggle');
 
             dot.className = 'status-dot ' + motorista.status;
 
             if (motorista.status === 'disponivel') {
-                text.textContent = 'Online';
+                text.textContent = 'Online - Aguardando corridas';
                 btn.textContent = 'FICAR OFFLINE';
-                btn.className = 'btn btn-danger';
+                btn.className = 'status-toggle online';
             } else if (motorista.status === 'em_corrida') {
-                text.textContent = 'Em Corrida';
+                text.textContent = 'Em corrida';
                 btn.textContent = 'EM CORRIDA';
                 btn.disabled = true;
-                btn.className = 'btn btn-warning';
+                btn.className = 'status-toggle';
             } else {
                 text.textContent = 'Offline';
                 btn.textContent = 'FICAR ONLINE';
-                btn.className = 'btn btn-success';
+                btn.disabled = false;
+                btn.className = 'status-toggle offline';
             }
+
+            document.getElementById('avaliacao').textContent = (motorista.avaliacao || 5).toFixed(1);
         }
 
-        // Verificar novas corridas
-        function iniciarCheckCorrida() {
-            checkCorridaInterval = setInterval(verificarCorridas, 5000);
+        // ========== VERIFICAR CORRIDAS ==========
+        function iniciarChecks() {
+            checkInterval = setInterval(() => {
+                if (motorista?.status === 'disponivel') {
+                    verificarNovasCorridas();
+                }
+                carregarChat();
+            }, 5000);
         }
 
-        async function verificarCorridas() {
-            if (!token || motorista.status !== 'disponivel') return;
-
+        async function verificarNovasCorridas() {
             try {
                 const res = await fetch('/api/motorista-app/corridas-disponiveis', {
                     headers: { 'Authorization': token }
                 });
                 const data = await res.json();
-
-                if (data.corridas && data.corridas.length > 0) {
+                if (data.corridas && data.corridas.length > 0 && !corridaAtual) {
                     mostrarNovaCorrida(data.corridas[0]);
                 }
             } catch (e) {}
         }
 
-        function mostrarNovaCorrida(corrida) {
-            corridaAtual = corrida;
-            document.getElementById('novaCorridaCliente').textContent = corrida.clienteNome;
-            document.getElementById('novaCorridaOrigem').textContent = corrida.origem?.endereco || '-';
-            document.getElementById('novaCorridaDestino').textContent = corrida.destino?.endereco || '-';
-            document.getElementById('novaCorridaValor').textContent = 'R$ ' + (corrida.precoEstimado || 0).toFixed(2);
-            document.getElementById('novaCorrida').classList.remove('hidden');
-            
-            // Som de notificação
-            try { new Audio('data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU').play(); } catch(e) {}
-        }
-
-        async function aceitarCorrida() {
-            if (!corridaAtual) return;
-
+        async function verificarCorridaAtiva() {
             try {
-                const res = await fetch('/api/motorista-app/aceitar', {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'Authorization': token 
-                    },
-                    body: JSON.stringify({ corridaId: corridaAtual._id })
+                const res = await fetch('/api/motorista-app/corrida-ativa', {
+                    headers: { 'Authorization': token }
                 });
                 const data = await res.json();
-
-                if (data.sucesso) {
-                    document.getElementById('novaCorrida').classList.add('hidden');
-                    motorista.status = 'em_corrida';
-                    atualizarStatusUI();
-                    mostrarCorridaAtiva(data.corrida);
-                    showNotification('Corrida aceita!');
+                if (data.corrida) {
+                    corridaAtual = data.corrida;
+                    mostrarCorridaAtiva();
                 }
             } catch (e) {}
         }
 
+        // ========== NOVA CORRIDA ==========
+        function mostrarNovaCorrida(corrida) {
+            corridaAtual = corrida;
+            
+            // Calcular distância
+            let distancia = '-';
+            if (minhaLatitude && corrida.origem?.latitude) {
+                distancia = calcularDistancia(minhaLatitude, minhaLongitude, corrida.origem.latitude, corrida.origem.longitude).toFixed(1) + ' km de você';
+            }
+
+            document.getElementById('novaCorridaValor').textContent = 'R$ ' + (corrida.precoEstimado || 0).toFixed(2);
+            document.getElementById('novaCorridaDistancia').textContent = '📍 ' + distancia;
+            document.getElementById('novaCorridaCliente').textContent = corrida.clienteNome || 'Cliente';
+            document.getElementById('novaCorridaOrigem').textContent = corrida.origem?.endereco || '-';
+            document.getElementById('novaCorridaDestino').textContent = corrida.destino?.endereco || '-';
+
+            if (corrida.observacaoOrigem) {
+                document.getElementById('novaCorridaObsOrigem').textContent = '📝 ' + corrida.observacaoOrigem;
+                document.getElementById('novaCorridaObsOrigem').style.display = 'block';
+            } else {
+                document.getElementById('novaCorridaObsOrigem').style.display = 'none';
+            }
+
+            document.getElementById('novaCorridaOverlay').classList.add('active');
+            
+            // Timer
+            tempoRestante = 30;
+            document.getElementById('timerProgress').style.width = '100%';
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                tempoRestante--;
+                document.getElementById('timerProgress').style.width = (tempoRestante / 30 * 100) + '%';
+                if (tempoRestante <= 0) {
+                    recusarCorrida();
+                }
+            }, 1000);
+
+            // Som
+            if (somAtivo) {
+                try { document.getElementById('somNovaCorrida').play(); } catch(e) {}
+            }
+        }
+
+        async function aceitarCorrida() {
+            if (!corridaAtual) return;
+            clearInterval(timerInterval);
+
+            try {
+                const res = await fetch('/api/motorista-app/aceitar', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': token },
+                    body: JSON.stringify({ corridaId: corridaAtual._id })
+                });
+                const data = await res.json();
+                if (data.sucesso) {
+                    corridaAtual = data.corrida;
+                    motorista.status = 'em_corrida';
+                    atualizarStatusUI();
+                    document.getElementById('novaCorridaOverlay').classList.remove('active');
+                    mostrarCorridaAtiva();
+                    toast('Corrida aceita!', 'success');
+                } else {
+                    toast(data.erro || 'Erro ao aceitar', 'error');
+                    recusarCorrida();
+                }
+            } catch (e) {
+                toast('Erro de conexão', 'error');
+            }
+        }
+
         function recusarCorrida() {
-            document.getElementById('novaCorrida').classList.add('hidden');
+            clearInterval(timerInterval);
+            document.getElementById('novaCorridaOverlay').classList.remove('active');
             corridaAtual = null;
         }
 
-        function mostrarCorridaAtiva(corrida) {
-            corridaAtual = corrida;
-            document.getElementById('corridaCliente').textContent = corrida.clienteNome;
-            document.getElementById('corridaOrigem').textContent = corrida.origem?.endereco || '-';
-            document.getElementById('corridaDestino').textContent = corrida.destino?.endereco || '-';
-            document.getElementById('corridaValor').textContent = 'R$ ' + (corrida.precoEstimado || 0).toFixed(2);
-            document.getElementById('corridaAtiva').classList.remove('hidden');
-            
-            if (corrida.status === 'em_andamento') {
-                document.getElementById('btnIniciar').classList.add('hidden');
-                document.getElementById('btnFinalizar').classList.remove('hidden');
+        // ========== CORRIDA ATIVA ==========
+        function mostrarCorridaAtiva() {
+            document.getElementById('semCorrida').style.display = 'none';
+            document.getElementById('corridaAtiva').classList.add('active');
+
+            document.getElementById('corridaValorAtiva').textContent = 'R$ ' + (corridaAtual.precoEstimado || 0).toFixed(2);
+            document.getElementById('clienteNomeAtiva').textContent = corridaAtual.clienteNome || 'Cliente';
+            document.getElementById('origemAtiva').textContent = corridaAtual.origem?.endereco || '-';
+            document.getElementById('destinoAtiva').textContent = corridaAtual.destino?.endereco || '-';
+
+            if (corridaAtual.observacaoOrigem) {
+                document.getElementById('obsOrigemAtiva').textContent = '📝 ' + corridaAtual.observacaoOrigem;
+                document.getElementById('obsOrigemAtiva').style.display = 'block';
             }
+
+            atualizarBotoesCorridaAtiva();
+        }
+
+        function atualizarBotoesCorridaAtiva() {
+            const status = corridaAtual?.status;
+            document.getElementById('btnCheguei').style.display = status === 'aceita' ? 'flex' : 'none';
+            document.getElementById('btnIniciar').style.display = status === 'a_caminho' ? 'flex' : 'none';
+            document.getElementById('btnFinalizar').style.display = status === 'em_andamento' ? 'flex' : 'none';
+        }
+
+        function navegarAteCliente() {
+            if (!corridaAtual?.origem?.latitude) {
+                toast('Endereço sem coordenadas', 'error');
+                return;
+            }
+            const lat = corridaAtual.origem.latitude;
+            const lng = corridaAtual.origem.longitude;
+            
+            // Tentar abrir Waze, senão Google Maps
+            const waze = `https://waze.com/ul?ll=${lat},${lng}&navigate=yes`;
+            const gmaps = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`;
+            
+            if (confirm('Abrir no Waze? (Cancelar = Google Maps)')) {
+                window.open(waze, '_blank');
+            } else {
+                window.open(gmaps, '_blank');
+            }
+        }
+
+        function ligarCliente() {
+            // Liga para central, não para cliente diretamente
+            toast('Conectando com a central...', 'success');
+            // Aqui integraria com Rebeca para fazer ligação mascarada
+        }
+
+        async function chegueiLocal() {
+            try {
+                await fetch('/api/motorista-app/cheguei', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': token },
+                    body: JSON.stringify({ corridaId: corridaAtual._id })
+                });
+                corridaAtual.status = 'a_caminho';
+                atualizarBotoesCorridaAtiva();
+                toast('Cliente notificado!', 'success');
+            } catch (e) {}
         }
 
         async function iniciarCorrida() {
             try {
                 const res = await fetch('/api/motorista-app/iniciar', {
                     method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'Authorization': token 
-                    },
+                    headers: { 'Content-Type': 'application/json', 'Authorization': token },
                     body: JSON.stringify({ corridaId: corridaAtual._id })
                 });
                 const data = await res.json();
-
                 if (data.sucesso) {
-                    document.getElementById('btnIniciar').classList.add('hidden');
-                    document.getElementById('btnFinalizar').classList.remove('hidden');
-                    showNotification('Corrida iniciada!');
+                    corridaAtual.status = 'em_andamento';
+                    atualizarBotoesCorridaAtiva();
+                    toast('Corrida iniciada!', 'success');
                 }
             } catch (e) {}
         }
@@ -408,54 +961,344 @@
             try {
                 const res = await fetch('/api/motorista-app/finalizar', {
                     method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'Authorization': token 
-                    },
+                    headers: { 'Content-Type': 'application/json', 'Authorization': token },
                     body: JSON.stringify({ corridaId: corridaAtual._id })
                 });
                 const data = await res.json();
-
                 if (data.sucesso) {
-                    document.getElementById('corridaAtiva').classList.add('hidden');
+                    toast('Corrida finalizada! R$ ' + (data.corrida?.precoFinal || 0).toFixed(2), 'success');
+                    corridaAtual = null;
                     motorista.status = 'disponivel';
                     atualizarStatusUI();
-                    corridaAtual = null;
-                    showNotification('Corrida finalizada!');
+                    document.getElementById('corridaAtiva').classList.remove('active');
+                    document.getElementById('semCorrida').style.display = 'block';
+                    carregarDashboard();
                 }
             } catch (e) {}
         }
 
         async function cancelarCorrida() {
-            if (!confirm('Tem certeza que deseja cancelar?')) return;
-
+            if (!confirm('Cancelar esta corrida?')) return;
             try {
-                const res = await fetch('/api/motorista-app/cancelar', {
+                await fetch('/api/motorista-app/cancelar', {
                     method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'Authorization': token 
-                    },
-                    body: JSON.stringify({ corridaId: corridaAtual._id })
+                    headers: { 'Content-Type': 'application/json', 'Authorization': token },
+                    body: JSON.stringify({ corridaId: corridaAtual._id, motivo: 'Cancelado pelo motorista' })
                 });
-                const data = await res.json();
-
-                if (data.sucesso) {
-                    document.getElementById('corridaAtiva').classList.add('hidden');
-                    motorista.status = 'disponivel';
-                    atualizarStatusUI();
-                    corridaAtual = null;
-                    showNotification('Corrida cancelada');
-                }
+                corridaAtual = null;
+                motorista.status = 'disponivel';
+                atualizarStatusUI();
+                document.getElementById('corridaAtiva').classList.remove('active');
+                document.getElementById('semCorrida').style.display = 'block';
+                toast('Corrida cancelada', 'error');
             } catch (e) {}
         }
 
-        function showNotification(msg) {
-            const notif = document.getElementById('notification');
-            notif.textContent = msg;
-            notif.style.display = 'block';
-            setTimeout(() => notif.style.display = 'none', 3000);
+        // ========== DASHBOARD ==========
+        async function carregarDashboard() {
+            try {
+                const res = await fetch('/api/motorista-app/estatisticas', {
+                    headers: { 'Authorization': token }
+                });
+                const data = await res.json();
+                document.getElementById('ganhosHoje').textContent = 'R$ ' + (data.ganhosHoje || 0).toFixed(2);
+                document.getElementById('corridasHoje').textContent = data.corridasHoje || 0;
+                document.getElementById('horasOnline').textContent = (data.horasOnline || 0) + 'h';
+            } catch (e) {}
         }
+
+        // ========== CHAT ==========
+        async function carregarChat() {
+            try {
+                const res = await fetch('/api/motorista-app/chat', {
+                    headers: { 'Authorization': token }
+                });
+                const data = await res.json();
+                renderizarChat(data.mensagens || []);
+            } catch (e) {}
+        }
+
+        function renderizarChat(mensagens) {
+            const container = document.getElementById('chatMessages');
+            container.innerHTML = mensagens.map(m => `
+                <div class="chat-msg ${m.remetente === motorista._id ? 'sent' : 'received'}">
+                    <div class="bubble">${m.texto}</div>
+                    <div class="meta">${m.nomeRemetente || 'Admin'} • ${new Date(m.data).toLocaleTimeString()}</div>
+                </div>
+            `).join('') || '<p style="text-align:center;color:#888;padding:20px;">Nenhuma mensagem</p>';
+            container.scrollTop = container.scrollHeight;
+        }
+
+        async function enviarMensagem() {
+            const input = document.getElementById('chatInput');
+            const texto = input.value.trim();
+            if (!texto) return;
+
+            try {
+                await fetch('/api/motorista-app/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': token },
+                    body: JSON.stringify({ texto })
+                });
+                input.value = '';
+                carregarChat();
+            } catch (e) {}
+        }
+
+        // ========== FINANCEIRO ==========
+        let tipoCaixa = 'entrada';
+
+        function registrarEntrada() {
+            tipoCaixa = 'entrada';
+            document.getElementById('modalCaixaTitulo').textContent = '💰 Registrar Entrada';
+            document.getElementById('btnSalvarCaixa').className = 'btn-action btn-finalizar';
+            abrirModal('modalCaixa');
+        }
+
+        function registrarSaida() {
+            tipoCaixa = 'saida';
+            document.getElementById('modalCaixaTitulo').textContent = '💸 Registrar Saída';
+            document.getElementById('btnSalvarCaixa').className = 'btn-action btn-cheguei';
+            abrirModal('modalCaixa');
+        }
+
+        async function salvarCaixa() {
+            const valor = parseFloat(document.getElementById('caixaValor').value);
+            const descricao = document.getElementById('caixaDescricao').value;
+            if (!valor) return toast('Digite o valor', 'error');
+
+            try {
+                await fetch('/api/motorista-app/caixa', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': token },
+                    body: JSON.stringify({ tipo: tipoCaixa, valor, descricao })
+                });
+                toast(tipoCaixa === 'entrada' ? 'Entrada registrada!' : 'Saída registrada!', 'success');
+                fecharModal('modalCaixa');
+                document.getElementById('caixaValor').value = '';
+                document.getElementById('caixaDescricao').value = '';
+                carregarFinanceiro();
+            } catch (e) {}
+        }
+
+        async function carregarFinanceiro() {
+            try {
+                const res = await fetch('/api/motorista-app/caixa', {
+                    headers: { 'Authorization': token }
+                });
+                const data = await res.json();
+                document.getElementById('saldoDia').textContent = 'R$ ' + (data.saldo || 0).toFixed(2);
+                renderizarTransacoes(data.transacoes || []);
+            } catch (e) {}
+        }
+
+        function renderizarTransacoes(transacoes) {
+            document.getElementById('transacoesList').innerHTML = transacoes.map(t => `
+                <div class="transacao-item">
+                    <div>
+                        <strong>${t.descricao || (t.tipo === 'entrada' ? 'Entrada' : 'Saída')}</strong>
+                        <div style="font-size:12px;color:#888;">${new Date(t.data).toLocaleString()}</div>
+                    </div>
+                    <div class="valor ${t.tipo === 'entrada' ? 'positivo' : 'negativo'}">
+                        ${t.tipo === 'entrada' ? '+' : '-'} R$ ${t.valor.toFixed(2)}
+                    </div>
+                </div>
+            `).join('') || '<p style="text-align:center;color:#888;">Nenhuma transação hoje</p>';
+        }
+
+        // ========== EMERGÊNCIA ==========
+        async function abrirEmergencia() {
+            abrirModal('modalEmergencia');
+            try {
+                const res = await fetch('/api/config/emergencia');
+                const data = await res.json();
+                renderizarEmergencia(data.contatos || []);
+            } catch (e) {
+                renderizarEmergencia([
+                    { nome: 'Admin/Suporte', telefone: '11999999999', tipo: 'admin' },
+                    { nome: 'Mecânico', telefone: '11988888888', tipo: 'mecanico' }
+                ]);
+            }
+        }
+
+        function renderizarEmergencia(contatos) {
+            document.getElementById('listaEmergencia').innerHTML = contatos.map(c => `
+                <div class="emergencia-item">
+                    <div class="emergencia-icon ${c.tipo}">${getIconeEmergencia(c.tipo)}</div>
+                    <div class="emergencia-info">
+                        <h3>${c.nome}</h3>
+                        <span>${c.categoria || c.tipo}</span>
+                    </div>
+                    <button class="emergencia-call" onclick="ligar('${c.telefone}')">📞</button>
+                </div>
+            `).join('');
+        }
+
+        function getIconeEmergencia(tipo) {
+            const icones = { admin: '👔', mecanico: '🔧', guincho: '🚛', borracheiro: '🛞', suporte: '💬' };
+            return icones[tipo] || '📞';
+        }
+
+        function ligar(telefone) {
+            window.open('tel:' + telefone);
+        }
+
+        // ========== AVARIA ==========
+        function abrirAvaria() {
+            abrirModal('modalAvaria');
+        }
+
+        function tirarFoto() {
+            document.getElementById('inputFoto').click();
+        }
+
+        function previewFoto(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    document.getElementById('fotoPreview').innerHTML = `<img src="${e.target.result}" style="max-width:100%;max-height:180px;border-radius:10px;">`;
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        async function enviarAvaria() {
+            const descricao = document.getElementById('avariaDescricao').value;
+            const fotoInput = document.getElementById('inputFoto');
+            
+            if (!descricao) return toast('Descreva o problema', 'error');
+
+            // Aqui enviaria para o backend com a foto
+            toast('Avaria reportada! Admin notificado.', 'success');
+            fecharModal('modalAvaria');
+            document.getElementById('avariaDescricao').value = '';
+            document.getElementById('fotoPreview').innerHTML = '📷 Toque para tirar foto';
+        }
+
+        // ========== REFERÊNCIAS ==========
+        function abrirReferencias() {
+            abrirModal('modalReferencia');
+        }
+
+        async function salvarReferencia() {
+            const nome = document.getElementById('refNome').value;
+            const endereco = document.getElementById('refEndereco').value;
+            const categoria = document.getElementById('refCategoria').value;
+
+            if (!nome || !endereco) return toast('Preencha todos os campos', 'error');
+
+            try {
+                await fetch('/api/pontos-referencia', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': token },
+                    body: JSON.stringify({ nome, endereco, categoria, latitude: minhaLatitude, longitude: minhaLongitude })
+                });
+                toast('Referência salva!', 'success');
+                fecharModal('modalReferencia');
+            } catch (e) {}
+        }
+
+        // ========== PREÇOS ==========
+        async function verValoresHorario() {
+            abrirModal('modalPrecos');
+            try {
+                const res = await fetch('/api/preco-dinamico/atual');
+                const data = await res.json();
+                document.getElementById('tabelaPrecos').innerHTML = `
+                    <div style="text-align:center;padding:20px;">
+                        <h2 style="color:#00d4ff;margin-bottom:10px;">Multiplicador Atual</h2>
+                        <div style="font-size:48px;font-weight:bold;color:#00ff88;">${data.multiplicador || 1}x</div>
+                        <p style="color:#888;margin-top:10px;">${data.faixa || 'Normal'}</p>
+                        <hr style="border-color:#333;margin:20px 0;">
+                        <p>Taxa Base: R$ ${data.taxaBase || 5}</p>
+                        <p>Preço/Km: R$ ${data.precoKm || 2.5}</p>
+                        <p>Mínimo: R$ ${data.taxaMinima || 15}</p>
+                    </div>
+                `;
+            } catch (e) {}
+        }
+
+        // ========== RELATÓRIOS ==========
+        async function setPeriodo(periodo) {
+            document.querySelectorAll('.periodo-btn').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+
+            try {
+                const res = await fetch('/api/motorista-app/relatorio?periodo=' + periodo, {
+                    headers: { 'Authorization': token }
+                });
+                const data = await res.json();
+                document.getElementById('relCorridas').textContent = data.corridas || 0;
+                document.getElementById('relFaturamento').textContent = 'R$ ' + (data.faturamento || 0).toFixed(2);
+                document.getElementById('relMedia').textContent = 'R$ ' + (data.media || 0).toFixed(2);
+                document.getElementById('relHoras').textContent = (data.horas || 0) + 'h';
+            } catch (e) {}
+        }
+
+        // ========== NAVEGAÇÃO ==========
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+            event.currentTarget.classList.add('active');
+
+            if (pageId === 'pageFinanceiro') carregarFinanceiro();
+            if (pageId === 'pageRelatorios') setPeriodo('hoje');
+        }
+
+        // ========== MODAIS ==========
+        function abrirModal(id) {
+            document.getElementById(id).classList.add('active');
+        }
+
+        function fecharModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        // ========== FAB ==========
+        function toggleFab() {
+            document.getElementById('fabMenu').classList.toggle('active');
+        }
+
+        // ========== UTILS ==========
+        function toast(msg, tipo = '') {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = 'toast active ' + tipo;
+            setTimeout(() => t.classList.remove('active'), 3000);
+        }
+
+        function toggleSound() {
+            somAtivo = !somAtivo;
+            toast(somAtivo ? '🔔 Som ativado' : '🔕 Som desativado');
+        }
+
+        function calcularDistancia(lat1, lon1, lat2, lon2) {
+            const R = 6371;
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.sin(dLon/2) * Math.sin(dLon/2);
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        }
+
+        function pararIntervalos() {
+            if (gpsInterval) clearInterval(gpsInterval);
+            if (checkInterval) clearInterval(checkInterval);
+            if (timerInterval) clearInterval(timerInterval);
+        }
+
+        function abrirPerfil() {
+            toast('Perfil: ' + motorista.nomeCompleto);
+        }
+
+        // Enter no chat
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('chatInput')?.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') enviarMensagem();
+            });
+        });
     </script>
 </body>
 </html>
