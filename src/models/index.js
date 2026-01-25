@@ -68,3 +68,16 @@ const ConfigFinanceiro = mongoose.model('ConfigFinanceiro', ConfigFinanceiroSche
 
 module.exports.Mensalidade = Mensalidade;
 module.exports.ConfigFinanceiro = ConfigFinanceiro;
+
+// ==================== CONTATOS EMERGÊNCIA ====================
+const ContatoEmergenciaSchema = new mongoose.Schema({
+    nome: { type: String, required: true },
+    telefone: { type: String, required: true },
+    categoria: { type: String, enum: ['admin', 'mecanico', 'guincho', 'borracheiro', 'suporte', 'policia', 'hospital', 'outro'], default: 'outro' },
+    descricao: String,
+    disponivel24h: { type: Boolean, default: false },
+    ativo: { type: Boolean, default: true }
+}, { timestamps: true });
+
+const ContatoEmergencia = mongoose.model('ContatoEmergencia', ContatoEmergenciaSchema);
+module.exports.ContatoEmergencia = ContatoEmergencia;
