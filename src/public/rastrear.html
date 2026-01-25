@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rastrear Corrida - UBMAX</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f0f2f5; min-height: 100vh; }
+        
+        .header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: white; padding: 15px 20px;
+            text-align: center;
+        }
+        .header h1 { font-size: 1.5em; }
+        .header h1 span { color: #e94560; }
+        
+        .container { max-width: 500px; margin: 0 auto; padding: 15px; }
+        
+        .status-card {
+            background: white; border-radius: 15px;
+            padding: 20px; margin-bottom: 15px;
+            box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+        }
+        
+        .status-header {
+            display: flex; align-items: center; gap: 15px;
+            margin-bottom: 15px; padding-bottom: 15px;
+            border-bottom: 2px solid #f0f2f5;
+        }
+        
+        .status-icon {
+            width: 60px; height: 60px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.8em;
+        }
+        .status-icon.buscando { background: #fff3cd; }
+        .status-icon.aceita { background: #cce5ff; }
+        .status-icon.caminho { background: #d4edda; }
+        .status-icon.viagem { background: #e2d9f3; }
+        .status-icon.finalizada { background: #d4edda; }
+        .status-icon.cancelada { background: #f8d7da; }
+        
+        .status-info h2 { font-size: 1.1em; color: #1a1a2e; }
+        .status-info p { color: #666; font-size: 0.9em; }
+        
+        .tempo-chegada {
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
+            color: white; border-radius: 12px;
+            padding: 20px; text-align: center;
+            margin-bottom: 15px;
+        }
+        .tempo-chegada .tempo { font-size: 2.5em; font-weight: bold; }
+        .tempo-chegada .label { font-size: 0.9em; opacity: 0.9; }
+        
+        .motorista-card {
+            background: white; border-radius: 15px;
+            padding: 20px; margin-bottom: 15px;
+            box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+        }
+        
+        .motorista-info {
+            display: flex; align-items: center; gap: 15px;
+        }
+        
+        .motorista-avatar {
+            width: 70px; height: 70px; border-radius: 50%;
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white; display: flex; align-items: center;
+            justify-content: center; font-size: 1.8em; font-weight: bold;
+        }
+        
+        .motorista-dados h3 { font-size: 1.2em; color: #1a1a2e; margin-bottom: 5px; }
+        .motorista-dados .veiculo { color: #666; font-size: 0.9em; }
+        .motorista-dados .placa {
+            display: inline-block; background: #1a1a2e;
+            color: white; padding: 5px 12px; border-radius: 5px;
+            font-weight: bold; margin-top: 8px; font-size: 1.1em;
+        }
+        .motorista-dados .avaliacao { color: #f39c12; margin-top: 5px; }
+        
+        .mapa-container {
+            background: white; border-radius: 15px;
+            overflow: hidden; margin-bottom: 15px;
+            box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+        }
+        #mapa { height: 300px; }
+        
+        .corrida-info {
+            background: white; border-radius: 15px;
+            padding: 20px; margin-bottom: 15px;
+            box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+        }
+        
+        .info-row {
+            display: flex; align-items: flex-start; gap: 12px;
+            padding: 12px 0; border-bottom: 1px solid #f0f2f5;
+        }
+        .info-row:last-child { border-bottom: none; }
+        .info-row .icon { font-size: 1.3em; }
+        .info-row .dados { flex: 1; }
+        .info-row .dados .label { font-size: 0.8em; color: #999; }
+        .info-row .dados .valor { font-weight: 500; color: #1a1a2e; }
+        
+        .preco-total {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            color: white; border-radius: 12px;
+            padding: 15px 20px; display: flex;
+            justify-content: space-between; align-items: center;
+        }
+        .preco-total .label { font-size: 0.9em; opacity: 0.8; }
+        .preco-total .valor { font-size: 1.8em; font-weight: bold; }
+        
+        .btn-ligar {
+            display: block; width: 100%; padding: 15px;
+            background: #27ae60; color: white; border: none;
+            border-radius: 12px; font-size: 1.1em; font-weight: bold;
+            cursor: pointer; text-align: center; text-decoration: none;
+            margin-top: 15px;
+        }
+        .btn-ligar:hover { background: #219a52; }
+        
+        .loading {
+            text-align: center; padding: 50px;
+            color: #666;
+        }
+        .loading .spinner {
+            width: 50px; height: 50px; border: 4px solid #f0f2f5;
+            border-top-color: #e94560; border-radius: 50%;
+            animation: spin 1s linear infinite; margin: 0 auto 20px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        .erro {
+            text-align: center; padding: 50px;
+            color: #e74c3c;
+        }
+        .erro .icon { font-size: 3em; margin-bottom: 15px; }
+        
+        .atualizado {
+            text-align: center; color: #999;
+            font-size: 0.8em; margin-top: 10px;
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>UB<span>MAX</span></h1>
+    </header>
+
+    <div class="container">
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p>Carregando informações...</p>
+        </div>
+
+        <div id="erro" class="erro" style="display:none;">
+            <div class="icon">😕</div>
+            <h2>Corrida não encontrada</h2>
+            <p>Verifique o código e tente novamente.</p>
+        </div>
+
+        <div id="conteudo" style="display:none;">
+            <!-- Status -->
+            <div class="status-card">
+                <div class="status-header">
+                    <div class="status-icon" id="statusIcon">🔍</div>
+                    <div class="status-info">
+                        <h2 id="statusTexto">Carregando...</h2>
+                        <p id="statusDescricao">Aguarde...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tempo de Chegada -->
+            <div class="tempo-chegada" id="tempoCard" style="display:none;">
+                <div class="label">TEMPO ESTIMADO</div>
+                <div class="tempo" id="tempoChegada">--</div>
+                <div class="label">minutos</div>
+            </div>
+
+            <!-- Motorista -->
+            <div class="motorista-card" id="motoristaCard" style="display:none;">
+                <div class="motorista-info">
+                    <div class="motorista-avatar" id="motoristaAvatar">?</div>
+                    <div class="motorista-dados">
+                        <h3 id="motoristaNome">Motorista</h3>
+                        <div class="veiculo" id="motoristaVeiculo">Veículo</div>
+                        <div class="placa" id="motoristaPlaca">---</div>
+                        <div class="avaliacao" id="motoristaAvaliacao">⭐ 5.0</div>
+                    </div>
+                </div>
+                <a href="tel:" class="btn-ligar" id="btnLigar" style="display:none;">📞 Ligar para Motorista</a>
+            </div>
+
+            <!-- Mapa -->
+            <div class="mapa-container">
+                <div id="mapa"></div>
+            </div>
+
+            <!-- Info da Corrida -->
+            <div class="corrida-info">
+                <div class="info-row">
+                    <span class="icon">📍</span>
+                    <div class="dados">
+                        <div class="label">ORIGEM</div>
+                        <div class="valor" id="origem">-</div>
+                    </div>
+                </div>
+                <div class="info-row">
+                    <span class="icon">🏁</span>
+                    <div class="dados">
+                        <div class="label">DESTINO</div>
+                        <div class="valor" id="destino">-</div>
+                    </div>
+                </div>
+                <div class="info-row">
+                    <span class="icon">📏</span>
+                    <div class="dados">
+                        <div class="label">DISTÂNCIA</div>
+                        <div class="valor" id="distancia">-</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Preço -->
+            <div class="preco-total">
+                <div class="label">VALOR ESTIMADO</div>
+                <div class="valor" id="preco">R$ --</div>
+            </div>
+
+            <p class="atualizado pulse">🔄 Atualizando a cada 10 segundos...</p>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        let mapa = null;
+        let marcadorMotorista = null;
+        let marcadorOrigem = null;
+        let marcadorDestino = null;
+        
+        const codigo = window.location.pathname.split('/').pop();
+        
+        async function carregarDados() {
+            try {
+                const resp = await fetch('/api/rebeca/rastrear/' + codigo);
+                const dados = await resp.json();
+                
+                if (dados.error) {
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('erro').style.display = 'block';
+                    return;
+                }
+                
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('conteudo').style.display = 'block';
+                
+                atualizarTela(dados);
+            } catch (e) {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('erro').style.display = 'block';
+            }
+        }
+        
+        function atualizarTela(dados) {
+            const { corrida, motorista, localizacao } = dados;
+            
+            // Status
+            const statusConfig = {
+                'pendente': { icon: '🔍', classe: 'buscando', texto: 'Buscando motorista', desc: 'Aguarde, estamos encontrando um motorista próximo...' },
+                'aceita': { icon: '✅', classe: 'aceita', texto: 'Motorista aceitou!', desc: 'O motorista está a caminho do seu local.' },
+                'a_caminho': { icon: '🚗', classe: 'caminho', texto: 'Motorista a caminho', desc: 'Prepare-se, ele está chegando!' },
+                'em_andamento': { icon: '🚀', classe: 'viagem', texto: 'Em viagem', desc: 'Aproveite o trajeto!' },
+                'finalizada': { icon: '✅', classe: 'finalizada', texto: 'Corrida finalizada', desc: 'Obrigado por viajar conosco!' },
+                'cancelada': { icon: '❌', classe: 'cancelada', texto: 'Corrida cancelada', desc: 'Esta corrida foi cancelada.' }
+            };
+            
+            const status = statusConfig[corrida.status] || statusConfig['pendente'];
+            document.getElementById('statusIcon').textContent = status.icon;
+            document.getElementById('statusIcon').className = 'status-icon ' + status.classe;
+            document.getElementById('statusTexto').textContent = status.texto;
+            document.getElementById('statusDescricao').textContent = status.desc;
+            
+            // Motorista
+            if (motorista) {
+                document.getElementById('motoristaCard').style.display = 'block';
+                document.getElementById('motoristaAvatar').textContent = motorista.nome.charAt(0);
+                document.getElementById('motoristaNome').textContent = motorista.nome;
+                document.getElementById('motoristaVeiculo').textContent = 
+                    `${motorista.veiculo?.modelo || ''} ${motorista.veiculo?.cor || ''}`;
+                document.getElementById('motoristaPlaca').textContent = motorista.veiculo?.placa || '---';
+                document.getElementById('motoristaAvaliacao').textContent = `⭐ ${motorista.avaliacao?.toFixed(1) || '5.0'}`;
+                
+                if (['aceita', 'a_caminho'].includes(corrida.status)) {
+                    document.getElementById('tempoCard').style.display = 'block';
+                    document.getElementById('tempoChegada').textContent = corrida.tempoEstimado || '5';
+                }
+            }
+            
+            // Info
+            document.getElementById('origem').textContent = corrida.origem?.endereco || corrida.origem || '-';
+            document.getElementById('destino').textContent = corrida.destino?.endereco || corrida.destino || '-';
+            document.getElementById('distancia').textContent = corrida.distanciaKm ? `${corrida.distanciaKm.toFixed(1)} km` : '-';
+            document.getElementById('preco').textContent = `R$ ${(corrida.precoEstimado || 0).toFixed(2)}`;
+            
+            // Mapa
+            atualizarMapa(corrida, localizacao);
+        }
+        
+        function atualizarMapa(corrida, localizacao) {
+            const latOrigem = corrida.origem?.latitude || -23.5327;
+            const lngOrigem = corrida.origem?.longitude || -46.7917;
+            
+            if (!mapa) {
+                mapa = L.map('mapa').setView([latOrigem, lngOrigem], 14);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapa);
+            }
+            
+            // Marcador origem
+            if (!marcadorOrigem) {
+                const iconeOrigem = L.divIcon({
+                    html: '<div style="background:#27ae60;width:20px;height:20px;border-radius:50%;border:3px solid white;"></div>',
+                    className: '', iconSize: [20, 20]
+                });
+                marcadorOrigem = L.marker([latOrigem, lngOrigem], { icon: iconeOrigem }).addTo(mapa);
+            }
+            
+            // Marcador motorista
+            if (localizacao && localizacao.latitude) {
+                const iconeCarro = L.divIcon({
+                    html: '<div style="background:#3498db;width:35px;height:35px;border-radius:50%;border:3px solid white;display:flex;align-items:center;justify-content:center;font-size:18px;">🚗</div>',
+                    className: '', iconSize: [35, 35]
+                });
+                
+                if (marcadorMotorista) {
+                    marcadorMotorista.setLatLng([localizacao.latitude, localizacao.longitude]);
+                } else {
+                    marcadorMotorista = L.marker([localizacao.latitude, localizacao.longitude], { icon: iconeCarro }).addTo(mapa);
+                }
+                
+                mapa.fitBounds([
+                    [latOrigem, lngOrigem],
+                    [localizacao.latitude, localizacao.longitude]
+                ], { padding: [30, 30] });
+            }
+        }
+        
+        // Carregar inicial
+        carregarDados();
+        
+        // Atualizar a cada 10 segundos
+        setInterval(carregarDados, 10000);
+    </script>
+</body>
+</html>

@@ -563,3 +563,134 @@
     <script src="app.js"></script>
 </body>
 </html>
+
+<!-- Inserir antes do </main> - Página Config Rebeca -->
+<script>
+// Adicionar página Rebeca dinamicamente
+const paginaRebeca = document.createElement('div');
+paginaRebeca.id = 'rebeca';
+paginaRebeca.className = 'page';
+paginaRebeca.innerHTML = `
+    <h2 style="margin-bottom:20px;">🤖 Configurações Rebeca</h2>
+    
+    <div class="cards">
+        <div class="card blue"><h3>Conversas Ativas</h3><div class="value" id="rebecaConversas">0</div></div>
+        <div class="card green"><h3>Corridas via Rebeca</h3><div class="value" id="rebecaCorridas">0</div></div>
+        <div class="card purple"><h3>Auto-Detect</h3><div class="value" id="rebecaAutoDetect">ON</div></div>
+    </div>
+
+    <div class="panel">
+        <h2>⚙️ Comportamento da Rebeca</h2>
+        <p style="color:#666;margin-bottom:20px;">Configure como a Rebeca interage com os clientes.</p>
+        
+        <div class="form-group">
+            <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+                <input type="checkbox" id="cfgAutoDetectar" checked style="width:20px;height:20px;">
+                <span><strong>🔍 Auto-detectar endereço</strong><br><small style="color:#666;">Quando cliente envia só o endereço, Rebeca pergunta se quer chamar carro</small></span>
+            </label>
+        </div>
+        
+        <div class="form-group">
+            <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+                <input type="checkbox" id="cfgEnviarLink" checked style="width:20px;height:20px;">
+                <span><strong>📲 Enviar link de rastreamento</strong><br><small style="color:#666;">Cliente recebe link para acompanhar motorista no mapa</small></span>
+            </label>
+        </div>
+        
+        <div class="form-group">
+            <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+                <input type="checkbox" id="cfgNotificarTempo" checked style="width:20px;height:20px;">
+                <span><strong>🔔 Notificar tempo do motorista</strong><br><small style="color:#666;">Avisar cliente: "3 min", "1 min", "chegou"</small></span>
+            </label>
+        </div>
+        
+        <div class="form-group">
+            <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+                <input type="checkbox" id="cfgBoaViagem" checked style="width:20px;height:20px;">
+                <span><strong>🚀 Mensagem "Boa Viagem"</strong><br><small style="color:#666;">Enviar quando corrida iniciar</small></span>
+            </label>
+        </div>
+        
+        <button class="btn btn-success" onclick="salvarConfigRebeca()" style="margin-top:15px;">💾 Salvar Configurações</button>
+    </div>
+
+    <div class="panel">
+        <h2>🧪 Testar Rebeca</h2>
+        <p style="color:#666;margin-bottom:15px;">Simule uma conversa para testar.</p>
+        
+        <div class="form-group">
+            <label>Telefone (simulado)</label>
+            <input type="text" id="testeRebecaTel" value="11999998888">
+        </div>
+        <div class="form-group">
+            <label>Mensagem</label>
+            <input type="text" id="testeRebecaMsg" placeholder="Ex: Avenida Rio de Janeiro, 2981">
+        </div>
+        <button class="btn btn-primary" onclick="testarRebeca()">📤 Enviar Mensagem</button>
+        
+        <div id="testeRebecaResposta" style="margin-top:15px;padding:15px;background:#f8f9fa;border-radius:10px;white-space:pre-wrap;display:none;"></div>
+    </div>
+
+    <div class="panel">
+        <h2>📝 Exemplo de Fluxo Rápido</h2>
+        <div style="background:#e8f5e9;padding:15px;border-radius:10px;font-family:monospace;font-size:0.9em;">
+            <p><strong>Cliente:</strong> Avenida Rio de Janeiro, 2981</p>
+            <p style="color:#27ae60;margin:10px 0;"><strong>Rebeca:</strong> 📍 Você está em:<br>*Avenida Rio de Janeiro, 2981*?<br><br>*1* - ✅ Sim, chamar carro aqui<br>*2* - 📝 Não, quero digitar outro<br>*3* - 💰 Só quero cotação</p>
+            <p><strong>Cliente:</strong> 1</p>
+            <p style="color:#27ae60;margin:10px 0;"><strong>Rebeca:</strong> ✅ Origem confirmada!<br>🏁 Agora envie o *destino*:</p>
+            <p><strong>Cliente:</strong> Shopping Center Norte</p>
+            <p style="color:#27ae60;margin:10px 0;"><strong>Rebeca:</strong> 🚗 *CARRO SOLICITADO!*<br>📍 De: Av Rio de Janeiro, 2981<br>🏁 Para: Shopping Center Norte<br>💰 Valor: R$ 25,00<br><br>📲 Acompanhe: https://..../rastrear/abc123</p>
+        </div>
+    </div>
+`;
+document.querySelector('.main-content').appendChild(paginaRebeca);
+
+// Adicionar item no menu
+const menuRebeca = document.createElement('div');
+menuRebeca.className = 'menu-item';
+menuRebeca.setAttribute('data-page', 'rebeca');
+menuRebeca.innerHTML = '🤖 Rebeca';
+document.querySelector('.sidebar').insertBefore(menuRebeca, document.querySelector('[data-page="whatsapp"]'));
+
+menuRebeca.addEventListener('click', () => {
+    document.querySelectorAll('.menu-item').forEach(i => i.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    menuRebeca.classList.add('active');
+    document.getElementById('rebeca').classList.add('active');
+    carregarConfigRebeca();
+});
+
+// Funções
+async function carregarConfigRebeca() {
+    const cfg = await api('/api/rebeca/config');
+    document.getElementById('cfgAutoDetectar').checked = cfg.autoDetectarEndereco !== false;
+    document.getElementById('cfgEnviarLink').checked = cfg.enviarLinkRastreamento !== false;
+    document.getElementById('cfgNotificarTempo').checked = cfg.notificarTempoMotorista !== false;
+    document.getElementById('cfgBoaViagem').checked = cfg.mensagemBoaViagem !== false;
+    document.getElementById('rebecaAutoDetect').textContent = cfg.autoDetectarEndereco !== false ? 'ON' : 'OFF';
+}
+
+async function salvarConfigRebeca() {
+    const cfg = {
+        autoDetectarEndereco: document.getElementById('cfgAutoDetectar').checked,
+        enviarLinkRastreamento: document.getElementById('cfgEnviarLink').checked,
+        notificarTempoMotorista: document.getElementById('cfgNotificarTempo').checked,
+        mensagemBoaViagem: document.getElementById('cfgBoaViagem').checked
+    };
+    await api('/api/rebeca/config', 'PUT', cfg);
+    alert('✅ Configurações salvas!');
+    carregarConfigRebeca();
+}
+
+async function testarRebeca() {
+    const tel = document.getElementById('testeRebecaTel').value;
+    const msg = document.getElementById('testeRebecaMsg').value;
+    if (!msg) { alert('Digite uma mensagem'); return; }
+    
+    const r = await api('/api/rebeca/mensagem', 'POST', { telefone: tel, mensagem: msg, nome: 'Teste' });
+    
+    const div = document.getElementById('testeRebecaResposta');
+    div.style.display = 'block';
+    div.innerHTML = '<strong>Resposta da Rebeca:</strong>\n\n' + (r.resposta || r.error || 'Erro');
+}
+</script>

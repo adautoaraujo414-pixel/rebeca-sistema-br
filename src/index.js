@@ -32,7 +32,7 @@ const antifraudeRoutes = require('./routes/antifraude.routes');
 const mapsRoutes = require('./routes/maps.routes');
 const despachoRoutes = require('./routes/despacho.routes');
 
-// Registrar rotas
+// Registrar rotas API
 app.use('/api/auth', authRoutes);
 app.use('/api/usuarios', usuariosRoutes);
 app.use('/api/motoristas', motoristaRoutes);
@@ -55,33 +55,47 @@ app.use('/api/antifraude', antifraudeRoutes);
 app.use('/api/maps', mapsRoutes);
 app.use('/api/despacho', despachoRoutes);
 
-// Rotas admin
-app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public/admin/index.html')));
-app.get('/admin/login', (req, res) => res.sendFile(path.join(__dirname, 'public/admin/login.html')));
+// Página de rastreamento para clientes
+app.get('/rastrear/:codigo', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'rastrear.html'));
+});
+
+// Redirecionar /admin para login se necessário
+app.get('/admin', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'admin', 'index.html'));
+});
+
+app.get('/admin/login', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'admin', 'login.html'));
+});
 
 // Health check
-app.get('/api/health', (req, res) => {
+app.get('/health', (req, res) => {
     res.json({ 
         status: 'ok', 
-        versao: '2.8.0',
+        versao: '2.9.0',
         funcionalidades: [
-            'Dashboard', 'Gráficos', 'Anti-Fraude', 'Google Maps',
-            'Multi-Usuários', 'Despacho Inteligente', 'Broadcast', 'Motorista Próximo'
+            'Rebeca Auto-Detect',
+            'Rastreamento Cliente',
+            'Notificações Tempo',
+            'Preços Dinâmicos',
+            'Despacho Inteligente'
         ]
     });
 });
 
+// 404
 app.use((req, res) => res.status(404).json({ error: 'Rota não encontrada' }));
 
 app.listen(PORT, () => {
-    console.log('=================================');
-    console.log('🚀 UBMAX Rebeca v2.8.0');
+    console.log('');
+    console.log('🚀 UBMAX Rebeca v2.9.0');
     console.log('=================================');
     console.log('📡 Porta:', PORT);
+    console.log('🤖 Rebeca: AUTO-DETECT ENDEREÇO');
+    console.log('📲 Rastreamento: /rastrear/:codigo');
+    console.log('🔔 Notificações: 3min, 1min, chegou');
     console.log('🚗 Despacho: BROADCAST / PRÓXIMO');
-    console.log('🗺️  Google Maps: INTEGRADO');
-    console.log('👥 Multi-Usuários: ATIVO');
-    console.log('🛡️  Anti-Fraude: ATIVO');
     console.log('⚙️  Admin: /admin');
     console.log('=================================');
 });
