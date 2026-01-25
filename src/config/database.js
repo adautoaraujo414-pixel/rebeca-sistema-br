@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://ntXIoRscLJRylhL5:yqK895RLbOFGrhZT@cluster0.mppdbhc.mongodb.net/ubmax?retryWrites=true&w=majority';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://ubmax:Ubmax2024@cluster0.mppdbhc.mongodb.net/ubmax?retryWrites=true&w=majority';
 let isConnected = false;
 const conectarDB = async () => {
     if (isConnected) return;
