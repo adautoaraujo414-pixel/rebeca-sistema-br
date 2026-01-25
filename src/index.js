@@ -32,6 +32,7 @@ const antifraudeRoutes = require('./routes/antifraude.routes');
 const mapsRoutes = require('./routes/maps.routes');
 const despachoRoutes = require('./routes/despacho.routes');
 const iaRoutes = require('./routes/ia.routes');
+const mensalidadeRoutes = require('./routes/mensalidade.routes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/usuarios', usuariosRoutes);
@@ -55,6 +56,7 @@ app.use('/api/antifraude', antifraudeRoutes);
 app.use('/api/maps', mapsRoutes);
 app.use('/api/despacho', despachoRoutes);
 app.use('/api/ia', iaRoutes);
+app.use('/api/mensalidades', mensalidadeRoutes);
 
 // Páginas
 app.get('/rastrear/:codigo', (req, res) => res.sendFile(path.join(__dirname, 'public', 'rastrear.html')));
@@ -67,17 +69,32 @@ app.get('/health', (req, res) => {
     const IAService = require('./services/ia.service');
     res.json({ 
         status: 'ok', 
-        versao: '3.2.0',
+        versao: '3.4.0',
         banco: mongoose.connection.readyState === 1 ? 'MongoDB CONECTADO' : 'Desconectado',
         ia: IAService.isAtivo() ? 'ATIVA (Claude)' : 'Desativada',
-        funcionalidades: ['MongoDB', 'IA Claude', 'GPS Real', 'App Motorista', 'Rastreamento']
+        funcionalidades: ['MongoDB', 'IA Claude', 'GPS Real', 'App Motorista', 'Mensalidades', 'Rastreamento']
     });
 });
+
+// Verificar mensalidades a cada hora
+const MensalidadeService = require('./services/mensalidade.service');
+setInterval(async () => {
+    try {
+        const notificacoes = await MensalidadeService.verificarVencimentos();
+        if (notificacoes.length > 0) {
+            console.log('📢 Notificações de mensalidade:', notificacoes.length);
+            // Aqui integrar com Rebeca para enviar WhatsApp
+        }
+    } catch (e) {
+        console.error('Erro ao verificar mensalidades:', e.message);
+    }
+}, 60 * 60 * 1000); // 1 hora
 
 app.use((req, res) => res.status(404).json({ error: 'Rota não encontrada' }));
 
 app.listen(PORT, () => {
-    console.log('🚀 UBMAX v3.2.0 - Sistema Completo');
+    console.log('🚀 UBMAX v3.4.0 - Sistema Completo');
     console.log('📡 Porta:', PORT);
     console.log('🚗 App Motorista: /motorista');
+    console.log('💰 Mensalidades: Ativo');
 });

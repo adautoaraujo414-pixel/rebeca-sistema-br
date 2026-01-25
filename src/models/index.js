@@ -34,3 +34,37 @@ module.exports = {
     Corrida: mongoose.model('Corrida', CorridaSchema),
     Config: mongoose.model('Config', ConfigSchema)
 };
+
+// ==================== MENSALIDADE ====================
+const MensalidadeSchema = new mongoose.Schema({
+    motoristaId: { type: mongoose.Schema.Types.ObjectId, ref: 'Motorista', required: true },
+    motoristaNome: String,
+    motoristaWhatsapp: String,
+    plano: { type: String, enum: ['semanal', 'mensal'], default: 'mensal' },
+    valor: { type: Number, required: true },
+    dataVencimento: { type: Date, required: true },
+    dataPagamento: Date,
+    status: { type: String, enum: ['pendente', 'pago', 'atrasado', 'bloqueado'], default: 'pendente' },
+    comprovante: String,
+    observacao: String,
+    notificacaoEnviada: { type: Boolean, default: false },
+    notificacaoAtrasoEnviada: { type: Boolean, default: false }
+}, { timestamps: true });
+
+// ==================== CONFIG FINANCEIRO ====================
+const ConfigFinanceiroSchema = new mongoose.Schema({
+    chavePix: String,
+    tipoChavePix: { type: String, enum: ['cpf', 'cnpj', 'email', 'telefone', 'aleatoria'], default: 'aleatoria' },
+    nomeTitular: String,
+    valorMensalidade: { type: Number, default: 100 },
+    valorSemanal: { type: Number, default: 30 },
+    diasTolerancia: { type: Number, default: 2 },
+    mensagemCobranca: String,
+    mensagemBloqueio: String
+}, { timestamps: true });
+
+const Mensalidade = mongoose.model('Mensalidade', MensalidadeSchema);
+const ConfigFinanceiro = mongoose.model('ConfigFinanceiro', ConfigFinanceiroSchema);
+
+module.exports.Mensalidade = Mensalidade;
+module.exports.ConfigFinanceiro = ConfigFinanceiro;
