@@ -694,3 +694,155 @@ async function testarRebeca() {
     div.innerHTML = '<strong>Resposta da Rebeca:</strong>\n\n' + (r.resposta || r.error || 'Erro');
 }
 </script>
+
+<script>
+// ==================== PÁGINA IA ====================
+const paginaIA = document.createElement('div');
+paginaIA.id = 'ia';
+paginaIA.className = 'page';
+paginaIA.innerHTML = `
+    <h2 style="margin-bottom:20px;">🤖 Inteligência Artificial (Claude)</h2>
+    
+    <div class="cards">
+        <div class="card" id="cardIAStatus"><h3>Status</h3><div class="value" id="iaStatus">-</div></div>
+        <div class="card blue"><h3>Modelo</h3><div class="value" id="iaModelo">-</div></div>
+        <div class="card green"><h3>Requisições Hoje</h3><div class="value" id="iaRequisicoes">0</div></div>
+    </div>
+
+    <div class="panel">
+        <h2>🔑 Configurar API Key</h2>
+        <p style="color:#666;margin-bottom:15px;">Obtenha sua API Key em <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a></p>
+        
+        <div class="form-group">
+            <label>API Key da Anthropic</label>
+            <input type="password" id="iaApiKey" placeholder="sk-ant-api03-..." style="font-family:monospace;">
+        </div>
+        
+        <div class="form-group">
+            <label>Modelo</label>
+            <select id="iaModeloSelect">
+                <option value="claude-3-haiku-20240307">Claude 3 Haiku (Rápido e Barato)</option>
+                <option value="claude-3-sonnet-20240229">Claude 3 Sonnet (Equilibrado)</option>
+                <option value="claude-3-opus-20240229">Claude 3 Opus (Mais Inteligente)</option>
+            </select>
+        </div>
+        
+        <div style="display:flex;gap:10px;margin-top:15px;">
+            <button class="btn btn-success" onclick="salvarConfigIA()">💾 Salvar</button>
+            <button class="btn btn-primary" onclick="testarIA()">🧪 Testar Conexão</button>
+        </div>
+        
+        <div id="iaTesteResultado" style="margin-top:15px;padding:15px;border-radius:10px;display:none;"></div>
+    </div>
+
+    <div class="panel">
+        <h2>🧪 Testar IA</h2>
+        <p style="color:#666;margin-bottom:15px;">Simule mensagens para ver como a IA interpreta.</p>
+        
+        <div class="form-group">
+            <label>Mensagem de Teste</label>
+            <input type="text" id="iaTesteMensagem" placeholder="Ex: preciso ir pro shopping agora">
+        </div>
+        
+        <button class="btn btn-primary" onclick="testarAnaliseIA()">🔍 Analisar Mensagem</button>
+        
+        <div id="iaAnaliseResultado" style="margin-top:15px;padding:15px;background:#f8f9fa;border-radius:10px;display:none;white-space:pre-wrap;font-family:monospace;font-size:0.85em;"></div>
+    </div>
+
+    <div class="panel">
+        <h2>💡 Como Funciona</h2>
+        <div style="background:#e8f5e9;padding:15px;border-radius:10px;">
+            <p><strong>Com IA ATIVA, a Rebeca entende:</strong></p>
+            <ul style="margin:10px 0 0 20px;">
+                <li>"preciso ir pro shopping" → Pedir corrida</li>
+                <li>"me busca na padaria do João" → Extrai endereço</li>
+                <li>"quanto fica até o aeroporto?" → Cotação</li>
+                <li>"tô na casa azul perto do mercado" → Endereço + Referência</li>
+                <li>"chama um carro pra minha mãe" → Entende contexto</li>
+            </ul>
+            <p style="margin-top:15px;"><strong>Sem IA:</strong> Funciona com palavras-chave (1, 2, 3, menu, etc.)</p>
+        </div>
+    </div>
+
+    <div class="panel">
+        <h2>💰 Custos Estimados</h2>
+        <table style="width:100%;">
+            <thead><tr><th>Modelo</th><th>Custo/1K msgs</th><th>Velocidade</th><th>Inteligência</th></tr></thead>
+            <tbody>
+                <tr><td>Haiku</td><td>~$0.25</td><td>⚡⚡⚡ Muito Rápido</td><td>⭐⭐⭐</td></tr>
+                <tr><td>Sonnet</td><td>~$3.00</td><td>⚡⚡ Rápido</td><td>⭐⭐⭐⭐</td></tr>
+                <tr><td>Opus</td><td>~$15.00</td><td>⚡ Normal</td><td>⭐⭐⭐⭐⭐</td></tr>
+            </tbody>
+        </table>
+        <p style="color:#666;margin-top:10px;font-size:0.9em;">💡 Recomendamos <strong>Haiku</strong> para a maioria dos casos.</p>
+    </div>
+`;
+document.querySelector('.main-content').appendChild(paginaIA);
+
+// Menu IA
+const menuIA = document.createElement('div');
+menuIA.className = 'menu-item';
+menuIA.setAttribute('data-page', 'ia');
+menuIA.innerHTML = '🤖 Inteligência Artificial';
+document.querySelector('.sidebar').insertBefore(menuIA, document.querySelector('[data-page="config"]'));
+
+menuIA.addEventListener('click', () => {
+    document.querySelectorAll('.menu-item').forEach(i => i.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    menuIA.classList.add('active');
+    document.getElementById('ia').classList.add('active');
+    carregarConfigIA();
+});
+
+async function carregarConfigIA() {
+    const cfg = await api('/api/ia/config');
+    document.getElementById('iaStatus').textContent = cfg.ativo ? '🟢 ATIVA' : '🔴 Desativada';
+    document.getElementById('cardIAStatus').className = 'card ' + (cfg.ativo ? 'green' : 'red');
+    document.getElementById('iaModelo').textContent = cfg.modelo?.split('-')[1] || '-';
+    if (cfg.modelo) document.getElementById('iaModeloSelect').value = cfg.modelo;
+}
+
+async function salvarConfigIA() {
+    const apiKey = document.getElementById('iaApiKey').value.trim();
+    const modelo = document.getElementById('iaModeloSelect').value;
+    
+    const r = await api('/api/ia/config', 'PUT', { apiKey, modelo, ativo: !!apiKey });
+    
+    if (r.sucesso) {
+        alert('✅ Configuração salva!');
+        carregarConfigIA();
+    } else {
+        alert('❌ Erro: ' + (r.error || 'Falha ao salvar'));
+    }
+}
+
+async function testarIA() {
+    const div = document.getElementById('iaTesteResultado');
+    div.style.display = 'block';
+    div.style.background = '#fff3cd';
+    div.innerHTML = '⏳ Testando conexão...';
+    
+    const r = await api('/api/ia/testar', 'POST');
+    
+    if (r.sucesso) {
+        div.style.background = '#d4edda';
+        div.innerHTML = '✅ <strong>Conexão OK!</strong><br>Modelo: ' + r.modelo + '<br>Resposta: ' + r.resposta;
+    } else {
+        div.style.background = '#f8d7da';
+        div.innerHTML = '❌ <strong>Erro:</strong> ' + (r.erro || 'Falha na conexão');
+    }
+}
+
+async function testarAnaliseIA() {
+    const msg = document.getElementById('iaTesteMensagem').value;
+    if (!msg) { alert('Digite uma mensagem'); return; }
+    
+    const div = document.getElementById('iaAnaliseResultado');
+    div.style.display = 'block';
+    div.innerHTML = '⏳ Analisando...';
+    
+    const r = await api('/api/ia/analisar', 'POST', { mensagem: msg, contexto: { nome: 'Teste' } });
+    
+    div.innerHTML = '<strong>Análise da IA:</strong>\n\n' + JSON.stringify(r, null, 2);
+}
+</script>

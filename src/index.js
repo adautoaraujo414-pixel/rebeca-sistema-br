@@ -9,7 +9,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Importar rotas
+// Rotas
 const authRoutes = require('./routes/auth.routes');
 const usuariosRoutes = require('./routes/usuarios.routes');
 const motoristaRoutes = require('./routes/motorista.routes');
@@ -31,8 +31,8 @@ const estatisticasRoutes = require('./routes/estatisticas.routes');
 const antifraudeRoutes = require('./routes/antifraude.routes');
 const mapsRoutes = require('./routes/maps.routes');
 const despachoRoutes = require('./routes/despacho.routes');
+const iaRoutes = require('./routes/ia.routes');
 
-// Registrar rotas API
 app.use('/api/auth', authRoutes);
 app.use('/api/usuarios', usuariosRoutes);
 app.use('/api/motoristas', motoristaRoutes);
@@ -54,33 +54,25 @@ app.use('/api/estatisticas', estatisticasRoutes);
 app.use('/api/antifraude', antifraudeRoutes);
 app.use('/api/maps', mapsRoutes);
 app.use('/api/despacho', despachoRoutes);
+app.use('/api/ia', iaRoutes);
 
-// Página de rastreamento para clientes
+// Rastreamento
 app.get('/rastrear/:codigo', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'rastrear.html'));
 });
 
-// Redirecionar /admin para login se necessário
-app.get('/admin', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'admin', 'index.html'));
-});
+// Admin
+app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'index.html')));
+app.get('/admin/login', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'login.html')));
 
-app.get('/admin/login', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'admin', 'login.html'));
-});
-
-// Health check
+// Health
 app.get('/health', (req, res) => {
+    const IAService = require('./services/ia.service');
     res.json({ 
         status: 'ok', 
-        versao: '2.9.0',
-        funcionalidades: [
-            'Rebeca Auto-Detect',
-            'Rastreamento Cliente',
-            'Notificações Tempo',
-            'Preços Dinâmicos',
-            'Despacho Inteligente'
-        ]
+        versao: '3.0.0',
+        ia: IAService.isAtivo() ? 'ATIVA (Claude)' : 'Desativada',
+        funcionalidades: ['IA Claude', 'Auto-Detect', 'GPS', 'Favoritos', 'Rastreamento']
     });
 });
 
@@ -89,13 +81,12 @@ app.use((req, res) => res.status(404).json({ error: 'Rota não encontrada' }));
 
 app.listen(PORT, () => {
     console.log('');
-    console.log('🚀 UBMAX Rebeca v2.9.0');
+    console.log('🚀 UBMAX Rebeca v3.0.0 + IA');
     console.log('=================================');
     console.log('📡 Porta:', PORT);
-    console.log('🤖 Rebeca: AUTO-DETECT ENDEREÇO');
+    console.log('🤖 IA: Claude API (Anthropic)');
+    console.log('📍 GPS + Favoritos');
     console.log('📲 Rastreamento: /rastrear/:codigo');
-    console.log('🔔 Notificações: 3min, 1min, chegou');
-    console.log('🚗 Despacho: BROADCAST / PRÓXIMO');
     console.log('⚙️  Admin: /admin');
     console.log('=================================');
 });
