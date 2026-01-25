@@ -56,25 +56,28 @@ app.use('/api/maps', mapsRoutes);
 app.use('/api/despacho', despachoRoutes);
 app.use('/api/ia', iaRoutes);
 
+// Páginas
 app.get('/rastrear/:codigo', (req, res) => res.sendFile(path.join(__dirname, 'public', 'rastrear.html')));
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'index.html')));
 app.get('/admin/login', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'login.html')));
+app.get('/motorista', (req, res) => res.sendFile(path.join(__dirname, 'public', 'motorista-app.html')));
 
 app.get('/health', (req, res) => {
     const mongoose = require('mongoose');
     const IAService = require('./services/ia.service');
     res.json({ 
         status: 'ok', 
-        versao: '3.1.0',
+        versao: '3.2.0',
         banco: mongoose.connection.readyState === 1 ? 'MongoDB CONECTADO' : 'Desconectado',
         ia: IAService.isAtivo() ? 'ATIVA (Claude)' : 'Desativada',
-        funcionalidades: ['MongoDB', 'IA Claude', 'GPS', 'Favoritos', 'Rastreamento']
+        funcionalidades: ['MongoDB', 'IA Claude', 'GPS Real', 'App Motorista', 'Rastreamento']
     });
 });
 
 app.use((req, res) => res.status(404).json({ error: 'Rota não encontrada' }));
 
 app.listen(PORT, () => {
-    console.log('🚀 UBMAX v3.1.0 - MongoDB + IA');
+    console.log('🚀 UBMAX v3.2.0 - Sistema Completo');
     console.log('📡 Porta:', PORT);
+    console.log('🚗 App Motorista: /motorista');
 });

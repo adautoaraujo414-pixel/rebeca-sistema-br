@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UBMAX Motorista</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #1a1a2e; color: white; min-height: 100vh; }
+        .container { max-width: 500px; margin: 0 auto; padding: 20px; }
+        .header { text-align: center; padding: 20px 0; border-bottom: 1px solid #333; margin-bottom: 20px; }
+        .header h1 { color: #00d4ff; font-size: 24px; }
+        .status-bar { display: flex; justify-content: space-between; align-items: center; background: #252542; padding: 15px; border-radius: 10px; margin-bottom: 20px; }
+        .status-indicator { display: flex; align-items: center; gap: 10px; }
+        .status-dot { width: 12px; height: 12px; border-radius: 50%; }
+        .status-dot.online { background: #00ff88; box-shadow: 0 0 10px #00ff88; }
+        .status-dot.offline { background: #ff4444; }
+        .status-dot.em_corrida { background: #ffaa00; box-shadow: 0 0 10px #ffaa00; }
+        .gps-status { font-size: 12px; color: #888; }
+        .gps-status.ativo { color: #00ff88; }
+        .btn { width: 100%; padding: 15px; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; margin-bottom: 10px; transition: all 0.3s; }
+        .btn-primary { background: linear-gradient(135deg, #00d4ff, #0099cc); color: white; }
+        .btn-success { background: linear-gradient(135deg, #00ff88, #00cc6a); color: white; }
+        .btn-danger { background: linear-gradient(135deg, #ff4444, #cc0000); color: white; }
+        .btn-warning { background: linear-gradient(135deg, #ffaa00, #cc8800); color: white; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .card { background: #252542; border-radius: 15px; padding: 20px; margin-bottom: 20px; }
+        .card-title { font-size: 14px; color: #888; margin-bottom: 10px; }
+        .card-value { font-size: 24px; font-weight: bold; color: #00d4ff; }
+        .corrida-card { background: linear-gradient(135deg, #252542, #1a1a2e); border: 2px solid #00d4ff; }
+        .corrida-info { margin-bottom: 15px; }
+        .corrida-info label { font-size: 12px; color: #888; display: block; }
+        .corrida-info span { font-size: 16px; }
+        .login-form { display: none; }
+        .login-form.active { display: block; }
+        .input { width: 100%; padding: 15px; border: 1px solid #333; border-radius: 10px; background: #1a1a2e; color: white; font-size: 16px; margin-bottom: 15px; }
+        .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .hidden { display: none !important; }
+        .coords { font-size: 11px; color: #666; margin-top: 5px; }
+        .pulse { animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .notification { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #00d4ff; color: white; padding: 15px 30px; border-radius: 10px; z-index: 1000; display: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚗 UBMAX Motorista</h1>
+        </div>
+
+        <!-- Login -->
+        <div id="loginSection" class="login-form active">
+            <div class="card">
+                <h2 style="margin-bottom: 20px; text-align: center;">Entrar</h2>
+                <input type="tel" id="loginWhatsapp" class="input" placeholder="WhatsApp (11999999999)">
+                <input type="password" id="loginSenha" class="input" placeholder="Senha">
+                <button class="btn btn-primary" onclick="fazerLogin()">ENTRAR</button>
+            </div>
+        </div>
+
+        <!-- App Principal -->
+        <div id="appSection" class="hidden">
+            <div class="status-bar">
+                <div class="status-indicator">
+                    <div id="statusDot" class="status-dot offline"></div>
+                    <span id="statusText">Offline</span>
+                </div>
+                <div>
+                    <div id="gpsStatus" class="gps-status">📍 GPS desativado</div>
+                    <div id="coordsDisplay" class="coords"></div>
+                </div>
+            </div>
+
+            <!-- Botão Status -->
+            <button id="btnStatus" class="btn btn-success" onclick="toggleStatus()">FICAR ONLINE</button>
+
+            <!-- Corrida Ativa -->
+            <div id="corridaAtiva" class="card corrida-card hidden">
+                <h3 style="margin-bottom: 15px; color: #00d4ff;">🚗 CORRIDA ATIVA</h3>
+                <div class="corrida-info">
+                    <label>Cliente</label>
+                    <span id="corridaCliente">-</span>
+                </div>
+                <div class="corrida-info">
+                    <label>📍 Origem</label>
+                    <span id="corridaOrigem">-</span>
+                </div>
+                <div class="corrida-info">
+                    <label>🏁 Destino</label>
+                    <span id="corridaDestino">-</span>
+                </div>
+                <div class="corrida-info">
+                    <label>💰 Valor</label>
+                    <span id="corridaValor">-</span>
+                </div>
+                <button id="btnIniciar" class="btn btn-warning" onclick="iniciarCorrida()">INICIAR CORRIDA</button>
+                <button id="btnFinalizar" class="btn btn-success hidden" onclick="finalizarCorrida()">FINALIZAR CORRIDA</button>
+                <button class="btn btn-danger" onclick="cancelarCorrida()">CANCELAR</button>
+            </div>
+
+            <!-- Nova Corrida Disponível -->
+            <div id="novaCorrida" class="card corrida-card hidden pulse">
+                <h3 style="margin-bottom: 15px; color: #ffaa00;">🔔 NOVA CORRIDA!</h3>
+                <div class="corrida-info">
+                    <label>Cliente</label>
+                    <span id="novaCorridaCliente">-</span>
+                </div>
+                <div class="corrida-info">
+                    <label>📍 Origem</label>
+                    <span id="novaCorridaOrigem">-</span>
+                </div>
+                <div class="corrida-info">
+                    <label>🏁 Destino</label>
+                    <span id="novaCorridaDestino">-</span>
+                </div>
+                <div class="corrida-info">
+                    <label>💰 Valor Estimado</label>
+                    <span id="novaCorridaValor">-</span>
+                </div>
+                <button class="btn btn-success" onclick="aceitarCorrida()">✅ ACEITAR</button>
+                <button class="btn btn-danger" onclick="recusarCorrida()">❌ RECUSAR</button>
+            </div>
+
+            <!-- Estatísticas -->
+            <div class="stats">
+                <div class="card">
+                    <div class="card-title">Corridas Hoje</div>
+                    <div id="corridasHoje" class="card-value">0</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">Ganhos Hoje</div>
+                    <div id="ganhosHoje" class="card-value">R$ 0</div>
+                </div>
+            </div>
+
+            <button class="btn btn-danger" onclick="fazerLogout()" style="margin-top: 20px;">SAIR</button>
+        </div>
+    </div>
+
+    <div id="notification" class="notification"></div>
+
+    <script>
+        let motorista = null;
+        let token = localStorage.getItem('motoristaToken');
+        let gpsInterval = null;
+        let checkCorridaInterval = null;
+        let corridaAtual = null;
+
+        // Inicialização
+        if (token) {
+            carregarMotorista();
+        }
+
+        async function fazerLogin() {
+            const whatsapp = document.getElementById('loginWhatsapp').value;
+            const senha = document.getElementById('loginSenha').value;
+
+            try {
+                const res = await fetch('/api/motorista-app/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ whatsapp, senha })
+                });
+                const data = await res.json();
+
+                if (data.sucesso) {
+                    motorista = data.motorista;
+                    token = data.token;
+                    localStorage.setItem('motoristaToken', token);
+                    mostrarApp();
+                    iniciarGPS();
+                    showNotification('Login realizado com sucesso!');
+                } else {
+                    alert(data.erro || 'Erro no login');
+                }
+            } catch (e) {
+                alert('Erro de conexão');
+            }
+        }
+
+        async function carregarMotorista() {
+            try {
+                const res = await fetch('/api/motorista-app/perfil', {
+                    headers: { 'Authorization': token }
+                });
+                const data = await res.json();
+
+                if (data.motorista) {
+                    motorista = data.motorista;
+                    mostrarApp();
+                    iniciarGPS();
+                } else {
+                    fazerLogout();
+                }
+            } catch (e) {
+                fazerLogout();
+            }
+        }
+
+        function mostrarApp() {
+            document.getElementById('loginSection').classList.remove('active');
+            document.getElementById('appSection').classList.remove('hidden');
+            atualizarStatusUI();
+            iniciarCheckCorrida();
+        }
+
+        function fazerLogout() {
+            localStorage.removeItem('motoristaToken');
+            motorista = null;
+            token = null;
+            pararGPS();
+            document.getElementById('loginSection').classList.add('active');
+            document.getElementById('appSection').classList.add('hidden');
+        }
+
+        // GPS
+        function iniciarGPS() {
+            if (!navigator.geolocation) {
+                document.getElementById('gpsStatus').textContent = '❌ GPS não suportado';
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    document.getElementById('gpsStatus').textContent = '📍 GPS ativo';
+                    document.getElementById('gpsStatus').classList.add('ativo');
+                    enviarGPS(pos.coords.latitude, pos.coords.longitude);
+                },
+                (err) => {
+                    document.getElementById('gpsStatus').textContent = '❌ GPS negado';
+                    alert('Por favor, permita o acesso à localização para usar o app.');
+                },
+                { enableHighAccuracy: true }
+            );
+
+            // Enviar GPS a cada 10 segundos
+            gpsInterval = setInterval(() => {
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => enviarGPS(pos.coords.latitude, pos.coords.longitude),
+                    () => {}
+                );
+            }, 10000);
+        }
+
+        async function enviarGPS(latitude, longitude) {
+            document.getElementById('coordsDisplay').textContent = `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
+            
+            if (!token) return;
+
+            try {
+                await fetch('/api/motorista-app/gps', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': token 
+                    },
+                    body: JSON.stringify({ latitude, longitude })
+                });
+            } catch (e) {}
+        }
+
+        function pararGPS() {
+            if (gpsInterval) clearInterval(gpsInterval);
+            if (checkCorridaInterval) clearInterval(checkCorridaInterval);
+        }
+
+        // Status Online/Offline
+        async function toggleStatus() {
+            const novoStatus = motorista.status === 'disponivel' ? 'offline' : 'disponivel';
+            
+            try {
+                const res = await fetch('/api/motorista-app/status', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': token 
+                    },
+                    body: JSON.stringify({ status: novoStatus })
+                });
+                const data = await res.json();
+
+                if (data.sucesso) {
+                    motorista.status = novoStatus;
+                    atualizarStatusUI();
+                }
+            } catch (e) {}
+        }
+
+        function atualizarStatusUI() {
+            const dot = document.getElementById('statusDot');
+            const text = document.getElementById('statusText');
+            const btn = document.getElementById('btnStatus');
+
+            dot.className = 'status-dot ' + motorista.status;
+
+            if (motorista.status === 'disponivel') {
+                text.textContent = 'Online';
+                btn.textContent = 'FICAR OFFLINE';
+                btn.className = 'btn btn-danger';
+            } else if (motorista.status === 'em_corrida') {
+                text.textContent = 'Em Corrida';
+                btn.textContent = 'EM CORRIDA';
+                btn.disabled = true;
+                btn.className = 'btn btn-warning';
+            } else {
+                text.textContent = 'Offline';
+                btn.textContent = 'FICAR ONLINE';
+                btn.className = 'btn btn-success';
+            }
+        }
+
+        // Verificar novas corridas
+        function iniciarCheckCorrida() {
+            checkCorridaInterval = setInterval(verificarCorridas, 5000);
+        }
+
+        async function verificarCorridas() {
+            if (!token || motorista.status !== 'disponivel') return;
+
+            try {
+                const res = await fetch('/api/motorista-app/corridas-disponiveis', {
+                    headers: { 'Authorization': token }
+                });
+                const data = await res.json();
+
+                if (data.corridas && data.corridas.length > 0) {
+                    mostrarNovaCorrida(data.corridas[0]);
+                }
+            } catch (e) {}
+        }
+
+        function mostrarNovaCorrida(corrida) {
+            corridaAtual = corrida;
+            document.getElementById('novaCorridaCliente').textContent = corrida.clienteNome;
+            document.getElementById('novaCorridaOrigem').textContent = corrida.origem?.endereco || '-';
+            document.getElementById('novaCorridaDestino').textContent = corrida.destino?.endereco || '-';
+            document.getElementById('novaCorridaValor').textContent = 'R$ ' + (corrida.precoEstimado || 0).toFixed(2);
+            document.getElementById('novaCorrida').classList.remove('hidden');
+            
+            // Som de notificação
+            try { new Audio('data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU').play(); } catch(e) {}
+        }
+
+        async function aceitarCorrida() {
+            if (!corridaAtual) return;
+
+            try {
+                const res = await fetch('/api/motorista-app/aceitar', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': token 
+                    },
+                    body: JSON.stringify({ corridaId: corridaAtual._id })
+                });
+                const data = await res.json();
+
+                if (data.sucesso) {
+                    document.getElementById('novaCorrida').classList.add('hidden');
+                    motorista.status = 'em_corrida';
+                    atualizarStatusUI();
+                    mostrarCorridaAtiva(data.corrida);
+                    showNotification('Corrida aceita!');
+                }
+            } catch (e) {}
+        }
+
+        function recusarCorrida() {
+            document.getElementById('novaCorrida').classList.add('hidden');
+            corridaAtual = null;
+        }
+
+        function mostrarCorridaAtiva(corrida) {
+            corridaAtual = corrida;
+            document.getElementById('corridaCliente').textContent = corrida.clienteNome;
+            document.getElementById('corridaOrigem').textContent = corrida.origem?.endereco || '-';
+            document.getElementById('corridaDestino').textContent = corrida.destino?.endereco || '-';
+            document.getElementById('corridaValor').textContent = 'R$ ' + (corrida.precoEstimado || 0).toFixed(2);
+            document.getElementById('corridaAtiva').classList.remove('hidden');
+            
+            if (corrida.status === 'em_andamento') {
+                document.getElementById('btnIniciar').classList.add('hidden');
+                document.getElementById('btnFinalizar').classList.remove('hidden');
+            }
+        }
+
+        async function iniciarCorrida() {
+            try {
+                const res = await fetch('/api/motorista-app/iniciar', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': token 
+                    },
+                    body: JSON.stringify({ corridaId: corridaAtual._id })
+                });
+                const data = await res.json();
+
+                if (data.sucesso) {
+                    document.getElementById('btnIniciar').classList.add('hidden');
+                    document.getElementById('btnFinalizar').classList.remove('hidden');
+                    showNotification('Corrida iniciada!');
+                }
+            } catch (e) {}
+        }
+
+        async function finalizarCorrida() {
+            try {
+                const res = await fetch('/api/motorista-app/finalizar', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': token 
+                    },
+                    body: JSON.stringify({ corridaId: corridaAtual._id })
+                });
+                const data = await res.json();
+
+                if (data.sucesso) {
+                    document.getElementById('corridaAtiva').classList.add('hidden');
+                    motorista.status = 'disponivel';
+                    atualizarStatusUI();
+                    corridaAtual = null;
+                    showNotification('Corrida finalizada!');
+                }
+            } catch (e) {}
+        }
+
+        async function cancelarCorrida() {
+            if (!confirm('Tem certeza que deseja cancelar?')) return;
+
+            try {
+                const res = await fetch('/api/motorista-app/cancelar', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': token 
+                    },
+                    body: JSON.stringify({ corridaId: corridaAtual._id })
+                });
+                const data = await res.json();
+
+                if (data.sucesso) {
+                    document.getElementById('corridaAtiva').classList.add('hidden');
+                    motorista.status = 'disponivel';
+                    atualizarStatusUI();
+                    corridaAtual = null;
+                    showNotification('Corrida cancelada');
+                }
+            } catch (e) {}
+        }
+
+        function showNotification(msg) {
+            const notif = document.getElementById('notification');
+            notif.textContent = msg;
+            notif.style.display = 'block';
+            setTimeout(() => notif.style.display = 'none', 3000);
+        }
+    </script>
+</body>
+</html>
