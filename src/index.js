@@ -56,37 +56,24 @@ app.use('/api/maps', mapsRoutes);
 app.use('/api/despacho', despachoRoutes);
 app.use('/api/ia', iaRoutes);
 
-// Rastreamento
-app.get('/rastrear/:codigo', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'rastrear.html'));
-});
-
-// Admin
+app.get('/rastrear/:codigo', (req, res) => res.sendFile(path.join(__dirname, 'public', 'rastrear.html')));
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'index.html')));
 app.get('/admin/login', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'login.html')));
 
-// Health
 app.get('/health', (req, res) => {
     const IAService = require('./services/ia.service');
     res.json({ 
         status: 'ok', 
         versao: '3.0.0',
-        ia: IAService.isAtivo() ? 'ATIVA (Claude)' : 'Desativada',
+        ia: IAService.isAtivo() ? 'ATIVA (Claude)' : 'Desativada - Configure ANTHROPIC_API_KEY',
         funcionalidades: ['IA Claude', 'Auto-Detect', 'GPS', 'Favoritos', 'Rastreamento']
     });
 });
 
-// 404
 app.use((req, res) => res.status(404).json({ error: 'Rota não encontrada' }));
 
 app.listen(PORT, () => {
-    console.log('');
-    console.log('🚀 UBMAX Rebeca v3.0.0 + IA');
-    console.log('=================================');
+    console.log('🚀 UBMAX Rebeca v3.0.0 + IA Claude');
     console.log('📡 Porta:', PORT);
-    console.log('🤖 IA: Claude API (Anthropic)');
-    console.log('📍 GPS + Favoritos');
-    console.log('📲 Rastreamento: /rastrear/:codigo');
-    console.log('⚙️  Admin: /admin');
-    console.log('=================================');
+    console.log('🤖 IA:', process.env.ANTHROPIC_API_KEY ? 'Configurada' : 'Não configurada');
 });
