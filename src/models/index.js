@@ -81,3 +81,16 @@ const ContatoEmergenciaSchema = new mongoose.Schema({
 
 const ContatoEmergencia = mongoose.model('ContatoEmergencia', ContatoEmergenciaSchema);
 module.exports.ContatoEmergencia = ContatoEmergencia;
+
+// ==================== MENSAGENS CORRIDA ====================
+const MensagemCorridaSchema = new mongoose.Schema({
+    corridaId: { type: mongoose.Schema.Types.ObjectId, ref: 'Corrida', required: true },
+    remetente: { type: String, enum: ['motorista', 'cliente', 'rebeca'], required: true },
+    destinatario: { type: String, enum: ['motorista', 'cliente'], required: true },
+    mensagem: { type: String, required: true },
+    lida: { type: Boolean, default: false },
+    entregue: { type: Boolean, default: false }
+}, { timestamps: true });
+
+const MensagemCorrida = mongoose.model('MensagemCorrida', MensagemCorridaSchema);
+module.exports.MensagemCorrida = MensagemCorrida;

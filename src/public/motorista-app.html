@@ -1311,3 +1311,166 @@
     </script>
 </body>
 </html>
+
+<!-- Modal Chat com Cliente via Rebeca -->
+<div id="modalChatCliente" class="modal-overlay">
+    <div class="modal-content" style="height:80vh;display:flex;flex-direction:column;">
+        <div class="modal-header" style="background:#00d4ff;color:#000;">
+            <h3>💬 Chat com Cliente (via Rebeca)</h3>
+            <button class="modal-close" onclick="fecharModal('modalChatCliente')" style="color:#000;">&times;</button>
+        </div>
+        <div style="padding:10px;background:#1a1a2e;border-bottom:1px solid #333;">
+            <small style="color:#888;">⚠️ Comunicação disponível apenas antes de iniciar a corrida</small>
+        </div>
+        <div id="chatClienteMensagens" style="flex:1;overflow-y:auto;padding:15px;background:#1a1a2e;">
+            <!-- Mensagens aparecem aqui -->
+        </div>
+        <div style="padding:10px;background:#252542;">
+            <div style="margin-bottom:10px;">
+                <small style="color:#888;">Mensagens Rápidas:</small>
+                <div id="mensagensRapidas" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:5px;">
+                    <!-- Carregadas via JS -->
+                </div>
+            </div>
+            <div style="display:flex;gap:10px;">
+                <input type="text" id="inputMsgCliente" class="chat-input" placeholder="Digite sua mensagem..." style="flex:1;">
+                <button class="chat-send" onclick="enviarMsgCliente()">➤</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ========== CHAT COM CLIENTE VIA REBECA ==========
+let chatClienteInterval = null;
+
+async function abrirChatCliente() {
+    if (!corridaAtual) {
+        toast('Nenhuma corrida ativa', 'error');
+        return;
+    }
+    
+    if (corridaAtual.status === 'em_andamento' || corridaAtual.status === 'finalizada') {
+        toast('Chat disponível apenas antes de iniciar', 'error');
+        return;
+    }
+    
+    document.getElementById('modalChatCliente').classList.add('active');
+    carregarMensagensRapidas();
+    carregarMensagensCliente();
+    
+    // Atualizar a cada 5 segundos
+    chatClienteInterval = setInterval(carregarMensagensCliente, 5000);
+}
+
+function fecharChatCliente() {
+    document.getElementById('modalChatCliente').classList.remove('active');
+    if (chatClienteInterval) clearInterval(chatClienteInterval);
+}
+
+async function carregarMensagensRapidas() {
+    try {
+        const res = await fetch('/api/comunicacao/mensagens-rapidas');
+        const msgs = await res.json();
+        
+        document.getElementById('mensagensRapidas').innerHTML = msgs.map(m => 
+            `<button onclick="usarMsgRapida('${m.texto}')" style="background:#333;border:none;color:#fff;padding:5px 10px;border-radius:15px;font-size:12px;cursor:pointer;">${m.texto}</button>`
+        ).join('');
+    } catch (e) {}
+}
+
+function usarMsgRapida(texto) {
+    document.getElementById('inputMsgCliente').value = texto;
+}
+
+async function carregarMensagensCliente() {
+    if (!corridaAtual) return;
+    
+    try {
+        const res = await fetch(`/api/comunicacao/corrida/${corridaAtual._id}`);
+        const msgs = await res.json();
+        
+        const container = document.getElementById('chatClienteMensagens');
+        container.innerHTML = msgs.length > 0 ? msgs.map(m => `
+            <div style="margin-bottom:15px;${m.remetente === 'motorista' ? 'text-align:right;' : ''}">
+                <div style="display:inline-block;max-width:80%;padding:10px 15px;border-radius:15px;${
+                    m.remetente === 'motorista' 
+                        ? 'background:#00d4ff;color:#000;border-bottom-right-radius:5px;' 
+                        : m.remetente === 'rebeca'
+                            ? 'background:#9c27b0;color:#fff;border-bottom-left-radius:5px;'
+                            : 'background:#252542;border-bottom-left-radius:5px;'
+                }">
+                    ${m.mensagem}
+                </div>
+                <div style="font-size:10px;color:#666;margin-top:3px;">
+                    ${m.remetente === 'motorista' ? '✓ Você' : m.remetente === 'rebeca' ? '🤖 Rebeca' : '👤 Cliente'} • ${new Date(m.createdAt).toLocaleTimeString()}
+                </div>
+            </div>
+        `).join('') : '<p style="text-align:center;color:#888;">Nenhuma mensagem ainda.<br>Envie uma mensagem para o cliente!</p>';
+        
+        container.scrollTop = container.scrollHeight;
+        
+        // Marcar como lidas
+        const naoLidas = msgs.filter(m => m.destinatario === 'motorista' && !m.lida);
+        for (const msg of naoLidas) {
+            await fetch(`/api/comunicacao/marcar-lida/${msg._id}`, { method: 'POST' });
+        }
+    } catch (e) {}
+}
+
+async function enviarMsgCliente() {
+    const input = document.getElementById('inputMsgCliente');
+    const mensagem = input.value.trim();
+    
+    if (!mensagem) return;
+    if (!corridaAtual) return;
+    
+    try {
+        const res = await fetch('/api/comunicacao/motorista-para-cliente', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                corridaId: corridaAtual._id,
+                mensagem,
+                motoristaToken: token
+            })
+        });
+        
+        const data = await res.json();
+        
+        if (data.sucesso) {
+            input.value = '';
+            carregarMensagensCliente();
+            toast('Mensagem enviada via Rebeca!', 'success');
+        } else {
+            toast(data.erro || 'Erro ao enviar', 'error');
+        }
+    } catch (e) {
+        toast('Erro de conexão', 'error');
+    }
+}
+
+// Verificar mensagens não lidas periodicamente
+async function verificarMensagensNaoLidas() {
+    if (!corridaAtual) return;
+    
+    try {
+        const res = await fetch(`/api/comunicacao/nao-lidas/${corridaAtual._id}`);
+        const msgs = await res.json();
+        
+        if (msgs.length > 0) {
+            toast(`💬 ${msgs.length} nova(s) mensagem(ns) do cliente!`, 'success');
+        }
+    } catch (e) {}
+}
+
+// Substituir função ligarCliente
+function ligarCliente() {
+    abrirChatCliente();
+}
+
+// Enter para enviar
+document.getElementById('inputMsgCliente')?.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') enviarMsgCliente();
+});
+</script>
