@@ -94,3 +94,16 @@ const MensagemCorridaSchema = new mongoose.Schema({
 
 const MensagemCorrida = mongoose.model('MensagemCorrida', MensagemCorridaSchema);
 module.exports.MensagemCorrida = MensagemCorrida;
+
+// ==================== ATUALIZAR CONFIG FINANCEIRO (Evolution API) ====================
+const ConfigFinanceiroSchemaUpdate = {
+    evolutionApiUrl: String,
+    evolutionApiKey: String,
+    evolutionInstance: { type: String, default: 'ubmax' },
+    whatsappConectado: { type: Boolean, default: false }
+};
+
+// Adicionar campos ao schema existente
+if (ConfigFinanceiro.schema) {
+    ConfigFinanceiro.schema.add(ConfigFinanceiroSchemaUpdate);
+}
