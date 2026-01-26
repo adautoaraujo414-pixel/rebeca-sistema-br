@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UBMAX - Seja um Parceiro</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, #0a0a1a 0%, #1a1a2e 50%, #0a0a1a 100%); color: #fff; min-height: 100vh; }
+        
+        .hero { padding: 60px 20px; text-align: center; background: linear-gradient(135deg, rgba(0,212,255,0.1), rgba(255,107,53,0.1)); }
+        .hero h1 { font-size: 3em; margin-bottom: 20px; }
+        .hero h1 span { color: #00d4ff; }
+        .hero h1 .orange { color: #ff6b35; }
+        .hero p { font-size: 1.3em; color: #888; max-width: 600px; margin: 0 auto 30px; }
+        .hero-stats { display: flex; justify-content: center; gap: 50px; flex-wrap: wrap; margin-top: 40px; }
+        .hero-stat { text-align: center; }
+        .hero-stat .number { font-size: 2.5em; font-weight: bold; color: #00d4ff; }
+        .hero-stat .label { color: #888; }
+        
+        .container { max-width: 1200px; margin: 0 auto; padding: 40px 20px; }
+        
+        .section-title { text-align: center; margin-bottom: 40px; }
+        .section-title h2 { font-size: 2em; color: #00d4ff; margin-bottom: 10px; }
+        .section-title p { color: #888; }
+        
+        .planos-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; margin-bottom: 60px; }
+        .plano-card { background: linear-gradient(135deg, #1a1a2e, #252542); border: 2px solid #333; border-radius: 20px; padding: 40px 30px; text-align: center; transition: all 0.3s; position: relative; overflow: hidden; }
+        .plano-card:hover { border-color: #00d4ff; transform: translateY(-10px); box-shadow: 0 20px 40px rgba(0,212,255,0.2); }
+        .plano-card.destaque { border-color: #ff6b35; }
+        .plano-card.destaque::before { content: '⭐ MAIS POPULAR'; position: absolute; top: 15px; right: -35px; background: #ff6b35; color: #000; padding: 5px 40px; font-size: 12px; font-weight: bold; transform: rotate(45deg); }
+        .plano-card h3 { font-size: 1.8em; color: #00d4ff; margin-bottom: 10px; }
+        .plano-card .descricao { color: #888; margin-bottom: 20px; }
+        .plano-card .preco { font-size: 3em; font-weight: bold; color: #fff; margin: 20px 0; }
+        .plano-card .preco span { font-size: 0.4em; color: #888; }
+        .plano-card ul { list-style: none; text-align: left; margin: 30px 0; }
+        .plano-card li { padding: 12px 0; color: #aaa; border-bottom: 1px solid #333; display: flex; align-items: center; gap: 10px; }
+        .plano-card li::before { content: '✓'; color: #00ff88; font-weight: bold; }
+        .plano-card .btn-escolher { width: 100%; padding: 15px; background: linear-gradient(135deg, #00d4ff, #0099cc); border: none; border-radius: 10px; color: #000; font-size: 1.1em; font-weight: bold; cursor: pointer; transition: all 0.3s; }
+        .plano-card .btn-escolher:hover { opacity: 0.9; transform: scale(1.02); }
+        .plano-card.destaque .btn-escolher { background: linear-gradient(135deg, #ff6b35, #ff4444); }
+        
+        .cadastro-section { background: #1a1a2e; border-radius: 20px; padding: 50px; margin-top: 40px; }
+        .cadastro-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+        .cadastro-info h3 { font-size: 1.8em; color: #00d4ff; margin-bottom: 20px; }
+        .cadastro-info p { color: #888; line-height: 1.8; margin-bottom: 20px; }
+        .cadastro-info ul { list-style: none; }
+        .cadastro-info li { padding: 10px 0; color: #aaa; display: flex; align-items: center; gap: 10px; }
+        .cadastro-info li::before { content: '✓'; color: #00ff88; }
+        
+        .cadastro-form { background: #252542; padding: 40px; border-radius: 15px; }
+        .cadastro-form h3 { color: #00d4ff; margin-bottom: 25px; text-align: center; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; color: #888; margin-bottom: 8px; }
+        .form-group input, .form-group select { width: 100%; padding: 15px; background: #1a1a2e; border: 1px solid #333; border-radius: 8px; color: #fff; font-size: 16px; }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: #00d4ff; }
+        .btn-cadastrar { width: 100%; padding: 18px; background: linear-gradient(135deg, #00ff88, #00cc6a); border: none; border-radius: 10px; color: #000; font-size: 1.2em; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .btn-cadastrar:hover { opacity: 0.9; }
+        
+        .plano-selecionado { background: #00d4ff20; border: 2px solid #00d4ff; border-radius: 10px; padding: 15px; margin-bottom: 20px; text-align: center; }
+        .plano-selecionado h4 { color: #00d4ff; }
+        .plano-selecionado p { color: #fff; font-size: 1.5em; font-weight: bold; margin-top: 5px; }
+        
+        .sucesso-box { display: none; text-align: center; padding: 40px; }
+        .sucesso-box .icon { font-size: 5em; margin-bottom: 20px; }
+        .sucesso-box h3 { color: #00ff88; font-size: 2em; margin-bottom: 15px; }
+        .sucesso-box p { color: #888; font-size: 1.1em; line-height: 1.8; }
+        
+        .footer { text-align: center; padding: 40px; color: #555; border-top: 1px solid #333; margin-top: 60px; }
+        
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 2em; }
+            .cadastro-grid { grid-template-columns: 1fr; }
+            .hero-stats { gap: 30px; }
+        }
+    </style>
+</head>
+<body>
+    <section class="hero">
+        <h1>Seja um Parceiro <span>UB</span><span class="orange">MAX</span></h1>
+        <p>A plataforma completa para gerenciar sua frota de motoristas e corridas. Tecnologia de ponta com a melhor experiência.</p>
+        <div class="hero-stats">
+            <div class="hero-stat"><div class="number" id="statMotoristas">500+</div><div class="label">Motoristas Ativos</div></div>
+            <div class="hero-stat"><div class="number" id="statCorridas">10.000+</div><div class="label">Corridas/Mês</div></div>
+            <div class="hero-stat"><div class="number" id="statAdmins">50+</div><div class="label">Empresas Parceiras</div></div>
+        </div>
+    </section>
+
+    <div class="container">
+        <div class="section-title">
+            <h2>💎 Escolha seu Plano</h2>
+            <p>Selecione o plano ideal para o tamanho da sua operação</p>
+        </div>
+        
+        <div class="planos-grid" id="planosGrid"></div>
+        
+        <section class="cadastro-section" id="cadastroSection">
+            <div class="cadastro-grid">
+                <div class="cadastro-info">
+                    <h3>🚀 Por que escolher a UBMAX?</h3>
+                    <p>Nossa plataforma foi desenvolvida pensando em facilitar a gestão da sua frota, com ferramentas modernas e suporte dedicado.</p>
+                    <ul>
+                        <li>Painel administrativo completo e intuitivo</li>
+                        <li>App exclusivo para seus motoristas</li>
+                        <li>Rastreamento GPS em tempo real</li>
+                        <li>Relatórios financeiros detalhados</li>
+                        <li>Gestão de mensalidades automatizada</li>
+                        <li>Chat integrado com clientes</li>
+                        <li>Suporte técnico dedicado</li>
+                        <li>Atualizações constantes</li>
+                    </ul>
+                </div>
+                
+                <div class="cadastro-form" id="formCadastro">
+                    <h3>📝 Cadastre-se Agora</h3>
+                    
+                    <div class="plano-selecionado" id="planoSelecionado" style="display:none;">
+                        <h4>Plano Selecionado</h4>
+                        <p id="planoNomePreco">-</p>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Nome Completo *</label>
+                        <input type="text" id="nome" placeholder="Seu nome completo">
+                    </div>
+                    <div class="form-group">
+                        <label>Email *</label>
+                        <input type="email" id="email" placeholder="seu@email.com">
+                    </div>
+                    <div class="form-group">
+                        <label>Telefone/WhatsApp *</label>
+                        <input type="tel" id="telefone" placeholder="(11) 99999-9999">
+                    </div>
+                    <div class="form-group">
+                        <label>Nome da Empresa</label>
+                        <input type="text" id="empresa" placeholder="Nome da sua empresa">
+                    </div>
+                    <div class="form-group">
+                        <label>Plano *</label>
+                        <select id="planoSelect"></select>
+                    </div>
+                    
+                    <button class="btn-cadastrar" onclick="realizarCadastro()">✓ Quero ser Parceiro UBMAX</button>
+                </div>
+                
+                <div class="sucesso-box" id="sucessoBox">
+                    <div class="icon">🎉</div>
+                    <h3>Cadastro Realizado!</h3>
+                    <p>Seu cadastro foi enviado com sucesso!<br><br>
+                    Nossa equipe irá analisar suas informações e em breve você receberá um email com suas <strong>credenciais de acesso</strong>.<br><br>
+                    Fique atento à sua caixa de entrada e spam.<br><br>
+                    <strong style="color:#00d4ff;">Bem-vindo à família UBMAX! 🚀</strong></p>
+                </div>
+            </div>
+        </section>
+    </div>
+    
+    <footer class="footer">
+        <p>© 2024 UBMAX - Todos os direitos reservados</p>
+        <p style="margin-top:10px;"><a href="/admin" style="color:#00d4ff;text-decoration:none;">Já sou parceiro → Acessar Painel</a></p>
+    </footer>
+
+    <script>
+        let planos = [];
+        let planoSelecionadoId = null;
+
+        async function carregarPlanos() {
+            try {
+                const res = await fetch('/api/admin-master/planos');
+                planos = await res.json();
+                renderPlanos();
+                renderSelectPlanos();
+            } catch (e) {
+                console.error('Erro ao carregar planos:', e);
+            }
+        }
+
+        function renderPlanos() {
+            const grid = document.getElementById('planosGrid');
+            grid.innerHTML = planos.map((p, i) => `
+                <div class="plano-card ${i === 1 ? 'destaque' : ''}" onclick="selecionarPlano('${p._id}', '${p.nome}', ${p.preco})">
+                    <h3>${p.nome}</h3>
+                    <p class="descricao">${p.descricao || ''}</p>
+                    <div class="preco">R$ ${p.preco.toFixed(2)}<span>/mês</span></div>
+                    <ul>
+                        <li>Até ${p.limiteMotoristas} motoristas</li>
+                        <li>Até ${p.limiteCorridas} corridas/mês</li>
+                        ${(p.recursos || []).map(r => `<li>${r}</li>`).join('')}
+                    </ul>
+                    <button class="btn-escolher">Escolher ${p.nome}</button>
+                </div>
+            `).join('');
+        }
+
+        function renderSelectPlanos() {
+            const select = document.getElementById('planoSelect');
+            select.innerHTML = '<option value="">Selecione um plano</option>' + 
+                planos.map(p => `<option value="${p._id}">${p.nome} - R$ ${p.preco.toFixed(2)}/mês</option>`).join('');
+        }
+
+        function selecionarPlano(id, nome, preco) {
+            planoSelecionadoId = id;
+            document.getElementById('planoSelect').value = id;
+            document.getElementById('planoSelecionado').style.display = 'block';
+            document.getElementById('planoNomePreco').textContent = `${nome} - R$ ${preco.toFixed(2)}/mês`;
+            document.getElementById('cadastroSection').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        async function realizarCadastro() {
+            const dados = {
+                nome: document.getElementById('nome').value,
+                email: document.getElementById('email').value,
+                telefone: document.getElementById('telefone').value,
+                empresa: document.getElementById('empresa').value,
+                planoId: document.getElementById('planoSelect').value
+            };
+
+            if (!dados.nome || !dados.email || !dados.telefone) {
+                alert('Por favor, preencha todos os campos obrigatórios!');
+                return;
+            }
+
+            if (!dados.planoId) {
+                alert('Por favor, selecione um plano!');
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/admin-master/cadastro-admin', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(dados)
+                });
+                const data = await res.json();
+
+                if (data.sucesso) {
+                    document.getElementById('formCadastro').style.display = 'none';
+                    document.getElementById('sucessoBox').style.display = 'block';
+                } else {
+                    alert(data.erro || 'Erro ao realizar cadastro');
+                }
+            } catch (e) {
+                alert('Erro de conexão. Tente novamente.');
+            }
+        }
+
+        // Inicializar
+        carregarPlanos();
+        
+        // Setup inicial
+        fetch('/api/admin-master/setup', { method: 'POST' });
+    </script>
+</body>
+</html>

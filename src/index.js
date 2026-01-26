@@ -10,6 +10,11 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 app.get('/admin-master', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin-master.html')));
+app.get('/cadastro-admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'cadastro-admin.html')));
+app.get('/parceiro', (req, res) => res.sendFile(path.join(__dirname, 'public', 'cadastro-admin.html')));
+app.get('/cadastro-admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'cadastro-admin.html')));
+app.get('/parceiro', (req, res) => res.sendFile(path.join(__dirname, 'public', 'cadastro-admin.html')));
+app.get('/parceiro', (req, res) => res.sendFile(path.join(__dirname, 'public', 'cadastro-admin.html')));
 
 const authRoutes = require('./routes/auth.routes');
 const usuariosRoutes = require('./routes/usuarios.routes');

@@ -189,3 +189,61 @@ module.exports.AdminMaster = AdminMaster;
 module.exports.Admin = Admin;
 module.exports.LogSistema = LogSistema;
 module.exports.TicketSuporte = TicketSuporte;
+
+// ==================== PLANOS ADMIN ====================
+const PlanoAdminSchema = new mongoose.Schema({
+    nome: { type: String, required: true },
+    descricao: String,
+    preco: { type: Number, required: true },
+    periodo: { type: String, enum: ['mensal', 'trimestral', 'semestral', 'anual'], default: 'mensal' },
+    limiteMotoristas: { type: Number, default: 10 },
+    limiteCorridas: { type: Number, default: 1000 },
+    recursos: [String],
+    ativo: { type: Boolean, default: true }
+}, { timestamps: true });
+
+// ==================== MENSALIDADE ADMIN ====================
+const MensalidadeAdminSchema = new mongoose.Schema({
+    adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin', required: true },
+    planoId: { type: mongoose.Schema.Types.ObjectId, ref: 'PlanoAdmin' },
+    valor: { type: Number, required: true },
+    dataVencimento: { type: Date, required: true },
+    dataPagamento: Date,
+    status: { type: String, enum: ['pendente', 'pago', 'atrasado', 'bloqueado'], default: 'pendente' },
+    formaPagamento: String,
+    comprovante: String,
+    observacao: String
+}, { timestamps: true });
+
+// ==================== CONTABILIDADE ADMIN ====================
+const ContabilidadeAdminSchema = new mongoose.Schema({
+    adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin', required: true },
+    mes: { type: Number, required: true },
+    ano: { type: Number, required: true },
+    motoristasAtivos: { type: Number, default: 0 },
+    corridasRealizadas: { type: Number, default: 0 },
+    faturamentoBruto: { type: Number, default: 0 },
+    comissaoPlataforma: { type: Number, default: 0 },
+    faturamentoLiquido: { type: Number, default: 0 }
+}, { timestamps: true });
+
+// ==================== CONFIG MASTER ====================
+const ConfigMasterSchema = new mongoose.Schema({
+    chavePixMaster: String,
+    tipoChavePixMaster: { type: String, enum: ['cpf', 'cnpj', 'email', 'telefone', 'aleatoria'] },
+    nomeTitularMaster: String,
+    comissaoPlataforma: { type: Number, default: 10 },
+    diasTolerancia: { type: Number, default: 5 },
+    mensagemBoasVindas: String,
+    termoUso: String
+}, { timestamps: true });
+
+const PlanoAdmin = mongoose.model('PlanoAdmin', PlanoAdminSchema);
+const MensalidadeAdmin = mongoose.model('MensalidadeAdmin', MensalidadeAdminSchema);
+const ContabilidadeAdmin = mongoose.model('ContabilidadeAdmin', ContabilidadeAdminSchema);
+const ConfigMaster = mongoose.model('ConfigMaster', ConfigMasterSchema);
+
+module.exports.PlanoAdmin = PlanoAdmin;
+module.exports.MensalidadeAdmin = MensalidadeAdmin;
+module.exports.ContabilidadeAdmin = ContabilidadeAdmin;
+module.exports.ConfigMaster = ConfigMaster;
