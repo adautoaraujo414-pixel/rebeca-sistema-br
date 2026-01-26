@@ -206,6 +206,7 @@
         /* Som */
         .sound-enabled { }
     </style>
+<script src="/js/gps-persistente.js"></script>
 </head>
 <body>
     <!-- Login Section -->
@@ -1473,4 +1474,54 @@ function ligarCliente() {
 document.getElementById('inputMsgCliente')?.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') enviarMsgCliente();
 });
+</script>
+
+<script>
+// ========== SUBSTITUIR GPS ANTIGO POR PERSISTENTE ==========
+async function iniciarGPSPersistente() {
+    try {
+        await GPSPersistente.iniciar();
+        
+        // Atualizar UI
+        document.getElementById('gpsInfo').textContent = '📍 GPS ativo';
+        document.getElementById('gpsInfo').classList.add('ativo');
+        
+        // Registrar callback para enviar ao servidor
+        GPSPersistente.onAtualizar(async (lat, lng, precisao) => {
+            minhaLatitude = lat;
+            minhaLongitude = lng;
+            
+            // Atualizar display
+            if (document.getElementById('coordsDisplay')) {
+                document.getElementById('coordsDisplay').textContent = `${lat.toFixed(5)}, ${lng.toFixed(5)} (±${precisao.toFixed(0)}m)`;
+            }
+            
+            // Enviar para servidor se estiver logado
+            if (token && motorista?.status !== 'offline') {
+                try {
+                    await fetch('/api/motorista-app/gps', {
+                        method: 'POST',
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'Authorization': token 
+                        },
+                        body: JSON.stringify({ latitude: lat, longitude: lng, precisao })
+                    });
+                } catch (e) {}
+            }
+        });
+        
+        toast('📍 GPS ativado com sucesso!', 'success');
+        
+    } catch (e) {
+        document.getElementById('gpsInfo').textContent = '❌ GPS não permitido';
+        toast('Permita o acesso ao GPS para usar o app', 'error');
+    }
+}
+
+// Substituir função antiga
+const iniciarGPSOriginal = iniciarGPS;
+iniciarGPS = function() {
+    iniciarGPSPersistente();
+};
 </script>
