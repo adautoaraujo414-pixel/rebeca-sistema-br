@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UBMAX - Admin Master</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #0a0a1a; color: #fff; min-height: 100vh; }
+        .login-container { display: flex; justify-content: center; align-items: center; min-height: 100vh; background: linear-gradient(135deg, #1a1a2e 0%, #0a0a1a 100%); }
+        .login-box { background: #1a1a2e; padding: 40px; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,212,255,0.2); width: 100%; max-width: 400px; }
+        .login-box h1 { color: #00d4ff; text-align: center; margin-bottom: 10px; }
+        .login-box h1 span { color: #ff6b35; }
+        .login-box p { color: #888; text-align: center; margin-bottom: 30px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; color: #888; margin-bottom: 5px; }
+        .form-group input { width: 100%; padding: 12px; background: #252542; border: 1px solid #333; border-radius: 8px; color: #fff; font-size: 16px; }
+        .form-group input:focus { outline: none; border-color: #00d4ff; }
+        .btn-login { width: 100%; padding: 15px; background: linear-gradient(135deg, #00d4ff, #0099cc); border: none; border-radius: 8px; color: #000; font-size: 16px; font-weight: bold; cursor: pointer; }
+        .btn-login:hover { opacity: 0.9; }
+        .error { color: #ff4444; text-align: center; margin-top: 15px; }
+        
+        .dashboard { display: none; }
+        .header { background: linear-gradient(135deg, #1a1a2e, #252542); padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }
+        .header h1 { color: #00d4ff; font-size: 1.5em; }
+        .header h1 span { color: #ff6b35; }
+        .header .user-info { display: flex; align-items: center; gap: 15px; }
+        .header .user-info span { color: #888; }
+        .btn-logout { padding: 8px 20px; background: #ff4444; border: none; border-radius: 5px; color: #fff; cursor: pointer; }
+        
+        .main { display: flex; min-height: calc(100vh - 60px); }
+        .sidebar { width: 250px; background: #1a1a2e; padding: 20px 0; }
+        .menu-item { padding: 15px 25px; color: #888; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: all 0.3s; }
+        .menu-item:hover, .menu-item.active { background: #252542; color: #00d4ff; border-left: 3px solid #00d4ff; }
+        .menu-section { color: #555; font-size: 12px; padding: 15px 25px 5px; text-transform: uppercase; }
+        
+        .content { flex: 1; padding: 30px; overflow-y: auto; }
+        .page { display: none; }
+        .page.active { display: block; }
+        
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: linear-gradient(135deg, #252542, #1a1a2e); padding: 25px; border-radius: 15px; border: 1px solid #333; }
+        .stat-card .icon { font-size: 2em; margin-bottom: 10px; }
+        .stat-card .value { font-size: 2em; font-weight: bold; color: #00d4ff; }
+        .stat-card .label { color: #888; margin-top: 5px; }
+        .stat-card.warning .value { color: #ffaa00; }
+        .stat-card.danger .value { color: #ff4444; }
+        .stat-card.success .value { color: #00ff88; }
+        
+        .panel { background: #1a1a2e; border-radius: 15px; padding: 25px; margin-bottom: 20px; border: 1px solid #333; }
+        .panel h3 { color: #00d4ff; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+        
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #333; }
+        th { color: #888; font-weight: normal; }
+        tr:hover { background: #252542; }
+        
+        .badge { padding: 5px 12px; border-radius: 20px; font-size: 12px; }
+        .badge.green { background: #00ff8820; color: #00ff88; }
+        .badge.red { background: #ff444420; color: #ff4444; }
+        .badge.yellow { background: #ffaa0020; color: #ffaa00; }
+        .badge.blue { background: #00d4ff20; color: #00d4ff; }
+        
+        .btn { padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; font-size: 14px; }
+        .btn-primary { background: #00d4ff; color: #000; }
+        .btn-success { background: #00ff88; color: #000; }
+        .btn-danger { background: #ff4444; color: #fff; }
+        .btn-warning { background: #ffaa00; color: #000; }
+        .btn-sm { padding: 5px 10px; font-size: 12px; }
+        
+        .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px; }
+        .form-control { width: 100%; padding: 10px; background: #252542; border: 1px solid #333; border-radius: 5px; color: #fff; }
+        
+        .log-item { padding: 10px; border-left: 3px solid #00d4ff; margin-bottom: 10px; background: #252542; border-radius: 0 5px 5px 0; }
+        .log-item.erro { border-color: #ff4444; }
+        .log-item.acao { border-color: #00ff88; }
+        .log-item .time { color: #888; font-size: 12px; }
+        
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); justify-content: center; align-items: center; z-index: 1000; }
+        .modal.active { display: flex; }
+        .modal-content { background: #1a1a2e; padding: 30px; border-radius: 15px; width: 90%; max-width: 500px; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .modal-close { background: none; border: none; color: #888; font-size: 24px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <!-- LOGIN -->
+    <div class="login-container" id="loginContainer">
+        <div class="login-box">
+            <h1>UB<span>MAX</span></h1>
+            <p>🔐 Painel Admin Master</p>
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="loginEmail" placeholder="master@ubmax.com">
+            </div>
+            <div class="form-group">
+                <label>Senha</label>
+                <input type="password" id="loginSenha" placeholder="••••••••">
+            </div>
+            <button class="btn-login" onclick="fazerLogin()">Entrar</button>
+            <p class="error" id="loginError"></p>
+        </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div class="dashboard" id="dashboard">
+        <header class="header">
+            <h1>UB<span>MAX</span> Master</h1>
+            <div class="user-info">
+                <span id="userNome">Admin Master</span>
+                <button class="btn-logout" onclick="fazerLogout()">Sair</button>
+            </div>
+        </header>
+        
+        <div class="main">
+            <nav class="sidebar">
+                <div class="menu-section">Principal</div>
+                <div class="menu-item active" onclick="abrirPagina('dashboard')">📊 Dashboard</div>
+                
+                <div class="menu-section">Gestão</div>
+                <div class="menu-item" onclick="abrirPagina('admins')">👥 Administradores</div>
+                <div class="menu-item" onclick="abrirPagina('pendentes')">⏳ Pendentes</div>
+                
+                <div class="menu-section">Sistema</div>
+                <div class="menu-item" onclick="abrirPagina('logs')">📋 Logs</div>
+                <div class="menu-item" onclick="abrirPagina('suporte')">🎧 Suporte</div>
+                <div class="menu-item" onclick="abrirPagina('config')">⚙️ Configurações</div>
+            </nav>
+            
+            <main class="content">
+                <!-- DASHBOARD -->
+                <div class="page active" id="page-dashboard">
+                    <h2 style="margin-bottom:20px;">📊 Dashboard Master</h2>
+                    <div class="stats-grid">
+                        <div class="stat-card"><div class="icon">👥</div><div class="value" id="statAdmins">0</div><div class="label">Admins Ativos</div></div>
+                        <div class="stat-card warning"><div class="icon">⏳</div><div class="value" id="statPendentes">0</div><div class="label">Pendentes</div></div>
+                        <div class="stat-card success"><div class="icon">🚗</div><div class="value" id="statMotoristas">0</div><div class="label">Motoristas</div></div>
+                        <div class="stat-card"><div class="icon">👤</div><div class="value" id="statClientes">0</div><div class="label">Clientes</div></div>
+                        <div class="stat-card success"><div class="icon">📍</div><div class="value" id="statCorridas">0</div><div class="label">Corridas Hoje</div></div>
+                        <div class="stat-card danger"><div class="icon">🎫</div><div class="value" id="statTickets">0</div><div class="label">Tickets Abertos</div></div>
+                    </div>
+                    <div class="panel">
+                        <h3>📋 Logs Recentes</h3>
+                        <div id="logsRecentes"></div>
+                    </div>
+                </div>
+                
+                <!-- ADMINS -->
+                <div class="page" id="page-admins">
+                    <h2 style="margin-bottom:20px;">👥 Administradores</h2>
+                    <div class="panel">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                            <h3>Lista de Admins</h3>
+                            <button class="btn btn-primary" onclick="abrirModalAdmin()">+ Novo Admin</button>
+                        </div>
+                        <table>
+                            <thead><tr><th>Nome</th><th>Email</th><th>Empresa</th><th>Status</th><th>Último Acesso</th><th>Ações</th></tr></thead>
+                            <tbody id="tabelaAdmins"></tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- PENDENTES -->
+                <div class="page" id="page-pendentes">
+                    <h2 style="margin-bottom:20px;">⏳ Admins Pendentes de Aprovação</h2>
+                    <div class="panel">
+                        <table>
+                            <thead><tr><th>Nome</th><th>Email</th><th>Empresa</th><th>Data Cadastro</th><th>Ações</th></tr></thead>
+                            <tbody id="tabelaPendentes"></tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- LOGS -->
+                <div class="page" id="page-logs">
+                    <h2 style="margin-bottom:20px;">📋 Logs do Sistema</h2>
+                    <div class="panel">
+                        <div style="margin-bottom:20px;">
+                            <select class="form-control" style="width:200px;display:inline-block;" onchange="carregarLogs(this.value)">
+                                <option value="">Todos</option>
+                                <option value="acesso">Acessos</option>
+                                <option value="acao">Ações</option>
+                                <option value="erro">Erros</option>
+                            </select>
+                        </div>
+                        <div id="listaLogs"></div>
+                    </div>
+                </div>
+                
+                <!-- SUPORTE -->
+                <div class="page" id="page-suporte">
+                    <h2 style="margin-bottom:20px;">🎧 Tickets de Suporte</h2>
+                    <div class="panel">
+                        <table>
+                            <thead><tr><th>Número</th><th>Solicitante</th><th>Assunto</th><th>Status</th><th>Prioridade</th><th>Ações</th></tr></thead>
+                            <tbody id="tabelaTickets"></tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- CONFIG -->
+                <div class="page" id="page-config">
+                    <h2 style="margin-bottom:20px;">⚙️ Configurações</h2>
+                    <div class="panel">
+                        <h3>🔐 Alterar Senha Master</h3>
+                        <div class="form-row">
+                            <input type="password" class="form-control" placeholder="Senha Atual" id="senhaAtual">
+                            <input type="password" class="form-control" placeholder="Nova Senha" id="novaSenha">
+                            <button class="btn btn-primary" onclick="alterarSenha()">Salvar</button>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- MODAL NOVO ADMIN -->
+    <div class="modal" id="modalAdmin">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Novo Administrador</h3>
+                <button class="modal-close" onclick="fecharModal()">&times;</button>
+            </div>
+            <div class="form-group"><label>Nome</label><input type="text" class="form-control" id="adminNome"></div>
+            <div class="form-group"><label>Email</label><input type="email" class="form-control" id="adminEmail"></div>
+            <div class="form-group"><label>Senha</label><input type="password" class="form-control" id="adminSenha"></div>
+            <div class="form-group"><label>Empresa</label><input type="text" class="form-control" id="adminEmpresa"></div>
+            <div class="form-group"><label>Telefone</label><input type="text" class="form-control" id="adminTelefone"></div>
+            <button class="btn btn-success" style="width:100%" onclick="salvarAdmin()">Criar Admin</button>
+        </div>
+    </div>
+
+    <script>
+        let masterLogado = null;
+        const API = '/api/admin-master';
+
+        async function fazerLogin() {
+            const email = document.getElementById('loginEmail').value;
+            const senha = document.getElementById('loginSenha').value;
+            try {
+                const res = await fetch(`${API}/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, senha }) });
+                const data = await res.json();
+                if (data.sucesso) {
+                    masterLogado = data.master;
+                    document.getElementById('userNome').textContent = masterLogado.nome;
+                    document.getElementById('loginContainer').style.display = 'none';
+                    document.getElementById('dashboard').style.display = 'block';
+                    carregarDashboard();
+                } else {
+                    document.getElementById('loginError').textContent = data.erro || 'Erro ao fazer login';
+                }
+            } catch (e) { document.getElementById('loginError').textContent = 'Erro de conexão'; }
+        }
+
+        function fazerLogout() { location.reload(); }
+
+        function abrirPagina(pagina) {
+            document.querySelectorAll('.menu-item').forEach(i => i.classList.remove('active'));
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById('page-' + pagina).classList.add('active');
+            if (pagina === 'dashboard') carregarDashboard();
+            if (pagina === 'admins') carregarAdmins();
+            if (pagina === 'pendentes') carregarPendentes();
+            if (pagina === 'logs') carregarLogs();
+            if (pagina === 'suporte') carregarTickets();
+        }
+
+        async function carregarDashboard() {
+            try {
+                const res = await fetch(`${API}/dashboard`);
+                const data = await res.json();
+                document.getElementById('statAdmins').textContent = data.adminsAtivos || 0;
+                document.getElementById('statPendentes').textContent = data.adminsPendentes || 0;
+                document.getElementById('statMotoristas').textContent = data.motoristas || 0;
+                document.getElementById('statClientes').textContent = data.clientes || 0;
+                document.getElementById('statCorridas').textContent = data.corridasHoje || 0;
+                document.getElementById('statTickets').textContent = data.ticketsAbertos || 0;
+                const logsHtml = (data.logsRecentes || []).slice(0, 10).map(l => `<div class="log-item ${l.tipo}"><div class="time">${new Date(l.createdAt).toLocaleString()}</div><strong>${l.usuario}</strong> - ${l.acao}</div>`).join('');
+                document.getElementById('logsRecentes').innerHTML = logsHtml || '<p style="color:#888">Nenhum log recente</p>';
+            } catch (e) { console.error(e); }
+        }
+
+        async function carregarAdmins() {
+            try {
+                const res = await fetch(`${API}/admins`);
+                const admins = await res.json();
+                const html = admins.map(a => `<tr>
+                    <td>${a.nome}</td><td>${a.email}</td><td>${a.empresa || '-'}</td>
+                    <td><span class="badge ${a.ativo ? 'green' : 'red'}">${a.ativo ? 'Ativo' : 'Bloqueado'}</span></td>
+                    <td>${a.ultimoAcesso ? new Date(a.ultimoAcesso).toLocaleString() : 'Nunca'}</td>
+                    <td>
+                        ${a.ativo ? `<button class="btn btn-danger btn-sm" onclick="bloquearAdmin('${a._id}')">Bloquear</button>` : `<button class="btn btn-success btn-sm" onclick="aprovarAdmin('${a._id}')">Ativar</button>`}
+                        <button class="btn btn-danger btn-sm" onclick="excluirAdmin('${a._id}')">Excluir</button>
+                    </td>
+                </tr>`).join('');
+                document.getElementById('tabelaAdmins').innerHTML = html || '<tr><td colspan="6" style="text-align:center;color:#888">Nenhum admin cadastrado</td></tr>';
+            } catch (e) { console.error(e); }
+        }
+
+        async function carregarPendentes() {
+            try {
+                const res = await fetch(`${API}/admins/pendentes`);
+                const admins = await res.json();
+                const html = admins.map(a => `<tr>
+                    <td>${a.nome}</td><td>${a.email}</td><td>${a.empresa || '-'}</td>
+                    <td>${new Date(a.createdAt).toLocaleString()}</td>
+                    <td>
+                        <button class="btn btn-success btn-sm" onclick="aprovarAdmin('${a._id}')">✓ Aprovar</button>
+                        <button class="btn btn-danger btn-sm" onclick="excluirAdmin('${a._id}')">✗ Recusar</button>
+                    </td>
+                </tr>`).join('');
+                document.getElementById('tabelaPendentes').innerHTML = html || '<tr><td colspan="5" style="text-align:center;color:#888">Nenhum admin pendente</td></tr>';
+            } catch (e) { console.error(e); }
+        }
+
+        async function carregarLogs(tipo = '') {
+            try {
+                const res = await fetch(`${API}/logs?tipo=${tipo}&limite=50`);
+                const logs = await res.json();
+                const html = logs.map(l => `<div class="log-item ${l.tipo}"><div class="time">${new Date(l.createdAt).toLocaleString()}</div><strong>${l.usuario || 'Sistema'}</strong> (${l.tipoUsuario || '-'}) - ${l.acao}<br><small style="color:#666">${JSON.stringify(l.detalhes || {})}</small></div>`).join('');
+                document.getElementById('listaLogs').innerHTML = html || '<p style="color:#888">Nenhum log encontrado</p>';
+            } catch (e) { console.error(e); }
+        }
+
+        async function carregarTickets() {
+            try {
+                const res = await fetch(`${API}/tickets`);
+                const tickets = await res.json();
+                const statusCores = { aberto: 'red', em_andamento: 'yellow', resolvido: 'green', fechado: 'blue' };
+                const html = tickets.map(t => `<tr>
+                    <td>${t.numero}</td><td>${t.solicitante}</td><td>${t.assunto}</td>
+                    <td><span class="badge ${statusCores[t.status] || 'blue'}">${t.status}</span></td>
+                    <td><span class="badge ${t.prioridade === 'urgente' ? 'red' : 'yellow'}">${t.prioridade}</span></td>
+                    <td><button class="btn btn-primary btn-sm" onclick="verTicket('${t._id}')">Ver</button></td>
+                </tr>`).join('');
+                document.getElementById('tabelaTickets').innerHTML = html || '<tr><td colspan="6" style="text-align:center;color:#888">Nenhum ticket</td></tr>';
+            } catch (e) { console.error(e); }
+        }
+
+        async function aprovarAdmin(id) {
+            if (!confirm('Aprovar este administrador?')) return;
+            await fetch(`${API}/admins/${id}/aprovar`, { method: 'PUT' });
+            carregarAdmins(); carregarPendentes(); carregarDashboard();
+        }
+
+        async function bloquearAdmin(id) {
+            if (!confirm('Bloquear este administrador?')) return;
+            await fetch(`${API}/admins/${id}/bloquear`, { method: 'PUT' });
+            carregarAdmins();
+        }
+
+        async function excluirAdmin(id) {
+            if (!confirm('Excluir este administrador permanentemente?')) return;
+            await fetch(`${API}/admins/${id}`, { method: 'DELETE' });
+            carregarAdmins(); carregarPendentes();
+        }
+
+        function abrirModalAdmin() { document.getElementById('modalAdmin').classList.add('active'); }
+        function fecharModal() { document.getElementById('modalAdmin').classList.remove('active'); }
+
+        async function salvarAdmin() {
+            const admin = {
+                nome: document.getElementById('adminNome').value,
+                email: document.getElementById('adminEmail').value,
+                senha: document.getElementById('adminSenha').value,
+                empresa: document.getElementById('adminEmpresa').value,
+                telefone: document.getElementById('adminTelefone').value
+            };
+            const res = await fetch(`${API}/admins`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(admin) });
+            const data = await res.json();
+            if (data.sucesso) { fecharModal(); carregarAdmins(); alert('Admin criado!'); }
+            else alert(data.erro || 'Erro ao criar');
+        }
+
+        // Criar master padrão ao carregar
+        fetch(`${API}/setup`, { method: 'POST' });
+    </script>
+</body>
+</html>

@@ -107,3 +107,85 @@ const ConfigFinanceiroSchemaUpdate = {
 if (ConfigFinanceiro.schema) {
     ConfigFinanceiro.schema.add(ConfigFinanceiroSchemaUpdate);
 }
+
+// ==================== ADMIN MASTER ====================
+const AdminMasterSchema = new mongoose.Schema({
+    nome: { type: String, required: true },
+    email: { type: String, required: true, unique: true },
+    senha: { type: String, required: true },
+    telefone: String,
+    ativo: { type: Boolean, default: true },
+    ultimoAcesso: Date,
+    permissoes: {
+        gerenciarAdmins: { type: Boolean, default: true },
+        gerenciarEmpresas: { type: Boolean, default: true },
+        verLogs: { type: Boolean, default: true },
+        suporte: { type: Boolean, default: true },
+        configuracoes: { type: Boolean, default: true }
+    }
+}, { timestamps: true });
+
+// ==================== ADMIN (SUB-ADMIN) ====================
+const AdminSchema = new mongoose.Schema({
+    nome: { type: String, required: true },
+    email: { type: String, required: true, unique: true },
+    senha: { type: String, required: true },
+    telefone: String,
+    empresa: String,
+    ativo: { type: Boolean, default: false },
+    aprovadoPor: { type: mongoose.Schema.Types.ObjectId, ref: 'AdminMaster' },
+    dataAprovacao: Date,
+    ultimoAcesso: Date,
+    permissoes: {
+        corridas: { type: Boolean, default: true },
+        motoristas: { type: Boolean, default: true },
+        clientes: { type: Boolean, default: true },
+        financeiro: { type: Boolean, default: false },
+        relatorios: { type: Boolean, default: true }
+    },
+    logs: [{
+        acao: String,
+        data: { type: Date, default: Date.now },
+        ip: String
+    }]
+}, { timestamps: true });
+
+// ==================== LOGS DO SISTEMA ====================
+const LogSistemaSchema = new mongoose.Schema({
+    tipo: { type: String, enum: ['acesso', 'acao', 'erro', 'suporte'] },
+    usuario: String,
+    tipoUsuario: { type: String, enum: ['master', 'admin', 'motorista', 'cliente'] },
+    acao: String,
+    detalhes: mongoose.Schema.Types.Mixed,
+    ip: String
+}, { timestamps: true });
+
+// ==================== TICKETS SUPORTE ====================
+const TicketSuporteSchema = new mongoose.Schema({
+    numero: { type: String, unique: true },
+    solicitante: String,
+    tipoSolicitante: { type: String, enum: ['admin', 'motorista', 'cliente'] },
+    assunto: String,
+    descricao: String,
+    status: { type: String, enum: ['aberto', 'em_andamento', 'aguardando', 'resolvido', 'fechado'], default: 'aberto' },
+    prioridade: { type: String, enum: ['baixa', 'media', 'alta', 'urgente'], default: 'media' },
+    atendidoPor: { type: mongoose.Schema.Types.ObjectId, ref: 'AdminMaster' },
+    mensagens: [{
+        remetente: String,
+        tipoRemetente: String,
+        mensagem: String,
+        data: { type: Date, default: Date.now }
+    }],
+    resolucao: String,
+    dataResolucao: Date
+}, { timestamps: true });
+
+const AdminMaster = mongoose.model('AdminMaster', AdminMasterSchema);
+const Admin = mongoose.model('Admin', AdminSchema);
+const LogSistema = mongoose.model('LogSistema', LogSistemaSchema);
+const TicketSuporte = mongoose.model('TicketSuporte', TicketSuporteSchema);
+
+module.exports.AdminMaster = AdminMaster;
+module.exports.Admin = Admin;
+module.exports.LogSistema = LogSistema;
+module.exports.TicketSuporte = TicketSuporte;
