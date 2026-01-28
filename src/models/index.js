@@ -247,3 +247,26 @@ module.exports.PlanoAdmin = PlanoAdmin;
 module.exports.MensalidadeAdmin = MensalidadeAdmin;
 module.exports.ContabilidadeAdmin = ContabilidadeAdmin;
 module.exports.ConfigMaster = ConfigMaster;
+
+// ==================== INSTÂNCIA WHATSAPP (MULTI-TENANT) ====================
+const InstanciaWhatsappSchema = new mongoose.Schema({
+    adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin', required: true },
+    nomeInstancia: { type: String, required: true, unique: true },
+    apiUrl: { type: String, default: 'https://evolution-api.com' },
+    apiKey: String,
+    telefoneConectado: String,
+    status: { type: String, enum: ['desconectado', 'conectando', 'conectado', 'erro'], default: 'desconectado' },
+    qrCode: String,
+    qrCodeExpira: Date,
+    ultimaConexao: Date,
+    webhookUrl: String,
+    configuracoes: {
+        receberMensagens: { type: Boolean, default: true },
+        enviarNotificacoes: { type: Boolean, default: true },
+        respostaAutomatica: { type: Boolean, default: false },
+        mensagemBoasVindas: String
+    }
+}, { timestamps: true });
+
+const InstanciaWhatsapp = mongoose.model('InstanciaWhatsapp', InstanciaWhatsappSchema);
+module.exports.InstanciaWhatsapp = InstanciaWhatsapp;

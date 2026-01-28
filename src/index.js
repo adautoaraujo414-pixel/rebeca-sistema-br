@@ -40,6 +40,7 @@ const mapsRoutes = require('./routes/maps.routes');
 const despachoRoutes = require('./routes/despacho.routes');
 const iaRoutes = require('./routes/ia.routes');
 const mensalidadeRoutes = require('./routes/mensalidade.routes');
+const evolutionMultiRoutes = require('./routes/evolution-multi.routes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/usuarios', usuariosRoutes);
@@ -65,12 +66,14 @@ app.use('/api/maps', mapsRoutes);
 app.use('/api/despacho', despachoRoutes);
 app.use('/api/ia', iaRoutes);
 app.use('/api/mensalidades', mensalidadeRoutes);
+app.use('/api/evolution', evolutionMultiRoutes);
 
 // Páginas
 app.get('/rastrear/:codigo', (req, res) => res.sendFile(path.join(__dirname, 'public', 'rastrear.html')));
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'index.html')));
 app.get('/admin/login', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'login.html')));
 app.get('/motorista', (req, res) => res.sendFile(path.join(__dirname, 'public', 'motorista-app.html')));
+app.get('/conectar-whatsapp', (req, res) => res.sendFile(path.join(__dirname, 'public', 'conectar-whatsapp.html')));
 
 app.get('/health', (req, res) => {
     const mongoose = require('mongoose');
