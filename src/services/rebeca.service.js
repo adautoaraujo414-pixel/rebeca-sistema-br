@@ -108,6 +108,9 @@ const RebecaService = {
     async processarMensagem(telefone, mensagem, nome = 'Cliente', contexto = {}) {
         const adminId = contexto.adminId || null;
         if (adminId) console.log('[REBECA] Admin:', adminId);
+        
+        // Guardar adminId na conversa para usar depois
+        if (adminId && conversa) conversa.adminId = adminId;
         const msg = typeof mensagem === 'string' ? mensagem.toLowerCase().trim() : '';
         const msgOriginal = typeof mensagem === 'string' ? mensagem.trim() : '';
         const conversa = conversas.get(telefone) || { etapa: 'inicio', dados: {} };
@@ -350,7 +353,7 @@ const RebecaService = {
             const calculo = await RebecaService.calcularCorrida(conversa.dados.origem, conversa.dados.destino);
             conversa.dados.calculo = calculo;
             
-            const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados);
+            const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId);
             conversa.etapa = 'inicio';
             
             resposta = `🚗 *CARRO SOLICITADO!*\n\n📍 *De:* ${conversa.dados.origem}`;
@@ -373,7 +376,7 @@ const RebecaService = {
             const calculo = await RebecaService.calcularCorrida(conversa.dados.origem, conversa.dados.destino);
             conversa.dados.calculo = calculo;
             
-            const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados);
+            const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId);
             conversa.etapa = 'inicio';
             
             resposta = `🚗 *CARRO SOLICITADO!*\n\n📍 *De:* ${conversa.dados.origem}`;
@@ -433,7 +436,7 @@ const RebecaService = {
         }
         else if (conversa.etapa === 'confirmar_corrida') {
             if (msg === '1' || msg.includes('sim') || msg.includes('confirmar')) {
-                const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados);
+                const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId);
                 conversa.etapa = 'inicio';
                 
                 resposta = `🎉 *CONFIRMADO!*\n\n🔢 #${corrida.id.slice(-6)}\n💰 R$ ${corrida.preco.toFixed(2)}\n\n⏳ Buscando motorista...`;
@@ -650,11 +653,12 @@ const RebecaService = {
         };
     },
 
-    async criarCorrida(telefone, nomeCliente, dados) {
+    async criarCorrida(telefone, nomeCliente, dados, adminId = null) {
         let cliente = ClienteService.buscarPorTelefone(telefone);
-        if (!cliente) cliente = ClienteService.criar({ nome: nomeCliente, telefone });
+        if (!cliente) cliente = ClienteService.criar({ nome: nomeCliente, telefone, adminId });
         
         const corrida = CorridaService.criar({
+            adminId,
             clienteId: cliente.id,
             clienteNome: cliente.nome,
             clienteTelefone: telefone,
