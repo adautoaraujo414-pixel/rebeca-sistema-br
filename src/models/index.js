@@ -35,6 +35,17 @@ module.exports = {
     Config: mongoose.model('Config', ConfigSchema)
 };
 
+// ==================== MULTI-TENANT: Adicionar adminId ====================
+// Adiciona adminId aos schemas existentes para isolamento por empresa
+const { Motorista, Cliente, Corrida } = module.exports;
+
+Motorista.schema.add({ adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin', index: true } });
+Cliente.schema.add({ adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin', index: true } });
+Corrida.schema.add({ adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin', index: true } });
+
+console.log('✅ Schemas atualizados com adminId para multi-tenant');
+
+
 // ==================== MENSALIDADE ====================
 const MensalidadeSchema = new mongoose.Schema({
     motoristaId: { type: mongoose.Schema.Types.ObjectId, ref: 'Motorista', required: true },

@@ -105,7 +105,9 @@ const RebecaService = {
     },
 
     // ==================== PROCESSAR MENSAGEM PRINCIPAL ====================
-    async processarMensagem(telefone, mensagem, nome = 'Cliente') {
+    async processarMensagem(telefone, mensagem, nome = 'Cliente', contexto = {}) {
+        const adminId = contexto.adminId || null;
+        if (adminId) console.log('[REBECA] Admin:', adminId);
         const msg = typeof mensagem === 'string' ? mensagem.toLowerCase().trim() : '';
         const msgOriginal = typeof mensagem === 'string' ? mensagem.trim() : '';
         const conversa = conversas.get(telefone) || { etapa: 'inicio', dados: {} };

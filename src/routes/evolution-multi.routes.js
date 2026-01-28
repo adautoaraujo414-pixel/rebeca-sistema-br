@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const EvolutionMultiService = require('../services/evolution-multi.service');
-const { InstanciaWhatsapp } = require('../models');
+const { InstanciaWhatsapp, Motorista, Cliente, Corrida } = require('../models');
 const RebecaService = require('../services/rebeca.service');
 
 router.post('/instancia', async (req, res) => {
@@ -48,7 +48,7 @@ router.delete('/instancia/:id', async (req, res) => {
     res.json(resultado);
 });
 
-// ==================== WEBHOOK - INTEGRADO COM REBECA ====================
+// ==================== WEBHOOK MULTI-TENANT COM REBECA ====================
 router.post('/webhook/:nomeInstancia', async (req, res) => {
     const { nomeInstancia } = req.params;
     const dados = req.body;
@@ -56,12 +56,13 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
     console.log('[WEBHOOK ' + nomeInstancia + '] Evento:', dados.event);
     
     try {
-        // Buscar instancia
         const instancia = await InstanciaWhatsapp.findOne({ nomeInstancia });
         if (!instancia) {
             console.log('[WEBHOOK] Instancia nao encontrada:', nomeInstancia);
             return res.json({ received: true });
         }
+        
+        const adminId = instancia.adminId; // IMPORTANTE: pegar adminId da instancia
         
         // Atualizar status de conexao
         if (dados.event === 'connection.update') {
@@ -74,68 +75,66 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
             console.log('[WEBHOOK] Status atualizado:', instancia.status);
         }
         
-        // PROCESSAR MENSAGENS RECEBIDAS - REBECA ATENDE
+        // PROCESSAR MENSAGENS - REBECA MULTI-TENANT
         if (dados.event === 'messages.upsert') {
             const mensagens = dados.data?.messages || [];
             
             for (const msg of mensagens) {
-                // Ignorar mensagens enviadas por nos
                 if (msg.key?.fromMe) continue;
                 
-                // Extrair dados da mensagem
                 const telefone = msg.key?.remoteJid?.replace('@s.whatsapp.net', '') || '';
                 const nome = msg.pushName || 'Cliente';
                 
-                // Extrair conteudo da mensagem
                 let conteudo = null;
-                
-                // Mensagem de texto
                 if (msg.message?.conversation) {
                     conteudo = msg.message.conversation;
-                }
-                // Texto extendido
-                else if (msg.message?.extendedTextMessage?.text) {
+                } else if (msg.message?.extendedTextMessage?.text) {
                     conteudo = msg.message.extendedTextMessage.text;
-                }
-                // Localizacao
-                else if (msg.message?.locationMessage) {
-                    conteudo = {
-                        latitude: msg.message.locationMessage.degreesLatitude,
-                        longitude: msg.message.locationMessage.degreesLongitude
-                    };
-                }
-                // Localizacao ao vivo
-                else if (msg.message?.liveLocationMessage) {
-                    conteudo = {
-                        latitude: msg.message.liveLocationMessage.degreesLatitude,
-                        longitude: msg.message.liveLocationMessage.degreesLongitude
-                    };
+                } else if (msg.message?.locationMessage) {
+                    conteudo = { latitude: msg.message.locationMessage.degreesLatitude, longitude: msg.message.locationMessage.degreesLongitude };
+                } else if (msg.message?.liveLocationMessage) {
+                    conteudo = { latitude: msg.message.liveLocationMessage.degreesLatitude, longitude: msg.message.liveLocationMessage.degreesLongitude };
                 }
                 
                 if (!conteudo || !telefone) continue;
                 
-                console.log('[REBECA] Mensagem de ' + telefone + ' (' + nome + '):', typeof conteudo === 'string' ? conteudo.substring(0, 50) : 'LOCALIZACAO');
+                console.log('[REBECA-' + (adminId || 'GLOBAL') + '] Msg de ' + telefone + ':', typeof conteudo === 'string' ? conteudo.substring(0, 30) : 'GPS');
                 
-                // CHAMAR REBECA PARA PROCESSAR
                 try {
-                    const resposta = await RebecaService.processarMensagem(telefone, conteudo, nome);
+                    // PASSAR adminId PARA REBECA (contexto multi-tenant)
+                    const contexto = { adminId: adminId, instanciaId: instancia._id };
+                    const resposta = await RebecaService.processarMensagem(telefone, conteudo, nome, contexto);
                     
                     if (resposta) {
-                        // Enviar resposta pelo WhatsApp da instancia
                         await EvolutionMultiService.enviarMensagem(instancia._id, telefone, resposta);
                         console.log('[REBECA] Resposta enviada para ' + telefone);
                     }
                 } catch (e) {
-                    console.error('[REBECA] Erro ao processar:', e.message);
+                    console.error('[REBECA] Erro:', e.message);
                 }
             }
         }
-        
     } catch (e) {
         console.error('[WEBHOOK] Erro:', e.message);
     }
     
     res.json({ received: true });
+});
+
+// ==================== STATS POR ADMIN ====================
+router.get('/stats/:adminId', async (req, res) => {
+    try {
+        const { adminId } = req.params;
+        const motoristas = await Motorista.countDocuments({ adminId, ativo: true });
+        const motOnline = await Motorista.countDocuments({ adminId, ativo: true, status: 'disponivel' });
+        const clientes = await Cliente.countDocuments({ adminId });
+        const corridas = await Corrida.countDocuments({ adminId });
+        const corridasHoje = await Corrida.countDocuments({ adminId, createdAt: { $gte: new Date().setHours(0,0,0,0) } });
+        
+        res.json({ sucesso: true, motoristas, motOnline, clientes, corridas, corridasHoje });
+    } catch (e) {
+        res.json({ sucesso: false, erro: e.message });
+    }
 });
 
 module.exports = router;
