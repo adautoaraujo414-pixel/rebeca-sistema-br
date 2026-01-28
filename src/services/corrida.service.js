@@ -1,4 +1,5 @@
 const { Corrida } = require('../models');
+const MotoristaService = require('./motorista.service');
 
 const CorridaService = {
     // Listar (filtrado por admin)
@@ -39,6 +40,13 @@ const CorridaService = {
         return Corrida.find({ clienteId }).sort({ createdAt: -1 }).limit(10);
     },
 
+    buscarCorridaAtivaMotorista(motoristaId) {
+        return Corrida.findOne({ 
+            motoristaId, 
+            status: { $in: ['aceita', 'em_andamento'] } 
+        });
+    },
+
     listarPorMotorista(motoristaId) {
         return Corrida.find({ motoristaId }).sort({ createdAt: -1 }).limit(10);
     },
@@ -59,6 +67,55 @@ const CorridaService = {
         const faturamentoHoje = corridasHoje.reduce((s, c) => s + (c.precoFinal || c.precoEstimado || 0), 0);
         
         return { total, hoje: hoje_count, pendentes, emAndamento, finalizadas, canceladas, faturamentoHoje };
+    }
+};
+
+    // Finalizar corrida e liberar motorista
+    async finalizarCorrida(corridaId, precoFinal = null) {
+        const corrida = await Corrida.findById(corridaId);
+        if (!corrida) return { sucesso: false, erro: 'Corrida não encontrada' };
+        
+        // Atualizar corrida
+        corrida.status = 'finalizada';
+        corrida.finalizadaEm = new Date();
+        if (precoFinal) corrida.precoFinal = precoFinal;
+        await corrida.save();
+        
+        // LIBERAR MOTORISTA - volta para disponivel
+        if (corrida.motoristaId) {
+            await MotoristaService.atualizarStatus(corrida.motoristaId, 'disponivel');
+            console.log('[CORRIDA] Motorista', corrida.motoristaId, 'liberado - Status: disponivel');
+        }
+        
+        return { sucesso: true, corrida };
+    },
+
+    // Cancelar corrida e liberar motorista
+    async cancelarCorrida(corridaId, motivo = null) {
+        const corrida = await Corrida.findById(corridaId);
+        if (!corrida) return { sucesso: false, erro: 'Corrida não encontrada' };
+        
+        corrida.status = 'cancelada';
+        corrida.canceladaEm = new Date();
+        corrida.motivoCancelamento = motivo;
+        await corrida.save();
+        
+        // LIBERAR MOTORISTA se tinha um atribuido
+        if (corrida.motoristaId) {
+            await MotoristaService.atualizarStatus(corrida.motoristaId, 'disponivel');
+            console.log('[CORRIDA] Motorista', corrida.motoristaId, 'liberado por cancelamento');
+        }
+        
+        return { sucesso: true, corrida };
+    },
+
+    // Iniciar corrida (motorista chegou e começou)
+    async iniciarCorrida(corridaId) {
+        const corrida = await Corrida.findByIdAndUpdate(corridaId, {
+            status: 'em_andamento',
+            iniciadaEm: new Date()
+        }, { new: true });
+        return { sucesso: true, corrida };
     }
 };
 

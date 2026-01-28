@@ -1,4 +1,5 @@
 const { v4: uuidv4 } = require('uuid');
+const MotoristaService = require('./motorista.service');
 const MapsService = require('./maps.service');
 const GPSIntegradoService = require('./gps-integrado.service');
 
@@ -237,7 +238,9 @@ const DespachoService = {
             });
         }
 
-        console.log(`✅ Corrida ${corridaId} aceita por ${motoristaNome}`);
+        // MUDAR STATUS DO MOTORISTA PARA EM_CORRIDA
+        MotoristaService.atualizarStatus(motoristaId, 'em_corrida');
+        console.log(`✅ Corrida ${corridaId} aceita por ${motoristaNome} - Status: em_corrida`);
 
         return {
             sucesso: true,

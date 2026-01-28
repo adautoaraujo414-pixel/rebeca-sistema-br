@@ -3,6 +3,8 @@ const MapsService = require('./maps.service');
 const CorridaService = require('./corrida.service');
 const ClienteService = require('./cliente.service');
 const MotoristaService = require('./motorista.service');
+const DespachoService = require('./despacho.service');
+const EvolutionMultiService = require('./evolution-multi.service');
 const IAService = require('./ia.service');
 
 const conversas = new Map();
@@ -107,10 +109,35 @@ const RebecaService = {
     // ==================== PROCESSAR MENSAGEM PRINCIPAL ====================
     async processarMensagem(telefone, mensagem, nome = 'Cliente', contexto = {}) {
         const adminId = contexto.adminId || null;
+        
+        // ========== COMANDOS DO MOTORISTA ==========
+        const msgUpper = typeof mensagem === 'string' ? mensagem.toUpperCase().trim() : '';
+        
+        // Motorista aceitando corrida
+        if (msgUpper === 'ACEITAR' || msgUpper.startsWith('ACEITAR ')) {
+            return await RebecaService.motoristaAceitarCorrida(telefone, adminId, contexto.instanciaId);
+        }
+        
+        // Motorista finalizando corrida
+        if (msgUpper === 'FINALIZAR' || msgUpper === 'FINALIZADA' || msgUpper === 'FIM') {
+            return await RebecaService.motoristaFinalizarCorrida(telefone, adminId, contexto.instanciaId);
+        }
+        
+        // Motorista cancelando corrida
+        if (msgUpper === 'CANCELAR' || msgUpper.startsWith('CANCELAR ')) {
+            return await RebecaService.motoristaCancelarCorrida(telefone, adminId, contexto.instanciaId);
+        }
+        
+        // Motorista chegou no local
+        if (msgUpper === 'CHEGUEI' || msgUpper === 'CHEGOU') {
+            return await RebecaService.motoristaChegou(telefone, adminId, contexto.instanciaId);
+        }
         if (adminId) console.log('[REBECA] Admin:', adminId);
         
         // Guardar adminId na conversa para usar depois
         if (adminId && conversa) conversa.adminId = adminId;
+        if (contexto.instanciaId && conversa) conversa.instanciaId = contexto.instanciaId;
+        if (contexto.instanciaId && conversa) conversa.instanciaId = contexto.instanciaId;
         const msg = typeof mensagem === 'string' ? mensagem.toLowerCase().trim() : '';
         const msgOriginal = typeof mensagem === 'string' ? mensagem.trim() : '';
         const conversa = conversas.get(telefone) || { etapa: 'inicio', dados: {} };
@@ -353,7 +380,7 @@ const RebecaService = {
             const calculo = await RebecaService.calcularCorrida(conversa.dados.origem, conversa.dados.destino);
             conversa.dados.calculo = calculo;
             
-            const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId);
+            const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
             conversa.etapa = 'inicio';
             
             resposta = `🚗 *CARRO SOLICITADO!*\n\n📍 *De:* ${conversa.dados.origem}`;
@@ -376,7 +403,7 @@ const RebecaService = {
             const calculo = await RebecaService.calcularCorrida(conversa.dados.origem, conversa.dados.destino);
             conversa.dados.calculo = calculo;
             
-            const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId);
+            const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
             conversa.etapa = 'inicio';
             
             resposta = `🚗 *CARRO SOLICITADO!*\n\n📍 *De:* ${conversa.dados.origem}`;
@@ -436,7 +463,7 @@ const RebecaService = {
         }
         else if (conversa.etapa === 'confirmar_corrida') {
             if (msg === '1' || msg.includes('sim') || msg.includes('confirmar')) {
-                const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId);
+                const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
                 conversa.etapa = 'inicio';
                 
                 resposta = `🎉 *CONFIRMADO!*\n\n🔢 #${corrida.id.slice(-6)}\n💰 R$ ${corrida.preco.toFixed(2)}\n\n⏳ Buscando motorista...`;
@@ -653,13 +680,13 @@ const RebecaService = {
         };
     },
 
-    async criarCorrida(telefone, nomeCliente, dados, adminId = null) {
+    async criarCorrida(telefone, nomeCliente, dados, adminId = null, instanciaId = null) {
         let cliente = ClienteService.buscarPorTelefone(telefone);
-        if (!cliente) cliente = ClienteService.criar({ nome: nomeCliente, telefone, adminId });
+        if (!cliente) cliente = await ClienteService.criar({ nome: nomeCliente, telefone, adminId });
         
-        const corrida = CorridaService.criar({
+        const corrida = await CorridaService.criar({
             adminId,
-            clienteId: cliente.id,
+            clienteId: cliente._id || cliente.id,
             clienteNome: cliente.nome,
             clienteTelefone: telefone,
             origem: dados.calculo.origem,
@@ -667,13 +694,53 @@ const RebecaService = {
             distanciaKm: dados.calculo.distanciaKm,
             tempoEstimado: dados.calculo.tempoMinutos,
             precoEstimado: dados.calculo.preco,
-            faixaPreco: dados.calculo.faixa.nome,
-            multiplicador: dados.calculo.faixa.multiplicador,
+            faixaPreco: dados.calculo.faixa?.nome || 'normal',
+            multiplicador: dados.calculo.faixa?.multiplicador || 1,
             observacaoOrigem: dados.observacaoOrigem || null,
-            observacaoDestino: dados.observacaoDestino || null
+            observacaoDestino: dados.observacaoDestino || null,
+            status: 'pendente'
         });
         
-        return { id: corrida.id, origem: dados.origem, destino: dados.destino, preco: dados.calculo.preco };
+        // ========== DESPACHAR PARA MOTORISTAS ==========
+        try {
+            // Buscar motoristas disponiveis DO ADMIN
+            const motoristasDisponiveis = await MotoristaService.listarDisponiveis(adminId);
+            
+            if (motoristasDisponiveis.length > 0) {
+                // Despachar corrida (usa modo configurado: broadcast ou proximo)
+                const resultadoDespacho = await DespachoService.despacharCorrida(corrida, motoristasDisponiveis);
+                
+                if (resultadoDespacho.sucesso && instanciaId) {
+                    // Notificar motoristas via WhatsApp
+                    const msgCorrida = `🚨 *NOVA CORRIDA!*\n\n📍 *Origem:* ${dados.calculo.origem?.endereco || dados.origem}\n🏁 *Destino:* ${dados.calculo.destino?.endereco || dados.destino}\n📏 *Distância:* ${dados.calculo.distanciaKm?.toFixed(1) || '?'}km\n💰 *Valor:* R$ ${dados.calculo.preco?.toFixed(2) || '?'}\n\n✅ Digite *ACEITAR* para pegar esta corrida!`;
+                    
+                    if (resultadoDespacho.modo === 'broadcast') {
+                        // Enviar para todos os motoristas
+                        for (const mot of motoristasDisponiveis) {
+                            if (mot.whatsapp) {
+                                await EvolutionMultiService.enviarMensagem(instanciaId, mot.whatsapp, msgCorrida);
+                                console.log('[REBECA] Corrida enviada para motorista:', mot.nomeCompleto || mot.nome);
+                            }
+                        }
+                    } else if (resultadoDespacho.modo === 'proximo' && resultadoDespacho.motorista) {
+                        // Enviar só pro mais próximo
+                        const mot = resultadoDespacho.motorista;
+                        if (mot.whatsapp) {
+                            await EvolutionMultiService.enviarMensagem(instanciaId, mot.whatsapp, msgCorrida);
+                            console.log('[REBECA] Corrida enviada para motorista mais proximo:', mot.nome);
+                        }
+                    }
+                }
+                
+                console.log('[REBECA] Despacho:', resultadoDespacho.modo, '- Motoristas:', motoristasDisponiveis.length);
+            } else {
+                console.log('[REBECA] Nenhum motorista disponivel para admin:', adminId);
+            }
+        } catch (e) {
+            console.error('[REBECA] Erro no despacho:', e.message);
+        }
+        
+        return { id: corrida._id || corrida.id, origem: dados.origem, destino: dados.destino, preco: dados.calculo.preco };
     },
 
     async historicoCliente(telefone) {
@@ -704,6 +771,112 @@ const RebecaService = {
     },
     gerarMensagemCorridaFinalizada: (c) => `✅ *FINALIZADA!*\n\n#${c.id.slice(-6)}\n💰 R$ ${(c.precoFinal || c.precoEstimado).toFixed(2)}\n\n⭐ Avalie de 1 a 5:`,
     gerarMensagemCorridaCancelada: (c, m) => `❌ *CANCELADA*\n\n#${c.id.slice(-6)}\n📝 ${m || '-'}`
+};
+
+    // ==================== COMANDOS DO MOTORISTA ====================
+    async motoristaAceitarCorrida(telefoneMotorista, adminId, instanciaId) {
+        try {
+            const motorista = await MotoristaService.buscarPorWhatsapp(telefoneMotorista, adminId);
+            if (!motorista) return '❌ Você não está cadastrado como motorista.';
+            if (motorista.status === 'em_corrida') return '⚠️ Você já está em uma corrida.';
+            
+            // Buscar corridas pendentes para este motorista
+            const corridasDisponiveis = DespachoService.getCorridasDisponiveis(motorista._id?.toString() || motorista.id);
+            
+            if (!corridasDisponiveis || corridasDisponiveis.length === 0) {
+                return '❌ Não há corridas disponíveis para você no momento.';
+            }
+            
+            // Pegar a primeira corrida disponível
+            const notif = corridasDisponiveis[0];
+            const resultado = DespachoService.aceitarCorrida(notif.corridaId, motorista._id?.toString() || motorista.id, motorista.nomeCompleto || motorista.nome);
+            
+            if (!resultado.sucesso) return '❌ ' + resultado.error;
+            
+            // Atribuir motorista na corrida
+            await CorridaService.atribuirMotorista(notif.corridaId, motorista._id, motorista.nomeCompleto || motorista.nome);
+            
+            // Notificar cliente que motorista está a caminho
+            const corrida = await CorridaService.buscarPorId(notif.corridaId);
+            if (corrida && corrida.clienteTelefone && instanciaId) {
+                const msgCliente = `🚗 *MOTORISTA A CAMINHO!*\n\n👨‍✈️ *${motorista.nomeCompleto || motorista.nome}*\n🚙 ${motorista.veiculo?.modelo || ''} ${motorista.veiculo?.cor || ''}\n🔢 *${motorista.veiculo?.placa || ''}*\n\n📞 ${motorista.whatsapp}`;
+                await EvolutionMultiService.enviarMensagem(instanciaId, corrida.clienteTelefone, msgCliente);
+            }
+            
+            return `✅ *CORRIDA ACEITA!*\n\n📍 Origem: ${corrida?.origem?.endereco || 'Ver no app'}\n🏁 Destino: ${corrida?.destino?.endereco || 'Ver no app'}\n💰 Valor: R$ ${corrida?.precoEstimado?.toFixed(2) || '?'}\n\n📱 Cliente: ${corrida?.clienteTelefone || ''}\n\nDigite *CHEGUEI* ao chegar no local.\nDigite *FINALIZAR* ao concluir.`;
+        } catch (e) {
+            console.error('[REBECA] Erro ao aceitar:', e.message);
+            return '❌ Erro ao processar. Tente novamente.';
+        }
+    },
+    
+    async motoristaChegou(telefoneMotorista, adminId, instanciaId) {
+        try {
+            const motorista = await MotoristaService.buscarPorWhatsapp(telefoneMotorista, adminId);
+            if (!motorista) return '❌ Você não está cadastrado.';
+            
+            // Buscar corrida ativa do motorista
+            const corrida = await CorridaService.buscarCorridaAtivaMotorista(motorista._id);
+            if (!corrida) return '❌ Você não tem corrida ativa.';
+            
+            // Notificar cliente
+            if (corrida.clienteTelefone && instanciaId) {
+                const msgCliente = `🎉 *MOTORISTA CHEGOU!*\n\n👨‍✈️ ${motorista.nomeCompleto || motorista.nome}\n🚙 ${motorista.veiculo?.placa || ''}\n\nAguardando você!`;
+                await EvolutionMultiService.enviarMensagem(instanciaId, corrida.clienteTelefone, msgCliente);
+            }
+            
+            return '✅ Cliente notificado! Aguardando embarque.\n\nDigite *FINALIZAR* ao concluir a corrida.';
+        } catch (e) {
+            return '❌ Erro. Tente novamente.';
+        }
+    },
+    
+    async motoristaFinalizarCorrida(telefoneMotorista, adminId, instanciaId) {
+        try {
+            const motorista = await MotoristaService.buscarPorWhatsapp(telefoneMotorista, adminId);
+            if (!motorista) return '❌ Você não está cadastrado.';
+            
+            // Buscar corrida ativa
+            const corrida = await CorridaService.buscarCorridaAtivaMotorista(motorista._id);
+            if (!corrida) return '❌ Você não tem corrida ativa para finalizar.';
+            
+            // Finalizar corrida (isso libera o motorista automaticamente)
+            await CorridaService.finalizarCorrida(corrida._id, corrida.precoEstimado);
+            
+            // Notificar cliente
+            if (corrida.clienteTelefone && instanciaId) {
+                const msgCliente = `✅ *CORRIDA FINALIZADA!*\n\n💰 Valor: R$ ${corrida.precoEstimado?.toFixed(2) || '?'}\n\n⭐ Avalie o motorista de 1 a 5\n\nObrigado por usar nosso serviço!`;
+                await EvolutionMultiService.enviarMensagem(instanciaId, corrida.clienteTelefone, msgCliente);
+            }
+            
+            return `✅ *CORRIDA FINALIZADA!*\n\n💰 R$ ${corrida.precoEstimado?.toFixed(2) || '?'}\n\nVocê está *DISPONÍVEL* para novas corridas!\n\n📊 Bom trabalho!`;
+        } catch (e) {
+            console.error('[REBECA] Erro ao finalizar:', e.message);
+            return '❌ Erro ao finalizar. Tente novamente.';
+        }
+    },
+    
+    async motoristaCancelarCorrida(telefoneMotorista, adminId, instanciaId) {
+        try {
+            const motorista = await MotoristaService.buscarPorWhatsapp(telefoneMotorista, adminId);
+            if (!motorista) return '❌ Você não está cadastrado.';
+            
+            const corrida = await CorridaService.buscarCorridaAtivaMotorista(motorista._id);
+            if (!corrida) return '❌ Você não tem corrida ativa.';
+            
+            await CorridaService.cancelarCorrida(corrida._id, 'Cancelado pelo motorista');
+            
+            // Notificar cliente
+            if (corrida.clienteTelefone && instanciaId) {
+                const msgCliente = '❌ *CORRIDA CANCELADA*\n\nO motorista precisou cancelar.\n\nEnvie sua localização para solicitar outro motorista.';
+                await EvolutionMultiService.enviarMensagem(instanciaId, corrida.clienteTelefone, msgCliente);
+            }
+            
+            return '❌ Corrida cancelada.\n\nVocê está *DISPONÍVEL* novamente.';
+        } catch (e) {
+            return '❌ Erro ao cancelar.';
+        }
+    }
 };
 
 module.exports = RebecaService;
