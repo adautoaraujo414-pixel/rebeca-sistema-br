@@ -145,7 +145,7 @@ const RebecaService = {
         
         let resposta = '';
 
-        // ========== GPS ==========
+        // ========== GPS - CHAMAR CARRO DIRETO ==========
         if (RebecaService.pareceLocalizacao(mensagem)) {
             const coords = RebecaService.extrairCoordenadas(mensagem);
             const endereco = await MapsService.geocodificarReverso(coords.latitude, coords.longitude);
@@ -153,14 +153,23 @@ const RebecaService = {
             conversa.dados.origemGPS = coords;
             conversa.dados.origem = endereco.endereco || `${coords.latitude}, ${coords.longitude}`;
             conversa.dados.origemValidada = { valido: true, precisao: 'gps', latitude: coords.latitude, longitude: coords.longitude };
-            conversa.etapa = 'pedir_destino_rapido';
+            conversa.dados.calculo = {
+                origem: { endereco: conversa.dados.origem, latitude: coords.latitude, longitude: coords.longitude },
+                destino: null,
+                distanciaKm: 0,
+                tempoMinutos: 0,
+                preco: 15,
+                faixa: { nome: 'padrao', multiplicador: 1 }
+            };
             
-            resposta = `📍 *Localização recebida!*\n\n${conversa.dados.origem}\n\n🏁 Envie o *destino*:`;
-            if (favoritos.casa) resposta += `\n• Digite *casa*`;
-            if (favoritos.trabalho) resposta += `\n• Digite *trabalho*`;
+            // Criar corrida e despachar DIRETO
+            const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
             
+            conversa.etapa = 'aguardando_motorista';
+            conversa.dados.corridaId = corrida.id;
             conversas.set(telefone, conversa);
-            return resposta;
+            
+            return `🚗 *CARRO A CAMINHO!*\n\n📍 Buscar em: *${conversa.dados.origem}*\n\n⏳ Localizando motorista próximo...\n\n_Informe o destino ao motorista_\n\nDigite *CANCELAR* para cancelar.`;
         }
 
         // ========== TENTAR IA PRIMEIRO ==========
@@ -265,39 +274,35 @@ const RebecaService = {
                 resposta = `Você não cadastrou ${tipo} ainda.\n\nEnvie o endereço:`;
             }
         }
-        // ========== AUTO-DETECT ENDEREÇO ==========
+        // ========== AUTO-DETECT ENDEREÇO - CHAMAR CARRO DIRETO ==========
         else if (configRebeca.autoDetectarEndereco && conversa.etapa === 'inicio' && RebecaService.pareceEndereco(msgOriginal)) {
             const validacao = await RebecaService.validarEndereco(msgOriginal);
             
-            conversa.dados.origemTexto = msgOriginal;
-            conversa.dados.origemValidada = validacao;
-            
             if (!validacao.valido) {
-                // Tentar IA para extrair endereço
-                if (configRebeca.usarIA && IAService.isAtivo()) {
-                    const extracao = await IAService.extrairEndereco(msgOriginal);
-                    if (extracao.encontrado && extracao.endereco) {
-                        const validacao2 = await RebecaService.validarEndereco(extracao.endereco);
-                        if (validacao2.valido) {
-                            conversa.dados.origemValidada = validacao2;
-                            conversa.dados.origem = validacao2.endereco;
-                            if (extracao.referencia) {
-                                conversa.dados.observacaoOrigem = extracao.referencia;
-                            }
-                            conversa.etapa = 'confirmar_origem_auto';
-                            resposta = `📍 Entendi! Você está em:\n*${validacao2.endereco}*`;
-                            if (extracao.referencia) resposta += `\n📝 Ref: ${extracao.referencia}`;
-                            resposta += `\n\n*1* - ✅ Chamar carro\n*2* - 📝 Outro endereço`;
-                            conversas.set(telefone, conversa);
-                            return resposta;
-                        }
-                    }
-                }
-                conversa.etapa = 'pedir_origem';
-                resposta = `❌ Não encontrei esse endereço.\n\nTente com número, bairro e cidade.\nOu envie sua 📍 localização.`;
-            } else if (validacao.precisaObservacao && configRebeca.pedirObservacaoEnderecoImpreciso) {
-                conversa.etapa = 'pedir_observacao_origem';
-                resposta = `📍 *Encontrei:* ${validacao.endereco}\n\n⚠️ _Localização aproximada_\n\nEnvie uma *referência* pro motorista:\n_Ex: casa azul, perto do mercado_\n\nOu *0* para continuar sem.`;
+                resposta = `❌ Não encontrei esse endereço.\n\nEnvie sua 📍 localização ou tente com mais detalhes.`;
+            } else {
+                // CHAMAR CARRO DIRETO!
+                conversa.dados.origem = validacao.endereco;
+                conversa.dados.origemValidada = validacao;
+                conversa.dados.calculo = {
+                    origem: { endereco: validacao.endereco, latitude: validacao.latitude, longitude: validacao.longitude },
+                    destino: null,
+                    distanciaKm: 0,
+                    tempoMinutos: 0,
+                    preco: 15, // Preço mínimo
+                    faixa: { nome: 'padrao', multiplicador: 1 }
+                };
+                
+                // Criar corrida e despachar
+                const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
+                
+                conversa.etapa = 'aguardando_motorista';
+                conversa.dados.corridaId = corrida.id;
+                conversas.set(telefone, conversa);
+                
+                return `🚗 *CARRO A CAMINHO!*\n\n📍 Buscar em: *${validacao.endereco}*\n\n⏳ Aguarde, estamos localizando motorista...\n\n_Informe o destino ao motorista quando ele chegar_\n\nDigite *CANCELAR* para cancelar.`;
+            }
+        }
             } else {
                 conversa.dados.origem = validacao.endereco;
                 conversa.etapa = 'confirmar_origem_auto';
