@@ -398,14 +398,85 @@
 
             <!-- WHATSAPP -->
             <div id="whatsapp" class="page">
-                <h2 style="margin-bottom:20px;">💬 WhatsApp</h2>
-                <div class="panel"><h2>Status</h2><div id="whatsappStatus"><p><span class="status-indicator offline"></span> Desconectado</p></div></div>
+                <h2 style="margin-bottom:20px;">💬 WhatsApp - Rebeca IA</h2>
+                
+                <div class="cards">
+                    <div class="card" id="cardStatusWpp">
+                        <div class="card-icon">📱</div>
+                        <h3>Status</h3>
+                        <div class="value" id="wppStatusText" style="font-size:1em;">Desconectado</div>
+                    </div>
+                    <div class="card green">
+                        <div class="card-icon">🤖</div>
+                        <h3>Rebeca IA</h3>
+                        <div class="value" style="font-size:1em;">Pronta</div>
+                    </div>
+                    <div class="card blue">
+                        <div class="card-icon">👨‍✈️</div>
+                        <h3>Motoristas</h3>
+                        <div class="value" id="wppMotoristas">0</div>
+                    </div>
+                    <div class="card purple">
+                        <div class="card-icon">💬</div>
+                        <h3>Msgs Hoje</h3>
+                        <div class="value" id="wppMsgsHoje">0</div>
+                    </div>
+                </div>
+
+                <div class="panel-grid">
+                    <div class="panel" style="text-align:center;">
+                        <h2>📱 Conectar WhatsApp</h2>
+                        <p style="color:#666;margin-bottom:20px;">Escaneie o QR Code com seu WhatsApp Business</p>
+                        
+                        <div id="qrCodeBox" style="background:#fff;padding:20px;border-radius:15px;min-height:280px;display:flex;justify-content:center;align-items:center;flex-direction:column;margin-bottom:20px;">
+                            <p style="color:#333;">Clique no botao abaixo para gerar o QR Code</p>
+                        </div>
+                        
+                        <div id="wppStatusBadge" style="padding:12px;border-radius:8px;margin-bottom:20px;background:#f8d7da;color:#721c24;font-weight:bold;">
+                            🔴 Desconectado
+                        </div>
+                        
+                        <button class="btn btn-success" onclick="gerarQRCodeAdmin()" id="btnGerarQR" style="font-size:1.1em;padding:15px 30px;">
+                            📷 Gerar QR Code
+                        </button>
+                        <button class="btn btn-danger" onclick="desconectarWhatsApp()" id="btnDesconectar" style="display:none;font-size:1.1em;padding:15px 30px;">
+                            🔌 Desconectar
+                        </button>
+                    </div>
+                    
+                    <div class="panel">
+                        <h2>🤖 Rebeca - Assistente IA</h2>
+                        <div style="background:#f0fff4;padding:20px;border-radius:10px;margin-bottom:20px;">
+                            <h3 style="color:#27ae60;margin-bottom:10px;">✅ Funcionalidades Ativas</h3>
+                            <ul style="color:#666;line-height:2;">
+                                <li>📍 Receber pedidos de corrida via WhatsApp</li>
+                                <li>🚗 Despachar corridas para motoristas</li>
+                                <li>📊 Informar status da corrida ao cliente</li>
+                                <li>💰 Calcular precos automaticamente</li>
+                                <li>⭐ Coletar avaliacoes pos-corrida</li>
+                                <li>❓ Responder duvidas dos clientes</li>
+                            </ul>
+                        </div>
+                        
+                        <h3 style="margin-bottom:10px;">📋 Como Funciona:</h3>
+                        <ol style="color:#666;line-height:2;padding-left:20px;">
+                            <li>Conecte seu WhatsApp Business</li>
+                            <li>A Rebeca comeca a atender automaticamente</li>
+                            <li>Clientes enviam localizacao para pedir corrida</li>
+                            <li>Rebeca encontra motorista e despacha</li>
+                            <li>Acompanhe tudo pelo painel</li>
+                        </ol>
+                    </div>
+                </div>
+                
                 <div class="panel">
-                    <h2>⚙️ Config API</h2>
-                    <div class="form-group"><label>URL</label><input type="text" id="whatsappApiUrl"></div>
-                    <div class="form-group"><label>API Key</label><input type="password" id="whatsappApiKey"></div>
-                    <div class="form-group"><label>Instância</label><input type="text" id="whatsappInstancia" value="rebeca-taxi"></div>
-                    <button class="btn btn-success" onclick="salvarConfigWhatsApp()">💾 Salvar</button>
+                    <h2>⚙️ Configuracoes Evolution API</h2>
+                    <div class="form-row">
+                        <div class="form-group"><label>URL da API</label><input type="text" id="whatsappApiUrl" placeholder="http://localhost:8080"></div>
+                        <div class="form-group"><label>API Key</label><input type="password" id="whatsappApiKey" placeholder="Sua chave da API"></div>
+                        <div class="form-group"><label>Nome da Instancia</label><input type="text" id="whatsappInstancia" value="rebeca-taxi"></div>
+                    </div>
+                    <button class="btn btn-success" onclick="salvarConfigWhatsApp()">💾 Salvar Configuracoes</button>
                 </div>
             </div>
 
@@ -847,4 +918,166 @@ async function testarAnaliseIA() {
     
     div.innerHTML = '<strong>Análise da IA:</strong>\n\n' + JSON.stringify(r, null, 2);
 }
-</script>
+
+    // ==================== WHATSAPP REBECA ====================
+    let adminInstanciaId = null;
+    let verificarWppInterval = null;
+    
+    async function carregarWhatsAppAdmin() {
+        try {
+            // Buscar instancia do admin atual
+            const adminId = localStorage.getItem('adminId') || 'admin';
+            const res = await fetch('/api/evolution/instancias/admin/' + adminId);
+            const data = await res.json();
+            
+            if (data.sucesso && data.instancias && data.instancias.length > 0) {
+                const inst = data.instancias[0];
+                adminInstanciaId = inst._id;
+                atualizarStatusWhatsApp(inst.status);
+                
+                if (inst.status === 'conectado') {
+                    document.getElementById('btnGerarQR').style.display = 'none';
+                    document.getElementById('btnDesconectar').style.display = 'inline-block';
+                }
+            }
+            
+            // Carregar total de motoristas
+            const motRes = await fetch('/api/motoristas');
+            const motoristas = await motRes.json();
+            document.getElementById('wppMotoristas').textContent = Array.isArray(motoristas) ? motoristas.length : 0;
+        } catch (e) {
+            console.log('Erro ao carregar WhatsApp:', e);
+        }
+    }
+    
+    function atualizarStatusWhatsApp(status) {
+        const badge = document.getElementById('wppStatusBadge');
+        const text = document.getElementById('wppStatusText');
+        const card = document.getElementById('cardStatusWpp');
+        
+        if (status === 'conectado') {
+            badge.style.background = '#d4edda';
+            badge.style.color = '#155724';
+            badge.innerHTML = '🟢 Conectado - Rebeca Ativa';
+            text.textContent = 'Conectado';
+            card.className = 'card green';
+        } else if (status === 'conectando') {
+            badge.style.background = '#fff3cd';
+            badge.style.color = '#856404';
+            badge.innerHTML = '🟡 Aguardando escaneamento...';
+            text.textContent = 'Conectando';
+            card.className = 'card orange';
+        } else {
+            badge.style.background = '#f8d7da';
+            badge.style.color = '#721c24';
+            badge.innerHTML = '🔴 Desconectado';
+            text.textContent = 'Desconectado';
+            card.className = 'card red';
+        }
+    }
+    
+    async function gerarQRCodeAdmin() {
+        const qrBox = document.getElementById('qrCodeBox');
+        qrBox.innerHTML = '<div style="border:4px solid #ddd;border-top:4px solid #27ae60;border-radius:50%;width:50px;height:50px;animation:spin 1s linear infinite;"></div><p style="color:#333;margin-top:15px;">Gerando QR Code...</p>';
+        document.getElementById('btnGerarQR').disabled = true;
+        
+        try {
+            // Se nao tem instancia, criar uma
+            if (!adminInstanciaId) {
+                const adminId = localStorage.getItem('adminId') || 'temp_' + Date.now();
+                const empresa = localStorage.getItem('adminEmpresa') || 'empresa';
+                
+                const createRes = await fetch('/api/evolution/instancia', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ adminId: adminId, nomeEmpresa: empresa })
+                });
+                const createData = await createRes.json();
+                
+                if (createData.sucesso) {
+                    adminInstanciaId = createData.instancia._id;
+                } else {
+                    qrBox.innerHTML = '<p style="color:#c0392b;">Erro: ' + (createData.erro || 'Falha ao criar instancia') + '</p>';
+                    document.getElementById('btnGerarQR').disabled = false;
+                    return;
+                }
+            }
+            
+            // Gerar QR Code
+            const res = await fetch('/api/evolution/instancia/' + adminInstanciaId + '/qrcode');
+            const data = await res.json();
+            
+            if (data.sucesso && data.qrCode) {
+                if (data.qrCode.startsWith('data:image')) {
+                    qrBox.innerHTML = '<img src="' + data.qrCode + '" style="max-width:250px;border-radius:10px;">';
+                } else {
+                    qrBox.innerHTML = '<div style="background:#f8f9fa;padding:20px;border-radius:10px;"><p style="color:#333;font-size:12px;word-break:break-all;">' + data.qrCode + '</p><p style="color:#666;font-size:11px;margin-top:10px;">Configure a Evolution API para QR visual</p></div>';
+                }
+                
+                atualizarStatusWhatsApp('conectando');
+                
+                // Iniciar verificacao
+                if (verificarWppInterval) clearInterval(verificarWppInterval);
+                verificarWppInterval = setInterval(verificarStatusWpp, 3000);
+            } else {
+                qrBox.innerHTML = '<p style="color:#c0392b;">Erro: ' + (data.erro || 'Falha ao gerar QR') + '</p>';
+            }
+        } catch (e) {
+            qrBox.innerHTML = '<p style="color:#c0392b;">Erro de conexao</p>';
+        }
+        
+        document.getElementById('btnGerarQR').disabled = false;
+    }
+    
+    async function verificarStatusWpp() {
+        if (!adminInstanciaId) return;
+        
+        try {
+            const res = await fetch('/api/evolution/instancia/' + adminInstanciaId + '/status');
+            const data = await res.json();
+            
+            if (data.sucesso) {
+                atualizarStatusWhatsApp(data.status);
+                
+                if (data.status === 'conectado') {
+                    clearInterval(verificarWppInterval);
+                    document.getElementById('qrCodeBox').innerHTML = '<div style="text-align:center;"><p style="color:#27ae60;font-size:48px;">✅</p><h3 style="color:#27ae60;">WhatsApp Conectado!</h3><p style="color:#666;margin-top:10px;">A Rebeca ja esta atendendo seus clientes</p></div>';
+                    document.getElementById('btnGerarQR').style.display = 'none';
+                    document.getElementById('btnDesconectar').style.display = 'inline-block';
+                }
+            }
+        } catch (e) {}
+    }
+    
+    async function desconectarWhatsApp() {
+        if (!confirm('Deseja desconectar o WhatsApp? A Rebeca parara de atender.')) return;
+        
+        try {
+            await fetch('/api/evolution/instancia/' + adminInstanciaId + '/desconectar', { method: 'POST' });
+            adminInstanciaId = null;
+            document.getElementById('qrCodeBox').innerHTML = '<p style="color:#333;">Clique no botao abaixo para gerar o QR Code</p>';
+            atualizarStatusWhatsApp('desconectado');
+            document.getElementById('btnGerarQR').style.display = 'inline-block';
+            document.getElementById('btnDesconectar').style.display = 'none';
+        } catch (e) {
+            alert('Erro ao desconectar');
+        }
+    }
+    
+    // Adicionar estilo de animacao
+    if (!document.getElementById('spinStyle')) {
+        const style = document.createElement('style');
+        style.id = 'spinStyle';
+        style.textContent = '@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }';
+        document.head.appendChild(style);
+    }
+    
+    // Carregar ao abrir pagina WhatsApp
+    const origShowPage = window.showPage;
+    window.showPage = function(page) {
+        if (typeof origShowPage === 'function') origShowPage(page);
+        if (page === 'whatsapp') carregarWhatsAppAdmin();
+    };
+
+
+    </script>
