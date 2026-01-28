@@ -469,7 +469,7 @@
                     </div>
                 </div>
                 
-                <div class="panel">
+                <div class="panel" style="display:none;">
                     <h2>⚙️ Configuracoes Evolution API</h2>
                     <div class="form-row">
                         <div class="form-group"><label>URL da API</label><input type="text" id="whatsappApiUrl" placeholder="http://localhost:8080"></div>
@@ -926,7 +926,7 @@ async function testarAnaliseIA() {
     async function carregarWhatsAppAdmin() {
         try {
             // Buscar instancia do admin atual
-            const adminId = localStorage.getItem('adminId') || 'admin';
+            const usuario = JSON.parse(localStorage.getItem('usuario') || '{}'); const adminId = usuario._id || usuario.id || 'admin';
             const res = await fetch('/api/evolution/instancias/admin/' + adminId);
             const data = await res.json();
             
@@ -984,8 +984,8 @@ async function testarAnaliseIA() {
         try {
             // Se nao tem instancia, criar uma
             if (!adminInstanciaId) {
-                const adminId = localStorage.getItem('adminId') || 'temp_' + Date.now();
-                const empresa = localStorage.getItem('adminEmpresa') || 'empresa';
+                const usuario = JSON.parse(localStorage.getItem('usuario') || '{}'); const adminId = usuario._id || usuario.id;
+                const empresa = usuario.nome || usuario.login || 'empresa';
                 
                 const createRes = await fetch('/api/evolution/instancia', {
                     method: 'POST',
