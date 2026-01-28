@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rebeca Sistemas - Admin Master</title>
+    <title>UBMAX - Admin Master</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', sans-serif; background: #0a0a1a; color: #fff; min-height: 100vh; }
@@ -91,11 +91,11 @@
 <body>
     <div class="login-container" id="loginContainer">
         <div class="login-box">
-            <h1>Rebeca <span>Sistemas</span></h1>
+            <h1>UB<span>MAX</span></h1>
             <p>🔐 Painel Admin Master</p>
             <div class="form-group">
                 <label>Email</label>
-                <input type="email" id="loginEmail" placeholder="master@rebeca.com" value="master@ubmax.com">
+                <input type="email" id="loginEmail" placeholder="master@ubmax.com" value="master@ubmax.com">
             </div>
             <div class="form-group">
                 <label>Senha</label>
@@ -107,7 +107,7 @@
     </div>
     <div class="dashboard" id="dashboard">
         <header class="header">
-            <h1>🔐 Rebeca <span>Sistemas</span></h1>
+            <h1>🔐 UB<span>MAX</span> Master</h1>
             <div class="user-info">
                 <span id="userNome">Admin Master</span>
                 <button class="btn-logout" onclick="fazerLogout()">Sair</button>
@@ -247,9 +247,7 @@
     </div>
     <script>
         let masterLogado = null;
-        let planosCache = [];
         const API = '/api/admin-master';
-        
         document.querySelectorAll('.menu-item').forEach(item => {
             item.addEventListener('click', function() {
                 const page = this.dataset.page;
@@ -261,7 +259,6 @@
                 carregarPagina(page);
             });
         });
-        
         function carregarPagina(page) {
             switch(page) {
                 case 'dashboard': carregarDashboard(); break;
@@ -275,12 +272,11 @@
                 case 'config': carregarConfig(); break;
             }
         }
-        
         async function fazerLogin() {
             const email = document.getElementById('loginEmail').value;
             const senha = document.getElementById('loginSenha').value;
             try {
-                const res = await fetch(API + '/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, senha }) });
+                const res = await fetch(`${API}/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, senha }) });
                 const data = await res.json();
                 if (data.sucesso) {
                     masterLogado = data.master;
@@ -291,12 +287,10 @@
                 } else { document.getElementById('loginError').textContent = data.erro || 'Erro ao fazer login'; }
             } catch (e) { document.getElementById('loginError').textContent = 'Erro de conexão'; }
         }
-        
         function fazerLogout() { location.reload(); }
-        
         async function carregarDashboard() {
             try {
-                const res = await fetch(API + '/dashboard');
+                const res = await fetch(`${API}/dashboard`);
                 const d = await res.json();
                 document.getElementById('statAdmins').textContent = d.adminsAtivos || 0;
                 document.getElementById('statPendentes').textContent = d.adminsPendentes || 0;
@@ -306,79 +300,104 @@
                 document.getElementById('statCorridasHoje').textContent = d.corridasHoje || 0;
                 document.getElementById('statFaturamento').textContent = 'R$ ' + (d.faturamentoMes || 0).toFixed(2);
                 document.getElementById('statTickets').textContent = d.ticketsAbertos || 0;
-                const logsHtml = (d.logsRecentes || []).slice(0, 10).map(l => '<div class="log-item ' + l.tipo + '"><div class="time">' + new Date(l.createdAt).toLocaleString() + '</div><strong>' + (l.usuario || 'Sistema') + '</strong> - ' + l.acao + '</div>').join('');
+                const logsHtml = (d.logsRecentes || []).slice(0, 10).map(l => `<div class="log-item ${l.tipo}"><div class="time">${new Date(l.createdAt).toLocaleString()}</div><strong>${l.usuario || 'Sistema'}</strong> - ${l.acao}</div>`).join('');
                 document.getElementById('logsRecentes').innerHTML = logsHtml || '<p style="color:#888">Nenhuma atividade recente</p>';
             } catch (e) { console.error(e); }
         }
-        
         async function carregarAdmins() {
             try {
-                const res = await fetch(API + '/admins');
+                const res = await fetch(`${API}/admins`);
                 const admins = await res.json();
-                const html = admins.map(a => '<tr><td>' + a.nome + '</td><td>' + a.email + '</td><td>' + (a.empresa || '-') + '</td><td><strong>' + (a.motoristas || 0) + '</strong></td><td>' + (a.corridasMes || 0) + '</td><td><span class="badge ' + (a.ativo ? 'green' : 'red') + '">' + (a.ativo ? 'Ativo' : 'Bloqueado') + '</span></td><td>' + (a.ativo ? '<button class="btn btn-danger btn-sm" onclick="bloquearAdmin(\'' + a._id + '\')">Bloquear</button>' : '<button class="btn btn-success btn-sm" onclick="aprovarAdmin(\'' + a._id + '\')">Ativar</button>') + '<button class="btn btn-warning btn-sm" onclick="resetarSenha(\'' + a._id + '\')">🔑</button><button class="btn btn-danger btn-sm" onclick="excluirAdmin(\'' + a._id + '\')">🗑️</button></td></tr>').join('');
+                const html = admins.map(a => `<tr>
+                    <td>${a.nome}</td><td>${a.email}</td><td>${a.empresa || '-'}</td>
+                    <td><strong>${a.motoristas || 0}</strong></td><td>${a.corridasMes || 0}</td>
+                    <td><span class="badge ${a.ativo ? 'green' : 'red'}">${a.ativo ? 'Ativo' : 'Bloqueado'}</span></td>
+                    <td>
+                        ${a.ativo ? `<button class="btn btn-danger btn-sm" onclick="bloquearAdmin('${a._id}')">Bloquear</button>` : `<button class="btn btn-success btn-sm" onclick="aprovarAdmin('${a._id}')">Ativar</button>`}
+                        <button class="btn btn-warning btn-sm" onclick="resetarSenha('${a._id}')">🔑</button>
+                        <button class="btn btn-danger btn-sm" onclick="excluirAdmin('${a._id}')">🗑️</button>
+                    </td></tr>`).join('');
                 document.getElementById('tabelaAdmins').innerHTML = html || '<tr><td colspan="7" style="text-align:center;color:#888">Nenhum admin cadastrado</td></tr>';
             } catch (e) { console.error(e); }
         }
-        
         async function carregarPendentes() {
             try {
-                const res = await fetch(API + '/admins/pendentes');
+                const res = await fetch(`${API}/admins/pendentes`);
                 const admins = await res.json();
-                const html = admins.map(a => '<tr><td>' + a.nome + '</td><td>' + a.email + '</td><td>' + (a.empresa || '-') + '</td><td>' + (a.telefone || '-') + '</td><td>' + new Date(a.createdAt).toLocaleString() + '</td><td><button class="btn btn-success btn-sm" onclick="aprovarAdmin(\'' + a._id + '\')">✓ Aprovar</button><button class="btn btn-danger btn-sm" onclick="excluirAdmin(\'' + a._id + '\')">✗ Recusar</button></td></tr>').join('');
+                const html = admins.map(a => `<tr>
+                    <td>${a.nome}</td><td>${a.email}</td><td>${a.empresa || '-'}</td><td>${a.telefone || '-'}</td>
+                    <td>${new Date(a.createdAt).toLocaleString()}</td>
+                    <td><button class="btn btn-success btn-sm" onclick="aprovarAdmin('${a._id}')">✓ Aprovar</button><button class="btn btn-danger btn-sm" onclick="excluirAdmin('${a._id}')">✗ Recusar</button></td>
+                </tr>`).join('');
                 document.getElementById('tabelaPendentes').innerHTML = html || '<tr><td colspan="6" style="text-align:center;color:#888">Nenhum admin pendente</td></tr>';
             } catch (e) { console.error(e); }
         }
-        
         async function carregarContabilidade() {
             try {
-                const res = await fetch(API + '/contabilidade');
+                const res = await fetch(`${API}/contabilidade`);
                 const dados = await res.json();
-                const html = dados.map(d => '<tr><td>' + d.admin.nome + '</td><td>' + (d.admin.empresa || '-') + '</td><td><strong>' + d.motoristasAtivos + '</strong></td><td>' + d.corridasMes + '</td><td>R$ ' + d.faturamentoMes.toFixed(2) + '</td><td>' + (d.mensalidade ? 'R$ ' + d.mensalidade.valor.toFixed(2) : '-') + '</td><td><span class="badge ' + (d.mensalidade?.status === 'pago' ? 'green' : d.mensalidade?.status === 'atrasado' ? 'red' : 'yellow') + '">' + (d.mensalidade?.status || '-') + '</span></td></tr>').join('');
+                const html = dados.map(d => `<tr>
+                    <td>${d.admin.nome}</td><td>${d.admin.empresa || '-'}</td>
+                    <td><strong>${d.motoristasAtivos}</strong></td><td>${d.corridasMes}</td>
+                    <td>R$ ${d.faturamentoMes.toFixed(2)}</td>
+                    <td>${d.mensalidade ? 'R$ ' + d.mensalidade.valor.toFixed(2) : '-'}</td>
+                    <td><span class="badge ${d.mensalidade?.status === 'pago' ? 'green' : d.mensalidade?.status === 'atrasado' ? 'red' : 'yellow'}">${d.mensalidade?.status || '-'}</span></td>
+                </tr>`).join('');
                 document.getElementById('tabelaContabilidade').innerHTML = html || '<tr><td colspan="7" style="text-align:center;color:#888">Nenhum dado</td></tr>';
             } catch (e) { console.error(e); }
         }
-        
         async function carregarPlanos() {
             try {
-                const res = await fetch(API + '/planos');
+                const res = await fetch(`${API}/planos`);
                 const planos = await res.json();
-                planosCache = planos;
-                const html = planos.map(p => '<div class="plano-card"><h4>' + p.nome + '</h4><p style="color:#888">' + (p.descricao || '') + '</p><div class="preco">R$ ' + p.preco.toFixed(2) + '<small>/mês</small></div><ul><li>' + p.limiteMotoristas + ' motoristas</li><li>' + p.limiteCorridas + ' corridas/mês</li>' + (p.recursos || []).map(r => '<li>' + r + '</li>').join('') + '</ul><button class="btn btn-primary" onclick="editarPlano(\'' + p._id + '\')">Editar</button><button class="btn btn-danger" onclick="excluirPlano(\'' + p._id + '\')">Excluir</button></div>').join('');
+                const html = planos.map(p => `<div class="plano-card">
+                    <h4>${p.nome}</h4><p style="color:#888">${p.descricao || ''}</p>
+                    <div class="preco">R$ ${p.preco.toFixed(2)}<small>/mês</small></div>
+                    <ul><li>${p.limiteMotoristas} motoristas</li><li>${p.limiteCorridas} corridas/mês</li>${(p.recursos || []).map(r => `<li>${r}</li>`).join('')}</ul>
+                    <button class="btn btn-primary" onclick="editarPlano('${p._id}')">Editar</button>
+                    <button class="btn btn-danger" onclick="excluirPlano('${p._id}')">Excluir</button>
+                </div>`).join('');
                 document.getElementById('listaPlanos').innerHTML = html || '<p style="color:#888">Nenhum plano cadastrado</p>';
             } catch (e) { console.error(e); }
         }
-        
         async function carregarMensalidades() {
             try {
-                const res = await fetch(API + '/mensalidades');
+                const res = await fetch(`${API}/mensalidades`);
                 const mensalidades = await res.json();
-                const html = mensalidades.map(m => '<tr><td>' + (m.adminId?.nome || '-') + '</td><td>R$ ' + m.valor.toFixed(2) + '</td><td>' + new Date(m.dataVencimento).toLocaleDateString() + '</td><td><span class="badge ' + (m.status === 'pago' ? 'green' : m.status === 'atrasado' ? 'red' : 'yellow') + '">' + m.status + '</span></td><td>' + (m.dataPagamento ? new Date(m.dataPagamento).toLocaleDateString() : '-') + '</td><td>' + (m.status !== 'pago' ? '<button class="btn btn-success btn-sm" onclick="confirmarPagamento(\'' + m._id + '\')">✓ Confirmar</button>' : '-') + '</td></tr>').join('');
+                const html = mensalidades.map(m => `<tr>
+                    <td>${m.adminId?.nome || '-'}</td><td>R$ ${m.valor.toFixed(2)}</td>
+                    <td>${new Date(m.dataVencimento).toLocaleDateString()}</td>
+                    <td><span class="badge ${m.status === 'pago' ? 'green' : m.status === 'atrasado' ? 'red' : 'yellow'}">${m.status}</span></td>
+                    <td>${m.dataPagamento ? new Date(m.dataPagamento).toLocaleDateString() : '-'}</td>
+                    <td>${m.status !== 'pago' ? `<button class="btn btn-success btn-sm" onclick="confirmarPagamento('${m._id}')">✓ Confirmar</button>` : '-'}</td>
+                </tr>`).join('');
                 document.getElementById('tabelaMensalidades').innerHTML = html || '<tr><td colspan="6" style="text-align:center;color:#888">Nenhuma mensalidade</td></tr>';
             } catch (e) { console.error(e); }
         }
-        
-        async function carregarLogs(tipo) {
-            tipo = tipo || '';
+        async function carregarLogs(tipo = '') {
             try {
-                const res = await fetch(API + '/logs?tipo=' + tipo + '&limite=50');
+                const res = await fetch(`${API}/logs?tipo=${tipo}&limite=50`);
                 const logs = await res.json();
-                const html = logs.map(l => '<div class="log-item ' + l.tipo + '"><div class="time">' + new Date(l.createdAt).toLocaleString() + '</div><strong>' + (l.usuario || 'Sistema') + '</strong> (' + (l.tipoUsuario || '-') + ') - ' + l.acao + '</div>').join('');
+                const html = logs.map(l => `<div class="log-item ${l.tipo}"><div class="time">${new Date(l.createdAt).toLocaleString()}</div><strong>${l.usuario || 'Sistema'}</strong> (${l.tipoUsuario || '-'}) - ${l.acao}</div>`).join('');
                 document.getElementById('listaLogs').innerHTML = html || '<p style="color:#888">Nenhum log</p>';
             } catch (e) { console.error(e); }
         }
-        
         async function carregarTickets() {
             try {
-                const res = await fetch(API + '/tickets');
+                const res = await fetch(`${API}/tickets`);
                 const tickets = await res.json();
-                const html = tickets.map(t => '<tr><td>' + t.numero + '</td><td>' + t.solicitante + '</td><td>' + t.assunto + '</td><td><span class="badge ' + (t.status === 'resolvido' ? 'green' : t.status === 'aberto' ? 'red' : 'yellow') + '">' + t.status + '</span></td><td><span class="badge ' + (t.prioridade === 'urgente' ? 'red' : 'yellow') + '">' + t.prioridade + '</span></td><td><button class="btn btn-primary btn-sm">Ver</button></td></tr>').join('');
+                const html = tickets.map(t => `<tr>
+                    <td>${t.numero}</td><td>${t.solicitante}</td><td>${t.assunto}</td>
+                    <td><span class="badge ${t.status === 'resolvido' ? 'green' : t.status === 'aberto' ? 'red' : 'yellow'}">${t.status}</span></td>
+                    <td><span class="badge ${t.prioridade === 'urgente' ? 'red' : 'yellow'}">${t.prioridade}</span></td>
+                    <td><button class="btn btn-primary btn-sm">Ver</button></td>
+                </tr>`).join('');
                 document.getElementById('tabelaTickets').innerHTML = html || '<tr><td colspan="6" style="text-align:center;color:#888">Nenhum ticket</td></tr>';
             } catch (e) { console.error(e); }
         }
-        
         async function carregarConfig() {
             try {
-                const res = await fetch(API + '/config');
+                const res = await fetch(`${API}/config`);
                 const c = await res.json();
                 document.getElementById('configTipoPix').value = c.tipoChavePixMaster || 'cpf';
                 document.getElementById('configChavePix').value = c.chavePixMaster || '';
@@ -388,7 +407,6 @@
                 document.getElementById('configBoasVindas').value = c.mensagemBoasVindas || '';
             } catch (e) { console.error(e); }
         }
-        
         async function salvarConfig() {
             try {
                 const config = {
@@ -399,31 +417,17 @@
                     diasTolerancia: parseInt(document.getElementById('configTolerancia').value),
                     mensagemBoasVindas: document.getElementById('configBoasVindas').value
                 };
-                const res = await fetch(API + '/config', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(config) });
+                const res = await fetch(`${API}/config`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(config) });
                 const data = await res.json();
                 if (data.sucesso) alert('✅ Configurações salvas!');
             } catch (e) { alert('Erro ao salvar'); }
         }
-        
         function abrirModalAdmin() { document.getElementById('modalAdmin').classList.add('active'); }
-        
-        function abrirModalPlano() { 
-            document.getElementById('planoId').value = ''; 
-            document.getElementById('planoNome').value = '';
-            document.getElementById('planoDescricao').value = '';
-            document.getElementById('planoPreco').value = '';
-            document.getElementById('planoMotoristas').value = '';
-            document.getElementById('planoCorridas').value = '';
-            document.getElementById('planoRecursos').value = '';
-            document.getElementById('modalPlanoTitulo').textContent = 'Novo Plano'; 
-            document.getElementById('modalPlano').classList.add('active'); 
-        }
-        
+        function abrirModalPlano() { document.getElementById('planoId').value = ''; document.getElementById('modalPlanoTitulo').textContent = 'Novo Plano'; document.getElementById('modalPlano').classList.add('active'); }
         function fecharModal(id) { document.getElementById(id).classList.remove('active'); }
-        
         async function salvarAdmin() {
             const admin = { nome: document.getElementById('adminNome').value, email: document.getElementById('adminEmail').value, senha: document.getElementById('adminSenha').value, empresa: document.getElementById('adminEmpresa').value, telefone: document.getElementById('adminTelefone').value };
-            const res = await fetch(API + '/admins', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(admin) });
+            const res = await fetch(`${API}/admins`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(admin) });
             const data = await res.json();
             if (data.sucesso) {
                 fecharModal('modalAdmin');
@@ -434,10 +438,9 @@
                 carregarAdmins();
             } else alert(data.erro || 'Erro ao criar');
         }
-        
         async function aprovarAdmin(id) {
             if (!confirm('Aprovar este administrador?')) return;
-            const res = await fetch(API + '/admins/' + id + '/aprovar', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ masterId: masterLogado?.id }) });
+            const res = await fetch(`${API}/admins/${id}/aprovar`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ masterId: masterLogado?.id }) });
             const data = await res.json();
             if (data.sucesso && data.credenciais) {
                 document.getElementById('credEmail').textContent = data.credenciais.email;
@@ -447,82 +450,29 @@
             }
             carregarAdmins(); carregarPendentes(); carregarDashboard();
         }
-        
-        async function bloquearAdmin(id) { if (!confirm('Bloquear?')) return; await fetch(API + '/admins/' + id + '/bloquear', { method: 'PUT' }); carregarAdmins(); }
-        
-        async function excluirAdmin(id) { if (!confirm('Excluir permanentemente?')) return; await fetch(API + '/admins/' + id, { method: 'DELETE' }); carregarAdmins(); carregarPendentes(); }
-        
+        async function bloquearAdmin(id) { if (!confirm('Bloquear?')) return; await fetch(`${API}/admins/${id}/bloquear`, { method: 'PUT' }); carregarAdmins(); }
+        async function excluirAdmin(id) { if (!confirm('Excluir permanentemente?')) return; await fetch(`${API}/admins/${id}`, { method: 'DELETE' }); carregarAdmins(); carregarPendentes(); }
         async function resetarSenha(id) {
             if (!confirm('Resetar senha deste admin?')) return;
-            const res = await fetch(API + '/admins/' + id + '/resetar-senha', { method: 'PUT' });
+            const res = await fetch(`${API}/admins/${id}/resetar-senha`, { method: 'PUT' });
             const data = await res.json();
             if (data.sucesso) alert('Nova senha: ' + data.novaSenha);
         }
-        
-        async function editarPlano(id) {
-            var plano = planosCache.find(function(p) { return p._id === id; });
-            if (!plano) {
-                try {
-                    const res = await fetch(API + '/planos');
-                    const planos = await res.json();
-                    planosCache = planos;
-                    plano = planos.find(function(p) { return p._id === id; });
-                } catch (e) {
-                    console.error(e);
-                    alert('Erro ao carregar plano');
-                    return;
-                }
-            }
-            if (!plano) { alert('Plano não encontrado'); return; }
-            document.getElementById('planoId').value = plano._id;
-            document.getElementById('planoNome').value = plano.nome || '';
-            document.getElementById('planoDescricao').value = plano.descricao || '';
-            document.getElementById('planoPreco').value = plano.preco || '';
-            document.getElementById('planoMotoristas').value = plano.limiteMotoristas || '';
-            document.getElementById('planoCorridas').value = plano.limiteCorridas || '';
-            document.getElementById('planoRecursos').value = (plano.recursos || []).join(', ');
-            document.getElementById('modalPlanoTitulo').textContent = 'Editar Plano';
-            document.getElementById('modalPlano').classList.add('active');
-        }
-        
         async function salvarPlano() {
-            const plano = { 
-                nome: document.getElementById('planoNome').value, 
-                descricao: document.getElementById('planoDescricao').value, 
-                preco: parseFloat(document.getElementById('planoPreco').value), 
-                limiteMotoristas: parseInt(document.getElementById('planoMotoristas').value), 
-                limiteCorridas: parseInt(document.getElementById('planoCorridas').value), 
-                recursos: document.getElementById('planoRecursos').value.split(',').map(function(r) { return r.trim(); }).filter(function(r) { return r; })
-            };
+            const plano = { nome: document.getElementById('planoNome').value, descricao: document.getElementById('planoDescricao').value, preco: parseFloat(document.getElementById('planoPreco').value), limiteMotoristas: parseInt(document.getElementById('planoMotoristas').value), limiteCorridas: parseInt(document.getElementById('planoCorridas').value), recursos: document.getElementById('planoRecursos').value.split(',').map(r => r.trim()) };
             const id = document.getElementById('planoId').value;
-            const url = id ? API + '/planos/' + id : API + '/planos';
+            const url = id ? `${API}/planos/${id}` : `${API}/planos`;
             const res = await fetch(url, { method: id ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(plano) });
             const data = await res.json();
-            if (data.sucesso) { 
-                fecharModal('modalPlano'); 
-                carregarPlanos(); 
-                alert(id ? '✅ Plano atualizado!' : '✅ Plano criado!');
-            } else alert(data.erro || 'Erro');
+            if (data.sucesso) { fecharModal('modalPlano'); carregarPlanos(); } else alert(data.erro || 'Erro');
         }
-        
-        async function excluirPlano(id) { 
-            if (!confirm('Excluir plano?')) return; 
-            await fetch(API + '/planos/' + id, { method: 'DELETE' }); 
-            carregarPlanos(); 
-        }
-        
-        async function confirmarPagamento(id) { 
-            if (!confirm('Confirmar pagamento?')) return; 
-            await fetch(API + '/mensalidades/' + id + '/confirmar', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ formaPagamento: 'pix' }) }); 
-            carregarMensalidades(); 
-        }
-        
+        async function excluirPlano(id) { if (!confirm('Excluir plano?')) return; await fetch(`${API}/planos/${id}`, { method: 'DELETE' }); carregarPlanos(); }
+        async function confirmarPagamento(id) { if (!confirm('Confirmar pagamento?')) return; await fetch(`${API}/mensalidades/${id}/confirmar`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ formaPagamento: 'pix' }) }); carregarMensalidades(); }
         function copiarCredenciais() {
-            const texto = 'Email: ' + document.getElementById('credEmail').textContent + '\nSenha: ' + document.getElementById('credSenha').textContent + '\nToken: ' + document.getElementById('credToken').textContent;
-            navigator.clipboard.writeText(texto).then(function() { alert('Credenciais copiadas!'); });
+            const texto = `Email: ${document.getElementById('credEmail').textContent}\nSenha: ${document.getElementById('credSenha').textContent}\nToken: ${document.getElementById('credToken').textContent}`;
+            navigator.clipboard.writeText(texto).then(() => alert('Credenciais copiadas!'));
         }
-        
-        fetch(API + '/setup', { method: 'POST' });
+        fetch(`${API}/setup`, { method: 'POST' });
     </script>
 </body>
 </html>
