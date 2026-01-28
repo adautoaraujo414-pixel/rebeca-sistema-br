@@ -1,11 +1,10 @@
 const { Motorista } = require('../models');
 const { v4: uuidv4 } = require('uuid');
-const bcrypt = require('bcryptjs');
 
 const MotoristaService = {
-    // Listar todos
-    async listar(filtros = {}) {
-        const query = {};
+    // Listar todos (filtrado por admin)
+    async listar(adminId, filtros = {}) {
+        const query = { adminId };
         if (filtros.status) query.status = filtros.status;
         if (filtros.ativo !== undefined) query.ativo = filtros.ativo;
         return await Motorista.find(query).sort({ createdAt: -1 });
@@ -16,9 +15,11 @@ const MotoristaService = {
         return await Motorista.findById(id);
     },
 
-    // Buscar por WhatsApp
-    async buscarPorWhatsapp(whatsapp) {
-        return await Motorista.findOne({ whatsapp });
+    // Buscar por WhatsApp (dentro do admin)
+    async buscarPorWhatsapp(whatsapp, adminId = null) {
+        const query = { whatsapp };
+        if (adminId) query.adminId = adminId;
+        return await Motorista.findOne(query);
     },
 
     // Buscar por Token
@@ -26,16 +27,16 @@ const MotoristaService = {
         return await Motorista.findOne({ token });
     },
 
-    // Criar motorista
-    async criar(dados) {
+    // Criar motorista (com adminId)
+    async criar(dados, adminId) {
         const token = 'MOT_' + uuidv4().substring(0, 8).toUpperCase() + '_' + Date.now();
         const motorista = new Motorista({
             ...dados,
+            adminId,
             token,
             status: 'offline',
             avaliacao: 5,
             corridasRealizadas: 0,
-            saldoDevedor: 0,
             ativo: true
         });
         return await motorista.save();
@@ -59,20 +60,20 @@ const MotoristaService = {
     // Atualizar GPS
     async atualizarGPS(id, latitude, longitude) {
         return await Motorista.findByIdAndUpdate(id, {
-            latitude,
-            longitude,
-            ultimaAtualizacaoGPS: new Date()
+            latitude, longitude, ultimaAtualizacaoGPS: new Date()
         }, { new: true });
     },
 
-    // Listar disponíveis
-    async listarDisponiveis() {
-        return await Motorista.find({ status: 'disponivel', ativo: true });
+    // Listar disponiveis (filtrado por admin)
+    async listarDisponiveis(adminId) {
+        const query = { status: 'disponivel', ativo: true };
+        if (adminId) query.adminId = adminId;
+        return await Motorista.find(query);
     },
 
-    // Buscar mais próximo
-    async buscarMaisProximo(latitude, longitude) {
-        const disponiveis = await this.listarDisponiveis();
+    // Buscar mais proximo (filtrado por admin)
+    async buscarMaisProximo(latitude, longitude, adminId) {
+        const disponiveis = await this.listarDisponiveis(adminId);
         if (disponiveis.length === 0) return null;
 
         let maisProximo = null;
@@ -102,25 +103,23 @@ const MotoristaService = {
 
     // Login motorista
     async login(whatsapp, senha) {
-        const motorista = await this.buscarPorWhatsapp(whatsapp);
-        if (!motorista) return { sucesso: false, erro: 'Motorista não encontrado' };
+        const motorista = await Motorista.findOne({ whatsapp });
+        if (!motorista) return { sucesso: false, erro: 'Motorista nao encontrado' };
         if (!motorista.ativo) return { sucesso: false, erro: 'Conta desativada' };
-        
-        // Por enquanto senha simples, depois usar bcrypt
         if (motorista.senha && motorista.senha !== senha) {
             return { sucesso: false, erro: 'Senha incorreta' };
         }
-
         await this.atualizarStatus(motorista._id, 'disponivel');
         return { sucesso: true, motorista, token: motorista.token };
     },
 
-    // Estatísticas
-    async estatisticas() {
-        const total = await Motorista.countDocuments();
-        const ativos = await Motorista.countDocuments({ ativo: true });
-        const disponiveis = await Motorista.countDocuments({ status: 'disponivel', ativo: true });
-        const emCorrida = await Motorista.countDocuments({ status: 'em_corrida' });
+    // Estatisticas (filtrado por admin)
+    async estatisticas(adminId) {
+        const query = adminId ? { adminId } : {};
+        const total = await Motorista.countDocuments(query);
+        const ativos = await Motorista.countDocuments({ ...query, ativo: true });
+        const disponiveis = await Motorista.countDocuments({ ...query, status: 'disponivel', ativo: true });
+        const emCorrida = await Motorista.countDocuments({ ...query, status: 'em_corrida' });
         return { total, ativos, disponiveis, emCorrida };
     }
 };

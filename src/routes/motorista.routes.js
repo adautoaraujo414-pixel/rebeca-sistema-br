@@ -1,143 +1,97 @@
 const express = require('express');
 const router = express.Router();
 const MotoristaService = require('../services/motorista.service');
+const { Motorista } = require('../models');
 
-// Listar todos (apenas admin)
-router.get('/', (req, res) => {
-    const filtros = {
-        status: req.query.status,
-        ativo: req.query.ativo === 'true' ? true : req.query.ativo === 'false' ? false : undefined,
-        busca: req.query.busca
-    };
-    const motoristas = MotoristaService.listarTodos(filtros);
-    
-    // Remove dados sensíveis
-    const motoristasLimpos = motoristas.map(m => ({
-        id: m.id,
-        nomeCompleto: m.nomeCompleto,
-        whatsapp: m.whatsapp,
-        veiculo: m.veiculo,
-        status: m.status,
-        avaliacao: m.avaliacao,
-        corridasRealizadas: m.corridasRealizadas,
-        ativo: m.ativo,
-        dataCadastro: m.dataCadastro
-    }));
-    
-    res.json(motoristasLimpos);
+// Middleware para extrair adminId
+const extrairAdminId = (req, res, next) => {
+    req.adminId = req.headers['x-admin-id'] || req.query.adminId || null;
+    next();
+};
+router.use(extrairAdminId);
+
+// Listar motoristas (filtrado por admin)
+router.get('/', async (req, res) => {
+    try {
+        const motoristas = await MotoristaService.listar(req.adminId);
+        res.json(motoristas);
+    } catch (e) { res.status(500).json({ erro: e.message }); }
 });
 
-// Estatísticas
-router.get('/estatisticas', (req, res) => {
-    const estatisticas = MotoristaService.obterEstatisticas();
-    res.json(estatisticas);
+// Estatisticas
+router.get('/estatisticas', async (req, res) => {
+    try {
+        const stats = await MotoristaService.estatisticas(req.adminId);
+        res.json(stats);
+    } catch (e) { res.status(500).json({ erro: e.message }); }
 });
 
-// Verificar se WhatsApp já existe
-router.get('/verificar-whatsapp/:whatsapp', (req, res) => {
-    const existe = MotoristaService.verificarWhatsAppExiste(req.params.whatsapp);
-    res.json({ existe });
+// Disponiveis
+router.get('/disponiveis', async (req, res) => {
+    try {
+        const motoristas = await MotoristaService.listarDisponiveis(req.adminId);
+        res.json(motoristas);
+    } catch (e) { res.status(500).json({ erro: e.message }); }
 });
 
 // Buscar por ID
-router.get('/:id', (req, res) => {
-    const motorista = MotoristaService.buscarPorId(req.params.id);
-    if (!motorista) {
-        return res.status(404).json({ error: 'Motorista não encontrado' });
-    }
-    
-    // Remove token da resposta pública
-    const { token, ...dadosPublicos } = motorista;
-    res.json(dadosPublicos);
-});
-
-// Criar novo motorista
-router.post('/', (req, res) => {
+router.get('/:id', async (req, res) => {
     try {
-        const { nomeCompleto, whatsapp, cnh, veiculo } = req.body;
-        
-        // Validações
-        if (!nomeCompleto || nomeCompleto.length < 3) {
-            return res.status(400).json({ error: 'Nome completo é obrigatório (mínimo 3 caracteres)' });
-        }
-        
-        if (!whatsapp || whatsapp.replace(/\D/g, '').length < 10) {
-            return res.status(400).json({ error: 'WhatsApp inválido' });
-        }
-        
-        if (!cnh || cnh.length < 5) {
-            return res.status(400).json({ error: 'Número da CNH é obrigatório' });
-        }
-        
-        if (!veiculo?.modelo || !veiculo?.cor || !veiculo?.placa) {
-            return res.status(400).json({ error: 'Dados do veículo são obrigatórios (modelo, cor, placa)' });
-        }
-        
-        // Verifica se WhatsApp já existe
-        if (MotoristaService.verificarWhatsAppExiste(whatsapp)) {
-            return res.status(400).json({ error: 'Este WhatsApp já está cadastrado' });
-        }
-        
-        const motorista = MotoristaService.criar(req.body);
-        
-        res.status(201).json({
-            sucesso: true,
-            mensagem: 'Motorista cadastrado com sucesso!',
-            motorista: {
-                id: motorista.id,
-                nomeCompleto: motorista.nomeCompleto,
-                whatsapp: motorista.whatsapp,
-                veiculo: motorista.veiculo,
-                token: motorista.token,
-                senhaGerada: motorista.senhaGerada
-            }
-        });
-    } catch (error) {
-        res.status(400).json({ error: error.message });
-    }
+        const motorista = await MotoristaService.buscarPorId(req.params.id);
+        if (!motorista) return res.status(404).json({ erro: 'Nao encontrado' });
+        res.json(motorista);
+    } catch (e) { res.status(500).json({ erro: e.message }); }
 });
 
-// Atualizar motorista
-router.put('/:id', (req, res) => {
-    const motorista = MotoristaService.atualizar(req.params.id, req.body);
-    if (!motorista) {
-        return res.status(404).json({ error: 'Motorista não encontrado' });
-    }
-    res.json({ sucesso: true, motorista });
+// Criar motorista (com adminId)
+router.post('/', async (req, res) => {
+    try {
+        const adminId = req.body.adminId || req.adminId;
+        const motorista = await MotoristaService.criar(req.body, adminId);
+        res.status(201).json(motorista);
+    } catch (e) { res.status(500).json({ erro: e.message }); }
+});
+
+// Atualizar
+router.put('/:id', async (req, res) => {
+    try {
+        const motorista = await MotoristaService.atualizar(req.params.id, req.body);
+        res.json(motorista);
+    } catch (e) { res.status(500).json({ erro: e.message }); }
+});
+
+// Deletar
+router.delete('/:id', async (req, res) => {
+    try {
+        await MotoristaService.deletar(req.params.id);
+        res.json({ sucesso: true });
+    } catch (e) { res.status(500).json({ erro: e.message }); }
 });
 
 // Atualizar status
-router.put('/:id/status', (req, res) => {
-    const { status } = req.body;
-    const statusValidos = ['offline', 'disponivel', 'a_caminho', 'em_corrida', 'pausa'];
-    
-    if (!statusValidos.includes(status)) {
-        return res.status(400).json({ error: 'Status inválido' });
-    }
-    
-    const motorista = MotoristaService.atualizarStatus(req.params.id, status);
-    if (!motorista) {
-        return res.status(404).json({ error: 'Motorista não encontrado' });
-    }
-    res.json({ sucesso: true, motorista });
+router.put('/:id/status', async (req, res) => {
+    try {
+        const motorista = await MotoristaService.atualizarStatus(req.params.id, req.body.status);
+        res.json(motorista);
+    } catch (e) { res.status(500).json({ erro: e.message }); }
 });
 
-// Regenerar token
-router.post('/:id/regenerar-token', (req, res) => {
-    const novoToken = MotoristaService.regenerarToken(req.params.id);
-    if (!novoToken) {
-        return res.status(404).json({ error: 'Motorista não encontrado' });
-    }
-    res.json({ sucesso: true, token: novoToken });
+// Atualizar GPS
+router.put('/:id/gps', async (req, res) => {
+    try {
+        const { latitude, longitude } = req.body;
+        const motorista = await MotoristaService.atualizarGPS(req.params.id, latitude, longitude);
+        res.json(motorista);
+    } catch (e) { res.status(500).json({ erro: e.message }); }
 });
 
-// Desativar motorista
-router.delete('/:id', (req, res) => {
-    const motorista = MotoristaService.desativar(req.params.id);
-    if (!motorista) {
-        return res.status(404).json({ error: 'Motorista não encontrado' });
-    }
-    res.json({ sucesso: true, mensagem: 'Motorista desativado' });
+// Login
+router.post('/login', async (req, res) => {
+    try {
+        const { whatsapp, senha } = req.body;
+        const resultado = await MotoristaService.login(whatsapp, senha);
+        res.json(resultado);
+    } catch (e) { res.status(500).json({ erro: e.message }); }
 });
 
 module.exports = router;
