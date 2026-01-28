@@ -303,12 +303,6 @@ const RebecaService = {
                 return `🚗 *CARRO A CAMINHO!*\n\n📍 Buscar em: *${validacao.endereco}*\n\n⏳ Aguarde, estamos localizando motorista...\n\n_Informe o destino ao motorista quando ele chegar_\n\nDigite *CANCELAR* para cancelar.`;
             }
         }
-            } else {
-                conversa.dados.origem = validacao.endereco;
-                conversa.etapa = 'confirmar_origem_auto';
-                resposta = `📍 Você está em:\n*${validacao.endereco}*?\n\n*1* - ✅ Chamar carro\n*2* - 📝 Outro endereço\n*3* - 💰 Só cotação`;
-            }
-        }
         // ========== OBSERVAÇÃO ==========
         else if (conversa.etapa === 'pedir_observacao_origem') {
             if (msg !== '0') conversa.dados.observacaoOrigem = msgOriginal;
@@ -775,8 +769,7 @@ const RebecaService = {
         return r;
     },
     gerarMensagemCorridaFinalizada: (c) => `✅ *FINALIZADA!*\n\n#${c.id.slice(-6)}\n💰 R$ ${(c.precoFinal || c.precoEstimado).toFixed(2)}\n\n⭐ Avalie de 1 a 5:`,
-    gerarMensagemCorridaCancelada: (c, m) => `❌ *CANCELADA*\n\n#${c.id.slice(-6)}\n📝 ${m || '-'}`
-};
+    gerarMensagemCorridaCancelada: (c, m) => `❌ *CANCELADA*\n\n#${c.id.slice(-6)}\n📝 ${m || '-'}`,
 
     // ==================== COMANDOS DO MOTORISTA ====================
     async motoristaAceitarCorrida(telefoneMotorista, adminId, instanciaId) {
