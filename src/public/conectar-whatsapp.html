@@ -10,179 +10,116 @@
         .container { background: #1a1a2e; padding: 40px; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,212,255,0.2); max-width: 500px; width: 90%; text-align: center; }
         h1 { color: #00d4ff; margin-bottom: 10px; }
         h1 span { color: #25D366; }
-        p { color: #888; margin-bottom: 30px; }
-        .qr-container { background: #fff; padding: 20px; border-radius: 15px; margin: 20px 0; min-height: 280px; display: flex; justify-content: center; align-items: center; }
+        p { color: #888; margin-bottom: 20px; }
+        .qr-container { background: #fff; padding: 20px; border-radius: 15px; margin: 20px 0; min-height: 280px; display: flex; justify-content: center; align-items: center; flex-direction: column; }
         .qr-container img { max-width: 250px; }
-        .qr-placeholder { color: #333; }
         .status { padding: 15px; border-radius: 10px; margin: 20px 0; font-weight: bold; }
         .status.conectado { background: #00ff8820; color: #00ff88; }
         .status.desconectado { background: #ff444420; color: #ff4444; }
         .status.conectando { background: #ffaa0020; color: #ffaa00; }
-        .btn { padding: 15px 30px; border: none; border-radius: 10px; cursor: pointer; font-size: 16px; font-weight: bold; margin: 5px; transition: all 0.3s; }
+        .btn { padding: 15px 30px; border: none; border-radius: 10px; cursor: pointer; font-size: 16px; font-weight: bold; margin: 5px; }
         .btn-primary { background: #25D366; color: #fff; }
         .btn-danger { background: #ff4444; color: #fff; }
-        .btn:hover { transform: scale(1.05); }
-        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn:disabled { opacity: 0.5; }
         .info { background: #252542; padding: 15px; border-radius: 10px; margin-top: 20px; text-align: left; }
         .info p { color: #aaa; margin: 5px 0; font-size: 14px; }
         .info strong { color: #00d4ff; }
-        .loader { border: 4px solid #333; border-top: 4px solid #25D366; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin: 20px auto; }
+        .loader { border: 4px solid #333; border-top: 4px solid #25D366; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>📱 <span>WhatsApp</span></h1>
-        <p>Conecte seu WhatsApp Business para enviar mensagens automáticas</p>
-        
-        <div id="statusBox" class="status desconectado">
-            ⚪ Desconectado
-        </div>
-        
-        <div class="qr-container" id="qrContainer">
-            <div class="qr-placeholder">
-                <p>Clique em "Gerar QR Code" para começar</p>
-            </div>
-        </div>
-        
+        <p>Conecte seu WhatsApp Business</p>
+        <div id="statusBox" class="status desconectado">🔴 Desconectado</div>
+        <div class="qr-container" id="qrContainer"><p style="color:#333">Clique em Gerar QR Code</p></div>
         <div id="actions">
             <button class="btn btn-primary" onclick="gerarQR()" id="btnGerar">📷 Gerar QR Code</button>
             <button class="btn btn-danger" onclick="desconectar()" id="btnDesconectar" style="display:none;">🔌 Desconectar</button>
         </div>
-        
         <div class="info" id="infoBox" style="display:none;">
-            <p><strong>Instância:</strong> <span id="infoInstancia">-</span></p>
-            <p><strong>Telefone:</strong> <span id="infoTelefone">-</span></p>
-            <p><strong>Última conexão:</strong> <span id="infoUltima">-</span></p>
+            <p><strong>Instancia:</strong> <span id="infoInstancia">-</span></p>
+            <p><strong>Ultima conexao:</strong> <span id="infoUltima">-</span></p>
         </div>
-        
-        <div class="info" style="margin-top:20px;">
+        <div class="info">
             <p><strong>Como conectar:</strong></p>
-            <p>1. Abra o WhatsApp no celular</p>
-            <p>2. Vá em Configurações > Aparelhos conectados</p>
-            <p>3. Clique em "Conectar aparelho"</p>
-            <p>4. Escaneie o QR Code acima</p>
+            <p>1. Abra WhatsApp no celular</p>
+            <p>2. Configuracoes - Aparelhos conectados</p>
+            <p>3. Conectar aparelho - Escanear QR</p>
         </div>
     </div>
-
     <script>
         const urlParams = new URLSearchParams(window.location.search);
-        const instanciaId = urlParams.get('id');
+        let instanciaId = urlParams.get('id');
         const adminId = urlParams.get('admin');
         let verificarInterval = null;
 
-        if (!instanciaId && !adminId) {
-            document.querySelector('.container').innerHTML = '<h1>❌ Erro</h1><p>ID da instância ou admin não fornecido</p><p>Use: ?id=INSTANCIA_ID ou ?admin=ADMIN_ID</p>';
-        }
-
         async function criarInstancia() {
+            document.getElementById('qrContainer').innerHTML = '<div class="loader"></div><p style="color:#333;margin-top:10px">Criando...</p>';
             try {
-                const res = await fetch('/api/evolution/instancia', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ adminId, nomeEmpresa: 'empresa_' + adminId })
-                });
+                const res = await fetch('/api/evolution/instancia', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ adminId: adminId, nomeEmpresa: 'empresa_' + adminId }) });
                 const data = await res.json();
-                if (data.sucesso) {
-                    window.location.href = '?id=' + data.instancia._id;
-                } else {
-                    alert('Erro: ' + data.erro);
-                }
-            } catch (e) {
-                alert('Erro ao criar instância');
-            }
+                if (data.sucesso) { instanciaId = data.instancia._id; gerarQR(); }
+                else { document.getElementById('qrContainer').innerHTML = '<p style="color:red">Erro: ' + (data.erro || 'Falha') + '</p>'; }
+            } catch (e) { document.getElementById('qrContainer').innerHTML = '<p style="color:red">Erro de conexao</p>'; }
         }
 
         async function gerarQR() {
-            if (!instanciaId) {
-                await criarInstancia();
-                return;
-            }
-
+            if (!instanciaId && adminId) { await criarInstancia(); return; }
+            if (!instanciaId) { alert('ID nao encontrado'); return; }
             document.getElementById('qrContainer').innerHTML = '<div class="loader"></div>';
             document.getElementById('btnGerar').disabled = true;
-
             try {
                 const res = await fetch('/api/evolution/instancia/' + instanciaId + '/qrcode');
                 const data = await res.json();
-
                 if (data.sucesso && data.qrCode) {
-                    if (data.qrCode.startsWith('data:image') || data.qrCode.length > 100) {
-                        document.getElementById('qrContainer').innerHTML = '<img src="' + data.qrCode + '" alt="QR Code">';
-                    } else {
-                        document.getElementById('qrContainer').innerHTML = '<div class="qr-placeholder"><p>QR Code: ' + data.qrCode + '</p><p style="font-size:12px;color:#666;">Configure sua Evolution API para gerar QR visual</p></div>';
-                    }
+                    if (data.qrCode.startsWith('data:image')) { document.getElementById('qrContainer').innerHTML = '<img src="' + data.qrCode + '">'; }
+                    else { document.getElementById('qrContainer').innerHTML = '<p style="color:#333;font-size:12px">QR: ' + data.qrCode.substring(0,30) + '...</p>'; }
                     atualizarStatus('conectando');
                     iniciarVerificacao();
-                } else {
-                    document.getElementById('qrContainer').innerHTML = '<div class="qr-placeholder"><p>❌ ' + (data.erro || 'Erro ao gerar QR') + '</p></div>';
-                }
-            } catch (e) {
-                document.getElementById('qrContainer').innerHTML = '<div class="qr-placeholder"><p>❌ Erro de conexão</p></div>';
-            }
-
+                } else { document.getElementById('qrContainer').innerHTML = '<p style="color:red">Erro: ' + (data.erro || 'Falha') + '</p>'; }
+            } catch (e) { document.getElementById('qrContainer').innerHTML = '<p style="color:red">Erro</p>'; }
             document.getElementById('btnGerar').disabled = false;
         }
 
         async function verificarStatus() {
             if (!instanciaId) return;
-
             try {
                 const res = await fetch('/api/evolution/instancia/' + instanciaId + '/status');
                 const data = await res.json();
-
                 if (data.sucesso) {
                     atualizarStatus(data.status);
-
                     if (data.status === 'conectado') {
                         clearInterval(verificarInterval);
-                        document.getElementById('qrContainer').innerHTML = '<div class="qr-placeholder" style="color:#00ff88;"><h2>✅ Conectado!</h2></div>';
+                        document.getElementById('qrContainer').innerHTML = '<p style="color:#00ff88;font-size:24px">✅ Conectado!</p>';
                         document.getElementById('btnGerar').style.display = 'none';
                         document.getElementById('btnDesconectar').style.display = 'inline-block';
-                        
                         document.getElementById('infoBox').style.display = 'block';
                         document.getElementById('infoInstancia').textContent = data.instancia?.nomeInstancia || '-';
-                        document.getElementById('infoTelefone').textContent = data.instancia?.telefoneConectado || 'Conectado';
                         document.getElementById('infoUltima').textContent = data.instancia?.ultimaConexao ? new Date(data.instancia.ultimaConexao).toLocaleString() : '-';
                     }
                 }
-            } catch (e) {
-                console.error('Erro ao verificar status');
-            }
+            } catch (e) {}
         }
 
         function atualizarStatus(status) {
             const box = document.getElementById('statusBox');
             box.className = 'status ' + status;
-            const textos = {
-                'conectado': '🟢 Conectado',
-                'desconectado': '🔴 Desconectado',
-                'conectando': '🟡 Aguardando escaneamento...',
-                'erro': '❌ Erro na conexão'
-            };
-            box.textContent = textos[status] || status;
+            const t = { 'conectado': '🟢 Conectado', 'desconectado': '🔴 Desconectado', 'conectando': '🟡 Aguardando...' };
+            box.textContent = t[status] || status;
         }
 
-        function iniciarVerificacao() {
-            if (verificarInterval) clearInterval(verificarInterval);
-            verificarInterval = setInterval(verificarStatus, 3000);
-        }
+        function iniciarVerificacao() { if (verificarInterval) clearInterval(verificarInterval); verificarInterval = setInterval(verificarStatus, 3000); }
 
         async function desconectar() {
-            if (!confirm('Deseja desconectar o WhatsApp?')) return;
-
-            try {
-                await fetch('/api/evolution/instancia/' + instanciaId + '/desconectar', { method: 'POST' });
-                location.reload();
-            } catch (e) {
-                alert('Erro ao desconectar');
-            }
+            if (!confirm('Desconectar WhatsApp?')) return;
+            await fetch('/api/evolution/instancia/' + instanciaId + '/desconectar', { method: 'POST' });
+            location.reload();
         }
 
-        // Verificar status inicial
-        if (instanciaId) {
-            verificarStatus();
-        }
+        if (instanciaId) verificarStatus();
+        if (!instanciaId && !adminId) document.querySelector('.container').innerHTML = '<h1>Erro</h1><p>Use: ?admin=ID ou ?id=INSTANCIA</p>';
     </script>
 </body>
 </html>
