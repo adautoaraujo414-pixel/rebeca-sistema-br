@@ -1,101 +1,80 @@
-const gpsService = require('./gps.service');
-const statusService = require('./status.service');
-
-const motoristas = new Map();
-
-const motoristasExemplo = [
-    { id: 'mot_001', nome: 'Carlos Silva', telefone: '11999887766', veiculo: 'Fiat Uno Branco - ABC-1234', latitude: -23.5327, longitude: -46.7917 },
-    { id: 'mot_002', nome: 'João Santos', telefone: '11988776655', veiculo: 'VW Gol Prata - DEF-5678', latitude: -23.5350, longitude: -46.7890 },
-    { id: 'mot_003', nome: 'Maria Oliveira', telefone: '11977665544', veiculo: 'Chevrolet Onix Preto - GHI-9012', latitude: -23.5300, longitude: -46.7950 }
-];
-
-motoristasExemplo.forEach(m => {
-    motoristas.set(m.id, m);
-    gpsService.atualizarLocalizacao(m.id, { latitude: m.latitude, longitude: m.longitude });
-    statusService.definirStatus(m.id, 'disponivel');
-});
+const { Motorista } = require('../models');
 
 const gpsIntegradoService = {
-    listarTodos: () => {
-        const resultado = [];
-        motoristas.forEach((motorista, id) => {
-            const localizacao = gpsService.obterLocalizacao(id);
-            const status = statusService.obterStatus(id);
-            resultado.push({
-                ...motorista,
-                latitude: localizacao?.latitude || null,
-                longitude: localizacao?.longitude || null,
-                status: status?.status || 'offline',
-                ultimaAtualizacao: localizacao?.timestamp || null
-            });
-        });
-        return resultado;
+    listarTodos: async (adminId) => {
+        const motoristas = await Motorista.find({ adminId }).lean();
+        return motoristas.map(m => ({
+            id: m._id.toString(),
+            nome: m.nome,
+            telefone: m.telefone || m.whatsapp,
+            veiculo: m.veiculo ? m.veiculo.modelo + ' ' + m.veiculo.cor + ' - ' + m.veiculo.placa : '-',
+            latitude: m.localizacao ? m.localizacao.latitude : null,
+            longitude: m.localizacao ? m.localizacao.longitude : null,
+            status: m.status || 'offline',
+            ultimaAtualizacao: m.localizacao ? m.localizacao.atualizadoEm : m.updatedAt
+        }));
     },
-
-    listarPorStatus: (statusFiltro) => {
-        return gpsIntegradoService.listarTodos().filter(m => m.status === statusFiltro);
+    listarPorStatus: async (adminId, statusFiltro) => {
+        const todos = await gpsIntegradoService.listarTodos(adminId);
+        return todos.filter(m => m.status === statusFiltro);
     },
-
-    listarDisponiveis: (latitude = null, longitude = null) => {
-        let disponiveis = gpsIntegradoService.listarPorStatus('disponivel');
+    listarDisponiveis: async (adminId, latitude, longitude) => {
+        let disponiveis = await gpsIntegradoService.listarPorStatus(adminId, 'disponivel');
         if (latitude && longitude) {
-            disponiveis = disponiveis.map(m => ({
-                ...m,
-                distancia: m.latitude && m.longitude 
-                    ? gpsService.calcularDistancia(latitude, longitude, m.latitude, m.longitude)
-                    : 999999
-            }));
+            disponiveis = disponiveis.map(m => {
+                const dist = (m.latitude && m.longitude) ? calcularDistancia(latitude, longitude, m.latitude, m.longitude) : 999999;
+                return Object.assign({}, m, { distancia: dist });
+            });
             disponiveis.sort((a, b) => a.distancia - b.distancia);
         }
         return disponiveis;
     },
-
-    buscarMaisProximo: (latitude, longitude, raioKm = 10) => {
-        const disponiveis = gpsIntegradoService.listarDisponiveis(latitude, longitude);
+    buscarMaisProximo: async (adminId, latitude, longitude, raioKm) => {
+        const disponiveis = await gpsIntegradoService.listarDisponiveis(adminId, latitude, longitude);
         if (disponiveis.length === 0) return null;
         const maisProximo = disponiveis[0];
-        if (maisProximo.distancia > raioKm) return null;
+        if (maisProximo.distancia > (raioKm || 10)) return null;
         return maisProximo;
     },
-
-    atualizar: (motoristaId, dados) => {
-        const motorista = motoristas.get(motoristaId);
-        if (!motorista) return null;
-
+    atualizar: async (motoristaId, dados) => {
+        const update = {};
         if (dados.latitude && dados.longitude) {
-            gpsService.atualizarLocalizacao(motoristaId, {
-                latitude: dados.latitude,
-                longitude: dados.longitude
-            });
+            update['localizacao.latitude'] = dados.latitude;
+            update['localizacao.longitude'] = dados.longitude;
+            update['localizacao.atualizadoEm'] = new Date();
         }
-
-        if (dados.status) {
-            statusService.definirStatus(motoristaId, dados.status);
-        }
-
-        return gpsIntegradoService.obterMotorista(motoristaId);
+        if (dados.status) update.status = dados.status;
+        const motorista = await Motorista.findByIdAndUpdate(motoristaId, update, { new: true });
+        return { id: motorista._id.toString(), nome: motorista.nome, status: motorista.status };
     },
-
-    obterMotorista: (motoristaId) => {
-        const motorista = motoristas.get(motoristaId);
-        if (!motorista) return null;
-        const localizacao = gpsService.obterLocalizacao(motoristaId);
-        const status = statusService.obterStatus(motoristaId);
+    obterMotorista: async (motoristaId) => {
+        const m = await Motorista.findById(motoristaId).lean();
         return {
-            ...motorista,
-            latitude: localizacao?.latitude || null,
-            longitude: localizacao?.longitude || null,
-            status: status?.status || 'offline',
-            ultimaAtualizacao: localizacao?.timestamp || null
+            id: m._id.toString(),
+            nome: m.nome,
+            telefone: m.telefone || m.whatsapp,
+            veiculo: m.veiculo ? m.veiculo.modelo + ' ' + m.veiculo.cor + ' - ' + m.veiculo.placa : '-',
+            latitude: m.localizacao ? m.localizacao.latitude : null,
+            longitude: m.localizacao ? m.localizacao.longitude : null,
+            status: m.status || 'offline'
         };
     },
-
-    obterEstatisticas: () => {
+    obterEstatisticas: async (adminId) => {
+        const motoristas = await Motorista.find({ adminId }).lean();
         return {
-            ...statusService.obterEstatisticas(),
-            totalMotoristas: motoristas.size
+            disponiveis: motoristas.filter(m => m.status === 'disponivel').length,
+            emCorrida: motoristas.filter(m => m.status === 'em_corrida').length,
+            totalMotoristas: motoristas.length
         };
     }
 };
+
+function calcularDistancia(lat1, lon1, lat2, lon2) {
+    var R = 6371;
+    var dLat = (lat2 - lat1) * Math.PI / 180;
+    var dLon = (lon2 - lon1) * Math.PI / 180;
+    var a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
 
 module.exports = gpsIntegradoService;
