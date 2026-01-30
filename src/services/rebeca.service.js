@@ -1,4 +1,5 @@
 const PrecoDinamicoService = require('./preco-dinamico.service');
+const PrecoAdminService = require('./preco-admin.service');
 const MapsService = require('./maps.service');
 const CorridaService = require('./corrida.service');
 const ClienteService = require('./cliente.service');
@@ -158,8 +159,8 @@ const RebecaService = {
                 destino: null,
                 distanciaKm: 0,
                 tempoMinutos: 0,
-                preco: 15,
-                faixa: { nome: 'padrao', multiplicador: 1 }
+                preco: 15, // Será recalculado com destino
+                faixa: { nome: 'chamada', multiplicador: 1 }
             };
             
             // Criar corrida e despachar DIRETO

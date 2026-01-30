@@ -158,6 +158,30 @@ const AdminSchema = new mongoose.Schema({
         acao: String,
         data: { type: Date, default: Date.now },
         ip: String
+    }],
+    // ========== CONFIGURAÇÕES DE PREÇO ==========
+    configPrecos: {
+        taxaBase: { type: Number, default: 5.00 },
+        precoKm: { type: Number, default: 2.50 },
+        taxaMinima: { type: Number, default: 15.00 },
+        taxaBandeira2: { type: Number, default: 3.00 },
+        precoMinuto: { type: Number, default: 0.50 }
+    },
+    // ========== CONFIGURAÇÕES DE DESPACHO ==========
+    configDespacho: {
+        modo: { type: String, enum: ['broadcast', 'proximo'], default: 'broadcast' },
+        tempoAceite: { type: Number, default: 30 },
+        tentativasMax: { type: Number, default: 3 }
+    },
+    // ========== FAIXAS DE PREÇO PERSONALIZADAS ==========
+    faixasPreco: [{
+        diaSemana: String,
+        horaInicio: String,
+        horaFim: String,
+        nome: String,
+        multiplicador: { type: Number, default: 1 },
+        taxaAdicional: { type: Number, default: 0 },
+        ativo: { type: Boolean, default: true }
     }]
 }, { timestamps: true });
 

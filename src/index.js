@@ -41,6 +41,7 @@ const despachoRoutes = require('./routes/despacho.routes');
 const iaRoutes = require('./routes/ia.routes');
 const mensalidadeRoutes = require('./routes/mensalidade.routes');
 const evolutionMultiRoutes = require('./routes/evolution-multi.routes');
+const precoAdminRoutes = require('./routes/preco-admin.routes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/usuarios', usuariosRoutes);
@@ -67,6 +68,7 @@ app.use('/api/despacho', despachoRoutes);
 app.use('/api/ia', iaRoutes);
 app.use('/api/mensalidades', mensalidadeRoutes);
 app.use('/api/evolution', evolutionMultiRoutes);
+app.use('/api/precos', precoAdminRoutes);
 
 // Páginas
 app.get('/rastrear/:codigo', (req, res) => res.sendFile(path.join(__dirname, 'public', 'rastrear.html')));
