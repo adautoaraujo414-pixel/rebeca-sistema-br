@@ -136,6 +136,15 @@
     </style>
 </head>
 <body>
+<script>
+    // Verificar login obrigatório
+    const token = localStorage.getItem('token');
+    const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
+    if (!token || !usuario._id) {
+        alert('Faça login primeiro!');
+        window.location.href = '/admin/login.html';
+    }
+</script>
     <header class="header">
         <h1>UB<span>MAX</span> Rebeca</h1>
         <div style="display:flex;align-items:center;gap:20px;">
@@ -926,7 +935,7 @@ async function testarAnaliseIA() {
     async function carregarWhatsAppAdmin() {
         try {
             // Buscar instancia do admin atual
-            const usuario = JSON.parse(localStorage.getItem('usuario') || '{}'); const adminId = usuario._id || usuario.id || 'admin';
+            const usuario = JSON.parse(localStorage.getItem('usuario') || '{}'); const adminId = usuario._id || usuario.id; if (!adminId) { alert('Sessão expirada!'); window.location.href = '/admin/login.html'; return; } if (!adminId) { alert('Sessão expirada!'); window.location.href = '/admin/login.html'; return; }
             const res = await fetch('/api/evolution/instancias/admin/' + adminId);
             const data = await res.json();
             
