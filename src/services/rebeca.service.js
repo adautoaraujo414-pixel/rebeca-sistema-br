@@ -655,11 +655,12 @@ const RebecaService = {
     },
 
     async enviarExemplosPreco() {
-        const faixa = PrecoDinamicoService.obterFaixaAtual();
+        const faixa = await PrecoAdminService.getFaixaAtual(adminId);
         let m = `📊 *EXEMPLOS* _(${faixa.nome})_\n\n`;
-        [3, 5, 10, 15, 20].forEach(km => {
-            m += `${km}km → R$ ${PrecoDinamicoService.calcularPreco(km).precoFinal.toFixed(2)}\n`;
-        });
+        for (const km of [3, 5, 10, 15, 20]) {
+            const calc = await PrecoAdminService.calcularPreco(adminId, km);
+            m += `${km}km → R$ ${calc.preco.toFixed(2)}\n`;
+        }
         return m;
     },
 
@@ -667,7 +668,7 @@ const RebecaService = {
         const rota = await MapsService.calcularRota(origem, destino);
         const km = rota.sucesso ? rota.distancia.km : 5;
         const min = rota.sucesso ? rota.duracao.minutos : 15;
-        const calc = PrecoDinamicoService.calcularPreco(km);
+        const calc = await PrecoAdminService.calcularPreco(null, km);
         return {
             distancia: rota.sucesso ? rota.distancia.texto : `~${km} km`,
             tempo: rota.sucesso ? rota.duracao.texto : `~${min} min`,
