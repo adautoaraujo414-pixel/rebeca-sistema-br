@@ -140,7 +140,8 @@
     // Verificar login obrigatório
     const token = localStorage.getItem('token');
     const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
-    if (!token || !usuario._id) {
+    const adminId = usuario._id || usuario.id;
+    if (!token || !adminId) {
         alert('Faça login primeiro!');
         window.location.href = '/admin/login.html';
     }
