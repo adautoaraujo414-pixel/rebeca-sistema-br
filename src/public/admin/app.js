@@ -1,4 +1,4 @@
-const token = localStorage.getItem('token');
+var token = localStorage.getItem('token');
 if (!token && !window.location.pathname.includes('login')) window.location.href = '/admin/login';
 
 const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
