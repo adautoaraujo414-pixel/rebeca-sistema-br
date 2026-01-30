@@ -22,7 +22,9 @@ function carregarPagina(p) {
 }
 
 async function api(url, method='GET', data=null) {
+    const adminId = usuario._id || usuario.id || null;
     const opt = { method, headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+token } };
+    if (adminId) opt.headers['x-admin-id'] = adminId;
     if (data) opt.body = JSON.stringify(data);
     try { return await (await fetch(url, opt)).json(); } catch(e) { return { error:'Erro' }; }
 }
