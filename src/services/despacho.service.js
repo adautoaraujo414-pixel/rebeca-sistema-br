@@ -1,5 +1,6 @@
 const { v4: uuidv4 } = require('uuid');
 const MotoristaService = require('./motorista.service');
+const PrecoAdminService = require('./preco-admin.service');
 const MapsService = require('./maps.service');
 const GPSIntegradoService = require('./gps-integrado.service');
 
@@ -28,8 +29,16 @@ const DespachoService = {
     },
 
     // ==================== DESPACHO DE CORRIDA ====================
-    async despacharCorrida(corrida, motoristasDisponiveis) {
-        const modo = DespachoService.modoDespacho;
+    async despacharCorrida(corrida, motoristasDisponiveis, adminId = null) {
+        // Buscar modo do admin (ou usar padrão)
+        let modo = DespachoService.modoDespacho;
+        if (adminId) {
+            try {
+                modo = await PrecoAdminService.getModoDespacho(adminId);
+            } catch (e) {
+                console.log('[DESPACHO] Usando modo padrão:', modo);
+            }
+        }
         
         console.log(`🚗 Despachando corrida ${corrida.id} - Modo: ${modo}`);
 

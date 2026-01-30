@@ -709,7 +709,7 @@ const RebecaService = {
             
             if (motoristasDisponiveis.length > 0) {
                 // Despachar corrida (usa modo configurado: broadcast ou proximo)
-                const resultadoDespacho = await DespachoService.despacharCorrida(corrida, motoristasDisponiveis);
+                const resultadoDespacho = await DespachoService.despacharCorrida(corrida, motoristasDisponiveis, adminId);
                 
                 if (resultadoDespacho.sucesso && instanciaId) {
                     // Notificar motoristas via WhatsApp
