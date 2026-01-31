@@ -1,4 +1,3 @@
-var usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
 if (usuario.nome) { document.getElementById('userName').textContent = usuario.nome; document.getElementById('userRole').textContent = usuario.nivel || 'Admin'; }
 
 function logout() { localStorage.clear(); window.location.href = '/admin/login'; }
