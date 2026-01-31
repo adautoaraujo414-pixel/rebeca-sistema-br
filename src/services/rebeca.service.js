@@ -664,11 +664,43 @@ const RebecaService = {
         return m;
     },
 
-    async calcularCorrida(origem, destino) {
+    async calcularCorrida(origem, destino, adminId = null) {
         const rota = await MapsService.calcularRota(origem, destino);
         const km = rota.sucesso ? rota.distancia.km : 5;
         const min = rota.sucesso ? rota.duracao.minutos : 15;
-        const calc = await PrecoAdminService.calcularPreco(null, km);
+        
+        // Verificar se é viagem intermunicipal
+        let precoIntermunicipal = null;
+        try {
+            const cidadeOrigem = RebecaService.extrairCidade(rota.sucesso ? rota.origem.endereco : origem);
+            const cidadeDestino = RebecaService.extrairCidade(rota.sucesso ? rota.destino.endereco : destino);
+            
+            if (cidadeOrigem && cidadeDestino && cidadeOrigem.toLowerCase() !== cidadeDestino.toLowerCase()) {
+                // Buscar preço intermunicipal
+                const query = { ativo: true };
+                if (adminId) query.adminId = adminId;
+                query.cidadeOrigem = new RegExp(cidadeOrigem, 'i');
+                query.cidadeDestino = new RegExp(cidadeDestino, 'i');
+                precoIntermunicipal = await PrecoIntermunicipal.findOne(query);
+            }
+        } catch (e) { console.log('Erro ao verificar intermunicipal:', e.message); }
+        
+        if (precoIntermunicipal) {
+            return {
+                distancia: rota.sucesso ? rota.distancia.texto : `~${km} km`,
+                tempo: rota.sucesso ? rota.duracao.texto : `~${min} min`,
+                distanciaKm: km, tempoMinutos: min,
+                preco: precoIntermunicipal.precoFixo,
+                detalhes: 'Viagem intermunicipal - Preço fixo',
+                faixa: { nome: 'Intermunicipal', multiplicador: 1 },
+                origem: rota.sucesso ? rota.origem : { endereco: origem },
+                destino: rota.sucesso ? rota.destino : { endereco: destino },
+                intermunicipal: true,
+                rotaIntermunicipal: precoIntermunicipal.cidadeOrigem + ' → ' + precoIntermunicipal.cidadeDestino
+            };
+        }
+        
+        const calc = await PrecoAdminService.calcularPreco(adminId, km);
         return {
             distancia: rota.sucesso ? rota.distancia.texto : `~${km} km`,
             tempo: rota.sucesso ? rota.duracao.texto : `~${min} min`,
@@ -679,6 +711,26 @@ const RebecaService = {
             origem: rota.sucesso ? rota.origem : { endereco: origem },
             destino: rota.sucesso ? rota.destino : { endereco: destino }
         };
+    },
+    
+    // Extrair cidade do endereço
+    extrairCidade(endereco) {
+        if (!endereco) return null;
+        // Formato comum: "Rua X, Bairro, Cidade - UF" ou "Cidade - UF"
+        const partes = endereco.split(',');
+        if (partes.length >= 2) {
+            const ultimaParte = partes[partes.length - 1].trim();
+            const penultimaParte = partes[partes.length - 2].trim();
+            // Se última parte tem UF (ex: "SP", "RJ"), pega a penúltima como cidade
+            if (ultimaParte.match(/^[A-Z]{2}$/) || ultimaParte.match(/ - [A-Z]{2}$/)) {
+                return penultimaParte.replace(/ - [A-Z]{2}$/, '').trim();
+            }
+            // Se penúltima tem cidade - UF
+            const matchCidade = penultimaParte.match(/^(.+) - [A-Z]{2}$/);
+            if (matchCidade) return matchCidade[1].trim();
+            return penultimaParte;
+        }
+        return endereco.split(' - ')[0].trim();
     },
 
     async criarCorrida(telefone, nomeCliente, dados, adminId = null, instanciaId = null) {
