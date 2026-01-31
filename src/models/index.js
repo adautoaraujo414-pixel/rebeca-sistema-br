@@ -305,3 +305,19 @@ const InstanciaWhatsappSchema = new mongoose.Schema({
 
 const InstanciaWhatsapp = mongoose.model('InstanciaWhatsapp', InstanciaWhatsappSchema);
 module.exports.InstanciaWhatsapp = InstanciaWhatsapp;
+
+// ==================== PREÇOS INTERMUNICIPAIS ====================
+const PrecoIntermunicipalSchema = new mongoose.Schema({
+    adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin', required: true },
+    cidadeOrigem: { type: String, required: true },
+    cidadeDestino: { type: String, required: true },
+    distanciaKm: Number,
+    precoFixo: { type: Number, required: true },
+    precoKmExtra: { type: Number, default: 2.50 },
+    tempoEstimadoMin: Number,
+    ativo: { type: Boolean, default: true }
+}, { timestamps: true });
+
+const PrecoIntermunicipal = mongoose.model('PrecoIntermunicipal', PrecoIntermunicipalSchema);
+module.exports.PrecoIntermunicipal = PrecoIntermunicipal;
+console.log('✅ Modelo PrecoIntermunicipal criado');

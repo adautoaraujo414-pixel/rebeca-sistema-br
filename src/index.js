@@ -69,6 +69,7 @@ app.use('/api/ia', iaRoutes);
 app.use('/api/mensalidades', mensalidadeRoutes);
 app.use('/api/evolution', evolutionMultiRoutes);
 app.use('/api/precos', precoAdminRoutes);
+app.use('/api/precos-intermunicipais', require('./routes/preco-intermunicipal.routes'));
 
 // Páginas
 app.get('/rastrear/:codigo', (req, res) => res.sendFile(path.join(__dirname, 'public', 'rastrear.html')));

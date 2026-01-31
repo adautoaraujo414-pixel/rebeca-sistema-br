@@ -419,3 +419,9 @@ document.querySelectorAll('.modal').forEach(m=>m.addEventListener('click',(e)=>{
 
 carregarDashboard();
 setInterval(carregarDashboard, 30000);
+
+// ==================== INTERMUNICIPAIS ====================
+async function carregarIntermunicipais() { const p=await api('/api/precos-intermunicipais'); document.getElementById('intermunicipaisTable').innerHTML=p.length?p.map(x=>`<tr><td>${x.cidadeOrigem}</td><td>${x.cidadeDestino}</td><td>${x.distanciaKm||'-'} km</td><td>R$ ${(x.precoFixo||0).toFixed(2)}</td><td><button class="btn btn-danger btn-sm" onclick="excluirIntermunicipal('${x._id}')">🗑️</button></td></tr>`).join(''):'<tr><td colspan="5" style="text-align:center;color:#999">Nenhuma rota cadastrada</td></tr>'; }
+function abrirModalIntermunicipal() { document.getElementById('formIntermunicipal').reset(); abrirModal('modalIntermunicipal'); }
+document.getElementById('formIntermunicipal').addEventListener('submit', async(e)=>{ e.preventDefault(); const d={cidadeOrigem:document.getElementById('intOrigem').value,cidadeDestino:document.getElementById('intDestino').value,distanciaKm:parseFloat(document.getElementById('intDistancia').value)||null,precoFixo:parseFloat(document.getElementById('intPreco').value),tempoEstimadoMin:parseInt(document.getElementById('intTempo').value)||null}; await api('/api/precos-intermunicipais','POST',d); fecharModal('modalIntermunicipal'); carregarIntermunicipais(); });
+async function excluirIntermunicipal(id) { if(confirm('Excluir rota?')) { await api('/api/precos-intermunicipais/'+id,'DELETE'); carregarIntermunicipais(); }}

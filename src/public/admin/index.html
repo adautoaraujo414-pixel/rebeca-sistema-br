@@ -360,6 +360,14 @@
                     <button class="btn btn-primary" onclick="simularPrecos()">🧮 Simular Todas Faixas</button>
                     <div id="resultadoSimulacao" style="margin-top:15px;"></div>
                 </div>
+
+                <div class="panel">
+                    <h2>🚗 Viagens Intermunicipais</h2>
+                    <p style="color:#666;margin-bottom:15px;">Preços fixos para viagens entre cidades diferentes.</p>
+                    <button class="btn btn-success" onclick="abrirModalIntermunicipal()" style="margin-bottom:15px;">+ Nova Rota</button>
+                    <table><thead><tr><th>Origem</th><th>Destino</th><th>Distância</th><th>Preço Fixo</th><th>Ações</th></tr></thead><tbody id="intermunicipaisTable"></tbody></table>
+                </div>
+
             </div>
 
             <!-- RANKING -->
@@ -1091,3 +1099,4 @@ async function testarAnaliseIA() {
 
 
     </script>
+    <div class="modal" id="modalIntermunicipal"><div class="modal-content"><div class="modal-header"><h3>🚗 Nova Rota Intermunicipal</h3><button class="modal-close" onclick="fecharModal('modalIntermunicipal')">&times;</button></div><form id="formIntermunicipal"><div class="form-group"><label>Cidade Origem *</label><input type="text" id="intOrigem" placeholder="Ex: São Paulo - SP" required></div><div class="form-group"><label>Cidade Destino *</label><input type="text" id="intDestino" placeholder="Ex: Campinas - SP" required></div><div class="form-row"><div class="form-group"><label>Distância (km)</label><input type="number" id="intDistancia" step="0.1"></div><div class="form-group"><label>Preço Fixo (R$) *</label><input type="number" id="intPreco" step="0.01" required></div></div><div class="form-group"><label>Tempo Estimado (min)</label><input type="number" id="intTempo"></div><button type="submit" class="btn btn-success" style="width:100%;">💾 Salvar Rota</button></form></div></div>
