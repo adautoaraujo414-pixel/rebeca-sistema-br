@@ -50,11 +50,56 @@ router.post('/', async (req, res) => {
         if (!adminId) {
             return res.status(400).json({ error: 'Admin ID obrigatorio' });
         }
-        // Gerar senha aleatoria
+        
         const senhaGerada = Math.random().toString(36).slice(-6).toUpperCase();
         req.body.senha = senhaGerada;
         const motorista = await MotoristaService.criar(req.body, adminId);
-        res.status(201).json({ motorista, senhaGerada });
+        
+        // Criar mensalidade automatica
+        const { Mensalidade, InstanciaWhatsapp } = require('../models');
+        const valorMensalidade = req.body.valorMensalidade || 100;
+        const plano = req.body.plano || 'mensal';
+        const diasVencimento = plano === 'semanal' ? 7 : 30;
+        const dataVencimento = new Date();
+        dataVencimento.setDate(dataVencimento.getDate() + diasVencimento);
+        
+        let mensalidadeCriada = false;
+        try {
+            await Mensalidade.create({
+                motoristaId: motorista._id,
+                motoristaNome: motorista.nomeCompleto,
+                motoristaWhatsapp: motorista.whatsapp,
+                plano: plano,
+                valor: valorMensalidade,
+                dataVencimento: dataVencimento,
+                status: 'pendente'
+            });
+            mensalidadeCriada = true;
+        } catch (e) { console.log('Erro mensalidade:', e.message); }
+        
+        // Enviar WhatsApp se solicitado
+        let whatsappEnviado = false;
+        if (req.body.enviarWhatsApp !== false) {
+            try {
+                const instancia = await InstanciaWhatsapp.findOne({ adminId, status: 'conectado' });
+                if (instancia) {
+                    const EvolutionMultiService = require('../services/evolution-multi.service');
+                    const linkApp = 'https://rebeca-sistema-br.onrender.com/motorista-app.html';
+                    const msg = '🚗 *BEM-VINDO À FROTA UBMAX!*\n\n' +
+                        'Voce foi cadastrado como motorista parceiro!\n\n' +
+                        '📱 *SUAS CREDENCIAIS:*\n' +
+                        '• Token: ' + motorista.token + '\n' +
+                        '• Senha: ' + senhaGerada + '\n\n' +
+                        '🔗 *ACESSE O APP:*\n' + linkApp + '\n\n' +
+                        '✅ Faca login e comece a receber corridas!\n\n' +
+                        '💰 Plano: ' + plano.toUpperCase() + ' - R$ ' + valorMensalidade.toFixed(2);
+                    await EvolutionMultiService.enviarMensagem(instancia.nomeInstancia, motorista.whatsapp, msg);
+                    whatsappEnviado = true;
+                }
+            } catch (e) { console.log('Erro WhatsApp:', e.message); }
+        }
+        
+        res.status(201).json({ motorista, senhaGerada, mensalidadeCriada, whatsappEnviado });
     } catch (e) { 
         console.error('Erro ao criar motorista:', e);
         res.status(500).json({ error: e.message }); 
