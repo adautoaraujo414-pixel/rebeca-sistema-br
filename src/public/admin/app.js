@@ -175,7 +175,7 @@ async function carregarPrecos() {
     }
     document.getElementById('faixaAtualNome').textContent = faixaTexto;
     
-    carregarFaixasDia(diaSelecionado);
+    carregarFaixasDia(diaSelecionado); carregarIntermunicipais();
 }
 
 function selecionarDia(dia) {
@@ -286,7 +286,7 @@ document.getElementById('formFaixa').addEventListener('submit', async (e) => {
     };
     await api('/api/preco-dinamico/faixas', 'POST', dados);
     fecharModal('modalFaixa');
-    carregarFaixasDia(diaSelecionado);
+    carregarFaixasDia(diaSelecionado); carregarIntermunicipais();
     alert('✅ Faixa criada!');
 });
 
@@ -323,14 +323,14 @@ document.getElementById('formEditarFaixa').addEventListener('submit', async (e) 
     };
     await api('/api/preco-dinamico/faixas/' + id, 'PUT', dados);
     fecharModal('modalEditarFaixa');
-    carregarFaixasDia(diaSelecionado);
+    carregarFaixasDia(diaSelecionado); carregarIntermunicipais();
     alert('✅ Faixa atualizada!');
 });
 
 async function excluirFaixa(id) {
     if (confirm('Excluir esta faixa?')) {
         await api('/api/preco-dinamico/faixas/' + id, 'DELETE');
-        carregarFaixasDia(diaSelecionado);
+        carregarFaixasDia(diaSelecionado); carregarIntermunicipais();
     }
 }
 
