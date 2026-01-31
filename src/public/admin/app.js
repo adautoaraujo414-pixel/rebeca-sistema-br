@@ -1,6 +1,3 @@
-var token = localStorage.getItem('token');
-if (!token && !window.location.pathname.includes('login')) window.location.href = '/admin/login';
-
 var usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
 if (usuario.nome) { document.getElementById('userName').textContent = usuario.nome; document.getElementById('userRole').textContent = usuario.nivel || 'Admin'; }
 
