@@ -47,9 +47,18 @@ router.get('/:id', async (req, res) => {
 router.post('/', async (req, res) => {
     try {
         const adminId = req.body.adminId || req.adminId;
+        if (!adminId) {
+            return res.status(400).json({ error: 'Admin ID obrigatorio' });
+        }
+        // Gerar senha aleatoria
+        const senhaGerada = Math.random().toString(36).slice(-6).toUpperCase();
+        req.body.senha = senhaGerada;
         const motorista = await MotoristaService.criar(req.body, adminId);
-        res.status(201).json(motorista);
-    } catch (e) { res.status(500).json({ erro: e.message }); }
+        res.status(201).json({ motorista, senhaGerada });
+    } catch (e) { 
+        console.error('Erro ao criar motorista:', e);
+        res.status(500).json({ error: e.message }); 
+    }
 });
 
 // Atualizar
