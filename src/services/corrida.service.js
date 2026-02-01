@@ -105,6 +105,12 @@ const CorridaService = {
         const faturamentoHoje = corridasHoje.reduce((s, c) => s + (c.precoFinal || c.precoEstimado || 0), 0);
         
         return { total, hoje: hoje_count, pendentes, emAndamento, finalizadas, canceladas, faturamentoHoje };
+    },
+    
+    async listarAtivas(adminId = null) {
+        const filtro = { status: { $in: ['pendente', 'aceita', 'em_andamento', 'motorista_a_caminho'] } };
+        if (adminId) filtro.adminId = adminId;
+        return await Corrida.find(filtro).sort({ createdAt: -1 }).limit(50);
     }
 };
 
