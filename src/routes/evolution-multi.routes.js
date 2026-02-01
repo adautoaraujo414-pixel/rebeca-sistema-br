@@ -147,11 +147,15 @@ router.post('/instancia/:id/reconfigurar-webhook', async (req, res) => {
         
         const webhookUrl = (process.env.APP_URL || 'https://rebeca-sistema-br.onrender.com') + '/api/evolution/webhook/' + instancia.nomeInstancia;
         
-        await axios.post(instancia.apiUrl + '/webhook/set/' + instancia.nomeInstancia, {
-            url: webhookUrl,
-            webhook_by_events: false,
-            webhook_base64: false,
-            events: ['MESSAGES_UPSERT', 'CONNECTION_UPDATE', 'MESSAGES_UPDATE']
+        // Formato Evolution API v2
+        await axios.put(instancia.apiUrl + '/webhook/set/' + instancia.nomeInstancia, {
+            webhook: {
+                enabled: true,
+                url: webhookUrl,
+                webhookByEvents: false,
+                webhookBase64: false,
+                events: ['MESSAGES_UPSERT', 'CONNECTION_UPDATE', 'MESSAGES_UPDATE']
+            }
         }, { headers: { 'apikey': instancia.apiKey || process.env.EVOLUTION_API_KEY, 'Content-Type': 'application/json' } });
         
         instancia.webhookUrl = webhookUrl;
