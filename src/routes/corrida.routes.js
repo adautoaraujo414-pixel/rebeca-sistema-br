@@ -17,13 +17,13 @@ router.get('/estatisticas', (req, res) => {
     res.json(estatisticas);
 });
 
-router.get('/pendentes', (req, res) => {
-    const corridas = CorridaService.listarPendentes();
+router.get('/pendentes', async (req, res) => {
+    const corridas = await CorridaService.listarPendentes(req.adminId);
     res.json(corridas);
 });
 
-router.get('/ativas', (req, res) => {
-    const corridas = CorridaService.listarAtivas();
+router.get('/ativas', async (req, res) => {
+    const corridas = await CorridaService.listarAtivas(req.adminId);
     res.json(corridas);
 });
 

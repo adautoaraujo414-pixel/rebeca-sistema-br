@@ -107,6 +107,12 @@ const CorridaService = {
         return { total, hoje: hoje_count, pendentes, emAndamento, finalizadas, canceladas, faturamentoHoje };
     },
     
+    async listarPendentes(adminId = null) {
+        const filtro = { status: 'pendente' };
+        if (adminId) filtro.adminId = adminId;
+        return await Corrida.find(filtro).sort({ createdAt: -1 }).limit(50);
+    },
+    
     async listarAtivas(adminId = null) {
         const filtro = { status: { $in: ['pendente', 'aceita', 'em_andamento', 'motorista_a_caminho'] } };
         if (adminId) filtro.adminId = adminId;
