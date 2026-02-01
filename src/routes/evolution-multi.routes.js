@@ -138,3 +138,26 @@ router.get('/stats/:adminId', async (req, res) => {
 });
 
 module.exports = router;
+// Reconfigurar webhook de instância existente
+router.post('/instancia/:id/reconfigurar-webhook', async (req, res) => {
+    try {
+        const instancia = await InstanciaWhatsapp.findById(req.params.id);
+        if (!instancia) return res.status(404).json({ erro: 'Instancia nao encontrada' });
+        
+        const webhookUrl = (process.env.APP_URL || 'https://rebeca-sistema-br.onrender.com') + '/api/evolution/webhook/' + instancia.nomeInstancia;
+        
+        await axios.post(instancia.apiUrl + '/webhook/set/' + instancia.nomeInstancia, {
+            url: webhookUrl,
+            webhook_by_events: false,
+            webhook_base64: false,
+            events: ['MESSAGES_UPSERT', 'CONNECTION_UPDATE', 'MESSAGES_UPDATE']
+        }, { headers: { 'apikey': instancia.apiKey || process.env.EVOLUTION_API_KEY, 'Content-Type': 'application/json' } });
+        
+        instancia.webhookUrl = webhookUrl;
+        await instancia.save();
+        
+        res.json({ sucesso: true, webhookUrl });
+    } catch (e) {
+        res.json({ sucesso: false, erro: e.message });
+    }
+});

@@ -14,7 +14,20 @@ const EvolutionMultiService = {
             try {
                 evolutionResponse = await axios.post(EVOLUTION_BASE_URL + '/instance/create', { instanceName: nomeInstancia, qrcode: true, integration: 'WHATSAPP-BAILEYS' }, { headers: { 'apikey': EVOLUTION_GLOBAL_KEY, 'Content-Type': 'application/json' } });
             } catch (e) { console.log('Evolution API nao disponivel'); }
-            const instancia = await InstanciaWhatsapp.create({ adminId, nomeInstancia, apiUrl: EVOLUTION_BASE_URL, apiKey: evolutionResponse?.data?.hash || EVOLUTION_GLOBAL_KEY, status: 'desconectado', webhookUrl: (process.env.APP_URL || 'https://rebeca-sistema-br.onrender.com') + '/api/evolution/webhook/' + nomeInstancia });
+            const webhookUrl = (process.env.APP_URL || 'https://rebeca-sistema-br.onrender.com') + '/api/evolution/webhook/' + nomeInstancia;
+            const instancia = await InstanciaWhatsapp.create({ adminId, nomeInstancia, apiUrl: EVOLUTION_BASE_URL, apiKey: evolutionResponse?.data?.hash || EVOLUTION_GLOBAL_KEY, status: 'desconectado', webhookUrl });
+            
+            // Configurar webhook na Evolution API
+            try {
+                await axios.post(EVOLUTION_BASE_URL + '/webhook/set/' + nomeInstancia, {
+                    url: webhookUrl,
+                    webhook_by_events: false,
+                    webhook_base64: false,
+                    events: ['MESSAGES_UPSERT', 'CONNECTION_UPDATE', 'MESSAGES_UPDATE']
+                }, { headers: { 'apikey': EVOLUTION_GLOBAL_KEY, 'Content-Type': 'application/json' } });
+                console.log('[EVOLUTION] Webhook configurado:', webhookUrl);
+            } catch (e) { console.log('[EVOLUTION] Erro ao configurar webhook:', e.message); }
+            
             return { sucesso: true, instancia };
         } catch (e) { return { sucesso: false, erro: e.message }; }
     },
