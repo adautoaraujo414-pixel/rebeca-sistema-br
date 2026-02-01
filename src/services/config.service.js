@@ -75,3 +75,13 @@ const ConfigService = {
 };
 
 module.exports = ConfigService;
+
+// Adicionar antes do module.exports
+ConfigService.obterConfigWhatsApp = function() {
+    return {
+        apiUrl: process.env.EVOLUTION_API_URL || 'https://evolution-api-production-794f.up.railway.app',
+        apiKey: process.env.EVOLUTION_API_KEY,
+        instanceName: process.env.EVOLUTION_INSTANCE_NAME || 'rebeca',
+        webhookUrl: (process.env.APP_URL || 'https://rebeca-sistema-br.onrender.com') + '/api/evolution/webhook'
+    };
+};
