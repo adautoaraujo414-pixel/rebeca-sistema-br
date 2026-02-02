@@ -55,7 +55,7 @@ const IAService = {
     async responderPergunta(pergunta, info = {}) {
         if (!IAService.isAtivo()) return null;
         try {
-            const prompt = `Rebeca (táxi UBMAX). Taxa R$${info.taxaBase||5}, km R$${info.precoKm||2.5}, mín R$${info.taxaMinima||15}. Pergunta: "${pergunta}". Responda breve.`;
+            const prompt = `Você é Rebeca, atendente de táxi. Seja simpática e objetiva. Info: Taxa base R$${info.taxaBase||5}, por km R$${info.precoKm||2.5}, mínimo R$${info.taxaMinima||15}. Funcionamos 24h. Cliente perguntou: "${pergunta}". Responda de forma natural e curta (max 2 frases). Se não souber, peça a localização para chamar um carro.`;
             const response = await clienteAnthropic.messages.create({ model: configIA.modelo, max_tokens: 200, messages: [{ role: 'user', content: prompt }] });
             return response.content[0].text.trim();
         } catch (e) { return null; }
