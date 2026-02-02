@@ -228,10 +228,26 @@ const RebecaService = {
             resposta += favoritos.trabalho ? `🏢 Trabalho: ${favoritos.trabalho.endereco}\n` : `🏢 Trabalho: _Não cadastrado_\n`;
             resposta += `\n*1* - Cadastrar Casa\n*2* - Cadastrar Trabalho\n*0* - Voltar`;
         }
-        else if (msg.includes('cancelar')) {
-            conversa.etapa = 'inicio';
+        else if (msg.includes("cancelar")) {
+            // Buscar corrida ativa do cliente
+            const cliente = ClienteService.buscarPorTelefone(telefone);
+            if (cliente) {
+                const corridas = await CorridaService.listarPorCliente(cliente._id || cliente.id);
+                const corridaAtiva = corridas?.find(c => ["pendente", "aceita", "a_caminho"].includes(c.status));
+                if (corridaAtiva) {
+                    await CorridaService.cancelarCorrida(corridaAtiva._id, "Cancelado pelo cliente");
+                    // Avisar motorista se tiver
+                    if (corridaAtiva.motoristaId && conversa.instanciaId) {
+                        const motorista = await MotoristaService.buscarPorId(corridaAtiva.motoristaId);
+                        if (motorista?.whatsapp) {
+                            await EvolutionMultiService.enviarMensagem(conversa.instanciaId, motorista.whatsapp, "❌ *CORRIDA CANCELADA*\n\nO cliente cancelou a corrida.\n\nVocê está disponível novamente!");
+                        }
+                    }
+                }
+            }
+            conversa.etapa = "inicio";
             conversa.dados = {};
-            resposta = `❌ Cancelado.\n\n${RebecaService.menuPrincipal(nome, telefone)}`;
+            resposta = "Poxa, que pena! 😔 Sua corrida foi cancelada.\n\nQuando precisar, é só mandar a localização!";
         }
         else if (msg.includes('rastrear') || msg.includes('onde está') || msg.includes('cadê') || msg.includes('cade o motorista')) {
             resposta = await RebecaService.enviarRastreamento(telefone);
@@ -478,7 +494,7 @@ const RebecaService = {
             } else {
                 conversa.etapa = 'inicio';
                 conversa.dados = {};
-                resposta = `❌ Cancelado.\n\n${RebecaService.menuPrincipal(nome, telefone)}`;
+                resposta = `Poxa, que pena! 😔 Sua corrida foi cancelada.\n\nQuando precisar, é só mandar a localização!`;
             }
         }
         // ========== COTAÇÃO ==========
