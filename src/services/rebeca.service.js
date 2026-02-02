@@ -137,12 +137,11 @@ const RebecaService = {
         if (adminId) console.log('[REBECA] Admin:', adminId);
         
         // Guardar adminId na conversa para usar depois
-        if (adminId && conversa) conversa.adminId = adminId;
-        if (contexto.instanciaId && conversa) conversa.instanciaId = contexto.instanciaId;
-        if (contexto.instanciaId && conversa) conversa.instanciaId = contexto.instanciaId;
         const msg = typeof mensagem === 'string' ? mensagem.toLowerCase().trim() : '';
         const msgOriginal = typeof mensagem === 'string' ? mensagem.trim() : '';
         const conversa = conversas.get(telefone) || { etapa: 'inicio', dados: {} };
+        if (adminId) conversa.adminId = adminId;
+        if (contexto.instanciaId) conversa.instanciaId = contexto.instanciaId;
         const favoritos = RebecaService.getFavoritos(telefone);
         
         let resposta = '';
