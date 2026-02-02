@@ -1,7 +1,6 @@
 const { Cliente } = require('../models');
 
 const ClienteService = {
-    // Listar (filtrado por admin)
     async listar(adminId) {
         const query = adminId ? { adminId } : {};
         return await Cliente.find(query).sort({ createdAt: -1 });
@@ -35,8 +34,7 @@ const ClienteService = {
         const total = await Cliente.countDocuments(query);
         const novos = await Cliente.countDocuments({ ...query, createdAt: { $gte: new Date(Date.now() - 7*24*60*60*1000) } });
         return { total, novos };
-    }
-};
+    },
 
     async listarTodos(filtros = {}) {
         const query = {};
@@ -50,8 +48,10 @@ const ClienteService = {
         }
         return await Cliente.find(query).sort({ createdAt: -1 });
     },
+
     obterEstatisticas(adminId) {
         return this.estatisticas(adminId);
     }
 };
+
 module.exports = ClienteService;
