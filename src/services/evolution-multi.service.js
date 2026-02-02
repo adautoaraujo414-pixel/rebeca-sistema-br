@@ -46,7 +46,7 @@ const EvolutionMultiService = {
             // Configurar webhook automaticamente
             try {
                 const webhookUrl = (process.env.APP_URL || 'https://rebeca-sistema-br.onrender.com') + '/api/evolution/webhook/' + instancia.nomeInstancia;
-                await axios.post(instancia.apiUrl + '/webhook/set/' + instancia.nomeInstancia, {
+                await axios.put(instancia.apiUrl + '/webhook/set/' + instancia.nomeInstancia, {
                     webhook: {
                         url: webhookUrl,
                         webhook_by_events: false,
