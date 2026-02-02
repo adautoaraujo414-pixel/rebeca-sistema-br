@@ -146,10 +146,16 @@ const RebecaService = {
         
         let resposta = '';
 
-        // ========== GPS - CHAMAR CARRO DIRETO ==========
         if (RebecaService.pareceLocalizacao(mensagem)) {
             const coords = RebecaService.extrairCoordenadas(mensagem);
             const endereco = await MapsService.geocodificarReverso(coords.latitude, coords.longitude);
+            
+            // Verificar motoristas disponíveis ANTES de criar corrida
+            const motoristasDisponiveis = await MotoristaService.listarDisponiveis(adminId);
+            
+            if (motoristasDisponiveis.length === 0) {
+                return `😔 Poxa, no momento não temos motoristas disponíveis.\n\nTente novamente em alguns minutos! 🙏`;
+            }
             
             conversa.dados.origemGPS = coords;
             conversa.dados.origem = endereco.endereco || `${coords.latitude}, ${coords.longitude}`;
@@ -159,20 +165,18 @@ const RebecaService = {
                 destino: null,
                 distanciaKm: 0,
                 tempoMinutos: 0,
-                preco: 15, // Será recalculado com destino
+                preco: 15,
                 faixa: { nome: 'chamada', multiplicador: 1 }
             };
             
-            // Criar corrida e despachar DIRETO
             const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
             
             conversa.etapa = 'aguardando_motorista';
             conversa.dados.corridaId = corrida.id;
             conversas.set(telefone, conversa);
             
-            return `🚗 *CARRO A CAMINHO!*\n\n📍 Buscar em: *${conversa.dados.origem}*\n\n⏳ Localizando motorista próximo...\n\n_Informe o destino ao motorista_\n\nDigite *CANCELAR* para cancelar.`;
+            return `📍 *${conversa.dados.origem}*\n\n⏳ Buscando motorista pra você...\n\nTe aviso assim que um aceitar! 😊\n\n_Digite CANCELAR se precisar_`;
         }
-
         // ========== TENTAR IA PRIMEIRO ==========
         if (configRebeca.usarIA && IAService.isAtivo() && conversa.etapa === 'inicio') {
             const analise = await IAService.analisarMensagem(msgOriginal, {
@@ -616,20 +620,12 @@ const RebecaService = {
     // ==================== FUNÇÕES AUXILIARES ====================
     menuPrincipal: (nome, telefone) => {
         const favoritos = RebecaService.getFavoritos(telefone);
-        let menu = `Olá${nome ? ', *' + nome + '*' : ''}! 👋\n\n`;
-        menu += `*1* - 🚗 Pedir corrida\n`;
-        menu += `*2* - 💵 Ver preços\n`;
-        menu += `*3* - 💰 Cotação\n`;
-        menu += `*4* - 📋 Histórico\n`;
-        menu += `*5* - 👤 Atendente\n`;
-        menu += `*7* - ⭐ Favoritos\n`;
-        menu += `\n💡 _Envie seu endereço ou localização!_`;
+        let menu = `Oi${nome ? " " + nome : ""}! Precisa de carro? 🚗\n\nMe manda a 📍 localização ou o endereço!`;
         if (favoritos.casa || favoritos.trabalho) {
-            menu += `\n⭐ _Atalhos: *casa* ou *trabalho*_`;
+            menu += `\n\n⭐ Atalhos: *casa* ou *trabalho*`;
         }
         return menu;
     },
-
     gerarLinkRastreamento: (corridaId) => {
         return `${process.env.BASE_URL || 'https://rebeca-sistema-br.onrender.com'}/rastrear/${corridaId.slice(-8)}`;
     },

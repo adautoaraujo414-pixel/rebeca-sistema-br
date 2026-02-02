@@ -80,6 +80,19 @@ const EvolutionMultiService = {
             if (instancia.status !== 'conectado') throw new Error('WhatsApp nao conectado');
             let numero = telefone.replace(/\D/g, '');
             if (numero.length <= 11) numero = '55' + numero;
+            
+            // Enviar "digitando..." primeiro
+            try {
+                await axios.post(instancia.apiUrl + '/chat/presence/' + instancia.nomeInstancia, { 
+                    number: numero + '@s.whatsapp.net', 
+                    presence: 'composing' 
+                }, { headers: { 'apikey': instancia.apiKey || EVOLUTION_GLOBAL_KEY, 'Content-Type': 'application/json' } });
+            } catch (e) {}
+            
+            // Delay natural (1-3 segundos baseado no tamanho da msg)
+            const delay = Math.min(1000 + (mensagem.length * 20), 3000);
+            await new Promise(r => setTimeout(r, delay));
+            
             try {
                 const response = await axios.post(instancia.apiUrl + '/message/sendText/' + instancia.nomeInstancia, { number: numero, text: mensagem }, { headers: { 'apikey': instancia.apiKey || EVOLUTION_GLOBAL_KEY, 'Content-Type': 'application/json' } });
                 return { sucesso: true, messageId: response.data?.key?.id };
