@@ -79,7 +79,7 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
         // PROCESSAR MENSAGENS - REBECA MULTI-TENANT
         if (dados.event === 'messages.upsert') {
             console.log('[DEBUG] Dados:', JSON.stringify(dados).substring(0, 800));
-            const mensagens = dados.data?.messages || [];
+            const mensagens = dados.data?.messages || (dados.data ? [dados.data] : []);
             
             for (const msg of mensagens) {
                 if (msg.key?.fromMe) continue;
