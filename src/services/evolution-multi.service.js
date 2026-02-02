@@ -43,6 +43,19 @@ const EvolutionMultiService = {
             instancia.qrCode = qrData.base64 || qrData.code;
             instancia.qrCodeExpira = new Date(Date.now() + 60000);
             instancia.status = 'conectando';
+            // Configurar webhook automaticamente
+            try {
+                const webhookUrl = (process.env.APP_URL || 'https://rebeca-sistema-br.onrender.com') + '/api/evolution/webhook/' + instancia.nomeInstancia;
+                await axios.post(instancia.apiUrl + '/webhook/set/' + instancia.nomeInstancia, {
+                    webhook: {
+                        url: webhookUrl,
+                        webhook_by_events: false,
+                        webhook_base64: false,
+                        events: ['MESSAGES_UPSERT', 'CONNECTION_UPDATE']
+                    }
+                }, { headers: { 'apikey': instancia.apiKey || EVOLUTION_GLOBAL_KEY, 'Content-Type': 'application/json' } });
+                console.log('[EVOLUTION] Webhook reconfigurado:', webhookUrl);
+            } catch (e) { console.log('[EVOLUTION] Webhook ja configurado ou erro:', e.message); }
             await instancia.save();
             return { sucesso: true, qrCode: instancia.qrCode, expira: instancia.qrCodeExpira };
         } catch (e) { return { sucesso: false, erro: e.message }; }
