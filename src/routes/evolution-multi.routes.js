@@ -84,7 +84,9 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
             for (const msg of mensagens) {
                 if (msg.key?.fromMe) continue;
                 
-                const telefone = msg.key?.remoteJid?.replace('@s.whatsapp.net', '') || '';
+                const remoteJid = msg.key?.remoteJid || '';
+                if (remoteJid.includes('@g.us')) continue; // Ignorar grupos
+                const telefone = remoteJid.replace('@s.whatsapp.net', '');
                 const nome = msg.pushName || 'Cliente';
                 
                 let conteudo = null;
