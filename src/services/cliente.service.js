@@ -38,4 +38,20 @@ const ClienteService = {
     }
 };
 
+    async listarTodos(filtros = {}) {
+        const query = {};
+        if (filtros.adminId) query.adminId = filtros.adminId;
+        if (filtros.bloqueado !== undefined) query.bloqueado = filtros.bloqueado;
+        if (filtros.busca) {
+            query.$or = [
+                { nome: { $regex: filtros.busca, $options: "i" } },
+                { telefone: { $regex: filtros.busca, $options: "i" } }
+            ];
+        }
+        return await Cliente.find(query).sort({ createdAt: -1 });
+    },
+    obterEstatisticas(adminId) {
+        return this.estatisticas(adminId);
+    }
+};
 module.exports = ClienteService;
