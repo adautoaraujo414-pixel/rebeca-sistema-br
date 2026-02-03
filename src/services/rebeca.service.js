@@ -179,11 +179,26 @@ const RebecaService = {
         }
         // ========== TENTAR IA PRIMEIRO ==========
         if (configRebeca.usarIA && IAService.isAtivo() && conversa.etapa === 'inicio') {
+            // Buscar dados da empresa do admin
+            let nomeEmpresa = '', telefoneEmpresa = '';
+            try {
+                if (conversa.adminId) {
+                    const { Admin } = require('../models');
+                    const admin = await Admin.findById(conversa.adminId);
+                    if (admin) {
+                        nomeEmpresa = admin.empresa || admin.nome || '';
+                        telefoneEmpresa = admin.telefone || '';
+                    }
+                }
+            } catch(e) {}
+            
             const analise = await IAService.analisarMensagem(msgOriginal, {
                 nome, telefone,
                 etapa: conversa.etapa,
                 temCasa: !!favoritos.casa,
-                temTrabalho: !!favoritos.trabalho
+                temTrabalho: !!favoritos.trabalho,
+                nomeEmpresa,
+                telefoneEmpresa
             });
 
             if (analise.usarIA && analise.confianca >= 0.7) {
@@ -527,7 +542,16 @@ const RebecaService = {
         }
         // ========== TENTAR IA PARA PERGUNTAS ==========
         else if (configRebeca.usarIA && IAService.isAtivo()) {
-            const respostaIA = await IAService.responderPergunta(msgOriginal, PrecoDinamicoService.getConfig());
+            // Buscar dados empresa para IA
+            let infoEmpresa = {};
+            try {
+                if (conversa.adminId) {
+                    const { Admin } = require('../models');
+                    const adm = await Admin.findById(conversa.adminId);
+                    if (adm) infoEmpresa = { nomeEmpresa: adm.empresa || adm.nome || '', telefoneEmpresa: adm.telefone || '' };
+                }
+            } catch(e) {}
+            const respostaIA = await IAService.responderPergunta(msgOriginal, { ...PrecoDinamicoService.getConfig(), ...infoEmpresa });
             if (respostaIA) {
                 resposta = respostaIA + `\n\n_Digite *menu* para ver opções._`;
             } else {
