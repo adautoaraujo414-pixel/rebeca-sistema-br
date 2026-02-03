@@ -315,7 +315,7 @@ router.get('/estatisticas', async (req, res) => {
 // ========== CADASTRO ADMIN (BOAS VINDAS) ==========
 router.post('/cadastro-admin', async (req, res) => {
     try {
-        const { nome, email, telefone, empresa, planoId } = req.body;
+        const { nome, email, telefone, empresa, planoId, senha: senhaEscolhida } = req.body;
         
         // Verificar se email já existe
         const existe = await Admin.findOne({ email });
@@ -327,9 +327,9 @@ router.post('/cadastro-admin', async (req, res) => {
         // Criar admin pendente
         const admin = await Admin.create({
             nome, email, telefone, empresa,
-            senha: gerarSenha(),
+            senha: senhaEscolhida || gerarSenha(),
             token: gerarToken(),
-            ativo: false,
+            ativo: true,
             planoId
         });
         

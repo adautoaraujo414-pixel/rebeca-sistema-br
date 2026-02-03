@@ -577,6 +577,25 @@
                         <div id="empresaMsg" style="display:none;padding:10px;border-radius:8px;text-align:center"></div>
                     </div>
                 </div>
+                <div class="panel" style="margin-top:20px">
+                    <h3>🔒 Alterar Senha</h3>
+                    <div style="display:grid;gap:15px;max-width:500px">
+                        <div>
+                            <label style="font-weight:bold;display:block;margin-bottom:5px">Senha Atual</label>
+                            <input type="password" id="senhaAtual" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px">
+                        </div>
+                        <div>
+                            <label style="font-weight:bold;display:block;margin-bottom:5px">Nova Senha</label>
+                            <input type="password" id="senhaNova" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px">
+                        </div>
+                        <div>
+                            <label style="font-weight:bold;display:block;margin-bottom:5px">Confirmar Nova Senha</label>
+                            <input type="password" id="senhaConfirmar" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px">
+                        </div>
+                        <button class="btn btn-primary" onclick="trocarSenha()" style="padding:12px;font-size:16px">🔒 Alterar Senha</button>
+                        <div id="senhaMsg" style="display:none;padding:10px;border-radius:8px;text-align:center"></div>
+                    </div>
+                </div>
             </div>
         </main>
     </div>
@@ -1136,6 +1155,24 @@ async function testarAnaliseIA() {
 
 
 
+    // ========== TROCAR SENHA ==========
+    async function trocarSenha() {
+        const atual = document.getElementById('senhaAtual').value;
+        const nova = document.getElementById('senhaNova').value;
+        const confirmar = document.getElementById('senhaConfirmar').value;
+        if (!atual || !nova) return alert('Preencha todos os campos');
+        if (nova.length < 6) return alert('Nova senha deve ter pelo menos 6 caracteres');
+        if (nova !== confirmar) return alert('Senhas nao conferem');
+        try {
+            const r = await fetch('/api/auth/trocar-senha', { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify({ senhaAtual: atual, senhaNova: nova }) });
+            const d = await r.json();
+            const msg = document.getElementById('senhaMsg');
+            msg.style.display = 'block';
+            if (d.sucesso) { msg.style.background = '#d4edda'; msg.style.color = '#155724'; msg.textContent = '✅ Senha alterada!'; document.getElementById('senhaAtual').value = ''; document.getElementById('senhaNova').value = ''; document.getElementById('senhaConfirmar').value = ''; }
+            else { msg.style.background = '#f8d7da'; msg.style.color = '#721c24'; msg.textContent = '❌ ' + (d.erro || 'Erro'); }
+            setTimeout(() => msg.style.display = 'none', 3000);
+        } catch(e) { alert('Erro: ' + e.message); }
+    }
     // ========== MINHA EMPRESA ==========
     async function carregarEmpresa() {
         try {
