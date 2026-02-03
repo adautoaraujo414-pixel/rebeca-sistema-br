@@ -77,22 +77,60 @@ router.post('/aceitar', auth, async (req, res) => {
 // Iniciar corrida
 router.post('/iniciar', auth, async (req, res) => {
     const { corridaId } = req.body;
-    const corrida = await CorridaService.iniciar(corridaId);
-    res.json({ sucesso: true, corrida });
+    try {
+        const corrida = await CorridaService.iniciar(corridaId);
+        if (corrida && corrida.clienteTelefone) {
+            const EvolutionMultiService = require('../services/evolution-multi.service');
+            const { InstanciaWhatsapp } = require('../models');
+            const instancia = await InstanciaWhatsapp.findOne({ adminId: corrida.adminId, status: 'conectado' });
+            if (instancia) {
+                await EvolutionMultiService.enviarMensagem(instancia._id, corrida.clienteTelefone,
+                    '\u2705 *MOTORISTA CHEGOU!*\n\nSeu motorista esta no local. Dirija-se ao veiculo.\n\nBoa viagem! \ud83d\ude97');
+            }
+        }
+        res.json({ sucesso: true, corrida });
+    } catch (e) { res.json({ sucesso: false, erro: e.message }); }
 });
 
 // Finalizar corrida
 router.post('/finalizar', auth, async (req, res) => {
     const { corridaId, precoFinal } = req.body;
-    const resultado = await CorridaService.finalizar(corridaId, precoFinal);
-    res.json(resultado);
+    try {
+        const corrida = await CorridaService.finalizar(corridaId, precoFinal);
+        const corridaFinal = corrida.corrida || corrida;
+        if (corridaFinal && corridaFinal.clienteTelefone) {
+            const EvolutionMultiService = require('../services/evolution-multi.service');
+            const { InstanciaWhatsapp } = require('../models');
+            const instancia = await InstanciaWhatsapp.findOne({ adminId: corridaFinal.adminId, status: 'conectado' });
+            if (instancia) {
+                const valor = precoFinal || corridaFinal.precoFinal || corridaFinal.precoEstimado || 0;
+                await EvolutionMultiService.enviarMensagem(instancia._id, corridaFinal.clienteTelefone,
+                    '\ud83c\udfc1 *CORRIDA FINALIZADA!*\n\n' +
+                    '\ud83d\udcb0 *Valor: R$ ' + valor.toFixed(2) + '*\n\n' +
+                    'Obrigada por viajar com a gente! \u2764\ufe0f\n\nQuer avaliar o motorista? Mande uma nota de 1 a 5.');
+            }
+        }
+        res.json(corrida);
+    } catch (e) { res.json({ sucesso: false, erro: e.message }); }
 });
 
 // Cancelar corrida
 router.post('/cancelar', auth, async (req, res) => {
     const { corridaId, motivo } = req.body;
-    const resultado = await CorridaService.cancelar(corridaId, motivo || 'Cancelado pelo motorista');
-    res.json(resultado);
+    try {
+        const corridaAntes = await CorridaService.buscarPorId(corridaId);
+        const resultado = await CorridaService.cancelar(corridaId, motivo || 'Cancelado pelo motorista');
+        if (corridaAntes && corridaAntes.clienteTelefone) {
+            const EvolutionMultiService = require('../services/evolution-multi.service');
+            const { InstanciaWhatsapp } = require('../models');
+            const instancia = await InstanciaWhatsapp.findOne({ adminId: corridaAntes.adminId, status: 'conectado' });
+            if (instancia) {
+                await EvolutionMultiService.enviarMensagem(instancia._id, corridaAntes.clienteTelefone,
+                    '\u274c *CORRIDA CANCELADA*\n\nInfelizmente o motorista precisou cancelar.\n\nQuer que eu busque outro? Mande sua localizacao!');
+            }
+        }
+        res.json(resultado);
+    } catch (e) { res.json({ sucesso: false, erro: e.message }); }
 });
 
 // Histórico de corridas
