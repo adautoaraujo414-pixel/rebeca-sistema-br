@@ -154,7 +154,7 @@ const RebecaService = {
             const motoristasDisponiveis = await MotoristaService.listarDisponiveis(adminId);
             
             if (motoristasDisponiveis.length === 0) {
-                return `😔 Poxa, no momento não temos motoristas disponíveis.\n\nTente novamente em alguns minutos! 🙏`;
+                return `😔 No momento, todos os nossos motoristas estão ocupados.\n\nPor favor, tente novamente em alguns minutos. Pedimos desculpas pelo transtorno! 🙏`;
             }
             
             conversa.dados.origemGPS = coords;
@@ -198,7 +198,7 @@ const RebecaService = {
         // ========== AGUARDANDO MOTORISTA ==========
         if (conversa.etapa === 'aguardando_motorista' && !msg.includes('cancelar')) {
             conversas.set(telefone, conversa);
-            return 'Calma que ja estou buscando um motorista pra voce! \u23f3\n\nAssim que um aceitar, te aviso. Se quiser cancelar, digite *CANCELAR*.';
+            return 'Estou localizando o motorista mais proximo para voce. \u23f3\n\nAssim que um aceitar, te aviso imediatamente. Para cancelar, digite *CANCELAR*.';
         }
 
         // ========== COMANDOS DIRETOS ==========
@@ -531,11 +531,11 @@ const RebecaService = {
             if (respostaIA) {
                 resposta = respostaIA + `\n\n_Digite *menu* para ver opções._`;
             } else {
-                resposta = `🤔 Não entendi.\n\n${RebecaService.menuPrincipal(nome, telefone)}`;
+                resposta = `🤔 Desculpe, não consegui entender. Posso te ajudar de outra forma?\n\n${RebecaService.menuPrincipal(nome, telefone)}`;
             }
         }
         else {
-            resposta = `🤔 Não entendi.\n\n${RebecaService.menuPrincipal(nome, telefone)}`;
+            resposta = `🤔 Desculpe, não consegui entender. Posso te ajudar de outra forma?\n\n${RebecaService.menuPrincipal(nome, telefone)}`;
         }
 
         conversas.set(telefone, conversa);
@@ -651,10 +651,16 @@ const RebecaService = {
 
     // ==================== FUNÇÕES AUXILIARES ====================
     menuPrincipal: (nome, telefone) => {
+        const hora = new Date().getHours();
+        let saudacao = 'Olá';
+        if (hora >= 5 && hora < 12) saudacao = 'Bom dia';
+        else if (hora >= 12 && hora < 18) saudacao = 'Boa tarde';
+        else saudacao = 'Boa noite';
+        
         const favoritos = RebecaService.getFavoritos(telefone);
-        let menu = `Oi${nome ? " " + nome : ""}! Precisa de carro? 🚗\n\nMe manda a 📍 localização ou o endereço!`;
+        let menu = `${saudacao}${nome ? ', ' + nome : ''}! Sou a *Rebeca*, sua assistente de transporte. 🚗\n\nComo posso te ajudar?\n\n📍 Envie sua *localização* ou digite o *endereço* de origem\n💰 Digite *preços* para consultar valores\n📋 Digite *historico* para ver suas corridas`;
         if (favoritos.casa || favoritos.trabalho) {
-            menu += `\n\n⭐ Atalhos: *casa* ou *trabalho*`;
+            menu += `\n\n⭐ *Atalhos salvos:* ${favoritos.casa ? '*casa*' : ''}${favoritos.casa && favoritos.trabalho ? ' | ' : ''}${favoritos.trabalho ? '*trabalho*' : ''}`;
         }
         return menu;
     },

@@ -35,17 +35,30 @@ const IAService = {
     async analisarMensagem(mensagem, contexto = {}) {
         if (!IAService.isAtivo()) return { usarIA: false };
         try {
-            const prompt = `Voce e a IA do app de taxi UBMAX. Analise a mensagem do cliente.
-REGRAS:
-- Se o cliente PERGUNTA algo (ex: "tem carro?", "ate que horas?", "como funciona?", "quanto custa de X a Y?"), intencao = "pergunta"
-- Se o cliente quer PEDIR um carro/corrida (ex: "me busca na Rua X", "quero ir pra casa"), intencao = "pedir_corrida"
+            const prompt = `Voce e a Rebeca, assistente virtual de transporte. Voce e profissional, educada e eficiente.
+PERSONALIDADE:
+- Tom profissional e acolhedor, nunca robotico
+- Respostas objetivas e claras
+- Sempre trate o cliente com respeito e cordialidade
+- Nunca diga que e IA, robo ou assistente virtual
+- Voce CONHECE: formas de pagamento (dinheiro, pix), funcionamento 24h, seguranca (motoristas cadastrados), tempo medio de espera (3-5 min)
+- Se nao souber algo especifico, oriente o cliente a enviar a localizacao para solicitar um carro
+
+REGRAS DE CLASSIFICACAO:
+- Se o cliente PERGUNTA algo (ex: "tem carro?", "ate que horas funciona?", "como funciona?", "aceita pix?"), intencao = "pergunta"
+- Se o cliente quer PEDIR um carro/corrida (ex: "me busca na Rua X", "quero ir pra casa", "preciso de um carro"), intencao = "pedir_corrida"
 - Se o cliente quer SABER PRECO sem pedir (ex: "quanto fica de X a Y?"), intencao = "cotacao"
-- Se diz "oi", "ola", "bom dia", intencao = "saudacao"
+- Se diz "oi", "ola", "bom dia", "boa noite", intencao = "saudacao"
+- Se agradece "obrigado", "valeu", intencao = "agradecimento"
+- Se reclama ou relata problema, intencao = "reclamacao"
 - Diferencie PERGUNTAS de PEDIDOS. "Tem carro disponivel?" e pergunta, nao pedido.
+
 Contexto: ${JSON.stringify(contexto)}
 Mensagem: "${mensagem}"
-Responda SOMENTE o JSON: {"intencao":"pedir_corrida|cotacao|historico|precos|saudacao|pergunta|outro","origem":null,"destino":null,"usarFavorito":null,"observacao":null,"confianca":0.9,"respostaPergunta":null}
-Se intencao="pergunta", preencha respostaPergunta com resposta curta e simpatica (max 2 frases).`;
+Responda SOMENTE o JSON: {"intencao":"pedir_corrida|cotacao|historico|precos|saudacao|pergunta|agradecimento|reclamacao|outro","origem":null,"destino":null,"usarFavorito":null,"observacao":null,"confianca":0.9,"respostaPergunta":null}
+Se intencao="pergunta", preencha respostaPergunta com resposta profissional e cordial (max 2 frases).
+Se intencao="agradecimento", preencha respostaPergunta com algo como "Por nada! Estou aqui sempre que precisar."
+Se intencao="reclamacao", preencha respostaPergunta pedindo desculpas e orientando a resolver.`;
             const response = await clienteAnthropic.messages.create({ model: configIA.modelo, max_tokens: 300, messages: [{ role: 'user', content: prompt }] });
             const analise = JSON.parse(response.content[0].text.trim());
             analise.usarIA = true;
@@ -65,7 +78,17 @@ Se intencao="pergunta", preencha respostaPergunta com resposta curta e simpatica
     async responderPergunta(pergunta, info = {}) {
         if (!IAService.isAtivo()) return null;
         try {
-            const prompt = `Você é Rebeca, atendente de táxi. Seja simpática e objetiva. Info: Taxa base R$${info.taxaBase||5}, por km R$${info.precoKm||2.5}, mínimo R$${info.taxaMinima||15}. Funcionamos 24h. Cliente perguntou: "${pergunta}". Responda de forma natural e curta (max 2 frases). Se não souber, peça a localização para chamar um carro.`;
+            const prompt = `Voce e a Rebeca, assistente de transporte profissional e cordial. Nunca diga que e IA.
+INFORMACOES DO SERVICO:
+- Taxa base: R$${info.taxaBase||5}, por km: R$${info.precoKm||2.5}, minimo: R$${info.taxaMinima||15}
+- Funcionamento: 24 horas, todos os dias
+- Pagamento: dinheiro, PIX
+- Seguranca: todos os motoristas sao cadastrados e verificados
+- Tempo medio de espera: 3 a 5 minutos
+- Para solicitar: basta enviar a localizacao ou digitar o endereco
+
+Cliente perguntou: "${pergunta}"
+Responda de forma profissional, cordial e objetiva (max 2 frases). Se nao souber, oriente a enviar a localizacao.`;
             const response = await clienteAnthropic.messages.create({ model: configIA.modelo, max_tokens: 200, messages: [{ role: 'user', content: prompt }] });
             return response.content[0].text.trim();
         } catch (e) { return null; }
