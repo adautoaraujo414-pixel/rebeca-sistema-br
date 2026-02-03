@@ -50,8 +50,28 @@ router.get('/corridas-disponiveis', auth, async (req, res) => {
 // Aceitar corrida
 router.post('/aceitar', auth, async (req, res) => {
     const { corridaId } = req.body;
-    const resultado = await CorridaService.aceitar(corridaId, req.motorista._id);
-    res.json(resultado);
+    try {
+        const corrida = await CorridaService.atribuirMotorista(corridaId, req.motorista._id, req.motorista.nome);
+        
+        // Notificar cliente via WhatsApp
+        if (corrida && corrida.clienteTelefone) {
+            const EvolutionMultiService = require('../services/evolution-multi.service');
+            const { InstanciaWhatsapp } = require('../models');
+            const instancia = await InstanciaWhatsapp.findOne({ adminId: corrida.adminId, status: 'conectado' });
+            if (instancia) {
+                const msg = '🚗 *MOTORISTA A CAMINHO!*\n\n' +
+                    '👤 *' + req.motorista.nome + '*\n' +
+                    (req.motorista.veiculo ? '🚙 ' + req.motorista.veiculo + '\n' : '') +
+                    (req.motorista.placa ? '🔢 Placa: ' + req.motorista.placa + '\n' : '') +
+                    '\nFique tranquilo, ele ja esta indo te buscar!';
+                await EvolutionMultiService.enviarMensagem(instancia._id, corrida.clienteTelefone, msg);
+            }
+        }
+        
+        res.json({ sucesso: true, corrida });
+    } catch (e) {
+        res.json({ sucesso: false, erro: e.message });
+    }
 });
 
 // Iniciar corrida
