@@ -954,6 +954,7 @@ async function testarAnaliseIA() {
                 atualizarStatusWhatsApp(inst.status);
                 
                 if (inst.status === 'conectado') {
+                    document.getElementById('qrCodeBox').innerHTML = '<div style="text-align:center"><p style="color:#27ae60;font-size:48px">✅</p><h3 style="color:#27ae60">WhatsApp Conectado</h3><p style="color:#666;margin-top:10px">A Rebeca ja esta atendendo seus clientes</p></div>';
                     document.getElementById('btnGerarQR').style.display = 'none';
                     document.getElementById('btnDesconectar').style.display = 'inline-block';
                 }
