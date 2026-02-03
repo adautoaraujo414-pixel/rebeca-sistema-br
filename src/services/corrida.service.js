@@ -117,7 +117,14 @@ const CorridaService = {
         const filtro = { status: { $in: ['pendente', 'aceita', 'em_andamento', 'motorista_a_caminho'] } };
         if (adminId) filtro.adminId = adminId;
         return await Corrida.find(filtro).sort({ createdAt: -1 }).limit(50);
-    }
+    },
+
+    // Aliases para compatibilidade com rotas
+    iniciar(corridaId) { return this.iniciarCorrida(corridaId); },
+    finalizar(corridaId, precoFinal) { return this.finalizarCorrida(corridaId, precoFinal); },
+    cancelar(corridaId, motivo) { return this.cancelarCorrida(corridaId, motivo); },
+    listarTodas(filtros) { return this.listar(null, filtros); },
+    obterEstatisticas(adminId) { return this.estatisticas(adminId); },
 };
 
 module.exports = CorridaService;
