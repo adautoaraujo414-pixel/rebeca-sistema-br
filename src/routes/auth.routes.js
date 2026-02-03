@@ -111,4 +111,35 @@ router.post('/cadastrar', async (req, res) => {
     }
 });
 
+// Buscar dados empresa
+router.get('/empresa', async (req, res) => {
+    try {
+        const { Admin } = require('../models');
+        const token = req.headers.authorization?.split(' ')[1];
+        const jwt = require('jsonwebtoken');
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'segredo-rebeca-2024');
+        const admin = await Admin.findById(decoded.id || decoded.adminId);
+        if (!admin) return res.json({ sucesso: false, erro: 'Admin nao encontrado' });
+        res.json({ sucesso: true, empresa: { nome: admin.empresa || '', telefone: admin.telefone || '', horario: admin.horario || '24 horas', pagamento: admin.pagamento || 'Dinheiro, PIX', boasVindas: admin.boasVindas || '' } });
+    } catch(e) { res.json({ sucesso: false, erro: e.message }); }
+});
+
+// Salvar dados empresa
+router.put('/empresa', async (req, res) => {
+    try {
+        const { Admin } = require('../models');
+        const token = req.headers.authorization?.split(' ')[1];
+        const jwt = require('jsonwebtoken');
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'segredo-rebeca-2024');
+        const admin = await Admin.findByIdAndUpdate(decoded.id || decoded.adminId, {
+            empresa: req.body.empresa,
+            telefone: req.body.telefone,
+            horario: req.body.horario,
+            pagamento: req.body.pagamento,
+            boasVindas: req.body.boasVindas
+        }, { new: true });
+        res.json({ sucesso: true, admin });
+    } catch(e) { res.json({ sucesso: false, erro: e.message }); }
+});
+
 module.exports = router;

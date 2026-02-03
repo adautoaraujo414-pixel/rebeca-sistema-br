@@ -682,7 +682,16 @@ const RebecaService = {
         else saudacao = 'Boa noite';
         
         const favoritos = RebecaService.getFavoritos(telefone);
-        let menu = `${saudacao}${nome ? ', ' + nome : ''}! Sou a *Rebeca*, sua assistente de transporte. 🚗\n\nComo posso te ajudar?\n\n📍 Envie sua *localização* ou digite o *endereço* de origem\n💰 Digite *preços* para consultar valores\n📋 Digite *historico* para ver suas corridas`;
+        // Verificar se cliente ja usou antes
+        let jaUsou = false;
+        try {
+            const cl = ClienteService.buscarPorTelefone(telefone);
+            if (cl) jaUsou = true;
+        } catch(e) {}
+        
+        let menu = jaUsou 
+            ? `${saudacao}${nome ? ', ' + nome : ''}! Que bom te ver de novo! 🚗`
+            : `${saudacao}${nome ? ', ' + nome : ''}! Sou a *Rebeca*, sua assistente de transporte. Seja bem-vindo! 🚗\n\nComo posso te ajudar?\n\n📍 Envie sua *localização* ou digite o *endereço* de origem\n💰 Digite *preços* para consultar valores\n📋 Digite *historico* para ver suas corridas`;
         if (favoritos.casa || favoritos.trabalho) {
             menu += `\n\n⭐ *Atalhos salvos:* ${favoritos.casa ? '*casa*' : ''}${favoritos.casa && favoritos.trabalho ? ' | ' : ''}${favoritos.trabalho ? '*trabalho*' : ''}`;
         }

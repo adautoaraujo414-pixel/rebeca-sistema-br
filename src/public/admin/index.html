@@ -180,6 +180,9 @@
             <div class="menu-item" data-page="reclamacoes">📞 Reclamações</div>
             <div class="menu-item" data-page="whatsapp">💬 WhatsApp</div>
             
+            <div class="menu-section">Empresa</div>
+            <div class="menu-item" data-page="empresa">🏢 Minha Empresa</div>
+            
             <div class="menu-section">Sistema</div>
             <div class="menu-item" data-page="usuarios">👤 Usuários Admin</div>
             <div class="menu-item" data-page="areas">🗺️ Áreas</div>
@@ -541,6 +544,39 @@
                 </div>
                 <div class="search-bar"><select id="filtroLogTipo"><option value="">Todos</option><option value="login">Login</option><option value="config">Config</option><option value="despacho">Despacho</option></select><button class="btn btn-primary" onclick="carregarLogs()">🔍</button></div>
                 <div class="panel"><div id="logsLista"></div></div>
+            </div>
+            
+            <!-- Pagina Minha Empresa -->
+            <div id="empresa" class="page">
+                <h2 style="margin-bottom:20px;">🏢 Minha Empresa</h2>
+                <div class="panel">
+                    <h3>Dados da Empresa</h3>
+                    <p style="color:#666;margin-bottom:15px">Esses dados serão usados pela Rebeca ao atender seus clientes.</p>
+                    <div style="display:grid;gap:15px;max-width:500px">
+                        <div>
+                            <label style="font-weight:bold;display:block;margin-bottom:5px">Nome da Empresa</label>
+                            <input type="text" id="empresaNome" class="form-control" placeholder="Ex: Taxi Express" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px">
+                        </div>
+                        <div>
+                            <label style="font-weight:bold;display:block;margin-bottom:5px">Telefone</label>
+                            <input type="text" id="empresaTelefone" class="form-control" placeholder="(34) 99999-9999" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px">
+                        </div>
+                        <div>
+                            <label style="font-weight:bold;display:block;margin-bottom:5px">Horário de Funcionamento</label>
+                            <input type="text" id="empresaHorario" class="form-control" placeholder="24 horas" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px">
+                        </div>
+                        <div>
+                            <label style="font-weight:bold;display:block;margin-bottom:5px">Formas de Pagamento</label>
+                            <input type="text" id="empresaPagamento" class="form-control" placeholder="Dinheiro, PIX" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px">
+                        </div>
+                        <div>
+                            <label style="font-weight:bold;display:block;margin-bottom:5px">Mensagem de Boas-Vindas (cliente novo)</label>
+                            <textarea id="empresaBoasVindas" rows="3" placeholder="Ex: Bem-vindo ao nosso serviço de transporte!" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px"></textarea>
+                        </div>
+                        <button class="btn btn-primary" onclick="salvarEmpresa()" style="padding:12px;font-size:16px">💾 Salvar</button>
+                        <div id="empresaMsg" style="display:none;padding:10px;border-radius:8px;text-align:center"></div>
+                    </div>
+                </div>
             </div>
         </main>
     </div>
@@ -1099,5 +1135,42 @@ async function testarAnaliseIA() {
     };
 
 
+
+    // ========== MINHA EMPRESA ==========
+    async function carregarEmpresa() {
+        try {
+            const r = await fetch('/api/auth/empresa', { headers: { 'Authorization': 'Bearer ' + token } });
+            const d = await r.json();
+            if (d.sucesso) {
+                document.getElementById('empresaNome').value = d.empresa.nome || '';
+                document.getElementById('empresaTelefone').value = d.empresa.telefone || '';
+                document.getElementById('empresaHorario').value = d.empresa.horario || '24 horas';
+                document.getElementById('empresaPagamento').value = d.empresa.pagamento || 'Dinheiro, PIX';
+                document.getElementById('empresaBoasVindas').value = d.empresa.boasVindas || '';
+            }
+        } catch(e) { console.log('Erro empresa:', e); }
+    }
+    async function salvarEmpresa() {
+        const dados = {
+            empresa: document.getElementById('empresaNome').value,
+            telefone: document.getElementById('empresaTelefone').value,
+            horario: document.getElementById('empresaHorario').value,
+            pagamento: document.getElementById('empresaPagamento').value,
+            boasVindas: document.getElementById('empresaBoasVindas').value
+        };
+        try {
+            const r = await fetch('/api/auth/empresa', { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify(dados) });
+            const d = await r.json();
+            const msg = document.getElementById('empresaMsg');
+            msg.style.display = 'block';
+            if (d.sucesso) { msg.style.background = '#d4edda'; msg.style.color = '#155724'; msg.textContent = '✅ Dados salvos!'; }
+            else { msg.style.background = '#f8d7da'; msg.style.color = '#721c24'; msg.textContent = '❌ Erro ao salvar'; }
+            setTimeout(() => msg.style.display = 'none', 3000);
+        } catch(e) { alert('Erro: ' + e.message); }
+    }
+    // Carregar empresa ao abrir pagina
+    document.querySelectorAll('.menu-item').forEach(item => {
+        item.addEventListener('click', function() { if (this.dataset.page === 'empresa') carregarEmpresa(); });
+    });
     </script>
     <div class="modal" id="modalIntermunicipal"><div class="modal-content"><div class="modal-header"><h3>🚗 Nova Rota Intermunicipal</h3><button class="modal-close" onclick="fecharModal('modalIntermunicipal')">&times;</button></div><form id="formIntermunicipal"><div class="form-group"><label>Cidade Origem *</label><input type="text" id="intOrigem" placeholder="Ex: São Paulo - SP" required></div><div class="form-group"><label>Cidade Destino *</label><input type="text" id="intDestino" placeholder="Ex: Campinas - SP" required></div><div class="form-row"><div class="form-group"><label>Distância (km)</label><input type="number" id="intDistancia" step="0.1"></div><div class="form-group"><label>Preço Fixo (R$) *</label><input type="number" id="intPreco" step="0.01" required></div></div><div class="form-group"><label>Tempo Estimado (min)</label><input type="number" id="intTempo"></div><button type="submit" class="btn btn-success" style="width:100%;">💾 Salvar Rota</button></form></div></div>
