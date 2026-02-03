@@ -194,6 +194,12 @@ const RebecaService = {
                 }
             }
         }
+ 
+        // ========== AGUARDANDO MOTORISTA ==========
+        if (conversa.etapa === 'aguardando_motorista' && !msg.includes('cancelar')) {
+            conversas.set(telefone, conversa);
+            return 'Calma que ja estou buscando um motorista pra voce! \u23f3\n\nAssim que um aceitar, te aviso. Se quiser cancelar, digite *CANCELAR*.';
+        }
 
         // ========== COMANDOS DIRETOS ==========
         if (msg === 'menu' || msg === 'oi' || msg === 'olá' || msg === 'ola' || msg === 'inicio' || msg === 'boa tarde' || msg === 'boa noite' || msg === 'bom dia') {
