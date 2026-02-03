@@ -22,7 +22,7 @@ const EvolutionMultiService = {
                 await axios.post(EVOLUTION_BASE_URL + '/webhook/set/' + nomeInstancia, {
                     url: webhookUrl,
                     webhook_by_events: false,
-                    webhook_base64: false,
+                    enabled: true, webhook_base64: false,
                     events: ['MESSAGES_UPSERT', 'CONNECTION_UPDATE', 'MESSAGES_UPDATE']
                 }, { headers: { 'apikey': EVOLUTION_GLOBAL_KEY, 'Content-Type': 'application/json' } });
                 console.log('[EVOLUTION] Webhook configurado:', webhookUrl);
@@ -50,7 +50,7 @@ const EvolutionMultiService = {
                     webhook: {
                         url: webhookUrl,
                         webhook_by_events: false,
-                        webhook_base64: false,
+                        enabled: true, webhook_base64: false,
                         events: ['MESSAGES_UPSERT', 'CONNECTION_UPDATE']
                     }
                 }, { headers: { 'apikey': instancia.apiKey || EVOLUTION_GLOBAL_KEY, 'Content-Type': 'application/json' } });
@@ -135,3 +135,28 @@ const EvolutionMultiService = {
     }
 };
 module.exports = EvolutionMultiService;
+// ========== LIMPEZA AUTOMATICA ==========
+// Deletar instancias desconectadas ha mais de 1 hora
+EvolutionMultiService.limparDesconectadas = async () => {
+    try {
+        const umaHoraAtras = new Date(Date.now() - 60 * 60 * 1000);
+        const desconectadas = await InstanciaWhatsapp.find({ 
+            status: 'desconectado', 
+            updatedAt: { $lt: umaHoraAtras } 
+        });
+        for (const inst of desconectadas) {
+            try {
+                await axios.delete(EVOLUTION_BASE_URL + '/instance/delete/' + inst.nomeInstancia, 
+                    { headers: { 'apikey': inst.apiKey || EVOLUTION_GLOBAL_KEY } });
+            } catch (e) {}
+            await InstanciaWhatsapp.findByIdAndDelete(inst._id);
+            console.log('[LIMPEZA] Instancia removida:', inst.nomeInstancia);
+        }
+        if (desconectadas.length > 0) console.log('[LIMPEZA] ' + desconectadas.length + ' instancias removidas');
+    } catch (e) { console.log('[LIMPEZA] Erro:', e.message); }
+};
+
+// Rodar a cada 30 minutos
+setInterval(() => EvolutionMultiService.limparDesconectadas(), 30 * 60 * 1000);
+// Rodar 1 min apos iniciar
+setTimeout(() => EvolutionMultiService.limparDesconectadas(), 60 * 1000);
