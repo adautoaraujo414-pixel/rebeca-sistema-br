@@ -216,6 +216,24 @@ const RebecaService = {
             return 'Estou localizando o motorista mais proximo para voce. \u23f3\n\nAssim que um aceitar, te aviso imediatamente. Para cancelar, digite *CANCELAR*.';
         }
 
+        // ========== AVALIACAO ==========
+        if (conversa.etapa === 'avaliar') {
+            const nota = parseInt(msg);
+            if (nota >= 1 && nota <= 5) {
+                const estrelas = '⭐'.repeat(nota);
+                conversa.etapa = 'inicio';
+                conversa.dados = {};
+                conversas.set(telefone, conversa);
+                return estrelas + ' Obrigada pela avaliacao! Sua opiniao e muito importante pra gente.\n\nQuando precisar, e so chamar!';
+            } else if (msg === 'menu' || msg === 'oi' || msg === 'ola' || msg.length > 5) {
+                conversa.etapa = 'inicio';
+                conversa.dados = {};
+                conversas.set(telefone, conversa);
+                return RebecaService.menuPrincipal(nome, telefone);
+            } else {
+                return 'Manda uma nota de *1* a *5* pra avaliar o motorista, ou digite *menu* pra voltar.';
+            }
+        }
         // ========== COMANDOS DIRETOS ==========
         if (msg === 'menu' || msg === 'oi' || msg === 'olá' || msg === 'ola' || msg === 'inicio' || msg === 'boa tarde' || msg === 'boa noite' || msg === 'bom dia') {
             conversa.etapa = 'inicio';
