@@ -636,6 +636,16 @@ const RebecaService = {
             return await RebecaService.enviarRastreamento(telefone);
         }
         
+        // Pergunta - IA responde direto
+        if (analise.intencao === 'pergunta' && analise.respostaPergunta) {
+            return analise.respostaPergunta;
+        }
+        
+        // Saudacao
+        if (analise.intencao === 'saudacao') {
+            return null; // Deixa cair no menu normal
+        }
+        
         return null;
     },
 

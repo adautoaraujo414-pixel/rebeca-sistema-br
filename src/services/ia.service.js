@@ -35,7 +35,17 @@ const IAService = {
     async analisarMensagem(mensagem, contexto = {}) {
         if (!IAService.isAtivo()) return { usarIA: false };
         try {
-            const prompt = `Analise para app de táxi. Contexto: ${JSON.stringify(contexto)}. Mensagem: "${mensagem}". Responda JSON: {"intencao":"pedir_corrida|cotacao|historico|precos|rastrear|saudacao|pergunta|outro","origem":null,"destino":null,"usarFavorito":"casa|trabalho|null","observacao":null,"confianca":0.9}`;
+            const prompt = `Voce e a IA do app de taxi UBMAX. Analise a mensagem do cliente.
+REGRAS:
+- Se o cliente PERGUNTA algo (ex: "tem carro?", "ate que horas?", "como funciona?", "quanto custa de X a Y?"), intencao = "pergunta"
+- Se o cliente quer PEDIR um carro/corrida (ex: "me busca na Rua X", "quero ir pra casa"), intencao = "pedir_corrida"
+- Se o cliente quer SABER PRECO sem pedir (ex: "quanto fica de X a Y?"), intencao = "cotacao"
+- Se diz "oi", "ola", "bom dia", intencao = "saudacao"
+- Diferencie PERGUNTAS de PEDIDOS. "Tem carro disponivel?" e pergunta, nao pedido.
+Contexto: ${JSON.stringify(contexto)}
+Mensagem: "${mensagem}"
+Responda SOMENTE o JSON: {"intencao":"pedir_corrida|cotacao|historico|precos|saudacao|pergunta|outro","origem":null,"destino":null,"usarFavorito":null,"observacao":null,"confianca":0.9,"respostaPergunta":null}
+Se intencao="pergunta", preencha respostaPergunta com resposta curta e simpatica (max 2 frases).`;
             const response = await clienteAnthropic.messages.create({ model: configIA.modelo, max_tokens: 300, messages: [{ role: 'user', content: prompt }] });
             const analise = JSON.parse(response.content[0].text.trim());
             analise.usarIA = true;
