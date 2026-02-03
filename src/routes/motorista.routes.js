@@ -51,7 +51,7 @@ router.post('/', async (req, res) => {
             return res.status(400).json({ error: 'Admin ID obrigatorio' });
         }
         
-        const senhaGerada = Math.random().toString(36).slice(-6).toUpperCase();
+        const senhaGerada = req.body.senhaPin || Math.random().toString(36).slice(-6).toUpperCase();
         req.body.senha = senhaGerada;
         const motorista = await MotoristaService.criar(req.body, adminId);
         

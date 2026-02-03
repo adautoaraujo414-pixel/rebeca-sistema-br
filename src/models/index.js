@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const MotoristaSchema = new mongoose.Schema({
-    nomeCompleto: String, whatsapp: { type: String, unique: true }, cpf: String, cnh: String,
+    nomeCompleto: String, whatsapp: { type: String }, cpf: String, cnh: String,
     veiculo: { modelo: String, cor: String, placa: String, ano: Number },
     status: { type: String, default: 'disponivel' }, latitude: Number, longitude: Number,
     avaliacao: { type: Number, default: 5 }, corridasRealizadas: { type: Number, default: 0 },
@@ -9,7 +9,7 @@ const MotoristaSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 const ClienteSchema = new mongoose.Schema({
-    nome: String, telefone: { type: String, unique: true }, email: String,
+    nome: String, telefone: { type: String }, email: String,
     enderecoFavorito: { casa: { endereco: String, latitude: Number, longitude: Number }, trabalho: { endereco: String, latitude: Number, longitude: Number } },
     corridasRealizadas: { type: Number, default: 0 }
 }, { timestamps: true });
@@ -38,6 +38,17 @@ module.exports = {
 // ==================== MULTI-TENANT: Adicionar adminId ====================
 // Adiciona adminId aos schemas existentes para isolamento por empresa
 const { Motorista, Cliente, Corrida } = module.exports;
+
+// Compound index: whatsapp + adminId (permite mesmo numero em admins diferentes)
+MotoristaSchema.index({ whatsapp: 1, adminId: 1 }, { unique: true });
+ClienteSchema.index({ telefone: 1, adminId: 1 }, { unique: true });
+
+// Dropar indexes unicos antigos que causam conflito
+async function corrigirIndexes() {
+    try { await Motorista.collection.dropIndex('whatsapp_1'); } catch(e) {}
+    try { await Cliente.collection.dropIndex('telefone_1'); } catch(e) {}
+}
+corrigirIndexes();
 
 Motorista.schema.add({ adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin', index: true } });
 Cliente.schema.add({ adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin', index: true } });
