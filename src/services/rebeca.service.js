@@ -762,6 +762,17 @@ const RebecaService = {
     },
 
     async criarCorrida(telefone, nomeCliente, dados, adminId = null, instanciaId = null) {
+        // Anti-duplicacao: verificar se ja tem corrida ativa
+        const { Corrida } = require('../models');
+        const corridaAtiva = await Corrida.findOne({
+            clienteTelefone: telefone,
+            status: { $in: ['pendente', 'aceita', 'em_andamento', 'motorista_a_caminho'] }
+        });
+        if (corridaAtiva) {
+            console.log('[REBECA] Corrida duplicada bloqueada para', telefone);
+            return { id: corridaAtiva._id, duplicada: true };
+        }
+        
         let cliente = ClienteService.buscarPorTelefone(telefone);
         if (!cliente) cliente = await ClienteService.criar({ nome: nomeCliente, telefone, adminId });
         
@@ -957,6 +968,27 @@ const RebecaService = {
             return '❌ Erro ao cancelar.';
         }
     }
+};
+
+    // Resetar conversa de um telefone
+    resetarConversa(telefone) {
+        const conversa = conversas.get(telefone);
+        if (conversa) {
+            conversa.etapa = 'inicio';
+            conversa.dados = {};
+            conversas.set(telefone, conversa);
+        }
+    },
+    
+    // Colocar em modo avaliacao
+    pedirAvaliacao(telefone) {
+        const conversa = conversas.get(telefone);
+        if (conversa) {
+            conversa.etapa = 'avaliar';
+            conversa.dados = {};
+            conversas.set(telefone, conversa);
+        }
+    },
 };
 
 module.exports = RebecaService;

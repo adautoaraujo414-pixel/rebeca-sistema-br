@@ -104,6 +104,8 @@ router.post('/finalizar', auth, async (req, res) => {
             const instancia = await InstanciaWhatsapp.findOne({ adminId: corridaFinal.adminId, status: 'conectado' });
             if (instancia) {
                 const valor = precoFinal || corridaFinal.precoFinal || corridaFinal.precoEstimado || 0;
+                // Colocar cliente em modo avaliacao
+                try { const RebecaService = require('../services/rebeca.service'); RebecaService.pedirAvaliacao(corridaFinal.clienteTelefone); } catch(e) {}
                 await EvolutionMultiService.enviarMensagem(instancia._id, corridaFinal.clienteTelefone,
                     '\ud83c\udfc1 *CORRIDA FINALIZADA!*\n\n' +
                     '\ud83d\udcb0 *Valor: R$ ' + valor.toFixed(2) + '*\n\n' +
