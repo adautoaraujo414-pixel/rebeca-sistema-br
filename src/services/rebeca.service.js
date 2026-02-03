@@ -967,8 +967,7 @@ const RebecaService = {
         } catch (e) {
             return '❌ Erro ao cancelar.';
         }
-    }
-};
+    },
 
     // Resetar conversa de um telefone
     resetarConversa(telefone) {
@@ -992,4 +991,3 @@ const RebecaService = {
 };
 
 module.exports = RebecaService;
-// fix
