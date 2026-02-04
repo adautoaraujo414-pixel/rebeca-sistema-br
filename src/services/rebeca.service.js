@@ -295,24 +295,42 @@ const RebecaService = {
         }
         else if (msg.includes("cancelar")) {
             // Buscar corrida ativa do cliente
-            const cliente = ClienteService.buscarPorTelefone(telefone);
-            if (cliente) {
-                const corridas = await CorridaService.listarPorCliente(cliente._id || cliente.id);
-                const corridaAtiva = corridas?.find(c => ["pendente", "aceita", "a_caminho"].includes(c.status));
+            let cancelou = false;
+            try {
+                const { Corrida } = require('../models');
+                const corridaAtiva = await Corrida.findOne({
+                    clienteTelefone: telefone,
+                    status: { $in: ['pendente', 'aceita', 'a_caminho', 'motorista_a_caminho', 'em_andamento'] }
+                });
+                
                 if (corridaAtiva) {
                     await CorridaService.cancelarCorrida(corridaAtiva._id, "Cancelado pelo cliente");
-                    // Avisar motorista se tiver
+                    cancelou = true;
+                    
+                    // Notificar motorista via WhatsApp
                     if (corridaAtiva.motoristaId && conversa.instanciaId) {
-                        const motorista = await MotoristaService.buscarPorId(corridaAtiva.motoristaId);
-                        if (motorista?.whatsapp) {
-                            await EvolutionMultiService.enviarMensagem(conversa.instanciaId, motorista.whatsapp, "❌ *CORRIDA CANCELADA*\n\nO cliente cancelou a corrida.\n\nVocê está disponível novamente!");
-                        }
+                        try {
+                            const motorista = await MotoristaService.buscarPorId(corridaAtiva.motoristaId);
+                            if (motorista?.whatsapp) {
+                                const msgMot = '❌ *Corrida cancelada pelo cliente*\n\n' +
+                                    '📍 ' + (corridaAtiva.origem?.endereco || 'Não informado') + '\n\n' +
+                                    'Você já está disponível para novas corridas! ✅';
+                                await EvolutionMultiService.enviarMensagem(conversa.instanciaId, motorista.whatsapp, msgMot);
+                            }
+                            // Liberar motorista
+                            await MotoristaService.atualizarStatus(corridaAtiva.motoristaId, 'disponivel');
+                        } catch(e) { console.log('[REBECA] Erro notificar motorista cancelamento:', e.message); }
                     }
                 }
-            }
-            conversa.etapa = "inicio";
+            } catch(e) { console.log('[REBECA] Erro cancelar:', e.message); }
+            
+            conversa.etapa = 'inicio';
             conversa.dados = {};
-            resposta = "Poxa, que pena! 😔 Sua corrida foi cancelada.\n\nQuando precisar, é só mandar a localização!";
+            if (cancelou) {
+                resposta = '😔 Corrida cancelada com sucesso.\n\nQuando precisar, estamos aqui! Basta enviar sua localização 📍';
+            } else {
+                resposta = 'Você não tem corrida ativa no momento.\n\nPara solicitar, envie sua localização! 📍';
+            }
         }
         else if (msg.includes('rastrear') || msg.includes('onde está') || msg.includes('cadê') || msg.includes('cade o motorista')) {
             resposta = await RebecaService.enviarRastreamento(telefone);
