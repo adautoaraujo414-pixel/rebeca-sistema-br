@@ -322,7 +322,10 @@ const RebecaService = {
                 conversa.etapa = 'inicio';
                 resposta = `✅ *${tipo.toUpperCase()} SALVO!*\n\n${validacao.endereco}\n\nAgora digite *${tipo}* para usar!\n\n${RebecaService.menuPrincipal(nome, telefone)}`;
             } else {
-                resposta = `❌ Não encontrei. Tente com mais detalhes.`;
+                // Salvar como texto livre
+                RebecaService.salvarFavorito(telefone, tipo, { endereco: msgOriginal });
+                conversa.etapa = 'inicio';
+                resposta = `✅ *${tipo.toUpperCase()} SALVO!*\n\n${msgOriginal}\n\nAgora digite *${tipo}* para usar!`;
             }
         }
         // ========== ATALHO FAVORITOS ==========
@@ -344,17 +347,11 @@ const RebecaService = {
             const validacao = await RebecaService.validarEndereco(msgOriginal);
             
             if (!validacao.valido) {
-                // Nao achou no Maps - usar o texto como endereco mesmo e pedir referencia
-                conversa.dados.origem = msgOriginal;
-                conversa.dados.origemValidada = { valido: true, precisao: 'texto_livre', endereco: msgOriginal };
-                conversa.dados.calculo = {
-                    origem: { endereco: msgOriginal },
-                    destino: null, distanciaKm: 0, tempoMinutos: 0, preco: 15,
-                    faixa: { nome: 'padrao', multiplicador: 1 }
-                };
-                conversa.etapa = 'pedir_referencia';
+                // Nao achou no Maps - perguntar bairro
+                conversa.dados.origemTexto = msgOriginal;
+                conversa.etapa = 'pedir_bairro_origem';
                 conversas.set(telefone, conversa);
-                return `📍 *${msgOriginal}*\n\n📌 Tem algum ponto de referência? (ex: próximo ao mercado, em frente à farmácia)\n\nOu envie *0* para continuar sem referência.`;
+                return `📍 *${msgOriginal}*\n\nQual bairro fica? 🏘️`;
             } else {
                 // Achou no Maps - pedir referencia
                 conversa.dados.origem = validacao.endereco;
@@ -368,6 +365,20 @@ const RebecaService = {
                 conversas.set(telefone, conversa);
                 return `📍 *${validacao.endereco}*\n\n📌 Tem algum ponto de referência? (ex: próximo ao mercado, portão azul)\n\nOu envie *0* para continuar sem referência.`;
             }
+        }
+        // ========== PEDIR BAIRRO ==========
+        else if (conversa.etapa === 'pedir_bairro_origem') {
+            const enderecoCompleto = conversa.dados.origemTexto + ', ' + msgOriginal;
+            conversa.dados.origem = enderecoCompleto;
+            conversa.dados.origemValidada = { valido: true, precisao: 'texto_livre', endereco: enderecoCompleto };
+            conversa.dados.calculo = {
+                origem: { endereco: enderecoCompleto },
+                destino: null, distanciaKm: 0, tempoMinutos: 0, preco: 15,
+                faixa: { nome: 'padrao', multiplicador: 1 }
+            };
+            conversa.etapa = 'pedir_referencia';
+            conversas.set(telefone, conversa);
+            return `📍 *${enderecoCompleto}*\n\n📌 Tem algum ponto de referência? (ex: próximo ao mercado, portão azul)\n\nOu envie *0* para continuar sem referência.`;
         }
         // ========== REFERÊNCIA (NOVO FLUXO DIRETO) ==========
         else if (conversa.etapa === 'pedir_referencia') {
@@ -523,11 +534,20 @@ const RebecaService = {
             } else {
                 const validacao = await RebecaService.validarEndereco(msgOriginal);
                 if (!validacao.valido) {
-                    resposta = `❌ Não encontrei. Envie com número e bairro.`;
+                    // Aceitar texto e pedir bairro
+                    conversa.dados.origemTexto = msgOriginal;
+                    conversa.etapa = 'pedir_bairro_origem';
+                    resposta = `📍 *${msgOriginal}*\n\nQual bairro fica? 🏘️`;
                 } else {
                     conversa.dados.origem = validacao.endereco;
-                    conversa.etapa = 'pedir_destino';
-                    resposta = `✅ *Origem:* ${validacao.endereco}\n\n🏁 Agora o destino:`;
+                    conversa.etapa = 'pedir_referencia';
+                    conversa.dados.origemValidada = validacao;
+                    conversa.dados.calculo = {
+                        origem: { endereco: validacao.endereco, latitude: validacao.latitude, longitude: validacao.longitude },
+                        destino: null, distanciaKm: 0, tempoMinutos: 0, preco: 15,
+                        faixa: { nome: 'padrao', multiplicador: 1 }
+                    };
+                    resposta = `📍 *${validacao.endereco}*\n\n📌 Tem algum ponto de referência?\n\nOu envie *0* para continuar sem referência.`;
                 }
             }
         }
@@ -572,7 +592,9 @@ const RebecaService = {
         else if (conversa.etapa === 'cotacao_origem') {
             const validacao = await RebecaService.validarEndereco(msgOriginal);
             if (!validacao.valido) {
-                resposta = `❌ Não encontrei. Tente novamente.`;
+                conversa.dados.origem = msgOriginal;
+                conversa.etapa = 'cotacao_destino';
+                resposta = `✅ Origem: ${msgOriginal}\n\n🏁 Destino:`;
             } else {
                 conversa.dados.origem = validacao.endereco;
                 conversa.etapa = 'cotacao_destino';
@@ -582,7 +604,9 @@ const RebecaService = {
         else if (conversa.etapa === 'cotacao_destino') {
             const validacao = await RebecaService.validarEndereco(msgOriginal);
             if (!validacao.valido) {
-                resposta = `❌ Não encontrei. Tente novamente.`;
+                conversa.etapa = 'inicio';
+                resposta = `💰 Cotação de *${conversa.dados.origem}* a *${msgOriginal}*\n\nPara valor exato, envie a localização 📍`;
+                conversa.dados = {};
             } else {
                 conversa.etapa = 'inicio';
                 const calculo = await RebecaService.calcularCorrida(conversa.dados.origem, validacao.endereco);
