@@ -37,14 +37,19 @@ const RebecaService = {
 
     // ==================== HELPERS ====================
     pareceEndereco: (texto) => {
-        const padroes = [
-            /\d+\s*,?\s*(rua|av|avenida|alameda|travessa|estrada|rod|rodovia|praca|praça)/i,
-            /(rua|av|avenida|alameda|travessa|estrada|rod|rodovia|praca|praça)\s+.+\d+/i,
-            /\d{5}-?\d{3}/,
-            /.+,\s*\d+\s*[-–]\s*.+/i,
-            /.+\s+\d+\s*,\s*.+/i,
-        ];
-        return padroes.some(p => p.test(texto)) && texto.length > 10;
+        if (!texto || texto.length < 5) return false;
+        const lower = texto.toLowerCase().trim();
+        // Ignorar comandos obvios
+        const comandos = ['menu','oi','ola','olá','bom dia','boa tarde','boa noite','obrigado','obrigada','valeu','sim','nao','não','ok','1','2','3','4','5','6','7','casa','trabalho','cancelar','aceitar','finalizar','cheguei','preço','preco','historico','cotação','cotacao','ajuda','atendente'];
+        if (comandos.includes(lower)) return false;
+        // Tem numero? Provavelmente endereco
+        if (/\d+/.test(texto) && texto.length > 8) return true;
+        // Tem palavras de endereco?
+        if (/(rua|av|avenida|alameda|travessa|estrada|rodovia|praca|praça|bairro|setor|quadra|lote|condominio|conjunto)/i.test(texto)) return true;
+        // Texto com mais de 3 palavras e nao parece pergunta
+        const palavras = texto.split(/\s+/).length;
+        if (palavras >= 3 && !lower.includes('?') && !lower.startsWith('como') && !lower.startsWith('qual') && !lower.startsWith('quanto') && !lower.startsWith('tem ') && !lower.startsWith('posso')) return true;
+        return false;
     },
 
     pareceLocalizacao: (mensagem) => {
@@ -334,34 +339,61 @@ const RebecaService = {
                 resposta = `Você não cadastrou ${tipo} ainda.\n\nEnvie o endereço:`;
             }
         }
-        // ========== AUTO-DETECT ENDEREÇO - CHAMAR CARRO DIRETO ==========
+        // ========== AUTO-DETECT ENDEREÇO ==========
         else if (configRebeca.autoDetectarEndereco && conversa.etapa === 'inicio' && RebecaService.pareceEndereco(msgOriginal)) {
             const validacao = await RebecaService.validarEndereco(msgOriginal);
             
             if (!validacao.valido) {
-                resposta = `❌ Não encontrei esse endereço.\n\nEnvie sua 📍 localização ou tente com mais detalhes.`;
+                // Nao achou no Maps - usar o texto como endereco mesmo e pedir referencia
+                conversa.dados.origem = msgOriginal;
+                conversa.dados.origemValidada = { valido: true, precisao: 'texto_livre', endereco: msgOriginal };
+                conversa.dados.calculo = {
+                    origem: { endereco: msgOriginal },
+                    destino: null, distanciaKm: 0, tempoMinutos: 0, preco: 15,
+                    faixa: { nome: 'padrao', multiplicador: 1 }
+                };
+                conversa.etapa = 'pedir_referencia';
+                conversas.set(telefone, conversa);
+                return `📍 *${msgOriginal}*\n\n📌 Tem algum ponto de referência? (ex: próximo ao mercado, em frente à farmácia)\n\nOu envie *0* para continuar sem referência.`;
             } else {
-                // CHAMAR CARRO DIRETO!
+                // Achou no Maps - pedir referencia
                 conversa.dados.origem = validacao.endereco;
                 conversa.dados.origemValidada = validacao;
                 conversa.dados.calculo = {
                     origem: { endereco: validacao.endereco, latitude: validacao.latitude, longitude: validacao.longitude },
-                    destino: null,
-                    distanciaKm: 0,
-                    tempoMinutos: 0,
-                    preco: 15, // Preço mínimo
+                    destino: null, distanciaKm: 0, tempoMinutos: 0, preco: 15,
                     faixa: { nome: 'padrao', multiplicador: 1 }
                 };
-                
-                // Criar corrida e despachar
-                const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
-                
-                conversa.etapa = 'aguardando_motorista';
-                conversa.dados.corridaId = corrida.id;
+                conversa.etapa = 'pedir_referencia';
                 conversas.set(telefone, conversa);
-                
-                return `🚗 *CARRO A CAMINHO!*\n\n📍 Buscar em: *${validacao.endereco}*\n\n⏳ Aguarde, estamos localizando motorista...\n\n_Informe o destino ao motorista quando ele chegar_\n\nDigite *CANCELAR* para cancelar.`;
+                return `📍 *${validacao.endereco}*\n\n📌 Tem algum ponto de referência? (ex: próximo ao mercado, portão azul)\n\nOu envie *0* para continuar sem referência.`;
             }
+        }
+        // ========== REFERÊNCIA (NOVO FLUXO DIRETO) ==========
+        else if (conversa.etapa === 'pedir_referencia') {
+            if (msg !== '0' && msg !== 'não' && msg !== 'nao' && msg !== 'n') {
+                conversa.dados.observacaoOrigem = msgOriginal;
+            }
+            
+            // Verificar motoristas disponiveis
+            const motoristasRef = await MotoristaService.listarDisponiveis(adminId);
+            if (motoristasRef.length === 0) {
+                conversa.etapa = 'inicio';
+                conversa.dados = {};
+                conversas.set(telefone, conversa);
+                return '😔 No momento não temos motoristas disponíveis.\n\nTente novamente em alguns minutos! 🙏';
+            }
+            
+            // Criar corrida e despachar DIRETO
+            const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
+            conversa.etapa = 'aguardando_motorista';
+            conversa.dados.corridaId = corrida.id;
+            conversas.set(telefone, conversa);
+            
+            let respRef = `🚗 *Pronto, ${nome}!*\n\n📍 *Buscar em:* ${conversa.dados.origem}`;
+            if (conversa.dados.observacaoOrigem) respRef += `\n📌 *Ref:* ${conversa.dados.observacaoOrigem}`;
+            respRef += `\n\n⏳ Localizando motorista mais próximo...\nTe aviso assim que um aceitar! 😊\n\n_Digite CANCELAR se precisar_`;
+            return respRef;
         }
         // ========== OBSERVAÇÃO ==========
         else if (conversa.etapa === 'pedir_observacao_origem') {
@@ -639,11 +671,14 @@ const RebecaService = {
                         }
                     }
                     
-                    conversa.etapa = 'pedir_destino_rapido';
-                    let resp = `📍 *Origem:* ${conversa.dados.origem}`;
-                    if (conversa.dados.observacaoOrigem) resp += `\n📝 _${conversa.dados.observacaoOrigem}_`;
-                    resp += `\n\n🏁 Pra onde?`;
-                    return resp;
+                    // Pedir referencia antes de despachar
+                    conversa.dados.calculo = {
+                        origem: { endereco: validacao.endereco, latitude: validacao.latitude, longitude: validacao.longitude },
+                        destino: null, distanciaKm: 0, tempoMinutos: 0, preco: 15,
+                        faixa: { nome: 'padrao', multiplicador: 1 }
+                    };
+                    conversa.etapa = 'pedir_referencia';
+                    return `📍 *${conversa.dados.origem}*\n\n📌 Tem algum ponto de referência?\n\nOu envie *0* para continuar sem referência.`;
                 }
             }
             
