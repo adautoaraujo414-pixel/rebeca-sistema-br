@@ -113,7 +113,8 @@ const CorridaService = {
     },
     
     async listarPendentes(adminId = null) {
-        const filtro = { status: 'pendente' };
+        const limiteRecente = new Date(Date.now() - 15 * 60 * 1000);
+        const filtro = { status: 'pendente', createdAt: { $gte: limiteRecente } };
         if (adminId) filtro.adminId = adminId;
         return await Corrida.find(filtro).sort({ createdAt: -1 }).limit(50);
     },
