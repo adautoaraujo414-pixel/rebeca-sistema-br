@@ -74,6 +74,36 @@ const ConfigService = {
     }
 };
 
+// Funções usadas pelas rotas
+ConfigService.obterConfig = function() {
+    return configPadrao;
+};
+
+ConfigService.atualizarConfig = function(dados) {
+    Object.assign(configPadrao, dados);
+    return configPadrao;
+};
+
+ConfigService.listarAreas = function(ativas) {
+    return [];
+};
+
+ConfigService.obterArea = function(id) {
+    return null;
+};
+
+ConfigService.criarArea = function(dados) {
+    return dados;
+};
+
+ConfigService.atualizarArea = function(id, dados) {
+    return dados;
+};
+
+ConfigService.deletarArea = function(id) {
+    return true;
+};
+
 module.exports = ConfigService;
 
 // Adicionar antes do module.exports

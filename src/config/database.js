@@ -7,6 +7,9 @@ const conectarDB = async () => {
         await mongoose.connect(MONGODB_URI);
         isConnected = true;
         console.log('✅ MongoDB conectado!');
+        // Dropar indexes unicos antigos (agora e compound com adminId)
+        try { await mongoose.connection.collection('motoristas').dropIndex('whatsapp_1'); console.log('Index whatsapp_1 removido'); } catch(e) {}
+        try { await mongoose.connection.collection('clientes').dropIndex('telefone_1'); console.log('Index telefone_1 removido'); } catch(e) {}
     } catch (error) {
         console.error('❌ Erro MongoDB:', error.message);
     }
