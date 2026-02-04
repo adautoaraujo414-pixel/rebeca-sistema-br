@@ -217,7 +217,7 @@
         </div>
         <div class="login-form">
             <input type="tel" id="loginWhatsapp" class="login-input" placeholder="WhatsApp (ex: 11999999999)">
-            <input type="password" id="loginSenha" class="login-input" placeholder="Senha">
+            <input type="password" id="loginSenha" class="login-input" placeholder="Senha PIN (6 digitos)">
             <button class="login-btn" onclick="fazerLogin()">ENTRAR</button>
         </div>
     </div>
@@ -627,12 +627,13 @@
             const whatsapp = document.getElementById('loginWhatsapp').value;
             const senha = document.getElementById('loginSenha').value;
             if (!whatsapp) return toast('Digite o WhatsApp', 'error');
+            if (!senha) return toast('Digite a senha PIN', 'error');
 
             try {
                 const res = await fetch('/api/motorista-app/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ whatsapp, senha: senha || '123456' })
+                    body: JSON.stringify({ whatsapp, senha })
                 });
                 const data = await res.json();
                 if (data.sucesso) {

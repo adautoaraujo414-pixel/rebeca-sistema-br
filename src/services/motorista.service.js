@@ -103,11 +103,20 @@ const MotoristaService = {
 
     // Login motorista
     async login(whatsapp, senha) {
-        const motorista = await Motorista.findOne({ whatsapp });
-        if (!motorista) return { sucesso: false, erro: 'Motorista nao encontrado' };
+        if (!whatsapp) return { sucesso: false, erro: 'Digite o WhatsApp' };
+        if (!senha) return { sucesso: false, erro: 'Digite a senha PIN' };
+        // Normalizar WhatsApp - tentar com e sem 55
+        let motorista = await Motorista.findOne({ whatsapp });
+        if (!motorista && !whatsapp.startsWith('55')) {
+            motorista = await Motorista.findOne({ whatsapp: '55' + whatsapp });
+        }
+        if (!motorista && whatsapp.startsWith('55')) {
+            motorista = await Motorista.findOne({ whatsapp: whatsapp.substring(2) });
+        }
+        if (!motorista) return { sucesso: false, erro: 'Motorista nao encontrado. Verifique o numero do WhatsApp.' };
         if (!motorista.ativo) return { sucesso: false, erro: 'Conta desativada' };
         if (motorista.senha && motorista.senha !== senha) {
-            return { sucesso: false, erro: 'Senha incorreta' };
+            return { sucesso: false, erro: 'Senha PIN incorreta' };
         }
         await this.atualizarStatus(motorista._id, 'disponivel');
         return { sucesso: true, motorista, token: motorista.token };

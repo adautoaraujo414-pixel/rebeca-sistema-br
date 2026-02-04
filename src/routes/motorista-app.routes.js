@@ -18,7 +18,7 @@ const auth = async (req, res, next) => {
 // Login
 router.post('/login', async (req, res) => {
     const { whatsapp, senha } = req.body;
-    const resultado = await MotoristaService.login(whatsapp, senha || '123456');
+    const resultado = await MotoristaService.login(whatsapp, senha);
     res.json(resultado);
 });
 
