@@ -10,6 +10,7 @@ const EvolutionMultiService = require('./evolution-multi.service');
 const IAService = require('./ia.service');
 
 const conversas = new Map();
+const ultimasRespostas = new Map(); // Anti-repeticao
 const favoritosClientes = new Map();
 
 const configRebeca = {
@@ -220,8 +221,9 @@ const RebecaService = {
             // Verificar se tem motorista atribuido - encaminhar mensagem
             try {
                 const { Corrida } = require('../models');
+                const telsC = [telefone, '55' + telefone, telefone.replace(/^55/, '')];
                 const corridaAtiva = await Corrida.findOne({ 
-                    clienteTelefone: telefone, 
+                    clienteTelefone: { $in: telsC }, 
                     status: { $in: ['aceita', 'em_andamento', 'motorista_a_caminho'] }
                 });
                 
@@ -298,10 +300,13 @@ const RebecaService = {
             let cancelou = false;
             try {
                 const { Corrida } = require('../models');
+                // Buscar por telefone com diferentes formatos
+                const tels = [telefone, '55' + telefone, telefone.replace(/^55/, '')];
                 const corridaAtiva = await Corrida.findOne({
-                    clienteTelefone: telefone,
+                    clienteTelefone: { $in: tels },
                     status: { $in: ['pendente', 'aceita', 'a_caminho', 'motorista_a_caminho', 'em_andamento'] }
                 });
+                console.log('[CANCELAR] Buscando corrida para tels:', tels, '| Encontrou:', !!corridaAtiva);
                 
                 if (corridaAtiva) {
                     await CorridaService.cancelarCorrida(corridaAtiva._id, "Cancelado pelo cliente");
@@ -676,6 +681,15 @@ const RebecaService = {
         }
 
         conversas.set(telefone, conversa);
+        
+        // Anti-repeticao: nunca mandar mesma msg 2x seguidas
+        const ultimaResp = ultimasRespostas.get(telefone);
+        if (ultimaResp && ultimaResp === resposta && resposta.length > 20) {
+            console.log('[REBECA] Resposta repetida bloqueada para', telefone);
+            return null;
+        }
+        ultimasRespostas.set(telefone, resposta);
+        
         return resposta;
     },
 

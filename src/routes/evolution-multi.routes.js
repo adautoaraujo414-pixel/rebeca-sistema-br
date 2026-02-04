@@ -81,8 +81,19 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
             console.log('[DEBUG] Dados:', JSON.stringify(dados).substring(0, 800));
             const mensagens = dados.data?.messages || (dados.data ? [dados.data] : []);
             
+            // Anti-duplicacao de mensagens
+            if (!global._msgProcessadas) global._msgProcessadas = new Map();
+            const agora = Date.now();
+            // Limpar msgs antigas (mais de 60s)
+            for (const [k, v] of global._msgProcessadas) { if (agora - v > 60000) global._msgProcessadas.delete(k); }
+            
             for (const msg of mensagens) {
                 if (msg.key?.fromMe) continue;
+                
+                // Dedup por messageId
+                const msgId = msg.key?.id;
+                if (msgId && global._msgProcessadas.has(msgId)) { console.log('[DEDUP] Msg duplicada ignorada:', msgId); continue; }
+                if (msgId) global._msgProcessadas.set(msgId, agora);
                 
                 const remoteJid = msg.key?.remoteJid || '';
                 if (remoteJid.includes('@g.us')) continue; // Ignorar grupos
