@@ -61,22 +61,39 @@ router.post('/aceitar', auth, async (req, res) => {
         
         // Notificar cliente via WhatsApp
         if (corrida && corrida.clienteTelefone) {
-            const EvolutionMultiService = require('../services/evolution-multi.service');
-            const { InstanciaWhatsapp } = require('../models');
-            const instancia = await InstanciaWhatsapp.findOne({ adminId: corrida.adminId, status: 'conectado' });
-            if (instancia) {
-                const m = req.motorista;
-                const nomeM = m.nomeCompleto || m.nome || 'Motorista';
-                const veicM = m.veiculo?.modelo || m.veiculo || '';
-                const corM = m.veiculo?.cor || '';
-                const placaM = m.veiculo?.placa || m.placa || '';
-                const msg = '🚗 *MOTORISTA A CAMINHO!*\n\n' +
-                    '👤 *' + nomeM + '*\n' +
-                    (veicM ? '🚙 ' + veicM + (corM ? ' ' + corM : '') + '\n' : '') +
-                    (placaM ? '🔢 *' + placaM + '*\n' : '') +
-                    '\nFique tranquilo, ele já está indo te buscar! 😊\n\n💬 Você pode enviar mensagens aqui que serão encaminhadas ao motorista.';
-                await EvolutionMultiService.enviarMensagem(instancia._id, corrida.clienteTelefone, msg);
+            try {
+                const EvolutionMultiService = require('../services/evolution-multi.service');
+                const { InstanciaWhatsapp } = require('../models');
+                console.log('[ACEITAR] Corrida:', corridaId, '| clienteTel:', corrida.clienteTelefone, '| adminId:', corrida.adminId);
+                
+                // Buscar instancia - tentar por adminId, senão pegar qualquer conectada
+                let instancia = await InstanciaWhatsapp.findOne({ adminId: corrida.adminId, status: 'conectado' });
+                if (!instancia) {
+                    console.log('[ACEITAR] Instancia nao encontrada por adminId, buscando qualquer conectada');
+                    instancia = await InstanciaWhatsapp.findOne({ status: 'conectado' });
+                }
+                
+                if (instancia) {
+                    const m = req.motorista;
+                    const nomeM = m.nomeCompleto || m.nome || 'Motorista';
+                    const veicM = m.veiculo?.modelo || m.veiculo || '';
+                    const corM = m.veiculo?.cor || '';
+                    const placaM = m.veiculo?.placa || m.placa || '';
+                    const msg = '🚗 *MOTORISTA A CAMINHO!*\n\n' +
+                        '👤 *' + nomeM + '*\n' +
+                        (veicM ? '🚙 ' + veicM + (corM ? ' ' + corM : '') + '\n' : '') +
+                        (placaM ? '🔢 *' + placaM + '*\n' : '') +
+                        '\nFique tranquilo, ele já está indo te buscar! 😊\n\n💬 Você pode enviar mensagens aqui que serão encaminhadas ao motorista.';
+                    await EvolutionMultiService.enviarMensagem(instancia._id, corrida.clienteTelefone, msg);
+                    console.log('[ACEITAR] Notificacao enviada para cliente:', corrida.clienteTelefone);
+                } else {
+                    console.log('[ACEITAR] ERRO: Nenhuma instancia WhatsApp conectada!');
+                }
+            } catch(e) {
+                console.error('[ACEITAR] Erro ao notificar cliente:', e.message);
             }
+        } else {
+            console.log('[ACEITAR] Sem clienteTelefone na corrida:', JSON.stringify(corrida?.clienteTelefone));
         }
         
         res.json({ sucesso: true, corrida });
@@ -93,7 +110,8 @@ router.post('/iniciar', auth, async (req, res) => {
         if (corrida && corrida.clienteTelefone) {
             const EvolutionMultiService = require('../services/evolution-multi.service');
             const { InstanciaWhatsapp } = require('../models');
-            const instancia = await InstanciaWhatsapp.findOne({ adminId: corrida.adminId, status: 'conectado' });
+            let instancia = await InstanciaWhatsapp.findOne({ adminId: corrida.adminId, status: 'conectado' });
+            if (!instancia) instancia = await InstanciaWhatsapp.findOne({ status: 'conectado' });
             if (instancia) {
                 await EvolutionMultiService.enviarMensagem(instancia._id, corrida.clienteTelefone,
                     '\u2705 *MOTORISTA CHEGOU!*\n\nSeu motorista esta no local. Dirija-se ao veiculo.\n\nBoa viagem! \ud83d\ude97');
@@ -112,7 +130,8 @@ router.post('/finalizar', auth, async (req, res) => {
         if (corridaFinal && corridaFinal.clienteTelefone) {
             const EvolutionMultiService = require('../services/evolution-multi.service');
             const { InstanciaWhatsapp } = require('../models');
-            const instancia = await InstanciaWhatsapp.findOne({ adminId: corridaFinal.adminId, status: 'conectado' });
+            let instancia = await InstanciaWhatsapp.findOne({ adminId: corridaFinal.adminId, status: 'conectado' });
+            if (!instancia) instancia = await InstanciaWhatsapp.findOne({ status: 'conectado' });
             if (instancia) {
                 const valor = precoFinal || corridaFinal.precoFinal || corridaFinal.precoEstimado || 0;
                 // Colocar cliente em modo avaliacao
@@ -136,7 +155,8 @@ router.post('/cancelar', auth, async (req, res) => {
         if (corridaAntes && corridaAntes.clienteTelefone) {
             const EvolutionMultiService = require('../services/evolution-multi.service');
             const { InstanciaWhatsapp } = require('../models');
-            const instancia = await InstanciaWhatsapp.findOne({ adminId: corridaAntes.adminId, status: 'conectado' });
+            let instancia = await InstanciaWhatsapp.findOne({ adminId: corridaAntes.adminId, status: 'conectado' });
+            if (!instancia) instancia = await InstanciaWhatsapp.findOne({ status: 'conectado' });
             if (instancia) {
                 await EvolutionMultiService.enviarMensagem(instancia._id, corridaAntes.clienteTelefone,
                     '\u274c *CORRIDA CANCELADA*\n\nInfelizmente o motorista precisou cancelar.\n\nQuer que eu busque outro? Mande sua localizacao!');
