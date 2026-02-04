@@ -39,17 +39,35 @@ const EvolutionMultiService = {
             const headers = { 'apikey': apiKey, 'Content-Type': 'application/json' };
             const webhookUrl = (process.env.APP_URL || 'https://rebeca-sistema-br.onrender.com') + '/api/evolution/webhook/' + instancia.nomeInstancia;
 
-            // 1. Tentar deletar instancia antiga no Evolution (ignora erro)
-            try {
-                await axios.delete(instancia.apiUrl + '/instance/delete/' + instancia.nomeInstancia, { headers });
-                console.log('[EVOLUTION] Instancia antiga deletada:', instancia.nomeInstancia);
-            } catch (e) { console.log('[EVOLUTION] Instancia nao existia ou erro ao deletar (OK)'); }
-
-            // 2. Aguardar 1s
-            await new Promise(r => setTimeout(r, 1000));
-
-            // 3. Criar instancia nova no Evolution
+            // 1. Verificar se instancia existe e esta conectada no Evolution
             let qrData = { code: 'QR_' + instancia.nomeInstancia, base64: null };
+            let instanciaExiste = false;
+            let instanciaConectada = false;
+            try {
+                const statusRes = await axios.get(instancia.apiUrl + '/instance/connectionState/' + instancia.nomeInstancia, { headers });
+                instanciaExiste = true;
+                instanciaConectada = statusRes.data?.instance?.state === 'open';
+                console.log('[EVOLUTION] Status atual:', statusRes.data?.instance?.state);
+            } catch (e) { console.log('[EVOLUTION] Instancia nao encontrada no Evolution'); }
+
+            // 2. Se conectada, nao mexer - retornar status
+            if (instanciaConectada) {
+                instancia.status = 'conectado';
+                instancia.ultimaConexao = new Date();
+                await instancia.save();
+                return { sucesso: true, jaConectado: true, status: 'conectado' };
+            }
+
+            // 3. Se existe mas desconectada, deletar e recriar limpa
+            if (instanciaExiste) {
+                try {
+                    await axios.delete(instancia.apiUrl + '/instance/delete/' + instancia.nomeInstancia, { headers });
+                    console.log('[EVOLUTION] Instancia desconectada deletada:', instancia.nomeInstancia);
+                    await new Promise(r => setTimeout(r, 1000));
+                } catch (e) { console.log('[EVOLUTION] Erro ao deletar (OK):', e.message); }
+            }
+
+            // 4. Criar instancia nova no Evolution
             try {
                 const createRes = await axios.post(instancia.apiUrl + '/instance/create', {
                     instanceName: instancia.nomeInstancia,
@@ -57,17 +75,10 @@ const EvolutionMultiService = {
                     integration: 'WHATSAPP-BAILEYS'
                 }, { headers });
                 console.log('[EVOLUTION] Instancia criada:', instancia.nomeInstancia);
-                // Pegar QR da criacao
-                if (createRes.data?.qrcode) {
-                    qrData = createRes.data.qrcode;
-                }
-                // Atualizar apiKey se veio hash novo
-                if (createRes.data?.hash) {
-                    instancia.apiKey = createRes.data.hash;
-                }
+                if (createRes.data?.qrcode) qrData = createRes.data.qrcode;
+                if (createRes.data?.hash) instancia.apiKey = createRes.data.hash;
             } catch (e) {
                 console.log('[EVOLUTION] Erro ao criar, tentando connect:', e.message);
-                // Se ja existe, tentar connect direto
                 try {
                     const connectRes = await axios.get(instancia.apiUrl + '/instance/connect/' + instancia.nomeInstancia, { headers });
                     qrData = connectRes.data;
