@@ -43,7 +43,7 @@ router.post('/status', auth, async (req, res) => {
 
 // Corridas disponíveis
 router.get('/corridas-disponiveis', auth, async (req, res) => {
-    const corridas = await CorridaService.listarPendentes();
+    const corridas = await CorridaService.listarPendentes(req.motorista.adminId);
     res.json({ corridas });
 });
 
