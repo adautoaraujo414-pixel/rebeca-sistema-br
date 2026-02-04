@@ -79,11 +79,13 @@ router.post('/aceitar', auth, async (req, res) => {
                     const veicM = m.veiculo?.modelo || m.veiculo || '';
                     const corM = m.veiculo?.cor || '';
                     const placaM = m.veiculo?.placa || m.placa || '';
+                    const baseUrl = process.env.BASE_URL || 'https://rebeca-sistema-br.onrender.com';
+                    const linkRastreio = baseUrl + '/rastrear/' + corridaId.slice(-8);
                     const msg = '🚗 *MOTORISTA A CAMINHO!*\n\n' +
                         '👤 *' + nomeM + '*\n' +
                         (veicM ? '🚙 ' + veicM + (corM ? ' ' + corM : '') + '\n' : '') +
                         (placaM ? '🔢 *' + placaM + '*\n' : '') +
-                        '\nFique tranquilo, ele já está indo te buscar! 😊\n\n💬 Você pode enviar mensagens aqui que serão encaminhadas ao motorista.';
+                        '\n📍 *Acompanhe em tempo real:*\n' + linkRastreio + '\n\n💬 Envie mensagens aqui que serão encaminhadas ao motorista.';
                     await EvolutionMultiService.enviarMensagem(instancia._id, corrida.clienteTelefone, msg);
                     console.log('[ACEITAR] Notificacao enviada para cliente:', corrida.clienteTelefone);
                 } else {
