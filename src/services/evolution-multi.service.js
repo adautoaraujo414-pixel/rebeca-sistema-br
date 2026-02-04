@@ -35,28 +35,71 @@ const EvolutionMultiService = {
         try {
             const instancia = await InstanciaWhatsapp.findById(instanciaId);
             if (!instancia) throw new Error('Instancia nao encontrada');
+            const apiKey = instancia.apiKey || EVOLUTION_GLOBAL_KEY;
+            const headers = { 'apikey': apiKey, 'Content-Type': 'application/json' };
+            const webhookUrl = (process.env.APP_URL || 'https://rebeca-sistema-br.onrender.com') + '/api/evolution/webhook/' + instancia.nomeInstancia;
+
+            // 1. Tentar deletar instancia antiga no Evolution (ignora erro)
+            try {
+                await axios.delete(instancia.apiUrl + '/instance/delete/' + instancia.nomeInstancia, { headers });
+                console.log('[EVOLUTION] Instancia antiga deletada:', instancia.nomeInstancia);
+            } catch (e) { console.log('[EVOLUTION] Instancia nao existia ou erro ao deletar (OK)'); }
+
+            // 2. Aguardar 1s
+            await new Promise(r => setTimeout(r, 1000));
+
+            // 3. Criar instancia nova no Evolution
             let qrData = { code: 'QR_' + instancia.nomeInstancia, base64: null };
             try {
-                const response = await axios.get(instancia.apiUrl + '/instance/connect/' + instancia.nomeInstancia, { headers: { 'apikey': instancia.apiKey || EVOLUTION_GLOBAL_KEY } });
-                qrData = response.data;
-            } catch (e) {}
-            instancia.qrCode = qrData.base64 || qrData.code;
+                const createRes = await axios.post(instancia.apiUrl + '/instance/create', {
+                    instanceName: instancia.nomeInstancia,
+                    qrcode: true,
+                    integration: 'WHATSAPP-BAILEYS'
+                }, { headers });
+                console.log('[EVOLUTION] Instancia criada:', instancia.nomeInstancia);
+                // Pegar QR da criacao
+                if (createRes.data?.qrcode) {
+                    qrData = createRes.data.qrcode;
+                }
+                // Atualizar apiKey se veio hash novo
+                if (createRes.data?.hash) {
+                    instancia.apiKey = createRes.data.hash;
+                }
+            } catch (e) {
+                console.log('[EVOLUTION] Erro ao criar, tentando connect:', e.message);
+                // Se ja existe, tentar connect direto
+                try {
+                    const connectRes = await axios.get(instancia.apiUrl + '/instance/connect/' + instancia.nomeInstancia, { headers });
+                    qrData = connectRes.data;
+                } catch (e2) { console.log('[EVOLUTION] Erro connect:', e2.message); }
+            }
+
+            // 4. Configurar webhook (tentar POST e PUT)
+            const webhookPayload = {
+                url: webhookUrl,
+                webhook_by_events: false,
+                enabled: true,
+                webhook_base64: false,
+                events: ['MESSAGES_UPSERT', 'CONNECTION_UPDATE', 'MESSAGES_UPDATE']
+            };
+            try {
+                await axios.post(instancia.apiUrl + '/webhook/set/' + instancia.nomeInstancia, webhookPayload, { headers });
+                console.log('[EVOLUTION] Webhook configurado (POST):', webhookUrl);
+            } catch (e) {
+                try {
+                    await axios.put(instancia.apiUrl + '/webhook/set/' + instancia.nomeInstancia, { webhook: webhookPayload }, { headers });
+                    console.log('[EVOLUTION] Webhook configurado (PUT):', webhookUrl);
+                } catch (e2) { console.log('[EVOLUTION] Erro webhook:', e2.message); }
+            }
+
+            // 5. Salvar QR
+            instancia.qrCode = qrData.base64 || qrData.code || null;
             instancia.qrCodeExpira = new Date(Date.now() + 60000);
             instancia.status = 'conectando';
-            // Configurar webhook automaticamente
-            try {
-                const webhookUrl = (process.env.APP_URL || 'https://rebeca-sistema-br.onrender.com') + '/api/evolution/webhook/' + instancia.nomeInstancia;
-                await axios.put(instancia.apiUrl + '/webhook/set/' + instancia.nomeInstancia, {
-                    webhook: {
-                        url: webhookUrl,
-                        webhook_by_events: false,
-                        enabled: true, webhook_base64: false,
-                        events: ['MESSAGES_UPSERT', 'CONNECTION_UPDATE']
-                    }
-                }, { headers: { 'apikey': instancia.apiKey || EVOLUTION_GLOBAL_KEY, 'Content-Type': 'application/json' } });
-                console.log('[EVOLUTION] Webhook reconfigurado:', webhookUrl);
-            } catch (e) { console.log('[EVOLUTION] Webhook ja configurado ou erro:', e.message); }
+            instancia.webhookUrl = webhookUrl;
             await instancia.save();
+
+            console.log('[EVOLUTION] QR gerado com sucesso para:', instancia.nomeInstancia);
             return { sucesso: true, qrCode: instancia.qrCode, expira: instancia.qrCodeExpira };
         } catch (e) { return { sucesso: false, erro: e.message }; }
     },
