@@ -74,12 +74,19 @@ const EvolutionMultiService = {
                 await new Promise(r => setTimeout(r, 3000));
             }
 
-            // 4. Criar instancia v2 (simples, sem webhook no body)
+            // 4. Criar instancia v2 COM webhook no body
             try {
                 const cr = await axios.post(instancia.apiUrl + '/instance/create', {
                     instanceName: instancia.nomeInstancia,
                     integration: 'WHATSAPP-BAILEYS',
-                    qrcode: true
+                    qrcode: true,
+                    webhook: {
+                        url: webhookUrl,
+                        webhookByEvents: false,
+                        webhookBase64: false,
+                        enabled: true,
+                        events: ['MESSAGES_UPSERT', 'CONNECTION_UPDATE', 'MESSAGES_UPDATE']
+                    }
                 }, { headers: gH });
                 console.log('[EVO] Criada OK:', JSON.stringify(cr.data).substring(0, 400));
                 // v2: hash e objeto {apikey: "..."}
