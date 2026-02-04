@@ -12,30 +12,30 @@
     <meta name="theme-color" content="#1a1a2e">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', sans-serif; background: #1a1a2e; color: #fff; min-height: 100vh; overflow-x: hidden; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f5f5f5; color: #333; min-height: 100vh; overflow-x: hidden; }
         
         /* Header */
-        .header { background: linear-gradient(135deg, #16213e, #1a1a2e); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; position: sticky; top: 0; z-index: 100; }
+        .header { background: linear-gradient(135deg, #16213e, #1a1a2e); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ddd; position: sticky; top: 0; z-index: 100; }
         .header h1 { font-size: 18px; color: #00d4ff; display: flex; align-items: center; gap: 10px; }
         .header-actions { display: flex; gap: 10px; }
-        .header-btn { background: #252542; border: none; color: #fff; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 16px; }
+        .header-btn { background: #ffffff; border: none; color: #333; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 16px; }
         
         /* Status Bar */
-        .status-bar { background: #252542; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
+        .status-bar { background: #ffffff; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
         .status-left { display: flex; align-items: center; gap: 15px; }
         .status-dot { width: 12px; height: 12px; border-radius: 50%; }
         .status-dot.disponivel { background: #00ff88; box-shadow: 0 0 10px #00ff88; animation: pulse 2s infinite; }
         .status-dot.em_corrida { background: #ffaa00; box-shadow: 0 0 10px #ffaa00; }
         .status-dot.offline { background: #ff4444; }
         .status-text { font-size: 14px; }
-        .status-toggle { background: linear-gradient(135deg, #00d4ff, #0099cc); border: none; color: #fff; padding: 10px 20px; border-radius: 25px; font-weight: bold; cursor: pointer; }
+        .status-toggle { background: linear-gradient(135deg, #00d4ff, #0099cc); border: none; color: #333; padding: 10px 20px; border-radius: 25px; font-weight: bold; cursor: pointer; }
         .status-toggle.offline { background: linear-gradient(135deg, #00ff88, #00cc6a); }
         .status-toggle.online { background: linear-gradient(135deg, #ff4444, #cc0000); }
         
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
         
         /* GPS Info */
-        .gps-bar { background: #1e1e3f; padding: 10px 20px; display: flex; justify-content: space-between; font-size: 12px; color: #888; }
+        .gps-bar { background: #1e1e3f; padding: 10px 20px; display: flex; justify-content: space-between; font-size: 12px; color: #666; }
         .gps-bar.ativo { color: #00ff88; }
         
         /* Cards Dashboard */
@@ -43,7 +43,7 @@
         .dash-card { background: linear-gradient(135deg, #252542, #1e1e3f); padding: 15px; border-radius: 12px; text-align: center; }
         .dash-card .icon { font-size: 24px; margin-bottom: 5px; }
         .dash-card .value { font-size: 22px; font-weight: bold; color: #00d4ff; }
-        .dash-card .label { font-size: 11px; color: #888; margin-top: 3px; }
+        .dash-card .label { font-size: 11px; color: #666; margin-top: 3px; }
         .dash-card.green .value { color: #00ff88; }
         .dash-card.orange .value { color: #ffaa00; }
         
@@ -63,18 +63,18 @@
         
         .corrida-body { padding: 20px; }
         .corrida-info { margin-bottom: 15px; }
-        .corrida-info label { font-size: 11px; color: #888; display: block; margin-bottom: 3px; }
+        .corrida-info label { font-size: 11px; color: #666; display: block; margin-bottom: 3px; }
         .corrida-info span { font-size: 15px; display: block; }
-        .corrida-info .obs { background: #1a1a2e; padding: 8px 12px; border-radius: 8px; margin-top: 5px; font-size: 13px; color: #ffaa00; }
+        .corrida-info .obs { background: #f5f5f5; padding: 8px 12px; border-radius: 8px; margin-top: 5px; font-size: 13px; color: #ffaa00; }
         
-        .corrida-cliente { display: flex; align-items: center; gap: 15px; padding: 15px; background: #1a1a2e; border-radius: 12px; margin-bottom: 15px; }
+        .corrida-cliente { display: flex; align-items: center; gap: 15px; padding: 15px; background: #f5f5f5; border-radius: 12px; margin-bottom: 15px; }
         .cliente-avatar { width: 50px; height: 50px; background: #00d4ff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; }
         .cliente-info h3 { font-size: 16px; margin-bottom: 3px; }
-        .cliente-info span { font-size: 12px; color: #888; }
+        .cliente-info span { font-size: 12px; color: #666; }
         
         .corrida-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .btn-aceitar { background: linear-gradient(135deg, #00ff88, #00cc6a); border: none; color: #fff; padding: 15px; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; }
-        .btn-recusar { background: linear-gradient(135deg, #ff4444, #cc0000); border: none; color: #fff; padding: 15px; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; }
+        .btn-aceitar { background: linear-gradient(135deg, #00ff88, #00cc6a); border: none; color: #333; padding: 15px; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; }
+        .btn-recusar { background: linear-gradient(135deg, #ff4444, #cc0000); border: none; color: #333; padding: 15px; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; }
         
         /* Corrida Ativa */
         .corrida-ativa { display: none; padding: 15px; }
@@ -86,34 +86,34 @@
         .rota-item { display: flex; gap: 15px; margin-bottom: 15px; }
         .rota-icon { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; }
         .rota-icon.origem { background: #00ff88; color: #000; }
-        .rota-icon.destino { background: #ff4444; color: #fff; }
+        .rota-icon.destino { background: #ff4444; color: #333; }
         .rota-content { flex: 1; }
-        .rota-content label { font-size: 11px; color: #888; }
+        .rota-content label { font-size: 11px; color: #666; }
         .rota-content p { font-size: 14px; margin-top: 3px; }
         .rota-content .obs { font-size: 12px; color: #ffaa00; margin-top: 5px; }
         
         .corrida-ativa-actions { display: grid; gap: 10px; padding: 15px; }
         .btn-action { padding: 15px; border: none; border-radius: 12px; font-size: 15px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; }
-        .btn-navegar { background: linear-gradient(135deg, #4285f4, #1a73e8); color: #fff; }
-        .btn-cheguei { background: linear-gradient(135deg, #ffaa00, #ff8800); color: #fff; }
-        .btn-iniciar { background: linear-gradient(135deg, #00d4ff, #0099cc); color: #fff; }
-        .btn-finalizar { background: linear-gradient(135deg, #00ff88, #00cc6a); color: #fff; }
-        .btn-ligar { background: linear-gradient(135deg, #9c27b0, #7b1fa2); color: #fff; }
+        .btn-navegar { background: linear-gradient(135deg, #4285f4, #1a73e8); color: #333; }
+        .btn-cheguei { background: linear-gradient(135deg, #ffaa00, #ff8800); color: #333; }
+        .btn-iniciar { background: linear-gradient(135deg, #00d4ff, #0099cc); color: #333; }
+        .btn-finalizar { background: linear-gradient(135deg, #00ff88, #00cc6a); color: #333; }
+        .btn-ligar { background: linear-gradient(135deg, #9c27b0, #7b1fa2); color: #333; }
         .btn-cancelar { background: transparent; border: 2px solid #ff4444; color: #ff4444; }
         
         /* Menu Flutuante */
         .fab-container { display: none; position: fixed; bottom: 80px; right: 20px; z-index: 500; }
-        .fab-btn { width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, #00d4ff, #0099cc); border: none; color: #fff; font-size: 24px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,212,255,0.4); }
-        .fab-menu { position: absolute; bottom: 70px; right: 0; background: #252542; border-radius: 12px; padding: 10px; display: none; min-width: 200px; box-shadow: 0 5px 20px rgba(0,0,0,0.5); }
+        .fab-btn { width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, #00d4ff, #0099cc); border: none; color: #333; font-size: 24px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,212,255,0.4); }
+        .fab-menu { position: absolute; bottom: 70px; right: 0; background: #ffffff; border-radius: 12px; padding: 10px; display: none; min-width: 200px; box-shadow: 0 5px 20px rgba(0,0,0,0.5); }
         .fab-menu.active { display: block; }
         .fab-item { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 8px; cursor: pointer; transition: background 0.2s; }
-        .fab-item:hover { background: #1a1a2e; }
+        .fab-item:hover { background: #f5f5f5; }
         .fab-item span { font-size: 14px; }
         
         /* Bottom Nav */
-        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #252542; display: flex; border-top: 1px solid #333; z-index: 100; }
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #ffffff; display: flex; border-top: 1px solid #333; z-index: 100; }
         .nav-item { flex: 1; padding: 12px 5px; text-align: center; cursor: pointer; transition: all 0.2s; }
-        .nav-item.active { background: #1a1a2e; color: #00d4ff; }
+        .nav-item.active { background: #f5f5f5; color: #00d4ff; }
         .nav-item .icon { font-size: 20px; display: block; }
         .nav-item .label { font-size: 10px; margin-top: 3px; }
         
@@ -127,40 +127,40 @@
         .chat-msg { margin-bottom: 15px; max-width: 80%; }
         .chat-msg.sent { margin-left: auto; }
         .chat-msg .bubble { padding: 12px 15px; border-radius: 15px; font-size: 14px; }
-        .chat-msg.received .bubble { background: #252542; border-bottom-left-radius: 5px; }
+        .chat-msg.received .bubble { background: #ffffff; border-bottom-left-radius: 5px; }
         .chat-msg.sent .bubble { background: #00d4ff; color: #000; border-bottom-right-radius: 5px; }
         .chat-msg .meta { font-size: 11px; color: #666; margin-top: 5px; }
         .chat-msg.sent .meta { text-align: right; }
-        .chat-input-container { padding: 15px; background: #252542; display: flex; gap: 10px; }
-        .chat-input { flex: 1; background: #1a1a2e; border: 1px solid #333; border-radius: 25px; padding: 12px 20px; color: #fff; font-size: 14px; }
+        .chat-input-container { padding: 15px; background: #ffffff; display: flex; gap: 10px; }
+        .chat-input { flex: 1; background: #f5f5f5; border: 1px solid #ddd; border-radius: 25px; padding: 12px 20px; color: #333; font-size: 14px; }
         .chat-send { width: 45px; height: 45px; border-radius: 50%; background: #00d4ff; border: none; color: #000; font-size: 18px; cursor: pointer; }
         
         /* Caixa/Financeiro */
         .financeiro-header { padding: 20px; background: linear-gradient(135deg, #252542, #1e1e3f); text-align: center; }
         .financeiro-saldo { font-size: 36px; font-weight: bold; color: #00ff88; }
-        .financeiro-label { font-size: 12px; color: #888; margin-top: 5px; }
+        .financeiro-label { font-size: 12px; color: #666; margin-top: 5px; }
         .financeiro-actions { display: flex; gap: 10px; padding: 15px; }
         .fin-btn { flex: 1; padding: 15px; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; }
         .fin-btn.entrada { background: #00ff88; color: #000; }
-        .fin-btn.saida { background: #ff4444; color: #fff; }
+        .fin-btn.saida { background: #ff4444; color: #333; }
         .transacoes-list { padding: 15px; }
-        .transacao-item { display: flex; justify-content: space-between; padding: 15px; background: #252542; border-radius: 10px; margin-bottom: 10px; }
+        .transacao-item { display: flex; justify-content: space-between; padding: 15px; background: #ffffff; border-radius: 10px; margin-bottom: 10px; }
         .transacao-item .valor.positivo { color: #00ff88; }
         .transacao-item .valor.negativo { color: #ff4444; }
         
         /* Relatórios */
-        .relatorio-card { background: #252542; margin: 15px; border-radius: 12px; padding: 20px; }
+        .relatorio-card { background: #ffffff; margin: 15px; border-radius: 12px; padding: 20px; }
         .relatorio-periodo { display: flex; gap: 10px; margin-bottom: 20px; }
-        .periodo-btn { flex: 1; padding: 10px; background: #1a1a2e; border: 1px solid #333; border-radius: 8px; color: #fff; cursor: pointer; }
+        .periodo-btn { flex: 1; padding: 10px; background: #f5f5f5; border: 1px solid #ddd; border-radius: 8px; color: #333; cursor: pointer; }
         .periodo-btn.active { background: #00d4ff; color: #000; border-color: #00d4ff; }
         .relatorio-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .rel-stat { text-align: center; padding: 15px; background: #1a1a2e; border-radius: 10px; }
+        .rel-stat { text-align: center; padding: 15px; background: #f5f5f5; border-radius: 10px; }
         .rel-stat .value { font-size: 24px; font-weight: bold; color: #00d4ff; }
-        .rel-stat .label { font-size: 12px; color: #888; margin-top: 5px; }
+        .rel-stat .label { font-size: 12px; color: #666; margin-top: 5px; }
         
         /* Emergência */
         .emergencia-list { padding: 15px; }
-        .emergencia-item { display: flex; align-items: center; gap: 15px; padding: 15px; background: #252542; border-radius: 12px; margin-bottom: 10px; }
+        .emergencia-item { display: flex; align-items: center; gap: 15px; padding: 15px; background: #ffffff; border-radius: 12px; margin-bottom: 10px; }
         .emergencia-icon { width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; }
         .emergencia-icon.admin { background: #00d4ff; }
         .emergencia-icon.mecanico { background: #ffaa00; }
@@ -168,44 +168,74 @@
         .emergencia-icon.borracheiro { background: #9c27b0; }
         .emergencia-info { flex: 1; }
         .emergencia-info h3 { font-size: 16px; }
-        .emergencia-info span { font-size: 12px; color: #888; }
+        .emergencia-info span { font-size: 12px; color: #666; }
         .emergencia-call { width: 45px; height: 45px; border-radius: 50%; background: #00ff88; border: none; font-size: 20px; cursor: pointer; }
         
         /* Avaria */
         .avaria-form { padding: 15px; }
-        .avaria-foto { width: 100%; height: 200px; background: #252542; border: 2px dashed #333; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; margin-bottom: 15px; }
+        .avaria-foto { width: 100%; height: 200px; background: #ffffff; border: 2px dashed #333; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; margin-bottom: 15px; }
         .avaria-foto img { max-width: 100%; max-height: 100%; object-fit: cover; border-radius: 10px; }
-        .avaria-textarea { width: 100%; background: #252542; border: 1px solid #333; border-radius: 12px; padding: 15px; color: #fff; font-size: 14px; min-height: 100px; resize: none; margin-bottom: 15px; }
+        .avaria-textarea { width: 100%; background: #ffffff; border: 1px solid #ddd; border-radius: 12px; padding: 15px; color: #333; font-size: 14px; min-height: 100px; resize: none; margin-bottom: 15px; }
         
         /* Modal */
         .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 2000; display: none; justify-content: center; align-items: center; padding: 20px; }
         .modal-overlay.active { display: flex; }
-        .modal-content { background: #252542; border-radius: 15px; width: 100%; max-width: 400px; max-height: 80vh; overflow-y: auto; }
-        .modal-header { padding: 15px 20px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; }
+        .modal-content { background: #ffffff; border-radius: 15px; width: 100%; max-width: 400px; max-height: 80vh; overflow-y: auto; }
+        .modal-header { padding: 15px 20px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; }
         .modal-header h3 { font-size: 18px; }
-        .modal-close { background: none; border: none; color: #fff; font-size: 24px; cursor: pointer; }
+        .modal-close { background: none; border: none; color: #333; font-size: 24px; cursor: pointer; }
         .modal-body { padding: 20px; }
         
         /* Login */
         .login-container { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; padding: 30px; }
         .login-logo { text-align: center; margin-bottom: 40px; }
         .login-logo h1 { font-size: 32px; color: #00d4ff; }
-        .login-logo p { color: #888; margin-top: 10px; }
-        .login-form { background: #252542; padding: 30px; border-radius: 20px; }
-        .login-input { width: 100%; background: #1a1a2e; border: 1px solid #333; border-radius: 12px; padding: 15px; color: #fff; font-size: 16px; margin-bottom: 15px; }
+        .login-logo p { color: #666; margin-top: 10px; }
+        .login-form { background: #ffffff; padding: 30px; border-radius: 20px; }
+        .login-input { width: 100%; background: #f5f5f5; border: 1px solid #ddd; border-radius: 12px; padding: 15px; color: #333; font-size: 16px; margin-bottom: 15px; }
         .login-input:focus { border-color: #00d4ff; outline: none; }
-        .login-btn { width: 100%; background: linear-gradient(135deg, #00d4ff, #0099cc); border: none; padding: 15px; border-radius: 12px; color: #fff; font-size: 16px; font-weight: bold; cursor: pointer; }
+        .login-btn { width: 100%; background: linear-gradient(135deg, #00d4ff, #0099cc); border: none; padding: 15px; border-radius: 12px; color: #333; font-size: 16px; font-weight: bold; cursor: pointer; }
         
         /* Notificação Toast */
         .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #00d4ff; color: #000; padding: 15px 25px; border-radius: 10px; z-index: 3000; display: none; font-weight: bold; }
         .toast.success { background: #00ff88; }
-        .toast.error { background: #ff4444; color: #fff; }
+        .toast.error { background: #ff4444; color: #333; }
         .toast.active { display: block; animation: slideDown 0.3s ease; }
         @keyframes slideDown { from { transform: translate(-50%, -100%); } to { transform: translate(-50%, 0); } }
         
         /* Som */
         .sound-enabled { }
-    </style>
+    
+/* ===== TEMA CLARO ===== */
+body { background: #f0f2f5 !important; color: #333 !important; }
+.login-container { background: #f0f2f5 !important; }
+.login-form { background: #fff !important; border: 1px solid #ddd !important; box-shadow: 0 2px 10px rgba(0,0,0,0.1) !important; }
+.login-input { background: #f5f5f5 !important; border: 1px solid #ddd !important; color: #333 !important; }
+.login-logo h1 { color: #1a73e8 !important; }
+.login-logo p { color: #666 !important; }
+.header { background: #fff !important; color: #333 !important; border-bottom: 1px solid #e0e0e0 !important; box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important; }
+.header h1 { color: #1a73e8 !important; }
+.status-bar { background: #fff !important; border: 1px solid #e0e0e0 !important; }
+.status-bar span { color: #333 !important; }
+.corrida-card { background: #fff !important; border: 1px solid #e0e0e0 !important; box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important; color: #333 !important; }
+.corrida-ativa { background: #fff !important; border: 1px solid #e0e0e0 !important; }
+.corrida-ativa label { color: #888 !important; }
+.corrida-ativa p { color: #333 !important; }
+.bottom-nav { background: #fff !important; border-top: 1px solid #e0e0e0 !important; }
+.bottom-nav a { color: #888 !important; }
+.bottom-nav a.active { color: #1a73e8 !important; }
+.panel, .card { background: #fff !important; border: 1px solid #e0e0e0 !important; color: #333 !important; }
+.overlay-content { background: #fff !important; color: #333 !important; }
+.nova-corrida-overlay .overlay-content { background: #fff !important; }
+#novaCorridaOverlay { background: rgba(0,0,0,0.7) !important; }
+.rota-info label { color: #888 !important; }
+.rota-info p { color: #333 !important; font-weight: 500 !important; }
+.btn-navegar { color: #fff !important; }
+.btn-action { color: #fff !important; }
+.btn-aceitar { color: #fff !important; }
+.btn-cancelar { color: #ff4444 !important; border-color: #ff4444 !important; background: #fff !important; }
+.toast { color: #fff !important; }
+</style>
 <script src="/js/gps-persistente.js"></script>
 </head>
 <body>
@@ -808,6 +838,32 @@
             } catch (e) {}
         }
 
+        
+        // Formatar endereco - se for coordenadas, mostrar mais amigavel
+        function formatarEndereco(local) {
+            if (!local) return '-';
+            if (local.endereco && !/^-?\d+\.\d+,\s*-?\d+\.\d+$/.test(local.endereco.trim())) {
+                return local.endereco;
+            }
+            if (local.latitude && local.longitude) {
+                return 'Loc: ' + parseFloat(local.latitude).toFixed(4) + ', ' + parseFloat(local.longitude).toFixed(4);
+            }
+            return local.endereco || '-';
+        }
+
+        // Navegacao direta Google Maps (sem confirm)
+        function navegarPara(lat, lng, endereco) {
+            if (!lat || !lng) {
+                if (endereco) {
+                    window.open('https://www.google.com/maps/search/' + encodeURIComponent(endereco), '_blank');
+                    return;
+                }
+                toast('Sem coordenadas', 'error');
+                return;
+            }
+            window.open('https://www.google.com/maps/dir/?api=1&destination=' + lat + ',' + lng + '&travelmode=driving', '_blank');
+        }
+
         // ========== NOVA CORRIDA ==========
         function mostrarNovaCorrida(corrida) {
             corridaAtual = corrida;
@@ -821,8 +877,8 @@
             document.getElementById('novaCorridaValor').textContent = 'R$ ' + (corrida.precoEstimado || 0).toFixed(2);
             document.getElementById('novaCorridaDistancia').textContent = '📍 ' + distancia;
             document.getElementById('novaCorridaCliente').textContent = corrida.clienteNome || 'Cliente';
-            document.getElementById('novaCorridaOrigem').textContent = corrida.origem?.endereco || '-';
-            document.getElementById('novaCorridaDestino').textContent = corrida.destino?.endereco || '-';
+            document.getElementById('novaCorridaOrigem').textContent = formatarEndereco(corrida.origem);
+            document.getElementById('novaCorridaDestino').textContent = formatarEndereco(corrida.destino);
 
             if (corrida.observacaoOrigem) {
                 document.getElementById('novaCorridaObsOrigem').textContent = '📝 ' + corrida.observacaoOrigem;
@@ -891,8 +947,8 @@
 
             document.getElementById('corridaValorAtiva').textContent = 'R$ ' + (corridaAtual.precoEstimado || 0).toFixed(2);
             document.getElementById('clienteNomeAtiva').textContent = corridaAtual.clienteNome || 'Cliente';
-            document.getElementById('origemAtiva').textContent = corridaAtual.origem?.endereco || '-';
-            document.getElementById('destinoAtiva').textContent = corridaAtual.destino?.endereco || '-';
+            document.getElementById('origemAtiva').textContent = formatarEndereco(corridaAtual.origem);
+            document.getElementById('destinoAtiva').textContent = formatarEndereco(corridaAtual.destino);
 
             if (corridaAtual.observacaoOrigem) {
                 document.getElementById('obsOrigemAtiva').textContent = '📝 ' + corridaAtual.observacaoOrigem;
@@ -910,22 +966,12 @@
         }
 
         function navegarAteCliente() {
-            if (!corridaAtual?.origem?.latitude) {
-                toast('Endereço sem coordenadas', 'error');
+            const origem = corridaAtual?.origem;
+            if (!origem?.latitude && !origem?.endereco) {
+                toast('Sem endereco para navegar', 'error');
                 return;
             }
-            const lat = corridaAtual.origem.latitude;
-            const lng = corridaAtual.origem.longitude;
-            
-            // Tentar abrir Waze, senão Google Maps
-            const waze = `https://waze.com/ul?ll=${lat},${lng}&navigate=yes`;
-            const gmaps = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`;
-            
-            if (confirm('Abrir no Waze? (Cancelar = Google Maps)')) {
-                window.open(waze, '_blank');
-            } else {
-                window.open(gmaps, '_blank');
-            }
+            navegarPara(origem.latitude, origem.longitude, origem.endereco);
         }
 
         function ligarCliente() {
