@@ -36,9 +36,11 @@ const CorridaService = {
     },
 
     buscarCorridaAtivaMotorista(motoristaId) {
+        const duasHorasAtras = new Date(Date.now() - 2 * 60 * 60 * 1000);
         return Corrida.findOne({ 
             motoristaId, 
-            status: { $in: ['aceita', 'em_andamento'] } 
+            status: { $in: ['aceita', 'em_andamento'] },
+            createdAt: { $gte: duasHorasAtras }
         });
     },
 
@@ -128,6 +130,7 @@ const CorridaService = {
     cancelar(corridaId, motivo) { return this.cancelarCorrida(corridaId, motivo); },
     listarTodas(filtros) { return this.listar(null, filtros); },
     obterEstatisticas(adminId) { return this.estatisticas(adminId); },
+    corridaAtivaMotorista(motoristaId) { return this.buscarCorridaAtivaMotorista(motoristaId); },
 };
 
 module.exports = CorridaService;
