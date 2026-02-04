@@ -68,6 +68,9 @@ const CorridaService = {
     },
 
     async cancelarCorrida(corridaId, motivo = null) {
+        if (!corridaId || corridaId === 'undefined') {
+            throw new Error('ID da corrida nao fornecido');
+        }
         const corrida = await Corrida.findById(corridaId);
         if (!corrida) return { sucesso: false, erro: 'Corrida não encontrada' };
         
