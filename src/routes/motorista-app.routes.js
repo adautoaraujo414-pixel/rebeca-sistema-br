@@ -53,17 +53,28 @@ router.post('/aceitar', auth, async (req, res) => {
     try {
         const corrida = await CorridaService.atribuirMotorista(corridaId, req.motorista._id, req.motorista.nome);
         
+        // Colocar cliente em modo corrida (para encaminhar msgs)
+        try {
+            const RebecaService = require('../services/rebeca.service');
+            RebecaService.setEtapaConversa(corrida.clienteTelefone, 'em_corrida');
+        } catch(e) {}
+        
         // Notificar cliente via WhatsApp
         if (corrida && corrida.clienteTelefone) {
             const EvolutionMultiService = require('../services/evolution-multi.service');
             const { InstanciaWhatsapp } = require('../models');
             const instancia = await InstanciaWhatsapp.findOne({ adminId: corrida.adminId, status: 'conectado' });
             if (instancia) {
+                const m = req.motorista;
+                const nomeM = m.nomeCompleto || m.nome || 'Motorista';
+                const veicM = m.veiculo?.modelo || m.veiculo || '';
+                const corM = m.veiculo?.cor || '';
+                const placaM = m.veiculo?.placa || m.placa || '';
                 const msg = '🚗 *MOTORISTA A CAMINHO!*\n\n' +
-                    '👤 *' + req.motorista.nome + '*\n' +
-                    (req.motorista.veiculo ? '🚙 ' + req.motorista.veiculo + '\n' : '') +
-                    (req.motorista.placa ? '🔢 Placa: ' + req.motorista.placa + '\n' : '') +
-                    '\nFique tranquilo, ele ja esta indo te buscar!';
+                    '👤 *' + nomeM + '*\n' +
+                    (veicM ? '🚙 ' + veicM + (corM ? ' ' + corM : '') + '\n' : '') +
+                    (placaM ? '🔢 *' + placaM + '*\n' : '') +
+                    '\nFique tranquilo, ele já está indo te buscar! 😊\n\n💬 Você pode enviar mensagens aqui que serão encaminhadas ao motorista.';
                 await EvolutionMultiService.enviarMensagem(instancia._id, corrida.clienteTelefone, msg);
             }
         }
@@ -145,6 +156,44 @@ router.get('/historico', auth, async (req, res) => {
 router.get('/corrida-ativa', auth, async (req, res) => {
     const corrida = await CorridaService.corridaAtivaMotorista(req.motorista._id);
     res.json({ corrida });
+});
+
+// Chat - Enviar mensagem para cliente via WhatsApp
+router.post('/chat', auth, async (req, res) => {
+    const { texto } = req.body;
+    if (!texto) return res.json({ sucesso: false, erro: 'Texto vazio' });
+    
+    try {
+        // Buscar corrida ativa do motorista
+        const corrida = await CorridaService.corridaAtivaMotorista(req.motorista._id);
+        if (!corrida || !corrida.clienteTelefone) {
+            return res.json({ sucesso: false, erro: 'Sem corrida ativa' });
+        }
+        
+        // Enviar via WhatsApp para o cliente
+        const EvolutionMultiService = require('../services/evolution-multi.service');
+        const { InstanciaWhatsapp } = require('../models');
+        const instancia = await InstanciaWhatsapp.findOne({ adminId: corrida.adminId, status: 'conectado' });
+        
+        if (instancia) {
+            const msgCliente = '🚗 *Mensagem do motorista ' + (req.motorista.nomeCompleto || req.motorista.nome) + ':*\n\n' + texto;
+            await EvolutionMultiService.enviarMensagem(instancia._id, corrida.clienteTelefone, msgCliente);
+        }
+        
+        res.json({ sucesso: true, mensagens: [{ texto, remetente: req.motorista._id, nomeRemetente: req.motorista.nome, data: new Date() }] });
+    } catch (e) {
+        res.json({ sucesso: false, erro: e.message });
+    }
+});
+
+// Chat - Buscar mensagens
+router.get('/chat', auth, async (req, res) => {
+    try {
+        const corrida = await CorridaService.corridaAtivaMotorista(req.motorista._id);
+        res.json({ sucesso: true, mensagens: corrida?.chatMensagens || [] });
+    } catch (e) {
+        res.json({ sucesso: true, mensagens: [] });
+    }
 });
 
 module.exports = router;

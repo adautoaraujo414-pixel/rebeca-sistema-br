@@ -215,10 +215,31 @@ const RebecaService = {
             }
         }
  
-        // ========== AGUARDANDO MOTORISTA ==========
-        if (conversa.etapa === 'aguardando_motorista' && !msg.includes('cancelar')) {
+        // ========== AGUARDANDO MOTORISTA OU EM CORRIDA ==========
+        if ((conversa.etapa === 'aguardando_motorista' || conversa.etapa === 'em_corrida') && !msg.includes('cancelar')) {
+            // Verificar se tem motorista atribuido - encaminhar mensagem
+            try {
+                const { Corrida } = require('../models');
+                const corridaAtiva = await Corrida.findOne({ 
+                    clienteTelefone: telefone, 
+                    status: { $in: ['aceita', 'em_andamento', 'motorista_a_caminho'] }
+                });
+                
+                if (corridaAtiva && corridaAtiva.motoristaId) {
+                    // Tem motorista - encaminhar mensagem via WhatsApp
+                    const motoristaAtivo = await MotoristaService.buscarPorId(corridaAtiva.motoristaId);
+                    if (motoristaAtivo?.whatsapp && conversa.instanciaId) {
+                        const msgMotorista = '💬 *Mensagem do cliente:*\n\n' + msgOriginal;
+                        await EvolutionMultiService.enviarMensagem(conversa.instanciaId, motoristaAtivo.whatsapp, msgMotorista);
+                        conversas.set(telefone, conversa);
+                        return '✅ Mensagem enviada para o motorista *' + (motoristaAtivo.nomeCompleto || motoristaAtivo.nome) + '*!';
+                    }
+                }
+            } catch (e) { console.log('[REBECA] Erro encaminhar msg:', e.message); }
+            
+            // Sem motorista ainda
             conversas.set(telefone, conversa);
-            return 'Estou localizando o motorista mais proximo para voce. \u23f3\n\nAssim que um aceitar, te aviso imediatamente. Para cancelar, digite *CANCELAR*.';
+            return '⏳ Estou localizando o motorista mais próximo...\n\nAssim que um aceitar, te aviso! Para cancelar, digite *CANCELAR*.';
         }
 
         // ========== AVALIACAO ==========
@@ -1083,6 +1104,13 @@ const RebecaService = {
         } catch (e) {
             return '❌ Erro ao cancelar.';
         }
+    },
+
+    // Setar etapa da conversa (usado pelo motorista-app)
+    setEtapaConversa(telefone, etapa) {
+        const conversa = conversas.get(telefone) || { etapa: 'inicio', dados: {} };
+        conversa.etapa = etapa;
+        conversas.set(telefone, conversa);
     },
 
     // Resetar conversa de um telefone
