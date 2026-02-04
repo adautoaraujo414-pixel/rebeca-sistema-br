@@ -36,11 +36,11 @@ const CorridaService = {
     },
 
     buscarCorridaAtivaMotorista(motoristaId) {
-        const duasHorasAtras = new Date(Date.now() - 2 * 60 * 60 * 1000);
+        const limiteRecente = new Date(Date.now() - 15 * 60 * 1000); // 15 minutos
         return Corrida.findOne({ 
             motoristaId, 
             status: { $in: ['aceita', 'em_andamento'] },
-            createdAt: { $gte: duasHorasAtras }
+            createdAt: { $gte: limiteRecente }
         });
     },
 
