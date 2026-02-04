@@ -709,7 +709,7 @@ const RebecaService = {
                 return `📍 *Origem:* ${conversa.dados.origem}\n\n🏁 Pra onde você quer ir?`;
             }
             
-            // Origem identificada
+            // Origem identificada pela IA
             if (analise.origem) {
                 const validacao = await RebecaService.validarEndereco(analise.origem);
                 if (validacao.valido) {
@@ -742,10 +742,15 @@ const RebecaService = {
                     };
                     conversa.etapa = 'pedir_referencia';
                     return `📍 *${conversa.dados.origem}*\n\n📌 Tem algum ponto de referência?\n\nOu envie *0* para continuar sem referência.`;
+                } else {
+                    // Maps nao achou - perguntar bairro
+                    conversa.dados.origemTexto = analise.origem;
+                    conversa.etapa = 'pedir_bairro_origem';
+                    return `📍 *${analise.origem}*\n\nQual bairro fica? 🏘️`;
                 }
             }
             
-            // Só intenção
+            // IA detectou intencao de corrida mas sem endereco
             conversa.etapa = 'pedir_origem';
             return `🚗 Beleza! Vamos lá.\n\n📍 Envie sua *localização* ou o endereço de origem:`;
         }

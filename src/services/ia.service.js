@@ -49,6 +49,8 @@ PERSONALIDADE:
 - Se nao souber algo especifico, oriente o cliente a enviar a localizacao para solicitar um carro
 
 REGRAS DE CLASSIFICACAO:
+- Se a mensagem contem um ENDERECO (nome de rua, avenida, numero, bairro, local conhecido), intencao = "pedir_corrida" e extraia o endereco no campo "origem"
+- EXEMPLOS de enderecos: "Rua das Flores 123", "Alexandre Rodrigues Borges 180", "Av Brasil 500 centro", "proximo ao mercado central", "shopping palladium", "hospital regional", "rodoviaria"
 - Se o cliente PERGUNTA algo (ex: "tem carro?", "ate que horas funciona?", "como funciona?", "aceita pix?"), intencao = "pergunta"
 - Se o cliente quer PEDIR um carro/corrida (ex: "me busca na Rua X", "quero ir pra casa", "preciso de um carro"), intencao = "pedir_corrida"
 - Se o cliente quer SABER PRECO sem pedir (ex: "quanto fica de X a Y?"), intencao = "cotacao"
@@ -56,6 +58,7 @@ REGRAS DE CLASSIFICACAO:
 - Se agradece "obrigado", "valeu", intencao = "agradecimento"
 - Se reclama ou relata problema, intencao = "reclamacao"
 - Diferencie PERGUNTAS de PEDIDOS. "Tem carro disponivel?" e pergunta, nao pedido.
+- IMPORTANTE: Qualquer texto que pareca ser um ENDERECO ou LOCAL deve ser classificado como "pedir_corrida" com o endereco no campo "origem". Na duvida, classifique como pedir_corrida.
 
 Contexto: ${JSON.stringify(contexto)}
 Mensagem: "${mensagem}"
