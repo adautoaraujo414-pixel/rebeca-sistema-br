@@ -63,24 +63,25 @@ const EvolutionMultiService = {
                 try {
                     await axios.delete(instancia.apiUrl + '/instance/delete/' + instancia.nomeInstancia, { headers });
                     console.log('[EVOLUTION] Instancia desconectada deletada:', instancia.nomeInstancia);
-                    await new Promise(r => setTimeout(r, 1000));
+                    await new Promise(r => setTimeout(r, 1500));
                 } catch (e) { console.log('[EVOLUTION] Erro ao deletar (OK):', e.message); }
             }
 
-            // 4. Criar instancia nova no Evolution
+            // 4. Criar instancia nova (SEMPRE usar chave global apos delete)
+            const globalHeaders = { 'apikey': EVOLUTION_GLOBAL_KEY, 'Content-Type': 'application/json' };
             try {
                 const createRes = await axios.post(instancia.apiUrl + '/instance/create', {
                     instanceName: instancia.nomeInstancia,
                     qrcode: true,
                     integration: 'WHATSAPP-BAILEYS'
-                }, { headers });
+                }, { headers: globalHeaders });
                 console.log('[EVOLUTION] Instancia criada:', instancia.nomeInstancia);
                 if (createRes.data?.qrcode) qrData = createRes.data.qrcode;
                 if (createRes.data?.hash) instancia.apiKey = createRes.data.hash;
             } catch (e) {
                 console.log('[EVOLUTION] Erro ao criar, tentando connect:', e.message);
                 try {
-                    const connectRes = await axios.get(instancia.apiUrl + '/instance/connect/' + instancia.nomeInstancia, { headers });
+                    const connectRes = await axios.get(instancia.apiUrl + '/instance/connect/' + instancia.nomeInstancia, { headers: globalHeaders });
                     qrData = connectRes.data;
                 } catch (e2) { console.log('[EVOLUTION] Erro connect:', e2.message); }
             }
@@ -94,11 +95,11 @@ const EvolutionMultiService = {
                 events: ['MESSAGES_UPSERT', 'CONNECTION_UPDATE', 'MESSAGES_UPDATE']
             };
             try {
-                await axios.post(instancia.apiUrl + '/webhook/set/' + instancia.nomeInstancia, webhookPayload, { headers });
+                await axios.post(instancia.apiUrl + '/webhook/set/' + instancia.nomeInstancia, webhookPayload, { headers: globalHeaders });
                 console.log('[EVOLUTION] Webhook configurado (POST):', webhookUrl);
             } catch (e) {
                 try {
-                    await axios.put(instancia.apiUrl + '/webhook/set/' + instancia.nomeInstancia, { webhook: webhookPayload }, { headers });
+                    await axios.put(instancia.apiUrl + '/webhook/set/' + instancia.nomeInstancia, { webhook: webhookPayload }, { headers: globalHeaders });
                     console.log('[EVOLUTION] Webhook configurado (PUT):', webhookUrl);
                 } catch (e2) { console.log('[EVOLUTION] Erro webhook:', e2.message); }
             }
