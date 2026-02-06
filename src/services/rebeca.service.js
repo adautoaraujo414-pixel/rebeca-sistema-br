@@ -438,7 +438,7 @@ const RebecaService = {
                 conversa.dados.origemTexto = msgOriginal;
                 conversa.etapa = 'pedir_bairro_origem';
                 conversas.set(telefone, conversa);
-                return `📍 *${msgOriginal}*\n\nQual bairro fica? 🏘️`;
+                return `📍 ${msgOriginal}\n\nQual bairro?`;
             } else {
                 // Achou no Maps - pedir referencia
                 conversa.dados.origem = validacao.endereco;
@@ -450,7 +450,7 @@ const RebecaService = {
                 };
                 conversa.etapa = 'pedir_referencia';
                 conversas.set(telefone, conversa);
-                return `📍 *${validacao.endereco}*\n\n📌 Tem algum ponto de referência? (ex: próximo ao mercado, portão azul)\n\nOu envie *0* para continuar sem referência.`;
+                return `📍 ${validacao.endereco}\n\nReferência? (ou 0)`;
             }
         }
         // ========== PEDIR BAIRRO ==========
@@ -465,7 +465,7 @@ const RebecaService = {
             };
             conversa.etapa = 'pedir_referencia';
             conversas.set(telefone, conversa);
-            return `📍 *${enderecoCompleto}*\n\n📌 Tem algum ponto de referência? (ex: próximo ao mercado, portão azul)\n\nOu envie *0* para continuar sem referência.`;
+            return `📍 ${enderecoCompleto}\n\nReferência? (ou 0)`;
         }
         // ========== REFERÊNCIA (NOVO FLUXO DIRETO) ==========
         else if (conversa.etapa === 'pedir_referencia') {
@@ -624,7 +624,7 @@ const RebecaService = {
                     // Aceitar texto e pedir bairro
                     conversa.dados.origemTexto = msgOriginal;
                     conversa.etapa = 'pedir_bairro_origem';
-                    resposta = `📍 *${msgOriginal}*\n\nQual bairro fica? 🏘️`;
+                    resposta = `📍 ${msgOriginal}\n\nQual bairro?`;
                 } else {
                     conversa.dados.origem = validacao.endereco;
                     conversa.etapa = 'pedir_referencia';
@@ -634,7 +634,7 @@ const RebecaService = {
                         destino: null, distanciaKm: 0, tempoMinutos: 0, preco: 15,
                         faixa: { nome: 'padrao', multiplicador: 1 }
                     };
-                    resposta = `📍 *${validacao.endereco}*\n\n📌 Tem algum ponto de referência?\n\nOu envie *0* para continuar sem referência.`;
+                    resposta = `📍 ${validacao.endereco}\n\nReferência? (ou 0)`;
                 }
             }
         }
@@ -798,12 +798,12 @@ const RebecaService = {
                         faixa: { nome: 'padrao', multiplicador: 1 }
                     };
                     conversa.etapa = 'pedir_referencia';
-                    return `📍 *${conversa.dados.origem}*\n\n📌 Tem algum ponto de referência?\n\nOu envie *0* para continuar sem referência.`;
+                    return `📍 ${conversa.dados.origem}\n\nReferência? (ou 0)`;
                 } else {
                     // Maps nao achou - perguntar bairro
                     conversa.dados.origemTexto = analise.origem;
                     conversa.etapa = 'pedir_bairro_origem';
-                    return `📍 *${analise.origem}*\n\nQual bairro fica? 🏘️`;
+                    return `📍 ${analise.origem}\n\nQual bairro?`;
                 }
             }
             
@@ -1023,7 +1023,10 @@ const RebecaService = {
                 
                 if (resultadoDespacho.sucesso && instanciaId) {
                     // Notificar motoristas via WhatsApp
-                    const msgCorrida = `🚨 *NOVA CORRIDA!*\n\n📍 *Origem:* ${dados.calculo.origem?.endereco || dados.origem}\n🏁 *Destino:* ${dados.calculo.destino?.endereco || dados.destino}\n📏 *Distância:* ${dados.calculo.distanciaKm?.toFixed(1) || '?'}km\n💰 *Valor:* R$ ${dados.calculo.preco?.toFixed(2) || '?'}\n\n✅ Digite *ACEITAR* para pegar esta corrida!`;
+                    const endOrigem = dados.calculo.origem?.endereco || dados.origem || 'Ver app';
+                    const refOrigem = dados.observacaoOrigem ? '\n📌 Ref: ' + dados.observacaoOrigem : '';
+                    const linkMaps = (dados.calculo.origem?.latitude && dados.calculo.origem?.longitude) ? '\n🗺️ maps.google.com/?q=' + dados.calculo.origem.latitude + ',' + dados.calculo.origem.longitude : '';
+                    const msgCorrida = `🚨 *NOVA CORRIDA!*\n\n📍 ${endOrigem}${refOrigem}${linkMaps}\n\n💰 R$ ${dados.calculo.preco?.toFixed(2) || '15.00'}\n\n✅ Digite ACEITAR`;
                     
                     if (resultadoDespacho.modo === 'broadcast') {
                         // Enviar para todos os motoristas
