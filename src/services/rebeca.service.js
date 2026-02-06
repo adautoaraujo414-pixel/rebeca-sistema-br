@@ -334,21 +334,39 @@ const RebecaService = {
                 console.log('[CANCELAR] Buscando corrida para tels:', tels, '| Encontrou:', !!corridaAtiva);
                 
                 if (corridaAtiva) {
+                    console.log('[CANCELAR] Corrida encontrada:', corridaAtiva._id, '| motoristaId:', corridaAtiva.motoristaId);
                     await CorridaService.cancelarCorrida(corridaAtiva._id, "Cancelado pelo cliente");
                     cancelou = true;
                     
                     // Notificar motorista via WhatsApp
-                    if (corridaAtiva.motoristaId && conversa.instanciaId) {
+                    console.log('[CANCELAR] instanciaId:', conversa.instanciaId);
+                    if (corridaAtiva.motoristaId) {
                         try {
                             const motorista = await MotoristaService.buscarPorId(corridaAtiva.motoristaId);
-                            if (motorista?.whatsapp) {
-                                const msgMot = '❌ *Corrida cancelada pelo cliente*\n\n' +
-                                    '📍 ' + (corridaAtiva.origem?.endereco || 'Não informado') + '\n\n' +
+                            console.log('[CANCELAR] Motorista:', motorista?.nomeCompleto || motorista?.nome, '| WhatsApp:', motorista?.whatsapp);
+                            
+                            if (motorista?.whatsapp && conversa.instanciaId) {
+                                const msgMot = '❌ *CORRIDA CANCELADA PELO CLIENTE*\n\n' +
+                                    '📍 *Origem:* ' + (corridaAtiva.origem?.endereco || 'Não informado') + '\n\n' +
                                     'Você já está disponível para novas corridas! ✅';
                                 await EvolutionMultiService.enviarMensagem(conversa.instanciaId, motorista.whatsapp, msgMot);
+                                console.log('[CANCELAR] Notificacao enviada para motorista:', motorista.whatsapp);
+                            } else if (!conversa.instanciaId) {
+                                // Buscar instancia do admin
+                                const { InstanciaWhatsapp } = require('../models');
+                                const inst = await InstanciaWhatsapp.findOne({ adminId: corridaAtiva.adminId, status: 'conectado' }) || 
+                                             await InstanciaWhatsapp.findOne({ status: 'conectado' });
+                                if (inst && motorista?.whatsapp) {
+                                    const msgMot = '❌ *CORRIDA CANCELADA PELO CLIENTE*\n\n' +
+                                        '📍 *Origem:* ' + (corridaAtiva.origem?.endereco || 'Não informado') + '\n\n' +
+                                        'Você já está disponível para novas corridas! ✅';
+                                    await EvolutionMultiService.enviarMensagem(inst._id, motorista.whatsapp, msgMot);
+                                    console.log('[CANCELAR] Notificacao enviada via instancia fallback');
+                                }
                             }
                             // Liberar motorista
                             await MotoristaService.atualizarStatus(corridaAtiva.motoristaId, 'disponivel');
+                            console.log('[CANCELAR] Motorista liberado para novas corridas');
                         } catch(e) { console.log('[REBECA] Erro notificar motorista cancelamento:', e.message); }
                     }
                 }
