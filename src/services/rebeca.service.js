@@ -138,24 +138,32 @@ const RebecaService = {
         // ========== COMANDOS DO MOTORISTA ==========
         const msgUpper = typeof mensagem === 'string' ? mensagem.toUpperCase().trim() : '';
         
-        // Motorista aceitando corrida
-        if (msgUpper === 'ACEITAR' || msgUpper.startsWith('ACEITAR ')) {
-            return await RebecaService.motoristaAceitarCorrida(telefone, adminId, contexto.instanciaId);
-        }
+        // Verificar se é motorista ANTES de processar comandos de motorista
+        const telsMotorista = [telefone, '55' + telefone, telefone.replace(/^55/, '')];
+        const ehMotorista = await MotoristaService.buscarPorWhatsapp(telsMotorista[0]) || 
+                            await MotoristaService.buscarPorWhatsapp(telsMotorista[1]) || 
+                            await MotoristaService.buscarPorWhatsapp(telsMotorista[2]);
         
-        // Motorista finalizando corrida
-        if (msgUpper === 'FINALIZAR' || msgUpper === 'FINALIZADA' || msgUpper === 'FIM') {
-            return await RebecaService.motoristaFinalizarCorrida(telefone, adminId, contexto.instanciaId);
-        }
-        
-        // Motorista cancelando corrida
-        if (msgUpper === 'CANCELAR' || msgUpper.startsWith('CANCELAR ')) {
-            return await RebecaService.motoristaCancelarCorrida(telefone, adminId, contexto.instanciaId);
-        }
-        
-        // Motorista chegou no local
-        if (msgUpper === 'CHEGUEI' || msgUpper === 'CHEGOU') {
-            return await RebecaService.motoristaChegou(telefone, adminId, contexto.instanciaId);
+        if (ehMotorista) {
+            // Motorista aceitando corrida
+            if (msgUpper === 'ACEITAR' || msgUpper.startsWith('ACEITAR ')) {
+                return await RebecaService.motoristaAceitarCorrida(telefone, adminId, contexto.instanciaId);
+            }
+            
+            // Motorista finalizando corrida
+            if (msgUpper === 'FINALIZAR' || msgUpper === 'FINALIZADA' || msgUpper === 'FIM') {
+                return await RebecaService.motoristaFinalizarCorrida(telefone, adminId, contexto.instanciaId);
+            }
+            
+            // Motorista cancelando corrida
+            if (msgUpper === 'CANCELAR' || msgUpper.startsWith('CANCELAR ')) {
+                return await RebecaService.motoristaCancelarCorrida(telefone, adminId, contexto.instanciaId);
+            }
+            
+            // Motorista chegou no local
+            if (msgUpper === 'CHEGUEI' || msgUpper === 'CHEGOU') {
+                return await RebecaService.motoristaChegou(telefone, adminId, contexto.instanciaId);
+            }
         }
         if (adminId) console.log('[REBECA] Admin:', adminId);
         
