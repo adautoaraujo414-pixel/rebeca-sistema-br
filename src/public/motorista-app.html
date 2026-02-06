@@ -322,19 +322,22 @@ body { background: #f0f2f5 !important; color: #333 !important; }
                                 <div class="rota-icon origem">A</div>
                                 <div class="rota-content">
                                     <label>BUSCAR EM</label>
-                                    <p id="origemAtiva">-</p>
-                                    <p id="enderecoOrigemAtiva" style="font-size:13px;color:#1a73e8;margin:4px 0 0 0;display:none;">📍</p>
-                                    <p id="referenciaOrigemAtiva" style="font-size:13px;color:#ff9800;margin:4px 0 0 0;display:none;">📌</p>
-                                    <div id="obsOrigemAtiva" class="obs" style="display:none;"></div>
+                                    <p id="origemAtiva" style="font-size:16px;font-weight:bold;color:#1a73e8;margin:5px 0;">-</p>
+                                    <div id="refOrigemAtivaBox" style="margin-top:8px;padding:10px;background:#fff3e0;border-left:4px solid #ff9800;border-radius:4px;display:none;">
+                                        <span style="color:#e65100;font-weight:bold;">📌 REFERÊNCIA:</span>
+                                        <p id="refOrigemAtivaText" style="margin:4px 0 0 0;color:#333;font-size:14px;"></p>
+                                    </div>
                                 </div>
                             </div>
                             <div class="rota-item">
                                 <div class="rota-icon destino">B</div>
                                 <div class="rota-content">
                                     <label>LEVAR ATÉ</label>
-                                    <p id="destinoAtiva">-</p>
-                                    <p id="referenciaDestinoAtiva" style="font-size:13px;color:#ff9800;margin:4px 0 0 0;display:none;">📌</p>
-                                    <div id="obsDestinoAtiva" class="obs" style="display:none;"></div>
+                                    <p id="destinoAtiva" style="font-size:15px;color:#333;margin:5px 0;">-</p>
+                                    <div id="refDestinoAtivaBox" style="margin-top:8px;padding:10px;background:#e8f5e9;border-left:4px solid #4caf50;border-radius:4px;display:none;">
+                                        <span style="color:#2e7d32;font-weight:bold;">📌 REFERÊNCIA:</span>
+                                        <p id="refDestinoAtivaText" style="margin:4px 0 0 0;color:#333;font-size:14px;"></p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -527,12 +530,19 @@ body { background: #f0f2f5 !important; color: #333 !important; }
                 </div>
                 <div class="corrida-info">
                     <label>📍 BUSCAR EM</label>
-                    <span id="novaCorridaOrigem">-</span>
-                    <div id="novaCorridaObsOrigem" class="obs" style="display:none;"></div>
+                    <span id="novaCorridaOrigem" style="font-size:16px;font-weight:bold;color:#1a73e8;">-</span>
+                    <div id="novaCorridaRefOrigem" style="margin-top:8px;padding:10px;background:#fff3e0;border-left:4px solid #ff9800;border-radius:4px;display:none;">
+                        <span style="color:#e65100;font-weight:bold;font-size:14px;">📌 REFERÊNCIA:</span>
+                        <span id="novaCorridaRefOrigemText" style="display:block;margin-top:4px;color:#333;font-size:14px;"></span>
+                    </div>
                 </div>
                 <div class="corrida-info">
                     <label>🏁 LEVAR ATÉ</label>
-                    <span id="novaCorridaDestino">-</span>
+                    <span id="novaCorridaDestino" style="font-size:15px;color:#333;">-</span>
+                    <div id="novaCorridaRefDestino" style="margin-top:8px;padding:10px;background:#e8f5e9;border-left:4px solid #4caf50;border-radius:4px;display:none;">
+                        <span style="color:#2e7d32;font-weight:bold;font-size:14px;">📌 REFERÊNCIA:</span>
+                        <span id="novaCorridaRefDestinoText" style="display:block;margin-top:4px;color:#333;font-size:14px;"></span>
+                    </div>
                 </div>
                 <div class="corrida-actions">
                     <button class="btn-recusar" onclick="recusarCorrida()">✖️ RECUSAR</button>
@@ -883,20 +893,30 @@ body { background: #f0f2f5 !important; color: #333 !important; }
             document.getElementById('novaCorridaOrigem').textContent = formatarEndereco(corrida.origem);
             document.getElementById('novaCorridaDestino').textContent = formatarEndereco(corrida.destino);
 
-            // Endereco e referencia na nova corrida
-            const novaRef = document.getElementById('novaCorridaRefOrigem');
-            if (novaRef) {
-                if (corrida.observacaoOrigem) {
-                    novaRef.textContent = '📌 Ref: ' + corrida.observacaoOrigem;
-                    novaRef.style.display = 'block';
-                } else { novaRef.style.display = 'none'; }
+            // Mostrar referência da origem em destaque
+            const refOrigemBox = document.getElementById('novaCorridaRefOrigem');
+            const refOrigemText = document.getElementById('novaCorridaRefOrigemText');
+            if (refOrigemBox && refOrigemText) {
+                const refOrigem = corrida.observacaoOrigem || corrida.origem?.referencia || corrida.origem?.observacao;
+                if (refOrigem) {
+                    refOrigemText.textContent = refOrigem;
+                    refOrigemBox.style.display = 'block';
+                } else {
+                    refOrigemBox.style.display = 'none';
+                }
             }
-
-            if (corrida.observacaoOrigem) {
-                document.getElementById('novaCorridaObsOrigem').textContent = '📝 ' + corrida.observacaoOrigem;
-                document.getElementById('novaCorridaObsOrigem').style.display = 'block';
-            } else {
-                document.getElementById('novaCorridaObsOrigem').style.display = 'none';
+            
+            // Mostrar referência do destino em destaque
+            const refDestinoBox = document.getElementById('novaCorridaRefDestino');
+            const refDestinoText = document.getElementById('novaCorridaRefDestinoText');
+            if (refDestinoBox && refDestinoText) {
+                const refDestino = corrida.observacaoDestino || corrida.destino?.referencia || corrida.destino?.observacao;
+                if (refDestino) {
+                    refDestinoText.textContent = refDestino;
+                    refDestinoBox.style.display = 'block';
+                } else {
+                    refDestinoBox.style.display = 'none';
+                }
             }
 
             document.getElementById('novaCorridaOverlay').classList.add('active');
@@ -962,31 +982,23 @@ body { background: #f0f2f5 !important; color: #333 !important; }
             document.getElementById('origemAtiva').textContent = formatarEndereco(corridaAtual.origem);
             document.getElementById('destinoAtiva').textContent = formatarEndereco(corridaAtual.destino);
 
-            // Endereco completo da origem (se tiver)
-            const endOrigem = document.getElementById('enderecoOrigemAtiva');
-            if (corridaAtual.origem?.endereco) {
-                endOrigem.textContent = '📍 ' + corridaAtual.origem.endereco;
-                endOrigem.style.display = 'block';
-            } else { endOrigem.style.display = 'none'; }
+            // Referencia origem - box destacado
+            const refOrigemBox = document.getElementById('refOrigemAtivaBox');
+            const refOrigemText = document.getElementById('refOrigemAtivaText');
+            const refOrigem = corridaAtual.observacaoOrigem || corridaAtual.origem?.referencia || corridaAtual.origem?.observacao;
+            if (refOrigemBox && refOrigemText && refOrigem) {
+                refOrigemText.textContent = refOrigem;
+                refOrigemBox.style.display = 'block';
+            } else if (refOrigemBox) { refOrigemBox.style.display = 'none'; }
 
-            // Referencia origem
-            const refOrigem = document.getElementById('referenciaOrigemAtiva');
-            if (corridaAtual.observacaoOrigem) {
-                refOrigem.textContent = '📌 Ref: ' + corridaAtual.observacaoOrigem;
-                refOrigem.style.display = 'block';
-            } else { refOrigem.style.display = 'none'; }
-
-            // Referencia destino
-            const refDestino = document.getElementById('referenciaDestinoAtiva');
-            if (corridaAtual.observacaoDestino) {
-                refDestino.textContent = '📌 Ref: ' + corridaAtual.observacaoDestino;
-                refDestino.style.display = 'block';
-            } else { refDestino.style.display = 'none'; }
-
-            if (corridaAtual.observacaoOrigem) {
-                document.getElementById('obsOrigemAtiva').textContent = '📝 ' + corridaAtual.observacaoOrigem;
-                document.getElementById('obsOrigemAtiva').style.display = 'block';
-            }
+            // Referencia destino - box destacado
+            const refDestinoBox = document.getElementById('refDestinoAtivaBox');
+            const refDestinoText = document.getElementById('refDestinoAtivaText');
+            const refDestino = corridaAtual.observacaoDestino || corridaAtual.destino?.referencia || corridaAtual.destino?.observacao;
+            if (refDestinoBox && refDestinoText && refDestino) {
+                refDestinoText.textContent = refDestino;
+                refDestinoBox.style.display = 'block';
+            } else if (refDestinoBox) { refDestinoBox.style.display = 'none'; }
 
             atualizarBotoesCorridaAtiva();
         }
