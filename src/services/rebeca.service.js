@@ -375,9 +375,9 @@ const RebecaService = {
             conversa.etapa = 'inicio';
             conversa.dados = {};
             if (cancelou) {
-                resposta = '😔 Corrida cancelada com sucesso.\n\nQuando precisar, estamos aqui! Basta enviar sua localização 📍';
+                resposta = '✅ Corrida cancelada!\n\nQuando precisar, é só chamar! 📍';
             } else {
-                resposta = 'Você não tem corrida ativa no momento.\n\nPara solicitar, envie sua localização! 📍';
+                resposta = 'Você não tem corrida ativa.\n\nEnvie sua localização para pedir! 📍';
             }
         }
         else if (msg.includes('rastrear') || msg.includes('onde está') || msg.includes('cadê') || msg.includes('cade o motorista')) {
@@ -479,7 +479,7 @@ const RebecaService = {
                 conversa.etapa = 'inicio';
                 conversa.dados = {};
                 conversas.set(telefone, conversa);
-                return '😔 No momento não temos motoristas disponíveis.\n\nTente novamente em alguns minutos! 🙏';
+                return '😔 Sem motoristas no momento. Tente em alguns minutos!';
             }
             
             // Criar corrida e despachar DIRETO

@@ -821,6 +821,9 @@ body { background: #f0f2f5 !important; color: #333 !important; }
             checkInterval = setInterval(() => {
                 if (motorista?.status === 'disponivel') {
                     verificarNovasCorridas();
+                } else if (corridaAtual) {
+                    // Se tem corrida ativa, verificar se ainda existe
+                    verificarCorridaAtiva();
                 }
                 carregarChat();
             }, 5000);
@@ -845,8 +848,20 @@ body { background: #f0f2f5 !important; color: #333 !important; }
                 });
                 const data = await res.json();
                 if (data.corrida) {
+                    // Se corrida foi cancelada, limpar
+                    if (data.corrida.status === 'cancelada') {
+                        corridaAtual = null;
+                        document.getElementById('corridaAtiva').classList.remove('active');
+                        document.getElementById('semCorrida').style.display = 'block';
+                        return;
+                    }
                     corridaAtual = data.corrida;
                     mostrarCorridaAtiva();
+                } else if (corridaAtual) {
+                    // Tinha corrida mas não tem mais - foi cancelada
+                    corridaAtual = null;
+                    document.getElementById('corridaAtiva').classList.remove('active');
+                    document.getElementById('semCorrida').style.display = 'block';
                 }
             } catch (e) {}
         }
