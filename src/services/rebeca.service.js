@@ -488,10 +488,7 @@ const RebecaService = {
             conversa.dados.corridaId = corrida.id;
             conversas.set(telefone, conversa);
             
-            let respRef = `🚗 *Pronto, ${nome}!*\n\n📍 *Buscar em:* ${conversa.dados.origem}`;
-            if (conversa.dados.observacaoOrigem) respRef += `\n📌 *Ref:* ${conversa.dados.observacaoOrigem}`;
-            respRef += `\n\n⏳ Localizando motorista mais próximo...\nTe aviso assim que um aceitar! 😊\n\n_Digite CANCELAR se precisar_`;
-            return respRef;
+            return `📍 ${conversa.dados.origem}${conversa.dados.observacaoOrigem ? '\n📌 ' + conversa.dados.observacaoOrigem : ''}\n\n⏳ Buscando motorista...\n_CANCELAR se precisar_`;
         }
         // ========== OBSERVAÇÃO ==========
         else if (conversa.etapa === 'pedir_observacao_origem') {
