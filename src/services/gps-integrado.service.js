@@ -2,16 +2,17 @@ const { Motorista } = require('../models');
 
 const gpsIntegradoService = {
     listarTodos: async (adminId) => {
-        const motoristas = await Motorista.find({ adminId }).lean();
+        const filtro = adminId ? { adminId, ativo: true } : { ativo: true };
+        const motoristas = await Motorista.find(filtro).lean();
         return motoristas.map(m => ({
             id: m._id.toString(),
-            nome: m.nome,
+            nome: m.nomeCompleto || m.nome || 'Motorista',
             telefone: m.telefone || m.whatsapp,
-            veiculo: m.veiculo ? m.veiculo.modelo + ' ' + m.veiculo.cor + ' - ' + m.veiculo.placa : '-',
-            latitude: m.localizacao ? m.localizacao.latitude : null,
-            longitude: m.localizacao ? m.localizacao.longitude : null,
+            veiculo: m.veiculo ? (m.veiculo.modelo || '') + ' ' + (m.veiculo.cor || '') + ' - ' + (m.veiculo.placa || '') : '-',
+            latitude: m.latitude || (m.localizacao ? m.localizacao.latitude : null),
+            longitude: m.longitude || (m.localizacao ? m.localizacao.longitude : null),
             status: m.status || 'offline',
-            ultimaAtualizacao: m.localizacao ? m.localizacao.atualizadoEm : m.updatedAt
+            ultimaAtualizacao: m.updatedAt
         }));
     },
     listarPorStatus: async (adminId, statusFiltro) => {
@@ -39,31 +40,33 @@ const gpsIntegradoService = {
     atualizar: async (motoristaId, dados) => {
         const update = {};
         if (dados.latitude && dados.longitude) {
-            update['localizacao.latitude'] = dados.latitude;
-            update['localizacao.longitude'] = dados.longitude;
-            update['localizacao.atualizadoEm'] = new Date();
+            update.latitude = dados.latitude;
+            update.longitude = dados.longitude;
         }
         if (dados.status) update.status = dados.status;
         const motorista = await Motorista.findByIdAndUpdate(motoristaId, update, { new: true });
-        return { id: motorista._id.toString(), nome: motorista.nome, status: motorista.status };
+        return { id: motorista._id.toString(), nome: motorista.nomeCompleto || motorista.nome, status: motorista.status };
     },
     obterMotorista: async (motoristaId) => {
         const m = await Motorista.findById(motoristaId).lean();
+        if (!m) return null;
         return {
             id: m._id.toString(),
-            nome: m.nome,
+            nome: m.nomeCompleto || m.nome || 'Motorista',
             telefone: m.telefone || m.whatsapp,
-            veiculo: m.veiculo ? m.veiculo.modelo + ' ' + m.veiculo.cor + ' - ' + m.veiculo.placa : '-',
-            latitude: m.localizacao ? m.localizacao.latitude : null,
-            longitude: m.localizacao ? m.localizacao.longitude : null,
+            veiculo: m.veiculo ? (m.veiculo.modelo || '') + ' ' + (m.veiculo.cor || '') + ' - ' + (m.veiculo.placa || '') : '-',
+            latitude: m.latitude || (m.localizacao ? m.localizacao.latitude : null),
+            longitude: m.longitude || (m.localizacao ? m.localizacao.longitude : null),
             status: m.status || 'offline'
         };
     },
     obterEstatisticas: async (adminId) => {
-        const motoristas = await Motorista.find({ adminId }).lean();
+        const filtro = adminId ? { adminId, ativo: true } : { ativo: true };
+        const motoristas = await Motorista.find(filtro).lean();
         return {
             disponiveis: motoristas.filter(m => m.status === 'disponivel').length,
             emCorrida: motoristas.filter(m => m.status === 'em_corrida').length,
+            offline: motoristas.filter(m => m.status === 'offline' || !m.status).length,
             totalMotoristas: motoristas.length
         };
     }
