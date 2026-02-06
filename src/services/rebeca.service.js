@@ -40,16 +40,33 @@ const RebecaService = {
     pareceEndereco: (texto) => {
         if (!texto || texto.length < 5) return false;
         const lower = texto.toLowerCase().trim();
+        
+        // NUNCA é endereço se contém palavras de pergunta
+        const palavrasPerguntas = ['?', 'como', 'qual', 'quanto', 'quando', 'onde fica', 'tem ', 'posso', 'pode', 'voce', 'você', 'aceita', 'funciona', 'horario', 'horário', 'aberto', 'fecha', 'demora', 'tempo', 'chega', 'valor', 'custa', 'pago', 'pagar', 'dinheiro', 'pix', 'cartao', 'cartão', 'credito', 'crédito', 'debito', 'débito', 'troco', 'seguro', 'segurança', 'confiavel', 'confiável'];
+        for (const p of palavrasPerguntas) {
+            if (lower.includes(p)) return false;
+        }
+        
         // Ignorar comandos obvios
-        const comandos = ['menu','oi','ola','olá','bom dia','boa tarde','boa noite','obrigado','obrigada','valeu','sim','nao','não','ok','1','2','3','4','5','6','7','casa','trabalho','cancelar','aceitar','finalizar','cheguei','preço','preco','historico','cotação','cotacao','ajuda','atendente'];
+        const comandos = ['menu','oi','ola','olá','bom dia','boa tarde','boa noite','obrigado','obrigada','valeu','sim','nao','não','ok','1','2','3','4','5','6','7','casa','trabalho','cancelar','aceitar','finalizar','cheguei','preço','preco','historico','cotação','cotacao','ajuda','atendente','ola rebeca','oi rebeca','eai','e ai','tudo bem','blz','beleza'];
         if (comandos.includes(lower)) return false;
-        // Tem numero? Provavelmente endereco
-        if (/\d+/.test(texto) && texto.length > 8) return true;
-        // Tem palavras de endereco?
-        if (/(rua|av|avenida|alameda|travessa|estrada|rodovia|praca|praça|bairro|setor|quadra|lote|condominio|conjunto)/i.test(texto)) return true;
-        // Texto com mais de 3 palavras e nao parece pergunta
+        
+        // SÓ é endereço se tem palavra-chave de endereço
+        const palavrasEndereco = ['rua ', 'r. ', 'av ', 'av. ', 'avenida ', 'alameda ', 'travessa ', 'estrada ', 'rodovia ', 'praca ', 'praça ', 'bairro ', 'setor ', 'quadra ', 'lote ', 'condominio ', 'condomínio ', 'conjunto ', 'vila ', 'jardim ', 'parque ', 'residencial ', 'numero ', 'número ', 'nº ', 'n. ', 'centro', 'zona sul', 'zona norte', 'zona leste', 'zona oeste'];
+        for (const p of palavrasEndereco) {
+            if (lower.includes(p)) return true;
+        }
+        
+        // Tem número E pelo menos uma palavra antes? (ex: "Alexandre Rodrigues 180")
+        const temNumero = /\d{2,}/.test(texto);
         const palavras = texto.split(/\s+/).length;
-        if (palavras >= 3 && !lower.includes('?') && !lower.startsWith('como') && !lower.startsWith('qual') && !lower.startsWith('quanto') && !lower.startsWith('tem ') && !lower.startsWith('posso')) return true;
+        if (temNumero && palavras >= 2 && texto.length > 10) {
+            // Mas não pode ser pergunta disfarçada
+            if (!lower.startsWith('o ') && !lower.startsWith('a ') && !lower.startsWith('e ') && !lower.startsWith('é ')) {
+                return true;
+            }
+        }
+        
         return false;
     },
 
