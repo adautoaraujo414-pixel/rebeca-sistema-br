@@ -987,7 +987,9 @@ const RebecaService = {
         // ========== DESPACHAR PARA MOTORISTAS ==========
         try {
             // Buscar motoristas disponiveis DO ADMIN
+            console.log('[REBECA] Buscando motoristas para adminId:', adminId);
             const motoristasDisponiveis = await MotoristaService.listarDisponiveis(adminId);
+            console.log('[REBECA] Motoristas encontrados:', motoristasDisponiveis.length, motoristasDisponiveis.map(m => ({ nome: m.nomeCompleto || m.nome, status: m.status, whatsapp: m.whatsapp })));
             
             if (motoristasDisponiveis.length > 0) {
                 // Despachar corrida (usa modo configurado: broadcast ou proximo)

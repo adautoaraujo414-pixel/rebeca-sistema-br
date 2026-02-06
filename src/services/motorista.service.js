@@ -68,7 +68,10 @@ const MotoristaService = {
     async listarDisponiveis(adminId) {
         const query = { status: 'disponivel', ativo: true };
         if (adminId) query.adminId = adminId;
-        return await Motorista.find(query);
+        console.log('[MOTORISTA] listarDisponiveis query:', JSON.stringify(query));
+        const mots = await Motorista.find(query);
+        console.log('[MOTORISTA] Encontrados:', mots.length);
+        return mots;
     },
 
     // Buscar mais proximo (filtrado por admin)
