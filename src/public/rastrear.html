@@ -264,6 +264,16 @@
                     return;
                 }
                 
+                // Link expirado (corrida iniciou/finalizou/cancelou)
+                if (dados.expirado) {
+                    document.getElementById('loading').style.display = 'none';
+                    document.querySelector('.erro .icon').textContent = dados.status === 'finalizada' ? '✅' : dados.status === 'em_andamento' ? '🚀' : '❌';
+                    document.querySelector('.erro h2').textContent = dados.mensagem;
+                    document.querySelector('.erro p').textContent = dados.status === 'em_andamento' ? 'O motorista já chegou e a corrida está em andamento.' : dados.status === 'finalizada' ? 'Esperamos que tenha tido uma ótima viagem!' : '';
+                    document.getElementById('erro').style.display = 'block';
+                    return;
+                }
+                
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('conteudo').style.display = 'block';
                 

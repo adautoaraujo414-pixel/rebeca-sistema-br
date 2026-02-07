@@ -44,6 +44,17 @@ router.get('/rastrear/:codigo', (req, res) => {
         return res.status(404).json({ error: 'Corrida não encontrada' });
     }
     
+    // Link expira quando corrida inicia, finaliza ou cancela
+    if (['em_andamento', 'finalizada', 'cancelada'].includes(corrida.status)) {
+        return res.json({ 
+            expirado: true, 
+            status: corrida.status,
+            mensagem: corrida.status === 'em_andamento' ? 'Corrida em andamento - rastreamento encerrado' :
+                      corrida.status === 'finalizada' ? 'Corrida finalizada - obrigado!' :
+                      'Corrida cancelada'
+        });
+    }
+    
     let motorista = null;
     let motoristaGPS = null;
     
