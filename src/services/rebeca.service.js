@@ -1146,11 +1146,11 @@ const RebecaService = {
                     const minutos = Math.round((distKm / 30) * 60); // 30km/h média urbana
                     tempoEstimado = `\n⏱️ *Tempo estimado:* ${minutos} min`;
                 }
-                const msgCliente = `🚗 *MOTORISTA A CAMINHO!*\n\n👨‍✈️ *${motorista.nomeCompleto || motorista.nome}*\n🚙 ${motorista.veiculo?.modelo || ''} ${motorista.veiculo?.cor || ''}\n🔢 *${motorista.veiculo?.placa || ''}*${tempoEstimado}\n\n📞 ${motorista.whatsapp}`;
+                const msgCliente = `🚗 *MOTORISTA A CAMINHO!*\n\n👨‍✈️ *${motorista.nomeCompleto || motorista.nome}*\n🚙 ${motorista.veiculo?.modelo || ''} ${motorista.veiculo?.cor || ''}\n🔢 *${motorista.veiculo?.placa || ''}*${tempoEstimado}\n\n💬 Use este chat para falar com o motorista!`;
                 await EvolutionMultiService.enviarMensagem(instanciaId, corrida.clienteTelefone, msgCliente);
             }
             
-            return `✅ *CORRIDA ACEITA!*\n\n📍 Origem: ${corrida?.origem?.endereco || 'Ver no app'}\n🏁 Destino: ${corrida?.destino?.endereco || 'Ver no app'}\n💰 Valor: R$ ${corrida?.precoEstimado?.toFixed(2) || '?'}\n\n📱 Cliente: ${corrida?.clienteTelefone || ''}\n\nDigite *CHEGUEI* ao chegar no local.\nDigite *FINALIZAR* ao concluir.`;
+            return `✅ *CORRIDA ACEITA!*\n\n📍 ${corrida?.origem?.endereco || 'Ver no app'}\n💰 R$ ${corrida?.precoEstimado?.toFixed(2) || '?'}\n\n💬 Use o chat do app para falar com o cliente!\n\nDigite *CHEGUEI* ao chegar.\nDigite *FINALIZAR* ao concluir.`;
         } catch (e) {
             console.error('[REBECA] Erro ao aceitar:', e.message);
             return '❌ Erro ao processar. Tente novamente.';
