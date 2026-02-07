@@ -79,14 +79,29 @@ router.post('/aceitar', auth, async (req, res) => {
                 const adminIdMotorista = req.motorista.adminId;
                 console.log('[ACEITAR] Corrida:', corridaId, '| clienteTel:', corrida.clienteTelefone, '| adminId corrida:', corrida.adminId, '| adminId motorista:', adminIdMotorista);
                 
-                // Buscar instancia - usar adminId do motorista primeiro
-                let instancia = await InstanciaWhatsapp.findOne({ adminId: adminIdMotorista, status: 'conectado' });
+                // Buscar instancia - tentar várias formas
+                let instancia = null;
+                
+                // 1. Por adminId do motorista
+                if (adminIdMotorista) {
+                    instancia = await InstanciaWhatsapp.findOne({ adminId: adminIdMotorista, status: 'conectado' });
+                }
+                
+                // 2. Por adminId da corrida
                 if (!instancia && corrida.adminId) {
                     instancia = await InstanciaWhatsapp.findOne({ adminId: corrida.adminId, status: 'conectado' });
                 }
+                
+                // 3. Qualquer instância conectada (mais recente)
                 if (!instancia) {
-                    console.log('[ACEITAR] Instancia nao encontrada por adminId, buscando qualquer conectada');
-                    instancia = await InstanciaWhatsapp.findOne({ status: 'conectado' });
+                    console.log('[ACEITAR] Buscando qualquer instancia conectada...');
+                    instancia = await InstanciaWhatsapp.findOne({ status: 'conectado' }).sort({ ultimaConexao: -1 });
+                }
+                
+                // 4. Se ainda não achou, verificar se existe alguma instância
+                if (!instancia) {
+                    const totalInstancias = await InstanciaWhatsapp.countDocuments();
+                    console.log('[ACEITAR] ERRO: Nenhuma instancia conectada! Total instancias:', totalInstancias);
                 }
                 
                 if (instancia) {
