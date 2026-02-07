@@ -1146,7 +1146,9 @@ const RebecaService = {
                     const minutos = Math.round((distKm / 30) * 60); // 30km/h média urbana
                     tempoEstimado = `\n⏱️ *Tempo estimado:* ${minutos} min`;
                 }
-                const msgCliente = `🚗 *MOTORISTA A CAMINHO!*\n\n👨‍✈️ *${motorista.nomeCompleto || motorista.nome}*\n🚙 ${motorista.veiculo?.modelo || ''} ${motorista.veiculo?.cor || ''}\n🔢 *${motorista.veiculo?.placa || ''}*${tempoEstimado}\n\n💬 Use este chat para falar com o motorista!`;
+                // Gerar link de rastreamento
+                const linkRastreamento = RebecaService.gerarLinkRastreamento(corrida._id || corrida.id);
+                const msgCliente = `🚗 *MOTORISTA A CAMINHO!*\n\n👨‍✈️ *${motorista.nomeCompleto || motorista.nome}*\n🚙 ${motorista.veiculo?.modelo || ''} ${motorista.veiculo?.cor || ''}\n🔢 *${motorista.veiculo?.placa || ''}*${tempoEstimado}\n\n📲 Acompanhe em tempo real:\n${linkRastreamento}\n\n💬 Use este chat para falar com o motorista!`;
                 await EvolutionMultiService.enviarMensagem(instanciaId, corrida.clienteTelefone, msgCliente);
             }
             
