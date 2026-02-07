@@ -178,9 +178,14 @@ const EvolutionMultiService = {
             await new Promise(r => setTimeout(r, delay));
             
             try {
+                console.log('[EVO] Enviando msg para:', numero);
                 const response = await axios.post(instancia.apiUrl + '/message/sendText/' + instancia.nomeInstancia, { number: numero, text: mensagem }, { headers: { 'apikey': instancia.apiKey || EVOLUTION_GLOBAL_KEY, 'Content-Type': 'application/json' } });
+                console.log('[EVO] Msg enviada OK, messageId:', response.data?.key?.id);
                 return { sucesso: true, messageId: response.data?.key?.id };
-            } catch (e) { return { sucesso: true, simulado: true }; }
+            } catch (e) { 
+                console.log('[EVO] ERRO ao enviar:', e.response?.data || e.message);
+                return { sucesso: false, erro: e.message }; 
+            }
         } catch (e) { return { sucesso: false, erro: e.message }; }
     },
     listarTodas: async () => {
