@@ -517,6 +517,12 @@ const RebecaService = {
                 
                 // CRIAR CORRIDA DIRETO - OBJETIVIDADE!
                 const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
+                
+                // Se duplicada, avisar cliente
+                if (corrida.duplicada) {
+                    return '⚠️ Você já tem uma corrida em andamento!\n\nDigite *CANCELAR* para cancelar ou aguarde o motorista.';
+                }
+                
                 conversa.etapa = 'aguardando_motorista';
                 conversa.dados.corridaId = corrida.id;
                 conversas.set(telefone, conversa);
@@ -531,6 +537,12 @@ const RebecaService = {
             
             // Criar corrida e despachar
             const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
+            
+            // Se duplicada, avisar cliente
+            if (corrida.duplicada) {
+                return '⚠️ Você já tem uma corrida em andamento!\n\nDigite *CANCELAR* para cancelar ou aguarde o motorista.';
+            }
+            
             conversa.etapa = 'aguardando_motorista';
             conversa.dados.corridaId = corrida.id;
             conversas.set(telefone, conversa);
@@ -568,6 +580,12 @@ const RebecaService = {
             
             // Criar corrida e despachar DIRETO
             const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
+            
+            // Se duplicada, avisar cliente
+            if (corrida.duplicada) {
+                return '⚠️ Você já tem uma corrida em andamento!\n\nDigite *CANCELAR* para cancelar ou aguarde o motorista.';
+            }
+            
             conversa.etapa = 'aguardando_motorista';
             conversa.dados.corridaId = corrida.id;
             conversas.set(telefone, conversa);
