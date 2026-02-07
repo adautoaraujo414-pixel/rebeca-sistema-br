@@ -1084,9 +1084,22 @@ const RebecaService = {
             clienteTelefone: telefone,
             status: { $in: ['pendente', 'aceita', 'em_andamento', 'motorista_a_caminho'] }
         });
+        
         if (corridaAtiva) {
-            console.log('[REBECA] Corrida duplicada bloqueada para', telefone);
-            return { id: corridaAtiva._id, duplicada: true };
+            // TIMEOUT: Se corrida PENDENTE há mais de 10 minutos, cancelar automaticamente
+            const agora = new Date();
+            const criacao = new Date(corridaAtiva.createdAt || corridaAtiva.dataCriacao || agora);
+            const minutosPendente = (agora - criacao) / 1000 / 60;
+            
+            if (corridaAtiva.status === 'pendente' && minutosPendente > 10) {
+                // Corrida pendente antiga - cancelar e permitir nova
+                await Corrida.findByIdAndUpdate(corridaAtiva._id, { status: 'cancelada', motivoCancelamento: 'timeout_10min' });
+                console.log('[REBECA] Corrida pendente antiga cancelada (timeout 10min):', corridaAtiva._id);
+            } else {
+                // Corrida ativa recente - bloquear duplicada
+                console.log('[REBECA] Corrida duplicada bloqueada para', telefone, '- Status:', corridaAtiva.status, '- Minutos:', minutosPendente.toFixed(1));
+                return { id: corridaAtiva._id, duplicada: true };
+            }
         }
         
         let cliente = ClienteService.buscarPorTelefone(telefone);
