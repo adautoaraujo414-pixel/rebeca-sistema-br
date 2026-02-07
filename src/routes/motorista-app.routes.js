@@ -51,6 +51,17 @@ router.get('/corridas-disponiveis', auth, async (req, res) => {
 router.post('/aceitar', auth, async (req, res) => {
     const { corridaId } = req.body;
     try {
+        // PROTEÇÃO: Verificar se corrida já foi aceita
+        const { Corrida } = require('../models');
+        const corridaExistente = await Corrida.findById(corridaId);
+        if (!corridaExistente) {
+            return res.status(404).json({ erro: 'Corrida não encontrada' });
+        }
+        if (corridaExistente.status !== 'pendente') {
+            console.log('[ACEITAR] Corrida já processada:', corridaId, '- Status:', corridaExistente.status);
+            return res.json({ sucesso: true, corrida: corridaExistente, mensagem: 'Corrida já aceita' });
+        }
+        
         const corrida = await CorridaService.atribuirMotorista(corridaId, req.motorista._id, req.motorista.nome);
         
         // Colocar cliente em modo corrida (para encaminhar msgs)
