@@ -500,7 +500,7 @@ const RebecaService = {
                 conversas.set(telefone, conversa);
                 return `📍 ${msgOriginal}\n\nQual bairro?`;
             } else {
-                // Achou no Maps - pedir referencia
+                // FLUXO DIRETO: Achou no Maps - criar corrida imediatamente!
                 conversa.dados.origem = validacao.endereco;
                 conversa.dados.origemValidada = validacao;
                 conversa.dados.calculo = {
@@ -508,9 +508,20 @@ const RebecaService = {
                     destino: null, distanciaKm: 0, tempoMinutos: 0, preco: 15,
                     faixa: { nome: 'padrao', multiplicador: 1 }
                 };
-                conversa.etapa = 'pedir_referencia';
+                
+                // Verificar motoristas disponíveis
+                const motoristasDisponiveis = await MotoristaService.listarDisponiveis(conversa.adminId);
+                if (motoristasDisponiveis.length === 0) {
+                    return '😔 Sem motoristas disponíveis no momento. Tente novamente em alguns minutos!';
+                }
+                
+                // CRIAR CORRIDA DIRETO - OBJETIVIDADE!
+                const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
+                conversa.etapa = 'aguardando_motorista';
+                conversa.dados.corridaId = corrida.id;
                 conversas.set(telefone, conversa);
-                return `📍 ${validacao.endereco}\n\nReferência? (ou 0)`;
+                
+                return `📍 ${validacao.endereco}\n\n⏳ Buscando motorista...\n_CANCELAR se precisar_`;
             }
         }
         // ========== COMPLEMENTO GPS (número/referência) ==========
