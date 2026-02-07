@@ -120,7 +120,7 @@ async function desbloquearCliente(id) { await api('/api/clientes/'+id+'/desbloqu
 
 // ROTAS
 let mapaRotaLeaflet = null;
-async function carregarRotas() { if (!mapaRotaLeaflet) { mapaRotaLeaflet = L.map('mapaGoogle').setView([-23.5327,-46.7917],12); L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapaRotaLeaflet); }}
+async function carregarRotas() { if (!mapaRotaLeaflet) { mapaRotaLeaflet = L.map('mapaGoogle').setView([-20.0,-48.0],12); L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapaRotaLeaflet); }}
 async function calcularRota() {
     const origem = document.getElementById('rotaOrigem').value;
     const destino = document.getElementById('rotaDestino').value;
