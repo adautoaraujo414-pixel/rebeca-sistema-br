@@ -12,6 +12,7 @@ const IAService = require('./ia.service');
 const conversas = new Map();
 const ultimasRespostas = new Map(); // Anti-repeticao
 const favoritosClientes = new Map();
+const localidadeService = require('./localidade.service');
 
 const configRebeca = {
     enviarLinkRastreamento: true,
@@ -184,6 +185,59 @@ const RebecaService = {
         const favoritos = RebecaService.getFavoritos(telefone);
         
         let resposta = '';
+
+        // ========== RECONHECER CASA/TRABALHO/PONTOS ==========
+        const msgLower = msg.toLowerCase();
+        
+        // Cliente pede "casa" e tem favorito
+        if ((msgLower === 'casa' || msgLower.includes('minha casa') || msgLower.includes('pra casa') || msgLower.includes('em casa')) && favoritos.casa) {
+            conversa.dados.origem = favoritos.casa.endereco || favoritos.casa;
+            conversa.dados.origemValidada = { valido: true, precisao: 'favorito' };
+            if (favoritos.casa.latitude) {
+                conversa.dados.calculo = {
+                    origem: { endereco: conversa.dados.origem, latitude: favoritos.casa.latitude, longitude: favoritos.casa.longitude },
+                    destino: null, distanciaKm: 0, tempoMinutos: 0, preco: 15
+                };
+            }
+            conversa.etapa = 'pedir_complemento_gps';
+            conversas.set(telefone, conversa);
+            return `📍 ${conversa.dados.origem}\n\nÉ esse o endereço? Confirme ou mande outro!`;
+        }
+        
+        // Cliente pede "trabalho" e tem favorito
+        if ((msgLower === 'trabalho' || msgLower.includes('meu trabalho') || msgLower.includes('pro trabalho')) && favoritos.trabalho) {
+            conversa.dados.origem = favoritos.trabalho.endereco || favoritos.trabalho;
+            conversa.dados.origemValidada = { valido: true, precisao: 'favorito' };
+            if (favoritos.trabalho.latitude) {
+                conversa.dados.calculo = {
+                    origem: { endereco: conversa.dados.origem, latitude: favoritos.trabalho.latitude, longitude: favoritos.trabalho.longitude },
+                    destino: null, distanciaKm: 0, tempoMinutos: 0, preco: 15
+                };
+            }
+            conversa.etapa = 'pedir_complemento_gps';
+            conversas.set(telefone, conversa);
+            return `📍 ${conversa.dados.origem}\n\nÉ esse o endereço? Confirme ou mande outro!`;
+        }
+        
+        // Buscar pontos de referência cadastrados
+        if (msgLower.length > 2 && !RebecaService.pareceLocalizacao(mensagem)) {
+            const pontosEncontrados = localidadeService.buscarPontos(msgLower);
+            if (pontosEncontrados && pontosEncontrados.length > 0) {
+                const ponto = pontosEncontrados[0];
+                conversa.dados.origem = ponto.endereco || ponto.nome;
+                conversa.dados.observacaoOrigem = ponto.nome;
+                conversa.dados.origemValidada = { valido: true, precisao: 'ponto_referencia' };
+                if (ponto.latitude) {
+                    conversa.dados.calculo = {
+                        origem: { endereco: conversa.dados.origem, latitude: ponto.latitude, longitude: ponto.longitude },
+                        destino: null, distanciaKm: 0, tempoMinutos: 0, preco: 15
+                    };
+                }
+                conversa.etapa = 'pedir_complemento_gps';
+                conversas.set(telefone, conversa);
+                return `📍 *${ponto.nome}*\n${ponto.endereco}\n\nÉ esse o local? Confirme ou mande outro!`;
+            }
+        }
 
         if (RebecaService.pareceLocalizacao(mensagem)) {
             const coords = RebecaService.extrairCoordenadas(mensagem);
@@ -1107,6 +1161,21 @@ const RebecaService = {
         if (configRebeca.enviarLinkRastreamento) r += `\n\n📲 ${RebecaService.gerarLinkRastreamento(c.id)}`;
         return r;
     },
+    // Salvar endereço frequente do cliente
+    salvarEnderecoFrequente: (telefone, endereco, tipo = 'recente') => {
+        const favoritos = favoritosClientes.get(telefone) || {};
+        if (!favoritos.recentes) favoritos.recentes = [];
+        
+        // Adicionar aos recentes se não existir
+        if (!favoritos.recentes.includes(endereco)) {
+            favoritos.recentes.unshift(endereco);
+            if (favoritos.recentes.length > 5) favoritos.recentes.pop();
+        }
+        
+        favoritosClientes.set(telefone, favoritos);
+        return favoritos;
+    },
+
     gerarMensagemCorridaFinalizada: (c) => `✅ *FINALIZADA!*\n\n#${c.id.slice(-6)}\n💰 R$ ${(c.precoFinal || c.precoEstimado).toFixed(2)}\n\n⭐ Avalie de 1 a 5:`,
     gerarMensagemCorridaCancelada: (c, m) => `❌ *CANCELADA*\n\n#${c.id.slice(-6)}\n📝 ${m || '-'}`,
 
