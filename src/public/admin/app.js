@@ -57,13 +57,16 @@ async function carregarMapa() {
     document.getElementById('mapaDisponiveis').textContent = st.disponiveis || 0;
     document.getElementById('mapaEmCorrida').textContent = st.emCorrida || 0;
     document.getElementById('mapaOffline').textContent = st.offline || 0;
-    if (!mapaLeaflet) { mapaLeaflet = L.map('mapaLeaflet').setView([-23.5327,-46.7917],13); L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapaLeaflet); }
+    if (!mapaLeaflet) { mapaLeaflet = L.map('mapaLeaflet').setView([-20.0,-48.0],12); L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapaLeaflet); }
     atualizarMapa();
 }
 async function atualizarMapa() {
     if (!mapaLeaflet) return;
     marcadores.forEach(m=>mapaLeaflet.removeLayer(m)); marcadores=[];
     const mots = await api('/api/gps-integrado');
+    // Auto-centralizar no primeiro motorista com GPS
+    const motComGPS = mots.find(m => m.latitude && m.longitude);
+    if (motComGPS && marcadores.length === 0) { mapaLeaflet.setView([motComGPS.latitude, motComGPS.longitude], 14); }
     mots.forEach(m => { if (m.latitude && m.longitude) { const cor = m.status==='disponivel'?'#27ae60':m.status==='em_corrida'?'#3498db':'#999'; const ic = L.divIcon({html:`<div style="background:${cor};width:30px;height:30px;border-radius:50%;border:3px solid white;display:flex;align-items:center;justify-content:center;">🚗</div>`,className:'',iconSize:[30,30]}); marcadores.push(L.marker([m.latitude,m.longitude],{icon:ic}).addTo(mapaLeaflet).bindPopup(`<b>${m.nome}</b><br>${formatStatus(m.status)}`)); }});
 }
 
