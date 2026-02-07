@@ -164,6 +164,14 @@ const RebecaService = {
             if (msgUpper === 'CHEGUEI' || msgUpper === 'CHEGOU') {
                 return await RebecaService.motoristaChegou(telefone, adminId, contexto.instanciaId);
             }
+            
+            // Motorista aceita/recusa próxima corrida
+            if (msgUpper === 'ACEITAR PROXIMA') {
+                return await RebecaService.aceitarProximaCorrida(telefone, adminId, contexto.instanciaId);
+            }
+            if (msgUpper === 'RECUSAR PROXIMA') {
+                return '👍 Ok! Você pode terminar sua corrida atual primeiro.';
+            }
         }
         if (adminId) console.log('[REBECA] Admin:', adminId);
         
@@ -1055,6 +1063,14 @@ const RebecaService = {
                 }
                 
                 console.log('[REBECA] Despacho:', resultadoDespacho.modo, '- Motoristas:', motoristasDisponiveis.length);
+                
+                // Verificar se tem motorista EM CORRIDA mas próximo (próxima corrida)
+                const motProximo = await DespachoService.verificarProximaCorrida(corrida, adminId);
+                if (motProximo && instanciaId) {
+                    const msgProxima = `🔔 *PRÓXIMA CORRIDA PERTO!*\n\n📍 ${dados.calculo.origem?.endereco || dados.origem}\n📏 ${motProximo.distanciaKm.toFixed(1)}km de você\n💰 R$ ${dados.calculo.preco?.toFixed(2) || '15.00'}\n\n✅ ACEITAR PROXIMA\n❌ RECUSAR PROXIMA`;
+                    await EvolutionMultiService.enviarMensagem(instanciaId, motProximo.whatsapp, msgProxima);
+                    console.log('[REBECA] Próxima corrida enviada para:', motProximo.nomeCompleto || motProximo.nome);
+                }
             } else {
                 console.log('[REBECA] Nenhum motorista disponivel para admin:', adminId);
             }
@@ -1162,6 +1178,32 @@ const RebecaService = {
         }
     },
     
+    async aceitarProximaCorrida(telefoneMotorista, adminId, instanciaId) {
+        try {
+            const motorista = await MotoristaService.buscarPorWhatsapp(telefoneMotorista, adminId);
+            if (!motorista) return '❌ Você não está cadastrado.';
+            
+            // Buscar corrida pendente mais recente
+            const { Corrida } = require('../models');
+            const corridaPendente = await Corrida.findOne({ 
+                adminId, 
+                status: 'pendente' 
+            }).sort({ createdAt: -1 });
+            
+            if (!corridaPendente) return '❌ Não há corrida disponível no momento.';
+            
+            // Reservar a próxima corrida para este motorista
+            corridaPendente.proximoMotoristaId = motorista._id;
+            corridaPendente.proximoMotoristaNome = motorista.nomeCompleto || motorista.nome;
+            await corridaPendente.save();
+            
+            return `✅ *PRÓXIMA CORRIDA RESERVADA!*\n\n📍 ${corridaPendente.origem?.endereco || 'Ver no app'}\n\nAssim que finalizar a corrida atual, ela será sua automaticamente!`;
+        } catch(e) {
+            console.error('[REBECA] Erro aceitarProxima:', e.message);
+            return '❌ Erro. Tente novamente.';
+        }
+    },
+
     async motoristaFinalizarCorrida(telefoneMotorista, adminId, instanciaId) {
         try {
             const motorista = await MotoristaService.buscarPorWhatsapp(telefoneMotorista, adminId);

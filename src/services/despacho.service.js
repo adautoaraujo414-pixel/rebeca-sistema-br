@@ -132,6 +132,52 @@ const DespachoService = {
         };
     },
 
+    // ==================== PRÓXIMA CORRIDA (motorista em corrida mas perto) ====================
+    async verificarProximaCorrida(corrida, adminId) {
+        try {
+            // Buscar motoristas EM CORRIDA que estão próximos
+            const { Motorista } = require('../models');
+            const motoristasEmCorrida = await Motorista.find({ 
+                adminId, 
+                status: 'em_corrida',
+                ativo: true,
+                latitude: { $exists: true },
+                longitude: { $exists: true }
+            });
+            
+            if (!motoristasEmCorrida.length) return null;
+            
+            // Buscar coordenadas da origem da nova corrida
+            let origemCoords = corrida.origem;
+            if (typeof corrida.origem === 'string') {
+                const geo = await MapsService.geocodificar(corrida.origem);
+                if (geo.sucesso) origemCoords = { latitude: geo.latitude, longitude: geo.longitude };
+            }
+            if (!origemCoords?.latitude) return null;
+            
+            // Encontrar motorista em corrida mais próximo (< 2km)
+            const proximoDisponivel = motoristasEmCorrida
+                .map(m => ({
+                    ...m.toObject(),
+                    distanciaKm: MapsService.calcularDistancia(
+                        origemCoords.latitude, origemCoords.longitude,
+                        m.latitude, m.longitude
+                    )
+                }))
+                .filter(m => m.distanciaKm < 2) // Máximo 2km
+                .sort((a, b) => a.distanciaKm - b.distanciaKm)[0];
+            
+            if (proximoDisponivel) {
+                console.log(`📍 Próxima corrida: ${proximoDisponivel.nomeCompleto || proximoDisponivel.nome} está a ${proximoDisponivel.distanciaKm.toFixed(1)}km`);
+                return proximoDisponivel;
+            }
+            return null;
+        } catch(e) {
+            console.error('[DESPACHO] Erro verificarProximaCorrida:', e.message);
+            return null;
+        }
+    },
+
     // ==================== MODO: BROADCAST (TODOS) ====================
     async despacharBroadcast(corrida, motoristasDisponiveis) {
         if (!motoristasDisponiveis || motoristasDisponiveis.length === 0) {
