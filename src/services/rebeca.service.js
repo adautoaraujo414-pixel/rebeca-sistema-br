@@ -185,11 +185,11 @@ const RebecaService = {
             const motoristasDisponiveis = await MotoristaService.listarDisponiveis(adminId);
             
             if (motoristasDisponiveis.length === 0) {
-                return `😔 No momento, todos os nossos motoristas estão ocupados.\n\nPor favor, tente novamente em alguns minutos. Pedimos desculpas pelo transtorno! 🙏`;
+                return '😔 Sem motoristas no momento. Tente em alguns minutos!';
             }
             
             conversa.dados.origemGPS = coords;
-            conversa.dados.origem = endereco.endereco || `${coords.latitude}, ${coords.longitude}`;
+            conversa.dados.origem = endereco.endereco || 'Localização recebida';
             conversa.dados.origemValidada = { valido: true, precisao: 'gps', latitude: coords.latitude, longitude: coords.longitude };
             conversa.dados.calculo = {
                 origem: { endereco: conversa.dados.origem, latitude: coords.latitude, longitude: coords.longitude },
@@ -200,13 +200,11 @@ const RebecaService = {
                 faixa: { nome: 'chamada', multiplicador: 1 }
             };
             
-            const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
-            
-            conversa.etapa = 'aguardando_motorista';
-            conversa.dados.corridaId = corrida.id;
+            // Pedir número/complemento ANTES de criar corrida
+            conversa.etapa = 'pedir_complemento_gps';
             conversas.set(telefone, conversa);
             
-            return `📍 *${conversa.dados.origem}*\n\n⏳ Buscando motorista pra você...\n\nTe aviso assim que um aceitar! 😊\n\n_Digite CANCELAR se precisar_`;
+            return `📍 ${conversa.dados.origem}\n\nQual o número ou ponto de referência?`;
         }
         // ========== TENTAR IA PRIMEIRO ==========
         if (configRebeca.usarIA && IAService.isAtivo() && conversa.etapa === 'inicio') {
@@ -452,6 +450,19 @@ const RebecaService = {
                 conversas.set(telefone, conversa);
                 return `📍 ${validacao.endereco}\n\nReferência? (ou 0)`;
             }
+        }
+        // ========== COMPLEMENTO GPS (número/referência) ==========
+        else if (conversa.etapa === 'pedir_complemento_gps') {
+            // Salvar complemento/referência
+            conversa.dados.observacaoOrigem = msgOriginal;
+            
+            // Criar corrida e despachar
+            const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
+            conversa.etapa = 'aguardando_motorista';
+            conversa.dados.corridaId = corrida.id;
+            conversas.set(telefone, conversa);
+            
+            return `📍 ${conversa.dados.origem}\n📌 ${msgOriginal}\n\n⏳ Buscando motorista...\n_CANCELAR se precisar_`;
         }
         // ========== PEDIR BAIRRO ==========
         else if (conversa.etapa === 'pedir_bairro_origem') {
@@ -1106,10 +1117,20 @@ const RebecaService = {
             // Atribuir motorista na corrida
             await CorridaService.atribuirMotorista(notif.corridaId, motorista._id, motorista.nomeCompleto || motorista.nome);
             
-            // Notificar cliente que motorista está a caminho
+            // Notificar cliente que motorista está a caminho COM TEMPO ESTIMADO
             const corrida = await CorridaService.buscarPorId(notif.corridaId);
             if (corrida && corrida.clienteTelefone && instanciaId) {
-                const msgCliente = `🚗 *MOTORISTA A CAMINHO!*\n\n👨‍✈️ *${motorista.nomeCompleto || motorista.nome}*\n🚙 ${motorista.veiculo?.modelo || ''} ${motorista.veiculo?.cor || ''}\n🔢 *${motorista.veiculo?.placa || ''}*\n\n📞 ${motorista.whatsapp}`;
+                // Calcular tempo estimado de chegada
+                let tempoEstimado = '';
+                if (motorista.latitude && motorista.longitude && corrida.origem?.latitude && corrida.origem?.longitude) {
+                    const distKm = MapsService.calcularDistancia(
+                        motorista.latitude, motorista.longitude,
+                        corrida.origem.latitude, corrida.origem.longitude
+                    );
+                    const minutos = Math.round((distKm / 30) * 60); // 30km/h média urbana
+                    tempoEstimado = `\n⏱️ *Tempo estimado:* ${minutos} min`;
+                }
+                const msgCliente = `🚗 *MOTORISTA A CAMINHO!*\n\n👨‍✈️ *${motorista.nomeCompleto || motorista.nome}*\n🚙 ${motorista.veiculo?.modelo || ''} ${motorista.veiculo?.cor || ''}\n🔢 *${motorista.veiculo?.placa || ''}*${tempoEstimado}\n\n📞 ${motorista.whatsapp}`;
                 await EvolutionMultiService.enviarMensagem(instanciaId, corrida.clienteTelefone, msgCliente);
             }
             
