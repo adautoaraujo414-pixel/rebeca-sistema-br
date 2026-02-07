@@ -75,10 +75,15 @@ router.post('/aceitar', auth, async (req, res) => {
             try {
                 const EvolutionMultiService = require('../services/evolution-multi.service');
                 const { InstanciaWhatsapp } = require('../models');
-                console.log('[ACEITAR] Corrida:', corridaId, '| clienteTel:', corrida.clienteTelefone, '| adminId:', corrida.adminId);
+                // Usar adminId do motorista (mais confiável que da corrida)
+                const adminIdMotorista = req.motorista.adminId;
+                console.log('[ACEITAR] Corrida:', corridaId, '| clienteTel:', corrida.clienteTelefone, '| adminId corrida:', corrida.adminId, '| adminId motorista:', adminIdMotorista);
                 
-                // Buscar instancia - tentar por adminId, senão pegar qualquer conectada
-                let instancia = await InstanciaWhatsapp.findOne({ adminId: corrida.adminId, status: 'conectado' });
+                // Buscar instancia - usar adminId do motorista primeiro
+                let instancia = await InstanciaWhatsapp.findOne({ adminId: adminIdMotorista, status: 'conectado' });
+                if (!instancia && corrida.adminId) {
+                    instancia = await InstanciaWhatsapp.findOne({ adminId: corrida.adminId, status: 'conectado' });
+                }
                 if (!instancia) {
                     console.log('[ACEITAR] Instancia nao encontrada por adminId, buscando qualquer conectada');
                     instancia = await InstanciaWhatsapp.findOne({ status: 'conectado' });
