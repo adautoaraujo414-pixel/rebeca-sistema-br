@@ -373,7 +373,7 @@ const RebecaService = {
             resposta = await RebecaService.historicoCliente(telefone);
         }
         else if (msg === '5' || msg.includes('atendente') || msg.includes('humano') || msg.includes('falar com')) {
-            resposta = `👤 *ATENDIMENTO*\n\nUm atendente vai te ajudar em breve.\n\n📞 Ou ligue: (11) 99999-9999`;
+            resposta = `👤 *ATENDIMENTO*\n\nUm atendente vai te ajudar em breve!`;
         }
         else if (msg === '6' || msg.includes('exemplo')) {
             resposta = await RebecaService.enviarExemplosPreco();
