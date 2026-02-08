@@ -820,11 +820,11 @@ const RebecaService = {
             if (respostaIA) {
                 resposta = respostaIA + `\n\n`;
             } else {
-                resposta = `🤔 Desculpe, não consegui entender. Posso te ajudar de outra forma?\n\n${RebecaService.menuPrincipal(nome, telefone)}`;
+                resposta = `Posso te ajudar a pedir um carro! Me passa o endereço?`;
             }
         }
         else {
-            resposta = `🤔 Desculpe, não consegui entender. Posso te ajudar de outra forma?\n\n${RebecaService.menuPrincipal(nome, telefone)}`;
+            resposta = `Posso te ajudar a pedir um carro! Me passa o endereço?`;
         }
 
         conversas.set(telefone, conversa);
@@ -1400,6 +1400,113 @@ const RebecaService = {
     },
     
     // Colocar em modo avaliacao
+
+    // ==================== SISTEMA DE DÚVIDAS AO DONO ====================
+    async encaminharDuvidaAoAdmin(telefoneCliente, nomeCliente, mensagemCliente, adminId, instanciaId) {
+        try {
+            const { Admin, DuvidaPendente, InstanciaWhatsapp } = require('../models');
+            const EvolutionMultiService = require('./evolution-multi.service');
+            
+            // Buscar admin
+            const admin = await Admin.findById(adminId);
+            if (!admin || !admin.telefone) {
+                console.log('[DUVIDA] Admin sem telefone cadastrado');
+                return null;
+            }
+            
+            // Criar registro de dúvida
+            const duvida = await DuvidaPendente.create({
+                adminId,
+                clienteTelefone: telefoneCliente,
+                clienteNome: nomeCliente,
+                mensagemCliente,
+                instanciaId,
+                status: 'pendente'
+            });
+            
+            // Buscar instância para enviar mensagem
+            const instancia = await InstanciaWhatsapp.findById(instanciaId) || 
+                await InstanciaWhatsapp.findOne({ adminId, status: 'conectado' });
+            
+            if (!instancia) {
+                console.log('[DUVIDA] Sem instância conectada');
+                return null;
+            }
+            
+            // Enviar mensagem ao dono da frota
+            const msgParaAdmin = `🤖 *REBECA - DÚVIDA DO CLIENTE*\n\n` +
+                `👤 Cliente: ${nomeCliente || 'Não identificado'}\n` +
+                `📱 Tel: ${telefoneCliente}\n\n` +
+                `💬 Mensagem:\n"${mensagemCliente}"\n\n` +
+                `📝 Responda esta mensagem que eu repasso ao cliente!\n` +
+                `🔖 #DUV${duvida._id.toString().slice(-6)}`;
+            
+            await EvolutionMultiService.enviarMensagem(instancia._id, admin.telefone, msgParaAdmin);
+            console.log('[DUVIDA] Enviada ao admin:', admin.telefone);
+            
+            return duvida;
+        } catch (e) {
+            console.error('[DUVIDA] Erro:', e.message);
+            return null;
+        }
+    },
+
+    async processarRespostaAdmin(telefoneAdmin, mensagem, adminId, instanciaId) {
+        try {
+            const { Admin, DuvidaPendente, InstanciaWhatsapp } = require('../models');
+            const EvolutionMultiService = require('./evolution-multi.service');
+            
+            // Verificar se é o admin
+            const admin = await Admin.findById(adminId);
+            if (!admin || admin.telefone !== telefoneAdmin) return null;
+            
+            // Buscar dúvida pendente mais recente deste admin
+            const duvida = await DuvidaPendente.findOne({ 
+                adminId, 
+                status: 'pendente' 
+            }).sort({ createdAt: -1 });
+            
+            if (!duvida) return null;
+            
+            // Atualizar dúvida como respondida
+            duvida.status = 'respondida';
+            duvida.respostaAdmin = mensagem;
+            duvida.respondidaEm = new Date();
+            await duvida.save();
+            
+            // Buscar instância
+            const instancia = await InstanciaWhatsapp.findById(instanciaId) || 
+                await InstanciaWhatsapp.findOne({ adminId, status: 'conectado' });
+            
+            if (!instancia) return null;
+            
+            // Enviar resposta ao cliente
+            const msgParaCliente = `${mensagem}`;
+            await EvolutionMultiService.enviarMensagem(instancia._id, duvida.clienteTelefone, msgParaCliente);
+            
+            console.log('[DUVIDA] Resposta enviada ao cliente:', duvida.clienteTelefone);
+            
+            // Confirmar ao admin
+            await EvolutionMultiService.enviarMensagem(instancia._id, telefoneAdmin, 
+                `✅ Resposta enviada ao cliente ${duvida.clienteNome || duvida.clienteTelefone}!`);
+            
+            return duvida;
+        } catch (e) {
+            console.error('[DUVIDA] Erro resposta:', e.message);
+            return null;
+        }
+    },
+
+    async verificarSeEhAdmin(telefone, adminId) {
+        try {
+            const { Admin } = require('../models');
+            const admin = await Admin.findById(adminId);
+            return admin && admin.telefone === telefone;
+        } catch (e) {
+            return false;
+        }
+    },
+
     pedirAvaliacao(telefone) {
         const conversa = conversas.get(telefone);
         if (conversa) {

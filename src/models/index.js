@@ -335,3 +335,18 @@ const PrecoIntermunicipalSchema = new mongoose.Schema({
 const PrecoIntermunicipal = mongoose.model('PrecoIntermunicipal', PrecoIntermunicipalSchema);
 module.exports.PrecoIntermunicipal = PrecoIntermunicipal;
 console.log('✅ Modelo PrecoIntermunicipal criado');
+
+// ==================== DÚVIDAS PENDENTES (Rebeca → Admin) ====================
+const DuvidaPendenteSchema = new mongoose.Schema({
+    adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin', required: true },
+    clienteTelefone: { type: String, required: true },
+    clienteNome: String,
+    mensagemCliente: { type: String, required: true },
+    status: { type: String, enum: ['pendente', 'respondida', 'expirada'], default: 'pendente' },
+    respostaAdmin: String,
+    respondidaEm: Date,
+    instanciaId: mongoose.Schema.Types.ObjectId
+}, { timestamps: true });
+
+const DuvidaPendente = mongoose.model('DuvidaPendente', DuvidaPendenteSchema);
+module.exports.DuvidaPendente = DuvidaPendente;
