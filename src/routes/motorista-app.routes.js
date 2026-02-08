@@ -52,7 +52,9 @@ router.post('/aceitar', auth, async (req, res) => {
     const { corridaId } = req.body;
     try {
         // PROTEÇÃO: Verificar se corrida já foi aceita
-        const { Corrida } = require('../models');
+        const { Corrida, InstanciaWhatsapp } = require('../models');
+        const EvolutionMultiService = require('../services/evolution-multi.service');
+        
         const corridaExistente = await Corrida.findById(corridaId);
         if (!corridaExistente) {
             return res.status(404).json({ erro: 'Corrida não encontrada' });
@@ -64,69 +66,64 @@ router.post('/aceitar', auth, async (req, res) => {
         
         const corrida = await CorridaService.atribuirMotorista(corridaId, req.motorista._id, req.motorista.nome);
         
-        // Colocar cliente em modo corrida (para encaminhar msgs)
+        // Colocar cliente em modo corrida
         try {
             const RebecaService = require('../services/rebeca.service');
             RebecaService.setEtapaConversa(corrida.clienteTelefone, 'em_corrida');
         } catch(e) {}
         
-        // Notificar cliente via WhatsApp
+        // ========== NOTIFICAR CLIENTE - SOLUÇÃO ROBUSTA ==========
         if (corrida && corrida.clienteTelefone) {
-            try {
-                const EvolutionMultiService = require('../services/evolution-multi.service');
-                const { InstanciaWhatsapp } = require('../models');
-                // Usar adminId do motorista (mais confiável que da corrida)
-                const adminIdMotorista = req.motorista.adminId;
-                console.log('[ACEITAR] Corrida:', corridaId, '| clienteTel:', corrida.clienteTelefone, '| adminId corrida:', corrida.adminId, '| adminId motorista:', adminIdMotorista);
+            const clienteTel = corrida.clienteTelefone;
+            console.log('[ACEITAR] Iniciando notificação para:', clienteTel);
+            
+            // Buscar TODAS as instâncias e tentar cada uma
+            const instancias = await InstanciaWhatsapp.find({}).sort({ ultimaConexao: -1 });
+            console.log('[ACEITAR] Total instancias encontradas:', instancias.length);
+            
+            if (instancias.length === 0) {
+                console.log('[ACEITAR] ERRO CRÍTICO: Nenhuma instância cadastrada!');
+            } else {
+                // Montar mensagem
+                const m = req.motorista;
+                const nomeM = m.nomeCompleto || m.nome || 'Motorista';
+                const veicM = m.veiculo?.modelo || m.veiculo || '';
+                const corM = m.veiculo?.cor || '';
+                const placaM = m.veiculo?.placa || m.placa || '';
+                const baseUrl = process.env.BASE_URL || 'https://rebeca-sistema-br.onrender.com';
+                const linkRastreio = baseUrl + '/rastrear/' + corridaId.slice(-8);
                 
-                // Buscar instancia - tentar várias formas
-                let instancia = null;
+                const msg = '🚗 *MOTORISTA A CAMINHO!*\n\n' +
+                    '👤 *' + nomeM + '*\n' +
+                    (veicM ? '🚙 ' + veicM + (corM ? ' ' + corM : '') + '\n' : '') +
+                    (placaM ? '🔢 *' + placaM + '*\n' : '') +
+                    '\n📍 *Acompanhe:*\n' + linkRastreio;
                 
-                // 1. Por adminId do motorista
-                if (adminIdMotorista) {
-                    instancia = await InstanciaWhatsapp.findOne({ adminId: adminIdMotorista, status: 'conectado' });
+                // Tentar enviar por cada instância até conseguir
+                let enviado = false;
+                for (const inst of instancias) {
+                    console.log('[ACEITAR] Tentando instancia:', inst.nomeInstancia, '- Status:', inst.status);
+                    
+                    try {
+                        const resultado = await EvolutionMultiService.enviarMensagem(inst._id, clienteTel, msg);
+                        if (resultado && resultado.sucesso) {
+                            console.log('[ACEITAR] ✅ NOTIFICAÇÃO ENVIADA via', inst.nomeInstancia);
+                            enviado = true;
+                            break;
+                        } else {
+                            console.log('[ACEITAR] Falhou via', inst.nomeInstancia, ':', resultado?.erro);
+                        }
+                    } catch (e) {
+                        console.log('[ACEITAR] Erro na instancia', inst.nomeInstancia, ':', e.message);
+                    }
                 }
                 
-                // 2. Por adminId da corrida
-                if (!instancia && corrida.adminId) {
-                    instancia = await InstanciaWhatsapp.findOne({ adminId: corrida.adminId, status: 'conectado' });
+                if (!enviado) {
+                    console.log('[ACEITAR] ❌ FALHA: Não conseguiu enviar por nenhuma instância!');
                 }
-                
-                // 3. Qualquer instância conectada (mais recente)
-                if (!instancia) {
-                    console.log('[ACEITAR] Buscando qualquer instancia conectada...');
-                    instancia = await InstanciaWhatsapp.findOne({ status: 'conectado' }).sort({ ultimaConexao: -1 });
-                }
-                
-                // 4. Se ainda não achou, verificar se existe alguma instância
-                if (!instancia) {
-                    const totalInstancias = await InstanciaWhatsapp.countDocuments();
-                    console.log('[ACEITAR] ERRO: Nenhuma instancia conectada! Total instancias:', totalInstancias);
-                }
-                
-                if (instancia) {
-                    const m = req.motorista;
-                    const nomeM = m.nomeCompleto || m.nome || 'Motorista';
-                    const veicM = m.veiculo?.modelo || m.veiculo || '';
-                    const corM = m.veiculo?.cor || '';
-                    const placaM = m.veiculo?.placa || m.placa || '';
-                    const baseUrl = process.env.BASE_URL || 'https://rebeca-sistema-br.onrender.com';
-                    const linkRastreio = baseUrl + '/rastrear/' + corridaId.slice(-8);
-                    const msg = '🚗 *MOTORISTA A CAMINHO!*\n\n' +
-                        '👤 *' + nomeM + '*\n' +
-                        (veicM ? '🚙 ' + veicM + (corM ? ' ' + corM : '') + '\n' : '') +
-                        (placaM ? '🔢 *' + placaM + '*\n' : '') +
-                        '\n📍 *Acompanhe em tempo real:*\n' + linkRastreio + '\n\n💬 Envie mensagens aqui que serão encaminhadas ao motorista.';
-                    await EvolutionMultiService.enviarMensagem(instancia._id, corrida.clienteTelefone, msg);
-                    console.log('[ACEITAR] Notificacao enviada para cliente:', corrida.clienteTelefone);
-                } else {
-                    console.log('[ACEITAR] ERRO: Nenhuma instancia WhatsApp conectada!');
-                }
-            } catch(e) {
-                console.error('[ACEITAR] Erro ao notificar cliente:', e.message);
             }
         } else {
-            console.log('[ACEITAR] Sem clienteTelefone na corrida:', JSON.stringify(corrida?.clienteTelefone));
+            console.log('[ACEITAR] Sem clienteTelefone na corrida');
         }
         
         res.json({ sucesso: true, corrida });
