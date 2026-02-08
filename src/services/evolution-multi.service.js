@@ -157,34 +157,68 @@ const EvolutionMultiService = {
             return { sucesso: true };
         } catch (e) { return { sucesso: false, erro: e.message }; }
     },
-    enviarMensagem: async (instanciaId, telefone, mensagem) => {
+    enviarMensagem: async (instanciaId, telefone, mensagem, tentativa = 1) => {
+        const MAX_TENTATIVAS = 3;
         try {
-            const instancia = await InstanciaWhatsapp.findById(instanciaId);
-            if (!instancia) throw new Error('Instancia nao encontrada');
-            if (instancia.status !== 'conectado') throw new Error('WhatsApp nao conectado');
+            let instancia = await InstanciaWhatsapp.findById(instanciaId);
+            if (!instancia) {
+                // Tentar encontrar qualquer instância conectada
+                instancia = await InstanciaWhatsapp.findOne({ status: 'conectado' });
+                if (!instancia) throw new Error('Nenhuma instancia disponivel');
+            }
+            
             let numero = telefone.replace(/\D/g, '');
             if (numero.length <= 11) numero = '55' + numero;
             
-            // Enviar "digitando..." primeiro
-            try {
-                await axios.post(instancia.apiUrl + '/chat/presence/' + instancia.nomeInstancia, { 
-                    number: numero + '@s.whatsapp.net', 
-                    presence: 'composing' 
-                }, { headers: { 'apikey': instancia.apiKey || EVOLUTION_GLOBAL_KEY, 'Content-Type': 'application/json' } });
-            } catch (e) {}
-            
-            // Delay natural (1-3 segundos baseado no tamanho da msg)
-            const delay = Math.min(1000 + (mensagem.length * 20), 3000);
+            // Delay natural curto
+            const delay = Math.min(500 + (mensagem.length * 10), 1500);
             await new Promise(r => setTimeout(r, delay));
             
             try {
-                console.log('[EVO] Enviando msg para:', numero);
-                const response = await axios.post(instancia.apiUrl + '/message/sendText/' + instancia.nomeInstancia, { number: numero, text: mensagem }, { headers: { 'apikey': instancia.apiKey || EVOLUTION_GLOBAL_KEY, 'Content-Type': 'application/json' } });
-                console.log('[EVO] Msg enviada OK, messageId:', response.data?.key?.id);
+                console.log('[EVO] Enviando msg para:', numero, '(tentativa', tentativa + ')');
+                const response = await axios.post(instancia.apiUrl + '/message/sendText/' + instancia.nomeInstancia, { number: numero, text: mensagem }, { headers: { 'apikey': instancia.apiKey || EVOLUTION_GLOBAL_KEY, 'Content-Type': 'application/json' }, timeout: 10000 });
+                console.log('[EVO] Msg enviada OK');
                 return { sucesso: true, messageId: response.data?.key?.id };
             } catch (e) { 
-                console.log('[EVO] ERRO ao enviar:', e.response?.data || e.message);
-                return { sucesso: false, erro: e.message }; 
+                const erroMsg = e.response?.data?.response?.message?.[0] || e.message;
+                console.log('[EVO] ERRO ao enviar:', erroMsg);
+                
+                // Se Connection Closed, tentar reconectar e reenviar
+                if (erroMsg?.includes?.('Connection Closed') || erroMsg?.includes?.('not connected')) {
+                    console.log('[EVO] Conexao perdida! Tentando reconectar...');
+                    
+                    // Marcar como desconectado
+                    await InstanciaWhatsapp.findByIdAndUpdate(instancia._id, { status: 'desconectado' });
+                    
+                    // Tentar reconectar via Evolution API
+                    try {
+                        await axios.get(instancia.apiUrl + '/instance/connect/' + instancia.nomeInstancia, { headers: { 'apikey': instancia.apiKey || EVOLUTION_GLOBAL_KEY } });
+                        await new Promise(r => setTimeout(r, 3000)); // Aguardar reconexão
+                        
+                        // Verificar status
+                        const statusRes = await axios.get(instancia.apiUrl + '/instance/connectionState/' + instancia.nomeInstancia, { headers: { 'apikey': instancia.apiKey || EVOLUTION_GLOBAL_KEY } });
+                        if (statusRes.data?.instance?.state === 'open') {
+                            await InstanciaWhatsapp.findByIdAndUpdate(instancia._id, { status: 'conectado', ultimaConexao: new Date() });
+                            console.log('[EVO] Reconectado com sucesso!');
+                            
+                            // Retry
+                            if (tentativa < MAX_TENTATIVAS) {
+                                return await EvolutionMultiService.enviarMensagem(instanciaId, telefone, mensagem, tentativa + 1);
+                            }
+                        }
+                    } catch (reconErr) {
+                        console.log('[EVO] Falha ao reconectar:', reconErr.message);
+                    }
+                }
+                
+                // Retry genérico
+                if (tentativa < MAX_TENTATIVAS) {
+                    console.log('[EVO] Tentando novamente em 2s...');
+                    await new Promise(r => setTimeout(r, 2000));
+                    return await EvolutionMultiService.enviarMensagem(instanciaId, telefone, mensagem, tentativa + 1);
+                }
+                
+                return { sucesso: false, erro: erroMsg }; 
             }
         } catch (e) { return { sucesso: false, erro: e.message }; }
     },
