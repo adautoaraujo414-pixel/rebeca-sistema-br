@@ -937,14 +937,29 @@ const RebecaService = {
             return await RebecaService.enviarRastreamento(telefone);
         }
         
-        // Pergunta - IA responde direto
+        // Respostas com respostaCurta (novo formato IA)
+        if (analise.respostaCurta) {
+            return analise.respostaCurta;
+        }
+        
+        // Pergunta - IA responde direto (formato antigo)
         if (analise.intencao === 'pergunta' && analise.respostaPergunta) {
             return analise.respostaPergunta;
         }
         
-        // Saudacao
+        // Saudacao - responder curto
         if (analise.intencao === 'saudacao') {
-            return null; // Deixa cair no menu normal
+            return 'Oi! Pra onde vai? 🚗';
+        }
+        
+        // Confirmacao
+        if (analise.intencao === 'confirmacao') {
+            return 'Entendi! Me manda o endereço de onde você está.';
+        }
+        
+        // Agradecimento
+        if (analise.intencao === 'agradecimento') {
+            return 'Por nada! Quando precisar, é só chamar. 🚗';
         }
         
         return null;
