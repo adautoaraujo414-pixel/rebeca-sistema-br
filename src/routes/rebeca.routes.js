@@ -77,17 +77,21 @@ router.get('/rastrear/:codigo', (req, res) => {
             statusTexto: RebecaService.formatarStatus(corrida.status),
             origem: corrida.origem,
             destino: corrida.destino,
+            origemLat: corrida.origemLat || corrida.calculo?.origem?.latitude,
+            origemLng: corrida.origemLng || corrida.calculo?.origem?.longitude,
             precoEstimado: corrida.precoEstimado,
             tempoEstimado: corrida.tempoEstimado,
             distanciaKm: corrida.distanciaKm
         },
         motorista: motorista ? {
             nome: motorista.nomeCompleto || motorista.nome,
-            veiculo: motorista.veiculo,
+            veiculo: motorista.veiculo?.modelo || motorista.veiculo || '',
+            cor: motorista.veiculo?.cor || '',
+            placa: motorista.veiculo?.placa || motorista.placa || '',
             avaliacao: motorista.avaliacao || 5,
             foto: motorista.foto
         } : null,
-        localizacao: motoristaGPS ? {
+        motoristaGPS: motoristaGPS ? {
             latitude: motoristaGPS.latitude,
             longitude: motoristaGPS.longitude,
             atualizadoEm: motoristaGPS.atualizadoEm

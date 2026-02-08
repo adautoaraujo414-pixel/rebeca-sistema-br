@@ -2,51 +2,261 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Rastreamento - UBMAX</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #1a1a2e; color: white; min-height: 100vh; }
-        .container { max-width: 500px; margin: 0 auto; padding: 20px; }
-        .header { text-align: center; padding: 20px 0; }
-        .header h1 { font-size: 24px; color: #00d4aa; }
-        .card { background: #16213e; border-radius: 15px; padding: 20px; margin: 15px 0; }
-        .status { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; }
-        .status-dot { width: 12px; height: 12px; border-radius: 50%; animation: pulse 1.5s infinite; }
+        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #1a1a2e; color: white; }
+        .header { background: #16213e; padding: 15px; text-align: center; position: fixed; top: 0; left: 0; right: 0; z-index: 1000; }
+        .header h1 { font-size: 18px; color: #00d4aa; }
+        .status-bar { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 8px; }
+        .status-dot { width: 10px; height: 10px; border-radius: 50%; background: #00d4aa; animation: pulse 1.5s infinite; }
         .status-dot.pending { background: #ffc107; }
-        .status-dot.accepted { background: #00d4aa; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-        .motorista { display: flex; align-items: center; gap: 15px; }
-        .motorista-avatar { width: 60px; height: 60px; background: #00d4aa; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; }
-        .motorista-info h3 { font-size: 18px; }
-        .veiculo { background: #0f3460; padding: 15px; border-radius: 10px; margin-top: 15px; }
-        .veiculo-row { display: flex; justify-content: space-between; margin: 5px 0; }
-        .loading { text-align: center; padding: 50px; }
-        .spinner { width: 40px; height: 40px; border: 3px solid #333; border-top-color: #00d4aa; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px; }
+        @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(1.2); } }
+        #map { position: fixed; top: 80px; left: 0; right: 0; bottom: 120px; }
+        .info-panel { position: fixed; bottom: 0; left: 0; right: 0; background: #16213e; padding: 15px; border-radius: 20px 20px 0 0; }
+        .motorista-card { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+        .avatar { width: 50px; height: 50px; background: #00d4aa; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; }
+        .motorista-info h3 { font-size: 16px; margin-bottom: 3px; }
+        .motorista-info p { font-size: 13px; color: #aaa; }
+        .distancia { text-align: center; background: #0f3460; padding: 10px; border-radius: 10px; }
+        .distancia .valor { font-size: 24px; font-weight: bold; color: #00d4aa; }
+        .distancia .label { font-size: 12px; color: #888; }
+        .btn-localizacao { width: 100%; padding: 12px; background: #00d4aa; color: #000; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .expirado { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #1a1a2e; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; }
+        .expirado h2 { font-size: 48px; margin-bottom: 20px; }
+        .expirado p { color: #aaa; font-size: 18px; }
+        .loading { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #1a1a2e; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .spinner { width: 50px; height: 50px; border: 4px solid #333; border-top-color: #00d4aa; border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
-        .error { text-align: center; padding: 50px; color: #ff5252; }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header"><h1>🚗 UBMAX</h1><p>Rastreamento</p></div>
-        <div id="content"><div class="loading"><div class="spinner"></div><p>Carregando...</p></div></div>
+    <div id="loading" class="loading">
+        <div class="spinner"></div>
+        <p style="margin-top: 20px; color: #aaa;">Carregando rastreamento...</p>
     </div>
+
+    <div id="expirado" class="expirado hidden">
+        <h2>🚗</h2>
+        <h3 id="expirado-titulo">Corrida em andamento!</h3>
+        <p id="expirado-msg">Boa viagem! 🎉</p>
+    </div>
+
+    <div id="app" class="hidden">
+        <div class="header">
+            <h1>🚗 UBMAX - Rastreamento</h1>
+            <div class="status-bar">
+                <div class="status-dot" id="status-dot"></div>
+                <span id="status-text">Motorista a caminho</span>
+            </div>
+        </div>
+
+        <div id="map"></div>
+
+        <div class="info-panel">
+            <div class="motorista-card">
+                <div class="avatar">🧑</div>
+                <div class="motorista-info">
+                    <h3 id="motorista-nome">Carregando...</h3>
+                    <p id="motorista-veiculo">-</p>
+                </div>
+            </div>
+            <div class="distancia">
+                <div class="valor" id="distancia-valor">--</div>
+                <div class="label">Distância até você</div>
+            </div>
+            <button class="btn-localizacao hidden" id="btn-loc" onclick="pedirLocalizacao()">
+                📍 Ativar minha localização
+            </button>
+        </div>
+    </div>
+
     <script>
         const codigo = window.location.pathname.split('/').pop();
-        async function carregar() {
+        let map, motoristaMarker, clienteMarker, linhaDistancia;
+        let motoristaPos = null, clientePos = null;
+        let localizacaoAtiva = false;
+        let intervalo = null;
+
+        // Ícones personalizados
+        const iconeMotorista = L.divIcon({
+            html: '<div style="background:#00d4aa;width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;border:3px solid white;box-shadow:0 2px 10px rgba(0,0,0,0.3);">🚗</div>',
+            iconSize: [40, 40],
+            iconAnchor: [20, 20]
+        });
+
+        const iconeCliente = L.divIcon({
+            html: '<div style="background:#ff6b6b;width:35px;height:35px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;border:3px solid white;box-shadow:0 2px 10px rgba(0,0,0,0.3);">📍</div>',
+            iconSize: [35, 35],
+            iconAnchor: [17, 17]
+        });
+
+        function initMap(lat, lng) {
+            map = L.map('map', { zoomControl: false }).setView([lat, lng], 16);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap'
+            }).addTo(map);
+            
+            motoristaMarker = L.marker([lat, lng], { icon: iconeMotorista }).addTo(map);
+        }
+
+        function atualizarMotorista(lat, lng) {
+            motoristaPos = { lat, lng };
+            if (!map) {
+                initMap(lat, lng);
+            } else {
+                motoristaMarker.setLatLng([lat, lng]);
+                if (!clientePos) {
+                    map.panTo([lat, lng]);
+                }
+            }
+            calcularDistancia();
+        }
+
+        function atualizarCliente(lat, lng) {
+            clientePos = { lat, lng };
+            if (!clienteMarker) {
+                clienteMarker = L.marker([lat, lng], { icon: iconeCliente }).addTo(map);
+            } else {
+                clienteMarker.setLatLng([lat, lng]);
+            }
+            
+            // Ajustar mapa para mostrar ambos
+            if (motoristaPos) {
+                const bounds = L.latLngBounds([
+                    [motoristaPos.lat, motoristaPos.lng],
+                    [clientePos.lat, clientePos.lng]
+                ]);
+                map.fitBounds(bounds, { padding: [50, 50] });
+            }
+            calcularDistancia();
+        }
+
+        function calcularDistancia() {
+            if (!motoristaPos) {
+                document.getElementById('distancia-valor').textContent = '--';
+                return;
+            }
+            
+            if (clientePos) {
+                const R = 6371;
+                const dLat = (clientePos.lat - motoristaPos.lat) * Math.PI / 180;
+                const dLng = (clientePos.lng - motoristaPos.lng) * Math.PI / 180;
+                const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                    Math.cos(motoristaPos.lat * Math.PI / 180) * Math.cos(clientePos.lat * Math.PI / 180) *
+                    Math.sin(dLng/2) * Math.sin(dLng/2);
+                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+                const distancia = R * c;
+                
+                if (distancia < 1) {
+                    document.getElementById('distancia-valor').textContent = Math.round(distancia * 1000) + 'm';
+                } else {
+                    document.getElementById('distancia-valor').textContent = distancia.toFixed(1) + 'km';
+                }
+                
+                // Linha entre motorista e cliente
+                if (linhaDistancia) map.removeLayer(linhaDistancia);
+                linhaDistancia = L.polyline([
+                    [motoristaPos.lat, motoristaPos.lng],
+                    [clientePos.lat, clientePos.lng]
+                ], { color: '#00d4aa', weight: 3, dashArray: '10, 10' }).addTo(map);
+            } else {
+                document.getElementById('distancia-valor').textContent = '📍 Ative sua localização';
+                document.getElementById('btn-loc').classList.remove('hidden');
+            }
+        }
+
+        function pedirLocalizacao() {
+            if ('geolocation' in navigator) {
+                navigator.geolocation.watchPosition(
+                    pos => {
+                        localizacaoAtiva = true;
+                        document.getElementById('btn-loc').classList.add('hidden');
+                        atualizarCliente(pos.coords.latitude, pos.coords.longitude);
+                    },
+                    err => {
+                        alert('Não foi possível obter sua localização');
+                    },
+                    { enableHighAccuracy: true, maximumAge: 2000 }
+                );
+            } else {
+                alert('Seu navegador não suporta geolocalização');
+            }
+        }
+
+        async function buscarDados() {
             try {
                 const r = await fetch('/api/rebeca/rastrear/' + codigo);
                 const d = await r.json();
-                if (d.error) { document.getElementById('content').innerHTML = '<div class="error"><h2>❌ Não encontrada</h2></div>'; return; }
-                if (d.expirado) { document.getElementById('content').innerHTML = '<div class="card" style="text-align:center"><h2>' + (d.status==='finalizada'?'✅ Finalizada':'❌ Cancelada') + '</h2></div>'; return; }
-                let h = '<div class="card"><div class="status"><div class="status-dot ' + (d.corrida?.status==='pendente'?'pending':'accepted') + '"></div><span>' + (d.corrida?.status==='pendente'?'⏳ Buscando...':'🚗 A caminho!') + '</span></div><p><b>Origem:</b> ' + (d.corrida?.origem||'-') + '</p></div>';
-                if (d.motorista) h += '<div class="card"><div class="motorista"><div class="motorista-avatar">🧑</div><div class="motorista-info"><h3>' + (d.motorista.nome||'Motorista') + '</h3></div></div><div class="veiculo">' + (d.motorista.veiculo?'<div class="veiculo-row"><span>Veículo</span><span>'+d.motorista.veiculo+'</span></div>':'') + (d.motorista.placa?'<div class="veiculo-row"><span>Placa</span><span><b>'+d.motorista.placa+'</b></span></div>':'') + '</div></div>';
-                document.getElementById('content').innerHTML = h;
-                setTimeout(carregar, 5000);
-            } catch(e) { document.getElementById('content').innerHTML = '<div class="error"><h2>❌ Erro</h2></div>'; }
+                
+                document.getElementById('loading').classList.add('hidden');
+                
+                if (d.error) {
+                    document.getElementById('expirado').classList.remove('hidden');
+                    document.getElementById('expirado-titulo').textContent = '❌ Não encontrada';
+                    document.getElementById('expirado-msg').textContent = 'Esta corrida não existe ou o link expirou.';
+                    clearInterval(intervalo);
+                    return;
+                }
+                
+                if (d.expirado) {
+                    document.getElementById('expirado').classList.remove('hidden');
+                    if (d.status === 'em_andamento') {
+                        document.getElementById('expirado-titulo').textContent = '🚗 Corrida em andamento!';
+                        document.getElementById('expirado-msg').textContent = 'Boa viagem! 🎉';
+                    } else if (d.status === 'finalizada') {
+                        document.getElementById('expirado-titulo').textContent = '✅ Corrida finalizada';
+                        document.getElementById('expirado-msg').textContent = 'Obrigado por usar UBMAX!';
+                    } else {
+                        document.getElementById('expirado-titulo').textContent = '❌ Corrida cancelada';
+                        document.getElementById('expirado-msg').textContent = '';
+                    }
+                    clearInterval(intervalo);
+                    return;
+                }
+                
+                document.getElementById('app').classList.remove('hidden');
+                
+                // Status
+                const isPendente = d.corrida?.status === 'pendente';
+                document.getElementById('status-dot').className = 'status-dot' + (isPendente ? ' pending' : '');
+                document.getElementById('status-text').textContent = isPendente ? '⏳ Buscando motorista...' : '🚗 Motorista a caminho!';
+                
+                // Motorista
+                if (d.motorista) {
+                    document.getElementById('motorista-nome').textContent = d.motorista.nome || 'Motorista';
+                    let veiculoInfo = '';
+                    if (d.motorista.veiculo) veiculoInfo += d.motorista.veiculo;
+                    if (d.motorista.cor) veiculoInfo += ' ' + d.motorista.cor;
+                    if (d.motorista.placa) veiculoInfo += ' • ' + d.motorista.placa;
+                    document.getElementById('motorista-veiculo').textContent = veiculoInfo || '-';
+                }
+                
+                // GPS do motorista
+                if (d.motoristaGPS && d.motoristaGPS.latitude && d.motoristaGPS.longitude) {
+                    atualizarMotorista(d.motoristaGPS.latitude, d.motoristaGPS.longitude);
+                } else if (d.corrida?.origemLat && d.corrida?.origemLng) {
+                    // Fallback: usar origem da corrida
+                    if (!map) initMap(d.corrida.origemLat, d.corrida.origemLng);
+                }
+                
+                // Perguntar localização após primeiro carregamento
+                if (!localizacaoAtiva && 'geolocation' in navigator) {
+                    document.getElementById('btn-loc').classList.remove('hidden');
+                }
+                
+            } catch (e) {
+                console.error('Erro:', e);
+            }
         }
-        carregar();
+
+        // Iniciar
+        buscarDados();
+        intervalo = setInterval(buscarDados, 2000); // Atualizar a cada 2 segundos
     </script>
 </body>
 </html>
