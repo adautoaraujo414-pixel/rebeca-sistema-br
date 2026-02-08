@@ -57,25 +57,31 @@ const IAService = {
             return { usarIA: true, intencao: 'ponto_referencia', respostaCurta: 'Qual o endereço completo ou me manda a localização?' };
         }
         
-        // ========== RESPOSTAS DIRETAS ==========
+        // ========== FLUXO HUMANO COM CONEXÃO ==========
         
-        // Saudações - responde e pergunta endereço
+        // Saudação simples - NÃO pede endereço ainda, cria conexão
         if (msgLower.match(/^(oi|ola|olá|e ai|eai|opa)$/)) {
-            return { usarIA: true, intencao: 'saudacao', respostaCurta: 'Oi! ' + variacoes.random(variacoes.pedir_endereco) };
+            return { usarIA: true, intencao: 'saudacao', respostaCurta: 'Oi, tudo bem?' };
         }
-        if (msgLower.match(/^bom dia/)) {
-            return { usarIA: true, intencao: 'saudacao', respostaCurta: 'Bom dia! ' + variacoes.random(variacoes.pedir_endereco) };
+        if (msgLower.match(/^(oi|ola|olá).*(tudo bem|tudo bom|como vai)/)) {
+            return { usarIA: true, intencao: 'saudacao', respostaCurta: 'Tudo sim, e você?' };
         }
-        if (msgLower.match(/^boa tarde/)) {
-            return { usarIA: true, intencao: 'saudacao', respostaCurta: 'Boa tarde! ' + variacoes.random(variacoes.pedir_endereco) };
+        if (msgLower.match(/^bom dia$/)) {
+            return { usarIA: true, intencao: 'saudacao', respostaCurta: 'Bom dia! Tudo bem?' };
         }
-        if (msgLower.match(/^boa noite/)) {
-            return { usarIA: true, intencao: 'saudacao', respostaCurta: 'Boa noite! ' + variacoes.random(variacoes.pedir_endereco) };
+        if (msgLower.match(/^boa tarde$/)) {
+            return { usarIA: true, intencao: 'saudacao', respostaCurta: 'Boa tarde! Tudo bem?' };
+        }
+        if (msgLower.match(/^boa noite$/)) {
+            return { usarIA: true, intencao: 'saudacao', respostaCurta: 'Boa noite! Tudo bem?' };
         }
         
-        // Tudo bem - responde curto e pergunta endereço
-        if (msgLower.match(/(tudo bem|como vai|tudo certo)/)) {
-            return { usarIA: true, intencao: 'saudacao', respostaCurta: 'Tudo sim! ' + variacoes.random(variacoes.pedir_endereco) };
+        // Resposta de "tudo bem" - agora sim, avança pro próximo passo
+        if (msgLower.match(/^(tudo|tudo bem|tudo bom|tudo certo|tudo otimo|tudo ótimo|bem|estou bem|to bem|tô bem)$/)) {
+            return { usarIA: true, intencao: 'pos_saudacao', respostaCurta: 'Que bom! ' + variacoes.random(variacoes.pedir_endereco) };
+        }
+        if (msgLower.match(/(tudo sim|tudo bem sim|bem e você|bem e vc|e você|e vc|e tu)/)) {
+            return { usarIA: true, intencao: 'pos_saudacao', respostaCurta: 'Também! ' + variacoes.random(variacoes.pedir_endereco) };
         }
         
         // Agradecimentos - finaliza
@@ -88,12 +94,12 @@ const IAService = {
             return { usarIA: true, intencao: 'outro', respostaCurta: 'Desculpa! Pode mandar de novo o endereço?' };
         }
         
-        // Perguntas sobre disponibilidade - responde e pede endereço
+        // Perguntas sobre disponibilidade
         if (msgLower.match(/(tem carro|carro disponivel|disponível|tem motorista|ta funcionando|tá funcionando)/)) {
-            return { usarIA: true, intencao: 'pergunta', respostaCurta: 'Tem sim! Me passa o endereço?' };
+            return { usarIA: true, intencao: 'pergunta', respostaCurta: 'Tem sim! ' + variacoes.random(variacoes.pedir_endereco) };
         }
         
-        // Perguntas sobre empresa - responde CURTO e volta pro foco
+        // Perguntas sobre empresa
         if (msgLower.match(/(empresa|sobre|voces|vocês|serviço|servico|o que é|oque é|qual seu nome|quem é você)/)) {
             return { usarIA: true, intencao: 'pergunta', respostaCurta: 'Sou a Rebeca, do transporte por app! Vai precisar de carro?' };
         }
@@ -103,22 +109,22 @@ const IAService = {
             return { usarIA: true, intencao: 'pedir_corrida', respostaCurta: 'Qual o endereço?' };
         }
         
-        // Reações positivas
-        if (msgLower.match(/^(ok|sim|certo|beleza|blz|ta|tá|show|perfeito|entendi|maravilha|otimo|ótimo|legal)$/)) {
+        // Reações positivas - avança
+        if (msgLower.match(/^(ok|sim|certo|beleza|blz|ta|tá|show|perfeito|entendi|maravilha|otimo|ótimo|legal|massa|top)$/)) {
             return { usarIA: true, intencao: 'confirmacao', respostaCurta: 'Beleza! ' + variacoes.random(variacoes.pedir_endereco) };
         }
         
-        // Expressões regionais sem contexto
+        // Expressões regionais
         if (msgLower.match(/(uai|ue|né|ne)/) && msgLower.length < 15) {
-            return { usarIA: true, intencao: 'outro', respostaCurta: 'Me passa o endereço?' };
+            return { usarIA: true, intencao: 'outro', respostaCurta: variacoes.random(variacoes.pedir_endereco) };
         }
         
-        // QUALQUER OUTRA COISA - não puxa assunto, pergunta se quer carro
+        // Qualquer outra coisa - pergunta se quer carro
         return { usarIA: true, intencao: 'outro', respostaCurta: 'Vai precisar de um carro? Me passa o endereço!' };
     },
 
     async responderPergunta(pergunta, contexto = {}) {
-        return null; // Não responde perguntas fora do contexto
+        return null;
     }
 };
 
