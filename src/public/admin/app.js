@@ -67,7 +67,7 @@ async function atualizarMapa() {
     // Auto-centralizar no primeiro motorista com GPS
     const motComGPS = mots.find(m => m.latitude && m.longitude);
     if (motComGPS && marcadores.length === 0) { mapaLeaflet.setView([motComGPS.latitude, motComGPS.longitude], 14); }
-    mots.forEach(m => { if (m.latitude && m.longitude) { const cor = m.status==='disponivel'?'#27ae60':m.status==='em_corrida'?'#3498db':'#999'; const ic = L.divIcon({html:`<div style="background:${cor};width:30px;height:30px;border-radius:50%;border:3px solid white;display:flex;align-items:center;justify-content:center;">🚗</div>`,className:'',iconSize:[30,30]}); marcadores.push(L.marker([m.latitude,m.longitude],{icon:ic}).addTo(mapaLeaflet).bindPopup(`<b>${m.nome}</b><br>${formatStatus(m.status)}`)); }});
+    mots.forEach(m => { if (m.latitude && m.longitude) { const cor = m.status==='disponivel'?'#27ae60':m.status==='em_corrida'?'#e74c3c':'#999'; const ic = L.divIcon({html:`<div style="background:${cor};width:30px;height:30px;border-radius:50%;border:3px solid white;display:flex;align-items:center;justify-content:center;">🚗</div>`,className:'',iconSize:[30,30]}); marcadores.push(L.marker([m.latitude,m.longitude],{icon:ic}).addTo(mapaLeaflet).bindPopup(`<b>${m.nome}</b><br>${formatStatus(m.status)}`)); }});
 }
 
 // CORRIDAS
@@ -417,13 +417,14 @@ async function salvarConfiguracoes() { await api('/api/config','PUT',{tempoMaxim
 async function carregarLogs() { const st=await api('/api/logs/estatisticas'); document.getElementById('logTotal').textContent=st.total||0; document.getElementById('logHoje').textContent=st.hoje||0; document.getElementById('logErros').textContent=st.porTipo?.erro||0; const l=await api('/api/logs?limite=50'); document.getElementById('logsLista').innerHTML=l.length?l.map(x=>`<div class="log-item"><span style="color:#999;font-size:0.85em;">${new Date(x.dataHora).toLocaleString('pt-BR')}</span> <strong>${x.acao}</strong> - ${x.usuarioNome||'Sistema'}</div>`).join(''):'<p style="color:#999">Nenhum</p>'; }
 
 // HELPERS
-function getStatusColor(s) { return {disponivel:'green',online:'green',finalizada:'green',resolvida:'green',em_corrida:'blue',em_andamento:'blue',aceita:'blue',buscando_motorista:'blue',pendente:'yellow',a_caminho:'yellow',offline:'red',cancelada:'red',bloqueado:'red'}[s]||'blue'; }
+function getStatusColor(s) { return {disponivel:'green',online:'green',finalizada:'green',resolvida:'green',em_corrida:'red',em_andamento:'blue',aceita:'blue',buscando_motorista:'blue',pendente:'yellow',a_caminho:'yellow',offline:'red',cancelada:'red',bloqueado:'red'}[s]||'blue'; }
 function formatStatus(s) { return {disponivel:'Disponível',em_corrida:'Em Corrida',offline:'Offline',pendente:'Pendente',aceita:'Aceita',em_andamento:'Em Andamento',finalizada:'Finalizada',cancelada:'Cancelada',resolvida:'Resolvida',buscando_motorista:'Buscando'}[s]||s; }
 function fecharModal(id) { document.getElementById(id).classList.remove('active'); if(id==='modalMotorista'){document.getElementById('formMotorista').style.display='block';document.getElementById('tokenMotoristaBox').style.display='none';} if(id==='modalUsuario'){document.getElementById('formUsuario').style.display='block';document.getElementById('usuarioCriado').style.display='none';} }
 document.querySelectorAll('.modal').forEach(m=>m.addEventListener('click',(e)=>{if(e.target===m)fecharModal(m.id);}));
 
 carregarDashboard();
 setInterval(carregarDashboard, 30000);
+setInterval(atualizarMapa, 10000); // Atualizar mapa a cada 10s
 
 // ==================== INTERMUNICIPAIS ====================
 async function carregarIntermunicipais() { const p=await api('/api/precos-intermunicipais'); document.getElementById('intermunicipaisTable').innerHTML=p.length?p.map(x=>`<tr><td>${x.cidadeOrigem}</td><td>${x.cidadeDestino}</td><td>${x.distanciaKm||'-'} km</td><td>R$ ${(x.precoFixo||0).toFixed(2)}</td><td><button class="btn btn-danger btn-sm" onclick="excluirIntermunicipal('${x._id}')">🗑️</button></td></tr>`).join(''):'<tr><td colspan="5" style="text-align:center;color:#999">Nenhuma rota cadastrada</td></tr>'; }
