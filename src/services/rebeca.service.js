@@ -141,6 +141,14 @@ const RebecaService = {
     async processarMensagem(telefone, mensagem, nome = 'Cliente', contexto = {}) {
         const adminId = contexto.adminId || null;
         
+        // ========== VERIFICAR SE É ADMIN RESPONDENDO DÚVIDA ==========
+        if (adminId) {
+            const respostaAdmin = await RebecaService.processarRespostaAdmin(telefone, mensagem, adminId, contexto.instanciaId);
+            if (respostaAdmin) {
+                return '✅ Resposta enviada ao cliente!';
+            }
+        }
+        
         // ========== COMANDOS DO MOTORISTA ==========
         const msgUpper = typeof mensagem === 'string' ? mensagem.toUpperCase().trim() : '';
         
@@ -820,11 +828,39 @@ const RebecaService = {
             if (respostaIA) {
                 resposta = respostaIA + `\n\n`;
             } else {
-                resposta = `Posso te ajudar a pedir um carro! Me passa o endereço?`;
+                // Encaminhar dúvida ao admin
+                if (conversa.adminId && conversa.instanciaId) {
+                    const duvida = await RebecaService.encaminharDuvidaAoAdmin(
+                        telefone, nome, msgOriginal, conversa.adminId, conversa.instanciaId
+                    );
+                    if (duvida) {
+                        conversa.etapa = 'aguardando_resposta_admin';
+                        conversa.dados.duvidaId = duvida._id;
+                        resposta = 'Só um momento que não tenho essa informação, deixa eu verificar com meu supervisor e já te retorno!';
+                    } else {
+                        resposta = 'Posso te ajudar a pedir um carro! Me passa o endereço?';
+                    }
+                } else {
+                    resposta = 'Posso te ajudar a pedir um carro! Me passa o endereço?';
+                }
             }
         }
         else {
-            resposta = `Posso te ajudar a pedir um carro! Me passa o endereço?`;
+            // Encaminhar dúvida ao admin
+                if (conversa.adminId && conversa.instanciaId) {
+                    const duvida = await RebecaService.encaminharDuvidaAoAdmin(
+                        telefone, nome, msgOriginal, conversa.adminId, conversa.instanciaId
+                    );
+                    if (duvida) {
+                        conversa.etapa = 'aguardando_resposta_admin';
+                        conversa.dados.duvidaId = duvida._id;
+                        resposta = 'Só um momento que não tenho essa informação, deixa eu verificar com meu supervisor e já te retorno!';
+                    } else {
+                        resposta = 'Posso te ajudar a pedir um carro! Me passa o endereço?';
+                    }
+                } else {
+                    resposta = 'Posso te ajudar a pedir um carro! Me passa o endereço?';
+                }
         }
 
         conversas.set(telefone, conversa);
