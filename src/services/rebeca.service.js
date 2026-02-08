@@ -826,7 +826,7 @@ const RebecaService = {
         
         // Anti-repeticao: nunca mandar mesma msg 2x seguidas
         const ultimaResp = ultimasRespostas.get(telefone);
-        if (ultimaResp && ultimaResp === resposta && resposta.length > 20) {
+        if (ultimaResp && ultimaResp === resposta) {
             console.log('[REBECA] Resposta repetida bloqueada para', telefone);
             return null;
         }

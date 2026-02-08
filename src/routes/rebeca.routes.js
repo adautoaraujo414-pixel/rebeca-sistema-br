@@ -33,6 +33,12 @@ router.post('/mensagem', async (req, res) => {
 });
 
 // ==================== RASTREAMENTO ====================
+// Página HTML de rastreamento
+router.get('/rastrear-page/:codigo', (req, res) => {
+    res.sendFile('rastrear.html', { root: 'public' });
+});
+
+// API de rastreamento
 router.get('/rastrear/:codigo', (req, res) => {
     const codigo = req.params.codigo;
     
