@@ -818,7 +818,7 @@ const RebecaService = {
             } catch(e) {}
             const respostaIA = await IAService.responderPergunta(msgOriginal, { ...PrecoDinamicoService.getConfig(), ...infoEmpresa });
             if (respostaIA) {
-                resposta = respostaIA + `\n\n_Digite *menu* para ver opções._`;
+                resposta = respostaIA + `\n\n`;
             } else {
                 resposta = `🤔 Desculpe, não consegui entender. Posso te ajudar de outra forma?\n\n${RebecaService.menuPrincipal(nome, telefone)}`;
             }
@@ -973,12 +973,11 @@ const RebecaService = {
     // ==================== FUNÇÕES AUXILIARES ====================
     menuPrincipal: (nome, telefone) => {
         const hora = new Date().getHours();
-        let saudacao = 'Olá';
+        let saudacao = 'Oi';
         if (hora >= 5 && hora < 12) saudacao = 'Bom dia';
         else if (hora >= 12 && hora < 18) saudacao = 'Boa tarde';
         else saudacao = 'Boa noite';
         
-        const favoritos = RebecaService.getFavoritos(telefone);
         // Verificar se cliente ja usou antes
         let jaUsou = false;
         try {
@@ -986,13 +985,12 @@ const RebecaService = {
             if (cl) jaUsou = true;
         } catch(e) {}
         
-        let menu = jaUsou 
-            ? `${saudacao}${nome ? ', ' + nome : ''}! Que bom te ver de novo! 🚗`
-            : `${saudacao}${nome ? ', ' + nome : ''}! Sou a *Rebeca*, sua assistente de transporte. Seja bem-vindo! 🚗\n\nComo posso te ajudar?\n\n📍 Envie sua *localização* ou digite o *endereço* de origem\n💰 Digite *preços* para consultar valores\n📋 Digite *historico* para ver suas corridas`;
-        if (favoritos.casa || favoritos.trabalho) {
-            menu += `\n\n⭐ *Atalhos salvos:* ${favoritos.casa ? '*casa*' : ''}${favoritos.casa && favoritos.trabalho ? ' | ' : ''}${favoritos.trabalho ? '*trabalho*' : ''}`;
+        // Resposta simples e direta
+        if (jaUsou) {
+            return `${saudacao}${nome ? ', ' + nome : ''}! Onde te busco?`;
+        } else {
+            return `${saudacao}! Sou a Rebeca, é um prazer te atender. Onde te busco?`;
         }
-        return menu;
     },
     gerarLinkRastreamento: (corridaId) => {
         return `${process.env.BASE_URL || 'https://rebeca-sistema-br.onrender.com'}/rastrear/${corridaId.slice(-8)}`;
