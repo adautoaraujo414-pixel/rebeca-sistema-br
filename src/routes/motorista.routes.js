@@ -10,6 +10,23 @@ const extrairAdminId = (req, res, next) => {
 };
 router.use(extrairAdminId);
 
+// Middleware para autenticar motorista via token
+const authMotorista = async (req, res, next) => {
+    try {
+        const token = req.headers['authorization']?.replace('Bearer ', '') || req.query.token;
+        if (!token) return res.status(401).json({ erro: 'Token não fornecido' });
+        
+        const motorista = await MotoristaService.buscarPorToken(token);
+        if (!motorista) return res.status(401).json({ erro: 'Token inválido' });
+        
+        req.motorista = motorista;
+        req.adminId = motorista.adminId;
+        next();
+    } catch (e) {
+        res.status(500).json({ erro: e.message });
+    }
+};
+
 // Listar motoristas (filtrado por admin)
 router.get('/', async (req, res) => {
     try {
