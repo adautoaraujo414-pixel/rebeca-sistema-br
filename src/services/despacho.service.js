@@ -233,10 +233,11 @@ const DespachoService = {
 
         // Registrar notificação para cada motorista
         motoristasComDistancia.forEach(m => {
-            if (!notificacoesMotoristas.has(m.id)) {
-                notificacoesMotoristas.set(m.id, []);
+            const mId = m._id?.toString() || m.id?.toString() || m.id;
+            if (!notificacoesMotoristas.has(mId)) {
+                notificacoesMotoristas.set(mId, []);
             }
-            notificacoesMotoristas.get(m.id).push({
+            notificacoesMotoristas.get(mId).push({
                 corridaId: corrida.id,
                 tipo: 'nova_corrida_broadcast',
                 distanciaKm: m.distanciaKm,
@@ -374,11 +375,25 @@ const DespachoService = {
     },
 
     getCorridasDisponiveis(motoristaId) {
-        const notifs = notificacoesMotoristas.get(motoristaId) || [];
-        const agora = new Date();
+        console.log('[DESPACHO] Buscando corridas para motorista:', motoristaId);
+        console.log('[DESPACHO] Notificações registradas:', Array.from(notificacoesMotoristas.keys()));
         
-        // Filtrar apenas não expiradas
-        return notifs.filter(n => new Date(n.expiraEm) > agora);
+        // Tentar diferentes formatos de ID
+        const ids = [motoristaId, motoristaId?.toString()];
+        let notifs = [];
+        
+        for (const id of ids) {
+            if (notificacoesMotoristas.has(id)) {
+                notifs = notificacoesMotoristas.get(id) || [];
+                break;
+            }
+        }
+        
+        const agora = new Date();
+        const disponiveis = notifs.filter(n => new Date(n.expiraEm) > agora);
+        console.log('[DESPACHO] Corridas encontradas:', disponiveis.length);
+        
+        return disponiveis;
     },
 
     limparExpiradas() {

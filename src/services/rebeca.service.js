@@ -154,7 +154,12 @@ const RebecaService = {
         
         // Verificar se é motorista ANTES de processar comandos de motorista
         const telsMotorista = [telefone, '55' + telefone, telefone.replace(/^55/, '')];
-        const ehMotorista = await MotoristaService.buscarPorWhatsapp(telsMotorista[0]) || 
+        // Buscar motorista COM adminId para não confundir entre admins
+        const ehMotorista = await MotoristaService.buscarPorWhatsapp(telsMotorista[0], adminId) || 
+                            await MotoristaService.buscarPorWhatsapp(telsMotorista[1], adminId) || 
+                            await MotoristaService.buscarPorWhatsapp(telsMotorista[2], adminId) ||
+                            // Se não achou com adminId, buscar sem (compatibilidade)
+                            await MotoristaService.buscarPorWhatsapp(telsMotorista[0]) || 
                             await MotoristaService.buscarPorWhatsapp(telsMotorista[1]) || 
                             await MotoristaService.buscarPorWhatsapp(telsMotorista[2]);
         
@@ -186,6 +191,10 @@ const RebecaService = {
             if (msgUpper === 'RECUSAR PROXIMA') {
                 return '👍 Ok! Você pode terminar sua corrida atual primeiro.';
             }
+            
+            // MOTORISTA: Se chegou aqui, mensagem não reconhecida - NÃO PROCESSAR COMO CLIENTE
+            console.log('[REBECA] Motorista enviou msg não reconhecida:', msgUpper);
+            return null; // Ignorar - motorista deve usar o APP
         }
         if (adminId) console.log('[REBECA] Admin:', adminId);
         
@@ -1371,12 +1380,20 @@ const RebecaService = {
     // ==================== COMANDOS DO MOTORISTA ====================
     async motoristaAceitarCorrida(telefoneMotorista, adminId, instanciaId) {
         try {
+            console.log('[ACEITAR] Telefone:', telefoneMotorista, 'AdminId:', adminId);
+            
             const motorista = await MotoristaService.buscarPorWhatsapp(telefoneMotorista, adminId);
+            console.log('[ACEITAR] Motorista encontrado:', motorista ? (motorista.nomeCompleto || motorista.nome) : 'NÃO');
+            
             if (!motorista) return '❌ Você não está cadastrado como motorista.';
             if (motorista.status === 'em_corrida') return '⚠️ Você já está em uma corrida.';
             
+            const motoristaId = motorista._id?.toString() || motorista.id;
+            console.log('[ACEITAR] MotoristaId:', motoristaId);
+            
             // Buscar corridas pendentes para este motorista
-            const corridasDisponiveis = DespachoService.getCorridasDisponiveis(motorista._id?.toString() || motorista.id);
+            const corridasDisponiveis = DespachoService.getCorridasDisponiveis(motoristaId);
+            console.log('[ACEITAR] Corridas disponíveis:', corridasDisponiveis?.length || 0);
             
             if (!corridasDisponiveis || corridasDisponiveis.length === 0) {
                 return '❌ Não há corridas disponíveis para você no momento.';
