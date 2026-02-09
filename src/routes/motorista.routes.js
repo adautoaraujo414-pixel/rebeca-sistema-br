@@ -149,3 +149,30 @@ router.post('/login', async (req, res) => {
 });
 
 module.exports = router;
+// ==================== PARADAS ====================
+// Marcar parada como concluída
+router.post('/corrida/:corridaId/parada/:indice/concluir', authMotorista, async (req, res) => {
+    try {
+        const { Corrida } = require('../models');
+        const { corridaId, indice } = req.params;
+        
+        const corrida = await Corrida.findById(corridaId);
+        if (!corrida) {
+            return res.status(404).json({ erro: 'Corrida não encontrada' });
+        }
+        
+        if (!corrida.paradas || !corrida.paradas[indice]) {
+            return res.status(400).json({ erro: 'Parada não encontrada' });
+        }
+        
+        corrida.paradas[indice].concluida = true;
+        await corrida.save();
+        
+        console.log('[PARADA] Parada', indice, 'concluída na corrida', corridaId);
+        
+        res.json({ sucesso: true, paradas: corrida.paradas });
+    } catch (e) {
+        console.error('[PARADA] Erro:', e.message);
+        res.status(500).json({ erro: e.message });
+    }
+});

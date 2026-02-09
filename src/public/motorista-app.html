@@ -87,6 +87,14 @@
         .rota-icon { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; }
         .rota-icon.origem { background: #00ff88; color: #000; }
         .rota-icon.destino { background: #ff4444; color: #333; }
+        .rota-icon.parada { background: #9c27b0; color: #fff; }
+        .rota-icon.parada.concluida { background: #4caf50; opacity: 0.7; }
+        .parada-item { display: flex; gap: 15px; margin-bottom: 15px; align-items: center; }
+        .parada-item.concluida { opacity: 0.6; }
+        .parada-item.concluida .rota-content p { text-decoration: line-through; }
+        .btn-parada-ok { background: #4caf50; border: none; color: #fff; padding: 8px 12px; border-radius: 8px; font-size: 12px; cursor: pointer; }
+        .btn-parada-ok:disabled { background: #999; cursor: not-allowed; }
+        .paradas-container { border-left: 3px dashed #9c27b0; margin-left: 14px; padding-left: 25px; margin-top: -10px; margin-bottom: -10px; }
         .rota-content { flex: 1; }
         .rota-content label { font-size: 11px; color: #666; }
         .rota-content p { font-size: 14px; margin-top: 3px; }
@@ -329,6 +337,11 @@ body { background: #f0f2f5 !important; color: #333 !important; }
                                     </div>
                                 </div>
                             </div>
+                            
+                            <!-- PARADAS INTERMEDIÁRIAS -->
+                            <div id="paradasContainer" class="paradas-container" style="display:none;">
+                            </div>
+                            
                             <div class="rota-item">
                                 <div class="rota-icon destino">B</div>
                                 <div class="rota-content">
@@ -1023,6 +1036,65 @@ body { background: #f0f2f5 !important; color: #333 !important; }
             document.getElementById('btnCheguei').style.display = status === 'aceita' ? 'flex' : 'none';
             document.getElementById('btnIniciar').style.display = status === 'a_caminho' ? 'flex' : 'none';
             document.getElementById('btnFinalizar').style.display = status === 'em_andamento' ? 'flex' : 'none';
+            
+            // Renderizar paradas
+            renderizarParadas();
+        }
+        
+        function renderizarParadas() {
+            const container = document.getElementById('paradasContainer');
+            if (!container) return;
+            
+            const paradas = corridaAtual?.paradas || [];
+            if (paradas.length === 0) {
+                container.style.display = 'none';
+                return;
+            }
+            
+            container.style.display = 'block';
+            container.innerHTML = paradas.map((p, i) => `
+                <div class="parada-item ${p.concluida ? 'concluida' : ''}" id="parada-${i}">
+                    <div class="rota-icon parada ${p.concluida ? 'concluida' : ''}">${i + 1}</div>
+                    <div class="rota-content" style="flex:1;">
+                        <label>PARADA ${i + 1}</label>
+                        <p style="font-size:14px;color:#333;margin:3px 0;">${p.endereco || 'Endereço não informado'}</p>
+                    </div>
+                    <button class="btn-parada-ok" onclick="marcarParadaConcluida(${i})" ${p.concluida ? 'disabled' : ''}>
+                        ${p.concluida ? '✓' : 'OK'}
+                    </button>
+                </div>
+            `).join('');
+        }
+        
+        async function marcarParadaConcluida(indice) {
+            if (!corridaAtual?._id) return;
+            
+            try {
+                const res = await fetch('/api/motoristas/corrida/' + corridaAtual._id + '/parada/' + indice + '/concluir', {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                const data = await res.json();
+                
+                if (data.sucesso) {
+                    // Atualizar localmente
+                    if (corridaAtual.paradas && corridaAtual.paradas[indice]) {
+                        corridaAtual.paradas[indice].concluida = true;
+                    }
+                    renderizarParadas();
+                    toast('Parada ' + (indice + 1) + ' concluída!', 'success');
+                    
+                    // Navegar para próxima parada ou destino
+                    const proxParada = corridaAtual.paradas.find(p => !p.concluida);
+                    if (proxParada && proxParada.latitude) {
+                        navegarPara(proxParada.latitude, proxParada.longitude, proxParada.endereco);
+                    }
+                } else {
+                    toast(data.erro || 'Erro ao marcar parada', 'error');
+                }
+            } catch (e) {
+                toast('Erro de conexão', 'error');
+            }
         }
 
         function navegarAteCliente() {

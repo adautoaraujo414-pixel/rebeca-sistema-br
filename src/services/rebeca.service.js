@@ -393,6 +393,77 @@ const RebecaService = {
             return 'Você ainda está na fila de espera! Assim que um motorista desocupar eu te aviso. Se quiser desistir, digite *CANCELAR*.';
         }
 
+        // ========== PARADAS INTERMEDIÁRIAS ==========
+        if (conversa.etapa === 'perguntar_paradas') {
+            if (msg.includes('sim') || msg.includes('tenho') || msg.includes('1')) {
+                conversa.etapa = 'adicionar_parada';
+                conversas.set(telefone, conversa);
+                return 'Beleza! Me passa o endereço da parada:';
+            } else if (msg.includes('nao') || msg.includes('não') || msg.includes('0') || msg.includes('2')) {
+                // Criar corrida sem paradas
+                const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
+                conversa.etapa = 'aguardando_motorista';
+                conversa.dados.corridaId = corrida.id || corrida._id;
+                conversas.set(telefone, conversa);
+                
+                let resp = `🚗 *CARRO SOLICITADO!*\n\n📍 *De:* ${conversa.dados.origem}`;
+                if (conversa.dados.observacaoOrigem) resp += `\n📝 _${conversa.dados.observacaoOrigem}_`;
+                resp += `\n\n🏁 *Para:* ${conversa.dados.destino}`;
+                resp += `\n\n💰 *R$ ${conversa.dados.calculo?.preco?.toFixed(2) || '15.00'}*`;
+                resp += `\n\n⏳ Buscando motorista...\n🔢 #${corrida.id?.slice(-6) || corrida._id?.toString().slice(-6)}`;
+                return resp;
+            } else {
+                return 'Não entendi. Responde *SIM* se tem parada no caminho ou *NÃO* para continuar:';
+            }
+        }
+
+        if (conversa.etapa === 'adicionar_parada') {
+            // Validar endereço da parada
+            const validacaoParada = await RebecaService.validarEndereco(msgOriginal);
+            
+            if (!validacaoParada.valido) {
+                return '❌ Não encontrei esse endereço. Tenta de novo ou digite *PRONTO* para finalizar:';
+            }
+            
+            // Adicionar parada
+            if (!conversa.dados.paradas) conversa.dados.paradas = [];
+            conversa.dados.paradas.push({
+                endereco: validacaoParada.endereco,
+                latitude: validacaoParada.latitude,
+                longitude: validacaoParada.longitude,
+                ordem: conversa.dados.paradas.length + 1,
+                concluida: false
+            });
+            
+            conversa.etapa = 'mais_paradas';
+            conversas.set(telefone, conversa);
+            return `✅ Parada ${conversa.dados.paradas.length} adicionada!\n📍 ${validacaoParada.endereco}\n\nTem mais alguma parada? Responde *SIM* ou *PRONTO* para finalizar:`;
+        }
+
+        if (conversa.etapa === 'mais_paradas') {
+            if (msg.includes('sim') || msg.includes('mais') || msg.includes('outra')) {
+                conversa.etapa = 'adicionar_parada';
+                conversas.set(telefone, conversa);
+                return 'Me passa o endereço da próxima parada:';
+            } else {
+                // Criar corrida com paradas
+                const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
+                conversa.etapa = 'aguardando_motorista';
+                conversa.dados.corridaId = corrida.id || corrida._id;
+                conversas.set(telefone, conversa);
+                
+                let resp = `🚗 *CARRO SOLICITADO!*\n\n📍 *De:* ${conversa.dados.origem}`;
+                if (conversa.dados.paradas?.length > 0) {
+                    resp += `\n\n🛑 *${conversa.dados.paradas.length} parada(s):*`;
+                    conversa.dados.paradas.forEach((p, i) => resp += `\n  ${i+1}. ${p.endereco}`);
+                }
+                resp += `\n\n🏁 *Para:* ${conversa.dados.destino}`;
+                resp += `\n\n💰 *R$ ${conversa.dados.calculo?.preco?.toFixed(2) || '15.00'}*`;
+                resp += `\n\n⏳ Buscando motorista...\n🔢 #${corrida.id?.slice(-6) || corrida._id?.toString().slice(-6)}`;
+                return resp;
+            }
+        }
+
         if (conversa.etapa === 'avaliar') {
             const nota = parseInt(msg);
             if (nota >= 1 && nota <= 5) {
@@ -739,12 +810,22 @@ const RebecaService = {
                 }
             }
             
-            // Criar corrida
+            // Perguntar sobre paradas intermediárias
             const calculo = await RebecaService.calcularCorrida(conversa.dados.origem, conversa.dados.destino);
             conversa.dados.calculo = calculo;
+            conversa.dados.paradas = [];
             
-            const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
-            conversa.etapa = 'inicio';
+            // Se já foi perguntado ou config desativada, criar direto
+            if (conversa.dados.perguntouParadas) {
+                const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
+                conversa.etapa = 'inicio';
+                resposta = `🚗 *CARRO SOLICITADO!*`;
+            } else {
+                conversa.etapa = 'perguntar_paradas';
+                conversa.dados.perguntouParadas = true;
+                conversas.set(telefone, conversa);
+                return `📍 *De:* ${conversa.dados.origem}\n🏁 *Para:* ${conversa.dados.destino}\n💰 *Valor:* R$ ${calculo.preco?.toFixed(2) || '15.00'}\n\n🛑 Tem alguma parada no caminho?\n\nResponde *SIM* ou *NÃO*`;
+            }
             
             resposta = `🚗 *CARRO SOLICITADO!*\n\n📍 *De:* ${conversa.dados.origem}`;
             if (conversa.dados.observacaoOrigem) resposta += `\n📝 _${conversa.dados.observacaoOrigem}_`;
@@ -1237,6 +1318,37 @@ const RebecaService = {
             observacaoDestino: dados.observacaoDestino || null,
             status: 'pendente'
         });
+        
+        // ========== VERIFICAR MOTORISTA FAVORITO ==========
+        try {
+            const favorito = await RebecaService.verificarMotoristaFavorito(telefone, adminId);
+            
+            if (favorito?.disponivel) {
+                // FAVORITO DISPONÍVEL - Priorizar ele!
+                console.log('[REBECA] Motorista favorito disponível:', favorito.motorista.nomeCompleto);
+                
+                // Despachar APENAS para o favorito primeiro
+                const resultadoFavorito = await DespachoService.despacharCorrida(corrida, [favorito.motorista], adminId);
+                
+                if (resultadoFavorito.sucesso && instanciaId) {
+                    const endOrigem = dados.calculo.origem?.endereco || dados.origem || 'Ver app';
+                    const refOrigem = dados.observacaoOrigem ? '\n📌 Ref: ' + dados.observacaoOrigem : '';
+                    const linkMaps = (dados.calculo.origem?.latitude && dados.calculo.origem?.longitude) ? '\n🗺️ maps.google.com/?q=' + dados.calculo.origem.latitude + ',' + dados.calculo.origem.longitude : '';
+                    const msgFavorito = `🚨 *CORRIDA DO SEU CLIENTE!*\n\n📍 ${endOrigem}${refOrigem}${linkMaps}\n\n💰 R$ ${dados.calculo.preco?.toFixed(2) || '15.00'}\n\n⭐ Este cliente já andou com você!\n✅ Digite ACEITAR`;
+                    
+                    await EvolutionMultiService.enviarMensagem(instanciaId, favorito.motorista.whatsapp, msgFavorito);
+                    console.log('[REBECA] Corrida enviada para motorista favorito:', favorito.motorista.nomeCompleto);
+                    
+                    // Salvar que foi para favorito primeiro (timeout de 60s antes de broadcast)
+                    corrida.favoritoPriorizado = true;
+                    corrida.favoritoMotoristaId = favorito.motorista._id;
+                    
+                    return { id: corrida.id || corrida._id, favoritoPriorizado: true, motorista: favorito.motorista.nomeCompleto };
+                }
+            }
+        } catch (e) {
+            console.log('[REBECA] Erro verificar favorito:', e.message);
+        }
         
         // ========== DESPACHAR PARA MOTORISTAS ==========
         try {
