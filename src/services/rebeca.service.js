@@ -1205,10 +1205,12 @@ const RebecaService = {
     async criarCorrida(telefone, nomeCliente, dados, adminId = null, instanciaId = null) {
         // Anti-duplicacao: verificar se ja tem corrida ativa
         const { Corrida } = require('../models');
-        const corridaAtiva = await Corrida.findOne({
+        const queryAtiva = {
             clienteTelefone: telefone,
             status: { $in: ['pendente', 'aceita', 'em_andamento', 'motorista_a_caminho'] }
-        });
+        };
+        if (adminId) queryAtiva.adminId = adminId;
+        const corridaAtiva = await Corrida.findOne(queryAtiva);
         
         if (corridaAtiva) {
             // TIMEOUT: Se corrida PENDENTE há mais de 10 minutos, cancelar automaticamente
@@ -1227,7 +1229,7 @@ const RebecaService = {
             }
         }
         
-        let cliente = ClienteService.buscarPorTelefone(telefone);
+        let cliente = await ClienteService.buscarPorTelefone(telefone, adminId);
         if (!cliente) cliente = await ClienteService.criar({ nome: nomeCliente, telefone, adminId });
         
         const corrida = await CorridaService.criar({
