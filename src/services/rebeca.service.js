@@ -336,10 +336,12 @@ const RebecaService = {
             try {
                 const { Corrida } = require('../models');
                 const telsC = [telefone, '55' + telefone, telefone.replace(/^55/, '')];
-                const corridaAtiva = await Corrida.findOne({ 
+                const queryMsg = { 
                     clienteTelefone: { $in: telsC }, 
                     status: { $in: ['aceita', 'em_andamento', 'motorista_a_caminho'] }
-                });
+                };
+                if (conversa.adminId) queryMsg.adminId = conversa.adminId;
+                const corridaAtiva = await Corrida.findOne(queryMsg);
                 
                 if (corridaAtiva && corridaAtiva.motoristaId) {
                     // Tem motorista - encaminhar mensagem via WhatsApp
@@ -459,10 +461,12 @@ const RebecaService = {
                 const { Corrida } = require('../models');
                 // Buscar por telefone com diferentes formatos
                 const tels = [telefone, '55' + telefone, telefone.replace(/^55/, '')];
-                const corridaAtiva = await Corrida.findOne({
+                const queryCancelar = {
                     clienteTelefone: { $in: tels },
                     status: { $in: ['pendente', 'aceita', 'a_caminho', 'motorista_a_caminho', 'em_andamento'] }
-                });
+                };
+                if (conversa.adminId) queryCancelar.adminId = conversa.adminId;
+                const corridaAtiva = await Corrida.findOne(queryCancelar);
                 console.log('[CANCELAR] Buscando corrida para tels:', tels, '| Encontrou:', !!corridaAtiva);
                 
                 if (corridaAtiva) {
