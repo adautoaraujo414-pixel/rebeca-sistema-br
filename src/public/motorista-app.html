@@ -356,6 +356,7 @@ body { background: #f0f2f5 !important; color: #333 !important; }
                         </div>
                         <div class="corrida-ativa-actions">
                             <button id="btnNavegar" class="btn-action btn-navegar" onclick="navegarAteCliente()">🗺️ NAVEGAR</button>
+                            <button id="btnAddParada" class="btn-action" style="background:linear-gradient(135deg,#9c27b0,#7b1fa2);color:#fff;" onclick="abrirModalParada()">➕ PARADA</button>
                             <button id="btnLigarCliente" class="btn-action btn-ligar" onclick="ligarCliente()">📞 LIGAR CENTRAL</button>
                             <button id="btnCheguei" class="btn-action btn-cheguei" onclick="chegueiLocal()">📍 CHEGUEI NO LOCAL</button>
                             <button id="btnIniciar" class="btn-action btn-iniciar" onclick="iniciarCorrida()" style="display:none;">▶️ INICIAR CORRIDA</button>
@@ -1489,6 +1490,22 @@ body { background: #f0f2f5 !important; color: #333 !important; }
         navigator.serviceWorker.register("/sw.js");
     }
     </script>
+
+        <!-- Modal Adicionar Parada -->
+        <div class="modal-overlay" id="modalParada">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>➕ Adicionar Parada</h3>
+                    <button class="modal-close" onclick="fecharModal('modalParada')">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <input type="text" id="inputParadaEndereco" class="login-input" placeholder="Digite o endereço da parada...">
+                    <div id="paradaSugestoes" style="margin:10px 0;max-height:200px;overflow-y:auto;"></div>
+                    <button class="btn-action btn-iniciar" onclick="adicionarParada()" style="width:100%;margin-top:10px;">✅ ADICIONAR PARADA</button>
+                </div>
+            </div>
+        </div>
+
 </body>
 </html>
 

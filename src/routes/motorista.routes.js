@@ -176,3 +176,51 @@ router.post('/corrida/:corridaId/parada/:indice/concluir', authMotorista, async 
         res.status(500).json({ erro: e.message });
     }
 });
+
+// Motorista adicionar parada na corrida
+router.post('/corrida/:corridaId/parada', authMotorista, async (req, res) => {
+    try {
+        const { Corrida } = require('../models');
+        const MapsService = require('../services/maps.service');
+        const { corridaId } = req.params;
+        const { endereco } = req.body;
+        
+        if (!endereco) {
+            return res.status(400).json({ erro: 'Endereço obrigatório' });
+        }
+        
+        const corrida = await Corrida.findById(corridaId);
+        if (!corrida) {
+            return res.status(404).json({ erro: 'Corrida não encontrada' });
+        }
+        
+        // Geocodificar endereço
+        let coords = null;
+        try {
+            coords = await MapsService.geocodificar(endereco);
+        } catch (e) {
+            console.log('[PARADA] Erro geocodificar:', e.message);
+        }
+        
+        // Inicializar array se não existir
+        if (!corrida.paradas) corrida.paradas = [];
+        
+        // Adicionar parada
+        corrida.paradas.push({
+            endereco: coords?.endereco || endereco,
+            latitude: coords?.latitude || null,
+            longitude: coords?.longitude || null,
+            ordem: corrida.paradas.length + 1,
+            concluida: false
+        });
+        
+        await corrida.save();
+        
+        console.log('[PARADA] Parada adicionada na corrida', corridaId, ':', endereco);
+        
+        res.json({ sucesso: true, paradas: corrida.paradas });
+    } catch (e) {
+        console.error('[PARADA] Erro adicionar:', e.message);
+        res.status(500).json({ erro: e.message });
+    }
+});
