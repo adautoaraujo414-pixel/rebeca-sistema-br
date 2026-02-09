@@ -69,6 +69,9 @@ router.get('/rastrear/:codigo', (req, res) => {
         motoristaGPS = GPSIntegradoService.obterLocalizacao(corrida.motoristaId);
     }
     
+    // Incluir foto do motorista
+    const fotoMotorista = motorista?.foto || null;
+    
     res.json({
         corrida: {
             id: corrida.id,

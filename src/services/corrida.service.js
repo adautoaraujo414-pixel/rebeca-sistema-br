@@ -58,6 +58,14 @@ const CorridaService = {
         
         corrida.status = 'finalizada';
         corrida.finalizadaEm = new Date();
+        
+        // Notificar próximo da fila de espera
+        try {
+            const RebecaService = require('./rebeca.service');
+            setTimeout(async () => {
+                await RebecaService.notificarFilaQuandoDisponivel(corrida.adminId, null);
+            }, 3000); // Aguarda 3 segundos para motorista ficar disponível
+        } catch(e) { console.log('[CORRIDA] Erro notificar fila:', e.message); }
         if (precoFinal) corrida.precoFinal = precoFinal;
         await corrida.save();
         

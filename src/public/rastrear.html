@@ -18,7 +18,8 @@
         #map { position: fixed; top: 80px; left: 0; right: 0; bottom: 120px; }
         .info-panel { position: fixed; bottom: 0; left: 0; right: 0; background: #16213e; padding: 15px; border-radius: 20px 20px 0 0; }
         .motorista-card { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
-        .avatar { width: 50px; height: 50px; background: #00d4aa; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; }
+        .avatar { width: 50px; height: 50px; background: #00d4aa; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; overflow: hidden; }
+        .avatar img { width: 100%; height: 100%; object-fit: cover; }
         .motorista-info h3 { font-size: 16px; margin-bottom: 3px; }
         .motorista-info p { font-size: 13px; color: #aaa; }
         .distancia { text-align: center; background: #0f3460; padding: 10px; border-radius: 10px; }
@@ -59,7 +60,7 @@
 
         <div class="info-panel">
             <div class="motorista-card">
-                <div class="avatar">🧑</div>
+                <div class="avatar" id="motorista-avatar">🧑</div>
                 <div class="motorista-info">
                     <h3 id="motorista-nome">Carregando...</h3>
                     <p id="motorista-veiculo">-</p>

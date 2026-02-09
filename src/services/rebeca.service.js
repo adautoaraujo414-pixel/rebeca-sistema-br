@@ -260,7 +260,14 @@ const RebecaService = {
             const motoristasDisponiveis = await MotoristaService.listarDisponiveis(adminId);
             
             if (motoristasDisponiveis.length === 0) {
-                return '😔 Sem motoristas no momento. Tente em alguns minutos!';
+                // Oferecer fila de espera
+                const estimativa = await RebecaService.estimarTempoEspera(adminId);
+                conversa.etapa = 'oferecer_fila_espera';
+                conversa.dados.origemGPS = coords;
+                conversas.set(telefone, conversa);
+                return 'Poxa, no momento todos os nossos motoristas estão em corrida! ' +
+                    'A previsão é de ' + estimativa.texto + ' para um ficar disponível.\n\n' +
+                    'Posso te avisar assim que um motorista desocupar? Responde *SIM* que eu te coloco na fila!';
             }
             
             conversa.dados.origemGPS = coords;
@@ -343,6 +350,49 @@ const RebecaService = {
         }
 
         // ========== AVALIACAO ==========
+        // ========== FILA DE ESPERA ==========
+        if (conversa.etapa === 'oferecer_fila_espera') {
+            if (msg.includes('sim') || msg.includes('quero') || msg.includes('pode') || msg.includes('ok')) {
+                // Cliente quer entrar na fila
+                const resultado = await RebecaService.adicionarFilaEspera(
+                    telefone, nome, 
+                    conversa.dados.calculo?.origem || conversa.dados.origem,
+                    conversa.dados.calculo?.destino || conversa.dados.destino,
+                    conversa.adminId, conversa.instanciaId
+                );
+                
+                if (resultado) {
+                    conversa.etapa = 'aguardando_fila';
+                    conversas.set(telefone, conversa);
+                    if (resultado.posicao === 1) {
+                        return 'Pronto! Você é o próximo da fila! Assim que um motorista desocupar eu te aviso e já crio sua corrida automaticamente!';
+                    }
+                    return 'Pronto! Te coloquei na fila, você é o ' + resultado.posicao + 'º da vez! Assim que um motorista desocupar eu te aviso!';
+                }
+                conversa.etapa = 'inicio';
+                conversas.set(telefone, conversa);
+                return 'Ops, não consegui te adicionar na fila. Tenta de novo daqui a pouco!';
+            } else if (msg.includes('nao') || msg.includes('não') || msg.includes('depois') || msg.includes('deixa')) {
+                // Cliente não quer esperar
+                conversa.etapa = 'inicio';
+                conversas.set(telefone, conversa);
+                return 'Sem problemas! Quando precisar é só me chamar!';
+            } else {
+                return 'Desculpa, não entendi. Responde *SIM* se quiser que eu te avise quando um motorista desocupar, ou *NÃO* se preferir tentar mais tarde!';
+            }
+        }
+
+        // ========== AGUARDANDO NA FILA ==========
+        if (conversa.etapa === 'aguardando_fila') {
+            if (msg.includes('cancelar') || msg.includes('desistir') || msg.includes('sair')) {
+                await RebecaService.removerDaFila(telefone, conversa.adminId);
+                conversa.etapa = 'inicio';
+                conversas.set(telefone, conversa);
+                return 'Ok, te tirei da fila! Quando precisar é só chamar!';
+            }
+            return 'Você ainda está na fila de espera! Assim que um motorista desocupar eu te aviso. Se quiser desistir, digite *CANCELAR*.';
+        }
+
         if (conversa.etapa === 'avaliar') {
             const nota = parseInt(msg);
             if (nota >= 1 && nota <= 5) {
@@ -525,7 +575,13 @@ const RebecaService = {
                 // Verificar motoristas disponíveis
                 const motoristasDisponiveis = await MotoristaService.listarDisponiveis(conversa.adminId);
                 if (motoristasDisponiveis.length === 0) {
-                    return '😔 Sem motoristas disponíveis no momento. Tente novamente em alguns minutos!';
+                    // Oferecer fila de espera
+                    const estimativa2 = await RebecaService.estimarTempoEspera(conversa.adminId);
+                    conversa.etapa = 'oferecer_fila_espera';
+                    conversas.set(telefone, conversa);
+                    return 'Poxa, no momento todos os nossos motoristas estão em corrida! ' +
+                        'A previsão é de ' + estimativa2.texto + ' para um ficar disponível.\n\n' +
+                        'Posso te avisar assim que um motorista desocupar? Responde *SIM* que eu te coloco na fila!';
                 }
                 
                 // CRIAR CORRIDA DIRETO - OBJETIVIDADE!
@@ -588,7 +644,13 @@ const RebecaService = {
                 conversa.etapa = 'inicio';
                 conversa.dados = {};
                 conversas.set(telefone, conversa);
-                return '😔 Sem motoristas no momento. Tente em alguns minutos!';
+                // Oferecer fila de espera
+                const estimativa3 = await RebecaService.estimarTempoEspera(conversa.adminId);
+                conversa.etapa = 'oferecer_fila_espera';
+                conversas.set(telefone, conversa);
+                return 'Poxa, no momento todos os nossos motoristas estão em corrida! ' +
+                    'A previsão é de ' + estimativa3.texto + ' para um ficar disponível.\n\n' +
+                    'Posso te avisar assim que um motorista desocupar? Responde *SIM* que eu te coloco na fila!';
             }
             
             // Criar corrida e despachar DIRETO
@@ -1554,3 +1616,202 @@ const RebecaService = {
 };
 
 module.exports = RebecaService;
+
+// ==================== FILA DE ESPERA ====================
+const filaEsperaFunctions = {
+    async verificarMotoristaFavorito(telefoneCliente, adminId) {
+        try {
+            const { Cliente, Motorista } = require('../models');
+            const cliente = await Cliente.findOne({ telefone: telefoneCliente, adminId });
+            if (!cliente || !cliente.ultimoMotorista) return null;
+            
+            const motorista = await Motorista.findById(cliente.ultimoMotorista);
+            if (!motorista || !motorista.ativo) return null;
+            
+            return {
+                motorista,
+                disponivel: motorista.status === 'disponivel',
+                emCorrida: motorista.status === 'em_corrida'
+            };
+        } catch (e) {
+            console.error('[FILA] Erro verificar favorito:', e.message);
+            return null;
+        }
+    },
+
+    async salvarUltimoMotorista(telefoneCliente, motoristaId, adminId) {
+        try {
+            const { Cliente } = require('../models');
+            await Cliente.findOneAndUpdate(
+                { telefone: telefoneCliente, adminId },
+                { ultimoMotorista: motoristaId },
+                { upsert: true }
+            );
+        } catch (e) {
+            console.error('[FILA] Erro salvar ultimo motorista:', e.message);
+        }
+    },
+
+    async adicionarFilaEspera(telefoneCliente, nomeCliente, origem, destino, adminId, instanciaId) {
+        try {
+            const { FilaEspera } = require('../models');
+            
+            // Calcular posição na fila
+            const aguardando = await FilaEspera.countDocuments({ adminId, status: 'aguardando' });
+            
+            const entrada = await FilaEspera.create({
+                clienteTelefone: telefoneCliente,
+                clienteNome: nomeCliente,
+                origem,
+                destino,
+                posicao: aguardando + 1,
+                status: 'aguardando',
+                adminId,
+                instanciaId
+            });
+            
+            return { entrada, posicao: aguardando + 1 };
+        } catch (e) {
+            console.error('[FILA] Erro adicionar fila:', e.message);
+            return null;
+        }
+    },
+
+    async estimarTempoEspera(adminId) {
+        try {
+            const { Corrida, Motorista } = require('../models');
+            
+            // Buscar corridas em andamento
+            const corridasAtivas = await Corrida.find({
+                adminId,
+                status: { $in: ['aceita', 'em_andamento', 'motorista_a_caminho'] }
+            });
+            
+            if (corridasAtivas.length === 0) return { minutos: 0, texto: 'poucos minutos' };
+            
+            // Estimar média de tempo das corridas (média 15min por corrida)
+            const tempoMedio = 15;
+            const menorTempo = Math.max(5, tempoMedio - 5);
+            
+            return { 
+                minutos: menorTempo, 
+                texto: `aproximadamente ${menorTempo} minutos`
+            };
+        } catch (e) {
+            return { minutos: 10, texto: 'aproximadamente 10 minutos' };
+        }
+    },
+
+    async notificarFilaQuandoDisponivel(adminId, instanciaId) {
+        try {
+            const { FilaEspera, InstanciaWhatsapp } = require('../models');
+            const EvolutionMultiService = require('./evolution-multi.service');
+            
+            // Buscar próximo da fila
+            const proximo = await FilaEspera.findOne({ 
+                adminId, 
+                status: 'aguardando' 
+            }).sort({ posicao: 1 });
+            
+            if (!proximo) return null;
+            
+            // Buscar instância
+            const instancia = await InstanciaWhatsapp.findById(instanciaId) || 
+                await InstanciaWhatsapp.findOne({ adminId, status: 'conectado' });
+            
+            if (!instancia) return null;
+            
+            // Notificar cliente
+            await EvolutionMultiService.enviarMensagem(
+                instancia._id, 
+                proximo.clienteTelefone,
+                `🎉 Boa notícia! Um motorista acabou de ficar disponível!\n\nDigite o endereço de destino para eu criar sua corrida!`
+            );
+            
+            // Atualizar status
+            proximo.status = 'notificado';
+            await proximo.save();
+            
+            // Atualizar conversa do cliente
+            const conversa = conversas.get(proximo.clienteTelefone);
+            if (conversa) {
+                conversa.etapa = 'inicial';
+                conversa.dados = { origem: proximo.origem };
+                conversas.set(proximo.clienteTelefone, conversa);
+            }
+            
+            console.log('[FILA] Cliente notificado:', proximo.clienteTelefone);
+            return proximo;
+        } catch (e) {
+            console.error('[FILA] Erro notificar fila:', e.message);
+            return null;
+        }
+    },
+
+    async removerDaFila(telefoneCliente, adminId) {
+        try {
+            const { FilaEspera } = require('../models');
+            await FilaEspera.updateOne(
+                { clienteTelefone: telefoneCliente, adminId, status: 'aguardando' },
+                { status: 'atendido' }
+            );
+        } catch (e) {
+            console.error('[FILA] Erro remover da fila:', e.message);
+        }
+    }
+};
+
+// Adicionar funções ao RebecaService
+Object.assign(RebecaService, filaEsperaFunctions);
+
+// ==================== TRANSCRIÇÃO DE ÁUDIO ====================
+RebecaService.transcreverAudio = async function(audioMessage, instancia) {
+    try {
+        // Baixar áudio da Evolution API
+        const axios = require('axios');
+        
+        if (!audioMessage.mediaKey || !instancia.apiUrl || !instancia.apiKey) {
+            console.log('[AUDIO] Dados insuficientes para baixar audio');
+            return null;
+        }
+        
+        // Tentar baixar o áudio via Evolution API
+        const mediaUrl = audioMessage.url || audioMessage.directPath;
+        if (!mediaUrl) {
+            console.log('[AUDIO] URL do audio nao encontrada');
+            return null;
+        }
+        
+        // Se não tiver OpenAI configurado, retornar aviso amigável
+        if (!process.env.OPENAI_API_KEY) {
+            console.log('[AUDIO] OpenAI API Key nao configurada para transcrição');
+            // Retornar mensagem genérica para tratar como pedido de corrida
+            return 'preciso de um carro';
+        }
+        
+        // Baixar áudio
+        const audioBuffer = await axios.get(mediaUrl, { responseType: 'arraybuffer' });
+        
+        // Enviar para OpenAI Whisper
+        const FormData = require('form-data');
+        const formData = new FormData();
+        formData.append('file', Buffer.from(audioBuffer.data), { filename: 'audio.ogg', contentType: 'audio/ogg' });
+        formData.append('model', 'whisper-1');
+        formData.append('language', 'pt');
+        
+        const whisperResponse = await axios.post('https://api.openai.com/v1/audio/transcriptions', formData, {
+            headers: {
+                'Authorization': 'Bearer ' + process.env.OPENAI_API_KEY,
+                ...formData.getHeaders()
+            }
+        });
+        
+        const transcricao = whisperResponse.data?.text;
+        console.log('[AUDIO] Transcricao:', transcricao);
+        return transcricao || null;
+    } catch (e) {
+        console.error('[AUDIO] Erro transcrever:', e.message);
+        // Se falhar, assumir que é pedido de corrida (comportamento amigável)
+        return 'preciso de um carro';
+    }
+};

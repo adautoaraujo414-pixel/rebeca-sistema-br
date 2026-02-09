@@ -109,6 +109,21 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                     conteudo = { latitude: msg.message.locationMessage.degreesLatitude, longitude: msg.message.locationMessage.degreesLongitude };
                 } else if (msg.message?.liveLocationMessage) {
                     conteudo = { latitude: msg.message.liveLocationMessage.degreesLatitude, longitude: msg.message.liveLocationMessage.degreesLongitude };
+                } else if (msg.message?.audioMessage) {
+                    // Áudio recebido - tentar transcrever
+                    console.log('[WEBHOOK] Audio recebido de', telefone);
+                    try {
+                        const transcricao = await RebecaService.transcreverAudio(msg.message.audioMessage, instancia);
+                        if (transcricao) {
+                            conteudo = transcricao;
+                            console.log('[WEBHOOK] Audio transcrito:', transcricao);
+                        } else {
+                            conteudo = '[AUDIO]';
+                        }
+                    } catch(e) {
+                        console.log('[WEBHOOK] Erro transcrever audio:', e.message);
+                        conteudo = '[AUDIO]';
+                    }
                 }
                 
                 if (!conteudo || !telefone) continue;

@@ -296,6 +296,15 @@ const DespachoService = {
         // MUDAR STATUS DO MOTORISTA PARA EM_CORRIDA
         MotoristaService.atualizarStatus(motoristaId, 'em_corrida');
         console.log(`✅ Corrida ${corridaId} aceita por ${motoristaNome} - Status: em_corrida`);
+        
+        // Salvar ultimo motorista do cliente
+        try {
+            const RebecaService = require('./rebeca.service');
+            const corrida = CorridaService.buscar(corridaId);
+            if (corrida?.clienteTelefone) {
+                RebecaService.salvarUltimoMotorista(corrida.clienteTelefone, motoristaId, corrida.adminId);
+            }
+        } catch(e) { console.log('[DESPACHO] Erro salvar ultimo motorista:', e.message); }
 
         return {
             sucesso: true,

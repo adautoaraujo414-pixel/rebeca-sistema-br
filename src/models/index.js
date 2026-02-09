@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const MotoristaSchema = new mongoose.Schema({
     nomeCompleto: String, whatsapp: { type: String }, cpf: String, cnh: String,
     veiculo: { modelo: String, cor: String, placa: String, ano: Number },
+    foto: String, // URL da foto do motorista
     status: { type: String, default: 'disponivel' }, latitude: Number, longitude: Number,
     avaliacao: { type: Number, default: 5 }, corridasRealizadas: { type: Number, default: 0 },
     ativo: { type: Boolean, default: true }, token: String, senha: String, cidadeAtuacao: String, adminId: mongoose.Schema.Types.ObjectId
@@ -11,7 +12,10 @@ const MotoristaSchema = new mongoose.Schema({
 const ClienteSchema = new mongoose.Schema({
     nome: String, telefone: { type: String }, email: String,
     enderecoFavorito: { casa: { endereco: String, latitude: Number, longitude: Number }, trabalho: { endereco: String, latitude: Number, longitude: Number } },
-    corridasRealizadas: { type: Number, default: 0 }
+    corridasRealizadas: { type: Number, default: 0 },
+    motoristaFavorito: { type: mongoose.Schema.Types.ObjectId, ref: 'Motorista' },
+    ultimoMotorista: { type: mongoose.Schema.Types.ObjectId, ref: 'Motorista' },
+    adminId: mongoose.Schema.Types.ObjectId
 }, { timestamps: true });
 
 const CorridaSchema = new mongoose.Schema({
@@ -19,6 +23,7 @@ const CorridaSchema = new mongoose.Schema({
     motoristaId: mongoose.Schema.Types.ObjectId, motoristaNome: String,
     origem: { endereco: String, latitude: Number, longitude: Number },
     destino: { endereco: String, latitude: Number, longitude: Number },
+    paradas: [{ endereco: String, latitude: Number, longitude: Number, ordem: Number, concluida: { type: Boolean, default: false } }], // Múltiplas paradas
     observacaoOrigem: String, observacaoDestino: String,
     distanciaKm: Number, tempoEstimado: Number, precoEstimado: Number, precoFinal: Number,
     status: { type: String, default: 'pendente' }, formaPagamento: String, avaliacao: Number
@@ -350,3 +355,18 @@ const DuvidaPendenteSchema = new mongoose.Schema({
 
 const DuvidaPendente = mongoose.model('DuvidaPendente', DuvidaPendenteSchema);
 module.exports.DuvidaPendente = DuvidaPendente;
+
+// ==================== FILA DE ESPERA ====================
+const FilaEsperaSchema = new mongoose.Schema({
+    clienteTelefone: { type: String, required: true },
+    clienteNome: String,
+    origem: { endereco: String, latitude: Number, longitude: Number },
+    destino: { endereco: String, latitude: Number, longitude: Number },
+    posicao: { type: Number, default: 1 },
+    status: { type: String, enum: ['aguardando', 'notificado', 'atendido', 'expirado'], default: 'aguardando' },
+    adminId: mongoose.Schema.Types.ObjectId,
+    instanciaId: mongoose.Schema.Types.ObjectId
+}, { timestamps: true });
+
+const FilaEspera = mongoose.model('FilaEspera', FilaEsperaSchema);
+module.exports.FilaEspera = FilaEspera;
