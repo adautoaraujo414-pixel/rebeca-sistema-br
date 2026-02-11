@@ -394,3 +394,32 @@ router.post('/setup', async (req, res) => {
 });
 
 module.exports = router;
+
+// Reset senha por email (utilitário)
+router.post('/reset-senha-email', async (req, res) => {
+    try {
+        const { Admin } = require('../models');
+        const { email, novaSenha } = req.body;
+        
+        if (!email || !novaSenha) {
+            return res.status(400).json({ erro: 'Email e novaSenha obrigatórios' });
+        }
+        
+        const admin = await Admin.findOne({ email });
+        if (!admin) {
+            return res.status(404).json({ erro: 'Admin não encontrado' });
+        }
+        
+        admin.senha = novaSenha;
+        admin.ativo = true;
+        await admin.save();
+        
+        res.json({ 
+            sucesso: true, 
+            mensagem: 'Senha atualizada!',
+            admin: { nome: admin.nome, email: admin.email, empresa: admin.empresa }
+        });
+    } catch (e) {
+        res.status(500).json({ erro: e.message });
+    }
+});
