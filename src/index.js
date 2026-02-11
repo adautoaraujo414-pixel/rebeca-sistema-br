@@ -42,6 +42,7 @@ const iaRoutes = require('./routes/ia.routes');
 const mensalidadeRoutes = require('./routes/mensalidade.routes');
 const evolutionMultiRoutes = require('./routes/evolution-multi.routes');
 const precoAdminRoutes = require('./routes/preco-admin.routes');
+const adminRoutes = require('./routes/admin.routes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/usuarios', usuariosRoutes);
@@ -69,6 +70,7 @@ app.use('/api/ia', iaRoutes);
 app.use('/api/mensalidades', mensalidadeRoutes);
 app.use('/api/evolution', evolutionMultiRoutes);
 app.use('/api/precos', precoAdminRoutes);
+app.use('/api/admin', adminRoutes);
 app.use('/api/precos-intermunicipais', require('./routes/preco-intermunicipal.routes'));
 app.use('/api/comunicacao', require('./routes/comunicacao.routes'));
 app.use('/api/emergencia', require('./routes/emergencia.routes'));
