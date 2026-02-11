@@ -1,3 +1,6 @@
+const express = require('express');
+const router = express.Router();
+
 
 // ==================== FILA DE ESPERA ====================
 router.get('/fila-espera', async (req, res) => {
@@ -25,3 +28,6 @@ router.delete('/fila-espera/:id', async (req, res) => {
         res.status(500).json({ erro: e.message });
     }
 });
+
+
+module.exports = router;
