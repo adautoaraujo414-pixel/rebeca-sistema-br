@@ -653,6 +653,12 @@ const RebecaService = {
         }
         // ========== PEDIR BAIRRO ==========
         else if (conversa.etapa === 'pedir_bairro_origem') {
+            // VALIDAR: ignorar expressões de confirmação/comandos
+            const expressoesIgnorar = ['maravilha','beleza','show','legal','perfeito','otimo','ótimo','certo','entendi','isso','ok','sim','blz','vlw','valeu','brigado','brigada','obrigado','obrigada','ta','tá','vamos','bora','pode ser','isso mesmo','a maravilha','top','dahora','massa','nice','maneiro'];
+            if (expressoesIgnorar.includes(msg) || msg.length < 3) {
+                return '📍 Por favor, informe o *bairro* para completar o endereço:';
+            }
+            
             const enderecoCompleto = conversa.dados.origemTexto + ', ' + msgOriginal;
             conversa.dados.origem = enderecoCompleto;
             conversa.dados.origemValidada = { valido: true, precisao: 'texto_livre', endereco: enderecoCompleto };
