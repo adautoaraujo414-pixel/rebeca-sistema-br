@@ -136,8 +136,22 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                     const resposta = await RebecaService.processarMensagem(telefone, conteudo, nome, contexto);
                     
                     if (resposta) {
-                        await EvolutionMultiService.enviarMensagem(instancia._id, telefone, resposta);
-                        console.log('[REBECA] Resposta enviada para ' + telefone);
+                        // Anti-repeticao de RESPOSTAS
+                        if (!global._respostasEnviadas) global._respostasEnviadas = new Map();
+                        const chaveResposta = telefone + '_' + resposta.substring(0, 50);
+                        const ultimaResposta = global._respostasEnviadas.get(chaveResposta);
+                        
+                        if (ultimaResposta && (Date.now() - ultimaResposta) < 30000) {
+                            console.log('[ANTI-REP] Resposta repetida bloqueada para', telefone);
+                        } else {
+                            global._respostasEnviadas.set(chaveResposta, Date.now());
+                            // Limpar respostas antigas (mais de 2 min)
+                            for (const [k, v] of global._respostasEnviadas) { 
+                                if (Date.now() - v > 120000) global._respostasEnviadas.delete(k); 
+                            }
+                            await EvolutionMultiService.enviarMensagem(instancia._id, telefone, resposta);
+                            console.log('[REBECA] Resposta enviada para ' + telefone);
+                        }
                     }
                 } catch (e) {
                     console.error('[REBECA] Erro:', e.message);
