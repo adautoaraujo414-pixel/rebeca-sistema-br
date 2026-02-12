@@ -87,7 +87,33 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
             // Limpar msgs antigas (mais de 60s)
             for (const [k, v] of global._msgProcessadas) { if (agora - v > 60000) global._msgProcessadas.delete(k); }
             
+            // MODO HUMANO: controla quando operador assume conversa
+            if (!global._modoHumano) global._modoHumano = new Map();
+            
             for (const msg of mensagens) {
+                const remoteJidTemp = msg.key?.remoteJid || '';
+                const telefoneTemp = remoteJidTemp.replace('@s.whatsapp.net', '');
+                
+                // Se mensagem é DO OPERADOR (fromMe), ativar modo humano para esse cliente
+                if (msg.key?.fromMe && telefoneTemp && !remoteJidTemp.includes('@g.us')) {
+                    global._modoHumano.set(telefoneTemp, Date.now());
+                    console.log('[MODO-HUMANO] Operador respondeu para', telefoneTemp, '- Rebeca pausada por 2 min');
+                    continue;
+                }
+                
+                // Se é mensagem do cliente, verificar se está em modo humano
+                if (!msg.key?.fromMe && telefoneTemp) {
+                    const ultimaHumana = global._modoHumano.get(telefoneTemp);
+                    if (ultimaHumana && (Date.now() - ultimaHumana) < 120000) {
+                        console.log('[MODO-HUMANO] Rebeca pausada para', telefoneTemp, '- humano no controle');
+                        continue; // Não processa - humano está atendendo
+                    } else if (ultimaHumana) {
+                        // Passou 2 min - limpar e Rebeca volta
+                        global._modoHumano.delete(telefoneTemp);
+                        console.log('[MODO-HUMANO] Rebeca retomou controle de', telefoneTemp);
+                    }
+                }
+                
                 if (msg.key?.fromMe) continue;
                 
                 // Dedup por messageId
