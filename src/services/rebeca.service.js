@@ -600,6 +600,11 @@ const RebecaService = {
                 // CRIAR CORRIDA DIRETO - OBJETIVIDADE!
                 const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
                 
+                // Se cooldown ativo
+                if (corrida.cooldown) {
+                    return '⏳ Aguarde um momento...\n\nVocê finalizou uma corrida há pouco.\nPode pedir nova corrida em ' + Math.ceil(corrida.segundosRestantes / 60) + ' minuto(s).';
+                }
+                
                 // Se duplicada, avisar cliente
                 if (corrida.duplicada) {
                     return '⚠️ Você já tem uma corrida em andamento!\n\nDigite *CANCELAR* para cancelar ou aguarde o motorista.';
@@ -619,6 +624,11 @@ const RebecaService = {
             
             // Criar corrida e despachar
             const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
+            
+            // Se cooldown ativo
+            if (corrida.cooldown) {
+                return '⏳ Aguarde um momento...\n\nVocê finalizou uma corrida há pouco.\nPode pedir nova corrida em ' + Math.ceil(corrida.segundosRestantes / 60) + ' minuto(s).';
+            }
             
             // Se duplicada, avisar cliente
             if (corrida.duplicada) {
@@ -668,6 +678,11 @@ const RebecaService = {
             
             // Criar corrida e despachar DIRETO
             const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
+            
+            // Se cooldown ativo
+            if (corrida.cooldown) {
+                return '⏳ Aguarde um momento...\n\nVocê finalizou uma corrida há pouco.\nPode pedir nova corrida em ' + Math.ceil(corrida.segundosRestantes / 60) + ' minuto(s).';
+            }
             
             // Se duplicada, avisar cliente
             if (corrida.duplicada) {
