@@ -291,11 +291,21 @@ const RebecaService = {
                 faixa: { nome: 'chamada', multiplicador: 1 }
             };
             
-            // Pedir número/complemento ANTES de criar corrida
-            conversa.etapa = 'pedir_complemento_gps';
+            // CRIAR CORRIDA DIRETO - sem pedir referência
+            const corridaGps = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
+            
+            if (corridaGps.cooldown) {
+                return '⏳ Aguarde um momento...\n\nVocê finalizou uma corrida há pouco.\nPode pedir nova corrida em ' + Math.ceil(corridaGps.segundosRestantes / 60) + ' minuto(s).';
+            }
+            if (corridaGps.duplicada) {
+                return '⚠️ Você já tem uma corrida em andamento!\n\nDigite *CANCELAR* para cancelar ou aguarde o motorista.';
+            }
+            
+            conversa.etapa = 'aguardando_motorista';
+            conversa.dados.corridaId = corridaGps.id;
             conversas.set(telefone, conversa);
             
-            return `📍 ${conversa.dados.origem}\n\nQual o número ou ponto de referência?`;
+            return `📍 ${conversa.dados.origem}\n\n⏳ Buscando motorista...\n_CANCELAR se precisar_`;
         }
         // ========== TENTAR IA PRIMEIRO ==========
         if (configRebeca.usarIA && IAService.isAtivo() && conversa.etapa === 'inicio') {
@@ -651,9 +661,20 @@ const RebecaService = {
                 destino: null, distanciaKm: 0, tempoMinutos: 0, preco: 15,
                 faixa: { nome: 'padrao', multiplicador: 1 }
             };
-            conversa.etapa = 'pedir_referencia';
+            // CRIAR CORRIDA DIRETO - sem pedir referência
+            const corridaBairro = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
+            
+            if (corridaBairro.cooldown) {
+                return '⏳ Aguarde um momento...\n\nVocê finalizou uma corrida há pouco.\nPode pedir nova corrida em ' + Math.ceil(corridaBairro.segundosRestantes / 60) + ' minuto(s).';
+            }
+            if (corridaBairro.duplicada) {
+                return '⚠️ Você já tem uma corrida em andamento!\n\nDigite *CANCELAR* para cancelar ou aguarde o motorista.';
+            }
+            
+            conversa.etapa = 'aguardando_motorista';
+            conversa.dados.corridaId = corridaBairro.id;
             conversas.set(telefone, conversa);
-            return `📍 ${enderecoCompleto}\n\nReferência? (ou 0)`;
+            return `📍 ${enderecoCompleto}\n\n⏳ Buscando motorista...\n_CANCELAR se precisar_`;
         }
         // ========== REFERÊNCIA (NOVO FLUXO DIRETO) ==========
         else if (conversa.etapa === 'pedir_referencia') {
