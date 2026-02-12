@@ -39,67 +39,76 @@ router.get('/rastrear-page/:codigo', (req, res) => {
 });
 
 // API de rastreamento
-router.get('/rastrear/:codigo', (req, res) => {
-    const codigo = req.params.codigo;
-    
-    // Buscar corrida pelo código (últimos 8 caracteres do ID)
-    const corridas = CorridaService.listarTodas({});
-    const corrida = corridas.find(c => c.id.endsWith(codigo) || c.id.slice(-8) === codigo || c.id.slice(-6) === codigo);
-    
-    if (!corrida) {
-        return res.status(404).json({ error: 'Corrida não encontrada' });
-    }
-    
-    // Link expira quando corrida inicia, finaliza ou cancela
-    if (['em_andamento', 'finalizada', 'cancelada'].includes(corrida.status)) {
-        return res.json({ 
-            expirado: true, 
-            status: corrida.status,
-            mensagem: corrida.status === 'em_andamento' ? 'Corrida em andamento - rastreamento encerrado' :
-                      corrida.status === 'finalizada' ? 'Corrida finalizada - obrigado!' :
-                      'Corrida cancelada'
+router.get('/rastrear/:codigo', async (req, res) => {
+    try {
+        const codigo = req.params.codigo;
+        const { Corrida, Motorista } = require('../models');
+        
+        // Buscar corrida pelo código (últimos 6 caracteres do ID)
+        const corridas = await Corrida.find({ 
+            status: { $in: ['pendente', 'aceita', 'em_andamento', 'finalizada', 'cancelada'] } 
+        }).sort({ createdAt: -1 }).limit(100);
+        
+        const corrida = corridas.find(c => 
+            c._id.toString().endsWith(codigo) || 
+            c._id.toString().slice(-6) === codigo ||
+            c._id.toString().slice(-8) === codigo
+        );
+        
+        if (!corrida) {
+            return res.status(404).json({ error: 'Corrida não encontrada' });
+        }
+        
+        // Link expira quando corrida inicia, finaliza ou cancela
+        if (['em_andamento', 'finalizada', 'cancelada'].includes(corrida.status)) {
+            return res.json({ 
+                expirado: true, 
+                status: corrida.status,
+                mensagem: corrida.status === 'em_andamento' ? 'Corrida em andamento - rastreamento encerrado' :
+                          corrida.status === 'finalizada' ? 'Corrida finalizada - obrigado!' :
+                          'Corrida cancelada'
+            });
+        }
+        
+        let motorista = null;
+        let motoristaGPS = null;
+        
+        if (corrida.motoristaId) {
+            motorista = await Motorista.findById(corrida.motoristaId);
+            motoristaGPS = GPSIntegradoService.obterLocalizacao(corrida.motoristaId.toString());
+        }
+        
+        res.json({
+            corrida: {
+                id: corrida._id.toString(),
+                codigo: corrida._id.toString().slice(-6),
+                status: corrida.status,
+                origem: corrida.origem?.endereco || corrida.origem,
+                destino: corrida.destino?.endereco || corrida.destino,
+                origemLat: corrida.origem?.latitude,
+                origemLng: corrida.origem?.longitude,
+                precoEstimado: corrida.precoEstimado,
+                tempoEstimado: corrida.tempoEstimado,
+                distanciaKm: corrida.distanciaKm
+            },
+            motorista: motorista ? {
+                nome: motorista.nomeCompleto || motorista.nome,
+                veiculo: motorista.veiculo?.modelo || '',
+                cor: motorista.veiculo?.cor || '',
+                placa: motorista.veiculo?.placa || '',
+                avaliacao: motorista.avaliacao || 5,
+                foto: motorista.foto
+            } : null,
+            motoristaGPS: motoristaGPS ? {
+                latitude: motoristaGPS.latitude,
+                longitude: motoristaGPS.longitude,
+                atualizadoEm: motoristaGPS.atualizadoEm
+            } : null
         });
+    } catch (e) {
+        console.error('[RASTREAR] Erro:', e.message);
+        res.status(500).json({ error: 'Erro ao buscar corrida' });
     }
-    
-    let motorista = null;
-    let motoristaGPS = null;
-    
-    if (corrida.motoristaId) {
-        motorista = MotoristaService.buscar(corrida.motoristaId);
-        motoristaGPS = GPSIntegradoService.obterLocalizacao(corrida.motoristaId);
-    }
-    
-    // Incluir foto do motorista
-    const fotoMotorista = motorista?.foto || null;
-    
-    res.json({
-        corrida: {
-            id: corrida.id,
-            codigo: corrida.id.slice(-6),
-            status: corrida.status,
-            statusTexto: RebecaService.formatarStatus(corrida.status),
-            origem: corrida.origem,
-            destino: corrida.destino,
-            origemLat: corrida.origemLat || corrida.calculo?.origem?.latitude,
-            origemLng: corrida.origemLng || corrida.calculo?.origem?.longitude,
-            precoEstimado: corrida.precoEstimado,
-            tempoEstimado: corrida.tempoEstimado,
-            distanciaKm: corrida.distanciaKm
-        },
-        motorista: motorista ? {
-            nome: motorista.nomeCompleto || motorista.nome,
-            veiculo: motorista.veiculo?.modelo || motorista.veiculo || '',
-            cor: motorista.veiculo?.cor || '',
-            placa: motorista.veiculo?.placa || motorista.placa || '',
-            avaliacao: motorista.avaliacao || 5,
-            foto: motorista.foto
-        } : null,
-        motoristaGPS: motoristaGPS ? {
-            latitude: motoristaGPS.latitude,
-            longitude: motoristaGPS.longitude,
-            atualizadoEm: motoristaGPS.atualizadoEm
-        } : null
-    });
 });
 
 // ==================== NOTIFICAÇÕES ====================
