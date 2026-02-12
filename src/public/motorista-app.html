@@ -728,6 +728,9 @@ body { background: #f0f2f5 !important; color: #333 !important; }
             document.getElementById('loginSection').style.display = 'none';
             document.getElementById('appSection').style.display = 'block';
             atualizarStatusUI();
+            
+            // Solicitar permissão de notificação
+            solicitarPermissaoNotificacao();
             iniciarGPS();
             iniciarChecks();
             carregarDashboard();
@@ -1489,7 +1492,63 @@ body { background: #f0f2f5 !important; color: #333 !important; }
     if ("serviceWorker" in navigator) {
         navigator.serviceWorker.register("/sw.js");
     }
-    </script>
+        // ========== NOTIFICAÇÕES PUSH ==========
+        async function solicitarPermissaoNotificacao() {
+            if (!('Notification' in window)) {
+                console.log('[NOTIF] Navegador não suporta notificações');
+                return;
+            }
+            
+            if (Notification.permission === 'granted') {
+                console.log('[NOTIF] Permissão já concedida');
+                registrarPushSubscription();
+                return;
+            }
+            
+            if (Notification.permission === 'denied') {
+                console.log('[NOTIF] Permissão negada pelo usuário');
+                return;
+            }
+            
+            // Solicitar permissão
+            try {
+                const permission = await Notification.requestPermission();
+                if (permission === 'granted') {
+                    toast('🔔 Notificações ativadas!', 'success');
+                    registrarPushSubscription();
+                }
+            } catch (e) {
+                console.log('[NOTIF] Erro ao solicitar permissão:', e);
+            }
+        }
+        
+        async function registrarPushSubscription() {
+            try {
+                const registration = await navigator.serviceWorker.ready;
+                const subscription = await registration.pushManager.getSubscription();
+                
+                if (!subscription) {
+                    console.log('[NOTIF] Sem subscription ainda - aguardando');
+                }
+                
+                console.log('[NOTIF] Service Worker pronto para notificações');
+            } catch (e) {
+                console.log('[NOTIF] Erro ao registrar push:', e);
+            }
+        }
+        
+        // Função para mostrar notificação local (fallback)
+        function mostrarNotificacaoLocal(titulo, corpo) {
+            if (Notification.permission === 'granted') {
+                new Notification(titulo, {
+                    body: corpo,
+                    icon: '/icons/icon-192.png',
+                    vibrate: [200, 100, 200]
+                });
+            }
+        }
+
+        </script>
 
         <!-- Modal Adicionar Parada -->
         <div class="modal-overlay" id="modalParada">
