@@ -133,6 +133,49 @@ router.post('/aceitar', auth, async (req, res) => {
 });
 
 // Iniciar corrida
+
+// Motorista chegou no local - notificar cliente
+router.post('/cheguei', auth, async (req, res) => {
+    try {
+        const { corridaId } = req.body;
+        const { Corrida, InstanciaWhatsapp } = require('../models');
+        const EvolutionMultiService = require('../services/evolution-multi.service');
+        
+        const corrida = await Corrida.findById(corridaId);
+        if (!corrida) return res.json({ erro: 'Corrida não encontrada' });
+        
+        // Anti-spam: verificar se já notificou recentemente
+        if (!global._notificacoesCheguei) global._notificacoesCheguei = new Map();
+        const chave = corridaId + '_cheguei';
+        const ultimaNotif = global._notificacoesCheguei.get(chave);
+        
+        if (ultimaNotif && (Date.now() - ultimaNotif) < 60000) {
+            console.log('[CHEGUEI] Notificação bloqueada (anti-spam)');
+            return res.json({ sucesso: true, mensagem: 'Cliente já foi notificado' });
+        }
+        
+        global._notificacoesCheguei.set(chave, Date.now());
+        
+        // Atualizar status da corrida
+        corrida.status = 'aguardando_cliente';
+        corrida.motoristaChegouEm = new Date();
+        await corrida.save();
+        
+        // Notificar cliente via WhatsApp
+        const instancia = await InstanciaWhatsapp.findOne({ adminId: corrida.adminId, status: 'conectado' });
+        if (instancia && corrida.clienteTelefone) {
+            const msg = `🚗 *MOTORISTA CHEGOU!*\n\nSeu motorista *${req.motorista.nomeCompleto}* está te aguardando no local.\n\n📍 Dirija-se ao veículo:\n🚙 ${req.motorista.veiculo?.modelo || ''} ${req.motorista.veiculo?.cor || ''} - ${req.motorista.veiculo?.placa || ''}`;
+            await EvolutionMultiService.enviarMensagem(instancia._id, corrida.clienteTelefone, msg);
+        }
+        
+        console.log('[CHEGUEI] Motorista', req.motorista.nomeCompleto, 'chegou na corrida', corridaId);
+        res.json({ sucesso: true, mensagem: 'Cliente notificado!' });
+    } catch (e) {
+        console.error('[CHEGUEI] Erro:', e.message);
+        res.json({ erro: e.message });
+    }
+});
+
 router.post('/iniciar', auth, async (req, res) => {
     const { corridaId } = req.body;
     try {
