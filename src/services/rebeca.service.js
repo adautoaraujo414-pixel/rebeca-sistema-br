@@ -1321,14 +1321,9 @@ const RebecaService = {
                 // Despachar APENAS para o favorito primeiro
                 const resultadoFavorito = await DespachoService.despacharCorrida(corrida, [favorito.motorista], adminId);
                 
-                if (resultadoFavorito.sucesso && instanciaId) {
-                    const endOrigem = dados.calculo.origem?.endereco || dados.origem || 'Ver app';
-                    const refOrigem = dados.observacaoOrigem ? '\n📌 Ref: ' + dados.observacaoOrigem : '';
-                    const linkMaps = (dados.calculo.origem?.latitude && dados.calculo.origem?.longitude) ? '\n🗺️ maps.google.com/?q=' + dados.calculo.origem.latitude + ',' + dados.calculo.origem.longitude : '';
-                    const msgFavorito = `🚨 *CORRIDA DO SEU CLIENTE!*\n\n📍 ${endOrigem}${refOrigem}${linkMaps}\n\n💰 R$ ${dados.calculo.preco?.toFixed(2) || '15.00'}\n\n⭐ Este cliente já andou com você!\n✅ Digite ACEITAR`;
-                    
-                    await EvolutionMultiService.enviarMensagem(instanciaId, favorito.motorista.whatsapp, msgFavorito);
-                    console.log('[REBECA] Corrida enviada para motorista favorito:', favorito.motorista.nomeCompleto);
+                if (resultadoFavorito.sucesso) {
+                    // Motorista favorito recebe APENAS no painel/app (sem WhatsApp)
+                    console.log('[REBECA] Corrida despachada para motorista favorito (painel):', favorito.motorista.nomeCompleto);
                     
                     // Salvar que foi para favorito primeiro (timeout de 60s antes de broadcast)
                     corrida.favoritoPriorizado = true;
@@ -1352,39 +1347,18 @@ const RebecaService = {
                 // Despachar corrida (usa modo configurado: broadcast ou proximo)
                 const resultadoDespacho = await DespachoService.despacharCorrida(corrida, motoristasDisponiveis, adminId);
                 
-                if (resultadoDespacho.sucesso && instanciaId) {
-                    // Notificar motoristas via WhatsApp
-                    const endOrigem = dados.calculo.origem?.endereco || dados.origem || 'Ver app';
-                    const refOrigem = dados.observacaoOrigem ? '\n📌 Ref: ' + dados.observacaoOrigem : '';
-                    const linkMaps = (dados.calculo.origem?.latitude && dados.calculo.origem?.longitude) ? '\n🗺️ maps.google.com/?q=' + dados.calculo.origem.latitude + ',' + dados.calculo.origem.longitude : '';
-                    const msgCorrida = `🚨 *NOVA CORRIDA!*\n\n📍 ${endOrigem}${refOrigem}${linkMaps}\n\n💰 R$ ${dados.calculo.preco?.toFixed(2) || '15.00'}\n\n✅ Digite ACEITAR`;
-                    
-                    if (resultadoDespacho.modo === 'broadcast') {
-                        // Enviar para todos os motoristas
-                        for (const mot of motoristasDisponiveis) {
-                            if (mot.whatsapp) {
-                                await EvolutionMultiService.enviarMensagem(instanciaId, mot.whatsapp, msgCorrida);
-                                console.log('[REBECA] Corrida enviada para motorista:', mot.nomeCompleto || mot.nome);
-                            }
-                        }
-                    } else if (resultadoDespacho.modo === 'proximo' && resultadoDespacho.motorista) {
-                        // Enviar só pro mais próximo
-                        const mot = resultadoDespacho.motorista;
-                        if (mot.whatsapp) {
-                            await EvolutionMultiService.enviarMensagem(instanciaId, mot.whatsapp, msgCorrida);
-                            console.log('[REBECA] Corrida enviada para motorista mais proximo:', mot.nome);
-                        }
-                    }
+                if (resultadoDespacho.sucesso) {
+                    // Motoristas recebem APENAS no painel/app (sem WhatsApp)
+                    console.log('[REBECA] Corrida despachada no painel - Modo:', resultadoDespacho.modo, '- Motoristas:', motoristasDisponiveis.length);
                 }
                 
                 console.log('[REBECA] Despacho:', resultadoDespacho.modo, '- Motoristas:', motoristasDisponiveis.length);
                 
-                // Verificar se tem motorista EM CORRIDA mas próximo (próxima corrida)
+                // Verificar se tem motorista EM CORRIDA mas próximo (notifica no painel)
                 const motProximo = await DespachoService.verificarProximaCorrida(corrida, adminId);
-                if (motProximo && instanciaId) {
-                    const msgProxima = `🔔 *PRÓXIMA CORRIDA PERTO!*\n\n📍 ${dados.calculo.origem?.endereco || dados.origem}\n📏 ${motProximo.distanciaKm.toFixed(1)}km de você\n💰 R$ ${dados.calculo.preco?.toFixed(2) || '15.00'}\n\n✅ ACEITAR PROXIMA\n❌ RECUSAR PROXIMA`;
-                    await EvolutionMultiService.enviarMensagem(instanciaId, motProximo.whatsapp, msgProxima);
-                    console.log('[REBECA] Próxima corrida enviada para:', motProximo.nomeCompleto || motProximo.nome);
+                if (motProximo) {
+                    // Salvar próxima corrida para o motorista ver no painel
+                    console.log('[REBECA] Próxima corrida disponível no painel para:', motProximo.nomeCompleto || motProximo.nome);
                 }
             } else {
                 console.log('[REBECA] Nenhum motorista disponivel para admin:', adminId);
