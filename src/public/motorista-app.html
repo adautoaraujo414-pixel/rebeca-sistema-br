@@ -965,9 +965,28 @@ body { background: #f0f2f5 !important; color: #333 !important; }
                 }
             }, 1000);
 
-            // Som
+            // Som + Vibração + Push Notification
             if (somAtivo) {
                 try { document.getElementById('somNovaCorrida').play(); } catch(e) {}
+            }
+            
+            // Vibrar celular (padrão similar ao WhatsApp)
+            if ('vibrate' in navigator) {
+                navigator.vibrate([200, 100, 200, 100, 200, 100, 400]);
+            }
+            
+            // Push notification em segundo plano (sobrepor tela)
+            if (Notification.permission === 'granted') {
+                const notif = new Notification('🚗 NOVA CORRIDA!', {
+                    body: 'R$ ' + (corrida.precoEstimado || 0).toFixed(2) + ' - ' + (corrida.clienteNome || 'Cliente'),
+                    icon: '/icons/icon-192.png',
+                    badge: '/icons/icon-72.png',
+                    tag: 'nova-corrida-' + corrida._id,
+                    requireInteraction: true,
+                    vibrate: [200, 100, 200, 100, 200],
+                    renotify: true
+                });
+                notif.onclick = () => { window.focus(); notif.close(); };
             }
         }
 
