@@ -984,7 +984,23 @@ const RebecaService = {
                     if (duvida) {
                         conversa.etapa = 'aguardando_resposta_admin';
                         conversa.dados.duvidaId = duvida._id;
-                        resposta = 'Só um momento que não tenho essa informação, deixa eu verificar com meu supervisor e já te retorno!';
+                        // Verificar se pergunta sobre disponibilidade
+                        const perguntaDisponibilidade = msgOriginal.toLowerCase().match(/(tem carro|tem motorista|tem veiculo|tem veículo|disponivel|disponível|funcionando|aberto|atende)/);
+                        if (perguntaDisponibilidade) {
+                            try {
+                                const motoristasOnline = await MotoristaService.listarDisponiveis(conversa.adminId);
+                                if (motoristasOnline.length > 0) {
+                                    resposta = 'Sim! Temos ' + motoristasOnline.length + ' motorista(s) disponível(is) agora! 🚗\n\nMe manda sua localização 📍 que já chamo um pra você!';
+                                } else {
+                                    resposta = 'No momento nossos motoristas estão em corrida. Quer que eu te avise quando um ficar disponível? Responde *SIM* 😊';
+                                    conversa.etapa = 'oferecer_fila_espera';
+                                }
+                            } catch(e) {
+                                resposta = 'Sim, estamos funcionando! Me manda sua localização 📍';
+                            }
+                        } else {
+                            resposta = 'Oi! Como posso te ajudar? 🚗\n\nDigite *1* para pedir corrida ou me mande sua *localização* 📍';
+                        }
                     } else {
                         resposta = 'Posso te ajudar a pedir um carro! Me passa o endereço?';
                     }
@@ -1002,7 +1018,23 @@ const RebecaService = {
                     if (duvida) {
                         conversa.etapa = 'aguardando_resposta_admin';
                         conversa.dados.duvidaId = duvida._id;
-                        resposta = 'Só um momento que não tenho essa informação, deixa eu verificar com meu supervisor e já te retorno!';
+                        // Verificar se pergunta sobre disponibilidade
+                        const perguntaDisponibilidade = msgOriginal.toLowerCase().match(/(tem carro|tem motorista|tem veiculo|tem veículo|disponivel|disponível|funcionando|aberto|atende)/);
+                        if (perguntaDisponibilidade) {
+                            try {
+                                const motoristasOnline = await MotoristaService.listarDisponiveis(conversa.adminId);
+                                if (motoristasOnline.length > 0) {
+                                    resposta = 'Sim! Temos ' + motoristasOnline.length + ' motorista(s) disponível(is) agora! 🚗\n\nMe manda sua localização 📍 que já chamo um pra você!';
+                                } else {
+                                    resposta = 'No momento nossos motoristas estão em corrida. Quer que eu te avise quando um ficar disponível? Responde *SIM* 😊';
+                                    conversa.etapa = 'oferecer_fila_espera';
+                                }
+                            } catch(e) {
+                                resposta = 'Sim, estamos funcionando! Me manda sua localização 📍';
+                            }
+                        } else {
+                            resposta = 'Oi! Como posso te ajudar? 🚗\n\nDigite *1* para pedir corrida ou me mande sua *localização* 📍';
+                        }
                     } else {
                         resposta = 'Posso te ajudar a pedir um carro! Me passa o endereço?';
                     }
