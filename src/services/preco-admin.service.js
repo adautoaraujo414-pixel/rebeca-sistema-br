@@ -1,4 +1,5 @@
 const { Admin } = require('../models');
+const PrecoSimplesService = require('./preco-simples.service');
 
 // Configuração padrão (usada quando admin não tem config)
 const configPadrao = {
@@ -99,6 +100,24 @@ const PrecoAdminService = {
 
     // Calcular preço da corrida
     async calcularPreco(adminId, distanciaKm, tempoMinutos = 0) {
+        // PRIMEIRO: Tentar preço simples
+        const precoSimples = await PrecoSimplesService.calcularPreco(adminId);
+        if (precoSimples && precoSimples.periodo !== 'erro') {
+            // Se não retornou null (modo calculado), usar preço simples
+            if (precoSimples.preco) {
+                return {
+                    preco: precoSimples.preco,
+                    precoFinal: precoSimples.preco,
+                    distanciaKm,
+                    tempoMinutos,
+                    faixa: { nome: precoSimples.detalhes || precoSimples.periodo, multiplicador: 1 },
+                    modoPreco: 'simples',
+                    detalhes: precoSimples.motivo || `${precoSimples.tipoDia} - ${precoSimples.periodo}`
+                };
+            }
+        }
+        
+        // FALLBACK: Usar cálculo por km
         const config = await this.getConfig(adminId);
         const faixa = await this.getFaixaAtual(adminId);
         

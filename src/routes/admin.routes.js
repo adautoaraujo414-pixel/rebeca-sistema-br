@@ -31,3 +31,21 @@ router.delete('/fila-espera/:id', async (req, res) => {
 
 
 module.exports = router;
+
+// ========== PREÇOS SIMPLES ==========
+const PrecoSimplesService = require('../services/preco-simples.service');
+
+router.get('/precos-simples', authAdmin, async (req, res) => {
+    const config = await PrecoSimplesService.getConfig(req.adminId);
+    res.json(config);
+});
+
+router.post('/precos-simples', authAdmin, async (req, res) => {
+    const resultado = await PrecoSimplesService.salvarPrecos(req.adminId, req.body);
+    res.json(resultado);
+});
+
+router.get('/preco-atual', authAdmin, async (req, res) => {
+    const preco = await PrecoSimplesService.calcularPreco(req.adminId);
+    res.json(preco);
+});

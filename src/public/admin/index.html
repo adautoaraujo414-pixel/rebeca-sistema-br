@@ -310,68 +310,85 @@
 
             <!-- PREÇOS DINÂMICOS -->
             <div id="precos" class="page">
-                <h2 style="margin-bottom:20px;">💵 Preços Dinâmicos</h2>
+                <h2 style="margin-bottom:20px;">💵 Preços - Configuração Simples</h2>
                 
+                <!-- PREÇO FIXO (FESTA/EVENTO) -->
+                <div class="panel" style="border: 3px solid #9b59b6; background: linear-gradient(135deg, #f8f4fc, #fff);">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;">
+                        <h2 style="margin:0;">🎉 Preço Fixo (Festa/Evento)</h2>
+                        <label class="switch" style="margin:0;">
+                            <input type="checkbox" id="precoFixoAtivo" onchange="togglePrecoFixo()">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    <p style="color:#666;margin-bottom:15px;">Ative para usar um preço único para TODAS as corridas (carnaval, ano novo, festa na cidade, etc)</p>
+                    <div class="form-row" id="precoFixoConfig" style="display:none;">
+                        <div class="form-group"><label>💰 Valor Fixo (R$)</label><input type="number" id="precoFixoValor" step="0.50" value="25.00" style="font-size:1.5em;font-weight:bold;text-align:center;"></div>
+                        <div class="form-group"><label>📝 Motivo (opcional)</label><input type="text" id="precoFixoMotivo" placeholder="Ex: Carnaval 2025"></div>
+                    </div>
+                </div>
+
+                <!-- PREÇO ATUAL -->
                 <div class="cards">
-                    <div class="card green"><h3>Taxa Base</h3><div class="value">R$ <span id="precoTaxaBase">5.00</span></div></div>
-                    <div class="card blue"><h3>Preço/Km</h3><div class="value">R$ <span id="precoKmAtual">2.50</span></div></div>
-                    <div class="card orange"><h3>Mínimo</h3><div class="value">R$ <span id="precoMinimo">15.00</span></div></div>
-                    <div class="card purple"><h3>Faixa Atual</h3><div class="value" id="faixaAtualNome">Normal</div></div>
+                    <div class="card purple" style="flex:2;">
+                        <h3>💰 Preço Atual</h3>
+                        <div class="value" style="font-size:2em;" id="precoAtualValor">R$ 15,00</div>
+                        <small id="precoAtualInfo">Semana - Manhã</small>
+                    </div>
                 </div>
 
+                <!-- TABELA DE PREÇOS SIMPLES -->
                 <div class="panel">
-                    <h2>💰 Valores Base</h2>
-                    <div class="form-row">
-                        <div class="form-group"><label>Taxa Base (R$)</label><input type="number" id="taxaBase" step="0.01" value="5.00"></div>
-                        <div class="form-group"><label>Preço/Km (R$)</label><input type="number" id="precoKm" step="0.01" value="2.50"></div>
-                        <div class="form-group"><label>Taxa Mínima (R$)</label><input type="number" id="taxaMinima" step="0.01" value="15.00"></div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group"><label>Taxa Bandeira 2 (R$)</label><input type="number" id="taxaBandeira2" step="0.01" value="3.00"></div>
-                        <div class="form-group"><label>Preço/Minuto Parado (R$)</label><input type="number" id="precoMinuto" step="0.01" value="0.50"></div>
-                    </div>
-                    <button class="btn btn-success" onclick="salvarConfigPreco()">💾 Salvar Valores Base</button>
-                </div>
-
-                <div class="panel">
-                    <h2>⏰ Faixas de Horário por Dia</h2>
-                    <p style="color:#666;margin-bottom:15px;">Configure preços <strong>FIXOS</strong> ou com <strong>MULTIPLICADOR</strong> para cada horário.</p>
+                    <h2>📅 Preços por Dia e Horário</h2>
+                    <p style="color:#666;margin-bottom:15px;">Configure o valor da corrida para cada período do dia</p>
                     
-                    <div class="tabs" id="tabsDias">
-                        <button class="tab active" onclick="selecionarDia('segunda')">Seg</button>
-                        <button class="tab" onclick="selecionarDia('terca')">Ter</button>
-                        <button class="tab" onclick="selecionarDia('quarta')">Qua</button>
-                        <button class="tab" onclick="selecionarDia('quinta')">Qui</button>
-                        <button class="tab" onclick="selecionarDia('sexta')">Sex</button>
-                        <button class="tab" onclick="selecionarDia('sabado')">Sáb</button>
-                        <button class="tab" onclick="selecionarDia('domingo')">Dom</button>
-                    </div>
-
-                    <div style="margin-bottom:15px;">
-                        <button class="btn btn-success" onclick="abrirModalFaixa()">+ Nova Faixa</button>
-                        <button class="btn btn-purple" onclick="abrirModalCopiarFaixas()">📋 Copiar Faixas</button>
-                    </div>
-
-                    <div id="faixasHorario"></div>
+                    <table style="width:100%;border-collapse:collapse;">
+                        <thead>
+                            <tr style="background:#f0f0f0;">
+                                <th style="padding:12px;text-align:left;">Período</th>
+                                <th style="padding:12px;text-align:center;">🗓️ Seg-Sex</th>
+                                <th style="padding:12px;text-align:center;">📅 Sábado</th>
+                                <th style="padding:12px;text-align:center;">🌞 Domingo</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="padding:12px;"><strong>☀️ Manhã</strong><br><small style="color:#666;">06:00 - 12:00</small></td>
+                                <td style="padding:8px;text-align:center;"><input type="number" id="preco_semana_manha" step="0.50" value="15.00" style="width:80px;text-align:center;font-size:1.1em;"></td>
+                                <td style="padding:8px;text-align:center;"><input type="number" id="preco_sabado_manha" step="0.50" value="18.00" style="width:80px;text-align:center;font-size:1.1em;"></td>
+                                <td style="padding:8px;text-align:center;"><input type="number" id="preco_domingo_manha" step="0.50" value="18.00" style="width:80px;text-align:center;font-size:1.1em;"></td>
+                            </tr>
+                            <tr style="background:#f9f9f9;">
+                                <td style="padding:12px;"><strong>🌤️ Tarde</strong><br><small style="color:#666;">12:00 - 18:00</small></td>
+                                <td style="padding:8px;text-align:center;"><input type="number" id="preco_semana_tarde" step="0.50" value="15.00" style="width:80px;text-align:center;font-size:1.1em;"></td>
+                                <td style="padding:8px;text-align:center;"><input type="number" id="preco_sabado_tarde" step="0.50" value="18.00" style="width:80px;text-align:center;font-size:1.1em;"></td>
+                                <td style="padding:8px;text-align:center;"><input type="number" id="preco_domingo_tarde" step="0.50" value="18.00" style="width:80px;text-align:center;font-size:1.1em;"></td>
+                            </tr>
+                            <tr>
+                                <td style="padding:12px;"><strong>🌙 Noite</strong><br><small style="color:#666;">18:00 - 00:00</small></td>
+                                <td style="padding:8px;text-align:center;"><input type="number" id="preco_semana_noite" step="0.50" value="18.00" style="width:80px;text-align:center;font-size:1.1em;"></td>
+                                <td style="padding:8px;text-align:center;"><input type="number" id="preco_sabado_noite" step="0.50" value="22.00" style="width:80px;text-align:center;font-size:1.1em;"></td>
+                                <td style="padding:8px;text-align:center;"><input type="number" id="preco_domingo_noite" step="0.50" value="20.00" style="width:80px;text-align:center;font-size:1.1em;"></td>
+                            </tr>
+                            <tr style="background:#f9f9f9;">
+                                <td style="padding:12px;"><strong>🌃 Madrugada</strong><br><small style="color:#666;">00:00 - 06:00</small></td>
+                                <td style="padding:8px;text-align:center;"><input type="number" id="preco_semana_madrugada" step="0.50" value="20.00" style="width:80px;text-align:center;font-size:1.1em;"></td>
+                                <td style="padding:8px;text-align:center;"><input type="number" id="preco_sabado_madrugada" step="0.50" value="25.00" style="width:80px;text-align:center;font-size:1.1em;"></td>
+                                <td style="padding:8px;text-align:center;"><input type="number" id="preco_domingo_madrugada" step="0.50" value="25.00" style="width:80px;text-align:center;font-size:1.1em;"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <button class="btn btn-success" onclick="salvarPrecosSimples()" style="margin-top:20px;width:100%;padding:15px;font-size:1.1em;">💾 Salvar Preços</button>
                 </div>
 
-                <div class="panel">
-                    <h2>🧮 Simulador de Preço</h2>
-                    <div class="form-row">
-                        <div class="form-group"><label>Distância (km)</label><input type="number" id="simularKm" value="5" step="0.1"></div>
-                        <div class="form-group"><label>Dia</label><select id="simularDia"><option value="segunda">Segunda</option><option value="terca">Terça</option><option value="quarta">Quarta</option><option value="quinta">Quinta</option><option value="sexta">Sexta</option><option value="sabado">Sábado</option><option value="domingo">Domingo</option></select></div>
-                    </div>
-                    <button class="btn btn-primary" onclick="simularPrecos()">🧮 Simular Todas Faixas</button>
-                    <div id="resultadoSimulacao" style="margin-top:15px;"></div>
-                </div>
-
+                <!-- VIAGENS INTERMUNICIPAIS -->
                 <div class="panel">
                     <h2>🚗 Viagens Intermunicipais</h2>
-                    <p style="color:#666;margin-bottom:15px;">Preços fixos para viagens entre cidades diferentes.</p>
+                    <p style="color:#666;margin-bottom:15px;">Preços fixos para viagens entre cidades</p>
                     <button class="btn btn-success" onclick="abrirModalIntermunicipal()" style="margin-bottom:15px;">+ Nova Rota</button>
-                    <table><thead><tr><th>Origem</th><th>Destino</th><th>Distância</th><th>Preço Fixo</th><th>Ações</th></tr></thead><tbody id="intermunicipaisTable"></tbody></table>
+                    <table><thead><tr><th>Origem</th><th>Destino</th><th>Preço Fixo</th><th>Ações</th></tr></thead><tbody id="intermunicipaisTable"></tbody></table>
                 </div>
-
             </div>
 
             <!-- RANKING -->
@@ -1212,3 +1229,108 @@ async function testarAnaliseIA() {
     });
     </script>
     <div class="modal" id="modalIntermunicipal"><div class="modal-content"><div class="modal-header"><h3>🚗 Nova Rota Intermunicipal</h3><button class="modal-close" onclick="fecharModal('modalIntermunicipal')">&times;</button></div><form id="formIntermunicipal"><div class="form-group"><label>Cidade Origem *</label><input type="text" id="intOrigem" placeholder="Ex: São Paulo - SP" required></div><div class="form-group"><label>Cidade Destino *</label><input type="text" id="intDestino" placeholder="Ex: Campinas - SP" required></div><div class="form-row"><div class="form-group"><label>Distância (km)</label><input type="number" id="intDistancia" step="0.1"></div><div class="form-group"><label>Preço Fixo (R$) *</label><input type="number" id="intPreco" step="0.01" required></div></div><div class="form-group"><label>Tempo Estimado (min)</label><input type="number" id="intTempo"></div><button type="submit" class="btn btn-success" style="width:100%;">💾 Salvar Rota</button></form></div></div>
+<script>
+// ========== PREÇOS SIMPLES ==========
+async function carregarPrecosSimples() {
+    try {
+        const res = await fetch('/api/admin/precos-simples', {
+            headers: { 'Authorization': localStorage.getItem('adminToken') }
+        });
+        const config = await res.json();
+        
+        // Preço fixo
+        document.getElementById('precoFixoAtivo').checked = config.precoFixo?.ativo || false;
+        document.getElementById('precoFixoValor').value = config.precoFixo?.valor || 25;
+        document.getElementById('precoFixoMotivo').value = config.precoFixo?.motivo || '';
+        togglePrecoFixo();
+        
+        // Preços por dia/período
+        const p = config.precosSimples || {};
+        document.getElementById('preco_semana_manha').value = p.semana?.manha || 15;
+        document.getElementById('preco_semana_tarde').value = p.semana?.tarde || 15;
+        document.getElementById('preco_semana_noite').value = p.semana?.noite || 18;
+        document.getElementById('preco_semana_madrugada').value = p.semana?.madrugada || 20;
+        document.getElementById('preco_sabado_manha').value = p.sabado?.manha || 18;
+        document.getElementById('preco_sabado_tarde').value = p.sabado?.tarde || 18;
+        document.getElementById('preco_sabado_noite').value = p.sabado?.noite || 22;
+        document.getElementById('preco_sabado_madrugada').value = p.sabado?.madrugada || 25;
+        document.getElementById('preco_domingo_manha').value = p.domingo?.manha || 18;
+        document.getElementById('preco_domingo_tarde').value = p.domingo?.tarde || 18;
+        document.getElementById('preco_domingo_noite').value = p.domingo?.noite || 20;
+        document.getElementById('preco_domingo_madrugada').value = p.domingo?.madrugada || 25;
+        
+        // Carregar preço atual
+        carregarPrecoAtual();
+    } catch (e) { console.error('Erro carregar preços:', e); }
+}
+
+async function carregarPrecoAtual() {
+    try {
+        const res = await fetch('/api/admin/preco-atual', {
+            headers: { 'Authorization': localStorage.getItem('adminToken') }
+        });
+        const preco = await res.json();
+        document.getElementById('precoAtualValor').textContent = 'R$ ' + (preco.preco || 15).toFixed(2).replace('.', ',');
+        document.getElementById('precoAtualInfo').textContent = preco.detalhes || (preco.tipoDia + ' - ' + preco.periodo);
+    } catch (e) {}
+}
+
+function togglePrecoFixo() {
+    const ativo = document.getElementById('precoFixoAtivo').checked;
+    document.getElementById('precoFixoConfig').style.display = ativo ? 'flex' : 'none';
+}
+
+async function salvarPrecosSimples() {
+    const dados = {
+        precoFixo: {
+            ativo: document.getElementById('precoFixoAtivo').checked,
+            valor: parseFloat(document.getElementById('precoFixoValor').value) || 25,
+            motivo: document.getElementById('precoFixoMotivo').value
+        },
+        precosSimples: {
+            semana: {
+                manha: parseFloat(document.getElementById('preco_semana_manha').value) || 15,
+                tarde: parseFloat(document.getElementById('preco_semana_tarde').value) || 15,
+                noite: parseFloat(document.getElementById('preco_semana_noite').value) || 18,
+                madrugada: parseFloat(document.getElementById('preco_semana_madrugada').value) || 20
+            },
+            sabado: {
+                manha: parseFloat(document.getElementById('preco_sabado_manha').value) || 18,
+                tarde: parseFloat(document.getElementById('preco_sabado_tarde').value) || 18,
+                noite: parseFloat(document.getElementById('preco_sabado_noite').value) || 22,
+                madrugada: parseFloat(document.getElementById('preco_sabado_madrugada').value) || 25
+            },
+            domingo: {
+                manha: parseFloat(document.getElementById('preco_domingo_manha').value) || 18,
+                tarde: parseFloat(document.getElementById('preco_domingo_tarde').value) || 18,
+                noite: parseFloat(document.getElementById('preco_domingo_noite').value) || 20,
+                madrugada: parseFloat(document.getElementById('preco_domingo_madrugada').value) || 25
+            }
+        },
+        modoPreco: 'simples'
+    };
+    
+    try {
+        const res = await fetch('/api/admin/precos-simples', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': localStorage.getItem('adminToken') },
+            body: JSON.stringify(dados)
+        });
+        const result = await res.json();
+        if (result.sucesso) {
+            toast('✅ Preços salvos com sucesso!', 'success');
+            carregarPrecoAtual();
+        } else {
+            toast('Erro ao salvar: ' + result.erro, 'error');
+        }
+    } catch (e) {
+        toast('Erro de conexão', 'error');
+    }
+}
+
+// Carregar quando abrir página de preços
+const menuPrecos = document.querySelector('[data-page="precos"]');
+if (menuPrecos) {
+    menuPrecos.addEventListener('click', () => setTimeout(carregarPrecosSimples, 100));
+}
+</script>

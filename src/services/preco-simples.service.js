@@ -1,0 +1,119 @@
+const { Admin } = require('../models');
+
+const PrecoSimplesService = {
+    // Obter período do dia
+    getPeriodo(hora) {
+        if (hora >= 6 && hora < 12) return 'manha';
+        if (hora >= 12 && hora < 18) return 'tarde';
+        if (hora >= 18 && hora < 24) return 'noite';
+        return 'madrugada'; // 00:00 - 06:00
+    },
+
+    // Obter tipo do dia
+    getTipoDia(diaSemana) {
+        if (diaSemana === 0) return 'domingo';
+        if (diaSemana === 6) return 'sabado';
+        return 'semana';
+    },
+
+    // Calcular preço simples
+    async calcularPreco(adminId) {
+        try {
+            const admin = await Admin.findById(adminId);
+            if (!admin) return { preco: 15.00, periodo: 'padrao', tipoDia: 'semana' };
+
+            // 1. Se preço fixo está ativo (festa/evento)
+            if (admin.precoFixo?.ativo) {
+                return {
+                    preco: admin.precoFixo.valor,
+                    periodo: 'fixo',
+                    tipoDia: 'evento',
+                    motivo: admin.precoFixo.motivo || 'Preço especial'
+                };
+            }
+
+            // 2. Se modo é calculado, usar sistema antigo
+            if (admin.modoPreco === 'calculado') {
+                return null; // Sinaliza para usar o cálculo por km
+            }
+
+            // 3. Usar preço simples por dia/período
+            const agora = new Date();
+            const hora = agora.getHours();
+            const diaSemana = agora.getDay();
+            
+            const periodo = this.getPeriodo(hora);
+            const tipoDia = this.getTipoDia(diaSemana);
+
+            // Buscar preço configurado ou usar padrão
+            const precos = admin.precosSimples || {
+                semana: { manha: 15, tarde: 15, noite: 18, madrugada: 20 },
+                sabado: { manha: 18, tarde: 18, noite: 22, madrugada: 25 },
+                domingo: { manha: 18, tarde: 18, noite: 20, madrugada: 25 }
+            };
+
+            const preco = precos[tipoDia]?.[periodo] || 15.00;
+
+            return {
+                preco,
+                periodo,
+                tipoDia,
+                horaAtual: hora,
+                detalhes: `${tipoDia} - ${periodo}`
+            };
+        } catch (e) {
+            console.error('[PRECO-SIMPLES] Erro:', e.message);
+            return { preco: 15.00, periodo: 'erro', tipoDia: 'padrao' };
+        }
+    },
+
+    // Salvar configuração de preços simples
+    async salvarPrecos(adminId, dados) {
+        try {
+            const update = {};
+            
+            if (dados.precosSimples) {
+                update.precosSimples = dados.precosSimples;
+            }
+            if (dados.precoFixo !== undefined) {
+                update.precoFixo = dados.precoFixo;
+            }
+            if (dados.modoPreco) {
+                update.modoPreco = dados.modoPreco;
+            }
+
+            await Admin.findByIdAndUpdate(adminId, update);
+            return { sucesso: true };
+        } catch (e) {
+            return { sucesso: false, erro: e.message };
+        }
+    },
+
+    // Obter configuração atual
+    async getConfig(adminId) {
+        try {
+            const admin = await Admin.findById(adminId);
+            return {
+                modoPreco: admin?.modoPreco || 'simples',
+                precoFixo: admin?.precoFixo || { ativo: false, valor: 15 },
+                precosSimples: admin?.precosSimples || {
+                    semana: { manha: 15, tarde: 15, noite: 18, madrugada: 20 },
+                    sabado: { manha: 18, tarde: 18, noite: 22, madrugada: 25 },
+                    domingo: { manha: 18, tarde: 18, noite: 20, madrugada: 25 }
+                }
+            };
+        } catch (e) {
+            return {
+                modoPreco: 'simples',
+                precoFixo: { ativo: false, valor: 15 },
+                precosSimples: {
+                    semana: { manha: 15, tarde: 15, noite: 18, madrugada: 20 },
+                    sabado: { manha: 18, tarde: 18, noite: 22, madrugada: 25 },
+                    domingo: { manha: 18, tarde: 18, noite: 20, madrugada: 25 }
+                }
+            };
+        }
+    }
+};
+
+module.exports = PrecoSimplesService;

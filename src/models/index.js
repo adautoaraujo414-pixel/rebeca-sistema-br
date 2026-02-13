@@ -192,6 +192,38 @@ const AdminSchema = new mongoose.Schema({
         tempoAceite: { type: Number, default: 30 },
         tentativasMax: { type: Number, default: 3 }
     },
+    // ========== PREÇO FIXO (FESTA/EVENTO) ==========
+    precoFixo: {
+        ativo: { type: Boolean, default: false },
+        valor: { type: Number, default: 15.00 },
+        motivo: String // Ex: "Carnaval", "Ano Novo"
+    },
+    // ========== PREÇOS SIMPLIFICADOS POR DIA ==========
+    precosSimples: {
+        // Segunda a Sexta
+        semana: {
+            manha: { type: Number, default: 15.00 },      // 06:00 - 12:00
+            tarde: { type: Number, default: 15.00 },      // 12:00 - 18:00
+            noite: { type: Number, default: 18.00 },      // 18:00 - 00:00
+            madrugada: { type: Number, default: 20.00 }   // 00:00 - 06:00
+        },
+        // Sábado
+        sabado: {
+            manha: { type: Number, default: 18.00 },
+            tarde: { type: Number, default: 18.00 },
+            noite: { type: Number, default: 22.00 },
+            madrugada: { type: Number, default: 25.00 }
+        },
+        // Domingo
+        domingo: {
+            manha: { type: Number, default: 18.00 },
+            tarde: { type: Number, default: 18.00 },
+            noite: { type: Number, default: 20.00 },
+            madrugada: { type: Number, default: 25.00 }
+        }
+    },
+    // ========== USAR PREÇO SIMPLES OU CALCULADO ==========
+    modoPreco: { type: String, enum: ['simples', 'calculado'], default: 'simples' },
     // ========== FAIXAS DE PREÇO PERSONALIZADAS ==========
     faixasPreco: [{
         diaSemana: String,
