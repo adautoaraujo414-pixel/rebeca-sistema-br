@@ -8,6 +8,7 @@ const MotoristaService = require('./motorista.service');
 const DespachoService = require('./despacho.service');
 const EvolutionMultiService = require('./evolution-multi.service');
 const IAService = require('./ia.service');
+const OpenAIRebecaService = require('./openai-rebeca.service');
 
 const conversas = new Map();
 const ultimasRespostas = new Map(); // Anti-repeticao
@@ -307,7 +308,48 @@ const RebecaService = {
             
             return `📍 ${conversa.dados.origem}\n\n⏳ Buscando motorista...\n_CANCELAR se precisar_`;
         }
-        // ========== TENTAR IA PRIMEIRO ==========
+        // ========== TENTAR OPENAI PRIMEIRO ==========
+        if (conversa.etapa === 'inicio') {
+            // Tentar OpenAI para classificar mensagem
+            if (OpenAIRebecaService.isAtivo()) {
+                try {
+                    let nomeEmpresa = '';
+                    if (conversa.adminId) {
+                        const { Admin } = require('../models');
+                        const admin = await Admin.findById(conversa.adminId);
+                        nomeEmpresa = admin?.empresa || admin?.nome || '';
+                    }
+                    
+                    const resultadoGPT = await OpenAIRebecaService.classificarMensagem(msgOriginal, { nome, nomeEmpresa });
+                    
+                    if (resultadoGPT && resultadoGPT.resposta) {
+                        console.log('[OPENAI] Intenção:', resultadoGPT.intencao, '| Resposta:', resultadoGPT.resposta);
+                        
+                        // Se é saudação ou outro, retorna resposta da IA
+                        if (['SAUDACAO', 'AGRADECIMENTO', 'INFORMACAO', 'OUTRO'].includes(resultadoGPT.intencao)) {
+                            conversas.set(telefone, conversa);
+                            return resultadoGPT.resposta;
+                        }
+                        
+                        // Se quer corrida, continua fluxo normal
+                        if (resultadoGPT.intencao === 'SOLICITAR_CORRIDA') {
+                            conversa.etapa = 'pedir_origem';
+                            conversas.set(telefone, conversa);
+                            return resultadoGPT.resposta + '\n\n📍 Me manda sua localização ou o endereço!';
+                        }
+                        
+                        // Se pergunta preço
+                        if (resultadoGPT.intencao === 'PERGUNTAR_PRECO') {
+                            return await RebecaService.enviarTabelaPrecos();
+                        }
+                    }
+                } catch (e) {
+                    console.log('[OPENAI] Erro:', e.message);
+                }
+            }
+        }
+        
+        // ========== FALLBACK: IA CLAUDE ==========
         if (configRebeca.usarIA && IAService.isAtivo() && conversa.etapa === 'inicio') {
             // Buscar dados da empresa do admin
             let nomeEmpresa = '', telefoneEmpresa = '';
