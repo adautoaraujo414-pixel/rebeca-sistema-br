@@ -120,7 +120,7 @@ const RebecaService = {
         
         if (!temNumero) {
             return {
-                valido: true, precisao: 'sem_numero',
+                valido: true, precisao: 'sem_numero', semNumero: true,
                 endereco: resultado.endereco,
                 latitude: resultado.latitude,
                 longitude: resultado.longitude,
@@ -683,6 +683,27 @@ const RebecaService = {
             return `📍 ${conversa.dados.origem}\n📌 ${msgOriginal}\n\n⏳ Buscando motorista...\n_CANCELAR se precisar_`;
         }
         // ========== PEDIR BAIRRO ==========
+        else if (conversa.etapa === 'pedir_numero_origem') {
+            // Cliente mandou endereço sem número, pedimos o número
+            const numero = msgOriginal.trim();
+            if (numero && (numero.match(/\d+/) || numero.toLowerCase() === 'sn' || numero.toLowerCase() === 's/n')) {
+                const enderecoCompleto = conversa.dados.origemTexto + ', ' + numero;
+                const validacao = await RebecaService.validarEndereco(enderecoCompleto);
+                
+                if (validacao.valido) {
+                    conversa.dados.origem = validacao.endereco;
+                    conversa.dados.origemValidada = validacao;
+                    conversa.etapa = 'pedir_referencia';
+                    resposta = '📍 ' + validacao.endereco + '\n\nReferência? (ou *0* se não tiver)';
+                } else {
+                    conversa.dados.origem = enderecoCompleto;
+                    conversa.etapa = 'pedir_bairro_origem';
+                    resposta = '📍 Qual o *bairro*?';
+                }
+            } else {
+                resposta = '🔢 Por favor, informe o *número* da casa/prédio (ou *SN* se não tiver):';
+            }
+        }
         else if (conversa.etapa === 'pedir_bairro_origem') {
             // VALIDAR: ignorar expressões de confirmação/comandos
             const expressoesIgnorar = ['maravilha','beleza','show','legal','perfeito','otimo','ótimo','certo','entendi','isso','ok','sim','blz','vlw','valeu','brigado','brigada','obrigado','obrigada','ta','tá','vamos','bora','pode ser','isso mesmo','a maravilha','top','dahora','massa','nice','maneiro'];
