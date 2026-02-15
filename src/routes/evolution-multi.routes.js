@@ -4,6 +4,7 @@ const router = express.Router();
 const EvolutionMultiService = require('../services/evolution-multi.service');
 const { InstanciaWhatsapp, Motorista, Cliente, Corrida } = require('../models');
 const RebecaService = require('../services/rebeca.service');
+const OpenAIRebecaService = require('../services/openai-rebeca.service');
 
 router.post('/instancia', async (req, res) => {
     const { adminId, nomeEmpresa } = req.body;
