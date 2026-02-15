@@ -14,91 +14,130 @@ const OpenAIRebecaService = {
             return null;
         }
 
-        // Verificar se pergunta sobre disponibilidade ANTES de chamar IA
-        const msgLower = mensagem.toLowerCase();
-        if (msgLower.match(/(tem carro|tem motorista|tem veiculo|tem veículo|disponivel|disponível|ta funcionando|tá funcionando|vocês atendem|voces atendem|aberto agora)/)) {
-            try {
-                const motoristas = await MotoristaService.listarDisponiveis(contexto.adminId);
-                if (motoristas.length > 0) {
-                    return {
-                        intencao: 'DISPONIBILIDADE',
-                        resposta: `Sim! Temos ${motoristas.length} motorista${motoristas.length > 1 ? 's' : ''} disponível agora! 🚗\n\nMe manda sua localização 📍 que já chamo um pra você!`,
-                        usarIA: true,
-                        confianca: 1
-                    };
-                } else {
-                    return {
-                        intencao: 'DISPONIBILIDADE',
-                        resposta: 'No momento nossos motoristas estão em corrida. Quer que eu te avise quando um ficar disponível? Responde *SIM* 😊',
-                        usarIA: true,
-                        confianca: 1,
-                        oferecerFila: true
-                    };
-                }
-            } catch(e) {
-                console.log('[OPENAI] Erro ao buscar motoristas:', e.message);
-            }
-        }
+        const nomeEmpresa = contexto.nomeEmpresa || 'Central de Corridas';
+        const nomeCliente = contexto.nome || 'Cliente';
 
-        const prompt = `Você é Rebeca, uma secretária virtual de central de corridas.
-Você é 100% HUMANA, educada, simpática e objetiva.
-Nunca pareça um robô. Converse naturalmente como uma pessoa real.
+        const prompt = `Você é Rebeca, assistente virtual de corridas por WhatsApp.
+Você trabalha para ${nomeEmpresa}.
+Cliente atual: ${nomeCliente}
 
-REGRAS:
-1) Respostas CURTAS (máximo 2 linhas)
-2) Use emoji com moderação (1 ou 2 no máximo)
-3) Seja natural e amigável
-4) Se for saudação, responda naturalmente sem pedir endereço ainda
+Seu papel é:
+1) Identificar a intenção real do cliente.
+2) Detectar se ele está enviando endereço.
+3) Identificar se o endereço tem número.
+4) Identificar se falta bairro.
+5) Reconhecer se é cliente recorrente pelo contexto.
+6) Responder de forma humana, natural e objetiva.
+7) Nunca escrever textos longos.
+8) Nunca parecer robótica.
+9) Nunca falar que é IA.
+10) Usar no máximo 2 emojis.
 
-EXEMPLOS DE RESPOSTAS NATURAIS:
-- "Oi" → "Oi! Tudo bem? 😊"
-- "Oi tudo bem" → "Tudo ótimo! E você?"
-- "Tudo bem e você?" → "Estou bem também, obrigada! Em que posso ajudar?"
-- "Bom dia" → "Bom dia! Tudo bem?"
-- "Quero um carro" → "Claro! Me manda sua localização 📍"
-- "Obrigado" → "Por nada! Sempre que precisar 🚗"
-
-Nome do cliente: ${contexto.nome || 'Cliente'}
-Empresa: ${contexto.nomeEmpresa || 'Central de Corridas'}
-
-Classifique a intenção:
+---
+CLASSIFIQUE EM UMA DAS INTENÇÕES:
 - SAUDACAO
 - SOLICITAR_CORRIDA
+- INFORMAR_ENDERECO_COMPLETO
+- INFORMAR_ENDERECO_SEM_NUMERO
+- INFORMAR_ENDERECO_SEM_BAIRRO
 - PERGUNTAR_PRECO
-- AGRADECIMENTO
 - INFORMACAO
+- VERIFICAR_DISPONIBILIDADE
+- RECLAMACAO
+- CLIENTE_RECORRENTE
+- AGRADECIMENTO
+- CANCELAMENTO
 - OUTRO
 
-Mensagem: "${mensagem}"
+---
+REGRAS IMPORTANTES:
+SE mensagem contiver rua/avenida + número → INFORMAR_ENDERECO_COMPLETO
+SE contiver rua mas NÃO tiver número → INFORMAR_ENDERECO_SEM_NUMERO
+SE tiver número mas não mencionar bairro e parecer incompleto → INFORMAR_ENDERECO_SEM_BAIRRO
+SE cliente disser "tem carro?", "está funcionando?" → VERIFICAR_DISPONIBILIDADE
+SE cliente já enviou endereço antes no contexto → marcar como CLIENTE_RECORRENTE
 
-Retorne APENAS JSON:
-{"intencao": "", "resposta": ""}`;
+---
+TOM DE VOZ:
+- Amigável
+- Comercial leve
+- Confiante
+- Direto
+
+---
+EXEMPLOS DE RESPOSTA:
+SAUDACAO: "Oi 😊 Vai precisar de carro agora?"
+SOLICITAR_CORRIDA: "Me manda sua localização que já vejo um carro pra você 🚗"
+INFORMAR_ENDERECO_SEM_NUMERO: "Qual o número, por favor? 😊"
+INFORMAR_ENDERECO_SEM_BAIRRO: "Qual o bairro pra eu confirmar certinho?"
+VERIFICAR_DISPONIBILIDADE: "Estamos sim 😊 Me manda sua localização que já vejo o mais próximo."
+RECLAMACAO: "Poxa, me conta o que aconteceu pra eu verificar pra você."
+
+---
+Mensagem do cliente: "${mensagem}"
+
+FORMATO DE RESPOSTA OBRIGATÓRIO:
+Retorne APENAS JSON válido:
+{
+  "intencao": "",
+  "tem_endereco": true ou false,
+  "tem_numero": true ou false,
+  "tem_bairro": true ou false,
+  "cliente_recorrente": true ou false,
+  "resposta": ""
+}
+Nunca escreva nada fora do JSON.`;
 
         try {
             const response = await axios.post('https://api.openai.com/v1/chat/completions', {
                 model: 'gpt-3.5-turbo',
                 messages: [{ role: 'user', content: prompt }],
-                max_tokens: 100,
-                temperature: 0.8
+                max_tokens: 200,
+                temperature: 0.7
             }, {
                 headers: {
                     'Authorization': `Bearer ${this.apiKey}`,
                     'Content-Type': 'application/json'
                 },
-                timeout: 10000
+                timeout: 15000
             });
 
             const texto = response.data.choices[0]?.message?.content?.trim();
-            console.log('[OPENAI] Resposta:', texto);
+            console.log('[OPENAI] Resposta bruta:', texto);
 
             const jsonLimpo = texto.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
             const resultado = JSON.parse(jsonLimpo);
             
+            console.log('[OPENAI] Intenção:', resultado.intencao);
+
+            // Se é verificar disponibilidade, consultar motoristas
+            if (resultado.intencao === 'VERIFICAR_DISPONIBILIDADE') {
+                try {
+                    const motoristas = await MotoristaService.listarDisponiveis(contexto.adminId);
+                    if (motoristas.length > 0) {
+                        resultado.resposta = `Temos ${motoristas.length} motorista${motoristas.length > 1 ? 's' : ''} disponível agora! 😊 Me manda sua localização que já chamo um pra você 🚗`;
+                        resultado.motoristasDisponiveis = motoristas.length;
+                    } else {
+                        resultado.resposta = 'No momento nossos motoristas estão em corrida. Quer que eu te avise quando um ficar disponível? 😊';
+                        resultado.motoristasDisponiveis = 0;
+                        resultado.oferecerFila = true;
+                    }
+                } catch(e) {
+                    console.log('[OPENAI] Erro ao buscar motoristas:', e.message);
+                }
+            }
+
             return {
                 intencao: resultado.intencao,
                 resposta: resultado.resposta,
+                temEndereco: resultado.tem_endereco,
+                temNumero: resultado.tem_numero,
+                temBairro: resultado.tem_bairro,
+                clienteRecorrente: resultado.cliente_recorrente,
+                motoristasDisponiveis: resultado.motoristasDisponiveis,
+                oferecerFila: resultado.oferecerFila,
                 usarIA: true,
-                confianca: 0.9
+                confianca: 0.95
             };
         } catch (e) {
             console.error('[OPENAI] Erro:', e.message);

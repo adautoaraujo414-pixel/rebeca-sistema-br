@@ -323,24 +323,69 @@ const RebecaService = {
                     const resultadoGPT = await OpenAIRebecaService.classificarMensagem(msgOriginal, { nome, nomeEmpresa });
                     
                     if (resultadoGPT && resultadoGPT.resposta) {
-                        console.log('[OPENAI] Intenção:', resultadoGPT.intencao, '| Resposta:', resultadoGPT.resposta);
+                        console.log('[OPENAI] Intenção:', resultadoGPT.intencao);
                         
-                        // Se é saudação ou outro, retorna resposta da IA
+                        // Saudação, agradecimento, outro
                         if (['SAUDACAO', 'AGRADECIMENTO', 'INFORMACAO', 'OUTRO'].includes(resultadoGPT.intencao)) {
                             conversas.set(telefone, conversa);
                             return resultadoGPT.resposta;
                         }
                         
-                        // Se quer corrida, continua fluxo normal
+                        // Verificar disponibilidade - já consultou motoristas
+                        if (resultadoGPT.intencao === 'VERIFICAR_DISPONIBILIDADE') {
+                            if (resultadoGPT.oferecerFila) {
+                                conversa.etapa = 'oferecer_fila_espera';
+                            }
+                            conversas.set(telefone, conversa);
+                            return resultadoGPT.resposta;
+                        }
+                        
+                        // Solicitar corrida
                         if (resultadoGPT.intencao === 'SOLICITAR_CORRIDA') {
                             conversa.etapa = 'pedir_origem';
                             conversas.set(telefone, conversa);
-                            return resultadoGPT.resposta + '\n\n📍 Me manda sua localização ou o endereço!';
+                            return resultadoGPT.resposta;
                         }
                         
-                        // Se pergunta preço
+                        // Endereço sem número
+                        if (resultadoGPT.intencao === 'INFORMAR_ENDERECO_SEM_NUMERO') {
+                            conversa.dados.origemTexto = msgOriginal;
+                            conversa.etapa = 'pedir_numero_origem';
+                            conversas.set(telefone, conversa);
+                            return resultadoGPT.resposta;
+                        }
+                        
+                        // Endereço sem bairro
+                        if (resultadoGPT.intencao === 'INFORMAR_ENDERECO_SEM_BAIRRO') {
+                            conversa.dados.origemTexto = msgOriginal;
+                            conversa.etapa = 'pedir_bairro_origem';
+                            conversas.set(telefone, conversa);
+                            return resultadoGPT.resposta;
+                        }
+                        
+                        // Endereço completo - processar normalmente
+                        if (resultadoGPT.intencao === 'INFORMAR_ENDERECO_COMPLETO') {
+                            // Deixar o fluxo normal processar o endereço
+                        }
+                        
+                        // Perguntar preço
                         if (resultadoGPT.intencao === 'PERGUNTAR_PRECO') {
                             return await RebecaService.enviarTabelaPrecos();
+                        }
+                        
+                        // Cancelamento
+                        if (resultadoGPT.intencao === 'CANCELAMENTO') {
+                            // Processar cancelamento
+                            conversa.etapa = 'inicio';
+                            conversa.dados = {};
+                            conversas.set(telefone, conversa);
+                            return 'Corrida cancelada! Quando precisar é só chamar 😊';
+                        }
+                        
+                        // Reclamação
+                        if (resultadoGPT.intencao === 'RECLAMACAO') {
+                            conversas.set(telefone, conversa);
+                            return resultadoGPT.resposta;
                         }
                     }
                 } catch (e) {
