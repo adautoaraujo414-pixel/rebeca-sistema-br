@@ -174,8 +174,8 @@ const OpenAIRebecaService = {
             return { intencao: 'CANCELAMENTO', resposta: 'Corrida cancelada! Quando precisar é só chamar 😊' };
         }
         
-        if (msg.match(/(quero um carro|preciso de carro|chama um carro|me busca|vem me buscar|preciso ir|quero ir)/)) {
-            return { intencao: 'SOLICITAR_CORRIDA', resposta: 'Claro! Me manda sua localização 📍' };
+        if (msg.match(/(quero um carro|preciso de carro|preciso de um carro|chama um carro|me busca|vem me buscar|preciso ir|quero ir|quero pedir|quero uma corrida|preciso de uma corrida)/)) {
+            return { intencao: 'SOLICITAR_CORRIDA', resposta: 'Claro! Me passa o endereço ou sua localização, por favor? 📍' };
         }
         
         if (msg.match(/(rua|avenida|av\.|av |r\.|travessa|alameda|estrada)/) && msg.match(/\d{1,5}/)) {
