@@ -140,7 +140,7 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                     // Áudio recebido - tentar transcrever
                     console.log('[WEBHOOK] Audio recebido de', telefone);
                     try {
-                        const transcricao = await RebecaService.transcreverAudio(msg.message.audioMessage, instancia);
+                        const transcricao = await OpenAIRebecaService.transcreverAudio(msg.message.audioMessage, instancia);
                         if (transcricao) {
                             conteudo = transcricao;
                             console.log('[WEBHOOK] Audio transcrito:', transcricao);
