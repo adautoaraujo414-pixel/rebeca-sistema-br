@@ -140,22 +140,22 @@ const OpenAIRebecaService = {
         }
         
         if (msg.match(/^(oi|olá|ola|hey|eai|e ai|opa)$/)) {
-            return { intencao: 'SAUDACAO', resposta: 'Oi 😊 Vai precisar de carro agora?' };
+            return { intencao: 'SAUDACAO', resposta: 'Oi, tudo bem? 😊' };
         }
         if (msg.match(/^bom dia$/)) {
-            return { intencao: 'SAUDACAO', resposta: 'Bom dia! 😊 Vai precisar de carro?' };
+            return { intencao: 'SAUDACAO', resposta: 'Bom dia! Tudo bem? 😊' };
         }
         if (msg.match(/^boa tarde$/)) {
-            return { intencao: 'SAUDACAO', resposta: 'Boa tarde! 😊 Vai precisar de carro?' };
+            return { intencao: 'SAUDACAO', resposta: 'Boa tarde! Tudo bem? 😊' };
         }
         if (msg.match(/^boa noite$/)) {
-            return { intencao: 'SAUDACAO', resposta: 'Boa noite! 😊 Vai precisar de carro?' };
+            return { intencao: 'SAUDACAO', resposta: 'Boa noite! Tudo bem? 😊' };
         }
         if (msg.match(/^(oi|ola|olá).*(tudo bem|tudo bom|como vai)/)) {
-            return { intencao: 'SAUDACAO', resposta: 'Tudo ótimo! E você? 😊' };
+            return { intencao: 'SAUDACAO', resposta: 'Estou muito bem, e você? 😊' };
         }
-        if (msg.match(/^(tudo|tudo bem|tudo bom|bem|to bem|tô bem)$/)) {
-            return { intencao: 'SAUDACAO', resposta: 'Que bom! Vai precisar de carro agora? 🚗' };
+        if (msg.match(/^(tudo|tudo bem|tudo bom|bem|to bem|tô bem|estou bem|tudo otimo|tudo ótimo)$/)) {
+            return { intencao: 'SAUDACAO', resposta: 'Que bom! Vai precisar de carro? 🚗' };
         }
         
         if (msg.match(/(obrigad|valeu|vlw|brigad|thanks)/)) {
