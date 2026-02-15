@@ -755,6 +755,20 @@ const RebecaService = {
             
             return `📍 ${conversa.dados.origem}\n📌 ${msgOriginal}\n\n⏳ Buscando motorista...\n_CANCELAR se precisar_`;
         }
+        // ========== CLIENTE RECORRENTE - CONFIRMAR ENDEREÇO ==========
+        else if (conversa.etapa === 'confirmar_endereco_anterior') {
+            // Cliente recorrente - confirmando se quer usar endereço anterior
+            if (msg === '1' || msg === 'sim' || msg === 's' || msg.includes('esse mesmo')) {
+                conversa.dados.origem = conversa.dados.ultimoEnderecoSugerido;
+                conversa.etapa = 'pedir_destino_rapido';
+                resposta = '📍 *Origem:* ' + conversa.dados.origem + '\n\n🏁 Pra onde você quer ir?';
+            } else if (msg === '2' || msg === 'nao' || msg === 'não' || msg === 'n' || msg.includes('outro')) {
+                conversa.etapa = 'pedir_origem';
+                resposta = 'Sem problemas! Me passa o novo endereço ou sua localização 📍';
+            } else {
+                resposta = 'Responde *1* para usar esse endereço ou *2* para outro 😊';
+            }
+        }
         // ========== PEDIR BAIRRO ==========
         else if (conversa.etapa === 'pedir_numero_origem') {
             // Cliente mandou endereço sem número, pedimos o número
