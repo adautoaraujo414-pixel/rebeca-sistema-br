@@ -343,6 +343,11 @@ const RebecaService = {
                         // Solicitar corrida
                         if (resultadoGPT.intencao === 'SOLICITAR_CORRIDA') {
                             conversa.etapa = 'pedir_origem';
+                            // Marcar urgência se detectada
+                            if (resultadoGPT.urgente) {
+                                conversa.dados.prioridade = 'urgente';
+                                console.log('[REBECA] 🚨 Corrida URGENTE detectada');
+                            }
                             conversas.set(telefone, conversa);
                             return resultadoGPT.resposta;
                         }
@@ -382,8 +387,12 @@ const RebecaService = {
                             return 'Corrida cancelada! Quando precisar é só chamar 😊';
                         }
                         
-                        // Reclamação
+                        // Reclamação - resposta empática
                         if (resultadoGPT.intencao === 'RECLAMACAO') {
+                            if (resultadoGPT.clienteNervoso) {
+                                console.log('[REBECA] ⚠️ Cliente NERVOSO detectado:', telefone);
+                                // Pode notificar admin no futuro
+                            }
                             conversas.set(telefone, conversa);
                             return resultadoGPT.resposta;
                         }

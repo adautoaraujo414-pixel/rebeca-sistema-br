@@ -113,6 +113,32 @@ const OpenAIRebecaService = {
     resolverComRegex(mensagem) {
         const msg = mensagem.toLowerCase().trim();
         
+        // Detectar URGÊNCIA
+        const urgente = msg.match(/(urgente|urgência|urgencia|atrasado|atrasada|rápido|rapido|correndo|pressa|emergência|emergencia|depressa|logo)/);
+        
+        // Detectar CLIENTE NERVOSO/AGRESSIVO
+        const nervoso = msg.match(/(absurdo|palhaçada|palhacada|ridiculo|ridículo|incompetente|péssimo|pessimo|horrível|horrivel|vergonha|lixo|merda|porra|caralho|desgraça|desgraca|nunca mais|vou processar|procon|reclamar)/);
+        
+        // Se nervoso, responder com empatia
+        if (nervoso) {
+            return { 
+                intencao: 'RECLAMACAO', 
+                resposta: 'Poxa, sinto muito pela situação 😔 Me conta o que aconteceu que vou te ajudar a resolver.',
+                clienteNervoso: true,
+                prioridade: 'alta'
+            };
+        }
+        
+        // Se urgente, marcar prioridade
+        if (urgente && msg.match(/(carro|corrida|busca|vem|preciso|quero)/)) {
+            return { 
+                intencao: 'SOLICITAR_CORRIDA', 
+                resposta: 'Entendi que é urgente! 🚨 Me manda sua localização 📍 que já priorizo um motorista pra você!',
+                urgente: true,
+                prioridade: 'urgente'
+            };
+        }
+        
         if (msg.match(/^(oi|olá|ola|hey|eai|e ai|opa)$/)) {
             return { intencao: 'SAUDACAO', resposta: 'Oi 😊 Vai precisar de carro agora?' };
         }
