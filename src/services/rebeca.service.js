@@ -320,7 +320,26 @@ const RebecaService = {
                         nomeEmpresa = admin?.empresa || admin?.nome || '';
                     }
                     
-                    const resultadoGPT = await OpenAIRebecaService.classificarMensagem(msgOriginal, { nome, nomeEmpresa });
+                    // Buscar contexto do cliente (histórico de corridas)
+                    const contextoCliente = await OpenAIRebecaService.buscarContextoCliente(telefone, conversa.adminId);
+                    
+                    // Se cliente recorrente pedindo corrida simples
+                    if (contextoCliente.clienteRecorrente && contextoCliente.ultimoEndereco) {
+                        const msgLower = msgOriginal.toLowerCase();
+                        if (msgLower.match(/(quero|preciso|carro|corrida|busca|me pega)/) && !msgLower.match(/(rua|av|avenida|numero|número)/)) {
+                            conversa.dados.ultimoEnderecoSugerido = contextoCliente.ultimoEndereco;
+                            conversa.etapa = 'confirmar_endereco_anterior';
+                            conversas.set(telefone, conversa);
+                            return 'Quer sair do mesmo endereço de antes? 🚗\n\n📍 ' + contextoCliente.ultimoEndereco + '\n\n*1* - Sim, esse mesmo\n*2* - Não, outro endereço';
+                        }
+                    }
+                    
+                    const resultadoGPT = await OpenAIRebecaService.classificarMensagem(msgOriginal, { 
+                        nome, 
+                        nomeEmpresa,
+                        adminId: conversa.adminId,
+                        ...contextoCliente
+                    });
                     
                     if (resultadoGPT && resultadoGPT.resposta) {
                         console.log('[OPENAI] Intenção:', resultadoGPT.intencao);

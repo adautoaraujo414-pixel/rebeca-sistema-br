@@ -9,6 +9,46 @@ const OpenAIRebecaService = {
         return !!this.apiKey;
     },
 
+    // Buscar contexto do cliente (histórico)
+    async buscarContextoCliente(telefone, adminId) {
+        try {
+            const { Corrida } = require('../models');
+            const tels = [telefone, '55' + telefone, telefone.replace(/^55/, '')];
+            
+            const query = { clienteTelefone: { $in: tels } };
+            if (adminId) query.adminId = adminId;
+            
+            // Buscar corridas anteriores
+            const corridas = await Corrida.find(query)
+                .sort({ createdAt: -1 })
+                .limit(10)
+                .lean();
+            
+            const totalCorridas = corridas.length;
+            const ultimaCorrida = corridas[0];
+            const ultimoEndereco = ultimaCorrida?.origem || null;
+            
+            // Cliente recorrente se tem 3+ corridas
+            const clienteRecorrente = totalCorridas >= 3;
+            
+            return {
+                totalCorridas,
+                clienteRecorrente,
+                ultimoEndereco,
+                ultimaCorrida: ultimaCorrida ? {
+                    origem: ultimaCorrida.origem,
+                    destino: ultimaCorrida.destino,
+                    data: ultimaCorrida.createdAt
+                } : null
+            };
+        } catch (e) {
+            console.log('[CONTEXTO] Erro ao buscar histórico:', e.message);
+            return { totalCorridas: 0, clienteRecorrente: false, ultimoEndereco: null };
+        }
+    },
+
+
+
     // Converter números por extenso para dígitos
     converterNumerosExtenso(texto) {
         const numeros = {
