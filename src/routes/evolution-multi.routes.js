@@ -140,11 +140,28 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                     // Áudio recebido - tentar transcrever
                     console.log('[WEBHOOK] Audio recebido de', telefone);
                     try {
-                        const transcricao = await OpenAIRebecaService.transcreverAudio(msg.message.audioMessage, instancia);
-                        if (transcricao) {
-                            conteudo = transcricao;
-                            console.log('[WEBHOOK] Audio transcrito:', transcricao);
+                        const audioMsg = msg.message.audioMessage;
+                        const mediaUrl = audioMsg.url || audioMsg.mediaUrl;
+                        
+                        if (mediaUrl) {
+                            // Baixar áudio
+                            const audioResponse = await axios.get(mediaUrl, { 
+                                responseType: 'arraybuffer',
+                                timeout: 15000 
+                            });
+                            
+                            // Transcrever
+                            const mimeType = audioMsg.mimetype || 'audio/ogg';
+                            const transcricao = await OpenAIRebecaService.transcreverAudio(audioResponse.data, mimeType);
+                            
+                            if (transcricao) {
+                                conteudo = transcricao;
+                                console.log('[WEBHOOK] Audio transcrito:', transcricao);
+                            } else {
+                                conteudo = '[AUDIO]';
+                            }
                         } else {
+                            console.log('[WEBHOOK] Audio sem URL');
                             conteudo = '[AUDIO]';
                         }
                     } catch(e) {

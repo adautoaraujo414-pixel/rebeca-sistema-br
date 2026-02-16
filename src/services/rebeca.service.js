@@ -1153,9 +1153,10 @@ const RebecaService = {
 
         conversas.set(telefone, conversa);
         
-        // Anti-repeticao: nunca mandar mesma msg 2x seguidas
+        // Anti-repeticao: nunca mandar mesma msg 2x seguidas (exceto tabela de preços)
         const ultimaResp = ultimasRespostas.get(telefone);
-        if (ultimaResp && ultimaResp === resposta) {
+        const ehTabelaPrecos = resposta && resposta.includes('PREÇOS');
+        if (ultimaResp && ultimaResp === resposta && !ehTabelaPrecos) {
             console.log('[REBECA] Resposta repetida bloqueada para', telefone);
             return null;
         }
