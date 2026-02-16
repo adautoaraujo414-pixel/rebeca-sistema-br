@@ -728,7 +728,13 @@ const RebecaService = {
                 conversa.dados.corridaId = corrida.id;
                 conversas.set(telefone, conversa);
                 
-                return `📍 ${validacao.endereco}\n\n⏳ Buscando motorista...\n_CANCELAR se precisar_`;
+                // Verificar se tem motorista disponível AGORA - feedback rápido
+                const motoristasAgora = await MotoristaService.listarDisponiveis(conversa.adminId);
+                if (motoristasAgora.length === 0) {
+                    return `📍 ${validacao.endereco}\n\nCorrida registrada! No momento todos os motoristas estão ocupados, mas já estamos buscando. Te aviso assim que um aceitar.`;
+                }
+                
+                return `📍 ${validacao.endereco}\n\nBuscando motorista...`;
             }
         }
         // ========== COMPLEMENTO GPS (número/referência) ==========
@@ -753,7 +759,13 @@ const RebecaService = {
             conversa.dados.corridaId = corrida.id;
             conversas.set(telefone, conversa);
             
-            return `📍 ${conversa.dados.origem}\n📌 ${msgOriginal}\n\n⏳ Buscando motorista...\n_CANCELAR se precisar_`;
+            // Feedback rápido se não tem motorista
+            const motoristasAgora2 = await MotoristaService.listarDisponiveis(conversa.adminId);
+            if (motoristasAgora2.length === 0) {
+                return `📍 ${conversa.dados.origem}\n📌 ${msgOriginal}\n\nCorrida registrada! Todos os motoristas estão ocupados, te aviso assim que um aceitar.`;
+            }
+            
+            return `📍 ${conversa.dados.origem}\n📌 ${msgOriginal}\n\nBuscando motorista...`;
         }
         // ========== CLIENTE RECORRENTE - CONFIRMAR ENDEREÇO ==========
         else if (conversa.etapa === 'confirmar_endereco_anterior') {
