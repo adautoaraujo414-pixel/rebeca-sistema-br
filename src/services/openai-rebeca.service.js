@@ -211,7 +211,7 @@ const OpenAIRebecaService = {
         }
         
         if (msg.match(/^(cancelar|cancela|desistir|desisto|nao quero|não quero)$/)) {
-            return { intencao: 'CANCELAMENTO', resposta: 'Corrida cancelada! Quando precisar é só chamar 😊' };
+            return { intencao: 'CANCELAMENTO', resposta: 'Corrida cancelada! Quando precisar é só chamar.' };
         }
         
         if (msg.match(/(quero um carro|preciso de carro|preciso de um carro|chama um carro|me busca|vem me buscar|preciso ir|quero ir|quero pedir|quero uma corrida|preciso de uma corrida)/)) {
@@ -237,10 +237,10 @@ const OpenAIRebecaService = {
                 try {
                     const motoristas = await MotoristaService.listarDisponiveis(contexto.adminId);
                     if (motoristas.length > 0) {
-                        regexResult.resposta = `Temos ${motoristas.length} motorista${motoristas.length > 1 ? 's' : ''} disponível agora! 😊 Me manda sua localização 📍`;
+                        regexResult.resposta = `Temos ${motoristas.length} motorista${motoristas.length > 1 ? 's' : ''} disponível agora! Me passa o endereço`;
                         regexResult.motoristasDisponiveis = motoristas.length;
                     } else {
-                        regexResult.resposta = 'No momento nossos motoristas estão em corrida. Quer que eu te avise quando um ficar disponível? 😊';
+                        regexResult.resposta = 'No momento nossos motoristas estão em corrida. Quer que eu te avise quando um ficar disponível?';
                         regexResult.motoristasDisponiveis = 0;
                         regexResult.oferecerFila = true;
                     }
@@ -330,9 +330,9 @@ RETORNE APENAS JSON VÁLIDO:
 
             if (resultado.intencao === 'VERIFICAR_DISPONIBILIDADE') {
                 if (motoristasDisponiveis > 0) {
-                    resultado.resposta = `Temos ${motoristasDisponiveis} motorista${motoristasDisponiveis > 1 ? 's' : ''} disponível agora! 😊 Me manda sua localização 📍`;
+                    resultado.resposta = `Temos ${motoristasDisponiveis} motorista${motoristasDisponiveis > 1 ? 's' : ''} disponível agora! Me passa o endereço`;
                 } else {
-                    resultado.resposta = 'No momento nossos motoristas estão em corrida. Quer que eu te avise quando um ficar disponível? 😊';
+                    resultado.resposta = 'No momento nossos motoristas estão em corrida. Quer que eu te avise quando um ficar disponível?';
                     resultado.oferecerFila = true;
                 }
             }
