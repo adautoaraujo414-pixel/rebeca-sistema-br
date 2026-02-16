@@ -163,7 +163,7 @@ const OpenAIRebecaService = {
         if (nervoso) {
             return { 
                 intencao: 'RECLAMACAO', 
-                resposta: 'Poxa, sinto muito pela situação 😔 Me conta o que aconteceu que vou te ajudar a resolver.',
+                resposta: 'Poxa, sinto muito pela situação. Me conta o que aconteceu que vou te ajudar a resolver.',
                 clienteNervoso: true,
                 prioridade: 'alta'
             };
@@ -173,33 +173,33 @@ const OpenAIRebecaService = {
         if (urgente && msg.match(/(carro|corrida|busca|vem|preciso|quero)/)) {
             return { 
                 intencao: 'SOLICITAR_CORRIDA', 
-                resposta: 'Entendi que é urgente! 🚨 Me manda sua localização 📍 que já priorizo um motorista pra você!',
+                resposta: 'Entendi que é urgente! Me passa o endereço que já priorizo um motorista pra você.',
                 urgente: true,
                 prioridade: 'urgente'
             };
         }
         
         if (msg.match(/^(oi|olá|ola|hey|eai|e ai|opa)$/)) {
-            return { intencao: 'SAUDACAO', resposta: 'Oi, tudo bem? 😊' };
+            return { intencao: 'SAUDACAO', resposta: 'Oi, tudo bem?' };
         }
         if (msg.match(/^bom dia$/)) {
-            return { intencao: 'SAUDACAO', resposta: 'Bom dia! Tudo bem? 😊' };
+            return { intencao: 'SAUDACAO', resposta: 'Bom dia! Tudo bem?' };
         }
         if (msg.match(/^boa tarde$/)) {
-            return { intencao: 'SAUDACAO', resposta: 'Boa tarde! Tudo bem? 😊' };
+            return { intencao: 'SAUDACAO', resposta: 'Boa tarde! Tudo bem?' };
         }
         if (msg.match(/^boa noite$/)) {
-            return { intencao: 'SAUDACAO', resposta: 'Boa noite! Tudo bem? 😊' };
+            return { intencao: 'SAUDACAO', resposta: 'Boa noite! Tudo bem?' };
         }
         if (msg.match(/^(oi|ola|olá).*(tudo bem|tudo bom|como vai)/)) {
-            return { intencao: 'SAUDACAO', resposta: 'Estou muito bem, e você? 😊' };
+            return { intencao: 'SAUDACAO', resposta: 'Estou muito bem, e você?' };
         }
         if (msg.match(/^(tudo|tudo bem|tudo bom|bem|to bem|tô bem|estou bem|tudo otimo|tudo ótimo)$/)) {
-            return { intencao: 'SAUDACAO', resposta: 'Que bom! Vai precisar de carro? 🚗' };
+            return { intencao: 'SAUDACAO', resposta: 'Que bom! Vai precisar de carro?' };
         }
         
         if (msg.match(/(obrigad|valeu|vlw|brigad|thanks)/)) {
-            return { intencao: 'AGRADECIMENTO', resposta: 'Por nada! Sempre que precisar 😊' };
+            return { intencao: 'AGRADECIMENTO', resposta: 'Por nada! Sempre que precisar.' };
         }
         
         if (msg.match(/(tem carro|tem motorista|tem veiculo|tem veículo|disponivel|disponível|ta funcionando|tá funcionando|vocês atendem|voces atendem|aberto|atende agora)/)) {
@@ -215,7 +215,7 @@ const OpenAIRebecaService = {
         }
         
         if (msg.match(/(quero um carro|preciso de carro|preciso de um carro|chama um carro|me busca|vem me buscar|preciso ir|quero ir|quero pedir|quero uma corrida|preciso de uma corrida)/)) {
-            return { intencao: 'SOLICITAR_CORRIDA', resposta: 'Claro! Me passa o endereço ou sua localização, por favor? 📍' };
+            return { intencao: 'SOLICITAR_CORRIDA', resposta: 'Claro! Me passa o endereço, por favor.' };
         }
         
         if (msg.match(/(rua|avenida|av\.|av |r\.|travessa|alameda|estrada)/) && msg.match(/\d{1,5}/)) {
@@ -223,7 +223,7 @@ const OpenAIRebecaService = {
         }
         
         if (msg.match(/(rua|avenida|av\.|av |r\.|travessa|alameda|estrada)/) && !msg.match(/\d{1,5}/)) {
-            return { intencao: 'INFORMAR_ENDERECO_SEM_NUMERO', temEndereco: true, temNumero: false, resposta: 'Qual o número, por favor? 😊' };
+            return { intencao: 'INFORMAR_ENDERECO_SEM_NUMERO', temEndereco: true, temNumero: false, resposta: 'Qual o número, por favor?' };
         }
         
         return null;
@@ -245,7 +245,7 @@ const OpenAIRebecaService = {
                         regexResult.oferecerFila = true;
                     }
                 } catch(e) {
-                    regexResult.resposta = 'Estamos funcionando sim! Me manda sua localização 📍';
+                    regexResult.resposta = 'Estamos funcionando sim! Me passa o endereço.';
                 }
             }
             console.log('[REGEX] Resolvido:', regexResult.intencao);
