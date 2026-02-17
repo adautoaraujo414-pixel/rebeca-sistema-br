@@ -19,8 +19,12 @@ const TEMPLATES = {
     CORRIDA_CANCELADA: (dados) =>
         `🚗 *REBECA TÁXI*\n\nSua corrida foi cancelada. 😔\n\n${dados.motivo ? 'Motivo: ' + dados.motivo : ''}\n\nSe precisar, estamos à disposição!`,
 
-    NOVA_CORRIDA: (dados) =>
-        `🚗 *NOVA CORRIDA*\n\n👤 Cliente: ${dados.clienteNome}\n📍 Origem: ${dados.origem}\n📍 Destino: ${dados.destino}\n📏 Distância: ${dados.distanciaKm} km\n💰 Valor: R$ ${dados.valorEstimado.toFixed(2)}`,
+    NOVA_CORRIDA: (dados) => {
+        if (dados.tipo === 'encomenda') {
+            return `📦 *NOVA ENCOMENDA*\n\n📍 Coleta: ${dados.origem}\n📍 Entrega: ${dados.destino}\n${dados.descricaoEncomenda ? '📝 Descrição: ' + dados.descricaoEncomenda + '\n' : ''}${dados.nomeColeta ? '👤 Procurar: ' + dados.nomeColeta + '\n' : ''}${dados.nomeEntrega ? '👤 Entregar para: ' + dados.nomeEntrega + '\n' : ''}${dados.fragilPerecivel ? '⚠️ Obs: ' + dados.fragilPerecivel + '\n' : ''}\n📏 Distância: ${dados.distanciaKm} km\n💰 Valor: R$ ${dados.valorEstimado.toFixed(2)}`;
+        }
+        return `🚗 *NOVA CORRIDA*\n\n👤 Cliente: ${dados.clienteNome}\n📍 Origem: ${dados.origem}\n📍 Destino: ${dados.destino}\n📏 Distância: ${dados.distanciaKm} km\n💰 Valor: R$ ${dados.valorEstimado.toFixed(2)}`;
+    },
 
     BOASVINDAS: (dados) =>
         `🚗 *BEM-VINDO À REBECA TÁXI!*\n\nOlá, ${dados.nome}! 👋\n\nPara solicitar corrida, envie sua localização ou endereço.\n\nEstamos à disposição! 🚗💨`
