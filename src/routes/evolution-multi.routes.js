@@ -97,21 +97,25 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                 
                 // Se mensagem é DO OPERADOR (fromMe), ativar modo humano para esse cliente
                 if (msg.key?.fromMe && telefoneTemp && !remoteJidTemp.includes('@g.us')) {
-                    global._modoHumano.set(telefoneTemp, Date.now());
-                    console.log('[MODO-HUMANO] Operador respondeu para', telefoneTemp, '- Rebeca pausada por 2 min');
+                    // Usar chave composta: adminId + telefone para isolar por admin
+                    const chaveHumano = adminId + '_' + telefoneTemp;
+                    global._modoHumano.set(chaveHumano, Date.now());
+                    console.log('[MODO-HUMANO] Operador respondeu para', telefoneTemp, '(admin:', adminId, ') - Rebeca pausada por 2 min');
                     continue;
                 }
                 
                 // Se é mensagem do cliente, verificar se está em modo humano
                 if (!msg.key?.fromMe && telefoneTemp) {
-                    const ultimaHumana = global._modoHumano.get(telefoneTemp);
+                    // Usar chave composta: adminId + telefone para isolar por admin
+                    const chaveHumano = adminId + '_' + telefoneTemp;
+                    const ultimaHumana = global._modoHumano.get(chaveHumano);
                     if (ultimaHumana && (Date.now() - ultimaHumana) < 120000) {
-                        console.log('[MODO-HUMANO] Rebeca pausada para', telefoneTemp, '- humano no controle');
+                        console.log('[MODO-HUMANO] Rebeca pausada para', telefoneTemp, '(admin:', adminId, ') - humano no controle');
                         continue; // Não processa - humano está atendendo
                     } else if (ultimaHumana) {
                         // Passou 2 min - limpar e Rebeca volta
-                        global._modoHumano.delete(telefoneTemp);
-                        console.log('[MODO-HUMANO] Rebeca retomou controle de', telefoneTemp);
+                        global._modoHumano.delete(chaveHumano);
+                        console.log('[MODO-HUMANO] Rebeca retomou controle de', telefoneTemp, '(admin:', adminId, ')');
                     }
                 }
                 
