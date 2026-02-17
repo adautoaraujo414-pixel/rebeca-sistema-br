@@ -1569,6 +1569,12 @@ const RebecaService = {
             multiplicador: dados.calculo.faixa?.multiplicador || 1,
             observacaoOrigem: dados.observacaoOrigem || null,
             observacaoDestino: dados.observacaoDestino || null,
+            // Campos de encomenda
+            tipo: dados.tipo || 'passageiro',
+            descricaoEncomenda: dados.descricaoEncomenda || null,
+            nomeColeta: dados.nomeColeta || null,
+            nomeEntrega: dados.nomeEntrega || null,
+            fragilPerecivel: dados.fragilPerecivel || null,
             status: 'pendente'
         });
         
