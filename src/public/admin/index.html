@@ -141,6 +141,15 @@
     const token = localStorage.getItem('token');
     const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
     const adminId = usuario._id || usuario.id;
+    
+    // Helper para fetch com adminId automático
+    window.fetchApi = async (url, options = {}) => {
+        options.headers = options.headers || {};
+        options.headers['x-admin-id'] = adminId;
+        options.headers['Authorization'] = 'Bearer ' + token;
+        return fetch(url, options);
+    };
+    
     if (!token || !adminId) {
         alert('Faça login primeiro!');
         window.location.href = '/admin/login.html';
@@ -1034,7 +1043,7 @@ async function testarAnaliseIA() {
             }
             
             // Carregar total de motoristas
-            const motRes = await fetch('/api/motoristas');
+            const motRes = await fetchApi('/api/motoristas');
             const motoristas = await motRes.json();
             document.getElementById('wppMotoristas').textContent = Array.isArray(motoristas) ? motoristas.length : 0;
         } catch (e) {
