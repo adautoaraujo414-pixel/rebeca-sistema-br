@@ -921,7 +921,27 @@ body { background: #f0f2f5 !important; color: #333 !important; }
 
             document.getElementById('novaCorridaValor').textContent = 'R$ ' + (corrida.precoEstimado || 0).toFixed(2);
             document.getElementById('novaCorridaDistancia').textContent = '📍 ' + distancia;
-            document.getElementById('novaCorridaCliente').textContent = corrida.clienteNome || 'Cliente';
+            
+            // Diferenciar ENCOMENDA de PASSAGEIRO
+            const headerH2 = document.querySelector('#novaCorridaOverlay h2');
+            const avatarDiv = document.querySelector('#novaCorridaOverlay .cliente-avatar');
+            
+            if (corrida.tipo === 'encomenda') {
+                if (headerH2) headerH2.textContent = '📦 NOVA ENCOMENDA!';
+                if (avatarDiv) avatarDiv.textContent = '📦';
+                document.getElementById('novaCorridaCliente').textContent = corrida.descricaoEncomenda || 'Encomenda';
+                const infoExtra = [];
+                if (corrida.nomeColeta) infoExtra.push('Procurar: ' + corrida.nomeColeta);
+                if (corrida.nomeEntrega) infoExtra.push('Entregar p/: ' + corrida.nomeEntrega);
+                if (corrida.fragilPerecivel) infoExtra.push('⚠️ ' + corrida.fragilPerecivel);
+                document.getElementById('novaCorridaClienteInfo').textContent = infoExtra.join(' • ') || 'Encomenda';
+            } else {
+                if (headerH2) headerH2.textContent = '🔔 NOVA CORRIDA!';
+                if (avatarDiv) avatarDiv.textContent = '👤';
+                document.getElementById('novaCorridaCliente').textContent = corrida.clienteNome || 'Cliente';
+                document.getElementById('novaCorridaClienteInfo').textContent = '⭐ 5.0 • ' + (corrida.qtdCorridas || 0) + ' corridas';
+            }
+            
             document.getElementById('novaCorridaOrigem').textContent = formatarEndereco(corrida.origem);
             document.getElementById('novaCorridaDestino').textContent = formatarEndereco(corrida.destino);
 
