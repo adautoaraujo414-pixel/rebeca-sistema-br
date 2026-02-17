@@ -997,8 +997,12 @@ body { background: #f0f2f5 !important; color: #333 !important; }
             
             // Push notification em segundo plano (sobrepor tela)
             if (Notification.permission === 'granted') {
-                const notif = new Notification('🚗 NOVA CORRIDA!', {
-                    body: 'R$ ' + (corrida.precoEstimado || 0).toFixed(2) + ' - ' + (corrida.clienteNome || 'Cliente'),
+                const tituloNotif = corrida.tipo === 'encomenda' ? '📦 NOVA ENCOMENDA!' : '🚗 NOVA CORRIDA!';
+                const bodyNotif = corrida.tipo === 'encomenda' 
+                    ? 'R$ ' + (corrida.precoEstimado || 0).toFixed(2) + ' - ' + (corrida.descricaoEncomenda || 'Encomenda')
+                    : 'R$ ' + (corrida.precoEstimado || 0).toFixed(2) + ' - ' + (corrida.clienteNome || 'Cliente');
+                const notif = new Notification(tituloNotif, {
+                    body: bodyNotif,
                     icon: '/icons/icon-192.png',
                     badge: '/icons/icon-72.png',
                     tag: 'nova-corrida-' + corrida._id,
