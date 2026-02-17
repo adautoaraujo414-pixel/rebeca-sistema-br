@@ -197,7 +197,21 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                             for (const [k, v] of global._respostasEnviadas) { 
                                 if (Date.now() - v > 120000) global._respostasEnviadas.delete(k); 
                             }
-                            await EvolutionMultiService.enviarMensagem(instancia._id, telefone, resposta);
+                            // Verificar se resposta tem partes (mais humano)
+                            if (resposta.includes('|||')) {
+                                // Resposta dividida - enviar em partes com delay
+                                const partes = resposta.split('|||');
+                                for (let i = 0; i < partes.length; i++) {
+                                    if (partes[i].trim()) {
+                                        await EvolutionMultiService.enviarMensagem(instancia._id, telefone, partes[i].trim());
+                                        if (i < partes.length - 1) {
+                                            await new Promise(r => setTimeout(r, 800 + Math.random() * 700)); // 800-1500ms
+                                        }
+                                    }
+                                }
+                            } else {
+                                await EvolutionMultiService.enviarMensagem(instancia._id, telefone, resposta);
+                            }
                             console.log('[REBECA] Resposta enviada para ' + telefone);
                         }
                     }

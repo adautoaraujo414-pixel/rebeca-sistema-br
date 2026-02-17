@@ -180,26 +180,26 @@ const OpenAIRebecaService = {
         }
         
         if (msg.match(/^(oi|olá|ola|hey|eai|e ai|opa)$/)) {
-            return { intencao: 'SAUDACAO', resposta: 'Oi, tudo bem?' };
+            return { intencao: 'SAUDACAO', resposta: Math.random() > 0.5 ? 'Oii|||Tudo bem?' : 'Oi, tudo bem?' };
         }
         if (msg.match(/^bom dia$/)) {
-            return { intencao: 'SAUDACAO', resposta: 'Bom dia! Tudo bem?' };
+            return { intencao: 'SAUDACAO', resposta: Math.random() > 0.5 ? 'Bom dia!|||Tudo bem com vc?' : 'Bom dia! Tudo bem?' };
         }
         if (msg.match(/^boa tarde$/)) {
-            return { intencao: 'SAUDACAO', resposta: 'Boa tarde! Tudo bem?' };
+            return { intencao: 'SAUDACAO', resposta: Math.random() > 0.5 ? 'Boa tarde!|||Tudo bem?' : 'Boa tarde, tudo bem?' };
         }
         if (msg.match(/^boa noite$/)) {
-            return { intencao: 'SAUDACAO', resposta: 'Boa noite! Tudo bem?' };
+            return { intencao: 'SAUDACAO', resposta: Math.random() > 0.5 ? 'Boa noite!|||Tudo certo?' : 'Boa noite, tudo bem?' };
         }
         if (msg.match(/^(oi|ola|olá).*(tudo bem|tudo bom|como vai)/)) {
             return { intencao: 'SAUDACAO', resposta: 'Estou muito bem, e você?' };
         }
         if (msg.match(/^(tudo|tudo bem|tudo bom|bem|to bem|tô bem|estou bem|tudo otimo|tudo ótimo)$/)) {
-            return { intencao: 'SAUDACAO', resposta: 'Que bom! Vai precisar de carro?' };
+            return { intencao: 'SAUDACAO', resposta: Math.random() > 0.5 ? 'Que bom!|||Vai precisar de carro?' : 'Que otimo! Posso ajudar com alguma corrida?' };
         }
         
         if (msg.match(/(obrigad|valeu|vlw|brigad|thanks)/)) {
-            return { intencao: 'AGRADECIMENTO', resposta: 'Por nada! Sempre que precisar.' };
+            return { intencao: 'AGRADECIMENTO', resposta: Math.random() > 0.5 ? 'Imagina!|||Sempre que precisar' : 'Por nada! Qualquer coisa me chama' };
         }
         
         if (msg.match(/(tem carro|tem motorista|tem veiculo|tem veículo|disponivel|disponível|ta funcionando|tá funcionando|vocês atendem|voces atendem|aberto|atende agora)/)) {
@@ -221,7 +221,7 @@ const OpenAIRebecaService = {
         
         // PASSAGEIRO
         if (msg.match(/(quero um carro|preciso de carro|preciso de um carro|chama um carro|me busca|vem me buscar|preciso ir|quero ir|quero pedir|quero uma corrida|preciso de uma corrida)/)) {
-            return { intencao: 'SOLICITAR_CORRIDA', resposta: 'Claro! Me passa o endereço, por favor.' };
+            return { intencao: 'SOLICITAR_CORRIDA', resposta: Math.random() > 0.5 ? 'Beleza!|||Me passa o endereço' : 'Claro! Qual o endereço?' };
         }
         
         if (msg.match(/(rua|avenida|av\.|av |r\.|travessa|alameda|estrada)/) && msg.match(/\d{1,5}/)) {
