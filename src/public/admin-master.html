@@ -432,7 +432,17 @@
         function abrirModalPlano() { document.getElementById('planoId').value = ''; document.getElementById('modalPlanoTitulo').textContent = 'Novo Plano'; document.getElementById('modalPlano').classList.add('active'); }
         function fecharModal(id) { document.getElementById(id).classList.remove('active'); }
         async function salvarAdmin() {
-            const admin = { nome: document.getElementById('adminNome').value, email: document.getElementById('adminEmail').value, senha: document.getElementById('adminSenha').value, empresa: document.getElementById('adminEmpresa').value, telefone: document.getElementById('adminTelefone').value };
+            const admin = { 
+                nome: document.getElementById('adminNome').value, 
+                email: document.getElementById('adminEmail').value, 
+                senha: document.getElementById('adminSenha').value, 
+                empresa: document.getElementById('adminEmpresa').value, 
+                telefone: document.getElementById('adminTelefone').value,
+                nomeMarca: document.getElementById('adminNomeMarca')?.value || 'UBMAX',
+                nomeAssistente: document.getElementById('adminNomeAssistente')?.value || 'Rebeca',
+                slugMotorista: (document.getElementById('adminSlugMotorista')?.value || '').toLowerCase().replace(/[^a-z0-9]/g, ''),
+                corPrimaria: document.getElementById('adminCorPrimaria')?.value || '#00d4ff'
+            };
             const res = await fetch(`${API}/admins`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(admin) });
             const data = await res.json();
             if (data.sucesso) {
