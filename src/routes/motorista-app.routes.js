@@ -290,3 +290,25 @@ router.get('/chat', auth, async (req, res) => {
 });
 
 module.exports = router;
+
+// Rota white-label: /m/:slug (ex: /m/ubmax)
+router.get('/m/:slug', async (req, res) => {
+    try {
+        const { Admin } = require('../models');
+        const admin = await Admin.findOne({ 
+            $or: [
+                { slugMotorista: req.params.slug.toLowerCase() },
+                { nomeMarca: new RegExp('^' + req.params.slug + '$', 'i') }
+            ]
+        });
+        
+        if (!admin) {
+            return res.status(404).send('Empresa não encontrada');
+        }
+        
+        // Redireciona para o app do motorista com adminId
+        res.redirect('/motorista-app.html?admin=' + admin._id + '&marca=' + encodeURIComponent(admin.nomeMarca || 'UBMAX'));
+    } catch (e) {
+        res.status(500).send('Erro: ' + e.message);
+    }
+});

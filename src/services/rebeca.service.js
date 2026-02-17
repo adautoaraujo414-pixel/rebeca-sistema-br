@@ -380,6 +380,19 @@ const RebecaService = {
                             return resultadoGPT.resposta;
                         }
                         
+                        // Perguntas sobre a empresa (white-label)
+                        if (resultadoGPT.intencao === 'SOBRE_EMPRESA') {
+                            try {
+                                const { Admin } = require('../models');
+                                const admin = await Admin.findById(conversa.adminId);
+                                const nomeMarca = admin?.nomeMarca || 'UBMAX';
+                                const nomeAssistente = admin?.nomeAssistente || 'Rebeca';
+                                return 'Oi! Eu sou a ' + nomeAssistente + ', assistente virtual da ' + nomeMarca + '. Posso te ajudar a pedir uma corrida ou tirar dúvidas.';
+                            } catch (e) {
+                                return 'Oi! Eu sou a Rebeca, assistente virtual. Posso te ajudar a pedir uma corrida ou tirar dúvidas.';
+                            }
+                        }
+                        
                         // Endereço sem número
                         if (resultadoGPT.intencao === 'INFORMAR_ENDERECO_SEM_NUMERO') {
                             conversa.dados.origemTexto = msgOriginal;

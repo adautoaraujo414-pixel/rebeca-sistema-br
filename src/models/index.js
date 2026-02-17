@@ -161,6 +161,12 @@ const AdminSchema = new mongoose.Schema({
     senha: { type: String, required: true },
     telefone: String,
     empresa: String,
+    // White-label - Personalização da marca
+    nomeMarca: { type: String, default: 'UBMAX' },
+    nomeAssistente: { type: String, default: 'Rebeca' },
+    corPrimaria: { type: String, default: '#00d4ff' },
+    logoUrl: String,
+    slugMotorista: String, // URL única para motoristas: /m/ubmax
     horario: { type: String, default: '24 horas' },
     pagamento: { type: String, default: 'Dinheiro, PIX' },
     boasVindas: String,
