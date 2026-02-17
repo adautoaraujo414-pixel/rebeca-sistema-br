@@ -790,6 +790,75 @@ const RebecaService = {
                 resposta = 'Responde *1* para usar esse endereço ou *2* para outro 😊';
             }
         }
+                // ========== FLUXO DE ENCOMENDA ==========
+        else if (conversa.etapa === 'pedir_origem_encomenda') {
+            const validacao = await RebecaService.validarEndereco(msgOriginal);
+            if (validacao.valido) {
+                conversa.dados.origem = validacao.endereco;
+                conversa.etapa = 'pedir_destino_encomenda';
+                resposta = 'Certo! E qual o endereço de entrega?';
+            } else {
+                resposta = 'Não consegui encontrar esse endereço. Pode informar com mais detalhes?';
+            }
+        }
+        else if (conversa.etapa === 'pedir_destino_encomenda') {
+            const validacao = await RebecaService.validarEndereco(msgOriginal);
+            if (validacao.valido) {
+                conversa.dados.destino = validacao.endereco;
+                conversa.etapa = 'pedir_descricao_encomenda';
+                resposta = 'Perfeito! O que vai ser transportado?';
+            } else {
+                resposta = 'Não consegui encontrar esse endereço. Pode informar com mais detalhes?';
+            }
+        }
+        else if (conversa.etapa === 'pedir_descricao_encomenda') {
+            conversa.dados.descricaoEncomenda = msgOriginal;
+            conversa.etapa = 'pedir_nome_coleta';
+            resposta = 'Qual o nome de quem vai entregar o pacote na coleta?';
+        }
+        else if (conversa.etapa === 'pedir_nome_coleta') {
+            conversa.dados.nomeColeta = msgOriginal;
+            conversa.etapa = 'pedir_nome_entrega';
+            resposta = 'E o nome de quem vai receber na entrega?';
+        }
+        else if (conversa.etapa === 'pedir_nome_entrega') {
+            conversa.dados.nomeEntrega = msgOriginal;
+            conversa.etapa = 'pedir_fragil_encomenda';
+            resposta = 'A encomenda é frágil, perecível ou pesada? (ou digite NAO)';
+        }
+        else if (conversa.etapa === 'pedir_fragil_encomenda') {
+            conversa.dados.fragilPerecivel = msg === 'nao' ? '' : msgOriginal;
+            const calculo = await RebecaService.calcularCorrida(conversa.dados.origem, conversa.dados.destino, conversa.adminId);
+            conversa.dados.calculo = calculo;
+            conversa.etapa = 'confirmar_encomenda';
+            resposta = '*RESUMO DA ENCOMENDA*\n\n' +
+                '📦 ' + conversa.dados.descricaoEncomenda + '\n' +
+                '📍 Coleta: ' + conversa.dados.origem + '\n' +
+                '👤 Entregar: ' + conversa.dados.nomeColeta + '\n\n' +
+                '🏁 Entrega: ' + conversa.dados.destino + '\n' +
+                '👤 Receber: ' + conversa.dados.nomeEntrega + '\n\n' +
+                '💰 Valor: R$ ' + calculo.preco.toFixed(2) + '\n\n' +
+                '*1* - Confirmar\n*2* - Cancelar';
+        }
+        else if (conversa.etapa === 'confirmar_encomenda') {
+            if (msg === '1' || msg.includes('confirma') || msg.includes('sim')) {
+                const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
+                if (corrida.cooldown) return 'Aguarde um momento. Você finalizou uma corrida há pouco.';
+                if (corrida.duplicada) return 'Você já tem uma corrida em andamento!';
+                conversa.etapa = 'aguardando_motorista';
+                conversa.dados.corridaId = corrida.id;
+                conversas.set(telefone, conversa);
+                const motoristasAgora = await MotoristaService.listarDisponiveis(conversa.adminId);
+                if (motoristasAgora.length === 0) {
+                    return 'Encomenda registrada! Todos os motoristas estão ocupados. Te aviso assim que um aceitar.';
+                }
+                return 'Encomenda confirmada! Buscando motorista...';
+            } else {
+                conversa.etapa = 'inicio';
+                conversa.dados = {};
+                resposta = 'Encomenda cancelada. Quando precisar é só chamar.';
+            }
+        }
         // ========== PEDIR BAIRRO ==========
         else if (conversa.etapa === 'pedir_numero_origem') {
             // Cliente mandou endereço sem número, pedimos o número
