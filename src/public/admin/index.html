@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UBMAX Rebeca - Painel Admin</title>
+    <title>Rebeca - Painel Admin</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -147,7 +147,7 @@
     }
 </script>
     <header class="header">
-        <h1>UB<span>MAX</span> Rebeca</h1>
+        <h1 id="headerNomeMarca">Rebeca</h1>
         <div style="display:flex;align-items:center;gap:20px;">
             <div style="text-align:right;"><div id="userName">Admin</div><small id="userRole" style="opacity:0.8;">Administrador</small></div>
             <button class="btn-logout" onclick="logout()">Sair</button>
@@ -1198,6 +1198,10 @@ async function testarAnaliseIA() {
             const d = await r.json();
             if (d.sucesso) {
                 document.getElementById('empresaNome').value = d.empresa.nome || '';
+                // Atualizar header com nome da marca
+                const nomeMarca = d.empresa.nomeMarca || d.empresa.empresa || d.empresa.nome || 'Rebeca';
+                document.getElementById('headerNomeMarca').textContent = nomeMarca;
+                document.title = nomeMarca + ' - Painel Admin';
                 document.getElementById('empresaTelefone').value = d.empresa.telefone || '';
                 document.getElementById('empresaHorario').value = d.empresa.horario || '24 horas';
                 document.getElementById('empresaPagamento').value = d.empresa.pagamento || 'Dinheiro, PIX';
