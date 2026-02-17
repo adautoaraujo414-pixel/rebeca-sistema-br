@@ -233,6 +233,9 @@
                 <p><strong>Email:</strong> <span class="valor" id="credEmail"></span></p>
                 <p><strong>Senha:</strong> <span class="valor" id="credSenha"></span></p>
                 <p><strong>Token:</strong> <span class="valor" id="credToken" style="font-size:10px;word-break:break-all;"></span></p>
+                <hr style="border-color:#333;margin:15px 0;">
+                <h4 style="color:#00ff88;">🔗 Links para compartilhar:</h4>
+                <p><strong>Link Motoristas:</strong> <span class="valor" id="credLinkMotorista" style="color:#00d4ff;word-break:break-all;"></span></p>
             </div>
             <p style="color:#ffaa00;text-align:center;">⚠️ Salve essas informações! A senha não poderá ser recuperada.</p>
             <button class="btn btn-primary" style="width:100%;margin-top:15px;" onclick="copiarCredenciais()">📋 Copiar Credenciais</button>
@@ -450,6 +453,12 @@
                 document.getElementById('credEmail').textContent = data.credenciais.email;
                 document.getElementById('credSenha').textContent = data.credenciais.senha;
                 document.getElementById('credToken').textContent = data.credenciais.token;
+                const slug = document.getElementById('adminSlugMotorista')?.value || data.credenciais.slugMotorista || '';
+                if (slug) {
+                    document.getElementById('credLinkMotorista').textContent = window.location.origin + '/m/' + slug.toLowerCase();
+                } else {
+                    document.getElementById('credLinkMotorista').textContent = window.location.origin + '/motorista-app.html?admin=' + data.adminId;
+                }
                 document.getElementById('modalCredenciais').classList.add('active');
                 carregarAdmins();
             } else alert(data.erro || 'Erro ao criar');
@@ -462,6 +471,12 @@
                 document.getElementById('credEmail').textContent = data.credenciais.email;
                 document.getElementById('credSenha').textContent = data.credenciais.senha;
                 document.getElementById('credToken').textContent = data.credenciais.token;
+                const slug = document.getElementById('adminSlugMotorista')?.value || data.credenciais.slugMotorista || '';
+                if (slug) {
+                    document.getElementById('credLinkMotorista').textContent = window.location.origin + '/m/' + slug.toLowerCase();
+                } else {
+                    document.getElementById('credLinkMotorista').textContent = window.location.origin + '/motorista-app.html?admin=' + data.adminId;
+                }
                 document.getElementById('modalCredenciais').classList.add('active');
             }
             carregarAdmins(); carregarPendentes(); carregarDashboard();
