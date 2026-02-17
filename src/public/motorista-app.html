@@ -663,6 +663,16 @@ body { background: #f0f2f5 !important; color: #333 !important; }
 
     <script>
         // ========== VARIÁVEIS GLOBAIS ==========
+        // Ler marca da URL (white-label)
+        const urlParams = new URLSearchParams(window.location.search);
+        const marcaUrl = urlParams.get('marca');
+        if (marcaUrl) {
+            document.title = decodeURIComponent(marcaUrl) + ' - Motorista';
+            setTimeout(() => {
+                document.querySelectorAll('#headerMarca').forEach(h => h.textContent = '🚗 ' + decodeURIComponent(marcaUrl));
+            }, 100);
+        }
+        
         let motorista = null;
         let token = localStorage.getItem('motoristaToken');
         let corridaAtual = null;
