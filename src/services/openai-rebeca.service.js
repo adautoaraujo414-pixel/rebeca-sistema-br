@@ -214,6 +214,12 @@ const OpenAIRebecaService = {
             return { intencao: 'CANCELAMENTO', resposta: 'Corrida cancelada! Quando precisar é só chamar.' };
         }
         
+        // ENCOMENDA - detectar primeiro (mais específico)
+        if (msg.match(/(encomenda|entregar algo|buscar pacote|levar documento|retirar pedido|coleta|buscar.*e levar|pegar.*e entregar|levar.*pra|entregar.*em|mercadoria|buscar.*documento|retirar.*encomenda)/)) {
+            return { intencao: 'SOLICITAR_ENCOMENDA', resposta: 'Certo! Vou precisar de algumas informações. Qual o endereço de coleta?' };
+        }
+        
+        // PASSAGEIRO
         if (msg.match(/(quero um carro|preciso de carro|preciso de um carro|chama um carro|me busca|vem me buscar|preciso ir|quero ir|quero pedir|quero uma corrida|preciso de uma corrida)/)) {
             return { intencao: 'SOLICITAR_CORRIDA', resposta: 'Claro! Me passa o endereço, por favor.' };
         }

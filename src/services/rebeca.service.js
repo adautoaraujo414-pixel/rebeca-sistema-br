@@ -362,11 +362,20 @@ const RebecaService = {
                         // Solicitar corrida
                         if (resultadoGPT.intencao === 'SOLICITAR_CORRIDA') {
                             conversa.etapa = 'pedir_origem';
+                            conversa.dados.tipo = 'passageiro';
                             // Marcar urgência se detectada
                             if (resultadoGPT.urgente) {
                                 conversa.dados.prioridade = 'urgente';
                                 console.log('[REBECA] 🚨 Corrida URGENTE detectada');
                             }
+                            conversas.set(telefone, conversa);
+                            return resultadoGPT.resposta;
+                        }
+                        
+                        // Solicitar ENCOMENDA
+                        if (resultadoGPT.intencao === 'SOLICITAR_ENCOMENDA') {
+                            conversa.etapa = 'pedir_origem_encomenda';
+                            conversa.dados.tipo = 'encomenda';
                             conversas.set(telefone, conversa);
                             return resultadoGPT.resposta;
                         }
