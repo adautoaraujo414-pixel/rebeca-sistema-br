@@ -61,7 +61,7 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
         const instancia = await InstanciaWhatsapp.findOne({ nomeInstancia });
         if (!instancia) {
             console.log('[WEBHOOK] Instancia nao encontrada:', nomeInstancia);
-            return res.json({ received: true });
+            return res.headersSent || res.json({ received: true });
         }
         
         const adminId = instancia.adminId; // IMPORTANTE: pegar adminId da instancia
@@ -78,6 +78,9 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
         }
         
         // PROCESSAR MENSAGENS - REBECA MULTI-TENANT
+        // Responder 200 imediato pro Evolution API
+        if (!res.headersSent) res.json({ received: true });
+
         if (dados.event === 'messages.upsert') {
             console.log('[DEBUG] Dados:', JSON.stringify(dados).substring(0, 800));
             const mensagens = dados.data?.messages || (dados.data ? [dados.data] : []);
@@ -224,7 +227,7 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
         console.error('[WEBHOOK] Erro:', e.message);
     }
     
-    res.json({ received: true });
+    if (!res.headersSent) res.json({ received: true });
 });
 
 // ==================== STATS POR ADMIN ====================
