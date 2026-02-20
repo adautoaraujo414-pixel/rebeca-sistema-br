@@ -1101,7 +1101,7 @@ body { background: #f0f2f5 !important; color: #333 !important; }
         function atualizarBotoesCorridaAtiva() {
             const status = corridaAtual?.status;
             document.getElementById('btnCheguei').style.display = (status === 'aceita' || status === 'motorista_a_caminho') ? 'flex' : 'none';
-            document.getElementById('btnIniciar').style.display = (status === 'a_caminho' || status === 'motorista_a_caminho') ? 'flex' : 'none';
+            document.getElementById('btnIniciar').style.display = status === 'a_caminho' ? 'flex' : 'none';
             document.getElementById('btnFinalizar').style.display = status === 'em_andamento' ? 'flex' : 'none';
             
             // Renderizar paradas
