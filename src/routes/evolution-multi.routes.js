@@ -7,25 +7,33 @@ const RebecaService = require('../services/rebeca.service');
 const OpenAIRebecaService = require('../services/openai-rebeca.service');
 
 router.post('/instancia', async (req, res) => {
-    const { adminId, nomeEmpresa } = req.body;
-    if (!adminId || !nomeEmpresa) return res.status(400).json({ erro: 'adminId e nomeEmpresa obrigatorios' });
-    const resultado = await EvolutionMultiService.criarInstancia(adminId, nomeEmpresa);
-    res.json(resultado);
+    try {
+        const { adminId, nomeEmpresa } = req.body;
+        if (!adminId || !nomeEmpresa) return res.status(400).json({ erro: 'adminId e nomeEmpresa obrigatorios' });
+        const resultado = await EvolutionMultiService.criarInstancia(adminId, nomeEmpresa);
+        res.json(resultado);
+    } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
 router.get('/instancia/:id/qrcode', async (req, res) => {
-    const resultado = await EvolutionMultiService.gerarQRCode(req.params.id);
-    res.json(resultado);
+    try {
+        const resultado = await EvolutionMultiService.gerarQRCode(req.params.id);
+        res.json(resultado);
+    } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
 router.get('/instancia/:id/status', async (req, res) => {
-    const resultado = await EvolutionMultiService.verificarStatus(req.params.id);
-    res.json(resultado);
+    try {
+        const resultado = await EvolutionMultiService.verificarStatus(req.params.id);
+        res.json(resultado);
+    } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
 router.post('/instancia/:id/desconectar', async (req, res) => {
-    const resultado = await EvolutionMultiService.desconectar(req.params.id);
-    res.json(resultado);
+    try {
+        const resultado = await EvolutionMultiService.desconectar(req.params.id);
+        res.json(resultado);
+    } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
 router.post('/instancia/:id/enviar', async (req, res) => {

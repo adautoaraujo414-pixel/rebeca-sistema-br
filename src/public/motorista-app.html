@@ -1537,6 +1537,7 @@ body { background: #f0f2f5 !important; color: #333 !important; }
         function pararIntervalos() {
             if (gpsInterval) clearInterval(gpsInterval);
             if (checkInterval) clearInterval(checkInterval);
+            if (typeof chatClienteInterval !== 'undefined' && chatClienteInterval) clearInterval(chatClienteInterval);
             if (timerInterval) clearInterval(timerInterval);
         }
 

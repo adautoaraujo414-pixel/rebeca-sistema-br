@@ -109,7 +109,7 @@ router.post('/', async (req, res) => {
                         '• Senha: ' + senhaGerada + '\n\n' +
                         '🔗 *ACESSE O APP:*\n' + linkApp + '\n\n' +
                         '✅ Faca login e comece a receber corridas!\n\n' +
-                        '💰 Plano: ' + plano.toUpperCase() + ' - R$ ' + valorMensalidade.toFixed(2);
+                        '💰 Plano: ' + plano.toUpperCase() + ' - R$ ' + Number(valorMensalidade).toFixed(2);
                     await EvolutionMultiService.enviarMensagem(instancia.nomeInstancia, motorista.whatsapp, msg);
                     whatsappEnviado = true;
                 }
