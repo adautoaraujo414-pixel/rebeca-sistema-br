@@ -875,11 +875,15 @@ body { background: #f0f2f5 !important; color: #333 !important; }
                 });
                 const data = await res.json();
                 if (data.corrida) {
-                    // Se corrida foi cancelada, limpar
+                    // Se corrida foi cancelada, AVISAR motorista
                     if (data.corrida.status === 'cancelada') {
                         corridaAtual = null;
+                        motorista.status = 'disponivel';
+                        atualizarStatusUI();
                         document.getElementById('corridaAtiva').classList.remove('active');
                         document.getElementById('semCorrida').style.display = 'block';
+                        toast('❌ Corrida cancelada pelo cliente', 'error');
+                        if (navigator.vibrate) navigator.vibrate([300, 100, 300]);
                         return;
                     }
                     corridaAtual = data.corrida;
@@ -887,8 +891,12 @@ body { background: #f0f2f5 !important; color: #333 !important; }
                 } else if (corridaAtual) {
                     // Tinha corrida mas não tem mais - foi cancelada
                     corridaAtual = null;
+                    motorista.status = 'disponivel';
+                    atualizarStatusUI();
                     document.getElementById('corridaAtiva').classList.remove('active');
                     document.getElementById('semCorrida').style.display = 'block';
+                    toast('❌ Corrida cancelada pelo cliente', 'error');
+                    if (navigator.vibrate) navigator.vibrate([300, 100, 300]);
                 }
             } catch (e) {}
         }
