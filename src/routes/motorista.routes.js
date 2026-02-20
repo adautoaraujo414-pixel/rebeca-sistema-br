@@ -156,16 +156,8 @@ router.put('/:id/gps', async (req, res) => {
     } catch (e) { res.status(500).json({ erro: e.message }); }
 });
 
-// Login
-router.post('/login', async (req, res) => {
-    try {
-        const { whatsapp, senha } = req.body;
-        const resultado = await MotoristaService.login(whatsapp, senha);
-        res.json(resultado);
-    } catch (e) { res.status(500).json({ erro: e.message }); }
-});
+// Login movido para motorista-app.routes.js
 
-module.exports = router;
 // ==================== PARADAS ====================
 // Marcar parada como concluída
 router.post('/corrida/:corridaId/parada/:indice/concluir', authMotorista, async (req, res) => {
@@ -241,3 +233,5 @@ router.post('/corrida/:corridaId/parada', authMotorista, async (req, res) => {
         res.status(500).json({ erro: e.message });
     }
 });
+
+module.exports = router;
