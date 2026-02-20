@@ -397,6 +397,17 @@ const DespachoService = {
     },
 
     limparExpiradas() {
+        // Limpar notificacoes expiradas dos motoristas
+        const agora = new Date();
+        notificacoesMotoristas.forEach((notifs, motoristaId) => {
+            const validas = notifs.filter(n => new Date(n.expiraEm) > agora);
+            if (validas.length === 0) {
+                notificacoesMotoristas.delete(motoristaId);
+            } else {
+                notificacoesMotoristas.set(motoristaId, validas);
+            }
+        });
+
         const agora = new Date();
         let limpas = 0;
 

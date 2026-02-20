@@ -8,36 +8,38 @@ const getAdminId = (req) => {
 };
 
 router.get('/', async (req, res) => {
-    const adminId = getAdminId(req);
-    if (!adminId) return res.json([]); // Sem adminId = vazio (segurança)
-    
-    const clientes = await ClienteService.listar(adminId);
-    res.json(clientes);
+    try {
+        const adminId = getAdminId(req);
+        if (!adminId) return res.json([]);
+        const clientes = await ClienteService.listar(adminId);
+        res.json(clientes);
+    } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
 router.get('/estatisticas', async (req, res) => {
-    const adminId = getAdminId(req);
-    if (!adminId) return res.json({ total: 0, ativos: 0, bloqueados: 0, novos: 0 });
-    
-    const estatisticas = await ClienteService.estatisticas(adminId);
-    res.json(estatisticas);
+    try {
+        const adminId = getAdminId(req);
+        if (!adminId) return res.json({ total: 0, ativos: 0, bloqueados: 0, novos: 0 });
+        const estatisticas = await ClienteService.estatisticas(adminId);
+        res.json(estatisticas);
+    } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
 router.get('/telefone/:telefone', async (req, res) => {
-    const adminId = getAdminId(req);
-    const cliente = await ClienteService.buscarPorTelefone(req.params.telefone, adminId);
-    if (!cliente) {
-        return res.status(404).json({ error: 'Cliente não encontrado' });
-    }
-    res.json(cliente);
+    try {
+        const adminId = getAdminId(req);
+        const cliente = await ClienteService.buscarPorTelefone(req.params.telefone, adminId);
+        if (!cliente) return res.status(404).json({ error: 'Cliente não encontrado' });
+        res.json(cliente);
+    } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
 router.get('/:id', async (req, res) => {
-    const cliente = await ClienteService.buscarPorId(req.params.id);
-    if (!cliente) {
-        return res.status(404).json({ error: 'Cliente não encontrado' });
-    }
-    res.json(cliente);
+    try {
+        const cliente = await ClienteService.buscarPorId(req.params.id);
+        if (!cliente) return res.status(404).json({ error: 'Cliente não encontrado' });
+        res.json(cliente);
+    } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
 router.post('/', async (req, res) => {
@@ -51,28 +53,28 @@ router.post('/', async (req, res) => {
 });
 
 router.put('/:id', async (req, res) => {
-    const cliente = await ClienteService.atualizar(req.params.id, req.body);
-    if (!cliente) {
-        return res.status(404).json({ error: 'Cliente não encontrado' });
-    }
-    res.json(cliente);
+    try {
+        const cliente = await ClienteService.atualizar(req.params.id, req.body);
+        if (!cliente) return res.status(404).json({ error: 'Cliente não encontrado' });
+        res.json(cliente);
+    } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
 router.put('/:id/bloquear', async (req, res) => {
-    const { motivo } = req.body;
-    const cliente = await ClienteService.bloquear(req.params.id, motivo);
-    if (!cliente) {
-        return res.status(404).json({ error: 'Cliente não encontrado' });
-    }
-    res.json(cliente);
+    try {
+        const { motivo } = req.body;
+        const cliente = await ClienteService.bloquear(req.params.id, motivo);
+        if (!cliente) return res.status(404).json({ error: 'Cliente não encontrado' });
+        res.json(cliente);
+    } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
 router.put('/:id/desbloquear', async (req, res) => {
-    const cliente = await ClienteService.desbloquear(req.params.id);
-    if (!cliente) {
-        return res.status(404).json({ error: 'Cliente não encontrado' });
-    }
-    res.json(cliente);
+    try {
+        const cliente = await ClienteService.desbloquear(req.params.id);
+        if (!cliente) return res.status(404).json({ error: 'Cliente não encontrado' });
+        res.json(cliente);
+    } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
 module.exports = router;

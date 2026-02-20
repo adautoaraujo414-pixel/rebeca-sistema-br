@@ -28,7 +28,8 @@ const CorridaSchema = new mongoose.Schema({
     paradas: [{ endereco: String, latitude: Number, longitude: Number, ordem: Number, concluida: { type: Boolean, default: false } }], // Múltiplas paradas
     observacaoOrigem: String, observacaoDestino: String,
     distanciaKm: Number, tempoEstimado: Number, precoEstimado: Number, precoFinal: Number,
-    status: { type: String, default: 'pendente' }, formaPagamento: String, avaliacao: Number
+    status: { type: String, default: 'pendente' }, formaPagamento: String, avaliacao: Number,
+    motoristaChegouEm: Date, iniciadaEm: Date, finalizadaEm: Date, canceladaEm: Date, motivoCancelamento: String
 }, { timestamps: true });
 
 const ConfigSchema = new mongoose.Schema({
