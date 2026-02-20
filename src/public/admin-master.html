@@ -483,8 +483,8 @@
             }
             carregarAdmins(); carregarPendentes(); carregarDashboard();
         }
-        async function bloquearAdmin(id) { if (!confirm('Bloquear?')) return; await fetch(`${API}/admins/${id}/bloquear`, { method: 'PUT' }); carregarAdmins(); }
-        async function excluirAdmin(id) { if (!confirm('Excluir permanentemente?')) return; await fetch(`${API}/admins/${id}`, { method: 'DELETE' }); carregarAdmins(); carregarPendentes(); }
+        async function bloquearAdmin(id) { if (!confirm('Bloquear?')) return; try { await fetch(`${API}/admins/${id}/bloquear`, { method: 'PUT' }); carregarAdmins(); } catch(e) { alert('Erro ao bloquear'); console.error(e); } }
+        async function excluirAdmin(id) { if (!confirm('Excluir permanentemente?')) return; try { await fetch(`${API}/admins/${id}`, { method: 'DELETE' }); carregarAdmins(); carregarPendentes(); } catch(e) { alert('Erro ao excluir'); console.error(e); } }
         async function resetarSenha(id) {
             if (!confirm('Resetar senha deste admin?')) return;
             const res = await fetch(`${API}/admins/${id}/resetar-senha`, { method: 'PUT' });
@@ -499,8 +499,8 @@
             const data = await res.json();
             if (data.sucesso) { fecharModal('modalPlano'); carregarPlanos(); } else alert(data.erro || 'Erro');
         }
-        async function excluirPlano(id) { if (!confirm('Excluir plano?')) return; await fetch(`${API}/planos/${id}`, { method: 'DELETE' }); carregarPlanos(); }
-        async function confirmarPagamento(id) { if (!confirm('Confirmar pagamento?')) return; await fetch(`${API}/mensalidades/${id}/confirmar`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ formaPagamento: 'pix' }) }); carregarMensalidades(); }
+        async function excluirPlano(id) { if (!confirm('Excluir plano?')) return; try { await fetch(`${API}/planos/${id}`, { method: 'DELETE' }); carregarPlanos(); } catch(e) { alert('Erro ao excluir plano'); console.error(e); } }
+        async function confirmarPagamento(id) { if (!confirm('Confirmar pagamento?')) return; try { await fetch(`${API}/mensalidades/${id}/confirmar`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ formaPagamento: 'pix' }) }); carregarMensalidades(); } catch(e) { alert('Erro ao confirmar pagamento'); console.error(e); } }
         function copiarCredenciais() {
             const texto = `Email: ${document.getElementById('credEmail').textContent}\nSenha: ${document.getElementById('credSenha').textContent}\nToken: ${document.getElementById('credToken').textContent}`;
             navigator.clipboard.writeText(texto).then(() => alert('Credenciais copiadas!'));
