@@ -22,9 +22,11 @@ const auth = async (req, res, next) => {
 
 // Login
 router.post('/login', async (req, res) => {
-    const { whatsapp, senha } = req.body;
-    const resultado = await MotoristaService.login(whatsapp, senha);
-    res.json(resultado);
+    try {
+        const { whatsapp, senha } = req.body;
+        const resultado = await MotoristaService.login(whatsapp, senha);
+        res.json(resultado);
+    } catch(e) { res.json({ sucesso: false, erro: e.message }); }
 });
 
 // Perfil
@@ -34,22 +36,28 @@ router.get('/perfil', auth, (req, res) => {
 
 // Atualizar GPS
 router.post('/gps', auth, async (req, res) => {
-    const { latitude, longitude } = req.body;
-    await MotoristaService.atualizarGPS(req.motorista._id, latitude, longitude);
-    res.json({ sucesso: true });
+    try {
+        const { latitude, longitude } = req.body;
+        await MotoristaService.atualizarGPS(req.motorista._id, latitude, longitude);
+        res.json({ sucesso: true });
+    } catch(e) { res.json({ sucesso: false, erro: e.message }); }
 });
 
 // Atualizar Status
 router.post('/status', auth, async (req, res) => {
-    const { status } = req.body;
-    await MotoristaService.atualizarStatus(req.motorista._id, status);
-    res.json({ sucesso: true, status });
+    try {
+        const { status } = req.body;
+        await MotoristaService.atualizarStatus(req.motorista._id, status);
+        res.json({ sucesso: true, status });
+    } catch(e) { res.json({ sucesso: false, erro: e.message }); }
 });
 
 // Corridas disponíveis
 router.get('/corridas-disponiveis', auth, async (req, res) => {
-    const corridas = await CorridaService.listarPendentes(req.motorista.adminId);
-    res.json({ corridas });
+    try {
+        const corridas = await CorridaService.listarPendentes(req.motorista.adminId);
+        res.json({ corridas });
+    } catch(e) { res.json({ corridas: [] }); }
 });
 
 // Aceitar corrida
@@ -199,7 +207,7 @@ router.post('/iniciar', auth, async (req, res) => {
             if (!instancia) instancia = await InstanciaWhatsapp.findOne({ status: 'conectado' });
             if (instancia) {
                 await EvolutionMultiService.enviarMensagem(instancia._id, corrida.clienteTelefone,
-                    '\u2705 *MOTORISTA CHEGOU!*\n\nSeu motorista esta no local. Dirija-se ao veiculo.\n\nBoa viagem! \ud83d\ude97');
+                    '\u2705 *VIAGEM INICIADA!*\n\nSua corrida comecou. Aproveite o trajeto!\n\nBoa viagem! \ud83d\ude97');
             }
         }
         res.json({ sucesso: true, corrida });
@@ -237,6 +245,9 @@ router.post('/cancelar', auth, async (req, res) => {
     try {
         const corridaAntes = await CorridaService.buscarPorId(corridaId);
         const resultado = await CorridaService.cancelar(corridaId, motivo || 'Cancelado pelo motorista');
+        // Liberar motorista
+        const MotoristaService = require('../services/motorista.service');
+        await MotoristaService.atualizarStatus(req.motorista._id, 'disponivel');
         if (corridaAntes && corridaAntes.clienteTelefone) {
             const EvolutionMultiService = require('../services/evolution-multi.service');
             const { InstanciaWhatsapp } = require('../models');
@@ -253,14 +264,18 @@ router.post('/cancelar', auth, async (req, res) => {
 
 // Histórico de corridas
 router.get('/historico', auth, async (req, res) => {
-    const corridas = await CorridaService.listarPorMotorista(req.motorista._id);
-    res.json({ corridas });
+    try {
+        const corridas = await CorridaService.listarPorMotorista(req.motorista._id);
+        res.json({ corridas });
+    } catch(e) { res.json({ corridas: [] }); }
 });
 
 // Corrida ativa
 router.get('/corrida-ativa', auth, async (req, res) => {
-    const corrida = await CorridaService.corridaAtivaMotorista(req.motorista._id);
-    res.json({ corrida });
+    try {
+        const corrida = await CorridaService.corridaAtivaMotorista(req.motorista._id);
+        res.json({ corrida });
+    } catch(e) { res.json({ corrida: null }); }
 });
 
 // Chat - Enviar mensagem para cliente via WhatsApp

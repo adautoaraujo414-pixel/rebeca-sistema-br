@@ -1543,7 +1543,7 @@ const RebecaService = {
         // Anti-duplicacao: verificar se ja tem corrida ativa
         const queryAtiva = {
             clienteTelefone: telefone,
-            status: { $in: ['pendente', 'aceita', 'em_andamento', 'motorista_a_caminho'] }
+            status: { $in: ['pendente', 'aceita', 'aguardando_cliente', 'em_andamento', 'motorista_a_caminho'] }
         };
         if (adminId) queryAtiva.adminId = adminId;
         const corridaAtiva = await Corrida.findOne(queryAtiva);

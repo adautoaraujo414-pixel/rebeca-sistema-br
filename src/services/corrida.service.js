@@ -59,6 +59,14 @@ const CorridaService = {
         corrida.status = 'finalizada';
         corrida.finalizadaEm = new Date();
         
+        // Liberar motorista para disponivel
+        if (corrida.motoristaId) {
+            try {
+                const MotoristaService = require('./motorista.service');
+                await MotoristaService.atualizarStatus(corrida.motoristaId, 'disponivel');
+            } catch(e) { console.log('[CORRIDA] Erro liberar motorista:', e.message); }
+        }
+        
         // Notificar próximo da fila de espera
         try {
             const RebecaService = require('./rebeca.service');
