@@ -691,7 +691,7 @@ body { background: #f0f2f5 !important; color: #333 !important; }
 
         // ========== LOGIN ==========
         async function fazerLogin() {
-            const whatsapp = document.getElementById('loginWhatsapp').value;
+            const whatsapp = document.getElementById('loginWhatsapp').value.replace(/[^0-9]/g, '').trim();
             const senha = document.getElementById('loginSenha').value;
             if (!whatsapp) return toast('Digite o WhatsApp', 'error');
             if (!senha) return toast('Digite a senha PIN', 'error');

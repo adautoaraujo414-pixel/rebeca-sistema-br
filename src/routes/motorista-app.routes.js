@@ -6,8 +6,9 @@ const CorridaService = require('../services/corrida.service');
 // Middleware de autenticação
 const auth = async (req, res, next) => {
     try {
-        const token = req.headers.authorization;
+        let token = req.headers.authorization;
         if (!token) return res.status(401).json({ erro: 'Token não fornecido' });
+        token = token.replace('Bearer ', '').trim();
         
         const motorista = await MotoristaService.buscarPorToken(token);
         if (!motorista) return res.status(401).json({ erro: 'Token inválido' });

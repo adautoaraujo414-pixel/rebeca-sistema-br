@@ -107,6 +107,7 @@ const MotoristaService = {
     // Login motorista
     async login(whatsapp, senha) {
         if (!whatsapp) return { sucesso: false, erro: 'Digite o WhatsApp' };
+        whatsapp = whatsapp.replace(/[^0-9]/g, '').trim();
         if (!senha) return { sucesso: false, erro: 'Digite a senha PIN' };
         // Normalizar WhatsApp - tentar com e sem 55
         let motorista = await Motorista.findOne({ whatsapp });
