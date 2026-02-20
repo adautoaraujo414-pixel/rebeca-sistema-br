@@ -39,7 +39,7 @@ const CorridaService = {
         const limiteRecente = new Date(Date.now() - 120 * 60 * 1000); // 2 horas
         return Corrida.findOne({ 
             motoristaId, 
-            status: { $in: ['aceita', 'a_caminho', 'motorista_a_caminho', 'em_andamento'] },
+            status: { $in: ['aceita', 'a_caminho', 'motorista_a_caminho', 'aguardando_cliente', 'em_andamento'] },
             createdAt: { $gte: limiteRecente }
         });
     },
@@ -128,7 +128,7 @@ const CorridaService = {
     },
     
     async listarAtivas(adminId = null) {
-        const filtro = { status: { $in: ['pendente', 'aceita', 'em_andamento', 'motorista_a_caminho'] } };
+        const filtro = { status: { $in: ['pendente', 'aceita', 'aguardando_cliente', 'em_andamento', 'motorista_a_caminho'] } };
         if (adminId) filtro.adminId = adminId;
         return await Corrida.find(filtro).sort({ createdAt: -1 }).limit(50);
     },

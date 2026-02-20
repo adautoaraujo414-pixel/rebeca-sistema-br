@@ -5,14 +5,19 @@ const CorridaService = require('../services/corrida.service');
 
 // Middleware de autenticação
 const auth = async (req, res, next) => {
-    const token = req.headers.authorization;
-    if (!token) return res.status(401).json({ erro: 'Token não fornecido' });
-    
-    const motorista = await MotoristaService.buscarPorToken(token);
-    if (!motorista) return res.status(401).json({ erro: 'Token inválido' });
-    
-    req.motorista = motorista;
-    next();
+    try {
+        const token = req.headers.authorization;
+        if (!token) return res.status(401).json({ erro: 'Token não fornecido' });
+        
+        const motorista = await MotoristaService.buscarPorToken(token);
+        if (!motorista) return res.status(401).json({ erro: 'Token inválido' });
+        
+        req.motorista = motorista;
+        next();
+    } catch(e) {
+        console.error('[AUTH] Erro:', e.message);
+        res.status(500).json({ erro: 'Erro de autenticação' });
+    }
 };
 
 // Login
@@ -146,6 +151,13 @@ router.post('/cheguei', auth, async (req, res) => {
         
         // Anti-spam: verificar se já notificou recentemente
         if (!global._notificacoesCheguei) global._notificacoesCheguei = new Map();
+        // Limpar entradas antigas (>5min) para evitar memory leak
+        if (global._notificacoesCheguei.size > 50) {
+            const agora = Date.now();
+            for (const [k, v] of global._notificacoesCheguei) {
+                if (agora - v > 300000) global._notificacoesCheguei.delete(k);
+            }
+        }
         const chave = corridaId + '_cheguei';
         const ultimaNotif = global._notificacoesCheguei.get(chave);
         
