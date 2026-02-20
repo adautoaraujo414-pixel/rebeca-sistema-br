@@ -37,25 +37,33 @@ router.post('/instancia/:id/desconectar', async (req, res) => {
 });
 
 router.post('/instancia/:id/enviar', async (req, res) => {
-    const { telefone, mensagem } = req.body;
-    if (!telefone || !mensagem) return res.status(400).json({ erro: 'telefone e mensagem obrigatorios' });
-    const resultado = await EvolutionMultiService.enviarMensagem(req.params.id, telefone, mensagem);
-    res.json(resultado);
+    try {
+        const { telefone, mensagem } = req.body;
+        if (!telefone || !mensagem) return res.status(400).json({ erro: 'telefone e mensagem obrigatorios' });
+        const resultado = await EvolutionMultiService.enviarMensagem(req.params.id, telefone, mensagem);
+        res.json(resultado);
+    } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
 router.get('/instancias', async (req, res) => {
-    const resultado = await EvolutionMultiService.listarTodas();
-    res.json(resultado);
+    try {
+        const resultado = await EvolutionMultiService.listarTodas();
+        res.json(resultado);
+    } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
 router.get('/instancias/admin/:adminId', async (req, res) => {
-    const resultado = await EvolutionMultiService.listarPorAdmin(req.params.adminId);
-    res.json(resultado);
+    try {
+        const resultado = await EvolutionMultiService.listarPorAdmin(req.params.adminId);
+        res.json(resultado);
+    } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
 router.delete('/instancia/:id', async (req, res) => {
-    const resultado = await EvolutionMultiService.deletarInstancia(req.params.id);
-    res.json(resultado);
+    try {
+        const resultado = await EvolutionMultiService.deletarInstancia(req.params.id);
+        res.json(resultado);
+    } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
 // ==================== WEBHOOK MULTI-TENANT COM REBECA ====================
