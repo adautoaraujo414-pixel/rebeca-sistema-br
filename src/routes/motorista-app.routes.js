@@ -245,9 +245,7 @@ router.post('/cancelar', auth, async (req, res) => {
     try {
         const corridaAntes = await CorridaService.buscarPorId(corridaId);
         const resultado = await CorridaService.cancelar(corridaId, motivo || 'Cancelado pelo motorista');
-        // Liberar motorista
-        const MotoristaService = require('../services/motorista.service');
-        await MotoristaService.atualizarStatus(req.motorista._id, 'disponivel');
+        // Motorista liberado automaticamente pelo cancelarCorrida no service
         if (corridaAntes && corridaAntes.clienteTelefone) {
             const EvolutionMultiService = require('../services/evolution-multi.service');
             const { InstanciaWhatsapp } = require('../models');

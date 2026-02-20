@@ -1554,7 +1554,14 @@ const RebecaService = {
             const criacao = new Date(corridaAtiva.createdAt || corridaAtiva.dataCriacao || agora);
             const minutosPendente = (agora - criacao) / 1000 / 60;
             
-            if (corridaAtiva.status === 'pendente' && minutosPendente > 10) {
+            if (corridaAtiva.status === 'aguardando_cliente' && minutosPendente > 30) {
+                // Motorista esperando cliente ha mais de 30 min - cancelar
+                await Corrida.findByIdAndUpdate(corridaAtiva._id, { status: 'cancelada', motivoCancelamento: 'timeout_aguardando_30min' });
+                if (corridaAtiva.motoristaId) {
+                    try { await MotoristaService.atualizarStatus(corridaAtiva.motoristaId, 'disponivel'); } catch(e) {}
+                }
+                console.log('[REBECA] Corrida aguardando_cliente cancelada (timeout 30min):', corridaAtiva._id);
+            } else if (corridaAtiva.status === 'pendente' && minutosPendente > 10) {
                 // Corrida pendente antiga - cancelar e permitir nova
                 await Corrida.findByIdAndUpdate(corridaAtiva._id, { status: 'cancelada', motivoCancelamento: 'timeout_10min' });
                 console.log('[REBECA] Corrida pendente antiga cancelada (timeout 10min):', corridaAtiva._id);

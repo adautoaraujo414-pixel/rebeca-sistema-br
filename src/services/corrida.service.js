@@ -118,7 +118,7 @@ const CorridaService = {
         const total = await Corrida.countDocuments(query);
         const hoje_count = await Corrida.countDocuments({ ...query, createdAt: { $gte: hoje } });
         const pendentes = await Corrida.countDocuments({ ...query, status: 'pendente' });
-        const emAndamento = await Corrida.countDocuments({ ...query, status: { $in: ['aceita', 'em_andamento'] } });
+        const emAndamento = await Corrida.countDocuments({ ...query, status: { $in: ['aceita', 'aguardando_cliente', 'em_andamento'] } });
         const finalizadas = await Corrida.countDocuments({ ...query, status: 'finalizada' });
         const canceladas = await Corrida.countDocuments({ ...query, status: 'cancelada' });
         
