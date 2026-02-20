@@ -11,6 +11,21 @@ const IAService = require('./ia.service');
 const OpenAIRebecaService = require('./openai-rebeca.service');
 
 const conversas = new Map();
+
+// Auto-cleanup conversas inativas (a cada 5 min, remove conversas >30min sem interacao)
+setInterval(() => {
+    const agora = Date.now();
+    let limpas = 0;
+    conversas.forEach((conversa, telefone) => {
+        const ultimaMsg = conversa.ultimaMensagem || conversa.updatedAt || conversa.criadaEm || 0;
+        const tempoInativo = agora - new Date(ultimaMsg).getTime();
+        if (tempoInativo > 30 * 60 * 1000) { // 30 min inativo
+            conversas.delete(telefone);
+            limpas++;
+        }
+    });
+    if (limpas > 0) console.log('[REBECA] Cleanup: ' + limpas + ' conversas inativas removidas. Ativas: ' + conversas.size);
+}, 5 * 60 * 1000);
 const ultimasRespostas = new Map(); // Anti-repeticao
 const favoritosClientes = new Map();
 const localidadeService = require('./localidade.service');
