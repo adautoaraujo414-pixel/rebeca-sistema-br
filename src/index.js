@@ -1,4 +1,14 @@
 const express = require('express');
+
+// ==================== CRASH PROTECTION ====================
+process.on('uncaughtException', (err) => {
+    console.error('[FATAL] Uncaught Exception:', err.message);
+    console.error(err.stack);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('[FATAL] Unhandled Rejection:', reason);
+});
 const cors = require('cors');
 const path = require('path');
 require('./config/database');

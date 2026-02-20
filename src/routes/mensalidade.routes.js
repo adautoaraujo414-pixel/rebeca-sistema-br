@@ -5,32 +5,37 @@ const { Motorista } = require('../models');
 
 // Listar todas mensalidades
 router.get('/', async (req, res) => {
-    const { status, motoristaId } = req.query;
+    try {    const { status, motoristaId } = req.query;
     const mensalidades = await MensalidadeService.listar({ status, motoristaId });
     res.json(mensalidades);
+    } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
 // Estatísticas
 router.get('/estatisticas', async (req, res) => {
-    const stats = await MensalidadeService.estatisticas();
+    try {    const stats = await MensalidadeService.estatisticas();
     res.json(stats);
+    } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
 // Config financeiro
 router.get('/config', async (req, res) => {
-    const config = await MensalidadeService.getConfigFinanceiro();
+    try {    const config = await MensalidadeService.getConfigFinanceiro();
     res.json(config);
+    } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
 router.put('/config', async (req, res) => {
-    const config = await MensalidadeService.salvarConfigFinanceiro(req.body);
+    try {    const config = await MensalidadeService.salvarConfigFinanceiro(req.body);
     res.json({ sucesso: true, config });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
 // Buscar por motorista
 router.get('/motorista/:motoristaId', async (req, res) => {
-    const mensalidades = await MensalidadeService.buscarPorMotorista(req.params.motoristaId);
+    try {    const mensalidades = await MensalidadeService.buscarPorMotorista(req.params.motoristaId);
     res.json(mensalidades);
+    } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
 // Criar mensalidade manual
