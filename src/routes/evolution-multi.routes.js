@@ -262,7 +262,6 @@ router.get('/stats/:adminId', async (req, res) => {
     }
 });
 
-module.exports = router;
 // Reconfigurar webhook de instância existente
 router.post('/instancia/:id/reconfigurar-webhook', async (req, res) => {
     try {
@@ -290,3 +289,5 @@ router.post('/instancia/:id/reconfigurar-webhook', async (req, res) => {
         res.json({ sucesso: false, erro: e.message });
     }
 });
+
+module.exports = router;

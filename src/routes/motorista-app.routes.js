@@ -315,7 +315,6 @@ router.get('/chat', auth, async (req, res) => {
     }
 });
 
-module.exports = router;
 
 // Rota white-label: /m/:slug (ex: /m/ubmax)
 router.get('/m/:slug', async (req, res) => {
@@ -338,3 +337,5 @@ router.get('/m/:slug', async (req, res) => {
         res.status(500).send('Erro: ' + e.message);
     }
 });
+
+module.exports = router;

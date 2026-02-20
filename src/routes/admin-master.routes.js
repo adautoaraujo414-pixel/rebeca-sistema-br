@@ -393,7 +393,6 @@ router.post('/setup', async (req, res) => {
     } catch (e) { res.status(500).json({ erro: e.message }); }
 });
 
-module.exports = router;
 
 // Reset senha por email (utilitário)
 router.post('/reset-senha-email', async (req, res) => {
@@ -423,3 +422,5 @@ router.post('/reset-senha-email', async (req, res) => {
         res.status(500).json({ erro: e.message });
     }
 });
+
+module.exports = router;
