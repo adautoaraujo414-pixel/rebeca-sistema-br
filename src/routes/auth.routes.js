@@ -116,9 +116,8 @@ router.put('/trocar-senha', async (req, res) => {
     try {
         const { Admin } = require('../models');
         const token = req.headers.authorization?.split(' ')[1];
-        const jwt = require('jsonwebtoken');
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'segredo-rebeca-2024');
-        const admin = await Admin.findById(decoded.id || decoded.adminId);
+        const adminId = token?.split('_')[1];
+        const admin = await Admin.findById(adminId);
         if (!admin) return res.json({ sucesso: false, erro: 'Admin nao encontrado' });
         if (admin.senha !== req.body.senhaAtual) return res.json({ sucesso: false, erro: 'Senha atual incorreta' });
         admin.senha = req.body.senhaNova;
@@ -132,9 +131,8 @@ router.get('/empresa', async (req, res) => {
     try {
         const { Admin } = require('../models');
         const token = req.headers.authorization?.split(' ')[1];
-        const jwt = require('jsonwebtoken');
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'segredo-rebeca-2024');
-        const admin = await Admin.findById(decoded.id || decoded.adminId);
+        const adminId = token?.split('_')[1];
+        const admin = await Admin.findById(adminId);
         if (!admin) return res.json({ sucesso: false, erro: 'Admin nao encontrado' });
         res.json({ sucesso: true, empresa: { nome: admin.empresa || '', telefone: admin.telefone || '', horario: admin.horario || '24 horas', pagamento: admin.pagamento || 'Dinheiro, PIX', boasVindas: admin.boasVindas || '' } });
     } catch(e) { res.json({ sucesso: false, erro: e.message }); }
@@ -145,9 +143,9 @@ router.put('/empresa', async (req, res) => {
     try {
         const { Admin } = require('../models');
         const token = req.headers.authorization?.split(' ')[1];
-        const jwt = require('jsonwebtoken');
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'segredo-rebeca-2024');
-        const admin = await Admin.findByIdAndUpdate(decoded.id || decoded.adminId, {
+        
+        
+        const admin = await Admin.findByIdAndUpdate(token?.split("_")[1], {
             empresa: req.body.empresa,
             telefone: req.body.telefone,
             horario: req.body.horario,
