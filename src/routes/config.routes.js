@@ -4,13 +4,18 @@ const ConfigService = require('../services/config.service');
 const LogsService = require('../services/logs.service');
 
 // ========== CONFIGURAÇÕES GERAIS ==========
-router.get('/', (req, res) => {
-    res.json(ConfigService.obterConfig());
+router.get('/', async (req, res) => {
+    const adminId = req.query.adminId || req.headers['x-admin-id'];
+    if (!adminId) return res.status(400).json({ error: 'adminId obrigatório' });
+    const config = await ConfigService.obterTudo(adminId);
+    res.json(config);
 });
 
-router.put('/', (req, res) => {
-    const config = ConfigService.atualizarConfig(req.body);
-    LogsService.registrar({ tipo: 'config', acao: 'Configurações atualizadas', detalhes: req.body });
+router.put('/', async (req, res) => {
+    const adminId = req.body.adminId || req.headers['x-admin-id'];
+    if (!adminId) return res.status(400).json({ error: 'adminId obrigatório' });
+    const config = await ConfigService.salvarTudo(req.body, adminId);
+    LogsService.registrar({ tipo: 'config', acao: 'Configurações atualizadas', adminId, detalhes: req.body });
     res.json({ sucesso: true, config });
 });
 

@@ -15,18 +15,17 @@ const configPadrao = {
 
 const ConfigService = {
     // Buscar configuração
-    async buscar(chave) {
-        const config = await Config.findOne({ chave });
+    async buscar(chave, adminId = null) {
+        const query = adminId ? { chave, adminId } : { chave, adminId: { $exists: false } };
+        const config = await Config.findOne(query);
         return config ? config.valor : configPadrao[chave];
     },
 
     // Salvar configuração
-    async salvar(chave, valor) {
-        return await Config.findOneAndUpdate(
-            { chave },
-            { chave, valor },
-            { new: true, upsert: true }
-        );
+    async salvar(chave, valor, adminId = null) {
+        const query = adminId ? { chave, adminId } : { chave, adminId: { $exists: false } };
+        const update = adminId ? { chave, valor, adminId } : { chave, valor };
+        return await Config.findOneAndUpdate(query, update, { new: true, upsert: true });
     },
 
     // Buscar todas
