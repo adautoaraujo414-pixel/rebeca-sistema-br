@@ -1,55 +1,43 @@
 const express = require('express');
 const router = express.Router();
-const ConfigService = require('../services/config.service');
 const LogsService = require('../services/logs.service');
+const { Corrida, Motorista, Cliente } = require('../models');
 
-// Listar reclamações
-router.get('/', (req, res) => {
-    const filtros = {
-        status: req.query.status,
-        tipo: req.query.tipo,
-        prioridade: req.query.prioridade,
-        motoristaId: req.query.motoristaId
-    };
-    res.json(ConfigService.listarReclamacoes(filtros));
+const getAdminId = (req) => req.query.adminId || req.headers['x-admin-id'] || req.body?.adminId || null;
+
+// Listar reclamações (corridas com avaliação ruim ou canceladas pelo cliente)
+router.get('/', async (req, res) => {
+    try {
+        const adminId = getAdminId(req);
+        if (!adminId) return res.status(400).json({ error: 'adminId obrigatório' });
+        const query = { adminId, motivoCancelamento: { $exists: true, $ne: null } };
+        if (req.query.status) query.status = req.query.status;
+        const reclamacoes = await Corrida.find(query).sort({ createdAt: -1 }).limit(100);
+        res.json(reclamacoes);
+    } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
 // Estatísticas
-router.get('/estatisticas', (req, res) => {
-    res.json(ConfigService.obterEstatisticasReclamacoes());
+router.get('/estatisticas', async (req, res) => {
+    try {
+        const adminId = getAdminId(req);
+        if (!adminId) return res.status(400).json({ error: 'adminId obrigatório' });
+        const total = await Corrida.countDocuments({ adminId, motivoCancelamento: { $exists: true, $ne: null } });
+        const hoje = new Date(); hoje.setHours(0,0,0,0);
+        const hoje_count = await Corrida.countDocuments({ adminId, motivoCancelamento: { $exists: true }, createdAt: { $gte: hoje } });
+        res.json({ total, hoje: hoje_count });
+    } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
 // Buscar por ID
-router.get('/:id', (req, res) => {
-    const rec = ConfigService.obterReclamacao(req.params.id);
-    if (!rec) return res.status(404).json({ error: 'Reclamação não encontrada' });
-    res.json(rec);
-});
-
-// Criar reclamação
-router.post('/', (req, res) => {
-    const rec = ConfigService.criarReclamacao(req.body);
-    LogsService.registrar({ tipo: 'atendimento', acao: 'Reclamação registrada', detalhes: { id: rec.id, assunto: rec.assunto } });
-    res.status(201).json(rec);
-});
-
-// Atualizar reclamação
-router.put('/:id', (req, res) => {
-    const rec = ConfigService.atualizarReclamacao(req.params.id, req.body);
-    if (!rec) return res.status(404).json({ error: 'Reclamação não encontrada' });
-    res.json({ sucesso: true, reclamacao: rec });
-});
-
-// Resolver reclamação
-router.put('/:id/resolver', (req, res) => {
-    const { resolucao } = req.body;
-    if (!resolucao) return res.status(400).json({ error: 'Resolução é obrigatória' });
-    
-    const rec = ConfigService.resolverReclamacao(req.params.id, resolucao);
-    if (!rec) return res.status(404).json({ error: 'Reclamação não encontrada' });
-    
-    LogsService.registrar({ tipo: 'atendimento', acao: 'Reclamação resolvida', detalhes: { id: rec.id } });
-    res.json({ sucesso: true, reclamacao: rec });
+router.get('/:id', async (req, res) => {
+    try {
+        const adminId = getAdminId(req);
+        if (!adminId) return res.status(400).json({ error: 'adminId obrigatório' });
+        const corrida = await Corrida.findOne({ _id: req.params.id, adminId });
+        if (!corrida) return res.status(404).json({ error: 'Reclamação não encontrada' });
+        res.json(corrida);
+    } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
 module.exports = router;

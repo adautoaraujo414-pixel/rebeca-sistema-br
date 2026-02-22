@@ -4,6 +4,7 @@ const logs = [];
 
 const LogsService = {
     registrar: (dados) => {
+        // adminId é passado nos dados para rastrear por admin
         const log = {
             id: 'log_' + uuidv4().slice(0, 8),
             tipo: dados.tipo || 'info',
@@ -22,6 +23,7 @@ const LogsService = {
 
     listar: (filtros = {}) => {
         let resultado = [...logs];
+        if (filtros.adminId) resultado = resultado.filter(l => l.adminId === filtros.adminId);
         if (filtros.tipo) resultado = resultado.filter(l => l.tipo === filtros.tipo);
         if (filtros.usuarioId) resultado = resultado.filter(l => l.usuarioId === filtros.usuarioId);
         if (filtros.usuarioTipo) resultado = resultado.filter(l => l.usuarioTipo === filtros.usuarioTipo);

@@ -4,7 +4,10 @@ const LogsService = require('../services/logs.service');
 
 // Listar logs
 router.get('/', (req, res) => {
+    const adminId = req.query.adminId || req.headers['x-admin-id'];
+    if (!adminId) return res.status(400).json({ error: 'adminId obrigatório' });
     const filtros = {
+        adminId,
         tipo: req.query.tipo,
         usuarioId: req.query.usuarioId,
         usuarioTipo: req.query.usuarioTipo,
