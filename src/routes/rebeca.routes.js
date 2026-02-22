@@ -8,24 +8,30 @@ const LogsService = require('../services/logs.service');
 
 // ==================== CONFIG REBECA ====================
 router.get('/config', (req, res) => {
-    res.json(RebecaService.getConfig());
+    const adminId = req.query.adminId || req.headers['x-admin-id'];
+    if (!adminId) return res.status(400).json({ error: 'adminId obrigatório' });
+    res.json(RebecaService.getConfig(adminId));
 });
 
 router.put('/config', (req, res) => {
-    const config = RebecaService.setConfig(req.body);
-    LogsService.registrar({ tipo: 'config', acao: 'Configurações Rebeca atualizadas', detalhes: req.body });
+    const adminId = req.body.adminId || req.headers['x-admin-id'];
+    if (!adminId) return res.status(400).json({ error: 'adminId obrigatório' });
+    const config = RebecaService.setConfig({ ...req.body, adminId });
+    LogsService.registrar({ tipo: 'config', acao: 'Configurações Rebeca atualizadas', adminId, detalhes: req.body });
     res.json({ sucesso: true, config });
 });
 
 // ==================== PROCESSAR MENSAGEM ====================
 router.post('/mensagem', async (req, res) => {
     try {
-        const { telefone, mensagem, nome } = req.body;
+        const { telefone, mensagem, nome, adminId, instanciaId } = req.body;
         if (!telefone || !mensagem) {
             return res.status(400).json({ error: 'Telefone e mensagem obrigatórios' });
         }
-        
-        const resposta = await RebecaService.processarMensagem(telefone, mensagem, nome);
+        if (!adminId) {
+            return res.status(400).json({ error: 'adminId obrigatório' });
+        }
+        const resposta = await RebecaService.processarMensagem(telefone, mensagem, nome, { adminId, instanciaId });
         res.json({ sucesso: true, resposta });
     } catch (error) {
         res.status(500).json({ error: 'Erro ao processar mensagem', detalhes: error.message });
