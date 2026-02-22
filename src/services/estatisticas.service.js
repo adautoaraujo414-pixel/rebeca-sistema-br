@@ -2,7 +2,7 @@ const { Corrida, Motorista, Cliente } = require('../models');
 
 const EstatisticasService = {
     // Corridas por dia
-    async corridasPorDia(dias, adminId = null = 7) {
+    async corridasPorDia(dias = 7, adminId = null) {
         const resultado = [];
         
         for (let i = dias - 1; i >= 0; i--) {
