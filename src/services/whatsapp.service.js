@@ -3,7 +3,7 @@ const axios = require('axios');
 const CONFIG = {
     baseUrl: process.env.EVOLUTION_API_URL || 'http://localhost:8080',
     apiKey: process.env.EVOLUTION_API_KEY || '',
-    instanceName: process.env.EVOLUTION_INSTANCE || 'rebeca-taxi'
+    instanceName: process.env.EVOLUTION_INSTANCE_NAME || 'rebeca-bot'
 };
 
 const TEMPLATES = {
