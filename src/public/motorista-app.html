@@ -1259,6 +1259,14 @@ body { background: #f0f2f5 !important; color: #333 !important; }
         }
 
         // ========== CHAT ==========
+        let chatPollingInterval = null;
+        function iniciarPollingChat() {
+            if (chatPollingInterval) clearInterval(chatPollingInterval);
+            chatPollingInterval = setInterval(carregarChat, 5000);
+        }
+        function pararPollingChat() {
+            if (chatPollingInterval) { clearInterval(chatPollingInterval); chatPollingInterval = null; }
+        }
         async function carregarChat() {
             try {
                 const res = await fetch('/api/motorista-app/chat', {

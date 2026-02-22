@@ -513,7 +513,7 @@ const RebecaService = {
                         try {
                             const { Corrida } = require('../models');
                             await Corrida.findByIdAndUpdate(corridaAtiva._id, {
-                                $push: { mensagensChat: { de: 'cliente', texto: msgOriginal, data: new Date() } }
+                                $push: { chatMensagens: { texto: msgOriginal, remetente: 'cliente', nomeRemetente: nome, data: new Date(), tipo: 'cliente' } }
                             });
                         } catch(e) {}
                         console.log('[REBECA] Mensagem cliente salva no painel para motorista:', motoristaAtivo.nomeCompleto || motoristaAtivo.nome);
