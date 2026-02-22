@@ -311,7 +311,10 @@ router.post('/chat', auth, async (req, res) => {
             await EvolutionMultiService.enviarMensagem(instancia._id, corrida.clienteTelefone, msgCliente);
         }
         
-        res.json({ sucesso: true, mensagens: [{ texto, remetente: req.motorista._id, nomeRemetente: req.motorista.nome, data: new Date() }] });
+        const novaMensagem = { texto, remetente: req.motorista._id, nomeRemetente: req.motorista.nomeCompleto || req.motorista.nome, data: new Date(), tipo: 'motorista' };
+        const { Corrida } = require('../models');
+        await Corrida.findByIdAndUpdate(corrida._id, { $push: { chatMensagens: novaMensagem } });
+        res.json({ sucesso: true, mensagens: [novaMensagem] });
     } catch (e) {
         res.json({ sucesso: false, erro: e.message });
     }
