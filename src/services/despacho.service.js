@@ -7,6 +7,31 @@ const GPSIntegradoService = require('./gps-integrado.service');
 const corridasPendentes = new Map(); // Corridas aguardando aceite
 const notificacoesMotoristas = new Map(); // Notificações enviadas
 
+
+// FALLBACK: Ao iniciar, recuperar corridas pendentes do MongoDB que ainda não estão na Map
+async function recuperarCorridasPendentes() {
+    try {
+        const { Corrida } = require('../models');
+        const limite = new Date(Date.now() - 15 * 60 * 1000); // 15 min
+        const pendentes = await Corrida.find({ status: 'pendente', createdAt: { $gte: limite } });
+        for (const c of pendentes) {
+            const id = c._id.toString();
+            if (!corridasPendentes.has(id)) {
+                corridasPendentes.set(id, {
+                    corridaId: id,
+                    corrida: c,
+                    adminId: c.adminId,
+                    modo: 'broadcast',
+                    motoristasNotificados: [],
+                    enviadoEm: c.createdAt
+                });
+            }
+        }
+        if (pendentes.length > 0) console.log('[DESPACHO] Recuperadas', pendentes.length, 'corridas pendentes do MongoDB');
+    } catch(e) { console.log('[DESPACHO] Erro ao recuperar pendentes:', e.message); }
+}
+setTimeout(recuperarCorridasPendentes, 3000); // Executar 3s após iniciar
+
 const DespachoService = {
     modoDespacho: 'broadcast', // 'broadcast' ou 'proximo'
     tempoAceiteSegundos: 30,
