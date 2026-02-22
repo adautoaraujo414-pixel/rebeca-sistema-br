@@ -34,7 +34,7 @@ const EstatisticasService = {
     },
 
     // Faturamento por período
-    async faturamentoPorPeriodo(periodo, adminId = null = 'hoje') {
+    async faturamentoPorPeriodo(periodo = 'hoje', adminId = null) {
         let dataInicio = new Date();
         dataInicio.setHours(0, 0, 0, 0);
         
@@ -57,7 +57,7 @@ const EstatisticasService = {
     },
 
     // Ranking motoristas
-    async rankingMotoristas(limite, adminId = null = 10) {
+    async rankingMotoristas(limite = 10, adminId = null) {
         const motoristas = await Motorista.find({ ativo: true , ...(adminId ? { adminId } : {})})
             .sort({ corridasRealizadas: -1 })
             .limit(limite);
