@@ -300,6 +300,9 @@ router.post('/chat', auth, async (req, res) => {
         if (!corrida || !corrida.clienteTelefone) {
             return res.json({ sucesso: false, erro: 'Sem corrida ativa' });
         }
+        if (['finalizada', 'cancelada'].includes(corrida.status)) {
+            return res.json({ sucesso: false, erro: 'Corrida encerrada. Chat desativado.' });
+        }
         
         // Enviar via WhatsApp para o cliente
         const EvolutionMultiService = require('../services/evolution-multi.service');
