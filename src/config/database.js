@@ -12,4 +12,7 @@ const connectDB = async () => {
   }
 };
 
+// Conectar imediatamente ao ser importado
+connectDB();
+
 module.exports = connectDB;
