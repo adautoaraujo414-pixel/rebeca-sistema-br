@@ -123,7 +123,7 @@ const EstatisticasService = {
 
     // Estatísticas de cancelamento
     async estatisticasCancelamento(adminId = null) {
-        const corridas = await Corrida.find({, ...(adminId ? { adminId } : {})});
+        const corridas = await Corrida.find({ ...(adminId ? { adminId } : {}) });
         const canceladas = corridas.filter(c => c.status === 'cancelada');
         
         return {
@@ -135,4 +135,5 @@ const EstatisticasService = {
 };
 
 module.exports = EstatisticasService;
+
 
