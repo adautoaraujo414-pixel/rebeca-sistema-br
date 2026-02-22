@@ -204,12 +204,20 @@ router.post('/cheguei', auth, async (req, res) => {
 router.post('/iniciar', auth, async (req, res) => {
     const { corridaId } = req.body;
     try {
-        const corrida = await CorridaService.iniciar(corridaId);
+        const { Corrida } = require('../models');
+        // Lock atômico - evita iniciar duas vezes
+        const locked = await Corrida.findOneAndUpdate(
+            { _id: corridaId, status: { $in: ['aceita', 'aguardando_cliente'] }, motoristaId: req.motorista._id },
+            { status: 'em_andamento', iniciadaEm: new Date() },
+            { new: true }
+        );
+        if (!locked) return res.json({ sucesso: false, erro: 'Corrida não pode ser iniciada' });
+        const corrida = locked;
         if (corrida && corrida.clienteTelefone) {
             const EvolutionMultiService = require('../services/evolution-multi.service');
             const { InstanciaWhatsapp } = require('../models');
             let instancia = await InstanciaWhatsapp.findOne({ adminId: corrida.adminId, status: 'conectado' });
-            if (!instancia) instancia = await InstanciaWhatsapp.findOne({ status: 'conectado' });
+            if (!instancia) instancia = await InstanciaWhatsapp.findOne({ adminId: corrida?.adminId || corridaAntes?.adminId || corridaFinal?.adminId, status: 'conectado' });
             if (instancia) {
                 await EvolutionMultiService.enviarMensagem(instancia._id, corrida.clienteTelefone,
                     '\u2705 *VIAGEM INICIADA!*\n\nSua corrida comecou. Aproveite o trajeto!\n\nBoa viagem! \ud83d\ude97');
@@ -229,7 +237,7 @@ router.post('/finalizar', auth, async (req, res) => {
             const EvolutionMultiService = require('../services/evolution-multi.service');
             const { InstanciaWhatsapp } = require('../models');
             let instancia = await InstanciaWhatsapp.findOne({ adminId: corridaFinal.adminId, status: 'conectado' });
-            if (!instancia) instancia = await InstanciaWhatsapp.findOne({ status: 'conectado' });
+            if (!instancia) instancia = await InstanciaWhatsapp.findOne({ adminId: corrida?.adminId || corridaAntes?.adminId || corridaFinal?.adminId, status: 'conectado' });
             if (instancia) {
                 const valor = precoFinal || corridaFinal.precoFinal || corridaFinal.precoEstimado || 0;
                 // Colocar cliente em modo avaliacao
@@ -255,7 +263,7 @@ router.post('/cancelar', auth, async (req, res) => {
             const EvolutionMultiService = require('../services/evolution-multi.service');
             const { InstanciaWhatsapp } = require('../models');
             let instancia = await InstanciaWhatsapp.findOne({ adminId: corridaAntes.adminId, status: 'conectado' });
-            if (!instancia) instancia = await InstanciaWhatsapp.findOne({ status: 'conectado' });
+            if (!instancia) instancia = await InstanciaWhatsapp.findOne({ adminId: corrida?.adminId || corridaAntes?.adminId || corridaFinal?.adminId, status: 'conectado' });
             if (instancia) {
                 await EvolutionMultiService.enviarMensagem(instancia._id, corridaAntes.clienteTelefone,
                     '\u274c *CORRIDA CANCELADA*\n\nInfelizmente o motorista precisou cancelar.\n\nQuer que eu busque outro? Mande sua localizacao!');
