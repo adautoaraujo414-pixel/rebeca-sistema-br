@@ -1,132 +1,89 @@
 const express = require('express');
 const router = express.Router();
-const UsuariosService = require('../services/usuarios.service');
+const UsuariosService = require('../services/usuarios-mongo.service');
 const LogsService = require('../services/logs.service');
 
-// Login
-router.post('/login', (req, res) => {
+const getAdminId = (req) => req.query.adminId || req.headers['x-admin-id'] || req.body?.adminId || null;
+
+router.post('/login', async (req, res) => {
     const { login, senha } = req.body;
     if (!login || !senha) return res.status(400).json({ error: 'Login e senha obrigatórios' });
-    
-    const result = UsuariosService.login(login, senha);
-    if (result.error) {
-        LogsService.registrar({ tipo: 'login', acao: 'Login falhou: ' + login, detalhes: { erro: result.error } });
-        return res.status(401).json(result);
-    }
-    
-    LogsService.registrar({ tipo: 'login', acao: 'Login realizado', usuarioId: result.usuario.id, usuarioNome: result.usuario.nome });
+    const result = await UsuariosService.login(login, senha);
+    if (result.error) return res.status(401).json(result);
     res.json(result);
 });
 
-// Verificar token
 router.get('/verificar', (req, res) => {
     const token = req.headers.authorization?.replace('Bearer ', '');
     if (!token) return res.status(401).json({ error: 'Token não fornecido' });
-    
     const usuario = UsuariosService.verificarToken(token);
     if (!usuario) return res.status(401).json({ error: 'Token inválido' });
-    
     res.json({ valido: true, usuario });
 });
 
-// Logout
-router.post('/logout', (req, res) => {
-    const token = req.headers.authorization?.replace('Bearer ', '');
-    if (token) UsuariosService.logout(token);
-    res.json({ sucesso: true });
+router.post('/logout', (req, res) => res.json(UsuariosService.logout()));
+
+router.get('/niveis', (req, res) => res.json(UsuariosService.listarNiveis()));
+
+router.get('/estatisticas', async (req, res) => res.json(await UsuariosService.obterEstatisticas()));
+
+router.get('/', async (req, res) => {
+    const adminId = getAdminId(req);
+    const filtros = { ativo: req.query.ativo === 'true' ? true : req.query.ativo === 'false' ? false : undefined, busca: req.query.busca };
+    res.json(await UsuariosService.listarTodos(filtros, adminId));
 });
 
-// Listar níveis
-router.get('/niveis', (req, res) => {
-    res.json(UsuariosService.listarNiveis());
-});
-
-// Estatísticas
-router.get('/estatisticas', (req, res) => {
-    res.json(UsuariosService.obterEstatisticas());
-});
-
-// Listar usuários
-router.get('/', (req, res) => {
-    const filtros = { nivel: req.query.nivel, ativo: req.query.ativo === 'true' ? true : req.query.ativo === 'false' ? false : undefined, busca: req.query.busca };
-    res.json(UsuariosService.listarTodos(filtros));
-});
-
-// Buscar por ID
-router.get('/:id', (req, res) => {
-    const usuario = UsuariosService.buscarPorId(req.params.id);
+router.get('/:id', async (req, res) => {
+    const usuario = await UsuariosService.buscarPorId(req.params.id);
     if (!usuario) return res.status(404).json({ error: 'Usuário não encontrado' });
     res.json(usuario);
 });
 
-// Criar usuário
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
+    const adminId = getAdminId(req);
     const { nome, email, login, senha, nivel, telefone } = req.body;
-    if (!nome || !email || !login) return res.status(400).json({ error: 'Nome, email e login obrigatórios' });
-    
-    const result = UsuariosService.criar({ nome, email, login, senha, nivel, telefone });
+    if (!nome || !email) return res.status(400).json({ error: 'Nome e email obrigatórios' });
+    const result = await UsuariosService.criar({ nome, email, login, senha, nivel, telefone }, adminId);
     if (result.error) return res.status(400).json(result);
-    
-    LogsService.registrar({ tipo: 'usuario', acao: 'Usuário criado: ' + nome, detalhes: { nivel } });
+    LogsService.registrar({ tipo: 'usuario', acao: 'Usuário criado: ' + nome, adminId });
     res.status(201).json(result);
 });
 
-// Atualizar usuário
-router.put('/:id', (req, res) => {
-    const result = UsuariosService.atualizar(req.params.id, req.body);
+router.put('/:id', async (req, res) => {
+    const result = await UsuariosService.atualizar(req.params.id, req.body);
     if (!result) return res.status(404).json({ error: 'Usuário não encontrado' });
-    if (result.error) return res.status(400).json(result);
-    
-    LogsService.registrar({ tipo: 'usuario', acao: 'Usuário atualizado', detalhes: { id: req.params.id } });
     res.json({ sucesso: true, usuario: result });
 });
 
-// Alterar senha
-router.put('/:id/senha', (req, res) => {
+router.put('/:id/senha', async (req, res) => {
     const { senhaAtual, novaSenha } = req.body;
     if (!senhaAtual || !novaSenha) return res.status(400).json({ error: 'Senhas obrigatórias' });
-    
-    const result = UsuariosService.alterarSenha(req.params.id, senhaAtual, novaSenha);
+    const result = await UsuariosService.alterarSenha(req.params.id, senhaAtual, novaSenha);
     if (result.error) return res.status(400).json(result);
-    
     res.json({ sucesso: true });
 });
 
-// Resetar senha (admin)
-router.post('/:id/resetar-senha', (req, res) => {
-    const result = UsuariosService.resetarSenha(req.params.id);
-    if (result.error) return res.status(400).json(result);
-    
-    LogsService.registrar({ tipo: 'usuario', acao: 'Senha resetada', detalhes: { id: req.params.id } });
+router.post('/:id/resetar-senha', async (req, res) => {
+    const result = await UsuariosService.resetarSenha(req.params.id);
     res.json(result);
 });
 
-// Ativar usuário
-router.put('/:id/ativar', (req, res) => {
-    const result = UsuariosService.ativar(req.params.id);
+router.put('/:id/ativar', async (req, res) => {
+    const result = await UsuariosService.ativar(req.params.id);
     if (!result) return res.status(404).json({ error: 'Usuário não encontrado' });
-    
-    LogsService.registrar({ tipo: 'usuario', acao: 'Usuário ativado', detalhes: { id: req.params.id } });
     res.json({ sucesso: true, usuario: result });
 });
 
-// Desativar usuário
-router.put('/:id/desativar', (req, res) => {
-    const result = UsuariosService.desativar(req.params.id);
+router.put('/:id/desativar', async (req, res) => {
+    const result = await UsuariosService.desativar(req.params.id);
     if (!result) return res.status(404).json({ error: 'Usuário não encontrado' });
-    if (result.error) return res.status(400).json(result);
-    
-    LogsService.registrar({ tipo: 'usuario', acao: 'Usuário desativado', detalhes: { id: req.params.id } });
     res.json({ sucesso: true, usuario: result });
 });
 
-// Excluir usuário
-router.delete('/:id', (req, res) => {
-    const result = UsuariosService.excluir(req.params.id);
-    if (result.error) return res.status(400).json(result);
-    
+router.delete('/:id', async (req, res) => {
+    const result = await UsuariosService.excluir(req.params.id);
     LogsService.registrar({ tipo: 'usuario', acao: 'Usuário excluído', detalhes: { id: req.params.id } });
-    res.json({ sucesso: true });
+    res.json(result);
 });
 
 module.exports = router;
