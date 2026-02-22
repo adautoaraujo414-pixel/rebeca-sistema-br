@@ -2,7 +2,7 @@ const { Corrida, Motorista, Cliente } = require('../models');
 
 const EstatisticasService = {
     // Corridas por dia
-    async corridasPorDia(dias = 7) {
+    async corridasPorDia(dias, adminId = null = 7) {
         const resultado = [];
         
         for (let i = dias - 1; i >= 0; i--) {
@@ -34,7 +34,7 @@ const EstatisticasService = {
     },
 
     // Faturamento por período
-    async faturamentoPorPeriodo(periodo = 'hoje') {
+    async faturamentoPorPeriodo(periodo, adminId = null = 'hoje') {
         let dataInicio = new Date();
         dataInicio.setHours(0, 0, 0, 0);
         
@@ -57,8 +57,8 @@ const EstatisticasService = {
     },
 
     // Ranking motoristas
-    async rankingMotoristas(limite = 10) {
-        const motoristas = await Motorista.find({ ativo: true })
+    async rankingMotoristas(limite, adminId = null = 10) {
+        const motoristas = await Motorista.find({ ativo: true , ...(adminId ? { adminId } : {})})
             .sort({ corridasRealizadas: -1 })
             .limit(limite);
         
@@ -71,8 +71,8 @@ const EstatisticasService = {
     },
 
     // Horários de pico
-    async horariosPico() {
-        const corridas = await Corrida.find({ status: 'finalizada' });
+    async horariosPico(adminId = null) {
+        const corridas = await Corrida.find({ status: 'finalizada' , ...(adminId ? { adminId } : {})});
         const horarios = {};
         
         corridas.forEach(c => {
@@ -88,7 +88,7 @@ const EstatisticasService = {
     },
 
     // Dashboard completo
-    async dashboardCompleto() {
+    async dashboardCompleto(adminId = null) {
         const hoje = new Date();
         hoje.setHours(0, 0, 0, 0);
         
@@ -122,8 +122,8 @@ const EstatisticasService = {
     },
 
     // Estatísticas de cancelamento
-    async estatisticasCancelamento() {
-        const corridas = await Corrida.find({});
+    async estatisticasCancelamento(adminId = null) {
+        const corridas = await Corrida.find({, ...(adminId ? { adminId } : {})});
         const canceladas = corridas.filter(c => c.status === 'cancelada');
         
         return {

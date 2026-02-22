@@ -5,7 +5,9 @@ const EstatisticasService = require('../services/estatisticas.service');
 // Dashboard completo
 router.get('/dashboard', async (req, res) => {
     try {
-        const dashboard = await EstatisticasService.dashboardCompleto();
+        const adminId = req.query.adminId || req.headers['x-admin-id'];
+        if (!adminId) return res.status(400).json({ error: 'adminId obrigatório' });
+        const dashboard = await EstatisticasService.dashboardCompleto(adminId);
         res.json(dashboard);
     } catch (e) {
         res.status(500).json({ erro: e.message });
@@ -15,8 +17,10 @@ router.get('/dashboard', async (req, res) => {
 // Corridas por dia
 router.get('/corridas-por-dia', async (req, res) => {
     try {
+        const adminId = req.query.adminId || req.headers['x-admin-id'];
+        if (!adminId) return res.status(400).json({ error: 'adminId obrigatório' });
         const dias = parseInt(req.query.dias) || 7;
-        const resultado = await EstatisticasService.corridasPorDia(dias);
+        const resultado = await EstatisticasService.corridasPorDia(dias, adminId);
         res.json(resultado);
     } catch (e) {
         res.status(500).json({ erro: e.message });
@@ -26,8 +30,10 @@ router.get('/corridas-por-dia', async (req, res) => {
 // Faturamento por período
 router.get('/faturamento', async (req, res) => {
     try {
+        const adminId = req.query.adminId || req.headers['x-admin-id'];
+        if (!adminId) return res.status(400).json({ error: 'adminId obrigatório' });
         const periodo = req.query.periodo || 'hoje';
-        const resultado = await EstatisticasService.faturamentoPorPeriodo(periodo);
+        const resultado = await EstatisticasService.faturamentoPorPeriodo(periodo, adminId);
         res.json(resultado);
     } catch (e) {
         res.status(500).json({ erro: e.message });
@@ -37,8 +43,10 @@ router.get('/faturamento', async (req, res) => {
 // Ranking motoristas
 router.get('/ranking', async (req, res) => {
     try {
+        const adminId = req.query.adminId || req.headers['x-admin-id'];
+        if (!adminId) return res.status(400).json({ error: 'adminId obrigatório' });
         const limite = parseInt(req.query.limite) || 10;
-        const ranking = await EstatisticasService.rankingMotoristas(limite);
+        const ranking = await EstatisticasService.rankingMotoristas(limite, adminId);
         res.json(ranking);
     } catch (e) {
         res.status(500).json({ erro: e.message });
@@ -48,7 +56,9 @@ router.get('/ranking', async (req, res) => {
 // Horários de pico
 router.get('/horarios-pico', async (req, res) => {
     try {
-        const horarios = await EstatisticasService.horariosPico();
+        const adminId = req.query.adminId || req.headers['x-admin-id'];
+        if (!adminId) return res.status(400).json({ error: 'adminId obrigatório' });
+        const horarios = await EstatisticasService.horariosPico(adminId);
         res.json(horarios);
     } catch (e) {
         res.status(500).json({ erro: e.message });
@@ -58,7 +68,9 @@ router.get('/horarios-pico', async (req, res) => {
 // Estatísticas de cancelamento
 router.get('/cancelamentos', async (req, res) => {
     try {
-        const stats = await EstatisticasService.estatisticasCancelamento();
+        const adminId = req.query.adminId || req.headers['x-admin-id'];
+        if (!adminId) return res.status(400).json({ error: 'adminId obrigatório' });
+        const stats = await EstatisticasService.estatisticasCancelamento(adminId);
         res.json(stats);
     } catch (e) {
         res.status(500).json({ erro: e.message });
