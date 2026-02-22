@@ -69,16 +69,18 @@ router.post('/aceitar', auth, async (req, res) => {
         const { Corrida, InstanciaWhatsapp } = require('../models');
         const EvolutionMultiService = require('../services/evolution-multi.service');
         
-        const corridaExistente = await Corrida.findById(corridaId);
-        if (!corridaExistente) {
-            return res.status(404).json({ erro: 'Corrida não encontrada' });
+        // LOCK ATÔMICO - só um motorista consegue aceitar
+        const corridaLocked = await Corrida.findOneAndUpdate(
+            { _id: corridaId, status: 'pendente' },
+            { status: 'aceita', motoristaId: req.motorista._id, motoristaNome: req.motorista.nome || req.motorista.nomeCompleto, aceitaEm: new Date() },
+            { new: true }
+        );
+        if (!corridaLocked) {
+            const existente = await Corrida.findById(corridaId);
+            console.log('[ACEITAR] Corrida já processada:', corridaId, '- Status:', existente?.status);
+            return res.json({ sucesso: true, corrida: existente, mensagem: 'Corrida já aceita por outro motorista' });
         }
-        if (corridaExistente.status !== 'pendente') {
-            console.log('[ACEITAR] Corrida já processada:', corridaId, '- Status:', corridaExistente.status);
-            return res.json({ sucesso: true, corrida: corridaExistente, mensagem: 'Corrida já aceita' });
-        }
-        
-        const corrida = await CorridaService.atribuirMotorista(corridaId, req.motorista._id, req.motorista.nome);
+        const corrida = corridaLocked;
         
         // Colocar cliente em modo corrida
         try {
@@ -92,7 +94,9 @@ router.post('/aceitar', auth, async (req, res) => {
             console.log('[ACEITAR] Iniciando notificação para:', clienteTel);
             
             // Buscar TODAS as instâncias e tentar cada uma
-            const instancias = await InstanciaWhatsapp.find({}).sort({ ultimaConexao: -1 });
+            const adminIdCorrida = corrida.adminId;
+            const queryInstancia = adminIdCorrida ? { adminId: adminIdCorrida } : {};
+            const instancias = await InstanciaWhatsapp.find(queryInstancia).sort({ ultimaConexao: -1 });
             console.log('[ACEITAR] Total instancias encontradas:', instancias.length);
             
             if (instancias.length === 0) {
