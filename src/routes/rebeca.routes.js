@@ -22,15 +22,33 @@ router.put('/config', (req, res) => {
 });
 
 // ==================== PROCESSAR MENSAGEM ====================
+// Deduplicação de mensagens - evita Rebeca responder 2x ao mesmo webhook
+if (!global._msgProcessadas) global._msgProcessadas = new Map();
+setInterval(() => {
+    const agora = Date.now();
+    for (const [k, v] of global._msgProcessadas) {
+        if (agora - v > 60000) global._msgProcessadas.delete(k);
+    }
+}, 60000);
+
 router.post('/mensagem', async (req, res) => {
     try {
-        const { telefone, mensagem, nome, adminId, instanciaId } = req.body;
+        const { telefone, mensagem, nome, adminId, instanciaId, messageId } = req.body;
         if (!telefone || !mensagem) {
             return res.status(400).json({ error: 'Telefone e mensagem obrigatórios' });
         }
         if (!adminId) {
             return res.status(400).json({ error: 'adminId obrigatório' });
         }
+
+        // Anti-duplicação: ignorar mesmo messageId nos últimos 60s
+        const dedupKey = messageId || (telefone + '_' + mensagem.slice(0, 30) + '_' + Math.floor(Date.now() / 3000));
+        if (global._msgProcessadas.has(dedupKey)) {
+            console.log('[REBECA] Mensagem duplicada ignorada:', dedupKey);
+            return res.json({ sucesso: true, resposta: null, duplicada: true });
+        }
+        global._msgProcessadas.set(dedupKey, Date.now());
+
         const resposta = await RebecaService.processarMensagem(telefone, mensagem, nome, { adminId, instanciaId });
         res.json({ sucesso: true, resposta });
     } catch (error) {
