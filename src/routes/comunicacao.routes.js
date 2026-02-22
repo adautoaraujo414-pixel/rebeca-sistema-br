@@ -12,6 +12,9 @@ router.post('/motorista-para-cliente', async (req, res) => {
         
         const corrida = await Corrida.findById(corridaId);
         if (!corrida) return res.status(404).json({ erro: 'Corrida não encontrada' });
+        if (corrida.adminId && motorista.adminId && corrida.adminId.toString() !== motorista.adminId.toString()) {
+            return res.status(403).json({ erro: 'Acesso negado' });
+        }
         
         // Verificar se corrida ainda não iniciou
         if (corrida.status === 'em_andamento' || corrida.status === 'finalizada') {

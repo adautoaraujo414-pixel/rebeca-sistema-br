@@ -5,7 +5,9 @@ const { ContatoEmergencia } = require('../models');
 // Listar todos contatos
 router.get('/', async (req, res) => {
     try {
-        const contatos = await ContatoEmergencia.find({ ativo: true }).sort({ categoria: 1 });
+        const adminId = req.query.adminId || req.headers['x-admin-id'];
+        if (!adminId) return res.status(400).json({ error: 'adminId obrigatório' });
+        const contatos = await ContatoEmergencia.find({ ativo: true, adminId }).sort({ categoria: 1 });
         res.json(contatos);
     } catch (e) {
         res.status(500).json({ erro: e.message });

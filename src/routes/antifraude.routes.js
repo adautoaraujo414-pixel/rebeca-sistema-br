@@ -5,16 +5,15 @@ const LogsService = require('../services/logs.service');
 
 // ==================== DASHBOARD ====================
 router.get('/estatisticas', (req, res) => {
-    res.json(AntiFraudeService.obterEstatisticas());
+    const adminId = req.query.adminId || req.headers['x-admin-id'];
+    res.json(AntiFraudeService.obterEstatisticas(adminId));
 });
 
 // ==================== ALERTAS ====================
 router.get('/alertas', (req, res) => {
-    const filtros = {
-        status: req.query.status,
-        nivel: req.query.nivel,
-        tipo: req.query.tipo
-    };
+    const adminId = req.query.adminId || req.headers['x-admin-id'];
+    if (!adminId) return res.status(400).json({ error: 'adminId obrigatório' });
+    const filtros = { adminId, status: req.query.status, nivel: req.query.nivel, tipo: req.query.tipo };
     res.json(AntiFraudeService.listarAlertas(filtros));
 });
 

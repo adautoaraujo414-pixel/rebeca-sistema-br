@@ -8,6 +8,7 @@ const LogsService = require('../services/logs.service');
 
 // ==================== CONFIGURAÇÃO ====================
 router.get('/config', (req, res) => {
+    const adminId = req.query.adminId || req.headers['x-admin-id'];
     res.json({
         modo: DespachoService.getModo(),
         tempoAceiteSegundos: DespachoService.tempoAceiteSegundos,
