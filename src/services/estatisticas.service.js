@@ -135,3 +135,4 @@ const EstatisticasService = {
 };
 
 module.exports = EstatisticasService;
+
