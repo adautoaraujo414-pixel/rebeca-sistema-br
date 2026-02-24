@@ -98,7 +98,6 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
         if (!res.headersSent) res.json({ received: true });
 
         if (dados.event === 'messages.upsert') {
-            console.log('[DEBUG] Dados:', JSON.stringify(dados).substring(0, 800));
             const mensagens = dados.data?.messages || (dados.data ? [dados.data] : []);
             
             // Anti-duplicacao de mensagens
@@ -148,6 +147,7 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                 const remoteJid = msg.key?.remoteJid || '';
                 if (remoteJid.includes('@g.us')) continue; // Ignorar grupos
                 const telefone = remoteJid.replace('@s.whatsapp.net', '');
+                console.log('[REBECA] Mensagem de', telefone, ':', (msg.message?.conversation || msg.message?.extendedTextMessage?.text || msg.messageType || '').substring(0, 80));
                 const nome = msg.pushName || 'Cliente';
                 
                 let conteudo = null;
