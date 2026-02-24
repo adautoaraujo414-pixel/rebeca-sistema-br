@@ -600,6 +600,10 @@
                             <label style="font-weight:bold;display:block;margin-bottom:5px">Mensagem de Boas-Vindas (cliente novo)</label>
                             <textarea id="empresaBoasVindas" rows="3" placeholder="Ex: Bem-vindo ao nosso serviço de transporte!" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px"></textarea>
                         </div>
+                        <div style="margin-bottom:15px">
+                            <label style="font-weight:bold;display:block;margin-bottom:5px">🏙️ Cidade de Atuação <small style="color:#666;font-weight:normal">(ajuda a Rebeca encontrar endereços)</small></label>
+                            <input type="text" id="empresaCidadeAtuacao" class="form-control" placeholder="Ex: Frutal, MG" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px">
+                        </div>
                         <button class="btn btn-primary" onclick="salvarEmpresa()" style="padding:12px;font-size:16px">💾 Salvar</button>
                         <div id="empresaMsg" style="display:none;padding:10px;border-radius:8px;text-align:center"></div>
                     </div>
@@ -1215,6 +1219,7 @@ async function testarAnaliseIA() {
                 document.getElementById('empresaHorario').value = d.empresa.horario || '24 horas';
                 document.getElementById('empresaPagamento').value = d.empresa.pagamento || 'Dinheiro, PIX';
                 document.getElementById('empresaBoasVindas').value = d.empresa.boasVindas || '';
+                document.getElementById('empresaCidadeAtuacao').value = d.empresa.cidadeAtuacao || '';
             }
         } catch(e) { console.log('Erro empresa:', e); }
     }
@@ -1224,7 +1229,8 @@ async function testarAnaliseIA() {
             telefone: document.getElementById('empresaTelefone').value,
             horario: document.getElementById('empresaHorario').value,
             pagamento: document.getElementById('empresaPagamento').value,
-            boasVindas: document.getElementById('empresaBoasVindas').value
+            boasVindas: document.getElementById('empresaBoasVindas').value,
+            cidadeAtuacao: document.getElementById('empresaCidadeAtuacao').value
         };
         try {
             const r = await fetch('/api/auth/empresa', { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify(dados) });

@@ -150,7 +150,8 @@ router.put('/empresa', async (req, res) => {
             telefone: req.body.telefone,
             horario: req.body.horario,
             pagamento: req.body.pagamento,
-            boasVindas: req.body.boasVindas
+            boasVindas: req.body.boasVindas,
+            cidadeAtuacao: req.body.cidadeAtuacao
         }, { new: true });
         res.json({ sucesso: true, admin });
     } catch(e) { res.json({ sucesso: false, erro: e.message }); }
