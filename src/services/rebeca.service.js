@@ -753,7 +753,7 @@ const RebecaService = {
                 try {
                     const { Admin } = require('../models');
                     const adminDoc = conversa.adminId ? await Admin.findById(conversa.adminId) : null;
-                    const cidade = adminDoc?.cidade || '';
+                    const cidade = adminDoc?.cidadeAtuacao || adminDoc?.cidade || '';
                     if (cidade) {
                         const val2 = await RebecaService.validarEndereco(msgOriginal + ', ' + cidade);
                         if (val2.valido) {
