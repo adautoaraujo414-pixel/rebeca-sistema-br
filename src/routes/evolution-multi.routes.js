@@ -98,7 +98,11 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
         if (!res.headersSent) res.json({ received: true });
 
         if (dados.event === 'messages.upsert') {
-            const mensagens = dados.data?.messages || (dados.data ? [dados.data] : []);
+            // Suprimir logs de grupos e mensagens proprias sem conteudo relevante
+            const todasMsgs = dados.data?.messages || (dados.data ? [dados.data] : []);
+            // Pre-filtro: ignorar grupos silenciosamente (sem log)
+            const mensagens = todasMsgs.filter(m => !m.key?.remoteJid?.includes('@g.us'));
+            if (mensagens.length === 0) return;
             
             // Anti-duplicacao de mensagens
             if (!global._msgProcessadas) global._msgProcessadas = new Map();
