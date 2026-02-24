@@ -185,11 +185,20 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                             }
                         } else {
                             console.log('[WEBHOOK] Audio sem URL');
-                            conteudo = '[AUDIO]';
+                            conteudo = null;
+                            // Avisar cliente que nao consegue ouvir audio
+                            try {
+                                const instancia = await InstanciaWhatsapp.findOne({ _id: instanciaId, status: 'conectado' });
+                                if (instancia) await EvolutionMultiService.enviarMensagem(instanciaId, telefone, '🎵 Recebi um áudio, mas não consigo ouvir. Pode digitar o endereço ou sua mensagem?');
+                            } catch(e2) {}
                         }
                     } catch(e) {
                         console.log('[WEBHOOK] Erro transcrever audio:', e.message);
-                        conteudo = '[AUDIO]';
+                        conteudo = null;
+                        try {
+                            const instancia = await InstanciaWhatsapp.findOne({ _id: instanciaId, status: 'conectado' });
+                            if (instancia) await EvolutionMultiService.enviarMensagem(instanciaId, telefone, '🎵 Recebi um áudio, mas não consigo processar agora. Pode digitar sua mensagem?');
+                        } catch(e2) {}
                     }
                 }
                 
