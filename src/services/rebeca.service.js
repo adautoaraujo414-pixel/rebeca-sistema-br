@@ -392,6 +392,24 @@ const RebecaService = {
                     
                     if (resultadoGPT && resultadoGPT.resposta) {
                         console.log('[OPENAI] Intenção:', resultadoGPT.intencao);
+            
+            // MODO SECRETÁRIA: se cliente manda algo fora do contexto de corrida
+            const intencoesNaoCorrela = ['AGENDAMENTO', 'PERGUNTA_GERAL', 'RECLAMACAO', 'ELOGIO', 'OUTRO', 'FORA_CONTEXTO'];
+            if (intencoesNaoCorrela.includes(resultadoGPT.intencao) && resultadoGPT.intencao !== 'SAUDACAO') {
+                try {
+                    const { Admin } = require('./models') || require('../models');
+                    const adminDoc = await Admin.findById(adminId);
+                    if (adminDoc?.telefone) {
+                        const msgAdmin = `📩 Mensagem de cliente (${telefone}):
+
+"${msg}"
+
+Responda diretamente para ele se necessário.`;
+                        await EvolutionService.enviarMensagem(instanciaId, adminDoc.telefone, msgAdmin);
+                        console.log('[SECRETARIA] Notificado admin sobre mensagem fora de contexto');
+                    }
+                } catch(e2) { console.log('[SECRETARIA] Erro notificar admin:', e2.message); }
+            }
                         
                         // Saudação, agradecimento, outro
                         if (['SAUDACAO', 'AGRADECIMENTO', 'INFORMACAO', 'OUTRO'].includes(resultadoGPT.intencao)) {

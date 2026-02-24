@@ -164,37 +164,34 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                 } else if (msg.message?.liveLocationMessage) {
                     conteudo = { latitude: msg.message.liveLocationMessage.degreesLatitude, longitude: msg.message.liveLocationMessage.degreesLongitude };
                 } else if (msg.message?.audioMessage) {
-                    // Áudio recebido - tentar transcrever
+                    // Áudio recebido - baixar via Evolution API e transcrever
                     console.log('[WEBHOOK] Audio recebido de', telefone);
                     try {
-                        const audioMsg = msg.message.audioMessage;
-                        const mediaUrl = audioMsg.url || audioMsg.mediaUrl;
+                        const instanciaDoc = await InstanciaWhatsapp.findOne({ _id: instanciaId });
+                        const nomeInstancia = instanciaDoc?.nomeInstancia;
                         
-                        if (mediaUrl) {
-                            // Baixar áudio
-                            const audioResponse = await axios.get(mediaUrl, { 
-                                responseType: 'arraybuffer',
-                                timeout: 15000 
-                            });
-                            
-                            // Transcrever
-                            const mimeType = audioMsg.mimetype || 'audio/ogg';
-                            const transcricao = await OpenAIRebecaService.transcreverAudio(audioResponse.data, mimeType);
-                            
+                        // Usar Evolution API para descriptografar o audio
+                        const base64Resp = await axios.post(
+                            `${process.env.EVOLUTION_API_URL}/chat/getBase64FromMediaMessage/${nomeInstancia}`,
+                            { message: msg, convertToMp4: false },
+                            { headers: { 'apikey': process.env.EVOLUTION_API_KEY }, timeout: 20000 }
+                        );
+                        
+                        const base64 = base64Resp.data?.base64;
+                        if (base64) {
+                            const audioBuffer = Buffer.from(base64, 'base64');
+                            const mimeType = msg.message.audioMessage.mimetype || 'audio/ogg';
+                            const transcricao = await OpenAIRebecaService.transcreverAudio(audioBuffer, mimeType);
                             if (transcricao) {
                                 conteudo = transcricao;
-                                console.log('[WEBHOOK] Audio transcrito:', transcricao);
+                                console.log('[WEBHOOK] Audio transcrito:', transcricao.substring(0, 80));
                             } else {
-                                conteudo = '[AUDIO]';
+                                conteudo = null;
+                                await EvolutionMultiService.enviarMensagem(instanciaId, telefone, '🎵 Não consegui entender o áudio. Pode digitar o endereço?');
                             }
                         } else {
-                            console.log('[WEBHOOK] Audio sem URL');
                             conteudo = null;
-                            // Avisar cliente que nao consegue ouvir audio
-                            try {
-                                const instancia = await InstanciaWhatsapp.findOne({ _id: instanciaId, status: 'conectado' });
-                                if (instancia) await EvolutionMultiService.enviarMensagem(instanciaId, telefone, '🎵 Recebi um áudio, mas não consigo ouvir. Pode digitar o endereço ou sua mensagem?');
-                            } catch(e2) {}
+                            await EvolutionMultiService.enviarMensagem(instanciaId, telefone, '🎵 Não consegui processar o áudio. Pode digitar?');
                         }
                     } catch(e) {
                         console.log('[WEBHOOK] Erro transcrever audio:', e.message);
