@@ -135,13 +135,41 @@
             const errorDiv = document.getElementById('errorMessage');
             
             try {
-                const response = await fetch('/api/auth/login', {
+                // Tentar login como admin primeiro, depois como sub-usuário
+                let response = await fetch('/api/auth/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ usuario, senha })
                 });
+                let data = await response.json();
                 
-                const data = await response.json();
+                // Se falhou como admin, tentar como sub-usuário
+                if (!data.sucesso) {
+                    const resp2 = await fetch('/api/usuarios/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ login: usuario, senha })
+                    });
+                    const data2 = await resp2.json();
+                    if (data2.sucesso || data2.token) {
+                        // Sub-usuário logado - normalizar formato
+                        data = {
+                            sucesso: true,
+                            token: data2.token,
+                            usuario: {
+                                _id: data2.usuario?.adminId || data2.adminId,
+                                id: data2.usuario?.adminId || data2.adminId,
+                                nome: data2.usuario?.nome || usuario,
+                                email: data2.usuario?.email || '',
+                                empresa: data2.usuario?.empresa || '',
+                                role: data2.usuario?.nivel || 'operador',
+                                subUsuario: true,
+                                subUsuarioId: data2.usuario?.id || data2.usuario?._id
+                            }
+                        };
+                    }
+                }
+                // Usar data já populado acima
                 
                 if (data.sucesso) {
                     localStorage.setItem('token', data.token);
