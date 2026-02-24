@@ -168,13 +168,27 @@ const RebecaService = {
             };
         }
         
+        // Detectar endereço suspeito (Maps achou mas com baixa confiança)
+        const locationType = resultado.locationType || '';
+        const types = resultado.types || [];
+        const partialMatch = resultado.partialMatch || false;
+        
+        // Suspeito quando:
+        // 1. partial_match: Maps não tinha certeza do endereço
+        // 2. location_type APPROXIMATE: Maps só achou área geral, não rua
+        // 3. types só tem locality/political: achou cidade/bairro, não rua específica
+        const apenasLocalidade = types.length > 0 && types.every(t => ['locality','political','administrative_area_level_1','administrative_area_level_2','country','sublocality','sublocality_level_1'].includes(t));
+        const suspeito = partialMatch || locationType === 'APPROXIMATE' || apenasLocalidade;
+        
         return {
             valido: true, precisao: 'exato',
             endereco: resultado.endereco,
             latitude: resultado.latitude,
             longitude: resultado.longitude,
             componentes: resultado.componentes,
-            precisaObservacao: false
+            precisaObservacao: false,
+            suspeito,
+            motivoSuspeita: partialMatch ? 'partial_match' : locationType === 'APPROXIMATE' ? 'approximate' : apenasLocalidade ? 'so_localidade' : null
         };
     },
 
@@ -801,7 +815,17 @@ Qual o número?`;
 _Digite CANCELAR se precisar_';
                 }
             } else {
-                // FLUXO DIRETO: Achou no Maps - criar corrida imediatamente!
+                // FLUXO DIRETO: Achou no Maps - verificar se endereço é suspeito
+                if (validacao.suspeito) {
+                    // Endereço encontrado mas com baixa confiança - pedir confirmação
+                    conversa.dados.origemTexto = msgOriginal;
+                    conversa.dados.origemValidadaSuspeita = validacao;
+                    conversa.etapa = 'confirmar_endereco_suspeito';
+                    conversas.set(telefone, conversa);
+                    return '📍 Encontrei: *' + validacao.endereco + '*
+
+Esse é o endereço correto? Responda *SIM* ou corrija.';
+                }
                 conversa.dados.origem = validacao.endereco;
                 conversa.dados.origemValidada = validacao;
                 conversa.dados.calculo = {
@@ -962,6 +986,34 @@ _Digite CANCELAR se precisar_';
             }
         }
         // ========== PEDIR BAIRRO ==========
+        else if (conversa.etapa === 'confirmar_endereco_suspeito') {
+            const confirmou = /^s(im)?$|^ok$|^sim$|^yes$/i.test(msg.trim());
+            if (confirmou) {
+                // Confirmar e usar endereço validado
+                const val = conversa.dados.origemValidadaSuspeita;
+                conversa.dados.origem = val.endereco;
+                conversa.dados.origemValidada = val;
+                conversa.dados.calculo = { origem: { endereco: val.endereco, latitude: val.latitude, longitude: val.longitude }, destino: null, distanciaKm: 0, tempoMinutos: 0, preco: 15, faixa: { nome: 'padrao', multiplicador: 1 } };
+                const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
+                if (corrida.cooldown) return '⏳ Aguarde ' + Math.ceil(corrida.segundosRestantes / 60) + ' min para nova corrida.';
+                if (corrida.duplicada) return '⚠️ Você já tem corrida ativa! Digite *CANCELAR* para cancelar.';
+                conversa.etapa = 'aguardando_motorista';
+                conversa.dados.corridaId = corrida.id;
+                conversas.set(telefone, conversa);
+                return '✅ Confirmado!
+
+📍 ' + val.endereco + '
+
+⏳ Buscando motorista...
+_Digite CANCELAR se precisar_';
+            } else {
+                // Cliente corrigiu o endereço
+                conversa.etapa = 'inicio';
+                conversa.dados.origemValidadaSuspeita = null;
+                conversas.set(telefone, conversa);
+                return '📍 Ok! Me manda o endereço correto então:';
+            }
+        }
         else if (conversa.etapa === 'pedir_numero_origem') {
             // Cliente mandou endereço sem número, pedimos o número
             const numero = msgOriginal.trim();

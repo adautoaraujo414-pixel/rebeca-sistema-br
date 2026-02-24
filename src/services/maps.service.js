@@ -27,7 +27,10 @@ const MapsService = {
                     endereco: result.formatted_address,
                     latitude: result.geometry.location.lat,
                     longitude: result.geometry.location.lng,
-                    componentes: MapsService.extrairComponentes(result.address_components)
+                    componentes: MapsService.extrairComponentes(result.address_components),
+                    locationType: result.geometry.location_type,
+                    types: result.types || [],
+                    partialMatch: result.partial_match || false
                 };
             }
             
