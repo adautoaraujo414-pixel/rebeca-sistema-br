@@ -410,7 +410,7 @@ const RebecaService = {
                         
                         // Endereço sem número
                         if (resultadoGPT.intencao === 'INFORMAR_ENDERECO_SEM_NUMERO') {
-                            conversa.dados.origemTexto = msgOriginal;
+                            // Tentar com cidade do admin
                             conversa.etapa = 'pedir_numero_origem';
                             conversas.set(telefone, conversa);
                             return resultadoGPT.resposta;
@@ -418,8 +418,8 @@ const RebecaService = {
                         
                         // Endereço sem bairro
                         if (resultadoGPT.intencao === 'INFORMAR_ENDERECO_SEM_BAIRRO') {
-                            conversa.dados.origemTexto = msgOriginal;
-                            conversa.etapa = 'pedir_bairro_origem';
+                            // Tentar com cidade do admin
+                            conversa.etapa = 'pedir_numero_origem';
                             conversas.set(telefone, conversa);
                             return resultadoGPT.resposta;
                         }
@@ -721,11 +721,13 @@ const RebecaService = {
             const validacao = await RebecaService.validarEndereco(msgOriginal);
             
             if (!validacao.valido) {
-                // Nao achou no Maps - perguntar bairro
-                conversa.dados.origemTexto = msgOriginal;
-                conversa.etapa = 'pedir_bairro_origem';
+                // Nao achou no Maps - tentar com cidade
+                // Tentar com cidade do admin
+                conversa.etapa = 'pedir_numero_origem';
                 conversas.set(telefone, conversa);
-                return `📍 ${msgOriginal}\n\nQual bairro?`;
+                return `📍 ${msgOriginal}
+
+Qual o número?`;
             } else {
                 // FLUXO DIRETO: Achou no Maps - criar corrida imediatamente!
                 conversa.dados.origem = validacao.endereco;
@@ -902,7 +904,7 @@ const RebecaService = {
                     resposta = '📍 ' + validacao.endereco + '\n\nReferência? (ou *0* se não tiver)';
                 } else {
                     conversa.dados.origem = enderecoCompleto;
-                    conversa.etapa = 'pedir_bairro_origem';
+                    conversa.etapa = 'pedir_numero_origem';
                     resposta = '📍 Qual o *bairro*?';
                 }
             } else {
@@ -1108,8 +1110,8 @@ const RebecaService = {
                 const validacao = await RebecaService.validarEndereco(msgOriginal);
                 if (!validacao.valido) {
                     // Aceitar texto e pedir bairro
-                    conversa.dados.origemTexto = msgOriginal;
-                    conversa.etapa = 'pedir_bairro_origem';
+                    // Tentar com cidade do admin
+                    conversa.etapa = 'pedir_numero_origem';
                     resposta = `📍 ${msgOriginal}\n\nQual bairro?`;
                 } else {
                     conversa.dados.origem = validacao.endereco;
@@ -1349,7 +1351,7 @@ const RebecaService = {
                 } else {
                     // Maps nao achou - perguntar bairro
                     conversa.dados.origemTexto = analise.origem;
-                    conversa.etapa = 'pedir_bairro_origem';
+                    conversa.etapa = 'pedir_numero_origem';
                     return `📍 ${analise.origem}\n\nQual bairro?`;
                 }
             }
