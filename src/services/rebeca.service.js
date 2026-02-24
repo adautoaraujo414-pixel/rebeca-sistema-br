@@ -721,13 +721,58 @@ const RebecaService = {
             const validacao = await RebecaService.validarEndereco(msgOriginal);
             
             if (!validacao.valido) {
-                // Nao achou no Maps - tentar com cidade
-                // Tentar com cidade do admin
-                conversa.etapa = 'pedir_numero_origem';
-                conversas.set(telefone, conversa);
-                return `📍 ${msgOriginal}
+                // Nao achou no Maps - tentar com cidade do admin
+                let achouComCidade = false;
+                try {
+                    const { Admin } = require('../models');
+                    const adminDoc = conversa.adminId ? await Admin.findById(conversa.adminId) : null;
+                    const cidade = adminDoc?.cidade || '';
+                    if (cidade) {
+                        const val2 = await RebecaService.validarEndereco(msgOriginal + ', ' + cidade);
+                        if (val2.valido) {
+                            conversa.dados.origem = val2.endereco;
+                            conversa.dados.origemValidada = val2;
+                            conversa.dados.calculo = { origem: { endereco: val2.endereco, latitude: val2.latitude, longitude: val2.longitude }, destino: null, distanciaKm: 0, tempoMinutos: 0, preco: 15, faixa: { nome: 'padrao', multiplicador: 1 } };
+                            const corridaDireta = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
+                            if (corridaDireta.cooldown) return '⏳ Aguarde ' + Math.ceil(corridaDireta.segundosRestantes / 60) + ' min para nova corrida.';
+                            if (corridaDireta.duplicada) return '⚠️ Você já tem corrida ativa! Digite *CANCELAR* para cancelar.';
+                            conversa.etapa = 'aguardando_motorista';
+                            conversa.dados.corridaId = corridaDireta.id;
+                            conversas.set(telefone, conversa);
+                            return '📍 ' + val2.endereco + '
+
+⏳ Buscando motorista...
+_Digite CANCELAR se precisar_';
+                            achouComCidade = true;
+                        }
+                    }
+                } catch(e) {}
+                if (!achouComCidade) {
+                    // Verificar se tem numero - se nao tem, pedir
+                    const temNumero = /d/.test(msgOriginal);
+                    conversa.dados.origemTexto = msgOriginal;
+                    if (!temNumero) {
+                        conversa.etapa = 'pedir_numero_origem';
+                        conversas.set(telefone, conversa);
+                        return `📍 ${msgOriginal}
 
 Qual o número?`;
+                    }
+                    // Tem numero mas nao achou - criar com texto livre
+                    conversa.dados.origem = msgOriginal;
+                    conversa.dados.origemValidada = { valido: true, precisao: 'texto_livre', endereco: msgOriginal };
+                    conversa.dados.calculo = { origem: { endereco: msgOriginal }, destino: null, distanciaKm: 0, tempoMinutos: 0, preco: 15, faixa: { nome: 'padrao', multiplicador: 1 } };
+                    const corridaTexto = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
+                    if (corridaTexto.cooldown) return '⏳ Aguarde ' + Math.ceil(corridaTexto.segundosRestantes / 60) + ' min para nova corrida.';
+                    if (corridaTexto.duplicada) return '⚠️ Você já tem corrida ativa! Digite *CANCELAR* para cancelar.';
+                    conversa.etapa = 'aguardando_motorista';
+                    conversa.dados.corridaId = corridaTexto.id;
+                    conversas.set(telefone, conversa);
+                    return '📍 ' + msgOriginal + '
+
+⏳ Buscando motorista...
+_Digite CANCELAR se precisar_';
+                }
             } else {
                 // FLUXO DIRETO: Achou no Maps - criar corrida imediatamente!
                 conversa.dados.origem = validacao.endereco;
