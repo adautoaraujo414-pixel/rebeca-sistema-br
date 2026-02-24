@@ -766,10 +766,7 @@ const RebecaService = {
                             conversa.etapa = 'aguardando_motorista';
                             conversa.dados.corridaId = corridaDireta.id;
                             conversas.set(telefone, conversa);
-                            return '📍 ' + val2.endereco + '
-
-⏳ Buscando motorista...
-_Digite CANCELAR se precisar_';
+                            return '📍 ' + val2.endereco + '\n⏳ Buscando motorista...\n_Digite CANCELAR se precisar_';
                             achouComCidade = true;
                         }
                     }
@@ -795,10 +792,7 @@ Qual o número?`;
                     conversa.etapa = 'aguardando_motorista';
                     conversa.dados.corridaId = corridaTexto.id;
                     conversas.set(telefone, conversa);
-                    return '📍 ' + msgOriginal + '
-
-⏳ Buscando motorista...
-_Digite CANCELAR se precisar_';
+                    return '📍 ' + msgOriginal + '\n\n⏳ Buscando motorista...\n_Digite CANCELAR se precisar_';
                 }
             } else {
                 // FLUXO DIRETO: Achou no Maps - criar corrida imediatamente!
@@ -985,10 +979,7 @@ _Digite CANCELAR se precisar_';
                     conversa.etapa = 'aguardando_motorista';
                     conversa.dados.corridaId = corridaNum.id;
                     conversas.set(telefone, conversa);
-                    return '📍 ' + enderecoCompleto + '
-
-⏳ Buscando motorista...
-_Digite CANCELAR se precisar_';
+                    return '📍 ' + enderecoCompleto + '\n\n⏳ Buscando motorista...\n_Digite CANCELAR se precisar_';
                 }
             } else {
                 resposta = '🔢 Por favor, informe o *número* da casa/prédio (ou *SN* se não tiver):';
