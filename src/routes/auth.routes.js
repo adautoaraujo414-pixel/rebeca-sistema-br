@@ -12,7 +12,7 @@ router.post('/login', async (req, res) => {
         }
 
         // Buscar admin por email
-        const admin = await Admin.findOne({ email: usuario });
+        const admin = await Admin.findOne({ email: { $regex: new RegExp("^" + usuario.trim() + "$", "i") } });
         
         if (!admin) {
             return res.status(401).json({ error: 'Usuário não encontrado' });
