@@ -107,10 +107,35 @@ const RebecaService = {
 
     getFavoritos: (telefone) => favoritosClientes.get(telefone) || {},
     
-    salvarFavorito: (telefone, tipo, endereco) => {
+    // Carregar favoritos do MongoDB para memória (chamado no inicio da conversa)
+    async carregarFavoritos(telefone, adminId) {
+        try {
+            const { Cliente } = require('../models');
+            const tels = [telefone, '55' + telefone, telefone.replace(/^55/, '')];
+            const query = { telefone: { $in: tels } };
+            if (adminId) query.adminId = adminId;
+            const cliente = await Cliente.findOne(query);
+            if (cliente?.enderecoFavorito) {
+                favoritosClientes.set(telefone, cliente.enderecoFavorito);
+                return cliente.enderecoFavorito;
+            }
+        } catch(e) {}
+        return {};
+    },
+
+    salvarFavorito: async (telefone, tipo, endereco, adminId) => {
+        // Salvar em memória
         const favoritos = favoritosClientes.get(telefone) || {};
         favoritos[tipo] = endereco;
         favoritosClientes.set(telefone, favoritos);
+        // Persistir no MongoDB
+        try {
+            const { Cliente } = require('../models');
+            const tels = [telefone, '55' + telefone, telefone.replace(/^55/, '')];
+            const query = { telefone: { $in: tels } };
+            if (adminId) query.adminId = adminId;
+            await Cliente.findOneAndUpdate(query, { $set: { ['enderecoFavorito.' + tipo]: endereco } }, { upsert: false });
+        } catch(e) { console.log('[REBECA] Erro salvar favorito MongoDB:', e.message); }
         return favoritos;
     },
 
@@ -220,6 +245,8 @@ const RebecaService = {
         const conversa = conversas.get(telefone) || { etapa: 'inicio', dados: {} };
         if (adminId) conversa.adminId = adminId;
         if (contexto.instanciaId) conversa.instanciaId = contexto.instanciaId;
+        // Carregar favoritos do MongoDB (atualiza cache em memória)
+        await RebecaService.carregarFavoritos(telefone, adminId);
         const favoritos = RebecaService.getFavoritos(telefone);
         
         let resposta = '';
@@ -948,9 +975,20 @@ _Digite CANCELAR se precisar_';
                     conversa.etapa = 'pedir_referencia';
                     resposta = '📍 ' + validacao.endereco + '\n\nReferência? (ou *0* se não tiver)';
                 } else {
+                    // Nao achou mesmo com numero - criar corrida com texto livre
                     conversa.dados.origem = enderecoCompleto;
-                    conversa.etapa = 'pedir_numero_origem';
-                    resposta = '📍 Qual o *bairro*?';
+                    conversa.dados.origemValidada = { valido: true, precisao: 'texto_livre', endereco: enderecoCompleto };
+                    conversa.dados.calculo = { origem: { endereco: enderecoCompleto }, destino: null, distanciaKm: 0, tempoMinutos: 0, preco: 15, faixa: { nome: 'padrao', multiplicador: 1 } };
+                    const corridaNum = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
+                    if (corridaNum.cooldown) return '⏳ Aguarde ' + Math.ceil(corridaNum.segundosRestantes / 60) + ' min para nova corrida.';
+                    if (corridaNum.duplicada) return '⚠️ Você já tem corrida ativa! Digite *CANCELAR* para cancelar.';
+                    conversa.etapa = 'aguardando_motorista';
+                    conversa.dados.corridaId = corridaNum.id;
+                    conversas.set(telefone, conversa);
+                    return '📍 ' + enderecoCompleto + '
+
+⏳ Buscando motorista...
+_Digite CANCELAR se precisar_';
                 }
             } else {
                 resposta = '🔢 Por favor, informe o *número* da casa/prédio (ou *SN* se não tiver):';
