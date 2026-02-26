@@ -141,7 +141,17 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                     }
                 }
                 
+                // NUNCA responder mensagens do próprio número (admin enviando)
                 if (msg.key?.fromMe) continue;
+                
+                // Ignorar mensagens sem texto/conteúdo útil (status, reações isoladas)
+                const temConteudoUtil = msg.message?.conversation || 
+                    msg.message?.extendedTextMessage?.text ||
+                    msg.message?.audioMessage ||
+                    msg.message?.locationMessage ||
+                    msg.message?.liveLocationMessage ||
+                    msg.message?.imageMessage?.caption;
+                if (!temConteudoUtil && msg.messageType !== 'audioMessage' && msg.messageType !== 'locationMessage') continue;
                 
                 // Dedup por messageId
                 const msgId = msg.key?.id;

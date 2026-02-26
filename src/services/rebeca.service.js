@@ -13,17 +13,32 @@ const OpenAIRebecaService = require('./openai-rebeca.service');
 const conversas = new Map();
 
 // Auto-cleanup conversas inativas (a cada 5 min, remove conversas >30min sem interacao)
-setInterval(() => {
+setInterval(async () => {
     const agora = Date.now();
     let limpas = 0;
-    conversas.forEach((conversa, telefone) => {
+    for (const [telefone, conversa] of conversas.entries()) {
         const ultimaMsg = conversa.ultimaMensagem || conversa.updatedAt || conversa.criadaEm || 0;
         const tempoInativo = agora - new Date(ultimaMsg).getTime();
-        if (tempoInativo > 30 * 60 * 1000) { // 30 min inativo
+        
+        // Aviso em 25min se conversa está no meio de algo
+        if (tempoInativo > 25 * 60 * 1000 && tempoInativo < 30 * 60 * 1000 && !conversa.avisouTimeout && conversa.etapa !== 'inicio') {
+            conversa.avisouTimeout = true;
+            conversas.set(telefone, conversa);
+            try {
+                const { InstanciaWhatsapp } = require('./models') || require('../models');
+                const EvolutionMultiService = require('./evolution-multi.service');
+                if (conversa.instanciaId) {
+                    await EvolutionMultiService.enviarMensagem(conversa.instanciaId, telefone, '⏰ Ainda está aí? Sua conversa expira em 5 minutos por inatividade. Me manda uma mensagem para continuar!');
+                }
+            } catch(e) {}
+        }
+        
+        // Remover após 30min
+        if (tempoInativo > 30 * 60 * 1000) {
             conversas.delete(telefone);
             limpas++;
         }
-    });
+    }
     if (limpas > 0) console.log('[REBECA] Cleanup: ' + limpas + ' conversas inativas removidas. Ativas: ' + conversas.size);
 }, 5 * 60 * 1000);
 const ultimasRespostas = new Map(); // Anti-repeticao
@@ -1595,13 +1610,26 @@ _Digite CANCELAR se precisar_`;
 
     formatarStatus: (s) => ({ 'pendente': '⏳ Buscando', 'aceita': '✅ Aceita', 'a_caminho': '🚗 A caminho', 'em_andamento': '🚀 Em viagem', 'finalizada': '✅ Finalizada', 'cancelada': '❌ Cancelada' }[s] || s),
 
-    async enviarTabelaPrecos() {
+    async enviarTabelaPrecos(adminId = null) {
+        try {
+            if (adminId) {
+                const faixa = await PrecoAdminService.getFaixaAtual(adminId);
+                const exemplos = [];
+                for (const km of [3, 5, 10]) {
+                    const calc = await PrecoAdminService.calcularPreco(adminId, km);
+                    if (calc?.precoFinal) exemplos.push(`${km}km → R$ ${calc.precoFinal.toFixed(2)}`);
+                }
+                let t = `💰 *TABELA DE PREÇOS*\n\n🕐 Agora: *${faixa.nome}*`;
+                if (faixa.multiplicador > 1) t += ` (${faixa.multiplicador}x)`;
+                if (exemplos.length) t += `\n\n${exemplos.join('\n')}`;
+                return t + `\n\n_Me manda o endereço para calcular o valor exato!_`;
+            }
+        } catch(e) {}
         const config = PrecoDinamicoService.getConfig();
         const faixa = PrecoDinamicoService.obterFaixaAtual();
-        let t = `📋 *PREÇOS*\n\n• Taxa: R$ ${config.taxaBase.toFixed(2)}\n• Km: R$ ${config.precoKm.toFixed(2)}\n• Mínimo: R$ ${config.taxaMinima.toFixed(2)}\n\n📍 *Agora:* ${faixa.nome}`;
-        if (faixa.tipo === 'fixo' && faixa.valorFixo > 0) t += ` = R$ ${faixa.valorFixo.toFixed(2)}`;
-        else if (faixa.multiplicador > 1) t += ` (${faixa.multiplicador}x)`;
-        return t + `\n\n_Envie endereço para cotação!_`;
+        let t = `💰 *TABELA DE PREÇOS*\n\n• Taxa: R$ ${config.taxaBase.toFixed(2)}\n• Km: R$ ${config.precoKm.toFixed(2)}\n\n🕐 *Agora:* ${faixa.nome}`;
+        if (faixa.multiplicador > 1) t += ` (${faixa.multiplicador}x)`;
+        return t + `\n\n_Me manda o endereço para calcular o valor exato!_`;
     },
 
     async enviarExemplosPreco() {
