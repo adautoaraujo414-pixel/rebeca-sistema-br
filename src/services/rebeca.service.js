@@ -1714,20 +1714,6 @@ _Digite CANCELAR se precisar_`;
     async criarCorrida(telefone, nomeCliente, dados, adminId = null, instanciaId = null) {
         const { Corrida } = require('../models');
         
-        // COOLDOWN 2 MINUTOS: Verificar se finalizou corrida recentemente
-        const doisMinAtras = new Date(Date.now() - 2 * 60 * 1000);
-        const corridaRecente = await Corrida.findOne({
-            clienteTelefone: telefone,
-            status: { $in: ['finalizada', 'cancelada'] },
-            updatedAt: { $gte: doisMinAtras }
-        });
-        
-        if (corridaRecente) {
-            const segundosRestantes = Math.ceil((new Date(corridaRecente.updatedAt).getTime() + 120000 - Date.now()) / 1000);
-            console.log('[REBECA] Cooldown ativo para', telefone, '- aguardar', segundosRestantes, 'segundos');
-            return { cooldown: true, segundosRestantes };
-        }
-        
         // Anti-duplicacao: verificar se ja tem corrida ativa
         const queryAtiva = {
             clienteTelefone: telefone,
