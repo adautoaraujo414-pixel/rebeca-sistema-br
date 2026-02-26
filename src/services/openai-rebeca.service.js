@@ -198,6 +198,13 @@ const OpenAIRebecaService = {
             return { intencao: 'SAUDACAO', resposta: Math.random() > 0.5 ? 'Que bom!|||Vai precisar de carro?' : 'Que otimo! Posso ajudar com alguma corrida?' };
         }
         
+        // Detectar pedido para falar com responsável/dono
+        if (msg.match(/(falar com|chamar|quero o|preciso do|passar para|fala com).*(responsável|responsavel|dono|gerente|chefe|proprietario|proprietário|admin)/) ||
+            msg.match(/^(responsável|responsavel|dono|gerente|chefe)$/) ||
+            msg.match(/(falar com o responsável|falar com responsável|quero falar com o dono)/)) {
+            return { intencao: 'FALAR_RESPONSAVEL', notificarAdmin: true };
+        }
+        
         if (msg.match(/(obrigad|valeu|vlw|brigad|thanks)/)) {
             return { intencao: 'AGRADECIMENTO', resposta: Math.random() > 0.5 ? 'Imagina!|||Sempre que precisar' : 'Por nada! Qualquer coisa me chama' };
         }
@@ -277,46 +284,48 @@ const OpenAIRebecaService = {
         const nomeEmpresa = contexto.nomeEmpresa || 'Central de Corridas';
         const nomeCliente = contexto.nome || 'Cliente';
 
-        const prompt = `Você é Rebeca, assistente virtual de corridas por WhatsApp.
-Você trabalha para ${nomeEmpresa}.
-Cliente atual: ${nomeCliente}.
+        const prompt = `Você é Rebeca, secretária virtual da ${nomeEmpresa}. Atende clientes pelo WhatsApp com educação, calor humano e objetividade — como uma secretária real faria.
 
-Seu objetivo é:
-1) Entender exatamente o que o cliente quer.
-2) Detectar se ele está enviando endereço.
-3) Identificar se o endereço tem número.
-4) Identificar se falta bairro.
-5) Responder de forma humana, natural e objetiva.
-6) Nunca escrever textos longos.
-7) Nunca parecer robótica.
-8) Usar no máximo 2 emojis.
+Cliente: ${nomeCliente}
+Motoristas disponíveis agora: ${motoristasDisponiveis}
 
-CONTEXTO:
-Motoristas disponíveis: ${motoristasDisponiveis}
+PERSONALIDADE:
+- Fala de forma natural, calorosa, nunca robótica
+- Respostas curtas e diretas (máximo 2 linhas)
+- Máximo 2 emojis por mensagem
+- Não inventa informações — só resolve o que sabe
+- Quando cliente pede corrida e manda endereço: "Maravilha! Já vou providenciar um motorista próximo de você 😊"
+- Quando cliente agradece: "Imagina! Qualquer coisa é só chamar 😊"
+- Não confunde pedidos de reunião/agendamento com pedido de corrida
 
-CLASSIFIQUE EM UMA DAS INTENÇÕES:
-- SAUDACAO
-- SOLICITAR_CORRIDA
-- INFORMAR_ENDERECO_COMPLETO
-- INFORMAR_ENDERECO_SEM_NUMERO
-- INFORMAR_ENDERECO_SEM_BAIRRO
-- PERGUNTAR_PRECO
-- INFORMACAO
-- VERIFICAR_DISPONIBILIDADE
-- RECLAMACAO
-- AGRADECIMENTO
-- CANCELAMENTO
-- OUTRO
+INTENÇÕES POSSÍVEIS:
+- SAUDACAO — cliente cumprimentando
+- SOLICITAR_CORRIDA — quer uma corrida/carro/transporte
+- INFORMAR_ENDERECO_COMPLETO — enviou endereço com número
+- INFORMAR_ENDERECO_SEM_NUMERO — endereço sem número
+- PERGUNTAR_PRECO — pergunta sobre valor/preço
+- VERIFICAR_DISPONIBILIDADE — pergunta se tem carro disponível
+- RECLAMACAO — insatisfeito com algo
+- AGRADECIMENTO — agradecendo
+- CANCELAMENTO — quer cancelar corrida
+- FALAR_RESPONSAVEL — quer falar com dono/responsável/gerente
+- AGENDAMENTO — quer agendar reunião ou outro serviço fora de corrida
+- OUTRO — qualquer outra coisa fora do contexto de corrida
+
+REGRAS IMPORTANTES:
+- Se intencao for FALAR_RESPONSAVEL: resposta deve ser "Claro! Vou chamar o responsável agora. Pode me dizer sobre o que você precisa falar para eu passar a mensagem?" e notificar_admin: true
+- Se intencao for AGENDAMENTO ou OUTRO: resposta educada explicando que ela cuida de corridas, e perguntar se pode ajudar com isso
+- Se intencao for SOLICITAR_CORRIDA com endereço: resposta animada e humana confirmando que vai buscar motorista
 
 Mensagem do cliente: "${mensagem}"
 
-RETORNE APENAS JSON VÁLIDO:
+RETORNE APENAS JSON VÁLIDO (sem markdown):
 {
   "intencao": "",
   "tem_endereco": true ou false,
   "tem_numero": true ou false,
-  "tem_bairro": true ou false,
-  "resposta": ""
+  "resposta": "",
+  "notificar_admin": false
 }`;
 
         try {
@@ -353,9 +362,9 @@ RETORNE APENAS JSON VÁLIDO:
                 resposta: resultado.resposta,
                 temEndereco: resultado.tem_endereco,
                 temNumero: resultado.tem_numero,
-                temBairro: resultado.tem_bairro,
                 motoristasDisponiveis,
                 oferecerFila: resultado.oferecerFila,
+                notificarAdmin: resultado.notificar_admin || resultado.intencao === 'FALAR_RESPONSAVEL',
                 usarIA: true,
                 confianca: 0.95
             };

@@ -393,22 +393,32 @@ const RebecaService = {
                     if (resultadoGPT && resultadoGPT.resposta) {
                         console.log('[OPENAI] Intenção:', resultadoGPT.intencao);
             
-            // MODO SECRETÁRIA: se cliente manda algo fora do contexto de corrida
-            const intencoesNaoCorrela = ['AGENDAMENTO', 'PERGUNTA_GERAL', 'RECLAMACAO', 'ELOGIO', 'OUTRO', 'FORA_CONTEXTO'];
-            if (intencoesNaoCorrela.includes(resultadoGPT.intencao) && resultadoGPT.intencao !== 'SAUDACAO') {
+            // MODO SECRETÁRIA: notificar admin quando necessário
+            const deveNotificarAdmin = resultadoGPT.notificarAdmin || 
+                resultadoGPT.intencao === 'FALAR_RESPONSAVEL' ||
+                ['AGENDAMENTO', 'OUTRO'].includes(resultadoGPT.intencao);
+            
+            if (deveNotificarAdmin) {
                 try {
-                    const { Admin } = require('./models') || require('../models');
+                    const { Admin } = require('../models');
                     const adminDoc = await Admin.findById(adminId);
                     if (adminDoc?.telefone) {
-                        const msgAdmin = `📩 Mensagem de cliente (${telefone}):
+                        const assunto = resultadoGPT.intencao === 'FALAR_RESPONSAVEL' ? 'quer falar com o responsável' :
+                                       resultadoGPT.intencao === 'AGENDAMENTO' ? 'quer agendar algo' : 'enviou mensagem fora do contexto';
+                        const msgAdmin = `📩 *Cliente ${nome || telefone} ${assunto}:*
 
 "${msg}"
 
-Responda diretamente para ele se necessário.`;
-                        await EvolutionService.enviarMensagem(instanciaId, adminDoc.telefone, msgAdmin);
-                        console.log('[SECRETARIA] Notificado admin sobre mensagem fora de contexto');
+Responda diretamente para ele: wa.me/${telefone}`;
+                        await EvolutionMultiService.enviarMensagem(instanciaId, adminDoc.telefone, msgAdmin);
+                        console.log('[SECRETARIA] Admin notificado:', assunto);
                     }
                 } catch(e2) { console.log('[SECRETARIA] Erro notificar admin:', e2.message); }
+            }
+            
+            // Se quer falar com responsável, responder e sair (não processar como corrida)
+            if (resultadoGPT.intencao === 'FALAR_RESPONSAVEL') {
+                return resultadoGPT.resposta || 'Claro! Vou chamar o responsável agora. Pode me dizer sobre o que precisa falar?';
             }
                         
                         // Saudação, agradecimento, outro
