@@ -1237,6 +1237,8 @@ body.dark-mode .chat-msg.received .bubble { background: #252542 !important; colo
         }
 
         async function chegueiLocal() {
+            const btn = document.getElementById('btnCheguei');
+            if (btn) { btn.disabled = true; btn.textContent = '⏳ NOTIFICANDO...'; }
             try {
                 await fetch('/api/motorista-app/cheguei', {
                     method: 'POST',
@@ -1245,8 +1247,11 @@ body.dark-mode .chat-msg.received .bubble { background: #252542 !important; colo
                 });
                 corridaAtual.status = 'aguardando_cliente';
                 atualizarBotoesCorridaAtiva();
-                toast('Cliente notificado!', 'success');
-            } catch (e) {}
+                toast('Cliente notificado! Aguardando...', 'success');
+            } catch (e) {
+                toast('Erro ao notificar cliente', 'error');
+                if (btn) { btn.disabled = false; btn.textContent = '📍 CHEGUEI NO LOCAL'; }
+            }
         }
 
         async function iniciarCorrida() {
