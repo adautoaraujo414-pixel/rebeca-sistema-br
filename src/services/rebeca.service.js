@@ -1909,6 +1909,9 @@ _Digite CANCELAR se precisar_`;
             console.error('[REBECA] Erro no despacho:', e.message);
         }
         
+        // Push notification para motoristas disponíveis
+        try { const PushService = require('./push.service'); await PushService.notificarNovaCorrida(adminId, corrida); } catch(e) {}
+        
         return { id: corrida._id || corrida.id, origem: dados.origem, destino: dados.destino, preco: dados.calculo.preco };
     },
 
