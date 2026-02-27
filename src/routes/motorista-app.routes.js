@@ -498,4 +498,20 @@ router.post('/avaliar', auth, async (req, res) => {
     } catch(e) { res.json({ sucesso: false, erro: e.message }); }
 });
 
+
+// Push: obter VAPID public key
+router.get('/push/vapid-key', (req, res) => {
+    const PushService = require('../services/push.service');
+    res.json({ key: PushService.VAPID_PUBLIC });
+});
+
+// Push: salvar subscription
+router.post('/push/subscribe', auth, async (req, res) => {
+    try {
+        const PushService = require('../services/push.service');
+        PushService.salvarSubscription(req.motorista._id, req.body.subscription);
+        res.json({ sucesso: true });
+    } catch(e) { res.json({ sucesso: false, erro: e.message }); }
+});
+
 module.exports = router;
