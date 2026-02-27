@@ -5,14 +5,19 @@ const VAPID_PRIVATE = 'lYrx40nlvnfJQP5cIKy98a9olwe_TuMiWRlAhnJvBSY';
 
 webpush.setVapidDetails('mailto:contato@rebeca.app', VAPID_PUBLIC, VAPID_PRIVATE);
 
-// Armazenar subscriptions em memória (idealmente salvar no banco)
-const subscriptions = new Map(); // motoristaId -> subscription
+// Subscriptions em memória + persistência no banco
+const subscriptions = new Map();
 
 const PushService = {
     VAPID_PUBLIC,
 
-    salvarSubscription(motoristaId, subscription) {
+    async salvarSubscription(motoristaId, subscription) {
         subscriptions.set(motoristaId.toString(), subscription);
+        // Persistir no banco
+        try {
+            const { Motorista } = require('../models');
+            await Motorista.findByIdAndUpdate(motoristaId, { pushSubscription: JSON.stringify(subscription) });
+        } catch(e) { console.log('[PUSH] Erro ao persistir:', e.message); }
         console.log('[PUSH] Subscription salva para motorista:', motoristaId);
     },
 
@@ -20,12 +25,25 @@ const PushService = {
         subscriptions.delete(motoristaId.toString());
     },
 
+    async getSubscription(motoristaId) {
+        const id = motoristaId.toString();
+        if (subscriptions.has(id)) return subscriptions.get(id);
+        // Buscar do banco
+        try {
+            const { Motorista } = require('../models');
+            const m = await Motorista.findById(motoristaId);
+            if (m && m.pushSubscription) {
+                const sub = JSON.parse(m.pushSubscription);
+                subscriptions.set(id, sub);
+                return sub;
+            }
+        } catch(e) {}
+        return null;
+    },
+
     async enviarParaMotorista(motoristaId, dados) {
-        const sub = subscriptions.get(motoristaId.toString());
-        if (!sub) {
-            console.log('[PUSH] Sem subscription para motorista:', motoristaId);
-            return false;
-        }
+        const sub = await PushService.getSubscription(motoristaId);
+        if (!sub) return false;
 
         try {
             await webpush.sendNotification(sub, JSON.stringify(dados));
@@ -35,13 +53,12 @@ const PushService = {
             console.log('[PUSH] Erro:', e.statusCode || e.message);
             if (e.statusCode === 410 || e.statusCode === 404) {
                 subscriptions.delete(motoristaId.toString());
-                console.log('[PUSH] Subscription expirada, removida');
+                try { const { Motorista } = require('../models'); await Motorista.findByIdAndUpdate(motoristaId, { $unset: { pushSubscription: 1 } }); } catch(e2) {}
             }
             return false;
         }
     },
 
-    // Enviar para TODOS os motoristas disponíveis de um admin
     async enviarParaDisponiveis(adminId, dados) {
         try {
             const { Motorista } = require('../models');
@@ -54,30 +71,24 @@ const PushService = {
             console.log('[PUSH] Enviado para', enviados, 'de', motoristas.length, 'motoristas');
             return enviados;
         } catch (e) {
-            console.log('[PUSH] Erro ao enviar para disponíveis:', e.message);
+            console.log('[PUSH] Erro:', e.message);
             return 0;
         }
     },
 
-    // Push de nova corrida
     async notificarNovaCorrida(adminId, corrida) {
         const tipo = corrida.tipo === 'encomenda' ? '📦 NOVA ENCOMENDA!' : '🚗 NOVA CORRIDA!';
         const valor = 'R$ ' + (corrida.precoEstimado || 0).toFixed(2);
         return await PushService.enviarParaDisponiveis(adminId, {
-            titulo: tipo,
-            corpo: valor + ' - ' + (corrida.clienteNome || 'Cliente'),
-            corridaId: corrida._id,
-            tipo: 'nova_corrida'
+            titulo: tipo, corpo: valor + ' - ' + (corrida.clienteNome || 'Cliente'),
+            corridaId: corrida._id, tipo: 'nova_corrida'
         });
     },
 
-    // Push de cancelamento
     async notificarCancelamento(motoristaId, corrida) {
         return await PushService.enviarParaMotorista(motoristaId, {
-            titulo: '❌ Corrida Cancelada',
-            corpo: 'O cliente cancelou a corrida',
-            corridaId: corrida._id,
-            tipo: 'cancelamento'
+            titulo: '❌ Corrida Cancelada', corpo: 'O cliente cancelou a corrida',
+            corridaId: corrida._id, tipo: 'cancelamento'
         });
     }
 };

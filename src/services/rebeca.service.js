@@ -693,6 +693,18 @@ Responda diretamente para ele: wa.me/${telefone}`;
 
 
         // ========== CONFIRMAÇÃO DE PREÇO ==========
+
+        // ========== AGUARDANDO RESPOSTA DO ADMIN ==========
+        if (conversa.etapa === 'aguardando_resposta_admin') {
+            if (msg.includes('cancelar') || msg.includes('desistir')) {
+                conversa.etapa = 'inicio';
+                conversa.dados = {};
+                conversas.set(telefone, conversa);
+                return 'Ok! Se precisar de algo é só chamar!';
+            }
+            return 'Sua dúvida foi enviada ao responsável! Aguarde a resposta. Se quiser cancelar, digite *CANCELAR*.';
+        }
+
         if (conversa.etapa === 'confirmar_preco') {
             if (msg.includes('sim') || msg.includes('confirma') || msg.includes('pode') || msg.includes('ok') || msg.includes('bora') || msg.includes('vai') || msg.includes('quero') || msg === 's') {
                 // Cliente confirmou - criar corrida
@@ -2365,7 +2377,7 @@ const filaEsperaFunctions = {
             // Atualizar conversa do cliente
             const conversa = conversas.get(proximo.clienteTelefone);
             if (conversa) {
-                conversa.etapa = 'inicial';
+                conversa.etapa = 'inicio';
                 conversa.dados = { origem: proximo.origem };
                 conversas.set(proximo.clienteTelefone, conversa);
             }

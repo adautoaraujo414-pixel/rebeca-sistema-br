@@ -6,7 +6,7 @@ const MotoristaSchema = new mongoose.Schema({
     foto: String, // URL da foto do motorista
     status: { type: String, default: 'disponivel' }, latitude: Number, longitude: Number,
     avaliacao: { type: Number, default: 5 }, corridasRealizadas: { type: Number, default: 0 },
-    ativo: { type: Boolean, default: true }, token: String, senha: String, cidadeAtuacao: String, adminId: mongoose.Schema.Types.ObjectId
+    ativo: { type: Boolean, default: true }, token: String, senha: String, pushSubscription: String, cidadeAtuacao: String, adminId: mongoose.Schema.Types.ObjectId
 }, { timestamps: true });
 
 const ClienteSchema = new mongoose.Schema({

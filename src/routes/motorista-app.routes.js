@@ -231,7 +231,7 @@ router.post('/finalizar', auth, async (req, res) => {
     const { corridaId, precoFinal } = req.body;
     try {
         const corrida = await CorridaService.finalizar(corridaId, precoFinal);
-        const corridaFinal = corrida.corrida || corrida;
+        const corridaFinal = corrida?.corrida || corrida;
         if (corridaFinal && corridaFinal.clienteTelefone) {
             const EvolutionMultiService = require('../services/evolution-multi.service');
             const { InstanciaWhatsapp } = require('../models');
