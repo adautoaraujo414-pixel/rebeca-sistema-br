@@ -720,7 +720,7 @@ body { background: #f0f2f5 !important; color: #333 !important; }
         async function carregarMotorista() {
             try {
                 const res = await fetch('/api/motorista-app/perfil', {
-                    headers: { 'Authorization': token }
+                    headers: { 'Authorization': 'Bearer ' + token }
                 });
                 const data = await res.json();
                 if (data.motorista) {
@@ -792,7 +792,7 @@ body { background: #f0f2f5 !important; color: #333 !important; }
                 try {
                     await fetch('/api/motorista-app/gps', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'Authorization': token },
+                        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
                         body: JSON.stringify({ latitude: minhaLatitude, longitude: minhaLongitude })
                     });
                 } catch (e) {}
@@ -805,7 +805,7 @@ body { background: #f0f2f5 !important; color: #333 !important; }
             try {
                 const res = await fetch('/api/motorista-app/status', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': token },
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
                     body: JSON.stringify({ status: novoStatus })
                 });
                 const data = await res.json();
@@ -861,7 +861,7 @@ body { background: #f0f2f5 !important; color: #333 !important; }
         async function verificarNovasCorridas() {
             try {
                 const res = await fetch('/api/motorista-app/corridas-disponiveis', {
-                    headers: { 'Authorization': token }
+                    headers: { 'Authorization': 'Bearer ' + token }
                 });
                 const data = await res.json();
                 if (data.corridas && data.corridas.length > 0 && !corridaAtual) {
@@ -873,7 +873,7 @@ body { background: #f0f2f5 !important; color: #333 !important; }
         async function verificarCorridaAtiva() {
             try {
                 const res = await fetch('/api/motorista-app/corrida-ativa', {
-                    headers: { 'Authorization': token }
+                    headers: { 'Authorization': 'Bearer ' + token }
                 });
                 const data = await res.json();
                 if (data.corrida) {
@@ -1041,7 +1041,7 @@ body { background: #f0f2f5 !important; color: #333 !important; }
             try {
                 const res = await fetch('/api/motorista-app/aceitar', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': token },
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
                     body: JSON.stringify({ corridaId: corridaAtual._id })
                 });
                 const data = await res.json();
@@ -1183,10 +1183,10 @@ body { background: #f0f2f5 !important; color: #333 !important; }
             try {
                 await fetch('/api/motorista-app/cheguei', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': token },
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
                     body: JSON.stringify({ corridaId: corridaAtual._id })
                 });
-                corridaAtual.status = 'a_caminho';
+                corridaAtual.status = 'aguardando_cliente';
                 atualizarBotoesCorridaAtiva();
                 toast('Cliente notificado!', 'success');
             } catch (e) {}
@@ -1196,7 +1196,7 @@ body { background: #f0f2f5 !important; color: #333 !important; }
             try {
                 const res = await fetch('/api/motorista-app/iniciar', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': token },
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
                     body: JSON.stringify({ corridaId: corridaAtual._id })
                 });
                 const data = await res.json();
@@ -1212,7 +1212,7 @@ body { background: #f0f2f5 !important; color: #333 !important; }
             try {
                 const res = await fetch('/api/motorista-app/finalizar', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': token },
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
                     body: JSON.stringify({ corridaId: corridaAtual._id })
                 });
                 const data = await res.json();
@@ -1233,7 +1233,7 @@ body { background: #f0f2f5 !important; color: #333 !important; }
             try {
                 await fetch('/api/motorista-app/cancelar', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': token },
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
                     body: JSON.stringify({ corridaId: corridaAtual._id, motivo: 'Cancelado pelo motorista' })
                 });
                 corridaAtual = null;
@@ -1249,7 +1249,7 @@ body { background: #f0f2f5 !important; color: #333 !important; }
         async function carregarDashboard() {
             try {
                 const res = await fetch('/api/motorista-app/estatisticas', {
-                    headers: { 'Authorization': token }
+                    headers: { 'Authorization': 'Bearer ' + token }
                 });
                 const data = await res.json();
                 document.getElementById('ganhosHoje').textContent = 'R$ ' + (data.ganhosHoje || 0).toFixed(2);
@@ -1270,7 +1270,7 @@ body { background: #f0f2f5 !important; color: #333 !important; }
         async function carregarChat() {
             try {
                 const res = await fetch('/api/motorista-app/chat', {
-                    headers: { 'Authorization': token }
+                    headers: { 'Authorization': 'Bearer ' + token }
                 });
                 const data = await res.json();
                 renderizarChat(data.mensagens || []);
@@ -1296,7 +1296,7 @@ body { background: #f0f2f5 !important; color: #333 !important; }
             try {
                 await fetch('/api/motorista-app/chat', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': token },
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
                     body: JSON.stringify({ texto })
                 });
                 input.value = '';
@@ -1329,7 +1329,7 @@ body { background: #f0f2f5 !important; color: #333 !important; }
             try {
                 await fetch('/api/motorista-app/caixa', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': token },
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
                     body: JSON.stringify({ tipo: tipoCaixa, valor, descricao })
                 });
                 toast(tipoCaixa === 'entrada' ? 'Entrada registrada!' : 'Saída registrada!', 'success');
@@ -1343,7 +1343,7 @@ body { background: #f0f2f5 !important; color: #333 !important; }
         async function carregarFinanceiro() {
             try {
                 const res = await fetch('/api/motorista-app/caixa', {
-                    headers: { 'Authorization': token }
+                    headers: { 'Authorization': 'Bearer ' + token }
                 });
                 const data = await res.json();
                 document.getElementById('saldoDia').textContent = 'R$ ' + (data.saldo || 0).toFixed(2);
@@ -1424,11 +1424,18 @@ body { background: #f0f2f5 !important; color: #333 !important; }
         async function enviarAvaria() {
             const descricao = document.getElementById('avariaDescricao').value;
             const fotoInput = document.getElementById('inputFoto');
-            
             if (!descricao) return toast('Descreva o problema', 'error');
-
-            // Aqui enviaria para o backend com a foto
-            toast('Avaria reportada! Admin notificado.', 'success');
+            try {
+                const formData = new FormData();
+                formData.append('descricao', descricao);
+                formData.append('motoristaId', motorista._id);
+                formData.append('motoristaNome', motorista.nomeCompleto || motorista.nome);
+                if (minhaLatitude) formData.append('latitude', minhaLatitude);
+                if (minhaLongitude) formData.append('longitude', minhaLongitude);
+                if (fotoInput.files && fotoInput.files[0]) formData.append('foto', fotoInput.files[0]);
+                await fetch('/api/motorista-app/avaria', { method: 'POST', headers: { 'Authorization': 'Bearer ' + token }, body: formData });
+                toast('Avaria reportada! Admin notificado.', 'success');
+            } catch(e) { toast('Avaria registrada. Admin será notificado.', 'success'); }
             fecharModal('modalAvaria');
             document.getElementById('avariaDescricao').value = '';
             document.getElementById('fotoPreview').innerHTML = '📷 Toque para tirar foto';
@@ -1449,7 +1456,7 @@ body { background: #f0f2f5 !important; color: #333 !important; }
             try {
                 await fetch('/api/pontos-referencia', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': token },
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
                     body: JSON.stringify({ nome, endereco, categoria, latitude: minhaLatitude, longitude: minhaLongitude })
                 });
                 toast('Referência salva!', 'success');
@@ -1484,7 +1491,7 @@ body { background: #f0f2f5 !important; color: #333 !important; }
 
             try {
                 const res = await fetch('/api/motorista-app/relatorio?periodo=' + periodo, {
-                    headers: { 'Authorization': token }
+                    headers: { 'Authorization': 'Bearer ' + token }
                 });
                 const data = await res.json();
                 document.getElementById('relCorridas').textContent = data.corridas || 0;
@@ -1550,7 +1557,19 @@ body { background: #f0f2f5 !important; color: #333 !important; }
         }
 
         function abrirPerfil() {
-            toast('Perfil: ' + motorista.nomeCompleto);
+            const m = motorista, v = m.veiculo || {};
+            const html = '<div style="text-align:center;padding:20px;">' +
+                '<div style="width:80px;height:80px;background:#00d4ff;border-radius:50%;margin:0 auto 15px;display:flex;align-items:center;justify-content:center;font-size:36px;">👤</div>' +
+                '<h2>' + (m.nomeCompleto||m.nome||'Motorista') + '</h2>' +
+                '<p style="color:#888;margin:5px 0 20px;">⭐ ' + (m.avaliacao||5).toFixed(1) + ' • ' + (m.totalCorridas||0) + ' corridas</p>' +
+                '<div style="text-align:left;background:#f5f5f5;border-radius:12px;padding:15px;margin-bottom:10px;">' +
+                '<p style="margin-bottom:8px;"><strong>📱 WhatsApp:</strong> ' + (m.whatsapp||'-') + '</p>' +
+                '<p style="margin-bottom:8px;"><strong>🚗 Veículo:</strong> ' + (v.modelo||v||'-') + '</p>' +
+                '<p style="margin-bottom:8px;"><strong>🎨 Cor:</strong> ' + (v.cor||'-') + '</p>' +
+                '<p><strong>🔢 Placa:</strong> ' + (v.placa||m.placa||'-') + '</p></div></div>';
+            const modal = document.getElementById('modalEmergencia');
+            if (modal) { document.getElementById('listaEmergencia').innerHTML = html; modal.querySelector('h3').textContent = '👤 Meu Perfil'; modal.classList.add('active'); }
+            else { toast('Perfil: ' + m.nomeCompleto); }
         }
 
         // Enter no chat
@@ -1830,7 +1849,7 @@ async function iniciarGPSPersistente() {
                         method: 'POST',
                         headers: { 
                             'Content-Type': 'application/json',
-                            'Authorization': token 
+                            'Authorization': 'Bearer ' + token 
                         },
                         body: JSON.stringify({ latitude: lat, longitude: lng, precisao })
                     });
