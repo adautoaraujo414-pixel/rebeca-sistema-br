@@ -506,9 +506,21 @@ Responda diretamente para ele: wa.me/${telefone}`;
                             // Deixar o fluxo normal processar o endereço
                         }
                         
-                        // Perguntar preço
+                        // Perguntar preço - se tem dados de origem/destino, calcular valor real
                         if (resultadoGPT.intencao === 'PERGUNTAR_PRECO') {
-                            return await RebecaService.enviarTabelaPrecos();
+                            // Se já tem cálculo com preço, mostrar e oferecer corrida
+                            if (conversa.dados?.calculo?.preco > 0 && conversa.dados?.calculo?.destino) {
+                                const calc = conversa.dados.calculo;
+                                const valor = calc.precoFinal || calc.preco || 0;
+                                conversa.etapa = 'confirmar_preco';
+                                conversas.set(telefone, conversa);
+                                return '💰 *Valor da corrida: R$ ' + valor.toFixed(2) + '*\n\n' +
+                                    '📍 ' + (calc.origem?.endereco || '') + '\n' +
+                                    '🏁 ' + (calc.destino?.endereco || '') + '\n' +
+                                    (calc.distanciaKm ? '📏 ' + calc.distanciaKm.toFixed(1) + ' km\n' : '') +
+                                    '\nQuer que eu chame um motorista? Responde *SIM* ou *NÃO*';
+                            }
+                            return await RebecaService.enviarTabelaPrecos(conversa.adminId);
                         }
                         
                         // Cancelamento
