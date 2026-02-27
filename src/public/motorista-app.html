@@ -871,9 +871,22 @@ body.dark-mode .chat-msg.received .bubble { background: #252542 !important; colo
                 btn.className = 'status-toggle online';
             } else if (motorista.status === 'em_corrida') {
                 text.textContent = 'Em corrida';
-                btn.textContent = 'EM CORRIDA';
-                btn.disabled = true;
-                btn.className = 'status-toggle';
+                // Se não tem corrida ativa, permitir resetar
+                if (!corridaAtual) {
+                    btn.textContent = 'RESETAR STATUS';
+                    btn.disabled = false;
+                    btn.className = 'status-toggle offline';
+                    btn.onclick = async () => {
+                        motorista.status = 'disponivel';
+                        try { await fetch('/api/motorista-app/status', { method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+token}, body:JSON.stringify({status:'disponivel'}) }); } catch(e){}
+                        atualizarStatusUI();
+                        toast('Status resetado!', 'success');
+                    };
+                } else {
+                    btn.textContent = 'EM CORRIDA';
+                    btn.disabled = true;
+                    btn.className = 'status-toggle';
+                }
             } else {
                 text.textContent = 'Offline';
                 btn.textContent = 'FICAR ONLINE';
@@ -1035,6 +1048,9 @@ body.dark-mode .chat-msg.received .bubble { background: #252542 !important; colo
             document.getElementById('novaCorridaOverlay').classList.add('active');
             
             // Timer
+            // Proteção anti-duplicata: não mostrar se já tem overlay ativo
+            if (document.getElementById('novaCorridaOverlay').classList.contains('active')) return;
+            
             tempoRestante = 30;
             document.getElementById('timerProgress').style.width = '100%';
             if (timerInterval) clearInterval(timerInterval);
@@ -1234,6 +1250,8 @@ body.dark-mode .chat-msg.received .bubble { background: #252542 !important; colo
         }
 
         async function iniciarCorrida() {
+            const btn = document.getElementById('btnIniciar');
+            if (btn) { btn.disabled = true; btn.textContent = '⏳ INICIANDO...'; }
             try {
                 const res = await fetch('/api/motorista-app/iniciar', {
                     method: 'POST',
@@ -1245,11 +1263,19 @@ body.dark-mode .chat-msg.received .bubble { background: #252542 !important; colo
                     corridaAtual.status = 'em_andamento';
                     atualizarBotoesCorridaAtiva();
                     toast('Corrida iniciada!', 'success');
+                } else {
+                    toast(data.erro || 'Erro ao iniciar', 'error');
+                    if (btn) { btn.disabled = false; btn.textContent = '▶️ INICIAR CORRIDA'; }
                 }
-            } catch (e) {}
+            } catch (e) {
+                toast('Erro de conexão', 'error');
+                if (btn) { btn.disabled = false; btn.textContent = '▶️ INICIAR CORRIDA'; }
+            }
         }
 
         async function finalizarCorrida() {
+            const btn = document.querySelector('.btn-finalizar');
+            if (btn) { btn.disabled = true; btn.textContent = '⏳ FINALIZANDO...'; }
             try {
                 const res = await fetch('/api/motorista-app/finalizar', {
                     method: 'POST',
@@ -1257,16 +1283,22 @@ body.dark-mode .chat-msg.received .bubble { background: #252542 !important; colo
                     body: JSON.stringify({ corridaId: corridaAtual._id })
                 });
                 const data = await res.json();
-                if (data.sucesso) {
+                if (data.sucesso || data.corrida) {
                     toast('Corrida finalizada! R$ ' + (data.corrida?.precoFinal || 0).toFixed(2), 'success');
-                    corridaAtual = null;
-                    motorista.status = 'disponivel';
-                    atualizarStatusUI();
-                    document.getElementById('corridaAtiva').classList.remove('active');
-                    document.getElementById('semCorrida').style.display = 'block';
-                    carregarDashboard();
+                } else {
+                    toast(data.erro || 'Erro ao finalizar', 'error');
                 }
-            } catch (e) {}
+            } catch (e) {
+                toast('Erro de conexão ao finalizar', 'error');
+            }
+            // SEMPRE resetar UI - evita motorista preso
+            corridaAtual = null;
+            motorista.status = 'disponivel';
+            atualizarStatusUI();
+            document.getElementById('corridaAtiva').classList.remove('active');
+            document.getElementById('semCorrida').style.display = 'block';
+            if (btn) { btn.disabled = false; btn.textContent = '✅ FINALIZAR CORRIDA'; }
+            carregarDashboard();
         }
 
         async function cancelarCorrida() {
@@ -1277,13 +1309,16 @@ body.dark-mode .chat-msg.received .bubble { background: #252542 !important; colo
                     headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
                     body: JSON.stringify({ corridaId: corridaAtual._id, motivo: 'Cancelado pelo motorista' })
                 });
-                corridaAtual = null;
-                motorista.status = 'disponivel';
-                atualizarStatusUI();
-                document.getElementById('corridaAtiva').classList.remove('active');
-                document.getElementById('semCorrida').style.display = 'block';
-                toast('Corrida cancelada', 'error');
-            } catch (e) {}
+            } catch (e) {
+                toast('Erro de conexão, mas corrida foi cancelada localmente', 'error');
+            }
+            // SEMPRE resetar UI
+            corridaAtual = null;
+            motorista.status = 'disponivel';
+            atualizarStatusUI();
+            document.getElementById('corridaAtiva').classList.remove('active');
+            document.getElementById('semCorrida').style.display = 'block';
+            toast('Corrida cancelada', 'error');
         }
 
         // ========== DASHBOARD ==========
