@@ -356,4 +356,102 @@ router.get('/m/:slug', async (req, res) => {
     }
 });
 
+
+// Reportar avaria
+router.post('/avaria', auth, async (req, res) => {
+    try {
+        const { descricao, latitude, longitude } = req.body;
+        const { Admin, InstanciaWhatsapp } = require('../models');
+        const EvolutionMultiService = require('../services/evolution-multi.service');
+        
+        console.log('[AVARIA]', req.motorista.nomeCompleto, ':', descricao);
+        
+        // Notificar admin via WhatsApp
+        const admin = await Admin.findById(req.motorista.adminId);
+        if (admin && admin.telefone) {
+            const instancia = await InstanciaWhatsapp.findOne({ adminId: admin._id, status: 'conectado' });
+            if (instancia) {
+                const msg = '⚠️ *AVARIA REPORTADA*\n\n' +
+                    '👤 Motorista: *' + req.motorista.nomeCompleto + '*\n' +
+                    '📝 ' + descricao + '\n' +
+                    (latitude ? '📍 Loc: ' + latitude + ',' + longitude : '') +
+                    '\n\n_Reportado agora_';
+                await EvolutionMultiService.enviarMensagem(instancia._id, admin.telefone, msg);
+            }
+        }
+        
+        res.json({ sucesso: true, mensagem: 'Avaria reportada com sucesso' });
+    } catch(e) {
+        console.error('[AVARIA] Erro:', e.message);
+        res.json({ sucesso: false, erro: e.message });
+    }
+});
+
+
+// Estatísticas do motorista
+router.get('/estatisticas', auth, async (req, res) => {
+    try {
+        const { Corrida } = require('../models');
+        const hoje = new Date();
+        hoje.setHours(0,0,0,0);
+        
+        const corridas = await Corrida.find({
+            motoristaId: req.motorista._id,
+            status: 'finalizada',
+            createdAt: { $gte: hoje }
+        });
+        
+        const ganhosHoje = corridas.reduce((s, c) => s + (c.precoFinal || c.precoEstimado || 0), 0);
+        const corridasHoje = corridas.length;
+        
+        // Calcular horas online (baseado em tempo entre primeira e última corrida do dia)
+        let horasOnline = 0;
+        if (corridas.length > 0) {
+            const primeira = new Date(corridas[0].createdAt);
+            const ultima = new Date(corridas[corridas.length-1].updatedAt || corridas[corridas.length-1].createdAt);
+            horasOnline = Math.round((ultima - primeira) / 3600000 * 10) / 10;
+            if (horasOnline < 0.5 && corridas.length > 0) horasOnline = 0.5;
+        }
+        
+        res.json({ ganhosHoje, corridasHoje, horasOnline });
+    } catch(e) {
+        res.json({ ganhosHoje: 0, corridasHoje: 0, horasOnline: 0 });
+    }
+});
+
+
+// Relatório por período
+router.get('/relatorio', auth, async (req, res) => {
+    try {
+        const { Corrida } = require('../models');
+        const periodo = req.query.periodo || 'hoje';
+        const agora = new Date();
+        let desde = new Date();
+        
+        if (periodo === 'hoje') desde.setHours(0,0,0,0);
+        else if (periodo === 'semana') desde.setDate(agora.getDate() - 7);
+        else if (periodo === 'mes') desde.setMonth(agora.getMonth() - 1);
+        
+        const corridas = await Corrida.find({
+            motoristaId: req.motorista._id,
+            status: 'finalizada',
+            createdAt: { $gte: desde }
+        });
+        
+        const faturamento = corridas.reduce((s, c) => s + (c.precoFinal || c.precoEstimado || 0), 0);
+        const media = corridas.length > 0 ? faturamento / corridas.length : 0;
+        
+        let horas = 0;
+        if (corridas.length > 0) {
+            const primeira = new Date(corridas[0].createdAt);
+            const ultima = new Date(corridas[corridas.length-1].updatedAt || corridas[corridas.length-1].createdAt);
+            horas = Math.round((ultima - primeira) / 3600000 * 10) / 10;
+        }
+        
+        res.json({ corridas: corridas.length, faturamento, media, horas });
+    } catch(e) {
+        res.json({ corridas: 0, faturamento: 0, media: 0, horas: 0 });
+    }
+});
+
 module.exports = router;

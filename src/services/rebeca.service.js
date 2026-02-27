@@ -649,6 +649,26 @@ Responda diretamente para ele: wa.me/${telefone}`;
             return 'Você ainda está na fila de espera! Assim que um motorista desocupar eu te aviso. Se quiser desistir, digite *CANCELAR*.';
         }
 
+
+        // ========== CONFIRMAÇÃO DE PREÇO ==========
+        if (conversa.etapa === 'confirmar_preco') {
+            if (msg.includes('sim') || msg.includes('confirma') || msg.includes('pode') || msg.includes('ok') || msg.includes('bora') || msg.includes('vai') || msg.includes('quero') || msg === 's') {
+                // Cliente confirmou - criar corrida
+                const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
+                if (corrida.duplicada) return '⚠️ Você já tem uma corrida em andamento!\n\nDigite *CANCELAR* para cancelar ou aguarde.';
+                conversa.etapa = 'aguardando_motorista';
+                conversa.dados.corridaId = corrida.id;
+                conversas.set(telefone, conversa);
+                return '✅ Corrida confirmada!\n\n⏳ Buscando motorista mais próximo...\n_Digite CANCELAR se precisar_';
+            } else if (msg.includes('nao') || msg.includes('não') || msg.includes('cancelar') || msg.includes('desisto')) {
+                conversa.etapa = 'inicio';
+                conversa.dados = {};
+                conversas.set(telefone, conversa);
+                return 'Sem problemas! Corrida cancelada. Quando precisar é só chamar! 😊';
+            }
+            return 'Confirma a corrida? Responde *SIM* para confirmar ou *NÃO* para cancelar.';
+        }
+
         if (conversa.etapa === 'avaliar') {
             const nota = parseInt(msg);
             if (nota >= 1 && nota <= 5) {
