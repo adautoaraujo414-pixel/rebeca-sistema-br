@@ -694,6 +694,20 @@ body.dark-mode .chat-msg.received .bubble { background: #252542 !important; colo
         </div>
     </div>
 
+    
+    <!-- Modal Histórico -->
+    <div id="modalHistorico" class="modal-overlay">
+        <div class="modal-content" style="max-height:85vh;">
+            <div class="modal-header">
+                <h3>📋 Histórico de Corridas</h3>
+                <button class="modal-close" onclick="fecharModal('modalHistorico')">&times;</button>
+            </div>
+            <div class="modal-body" id="historicoLista" style="overflow-y:auto;max-height:65vh;">
+                <p style="text-align:center;color:#888;">Carregando...</p>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast -->
     <div id="toast" class="toast"></div>
 
@@ -724,6 +738,51 @@ body.dark-mode .chat-msg.received .bubble { background: #252542 !important; colo
         let somAtivo = true;
         let minhaLatitude = null;
         let minhaLongitude = null;
+
+
+        // ========== HISTÓRICO ==========
+        async function abrirHistorico() {
+            abrirModal('modalHistorico');
+            document.getElementById('historicoLista').innerHTML = '<p style="text-align:center;color:#888;">Carregando...</p>';
+            try {
+                const res = await fetch('/api/motorista-app/historico', { headers: { 'Authorization': 'Bearer ' + token } });
+                const data = await res.json();
+                const corridas = data.corridas || [];
+                if (corridas.length === 0) {
+                    document.getElementById('historicoLista').innerHTML = '<p style="text-align:center;color:#888;">Nenhuma corrida ainda.</p>';
+                    return;
+                }
+                document.getElementById('historicoLista').innerHTML = corridas.slice(0, 30).map(c => {
+                    const data = new Date(c.createdAt || c.dataCriacao);
+                    const dia = data.toLocaleDateString('pt-BR');
+                    const hora = data.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'});
+                    const valor = (c.precoFinal || c.precoEstimado || 0).toFixed(2);
+                    const status = c.status === 'finalizada' ? '✅' : c.status === 'cancelada' ? '❌' : '⏳';
+                    return '<div style="padding:12px;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center;">' +
+                        '<div>' +
+                        '<div style="font-weight:bold;">' + status + ' ' + (c.clienteNome || 'Cliente') + '</div>' +
+                        '<div style="font-size:12px;color:#888;">' + dia + ' ' + hora + '</div>' +
+                        '<div style="font-size:12px;color:#666;">' + (c.origem?.endereco || '-').substring(0,35) + '</div>' +
+                        '</div>' +
+                        '<div style="font-weight:bold;color:' + (c.status === 'finalizada' ? '#00cc6a' : '#999') + ';">R$ ' + valor + '</div>' +
+                        '</div>';
+                }).join('');
+            } catch(e) {
+                document.getElementById('historicoLista').innerHTML = '<p style="text-align:center;color:#888;">Erro ao carregar.</p>';
+            }
+        }
+
+
+        // ========== DETECTOR REDE OFFLINE ==========
+        window.addEventListener('offline', () => {
+            toast('📡 Sem conexão! Verifique sua internet.', 'error');
+            document.getElementById('gpsInfo').textContent = '❌ SEM INTERNET';
+        });
+        window.addEventListener('online', () => {
+            toast('📡 Conexão restaurada!', 'success');
+            document.getElementById('gpsInfo').textContent = '📍 GPS ativo';
+            if (motorista) { carregarDashboard(); verificarCorridaAtiva(); }
+        });
 
         // ========== INICIALIZAÇÃO ==========
         if (token) {
@@ -1094,6 +1153,8 @@ body.dark-mode .chat-msg.received .bubble { background: #252542 !important; colo
         async function aceitarCorrida() {
             if (!corridaAtual) return;
             clearInterval(timerInterval);
+            const btn = document.querySelector('.btn-aceitar');
+            if (btn) { btn.disabled = true; btn.textContent = '⏳ ACEITANDO...'; }
 
             try {
                 const res = await fetch('/api/motorista-app/aceitar', {
@@ -1111,10 +1172,12 @@ body.dark-mode .chat-msg.received .bubble { background: #252542 !important; colo
                     toast('Corrida aceita!', 'success');
                 } else {
                     toast(data.erro || 'Erro ao aceitar', 'error');
+                    if (btn) { btn.disabled = false; btn.textContent = '✅ ACEITAR'; }
                     recusarCorrida();
                 }
             } catch (e) {
                 toast('Erro de conexão', 'error');
+                if (btn) { btn.disabled = false; btn.textContent = '✅ ACEITAR'; }
             }
         }
 

@@ -366,6 +366,27 @@ router.post('/avaria', auth, async (req, res) => {
         
         console.log('[AVARIA]', req.motorista.nomeCompleto, ':', descricao);
         
+        // Salvar avaria no banco
+        try {
+            const mongoose = require('mongoose');
+            const AvariaSchema = mongoose.models.Avaria || mongoose.model('Avaria', new mongoose.Schema({
+                motoristaId: mongoose.Schema.Types.ObjectId,
+                motoristaNome: String,
+                descricao: String,
+                latitude: Number, longitude: Number,
+                adminId: mongoose.Schema.Types.ObjectId,
+                status: { type: String, default: 'pendente' }
+            }, { timestamps: true }));
+            await AvariaSchema.create({
+                motoristaId: req.motorista._id,
+                motoristaNome: req.motorista.nomeCompleto,
+                descricao,
+                latitude: latitude || null,
+                longitude: longitude || null,
+                adminId: req.motorista.adminId
+            });
+        } catch(dbErr) { console.log('[AVARIA] Erro ao salvar:', dbErr.message); }
+        
         // Notificar admin via WhatsApp
         const admin = await Admin.findById(req.motorista.adminId);
         if (admin && admin.telefone) {
@@ -452,6 +473,29 @@ router.get('/relatorio', auth, async (req, res) => {
     } catch(e) {
         res.json({ corridas: 0, faturamento: 0, media: 0, horas: 0 });
     }
+});
+
+
+// Salvar avaliação do cliente
+router.post('/avaliar', auth, async (req, res) => {
+    try {
+        const { corridaId, nota } = req.body;
+        const { Corrida } = require('../models');
+        if (!corridaId || !nota || nota < 1 || nota > 5) {
+            return res.json({ sucesso: false, erro: 'Dados inválidos' });
+        }
+        await Corrida.findByIdAndUpdate(corridaId, { avaliacao: nota });
+        
+        // Atualizar média do motorista
+        const corridas = await Corrida.find({ motoristaId: req.motorista._id, avaliacao: { $exists: true, $gt: 0 } });
+        if (corridas.length > 0) {
+            const media = corridas.reduce((s, c) => s + c.avaliacao, 0) / corridas.length;
+            const Motorista = require('../models').Motorista;
+            await Motorista.findByIdAndUpdate(req.motorista._id, { avaliacao: Math.round(media * 10) / 10 });
+        }
+        
+        res.json({ sucesso: true });
+    } catch(e) { res.json({ sucesso: false, erro: e.message }); }
 });
 
 module.exports = router;

@@ -18,6 +18,36 @@ setInterval(async () => {
     let limpas = 0;
     for (const [telefone, conversa] of conversas.entries()) {
         const ultimaMsg = conversa.ultimaMensagem || conversa.updatedAt || conversa.criadaEm || 0;
+        
+        // Timeout etapas que podem travar o cliente
+        const minutos = (agora - ultimaMsg) / 60000;
+        if (conversa.etapa === 'aguardando_motorista' && minutos > 10) {
+            // Cancelar corrida pendente e avisar cliente
+            try {
+                const { Corrida } = require('../models');
+                if (conversa.dados?.corridaId) {
+                    await Corrida.findByIdAndUpdate(conversa.dados.corridaId, { status: 'cancelada', motivoCancelamento: 'timeout_sem_motorista' });
+                }
+                const EvolutionMultiService = require('./evolution-multi.service');
+                const { InstanciaWhatsapp } = require('../models');
+                const inst = await InstanciaWhatsapp.findOne({ adminId: conversa.adminId, status: 'conectado' });
+                if (inst) {
+                    await EvolutionMultiService.enviarMensagem(inst._id, telefone, 'Poxa, não encontramos motorista disponível no momento 😔\n\nTente novamente daqui a pouco! Quando precisar é só chamar.');
+                }
+            } catch(e) {}
+            conversa.etapa = 'inicio';
+            conversa.dados = {};
+            conversas.set(telefone, conversa);
+            console.log('[CLEANUP] Timeout aguardando_motorista:', telefone);
+            continue;
+        }
+        if (conversa.etapa === 'avaliar' && minutos > 60) {
+            conversa.etapa = 'inicio';
+            conversa.dados = {};
+            conversas.set(telefone, conversa);
+            console.log('[CLEANUP] Timeout avaliação:', telefone);
+            continue;
+        }
         const tempoInativo = agora - new Date(ultimaMsg).getTime();
         
         // Aviso em 25min se conversa está no meio de algo
@@ -685,6 +715,24 @@ Responda diretamente para ele: wa.me/${telefone}`;
             const nota = parseInt(msg);
             if (nota >= 1 && nota <= 5) {
                 const estrelas = '⭐'.repeat(nota);
+                
+                // Salvar nota na corrida
+                try {
+                    const { Corrida, Motorista } = require('../models');
+                    const ultimaCorrida = await Corrida.findOne({ clienteTelefone: telefone, status: 'finalizada' }).sort({ updatedAt: -1 });
+                    if (ultimaCorrida) {
+                        await Corrida.findByIdAndUpdate(ultimaCorrida._id, { avaliacao: nota });
+                        // Atualizar média do motorista
+                        if (ultimaCorrida.motoristaId) {
+                            const corridas = await Corrida.find({ motoristaId: ultimaCorrida.motoristaId, avaliacao: { $exists: true, $gt: 0 } });
+                            if (corridas.length > 0) {
+                                const media = corridas.reduce((s, c) => s + c.avaliacao, 0) / corridas.length;
+                                await Motorista.findByIdAndUpdate(ultimaCorrida.motoristaId, { avaliacao: Math.round(media * 10) / 10 });
+                            }
+                        }
+                    }
+                } catch(e) { console.log('[AVALIACAO] Erro ao salvar:', e.message); }
+                
                 conversa.etapa = 'inicio';
                 conversa.dados = {};
                 conversas.set(telefone, conversa);
