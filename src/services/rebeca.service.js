@@ -12,6 +12,12 @@ const OpenAIRebecaService = require('./openai-rebeca.service');
 
 const conversas = new Map();
 
+// Carregar conversas do banco ao iniciar
+setTimeout(() => { try { RebecaService.carregarConversasDoBanco(); } catch(e) { console.log('[CATCH]', e.message); } }, 5000);
+
+// Salvar conversas no banco a cada 2 min
+setInterval(() => { try { RebecaService.salvarConversasNoBanco(); } catch(e) { console.log('[CATCH]', e.message); } }, 120000);
+
 // Auto-cleanup conversas inativas (a cada 5 min, remove conversas >30min sem interacao)
 setInterval(async () => {
     const agora = Date.now();
@@ -34,7 +40,7 @@ setInterval(async () => {
                 if (inst) {
                     await EvolutionMultiService.enviarMensagem(inst._id, telefone, 'Poxa, não encontramos motorista disponível no momento 😔\n\nTente novamente daqui a pouco! Quando precisar é só chamar.');
                 }
-            } catch(e) {}
+            } catch(e) { console.log('[CATCH]', e.message); }
             conversa.etapa = 'inicio';
             conversa.dados = {};
             conversas.set(telefone, conversa);
@@ -60,7 +66,7 @@ setInterval(async () => {
                 if (conversa.instanciaId) {
                     await EvolutionMultiService.enviarMensagem(conversa.instanciaId, telefone, '⏰ Ainda está aí? Sua conversa expira em 5 minutos por inatividade. Me manda uma mensagem para continuar!');
                 }
-            } catch(e) {}
+            } catch(e) { console.log('[CATCH]', e.message); }
         }
         
         // Remover após 30min
@@ -164,7 +170,7 @@ const RebecaService = {
                 favoritosClientes.set(telefone, cliente.enderecoFavorito);
                 return cliente.enderecoFavorito;
             }
-        } catch(e) {}
+        } catch(e) { console.log('[CATCH]', e.message); }
         return {};
     },
 
@@ -592,7 +598,7 @@ Responda diretamente para ele: wa.me/${telefone}`;
                         telefoneEmpresa = admin.telefone || '';
                     }
                 }
-            } catch(e) {}
+            } catch(e) { console.log('[CATCH]', e.message); }
             
             const analise = await IAService.analisarMensagem(msgOriginal, {
                 nome, telefone,
@@ -635,7 +641,7 @@ Responda diretamente para ele: wa.me/${telefone}`;
                             await Corrida.findByIdAndUpdate(corridaAtiva._id, {
                                 $push: { chatMensagens: { texto: msgOriginal, remetente: 'cliente', nomeRemetente: nome, data: new Date(), tipo: 'cliente' } }
                             });
-                        } catch(e) {}
+                        } catch(e) { console.log('[CATCH]', e.message); }
                         console.log('[REBECA] Mensagem cliente salva no painel para motorista:', motoristaAtivo.nomeCompleto || motoristaAtivo.nome);
                         conversas.set(telefone, conversa);
                         return '✅ Mensagem enviada para o motorista *' + (motoristaAtivo.nomeCompleto || motoristaAtivo.nome) + '*!';
@@ -915,7 +921,7 @@ Responda diretamente para ele: wa.me/${telefone}`;
                             achouComCidade = true;
                         }
                     }
-                } catch(e) {}
+                } catch(e) { console.log('[CATCH]', e.message); }
                 if (!achouComCidade) {
                     // Verificar se tem numero - se nao tem, pedir
                     const temNumero = /d/.test(msgOriginal);
@@ -1104,7 +1110,8 @@ Esse é o endereço correto? Responda *SIM* ou corrija.`;
                 if (motoristasAgora.length === 0) {
                     return 'Encomenda registrada! Todos os motoristas estão ocupados. Te aviso assim que um aceitar.';
                 }
-                return 'Encomenda confirmada! Buscando motorista...';
+                const _precoEnc = conversa.dados?.calculo?.preco || 0;
+                return 'Encomenda confirmada!' + (_precoEnc > 0 ? '\n💰 *Valor: R$ ' + _precoEnc.toFixed(2) + '*' : '') + '\n\n⏳ Buscando motorista...\n_Digite CANCELAR se precisar_';
             } else {
                 conversa.etapa = 'inicio';
                 conversa.dados = {};
@@ -1457,7 +1464,7 @@ _Digite CANCELAR se precisar_`;
                     const adm = await Admin.findById(conversa.adminId);
                     if (adm) infoEmpresa = { nomeEmpresa: adm.empresa || adm.nome || '', telefoneEmpresa: adm.telefone || '' };
                 }
-            } catch(e) {}
+            } catch(e) { console.log('[CATCH]', e.message); }
             const respostaIA = await IAService.responderPergunta(msgOriginal, { ...PrecoDinamicoService.getConfig(), ...infoEmpresa });
             if (respostaIA) {
                 resposta = respostaIA + `\n\n`;
@@ -1686,7 +1693,7 @@ _Digite CANCELAR se precisar_`;
         try {
             const cl = ClienteService.buscarPorTelefone(telefone);
             if (cl) jaUsou = true;
-        } catch(e) {}
+        } catch(e) { console.log('[CATCH]', e.message); }
         
         // Resposta simples e direta
         if (jaUsou) {
@@ -1724,7 +1731,7 @@ _Digite CANCELAR se precisar_`;
                 if (exemplos.length) t += `\n\n${exemplos.join('\n')}`;
                 return t + `\n\n_Me manda o endereço para calcular o valor exato!_`;
             }
-        } catch(e) {}
+        } catch(e) { console.log('[CATCH]', e.message); }
         const config = PrecoDinamicoService.getConfig();
         const faixa = PrecoDinamicoService.obterFaixaAtual();
         let t = `💰 *TABELA DE PREÇOS*\n\n• Taxa: R$ ${config.taxaBase.toFixed(2)}\n• Km: R$ ${config.precoKm.toFixed(2)}\n\n🕐 *Agora:* ${faixa.nome}`;
@@ -1832,7 +1839,7 @@ _Digite CANCELAR se precisar_`;
                 // Motorista esperando cliente ha mais de 30 min - cancelar
                 await Corrida.findByIdAndUpdate(corridaAtiva._id, { status: 'cancelada', motivoCancelamento: 'timeout_aguardando_30min' });
                 if (corridaAtiva.motoristaId) {
-                    try { await MotoristaService.atualizarStatus(corridaAtiva.motoristaId, 'disponivel'); } catch(e) {}
+                    try { await MotoristaService.atualizarStatus(corridaAtiva.motoristaId, 'disponivel'); } catch(e) { console.log('[CATCH]', e.message); }
                 }
                 console.log('[REBECA] Corrida aguardando_cliente cancelada (timeout 30min):', corridaAtiva._id);
             } else if (corridaAtiva.status === 'pendente' && minutosPendente > 10) {
@@ -1930,9 +1937,9 @@ _Digite CANCELAR se precisar_`;
         }
         
         // Push notification para motoristas disponíveis
-        try { const PushService = require('./push.service'); await PushService.notificarNovaCorrida(adminId, corrida); } catch(e) {}
+        try { const PushService = require('./push.service'); await PushService.notificarNovaCorrida(adminId, corrida); } catch(e) { console.log('[CATCH]', e.message); }
         
-        return { id: corrida._id || corrida.id, origem: dados.origem, destino: dados.destino, preco: dados.calculo.preco };
+        return { id: corrida._id || corrida.id, origem: dados.origem, destino: dados.destino, preco: dados.calculo.preco, tempoEstimado: dados.calculo?.tempoMinutos || 0 };
     },
 
     async historicoCliente(telefone) {

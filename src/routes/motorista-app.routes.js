@@ -86,7 +86,7 @@ router.post('/aceitar', auth, async (req, res) => {
         try {
             const RebecaService = require('../services/rebeca.service');
             RebecaService.setEtapaConversa(corrida.clienteTelefone, 'em_corrida');
-        } catch(e) {}
+        } catch(e) { console.log('[CATCH]', e.message); }
         
         // ========== NOTIFICAR CLIENTE - SOLUÇÃO ROBUSTA ==========
         if (corrida && corrida.clienteTelefone) {
@@ -112,8 +112,11 @@ router.post('/aceitar', auth, async (req, res) => {
                 const linkRastreio = baseUrl + '/rastrear/' + corridaId.slice(-8);
                 
                 const valorCorrida = corrida.precoEstimado || corrida.precoFinal || 0;
+                const etaMin = corrida.tempoEstimado || 0;
+                const etaTexto = etaMin > 0 ? '⏱️ *Tempo estimado: ~' + etaMin + ' min*\n' : '';
                 const msg = '🚗 *MOTORISTA A CAMINHO!*\n\n' +
-                    (valorCorrida > 0 ? '💰 *Valor: R$ ' + valorCorrida.toFixed(2) + '*\n\n' : '') +
+                    (valorCorrida > 0 ? '💰 *Valor: R$ ' + valorCorrida.toFixed(2) + '*\n' : '') +
+                    etaTexto + '\n' +
                     '👤 *' + nomeM + '*\n' +
                     (veicM ? '🚙 ' + veicM + (corM ? ' ' + corM : '') + '\n' : '') +
                     (placaM ? '🔢 *' + placaM + '*\n' : '') +
@@ -241,7 +244,7 @@ router.post('/finalizar', auth, async (req, res) => {
             if (instancia) {
                 const valor = precoFinal || corridaFinal.precoFinal || corridaFinal.precoEstimado || 0;
                 // Colocar cliente em modo avaliacao
-                try { const RebecaService = require('../services/rebeca.service'); RebecaService.pedirAvaliacao(corridaFinal.clienteTelefone); } catch(e) {}
+                try { const RebecaService = require('../services/rebeca.service'); RebecaService.pedirAvaliacao(corridaFinal.clienteTelefone); } catch(e) { console.log('[CATCH]', e.message); }
                 await EvolutionMultiService.enviarMensagem(instancia._id, corridaFinal.clienteTelefone,
                     '\ud83c\udfc1 *CORRIDA FINALIZADA!*\n\n' +
                     '\ud83d\udcb0 *Valor: R$ ' + valor.toFixed(2) + '*\n\n' +
@@ -260,7 +263,7 @@ router.post('/cancelar', auth, async (req, res) => {
         const resultado = await CorridaService.cancelar(corridaId, motivo || 'Cancelado pelo motorista');
         // Resetar Rebeca para cliente poder pedir nova corrida
         if (corridaAntes && corridaAntes.clienteTelefone) {
-            try { const RebecaService = require('../services/rebeca.service'); RebecaService.setEtapaConversa(corridaAntes.clienteTelefone, 'inicio'); } catch(e) {}
+            try { const RebecaService = require('../services/rebeca.service'); RebecaService.setEtapaConversa(corridaAntes.clienteTelefone, 'inicio'); } catch(e) { console.log('[CATCH]', e.message); }
         }
         if (corridaAntes && corridaAntes.clienteTelefone) {
             const EvolutionMultiService = require('../services/evolution-multi.service');
