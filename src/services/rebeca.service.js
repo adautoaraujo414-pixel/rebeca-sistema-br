@@ -400,7 +400,8 @@ const RebecaService = {
             conversa.dados.corridaId = corridaGps.id;
             conversas.set(telefone, conversa);
             
-            return `📍 ${conversa.dados.origem}\n\n⏳ Buscando motorista...\n_CANCELAR se precisar_`;
+            const _preco1 = conversa.dados?.calculo?.preco || conversa.dados?.calculo?.precoFinal || 0;
+            return `📍 ${conversa.dados.origem}` + (_preco1 > 0 ? `\n💰 *Valor: R$ ${_preco1.toFixed(2)}*` : '') + `\n\n⏳ Buscando motorista...\n_CANCELAR se precisar_`;
         }
         // ========== TENTAR OPENAI PRIMEIRO ==========
         if (conversa.etapa === 'inicio') {
@@ -713,7 +714,8 @@ Responda diretamente para ele: wa.me/${telefone}`;
                 conversa.etapa = 'aguardando_motorista';
                 conversa.dados.corridaId = corrida.id;
                 conversas.set(telefone, conversa);
-                return '✅ Corrida confirmada!\n\n⏳ Buscando motorista mais próximo...\n_Digite CANCELAR se precisar_';
+                const _precoConf = conversa.dados?.calculo?.preco || conversa.dados?.calculo?.precoFinal || 0;
+                return '✅ Corrida confirmada!' + (_precoConf > 0 ? '\n💰 *Valor: R$ ' + _precoConf.toFixed(2) + '*' : '') + '\n\n⏳ Buscando motorista mais próximo...\n_Digite CANCELAR se precisar_';
             } else if (msg.includes('nao') || msg.includes('não') || msg.includes('cancelar') || msg.includes('desisto')) {
                 conversa.etapa = 'inicio';
                 conversa.dados = {};
@@ -908,7 +910,8 @@ Responda diretamente para ele: wa.me/${telefone}`;
                             conversa.etapa = 'aguardando_motorista';
                             conversa.dados.corridaId = corridaDireta.id;
                             conversas.set(telefone, conversa);
-                            return '📍 ' + val2.endereco + '\n⏳ Buscando motorista...\n_Digite CANCELAR se precisar_';
+                            const _precoV2 = conversa.dados?.calculo?.preco || 0;
+                            return '📍 ' + val2.endereco + (_precoV2 > 0 ? '\n💰 *Valor: R$ ' + _precoV2.toFixed(2) + '*' : '') + '\n⏳ Buscando motorista...\n_Digite CANCELAR se precisar_';
                             achouComCidade = true;
                         }
                     }
@@ -934,7 +937,8 @@ Qual o número?`;
                     conversa.etapa = 'aguardando_motorista';
                     conversa.dados.corridaId = corridaTexto.id;
                     conversas.set(telefone, conversa);
-                    return '📍 ' + msgOriginal + '\n\n⏳ Buscando motorista...\n_Digite CANCELAR se precisar_';
+                    const _precoTx = conversa.dados?.calculo?.preco || 0;
+                    return '📍 ' + msgOriginal + (_precoTx > 0 ? '\n💰 *Valor: R$ ' + _precoTx.toFixed(2) + '*' : '') + '\n\n⏳ Buscando motorista...\n_Digite CANCELAR se precisar_';
                 }
             } else {
                 // FLUXO DIRETO: Achou no Maps - verificar suspeito
@@ -989,7 +993,8 @@ Esse é o endereço correto? Responda *SIM* ou corrija.`;
                     return `📍 ${validacao.endereco}\n\nCorrida registrada! No momento todos os motoristas estão ocupados, mas já estamos buscando. Te aviso assim que um aceitar.`;
                 }
                 
-                return `📍 ${validacao.endereco}\n\nBuscando motorista...`;
+                const _precoVal = conversa.dados?.calculo?.preco || 0;
+                return `📍 ${validacao.endereco}` + (_precoVal > 0 ? `\n💰 *Valor: R$ ${_precoVal.toFixed(2)}*` : '') + `\n\n⏳ Buscando motorista...\n_CANCELAR se precisar_`;
             }
         }
         // ========== COMPLEMENTO GPS (número/referência) ==========
@@ -1020,7 +1025,8 @@ Esse é o endereço correto? Responda *SIM* ou corrija.`;
                 return `📍 ${conversa.dados.origem}\n📌 ${msgOriginal}\n\nCorrida registrada! Todos os motoristas estão ocupados, te aviso assim que um aceitar.`;
             }
             
-            return `📍 ${conversa.dados.origem}\n📌 ${msgOriginal}\n\nBuscando motorista...`;
+            const _precoGps = conversa.dados?.calculo?.preco || 0;
+            return `📍 ${conversa.dados.origem}\n📌 ${msgOriginal}` + (_precoGps > 0 ? `\n💰 *Valor: R$ ${_precoGps.toFixed(2)}*` : '') + `\n\n⏳ Buscando motorista...\n_CANCELAR se precisar_`;
         }
         // ========== CLIENTE RECORRENTE - CONFIRMAR ENDEREÇO ==========
         else if (conversa.etapa === 'confirmar_endereco_anterior') {
@@ -1155,7 +1161,8 @@ _Digite CANCELAR se precisar_`;
                     conversa.etapa = 'aguardando_motorista';
                     conversa.dados.corridaId = corridaNum.id;
                     conversas.set(telefone, conversa);
-                    return '📍 ' + enderecoCompleto + '\n\n⏳ Buscando motorista...\n_Digite CANCELAR se precisar_';
+                    const _precoCpl = conversa.dados?.calculo?.preco || 0;
+                    return '📍 ' + enderecoCompleto + (_precoCpl > 0 ? '\n💰 *Valor: R$ ' + _precoCpl.toFixed(2) + '*' : '') + '\n\n⏳ Buscando motorista...\n_Digite CANCELAR se precisar_';
                 }
             } else {
                 resposta = '🔢 Por favor, informe o *número* da casa/prédio (ou *SN* se não tiver):';
@@ -1189,7 +1196,8 @@ _Digite CANCELAR se precisar_`;
             conversa.etapa = 'aguardando_motorista';
             conversa.dados.corridaId = corridaBairro.id;
             conversas.set(telefone, conversa);
-            return `📍 ${enderecoCompleto}\n\n⏳ Buscando motorista...\n_CANCELAR se precisar_`;
+            const _precoBairro = conversa.dados?.calculo?.preco || 0;
+            return `📍 ${enderecoCompleto}` + (_precoBairro > 0 ? `\n💰 *Valor: R$ ${_precoBairro.toFixed(2)}*` : '') + `\n\n⏳ Buscando motorista...\n_CANCELAR se precisar_`;
         }
         // ========== REFERÊNCIA (NOVO FLUXO DIRETO) ==========
         else if (conversa.etapa === 'pedir_referencia') {

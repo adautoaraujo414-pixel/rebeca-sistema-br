@@ -786,6 +786,56 @@ body.dark-mode .chat-msg.received .bubble { background: #252542 !important; colo
         });
 
 
+
+        // ========== CHAT BIDIRECIONAL ==========
+        let chatInterval = null;
+        let lastChatCount = 0;
+        
+        function iniciarChatPolling() {
+            if (chatInterval) clearInterval(chatInterval);
+            lastChatCount = 0;
+            chatInterval = setInterval(async () => {
+                if (!corridaAtual || !token) return;
+                try {
+                    const res = await fetch('/api/motorista-app/chat/mensagens', {
+                        headers: { 'Authorization': 'Bearer ' + token }
+                    });
+                    const data = await res.json();
+                    const msgs = data.mensagens || [];
+                    // Filtrar só mensagens do cliente
+                    const msgsCliente = msgs.filter(m => m.tipo === 'cliente');
+                    if (msgsCliente.length > lastChatCount) {
+                        // Nova mensagem do cliente!
+                        const novas = msgsCliente.slice(lastChatCount);
+                        novas.forEach(m => {
+                            toast('💬 Cliente: ' + (m.texto || '').substring(0, 50), 'success');
+                            // Vibrar
+                            if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+                        });
+                        lastChatCount = msgsCliente.length;
+                        
+                        // Atualizar chat na tela se visível
+                        const chatBox = document.getElementById('chatMensagens');
+                        if (chatBox) {
+                            novas.forEach(m => {
+                                const div = document.createElement('div');
+                                div.className = 'chat-msg cliente';
+                                div.style.cssText = 'background:#e3f2fd;padding:8px 12px;border-radius:12px;margin:5px 0;max-width:80%;align-self:flex-start;';
+                                div.innerHTML = '<small style="color:#1976d2;font-weight:bold;">👤 ' + (m.nomeRemetente || 'Cliente') + '</small><br>' + (m.texto || '');
+                                chatBox.appendChild(div);
+                                chatBox.scrollTop = chatBox.scrollHeight;
+                            });
+                        }
+                    }
+                } catch(e) {}
+            }, 5000);
+        }
+        
+        function pararChatPolling() {
+            if (chatInterval) { clearInterval(chatInterval); chatInterval = null; }
+            lastChatCount = 0;
+        }
+
         // ========== SEGUNDO PLANO / BACKGROUND ==========
         let wakeLock = null;
         

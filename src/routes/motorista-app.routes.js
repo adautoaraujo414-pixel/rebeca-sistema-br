@@ -111,7 +111,9 @@ router.post('/aceitar', auth, async (req, res) => {
                 const baseUrl = process.env.BASE_URL || 'https://rebeca-sistema-br.onrender.com';
                 const linkRastreio = baseUrl + '/rastrear/' + corridaId.slice(-8);
                 
+                const valorCorrida = corrida.precoEstimado || corrida.precoFinal || 0;
                 const msg = '🚗 *MOTORISTA A CAMINHO!*\n\n' +
+                    (valorCorrida > 0 ? '💰 *Valor: R$ ' + valorCorrida.toFixed(2) + '*\n\n' : '') +
                     '👤 *' + nomeM + '*\n' +
                     (veicM ? '🚙 ' + veicM + (corM ? ' ' + corM : '') + '\n' : '') +
                     (placaM ? '🔢 *' + placaM + '*\n' : '') +
@@ -512,6 +514,22 @@ router.post('/push/subscribe', auth, async (req, res) => {
         PushService.salvarSubscription(req.motorista._id, req.body.subscription);
         res.json({ sucesso: true });
     } catch(e) { res.json({ sucesso: false, erro: e.message }); }
+});
+
+
+// Chat: motorista busca mensagens do cliente
+router.get('/chat/mensagens', auth, async (req, res) => {
+    try {
+        const corrida = await CorridaService.corridaAtivaMotorista(req.motorista._id);
+        if (!corrida) return res.json({ mensagens: [] });
+        
+        const { Corrida } = require('../models');
+        const corridaFull = await Corrida.findById(corrida._id).select('chatMensagens');
+        const msgs = corridaFull?.chatMensagens || [];
+        
+        // Retornar últimas 20 mensagens
+        res.json({ mensagens: msgs.slice(-20) });
+    } catch(e) { res.json({ mensagens: [] }); }
 });
 
 module.exports = router;
