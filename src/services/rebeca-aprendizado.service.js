@@ -251,7 +251,7 @@ RETORNE APENAS JSON:
                 totalInteracoes: 0, naoEntendeu: 0, conflitos: 0, corridasCriadas: 0
             };
         } catch(e) { return { totalInteracoes: 0 }; }
-    }
+    },
 
 
 
