@@ -372,6 +372,7 @@ body.dark-mode .chat-msg.received .bubble { background: #252542 !important; colo
                                 <div class="rota-content">
                                     <label>BUSCAR EM</label>
                                     <p id="origemAtiva" style="font-size:16px;font-weight:bold;color:#1a73e8;margin:5px 0;">-</p>
+                                    <button id="btnNavegarOrigem" onclick="abrirNavegacao('origem')" style="background:#1a73e8;color:#fff;border:none;padding:8px 16px;border-radius:20px;font-size:13px;cursor:pointer;margin-top:5px;">🗺️ ABRIR NO MAPA</button>
                                     <div id="refOrigemAtivaBox" style="margin-top:8px;padding:10px;background:#fff3e0;border-left:4px solid #ff9800;border-radius:4px;display:none;">
                                         <span style="color:#e65100;font-weight:bold;">📌 REFERÊNCIA:</span>
                                         <p id="refOrigemAtivaText" style="margin:4px 0 0 0;color:#333;font-size:14px;"></p>
@@ -1172,6 +1173,10 @@ body.dark-mode .chat-msg.received .bubble { background: #252542 !important; colo
             }
 
             document.getElementById('novaCorridaValor').textContent = 'R$ ' + (corrida.precoEstimado || 0).toFixed(2);
+            // Valor zero = problema no cálculo
+            if (!corrida.precoEstimado || corrida.precoEstimado === 0) {
+                document.getElementById('novaCorridaValor').textContent = 'Valor a combinar';
+            }
             document.getElementById('novaCorridaDistancia').textContent = '📍 ' + distancia;
             
             // Diferenciar ENCOMENDA de PASSAGEIRO
@@ -1232,7 +1237,14 @@ body.dark-mode .chat-msg.received .bubble { background: #252542 !important; colo
             tempoRestante = 30;
             document.getElementById('timerProgress').style.width = '100%';
             if (timerInterval) clearInterval(timerInterval);
+            // Mostrar contagem regressiva visual
+            let timerCount = 30;
+            const timerDisplay = document.getElementById('novaCorridaTimer');
+            if (timerDisplay) timerDisplay.textContent = timerCount + 's';
+            
             timerInterval = setInterval(() => {
+                timerCount--;
+                if (timerDisplay) timerDisplay.textContent = timerCount + 's';
                 tempoRestante--;
                 document.getElementById('timerProgress').style.width = (tempoRestante / 30 * 100) + '%';
                 if (tempoRestante <= 0) {
@@ -1313,6 +1325,67 @@ body.dark-mode .chat-msg.received .bubble { background: #252542 !important; colo
             }
         }
 
+
+
+        // Badge de nova mensagem no chat
+        let mensagensNaoLidas = 0;
+        function atualizarBadgeChat() {
+            const badge = document.getElementById('chatBadge');
+            if (badge) {
+                if (mensagensNaoLidas > 0) {
+                    badge.textContent = mensagensNaoLidas;
+                    badge.style.display = 'inline-block';
+                } else {
+                    badge.style.display = 'none';
+                }
+            }
+        }
+
+
+        function ligarParaCliente() {
+            if (!corridaAtual || !corridaAtual.clienteTelefone) {
+                toast('Telefone não disponível', 'error');
+                return;
+            }
+            let tel = corridaAtual.clienteTelefone.replace(/\D/g, '');
+            if (!tel.startsWith('55')) tel = '55' + tel;
+            window.open('tel:+' + tel, '_self');
+        }
+
+        function abrirNavegacao(tipo) {
+            if (!corridaAtual) return;
+            let lat, lng, endereco;
+            if (tipo === 'origem') {
+                lat = corridaAtual.origem?.latitude;
+                lng = corridaAtual.origem?.longitude;
+                endereco = corridaAtual.origem?.endereco || '';
+            } else {
+                lat = corridaAtual.destino?.latitude;
+                lng = corridaAtual.destino?.longitude;
+                endereco = corridaAtual.destino?.endereco || '';
+            }
+            
+            if (lat && lng) {
+                // Tentar Waze primeiro, fallback Google Maps
+                const waze = 'https://waze.com/ul?ll=' + lat + ',' + lng + '&navigate=yes';
+                const gmaps = 'https://www.google.com/maps/dir/?api=1&destination=' + lat + ',' + lng;
+                
+                // Detectar se tem Waze instalado
+                const isAndroid = /android/i.test(navigator.userAgent);
+                const isIOS = /iphone|ipad/i.test(navigator.userAgent);
+                
+                if (isAndroid || isIOS) {
+                    window.open(waze, '_blank');
+                } else {
+                    window.open(gmaps, '_blank');
+                }
+            } else if (endereco) {
+                window.open('https://www.google.com/maps/search/' + encodeURIComponent(endereco), '_blank');
+            } else {
+                toast('Endereço sem coordenadas', 'error');
+            }
+        }
+
         function recusarCorrida() {
             clearInterval(timerInterval);
             if (window._somRepetir) clearInterval(window._somRepetir);
@@ -1329,6 +1402,16 @@ body.dark-mode .chat-msg.received .bubble { background: #252542 !important; colo
             document.getElementById('clienteNomeAtiva').textContent = corridaAtual.clienteNome || 'Cliente';
             document.getElementById('origemAtiva').textContent = formatarEndereco(corridaAtual.origem);
             document.getElementById('destinoAtiva').textContent = formatarEndereco(corridaAtual.destino);
+            // Botao navegar destino
+            let btnNavDest = document.getElementById('btnNavegarDestino');
+            if (!btnNavDest) {
+                btnNavDest = document.createElement('button');
+                btnNavDest.id = 'btnNavegarDestino';
+                btnNavDest.textContent = '🗺️ NAVEGAR ATÉ DESTINO';
+                btnNavDest.style = 'background:#00cc6a;color:#fff;border:none;padding:8px 16px;border-radius:20px;font-size:13px;cursor:pointer;margin-top:5px;';
+                btnNavDest.onclick = () => abrirNavegacao('destino');
+                document.getElementById('destinoAtiva')?.parentElement?.appendChild(btnNavDest);
+            }
 
             // Referencia origem - box destacado
             const refOrigemBox = document.getElementById('refOrigemAtivaBox');
