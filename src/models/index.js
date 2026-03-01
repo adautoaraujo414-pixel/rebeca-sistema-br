@@ -178,6 +178,7 @@ const AdminSchema = new mongoose.Schema({
     bloqueado: { type: Boolean, default: false },
     motivoBloqueio: String,
     origem: { type: String, default: 'cadastro_manual' }, // cadastro_manual, landing_page
+    tipoAdmin: { type: String, enum: ['transporte', 'delivery', 'multi'], default: 'transporte' },
     aprovadoPor: { type: mongoose.Schema.Types.ObjectId, ref: 'AdminMaster' },
     dataAprovacao: Date,
     ultimoAcesso: Date,
@@ -216,6 +217,7 @@ const AdminSchema = new mongoose.Schema({
     bloqueado: { type: Boolean, default: false },
     motivoBloqueio: String,
     origem: { type: String, default: 'cadastro_manual' }, // cadastro_manual, landing_page
+    tipoAdmin: { type: String, enum: ['transporte', 'delivery', 'multi'], default: 'transporte' },
         valor: { type: Number, default: 15.00 },
         motivo: String // Ex: "Carnaval", "Ano Novo"
     },

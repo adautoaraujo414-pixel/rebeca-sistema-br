@@ -139,6 +139,14 @@ app.use('/api/comunicacao', require('./routes/comunicacao.routes'));
 app.use('/api/emergencia', require('./routes/emergencia.routes'));
 
 // Páginas
+
+// ========== DELIVERY (100% ISOLADO) ==========
+const deliveryRoutes = require('./routes/delivery.routes');
+app.use('/api/delivery', deliveryRoutes);
+app.get('/delivery-admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'delivery-admin.html')));
+app.get('/delivery-cozinha', (req, res) => res.sendFile(path.join(__dirname, 'public', 'delivery-cozinha.html')));
+app.get('/delivery-rastrear/:codigo', (req, res) => res.sendFile(path.join(__dirname, 'public', 'delivery-rastrear.html')));
+
 app.get('/rastrear/:codigo', (req, res) => res.sendFile(path.join(__dirname, 'public', 'rastrear.html')));
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'index.html')));
 app.get('/admin/login', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'login.html')));
