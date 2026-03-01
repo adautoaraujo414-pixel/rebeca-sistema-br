@@ -17,7 +17,7 @@ const conversas = new Map();
 setTimeout(() => { try { AprendizadoService.carregarConversasDoBanco ? AprendizadoService.carregarConversasDoBanco() : null; } catch(e) { console.log('[CATCH]', e.message); } }, 5000);
 
 // Salvar conversas no banco a cada 2 min
-setInterval(() => { try { AprendizadoService.salvarConversasNoBanco ? AprendizadoService.salvarConversasNoBanco() : null; } catch(e) { console.log('[CATCH]', e.message); } }, 120000);
+// Persistencia via AprendizadoService (registra cada interacao automaticamente)
 
 // Auto-cleanup conversas inativas (a cada 5 min, remove conversas >30min sem interacao)
 setInterval(async () => {
