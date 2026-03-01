@@ -20,6 +20,62 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 app.get('/admin-master', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin-master.html')));
+
+// ========== REBECA LANDING PAGE ==========
+app.get('/rebeca', (req, res) => res.sendFile(path.join(__dirname, 'public', 'rebeca-landing.html')));
+
+app.post('/api/rebeca-cadastro', async (req, res) => {
+    try {
+        const { Admin } = require('./models');
+        const { nome, email, telefone, empresa, senha } = req.body;
+        
+        if (!nome || !email || !senha) return res.status(400).json({ erro: 'Preencha todos os campos obrigatórios' });
+        
+        const existe = await Admin.findOne({ email });
+        if (existe) return res.status(400).json({ erro: 'Email já cadastrado. Faça login.' });
+        
+        const dataFim = new Date();
+        dataFim.setDate(dataFim.getDate() + 3); // 3 dias de teste
+        
+        const crypto = require('crypto');
+        const admin = await Admin.create({
+            nome, email, telefone, empresa: empresa || nome,
+            senha,
+            token: crypto.randomBytes(16).toString('hex'),
+            ativo: true,
+            testeGratis: true,
+            dataInicioTeste: new Date(),
+            dataFimTeste: dataFim,
+            origem: 'landing_page',
+            nomeAssistente: 'Rebeca'
+        });
+        
+        res.json({ sucesso: true, admin: { id: admin._id, nome: admin.nome, email: admin.email, token: admin.token, testeGratis: true, dataFimTeste: dataFim } });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+app.post('/api/rebeca-login', async (req, res) => {
+    try {
+        const { Admin } = require('./models');
+        const { email, senha } = req.body;
+        
+        const admin = await Admin.findOne({ email, senha });
+        if (!admin) return res.status(401).json({ erro: 'Email ou senha incorretos' });
+        
+        if (admin.bloqueado) return res.status(403).json({ erro: 'Sua conta foi bloqueada. Entre em contato pelo WhatsApp (34) 98403-9955' });
+        
+        // Verificar teste expirado
+        if (admin.testeGratis && admin.dataFimTeste && new Date(admin.dataFimTeste) < new Date()) {
+            return res.status(403).json({ erro: 'Seu teste grátis expirou! Entre em contato pelo WhatsApp (34) 98403-9955 para continuar usando.' });
+        }
+        
+        admin.ultimoAcesso = new Date();
+        await admin.save();
+        
+        res.json({ sucesso: true, admin: { id: admin._id, nome: admin.nome, email: admin.email, token: admin.token, empresa: admin.empresa, testeGratis: admin.testeGratis, dataFimTeste: admin.dataFimTeste } });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
 app.get('/cadastro-admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'cadastro-admin.html')));
 app.get('/parceiro', (req, res) => res.sendFile(path.join(__dirname, 'public', 'cadastro-admin.html')));
 

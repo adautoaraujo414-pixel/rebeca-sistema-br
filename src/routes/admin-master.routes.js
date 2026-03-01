@@ -423,4 +423,53 @@ router.post('/reset-senha-email', async (req, res) => {
     }
 });
 
+
+// ========== GESTÃO DE CLIENTES LANDING PAGE ==========
+router.get('/clientes-landing', async (req, res) => {
+    try {
+        const admins = await Admin.find({ origem: 'landing_page' }).sort({ createdAt: -1 }).lean();
+        const agora = new Date();
+        const resultado = admins.map(a => {
+            const diasAtivo = Math.ceil((agora - new Date(a.createdAt)) / 86400000);
+            const testeExpirado = a.testeGratis && a.dataFimTeste && new Date(a.dataFimTeste) < agora;
+            return {
+                ...a,
+                diasAtivo,
+                testeExpirado,
+                statusTexto: a.bloqueado ? 'Bloqueado' : testeExpirado ? 'Teste Expirado' : a.testeGratis ? 'Teste Grátis' : a.ativo ? 'Ativo' : 'Inativo'
+            };
+        });
+        res.json(resultado);
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+router.put('/clientes-landing/:id/liberar', async (req, res) => {
+    try {
+        const { dias } = req.body; // dias de acesso ou 0 = ilimitado
+        const update = {
+            ativo: true,
+            bloqueado: false,
+            testeGratis: false,
+            motivoBloqueio: null
+        };
+        if (dias && dias > 0) {
+            update.dataFimTeste = new Date(Date.now() + dias * 86400000);
+            update.testeGratis = true;
+        } else {
+            update.dataFimTeste = null;
+        }
+        await Admin.findByIdAndUpdate(req.params.id, update);
+        res.json({ sucesso: true });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+router.put('/clientes-landing/:id/bloquear-cliente', async (req, res) => {
+    try {
+        const { motivo } = req.body;
+        await Admin.findByIdAndUpdate(req.params.id, { bloqueado: true, ativo: false, motivoBloqueio: motivo || 'Bloqueado pelo admin' });
+        res.json({ sucesso: true });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+
 module.exports = router;

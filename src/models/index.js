@@ -172,6 +172,12 @@ const AdminSchema = new mongoose.Schema({
     pagamento: { type: String, default: 'Dinheiro, PIX' },
     boasVindas: String,
     ativo: { type: Boolean, default: false },
+    testeGratis: { type: Boolean, default: false },
+    dataInicioTeste: Date,
+    dataFimTeste: Date,
+    bloqueado: { type: Boolean, default: false },
+    motivoBloqueio: String,
+    origem: { type: String, default: 'cadastro_manual' }, // cadastro_manual, landing_page
     aprovadoPor: { type: mongoose.Schema.Types.ObjectId, ref: 'AdminMaster' },
     dataAprovacao: Date,
     ultimoAcesso: Date,
@@ -204,6 +210,12 @@ const AdminSchema = new mongoose.Schema({
     // ========== PREÇO FIXO (FESTA/EVENTO) ==========
     precoFixo: {
         ativo: { type: Boolean, default: false },
+    testeGratis: { type: Boolean, default: false },
+    dataInicioTeste: Date,
+    dataFimTeste: Date,
+    bloqueado: { type: Boolean, default: false },
+    motivoBloqueio: String,
+    origem: { type: String, default: 'cadastro_manual' }, // cadastro_manual, landing_page
         valor: { type: Number, default: 15.00 },
         motivo: String // Ex: "Carnaval", "Ano Novo"
     },
