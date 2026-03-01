@@ -317,6 +317,8 @@ REGRAS IMPORTANTES:
 - Se intencao for AGENDAMENTO ou OUTRO: resposta educada explicando que ela cuida de corridas, e perguntar se pode ajudar com isso
 - Se intencao for SOLICITAR_CORRIDA com endereço: resposta animada e humana confirmando que vai buscar motorista
 
+${contexto.contextoExtra || ''}
+
 Mensagem do cliente: "${mensagem}"
 
 RETORNE APENAS JSON VÁLIDO (sem markdown):

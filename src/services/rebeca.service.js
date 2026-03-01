@@ -9,6 +9,7 @@ const DespachoService = require('./despacho.service');
 const EvolutionMultiService = require('./evolution-multi.service');
 const IAService = require('./ia.service');
 const OpenAIRebecaService = require('./openai-rebeca.service');
+const AprendizadoService = require('./rebeca-aprendizado.service');
 
 const conversas = new Map();
 
@@ -414,6 +415,8 @@ const RebecaService = {
             // Tentar OpenAI para classificar mensagem
             if (OpenAIRebecaService.isAtivo()) {
                 try {
+                    // Buscar contexto enriquecido com aprendizados
+                    const _contextoIA = await AprendizadoService.gerarContextoEnriquecido(telefone, conversa.adminId);
                     let nomeEmpresa = '';
                     if (conversa.adminId) {
                         const { Admin } = require('../models');
@@ -571,9 +574,48 @@ Responda diretamente para ele: wa.me/${telefone}`;
                         
                         // Reclamação - resposta empática
                         if (resultadoGPT.intencao === 'RECLAMACAO') {
+                            const sentCliente = AprendizadoService.detectarSentimento(msgOriginal);
+                            console.log('[REBECA] Reclamação detectada, sentimento:', sentCliente);
+                            
+                            // Tentar resolver com IA
+                            const resolucao = await AprendizadoService.resolverConflito(telefone, msgOriginal, {
+                                sentimento: sentCliente,
+                                etapa: conversa.etapa,
+                                temCorrida: !!conversa.dados?.corridaId,
+                                adminId: conversa.adminId
+                            });
+                            
+                            if (resolucao) {
+                                // Registrar aprendizado
+                                await AprendizadoService.registrar({
+                                    telefone, adminId: conversa.adminId,
+                                    mensagemCliente: msgOriginal,
+                                    intencaoDetectada: 'RECLAMACAO',
+                                    respostaRebeca: resolucao.resposta,
+                                    etapaAntes: conversa.etapa, etapaDepois: conversa.etapa,
+                                    resultado: resolucao.escalado ? 'escalado' : 'conflito',
+                                    sentimentoCliente: sentCliente
+                                });
+                                
+                                if (resolucao.escalado) {
+                                    // Escalar pro admin com contexto
+                                    try {
+                                        await RebecaService.encaminharDuvidaAoAdmin(telefone, nome, 
+                                            '⚠️ CONFLITO: ' + msgOriginal + '\n\nMotivo: ' + (resolucao.motivo_escalar || 'Cliente insatisfeito'),
+                                            conversa.adminId, conversa.instanciaId);
+                                    } catch(e) { console.log('[CATCH]', e.message); }
+                                    conversa.etapa = 'aguardando_resposta_admin';
+                                    conversas.set(telefone, conversa);
+                                    return resolucao.resposta;
+                                }
+                                
+                                conversas.set(telefone, conversa);
+                                return resolucao.resposta;
+                            }
+                            
+                            // Fallback: resposta do GPT normal
                             if (resultadoGPT.clienteNervoso) {
                                 console.log('[REBECA] ⚠️ Cliente NERVOSO detectado:', telefone);
-                                // Pode notificar admin no futuro
                             }
                             conversas.set(telefone, conversa);
                             return resultadoGPT.resposta;
@@ -767,6 +809,11 @@ Responda diretamente para ele: wa.me/${telefone}`;
             }
         }
         // ========== COMANDOS DIRETOS ==========
+        // Registrar interação para aprendizado
+        const _sentimento = AprendizadoService.detectarSentimento(msgOriginal);
+        const _etapaAntes = conversa.etapa;
+        const _inicioProcessamento = Date.now();
+        
         if (msg === 'menu' || msg === 'oi' || msg === 'olá' || msg === 'ola' || msg === 'inicio' || msg === 'boa tarde' || msg === 'boa noite' || msg === 'bom dia') {
             conversa.etapa = 'inicio';
             conversa.dados = {};
