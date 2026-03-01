@@ -252,7 +252,7 @@ RETORNE APENAS JSON:
             };
         } catch(e) { return { totalInteracoes: 0 }; }
     }
-};
+
 
 
     // ========== APRENDER COM AVALIAÇÕES REAIS ==========

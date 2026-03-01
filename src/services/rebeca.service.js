@@ -14,10 +14,10 @@ const AprendizadoService = require('./rebeca-aprendizado.service');
 const conversas = new Map();
 
 // Carregar conversas do banco ao iniciar
-setTimeout(() => { try { RebecaService.carregarConversasDoBanco(); } catch(e) { console.log('[CATCH]', e.message); } }, 5000);
+setTimeout(() => { try { AprendizadoService.carregarConversasDoBanco ? AprendizadoService.carregarConversasDoBanco() : null; } catch(e) { console.log('[CATCH]', e.message); } }, 5000);
 
 // Salvar conversas no banco a cada 2 min
-setInterval(() => { try { RebecaService.salvarConversasNoBanco(); } catch(e) { console.log('[CATCH]', e.message); } }, 120000);
+setInterval(() => { try { AprendizadoService.salvarConversasNoBanco ? AprendizadoService.salvarConversasNoBanco() : null; } catch(e) { console.log('[CATCH]', e.message); } }, 120000);
 
 // Auto-cleanup conversas inativas (a cada 5 min, remove conversas >30min sem interacao)
 setInterval(async () => {
