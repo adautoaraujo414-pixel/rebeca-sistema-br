@@ -33,9 +33,11 @@ self.addEventListener('push', event => {
             body: corpo,
             icon: icone,
             badge: '/icons/icon-72.png',
-            vibrate: [200, 100, 200, 100, 200],
+            vibrate: [300, 100, 300, 100, 300, 100, 500],
             tag: 'corrida-' + (data.corridaId || Date.now()),
             requireInteraction: true,
+            silent: false,
+            renotify: true,
             actions: [
                 { action: 'aceitar', title: '✅ Ver Corrida' },
                 { action: 'ignorar', title: '❌ Ignorar' }

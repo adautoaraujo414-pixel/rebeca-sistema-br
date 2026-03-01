@@ -785,6 +785,68 @@ body.dark-mode .chat-msg.received .bubble { background: #252542 !important; colo
             if (motorista) { carregarDashboard(); verificarCorridaAtiva(); }
         });
 
+
+        // ========== SEGUNDO PLANO / BACKGROUND ==========
+        let wakeLock = null;
+        
+        // Wake Lock - impede tela de desligar durante corrida
+        async function solicitarWakeLock() {
+            try {
+                if ('wakeLock' in navigator) {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                    wakeLock.addEventListener('release', () => { console.log('[WAKE] Lock liberado'); });
+                    console.log('[WAKE] Tela mantida ativa');
+                }
+            } catch(e) { console.log('[WAKE] Não suportado ou negado'); }
+        }
+        
+        // Reativar Wake Lock quando voltar ao foco
+        document.addEventListener('visibilitychange', async () => {
+            if (document.visibilityState === 'visible') {
+                console.log('[BG] App voltou ao foco');
+                // Reativar wake lock se em corrida
+                if (motorista?.status === 'em_corrida' || motorista?.status === 'disponivel') {
+                    solicitarWakeLock();
+                }
+                // Buscar atualizações imediatas
+                if (motorista) {
+                    verificarCorridaAtiva();
+                    verificarNovasCorridas();
+                    carregarDashboard();
+                }
+            } else {
+                console.log('[BG] App em segundo plano');
+                // Registrar background sync se possível
+                if ('serviceWorker' in navigator && 'SyncManager' in window) {
+                    try {
+                        const reg = await navigator.serviceWorker.ready;
+                        await reg.sync.register('check-corridas');
+                    } catch(e) {}
+                }
+            }
+        });
+        
+        // Manter polling mesmo minimizado (setInterval continua em background no mobile)
+        // Mas com intervalo maior pra não gastar bateria
+        let bgCheckInterval = null;
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'hidden') {
+                // Em background: polling mais lento (15s)
+                if (checkInterval) clearInterval(checkInterval);
+                bgCheckInterval = setInterval(() => {
+                    if (motorista?.status === 'disponivel') verificarNovasCorridas();
+                    else if (motorista?.status === 'em_corrida') verificarCorridaAtiva();
+                }, 15000);
+            } else {
+                // Voltou: polling normal (5s)
+                if (bgCheckInterval) clearInterval(bgCheckInterval);
+                if (motorista) iniciarChecks();
+            }
+        });
+        
+        // Solicitar Wake Lock ao entrar em corrida
+        const _atualizarStatusUI_original = atualizarStatusUI;
+
         // ========== INICIALIZAÇÃO ==========
         if (token) {
             carregarMotorista();
@@ -914,6 +976,12 @@ body.dark-mode .chat-msg.received .bubble { background: #252542 !important; colo
                     motorista.status = novoStatus;
                     atualizarStatusUI();
                     toast(novoStatus === 'disponivel' ? 'Você está ONLINE!' : 'Você está OFFLINE', 'success');
+                    // Wake Lock: manter tela ativa quando online
+                    if (novoStatus === 'disponivel' || novoStatus === 'em_corrida') {
+                        solicitarWakeLock();
+                    } else if (wakeLock) {
+                        wakeLock.release(); wakeLock = null;
+                    }
                 }
             } catch (e) {}
         }
@@ -1124,7 +1192,19 @@ body.dark-mode .chat-msg.received .bubble { background: #252542 !important; colo
 
             // Som + Vibração + Push Notification
             if (somAtivo) {
-                try { document.getElementById('somNovaCorrida').play(); } catch(e) {}
+                try { 
+                    const audio = document.getElementById('somNovaCorrida');
+                    audio.play();
+                    // Repetir som a cada 3s até motorista interagir
+                    if (window._somRepetir) clearInterval(window._somRepetir);
+                    window._somRepetir = setInterval(() => {
+                        if (document.getElementById('novaCorridaOverlay').classList.contains('active')) {
+                            try { audio.currentTime = 0; audio.play(); } catch(e2) {}
+                        } else {
+                            clearInterval(window._somRepetir);
+                        }
+                    }, 3000);
+                } catch(e) {}
             }
             
             // Vibrar celular (padrão similar ao WhatsApp)
@@ -1154,6 +1234,7 @@ body.dark-mode .chat-msg.received .bubble { background: #252542 !important; colo
         async function aceitarCorrida() {
             if (!corridaAtual) return;
             clearInterval(timerInterval);
+            if (window._somRepetir) clearInterval(window._somRepetir);
             const btn = document.querySelector('.btn-aceitar');
             if (btn) { btn.disabled = true; btn.textContent = '⏳ ACEITANDO...'; }
 
@@ -1184,6 +1265,7 @@ body.dark-mode .chat-msg.received .bubble { background: #252542 !important; colo
 
         function recusarCorrida() {
             clearInterval(timerInterval);
+            if (window._somRepetir) clearInterval(window._somRepetir);
             document.getElementById('novaCorridaOverlay').classList.remove('active');
             corridaAtual = null;
         }
