@@ -795,6 +795,13 @@ Responda diretamente para ele: wa.me/${telefone}`;
                     }
                 } catch(e) { console.log('[AVALIACAO] Erro ao salvar:', e.message); }
                 
+                // Rebeca aprende com a avaliação
+                try {
+                    if (ultimaCorrida) {
+                        await AprendizadoService.aprenderComAvaliacao(ultimaCorrida._id, nota, conversa.adminId);
+                    }
+                } catch(e) { console.log('[CATCH]', e.message); }
+                
                 conversa.etapa = 'inicio';
                 conversa.dados = {};
                 conversas.set(telefone, conversa);
@@ -1982,6 +1989,9 @@ _Digite CANCELAR se precisar_`;
         } catch (e) {
             console.error('[REBECA] Erro no despacho:', e.message);
         }
+        
+        // Rebeca aprende endereço popular
+        try { await AprendizadoService.aprenderEnderecoPopular(dados.origem, adminId); } catch(e) { console.log('[CATCH]', e.message); }
         
         // Push notification para motoristas disponíveis
         try { const PushService = require('./push.service'); await PushService.notificarNovaCorrida(adminId, corrida); } catch(e) { console.log('[CATCH]', e.message); }

@@ -254,4 +254,107 @@ RETORNE APENAS JSON:
     }
 };
 
+
+    // ========== APRENDER COM AVALIAÇÕES REAIS ==========
+    async aprenderComAvaliacao(corridaId, nota, adminId) {
+        try {
+            const { Corrida } = require('../models');
+            const corrida = await Corrida.findById(corridaId).lean();
+            if (!corrida) return;
+            
+            // Nota baixa (1-2) = problema real
+            if (nota <= 2) {
+                // Buscar interações dessa corrida
+                const interacoes = await InteracaoSchema.find({
+                    telefone: corrida.clienteTelefone,
+                    adminId,
+                    createdAt: { $gte: new Date(corrida.createdAt) }
+                }).lean();
+                
+                // Marcar como falha
+                for (const inter of interacoes) {
+                    await InteracaoSchema.findByIdAndUpdate(inter._id, { 
+                        acertou: false, resultado: 'falha',
+                        tags: [...(inter.tags || []), 'avaliacao_ruim', 'nota_' + nota]
+                    });
+                }
+                
+                console.log('[APREND] Corrida nota', nota, '- Marcadas', interacoes.length, 'interações como falha');
+            }
+            
+            // Nota alta (4-5) = padrão bom
+            if (nota >= 4) {
+                const interacoes = await InteracaoSchema.find({
+                    telefone: corrida.clienteTelefone,
+                    adminId,
+                    createdAt: { $gte: new Date(corrida.createdAt) }
+                }).lean();
+                
+                // Reforçar confiança nos padrões usados
+                for (const inter of interacoes) {
+                    if (inter.intencaoDetectada) {
+                        await PadraoSchema.findOneAndUpdate(
+                            { adminId, gatilho: inter.mensagemCliente?.toLowerCase()?.substring(0, 50) },
+                            { $inc: { confianca: 0.05, usos: 1 } }
+                        );
+                    }
+                }
+            }
+        } catch(e) { console.log('[APREND] Erro avaliação:', e.message); }
+    },
+
+    // ========== APRENDER ENDEREÇOS POPULARES ==========
+    async aprenderEnderecoPopular(endereco, adminId) {
+        try {
+            if (!endereco || endereco.length < 5) return;
+            const chave = endereco.toLowerCase().substring(0, 80);
+            
+            const existe = await PadraoSchema.findOne({ adminId, tipo: 'endereco_comum', gatilho: chave });
+            if (existe) {
+                await PadraoSchema.findByIdAndUpdate(existe._id, { $inc: { usos: 1, confianca: 0.02 } });
+            } else {
+                // Só cria se já teve 3+ corridas com esse endereço
+                const { Corrida } = require('../models');
+                const count = await Corrida.countDocuments({ 
+                    adminId, 
+                    'origem.endereco': { $regex: chave.substring(0, 30), $options: 'i' }
+                });
+                if (count >= 3) {
+                    await PadraoSchema.create({
+                        adminId, tipo: 'endereco_comum', gatilho: chave,
+                        resolucao: 'Endereço popular - ' + count + ' corridas',
+                        confianca: 0.7, usos: count
+                    });
+                    console.log('[APREND] Novo endereço popular:', chave);
+                }
+            }
+        } catch(e) {}
+    },
+
+    // ========== RELATÓRIO SEMANAL DE APRENDIZADO ==========
+    async relatorioSemanal(adminId) {
+        try {
+            const semanaAtras = new Date(Date.now() - 7 * 24 * 3600000);
+            
+            const totalInteracoes = await InteracaoSchema.countDocuments({ adminId, createdAt: { $gte: semanaAtras } });
+            const naoEntendeu = await InteracaoSchema.countDocuments({ adminId, resultado: 'nao_entendeu', createdAt: { $gte: semanaAtras } });
+            const conflitos = await InteracaoSchema.countDocuments({ adminId, resultado: { $in: ['conflito', 'escalado'] }, createdAt: { $gte: semanaAtras } });
+            const padroesNovos = await PadraoSchema.countDocuments({ adminId, createdAt: { $gte: semanaAtras } });
+            const taxaAcerto = totalInteracoes > 0 ? ((totalInteracoes - naoEntendeu) / totalInteracoes * 100).toFixed(1) : 0;
+            
+            return {
+                totalInteracoes,
+                taxaAcerto: taxaAcerto + '%',
+                naoEntendeu,
+                conflitos,
+                padroesAprendidos: padroesNovos,
+                mensagem: totalInteracoes > 0 
+                    ? `📊 Semana: ${totalInteracoes} atendimentos, ${taxaAcerto}% de acerto, ${padroesNovos} novos padrões aprendidos`
+                    : 'Sem dados suficientes ainda'
+            };
+        } catch(e) { return { mensagem: 'Erro ao gerar relatório' }; }
+    },
+
+};
+
 module.exports = AprendizadoService;
