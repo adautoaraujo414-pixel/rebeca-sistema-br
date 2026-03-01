@@ -68,9 +68,16 @@ router.get('/rastrear/:codigo', async (req, res) => {
         const codigo = req.params.codigo;
         const { Corrida, Motorista } = require('../models');
         
-        // Buscar corrida pelo código (últimos caracteres do ID) - busca eficiente
-        const regexCodigo = new RegExp(codigo + "\$", "i");
-        const corrida = await Corrida.findOne({ _id: { $regex: regexCodigo } }).sort({ createdAt: -1 });
+        // Buscar corrida pelo código (últimos caracteres do ID)
+        // ObjectId não suporta regex, então buscamos as recentes e filtramos
+        let corrida = null;
+        const recentes = await Corrida.find({}).sort({ createdAt: -1 }).limit(100).lean();
+        corrida = recentes.find(c => c._id.toString().endsWith(codigo));
+        
+        // Fallback: tentar como ID completo
+        if (!corrida && codigo.length >= 20) {
+            try { corrida = await Corrida.findById(codigo).lean(); } catch(e) {}
+        }
         
         if (!corrida) {
             return res.status(404).json({ error: 'Corrida não encontrada' });
