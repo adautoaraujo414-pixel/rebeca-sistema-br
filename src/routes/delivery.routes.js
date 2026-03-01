@@ -194,4 +194,16 @@ router.get('/cardapio-publico/:adminId', async (req, res) => {
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
+
+// ========== RASTREIO PÚBLICO (sem auth) ==========
+router.get('/pedidos/rastrear/:codigo', async (req, res) => {
+    try {
+        const codigo = req.params.codigo;
+        const recentes = await PedidoDelivery.find({}).sort({ createdAt: -1 }).limit(200).lean();
+        const pedido = recentes.find(p => p._id.toString().endsWith(codigo));
+        if (!pedido) return res.status(404).json({ erro: 'Pedido não encontrado' });
+        res.json(pedido);
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
 module.exports = router;

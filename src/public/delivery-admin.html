@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rebeca Delivery - Painel Admin</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #0a0a1a; color: #fff; }
+        
+        /* Login */
+        .login-container { display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .login-box { background: #1a1a2e; padding: 40px; border-radius: 15px; width: 100%; max-width: 400px; box-shadow: 0 10px 40px rgba(255,107,53,0.2); }
+        .login-box h1 { color: #ff6b35; text-align: center; margin-bottom: 5px; font-size: 28px; }
+        .login-box .sub { color: #888; text-align: center; margin-bottom: 30px; font-size: 14px; }
+        
+        /* Dashboard */
+        .dashboard { display: none; }
+        .header { background: linear-gradient(135deg, #1a1a2e, #252542); padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }
+        .header h1 { color: #ff6b35; font-size: 20px; }
+        .header h1 span { color: #00d4ff; font-size: 14px; }
+        .main { display: flex; min-height: calc(100vh - 60px); }
+        .sidebar { width: 240px; background: #1a1a2e; padding: 15px 0; }
+        .menu-item { padding: 14px 20px; color: #888; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: all 0.3s; font-size: 14px; }
+        .menu-item:hover, .menu-item.active { background: #252542; color: #ff6b35; border-left: 3px solid #ff6b35; }
+        .menu-section { color: #555; font-size: 11px; padding: 12px 20px 5px; text-transform: uppercase; }
+        .content { flex: 1; padding: 25px; overflow-y: auto; }
+        .page { display: none; }
+        .page.active { display: block; }
+        
+        /* Cards */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
+        .stat-card { background: #1a1a2e; border: 1px solid #333; border-radius: 12px; padding: 20px; text-align: center; }
+        .stat-card .valor { font-size: 32px; font-weight: bold; color: #ff6b35; }
+        .stat-card .label { font-size: 12px; color: #888; margin-top: 5px; }
+        
+        /* Panel */
+        .panel { background: #1a1a2e; border-radius: 12px; padding: 20px; margin-bottom: 20px; border: 1px solid #333; }
+        .panel h3 { color: #ff6b35; margin-bottom: 15px; font-size: 16px; }
+        
+        /* Forms */
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; color: #888; margin-bottom: 5px; font-size: 13px; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px 14px; background: #252542; border: 1px solid #333; border-radius: 8px; color: #fff; font-size: 14px; }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: #ff6b35; }
+        .form-row { display: flex; gap: 15px; }
+        .form-row .form-group { flex: 1; }
+        
+        /* Buttons */
+        .btn { padding: 10px 20px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 14px; }
+        .btn-primary { background: #ff6b35; color: #fff; }
+        .btn-primary:hover { opacity: 0.9; }
+        .btn-success { background: #00cc6a; color: #000; }
+        .btn-danger { background: #ff4444; color: #fff; }
+        .btn-small { padding: 6px 12px; font-size: 12px; }
+        
+        /* Table */
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 10px; color: #ff6b35; font-size: 13px; border-bottom: 1px solid #333; }
+        td { padding: 10px; border-bottom: 1px solid #222; font-size: 14px; }
+        
+        /* Cardápio item */
+        .item-card { display: flex; justify-content: space-between; align-items: center; background: #252542; border-radius: 10px; padding: 15px; margin-bottom: 10px; }
+        .item-info h4 { margin-bottom: 3px; }
+        .item-info p { color: #888; font-size: 13px; }
+        .item-preco { font-size: 20px; font-weight: bold; color: #00cc6a; }
+        
+        /* Toast */
+        .toast { position: fixed; top: 20px; right: 20px; padding: 12px 20px; border-radius: 10px; font-size: 14px; z-index: 9999; animation: fadeIn 0.3s; }
+        .toast.success { background: #00cc6a; color: #000; }
+        .toast.error { background: #ff4444; color: #fff; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; } }
+        
+        /* Modal */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 9999; align-items: center; justify-content: center; }
+        .modal-overlay.active { display: flex; }
+        .modal-box { background: #1a1a2e; border: 1px solid #333; border-radius: 15px; padding: 30px; width: 90%; max-width: 500px; max-height: 80vh; overflow-y: auto; }
+        .modal-box h2 { color: #ff6b35; margin-bottom: 20px; font-size: 18px; }
+        .modal-close { float: right; background: none; border: none; color: #888; font-size: 20px; cursor: pointer; }
+        
+        /* Pedidos tempo real */
+        .pedido-card { background: #252542; border-radius: 12px; padding: 15px; margin-bottom: 12px; border-left: 4px solid #ff6b35; }
+        .pedido-card.novo { border-left-color: #ffc107; }
+        .pedido-card.preparando { border-left-color: #ff6b35; }
+        .pedido-card.pronto { border-left-color: #00cc6a; }
+        .pedido-card.saiu_entrega { border-left-color: #00d4ff; }
+        .pedido-header { display: flex; justify-content: space-between; margin-bottom: 8px; }
+        .pedido-num { font-weight: bold; font-size: 16px; }
+        .pedido-status { padding: 3px 10px; border-radius: 15px; font-size: 12px; font-weight: bold; }
+        .status-novo { background: #ffc107; color: #000; }
+        .status-confirmado { background: #2196f3; color: #fff; }
+        .status-preparando { background: #ff6b35; color: #fff; }
+        .status-pronto { background: #00cc6a; color: #000; }
+        .status-saiu_entrega { background: #00d4ff; color: #000; }
+        .status-entregue { background: #4caf50; color: #fff; }
+        .status-cancelado { background: #ff4444; color: #fff; }
+        
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            .form-row { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <!-- LOGIN -->
+    <div id="loginContainer" class="login-container">
+        <div class="login-box">
+            <h1>🍔 Rebeca Delivery</h1>
+            <p class="sub">Automação inteligente para seu delivery</p>
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="loginEmail" placeholder="seu@email.com">
+            </div>
+            <div class="form-group">
+                <label>Senha</label>
+                <input type="password" id="loginSenha" placeholder="Sua senha">
+            </div>
+            <button class="btn btn-primary" style="width:100%;padding:14px;margin-top:10px;" onclick="fazerLogin()">Entrar</button>
+            <p id="loginErro" style="color:#ff4444;text-align:center;margin-top:10px;"></p>
+        </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div id="dashboardContainer" class="dashboard">
+        <div class="header">
+            <h1>🍔 Rebeca Delivery <span id="nomeRestaurante"></span></h1>
+            <div>
+                <button class="btn btn-small" style="background:#252542;color:#888;" onclick="copiarLinkCozinha()">👨‍🍳 Link Cozinha</button>
+                <button class="btn btn-small btn-danger" onclick="logout()">Sair</button>
+            </div>
+        </div>
+        <div class="main">
+            <div class="sidebar">
+                <div class="menu-section">Principal</div>
+                <div class="menu-item active" data-page="dashboard">📊 Dashboard</div>
+                <div class="menu-item" data-page="pedidos">📋 Pedidos</div>
+                <div class="menu-section">Cardápio</div>
+                <div class="menu-item" data-page="categorias">📁 Categorias</div>
+                <div class="menu-item" data-page="cardapio">🍔 Itens</div>
+                <div class="menu-section">Config</div>
+                <div class="menu-item" data-page="config">⚙️ Configurações</div>
+            </div>
+            <div class="content">
+                <!-- DASHBOARD -->
+                <div id="page-dashboard" class="page active">
+                    <h2 style="margin-bottom:20px;">📊 Dashboard</h2>
+                    <div class="stats-grid">
+                        <div class="stat-card"><div class="valor" id="statPedidosHoje">0</div><div class="label">Pedidos Hoje</div></div>
+                        <div class="stat-card"><div class="valor" id="statPedidosAtivos">0</div><div class="label">Pedidos Ativos</div></div>
+                        <div class="stat-card"><div class="valor" id="statFaturamento">R$ 0</div><div class="label">Faturamento Semana</div></div>
+                        <div class="stat-card"><div class="valor" id="statPedidosSemana">0</div><div class="label">Pedidos Semana</div></div>
+                    </div>
+                    <div class="panel">
+                        <h3>📋 Pedidos Ativos</h3>
+                        <div id="pedidosAtivosLista"></div>
+                    </div>
+                </div>
+
+                <!-- PEDIDOS -->
+                <div id="page-pedidos" class="page">
+                    <h2 style="margin-bottom:20px;">📋 Todos os Pedidos</h2>
+                    <div style="margin-bottom:15px;">
+                        <select id="filtroPedidos" onchange="carregarPedidos()" style="padding:8px 14px;background:#252542;border:1px solid #333;border-radius:8px;color:#fff;">
+                            <option value="">Todos</option>
+                            <option value="novo">Novos</option>
+                            <option value="preparando">Preparando</option>
+                            <option value="pronto">Prontos</option>
+                            <option value="saiu_entrega">Em Entrega</option>
+                            <option value="entregue">Entregues</option>
+                            <option value="cancelado">Cancelados</option>
+                        </select>
+                    </div>
+                    <div id="pedidosLista"></div>
+                </div>
+
+                <!-- CATEGORIAS -->
+                <div id="page-categorias" class="page">
+                    <h2 style="margin-bottom:20px;">📁 Categorias do Cardápio</h2>
+                    <div class="panel">
+                        <div class="form-row">
+                            <div class="form-group"><label>Emoji</label><input type="text" id="catEmoji" placeholder="🍔" style="width:60px;"></div>
+                            <div class="form-group"><label>Nome</label><input type="text" id="catNome" placeholder="Lanches"></div>
+                            <div class="form-group" style="align-self:flex-end;"><button class="btn btn-primary" onclick="criarCategoria()">+ Adicionar</button></div>
+                        </div>
+                    </div>
+                    <div id="categoriasLista" class="panel"></div>
+                </div>
+
+                <!-- CARDÁPIO -->
+                <div id="page-cardapio" class="page">
+                    <h2 style="margin-bottom:20px;">🍔 Itens do Cardápio</h2>
+                    <button class="btn btn-primary" onclick="abrirModalItem()" style="margin-bottom:15px;">+ Novo Item</button>
+                    <div id="cardapioLista"></div>
+                </div>
+
+                <!-- CONFIG -->
+                <div id="page-config" class="page">
+                    <h2 style="margin-bottom:20px;">⚙️ Configurações</h2>
+                    <div class="panel">
+                        <h3>🏪 Restaurante</h3>
+                        <div class="form-row">
+                            <div class="form-group"><label>Nome</label><input type="text" id="cfgNome"></div>
+                            <div class="form-group"><label>Horário</label><input type="text" id="cfgHorario" placeholder="18:00 - 23:00"></div>
+                        </div>
+                        <div class="form-group"><label>Endereço</label><input type="text" id="cfgEndereco"></div>
+                    </div>
+                    <div class="panel">
+                        <h3>🏍️ Entrega</h3>
+                        <div class="form-row">
+                            <div class="form-group"><label>Taxa Fixa (R$)</label><input type="number" id="cfgTaxaFixa" step="0.50"></div>
+                            <div class="form-group"><label>Taxa por Km (R$)</label><input type="number" id="cfgTaxaKm" step="0.50"></div>
+                            <div class="form-group"><label>Raio Máximo (km)</label><input type="number" id="cfgRaio"></div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group"><label>Pedido Mínimo (R$)</label><input type="number" id="cfgPedidoMin" step="1"></div>
+                            <div class="form-group"><label>Tempo Médio (min)</label><input type="number" id="cfgTempo"></div>
+                        </div>
+                    </div>
+                    <div class="panel">
+                        <h3>💰 Pagamento</h3>
+                        <div class="form-row">
+                            <div class="form-group"><label><input type="checkbox" id="cfgPix"> Aceita PIX</label></div>
+                            <div class="form-group"><label><input type="checkbox" id="cfgDinheiro"> Aceita Dinheiro</label></div>
+                            <div class="form-group"><label><input type="checkbox" id="cfgCartao"> Aceita Cartão</label></div>
+                        </div>
+                        <div class="form-group"><label>Chave PIX</label><input type="text" id="cfgChavePix"></div>
+                    </div>
+                    <div class="panel">
+                        <h3>💬 Mensagens WhatsApp</h3>
+                        <div class="form-group"><label>Boas-vindas</label><textarea id="cfgBoasVindas" rows="2" style="width:100%;padding:10px;background:#252542;border:1px solid #333;border-radius:8px;color:#fff;"></textarea></div>
+                        <div class="form-group"><label>Pedido Confirmado</label><textarea id="cfgMsgConfirmado" rows="2" style="width:100%;padding:10px;background:#252542;border:1px solid #333;border-radius:8px;color:#fff;"></textarea></div>
+                        <div class="form-group"><label>Pedido Pronto</label><textarea id="cfgMsgPronto" rows="2" style="width:100%;padding:10px;background:#252542;border:1px solid #333;border-radius:8px;color:#fff;"></textarea></div>
+                    </div>
+                    <div style="display:flex;gap:10px;">
+                        <button class="btn btn-primary" onclick="salvarConfig()">💾 Salvar Configurações</button>
+                        <button class="btn" id="btnAberto" onclick="toggleAberto()" style="background:#00cc6a;color:#000;">🟢 ABERTO</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL ITEM -->
+    <div id="modalItem" class="modal-overlay">
+        <div class="modal-box">
+            <button class="modal-close" onclick="fecharModalItem()">&times;</button>
+            <h2 id="modalItemTitulo">Novo Item</h2>
+            <input type="hidden" id="itemEditId">
+            <div class="form-group"><label>Categoria</label><select id="itemCategoria" style="width:100%;padding:10px;background:#252542;border:1px solid #333;border-radius:8px;color:#fff;"></select></div>
+            <div class="form-group"><label>Nome</label><input type="text" id="itemNome" placeholder="X-Burguer"></div>
+            <div class="form-group"><label>Descrição</label><input type="text" id="itemDesc" placeholder="Pão, hambúrguer, queijo..."></div>
+            <div class="form-row">
+                <div class="form-group"><label>Preço (R$)</label><input type="number" id="itemPreco" step="0.50"></div>
+                <div class="form-group"><label>Tempo Preparo (min)</label><input type="number" id="itemTempo" value="20"></div>
+            </div>
+            <div class="form-group"><label><input type="checkbox" id="itemDestaque"> Destaque</label></div>
+            <button class="btn btn-primary" style="width:100%;margin-top:10px;" onclick="salvarItem()">💾 Salvar</button>
+        </div>
+    </div>
+
+    <script>
+        let token = localStorage.getItem('delivery_token') || '';
+        let adminData = null;
+        let categorias = [];
+
+        // AUTO-LOGIN
+        if (token) {
+            document.getElementById('loginContainer').style.display = 'none';
+            document.getElementById('dashboardContainer').style.display = 'block';
+            document.querySelector('.dashboard').style.display = 'block';
+            carregarDashboard();
+        }
+
+        async function fazerLogin() {
+            const email = document.getElementById('loginEmail').value;
+            const senha = document.getElementById('loginSenha').value;
+            try {
+                const res = await fetch('/api/rebeca-login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, senha }) });
+                const data = await res.json();
+                if (data.sucesso) {
+                    token = data.admin.token;
+                    adminData = data.admin;
+                    localStorage.setItem('delivery_token', token);
+                    document.getElementById('loginContainer').style.display = 'none';
+                    document.getElementById('dashboardContainer').style.display = 'block';
+                    document.querySelector('.dashboard').style.display = 'block';
+                    carregarDashboard();
+                } else {
+                    document.getElementById('loginErro').textContent = data.erro;
+                }
+            } catch(e) { document.getElementById('loginErro').textContent = 'Erro de conexão'; }
+        }
+
+        function logout() { localStorage.removeItem('delivery_token'); location.reload(); }
+
+        function api(path, opts = {}) {
+            return fetch('/api/delivery' + path, { ...opts, headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', ...opts.headers } });
+        }
+
+        function toast(msg, tipo = 'success') {
+            const t = document.createElement('div');
+            t.className = 'toast ' + tipo;
+            t.textContent = msg;
+            document.body.appendChild(t);
+            setTimeout(() => t.remove(), 3000);
+        }
+
+        // NAVEGAÇÃO
+        document.querySelectorAll('.menu-item').forEach(item => {
+            item.addEventListener('click', () => {
+                document.querySelectorAll('.menu-item').forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+                const page = item.dataset.page;
+                document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+                document.getElementById('page-' + page).classList.add('active');
+                if (page === 'dashboard') carregarDashboard();
+                if (page === 'pedidos') carregarPedidos();
+                if (page === 'categorias') carregarCategorias();
+                if (page === 'cardapio') carregarCardapio();
+                if (page === 'config') carregarConfig();
+            });
+        });
+
+        // DASHBOARD
+        async function carregarDashboard() {
+            try {
+                const res = await api('/dashboard');
+                const d = await res.json();
+                document.getElementById('statPedidosHoje').textContent = d.pedidosHoje || 0;
+                document.getElementById('statPedidosAtivos').textContent = d.pedidosAtivos || 0;
+                document.getElementById('statFaturamento').textContent = 'R$ ' + (d.faturamentoSemana || 0).toFixed(2);
+                document.getElementById('statPedidosSemana').textContent = d.pedidosSemana || 0;
+                
+                const res2 = await api('/pedidos/ativos');
+                const ativos = await res2.json();
+                renderPedidos(ativos, 'pedidosAtivosLista');
+
+                const cfgRes = await api('/config');
+                const cfg = await cfgRes.json();
+                document.getElementById('nomeRestaurante').textContent = '• ' + (cfg.nomeRestaurante || '');
+            } catch(e) { console.log(e); }
+        }
+
+        function renderPedidos(pedidos, containerId) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = pedidos.map(p => {
+                const itensTexto = (p.itens || []).map(i => i.quantidade + 'x ' + i.nome).join(', ');
+                return `<div class="pedido-card ${p.status}">
+                    <div class="pedido-header">
+                        <span class="pedido-num">#${p.numero || '?'} — ${p.clienteNome || 'Cliente'}</span>
+                        <span class="pedido-status status-${p.status}">${p.status?.toUpperCase()}</span>
+                    </div>
+                    <p style="color:#aaa;font-size:13px;">${itensTexto}</p>
+                    <p style="font-size:13px;margin-top:5px;">📍 ${p.enderecoEntrega || 'Retirada'} | 💰 R$ ${(p.total||0).toFixed(2)} | 💳 ${p.formaPagamento || '-'}</p>
+                    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+                        ${p.status === 'novo' ? '<button class="btn btn-small btn-success" onclick="mudarStatus(\''+p._id+'\',\'confirmado\')">✅ Confirmar</button><button class="btn btn-small btn-danger" onclick="cancelarPedido(\''+p._id+'\')">❌ Cancelar</button>' : ''}
+                        ${p.status === 'confirmado' ? '<button class="btn btn-small" style="background:#ff6b35;color:#fff;" onclick="mudarStatus(\''+p._id+'\',\'preparando\')">👨‍🍳 Preparar</button>' : ''}
+                        ${p.status === 'preparando' ? '<button class="btn btn-small btn-success" onclick="mudarStatus(\''+p._id+'\',\'pronto\')">✅ Pronto!</button>' : ''}
+                        ${p.status === 'pronto' ? '<button class="btn btn-small" style="background:#00d4ff;color:#000;" onclick="mudarStatus(\''+p._id+'\',\'saiu_entrega\')">🏍️ Saiu Entrega</button>' : ''}
+                        ${p.status === 'saiu_entrega' ? '<button class="btn btn-small btn-success" onclick="mudarStatus(\''+p._id+'\',\'entregue\')">✅ Entregue</button>' : ''}
+                    </div>
+                </div>`;
+            }).join('') || '<p style="color:#888;text-align:center;">Nenhum pedido</p>';
+        }
+
+        async function mudarStatus(id, status) {
+            try {
+                await api('/pedidos/' + id + '/status', { method: 'PUT', body: JSON.stringify({ status }) });
+                toast('Status atualizado!');
+                carregarDashboard();
+                carregarPedidos();
+            } catch(e) { toast('Erro', 'error'); }
+        }
+
+        async function cancelarPedido(id) {
+            const motivo = prompt('Motivo do cancelamento:');
+            if (!motivo) return;
+            await api('/pedidos/' + id + '/status', { method: 'PUT', body: JSON.stringify({ status: 'cancelado', motivo }) });
+            toast('Pedido cancelado');
+            carregarDashboard();
+        }
+
+        // PEDIDOS
+        async function carregarPedidos() {
+            const status = document.getElementById('filtroPedidos')?.value || '';
+            const res = await api('/pedidos' + (status ? '?status=' + status : ''));
+            const pedidos = await res.json();
+            renderPedidos(pedidos, 'pedidosLista');
+        }
+
+        // CATEGORIAS
+        async function carregarCategorias() {
+            const res = await api('/categorias');
+            categorias = await res.json();
+            document.getElementById('categoriasLista').innerHTML = categorias.map(c => 
+                `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px;border-bottom:1px solid #333;">
+                    <span>${c.emoji || '📁'} ${c.nome}</span>
+                    <button class="btn btn-small btn-danger" onclick="deletarCategoria('${c._id}')">🗑️</button>
+                </div>`
+            ).join('') || '<p style="color:#888;">Nenhuma categoria</p>';
+        }
+
+        async function criarCategoria() {
+            const nome = document.getElementById('catNome').value.trim();
+            const emoji = document.getElementById('catEmoji').value.trim();
+            if (!nome) return toast('Nome obrigatório', 'error');
+            await api('/categorias', { method: 'POST', body: JSON.stringify({ nome, emoji }) });
+            document.getElementById('catNome').value = '';
+            document.getElementById('catEmoji').value = '';
+            toast('Categoria criada!');
+            carregarCategorias();
+        }
+
+        async function deletarCategoria(id) {
+            if (!confirm('Remover categoria?')) return;
+            await api('/categorias/' + id, { method: 'DELETE' });
+            toast('Removida');
+            carregarCategorias();
+        }
+
+        // CARDÁPIO
+        async function carregarCardapio() {
+            await carregarCategorias();
+            const res = await api('/cardapio');
+            const itens = await res.json();
+            document.getElementById('cardapioLista').innerHTML = itens.map(i => 
+                `<div class="item-card">
+                    <div class="item-info">
+                        <h4>${i.destaque ? '⭐ ' : ''}${i.nome}</h4>
+                        <p>${i.descricao || ''} — ${i.categoriaId?.nome || ''}</p>
+                        <p>⏱️ ${i.tempoPreparoMin || 20}min</p>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:15px;">
+                        <span class="item-preco">R$ ${(i.preco||0).toFixed(2)}</span>
+                        <button class="btn btn-small" style="background:#252542;color:#00d4ff;" onclick="editarItem('${i._id}')">✏️</button>
+                        <button class="btn btn-small btn-danger" onclick="deletarItem('${i._id}')">🗑️</button>
+                    </div>
+                </div>`
+            ).join('') || '<p style="color:#888;text-align:center;">Nenhum item no cardápio</p>';
+        }
+
+        function abrirModalItem() {
+            document.getElementById('modalItemTitulo').textContent = 'Novo Item';
+            document.getElementById('itemEditId').value = '';
+            document.getElementById('itemNome').value = '';
+            document.getElementById('itemDesc').value = '';
+            document.getElementById('itemPreco').value = '';
+            document.getElementById('itemTempo').value = '20';
+            document.getElementById('itemDestaque').checked = false;
+            // Popular categorias no select
+            document.getElementById('itemCategoria').innerHTML = categorias.map(c => `<option value="${c._id}">${c.emoji || ''} ${c.nome}</option>`).join('');
+            document.getElementById('modalItem').classList.add('active');
+        }
+
+        function fecharModalItem() { document.getElementById('modalItem').classList.remove('active'); }
+
+        async function salvarItem() {
+            const id = document.getElementById('itemEditId').value;
+            const body = {
+                categoriaId: document.getElementById('itemCategoria').value,
+                nome: document.getElementById('itemNome').value,
+                descricao: document.getElementById('itemDesc').value,
+                preco: parseFloat(document.getElementById('itemPreco').value) || 0,
+                tempoPreparoMin: parseInt(document.getElementById('itemTempo').value) || 20,
+                destaque: document.getElementById('itemDestaque').checked
+            };
+            if (!body.nome || !body.preco) return toast('Nome e preço obrigatórios', 'error');
+            if (id) {
+                await api('/cardapio/' + id, { method: 'PUT', body: JSON.stringify(body) });
+            } else {
+                await api('/cardapio', { method: 'POST', body: JSON.stringify(body) });
+            }
+            fecharModalItem();
+            toast(id ? 'Item atualizado!' : 'Item criado!');
+            carregarCardapio();
+        }
+
+        async function editarItem(id) {
+            const res = await api('/cardapio');
+            const itens = await res.json();
+            const item = itens.find(i => i._id === id);
+            if (!item) return;
+            await carregarCategorias();
+            document.getElementById('itemCategoria').innerHTML = categorias.map(c => `<option value="${c._id}" ${c._id === (item.categoriaId?._id || item.categoriaId) ? 'selected' : ''}>${c.emoji || ''} ${c.nome}</option>`).join('');
+            document.getElementById('modalItemTitulo').textContent = 'Editar Item';
+            document.getElementById('itemEditId').value = id;
+            document.getElementById('itemNome').value = item.nome;
+            document.getElementById('itemDesc').value = item.descricao || '';
+            document.getElementById('itemPreco').value = item.preco;
+            document.getElementById('itemTempo').value = item.tempoPreparoMin || 20;
+            document.getElementById('itemDestaque').checked = item.destaque;
+            document.getElementById('modalItem').classList.add('active');
+        }
+
+        async function deletarItem(id) {
+            if (!confirm('Remover item?')) return;
+            await api('/cardapio/' + id, { method: 'DELETE' });
+            toast('Removido');
+            carregarCardapio();
+        }
+
+        // CONFIG
+        async function carregarConfig() {
+            const res = await api('/config');
+            const c = await res.json();
+            document.getElementById('cfgNome').value = c.nomeRestaurante || '';
+            document.getElementById('cfgHorario').value = c.horarioFuncionamento || '';
+            document.getElementById('cfgEndereco').value = c.endereco || '';
+            document.getElementById('cfgTaxaFixa').value = c.taxaEntregaFixa || 0;
+            document.getElementById('cfgTaxaKm').value = c.taxaEntregaPorKm || 0;
+            document.getElementById('cfgRaio').value = c.raioEntregaKm || 10;
+            document.getElementById('cfgPedidoMin').value = c.pedidoMinimo || 0;
+            document.getElementById('cfgTempo').value = c.tempoMedioEntrega || 40;
+            document.getElementById('cfgPix').checked = c.aceitaPix;
+            document.getElementById('cfgDinheiro').checked = c.aceitaDinheiro;
+            document.getElementById('cfgCartao').checked = c.aceitaCartao;
+            document.getElementById('cfgChavePix').value = c.chavePix || '';
+            document.getElementById('cfgBoasVindas').value = c.mensagemBoasVindas || '';
+            document.getElementById('cfgMsgConfirmado').value = c.mensagemPedidoConfirmado || '';
+            document.getElementById('cfgMsgPronto').value = c.mensagemPedidoPronto || '';
+            const btn = document.getElementById('btnAberto');
+            btn.textContent = c.aberto ? '🟢 ABERTO' : '🔴 FECHADO';
+            btn.style.background = c.aberto ? '#00cc6a' : '#ff4444';
+            btn.style.color = c.aberto ? '#000' : '#fff';
+        }
+
+        async function salvarConfig() {
+            await api('/config', { method: 'PUT', body: JSON.stringify({
+                nomeRestaurante: document.getElementById('cfgNome').value,
+                horarioFuncionamento: document.getElementById('cfgHorario').value,
+                endereco: document.getElementById('cfgEndereco').value,
+                taxaEntregaFixa: parseFloat(document.getElementById('cfgTaxaFixa').value) || 0,
+                taxaEntregaPorKm: parseFloat(document.getElementById('cfgTaxaKm').value) || 0,
+                raioEntregaKm: parseInt(document.getElementById('cfgRaio').value) || 10,
+                pedidoMinimo: parseFloat(document.getElementById('cfgPedidoMin').value) || 0,
+                tempoMedioEntrega: parseInt(document.getElementById('cfgTempo').value) || 40,
+                aceitaPix: document.getElementById('cfgPix').checked,
+                aceitaDinheiro: document.getElementById('cfgDinheiro').checked,
+                aceitaCartao: document.getElementById('cfgCartao').checked,
+                chavePix: document.getElementById('cfgChavePix').value,
+                mensagemBoasVindas: document.getElementById('cfgBoasVindas').value,
+                mensagemPedidoConfirmado: document.getElementById('cfgMsgConfirmado').value,
+                mensagemPedidoPronto: document.getElementById('cfgMsgPronto').value
+            })});
+            toast('Configurações salvas!');
+        }
+
+        async function toggleAberto() {
+            const res = await api('/config');
+            const c = await res.json();
+            await api('/config', { method: 'PUT', body: JSON.stringify({ aberto: !c.aberto }) });
+            carregarConfig();
+            toast(c.aberto ? 'Delivery FECHADO' : 'Delivery ABERTO!');
+        }
+
+        function copiarLinkCozinha() {
+            const link = location.origin + '/delivery-cozinha?token=' + token;
+            navigator.clipboard.writeText(link).then(() => toast('Link da cozinha copiado!')).catch(() => {
+                prompt('Copie o link:', link);
+            });
+        }
+
+        // Auto-refresh pedidos a cada 10s
+        setInterval(() => {
+            if (document.querySelector('.page.active')?.id === 'page-dashboard') carregarDashboard();
+        }, 10000);
+
+        // Enter login
+        document.addEventListener('keypress', e => { if (e.key === 'Enter' && !token) fazerLogin(); });
+    </script>
+</body>
+</html>

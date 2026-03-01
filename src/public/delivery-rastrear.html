@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rastreio do Pedido</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, sans-serif; background: #0a0a1a; color: #fff; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+        .card { background: #1a1a2e; border-radius: 20px; padding: 30px; width: 100%; max-width: 400px; text-align: center; }
+        .card h1 { color: #ff6b35; font-size: 22px; margin-bottom: 5px; }
+        .card .sub { color: #888; font-size: 14px; margin-bottom: 25px; }
+        .steps { text-align: left; }
+        .step { display: flex; gap: 12px; padding: 12px 0; position: relative; }
+        .step::before { content: ''; position: absolute; left: 15px; top: 36px; width: 2px; height: calc(100% - 24px); background: #333; }
+        .step:last-child::before { display: none; }
+        .step .icon { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; background: #333; z-index: 1; flex-shrink: 0; }
+        .step.done .icon { background: #00cc6a; }
+        .step.active .icon { background: #ff6b35; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(255,107,53,0.4); } 50% { box-shadow: 0 0 0 10px rgba(255,107,53,0); } }
+        .step .info h3 { font-size: 14px; color: #fff; }
+        .step .info p { font-size: 12px; color: #888; }
+        .step.done .info h3 { color: #00cc6a; }
+        .step.active .info h3 { color: #ff6b35; }
+        .step.pending .info h3 { color: #555; }
+        .resumo { margin-top: 20px; padding-top: 15px; border-top: 1px solid #333; text-align: left; }
+        .resumo p { font-size: 13px; color: #aaa; margin: 3px 0; }
+        .total { font-size: 20px; font-weight: bold; color: #00cc6a; text-align: center; margin-top: 15px; }
+        .loading { text-align: center; padding: 40px; }
+        .spinner { width: 40px; height: 40px; border: 3px solid #333; border-top-color: #ff6b35; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 15px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p style="color:#888;">Carregando pedido...</p>
+        </div>
+        <div id="conteudo" style="display:none;">
+            <h1>🍔 Pedido #<span id="numPedido">0</span></h1>
+            <p class="sub" id="restaurante"></p>
+            
+            <div class="steps" id="steps"></div>
+            
+            <div class="resumo">
+                <p id="itensResumo"></p>
+                <p id="enderecoResumo"></p>
+                <p id="pagamentoResumo"></p>
+            </div>
+            <div class="total" id="totalResumo"></div>
+        </div>
+        <div id="erro" style="display:none;text-align:center;padding:30px;">
+            <p style="font-size:48px;">🍔</p>
+            <h2 id="erroTitulo" style="margin:15px 0;color:#ff6b35;">Pedido não encontrado</h2>
+            <p id="erroMsg" style="color:#888;"></p>
+        </div>
+    </div>
+
+    <script>
+        const codigo = location.pathname.split('/').pop();
+        
+        const statusSteps = [
+            { status: 'confirmado', icon: '✅', titulo: 'Pedido confirmado', desc: 'O restaurante recebeu seu pedido' },
+            { status: 'preparando', icon: '👨‍🍳', titulo: 'Preparando', desc: 'Seu pedido está sendo preparado' },
+            { status: 'pronto', icon: '📦', titulo: 'Pronto', desc: 'Seu pedido está pronto' },
+            { status: 'saiu_entrega', icon: '🏍️', titulo: 'Saiu para entrega', desc: 'O entregador está a caminho' },
+            { status: 'entregue', icon: '🎉', titulo: 'Entregue', desc: 'Bom apetite!' }
+        ];
+
+        async function carregar() {
+            try {
+                // Buscar pedido pelo código (últimos 8 chars do ID)
+                const res = await fetch('/api/delivery/pedidos/rastrear/' + codigo);
+                if (!res.ok) throw new Error('Não encontrado');
+                const pedido = await res.json();
+                
+                document.getElementById('loading').style.display = 'none';
+                
+                if (pedido.status === 'cancelado') {
+                    document.getElementById('erro').style.display = 'block';
+                    document.getElementById('erroTitulo').textContent = 'Pedido cancelado';
+                    document.getElementById('erroMsg').textContent = pedido.motivoCancelamento || '';
+                    return;
+                }
+                
+                document.getElementById('conteudo').style.display = 'block';
+                document.getElementById('numPedido').textContent = pedido.numero;
+                
+                const statusOrder = ['confirmado','preparando','pronto','saiu_entrega','entregue'];
+                const currentIdx = statusOrder.indexOf(pedido.status);
+                
+                document.getElementById('steps').innerHTML = statusSteps.map((s, i) => {
+                    let classe = 'pending';
+                    if (i < currentIdx) classe = 'done';
+                    if (i === currentIdx) classe = 'active';
+                    if (pedido.status === 'entregue') classe = 'done';
+                    const time = pedido['data' + s.status.charAt(0).toUpperCase() + s.status.slice(1)];
+                    return `<div class="step ${classe}">
+                        <div class="icon">${s.icon}</div>
+                        <div class="info">
+                            <h3>${s.titulo}</h3>
+                            <p>${time ? new Date(time).toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'}) : s.desc}</p>
+                        </div>
+                    </div>`;
+                }).join('');
+                
+                document.getElementById('itensResumo').textContent = '🛒 ' + (pedido.itens||[]).map(i => i.quantidade + 'x ' + i.nome).join(', ');
+                document.getElementById('enderecoResumo').textContent = pedido.tipoEntrega === 'retirada' ? '🏪 Retirada no local' : '📍 ' + (pedido.enderecoEntrega || '');
+                document.getElementById('pagamentoResumo').textContent = '💳 ' + (pedido.formaPagamento || '-');
+                document.getElementById('totalResumo').textContent = 'R$ ' + (pedido.total || 0).toFixed(2);
+                
+            } catch(e) {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('erro').style.display = 'block';
+            }
+        }
+        
+        carregar();
+        setInterval(carregar, 8000); // Atualiza a cada 8s
+    </script>
+</body>
+</html>

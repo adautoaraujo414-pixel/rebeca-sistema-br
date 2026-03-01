@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🍳 Cozinha - Rebeca Delivery</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #0a0a1a; color: #fff; min-height: 100vh; }
+        .header { background: linear-gradient(135deg, #1a1a2e, #252542); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
+        .header h1 { color: #ff6b35; font-size: 18px; }
+        .header .stats { display: flex; gap: 15px; }
+        .header .stat { text-align: center; }
+        .header .stat .n { font-size: 22px; font-weight: bold; color: #00cc6a; }
+        .header .stat .l { font-size: 10px; color: #888; }
+        
+        .colunas { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px; padding: 15px; }
+        .coluna { background: #111128; border-radius: 12px; padding: 15px; min-height: 300px; }
+        .coluna h2 { font-size: 16px; padding-bottom: 10px; margin-bottom: 10px; border-bottom: 2px solid; }
+        .coluna.novos h2 { color: #ffc107; border-color: #ffc107; }
+        .coluna.preparando h2 { color: #ff6b35; border-color: #ff6b35; }
+        .coluna.prontos h2 { color: #00cc6a; border-color: #00cc6a; }
+        .coluna.entrega h2 { color: #00d4ff; border-color: #00d4ff; }
+        
+        .pedido { background: #1a1a2e; border-radius: 10px; padding: 12px; margin-bottom: 10px; border-left: 4px solid #333; animation: slideIn 0.3s; }
+        .pedido.novo { border-left-color: #ffc107; }
+        .pedido.preparando { border-left-color: #ff6b35; }
+        .pedido.pronto { border-left-color: #00cc6a; }
+        .pedido.saiu_entrega { border-left-color: #00d4ff; }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; } }
+        
+        .pedido .topo { display: flex; justify-content: space-between; margin-bottom: 8px; }
+        .pedido .num { font-weight: bold; font-size: 18px; color: #ff6b35; }
+        .pedido .tempo { font-size: 12px; color: #888; }
+        .pedido .cliente { font-size: 13px; color: #aaa; margin-bottom: 5px; }
+        .pedido .itens { font-size: 14px; margin-bottom: 8px; }
+        .pedido .itens .item { padding: 3px 0; }
+        .pedido .itens .obs { color: #ffc107; font-size: 12px; }
+        .pedido .endereco { font-size: 12px; color: #888; padding: 5px 0; border-top: 1px solid #333; margin-top: 5px; }
+        .pedido .acoes { display: flex; gap: 8px; margin-top: 10px; }
+        .pedido .acoes button { flex: 1; padding: 10px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 13px; }
+        .btn-confirmar { background: #00cc6a; color: #000; }
+        .btn-preparar { background: #ff6b35; color: #fff; }
+        .btn-pronto { background: #00cc6a; color: #000; }
+        .btn-sair { background: #00d4ff; color: #000; }
+        .btn-entregar { background: #4caf50; color: #fff; }
+        .btn-cancelar { background: #ff4444; color: #fff; }
+        
+        .vazio { text-align: center; color: #555; padding: 30px; font-size: 14px; }
+        
+        .toast { position: fixed; top: 20px; right: 20px; padding: 12px 20px; border-radius: 10px; font-size: 14px; z-index: 9999; animation: fadeIn 0.3s; }
+        .toast.success { background: #00cc6a; color: #000; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        /* Som */
+        .novo-pedido-alert { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #ffc107; color: #000; padding: 30px; border-radius: 20px; font-size: 24px; font-weight: bold; text-align: center; z-index: 10000; display: none; animation: pulse 0.5s infinite alternate; }
+        @keyframes pulse { from { transform: translate(-50%, -50%) scale(1); } to { transform: translate(-50%, -50%) scale(1.05); } }
+    </style>
+</head>
+<body>
+    <div id="novoPedidoAlert" class="novo-pedido-alert">
+        🔔 NOVO PEDIDO!<br><span id="alertNumero"></span>
+    </div>
+
+    <div class="header">
+        <h1>👨‍🍳 Cozinha</h1>
+        <div class="stats">
+            <div class="stat"><div class="n" id="totalNovos">0</div><div class="l">Novos</div></div>
+            <div class="stat"><div class="n" id="totalPreparando">0</div><div class="l">Preparando</div></div>
+            <div class="stat"><div class="n" id="totalProntos">0</div><div class="l">Prontos</div></div>
+        </div>
+    </div>
+
+    <div class="colunas">
+        <div class="coluna novos">
+            <h2>🔔 NOVOS (<span id="countNovos">0</span>)</h2>
+            <div id="listaNovos"></div>
+        </div>
+        <div class="coluna preparando">
+            <h2>👨‍🍳 PREPARANDO (<span id="countPreparando">0</span>)</h2>
+            <div id="listaPreparando"></div>
+        </div>
+        <div class="coluna prontos">
+            <h2>✅ PRONTOS (<span id="countProntos">0</span>)</h2>
+            <div id="listaProntos"></div>
+        </div>
+        <div class="coluna entrega">
+            <h2>🏍️ EM ENTREGA (<span id="countEntrega">0</span>)</h2>
+            <div id="listaEntrega"></div>
+        </div>
+    </div>
+
+    <script>
+        const params = new URLSearchParams(location.search);
+        const token = params.get('token') || localStorage.getItem('delivery_token') || '';
+        let ultimosPedidos = 0;
+
+        function api(path, opts = {}) {
+            return fetch('/api/delivery' + path, { ...opts, headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', ...opts.headers } });
+        }
+
+        function toast(msg) {
+            const t = document.createElement('div');
+            t.className = 'toast success';
+            t.textContent = msg;
+            document.body.appendChild(t);
+            setTimeout(() => t.remove(), 3000);
+        }
+
+        function tempoDesde(data) {
+            const min = Math.floor((Date.now() - new Date(data).getTime()) / 60000);
+            if (min < 1) return 'agora';
+            if (min < 60) return min + 'min';
+            return Math.floor(min/60) + 'h' + (min%60) + 'min';
+        }
+
+        function renderPedido(p) {
+            const itensHtml = (p.itens || []).map(i => 
+                `<div class="item">• ${i.quantidade}x <strong>${i.nome}</strong> ${i.opcionais?.length ? '(' + i.opcionais.map(o=>o.nome).join(', ') + ')' : ''}</div>` +
+                (i.observacao ? `<div class="obs">📝 ${i.observacao}</div>` : '')
+            ).join('');
+            
+            let acoes = '';
+            if (p.status === 'novo') acoes = `<button class="btn-confirmar" onclick="mudar('${p._id}','confirmado')">✅ Confirmar</button><button class="btn-cancelar" onclick="cancelar('${p._id}')">❌</button>`;
+            if (p.status === 'confirmado') acoes = `<button class="btn-preparar" onclick="mudar('${p._id}','preparando')">👨‍🍳 Preparar</button>`;
+            if (p.status === 'preparando') acoes = `<button class="btn-pronto" onclick="mudar('${p._id}','pronto')">✅ Pronto!</button>`;
+            if (p.status === 'pronto') acoes = `<button class="btn-sair" onclick="mudar('${p._id}','saiu_entrega')">🏍️ Saiu Entrega</button>`;
+            if (p.status === 'saiu_entrega') acoes = `<button class="btn-entregar" onclick="mudar('${p._id}','entregue')">✅ Entregue</button>`;
+
+            return `<div class="pedido ${p.status}">
+                <div class="topo">
+                    <span class="num">#${p.numero}</span>
+                    <span class="tempo">⏱️ ${tempoDesde(p.createdAt)}</span>
+                </div>
+                <div class="cliente">👤 ${p.clienteNome || 'Cliente'} • 💳 ${p.formaPagamento || '-'} ${p.trocoPara ? '(troco p/ R$'+p.trocoPara+')' : ''}</div>
+                <div class="itens">${itensHtml}</div>
+                ${p.observacao ? '<div class="obs">📝 ' + p.observacao + '</div>' : ''}
+                <div class="endereco">${p.tipoEntrega === 'retirada' ? '🏪 RETIRADA' : '📍 ' + (p.enderecoEntrega || '-')}</div>
+                <div class="acoes">${acoes}</div>
+            </div>`;
+        }
+
+        async function carregarPedidos() {
+            try {
+                const res = await api('/pedidos/ativos');
+                const pedidos = await res.json();
+                
+                const novos = pedidos.filter(p => ['novo','confirmado'].includes(p.status));
+                const preparando = pedidos.filter(p => p.status === 'preparando');
+                const prontos = pedidos.filter(p => p.status === 'pronto');
+                const entrega = pedidos.filter(p => p.status === 'saiu_entrega');
+
+                document.getElementById('listaNovos').innerHTML = novos.map(renderPedido).join('') || '<div class="vazio">Nenhum pedido novo</div>';
+                document.getElementById('listaPreparando').innerHTML = preparando.map(renderPedido).join('') || '<div class="vazio">—</div>';
+                document.getElementById('listaProntos').innerHTML = prontos.map(renderPedido).join('') || '<div class="vazio">—</div>';
+                document.getElementById('listaEntrega').innerHTML = entrega.map(renderPedido).join('') || '<div class="vazio">—</div>';
+
+                document.getElementById('countNovos').textContent = novos.length;
+                document.getElementById('countPreparando').textContent = preparando.length;
+                document.getElementById('countProntos').textContent = prontos.length;
+                document.getElementById('countEntrega').textContent = entrega.length;
+                document.getElementById('totalNovos').textContent = novos.length;
+                document.getElementById('totalPreparando').textContent = preparando.length;
+                document.getElementById('totalProntos').textContent = prontos.length;
+
+                // Alerta de novo pedido
+                if (novos.length > ultimosPedidos && ultimosPedidos > 0) {
+                    const alert = document.getElementById('novoPedidoAlert');
+                    document.getElementById('alertNumero').textContent = '#' + novos[0].numero;
+                    alert.style.display = 'block';
+                    if (navigator.vibrate) navigator.vibrate([500, 200, 500]);
+                    try { new Audio('data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQ==').play(); } catch(e) {}
+                    setTimeout(() => alert.style.display = 'none', 5000);
+                }
+                ultimosPedidos = novos.length;
+            } catch(e) { console.log(e); }
+        }
+
+        async function mudar(id, status) {
+            await api('/pedidos/' + id + '/status', { method: 'PUT', body: JSON.stringify({ status }) });
+            toast('Atualizado!');
+            carregarPedidos();
+        }
+
+        async function cancelar(id) {
+            const motivo = prompt('Motivo:');
+            if (!motivo) return;
+            await api('/pedidos/' + id + '/status', { method: 'PUT', body: JSON.stringify({ status: 'cancelado', motivo }) });
+            toast('Cancelado');
+            carregarPedidos();
+        }
+
+        // Carregar e auto-refresh
+        carregarPedidos();
+        setInterval(carregarPedidos, 5000); // A cada 5 segundos
+    </script>
+</body>
+</html>
