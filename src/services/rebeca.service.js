@@ -14,7 +14,7 @@ const AprendizadoService = require('./rebeca-aprendizado.service');
 const conversas = new Map();
 
 // Carregar conversas do banco ao iniciar
-setTimeout(() => { try { AprendizadoService.carregarConversasDoBanco ? AprendizadoService.carregarConversasDoBanco() : null; } catch(e) { console.log('[CATCH]', e.message); } }, 5000);
+// Conversas carregadas sob demanda via AprendizadoService
 
 // Salvar conversas no banco a cada 2 min
 // Persistencia via AprendizadoService (registra cada interacao automaticamente)
