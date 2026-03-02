@@ -1230,8 +1230,6 @@ _Digite CANCELAR se precisar_`;
             }
         }
         else if (conversa.etapa === 'pedir_bairro_origem') {
-            if (conversa.bairroJaSolicitado) return null;
-            conversa.bairroJaSolicitado = true;
             // VALIDAR: ignorar expressões de confirmação/comandos
             const expressoesIgnorar = ['maravilha','beleza','show','legal','perfeito','otimo','ótimo','certo','entendi','isso','ok','sim','blz','vlw','valeu','brigado','brigada','obrigado','obrigada','ta','tá','vamos','bora','pode ser','isso mesmo','a maravilha','top','dahora','massa','nice','maneiro'];
             if (expressoesIgnorar.includes(msg) || msg.length < 3) {
