@@ -1,123 +1,114 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rastreio do Pedido</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, sans-serif; background: #0a0a1a; color: #fff; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
-        .card { background: #1a1a2e; border-radius: 20px; padding: 30px; width: 100%; max-width: 400px; text-align: center; }
-        .card h1 { color: #ff6b35; font-size: 22px; margin-bottom: 5px; }
-        .card .sub { color: #888; font-size: 14px; margin-bottom: 25px; }
-        .steps { text-align: left; }
-        .step { display: flex; gap: 12px; padding: 12px 0; position: relative; }
-        .step::before { content: ''; position: absolute; left: 15px; top: 36px; width: 2px; height: calc(100% - 24px); background: #333; }
-        .step:last-child::before { display: none; }
-        .step .icon { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; background: #333; z-index: 1; flex-shrink: 0; }
-        .step.done .icon { background: #00cc6a; }
-        .step.active .icon { background: #ff6b35; animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(255,107,53,0.4); } 50% { box-shadow: 0 0 0 10px rgba(255,107,53,0); } }
-        .step .info h3 { font-size: 14px; color: #fff; }
-        .step .info p { font-size: 12px; color: #888; }
-        .step.done .info h3 { color: #00cc6a; }
-        .step.active .info h3 { color: #ff6b35; }
-        .step.pending .info h3 { color: #555; }
-        .resumo { margin-top: 20px; padding-top: 15px; border-top: 1px solid #333; text-align: left; }
-        .resumo p { font-size: 13px; color: #aaa; margin: 3px 0; }
-        .total { font-size: 20px; font-weight: bold; color: #00cc6a; text-align: center; margin-top: 15px; }
-        .loading { text-align: center; padding: 40px; }
-        .spinner { width: 40px; height: 40px; border: 3px solid #333; border-top-color: #ff6b35; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 15px; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rastreamento - Rebeca Delivery</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',sans-serif;background:#0a0a1a;color:#fff;min-height:100vh}
+.container{max-width:500px;margin:0 auto;padding:20px}
+.header{text-align:center;padding:20px 0}
+.header h1{color:#ff6b35;font-size:1.5em}
+.header p{color:#888;font-size:.9em}
+.card{background:#1a1a2e;border:1px solid #333;border-radius:12px;padding:20px;margin-bottom:15px}
+.card h3{color:#ff6b35;margin-bottom:10px;font-size:1em}
+.status-track{display:flex;flex-direction:column;gap:0}
+.step{display:flex;align-items:flex-start;gap:12px;padding:12px 0;position:relative}
+.step-dot{width:24px;height:24px;border-radius:50%;border:2px solid #333;display:flex;align-items:center;justify-content:center;font-size:.7em;flex-shrink:0;background:#0a0a1a}
+.step.done .step-dot{background:#00cc6a;border-color:#00cc6a;color:#000}
+.step.active .step-dot{background:#ff6b35;border-color:#ff6b35;color:#fff;animation:pulse 1.5s infinite}
+.step-info{flex:1}
+.step-info h4{font-size:.9em;color:#fff}
+.step-info p{font-size:.8em;color:#888}
+.step.done .step-info h4{color:#00cc6a}
+.step.active .step-info h4{color:#ff6b35}
+.step-line{position:absolute;left:11px;top:36px;width:2px;height:calc(100% - 24px);background:#333}
+.step.done .step-line{background:#00cc6a}
+.step:last-child .step-line{display:none}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.itens{margin:10px 0}
+.item{padding:6px 0;border-bottom:1px solid #222;font-size:.9em;display:flex;justify-content:space-between}
+.item:last-child{border:none}
+.total{font-size:1.2em;font-weight:bold;color:#00cc6a;text-align:right;margin-top:10px}
+.endereco{background:#252542;padding:12px;border-radius:8px;margin:10px 0;font-size:.9em}
+.endereco-icon{color:#00d4ff}
+.entregador{background:#252542;padding:12px;border-radius:8px;margin:10px 0}
+.entregador h4{color:#ff6b35;font-size:.9em}
+.entregador p{color:#ccc;font-size:.85em}
+.mapa{width:100%;height:250px;border-radius:10px;margin:10px 0;background:#252542;display:flex;align-items:center;justify-content:center;color:#888}
+.vazio{text-align:center;padding:60px 20px;color:#888}
+.vazio h2{color:#ff6b35;margin-bottom:10px}
+</style>
 </head>
 <body>
-    <div class="card">
-        <div id="loading" class="loading">
-            <div class="spinner"></div>
-            <p style="color:#888;">Carregando pedido...</p>
-        </div>
-        <div id="conteudo" style="display:none;">
-            <h1>🍔 Pedido #<span id="numPedido">0</span></h1>
-            <p class="sub" id="restaurante"></p>
-            
-            <div class="steps" id="steps"></div>
-            
-            <div class="resumo">
-                <p id="itensResumo"></p>
-                <p id="enderecoResumo"></p>
-                <p id="pagamentoResumo"></p>
-            </div>
-            <div class="total" id="totalResumo"></div>
-        </div>
-        <div id="erro" style="display:none;text-align:center;padding:30px;">
-            <p style="font-size:48px;">🍔</p>
-            <h2 id="erroTitulo" style="margin:15px 0;color:#ff6b35;">Pedido não encontrado</h2>
-            <p id="erroMsg" style="color:#888;"></p>
-        </div>
-    </div>
+<div class="container">
+<div class="header">
+<h1>&#x1F6F5; Rebeca Delivery</h1>
+<p>Acompanhe seu pedido em tempo real</p>
+</div>
+<div id="conteudo"><div class="vazio"><h2>Carregando...</h2></div></div>
+</div>
+<script>
+var codigo = location.pathname.split('/').pop();
+var BASE = '/api/delivery';
 
-    <script>
-        const codigo = location.pathname.split('/').pop();
-        
-        const statusSteps = [
-            { status: 'confirmado', icon: '✅', titulo: 'Pedido confirmado', desc: 'O restaurante recebeu seu pedido' },
-            { status: 'preparando', icon: '👨‍🍳', titulo: 'Preparando', desc: 'Seu pedido está sendo preparado' },
-            { status: 'pronto', icon: '📦', titulo: 'Pronto', desc: 'Seu pedido está pronto' },
-            { status: 'saiu_entrega', icon: '🏍️', titulo: 'Saiu para entrega', desc: 'O entregador está a caminho' },
-            { status: 'entregue', icon: '🎉', titulo: 'Entregue', desc: 'Bom apetite!' }
-        ];
+async function carregar() {
+try {
+var r = await fetch(BASE + '/rastrear-gps/' + codigo);
+if (r.status === 404) { document.getElementById('conteudo').innerHTML = '<div class="vazio"><h2>Pedido nao encontrado</h2><p>Verifique o link</p></div>'; return; }
+var p = await r.json();
+var statusList = ['novo','confirmado','preparando','pronto','saiu_entrega','entregue'];
+var statusNomes = {novo:'Pedido recebido',confirmado:'Confirmado',preparando:'Em preparo',pronto:'Pronto',saiu_entrega:'Saiu para entrega',entregue:'Entregue'};
+var statusEmoji = {novo:'&#x1F4CB;',confirmado:'&#x2705;',preparando:'&#x1F373;',pronto:'&#x2705;',saiu_entrega:'&#x1F6F5;',entregue:'&#x1F389;'};
+var idxAtual = statusList.indexOf(p.status);
 
-        async function carregar() {
-            try {
-                // Buscar pedido pelo código (últimos 8 chars do ID)
-                const res = await fetch('/api/delivery/pedidos/rastrear/' + codigo);
-                if (!res.ok) throw new Error('Não encontrado');
-                const pedido = await res.json();
-                
-                document.getElementById('loading').style.display = 'none';
-                
-                if (pedido.status === 'cancelado') {
-                    document.getElementById('erro').style.display = 'block';
-                    document.getElementById('erroTitulo').textContent = 'Pedido cancelado';
-                    document.getElementById('erroMsg').textContent = pedido.motivoCancelamento || '';
-                    return;
-                }
-                
-                document.getElementById('conteudo').style.display = 'block';
-                document.getElementById('numPedido').textContent = pedido.numero;
-                
-                const statusOrder = ['confirmado','preparando','pronto','saiu_entrega','entregue'];
-                const currentIdx = statusOrder.indexOf(pedido.status);
-                
-                document.getElementById('steps').innerHTML = statusSteps.map((s, i) => {
-                    let classe = 'pending';
-                    if (i < currentIdx) classe = 'done';
-                    if (i === currentIdx) classe = 'active';
-                    if (pedido.status === 'entregue') classe = 'done';
-                    const time = pedido['data' + s.status.charAt(0).toUpperCase() + s.status.slice(1)];
-                    return `<div class="step ${classe}">
-                        <div class="icon">${s.icon}</div>
-                        <div class="info">
-                            <h3>${s.titulo}</h3>
-                            <p>${time ? new Date(time).toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'}) : s.desc}</p>
-                        </div>
-                    </div>`;
-                }).join('');
-                
-                document.getElementById('itensResumo').textContent = '🛒 ' + (pedido.itens||[]).map(i => i.quantidade + 'x ' + i.nome).join(', ');
-                document.getElementById('enderecoResumo').textContent = pedido.tipoEntrega === 'retirada' ? '🏪 Retirada no local' : '📍 ' + (pedido.enderecoEntrega || '');
-                document.getElementById('pagamentoResumo').textContent = '💳 ' + (pedido.formaPagamento || '-');
-                document.getElementById('totalResumo').textContent = 'R$ ' + (pedido.total || 0).toFixed(2);
-                
-            } catch(e) {
-                document.getElementById('loading').style.display = 'none';
-                document.getElementById('erro').style.display = 'block';
-            }
-        }
-        
-        carregar();
-        setInterval(carregar, 8000); // Atualiza a cada 8s
-    </script>
+var h = '<div class="card"><h3>Pedido #' + (p.numero || '?') + '</h3>';
+h += '<div class="status-track">';
+for (var i = 0; i < statusList.length; i++) {
+var s = statusList[i];
+var cls = i < idxAtual ? 'done' : i === idxAtual ? 'active' : '';
+h += '<div class="step ' + cls + '">';
+h += '<div class="step-dot">' + (i < idxAtual ? '&#x2713;' : statusEmoji[s]) + '</div>';
+h += '<div class="step-info"><h4>' + statusNomes[s] + '</h4></div>';
+if (i < statusList.length - 1) h += '<div class="step-line"></div>';
+h += '</div>';
+}
+h += '</div></div>';
+
+h += '<div class="card"><h3>Itens</h3><div class="itens">';
+var tot = 0;
+for (var j = 0; j < (p.itens || []).length; j++) {
+var it = p.itens[j];
+h += '<div class="item"><span>' + it.quantidade + 'x ' + it.nome + '</span><span>R$ ' + (it.subtotal || 0).toFixed(2) + '</span></div>';
+tot += (it.subtotal || 0);
+}
+h += '</div><div class="total">Total: R$ ' + tot.toFixed(2) + '</div></div>';
+
+if (p.enderecoEntrega) {
+h += '<div class="card"><div class="endereco"><span class="endereco-icon">&#x1F4CD;</span> ' + p.enderecoEntrega + '</div></div>';
+}
+
+if (p.entregadorNome) {
+h += '<div class="card"><div class="entregador"><h4>&#x1F6F5; Entregador</h4><p>' + p.entregadorNome + '</p></div></div>';
+}
+
+if (p.status === 'saiu_entrega' && p.entregadorLatitude && p.entregadorLongitude) {
+h += '<div class="card"><h3>Localizacao do entregador</h3>';
+h += '<div class="mapa" id="mapa">GPS: ' + p.entregadorLatitude.toFixed(4) + ', ' + p.entregadorLongitude.toFixed(4) + '</div>';
+h += '<p style="font-size:.8em;color:#888;text-align:center">Atualizado: ' + (p.gpsAtualizado ? new Date(p.gpsAtualizado).toLocaleTimeString() : '-') + '</p></div>';
+}
+
+if (p.status === 'entregue') {
+h += '<div class="card" style="text-align:center"><h3 style="color:#00cc6a">&#x1F389; Pedido Entregue!</h3><p style="color:#888">Obrigado pela preferencia!</p></div>';
+}
+
+document.getElementById('conteudo').innerHTML = h;
+} catch(e) { console.error(e); }
+}
+
+carregar();
+setInterval(carregar, 8000);
+</script>
 </body>
 </html>
