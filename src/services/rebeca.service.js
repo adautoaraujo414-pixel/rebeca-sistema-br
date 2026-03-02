@@ -56,6 +56,7 @@ setInterval(async () => {
                     if (inst) {
                         await EvolutionMultiService.enviarMensagem(inst._id, telefone, 'Poxa, não encontramos motorista disponível no momento 😔\n\nTente novamente daqui a pouco! Quando precisar é só chamar.');
                     }
+                }
             } catch(e) { console.log('[CATCH]', e.message); }
             conversa.etapa = 'inicio';
             conversa.dados = {};
