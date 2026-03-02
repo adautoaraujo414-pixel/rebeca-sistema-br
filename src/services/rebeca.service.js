@@ -82,6 +82,24 @@ const ultimasRespostas = new Map(); // Anti-repeticao
 const favoritosClientes = new Map();
 const localidadeService = require('./localidade.service');
 
+
+// ===== ANTI-REPETICAO: Frases variadas =====
+const _fraseIdx = new Map();
+const FRASES = {
+    buscando: ['⏳ Buscando motorista...','⏳ Localizando motorista perto de você...','⏳ Procurando motorista...','⏳ Chamando motoristas da região...'],
+    cancelar_hint: ['_CANCELAR se precisar_','_Digite CANCELAR pra desistir_','_Mande CANCELAR se mudar de ideia_'],
+    agradecimento: ['Imagina! Sempre que precisar 😊','Por nada! É só chamar!','Disponha! 😊','Que nada! Me chama quando quiser!'],
+    cancelado: ['Corrida cancelada! Quando precisar é só chamar 😊','Cancelado! Me chama quando quiser 😊','Pronto, cancelei! É só chamar de novo!'],
+    msg_enviada: ['✅ Mensagem enviada pro motorista!','✅ Repassei pro motorista!','✅ Motorista recebeu sua mensagem!']
+};
+function variar(tipo) {
+    const f = FRASES[tipo]; if (!f||!f.length) return '';
+    const ult = _fraseIdx.get(tipo)||-1;
+    let i = Math.floor(Math.random()*f.length);
+    if (f.length>1) while(i===ult) i=Math.floor(Math.random()*f.length);
+    _fraseIdx.set(tipo,i); return f[i];
+}
+
 const configRebeca = {
     enviarLinkRastreamento: true,
     notificarTempoMotorista: true,
@@ -697,7 +715,15 @@ Responda diretamente para ele: wa.me/${telefone}`;
                     // Tem motorista - salvar mensagem para o painel (sem WhatsApp)
                     const motoristaAtivo = await MotoristaService.buscarPorId(corridaAtiva.motoristaId);
                     if (motoristaAtivo) {
-                        // Salvar mensagem no chat da corrida para o motorista ver no painel
+                        // CHAT VIA WHATSAPP: repassar pro motorista
+                        try {
+                            const _resChatCli = await RebecaService.clienteMensagemParaMotorista(telefone, msgOriginal, conversa.adminId, conversa.instanciaId);
+                            if (_resChatCli && _resChatCli.enviado) {
+                                conversas.set(telefone, conversa);
+                                return variar('msg_enviada');
+                            }
+                        } catch(e2) { console.log('[CHAT] Fallback painel:', e2.message); }
+                        // Fallback: salvar no painel
                         try {
                             const { Corrida } = require('../models');
                             await Corrida.findByIdAndUpdate(corridaAtiva._id, {
@@ -2237,6 +2263,38 @@ _Digite CANCELAR se precisar_`;
     },
     
     // Colocar em modo avaliacao
+
+    
+    // ===== CHAT INTERMEDIADO MOTORISTA↔CLIENTE =====
+    async motoristaMensagemParaCliente(telefoneMotorista, mensagem, adminId, instanciaId) {
+        try {
+            const mot = await MotoristaService.buscarPorWhatsapp(telefoneMotorista, adminId);
+            if (!mot) return null;
+            const corrida = await CorridaService.buscarCorridaAtivaMotorista(mot._id);
+            if (!corrida || !corrida.clienteTelefone) return null;
+            const nomeMot = mot.nomeCompleto || mot.nome;
+            await EvolutionMultiService.enviarMensagem(instanciaId, corrida.clienteTelefone, '💬 *' + nomeMot + ':* ' + mensagem);
+            try { const { Corrida: CM } = require('../models'); await CM.findByIdAndUpdate(corrida._id, { $push: { chatMensagens: { texto: mensagem, remetente: 'motorista', nomeRemetente: nomeMot, data: new Date() } } }); } catch(e){}
+            console.log('[CHAT] Motorista->Cliente:', mensagem.substring(0,40));
+            return { enviado: true };
+        } catch(e) { return null; }
+    },
+
+    async clienteMensagemParaMotorista(telefoneCliente, mensagem, adminId, instanciaId) {
+        try {
+            const { Corrida: CM } = require('../models');
+            const tels = [telefoneCliente, '55'+telefoneCliente, telefoneCliente.replace(/^55/,'')];
+            const corrida = await CM.findOne({ clienteTelefone:{$in:tels}, adminId, status:{$in:['aceita','em_andamento','motorista_a_caminho']} });
+            if (!corrida || !corrida.motoristaId) return null;
+            const mot = await MotoristaService.buscarPorId(corrida.motoristaId);
+            if (!mot || !mot.whatsapp) return null;
+            const nomeCli = corrida.clienteNome || 'Cliente';
+            await EvolutionMultiService.enviarMensagem(instanciaId, mot.whatsapp, '💬 *' + nomeCli + ':* ' + mensagem + '\n_Responda aqui que eu repasso!_');
+            await CM.findByIdAndUpdate(corrida._id, { $push: { chatMensagens: { texto: mensagem, remetente: 'cliente', nomeRemetente: nomeCli, data: new Date() } } });
+            console.log('[CHAT] Cliente->Motorista:', mensagem.substring(0,40));
+            return { enviado: true, motoristaNome: mot.nomeCompleto||mot.nome };
+        } catch(e) { return null; }
+    },
 
     // ==================== SISTEMA DE DÚVIDAS AO DONO ====================
     async encaminharDuvidaAoAdmin(telefoneCliente, nomeCliente, mensagemCliente, adminId, instanciaId) {
