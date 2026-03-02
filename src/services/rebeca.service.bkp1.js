@@ -92,30 +92,62 @@ const configRebeca = {
     usarIA: true
 };
 
+const RebecaService = {
     async resolverEtapaAtiva(telefone, msg, conversa, nome) {
-        const texto = msg.toLowerCase().trim();
-        
         switch(conversa.etapa) {
-            
-            case "confirmar_corrida":
-                if (texto.includes("sim") || texto === "1") {
-                    const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
-                    conversa.etapa = "aguardando_motorista";
-                    conversas.set(telefone, conversa);
-                    return "🚗 Corrida confirmada! Estou buscando motorista...";
+            case 'confirmar_preco':
+                if (msg.toLowerCase().includes('sim')) {
+                    return 'Processando confirmação...';
                 }
-                if (texto.includes("nao") || texto.includes("não") || texto === "2") {
-                    conversa.etapa = "inicio";
-                    conversa.dados = {};
-                    conversas.set(telefone, conversa);
-                    return "Tudo bem 😊 Quando precisar é só chamar."; 
-                }
-                return "Confirma a corrida? Responde SIM ou NÃO.";
-            
+                return 'Confirma a corrida? Responde SIM ou NÃO.';
             default:
                 return null;
         }
     },
+
+    // ==================== CONFIG ====================
+    getConfig: () => ({ 
+        ...configRebeca,
+        iaAtiva: IAService.isAtivo(),
+        iaConfig: IAService.getConfig()
+    }),
+    
+    setConfig: (novaConfig) => {
+        Object.assign(configRebeca, novaConfig);
+        return RebecaService.getConfig();
+    },
+
+    // ==================== HELPERS ====================
+    pareceEndereco: (texto) => {
+        if (!texto || texto.length < 5) return false;
+        const lower = texto.toLowerCase().trim();
+        
+        // NUNCA é endereço se contém palavras de pergunta
+        const palavrasPerguntas = ['?', 'como', 'qual', 'quanto', 'quando', 'onde fica', 'tem ', 'posso', 'pode', 'voce', 'você', 'aceita', 'funciona', 'horario', 'horário', 'aberto', 'fecha', 'demora', 'tempo', 'chega', 'valor', 'custa', 'pago', 'pagar', 'dinheiro', 'pix', 'cartao', 'cartão', 'credito', 'crédito', 'debito', 'débito', 'troco', 'seguro', 'segurança', 'confiavel', 'confiável'];
+        for (const p of palavrasPerguntas) {
+            if (lower.includes(p)) return false;
+        }
+        
+        // Ignorar comandos obvios
+        const comandos = ['menu','oi','ola','olá','bom dia','boa tarde','boa noite','obrigado','obrigada','valeu','sim','nao','não','ok','1','2','3','4','5','6','7','casa','trabalho','cancelar','aceitar','finalizar','cheguei','preço','preco','historico','cotação','cotacao','ajuda','atendente','ola rebeca','oi rebeca','eai','e ai','tudo bem','blz','beleza','ja te mandei','ja mandei','te mandei','mandei','uai','ue','ne','a maravilha','maravilha','otimo','ótimo','legal','show','perfeito','certo','entendi','isso','isso mesmo','pode ser','vamos','bora','ta','tá','vlw','brigado','brigada'];
+        // Ignorar frases que contém palavras comuns sem endereço
+        const frasesComuns = ['ja te', 'já te', 'te mandei', 'mandei uai', 'uai', 'ue', 'a maravilha'];
+        for (const f of frasesComuns) {
+            if (lower.includes(f)) return false;
+        }
+        if (comandos.includes(lower)) return false;
+        
+        // SÓ é endereço se tem palavra-chave de endereço
+        const palavrasEndereco = ['rua ', 'r. ', 'av ', 'av. ', 'avenida ', 'alameda ', 'travessa ', 'estrada ', 'rodovia ', 'praca ', 'praça ', 'bairro ', 'setor ', 'quadra ', 'lote ', 'condominio ', 'condomínio ', 'conjunto ', 'vila ', 'jardim ', 'parque ', 'residencial ', 'numero ', 'número ', 'nº ', 'n. ', 'centro', 'zona sul', 'zona norte', 'zona leste', 'zona oeste'];
+        for (const p of palavrasEndereco) {
+            if (lower.includes(p)) return true;
+        }
+        
+        // Tem número E pelo menos uma palavra antes? (ex: "Alexandre Rodrigues 180")
+        const temNumero = /\d{2,}/.test(texto);
+        const palavras = texto.split(/\s+/).length;
+        if (temNumero && palavras >= 2 && texto.length > 10) {
+            // Mas não pode ser pergunta disfarçada
             if (!lower.startsWith('o ') && !lower.startsWith('a ') && !lower.startsWith('e ') && !lower.startsWith('é ')) {
                 return true;
             }
