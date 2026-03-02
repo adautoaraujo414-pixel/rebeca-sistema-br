@@ -491,11 +491,36 @@ const RebecaService = {
                     // Se cliente recorrente pedindo corrida simples
                     if (contextoCliente.clienteRecorrente && contextoCliente.ultimoEndereco) {
                         const msgLower = msgOriginal.toLowerCase();
-                        if (msgLower.match(/(quero|preciso|carro|corrida|busca|me pega)/) && !msgLower.match(/(rua|av|avenida|numero|número)/)) {
+                        const pedindoCorrida = msgLower.match(/(quero|preciso|carro|corrida|busca|me pega|oi|ola|olá|bom dia|boa tarde|boa noite|manda|chama|vem)/);
+                        const informouEndereco = msgLower.match(/(rua|av|avenida|numero|número|aqui no|aqui na)/);
+                        
+                        if (pedindoCorrida && !informouEndereco) {
+                            // CLIENTE SUPER RECORRENTE (5+ corridas mesmo endereço) = DESPACHO DIRETO
+                            if (contextoCliente.enderecoFrequente && contextoCliente.vezesUsouEndereco >= 5) {
+                                console.log('[REBECA] Cliente super recorrente (' + contextoCliente.vezesUsouEndereco + 'x) - despacho direto!');
+                                const endFreq = contextoCliente.enderecoFrequente;
+                                // Validar e criar corrida direto
+                                const valFreq = await RebecaService.validarEndereco(endFreq);
+                                if (valFreq.valido) {
+                                    conversa.dados.origem = valFreq.endereco;
+                                    conversa.dados.origemValidada = valFreq;
+                                    conversa.dados.calculo = { origem: { endereco: valFreq.endereco, latitude: valFreq.latitude, longitude: valFreq.longitude }, destino: null, distanciaKm: 0, tempoMinutos: 0, preco: 15, faixa: { nome: 'padrao', multiplicador: 1 } };
+                                    const corridaDir = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
+                                    if (!corridaDir.duplicada && !corridaDir.cooldown) {
+                                        conversa.etapa = 'aguardando_motorista';
+                                        conversa.dados.corridaId = corridaDir.id;
+                                        conversas.set(telefone, conversa);
+                                        const _precoDir = conversa.dados?.calculo?.preco || 0;
+                                        return 'Oi ' + (nome || '') + '! Já mandei pro mesmo lugar 🚗\n\n📍 ' + valFreq.endereco + (_precoDir > 0 ? '\n💰 *R$ ' + _precoDir.toFixed(2) + '*' : '') + '\n\n' + variar('buscando') + '\n' + variar('cancelar_hint');
+                                    }
+                                }
+                            }
+                            
+                            // CLIENTE RECORRENTE (3+ corridas) = Perguntar rápido
                             conversa.dados.ultimoEnderecoSugerido = contextoCliente.ultimoEndereco;
                             conversa.etapa = 'confirmar_endereco_anterior';
                             conversas.set(telefone, conversa);
-                            return 'Quer sair do mesmo endereço de antes? 🚗\n\n📍 ' + contextoCliente.ultimoEndereco + '\n\n*1* - Sim, esse mesmo\n*2* - Não, outro endereço';
+                            return 'Oi ' + (nome || '') + '! Mesmo lugar de antes? 🚗\n\n📍 ' + contextoCliente.ultimoEndereco + '\n\n*1* - Sim\n*2* - Outro endereço';
                         }
                     }
                     

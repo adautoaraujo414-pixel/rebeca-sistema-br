@@ -213,7 +213,7 @@ router.put('/cozinha/:id/aceitar', authDelivery, async (req, res) => {
     try {
         const pedido = await PedidoDelivery.findOneAndUpdate(
             { _id: req.params.id, adminId: req.adminId, status: 'novo' },
-            { status: 'preparando', dataPreparando: new Date() },
+            { status: 'preparando', tempoEstimadoPreparo: req.body.tempoEstimado || 20, dataPreparando: new Date() },
             { new: true }
         );
         // Notificar cliente via WhatsApp

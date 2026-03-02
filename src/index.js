@@ -211,3 +211,65 @@ app.listen(PORT, () => {
     console.log('🚗 App Motorista: /motorista');
     console.log('💰 Mensalidades: Ativo');
 });
+
+// ===== CRON: Reativação de clientes sumidos (roda 1x por dia às 10h) =====
+setInterval(async () => {
+    const agora = new Date();
+    if (agora.getHours() !== 10 || agora.getMinutes() > 5) return; // Só roda às 10h
+    
+    try {
+        const { Cliente, Corrida, Admin, InstanciaWhatsapp } = require('./models');
+        const EvolutionMultiService = require('./services/evolution-multi.service');
+        
+        // Buscar admins ativos
+        const admins = await Admin.find({ ativo: true, tipoAdmin: 'transporte' }).lean();
+        
+        for (const admin of admins) {
+            const instancia = await InstanciaWhatsapp.findOne({ adminId: admin._id, status: 'conectado' });
+            if (!instancia) continue;
+            
+            // Buscar clientes que não pedem há 7-14 dias
+            const seteDiasAtras = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+            const quatorzeDiasAtras = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
+            
+            const clientesInativos = await Cliente.find({ adminId: admin._id }).lean();
+            
+            let reativados = 0;
+            for (const cliente of clientesInativos) {
+                if (!cliente.telefone || reativados >= 5) break; // Max 5 por admin por dia
+                
+                // Verificar última corrida
+                const tels = [cliente.telefone, '55' + cliente.telefone, cliente.telefone.replace(/^55/, '')];
+                const ultimaCorrida = await Corrida.findOne({ clienteTelefone: { $in: tels }, adminId: admin._id }).sort({ createdAt: -1 }).lean();
+                
+                if (!ultimaCorrida) continue;
+                const diasSemPedir = (Date.now() - new Date(ultimaCorrida.createdAt).getTime()) / (24*60*60*1000);
+                
+                // Só reativar quem sumiu entre 7-14 dias (não incomodar demais)
+                if (diasSemPedir >= 7 && diasSemPedir <= 14) {
+                    // Verificar se já mandou reativação recente (evitar spam)
+                    if (!global._reativacoes) global._reativacoes = new Map();
+                    const chave = cliente.telefone + '_' + admin._id;
+                    const ultimaReativacao = global._reativacoes.get(chave);
+                    if (ultimaReativacao && (Date.now() - ultimaReativacao) < 7 * 24 * 60 * 60 * 1000) continue;
+                    
+                    const frases = [
+                        'Oi ' + (cliente.nome || '') + '! Faz tempo que não te vejo por aqui 😊 Precisando de carro é só chamar!',
+                        'Ei ' + (cliente.nome || '') + '! Sentimos sua falta! Quando precisar de corrida é só mandar mensagem 🚗',
+                        'Olá ' + (cliente.nome || '') + '! Tudo bem? Estamos aqui sempre que precisar de um carro 😊'
+                    ];
+                    const msg = frases[Math.floor(Math.random() * frases.length)];
+                    
+                    await EvolutionMultiService.enviarMensagem(instancia._id, cliente.telefone, msg);
+                    global._reativacoes.set(chave, Date.now());
+                    reativados++;
+                    console.log('[REATIVAR] Msg enviada para', cliente.nome || cliente.telefone, '(' + Math.floor(diasSemPedir) + ' dias inativo)');
+                }
+            }
+            if (reativados > 0) console.log('[REATIVAR] Admin', admin.nome, ':', reativados, 'clientes reativados');
+        }
+    } catch(e) {
+        console.log('[REATIVAR] Erro:', e.message);
+    }
+}, 5 * 60 * 1000); // Verifica a cada 5min (mas só executa às 10h)
+console.log('✅ Cron reativação de clientes ativo');

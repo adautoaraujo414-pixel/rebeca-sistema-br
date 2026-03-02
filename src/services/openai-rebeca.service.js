@@ -31,6 +31,16 @@ const OpenAIRebecaService = {
             // Cliente recorrente se tem 3+ corridas
             const clienteRecorrente = totalCorridas >= 3;
             
+            // Contar endereço mais usado (pra despacho zero perguntas)
+            const enderecoContagem = {};
+            corridas.forEach(c => {
+                const end = c.origem?.endereco;
+                if (end) enderecoContagem[end] = (enderecoContagem[end] || 0) + 1;
+            });
+            const enderecoMaisUsado = Object.entries(enderecoContagem).sort((a,b) => b[1] - a[1])[0];
+            const enderecoFrequente = enderecoMaisUsado && enderecoMaisUsado[1] >= 3 ? enderecoMaisUsado[0] : null;
+            const vezesUsouEndereco = enderecoMaisUsado ? enderecoMaisUsado[1] : 0;
+            
             return {
                 totalCorridas,
                 clienteRecorrente,

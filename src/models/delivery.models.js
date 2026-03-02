@@ -26,7 +26,8 @@ const ItemCardapioSchema = new mongoose.Schema({
             preco: { type: Number, default: 0 }
         }]
     }],
-    tempoPreparoMin: { type: Number, default: 20 }, // minutos
+    tempoPreparoMin: { type: Number, default: 20 },
+    tempoEstimadoPreparo: { type: Number }, // tempo real informado pela cozinha // minutos
     disponivel: { type: Boolean, default: true }
 }, { timestamps: true });
 
