@@ -45,6 +45,10 @@ const PedidoDeliverySchema = new mongoose.Schema({
         precoUnitario: Number,
         opcionais: [{ nome: String, preco: Number }],
         observacao: String,
+    // GPS Entregador (rastreamento tempo real)
+    entregadorLatitude: Number,
+    entregadorLongitude: Number,
+    entregadorGpsAtualizado: Date,
         subtotal: Number
     }],
     

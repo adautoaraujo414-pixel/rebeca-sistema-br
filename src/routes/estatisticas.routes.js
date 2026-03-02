@@ -1,3 +1,4 @@
+const cache = require('../middlewares/cache');
 const express = require('express');
 const router = express.Router();
 const EstatisticasService = require('../services/estatisticas.service');

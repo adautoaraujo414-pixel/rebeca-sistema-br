@@ -167,6 +167,7 @@ app.use('/api/emergencia', require('./routes/emergencia.routes'));
 const deliveryRoutes = require('./routes/delivery.routes');
 app.use('/api/delivery', deliveryRoutes);
 app.get('/delivery-admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'delivery-admin.html')));
+app.get('/delivery-entregador', (req, res) => res.sendFile(path.join(__dirname, 'public', 'delivery-entregador.html')));
 app.get('/delivery-cozinha', (req, res) => res.sendFile(path.join(__dirname, 'public', 'delivery-cozinha.html')));
 app.get('/delivery-rastrear/:codigo', (req, res) => res.sendFile(path.join(__dirname, 'public', 'delivery-rastrear.html')));
 

@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rebeca Delivery - Entregador</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#0a0a1a;color:#fff;min-height:100vh}
+.header{background:#1a1a2e;padding:15px 20px;display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #00d4ff}
+.header h1{font-size:1.2em;color:#00d4ff}
+.badge{background:#00d4ff;color:#000;padding:4px 12px;border-radius:20px;font-weight:bold}
+.tabs{display:flex;background:#1a1a2e;border-bottom:1px solid #333}
+.tab{flex:1;padding:12px;text-align:center;cursor:pointer;border-bottom:3px solid transparent;font-weight:500}
+.tab.active{border-bottom-color:#00d4ff;color:#00d4ff}
+.tab .ct{background:#00d4ff;color:#000;padding:2px 8px;border-radius:10px;font-size:.8em;margin-left:5px}
+.lista{padding:10px;max-width:600px;margin:0 auto}
+.card{background:#1a1a2e;border-radius:12px;padding:15px;margin-bottom:12px;border-left:4px solid #f39c12}
+.card.entrega{border-left-color:#00d4ff}
+.card-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.num{font-size:1.2em;font-weight:bold;color:#00d4ff}
+.tag{padding:3px 10px;border-radius:10px;font-size:.8em;font-weight:bold}
+.tag-pronto{background:#f39c12;color:#fff}
+.tag-entrega{background:#00d4ff;color:#000}
+.end{background:#16213e;padding:10px;border-radius:8px;margin:8px 0;font-size:.95em}
+.end-icon{color:#00d4ff;margin-right:5px}
+.itens{margin:8px 0;font-size:.9em;color:#ccc}
+.it{padding:4px 0}
+.bebida{background:#1a3a5c;padding:6px 10px;border-radius:8px;margin:8px 0;font-size:.85em;color:#87ceeb}
+.pgto{font-size:.9em;color:#aaa;margin:5px 0}
+.troco{background:#f39c12;color:#000;padding:4px 8px;border-radius:6px;font-size:.85em;font-weight:bold;display:inline-block}
+.total{font-size:1.1em;font-weight:bold;color:#27ae60;margin:5px 0}
+.btn{width:100%;padding:14px;border:none;border-radius:10px;font-weight:bold;cursor:pointer;font-size:1em;margin-top:10px}
+.btn:active{transform:scale(.97)}
+.btn-pegar{background:#00d4ff;color:#000}
+.btn-entregue{background:#27ae60;color:#fff}
+.btn-maps{background:#4285f4;color:#fff;margin-top:8px;font-size:.9em;padding:10px}
+.vazio{text-align:center;padding:60px 20px;color:#666}
+.gps-status{font-size:.8em;color:#27ae60;text-align:center;padding:5px}
+.nome-input{width:100%;padding:10px;border:1px solid #333;border-radius:8px;background:#16213e;color:#fff;font-size:1em;margin-bottom:10px}
+</style>
+</head>
+<body>
+<div class="header">
+<h1>&#x1F6F5; ENTREGADOR</h1>
+<span class="badge" id="tot">0</span>
+</div>
+<div class="tabs">
+<div class="tab active" onclick="filtrar('pronto')" id="t-pr">Prontos <span class="ct" id="c-pr">0</span></div>
+<div class="tab" onclick="filtrar('saiu_entrega')" id="t-en">Em Entrega <span class="ct" id="c-en">0</span></div>
+</div>
+<div id="nomeArea" style="padding:10px;max-width:600px;margin:0 auto">
+<input class="nome-input" id="nomeEntregador" placeholder="Seu nome (entregador)" value="">
+</div>
+<div class="lista" id="lista"><div class="vazio">Nenhum pedido pronto</div></div>
+<div class="gps-status" id="gpsStatus"></div>
+<script>
+var TK=localStorage.getItem('delivery_token')||new URLSearchParams(location.search).get('token')||'';
+var B='/api/delivery';
+var F='pronto';
+var GPS={lat:null,lng:null};
+var entregaAtiva=null;
+if(TK)localStorage.setItem('delivery_token',TK);
+
+var nomeEl=document.getElementById('nomeEntregador');
+nomeEl.value=localStorage.getItem('entregador_nome')||'';
+nomeEl.onchange=function(){localStorage.setItem('entregador_nome',nomeEl.value);};
+
+function filtrar(s){F=s;document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active')});
+if(s==='pronto')document.getElementById('t-pr').classList.add('active');
+else document.getElementById('t-en').classList.add('active');
+carregar();}
+
+async function carregar(){
+try{
+var r=await fetch(B+'/entregador/pedidos?token='+TK);
+var ps=await r.json();
+if(!Array.isArray(ps))return;
+var pr=ps.filter(function(p){return p.status==='pronto'});
+var en=ps.filter(function(p){return p.status==='saiu_entrega'});
+document.getElementById('c-pr').textContent=pr.length;
+document.getElementById('c-en').textContent=en.length;
+document.getElementById('tot').textContent=ps.length;
+var ls=F==='pronto'?pr:en;
+if(ls.length===0){document.getElementById('lista').innerHTML='<div class="vazio">Nenhum pedido '+(F==='pronto'?'pronto':'em entrega')+'</div>';return;}
+var h='';
+for(var i=0;i<ls.length;i++){
+var p=ls[i];
+var fm={pix:'PIX',dinheiro:'Dinheiro',cartao:'Cartao',na_entrega:'Na entrega'};
+var tb=false;
+var itxt='';
+for(var j=0;j<(p.itens||[]).length;j++){
+var it=p.itens[j];
+if(it.nome&&it.nome.toLowerCase().match(/(coca|refri|suco|guarana|agua|cerveja|fanta|sprite)/))tb=true;
+itxt+='<div class="it">'+it.quantidade+'x '+it.nome+(it.observacao?' ('+it.observacao+')':'')+'</div>';
+}
+h+='<div class="card '+(p.status==='saiu_entrega'?'entrega':'')+'">';
+h+='<div class="card-head"><span class="num">#'+(p.numero||'?')+'</span>';
+h+='<span class="tag tag-'+(p.status==='pronto'?'pronto':'entrega')+'">'+(p.status==='pronto'?'PRONTO':'EM ENTREGA')+'</span></div>';
+h+='<div class="end"><span class="end-icon">&#x1F4CD;</span>'+(p.enderecoEntrega||'Retirada')+'</div>';
+h+='<div class="itens">'+itxt+'</div>';
+if(tb)h+='<div class="bebida">&#x1F9CA; TEM BEBIDA</div>';
+h+='<div class="pgto">'+(fm[p.formaPagamento]||'')+'</div>';
+if(p.formaPagamento==='dinheiro'&&p.trocoPara)h+='<span class="troco">TROCO P/ R$ '+p.trocoPara.toFixed(2)+'</span>';
+h+='<div class="total">R$ '+(p.total||0).toFixed(2)+'</div>';
+h+='<div style="font-size:.85em;color:#ccc">Cliente: '+(p.clienteNome||'')+' - '+(p.clienteTelefone||'')+'</div>';
+if(p.status==='pronto'){
+h+='<button class="btn btn-pegar" onclick="pegar(''+p._id+'')">PEGAR PEDIDO &#x1F6F5;</button>';
+}else{
+h+='<button class="btn btn-maps" onclick="abrirMaps(''+encodeURIComponent(p.enderecoEntrega||'')+'')">&#x1F4CD; ABRIR NO MAPS</button>';
+h+='<button class="btn btn-entregue" onclick="entregue(''+p._id+'')">ENTREGUE &#x2705;</button>';
+}
+h+='</div>';
+}
+document.getElementById('lista').innerHTML=h;
+}catch(e){console.error(e);}
+}
+
+async function pegar(id){
+var nome=document.getElementById('nomeEntregador').value||'Entregador';
+await fetch(B+'/entregador/'+id+'/pegar?token='+TK,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({entregadorNome:nome})});
+entregaAtiva=id;
+iniciarGPS();
+carregar();
+filtrar('saiu_entrega');
+}
+
+async function entregue(id){
+await fetch(B+'/entregador/'+id+'/entregue?token='+TK,{method:'PUT',headers:{'Content-Type':'application/json'}});
+entregaAtiva=null;
+carregar();
+filtrar('pronto');
+}
+
+function abrirMaps(end){
+window.open('https://www.google.com/maps/search/'+end,'_blank');
+}
+
+function iniciarGPS(){
+if(!navigator.geolocation)return;
+navigator.geolocation.watchPosition(function(pos){
+GPS.lat=pos.coords.latitude;
+GPS.lng=pos.coords.longitude;
+document.getElementById('gpsStatus').textContent='GPS ativo: '+GPS.lat.toFixed(4)+', '+GPS.lng.toFixed(4);
+if(entregaAtiva){
+fetch(B+'/entregador/'+entregaAtiva+'/gps',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({latitude:GPS.lat,longitude:GPS.lng})}).catch(function(){});
+}
+},function(err){document.getElementById('gpsStatus').textContent='GPS: '+err.message;},{enableHighAccuracy:true,maximumAge:10000});
+}
+
+carregar();
+setInterval(carregar,8000);
+iniciarGPS();
+</script>
+</body>
+</html>

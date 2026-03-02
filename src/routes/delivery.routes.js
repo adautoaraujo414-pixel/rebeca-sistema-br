@@ -206,4 +206,157 @@ router.get('/pedidos/rastrear/:codigo', async (req, res) => {
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
+
+
+// ========== COZINHA: ACEITAR PEDIDO (novo -> preparando) ==========
+router.put('/cozinha/:id/aceitar', authDelivery, async (req, res) => {
+    try {
+        const pedido = await PedidoDelivery.findOneAndUpdate(
+            { _id: req.params.id, adminId: req.adminId, status: 'novo' },
+            { status: 'preparando', dataPreparando: new Date() },
+            { new: true }
+        );
+        // Notificar cliente via WhatsApp
+        try {
+            const RebecaDeliveryService = require('../services/rebeca-delivery.service');
+            await RebecaDeliveryService.notificarClientePreparo(pedido._id);
+        } catch(e) { console.log('[COZINHA] Erro notificar:', e.message); }
+        console.log('[COZINHA] Pedido #' + pedido.numero + ' aceito - preparando');
+        res.json(pedido);
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// ========== COZINHA: MARCAR PRONTO ==========
+router.put('/cozinha/:id/pronto', authDelivery, async (req, res) => {
+    try {
+        const pedido = await PedidoDelivery.findOneAndUpdate(
+            { _id: req.params.id, adminId: req.adminId, status: 'preparando' },
+            { status: 'pronto', dataPronto: new Date() },
+            { new: true }
+        );
+        try {
+            const RebecaDeliveryService = require('../services/rebeca-delivery.service');
+            await RebecaDeliveryService.notificarClientePronto(pedido._id);
+        } catch(e) { console.log('[COZINHA] Erro notificar pronto:', e.message); }
+        console.log('[COZINHA] Pedido #' + pedido.numero + ' PRONTO');
+        res.json(pedido);
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// ========== COZINHA: REJEITAR PEDIDO ==========
+router.put('/cozinha/:id/rejeitar', authDelivery, async (req, res) => {
+    try {
+        const motivo = req.body.motivo || 'Rejeitado pela cozinha';
+        const pedido = await PedidoDelivery.findOneAndUpdate(
+            { _id: req.params.id, adminId: req.adminId, status: 'novo' },
+            { status: 'cancelado', dataCancelado: new Date(), motivoCancelamento: motivo },
+            { new: true }
+        );
+        try {
+            const EvolutionMultiService = require('../services/evolution-multi.service');
+            const { InstanciaWhatsapp } = require('../models');
+            const inst = await InstanciaWhatsapp.findOne({ adminId: req.adminId, status: 'conectado' });
+            if (inst) await EvolutionMultiService.enviarMensagem(inst._id, pedido.clienteTelefone, 'Pedido #' + pedido.numero + ' cancelado. ' + motivo + '. Desculpe pelo transtorno!');
+        } catch(e) {}
+        res.json(pedido);
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// ========== COZINHA: LISTAR PEDIDOS POR STATUS ==========
+router.get('/cozinha/pedidos', authDelivery, async (req, res) => {
+    try {
+        const pedidos = await PedidoDelivery.find({
+            adminId: req.adminId,
+            status: { : ['novo', 'preparando', 'pronto'] }
+        }).sort({ createdAt: 1 });
+        res.json(pedidos);
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// ========== ENTREGADOR: LISTAR PEDIDOS PRONTOS ==========
+router.get('/entregador/pedidos', authDelivery, async (req, res) => {
+    try {
+        const pedidos = await PedidoDelivery.find({
+            adminId: req.adminId,
+            status: { : ['pronto', 'saiu_entrega'] }
+        }).sort({ dataPronto: 1 });
+        res.json(pedidos);
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// ========== ENTREGADOR: PEGAR PEDIDO (pronto -> saiu_entrega) ==========
+router.put('/entregador/:id/pegar', authDelivery, async (req, res) => {
+    try {
+        const { entregadorNome, entregadorId } = req.body;
+        const pedido = await PedidoDelivery.findOneAndUpdate(
+            { _id: req.params.id, adminId: req.adminId, status: 'pronto' },
+            { 
+                status: 'saiu_entrega', dataSaiuEntrega: new Date(),
+                entregadorNome: entregadorNome || 'Entregador',
+                entregadorId: entregadorId || null
+            },
+            { new: true }
+        );
+        try {
+            const RebecaDeliveryService = require('../services/rebeca-delivery.service');
+            await RebecaDeliveryService.notificarClienteSaiuEntrega(pedido._id, entregadorNome);
+        } catch(e) { console.log('[ENTREGADOR] Erro notificar:', e.message); }
+        console.log('[ENTREGADOR] Pedido #' + pedido.numero + ' saiu entrega com', entregadorNome);
+        res.json(pedido);
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// ========== ENTREGADOR: MARCAR ENTREGUE ==========
+router.put('/entregador/:id/entregue', authDelivery, async (req, res) => {
+    try {
+        const pedido = await PedidoDelivery.findOneAndUpdate(
+            { _id: req.params.id, adminId: req.adminId, status: 'saiu_entrega' },
+            { status: 'entregue', dataEntregue: new Date() },
+            { new: true }
+        );
+        try {
+            const RebecaDeliveryService = require('../services/rebeca-delivery.service');
+            await RebecaDeliveryService.notificarClienteEntregue(pedido._id);
+        } catch(e) { console.log('[ENTREGADOR] Erro notificar entregue:', e.message); }
+        console.log('[ENTREGADOR] Pedido #' + pedido.numero + ' ENTREGUE');
+        res.json(pedido);
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// ========== ENTREGADOR: ATUALIZAR GPS ==========
+router.post('/entregador/:id/gps', async (req, res) => {
+    try {
+        const { latitude, longitude } = req.body;
+        const pedido = await PedidoDelivery.findById(req.params.id);
+        // Salvar GPS no pedido (para rastreamento)
+        pedido.entregadorLatitude = latitude;
+        pedido.entregadorLongitude = longitude;
+        pedido.entregadorGpsAtualizado = new Date();
+        await pedido.save();
+        res.json({ sucesso: true });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// ========== RASTREIO COM GPS DO ENTREGADOR ==========
+router.get('/rastrear-gps/:codigo', async (req, res) => {
+    try {
+        const codigo = req.params.codigo;
+        const recentes = await PedidoDelivery.find({ status: { : ['preparando', 'pronto', 'saiu_entrega'] } }).sort({ createdAt: -1 }).limit(200).lean();
+        const pedido = recentes.find(function(p) { return p._id.toString().endsWith(codigo); });
+        res.json({
+            numero: pedido.numero,
+            status: pedido.status,
+            itens: pedido.itens,
+            enderecoEntrega: pedido.enderecoEntrega,
+            entregadorNome: pedido.entregadorNome,
+            entregadorLatitude: pedido.entregadorLatitude,
+            entregadorLongitude: pedido.entregadorLongitude,
+            gpsAtualizado: pedido.entregadorGpsAtualizado,
+            dataPronto: pedido.dataPronto,
+            dataSaiuEntrega: pedido.dataSaiuEntrega
+        });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+
 module.exports = router;
