@@ -93,6 +93,18 @@ const configRebeca = {
 };
 
 const RebecaService = {
+    async resolverEtapaAtiva(telefone, msg, conversa, nome) {
+        switch(conversa.etapa) {
+            case 'confirmar_preco':
+                if (msg.toLowerCase().includes('sim')) {
+                    return 'Processando confirmação...';
+                }
+                return 'Confirma a corrida? Responde SIM ou NÃO.';
+            default:
+                return null;
+        }
+    },
+
     // ==================== CONFIG ====================
     getConfig: () => ({ 
         ...configRebeca,
@@ -245,8 +257,6 @@ const RebecaService = {
         if (adminId) {
             const respostaAdmin = await RebecaService.processarRespostaAdmin(telefone, mensagem, adminId, contexto.instanciaId);
             if (respostaAdmin) {
-                return '✅ Resposta enviada ao cliente!';
-            }
         }
         
         // ========== COMANDOS DO MOTORISTA ==========
@@ -305,6 +315,15 @@ const RebecaService = {
         if (adminId) conversa.adminId = adminId;
         if (contexto.instanciaId) conversa.instanciaId = contexto.instanciaId;
         // Carregar favoritos do MongoDB (atualiza cache em memória)
+        // ================= PRIORIDADE DE ETAPA =================
+        if (conversa.etapa && conversa.etapa !== "inicio") {
+            const respostaEtapa = await RebecaService.resolverEtapaAtiva(telefone, msgOriginal, conversa, nome);
+            if (respostaEtapa) {
+                conversas.set(telefone, conversa);
+                return respostaEtapa;
+            }
+        }
+
         await RebecaService.carregarFavoritos(telefone, adminId);
         const favoritos = RebecaService.getFavoritos(telefone);
         
