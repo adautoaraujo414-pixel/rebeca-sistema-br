@@ -273,3 +273,4 @@ setInterval(async () => {
     }
 }, 5 * 60 * 1000); // Verifica a cada 5min (mas só executa às 10h)
 console.log('✅ Cron reativação de clientes ativo');
+
