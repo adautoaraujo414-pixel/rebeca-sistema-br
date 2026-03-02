@@ -4,6 +4,7 @@ const router = express.Router();
 const EvolutionMultiService = require('../services/evolution-multi.service');
 const { InstanciaWhatsapp, Motorista, Cliente, Corrida } = require('../models');
 const RebecaService = require('../services/rebeca.service');
+const RebecaDeliveryService = require('../services/rebeca-delivery.service');
 const OpenAIRebecaService = require('../services/openai-rebeca.service');
 
 router.post('/instancia', async (req, res) => {
@@ -220,7 +221,20 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                 try {
                     // PASSAR adminId PARA REBECA (contexto multi-tenant)
                     const contexto = { adminId: adminId, instanciaId: instancia._id };
-                    const resposta = await RebecaService.processarMensagem(telefone, conteudo, nome, contexto);
+                    // Rotear: Delivery ou Corridas baseado no tipoAdmin do admin
+                    let resposta;
+                    try {
+                        const { Admin: AdminModel } = require('../models');
+                        const adminDoc = await AdminModel.findById(adminId).select('tipoAdmin').lean();
+                        if (adminDoc && adminDoc.tipoAdmin === 'delivery') {
+                            resposta = await RebecaDeliveryService.processarMensagem(telefone, conteudo, nome, contexto);
+                        } else {
+                            resposta = await RebecaService.processarMensagem(telefone, conteudo, nome, contexto);
+                        }
+                    } catch(routeErr) {
+                        console.log('[ROUTE] Erro roteamento delivery/corrida:', routeErr.message);
+                        resposta = await RebecaService.processarMensagem(telefone, conteudo, nome, contexto);
+                    }
                     
                     if (resposta) {
                         // Anti-repeticao de RESPOSTAS
