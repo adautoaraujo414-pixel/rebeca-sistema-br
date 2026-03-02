@@ -138,15 +138,60 @@ const OpenAIRebecaService = {
 
             const textoOriginal = response.data.text || '';
             const textoLimpo = this.limparTranscricao(textoOriginal);
+            const textoInterpretado = this.interpretarAudioTranscrito(textoLimpo);
             
             console.log('[AUDIO] Texto original:', textoOriginal);
             console.log('[AUDIO] Texto limpo:', textoLimpo);
+            console.log('[AUDIO] Texto interpretado:', textoInterpretado);
             
-            return textoLimpo;
+            // Se interpretação retornou null (ruído), retornar null
+            if (!textoInterpretado) {
+                console.log('[AUDIO] Detectado como ruído, ignorando');
+                return null;
+            }
+            return textoInterpretado;
         } catch (e) {
             console.error('[AUDIO] Erro na transcrição:', e.message);
             return null;
         }
+    },
+
+
+    // ===== INTERPRETAÇÃO INTELIGENTE DE ÁUDIO =====
+    interpretarAudioTranscrito(texto) {
+        if (!texto || texto.length < 2) return texto;
+        let limpo = texto.trim();
+        
+        // Remover ruídos comuns do Whisper
+        limpo = limpo.replace(/^(legendado por|traduzido por|transcrição por|obrigado por assistir|inscreva-se).*/gi, '');
+        limpo = limpo.replace(/^(música|aplausos|risos|silêncio|barulho)$/gi, '');
+        limpo = limpo.replace(/\.{3,}/g, '.');
+        limpo = limpo.trim();
+        
+        // Se ficou vazio após limpeza, é ruído
+        if (!limpo || limpo.length < 2) return null;
+        
+        // Normalizar pedidos de corrida falados naturalmente
+        // "Ô Rebeca manda um carro aqui no JB 7" → "manda um carro aqui no JB 7"
+        limpo = limpo.replace(/^(ô|oh|ei|oi|olha|ó)s+(rebeca|rebecca)s*/gi, '');
+        
+        // "Eu quero um carro lá no hospital" → "quero um carro no hospital"
+        limpo = limpo.replace(/^eus+/gi, '');
+        limpo = limpo.replace(/s+lás+/gi, ' ');
+        
+        // Detectar endereço/ponto de referência no áudio
+        const temEndereco = /(rua|avenida|av.|praça|praca|hospital|shopping|escola|mercado|terminal|rodoviaria|rodoviária|farmacia|farmácia|igreja|posto|aqui no|aqui na|estou no|to no|me busca no|me pega no)/i.test(limpo);
+        
+        // Se falou um endereço mas sem verbo de ação, adicionar contexto
+        if (temEndereco && !/(quero|preciso|manda|busca|pega|vem|chama)/i.test(limpo)) {
+            limpo = 'manda um carro ' + limpo;
+        }
+        
+        // Normalizar pedidos de delivery falados
+        // "Manda um x-tudo e uma coca pra mim" → mantém como está (delivery já parseia)
+        // "Eu quero dois x-bacon sem cebola" → "quero dois x-bacon sem cebola"
+        
+        return limpo;
     },
 
     // REGEX para resolver SEM chamar IA (mais rápido e barato)

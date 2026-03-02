@@ -230,20 +230,21 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                                 conteudo = transcricao;
                                 console.log('[WEBHOOK] Audio transcrito OK:', transcricao.substring(0, 80));
                             } else {
-                                conteudo = null;
-                                await EvolutionMultiService.enviarMensagem(instanciaId, telefone, '🎵 Não consegui entender o áudio. Pode digitar por favor?');
+                                // Fallback inteligente por tipo de admin
+                            conteudo = '__AUDIO_SEM_TRANSCRICAO__';
+                            console.log('[AUDIO] Transcrição falhou, marcando para fallback inteligente');
                             }
                         } else {
                             console.log('[AUDIO] Nenhum método conseguiu baixar o áudio');
                             // Audio não baixou - tratar como pedido de corrida
-                            conteudo = 'preciso de um carro';
-                            console.log('[AUDIO] Download falhou, tratando como pedido de corrida');
+                            conteudo = '__AUDIO_SEM_TRANSCRICAO__';
+                            console.log('[AUDIO] Download falhou, marcando para fallback inteligente');
                         }
                     } catch(e) {
                         console.log('[WEBHOOK] Erro geral audio:', e.message);
                         // Erro geral audio - tratar como pedido de corrida
-                        conteudo = 'preciso de um carro';
-                        console.log('[AUDIO] Erro geral, tratando como pedido de corrida');
+                        conteudo = '__AUDIO_SEM_TRANSCRICAO__';
+                        console.log('[AUDIO] Erro geral, marcando para fallback inteligente');
                     }
                 }
                 
@@ -259,6 +260,16 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                     try {
                         const { Admin: AdminModel } = require('../models');
                         const adminDoc = await AdminModel.findById(adminId).select('tipoAdmin').lean();
+                        // Fallback inteligente de áudio por tipo
+                        if (conteudo === '__AUDIO_SEM_TRANSCRICAO__') {
+                            if (adminDoc && adminDoc.tipoAdmin === 'delivery') {
+                                conteudo = 'quero fazer um pedido';
+                                console.log('[AUDIO] Fallback delivery: quero fazer pedido');
+                            } else {
+                                conteudo = 'preciso de um carro';
+                                console.log('[AUDIO] Fallback corrida: preciso de carro');
+                            }
+                        }
                         if (adminDoc && adminDoc.tipoAdmin === 'delivery') {
                             resposta = await RebecaDeliveryService.processarMensagem(telefone, conteudo, nome, contexto);
                         } else {
