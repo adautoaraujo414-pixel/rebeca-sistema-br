@@ -107,26 +107,47 @@ const RebecaService = {
 
     // ==================== HELPERS ====================
     pareceEndereco: (texto) => {
-        if (!texto || texto.length < 5) return false;
+        if (!texto || texto.length < 3) return false;
         const lower = texto.toLowerCase().trim();
         
         // NUNCA é endereço se contém palavras de pergunta
-        const palavrasPerguntas = ['?', 'como', 'qual', 'quanto', 'quando', 'onde fica', 'tem ', 'posso', 'pode', 'voce', 'você', 'aceita', 'funciona', 'horario', 'horário', 'aberto', 'fecha', 'demora', 'tempo', 'chega', 'valor', 'custa', 'pago', 'pagar', 'dinheiro', 'pix', 'cartao', 'cartão', 'credito', 'crédito', 'debito', 'débito', 'troco', 'seguro', 'segurança', 'confiavel', 'confiável'];
+        const palavrasPerguntas = ['?', 'como funciona', 'qual o', 'quanto', 'quando', 'onde fica', 'posso', 'voce', 'você', 'aceita', 'funciona', 'horario', 'horário', 'aberto', 'fecha', 'demora quanto', 'valor da', 'custa', 'pago', 'pagar', 'dinheiro', 'pix', 'cartao', 'cartão', 'credito', 'crédito', 'debito', 'débito', 'troco', 'seguro', 'segurança', 'confiavel', 'confiável'];
         for (const p of palavrasPerguntas) {
             if (lower.includes(p)) return false;
         }
         
         // Ignorar comandos obvios
         const comandos = ['menu','oi','ola','olá','bom dia','boa tarde','boa noite','obrigado','obrigada','valeu','sim','nao','não','ok','1','2','3','4','5','6','7','casa','trabalho','cancelar','aceitar','finalizar','cheguei','preço','preco','historico','cotação','cotacao','ajuda','atendente','ola rebeca','oi rebeca','eai','e ai','tudo bem','blz','beleza','ja te mandei','ja mandei','te mandei','mandei','uai','ue','ne','a maravilha','maravilha','otimo','ótimo','legal','show','perfeito','certo','entendi','isso','isso mesmo','pode ser','vamos','bora','ta','tá','vlw','brigado','brigada'];
-        // Ignorar frases que contém palavras comuns sem endereço
         const frasesComuns = ['ja te', 'já te', 'te mandei', 'mandei uai', 'uai', 'ue', 'a maravilha'];
         for (const f of frasesComuns) {
             if (lower.includes(f)) return false;
         }
         if (comandos.includes(lower)) return false;
         
+        // PONTOS DE REFERÊNCIA CONHECIDOS - despachar direto!
+        const pontosReferencia = ['hospital', 'rodoviaria', 'rodoviária', 'aeroporto', 'shopping', 'terminal', 'mercado', 'supermercado', 'escola', 'colegio', 'colégio', 'universidade', 'faculdade', 'forum', 'fórum', 'prefeitura', 'posto de saude', 'posto de saúde', 'upa ', 'ubs ', 'igreja', 'catedral', 'capela', 'cemiterio', 'cemitério', 'estadio', 'estádio', 'ginasio', 'ginásio', 'pronto socorro', 'farmacia', 'farmácia', 'banco ', 'lotérica', 'loterica', 'correios', 'delegacia', 'bombeiros', 'cartorio', 'cartório', 'detran', 'sesi', 'senai', 'senac', 'sesc', 'parque ', 'praça ', 'praca ', 'feira', 'mercadao', 'mercadão', 'padaria', 'açougue', 'acougue'];
+        for (const p of pontosReferencia) {
+            if (lower.includes(p)) return true;
+        }
+        
+        // Frases de pedido com localização (ex: "manda um carro aqui no frei gabriel", "me busca no centro")
+        const frasesPedidoLocal = /(manda|busca|pega|vem|carro|moto).*(aqui|no |na |em |pro |pra )/i;
+        if (frasesPedidoLocal.test(lower)) return true;
+        
+        // "aqui no/na/em" + nome = ponto de referência
+        const aquiNo = /aqui (no|na|em|do|da) .+/i;
+        if (aquiNo.test(lower)) return true;
+        
+        // "estou no/na/em" + nome
+        const estouNo = /(estou|to|tô|tou) (no|na|em|do|da|aqui) .+/i;
+        if (estouNo.test(lower)) return true;
+        
+        // "me busca/pega no/na"
+        const meBusca = /(me |busca|pega|vem).*(no |na |em )/i;
+        if (meBusca.test(lower) && lower.length > 10) return true;
+        
         // SÓ é endereço se tem palavra-chave de endereço
-        const palavrasEndereco = ['rua ', 'r. ', 'av ', 'av. ', 'avenida ', 'alameda ', 'travessa ', 'estrada ', 'rodovia ', 'praca ', 'praça ', 'bairro ', 'setor ', 'quadra ', 'lote ', 'condominio ', 'condomínio ', 'conjunto ', 'vila ', 'jardim ', 'parque ', 'residencial ', 'numero ', 'número ', 'nº ', 'n. ', 'centro', 'zona sul', 'zona norte', 'zona leste', 'zona oeste'];
+        const palavrasEndereco = ['rua ', 'r. ', 'av ', 'av. ', 'avenida ', 'alameda ', 'travessa ', 'estrada ', 'rodovia ', 'praca ', 'praça ', 'bairro ', 'setor ', 'quadra ', 'lote ', 'condominio ', 'condomínio ', 'conjunto ', 'vila ', 'jardim ', 'parque ', 'residencial ', 'numero ', 'número ', 'nº ', 'n. ', 'centro', 'zona sul', 'zona norte', 'zona leste', 'zona oeste', 'br-', 'br ', 'mg-', 'sp-', 'go-', 'distrito'];
         for (const p of palavrasEndereco) {
             if (lower.includes(p)) return true;
         }
@@ -135,7 +156,6 @@ const RebecaService = {
         const temNumero = /\d{2,}/.test(texto);
         const palavras = texto.split(/\s+/).length;
         if (temNumero && palavras >= 2 && texto.length > 10) {
-            // Mas não pode ser pergunta disfarçada
             if (!lower.startsWith('o ') && !lower.startsWith('a ') && !lower.startsWith('e ') && !lower.startsWith('é ')) {
                 return true;
             }
@@ -978,14 +998,16 @@ Responda diretamente para ele: wa.me/${telefone}`;
                 } catch(e) { console.log('[CATCH]', e.message); }
                 if (!achouComCidade) {
                     // Verificar se tem numero - se nao tem, pedir
-                    const temNumero = /d/.test(msgOriginal);
+                    const temNumero = /\d/.test(msgOriginal);
                     conversa.dados.origemTexto = msgOriginal;
-                    if (!temNumero) {
+                    // Se é ponto de referência, NÃO pedir número - despachar direto
+                    const ehPontoRef = /(hospital|rodoviaria|rodoviária|aeroporto|shopping|terminal|mercado|supermercado|escola|colegio|colégio|universidade|faculdade|forum|fórum|prefeitura|posto|upa|ubs|igreja|catedral|cemiterio|cemitério|estadio|estádio|farmacia|farmácia|banco|correios|delegacia|parque|praça|praca|feira|padaria)/i.test(msgOriginal);
+                    const ehFrasePedido = /(aqui no|aqui na|estou no|estou na|to no|to na|me busca|me pega|manda.*aqui)/i.test(msgOriginal);
+                    
+                    if (!temNumero && !ehPontoRef && !ehFrasePedido) {
                         conversa.etapa = 'pedir_numero_origem';
                         conversas.set(telefone, conversa);
-                        return `📍 ${msgOriginal}
-
-Qual o número?`;
+                        return \`📍 \${msgOriginal}\n\nQual o número?\`;
                     }
                     // Tem numero mas nao achou - criar com texto livre
                     conversa.dados.origem = msgOriginal;
@@ -1003,12 +1025,15 @@ Qual o número?`;
             } else {
                 // FLUXO DIRETO: Achou no Maps - verificar suspeito
                 if (validacao.suspeito) {
-                    conversa.dados.origemValidadaSuspeita = validacao;
-                    conversa.etapa = 'confirmar_endereco_suspeito';
-                    conversas.set(telefone, conversa);
-                    return `📍 Encontrei: *${validacao.endereco}*
-
-Esse é o endereço correto? Responda *SIM* ou corrija.`;
+                    // Se é ponto de referência, aceitar sem confirmar - despachar direto!
+                    const pontRef = /(hospital|rodoviaria|rodoviária|aeroporto|shopping|terminal|mercado|escola|universidade|prefeitura|posto|igreja|farmacia|farmácia|praça|praca|aqui no|aqui na|estou no|to no)/i.test(msgOriginal);
+                    if (!pontRef) {
+                        conversa.dados.origemValidadaSuspeita = validacao;
+                        conversa.etapa = 'confirmar_endereco_suspeito';
+                        conversas.set(telefone, conversa);
+                        return \`📍 Encontrei: *\${validacao.endereco}*\n\nEsse é o endereço correto? Responda *SIM* ou corrija.\`;
+                    }
+                    // Ponto de referência - segue direto pro despacho
                 }
                 conversa.dados.origem = validacao.endereco;
                 conversa.dados.origemValidada = validacao;

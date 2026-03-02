@@ -181,35 +181,68 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                         const instanciaDoc = await InstanciaWhatsapp.findOne({ _id: instanciaId });
                         const nomeInstancia = instanciaDoc?.nomeInstancia;
                         
-                        // Usar Evolution API para descriptografar o audio
-                        const base64Resp = await axios.post(
-                            `${process.env.EVOLUTION_API_URL}/chat/getBase64FromMediaMessage/${nomeInstancia}`,
-                            { message: msg, convertToMp4: false },
-                            { headers: { 'apikey': process.env.EVOLUTION_API_KEY }, timeout: 20000 }
-                        );
+                        // Tentar múltiplos métodos de download do áudio
+                        let base64 = null;
                         
-                        const base64 = base64Resp.data?.base64;
+                        // Método 1: getBase64FromMediaMessage (Evolution v1)
+                        try {
+                            const base64Resp = await axios.post(
+                                `${process.env.EVOLUTION_API_URL}/chat/getBase64FromMediaMessage/${nomeInstancia}`,
+                                { message: msg, convertToMp4: false },
+                                { headers: { 'apikey': process.env.EVOLUTION_API_KEY }, timeout: 25000 }
+                            );
+                            base64 = base64Resp.data?.base64 || base64Resp.data?.data?.base64;
+                        } catch(e1) {
+                            console.log('[AUDIO] Método 1 falhou:', e1.message);
+                        }
+                        
+                        // Método 2: mediaUrl direto (Evolution v2)
+                        if (!base64 && msg.message?.audioMessage?.url) {
+                            try {
+                                const mediaResp = await axios.get(msg.message.audioMessage.url, { 
+                                    responseType: 'arraybuffer', timeout: 20000 
+                                });
+                                base64 = Buffer.from(mediaResp.data).toString('base64');
+                            } catch(e2) { console.log('[AUDIO] Método 2 falhou:', e2.message); }
+                        }
+                        
+                        // Método 3: getBase64 com key do msg (Evolution v2+)
+                        if (!base64) {
+                            try {
+                                const msgKey = msg.key || msg.message?.key;
+                                if (msgKey) {
+                                    const base64Resp2 = await axios.post(
+                                        `${process.env.EVOLUTION_API_URL}/chat/getBase64FromMediaMessage/${nomeInstancia}`,
+                                        { message: { key: msgKey, message: msg.message }, convertToMp4: false },
+                                        { headers: { 'apikey': process.env.EVOLUTION_API_KEY }, timeout: 25000 }
+                                    );
+                                    base64 = base64Resp2.data?.base64 || base64Resp2.data?.data?.base64;
+                                }
+                            } catch(e3) { console.log('[AUDIO] Método 3 falhou:', e3.message); }
+                        }
+                        
                         if (base64) {
                             const audioBuffer = Buffer.from(base64, 'base64');
+                            console.log('[AUDIO] Buffer size:', audioBuffer.length, 'bytes');
                             const mimeType = msg.message.audioMessage.mimetype || 'audio/ogg';
                             const transcricao = await OpenAIRebecaService.transcreverAudio(audioBuffer, mimeType);
                             if (transcricao) {
                                 conteudo = transcricao;
-                                console.log('[WEBHOOK] Audio transcrito:', transcricao.substring(0, 80));
+                                console.log('[WEBHOOK] Audio transcrito OK:', transcricao.substring(0, 80));
                             } else {
                                 conteudo = null;
-                                await EvolutionMultiService.enviarMensagem(instanciaId, telefone, '🎵 Não consegui entender o áudio. Pode digitar o endereço?');
+                                await EvolutionMultiService.enviarMensagem(instanciaId, telefone, '🎵 Não consegui entender o áudio. Pode digitar por favor?');
                             }
                         } else {
+                            console.log('[AUDIO] Nenhum método conseguiu baixar o áudio');
                             conteudo = null;
-                            await EvolutionMultiService.enviarMensagem(instanciaId, telefone, '🎵 Não consegui processar o áudio. Pode digitar?');
+                            await EvolutionMultiService.enviarMensagem(instanciaId, telefone, '🎵 Não consegui processar o áudio. Pode digitar sua mensagem?');
                         }
                     } catch(e) {
-                        console.log('[WEBHOOK] Erro transcrever audio:', e.message);
+                        console.log('[WEBHOOK] Erro geral audio:', e.message);
                         conteudo = null;
                         try {
-                            const instancia = await InstanciaWhatsapp.findOne({ _id: instanciaId, status: 'conectado' });
-                            if (instancia) await EvolutionMultiService.enviarMensagem(instanciaId, telefone, '🎵 Recebi um áudio, mas não consigo processar agora. Pode digitar sua mensagem?');
+                            await EvolutionMultiService.enviarMensagem(instanciaId, telefone, '🎵 Tive um problema com o áudio. Pode digitar por favor?');
                         } catch(e2) {}
                     }
                 }
