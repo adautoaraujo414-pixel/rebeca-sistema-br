@@ -22,6 +22,29 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.get('/admin-master', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin-master.html')));
 
 // ========== REBECA LANDING PAGE ==========
+
+// ========== REBECA DELIVERY LANDING (ISOLADO) ==========
+app.get('/rebeca-delivery', (req, res) => res.sendFile(path.join(__dirname, 'public', 'rebeca-delivery-landing.html')));
+
+app.post('/api/rebeca-delivery-cadastro', async (req, res) => {
+    try {
+        const { Admin } = require('./models');
+        const { nome, email, telefone, empresa, senha } = req.body;
+        if (!nome || !email || !senha) return res.status(400).json({ erro: 'Preencha todos os campos obrigatórios' });
+        const existe = await Admin.findOne({ email });
+        if (existe) return res.status(400).json({ erro: 'Email já cadastrado. Faça login.' });
+        const dataFim = new Date(); dataFim.setDate(dataFim.getDate() + 3);
+        const crypto = require('crypto');
+        const admin = await Admin.create({
+            nome, email, telefone, empresa: empresa || nome,
+            senha, token: crypto.randomBytes(16).toString('hex'),
+            ativo: true, testeGratis: true, dataInicioTeste: new Date(), dataFimTeste: dataFim,
+            origem: 'landing_page', tipoAdmin: 'delivery', nomeAssistente: 'Rebeca Delivery'
+        });
+        res.json({ sucesso: true, admin: { id: admin._id, nome: admin.nome, email: admin.email, token: admin.token, testeGratis: true, dataFimTeste: dataFim } });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
 app.get('/rebeca', (req, res) => res.sendFile(path.join(__dirname, 'public', 'rebeca-landing.html')));
 
 app.post('/api/rebeca-cadastro', async (req, res) => {

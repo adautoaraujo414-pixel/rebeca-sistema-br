@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const RebecaService = require('../services/rebeca.service');
+const RebecaDeliveryService = require('../services/rebeca-delivery.service');
+const { Admin } = require('../models');
 const CorridaService = require('../services/corrida.service');
 const MotoristaService = require('../services/motorista.service');
 const GPSIntegradoService = require('../services/gps-integrado.service');
@@ -49,7 +51,19 @@ router.post('/mensagem', async (req, res) => {
         }
         global._msgProcessadas.set(dedupKey, Date.now());
 
-        const resposta = await RebecaService.processarMensagem(telefone, mensagem, nome, { adminId, instanciaId });
+        // Rotear para Delivery ou Corridas baseado no tipoAdmin
+        let resposta;
+        try {
+            const adminDoc = await Admin.findById(adminId).lean();
+            if (adminDoc && adminDoc.tipoAdmin === 'delivery') {
+                resposta = await RebecaDeliveryService.processarMensagem(telefone, mensagem, nome, { adminId, instanciaId });
+            } else {
+                resposta = await RebecaService.processarMensagem(telefone, mensagem, nome, { adminId, instanciaId });
+            }
+        } catch(routeErr) {
+            console.log('[REBECA] Erro roteamento:', routeErr.message);
+            resposta = await RebecaService.processarMensagem(telefone, mensagem, nome, { adminId, instanciaId });
+        }
         res.json({ sucesso: true, resposta });
     } catch (error) {
         res.status(500).json({ error: 'Erro ao processar mensagem', detalhes: error.message });
