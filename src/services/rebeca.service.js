@@ -28,19 +28,34 @@ setInterval(async () => {
         
         // Timeout etapas que podem travar o cliente
         const minutos = (agora - ultimaMsg) / 60000;
-        if (conversa.etapa === 'aguardando_motorista' && minutos > 10) {
-            // Cancelar corrida pendente e avisar cliente
+        if (conversa.etapa === 'aguardando_motorista' && minutos > 5) {
+            // 5min+ sem motorista → tentar redirecionar antes de cancelar
             try {
                 const { Corrida } = require('../models');
-                if (conversa.dados?.corridaId) {
-                    await Corrida.findByIdAndUpdate(conversa.dados.corridaId, { status: 'cancelada', motivoCancelamento: 'timeout_sem_motorista' });
-                }
                 const EvolutionMultiService = require('./evolution-multi.service');
                 const { InstanciaWhatsapp } = require('../models');
                 const inst = await InstanciaWhatsapp.findOne({ adminId: conversa.adminId, status: 'conectado' });
-                if (inst) {
-                    await EvolutionMultiService.enviarMensagem(inst._id, telefone, 'Poxa, não encontramos motorista disponível no momento 😔\n\nTente novamente daqui a pouco! Quando precisar é só chamar.');
+                
+                if (conversa.dados?.corridaId && minutos <= 10) {
+                    // 5-10min: tentar redirecionar
+                    const _corridaRedir = await Corrida.findById(conversa.dados.corridaId);
+                    if (_corridaRedir && _corridaRedir.status === 'pendente') {
+                        const _motsRedir = await MotoristaService.listarDisponiveis(conversa.adminId);
+                        if (_motsRedir.length > 0) {
+                            await DespachoService.despacharCorrida(_corridaRedir, _motsRedir, conversa.adminId);
+                            console.log('[CLEANUP] Redirecionando corrida após ' + minutos.toFixed(0) + 'min');
+                            if (inst) await EvolutionMultiService.enviarMensagem(inst._id, telefone, 'Ainda estou procurando motorista pra você! Só mais um instante 🚗');
+                            continue;
+                        }
+                    }
                 }
+                
+                if (conversa.dados?.corridaId && minutos > 10) {
+                    // 10min+: cancelar
+                    await Corrida.findByIdAndUpdate(conversa.dados.corridaId, { status: 'cancelada', motivoCancelamento: 'timeout_sem_motorista' });
+                    if (inst) {
+                        await EvolutionMultiService.enviarMensagem(inst._id, telefone, 'Poxa, não encontramos motorista disponível no momento 😔\n\nTente novamente daqui a pouco! Quando precisar é só chamar.');
+                    }
             } catch(e) { console.log('[CATCH]', e.message); }
             conversa.etapa = 'inicio';
             conversa.dados = {};
@@ -90,7 +105,9 @@ const FRASES = {
     cancelar_hint: ['_CANCELAR se precisar_','_Digite CANCELAR pra desistir_','_Mande CANCELAR se mudar de ideia_'],
     agradecimento: ['Imagina! Sempre que precisar 😊','Por nada! É só chamar!','Disponha! 😊','Que nada! Me chama quando quiser!'],
     cancelado: ['Corrida cancelada! Quando precisar é só chamar 😊','Cancelado! Me chama quando quiser 😊','Pronto, cancelei! É só chamar de novo!'],
-    msg_enviada: ['✅ Mensagem enviada pro motorista!','✅ Repassei pro motorista!','✅ Motorista recebeu sua mensagem!']
+    msg_enviada: ['✅ Mensagem enviada pro motorista!','✅ Repassei pro motorista!','✅ Motorista recebeu sua mensagem!'],
+    demora_calma: ['Já estou localizando o motorista mais perto! 🚗','Só mais um instante, estou chamando motoristas!','Calma que já vai! Estou buscando o mais próximo 🚗'],
+    demora_redirecionou: ['Entendo a pressa! Já chamei outros motoristas 🚗💨','Sem problemas! Já estou redirecionando pra agilizar!','Compreendo! Chamando mais motoristas pra você!']
 };
 function variar(tipo) {
     const f = FRASES[tipo]; if (!f||!f.length) return '';
@@ -706,6 +723,42 @@ Responda diretamente para ele: wa.me/${telefone}`;
  
         // ========== AGUARDANDO MOTORISTA OU EM CORRIDA ==========
         if ((conversa.etapa === 'aguardando_motorista' || conversa.etapa === 'em_corrida') && !msg.includes('cancelar')) {
+            // CLIENTE NERVOSO/RECLAMANDO DA DEMORA → Redirecionar corrida
+            const _reclamaDemora = msg.match(/(demora|demorando|cadê|cade|onde|tá onde|ta onde|quanto tempo|muito tempo|esperando|cansei|absurdo|ridiculo|ridículo|péssimo|pessimo|horrível|horrivel|nunca chega|não chega|nao chega|vou cancelar|demais|muito lento)/);
+            if (_reclamaDemora && conversa.etapa === 'aguardando_motorista') {
+                // Verificar quanto tempo está pendente
+                try {
+                    const { Corrida: _CM } = require('../models');
+                    const _corridaPend = await _CM.findById(conversa.dados.corridaId);
+                    if (_corridaPend && _corridaPend.status === 'pendente') {
+                        const _minPend = (Date.now() - new Date(_corridaPend.createdAt).getTime()) / 60000;
+                        if (_minPend > 3) {
+                            // Mais de 3 min sem aceite → tentar redirecionar pra outro motorista
+                            console.log('[REBECA] Cliente reclamando demora (' + _minPend.toFixed(0) + 'min), redirecionando corrida');
+                            try {
+                                const _motsDisp = await MotoristaService.listarDisponiveis(conversa.adminId);
+                                if (_motsDisp.length > 0) {
+                                    const resultadoRedespacho = await DespachoService.despacharCorrida(_corridaPend, _motsDisp, conversa.adminId);
+                                    if (resultadoRedespacho.sucesso) {
+                                        try { const PushService = require('./push.service'); await PushService.notificarNovaCorrida(conversa.adminId, _corridaPend); } catch(e){}
+                                    }
+                                    conversas.set(telefone, conversa);
+                                    return 'Entendo a pressa! Já estou chamando outros motoristas pra agilizar 🚗💨';
+                                }
+                            } catch(e) { console.log('[REBECA] Erro redirecionar:', e.message); }
+                            conversas.set(telefone, conversa);
+                            return 'Entendo! Estou fazendo o possível pra encontrar um motorista. Só mais um instante! 🙏';
+                        }
+                    } else if (_corridaPend && ['aceita','motorista_a_caminho'].includes(_corridaPend.status)) {
+                        // Motorista já aceitou mas tá demorando → avisar que está a caminho
+                        conversas.set(telefone, conversa);
+                        return 'O motorista já está a caminho! Deve chegar em poucos minutos 🚗';
+                    }
+                } catch(e) { console.log('[REBECA] Erro check demora:', e.message); }
+                conversas.set(telefone, conversa);
+                return 'Já estou localizando o motorista mais perto de você! Só um instante 🚗';
+            }
+
             // Verificar se tem motorista atribuido - encaminhar mensagem
             try {
                 const { Corrida } = require('../models');

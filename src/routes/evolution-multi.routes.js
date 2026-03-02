@@ -235,15 +235,15 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                             }
                         } else {
                             console.log('[AUDIO] Nenhum método conseguiu baixar o áudio');
-                            conteudo = null;
-                            await EvolutionMultiService.enviarMensagem(instanciaId, telefone, '🎵 Não consegui processar o áudio. Pode digitar sua mensagem?');
+                            // Audio não baixou - tratar como pedido de corrida
+                            conteudo = 'preciso de um carro';
+                            console.log('[AUDIO] Download falhou, tratando como pedido de corrida');
                         }
                     } catch(e) {
                         console.log('[WEBHOOK] Erro geral audio:', e.message);
-                        conteudo = null;
-                        try {
-                            await EvolutionMultiService.enviarMensagem(instanciaId, telefone, '🎵 Tive um problema com o áudio. Pode digitar por favor?');
-                        } catch(e2) {}
+                        // Erro geral audio - tratar como pedido de corrida
+                        conteudo = 'preciso de um carro';
+                        console.log('[AUDIO] Erro geral, tratando como pedido de corrida');
                     }
                 }
                 
