@@ -1,4 +1,4 @@
-cp src/services/rebeca.service.js src/services/rebeca.service.backup.jsconst conversa = conversas.get(telefone) || { etapa: 'inicio', dados: {} };const conversa = conversas.get(telefone) || { etapa: 'inicio', dados: {} };const { PrecoIntermunicipal } = require('../models');
+const { PrecoIntermunicipal } = require('../models');
 const PrecoDinamicoService = require('./preco-dinamico.service');
 const PrecoAdminService = require('./preco-admin.service');
 const MapsService = require('./maps.service');
@@ -92,30 +92,50 @@ const configRebeca = {
     usarIA: true
 };
 
-    async resolverEtapaAtiva(telefone, msg, conversa, nome) {
-        const texto = msg.toLowerCase().trim();
-        
-        switch(conversa.etapa) {
-            
-            case "confirmar_corrida":
-                if (texto.includes("sim") || texto === "1") {
-                    const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
-                    conversa.etapa = "aguardando_motorista";
-                    conversas.set(telefone, conversa);
-                    return "🚗 Corrida confirmada! Estou buscando motorista...";
-                }
-                if (texto.includes("nao") || texto.includes("não") || texto === "2") {
-                    conversa.etapa = "inicio";
-                    conversa.dados = {};
-                    conversas.set(telefone, conversa);
-                    return "Tudo bem 😊 Quando precisar é só chamar."; 
-                }
-                return "Confirma a corrida? Responde SIM ou NÃO.";
-            
-            default:
-                return null;
-        }
+const RebecaService = {
+    // ==================== CONFIG ====================
+    getConfig: () => ({ 
+        ...configRebeca,
+        iaAtiva: IAService.isAtivo(),
+        iaConfig: IAService.getConfig()
+    }),
+    
+    setConfig: (novaConfig) => {
+        Object.assign(configRebeca, novaConfig);
+        return RebecaService.getConfig();
     },
+
+    // ==================== HELPERS ====================
+    pareceEndereco: (texto) => {
+        if (!texto || texto.length < 5) return false;
+        const lower = texto.toLowerCase().trim();
+        
+        // NUNCA é endereço se contém palavras de pergunta
+        const palavrasPerguntas = ['?', 'como', 'qual', 'quanto', 'quando', 'onde fica', 'tem ', 'posso', 'pode', 'voce', 'você', 'aceita', 'funciona', 'horario', 'horário', 'aberto', 'fecha', 'demora', 'tempo', 'chega', 'valor', 'custa', 'pago', 'pagar', 'dinheiro', 'pix', 'cartao', 'cartão', 'credito', 'crédito', 'debito', 'débito', 'troco', 'seguro', 'segurança', 'confiavel', 'confiável'];
+        for (const p of palavrasPerguntas) {
+            if (lower.includes(p)) return false;
+        }
+        
+        // Ignorar comandos obvios
+        const comandos = ['menu','oi','ola','olá','bom dia','boa tarde','boa noite','obrigado','obrigada','valeu','sim','nao','não','ok','1','2','3','4','5','6','7','casa','trabalho','cancelar','aceitar','finalizar','cheguei','preço','preco','historico','cotação','cotacao','ajuda','atendente','ola rebeca','oi rebeca','eai','e ai','tudo bem','blz','beleza','ja te mandei','ja mandei','te mandei','mandei','uai','ue','ne','a maravilha','maravilha','otimo','ótimo','legal','show','perfeito','certo','entendi','isso','isso mesmo','pode ser','vamos','bora','ta','tá','vlw','brigado','brigada'];
+        // Ignorar frases que contém palavras comuns sem endereço
+        const frasesComuns = ['ja te', 'já te', 'te mandei', 'mandei uai', 'uai', 'ue', 'a maravilha'];
+        for (const f of frasesComuns) {
+            if (lower.includes(f)) return false;
+        }
+        if (comandos.includes(lower)) return false;
+        
+        // SÓ é endereço se tem palavra-chave de endereço
+        const palavrasEndereco = ['rua ', 'r. ', 'av ', 'av. ', 'avenida ', 'alameda ', 'travessa ', 'estrada ', 'rodovia ', 'praca ', 'praça ', 'bairro ', 'setor ', 'quadra ', 'lote ', 'condominio ', 'condomínio ', 'conjunto ', 'vila ', 'jardim ', 'parque ', 'residencial ', 'numero ', 'número ', 'nº ', 'n. ', 'centro', 'zona sul', 'zona norte', 'zona leste', 'zona oeste'];
+        for (const p of palavrasEndereco) {
+            if (lower.includes(p)) return true;
+        }
+        
+        // Tem número E pelo menos uma palavra antes? (ex: "Alexandre Rodrigues 180")
+        const temNumero = /\d{2,}/.test(texto);
+        const palavras = texto.split(/\s+/).length;
+        if (temNumero && palavras >= 2 && texto.length > 10) {
+            // Mas não pode ser pergunta disfarçada
             if (!lower.startsWith('o ') && !lower.startsWith('a ') && !lower.startsWith('e ') && !lower.startsWith('é ')) {
                 return true;
             }
@@ -225,6 +245,8 @@ const configRebeca = {
         if (adminId) {
             const respostaAdmin = await RebecaService.processarRespostaAdmin(telefone, mensagem, adminId, contexto.instanciaId);
             if (respostaAdmin) {
+                return '✅ Resposta enviada ao cliente!';
+            }
         }
         
         // ========== COMANDOS DO MOTORISTA ==========
@@ -283,15 +305,6 @@ const configRebeca = {
         if (adminId) conversa.adminId = adminId;
         if (contexto.instanciaId) conversa.instanciaId = contexto.instanciaId;
         // Carregar favoritos do MongoDB (atualiza cache em memória)
-        // ================= PRIORIDADE DE ETAPA =================
-        if (conversa.etapa && conversa.etapa !== "inicio") {
-            const respostaEtapa = await RebecaService.resolverEtapaAtiva(telefone, msgOriginal, conversa, nome);
-            if (respostaEtapa) {
-                conversas.set(telefone, conversa);
-                return respostaEtapa;
-            }
-        }
-
         await RebecaService.carregarFavoritos(telefone, adminId);
         const favoritos = RebecaService.getFavoritos(telefone);
         
@@ -1217,8 +1230,6 @@ _Digite CANCELAR se precisar_`;
             }
         }
         else if (conversa.etapa === 'pedir_bairro_origem') {
-            if (conversa.bairroJaSolicitado) return null;
-            conversa.bairroJaSolicitado = true;
             // VALIDAR: ignorar expressões de confirmação/comandos
             const expressoesIgnorar = ['maravilha','beleza','show','legal','perfeito','otimo','ótimo','certo','entendi','isso','ok','sim','blz','vlw','valeu','brigado','brigada','obrigado','obrigada','ta','tá','vamos','bora','pode ser','isso mesmo','a maravilha','top','dahora','massa','nice','maneiro'];
             if (expressoesIgnorar.includes(msg) || msg.length < 3) {
