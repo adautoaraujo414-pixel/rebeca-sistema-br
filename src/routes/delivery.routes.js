@@ -359,4 +359,63 @@ router.get('/rastrear-gps/:codigo', async (req, res) => {
 });
 
 
+
+// ========== UPLOAD FOTO CARDAPIO (IA TRANSCREVE) ==========
+router.post('/cardapio/upload-foto', authDelivery, async (req, res) => {
+    try {
+        const { imagemBase64 } = req.body;
+        if (!imagemBase64) return res.status(400).json({ erro: 'Envie imagemBase64' });
+        const apiKey = process.env.OPENAI_API_KEY;
+        if (!apiKey) return res.status(500).json({ erro: 'OPENAI_API_KEY nao configurada' });
+        const axios = require('axios');
+        let mediaType = 'image/jpeg';
+        let base64Data = imagemBase64;
+        if (imagemBase64.startsWith('data:')) {
+            const match = imagemBase64.match(/^data:(image\/\w+);base64,(.+)$/);
+            if (match) { mediaType = match[1]; base64Data = match[2]; }
+        }
+        const response = await axios.post('https://api.openai.com/v1/chat/completions', {
+            model: 'gpt-4o',
+            messages: [{ role: 'user', content: [
+                { type: 'text', text: 'Analise esta foto de cardapio/menu de restaurante e extraia TODOS os itens. Retorne APENAS um JSON valido (sem markdown, sem backticks) neste formato exato: { "categorias": [ { "nome": "Nome da Categoria", "emoji": "emoji adequado", "itens": [ { "nome": "Nome do Item", "descricao": "ingredientes ou descricao se visivel", "preco": 25.90 } ] } ] }. Regras: Se nao conseguir ler o preco coloque 0. Agrupe itens em categorias logicas. Use emojis adequados. Mantenha os nomes EXATAMENTE como estao no cardapio. Se a foto estiver ilegivel retorne {"erro": "Nao consegui ler o cardapio. Tente uma foto mais nitida."}' },
+                { type: 'image_url', image_url: { url: 'data:' + mediaType + ';base64,' + base64Data, detail: 'high' } }
+            ]}],
+            max_tokens: 4000, temperature: 0.2
+        }, { headers: { 'Authorization': 'Bearer ' + apiKey, 'Content-Type': 'application/json' }, timeout: 60000 });
+        const texto = response.data.choices[0].message.content.trim();
+        console.log('[CARDAPIO-IA] Resposta recebida');
+        const jsonLimpo = texto.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+        const resultado = JSON.parse(jsonLimpo);
+        if (resultado.erro) return res.status(400).json({ erro: resultado.erro });
+        let totalItens = 0;
+        resultado.categorias.forEach(function(c) { totalItens += c.itens.length; });
+        console.log('[CARDAPIO-IA] ' + resultado.categorias.length + ' categorias, ' + totalItens + ' itens');
+        res.json(resultado);
+    } catch(e) { console.error('[CARDAPIO-IA] Erro:', e.message); res.status(500).json({ erro: 'Erro ao processar imagem: ' + e.message }); }
+});
+
+router.post('/cardapio/confirmar-transcricao', authDelivery, async (req, res) => {
+    try {
+        const { categorias, limparExistente } = req.body;
+        if (!categorias || !categorias.length) return res.status(400).json({ erro: 'Nenhuma categoria' });
+        if (limparExistente) {
+            await ItemCardapio.updateMany({ adminId: req.adminId }, { ativo: false });
+            await CategoriaCardapio.updateMany({ adminId: req.adminId }, { ativo: false });
+        }
+        let totalCats = 0, totalItens = 0;
+        for (let i = 0; i < categorias.length; i++) {
+            const catData = categorias[i];
+            const cat = await CategoriaCardapio.create({ adminId: req.adminId, nome: catData.nome, emoji: catData.emoji || '', ordem: i, ativo: true });
+            totalCats++;
+            for (let j = 0; j < catData.itens.length; j++) {
+                const it = catData.itens[j];
+                await ItemCardapio.create({ adminId: req.adminId, categoriaId: cat._id, nome: it.nome, descricao: it.descricao || '', preco: parseFloat(it.preco) || 0, ordem: j, ativo: true, disponivel: true });
+                totalItens++;
+            }
+        }
+        console.log('[CARDAPIO-IA] Salvo: ' + totalCats + ' cats, ' + totalItens + ' itens');
+        res.json({ sucesso: true, categorias: totalCats, itens: totalItens });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
 module.exports = router;

@@ -137,6 +137,7 @@
                 <div class="menu-section">Cardápio</div>
                 <div class="menu-item" data-page="categorias">📁 Categorias</div>
                 <div class="menu-item" data-page="cardapio">🍔 Itens</div>
+                <div class="menu-item" data-page="upload-cardapio">📸 Upload Cardápio IA</div>
                 <div class="menu-section">Config</div>
                 <div class="menu-item" data-page="config">⚙️ Configurações</div>
             </div>
@@ -194,6 +195,53 @@
                 </div>
 
                 <!-- CONFIG -->
+                
+                <!-- UPLOAD CARDAPIO IA -->
+                <div id="page-upload-cardapio" class="page">
+                    <h2 style="margin-bottom:20px;">📸 Upload de Cardápio com IA</h2>
+                    <div class="panel">
+                        <h3>📷 Envie a foto do seu cardápio</h3>
+                        <p style="color:#aaa;margin-bottom:15px;">A inteligência artificial vai ler a foto e transcrever todos os itens automaticamente. Depois você pode revisar e ajustar preços antes de salvar.</p>
+                        <div id="uploadArea" style="border:2px dashed #444;border-radius:12px;padding:40px;text-align:center;cursor:pointer;transition:all 0.3s;margin-bottom:20px;" onclick="document.getElementById('inputFotoCardapio').click()" ondragover="event.preventDefault();this.style.borderColor='#00d4ff'" ondragleave="this.style.borderColor='#444'" ondrop="handleDropFoto(event)">
+                            <div style="font-size:48px;margin-bottom:10px;">📸</div>
+                            <p style="color:#ccc;font-size:16px;">Clique ou arraste a foto do cardápio aqui</p>
+                            <p style="color:#888;font-size:13px;margin-top:5px;">JPG, PNG — Quanto mais nítida, melhor o resultado</p>
+                            <input type="file" id="inputFotoCardapio" accept="image/*" style="display:none" onchange="processarFotoCardapio(this.files[0])">
+                        </div>
+                        <div id="previewFoto" style="display:none;text-align:center;margin-bottom:20px;">
+                            <img id="imgPreview" style="max-width:100%;max-height:400px;border-radius:8px;border:1px solid #333;">
+                            <br><button class="btn" style="margin-top:10px;background:#333;" onclick="limparFoto()">🗑️ Trocar foto</button>
+                        </div>
+                        <div id="iaLoading" style="display:none;text-align:center;padding:30px;">
+                            <div style="font-size:32px;animation:spin 1s linear infinite;display:inline-block;">🤖</div>
+                            <p style="color:#00d4ff;margin-top:10px;font-size:16px;">A IA está lendo seu cardápio...</p>
+                            <p style="color:#888;font-size:13px;">Isso pode levar até 30 segundos</p>
+                            <style>@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}</style>
+                        </div>
+                    </div>
+                    <div id="resultadoTranscricao" style="display:none;">
+                        <div class="panel" style="margin-top:15px;">
+                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;">
+                                <h3>✅ Cardápio Transcrito — Revise e ajuste</h3>
+                                <span id="contadorItens" style="color:#00d4ff;font-size:14px;"></span>
+                            </div>
+                            <div id="transcricaoLista"></div>
+                        </div>
+                        <div class="panel" style="margin-top:15px;">
+                            <div style="display:flex;gap:10px;align-items:center;">
+                                <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                                    <input type="checkbox" id="limparExistente" checked>
+                                    <span style="color:#ccc;">Substituir cardápio atual (desativar itens antigos)</span>
+                                </label>
+                            </div>
+                            <div style="display:flex;gap:10px;margin-top:15px;">
+                                <button class="btn btn-primary" onclick="confirmarTranscricao()" style="flex:1;padding:14px;font-size:16px;">💾 Salvar Cardápio</button>
+                                <button class="btn" onclick="limparTranscricao()" style="background:#333;padding:14px;">Cancelar</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div id="page-config" class="page">
                     <h2 style="margin-bottom:20px;">⚙️ Configurações</h2>
                     <div class="panel">
@@ -567,6 +615,86 @@
 
         // Enter login
         document.addEventListener('keypress', e => { if (e.key === 'Enter' && !token) fazerLogin(); });
+
+        // ========== UPLOAD CARDAPIO IA ==========
+        var dadosTranscritos = null;
+        function handleDropFoto(e) { e.preventDefault(); if (e.dataTransfer.files.length) processarFotoCardapio(e.dataTransfer.files[0]); }
+        function processarFotoCardapio(file) {
+            if (!file) return;
+            if (!file.type.startsWith('image/')) return toast('Envie uma imagem', 'error');
+            if (file.size > 20*1024*1024) return toast('Imagem muito grande (max 20MB)', 'error');
+            var reader = new FileReader();
+            reader.onload = async function(e) {
+                var base64 = e.target.result;
+                document.getElementById('imgPreview').src = base64;
+                document.getElementById('previewFoto').style.display = 'block';
+                document.getElementById('uploadArea').style.display = 'none';
+                document.getElementById('iaLoading').style.display = 'block';
+                document.getElementById('resultadoTranscricao').style.display = 'none';
+                try {
+                    var res = await api('/cardapio/upload-foto', { method: 'POST', body: JSON.stringify({ imagemBase64: base64 }) });
+                    var data = await res.json();
+                    document.getElementById('iaLoading').style.display = 'none';
+                    if (data.erro) { toast(data.erro, 'error'); limparFoto(); return; }
+                    dadosTranscritos = data;
+                    renderizarTranscricao(data);
+                    document.getElementById('resultadoTranscricao').style.display = 'block';
+                    toast('Cardapio transcrito! Revise antes de salvar.');
+                } catch(err) { document.getElementById('iaLoading').style.display = 'none'; toast('Erro: ' + err.message, 'error'); limparFoto(); }
+            };
+            reader.readAsDataURL(file);
+        }
+        function renderizarTranscricao(data) {
+            var totalItens = 0; var html = '';
+            data.categorias.forEach(function(cat, ci) {
+                html += '<div style="margin-bottom:20px;border:1px solid #333;border-radius:10px;overflow:hidden;">';
+                html += '<div style="background:#252542;padding:12px 16px;display:flex;align-items:center;gap:10px;">';
+                html += '<input type="text" value="' + (cat.emoji||'') + '" onchange="dadosTranscritos.categorias[' + ci + '].emoji=this.value" style="width:45px;text-align:center;background:#1a1a2e;border:1px solid #444;border-radius:6px;padding:6px;font-size:18px;color:#fff;">';
+                html += '<input type="text" value="' + cat.nome + '" onchange="dadosTranscritos.categorias[' + ci + '].nome=this.value" style="flex:1;background:#1a1a2e;border:1px solid #444;border-radius:6px;padding:8px 12px;color:#fff;font-weight:600;">';
+                html += '<button onclick="removerCatTranscricao(' + ci + ')" style="background:none;border:none;color:#ff4444;cursor:pointer;font-size:18px;">🗑️</button>';
+                html += '</div><div style="padding:10px;">';
+                cat.itens.forEach(function(item, ii) {
+                    totalItens++;
+                    html += '<div style="display:flex;gap:8px;align-items:center;padding:8px;border-bottom:1px solid #222;">';
+                    html += '<input type="text" value="' + item.nome + '" onchange="dadosTranscritos.categorias[' + ci + '].itens[' + ii + '].nome=this.value" style="flex:2;background:#1a1a2e;border:1px solid #333;border-radius:6px;padding:7px 10px;color:#fff;" placeholder="Nome">';
+                    html += '<input type="text" value="' + (item.descricao||'') + '" onchange="dadosTranscritos.categorias[' + ci + '].itens[' + ii + '].descricao=this.value" style="flex:2;background:#1a1a2e;border:1px solid #333;border-radius:6px;padding:7px 10px;color:#aaa;font-size:13px;" placeholder="Descricao">';
+                    html += '<div style="display:flex;align-items:center;gap:2px;"><span style="color:#0f0;font-size:13px;">R$</span>';
+                    html += '<input type="number" step="0.01" value="' + (item.preco||0) + '" onchange="dadosTranscritos.categorias[' + ci + '].itens[' + ii + '].preco=parseFloat(this.value)||0" style="width:80px;background:#1a1a2e;border:1px solid #333;border-radius:6px;padding:7px;color:#0f0;text-align:right;font-weight:600;"></div>';
+                    html += '<button onclick="removerItemTranscricao(' + ci + ',' + ii + ')" style="background:none;border:none;color:#ff4444;cursor:pointer;">x</button></div>';
+                });
+                html += '<button onclick="addItemTranscricao(' + ci + ')" style="width:100%;padding:8px;background:none;border:1px dashed #444;border-radius:6px;color:#888;cursor:pointer;margin-top:5px;">+ Adicionar item</button>';
+                html += '</div></div>';
+            });
+            document.getElementById('transcricaoLista').innerHTML = html;
+            document.getElementById('contadorItens').textContent = data.categorias.length + ' categorias, ' + totalItens + ' itens';
+        }
+        function removerCatTranscricao(ci) { dadosTranscritos.categorias.splice(ci,1); renderizarTranscricao(dadosTranscritos); }
+        function removerItemTranscricao(ci,ii) { dadosTranscritos.categorias[ci].itens.splice(ii,1); if(dadosTranscritos.categorias[ci].itens.length===0) dadosTranscritos.categorias.splice(ci,1); renderizarTranscricao(dadosTranscritos); }
+        function addItemTranscricao(ci) { dadosTranscritos.categorias[ci].itens.push({nome:'',descricao:'',preco:0}); renderizarTranscricao(dadosTranscritos); }
+        async function confirmarTranscricao() {
+            if (!dadosTranscritos) return;
+            var pz = 0;
+            dadosTranscritos.categorias.forEach(function(c){c.itens.forEach(function(i){if(!i.preco||i.preco<=0)pz++;});});
+            if (pz > 0 && !confirm(pz + ' item(ns) com preco R$ 0,00. Continuar?')) return;
+            dadosTranscritos.categorias.forEach(function(c){c.itens=c.itens.filter(function(i){return i.nome&&i.nome.trim();});});
+            dadosTranscritos.categorias = dadosTranscritos.categorias.filter(function(c){return c.itens.length>0;});
+            if (!dadosTranscritos.categorias.length) return toast('Nenhum item valido','error');
+            try {
+                var res = await api('/cardapio/confirmar-transcricao', { method:'POST', body:JSON.stringify({ categorias:dadosTranscritos.categorias, limparExistente:document.getElementById('limparExistente').checked }) });
+                var data = await res.json();
+                if (data.erro) return toast(data.erro,'error');
+                toast('Cardapio salvo! ' + data.categorias + ' categorias, ' + data.itens + ' itens');
+                limparTranscricao();
+                document.querySelectorAll('.menu-item').forEach(function(m){m.classList.remove('active');});
+                document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
+                document.querySelector('[data-page="cardapio"]').classList.add('active');
+                document.getElementById('page-cardapio').classList.add('active');
+                carregarCardapio();
+            } catch(err) { toast('Erro: ' + err.message, 'error'); }
+        }
+        function limparFoto() { document.getElementById('uploadArea').style.display='block'; document.getElementById('previewFoto').style.display='none'; document.getElementById('inputFotoCardapio').value=''; document.getElementById('iaLoading').style.display='none'; }
+        function limparTranscricao() { dadosTranscritos=null; document.getElementById('resultadoTranscricao').style.display='none'; limparFoto(); }
+
     </script>
 </body>
 </html>
