@@ -332,7 +332,13 @@ const RebecaService = {
             
             // MOTORISTA: Se chegou aqui, mensagem não reconhecida - NÃO PROCESSAR COMO CLIENTE
             console.log('[REBECA] Motorista enviou msg não reconhecida:', msgUpper);
-            return null; // Ignorar - motorista deve usar o APP
+            // Chat intermediado: motorista com corrida ativa repassa msg pro cliente
+            const _corridaMot = await CorridaService.buscarCorridaAtivaMotorista(ehMotorista._id);
+            if (_corridaMot && _corridaMot.clienteTelefone) {
+                const _resChat = await RebecaService.motoristaMensagemParaCliente(telefone, msgOriginal, adminId, contexto.instanciaId);
+                if (_resChat && _resChat.enviado) return '✅ Mensagem enviada pro cliente!';
+            }
+            return null;
         }
         if (adminId) console.log('[REBECA] Admin:', adminId);
         
