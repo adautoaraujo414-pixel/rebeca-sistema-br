@@ -30,7 +30,6 @@ class RebecaDeliveryService {
 
     async reconhecerCliente(telefone, nome, adminId) {
         const chave = adminId + '_' + telefone;
-        if (!conversasDelivery.has(chave)) {
         const cached = clientesCache.get(chave);
         if (cached && Date.now() - cached._ts < 600000) return cached;
         try {
@@ -47,6 +46,8 @@ class RebecaDeliveryService {
         } catch(e) {
             return { telefone, nome, totalPedidos: 0, recorrente: false, enderecosUsados: [], _ts: Date.now() };
         }
+    }
+    }
     }
 
     async processarMensagem(telefone, conteudo, nome, contexto) {
