@@ -370,16 +370,53 @@
         }
 
         // NAVEGAÇÃO
+        // ========== ENTREGADORES ==========
+        let entregadores = [];
+        
+        async function carregarEntregadores() {
+            try {
+                const resp = await apiCall("/entregadores");
+                entregadores = resp.entregadores || [];
+                renderEntregadores();
+            } catch(e) {
+                document.getElementById("listaEntregadores").innerHTML = "<p>Erro ao carregar entregadores</p>";
+            }
+        }
         document.querySelectorAll('.menu-item').forEach(item => {
             item.addEventListener('click', () => {
+        // ========== ENTREGADORES ==========
+        let entregadores = [];
+        
+        async function carregarEntregadores() {
+            try {
+                const resp = await apiCall("/entregadores");
+                entregadores = resp.entregadores || [];
+                renderEntregadores();
+            } catch(e) {
+                document.getElementById("listaEntregadores").innerHTML = "<p>Erro ao carregar entregadores</p>";
+            }
+        }
                 document.querySelectorAll('.menu-item').forEach(i => i.classList.remove('active'));
                 item.classList.add('active');
                 const page = item.dataset.page;
+        // ========== ENTREGADORES ==========
+        let entregadores = [];
+        
+        async function carregarEntregadores() {
+            try {
+                const resp = await apiCall("/entregadores");
+                entregadores = resp.entregadores || [];
+                renderEntregadores();
+            } catch(e) {
+                document.getElementById("listaEntregadores").innerHTML = "<p>Erro ao carregar entregadores</p>";
+            }
+        }
                 document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
                 document.getElementById('page-' + page).classList.add('active');
                 if (page === 'dashboard') carregarDashboard();
                 if (page === 'pedidos') carregarPedidos();
                 if (page === 'categorias') carregarCategorias();
+                if (page === 'entregadores') carregarEntregadores();
                 if (page === 'cardapio') carregarCardapio();
                 if (page === 'config') carregarConfig();
             });
@@ -701,7 +738,31 @@
                 if (data.erro) return toast(data.erro,'error');
                 toast('Cardapio salvo! ' + data.categorias + ' categorias, ' + data.itens + ' itens');
                 limparTranscricao();
+        // ========== ENTREGADORES ==========
+        let entregadores = [];
+        
+        async function carregarEntregadores() {
+            try {
+                const resp = await apiCall("/entregadores");
+                entregadores = resp.entregadores || [];
+                renderEntregadores();
+            } catch(e) {
+                document.getElementById("listaEntregadores").innerHTML = "<p>Erro ao carregar entregadores</p>";
+            }
+        }
                 document.querySelectorAll('.menu-item').forEach(function(m){m.classList.remove('active');});
+        // ========== ENTREGADORES ==========
+        let entregadores = [];
+        
+        async function carregarEntregadores() {
+            try {
+                const resp = await apiCall("/entregadores");
+                entregadores = resp.entregadores || [];
+                renderEntregadores();
+            } catch(e) {
+                document.getElementById("listaEntregadores").innerHTML = "<p>Erro ao carregar entregadores</p>";
+            }
+        }
                 document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
                 document.querySelector('[data-page="cardapio"]').classList.add('active');
                 document.getElementById('page-cardapio').classList.add('active');

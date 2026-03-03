@@ -273,6 +273,46 @@ router.get('/cozinha/pedidos', authDelivery, async (req, res) => {
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
+
+// ========== CRUD ENTREGADORES ==========
+router.get('/entregadores', authDelivery, async (req, res) => {
+    try {
+        const entregadores = await Motorista.find({ adminId: req.adminId, tipo: 'entregador' }).sort({ nome: 1 });
+        res.json({ entregadores });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+router.post('/entregadores', authDelivery, async (req, res) => {
+    try {
+        const { nome, telefone, veiculo } = req.body;
+        const entregador = await Motorista.create({
+            nome, telefone, veiculo, adminId: req.adminId,
+            tipo: 'entregador', ativo: true
+        });
+        res.json({ entregador });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+router.put('/entregadores/:id', authDelivery, async (req, res) => {
+    try {
+        const { nome, telefone, veiculo } = req.body;
+        const entregador = await Motorista.findOneAndUpdate(
+            { _id: req.params.id, adminId: req.adminId },
+            { nome, telefone, veiculo },
+            { new: true }
+        );
+        res.json({ entregador });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+router.put('/entregadores/:id/toggle', authDelivery, async (req, res) => {
+    try {
+        const entregador = await Motorista.findOne({ _id: req.params.id, adminId: req.adminId });
+        await entregador.save();
+        res.json({ entregador });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
 // ========== ENTREGADOR: LISTAR PEDIDOS PRONTOS ==========
 router.get('/entregador/pedidos', authDelivery, async (req, res) => {
     try {
