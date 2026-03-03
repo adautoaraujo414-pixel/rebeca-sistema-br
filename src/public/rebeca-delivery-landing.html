@@ -201,6 +201,11 @@
     </div>
 
     <script>
+        // Auto-login - pula direto pro painel se já logou
+        const savedToken = localStorage.getItem('delivery_token');
+        if (savedToken) {
+            window.location.href = '/delivery-admin';
+        }
         function abrirCadastro(){document.getElementById('authOverlay').classList.add('active');document.getElementById('formCadastro').style.display='block';document.getElementById('formLogin').style.display='none';}
         function abrirLogin(){document.getElementById('authOverlay').classList.add('active');document.getElementById('formCadastro').style.display='none';document.getElementById('formLogin').style.display='block';}
         function fecharAuth(){document.getElementById('authOverlay').classList.remove('active');}

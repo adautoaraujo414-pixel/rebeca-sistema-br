@@ -296,6 +296,11 @@
     </div>
 
     <script>
+        // Auto-login - pula direto pro painel se já logou
+        const savedToken = localStorage.getItem('rebeca_token');
+        if (savedToken) {
+            window.location.href = '/admin';
+        }
         function abrirCadastro() {
             document.getElementById('authOverlay').classList.add('active');
             document.getElementById('formCadastro').style.display = 'block';
