@@ -138,6 +138,7 @@
                 <div class="menu-item" data-page="categorias">📁 Categorias</div>
                 <div class="menu-item" data-page="cardapio">🍔 Itens</div>
                 <div class="menu-item" data-page="upload-cardapio">📸 Upload Cardápio IA</div>
+                <div class="menu-item" data-page="entregadores">📦 Entregadores</div>
                 <div class="menu-section">Equipe</div>
                 <div class="menu-item" onclick="window.open('/delivery-cozinha?token='+token)" style="cursor:pointer">👨‍🍳 Painel Cozinha</div>
                 <div class="menu-item" onclick="window.open('/delivery-entregador?token='+token)" style="cursor:pointer">🏍️ Painel Entregador</div>
@@ -242,6 +243,18 @@
                                 <button class="btn" onclick="limparTranscricao()" style="background:#333;padding:14px;">Cancelar</button>
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                
+                <div id="page-entregadores" class="page">
+                    <h2 style="margin-bottom:20px;">📦 Gerenciar Entregadores</h2>
+                    <div class="panel">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                            <h3>Lista de Entregadores</h3>
+                            <button class="btn" onclick="abrirModalEntregador()">+ Novo Entregador</button>
+                        </div>
+                        <div id="listaEntregadores">Carregando...</div>
                     </div>
                 </div>
 
@@ -699,5 +712,20 @@
         function limparTranscricao() { dadosTranscritos=null; document.getElementById('resultadoTranscricao').style.display='none'; limparFoto(); }
 
     </script>
+
+    <div id="modalEntregador" class="modal">
+        <div class="modal-content">
+            <h3 id="tituloModalEntregador">Novo Entregador</h3>
+            <input type="hidden" id="entregadorId">
+            <input type="text" id="entregadorNome" placeholder="Nome do entregador" style="margin-bottom:10px;">
+            <input type="text" id="entregadorTelefone" placeholder="Telefone" style="margin-bottom:10px;">
+            <input type="text" id="entregadorVeiculo" placeholder="Veículo (ex: Moto Honda CG 160)" style="margin-bottom:15px;">
+            <div style="text-align:right;">
+                <button onclick="fecharModalEntregador()" style="margin-right:10px;">Cancelar</button>
+                <button onclick="salvarEntregador()" class="btn">Salvar</button>
+            </div>
+        </div>
+    </div>
+
 </body>
 </html>
