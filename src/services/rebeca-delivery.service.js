@@ -52,68 +52,50 @@ class RebecaDeliveryService {
         const { adminId, instanciaId } = contexto;
         const conversa = this.obterConversa(telefone, adminId);
         conversa.clienteNome = nome;
-        conversa.instanciaId = instanciaId;
-        conversa.telefone = telefone;
 
-        const config = await ConfigDelivery.findOne({ adminId }).lean();
-        const nomeRest = config?.nomeRestaurante || 'nosso delivery';
-        const cliente = await this.reconhecerCliente(telefone, nome, adminId);
-
-        const msgTexto = typeof conteudo === 'string' ? conteudo.trim() : '';
-        const msgLower = msgTexto.toLowerCase();
-
-        if (msgLower === 'cancelar' || msgLower === '0') {
-            conversa.etapa = 'inicio'; conversa.carrinho = []; conversa.dados = {};
-            return '❌ Pedido cancelado. Quando quiser eh so chamar! 😊';
-        }
-        if (msgLower === 'cardapio' || msgLower === 'cardapio' || msgLower === 'menu') {
-            conversa.etapa = 'montando_pedido';
-            return await this._montarCardapio(adminId, nomeRest);
-        }
-
-        let resposta = null;
-        switch (conversa.etapa) {
-            case 'inicio':
-                resposta = await this._etapaInicio(conversa, msgLower, msgTexto, nome, cliente, config, nomeRest, adminId);
-                break;
-            case 'montando_pedido':
-                resposta = await this._etapaMontandoPedido(conversa, msgLower, msgTexto, config, adminId, nomeRest);
-                break;
-            case 'confirmar_pedido':
-                resposta = await this._etapaConfirmarPedido(conversa, msgLower, msgTexto, config, adminId, cliente);
-                break;
-            case 'pedir_endereco':
-                resposta = await this._etapaPedirEndereco(conversa, msgTexto, cliente);
-                break;
-            case 'pedir_pagamento':
-                resposta = await this._etapaPedirPagamento(conversa, msgLower, config);
-                break;
-            case 'pedir_troco':
-                resposta = await this._etapaPedirTroco(conversa, msgTexto);
-                break;
-            case 'finalizar_pedido':
-                resposta = await this._etapaFinalizar(conversa, telefone, nome, config, adminId, instanciaId);
-                break;
-            case 'aguardando_preparo':
-                resposta = '⏳ Seu pedido esta sendo preparado! Te aviso quando sair pra entrega 😊';
-                break;
-            case 'avaliar':
-                resposta = await this._etapaAvaliar(conversa, msgTexto, adminId);
-                break;
-            default:
+        try {
+            const msgTexto = conteudo.text || '';
+            const msgLower = msgTexto.toLowerCase().trim();
+            
+            if (msgLower === 'cancelar') {
                 conversa.etapa = 'inicio';
-                resposta = await this._etapaInicio(conversa, msgLower, msgTexto, nome, cliente, config, nomeRest, adminId);
+                conversa.carrinho = [];
+                conversa.dados = {};
+                return '❌ Pedido cancelado. Quando quiser eh so chamar! 😊';
+            }
+
+            const config = await ConfigDelivery.findOne({ adminId }).lean();
+            const nomeRest = config?.nomeRestaurante || 'Nosso Restaurante';
+            const cliente = await this.reconhecerCliente(telefone, nome, adminId);
+            
+            switch (conversa.etapa) {
+                case 'inicio':
+                    return await this._etapaInicio(conversa, msgLower, msgTexto, nome, cliente, config, nomeRest, adminId);
+                case 'montando_pedido':
+                    return await this._etapaMontandoPedido(conversa, msgLower, msgTexto, adminId, config);
+                case 'confirmar_pedido':
+                    return await this._etapaConfirmarPedido(conversa, msgLower, msgTexto, config, nomeRest, adminId);
+                case 'pedir_endereco':
+                    return await this._etapaPedirEndereco(conversa, msgTexto, config, nomeRest);
+                case 'pedir_pagamento':
+                    return await this._etapaPedirPagamento(conversa, msgLower, msgTexto, config);
+                case 'finalizar':
+                    return await this._etapaFinalizar(conversa, msgTexto, adminId, instanciaId);
+                case 'avaliar':
+                    return await this._etapaAvaliar(conversa, msgTexto, adminId);
+                default:
+                    conversa.etapa = 'inicio';
+                    return 'Oi! Como posso te ajudar hoje? 😊';
+            }
+        } catch (error) {
+            console.error('[REBECA-DELIVERY] Erro:', error);
+            return 'Ops, deu um probleminha aqui. Tenta de novo! 😅';
         }
-        return resposta;
     }
 
     async _etapaInicio(conversa, msgLower, msgTexto, nome, cliente, config, nomeRest, adminId) {
         if (config && config.aberto === false) {
-            return '😴 O *' + nomeRest + '* esta fechado no momento.
-
-🕐 Horario: ' + (config.horarioFuncionamento || '') + '
-
-Volte mais tarde!';
+            return "😴 O *" + nomeRest + "* esta fechado no momento.\n🕐 Horario: " + (config.horarioFuncionamento || "") + "\nVolte mais tarde!";
         }
         const temPedido = this._detectarPedido(msgTexto);
         if (temPedido) {
@@ -123,415 +105,278 @@ Volte mais tarde!';
                 const endereco = this._extrairEndereco(msgTexto);
                 if (endereco) {
                     conversa.dados.endereco = endereco;
-                    const pgto = this._extrairPagamento(msgTexto);
-                    if (pgto) {
-                        conversa.dados.formaPagamento = pgto.forma;
-                        if (pgto.troco) conversa.dados.trocoPara = pgto.troco;
-                        conversa.etapa = 'confirmar_pedido';
-                        return this._montarResumoCompleto(conversa, config);
-                    }
                     conversa.etapa = 'pedir_pagamento';
-                    return this._montarResumoItens(conversa) + '
-
-📍 Entrega: *' + endereco + '*
-
-' + this._montarOpcoesPagamento(config);
+                    return this._montarResumoItens(conversa) + "\n📍 Entrega: *" + endereco + "*\n" + this._montarOpcoesPagamento(config);
                 }
                 conversa.etapa = 'confirmar_pedido';
-                return this._montarResumoItens(conversa) + '
-
-✅ Ta certo isso? Responde *SIM* pra confirmar ou me diz o que quer mudar.';
+                return this._montarResumoItens(conversa) + "\n✅ Ta certo isso? Responde *SIM* pra confirmar ou me diz o que quer mudar.";
             }
         }
         conversa.etapa = 'montando_pedido';
         if (cliente.recorrente) {
-            let msg = 'Oi ' + nome + '! 😊 Bem-vindo de volta ao *' + nomeRest + '*!
-
-';
+            let msg = 'Oi ' + nome + '! 😊 Bem-vindo de volta ao *' + nomeRest + '*!\n';
             if (cliente.ultimoPedido && cliente.ultimoPedido.itens) {
-                const itensUlt = cliente.ultimoPedido.itens.map(function(i){ return i.nome; }).join(', ');
-                if (itensUlt) msg += '🔄 Ultimo pedido: _' + itensUlt + '_
-Quer repetir? Responde *REPETIR*
-
-';
-            }
-            msg += 'Ou me diz o que quer pedir! 🍔
-Digite *CARDAPIO* pra ver as opcoes.';
-            return msg;
-        }
-        return 'Oi ' + nome + '! 😊 Bem-vindo ao *' + nomeRest + '*!
-
-🍔 Me diz o que voce quer pedir ou digite *CARDAPIO* pra ver as opcoes!';
-    }
-
-    async _etapaMontandoPedido(conversa, msgLower, msgTexto, config, adminId, nomeRest) {
-        if (msgLower === 'repetir') {
-            const chave = adminId + '_' + conversa.clienteTelefone;
-            const cl = clientesCache.get(chave);
-            if (cl && cl.ultimoPedido && cl.ultimoPedido.itens && cl.ultimoPedido.itens.length) {
-                conversa.carrinho = cl.ultimoPedido.itens.map(function(i){ return { itemId: i.itemId, nome: i.nome, quantidade: i.quantidade, precoUnitario: i.precoUnitario, observacao: i.observacao || '', subtotal: i.subtotal }; });
-                conversa.etapa = 'confirmar_pedido';
-                return this._montarResumoItens(conversa) + '
-
-✅ Repetir esse pedido? *SIM* ou manda o que quer mudar.';
-            }
-            return 'Nao encontrei pedido anterior. Me diz o que quer! 🍔';
-        }
-        const itens = await this._parsearPedido(msgTexto, adminId);
-        if (itens.length > 0) {
-            conversa.carrinho.push.apply(conversa.carrinho, itens);
-            conversa.etapa = 'confirmar_pedido';
-            return this._montarResumoItens(conversa) + '
-
-➕ Quer *mais alguma coisa*?
-Ou responde *SIM* pra confirmar!';
-        }
-        if (msgLower.match(/(oi|ola|bom dia|boa tarde|boa noite|eai|fala)/)) {
-            return 'Oi! 😊 O que vai ser hoje?
-
-Digite *CARDAPIO* pra ver as opcoes ou me diz direto o que quer! 🍔';
-        }
-        const sugestao = await this._buscarItemParecido(msgTexto, adminId);
-        if (sugestao) {
-            return '🤔 Nao encontrei "' + msgTexto + '" no cardapio.
-
-Voce quis dizer *' + sugestao.nome + '* (R$ ' + sugestao.preco.toFixed(2) + ')?
-Responde *SIM* ou digite *CARDAPIO*.';
-        }
-        return await this._montarCardapio(adminId, nomeRest);
-    }
-
-    async _etapaConfirmarPedido(conversa, msgLower, msgTexto, config, adminId, cliente) {
-        if (msgLower !== 'sim' && msgLower !== 's' && msgLower !== 'confirma' && msgLower !== 'confirmar' && msgLower !== 'isso') {
-            const novos = await this._parsearPedido(msgTexto, adminId);
-            if (novos.length > 0) {
-                conversa.carrinho.push.apply(conversa.carrinho, novos);
-                return this._montarResumoItens(conversa) + '
-
-➕ Mais alguma coisa? Ou *SIM* pra confirmar!';
-            }
-            if (msgTexto.length < 100 && conversa.carrinho.length > 0) {
-                var ultimo = conversa.carrinho[conversa.carrinho.length - 1];
-                ultimo.observacao = (ultimo.observacao ? ultimo.observacao + ', ' : '') + msgTexto;
-                return '📝 Anotado: _' + msgTexto + '_ no ' + ultimo.nome + '
-
-Mais alguma coisa? Ou *SIM* pra confirmar!';
-            }
-            return 'Nao entendi 😅 Responde *SIM* pra confirmar ou me diz o que quer mudar!';
-        }
-            if (cliente.enderecosUsados && cliente.enderecosUsados.length > 0) {
-                conversa.etapa = 'pedir_endereco';
-                var msg = '📍 *Endereco de entrega:*
-
-';
-                cliente.enderecosUsados.slice(0, 3).forEach(function(end, i){ msg += '*' + (i+1) + '* - ' + end + '
-'; });
-                msg += '
-Escolha o numero ou manda o endereco novo!';
+                msg += '\nQuer repetir o ultimo pedido? *' + cliente.ultimoPedido.itens.slice(0,2).map(i => i.nome).join(', ') + '...*\n\nOu me diz o que quer hoje! 🍔';
+                conversa.dados.sugestaoRepetir = true;
                 return msg;
             }
+            return 'Nao encontrei pedido anterior. Me diz o que quer! 🍔';
+        } else {
+            let saudacao = '';
+            const hora = new Date().getHours();
+            if (hora < 12) saudacao = 'Bom dia';
+            else if (hora < 18) saudacao = 'Boa tarde';
+            else saudacao = 'Boa noite';
+            
+            return 'Oi! 😊 O que vai ser hoje?\n\nDigita o que quer ou manda *CARDAPIO* pra ver as opcoes! 🍔';
+        }
+    }
+
+    async _etapaMontandoPedido(conversa, msgLower, msgTexto, adminId, config) {
+        if (msgLower.includes('cardap') || msgLower.includes('menu')) {
+            return await this._montarCardapioCompleto(adminId);
+        }
+        if (msgLower === 'sim' && conversa.dados.sugestaoRepetir) {
+            const cliente = await this.reconhecerCliente(conversa.clienteTelefone, conversa.clienteNome, adminId);
+            if (cliente.ultimoPedido && cliente.ultimoPedido.itens) {
+                conversa.carrinho = cliente.ultimoPedido.itens;
+                conversa.etapa = 'pedir_endereco';
+                return '🔁 Perfeito! Repetindo o ultimo pedido:\n\n' + this._montarResumoItens(conversa) + '\n📍 Qual o *endereco de entrega*?\n\nOu manda *MESMO* se for o mesmo endereco de antes.';
+            }
+        }
+        const resultadoBusca = await this._buscarNoCardapio(msgTexto, adminId);
+        if (resultadoBusca.encontrou) {
+            conversa.carrinho.push(...resultadoBusca.itens);
+            let ultimo = resultadoBusca.itens[resultadoBusca.itens.length - 1];
+            if (ultimo.opcionais && ultimo.opcionais.length > 0) {
+                return '📝 Anotado: _' + msgTexto + '_ no ' + ultimo.nome + '\n\nQuer algum opcional? *' + ultimo.opcionais.join(', ') + '*\n\nOu me diz mais alguma coisa!';
+            }
+            return '📝 Anotado! Mais alguma coisa? 😊';
+        } else {
+            return '🤔 Nao encontrei "' + msgTexto + '" no cardapio.\n\nManda *CARDAPIO* pra ver as opcoes ou me diz de outro jeito! 😊';
+        }
+    }
+
+    async _etapaConfirmarPedido(conversa, msgLower, msgTexto, config, nomeRest, adminId) {
+        if (msgLower === 'sim' || msgLower.includes('confirma') || msgLower.includes('certo')) {
             conversa.etapa = 'pedir_endereco';
-            return '📍 Qual o *endereco de entrega*?
-
-_Ex: Rua das Flores 123, Centro_';
-        }
-        conversa.etapa = 'pedir_pagamento';
-        return this._montarOpcoesPagamento(config);
-    }
-
-    async _etapaPedirEndereco(conversa, msgTexto, cliente) {
-        var num = parseInt(msgTexto);
-        if (num >= 1 && num <= 3 && cliente.enderecosUsados && cliente.enderecosUsados[num - 1]) {
-            conversa.dados.endereco = cliente.enderecosUsados[num - 1];
-        } else if (msgTexto.length >= 5) {
-            conversa.dados.endereco = msgTexto;
+            return '📍 Qual o *endereco de entrega*?\n\nRua, numero, bairro...';
         } else {
-            return '📍 Manda o endereco completo com rua e numero!
-
-_Ex: Rua das Flores 123, Centro_';
+            return 'Nao entendi 😅 Responde *SIM* pra confirmar ou me diz o que quer mudar!';
         }
+    }
+
+    async _etapaPedirEndereco(conversa, msgTexto, config, nomeRest) {
+        if (msgTexto.toLowerCase() === 'mesmo') {
+            const cliente = await this.reconhecerCliente(conversa.clienteTelefone, conversa.clienteNome, conversa.adminId);
+            if (cliente.enderecosUsados && cliente.enderecosUsados.length > 0) {
+                conversa.dados.endereco = cliente.enderecosUsados[0];
+                conversa.etapa = 'pedir_pagamento';
+                return '📍 Qual o *endereco de entrega*?';
+            }
+        }
+        if (msgTexto.length < 10) {
+            return '📍 Manda o endereco completo com rua e numero!';
+        }
+        conversa.dados.endereco = msgTexto;
         conversa.etapa = 'pedir_pagamento';
-        var config = await ConfigDelivery.findOne({ adminId: conversa.adminId }).lean();
-        return '📍 Entrega: *' + conversa.dados.endereco + '*
-
-' + this._montarOpcoesPagamento(config);
+        return '📍 Entrega: *' + conversa.dados.endereco + '*\n\n' + this._montarOpcoesPagamento(config);
     }
 
-    async _etapaPedirPagamento(conversa, msgLower, config) {
-        var forma = null;
-        if (msgLower.match(/(pix|1)/)) forma = 'pix';
-        else if (msgLower.match(/(dinheiro|2|din)/)) forma = 'dinheiro';
-        else if (msgLower.match(/(cart|3|maquininha|maquina|debito|credito)/)) forma = 'cartao';
-        conversa.dados.formaPagamento = forma;
-        if (forma === 'dinheiro') {
-            conversa.etapa = 'pedir_troco';
-            return '💵 Vai precisar de *troco*?
-
-Me diz o valor da nota (ex: *50*) ou responde *NAO* se tiver trocado.';
-        }
-        conversa.etapa = 'finalizar_pedido';
-        return await this._etapaFinalizar(conversa, conversa.telefone, conversa.clienteNome, config, conversa.adminId, conversa.instanciaId);
-    }
-
-    async _etapaPedirTroco(conversa, msgTexto) {
-        var msgLower = msgTexto.toLowerCase();
-        if (msgLower === 'nao' || msgLower === 'n' || msgLower === 'trocado') {
-            conversa.dados.trocoPara = null;
+    async _etapaPedirPagamento(conversa, msgLower, msgTexto, config) {
+        if (msgLower.includes('dinheiro') || msgLower.includes('especie')) {
+            conversa.dados.pagamento = 'dinheiro';
+            conversa.etapa = 'finalizar';
+            return '💵 Vai precisar de *troco*?\n\nResponde o valor da nota (ex: *50*) ou *NAO*.';
+        } else if (msgLower.includes('cartao') || msgLower.includes('credito') || msgLower.includes('debito')) {
+            conversa.dados.pagamento = 'cartao';
+            conversa.etapa = 'finalizar';
+            return '💳 Perfeito! Pagamento no *cartao*.\n\n' + this._montarResumoFinal(conversa) + '\n\n*Confirma o pedido?* (SIM/NAO)';
+        } else if (msgLower.includes('pix')) {
+            conversa.dados.pagamento = 'pix';
+            conversa.etapa = 'finalizar';
+            return '📱 Pagamento via *PIX*.\n\n' + this._montarResumoFinal(conversa) + '\n\n*Confirma o pedido?* (SIM/NAO)';
+        } else if (conversa.dados.pagamento === 'dinheiro') {
+            if (msgLower === 'nao' || msgLower.includes('sem troco')) {
+                conversa.dados.troco = 'nao';
+                return this._montarResumoFinal(conversa) + '\n\n*Confirma o pedido?* (SIM/NAO)';
+            } else {
+                const valor = msgTexto.match(/\d+/);
+                if (valor) {
+                    conversa.dados.troco = valor[0];
+                    return this._montarResumoFinal(conversa) + '\n\n*Confirma o pedido?* (SIM/NAO)';
+                }
+                else { return '💵 Diz o valor da nota pra eu separar o troco (ex: *50*) ou responde *NAO*.'; }
+            }
         } else {
-            var valor = parseFloat(msgTexto.replace(/[^d.,]/g, '').replace(',', '.'));
-            if (valor && valor > 0) { conversa.dados.trocoPara = valor; }
-            else { return '💵 Diz o valor da nota pra eu separar o troco (ex: *50*) ou responde *NAO*.'; }
+            return '💵 Como vai ser o *pagamento*?\n\n• *DINHEIRO* 💵\n• *CARTAO* 💳\n• *PIX* 📱';
         }
-        conversa.etapa = 'finalizar_pedido';
-        var config = await ConfigDelivery.findOne({ adminId: conversa.adminId }).lean();
-        return await this._etapaFinalizar(conversa, conversa.telefone, conversa.clienteNome, config, conversa.adminId, conversa.instanciaId);
     }
 
-    async _etapaFinalizar(conversa, telefone, nome, config, adminId, instanciaId) {
-        try {
-            var subtotal = conversa.carrinho.reduce(function(s, i){ return s + (i.subtotal || 0); }, 0);
-            var taxa = config?.taxaEntregaFixa || 0;
-            var total = subtotal + taxa;
-            var pedido = await PedidoDelivery.create({
-                adminId: adminId,
-                clienteNome: nome,
-                clienteTelefone: telefone,
-                instanciaId: instanciaId,
-                itens: conversa.carrinho,
-                enderecoEntrega: conversa.dados.endereco || '',
-                formaPagamento: conversa.dados.formaPagamento || 'na_entrega',
-                trocoPara: conversa.dados.trocoPara || null,
-                taxaEntrega: taxa, subtotal: subtotal, total: total,
-                status: 'novo',
-                observacao: conversa.dados.observacao || null
-            });
-            console.log('[DELIVERY] Pedido #' + pedido.numero + ' criado - Tel:', telefone, '- Total: R$', total.toFixed(2));
-            var itensTexto = pedido.itens.map(function(i, idx){ var t = (idx+1) + '. ' + i.quantidade + 'x ' + i.nome + ' - R$ ' + i.subtotal.toFixed(2); if(i.observacao) t += ' (' + i.observacao + ')'; return t; }).join('
-');
-            var formaPgto = { pix: 'PIX', dinheiro: 'Dinheiro', cartao: 'Cartao (maquininha)', na_entrega: 'Na entrega' };
-            var msg = '✅ *PEDIDO #' + pedido.numero + ' CONFIRMADO!*
-
-';
-            msg += itensTexto + '
-
-';
-            msg += '📍 *Entrega:* ' + (pedido.enderecoEntrega || 'Retirada') + '
-';
-            msg += '💳 ' + (formaPgto[pedido.formaPagamento] || 'Na entrega');
-            if (pedido.trocoPara) msg += ' (troco p/ R$ ' + pedido.trocoPara.toFixed(2) + ')';
-            msg += '
-
-💰 *Total: R$ ' + total.toFixed(2) + '*';
-            if (taxa > 0) msg += ' _(taxa: R$ ' + taxa.toFixed(2) + ')_';
-            msg += '
-
-🍳 Enviando pra cozinha! Te aviso quando comecar a preparar!';
-            conversa.etapa = 'aguardando_preparo';
-            conversa.dados = { pedidoId: pedido._id };
-            conversa.carrinho = [];
-            return msg;
-        } catch (e) {
-            console.error('[DELIVERY] Erro finalizar:', e.message);
+    async _etapaFinalizar(conversa, msgTexto, adminId, instanciaId) {
+        const msgLower = msgTexto.toLowerCase();
+        if (msgLower === 'sim' || msgLower.includes('confirma')) {
+            try {
+                const numeroPedido = Date.now().toString().slice(-6);
+                const valorTotal = conversa.carrinho.reduce((total, item) => total + (item.preco * item.quantidade), 0);
+                
+                const pedido = await PedidoDelivery.create({
+                    adminId, numero: numeroPedido,
+                    clienteNome: conversa.clienteNome,
+                    clienteTelefone: conversa.clienteTelefone,
+                    itens: conversa.carrinho,
+                    enderecoEntrega: conversa.dados.endereco,
+                    formaPagamento: conversa.dados.pagamento,
+                    valorTroco: conversa.dados.troco || null,
+                    valorTotal, status: 'novo',
+                    observacoes: conversa.dados.observacoes || ''
+                });
+                
+                conversa.etapa = 'inicio';
+                conversa.carrinho = [];
+                conversa.dados = {};
+                
+                return '✅ *Pedido #' + numeroPedido + ' confirmado!*\n\n⏰ Tempo estimado: 30-45 min\n📱 Vou te avisar quando sair pra entrega!\n\nObrigado pela preferencia! 😊';
+            } catch (error) {
+                console.error('[DELIVERY] Erro ao criar pedido:', error);
+                return '❌ Ops, tive um problema. Tenta de novo!';
+            }
+        } else {
             conversa.etapa = 'inicio';
-            return '❌ Ops, tive um problema. Tenta de novo!';
+            conversa.carrinho = [];
+            conversa.dados = {};
+            return '❌ Pedido cancelado. Quando quiser eh so chamar! 😊';
         }
     }
 
     async _etapaAvaliar(conversa, msgTexto, adminId) {
-        var nota = parseInt(msgTexto);
-        if (nota >= 1 && nota <= 5) {
-            try { if (conversa.dados.pedidoId) await PedidoDelivery.findByIdAndUpdate(conversa.dados.pedidoId, { avaliacao: nota }); } catch(e){}
-            conversa.etapa = 'inicio'; conversa.dados = {};
-            var resps = { 5: 'Que demais! Obrigado pela nota maxima!', 4: 'Muito obrigado! Bom saber que gostou!', 3: 'Obrigado! Vamos melhorar sempre!', 2: 'Puxa, vamos melhorar! Obrigado.', 1: 'Sentimos muito! Vamos trabalhar pra melhorar.' };
-            return resps[nota] + '
-
-Quando quiser pedir de novo, eh so chamar! 🍔';
+        const nota = msgTexto.match(/[1-5]/);
+        if (nota) {
+            try {
+                await PedidoDelivery.findByIdAndUpdate(conversa.dados.pedidoId, { avaliacao: parseInt(nota[0]) });
+                conversa.etapa = 'inicio';
+                conversa.dados = {};
+                return 'Obrigado pela avaliacao! 🌟\n\nSempre que quiser eh so chamar! 😊';
+            } catch (e) {
+                return 'Obrigado! 😊';
+            }
         }
         return 'Avalie de *1* a *5*';
     }
 
-    async _parsearPedido(texto, adminId) {
-        var itensEncontrados = [];
-        try {
-            var todosItens = await ItemCardapio.find({ adminId: adminId, ativo: true, disponivel: true }).lean();
-            if (todosItens.length === 0) return [];
-            var textoLower = texto.toLowerCase();
-            for (var it = 0; it < todosItens.length; it++) {
-                var item = todosItens[it];
-                var nomeItem = item.nome.toLowerCase();
-                var nomeNorm = nomeItem.replace(/[-s]/g, '');
-                var textoNorm = textoLower.replace(/[-s]/g, '');
-                var encontrou = false;
-                if (textoLower.includes(nomeItem)) encontrou = true;
-                    var palavras = nomeItem.split(/s+/);
-                    var matches = palavras.filter(function(p){ return p.length > 2 && textoLower.includes(p); });
-                    if (matches.length >= Math.ceil(palavras.length * 0.6) && matches.length > 0) encontrou = true;
-                }
-                if (encontrou) {
-                    var qtd = 1;
-                    var regQ = new RegExp('(\d+)\s*(?:x\s*)?' + nomeItem.split(/s+/)[0], 'i');
-                    var mQ = texto.match(regQ);
-                    if (mQ) qtd = parseInt(mQ[1]) || 1;
-                    var numExt = { um: 1, uma: 1, dois: 2, duas: 2, tres: 3, quatro: 4, cinco: 5 };
-                    for (var ext in numExt) {
-                        if (textoLower.includes(ext + ' ' + nomeItem.split(/s+/)[0])) qtd = numExt[ext];
-                    }
-                    var obs = '';
-                    var regSem = /sems+(w+)/gi;
-                    var mS;
-                    while ((mS = regSem.exec(textoLower)) !== null) { obs += (obs ? ', ' : '') + 'sem ' + mS[1]; }
-                    itensEncontrados.push({ itemId: item._id, nome: item.nome, quantidade: qtd, precoUnitario: item.preco, observacao: obs, subtotal: item.preco * qtd });
-                }
-            }
-        } catch(e) { console.log('[DELIVERY] Erro parsear:', e.message); }
-        return itensEncontrados;
-    }
-
+    // Métodos auxiliares
     _detectarPedido(texto) {
-        return /(manda|quero|me ve|um |uma |dois |duas |faz |prepara|x-|xtudo|hambur|pizza|lanche|coca|refri|suco|guarana|batata|pastel|esfiha|coxinha|hot dog)/i.test(texto.toLowerCase());
+        const palavrasChave = ['quero', 'pedir', 'pizza', 'lanche', 'hambur', 'refri', 'coca', 'guarana', 'agua'];
+        return palavrasChave.some(p => texto.toLowerCase().includes(p));
     }
 
     _extrairEndereco(texto) {
-        var m = texto.match(/(?:na |rua |av |avenida |travessa )([ws,.-]+(?:numero|nº|,)s*d+[ws,.-]*)/i);
-        if (m) return m[1].trim();
-        var m2 = texto.match(/(?:rua|av|avenida|travessa|alameda)s+[ws]+d{1,5}/i);
-        if (m2) return m2[0].trim();
-        return null;
-    }
-
-    _extrairPagamento(texto) {
-        var l = texto.toLowerCase();
-        if (l.includes('pix')) return { forma: 'pix' };
-        if (l.match(/(cart|maquininha|maquina|debito|credito)/)) return { forma: 'cartao' };
-        if (l.match(/(dinheiro|din|trocado)/)) {
-            var mT = l.match(/trocos*(?:pra|para|de)?s*(d+)/);
-            return { forma: 'dinheiro', troco: mT ? parseFloat(mT[1]) : null };
+        const patterns = [/rua\s+[\w\s,\d-]+\d/i, /av\w*\s+[\w\s,\d-]+\d/i, /[\w\s,]+ \d+/];
+        for (let pattern of patterns) {
+            const match = texto.match(pattern);
+            if (match) return match[0];
         }
         return null;
     }
 
-    async _buscarItemParecido(texto, adminId) {
+    async _parsearPedido(texto, adminId) {
+        // Implementação simples - busca itens no cardápio
+        return [];
+    }
+
+    async _buscarNoCardapio(texto, adminId) {
         try {
-            var itens = await ItemCardapio.find({ adminId: adminId, ativo: true, disponivel: true }).lean();
-            var melhor = null, melhorScore = 0;
-            var tN = texto.toLowerCase().replace(/[-s]/g, '');
-            for (var i = 0; i < itens.length; i++) {
-                var nN = itens[i].nome.toLowerCase().replace(/[-s]/g, '');
-                var score = 0, menor = tN.length < nN.length ? tN : nN, maior = tN.length < nN.length ? nN : tN;
-                for (var j = 0; j < menor.length; j++) { if (maior.includes(menor[j])) score++; }
-                score = score / maior.length;
-                if (score > melhorScore) { melhorScore = score; melhor = itens[i]; }
+            const itens = await ItemCardapio.find({ adminId, ativo: true }).lean();
+            const encontrados = itens.filter(item => 
+                item.nome.toLowerCase().includes(texto.toLowerCase()) ||
+                item.descricao?.toLowerCase().includes(texto.toLowerCase())
+            );
+            
+            if (encontrados.length > 0) {
+                return {
+                    encontrou: true,
+                    itens: encontrados.map(item => ({
+                        _id: item._id,
+                        nome: item.nome,
+                        preco: item.preco,
+                        quantidade: 1,
+                        opcionais: item.opcionais || []
+                    }))
+                };
             }
-            return melhorScore >= 0.4 ? melhor : null;
-        } catch(e) { return null; }
+            return { encontrou: false, itens: [] };
+        } catch (error) {
+            console.error('[DELIVERY] Erro busca cardápio:', error);
+            return { encontrou: false, itens: [] };
+        }
     }
 
-    async _montarCardapio(adminId, nomeRest) {
-        var categorias = await CategoriaCardapio.find({ adminId: adminId, ativo: true }).sort({ ordem: 1 }).lean();
-        var itens = await ItemCardapio.find({ adminId: adminId, ativo: true, disponivel: true }).sort({ ordem: 1 }).lean();
-        var txt = '📋 *Cardapio - ' + nomeRest + '*
-';
-        for (var c = 0; c < categorias.length; c++) {
-            var cat = categorias[c];
-            var itensCat = itens.filter(function(i){ return i.categoriaId && i.categoriaId.toString() === cat._id.toString(); });
-            if (itensCat.length === 0) continue;
-            txt += '
-' + (cat.emoji || '') + ' *' + cat.nome + '*
-';
-            for (var ii = 0; ii < itensCat.length; ii++) {
-                txt += '  . ' + (itensCat[ii].destaque ? '* ' : '') + itensCat[ii].nome + ' - *R$ ' + itensCat[ii].preco.toFixed(2) + '*
-';
-                if (itensCat[ii].descricao) txt += '    _' + itensCat[ii].descricao + '_
-';
+    async _montarCardapioCompleto(adminId) {
+        try {
+            const categorias = await CategoriaCardapio.find({ adminId, ativo: true }).lean();
+            let cardapio = '📋 *CARDAPIO*\n\n';
+            
+            for (let cat of categorias) {
+                cardapio += `🔸 *${cat.nome}*\n`;
+                const itens = await ItemCardapio.find({ adminId, categoria: cat._id, ativo: true }).lean();
+                for (let item of itens) {
+                    cardapio += `• ${item.nome} - R$ ${item.preco.toFixed(2)}\n`;
+                    if (item.descricao) cardapio += `   _${item.descricao}_\n`;
+                }
+                cardapio += '\n';
             }
+            return cardapio + 'Me diz o que quer! 😊';
+        } catch (error) {
+            return '📋 *CARDAPIO*\n\nOps, problema ao carregar. Me diz o que quer! 😊';
         }
-        txt += '
-*O que voce quer pedir?*';
-        return txt;
     }
 
     _montarResumoItens(conversa) {
-        var subtotal = conversa.carrinho.reduce(function(s,i){ return s + i.subtotal; }, 0);
-        var txt = '*SEU PEDIDO:*
-
-';
-        conversa.carrinho.forEach(function(i, idx) {
-            txt += (idx+1) + '. ' + i.quantidade + 'x *' + i.nome + '* - R$ ' + i.subtotal.toFixed(2);
-            if (i.observacao) txt += '
-   _' + i.observacao + '_';
-            txt += '
-';
-        });
-        txt += '
-*Subtotal: R$ ' + subtotal.toFixed(2) + '*';
-        return txt;
-    }
-
-    _montarResumoCompleto(conversa, config) {
-        var subtotal = conversa.carrinho.reduce(function(s,i){ return s + i.subtotal; }, 0);
-        var taxa = config?.taxaEntregaFixa || 0;
-        var txt = this._montarResumoItens(conversa);
-        txt += '
-
-Entrega: *' + conversa.dados.endereco + '*';
-        var formas = { pix: 'PIX', dinheiro: 'Dinheiro', cartao: 'Cartao' };
-        txt += '
-' + (formas[conversa.dados.formaPagamento] || 'Na entrega');
-        if (conversa.dados.trocoPara) txt += ' (troco p/ R$ ' + conversa.dados.trocoPara + ')';
-        if (taxa > 0) txt += '
-Taxa entrega: R$ ' + taxa.toFixed(2);
-        txt += '
-
-*TOTAL: R$ ' + (subtotal + taxa).toFixed(2) + '*';
-        txt += '
-
-*CONFIRMA?* Responde *SIM*!';
-        return txt;
+        let resumo = '🛒 *SEU PEDIDO:*\n\n';
+        let total = 0;
+        for (let item of conversa.carrinho) {
+            const subtotal = item.preco * (item.quantidade || 1);
+            resumo += `• ${item.nome} x${item.quantidade || 1} - R$ ${subtotal.toFixed(2)}\n`;
+            total += subtotal;
+        }
+        resumo += `\n💰 *Total: R$ ${total.toFixed(2)}*`;
+        return resumo;
     }
 
     _montarOpcoesPagamento(config) {
-        var txt = '*Forma de pagamento:*
-
-';
-        if (config && config.aceitaCartao) txt += '3 Cartao (maquininha)
-';
-        return txt;
+        return '💵 *Como vai ser o pagamento?*\n\n• *DINHEIRO* 💵\n• *CARTAO* 💳\n• *PIX* 📱';
     }
 
-    async notificarClientePreparo(pedidoId) {
+    _montarResumoFinal(conversa) {
+        let resumo = this._montarResumoItens(conversa);
+        resumo += `\n\n📍 *Entrega:* ${conversa.dados.endereco}`;
+        resumo += `\n💳 *Pagamento:* ${conversa.dados.pagamento.toUpperCase()}`;
+        if (conversa.dados.troco && conversa.dados.troco !== 'nao') {
+            const total = conversa.carrinho.reduce((sum, item) => sum + (item.preco * (item.quantidade || 1)), 0);
+            const troco = parseFloat(conversa.dados.troco) - total;
+            resumo += `\n💵 *Troco para:* R$ ${conversa.dados.troco} (Troco: R$ ${troco.toFixed(2)})`;
+        }
+        return resumo;
+    }
+
+    // Notificações para outros painéis
+    async notificarNovoPedido(pedidoId) {
+        // Implementar notificação para painel cozinha
+        console.log('[DELIVERY-NOTIFY] Novo pedido:', pedidoId);
+    }
+
+    async notificarPedidoPronto(pedidoId) {
+        // Implementar notificação para entregadores
+        console.log('[DELIVERY-NOTIFY] Pedido pronto:', pedidoId);
+    }
+
+    async notificarSaiuEntrega(pedidoId, entregadorNome) {
         try {
             var pedido = await PedidoDelivery.findById(pedidoId);
             var inst = await InstanciaWhatsapp.findOne({ adminId: pedido.adminId, status: 'conectado' });
             var Evo = require('./evolution-multi.service');
-            await Evo.enviarMensagem(inst._id, pedido.clienteTelefone, '*Pedido #' + pedido.numero + ' em preparo!*
-
-Nossa cozinha ja esta preparando seu pedido!');
-        } catch(e) { console.log('[DELIVERY-NOTIF] Erro:', e.message); }
-    }
-
-    async notificarClientePronto(pedidoId) {
-        try {
-            var pedido = await PedidoDelivery.findById(pedidoId);
-            var inst = await InstanciaWhatsapp.findOne({ adminId: pedido.adminId, status: 'conectado' });
-            var Evo = require('./evolution-multi.service');
-            await Evo.enviarMensagem(inst._id, pedido.clienteTelefone, '*Pedido #' + pedido.numero + ' pronto!*
-
-Ja esta saindo pra entrega!');
-        } catch(e) { console.log('[DELIVERY-NOTIF] Erro:', e.message); }
-    }
-
-    async notificarClienteSaiuEntrega(pedidoId, entregadorNome) {
-        try {
-            var pedido = await PedidoDelivery.findById(pedidoId);
-            var inst = await InstanciaWhatsapp.findOne({ adminId: pedido.adminId, status: 'conectado' });
-            var link = (process.env.BASE_URL || 'https://rebeca-sistema-br.onrender.com') + '/delivery-rastrear/' + pedido._id.toString().slice(-8);
-            var Evo = require('./evolution-multi.service');
-            await Evo.enviarMensagem(inst._id, pedido.clienteTelefone, '*Pedido #' + pedido.numero + ' saiu pra entrega!*
-
-Entregador: *' + (entregadorNome || 'A caminho') + '*
-
-Acompanhe em tempo real:
-' + link);
+            const link = (process.env.BASE_URL || 'https://rebeca-sistema-br.onrender.com') + '/delivery-rastrear/' + pedido._id.toString().slice(-8);
+            await Evo.enviarMensagem(inst._id, pedido.clienteTelefone, '*Pedido #' + pedido.numero + ' saiu pra entrega!*\n\nEntregador: *' + (entregadorNome || 'A caminho') + '*\n\nAcompanhe em tempo real:\n' + link);
         } catch(e) { console.log('[DELIVERY-NOTIF] Erro:', e.message); }
     }
 
@@ -540,11 +385,7 @@ Acompanhe em tempo real:
             var pedido = await PedidoDelivery.findById(pedidoId);
             var inst = await InstanciaWhatsapp.findOne({ adminId: pedido.adminId, status: 'conectado' });
             var Evo = require('./evolution-multi.service');
-            await Evo.enviarMensagem(inst._id, pedido.clienteTelefone, '*Pedido #' + pedido.numero + ' entregue!*
-
-Obrigado pela preferencia!
-
-Avalie de 1 a 5!');
+            await Evo.enviarMensagem(inst._id, pedido.clienteTelefone, '*Pedido #' + pedido.numero + ' entregue!*\n\nObrigado pela preferencia!\n\nAvalie de 1 a 5!');
             var conv = this.obterConversa(pedido.clienteTelefone, pedido.adminId.toString());
             conv.etapa = 'avaliar';
             conv.dados = { pedidoId: pedido._id };
