@@ -47,6 +47,7 @@ class RebecaDeliveryService {
             return { telefone, nome, totalPedidos: 0, recorrente: false, enderecosUsados: [], _ts: Date.now() };
         }
     }
+    }
 
     async processarMensagem(telefone, conteudo, nome, contexto) {
         const { adminId, instanciaId } = contexto;
