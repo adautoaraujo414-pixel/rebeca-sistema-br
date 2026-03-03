@@ -1118,7 +1118,7 @@ Responda diretamente para ele: wa.me/${telefone}`;
                     if (!temNumero && !ehPontoRef && !ehFrasePedido) {
                         conversa.etapa = 'pedir_numero_origem';
                         conversas.set(telefone, conversa);
-                        return \`📍 \${msgOriginal}\n\nQual o número?\`;
+                        return `📍 ${msgOriginal}\n\nQual o número?`;
                     }
                     // Tem numero mas nao achou - criar com texto livre
                     conversa.dados.origem = msgOriginal;
@@ -1142,7 +1142,7 @@ Responda diretamente para ele: wa.me/${telefone}`;
                         conversa.dados.origemValidadaSuspeita = validacao;
                         conversa.etapa = 'confirmar_endereco_suspeito';
                         conversas.set(telefone, conversa);
-                        return \`📍 Encontrei: *\${validacao.endereco}*\n\nEsse é o endereço correto? Responda *SIM* ou corrija.\`;
+                        return `📍 Encontrei: *${validacao.endereco}*\n\nEsse é o endereço correto? Responda *SIM* ou corrija.`;
                     }
                     // Ponto de referência - segue direto pro despacho
                 }
