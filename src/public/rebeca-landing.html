@@ -421,6 +421,14 @@
         });
         
         // Smooth scroll
+        // Auto-login se tiver token salvo
+        window.addEventListener("load", function() {
+            const token = localStorage.getItem("rebeca_token");
+            if (token) {
+                window.location.href = "/admin?token=" + token;
+                return;
+            }
+        });
         document.querySelectorAll('a[href^="#"]').forEach(a => {
             a.addEventListener('click', e => {
                 e.preventDefault();

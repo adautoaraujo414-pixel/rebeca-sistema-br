@@ -235,6 +235,14 @@
             }catch(e){erro.textContent='Erro de conexao';erro.style.display='block';}
             btn.disabled=false;btn.textContent='Entrar';
         }
+        // Auto-login se tiver token salvo
+        window.addEventListener("load", function() {
+            const token = localStorage.getItem("delivery_token");
+            if (token) {
+                window.location.href = "/delivery-admin?token=" + token;
+                return;
+            }
+        });
         document.addEventListener('keypress',function(e){if(e.key==='Enter'){document.getElementById('formLogin').style.display!=='none'?logar():cadastrar();}});
         document.querySelectorAll('a[href^="#"]').forEach(function(a){a.addEventListener('click',function(e){e.preventDefault();document.querySelector(a.getAttribute('href')).scrollIntoView({behavior:'smooth'});});});
         document.getElementById('authOverlay').addEventListener('click',function(e){if(e.target===this)fecharAuth();});
