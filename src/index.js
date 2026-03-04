@@ -274,6 +274,6 @@ setInterval(async () => {
     } catch(e) {
         console.log('[REATIVAR] Erro:', e.message);
     }
-}, 5 * 60 * 1000); // Verifica a cada 5min (mas só executa às 10h)
+}, 60 * 60 * 1000); // Verifica a cada 1h (mas só executa às 10h)
 console.log('✅ Cron reativação de clientes ativo');
 
