@@ -19,7 +19,7 @@ const ClienteSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 const CorridaSchema = new mongoose.Schema({
-    clienteId: mongoose.Schema.Types.ObjectId, clienteNome: String, clienteTelefone: String,
+    clienteId: mongoose.Schema.Types.ObjectId, clienteNome: String, clienteTelefone: String, clienteFoto: String, enderecoOrigemTexto: String, enderecoDestinoTexto: String,
     tipo: { type: String, enum: ['passageiro', 'encomenda'], default: 'passageiro' },
     descricaoEncomenda: String, nomeColeta: String, nomeEntrega: String, fragilPerecivel: String,
     motoristaId: mongoose.Schema.Types.ObjectId, motoristaNome: String,

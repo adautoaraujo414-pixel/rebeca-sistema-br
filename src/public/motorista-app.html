@@ -361,7 +361,7 @@ body.dark-mode .chat-msg.received .bubble { background: #252542 !important; colo
                         </div>
                         <div class="corrida-ativa-body">
                             <div class="corrida-cliente">
-                                <div class="cliente-avatar">👤</div>
+                                <div class="cliente-avatar" id="avatarCorridaAtiva">${c.clienteFoto ? '<img src="'+c.clienteFoto+'" style="width:50px;height:50px;border-radius:50%;object-fit:cover;" onerror="this.textContent='👤'">' : '👤'}</div>
                                 <div class="cliente-info">
                                     <h3 id="clienteNomeAtiva">Cliente</h3>
                                     <span id="clienteCorridasAtiva">0 corridas</span>
@@ -1181,11 +1181,20 @@ body.dark-mode .chat-msg.received .bubble { background: #252542 !important; colo
             
             // Diferenciar ENCOMENDA de PASSAGEIRO
             const headerH2 = document.querySelector('#novaCorridaOverlay h2');
+            // Carregar foto do cliente
             const avatarDiv = document.querySelector('#novaCorridaOverlay .cliente-avatar');
+            if (corridaAtual?.clienteFoto) {
+                avatarDiv.innerHTML = '<img src="' + corridaAtual.clienteFoto + '" style="width:50px;height:50px;border-radius:50%;object-fit:cover;" onerror="this.parentElement.textContent='👤'">';
+            }
             
             if (corrida.tipo === 'encomenda') {
                 if (headerH2) headerH2.textContent = '📦 NOVA ENCOMENDA!';
                 if (avatarDiv) avatarDiv.textContent = '📦';
+            // Mostrar endereço em texto legível
+            const origemEl = document.getElementById('corridaOrigem');
+            const destinoEl = document.getElementById('corridaDestino');
+            if (origemEl && corridaAtual?.enderecoOrigemTexto) origemEl.textContent = corridaAtual.enderecoOrigemTexto;
+            if (destinoEl && corridaAtual?.enderecoDestinoTexto) destinoEl.textContent = corridaAtual.enderecoDestinoTexto;
                 document.getElementById('novaCorridaCliente').textContent = corrida.descricaoEncomenda || 'Encomenda';
                 const infoExtra = [];
                 if (corrida.nomeColeta) infoExtra.push('Procurar: ' + corrida.nomeColeta);

@@ -2680,6 +2680,8 @@ RebecaService.transcreverAudio = async function(audioMessage, instancia) {
         formData.append('file', Buffer.from(audioBuffer.data), { filename: 'audio.ogg', contentType: 'audio/ogg' });
         formData.append('model', 'whisper-1');
         formData.append('language', 'pt');
+        formData.append('prompt', 'Rebeca, corrida, endereço, rua, avenida, bairro, número, destino, origem, Uber, mototaxi, delivery, pedido, cancelar, confirmar, sim, não, obrigado');
+        formData.append('language', 'pt');
         
         const whisperResponse = await axios.post('https://api.openai.com/v1/audio/transcriptions', formData, {
             headers: {

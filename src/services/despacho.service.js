@@ -55,6 +55,36 @@ const DespachoService = {
 
     // ==================== DESPACHO DE CORRIDA ====================
     async despacharCorrida(corrida, motoristasDisponiveis, adminId = null) {
+        // Buscar foto do cliente no WhatsApp e salvar endereço em texto
+        try {
+            const { InstanciaWhatsapp } = require('../models');
+            const axios = require('axios');
+            const inst = await InstanciaWhatsapp.findOne({ adminId: corrida.adminId || adminId, status: 'conectado' });
+            if (inst && corrida.clienteTelefone && !corrida.clienteFoto) {
+                try {
+                    const fotoResp = await axios.get(
+                        `${process.env.EVOLUTION_API_URL}/chat/fetchProfile/${inst.nomeInstancia}`,
+                        { params: { number: corrida.clienteTelefone + '@s.whatsapp.net' },
+                          headers: { 'apikey': process.env.EVOLUTION_API_KEY }, timeout: 8000 }
+                    );
+                    const fotoUrl = fotoResp.data?.picture || fotoResp.data?.profilePictureUrl || null;
+                    if (fotoUrl) {
+                        corrida.clienteFoto = fotoUrl;
+                        await corrida.save();
+                        console.log('[FOTO] Foto do cliente salva:', fotoUrl.substring(0, 60));
+                    }
+                } catch(fotoErr) { console.log('[FOTO] Não obteve foto:', fotoErr.message); }
+            }
+            // Salvar endereço de origem em texto legível
+            if (corrida.origem && !corrida.enderecoOrigemTexto) {
+                const endTxt = corrida.origem?.endereco || corrida.origem?.enderecoFormatado || corrida.enderecoOrigem || '';
+                if (endTxt) {
+                    corrida.enderecoOrigemTexto = endTxt;
+                    corrida.enderecoDestinoTexto = corrida.destino?.endereco || corrida.destino?.enderecoFormatado || corrida.enderecoDestino || '';
+                    await corrida.save();
+                }
+            }
+        } catch(e) { console.log('[DESPACHO] Erro ao buscar foto/endereço:', e.message); }
         // Buscar modo do admin (ou usar padrão)
         let modo = DespachoService.modoDespacho;
         if (adminId) {
