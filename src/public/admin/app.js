@@ -99,6 +99,29 @@ async function carregarMapa() {
 async function atualizarMapa() {
     if (!mapaLeaflet) return;
     marcadores.forEach(m=>mapaLeaflet.removeLayer(m)); marcadores=[];
+    // Marcadores de centrais ativas
+    try {
+        const centrais = await api('/api/pontos');
+        if (Array.isArray(centrais)) {
+            const agora = new Date();
+            const diaAtual = agora.getDay();
+            const horaAtual = agora.getHours().toString().padStart(2,'0') + ':' + agora.getMinutes().toString().padStart(2,'0');
+            centrais.forEach(c => {
+                if (!c.lat || !c.lng) return;
+                const estaAberto = c.ativo && (c.diasSemana||[]).includes(diaAtual) && horaAtual >= (c.horarioAbertura||'00:00') && horaAtual <= (c.horarioFechamento||'23:59');
+                const corCentral = !c.ativo ? '#e74c3c' : estaAberto ? '#27ae60' : '#f39c12';
+                const statusTxt = !c.ativo ? 'Fechada' : estaAberto ? '🟢 Aberta' : '🟡 Fora do horário';
+                const icCentral = L.divIcon({
+                    html: `<div style="background:${corCentral};width:36px;height:36px;border-radius:8px;border:3px solid white;display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 2px 6px rgba(0,0,0,0.3);">🏢</div>`,
+                    className: '', iconSize: [36, 36], iconAnchor: [18, 18]
+                });
+                const m = L.marker([c.lat, c.lng], { icon: icCentral })
+                    .addTo(mapaLeaflet)
+                    .bindPopup(`<div style="min-width:180px"><b style="font-size:1em;">🏢 ${c.nome}</b>${c.principal ? ' <span style="background:#9b59b6;color:white;padding:1px 6px;border-radius:8px;font-size:0.75em;">⭐ Principal</span>' : ''}<br><small style="color:#666">📍 ${c.endereco||''}</small><br><small>⏰ ${c.horarioAbertura||'06:00'} – ${c.horarioFechamento||'22:00'}</small><br><span style="color:${corCentral};font-weight:600;">${statusTxt}</span></div>`);
+                marcadores.push(m);
+            });
+        }
+    } catch(e) { console.log('Erro centrais no mapa:', e); }
     const mots = await api('/api/gps-integrado');
     // Auto-centralizar no primeiro motorista com GPS
     const motComGPS = mots.find(m => m.latitude && m.longitude);
