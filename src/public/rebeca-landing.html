@@ -362,6 +362,7 @@
                     sucesso.textContent = '✅ Conta criada! Seu teste grátis de 3 dias começou. Redirecionando...';
                     sucesso.style.display = 'block';
                     localStorage.setItem('rebeca_admin', JSON.stringify(data.admin));
+                    localStorage.setItem('rebeca_token', data.admin.token);
                     setTimeout(() => {
                         window.location.href = '/cadastro-admin?token=' + data.admin.token;
                     }, 2000);
@@ -404,6 +405,7 @@
                 
                 if (data.sucesso) {
                     localStorage.setItem('rebeca_admin', JSON.stringify(data.admin));
+                    localStorage.setItem('rebeca_token', data.admin.token);
                     window.location.href = '/cadastro-admin?token=' + data.admin.token;
                 } else {
                     erro.textContent = data.erro || 'Erro ao entrar';
