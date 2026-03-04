@@ -158,6 +158,7 @@ app.use('/api/evolution', evolutionMultiRoutes);
 app.use('/api/precos', precoAdminRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/pontos', require('./routes/pontos.routes'));
+app.use('/api/zona-preco', require('./routes/zona-preco.routes'));
 app.use('/api/precos-intermunicipais', require('./routes/preco-intermunicipal.routes'));
 app.use('/api/comunicacao', require('./routes/comunicacao.routes'));
 app.use('/api/emergencia', require('./routes/emergencia.routes'));

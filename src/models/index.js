@@ -470,3 +470,29 @@ const MsgDedupSchema = new mongoose.Schema({
 const MsgDedup = mongoose.model('MsgDedup', MsgDedupSchema);
 module.exports.MsgDedup = MsgDedup;
 
+
+// ===== ZONA DE PREÇO (raio no mapa com preço fixo) =====
+const ZonaPrecoSchema = new mongoose.Schema({
+    adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin', required: true, index: true },
+    nome: { type: String, required: true },
+    ativo: { type: Boolean, default: true },
+    // Centro do raio
+    lat: { type: Number, required: true },
+    lng: { type: Number, required: true },
+    enderecoReferencia: { type: String, default: '' },
+    // Raio em km
+    raioKm: { type: Number, required: true, default: 2 },
+    // Preço fixo dentro do raio (substitui cálculo normal)
+    precoFixo: { type: Number, required: true },
+    // Restrições de horário/dia (opcional — null = sempre ativo)
+    diasSemana: [{ type: Number }], // 0=Dom..6=Sab, vazio=todos
+    horaInicio: { type: String, default: '00:00' },
+    horaFim: { type: String, default: '23:59' },
+    // Descrição
+    descricao: { type: String, default: '' },
+    criadoEm: { type: Date, default: Date.now }
+}, { timestamps: true });
+ZonaPrecoSchema.index({ adminId: 1, ativo: 1 });
+
+const ZonaPreco = mongoose.model('ZonaPreco', ZonaPrecoSchema);
+module.exports.ZonaPreco = ZonaPreco;

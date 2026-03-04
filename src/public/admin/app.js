@@ -23,7 +23,7 @@ document.querySelectorAll('.menu-item').forEach(item => {
 });
 
 function carregarPagina(p) {
-    const fn = { dashboard:carregarDashboard, mapa:carregarMapa, corridas:carregarCorridas, despacho:carregarDespacho, motoristas:carregarMotoristas, clientes:carregarClientes, rotas:carregarRotas, faturamento:carregarFaturamento, precos:carregarPrecos, ranking:carregarRanking, antifraude:carregarAntiFraude, blacklist:carregarBlacklist, reclamacoes:carregarReclamacoes, whatsapp:carregarWhatsApp, usuarios:carregarUsuarios, areas:carregarAreas, config:carregarConfig, logs:carregarLogs, fila:carregarFilaEspera, pontos:carregarPontos };
+    const fn = { dashboard:carregarDashboard, mapa:carregarMapa, corridas:carregarCorridas, despacho:carregarDespacho, motoristas:carregarMotoristas, clientes:carregarClientes, rotas:carregarRotas, faturamento:carregarFaturamento, precos:carregarPrecosSimples, ranking:carregarRanking, antifraude:carregarAntiFraude, blacklist:carregarBlacklist, reclamacoes:carregarReclamacoes, whatsapp:carregarWhatsApp, usuarios:carregarUsuarios, areas:carregarAreas, config:carregarConfig, logs:carregarLogs, fila:carregarFilaEspera, pontos:carregarPontos };
     if (fn[p]) fn[p]();
 }
 
@@ -791,3 +791,177 @@ function iniciarGPSPreciso(callback) {
     );
     return watchGPSId;
 }
+
+// ==================== ABAS DE PREÇO ====================
+function abaPreco(n) {
+    [1,2,3,4].forEach(i => {
+        const el = document.getElementById('abaPreco'+i);
+        const btn = document.getElementById('abaPrecoBtn'+i);
+        if (!el || !btn) return;
+        if (i === n) {
+            el.style.display = '';
+            btn.style.color = '#3498db';
+            btn.style.fontWeight = '700';
+            btn.style.borderBottom = '3px solid #3498db';
+        } else {
+            el.style.display = 'none';
+            btn.style.color = '#888';
+            btn.style.fontWeight = '600';
+            btn.style.borderBottom = 'none';
+        }
+    });
+    if (n === 2) iniciarMapaZona();
+    if (n === 2) carregarZonasPreco();
+}
+
+// ==================== MAPA DE ZONA ====================
+let mapaZona = null, marcadorZona = null, circuloZona = null;
+let zonaLatSelecionada = null, zonaLngSelecionada = null;
+
+function iniciarMapaZona() {
+    if (mapaZona) { setTimeout(() => mapaZona.invalidateSize(), 100); return; }
+    setTimeout(() => {
+        try {
+            mapaZona = L.map('mapaZonaPreco').setView([-20.0, -48.0], 13);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap'
+            }).addTo(mapaZona);
+
+            mapaZona.on('click', function(e) {
+                zonaLatSelecionada = e.latlng.lat;
+                zonaLngSelecionada = e.latlng.lng;
+
+                // Atualizar marcador
+                if (marcadorZona) mapaZona.removeLayer(marcadorZona);
+                marcadorZona = L.marker([zonaLatSelecionada, zonaLngSelecionada], {
+                    icon: L.divIcon({ html: '<div style="background:#e74c3c;width:14px;height:14px;border-radius:50%;border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.4);"></div>', className:'', iconSize:[14,14], iconAnchor:[7,7] })
+                }).addTo(mapaZona);
+
+                // Atualizar círculo
+                atualizarCirculoZona();
+
+                // Atualizar UI
+                const coord = zonaLatSelecionada.toFixed(5) + ', ' + zonaLngSelecionada.toFixed(5);
+                document.getElementById('zonaCoordDisplay').textContent = coord;
+                document.getElementById('zonaCoordsTexto').textContent = coord;
+                document.getElementById('zonaCoordsInfo').style.display = 'block';
+            });
+
+            // Carregar zonas existentes no mapa
+            carregarZonasNoMapa();
+        } catch(e) { console.log('Erro iniciar mapa zona:', e); }
+    }, 200);
+}
+
+function atualizarCirculoZona() {
+    if (!mapaZona || !zonaLatSelecionada) return;
+    const raio = parseFloat(document.getElementById('zonaRaio')?.value || 2) * 1000;
+    if (circuloZona) mapaZona.removeLayer(circuloZona);
+    circuloZona = L.circle([zonaLatSelecionada, zonaLngSelecionada], {
+        radius: raio, color: '#3498db', fillColor: '#3498db', fillOpacity: 0.15, weight: 2
+    }).addTo(mapaZona);
+}
+
+async function carregarZonasNoMapa() {
+    if (!mapaZona) return;
+    try {
+        const zonas = await api('/api/zona-preco');
+        if (!Array.isArray(zonas)) return;
+        zonas.forEach(z => {
+            if (!z.lat || !z.lng) return;
+            const cor = z.ativo ? '#27ae60' : '#999';
+            L.circle([z.lat, z.lng], {
+                radius: z.raioKm * 1000, color: cor, fillColor: cor, fillOpacity: 0.1, weight: 2, dashArray: '6,4'
+            }).addTo(mapaZona).bindPopup(
+                '<b>' + z.nome + '</b><br>R$ ' + z.precoFixo.toFixed(2) + ' fixo<br>Raio: ' + z.raioKm + ' km'
+            );
+            L.marker([z.lat, z.lng], {
+                icon: L.divIcon({ html: '<div style="background:' + cor + ';color:white;padding:3px 6px;border-radius:4px;font-size:11px;font-weight:700;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,0.3);">R$ ' + z.precoFixo.toFixed(2) + '</div>', className:'', iconAnchor:[0,0] })
+            }).addTo(mapaZona);
+        });
+    } catch(e) {}
+}
+
+async function salvarZonaPreco() {
+    if (!zonaLatSelecionada) return alert('Clique no mapa para selecionar o centro da zona');
+    const nome = document.getElementById('zonaNome').value.trim();
+    const raioKm = parseFloat(document.getElementById('zonaRaio').value);
+    const precoFixo = parseFloat(document.getElementById('zonaPreco').value);
+    const horaInicio = document.getElementById('zonaHoraInicio').value;
+    const horaFim = document.getElementById('zonaHoraFim').value;
+    const descricao = document.getElementById('zonaDescricao').value.trim();
+    const diasSemana = [...document.querySelectorAll('.zona-dia:checked')].map(c => parseInt(c.value));
+
+    if (!nome) return alert('Informe o nome da zona');
+    if (!raioKm || raioKm <= 0) return alert('Informe um raio válido');
+    if (!precoFixo || precoFixo <= 0) return alert('Informe o preço fixo');
+
+    const r = await api('/api/zona-preco', 'POST', {
+        nome, lat: zonaLatSelecionada, lng: zonaLngSelecionada,
+        raioKm, precoFixo, horaInicio, horaFim, diasSemana, descricao
+    });
+    if (r.sucesso) {
+        alert('Zona salva com sucesso!');
+        // Limpar form
+        document.getElementById('zonaNome').value = '';
+        document.getElementById('zonaPreco').value = '';
+        document.getElementById('zonaDescricao').value = '';
+        document.querySelectorAll('.zona-dia').forEach(c => c.checked = false);
+        zonaLatSelecionada = null; zonaLngSelecionada = null;
+        if (marcadorZona) { mapaZona.removeLayer(marcadorZona); marcadorZona = null; }
+        if (circuloZona) { mapaZona.removeLayer(circuloZona); circuloZona = null; }
+        document.getElementById('zonaCoordsInfo').style.display = 'none';
+        document.getElementById('zonaCoordDisplay').textContent = 'Nenhum ponto selecionado';
+        carregarZonasPreco();
+        carregarZonasNoMapa();
+    } else {
+        alert('Erro: ' + (r.erro || 'Tente novamente'));
+    }
+}
+
+async function carregarZonasPreco() {
+    const el = document.getElementById('listaZonasPreco');
+    if (!el) return;
+    try {
+        const zonas = await api('/api/zona-preco');
+        if (!Array.isArray(zonas) || !zonas.length) {
+            el.innerHTML = '<div style="text-align:center;padding:30px;color:#999;"><div style="font-size:2em;margin-bottom:8px;">📍</div><p>Nenhuma zona cadastrada</p></div>';
+            return;
+        }
+        const diasNome = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+        el.innerHTML = zonas.map(z => {
+            const dias = z.diasSemana?.length ? z.diasSemana.map(d => diasNome[d]).join(', ') : 'Todos os dias';
+            const horario = z.horaInicio === '00:00' && z.horaFim === '23:59' ? 'Horário integral' : z.horaInicio + ' – ' + z.horaFim;
+            return '<div style="background:#fff;border:1px solid #e8ecef;border-radius:10px;padding:16px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;">' +
+                '<div style="flex:1;">' +
+                    '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">' +
+                        '<strong style="color:#2c3e50;">' + z.nome + '</strong>' +
+                        '<span style="background:' + (z.ativo ? '#e8f8ef' : '#f5f5f5') + ';color:' + (z.ativo ? '#27ae60' : '#999') + ';font-size:0.72em;padding:2px 8px;border-radius:8px;font-weight:700;">' + (z.ativo ? '✅ Ativa' : '⏸ Inativa') + '</span>' +
+                    '</div>' +
+                    '<div style="font-size:0.82em;color:#666;line-height:1.8;">' +
+                        '<span>📍 Raio: <strong>' + z.raioKm + ' km</strong></span> &nbsp;|&nbsp; ' +
+                        '<span>💰 Preço fixo: <strong style="color:#27ae60;">R$ ' + z.precoFixo.toFixed(2) + '</strong></span><br>' +
+                        '<span>📅 ' + dias + '</span> &nbsp;|&nbsp; <span>⏰ ' + horario + '</span>' +
+                        (z.descricao ? '<br><span style="color:#888;">' + z.descricao + '</span>' : '') +
+                    '</div>' +
+                '</div>' +
+                '<div style="display:flex;gap:6px;">' +
+                    '<button onclick="toggleZona('' + z._id + '',' + !z.ativo + ')" style="background:' + (z.ativo ? '#e67e22' : '#27ae60') + ';color:white;border:none;padding:7px 12px;border-radius:6px;cursor:pointer;font-size:0.82em;">' + (z.ativo ? '⏸ Pausar' : '▶ Ativar') + '</button>' +
+                    '<button onclick="deletarZona('' + z._id + '','' + z.nome.replace(/'/g,"\'") + '')" style="background:#e74c3c;color:white;border:none;padding:7px 12px;border-radius:6px;cursor:pointer;font-size:0.82em;">🗑 Excluir</button>' +
+                '</div>' +
+            '</div>';
+        }).join('');
+    } catch(e) { console.log('Erro zonas:', e); }
+}
+
+async function toggleZona(id, ativo) {
+    await api('/api/zona-preco/' + id, 'PUT', { ativo });
+    carregarZonasPreco();
+}
+
+async function deletarZona(id, nome) {
+    if (!confirm('Excluir a zona "' + nome + '"?')) return;
+    await api('/api/zona-preco/' + id, 'DELETE');
+    carregarZonasPreco();
+}
+

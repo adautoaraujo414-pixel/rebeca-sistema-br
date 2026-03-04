@@ -383,85 +383,230 @@
             </div>
 
             <!-- PREÇOS DINÂMICOS -->
-            <div id="precos" class="page">
-                <h2 style="margin-bottom:20px;">💵 Preços - Configuração Simples</h2>
-                
-                <!-- PREÇO FIXO (FESTA/EVENTO) -->
-                <div class="panel" style="border: 3px solid #9b59b6; background: linear-gradient(135deg, #f8f4fc, #fff);">
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;">
-                        <h2 style="margin:0;">🎉 Preço Fixo (Festa/Evento)</h2>
-                        <label class="switch" style="margin:0;">
-                            <input type="checkbox" id="precoFixoAtivo" onchange="togglePrecoFixo()">
-                            <span class="slider round"></span>
-                        </label>
+                        <div id="precos" class="page">
+                <h2 style="margin-bottom:4px;">💵 Gestão de Preços</h2>
+                <p style="color:#888;font-size:0.88em;margin-bottom:20px;">Configure tarifas, zonas de preço fixo e períodos especiais</p>
+
+                <!-- ABAS -->
+                <div style="display:flex;gap:4px;margin-bottom:20px;border-bottom:2px solid #e8ecef;">
+                    <button id="abaPrecoBtn1" onclick="abaPreco(1)" style="padding:10px 20px;border:none;background:none;font-weight:700;color:#3498db;border-bottom:3px solid #3498db;cursor:pointer;font-size:0.92em;">📅 Tarifas por Período</button>
+                    <button id="abaPrecoBtn2" onclick="abaPreco(2)" style="padding:10px 20px;border:none;background:none;font-weight:600;color:#888;cursor:pointer;font-size:0.92em;">📍 Zonas de Preço Fixo</button>
+                    <button id="abaPrecoBtn3" onclick="abaPreco(3)" style="padding:10px 20px;border:none;background:none;font-weight:600;color:#888;cursor:pointer;font-size:0.92em;">🎉 Preço Especial</button>
+                    <button id="abaPrecoBtn4" onclick="abaPreco(4)" style="padding:10px 20px;border:none;background:none;font-weight:600;color:#888;cursor:pointer;font-size:0.92em;">🚗 Intermunicipal</button>
+                </div>
+
+                <!-- ABA 1: Tarifas por Período -->
+                <div id="abaPreco1">
+                    <div style="background:#f0f7ff;border:1px solid #bdd7f5;border-radius:10px;padding:14px;margin-bottom:20px;display:flex;align-items:center;gap:12px;">
+                        <div style="font-size:1.8em;">💰</div>
+                        <div>
+                            <div style="font-weight:700;color:#2c3e50;">Preço atual em vigor</div>
+                            <div style="font-size:0.85em;color:#555;" id="precoAtualInfo">Carregando...</div>
+                        </div>
+                        <div style="margin-left:auto;font-size:1.8em;font-weight:800;color:#27ae60;" id="precoAtualValor">—</div>
                     </div>
-                    <p style="color:#666;margin-bottom:15px;">Ative para usar um preço único para TODAS as corridas (carnaval, ano novo, festa na cidade, etc)</p>
-                    <div class="form-row" id="precoFixoConfig" style="display:none;">
-                        <div class="form-group"><label>💰 Valor Fixo (R$)</label><input type="number" id="precoFixoValor" step="0.50" value="25.00" style="font-size:1.5em;font-weight:bold;text-align:center;"></div>
-                        <div class="form-group"><label>📝 Motivo (opcional)</label><input type="text" id="precoFixoMotivo" placeholder="Ex: Carnaval 2025"></div>
+
+                    <div class="panel" style="padding:0;overflow:hidden;">
+                        <div style="padding:16px 20px;border-bottom:1px solid #f0f0f0;background:#fafafa;">
+                            <h3 style="margin:0;font-size:1em;color:#2c3e50;">📅 Tabela de Tarifas — Dias e Horários</h3>
+                            <p style="margin:4px 0 0;font-size:0.82em;color:#888;">Defina o valor da corrida para cada combinação de dia e período do dia</p>
+                        </div>
+                        <div style="overflow-x:auto;">
+                        <table style="width:100%;border-collapse:collapse;min-width:500px;">
+                            <thead>
+                                <tr style="background:#f8f9fa;">
+                                    <th style="padding:14px 16px;text-align:left;font-size:0.82em;color:#555;font-weight:700;border-bottom:2px solid #e8ecef;width:160px;">PERÍODO</th>
+                                    <th style="padding:14px 10px;text-align:center;font-size:0.82em;color:#555;font-weight:700;border-bottom:2px solid #e8ecef;">SEG–SEX</th>
+                                    <th style="padding:14px 10px;text-align:center;font-size:0.82em;color:#555;font-weight:700;border-bottom:2px solid #e8ecef;">SÁBADO</th>
+                                    <th style="padding:14px 10px;text-align:center;font-size:0.82em;color:#555;font-weight:700;border-bottom:2px solid #e8ecef;">DOMINGO</th>
+                                    <th style="padding:14px 10px;text-align:center;font-size:0.82em;color:#555;font-weight:700;border-bottom:2px solid #e8ecef;">FERIADO</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr style="border-bottom:1px solid #f0f0f0;">
+                                    <td style="padding:14px 16px;">
+                                        <div style="font-weight:700;color:#e67e22;">☀️ Manhã</div>
+                                        <div style="font-size:0.78em;color:#999;margin-top:2px;">06:00 – 12:00</div>
+                                    </td>
+                                    <td style="padding:10px;text-align:center;"><div style="position:relative;display:inline-block;"><span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);color:#27ae60;font-weight:700;font-size:0.9em;">R$</span><input type="number" id="preco_semana_manha" step="0.50" min="0" style="width:85px;padding:8px 6px 8px 26px;border:1px solid #ddd;border-radius:6px;font-size:1em;text-align:right;"></div></td>
+                                    <td style="padding:10px;text-align:center;"><div style="position:relative;display:inline-block;"><span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);color:#27ae60;font-weight:700;font-size:0.9em;">R$</span><input type="number" id="preco_sabado_manha" step="0.50" min="0" style="width:85px;padding:8px 6px 8px 26px;border:1px solid #ddd;border-radius:6px;font-size:1em;text-align:right;"></div></td>
+                                    <td style="padding:10px;text-align:center;"><div style="position:relative;display:inline-block;"><span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);color:#27ae60;font-weight:700;font-size:0.9em;">R$</span><input type="number" id="preco_domingo_manha" step="0.50" min="0" style="width:85px;padding:8px 6px 8px 26px;border:1px solid #ddd;border-radius:6px;font-size:1em;text-align:right;"></div></td>
+                                    <td style="padding:10px;text-align:center;"><div style="position:relative;display:inline-block;"><span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);color:#e74c3c;font-weight:700;font-size:0.9em;">R$</span><input type="number" id="preco_feriado_manha" step="0.50" min="0" style="width:85px;padding:8px 6px 8px 26px;border:1px solid #fcc;border-radius:6px;font-size:1em;text-align:right;background:#fff8f8;"></div></td>
+                                </tr>
+                                <tr style="border-bottom:1px solid #f0f0f0;background:#fafafa;">
+                                    <td style="padding:14px 16px;">
+                                        <div style="font-weight:700;color:#f39c12;">🌤️ Tarde</div>
+                                        <div style="font-size:0.78em;color:#999;margin-top:2px;">12:00 – 18:00</div>
+                                    </td>
+                                    <td style="padding:10px;text-align:center;"><div style="position:relative;display:inline-block;"><span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);color:#27ae60;font-weight:700;font-size:0.9em;">R$</span><input type="number" id="preco_semana_tarde" step="0.50" min="0" style="width:85px;padding:8px 6px 8px 26px;border:1px solid #ddd;border-radius:6px;font-size:1em;text-align:right;"></div></td>
+                                    <td style="padding:10px;text-align:center;"><div style="position:relative;display:inline-block;"><span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);color:#27ae60;font-weight:700;font-size:0.9em;">R$</span><input type="number" id="preco_sabado_tarde" step="0.50" min="0" style="width:85px;padding:8px 6px 8px 26px;border:1px solid #ddd;border-radius:6px;font-size:1em;text-align:right;"></div></td>
+                                    <td style="padding:10px;text-align:center;"><div style="position:relative;display:inline-block;"><span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);color:#27ae60;font-weight:700;font-size:0.9em;">R$</span><input type="number" id="preco_domingo_tarde" step="0.50" min="0" style="width:85px;padding:8px 6px 8px 26px;border:1px solid #ddd;border-radius:6px;font-size:1em;text-align:right;"></div></td>
+                                    <td style="padding:10px;text-align:center;"><div style="position:relative;display:inline-block;"><span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);color:#e74c3c;font-weight:700;font-size:0.9em;">R$</span><input type="number" id="preco_feriado_tarde" step="0.50" min="0" style="width:85px;padding:8px 6px 8px 26px;border:1px solid #fcc;border-radius:6px;font-size:1em;text-align:right;background:#fff8f8;"></div></td>
+                                </tr>
+                                <tr style="border-bottom:1px solid #f0f0f0;">
+                                    <td style="padding:14px 16px;">
+                                        <div style="font-weight:700;color:#8e44ad;">🌙 Noite</div>
+                                        <div style="font-size:0.78em;color:#999;margin-top:2px;">18:00 – 00:00</div>
+                                    </td>
+                                    <td style="padding:10px;text-align:center;"><div style="position:relative;display:inline-block;"><span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);color:#27ae60;font-weight:700;font-size:0.9em;">R$</span><input type="number" id="preco_semana_noite" step="0.50" min="0" style="width:85px;padding:8px 6px 8px 26px;border:1px solid #ddd;border-radius:6px;font-size:1em;text-align:right;"></div></td>
+                                    <td style="padding:10px;text-align:center;"><div style="position:relative;display:inline-block;"><span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);color:#27ae60;font-weight:700;font-size:0.9em;">R$</span><input type="number" id="preco_sabado_noite" step="0.50" min="0" style="width:85px;padding:8px 6px 8px 26px;border:1px solid #ddd;border-radius:6px;font-size:1em;text-align:right;"></div></td>
+                                    <td style="padding:10px;text-align:center;"><div style="position:relative;display:inline-block;"><span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);color:#27ae60;font-weight:700;font-size:0.9em;">R$</span><input type="number" id="preco_domingo_noite" step="0.50" min="0" style="width:85px;padding:8px 6px 8px 26px;border:1px solid #ddd;border-radius:6px;font-size:1em;text-align:right;"></div></td>
+                                    <td style="padding:10px;text-align:center;"><div style="position:relative;display:inline-block;"><span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);color:#e74c3c;font-weight:700;font-size:0.9em;">R$</span><input type="number" id="preco_feriado_noite" step="0.50" min="0" style="width:85px;padding:8px 6px 8px 26px;border:1px solid #fcc;border-radius:6px;font-size:1em;text-align:right;background:#fff8f8;"></div></td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:14px 16px;">
+                                        <div style="font-weight:700;color:#2c3e50;">🌃 Madrugada</div>
+                                        <div style="font-size:0.78em;color:#999;margin-top:2px;">00:00 – 06:00</div>
+                                    </td>
+                                    <td style="padding:10px;text-align:center;"><div style="position:relative;display:inline-block;"><span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);color:#27ae60;font-weight:700;font-size:0.9em;">R$</span><input type="number" id="preco_semana_madrugada" step="0.50" min="0" style="width:85px;padding:8px 6px 8px 26px;border:1px solid #ddd;border-radius:6px;font-size:1em;text-align:right;"></div></td>
+                                    <td style="padding:10px;text-align:center;"><div style="position:relative;display:inline-block;"><span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);color:#27ae60;font-weight:700;font-size:0.9em;">R$</span><input type="number" id="preco_sabado_madrugada" step="0.50" min="0" style="width:85px;padding:8px 6px 8px 26px;border:1px solid #ddd;border-radius:6px;font-size:1em;text-align:right;"></div></td>
+                                    <td style="padding:10px;text-align:center;"><div style="position:relative;display:inline-block;"><span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);color:#27ae60;font-weight:700;font-size:0.9em;">R$</span><input type="number" id="preco_domingo_madrugada" step="0.50" min="0" style="width:85px;padding:8px 6px 8px 26px;border:1px solid #ddd;border-radius:6px;font-size:1em;text-align:right;"></div></td>
+                                    <td style="padding:10px;text-align:center;"><div style="position:relative;display:inline-block;"><span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);color:#e74c3c;font-weight:700;font-size:0.9em;">R$</span><input type="number" id="preco_feriado_madrugada" step="0.50" min="0" style="width:85px;padding:8px 6px 8px 26px;border:1px solid #fcc;border-radius:6px;font-size:1em;text-align:right;background:#fff8f8;"></div></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        </div>
+                        <div style="padding:16px 20px;border-top:1px solid #f0f0f0;display:flex;justify-content:flex-end;">
+                            <button onclick="salvarPrecosSimples()" style="background:#27ae60;color:white;border:none;padding:11px 28px;border-radius:8px;font-weight:700;font-size:0.95em;cursor:pointer;">💾 Salvar Tarifas</button>
+                        </div>
                     </div>
                 </div>
 
-                <!-- PREÇO ATUAL -->
-                <div class="cards">
-                    <div class="card purple" style="flex:2;">
-                        <h3>💰 Preço Atual</h3>
-                        <div class="value" style="font-size:2em;" id="precoAtualValor">R$ 15,00</div>
-                        <small id="precoAtualInfo">Semana - Manhã</small>
+                <!-- ABA 2: Zonas de Preço Fixo -->
+                <div id="abaPreco2" style="display:none;">
+                    <div style="background:#fff8e6;border:1px solid #f5c842;border-radius:10px;padding:14px;margin-bottom:20px;display:flex;gap:12px;align-items:flex-start;">
+                        <div style="font-size:1.5em;">📍</div>
+                        <div style="font-size:0.85em;color:#7a5c00;line-height:1.6;">
+                            <strong>Como funciona:</strong> Clique no mapa para marcar o centro da zona. Defina o raio em km e o preço fixo. Quando a <strong>origem</strong> de uma corrida cair dentro do raio, o sistema usa esse preço — independente da distância. Fora da zona, o preço normal por período é aplicado.
+                        </div>
+                    </div>
+
+                    <div style="display:grid;grid-template-columns:1fr 380px;gap:20px;align-items:start;">
+                        <!-- Mapa -->
+                        <div>
+                            <div style="background:#fff;border:1px solid #e0e0e0;border-radius:10px;overflow:hidden;">
+                                <div style="padding:12px 16px;border-bottom:1px solid #f0f0f0;background:#fafafa;display:flex;justify-content:space-between;align-items:center;">
+                                    <span style="font-weight:700;font-size:0.9em;color:#2c3e50;">🗺️ Clique no mapa para definir o centro da zona</span>
+                                    <span id="zonaCoordDisplay" style="font-size:0.78em;color:#888;">Nenhum ponto selecionado</span>
+                                </div>
+                                <div id="mapaZonaPreco" style="height:380px;"></div>
+                            </div>
+                        </div>
+
+                        <!-- Formulário -->
+                        <div style="display:flex;flex-direction:column;gap:12px;">
+                            <div style="background:#fff;border:1px solid #e0e0e0;border-radius:10px;padding:18px;">
+                                <h3 style="margin:0 0 16px;font-size:0.95em;color:#2c3e50;">➕ Nova Zona de Preço</h3>
+
+                                <div style="margin-bottom:12px;">
+                                    <label style="font-size:0.78em;font-weight:700;color:#555;display:block;margin-bottom:4px;">NOME DA ZONA *</label>
+                                    <input id="zonaNome" type="text" placeholder="Ex: Centro Histórico" style="width:100%;padding:9px 12px;border:1px solid #ddd;border-radius:6px;font-size:0.9em;">
+                                </div>
+
+                                <div style="margin-bottom:12px;">
+                                    <label style="font-size:0.78em;font-weight:700;color:#555;display:block;margin-bottom:4px;">RAIO (km) *</label>
+                                    <input id="zonaRaio" type="number" min="0.1" max="50" step="0.1" value="2" style="width:100%;padding:9px 12px;border:1px solid #ddd;border-radius:6px;font-size:0.9em;" oninput="atualizarCirculoZona()">
+                                </div>
+
+                                <div style="margin-bottom:12px;">
+                                    <label style="font-size:0.78em;font-weight:700;color:#555;display:block;margin-bottom:4px;">PREÇO FIXO (R$) *</label>
+                                    <div style="position:relative;">
+                                        <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-weight:700;color:#27ae60;">R$</span>
+                                        <input id="zonaPreco" type="number" min="0" step="0.50" placeholder="0,00" style="width:100%;padding:9px 12px 9px 32px;border:1px solid #ddd;border-radius:6px;font-size:1.1em;font-weight:700;">
+                                    </div>
+                                </div>
+
+                                <div style="margin-bottom:12px;">
+                                    <label style="font-size:0.78em;font-weight:700;color:#555;display:block;margin-bottom:6px;">DIAS DA SEMANA (vazio = todos)</label>
+                                    <div style="display:flex;flex-wrap:wrap;gap:4px;">
+                                        <label style="display:flex;align-items:center;gap:3px;font-size:0.8em;cursor:pointer;"><input type="checkbox" class="zona-dia" value="0"> Dom</label>
+                                        <label style="display:flex;align-items:center;gap:3px;font-size:0.8em;cursor:pointer;"><input type="checkbox" class="zona-dia" value="1"> Seg</label>
+                                        <label style="display:flex;align-items:center;gap:3px;font-size:0.8em;cursor:pointer;"><input type="checkbox" class="zona-dia" value="2"> Ter</label>
+                                        <label style="display:flex;align-items:center;gap:3px;font-size:0.8em;cursor:pointer;"><input type="checkbox" class="zona-dia" value="3"> Qua</label>
+                                        <label style="display:flex;align-items:center;gap:3px;font-size:0.8em;cursor:pointer;"><input type="checkbox" class="zona-dia" value="4"> Qui</label>
+                                        <label style="display:flex;align-items:center;gap:3px;font-size:0.8em;cursor:pointer;"><input type="checkbox" class="zona-dia" value="5"> Sex</label>
+                                        <label style="display:flex;align-items:center;gap:3px;font-size:0.8em;cursor:pointer;"><input type="checkbox" class="zona-dia" value="6"> Sáb</label>
+                                    </div>
+                                </div>
+
+                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+                                    <div>
+                                        <label style="font-size:0.78em;font-weight:700;color:#555;display:block;margin-bottom:4px;">HORA INÍCIO</label>
+                                        <input id="zonaHoraInicio" type="time" value="00:00" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:0.9em;">
+                                    </div>
+                                    <div>
+                                        <label style="font-size:0.78em;font-weight:700;color:#555;display:block;margin-bottom:4px;">HORA FIM</label>
+                                        <input id="zonaHoraFim" type="time" value="23:59" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:0.9em;">
+                                    </div>
+                                </div>
+
+                                <div style="margin-bottom:16px;">
+                                    <label style="font-size:0.78em;font-weight:700;color:#555;display:block;margin-bottom:4px;">DESCRIÇÃO (opcional)</label>
+                                    <input id="zonaDescricao" type="text" placeholder="Ex: Bairro com tarifa especial aos finais de semana" style="width:100%;padding:9px 12px;border:1px solid #ddd;border-radius:6px;font-size:0.85em;">
+                                </div>
+
+                                <div id="zonaCoordsInfo" style="background:#f0f7ff;border-radius:6px;padding:8px 12px;font-size:0.78em;color:#555;margin-bottom:12px;display:none;">
+                                    📍 Centro: <span id="zonaCoordsTexto">—</span>
+                                </div>
+
+                                <button onclick="salvarZonaPreco()" style="width:100%;background:#3498db;color:white;border:none;padding:11px;border-radius:8px;font-weight:700;cursor:pointer;">💾 Salvar Zona</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Lista de zonas -->
+                    <div style="margin-top:20px;">
+                        <h3 style="font-size:0.95em;color:#2c3e50;margin-bottom:12px;">📋 Zonas Cadastradas</h3>
+                        <div id="listaZonasPreco"><p style="color:#999;text-align:center;padding:20px;">Carregando...</p></div>
                     </div>
                 </div>
 
-                <!-- TABELA DE PREÇOS SIMPLES -->
-                <div class="panel">
-                    <h2>📅 Preços por Dia e Horário</h2>
-                    <p style="color:#666;margin-bottom:15px;">Configure o valor da corrida para cada período do dia</p>
-                    
-                    <table style="width:100%;border-collapse:collapse;">
-                        <thead>
-                            <tr style="background:#f0f0f0;">
-                                <th style="padding:12px;text-align:left;">Período</th>
-                                <th style="padding:12px;text-align:center;">🗓️ Seg-Sex</th>
-                                <th style="padding:12px;text-align:center;">📅 Sábado</th>
-                                <th style="padding:12px;text-align:center;">🌞 Domingo</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td style="padding:12px;"><strong>☀️ Manhã</strong><br><small style="color:#666;">06:00 - 12:00</small></td>
-                                <td style="padding:8px;text-align:center;"><input type="number" id="preco_semana_manha" step="0.50" value="15.00" style="width:80px;text-align:center;font-size:1.1em;"></td>
-                                <td style="padding:8px;text-align:center;"><input type="number" id="preco_sabado_manha" step="0.50" value="18.00" style="width:80px;text-align:center;font-size:1.1em;"></td>
-                                <td style="padding:8px;text-align:center;"><input type="number" id="preco_domingo_manha" step="0.50" value="18.00" style="width:80px;text-align:center;font-size:1.1em;"></td>
-                            </tr>
-                            <tr style="background:#f9f9f9;">
-                                <td style="padding:12px;"><strong>🌤️ Tarde</strong><br><small style="color:#666;">12:00 - 18:00</small></td>
-                                <td style="padding:8px;text-align:center;"><input type="number" id="preco_semana_tarde" step="0.50" value="15.00" style="width:80px;text-align:center;font-size:1.1em;"></td>
-                                <td style="padding:8px;text-align:center;"><input type="number" id="preco_sabado_tarde" step="0.50" value="18.00" style="width:80px;text-align:center;font-size:1.1em;"></td>
-                                <td style="padding:8px;text-align:center;"><input type="number" id="preco_domingo_tarde" step="0.50" value="18.00" style="width:80px;text-align:center;font-size:1.1em;"></td>
-                            </tr>
-                            <tr>
-                                <td style="padding:12px;"><strong>🌙 Noite</strong><br><small style="color:#666;">18:00 - 00:00</small></td>
-                                <td style="padding:8px;text-align:center;"><input type="number" id="preco_semana_noite" step="0.50" value="18.00" style="width:80px;text-align:center;font-size:1.1em;"></td>
-                                <td style="padding:8px;text-align:center;"><input type="number" id="preco_sabado_noite" step="0.50" value="22.00" style="width:80px;text-align:center;font-size:1.1em;"></td>
-                                <td style="padding:8px;text-align:center;"><input type="number" id="preco_domingo_noite" step="0.50" value="20.00" style="width:80px;text-align:center;font-size:1.1em;"></td>
-                            </tr>
-                            <tr style="background:#f9f9f9;">
-                                <td style="padding:12px;"><strong>🌃 Madrugada</strong><br><small style="color:#666;">00:00 - 06:00</small></td>
-                                <td style="padding:8px;text-align:center;"><input type="number" id="preco_semana_madrugada" step="0.50" value="20.00" style="width:80px;text-align:center;font-size:1.1em;"></td>
-                                <td style="padding:8px;text-align:center;"><input type="number" id="preco_sabado_madrugada" step="0.50" value="25.00" style="width:80px;text-align:center;font-size:1.1em;"></td>
-                                <td style="padding:8px;text-align:center;"><input type="number" id="preco_domingo_madrugada" step="0.50" value="25.00" style="width:80px;text-align:center;font-size:1.1em;"></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                    
-                    <button class="btn btn-success" onclick="salvarPrecosSimples()" style="margin-top:20px;width:100%;padding:15px;font-size:1.1em;">💾 Salvar Preços</button>
+                <!-- ABA 3: Preço Especial/Fixo -->
+                <div id="abaPreco3" style="display:none;">
+                    <div class="panel" style="border:2px solid #9b59b6;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                            <div>
+                                <h3 style="margin:0;color:#2c3e50;">🎉 Preço Especial (Evento / Feriado)</h3>
+                                <p style="margin:4px 0 0;font-size:0.85em;color:#888;">Ative para aplicar um valor único para TODAS as corridas temporariamente</p>
+                            </div>
+                            <label class="switch" style="margin:0;">
+                                <input type="checkbox" id="precoFixoAtivo" onchange="togglePrecoFixo()">
+                                <span class="slider round"></span>
+                            </label>
+                        </div>
+                        <div id="precoFixoConfig" style="display:none;">
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                                <div>
+                                    <label style="font-size:0.78em;font-weight:700;color:#555;display:block;margin-bottom:4px;">VALOR FIXO (R$)</label>
+                                    <div style="position:relative;">
+                                        <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-weight:700;color:#9b59b6;">R$</span>
+                                        <input type="number" id="precoFixoValor" step="0.50" style="width:100%;padding:10px 12px 10px 32px;border:1px solid #ddd;border-radius:8px;font-size:1.4em;font-weight:800;">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label style="font-size:0.78em;font-weight:700;color:#555;display:block;margin-bottom:4px;">MOTIVO / DESCRIÇÃO</label>
+                                    <input type="text" id="precoFixoMotivo" placeholder="Ex: Carnaval 2025, Réveillon..." style="width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:8px;font-size:0.95em;">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- VIAGENS INTERMUNICIPAIS -->
-                <div class="panel">
-                    <h2>🚗 Viagens Intermunicipais</h2>
-                    <p style="color:#666;margin-bottom:15px;">Preços fixos para viagens entre cidades</p>
-                    <button class="btn btn-success" onclick="abrirModalIntermunicipal()" style="margin-bottom:15px;">+ Nova Rota</button>
-                    <table><thead><tr><th>Origem</th><th>Destino</th><th>Preço Fixo</th><th>Ações</th></tr></thead><tbody id="intermunicipaisTable"></tbody></table>
+                <!-- ABA 4: Intermunicipal -->
+                <div id="abaPreco4" style="display:none;">
+                    <div class="panel">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                            <div>
+                                <h3 style="margin:0;color:#2c3e50;">🚗 Viagens Intermunicipais</h3>
+                                <p style="margin:4px 0 0;font-size:0.85em;color:#888;">Preços fixos para rotas entre cidades</p>
+                            </div>
+                            <button class="btn btn-primary" onclick="abrirModalIntermunicipal()">➕ Nova Rota</button>
+                        </div>
+                        <table style="width:100%;border-collapse:collapse;">
+                            <thead><tr style="background:#f8f9fa;"><th style="padding:12px;text-align:left;font-size:0.82em;color:#555;">ORIGEM</th><th style="padding:12px;text-align:left;font-size:0.82em;color:#555;">DESTINO</th><th style="padding:12px;text-align:center;font-size:0.82em;color:#555;">PREÇO</th><th style="padding:12px;text-align:center;font-size:0.82em;color:#555;">AÇÕES</th></tr></thead>
+                            <tbody id="intermunicipaisTable"></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 

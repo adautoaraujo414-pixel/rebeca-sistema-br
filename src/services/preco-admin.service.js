@@ -13,6 +13,43 @@ const configPadrao = {
 const diasSemana = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado'];
 
 const PrecoAdminService = {
+
+    // Verificar se origem está dentro de alguma zona de preço ativa
+    async verificarZonaPreco(adminId, lat, lng) {
+        if (!adminId || !lat || !lng) return null;
+        try {
+            const { ZonaPreco } = require('../models');
+            const agora = new Date();
+            const diaAtual = agora.getDay();
+            const horaAtual = agora.getHours().toString().padStart(2,'0') + ':' + agora.getMinutes().toString().padStart(2,'0');
+
+            const zonas = await ZonaPreco.find({ adminId, ativo: true });
+            for (const z of zonas) {
+                // Verificar dia/hora se configurado
+                if (z.diasSemana && z.diasSemana.length > 0 && !z.diasSemana.includes(diaAtual)) continue;
+                if (horaAtual < z.horaInicio || horaAtual > z.horaFim) continue;
+
+                // Calcular distância do centro da zona até a origem (fórmula de Haversine simplificada)
+                const R = 6371; // km
+                const dLat = (lat - z.lat) * Math.PI / 180;
+                const dLng = (lng - z.lng) * Math.PI / 180;
+                const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                          Math.cos(z.lat * Math.PI/180) * Math.cos(lat * Math.PI/180) *
+                          Math.sin(dLng/2) * Math.sin(dLng/2);
+                const distKm = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+                if (distKm <= z.raioKm) {
+                    console.log('[ZONA PRECO] Origem dentro da zona "' + z.nome + '" (dist: ' + distKm.toFixed(2) + 'km / raio: ' + z.raioKm + 'km) — R$ ' + z.precoFixo);
+                    return { zona: z, precoFixo: z.precoFixo, distKm };
+                }
+            }
+            return null;
+        } catch(e) {
+            console.log('[ZONA PRECO] Erro:', e.message);
+            return null;
+        }
+    },
+
     // Buscar configuração de preço do admin
     async getConfig(adminId) {
         if (!adminId) return configPadrao;
