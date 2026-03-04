@@ -54,7 +54,210 @@ const DespachoService = {
     },
 
     // ==================== DESPACHO DE CORRIDA ====================
+    async despacharPorPonto(corrida, adminId) {
+        // Verifica se há pontos ativos próximos à origem da corrida
+        try {
+            const { PontoEmbarque, FilaPonto } = require('../models');
+            const agora = new Date();
+            const diaSemana = agora.getDay();
+            const hora = agora.getHours().toString().padStart(2,'0') + ':' + agora.getMinutes().toString().padStart(2,'0');
+            const pontos = await PontoEmbarque.find({
+                adminId, ativo: true,
+                diasSemana: diaSemana,
+                horarioAbertura: { $lte: hora },
+                horarioFechamento: { $gte: hora }
+            }).lean();
+
+            if (!pontos.length) return false;
+
+            // Encontrar ponto mais próximo da origem
+            let pontoMaisProximo = null, menorDist = Infinity;
+            const origemLat = corrida.origem?.lat || corrida.origemLat;
+            const origemLng = corrida.origem?.lng || corrida.origemLng;
+
+            if (origemLat && origemLng) {
+                for (const p of pontos) {
+                    if (!p.lat || !p.lng) continue;
+                    const dist = Math.sqrt(Math.pow(p.lat - origemLat, 2) + Math.pow(p.lng - origemLng, 2));
+                    if (dist < menorDist) { menorDist = dist; pontoMaisProximo = p; }
+                }
+            } else {
+                pontoMaisProximo = pontos[0];
+            }
+
+            if (!pontoMaisProximo) return false;
+
+            // Pegar fila do ponto (ordem de chegada)
+            const filaAtual = await FilaPonto.find({
+                pontoId: pontoMaisProximo._id, status: 'aguardando'
+            }).sort({ ordemChegada: 1 }).lean();
+
+            if (!filaAtual.length) return false;
+
+            // Notificar motoristas do ponto (até maxCorridasPonto)
+            const max = pontoMaisProximo.maxCorridasPonto || 5;
+            const motoristasDoPonto = filaAtual.slice(0, max).map(f => ({ _id: f.motoristaId, nomeCompleto: f.motoristaNome }));
+
+            console.log(`[PONTO] Despachando para ${motoristasDoPonto.length} motoristas do ponto ${pontoMaisProximo.nome}`);
+            await this.despacharCorrida(corrida, motoristasDoPonto, adminId);
+
+            // Após 1 minuto sem aceite, broadcast para todos
+            setTimeout(async () => {
+                try {
+                    const { Corrida, Motorista } = require('../models');
+                    const corridaAtual = await Corrida.findById(corrida._id).lean();
+                    if (corridaAtual && corridaAtual.status === 'pendente') {
+                        console.log('[PONTO] 1 min sem aceite — broadcast para todos');
+                        const todos = await Motorista.find({ adminId, online: true }).lean();
+                        await DespachoService.despacharCorrida(corridaAtual, todos, adminId);
+                    }
+                } catch(e) { console.log('[PONTO TIMEOUT]', e.message); }
+            }, 60000);
+
+            return true;
+        } catch(e) {
+            console.log('[PONTO] Erro:', e.message);
+            return false;
+        }
+    },
+
     async despacharCorrida(corrida, motoristasDisponiveis, adminId = null) {
+        // ===== SISTEMA DE PONTOS =====
+        try {
+            const { PontoEmbarque, FilaPonto } = require('../models');
+            const adminIdStr = (adminId || corrida.adminId)?.toString();
+
+            // Encontrar ponto mais próximo da origem da corrida
+            const pontos = await PontoEmbarque.find({ adminId: adminIdStr, ativo: true });
+            let pontoMaisProximo = null;
+            let menorDistancia = Infinity;
+
+            if (pontos.length > 0 && corrida.origem?.lat && corrida.origem?.lng) {
+                for (const p of pontos) {
+                    if (!p.lat || !p.lng) continue;
+                    const dist = Math.sqrt(Math.pow(p.lat - corrida.origem.lat, 2) + Math.pow(p.lng - corrida.origem.lng, 2));
+                    if (dist < menorDistancia) { menorDistancia = dist; pontoMaisProximo = p; }
+                }
+            }
+
+            if (pontoMaisProximo && menorDistancia < 0.1) { // ~10km
+                // Verificar fila do ponto
+                const fila = await FilaPonto.find({ pontoId: pontoMaisProximo._id, status: 'aguardando' }).sort({ ordemChegada: 1 });
+                
+                if (fila.length > 0) {
+                    console.log(`[PONTOS] Corrida vai para fila do ponto ${pontoMaisProximo.nome} — ${fila.length} motoristas`);
+                    
+                    // Notificar motoristas do ponto por ordem de chegada (até maxCorridasPonto)
+                    const limite = pontoMaisProximo.maxCorridasPonto || 3;
+                    const motoristasNoPonto = fila.slice(0, limite).map(f => f.motoristaId.toString());
+                    
+                    // Filtrar motoristasDisponiveis pelos que estão no ponto
+                    const motoristasFilados = motoristasDisponiveis.filter(m => motoristasNoPonto.includes(m._id.toString()));
+                    
+                    if (motoristasFilados.length > 0) {
+                        // Notificar só os do ponto por 1 minuto
+                        console.log(`[PONTOS] Notificando ${motoristasFilados.length} motoristas do ponto por 60s`);
+                        
+                        // Despachar só para os do ponto
+                        const corridaId = corrida._id.toString();
+                        global._corridasPonto = global._corridasPonto || new Map();
+                        global._corridasPonto.set(corridaId, { pontoId: pontoMaisProximo._id, adminId: adminIdStr });
+                        
+                        // Após 60s sem aceite, broadcast para todos
+                        setTimeout(async () => {
+                            try {
+                                const { Corrida } = require('../models');
+                                const corridaAtual = await Corrida.findById(corridaId);
+                                if (corridaAtual && corridaAtual.status === 'pendente') {
+                                    console.log('[PONTOS] Timeout 60s — broadcast para todos');
+                                    global._corridasPonto.delete(corridaId);
+                                    // Notificar todos os motoristas disponíveis
+                                    for (const mot of motoristasDisponiveis) {
+                                        try {
+                                            if (mot.pushSubscription) {
+                                                const GPSIntegradoService = require('./gps-integrado.service');
+                                                await GPSIntegradoService.notificarMotorista(mot, corridaAtual);
+                                            }
+                                        } catch(e) {}
+                                    }
+                                }
+                            } catch(e) { console.log('[PONTOS] Erro timeout:', e.message); }
+                        }, 60000);
+                        
+                        // Substituir lista de motoristas pelos do ponto
+                        motoristasDisponiveis = motoristasFilados;
+                    }
+                }
+            }
+        } catch(pontosErr) { console.log('[PONTOS] Erro sistema pontos:', pontosErr.message); }
+        // ===== SISTEMA DE PONTOS =====
+        try {
+            const { PontoEmbarque, FilaPonto } = require('../models');
+            const adminIdStr = (adminId || corrida.adminId)?.toString();
+
+            // Encontrar ponto mais próximo da origem da corrida
+            const pontos = await PontoEmbarque.find({ adminId: adminIdStr, ativo: true });
+            let pontoMaisProximo = null;
+            let menorDistancia = Infinity;
+
+            if (pontos.length > 0 && corrida.origem?.lat && corrida.origem?.lng) {
+                for (const p of pontos) {
+                    if (!p.lat || !p.lng) continue;
+                    const dist = Math.sqrt(Math.pow(p.lat - corrida.origem.lat, 2) + Math.pow(p.lng - corrida.origem.lng, 2));
+                    if (dist < menorDistancia) { menorDistancia = dist; pontoMaisProximo = p; }
+                }
+            }
+
+            if (pontoMaisProximo && menorDistancia < 0.1) { // ~10km
+                // Verificar fila do ponto
+                const fila = await FilaPonto.find({ pontoId: pontoMaisProximo._id, status: 'aguardando' }).sort({ ordemChegada: 1 });
+                
+                if (fila.length > 0) {
+                    console.log(`[PONTOS] Corrida vai para fila do ponto ${pontoMaisProximo.nome} — ${fila.length} motoristas`);
+                    
+                    // Notificar motoristas do ponto por ordem de chegada (até maxCorridasPonto)
+                    const limite = pontoMaisProximo.maxCorridasPonto || 3;
+                    const motoristasNoPonto = fila.slice(0, limite).map(f => f.motoristaId.toString());
+                    
+                    // Filtrar motoristasDisponiveis pelos que estão no ponto
+                    const motoristasFilados = motoristasDisponiveis.filter(m => motoristasNoPonto.includes(m._id.toString()));
+                    
+                    if (motoristasFilados.length > 0) {
+                        // Notificar só os do ponto por 1 minuto
+                        console.log(`[PONTOS] Notificando ${motoristasFilados.length} motoristas do ponto por 60s`);
+                        
+                        // Despachar só para os do ponto
+                        const corridaId = corrida._id.toString();
+                        global._corridasPonto = global._corridasPonto || new Map();
+                        global._corridasPonto.set(corridaId, { pontoId: pontoMaisProximo._id, adminId: adminIdStr });
+                        
+                        // Após 60s sem aceite, broadcast para todos
+                        setTimeout(async () => {
+                            try {
+                                const { Corrida } = require('../models');
+                                const corridaAtual = await Corrida.findById(corridaId);
+                                if (corridaAtual && corridaAtual.status === 'pendente') {
+                                    console.log('[PONTOS] Timeout 60s — broadcast para todos');
+                                    global._corridasPonto.delete(corridaId);
+                                    // Notificar todos os motoristas disponíveis
+                                    for (const mot of motoristasDisponiveis) {
+                                        try {
+                                            if (mot.pushSubscription) {
+                                                const GPSIntegradoService = require('./gps-integrado.service');
+                                                await GPSIntegradoService.notificarMotorista(mot, corridaAtual);
+                                            }
+                                        } catch(e) {}
+                                    }
+                                }
+                            } catch(e) { console.log('[PONTOS] Erro timeout:', e.message); }
+                        }, 60000);
+                        
+                        // Substituir lista de motoristas pelos do ponto
+                        motoristasDisponiveis = motoristasFilados;
+                    }
+                }
+            }
+        } catch(pontosErr) { console.log('[PONTOS] Erro sistema pontos:', pontosErr.message); }
         // Buscar foto do cliente no WhatsApp e salvar endereço em texto
         try {
             const { InstanciaWhatsapp } = require('../models');

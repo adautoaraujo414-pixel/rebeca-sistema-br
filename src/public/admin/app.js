@@ -457,3 +457,65 @@ async function carregarIntermunicipais() { const p=await api('/api/precos-interm
 function abrirModalIntermunicipal() { document.getElementById('formIntermunicipal').reset(); abrirModal('modalIntermunicipal'); }
 document.getElementById('formIntermunicipal').addEventListener('submit', async(e)=>{ e.preventDefault(); const d={cidadeOrigem:document.getElementById('intOrigem').value,cidadeDestino:document.getElementById('intDestino').value,distanciaKm:parseFloat(document.getElementById('intDistancia').value)||null,precoFixo:parseFloat(document.getElementById('intPreco').value),tempoEstimadoMin:parseInt(document.getElementById('intTempo').value)||null}; await api('/api/precos-intermunicipais','POST',d); fecharModal('modalIntermunicipal'); carregarIntermunicipais(); });
 async function excluirIntermunicipal(id) { if(confirm('Excluir rota?')) { await api('/api/precos-intermunicipais/'+id,'DELETE'); carregarIntermunicipais(); }}
+
+// ===== SISTEMA DE PONTOS =====
+async function carregarPontos() {
+    try {
+        const pontos = await api('/api/pontos');
+        const el = document.getElementById('listaPontos');
+        if (!pontos.length) { el.innerHTML = '<p style="color:#999">Nenhum ponto cadastrado.</p>'; return; }
+        el.innerHTML = pontos.map(p => `
+            <div style="background:#f8f9fa;border-radius:8px;padding:15px;margin-bottom:10px;border-left:4px solid ${p.ativo ? '#27ae60' : '#e74c3c'}">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <div>
+                        <strong>${p.nome}</strong> 
+                        <span class="badge ${p.ativo ? 'green' : 'red'}">${p.ativo ? '✅ Ativo' : '❌ Inativo'}</span><br>
+                        <small style="color:#666">📍 ${p.endereco}</small><br>
+                        <small style="color:#666">⏰ ${p.horarioAbertura} - ${p.horarioFechamento} | 
+                        🚗 ${p.maxCorridasPonto} corridas/ponto → broadcast após ${p.maxCorridasBroadcast}</small>
+                    </div>
+                    <div>
+                        <button class="btn btn-sm" style="background:#f39c12;color:white" onclick="togglePonto('${p._id}', ${!p.ativo})">${p.ativo ? '⏸ Pausar' : '▶ Ativar'}</button>
+                        <button class="btn btn-sm btn-danger" onclick="deletarPonto('${p._id}')">🗑</button>
+                        <button class="btn btn-sm btn-primary" onclick="verFilaPonto('${p._id}', '${p.nome}')">👥 Fila</button>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    } catch(e) { console.log('Erro pontos:', e); }
+}
+
+async function criarPonto() {
+    const nome = document.getElementById('pontoNome').value.trim();
+    const endereco = document.getElementById('pontoEndereco').value.trim();
+    if (!nome || !endereco) return alert('Preencha nome e endereço');
+    const diasSemana = [...document.querySelectorAll('.dia-check:checked')].map(c => parseInt(c.value));
+    const body = {
+        nome, endereco,
+        horarioAbertura: document.getElementById('pontoAbertura').value,
+        horarioFechamento: document.getElementById('pontoFechamento').value,
+        maxCorridasPonto: parseInt(document.getElementById('pontoMaxPonto').value) || 3,
+        maxCorridasBroadcast: parseInt(document.getElementById('pontoMaxBroadcast').value) || 5,
+        diasSemana
+    };
+    await api('/api/pontos', { method: 'POST', body: JSON.stringify(body) });
+    carregarPontos();
+    document.getElementById('pontoNome').value = '';
+    document.getElementById('pontoEndereco').value = '';
+}
+
+async function togglePonto(id, ativo) {
+    await api(`/api/pontos/${id}`, { method: 'PUT', body: JSON.stringify({ ativo }) });
+    carregarPontos();
+}
+
+async function deletarPonto(id) {
+    if (!confirm('Deletar ponto?')) return;
+    await api(`/api/pontos/${id}`, { method: 'DELETE' });
+    carregarPontos();
+}
+
+async function verFilaPonto(id, nome) {
+    const fila = await api(`/api/pontos/${id}/fila`);
+    alert(`Fila do ponto ${nome}:\n` + (fila.length ? fila.map((f,i) => `${i+1}. ${f.motoristaNome} — chegou ${new Date(f.chegadaEm).toLocaleTimeString('pt-BR')}`).join('\n') : 'Fila vazia'));
+}

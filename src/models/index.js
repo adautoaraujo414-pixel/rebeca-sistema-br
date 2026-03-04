@@ -426,6 +426,39 @@ const FilaEsperaSchema = new mongoose.Schema({
 const FilaEspera = mongoose.model('FilaEspera', FilaEsperaSchema);
 module.exports.FilaEspera = FilaEspera;
 
+
+// ==================== PONTOS DE EMBARQUE ====================
+const PontoEmbarqueSchema = new mongoose.Schema({
+    adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin', required: true, index: true },
+    nome: { type: String, required: true },
+    endereco: { type: String, required: true },
+    lat: Number,
+    lng: Number,
+    ativo: { type: Boolean, default: true },
+    diasSemana: [{ type: Number }], // 0=Dom, 1=Seg... 6=Sab
+    horarioAbertura: String, // ex: "06:00"
+    horarioFechamento: String, // ex: "22:00"
+    maxCorridasPonto: { type: Number, default: 3 }, // corridas por ponto antes de broadcast
+    maxCorridasBroadcast: { type: Number, default: 5 }, // corridas para todos
+    createdAt: { type: Date, default: Date.now }
+});
+
+const FilaPontoSchema = new mongoose.Schema({
+    adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin', required: true, index: true },
+    pontoId: { type: mongoose.Schema.Types.ObjectId, ref: 'PontoEmbarque', required: true },
+    motoristaId: { type: mongoose.Schema.Types.ObjectId, ref: 'Motorista', required: true },
+    motoristaNome: String,
+    chegadaEm: { type: Date, default: Date.now },
+    ordemChegada: Number,
+    status: { type: String, default: 'aguardando' } // aguardando, em_corrida, saiu
+});
+FilaPontoSchema.index({ pontoId: 1, status: 1 });
+
+const PontoEmbarque = mongoose.model('PontoEmbarque', PontoEmbarqueSchema);
+const FilaPonto = mongoose.model('FilaPonto', FilaPontoSchema);
+module.exports.PontoEmbarque = PontoEmbarque;
+module.exports.FilaPonto = FilaPonto;
+
 // Dedup de mensagens WhatsApp — TTL 10 minutos
 const MsgDedupSchema = new mongoose.Schema({
     msgId: { type: String, required: true, unique: true },
@@ -433,3 +466,67 @@ const MsgDedupSchema = new mongoose.Schema({
 });
 const MsgDedup = mongoose.model('MsgDedup', MsgDedupSchema);
 module.exports.MsgDedup = MsgDedup;
+
+// ==================== PONTOS DE EMBARQUE ====================
+const PontoEmbarqueSchema = new mongoose.Schema({
+    adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin', required: true, index: true },
+    nome: { type: String, required: true },
+    endereco: { type: String, required: true },
+    lat: Number,
+    lng: Number,
+    ativo: { type: Boolean, default: true },
+    diasSemana: [{ type: Number }], // 0=Dom, 1=Seg ... 6=Sab
+    horarioAbertura: String, // "06:00"
+    horarioFechamento: String, // "22:00"
+    corridasPorPonto: { type: Number, default: 3 }, // qtd corridas exclusivas do ponto
+    corridasParaTodos: { type: Number, default: 1 }, // após quantas corridas no ponto, joga pra todos
+    createdAt: { type: Date, default: Date.now }
+});
+const PontoEmbarque = mongoose.model('PontoEmbarque', PontoEmbarqueSchema);
+module.exports.PontoEmbarque = PontoEmbarque;
+
+// Fila de motoristas no ponto
+const FilaPontoSchema = new mongoose.Schema({
+    adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin', required: true, index: true },
+    pontoId: { type: mongoose.Schema.Types.ObjectId, ref: 'PontoEmbarque', required: true },
+    motoristaId: { type: mongoose.Schema.Types.ObjectId, ref: 'Motorista', required: true },
+    motoristaNome: String,
+    chegadaEm: { type: Date, default: Date.now },
+    posicao: { type: Number, default: 0 },
+    ativo: { type: Boolean, default: true }
+});
+FilaPontoSchema.index({ pontoId: 1, chegadaEm: 1 });
+const FilaPonto = mongoose.model('FilaPonto', FilaPontoSchema);
+module.exports.FilaPonto = FilaPonto;
+
+// ==================== PONTOS DE EMBARQUE ====================
+const PontoEmbarqueSchema = new mongoose.Schema({
+    adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin', required: true, index: true },
+    nome: { type: String, required: true },
+    endereco: { type: String, required: true },
+    lat: Number,
+    lng: Number,
+    ativo: { type: Boolean, default: true },
+    diasSemana: [{ type: Number }], // 0=Dom, 1=Seg... 6=Sab
+    horarioAbertura: String, // "08:00"
+    horarioFechamento: String, // "22:00"
+    maxCorridasPonto: { type: Number, default: 5 },
+    maxCorridasBroadcast: { type: Number, default: 3 },
+    createdAt: { type: Date, default: Date.now }
+});
+
+const FilaPontoSchema = new mongoose.Schema({
+    adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin', required: true, index: true },
+    pontoId: { type: mongoose.Schema.Types.ObjectId, ref: 'PontoEmbarque', required: true },
+    motoristaId: { type: mongoose.Schema.Types.ObjectId, ref: 'Motorista', required: true },
+    motoristaNome: String,
+    ordemChegada: Number,
+    entradaEm: { type: Date, default: Date.now },
+    status: { type: String, default: 'aguardando', enum: ['aguardando', 'em_corrida', 'saiu'] }
+});
+FilaPontoSchema.index({ pontoId: 1, status: 1, ordemChegada: 1 });
+
+const PontoEmbarque = mongoose.model('PontoEmbarque', PontoEmbarqueSchema);
+const FilaPonto = mongoose.model('FilaPonto', FilaPontoSchema);
+module.exports.PontoEmbarque = PontoEmbarque;
+module.exports.FilaPonto = FilaPonto;
