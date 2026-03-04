@@ -31,8 +31,10 @@ router.post('/login', async (req, res) => {
 });
 
 // Perfil
-router.get('/perfil', auth, (req, res) => {
-    res.json({ motorista: req.motorista });
+router.get('/perfil', auth, async (req, res) => {
+    try {
+        res.json({ motorista: req.motorista });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
 // Atualizar GPS
@@ -506,8 +508,12 @@ router.post('/avaliar', auth, async (req, res) => {
 
 // Push: obter VAPID public key
 router.get('/push/vapid-key', (req, res) => {
-    const PushService = require('../services/push.service');
-    res.json({ key: PushService.VAPID_PUBLIC });
+    try {
+        const PushService = require('../services/push.service');
+        res.json({ key: PushService.VAPID_PUBLIC || null });
+    } catch(e) {
+        res.json({ key: null });
+    }
 });
 
 // Push: salvar subscription

@@ -78,7 +78,7 @@ setInterval(async () => {
             conversa.avisouTimeout = true;
             conversas.set(telefone, conversa);
             try {
-                const { InstanciaWhatsapp } = require('./models') || require('../models');
+                const { InstanciaWhatsapp } = require('../models');
                 const EvolutionMultiService = require('./evolution-multi.service');
                 if (conversa.instanciaId) {
                     await EvolutionMultiService.enviarMensagem(conversa.instanciaId, telefone, '⏰ Ainda está aí? Sua conversa expira em 5 minutos por inatividade. Me manda uma mensagem para continuar!');

@@ -117,6 +117,9 @@ async function carregarDespacho() {
     document.getElementById('tempoAceite').value = cfg.tempoAceiteSegundos || 30;
     document.getElementById('modoBroadcast').classList.toggle('active', cfg.modo === 'broadcast');
     document.getElementById('modoProximo').classList.toggle('active', cfg.modo === 'proximo');
+    // Carregar regras sequenciais
+    regrasDespacho = cfg.regras || [{ tipo: 'broadcast', tempoEsperaSegundos: 30 }];
+    renderizarRegras();
     const corridas = await api('/api/corridas?status=pendente');
     document.getElementById('corridasPendentesDespacho').innerHTML = corridas.length ? corridas.map(c=>`<div class="corrida-despacho aguardando"><div style="display:flex;justify-content:space-between;align-items:center;"><div><strong>${c.clienteNome||'Cliente'}</strong><br><small>📍 ${(c.origem?.endereco||c.origem||'').toString().slice(0,30)}...</small></div><div><button class="btn btn-primary btn-sm" onclick="despacharCorrida('${c.id}')">📡 Despachar</button></div></div></div>`).join('') : '<p style="color:#999;text-align:center;">Nenhuma pendente</p>';
 }
