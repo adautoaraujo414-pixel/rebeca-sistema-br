@@ -226,8 +226,6 @@ async function salvarTempoAceite() {
     if (regrasDespacho[0]) regrasDespacho[0].tempoEsperaSegundos = t;
     await salvarRegras();
 }
- await api('/api/despacho/config', 'PUT', { modo }); carregarDespacho(); }
-async function salvarTempoAceite() { const tempo = document.getElementById('tempoAceite').value; await api('/api/despacho/config', 'PUT', { tempoAceiteSegundos: parseInt(tempo) }); alert('✅ Salvo!'); }
 
 // MOTORISTAS
 async function carregarMotoristas() {
