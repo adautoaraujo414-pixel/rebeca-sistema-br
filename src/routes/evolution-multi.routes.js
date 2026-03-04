@@ -154,10 +154,21 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                     msg.message?.imageMessage?.caption;
                 if (!temConteudoUtil && msg.messageType !== 'audioMessage' && msg.messageType !== 'locationMessage') continue;
                 
-                // Dedup por messageId
+                // Dedup por messageId — persistido no MongoDB (sobrevive reinício)
                 const msgId = msg.key?.id;
-                if (msgId && global._msgProcessadas.has(msgId)) { console.log('[DEDUP] Msg duplicada ignorada:', msgId); continue; }
-                if (msgId) global._msgProcessadas.set(msgId, agora);
+                if (msgId) {
+                    try {
+                        const { MsgDedup } = require('../models');
+                        const existe = await MsgDedup.findOne({ msgId });
+                        if (existe) { console.log('[DEDUP] Msg duplicada ignorada:', msgId); continue; }
+                        await MsgDedup.create({ msgId });
+                    } catch(dedupErr) {
+                        // fallback: usar memória se modelo não existir ainda
+                        if (!global._msgProcessadas) global._msgProcessadas = new Map();
+                        if (global._msgProcessadas.has(msgId)) continue;
+                        global._msgProcessadas.set(msgId, agora);
+                    }
+                }
                 
                 const remoteJid = msg.key?.remoteJid || '';
                 if (remoteJid.includes('@g.us')) continue; // Ignorar grupos

@@ -425,3 +425,11 @@ const FilaEsperaSchema = new mongoose.Schema({
 
 const FilaEspera = mongoose.model('FilaEspera', FilaEsperaSchema);
 module.exports.FilaEspera = FilaEspera;
+
+// Dedup de mensagens WhatsApp — TTL 10 minutos
+const MsgDedupSchema = new mongoose.Schema({
+    msgId: { type: String, required: true, unique: true },
+    criadoEm: { type: Date, default: Date.now, expires: 600 }
+});
+const MsgDedup = mongoose.model('MsgDedup', MsgDedupSchema);
+module.exports.MsgDedup = MsgDedup;
