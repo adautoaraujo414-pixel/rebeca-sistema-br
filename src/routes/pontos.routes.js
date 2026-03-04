@@ -142,4 +142,16 @@ router.get('/motorista/:adminId', async (req, res) => {
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
+
+// Posição atual do motorista na fila (qualquer central)
+router.get('/motorista-fila/:motoristaId', async (req, res) => {
+    try {
+        const fila = await FilaPonto.findOne({ motoristaId: req.params.motoristaId, status: 'aguardando' });
+        if (!fila) return res.json({ pontoId: null });
+        const ponto = await PontoEmbarque.findById(fila.pontoId);
+        const totalFila = await FilaPonto.countDocuments({ pontoId: fila.pontoId, status: 'aguardando' });
+        res.json({ pontoId: fila.pontoId?.toString(), ordemChegada: fila.ordemChegada, totalFila, nomeCentral: ponto?.nome || '' });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
 module.exports = router;

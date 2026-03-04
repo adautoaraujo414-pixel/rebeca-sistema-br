@@ -478,7 +478,32 @@ body.dark-mode .chat-msg.received .bubble { background: #252542 !important; colo
             </div>
 
             <!-- MENU/MAIS PAGE -->
-            <div id="pageMenu" class="page">
+            <div id="pageCentrais" class="page">
+                <div style="padding:16px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                        <h2 style="color:#00d4ff;font-size:1.1em;margin:0;">🏢 Centrais de Embarque</h2>
+                        <div style="display:flex;align-items:center;gap:6px;">
+                            <div id="centraisLiveDoc" style="width:7px;height:7px;border-radius:50%;background:#00ff88;animation:pulse 2s infinite;"></div>
+                            <span style="font-size:0.75em;color:#666;" id="centraisAtualizadoEm">--:--</span>
+                        </div>
+                    </div>
+                    <!-- Status atual do motorista na fila -->
+                    <div id="minhaFilaInfo" style="display:none;background:linear-gradient(135deg,#1e3a2f,#1a2e24);border:1px solid #00ff88;border-radius:10px;padding:14px;margin-bottom:16px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;">
+                            <div>
+                                <div style="color:#00ff88;font-weight:700;font-size:0.95em;">✅ Você está na fila</div>
+                                <div style="color:#ccc;font-size:0.85em;margin-top:4px;" id="minhaFilaNome"></div>
+                                <div style="color:#aaa;font-size:0.8em;margin-top:2px;" id="minhaFilaPosicao"></div>
+                            </div>
+                            <button onclick="sairDaCentral()" style="background:#e74c3c;color:white;border:none;padding:8px 14px;border-radius:8px;font-weight:600;cursor:pointer;font-size:0.85em;">🚪 Sair</button>
+                        </div>
+                    </div>
+                    <!-- Lista de centrais -->
+                    <div id="listaCentraisMotorista"><div style="text-align:center;padding:40px;color:#666;"><div style="font-size:2em;margin-bottom:8px;">🏢</div><p>Carregando centrais...</p></div></div>
+                </div>
+            </div>
+
+                        <div id="pageMenu" class="page">
                 <div style="padding:15px;">
                     <h3 style="margin-bottom:15px;">⚙️ Menu</h3>
                     
@@ -543,6 +568,10 @@ body.dark-mode .chat-msg.received .bubble { background: #252542 !important; colo
             <div class="nav-item" onclick="showPage('pageFinanceiro')">
                 <span class="icon">💰</span>
                 <span class="label">Caixa</span>
+            </div>
+            <div class="nav-item" onclick="showPage('pageCentrais')">
+                <span class="icon">🏢</span>
+                <span class="label">Centrais</span>
             </div>
             <div class="nav-item" onclick="showPage('pageRelatorios')">
                 <span class="icon">📊</span>
