@@ -13,7 +13,7 @@ document.querySelectorAll('.menu-item').forEach(item => {
 });
 
 function carregarPagina(p) {
-    const fn = { dashboard:carregarDashboard, mapa:carregarMapa, corridas:carregarCorridas, despacho:carregarDespacho, motoristas:carregarMotoristas, clientes:carregarClientes, rotas:carregarRotas, faturamento:carregarFaturamento, precos:carregarPrecos, ranking:carregarRanking, antifraude:carregarAntiFraude, blacklist:carregarBlacklist, reclamacoes:carregarReclamacoes, whatsapp:carregarWhatsApp, usuarios:carregarUsuarios, areas:carregarAreas, config:carregarConfig, logs:carregarLogs };
+    const fn = { dashboard:carregarDashboard, mapa:carregarMapa, corridas:carregarCorridas, despacho:carregarDespacho, motoristas:carregarMotoristas, clientes:carregarClientes, rotas:carregarRotas, faturamento:carregarFaturamento, precos:carregarPrecos, ranking:carregarRanking, antifraude:carregarAntiFraude, blacklist:carregarBlacklist, reclamacoes:carregarReclamacoes, whatsapp:carregarWhatsApp, usuarios:carregarUsuarios, areas:carregarAreas, config:carregarConfig, logs:carregarLogs, fila:carregarFilaEspera, pontos:carregarPontos };
     if (fn[p]) fn[p]();
 }
 
@@ -566,6 +566,40 @@ document.getElementById('formIntermunicipal').addEventListener('submit', async(e
 async function excluirIntermunicipal(id) { if(confirm('Excluir rota?')) { await api('/api/precos-intermunicipais/'+id,'DELETE'); carregarIntermunicipais(); }}
 
 // ===== SISTEMA DE PONTOS =====
+async function carregarFilaEspera() {
+    try {
+        const fila = await api('/api/fila-espera');
+        const el = document.getElementById('filaEsperaContainer');
+        if (!el) return;
+        const lista = fila.fila || fila || [];
+        if (!lista.length) { el.innerHTML = '<p style="color:#999;text-align:center;">Fila vazia</p>'; return; }
+        el.innerHTML = `<table><thead><tr><th>#</th><th>Cliente</th><th>Origem</th><th>Aguardando</th><th>Ação</th></tr></thead><tbody>
+        ${lista.map((f,i) => `<tr>
+            <td>${i+1}</td>
+            <td>${f.clienteNome||f.nome||'-'}</td>
+            <td>${(f.origem?.endereco||f.origem||'-').toString().slice(0,30)}</td>
+            <td>${f.criadoEm ? Math.round((Date.now()-new Date(f.criadoEm))/60000)+'min' : '-'}</td>
+            <td><button class="btn btn-danger btn-sm" onclick="removerFila('${f._id}')">✖ Remover</button></td>
+        </tr>`).join('')}
+        </tbody></table>`;
+    } catch(e) { console.log('Erro fila:', e); }
+}
+
+async function removerFila(id) {
+    if (!confirm('Remover da fila?')) return;
+    await api('/api/fila-espera/' + id, 'DELETE');
+    carregarFilaEspera();
+}
+
+async function abrirModalNovoPonto() {
+    const nome = prompt('Nome da central/ponto:');
+    if (!nome) return;
+    const endereco = prompt('Endereço:');
+    if (!endereco) return;
+    await api('/api/pontos', 'POST', { nome, endereco, ativo: true });
+    carregarPontos();
+}
+
 async function carregarPontos() {
     try {
         const pontos = await api('/api/pontos');

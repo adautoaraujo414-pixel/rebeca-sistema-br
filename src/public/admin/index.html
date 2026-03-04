@@ -627,7 +627,18 @@
             </div>
 
             <!-- LOGS -->
-            <div id="logs" class="page">
+            <div id="fila" class="page">
+                <h2 style="margin-bottom:20px;">⏳ Fila de Espera</h2>
+                <div id="filaEsperaContainer"><p style="color:#999;text-align:center;">Carregando...</p></div>
+            </div>
+
+            <div id="pontos" class="page">
+                <h2 style="margin-bottom:20px;">🏢 Centrais / Pontos</h2>
+                <button class="btn btn-primary" onclick="abrirModalNovoPonto()" style="margin-bottom:20px;">➕ Nova Central</button>
+                <div id="pontosContainer"><p style="color:#999;text-align:center;">Carregando...</p></div>
+            </div>
+
+                        <div id="logs" class="page">
                 <h2 style="margin-bottom:20px;">📜 Logs</h2>
                 <div class="cards">
                     <div class="card blue"><h3>Total</h3><div class="value" id="logTotal">0</div></div>
