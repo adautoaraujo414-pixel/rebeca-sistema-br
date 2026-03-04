@@ -8,35 +8,44 @@ const LogsService = require('../services/logs.service');
 
 // ==================== CONFIGURAÇÃO ====================
 router.get('/config', (req, res) => {
-    const adminId = req.query.adminId || req.headers['x-admin-id'];
     res.json({
         modo: DespachoService.getModo(),
         tempoAceiteSegundos: DespachoService.tempoAceiteSegundos,
-        modos: [
-            { id: 'broadcast', nome: 'Broadcast (Todos)', descricao: 'Envia para todos motoristas, primeiro que aceitar leva' },
-            { id: 'proximo', nome: 'Mais Próximo', descricao: 'Envia para o motorista mais próximo do cliente' }
+        regras: DespachoService.getRegras(),
+        tiposDisponiveis: [
+            { id: 'central', nome: '🏢 Central', descricao: 'Oferece para motoristas na fila da central mais próxima, um por vez' },
+            { id: 'proximo', nome: '📍 Mais Próximo', descricao: 'Oferece para o motorista com GPS mais próximo da origem' },
+            { id: 'broadcast', nome: '📢 Broadcast', descricao: 'Envia para todos os motoristas disponíveis' }
         ]
     });
 });
 
 router.put('/config', (req, res) => {
-    const { modo, tempoAceiteSegundos } = req.body;
-    
+    const { modo, tempoAceiteSegundos, regras } = req.body;
+
+    // Novo sistema de regras sequenciais
+    if (regras && Array.isArray(regras)) {
+        const result = DespachoService.setRegras(regras);
+        if (result.error) return res.status(400).json(result);
+        LogsService.registrar({ tipo: 'config', acao: 'Regras despacho alteradas', detalhes: { regras } });
+        return res.json({ sucesso: true, regras: DespachoService.getRegras() });
+    }
+
+    // Compatibilidade legada
     if (modo) {
         const result = DespachoService.setModo(modo);
         if (result.error) return res.status(400).json(result);
     }
-    
     if (tempoAceiteSegundos) {
         DespachoService.setTempoAceite(parseInt(tempoAceiteSegundos));
     }
-    
+
     LogsService.registrar({ tipo: 'config', acao: 'Modo despacho alterado', detalhes: { modo, tempoAceiteSegundos } });
-    
     res.json({
         sucesso: true,
         modo: DespachoService.getModo(),
-        tempoAceiteSegundos: DespachoService.tempoAceiteSegundos
+        tempoAceiteSegundos: DespachoService.tempoAceiteSegundos,
+        regras: DespachoService.getRegras()
     });
 });
 

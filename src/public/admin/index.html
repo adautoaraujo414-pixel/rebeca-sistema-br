@@ -296,10 +296,33 @@
                     <div class="card purple"><h3>Online</h3><div class="value" id="motoristasDespacho">0</div></div>
                 </div>
                 <div class="panel">
-                    <h2>⚙️ Modo de Despacho</h2>
-                    <div class="modo-card" id="modoBroadcast" onclick="setModoDespacho('broadcast')"><h3><span class="modo-icon">📢</span> Broadcast</h3><p>Envia para TODOS, primeiro aceita.</p></div>
-                    <div class="modo-card" id="modoProximo" onclick="setModoDespacho('proximo')"><h3><span class="modo-icon">📍</span> Mais Próximo</h3><p>Envia para o mais perto do cliente.</p></div>
-                    <div class="form-group" style="margin-top:15px;"><label>Tempo aceite (seg)</label><input type="number" id="tempoAceite" value="30" style="width:100px;"><button class="btn btn-primary" onclick="salvarTempoAceite()" style="margin-left:10px;">Salvar</button></div>
+                    <h2>⚙️ Regras de Despacho</h2>
+                    <p style="color:#666;margin-bottom:15px;">Configure a sequência de despacho. A Rebeca tenta cada etapa antes de avançar para a próxima.</p>
+
+                    <!-- Etapas ativas -->
+                    <div id="regrasAtivas" style="margin-bottom:20px;"></div>
+
+                    <!-- Adicionar etapa -->
+                    <div style="background:#f8f9fa;border-radius:10px;padding:15px;margin-bottom:15px;">
+                        <h3 style="margin-bottom:10px;">➕ Adicionar Etapa</h3>
+                        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+                            <div>
+                                <label style="font-size:0.85em;color:#666;">Tipo</label><br>
+                                <select id="novaRegraTipo" style="padding:8px;border:1px solid #ddd;border-radius:6px;">
+                                    <option value="central">🏢 Central (fila por ordem)</option>
+                                    <option value="proximo">📍 Mais Próximo (GPS)</option>
+                                    <option value="broadcast">📢 Broadcast (todos)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="font-size:0.85em;color:#666;">Esperar (seg)</label><br>
+                                <input type="number" id="novaRegraTempo" value="30" min="5" max="300" style="padding:8px;border:1px solid #ddd;border-radius:6px;width:90px;">
+                            </div>
+                            <button class="btn btn-success" onclick="adicionarRegra()">➕ Adicionar</button>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary" onclick="salvarRegras()" style="width:100%;">💾 Salvar Regras</button>
                 </div>
                 <div class="panel"><h2>🚗 Pendentes</h2><div id="corridasPendentesDespacho"></div></div>
             </div>

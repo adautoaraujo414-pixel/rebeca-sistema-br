@@ -120,7 +120,113 @@ async function carregarDespacho() {
     const corridas = await api('/api/corridas?status=pendente');
     document.getElementById('corridasPendentesDespacho').innerHTML = corridas.length ? corridas.map(c=>`<div class="corrida-despacho aguardando"><div style="display:flex;justify-content:space-between;align-items:center;"><div><strong>${c.clienteNome||'Cliente'}</strong><br><small>📍 ${(c.origem?.endereco||c.origem||'').toString().slice(0,30)}...</small></div><div><button class="btn btn-primary btn-sm" onclick="despacharCorrida('${c.id}')">📡 Despachar</button></div></div></div>`).join('') : '<p style="color:#999;text-align:center;">Nenhuma pendente</p>';
 }
-async function setModoDespacho(modo) { await api('/api/despacho/config', 'PUT', { modo }); carregarDespacho(); }
+
+// ===== REGRAS DE DESPACHO =====
+let regrasDespacho = [];
+
+const tipoLabels = {
+    central: '🏢 Central',
+    proximo: '📍 Mais Próximo',
+    broadcast: '📢 Broadcast'
+};
+const tipoDesc = {
+    central: 'Fila da central por ordem de chegada',
+    proximo: 'Motorista com GPS mais próximo da origem',
+    broadcast: 'Todos os motoristas disponíveis'
+};
+const tipoCores = {
+    central: '#9b59b6',
+    proximo: '#3498db',
+    broadcast: '#27ae60'
+};
+
+function renderizarRegras() {
+    const el = document.getElementById('regrasAtivas');
+    if (!el) return;
+    if (!regrasDespacho.length) {
+        el.innerHTML = '<p style="color:#999;text-align:center;padding:20px;">Nenhuma regra configurada. Adicione pelo menos uma etapa.</p>';
+        return;
+    }
+    el.innerHTML = regrasDespacho.map((r, i) => `
+        <div style="background:white;border:2px solid ${tipoCores[r.tipo]};border-radius:10px;padding:15px;margin-bottom:10px;display:flex;align-items:center;gap:12px;">
+            <div style="background:${tipoCores[r.tipo]};color:white;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;flex-shrink:0;">${i+1}</div>
+            <div style="flex:1;">
+                <div style="font-weight:bold;color:${tipoCores[r.tipo]};">${tipoLabels[r.tipo]}</div>
+                <div style="font-size:0.82em;color:#666;">${tipoDesc[r.tipo]}</div>
+                <div style="font-size:0.82em;color:#999;margin-top:2px;">⏱ Aguarda <strong>${r.tempoEsperaSegundos}s</strong> antes de avançar</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:4px;">
+                ${i > 0 ? `<button onclick="moverRegra(${i},-1)" style="background:#eee;border:none;border-radius:4px;padding:3px 8px;cursor:pointer;">▲</button>` : ''}
+                ${i < regrasDespacho.length-1 ? `<button onclick="moverRegra(${i},1)" style="background:#eee;border:none;border-radius:4px;padding:3px 8px;cursor:pointer;">▼</button>` : ''}
+            </div>
+            <button onclick="removerRegra(${i})" style="background:#e74c3c;color:white;border:none;border-radius:6px;padding:6px 10px;cursor:pointer;">🗑</button>
+        </div>
+        ${i < regrasDespacho.length-1 ? '<div style="text-align:center;color:#999;font-size:0.8em;margin:-4px 0 6px;">⬇ se ninguém aceitar em ' + r.tempoEsperaSegundos + 's</div>' : ''}
+    `).join('');
+}
+
+function adicionarRegra() {
+    const tipo = document.getElementById('novaRegraTipo').value;
+    const tempo = parseInt(document.getElementById('novaRegraTempo').value) || 30;
+    // Broadcast só pode ser a última etapa
+    if (tipo === 'broadcast' && regrasDespacho.some(r => r.tipo === 'broadcast')) {
+        alert('Broadcast já adicionado. Só pode haver um broadcast, e deve ser a última etapa.');
+        return;
+    }
+    regrasDespacho.push({ tipo, tempoEsperaSegundos: tempo });
+    // Garantir broadcast sempre por último
+    const bc = regrasDespacho.filter(r => r.tipo === 'broadcast');
+    const outros = regrasDespacho.filter(r => r.tipo !== 'broadcast');
+    regrasDespacho = [...outros, ...bc];
+    renderizarRegras();
+}
+
+function removerRegra(i) {
+    regrasDespacho.splice(i, 1);
+    renderizarRegras();
+}
+
+function moverRegra(i, dir) {
+    const j = i + dir;
+    if (j < 0 || j >= regrasDespacho.length) return;
+    // Não mover broadcast para antes de outros
+    if (regrasDespacho[i].tipo === 'broadcast' && dir < 0) return;
+    if (regrasDespacho[j].tipo === 'broadcast' && dir > 0) return;
+    [regrasDespacho[i], regrasDespacho[j]] = [regrasDespacho[j], regrasDespacho[i]];
+    renderizarRegras();
+}
+
+async function salvarRegras() {
+    if (!regrasDespacho.length) return alert('Adicione pelo menos uma regra antes de salvar.');
+    try {
+        await api('/api/despacho/config', { method: 'PUT', body: JSON.stringify({ regras: regrasDespacho }) });
+        mostrarNotificacao('✅ Regras de despacho salvas!', 'success');
+    } catch(e) { alert('Erro ao salvar: ' + e.message); }
+}
+
+async function carregarConfigDespacho() {
+    try {
+        const config = await api('/api/despacho/config');
+        regrasDespacho = config.regras || [{ tipo: 'broadcast', tempoEsperaSegundos: 30 }];
+        renderizarRegras();
+        // Atualizar card de modo atual
+        const el = document.getElementById('modoDespachoAtual');
+        if (el) el.textContent = regrasDespacho.map(r => tipoLabels[r.tipo]).join(' → ');
+    } catch(e) { console.log('Erro config despacho:', e); }
+}
+
+// Compatibilidade legada
+async function setModoDespacho(modo) {
+    regrasDespacho = [{ tipo: modo === 'proximo' ? 'proximo' : 'broadcast', tempoEsperaSegundos: 30 }];
+    await salvarRegras();
+    renderizarRegras();
+}
+async function salvarTempoAceite() {
+    const t = parseInt(document.getElementById('tempoAceite')?.value) || 30;
+    if (regrasDespacho[0]) regrasDespacho[0].tempoEsperaSegundos = t;
+    await salvarRegras();
+}
+ await api('/api/despacho/config', 'PUT', { modo }); carregarDespacho(); }
 async function salvarTempoAceite() { const tempo = document.getElementById('tempoAceite').value; await api('/api/despacho/config', 'PUT', { tempoAceiteSegundos: parseInt(tempo) }); alert('✅ Salvo!'); }
 
 // MOTORISTAS
@@ -520,4 +626,41 @@ async function deletarPonto(id) {
 async function verFilaPonto(id, nome) {
     const fila = await api(`/api/pontos/${id}/fila`);
     alert(`Fila do ponto ${nome}:\n` + (fila.length ? fila.map((f,i) => `${i+1}. ${f.motoristaNome} — chegou ${new Date(f.chegadaEm).toLocaleTimeString('pt-BR')}`).join('\n') : 'Fila vazia'));
+}
+
+// ===== GPS ALTA PRECISÃO =====
+let watchGPSId = null;
+
+function iniciarGPSPreciso(callback) {
+    if (!navigator.geolocation) return;
+    const opcoes = {
+        enableHighAccuracy: true,
+        timeout: 8000,
+        maximumAge: 3000  // aceitar cache de até 3s
+    };
+    // Cancelar watch anterior
+    if (watchGPSId) navigator.geolocation.clearWatch(watchGPSId);
+
+    watchGPSId = navigator.geolocation.watchPosition(
+        (pos) => {
+            const { latitude, longitude, accuracy, speed, heading } = pos.coords;
+            // Só usar se precisão < 50m
+            if (accuracy > 50) {
+                console.log('[GPS] Precisão baixa:', accuracy, 'm — aguardando melhor sinal');
+                return;
+            }
+            callback({ latitude, longitude, accuracy, speed: speed || 0, heading: heading || 0 });
+        },
+        (err) => {
+            console.log('[GPS] Erro:', err.message);
+            // Fallback para posição única
+            navigator.geolocation.getCurrentPosition(
+                (pos) => callback({ latitude: pos.coords.latitude, longitude: pos.coords.longitude, accuracy: pos.coords.accuracy }),
+                () => {},
+                { enableHighAccuracy: false, timeout: 10000 }
+            );
+        },
+        opcoes
+    );
+    return watchGPSId;
 }

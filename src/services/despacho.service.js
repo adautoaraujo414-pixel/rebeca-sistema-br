@@ -33,112 +33,166 @@ async function recuperarCorridasPendentes() {
 setTimeout(recuperarCorridasPendentes, 3000); // Executar 3s após iniciar
 
 const DespachoService = {
-    modoDespacho: 'broadcast', // 'broadcast' ou 'proximo'
-    tempoAceiteSegundos: 30,
-    tentativasMaximas: 3,
+    // ==================== REGRAS SEQUENCIAIS ====================
+    // regras: array de etapas em ordem, ex: ['central', 'proximo', 'broadcast']
+    // cada etapa tem seu tempo de espera antes de passar para a próxima
+    regras: [{ tipo: 'broadcast', tempoEsperaSegundos: 30 }],
+    modoDespacho: 'broadcast', // compatibilidade legada
 
     // ==================== CONFIGURAÇÃO ====================
-    setModo: (modo) => {
-        if (['broadcast', 'proximo'].includes(modo)) {
-            DespachoService.modoDespacho = modo;
-            return { sucesso: true, modo };
+    setRegras: (regras) => {
+        // regras = [{ tipo: 'central'|'proximo'|'broadcast', tempoEsperaSegundos: 30 }, ...]
+        const tiposValidos = ['central', 'proximo', 'broadcast'];
+        for (const r of regras) {
+            if (!tiposValidos.includes(r.tipo)) return { error: `Tipo inválido: ${r.tipo}` };
+            if (!r.tempoEsperaSegundos || r.tempoEsperaSegundos < 5) r.tempoEsperaSegundos = 30;
         }
-        return { error: 'Modo inválido. Use: broadcast ou proximo' };
+        DespachoService.regras = regras;
+        // Compatibilidade legada
+        DespachoService.modoDespacho = regras[regras.length - 1]?.tipo || 'broadcast';
+        return { sucesso: true, regras };
+    },
+
+    getRegras: () => DespachoService.regras,
+
+    setModo: (modo) => {
+        // Compatibilidade legada — converte para regras
+        if (modo === 'broadcast') {
+            DespachoService.regras = [{ tipo: 'broadcast', tempoEsperaSegundos: DespachoService.tempoAceiteSegundos || 30 }];
+        } else if (modo === 'proximo') {
+            DespachoService.regras = [{ tipo: 'proximo', tempoEsperaSegundos: DespachoService.tempoAceiteSegundos || 30 }];
+        }
+        DespachoService.modoDespacho = modo;
+        return { sucesso: true, modo };
     },
 
     getModo: () => DespachoService.modoDespacho,
 
+    get tempoAceiteSegundos() { return DespachoService.regras[0]?.tempoEsperaSegundos || 30; },
+    set tempoAceiteSegundos(v) { if (DespachoService.regras[0]) DespachoService.regras[0].tempoEsperaSegundos = v; },
+
     setTempoAceite: (segundos) => {
-        DespachoService.tempoAceiteSegundos = segundos;
+        if (DespachoService.regras[0]) DespachoService.regras[0].tempoEsperaSegundos = segundos;
         return { sucesso: true, tempoAceite: segundos };
     },
 
+    tentativasMaximas: 3,
+
     // ==================== DESPACHO DE CORRIDA ====================
         async despacharCorrida(corrida, motoristasDisponiveis, adminId = null) {
-        // ===== SISTEMA DE CENTRAIS =====
+        // ===== EXECUTOR DE REGRAS SEQUENCIAIS =====
         try {
-            const { PontoEmbarque, FilaPonto, Corrida } = require('../models');
             const adminIdStr = (adminId || corrida.adminId)?.toString();
             const corridaId = corrida._id.toString();
+            const regras = DespachoService.regras || [{ tipo: 'broadcast', tempoEsperaSegundos: 30 }];
 
-            // Buscar central mais próxima da origem
-            const centrais = await PontoEmbarque.find({ adminId: adminIdStr, ativo: true });
-            let centralMaisProxima = null;
-            let menorDist = Infinity;
+            // Executar regras em sequência
+            const executarRegra = async (indiceRegra) => {
+                if (indiceRegra >= regras.length) return; // Todas esgotadas
+                const regra = regras[indiceRegra];
+                const tempoMs = (regra.tempoEsperaSegundos || 30) * 1000;
+                console.log(`[DESPACHO] Regra ${indiceRegra + 1}/${regras.length}: ${regra.tipo} | ${regra.tempoEsperaSegundos}s`);
 
-            if (centrais.length > 0 && corrida.origem?.lat && corrida.origem?.lng) {
-                for (const c of centrais) {
-                    if (!c.lat || !c.lng) continue;
-                    const dist = Math.sqrt(Math.pow(c.lat - corrida.origem.lat, 2) + Math.pow(c.lng - corrida.origem.lng, 2));
-                    if (dist < menorDist) { menorDist = dist; centralMaisProxima = c; }
-                }
-            } else if (centrais.length > 0) {
-                // Sem GPS na origem — usar central principal ou primeira
-                centralMaisProxima = centrais.find(c => c.principal) || centrais[0];
-            }
+                let motoristasParaNotificar = [];
 
-            if (centralMaisProxima) {
-                const fila = await FilaPonto.find({ pontoId: centralMaisProxima._id, status: 'aguardando' }).sort({ ordemChegada: 1 });
+                if (regra.tipo === 'central') {
+                    // Buscar central mais próxima e sua fila
+                    try {
+                        const { PontoEmbarque, FilaPonto } = require('../models');
+                        const centrais = await PontoEmbarque.find({ adminId: adminIdStr, ativo: true });
+                        let centralProxima = null, menorDist = Infinity;
+                        const oLat = corrida.origem?.lat || corrida.origemLat;
+                        const oLng = corrida.origem?.lng || corrida.origemLng;
 
-                if (fila.length > 0) {
-                    const tempoAceite = (centralMaisProxima.tempoAceiteSegundos || 30) * 1000;
-                    console.log(`[CENTRAL] ${centralMaisProxima.nome} — ${fila.length} motoristas na fila`);
+                        for (const c of centrais) {
+                            if (!c.lat || !c.lng) continue;
+                            const dist = Math.sqrt(Math.pow(c.lat - oLat, 2) + Math.pow(c.lng - oLng, 2));
+                            if (dist < menorDist) { menorDist = dist; centralProxima = c; }
+                        }
+                        if (!centralProxima) centralProxima = centrais.find(c => c.principal) || centrais[0];
 
-                    // Função para oferecer corrida ao próximo da fila em sequência
-                    const ofereceProximo = async (indice, filaAtual) => {
-                        if (indice >= filaAtual.length) {
-                            // Todos da central recusaram — broadcast para todos
-                            console.log('[CENTRAL] Todos recusaram — broadcast geral');
-                            const corridaAtual = await Corrida.findById(corridaId);
-                            if (corridaAtual && corridaAtual.status === 'pendente') {
-                                for (const mot of motoristasDisponiveis) {
+                        if (centralProxima) {
+                            const fila = await FilaPonto.find({ pontoId: centralProxima._id, status: 'aguardando' }).sort({ ordemChegada: 1 });
+                            if (fila.length > 0) {
+                                // Oferecer em sequência dentro da fila da central
+                                const ofereceNaFila = async (i) => {
+                                    if (i >= fila.length) {
+                                        // Fila esgotada — próxima regra
+                                        console.log(`[CENTRAL] Fila esgotada — próxima regra`);
+                                        executarRegra(indiceRegra + 1);
+                                        return;
+                                    }
+                                    const { Corrida } = require('../models');
+                                    const corridaAtual = await Corrida.findById(corridaId).lean();
+                                    if (!corridaAtual || corridaAtual.status !== 'pendente') return;
+
+                                    const motDaVez = motoristasDisponiveis.find(m => m._id.toString() === fila[i].motoristaId.toString());
+                                    if (!motDaVez) { ofereceNaFila(i + 1); return; }
+
+                                    console.log(`[CENTRAL] ${fila[i].motoristaNome} (${i+1}º da fila)`);
                                     try {
-                                        if (mot.pushSubscription) {
-                                            const GPSIntegradoService = require('./gps-integrado.service');
-                                            await GPSIntegradoService.notificarMotorista(mot, corridaAtual);
-                                        }
+                                        await GPSIntegradoService.notificarMotorista(motDaVez, corridaAtual);
                                     } catch(e) {}
-                                }
+
+                                    setTimeout(async () => {
+                                        try {
+                                            const c2 = await Corrida.findById(corridaId).lean();
+                                            if (c2 && c2.status === 'pendente') ofereceNaFila(i + 1);
+                                        } catch(e) {}
+                                    }, tempoMs);
+                                };
+                                ofereceNaFila(0);
+                                return; // Não continuar — sequência interna da fila controla
                             }
-                            return;
                         }
+                    } catch(e) { console.log('[CENTRAL] Erro:', e.message); }
+                    // Central sem fila — pular para próxima regra imediatamente
+                    executarRegra(indiceRegra + 1);
+                    return;
 
-                        const entrada = filaAtual[indice];
-                        const motDaVez = motoristasDisponiveis.find(m => m._id.toString() === entrada.motoristaId.toString());
+                } else if (regra.tipo === 'proximo') {
+                    // Motorista mais próximo com GPS
+                    const comGPS = motoristasDisponiveis.filter(m => m.latitude && m.longitude);
+                    if (comGPS.length > 0 && (corrida.origem?.lat || corrida.origemLat)) {
+                        const oLat = corrida.origem?.lat || corrida.origemLat;
+                        const oLng = corrida.origem?.lng || corrida.origemLng;
+                        comGPS.sort((a, b) => {
+                            const da = Math.sqrt(Math.pow(a.latitude - oLat, 2) + Math.pow(a.longitude - oLng, 2));
+                            const db = Math.sqrt(Math.pow(b.latitude - oLat, 2) + Math.pow(b.longitude - oLng, 2));
+                            return da - db;
+                        });
+                        motoristasParaNotificar = [comGPS[0]];
+                    } else {
+                        motoristasParaNotificar = motoristasDisponiveis.slice(0, 1);
+                    }
 
-                        if (!motDaVez) {
-                            // Motorista não está mais disponível — pular
-                            return ofereceProximo(indice + 1, filaAtual);
-                        }
+                } else { // broadcast
+                    motoristasParaNotificar = motoristasDisponiveis;
+                }
 
-                        console.log(`[CENTRAL] Oferecendo corrida para ${entrada.motoristaNome} (${indice+1}º da fila)`);
+                // Notificar motoristas desta regra
+                for (const mot of motoristasParaNotificar) {
+                    try { await GPSIntegradoService.notificarMotorista(mot, corrida); } catch(e) {}
+                }
 
-                        // Notificar só este motorista
+                // Se não for a última regra, agendar próxima após tempoEspera
+                if (indiceRegra < regras.length - 1) {
+                    setTimeout(async () => {
                         try {
-                            if (motDaVez.pushSubscription) {
-                                const GPSIntegradoService = require('./gps-integrado.service');
-                                await GPSIntegradoService.notificarMotorista(motDaVez, corrida);
+                            const { Corrida } = require('../models');
+                            const corridaAtual = await Corrida.findById(corridaId).lean();
+                            if (corridaAtual && corridaAtual.status === 'pendente') {
+                                console.log(`[DESPACHO] Tempo esgotado para regra ${regra.tipo} — avançando`);
+                                executarRegra(indiceRegra + 1);
                             }
                         } catch(e) {}
-
-                        // Aguardar tempo de aceite, depois passar para o próximo
-                        setTimeout(async () => {
-                            try {
-                                const corridaAtual = await Corrida.findById(corridaId);
-                                if (corridaAtual && corridaAtual.status === 'pendente') {
-                                    console.log(`[CENTRAL] ${entrada.motoristaNome} não aceitou — próximo da fila`);
-                                    ofereceProximo(indice + 1, filaAtual);
-                                }
-                            } catch(e) {}
-                        }, tempoAceite);
-                    };
-
-                    // Iniciar sequência pela fila
-                    ofereceProximo(0, fila);
-                    return; // Não continuar com broadcast padrão
+                    }, tempoMs);
                 }
-            }
-        } catch(centralErr) { console.log('[CENTRAL] Erro:', centralErr.message); }
+            };
+
+            await executarRegra(0);
+            return; // Executor de regras assumiu o controle
+        } catch(regraErr) { console.log('[DESPACHO REGRAS] Erro:', regraErr.message); }
 
         // Buscar foto do cliente no WhatsApp e salvar endereço em texto
         try {
