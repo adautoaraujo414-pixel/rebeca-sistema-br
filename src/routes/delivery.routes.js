@@ -470,3 +470,19 @@ router.post('/login', async (req, res) => {
         res.json({ sucesso: true, admin: { id: admin._id, nome: admin.nome, email: admin.email, token: admin.token } });
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
+
+// ===== CONTATO ENTREGADOR -> CLIENTE VIA REBECA =====
+router.post('/pedido/:id/contato-cliente', async (req, res) => {
+    try {
+        const { Pedido, InstanciaWhatsapp } = require('../models');
+        const pedido = await Pedido.findById(req.params.id);
+        if (!pedido) return res.status(404).json({ erro: 'Pedido não encontrado' });
+        const instancia = await InstanciaWhatsapp.findOne({ adminId: pedido.adminId, status: 'conectado' });
+        if (!instancia) return res.status(400).json({ erro: 'WhatsApp não conectado' });
+        const { EvolutionMultiService } = require('../services/evolution-multi.service');
+        const entregadorNome = req.body.entregadorNome || 'Entregador';
+        const msg = `🛵 *Mensagem do Entregador*\n\nOlá! Sou o entregador do seu pedido #${pedido.numeroPedido || pedido._id.toString().slice(-4)}.\nEstou a caminho! Caso precise falar comigo, responda esta mensagem e a Rebeca vai me repassar.`;
+        await EvolutionMultiService.enviarMensagem(instancia.nomeInstancia, pedido.telefoneCliente, msg);
+        res.json({ sucesso: true });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
