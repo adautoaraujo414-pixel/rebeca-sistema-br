@@ -164,10 +164,7 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                         try {
                             await EvolutionMultiService.enviarMensagem(inst._id, telChamada,
                                 '📵 Olá! Não consigo atender ligações, mas posso te ajudar aqui pelo chat! 😊\n\n' +
-                                '🚗 *Precisa de uma corrida?* É só me mandar:\n' +
-                                '• Seu endereço de *origem*\n' +
-                                '• Seu endereço de *destino*\n\n' +
-                                'Te atendo na hora! 👇'
+                                '🚗 *Precisa de uma corrida?* Me manda só seu endereço de origem que a gente resolve! 📍'
                             );
                             console.log('[CHAMADA] Ligação rejeitada e mensagem enviada para:', telChamada);
                         } catch(callErr) { console.log('[CHAMADA] Erro:', callErr.message); }
