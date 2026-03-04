@@ -939,7 +939,7 @@ Responda diretamente para ele: wa.me/${telefone}`;
                 // Salvar nota na corrida
                 try {
                     const { Corrida, Motorista } = require('../models');
-                    const ultimaCorrida = await Corrida.findOne({ clienteTelefone: telefone, status: 'finalizada' }).sort({ updatedAt: -1 });
+                    const ultimaCorrida = await Corrida.findOne({ clienteTelefone: telefone, status: 'finalizada', ...(conversa?.adminId ? { adminId: conversa.adminId } : {}) }).sort({ updatedAt: -1 });
                     if (ultimaCorrida) {
                         await Corrida.findByIdAndUpdate(ultimaCorrida._id, { avaliacao: nota });
                         // Atualizar média do motorista
