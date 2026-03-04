@@ -36,9 +36,21 @@ router.post('/motorista-para-cliente', async (req, res) => {
             `"${mensagem}"\n\n` +
             `_Responda esta mensagem para falar com o motorista._`;
         
-        // TODO: Integrar com WhatsApp API
-        console.log(`📱 Rebeca enviaria para ${corrida.clienteTelefone}:`, mensagemRebeca);
-        
+        // Enviar via WhatsApp real
+        try {
+            const { InstanciaWhatsapp } = require('../models');
+            const EvolutionMultiService = require('../services/evolution-multi.service');
+            const inst = await InstanciaWhatsapp.findOne({ adminId: corrida.adminId, status: 'conectado' });
+            if (inst) {
+                await EvolutionMultiService.enviarMensagem(inst._id, corrida.clienteTelefone, mensagemRebeca);
+                console.log('[CHAT] Mensagem enviada ao cliente via WhatsApp:', corrida.clienteTelefone);
+            } else {
+                console.log('[CHAT] Sem instância conectada para enviar ao cliente');
+            }
+        } catch(wppErr) {
+            console.log('[CHAT] Erro ao enviar WhatsApp:', wppErr.message);
+        }
+
         await MensagemCorrida.findByIdAndUpdate(msg._id, { entregue: true });
         
         res.json({ 
