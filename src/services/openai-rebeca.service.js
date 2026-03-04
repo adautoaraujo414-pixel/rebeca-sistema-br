@@ -339,7 +339,22 @@ const OpenAIRebecaService = {
         const nomeEmpresa = contexto.nomeEmpresa || 'Central de Corridas';
         const nomeCliente = contexto.nome || 'Cliente';
 
-        const prompt = `Você é Rebeca, secretária virtual da ${nomeEmpresa}. Atende clientes pelo WhatsApp com educação, calor humano e objetividade — como uma secretária real faria.
+        const humoreCliente = (() => {
+            const txt = (contexto?.mensagem || '').toLowerCase();
+            const bravo = ['absurdo','ridículo','ridiculoculo','ridículo','péssimo','horrível','lixo','vergonha','incompetência','incompetente','idiota','burro','inútil','raiva','ódio','revoltado','cancelar tudo','nunca mais','processo','reclamar','pqp','vsf','fdp','merda','droga','cacete','caramba que absurdo'];
+            const impaciente = ['cadê','cadê?','demora','demorou','quanto tempo','já faz','esperando','urgente','rápido','logo','agora','imediato'];
+            if (bravo.some(p => txt.includes(p))) return 'BRAVO';
+            if (impaciente.some(p => txt.includes(p))) return 'IMPACIENTE';
+            return 'NORMAL';
+        })();
+
+        const instrucaoHumor = humoreCliente === 'BRAVO'
+            ? 'ATENÇÃO: O cliente está BRAVO ou frustrado. Responda com empatia máxima, peça desculpas sinceras, não seja robótica, mostre que se importa de verdade. Nunca ignore a raiva. Ofereça solução concreta.'
+            : humoreCliente === 'IMPACIENTE'
+            ? 'O cliente está impaciente. Seja ágil, direta, sem enrolação. Passe segurança e velocidade na resposta.'
+            : 'Atenda com calor humano e objetividade.';
+
+        const prompt = `Você é Rebeca, secretária virtual da ${nomeEmpresa}. ${instrucaoHumor}
 
 Cliente: ${nomeCliente}
 Motoristas disponíveis agora: ${motoristasDisponiveis}
@@ -368,9 +383,13 @@ INTENÇÕES POSSÍVEIS:
 - OUTRO — qualquer outra coisa fora do contexto de corrida
 
 REGRAS IMPORTANTES:
-- Se intencao for FALAR_RESPONSAVEL: resposta deve ser "Claro! Vou chamar o responsável agora. Pode me dizer sobre o que você precisa falar para eu passar a mensagem?" e notificar_admin: true
-- Se intencao for AGENDAMENTO ou OUTRO: resposta educada explicando que ela cuida de corridas, e perguntar se pode ajudar com isso
-- Se intencao for SOLICITAR_CORRIDA com endereço: resposta animada e humana confirmando que vai buscar motorista
+- Se intencao for FALAR_RESPONSAVEL: responda com empatia e diga que vai chamar o responsável. notificar_admin: true
+- Se intencao for AGENDAMENTO ou OUTRO: resposta educada explicando que cuida de corridas, pergunte se pode ajudar
+- Se intencao for SOLICITAR_CORRIDA com endereço: resposta animada confirmando que vai buscar motorista
+- Se intencao for RECLAMACAO: empatia total, peça desculpas, ofereça solução, notificar_admin: true
+- Se humor_cliente for BRAVO: comece SEMPRE com "Entendo sua frustração..." ou "Sinto muito pelo transtorno..." antes de qualquer outra coisa
+- Nunca seja robótica ou genérica quando o cliente estiver bravo — seja humana e resolutiva
+- humor_cliente deve ser: BRAVO, IMPACIENTE ou NORMAL
 
 ${contexto.contextoExtra || ''}
 
@@ -379,6 +398,7 @@ Mensagem do cliente: "${mensagem}"
 RETORNE APENAS JSON VÁLIDO (sem markdown):
 {
   "intencao": "",
+  "humor_cliente": "NORMAL",
   "tem_endereco": true ou false,
   "tem_numero": true ou false,
   "resposta": "",
@@ -416,6 +436,7 @@ RETORNE APENAS JSON VÁLIDO (sem markdown):
 
             return {
                 intencao: resultado.intencao,
+                humorCliente: resultado.humor_cliente || humoreCliente,
                 resposta: resultado.resposta,
                 temEndereco: resultado.tem_endereco,
                 temNumero: resultado.tem_numero,
