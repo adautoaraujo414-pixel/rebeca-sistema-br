@@ -1183,10 +1183,6 @@ body.dark-mode .chat-msg.received .bubble { background: #252542 !important; colo
             const headerH2 = document.querySelector('#novaCorridaOverlay h2');
             // Carregar foto do cliente
             const avatarDiv = document.querySelector('#novaCorridaOverlay .cliente-avatar');
-            if (corridaAtual?.clienteFoto) {
-                avatarDiv.innerHTML = '<img src="' + corridaAtual.clienteFoto + '" style="width:50px;height:50px;border-radius:50%;object-fit:cover;" onerror="this.parentElement.textContent='👤'">';
-            }
-            
             if (corrida.tipo === 'encomenda') {
                 if (headerH2) headerH2.textContent = '📦 NOVA ENCOMENDA!';
                 if (avatarDiv) avatarDiv.textContent = '📦';
@@ -1203,7 +1199,11 @@ body.dark-mode .chat-msg.received .bubble { background: #252542 !important; colo
                 document.getElementById('novaCorridaClienteInfo').textContent = infoExtra.join(' • ') || 'Encomenda';
             } else {
                 if (headerH2) headerH2.textContent = '🔔 NOVA CORRIDA!';
-                if (avatarDiv) avatarDiv.textContent = '👤';
+                if (corridaAtual?.clienteFoto) {
+                    avatarDiv.innerHTML = '<img src="' + corridaAtual.clienteFoto + '" style="width:50px;height:50px;border-radius:50%;object-fit:cover;border:2px solid #00d4ff;" onerror="this.parentElement.innerHTML='👤'">';
+                } else {
+                    avatarDiv.textContent = '👤';
+                }
                 document.getElementById('novaCorridaCliente').textContent = corrida.clienteNome || 'Cliente';
                 document.getElementById('novaCorridaClienteInfo').textContent = '⭐ 5.0 • ' + (corrida.qtdCorridas || 0) + ' corridas';
             }

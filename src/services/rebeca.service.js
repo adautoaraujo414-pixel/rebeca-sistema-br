@@ -247,7 +247,25 @@ const RebecaService = {
         return favoritos;
     },
 
+    normalizarEndereco(texto) {
+        if (!texto || typeof texto !== 'string') return texto;
+        let end = texto.trim();
+        // Capitalizar primeira letra de cada palavra relevante
+        end = end.replace(/(rua|av|avenida|r\.|travessa|tv|alameda|al|estrada|rod|rodovia|praça|pc)/gi, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
+        // Corrigir abreviações comuns
+        end = end.replace(/av\.?/gi, 'Avenida').replace(/r\.?\s/gi, 'Rua ').replace(/tv\.?/gi, 'Travessa');
+        // Inserir vírgula entre rua e número se faltar (ex: "Rua das Flores 123" → "Rua das Flores, 123")
+        end = end.replace(/([a-záéíóúâêîôûãõçàèìòùA-Z]{3,})\s+(\d+)(?!\s*km|\s*min)/g, '$1, $2');
+        // Inserir vírgula entre número e bairro se faltar (ex: "123 Centro" → "123, Centro")
+        end = end.replace(/(\d+)\s+([A-ZÁÉÍÓÚÂÊÎÔÛÃÕÇ][a-záéíóúâêîôûãõç])/g, '$1, $2');
+        // Remover vírgulas duplicadas
+        end = end.replace(/,\s*,/g, ',').replace(/\s+/g, ' ').trim();
+        return end;
+    },
+
     async validarEndereco(endereco) {
+        // Normalizar antes de validar
+        endereco = this.normalizarEndereco(endereco);
         const resultado = await MapsService.geocodificar(endereco);
         
         if (!resultado.sucesso) {
@@ -532,6 +550,15 @@ const RebecaService = {
                         ...contextoCliente
                     });
                     
+                    // Usar endereço corrigido pelo GPT se disponível
+                    if (resultadoGPT?.endereco_corrigido) {
+                        console.log('[GPT] Endereço corrigido:', resultadoGPT.endereco_corrigido);
+                        msgOriginal = resultadoGPT.endereco_corrigido;
+                    }
+                    // Corrigir nome do cliente se GPT sugeriu
+                    if (resultadoGPT?.nome_cliente_corrigido && nome === nome.toLowerCase()) {
+                        nome = resultadoGPT.nome_cliente_corrigido;
+                    }
                     if (resultadoGPT && resultadoGPT.resposta) {
                         console.log('[OPENAI] Intenção:', resultadoGPT.intencao);
             
