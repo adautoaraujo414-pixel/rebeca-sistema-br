@@ -339,7 +339,7 @@
             const email = document.getElementById('loginEmail').value;
             const senha = document.getElementById('loginSenha').value;
             try {
-                const res = await fetch('/api/rebeca-login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, senha }) });
+                const res = await fetch('/api/delivery/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, senha }) });
                 const data = await res.json();
                 if (data.sucesso) {
                     token = data.admin.token;
