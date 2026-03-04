@@ -471,8 +471,8 @@ async function carregarPontos() {
                         <strong>${p.nome}</strong> 
                         <span class="badge ${p.ativo ? 'green' : 'red'}">${p.ativo ? '✅ Ativo' : '❌ Inativo'}</span><br>
                         <small style="color:#666">📍 ${p.endereco}</small><br>
-                        <small style="color:#666">⏰ ${p.horarioAbertura} - ${p.horarioFechamento} | 
-                        🚗 ${p.maxCorridasPonto} corridas/ponto → broadcast após ${p.maxCorridasBroadcast}</small>
+                        <small style="color:#666">⏰ ${p.horarioAbertura} - ${p.horarioFechamento} | ⏱ ${p.tempoAceiteSegundos||30}s aceite | 🚗 ${p.maxCorridasPonto||3} por vez</small>
+                        ${p.principal ? '<span class="badge purple">⭐ Principal</span>' : ''}
                     </div>
                     <div>
                         <button class="btn btn-sm" style="background:#f39c12;color:white" onclick="togglePonto('${p._id}', ${!p.ativo})">${p.ativo ? '⏸ Pausar' : '▶ Ativar'}</button>
@@ -488,20 +488,22 @@ async function carregarPontos() {
 async function criarPonto() {
     const nome = document.getElementById('pontoNome').value.trim();
     const endereco = document.getElementById('pontoEndereco').value.trim();
-    if (!nome || !endereco) return alert('Preencha nome e endereço');
+    if (!nome || !endereco) return alert('Preencha nome e endereço da central');
     const diasSemana = [...document.querySelectorAll('.dia-check:checked')].map(c => parseInt(c.value));
     const body = {
         nome, endereco,
         horarioAbertura: document.getElementById('pontoAbertura').value,
         horarioFechamento: document.getElementById('pontoFechamento').value,
         maxCorridasPonto: parseInt(document.getElementById('pontoMaxPonto').value) || 3,
-        maxCorridasBroadcast: parseInt(document.getElementById('pontoMaxBroadcast').value) || 5,
+        tempoAceiteSegundos: parseInt(document.getElementById('pontoTempoAceite').value) || 30,
+        principal: document.getElementById('pontoPrincipal').checked,
         diasSemana
     };
     await api('/api/pontos', { method: 'POST', body: JSON.stringify(body) });
     carregarPontos();
     document.getElementById('pontoNome').value = '';
     document.getElementById('pontoEndereco').value = '';
+    document.getElementById('pontoPrincipal').checked = false;
 }
 
 async function togglePonto(id, ativo) {

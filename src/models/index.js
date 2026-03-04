@@ -440,6 +440,8 @@ const PontoEmbarqueSchema = new mongoose.Schema({
     horarioFechamento: String, // ex: "22:00"
     maxCorridasPonto: { type: Number, default: 3 }, // corridas por ponto antes de broadcast
     maxCorridasBroadcast: { type: Number, default: 5 }, // corridas para todos
+    tempoAceiteSegundos: { type: Number, default: 30 },
+    principal: { type: Boolean, default: false },
     createdAt: { type: Date, default: Date.now }
 });
 

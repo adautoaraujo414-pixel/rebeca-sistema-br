@@ -122,74 +122,90 @@ const DespachoService = {
     },
 
     async despacharCorrida(corrida, motoristasDisponiveis, adminId = null) {
-        // ===== SISTEMA DE PONTOS =====
+        // ===== SISTEMA DE CENTRAIS =====
         try {
-            const { PontoEmbarque, FilaPonto } = require('../models');
+            const { PontoEmbarque, FilaPonto, Corrida } = require('../models');
             const adminIdStr = (adminId || corrida.adminId)?.toString();
+            const corridaId = corrida._id.toString();
 
-            // Encontrar ponto mais próximo da origem da corrida
-            const pontos = await PontoEmbarque.find({ adminId: adminIdStr, ativo: true });
-            let pontoMaisProximo = null;
-            let menorDistancia = Infinity;
+            // Buscar central mais próxima da origem
+            const centrais = await PontoEmbarque.find({ adminId: adminIdStr, ativo: true });
+            let centralMaisProxima = null;
+            let menorDist = Infinity;
 
-            if (pontos.length > 0 && corrida.origem?.lat && corrida.origem?.lng) {
-                for (const p of pontos) {
-                    if (!p.lat || !p.lng) continue;
-                    const dist = Math.sqrt(Math.pow(p.lat - corrida.origem.lat, 2) + Math.pow(p.lng - corrida.origem.lng, 2));
-                    if (dist < menorDistancia) { menorDistancia = dist; pontoMaisProximo = p; }
+            if (centrais.length > 0 && corrida.origem?.lat && corrida.origem?.lng) {
+                for (const c of centrais) {
+                    if (!c.lat || !c.lng) continue;
+                    const dist = Math.sqrt(Math.pow(c.lat - corrida.origem.lat, 2) + Math.pow(c.lng - corrida.origem.lng, 2));
+                    if (dist < menorDist) { menorDist = dist; centralMaisProxima = c; }
                 }
+            } else if (centrais.length > 0) {
+                // Sem GPS na origem — usar central principal ou primeira
+                centralMaisProxima = centrais.find(c => c.principal) || centrais[0];
             }
 
-            if (pontoMaisProximo && menorDistancia < 0.1) { // ~10km
-                // Verificar fila do ponto
-                const fila = await FilaPonto.find({ pontoId: pontoMaisProximo._id, status: 'aguardando' }).sort({ ordemChegada: 1 });
-                
+            if (centralMaisProxima) {
+                const fila = await FilaPonto.find({ pontoId: centralMaisProxima._id, status: 'aguardando' }).sort({ ordemChegada: 1 });
+
                 if (fila.length > 0) {
-                    console.log(`[PONTOS] Corrida vai para fila do ponto ${pontoMaisProximo.nome} — ${fila.length} motoristas`);
-                    
-                    // Notificar motoristas do ponto por ordem de chegada (até maxCorridasPonto)
-                    const limite = pontoMaisProximo.maxCorridasPonto || 3;
-                    const motoristasNoPonto = fila.slice(0, limite).map(f => f.motoristaId.toString());
-                    
-                    // Filtrar motoristasDisponiveis pelos que estão no ponto
-                    const motoristasFilados = motoristasDisponiveis.filter(m => motoristasNoPonto.includes(m._id.toString()));
-                    
-                    if (motoristasFilados.length > 0) {
-                        // Notificar só os do ponto por 1 minuto
-                        console.log(`[PONTOS] Notificando ${motoristasFilados.length} motoristas do ponto por 60s`);
-                        
-                        // Despachar só para os do ponto
-                        const corridaId = corrida._id.toString();
-                        global._corridasPonto = global._corridasPonto || new Map();
-                        global._corridasPonto.set(corridaId, { pontoId: pontoMaisProximo._id, adminId: adminIdStr });
-                        
-                        // Após 60s sem aceite, broadcast para todos
+                    const tempoAceite = (centralMaisProxima.tempoAceiteSegundos || 30) * 1000;
+                    console.log(`[CENTRAL] ${centralMaisProxima.nome} — ${fila.length} motoristas na fila`);
+
+                    // Função para oferecer corrida ao próximo da fila em sequência
+                    const ofereceProximo = async (indice, filaAtual) => {
+                        if (indice >= filaAtual.length) {
+                            // Todos da central recusaram — broadcast para todos
+                            console.log('[CENTRAL] Todos recusaram — broadcast geral');
+                            const corridaAtual = await Corrida.findById(corridaId);
+                            if (corridaAtual && corridaAtual.status === 'pendente') {
+                                for (const mot of motoristasDisponiveis) {
+                                    try {
+                                        if (mot.pushSubscription) {
+                                            const GPSIntegradoService = require('./gps-integrado.service');
+                                            await GPSIntegradoService.notificarMotorista(mot, corridaAtual);
+                                        }
+                                    } catch(e) {}
+                                }
+                            }
+                            return;
+                        }
+
+                        const entrada = filaAtual[indice];
+                        const motDaVez = motoristasDisponiveis.find(m => m._id.toString() === entrada.motoristaId.toString());
+
+                        if (!motDaVez) {
+                            // Motorista não está mais disponível — pular
+                            return ofereceProximo(indice + 1, filaAtual);
+                        }
+
+                        console.log(`[CENTRAL] Oferecendo corrida para ${entrada.motoristaNome} (${indice+1}º da fila)`);
+
+                        // Notificar só este motorista
+                        try {
+                            if (motDaVez.pushSubscription) {
+                                const GPSIntegradoService = require('./gps-integrado.service');
+                                await GPSIntegradoService.notificarMotorista(motDaVez, corrida);
+                            }
+                        } catch(e) {}
+
+                        // Aguardar tempo de aceite, depois passar para o próximo
                         setTimeout(async () => {
                             try {
-                                const { Corrida } = require('../models');
                                 const corridaAtual = await Corrida.findById(corridaId);
                                 if (corridaAtual && corridaAtual.status === 'pendente') {
-                                    console.log('[PONTOS] Timeout 60s — broadcast para todos');
-                                    global._corridasPonto.delete(corridaId);
-                                    // Notificar todos os motoristas disponíveis
-                                    for (const mot of motoristasDisponiveis) {
-                                        try {
-                                            if (mot.pushSubscription) {
-                                                const GPSIntegradoService = require('./gps-integrado.service');
-                                                await GPSIntegradoService.notificarMotorista(mot, corridaAtual);
-                                            }
-                                        } catch(e) {}
-                                    }
+                                    console.log(`[CENTRAL] ${entrada.motoristaNome} não aceitou — próximo da fila`);
+                                    ofereceProximo(indice + 1, filaAtual);
                                 }
-                            } catch(e) { console.log('[PONTOS] Erro timeout:', e.message); }
-                        }, 60000);
-                        
-                        // Substituir lista de motoristas pelos do ponto
-                        motoristasDisponiveis = motoristasFilados;
-                    }
+                            } catch(e) {}
+                        }, tempoAceite);
+                    };
+
+                    // Iniciar sequência pela fila
+                    ofereceProximo(0, fila);
+                    return; // Não continuar com broadcast padrão
                 }
             }
-        } catch(pontosErr) { console.log('[PONTOS] Erro sistema pontos:', pontosErr.message); }
+        } catch(centralErr) { console.log('[CENTRAL] Erro:', centralErr.message); }
         // ===== SISTEMA DE PONTOS =====
         try {
             const { PontoEmbarque, FilaPonto } = require('../models');
