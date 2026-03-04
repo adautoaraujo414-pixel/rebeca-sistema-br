@@ -1859,6 +1859,8 @@ body.dark-mode .chat-msg.received .bubble { background: #252542 !important; colo
 
             if (pageId === 'pageFinanceiro') carregarFinanceiro();
             if (pageId === 'pageRelatorios') setPeriodo('hoje');
+            if (pageId === 'pageChat') { carregarChat(); iniciarPollingChat(); }
+            else pararPollingChat();
         }
 
         // ========== MODAIS ==========
