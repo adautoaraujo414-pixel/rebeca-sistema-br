@@ -47,6 +47,42 @@
         .badge.orange { background: #ffe5d0; color: #d35400; }
         .btn { padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85em; transition: all 0.3s; margin: 2px; }
         .btn-sm { padding: 5px 10px; font-size: 0.8em; }
+
+        /* ===== RESPONSIVO MOBILE ===== */
+        .menu-toggle { display: none; background: none; border: none; color: white; font-size: 1.5em; cursor: pointer; padding: 5px; }
+        
+        @media (max-width: 768px) {
+            .menu-toggle { display: block; }
+            .header { padding: 10px 15px; }
+            .header h1 { font-size: 1.2em; }
+            .container { flex-direction: column; }
+            .sidebar { 
+                width: 100%; 
+                max-height: 0; 
+                overflow: hidden; 
+                transition: max-height 0.3s ease;
+                padding: 0;
+            }
+            .sidebar.aberto { max-height: 600px; padding: 10px 0; }
+            .main-content { padding: 12px; }
+            .cards { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+            .card { padding: 12px; }
+            .card .value { font-size: 1.4em; }
+            .panel-grid { grid-template-columns: 1fr; }
+            .panel { padding: 12px; }
+            table { font-size: 0.78em; }
+            th, td { padding: 6px 8px; }
+            .btn { padding: 6px 12px; font-size: 0.8em; }
+            .header-actions { display: flex; gap: 8px; align-items: center; }
+        }
+
+        @media (max-width: 480px) {
+            .cards { grid-template-columns: 1fr 1fr; gap: 8px; }
+            .card { padding: 10px; }
+            .card-icon { font-size: 1.4em; }
+            .card .value { font-size: 1.2em; }
+            table th:nth-child(n+4), table td:nth-child(n+4) { display: none; }
+        }
         .btn-primary { background: #3498db; color: white; }
         .btn-success { background: #27ae60; color: white; }
         .btn-danger { background: #e74c3c; color: white; }

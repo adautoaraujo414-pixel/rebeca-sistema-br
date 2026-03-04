@@ -27,6 +27,32 @@ async function api(url, method='GET', data=null) {
 
 // GRÁFICOS
 let chartCorridas=null, chartFaturamento=null;
+// ===== MOBILE: Toggle menu lateral =====
+function toggleMenu() {
+    const sidebar = document.querySelector('.sidebar');
+    sidebar.classList.toggle('aberto');
+}
+
+// Fechar menu ao clicar em item (mobile)
+document.querySelectorAll('.menu-item').forEach(item => {
+    item.addEventListener('click', () => {
+        if (window.innerWidth <= 768) {
+            document.querySelector('.sidebar').classList.remove('aberto');
+        }
+    });
+});
+
+// Detectar mobile e ajustar automaticamente
+function detectarMobile() {
+    const isMobile = window.innerWidth <= 768;
+    document.body.classList.toggle('is-mobile', isMobile);
+    if (!isMobile) {
+        document.querySelector('.sidebar')?.classList.remove('aberto');
+    }
+}
+window.addEventListener('resize', detectarMobile);
+detectarMobile();
+
 function criarGraficoCorridas(d) { const ctx=document.getElementById('chartCorridas'); if(!ctx)return; if(chartCorridas)chartCorridas.destroy(); chartCorridas=new Chart(ctx,{type:'bar',data:{labels:d.map(x=>x.diaSemana),datasets:[{label:'Finalizadas',data:d.map(x=>x.finalizadas),backgroundColor:'#27ae60'},{label:'Canceladas',data:d.map(x=>x.canceladas),backgroundColor:'#e74c3c'}]},options:{responsive:true,maintainAspectRatio:false}}); }
 function criarGraficoFaturamento(d) { const ctx=document.getElementById('chartFaturamento'); if(!ctx)return; if(chartFaturamento)chartFaturamento.destroy(); chartFaturamento=new Chart(ctx,{type:'line',data:{labels:d.map(x=>x.dataFormatada),datasets:[{label:'Faturamento',data:d.map(x=>x.faturamentoBruto),borderColor:'#27ae60',fill:true,backgroundColor:'rgba(39,174,96,0.1)'}]},options:{responsive:true,maintainAspectRatio:false}}); }
 
