@@ -785,6 +785,56 @@
         function limparFoto() { document.getElementById('uploadArea').style.display='block'; document.getElementById('previewFoto').style.display='none'; document.getElementById('inputFotoCardapio').value=''; document.getElementById('iaLoading').style.display='none'; }
         function limparTranscricao() { dadosTranscritos=null; document.getElementById('resultadoTranscricao').style.display='none'; limparFoto(); }
 
+
+        // ===== WHATSAPP QR CODE DELIVERY =====
+        let instanciaDeliveryId = null;
+
+        async function conectarWhatsappDelivery() {
+            const box = document.getElementById('qrDeliveryBox');
+            box.innerHTML = '<div style="text-align:center"><div style="border:4px solid #00d4ff;border-top-color:transparent;border-radius:50%;width:40px;height:40px;animation:spin 1s linear infinite;margin:0 auto"></div><p style="color:#aaa;margin-top:10px;">Criando instância...</p></div>';
+            try {
+                const r = await api('/api/evolution/instancia', { method: 'POST', body: JSON.stringify({ nomeEmpresa: 'delivery-' + Date.now() }) });
+                if (!r._id && !r.sucesso) { box.innerHTML = '<p style="color:#c0392b">Erro: ' + (r.erro||'Falha ao criar') + '</p>'; return; }
+                instanciaDeliveryId = r._id || r.instancia?._id;
+                await gerarQRDelivery();
+            } catch(e) { box.innerHTML = '<p style="color:#c0392b">Erro de conexão</p>'; }
+        }
+
+        async function gerarQRDelivery() {
+            const box = document.getElementById('qrDeliveryBox');
+            if (!instanciaDeliveryId) { box.innerHTML = '<p style="color:#c0392b">Crie a instância primeiro</p>'; return; }
+            box.innerHTML = '<p style="color:#aaa">Gerando QR Code...</p>';
+            try {
+                const r = await api('/api/evolution/instancia/' + instanciaDeliveryId + '/qrcode');
+                if (r.qrcode) {
+                    box.innerHTML = '<img src="' + r.qrcode + '" style="max-width:250px;border-radius:12px;"><p style="color:#aaa;margin-top:10px;">Escaneie com o WhatsApp</p>';
+                } else {
+                    box.innerHTML = '<p style="color:#c0392b">Erro ao gerar QR: ' + (r.erro||'tente novamente') + '</p>';
+                }
+            } catch(e) { box.innerHTML = '<p style="color:#c0392b">Erro de conexão</p>'; }
+        }
+
+        async function verificarStatusDelivery() {
+            const el = document.getElementById('statusDeliveryWA');
+            el.style.display = 'block';
+            el.style.background = '#252542';
+            el.textContent = 'Verificando...';
+            if (!instanciaDeliveryId) { el.textContent = 'Nenhuma instância ativa'; return; }
+            try {
+                const r = await api('/api/evolution/instancia/' + instanciaDeliveryId + '/status');
+                const conectado = r.status === 'conectado' || r.state === 'open';
+                el.style.background = conectado ? '#1a4a1a' : '#4a1a1a';
+                el.textContent = conectado ? '✅ WhatsApp conectado!' : '❌ Desconectado — gere o QR novamente';
+            } catch(e) { el.textContent = 'Erro ao verificar'; }
+        }
+
+        async function desconectarWhatsappDelivery() {
+            if (!instanciaDeliveryId) return;
+            if (!confirm('Desconectar WhatsApp?')) return;
+            await api('/api/evolution/instancia/' + instanciaDeliveryId + '/desconectar', { method: 'POST' });
+            document.getElementById('qrDeliveryBox').innerHTML = '<p style="color:#888">Desconectado. Clique em Conectar para reconectar.</p>';
+            document.getElementById('statusDeliveryWA').style.display = 'none';
+        }
     </script>
 
     <div id="modalEntregador" class="modal">
