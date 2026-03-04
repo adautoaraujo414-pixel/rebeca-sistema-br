@@ -101,8 +101,8 @@ const DespachoService = {
                         const { PontoEmbarque, FilaPonto } = require('../models');
                         const centrais = await PontoEmbarque.find({ adminId: adminIdStr, ativo: true });
                         let centralProxima = null, menorDist = Infinity;
-                        const oLat = corrida.origem?.lat || corrida.origemLat;
-                        const oLng = corrida.origem?.lng || corrida.origemLng;
+                        const oLat = corrida.origem?.latitude || corrida.origem?.lat || corrida.origemLat;
+                        const oLng = corrida.origem?.longitude || corrida.origem?.lng || corrida.origemLng;
 
                         for (const c of centrais) {
                             if (!c.lat || !c.lng) continue;
@@ -153,9 +153,9 @@ const DespachoService = {
                 } else if (regra.tipo === 'proximo') {
                     // Motorista mais próximo com GPS
                     const comGPS = motoristasDisponiveis.filter(m => m.latitude && m.longitude);
-                    if (comGPS.length > 0 && (corrida.origem?.lat || corrida.origemLat)) {
-                        const oLat = corrida.origem?.lat || corrida.origemLat;
-                        const oLng = corrida.origem?.lng || corrida.origemLng;
+                    if (comGPS.length > 0 && (corrida.origem?.latitude || corrida.origem?.lat || corrida.origemLat)) {
+                        const oLat = corrida.origem?.latitude || corrida.origem?.lat || corrida.origemLat;
+                        const oLng = corrida.origem?.longitude || corrida.origem?.lng || corrida.origemLng;
                         comGPS.sort((a, b) => {
                             const da = Math.sqrt(Math.pow(a.latitude - oLat, 2) + Math.pow(a.longitude - oLng, 2));
                             const db = Math.sqrt(Math.pow(b.latitude - oLat, 2) + Math.pow(b.longitude - oLng, 2));
@@ -491,6 +491,18 @@ const DespachoService = {
         // MUDAR STATUS DO MOTORISTA PARA EM_CORRIDA
         MotoristaService.atualizarStatus(motoristaId, 'em_corrida');
         console.log(`✅ Corrida ${corridaId} aceita por ${motoristaNome} - Status: em_corrida`);
+
+        // SAIR DA FILA DA CENTRAL AUTOMATICAMENTE ao aceitar corrida
+        (async () => {
+            try {
+                const { FilaPonto } = require('../models');
+                await FilaPonto.updateMany(
+                    { motoristaId, status: 'aguardando' },
+                    { status: 'em_corrida' }
+                );
+                console.log(`[CENTRAL] ${motoristaNome} saiu da fila automaticamente ao aceitar corrida`);
+            } catch(e) { console.log('[CENTRAL] Erro ao sair da fila:', e.message); }
+        })();
         
         // Salvar ultimo motorista do cliente
         try {
@@ -637,5 +649,68 @@ const DespachoService = {
 
 // Limpar expiradas a cada 30 segundos
 setInterval(() => DespachoService.limparExpiradas(), 30000);
+
+
+// ==================== REENTRAR NA FILA APÓS CORRIDA ====================
+DespachoService.reentrarNaFilaAposCorrida = async (motoristaId, adminId) => {
+    try {
+        const { FilaPonto, PontoEmbarque, Motorista } = require('../models');
+
+        // Buscar a última central onde o motorista estava (status em_corrida)
+        const filaAnterior = await FilaPonto.findOne({
+            motoristaId,
+            status: 'em_corrida'
+        }).sort({ chegadaEm: -1 });
+
+        if (!filaAnterior) {
+            console.log(`[CENTRAL] Motorista ${motoristaId} não estava em nenhuma central`);
+            return;
+        }
+
+        const central = await PontoEmbarque.findById(filaAnterior.pontoId);
+        if (!central || !central.ativo) {
+            await FilaPonto.updateOne({ _id: filaAnterior._id }, { status: 'saiu' });
+            console.log(`[CENTRAL] Central não existe mais — motorista não reinserido`);
+            return;
+        }
+
+        // Verificar se central ainda está aberta no horário atual
+        const agora = new Date();
+        const dia = agora.getDay();
+        const hora = agora.getHours().toString().padStart(2,'0') + ':' + agora.getMinutes().toString().padStart(2,'0');
+        const estaAberta = (central.diasSemana || []).includes(dia) &&
+                           hora >= (central.horarioAbertura || '00:00') &&
+                           hora <= (central.horarioFechamento || '23:59');
+
+        if (!estaAberta) {
+            await FilaPonto.updateOne({ _id: filaAnterior._id }, { status: 'saiu' });
+            console.log(`[CENTRAL] Central ${central.nome} fechada — motorista não reinserido`);
+            return;
+        }
+
+        // Marcar registro anterior como concluído
+        await FilaPonto.updateOne({ _id: filaAnterior._id }, { status: 'saiu' });
+
+        // Reentrar no FINAL da fila
+        const ultimo = await FilaPonto.findOne({ pontoId: central._id, status: 'aguardando' })
+                                      .sort({ ordemChegada: -1 });
+        const novaOrdem = (ultimo?.ordemChegada || 0) + 1;
+
+        const motorista = await Motorista.findById(motoristaId);
+        await FilaPonto.create({
+            adminId: central.adminId,
+            pontoId: central._id,
+            motoristaId,
+            motoristaNome: motorista?.nomeCompleto || 'Motorista',
+            ordemChegada: novaOrdem,
+            chegadaEm: new Date(),
+            status: 'aguardando'
+        });
+
+        console.log(`[CENTRAL] ✅ ${motorista?.nomeCompleto} reinserido em ${central.nome} — posição #${novaOrdem}`);
+    } catch(e) {
+        console.log('[CENTRAL] Erro ao reentrar na fila:', e.message);
+    }
+};
 
 module.exports = DespachoService;

@@ -66,7 +66,20 @@ const CorridaService = {
                 await MotoristaService.atualizarStatus(corrida.motoristaId, 'disponivel');
             } catch(e) { console.log('[CORRIDA] Erro liberar motorista:', e.message); }
         }
-        
+
+        // Reentrar na fila da central automaticamente após concluir
+        if (corrida.motoristaId) {
+            try {
+                const DespachoService = require('./despacho.service');
+                setTimeout(async () => {
+                    await DespachoService.reentrarNaFilaAposCorrida(
+                        corrida.motoristaId.toString(),
+                        corrida.adminId?.toString()
+                    );
+                }, 2000); // 2s de delay para status disponivel já estar salvo
+            } catch(e) { console.log('[CENTRAL] Erro reentrar fila após finalizar:', e.message); }
+        }
+
         // Notificar próximo da fila de espera
         try {
             const RebecaService = require('./rebeca.service');
@@ -76,12 +89,8 @@ const CorridaService = {
         } catch(e) { console.log('[CORRIDA] Erro notificar fila:', e.message); }
         if (precoFinal) corrida.precoFinal = precoFinal;
         await corrida.save();
-        
-        if (corrida.motoristaId) {
-            await MotoristaService.atualizarStatus(corrida.motoristaId, 'disponivel');
-            console.log('[CORRIDA] Motorista liberado - Status: disponivel');
-        }
-        
+
+        console.log('[CORRIDA] Motorista liberado - Status: disponivel');
         return { sucesso: true, corrida };
     },
 
@@ -96,11 +105,24 @@ const CorridaService = {
         corrida.canceladaEm = new Date();
         corrida.motivoCancelamento = motivo;
         await corrida.save();
-        
+
         if (corrida.motoristaId) {
             await MotoristaService.atualizarStatus(corrida.motoristaId, 'disponivel');
+            // Reentrar na fila se o cancelamento não foi culpa do motorista
+            const motivoMotorista = ['motorista_cancelou', 'motorista_nao_compareceu'];
+            if (!motivoMotorista.includes(motivo)) {
+                try {
+                    const DespachoService = require('./despacho.service');
+                    setTimeout(async () => {
+                        await DespachoService.reentrarNaFilaAposCorrida(
+                            corrida.motoristaId.toString(),
+                            corrida.adminId?.toString()
+                        );
+                    }, 2000);
+                } catch(e) { console.log('[CENTRAL] Erro reentrar fila após cancelar:', e.message); }
+            }
         }
-        
+
         return { sucesso: true, corrida };
     },
 
