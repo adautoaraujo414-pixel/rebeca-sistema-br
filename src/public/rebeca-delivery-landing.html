@@ -88,8 +88,8 @@
     <nav class="nav">
         <div class="nav-logo">🍔 Rebeca Delivery</div>
         <div class="nav-btns">
-            <button class="nav-btn login" onclick="abrirLogin()">Entrar</button>
-            <button class="nav-btn cadastro" onclick="abrirCadastro()">Teste Gratis</button>
+            <button class="nav-btn login" onclick="window.location.href='/delivery-admin.html'">Entrar</button>
+            <button class="nav-btn cadastro" onclick="window.location.href='/cadastro-admin?tipo=delivery'">Teste Gratis</button>
         </div>
     </nav>
 
@@ -187,7 +187,7 @@
                 <div class="form-group"><label>Nome do Restaurante</label><input type="text" id="cadEmpresa" placeholder="Lanchonete do Joao"></div>
                 <div class="form-group"><label>Senha *</label><input type="password" id="cadSenha" placeholder="Minimo 6 caracteres"></div>
                 <button class="auth-btn" id="btnCadastro" onclick="cadastrar()">Criar Conta Gratis</button>
-                <div class="auth-toggle">Ja tem conta? <a onclick="trocarParaLogin()">Entrar</a></div>
+                <div class="auth-toggle">Ja tem conta? <a href="/delivery-admin.html" style="color:#ff6b35;cursor:pointer;">Entrar</a></div>
             </div>
             <div id="formLogin" style="display:none;">
                 <h2>👋 Bem-vindo de volta</h2>
