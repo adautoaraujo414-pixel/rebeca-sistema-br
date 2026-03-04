@@ -632,10 +632,82 @@
                 <div id="filaEsperaContainer"><p style="color:#999;text-align:center;">Carregando...</p></div>
             </div>
 
-            <div id="pontos" class="page">
-                <h2 style="margin-bottom:20px;">🏢 Centrais / Pontos</h2>
-                <button class="btn btn-primary" onclick="abrirModalNovoPonto()" style="margin-bottom:20px;">➕ Nova Central</button>
-                <div id="pontosContainer"><p style="color:#999;text-align:center;">Carregando...</p></div>
+                        <div id="pontos" class="page">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px;">
+                    <h2 style="margin:0;">🏢 Centrais / Pontos de Embarque</h2>
+                    <button class="btn btn-primary" onclick="mostrarFormCentral()" id="btnNovaCentral">➕ Nova Central</button>
+                </div>
+
+                <!-- Formulário de criação (oculto por padrão) -->
+                <div id="formCentralContainer" style="display:none;background:#fff;border:1px solid #e0e0e0;border-radius:10px;padding:20px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,0.08)">
+                    <h3 style="margin-top:0;color:#2c3e50;">➕ Nova Central</h3>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                        <div>
+                            <label style="font-size:0.8em;color:#666;font-weight:600;">NOME DA CENTRAL *</label>
+                            <input id="pontoNome" type="text" class="form-control" placeholder="Ex: Central Norte" style="margin-top:4px;">
+                        </div>
+                        <div>
+                            <label style="font-size:0.8em;color:#666;font-weight:600;">ENDEREÇO *</label>
+                            <input id="pontoEndereco" type="text" class="form-control" placeholder="Rua, número, bairro" style="margin-top:4px;">
+                        </div>
+                        <div>
+                            <label style="font-size:0.8em;color:#666;font-weight:600;">HORÁRIO ABERTURA</label>
+                            <input id="pontoAbertura" type="time" class="form-control" value="06:00" style="margin-top:4px;">
+                        </div>
+                        <div>
+                            <label style="font-size:0.8em;color:#666;font-weight:600;">HORÁRIO FECHAMENTO</label>
+                            <input id="pontoFechamento" type="time" class="form-control" value="22:00" style="margin-top:4px;">
+                        </div>
+                        <div>
+                            <label style="font-size:0.8em;color:#666;font-weight:600;">MÁX. CORRIDAS POR VEZ</label>
+                            <input id="pontoMaxPonto" type="number" class="form-control" value="3" min="1" max="20" style="margin-top:4px;">
+                        </div>
+                        <div>
+                            <label style="font-size:0.8em;color:#666;font-weight:600;">TEMPO ACEITE (seg)</label>
+                            <input id="pontoTempoAceite" type="number" class="form-control" value="30" min="10" max="120" style="margin-top:4px;">
+                        </div>
+                    </div>
+                    <div style="margin-top:12px;">
+                        <label style="font-size:0.8em;color:#666;font-weight:600;">DIAS DE FUNCIONAMENTO</label>
+                        <div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap;">
+                            <label style="display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox" class="dia-check" value="0"> Dom</label>
+                            <label style="display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox" class="dia-check" value="1" checked> Seg</label>
+                            <label style="display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox" class="dia-check" value="2" checked> Ter</label>
+                            <label style="display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox" class="dia-check" value="3" checked> Qua</label>
+                            <label style="display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox" class="dia-check" value="4" checked> Qui</label>
+                            <label style="display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox" class="dia-check" value="5" checked> Sex</label>
+                            <label style="display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox" class="dia-check" value="6"> Sáb</label>
+                        </div>
+                    </div>
+                    <div style="margin-top:12px;display:flex;align-items:center;gap:8px;">
+                        <input type="checkbox" id="pontoPrincipal">
+                        <label for="pontoPrincipal" style="cursor:pointer;font-size:0.9em;">⭐ Central principal (prioridade no despacho)</label>
+                    </div>
+                    <div style="display:flex;gap:10px;margin-top:16px;">
+                        <button class="btn btn-primary" onclick="criarPonto()">💾 Salvar Central</button>
+                        <button class="btn" style="background:#95a5a6;color:white;" onclick="ocultarFormCentral()">✖ Cancelar</button>
+                    </div>
+                </div>
+
+                <!-- Indicador de tempo real -->
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+                    <div id="pontoLiveIndicator" style="width:8px;height:8px;border-radius:50%;background:#27ae60;animation:pulse 2s infinite;"></div>
+                    <span style="font-size:0.8em;color:#666;" id="pontoUltimaAtualizacao">Atualizando...</span>
+                </div>
+
+                <!-- Lista de centrais -->
+                <div id="listaPontos"><p style="color:#999;text-align:center;padding:40px;">Carregando centrais...</p></div>
+
+                <!-- Modal fila de motoristas -->
+                <div id="modalFilaPonto" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;">
+                    <div style="background:#fff;border-radius:12px;padding:24px;width:90%;max-width:500px;max-height:80vh;overflow-y:auto;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                            <h3 style="margin:0;" id="modalFilaTitulo">Fila da Central</h3>
+                            <button onclick="document.getElementById('modalFilaPonto').style.display='none'" style="background:none;border:none;font-size:1.4em;cursor:pointer;">✖</button>
+                        </div>
+                        <div id="modalFilaConteudo"></div>
+                    </div>
+                </div>
             </div>
 
                         <div id="logs" class="page">

@@ -7,8 +7,18 @@ document.querySelectorAll('.menu-item').forEach(item => {
         document.querySelectorAll('.menu-item').forEach(i => i.classList.remove('active'));
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         item.classList.add('active');
-        document.getElementById(item.getAttribute('data-page')).classList.add('active');
-        carregarPagina(item.getAttribute('data-page'));
+        const page = item.getAttribute('data-page');
+        document.getElementById(page).classList.add('active');
+        // Para polling de centrais ao trocar de página
+        if (typeof _pontosPollingInterval !== 'undefined' && _pontosPollingInterval) {
+            clearInterval(_pontosPollingInterval);
+            _pontosPollingInterval = null;
+        }
+        carregarPagina(page);
+        // Inicia polling tempo real ao entrar em Centrais
+        if (page === 'pontos') {
+            _pontosPollingInterval = setInterval(carregarPontos, 5000);
+        }
     });
 });
 
@@ -600,31 +610,93 @@ async function abrirModalNovoPonto() {
     carregarPontos();
 }
 
+let _pontosPollingInterval = null;
+
 async function carregarPontos() {
     try {
         const pontos = await api('/api/pontos');
         const el = document.getElementById('listaPontos');
-        if (!pontos.length) { el.innerHTML = '<p style="color:#999">Nenhum ponto cadastrado.</p>'; return; }
-        el.innerHTML = pontos.map(p => `
-            <div style="background:#f8f9fa;border-radius:8px;padding:15px;margin-bottom:10px;border-left:4px solid ${p.ativo ? '#27ae60' : '#e74c3c'}">
-                <div style="display:flex;justify-content:space-between;align-items:center;">
-                    <div>
-                        <strong>${p.nome}</strong> 
-                        <span class="badge ${p.ativo ? 'green' : 'red'}">${p.ativo ? '✅ Ativo' : '❌ Inativo'}</span><br>
-                        <small style="color:#666">📍 ${p.endereco}</small><br>
-                        <small style="color:#666">⏰ ${p.horarioAbertura} - ${p.horarioFechamento} | ⏱ ${p.tempoAceiteSegundos||30}s aceite | 🚗 ${p.maxCorridasPonto||3} por vez</small>
-                        ${p.principal ? '<span class="badge purple">⭐ Principal</span>' : ''}
-                    </div>
-                    <div>
-                        <button class="btn btn-sm" style="background:#f39c12;color:white" onclick="togglePonto('${p._id}', ${!p.ativo})">${p.ativo ? '⏸ Pausar' : '▶ Ativar'}</button>
-                        <button class="btn btn-sm btn-danger" onclick="deletarPonto('${p._id}')">🗑</button>
-                        <button class="btn btn-sm btn-primary" onclick="verFilaPonto('${p._id}', '${p.nome}')">👥 Fila</button>
+        if (!el) return;
+        const ts = document.getElementById('pontoUltimaAtualizacao');
+        if (ts) ts.textContent = 'Atualizado às ' + new Date().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+
+        if (!Array.isArray(pontos) || !pontos.length) {
+            el.innerHTML = `<div style="text-align:center;padding:60px 20px;color:#999;">
+                <div style="font-size:3em;margin-bottom:12px;">🏢</div>
+                <p style="margin:0;font-size:1.1em;">Nenhuma central cadastrada</p>
+                <p style="margin:8px 0 0;font-size:0.9em;">Clique em <strong>➕ Nova Central</strong> para começar</p>
+            </div>`;
+            return;
+        }
+
+        const agora = new Date();
+        const diaAtual = agora.getDay();
+        const horaAtual = agora.getHours().toString().padStart(2,'0') + ':' + agora.getMinutes().toString().padStart(2,'0');
+        const diasNome = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+
+        el.innerHTML = pontos.map(p => {
+            const diasFuncionamento = (p.diasSemana || [1,2,3,4,5]).map(d => diasNome[d]).join(', ');
+            const estaAberto = p.ativo && (p.diasSemana || []).includes(diaAtual) && horaAtual >= (p.horarioAbertura||'00:00') && horaAtual <= (p.horarioFechamento||'23:59');
+            const statusCor = !p.ativo ? '#e74c3c' : estaAberto ? '#27ae60' : '#f39c12';
+            const statusTxt = !p.ativo ? '⛔ Fechado' : estaAberto ? '🟢 Aberto' : '🟡 Fora do horário';
+            return `<div style="background:#fff;border-radius:10px;padding:0;margin-bottom:12px;border:1px solid #e8ecef;box-shadow:0 1px 4px rgba(0,0,0,0.06);overflow:hidden;">
+                <div style="height:4px;background:${statusCor};"></div>
+                <div style="padding:16px;">
+                    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">
+                        <div style="flex:1;min-width:200px;">
+                            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+                                <strong style="font-size:1.05em;color:#2c3e50;">${p.nome}</strong>
+                                ${p.principal ? '<span style="background:#9b59b6;color:white;font-size:0.7em;padding:2px 7px;border-radius:10px;font-weight:600;">⭐ PRINCIPAL</span>' : ''}
+                                <span style="background:${statusCor}22;color:${statusCor};font-size:0.75em;padding:2px 8px;border-radius:10px;font-weight:600;">${statusTxt}</span>
+                            </div>
+                            <div style="color:#555;font-size:0.88em;line-height:1.8;">
+                                <div>📍 ${p.endereco || '-'}</div>
+                                <div>⏰ ${p.horarioAbertura||'06:00'} – ${p.horarioFechamento||'22:00'} &nbsp;|&nbsp; 📅 ${diasFuncionamento}</div>
+                                <div>⏱ Aceite: <strong>${p.tempoAceiteSegundos||30}s</strong> &nbsp;|&nbsp; 🚗 Máx por vez: <strong>${p.maxCorridasPonto||3}</strong></div>
+                            </div>
+                        </div>
+                        <div style="display:flex;flex-direction:column;gap:6px;min-width:130px;">
+                            <button class="btn btn-sm btn-primary" onclick="verFilaPonto('${p._id}','${p.nome.replace(/'/g,'\'')}')" style="text-align:left;">👥 Ver Fila</button>
+                            ${p.ativo
+                                ? `<button class="btn btn-sm" style="background:#e67e22;color:white;text-align:left;" onclick="fecharCentral('${p._id}')">🔒 Fechar Central</button>`
+                                : `<button class="btn btn-sm" style="background:#27ae60;color:white;text-align:left;" onclick="abrirCentral('${p._id}')">🔓 Abrir Central</button>`
+                            }
+                            <button class="btn btn-sm btn-danger" onclick="deletarPonto('${p._id}','${p.nome.replace(/'/g,'\'')}')" style="text-align:left;">🗑 Excluir</button>
+                        </div>
                     </div>
                 </div>
-            </div>
-        `).join('');
+            </div>`;
+        }).join('');
     } catch(e) { console.log('Erro pontos:', e); }
 }
+
+function mostrarFormCentral() {
+    document.getElementById('formCentralContainer').style.display = 'block';
+    document.getElementById('btnNovaCentral').style.display = 'none';
+    document.getElementById('pontoNome').focus();
+}
+
+function ocultarFormCentral() {
+    document.getElementById('formCentralContainer').style.display = 'none';
+    document.getElementById('btnNovaCentral').style.display = '';
+    ['pontoNome','pontoEndereco'].forEach(id => { const el = document.getElementById(id); if(el) el.value=''; });
+}
+
+async function fecharCentral(id) {
+    await api('/api/pontos/' + id, 'PUT', { ativo: false });
+    carregarPontos();
+}
+
+async function abrirCentral(id) {
+    await api('/api/pontos/' + id, 'PUT', { ativo: true });
+    carregarPontos();
+}
+
+
+
+
+
+
 
 async function criarPonto() {
     const nome = document.getElementById('pontoNome').value.trim();
@@ -647,10 +719,7 @@ async function criarPonto() {
     document.getElementById('pontoPrincipal').checked = false;
 }
 
-async function togglePonto(id, ativo) {
-    await api(`/api/pontos/${id}`, { method: 'PUT', body: JSON.stringify({ ativo }) });
-    carregarPontos();
-}
+
 
 async function deletarPonto(id) {
     if (!confirm('Deletar ponto?')) return;
