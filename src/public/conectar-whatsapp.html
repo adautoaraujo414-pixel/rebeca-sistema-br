@@ -121,5 +121,68 @@
         if (instanciaId) verificarStatus();
         if (!instanciaId && !adminId) document.querySelector('.container').innerHTML = '<h1>Erro</h1><p>Use: ?admin=ID ou ?id=INSTANCIA</p>';
     </script>
+
+<style id="mobile-responsive">
+/* ===== RESPONSIVO GLOBAL MOBILE ===== */
+* { box-sizing: border-box; }
+img { max-width: 100%; }
+.menu-toggle-global { display: none; background: none; border: none; color: white; font-size: 1.6em; cursor: pointer; padding: 5px 10px; }
+
+@media (max-width: 768px) {
+    .menu-toggle-global { display: block !important; }
+    .sidebar, .nav-lateral { width: 100% !important; max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
+    .sidebar.aberto, .nav-lateral.aberto { max-height: 700px !important; }
+    .container, .layout, .main-wrap { flex-direction: column !important; }
+    .main-content, .content, .page-content { padding: 10px !important; width: 100% !important; }
+    .cards, .grid, .stats-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 10px !important; }
+    .panel-grid { grid-template-columns: 1fr !important; }
+    .card { padding: 12px !important; }
+    .card .value { font-size: 1.3em !important; }
+    table { font-size: 0.78em !important; display: block; overflow-x: auto; white-space: nowrap; }
+    .btn { padding: 6px 10px !important; font-size: 0.8em !important; }
+    .header, .top-bar { padding: 10px 12px !important; flex-wrap: wrap; gap: 8px; }
+    .header h1, .top-bar h1 { font-size: 1.1em !important; }
+    input, select, textarea { width: 100% !important; font-size: 16px !important; }
+    .modal, .overlay-box { width: 95vw !important; max-width: 95vw !important; margin: 10px auto !important; }
+    .form-row, .form-grid { flex-direction: column !important; }
+    .col-2, .col-3, .col-4 { width: 100% !important; }
+}
+
+@media (max-width: 480px) {
+    .cards, .grid, .stats-grid { grid-template-columns: 1fr 1fr !important; }
+    .card-icon { font-size: 1.3em !important; }
+    h1 { font-size: 1.2em !important; }
+    h2 { font-size: 1em !important; }
+}
+</style>
+<script>
+// Toggle menu mobile global
+function toggleMenuGlobal() {
+    document.querySelectorAll('.sidebar, .nav-lateral').forEach(el => el.classList.toggle('aberto'));
+}
+// Auto-detectar mobile
+(function() {
+    function ajustar() {
+        const isMobile = window.innerWidth <= 768;
+        document.body.classList.toggle('is-mobile', isMobile);
+        if (!isMobile) {
+            document.querySelectorAll('.sidebar, .nav-lateral').forEach(el => el.classList.remove('aberto'));
+        }
+    }
+    window.addEventListener('resize', ajustar);
+    document.addEventListener('DOMContentLoaded', ajustar);
+})();
+// Fechar menu ao clicar em item
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.menu-item, .nav-item').forEach(item => {
+        item.addEventListener('click', () => {
+            if (window.innerWidth <= 768) {
+                document.querySelectorAll('.sidebar, .nav-lateral').forEach(el => el.classList.remove('aberto'));
+            }
+        });
+    });
+});
+</script>
+
 </body>
 </html>
