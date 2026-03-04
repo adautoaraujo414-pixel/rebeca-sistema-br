@@ -267,7 +267,7 @@ router.get('/cozinha/pedidos', authDelivery, async (req, res) => {
     try {
         const pedidos = await PedidoDelivery.find({
             adminId: req.adminId,
-            status: { : ['novo', 'preparando', 'pronto'] }
+            status: { $in: ['novo', 'preparando', 'pronto'] }
         }).sort({ createdAt: 1 });
         res.json(pedidos);
     } catch(e) { res.status(500).json({ erro: e.message }); }
@@ -318,7 +318,7 @@ router.get('/entregador/pedidos', authDelivery, async (req, res) => {
     try {
         const pedidos = await PedidoDelivery.find({
             adminId: req.adminId,
-            status: { : ['pronto', 'saiu_entrega'] }
+            status: { $in: ['pronto', 'saiu_entrega'] }
         }).sort({ dataPronto: 1 });
         res.json(pedidos);
     } catch(e) { res.status(500).json({ erro: e.message }); }
@@ -381,7 +381,7 @@ router.post('/entregador/:id/gps', async (req, res) => {
 router.get('/rastrear-gps/:codigo', async (req, res) => {
     try {
         const codigo = req.params.codigo;
-        const recentes = await PedidoDelivery.find({ status: { : ['preparando', 'pronto', 'saiu_entrega'] } }).sort({ createdAt: -1 }).limit(200).lean();
+        const recentes = await PedidoDelivery.find({ status: { $in: ['preparando', 'pronto', 'saiu_entrega'] } }).sort({ createdAt: -1 }).limit(200).lean();
         const pedido = recentes.find(function(p) { return p._id.toString().endsWith(codigo); });
         res.json({
             numero: pedido.numero,
