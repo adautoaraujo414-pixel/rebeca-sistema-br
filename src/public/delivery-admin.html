@@ -398,9 +398,9 @@
         document.querySelectorAll('.menu-item').forEach(item => {
             item.addEventListener('click', () => {
         // ========== ENTREGADORES ==========
-        let entregadores = [];
+
         
-        async function carregarEntregadores() {
+
             try {
                 const resp = await apiCall("/entregadores");
                 entregadores = resp.entregadores || [];
@@ -413,9 +413,9 @@
                 item.classList.add('active');
                 const page = item.dataset.page;
         // ========== ENTREGADORES ==========
-        let entregadores = [];
+
         
-        async function carregarEntregadores() {
+
             try {
                 const resp = await apiCall("/entregadores");
                 entregadores = resp.entregadores || [];
@@ -752,9 +752,9 @@
                 toast('Cardapio salvo! ' + data.categorias + ' categorias, ' + data.itens + ' itens');
                 limparTranscricao();
         // ========== ENTREGADORES ==========
-        let entregadores = [];
+
         
-        async function carregarEntregadores() {
+
             try {
                 const resp = await apiCall("/entregadores");
                 entregadores = resp.entregadores || [];
@@ -765,9 +765,9 @@
         }
                 document.querySelectorAll('.menu-item').forEach(function(m){m.classList.remove('active');});
         // ========== ENTREGADORES ==========
-        let entregadores = [];
+
         
-        async function carregarEntregadores() {
+
             try {
                 const resp = await apiCall("/entregadores");
                 entregadores = resp.entregadores || [];
