@@ -154,6 +154,27 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                     msg.message?.imageMessage?.caption;
                 if (!temConteudoUtil && msg.messageType !== 'audioMessage' && msg.messageType !== 'locationMessage') continue;
                 
+                // ===== TRATAMENTO DE CHAMADA (LIGAÇÃO) =====
+                if (msg.messageType === 'call' || msg.key?.remoteJid?.includes('call') || 
+                    msg.message?.audioMessage?.ptt === false && msg.messageType === 'audioMessage' ||
+                    (msg.messageStubType && [6,7,8].includes(msg.messageStubType))) {
+                    // É uma chamada — rejeitar e responder via texto
+                    const telChamada = (msg.key?.remoteJid || '').replace('@s.whatsapp.net','').replace('@c.us','');
+                    if (telChamada && inst) {
+                        try {
+                            await EvolutionMultiService.enviarMensagem(inst._id, telChamada,
+                                '📵 Olá! Não consigo atender ligações, mas posso te ajudar aqui pelo chat! 😊\n\n' +
+                                '🚗 *Precisa de uma corrida?* É só me mandar:\n' +
+                                '• Seu endereço de *origem*\n' +
+                                '• Seu endereço de *destino*\n\n' +
+                                'Te atendo na hora! 👇'
+                            );
+                            console.log('[CHAMADA] Ligação rejeitada e mensagem enviada para:', telChamada);
+                        } catch(callErr) { console.log('[CHAMADA] Erro:', callErr.message); }
+                    }
+                    continue;
+                }
+
                 // Dedup por messageId — persistido no MongoDB (sobrevive reinício)
                 const msgId = msg.key?.id;
                 if (msgId) {
