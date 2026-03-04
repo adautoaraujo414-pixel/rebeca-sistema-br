@@ -1,7 +1,7 @@
 {
-    "name": "UBMAX Motorista",
-    "short_name": "UBMAX",
-    "description": "App do Motorista UBMAX - Sistema de Corridas",
+    "name": "Rebeca Corridas Motorista",
+    "short_name": "Rebeca Corridas",
+    "description": "App do Motorista Rebeca Corridas - Sistema de Corridas",
     "start_url": "/motorista",
     "display": "standalone",
     "background_color": "#1a1a2e",

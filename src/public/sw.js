@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ubmax-v2';
+const CACHE_NAME = 'rebeca-corridas-v2';
 const urlsToCache = ['/motorista', '/manifest.json'];
 
 // Instalação

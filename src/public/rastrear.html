@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Rastreamento - UBMAX</title>
+    <title>Rastreamento - Rebeca Corridas</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
@@ -49,7 +49,7 @@
 
     <div id="app" class="hidden">
         <div class="header">
-            <h1>🚗 UBMAX - Rastreamento</h1>
+            <h1>🚗 Rebeca Corridas - Rastreamento</h1>
             <div class="status-bar">
                 <div class="status-dot" id="status-dot"></div>
                 <span id="status-text">Motorista a caminho</span>
@@ -211,7 +211,7 @@
                         document.getElementById('expirado-msg').textContent = 'Boa viagem! 🎉';
                     } else if (d.status === 'finalizada') {
                         document.getElementById('expirado-titulo').textContent = '✅ Corrida finalizada';
-                        document.getElementById('expirado-msg').textContent = 'Obrigado por usar UBMAX!';
+                        document.getElementById('expirado-msg').textContent = 'Obrigado por usar Rebeca Corridas!';
                     } else {
                         document.getElementById('expirado-titulo').textContent = '❌ Corrida cancelada';
                         document.getElementById('expirado-msg').textContent = '';
