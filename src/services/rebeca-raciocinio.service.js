@@ -137,4 +137,75 @@ RETORNE APENAS JSON VÁLIDO:
     }
 };
 
+
+    /**
+     * Classificar endereço que o Maps não achou
+     * Decide se é: ponto_referencia, endereco_incompleto, endereco_digitado_errado, texto_invalido
+     *
+     * - ponto_referencia: motorista provavelmente conhece ("mercadão", "campo do zé", "praça da matriz")
+     * - endereco_incompleto: rua sem número ou bairro sem rua ("rua das flores", "centro")
+     * - endereco_digitado_errado: parece endereço mas com typo ("av. brasilia" sem número, "r. joao slva 45")
+     * - texto_invalido: não é endereço de jeito nenhum ("oi", "sim", "não sei")
+     */
+    async classificarEnderecoNaoEncontrado(texto, adminId = null) {
+        if (!this.apiKey) return { tipo: 'ponto_referencia', confianca: 0.5, enderecoLimpo: texto };
+
+        // Heurística rápida antes de chamar IA (economizar tokens)
+        const t = texto.toLowerCase().trim();
+
+        // Claramente não é endereço
+        if (t.length < 4 || /^(sim|nao|não|ok|s|n|1|2|cancelar|oi|olá|ola)$/.test(t)) {
+            return { tipo: 'texto_invalido', confianca: 0.99, enderecoLimpo: null };
+        }
+
+        // Ponto de referência claro — mandar direto
+        const ehPontoRef = /(hospital|rodoviaria|rodoviária|aeroporto|shopping|terminal|mercado|supermercado|escola|colegio|colégio|universidade|faculdade|prefeitura|posto de saude|upa|ubs|igreja|catedral|cemiterio|estadio|farmacia|banco|correios|delegacia|parque|praça|praca|feira|padaria|açougue|acougue|bar do|boteco|posto.*gasolina|clube|ginásio|ginasio|campo de futebol|campo do|quadra|condomínio|condominio|residencial|conjunto|vila|bairro|setor|jardim|loteamento)/i.test(texto);
+
+        if (ehPontoRef) {
+            return { tipo: 'ponto_referencia', confianca: 0.92, enderecoLimpo: texto };
+        }
+
+        // Endereço com número mas não achou — provavelmente erro de digitação
+        const temNumeroERua = /\d+/.test(texto) && /(rua|av|avenida|r\.|travessa|alameda|estrada|rod|rodovia)/i.test(texto);
+        if (temNumeroERua) {
+            return { tipo: 'endereco_digitado_errado', confianca: 0.85, enderecoLimpo: texto };
+        }
+
+        // Usar IA para casos ambíguos
+        try {
+            const prompt = `Analise este texto que um cliente de táxi enviou como endereço de destino, mas o Google Maps não conseguiu localizar.
+
+Texto: "${texto}"
+
+Classifique em UMA das categorias:
+- "ponto_referencia": nome de estabelecimento, ponto turístico, apelido local que um motorista local provavelmente conhece (ex: "mercadão central", "campo do zé", "bar do bigode", "praça velha")
+- "endereco_incompleto": parece endereço real mas falta número ou bairro (ex: "rua das flores", "avenida brasil", "rua joão silva")  
+- "endereco_digitado_errado": parece endereço com erro de digitação (ex: "r. joao slva 45", "av brasiia 80")
+- "texto_invalido": não é endereço de forma alguma
+
+Também sugira uma versão corrigida/limpa se possível.
+
+RETORNE APENAS JSON:
+{"tipo": "", "confianca": 0.0, "enderecoLimpo": "versão limpa ou null", "motivo": "1 linha"}`;
+
+            const response = await axios.post('https://api.openai.com/v1/chat/completions', {
+                model: 'gpt-4o-mini',
+                messages: [{ role: 'user', content: prompt }],
+                max_tokens: 120,
+                temperature: 0.1
+            }, {
+                headers: { 'Authorization': `Bearer ${this.apiKey}`, 'Content-Type': 'application/json' },
+                timeout: 8000
+            });
+
+            const txt = response.data.choices[0]?.message?.content?.trim();
+            const parsed = JSON.parse(txt.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim());
+            console.log(`[CLASSIF_END] "${texto}" → ${parsed.tipo} (${parsed.confianca}) — ${parsed.motivo}`);
+            return parsed;
+        } catch(e) {
+            console.log('[CLASSIF_END] Fallback heurística:', e.message);
+            return { tipo: 'ponto_referencia', confianca: 0.5, enderecoLimpo: texto };
+        }
+    },
+
 module.exports = RebecaRaciocinioService;

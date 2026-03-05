@@ -1182,14 +1182,26 @@ Responda diretamente para ele: wa.me/${telefone}`;
             const validacao = await RebecaService.validarEndereco(msgOriginal);
             
             if (!validacao.valido) {
+                // Classificar endereço antes de desistir
+                const classif = await RaciocinioService.classificarEnderecoNaoEncontrado(msgOriginal, conversa.adminId);
+                console.log('[CLASSIF]', msgOriginal, '->', classif.tipo, classif.confianca);
+
+                // texto_invalido — não é endereço, ignorar silenciosamente e deixar fluxo normal tratar
+                if (classif.tipo === 'texto_invalido' && classif.confianca > 0.8) {
+                    // Não faz nada aqui — cai fora do bloco autoDetectarEndereco e fluxo normal trata
+                    // (não retorna nada, deixa passar)
+                }
+
                 // Nao achou no Maps - tentar com cidade do admin
                 let achouComCidade = false;
                 try {
                     const { Admin } = require('../models');
                     const adminDoc = conversa.adminId ? await Admin.findById(conversa.adminId) : null;
                     const cidade = adminDoc?.cidadeAtuacao || adminDoc?.cidade || '';
+                    // Tentar com cidade + endereço corrigido pelo classificador
+                    const textoTentar = classif.enderecoLimpo || msgOriginal;
                     if (cidade) {
-                        const val2 = await RebecaService.validarEndereco(msgOriginal + ', ' + cidade);
+                        const val2 = await RebecaService.validarEndereco(textoTentar + ', ' + cidade);
                         if (val2.valido) {
                             conversa.dados.origem = val2.endereco;
                             conversa.dados.origemValidada = val2;
@@ -1201,13 +1213,9 @@ Responda diretamente para ele: wa.me/${telefone}`;
                             conversa.dados.corridaId = corridaDireta.id;
                             conversas.set(telefone, conversa);
                             const _precoV2 = conversa.dados?.calculo?.preco || corridaDireta.preco || 0;
-                            let _msgCidade = `✅ *Corrida solicitada!*\n\n📍 *Origem:* ${val2.endereco}`;
-                            if (_precoV2 > 0) _msgCidade += `\n💰 *Valor estimado: R$ ${_precoV2.toFixed(2)}*`;
-                            _msgCidade += `\n\n⏳ Buscando o motorista mais próximo...`;
-                            if (configRebeca.enviarLinkRastreamento) {
-                                _msgCidade += `\n\n📲 *Acompanhe em tempo real:*\n${RebecaService.gerarLinkRastreamento(corridaDireta.id)}`;
-                            }
-                            _msgCidade += `\n\n_Digite CANCELAR se precisar_`;
+                            let _msgCidade = '✅ *Corrida solicitada!*\n\n📍 *Origem:* ' + val2.endereco;
+                            if (_precoV2 > 0) _msgCidade += '\n💰 *Valor estimado: R$ ' + _precoV2.toFixed(2) + '*';
+                            _msgCidade += '\n\n⏳ Buscando o motorista mais próximo...\n\n_Digite CANCELAR se precisar_';
                             return _msgCidade;
                             achouComCidade = true;
                         }
@@ -1222,12 +1230,28 @@ Responda diretamente para ele: wa.me/${telefone}`;
                     const ehFrasePedido = /(aqui no|aqui na|estou no|estou na|to no|to na|me busca|me pega|manda.*aqui)/i.test(msgOriginal);
                     
                     if (!temNumero && !ehPontoRef && !ehFrasePedido) {
-                        conversa.etapa = 'pedir_numero_origem';
-                        conversas.set(telefone, conversa);
-                        return `📍 ${msgOriginal}\n\nQual o número?`;
+                        // Classificar antes de pedir número — pode ser ponto de referência local
+                        const classifTL = await RaciocinioService.classificarEnderecoNaoEncontrado(msgOriginal, conversa.adminId);
+                        if (classifTL.tipo === 'ponto_referencia' && classifTL.confianca > 0.75) {
+                            // Motorista provavelmente conhece — criar corrida direto
+                            conversa.dados.origem = classifTL.enderecoLimpo || msgOriginal;
+                            conversa.dados.origemPontoRef = true;
+                        } else if (classifTL.tipo === 'texto_invalido' && classifTL.confianca > 0.8) {
+                            // Não é endereço — pedir origem corretamente
+                            conversa.etapa = 'pedir_origem';
+                            conversas.set(telefone, conversa);
+                            return '📍 Qual o endereço de onde você está? (rua e número)';
+                        } else {
+                            conversa.etapa = 'pedir_numero_origem';
+                            conversas.set(telefone, conversa);
+                            return '📍 ' + msgOriginal + '\n\nQual o número?';
+                        }
+                    } else {
+                    // Tem numero ou ponto de referência — criar com texto como está
+                    conversa.dados.origem = classifTL?.enderecoLimpo || msgOriginal;
                     }
-                    // Tem numero mas nao achou - criar com texto livre
-                    conversa.dados.origem = msgOriginal;
+                    // Criar com texto livre — motorista vai confirmar localização
+                    conversa.dados.origem = conversa.dados.origem || msgOriginal;
                     conversa.dados.origemValidada = { valido: true, precisao: 'texto_livre', endereco: msgOriginal };
                     conversa.dados.calculo = { origem: { endereco: msgOriginal }, destino: null, distanciaKm: 0, tempoMinutos: 0, preco: 15, faixa: { nome: 'padrao', multiplicador: 1 } };
                     const corridaTexto = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
@@ -1638,8 +1662,9 @@ _Digite CANCELAR se precisar_`;
                             }
                         }
                         if (!destinoFinal) {
-                            conversas.set(telefone, conversa);
-                            return RaciocinioService.reformularPergunta('pedir_destino_rapido', conversa.dados);
+                            // Criar corrida mesmo assim com texto livre — motorista entra em contato
+                            conversa.dados.destino = msgOriginal;
+                            conversa.dados.destinoTextoLivre = true;
                         }
                     }
                 } else {
@@ -1788,8 +1813,15 @@ _Digite CANCELAR se precisar_`;
                             }
                         }
                     }
+                    // Criar corrida mesmo assim com texto livre
+                    conversa.dados.destino = msgOriginal;
+                    conversa.dados.destinoTextoLivre = true;
+                    const calculoTL = await RebecaService.calcularCorrida(conversa.dados.origem, conversa.dados.destino);
+                    conversa.dados.calculo = calculoTL;
+                    conversa.etapa = 'confirmar_corrida';
+                    const respTL = `🚗 *RESUMO*\n\n📍 ${conversa.dados.origem}\n🏁 ${conversa.dados.destino}\n\n📏 ${calculoTL.distancia} | ⏱️ ${calculoTL.tempo}\n💰 *R$ ${calculoTL.preco.toFixed(2)}*\n\n*1* - ✅ Confirmar\n*2* - ❌ Cancelar`;
                     conversas.set(telefone, conversa);
-                    return RaciocinioService.reformularPergunta('pedir_destino', conversa.dados);
+                    return respTL;
                 }
                 conversa.dados.destino = validacao.endereco;
             }
