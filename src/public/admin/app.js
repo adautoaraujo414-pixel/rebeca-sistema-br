@@ -32,7 +32,7 @@ async function api(url, method='GET', data=null) {
     const opt = { method, headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+token } };
     if (adminId) opt.headers['x-admin-id'] = adminId;
     if (data) opt.body = JSON.stringify(data);
-    try { return await (await fetch(url, opt)).json(); } catch(e) { return { error:'Erro' }; }
+    try { return await (await fetch(url, opt)).json(); } catch(e) { return { error:'Erro' };} catch(e) { console.error(e); }
 }
 
 // GRÁFICOS
@@ -121,7 +121,8 @@ async function atualizarMapa() {
                 marcadores.push(m);
             });
         }
-    } catch(e) { console.log('Erro centrais no mapa:', e); }
+    } catch(e) { console.log('Erro centrais no mapa:', e); } catch(e) { console.error(e); }
+
     const mots = await api('/api/gps-integrado');
     // Auto-centralizar no primeiro motorista com GPS
     const motComGPS = mots.find(m => m.latitude && m.longitude);
@@ -148,7 +149,8 @@ async function cancelarCorrida(id) {
         console.error('Erro ao cancelar corrida:', e);
     } finally {
         _cancelando = false;
-    }
+    } catch(e) { console.error(e); }
+
 }
 let _despachando = false;
 async function despacharCorrida(id) {
@@ -162,7 +164,8 @@ async function despacharCorrida(id) {
         console.error('Erro ao despachar corrida:', e);
     } finally {
         _despachando = false;
-    }
+    } catch(e) { console.error(e); }
+
 }
 
 // DESPACHO
@@ -264,7 +267,8 @@ async function salvarRegras() {
     try {
         await api('/api/despacho/config', { method: 'PUT', body: JSON.stringify({ regras: regrasDespacho }) });
         mostrarNotificacao('✅ Regras de despacho salvas!', 'success');
-    } catch(e) { alert('Erro ao salvar: ' + e.message); }
+    } catch(e) { alert('Erro ao salvar: ' + e.message); } catch(e) { console.error(e); }
+
 }
 
 async function carregarConfigDespacho() {
@@ -275,7 +279,8 @@ async function carregarConfigDespacho() {
         // Atualizar card de modo atual
         const el = document.getElementById('modoDespachoAtual');
         if (el) el.textContent = regrasDespacho.map(r => tipoLabels[r.tipo]).join(' → ');
-    } catch(e) { console.log('Erro config despacho:', e); }
+    } catch(e) { console.log('Erro config despacho:', e); } catch(e) { console.error(e); }
+
 }
 
 // Compatibilidade legada
@@ -309,7 +314,8 @@ async function desativarMotorista(id) {
     _desativandoMot = true;
     try {
         if (confirm('Desativar?')) { await api('/api/motoristas/'+id,'DELETE'); carregarMotoristas(); }
-    } catch(e) { console.error(e); } finally { _desativandoMot = false; }
+    } catch(e) { console.error(e); } finally { _desativandoMot = false; } catch(e) { console.error(e); }
+
 
 // CLIENTES
 async function carregarClientes() { const b=document.getElementById('buscaCliente').value; const c=await api('/api/clientes'+(b?'?busca='+b:'')); document.getElementById('clientesTable').innerHTML=c.length?c.map(x=>`<tr><td>${x.nome}</td><td>📱 ${x.telefone}</td><td>${x.corridasRealizadas||0}</td><td><span class="badge ${x.bloqueado?'red':'green'}">${x.bloqueado?'Bloqueado':'Ativo'}</span></td><td>${x.bloqueado?`<button class="btn btn-success btn-sm" onclick="desbloquearCliente('${x.id}')">Desbloquear</button>`:`<button class="btn btn-danger btn-sm" onclick="bloquearCliente('${x.id}')">Bloquear</button>`}</td></tr>`).join(''):'<tr><td colspan="5" style="text-align:center;color:#999">Nenhum</td></tr>'; }
@@ -323,7 +329,8 @@ async function bloquearCliente(id) {
     try {
         await api('/api/clientes/'+id+'/bloquear', 'PUT', {motivo:'Admin'});
         carregarClientes();
-    } catch(e) { console.error(e); } finally { _bloqueandoCli = false; }
+    } catch(e) { console.error(e); } finally { _bloqueandoCli = false; } catch(e) { console.error(e); }
+
 let _desbloqueandoCli = false;
 async function desbloquearCliente(id) {
     if (_desbloqueandoCli) return;
@@ -331,7 +338,8 @@ async function desbloquearCliente(id) {
     try {
         await api('/api/clientes/'+id+'/desbloquear', 'PUT');
         carregarClientes();
-    } catch(e) { console.error(e); } finally { _desbloqueandoCli = false; }
+    } catch(e) { console.error(e); } finally { _desbloqueandoCli = false; } catch(e) { console.error(e); }
+
 
 // ROTAS
 let mapaRotaLeaflet = null;
@@ -497,7 +505,8 @@ async function excluirFaixa(id) {
         await api('/api/preco-dinamico/faixas/' + id, 'DELETE');
         carregarFaixasDia(diaSelecionado); carregarIntermunicipais();
     }
-}
+} catch(e) { console.error(e); }
+
 
 function abrirModalCopiarFaixas() {
     document.getElementById('copiarOrigem').value = diaSelecionado;
@@ -543,7 +552,7 @@ async function carregarAntiFraude() { const st=await api('/api/antifraude/estati
 let _resolvendoAlerta = false;
 async function resolverAlerta(id) {
     if (_resolvendoAlerta) return; _resolvendoAlerta = true;
-    try { const r=prompt('Resolução:'); if(r){await api('/api/antifraude/alertas/'+id+'/resolver','PUT',{resolucao:r}); carregarAntiFraude();} }
+    try { const r=prompt('Resolução:'); if(r){await api('/api/antifraude/alertas/'+id+'/resolver','PUT',{resolucao:r}); carregarAntiFraude();}} catch(e) { console.error(e); }
 
 // BLACKLIST
 async function carregarBlacklist() { const st=await api('/api/antifraude/estatisticas'); document.getElementById('blacklistTotal').textContent=st.blacklist?.total||0; document.getElementById('blacklistTelefones').textContent=st.blacklist?.porTipo?.telefone||0; document.getElementById('blacklistCPFs').textContent=st.blacklist?.porTipo?.cpf||0; const l=await api('/api/antifraude/blacklist'); document.getElementById('blacklistTable').innerHTML=l.length?l.map(x=>`<tr><td><span class="badge purple">${x.tipo}</span></td><td><strong>${x.valor}</strong></td><td>${x.motivo}</td><td>${new Date(x.dataBloqueio).toLocaleDateString('pt-BR')}</td><td><button class="btn btn-success btn-sm" onclick="removerBlacklist('${x.id}')">Remover</button></td></tr>`).join(''):'<tr><td colspan="5" style="text-align:center;color:#999">Nenhum</td></tr>'; }
@@ -555,7 +564,8 @@ async function removerBlacklist(id) {
     _removendoBL = true;
     try {
         if(confirm('Remover?')){ await api('/api/antifraude/blacklist/'+id,'DELETE'); carregarBlacklist(); }
-    } catch(e) { console.error(e); } finally { _removendoBL = false; }
+    } catch(e) { console.error(e); } finally { _removendoBL = false; } catch(e) { console.error(e); }
+
 
 // RECLAMAÇÕES
 async function carregarReclamacoes() { const st=await api('/api/reclamacoes/estatisticas'); document.getElementById('recPendentes').textContent=st.pendentes||0; document.getElementById('recAndamento').textContent=st.emAndamento||0; document.getElementById('recResolvidas').textContent=st.resolvidas||0; const r=await api('/api/reclamacoes'); document.getElementById('reclamacoesTable').innerHTML=r.length?r.map(x=>`<tr><td>${new Date(x.dataAbertura).toLocaleDateString('pt-BR')}</td><td>${x.clienteNome}</td><td>${x.assunto}</td><td><span class="badge ${x.status==='resolvida'?'green':'yellow'}">${x.status}</span></td><td>${x.status!=='resolvida'?`<button class="btn btn-success btn-sm" onclick="resolverReclamacao('${x.id}')">✓</button>`:''}</td></tr>`).join(''):'<tr><td colspan="5" style="text-align:center;color:#999">Nenhuma</td></tr>'; }
@@ -564,7 +574,7 @@ document.getElementById('formReclamacao')?.addEventListener('submit',async(e)=>{
 let _resolvendoRec = false;
 async function resolverReclamacao(id) {
     if (_resolvendoRec) return; _resolvendoRec = true;
-    try { const r=prompt('Resolução:'); if(r){await api('/api/reclamacoes/'+id+'/resolver','PUT',{resolucao:r}); carregarReclamacoes();} }
+    try { const r=prompt('Resolução:'); if(r){await api('/api/reclamacoes/'+id+'/resolver','PUT',{resolucao:r}); carregarReclamacoes();}} catch(e) { console.error(e); }
 
 // WHATSAPP
 async function carregarWhatsApp() {
@@ -592,7 +602,8 @@ async function carregarWhatsApp() {
         const msgEl = document.getElementById('wppMsgsHoje');
         if (motEl && c?.motoristas !== undefined) motEl.textContent = c.motoristas;
         if (msgEl && c?.msgsHoje !== undefined) msgEl.textContent = c.msgsHoje;
-    } catch(e) { console.log('Erro carregarWhatsApp:', e); }
+    } catch(e) { console.log('Erro carregarWhatsApp:', e); } catch(e) { console.error(e); }
+
 }
 // salvarConfigWhatsApp: ver versão completa abaixo
 
@@ -604,7 +615,7 @@ document.getElementById('formUsuario')?.addEventListener('submit',async(e)=>{ e.
 let _togUsuario = false;
 async function toggleUsuario(id,ativo) {
     if (_togUsuario) return; _togUsuario = true;
-    try { await api('/api/usuarios/'+id+'/'+(ativo?'desativar':'ativar'),'PUT'); carregarUsuarios(); }
+    try { await api('/api/usuarios/'+id+'/'+(ativo?'desativar':'ativar'),'PUT'); carregarUsuarios();} catch(e) { console.error(e); }
 
 // ÁREAS
 async function carregarAreas() { const a=await api('/api/config/areas'); document.getElementById('areasTable').innerHTML=a.length?a.map(x=>`<tr><td><strong>${x.nome}</strong></td><td>${x.cidade}</td><td>${x.bairros?.join(', ')||'-'}</td><td>R$ ${(x.taxaExtra||0).toFixed(2)}</td><td><button class="btn btn-danger btn-sm" onclick="excluirArea('${x.id}')">🗑️</button></td></tr>`).join(''):'<tr><td colspan="5">Nenhuma</td></tr>'; }
@@ -616,7 +627,8 @@ async function excluirArea(id) {
     _excluindoArea = true;
     try {
         if(confirm('Excluir?')){ await api('/api/config/areas/'+id,'DELETE'); carregarAreas(); }
-    } catch(e) { console.error(e); } finally { _excluindoArea = false; }
+    } catch(e) { console.error(e); } finally { _excluindoArea = false; } catch(e) { console.error(e); }
+
 
 // CONFIG
 async function carregarConfig() { const c=await api('/api/config'); document.getElementById('cfgTempoEspera').value=c.tempoMaximoEspera||10; document.getElementById('cfgRaioBusca').value=c.raioMaximoBusca||15; document.getElementById('cfgComissao').value=c.comissaoEmpresa||15; }
@@ -645,7 +657,8 @@ async function excluirIntermunicipal(id) {
     _excluindoInter = true;
     try {
         if(confirm('Excluir rota?')) { await api('/api/precos-intermunicipais/'+id,'DELETE'); carregarIntermunicipais(); }
-    } catch(e) { console.error(e); } finally { _excluindoInter = false; }
+    } catch(e) { console.error(e); } finally { _excluindoInter = false; } catch(e) { console.error(e); }
+
 
 // ===== SISTEMA DE PONTOS =====
 async function carregarFilaEspera() {
@@ -664,7 +677,8 @@ async function carregarFilaEspera() {
             <td><button class="btn btn-danger btn-sm" onclick="removerFila('${f._id}')">✖ Remover</button></td>
         </tr>`).join('')}
         </tbody></table>`;
-    } catch(e) { console.log('Erro fila:', e); }
+    } catch(e) { console.log('Erro fila:', e); } catch(e) { console.error(e); }
+
 }
 
 let _removendoFila = false;
@@ -674,7 +688,8 @@ async function removerFila(id) {
     if (!confirm('Remover da fila?')) return;
     await api('/api/fila-espera/' + id, 'DELETE');
     carregarFilaEspera();
-    } finally { _removendoFila = false; }
+    } finally { _removendoFila = false; } catch(e) { console.error(e); }
+
 }
 
 async function abrirModalNovoPonto() {
@@ -739,7 +754,8 @@ async function carregarPontos() {
                 </div>
             </div>`;
         }).join('');
-    } catch(e) { console.log('Erro pontos:', e); }
+    } catch(e) { console.log('Erro pontos:', e); } catch(e) { console.error(e); }
+
 }
 
 function mostrarFormCentral() {
@@ -760,7 +776,8 @@ async function fecharCentral(id) {
     try {
     await api('/api/pontos/' + id, 'PUT', { ativo: false });
     carregarPontos();
-    } finally { _fechandoCentral = false; }
+    } finally { _fechandoCentral = false; } catch(e) { console.error(e); }
+
 }
 
 async function abrirCentral(id) {
@@ -798,7 +815,8 @@ async function criarPonto() {
         carregarPontos();
     } finally {
         _criandoPonto = false;
-    }
+    } catch(e) { console.error(e); }
+
 }
 
 
@@ -810,7 +828,8 @@ async function deletarPonto(id) {
     if (!confirm('Deletar ponto?')) return;
     await api(`/api/pontos/${id}`, { method: 'DELETE' });
     carregarPontos();
-    } finally { _deletandoPonto = false; }
+    } finally { _deletandoPonto = false; } catch(e) { console.error(e); }
+
 }
 
 async function verFilaPonto(id, nome) {
@@ -871,7 +890,8 @@ async function salvarConfigPreco() {
             if (btn) { const t = btn.textContent; btn.textContent = '✅ Salvo!'; setTimeout(() => btn.textContent = t, 2000); }
             carregarPrecos();
         } else { alert('Erro: ' + (r?.erro || r?.error || 'Tente novamente')); }
-    } catch(e) { alert('Erro: ' + e.message); }
+    } catch(e) { alert('Erro: ' + e.message); } catch(e) { console.error(e); }
+
 }
 
 async function simularPreco() {
@@ -891,7 +911,8 @@ async function simularPreco() {
     } catch(e) {
         el.style.display = 'block';
         el.innerHTML = '<p style="color:#e74c3c;margin:0;">Erro ao simular: ' + e.message + '</p>';
-    }
+    } catch(e) { console.error(e); }
+
 }
 
 let _salvandoFaixa = false;
@@ -966,7 +987,8 @@ async function carregarZonas() {
             </div>`).join('');
     } catch(e) {
         el.innerHTML = '<p style="color:#e74c3c;padding:20px;">Erro ao carregar zonas: ' + e.message + '</p>';
-    }
+    } catch(e) { console.error(e); }
+
 }
 
 async function salvarNovaZona() {
@@ -1009,7 +1031,8 @@ async function salvarNovaZona() {
             mostrarErro(r?.erro || r?.error || 'Erro ao criar zona. Tente novamente.');
         }
     } catch(e) { mostrarErro('Erro: ' + e.message); }
-    } finally { _salvandoZona = false; }
+    } finally { _salvandoZona = false; } catch(e) { console.error(e); }
+
 }
 
 async function toggleZona(id, ativo) {
@@ -1017,7 +1040,8 @@ async function toggleZona(id, ativo) {
         const r = await api('/api/zona-preco/' + id, 'PUT', { ativo });
         if (r?.sucesso) carregarZonas();
         else alert('Erro: ' + (r?.erro || 'Tente novamente'));
-    } catch(e) { alert('Erro: ' + e.message); }
+    } catch(e) { alert('Erro: ' + e.message); } catch(e) { console.error(e); }
+
 }
 
 async function deletarZona(id, nome) {
@@ -1026,7 +1050,8 @@ async function deletarZona(id, nome) {
         const r = await api('/api/zona-preco/' + id, 'DELETE');
         if (r?.sucesso) carregarZonas();
         else alert('Erro: ' + (r?.erro || 'Tente novamente'));
-    } catch(e) { alert('Erro: ' + e.message); }
+    } catch(e) { alert('Erro: ' + e.message); } catch(e) { console.error(e); }
+
 }
 
 // ==================== ABAS DE PREÇO ====================
@@ -1087,7 +1112,8 @@ function iniciarMapaZona() {
 
             // Carregar zonas existentes no mapa
             carregarZonasNoMapa();
-        } catch(e) { console.log('Erro iniciar mapa zona:', e); }
+        } catch(e) { console.log('Erro iniciar mapa zona:', e); } catch(e) { console.error(e); }
+
     }, 200);
 }
 
@@ -1117,7 +1143,8 @@ async function carregarZonasNoMapa() {
                 icon: L.divIcon({ html: '<div style="background:' + cor + ';color:white;padding:3px 6px;border-radius:4px;font-size:11px;font-weight:700;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,0.3);">R$ ' + z.precoFixo.toFixed(2) + '</div>', className:'', iconAnchor:[0,0] })
             }).addTo(mapaZona);
         });
-    } catch(e) {}
+    } catch(e) {} catch(e) { console.error(e); }
+
 }
 
 let _salvandoZonaPreco = false;
@@ -1192,7 +1219,8 @@ async function carregarZonasPreco() {
                 '</div>' +
             '</div>';
         }).join('');
-    } catch(e) { console.log('Erro zonas:', e); }
+    } catch(e) { console.log('Erro zonas:', e); } catch(e) { console.error(e); }
+
 }
 
 
@@ -1209,7 +1237,8 @@ async function salvarConfig() {
             const btn = document.querySelector('[onclick="salvarConfig()"]');
             if (btn) { const t = btn.textContent; btn.textContent = '✅ Salvo!'; setTimeout(() => btn.textContent = t, 2000); }
         } else { alert('Erro ao salvar: ' + (r?.erro || 'Tente novamente')); }
-    } catch(e) { alert('Erro: ' + e.message); }
+    } catch(e) { alert('Erro: ' + e.message); } catch(e) { console.error(e); }
+
 }
 
 async function salvarConfigWhatsApp() {
@@ -1220,7 +1249,8 @@ async function salvarConfigWhatsApp() {
         const r = await api('/api/config/whatsapp', 'POST', { apiUrl, apiKey, instancia });
         if (r?.sucesso || r?._id) alert('Configuração salva!');
         else alert('Erro: ' + (r?.erro || 'Tente novamente'));
-    } catch(e) { alert('Erro: ' + e.message); }
+    } catch(e) { alert('Erro: ' + e.message); } catch(e) { console.error(e); }
+
 }
 
 async function abrirModalBlacklist() {
@@ -1264,5 +1294,6 @@ async function carregarEmpresa() {
             const el = document.getElementById(id);
             if (el) el.value = val;
         });
-    } catch(e) { console.log('Erro carregarEmpresa:', e); }
+    } catch(e) { console.log('Erro carregarEmpresa:', e); } catch(e) { console.error(e); }
+
 }
