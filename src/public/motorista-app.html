@@ -315,9 +315,12 @@ function whatsappSuporte() {
     window.open('https://wa.me/55' + _numeroSuporte + '?text=' + msg, '_blank');
     fecharSuporte();
 }
-// Fechar clicando fora
-document.getElementById('modalSuporte').addEventListener('click', function(e) {
-    if (e.target === this) fecharSuporte();
+// Fechar clicando fora — aguarda DOM estar pronto
+document.addEventListener('DOMContentLoaded', function() {
+    const m = document.getElementById('modalSuporte');
+    if (m) m.addEventListener('click', function(e) {
+        if (e.target === this) fecharSuporte();
+    });
 });
 // ===== FIM SUPORTE =====
 </script>

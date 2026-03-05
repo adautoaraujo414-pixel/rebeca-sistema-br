@@ -9,7 +9,42 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rebeca - Painel Admin</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js">
+// ===== SUPORTE AO MOTORISTA =====
+async function carregarNumeroSuporte() {
+    try {
+        const cfg = await api('/api/rebeca/config');
+        if (cfg && cfg.numeroSuporte) {
+            const el = document.getElementById('cfgNumeroSuporte');
+            if (el) el.value = cfg.numeroSuporte;
+        }
+    } catch(e) { console.error('Erro ao carregar suporte:', e); }
+}
+
+async function salvarNumeroSuporte() {
+    const el = document.getElementById('cfgNumeroSuporte');
+    if (!el) return;
+    const numero = el.value.replace(/\D/g, '');
+    if (!numero || numero.length < 10) {
+        alert('Digite um número válido com DDD (ex: 34991234567)');
+        return;
+    }
+    try {
+        const cfg = await api('/api/rebeca/config') || {};
+        cfg.numeroSuporte = numero;
+        await api('/api/rebeca/config', 'PUT', cfg);
+        const msg = document.getElementById('suporteSalvoMsg');
+        if (msg) { msg.style.display = 'inline'; setTimeout(() => msg.style.display = 'none', 3000); }
+    } catch(e) { alert('Erro ao salvar: ' + e.message); }
+}
+
+// Carregar número ao abrir aba de configurações
+document.addEventListener('DOMContentLoaded', () => {
+    const cfgItem = document.querySelector('[data-page="config"]');
+    if (cfgItem) cfgItem.addEventListener('click', carregarNumeroSuporte);
+});
+// ===== FIM SUPORTE AO MOTORISTA =====
+</script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f0f2f5; }
