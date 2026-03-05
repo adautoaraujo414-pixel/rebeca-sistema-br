@@ -23,7 +23,7 @@ document.querySelectorAll('.menu-item').forEach(item => {
 });
 
 function carregarPagina(p) {
-    const fn = { dashboard:carregarDashboard, mapa:carregarMapa, corridas:carregarCorridas, despacho:carregarDespacho, motoristas:carregarMotoristas, clientes:carregarClientes, rotas:carregarRotas, faturamento:carregarFaturamento, precos:carregarPrecosSimples, ranking:carregarRanking, antifraude:carregarAntiFraude, blacklist:carregarBlacklist, reclamacoes:carregarReclamacoes, whatsapp:carregarWhatsApp, usuarios:carregarUsuarios, areas:carregarAreas, config:carregarConfig, logs:carregarLogs, fila:carregarFilaEspera, pontos:carregarPontos };
+    const fn = { dashboard:carregarDashboard, mapa:carregarMapa, corridas:carregarCorridas, despacho:carregarDespacho, motoristas:carregarMotoristas, clientes:carregarClientes, rotas:carregarRotas, faturamento:carregarFaturamento, precos:carregarPrecosSimples, ranking:carregarRanking, antifraude:carregarAntiFraude, blacklist:carregarBlacklist, reclamacoes:carregarReclamacoes, whatsapp:carregarWhatsApp, usuarios:carregarUsuarios, areas:carregarAreas, config:carregarConfig, logs:carregarLogs, fila:carregarFilaEspera, pontos:carregarPontos, empresa:carregarEmpresa };
     if (fn[p]) fn[p]();
 }
 
@@ -560,7 +560,33 @@ document.getElementById('formReclamacao').addEventListener('submit',async(e)=>{ 
 async function resolverReclamacao(id) { const r=prompt('Resolução:'); if(r){await api('/api/reclamacoes/'+id+'/resolver','PUT',{resolucao:r}); carregarReclamacoes();} }
 
 // WHATSAPP
-async function carregarWhatsApp() { const c=await api('/api/config/whatsapp'); document.getElementById('whatsappApiUrl').value=c.apiUrl||''; document.getElementById('whatsappApiKey').value=c.apiKey||''; document.getElementById('whatsappInstancia').value=c.instancia||''; document.getElementById('whatsappStatus').innerHTML=c.conectado?'<p><span class="status-indicator online"></span> Conectado</p>':'<p><span class="status-indicator offline"></span> Desconectado</p>'; }
+async function carregarWhatsApp() {
+    try {
+        const c = await api('/api/config/whatsapp');
+        const conectado = c?.conectado || false;
+        // Campos de config (painel oculto)
+        const apiUrlEl = document.getElementById('whatsappApiUrl');
+        const apiKeyEl = document.getElementById('whatsappApiKey');
+        const instEl = document.getElementById('whatsappInstancia');
+        if (apiUrlEl) apiUrlEl.value = c?.apiUrl || '';
+        if (apiKeyEl) apiKeyEl.value = c?.apiKey || '';
+        if (instEl) instEl.value = c?.instancia || '';
+        // Status badge visível
+        const badge = document.getElementById('wppStatusBadge');
+        const statusText = document.getElementById('wppStatusText');
+        const btnGerar = document.getElementById('btnGerarQR');
+        const btnDesc = document.getElementById('btnDesconectar');
+        if (badge) { badge.style.background = conectado ? '#d4edda' : '#f8d7da'; badge.style.color = conectado ? '#155724' : '#721c24'; badge.innerHTML = conectado ? '🟢 Conectado' : '🔴 Desconectado'; }
+        if (statusText) statusText.textContent = conectado ? 'Conectado' : 'Desconectado';
+        if (btnGerar) btnGerar.style.display = conectado ? 'none' : 'inline-block';
+        if (btnDesc) btnDesc.style.display = conectado ? 'inline-block' : 'none';
+        // Contadores
+        const motEl = document.getElementById('wppMotoristas');
+        const msgEl = document.getElementById('wppMsgsHoje');
+        if (motEl && c?.motoristas !== undefined) motEl.textContent = c.motoristas;
+        if (msgEl && c?.msgsHoje !== undefined) msgEl.textContent = c.msgsHoje;
+    } catch(e) { console.log('Erro carregarWhatsApp:', e); }
+}
 async function salvarConfigWhatsApp() { await api('/api/config/whatsapp','PUT',{apiUrl:document.getElementById('whatsappApiUrl').value,apiKey:document.getElementById('whatsappApiKey').value,instancia:document.getElementById('whatsappInstancia').value}); alert('Salvo!'); }
 
 // USUÁRIOS
@@ -965,3 +991,71 @@ async function deletarZona(id, nome) {
     carregarZonasPreco();
 }
 
+
+async function salvarConfig() {
+    try {
+        const tempoMaximoEspera = parseFloat(document.getElementById('cfgTempoEspera')?.value || 10);
+        const raioMaximoBusca = parseFloat(document.getElementById('cfgRaioBusca')?.value || 15);
+        const comissaoEmpresa = parseFloat(document.getElementById('cfgComissao')?.value || 15);
+        const r = await api('/api/config', 'POST', { tempoMaximoEspera, raioMaximoBusca, comissaoEmpresa });
+        if (r?.sucesso || r?._id) {
+            const btn = document.querySelector('[onclick="salvarConfig()"]');
+            if (btn) { const t = btn.textContent; btn.textContent = '✅ Salvo!'; setTimeout(() => btn.textContent = t, 2000); }
+        } else { alert('Erro ao salvar: ' + (r?.erro || 'Tente novamente')); }
+    } catch(e) { alert('Erro: ' + e.message); }
+}
+
+async function salvarConfigWhatsApp() {
+    try {
+        const apiUrl = document.getElementById('whatsappApiUrl')?.value;
+        const apiKey = document.getElementById('whatsappApiKey')?.value;
+        const instancia = document.getElementById('whatsappInstancia')?.value;
+        const r = await api('/api/config/whatsapp', 'POST', { apiUrl, apiKey, instancia });
+        if (r?.sucesso || r?._id) alert('Configuração salva!');
+        else alert('Erro: ' + (r?.erro || 'Tente novamente'));
+    } catch(e) { alert('Erro: ' + e.message); }
+}
+
+async function abrirModalBlacklist() {
+    const m = document.getElementById('modalBlacklist');
+    if (m) m.style.display = 'flex';
+    else alert('Modal de blacklist não encontrado');
+}
+
+async function abrirModalReclamacao() {
+    const m = document.getElementById('modalReclamacao');
+    if (m) m.style.display = 'flex';
+    else alert('Modal de reclamação não encontrado');
+}
+
+async function abrirModalUsuario() {
+    const m = document.getElementById('modalUsuario');
+    if (m) m.style.display = 'flex';
+    else alert('Modal de usuário não encontrado');
+}
+
+async function abrirModalArea() {
+    const m = document.getElementById('modalArea');
+    if (m) m.style.display = 'flex';
+    else alert('Modal de área não encontrado');
+}
+
+
+async function carregarEmpresa() {
+    try {
+        const c = await api('/api/config');
+        if (!c) return;
+        const fields = {
+            empresaNome: c.nomeEmpresa || c.nome || '',
+            empresaTelefone: c.telefone || '',
+            empresaHorario: c.horarioFuncionamento || '',
+            empresaPagamento: c.formasPagamento || '',
+            empresaBoasVindas: c.mensagemBoasVindas || '',
+            empresaCidadeAtuacao: c.cidadeAtuacao || ''
+        };
+        Object.entries(fields).forEach(([id, val]) => {
+            const el = document.getElementById(id);
+            if (el) el.value = val;
+        });
+    } catch(e) { console.log('Erro carregarEmpresa:', e); }
+}

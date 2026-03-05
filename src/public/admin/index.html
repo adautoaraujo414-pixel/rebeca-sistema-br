@@ -690,6 +690,7 @@
                             <p style="color:#333;">Clique no botao abaixo para gerar o QR Code</p>
                         </div>
                         
+                        <div id="whatsappStatus" style="display:none;"></div>
                         <div id="wppStatusBadge" style="padding:12px;border-radius:8px;margin-bottom:20px;background:#f8d7da;color:#721c24;font-weight:bold;">
                             🔴 Desconectado
                         </div>
@@ -767,7 +768,7 @@
                         <div class="form-group"><label>Raio Busca (km)</label><input type="number" id="cfgRaioBusca" value="15"></div>
                         <div class="form-group"><label>Comissão (%)</label><input type="number" id="cfgComissao" value="15"></div>
                     </div>
-                    <button class="btn btn-success" onclick="salvarConfiguracoes()">💾 Salvar</button>
+                    <button class="btn btn-success" onclick="salvarConfig()">💾 Salvar</button>
                 </div>
             </div>
 
@@ -914,7 +915,7 @@
                         </div>
                         <div>
                             <label style="font-weight:bold;display:block;margin-bottom:5px">Confirmar Nova Senha</label>
-                            <input type="password" id="senhaConfirmar" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px">
+                            <input type="password" id="senhaConfirm" name="senhaConfirmar" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px">
                         </div>
                         <button class="btn btn-primary" onclick="trocarSenha()" style="padding:12px;font-size:16px">🔒 Alterar Senha</button>
                         <div id="senhaMsg" style="display:none;padding:10px;border-radius:8px;text-align:center"></div>
