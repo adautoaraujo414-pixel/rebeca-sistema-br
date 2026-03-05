@@ -559,8 +559,8 @@ function fecharModal(id) { document.getElementById(id).classList.remove('active'
 document.querySelectorAll('.modal').forEach(m=>m.addEventListener('click',(e)=>{if(e.target===m)fecharModal(m.id);}));
 
 carregarDashboard();
-setInterval(carregarDashboard, 30000);
-setInterval(atualizarMapa, 10000); // Atualizar mapa a cada 10s
+window._dashInterval = setInterval(carregarDashboard, 30000);
+window._mapaInterval = setInterval(atualizarMapa, 10000); // Atualizar mapa a cada 10s
 
 // ==================== INTERMUNICIPAIS ====================
 async function carregarIntermunicipais() { const p=await api('/api/precos-intermunicipais'); document.getElementById('intermunicipaisTable').innerHTML=p.length?p.map(x=>`<tr><td>${x.cidadeOrigem}</td><td>${x.cidadeDestino}</td><td>${x.distanciaKm||'-'} km</td><td>R$ ${(x.precoFixo||0).toFixed(2)}</td><td><button class="btn btn-danger btn-sm" onclick="excluirIntermunicipal('${x._id}')">🗑️</button></td></tr>`).join(''):'<tr><td colspan="5" style="text-align:center;color:#999">Nenhuma rota cadastrada</td></tr>'; }
