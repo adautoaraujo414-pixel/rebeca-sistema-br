@@ -32,7 +32,7 @@ async function api(url, method='GET', data=null) {
     const opt = { method, headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+token } };
     if (adminId) opt.headers['x-admin-id'] = adminId;
     if (data) opt.body = JSON.stringify(data);
-    try { return await (await fetch(url, opt)).json(); } catch(e) { console.error(e); return { error: e.message || 'Erro de conexão' }; }
+    try { return await (await fetch(url, opt)).json(); } catch(e) { return { error:'Erro' }; }
 }
 
 // GRÁFICOS
@@ -122,7 +122,6 @@ async function atualizarMapa() {
             });
         }
     } catch(e) { console.log('Erro centrais no mapa:', e); }
-
     const mots = await api('/api/gps-integrado');
     // Auto-centralizar no primeiro motorista com GPS
     const motComGPS = mots.find(m => m.latitude && m.longitude);
@@ -136,29 +135,8 @@ async function carregarCorridas() {
     const c = await api('/api/corridas'+(st?'?status='+st:''));
     document.getElementById('corridasTable').innerHTML = c.length ? c.map(x=>`<tr><td>${x.id.slice(-6)}</td><td>${x.clienteNome||'-'}</td><td>${(x.origem?.endereco||x.origem||'-').toString().slice(0,20)}...</td><td>${(x.destino?.endereco||x.destino||'-').toString().slice(0,20)}...</td><td>R$ ${(x.precoFinal||x.precoEstimado||0).toFixed(2)}</td><td><span class="badge ${getStatusColor(x.status)}">${formatStatus(x.status)}</span></td><td>${x.status==='pendente'?`<button class="btn btn-primary btn-sm" onclick="despacharCorrida('${x.id}')">📡</button> <button class="btn btn-danger btn-sm" onclick="cancelarCorrida('${x.id}')">✕</button>`:''}</td></tr>`).join('') : '<tr><td colspan="7" style="text-align:center;color:#999">Nenhuma</td></tr>';
 }
-let _cancelando = false;
-async function cancelarCorrida(id) {
-    if (_cancelando) return;
-    if (!confirm('Cancelar esta corrida?')) return;
-    _cancelando = true;
-        await api('/api/corridas/'+id+'/cancelar', 'PUT', {motivo:'Admin'});
-        carregarCorridas();
-        carregarDashboard();
-    } catch(e) {
-        console.error('Erro ao cancelar corrida:', e);
-
-}
-let _despachando = false;
-async function despacharCorrida(id) {
-    if (_despachando) return;
-    _despachando = true;
-        const r = await api('/api/despacho/despachar/'+id, 'POST');
-        if (r.sucesso) { alert(`✅ Despachada! Modo: ${r.modo}`); carregarCorridas(); }
-        else alert('❌ ' + (r.error || 'Erro ao despachar'));
-    } catch(e) {
-        console.error('Erro ao despachar corrida:', e);
-
-}
+async function cancelarCorrida(id) { if (confirm('Cancelar?')) { await api('/api/corridas/'+id+'/cancelar','PUT',{motivo:'Admin'}); carregarCorridas(); carregarDashboard(); }}
+async function despacharCorrida(id) { const r = await api('/api/despacho/despachar/'+id, 'POST'); if (r.sucesso) { alert(`✅ Despachada! Modo: ${r.modo}`); carregarCorridas(); } else alert('❌ '+r.error); }
 
 // DESPACHO
 async function carregarDespacho() {
@@ -260,7 +238,6 @@ async function salvarRegras() {
         await api('/api/despacho/config', { method: 'PUT', body: JSON.stringify({ regras: regrasDespacho }) });
         mostrarNotificacao('✅ Regras de despacho salvas!', 'success');
     } catch(e) { alert('Erro ao salvar: ' + e.message); }
-
 }
 
 async function carregarConfigDespacho() {
@@ -272,7 +249,6 @@ async function carregarConfigDespacho() {
         const el = document.getElementById('modoDespachoAtual');
         if (el) el.textContent = regrasDespacho.map(r => tipoLabels[r.tipo]).join(' → ');
     } catch(e) { console.log('Erro config despacho:', e); }
-
 }
 
 // Compatibilidade legada
@@ -300,32 +276,14 @@ function abrirModal(id) { document.getElementById(id).classList.add('active'); }
 function abrirModalMotorista() { document.getElementById('formMotorista').reset(); document.getElementById('formMotorista').style.display='block'; document.getElementById('tokenMotoristaBox').style.display='none'; document.getElementById('formMotoristaAlert').innerHTML=''; document.getElementById('modalMotorista').classList.add('active'); }
 let _submittingMotorista = false;
 document.getElementById('formMotorista')?.addEventListener('submit', async(e)=>{ e.preventDefault(); if(_submittingMotorista) return; _submittingMotorista=true; const d={nomeCompleto:document.getElementById('motNome').value.trim(),whatsapp:document.getElementById('motWhatsApp').value.trim(),cpf:document.getElementById('motCPF').value.trim(),cnh:document.getElementById('motCNH').value.trim(),cidadeAtuacao:document.getElementById('motCidade').value.trim(),foto:document.getElementById('motFoto')?.value?.trim()||'',cnhValidade:document.getElementById('motCNHValidade').value,veiculo:{modelo:document.getElementById('motVeiculoModelo').value.trim(),cor:document.getElementById('motVeiculoCor').value.trim(),placa:document.getElementById('motVeiculoPlaca').value.trim().toUpperCase(),ano:parseInt(document.getElementById('motVeiculoAno').value)||2020},plano:document.getElementById('motPlano').value,valorMensalidade:parseFloat(document.getElementById('motValorMensalidade').value)||100,enviarWhatsApp:document.getElementById('motEnviarWhatsApp').checked,senhaPin:document.getElementById('motSenhaPin').value.trim()}; if(!d.nomeCompleto||!d.whatsapp||!d.cnh||!d.veiculo.modelo||!d.veiculo.cor||!d.veiculo.placa){document.getElementById('formMotoristaAlert').innerHTML='<div class="alert alert-error">Preencha campos obrigatórios</div>';return;} if(!d.senhaPin||d.senhaPin.length!==6||!/^[0-9]{6}$/.test(d.senhaPin)){document.getElementById('formMotoristaAlert').innerHTML='<div class="alert alert-error">PIN deve ter exatamente 6 números</div>';return;} const r=await api('/api/motoristas','POST',d); if(r.error){document.getElementById('formMotoristaAlert').innerHTML=`<div class="alert alert-error">${r.error}</div>`;return;} document.getElementById('formMotoristaAlert').innerHTML=''; document.getElementById('formMotorista').style.display='none'; document.getElementById('tokenGerado').textContent=r.motorista.token; document.getElementById('senhaGerada').textContent=r.senhaGerada; document.getElementById('tokenMotoristaBox').style.display='block'; carregarMotoristas(); });
-let _desativandoMot = false;
-async function desativarMotorista(id) {
-    if (_desativandoMot) return;
-    _desativandoMot = true;
-        if (confirm('Desativar?')) { await api('/api/motoristas/'+id,'DELETE'); carregarMotoristas(); }
-
+async function desativarMotorista(id) { if (confirm('Desativar?')) { await api('/api/motoristas/'+id,'DELETE'); carregarMotoristas(); }}
 
 // CLIENTES
 async function carregarClientes() { const b=document.getElementById('buscaCliente').value; const c=await api('/api/clientes'+(b?'?busca='+b:'')); document.getElementById('clientesTable').innerHTML=c.length?c.map(x=>`<tr><td>${x.nome}</td><td>📱 ${x.telefone}</td><td>${x.corridasRealizadas||0}</td><td><span class="badge ${x.bloqueado?'red':'green'}">${x.bloqueado?'Bloqueado':'Ativo'}</span></td><td>${x.bloqueado?`<button class="btn btn-success btn-sm" onclick="desbloquearCliente('${x.id}')">Desbloquear</button>`:`<button class="btn btn-danger btn-sm" onclick="bloquearCliente('${x.id}')">Bloquear</button>`}</td></tr>`).join(''):'<tr><td colspan="5" style="text-align:center;color:#999">Nenhum</td></tr>'; }
 function abrirModalCliente() { document.getElementById('formCliente').reset(); document.getElementById('modalCliente').classList.add('active'); }
 document.getElementById('formCliente')?.addEventListener('submit',async(e)=>{ e.preventDefault(); await api('/api/clientes','POST',{nome:document.getElementById('cliNome').value,telefone:document.getElementById('cliTelefone').value}); fecharModal('modalCliente'); carregarClientes(); });
-let _bloqueandoCli = false;
-async function bloquearCliente(id) {
-    if (_bloqueandoCli) return;
-    if (!confirm('Bloquear este cliente?')) return;
-    _bloqueandoCli = true;
-        await api('/api/clientes/'+id+'/bloquear', 'PUT', {motivo:'Admin'});
-        carregarClientes();
-
-let _desbloqueandoCli = false;
-async function desbloquearCliente(id) {
-    if (_desbloqueandoCli) return;
-    _desbloqueandoCli = true;
-        await api('/api/clientes/'+id+'/desbloquear', 'PUT');
-        carregarClientes();
-
+async function bloquearCliente(id) { if(confirm('Bloquear?')){ await api('/api/clientes/'+id+'/bloquear','PUT',{motivo:'Admin'}); carregarClientes(); }}
+async function desbloquearCliente(id) { await api('/api/clientes/'+id+'/desbloquear','PUT'); carregarClientes(); }
 
 // ROTAS
 let mapaRotaLeaflet = null;
@@ -483,14 +441,12 @@ document.getElementById('formEditarFaixa')?.addEventListener('submit', async (e)
     alert('✅ Faixa atualizada!');
 });
 
-let _excluindoFaixa = false;
 async function excluirFaixa(id) {
-    if (_excluindoFaixa) return; _excluindoFaixa = true;
     if (confirm('Excluir esta faixa?')) {
         await api('/api/preco-dinamico/faixas/' + id, 'DELETE');
         carregarFaixasDia(diaSelecionado); carregarIntermunicipais();
     }
-
+}
 
 function abrirModalCopiarFaixas() {
     document.getElementById('copiarOrigem').value = diaSelecionado;
@@ -532,30 +488,19 @@ async function carregarRanking() { const p=document.getElementById('rankingPerio
 
 // ANTI-FRAUDE
 async function carregarAntiFraude() { const st=await api('/api/antifraude/estatisticas'); document.getElementById('fraudeCriticos').textContent=st.alertas?.porNivel?.critico||0; document.getElementById('fraudeAltos').textContent=st.alertas?.porNivel?.alto||0; document.getElementById('fraudePendentes').textContent=st.alertas?.pendentes||0; document.getElementById('fraudeResolvidos').textContent=st.alertas?.resolvidos||0; const a=await api('/api/antifraude/alertas'); document.getElementById('alertasFraudeLista').innerHTML=a.length?a.map(x=>`<div class="alerta-fraude ${x.nivel}"><div class="alerta-header"><strong>${x.entidadeNome}</strong> <span class="badge ${x.nivel==='critico'?'red':'orange'}">${x.nivel}</span></div><div class="alerta-motivos"><ul>${x.motivos.map(m=>`<li>⚠️ ${m}</li>`).join('')}</ul></div>${x.status!=='resolvido'?`<button class="btn btn-success btn-sm" onclick="resolverAlerta('${x.id}')">✅ Resolver</button>`:''}</div>`).join(''):'<p style="color:#999;padding:20px;">Nenhum</p>'; }
-let _resolvendoAlerta = false;
-async function resolverAlerta(id) {
-    if (_resolvendoAlerta) return; _resolvendoAlerta = true;
-    try { const r=prompt('Resolução:'); if(r){await api('/api/antifraude/alertas/'+id+'/resolver','PUT',{resolucao:r}); carregarAntiFraude();}} catch(e) { console.error(e); }
+async function resolverAlerta(id) { const r=prompt('Resolução:'); if(r){await api('/api/antifraude/alertas/'+id+'/resolver','PUT',{resolucao:r}); carregarAntiFraude();} }
 
 // BLACKLIST
 async function carregarBlacklist() { const st=await api('/api/antifraude/estatisticas'); document.getElementById('blacklistTotal').textContent=st.blacklist?.total||0; document.getElementById('blacklistTelefones').textContent=st.blacklist?.porTipo?.telefone||0; document.getElementById('blacklistCPFs').textContent=st.blacklist?.porTipo?.cpf||0; const l=await api('/api/antifraude/blacklist'); document.getElementById('blacklistTable').innerHTML=l.length?l.map(x=>`<tr><td><span class="badge purple">${x.tipo}</span></td><td><strong>${x.valor}</strong></td><td>${x.motivo}</td><td>${new Date(x.dataBloqueio).toLocaleDateString('pt-BR')}</td><td><button class="btn btn-success btn-sm" onclick="removerBlacklist('${x.id}')">Remover</button></td></tr>`).join(''):'<tr><td colspan="5" style="text-align:center;color:#999">Nenhum</td></tr>'; }
 // abrirModalBlacklist: ver versão async abaixo
 document.getElementById('formBlacklist')?.addEventListener('submit',async(e)=>{ e.preventDefault(); await api('/api/antifraude/blacklist','POST',{tipo:document.getElementById('blTipo').value,valor:document.getElementById('blValor').value,motivo:document.getElementById('blMotivo').value}); fecharModal('modalBlacklist'); carregarBlacklist(); });
-let _removendoBL = false;
-async function removerBlacklist(id) {
-    if (_removendoBL) return;
-    _removendoBL = true;
-        if(confirm('Remover?')){ await api('/api/antifraude/blacklist/'+id,'DELETE'); carregarBlacklist(); }
-
+async function removerBlacklist(id) { if(confirm('Remover?')){ await api('/api/antifraude/blacklist/'+id,'DELETE'); carregarBlacklist(); }}
 
 // RECLAMAÇÕES
 async function carregarReclamacoes() { const st=await api('/api/reclamacoes/estatisticas'); document.getElementById('recPendentes').textContent=st.pendentes||0; document.getElementById('recAndamento').textContent=st.emAndamento||0; document.getElementById('recResolvidas').textContent=st.resolvidas||0; const r=await api('/api/reclamacoes'); document.getElementById('reclamacoesTable').innerHTML=r.length?r.map(x=>`<tr><td>${new Date(x.dataAbertura).toLocaleDateString('pt-BR')}</td><td>${x.clienteNome}</td><td>${x.assunto}</td><td><span class="badge ${x.status==='resolvida'?'green':'yellow'}">${x.status}</span></td><td>${x.status!=='resolvida'?`<button class="btn btn-success btn-sm" onclick="resolverReclamacao('${x.id}')">✓</button>`:''}</td></tr>`).join(''):'<tr><td colspan="5" style="text-align:center;color:#999">Nenhuma</td></tr>'; }
 // abrirModalReclamacao: ver versão async abaixo
 document.getElementById('formReclamacao')?.addEventListener('submit',async(e)=>{ e.preventDefault(); await api('/api/reclamacoes','POST',{clienteNome:document.getElementById('recClienteNome').value,clienteTelefone:document.getElementById('recClienteTel').value,assunto:document.getElementById('recAssunto').value,descricao:document.getElementById('recDescricao').value}); fecharModal('modalReclamacao'); carregarReclamacoes(); });
-let _resolvendoRec = false;
-async function resolverReclamacao(id) {
-    if (_resolvendoRec) return; _resolvendoRec = true;
-    try { const r=prompt('Resolução:'); if(r){await api('/api/reclamacoes/'+id+'/resolver','PUT',{resolucao:r}); carregarReclamacoes();}} catch(e) { console.error(e); }
+async function resolverReclamacao(id) { const r=prompt('Resolução:'); if(r){await api('/api/reclamacoes/'+id+'/resolver','PUT',{resolucao:r}); carregarReclamacoes();} }
 
 // WHATSAPP
 async function carregarWhatsApp() {
@@ -584,30 +529,21 @@ async function carregarWhatsApp() {
         if (motEl && c?.motoristas !== undefined) motEl.textContent = c.motoristas;
         if (msgEl && c?.msgsHoje !== undefined) msgEl.textContent = c.msgsHoje;
     } catch(e) { console.log('Erro carregarWhatsApp:', e); }
-
 }
-// salvarConfigWhatsApp: ver versão completa abaixo
+async function salvarConfigWhatsApp() { await api('/api/config/whatsapp','PUT',{apiUrl:document.getElementById('whatsappApiUrl').value,apiKey:document.getElementById('whatsappApiKey').value,instancia:document.getElementById('whatsappInstancia').value}); alert('Salvo!'); }
 
 // USUÁRIOS
 async function carregarUsuarios() { const st=await api('/api/usuarios/estatisticas'); document.getElementById('usrTotal').textContent=st.total||0; document.getElementById('usrAtivos').textContent=st.ativos||0; document.getElementById('usrSessoes').textContent=st.sessoesAtivas||0; const u=await api('/api/usuarios'); document.getElementById('usuariosTable').innerHTML=u.length?u.map(x=>`<tr><td><div style="display:flex;align-items:center;gap:10px;"><div class="user-avatar">${x.nome.charAt(0)}</div><strong>${x.nome}</strong></div></td><td>${x.login}</td><td>${x.email}</td><td><span class="badge ${x.nivel==='admin'?'red':'blue'}">${x.nivel}</span></td><td><span class="badge ${x.ativo?'green':'red'}">${x.ativo?'Ativo':'Inativo'}</span></td><td>${x.login!=='admin'?`<button class="btn btn-warning btn-sm" onclick="toggleUsuario('${x.id}',${x.ativo})">${x.ativo?'Desativar':'Ativar'}</button>`:''}</td></tr>`).join(''):'<tr><td colspan="6">Nenhum</td></tr>'; }
 // abrirModalUsuario: ver versão async abaixo
 let _submittingUsuario = false;
 document.getElementById('formUsuario')?.addEventListener('submit',async(e)=>{ e.preventDefault(); if(_submittingUsuario) return; _submittingUsuario=true; const d={nome:document.getElementById('usrNome').value,login:document.getElementById('usrLogin').value,email:document.getElementById('usrEmail').value,senha:document.getElementById('usrSenha').value||null,nivel:document.getElementById('usrNivel').value}; const r=await api('/api/usuarios','POST',d); if(r.error){document.getElementById('formUsuarioAlert').innerHTML=`<div class="alert alert-error">${r.error}</div>`;return;} document.getElementById('formUsuario').style.display='none'; document.getElementById('novoUsrLogin').textContent=r.login; document.getElementById('novoUsrSenha').textContent=r.senhaGerada||d.senha||'123456'; document.getElementById('usuarioCriado').style.display='block'; carregarUsuarios(); });
-let _togUsuario = false;
-async function toggleUsuario(id,ativo) {
-    if (_togUsuario) return; _togUsuario = true;
-    try { await api('/api/usuarios/'+id+'/'+(ativo?'desativar':'ativar'),'PUT'); carregarUsuarios();} catch(e) { console.error(e); }
+async function toggleUsuario(id,ativo) { await api('/api/usuarios/'+id+'/'+(ativo?'desativar':'ativar'),'PUT'); carregarUsuarios(); }
 
 // ÁREAS
 async function carregarAreas() { const a=await api('/api/config/areas'); document.getElementById('areasTable').innerHTML=a.length?a.map(x=>`<tr><td><strong>${x.nome}</strong></td><td>${x.cidade}</td><td>${x.bairros?.join(', ')||'-'}</td><td>R$ ${(x.taxaExtra||0).toFixed(2)}</td><td><button class="btn btn-danger btn-sm" onclick="excluirArea('${x.id}')">🗑️</button></td></tr>`).join(''):'<tr><td colspan="5">Nenhuma</td></tr>'; }
 // abrirModalArea: ver versão async abaixo
 document.getElementById('formArea')?.addEventListener('submit',async(e)=>{ e.preventDefault(); await api('/api/config/areas','POST',{nome:document.getElementById('areaNome').value,cidade:document.getElementById('areaCidade').value,bairros:document.getElementById('areaBairros').value.split(',').map(b=>b.trim()).filter(b=>b),taxaExtra:parseFloat(document.getElementById('areaTaxa').value)||0}); fecharModal('modalArea'); carregarAreas(); });
-let _excluindoArea = false;
-async function excluirArea(id) {
-    if (_excluindoArea) return;
-    _excluindoArea = true;
-        if(confirm('Excluir?')){ await api('/api/config/areas/'+id,'DELETE'); carregarAreas(); }
-
+async function excluirArea(id) { if(confirm('Excluir?')){ await api('/api/config/areas/'+id,'DELETE'); carregarAreas(); }}
 
 // CONFIG
 async function carregarConfig() { const c=await api('/api/config'); document.getElementById('cfgTempoEspera').value=c.tempoMaximoEspera||10; document.getElementById('cfgRaioBusca').value=c.raioMaximoBusca||15; document.getElementById('cfgComissao').value=c.comissaoEmpresa||15; }
@@ -630,12 +566,7 @@ setInterval(atualizarMapa, 10000); // Atualizar mapa a cada 10s
 async function carregarIntermunicipais() { const p=await api('/api/precos-intermunicipais'); document.getElementById('intermunicipaisTable').innerHTML=p.length?p.map(x=>`<tr><td>${x.cidadeOrigem}</td><td>${x.cidadeDestino}</td><td>${x.distanciaKm||'-'} km</td><td>R$ ${(x.precoFixo||0).toFixed(2)}</td><td><button class="btn btn-danger btn-sm" onclick="excluirIntermunicipal('${x._id}')">🗑️</button></td></tr>`).join(''):'<tr><td colspan="5" style="text-align:center;color:#999">Nenhuma rota cadastrada</td></tr>'; }
 function abrirModalIntermunicipal() { document.getElementById('formIntermunicipal').reset(); abrirModal('modalIntermunicipal'); }
 document.getElementById('formIntermunicipal')?.addEventListener('submit', async(e)=>{ e.preventDefault(); const d={cidadeOrigem:document.getElementById('intOrigem').value,cidadeDestino:document.getElementById('intDestino').value,distanciaKm:parseFloat(document.getElementById('intDistancia').value)||null,precoFixo:parseFloat(document.getElementById('intPreco').value),tempoEstimadoMin:parseInt(document.getElementById('intTempo').value)||null}; await api('/api/precos-intermunicipais','POST',d); fecharModal('modalIntermunicipal'); carregarIntermunicipais(); });
-let _excluindoInter = false;
-async function excluirIntermunicipal(id) {
-    if (_excluindoInter) return;
-    _excluindoInter = true;
-        if(confirm('Excluir rota?')) { await api('/api/precos-intermunicipais/'+id,'DELETE'); carregarIntermunicipais(); }
-
+async function excluirIntermunicipal(id) { if(confirm('Excluir rota?')) { await api('/api/precos-intermunicipais/'+id,'DELETE'); carregarIntermunicipais(); }}
 
 // ===== SISTEMA DE PONTOS =====
 async function carregarFilaEspera() {
@@ -655,16 +586,12 @@ async function carregarFilaEspera() {
         </tr>`).join('')}
         </tbody></table>`;
     } catch(e) { console.log('Erro fila:', e); }
-
 }
 
-let _removendoFila = false;
 async function removerFila(id) {
-    if (_removendoFila) return; _removendoFila = true;
     if (!confirm('Remover da fila?')) return;
     await api('/api/fila-espera/' + id, 'DELETE');
     carregarFilaEspera();
-
 }
 
 async function abrirModalNovoPonto() {
@@ -730,7 +657,6 @@ async function carregarPontos() {
             </div>`;
         }).join('');
     } catch(e) { console.log('Erro pontos:', e); }
-
 }
 
 function mostrarFormCentral() {
@@ -745,12 +671,9 @@ function ocultarFormCentral() {
     ['pontoNome','pontoEndereco'].forEach(id => { const el = document.getElementById(id); if(el) el.value=''; });
 }
 
-let _fechandoCentral = false;
 async function fecharCentral(id) {
-    if (_fechandoCentral) return; _fechandoCentral = true;
     await api('/api/pontos/' + id, 'PUT', { ativo: false });
     carregarPontos();
-
 }
 
 async function abrirCentral(id) {
@@ -782,21 +705,21 @@ async function criarPonto() {
         diasSemana
     };
     _criandoPonto = true;
+    try {
         await api('/api/pontos', { method: 'POST', body: JSON.stringify(body) });
         ocultarFormCentral();
         carregarPontos();
-
+    } finally {
+        _criandoPonto = false;
+    }
 }
 
 
 
-let _deletandoPonto = false;
 async function deletarPonto(id) {
-    if (_deletandoPonto) return; _deletandoPonto = true;
     if (!confirm('Deletar ponto?')) return;
     await api(`/api/pontos/${id}`, { method: 'DELETE' });
     carregarPontos();
-
 }
 
 async function verFilaPonto(id, nome) {
@@ -858,7 +781,6 @@ async function salvarConfigPreco() {
             carregarPrecos();
         } else { alert('Erro: ' + (r?.erro || r?.error || 'Tente novamente')); }
     } catch(e) { alert('Erro: ' + e.message); }
-
 }
 
 async function simularPreco() {
@@ -879,7 +801,6 @@ async function simularPreco() {
         el.style.display = 'block';
         el.innerHTML = '<p style="color:#e74c3c;margin:0;">Erro ao simular: ' + e.message + '</p>';
     }
-
 }
 
 let _salvandoFaixa = false;
@@ -955,7 +876,6 @@ async function carregarZonas() {
     } catch(e) {
         el.innerHTML = '<p style="color:#e74c3c;padding:20px;">Erro ao carregar zonas: ' + e.message + '</p>';
     }
-
 }
 
 async function salvarNovaZona() {
@@ -988,6 +908,7 @@ async function salvarNovaZona() {
 
     try {
     _salvandoZona = true;
+    try {
             const r = await api('/api/zona-preco', 'POST', { nome, precoFixo: preco, enderecoReferencia: endereco, raioKm: raio, horaInicio, horaFim, diasSemana, descricao });
         if (r?.sucesso || r?._id) {
             alertEl.style.display = 'none';
@@ -997,7 +918,7 @@ async function salvarNovaZona() {
             mostrarErro(r?.erro || r?.error || 'Erro ao criar zona. Tente novamente.');
         }
     } catch(e) { mostrarErro('Erro: ' + e.message); }
-
+    } finally { _salvandoZona = false; }
 }
 
 async function toggleZona(id, ativo) {
@@ -1006,7 +927,6 @@ async function toggleZona(id, ativo) {
         if (r?.sucesso) carregarZonas();
         else alert('Erro: ' + (r?.erro || 'Tente novamente'));
     } catch(e) { alert('Erro: ' + e.message); }
-
 }
 
 async function deletarZona(id, nome) {
@@ -1016,7 +936,6 @@ async function deletarZona(id, nome) {
         if (r?.sucesso) carregarZonas();
         else alert('Erro: ' + (r?.erro || 'Tente novamente'));
     } catch(e) { alert('Erro: ' + e.message); }
-
 }
 
 // ==================== ABAS DE PREÇO ====================
@@ -1078,7 +997,6 @@ function iniciarMapaZona() {
             // Carregar zonas existentes no mapa
             carregarZonasNoMapa();
         } catch(e) { console.log('Erro iniciar mapa zona:', e); }
-
     }, 200);
 }
 
@@ -1109,7 +1027,6 @@ async function carregarZonasNoMapa() {
             }).addTo(mapaZona);
         });
     } catch(e) {}
-
 }
 
 let _salvandoZonaPreco = false;
@@ -1185,7 +1102,6 @@ async function carregarZonasPreco() {
             '</div>';
         }).join('');
     } catch(e) { console.log('Erro zonas:', e); }
-
 }
 
 
@@ -1203,7 +1119,6 @@ async function salvarConfig() {
             if (btn) { const t = btn.textContent; btn.textContent = '✅ Salvo!'; setTimeout(() => btn.textContent = t, 2000); }
         } else { alert('Erro ao salvar: ' + (r?.erro || 'Tente novamente')); }
     } catch(e) { alert('Erro: ' + e.message); }
-
 }
 
 async function salvarConfigWhatsApp() {
@@ -1215,7 +1130,6 @@ async function salvarConfigWhatsApp() {
         if (r?.sucesso || r?._id) alert('Configuração salva!');
         else alert('Erro: ' + (r?.erro || 'Tente novamente'));
     } catch(e) { alert('Erro: ' + e.message); }
-
 }
 
 async function abrirModalBlacklist() {
@@ -1260,5 +1174,4 @@ async function carregarEmpresa() {
             if (el) el.value = val;
         });
     } catch(e) { console.log('Erro carregarEmpresa:', e); }
-
 }
