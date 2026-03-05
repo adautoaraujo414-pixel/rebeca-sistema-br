@@ -1157,10 +1157,6 @@ async function carregarZonasPreco() {
     } catch(e) { console.log('Erro zonas:', e); }
 }
 
-async function toggleZona(id, ativo) {
-    await api('/api/zona-preco/' + id, 'PUT', { ativo });
-    carregarZonasPreco();
-}
 
 async function deletarZona(id, nome) {
     if (!confirm('Excluir a zona "' + nome + '"?')) return;
