@@ -317,12 +317,21 @@ function abrirModalCliente() { document.getElementById('formCliente').reset(); d
 document.getElementById('formCliente')?.addEventListener('submit',async(e)=>{ e.preventDefault(); await api('/api/clientes','POST',{nome:document.getElementById('cliNome').value,telefone:document.getElementById('cliTelefone').value}); fecharModal('modalCliente'); carregarClientes(); });
 let _bloqueandoCli = false;
 async function bloquearCliente(id) {
-    if (_bloqueandoCli) return; _bloqueandoCli = true;
-    try { if(confirm('Bloquear?')){ await api('/api/clientes/'+id+'/bloquear','PUT',{motivo:'Admin'}); carregarClientes(); } catch(e) { console.error(e); } finally { _bloqueandoCli = false; }
+    if (_bloqueandoCli) return;
+    if (!confirm('Bloquear este cliente?')) return;
+    _bloqueandoCli = true;
+    try {
+        await api('/api/clientes/'+id+'/bloquear', 'PUT', {motivo:'Admin'});
+        carregarClientes();
+    } catch(e) { console.error(e); } finally { _bloqueandoCli = false; }
 let _desbloqueandoCli = false;
 async function desbloquearCliente(id) {
-    if (_desbloqueandoCli) return; _desbloqueandoCli = true;
-    try { await api('/api/clientes/'+id+'/desbloquear','PUT'); carregarClientes(); }
+    if (_desbloqueandoCli) return;
+    _desbloqueandoCli = true;
+    try {
+        await api('/api/clientes/'+id+'/desbloquear', 'PUT');
+        carregarClientes();
+    } catch(e) { console.error(e); } finally { _desbloqueandoCli = false; }
 
 // ROTAS
 let mapaRotaLeaflet = null;
