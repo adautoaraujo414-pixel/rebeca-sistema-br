@@ -135,8 +135,35 @@ async function carregarCorridas() {
     const c = await api('/api/corridas'+(st?'?status='+st:''));
     document.getElementById('corridasTable').innerHTML = c.length ? c.map(x=>`<tr><td>${x.id.slice(-6)}</td><td>${x.clienteNome||'-'}</td><td>${(x.origem?.endereco||x.origem||'-').toString().slice(0,20)}...</td><td>${(x.destino?.endereco||x.destino||'-').toString().slice(0,20)}...</td><td>R$ ${(x.precoFinal||x.precoEstimado||0).toFixed(2)}</td><td><span class="badge ${getStatusColor(x.status)}">${formatStatus(x.status)}</span></td><td>${x.status==='pendente'?`<button class="btn btn-primary btn-sm" onclick="despacharCorrida('${x.id}')">📡</button> <button class="btn btn-danger btn-sm" onclick="cancelarCorrida('${x.id}')">✕</button>`:''}</td></tr>`).join('') : '<tr><td colspan="7" style="text-align:center;color:#999">Nenhuma</td></tr>';
 }
-async function cancelarCorrida(id) { if (confirm('Cancelar?')) { await api('/api/corridas/'+id+'/cancelar','PUT',{motivo:'Admin'}); carregarCorridas(); carregarDashboard(); }}
-async function despacharCorrida(id) { const r = await api('/api/despacho/despachar/'+id, 'POST'); if (r.sucesso) { alert(`✅ Despachada! Modo: ${r.modo}`); carregarCorridas(); } else alert('❌ '+r.error); }
+let _cancelando = false;
+async function cancelarCorrida(id) {
+    if (_cancelando) return;
+    if (!confirm('Cancelar esta corrida?')) return;
+    _cancelando = true;
+    try {
+        await api('/api/corridas/'+id+'/cancelar', 'PUT', {motivo:'Admin'});
+        carregarCorridas();
+        carregarDashboard();
+    } catch(e) {
+        console.error('Erro ao cancelar:', e);
+    } finally {
+        _cancelando = false;
+    }
+}
+let _despachando = false;
+async function despacharCorrida(id) {
+    if (_despachando) return;
+    _despachando = true;
+    try {
+        const r = await api('/api/despacho/despachar/'+id, 'POST');
+        if (r.sucesso) { alert(`✅ Despachada! Modo: ${r.modo}`); carregarCorridas(); }
+        else alert('❌ ' + (r.error || 'Erro ao despachar'));
+    } catch(e) {
+        console.error('Erro ao despachar:', e);
+    } finally {
+        _despachando = false;
+    }
+}
 
 // DESPACHO
 async function carregarDespacho() {
@@ -276,14 +303,52 @@ function abrirModal(id) { document.getElementById(id).classList.add('active'); }
 function abrirModalMotorista() { document.getElementById('formMotorista').reset(); document.getElementById('formMotorista').style.display='block'; document.getElementById('tokenMotoristaBox').style.display='none'; document.getElementById('formMotoristaAlert').innerHTML=''; document.getElementById('modalMotorista').classList.add('active'); }
 let _submittingMotorista = false;
 document.getElementById('formMotorista')?.addEventListener('submit', async(e)=>{ e.preventDefault(); if(_submittingMotorista) return; _submittingMotorista=true; const d={nomeCompleto:document.getElementById('motNome').value.trim(),whatsapp:document.getElementById('motWhatsApp').value.trim(),cpf:document.getElementById('motCPF').value.trim(),cnh:document.getElementById('motCNH').value.trim(),cidadeAtuacao:document.getElementById('motCidade').value.trim(),foto:document.getElementById('motFoto')?.value?.trim()||'',cnhValidade:document.getElementById('motCNHValidade').value,veiculo:{modelo:document.getElementById('motVeiculoModelo').value.trim(),cor:document.getElementById('motVeiculoCor').value.trim(),placa:document.getElementById('motVeiculoPlaca').value.trim().toUpperCase(),ano:parseInt(document.getElementById('motVeiculoAno').value)||2020},plano:document.getElementById('motPlano').value,valorMensalidade:parseFloat(document.getElementById('motValorMensalidade').value)||100,enviarWhatsApp:document.getElementById('motEnviarWhatsApp').checked,senhaPin:document.getElementById('motSenhaPin').value.trim()}; if(!d.nomeCompleto||!d.whatsapp||!d.cnh||!d.veiculo.modelo||!d.veiculo.cor||!d.veiculo.placa){document.getElementById('formMotoristaAlert').innerHTML='<div class="alert alert-error">Preencha campos obrigatórios</div>';return;} if(!d.senhaPin||d.senhaPin.length!==6||!/^[0-9]{6}$/.test(d.senhaPin)){document.getElementById('formMotoristaAlert').innerHTML='<div class="alert alert-error">PIN deve ter exatamente 6 números</div>';return;} const r=await api('/api/motoristas','POST',d); if(r.error){document.getElementById('formMotoristaAlert').innerHTML=`<div class="alert alert-error">${r.error}</div>`;return;} document.getElementById('formMotoristaAlert').innerHTML=''; document.getElementById('formMotorista').style.display='none'; document.getElementById('tokenGerado').textContent=r.motorista.token; document.getElementById('senhaGerada').textContent=r.senhaGerada; document.getElementById('tokenMotoristaBox').style.display='block'; carregarMotoristas(); });
-async function desativarMotorista(id) { if (confirm('Desativar?')) { await api('/api/motoristas/'+id,'DELETE'); carregarMotoristas(); }}
+let _desativandoMot = false;
+async function desativarMotorista(id) {
+    if (_desativandoMot) return;
+    if (!confirm('Desativar este motorista?')) return;
+    _desativandoMot = true;
+    try {
+        await api('/api/motoristas/'+id, 'DELETE');
+        carregarMotoristas();
+    } catch(e) {
+        console.error('Erro ao desativar motorista:', e);
+    } finally {
+        _desativandoMot = false;
+    }
+}
 
 // CLIENTES
 async function carregarClientes() { const b=document.getElementById('buscaCliente').value; const c=await api('/api/clientes'+(b?'?busca='+b:'')); document.getElementById('clientesTable').innerHTML=c.length?c.map(x=>`<tr><td>${x.nome}</td><td>📱 ${x.telefone}</td><td>${x.corridasRealizadas||0}</td><td><span class="badge ${x.bloqueado?'red':'green'}">${x.bloqueado?'Bloqueado':'Ativo'}</span></td><td>${x.bloqueado?`<button class="btn btn-success btn-sm" onclick="desbloquearCliente('${x.id}')">Desbloquear</button>`:`<button class="btn btn-danger btn-sm" onclick="bloquearCliente('${x.id}')">Bloquear</button>`}</td></tr>`).join(''):'<tr><td colspan="5" style="text-align:center;color:#999">Nenhum</td></tr>'; }
 function abrirModalCliente() { document.getElementById('formCliente').reset(); document.getElementById('modalCliente').classList.add('active'); }
 document.getElementById('formCliente')?.addEventListener('submit',async(e)=>{ e.preventDefault(); await api('/api/clientes','POST',{nome:document.getElementById('cliNome').value,telefone:document.getElementById('cliTelefone').value}); fecharModal('modalCliente'); carregarClientes(); });
-async function bloquearCliente(id) { if(confirm('Bloquear?')){ await api('/api/clientes/'+id+'/bloquear','PUT',{motivo:'Admin'}); carregarClientes(); }}
-async function desbloquearCliente(id) { await api('/api/clientes/'+id+'/desbloquear','PUT'); carregarClientes(); }
+let _bloqueandoCli = false;
+async function bloquearCliente(id) {
+    if (_bloqueandoCli) return;
+    if (!confirm('Bloquear este cliente?')) return;
+    _bloqueandoCli = true;
+    try {
+        await api('/api/clientes/'+id+'/bloquear', 'PUT', {motivo:'Admin'});
+        carregarClientes();
+    } catch(e) {
+        console.error('Erro ao bloquear cliente:', e);
+    } finally {
+        _bloqueandoCli = false;
+    }
+}
+let _desbloqueandoCli = false;
+async function desbloquearCliente(id) {
+    if (_desbloqueandoCli) return;
+    _desbloqueandoCli = true;
+    try {
+        await api('/api/clientes/'+id+'/desbloquear', 'PUT');
+        carregarClientes();
+    } catch(e) {
+        console.error('Erro ao desbloquear cliente:', e);
+    } finally {
+        _desbloqueandoCli = false;
+    }
+}
 
 // ROTAS
 let mapaRotaLeaflet = null;
