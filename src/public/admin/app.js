@@ -274,7 +274,8 @@ async function carregarMotoristas() {
 function abrirModal(id) { document.getElementById(id).classList.add('active'); }
 function fecharModal(id) { document.getElementById(id).classList.remove('active'); }
 function abrirModalMotorista() { document.getElementById('formMotorista').reset(); document.getElementById('formMotorista').style.display='block'; document.getElementById('tokenMotoristaBox').style.display='none'; document.getElementById('formMotoristaAlert').innerHTML=''; document.getElementById('modalMotorista').classList.add('active'); }
-document.getElementById('formMotorista').addEventListener('submit', async(e)=>{ e.preventDefault(); const d={nomeCompleto:document.getElementById('motNome').value.trim(),whatsapp:document.getElementById('motWhatsApp').value.trim(),cpf:document.getElementById('motCPF').value.trim(),cnh:document.getElementById('motCNH').value.trim(),cidadeAtuacao:document.getElementById('motCidade').value.trim(),foto:document.getElementById('motFoto')?.value?.trim()||'',cnhValidade:document.getElementById('motCNHValidade').value,veiculo:{modelo:document.getElementById('motVeiculoModelo').value.trim(),cor:document.getElementById('motVeiculoCor').value.trim(),placa:document.getElementById('motVeiculoPlaca').value.trim().toUpperCase(),ano:parseInt(document.getElementById('motVeiculoAno').value)||2020},plano:document.getElementById('motPlano').value,valorMensalidade:parseFloat(document.getElementById('motValorMensalidade').value)||100,enviarWhatsApp:document.getElementById('motEnviarWhatsApp').checked,senhaPin:document.getElementById('motSenhaPin').value.trim()}; if(!d.nomeCompleto||!d.whatsapp||!d.cnh||!d.veiculo.modelo||!d.veiculo.cor||!d.veiculo.placa){document.getElementById('formMotoristaAlert').innerHTML='<div class="alert alert-error">Preencha campos obrigatórios</div>';return;} if(!d.senhaPin||d.senhaPin.length!==6||!/^[0-9]{6}$/.test(d.senhaPin)){document.getElementById('formMotoristaAlert').innerHTML='<div class="alert alert-error">PIN deve ter exatamente 6 números</div>';return;} const r=await api('/api/motoristas','POST',d); if(r.error){document.getElementById('formMotoristaAlert').innerHTML=`<div class="alert alert-error">${r.error}</div>`;return;} document.getElementById('formMotoristaAlert').innerHTML=''; document.getElementById('formMotorista').style.display='none'; document.getElementById('tokenGerado').textContent=r.motorista.token; document.getElementById('senhaGerada').textContent=r.senhaGerada; document.getElementById('tokenMotoristaBox').style.display='block'; carregarMotoristas(); });
+let _submittingMotorista = false;
+document.getElementById('formMotorista').addEventListener('submit', async(e)=>{ e.preventDefault(); if(_submittingMotorista) return; _submittingMotorista=true; const d={nomeCompleto:document.getElementById('motNome').value.trim(),whatsapp:document.getElementById('motWhatsApp').value.trim(),cpf:document.getElementById('motCPF').value.trim(),cnh:document.getElementById('motCNH').value.trim(),cidadeAtuacao:document.getElementById('motCidade').value.trim(),foto:document.getElementById('motFoto')?.value?.trim()||'',cnhValidade:document.getElementById('motCNHValidade').value,veiculo:{modelo:document.getElementById('motVeiculoModelo').value.trim(),cor:document.getElementById('motVeiculoCor').value.trim(),placa:document.getElementById('motVeiculoPlaca').value.trim().toUpperCase(),ano:parseInt(document.getElementById('motVeiculoAno').value)||2020},plano:document.getElementById('motPlano').value,valorMensalidade:parseFloat(document.getElementById('motValorMensalidade').value)||100,enviarWhatsApp:document.getElementById('motEnviarWhatsApp').checked,senhaPin:document.getElementById('motSenhaPin').value.trim()}; if(!d.nomeCompleto||!d.whatsapp||!d.cnh||!d.veiculo.modelo||!d.veiculo.cor||!d.veiculo.placa){document.getElementById('formMotoristaAlert').innerHTML='<div class="alert alert-error">Preencha campos obrigatórios</div>';return;} if(!d.senhaPin||d.senhaPin.length!==6||!/^[0-9]{6}$/.test(d.senhaPin)){document.getElementById('formMotoristaAlert').innerHTML='<div class="alert alert-error">PIN deve ter exatamente 6 números</div>';return;} const r=await api('/api/motoristas','POST',d); if(r.error){document.getElementById('formMotoristaAlert').innerHTML=`<div class="alert alert-error">${r.error}</div>`;return;} document.getElementById('formMotoristaAlert').innerHTML=''; document.getElementById('formMotorista').style.display='none'; document.getElementById('tokenGerado').textContent=r.motorista.token; document.getElementById('senhaGerada').textContent=r.senhaGerada; document.getElementById('tokenMotoristaBox').style.display='block'; carregarMotoristas(); });
 async function desativarMotorista(id) { if (confirm('Desativar?')) { await api('/api/motoristas/'+id,'DELETE'); carregarMotoristas(); }}
 
 // CLIENTES
@@ -534,7 +535,8 @@ async function salvarConfigWhatsApp() { await api('/api/config/whatsapp','PUT',{
 // USUÁRIOS
 async function carregarUsuarios() { const st=await api('/api/usuarios/estatisticas'); document.getElementById('usrTotal').textContent=st.total||0; document.getElementById('usrAtivos').textContent=st.ativos||0; document.getElementById('usrSessoes').textContent=st.sessoesAtivas||0; const u=await api('/api/usuarios'); document.getElementById('usuariosTable').innerHTML=u.length?u.map(x=>`<tr><td><div style="display:flex;align-items:center;gap:10px;"><div class="user-avatar">${x.nome.charAt(0)}</div><strong>${x.nome}</strong></div></td><td>${x.login}</td><td>${x.email}</td><td><span class="badge ${x.nivel==='admin'?'red':'blue'}">${x.nivel}</span></td><td><span class="badge ${x.ativo?'green':'red'}">${x.ativo?'Ativo':'Inativo'}</span></td><td>${x.login!=='admin'?`<button class="btn btn-warning btn-sm" onclick="toggleUsuario('${x.id}',${x.ativo})">${x.ativo?'Desativar':'Ativar'}</button>`:''}</td></tr>`).join(''):'<tr><td colspan="6">Nenhum</td></tr>'; }
 function abrirModalUsuario() { document.getElementById('formUsuario').reset(); document.getElementById('formUsuario').style.display='block'; document.getElementById('usuarioCriado').style.display='none'; document.getElementById('formUsuarioAlert').innerHTML=''; document.getElementById('modalUsuario').classList.add('active'); }
-document.getElementById('formUsuario').addEventListener('submit',async(e)=>{ e.preventDefault(); const d={nome:document.getElementById('usrNome').value,login:document.getElementById('usrLogin').value,email:document.getElementById('usrEmail').value,senha:document.getElementById('usrSenha').value||null,nivel:document.getElementById('usrNivel').value}; const r=await api('/api/usuarios','POST',d); if(r.error){document.getElementById('formUsuarioAlert').innerHTML=`<div class="alert alert-error">${r.error}</div>`;return;} document.getElementById('formUsuario').style.display='none'; document.getElementById('novoUsrLogin').textContent=r.login; document.getElementById('novoUsrSenha').textContent=r.senhaGerada||d.senha||'123456'; document.getElementById('usuarioCriado').style.display='block'; carregarUsuarios(); });
+let _submittingUsuario = false;
+document.getElementById('formUsuario').addEventListener('submit',async(e)=>{ e.preventDefault(); if(_submittingUsuario) return; _submittingUsuario=true; const d={nome:document.getElementById('usrNome').value,login:document.getElementById('usrLogin').value,email:document.getElementById('usrEmail').value,senha:document.getElementById('usrSenha').value||null,nivel:document.getElementById('usrNivel').value}; const r=await api('/api/usuarios','POST',d); if(r.error){document.getElementById('formUsuarioAlert').innerHTML=`<div class="alert alert-error">${r.error}</div>`;return;} document.getElementById('formUsuario').style.display='none'; document.getElementById('novoUsrLogin').textContent=r.login; document.getElementById('novoUsrSenha').textContent=r.senhaGerada||d.senha||'123456'; document.getElementById('usuarioCriado').style.display='block'; carregarUsuarios(); });
 async function toggleUsuario(id,ativo) { await api('/api/usuarios/'+id+'/'+(ativo?'desativar':'ativar'),'PUT'); carregarUsuarios(); }
 
 // ÁREAS
@@ -593,12 +595,8 @@ async function removerFila(id) {
 }
 
 async function abrirModalNovoPonto() {
-    const nome = prompt('Nome da central/ponto:');
-    if (!nome) return;
-    const endereco = prompt('Endereço:');
-    if (!endereco) return;
-    await api('/api/pontos', 'POST', { nome, endereco, ativo: true });
-    carregarPontos();
+    // Substituída por mostrarFormCentral()
+    mostrarFormCentral();
 }
 
 let _pontosPollingInterval = null;
@@ -805,6 +803,7 @@ async function simularPreco() {
     }
 }
 
+let _salvandoFaixa = false;
 async function abrirModalFaixa() {
     const m = document.getElementById('modalFaixa');
     if (m) { m.classList.add('active'); }
@@ -908,7 +907,9 @@ async function salvarNovaZona() {
     alertEl.textContent = '⏳ Geocodificando endereço...';
 
     try {
-        const r = await api('/api/zona-preco', 'POST', { nome, precoFixo: preco, enderecoReferencia: endereco, raioKm: raio, horaInicio, horaFim, diasSemana, descricao });
+    _salvandoZona = true;
+    try {
+            const r = await api('/api/zona-preco', 'POST', { nome, precoFixo: preco, enderecoReferencia: endereco, raioKm: raio, horaInicio, horaFim, diasSemana, descricao });
         if (r?.sucesso || r?._id) {
             alertEl.style.display = 'none';
             fecharFormZona();
@@ -917,6 +918,7 @@ async function salvarNovaZona() {
             mostrarErro(r?.erro || r?.error || 'Erro ao criar zona. Tente novamente.');
         }
     } catch(e) { mostrarErro('Erro: ' + e.message); }
+    } finally { _salvandoZona = false; }
 }
 
 async function toggleZona(id, ativo) {
@@ -1027,7 +1029,9 @@ async function carregarZonasNoMapa() {
     } catch(e) {}
 }
 
+let _salvandoZonaPreco = false;
 async function salvarZonaPreco() {
+    if (_salvandoZonaPreco) return;
     if (!zonaLatSelecionada) return alert('Clique no mapa para selecionar o centro da zona');
     const nome = document.getElementById('zonaNome').value.trim();
     const raioKm = parseFloat(document.getElementById('zonaRaio').value);
@@ -1062,6 +1066,7 @@ async function salvarZonaPreco() {
     } else {
         alert('Erro: ' + (r.erro || 'Tente novamente'));
     }
+    _salvandoZonaPreco = false;
 }
 
 async function carregarZonasPreco() {
