@@ -10,6 +10,7 @@ const EvolutionMultiService = require('./evolution-multi.service');
 const IAService = require('./ia.service');
 const OpenAIRebecaService = require('./openai-rebeca.service');
 const AprendizadoService = require('./rebeca-aprendizado.service');
+const RaciocinioService = require('./rebeca-raciocinio.service');
 
 const conversas = new Map();
 
@@ -1539,9 +1540,37 @@ _Digite CANCELAR se precisar_`;
                     }
                     
                     if (!destinoFinal) {
-                        resposta = `❌ Destino não encontrado. Tente novamente.`;
-                        conversas.set(telefone, conversa);
-                        return resposta;
+                        // Raciocínio amplificado — tentar entender o que o cliente quis dizer
+                        if (RaciocinioService.isAtivo()) {
+                            const rac = await RaciocinioService.raciocinar(telefone, msgOriginal, conversa, { nome });
+                            if (rac) {
+                                if (rac.acao === 'avancar' && rac.valor) {
+                                    const val3 = await RebecaService.validarEndereco(rac.valor);
+                                    if (val3.valido) {
+                                        conversa.dados.destino = val3.endereco;
+                                        conversa.dados.destinoValidado = val3;
+                                        destinoFinal = val3;
+                                    }
+                                } else if (rac.acao === 'cancelar' || rac.acao === 'negar') {
+                                    conversa.etapa = 'inicio';
+                                    conversa.dados = {};
+                                    conversas.set(telefone, conversa);
+                                    return 'Ok! Corrida cancelada. Quando precisar é só chamar! 😊';
+                                } else if (rac.acao === 'voltar') {
+                                    conversa.etapa = 'pedir_origem';
+                                    conversas.set(telefone, conversa);
+                                    return rac.resposta || '📍 Tudo bem! Me passa o endereço de origem novamente.';
+                                } else {
+                                    // repetir — reformular sem perder etapa
+                                    conversas.set(telefone, conversa);
+                                    return rac.resposta || RaciocinioService.reformularPergunta(conversa.etapa, conversa.dados);
+                                }
+                            }
+                        }
+                        if (!destinoFinal) {
+                            conversas.set(telefone, conversa);
+                            return RaciocinioService.reformularPergunta('pedir_destino_rapido', conversa.dados);
+                        }
                     }
                 } else {
                     conversa.dados.destino = validacao.endereco;
@@ -1637,9 +1666,42 @@ _Digite CANCELAR se precisar_`;
             } else {
                 const validacao = await RebecaService.validarEndereco(msgOriginal);
                 if (!validacao.valido) {
-                    resposta = `❌ Destino não encontrado.`;
+                    if (RaciocinioService.isAtivo()) {
+                        const rac = await RaciocinioService.raciocinar(telefone, msgOriginal, conversa, { nome });
+                        if (rac) {
+                            if (rac.acao === 'avancar' && rac.valor) {
+                                const valRac = await RebecaService.validarEndereco(rac.valor);
+                                if (valRac.valido) {
+                                    conversa.dados.destino = valRac.endereco;
+                                    // Continua para confirmar_corrida abaixo
+                                    const calculoRac = await RebecaService.calcularCorrida(conversa.dados.origem, conversa.dados.destino);
+                                    conversa.dados.calculo = calculoRac;
+                                    conversa.etapa = 'confirmar_corrida';
+                                    const respRac = `🚗 *RESUMO*
+
+📍 ${conversa.dados.origem}
+🏁 ${conversa.dados.destino}
+
+📏 ${calculoRac.distancia} | ⏱️ ${calculoRac.tempo}
+💰 *R$ ${calculoRac.preco.toFixed(2)}*
+
+*1* - ✅ Confirmar
+*2* - ❌ Cancelar`;
+                                    conversas.set(telefone, conversa);
+                                    return respRac;
+                                }
+                            } else if (rac.acao === 'cancelar' || rac.acao === 'negar') {
+                                conversa.etapa = 'inicio'; conversa.dados = {};
+                                conversas.set(telefone, conversa);
+                                return 'Ok! Cancelado. Quando precisar é só chamar! 😊';
+                            } else {
+                                conversas.set(telefone, conversa);
+                                return rac.resposta || RaciocinioService.reformularPergunta('pedir_destino', conversa.dados);
+                            }
+                        }
+                    }
                     conversas.set(telefone, conversa);
-                    return resposta;
+                    return RaciocinioService.reformularPergunta('pedir_destino', conversa.dados);
                 }
                 conversa.dados.destino = validacao.endereco;
             }
