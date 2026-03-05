@@ -328,6 +328,12 @@ let tipoPrecoEditSelecionado = 'multiplicador';
 
 async function carregarPrecos() {
     const cfg = await api('/api/preco-dinamico/config');
+    // Preencher campos da aba 5
+    const fields = { taxaBase:'taxaBase', precoKm:'precoKm', taxaMinima:'taxaMinima', taxaBandeira2:'taxaBandeira2', precoMinuto:'precoMinuto' };
+    Object.entries(fields).forEach(([key, id]) => { const el = document.getElementById(id); if (el && cfg[key] !== undefined) el.value = cfg[key]; });
+    const tBaseEl = document.getElementById('precoTaxaBase'); if (tBaseEl) tBaseEl.textContent = (cfg.taxaBase || 5).toFixed(2);
+    const kmAtEl = document.getElementById('precoKmAtual'); if (kmAtEl) kmAtEl.textContent = (cfg.precoKm || 2.5).toFixed(2);
+    const minEl = document.getElementById('precoMinimo'); if (minEl) minEl.textContent = (cfg.taxaMinima || 15).toFixed(2);
     document.getElementById('taxaBase').value = cfg.taxaBase || 5;
     document.getElementById('precoKm').value = cfg.precoKm || 2.5;
     document.getElementById('taxaMinima').value = cfg.taxaMinima || 15;
@@ -818,9 +824,64 @@ function iniciarGPSPreciso(callback) {
     return watchGPSId;
 }
 
+
+async function salvarConfigPreco() {
+    try {
+        const body = {
+            taxaBase: parseFloat(document.getElementById('taxaBase')?.value || 5),
+            precoKm: parseFloat(document.getElementById('precoKm')?.value || 2.5),
+            taxaMinima: parseFloat(document.getElementById('taxaMinima')?.value || 15),
+            taxaBandeira2: parseFloat(document.getElementById('taxaBandeira2')?.value || 3),
+            precoMinuto: parseFloat(document.getElementById('precoMinuto')?.value || 0.5)
+        };
+        const r = await api('/api/preco-dinamico/config', 'POST', body);
+        if (r?.sucesso || r?._id) {
+            const btn = document.querySelector('[onclick="salvarConfigPreco()"]');
+            if (btn) { const t = btn.textContent; btn.textContent = '✅ Salvo!'; setTimeout(() => btn.textContent = t, 2000); }
+            carregarPrecos();
+        } else { alert('Erro: ' + (r?.erro || r?.error || 'Tente novamente')); }
+    } catch(e) { alert('Erro: ' + e.message); }
+}
+
+async function simularPreco() {
+    const km = parseFloat(document.getElementById('simularKm')?.value || 5);
+    const dia = document.getElementById('simularDia')?.value || 'semana';
+    const el = document.getElementById('resultadoSimulacao');
+    if (!el) return;
+    try {
+        const r = await api('/api/preco-dinamico/simular', 'POST', { km, dia });
+        const preco = r?.precoTotal || r?.preco || r?.total || '—';
+        const detalhes = r?.detalhes || '';
+        el.style.display = 'block';
+        el.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;">' +
+            '<div><div style="font-size:0.82em;color:#555;">Estimativa para <strong>' + km + ' km</strong> (' + dia + ')</div>' +
+            (detalhes ? '<div style="font-size:0.8em;color:#888;margin-top:4px;">' + detalhes + '</div>' : '') + '</div>' +
+            '<div style="font-size:2em;font-weight:800;color:#27ae60;">R$ ' + (typeof preco === 'number' ? preco.toFixed(2) : preco) + '</div></div>';
+    } catch(e) {
+        el.style.display = 'block';
+        el.innerHTML = '<p style="color:#e74c3c;margin:0;">Erro ao simular: ' + e.message + '</p>';
+    }
+}
+
+async function abrirModalFaixa() {
+    const m = document.getElementById('modalFaixa');
+    if (m) { m.classList.add('active'); }
+    else {
+        // Fallback: prompt simples
+        const nome = prompt('Nome da faixa (ex: Pico Manhã):');
+        if (!nome) return;
+        const mult = parseFloat(prompt('Multiplicador (ex: 1.5 = 50% mais caro):') || '1');
+        const horaInicio = prompt('Hora início (HH:MM):') || '07:00';
+        const horaFim = prompt('Hora fim (HH:MM):') || '09:00';
+        const r = await api('/api/preco-dinamico/faixas', 'POST', { nome, multiplicador: mult, horaInicio, horaFim });
+        if (r?.sucesso || r?._id) carregarPrecos();
+        else alert('Erro: ' + (r?.erro || 'Tente novamente'));
+    }
+}
+
 // ==================== ABAS DE PREÇO ====================
 function abaPreco(n) {
-    [1,2,3,4].forEach(i => {
+    [1,2,3,4,5].forEach(i => {
         const el = document.getElementById('abaPreco'+i);
         const btn = document.getElementById('abaPrecoBtn'+i);
         if (!el || !btn) return;

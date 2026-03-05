@@ -322,6 +322,26 @@
 
                     <button class="btn btn-primary" onclick="salvarRegras()" style="width:100%;">💾 Salvar Regras</button>
                 </div>
+                <!-- Configuração rápida (compatibilidade legada) -->
+                <div class="panel" style="background:#f8f9fa;border:1px solid #e0e0e0;">
+                    <h3 style="margin-bottom:16px;color:#2c3e50;">⚙️ Configuração Rápida</h3>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+                        <div>
+                            <label style="font-size:0.82em;font-weight:700;color:#555;display:block;margin-bottom:6px;">MODO PADRÃO</label>
+                            <div style="display:flex;gap:8px;">
+                                <button id="modoBroadcast" onclick="setModoDespacho('broadcast')" class="btn" style="flex:1;font-size:0.85em;">📢 Broadcast</button>
+                                <button id="modoProximo" onclick="setModoDespacho('proximo')" class="btn" style="flex:1;font-size:0.85em;">📍 Próximo</button>
+                            </div>
+                        </div>
+                        <div>
+                            <label style="font-size:0.82em;font-weight:700;color:#555;display:block;margin-bottom:6px;">TEMPO DE ACEITE (segundos)</label>
+                            <div style="display:flex;gap:8px;">
+                                <input type="number" id="tempoAceite" value="30" min="10" max="300" style="flex:1;padding:9px 12px;border:1px solid #ddd;border-radius:6px;font-size:1em;">
+                                <button class="btn btn-primary" onclick="salvarTempoAceite()" style="font-size:0.85em;">💾 Salvar</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <div class="panel"><h2>🚗 Pendentes</h2><div id="corridasPendentesDespacho"></div></div>
             </div>
 
@@ -393,6 +413,7 @@
                     <button id="abaPrecoBtn2" onclick="abaPreco(2)" style="padding:10px 20px;border:none;background:none;font-weight:600;color:#888;cursor:pointer;font-size:0.92em;">📍 Zonas de Preço Fixo</button>
                     <button id="abaPrecoBtn3" onclick="abaPreco(3)" style="padding:10px 20px;border:none;background:none;font-weight:600;color:#888;cursor:pointer;font-size:0.92em;">🎉 Preço Especial</button>
                     <button id="abaPrecoBtn4" onclick="abaPreco(4)" style="padding:10px 20px;border:none;background:none;font-weight:600;color:#888;cursor:pointer;font-size:0.92em;">🚗 Intermunicipal</button>
+                    <button id="abaPrecoBtn5" onclick="abaPreco(5)" style="padding:10px 20px;border:none;background:none;font-weight:600;color:#888;cursor:pointer;font-size:0.92em;">📊 Preço por Km</button>
                 </div>
 
                 <!-- ABA 1: Tarifas por Período -->
@@ -592,7 +613,111 @@
                     </div>
                 </div>
 
-                <!-- ABA 4: Intermunicipal -->
+                <!-- ABA 5: Preço por Km (dinâmico) -->
+                <div id="abaPreco5" style="display:none;">
+                    <!-- Card faixa atual -->
+                    <div style="background:linear-gradient(135deg,#2c3e50,#3d5166);border-radius:12px;padding:20px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;color:white;">
+                        <div>
+                            <div style="font-size:0.82em;opacity:0.7;margin-bottom:4px;">FAIXA ATIVA AGORA</div>
+                            <div style="font-size:1.4em;font-weight:800;" id="faixaAtualNome">Carregando...</div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div style="font-size:0.78em;opacity:0.7;">Taxa Base</div>
+                            <div style="font-size:1.6em;font-weight:800;color:#00d4ff;">R$ <span id="precoTaxaBase">—</span></div>
+                            <div style="font-size:0.78em;opacity:0.7;margin-top:4px;">+ R$ <span id="precoKmAtual">—</span>/km &nbsp;|&nbsp; Mín R$ <span id="precoMinimo">—</span></div>
+                        </div>
+                    </div>
+
+                    <!-- Configuração de tarifas por km -->
+                    <div class="panel" style="padding:0;overflow:hidden;margin-bottom:20px;">
+                        <div style="padding:16px 20px;border-bottom:1px solid #f0f0f0;background:#fafafa;">
+                            <h3 style="margin:0;font-size:1em;color:#2c3e50;">⚙️ Tarifas Base (Km)</h3>
+                            <p style="margin:4px 0 0;font-size:0.82em;color:#888;">Valor da tarifa por quilômetro rodado</p>
+                        </div>
+                        <div style="padding:20px;display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                            <div>
+                                <label style="font-size:0.78em;font-weight:700;color:#555;display:block;margin-bottom:4px;">TAXA BASE (R$)</label>
+                                <div style="position:relative;">
+                                    <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#27ae60;font-weight:700;">R$</span>
+                                    <input type="number" id="taxaBase" step="0.50" min="0" style="width:100%;padding:10px 12px 10px 30px;border:1px solid #ddd;border-radius:6px;font-size:1em;">
+                                </div>
+                                <p style="font-size:0.75em;color:#888;margin-top:4px;">Cobrado ao iniciar a corrida</p>
+                            </div>
+                            <div>
+                                <label style="font-size:0.78em;font-weight:700;color:#555;display:block;margin-bottom:4px;">PREÇO POR KM (R$)</label>
+                                <div style="position:relative;">
+                                    <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#27ae60;font-weight:700;">R$</span>
+                                    <input type="number" id="precoKm" step="0.10" min="0" style="width:100%;padding:10px 12px 10px 30px;border:1px solid #ddd;border-radius:6px;font-size:1em;">
+                                </div>
+                            </div>
+                            <div>
+                                <label style="font-size:0.78em;font-weight:700;color:#555;display:block;margin-bottom:4px;">TARIFA MÍNIMA (R$)</label>
+                                <div style="position:relative;">
+                                    <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#27ae60;font-weight:700;">R$</span>
+                                    <input type="number" id="taxaMinima" step="0.50" min="0" style="width:100%;padding:10px 12px 10px 30px;border:1px solid #ddd;border-radius:6px;font-size:1em;">
+                                </div>
+                                <p style="font-size:0.75em;color:#888;margin-top:4px;">Valor mínimo independente da distância</p>
+                            </div>
+                            <div>
+                                <label style="font-size:0.78em;font-weight:700;color:#555;display:block;margin-bottom:4px;">BANDEIRA 2 / NOTURNA (R$)</label>
+                                <div style="position:relative;">
+                                    <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#e74c3c;font-weight:700;">R$</span>
+                                    <input type="number" id="taxaBandeira2" step="0.10" min="0" style="width:100%;padding:10px 12px 10px 30px;border:1px solid #fcc;border-radius:6px;font-size:1em;background:#fff8f8;">
+                                </div>
+                                <p style="font-size:0.75em;color:#888;margin-top:4px;">Adicional por km em horário noturno</p>
+                            </div>
+                            <div>
+                                <label style="font-size:0.78em;font-weight:700;color:#555;display:block;margin-bottom:4px;">PREÇO POR MINUTO (R$)</label>
+                                <div style="position:relative;">
+                                    <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#3498db;font-weight:700;">R$</span>
+                                    <input type="number" id="precoMinuto" step="0.05" min="0" style="width:100%;padding:10px 12px 10px 30px;border:1px solid #ddd;border-radius:6px;font-size:1em;">
+                                </div>
+                                <p style="font-size:0.75em;color:#888;margin-top:4px;">Cobrado por minuto em trânsito</p>
+                            </div>
+                        </div>
+                        <div style="padding:16px 20px;border-top:1px solid #f0f0f0;display:flex;justify-content:flex-end;">
+                            <button onclick="salvarConfigPreco()" style="background:#27ae60;color:white;border:none;padding:11px 28px;border-radius:8px;font-weight:700;font-size:0.95em;cursor:pointer;">💾 Salvar Tarifas</button>
+                        </div>
+                    </div>
+
+                    <!-- Faixas de horário -->
+                    <div class="panel" style="padding:0;overflow:hidden;margin-bottom:20px;">
+                        <div style="padding:16px 20px;border-bottom:1px solid #f0f0f0;background:#fafafa;display:flex;justify-content:space-between;align-items:center;">
+                            <div>
+                                <h3 style="margin:0;font-size:1em;color:#2c3e50;">🕐 Faixas de Horário (Multiplicadores)</h3>
+                                <p style="margin:4px 0 0;font-size:0.82em;color:#888;">Aplique multiplicadores ao preço base em períodos específicos</p>
+                            </div>
+                            <button onclick="abrirModalFaixa()" class="btn btn-primary" style="font-size:0.85em;">➕ Nova Faixa</button>
+                        </div>
+                        <div id="faixasHorario" style="padding:16px 20px;">
+                            <p style="color:#999;text-align:center;padding:20px;">Carregando faixas...</p>
+                        </div>
+                    </div>
+
+                    <!-- Simulador de preço -->
+                    <div class="panel">
+                        <h3 style="margin-bottom:16px;color:#2c3e50;">🧮 Simulador de Preço</h3>
+                        <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:12px;align-items:flex-end;">
+                            <div>
+                                <label style="font-size:0.78em;font-weight:700;color:#555;display:block;margin-bottom:4px;">DISTÂNCIA (km)</label>
+                                <input type="number" id="simularKm" step="0.5" min="0.5" value="5" style="width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:6px;font-size:1em;">
+                            </div>
+                            <div>
+                                <label style="font-size:0.78em;font-weight:700;color:#555;display:block;margin-bottom:4px;">DIA DA SEMANA</label>
+                                <select id="simularDia" style="width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:6px;font-size:1em;">
+                                    <option value="semana">Segunda a Sexta</option>
+                                    <option value="sabado">Sábado</option>
+                                    <option value="domingo">Domingo</option>
+                                    <option value="feriado">Feriado</option>
+                                </select>
+                            </div>
+                            <button onclick="simularPreco()" style="background:#3498db;color:white;border:none;padding:10px 20px;border-radius:8px;font-weight:700;cursor:pointer;white-space:nowrap;">▶ Simular</button>
+                        </div>
+                        <div id="resultadoSimulacao" style="display:none;margin-top:16px;background:#f0f7ff;border-radius:8px;padding:16px;"></div>
+                    </div>
+                </div>
+
+                                <!-- ABA 4: Intermunicipal -->
                 <div id="abaPreco4" style="display:none;">
                     <div class="panel">
                         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
