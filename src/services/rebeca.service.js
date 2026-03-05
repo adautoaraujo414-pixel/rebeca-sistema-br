@@ -883,7 +883,30 @@ Responda diretamente para ele: wa.me/${telefone}`;
                 conversas.set(telefone, conversa);
                 return 'Sem problemas! Quando precisar é só me chamar!';
             } else {
-                return 'Desculpa, não entendi. Responde *SIM* se quiser que eu te avise quando um motorista desocupar, ou *NÃO* se preferir tentar mais tarde!';
+                // Tentar interpretar variações de sim/não
+                const mSim = ['s','sim','ok','quero','pode','manda','avisa','bora','vai','yes','yeah','claro','confirma','confirmo','ótimo','otimo'];
+                const mNao = ['n','nao','não','agora','depois','deixa','cancela','tanto faz','tchau','flw','valeu','obrigado','obrigada'];
+                if (mSim.some(p => msg.includes(p))) {
+                    const resultado = await RebecaService.adicionarFilaEspera(telefone, conversa.dados, conversa.adminId);
+                    if (resultado?.posicao) {
+                        conversa.etapa = 'aguardando_fila';
+                        conversas.set(telefone, conversa);
+                        return resultado.posicao === 1
+                            ? 'Pronto! Você é o próximo da fila! Assim que um motorista desocupar eu te aviso e já crio sua corrida automaticamente!'
+                            : 'Pronto! Te coloquei na fila, você é o ' + resultado.posicao + 'º da vez! Assim que um motorista desocupar eu te aviso!';
+                    }
+                }
+                if (mNao.some(p => msg.includes(p))) {
+                    conversa.etapa = 'inicio';
+                    conversas.set(telefone, conversa);
+                    return 'Sem problemas! Quando precisar é só me chamar! 😊';
+                }
+                // Ainda não entendeu — reforçar de forma amigável sem admitir confusão
+                conversa.etapa = 'oferecer_fila_espera';
+                conversas.set(telefone, conversa);
+                return '🙋 Quer que eu te avise assim que um motorista ficar livre?
+
+Responde *SIM* para entrar na fila ou *NÃO* para tentar depois!';
             }
         }
 

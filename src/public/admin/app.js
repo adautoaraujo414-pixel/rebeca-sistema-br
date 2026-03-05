@@ -879,9 +879,124 @@ async function abrirModalFaixa() {
     }
 }
 
+
+// ==================== ZONAS DE PREÇO ====================
+
+function abrirFormZona() {
+    document.getElementById('formZona').style.display = 'block';
+    document.getElementById('formZonaAlerta').style.display = 'none';
+    document.getElementById('zonaNovoNome').focus();
+}
+
+function fecharFormZona() {
+    document.getElementById('formZona').style.display = 'none';
+    ['zonaNovoNome','zonaNovoPreco','zonaNovoEndereco','zonaNovoRaio','zonaNovoDescricao'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = id === 'zonaNovoRaio' ? '2' : id === 'zonaNovoHoraInicio' ? '00:00' : id === 'zonaNovoHoraFim' ? '23:59' : '';
+    });
+    document.querySelectorAll('[name="zonaDias"]').forEach(c => c.checked = false);
+}
+
+async function carregarZonas() {
+    const el = document.getElementById('listaZonas');
+    const totalEl = document.getElementById('totalZonasAtivas');
+    if (!el) return;
+    try {
+        const zonas = await api('/api/zona-preco');
+        if (!Array.isArray(zonas) || zonas.length === 0) {
+            el.innerHTML = '<div style="text-align:center;padding:32px;color:#aaa;"><div style="font-size:2em;margin-bottom:8px;">🗺️</div><p>Nenhuma zona cadastrada ainda.</p><p style="font-size:0.85em;">Crie uma zona para definir preços fixos por localização.</p></div>';
+            if (totalEl) totalEl.textContent = '0';
+            return;
+        }
+        const ativas = zonas.filter(z => z.ativo).length;
+        if (totalEl) totalEl.textContent = ativas + ' / ' + zonas.length;
+        el.innerHTML = zonas.map(z => `
+            <div style="border:1px solid ${z.ativo ? '#e0f0e0' : '#eee'};border-radius:10px;padding:16px;margin-bottom:12px;background:${z.ativo ? '#f8fff8' : '#fafafa'};">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                    <div style="flex:1;">
+                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+                            <span style="font-size:1em;font-weight:700;color:#2c3e50;">${z.nome}</span>
+                            <span style="font-size:0.75em;padding:2px 8px;border-radius:20px;font-weight:600;background:${z.ativo ? '#27ae60' : '#ccc'};color:white;">${z.ativo ? 'ATIVA' : 'INATIVA'}</span>
+                        </div>
+                        <div style="font-size:0.82em;color:#666;margin-bottom:4px;">📍 ${z.enderecoReferencia || 'Sem endereço de referência'} &nbsp;·&nbsp; 📏 Raio: ${z.raioKm} km</div>
+                        <div style="font-size:0.82em;color:#666;margin-bottom:4px;">🕐 ${z.horaInicio || '00:00'} – ${z.horaFim || '23:59'} &nbsp;·&nbsp; ${(z.diasSemana && z.diasSemana.length > 0) ? '📅 ' + ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].filter((_,i) => z.diasSemana.includes(i)).join(', ') : '📅 Todos os dias'}</div>
+                        ${z.descricao ? '<div style="font-size:0.8em;color:#888;font-style:italic;">' + z.descricao + '</div>' : ''}
+                    </div>
+                    <div style="text-align:right;margin-left:16px;">
+                        <div style="font-size:1.6em;font-weight:800;color:#27ae60;">R$ ${(z.precoFixo || 0).toFixed(2)}</div>
+                        <div style="font-size:0.75em;color:#888;margin-bottom:8px;">preço fixo</div>
+                        <div style="display:flex;gap:6px;justify-content:flex-end;">
+                            <button onclick="toggleZona('${z._id}', ${!z.ativo})" style="background:${z.ativo ? '#e74c3c' : '#27ae60'};color:white;border:none;padding:6px 12px;border-radius:6px;font-size:0.78em;cursor:pointer;font-weight:600;">${z.ativo ? '⏸ Desativar' : '▶ Ativar'}</button>
+                            <button onclick="deletarZona('${z._id}', '${z.nome}')" style="background:#f0f0f0;color:#e74c3c;border:1px solid #fcc;padding:6px 12px;border-radius:6px;font-size:0.78em;cursor:pointer;font-weight:600;">🗑️</button>
+                        </div>
+                    </div>
+                </div>
+            </div>`).join('');
+    } catch(e) {
+        el.innerHTML = '<p style="color:#e74c3c;padding:20px;">Erro ao carregar zonas: ' + e.message + '</p>';
+    }
+}
+
+async function salvarNovaZona() {
+    const nome = document.getElementById('zonaNovoNome')?.value?.trim();
+    const preco = parseFloat(document.getElementById('zonaNovoPreco')?.value || 0);
+    const endereco = document.getElementById('zonaNovoEndereco')?.value?.trim();
+    const raio = parseFloat(document.getElementById('zonaNovoRaio')?.value || 2);
+    const horaInicio = document.getElementById('zonaNovoHoraInicio')?.value || '00:00';
+    const horaFim = document.getElementById('zonaNovoHoraFim')?.value || '23:59';
+    const descricao = document.getElementById('zonaNovoDescricao')?.value?.trim() || '';
+    const diasSemana = Array.from(document.querySelectorAll('[name="zonaDias"]:checked')).map(c => parseInt(c.value));
+
+    const alertEl = document.getElementById('formZonaAlerta');
+    const mostrarErro = (msg) => {
+        alertEl.style.display = 'block';
+        alertEl.style.background = '#ffeaea';
+        alertEl.style.color = '#c0392b';
+        alertEl.textContent = '⚠️ ' + msg;
+    };
+
+    if (!nome) return mostrarErro('Informe o nome da zona.');
+    if (!preco || preco < 1) return mostrarErro('Informe um preço fixo válido.');
+    if (!endereco) return mostrarErro('Informe o endereço central da zona.');
+    if (!raio || raio < 0.1) return mostrarErro('Informe um raio válido (mín. 0.1 km).');
+
+    alertEl.style.display = 'block';
+    alertEl.style.background = '#fff8e1';
+    alertEl.style.color = '#856404';
+    alertEl.textContent = '⏳ Geocodificando endereço...';
+
+    try {
+        const r = await api('/api/zona-preco', 'POST', { nome, precoFixo: preco, enderecoReferencia: endereco, raioKm: raio, horaInicio, horaFim, diasSemana, descricao });
+        if (r?.sucesso || r?._id) {
+            alertEl.style.display = 'none';
+            fecharFormZona();
+            carregarZonas();
+        } else {
+            mostrarErro(r?.erro || r?.error || 'Erro ao criar zona. Tente novamente.');
+        }
+    } catch(e) { mostrarErro('Erro: ' + e.message); }
+}
+
+async function toggleZona(id, ativo) {
+    try {
+        const r = await api('/api/zona-preco/' + id, 'PUT', { ativo });
+        if (r?.sucesso) carregarZonas();
+        else alert('Erro: ' + (r?.erro || 'Tente novamente'));
+    } catch(e) { alert('Erro: ' + e.message); }
+}
+
+async function deletarZona(id, nome) {
+    if (!confirm('Deletar a zona "' + nome + '"? Essa ação não pode ser desfeita.')) return;
+    try {
+        const r = await api('/api/zona-preco/' + id, 'DELETE');
+        if (r?.sucesso) carregarZonas();
+        else alert('Erro: ' + (r?.erro || 'Tente novamente'));
+    } catch(e) { alert('Erro: ' + e.message); }
+}
+
 // ==================== ABAS DE PREÇO ====================
 function abaPreco(n) {
-    [1,2,3,4,5].forEach(i => {
+    [1,2,3,4,5,6].forEach(i => {
         const el = document.getElementById('abaPreco'+i);
         const btn = document.getElementById('abaPrecoBtn'+i);
         if (!el || !btn) return;

@@ -24,8 +24,21 @@ router.post('/', authAdmin, async (req, res) => {
                 diasSemana, horaInicio, horaFim, descricao } = req.body;
         if (!nome || !lat || !lng || !precoFixo || !raioKm)
             return res.status(400).json({ erro: 'Campos obrigatórios: nome, lat, lng, raioKm, precoFixo' });
+        // Geocodificar endereço de referência para obter lat/lng
+        let lat = req.body.lat, lng = req.body.lng;
+        if (!lat && req.body.enderecoReferencia) {
+            try {
+                const MapsService = require('../services/maps.service');
+                const geo = await MapsService.geocodificar(req.body.enderecoReferencia);
+                if (geo?.sucesso) { lat = geo.latitude; lng = geo.longitude; }
+            } catch(e) {}
+        }
+        if (!lat || !lng) return res.status(400).json({ erro: 'Não foi possível localizar o endereço informado. Verifique e tente novamente.' });
+
         const zona = await ZonaPreco.create({
-            adminId: req.adminId, nome, lat, lng,
+            adminId: req.adminId,
+            lat: lat || req.body.lat,
+            lng: lng || req.body.lng, nome, lat, lng,
             enderecoReferencia: enderecoReferencia || '',
             raioKm, precoFixo,
             diasSemana: diasSemana || [],
