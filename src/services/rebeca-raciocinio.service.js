@@ -134,9 +134,7 @@ RETORNE APENAS JSON VÁLIDO:
             oferecer_fila_espera:       `🙋 Quer entrar na fila de espera? Responde *SIM* ou *NÃO*`,
         };
         return templates[etapa] || `Pode repetir? Não entendi bem 😊`;
-    }
-};
-
+    },
 
     /**
      * Classificar endereço que o Maps não achou
