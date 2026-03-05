@@ -147,7 +147,7 @@ async function cancelarCorrida(id) {
         carregarDashboard();
     } catch(e) {
         console.error('Erro ao cancelar corrida:', e);
-    } catch(e) { console.error(e); } finally { _cancelando = false; }
+    } finally { _cancelando = false; }
 
 }
 let _despachando = false;
@@ -160,7 +160,7 @@ async function despacharCorrida(id) {
         else alert('❌ ' + (r.error || 'Erro ao despachar'));
     } catch(e) {
         console.error('Erro ao despachar corrida:', e);
-    } catch(e) { console.error(e); } finally { _despachando = false; }
+    } finally { _despachando = false; }
 
 }
 
@@ -310,7 +310,7 @@ async function desativarMotorista(id) {
     _desativandoMot = true;
     try {
         if (confirm('Desativar?')) { await api('/api/motoristas/'+id,'DELETE'); carregarMotoristas(); }
-    } catch(e) { console.error(e); } catch(e) { console.error(e); } finally { _desativandoMot = false; }
+    } catch(e) { console.error(e); } finally { _desativandoMot = false; }
 
 
 // CLIENTES
@@ -325,7 +325,7 @@ async function bloquearCliente(id) {
     try {
         await api('/api/clientes/'+id+'/bloquear', 'PUT', {motivo:'Admin'});
         carregarClientes();
-    } catch(e) { console.error(e); } catch(e) { console.error(e); } finally { _bloqueandoCli = false; }
+    } catch(e) { console.error(e); } finally { _bloqueandoCli = false; }
 
 let _desbloqueandoCli = false;
 async function desbloquearCliente(id) {
@@ -334,7 +334,7 @@ async function desbloquearCliente(id) {
     try {
         await api('/api/clientes/'+id+'/desbloquear', 'PUT');
         carregarClientes();
-    } catch(e) { console.error(e); } catch(e) { console.error(e); } finally { _desbloqueandoCli = false; }
+    } catch(e) { console.error(e); } finally { _desbloqueandoCli = false; }
 
 
 // ROTAS
@@ -560,7 +560,7 @@ async function removerBlacklist(id) {
     _removendoBL = true;
     try {
         if(confirm('Remover?')){ await api('/api/antifraude/blacklist/'+id,'DELETE'); carregarBlacklist(); }
-    } catch(e) { console.error(e); } catch(e) { console.error(e); } finally { _removendoBL = false; }
+    } catch(e) { console.error(e); } finally { _removendoBL = false; }
 
 
 // RECLAMAÇÕES
@@ -623,7 +623,7 @@ async function excluirArea(id) {
     _excluindoArea = true;
     try {
         if(confirm('Excluir?')){ await api('/api/config/areas/'+id,'DELETE'); carregarAreas(); }
-    } catch(e) { console.error(e); } catch(e) { console.error(e); } finally { _excluindoArea = false; }
+    } catch(e) { console.error(e); } finally { _excluindoArea = false; }
 
 
 // CONFIG
@@ -653,7 +653,7 @@ async function excluirIntermunicipal(id) {
     _excluindoInter = true;
     try {
         if(confirm('Excluir rota?')) { await api('/api/precos-intermunicipais/'+id,'DELETE'); carregarIntermunicipais(); }
-    } catch(e) { console.error(e); } catch(e) { console.error(e); } finally { _excluindoInter = false; }
+    } catch(e) { console.error(e); } finally { _excluindoInter = false; }
 
 
 // ===== SISTEMA DE PONTOS =====
