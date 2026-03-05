@@ -718,6 +718,42 @@
                     </div>
                 </div>
 
+                <!-- ABA 6: Zonas de Preço -->
+                <div id="abaPreco6" style="display:none;">
+                    <div style="background:linear-gradient(135deg,#1a1a2e,#16213e);border-radius:12px;padding:20px;margin-bottom:20px;color:white;display:flex;justify-content:space-between;align-items:center;">
+                        <div>
+                            <div style="font-size:0.82em;opacity:0.7;margin-bottom:4px;">ZONAS ATIVAS</div>
+                            <div style="font-size:1.6em;font-weight:800;" id="totalZonasAtivas">—</div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div style="font-size:0.78em;opacity:0.7;margin-bottom:4px;">Como funciona</div>
+                            <div style="font-size:0.85em;opacity:0.9;">Cliente dentro do raio → preço fixo da zona<br>Fora do raio → preço normal do sistema</div>
+                        </div>
+                    </div>
+                    <div class="panel" style="padding:0;overflow:hidden;margin-bottom:20px;">
+                        <div style="padding:16px 20px;border-bottom:1px solid #f0f0f0;background:#fafafa;display:flex;justify-content:space-between;align-items:center;">
+                            <div><h3 style="margin:0;font-size:1em;color:#2c3e50;">🗺️ Zonas Cadastradas</h3><p style="margin:4px 0 0;font-size:0.82em;color:#888;">Cada zona define um raio geográfico com preço fixo</p></div>
+                            <button onclick="abrirFormZona()" class="btn btn-primary" style="font-size:0.85em;">➕ Nova Zona</button>
+                        </div>
+                        <div id="listaZonas" style="padding:16px 20px;"><p style="color:#999;text-align:center;padding:20px;">Carregando zonas...</p></div>
+                    </div>
+                    <div id="formZona" style="display:none;" class="panel">
+                        <h3 style="margin-bottom:20px;color:#2c3e50;">➕ Nova Zona de Preço</h3>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+                            <div><label style="font-size:0.78em;font-weight:700;color:#555;display:block;margin-bottom:4px;">NOME DA ZONA *</label><input type="text" id="zonaNovoNome" placeholder="Ex: Centro, Aeroporto" style="width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:6px;font-size:1em;"></div>
+                            <div><label style="font-size:0.78em;font-weight:700;color:#555;display:block;margin-bottom:4px;">PREÇO FIXO (R$) *</label><div style="position:relative;"><span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#27ae60;font-weight:700;">R$</span><input type="number" id="zonaNovoPreco" step="0.50" min="1" placeholder="25.00" style="width:100%;padding:10px 12px 10px 30px;border:1px solid #ddd;border-radius:6px;font-size:1em;"></div></div>
+                            <div><label style="font-size:0.78em;font-weight:700;color:#555;display:block;margin-bottom:4px;">ENDEREÇO DO CENTRO *</label><input type="text" id="zonaNovoEndereco" placeholder="Ex: Praça Central, Centro, Cidade - UF" style="width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:6px;font-size:1em;"><p style="font-size:0.75em;color:#888;margin-top:4px;">Geocodificado automaticamente</p></div>
+                            <div><label style="font-size:0.78em;font-weight:700;color:#555;display:block;margin-bottom:4px;">RAIO (km) *</label><input type="number" id="zonaNovoRaio" step="0.5" min="0.5" value="2" style="width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:6px;font-size:1em;"><p style="font-size:0.75em;color:#888;margin-top:4px;">Clientes dentro desse raio pagam o preço fixo</p></div>
+                            <div><label style="font-size:0.78em;font-weight:700;color:#555;display:block;margin-bottom:4px;">HORA INÍCIO</label><input type="time" id="zonaNovoHoraInicio" value="00:00" style="width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:6px;font-size:1em;"></div>
+                            <div><label style="font-size:0.78em;font-weight:700;color:#555;display:block;margin-bottom:4px;">HORA FIM</label><input type="time" id="zonaNovoHoraFim" value="23:59" style="width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:6px;font-size:1em;"></div>
+                        </div>
+                        <div style="margin-bottom:16px;"><label style="font-size:0.78em;font-weight:700;color:#555;display:block;margin-bottom:8px;">DIAS DA SEMANA (vazio = sempre ativo)</label><div style="display:flex;gap:8px;flex-wrap:wrap;"><label style="display:flex;align-items:center;gap:4px;font-size:0.85em;"><input type="checkbox" value="0" name="zonaDias"> Dom</label><label style="display:flex;align-items:center;gap:4px;font-size:0.85em;"><input type="checkbox" value="1" name="zonaDias"> Seg</label><label style="display:flex;align-items:center;gap:4px;font-size:0.85em;"><input type="checkbox" value="2" name="zonaDias"> Ter</label><label style="display:flex;align-items:center;gap:4px;font-size:0.85em;"><input type="checkbox" value="3" name="zonaDias"> Qua</label><label style="display:flex;align-items:center;gap:4px;font-size:0.85em;"><input type="checkbox" value="4" name="zonaDias"> Qui</label><label style="display:flex;align-items:center;gap:4px;font-size:0.85em;"><input type="checkbox" value="5" name="zonaDias"> Sex</label><label style="display:flex;align-items:center;gap:4px;font-size:0.85em;"><input type="checkbox" value="6" name="zonaDias"> Sáb</label></div></div>
+                        <div style="margin-bottom:16px;"><label style="font-size:0.78em;font-weight:700;color:#555;display:block;margin-bottom:4px;">DESCRIÇÃO (opcional)</label><input type="text" id="zonaNovoDescricao" placeholder="Ex: Preço fixo para o aeroporto" style="width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:6px;font-size:1em;"></div>
+                        <div id="formZonaAlerta" style="display:none;margin-bottom:12px;padding:10px 14px;border-radius:6px;font-size:0.88em;"></div>
+                        <div style="display:flex;gap:12px;justify-content:flex-end;"><button onclick="fecharFormZona()" class="btn" style="font-size:0.9em;">Cancelar</button><button onclick="salvarNovaZona()" style="background:#27ae60;color:white;border:none;padding:11px 28px;border-radius:8px;font-weight:700;font-size:0.95em;cursor:pointer;">💾 Criar Zona</button></div>
+                    </div>
+                </div>
+
                                 <!-- ABA 4: Intermunicipal -->
                 <div id="abaPreco4" style="display:none;">
                     <div class="panel">

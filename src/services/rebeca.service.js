@@ -904,9 +904,7 @@ Responda diretamente para ele: wa.me/${telefone}`;
                 // Ainda não entendeu — reforçar de forma amigável sem admitir confusão
                 conversa.etapa = 'oferecer_fila_espera';
                 conversas.set(telefone, conversa);
-                return '🙋 Quer que eu te avise assim que um motorista ficar livre?
-
-Responde *SIM* para entrar na fila ou *NÃO* para tentar depois!';
+                return '🙋 Quer que eu te avise assim que um motorista ficar livre?\n\nResponde *SIM* para entrar na fila ou *NÃO* para tentar depois!';;
             }
         }
 
