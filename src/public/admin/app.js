@@ -141,7 +141,6 @@ async function cancelarCorrida(id) {
     if (_cancelando) return;
     if (!confirm('Cancelar esta corrida?')) return;
     _cancelando = true;
-    try {
         await api('/api/corridas/'+id+'/cancelar', 'PUT', {motivo:'Admin'});
         carregarCorridas();
         carregarDashboard();
@@ -153,7 +152,6 @@ let _despachando = false;
 async function despacharCorrida(id) {
     if (_despachando) return;
     _despachando = true;
-    try {
         const r = await api('/api/despacho/despachar/'+id, 'POST');
         if (r.sucesso) { alert(`✅ Despachada! Modo: ${r.modo}`); carregarCorridas(); }
         else alert('❌ ' + (r.error || 'Erro ao despachar'));
@@ -306,7 +304,6 @@ let _desativandoMot = false;
 async function desativarMotorista(id) {
     if (_desativandoMot) return;
     _desativandoMot = true;
-    try {
         if (confirm('Desativar?')) { await api('/api/motoristas/'+id,'DELETE'); carregarMotoristas(); }
 
 
@@ -319,7 +316,6 @@ async function bloquearCliente(id) {
     if (_bloqueandoCli) return;
     if (!confirm('Bloquear este cliente?')) return;
     _bloqueandoCli = true;
-    try {
         await api('/api/clientes/'+id+'/bloquear', 'PUT', {motivo:'Admin'});
         carregarClientes();
 
@@ -327,7 +323,6 @@ let _desbloqueandoCli = false;
 async function desbloquearCliente(id) {
     if (_desbloqueandoCli) return;
     _desbloqueandoCli = true;
-    try {
         await api('/api/clientes/'+id+'/desbloquear', 'PUT');
         carregarClientes();
 
@@ -491,7 +486,6 @@ document.getElementById('formEditarFaixa')?.addEventListener('submit', async (e)
 let _excluindoFaixa = false;
 async function excluirFaixa(id) {
     if (_excluindoFaixa) return; _excluindoFaixa = true;
-    try {
     if (confirm('Excluir esta faixa?')) {
         await api('/api/preco-dinamico/faixas/' + id, 'DELETE');
         carregarFaixasDia(diaSelecionado); carregarIntermunicipais();
@@ -551,7 +545,6 @@ let _removendoBL = false;
 async function removerBlacklist(id) {
     if (_removendoBL) return;
     _removendoBL = true;
-    try {
         if(confirm('Remover?')){ await api('/api/antifraude/blacklist/'+id,'DELETE'); carregarBlacklist(); }
 
 
@@ -613,7 +606,6 @@ let _excluindoArea = false;
 async function excluirArea(id) {
     if (_excluindoArea) return;
     _excluindoArea = true;
-    try {
         if(confirm('Excluir?')){ await api('/api/config/areas/'+id,'DELETE'); carregarAreas(); }
 
 
@@ -642,7 +634,6 @@ let _excluindoInter = false;
 async function excluirIntermunicipal(id) {
     if (_excluindoInter) return;
     _excluindoInter = true;
-    try {
         if(confirm('Excluir rota?')) { await api('/api/precos-intermunicipais/'+id,'DELETE'); carregarIntermunicipais(); }
 
 
@@ -670,7 +661,6 @@ async function carregarFilaEspera() {
 let _removendoFila = false;
 async function removerFila(id) {
     if (_removendoFila) return; _removendoFila = true;
-    try {
     if (!confirm('Remover da fila?')) return;
     await api('/api/fila-espera/' + id, 'DELETE');
     carregarFilaEspera();
@@ -758,7 +748,6 @@ function ocultarFormCentral() {
 let _fechandoCentral = false;
 async function fecharCentral(id) {
     if (_fechandoCentral) return; _fechandoCentral = true;
-    try {
     await api('/api/pontos/' + id, 'PUT', { ativo: false });
     carregarPontos();
 
@@ -793,7 +782,6 @@ async function criarPonto() {
         diasSemana
     };
     _criandoPonto = true;
-    try {
         await api('/api/pontos', { method: 'POST', body: JSON.stringify(body) });
         ocultarFormCentral();
         carregarPontos();
@@ -805,7 +793,6 @@ async function criarPonto() {
 let _deletandoPonto = false;
 async function deletarPonto(id) {
     if (_deletandoPonto) return; _deletandoPonto = true;
-    try {
     if (!confirm('Deletar ponto?')) return;
     await api(`/api/pontos/${id}`, { method: 'DELETE' });
     carregarPontos();
@@ -1001,7 +988,6 @@ async function salvarNovaZona() {
 
     try {
     _salvandoZona = true;
-    try {
             const r = await api('/api/zona-preco', 'POST', { nome, precoFixo: preco, enderecoReferencia: endereco, raioKm: raio, horaInicio, horaFim, diasSemana, descricao });
         if (r?.sucesso || r?._id) {
             alertEl.style.display = 'none';
@@ -1122,7 +1108,7 @@ async function carregarZonasNoMapa() {
                 icon: L.divIcon({ html: '<div style="background:' + cor + ';color:white;padding:3px 6px;border-radius:4px;font-size:11px;font-weight:700;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,0.3);">R$ ' + z.precoFixo.toFixed(2) + '</div>', className:'', iconAnchor:[0,0] })
             }).addTo(mapaZona);
         });
-    } catch(e) {} catch(e) { console.error(e); }
+    } catch(e) {}
 
 }
 
