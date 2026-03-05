@@ -1014,6 +1014,7 @@ function abaPreco(n) {
     });
     if (n === 2) iniciarMapaZona();
     if (n === 2) carregarZonasPreco();
+    if (n === 6) carregarZonas();
 }
 
 // ==================== MAPA DE ZONA ====================
