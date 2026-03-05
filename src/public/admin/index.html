@@ -936,6 +936,21 @@
                     </div>
                     <button class="btn btn-success" onclick="salvarConfig()">💾 Salvar</button>
                 </div>
+
+                <div class="panel" style="margin-top:20px;">
+                    <h2>📞 Suporte ao Motorista</h2>
+                    <p style="color:#666;font-size:0.9em;margin-bottom:15px;">Número que os motoristas usarão para ligar ou chamar no WhatsApp em caso de dúvidas.</p>
+                    <div class="form-row">
+                        <div class="form-group" style="max-width:300px;">
+                            <label>Número de Suporte (com DDD)</label>
+                            <input type="text" id="cfgNumeroSuporte" placeholder="Ex: 34991234567" maxlength="20"
+                                style="font-size:1.1em;padding:10px;border:2px solid #00d4ff44;border-radius:8px;width:100%;">
+                            <small style="color:#999;">Somente números, sem espaço ou traço</small>
+                        </div>
+                    </div>
+                    <button class="btn btn-success" onclick="salvarNumeroSuporte()" style="margin-top:10px;">💾 Salvar Número</button>
+                    <span id="suporteSalvoMsg" style="display:none;color:#00cc66;margin-left:10px;font-weight:bold;">✅ Salvo!</span>
+                </div>
             </div>
 
             <!-- LOGS -->

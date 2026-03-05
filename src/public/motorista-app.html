@@ -273,8 +273,54 @@ body.dark-mode .periodo-btn { background: #1e1e3f !important; border-color: #333
 body.dark-mode .financeiro-header { background: linear-gradient(135deg, #252542, #1e1e3f) !important; }
 body.dark-mode .chat-input { background: #1a1a2e !important; border-color: #333 !important; color: #e0e0e0 !important; }
 body.dark-mode .chat-msg.received .bubble { background: #252542 !important; color: #e0e0e0 !important; }
-</style>
-<script src="/js/gps-persistente.js"></script>
+
+        /* Modal Suporte */
+        #modalSuporte { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:10000; align-items:flex-end; justify-content:center; }
+        #modalSuporte.aberto { display:flex; }
+        .suporte-sheet { background:#1a1a2e; border-radius:24px 24px 0 0; padding:30px 24px 40px; width:100%; max-width:480px; animation:slideUpSheet 0.3s ease; }
+        @keyframes slideUpSheet { from{transform:translateY(100%)} to{transform:translateY(0)} }
+        .suporte-sheet h3 { color:#fff; font-size:18px; margin-bottom:6px; text-align:center; }
+        .suporte-sheet p { color:#aaa; font-size:13px; text-align:center; margin-bottom:24px; }
+        .suporte-btns { display:flex; flex-direction:column; gap:12px; }
+        .btn-suporte-ligar { background:linear-gradient(135deg,#00c853,#00a040); color:#fff; border:none; padding:16px; border-radius:14px; font-size:16px; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:10px; }
+        .btn-suporte-wpp { background:linear-gradient(135deg,#25D366,#128C7E); color:#fff; border:none; padding:16px; border-radius:14px; font-size:16px; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:10px; }
+        .btn-suporte-fechar { background:transparent; border:2px solid #444; color:#aaa; padding:12px; border-radius:14px; font-size:14px; cursor:pointer; margin-top:4px; }
+        </style>
+<script src="/js/gps-persistente.js">
+// ===== SUPORTE =====
+let _numeroSuporte = '';
+
+async function carregarSuporte() {
+    try {
+        const cfg = await fetch('/api/rebeca/config').then(r=>r.json());
+        _numeroSuporte = cfg?.numeroSuporte || '';
+    } catch(e) {}
+}
+carregarSuporte();
+
+function abrirSuporte() {
+    document.getElementById('modalSuporte').classList.add('aberto');
+}
+function fecharSuporte() {
+    document.getElementById('modalSuporte').classList.remove('aberto');
+}
+function ligarSuporte() {
+    if (!_numeroSuporte) { alert('Número de suporte não configurado. Fale com a central.'); return; }
+    window.location.href = 'tel:+55' + _numeroSuporte;
+}
+function whatsappSuporte() {
+    if (!_numeroSuporte) { alert('Número de suporte não configurado. Fale com a central.'); return; }
+    const nome = localStorage.getItem('motoristaNome') || 'Motorista';
+    const msg = encodeURIComponent('Olá, sou o motorista ' + nome + '. Solicitação de suporte: ');
+    window.open('https://wa.me/55' + _numeroSuporte + '?text=' + msg, '_blank');
+    fecharSuporte();
+}
+// Fechar clicando fora
+document.getElementById('modalSuporte').addEventListener('click', function(e) {
+    if (e.target === this) fecharSuporte();
+});
+// ===== FIM SUPORTE =====
+</script>
 </head>
 <body>
     <!-- Login Section -->
