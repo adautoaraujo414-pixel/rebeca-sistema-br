@@ -321,7 +321,7 @@ if (btnWpp) {
   btnWpp.onclick = () => window.open('https://wa.me/' + numWpp + '?text=' + msgWpp, '_blank');
   btnWpp.style.display = 'block';
 }
-carregarMotoristas(); });
+carregarMotoristas(); _submittingMotorista=false; });
 let _desativandoMot = false;
 async function desativarMotorista(id) {
     if (_desativandoMot) return;
