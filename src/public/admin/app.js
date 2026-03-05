@@ -858,6 +858,7 @@ async function deletarPonto(id) {
     try {
         await api(`/api/pontos/${id}`, { method: 'DELETE' });
         carregarPontos();
+    } catch(e) { console.error(e); } finally { _deletandoPonto = false; }
 }
 
 async function verFilaPonto(id, nome) {
