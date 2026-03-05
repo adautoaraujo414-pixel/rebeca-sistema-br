@@ -145,21 +145,27 @@ const configRebeca = {
 
 const RebecaService = {
     // ==================== CONFIG ====================
-    getConfig: () => ({ 
-        ...configRebeca,
-        iaAtiva: IAService.isAtivo(),
-        iaConfig: IAService.getConfig()
-    }),
+    getConfig: (adminId) => {
+        const cfg = adminId ? _carregarConfigAdmin(adminId) : configRebeca;
+        return {
+            ...cfg,
+            iaAtiva: IAService.isAtivo(),
+            iaConfig: IAService.getConfig()
+        };
+    },
     
     setConfig: (novaConfig) => {
-        Object.assign(configRebeca, novaConfig);
-        // Persistir no arquivo para sobreviver a reinicializações
-        try {
-            const dir = path.dirname(CONFIG_FILE);
-            if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-            fs.writeFileSync(CONFIG_FILE, JSON.stringify(configRebeca, null, 2));
-        } catch(e) { console.error('[RebecaService] Erro ao salvar config:', e.message); }
-        return RebecaService.getConfig();
+        const adminId = novaConfig.adminId;
+        if (adminId) {
+            const cfg = _carregarConfigAdmin(adminId);
+            Object.assign(cfg, novaConfig);
+            _salvarConfigAdmin(adminId, cfg);
+            _configCache[adminId] = cfg;
+        } else {
+            // fallback legado sem adminId
+            Object.assign(configRebeca, novaConfig);
+        }
+        return RebecaService.getConfig(adminId);
     },
 
     // ==================== HELPERS ====================
