@@ -137,12 +137,33 @@ async function carregarCorridas() {
 }
 let _cancelando = false;
 async function cancelarCorrida(id) {
-    if (_cancelando) return; _cancelando = true;
-    try { if (confirm('Cancelar?')) { await api('/api/corridas/'+id+'/cancelar','PUT',{motivo:'Admin'}); carregarCorridas(); carregarDashboard(); }}
+    if (_cancelando) return;
+    if (!confirm('Cancelar esta corrida?')) return;
+    _cancelando = true;
+    try {
+        await api('/api/corridas/'+id+'/cancelar', 'PUT', {motivo:'Admin'});
+        carregarCorridas();
+        carregarDashboard();
+    } catch(e) {
+        console.error('Erro ao cancelar corrida:', e);
+    } finally {
+        _cancelando = false;
+    }
+}
 let _despachando = false;
 async function despacharCorrida(id) {
-    if (_despachando) return; _despachando = true;
-    try { const r = await api('/api/despacho/despachar/'+id, 'POST'); if (r.sucesso) { alert(`✅ Despachada! Modo: ${r.modo}`); carregarCorridas(); } else alert('❌ '+r.error); }
+    if (_despachando) return;
+    _despachando = true;
+    try {
+        const r = await api('/api/despacho/despachar/'+id, 'POST');
+        if (r.sucesso) { alert(`✅ Despachada! Modo: ${r.modo}`); carregarCorridas(); }
+        else alert('❌ ' + (r.error || 'Erro ao despachar'));
+    } catch(e) {
+        console.error('Erro ao despachar corrida:', e);
+    } finally {
+        _despachando = false;
+    }
+}
 
 // DESPACHO
 async function carregarDespacho() {
