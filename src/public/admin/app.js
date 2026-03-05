@@ -689,11 +689,14 @@ async function abrirCentral(id) {
 
 
 
+let _criandoPonto = false;
 async function criarPonto() {
+    if (_criandoPonto) return;
     const nome = document.getElementById('pontoNome').value.trim();
     const endereco = document.getElementById('pontoEndereco').value.trim();
     if (!nome || !endereco) return alert('Preencha nome e endereço da central');
-    const diasSemana = [...document.querySelectorAll('.dia-check:checked')].map(c => parseInt(c.value));
+    const container = document.getElementById('formCentralContainer');
+    const diasSemana = [...container.querySelectorAll('.dia-check:checked')].map(c => parseInt(c.value));
     const body = {
         nome, endereco,
         horarioAbertura: document.getElementById('pontoAbertura').value,
@@ -703,11 +706,14 @@ async function criarPonto() {
         principal: document.getElementById('pontoPrincipal').checked,
         diasSemana
     };
-    await api('/api/pontos', { method: 'POST', body: JSON.stringify(body) });
-    carregarPontos();
-    document.getElementById('pontoNome').value = '';
-    document.getElementById('pontoEndereco').value = '';
-    document.getElementById('pontoPrincipal').checked = false;
+    _criandoPonto = true;
+    try {
+        await api('/api/pontos', { method: 'POST', body: JSON.stringify(body) });
+        ocultarFormCentral();
+        carregarPontos();
+    } finally {
+        _criandoPonto = false;
+    }
 }
 
 
