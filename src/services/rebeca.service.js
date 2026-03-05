@@ -119,6 +119,19 @@ function variar(tipo) {
     _fraseIdx.set(tipo,i); return f[i];
 }
 
+const fs = require('fs');
+const path = require('path');
+const CONFIG_FILE = path.join(__dirname, '../../data/rebeca-config.json');
+
+function _carregarConfigSalvo() {
+    try {
+        if (fs.existsSync(CONFIG_FILE)) {
+            return JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'));
+        }
+    } catch(e) { console.error('[RebecaService] Erro ao carregar config:', e.message); }
+    return {};
+}
+
 const configRebeca = {
     enviarLinkRastreamento: true,
     notificarTempoMotorista: true,
@@ -126,7 +139,8 @@ const configRebeca = {
     autoDetectarEndereco: true,
     mensagemBoaViagem: true,
     pedirObservacaoEnderecoImpreciso: true,
-    usarIA: true
+    usarIA: true,
+    ..._carregarConfigSalvo()
 };
 
 const RebecaService = {
@@ -139,6 +153,12 @@ const RebecaService = {
     
     setConfig: (novaConfig) => {
         Object.assign(configRebeca, novaConfig);
+        // Persistir no arquivo para sobreviver a reinicializações
+        try {
+            const dir = path.dirname(CONFIG_FILE);
+            if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+            fs.writeFileSync(CONFIG_FILE, JSON.stringify(configRebeca, null, 2));
+        } catch(e) { console.error('[RebecaService] Erro ao salvar config:', e.message); }
         return RebecaService.getConfig();
     },
 
