@@ -2015,6 +2015,7 @@ _Digite CANCELAR se precisar_`;
                         conversa.dados.calculo = calculo;
                         
                         conversa.etapa = 'confirmar_corrida';
+                        conversas.set(telefone, conversa);
                         let resp = `🚗 *Entendi!*\n\n📍 *De:* ${conversa.dados.origem}\n🏁 *Para:* ${conversa.dados.destino}`;
                         if (analise.observacao) resp += `\n📝 _${analise.observacao}_`;
                         resp += `\n\n📏 ${calculo.distancia} | ⏱️ ${calculo.tempo}\n💰 *R$ ${calculo.preco.toFixed(2)}*\n\n*1* - ✅ Confirmar\n*2* - ❌ Cancelar`;
@@ -2023,6 +2024,7 @@ _Digite CANCELAR se precisar_`;
                 }
                 
                 conversa.etapa = 'pedir_destino_rapido';
+                conversas.set(telefone, conversa);
                 return `📍 *Origem:* ${conversa.dados.origem}\n\n🏁 Pra onde você quer ir?`;
             }
             
@@ -2058,17 +2060,20 @@ _Digite CANCELAR se precisar_`;
                         faixa: { nome: 'padrao', multiplicador: 1 }
                     };
                     conversa.etapa = 'pedir_referencia';
+                    conversas.set(telefone, conversa);
                     return `📍 ${conversa.dados.origem}\n\nReferência? (ou 0)`;
                 } else {
                     // Maps nao achou - perguntar bairro
                     conversa.dados.origemTexto = analise.origem;
                     conversa.etapa = 'pedir_numero_origem';
+                    conversas.set(telefone, conversa);
                     return `📍 ${analise.origem}\n\nQual bairro?`;
                 }
             }
             
             // IA detectou intencao de corrida mas sem endereco
             conversa.etapa = 'pedir_origem';
+            conversas.set(telefone, conversa);
             return `🚗 Beleza! Vamos lá.\n\n📍 Envie sua *localização* ou o endereço de origem:`;
         }
         
