@@ -1641,8 +1641,26 @@ _Digite CANCELAR se precisar_`;
             } else {
                 const validacao = await RebecaService.validarEndereco(msgOriginal);
                 if (!validacao.valido) {
-                    // Aceitar texto e pedir bairro
-                    // Tentar com cidade do admin
+                    // Raciocínio amplificado antes de pedir bairro
+                    if (RaciocinioService.isAtivo()) {
+                        const rac = await RaciocinioService.raciocinar(telefone, msgOriginal, conversa, { nome });
+                        if (rac && rac.acao === 'avancar' && rac.valor) {
+                            const valOrig = await RebecaService.validarEndereco(rac.valor);
+                            if (valOrig.valido) {
+                                conversa.dados.origem = valOrig.endereco;
+                                conversa.dados.origemValidada = valOrig;
+                                conversa.dados.calculo = { origem: { endereco: valOrig.endereco, latitude: valOrig.latitude, longitude: valOrig.longitude }, destino: null, distanciaKm: 0, tempoMinutos: 0, preco: 15, faixa: { nome: 'padrao', multiplicador: 1 } };
+                                conversa.etapa = 'pedir_referencia';
+                                resposta = `📍 ${valOrig.endereco}\n\nReferência? (ou 0)`;
+                                conversas.set(telefone, conversa);
+                                return resposta;
+                            }
+                        } else if (rac && (rac.acao === 'cancelar' || rac.acao === 'negar')) {
+                            conversa.etapa = 'inicio'; conversa.dados = {};
+                            conversas.set(telefone, conversa);
+                            return 'Ok! Quando precisar é só chamar 😊';
+                        }
+                    }
                     conversa.etapa = 'pedir_numero_origem';
                     resposta = `📍 ${msgOriginal}\n\nQual bairro?`;
                 } else {
@@ -1713,19 +1731,45 @@ _Digite CANCELAR se precisar_`;
             resposta = `🚗 *RESUMO*\n\n📍 ${conversa.dados.origem}\n🏁 ${conversa.dados.destino}\n\n📏 ${calculo.distancia} | ⏱️ ${calculo.tempo}\n💰 *R$ ${calculo.preco.toFixed(2)}*\n\n*1* - ✅ Confirmar\n*2* - ❌ Cancelar`;
         }
         else if (conversa.etapa === 'confirmar_corrida') {
-            if (msg === '1' || msg.includes('sim') || msg.includes('confirmar')) {
+            if (msg === '1' || msg.includes('sim') || msg.includes('confirmar') || msg.includes('pode') || msg.includes('ok') || msg.includes('bora') || msg.includes('vai') || msg.includes('quero')) {
                 const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
-                conversa.etapa = 'inicio';
-                
+                conversa.etapa = 'aguardando_motorista';
+                conversa.dados.corridaId = corrida.id;
                 resposta = `🎉 *CONFIRMADO!*\n\n🔢 #${corrida.id.slice(-6)}\n💰 R$ ${corrida.preco.toFixed(2)}\n\n⏳ Buscando motorista...`;
                 if (configRebeca.enviarLinkRastreamento) {
                     resposta += `\n\n📲 ${RebecaService.gerarLinkRastreamento(corrida.id)}`;
                 }
                 conversa.dados = {};
-            } else {
+            } else if (msg === '2' || msg.includes('nao') || msg.includes('não') || msg.includes('cancela') || msg.includes('desist')) {
                 conversa.etapa = 'inicio';
                 conversa.dados = {};
-                resposta = `Poxa, que pena! 😔 Sua corrida foi cancelada.\n\nQuando precisar, é só mandar a localização!`;
+                resposta = `Tudo bem! Corrida cancelada. Quando precisar é só chamar 😊`;
+            } else {
+                // Raciocínio amplificado — cliente pode ter confirmado de forma diferente
+                if (RaciocinioService.isAtivo()) {
+                    const rac = await RaciocinioService.raciocinar(telefone, msgOriginal, conversa, { nome });
+                    if (rac) {
+                        if (rac.acao === 'confirmar' || rac.acao === 'avancar') {
+                            const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
+                            conversa.etapa = 'aguardando_motorista';
+                            conversa.dados.corridaId = corrida.id;
+                            resposta = `🎉 *CONFIRMADO!*\n\n🔢 #${corrida.id.slice(-6)}\n💰 R$ ${corrida.preco.toFixed(2)}\n\n⏳ Buscando motorista...`;
+                            if (configRebeca.enviarLinkRastreamento) resposta += `\n\n📲 ${RebecaService.gerarLinkRastreamento(corrida.id)}`;
+                            conversa.dados = {};
+                        } else if (rac.acao === 'negar' || rac.acao === 'cancelar') {
+                            conversa.etapa = 'inicio'; conversa.dados = {};
+                            resposta = `Tudo bem! Corrida cancelada. Quando precisar é só chamar 😊`;
+                        } else if (rac.acao === 'voltar') {
+                            conversa.etapa = 'pedir_destino';
+                            resposta = rac.resposta || `🏁 Qual o endereço de destino?`;
+                        } else {
+                            resposta = rac.resposta || `👆 Confirma a corrida? Responde *1* - ✅ SIM ou *2* - ❌ Cancelar`;
+                        }
+                        conversas.set(telefone, conversa);
+                        return resposta;
+                    }
+                }
+                resposta = `👆 Confirma? Responde *1* - ✅ SIM ou *2* - ❌ Cancelar`;
             }
         }
         // ========== COTAÇÃO ==========
