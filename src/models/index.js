@@ -6,13 +6,14 @@ const MotoristaSchema = new mongoose.Schema({
     foto: String, // URL da foto do motorista
     status: { type: String, default: 'disponivel' }, latitude: Number, longitude: Number,
     avaliacao: { type: Number, default: 5 }, corridasRealizadas: { type: Number, default: 0 },
-    ativo: { type: Boolean, default: true }, token: String, senha: String, pushSubscription: String, cidadeAtuacao: String, adminId: mongoose.Schema.Types.ObjectId
+    ativo: { type: Boolean, default: true }, bloqueado: { type: Boolean, default: false }, token: String, senha: String, pushSubscription: String, cidadeAtuacao: String, cnhValidade: Date, observacao: String, plano: { type: String, enum: ['semanal', 'mensal'], default: 'mensal' }, valorMensalidade: { type: Number, default: 100 }, adminId: mongoose.Schema.Types.ObjectId
 }, { timestamps: true });
 
 const ClienteSchema = new mongoose.Schema({
     nome: String, telefone: { type: String }, email: String,
     enderecoFavorito: { casa: { endereco: String, latitude: Number, longitude: Number }, trabalho: { endereco: String, latitude: Number, longitude: Number } },
     corridasRealizadas: { type: Number, default: 0 },
+    bloqueado: { type: Boolean, default: false }, motivoBloqueio: String,
     motoristaFavorito: { type: mongoose.Schema.Types.ObjectId, ref: 'Motorista' },
     ultimoMotorista: { type: mongoose.Schema.Types.ObjectId, ref: 'Motorista' },
     adminId: mongoose.Schema.Types.ObjectId
