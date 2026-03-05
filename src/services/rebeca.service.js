@@ -488,9 +488,59 @@ const RebecaService = {
             conversa.dados.corridaId = corridaGps.id;
             conversas.set(telefone, conversa);
             
-            const _preco1 = conversa.dados?.calculo?.preco || conversa.dados?.calculo?.precoFinal || 0;
-            return `📍 ${conversa.dados.origem}` + (_preco1 > 0 ? `\n💰 *Valor: R$ ${_preco1.toFixed(2)}*` : '') + `\n\n⏳ Buscando motorista...\n_CANCELAR se precisar_`;
+            const _preco1 = conversa.dados?.calculo?.preco || conversa.dados?.calculo?.precoFinal || corridaGps.preco || 0;
+            let _msgGps = `✅ *Corrida solicitada!*\n\n📍 *Origem:* ${conversa.dados.origem}`;
+            if (_preco1 > 0) _msgGps += `\n💰 *Valor estimado: R$ ${_preco1.toFixed(2)}*`;
+            _msgGps += `\n\n⏳ Buscando o motorista mais próximo...`;
+            if (configRebeca.enviarLinkRastreamento) {
+                _msgGps += `\n\n📲 *Acompanhe em tempo real:*\n${RebecaService.gerarLinkRastreamento(corridaGps.id)}`;
+            }
+            _msgGps += `\n\n_Digite CANCELAR se precisar_`;
+            return _msgGps;
         }
+        // ========== RACIOCÍNIO AMPLIFICADO: endereço não detectado por regex mas pode ser pedido de corrida ==========
+        if (conversa.etapa === 'inicio' && RaciocinioService.isAtivo()) {
+            // Verificar se parece pedido de corrida com endereço informal (ex: "avenida brasilia 80", "me busca no mercado X")
+            const _msgLower = msg.toLowerCase();
+            const _pareceCorridaInformal = (
+                _msgLower.match(/(me busca|me pega|vem aqui|manda um carro|quero carro|preciso de carro|to na|to no|estou na|estou no|aqui no|aqui na|me buscar em|ir para|ir pra|quero ir)/) ||
+                (_msgLower.match(/\d+/) && _msgLower.match(/(rua|av|avenida|r\.|travessa|alameda|estrada|bairro|praça|praca)/i))
+            );
+            if (_pareceCorridaInformal && !RebecaService.pareceEndereco(msgOriginal)) {
+                try {
+                    const racInicio = await RaciocinioService.raciocinar(telefone, msgOriginal, { etapa: 'pedir_origem', dados: {} }, { nome });
+                    if (racInicio && racInicio.acao === 'avancar' && racInicio.valor) {
+                        const valRacInicio = await RebecaService.validarEndereco(racInicio.valor);
+                        if (valRacInicio.valido) {
+                            conversa.dados.origem = valRacInicio.endereco;
+                            conversa.dados.origemValidada = valRacInicio;
+                            conversa.dados.calculo = { origem: { endereco: valRacInicio.endereco, latitude: valRacInicio.latitude, longitude: valRacInicio.longitude }, destino: null, distanciaKm: 0, tempoMinutos: 0, preco: 15, faixa: { nome: 'padrao', multiplicador: 1 } };
+                            const _motsRacInicio = await MotoristaService.listarDisponiveis(conversa.adminId);
+                            if (_motsRacInicio.length === 0) {
+                                const _estRac = await RebecaService.estimarTempoEspera(conversa.adminId);
+                                conversa.etapa = 'oferecer_fila_espera';
+                                conversas.set(telefone, conversa);
+                                return 'Poxa, todos os motoristas estão em corrida! Previsão: ' + _estRac.texto + '.\n\nPosso te avisar quando um desocupar? Responde *SIM*!';
+                            }
+                            const corridaRac = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
+                            if (corridaRac.cooldown) return '⏳ Aguarde ' + Math.ceil(corridaRac.segundosRestantes / 60) + ' min para nova corrida.';
+                            if (corridaRac.duplicada) return '⚠️ Você já tem corrida ativa! Digite *CANCELAR* para cancelar.';
+                            conversa.etapa = 'aguardando_motorista';
+                            conversa.dados.corridaId = corridaRac.id;
+                            conversas.set(telefone, conversa);
+                            const _precoRac = conversa.dados?.calculo?.preco || corridaRac.preco || 0;
+                            let _msgRac = `✅ *Corrida solicitada!*\n\n📍 *Origem:* ${valRacInicio.endereco}`;
+                            if (_precoRac > 0) _msgRac += `\n💰 *Valor estimado: R$ ${_precoRac.toFixed(2)}*`;
+                            _msgRac += `\n\n⏳ Buscando o motorista mais próximo...`;
+                            if (configRebeca.enviarLinkRastreamento) _msgRac += `\n\n📲 *Acompanhe em tempo real:*\n${RebecaService.gerarLinkRastreamento(corridaRac.id)}`;
+                            _msgRac += `\n\n_Digite CANCELAR se precisar_`;
+                            return _msgRac;
+                        }
+                    }
+                } catch(_eRac) { console.log('[RAC_INICIO]', _eRac.message); }
+            }
+        }
+
         // ========== TENTAR OPENAI PRIMEIRO ==========
         if (conversa.etapa === 'inicio') {
             // Tentar OpenAI para classificar mensagem
@@ -1150,8 +1200,15 @@ Responda diretamente para ele: wa.me/${telefone}`;
                             conversa.etapa = 'aguardando_motorista';
                             conversa.dados.corridaId = corridaDireta.id;
                             conversas.set(telefone, conversa);
-                            const _precoV2 = conversa.dados?.calculo?.preco || 0;
-                            return '📍 ' + val2.endereco + (_precoV2 > 0 ? '\n💰 *Valor: R$ ' + _precoV2.toFixed(2) + '*' : '') + '\n⏳ Buscando motorista...\n_Digite CANCELAR se precisar_';
+                            const _precoV2 = conversa.dados?.calculo?.preco || corridaDireta.preco || 0;
+                            let _msgCidade = `✅ *Corrida solicitada!*\n\n📍 *Origem:* ${val2.endereco}`;
+                            if (_precoV2 > 0) _msgCidade += `\n💰 *Valor estimado: R$ ${_precoV2.toFixed(2)}*`;
+                            _msgCidade += `\n\n⏳ Buscando o motorista mais próximo...`;
+                            if (configRebeca.enviarLinkRastreamento) {
+                                _msgCidade += `\n\n📲 *Acompanhe em tempo real:*\n${RebecaService.gerarLinkRastreamento(corridaDireta.id)}`;
+                            }
+                            _msgCidade += `\n\n_Digite CANCELAR se precisar_`;
+                            return _msgCidade;
                             achouComCidade = true;
                         }
                     }
@@ -1179,8 +1236,15 @@ Responda diretamente para ele: wa.me/${telefone}`;
                     conversa.etapa = 'aguardando_motorista';
                     conversa.dados.corridaId = corridaTexto.id;
                     conversas.set(telefone, conversa);
-                    const _precoTx = conversa.dados?.calculo?.preco || 0;
-                    return '📍 ' + msgOriginal + (_precoTx > 0 ? '\n💰 *Valor: R$ ' + _precoTx.toFixed(2) + '*' : '') + '\n\n⏳ Buscando motorista...\n_Digite CANCELAR se precisar_';
+                    const _precoTx = conversa.dados?.calculo?.preco || corridaTexto.preco || 0;
+                    let _msgTexto = `✅ *Corrida solicitada!*\n\n📍 *Origem:* ${msgOriginal}`;
+                    if (_precoTx > 0) _msgTexto += `\n💰 *Valor estimado: R$ ${_precoTx.toFixed(2)}*`;
+                    _msgTexto += `\n\n⏳ Buscando o motorista mais próximo...`;
+                    if (configRebeca.enviarLinkRastreamento) {
+                        _msgTexto += `\n\n📲 *Acompanhe em tempo real:*\n${RebecaService.gerarLinkRastreamento(corridaTexto.id)}`;
+                    }
+                    _msgTexto += `\n\n_Digite CANCELAR se precisar_`;
+                    return _msgTexto;
                 }
             } else {
                 // FLUXO DIRETO: Achou no Maps - verificar suspeito
@@ -1238,8 +1302,16 @@ Responda diretamente para ele: wa.me/${telefone}`;
                     return `📍 ${validacao.endereco}\n\nCorrida registrada! No momento todos os motoristas estão ocupados, mas já estamos buscando. Te aviso assim que um aceitar.`;
                 }
                 
-                const _precoVal = conversa.dados?.calculo?.preco || 0;
-                return `📍 ${validacao.endereco}` + (_precoVal > 0 ? `\n💰 *Valor: R$ ${_precoVal.toFixed(2)}*` : '') + `\n\n⏳ Buscando motorista...\n_CANCELAR se precisar_`;
+                // ========== RESPOSTA RICA + LINK RASTREAMENTO ==========
+                const _precoVal = conversa.dados?.calculo?.preco || conversa.dados?.calculo?.precoFinal || 0;
+                let _msgDireto = `✅ *Corrida solicitada!*\n\n📍 *Origem:* ${validacao.endereco}`;
+                if (_precoVal > 0) _msgDireto += `\n💰 *Valor estimado: R$ ${_precoVal.toFixed(2)}*`;
+                _msgDireto += `\n\n⏳ Buscando o motorista mais próximo...`;
+                if (configRebeca.enviarLinkRastreamento) {
+                    _msgDireto += `\n\n📲 *Acompanhe em tempo real:*\n${RebecaService.gerarLinkRastreamento(corrida.id)}`;
+                }
+                _msgDireto += `\n\n_Digite CANCELAR se precisar_`;
+                return _msgDireto;
             }
         }
         // ========== COMPLEMENTO GPS (número/referência) ==========
