@@ -532,7 +532,7 @@ const RebecaService = {
                             let _msgRac = `✅ *Corrida solicitada!*\n\n📍 *Origem:* ${valRacInicio.endereco}`;
                             if (_precoRac > 0) _msgRac += `\n💰 *Valor estimado: R$ ${_precoRac.toFixed(2)}*`;
                             _msgRac += `\n\n⏳ Buscando o motorista mais próximo...`;
-                            if (configRebeca.enviarLinkRastreamento) _msgRac += `\n\n📲 *Acompanhe em tempo real:*\n${RebecaService.gerarLinkRastreamento(corridaRac.id)}`;
+                            // Link de rastreamento enviado após motorista aceitar
                             _msgRac += `\n\n_Digite CANCELAR se precisar_`;
                             return _msgRac;
                         }
@@ -1241,7 +1241,7 @@ Responda diretamente para ele: wa.me/${telefone}`;
                     if (_precoTx > 0) _msgTexto += `\n💰 *Valor estimado: R$ ${_precoTx.toFixed(2)}*`;
                     _msgTexto += `\n\n⏳ Buscando o motorista mais próximo...`;
                     if (configRebeca.enviarLinkRastreamento) {
-                        _msgTexto += `\n\n📲 *Acompanhe em tempo real:*\n${RebecaService.gerarLinkRastreamento(corridaTexto.id)}`;
+                // Link de rastreamento enviado após motorista aceitar
                     }
                     _msgTexto += `\n\n_Digite CANCELAR se precisar_`;
                     return _msgTexto;
@@ -1307,9 +1307,7 @@ Responda diretamente para ele: wa.me/${telefone}`;
                 let _msgDireto = `✅ *Corrida solicitada!*\n\n📍 *Origem:* ${validacao.endereco}`;
                 if (_precoVal > 0) _msgDireto += `\n💰 *Valor estimado: R$ ${_precoVal.toFixed(2)}*`;
                 _msgDireto += `\n\n⏳ Buscando o motorista mais próximo...`;
-                if (configRebeca.enviarLinkRastreamento) {
-                    _msgDireto += `\n\n📲 *Acompanhe em tempo real:*\n${RebecaService.gerarLinkRastreamento(corrida.id)}`;
-                }
+                // Link de rastreamento enviado após motorista aceitar
                 _msgDireto += `\n\n_Digite CANCELAR se precisar_`;
                 return _msgDireto;
             }
@@ -2118,8 +2116,17 @@ _Digite CANCELAR se precisar_`;
             return `${saudacao}! Sou a Rebeca, é um prazer te atender. Onde te busco?`;
         }
     },
-    gerarLinkRastreamento: (corridaId) => {
-        return `${process.env.BASE_URL || 'https://rebeca-sistema-br.onrender.com'}/rastrear/${corridaId.slice(-8)}`;
+    gerarLinkRastreamento: (corridaId, token = null) => {
+        const base = process.env.BASE_URL || 'https://rebeca-sistema-br.onrender.com';
+        if (token) return `${base}/rastrear/${token}`;
+        return `${base}/rastrear/${corridaId.slice(-8)}`;
+    },
+
+    gerarTokenRastreamento: () => {
+        const chars = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+        let token = '';
+        for (let i = 0; i < 12; i++) token += chars[Math.floor(Math.random() * chars.length)];
+        return token;
     },
 
     async enviarRastreamento(telefone) {
@@ -2460,9 +2467,25 @@ _Digite CANCELAR se precisar_`;
                     const minutos = Math.round((distKm / 30) * 60); // 30km/h média urbana
                     tempoEstimado = `\n⏱️ *Tempo estimado:* ${minutos} min`;
                 }
-                // Gerar link de rastreamento
-                const linkRastreamento = RebecaService.gerarLinkRastreamento(corrida._id || corrida.id);
-                const msgCliente = `🚗 *MOTORISTA A CAMINHO!*\n\n👨‍✈️ *${motorista.nomeCompleto || motorista.nome}*\n🚙 ${motorista.veiculo?.modelo || ''} ${motorista.veiculo?.cor || ''}\n🔢 *${motorista.veiculo?.placa || ''}*${tempoEstimado}\n\n📲 Acompanhe em tempo real:\n${linkRastreamento}\n\n💬 Use este chat para falar com o motorista!`;
+                // Gerar token único de rastreamento e salvar na corrida
+                let tokenRastr = corrida.tokenRastreamento;
+                if (!tokenRastr) {
+                    tokenRastr = RebecaService.gerarTokenRastreamento();
+                    await require('../models').Corrida.findByIdAndUpdate(corrida._id || corrida.id, { tokenRastreamento: tokenRastr });
+                }
+                const linkRastreamento = RebecaService.gerarLinkRastreamento(corrida._id || corrida.id, tokenRastr);
+
+                // Montar mensagem rica ao cliente
+                const _nomeMotorista = motorista.nomeCompleto || motorista.nome || 'Motorista';
+                const _veiculo = [motorista.veiculo?.modelo, motorista.veiculo?.cor].filter(Boolean).join(' ');
+                const _placa = motorista.veiculo?.placa || '';
+                let msgCliente = `🚗 *MOTORISTA A CAMINHO!*\n\n`;
+                msgCliente += `👨‍✈️ *${_nomeMotorista}*\n`;
+                if (_veiculo) msgCliente += `🚙 ${_veiculo}\n`;
+                if (_placa) msgCliente += `🔢 *${_placa}*`;
+                if (tempoEstimado) msgCliente += tempoEstimado;
+                msgCliente += `\n\n📲 *Acompanhe o motorista em tempo real:*\n${linkRastreamento}`;
+                msgCliente += `\n\n💬 Qualquer dúvida pode falar aqui!`;
                 await EvolutionMultiService.enviarMensagem(instanciaId, corrida.clienteTelefone, msgCliente);
             }
             
