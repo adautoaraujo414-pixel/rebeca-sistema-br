@@ -206,6 +206,7 @@ RETORNE APENAS JSON:
             console.log('[CLASSIF_END] Fallback heurística:', e.message);
             return { tipo: 'ponto_referencia', confianca: 0.5, enderecoLimpo: texto };
         }
-    },
+    }
+};
 
 module.exports = RebecaRaciocinioService;
