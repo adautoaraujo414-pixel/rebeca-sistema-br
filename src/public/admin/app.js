@@ -121,7 +121,7 @@ async function atualizarMapa() {
                 marcadores.push(m);
             });
         }
-    } catch(e) { console.log('Erro centrais no mapa:', e); } catch(e) { console.error(e); }
+    } catch(e) { console.log('Erro centrais no mapa:', e); }
 
     const mots = await api('/api/gps-integrado');
     // Auto-centralizar no primeiro motorista com GPS
@@ -267,7 +267,7 @@ async function salvarRegras() {
     try {
         await api('/api/despacho/config', { method: 'PUT', body: JSON.stringify({ regras: regrasDespacho }) });
         mostrarNotificacao('✅ Regras de despacho salvas!', 'success');
-    } catch(e) { alert('Erro ao salvar: ' + e.message); } catch(e) { console.error(e); }
+    } catch(e) { alert('Erro ao salvar: ' + e.message); }
 
 }
 
@@ -279,7 +279,7 @@ async function carregarConfigDespacho() {
         // Atualizar card de modo atual
         const el = document.getElementById('modoDespachoAtual');
         if (el) el.textContent = regrasDespacho.map(r => tipoLabels[r.tipo]).join(' → ');
-    } catch(e) { console.log('Erro config despacho:', e); } catch(e) { console.error(e); }
+    } catch(e) { console.log('Erro config despacho:', e); }
 
 }
 
@@ -602,7 +602,7 @@ async function carregarWhatsApp() {
         const msgEl = document.getElementById('wppMsgsHoje');
         if (motEl && c?.motoristas !== undefined) motEl.textContent = c.motoristas;
         if (msgEl && c?.msgsHoje !== undefined) msgEl.textContent = c.msgsHoje;
-    } catch(e) { console.log('Erro carregarWhatsApp:', e); } catch(e) { console.error(e); }
+    } catch(e) { console.log('Erro carregarWhatsApp:', e); }
 
 }
 // salvarConfigWhatsApp: ver versão completa abaixo
@@ -677,7 +677,7 @@ async function carregarFilaEspera() {
             <td><button class="btn btn-danger btn-sm" onclick="removerFila('${f._id}')">✖ Remover</button></td>
         </tr>`).join('')}
         </tbody></table>`;
-    } catch(e) { console.log('Erro fila:', e); } catch(e) { console.error(e); }
+    } catch(e) { console.log('Erro fila:', e); }
 
 }
 
@@ -754,7 +754,7 @@ async function carregarPontos() {
                 </div>
             </div>`;
         }).join('');
-    } catch(e) { console.log('Erro pontos:', e); } catch(e) { console.error(e); }
+    } catch(e) { console.log('Erro pontos:', e); }
 
 }
 
@@ -890,7 +890,7 @@ async function salvarConfigPreco() {
             if (btn) { const t = btn.textContent; btn.textContent = '✅ Salvo!'; setTimeout(() => btn.textContent = t, 2000); }
             carregarPrecos();
         } else { alert('Erro: ' + (r?.erro || r?.error || 'Tente novamente')); }
-    } catch(e) { alert('Erro: ' + e.message); } catch(e) { console.error(e); }
+    } catch(e) { alert('Erro: ' + e.message); }
 
 }
 
@@ -911,7 +911,7 @@ async function simularPreco() {
     } catch(e) {
         el.style.display = 'block';
         el.innerHTML = '<p style="color:#e74c3c;margin:0;">Erro ao simular: ' + e.message + '</p>';
-    } catch(e) { console.error(e); }
+    }
 
 }
 
@@ -987,7 +987,7 @@ async function carregarZonas() {
             </div>`).join('');
     } catch(e) {
         el.innerHTML = '<p style="color:#e74c3c;padding:20px;">Erro ao carregar zonas: ' + e.message + '</p>';
-    } catch(e) { console.error(e); }
+    }
 
 }
 
@@ -1040,7 +1040,7 @@ async function toggleZona(id, ativo) {
         const r = await api('/api/zona-preco/' + id, 'PUT', { ativo });
         if (r?.sucesso) carregarZonas();
         else alert('Erro: ' + (r?.erro || 'Tente novamente'));
-    } catch(e) { alert('Erro: ' + e.message); } catch(e) { console.error(e); }
+    } catch(e) { alert('Erro: ' + e.message); }
 
 }
 
@@ -1050,7 +1050,7 @@ async function deletarZona(id, nome) {
         const r = await api('/api/zona-preco/' + id, 'DELETE');
         if (r?.sucesso) carregarZonas();
         else alert('Erro: ' + (r?.erro || 'Tente novamente'));
-    } catch(e) { alert('Erro: ' + e.message); } catch(e) { console.error(e); }
+    } catch(e) { alert('Erro: ' + e.message); }
 
 }
 
@@ -1112,7 +1112,7 @@ function iniciarMapaZona() {
 
             // Carregar zonas existentes no mapa
             carregarZonasNoMapa();
-        } catch(e) { console.log('Erro iniciar mapa zona:', e); } catch(e) { console.error(e); }
+        } catch(e) { console.log('Erro iniciar mapa zona:', e); }
 
     }, 200);
 }
@@ -1219,7 +1219,7 @@ async function carregarZonasPreco() {
                 '</div>' +
             '</div>';
         }).join('');
-    } catch(e) { console.log('Erro zonas:', e); } catch(e) { console.error(e); }
+    } catch(e) { console.log('Erro zonas:', e); }
 
 }
 
@@ -1237,7 +1237,7 @@ async function salvarConfig() {
             const btn = document.querySelector('[onclick="salvarConfig()"]');
             if (btn) { const t = btn.textContent; btn.textContent = '✅ Salvo!'; setTimeout(() => btn.textContent = t, 2000); }
         } else { alert('Erro ao salvar: ' + (r?.erro || 'Tente novamente')); }
-    } catch(e) { alert('Erro: ' + e.message); } catch(e) { console.error(e); }
+    } catch(e) { alert('Erro: ' + e.message); }
 
 }
 
@@ -1249,7 +1249,7 @@ async function salvarConfigWhatsApp() {
         const r = await api('/api/config/whatsapp', 'POST', { apiUrl, apiKey, instancia });
         if (r?.sucesso || r?._id) alert('Configuração salva!');
         else alert('Erro: ' + (r?.erro || 'Tente novamente'));
-    } catch(e) { alert('Erro: ' + e.message); } catch(e) { console.error(e); }
+    } catch(e) { alert('Erro: ' + e.message); }
 
 }
 
@@ -1294,6 +1294,6 @@ async function carregarEmpresa() {
             const el = document.getElementById(id);
             if (el) el.value = val;
         });
-    } catch(e) { console.log('Erro carregarEmpresa:', e); } catch(e) { console.error(e); }
+    } catch(e) { console.log('Erro carregarEmpresa:', e); }
 
 }
