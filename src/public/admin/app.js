@@ -302,7 +302,26 @@ function abrirModal(id) { document.getElementById(id).classList.add('active'); }
 // fecharModal: ver versão completa abaixo
 function abrirModalMotorista() { document.getElementById('formMotorista').reset(); document.getElementById('formMotorista').style.display='block'; document.getElementById('tokenMotoristaBox').style.display='none'; document.getElementById('formMotoristaAlert').innerHTML=''; document.getElementById('modalMotorista').classList.add('active'); }
 let _submittingMotorista = false;
-document.getElementById('formMotorista')?.addEventListener('submit', async(e)=>{ e.preventDefault(); if(_submittingMotorista) return; _submittingMotorista=true; const d={nomeCompleto:document.getElementById('motNome').value.trim(),whatsapp:document.getElementById('motWhatsApp').value.trim(),cpf:document.getElementById('motCPF').value.trim(),cnh:document.getElementById('motCNH').value.trim(),cidadeAtuacao:document.getElementById('motCidade').value.trim(),foto:document.getElementById('motFoto')?.value?.trim()||'',cnhValidade:document.getElementById('motCNHValidade').value,veiculo:{modelo:document.getElementById('motVeiculoModelo').value.trim(),cor:document.getElementById('motVeiculoCor').value.trim(),placa:document.getElementById('motVeiculoPlaca').value.trim().toUpperCase(),ano:parseInt(document.getElementById('motVeiculoAno').value)||2020},plano:document.getElementById('motPlano').value,valorMensalidade:parseFloat(document.getElementById('motValorMensalidade').value)||100,enviarWhatsApp:document.getElementById('motEnviarWhatsApp').checked,senhaPin:document.getElementById('motSenhaPin').value.trim()}; if(!d.nomeCompleto||!d.whatsapp||!d.cnh||!d.veiculo.modelo||!d.veiculo.cor||!d.veiculo.placa){document.getElementById('formMotoristaAlert').innerHTML='<div class="alert alert-error">Preencha campos obrigatórios</div>';return;} if(!d.senhaPin||d.senhaPin.length!==6||!/^[0-9]{6}$/.test(d.senhaPin)){document.getElementById('formMotoristaAlert').innerHTML='<div class="alert alert-error">PIN deve ter exatamente 6 números</div>';return;} const r=await api('/api/motoristas','POST',d); if(r.error){document.getElementById('formMotoristaAlert').innerHTML=`<div class="alert alert-error">${r.error}</div>`;return;} document.getElementById('formMotoristaAlert').innerHTML=''; document.getElementById('formMotorista').style.display='none'; document.getElementById('tokenGerado').textContent=r.motorista.token; document.getElementById('senhaGerada').textContent=r.senhaGerada; document.getElementById('tokenMotoristaBox').style.display='block'; carregarMotoristas(); });
+document.getElementById('formMotorista')?.addEventListener('submit', async(e)=>{ e.preventDefault(); if(_submittingMotorista) return; _submittingMotorista=true; const d={nomeCompleto:document.getElementById('motNome').value.trim(),whatsapp:document.getElementById('motWhatsApp').value.trim(),cpf:document.getElementById('motCPF').value.trim(),cnh:document.getElementById('motCNH').value.trim(),cidadeAtuacao:document.getElementById('motCidade').value.trim(),foto:document.getElementById('motFoto')?.value?.trim()||'',cnhValidade:document.getElementById('motCNHValidade').value,veiculo:{modelo:document.getElementById('motVeiculoModelo').value.trim(),cor:document.getElementById('motVeiculoCor').value.trim(),placa:document.getElementById('motVeiculoPlaca').value.trim().toUpperCase(),ano:parseInt(document.getElementById('motVeiculoAno').value)||2020},plano:document.getElementById('motPlano').value,valorMensalidade:parseFloat(document.getElementById('motValorMensalidade').value)||100,enviarWhatsApp:document.getElementById('motEnviarWhatsApp').checked,senhaPin:document.getElementById('motSenhaPin').value.trim()}; if(!d.nomeCompleto||!d.whatsapp||!d.cnh||!d.veiculo.modelo||!d.veiculo.cor||!d.veiculo.placa){document.getElementById('formMotoristaAlert').innerHTML='<div class="alert alert-error">Preencha campos obrigatórios</div>';return;} if(!d.senhaPin||d.senhaPin.length!==6||!/^[0-9]{6}$/.test(d.senhaPin)){document.getElementById('formMotoristaAlert').innerHTML='<div class="alert alert-error">PIN deve ter exatamente 6 números</div>';return;} const r=await api('/api/motoristas','POST',d); if(r.error){document.getElementById('formMotoristaAlert').innerHTML=`<div class="alert alert-error">${r.error}</div>`;return;} document.getElementById('formMotoristaAlert').innerHTML=''; document.getElementById('formMotorista').style.display='none'; document.getElementById('tokenGerado').textContent=r.motorista.token; document.getElementById('senhaGerada').textContent=r.senhaGerada; document.getElementById('tokenMotoristaBox').style.display='block';
+// Botão WhatsApp de boas-vindas
+const nome = d.nomeCompleto.split(' ')[0];
+const urlApp = window.location.origin + '/motorista-app.html';
+const msgWpp = encodeURIComponent(
+  '🚗 *Bem-vindo à Rebeca Corridas, ' + nome + '!*\n\n' +
+  'Seu cadastro foi aprovado! Acesse o app pelo link abaixo:\n' +
+  '👉 ' + urlApp + '\n\n' +
+  '📱 *Seu login:*\n' +
+  '• WhatsApp: ' + d.whatsapp + '\n' +
+  '• Senha PIN: ' + d.senhaPin + '\n\n' +
+  'Qualquer dúvida, fale com a central. Boas corridas! 🎉'
+);
+const numWpp = d.whatsapp.replace(/\D/g,'');
+const btnWpp = document.getElementById('btnEnviarBoasVindas');
+if (btnWpp) {
+  btnWpp.onclick = () => window.open('https://wa.me/' + numWpp + '?text=' + msgWpp, '_blank');
+  btnWpp.style.display = 'block';
+}
+carregarMotoristas(); });
 let _desativandoMot = false;
 async function desativarMotorista(id) {
     if (_desativandoMot) return;
