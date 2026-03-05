@@ -2002,12 +2002,23 @@ _Digite CANCELAR se precisar_`;
             };
         }
         
-        const calc = await PrecoAdminService.calcularPreco(adminId, km);
+        // Verificar zona de preço por localização da origem
+        const origemLat = rota.sucesso ? rota.origem?.latitude : null;
+        const origemLng = rota.sucesso ? rota.origem?.longitude : null;
+        let precoZona = null;
+        if (origemLat && origemLng) {
+            try {
+                const PrecoSimplesService = require('./preco-simples.service');
+                const zonaRes = await PrecoSimplesService.calcularPreco(adminId, origemLat, origemLng);
+                if (zonaRes && zonaRes.periodo === 'zona') precoZona = zonaRes;
+            } catch(e) {}
+        }
+        const calc = precoZona || await PrecoAdminService.calcularPreco(adminId, km);
         return {
             distancia: rota.sucesso ? rota.distancia.texto : `~${km} km`,
             tempo: rota.sucesso ? rota.duracao.texto : `~${min} min`,
             distanciaKm: km, tempoMinutos: min,
-            preco: calc.precoFinal,
+            preco: precoZona ? precoZona.preco : calc.precoFinal,
             detalhes: calc.detalhes,
             faixa: PrecoDinamicoService.obterFaixaAtual(),
             origem: rota.sucesso ? rota.origem : { endereco: origem },
