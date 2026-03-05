@@ -143,6 +143,44 @@ const configRebeca = {
     ..._carregarConfigSalvo()
 };
 
+// ===== CONFIG POR ADMINID =====
+const CONFIG_DIR = path.join(__dirname, '../../data/configs');
+const CONFIG_DEFAULTS = {
+    enviarLinkRastreamento: true,
+    notificarTempoMotorista: true,
+    temposNotificacao: [3, 1, 0],
+    autoDetectarEndereco: true,
+    mensagemBoaViagem: true,
+    pedirObservacaoEnderecoImpreciso: true,
+    usarIA: true
+};
+const _configCache = {};
+function _getConfigFile(adminId) {
+    return path.join(CONFIG_DIR, 'config-' + adminId + '.json');
+}
+function _carregarConfigAdmin(adminId) {
+    if (_configCache[adminId]) return _configCache[adminId];
+    try {
+        const file = _getConfigFile(adminId);
+        if (fs.existsSync(file)) {
+            _configCache[adminId] = { ...CONFIG_DEFAULTS, ...JSON.parse(fs.readFileSync(file, 'utf8')) };
+        } else {
+            _configCache[adminId] = { ...CONFIG_DEFAULTS };
+        }
+    } catch(e) {
+        console.error('[RebecaService] Erro ao carregar config do admin:', e.message);
+        _configCache[adminId] = { ...CONFIG_DEFAULTS };
+    }
+    return _configCache[adminId];
+}
+function _salvarConfigAdmin(adminId, config) {
+    try {
+        if (!fs.existsSync(CONFIG_DIR)) fs.mkdirSync(CONFIG_DIR, { recursive: true });
+        fs.writeFileSync(_getConfigFile(adminId), JSON.stringify(config, null, 2));
+    } catch(e) { console.error('[RebecaService] Erro ao salvar config:', e.message); }
+}
+// ===== FIM CONFIG POR ADMINID =====
+
 const RebecaService = {
     // ==================== CONFIG ====================
     getConfig: (adminId) => {
