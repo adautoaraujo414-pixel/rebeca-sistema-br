@@ -147,7 +147,6 @@ async function cancelarCorrida(id) {
         carregarDashboard();
     } catch(e) {
         console.error('Erro ao cancelar corrida:', e);
-    } finally { _cancelando = false; }
 
 }
 let _despachando = false;
@@ -160,7 +159,6 @@ async function despacharCorrida(id) {
         else alert('❌ ' + (r.error || 'Erro ao despachar'));
     } catch(e) {
         console.error('Erro ao despachar corrida:', e);
-    } finally { _despachando = false; }
 
 }
 
@@ -310,7 +308,6 @@ async function desativarMotorista(id) {
     _desativandoMot = true;
     try {
         if (confirm('Desativar?')) { await api('/api/motoristas/'+id,'DELETE'); carregarMotoristas(); }
-    } catch(e) { console.error(e); } finally { _desativandoMot = false; }
 
 
 // CLIENTES
@@ -325,7 +322,6 @@ async function bloquearCliente(id) {
     try {
         await api('/api/clientes/'+id+'/bloquear', 'PUT', {motivo:'Admin'});
         carregarClientes();
-    } catch(e) { console.error(e); } finally { _bloqueandoCli = false; }
 
 let _desbloqueandoCli = false;
 async function desbloquearCliente(id) {
@@ -334,7 +330,6 @@ async function desbloquearCliente(id) {
     try {
         await api('/api/clientes/'+id+'/desbloquear', 'PUT');
         carregarClientes();
-    } catch(e) { console.error(e); } finally { _desbloqueandoCli = false; }
 
 
 // ROTAS
@@ -501,13 +496,11 @@ async function excluirFaixa(id) {
         await api('/api/preco-dinamico/faixas/' + id, 'DELETE');
         carregarFaixasDia(diaSelecionado); carregarIntermunicipais();
     }
-} catch(e) { console.error(e); }
 
 
 function abrirModalCopiarFaixas() {
     document.getElementById('copiarOrigem').value = diaSelecionado;
     document.getElementById('modalCopiarFaixas').classList.add('active');
-    } finally { _excluindoFaixa = false; }
 }
 
 async function copiarFaixas() {
@@ -560,7 +553,6 @@ async function removerBlacklist(id) {
     _removendoBL = true;
     try {
         if(confirm('Remover?')){ await api('/api/antifraude/blacklist/'+id,'DELETE'); carregarBlacklist(); }
-    } catch(e) { console.error(e); } finally { _removendoBL = false; }
 
 
 // RECLAMAÇÕES
@@ -623,7 +615,6 @@ async function excluirArea(id) {
     _excluindoArea = true;
     try {
         if(confirm('Excluir?')){ await api('/api/config/areas/'+id,'DELETE'); carregarAreas(); }
-    } catch(e) { console.error(e); } finally { _excluindoArea = false; }
 
 
 // CONFIG
@@ -653,7 +644,6 @@ async function excluirIntermunicipal(id) {
     _excluindoInter = true;
     try {
         if(confirm('Excluir rota?')) { await api('/api/precos-intermunicipais/'+id,'DELETE'); carregarIntermunicipais(); }
-    } catch(e) { console.error(e); } finally { _excluindoInter = false; }
 
 
 // ===== SISTEMA DE PONTOS =====
@@ -684,7 +674,6 @@ async function removerFila(id) {
     if (!confirm('Remover da fila?')) return;
     await api('/api/fila-espera/' + id, 'DELETE');
     carregarFilaEspera();
-    } catch(e) { console.error(e); } finally { _removendoFila = false; }
 
 }
 
@@ -772,7 +761,6 @@ async function fecharCentral(id) {
     try {
     await api('/api/pontos/' + id, 'PUT', { ativo: false });
     carregarPontos();
-    } catch(e) { console.error(e); } finally { _fechandoCentral = false; }
 
 }
 
@@ -809,7 +797,6 @@ async function criarPonto() {
         await api('/api/pontos', { method: 'POST', body: JSON.stringify(body) });
         ocultarFormCentral();
         carregarPontos();
-    } catch(e) { console.error(e); } finally { _criandoPonto = false; }
 
 }
 
@@ -822,7 +809,6 @@ async function deletarPonto(id) {
     if (!confirm('Deletar ponto?')) return;
     await api(`/api/pontos/${id}`, { method: 'DELETE' });
     carregarPontos();
-    } catch(e) { console.error(e); } finally { _deletandoPonto = false; }
 
 }
 
@@ -1025,7 +1011,6 @@ async function salvarNovaZona() {
             mostrarErro(r?.erro || r?.error || 'Erro ao criar zona. Tente novamente.');
         }
     } catch(e) { mostrarErro('Erro: ' + e.message); }
-    } catch(e) { console.error(e); } finally { _salvandoZona = false; }
 
 }
 
