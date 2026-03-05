@@ -514,7 +514,7 @@ async function excluirFaixa(id) {
     try {
         await api('/api/preco-dinamico/faixas/' + id, 'DELETE');
         carregarFaixasDia(diaSelecionado); carregarIntermunicipais();
-    }
+    } catch(e) { console.error(e); } finally { _excluindoFaixa = false; }
 }
 
 function abrirModalCopiarFaixas() {
@@ -557,19 +557,48 @@ async function carregarRanking() { const p=document.getElementById('rankingPerio
 
 // ANTI-FRAUDE
 async function carregarAntiFraude() { const st=await api('/api/antifraude/estatisticas'); document.getElementById('fraudeCriticos').textContent=st.alertas?.porNivel?.critico||0; document.getElementById('fraudeAltos').textContent=st.alertas?.porNivel?.alto||0; document.getElementById('fraudePendentes').textContent=st.alertas?.pendentes||0; document.getElementById('fraudeResolvidos').textContent=st.alertas?.resolvidos||0; const a=await api('/api/antifraude/alertas'); document.getElementById('alertasFraudeLista').innerHTML=a.length?a.map(x=>`<div class="alerta-fraude ${x.nivel}"><div class="alerta-header"><strong>${x.entidadeNome}</strong> <span class="badge ${x.nivel==='critico'?'red':'orange'}">${x.nivel}</span></div><div class="alerta-motivos"><ul>${x.motivos.map(m=>`<li>⚠️ ${m}</li>`).join('')}</ul></div>${x.status!=='resolvido'?`<button class="btn btn-success btn-sm" onclick="resolverAlerta('${x.id}')">✅ Resolver</button>`:''}</div>`).join(''):'<p style="color:#999;padding:20px;">Nenhum</p>'; }
-async function resolverAlerta(id) { const r=prompt('Resolução:'); if(r){await api('/api/antifraude/alertas/'+id+'/resolver','PUT',{resolucao:r}); carregarAntiFraude();} }
+let _resolvendoAlerta = false;
+async function resolverAlerta(id) {
+    if (_resolvendoAlerta) return;
+    const r = prompt('Resolução:');
+    if (!r) return;
+    _resolvendoAlerta = true;
+    try {
+        await api('/api/antifraude/alertas/'+id+'/resolver', 'PUT', {resolucao: r});
+        carregarAntiFraude();
+    } catch(e) { console.error(e); } finally { _resolvendoAlerta = false; }
+}
 
 // BLACKLIST
 async function carregarBlacklist() { const st=await api('/api/antifraude/estatisticas'); document.getElementById('blacklistTotal').textContent=st.blacklist?.total||0; document.getElementById('blacklistTelefones').textContent=st.blacklist?.porTipo?.telefone||0; document.getElementById('blacklistCPFs').textContent=st.blacklist?.porTipo?.cpf||0; const l=await api('/api/antifraude/blacklist'); document.getElementById('blacklistTable').innerHTML=l.length?l.map(x=>`<tr><td><span class="badge purple">${x.tipo}</span></td><td><strong>${x.valor}</strong></td><td>${x.motivo}</td><td>${new Date(x.dataBloqueio).toLocaleDateString('pt-BR')}</td><td><button class="btn btn-success btn-sm" onclick="removerBlacklist('${x.id}')">Remover</button></td></tr>`).join(''):'<tr><td colspan="5" style="text-align:center;color:#999">Nenhum</td></tr>'; }
 // abrirModalBlacklist: ver versão async abaixo
 document.getElementById('formBlacklist')?.addEventListener('submit',async(e)=>{ e.preventDefault(); await api('/api/antifraude/blacklist','POST',{tipo:document.getElementById('blTipo').value,valor:document.getElementById('blValor').value,motivo:document.getElementById('blMotivo').value}); fecharModal('modalBlacklist'); carregarBlacklist(); });
-async function removerBlacklist(id) { if(confirm('Remover?')){ await api('/api/antifraude/blacklist/'+id,'DELETE'); carregarBlacklist(); }}
+let _removendoBL = false;
+async function removerBlacklist(id) {
+    if (_removendoBL) return;
+    if (!confirm('Remover da blacklist?')) return;
+    _removendoBL = true;
+    try {
+        await api('/api/antifraude/blacklist/'+id, 'DELETE');
+        carregarBlacklist();
+    } catch(e) { console.error(e); } finally { _removendoBL = false; }
+}
 
 // RECLAMAÇÕES
 async function carregarReclamacoes() { const st=await api('/api/reclamacoes/estatisticas'); document.getElementById('recPendentes').textContent=st.pendentes||0; document.getElementById('recAndamento').textContent=st.emAndamento||0; document.getElementById('recResolvidas').textContent=st.resolvidas||0; const r=await api('/api/reclamacoes'); document.getElementById('reclamacoesTable').innerHTML=r.length?r.map(x=>`<tr><td>${new Date(x.dataAbertura).toLocaleDateString('pt-BR')}</td><td>${x.clienteNome}</td><td>${x.assunto}</td><td><span class="badge ${x.status==='resolvida'?'green':'yellow'}">${x.status}</span></td><td>${x.status!=='resolvida'?`<button class="btn btn-success btn-sm" onclick="resolverReclamacao('${x.id}')">✓</button>`:''}</td></tr>`).join(''):'<tr><td colspan="5" style="text-align:center;color:#999">Nenhuma</td></tr>'; }
 // abrirModalReclamacao: ver versão async abaixo
 document.getElementById('formReclamacao')?.addEventListener('submit',async(e)=>{ e.preventDefault(); await api('/api/reclamacoes','POST',{clienteNome:document.getElementById('recClienteNome').value,clienteTelefone:document.getElementById('recClienteTel').value,assunto:document.getElementById('recAssunto').value,descricao:document.getElementById('recDescricao').value}); fecharModal('modalReclamacao'); carregarReclamacoes(); });
-async function resolverReclamacao(id) { const r=prompt('Resolução:'); if(r){await api('/api/reclamacoes/'+id+'/resolver','PUT',{resolucao:r}); carregarReclamacoes();} }
+let _resolvendoRec = false;
+async function resolverReclamacao(id) {
+    if (_resolvendoRec) return;
+    const r = prompt('Resolução:');
+    if (!r) return;
+    _resolvendoRec = true;
+    try {
+        await api('/api/reclamacoes/'+id+'/resolver', 'PUT', {resolucao: r});
+        carregarReclamacoes();
+    } catch(e) { console.error(e); } finally { _resolvendoRec = false; }
+}
 
 // WHATSAPP
 async function carregarWhatsApp() {
