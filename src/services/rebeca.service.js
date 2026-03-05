@@ -1216,8 +1216,8 @@ Responda diretamente para ele: wa.me/${telefone}`;
                             let _msgCidade = '✅ *Corrida solicitada!*\n\n📍 *Origem:* ' + val2.endereco;
                             if (_precoV2 > 0) _msgCidade += '\n💰 *Valor estimado: R$ ' + _precoV2.toFixed(2) + '*';
                             _msgCidade += '\n\n⏳ Buscando o motorista mais próximo...\n\n_Digite CANCELAR se precisar_';
-                            return _msgCidade;
                             achouComCidade = true;
+                            return _msgCidade;
                         }
                     }
                 } catch(e) { console.log('[CATCH]', e.message); }
@@ -1247,8 +1247,8 @@ Responda diretamente para ele: wa.me/${telefone}`;
                             return '📍 ' + msgOriginal + '\n\nQual o número?';
                         }
                     } else {
-                    // Tem numero ou ponto de referência — criar com texto como está
-                    conversa.dados.origem = classifTL?.enderecoLimpo || msgOriginal;
+                        // Tem numero ou ponto de referência — criar com texto como está
+                        conversa.dados.origem = msgOriginal;
                     }
                     // Criar com texto livre — motorista vai confirmar localização
                     conversa.dados.origem = conversa.dados.origem || msgOriginal;
