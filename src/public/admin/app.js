@@ -720,6 +720,7 @@ async function removerFila(id) {
     try {
         await api('/api/fila-espera/' + id, 'DELETE');
         carregarFilaEspera();
+    } catch(e) { console.error(e); } finally { _removendoFila = false; }
 }
 
 async function abrirModalNovoPonto() {
