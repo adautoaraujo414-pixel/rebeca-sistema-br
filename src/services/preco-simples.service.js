@@ -17,10 +17,27 @@ const PrecoSimplesService = {
     },
 
     // Calcular preço simples
-    async calcularPreco(adminId) {
+    async calcularPreco(adminId, lat = null, lng = null) {
         try {
             const admin = await Admin.findById(adminId);
             if (!admin) return { preco: 15.00, periodo: 'padrao', tipoDia: 'semana' };
+
+            // 0. Verificar zona de preço fixo por localização
+            if (lat && lng) {
+                try {
+                    const PrecoAdminService = require('./preco-admin.service');
+                    const zonaResult = await PrecoAdminService.verificarZonaPreco(adminId, lat, lng);
+                    if (zonaResult) {
+                        return {
+                            preco: zonaResult.precoFixo,
+                            periodo: 'zona',
+                            tipoDia: 'zona',
+                            zona: zonaResult.zona.nome,
+                            motivo: 'Zona: ' + zonaResult.zona.nome
+                        };
+                    }
+                } catch(e) { console.log('[ZONA] Erro verificar zona:', e.message); }
+            }
 
             // 1. Se preço fixo está ativo (festa/evento)
             if (admin.precoFixo?.ativo) {
