@@ -946,7 +946,7 @@ async function carregarZonasPreco() {
                     '</div>' +
                 '</div>' +
                 '<div style="display:flex;gap:6px;">' +
-                    '<button onclick="toggleZona('' + z._id + '',' + !z.ativo + ')" style="background:' + (z.ativo ? '#e67e22' : '#27ae60') + ';color:white;border:none;padding:7px 12px;border-radius:6px;cursor:pointer;font-size:0.82em;">' + (z.ativo ? '⏸ Pausar' : '▶ Ativar') + '</button>' +
+                    '<button onclick="toggleZona(' + JSON.stringify(z._id) + ',' + !z.ativo + ')" style="background:' + (z.ativo ? '#e67e22' : '#27ae60') + ';color:white;border:none;padding:7px 12px;border-radius:6px;cursor:pointer;font-size:0.82em;">' + (z.ativo ? '⏸ Pausar' : '▶ Ativar') + '</button>' +
                     '<button onclick="deletarZona('' + z._id + '','' + z.nome.replace(/'/g,"\'") + '')" style="background:#e74c3c;color:white;border:none;padding:7px 12px;border-radius:6px;cursor:pointer;font-size:0.82em;">🗑 Excluir</button>' +
                 '</div>' +
             '</div>';
