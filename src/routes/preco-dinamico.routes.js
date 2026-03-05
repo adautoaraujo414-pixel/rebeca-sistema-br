@@ -111,9 +111,32 @@ router.get('/calcular/:distanciaKm', (req, res) => {
 router.get('/simular/:distanciaKm/:diaSemana', (req, res) => {
     const distanciaKm = parseFloat(req.params.distanciaKm);
     const diaSemana = req.params.diaSemana;
-    
     const simulacao = PrecoDinamicoService.simularPrecos(distanciaKm, diaSemana);
     res.json(simulacao);
+});
+
+// POST /simular — aceita { km, dia } do painel admin
+router.post('/simular', (req, res) => {
+    try {
+        const km = parseFloat(req.body.km || req.body.distanciaKm || 5);
+        const dia = req.body.dia || req.body.diaSemana || 'semana';
+        const simulacao = PrecoDinamicoService.simularPrecos(km, dia);
+        // Normalizar resposta para o frontend
+        // simularPrecos retorna array de faixas [{nome, horaInicio, horaFim, precoFinal, tipoCalculo}]
+        if (Array.isArray(simulacao) && simulacao.length > 0) {
+            // Pegar a faixa atual (hora atual dentro do intervalo) ou a primeira
+            const agora = new Date();
+            const horaAtual = agora.getHours().toString().padStart(2,'0') + ':' + agora.getMinutes().toString().padStart(2,'0');
+            const faixaAtual = simulacao.find(f => horaAtual >= f.horaInicio && horaAtual <= f.horaFim) || simulacao[0];
+            const precoTotal = faixaAtual.precoFinal ?? faixaAtual.total ?? 0;
+            const detalhes = 'Faixa: ' + (faixaAtual.nome || '') + 
+                             (faixaAtual.tipoCalculo === 'fixo' ? ' (preço fixo)' : ' (' + faixaAtual.multiplicador + 'x)') +
+                             ' · ' + faixaAtual.horaInicio + '–' + faixaAtual.horaFim;
+            return res.json({ sucesso: true, precoTotal, detalhes, todasFaixas: simulacao });
+        }
+        const precoTotal = simulacao?.precoTotal ?? simulacao?.total ?? simulacao?.preco ?? '—';
+        res.json({ sucesso: true, precoTotal, detalhes: '', raw: simulacao });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
 // ==================== ENDPOINT ESPECIAL PARA REBECA ====================

@@ -132,9 +132,13 @@ router.get('/motorista/:adminId', async (req, res) => {
         const agora = new Date();
         const dia = agora.getDay();
         const hora = agora.getHours().toString().padStart(2,'0') + ':' + agora.getMinutes().toString().padStart(2,'0');
-        const centrais = await PontoEmbarque.find({ adminId: req.params.adminId, ativo: true }).sort({ principal: -1, nome: 1 });
+        const centrais = await PontoEmbarque.find({ adminId: req.params.adminId }).sort({ principal: -1, ativo: -1, nome: 1 });
         const result = await Promise.all(centrais.map(async c => {
-            const aberto = c.diasSemana.includes(dia) && hora >= c.horarioAbertura && hora <= c.horarioFechamento;
+            // aberto = ativo E dentro do horário E dia correto
+            const aberto = c.ativo &&
+                           (c.diasSemana || []).includes(dia) &&
+                           hora >= (c.horarioAbertura || '00:00') &&
+                           hora <= (c.horarioFechamento || '23:59');
             const totalFila = await FilaPonto.countDocuments({ pontoId: c._id, status: 'aguardando' });
             return { ...c.toObject(), aberto, totalFila };
         }));
@@ -146,7 +150,11 @@ router.get('/motorista/:adminId', async (req, res) => {
 // Posição atual do motorista na fila (qualquer central)
 router.get('/motorista-fila/:motoristaId', async (req, res) => {
     try {
-        const fila = await FilaPonto.findOne({ motoristaId: req.params.motoristaId, status: 'aguardando' });
+        // Buscar fila ativa (aguardando) ou em corrida (para saber de onde veio)
+        const fila = await FilaPonto.findOne({ 
+            motoristaId: req.params.motoristaId, 
+            status: { $in: ['aguardando'] }
+        }).sort({ chegadaEm: -1 });
         if (!fila) return res.json({ pontoId: null });
         const ponto = await PontoEmbarque.findById(fila.pontoId);
         const totalFila = await FilaPonto.countDocuments({ pontoId: fila.pontoId, status: 'aguardando' });
