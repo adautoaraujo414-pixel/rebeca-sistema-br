@@ -305,8 +305,11 @@ let _submittingMotorista = false;
 document.getElementById('formMotorista')?.addEventListener('submit', async(e)=>{ e.preventDefault(); if(_submittingMotorista) return; _submittingMotorista=true; const d={nomeCompleto:document.getElementById('motNome').value.trim(),whatsapp:document.getElementById('motWhatsApp').value.trim(),cpf:document.getElementById('motCPF').value.trim(),cnh:document.getElementById('motCNH').value.trim(),cidadeAtuacao:document.getElementById('motCidade').value.trim(),foto:document.getElementById('motFoto')?.value?.trim()||'',cnhValidade:document.getElementById('motCNHValidade').value,veiculo:{modelo:document.getElementById('motVeiculoModelo').value.trim(),cor:document.getElementById('motVeiculoCor').value.trim(),placa:document.getElementById('motVeiculoPlaca').value.trim().toUpperCase(),ano:parseInt(document.getElementById('motVeiculoAno').value)||2020},plano:document.getElementById('motPlano').value,valorMensalidade:parseFloat(document.getElementById('motValorMensalidade').value)||100,enviarWhatsApp:document.getElementById('motEnviarWhatsApp').checked,senhaPin:document.getElementById('motSenhaPin').value.trim()}; if(!d.nomeCompleto||!d.whatsapp||!d.cnh||!d.veiculo.modelo||!d.veiculo.cor||!d.veiculo.placa){document.getElementById('formMotoristaAlert').innerHTML='<div class="alert alert-error">Preencha campos obrigatórios</div>';return;} if(!d.senhaPin||d.senhaPin.length!==6||!/^[0-9]{6}$/.test(d.senhaPin)){document.getElementById('formMotoristaAlert').innerHTML='<div class="alert alert-error">PIN deve ter exatamente 6 números</div>';return;} const r=await api('/api/motoristas','POST',d); if(r.error){document.getElementById('formMotoristaAlert').innerHTML=`<div class="alert alert-error">${r.error}</div>`;return;} document.getElementById('formMotoristaAlert').innerHTML=''; document.getElementById('formMotorista').style.display='none'; document.getElementById('tokenGerado').textContent=r.motorista.token; document.getElementById('senhaGerada').textContent=r.senhaGerada; document.getElementById('tokenMotoristaBox').style.display='block'; carregarMotoristas(); });
 let _desativandoMot = false;
 async function desativarMotorista(id) {
-    if (_desativandoMot) return; _desativandoMot = true;
-    try { if (confirm('Desativar?')) { await api('/api/motoristas/'+id,'DELETE'); carregarMotoristas(); }}
+    if (_desativandoMot) return;
+    _desativandoMot = true;
+    try {
+        if (confirm('Desativar?')) { await api('/api/motoristas/'+id,'DELETE'); carregarMotoristas(); }
+    } catch(e) { console.error(e); } finally { _desativandoMot = false; }
 
 // CLIENTES
 async function carregarClientes() { const b=document.getElementById('buscaCliente').value; const c=await api('/api/clientes'+(b?'?busca='+b:'')); document.getElementById('clientesTable').innerHTML=c.length?c.map(x=>`<tr><td>${x.nome}</td><td>📱 ${x.telefone}</td><td>${x.corridasRealizadas||0}</td><td><span class="badge ${x.bloqueado?'red':'green'}">${x.bloqueado?'Bloqueado':'Ativo'}</span></td><td>${x.bloqueado?`<button class="btn btn-success btn-sm" onclick="desbloquearCliente('${x.id}')">Desbloquear</button>`:`<button class="btn btn-danger btn-sm" onclick="bloquearCliente('${x.id}')">Bloquear</button>`}</td></tr>`).join(''):'<tr><td colspan="5" style="text-align:center;color:#999">Nenhum</td></tr>'; }
@@ -315,7 +318,7 @@ document.getElementById('formCliente')?.addEventListener('submit',async(e)=>{ e.
 let _bloqueandoCli = false;
 async function bloquearCliente(id) {
     if (_bloqueandoCli) return; _bloqueandoCli = true;
-    try { if(confirm('Bloquear?')){ await api('/api/clientes/'+id+'/bloquear','PUT',{motivo:'Admin'}); carregarClientes(); }}
+    try { if(confirm('Bloquear?')){ await api('/api/clientes/'+id+'/bloquear','PUT',{motivo:'Admin'}); carregarClientes(); } catch(e) { console.error(e); } finally { _bloqueandoCli = false; }
 let _desbloqueandoCli = false;
 async function desbloquearCliente(id) {
     if (_desbloqueandoCli) return; _desbloqueandoCli = true;
@@ -539,8 +542,11 @@ async function carregarBlacklist() { const st=await api('/api/antifraude/estatis
 document.getElementById('formBlacklist')?.addEventListener('submit',async(e)=>{ e.preventDefault(); await api('/api/antifraude/blacklist','POST',{tipo:document.getElementById('blTipo').value,valor:document.getElementById('blValor').value,motivo:document.getElementById('blMotivo').value}); fecharModal('modalBlacklist'); carregarBlacklist(); });
 let _removendoBL = false;
 async function removerBlacklist(id) {
-    if (_removendoBL) return; _removendoBL = true;
-    try { if(confirm('Remover?')){ await api('/api/antifraude/blacklist/'+id,'DELETE'); carregarBlacklist(); }}
+    if (_removendoBL) return;
+    _removendoBL = true;
+    try {
+        if(confirm('Remover?')){ await api('/api/antifraude/blacklist/'+id,'DELETE'); carregarBlacklist(); }
+    } catch(e) { console.error(e); } finally { _removendoBL = false; }
 
 // RECLAMAÇÕES
 async function carregarReclamacoes() { const st=await api('/api/reclamacoes/estatisticas'); document.getElementById('recPendentes').textContent=st.pendentes||0; document.getElementById('recAndamento').textContent=st.emAndamento||0; document.getElementById('recResolvidas').textContent=st.resolvidas||0; const r=await api('/api/reclamacoes'); document.getElementById('reclamacoesTable').innerHTML=r.length?r.map(x=>`<tr><td>${new Date(x.dataAbertura).toLocaleDateString('pt-BR')}</td><td>${x.clienteNome}</td><td>${x.assunto}</td><td><span class="badge ${x.status==='resolvida'?'green':'yellow'}">${x.status}</span></td><td>${x.status!=='resolvida'?`<button class="btn btn-success btn-sm" onclick="resolverReclamacao('${x.id}')">✓</button>`:''}</td></tr>`).join(''):'<tr><td colspan="5" style="text-align:center;color:#999">Nenhuma</td></tr>'; }
@@ -597,8 +603,11 @@ async function carregarAreas() { const a=await api('/api/config/areas'); documen
 document.getElementById('formArea')?.addEventListener('submit',async(e)=>{ e.preventDefault(); await api('/api/config/areas','POST',{nome:document.getElementById('areaNome').value,cidade:document.getElementById('areaCidade').value,bairros:document.getElementById('areaBairros').value.split(',').map(b=>b.trim()).filter(b=>b),taxaExtra:parseFloat(document.getElementById('areaTaxa').value)||0}); fecharModal('modalArea'); carregarAreas(); });
 let _excluindoArea = false;
 async function excluirArea(id) {
-    if (_excluindoArea) return; _excluindoArea = true;
-    try { if(confirm('Excluir?')){ await api('/api/config/areas/'+id,'DELETE'); carregarAreas(); }}
+    if (_excluindoArea) return;
+    _excluindoArea = true;
+    try {
+        if(confirm('Excluir?')){ await api('/api/config/areas/'+id,'DELETE'); carregarAreas(); }
+    } catch(e) { console.error(e); } finally { _excluindoArea = false; }
 
 // CONFIG
 async function carregarConfig() { const c=await api('/api/config'); document.getElementById('cfgTempoEspera').value=c.tempoMaximoEspera||10; document.getElementById('cfgRaioBusca').value=c.raioMaximoBusca||15; document.getElementById('cfgComissao').value=c.comissaoEmpresa||15; }
@@ -623,8 +632,11 @@ function abrirModalIntermunicipal() { document.getElementById('formIntermunicipa
 document.getElementById('formIntermunicipal')?.addEventListener('submit', async(e)=>{ e.preventDefault(); const d={cidadeOrigem:document.getElementById('intOrigem').value,cidadeDestino:document.getElementById('intDestino').value,distanciaKm:parseFloat(document.getElementById('intDistancia').value)||null,precoFixo:parseFloat(document.getElementById('intPreco').value),tempoEstimadoMin:parseInt(document.getElementById('intTempo').value)||null}; await api('/api/precos-intermunicipais','POST',d); fecharModal('modalIntermunicipal'); carregarIntermunicipais(); });
 let _excluindoInter = false;
 async function excluirIntermunicipal(id) {
-    if (_excluindoInter) return; _excluindoInter = true;
-    try { if(confirm('Excluir rota?')) { await api('/api/precos-intermunicipais/'+id,'DELETE'); carregarIntermunicipais(); }}
+    if (_excluindoInter) return;
+    _excluindoInter = true;
+    try {
+        if(confirm('Excluir rota?')) { await api('/api/precos-intermunicipais/'+id,'DELETE'); carregarIntermunicipais(); }
+    } catch(e) { console.error(e); } finally { _excluindoInter = false; }
 
 // ===== SISTEMA DE PONTOS =====
 async function carregarFilaEspera() {
