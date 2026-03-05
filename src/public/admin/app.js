@@ -506,8 +506,12 @@ document.getElementById('formEditarFaixa')?.addEventListener('submit', async (e)
     alert('✅ Faixa atualizada!');
 });
 
+let _excluindoFaixa = false;
 async function excluirFaixa(id) {
-    if (confirm('Excluir esta faixa?')) {
+    if (_excluindoFaixa) return;
+    if (!confirm('Excluir esta faixa?')) return;
+    _excluindoFaixa = true;
+    try {
         await api('/api/preco-dinamico/faixas/' + id, 'DELETE');
         carregarFaixasDia(diaSelecionado); carregarIntermunicipais();
     }
@@ -602,13 +606,30 @@ async function carregarUsuarios() { const st=await api('/api/usuarios/estatistic
 // abrirModalUsuario: ver versão async abaixo
 let _submittingUsuario = false;
 document.getElementById('formUsuario')?.addEventListener('submit',async(e)=>{ e.preventDefault(); if(_submittingUsuario) return; _submittingUsuario=true; const d={nome:document.getElementById('usrNome').value,login:document.getElementById('usrLogin').value,email:document.getElementById('usrEmail').value,senha:document.getElementById('usrSenha').value||null,nivel:document.getElementById('usrNivel').value}; const r=await api('/api/usuarios','POST',d); if(r.error){document.getElementById('formUsuarioAlert').innerHTML=`<div class="alert alert-error">${r.error}</div>`;return;} document.getElementById('formUsuario').style.display='none'; document.getElementById('novoUsrLogin').textContent=r.login; document.getElementById('novoUsrSenha').textContent=r.senhaGerada||d.senha||'123456'; document.getElementById('usuarioCriado').style.display='block'; carregarUsuarios(); });
-async function toggleUsuario(id,ativo) { await api('/api/usuarios/'+id+'/'+(ativo?'desativar':'ativar'),'PUT'); carregarUsuarios(); }
+let _togUsuario = false;
+async function toggleUsuario(id, ativo) {
+    if (_togUsuario) return;
+    _togUsuario = true;
+    try {
+        await api('/api/usuarios/'+id+'/'+(ativo?'desativar':'ativar'), 'PUT');
+        carregarUsuarios();
+    } catch(e) { console.error(e); } finally { _togUsuario = false; }
+}
 
 // ÁREAS
 async function carregarAreas() { const a=await api('/api/config/areas'); document.getElementById('areasTable').innerHTML=a.length?a.map(x=>`<tr><td><strong>${x.nome}</strong></td><td>${x.cidade}</td><td>${x.bairros?.join(', ')||'-'}</td><td>R$ ${(x.taxaExtra||0).toFixed(2)}</td><td><button class="btn btn-danger btn-sm" onclick="excluirArea('${x.id}')">🗑️</button></td></tr>`).join(''):'<tr><td colspan="5">Nenhuma</td></tr>'; }
 // abrirModalArea: ver versão async abaixo
 document.getElementById('formArea')?.addEventListener('submit',async(e)=>{ e.preventDefault(); await api('/api/config/areas','POST',{nome:document.getElementById('areaNome').value,cidade:document.getElementById('areaCidade').value,bairros:document.getElementById('areaBairros').value.split(',').map(b=>b.trim()).filter(b=>b),taxaExtra:parseFloat(document.getElementById('areaTaxa').value)||0}); fecharModal('modalArea'); carregarAreas(); });
-async function excluirArea(id) { if(confirm('Excluir?')){ await api('/api/config/areas/'+id,'DELETE'); carregarAreas(); }}
+let _excluindoArea = false;
+async function excluirArea(id) {
+    if (_excluindoArea) return;
+    if (!confirm('Excluir área?')) return;
+    _excluindoArea = true;
+    try {
+        await api('/api/config/areas/'+id, 'DELETE');
+        carregarAreas();
+    } catch(e) { console.error(e); } finally { _excluindoArea = false; }
+}
 
 // CONFIG
 async function carregarConfig() { const c=await api('/api/config'); document.getElementById('cfgTempoEspera').value=c.tempoMaximoEspera||10; document.getElementById('cfgRaioBusca').value=c.raioMaximoBusca||15; document.getElementById('cfgComissao').value=c.comissaoEmpresa||15; }
@@ -631,7 +652,16 @@ window._mapaInterval = setInterval(atualizarMapa, 10000); // Atualizar mapa a ca
 async function carregarIntermunicipais() { const p=await api('/api/precos-intermunicipais'); document.getElementById('intermunicipaisTable').innerHTML=p.length?p.map(x=>`<tr><td>${x.cidadeOrigem}</td><td>${x.cidadeDestino}</td><td>${x.distanciaKm||'-'} km</td><td>R$ ${(x.precoFixo||0).toFixed(2)}</td><td><button class="btn btn-danger btn-sm" onclick="excluirIntermunicipal('${x._id}')">🗑️</button></td></tr>`).join(''):'<tr><td colspan="5" style="text-align:center;color:#999">Nenhuma rota cadastrada</td></tr>'; }
 function abrirModalIntermunicipal() { document.getElementById('formIntermunicipal').reset(); abrirModal('modalIntermunicipal'); }
 document.getElementById('formIntermunicipal')?.addEventListener('submit', async(e)=>{ e.preventDefault(); const d={cidadeOrigem:document.getElementById('intOrigem').value,cidadeDestino:document.getElementById('intDestino').value,distanciaKm:parseFloat(document.getElementById('intDistancia').value)||null,precoFixo:parseFloat(document.getElementById('intPreco').value),tempoEstimadoMin:parseInt(document.getElementById('intTempo').value)||null}; await api('/api/precos-intermunicipais','POST',d); fecharModal('modalIntermunicipal'); carregarIntermunicipais(); });
-async function excluirIntermunicipal(id) { if(confirm('Excluir rota?')) { await api('/api/precos-intermunicipais/'+id,'DELETE'); carregarIntermunicipais(); }}
+let _excluindoInter = false;
+async function excluirIntermunicipal(id) {
+    if (_excluindoInter) return;
+    if (!confirm('Excluir rota intermunicipal?')) return;
+    _excluindoInter = true;
+    try {
+        await api('/api/precos-intermunicipais/'+id, 'DELETE');
+        carregarIntermunicipais();
+    } catch(e) { console.error(e); } finally { _excluindoInter = false; }
+}
 
 // ===== SISTEMA DE PONTOS =====
 async function carregarFilaEspera() {
@@ -653,10 +683,14 @@ async function carregarFilaEspera() {
     } catch(e) { console.log('Erro fila:', e); }
 }
 
+let _removendoFila = false;
 async function removerFila(id) {
+    if (_removendoFila) return;
     if (!confirm('Remover da fila?')) return;
-    await api('/api/fila-espera/' + id, 'DELETE');
-    carregarFilaEspera();
+    _removendoFila = true;
+    try {
+        await api('/api/fila-espera/' + id, 'DELETE');
+        carregarFilaEspera();
 }
 
 async function abrirModalNovoPonto() {
@@ -736,9 +770,14 @@ function ocultarFormCentral() {
     ['pontoNome','pontoEndereco'].forEach(id => { const el = document.getElementById(id); if(el) el.value=''; });
 }
 
+let _fechandoCentral = false;
 async function fecharCentral(id) {
-    await api('/api/pontos/' + id, 'PUT', { ativo: false });
-    carregarPontos();
+    if (_fechandoCentral) return;
+    _fechandoCentral = true;
+    try {
+        await api('/api/pontos/' + id, 'PUT', { ativo: false });
+        carregarPontos();
+    } catch(e) { console.error(e); } finally { _fechandoCentral = false; }
 }
 
 async function abrirCentral(id) {
@@ -781,10 +820,14 @@ async function criarPonto() {
 
 
 
+let _deletandoPonto = false;
 async function deletarPonto(id) {
+    if (_deletandoPonto) return;
     if (!confirm('Deletar ponto?')) return;
-    await api(`/api/pontos/${id}`, { method: 'DELETE' });
-    carregarPontos();
+    _deletandoPonto = true;
+    try {
+        await api(`/api/pontos/${id}`, { method: 'DELETE' });
+        carregarPontos();
 }
 
 async function verFilaPonto(id, nome) {
