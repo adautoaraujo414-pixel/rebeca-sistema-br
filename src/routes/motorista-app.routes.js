@@ -491,14 +491,14 @@ router.post('/avaliar', auth, async (req, res) => {
         if (!corridaId || !nota || nota < 1 || nota > 5) {
             return res.json({ sucesso: false, erro: 'Dados inválidos' });
         }
-        await Corrida.findByIdAndUpdate(corridaId, { avaliacao: nota });
+        await Corrida.findByIdAndUpdate(corridaId, { avaliacao: nota }, { new: true });
         
         // Atualizar média do motorista
         const corridas = await Corrida.find({ motoristaId: req.motorista._id, avaliacao: { $exists: true, $gt: 0 } });
         if (corridas.length > 0) {
             const media = corridas.reduce((s, c) => s + c.avaliacao, 0) / corridas.length;
             const Motorista = require('../models').Motorista;
-            await Motorista.findByIdAndUpdate(req.motorista._id, { avaliacao: Math.round(media * 10) / 10 });
+            await Motorista.findByIdAndUpdate(req.motorista._id, { avaliacao: Math.round(media * 10) / 10 }, { new: true });
         }
         
         res.json({ sucesso: true });

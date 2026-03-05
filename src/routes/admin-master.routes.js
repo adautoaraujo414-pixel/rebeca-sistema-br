@@ -458,7 +458,7 @@ router.put('/clientes-landing/:id/liberar', async (req, res) => {
         } else {
             update.dataFimTeste = null;
         }
-        await Admin.findByIdAndUpdate(req.params.id, update);
+        await Admin.findByIdAndUpdate(req.params.id, update, { new: true });
         res.json({ sucesso: true });
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
@@ -466,7 +466,7 @@ router.put('/clientes-landing/:id/liberar', async (req, res) => {
 router.put('/clientes-landing/:id/bloquear-cliente', async (req, res) => {
     try {
         const { motivo } = req.body;
-        await Admin.findByIdAndUpdate(req.params.id, { bloqueado: true, ativo: false, motivoBloqueio: motivo || 'Bloqueado pelo admin' });
+        await Admin.findByIdAndUpdate(req.params.id, { bloqueado: true, ativo: false, motivoBloqueio: motivo || 'Bloqueado pelo admin' }, { new: true });
         res.json({ sucesso: true });
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });

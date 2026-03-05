@@ -51,7 +51,7 @@ router.post('/motorista-para-cliente', async (req, res) => {
             console.log('[CHAT] Erro ao enviar WhatsApp:', wppErr.message);
         }
 
-        await MensagemCorrida.findByIdAndUpdate(msg._id, { entregue: true });
+        await MensagemCorrida.findByIdAndUpdate(msg._id, { entregue: true }, { new: true });
         
         res.json({ 
             sucesso: true, 
@@ -135,7 +135,7 @@ router.get('/nao-lidas/:corridaId', async (req, res) => {
 // Marcar como lida
 router.post('/marcar-lida/:msgId', async (req, res) => {
     try {
-        await MensagemCorrida.findByIdAndUpdate(req.params.msgId, { lida: true });
+        await MensagemCorrida.findByIdAndUpdate(req.params.msgId, { lida: true }, { new: true });
         res.json({ sucesso: true });
     } catch (e) {
         res.status(500).json({ erro: e.message });

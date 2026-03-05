@@ -22,7 +22,7 @@ router.get('/fila-espera', async (req, res) => {
 router.delete('/fila-espera/:id', async (req, res) => {
     try {
         const { FilaEspera } = require('../models');
-        await FilaEspera.findByIdAndUpdate(req.params.id, { status: 'expirado' });
+        await FilaEspera.findByIdAndUpdate(req.params.id, { status: 'expirado' }, { new: true });
         res.json({ sucesso: true });
     } catch (e) {
         res.status(500).json({ erro: e.message });

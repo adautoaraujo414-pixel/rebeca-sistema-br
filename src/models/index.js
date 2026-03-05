@@ -76,7 +76,7 @@ const MensalidadeSchema = new mongoose.Schema({
     valor: { type: Number, required: true },
     dataVencimento: { type: Date, required: true },
     dataPagamento: Date,
-    status: { type: String, enum: ['pendente', 'pago', 'atrasado', 'bloqueado'], default: 'pendente' },
+    status: { type: String, index: true, enum: ['pendente', 'pago', 'atrasado', 'bloqueado'], default: 'pendente' },
     comprovante: String,
     observacao: String,
     notificacaoEnviada: { type: Boolean, default: false },
@@ -104,7 +104,7 @@ module.exports.ConfigFinanceiro = ConfigFinanceiro;
 // ==================== CONTATOS EMERGÊNCIA ====================
 const ContatoEmergenciaSchema = new mongoose.Schema({
     nome: { type: String, required: true },
-    telefone: { type: String, required: true },
+    telefone: { type: String, required: true, index: true },
     categoria: { type: String, enum: ['admin', 'mecanico', 'guincho', 'borracheiro', 'suporte', 'policia', 'hospital', 'outro'], default: 'outro' },
     descricao: String,
     disponivel24h: { type: Boolean, default: false },
