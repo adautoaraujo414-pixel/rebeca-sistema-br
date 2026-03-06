@@ -798,7 +798,7 @@ async function carregarPontos() {
                                 ? `<button class="btn btn-sm" style="background:#e67e22;color:white;text-align:left;" onclick="fecharCentral('${p._id}')">🔒 Fechar Central</button>`
                                 : `<button class="btn btn-sm" style="background:#27ae60;color:white;text-align:left;" onclick="abrirCentral('${p._id}')">🔓 Abrir Central</button>`
                             }
-                            <button class="btn btn-sm btn-danger" onclick="deletarPonto('${p._id}','${p.nome.replace(/'/g,'\'')}')" style="text-align:left;">🗑 Excluir</button>
+                            <button class="btn btn-sm btn-danger" onclick="deletarPonto('${p._id}')" style="text-align:left;">🗑 Excluir</button>
                         </div>
                     </div>
                 </div>
