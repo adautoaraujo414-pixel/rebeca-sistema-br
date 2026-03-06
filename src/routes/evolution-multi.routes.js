@@ -257,12 +257,40 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                             const audioBuffer = Buffer.from(base64, 'base64');
                             console.log('[AUDIO] Buffer size:', audioBuffer.length, 'bytes');
                             const mimeType = msg.message.audioMessage.mimetype || 'audio/ogg';
-                            const transcricao = await OpenAIRebecaService.transcreverAudio(audioBuffer, mimeType);
+                            // Buscar conversa atual para contexto do audio
+                            let conversaCtx = null;
+                            try {
+                                const { Conversa } = require('../models');
+                                conversaCtx = await Conversa.findOne({ telefone, adminId }).lean();
+                            } catch(_) {}
+
+                            const transcricao = await OpenAIRebecaService.transcreverAudio(audioBuffer, mimeType, conversaCtx);
+
                             if (transcricao && transcricao.startsWith('__RESPOSTA_DIRETA__')) {
-                                // GPT gerou resposta direta — enviar e pular processamento
                                 const msgDireta = transcricao.replace('__RESPOSTA_DIRETA__', '');
                                 await EvolutionMultiService.enviarMensagem(instancia._id, telefone, msgDireta);
-                                console.log('[AUDIO] Resposta direta GPT enviada:', msgDireta.substring(0,60));
+                                console.log('[AUDIO] Resposta direta GPT:', msgDireta.substring(0,60));
+                                continue;
+                            } else if (transcricao && transcricao.startsWith('__AUDIO_RACIOCINIO__')) {
+                                try {
+                                    const jsonStr = transcricao.replace('__AUDIO_RACIOCINIO__', '');
+                                    const rac = JSON.parse(jsonStr);
+                                    const { Conversa } = require('../models');
+                                    const upd = {};
+                                    if (rac.origem_extraida) upd['dados.origem'] = rac.origem_extraida;
+                                    if (rac.destino_extraido) upd['dados.destino'] = rac.destino_extraido;
+                                    if (rac.nome_cliente) upd['dados.nome'] = rac.nome_cliente;
+                                    if (rac.proxima_etapa) upd['etapa'] = rac.proxima_etapa;
+                                    if (Object.keys(upd).length > 0) {
+                                        await Conversa.findOneAndUpdate({ telefone, adminId }, { $set: upd }, { upsert: true });
+                                    }
+                                    if (rac.resposta_rebeca) {
+                                        await EvolutionMultiService.enviarMensagem(instancia._id, telefone, rac.resposta_rebeca);
+                                        console.log('[AUDIO RACIOCINIO] Enviado:', rac.resposta_rebeca.substring(0,60));
+                                    }
+                                } catch(racErr) {
+                                    console.log('[AUDIO] Erro raciocinio:', racErr.message);
+                                }
                                 continue;
                             } else if (transcricao) {
                                 conteudo = transcricao;
