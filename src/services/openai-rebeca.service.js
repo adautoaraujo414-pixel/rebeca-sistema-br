@@ -341,7 +341,7 @@ const OpenAIRebecaService = {
 
         const humoreCliente = (() => {
             const txt = (contexto?.mensagem || '').toLowerCase();
-            const bravo = ['absurdo','ridículo','ridiculoculo','ridículo','péssimo','horrível','lixo','vergonha','incompetência','incompetente','idiota','burro','inútil','raiva','ódio','revoltado','cancelar tudo','nunca mais','processo','reclamar','pqp','vsf','fdp','merda','droga','cacete','caramba que absurdo'];
+            const bravo = ['absurdo','ridículo','ridiculoculo','ridículo','péssimo','horrível','lixo','vergonha','incompetência','incompetente','idiota','burro','inútil','raiva','ódio','revoltado','cancelar tudo','nunca mais','processo','reclamar','pqp','vsf','fdp','merda','droga','cacete','caramba que absurdo','caralho','capeta','porra','desgraça','desgraçado','maldito','inferno','imbecil','viado','otario','otário','palhaço','palhaçada','lixo de atendimento','que merda','que bosta','bosta','atende logo','atende urgente','urgente caralho','me atende','me atende logo'];
             const impaciente = ['cadê','cadê?','demora','demorou','quanto tempo','já faz','esperando','urgente','rápido','logo','agora','imediato'];
             if (bravo.some(p => txt.includes(p))) return 'BRAVO';
             if (impaciente.some(p => txt.includes(p))) return 'IMPACIENTE';
@@ -403,7 +403,7 @@ REGRAS IMPORTANTES:
 - Se intencao for AGENDAMENTO ou OUTRO: resposta educada explicando que cuida de corridas, pergunte se pode ajudar
 - Se intencao for SOLICITAR_CORRIDA com endereço: resposta animada confirmando que vai buscar motorista
 - Se intencao for RECLAMACAO: empatia total, peça desculpas, ofereça solução, notificar_admin: true
-- Se humor_cliente for BRAVO: comece SEMPRE com "Entendo sua frustração..." ou "Sinto muito pelo transtorno..."
+- Se humor_cliente for BRAVO: comece com empatia REAL, ex: "Oi! Já estou aqui, pode falar 😊" ou "Aqui estou! Me conta o que aconteceu 🙏" — NUNCA use frases genéricas ou formais demais. Seja humana, rápida e resolve.
 - Nunca seja robótica ou genérica quando o cliente estiver bravo — seja humana e resolutiva
 - humor_cliente deve ser: BRAVO, IMPACIENTE ou NORMAL
 

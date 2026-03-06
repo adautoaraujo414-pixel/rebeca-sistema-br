@@ -197,6 +197,24 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                 console.log('[REBECA] Mensagem de', telefone, ':', (msg.message?.conversation || msg.message?.extendedTextMessage?.text || msg.messageType || '').substring(0, 80));
                 const nome = msg.pushName || 'Cliente';
                 
+                // DEDUP por message ID — evitar processar mesma msg duas vezes
+                const msgId = msg.key?.id;
+                if (msgId) {
+                    if (!global._msgsProcessadas) global._msgsProcessadas = new Map();
+                    if (global._msgsProcessadas.has(msgId)) {
+                        console.log('[DEDUP] Msg já processada, ignorando:', msgId);
+                        continue;
+                    }
+                    global._msgsProcessadas.set(msgId, Date.now());
+                    // Limpar cache antigo (> 5 min)
+                    if (global._msgsProcessadas.size > 500) {
+                        const agora = Date.now();
+                        for (const [k, v] of global._msgsProcessadas) {
+                            if (agora - v > 300000) global._msgsProcessadas.delete(k);
+                        }
+                    }
+                }
+
                 let conteudo = null;
                 if (msg.message?.conversation) {
                     conteudo = msg.message.conversation;
