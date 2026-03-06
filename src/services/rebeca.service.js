@@ -379,6 +379,8 @@ const RebecaService = {
     // ==================== PROCESSAR MENSAGEM PRINCIPAL ====================
     async processarMensagem(telefone, mensagem, nome = 'Cliente', contexto = {}) {
         const adminId = contexto.adminId || null;
+        // Carregar config isolada por adminId (nunca mistura entre admins)
+        const _cfg = adminId ? _carregarConfigAdmin(adminId) : configRebeca;
         
         // ========== VERIFICAR SE É ADMIN RESPONDENDO DÚVIDA ==========
         if (adminId) {
@@ -556,7 +558,7 @@ const RebecaService = {
             let _msgGps = `✅ *Corrida solicitada!*\n\n📍 *Origem:* ${conversa.dados.origem}`;
             if (_preco1 > 0) _msgGps += `\n💰 *Valor estimado: R$ ${_preco1.toFixed(2)}*`;
             _msgGps += `\n\n⏳ Buscando o motorista mais próximo...`;
-            if (configRebeca.enviarLinkRastreamento) {
+            if (_cfg.enviarLinkRastreamento) {
                 _msgGps += `\n\n📲 *Acompanhe em tempo real:*\n${RebecaService.gerarLinkRastreamento(corridaGps.id)}`;
             }
             _msgGps += `\n\n_Digite CANCELAR se precisar_`;
@@ -857,7 +859,7 @@ Responda diretamente para ele: wa.me/${telefone}`;
         }
         
         // ========== FALLBACK: IA CLAUDE ==========
-        if (configRebeca.usarIA && IAService.isAtivo() && conversa.etapa === 'inicio') {
+        if (_cfg.usarIA && IAService.isAtivo() && conversa.etapa === 'inicio') {
             // Buscar dados da empresa do admin
             let nomeEmpresa = '', telefoneEmpresa = '';
             try {
@@ -1242,7 +1244,7 @@ Responda diretamente para ele: wa.me/${telefone}`;
             }
         }
         // ========== AUTO-DETECT ENDEREÇO ==========
-        else if (configRebeca.autoDetectarEndereco && conversa.etapa === 'inicio' && RebecaService.pareceEndereco(msgOriginal)) {
+        else if (_cfg.autoDetectarEndereco && conversa.etapa === 'inicio' && RebecaService.pareceEndereco(msgOriginal)) {
             const validacao = await RebecaService.validarEndereco(msgOriginal);
             
             if (!validacao.valido) {
@@ -1328,7 +1330,7 @@ Responda diretamente para ele: wa.me/${telefone}`;
                     let _msgTexto = `✅ *Corrida solicitada!*\n\n📍 *Origem:* ${msgOriginal}`;
                     if (_precoTx > 0) _msgTexto += `\n💰 *Valor estimado: R$ ${_precoTx.toFixed(2)}*`;
                     _msgTexto += `\n\n⏳ Buscando o motorista mais próximo...`;
-                    if (configRebeca.enviarLinkRastreamento) {
+                    if (_cfg.enviarLinkRastreamento) {
                 // Link de rastreamento enviado após motorista aceitar
                     }
                     _msgTexto += `\n\n_Digite CANCELAR se precisar_`;
@@ -1685,7 +1687,7 @@ _Digite CANCELAR se precisar_`;
                 
                 if (!validacao.valido) {
                     // Tentar IA
-                    if (configRebeca.usarIA && IAService.isAtivo()) {
+                    if (_cfg.usarIA && IAService.isAtivo()) {
                         const extracao = await IAService.extrairEndereco(msgOriginal);
                         if (extracao.encontrado && extracao.endereco) {
                             const val2 = await RebecaService.validarEndereco(extracao.endereco);
@@ -1735,7 +1737,7 @@ _Digite CANCELAR se precisar_`;
                     conversa.dados.destino = validacao.endereco;
                     conversa.dados.destinoValidado = validacao;
                     
-                    if (validacao.precisaObservacao && configRebeca.pedirObservacaoEnderecoImpreciso) {
+                    if (validacao.precisaObservacao && _cfg.pedirObservacaoEnderecoImpreciso) {
                         conversa.etapa = 'pedir_observacao_destino';
                         resposta = `🏁 *Destino:* ${validacao.endereco}\n\n⚠️ Envie referência ou *0*:`;
                         conversas.set(telefone, conversa);
@@ -1758,7 +1760,7 @@ _Digite CANCELAR se precisar_`;
             resposta += `\n\n📏 ${calculo.distancia} | ⏱️ ${calculo.tempo}\n💰 *R$ ${corrida.preco.toFixed(2)}*`;
             resposta += `\n\n⏳ Buscando motorista...\n🔢 #${corrida.id.slice(-6)}`;
             
-            if (configRebeca.enviarLinkRastreamento) {
+            if (_cfg.enviarLinkRastreamento) {
                 resposta += `\n\n📲 ${RebecaService.gerarLinkRastreamento(corrida.id)}`;
             }
             
@@ -1781,7 +1783,7 @@ _Digite CANCELAR se precisar_`;
             resposta += `\n\n📏 ${calculo.distancia} | ⏱️ ${calculo.tempo}\n💰 *R$ ${corrida.preco.toFixed(2)}*`;
             resposta += `\n\n⏳ Buscando motorista...\n🔢 #${corrida.id.slice(-6)}`;
             
-            if (configRebeca.enviarLinkRastreamento) {
+            if (_cfg.enviarLinkRastreamento) {
                 resposta += `\n\n📲 ${RebecaService.gerarLinkRastreamento(corrida.id)}`;
             }
             
@@ -1902,7 +1904,7 @@ _Digite CANCELAR se precisar_`;
                 conversa.etapa = 'aguardando_motorista';
                 conversa.dados.corridaId = corrida.id;
                 resposta = `🎉 *CONFIRMADO!*\n\n🔢 #${corrida.id.slice(-6)}\n💰 R$ ${corrida.preco.toFixed(2)}\n\n⏳ Buscando motorista...`;
-                if (configRebeca.enviarLinkRastreamento) {
+                if (_cfg.enviarLinkRastreamento) {
                     resposta += `\n\n📲 ${RebecaService.gerarLinkRastreamento(corrida.id)}`;
                 }
                 conversa.dados = {};
@@ -1920,7 +1922,7 @@ _Digite CANCELAR se precisar_`;
                             conversa.etapa = 'aguardando_motorista';
                             conversa.dados.corridaId = corrida.id;
                             resposta = `🎉 *CONFIRMADO!*\n\n🔢 #${corrida.id.slice(-6)}\n💰 R$ ${corrida.preco.toFixed(2)}\n\n⏳ Buscando motorista...`;
-                            if (configRebeca.enviarLinkRastreamento) resposta += `\n\n📲 ${RebecaService.gerarLinkRastreamento(corrida.id)}`;
+                            if (_cfg.enviarLinkRastreamento) resposta += `\n\n📲 ${RebecaService.gerarLinkRastreamento(corrida.id)}`;
                             conversa.dados = {};
                         } else if (rac.acao === 'negar' || rac.acao === 'cancelar') {
                             conversa.etapa = 'inicio'; conversa.dados = {};
@@ -1965,7 +1967,7 @@ _Digite CANCELAR se precisar_`;
             }
         }
         // ========== TENTAR IA PARA PERGUNTAS ==========
-        else if (configRebeca.usarIA && IAService.isAtivo()) {
+        else if (_cfg.usarIA && IAService.isAtivo()) {
             // Buscar dados empresa para IA
             let infoEmpresa = {};
             try {
@@ -2503,7 +2505,7 @@ _Digite CANCELAR se precisar_`;
     gerarMensagemMotoristaAceitou: (c, m) => {
         let r = `🎉 *MOTORISTA A CAMINHO!*\n\n👨‍✈️ *${m.nome}*\n🚗 ${m.veiculo?.modelo} ${m.veiculo?.cor}\n🔢 *${m.veiculo?.placa}*`;
         if (c.observacaoOrigem) r += `\n\n📝 *Obs:* ${c.observacaoOrigem}`;
-        if (configRebeca.enviarLinkRastreamento) r += `\n\n📲 ${RebecaService.gerarLinkRastreamento(c.id)}`;
+        if (_cfg.enviarLinkRastreamento) r += `\n\n📲 ${RebecaService.gerarLinkRastreamento(c.id)}`;
         return r;
     },
     // Salvar endereço frequente do cliente
