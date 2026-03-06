@@ -1299,9 +1299,18 @@ Responda diretamente para ele: wa.me/${telefone}`;
                         // Classificar antes de pedir número — pode ser ponto de referência local
                         const classifTL = await RaciocinioService.classificarEnderecoNaoEncontrado(msgOriginal, conversa.adminId);
                         if (classifTL.tipo === 'ponto_referencia' && classifTL.confianca > 0.75) {
-                            // Motorista provavelmente conhece — criar corrida direto
+                            // Motorista provavelmente conhece — pedir aparência antes de despachar
                             conversa.dados.origem = classifTL.enderecoLimpo || msgOriginal;
                             conversa.dados.origemPontoRef = true;
+                            conversa.etapa = 'pedir_aparencia';
+                            conversas.set(telefone, conversa);
+                            return `📍 *${conversa.dados.origem}*
+
+Como você está? Me descreva sua aparência para o motorista te encontrar mais fácil 👕
+
+Ex: _camisa azul, portão verde, chapéu preto_
+
+_(ou mande *0* para pular)_`;
                         } else if (classifTL.tipo === 'texto_invalido' && classifTL.confianca > 0.8) {
                             // Não é endereço — pedir origem corretamente
                             conversa.etapa = 'pedir_origem';
@@ -1606,6 +1615,51 @@ _Digite CANCELAR se precisar_`;
             return `📍 ${enderecoCompleto}` + (_precoBairro > 0 ? `\n💰 *Valor: R$ ${_precoBairro.toFixed(2)}*` : '') + `\n\n⏳ Buscando motorista...\n_CANCELAR se precisar_`;
         }
         // ========== REFERÊNCIA (NOVO FLUXO DIRETO) ==========
+        // ========== APARÊNCIA DO CLIENTE (ponto de referência) ==========
+        else if (conversa.etapa === 'pedir_aparencia') {
+            // Salvar aparência (ou pular com 0)
+            if (msg !== '0' && msg !== 'nao' && msg !== 'não' && msg !== 'n') {
+                conversa.dados.aparenciaCliente = msgOriginal;
+            }
+
+            // Verificar motoristas disponíveis
+            const motoristasAp = await MotoristaService.listarDisponiveis(adminId);
+            if (motoristasAp.length === 0) {
+                conversa.etapa = 'oferecer_fila_espera';
+                conversas.set(telefone, conversa);
+                const estimativaAp = await RebecaService.estimarTempoEspera(conversa.adminId);
+                return 'Poxa, no momento todos os motoristas estão em corrida! ' +
+                    'A previsão é de ' + estimativaAp.texto + ' para um ficar disponível.\n\n' +
+                    'Posso te avisar assim que um motorista desocupar? Responde *SIM*!';
+            }
+
+            // Criar corrida e despachar
+            const corridaAp = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
+
+            if (corridaAp.cooldown) {
+                return '⏳ Você finalizou uma corrida recentemente. Aguarde ' + Math.ceil(corridaAp.segundosRestantes / 60) + ' minuto(s).';
+            }
+            if (corridaAp.duplicada) {
+                return '⚠️ Você já tem uma corrida em andamento!\n\nDigite *CANCELAR* para cancelar ou aguarde o motorista.';
+            }
+
+            // Salvar aparência na corrida no banco
+            if (conversa.dados.aparenciaCliente && corridaAp.id) {
+                try {
+                    await require('../models').Corrida.findByIdAndUpdate(corridaAp.id, { aparenciaCliente: conversa.dados.aparenciaCliente });
+                } catch(e) { console.log('[REBECA] Erro salvar aparencia:', e.message); }
+            }
+
+            conversa.etapa = 'aguardando_motorista';
+            conversa.dados.corridaId = corridaAp.id;
+            conversas.set(telefone, conversa);
+
+            let msgAp = `📍 *${conversa.dados.origem}*`;
+            if (conversa.dados.aparenciaCliente) msgAp += `\n👕 *${conversa.dados.aparenciaCliente}*`;
+            msgAp += `\n\n⏳ Buscando motorista...\n_CANCELAR se precisar_`;
+            return msgAp;
+        }
+
         else if (conversa.etapa === 'pedir_referencia') {
             if (msg !== '0' && msg !== 'não' && msg !== 'nao' && msg !== 'n') {
                 conversa.dados.observacaoOrigem = msgOriginal;
@@ -2412,6 +2466,7 @@ _Digite CANCELAR se precisar_`;
             clienteNome: cliente.nome,
             clienteTelefone: telefone,
             clienteFoto: clienteFotoUrl,
+            aparenciaCliente: dados.aparenciaCliente || null,
             origem: dados.calculo.origem,
             destino: dados.calculo.destino,
             distanciaKm: dados.calculo.distanciaKm,

@@ -21,7 +21,7 @@ const ClienteSchema = new mongoose.Schema({
 
 const CorridaSchema = new mongoose.Schema({
     clienteId: mongoose.Schema.Types.ObjectId, clienteNome: String, clienteTelefone: String,
-    tokenRastreamento: { type: String, index: true }, clienteFoto: String, enderecoOrigemTexto: String, enderecoDestinoTexto: String,
+    tokenRastreamento: { type: String, index: true }, clienteFoto: String, aparenciaCliente: String, enderecoOrigemTexto: String, enderecoDestinoTexto: String,
     tipo: { type: String, enum: ['passageiro', 'encomenda'], default: 'passageiro' },
     descricaoEncomenda: String, nomeColeta: String, nomeEntrega: String, fragilPerecivel: String,
     motoristaId: mongoose.Schema.Types.ObjectId, motoristaNome: String,

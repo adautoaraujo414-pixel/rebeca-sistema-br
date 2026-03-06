@@ -662,6 +662,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="cliente-info">
                         <h3 id="novaCorridaCliente">Cliente</h3>
                         <span id="novaCorridaClienteInfo">⭐ 5.0 • 10 corridas</span>
+                        <span id="novaCorridaAparencia" style="display:none;font-size:13px;color:#e67e22;font-weight:600;margin-top:4px;display:block;"></span>
                     </div>
                 </div>
                 <div class="corrida-info">
@@ -1240,6 +1241,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     avatarDiv.textContent = '👤';
                 }
                 document.getElementById('novaCorridaCliente').textContent = corrida.clienteNome || 'Cliente';
+                // Mostrar aparência do cliente
+                const apEl = document.getElementById('novaCorridaAparencia');
+                if (apEl) {
+                    if (corrida.aparenciaCliente) {
+                        apEl.textContent = '👕 ' + corrida.aparenciaCliente;
+                        apEl.style.display = 'block';
+                    } else {
+                        apEl.style.display = 'none';
+                    }
+                }
                 document.getElementById('novaCorridaClienteInfo').textContent = '⭐ 5.0 • ' + (corrida.qtdCorridas || 0) + ' corridas';
             }
             
