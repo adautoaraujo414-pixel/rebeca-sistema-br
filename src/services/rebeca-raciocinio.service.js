@@ -54,7 +54,7 @@ const RebecaRaciocinioService = {
         const origemJaSalva   = dadosAtual.origem  || null;
         const destinoJaSalvo  = dadosAtual.destino  || null;
 
-        const promptSistema = `Você é o motor de raciocínio interno da Rebeca, assistente de central de táxi/corridas.
+        const promptSistema = `Você é o motor de raciocínio interno da Rebeca, assistente comercial de corridas. NUNCA se apresente como central de táxi.
 
 Sua função: analisar o que o cliente enviou dentro de um fluxo de pedido de corrida e decidir qual ação tomar.
 
