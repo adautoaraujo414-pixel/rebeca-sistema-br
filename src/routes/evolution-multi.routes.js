@@ -210,7 +210,7 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                     // Áudio recebido - baixar via Evolution API e transcrever
                     console.log('[WEBHOOK] Audio recebido de', telefone);
                     try {
-                        const instanciaDoc = await InstanciaWhatsapp.findOne({ _id: instanciaId });
+                        const instanciaDoc = await InstanciaWhatsapp.findOne({ _id: instancia._id });
                         const nomeInstancia = instanciaDoc?.nomeInstancia;
                         
                         // Tentar múltiplos métodos de download do áudio
