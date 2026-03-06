@@ -1615,6 +1615,28 @@ _Digite CANCELAR se precisar_`;
             return `📍 ${enderecoCompleto}` + (_precoBairro > 0 ? `\n💰 *Valor: R$ ${_precoBairro.toFixed(2)}*` : '') + `\n\n⏳ Buscando motorista...\n_CANCELAR se precisar_`;
         }
         // ========== REFERÊNCIA (NOVO FLUXO DIRETO) ==========
+        // ========== BUSCAR TERCEIRO — NOME ==========
+        else if (conversa.etapa === 'pedir_nome_buscado') {
+            conversa.dados.nomeBuscado = msgOriginal;
+            conversa.etapa = 'pedir_aparencia_buscado';
+            conversas.set(telefone, conversa);
+            return `Ótimo! E como *${conversa.dados.nomeBuscado}* está? Me descreva a aparência para o motorista reconhecer a pessoa 👕\n\nEx: _blusa rosa, cabelo curto, mochila preta_\n\n_(ou mande *0* para pular)_`;
+        }
+
+        // ========== BUSCAR TERCEIRO — APARÊNCIA ==========
+        else if (conversa.etapa === 'pedir_aparencia_buscado') {
+            if (msg !== '0' && msg !== 'nao' && msg !== 'não') {
+                conversa.dados.aparenciaBuscado = msgOriginal;
+            }
+            conversa.etapa = 'pedir_origem';
+            conversas.set(telefone, conversa);
+            const nomeB = conversa.dados.nomeBuscado || 'a pessoa';
+            let resp = `Anotado! 📝`;
+            if (conversa.dados.aparenciaBuscado) resp += ` *${conversa.dados.aparenciaBuscado}*`;
+            resp += `\n\nAgora me diz: *onde ${nomeB} está?* Manda o endereço ou ponto de referência 📍`;
+            return resp;
+        }
+
         // ========== APARÊNCIA DO CLIENTE (ponto de referência) ==========
         else if (conversa.etapa === 'pedir_aparencia') {
             // Salvar aparência (ou pular com 0)
