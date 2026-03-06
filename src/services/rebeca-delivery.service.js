@@ -220,9 +220,7 @@ class RebecaDeliveryService {
             if (cliente.enderecosUsados && cliente.enderecosUsados.length > 0) {
                 conversa.dados.endereco = cliente.enderecosUsados[0];
                 conversa.etapa = 'pedir_pagamento';
-                return '📍 *' + conversa.dados.endereco + '*
-
-' + this._montarOpcoesPagamento(config);
+                return '📍 *' + conversa.dados.endereco + '*\n\n' + this._montarOpcoesPagamento(config);
             }
         }
         if (msgTexto.length < 10) {
@@ -467,4 +465,4 @@ class RebecaDeliveryService {
     }
 }
 
-const RebecaDeliveryService = new RebecaDeliveryService_Class ? new RebecaDeliveryService() : null;
+
