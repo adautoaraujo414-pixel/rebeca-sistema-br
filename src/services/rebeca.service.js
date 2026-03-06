@@ -2592,6 +2592,20 @@ _Digite CANCELAR se precisar_`;
                 await EvolutionMultiService.enviarMensagem(instanciaId, corrida.clienteTelefone, msgCliente);
             }
             
+            // ===== ENVIAR FOTO DO CLIENTE PARA O MOTORISTA =====
+            try {
+                if (corrida.clienteFoto && instanciaId && motorista.whatsapp) {
+                    const _nomeCliente = corrida.clienteNome || 'Cliente';
+                    const _telCliente = corrida.clienteTelefone ? corrida.clienteTelefone.replace(/\D/g,'').slice(-9) : '';
+                    const legenda = `👤 *${_nomeCliente}*\n📞 *${_telCliente}*\n\n📍 ${corrida.origem?.endereco || corrida.enderecoOrigemTexto || 'Ver no app'}`;
+                    await new Promise(r => setTimeout(r, 1000));
+                    await EvolutionMultiService.enviarImagem(instanciaId, motorista.whatsapp, corrida.clienteFoto, legenda);
+                    console.log('[REBECA] Foto do cliente enviada para motorista:', motorista.whatsapp);
+                }
+            } catch(fotoErr) {
+                console.log('[REBECA] Não enviou foto do cliente:', fotoErr.message);
+            }
+
             return `✅ *CORRIDA ACEITA!*\n\n📍 ${corrida?.origem?.endereco || 'Ver no app'}\n💰 R$ ${corrida?.precoEstimado?.toFixed(2) || '?'}\n\n💬 Use o chat do app para falar com o cliente!\n\nDigite *CHEGUEI* ao chegar.\nDigite *FINALIZAR* ao concluir.`;
         } catch (e) {
             console.error('[REBECA] Erro ao aceitar:', e.message);

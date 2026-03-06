@@ -222,6 +222,36 @@ const EvolutionMultiService = {
             }
         } catch (e) { return { sucesso: false, erro: e.message }; }
     },
+
+    enviarImagem: async (instanciaId, telefone, urlImagem, legenda = '') => {
+        try {
+            let instancia = await InstanciaWhatsapp.findById(instanciaId);
+            if (!instancia) instancia = await InstanciaWhatsapp.findOne({ status: 'conectado' });
+            if (!instancia) throw new Error('Nenhuma instancia disponivel');
+
+            let numero = telefone.replace(/\D/g, '');
+            if (numero.length <= 11) numero = '55' + numero;
+
+            await new Promise(r => setTimeout(r, 800));
+
+            const response = await axios.post(
+                instancia.apiUrl + '/message/sendMedia/' + instancia.nomeInstancia,
+                {
+                    number: numero,
+                    mediatype: 'image',
+                    media: urlImagem,
+                    caption: legenda
+                },
+                { headers: { 'apikey': instancia.apiKey || EVOLUTION_GLOBAL_KEY, 'Content-Type': 'application/json' }, timeout: 15000 }
+            );
+            console.log('[EVO] Imagem enviada OK para:', numero);
+            return { sucesso: true, messageId: response.data?.key?.id };
+        } catch (e) {
+            console.log('[EVO] Erro ao enviar imagem:', e.message);
+            return { sucesso: false, erro: e.message };
+        }
+    },
+
     listarTodas: async () => {
         try {
             const instancias = await InstanciaWhatsapp.find().populate('adminId', 'nome email empresa').sort({ createdAt: -1 });
