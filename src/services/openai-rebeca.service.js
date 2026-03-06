@@ -116,54 +116,137 @@ const OpenAIRebecaService = {
     },
 
     // Transcrever áudio usando OpenAI Whisper
-    async transcreverAudio(buffer, mimeType = 'audio/ogg') {
+    async transcreverAudio(buffer, mimeType = 'audio/ogg', contextoConversa = null) {
         if (!this.apiKey) {
-            console.log('[AUDIO] API Key não configurada');
+            console.log('[AUDIO] API Key nao configurada');
             return null;
         }
 
-        try {
-            const formData = new FormData();
-            
-            let ext = 'ogg';
-            if (mimeType.includes('mp3') || mimeType.includes('mpeg')) ext = 'mp3';
-            if (mimeType.includes('wav')) ext = 'wav';
-            if (mimeType.includes('m4a')) ext = 'm4a';
-            if (mimeType.includes('webm')) ext = 'webm';
-            
-            formData.append('file', Buffer.from(buffer), {
-                filename: 'audio.' + ext,
-                contentType: mimeType
-            });
-            formData.append('model', 'whisper-1');
-            formData.append('language', 'pt');
-
-            const response = await axios.post('https://api.openai.com/v1/audio/transcriptions', formData, {
-                headers: {
-                    'Authorization': 'Bearer ' + this.apiKey,
-                    ...formData.getHeaders()
-                },
-                timeout: 30000
-            });
-
-            const textoOriginal = response.data.text || '';
-            const textoLimpo = this.limparTranscricao(textoOriginal);
-            const textoInterpretado = this.interpretarAudioTranscrito(textoLimpo);
-            
-            console.log('[AUDIO] Texto original:', textoOriginal);
-            console.log('[AUDIO] Texto limpo:', textoLimpo);
-            console.log('[AUDIO] Texto interpretado:', textoInterpretado);
-            
-            // Se interpretação retornou null (ruído), retornar null
-            if (!textoInterpretado) {
-                console.log('[AUDIO] Detectado como ruído, ignorando');
-                return null;
+        const chamarWhisper = async (buf, mime, forceLang) => {
+            try {
+                const formData = new FormData();
+                let ext = 'ogg';
+                if (mime.includes('mp3') || mime.includes('mpeg')) ext = 'mp3';
+                else if (mime.includes('wav')) ext = 'wav';
+                else if (mime.includes('m4a')) ext = 'm4a';
+                else if (mime.includes('webm')) ext = 'webm';
+                formData.append('file', Buffer.from(buf), { filename: 'audio.' + ext, contentType: mime });
+                formData.append('model', 'whisper-1');
+                formData.append('prompt', 'corrida, endereco, rua, avenida, bairro, numero, destino, origem, mototaxi, Uber, delivery, confirmar, cancelar, sim, nao, obrigado, quero, preciso, me busca');
+                if (forceLang) formData.append('language', 'pt');
+                const resp = await axios.post('https://api.openai.com/v1/audio/transcriptions', formData, {
+                    headers: { 'Authorization': 'Bearer ' + this.apiKey, ...formData.getHeaders() },
+                    timeout: 30000
+                });
+                return resp.data.text || '';
+            } catch(e) {
+                console.log('[AUDIO] Whisper falhou:', e.message);
+                return '';
             }
-            return textoInterpretado;
-        } catch (e) {
-            console.error('[AUDIO] Erro na transcrição:', e.message);
-            return null;
+        };
+
+        let texto = await chamarWhisper(buffer, mimeType, true);
+        console.log('[AUDIO] T1:', texto && texto.substring(0, 100));
+
+        if (!texto || texto.length < 3) {
+            texto = await chamarWhisper(buffer, mimeType, false);
+            console.log('[AUDIO] T2:', texto && texto.substring(0, 100));
         }
+
+        if (!texto || texto.length < 3) {
+            try {
+                const { execSync } = require('child_process');
+                const fs = require('fs'), os = require('os'), path = require('path');
+                const tmp = path.join(os.tmpdir(), 'reb_' + Date.now());
+                fs.writeFileSync(tmp + '.ogg', buffer);
+                execSync('ffmpeg -y -i ' + tmp + '.ogg -ar 16000 -ac 1 -f mp3 ' + tmp + '.mp3 2>/dev/null', { timeout: 15000 });
+                const mp3 = fs.readFileSync(tmp + '.mp3');
+                try { fs.unlinkSync(tmp + '.ogg'); fs.unlinkSync(tmp + '.mp3'); } catch(_) {}
+                texto = await chamarWhisper(mp3, 'audio/mp3', false);
+                console.log('[AUDIO] T3 mp3:', texto && texto.substring(0, 100));
+            } catch(e) {
+                console.log('[AUDIO] ffmpeg falhou:', e.message);
+            }
+        }
+
+        if (texto && texto.length >= 3) {
+            const textoLimpo = this.limparTranscricao(texto);
+            const textoFinal = this.interpretarAudioTranscrito(textoLimpo);
+            console.log('[AUDIO] Transcrito final:', textoFinal && textoFinal.substring(0, 100));
+            if (textoFinal) {
+                const raciocinio = await this.raciocionarSobreAudio(textoFinal, contextoConversa);
+                return raciocinio || textoFinal;
+            }
+        }
+
+        console.log('[AUDIO] Whisper falhou em tudo — GPT assume controle');
+        return await this.gptFallbackAudio(contextoConversa);
+    },
+
+    async raciocionarSobreAudio(textoTranscrito, contextoConversa) {
+        try {
+            const etapaAtual = (contextoConversa && contextoConversa.etapa) || 'inicio';
+            const dadosAtuais = (contextoConversa && contextoConversa.dados) ? JSON.stringify(contextoConversa.dados) : '{}';
+            const resp = await axios.post('https://api.openai.com/v1/chat/completions', {
+                model: 'gpt-4o-mini',
+                messages: [{
+                    role: 'system',
+                    content: 'Voce e o cerebro da Rebeca, assistente de corridas no Brasil. Analise o audio transcrito e retorne JSON. CONTEXTO: etapa="' + etapaAtual + '", dados=' + dadosAtuais + '. REGRAS: extraia origem, destino, confirmacoes, cancelamentos. Gere resposta_rebeca em portugues brasileiro humano, curto (1-2 linhas WhatsApp). NAO peca informacao que o cliente ja deu. Se cliente deu origem E destino, confirme os dois e peca confirmacao final. NUNCA use ingles. Retorne APENAS JSON valido sem markdown: {"origem_extraida":null,"destino_extraido":null,"confirmacao":false,"cancelamento":false,"nome_cliente":null,"resposta_rebeca":"","proxima_etapa":"","notificar_admin":false}'
+                }, {
+                    role: 'user',
+                    content: 'Audio transcrito: "' + textoTranscrito + '"'
+                }],
+                max_tokens: 400,
+                temperature: 0.2
+            }, {
+                headers: { 'Authorization': 'Bearer ' + this.apiKey, 'Content-Type': 'application/json' },
+                timeout: 12000
+            });
+            const raw = resp.data.choices[0].message.content.trim().replace(/```json|```/g, '').trim();
+            const json = JSON.parse(raw);
+            console.log('[AUDIO RACIOCINIO]', JSON.stringify(json).substring(0, 200));
+            if (json.origem_extraida || json.destino_extraido || json.confirmacao || json.cancelamento) {
+                return '__AUDIO_RACIOCINIO__' + JSON.stringify(json);
+            }
+            return textoTranscrito;
+        } catch(e) {
+            console.log('[AUDIO] Raciocinio falhou:', e.message);
+            return textoTranscrito;
+        }
+    },
+
+    async gptFallbackAudio(contextoConversa) {
+        try {
+            const etapa = (contextoConversa && contextoConversa.etapa) || 'inicio';
+            const dados = (contextoConversa && contextoConversa.dados) || {};
+            let ctx = '';
+            if (dados.origem) ctx += 'Ja sei a origem: ' + dados.origem + '. ';
+            if (dados.destino) ctx += 'Ja sei o destino: ' + dados.destino + '. ';
+            if (dados.nome) ctx += 'Cliente se chama ' + dados.nome + '. ';
+            const resp = await axios.post('https://api.openai.com/v1/chat/completions', {
+                model: 'gpt-4o-mini',
+                messages: [{
+                    role: 'system',
+                    content: 'Voce e a Rebeca, assistente de corridas no Brasil. Fale como atendente humana, simpatica e rapida. Cliente mandou audio que nao foi transcrito. ' + ctx + ' Etapa: ' + etapa + '. Se etapa inicio ou aguardando_origem: pergunte o endereco calorosamente. Se tem origem mas nao destino: pergunte o destino. Se tem origem e destino: peca confirmacao. NUNCA mencione audio ou problema tecnico. NUNCA use ingles. Seja breve (1-2 linhas).'
+                }, {
+                    role: 'user',
+                    content: 'Cliente mandou audio. Responda como Rebeca.'
+                }],
+                max_tokens: 120,
+                temperature: 0.7
+            }, {
+                headers: { 'Authorization': 'Bearer ' + this.apiKey, 'Content-Type': 'application/json' },
+                timeout: 10000
+            });
+            const msg = resp.data.choices[0].message.content.trim();
+            if (msg) {
+                console.log('[AUDIO FALLBACK]:', msg.substring(0, 80));
+                return '__RESPOSTA_DIRETA__' + msg;
+            }
+        } catch(e) {
+            console.log('[AUDIO] Fallback GPT falhou:', e.message);
+        }
+        return null;
     },
 
 
