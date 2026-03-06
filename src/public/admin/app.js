@@ -883,7 +883,7 @@ async function deletarPonto(id) {
     if (!ok) return;
     _deletandoPonto = true;
     try {
-        await api(`/api/pontos/${id}`, { method: 'DELETE' });
+        await api(`/api/pontos/${id}`, 'DELETE');
         carregarPontos();
     } catch(e) { console.error(e); } finally { _deletandoPonto = false; }
 }
