@@ -437,6 +437,7 @@
 
         // DASHBOARD
         async function carregarDashboard() {
+            carregarInstanciaDelivery();
             try {
                 const res = await api('/dashboard');
                 const d = await res.json();
@@ -787,15 +788,21 @@
 
 
         // ===== WHATSAPP QR CODE DELIVERY =====
-        let instanciaDeliveryId = null;
+        function carregarInstanciaDelivery() {
+            if (adminData && adminData._id) {
+                instanciaDeliveryId = localStorage.getItem('instanciaDeliveryId_' + adminData._id) || null;
+            }
+        }
+        let instanciaDeliveryId = null; // carregado após login em carregarInstanciaDelivery()
 
         async function conectarWhatsappDelivery() {
             const box = document.getElementById('qrDeliveryBox');
             box.innerHTML = '<div style="text-align:center"><div style="border:4px solid #00d4ff;border-top-color:transparent;border-radius:50%;width:40px;height:40px;animation:spin 1s linear infinite;margin:0 auto"></div><p style="color:#aaa;margin-top:10px;">Criando instância...</p></div>';
             try {
-                const r = await api('/api/evolution/instancia', { method: 'POST', body: JSON.stringify({ nomeEmpresa: 'delivery-' + Date.now() }) });
+                const r = await api('/api/evolution/instancia', { method: 'POST', body: JSON.stringify({ adminId: adminData._id, nomeEmpresa: 'delivery-' + adminData._id }) });
                 if (!r._id && !r.sucesso) { box.innerHTML = '<p style="color:#c0392b">Erro: ' + (r.erro||'Falha ao criar') + '</p>'; return; }
                 instanciaDeliveryId = r._id || r.instancia?._id;
+                if (instanciaDeliveryId) localStorage.setItem('instanciaDeliveryId_' + adminData._id, instanciaDeliveryId);
                 await gerarQRDelivery();
             } catch(e) { box.innerHTML = '<p style="color:#c0392b">Erro de conexão</p>'; }
         }
