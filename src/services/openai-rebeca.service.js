@@ -259,10 +259,10 @@ const OpenAIRebecaService = {
                     content: 'Voce e a Rebeca, assistente comercial da ' + nomeEmpresa + '. NUNCA diga que e taxista ou central de taxi. Voce e assistente da empresa, humana, simpatica e rapida. ' + ctxHistorico + ' Etapa: ' + etapa + '. Se etapa inicio ou aguardando_origem: pergunte o endereco de saida calorosamente. Se tem origem mas nao destino: pergunte o destino. Se tem origem e destino: peca confirmacao. NUNCA mencione audio ou problema tecnico. NUNCA use ingles. Seja breve (1-2 linhas WhatsApp).'
                 }, {
                     role: 'user',
-                    content: 'Cliente mandou audio. Responda como Rebeca.'
+                    content: 'Cliente mandou um audio curto. Responda de forma OBJETIVA e DIRETA conforme a etapa atual. SEM saudacoes genericas tipo "espero que esteja bem". Se etapa for inicio: pergunte so o endereco de origem. Se ja tem origem: pergunte so o destino. Se ja tem origem e destino: peca confirmacao. Maximo 1 linha.'
                 }],
-                max_tokens: 120,
-                temperature: 0.6
+                max_tokens: 80,
+                temperature: 0.2
             }, {
                 headers: { 'Authorization': 'Bearer ' + this.apiKey, 'Content-Type': 'application/json' },
                 timeout: 10000
