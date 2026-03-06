@@ -742,6 +742,15 @@ Responda diretamente para ele: wa.me/${telefone}`;
                             conversas.set(telefone, conversa);
                             return resultadoGPT.resposta;
                         }
+
+                        // Buscar terceiro (mãe, filho, amigo...)
+                        if (resultadoGPT.intencao === 'BUSCAR_TERCEIRO') {
+                            conversa.etapa = 'pedir_nome_buscado';
+                            conversa.dados.tipo = 'passageiro';
+                            conversa.dados.buscandoTerceiro = true;
+                            conversas.set(telefone, conversa);
+                            return resultadoGPT.resposta || 'Claro! Qual o nome da pessoa que devo buscar? 😊';
+                        }
                         
                         // Perguntas sobre a empresa (white-label)
                         if (resultadoGPT.intencao === 'SOBRE_EMPRESA') {
