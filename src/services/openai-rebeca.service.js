@@ -219,21 +219,50 @@ const OpenAIRebecaService = {
         try {
             const etapa = (contextoConversa && contextoConversa.etapa) || 'inicio';
             const dados = (contextoConversa && contextoConversa.dados) || {};
-            let ctx = '';
-            if (dados.origem) ctx += 'Ja sei a origem: ' + dados.origem + '. ';
-            if (dados.destino) ctx += 'Ja sei o destino: ' + dados.destino + '. ';
-            if (dados.nome) ctx += 'Cliente se chama ' + dados.nome + '. ';
+            const adminId = contextoConversa && contextoConversa.adminId;
+            const telefone = contextoConversa && contextoConversa.telefone;
+
+            // Buscar historico do cliente igual ao fluxo de texto
+            let ctxHistorico = '';
+            let ultimoEndereco = null;
+            let nomeCliente = dados.nome || '';
+            let nomeEmpresa = 'Central de Corridas';
+            try {
+                const { Admin } = require('../models');
+                if (adminId) {
+                    const adm = await Admin.findById(adminId);
+                    if (adm) nomeEmpresa = adm.empresa || adm.nome || nomeEmpresa;
+                }
+                const ctxCliente = await this.buscarContextoCliente(telefone, adminId);
+                if (ctxCliente) {
+                    nomeCliente = ctxCliente.nome || nomeCliente;
+                    ultimoEndereco = ctxCliente.ultimoEndereco;
+                    if (ctxCliente.clienteRecorrente && ultimoEndereco) {
+                        ctxHistorico = 'Cliente recorrente. Ultimo endereco usado: ' + ultimoEndereco + '. ';
+                    }
+                }
+            } catch(eCtx) {}
+
+            if (dados.origem) ctxHistorico += 'Ja sei a origem: ' + dados.origem + '. ';
+            if (dados.destino) ctxHistorico += 'Ja sei o destino: ' + dados.destino + '. ';
+
+            // Se cliente recorrente em etapa inicio, oferecer endereco anterior direto
+            if (etapa === 'inicio' && ultimoEndereco && !dados.origem) {
+                const saudacao = nomeCliente ? 'Oi ' + nomeCliente + '!' : 'Oi!';
+                return '__RESPOSTA_DIRETA__' + saudacao + ' Mesmo lugar de antes? 🚗\n\n📍 ' + ultimoEndereco + '\n\n*1* - Sim\n*2* - Outro endereço';
+            }
+
             const resp = await axios.post('https://api.openai.com/v1/chat/completions', {
                 model: 'gpt-4o-mini',
                 messages: [{
                     role: 'system',
-                    content: 'Voce e a Rebeca, assistente de corridas no Brasil. Fale como atendente humana, simpatica e rapida. Cliente mandou audio que nao foi transcrito. ' + ctx + ' Etapa: ' + etapa + '. Se etapa inicio ou aguardando_origem: pergunte o endereco calorosamente. Se tem origem mas nao destino: pergunte o destino. Se tem origem e destino: peca confirmacao. NUNCA mencione audio ou problema tecnico. NUNCA use ingles. Seja breve (1-2 linhas).'
+                    content: 'Voce e a Rebeca, assistente de corridas da ' + nomeEmpresa + '. Fale como atendente humana, simpatica e rapida. ' + ctxHistorico + ' Etapa: ' + etapa + '. Se etapa inicio ou aguardando_origem: pergunte o endereco de saida calorosamente. Se tem origem mas nao destino: pergunte o destino. Se tem origem e destino: peca confirmacao. NUNCA mencione audio ou problema tecnico. NUNCA use ingles. Seja breve (1-2 linhas WhatsApp).'
                 }, {
                     role: 'user',
                     content: 'Cliente mandou audio. Responda como Rebeca.'
                 }],
                 max_tokens: 120,
-                temperature: 0.7
+                temperature: 0.6
             }, {
                 headers: { 'Authorization': 'Bearer ' + this.apiKey, 'Content-Type': 'application/json' },
                 timeout: 10000
