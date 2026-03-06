@@ -52,6 +52,11 @@ class RebecaDeliveryService {
 
     async processarMensagem(telefone, conteudo, nome, contexto) {
         const { adminId, instanciaId } = contexto;
+
+        // ===== ANTI-REPETIÇÃO =====
+        if (!global._respostasDelivery) global._respostasDelivery = new Map();
+        const _agora = Date.now();
+        for (const [k, v] of global._respostasDelivery) { if (_agora - v > 120000) global._respostasDelivery.delete(k); }
         const conversa = this.obterConversa(telefone, adminId);
         conversa.clienteNome = nome;
 
@@ -66,10 +71,14 @@ class RebecaDeliveryService {
                 return '❌ Pedido cancelado. Quando quiser eh so chamar! 😊';
             }
 
+            // ===== REATIVAÇÃO: processar resposta antes do fluxo normal =====
+            const _reativResp = await RebecaDeliveryReativacao.processarResposta(telefone, adminId, instanciaId, msgTexto);
+            if (_reativResp === '__REATIVACAO__') return null; // Rebeca já respondeu diretamente
+
             const config = await ConfigDelivery.findOne({ adminId }).lean();
             const nomeRest = config?.nomeRestaurante || 'Nosso Restaurante';
             const cliente = await this.reconhecerCliente(telefone, nome, adminId);
-            
+
             switch (conversa.etapa) {
                 case 'inicio':
                     return await this._etapaInicio(conversa, msgLower, msgTexto, nome, cliente, config, nomeRest, adminId);
@@ -98,6 +107,15 @@ class RebecaDeliveryService {
             console.error('[REBECA-DELIVERY] Erro:', error);
             return 'Ops, deu um probleminha aqui. Tenta de novo! 😅';
         }
+    }
+
+    _antiRep(telefone, adminId, resposta) {
+        if (!global._respostasDelivery) global._respostasDelivery = new Map();
+        const chave = adminId + '_' + telefone + '_' + resposta.substring(0, 40);
+        const ultima = global._respostasDelivery.get(chave);
+        if (ultima && (Date.now() - ultima) < 30000) return true; // bloqueado
+        global._respostasDelivery.set(chave, Date.now());
+        return false;
     }
 
     async _etapaInicio(conversa, msgLower, msgTexto, nome, cliente, config, nomeRest, adminId) {
@@ -189,12 +207,24 @@ class RebecaDeliveryService {
     }
 
     async _etapaPedirEndereco(conversa, msgTexto, config, nomeRest) {
-        if (msgTexto.toLowerCase() === 'mesmo') {
+        const msgL = msgTexto.toLowerCase().trim();
+        // Aceitar SIM para endereço sugerido na reativação
+        if ((msgL === 'sim' || msgL === 'mesmo') && conversa.dados.enderecoSugerido) {
+            conversa.dados.endereco = conversa.dados.enderecoSugerido;
+            delete conversa.dados.enderecoSugerido;
+            conversa.etapa = 'pedir_pagamento';
+            return '📍 *' + conversa.dados.endereco + '*
+
+' + this._montarOpcoesPagamento(config);
+        }
+        if (msgL === 'mesmo') {
             const cliente = await this.reconhecerCliente(conversa.clienteTelefone, conversa.clienteNome, conversa.adminId);
             if (cliente.enderecosUsados && cliente.enderecosUsados.length > 0) {
                 conversa.dados.endereco = cliente.enderecosUsados[0];
                 conversa.etapa = 'pedir_pagamento';
-                return '📍 Qual o *endereco de entrega*?';
+                return '📍 *' + conversa.dados.endereco + '*
+
+' + this._montarOpcoesPagamento(config);
             }
         }
         if (msgTexto.length < 10) {
@@ -253,12 +283,36 @@ class RebecaDeliveryService {
                     valorTotal, status: 'novo',
                     observacoes: conversa.dados.observacoes || ''
                 });
-                
+
+                // ===== VERIFICAR FILA E TEMPO REAL =====
+                const pedidosNaFila = await PedidoDelivery.countDocuments({
+                    adminId, status: { $in: ['novo', 'aceito', 'em_preparo'] }
+                });
+                const tempoBase = 30;
+                const tempoFila = pedidosNaFila > 2 ? tempoBase + (pedidosNaFila - 1) * 10 : tempoBase;
+                const tempoMsg = tempoFila <= 30 ? '30-40 min' : tempoFila <= 45 ? '40-50 min' : '50-60 min';
+
+                // ===== SALVAR ENDEREÇO NO HISTÓRICO DO CLIENTE =====
+                const chaveCliente = adminId + '_' + conversa.clienteTelefone;
+                const cachedCli = clientesCache.get(chaveCliente);
+                if (cachedCli) {
+                    if (!cachedCli.enderecosUsados) cachedCli.enderecosUsados = [];
+                    if (!cachedCli.enderecosUsados.includes(conversa.dados.endereco)) {
+                        cachedCli.enderecosUsados.unshift(conversa.dados.endereco);
+                        if (cachedCli.enderecosUsados.length > 5) cachedCli.enderecosUsados.pop();
+                    }
+                    clientesCache.set(chaveCliente, cachedCli);
+                }
+
                 conversa.etapa = 'inicio';
                 conversa.carrinho = [];
                 conversa.dados = {};
-                
-                return '✅ *Pedido #' + numeroPedido + ' confirmado!*\n\n⏰ Tempo estimado: 30-45 min\n📱 Vou te avisar quando sair pra entrega!\n\nObrigado pela preferencia! 😊';
+
+                const tratamento = conversa.clienteNome && conversa.clienteNome.length > 2
+                    ? (conversa.clienteNome.split(' ')[0])
+                    : 'você';
+
+                return '✅ *Pedido #' + numeroPedido + ' confirmado!*\n\n⏰ Tempo estimado: *' + tempoMsg + '*\n📱 Vou te avisar quando sair pra entrega!\n\nObrigado pela preferência, ' + tratamento + '! 😊';
             } catch (error) {
                 console.error('[DELIVERY] Erro ao criar pedido:', error);
                 return '❌ Ops, tive um problema. Tenta de novo!';
@@ -415,4 +469,4 @@ class RebecaDeliveryService {
     }
 }
 
-module.exports = new RebecaDeliveryService();
+const RebecaDeliveryService = new RebecaDeliveryService_Class ? new RebecaDeliveryService() : null;

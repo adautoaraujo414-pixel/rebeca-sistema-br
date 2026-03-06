@@ -123,6 +123,9 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                     // Usar chave composta: adminId + telefone para isolar por admin
                     const chaveHumano = adminId + '_' + telefoneTemp;
                     global._modoHumano.set(chaveHumano, Date.now());
+                    // Delivery também pausa
+                    if (!global._modoHumanoDelivery) global._modoHumanoDelivery = new Map();
+                    global._modoHumanoDelivery.set(chaveHumano, Date.now());
                     console.log('[MODO-HUMANO] Operador respondeu para', telefoneTemp, '(admin:', adminId, ') - Rebeca pausada por 2 min');
                     continue;
                 }
