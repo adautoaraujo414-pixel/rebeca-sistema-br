@@ -89,12 +89,17 @@
         <div class="nav-logo">🍔 Rebeca Delivery</div>
         <div class="nav-btns">
             <button class="nav-btn login" onclick="window.location.href='/delivery-admin.html'">Entrar</button>
+            <button class="nav-btn login" onclick="document.getElementById('precadastro').scrollIntoView({behavior:'smooth'})">Pré-cadastro</button>
             <button class="nav-btn cadastro" onclick="window.location.href='/cadastro-admin?tipo=delivery'">Teste Gratis</button>
         </div>
     </nav>
 
     <section class="hero">
         <div class="hero-badge"><span class="dot"></span> Suporte 24/7 — Atendimento em menos de 30 minutos</div>
+        <div style="display:inline-flex;align-items:center;gap:10px;background:rgba(255,107,53,0.1);border:1px solid rgba(255,107,53,0.35);border-radius:50px;padding:10px 24px;font-size:14px;font-weight:700;color:#ff9a56;margin-bottom:20px;position:relative;z-index:1;">
+            🚀 Rebeca Delivery disponível a partir de <span style="color:#fff;margin-left:4px;">30/03/2026</span>
+            &nbsp;·&nbsp; <span id="cdInline">...</span>
+        </div>
         <div class="logo">Rebeca Delivery<span>Sistemas BR</span></div>
         <h2>Sua melhor funcionaria. Atende clientes pelo WhatsApp, monta pedidos, gerencia cozinha e entrega — 24h por dia, 7 dias por semana. Nunca falta, nunca reclama.</h2>
         <div class="hero-cta">
@@ -164,6 +169,91 @@
         <h2 class="section-title">Pronto para ter a <span>melhor funcionaria</span>?</h2>
         <p class="section-subtitle">Teste gratis por 3 dias. Sem cartao. Sem compromisso. Suporte em menos de 30 minutos.</p>
         <button class="btn btn-primary" onclick="abrirCadastro()" style="font-size:18px;padding:18px 50px;">🚀 Comecar Agora — E Gratis</button>
+    </section>
+
+    <!-- ===== PRÉ-CADASTRO ===== -->
+    <section id="precadastro" style="padding:80px 20px;max-width:780px;margin:0 auto;">
+        <div style="background:linear-gradient(145deg,#111128,#0d0d22);border:1px solid #2a1a3e;border-radius:25px;padding:50px 40px;text-align:center;">
+            <div style="display:inline-block;background:rgba(255,107,53,0.1);border:1px solid rgba(255,107,53,0.3);border-radius:50px;padding:6px 18px;font-size:12px;font-weight:700;color:#ff9a56;letter-spacing:1px;text-transform:uppercase;margin-bottom:18px;">🎯 Lista VIP — Pré-cadastro</div>
+            <h2 style="font-size:clamp(24px,4vw,38px);font-weight:800;color:#fff;margin-bottom:12px;line-height:1.2;">
+                Garanta seu acesso em<br>
+                <span style="background:linear-gradient(135deg,#ff6b35,#ff9a56);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">30 de Março de 2026</span>
+            </h2>
+            <p style="color:#888;font-size:15px;line-height:1.65;max-width:480px;margin:0 auto 36px;">
+                Preencha abaixo e entre na lista VIP. Nossa equipe entra em contato antes do lançamento com condições exclusivas e onboarding personalizado.
+            </p>
+
+            <!-- Countdown -->
+            <div style="display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin-bottom:36px;" id="cdBlocks">
+                <div style="background:#0a0a1a;border:1px solid #1a1a3e;border-radius:14px;padding:16px 20px;min-width:80px;text-align:center;">
+                    <div style="font-size:36px;font-weight:900;background:linear-gradient(135deg,#ff6b35,#ff9a56);-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1;" id="cdDias">00</div>
+                    <div style="font-size:10px;color:#666;text-transform:uppercase;letter-spacing:1px;margin-top:4px;">Dias</div>
+                </div>
+                <div style="background:#0a0a1a;border:1px solid #1a1a3e;border-radius:14px;padding:16px 20px;min-width:80px;text-align:center;">
+                    <div style="font-size:36px;font-weight:900;background:linear-gradient(135deg,#ff6b35,#ff9a56);-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1;" id="cdHoras">00</div>
+                    <div style="font-size:10px;color:#666;text-transform:uppercase;letter-spacing:1px;margin-top:4px;">Horas</div>
+                </div>
+                <div style="background:#0a0a1a;border:1px solid #1a1a3e;border-radius:14px;padding:16px 20px;min-width:80px;text-align:center;">
+                    <div style="font-size:36px;font-weight:900;background:linear-gradient(135deg,#ff6b35,#ff9a56);-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1;" id="cdMin">00</div>
+                    <div style="font-size:10px;color:#666;text-transform:uppercase;letter-spacing:1px;margin-top:4px;">Min</div>
+                </div>
+                <div style="background:#0a0a1a;border:1px solid #1a1a3e;border-radius:14px;padding:16px 20px;min-width:80px;text-align:center;">
+                    <div style="font-size:36px;font-weight:900;background:linear-gradient(135deg,#ff6b35,#ff9a56);-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1;" id="cdSeg">00</div>
+                    <div style="font-size:10px;color:#666;text-transform:uppercase;letter-spacing:1px;margin-top:4px;">Seg</div>
+                </div>
+            </div>
+
+            <div id="pcErro" style="background:rgba(255,68,68,0.12);border:1px solid rgba(255,68,68,0.25);color:#ff6b6b;padding:12px 16px;border-radius:10px;font-size:13px;margin-bottom:16px;display:none;"></div>
+
+            <div id="pcFormWrap">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;text-align:left;margin-bottom:14px;">
+                    <div>
+                        <label style="display:block;font-size:11px;font-weight:700;color:#666;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:7px;">Nome do responsável *</label>
+                        <input type="text" id="pcNome" placeholder="João Silva" style="width:100%;padding:13px 15px;background:#0a0a1a;border:1px solid #1a1a3e;border-radius:12px;color:#fff;font-size:14px;outline:none;font-family:Inter,sans-serif;">
+                    </div>
+                    <div>
+                        <label style="display:block;font-size:11px;font-weight:700;color:#666;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:7px;">Nome do comércio *</label>
+                        <input type="text" id="pcComercio" placeholder="Restaurante Sabor Casa" style="width:100%;padding:13px 15px;background:#0a0a1a;border:1px solid #1a1a3e;border-radius:12px;color:#fff;font-size:14px;outline:none;font-family:Inter,sans-serif;">
+                    </div>
+                    <div>
+                        <label style="display:block;font-size:11px;font-weight:700;color:#666;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:7px;">WhatsApp *</label>
+                        <input type="tel" id="pcTelefone" placeholder="(34) 9 9999-9999" style="width:100%;padding:13px 15px;background:#0a0a1a;border:1px solid #1a1a3e;border-radius:12px;color:#fff;font-size:14px;outline:none;font-family:Inter,sans-serif;">
+                    </div>
+                    <div>
+                        <label style="display:block;font-size:11px;font-weight:700;color:#666;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:7px;">Cidade *</label>
+                        <input type="text" id="pcCidade" placeholder="Uberlândia, MG" style="width:100%;padding:13px 15px;background:#0a0a1a;border:1px solid #1a1a3e;border-radius:12px;color:#fff;font-size:14px;outline:none;font-family:Inter,sans-serif;">
+                    </div>
+                </div>
+                <div style="text-align:left;margin-bottom:20px;">
+                    <label style="display:block;font-size:11px;font-weight:700;color:#666;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:7px;">Tipo de negócio</label>
+                    <select id="pcTipo" style="width:100%;padding:13px 15px;background:#0a0a1a;border:1px solid #1a1a3e;border-radius:12px;color:#fff;font-size:14px;outline:none;font-family:Inter,sans-serif;">
+                        <option value="">Selecione...</option>
+                        <option value="restaurante">Restaurante</option>
+                        <option value="lanchonete">Lanchonete / Hamburgueria</option>
+                        <option value="pizzaria">Pizzaria</option>
+                        <option value="sorveteria">Sorveteria / Açaí</option>
+                        <option value="mercado">Mercado / Minimercado</option>
+                        <option value="farmacia">Farmácia</option>
+                        <option value="outro">Outro comércio</option>
+                    </select>
+                </div>
+                <button onclick="enviarPreCadastro()" id="pcBtn" style="width:100%;padding:17px;background:linear-gradient(135deg,#ff6b35,#ff9a56);color:#fff;border:none;border-radius:14px;font-size:17px;font-weight:700;cursor:pointer;font-family:Inter,sans-serif;transition:all 0.3s;">
+                    🚀 Garantir meu pré-cadastro
+                </button>
+                <p style="font-size:12px;color:#555;margin-top:14px;line-height:1.5;">
+                    ✅ Sem compromisso. Ao se pré-cadastrar, você entra na lista VIP e nossa equipe entra em contato antes do lançamento.
+                </p>
+            </div>
+
+            <div id="pcSucesso" style="display:none;background:rgba(0,204,106,0.08);border:1px solid rgba(0,204,106,0.25);border-radius:16px;padding:30px;">
+                <div style="font-size:52px;margin-bottom:14px;">🎉</div>
+                <h3 style="color:#00cc6a;font-size:22px;margin-bottom:10px;">Pré-cadastro confirmado!</h3>
+                <p style="color:#888;font-size:14px;line-height:1.6;">
+                    Você está na lista VIP da Rebeca Delivery!<br>
+                    Nossa equipe entrará em contato via WhatsApp antes do lançamento<br>com tudo que você precisa para começar.
+                </p>
+            </div>
+        </div>
     </section>
 
     <footer>
@@ -316,5 +406,64 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
+<script>
+// ── COUNTDOWN ──
+function atualizarCD() {
+    const alvo = new Date('2026-03-30T00:00:00');
+    const agora = new Date();
+    const diff = alvo - agora;
+    if (diff <= 0) return;
+    const dias = Math.floor(diff / 86400000);
+    const horas = Math.floor((diff % 86400000) / 3600000);
+    const min = Math.floor((diff % 3600000) / 60000);
+    const seg = Math.floor((diff % 60000) / 1000);
+    const fmt = n => String(n).padStart(2,'0');
+    ['cdDias','cdHoras','cdMin','cdSeg'].forEach((id,i) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = fmt([dias,horas,min,seg][i]);
+    });
+    const il = document.getElementById('cdInline');
+    if (il) il.textContent = dias + 'd ' + fmt(horas) + 'h ' + fmt(min) + 'm';
+}
+atualizarCD();
+setInterval(atualizarCD, 1000);
+
+// ── PRÉ-CADASTRO ──
+async function enviarPreCadastro() {
+    const nome = document.getElementById('pcNome').value.trim();
+    const comercio = document.getElementById('pcComercio').value.trim();
+    const telefone = document.getElementById('pcTelefone').value.trim();
+    const cidade = document.getElementById('pcCidade').value.trim();
+    const tipo = document.getElementById('pcTipo').value;
+    const erro = document.getElementById('pcErro');
+    erro.style.display = 'none';
+    if (!nome || !comercio || !telefone || !cidade) {
+        erro.textContent = '⚠️ Preencha todos os campos obrigatórios (*)';
+        erro.style.display = 'block';
+        return;
+    }
+    const btn = document.getElementById('pcBtn');
+    btn.disabled = true; btn.textContent = 'Enviando...';
+    try {
+        const r = await fetch('/api/delivery/pre-cadastro', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nome, comercio, telefone, cidade, tipo, origem: 'landing_delivery' })
+        });
+        const d = await r.json();
+        if (d.sucesso || r.ok) {
+            document.getElementById('pcFormWrap').style.display = 'none';
+            document.getElementById('pcSucesso').style.display = 'block';
+        } else {
+            erro.textContent = d.erro || 'Erro ao enviar. Tente novamente.';
+            erro.style.display = 'block';
+            btn.disabled = false; btn.textContent = '🚀 Garantir meu pré-cadastro';
+        }
+    } catch(e) {
+        document.getElementById('pcFormWrap').style.display = 'none';
+        document.getElementById('pcSucesso').style.display = 'block';
+    }
+}
+</script>
 </body>
 </html>
