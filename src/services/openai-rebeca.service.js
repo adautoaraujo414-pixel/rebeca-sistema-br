@@ -26,7 +26,7 @@ const OpenAIRebecaService = {
             
             const totalCorridas = corridas.length;
             const ultimaCorrida = corridas[0];
-            const ultimoEndereco = ultimaCorrida?.origem || null;
+            const ultimoEndereco = ultimaCorrida?.origem?.endereco || ultimaCorrida?.origem?.enderecoTexto || (typeof ultimaCorrida?.origem === 'string' ? ultimaCorrida.origem : null);
             
             // Cliente recorrente se tem 3+ corridas
             const clienteRecorrente = totalCorridas >= 3;
