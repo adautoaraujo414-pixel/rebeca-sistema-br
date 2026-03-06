@@ -312,6 +312,19 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                 }
                 
                 if (!conteudo || !telefone) continue;
+
+                // Anti-duplicata de MENSAGENS RECEBIDAS — bloqueia webhook duplicado
+                if (!global._mensagensProcessadas) global._mensagensProcessadas = new Map();
+                const _chaveMsgRecebida = telefone + '_' + (typeof conteudo === 'string' ? conteudo.substring(0,40) : 'GPS') + '_' + Math.floor(Date.now()/3000);
+                if (global._mensagensProcessadas.has(_chaveMsgRecebida)) {
+                    console.log('[ANTI-DUP] Mensagem duplicada bloqueada para', telefone);
+                    continue;
+                }
+                global._mensagensProcessadas.set(_chaveMsgRecebida, Date.now());
+                // Limpar entradas antigas (mais de 10s)
+                for (const [k, v] of global._mensagensProcessadas) {
+                    if (Date.now() - v > 10000) global._mensagensProcessadas.delete(k);
+                }
                 
                 console.log('[REBECA-' + (adminId || 'GLOBAL') + '] Msg de ' + telefone + ':', typeof conteudo === 'string' ? conteudo.substring(0, 30) : 'GPS');
                 
@@ -328,7 +341,7 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                             // Usar GPT para interpretar o contexto do cliente e gerar resposta natural
                             try {
                                 const axios2 = require('axios');
-                                const promptAudio = `Você é a Rebeca, assistente comercial de uma central de ${adminDoc?.tipoAdmin === 'delivery' ? 'delivery/restaurante' : 'táxi/corridas'}.
+                                const promptAudio = `Você é a Rebeca, assistente comercial da empresa. NUNCA mencione táxi, central de táxi ou que é um robô.
 Um cliente enviou um áudio que não conseguimos transcrever.
 Gere uma resposta amigável e natural em português brasileiro, como se o cliente tivesse mandado uma saudação ou cumprimento.
 Pergunte como pode ajudá-lo de forma calorosa.
