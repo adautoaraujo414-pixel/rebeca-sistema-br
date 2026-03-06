@@ -1217,32 +1217,20 @@ const RebecaService = {
         const _etapaAntes = conversa.etapa;
         const _inicioProcessamento = Date.now();
         
-        if (msg === 'menu' || msg === 'oi' || msg === 'olá' || msg === 'ola' || msg === 'inicio' || msg === 'boa tarde' || msg === 'boa noite' || msg === 'bom dia') {
+        // COMANDOS DIRETOS: apenas menu numérico explícito
+        // Tudo mais vai pro GPT processar com inteligência
+        if (msg === 'menu') {
             conversa.etapa = 'inicio';
             conversa.dados = {};
             resposta = RebecaService.menuPrincipal(nome, telefone);
         }
-        else if (msg === '1' || msg.includes('pedir') || msg.includes('corrida') || msg.includes('carro') || msg.includes('taxi') || msg.includes('uber') || msg.includes('chamar') || msg.includes('preciso ir') || msg.includes('me busca') || msg.includes('vem me buscar')) {
-            conversa.etapa = 'pedir_origem';
-            resposta = `📍 *SOLICITAR CORRIDA*\n\nEnvie:\n• 📍 Sua *localização*\n• 🏠 Digite *casa* ou *trabalho*\n• 📝 Ou o endereço completo`;
-        }
-        else if (msg === '2' || msg.includes('preço') || msg.includes('preco') || msg.includes('tabela') || msg.includes('quanto custa')) {
+        else if (msg === '2' && conversa.etapa === 'inicio') {
             resposta = await RebecaService.enviarTabelaPrecos();
         }
-        else if (msg === '3' || msg.includes('cotação') || msg.includes('cotacao') || msg.includes('simular') || msg.includes('quanto fica') || msg.includes('qual o valor')) {
-            conversa.etapa = 'cotacao_origem';
-            resposta = `💰 *COTAÇÃO*\n\nEnvie o *endereço de origem*:`;
-        }
-        else if (msg === '4' || msg.includes('minhas corridas') || msg.includes('historico') || msg.includes('histórico')) {
+        else if (msg === '4' && conversa.etapa === 'inicio') {
             resposta = await RebecaService.historicoCliente(telefone);
         }
-        else if (msg === '5' || msg.includes('atendente') || msg.includes('humano') || msg.includes('falar com')) {
-            resposta = `👤 *ATENDIMENTO*\n\nUm atendente vai te ajudar em breve!`;
-        }
-        else if (msg === '6' || msg.includes('exemplo')) {
-            resposta = await RebecaService.enviarExemplosPreco();
-        }
-        else if (msg === '7' || msg.includes('favorito') || msg.includes('salvar endereco') || msg.includes('cadastrar casa')) {
+        else if (msg === '7' && conversa.etapa === 'inicio') {
             conversa.etapa = 'menu_favoritos';
             resposta = `⭐ *FAVORITOS*\n\n`;
             resposta += favoritos.casa ? `🏠 Casa: ${favoritos.casa.endereco}\n` : `🏠 Casa: _Não cadastrado_\n`;
