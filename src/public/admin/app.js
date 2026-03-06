@@ -872,7 +872,15 @@ async function criarPonto() {
 let _deletandoPonto = false;
 async function deletarPonto(id) {
     if (_deletandoPonto) return;
-    if (!confirm('Deletar ponto?')) return;
+    const ok = await new Promise(resolve => {
+        const ov = document.createElement('div');
+        ov.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;';
+        ov.innerHTML = '<div style="background:#fff;border-radius:12px;padding:28px 24px;max-width:300px;width:90%;text-align:center;"><div style="font-size:2em;">🗑️</div><h3 style="margin:8px 0;color:#2c3e50;">Excluir central?</h3><p style="color:#666;font-size:0.9em;margin-bottom:20px;">Esta ação não pode ser desfeita.</p><div style="display:flex;gap:10px;justify-content:center;"><button id="_cNao" style="padding:10px 20px;border-radius:8px;border:1px solid #ccc;background:#f5f5f5;cursor:pointer;">Cancelar</button><button id="_cSim" style="padding:10px 20px;border-radius:8px;border:none;background:#e74c3c;color:#fff;cursor:pointer;font-weight:bold;">Excluir</button></div></div>';
+        document.body.appendChild(ov);
+        ov.querySelector('#_cSim').onclick = () => { document.body.removeChild(ov); resolve(true); };
+        ov.querySelector('#_cNao').onclick = () => { document.body.removeChild(ov); resolve(false); };
+    });
+    if (!ok) return;
     _deletandoPonto = true;
     try {
         await api(`/api/pontos/${id}`, { method: 'DELETE' });
