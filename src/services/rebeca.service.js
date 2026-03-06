@@ -2201,7 +2201,7 @@ _Digite CANCELAR se precisar_`;
                                 resposta = 'Sim, estamos funcionando! Me manda sua localização 📍';
                             }
                         } else {
-                            resposta = 'Oi! Como posso te ajudar? 🚗\n\nDigite *1* para pedir corrida ou me mande sua *localização* 📍';
+                            resposta = 'Oi! 😊 Vai precisar de um carro hoje? Me manda o endereço de onde você está 📍';
                         }
                     } else {
                         resposta = 'Posso te ajudar a pedir um carro! Me passa o endereço?';
@@ -2235,7 +2235,7 @@ _Digite CANCELAR se precisar_`;
                                 resposta = 'Sim, estamos funcionando! Me manda sua localização 📍';
                             }
                         } else {
-                            resposta = 'Oi! Como posso te ajudar? 🚗\n\nDigite *1* para pedir corrida ou me mande sua *localização* 📍';
+                            resposta = 'Oi! 😊 Vai precisar de um carro hoje? Me manda o endereço de onde você está 📍';
                         }
                     } else {
                         resposta = 'Posso te ajudar a pedir um carro! Me passa o endereço?';
