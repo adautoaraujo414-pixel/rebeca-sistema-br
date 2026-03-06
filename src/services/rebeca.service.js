@@ -612,7 +612,7 @@ const RebecaService = {
             const _msgBravoCheck = msgOriginal.toLowerCase();
             const _palavrasBravo = ['vai se fuder','vai se foder','vsf','fdp','merda','porra','caralho','bosta','lixo de atendimento','alguém nessa','alguem nessa','tem alguem','nessa bosta','nessa merda','pqp','que merda','que bosta','inútil','incompetente','absurdo','ridículo','ridiculo','vergonha','nunca mais','vou processar','péssimo','pessimo','horrível','horrivel','odeio','raiva','maldito','inferno','idiota','burro','palhaço','palhaçada','imbecil','otario','otário'];
             const _estaBravo = _palavrasBravo.some(p => _msgBravoCheck.includes(p));
-            if (_estaBravo && conversa.etapa !== 'inicio') {
+            if (_estaBravo) {
                 // Acalmar e continuar na mesma etapa
                 const _frasesCalma = [
                     'Entendo sua frustração e me desculpe pela demora! Vou te ajudar agora mesmo 🙏',
