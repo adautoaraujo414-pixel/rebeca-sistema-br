@@ -724,7 +724,6 @@ const RebecaService = {
                     }
                 } catch(e2) { console.log('[SECRETARIA] Erro notificar admin:', e2.message); }
             }
-            }
             
             // Se quer falar com responsável, responder e sair (não processar como corrida)
             if (resultadoGPT.intencao === 'FALAR_RESPONSAVEL') {
