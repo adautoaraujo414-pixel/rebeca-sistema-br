@@ -1907,6 +1907,7 @@ _Digite CANCELAR se precisar_`;
                             return 'Ok! Quando precisar é só chamar 😊';
                         }
                     }
+                    conversa.dados.origemTexto = msgOriginal;
                     conversa.etapa = 'pedir_numero_origem';
                     resposta = `📍 ${msgOriginal}\n\nQual bairro?`;
                 } else {

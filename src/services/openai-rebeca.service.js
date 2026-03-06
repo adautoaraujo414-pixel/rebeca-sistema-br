@@ -409,6 +409,8 @@ REGRAS IMPORTANTES:
 
 ${contexto.contextoExtra || ''}
 
+IDIOMA: Responda SEMPRE em português brasileiro. NUNCA use inglês em nenhuma circunstância.
+
 Mensagem do cliente: "${mensagem}"
 
 RETORNE APENAS JSON VÁLIDO (sem markdown):
