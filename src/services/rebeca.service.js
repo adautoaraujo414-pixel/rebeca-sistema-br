@@ -680,26 +680,50 @@ const RebecaService = {
                         console.log('[OPENAI] Intenção:', resultadoGPT.intencao);
             
             // MODO SECRETÁRIA: notificar admin quando necessário
-            const deveNotificarAdmin = resultadoGPT.notificarAdmin || 
+            const humorFinal = resultadoGPT.humorCliente || 'NORMAL';
+            const deveNotificarAdmin = resultadoGPT.notificarAdmin ||
                 resultadoGPT.intencao === 'FALAR_RESPONSAVEL' ||
+                resultadoGPT.intencao === 'RECLAMACAO' ||
+                humorFinal === 'BRAVO' ||
                 ['AGENDAMENTO', 'OUTRO'].includes(resultadoGPT.intencao);
-            
+
+            // Se cliente BRAVO — acalmar primeiro
+            if (humorFinal === 'BRAVO') {
+                const frasesCalma = [
+                    'Calma, estou aqui! 🙏 Já vou resolver isso pra você agora mesmo.',
+                    'Oi! Respira, pode contar comigo 😊 Me fala o que aconteceu que já resolvo.',
+                    'Ei, aqui estou! Entendo sua frustração e vou resolver agora. Me conta tudo.',
+                    'Calma! Estou te ouvindo e vou resolver isso agora mesmo. O que aconteceu?'
+                ];
+                const fraseBravo = frasesCalma[Math.floor(Math.random() * frasesCalma.length)];
+                // Enviar acalme ANTES da resposta principal
+                try {
+                    const instObj = await require('./evolution-multi.service').buscarInstancia(instanciaId);
+                    if (instObj) await require('./evolution-multi.service').enviarMensagem(instanciaId, telefone, fraseBravo);
+                } catch(_) {}
+            }
+
             if (deveNotificarAdmin) {
                 try {
                     const { Admin } = require('../models');
                     const adminDoc = await Admin.findById(adminId);
-                    if (adminDoc?.telefone) {
-                        const assunto = resultadoGPT.intencao === 'FALAR_RESPONSAVEL' ? 'quer falar com o responsável' :
-                                       resultadoGPT.intencao === 'AGENDAMENTO' ? 'quer agendar algo' : 'enviou mensagem fora do contexto';
-                        const msgAdmin = `📩 *Cliente ${nome || telefone} ${assunto}:*
-
-"${msg}"
-
-Responda diretamente para ele: wa.me/${telefone}`;
-                        await EvolutionMultiService.enviarMensagem(instanciaId, adminDoc.telefone, msgAdmin);
-                        console.log('[SECRETARIA] Admin notificado:', assunto);
+                    if (adminDoc && adminDoc.telefone) {
+                        // Montar mensagem rica pro admin
+                        const emoji = humorFinal === 'BRAVO' ? '🔴' : resultadoGPT.intencao === 'RECLAMACAO' ? '🟠' : resultadoGPT.intencao === 'FALAR_RESPONSAVEL' ? '🟡' : '📩';
+                        const situacao = humorFinal === 'BRAVO' ? 'CLIENTE BRAVO' :
+                            resultadoGPT.intencao === 'RECLAMACAO' ? 'RECLAMAÇÃO' :
+                            resultadoGPT.intencao === 'FALAR_RESPONSAVEL' ? 'QUER FALAR COM RESPONSÁVEL' :
+                            resultadoGPT.intencao === 'AGENDAMENTO' ? 'QUER AGENDAR' : 'FORA DO CONTEXTO';
+                        const msgAdmin = emoji + ' *' + situacao + '*\n\n' +
+                            '👤 *Cliente:* ' + (nome || 'Sem nome') + '\n' +
+                            '📱 *Contato:* wa.me/' + telefone + '\n' +
+                            '💬 *Mensagem:* ' + msg + '\n\n' +
+                            '⚡ *Ação:* Clique no contato acima para falar diretamente com o cliente.';
+                        await require('./evolution-multi.service').enviarMensagem(instanciaId, adminDoc.telefone, msgAdmin);
+                        console.log('[SECRETARIA] Admin notificado:', situacao, '| Cliente:', telefone);
                     }
                 } catch(e2) { console.log('[SECRETARIA] Erro notificar admin:', e2.message); }
+            }
             }
             
             // Se quer falar com responsável, responder e sair (não processar como corrida)
@@ -905,14 +929,12 @@ Responda diretamente para ele: wa.me/${telefone}`;
             // CLIENTE NERVOSO/RECLAMANDO DA DEMORA → Redirecionar corrida
             const _reclamaDemora = msg.match(/(demora|demorando|cadê|cade|onde|tá onde|ta onde|quanto tempo|muito tempo|esperando|cansei|absurdo|ridiculo|ridículo|péssimo|pessimo|horrível|horrivel|nunca chega|não chega|nao chega|vou cancelar|demais|muito lento)/);
             if (_reclamaDemora && conversa.etapa === 'aguardando_motorista') {
-                // Verificar quanto tempo está pendente
                 try {
                     const { Corrida: _CM } = require('../models');
                     const _corridaPend = await _CM.findById(conversa.dados.corridaId);
                     if (_corridaPend && _corridaPend.status === 'pendente') {
                         const _minPend = (Date.now() - new Date(_corridaPend.createdAt).getTime()) / 60000;
                         if (_minPend > 3) {
-                            // Mais de 3 min sem aceite → tentar redirecionar pra outro motorista
                             console.log('[REBECA] Cliente reclamando demora (' + _minPend.toFixed(0) + 'min), redirecionando corrida');
                             try {
                                 const _motsDisp = await MotoristaService.listarDisponiveis(conversa.adminId);
@@ -921,17 +943,47 @@ Responda diretamente para ele: wa.me/${telefone}`;
                                     if (resultadoRedespacho.sucesso) {
                                         try { const PushService = require('./push.service'); await PushService.notificarNovaCorrida(conversa.adminId, _corridaPend); } catch(e){}
                                     }
-                                    conversas.set(telefone, conversa);
-                                    return 'Entendo a pressa! Já estou chamando outros motoristas pra agilizar 🚗💨';
                                 }
                             } catch(e) { console.log('[REBECA] Erro redirecionar:', e.message); }
+                            // Notificar admin da urgencia do cliente
+                            try {
+                                const { Admin } = require('../models');
+                                const _admDoc = await Admin.findById(conversa.adminId);
+                                if (_admDoc && _admDoc.telefone) {
+                                    const _instUrgente = await require('../models').InstanciaWhatsapp.findOne({ adminId: conversa.adminId, status: 'conectado' });
+                                    if (_instUrgente) {
+                                        const _msgUrgAdmin = '🚨 *CLIENTE URGENTE — DEMORA NA CORRIDA*\n\n' +
+                                            '👤 *Cliente:* ' + (nome || telefone) + '\n' +
+                                            '📱 *Contato:* wa.me/' + telefone + '\n' +
+                                            '⏱ *Tempo esperando:* ' + _minPend.toFixed(0) + ' minutos\n' +
+                                            '💬 *Mensagem:* ' + msg + '\n\n' +
+                                            '⚡ Cliente está reclamando da demora. Verifique a corrida!';
+                                        await EvolutionMultiService.enviarMensagem(_instUrgente._id, _admDoc.telefone, _msgUrgAdmin);
+                                        console.log('[URGENCIA] Admin notificado sobre demora cliente:', telefone);
+                                    }
+                                }
+                            } catch(eAdm) { console.log('[URGENCIA] Erro notif admin:', eAdm.message); }
                             conversas.set(telefone, conversa);
-                            return 'Entendo! Estou fazendo o possível pra encontrar um motorista. Só mais um instante! 🙏';
+                            return 'Entendo sua pressa! 🙏 Já estou chamando mais motoristas pra agilizar agora mesmo 🚗💨\n\nO responsável também já foi avisado!';
                         }
                     } else if (_corridaPend && ['aceita','motorista_a_caminho'].includes(_corridaPend.status)) {
-                        // Motorista já aceitou mas tá demorando → avisar que está a caminho
+                        // Motorista ja aceitou mas ta demorando → notificar motorista da urgencia
+                        try {
+                            const _motUrgente = await MotoristaService.buscarPorId(_corridaPend.motoristaId);
+                            if (_motUrgente && _motUrgente.whatsapp) {
+                                const _instUrg = await require('../models').InstanciaWhatsapp.findOne({ adminId: conversa.adminId, status: 'conectado' });
+                                if (_instUrg) {
+                                    const _msgMot = '🚨 *ATENÇÃO — CLIENTE URGENTE*\n\n' +
+                                        'O cliente *' + (nome || telefone) + '* está esperando e ficou ansioso.\n' +
+                                        'Por favor, confirme que está a caminho ou atualize sua posição!\n\n' +
+                                        '_Responda aqui para eu repassar ao cliente._';
+                                    await EvolutionMultiService.enviarMensagem(_instUrg._id, _motUrgente.whatsapp, _msgMot);
+                                    console.log('[URGENCIA] Motorista notificado urgencia:', _motUrgente.whatsapp);
+                                }
+                            }
+                        } catch(eMot) { console.log('[URGENCIA] Erro notif motorista:', eMot.message); }
                         conversas.set(telefone, conversa);
-                        return 'O motorista já está a caminho! Deve chegar em poucos minutos 🚗';
+                        return 'Calma! 🙏 Já avisei o motorista que você está esperando — ele deve chegar logo! 🚗';
                     }
                 } catch(e) { console.log('[REBECA] Erro check demora:', e.message); }
                 conversas.set(telefone, conversa);
