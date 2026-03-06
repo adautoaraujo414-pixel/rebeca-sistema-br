@@ -607,6 +607,38 @@ const RebecaService = {
             }
         }
 
+        // ========== DETECTOR DE BRAVO GLOBAL (qualquer etapa) ==========
+        {
+            const _msgBravoCheck = msgOriginal.toLowerCase();
+            const _palavrasBravo = ['vai se fuder','vai se foder','vsf','fdp','merda','porra','caralho','bosta','lixo de atendimento','alguém nessa','alguem nessa','tem alguem','nessa bosta','nessa merda','pqp','que merda','que bosta','inútil','incompetente','absurdo','ridículo','ridiculo','vergonha','nunca mais','vou processar','péssimo','pessimo','horrível','horrivel','odeio','raiva','maldito','inferno','idiota','burro','palhaço','palhaçada','imbecil','otario','otário'];
+            const _estaBravo = _palavrasBravo.some(p => _msgBravoCheck.includes(p));
+            if (_estaBravo && conversa.etapa !== 'inicio') {
+                // Acalmar e continuar na mesma etapa
+                const _frasesCalma = [
+                    'Entendo sua frustração e me desculpe pela demora! Vou te ajudar agora mesmo 🙏',
+                    'Peço desculpas! Não era pra ser assim. Pode contar comigo, vou resolver agora 💙',
+                    'Sinto muito mesmo! Vou priorizar você agora. Me passa o que precisa 🙏',
+                    'Desculpe o transtorno! Estou aqui agora, 100% focada em você ❤️'
+                ];
+                const _fraseCalma = _frasesCalma[Math.floor(Math.random() * _frasesCalma.length)];
+                // Notificar admin
+                try {
+                    const { Admin } = require('../models');
+                    const _admBravo = conversa.adminId ? await Admin.findById(conversa.adminId) : null;
+                    if (_admBravo && _admBravo.telefone) {
+                        const _instBravo = conversa.instanciaId;
+                        const _msgAdmBravo = '🔴 *CLIENTE BRAVO*\n\n' +
+                            '👤 *Cliente:* ' + (nome || telefone) + '\n' +
+                            '📱 *Contato:* wa.me/55' + telefone.replace(/\D/g,'') + '\n' +
+                            '💬 *Mensagem:* ' + msgOriginal + '\n\n' +
+                            '⚡ Intervença manual recomendada.';
+                        await require('./evolution-multi.service').enviarMensagem(_instBravo, _admBravo.telefone, _msgAdmBravo);
+                    }
+                } catch(_eBravo) {}
+                return _fraseCalma;
+            }
+        }
+
         // ========== TENTAR OPENAI PRIMEIRO ==========
         if (conversa.etapa === 'inicio') {
             // Tentar OpenAI para classificar mensagem
@@ -628,7 +660,7 @@ const RebecaService = {
                     if (contextoCliente.clienteRecorrente && contextoCliente.ultimoEndereco) {
                         const msgLower = msgOriginal.toLowerCase();
                         const pedindoCorrida = msgLower.match(/(quero|preciso|carro|corrida|busca|me pega|oi|ola|olá|bom dia|boa tarde|boa noite|manda|chama|vem)/);
-                        const informouEndereco = msgLower.match(/(rua|av|avenida|numero|número|aqui no|aqui na)/);
+                        const informouEndereco = msgLower.match(/(rua|av\b|avenida|travessa|alameda|estrada|numero|número|aqui no|aqui na|\d{3,}|bairro|praca|praça|esquina|proximo|próximo)/);
                         
                         if (pedindoCorrida && !informouEndereco) {
                             // CLIENTE SUPER RECORRENTE (5+ corridas mesmo endereço) = DESPACHO DIRETO
