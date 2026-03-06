@@ -978,6 +978,11 @@ const RebecaService = {
                                         '_Responda aqui para eu repassar ao cliente._';
                                     await EvolutionMultiService.enviarMensagem(_instUrg._id, _motUrgente.whatsapp, _msgMot);
                                     console.log('[URGENCIA] Motorista notificado urgencia:', _motUrgente.whatsapp);
+                                    // Push com flag urgente para painel piscar vermelho
+                                    try {
+                                        const PushService = require('./push.service');
+                                        await PushService.notificarUrgenciaMotorista(_corridaPend.motoristaId, _corridaPend, nome || telefone);
+                                    } catch(ePush) { console.log('[URGENCIA] Push falhou:', ePush.message); }
                                 }
                             }
                         } catch(eMot) { console.log('[URGENCIA] Erro notif motorista:', eMot.message); }

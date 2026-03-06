@@ -33,6 +33,12 @@
         .status-toggle.online { background: linear-gradient(135deg, #ff4444, #cc0000); }
         
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+        @keyframes pulseRed { 0%, 100% { box-shadow: 0 0 0 0 rgba(255,50,50,0.8), 0 0 30px rgba(255,50,50,0.6); border-color: #ff3232; } 50% { box-shadow: 0 0 0 20px rgba(255,50,50,0), 0 0 60px rgba(255,50,50,0.3); border-color: #ff0000; } }
+        @keyframes shakeUrgente { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-8px)} 40%{transform:translateX(8px)} 60%{transform:translateX(-5px)} 80%{transform:translateX(5px)} }
+        .nova-corrida-card.urgente { animation: pulseRed 0.8s infinite, shakeUrgente 0.5s ease 0.1s; border-color: #ff3232 !important; }
+        .urgente-banner { display: none; background: linear-gradient(135deg, #ff0000, #cc0000); color: #fff; text-align: center; padding: 12px; font-size: 16px; font-weight: bold; letter-spacing: 1px; animation: pulseRed 0.6s infinite; }
+        .urgente-banner.ativo { display: block; }
+        .nova-corrida-overlay.urgente { background: rgba(180,0,0,0.95) !important; }
         
         /* GPS Info */
         .gps-bar { background: #1e1e3f; padding: 10px 20px; display: flex; justify-content: space-between; font-size: 12px; color: #666; }
@@ -54,6 +60,7 @@
         @keyframes slideUp { from { transform: translateY(100px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         
         .corrida-header { background: linear-gradient(135deg, #00d4ff, #0099cc); padding: 15px; text-align: center; }
+        .corrida-header.urgente { background: linear-gradient(135deg, #ff3232, #990000) !important; }
         .corrida-header h2 { font-size: 18px; margin-bottom: 5px; }
         .corrida-valor { font-size: 32px; font-weight: bold; }
         .corrida-distancia { font-size: 14px; opacity: 0.9; }
@@ -1297,6 +1304,47 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             document.getElementById('novaCorridaOverlay').classList.add('active');
+
+            // URGENCIA: cliente bravo esperando
+            const isUrgente = corrida.urgente === true || corrida.prioridade === 'urgente';
+            const card = document.querySelector('.nova-corrida-card');
+            const overlay = document.getElementById('novaCorridaOverlay');
+            const header = document.querySelector('.corrida-header');
+            let bannerUrgente = document.getElementById('urgenteBanner');
+            if (!bannerUrgente) {
+                bannerUrgente = document.createElement('div');
+                bannerUrgente.id = 'urgenteBanner';
+                bannerUrgente.className = 'urgente-banner';
+                bannerUrgente.textContent = '🚨 CLIENTE URGENTE — RESPONDA AGORA! 🚨';
+                card && card.insertBefore(bannerUrgente, card.firstChild);
+            }
+            if (isUrgente) {
+                card && card.classList.add('urgente');
+                overlay && overlay.classList.add('urgente');
+                header && header.classList.add('urgente');
+                bannerUrgente.classList.add('ativo');
+                if ('vibrate' in navigator) navigator.vibrate([400,100,400,100,400,100,800,100,400,100,400]);
+                // Som de alerta urgente (beeps rápidos)
+                try {
+                    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                    const beep = (freq, start, dur) => {
+                        const o = ctx.createOscillator();
+                        const g = ctx.createGain();
+                        o.connect(g); g.connect(ctx.destination);
+                        o.frequency.value = freq;
+                        g.gain.setValueAtTime(0.4, ctx.currentTime + start);
+                        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + start + dur);
+                        o.start(ctx.currentTime + start);
+                        o.stop(ctx.currentTime + start + dur + 0.05);
+                    };
+                    for (let i = 0; i < 6; i++) beep(880, i * 0.25, 0.15);
+                } catch(e) {}
+            } else {
+                card && card.classList.remove('urgente');
+                overlay && overlay.classList.remove('urgente');
+                header && header.classList.remove('urgente');
+                bannerUrgente.classList.remove('ativo');
+            }
             
             // Timer
             // Proteção anti-duplicata: não mostrar se já tem overlay ativo

@@ -90,6 +90,17 @@ const PushService = {
         });
     },
 
+    async notificarUrgenciaMotorista(motoristaId, corrida, nomeCliente) {
+        return await PushService.enviarParaMotorista(motoristaId, {
+            titulo: '🚨 CLIENTE URGENTE!',
+            corpo: (nomeCliente || 'Cliente') + ' está esperando — responda agora!',
+            corridaId: corrida._id,
+            tipo: 'urgencia_cliente',
+            urgente: true,
+            prioridade: 'urgente'
+        });
+    },
+
     async notificarCancelamento(motoristaId, corrida) {
         return await PushService.enviarParaMotorista(motoristaId, {
             titulo: '❌ Corrida Cancelada', corpo: 'O cliente cancelou a corrida',
