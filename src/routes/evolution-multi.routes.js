@@ -258,13 +258,18 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                             console.log('[AUDIO] Buffer size:', audioBuffer.length, 'bytes');
                             const mimeType = msg.message.audioMessage.mimetype || 'audio/ogg';
                             const transcricao = await OpenAIRebecaService.transcreverAudio(audioBuffer, mimeType);
-                            if (transcricao) {
+                            if (transcricao && transcricao.startsWith('__RESPOSTA_DIRETA__')) {
+                                // GPT gerou resposta direta — enviar e pular processamento
+                                const msgDireta = transcricao.replace('__RESPOSTA_DIRETA__', '');
+                                await EvolutionMultiService.enviarMensagem(instancia._id, telefone, msgDireta);
+                                console.log('[AUDIO] Resposta direta GPT enviada:', msgDireta.substring(0,60));
+                                continue;
+                            } else if (transcricao) {
                                 conteudo = transcricao;
                                 console.log('[WEBHOOK] Audio transcrito OK:', transcricao.substring(0, 80));
                             } else {
-                                // Fallback inteligente por tipo de admin
-                            conteudo = '__AUDIO_SEM_TRANSCRICAO__';
-                            console.log('[AUDIO] Transcrição falhou, marcando para fallback inteligente');
+                                conteudo = '__AUDIO_SEM_TRANSCRICAO__';
+                                console.log('[AUDIO] Todas tentativas falharam');
                             }
                         } else {
                             console.log('[AUDIO] Nenhum método conseguiu baixar o áudio');
