@@ -274,7 +274,6 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                         }
                     } catch(e) {
                         console.log('[WEBHOOK] Erro geral audio:', e.message);
-                        // Erro geral audio - tratar como pedido de corrida
                         conteudo = '__AUDIO_SEM_TRANSCRICAO__';
                         console.log('[AUDIO] Erro geral, marcando para fallback inteligente');
                     }
@@ -294,13 +293,9 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                         const adminDoc = await AdminModel.findById(adminId).select('tipoAdmin').lean();
                         // Fallback inteligente de áudio por tipo
                         if (conteudo === '__AUDIO_SEM_TRANSCRICAO__') {
-                            if (adminDoc && adminDoc.tipoAdmin === 'delivery') {
-                                conteudo = 'quero fazer um pedido';
-                                console.log('[AUDIO] Fallback delivery: quero fazer pedido');
-                            } else {
-                                conteudo = 'preciso de um carro';
-                                console.log('[AUDIO] Fallback corrida: preciso de carro');
-                            }
+                            // Não inventar intenção — tratar como saudação para Rebeca responder naturalmente
+                            conteudo = 'oi';
+                            console.log('[AUDIO] Fallback: tratando áudio não transcrito como saudação');
                         }
                         if (adminDoc && adminDoc.tipoAdmin === 'delivery') {
                             resposta = await RebecaDeliveryService.processarMensagem(telefone, conteudo, nome, contexto);
