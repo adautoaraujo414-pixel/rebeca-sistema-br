@@ -81,7 +81,12 @@ const PushService = {
         const valor = 'R$ ' + (corrida.precoEstimado || 0).toFixed(2);
         return await PushService.enviarParaDisponiveis(adminId, {
             titulo: tipo, corpo: valor + ' - ' + (corrida.clienteNome || 'Cliente'),
-            corridaId: corrida._id, tipo: 'nova_corrida'
+            corridaId: corrida._id, tipo: 'nova_corrida',
+            clienteFoto: corrida.clienteFoto || null,
+            clienteNome: corrida.clienteNome || 'Cliente',
+            origem: corrida.enderecoOrigemTexto || corrida.origem?.endereco || '',
+            destino: corrida.enderecoDestinoTexto || corrida.destino?.endereco || '',
+            precoEstimado: corrida.precoEstimado || 0
         });
     },
 

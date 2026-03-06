@@ -759,9 +759,9 @@ Responda diretamente para ele: wa.me/${telefone}`;
                                 const admin = await Admin.findById(conversa.adminId);
                                 const nomeMarca = admin?.nomeMarca || 'UBMAX';
                                 const nomeAssistente = admin?.nomeAssistente || 'Rebeca';
-                                return 'Oi! Eu sou a ' + nomeAssistente + ', assistente virtual da ' + nomeMarca + '. Posso te ajudar a pedir uma corrida ou tirar dúvidas.';
+                                return 'Oi! Eu sou a ' + nomeAssistente + ', assistente comercial da ' + nomeMarca + '. Posso te ajudar a pedir uma corrida ou tirar dúvidas.';
                             } catch (e) {
-                                return 'Oi! Eu sou a Rebeca, assistente virtual. Posso te ajudar a pedir uma corrida ou tirar dúvidas.';
+                                return 'Oi! Eu sou a Rebeca, assistente comercial. Posso te ajudar a pedir uma corrida ou tirar dúvidas.';
                             }
                         }
                         
