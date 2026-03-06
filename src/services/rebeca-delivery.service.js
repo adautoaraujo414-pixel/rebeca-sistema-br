@@ -213,9 +213,7 @@ class RebecaDeliveryService {
             conversa.dados.endereco = conversa.dados.enderecoSugerido;
             delete conversa.dados.enderecoSugerido;
             conversa.etapa = 'pedir_pagamento';
-            return '📍 *' + conversa.dados.endereco + '*
-
-' + this._montarOpcoesPagamento(config);
+            return '📍 *' + conversa.dados.endereco + '*\n\n' + this._montarOpcoesPagamento(config);
         }
         if (msgL === 'mesmo') {
             const cliente = await this.reconhecerCliente(conversa.clienteTelefone, conversa.clienteNome, conversa.adminId);
