@@ -191,7 +191,7 @@ const OpenAIRebecaService = {
                 model: 'gpt-4o-mini',
                 messages: [{
                     role: 'system',
-                    content: 'Voce e o cerebro da Rebeca, assistente de corridas no Brasil. Analise o audio transcrito e retorne JSON. CONTEXTO: etapa="' + etapaAtual + '", dados=' + dadosAtuais + '. REGRAS: extraia origem, destino, confirmacoes, cancelamentos. Gere resposta_rebeca em portugues brasileiro humano, curto (1-2 linhas WhatsApp). NAO peca informacao que o cliente ja deu. Se cliente deu origem E destino, confirme os dois e peca confirmacao final. NUNCA use ingles. Retorne APENAS JSON valido sem markdown: {"origem_extraida":null,"destino_extraido":null,"confirmacao":false,"cancelamento":false,"nome_cliente":null,"resposta_rebeca":"","proxima_etapa":"","notificar_admin":false}'
+                    content: 'Voce e a Rebeca, assistente comercial de corridas no Brasil. Analise o audio e retorne JSON. ETAPA ATUAL: "' + etapaAtual + '". DADOS JA COLETADOS: ' + dadosAtuais + '. REGRAS OBRIGATORIAS: (1) SEMPRE gere resposta_rebeca — nunca deixe vazio. (2) Se cliente mandou saudacao (oi, boa noite, tudo bem etc): responda brevemente E ja pergunte o endereco de origem na mesma mensagem. Ex: "Oi! Boa noite! Me passa o endereco de onde voce esta? 📍". (3) Se etapa for confirmar_endereco_anterior e cliente confirmou (sim, isso, correto, 1): confirmacao=true. (4) Se etapa for confirmar_endereco_anterior e cliente disse nao/outro/2: confirmacao=false, cancelamento=false, resposta_rebeca="Tudo bem! Me passa o novo endereco 📍". (5) Extraia origem e destino se mencionados. (6) NUNCA pergunte informacao que o cliente ja deu. (7) SEMPRE induza o cliente a pedir corrida ao final da resposta se nao tem origem ainda. (8) Resposta maxima 2 linhas WhatsApp. (9) NUNCA use ingles. Retorne APENAS JSON sem markdown: {"origem_extraida":null,"destino_extraido":null,"confirmacao":false,"cancelamento":false,"nome_cliente":null,"resposta_rebeca":"","proxima_etapa":"","notificar_admin":false}'
                 }, {
                     role: 'user',
                     content: 'Audio transcrito: "' + textoTranscrito + '"'
@@ -205,7 +205,7 @@ const OpenAIRebecaService = {
             const raw = resp.data.choices[0].message.content.trim().replace(/```json|```/g, '').trim();
             const json = JSON.parse(raw);
             console.log('[AUDIO RACIOCINIO]', JSON.stringify(json).substring(0, 200));
-            if (json.origem_extraida || json.destino_extraido || json.confirmacao || json.cancelamento) {
+            if (json.resposta_rebeca) {
                 return '__AUDIO_RACIOCINIO__' + JSON.stringify(json);
             }
             return textoTranscrito;
