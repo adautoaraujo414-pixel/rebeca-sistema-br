@@ -2393,11 +2393,25 @@ _Digite CANCELAR se precisar_`;
         let cliente = await ClienteService.buscarPorTelefone(telefone, adminId);
         if (!cliente) cliente = await ClienteService.criar({ nome: nomeCliente, telefone, adminId });
         
+        // Buscar foto do perfil do cliente no WhatsApp
+        let clienteFotoUrl = null;
+        try {
+            const { InstanciaWhatsapp } = require('../models');
+            const inst = await InstanciaWhatsapp.findOne({ adminId, status: 'conectado' });
+            if (inst) {
+                const _evoUrl = inst.apiUrl + '/chat/fetchProfilePictureUrl/' + inst.nomeInstancia;
+                const _evoKey = inst.apiKey || process.env.EVOLUTION_API_KEY;
+                const _fotoRes = await require('axios').get(_evoUrl, { params: { number: telefone + '@s.whatsapp.net' }, headers: { 'apikey': _evoKey }, timeout: 5000 });
+                clienteFotoUrl = _fotoRes.data?.profilePictureUrl || null;
+            }
+        } catch(e) { console.log('[REBECA] Foto cliente não obtida:', e.message); }
+
         const corrida = await CorridaService.criar({
             adminId,
             clienteId: cliente._id || cliente.id,
             clienteNome: cliente.nome,
             clienteTelefone: telefone,
+            clienteFoto: clienteFotoUrl,
             origem: dados.calculo.origem,
             destino: dados.calculo.destino,
             distanciaKm: dados.calculo.distanciaKm,
