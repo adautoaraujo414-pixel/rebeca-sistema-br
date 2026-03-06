@@ -275,7 +275,6 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                     } catch(e) {
                         console.log('[WEBHOOK] Erro geral audio:', e.message);
                         conteudo = '__AUDIO_SEM_TRANSCRICAO__';
-                        console.log('[AUDIO] Erro geral, marcando para fallback inteligente');
                     }
                 }
                 
@@ -293,9 +292,33 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                         const adminDoc = await AdminModel.findById(adminId).select('tipoAdmin').lean();
                         // Fallback inteligente de áudio por tipo
                         if (conteudo === '__AUDIO_SEM_TRANSCRICAO__') {
-                            // Não inventar intenção — tratar como saudação para Rebeca responder naturalmente
+                            // Usar GPT para interpretar o contexto do cliente e gerar resposta natural
+                            try {
+                                const axios2 = require('axios');
+                                const promptAudio = `Você é a Rebeca, assistente comercial de uma central de ${adminDoc?.tipoAdmin === 'delivery' ? 'delivery/restaurante' : 'táxi/corridas'}.
+Um cliente enviou um áudio que não conseguimos transcrever.
+Gere uma resposta amigável e natural em português brasileiro, como se o cliente tivesse mandado uma saudação ou cumprimento.
+Pergunte como pode ajudá-lo de forma calorosa.
+Responda apenas com a mensagem para o cliente, sem explicações.`;
+                                const gptResp = await axios2.post('https://api.openai.com/v1/chat/completions', {
+                                    model: 'gpt-4o-mini',
+                                    messages: [{ role: 'user', content: promptAudio }],
+                                    max_tokens: 120,
+                                    temperature: 0.7
+                                }, {
+                                    headers: { 'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`, 'Content-Type': 'application/json' },
+                                    timeout: 8000
+                                });
+                                const respostaAudio = gptResp.data.choices[0]?.message?.content?.trim();
+                                if (respostaAudio) {
+                                    await EvolutionMultiService.enviarMensagem(instancia._id, telefone, respostaAudio);
+                                    console.log('[AUDIO] Resposta inteligente enviada:', respostaAudio.substring(0, 60));
+                                    continue;
+                                }
+                            } catch(gptErr) {
+                                console.log('[AUDIO] GPT fallback falhou:', gptErr.message);
+                            }
                             conteudo = 'oi';
-                            console.log('[AUDIO] Fallback: tratando áudio não transcrito como saudação');
                         }
                         if (adminDoc && adminDoc.tipoAdmin === 'delivery') {
                             resposta = await RebecaDeliveryService.processarMensagem(telefone, conteudo, nome, contexto);
