@@ -4,6 +4,8 @@
 // NUNCA interfere no Rebeca Corridas
 
 const { CategoriaCardapio, ItemCardapio, PedidoDelivery, ConfigDelivery } = require('../models/delivery.models');
+const IAService = require('./ia.service');
+const EvolutionMultiService = require('./evolution-multi.service');
 const { Admin, InstanciaWhatsapp } = require('../models');
 
 const conversasDelivery = new Map();
@@ -85,6 +87,11 @@ class RebecaDeliveryService {
                     return await this._etapaAvaliar(conversa, msgTexto, adminId);
                 default:
                     conversa.etapa = 'inicio';
+                    // Fallback IA para mensagens não reconhecidas
+                    if (IAService.isAtivo()) {
+                        const analise = await IAService.analisarMensagemDelivery(msgTexto, { adminId });
+                        if (analise.usarIA && analise.respostaCurta) return analise.respostaCurta;
+                    }
                     return 'Oi! Como posso te ajudar hoje? 😊';
             }
         } catch (error) {
@@ -94,6 +101,13 @@ class RebecaDeliveryService {
     }
 
     async _etapaInicio(conversa, msgLower, msgTexto, nome, cliente, config, nomeRest, adminId) {
+        // ========== IA: saudações e intenções humanizadas ==========
+        if (IAService.isAtivo()) {
+            const analise = await IAService.analisarMensagemDelivery(msgTexto, { adminId, nomeRest });
+            if (analise.usarIA && analise.respostaCurta && analise.intencao !== 'pedir' && analise.intencao !== 'pergunta_horario') {
+                return analise.respostaCurta;
+            }
+        }
         if (config && config.aberto === false) {
             return "😴 O *" + nomeRest + "* esta fechado no momento.\n🕐 Horario: " + (config.horarioFuncionamento || "") + "\nVolte mais tarde!";
         }
@@ -153,6 +167,14 @@ class RebecaDeliveryService {
             }
             return '📝 Anotado! Mais alguma coisa? 😊';
         } else {
+            // IA tenta entender o que o cliente quis dizer
+            if (IAService.isAtivo()) {
+                const analise = await IAService.analisarMensagemDelivery(msgTexto, { adminId });
+                if (analise.usarIA && analise.intencao === 'agradecimento' && analise.respostaCurta) return analise.respostaCurta;
+                if (analise.usarIA && analise.intencao === 'outro' && analise.respostaCurta) {
+                    return '🤔 Nao encontrei "' + msgTexto + '" no cardapio.\n\n' + analise.respostaCurta;
+                }
+            }
             return '🤔 Nao encontrei "' + msgTexto + '" no cardapio.\n\nManda *CARDAPIO* pra ver as opcoes ou me diz de outro jeito! 😊';
         }
     }

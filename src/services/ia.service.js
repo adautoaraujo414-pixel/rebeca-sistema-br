@@ -123,6 +123,80 @@ const IAService = {
         return { usarIA: true, intencao: 'outro', respostaCurta: 'Vai precisar de um carro? Me passa o endereço!' };
     },
 
+
+    async analisarMensagemDelivery(mensagem, contexto = {}) {
+        if (!IAService.isAtivo()) return { usarIA: false };
+
+        const msgLower = mensagem.toLowerCase().trim();
+
+        const varDelivery = {
+            cardapio: ['O que vai ser hoje? 🍔', 'Manda *CARDAPIO* pra ver as opcoes!', 'Me diz o que quer hoje! 😊'],
+            random: (arr) => arr[Math.floor(Math.random() * arr.length)]
+        };
+
+        // ========== SAUDAÇÕES HUMANIZADAS ==========
+        if (msgLower.match(/^(oi|ola|olá|e ai|eai|opa)$/)) {
+            return { usarIA: true, intencao: 'saudacao', respostaCurta: 'Oi! Tudo bem? 😊' };
+        }
+        if (msgLower.match(/^(oi|ola|olá).*(tudo bem|tudo bom|como vai)/)) {
+            return { usarIA: true, intencao: 'saudacao', respostaCurta: 'Tudo sim! E você? 😊' };
+        }
+        if (msgLower.match(/^bom dia$/)) {
+            return { usarIA: true, intencao: 'saudacao', respostaCurta: 'Bom dia! Tudo bem? ☀️' };
+        }
+        if (msgLower.match(/^boa tarde$/)) {
+            return { usarIA: true, intencao: 'saudacao', respostaCurta: 'Boa tarde! Tudo bem? 😊' };
+        }
+        if (msgLower.match(/^boa noite$/)) {
+            return { usarIA: true, intencao: 'saudacao', respostaCurta: 'Boa noite! 🌙 Tudo bem?' };
+        }
+
+        // Resposta de tudo bem → avança pro cardápio
+        if (msgLower.match(/^(tudo|tudo bem|tudo bom|tudo certo|bem|to bem|tô bem|estou bem)$/)) {
+            return { usarIA: true, intencao: 'pos_saudacao', respostaCurta: 'Que bom! ' + varDelivery.random(varDelivery.cardapio) };
+        }
+        if (msgLower.match(/(e você|e vc|e tu|tudo sim)/)) {
+            return { usarIA: true, intencao: 'pos_saudacao', respostaCurta: 'Também! ' + varDelivery.random(varDelivery.cardapio) };
+        }
+
+        // ========== INTENÇÃO DE PEDIDO ==========
+        if (msgLower.match(/(quero pedir|quero fazer|quero um|me manda|quero comer|com fome|tô com fome|to com fome)/)) {
+            return { usarIA: true, intencao: 'pedir', respostaCurta: varDelivery.random(varDelivery.cardapio) };
+        }
+
+        // ========== PERGUNTAS SOBRE FUNCIONAMENTO ==========
+        if (msgLower.match(/(ta aberto|tá aberto|funcionando|aberto agora|ainda aberto|horario|horário)/)) {
+            return { usarIA: true, intencao: 'pergunta_horario', respostaCurta: null }; // deixa o fluxo normal responder
+        }
+        if (msgLower.match(/(empresa|sobre|voces|vocês|serviço|servico|quem é|qual seu nome|o que é)/)) {
+            return { usarIA: true, intencao: 'pergunta', respostaCurta: 'Sou a Rebeca, seu atendente virtual! ' + varDelivery.random(varDelivery.cardapio) };
+        }
+        if (msgLower.match(/(tem entrega|faz entrega|entrega aqui|entrega em|delivery|motoboy)/)) {
+            return { usarIA: true, intencao: 'pergunta', respostaCurta: 'Sim, fazemos entrega! ' + varDelivery.random(varDelivery.cardapio) };
+        }
+        if (msgLower.match(/(quanto tempo|demora|tempo de entrega|previsao|previsão)/)) {
+            return { usarIA: true, intencao: 'pergunta', respostaCurta: 'Em média 30-45 minutos! ' + varDelivery.random(varDelivery.cardapio) };
+        }
+
+        // ========== CONFIRMAÇÕES ==========
+        if (msgLower.match(/^(ok|sim|certo|beleza|blz|ta|tá|show|perfeito|entendi|maravilha|otimo|ótimo|legal|massa|top)$/)) {
+            return { usarIA: true, intencao: 'confirmacao', respostaCurta: 'Beleza! ' + varDelivery.random(varDelivery.cardapio) };
+        }
+
+        // ========== AGRADECIMENTOS ==========
+        if (msgLower.match(/(obrigad|valeu|vlw|brigad)/)) {
+            return { usarIA: true, intencao: 'agradecimento', respostaCurta: 'Por nada! Sempre que quiser é só chamar 😊🍔' };
+        }
+
+        // ========== EXPRESSÕES REGIONAIS ==========
+        if (msgLower.match(/(uai|ue|né|ne)/) && msgLower.length < 15) {
+            return { usarIA: true, intencao: 'outro', respostaCurta: varDelivery.random(varDelivery.cardapio) };
+        }
+
+        // ========== FALLBACK DELIVERY ==========
+        return { usarIA: true, intencao: 'outro', respostaCurta: 'Vai querer pedir algo? ' + varDelivery.random(varDelivery.cardapio) };
+    },
+
     async responderPergunta(pergunta, contexto = {}) {
         return null;
     }
