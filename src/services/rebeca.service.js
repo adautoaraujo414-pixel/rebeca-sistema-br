@@ -693,9 +693,12 @@ const RebecaService = {
                     }
                     
                     const resultadoGPT = await OpenAIRebecaService.classificarMensagem(msgOriginal, { 
-                        nome, 
+                        nome,
                         nomeEmpresa,
                         adminId: conversa.adminId,
+                        etapa: conversa.etapa,
+                        dadosConversa: conversa.dados,
+                        mensagem: msgOriginal,
                         ...contextoCliente
                     });
                     

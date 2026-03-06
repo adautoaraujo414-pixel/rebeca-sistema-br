@@ -466,10 +466,32 @@ const OpenAIRebecaService = {
             ? 'O cliente está impaciente. Seja ágil, direta, sem enrolação. Passe segurança e velocidade na resposta.'
             : 'Atenda com calor humano e objetividade.';
 
+        const etapaAtual = contexto.etapa || 'inicio';
+        const dadosConversa = contexto.dadosConversa || {};
+        const historicoTexto = (() => {
+            const parts = [];
+            if (dadosConversa.origem) parts.push('Origem já informada: ' + dadosConversa.origem);
+            if (dadosConversa.destino) parts.push('Destino já informado: ' + dadosConversa.destino);
+            if (dadosConversa.corridaId) parts.push('Corrida ativa em andamento');
+            return parts.length ? parts.join(' | ') : 'Nenhum dado coletado ainda';
+        })();
+
+        const instrucaoEtapa = (() => {
+            if (etapaAtual === 'pedir_origem') return 'ETAPA ATUAL: aguardando endereço de ORIGEM do cliente. Se ele mandar qualquer endereço ou local, classifique como INFORMAR_ENDERECO_COMPLETO.';
+            if (etapaAtual === 'pedir_destino') return 'ETAPA ATUAL: aguardando endereço de DESTINO. Se ele mandar endereço, classifique como INFORMAR_ENDERECO_COMPLETO.';
+            if (etapaAtual === 'pedir_numero_origem') return 'ETAPA ATUAL: aguardando número do endereço. Se mandar número, classifique como INFORMAR_ENDERECO_COMPLETO.';
+            if (etapaAtual === 'aguardando_motorista') return 'ETAPA ATUAL: corrida solicitada, aguardando motorista aceitar. Cliente pode estar perguntando sobre status, reclamando de demora ou cancelando.';
+            if (etapaAtual === 'confirmar_endereco_anterior') return 'ETAPA ATUAL: perguntei se é o mesmo endereço de antes. Cliente deve responder 1/sim ou 2/outro.';
+            if (etapaAtual === 'inicio') return 'ETAPA ATUAL: início da conversa, nenhum dado coletado ainda.';
+            return 'ETAPA ATUAL: ' + etapaAtual;
+        })();
+
         const prompt = `Você é Rebeca, assistente comercial da ${nomeEmpresa}. ${instrucaoHumor}
 
 Cliente: ${nomeCliente}
 Motoristas disponíveis agora: ${motoristasDisponiveis}
+${instrucaoEtapa}
+Contexto da conversa: ${historicoTexto}
 
 PERSONALIDADE:
 - Fala de forma natural, calorosa, nunca robótica
