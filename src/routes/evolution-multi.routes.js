@@ -287,6 +287,7 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                                     if (rac.resposta_rebeca) {
                                         await EvolutionMultiService.enviarMensagem(instancia._id, telefone, rac.resposta_rebeca);
                                         console.log('[AUDIO RACIOCINIO] Enviado:', rac.resposta_rebeca.substring(0,60));
+                                        conteudo = null; // impedir fluxo normal de processar de novo
                                     }
                                 } catch(racErr) {
                                     console.log('[AUDIO] Erro raciocinio:', racErr.message);
@@ -382,7 +383,7 @@ Responda apenas com a mensagem para o cliente, sem explicações.`;
                         const chaveResposta = telefone + '_' + resposta.substring(0, 50);
                         const ultimaResposta = global._respostasEnviadas.get(chaveResposta);
                         
-                        if (ultimaResposta && (Date.now() - ultimaResposta) < 30000) {
+                        if (ultimaResposta && (Date.now() - ultimaResposta) < 5000) {
                             console.log('[ANTI-REP] Resposta repetida bloqueada para', telefone);
                         } else {
                             global._respostasEnviadas.set(chaveResposta, Date.now());
