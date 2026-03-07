@@ -1,210 +1,151 @@
 /**
- * RebecaRaciocinioService
- * Raciocínio amplificado para manter o fluxo da corrida
- * Roda quando a Rebeca não entende uma mensagem numa etapa intermediária
+ * RaciocinioService — classifica mensagens ambíguas para o fluxo da Rebeca
+ * Substitui chamadas a IA externa com lógica local robusta e anti-falha
  */
 
-const axios = require('axios');
-
-const ETAPAS_FLUXO = {
-    pedir_origem:               { espera: 'endereço de origem',         proxima: 'pedir_referencia' },
-    pedir_numero_origem:        { espera: 'número ou bairro da origem',  proxima: 'pedir_referencia' },
-    pedir_bairro_origem:        { espera: 'bairro da origem',            proxima: 'pedir_referencia' },
-    pedir_referencia:           { espera: 'referência ou 0',             proxima: 'pedir_destino_rapido' },
-    pedir_destino_rapido:       { espera: 'endereço de destino',         proxima: 'aguardando_motorista' },
-    pedir_destino:              { espera: 'endereço de destino',         proxima: 'confirmar_corrida' },
-    confirmar_corrida:          { espera: 'confirmação (sim/não)',        proxima: 'aguardando_motorista' },
-    confirmar_preco:            { espera: 'confirmação do preço',         proxima: 'aguardando_motorista' },
-    pedir_observacao_origem:    { espera: 'observação ou 0',             proxima: 'pedir_destino_rapido' },
-    pedir_observacao_destino:   { espera: 'observação ou 0',             proxima: 'aguardando_motorista' },
-    pedir_complemento_gps:      { espera: 'complemento do endereço GPS', proxima: 'pedir_destino_rapido' },
-    confirmar_origem_auto:      { espera: 'confirmação do endereço',     proxima: 'pedir_destino_rapido' },
-    confirmar_endereco_suspeito:{ espera: 'confirmação do endereço',     proxima: 'pedir_destino_rapido' },
-    oferecer_fila_espera:       { espera: 'sim ou não',                  proxima: 'aguardando_fila' },
-};
-
-const RebecaRaciocinioService = {
-
-    apiKey: process.env.OPENAI_API_KEY || '',
-
-    isAtivo() {
-        return !!this.apiKey;
-    },
+const RaciocinioService = {
 
     /**
-     * Raciocinar sobre o que o cliente quis dizer numa etapa intermediária
-     * Retorna: { acao, valor, resposta, confianca }
-     *
-     * acao:
-     *   'avancar'   — extraiu o dado esperado, seguir fluxo com `valor`
-     *   'repetir'   — não entendeu mas deve reformular sem perder etapa
-     *   'cancelar'  — cliente quer cancelar/sair
-     *   'voltar'    — cliente quer corrigir etapa anterior
-     *   'confirmar' — cliente confirmou (sim/ok/bora)
-     *   'negar'     — cliente negou (não/cancela)
-     */
-    async raciocinar(telefone, mensagem, conversa, contextoExtra = {}) {
-        if (!this.apiKey) return null;
-
-        const etapa = conversa.etapa;
-        const infoEtapa = ETAPAS_FLUXO[etapa];
-        if (!infoEtapa) return null;
-
-        const dadosAtual = conversa.dados || {};
-        const origemJaSalva   = dadosAtual.origem  || null;
-        const destinoJaSalvo  = dadosAtual.destino  || null;
-
-        const promptSistema = `Você é o motor de raciocínio interno da Rebeca, assistente comercial de corridas. NUNCA se apresente como central de táxi.
-
-Sua função: analisar o que o cliente enviou dentro de um fluxo de pedido de corrida e decidir qual ação tomar.
-
-CONTEXTO ATUAL DA CONVERSA:
-- Etapa: ${etapa}
-- O que a Rebeca estava esperando: ${infoEtapa.espera}
-- Origem já salva: ${origemJaSalva || 'não informada ainda'}
-- Destino já salvo: ${destinoJaSalvo || 'não informado ainda'}
-- Observação origem: ${dadosAtual.observacaoOrigem || 'nenhuma'}
-- Nome do cliente: ${contextoExtra.nome || 'Cliente'}
-
-MENSAGEM DO CLIENTE: "${mensagem}"
-
-REGRAS DE RACIOCÍNIO:
-1. Se o cliente mandou algo que claramente é ${infoEtapa.espera} → acao: "avancar", valor: o dado extraído limpo
-2. Se o cliente confirmou (sim, ok, pode, bora, vai, s, 1, confirma, exato, isso, correto, certo) → acao: "confirmar"
-3. Se o cliente negou ou quer cancelar (não, nao, cancela, desisto, para, chega, errei, errado, 2) → acao: "negar"
-4. Se o cliente quer corrigir a etapa anterior (errei o endereço, muda a origem, quero mudar) → acao: "voltar"
-5. Se não deu pra entender mas parece boa fé → acao: "repetir", reformule a pergunta de forma diferente e mais clara
-6. NUNCA invente dados — se não tem certeza do endereço extraído, use "repetir"
-7. Para endereços: extraia a rua, número e bairro se presentes. Corrija abreviações óbvias.
-8. Para confirmações em etapas de confirmar_corrida/confirmar_preco: qualquer variante de "sim" → "confirmar"
-
-RETORNE APENAS JSON VÁLIDO:
-{
-  "acao": "avancar|repetir|cancelar|voltar|confirmar|negar",
-  "valor": "dado extraído (endereço limpo, número, referência etc) ou null",
-  "resposta": "mensagem amigável para enviar ao cliente (máx 2 linhas)",
-  "confianca": 0.0 a 1.0,
-  "raciocinio": "explicação interna de 1 linha do que você concluiu"
-}`;
-
-        try {
-            const response = await axios.post('https://api.openai.com/v1/chat/completions', {
-                model: 'gpt-4o-mini',
-                messages: [{ role: 'user', content: promptSistema }],
-                max_tokens: 250,
-                temperature: 0.2
-            }, {
-                headers: {
-                    'Authorization': `Bearer ${this.apiKey}`,
-                    'Content-Type': 'application/json'
-                },
-                timeout: 10000
-            });
-
-            const texto = response.data.choices[0]?.message?.content?.trim();
-            const limpo = texto.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-            const resultado = JSON.parse(limpo);
-
-            console.log(`[RACIOCINIO] Etapa: ${etapa} | Acao: ${resultado.acao} | Confianca: ${resultado.confianca} | ${resultado.raciocinio}`);
-
-            return resultado;
-        } catch (e) {
-            console.error('[RACIOCINIO] Erro:', e.message);
-            return null;
-        }
-    },
-
-    /**
-     * Gerar resposta de "não entendi mas vou continuar" sem perder o fluxo
-     */
-    reformularPergunta(etapa, dadosConversa) {
-        const templates = {
-            pedir_origem:               `📍 Me passa o endereço de onde você está agora (rua e número)`,
-            pedir_numero_origem:        `📍 Qual o número ou bairro do endereço *${dadosConversa.origem || ''}*?`,
-            pedir_bairro_origem:        `📍 Qual o bairro? (ex: Centro, Boa Vista...)`,
-            pedir_referencia:           `📍 Tem alguma referência perto? (ou manda *0* para pular)`,
-            pedir_destino_rapido:       `🏁 Pra onde você vai? Me passa o endereço de destino`,
-            pedir_destino:              `🏁 Qual o endereço de destino?`,
-            confirmar_corrida:          `👆 Confirma a corrida? Responde *1* para SIM ou *2* para CANCELAR`,
-            confirmar_preco:            `💰 Confirma o valor? Responde *SIM* ou *NÃO*`,
-            pedir_observacao_origem:    `📝 Alguma referência ou observação? (ou *0* para pular)`,
-            pedir_observacao_destino:   `📝 Alguma referência no destino? (ou *0* para pular)`,
-            pedir_complemento_gps:      `📍 Qual o complemento ou referência da sua localização?`,
-            confirmar_origem_auto:      `📍 Esse é o endereço certo? Confirma ou manda o correto`,
-            oferecer_fila_espera:       `🙋 Quer entrar na fila de espera? Responde *SIM* ou *NÃO*`,
-        };
-        return templates[etapa] || `Pode repetir? Não entendi bem 😊`;
-    },
-
-    /**
-     * Classificar endereço que o Maps não achou
-     * Decide se é: ponto_referencia, endereco_incompleto, endereco_digitado_errado, texto_invalido
-     *
-     * - ponto_referencia: motorista provavelmente conhece ("mercadão", "campo do zé", "praça da matriz")
-     * - endereco_incompleto: rua sem número ou bairro sem rua ("rua das flores", "centro")
-     * - endereco_digitado_errado: parece endereço mas com typo ("av. brasilia" sem número, "r. joao slva 45")
-     * - texto_invalido: não é endereço de jeito nenhum ("oi", "sim", "não sei")
+     * Classifica um endereço que não foi encontrado no Google Maps
+     * Retorna: { tipo, confianca, enderecoLimpo }
+     * tipos: 'endereco_parcial' | 'ponto_referencia' | 'texto_invalido' | 'endereco_outro_formato'
      */
     async classificarEnderecoNaoEncontrado(texto, adminId = null) {
-        if (!this.apiKey) return { tipo: 'ponto_referencia', confianca: 0.5, enderecoLimpo: texto };
-
-        // Heurística rápida antes de chamar IA (economizar tokens)
-        const t = texto.toLowerCase().trim();
-
-        // Claramente não é endereço
-        if (t.length < 4 || /^(sim|nao|não|ok|s|n|1|2|cancelar|oi|olá|ola)$/.test(t)) {
-            return { tipo: 'texto_invalido', confianca: 0.99, enderecoLimpo: null };
-        }
-
-        // Ponto de referência claro — mandar direto
-        const ehPontoRef = /(hospital|rodoviaria|rodoviária|aeroporto|shopping|terminal|mercado|supermercado|escola|colegio|colégio|universidade|faculdade|prefeitura|posto de saude|upa|ubs|igreja|catedral|cemiterio|estadio|farmacia|banco|correios|delegacia|parque|praça|praca|feira|padaria|açougue|acougue|bar do|boteco|posto.*gasolina|clube|ginásio|ginasio|campo de futebol|campo do|quadra|condomínio|condominio|residencial|conjunto|vila|bairro|setor|jardim|loteamento)/i.test(texto);
-
-        if (ehPontoRef) {
-            return { tipo: 'ponto_referencia', confianca: 0.92, enderecoLimpo: texto };
-        }
-
-        // Endereço com número mas não achou — provavelmente erro de digitação
-        const temNumeroERua = /\d+/.test(texto) && /(rua|av|avenida|r\.|travessa|alameda|estrada|rod|rodovia)/i.test(texto);
-        if (temNumeroERua) {
-            return { tipo: 'endereco_digitado_errado', confianca: 0.85, enderecoLimpo: texto };
-        }
-
-        // Usar IA para casos ambíguos
         try {
-            const prompt = `Analise este texto que um cliente de táxi enviou como endereço de destino, mas o Google Maps não conseguiu localizar.
+            const t = texto.toLowerCase().trim();
 
-Texto: "${texto}"
+            // Texto muito curto ou claramente não é endereço
+            if (t.length < 4) {
+                return { tipo: 'texto_invalido', confianca: 0.95, enderecoLimpo: texto };
+            }
 
-Classifique em UMA das categorias:
-- "ponto_referencia": nome de estabelecimento, ponto turístico, apelido local que um motorista local provavelmente conhece (ex: "mercadão central", "campo do zé", "bar do bigode", "praça velha")
-- "endereco_incompleto": parece endereço real mas falta número ou bairro (ex: "rua das flores", "avenida brasil", "rua joão silva")  
-- "endereco_digitado_errado": parece endereço com erro de digitação (ex: "r. joao slva 45", "av brasiia 80")
-- "texto_invalido": não é endereço de forma alguma
+            // Palavras que indicam claramente não é endereço
+            const naoEnderecos = /^(sim|nao|não|ok|oi|ola|olá|bom dia|boa tarde|boa noite|obrigad|valeu|cancelar|ajuda|menu|1|2|3|4|5|6|7|8|9|0)$/i;
+            if (naoEnderecos.test(t)) {
+                return { tipo: 'texto_invalido', confianca: 0.99, enderecoLimpo: texto };
+            }
 
-Também sugira uma versão corrigida/limpa se possível.
+            // Emojis ou mensagem muito informal
+            if (/[\u{1F300}-\u{1FFFF}]/u.test(texto) && t.split(' ').length < 3) {
+                return { tipo: 'texto_invalido', confianca: 0.9, enderecoLimpo: texto };
+            }
 
-RETORNE APENAS JSON:
-{"tipo": "", "confianca": 0.0, "enderecoLimpo": "versão limpa ou null", "motivo": "1 linha"}`;
+            // Ponto de referência conhecido
+            const pontosRef = /(shopping|rodoviaria|rodoviária|hospital|upa|ubs|posto de saude|mercado|supermercado|escola|colegio|colégio|igreja|praça|praca|terminal|aeroporto|estação|estacao|forum|fórum|prefeitura|banco|farmacia|farmácia|posto de gasolina|lanchonete|restaurante|hotel|motel|clube|ginasio|ginásio|estádio|estadio|parque|cemitério|cemiterio|cartório|cartorio|delegacia|corpo de bombeiros|bombeiros)/i;
+            if (pontosRef.test(t)) {
+                // Limpar o texto — remover palavras como "no", "na", "perto do"
+                const limpo = texto.replace(/^(no|na|nos|nas|perto do|perto da|aqui no|aqui na|em frente ao|em frente à)\s+/i, '').trim();
+                return { tipo: 'ponto_referencia', confianca: 0.85, enderecoLimpo: limpo };
+            }
 
-            const response = await axios.post('https://api.openai.com/v1/chat/completions', {
-                model: 'gpt-4o-mini',
-                messages: [{ role: 'user', content: prompt }],
-                max_tokens: 120,
-                temperature: 0.1
-            }, {
-                headers: { 'Authorization': `Bearer ${this.apiKey}`, 'Content-Type': 'application/json' },
-                timeout: 8000
-            });
+            // Tem número mas sem logradouro — provavelmente endereço parcial
+            if (/\d{2,}/.test(t) && t.split(' ').length >= 2) {
+                return { tipo: 'endereco_parcial', confianca: 0.75, enderecoLimpo: texto };
+            }
 
-            const txt = response.data.choices[0]?.message?.content?.trim();
-            const parsed = JSON.parse(txt.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim());
-            console.log(`[CLASSIF_END] "${texto}" → ${parsed.tipo} (${parsed.confianca}) — ${parsed.motivo}`);
-            return parsed;
-        } catch(e) {
-            console.log('[CLASSIF_END] Fallback heurística:', e.message);
-            return { tipo: 'ponto_referencia', confianca: 0.5, enderecoLimpo: texto };
+            // Tem vírgula — provavelmente "Local, Bairro" ou "Rua X, Cidade"
+            if (texto.includes(',')) {
+                return { tipo: 'endereco_outro_formato', confianca: 0.7, enderecoLimpo: texto };
+            }
+
+            // Tem palavras de bairro/localidade
+            if (/(bairro|vila|jardim|setor|quadra|conjunto|residencial|district)/i.test(t)) {
+                return { tipo: 'endereco_parcial', confianca: 0.8, enderecoLimpo: texto };
+            }
+
+            // Fallback — tratar como texto inválido com baixa confiança
+            return { tipo: 'texto_invalido', confianca: 0.5, enderecoLimpo: texto };
+
+        } catch (e) {
+            console.error('[RaciocinioService] Erro:', e.message);
+            // Anti-falha: nunca crasha o fluxo
+            return { tipo: 'texto_invalido', confianca: 0.5, enderecoLimpo: texto };
         }
+    },
+
+    /**
+     * Decide se uma mensagem numa etapa de endereço deve ser tratada como endereço
+     * mesmo que pareça texto informal
+     */
+    deveTratarComoEndereco(mensagem, etapa) {
+        const t = mensagem.toLowerCase().trim();
+        const etapasEndereco = ['pedir_origem', 'pedir_destino', 'pedir_destino_rapido',
+                                 'cotacao_origem', 'cotacao_destino',
+                                 'pedir_origem_encomenda', 'pedir_destino_encomenda'];
+        if (!etapasEndereco.includes(etapa)) return false;
+
+        // Palavras claramente não-endereço mesmo nessas etapas
+        const naoEndereco = /^(cancelar|menu|ajuda|atendente|sim|nao|não|ok|1|2|3|4|5)$/i;
+        if (naoEndereco.test(t)) return false;
+
+        return true;
     }
 };
 
-module.exports = RebecaRaciocinioService;
+    /**
+     * isAtivo — sempre true (serviço local, sem dependência externa)
+     */
+    isAtivo() {
+        return true;
+    },
+
+    /**
+     * raciocinar — tenta interpretar mensagem ambígua numa etapa de endereço
+     * Retorna: { acao: 'avancar'|'pedir_mais'|'ignorar', valor, mensagem }
+     */
+    async raciocinar(telefone, mensagem, conversa, contexto = {}) {
+        try {
+            const t = mensagem.toLowerCase().trim();
+            const etapa = conversa?.etapa || '';
+
+            // Endereço com número — alta chance de ser válido, tentar com cidade
+            if (/\d{2,}/.test(mensagem) && mensagem.split(/\s+/).length >= 2) {
+                return { acao: 'avancar', valor: mensagem, confianca: 0.8 };
+            }
+
+            // Ponto de referência — avançar com o texto como está
+            const pontosRef = /(shopping|rodoviaria|rodoviária|hospital|upa|ubs|mercado|supermercado|escola|colegio|colégio|igreja|praça|praca|terminal|aeroporto|prefeitura|banco|farmacia|farmácia)/i;
+            if (pontosRef.test(t)) {
+                return { acao: 'avancar', valor: mensagem, confianca: 0.75 };
+            }
+
+            // Tem vírgula — provavelmente "Local, Bairro"
+            if (mensagem.includes(',') && mensagem.length > 6) {
+                return { acao: 'avancar', valor: mensagem, confianca: 0.7 };
+            }
+
+            // Tem bairro/vila/jardim
+            if (/(bairro|vila|jardim|setor|quadra|conjunto|residencial)/i.test(t)) {
+                return { acao: 'avancar', valor: mensagem, confianca: 0.72 };
+            }
+
+            // Texto longo (>20 chars) na etapa de endereço — tentar como endereço
+            if (mensagem.length > 20 && ['pedir_origem','pedir_destino','pedir_destino_rapido'].includes(etapa)) {
+                return { acao: 'avancar', valor: mensagem, confianca: 0.6 };
+            }
+
+            // Não conseguiu interpretar — pedir mais informação
+            return { acao: 'pedir_mais', mensagem: 'Pode me passar o endereço completo? Ex: Rua X, número, bairro' };
+
+        } catch(e) {
+            console.error('[RaciocinioService.raciocinar]', e.message);
+            return { acao: 'pedir_mais', mensagem: 'Pode me passar o endereço completo?' };
+        }
+    },
+
+    /**
+     * gerarRespostaContextual — resposta humanizada baseada no contexto
+     */
+    gerarRespostaContextual(etapa, dadosConversa = {}) {
+        const respostas = {
+            pedir_origem: ['De onde você vai sair? 📍', 'Me passa o endereço de origem:', 'Qual o ponto de partida?'],
+            pedir_destino: ['Pra onde você vai? 🏁', 'Me passa o destino:', 'Qual o endereço de destino?'],
+            pedir_destino_rapido: ['Pra onde você quer ir? 🏁', 'Me passa o destino:'],
+        };
+        const opts = respostas[etapa] || ['Pode repetir?'];
+        return opts[Math.floor(Math.random() * opts.length)];
+    }
+
+
+module.exports = RaciocinioService;
+// Adicionar antes do module.exports (será inserido via sed)
