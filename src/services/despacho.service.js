@@ -128,7 +128,35 @@ const DespachoService = {
 
             // Executar regras em sequência
             const executarRegra = async (indiceRegra) => {
-                if (indiceRegra >= regras.length) return; // Todas esgotadas
+                if (indiceRegra >= regras.length) {
+                    // Todas as regras esgotadas — nenhum motorista aceitou
+                    try {
+                        const { Corrida, InstanciaWhatsapp } = require('../models');
+                        const EvolutionMultiService = require('./evolution-multi.service');
+                        const corridaFinal = await Corrida.findById(corridaId).lean();
+                        if (corridaFinal && corridaFinal.status === 'pendente') {
+                            // Cancelar a corrida
+                            await Corrida.findByIdAndUpdate(corridaId, { status: 'cancelada', motivoCancelamento: 'sem_motorista' });
+                            corridasPendentes.delete(corridaId);
+                            // Buscar instância para enviar mensagem ao cliente
+                            const inst = await InstanciaWhatsapp.findOne({ adminId: corridaFinal.adminId?.toString(), status: 'conectado' });
+                            if (inst && corridaFinal.clienteTelefone) {
+                                const msg = `⏳ *Poxa, que pena!*\n\nNo momento todos os nossos motoristas estão ocupados e não conseguimos atender sua corrida.\n\n🔔 Assim que um motorista ficar disponível, te aviso caso ainda queira uma corrida!\n\nPara solicitar novamente é só me chamar. 😊`;
+                                await EvolutionMultiService.enviarMensagem(inst._id, corridaFinal.clienteTelefone, msg);
+                                console.log('[DESPACHO] Cliente notificado — sem motorista disponível:', corridaFinal.clienteTelefone);
+                                // Salvar telefone na fila de aviso
+                                const { Admin } = require('../models');
+                                const adminDoc = await Admin.findById(corridaFinal.adminId).lean();
+                                if (adminDoc) {
+                                    const filaAviso = new Set(adminDoc.filaAvisoMotorista || []);
+                                    filaAviso.add(corridaFinal.clienteTelefone);
+                                    await Admin.findByIdAndUpdate(corridaFinal.adminId, { filaAvisoMotorista: [...filaAviso] });
+                                }
+                            }
+                        }
+                    } catch(eAviso) { console.log('[DESPACHO] Erro aviso sem motorista:', eAviso.message); }
+                    return;
+                } // Todas esgotadas
                 const regra = regras[indiceRegra];
                 const tempoMs = (regra.tempoEsperaSegundos || 30) * 1000;
                 console.log(`[DESPACHO] Regra ${indiceRegra + 1}/${regras.length}: ${regra.tipo} | ${regra.tempoEsperaSegundos}s`);
