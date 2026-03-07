@@ -192,6 +192,19 @@ app.get('/health', (req, res) => {
     });
 });
 
+// Keep-alive — evita que o Render durma e mate os crons
+const _urlSelf = process.env.RENDER_EXTERNAL_URL || process.env.APP_URL || null;
+if (_urlSelf) {
+    setInterval(() => {
+        require('https').get(_urlSelf + '/health', (r) => {
+            console.log('[KEEP-ALIVE] ping OK:', r.statusCode);
+        }).on('error', (e) => console.log('[KEEP-ALIVE] erro:', e.message));
+    }, 10 * 60 * 1000); // a cada 10 min
+    console.log('✅ Keep-alive ativo para:', _urlSelf);
+} else {
+    console.log('⚠️  RENDER_EXTERNAL_URL não definida — keep-alive desativado');
+}
+
 // Verificar mensalidades a cada hora
 const MensalidadeService = require('./services/mensalidade.service');
 setInterval(async () => {
