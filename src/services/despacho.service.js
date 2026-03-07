@@ -7,6 +7,46 @@ const GPSIntegradoService = require('./gps-integrado.service');
 const corridasPendentes = new Map(); // Corridas aguardando aceite
 const notificacoesMotoristas = new Map(); // Notificações enviadas
 
+// Persistir despachos ativos no banco a cada 15s (sobrevive a reinícios do servidor)
+setInterval(async () => {
+    if (corridasPendentes.size === 0) return;
+    try {
+        const { Corrida } = require('../models');
+        for (const [cId, despacho] of corridasPendentes.entries()) {
+            await Corrida.findByIdAndUpdate(cId, {
+                _despachoCache: JSON.stringify(despacho)
+            }).catch(() => {});
+        }
+    } catch(_pe) {}
+}, 15000);
+
+// Recuperar despachos pendentes ao iniciar (após reinício do servidor)
+setTimeout(async () => {
+    try {
+        const { Corrida } = require('../models');
+        const pendentes = await Corrida.find({
+            status: 'pendente',
+            _despachoCache: { $exists: true, $ne: '' }
+        }).lean();
+        let recuperados = 0;
+        for (const c of pendentes) {
+            try {
+                const cId = c._id.toString();
+                if (c._despachoCache && !corridasPendentes.has(cId)) {
+                    const cache = JSON.parse(c._despachoCache);
+                    const expira = cache.expiraEm ? new Date(cache.expiraEm) : null;
+                    if (!expira || (Date.now() - expira.getTime()) < 120000) {
+                        corridasPendentes.set(cId, cache);
+                        recuperados++;
+                    }
+                }
+            } catch(_pe2) {}
+        }
+        if (recuperados > 0) console.log('[DESPACHO] ' + recuperados + ' despachos recuperados do banco');
+    } catch(_pe) { console.log('[DESPACHO] Erro recuperar pendentes:', _pe.message); }
+}, 6000);
+
+
 
 // FALLBACK: Ao iniciar, recuperar corridas pendentes do MongoDB que ainda não estão na Map
 async function recuperarCorridasPendentes() {
@@ -544,29 +584,31 @@ const DespachoService = {
 
                 console.log(`🔄 Corrida ${corridaId} redirecionada para ${proximo.nome} (tentativa ${despacho.tentativa})`);
 
-                // Notificar cliente que ainda está buscando motorista
-                try {
-                    const { Corrida, InstanciaWhatsapp } = require('../models');
-                    const corridaRedir = await Corrida.findById(corridaId).lean();
-                    if (corridaRedir && corridaRedir.clienteTelefone) {
-                        const instRedir = corridaRedir.instanciaId
-                            ? await InstanciaWhatsapp.findById(corridaRedir.instanciaId)
-                            : await InstanciaWhatsapp.findOne({ adminId: corridaRedir.adminId, status: 'conectado' });
-                        if (instRedir) {
-                            const EvolutionMultiService = require('./evolution-multi.service');
-                            const msgs = [
-                                'Ainda buscando o motorista ideal pra voce! So mais um instante.',
-                                'Quase la! Procurando outro motorista disponivel.',
-                                'Nao desanime! Estou localizando um motorista pra voce agora.'
-                            ];
-                            await EvolutionMultiService.enviarMensagem(
-                                instRedir._id,
-                                corridaRedir.clienteTelefone,
-                                msgs[Math.floor(Math.random() * msgs.length)]
-                            );
+                // Notificar cliente que ainda está buscando (fire-and-forget, sem await pois recusarCorrida não é async)
+                (async () => {
+                    try {
+                        const { Corrida, InstanciaWhatsapp } = require('../models');
+                        const corridaRedir = await Corrida.findById(corridaId).lean();
+                        if (corridaRedir && corridaRedir.clienteTelefone) {
+                            const instRedir = corridaRedir.instanciaId
+                                ? await InstanciaWhatsapp.findById(corridaRedir.instanciaId)
+                                : await InstanciaWhatsapp.findOne({ adminId: corridaRedir.adminId, status: 'conectado' });
+                            if (instRedir) {
+                                const EvolutionMultiService = require('./evolution-multi.service');
+                                const msgs = [
+                                    'Ainda buscando o motorista ideal pra voce! So mais um instante.',
+                                    'Quase la! Procurando outro motorista disponivel.',
+                                    'Nao desanime! Estou localizando um motorista pra voce agora.'
+                                ];
+                                await EvolutionMultiService.enviarMensagem(
+                                    instRedir._id,
+                                    corridaRedir.clienteTelefone,
+                                    msgs[Math.floor(Math.random() * msgs.length)]
+                                );
+                            }
                         }
-                    }
-                } catch(_rn) { console.log('[DESPACHO] Erro notif redespacho:', _rn.message); }
+                    } catch(_rn) { console.log('[DESPACHO] Erro notif redespacho:', _rn.message); }
+                })();
 
                 return {
                     sucesso: true,

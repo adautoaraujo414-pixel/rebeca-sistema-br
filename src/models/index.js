@@ -42,6 +42,7 @@ const CorridaSchema = new mongoose.Schema({
     distanciaKm: Number, tempoEstimado: Number, precoEstimado: Number, precoFinal: Number,
     status: { type: String, default: 'pendente' }, formaPagamento: String, avaliacao: Number,
     motoristaChegouEm: Date, iniciadaEm: Date, finalizadaEm: Date, canceladaEm: Date, motivoCancelamento: String,
+    _despachoCache: String,
     chatMensagens: [{ texto: String, remetente: String, nomeRemetente: String, data: Date, tipo: String }],
     // Notificacoes enviadas (evitar duplicar)
     notificacoes: {
