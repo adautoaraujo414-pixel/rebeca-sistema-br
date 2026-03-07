@@ -2885,6 +2885,7 @@ _Digite CANCELAR se precisar_`;
 
         const corrida = await CorridaService.criar({
             adminId,
+            instanciaId: instanciaId || null,
             clienteId: cliente._id || cliente.id,
             clienteNome: cliente.nome,
             clienteTelefone: telefone,
