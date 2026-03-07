@@ -5,6 +5,7 @@ const MapsService = require('./maps.service');
 const CorridaService = require('./corrida.service');
 const ClienteService = require('./cliente.service');
 const MotoristaService = require('./motorista.service');
+const NLPService = require('./nlp.service');
 const DespachoService = require('./despacho.service');
 const EvolutionMultiService = require('./evolution-multi.service');
 const IAService = require('./ia.service');
@@ -459,6 +460,73 @@ const RebecaService = {
         const favoritos = RebecaService.getFavoritos(telefone);
         
         let resposta = null; // null = sem resposta ainda (diferente de '' que ativa anti-repeticao)
+
+        // ========== CLIENTE FREQUENTE — oferecer destinos recentes ==========
+        if (conversa.etapa === 'inicio' && NLPService.eSaudacao(msg)) {
+            try {
+                const ultimosDestinos = await ClienteService.buscarUltimosDestinos(telefone, adminId);
+                const clienteDoc = await ClienteService.buscarPorTelefone(telefone, adminId);
+                const primeiraVez = !clienteDoc || clienteDoc.primeiraVez !== false;
+                const totalCorridas = clienteDoc?.totalCorridas || clienteDoc?.corridasRealizadas || 0;
+
+                if (!primeiraVez && ultimosDestinos.length > 0 && totalCorridas >= 2) {
+                    // Cliente frequente — oferecer últimos destinos
+                    let menuDestinos = `${NLPService.saudacaoTemporal()} *${nome?.split(' ')[0] || ''}*! Que bom te ver de novo 😊
+
+`;
+                    menuDestinos += `Quer ir pro mesmo lugar?
+
+`;
+                    ultimosDestinos.forEach((d, i) => {
+                        menuDestinos += `*${i+1}* - ${d.endereco.substring(0, 50)}
+`;
+                    });
+                    menuDestinos += `
+Ou me manda o endereço novo! 📍`;
+
+                    conversa.etapa = 'escolher_destino_recente';
+                    conversa.dados = { ...conversa.dados, ultimosDestinos };
+                    conversas.set(telefone, conversa);
+                    resposta = menuDestinos;
+                } else if (primeiraVez) {
+                    // Primeira vez — boas vindas especial
+                    await ClienteService.marcarPrimeiraVezFeita(telefone, adminId);
+                    resposta = `${NLPService.saudacaoTemporal()} *${nome?.split(' ')[0] || ''}*! Bem-vindo(a)! 😊
+
+Sou a Rebeca, sua assistente de transporte.
+
+Me manda o endereço de *onde você está* que chamo um motorista pra você! 🚗`;
+                }
+                // Se nao primeiraVez mas sem destinos — deixa fluir normalmente
+            } catch(_e) { console.log('[REBECA] Erro destinos recentes:', _e.message); }
+        }
+
+        // ========== DESTINO RECENTE ESCOLHIDO ==========
+        if (conversa.etapa === 'escolher_destino_recente') {
+            const ultimosDestinos = conversa.dados?.ultimosDestinos || [];
+            const numEscolhido = parseInt(msg);
+            if (numEscolhido >= 1 && numEscolhido <= ultimosDestinos.length) {
+                const destinoEscolhido = ultimosDestinos[numEscolhido - 1];
+                // Definir como destino e pedir origem
+                conversa.dados.destino = destinoEscolhido.endereco;
+                conversa.dados.destinoCoords = { latitude: destinoEscolhido.latitude, longitude: destinoEscolhido.longitude };
+                conversa.etapa = 'pedir_origem';
+                conversas.set(telefone, conversa);
+                resposta = `Ótimo! Indo para *${destinoEscolhido.endereco.substring(0, 60)}* 📍
+
+Me manda o endereço de *onde você está*!`;
+            } else if (NLPService.eCancelar(msg) || msg === 'outro' || msg === 'outro endereco') {
+                conversa.etapa = 'inicio';
+                conversa.dados = {};
+                conversas.set(telefone, conversa);
+                resposta = `Tudo bem! Me manda o endereço de *onde você está* então! 😊`;
+            } else {
+                // Pode ter mandado o endereço direto
+                conversa.etapa = 'inicio';
+                conversas.set(telefone, conversa);
+                // Deixa cair no fluxo normal de endereço
+            }
+        }
 
         // ========== RECONHECER CASA/TRABALHO/PONTOS ==========
         const msgLower = msg.toLowerCase();
@@ -1150,9 +1218,61 @@ const RebecaService = {
         }
 
         // ========== AVALIACAO ==========
+        if (conversa.etapa === 'avaliar') {
+            const nota = parseInt(msg);
+            const corridaId = conversa.dados?.corridaId;
+            if (nota >= 1 && nota <= 5 && corridaId) {
+                try {
+                    const { Corrida, Motorista } = require('../models');
+                    await Corrida.findByIdAndUpdate(corridaId, { avaliacao: nota });
+
+                    // Atualizar média do motorista
+                    const corridaAvaliada = await Corrida.findById(corridaId);
+                    if (corridaAvaliada?.motoristaId) {
+                        const corridas = await Corrida.find({
+                            motoristaId: corridaAvaliada.motoristaId,
+                            avaliacao: { $exists: true, $gt: 0 }
+                        });
+                        if (corridas.length > 0) {
+                            const media = corridas.reduce((s, c) => s + c.avaliacao, 0) / corridas.length;
+                            await Motorista.findByIdAndUpdate(corridaAvaliada.motoristaId, {
+                                avaliacao: Math.round(media * 10) / 10
+                            });
+                        }
+                    }
+
+                    // Registrar aprendizado
+                    try {
+                        const AprendizadoService = require('./rebeca-aprendizado.service');
+                        await AprendizadoService.aprenderComAvaliacao(corridaId, nota, adminId);
+                    } catch(_ae) {}
+
+                } catch(_av) { console.log('[AVALIACAO] Erro:', _av.message); }
+
+                conversa.etapa = 'inicio';
+                conversa.dados = {};
+                conversas.set(telefone, conversa);
+
+                const respostas = {
+                    1: 'Lamentamos muito pela experiência ruim 😔 Vamos verificar o que aconteceu. Obrigada pelo feedback!',
+                    2: 'Poxa, lamentamos que não foi tão bom 😕 Seu feedback nos ajuda a melhorar!',
+                    3: 'Obrigada pela avaliação! Estamos sempre buscando melhorar 😊',
+                    4: 'Que ótimo! Fico feliz que foi uma boa experiência 😊 Até a próxima!',
+                    5: 'Incrível! Ficamos muito felizes 😍⭐ Até a próxima corrida!'
+                };
+                resposta = respostas[nota] || 'Obrigada pela avaliação! 😊';
+            } else if (NLPService.eCancelar(msg) || msg === 'pular' || msg === 'depois') {
+                conversa.etapa = 'inicio';
+                conversa.dados = {};
+                conversas.set(telefone, conversa);
+                resposta = 'Tudo bem! Até a próxima 😊';
+            } else {
+                resposta = 'Por favor, manda um número de *1 a 5* para avaliar sua corrida ⭐';
+            }
+        }
         // ========== FILA DE ESPERA ==========
         if (conversa.etapa === 'oferecer_fila_espera') {
-            if (msg.includes('sim') || msg.includes('quero') || msg.includes('pode') || msg.includes('ok')) {
+            if (NLPService.eSim(msg)) {
                 // Cliente quer entrar na fila
                 const resultado = await RebecaService.adicionarFilaEspera(
                     telefone, nome, 
@@ -1172,7 +1292,7 @@ const RebecaService = {
                 conversa.etapa = 'inicio';
                 conversas.set(telefone, conversa);
                 return 'Ops, não consegui te adicionar na fila. Tenta de novo daqui a pouco!';
-            } else if (msg.includes('nao') || msg.includes('não') || msg.includes('depois') || msg.includes('deixa')) {
+            } else if (NLPService.eNao(msg)) {
                 // Cliente não quer esperar
                 conversa.etapa = 'inicio';
                 conversas.set(telefone, conversa);
@@ -1574,11 +1694,11 @@ _(ou mande *0* para pular)_`;
         // ========== CLIENTE RECORRENTE - CONFIRMAR ENDEREÇO ==========
         else if (conversa.etapa === 'confirmar_endereco_anterior') {
             // Cliente recorrente - confirmando se quer usar endereço anterior
-            if (msg === '1' || msg === 'sim' || msg === 's' || msg.includes('esse mesmo')) {
+            if (msg === '1' || NLPService.eSim(msg)) {
                 conversa.dados.origem = conversa.dados.ultimoEnderecoSugerido;
                 conversa.etapa = 'pedir_destino_rapido';
                 resposta = '📍 *Origem:* ' + conversa.dados.origem + '\n\n🏁 Pra onde você quer ir?';
-            } else if (msg === '2' || msg === 'nao' || msg === 'não' || msg === 'n' || msg.includes('outro')) {
+            } else if (msg === '2' || NLPService.eNao(msg)) {
                 conversa.etapa = 'pedir_origem';
                 resposta = 'Sem problemas! Me passa o novo endereço ou sua localização 📍';
             } else {
@@ -2120,7 +2240,7 @@ _Digite CANCELAR se precisar_`;
             resposta = `🚗 Chamando motorista!\n\n📍 ${conversa.dados.origem}\n🏁 ${conversa.dados.destino}\n\n📏 ${calculo.distancia} | ⏱️ ${calculo.tempo}\n💰 *R$ ${calculo.preco.toFixed(2)}*\n\n⏳ Buscando...\n_CANCELAR para cancelar_`;
         }
         else if (conversa.etapa === 'confirmar_corrida') {
-            if (msg === '1' || msg.includes('sim') || msg.includes('confirmar') || msg.includes('pode') || msg.includes('ok') || msg.includes('bora') || msg.includes('vai') || msg.includes('quero')) {
+            if (msg === '1' || NLPService.eSim(msg)) {
                 const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
                 conversa.etapa = 'aguardando_motorista';
                 conversa.dados.corridaId = corrida.id;
@@ -2129,7 +2249,7 @@ _Digite CANCELAR se precisar_`;
                     resposta += `\n\n📲 ${RebecaService.gerarLinkRastreamento(corrida.id)}`;
                 }
                 conversa.dados = {};
-            } else if (msg === '2' || msg.includes('nao') || msg.includes('não') || msg.includes('cancela') || msg.includes('desist')) {
+            } else if (msg === '2' || NLPService.eNao(msg)) {
                 conversa.etapa = 'inicio';
                 conversa.dados = {};
                 resposta = `Tudo bem! Corrida cancelada. Quando precisar é só chamar 😊`;

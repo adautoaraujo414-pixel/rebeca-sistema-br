@@ -4,6 +4,8 @@ const router = express.Router();
 const EvolutionMultiService = require('../services/evolution-multi.service');
 const { InstanciaWhatsapp, Motorista, Cliente, Corrida } = require('../models');
 const RebecaService = require('../services/rebeca.service');
+const MotoristaWhatsappService = require('../services/motorista-whatsapp.service');
+const NLPService = require('../services/nlp.service');
 const RebecaDeliveryService = require('../services/rebeca-delivery.service');
 const OpenAIRebecaService = require('../services/openai-rebeca.service');
 

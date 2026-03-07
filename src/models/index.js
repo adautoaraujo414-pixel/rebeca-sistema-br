@@ -16,7 +16,17 @@ const ClienteSchema = new mongoose.Schema({
     bloqueado: { type: Boolean, default: false }, motivoBloqueio: String,
     motoristaFavorito: { type: mongoose.Schema.Types.ObjectId, ref: 'Motorista' },
     ultimoMotorista: { type: mongoose.Schema.Types.ObjectId, ref: 'Motorista' },
-    adminId: mongoose.Schema.Types.ObjectId
+    adminId: mongoose.Schema.Types.ObjectId,
+    // Histórico de destinos recentes (últimos 5)
+    ultimosDestinos: [{
+        endereco: String,
+        latitude: Number,
+        longitude: Number,
+        contagem: { type: Number, default: 1 },
+        ultimaVez: { type: Date, default: Date.now }
+    }],
+    primeiraVez: { type: Boolean, default: true },
+    totalCorridas: { type: Number, default: 0 }
 }, { timestamps: true });
 
 const CorridaSchema = new mongoose.Schema({
@@ -31,7 +41,14 @@ const CorridaSchema = new mongoose.Schema({
     observacaoOrigem: String, observacaoDestino: String,
     distanciaKm: Number, tempoEstimado: Number, precoEstimado: Number, precoFinal: Number,
     status: { type: String, default: 'pendente' }, formaPagamento: String, avaliacao: Number,
-    motoristaChegouEm: Date, iniciadaEm: Date, finalizadaEm: Date, canceladaEm: Date, motivoCancelamento: String
+    motoristaChegouEm: Date, iniciadaEm: Date, finalizadaEm: Date, canceladaEm: Date, motivoCancelamento: String,
+    chatMensagens: [{ texto: String, remetente: String, nomeRemetente: String, data: Date, tipo: String }],
+    // Notificacoes enviadas (evitar duplicar)
+    notificacoes: {
+        motoristaChegouEnviada: { type: Boolean, default: false },
+        corridaIniciadaEnviada: { type: Boolean, default: false },
+        avaliacaoEnviada: { type: Boolean, default: false }
+    }
 }, { timestamps: true });
 
 const ConfigSchema = new mongoose.Schema({
