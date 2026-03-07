@@ -542,6 +542,16 @@ const RebecaService = {
             
             // CRIAR CORRIDA DIRETO - sem pedir referência
             const corridaGps = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
+
+            // Se foi agendado, responder e sair
+            if (corridaGps && corridaGps.agendado) {
+                const _dtAg = new Date(conversa.dados.horario_agendamento);
+                const _hAg = _dtAg.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+                conversa.etapa = 'inicio';
+                conversa.dados = {};
+                conversas.set(telefone, conversa);
+                return `Agendado para ${_hAg}! Te mando um lembrete 30 minutos antes. Qualquer coisa é só chamar.`;
+            }
             
             if (corridaGps.cooldown) {
                 return '⏳ Aguarde um momento...\n\nVocê finalizou uma corrida há pouco.\nPode pedir nova corrida em ' + Math.ceil(corridaGps.segundosRestantes / 60) + ' minuto(s).';
@@ -1213,6 +1223,12 @@ const RebecaService = {
             if (msg.includes('sim') || msg.includes('confirma') || msg.includes('pode') || msg.includes('ok') || msg.includes('bora') || msg.includes('vai') || msg.includes('quero') || msg === 's') {
                 // Cliente confirmou - criar corrida
                 const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
+                if (corrida && corrida.agendado) {
+                    const _dtA = new Date(conversa.dados.horario_agendamento);
+                    const _hA = _dtA.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+                    conversa.etapa = 'inicio'; conversa.dados = {}; conversas.set(telefone, conversa);
+                    return `Agendado para ${_hA}! Te aviso 30 minutos antes. Qualquer coisa é só falar.`;
+                }
                 if (corrida.duplicada) return '⚠️ Você já tem uma corrida em andamento!\n\nDigite *CANCELAR* para cancelar ou aguarde.';
                 conversa.etapa = 'aguardando_motorista';
                 conversa.dados.corridaId = corrida.id;
@@ -2580,6 +2596,26 @@ _Digite CANCELAR se precisar_`;
     },
 
     async criarCorrida(telefone, nomeCliente, dados, adminId = null, instanciaId = null) {
+        // AGENDAMENTO — se dados tem horario_agendamento, salva e nao cria corrida agora
+        if (dados && dados.horario_agendamento) {
+            try {
+                const AgendamentoService = require('./agendamento.service');
+                const ag = await AgendamentoService.salvar({
+                    adminId, instanciaId,
+                    telefone, nomeCliente,
+                    origem: dados.origem,
+                    destino: dados.destino || null,
+                    dataHora: dados.horario_agendamento
+                });
+                console.log('[REBECA] Agendamento salvo via criarCorrida:', ag._id, '|', dados.horario_agendamento);
+                // Retornar objeto fake compativel com o fluxo (sem criar corrida real)
+                return { agendado: true, id: ag._id, agendamento: ag };
+            } catch(e) {
+                console.log('[REBECA] Erro ao agendar — criando corrida normal:', e.message);
+                // Se falhar o agendamento, continua e cria corrida normal
+            }
+        }
+
         const { Corrida } = require('../models');
         
         // Anti-duplicacao: verificar se ja tem corrida ativa

@@ -580,9 +580,11 @@ RETORNE APENAS JSON VÁLIDO (sem markdown):
   "nome_cliente_corrigido": null,
   "tem_endereco": true ou false,
   "tem_numero": true ou false,
+  "horario_agendamento": null,
   "resposta": "",
   "notificar_admin": false
-}`;
+}
+REGRA HORARIO: Se a intencao for AGENDAMENTO ou se o cliente mencionar data/hora/compromisso, preencha horario_agendamento com a data/hora em formato ISO 8601 calculando a partir de hoje. Exemplos: "amanha as 17h" → "${new Date(Date.now()+86400000).toISOString().split('T')[0]}T17:00:00", "hoje as 20h" → "${new Date().toISOString().split('T')[0]}T20:00:00", "segunda as 8h" → calcule a proxima segunda.`;
 
         try {
             const response = await axios.post('https://api.openai.com/v1/chat/completions', {
