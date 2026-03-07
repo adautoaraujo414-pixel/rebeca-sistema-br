@@ -58,6 +58,7 @@ const CorridaService = {
         
         corrida.status = 'finalizada';
         corrida.finalizadaEm = new Date();
+        corrida._despachoCache = undefined;
         
         // Liberar motorista para disponivel
         if (corrida.motoristaId) {
@@ -104,6 +105,7 @@ const CorridaService = {
         corrida.status = 'cancelada';
         corrida.canceladaEm = new Date();
         corrida.motivoCancelamento = motivo;
+        corrida._despachoCache = undefined;
         await corrida.save();
 
         if (corrida.motoristaId) {
