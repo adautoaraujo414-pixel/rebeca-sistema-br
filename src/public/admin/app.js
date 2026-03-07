@@ -76,11 +76,11 @@ function criarGraficoFaturamento(d) { const ctx=document.getElementById('chartFa
 async function carregarDashboard() {
     const dash = await api('/api/estatisticas/dashboard');
     const fraude = await api('/api/antifraude/estatisticas');
-    document.getElementById('motoristasOnline').textContent = dash.motoristas?.online || 0;
-    document.getElementById('corridasHoje').textContent = dash.corridas?.hoje || 0;
-    document.getElementById('corridasPendentes').textContent = dash.corridas?.pendentes || 0;
-    document.getElementById('faturamentoHoje').textContent = (dash.faturamento?.hoje?.bruto || 0).toFixed(2);
-    document.getElementById('alertasFraude').textContent = fraude.alertas?.pendentes || 0;
+    document.getElementById('motoristasOnline').textContent = dash.motoristasOnline ?? dash.motoristas?.online ?? 0;
+    document.getElementById('corridasHoje').textContent = dash.corridasHoje ?? dash.corridas?.hoje ?? 0;
+    document.getElementById('corridasPendentes').textContent = dash.corridasPendentes ?? dash.corridas?.pendentes ?? 0;
+    document.getElementById('faturamentoHoje').textContent = ((dash.faturamentoHoje ?? dash.faturamento?.hoje?.bruto ?? 0)).toFixed(2);
+    document.getElementById('alertasFraude').textContent = fraude.alertas?.pendentes ?? 0;
     const cd = await api('/api/estatisticas/corridas-por-dia?dias=7'); criarGraficoCorridas(cd);
     const hr = await api('/api/estatisticas/horarios-pico');
     const picos = hr.filter(h=>h.corridas>0).sort((a,b)=>b.corridas-a.corridas).slice(0,8);
