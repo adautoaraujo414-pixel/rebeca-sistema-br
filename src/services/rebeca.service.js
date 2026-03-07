@@ -520,17 +520,20 @@ Baseado APENAS na situação real acima, responda de forma natural e contextual.
 - NÃO invente informações que não estão nos dados acima
 - Se não souber responder com certeza, diga algo natural como "deixa eu verificar..."`;
 
-                const _respostaIA = await fetch('https://api.anthropic.com/v1/messages', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
-                    body: JSON.stringify({
+                const axios = require('axios');
+                const _respostaIA = await axios.post('https://api.anthropic.com/v1/messages', {
                         model: 'claude-haiku-4-5-20251001',
                         max_tokens: 200,
                         messages: [{ role: 'user', content: _promptContexto }]
-                    })
-                });
-                const _dadosIA = await _respostaIA.json();
-                const _textoIA = _dadosIA?.content?.[0]?.text?.trim();
+                    }, {
+                        headers: { 
+                            'Content-Type': 'application/json', 
+                            'x-api-key': process.env.ANTHROPIC_API_KEY, 
+                            'anthropic-version': '2023-06-01' 
+                        },
+                        timeout: 8000
+                    });
+                const _textoIA = _respostaIA.data?.content?.[0]?.text?.trim();
                 if (_textoIA && _textoIA.length > 5) {
                     console.log('[REBECA-CLAUDE] Contexto resolvido por IA:', mensagem.substring(0,50));
                     conversas.set(telefone, conversa);
