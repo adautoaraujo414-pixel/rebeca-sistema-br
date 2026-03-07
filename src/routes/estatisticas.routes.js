@@ -7,11 +7,13 @@ const EstatisticasService = require('../services/estatisticas.service');
 router.get('/dashboard', async (req, res) => {
     try {
         const adminId = req.query.adminId || req.headers['x-admin-id'];
-        // adminId opcional — sem ele retorna dados globais
+        console.log('[DASHBOARD] adminId recebido:', adminId);
         const dashboard = await EstatisticasService.dashboardCompleto(adminId);
+        console.log('[DASHBOARD] resultado:', JSON.stringify(dashboard));
         res.json(dashboard);
     } catch (e) {
-        res.status(500).json({ erro: e.message });
+        console.error('[DASHBOARD] ERRO:', e.message, e.stack);
+        res.status(500).json({ erro: e.message, stack: e.stack?.split('\n')[0] });
     }
 });
 
