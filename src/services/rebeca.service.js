@@ -2073,9 +2073,31 @@ _Digite CANCELAR se precisar_`;
                             return 'Ok! Quando precisar é só chamar 😊';
                         }
                     }
-                    conversa.dados.origemTexto = msgOriginal;
-                    conversa.etapa = 'pedir_numero_origem';
-                    resposta = `📍 ${msgOriginal}\n\nQual bairro?`;
+                    // Aceitar como referencia/ponto de local — nao exigir endereco formal
+                    // Ex: "jb7", "perto do mercado", "aqui no shopping", "me busca no centro"
+                    conversa.dados.origem = msgOriginal;
+                    conversa.dados.origemValidada = { valido: false, precisao: 'referencia', endereco: msgOriginal };
+                    conversa.dados.calculo = { origem: { endereco: msgOriginal, latitude: null, longitude: null }, destino: null, distanciaKm: 0, tempoMinutos: 0, preco: 15, faixa: { nome: 'padrao', multiplicador: 1 } };
+                    // Despachar direto sem pedir mais info
+                    const _motsRef = await MotoristaService.listarDisponiveis(conversa.adminId);
+                    if (_motsRef.length === 0) {
+                        const _estRef = await RebecaService.estimarTempoEspera(conversa.adminId);
+                        conversa.etapa = 'oferecer_fila_espera';
+                        conversas.set(telefone, conversa);
+                        return 'Todos os motoristas estão em corrida agora. Previsão: ' + _estRef.texto + '. Posso te avisar quando um desocupar? Responde SIM!';
+                    }
+                    const _corrRef = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
+                    if (_corrRef && _corrRef.agendado) {
+                        conversa.etapa = 'inicio'; conversa.dados = {};
+                        conversas.set(telefone, conversa);
+                        return 'Agendado! Te aviso antes.';
+                    }
+                    if (_corrRef.cooldown) return '⏳ Aguarde ' + Math.ceil(_corrRef.segundosRestantes / 60) + ' min para nova corrida.';
+                    if (_corrRef.duplicada) return '⚠️ Você já tem corrida ativa! Digite CANCELAR para cancelar.';
+                    conversa.etapa = 'aguardando_motorista';
+                    conversa.dados.corridaId = _corrRef.id;
+                    conversas.set(telefone, conversa);
+                    resposta = '✅ Certo! Motorista a caminho para: ' + msgOriginal + '\n\n⏳ Buscando o mais próximo...\n\n_Digite CANCELAR se precisar_';
                 } else {
                     conversa.dados.origem = validacao.endereco;
                     conversa.etapa = 'pedir_referencia';
