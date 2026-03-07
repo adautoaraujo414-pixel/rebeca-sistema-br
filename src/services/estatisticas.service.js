@@ -113,7 +113,7 @@ const EstatisticasService = {
             Corrida.find({ adminId: aid, createdAt: { $gte: hoje } }),
             Motorista.find({ adminId: aid }),
             Cliente.countDocuments({ adminId: aid }),
-            Corrida.find({ adminId: aid, status: 'finalizada' })
+            Corrida.find({ adminId: aid })
         ]);
         
         const faturamentoHoje = corridasHoje
