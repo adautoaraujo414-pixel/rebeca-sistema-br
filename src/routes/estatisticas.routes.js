@@ -90,4 +90,33 @@ router.get('/cancelamentos', async (req, res) => {
     }
 });
 
+
+// ROTA DEBUG TEMPORARIA — remover depois
+router.get('/debug-adminid', async (req, res) => {
+    try {
+        const mongoose = require('mongoose');
+        const { Corrida, Motorista } = require('../models');
+        const adminId = req.query.adminId;
+        
+        const totalCorridas = await Corrida.countDocuments({});
+        const comAdminStr = adminId ? await Corrida.countDocuments({ adminId }) : 'sem adminId';
+        const comAdminObj = adminId && mongoose.Types.ObjectId.isValid(adminId) 
+            ? await Corrida.countDocuments({ adminId: new mongoose.Types.ObjectId(adminId) }) : 'N/A';
+        const sample = await Corrida.findOne({}).select('adminId status').lean();
+        const totalMot = await Motorista.countDocuments({});
+        const motComAdmin = adminId ? await Motorista.countDocuments({ adminId }) : 0;
+        
+        res.json({
+            totalCorridas, comAdminStr, comAdminObj,
+            totalMotoristas: totalMot, motoristasComAdmin: motComAdmin,
+            sampleAdminId: sample?.adminId,
+            sampleAdminIdType: typeof sample?.adminId,
+            adminIdRecebido: adminId,
+            isValid: adminId ? mongoose.Types.ObjectId.isValid(adminId) : false
+        });
+    } catch(e) {
+        res.json({ erro: e.message });
+    }
+});
+
 module.exports = router;
