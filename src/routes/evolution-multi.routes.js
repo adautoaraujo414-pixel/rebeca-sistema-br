@@ -206,6 +206,33 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                     conteudo = { latitude: msg.message.locationMessage.degreesLatitude, longitude: msg.message.locationMessage.degreesLongitude };
                 } else if (msg.message?.liveLocationMessage) {
                     conteudo = { latitude: msg.message.liveLocationMessage.degreesLatitude, longitude: msg.message.liveLocationMessage.degreesLongitude };
+                } else if (msg.message?.stickerMessage) {
+                    // Sticker/figurinha — responder com bom humor e redirecionar
+                    const _stickers = [
+                        'Haha, boa figurinha! 😄 Vai precisar de um carro hoje?',
+                        '😂 Adorei! Me passa um endereço que eu chamo um carro!',
+                        'Kkkk! 😄 Quando precisar de corrida é só falar!'
+                    ];
+                    conteudo = '__STICKER__';
+                    const _resSticker = _stickers[Math.floor(Math.random() * _stickers.length)];
+                    await EvolutionMultiService.enviarMensagem(instancia._id, telefone, _resSticker);
+                    continue;
+
+                } else if (msg.message?.imageMessage) {
+                    // Imagem — responder naturalmente e redirecionar
+                    const _caption = msg.message.imageMessage.caption || '';
+                    if (_caption) {
+                        conteudo = _caption; // processar legenda como mensagem normal
+                    } else {
+                        const _resImg = [
+                            'Boa imagem! 😄 Vai precisar de um carro hoje?',
+                            '😊 Legal! Me passa um endereço que eu chamo um carro!',
+                            'Haha! 😄 Quando precisar de corrida é só falar!'
+                        ];
+                        await EvolutionMultiService.enviarMensagem(instancia._id, telefone, _resImg[Math.floor(Math.random() * _resImg.length)]);
+                        continue;
+                    }
+
                 } else if (msg.message?.audioMessage) {
                     // Áudio recebido - baixar via Evolution API e transcrever
                     console.log('[WEBHOOK] Audio recebido de', telefone);
