@@ -1531,37 +1531,10 @@ _(ou mande *0* para pular)_`;
                         'Posso te avisar assim que um motorista desocupar? Responde *SIM* que eu te coloco na fila!';
                 }
                 
-                // CRIAR CORRIDA DIRETO - OBJETIVIDADE!
-                const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
-                
-                // Se cooldown ativo
-                if (corrida.cooldown) {
-                    return '⏳ Aguarde um momento...\n\nVocê finalizou uma corrida há pouco.\nPode pedir nova corrida em ' + Math.ceil(corrida.segundosRestantes / 60) + ' minuto(s).';
-                }
-                
-                // Se duplicada, avisar cliente
-                if (corrida.duplicada) {
-                    return '⚠️ Você já tem uma corrida em andamento!\n\nDigite *CANCELAR* para cancelar ou aguarde o motorista.';
-                }
-                
-                conversa.etapa = 'aguardando_motorista';
-                conversa.dados.corridaId = corrida.id;
+                // Salvar origem validada e pedir destino
+                conversa.etapa = 'pedir_destino';
                 conversas.set(telefone, conversa);
-                
-                // Verificar se tem motorista disponível AGORA - feedback rápido
-                const motoristasAgora = await MotoristaService.listarDisponiveis(conversa.adminId);
-                if (motoristasAgora.length === 0) {
-                    return `📍 ${validacao.endereco}\n\nCorrida registrada! No momento todos os motoristas estão ocupados, mas já estamos buscando. Te aviso assim que um aceitar.`;
-                }
-                
-                // ========== RESPOSTA RICA + LINK RASTREAMENTO ==========
-                const _precoVal = conversa.dados?.calculo?.preco || conversa.dados?.calculo?.precoFinal || 0;
-                let _msgDireto = `✅ *Corrida solicitada!*\n\n📍 *Origem:* ${validacao.endereco}`;
-                if (_precoVal > 0) _msgDireto += `\n💰 *Valor estimado: R$ ${_precoVal.toFixed(2)}*`;
-                _msgDireto += `\n\n⏳ Buscando o motorista mais próximo...`;
-                // Link de rastreamento enviado após motorista aceitar
-                _msgDireto += `\n\n_Digite CANCELAR se precisar_`;
-                return _msgDireto;
+                return '📍 *' + validacao.endereco + '*\n\n🏁 Qual o destino?';
             }
         }
         // ========== COMPLEMENTO GPS (número/referência) ==========
