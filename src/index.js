@@ -275,5 +275,7 @@ setInterval(async () => {
         console.log('[REATIVAR] Erro:', e.message);
     }
 }, 60 * 60 * 1000); // Verifica a cada 1h (mas só executa às 10h)
-console.log('✅ Cron reativação de clientes ativo');
+console.log('✅ Cron reativação de clientes ativo')
+const AgendamentoService = require('./services/agendamento.service');
+AgendamentoService.iniciarCron();;
 

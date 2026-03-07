@@ -38,7 +38,10 @@ const ConfigSchema = new mongoose.Schema({
     chave: { type: String, unique: true }, valor: mongoose.Schema.Types.Mixed
 }, { timestamps: true });
 
+const Agendamento = require('./Agendamento');
+
 module.exports = {
+    Agendamento,
     Motorista: mongoose.model('Motorista', MotoristaSchema),
     Cliente: mongoose.model('Cliente', ClienteSchema),
     Corrida: mongoose.model('Corrida', CorridaSchema),

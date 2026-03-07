@@ -315,6 +315,21 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                                     } catch(_mapErr) {
                                         console.log('[AUDIO] Aviso: nao atualizou conversa:', _mapErr.message);
                                     }
+                                    // Salvar agendamento se audio mencionou horário + endereço
+                                    if (rac.origem_extraida && rac.horario_agendamento) {
+                                        try {
+                                            const AgendamentoService = require('../services/agendamento.service');
+                                            await AgendamentoService.salvar({
+                                                adminId, instanciaId: instancia._id,
+                                                telefone, nomeCliente: nome,
+                                                origem: rac.origem_extraida,
+                                                destino: rac.destino_extraido,
+                                                dataHora: rac.horario_agendamento
+                                            });
+                                            console.log('[AUDIO] Agendamento salvo:', rac.horario_agendamento);
+                                        } catch(e) { console.log('[AUDIO] Erro salvar agendamento:', e.message); }
+                                    }
+
                                     if (rac.resposta_rebeca) {
                                         await EvolutionMultiService.enviarMensagem(instancia._id, telefone, rac.resposta_rebeca);
                                         console.log('[AUDIO RACIOCINIO] Enviado:', rac.resposta_rebeca.substring(0,60));
