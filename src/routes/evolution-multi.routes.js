@@ -332,7 +332,12 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                                         } catch(e) { console.log('[AUDIO] Erro salvar agendamento:', e.message); }
                                     }
 
-                                    if (rac.resposta_rebeca) {
+                                    // Se o áudio é pergunta de status — ignorar resposta_rebeca e deixar
+                                    // a Rebeca responder com dados reais do banco
+                                    const _audioTranscrito = typeof conteudoOriginal === 'string' ? conteudoOriginal.toLowerCase() : '';
+                                    const _perguntaStatus = _audioTranscrito.match(/(cadê|cade|chegando|chegou|a caminho|onde (está|esta|fica)|quanto tempo|meu carro|minha corrida|agendad|status|motorista)/);
+                                    
+                                    if (rac.resposta_rebeca && !_perguntaStatus) {
                                         await EvolutionMultiService.enviarMensagem(instancia._id, telefone, rac.resposta_rebeca);
                                         console.log('[AUDIO RACIOCINIO] Enviado:', rac.resposta_rebeca.substring(0,60));
                                         conteudo = null;
