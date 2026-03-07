@@ -2749,13 +2749,46 @@ _Digite CANCELAR se precisar_`;
                 }
             } else {
                 console.log('[REBECA] Nenhum motorista disponivel para admin:', adminId);
-                // Notificar cliente que não tem motorista disponível
+
+                // Verificar se tem motorista em corrida há mais de 7 min — provavelmente terminando
                 try {
-                    const _instSemMot = await InstanciaWhatsapp.findOne({ adminId, status: 'conectado' });
-                    if (_instSemMot) {
+                    const { Corrida: _Corrida } = require('../models');
+                    const _agora = new Date();
+                    const _corridasAndamento = await _Corrida.find({
+                        adminId,
+                        status: { $in: ['em_andamento', 'motorista_a_caminho', 'aceita'] }
+                    }).populate('motoristaId').lean();
+
+                    // Achar motorista em corrida ha mais de 7 min
+                    const _maisAntiga = _corridasAndamento
+                        .filter(c => {
+                            const mins = (_agora - new Date(c.updatedAt || c.createdAt)) / 60000;
+                            return mins > 7;
+                        })
+                        .sort((a, b) => new Date(a.updatedAt || a.createdAt) - new Date(b.updatedAt || b.createdAt))[0];
+
+                    const _instNotif = await InstanciaWhatsapp.findOne({ adminId, status: 'conectado' });
+
+                    if (_maisAntiga?.motoristaId?.whatsapp && _instNotif) {
                         const EvoService = require('./evolution-multi.service');
-                        await EvoService.enviarMensagem(_instSemMot._id, corrida.clienteTelefone,
-                            'Poxa, todos os motoristas estão ocupados no momento. Você será avisado assim que um desocupar!'
+                        // Avisar motorista que tem cliente esperando
+                        await EvoService.enviarMensagem(_instNotif._id, _maisAntiga.motoristaId.whatsapp,
+                            `Tem um cliente aguardando corrida! Assim que finalizar sua corrida atual, o próximo já está na fila.`
+                        );
+                        console.log('[REBECA] Motorista próximo de terminar notificado:', _maisAntiga.motoristaId.whatsapp);
+                        // Avisar cliente com estimativa real
+                        const _est = await RebecaService.estimarTempoEspera(adminId);
+                        if (_instNotif) {
+                            await EvoService.enviarMensagem(_instNotif._id, corrida.clienteTelefone,
+                                'Todos os motoristas estão em corrida, mas já avisamos o mais próximo de terminar. Previsão: ' + _est.texto + '. Aguarda!'
+                            );
+                        }
+                    } else if (_instNotif) {
+                        // Sem nenhum motorista próximo de terminar — aviso genérico
+                        const EvoService = require('./evolution-multi.service');
+                        const _est = await RebecaService.estimarTempoEspera(adminId);
+                        await EvoService.enviarMensagem(_instNotif._id, corrida.clienteTelefone,
+                            'Todos os motoristas estão ocupados no momento. Previsão de espera: ' + _est.texto + '. Você será avisado assim que um desocupar!'
                         );
                     }
                 } catch(_ne) { console.log('[REBECA] Erro notificar sem motorista:', _ne.message); }
@@ -3246,24 +3279,43 @@ const filaEsperaFunctions = {
 
     async estimarTempoEspera(adminId) {
         try {
-            const { Corrida, Motorista } = require('../models');
-            
-            // Buscar corridas em andamento
+            const { Corrida } = require('../models');
+            const agora = new Date();
+
+            // Buscar corridas em andamento com tempo de inicio
             const corridasAtivas = await Corrida.find({
                 adminId,
                 status: { $in: ['aceita', 'em_andamento', 'motorista_a_caminho'] }
-            });
-            
-            if (corridasAtivas.length === 0) return { minutos: 0, texto: 'poucos minutos' };
-            
-            // Estimar média de tempo das corridas (média 15min por corrida)
-            const tempoMedio = 15;
-            const menorTempo = Math.max(5, tempoMedio - 5);
-            
-            return { 
-                minutos: menorTempo, 
-                texto: `aproximadamente ${menorTempo} minutos`
-            };
+            }).lean();
+
+            if (corridasAtivas.length === 0) return { minutos: 0, texto: 'poucos minutos', proximaTerminando: null };
+
+            // Calcular tempo decorrido de cada corrida e estimar restante
+            // Assumindo media de 20min por corrida
+            const MEDIA_CORRIDA_MIN = 20;
+            let menorTempoRestante = Infinity;
+            let corridaMaisAntiga = null;
+
+            for (const c of corridasAtivas) {
+                const inicio = new Date(c.updatedAt || c.createdAt || agora);
+                const minutosDecorridos = (agora - inicio) / 1000 / 60;
+                const minutosRestantes = Math.max(2, MEDIA_CORRIDA_MIN - minutosDecorridos);
+                if (minutosRestantes < menorTempoRestante) {
+                    menorTempoRestante = minutosRestantes;
+                    corridaMaisAntiga = c;
+                }
+            }
+
+            const minutos = Math.round(menorTempoRestante);
+            const proximaTerminando = corridaMaisAntiga;
+
+            let texto;
+            if (minutos <= 3) texto = 'menos de 5 minutos';
+            else if (minutos <= 8) texto = 'uns 5 a 10 minutos';
+            else if (minutos <= 15) texto = 'uns 10 a 15 minutos';
+            else texto = 'aproximadamente ' + minutos + ' minutos';
+
+            return { minutos, texto, proximaTerminando };
         } catch (e) {
             return { minutos: 10, texto: 'aproximadamente 10 minutos' };
         }
