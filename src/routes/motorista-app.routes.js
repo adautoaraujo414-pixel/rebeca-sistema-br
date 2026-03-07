@@ -191,8 +191,23 @@ router.post('/cheguei', auth, async (req, res) => {
         // Atualizar status da corrida
         corrida.status = 'aguardando_cliente';
         corrida.motoristaChegouEm = new Date();
+        if (!corrida.notificacoes) corrida.notificacoes = {};
+        corrida.notificacoes.motoristaChegouEnviada = true;
         await corrida.save();
-        
+
+        // Atualizar estado da conversa da Rebeca — cliente está em aguardando_embarque
+        try {
+            const RebecaService = require('../services/rebeca.service');
+            const conversas = RebecaService.conversas;
+            if (conversas && corrida.clienteTelefone) {
+                const conv = conversas.get(corrida.clienteTelefone) || {};
+                conv.etapa = 'aguardando_embarque';
+                conv.dados = { ...conv.dados, corridaId: corridaId };
+                conv._ultimaAtividade = Date.now();
+                conversas.set(corrida.clienteTelefone, conv);
+            }
+        } catch(_re) { console.log('[CHEGUEI] Rebeca state:', _re.message); }
+
         // Notificar cliente via WhatsApp
         const instancia = await InstanciaWhatsapp.findOne({ adminId: corrida.adminId, status: 'conectado' });
         if (instancia && corrida.clienteTelefone) {
