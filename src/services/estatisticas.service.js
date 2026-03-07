@@ -3,6 +3,8 @@ const { Corrida, Motorista, Cliente } = require('../models');
 const EstatisticasService = {
     // Corridas por dia
     async corridasPorDia(dias = 7, adminId = null) {
+        const mongoose = require('mongoose');
+        if (!adminId || !mongoose.Types.ObjectId.isValid(adminId)) return [];
         const resultado = [];
         
         for (let i = dias - 1; i >= 0; i--) {
@@ -72,6 +74,8 @@ const EstatisticasService = {
 
     // Horários de pico
     async horariosPico(adminId = null) {
+        const mongoose = require('mongoose');
+        if (!adminId || !mongoose.Types.ObjectId.isValid(adminId)) return [];
         const corridas = await Corrida.find({ status: 'finalizada' , ...(adminId ? { adminId } : {})});
         const horarios = {};
         
@@ -89,6 +93,12 @@ const EstatisticasService = {
 
     // Dashboard completo
     async dashboardCompleto(adminId = null) {
+        const mongoose = require('mongoose');
+        if (!adminId || !mongoose.Types.ObjectId.isValid(adminId)) {
+            return { corridasHoje: 0, corridasFinalizadasHoje: 0, faturamentoHoje: 0,
+                     motoristasTotal: 0, motoristasOnline: 0, motoristasEmCorrida: 0,
+                     clientesTotal: 0, corridasTotal: 0, faturamentoTotal: 0 };
+        }
         const hoje = new Date();
         hoje.setHours(0, 0, 0, 0);
         
