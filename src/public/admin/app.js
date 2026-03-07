@@ -31,6 +31,11 @@ async function api(url, method='GET', data=null) {
     const adminId = usuario._id || usuario.id || null;
     const opt = { method, headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+token } };
     if (adminId) opt.headers['x-admin-id'] = adminId;
+    // Adicionar adminId como query param para garantir chegada no backend
+    if (adminId && method === 'GET') {
+        const sep = url.includes('?') ? '&' : '?';
+        url = url + sep + 'adminId=' + adminId;
+    }
     if (data) opt.body = JSON.stringify(data);
     try { return await (await fetch(url, opt)).json(); } catch(e) { return { error:'Erro' }; }
 }
