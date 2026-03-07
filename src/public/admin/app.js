@@ -302,7 +302,21 @@ async function carregarMotoristas() {
     const s = document.getElementById('filtroStatusMotorista').value;
     let url = '/api/motoristas?'; if (b) url+='busca='+b+'&'; if (s) url+='status='+s;
     const m = await api(url);
-    document.getElementById('motoristasTable').innerHTML = m.length ? m.map(x=>`<tr><td><strong>${x.nomeCompleto||x.nome}</strong></td><td>📱 ${x.whatsapp}</td><td>${x.veiculo?.modelo||''} ${x.veiculo?.cor||''}</td><td><strong>${x.veiculo?.placa||'-'}</strong></td><td><span class="badge ${getStatusColor(x.status)}">${formatStatus(x.status)}</span></td><td><button class="btn btn-danger btn-sm" onclick="desativarMotorista('${x._id||x.id}')">🗑️</button></td></tr>`).join('') : '<tr><td colspan="6" style="text-align:center;color:#999">Nenhum</td></tr>';
+    document.getElementById('motoristasTable').innerHTML = m.length ? m.map(x=>{
+        const link = window.location.origin + '/motorista-app.html?id=' + (x._id||x.id);
+        return `<tr>
+            <td><strong>${x.nomeCompleto||x.nome}</strong></td>
+            <td>📱 ${x.whatsapp}</td>
+            <td>${x.veiculo?.modelo||''} ${x.veiculo?.cor||''}</td>
+            <td><strong>${x.veiculo?.placa||'-'}</strong></td>
+            <td><span class="badge ${getStatusColor(x.status)}">${formatStatus(x.status)}</span></td>
+            <td style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+                <a href="${link}" target="_blank" class="btn btn-primary btn-sm" title="Abrir app motorista">📱 App</a>
+                <button class="btn btn-sm" style="background:#6c757d;color:#fff;" title="Copiar link" onclick="navigator.clipboard.writeText('${link}').then(()=>{const t=document.createElement('div');t.textContent='✅ Link copiado!';t.style.cssText='position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:10px 20px;border-radius:8px;z-index:9999;font-size:14px;';document.body.appendChild(t);setTimeout(()=>t.remove(),2500)})">📋 Copiar</button>
+                <button class="btn btn-danger btn-sm" onclick="desativarMotorista('${x._id||x.id}')">🗑️</button>
+            </td>
+        </tr>`;
+    }).join('') : '<tr><td colspan="6" style="text-align:center;color:#999">Nenhum</td></tr>';
 }
 function abrirModal(id) { document.getElementById(id).classList.add('active'); }
 // fecharModal: ver versão completa abaixo
