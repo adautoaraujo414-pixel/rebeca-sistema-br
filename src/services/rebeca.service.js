@@ -776,17 +776,20 @@ const RebecaService = {
                             conversas.set(telefone, conversa);
                             const _respostaOUTRO = (resultadoGPT.resposta || '').toLowerCase();
                             // Filtrar respostas genéricas proibidas
-                            const _proibidas = ['como posso ajudar', 'posso te ajudar', 'posso fazer por você', 'aqui é a rebeca', 'da ubmax', 'em que posso'];
+                            const _proibidas = ['como posso ajudar', 'posso te ajudar', 'posso fazer por você', 'aqui é a rebeca', 'da ubmax', 'em que posso', 'é só chamar', 'quando precisar de um carro'];
                             const _temProibida = _proibidas.some(p => _respostaOUTRO.includes(p));
                             if (!_temProibida && resultadoGPT.resposta && resultadoGPT.resposta.length > 5) {
                                 return resultadoGPT.resposta;
                             }
-                            // Fallback contextual baseado na mensagem
+                            // Fallback contextual variado — sem frase fixa
                             const _msgLower = (msg || '').toLowerCase();
-                            if (_msgLower.includes('dormir') || _msgLower.includes('boa noite')) return 'Boa noite! 😴 Quando precisar de um carro é só chamar!';
-                            if (_msgLower.includes('dinheiro') || _msgLower.includes('real') || _msgLower.includes('reais')) return 'Haha, só faço corridas por aqui! 😄 Vai precisar de uma?';
-                            if (_msgLower.includes('internet') || _msgLower.includes('sinal')) return 'Tudo bem! Quando voltar é só chamar 😊';
-                            return 'Entendido! 😊 Quando precisar de um carro é só falar!';
+                            if (_msgLower.includes('kk') || _msgLower.includes('haha') || _msgLower.includes('rsrs')) return ['Haha! 😄', 'Kkk tô aqui! 😄', '😂 Boa!'][Math.floor(Math.random()*3)];
+                            if (_msgLower.includes('fds') || _msgLower.includes('droga') || _msgLower.includes('merda')) return ['Eita! 😅 Tá tudo bem?', 'Ops! 😅'][Math.floor(Math.random()*2)];
+                            if (_msgLower.includes('dormir') || _msgLower.includes('boa noite')) return 'Boa noite! 😴';
+                            if (_msgLower.includes('dinheiro') || _msgLower.includes('pix') || _msgLower.includes('reais')) return 'Haha, só faço corridas por aqui! 😄';
+                            if (_msgLower.includes('internet') || _msgLower.includes('sinal') || _msgLower.includes('net')) return 'Eita, boa sorte com o sinal! 😅';
+                            if (_msgLower.includes('humilh') || _msgLower.includes('triste') || _msgLower.includes('chateado')) return 'Espero melhorar seu dia! 😊';
+                            return ['Entendido! 😊', 'Tô aqui! 😊', 'Ok! 😄'][Math.floor(Math.random()*3)];
                         }
                         
                         // Verificar disponibilidade - já consultou motoristas
