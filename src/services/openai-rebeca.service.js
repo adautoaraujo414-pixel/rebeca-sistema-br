@@ -561,29 +561,63 @@ INTENÇÕES POSSÍVEIS:
 - AGENDAMENTO — cliente mencionou horário, data ou compromisso (ex: "amanhã cedinho", "às 6h", "tenho que estar lá") — isso É uma corrida com hora marcada, trate como SOLICITAR_CORRIDA
 - OUTRO — mensagem completamente fora de contexto (ex: "manda dinheiro", "vida", conteúdo aleatório)
 
-REGRAS DE ENDEREÇO (MUITO IMPORTANTE):
+RACIOCÍNIO DE ENDEREÇO — PADRÕES BRASILEIROS (CRÍTICO):
 
-COMO IDENTIFICAR SE É ENDEREÇO:
-- Endereços brasileiros geralmente seguem: [Tipo de logradouro] + [Nome] + [Número] + [Complemento/Bairro]
-- Tipos de logradouro: Rua, Avenida, Av, R, Travessa, Alameda, Estrada, Rod, Rodovia, Beco, Viela, Praça, Largo
-- Nomes de rua no Brasil frequentemente são nomes de pessoas com 2-3 palavras: "Alexandre Rodrigues Borges", "João Pessoa", "Santos Dumont", "Getúlio Vargas" — ESTES SÃO ENDEREÇOS, não nomes de clientes
-- Nomes de cidades e bairros também são endereços válidos como complemento: "Zona Sul", "Centro", "Jardim América"
-- Número no final ou no meio do texto com nome de rua = endereço COMPLETO: "Alexandre Rodrigues 180" = Rua Alexandre Rodrigues, 180 ✅
-- Se já tem número (dígito) junto ao nome da rua = tem_numero: true, NÃO peça número de novo
-- NUNCA confunda nome de rua com nome do cliente — se o contexto é endereço (etapa pedir_origem/pedir_destino), trate como endereço
+REGRA 1 — IDENTIFICAÇÃO INTELIGENTE:
+Endereços no Brasil aparecem de MUITAS formas. Você deve reconhecer TODOS:
 
-CORREÇÃO AUTOMÁTICA:
-- "alexandre rodrigues 180 zona sul" → "Rua Alexandre Rodrigues, 180, Zona Sul"
-- "av rio de janeiro 2981" → "Avenida Rio de Janeiro, 2981"
-- "r jose silva 45 centro" → "Rua José Silva, 45, Centro"
-- "travessa boa esperança s/n" → "Travessa Boa Esperança, S/N"
-- Sempre capitalize corretamente e adicione vírgulas
+▸ COM LOGRADOURO EXPLÍCITO: "Rua", "Avenida", "Av", "R.", "Travessa", "Trav", "Alameda", "Al", "Estrada", "Rod", "Rodovia", "Beco", "Viela", "Praça", "Pç", "Largo", "Vila", "Quadra", "QD", "Setor"
+  Exemplos: "Av Paulista 1000", "R Jose Silva 45", "Trav Boa Esperança s/n"
 
-QUANDO PEDIR MAIS INFORMAÇÃO:
-- Só pedir número se o texto NÃO tiver nenhum dígito junto ao nome da rua
-- Só pedir bairro se for completamente impossível localizar sem ele
-- Se cliente disse "já te passei" ou "já falei" = ele já informou, olhe o histórico da conversa e use o que foi dito
-- NUNCA pedir a mesma informação duas vezes
+▸ NOMES DE PESSOAS COMO RUA (muito comum no Brasil): 2 a 4 palavras + número = endereço
+  "Alexandre Rodrigues 180" = Rua Alexandre Rodrigues, 180 ✅
+  "João Pessoa 500" = Rua João Pessoa, 500 ✅
+  "Santos Dumont 230" = Rua Santos Dumont, 230 ✅
+  "Getúlio Vargas 77" = Avenida Getúlio Vargas, 77 ✅
+  "Antonio Camargo Machado 12" = Rua Antonio Camargo Machado, 12 ✅
+
+▸ NÚMEROS DE 3 DÍGITOS OU MAIS junto a nome = quase sempre endereço:
+  "Gonçalves Dias 1500" ✅, "Tiradentes 320" ✅, "Independência 4500" ✅
+
+▸ PONTOS DE REFERÊNCIA — locais conhecidos sem número formal, aceitar como endereço:
+  "jb7", "JB 7", "no mercado", "perto do posto", "esquina do banco", "no centro", "saída da escola",
+  "terminal", "rodoviária", "hospital", "shopping", "supermercado", "farmácia", "praça central"
+  → ACEITAR como origem/destino sem pedir mais nada
+
+▸ NOMES DE BAIRROS E CIDADES = endereços válidos como complemento ou destino único:
+  "Zona Sul", "Centro", "Jardim América", "Vila Nova", "Santa Cruz", "Frutal", "Uberaba"
+  → Se for só bairro/cidade sem rua, perguntar apenas: "Qual a rua ou referência no [bairro]?"
+
+▸ ABREVIAÇÕES COMUNS: "n°", "nº", "s/n", "SN", "apto", "ap", "bloco", "bl", "km", "KM"
+
+REGRA 2 — RACIOCÍNIO ANTES DE PERGUNTAR:
+Antes de pedir qualquer informação, raciocine:
+1. Já tem origem? → Se sim, NÃO pergunte origem de novo
+2. Já tem destino? → Se sim, NÃO pergunte destino de novo  
+3. O texto tem número (dígitos)? → tem_numero: true, não peça número
+4. O texto é claramente um local/referência? → aceite como endereço
+5. Cliente disse "já passei", "já falei", "já disse" → use o histórico, não pergunte de novo
+6. NUNCA faça mais de 1 pergunta por mensagem
+7. Se tem origem E destino → despache, não confirme de novo
+
+REGRA 3 — CORREÇÃO AUTOMÁTICA (sempre aplicar):
+Corrija erros de digitação, falta de vírgulas, minúsculas, abreviações:
+"alexandre rodrigues 180 zona sul" → "Rua Alexandre Rodrigues, 180, Zona Sul"
+"av rio de janeiro 2981" → "Avenida Rio de Janeiro, 2981"  
+"r jose silva 45 centro" → "Rua José Silva, 45, Centro"
+"trav boa esperança sn" → "Travessa Boa Esperança, S/N"
+"joao pessoa 500 centro" → "Rua João Pessoa, 500, Centro"
+Sempre capitalize corretamente. Coloque no campo "endereco_corrigido".
+
+REGRA 4 — QUANDO E O QUE PERGUNTAR:
+✅ Pode perguntar: só quando realmente impossível prosseguir sem a info
+❌ NUNCA pergunte número se já tem dígito no texto
+❌ NUNCA pergunte bairro se já tem referência clara
+❌ NUNCA pergunte a mesma coisa duas vezes  
+❌ NUNCA faça 2+ perguntas numa mesma mensagem
+✅ Se só falta destino: "Qual o destino?"
+✅ Se só falta origem: "De onde você sai?"
+✅ Se é só bairro sem rua: "Qual a rua ou referência em [bairro]?"
 
 - Se o nome do cliente for abreviado ou em minúsculas, capitalize corretamente no campo "nome_cliente_corrigido"
   ex: "joao silva" → "João Silva", "MARIA JOSE" → "Maria José"
