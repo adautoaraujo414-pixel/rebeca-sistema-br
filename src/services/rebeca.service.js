@@ -1220,23 +1220,27 @@ Me manda o endereço de *onde você está*!`;
         // ========== AGUARDANDO EMBARQUE (motorista chegou, cliente vai embarcar) ==========
         if (conversa.etapa === 'aguardando_embarque') {
             if (NLPService.eCancelar(msg)) {
-                // Cliente quer cancelar mesmo com motorista esperando
                 try {
                     const { Corrida } = require('../models');
-                    if (conversa.dados?.corridaId) {
+                    if (conversa.dados && conversa.dados.corridaId) {
                         const corridaCancelar = await Corrida.findById(conversa.dados.corridaId);
                         if (corridaCancelar) {
                             await Corrida.findByIdAndUpdate(corridaCancelar._id, {
-                                status: 'cancelada', motivoCancelamento: 'cliente_cancelou_apos_chegada'
+                                status: 'cancelada',
+                                motivoCancelamento: 'cliente_cancelou_apos_chegada'
                             });
-                            // Notificar motorista
                             try {
                                 const inst = await require('../models').InstanciaWhatsapp.findOne({ adminId, status: 'conectado' });
                                 if (inst && corridaCancelar.motoristaId) {
                                     const mot = await MotoristaService.buscarPorId(corridaCancelar.motoristaId);
-                                    if (mot?.whatsapp) {
-                                        await EvolutionMultiService.enviarMensagem(inst._id, mot.whatsapp,
-                                            '⚠️ O cliente cancelou a corrida após sua chegada.\nVocê está disponível para novas corridas! 🚗'\n);
+                                    if (mot && mot.whatsapp) {
+                                        await EvolutionMultiService.enviarMensagem(
+                                            inst._id,
+                                            mot.whatsapp,
+                                            'O cliente cancelou a corrida apos sua chegada.
+
+Voce esta disponivel para novas corridas!'
+                                        );
                                     }
                                 }
                             } catch(_mn) {}
@@ -1246,14 +1250,16 @@ Me manda o endereço de *onde você está*!`;
                 conversa.etapa = 'inicio';
                 conversa.dados = {};
                 conversas.set(telefone, conversa);
-                resposta = 'Corrida cancelada. Pedimos desculpas pela situação 😔\nQuando precisar é só chamar!';\n} else {
-                // Cliente mandou qualquer outra coisa — tranquilizar
-                const msgs = [
-                    '🚗 Seu motorista está te aguardando! Por favor, dirija-se ao veículo 😊',
-                    '⏳ Motorista no local, pode ir! Ele está esperando você 🚗',
-                    '📍 Seu motorista chegou e está te aguardando. Se precisar cancelar, manda *CANCELAR*'
+                resposta = 'Corrida cancelada. Pedimos desculpas pela situacao.
+
+Quando precisar e so chamar!';
+            } else {
+                const opcs = [
+                    'Seu motorista esta te aguardando! Por favor, dirija-se ao veiculo.',
+                    'Motorista no local, pode ir! Ele esta esperando voce.',
+                    'Seu motorista chegou e esta te aguardando. Se precisar cancelar, manda CANCELAR.'
                 ];
-                resposta = msgs[Math.floor(Math.random() * msgs.length)];
+                resposta = opcs[Math.floor(Math.random() * opcs.length)];
                 conversas.set(telefone, conversa);
             }
         }
@@ -1261,37 +1267,50 @@ Me manda o endereço de *onde você está*!`;
         // ========== EM CORRIDA (corrida em andamento) ==========
         if (conversa.etapa === 'em_corrida') {
             if (NLPService.eCancelar(msg)) {
-                resposta = '⚠️ A corrida já foi iniciada e não pode ser cancelada agora.\nSe tiver algum problema, fale diretamente com o motorista ou aguarde o destino.';\n} else {
-                // Cliente mandou msg durante a corrida — repassar para motorista se possível
+                resposta = 'A corrida ja foi iniciada e nao pode ser cancelada agora.
+
+Se tiver algum problema, fale diretamente com o motorista.';
+                conversas.set(telefone, conversa);
+            } else {
                 try {
                     const { Corrida } = require('../models');
-                    if (conversa.dados?.corridaId) {
+                    if (conversa.dados && conversa.dados.corridaId) {
                         const corridaAtiva = await Corrida.findById(conversa.dados.corridaId);
-                        if (corridaAtiva?.motoristaId) {
+                        if (corridaAtiva && corridaAtiva.motoristaId) {
                             const mot = await MotoristaService.buscarPorId(corridaAtiva.motoristaId);
-                            if (mot?.whatsapp) {
+                            if (mot && mot.whatsapp) {
                                 const inst = await require('../models').InstanciaWhatsapp.findOne({ adminId, status: 'conectado' });
                                 if (inst) {
-                                    await EvolutionMultiService.enviarMensagem(inst._id, mot.whatsapp,
-                                        `💬 *Mensagem do cliente ${nome || ''}:*
+                                    await EvolutionMultiService.enviarMensagem(
+                                        inst._id,
+                                        mot.whatsapp,
+                                        'Mensagem do cliente ' + (nome || '') + ':
 
-${msgOriginal}`
+' + msgOriginal
                                     );
                                     await Corrida.findByIdAndUpdate(corridaAtiva._id, {
-                                        $push: { chatMensagens: { texto: msgOriginal, remetente: 'cliente', nomeRemetente: nome, data: new Date(), tipo: 'cliente' }}
+                                        $push: { chatMensagens: {
+                                            texto: msgOriginal,
+                                            remetente: 'cliente',
+                                            nomeRemetente: nome,
+                                            data: new Date(),
+                                            tipo: 'cliente'
+                                        }}
                                     });
-                                    resposta = '✅ Mensagem enviada ao motorista!';
+                                    resposta = 'Mensagem enviada ao motorista!';
                                 }
                             }
                         }
                     }
                 } catch(_ec) {}
-                if (!resposta) resposta = '🚗 Sua corrida está em andamento! Se precisar falar com o motorista, pode mandar mensagem aqui mesmo.';
+                if (!resposta) {
+                    resposta = 'Sua corrida esta em andamento! Se precisar falar com o motorista, pode mandar mensagem aqui.';
+                }
                 conversas.set(telefone, conversa);
             }
         }
 
-        // ========== AVALIACAO ==========
+                // ========== AVALIACAO ==========
         if (conversa.etapa === 'avaliar') {
             const nota = parseInt(msg);
             const corridaId = conversa.dados?.corridaId;
