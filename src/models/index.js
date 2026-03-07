@@ -7,6 +7,7 @@ const MotoristaSchema = new mongoose.Schema({
     status: { type: String, default: 'disponivel' }, latitude: Number, longitude: Number,
     avaliacao: { type: Number, default: 5 }, corridasRealizadas: { type: Number, default: 0 },
     ativo: { type: Boolean, default: true }, bloqueado: { type: Boolean, default: false }, token: String, senha: String, pushSubscription: String, cidadeAtuacao: String, cnhValidade: Date, observacao: String, plano: { type: String, enum: ['semanal', 'mensal'], default: 'mensal' }, valorMensalidade: { type: Number, default: 100 }, adminId: mongoose.Schema.Types.ObjectId
+    caixaDia: [{ tipo: String, valor: Number, descricao: String, data: Date }],
 }, { timestamps: true });
 
 const ClienteSchema = new mongoose.Schema({
