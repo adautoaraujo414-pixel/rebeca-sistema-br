@@ -287,7 +287,38 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                                     if (rac.resposta_rebeca) {
                                         await EvolutionMultiService.enviarMensagem(instancia._id, telefone, rac.resposta_rebeca);
                                         console.log('[AUDIO RACIOCINIO] Enviado:', rac.resposta_rebeca.substring(0,60));
-                                        conteudo = null; // impedir fluxo normal de processar de novo
+                                        conteudo = null;
+
+                                        // Se notificar_admin=true: notifica dono e agenda acompanhamento
+                                        if (rac.notificar_admin) {
+                                            console.log('[AUDIO] Notificando admin sobre duvida/reclamacao de', telefone);
+                                            try {
+                                                await RebecaService.notificarAdmin(instancia._id, adminId,
+                                                    '⚠️ Cliente ' + (nome || telefone) + ' precisa de atendimento:\n' +
+                                                    '"' + (typeof conteudoOriginal === 'string' ? conteudoOriginal.substring(0,120) : 'audio') + '"'
+                                                );
+                                            } catch(e) { console.log('[AUDIO] Erro notif admin:', e.message); }
+
+                                            // Agendar mensagem de acompanhamento se admin nao responder em 3 min
+                                            if (!global._pendentesAdmin) global._pendentesAdmin = new Map();
+                                            const _chaveP = telefone + '_' + Date.now();
+                                            global._pendentesAdmin.set(_chaveP, {
+                                                telefone, instanciaId: instancia._id, nome, ts: Date.now()
+                                            });
+                                            setTimeout(async () => {
+                                                // Se ainda estiver pendente (admin nao respondeu)
+                                                if (global._pendentesAdmin.has(_chaveP)) {
+                                                    global._pendentesAdmin.delete(_chaveP);
+                                                    try {
+                                                        await EvolutionMultiService.enviarMensagem(
+                                                            instancia._id, telefone,
+                                                            'Já contatei meu supervisor e estou aguardando uma resposta! Em breve ele vai entrar em contato com você 😊'
+                                                        );
+                                                        console.log('[AUDIO] Mensagem de acompanhamento enviada para', telefone);
+                                                    } catch(e) { console.log('[AUDIO] Erro acompanhamento:', e.message); }
+                                                }
+                                            }, 3 * 60 * 1000); // 3 minutos
+                                        }
                                     }
                                 } catch(racErr) {
                                     console.log('[AUDIO] Erro raciocinio:', racErr.message);
