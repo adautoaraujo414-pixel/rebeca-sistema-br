@@ -534,14 +534,29 @@ INTENÇÕES POSSÍVEIS:
 - OUTRO — mensagem completamente fora de contexto (ex: "manda dinheiro", "vida", conteúdo aleatório)
 
 REGRAS DE ENDEREÇO (MUITO IMPORTANTE):
-- Se o cliente mandar endereço com erro de digitação, vírgula faltando, número junto ao nome, abreviação — CORRIJA automaticamente e retorne no campo "endereco_corrigido"
-- Exemplos de correção:
-  "rua das flores123 centro" → "Rua das Flores, 123, Centro"
-  "av paulista 1000 bela vista sp" → "Avenida Paulista, 1000, Bela Vista, São Paulo - SP"
-  "r jose silva 45" → "Rua José Silva, 45"
-  "travessa boa esperança s/n" → "Travessa Boa Esperança, S/N"
-- Se o cliente mandar APENAS bairro ou cidade sem rua, pergunte a rua e número
-- Se mandar rua sem número, pergunte o número (a menos que diga S/N)
+
+COMO IDENTIFICAR SE É ENDEREÇO:
+- Endereços brasileiros geralmente seguem: [Tipo de logradouro] + [Nome] + [Número] + [Complemento/Bairro]
+- Tipos de logradouro: Rua, Avenida, Av, R, Travessa, Alameda, Estrada, Rod, Rodovia, Beco, Viela, Praça, Largo
+- Nomes de rua no Brasil frequentemente são nomes de pessoas com 2-3 palavras: "Alexandre Rodrigues Borges", "João Pessoa", "Santos Dumont", "Getúlio Vargas" — ESTES SÃO ENDEREÇOS, não nomes de clientes
+- Nomes de cidades e bairros também são endereços válidos como complemento: "Zona Sul", "Centro", "Jardim América"
+- Número no final ou no meio do texto com nome de rua = endereço COMPLETO: "Alexandre Rodrigues 180" = Rua Alexandre Rodrigues, 180 ✅
+- Se já tem número (dígito) junto ao nome da rua = tem_numero: true, NÃO peça número de novo
+- NUNCA confunda nome de rua com nome do cliente — se o contexto é endereço (etapa pedir_origem/pedir_destino), trate como endereço
+
+CORREÇÃO AUTOMÁTICA:
+- "alexandre rodrigues 180 zona sul" → "Rua Alexandre Rodrigues, 180, Zona Sul"
+- "av rio de janeiro 2981" → "Avenida Rio de Janeiro, 2981"
+- "r jose silva 45 centro" → "Rua José Silva, 45, Centro"
+- "travessa boa esperança s/n" → "Travessa Boa Esperança, S/N"
+- Sempre capitalize corretamente e adicione vírgulas
+
+QUANDO PEDIR MAIS INFORMAÇÃO:
+- Só pedir número se o texto NÃO tiver nenhum dígito junto ao nome da rua
+- Só pedir bairro se for completamente impossível localizar sem ele
+- Se cliente disse "já te passei" ou "já falei" = ele já informou, olhe o histórico da conversa e use o que foi dito
+- NUNCA pedir a mesma informação duas vezes
+
 - Se o nome do cliente for abreviado ou em minúsculas, capitalize corretamente no campo "nome_cliente_corrigido"
   ex: "joao silva" → "João Silva", "MARIA JOSE" → "Maria José"
 
