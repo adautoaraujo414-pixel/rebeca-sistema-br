@@ -43,9 +43,17 @@ const IAService = {
         
         const msgLower = mensagem.toLowerCase().trim();
         
-        // Verificar se parece endereço (tem rua/av/número)
-        const pareceEndereco = /\b(rua|avenida|av|travessa|alameda|rodovia|estrada)\b/i.test(mensagem) || 
-            (/\d{2,}/.test(mensagem) && mensagem.split(/\s+/).length >= 2 && mensagem.length > 8);
+        // Verificar se parece endereço (rua/av/número OU referência livre como "Mercado X, bairro Y")
+        const temLogradouro = /\b(rua|avenida|av|travessa|alameda|rodovia|estrada|r\.)\b/i.test(mensagem);
+        const temNumero = /\d{2,}/.test(mensagem) && mensagem.split(/\s+/).length >= 2 && mensagem.length > 8;
+        const temBairro = /\b(bairro|vila|jardim|setor|quadra|qd|lote|lt|conjunto|cj|residencial|res\.)\b/i.test(mensagem);
+        const temVirgula = mensagem.includes(',') && mensagem.length > 8;
+        const pareceEndereco = temLogradouro || temNumero || temBairro || temVirgula;
+        
+        if (pareceEndereco && contexto.etapa && ['pedir_origem','pedir_destino','pedir_destino_rapido','cotacao_origem','cotacao_destino','pedir_origem_encomenda','pedir_destino_encomenda'].includes(contexto.etapa)) {
+            // Está numa etapa de coletar endereço — tratar mensagem como endereço
+            return { usarIA: false }; // deixa o fluxo normal processar
+        }
         
         if (pareceEndereco) {
             return { usarIA: true, intencao: 'pedir_corrida', endereco: mensagem };
@@ -54,7 +62,8 @@ const IAService = {
         // Ponto de referência (ex: "shopping", "rodoviária", "hospital")
         const pontosReferencia = /(shopping|rodoviaria|rodoviária|hospital|posto|mercado|supermercado|escola|igreja|praça|praca|terminal|aeroporto|estação|estacao|forum|fórum|prefeitura|banco|farmacia|farmácia)/i;
         if (pontosReferencia.test(msgLower)) {
-            return { usarIA: true, intencao: 'ponto_referencia', respostaCurta: 'Qual o endereço completo ou me manda a localização?' };
+            // Trata como endereço livre — avança o fluxo em vez de travar
+            return { usarIA: true, intencao: 'pedir_corrida', endereco: mensagem };
         }
         
         // ========== FLUXO HUMANO COM CONEXÃO ==========

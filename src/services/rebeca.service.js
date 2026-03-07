@@ -1095,7 +1095,14 @@ Me manda o endereço de *onde você está*!`;
                 telefoneEmpresa
             });
 
-            if (analise.usarIA && analise.confianca >= 0.7) {
+            // Se IAService identificou endereço livre mas fluxo já está coletando endereço,
+            // deixa o fluxo normal processar (analise.usarIA=false já tratado no IAService)
+            if (analise.usarIA && analise.intencao === 'pedir_corrida' && analise.endereco && 
+                ['pedir_origem','pedir_destino','pedir_destino_rapido'].includes(conversa.etapa)) {
+                // Re-injetar a mensagem no fluxo normal — não interceptar
+                analise.usarIA = false;
+            }
+            if (analise.usarIA && analise.respostaCurta) {
                 const resultadoIA = await RebecaService.processarComIA(telefone, nome, analise, conversa, favoritos);
                 if (resultadoIA) {
                     conversas.set(telefone, conversa);
@@ -2572,6 +2579,72 @@ _Digite CANCELAR se precisar_`;
                 return `📍 *Origem:* ${conversa.dados.origem}\n\n🏁 Pra onde você quer ir?`;
             }
             
+            // Endereço livre detectado (sem favorito, sem origem separada)
+            // Ex: "Mercado São João, bairro Centro" ou "Rua X, 100"
+            if (analise.endereco && !analise.origem && !analise.usarFavorito) {
+                // Se fluxo já tem origem, tratar como destino
+                if (conversa.dados.origem && conversa.dados.origemValidada?.valido) {
+                    const valDest = await RebecaService.validarEndereco(analise.endereco);
+                    if (valDest.valido) {
+                        conversa.dados.destino = valDest.endereco;
+                        const calculo = await RebecaService.calcularCorrida(conversa.dados.origem, conversa.dados.destino);
+                        conversa.dados.calculo = calculo;
+                        conversa.etapa = 'confirmar_corrida';
+                        conversas.set(telefone, conversa);
+                        return `✅ *Confirmar corrida?*
+
+📍 *De:* ${conversa.dados.origem}
+🏁 *Para:* ${conversa.dados.destino}
+
+📏 ${calculo.distancia} | ⏱️ ${calculo.tempo}
+💰 *R$ ${calculo.preco.toFixed(2)}*
+
+Responda *1* para confirmar ou *CANCELAR`;
+                    } else {
+                        conversa.etapa = 'pedir_destino';
+                        conversas.set(telefone, conversa);
+                        return `Não achei esse endereço 😕
+
+Pode me passar o destino de outro jeito? Ex: Rua X, número, bairro`;
+                    }
+                }
+                // Sem origem ainda — validar como origem
+                const valOrig = await RebecaService.validarEndereco(analise.endereco);
+                if (valOrig.valido) {
+                    conversa.dados.origem = valOrig.endereco;
+                    conversa.dados.origemValidada = valOrig;
+                    conversa.etapa = 'pedir_destino';
+                    conversas.set(telefone, conversa);
+                    return `📍 *Origem:* ${valOrig.endereco}
+
+🏁 Ótimo! Agora me passa o *destino*:`;
+                } else {
+                    // Tentar com cidade do admin como contexto
+                    try {
+                        const { Admin } = require('../models');
+                        const adminDoc = conversa.adminId ? await Admin.findById(conversa.adminId).lean() : null;
+                        const cidade = adminDoc?.cidadeAtuacao || adminDoc?.cidade || '';
+                        if (cidade) {
+                            const val2 = await RebecaService.validarEndereco(analise.endereco + ', ' + cidade);
+                            if (val2.valido) {
+                                conversa.dados.origem = val2.endereco;
+                                conversa.dados.origemValidada = val2;
+                                conversa.etapa = 'pedir_destino';
+                                conversas.set(telefone, conversa);
+                                return `📍 *Origem:* ${val2.endereco}
+
+🏁 Ótimo! Agora me passa o *destino*:`;
+                            }
+                        }
+                    } catch(e) {}
+                    conversa.etapa = 'pedir_origem';
+                    conversas.set(telefone, conversa);
+                    return `Não encontrei esse local 😕
+
+Pode me passar o endereço completo? Ex: Rua X, número, bairro`;
+                }
+            }
+
             // Origem identificada pela IA
             if (analise.origem) {
                 const validacao = await RebecaService.validarEndereco(analise.origem);
