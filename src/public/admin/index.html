@@ -1308,6 +1308,26 @@ document.addEventListener('DOMContentLoaded', () => {
 function fecharPWABanner(){document.getElementById('pwa-banner').style.display='none';sessionStorage.setItem('pwa-fechado','1');}
 </script>
 <!-- ===== FIM PWA ===== -->
+
+<!-- MODAL EDITAR MOTORISTA -->
+<div id="modalEditarMotorista" class="modal">
+<div class="modal-content"><div class="modal-header"><h3>✏️ Editar Motorista</h3><button class="modal-close" onclick="fecharModal('modalEditarMotorista')">&times;</button></div>
+<div id="formEditarMotoristaAlert"></div>
+<form id="formEditarMotorista">
+<input type="hidden" id="editMotId">
+<div class="form-group"><label>Nome *</label><input type="text" id="editMotNome" required></div>
+<div class="form-row"><div class="form-group"><label>WhatsApp *</label><input type="text" id="editMotWhatsApp" required></div><div class="form-group"><label>CPF</label><input type="text" id="editMotCPF"></div></div>
+<div class="form-row"><div class="form-group"><label>CNH *</label><input type="text" id="editMotCNH" required></div><div class="form-group"><label>Validade CNH</label><input type="date" id="editMotCNHValidade"></div></div>
+<div class="form-group"><label>Cidade/Estado</label><input type="text" id="editMotCidade" placeholder="Ex: São Paulo - SP"></div>
+<div class="form-group"><label>📸 Foto (URL)</label><input type="text" id="editMotFoto" placeholder="https://exemplo.com/foto.jpg"></div>
+<hr class="divider">
+<div class="form-row"><div class="form-group"><label>Modelo *</label><input type="text" id="editMotVeiculoModelo" required></div><div class="form-group"><label>Cor *</label><input type="text" id="editMotVeiculoCor" required></div></div>
+<div class="form-row"><div class="form-group"><label>Placa *</label><input type="text" id="editMotVeiculoPlaca" required></div><div class="form-group"><label>Ano</label><input type="number" id="editMotVeiculoAno"></div></div>
+<hr class="divider">
+<div class="form-row"><div class="form-group"><label>Plano</label><select id="editMotPlano"><option value="mensal">Mensal</option><option value="semanal">Semanal</option></select></div><div class="form-group"><label>Valor Mensalidade</label><input type="number" id="editMotValorMensalidade" step="0.01"></div></div>
+<div class="form-group"><label>Novo PIN (6 dígitos) — deixe em branco para não alterar</label><input type="text" id="editMotSenhaPin" maxlength="6" pattern="[0-9]{6}" placeholder="Deixe em branco para manter" style="width:100%;padding:15px;background:#1a1a2e;border:1px solid #333;border-radius:8px;color:#fff;font-size:18px;letter-spacing:8px;text-align:center"></div>
+<button type="submit" class="btn btn-success" style="width:100%;padding:12px;">💾 Salvar Alterações</button>
+</form></div></div>
 </body>
 </html>
 

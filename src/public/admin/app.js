@@ -313,6 +313,7 @@ async function carregarMotoristas() {
             <td style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
                 <a href="${link}" target="_blank" class="btn btn-primary btn-sm" title="Abrir app motorista">📱 App</a>
                 <button class="btn btn-sm" style="background:#6c757d;color:#fff;" title="Copiar link" onclick="navigator.clipboard.writeText('${link}').then(()=>{const t=document.createElement('div');t.textContent='✅ Link copiado!';t.style.cssText='position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:10px 20px;border-radius:8px;z-index:9999;font-size:14px;';document.body.appendChild(t);setTimeout(()=>t.remove(),2500)})">📋 Copiar</button>
+                <button class="btn btn-sm" style="background:#f39c12;color:#fff;" onclick="abrirEditarMotorista('${x._id||x.id}')">✏️</button>
                 <button class="btn btn-danger btn-sm" onclick="desativarMotorista('${x._id||x.id}')">🗑️</button>
             </td>
         </tr>`;
@@ -1361,3 +1362,62 @@ async function carregarEmpresa() {
         });
     } catch(e) { console.log('Erro carregarEmpresa:', e); }
 }
+
+
+async function abrirEditarMotorista(id) {
+    const m = await api('/api/motoristas/' + id);
+    if (!m || m.error) return alert('Erro ao carregar motorista');
+    document.getElementById('editMotId').value = m._id || m.id;
+    document.getElementById('editMotNome').value = m.nomeCompleto || m.nome || '';
+    document.getElementById('editMotWhatsApp').value = m.whatsapp || '';
+    document.getElementById('editMotCPF').value = m.cpf || '';
+    document.getElementById('editMotCNH').value = m.cnh || '';
+    document.getElementById('editMotCNHValidade').value = m.cnhValidade ? m.cnhValidade.split('T')[0] : '';
+    document.getElementById('editMotCidade').value = m.cidadeAtuacao || '';
+    document.getElementById('editMotFoto').value = m.foto || '';
+    document.getElementById('editMotVeiculoModelo').value = m.veiculo?.modelo || '';
+    document.getElementById('editMotVeiculoCor').value = m.veiculo?.cor || '';
+    document.getElementById('editMotVeiculoPlaca').value = m.veiculo?.placa || '';
+    document.getElementById('editMotVeiculoAno').value = m.veiculo?.ano || '';
+    document.getElementById('editMotPlano').value = m.plano || 'mensal';
+    document.getElementById('editMotValorMensalidade').value = m.valorMensalidade || 100;
+    document.getElementById('editMotSenhaPin').value = '';
+    document.getElementById('formEditarMotoristaAlert').innerHTML = '';
+    document.getElementById('modalEditarMotorista').classList.add('active');
+}
+
+document.getElementById('formEditarMotorista')?.addEventListener('submit', async(e) => {
+    e.preventDefault();
+    const id = document.getElementById('editMotId').value;
+    const pin = document.getElementById('editMotSenhaPin').value.trim();
+    if (pin && (pin.length !== 6 || !/^[0-9]{6}$/.test(pin))) {
+        document.getElementById('formEditarMotoristaAlert').innerHTML = '<div class="alert alert-error">PIN deve ter exatamente 6 números ou deixe em branco</div>';
+        return;
+    }
+    const d = {
+        nomeCompleto: document.getElementById('editMotNome').value.trim(),
+        whatsapp: document.getElementById('editMotWhatsApp').value.trim(),
+        cpf: document.getElementById('editMotCPF').value.trim(),
+        cnh: document.getElementById('editMotCNH').value.trim(),
+        cnhValidade: document.getElementById('editMotCNHValidade').value,
+        cidadeAtuacao: document.getElementById('editMotCidade').value.trim(),
+        foto: document.getElementById('editMotFoto').value.trim(),
+        veiculo: {
+            modelo: document.getElementById('editMotVeiculoModelo').value.trim(),
+            cor: document.getElementById('editMotVeiculoCor').value.trim(),
+            placa: document.getElementById('editMotVeiculoPlaca').value.trim().toUpperCase(),
+            ano: parseInt(document.getElementById('editMotVeiculoAno').value) || 2020
+        },
+        plano: document.getElementById('editMotPlano').value,
+        valorMensalidade: parseFloat(document.getElementById('editMotValorMensalidade').value) || 100
+    };
+    if (pin) d.senhaPin = pin;
+    const r = await api('/api/motoristas/' + id, 'PUT', d);
+    if (r.error) {
+        document.getElementById('formEditarMotoristaAlert').innerHTML = '<div class="alert alert-error">' + r.error + '</div>';
+        return;
+    }
+    fecharModal('modalEditarMotorista');
+    carregarMotoristas();
+    alert('✅ Motorista atualizado com sucesso!');
+});
