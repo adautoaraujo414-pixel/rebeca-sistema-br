@@ -1751,23 +1751,24 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         async function cancelarCorrida() {
-            if (!confirm('Cancelar esta corrida?')) return;
-            try {
-                await fetch('/api/motorista-app/cancelar', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-                    body: JSON.stringify({ corridaId: corridaAtual._id, motivo: 'Cancelado pelo motorista' })
-                });
-            } catch (e) {
-                toast('Erro de conexão, mas corrida foi cancelada localmente', 'error');
-            }
-            // SEMPRE resetar UI
+            if (!confirm('Cancelar esta corrida? O cliente será notificado.')) return;
+            const corridaIdCancelar = corridaAtual?._id;
+            // Resetar UI imediatamente para não deixar motorista preso
             corridaAtual = null;
             motorista.status = 'disponivel';
             atualizarStatusUI();
             document.getElementById('corridaAtiva').classList.remove('active');
             document.getElementById('semCorrida').style.display = 'block';
             toast('Corrida cancelada', 'error');
+            try {
+                await fetch('/api/motorista-app/cancelar', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                    body: JSON.stringify({ corridaId: corridaIdCancelar, motivo: 'Cancelado pelo motorista' })
+                });
+            } catch (e) {
+                console.log('Erro ao cancelar no backend:', e);
+            }
         }
 
         // ========== DASHBOARD ==========

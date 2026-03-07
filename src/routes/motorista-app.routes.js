@@ -84,11 +84,19 @@ router.post('/aceitar', auth, async (req, res) => {
         }
         const corrida = corridaLocked;
         
-        // Colocar cliente em modo corrida
+        // Colocar cliente em modo motorista_a_caminho (corrida só começa no INICIAR)
         try {
             const RebecaService = require('../services/rebeca.service');
-            RebecaService.setEtapaConversa(corrida.clienteTelefone, 'em_corrida');
+            RebecaService.setEtapaConversa(corrida.clienteTelefone, 'motorista_a_caminho');
         } catch(e) { console.log('[CATCH]', e.message); }
+
+        // Remover corrida dos despachos pendentes em memória
+        try {
+            const DespachoService = require('../services/despacho.service');
+            if (DespachoService.corridasPendentes) {
+                DespachoService.corridasPendentes.delete(corridaId.toString());
+            }
+        } catch(_dp) {}
         
         // ========== NOTIFICAR CLIENTE - SOLUÇÃO ROBUSTA ==========
         if (corrida && corrida.clienteTelefone) {
@@ -151,6 +159,15 @@ router.post('/aceitar', auth, async (req, res) => {
             console.log('[ACEITAR] Sem clienteTelefone na corrida');
         }
         
+        // Remover corrida do mapa de pendentes do DespachoService
+        try {
+            const DespachoService = require('../services/despacho.service');
+            if (DespachoService.corridasPendentes) {
+                DespachoService.corridasPendentes.delete(corridaId.toString());
+                console.log('[ACEITAR] Corrida removida do DespachoService');
+            }
+        } catch(_dp) {}
+
         res.json({ sucesso: true, corrida });
     } catch (e) {
         res.json({ sucesso: false, erro: e.message });
