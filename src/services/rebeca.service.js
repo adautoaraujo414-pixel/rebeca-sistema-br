@@ -460,89 +460,6 @@ const RebecaService = {
         const favoritos = RebecaService.getFavoritos(telefone);
         
         let resposta = null; // null = sem resposta ainda (diferente de '' que ativa anti-repeticao)
-        // ========== INTERCEPTOR CLAUDE — CONTEXTO INTELIGENTE ==========
-        // Quando a mensagem não é um comando claro (não é sim/não/número/cancelar)
-        // e o cliente parece estar fazendo uma pergunta ou comentário contextual,
-        // Claude lê TODA a situação real e responde como humano faria
-        const _msgLimpa = mensagem.trim().toLowerCase();
-        const _ehComandoSimples = ['1','2','3','sim','nao','não','cancelar','aceitar','ok','s','n'].includes(_msgLimpa)
-            || _msgLimpa.startsWith('av ') || _msgLimpa.startsWith('rua ') 
-            || _msgLimpa.startsWith('r ') || _msgLimpa.length < 4;
-        
-        const _etapasAtivas = ['aguardando_motorista','em_corrida','motorista_a_caminho','confirmar_corrida','pedir_destino','pedir_origem'];
-        const _parecePerguntaContextual = !_ehComandoSimples && mensagem.includes('?') ||
-            _msgLimpa.match(/(cadê|cade|onde|quanto|como|tá|ta|ainda|chegou|chegando|meu carro|minha corrida|agendad|vai chegar|previsão|cancelou|aconteceu|status|andamento|motorista)/);
-
-        if (_parecePerguntaContextual) {
-            try {
-                const { Corrida } = require('../models');
-                // Buscar corrida mais recente do cliente
-                const _corridaRecente = conversa.dados?.corridaId 
-                    ? await Corrida.findById(conversa.dados.corridaId).lean()
-                    : await Corrida.findOne({ 
-                        clienteTelefone: { $in: [telefone, '55'+telefone, telefone.replace(/^55/,'')] },
-                        adminId: adminId,
-                        status: { $in: ['pendente','aceita','motorista_a_caminho','em_andamento','agendada'] }
-                    }).sort({ createdAt: -1 }).lean();
-
-                const _statusMap = {
-                    pendente: 'buscando motorista',
-                    aceita: 'motorista a caminho',
-                    motorista_a_caminho: 'motorista a caminho',
-                    em_andamento: 'em andamento',
-                    agendada: 'agendada'
-                };
-
-                const _contextoSituacao = _corridaRecente ? `
-- Corrida encontrada no banco: status="${_corridaRecente.status}" (${_statusMap[_corridaRecente.status] || _corridaRecente.status})
-- Origem: ${_corridaRecente.origem || conversa.dados?.origem || 'não informada'}
-- Destino: ${_corridaRecente.destino || conversa.dados?.destino || 'não informado'}
-- Horário agendado: ${_corridaRecente.horarioAgendado ? new Date(_corridaRecente.horarioAgendado).toLocaleString('pt-BR') : 'corrida imediata'}
-- Motorista atribuído: ${_corridaRecente.motoristaNome || 'nenhum ainda'}
-- Criada há: ${Math.round((Date.now() - new Date(_corridaRecente.createdAt).getTime())/60000)} minutos` 
-                : '- Nenhuma corrida ativa encontrada para este cliente';
-
-                const _promptContexto = `Você é a Rebeca, assistente de taxi via WhatsApp. Responda APENAS em português brasileiro, de forma natural e amigável como uma atendente humana faria.
-
-SITUAÇÃO ATUAL DO CLIENTE:
-- Nome: ${nome}
-- Etapa da conversa: ${conversa.etapa}
-- Dados da conversa: origem="${conversa.dados?.origem || ''}", destino="${conversa.dados?.destino || ''}", horario="${conversa.dados?.horario || ''}"
-${_contextoSituacao}
-
-MENSAGEM DO CLIENTE: "${mensagem}"
-
-Baseado APENAS na situação real acima, responda de forma natural e contextual. 
-- Se a corrida está agendada, diga que está agendada (não diga que está a caminho)
-- Se não tem motorista ainda, diga que está buscando
-- Se não tem corrida ativa, pergunte se quer solicitar uma
-- Seja breve, natural, sem mencionar sistemas ou etapas
-- NÃO invente informações que não estão nos dados acima
-- Se não souber responder com certeza, diga algo natural como "deixa eu verificar..."`;
-
-                const _respostaIA = await fetch('https://api.anthropic.com/v1/messages', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
-                    body: JSON.stringify({
-                        model: 'claude-haiku-4-5-20251001',
-                        max_tokens: 200,
-                        messages: [{ role: 'user', content: _promptContexto }]
-                    })
-                });
-                const _dadosIA = await _respostaIA.json();
-                const _textoIA = _dadosIA?.content?.[0]?.text?.trim();
-                if (_textoIA && _textoIA.length > 5) {
-                    console.log('[REBECA-CLAUDE] Contexto resolvido por IA:', mensagem.substring(0,50));
-                    conversas.set(telefone, conversa);
-                    return _textoIA;
-                }
-            } catch(_errIA) {
-                console.log('[REBECA-CLAUDE] Erro IA contextual:', _errIA.message);
-                // Falha silenciosa — continua fluxo normal abaixo
-            }
-        }
-        // ========== FIM INTERCEPTOR CLAUDE ==========
-
 
         // ========== CLIENTE FREQUENTE — oferecer destinos recentes ==========
         if (conversa.etapa === 'inicio' && NLPService.eSaudacao(msg)) {
@@ -1707,7 +1624,7 @@ Me manda o endereço de *onde você está*!`;
                 conversa.dados.origem = favoritos[tipo].endereco;
                 conversa.dados.origemValidada = { valido: true, precisao: 'favorito', ...favoritos[tipo] };
                 conversa.etapa = 'confirmar_corrida';
-                resposta = `📍 *Origem:* ${favoritos[tipo].endereco}\n\nPosso confirmar a corrida? 😊`;
+                resposta = `📍 *Origem:* ${favoritos[tipo].endereco}\n\nConfirma a corrida?\n\n*1* - Sim\n*CANCELAR* - Cancelar`;
             } else {
                 conversa.etapa = tipo === 'casa' ? 'salvar_casa' : 'salvar_trabalho';
                 resposta = `Você não cadastrou ${tipo} ainda.\n\nEnvie o endereço:`;
@@ -1878,7 +1795,7 @@ _(ou mande *0* para pular)_`;
             if (msg === '1' || NLPService.eSim(msg)) {
                 conversa.dados.origem = conversa.dados.ultimoEnderecoSugerido;
                 conversa.etapa = 'confirmar_corrida';
-                resposta = '📍 *Origem:* ' + conversa.dados.origem + '\n\nPosso confirmar a corrida? 😊';
+                resposta = '📍 *Origem:* ' + conversa.dados.origem + '\n\nConfirma a corrida?\n\n*1* - Sim\n*CANCELAR* - Cancelar';
             } else if (msg === '2' || NLPService.eNao(msg)) {
                 conversa.etapa = 'pedir_origem';
                 resposta = 'Sem problemas! Me passa o novo endereço ou sua localização 📍';
@@ -2164,7 +2081,7 @@ _Digite CANCELAR se precisar_`;
         else if (conversa.etapa === 'confirmar_origem_auto') {
             if (msg === '1' || msg.includes('sim') || msg.includes('confirmar') || msg.includes('isso')) {
                 conversa.etapa = 'confirmar_corrida';
-                resposta = `✅ *Origem confirmada!*\n\nPosso confirmar a corrida? 😊`;
+                resposta = `✅ *Origem confirmada!*\n\nConfirma a corrida?\n\n*1* - Sim\n*CANCELAR* - Cancelar`;
                 if (favoritos.casa) resposta += `\n• *casa* - 🏠`;
                 if (favoritos.trabalho) resposta += `\n• *trabalho* - 🏢`;
             } else if (msg === '2') {
@@ -2305,12 +2222,12 @@ _Digite CANCELAR se precisar_`;
                 conversa.dados.origem = favoritos.casa.endereco;
                 conversa.dados.origemValidada = { valido: true, precisao: 'favorito', ...favoritos.casa };
                 conversa.etapa = 'confirmar_corrida';
-                resposta = `📍 *Origem:* ${favoritos.casa.endereco}\n\nPosso confirmar a corrida? 😊`;
+                resposta = `📍 *Origem:* ${favoritos.casa.endereco}\n\nConfirma a corrida?\n\n*1* - Sim\n*CANCELAR* - Cancelar`;
             } else if (msg === 'trabalho' && favoritos.trabalho) {
                 conversa.dados.origem = favoritos.trabalho.endereco;
                 conversa.dados.origemValidada = { valido: true, precisao: 'favorito', ...favoritos.trabalho };
                 conversa.etapa = 'confirmar_corrida';
-                resposta = `📍 *Origem:* ${favoritos.trabalho.endereco}\n\nPosso confirmar a corrida? 😊`;
+                resposta = `📍 *Origem:* ${favoritos.trabalho.endereco}\n\nConfirma a corrida?\n\n*1* - Sim\n*CANCELAR* - Cancelar`;
             } else {
                 const validacao = await RebecaService.validarEndereco(msgOriginal);
                 if (!validacao.valido) {
@@ -2327,7 +2244,7 @@ _Digite CANCELAR se precisar_`;
                                 conversa.dados.origemValidada = valOrig;
                                 conversa.dados.calculo = { origem: { endereco: valOrig.endereco, latitude: valOrig.latitude, longitude: valOrig.longitude }, destino: null, distanciaKm: 0, tempoMinutos: 0, preco: 15, faixa: { nome: 'padrao', multiplicador: 1 } };
                                 conversa.etapa = 'confirmar_corrida';
-                                resposta = `📍 *Origem:* ${valOrig.endereco}\n\nPosso confirmar a corrida? 😊`;
+                                resposta = `📍 *Origem:* ${valOrig.endereco}\n\nConfirma a corrida?\n\n*1* - Sim\n*CANCELAR* - Cancelar`;
                                 conversas.set(telefone, conversa);
                                 return resposta;
                             }
@@ -2342,10 +2259,9 @@ _Digite CANCELAR se precisar_`;
                     conversa.dados.origem = msgOriginal;
                     conversa.dados.origemValidada = { valido: false, precisao: 'referencia', endereco: msgOriginal };
                     conversa.dados.calculo = { origem: { endereco: msgOriginal, latitude: null, longitude: null }, destino: null, distanciaKm: 0, tempoMinutos: 0, preco: 15, faixa: { nome: 'padrao', multiplicador: 1 } };
-                    conversa.dados.origem = msgOriginal;
                     conversa.etapa = 'confirmar_corrida';
                     conversas.set(telefone, conversa);
-                    resposta = `📍 *${msgOriginal}*\n\nPosso confirmar a corrida? 😊`;
+                    resposta = `📍 *${msgOriginal}*\n\nConfirma a corrida?\n\n*1* - Sim\n*CANCELAR* - Cancelar`;
                 } else {
                     conversa.dados.origem = validacao.endereco;
                     conversa.dados.origemValidada = validacao;
@@ -2355,7 +2271,7 @@ _Digite CANCELAR se precisar_`;
                         faixa: { nome: 'padrao', multiplicador: 1 }
                     };
                     conversa.etapa = 'confirmar_corrida';
-                    resposta = `📍 *Origem:* ${validacao.endereco}\n\nPosso confirmar a corrida? 😊`;
+                    resposta = `📍 *Origem:* ${validacao.endereco}\n\nConfirma a corrida?\n\n*1* - Sim\n*CANCELAR* - Cancelar`;
                 }
             }
         }
