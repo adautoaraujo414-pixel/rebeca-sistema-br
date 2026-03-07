@@ -444,7 +444,9 @@ const FilaEsperaSchema = new mongoose.Schema({
     status: { type: String, enum: ['aguardando', 'notificado', 'atendido', 'expirado'], default: 'aguardando' },
     adminId: mongoose.Schema.Types.ObjectId,
     instanciaId: mongoose.Schema.Types.ObjectId
-}, { timestamps: true });
+}, { timestamps: true ,
+    avisado30min: { type: Boolean, default: false },
+    criadoEm: { type: Date, default: Date.now }});
 
 const FilaEspera = mongoose.model('FilaEspera', FilaEsperaSchema);
 module.exports.FilaEspera = FilaEspera;

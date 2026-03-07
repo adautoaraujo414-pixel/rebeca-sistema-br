@@ -3428,6 +3428,70 @@ RebecaService.atualizarConversa = function(telefone, adminId, dados) {
     console.log('[AUDIO] Conversa atualizada no Map:', telefone, '| etapa:', conversa.etapa);
 };
 
+
+// ===== CRON: Timeout da fila de espera =====
+// Roda a cada 5min — avisa clientes há 30min na fila, cancela após 60min
+setInterval(async () => {
+    try {
+        const { FilaEspera, InstanciaWhatsapp } = require('./models' in require.cache ? '../models' : '../models');
+        const agora = Date.now();
+        const em30min = new Date(agora - 30 * 60 * 1000); // entrada há 30min
+        const em60min = new Date(agora - 60 * 60 * 1000); // entrada há 60min
+
+        // Avisar quem está há 30min sem aviso prévio
+        const aguardando30 = await FilaEspera.find({
+            status: 'aguardando',
+            criadoEm: { $lte: em30min, $gt: em60min },
+            avisado30min: { $ne: true }
+        }).lean().catch(() => []);
+
+        for (const entrada of aguardando30) {
+            try {
+                const inst = entrada.instanciaId
+                    ? await InstanciaWhatsapp.findById(entrada.instanciaId)
+                    : await InstanciaWhatsapp.findOne({ adminId: entrada.adminId, status: 'conectado' });
+                if (inst) {
+                    const EvolutionMultiService = require('./evolution-multi.service');
+                    await EvolutionMultiService.enviarMensagem(
+                        inst._id, entrada.telefone,
+                        'Voce ainda esta na fila de espera por um motorista.\n\nAssim que um ficar livre eu te aviso! Se quiser cancelar, manda CANCELAR.'
+                    );
+                    await FilaEspera.findByIdAndUpdate(entrada._id, { avisado30min: true });
+                }
+            } catch(_fa) {}
+        }
+
+        // Cancelar quem está há 60min — sem motorista disponível
+        const expirados = await FilaEspera.find({
+            status: 'aguardando',
+            criadoEm: { $lte: em60min }
+        }).lean().catch(() => []);
+
+        for (const entrada of expirados) {
+            try {
+                await FilaEspera.findByIdAndUpdate(entrada._id, { status: 'cancelado' });
+                const inst = entrada.instanciaId
+                    ? await InstanciaWhatsapp.findById(entrada.instanciaId)
+                    : await InstanciaWhatsapp.findOne({ adminId: entrada.adminId, status: 'conectado' });
+                if (inst) {
+                    const EvolutionMultiService = require('./evolution-multi.service');
+                    await EvolutionMultiService.enviarMensagem(
+                        inst._id, entrada.telefone,
+                        'Poxa, ficamos 1 hora sem encontrar motorista disponivel para voce.\n\nSua posicao na fila foi cancelada. Quando quiser tentar de novo e so chamar!'
+                    );
+                    // Resetar conversa
+                    const conv = RebecaService.conversas ? RebecaService.conversas.get(entrada.telefone) : null;
+                    if (conv) {
+                        conv.etapa = 'inicio';
+                        conv.dados = {};
+                        RebecaService.conversas.set(entrada.telefone, conv);
+                    }
+                }
+            } catch(_fe) {}
+        }
+    } catch(_cron) { console.log('[FILA-CRON] Erro:', _cron.message); }
+}, 5 * 60 * 1000); // a cada 5 minutos
+
 module.exports = RebecaService;
 
 // ==================== FILA DE ESPERA ====================

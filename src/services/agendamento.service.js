@@ -22,7 +22,7 @@ const AgendamentoService = {
                 const janela = 60 * 1000; // tolerância de 1 min
 
                 // Buscar agendamentos pendentes
-                const pendentes = await Agendamento.find({ status: 'pendente' });
+                const pendentes = await Agendamento.find({ status: { $in: ['pendente', 'lembrete_enviado'] } });
 
                 for (const ag of pendentes) {
                     const diff = ag.dataHora.getTime() - agora.getTime();
@@ -37,6 +37,17 @@ const AgendamentoService = {
                             await Agendamento.findByIdAndUpdate(ag._id, { status: 'lembrete_enviado' });
                             console.log('[AGENDAMENTO] Lembrete 30min enviado para', ag.telefone);
                         } catch(e) { console.log('[AGENDAMENTO] Erro lembrete:', e.message); }
+                    }
+
+                    // 5 min antes — lembrete urgente (separado do 30min)
+                    if (diff <= 5 * 60 * 1000 + janela && diff > 5 * 60 * 1000 - janela &&
+                        ag.status !== 'despachado') {
+                        try {
+                            const EvoService = require('./evolution-multi.service');
+                            await EvoService.enviarMensagem(ag.instanciaId, ag.telefone,
+                                'Sua corrida esta quase na hora! Faltam 5 minutinhos.\n\nJa estou chamando seu motorista!'
+                            );
+                        } catch(e) { console.log('[AGENDAMENTO] Erro lembrete 5min:', e.message); }
                     }
 
                     // 10 min antes — despachar motorista

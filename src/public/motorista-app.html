@@ -1502,10 +1502,21 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
-        function recusarCorrida() {
+        async function recusarCorrida() {
             clearInterval(timerInterval);
             if (window._somRepetir) clearInterval(window._somRepetir);
             document.getElementById('novaCorridaOverlay').classList.remove('active');
+            // Chamar backend para redespacho automático
+            if (corridaAtual && corridaAtual._id) {
+                try {
+                    const token = localStorage.getItem('motoristaToken') || localStorage.getItem('token');
+                    await fetch('/api/motorista-app/recusar', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                        body: JSON.stringify({ corridaId: corridaAtual._id, motivo: 'Recusado pelo motorista' })
+                    });
+                } catch(e) { console.log('Erro ao recusar:', e); }
+            }
             corridaAtual = null;
         }
 
