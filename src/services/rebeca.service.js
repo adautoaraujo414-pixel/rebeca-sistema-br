@@ -329,6 +329,9 @@ const RebecaService = {
     },
 
     async validarEndereco(endereco) {
+        if (!endereco || endereco.trim().length < 3) {
+            return { valido: false, endereco: endereco || '', latitude: null, longitude: null, precisao: 'invalido' };
+        }
         // Normalizar antes de validar
         endereco = this.normalizarEndereco(endereco);
         const resultado = await MapsService.geocodificar(endereco);
@@ -1904,7 +1907,10 @@ _Digite CANCELAR se precisar_`;
                     if (!destinoFinal) {
                         // Raciocínio amplificado — tentar entender o que o cliente quis dizer
                         if (RaciocinioService.isAtivo()) {
-                            const rac = await RaciocinioService.raciocinar(telefone, msgOriginal, conversa, { nome });
+                            const rac = await Promise.race([
+                        RaciocinioService.raciocinar(telefone, msgOriginal, conversa, { nome }),
+                        new Promise(r => setTimeout(() => r(null), 5000)) // 5s timeout
+                    ]);
                             if (rac) {
                                 if (rac.acao === 'avancar' && rac.valor) {
                                     const val3 = await RebecaService.validarEndereco(rac.valor);
@@ -2006,7 +2012,10 @@ _Digite CANCELAR se precisar_`;
                 if (!validacao.valido) {
                     // Raciocínio amplificado antes de pedir bairro
                     if (RaciocinioService.isAtivo()) {
-                        const rac = await RaciocinioService.raciocinar(telefone, msgOriginal, conversa, { nome });
+                        const rac = await Promise.race([
+                        RaciocinioService.raciocinar(telefone, msgOriginal, conversa, { nome }),
+                        new Promise(r => setTimeout(() => r(null), 5000)) // 5s timeout
+                    ]);
                         if (rac && rac.acao === 'avancar' && rac.valor) {
                             const valOrig = await RebecaService.validarEndereco(rac.valor);
                             if (valOrig.valido) {
@@ -2057,7 +2066,10 @@ _Digite CANCELAR se precisar_`;
                     conversa.dados.destino = msgOriginal;
                     validacao = { valido: true, endereco: msgOriginal, latitude: null, longitude: null };
                     if (RaciocinioService.isAtivo()) {
-                        const rac = await RaciocinioService.raciocinar(telefone, msgOriginal, conversa, { nome });
+                        const rac = await Promise.race([
+                        RaciocinioService.raciocinar(telefone, msgOriginal, conversa, { nome }),
+                        new Promise(r => setTimeout(() => r(null), 5000)) // 5s timeout
+                    ]);
                         if (rac) {
                             if (rac.acao === 'avancar' && rac.valor) {
                                 const valRac = await RebecaService.validarEndereco(rac.valor);
@@ -2124,7 +2136,10 @@ _Digite CANCELAR se precisar_`;
             } else {
                 // Raciocínio amplificado — cliente pode ter confirmado de forma diferente
                 if (RaciocinioService.isAtivo()) {
-                    const rac = await RaciocinioService.raciocinar(telefone, msgOriginal, conversa, { nome });
+                    const rac = await Promise.race([
+                        RaciocinioService.raciocinar(telefone, msgOriginal, conversa, { nome }),
+                        new Promise(r => setTimeout(() => r(null), 5000)) // 5s timeout
+                    ]);
                     if (rac) {
                         if (rac.acao === 'confirmar' || rac.acao === 'avancar') {
                             const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);

@@ -136,7 +136,7 @@ const OpenAIRebecaService = {
                 if (forceLang) formData.append('language', 'pt');
                 const resp = await axios.post('https://api.openai.com/v1/audio/transcriptions', formData, {
                     headers: { 'Authorization': 'Bearer ' + this.apiKey, ...formData.getHeaders() },
-                    timeout: 30000
+                    timeout: 8000
                 });
                 return resp.data.text || '';
             } catch(e) {
