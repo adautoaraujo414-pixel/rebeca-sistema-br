@@ -418,7 +418,11 @@ REGRAS DE COMPORTAMENTO:
         const _temNumero = msg.match(/\b\d{1,5}\b/);
         const _palavras = msg.trim().split(/\s+/);
         // Padrao: 2+ palavras capitalizadas + numero no final = endereco tipico brasileiro
-        const _parecEndereco = _palavras.length >= 2 && _temNumero && msg.match(/[A-Za-záéíóúâêîôûãõàèìòùç]{3,}/);
+        // Excluir frases que nao sao endereco mesmo tendo numero
+        const _naoEhEndereco = msg.match(/^(sim|nao|não|ok|oi|ola|olá|já|ja|to|tô|tudo|meu|minha|pode|obrig|valeu|certo|fechado|blz|beleza|show|ótimo|otimo|perfeito)/i)
+            || msg.split(/\s+/).length <= 2 && !_temLogradouro  // muito curto sem logradouro
+            || msg.match(/^(já te passei|ja te passei|já falei|ja falei|já disse|ja disse)/i);
+        const _parecEndereco = !_naoEhEndereco && _palavras.length >= 3 && _temNumero && msg.match(/[A-Za-záéíóúâêîôûãõàèìòùç]{3,}/);
 
         if ((_temLogradouro || _parecEndereco) && _temNumero) {
             return { intencao: 'INFORMAR_ENDERECO_COMPLETO', temEndereco: true, temNumero: true };
