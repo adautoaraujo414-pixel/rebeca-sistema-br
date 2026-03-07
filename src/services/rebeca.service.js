@@ -2219,12 +2219,14 @@ _Digite CANCELAR se precisar_`;
         else if (conversa.etapa === 'pedir_origem') {
             if (msg === 'casa' && favoritos.casa) {
                 conversa.dados.origem = favoritos.casa.endereco;
-                conversa.etapa = 'pedir_destino';
-                resposta = `📍 *Origem:* ${favoritos.casa.endereco}\n\n🏁 Destino:`;
+                conversa.dados.origemValidada = { valido: true, precisao: 'favorito', ...favoritos.casa };
+                conversa.etapa = 'confirmar_corrida';
+                resposta = `📍 *Origem:* ${favoritos.casa.endereco}\n\nConfirma a corrida?\n\n*1* - Sim\n*CANCELAR* - Cancelar`;
             } else if (msg === 'trabalho' && favoritos.trabalho) {
                 conversa.dados.origem = favoritos.trabalho.endereco;
-                conversa.etapa = 'pedir_destino';
-                resposta = `📍 *Origem:* ${favoritos.trabalho.endereco}\n\n🏁 Destino:`;
+                conversa.dados.origemValidada = { valido: true, precisao: 'favorito', ...favoritos.trabalho };
+                conversa.etapa = 'confirmar_corrida';
+                resposta = `📍 *Origem:* ${favoritos.trabalho.endereco}\n\nConfirma a corrida?\n\n*1* - Sim\n*CANCELAR* - Cancelar`;
             } else {
                 const validacao = await RebecaService.validarEndereco(msgOriginal);
                 if (!validacao.valido) {
@@ -2240,8 +2242,8 @@ _Digite CANCELAR se precisar_`;
                                 conversa.dados.origem = valOrig.endereco;
                                 conversa.dados.origemValidada = valOrig;
                                 conversa.dados.calculo = { origem: { endereco: valOrig.endereco, latitude: valOrig.latitude, longitude: valOrig.longitude }, destino: null, distanciaKm: 0, tempoMinutos: 0, preco: 15, faixa: { nome: 'padrao', multiplicador: 1 } };
-                                conversa.etapa = 'pedir_referencia';
-                                resposta = `📍 ${valOrig.endereco}\n\nReferência? (ou 0)`;
+                                conversa.etapa = 'confirmar_corrida';
+                                resposta = `📍 *Origem:* ${valOrig.endereco}\n\nConfirma a corrida?\n\n*1* - Sim\n*CANCELAR* - Cancelar`;
                                 conversas.set(telefone, conversa);
                                 return resposta;
                             }
@@ -2256,19 +2258,19 @@ _Digite CANCELAR se precisar_`;
                     conversa.dados.origem = msgOriginal;
                     conversa.dados.origemValidada = { valido: false, precisao: 'referencia', endereco: msgOriginal };
                     conversa.dados.calculo = { origem: { endereco: msgOriginal, latitude: null, longitude: null }, destino: null, distanciaKm: 0, tempoMinutos: 0, preco: 15, faixa: { nome: 'padrao', multiplicador: 1 } };
-                    conversa.etapa = 'pedir_destino';
+                    conversa.etapa = 'confirmar_corrida';
                     conversas.set(telefone, conversa);
-                    resposta = `📍 *${msgOriginal}*\n\n🏁 Qual o destino?`;
+                    resposta = `📍 *${msgOriginal}*\n\nConfirma a corrida?\n\n*1* - Sim\n*CANCELAR* - Cancelar`;
                 } else {
                     conversa.dados.origem = validacao.endereco;
-                    conversa.etapa = 'pedir_referencia';
                     conversa.dados.origemValidada = validacao;
                     conversa.dados.calculo = {
                         origem: { endereco: validacao.endereco, latitude: validacao.latitude, longitude: validacao.longitude },
                         destino: null, distanciaKm: 0, tempoMinutos: 0, preco: 15,
                         faixa: { nome: 'padrao', multiplicador: 1 }
                     };
-                    resposta = `📍 ${validacao.endereco}\n\nReferência? (ou 0)`;
+                    conversa.etapa = 'confirmar_corrida';
+                    resposta = `📍 *Origem:* ${validacao.endereco}\n\nConfirma a corrida?\n\n*1* - Sim\n*CANCELAR* - Cancelar`;
                 }
             }
         }
