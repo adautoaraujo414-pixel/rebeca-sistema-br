@@ -413,11 +413,17 @@ REGRAS DE COMPORTAMENTO:
             return { intencao: 'SOLICITAR_CORRIDA', resposta: Math.random() > 0.5 ? 'Beleza!|||Me passa o endereço' : 'Claro! Qual o endereço?' };
         }
         
-        if (msg.match(/(rua|avenida|av\.|av |r\.|travessa|alameda|estrada)/) && msg.match(/\d{1,5}/)) {
+        // Deteccao ampla: logradouro explicito OU nome com numero (padrao brasileiro)
+        const _temLogradouro = msg.match(/(rua|avenida|av[\. ]|r\.|travessa|alameda|estrada|rodovia|rod\.|beco|viela|praça|largo|vila)/i);
+        const _temNumero = msg.match(/\b\d{1,5}\b/);
+        const _palavras = msg.trim().split(/\s+/);
+        // Padrao: 2+ palavras capitalizadas + numero no final = endereco tipico brasileiro
+        const _parecEndereco = _palavras.length >= 2 && _temNumero && msg.match(/[A-Za-záéíóúâêîôûãõàèìòùç]{3,}/);
+
+        if ((_temLogradouro || _parecEndereco) && _temNumero) {
             return { intencao: 'INFORMAR_ENDERECO_COMPLETO', temEndereco: true, temNumero: true };
         }
-        
-        if (msg.match(/(rua|avenida|av\.|av |r\.|travessa|alameda|estrada)/) && !msg.match(/\d{1,5}/)) {
+        if (_temLogradouro && !_temNumero) {
             return { intencao: 'INFORMAR_ENDERECO_SEM_NUMERO', temEndereco: true, temNumero: false, resposta: 'Qual o número, por favor?' };
         }
         
