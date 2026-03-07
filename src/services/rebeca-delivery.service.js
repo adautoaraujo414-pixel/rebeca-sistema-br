@@ -101,7 +101,7 @@ class RebecaDeliveryService {
                         const analise = await IAService.analisarMensagemDelivery(msgTexto, { adminId });
                         if (analise.usarIA && analise.respostaCurta) return analise.respostaCurta;
                     }
-                    return 'Oi! Como posso te ajudar hoje? 😊';
+                    return 'Oi! 😊 Quer fazer um pedido? Me conta o que você precisa!';
             }
         } catch (error) {
             console.error('[REBECA-DELIVERY] Erro:', error);
