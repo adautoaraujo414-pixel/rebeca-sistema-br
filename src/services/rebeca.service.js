@@ -766,9 +766,20 @@ const RebecaService = {
             }
                         
                         // Saudação, agradecimento, outro
-                        if (['SAUDACAO', 'AGRADECIMENTO', 'INFORMACAO', 'OUTRO'].includes(resultadoGPT.intencao)) {
+                        if (['SAUDACAO', 'AGRADECIMENTO', 'INFORMACAO'].includes(resultadoGPT.intencao)) {
                             conversas.set(telefone, conversa);
                             return resultadoGPT.resposta;
+                        }
+                        
+                        // OUTRO — redirecionar suavemente para corrida
+                        if (resultadoGPT.intencao === 'OUTRO') {
+                            conversas.set(telefone, conversa);
+                            // Se GPT já gerou resposta contextual, usa ela
+                            if (resultadoGPT.resposta && !resultadoGPT.resposta.toLowerCase().includes('aqui é a rebeca') && !resultadoGPT.resposta.toLowerCase().includes('como posso')) {
+                                return resultadoGPT.resposta;
+                            }
+                            // Senão, redireciona pro tema corrida naturalmente
+                            return 'Entendi! 😊 Quando precisar de um carro é só falar — estou aqui pra isso!';
                         }
                         
                         // Verificar disponibilidade - já consultou motoristas
@@ -780,8 +791,8 @@ const RebecaService = {
                             return resultadoGPT.resposta;
                         }
                         
-                        // Solicitar corrida
-                        if (resultadoGPT.intencao === 'SOLICITAR_CORRIDA') {
+                        // Solicitar corrida (inclui AGENDAMENTO — corrida com horário)
+                        if (resultadoGPT.intencao === 'SOLICITAR_CORRIDA' || resultadoGPT.intencao === 'AGENDAMENTO') {
                             conversa.etapa = 'pedir_origem';
                             conversa.dados.tipo = 'passageiro';
                             // Marcar urgência se detectada
