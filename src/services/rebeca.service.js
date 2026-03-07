@@ -562,8 +562,14 @@ Me manda o endereço de *onde você está*!`;
         }
         
         // Buscar pontos de referência cadastrados
+        // Extrair apenas o local de frases como "me busca aqui na rodoviária"
+        let _textoParaBusca = msgLower;
+        const _frasePedido = msgLower.match(/(?:me busca|busca|pega|vem|manda|aqui na?o?|aqui no?|estou na?o?|estou no?|to na?o?|to no?)\s+(?:aqui\s+)?(?:na?o?\s+|no?\s+|em\s+|do?\s+|da?\s+)?(.+)/i);
+        if (_frasePedido && _frasePedido[1]) {
+            _textoParaBusca = _frasePedido[1].replace(/[,\.!?]+$/, '').trim();
+        }
         if (msgLower.length > 2 && !RebecaService.pareceLocalizacao(mensagem)) {
-            const pontosEncontrados = localidadeService.buscarPontos(msgLower);
+            const pontosEncontrados = localidadeService.buscarPontos(_textoParaBusca);
             if (pontosEncontrados && pontosEncontrados.length > 0) {
                 const ponto = pontosEncontrados[0];
                 conversa.dados.origem = ponto.endereco || ponto.nome;
@@ -1761,7 +1767,21 @@ _(ou mande *0* para pular)_`;
         // ========== COMPLEMENTO GPS (número/referência) ==========
         else if (conversa.etapa === 'pedir_complemento_gps') {
             // Salvar complemento/referência
-            conversa.dados.observacaoOrigem = msgOriginal;
+            if (msg !== '0' && msg !== 'nao' && msg !== 'não' && msg !== 'n') {
+                conversa.dados.observacaoOrigem = msgOriginal;
+            }
+            
+            // Ir para pedir_aparencia — motorista precisa encontrar o cliente no ponto
+            conversa.dados.origemPontoRef = true;
+            conversa.etapa = 'pedir_aparencia';
+            conversas.set(telefone, conversa);
+            return `📍 *${conversa.dados.origem}*
+
+Como você está? Me descreva sua aparência para o motorista te encontrar 👕
+
+Ex: _camisa azul, chapéu preto, mochila vermelha_
+
+_(ou mande *0* para pular)_`;
             
             // Criar corrida e despachar
             const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
@@ -2685,6 +2705,20 @@ Pode me passar o endereço completo? Ex: Rua X, número, bairro`;
                         destino: null, distanciaKm: 0, tempoMinutos: 0, preco: 15,
                         faixa: { nome: 'padrao', multiplicador: 1 }
                     };
+                    // Se veio de frase de pedido (me busca na X), pedir aparência
+                    const _eraPedidoLocal = /(me busca|me pega|busca aqui|aqui na|aqui no|estou na|estou no|tô na|tô no)/i.test(msgOriginal);
+                    if (_eraPedidoLocal || conversa.dados.origemPontoRef) {
+                        conversa.dados.origemPontoRef = true;
+                        conversa.etapa = 'pedir_aparencia';
+                        conversas.set(telefone, conversa);
+                        return `📍 *${conversa.dados.origem}*
+
+Como você está? Me descreva sua aparência para o motorista te encontrar 👕
+
+Ex: _camisa azul, chapéu preto, mochila vermelha_
+
+_(ou mande *0* para pular)_`;
+                    }
                     conversa.etapa = 'pedir_referencia';
                     conversas.set(telefone, conversa);
                     return `📍 ${conversa.dados.origem}\n\nReferência? (ou 0)`;
