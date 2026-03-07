@@ -544,6 +544,30 @@ const DespachoService = {
 
                 console.log(`🔄 Corrida ${corridaId} redirecionada para ${proximo.nome} (tentativa ${despacho.tentativa})`);
 
+                // Notificar cliente que ainda está buscando motorista
+                try {
+                    const { Corrida, InstanciaWhatsapp } = require('../models');
+                    const corridaRedir = await Corrida.findById(corridaId).lean();
+                    if (corridaRedir && corridaRedir.clienteTelefone) {
+                        const instRedir = corridaRedir.instanciaId
+                            ? await InstanciaWhatsapp.findById(corridaRedir.instanciaId)
+                            : await InstanciaWhatsapp.findOne({ adminId: corridaRedir.adminId, status: 'conectado' });
+                        if (instRedir) {
+                            const EvolutionMultiService = require('./evolution-multi.service');
+                            const msgs = [
+                                'Ainda buscando o motorista ideal pra voce! So mais um instante.',
+                                'Quase la! Procurando outro motorista disponivel.',
+                                'Nao desanime! Estou localizando um motorista pra voce agora.'
+                            ];
+                            await EvolutionMultiService.enviarMensagem(
+                                instRedir._id,
+                                corridaRedir.clienteTelefone,
+                                msgs[Math.floor(Math.random() * msgs.length)]
+                            );
+                        }
+                    }
+                } catch(_rn) { console.log('[DESPACHO] Erro notif redespacho:', _rn.message); }
+
                 return {
                     sucesso: true,
                     redirecionado: true,

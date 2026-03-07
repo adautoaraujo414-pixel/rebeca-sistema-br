@@ -592,4 +592,78 @@ router.get('/chat/mensagens', auth, async (req, res) => {
     } catch(e) { res.json({ mensagens: [] }); }
 });
 
+// Recusar corrida — aciona redespacho automático
+router.post('/recusar', auth, async (req, res) => {
+    const { corridaId, motivo } = req.body;
+    try {
+        const { Corrida, Motorista } = require('../models');
+        const DespachoService = require('../services/despacho.service');
+
+        // Verificar se corrida pertence a este motorista
+        const corrida = await Corrida.findOne({
+            _id: corridaId,
+            motoristaId: req.motorista._id,
+            status: { $in: ['pendente', 'aceita', 'motorista_a_caminho'] }
+        });
+        if (!corrida) return res.json({ sucesso: false, erro: 'Corrida nao encontrada' });
+
+        // Liberar motorista
+        await Motorista.findByIdAndUpdate(req.motorista._id, { status: 'disponivel' });
+
+        // Acionar redespacho — DespachoService tenta proximo da lista
+        const resultado = DespachoService.recusarCorrida(corridaId, req.motorista._id.toString(), motivo || 'Recusado pelo motorista');
+
+        if (resultado.redirecionado && resultado.novoMotorista) {
+            // Tem proximo motorista — notificar via GPS/push
+            try {
+                const GPSIntegradoService = require('../services/gps-integrado.service');
+                const corridaAtual = await Corrida.findById(corridaId);
+                const novoMot = await require('../services/motorista.service').buscarPorId(resultado.novoMotorista.id);
+                if (novoMot && corridaAtual) {
+                    await GPSIntegradoService.notificarMotorista(novoMot, corridaAtual);
+                }
+            } catch(_gps) { console.log('[RECUSAR] Erro notif GPS:', _gps.message); }
+            return res.json({ sucesso: true, redirecionado: true, mensagem: 'Corrida repassada para outro motorista' });
+        }
+
+        if (resultado.semMotoristas) {
+            // Sem mais alternativas — cancelar corrida e avisar cliente
+            await Corrida.findByIdAndUpdate(corridaId, {
+                status: 'cancelada',
+                motivoCancelamento: 'sem_motoristas_disponiveis'
+            });
+            try {
+                const { InstanciaWhatsapp } = require('../models');
+                const EvolutionMultiService = require('../services/evolution-multi.service');
+                const corridaCanc = await Corrida.findById(corridaId);
+                if (corridaCanc) {
+                    const inst = corridaCanc.instanciaId
+                        ? await InstanciaWhatsapp.findById(corridaCanc.instanciaId)
+                        : await InstanciaWhatsapp.findOne({ adminId: corridaCanc.adminId, status: 'conectado' });
+                    if (inst && corridaCanc.clienteTelefone) {
+                        await EvolutionMultiService.enviarMensagem(
+                            inst._id, corridaCanc.clienteTelefone,
+                            'Poxa, nao encontramos nenhum motorista disponivel agora.\n\nTente novamente daqui a pouco! Quando precisar e so chamar.'
+                        );
+                        // Resetar conversa do cliente
+                        const RebecaService = require('../services/rebeca.service');
+                        const conversas = RebecaService.conversas;
+                        if (conversas && corridaCanc.clienteTelefone) {
+                            const conv = conversas.get(corridaCanc.clienteTelefone) || {};
+                            conv.etapa = 'oferecer_fila_espera';
+                            conv._ultimaAtividade = Date.now();
+                            conversas.set(corridaCanc.clienteTelefone, conv);
+                        }
+                    }
+                }
+            } catch(_ce) { console.log('[RECUSAR] Erro cancelar:', _ce.message); }
+        }
+
+        res.json({ sucesso: true, mensagem: 'Corrida recusada' });
+    } catch(e) {
+        console.error('[RECUSAR] Erro:', e.message);
+        res.json({ sucesso: false, erro: e.message });
+    }
+});
+
 module.exports = router;

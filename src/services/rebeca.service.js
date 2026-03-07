@@ -26,7 +26,7 @@ setInterval(async () => {
     const agora = Date.now();
     let limpas = 0;
     for (const [telefone, conversa] of conversas.entries()) {
-        const ultimaMsg = conversa.ultimaMensagem || conversa.updatedAt || conversa.criadaEm || 0;
+        const ultimaMsg = conversa._ultimaAtividade || conversa.ultimaMensagem || conversa.updatedAt || Date.now();
         
         // Timeout etapas que podem travar o cliente
         const minutos = (agora - ultimaMsg) / 60000;
@@ -1378,28 +1378,9 @@ Me manda o endereço de *onde você está*!`;
                 conversas.set(telefone, conversa);
                 return 'Sem problemas! Quando precisar é só me chamar!';
             } else {
-                // Tentar interpretar variações de sim/não
-                const mSim = ['s','sim','ok','quero','pode','manda','avisa','bora','vai','yes','yeah','claro','confirma','confirmo','ótimo','otimo'];
-                const mNao = ['n','nao','não','agora','depois','deixa','cancela','tanto faz','tchau','flw','valeu','obrigado','obrigada'];
-                if (mSim.some(p => msg.includes(p))) {
-                    const resultado = await RebecaService.adicionarFilaEspera(telefone, conversa.dados, conversa.adminId);
-                    if (resultado?.posicao) {
-                        conversa.etapa = 'aguardando_fila';
-                        conversas.set(telefone, conversa);
-                        return resultado.posicao === 1
-                            ? 'Pronto! Você é o próximo da fila! Assim que um motorista desocupar eu te aviso e já crio sua corrida automaticamente!'
-                            : 'Pronto! Te coloquei na fila, você é o ' + resultado.posicao + 'º da vez! Assim que um motorista desocupar eu te aviso!';
-                    }
-                }
-                if (mNao.some(p => msg.includes(p))) {
-                    conversa.etapa = 'inicio';
-                    conversas.set(telefone, conversa);
-                    return 'Sem problemas! Quando precisar é só me chamar! 😊';
-                }
-                // Ainda não entendeu — reforçar de forma amigável sem admitir confusão
-                conversa.etapa = 'oferecer_fila_espera';
+                // Ainda não entendeu — reforçar
                 conversas.set(telefone, conversa);
-                return '🙋 Quer que eu te avise assim que um motorista ficar livre?\n\nResponde *SIM* para entrar na fila ou *NÃO* para tentar depois!';;
+                return 'Quer que eu te avise assim que um motorista ficar livre?\n\nResponde *SIM* para entrar na fila ou *NAO* para tentar depois!';
             }
         }
 

@@ -1,3 +1,6 @@
+// DEPRECATED — Este serviço usa WhatsAppService legado e não é chamado por nenhuma rota ativa.
+// Mantido apenas para referência histórica. Não adicionar novas chamadas aqui.
+
 const MotoristaService = require('./motorista.service');
 const CorridaService = require('./corrida.service');
 const ClienteService = require('./cliente.service');
