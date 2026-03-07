@@ -17,10 +17,15 @@ const MapsService = {
         
         try {
             const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(endereco)}&key=${MapsService.apiKey}&language=pt-BR&region=br`;
-            const response = await fetch(url);
-            const data = await response.json();
+            const controller1 = new AbortController();
+            const _t1 = setTimeout(() => controller1.abort(), 5000);
+            let response, data;
+            try {
+                response = await fetch(url, { signal: controller1.signal });
+                data = await response.json();
+            } finally { clearTimeout(_t1); }
             
-            if (data.status === 'OK' && data.results[0]) {
+            if (data && data.status === 'OK' && data.results && data.results[0]) {
                 const result = data.results[0];
                 return {
                     sucesso: true,
@@ -36,7 +41,11 @@ const MapsService = {
             
             return { sucesso: false, error: 'Endereço não encontrado' };
         } catch (error) {
-            console.error('Erro geocoding:', error);
+            if (error.name === 'AbortError') {
+                console.warn('[MAPS] geocodificar timeout 5s — usando offline');
+            } else {
+                console.error('[MAPS] geocodificar erro:', error.message);
+            }
             return MapsService.geocodificarOffline(endereco);
         }
     },
@@ -90,10 +99,15 @@ const MapsService = {
 
         try {
             const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${MapsService.apiKey}&language=pt-BR`;
-            const response = await fetch(url);
-            const data = await response.json();
+            const controller2 = new AbortController();
+            const _t2 = setTimeout(() => controller2.abort(), 5000);
+            let response, data;
+            try {
+                response = await fetch(url, { signal: controller2.signal });
+                data = await response.json();
+            } finally { clearTimeout(_t2); }
 
-            if (data.status === 'OK' && data.results[0]) {
+            if (data && data.status === 'OK' && data.results && data.results[0]) {
                 return {
                     sucesso: true,
                     endereco: data.results[0].formatted_address,
@@ -122,10 +136,15 @@ const MapsService = {
 
         try {
             const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${origemGeo.latitude},${origemGeo.longitude}&destination=${destinoGeo.latitude},${destinoGeo.longitude}&key=${MapsService.apiKey}&language=pt-BR&mode=driving`;
-            const response = await fetch(url);
-            const data = await response.json();
+            const controller3 = new AbortController();
+            const _t3 = setTimeout(() => controller3.abort(), 5000);
+            let response, data;
+            try {
+                response = await fetch(url, { signal: controller3.signal });
+                data = await response.json();
+            } finally { clearTimeout(_t3); }
 
-            if (data.status === 'OK' && data.routes[0]) {
+            if (data && data.status === 'OK' && data.routes && data.routes[0]) {
                 const route = data.routes[0];
                 const leg = route.legs[0];
 
@@ -162,7 +181,11 @@ const MapsService = {
 
             return MapsService.calcularRotaOffline(origemGeo, destinoGeo);
         } catch (error) {
-            console.error('Erro directions:', error);
+            if (error.name === 'AbortError') {
+                console.warn('[MAPS] calcularRota timeout 5s — usando offline');
+            } else {
+                console.error('[MAPS] calcularRota erro:', error.message);
+            }
             return MapsService.calcularRotaOffline(origemGeo, destinoGeo);
         }
     },
@@ -215,10 +238,15 @@ const MapsService = {
             const destinosStr = destinos.map(d => `${d.latitude},${d.longitude}`).join('|');
             
             const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${origensStr}&destinations=${destinosStr}&key=${MapsService.apiKey}&language=pt-BR&mode=driving`;
-            const response = await fetch(url);
-            const data = await response.json();
+            const controller4 = new AbortController();
+            const _t4 = setTimeout(() => controller4.abort(), 5000);
+            let response, data;
+            try {
+                response = await fetch(url, { signal: controller4.signal });
+                data = await response.json();
+            } finally { clearTimeout(_t4); }
 
-            if (data.status === 'OK') {
+            if (data && data.status === 'OK') {
                 return {
                     sucesso: true,
                     resultados: data.rows.map((row, i) => ({
@@ -302,10 +330,15 @@ const MapsService = {
 
         try {
             const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(texto)}&key=${MapsService.apiKey}&language=pt-BR&components=country:br&types=address`;
-            const response = await fetch(url);
-            const data = await response.json();
+            const controller5 = new AbortController();
+            const _t5 = setTimeout(() => controller5.abort(), 4000);
+            let response, data;
+            try {
+                response = await fetch(url, { signal: controller5.signal });
+                data = await response.json();
+            } finally { clearTimeout(_t5); }
 
-            if (data.status === 'OK') {
+            if (data && data.status === 'OK') {
                 return {
                     sucesso: true,
                     sugestoes: data.predictions.map(p => ({

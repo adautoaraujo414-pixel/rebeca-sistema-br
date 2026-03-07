@@ -137,7 +137,7 @@ const EvolutionMultiService = {
             if (!instancia) throw new Error('Instancia nao encontrada');
             let statusApi = instancia.status;
             try {
-                const response = await axios.get(instancia.apiUrl + '/instance/connectionState/' + instancia.nomeInstancia, { headers: { 'apikey': instancia.apiKey || EVOLUTION_GLOBAL_KEY } });
+                const response = await axios.get(instancia.apiUrl + '/instance/connectionState/' + instancia.nomeInstancia, { headers: { 'apikey': instancia.apiKey || EVOLUTION_GLOBAL_KEY }, timeout: 6000 });
                 statusApi = response.data?.instance?.state === 'open' ? 'conectado' : 'desconectado';
             } catch (e) {}
             instancia.status = statusApi;
@@ -192,11 +192,11 @@ const EvolutionMultiService = {
                     
                     // Tentar reconectar via Evolution API
                     try {
-                        await axios.get(instancia.apiUrl + '/instance/connect/' + instancia.nomeInstancia, { headers: { 'apikey': instancia.apiKey || EVOLUTION_GLOBAL_KEY } });
+                        await axios.get(instancia.apiUrl + '/instance/connect/' + instancia.nomeInstancia, { headers: { 'apikey': instancia.apiKey || EVOLUTION_GLOBAL_KEY }, timeout: 8000 });
                         await new Promise(r => setTimeout(r, 3000)); // Aguardar reconexão
                         
                         // Verificar status
-                        const statusRes = await axios.get(instancia.apiUrl + '/instance/connectionState/' + instancia.nomeInstancia, { headers: { 'apikey': instancia.apiKey || EVOLUTION_GLOBAL_KEY } });
+                        const statusRes = await axios.get(instancia.apiUrl + '/instance/connectionState/' + instancia.nomeInstancia, { headers: { 'apikey': instancia.apiKey || EVOLUTION_GLOBAL_KEY }, timeout: 6000 });
                         if (statusRes.data?.instance?.state === 'open') {
                             await InstanciaWhatsapp.findByIdAndUpdate(instancia._id, { status: 'conectado', ultimaConexao: new Date() });
                             console.log('[EVO] Reconectado com sucesso!');
