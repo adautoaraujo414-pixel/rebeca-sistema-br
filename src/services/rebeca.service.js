@@ -2467,7 +2467,8 @@ _Digite CANCELAR se precisar_`;
     },
     gerarLinkRastreamento: (corridaId, token = null) => {
         const base = process.env.BASE_URL || 'https://rebeca-sistema-br.onrender.com';
-        if (token) return `${base}/rastrear/${token}`;
+        const codigo = token || (corridaId ? corridaId.toString().slice(-8) : 'xxx');
+        return `${base}/rastrear.html?c=${codigo}`;
         return `${base}/rastrear/${corridaId.slice(-8)}`;
     },
 
