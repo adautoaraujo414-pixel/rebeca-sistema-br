@@ -83,7 +83,8 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-const codigo = location.pathname.split('/').pop();
+const _params = new URLSearchParams(location.search);
+const codigo = _params.get('c') || location.pathname.split('/').pop();
 const API = `/api/rebeca/rastrear/${codigo}`;
 
 const mapa = L.map('mapa', { zoomControl: true, attributionControl: false });
