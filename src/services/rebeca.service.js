@@ -1217,6 +1217,17 @@ Me manda o endereço de *onde você está*!`;
             return '⏳ Estou localizando o motorista mais próximo...\n\nAssim que um aceitar, te aviso! Para cancelar, digite *CANCELAR*.';
         }
 
+        // ========== AGUARDANDO EMBARQUE — resposta para msgs normais ==========
+        if (conversa.etapa === 'aguardando_embarque' && !resposta) {
+            const _frasesEmbarque = [
+                'Seu motorista já está te esperando! É só subir no veículo. 🚗',
+                'Ele está no local! Pode ir que a corrida começa assim que embarcar. 😊',
+                'Motorista aguardando você! Dirija-se ao veículo. 🚙',
+                'Já pode ir! O motorista está no local esperando você.'
+            ];
+            resposta = _frasesEmbarque[Math.floor(Math.random() * _frasesEmbarque.length)];
+        }
+
         // ========== MOTORISTA A CAMINHO (aceitou, indo buscar cliente) ==========
         if (conversa.etapa === 'motorista_a_caminho') {
             if (NLPService.eCancelar(msg)) {
