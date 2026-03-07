@@ -86,7 +86,7 @@ router.get('/rastrear/:codigo', async (req, res) => {
         // ObjectId não suporta regex, então buscamos as recentes e filtramos
         let corrida = null;
         const recentes = await Corrida.find({}).sort({ createdAt: -1 }).limit(100).lean();
-        corrida = recentes.find(c => c._id.toString().endsWith(codigo));
+        corrida = recentes.find(c => c._id.toString().endsWith(codigo)) || recentes.find(c => c._id.toString().includes(codigo));
         
         // Fallback: tentar como ID completo
         if (!corrida && codigo.length >= 20) {
@@ -98,13 +98,11 @@ router.get('/rastrear/:codigo', async (req, res) => {
         }
         
         // Link expira quando corrida inicia, finaliza ou cancela
-        if (['em_andamento', 'finalizada', 'cancelada'].includes(corrida.status)) {
+        if (['finalizada', 'cancelada'].includes(corrida.status)) {
             return res.json({ 
                 expirado: true, 
                 status: corrida.status,
-                mensagem: corrida.status === 'em_andamento' ? 'Corrida em andamento - rastreamento encerrado' :
-                          corrida.status === 'finalizada' ? 'Corrida finalizada - obrigado!' :
-                          'Corrida cancelada'
+                mensagem: corrida.status === 'finalizada' ? 'Corrida finalizada - obrigado!' : 'Corrida cancelada'
             });
         }
         
