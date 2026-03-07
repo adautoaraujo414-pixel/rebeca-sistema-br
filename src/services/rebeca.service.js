@@ -715,15 +715,22 @@ const RebecaService = {
                         console.log('[OPENAI] Intenção:', resultadoGPT.intencao);
             
             // MODO SECRETÁRIA: notificar admin quando necessário
-            const humorFinal = resultadoGPT.humorCliente || 'NORMAL';
-            const deveNotificarAdmin = resultadoGPT.notificarAdmin ||
+            const humorFinal = resultadoGPT.humorCliente || resultadoGPT.humor_cliente || 'NORMAL';
+            
+            // Detectar BRINCANDO pelo conteúdo da mensagem se GPT não detectou
+            const _msgHumor = (msg || '').toLowerCase();
+            const _eBrincando = humorFinal === 'BRINCANDO' || 
+                (_msgHumor.match(/kkk|haha|rsrs|hauha|kk+|😂|🤣/) && !_msgHumor.includes('bravo') && !_msgHumor.includes('raiva'));
+            const humorEfetivo = _eBrincando ? 'BRINCANDO' : humorFinal;
+
+            const deveNotificarAdmin = resultadoGPT.notificarAdmin || resultadoGPT.notificar_admin ||
                 resultadoGPT.intencao === 'FALAR_RESPONSAVEL' ||
                 resultadoGPT.intencao === 'RECLAMACAO' ||
-                humorFinal === 'BRAVO' ||
-                ['AGENDAMENTO', 'OUTRO'].includes(resultadoGPT.intencao);
+                humorFinal === 'BRAVO';
+            // BRINCANDO e OUTRO nunca notificam admin — são mensagens casuais
 
             // Se cliente BRAVO — acalmar primeiro
-            if (humorFinal === 'BRAVO') {
+            if (humorEfetivo === 'BRAVO') {
                 const frasesCalma = [
                     'Calma, estou aqui! 🙏 Já vou resolver isso pra você agora mesmo.',
                     'Oi! Respira, pode contar comigo 😊 Me fala o que aconteceu que já resolvo.',
@@ -731,7 +738,6 @@ const RebecaService = {
                     'Calma! Estou te ouvindo e vou resolver isso agora mesmo. O que aconteceu?'
                 ];
                 const fraseBravo = frasesCalma[Math.floor(Math.random() * frasesCalma.length)];
-                // Enviar acalme ANTES da resposta principal
                 try {
                     const instObj = await require('./evolution-multi.service').buscarInstancia(instanciaId);
                     if (instObj) await require('./evolution-multi.service').enviarMensagem(instanciaId, telefone, fraseBravo);
@@ -744,8 +750,8 @@ const RebecaService = {
                     const adminDoc = await Admin.findById(adminId);
                     if (adminDoc && adminDoc.telefone) {
                         // Montar mensagem rica pro admin
-                        const emoji = humorFinal === 'BRAVO' ? '🔴' : resultadoGPT.intencao === 'RECLAMACAO' ? '🟠' : resultadoGPT.intencao === 'FALAR_RESPONSAVEL' ? '🟡' : '📩';
-                        const situacao = humorFinal === 'BRAVO' ? 'CLIENTE BRAVO' :
+                        const emoji = humorEfetivo === 'BRAVO' ? '🔴' : resultadoGPT.intencao === 'RECLAMACAO' ? '🟠' : resultadoGPT.intencao === 'FALAR_RESPONSAVEL' ? '🟡' : '📩';
+                        const situacao = humorEfetivo === 'BRAVO' ? 'CLIENTE BRAVO' :
                             resultadoGPT.intencao === 'RECLAMACAO' ? 'RECLAMAÇÃO' :
                             resultadoGPT.intencao === 'FALAR_RESPONSAVEL' ? 'QUER FALAR COM RESPONSÁVEL' :
                             resultadoGPT.intencao === 'AGENDAMENTO' ? 'QUER AGENDAR' : 'FORA DO CONTEXTO';
