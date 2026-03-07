@@ -1217,6 +1217,21 @@ Me manda o endereço de *onde você está*!`;
             return '⏳ Estou localizando o motorista mais próximo...\n\nAssim que um aceitar, te aviso! Para cancelar, digite *CANCELAR*.';
         }
 
+        // ========== MOTORISTA A CAMINHO (aceitou, indo buscar cliente) ==========
+        if (conversa.etapa === 'motorista_a_caminho') {
+            if (NLPService.eCancelar(msg)) {
+                resposta = 'Seu motorista ja esta a caminho! Para cancelar agora precisaria entrar em contato direto com ele.\n\nSe precisar de ajuda manda mensagem aqui!';
+            } else {
+                const _frasesCaminho = [
+                    'Seu motorista esta a caminho! Fique de olho no WhatsApp, ele vai te avisar quando chegar.',
+                    'Calma, ele ja esta indo! Assim que chegar no local voce recebe uma mensagem.',
+                    'Motorista a caminho! Qualquer duvida e so me chamar.'
+                ];
+                resposta = _frasesCaminho[Math.floor(Math.random() * _frasesCaminho.length)];
+            }
+            conversas.set(telefone, conversa);
+        }
+
         // ========== AGUARDANDO EMBARQUE (motorista chegou, cliente vai embarcar) ==========
         if (conversa.etapa === 'aguardando_embarque') {
             if (NLPService.eCancelar(msg)) {

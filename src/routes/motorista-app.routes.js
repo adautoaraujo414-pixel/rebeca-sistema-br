@@ -691,4 +691,51 @@ router.post('/recusar', auth, async (req, res) => {
     }
 });
 
+// Caixa financeira do motorista — registro de entradas/saídas do dia
+router.post('/caixa', auth, async (req, res) => {
+    try {
+        const { tipo, valor, descricao } = req.body;
+        if (!tipo || !valor || isNaN(valor)) return res.json({ sucesso: false, erro: 'Dados inválidos' });
+        const { Motorista } = require('../models');
+        const entrada = {
+            tipo: tipo === 'entrada' ? 'entrada' : 'saida',
+            valor: parseFloat(valor),
+            descricao: descricao || (tipo === 'entrada' ? 'Entrada' : 'Saída'),
+            data: new Date()
+        };
+        await Motorista.findByIdAndUpdate(req.motorista._id, {
+            $push: { caixaDia: entrada }
+        });
+        res.json({ sucesso: true });
+    } catch(e) { res.json({ sucesso: false, erro: e.message }); }
+});
+
+router.get('/caixa', auth, async (req, res) => {
+    try {
+        const { Motorista } = require('../models');
+        const m = await Motorista.findById(req.motorista._id).lean();
+        const hoje = new Date(); hoje.setHours(0,0,0,0);
+        const transacoes = (m.caixaDia || []).filter(t => new Date(t.data) >= hoje);
+        const saldo = transacoes.reduce((s, t) => t.tipo === 'entrada' ? s + t.valor : s - t.valor, 0);
+        // Adicionar corridas do dia como entradas automáticas
+        const { Corrida } = require('../models');
+        const corridasHoje = await Corrida.find({
+            motoristaId: req.motorista._id,
+            status: 'finalizada',
+            finalizadaEm: { $gte: hoje }
+        }).lean();
+        const corridasTransacoes = corridasHoje.map(c => ({
+            tipo: 'entrada',
+            valor: c.precoFinal || c.precoEstimado || 0,
+            descricao: 'Corrida — ' + (c.clienteNome || 'Cliente'),
+            data: c.finalizadaEm || c.updatedAt,
+            auto: true
+        }));
+        const todasTransacoes = [...corridasTransacoes, ...transacoes]
+            .sort((a,b) => new Date(b.data) - new Date(a.data));
+        const saldoTotal = saldo + corridasHoje.reduce((s,c) => s + (c.precoFinal || c.precoEstimado || 0), 0);
+        res.json({ sucesso: true, saldo: saldoTotal, transacoes: todasTransacoes });
+    } catch(e) { res.json({ sucesso: false, saldo: 0, transacoes: [] }); }
+});
+
 module.exports = router;

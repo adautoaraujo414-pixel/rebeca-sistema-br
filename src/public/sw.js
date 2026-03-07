@@ -52,16 +52,19 @@ self.addEventListener('notificationclick', event => {
     event.notification.close();
     
     if (event.action === 'aceitar' || !event.action) {
+        const corridaId = event.notification.data?.corridaId || '';
+        const urlAlvo = '/motorista-app.html' + (corridaId ? '?corridaId=' + corridaId : '');
         event.waitUntil(
             clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
-                // Se já tem uma aba aberta, focar nela
+                // Se já tem uma aba aberta, focar nela e passar corridaId
                 for (const client of clientList) {
                     if (client.url.includes('motorista') && 'focus' in client) {
+                        client.postMessage({ tipo: 'nova_corrida', corridaId: corridaId });
                         return client.focus();
                     }
                 }
-                // Senão, abrir nova aba
-                return clients.openWindow('/motorista-app.html');
+                // Senão, abrir nova aba com corridaId na URL
+                return clients.openWindow(urlAlvo);
             })
         );
     }

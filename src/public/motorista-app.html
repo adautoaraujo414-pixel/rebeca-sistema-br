@@ -323,6 +323,14 @@ function whatsappSuporte() {
     fecharSuporte();
 }
 // Fechar clicando fora — aguarda DOM estar pronto
+// Ouvir mensagem do Service Worker (clique em notificação push)
+navigator.serviceWorker && navigator.serviceWorker.addEventListener('message', (event) => {
+    if (event.data && event.data.tipo === 'nova_corrida' && event.data.corridaId) {
+        // Forçar verificação imediata de corridas ao receber push
+        setTimeout(() => { verificarNovasCorridas && verificarNovasCorridas(); }, 500);
+    }
+});
+
 document.addEventListener('DOMContentLoaded', function() {
     const m = document.getElementById('modalSuporte');
     if (m) m.addEventListener('click', function(e) {
