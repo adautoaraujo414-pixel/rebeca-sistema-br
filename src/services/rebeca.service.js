@@ -1236,10 +1236,7 @@ Me manda o endereço de *onde você está*!`;
                                     const mot = await MotoristaService.buscarPorId(corridaCancelar.motoristaId);
                                     if (mot?.whatsapp) {
                                         await EvolutionMultiService.enviarMensagem(inst._id, mot.whatsapp,
-                                            '⚠️ O cliente cancelou a corrida após sua chegada.
-
-Você está disponível para novas corridas! 🚗'
-                                        );
+                                            '⚠️ O cliente cancelou a corrida após sua chegada.\nVocê está disponível para novas corridas! 🚗'\n);
                                     }
                                 }
                             } catch(_mn) {}
@@ -1249,10 +1246,7 @@ Você está disponível para novas corridas! 🚗'
                 conversa.etapa = 'inicio';
                 conversa.dados = {};
                 conversas.set(telefone, conversa);
-                resposta = 'Corrida cancelada. Pedimos desculpas pela situação 😔
-
-Quando precisar é só chamar!';
-            } else {
+                resposta = 'Corrida cancelada. Pedimos desculpas pela situação 😔\nQuando precisar é só chamar!';\n} else {
                 // Cliente mandou qualquer outra coisa — tranquilizar
                 const msgs = [
                     '🚗 Seu motorista está te aguardando! Por favor, dirija-se ao veículo 😊',
@@ -1267,10 +1261,7 @@ Quando precisar é só chamar!';
         // ========== EM CORRIDA (corrida em andamento) ==========
         if (conversa.etapa === 'em_corrida') {
             if (NLPService.eCancelar(msg)) {
-                resposta = '⚠️ A corrida já foi iniciada e não pode ser cancelada agora.
-
-Se tiver algum problema, fale diretamente com o motorista ou aguarde o destino.';
-            } else {
+                resposta = '⚠️ A corrida já foi iniciada e não pode ser cancelada agora.\nSe tiver algum problema, fale diretamente com o motorista ou aguarde o destino.';\n} else {
                 // Cliente mandou msg durante a corrida — repassar para motorista se possível
                 try {
                     const { Corrida } = require('../models');

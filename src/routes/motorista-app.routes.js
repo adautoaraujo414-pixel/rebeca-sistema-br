@@ -241,9 +241,23 @@ router.post('/iniciar', auth, async (req, res) => {
             let instancia = await InstanciaWhatsapp.findOne({ adminId: corrida.adminId, status: 'conectado' });
             if (instancia) {
                 await EvolutionMultiService.enviarMensagem(instancia._id, corrida.clienteTelefone,
-                    '\u2705 *VIAGEM INICIADA!*\n\nSua corrida comecou. Aproveite o trajeto!\n\nBoa viagem! \ud83d\ude97');
+                    '🚗 *Corrida iniciada!*\n\n' +
+                    '*' + (req.motorista?.nomeCompleto || req.motorista?.nome || 'Seu motorista') + '* está a caminho do seu destino.\n\n' +
+                    'Boa viagem! 😊');
             }
         }
+        // Sincronizar estado Rebeca — em_corrida
+        try {
+            const RebecaService = require('../services/rebeca.service');
+            const conversas = RebecaService.conversas;
+            if (conversas && corrida?.clienteTelefone) {
+                const conv = conversas.get(corrida.clienteTelefone) || {};
+                conv.etapa = 'em_corrida';
+                conv.dados = { ...conv.dados, corridaId: corridaId };
+                conv._ultimaAtividade = Date.now();
+                conversas.set(corrida.clienteTelefone, conv);
+            }
+        } catch(_rs) {}
         res.json({ sucesso: true, corrida });
     } catch (e) { res.json({ sucesso: false, erro: e.message }); }
 });
@@ -261,11 +275,33 @@ router.post('/finalizar', auth, async (req, res) => {
             if (instancia) {
                 const valor = precoFinal || corridaFinal.precoFinal || corridaFinal.precoEstimado || 0;
                 // Colocar cliente em modo avaliacao
-                try { const RebecaService = require('../services/rebeca.service'); RebecaService.pedirAvaliacao(corridaFinal.clienteTelefone); } catch(e) { console.log('[CATCH]', e.message); }
+                try {
+                    const RebecaService = require('../services/rebeca.service');
+                    const conversas = RebecaService.conversas;
+                    if (conversas && corridaFinal.clienteTelefone) {
+                        const conv = conversas.get(corridaFinal.clienteTelefone) || {};
+                        conv.etapa = 'avaliar';
+                        conv.dados = { ...conv.dados, corridaId: corridaFinal._id?.toString() };
+                        conv._ultimaAtividade = Date.now();
+                        conversas.set(corridaFinal.clienteTelefone, conv);
+                    }
+                    // Salvar destino no histórico
+                    if (corridaFinal.destino?.endereco) {
+                        const ClienteService = require('../services/cliente.service');
+                        await ClienteService.salvarDestino(corridaFinal.clienteTelefone, corridaFinal.adminId, corridaFinal.destino);
+                    }
+                } catch(_re) { console.log('[FINALIZAR] state:', _re.message); }
                 await EvolutionMultiService.enviarMensagem(instancia._id, corridaFinal.clienteTelefone,
-                    '\ud83c\udfc1 *CORRIDA FINALIZADA!*\n\n' +
-                    '\ud83d\udcb0 *Valor: R$ ' + valor.toFixed(2) + '*\n\n' +
-                    'Obrigada por viajar com a gente! \u2764\ufe0f\n\nQuer avaliar o motorista? Mande uma nota de 1 a 5.');
+                    '🏁 *Corrida finalizada!*\n\n' +
+                    (valor > 0 ? '💰 *Valor: R$ ' + valor.toFixed(2).replace('.', ',') + '*\n\n' : '') +
+                    'Obrigada por viajar com a gente! ❤️\n\n' +
+                    'Como foi sua experiência com *' + (req.motorista?.nomeCompleto?.split(' ')[0] || 'o motorista') + '*?\n\n' +
+                    '⭐ *1* - Péssimo\n' +
+                    '⭐⭐ *2* - Ruim\n' +
+                    '⭐⭐⭐ *3* - Ok\n' +
+                    '⭐⭐⭐⭐ *4* - Bom\n' +
+                    '⭐⭐⭐⭐⭐ *5* - Excelente\n\n' +
+                    'Manda o número da sua avaliação! 😊');
             }
         }
         res.json(corrida);
