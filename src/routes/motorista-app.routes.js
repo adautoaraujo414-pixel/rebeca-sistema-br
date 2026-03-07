@@ -225,13 +225,21 @@ router.post('/cheguei', auth, async (req, res) => {
             }
         } catch(_re) { console.log('[CHEGUEI] Rebeca state:', _re.message); }
 
-        // Notificar cliente via WhatsApp
-        const instancia = await InstanciaWhatsapp.findOne({ adminId: corrida.adminId, status: 'conectado' });
-        if (instancia && corrida.clienteTelefone) {
-            const msg = `🚗 *MOTORISTA CHEGOU!*\n\nSeu motorista *${req.motorista.nomeCompleto}* está te aguardando no local.\n\n📍 Dirija-se ao veículo:\n🚙 ${req.motorista.veiculo?.modelo || ''} ${req.motorista.veiculo?.cor || ''} - ${req.motorista.veiculo?.placa || ''}`;
-            await EvolutionMultiService.enviarMensagem(instancia._id, corrida.clienteTelefone, msg);
+        // Notificar cliente via WhatsApp — tenta todas as instâncias
+        if (corrida.clienteTelefone) {
+            const instancias = await InstanciaWhatsapp.find({ adminId: corrida.adminId }).sort({ ultimaConexao: -1 });
+            const nomeM = req.motorista.nomeCompleto || req.motorista.nome || 'Motorista';
+            const veic = req.motorista.veiculo?.modelo || '';
+            const cor = req.motorista.veiculo?.cor || '';
+            const placa = req.motorista.veiculo?.placa || req.motorista.placa || '';
+            const msgCheg = '\ud83d\ude97 *MOTORISTA CHEGOU!*\n\nSeu motorista *' + nomeM + '* est\u00e1 te aguardando no local.\n\n\ud83d\udccd Dirija-se ao ve\u00edculo:\n\ud83d\ude99 ' + veic + ' ' + cor + (placa ? ' - *' + placa + '*' : '');
+            for (const inst of instancias) {
+                try {
+                    const r = await EvolutionMultiService.enviarMensagem(inst._id, corrida.clienteTelefone, msgCheg);
+                    if (r && r.sucesso) { console.log('[CHEGUEI] Notif enviada via', inst.nomeInstancia); break; }
+                } catch(_ci) {}
+            }
         }
-        
         console.log('[CHEGUEI] Motorista', req.motorista.nomeCompleto, 'chegou na corrida', corridaId);
         res.json({ sucesso: true, mensagem: 'Cliente notificado!' });
     } catch (e) {
