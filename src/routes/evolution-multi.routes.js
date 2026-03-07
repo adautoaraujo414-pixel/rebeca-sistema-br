@@ -302,14 +302,26 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                                 try {
                                     const jsonStr = transcricao.replace('__AUDIO_RACIOCINIO__', '');
                                     const rac = JSON.parse(jsonStr);
-                                    const { Conversa } = require('../models');
+                                    // Usar mongoose diretamente para evitar undefined por cache do require
+                                    let Conversa;
+                                    try { 
+                                        const _m = require('../models'); 
+                                        Conversa = _m.Conversa || require('mongoose').model('Conversa');
+                                    } catch(_e) { 
+                                        Conversa = require('mongoose').model('Conversa'); 
+                                    }
                                     const upd = {};
                                     if (rac.origem_extraida) upd['dados.origem'] = rac.origem_extraida;
                                     if (rac.destino_extraido) upd['dados.destino'] = rac.destino_extraido;
                                     if (rac.nome_cliente) upd['dados.nome'] = rac.nome_cliente;
                                     if (rac.proxima_etapa) upd['etapa'] = rac.proxima_etapa;
-                                    if (Object.keys(upd).length > 0) {
-                                        await Conversa.findOneAndUpdate({ telefone, adminId }, { $set: upd }, { upsert: true });
+                                    if (Object.keys(upd).length > 0 && Conversa) {
+                                        try {
+                                            await Conversa.findOneAndUpdate({ telefone, adminId }, { $set: upd }, { upsert: true });
+                                        } catch(_dbErr) {
+                                            console.log('[AUDIO] Aviso: nao salvou conversa no DB:', _dbErr.message);
+                                            // Continua mesmo sem salvar — resposta ao cliente é prioridade
+                                        }
                                     }
                                     if (rac.resposta_rebeca) {
                                         await EvolutionMultiService.enviarMensagem(instancia._id, telefone, rac.resposta_rebeca);
