@@ -31,7 +31,7 @@ router.post('/motorista-para-cliente', async (req, res) => {
         
         // Aqui Rebeca enviaria via WhatsApp para o cliente
         // Por enquanto, simula a entrega
-        const mensagemRebeca = `🚗 *UBMAX - Mensagem do Motorista*\n\n` +
+        const mensagemRebeca = `🚗 *Mensagem do Motorista*\n\n` +
             `Motorista ${motorista.nomeCompleto} diz:\n` +
             `"${mensagem}"\n\n` +
             `_Responda esta mensagem para falar com o motorista._`;

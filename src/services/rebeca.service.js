@@ -826,7 +826,7 @@ const RebecaService = {
                             try {
                                 const { Admin } = require('../models');
                                 const admin = await Admin.findById(conversa.adminId);
-                                const nomeMarca = admin?.nomeMarca || 'UBMAX';
+                                const nomeMarca = admin?.nomeMarca || 'nossa empresa';
                                 const nomeAssistente = admin?.nomeAssistente || 'Rebeca';
                                 return 'Oi! Eu sou a ' + nomeAssistente + ', assistente comercial da ' + nomeMarca + '. Posso te ajudar a pedir uma corrida ou tirar dúvidas.';
                             } catch (e) {

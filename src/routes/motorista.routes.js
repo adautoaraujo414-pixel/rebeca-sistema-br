@@ -102,7 +102,7 @@ router.post('/', async (req, res) => {
                 if (instancia) {
                     const EvolutionMultiService = require('../services/evolution-multi.service');
                     const linkApp = 'https://rebeca-sistema-br.onrender.com/motorista-app.html';
-                    const msg = '🚗 *BEM-VINDO À FROTA UBMAX!*\n\n' +
+                    const msg = '🚗 *BEM-VINDO À FROTA!*\n\n' +
                         'Voce foi cadastrado como motorista parceiro!\n\n' +
                         '📱 *SUAS CREDENCIAIS:*\n' +
                         '• Token: ' + motorista.token + '\n' +
