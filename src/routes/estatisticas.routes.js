@@ -42,6 +42,18 @@ router.get('/faturamento', async (req, res) => {
 });
 
 // Ranking motoristas
+router.get('/ranking-motoristas', async (req, res) => {
+    try {
+        const adminId = req.query.adminId || req.headers['x-admin-id'];
+        if (!adminId) return res.status(400).json({ error: 'adminId obrigatório' });
+        const limite = parseInt(req.query.limite) || 5;
+        const ranking = await EstatisticasService.rankingMotoristas(limite, adminId);
+        res.json(ranking);
+    } catch (e) {
+        res.status(500).json({ erro: e.message });
+    }
+});
+
 router.get('/ranking', async (req, res) => {
     try {
         const adminId = req.query.adminId || req.headers['x-admin-id'];
