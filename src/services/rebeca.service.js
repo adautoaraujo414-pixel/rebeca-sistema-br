@@ -1623,8 +1623,8 @@ Me manda o endereço de *onde você está*!`;
             if (favoritos[tipo]) {
                 conversa.dados.origem = favoritos[tipo].endereco;
                 conversa.dados.origemValidada = { valido: true, precisao: 'favorito', ...favoritos[tipo] };
-                conversa.etapa = 'pedir_destino_rapido';
-                resposta = `📍 *Origem:* ${favoritos[tipo].endereco}\n\n🏁 Envie o *destino*:`;
+                conversa.etapa = 'confirmar_corrida';
+                resposta = `📍 *Origem:* ${favoritos[tipo].endereco}\n\nConfirma a corrida?\n\n*1* - Sim\n*CANCELAR* - Cancelar`;
             } else {
                 conversa.etapa = tipo === 'casa' ? 'salvar_casa' : 'salvar_trabalho';
                 resposta = `Você não cadastrou ${tipo} ainda.\n\nEnvie o endereço:`;
@@ -1794,8 +1794,8 @@ _(ou mande *0* para pular)_`;
             // Cliente recorrente - confirmando se quer usar endereço anterior
             if (msg === '1' || NLPService.eSim(msg)) {
                 conversa.dados.origem = conversa.dados.ultimoEnderecoSugerido;
-                conversa.etapa = 'pedir_destino_rapido';
-                resposta = '📍 *Origem:* ' + conversa.dados.origem + '\n\n🏁 Pra onde você quer ir?';
+                conversa.etapa = 'confirmar_corrida';
+                resposta = '📍 *Origem:* ' + conversa.dados.origem + '\n\nConfirma a corrida?\n\n*1* - Sim\n*CANCELAR* - Cancelar';
             } else if (msg === '2' || NLPService.eNao(msg)) {
                 conversa.etapa = 'pedir_origem';
                 resposta = 'Sem problemas! Me passa o novo endereço ou sua localização 📍';
@@ -2080,8 +2080,8 @@ _Digite CANCELAR se precisar_`;
         // ========== CONFIRMAR ORIGEM ==========
         else if (conversa.etapa === 'confirmar_origem_auto') {
             if (msg === '1' || msg.includes('sim') || msg.includes('confirmar') || msg.includes('isso')) {
-                conversa.etapa = 'pedir_destino_rapido';
-                resposta = `✅ *Origem confirmada!*\n\n🏁 Agora o *destino*:`;
+                conversa.etapa = 'confirmar_corrida';
+                resposta = `✅ *Origem confirmada!*\n\nConfirma a corrida?\n\n*1* - Sim\n*CANCELAR* - Cancelar`;
                 if (favoritos.casa) resposta += `\n• *casa* - 🏠`;
                 if (favoritos.trabalho) resposta += `\n• *trabalho* - 🏢`;
             } else if (msg === '2') {
@@ -2579,7 +2579,7 @@ _Digite CANCELAR se precisar_`;
                     }
                 }
                 
-                conversa.etapa = 'pedir_destino_rapido';
+                conversa.etapa = 'confirmar_corrida';
                 conversas.set(telefone, conversa);
                 return `📍 *Origem:* ${conversa.dados.origem}\n\n🏁 Pra onde você quer ir?`;
             }
