@@ -455,7 +455,7 @@ const RebecaService = {
         await RebecaService.carregarFavoritos(telefone, adminId);
         const favoritos = RebecaService.getFavoritos(telefone);
         
-        let resposta = '';
+        let resposta = null; // null = sem resposta ainda (diferente de '' que ativa anti-repeticao)
 
         // ========== RECONHECER CASA/TRABALHO/PONTOS ==========
         const msgLower = msg.toLowerCase();
@@ -2053,6 +2053,9 @@ _Digite CANCELAR se precisar_`;
             } else {
                 const validacao = await RebecaService.validarEndereco(msgOriginal);
                 if (!validacao.valido) {
+                    // Aceitar como referência de destino — não travar
+                    conversa.dados.destino = msgOriginal;
+                    validacao = { valido: true, endereco: msgOriginal, latitude: null, longitude: null };
                     if (RaciocinioService.isAtivo()) {
                         const rac = await RaciocinioService.raciocinar(telefone, msgOriginal, conversa, { nome });
                         if (rac) {
@@ -2060,7 +2063,7 @@ _Digite CANCELAR se precisar_`;
                                 const valRac = await RebecaService.validarEndereco(rac.valor);
                                 if (valRac.valido) {
                                     conversa.dados.destino = valRac.endereco;
-                                    // Continua para confirmar_corrida abaixo
+                                    validacao = valRac;
                                     const calculoRac = await RebecaService.calcularCorrida(conversa.dados.origem, conversa.dados.destino);
                                     conversa.dados.calculo = calculoRac;
                                     // Despacha direto
@@ -2301,11 +2304,12 @@ _Digite CANCELAR se precisar_`;
         // Anti-repeticao: nunca mandar mesma msg 2x seguidas (exceto tabela de preços)
         const ultimaResp = ultimasRespostas.get(telefone);
         const ehTabelaPrecos = resposta && resposta.includes('PREÇOS');
-        if (ultimaResp && ultimaResp === resposta && !ehTabelaPrecos) {
+        // So bloquear repeticao se resposta tem conteudo real (nao vazio/null)
+        if (resposta && ultimaResp && ultimaResp === resposta && !ehTabelaPrecos) {
             console.log('[REBECA] Resposta repetida bloqueada para', telefone);
             return null;
         }
-        ultimasRespostas.set(telefone, resposta);
+        if (resposta) ultimasRespostas.set(telefone, resposta);
         
         return resposta;
     },
@@ -2447,8 +2451,10 @@ _Digite CANCELAR se precisar_`;
         if (analise.intencao === 'agradecimento') {
             return 'Por nada! Quando precisar, é só chamar. 🚗';
         }
-        
-        return null;
+
+        // Qualquer outra intencao nao mapeada — nao retornar null, responder algo util
+        console.log('[processarComIA] Intencao nao mapeada:', analise.intencao, '— usando fallback');
+        return 'Oi! Precisa de um carro? Me manda o endereço de onde você está. 🚗';
     },
 
     // ==================== FUNÇÕES AUXILIARES ====================

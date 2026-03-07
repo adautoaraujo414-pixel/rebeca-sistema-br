@@ -442,7 +442,15 @@ Responda apenas com a mensagem para o cliente, sem explicações.`;
                             } catch(gptErr) {
                                 console.log('[AUDIO] GPT fallback falhou:', gptErr.message);
                             }
-                            conteudo = 'oi';
+                            // Nao conseguiu transcrever — pedir reenvio
+                            try {
+                                await EvolutionMultiService.enviarMensagem(instancia._id, telefone,
+                                    'Não consegui ouvir direito seu áudio 🎤
+
+Pode repetir por texto ou mandar outro áudio?'
+                                );
+                            } catch(_efb) {}
+                            continue;
                         }
                         if (adminDoc && adminDoc.tipoAdmin === 'delivery') {
                             resposta = await RebecaDeliveryService.processarMensagem(telefone, conteudo, nome, contexto);
