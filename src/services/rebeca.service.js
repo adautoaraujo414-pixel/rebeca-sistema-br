@@ -1098,7 +1098,7 @@ Me manda o endereço de *onde você está*!`;
             // Se IAService identificou endereço livre mas fluxo já está coletando endereço,
             // deixa o fluxo normal processar (analise.usarIA=false já tratado no IAService)
             if (analise.usarIA && analise.intencao === 'pedir_corrida' && analise.endereco && 
-                ['pedir_origem','pedir_destino','pedir_destino_rapido'].includes(conversa.etapa)) {
+                ['pedir_origem','pedir_destino','confirmar_corrida'].includes(conversa.etapa)) {
                 // Re-injetar a mensagem no fluxo normal — não interceptar
                 analise.usarIA = false;
             }
@@ -2097,6 +2097,7 @@ _Digite CANCELAR se precisar_`;
         }
         // ========== DESTINO RÁPIDO ==========
         else if (conversa.etapa === 'pedir_destino_rapido') {
+            // Destino é informado ao motorista — aceitar qualquer texto sem validar
             let destinoFinal = null;
             
             if ((msg === '1' || msg === 'casa' || msg === 'ir pra casa') && favoritos.casa) {
@@ -2500,7 +2501,7 @@ _Digite CANCELAR se precisar_`;
             console.log('[REBECA] ⚠️ Sem resposta na etapa:', etapaAtual, '— aplicando fallback');
             
             // Etapas que devem pedir destino
-            if (['pedir_destino', 'pedir_destino_rapido'].includes(etapaAtual)) {
+            if (['pedir_destino'].includes(etapaAtual)) {
                 resposta = '🏁 Qual o destino?';
             }
             // Etapas que devem pedir origem
