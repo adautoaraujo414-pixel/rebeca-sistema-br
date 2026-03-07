@@ -894,36 +894,30 @@ const RebecaService = {
                                 ? (resultadoGPT.enderecoFormatado || msgOriginal)
                                 : (resultadoGPT.endereco_corrigido || msgOriginal);
                             const _valGPT = await RebecaService.validarEndereco(_endGPT);
-                            if (_valGPT.valido) {
-                                conversa.dados.origem = _valGPT.endereco;
-                                conversa.dados.origemValidada = _valGPT;
-                                conversa.dados.calculo = { origem: { endereco: _valGPT.endereco, latitude: _valGPT.latitude, longitude: _valGPT.longitude }, destino: null, distanciaKm: 0, tempoMinutos: 0, preco: 15, faixa: { nome: 'padrao', multiplicador: 1 } };
-                                const _motsGPT = await MotoristaService.listarDisponiveis(conversa.adminId);
-                                if (_motsGPT.length === 0) {
-                                    const _estGPT = await RebecaService.estimarTempoEspera(conversa.adminId);
-                                    conversa.etapa = 'oferecer_fila_espera';
-                                    conversas.set(telefone, conversa);
-                                    return 'Poxa, todos os motoristas estão em corrida! Previsão: ' + _estGPT.texto + '.\n\nPosso te avisar quando um desocupar? Responde *SIM*!';
-                                }
+                            const _enderecoFinal = _valGPT.valido ? _valGPT.endereco : _endGPT;
+                            const _latFinal = _valGPT.valido ? _valGPT.latitude : null;
+                            const _lngFinal = _valGPT.valido ? _valGPT.longitude : null;
+
+                            // Salvar origem
+                            conversa.dados.origem = _enderecoFinal;
+                            if (_valGPT.valido) conversa.dados.origemValidada = _valGPT;
+                            conversa.dados.calculo = { origem: { endereco: _enderecoFinal, latitude: _latFinal, longitude: _lngFinal }, destino: null, distanciaKm: 0, tempoMinutos: 0, preco: 15, faixa: { nome: 'padrao', multiplicador: 1 } };
+
+                            // Se ja tem destino na mesma mensagem (cliente mandou origem+destino juntos)
+                            if (conversa.dados.destino) {
                                 const _corrGPT = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
-                                if (_corrGPT.cooldown) return '⏳ Aguarde ' + Math.ceil(_corrGPT.segundosRestantes / 60) + ' min para nova corrida.';
-                                if (_corrGPT.duplicada) return '⚠️ Você já tem corrida ativa! Digite *CANCELAR* para cancelar.';
+                                if (_corrGPT.cooldown) return '⏳ Aguarde ' + Math.ceil(_corrGPT.segundosRestantes / 60) + ' min.';
+                                if (_corrGPT.duplicada) return '⚠️ Já tem corrida ativa! Digite *CANCELAR* para cancelar.';
                                 conversa.etapa = 'aguardando_motorista';
                                 conversa.dados.corridaId = _corrGPT.id;
                                 conversas.set(telefone, conversa);
-                                const _precoGPT = conversa.dados?.calculo?.preco || _corrGPT.preco || 0;
-                                let _msgGPT = '✅ *Corrida solicitada!*\n\n📍 *Origem:* ' + _valGPT.endereco;
-                                if (_precoGPT > 0) _msgGPT += '\n💰 *Valor estimado: R$ ' + _precoGPT.toFixed(2) + '*';
-                                _msgGPT += '\n\n⏳ Buscando o motorista mais próximo...\n\n_Digite CANCELAR se precisar_';
-                                conversas.set(telefone, conversa);
-                                return _msgGPT;
-                            } else {
-                                // Endereço não encontrado no Maps — pedir confirmação
-                                conversa.dados.enderecoTentativa = _endGPT;
-                                conversa.etapa = 'pedir_origem';
-                                conversas.set(telefone, conversa);
-                                return 'Não encontrei esse endereço no mapa 📍\n\nMe passa mais detalhes: rua, número e bairro?';
+                                return '🚗 Chamando motorista!\n\n📍 ' + _enderecoFinal + '\n🏁 ' + conversa.dados.destino + '\n\n⏳ Buscando...\n_CANCELAR para cancelar_';
                             }
+
+                            // Pedir destino — sempre, proativamente
+                            conversa.etapa = 'pedir_destino';
+                            conversas.set(telefone, conversa);
+                            return '📍 *' + _enderecoFinal + '*\n\n🏁 Qual o destino?';
                         }
                         
                         // Perguntar preço - se tem dados de origem/destino, calcular valor real
