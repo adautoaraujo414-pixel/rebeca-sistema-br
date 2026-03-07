@@ -644,7 +644,7 @@ const RebecaService = {
                             '⚡ Intervença manual recomendada.';
                         await require('./evolution-multi.service').enviarMensagem(_instBravo, _admBravo.telefone, _msgAdmBravo);
                     }
-                } catch(_eBravo) {}
+                } catch(_eBravo) { console.log('[REBECA] Erro bloco bravo:', _eBravo.message); }
                 return _fraseCalma;
             }
         }
@@ -757,7 +757,7 @@ const RebecaService = {
                 try {
                     const instObj = await require('./evolution-multi.service').buscarInstancia(instanciaId);
                     if (instObj) await require('./evolution-multi.service').enviarMensagem(instanciaId, telefone, fraseBravo);
-                } catch(_) {}
+                } catch(_) { console.log('[REBECA] Erro bloco secundario:', _.message); }
             }
 
             if (deveNotificarAdmin) {
@@ -2256,6 +2256,48 @@ _Digite CANCELAR se precisar_`;
 
         conversas.set(telefone, conversa);
         
+        // ===== FALLBACK UNIVERSAL — nenhuma etapa pode travar =====
+        if (!resposta) {
+            const etapaAtual = conversa.etapa;
+            console.log('[REBECA] ⚠️ Sem resposta na etapa:', etapaAtual, '— aplicando fallback');
+            
+            // Etapas que devem pedir destino
+            if (['pedir_destino', 'pedir_destino_rapido'].includes(etapaAtual)) {
+                resposta = '🏁 Qual o destino?';
+            }
+            // Etapas que devem pedir origem
+            else if (['pedir_origem', 'pedir_origem_encomenda'].includes(etapaAtual)) {
+                resposta = '📍 De onde você sai?';
+            }
+            // Etapas de espera de motorista
+            else if (etapaAtual === 'aguardando_motorista') {
+                resposta = '⏳ Ainda buscando motorista... aguarde!';
+            }
+            // Fila de espera
+            else if (etapaAtual === 'oferecer_fila_espera') {
+                resposta = 'Posso te avisar quando um motorista desocupar. Responde *SIM*!';
+            }
+            // Qualquer outra etapa desconhecida — resetar
+            else {
+                console.log('[REBECA] Etapa sem handler:', etapaAtual, '— resetando');
+                conversa.etapa = 'inicio';
+                conversa.dados = {};
+                conversas.set(telefone, conversa);
+                resposta = 'Oi! Precisa de um carro? 🚗';
+            }
+        }
+
+        // Timeout de segurança: se conversa está travada há mais de 10min sem resposta, resetar
+        if (!conversa._ultimaAtividade) conversa._ultimaAtividade = Date.now();
+        const minutosSemAtividade = (Date.now() - conversa._ultimaAtividade) / 60000;
+        if (minutosSemAtividade > 10 && !['aguardando_motorista', 'em_corrida'].includes(conversa.etapa)) {
+            console.log('[REBECA] Conversa travada há', Math.round(minutosSemAtividade), 'min — resetando');
+            conversa.etapa = 'inicio';
+            conversa.dados = {};
+        }
+        conversa._ultimaAtividade = Date.now();
+        conversas.set(telefone, conversa);
+
         // Anti-repeticao: nunca mandar mesma msg 2x seguidas (exceto tabela de preços)
         const ultimaResp = ultimasRespostas.get(telefone);
         const ehTabelaPrecos = resposta && resposta.includes('PREÇOS');
@@ -2533,7 +2575,7 @@ _Digite CANCELAR se precisar_`;
                 const PrecoSimplesService = require('./preco-simples.service');
                 const zonaRes = await PrecoSimplesService.calcularPreco(adminId, origemLat, origemLng);
                 if (zonaRes && zonaRes.periodo === 'zona') precoZona = zonaRes;
-            } catch(e) {}
+            } catch(e) { console.log('[REBECA] Erro catch silencioso:', e.message); }
         }
         const calc = precoZona || await PrecoAdminService.calcularPreco(adminId, km);
         return {
