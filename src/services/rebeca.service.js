@@ -774,12 +774,19 @@ const RebecaService = {
                         // OUTRO — redirecionar suavemente para corrida
                         if (resultadoGPT.intencao === 'OUTRO') {
                             conversas.set(telefone, conversa);
-                            // Se GPT já gerou resposta contextual, usa ela
-                            if (resultadoGPT.resposta && !resultadoGPT.resposta.toLowerCase().includes('aqui é a rebeca') && !resultadoGPT.resposta.toLowerCase().includes('como posso')) {
+                            const _respostaOUTRO = (resultadoGPT.resposta || '').toLowerCase();
+                            // Filtrar respostas genéricas proibidas
+                            const _proibidas = ['como posso ajudar', 'posso te ajudar', 'posso fazer por você', 'aqui é a rebeca', 'da ubmax', 'em que posso'];
+                            const _temProibida = _proibidas.some(p => _respostaOUTRO.includes(p));
+                            if (!_temProibida && resultadoGPT.resposta && resultadoGPT.resposta.length > 5) {
                                 return resultadoGPT.resposta;
                             }
-                            // Senão, redireciona pro tema corrida naturalmente
-                            return 'Entendi! 😊 Quando precisar de um carro é só falar — estou aqui pra isso!';
+                            // Fallback contextual baseado na mensagem
+                            const _msgLower = (msg || '').toLowerCase();
+                            if (_msgLower.includes('dormir') || _msgLower.includes('boa noite')) return 'Boa noite! 😴 Quando precisar de um carro é só chamar!';
+                            if (_msgLower.includes('dinheiro') || _msgLower.includes('real') || _msgLower.includes('reais')) return 'Haha, só faço corridas por aqui! 😄 Vai precisar de uma?';
+                            if (_msgLower.includes('internet') || _msgLower.includes('sinal')) return 'Tudo bem! Quando voltar é só chamar 😊';
+                            return 'Entendido! 😊 Quando precisar de um carro é só falar!';
                         }
                         
                         // Verificar disponibilidade - já consultou motoristas
