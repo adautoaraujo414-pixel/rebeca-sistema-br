@@ -1108,7 +1108,7 @@ Me manda o endereço de *onde você está*!`;
         if ((conversa.etapa === 'aguardando_motorista' || conversa.etapa === 'em_corrida') && !msg.includes('cancelar')) {
             // CLIENTE NERVOSO/RECLAMANDO DA DEMORA → Redirecionar corrida
             const _reclamaDemora = msg.match(/(demora|demorando|cadê|cade|onde|tá onde|ta onde|quanto tempo|muito tempo|esperando|cansei|absurdo|ridiculo|ridículo|péssimo|pessimo|horrível|horrivel|nunca chega|não chega|nao chega|vou cancelar|demais|muito lento)/);
-            if (_reclamaDemora && conversa.etapa === 'aguardando_motorista') {
+            if (_reclamaDemora && (conversa.etapa === 'aguardando_motorista' || conversa.etapa === 'em_corrida')) {
                 try {
                     const { Corrida: _CM } = require('../models');
                     const _corridaPend = await _CM.findById(conversa.dados.corridaId);
@@ -1223,9 +1223,10 @@ Me manda o endereço de *onde você está*!`;
                 resposta = 'Seu motorista ja esta a caminho! Para cancelar agora precisaria entrar em contato direto com ele.\n\nSe precisar de ajuda manda mensagem aqui!';
             } else {
                 const _frasesCaminho = [
-                    'Seu motorista esta a caminho! Fique de olho no WhatsApp, ele vai te avisar quando chegar.',
-                    'Calma, ele ja esta indo! Assim que chegar no local voce recebe uma mensagem.',
-                    'Motorista a caminho! Qualquer duvida e so me chamar.'
+                    'Seu motorista está a caminho! 🚗 Fique de olho no WhatsApp, ele vai te avisar quando chegar.',
+                    'Ele já está indo até você! Assim que chegar no local você recebe uma mensagem aqui. 😊',
+                    'Motorista a caminho! Qualquer dúvida é só me chamar.',
+                    'Já mandei o motorista! Aguarde a mensagem de chegada no seu WhatsApp. 📲'
                 ];
                 resposta = _frasesCaminho[Math.floor(Math.random() * _frasesCaminho.length)];
             }
