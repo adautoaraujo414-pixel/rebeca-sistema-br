@@ -3113,6 +3113,23 @@ _Digite CANCELAR se precisar_`;
     },
 };
 
+// Método para áudio atualizar conversa no Map
+RebecaService.atualizarConversa = function(telefone, adminId, dados) {
+    const chave = telefone + '_' + (adminId || 'global');
+    let conversa = conversas.get(chave) || conversas.get(telefone);
+    if (!conversa) {
+        conversa = { telefone, adminId, etapa: 'inicio', dados: {}, historico: [], ts: Date.now() };
+    }
+    if (dados.origem) conversa.dados = conversa.dados || {};
+    if (dados.origem) conversa.dados.origem = dados.origem;
+    if (dados.destino) conversa.dados.destino = dados.destino;
+    if (dados.nome) conversa.dados.nome = dados.nome;
+    if (dados.etapa) conversa.etapa = dados.etapa;
+    conversa.ts = Date.now();
+    conversas.set(telefone, conversa);
+    console.log('[AUDIO] Conversa atualizada no Map:', telefone, '| etapa:', conversa.etapa);
+};
+
 module.exports = RebecaService;
 
 // ==================== FILA DE ESPERA ====================
