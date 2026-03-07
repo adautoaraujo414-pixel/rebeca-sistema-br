@@ -717,6 +717,12 @@ const RebecaService = {
                         console.log('[GPT] Endereço corrigido:', resultadoGPT.endereco_corrigido);
                         msgOriginal = resultadoGPT.endereco_corrigido;
                     }
+                    // Salvar horario_agendamento em conversa.dados se GPT detectou
+                    if (resultadoGPT?.horario_agendamento) {
+                        conversa.dados = conversa.dados || {};
+                        conversa.dados.horario_agendamento = resultadoGPT.horario_agendamento;
+                        console.log('[GPT] Horario agendamento detectado:', resultadoGPT.horario_agendamento);
+                    }
                     // Corrigir nome do cliente se GPT sugeriu
                     if (resultadoGPT?.nome_cliente_corrigido && nome === nome.toLowerCase()) {
                         nome = resultadoGPT.nome_cliente_corrigido;
