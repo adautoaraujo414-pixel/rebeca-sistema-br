@@ -885,7 +885,14 @@ const RebecaService = {
                         // Endereço completo - processar normalmente
                         if (resultadoGPT.intencao === 'INFORMAR_ENDERECO_COMPLETO') {
                             // GPT identificou endereço — processar direto aqui
-                            const _endGPT = resultadoGPT.endereco_corrigido || msgOriginal;
+                            // Salvar obs do motorista se for ponto de referencia
+                            if (resultadoGPT.pontoReferencia && resultadoGPT.obsMotorista) {
+                                conversa.dados.obsMotorista = '📍 Ponto de referência: ' + resultadoGPT.obsMotorista;
+                                conversa.dados.origem = resultadoGPT.enderecoFormatado || msgOriginal;
+                            }
+                            const _endGPT = resultadoGPT.pontoReferencia
+                                ? (resultadoGPT.enderecoFormatado || msgOriginal)
+                                : (resultadoGPT.endereco_corrigido || msgOriginal);
                             const _valGPT = await RebecaService.validarEndereco(_endGPT);
                             if (_valGPT.valido) {
                                 conversa.dados.origem = _valGPT.endereco;
@@ -2683,6 +2690,7 @@ _Digite CANCELAR se precisar_`;
             clienteTelefone: telefone,
             clienteFoto: clienteFotoUrl,
             aparenciaCliente: dados.aparenciaCliente || null,
+            obsMotorista: dados.obsMotorista || null,
             origem: dados.calculo.origem,
             destino: dados.calculo.destino,
             distanciaKm: dados.calculo.distanciaKm,

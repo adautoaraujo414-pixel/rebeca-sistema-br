@@ -429,6 +429,19 @@ REGRAS DE COMPORTAMENTO:
             || msg.match(/^(já te passei|ja te passei|já falei|ja falei|já disse|ja disse)/i);
         const _parecEndereco = !_naoEhEndereco && _palavras.length >= 3 && _temNumero && msg.match(/[A-Za-záéíóúâêîôûãõàèìòùç]{3,}/);
 
+        // Ponto de referencia — extrair complemento para passar ao motorista
+        if (_pontosReferencia && !_naoEhEndereco) {
+            // Extrair complementos: zona, bairro, cor de roupa, característica do cliente
+            const _complemento = msg
+                .replace(/^(me busca|me pega|pode me buscar|pode me pegar|estou|to|tô|tô aqui|estou aqui|aqui no|aqui na|aqui em|aqui|no|na|em)\s+/i, '')
+                .trim();
+            const _zona = msg.match(/(zona norte|zona sul|zona leste|zona oeste|centro|bairro\s+\w+|vila\s+\w+|jardim\s+\w+|setor\s+\w+)/i);
+            const _caracteristica = msg.match(/(roupa\s+\w+|camiseta\s+\w+|blusa\s+\w+|vestindo\s+\w+|de\s+(vermelho|azul|verde|amarelo|branco|preto|rosa|laranja|cinza)|cabelo\s+\w+|alta|baixa|gordo|magro|idoso|criança|cadeirante|mulher|homem|casal)/i);
+            let _obsMotorista = _complemento;
+            if (_zona) _obsMotorista += ' (' + _zona[0] + ')';
+            if (_caracteristica) _obsMotorista += ' — cliente ' + _caracteristica[0];
+            return { intencao: 'INFORMAR_ENDERECO_COMPLETO', temEndereco: true, temNumero: true, pontoReferencia: true, enderecoFormatado: _complemento, obsMotorista: _obsMotorista };
+        }
         if ((_temLogradouro || _parecEndereco) && _temNumero) {
             return { intencao: 'INFORMAR_ENDERECO_COMPLETO', temEndereco: true, temNumero: true };
         }
