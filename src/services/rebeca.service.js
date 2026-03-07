@@ -925,13 +925,12 @@ const RebecaService = {
                             if (conversa.dados?.calculo?.preco > 0 && conversa.dados?.calculo?.destino) {
                                 const calc = conversa.dados.calculo;
                                 const valor = calc.precoFinal || calc.preco || 0;
-                                conversa.etapa = 'confirmar_preco';
+                                // Despacha direto
+                                const _corrP = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
+                                conversa.etapa = 'aguardando_motorista';
+                                conversa.dados.corridaId = _corrP.id;
                                 conversas.set(telefone, conversa);
-                                return '💰 *Valor da corrida: R$ ' + valor.toFixed(2) + '*\n\n' +
-                                    '📍 ' + (calc.origem?.endereco || '') + '\n' +
-                                    '🏁 ' + (calc.destino?.endereco || '') + '\n' +
-                                    (calc.distanciaKm ? '📏 ' + calc.distanciaKm.toFixed(1) + ' km\n' : '') +
-                                    '\nQuer que eu chame um motorista? Responde *SIM* ou *NÃO*';
+                                return '🚗 Chamando motorista!\n\n💰 *R$ ' + valor.toFixed(2) + '*\n📍 ' + (calc.origem?.endereco||'') + '\n🏁 ' + (calc.destino?.endereco||'') + '\n\n⏳ Buscando...\n_CANCELAR para cancelar_';
                             }
                             return await RebecaService.enviarTabelaPrecos(conversa.adminId);
                         }
@@ -2101,19 +2100,12 @@ _Digite CANCELAR se precisar_`;
                                     // Continua para confirmar_corrida abaixo
                                     const calculoRac = await RebecaService.calcularCorrida(conversa.dados.origem, conversa.dados.destino);
                                     conversa.dados.calculo = calculoRac;
-                                    conversa.etapa = 'confirmar_corrida';
-                                    const respRac = `🚗 *RESUMO*
-
-📍 ${conversa.dados.origem}
-🏁 ${conversa.dados.destino}
-
-📏 ${calculoRac.distancia} | ⏱️ ${calculoRac.tempo}
-💰 *R$ ${calculoRac.preco.toFixed(2)}*
-
-*1* - ✅ Confirmar
-*2* - ❌ Cancelar`;
+                                    // Despacha direto
+                                    const _corrRac = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
+                                    conversa.etapa = 'aguardando_motorista';
+                                    conversa.dados.corridaId = _corrRac.id;
                                     conversas.set(telefone, conversa);
-                                    return respRac;
+                                    return `🚗 Chamando motorista!\n\n📍 ${conversa.dados.origem}\n🏁 ${conversa.dados.destino}\n\n📏 ${calculoRac.distancia} | ⏱️ ${calculoRac.tempo}\n💰 *R$ ${calculoRac.preco.toFixed(2)}*\n\n⏳ Buscando...\n_CANCELAR para cancelar_`;
                                 }
                             } else if (rac.acao === 'cancelar' || rac.acao === 'negar') {
                                 conversa.etapa = 'inicio'; conversa.dados = {};
@@ -2130,19 +2122,24 @@ _Digite CANCELAR se precisar_`;
                     conversa.dados.destinoTextoLivre = true;
                     const calculoTL = await RebecaService.calcularCorrida(conversa.dados.origem, conversa.dados.destino);
                     conversa.dados.calculo = calculoTL;
-                    conversa.etapa = 'confirmar_corrida';
-                    const respTL = `🚗 *RESUMO*\n\n📍 ${conversa.dados.origem}\n🏁 ${conversa.dados.destino}\n\n📏 ${calculoTL.distancia} | ⏱️ ${calculoTL.tempo}\n💰 *R$ ${calculoTL.preco.toFixed(2)}*\n\n*1* - ✅ Confirmar\n*2* - ❌ Cancelar`;
+                    // Despacha direto
+                    const _corrTL = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
+                    conversa.etapa = 'aguardando_motorista';
+                    conversa.dados.corridaId = _corrTL.id;
                     conversas.set(telefone, conversa);
-                    return respTL;
+                    return `🚗 Chamando motorista!\n\n📍 ${conversa.dados.origem}\n🏁 ${conversa.dados.destino}\n\n📏 ${calculoTL.distancia} | ⏱️ ${calculoTL.tempo}\n💰 *R$ ${calculoTL.preco.toFixed(2)}*\n\n⏳ Buscando...\n_CANCELAR para cancelar_`;
                 }
                 conversa.dados.destino = validacao.endereco;
             }
             
-            conversa.etapa = 'confirmar_corrida';
+            // Despacha direto
             const calculo = await RebecaService.calcularCorrida(conversa.dados.origem, conversa.dados.destino);
             conversa.dados.calculo = calculo;
-            
-            resposta = `🚗 *RESUMO*\n\n📍 ${conversa.dados.origem}\n🏁 ${conversa.dados.destino}\n\n📏 ${calculo.distancia} | ⏱️ ${calculo.tempo}\n💰 *R$ ${calculo.preco.toFixed(2)}*\n\n*1* - ✅ Confirmar\n*2* - ❌ Cancelar`;
+            const _corr2141 = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
+            conversa.etapa = 'aguardando_motorista';
+            conversa.dados.corridaId = _corr2141.id;
+            conversas.set(telefone, conversa);
+            resposta = `🚗 Chamando motorista!\n\n📍 ${conversa.dados.origem}\n🏁 ${conversa.dados.destino}\n\n📏 ${calculo.distancia} | ⏱️ ${calculo.tempo}\n💰 *R$ ${calculo.preco.toFixed(2)}*\n\n⏳ Buscando...\n_CANCELAR para cancelar_`;
         }
         else if (conversa.etapa === 'confirmar_corrida') {
             if (msg === '1' || msg.includes('sim') || msg.includes('confirmar') || msg.includes('pode') || msg.includes('ok') || msg.includes('bora') || msg.includes('vai') || msg.includes('quero')) {
@@ -2326,11 +2323,14 @@ _Digite CANCELAR se precisar_`;
                         const calculo = await RebecaService.calcularCorrida(conversa.dados.origem, conversa.dados.destino);
                         conversa.dados.calculo = calculo;
                         
-                        conversa.etapa = 'confirmar_corrida';
+                        // Despacha direto
+                        const _corr2329 = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
+                        conversa.etapa = 'aguardando_motorista';
+                        conversa.dados.corridaId = _corr2329.id;
                         conversas.set(telefone, conversa);
-                        let resp = `🚗 *Entendi!*\n\n📍 *De:* ${conversa.dados.origem}\n🏁 *Para:* ${conversa.dados.destino}`;
+                        let resp = `🚗 Chamando motorista!\n\n📍 *De:* ${conversa.dados.origem}\n🏁 *Para:* ${conversa.dados.destino}`;
                         if (analise.observacao) resp += `\n📝 _${analise.observacao}_`;
-                        resp += `\n\n📏 ${calculo.distancia} | ⏱️ ${calculo.tempo}\n💰 *R$ ${calculo.preco.toFixed(2)}*\n\n*1* - ✅ Confirmar\n*2* - ❌ Cancelar`;
+                        resp += `\n\n📏 ${calculo.distancia} | ⏱️ ${calculo.tempo}\n💰 *R$ ${calculo.preco.toFixed(2)}*\n\n⏳ Buscando...\n_CANCELAR para cancelar_`;
                         return resp;
                     }
                 }
@@ -2356,11 +2356,14 @@ _Digite CANCELAR se precisar_`;
                             const calculo = await RebecaService.calcularCorrida(conversa.dados.origem, conversa.dados.destino);
                             conversa.dados.calculo = calculo;
                             
-                            conversa.etapa = 'confirmar_corrida';
-                            let resp = `🚗 *Entendi!*\n\n📍 *De:* ${conversa.dados.origem}`;
+                            // Despacha direto
+                            const _corr2359 = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
+                            conversa.etapa = 'aguardando_motorista';
+                            conversa.dados.corridaId = _corr2359.id;
+                            conversas.set(telefone, conversa);
+                            let resp = `🚗 Chamando motorista!\n\n📍 *De:* ${conversa.dados.origem}`;
                             if (conversa.dados.observacaoOrigem) resp += `\n📝 _${conversa.dados.observacaoOrigem}_`;
-                            resp += `\n\n🏁 *Para:* ${conversa.dados.destino}`;
-                            resp += `\n\n📏 ${calculo.distancia} | ⏱️ ${calculo.tempo}\n💰 *R$ ${calculo.preco.toFixed(2)}*\n\n*1* - ✅ Confirmar\n*2* - ❌ Cancelar`;
+                            resp += `\n\n🏁 *Para:* ${conversa.dados.destino}\n\n📏 ${calculo.distancia} | ⏱️ ${calculo.tempo}\n💰 *R$ ${calculo.preco.toFixed(2)}*\n\n⏳ Buscando...\n_CANCELAR para cancelar_`;
                             return resp;
                         }
                     }
