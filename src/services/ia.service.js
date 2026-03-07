@@ -5,7 +5,7 @@ let clienteAnthropic = null;
 const configIA = {
     apiKey: process.env.ANTHROPIC_API_KEY || '',
     modelo: 'claude-3-haiku-20240307',
-    ativo: !!process.env.ANTHROPIC_API_KEY
+    ativo: true // lógica local, sempre ativo
 };
 
 if (configIA.apiKey) {
@@ -36,7 +36,7 @@ const IAService = {
         return IAService.getConfig();
     },
 
-    isAtivo: () => configIA.ativo && !!configIA.apiKey && !!clienteAnthropic,
+    isAtivo: () => true, // lógica local pura — não depende de API key
 
     async analisarMensagem(mensagem, contexto = {}) {
         if (!IAService.isAtivo()) return { usarIA: false };
