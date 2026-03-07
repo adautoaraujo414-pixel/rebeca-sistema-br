@@ -445,9 +445,7 @@ Responda apenas com a mensagem para o cliente, sem explicações.`;
                             // Nao conseguiu transcrever — pedir reenvio
                             try {
                                 await EvolutionMultiService.enviarMensagem(instancia._id, telefone,
-                                    'Não consegui ouvir direito seu áudio 🎤
-
-Pode repetir por texto ou mandar outro áudio?'
+                                    'Não consegui ouvir direito seu áudio 🎤' + '\n\n' + 'Pode repetir por texto ou mandar outro áudio?'
                                 );
                             } catch(_efb) {}
                             continue;
