@@ -2749,6 +2749,16 @@ _Digite CANCELAR se precisar_`;
                 }
             } else {
                 console.log('[REBECA] Nenhum motorista disponivel para admin:', adminId);
+                // Notificar cliente que não tem motorista disponível
+                try {
+                    const _instSemMot = await InstanciaWhatsapp.findOne({ adminId, status: 'conectado' });
+                    if (_instSemMot) {
+                        const EvoService = require('./evolution-multi.service');
+                        await EvoService.enviarMensagem(_instSemMot._id, corrida.clienteTelefone,
+                            'Poxa, todos os motoristas estão ocupados no momento. Você será avisado assim que um desocupar!'
+                        );
+                    }
+                } catch(_ne) { console.log('[REBECA] Erro notificar sem motorista:', _ne.message); }
             }
         } catch (e) {
             console.error('[REBECA] Erro no despacho:', e.message);
