@@ -1639,10 +1639,13 @@ Me manda o endereço de *onde você está*!`;
                 const classif = await RaciocinioService.classificarEnderecoNaoEncontrado(msgOriginal, conversa.adminId);
                 console.log('[CLASSIF]', msgOriginal, '->', classif.tipo, classif.confianca);
 
-                // texto_invalido — não é endereço, ignorar silenciosamente e deixar fluxo normal tratar
+                // texto_invalido — não é endereço, sair do bloco autoDetect e deixar fluxo normal tratar
                 if (classif.tipo === 'texto_invalido' && classif.confianca > 0.8) {
-                    // Não faz nada aqui — cai fora do bloco autoDetectarEndereco e fluxo normal trata
-                    // (não retorna nada, deixa passar)
+                    // Cai fora — o fluxo normal (saudação, menu, etc) vai processar
+                    // Forçar saída do else if autoDetectarEndereco setando validacao.valido = false
+                    // e não retornando nada aqui
+                    resposta = null; // será preenchido pelo fluxo normal abaixo
+                    // break artificial — o bloco autoDetect não deve retornar nada
                 }
 
                 // Nao achou no Maps - tentar com cidade do admin
