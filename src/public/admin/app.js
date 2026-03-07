@@ -28,7 +28,8 @@ function carregarPagina(p) {
 }
 
 async function api(url, method='GET', data=null) {
-    const adminId = usuario._id || usuario.id || null;
+    const _u = (typeof usuario !== 'undefined' && usuario) || JSON.parse(localStorage.getItem('usuario') || '{}');
+    const adminId = _u._id || _u.id || null;
     const opt = { method, headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+token } };
     if (adminId) opt.headers['x-admin-id'] = adminId;
     // Adicionar adminId como query param para garantir chegada no backend
