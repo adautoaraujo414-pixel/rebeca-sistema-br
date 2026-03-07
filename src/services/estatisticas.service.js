@@ -18,8 +18,9 @@ const EstatisticasService = {
             const dataStr = data.toISOString().split('T')[0];
             const diaSemana = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'][data.getDay()];
             
+            const aid2 = new mongoose.Types.ObjectId(adminId);
             const corridas = await Corrida.find({
-                createdAt: { $gte: data, $lte: dataFim }
+                adminId: aid2, createdAt: { $gte: data, $lte: dataFim }
             });
             
             resultado.push({
@@ -102,16 +103,17 @@ const EstatisticasService = {
         const hoje = new Date();
         hoje.setHours(0, 0, 0, 0);
         
+        const aid = new mongoose.Types.ObjectId(adminId);
         const [
             corridasHoje,
             motoristas,
             clientes,
             todasCorridas
         ] = await Promise.all([
-            Corrida.find({ createdAt: { $gte: hoje } }),
-            Motorista.find({}),
-            Cliente.countDocuments(),
-            Corrida.find({ status: 'finalizada' })
+            Corrida.find({ adminId: aid, createdAt: { $gte: hoje } }),
+            Motorista.find({ adminId: aid }),
+            Cliente.countDocuments({ adminId: aid }),
+            Corrida.find({ adminId: aid, status: 'finalizada' })
         ]);
         
         const faturamentoHoje = corridasHoje
