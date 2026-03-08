@@ -141,7 +141,7 @@ const RaciocinioService = {
         if (!etapasEndereco.includes(etapa)) return false;
         if (/^(cancelar|menu|ajuda|atendente|sim|nao|não|ok|1|2|3|4|5)$/i.test(t)) return false;
         return true;
-    }
+    },
 
     /**
      * extrairPontoReferencia — usa Claude para extrair apenas o nome limpo do ponto
