@@ -1991,7 +1991,7 @@ _Digite CANCELAR se precisar_`;
             conversa.dados.nomeBuscado = msgOriginal;
             conversa.etapa = 'pedir_aparencia_buscado';
             conversas.set(telefone, conversa);
-            return `Ótimo! E como *${conversa.dados.nomeBuscado}* está? Me descreva a aparência para o motorista reconhecer a pessoa 👕\n\nEx: _blusa rosa, cabelo curto, mochila preta_\n\n_(ou mande *0* para pular)_`;
+            return `Qual a cor da camisa de *${conversa.dados.nomeBuscado}*? 👕\n\n_(ou mande *0* para pular)_`;
         }
 
         // ========== BUSCAR TERCEIRO — APARÊNCIA ==========
