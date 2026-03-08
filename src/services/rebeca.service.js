@@ -562,11 +562,13 @@ Me manda o endereço de *onde você está*!`;
         }
         
         // Buscar pontos de referência cadastrados
-        // Extrair apenas o local de frases como "me busca aqui na rodoviária"
+        // Usar Claude para extrair nome limpo do ponto (ex: "me busca no Frei Gabriel" → "Frei Gabriel")
         let _textoParaBusca = msgLower;
-        const _frasePedido = msgLower.match(/(?:me busca|busca|pega|vem|manda|aqui na?o?|aqui no?|estou na?o?|estou no?|to na?o?|to no?)\s+(?:aqui\s+)?(?:na?o?\s+|no?\s+|em\s+|do?\s+|da?\s+)?(.+)/i);
-        if (_frasePedido && _frasePedido[1]) {
-            _textoParaBusca = _frasePedido[1].replace(/[,\.!?]+$/, '').trim();
+        if (RebecaService.ePontoDeReferencia(msgLower)) {
+            try {
+                const _nomeLimpo = await RaciocinioService.extrairPontoReferencia(msgOriginal);
+                if (_nomeLimpo) _textoParaBusca = _nomeLimpo.toLowerCase();
+            } catch(e) { /* usa msgLower como fallback */ }
         }
         if (msgLower.length > 2 && !RebecaService.pareceLocalizacao(mensagem)) {
             const pontosEncontrados = localidadeService.buscarPontos(_textoParaBusca);

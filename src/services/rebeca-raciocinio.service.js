@@ -143,6 +143,62 @@ const RaciocinioService = {
         return true;
     }
 
+    /**
+     * extrairPontoReferencia — usa Claude para extrair apenas o nome limpo do ponto
+     * "Me busca aqui no Frei Gabriel" → "Frei Gabriel"
+     * "to na rodoviária central" → "Rodoviária Central"
+     * Fallback regex local se Claude falhar
+     */
+    async extrairPontoReferencia(mensagem) {
+        try {
+            const anthropicKey = process.env.ANTHROPIC_API_KEY;
+            if (!anthropicKey) throw new Error('sem chave');
+
+            const axios = require('axios');
+            const resp = await axios.post('https://api.anthropic.com/v1/messages', {
+                model: 'claude-haiku-4-5-20251001',
+                max_tokens: 60,
+                messages: [{
+                    role: 'user',
+                    content: `Extraia APENAS o nome do local/ponto de referência da mensagem abaixo. Retorne somente o nome limpo, sem explicação, sem pontuação extra, sem aspas. Se não houver ponto de referência claro, retorne a mensagem original sem modificação.
+
+Exemplos:
+"Me busca aqui no Frei Gabriel" → Frei Gabriel
+"to na rodoviária central agora" → Rodoviária Central
+"me pega no shopping bela vista" → Shopping Bela Vista
+"aqui no hospital regional" → Hospital Regional
+"estou na praça da matriz" → Praça da Matriz
+
+Mensagem: "${mensagem.replace(/"/g, "'")}"`
+                }]
+            }, {
+                headers: {
+                    'x-api-key': anthropicKey,
+                    'anthropic-version': '2023-06-01',
+                    'content-type': 'application/json'
+                },
+                timeout: 4000
+            });
+
+            const resultado = resp.data?.content?.[0]?.text?.trim();
+            if (resultado && resultado.length > 1 && resultado.length < 80) {
+                return resultado;
+            }
+            throw new Error('resposta vazia');
+
+        } catch (e) {
+            // Fallback regex local — extrai o que vem depois de "no/na/em/aqui"
+            const match = mensagem.match(/(?:me busca|busca|pega|vem|manda|aqui|estou|to|tô)\s+(?:aqui\s+)?(?:no?\s+|na?\s+|em\s+)?(.+)/i);
+            if (match && match[1]) {
+                // Capitalizar primeira letra de cada palavra
+                return match[1].replace(/[,\.!?]+$/, '').trim()
+                    .replace(/\b\w/g, l => l.toUpperCase());
+            }
+            return mensagem;
+        }
+    },
+
+
 };
 
 module.exports = RaciocinioService;
