@@ -132,11 +132,24 @@ const adminRoutes = require('./routes/admin.routes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/usuarios', usuariosRoutes);
-app.use('/api/motoristas', motoristaRoutes);
+// Middleware de autenticação para rotas admin
+const _authAdmin = (req, res, next) => {
+    // Rotas públicas do WhatsApp/Rebeca passam sem token
+    const pub = ['/api/corridas/webhook', '/api/corridas/publica'];
+    if (pub.some(p => req.path.startsWith(p))) return next();
+    const token = req.headers['authorization']?.replace('Bearer ', '') || req.query.token;
+    if (!token || !token.startsWith('ADMIN_')) {
+        return res.status(401).json({ erro: 'Acesso não autorizado' });
+    }
+    req.adminId = token.split('_')[1];
+    next();
+};
+
+app.use('/api/motoristas', _authAdmin, motoristaRoutes);
 app.use('/api/motorista-app', motoristaAppRoutes);
-app.use('/api/corridas', corridaRoutes);
+app.use('/api/corridas', _authAdmin, corridaRoutes);
 app.use('/api/admin-master', adminMasterRoutes);
-app.use('/api/clientes', clienteRoutes);
+app.use('/api/clientes', _authAdmin, clienteRoutes);
 app.use('/api/gps', gpsRoutes);
 app.use('/api/gps-integrado', gpsIntegradoRoutes);
 app.use('/api/status', statusRoutes);
