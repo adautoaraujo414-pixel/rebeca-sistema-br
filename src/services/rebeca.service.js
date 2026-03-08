@@ -660,6 +660,21 @@ Me manda o endereço de *onde você está*!`;
             return _msgGps;
         }
         // ========== RACIOCÍNIO AMPLIFICADO: endereço não detectado por regex mas pode ser pedido de corrida ==========
+        // Fallback global: se RaciocinioService falhar em qualquer etapa intermediária, usar OpenAI diretamente
+        const _etapasComRaciocinio = ['pedir_origem','pedir_destino','confirmar_corrida','pedir_aparencia','pedir_bairro_origem'];
+        if (_etapasComRaciocinio.includes(conversa.etapa) && !RaciocinioService.isAtivo()) {
+            try {
+                const OpenAIRebecaService = require('./openai-rebeca.service');
+                if (OpenAIRebecaService.isAtivo()) {
+                    const _resOAI = await OpenAIRebecaService.gerarResposta(telefone, msgOriginal, conversa, { nome });
+                    if (_resOAI) {
+                        conversas.set(telefone, conversa);
+                        return _resOAI;
+                    }
+                }
+            } catch(e) { console.log('[FALLBACK_OAI]', e.message); }
+        }
+
         if (conversa.etapa === 'inicio' && RaciocinioService.isAtivo()) {
             // Verificar se parece pedido de corrida com endereço informal (ex: "avenida brasilia 80", "me busca no mercado X")
             const _msgLower = msg.toLowerCase();
@@ -1565,11 +1580,47 @@ Me manda o endereço de *onde você está*!`;
                 conversas.set(telefone, conversa);
                 return 'Sem problemas! Corrida cancelada. Quando precisar é só chamar! 😊';
             }
+            // Mensagem ambígua — passar pelo Claude para interpretar
+            if (RaciocinioService.isAtivo()) {
+                try {
+                    const _racPreco = await Promise.race([
+                        RaciocinioService.raciocinar(telefone, msgOriginal, conversa, { nome }),
+                        new Promise(r => setTimeout(() => r(null), 5000))
+                    ]);
+                    if (_racPreco && (_racPreco.acao === 'confirmar' || _racPreco.acao === 'avancar')) {
+                        const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
+                        conversa.etapa = 'aguardando_motorista';
+                        conversa.dados.corridaId = corrida.id;
+                        conversas.set(telefone, conversa);
+                        return '✅ Corrida confirmada!\n\n⏳ Buscando motorista mais próximo...\n_Digite CANCELAR se precisar_';
+                    }
+                    if (_racPreco && _racPreco.resposta) {
+                        conversas.set(telefone, conversa);
+                        return _racPreco.resposta;
+                    }
+                } catch(e) { console.log('[CONFIRMAR_PRECO] Raciocinio falhou:', e.message); }
+            }
+            conversas.set(telefone, conversa);
             return 'Confirma a corrida? Responde *SIM* para confirmar ou *NÃO* para cancelar.';
         }
 
         if (conversa.etapa === 'avaliar') {
             const nota = parseInt(msg);
+            // Feedback em texto livre — passar pelo Claude para interpretar e responder
+            if (isNaN(nota) && msg.length > 2 && RaciocinioService.isAtivo()) {
+                try {
+                    const _racAval = await Promise.race([
+                        RaciocinioService.raciocinar(telefone, msgOriginal, conversa, { nome }),
+                        new Promise(r => setTimeout(() => r(null), 5000))
+                    ]);
+                    if (_racAval && _racAval.resposta) {
+                        conversas.set(telefone, conversa);
+                        return _racAval.resposta;
+                    }
+                } catch(e) {}
+                conversas.set(telefone, conversa);
+                return 'Obrigada pelo feedback! 😊 Como você avalia a corrida de 1 a 5?';
+            }
             if (nota >= 1 && nota <= 5) {
                 const estrelas = '⭐'.repeat(nota);
                 
@@ -2044,6 +2095,19 @@ _Digite CANCELAR se precisar_`;
             // VALIDAR: ignorar expressões de confirmação/comandos
             const expressoesIgnorar = ['maravilha','beleza','show','legal','perfeito','otimo','ótimo','certo','entendi','isso','ok','sim','blz','vlw','valeu','brigado','brigada','obrigado','obrigada','ta','tá','vamos','bora','pode ser','isso mesmo','a maravilha','top','dahora','massa','nice','maneiro'];
             if (expressoesIgnorar.includes(msg) || msg.length < 3) {
+                if (RaciocinioService.isAtivo()) {
+                    try {
+                        const _racBairro = await Promise.race([
+                            RaciocinioService.raciocinar(telefone, msgOriginal, conversa, { nome }),
+                            new Promise(r => setTimeout(() => r(null), 4000))
+                        ]);
+                        if (_racBairro && _racBairro.resposta) {
+                            conversas.set(telefone, conversa);
+                            return _racBairro.resposta;
+                        }
+                    } catch(e) {}
+                }
+                conversas.set(telefone, conversa);
                 return '📍 Por favor, informe o *bairro* para completar o endereço:';
             }
             
