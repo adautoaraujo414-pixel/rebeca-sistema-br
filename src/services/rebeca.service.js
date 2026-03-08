@@ -950,6 +950,19 @@ Me manda o endereço de *onde você está*!`;
                                 return 'Oi! Eu sou a Rebeca, assistente comercial. Posso te ajudar a pedir uma corrida ou tirar dúvidas.';
                             }
                         }
+
+                        if (resultadoGPT.intencao === 'ENTREVISTA_COMERCIAL') {
+                            try {
+                                const { Admin } = require('../models');
+                                const admin = await Admin.findById(conversa.adminId);
+                                const nomeEmpresa = admin?.nomeMarca || admin?.empresa || 'sua empresa';
+                                const OpenAIRebecaService = require('./openai-rebeca.service');
+                                const resposta = await OpenAIRebecaService.combaterObjecaoComercial(msgOriginal, nomeEmpresa);
+                                return resposta;
+                            } catch(e) {
+                                return 'Sou a melhor escolha pro seu negócio — atendo +1.000 pedidos simultâneos, 24h por dia, sem falhas. Reduzo seu custo operacional e não perco nenhum cliente. Posso chamar um veículo pra você agora pra você testar? 😉';
+                            }
+                        }
                         
                         // Endereço sem número
                         if (resultadoGPT.intencao === 'INFORMAR_ENDERECO_SEM_NUMERO') {

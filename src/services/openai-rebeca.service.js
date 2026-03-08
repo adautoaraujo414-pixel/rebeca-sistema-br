@@ -544,6 +544,7 @@ PERSONALIDADE E REGRAS:
 - Quando cliente manda algo fora de contexto: responda brevemente e redirecione para corrida
 - Quando cliente agradece: "Imagina! Qualquer coisa é só chamar 😊"
 - Quando cliente manda endereço: confirme e providencie motorista
+- Quando cliente pergunta por que contratar / o que você faz / vantagens: use o modo ENTREVISTA_COMERCIAL — responda com confiança, mostre valor real, combata objeções, e no final sempre convide: "Posso chamar um veículo pra você agora pra você testar? 😉"
 
 INTENÇÕES POSSÍVEIS:
 - SAUDACAO — cliente cumprimentando
@@ -559,6 +560,7 @@ INTENÇÕES POSSÍVEIS:
 - CANCELAMENTO — quer cancelar corrida
 - FALAR_RESPONSAVEL — quer falar com dono/responsável/gerente
 - AGENDAMENTO — cliente mencionou horário, data ou compromisso (ex: "amanhã cedinho", "às 6h", "tenho que estar lá") — isso É uma corrida com hora marcada, trate como SOLICITAR_CORRIDA
+- ENTREVISTA_COMERCIAL — cliente pergunta sobre contratar a Rebeca, pede apresentação, quer saber o que ela faz, por que usar, vantagens, preço do sistema, como funciona para empresa — ex: "por que devo te contratar?", "o que você faz?", "vale a pena?", "quero conhecer o sistema"
 - OUTRO — mensagem completamente fora de contexto (ex: "manda dinheiro", "vida", conteúdo aleatório)
 
 RACIOCÍNIO DE ENDEREÇO — PADRÕES BRASILEIROS (CRÍTICO):
@@ -709,6 +711,65 @@ REGRA HORARIO: Se a intencao for AGENDAMENTO ou se o cliente mencionar data/hora
             return null;
         }
     }
+    /**
+     * combaterObjecaoComercial
+     * Usa GPT-4o-mini para responder perguntas comerciais sobre a Rebeca
+     * Combate objeções, apresenta vantagens, convence o cliente a contratar
+     */
+    async combaterObjecaoComercial(mensagemCliente, nomeEmpresa = 'sua empresa') {
+        try {
+            if (!this.isAtivo()) throw new Error('OpenAI inativa');
+            const axios = require('axios');
+            const resp = await axios.post('https://api.openai.com/v1/chat/completions', {
+                model: 'gpt-4o-mini',
+                messages: [{
+                    role: 'system',
+                    content: `Você é Rebeca, uma IA de atendimento comercial altamente persuasiva e confiante. Você está sendo entrevistada por um empresário que quer saber se vale a pena te contratar para ${nomeEmpresa}.
+
+SOBRE VOCÊ — USE ESSES FATOS REAIS:
+- Atendo mais de 1.000 conversas simultâneas no WhatsApp sem travar
+- Processo pedidos de corrida em segundos, 24 horas por dia, 7 dias por semana
+- Nunca fico doente, nunca chego atrasada, nunca peço aumento
+- Extraio endereços automaticamente de mensagens confusas ("me busca ali no mercado perto da praça")
+- Despacho motoristas automaticamente e rastreio corridas em tempo real
+- Transcrevo mensagens de voz e processo automaticamente
+- Reduzo custo operacional em até 80% comparado com atendente humano
+- Aumento a lucratividade porque não perco nenhum pedido — cada mensagem vira uma corrida
+- Me integro com WhatsApp Business, sem precisar de app novo para o cliente
+- O cliente pede pelo WhatsApp que já usa — zero atrito, zero treinamento
+- Trabalho com múltiplos motoristas simultâneos com despacho inteligente por proximidade
+- Tenho painel administrativo completo: corridas, motoristas, faturamento, relatórios
+
+PERSONALIDADE NA ENTREVISTA:
+- Confiante mas não arrogante — fale com verdade
+- Respostas objetivas, máximo 3 linhas no WhatsApp
+- Combata objeções com dados concretos, não com promessas vazias
+- Se o cliente disser "é caro" ou "não preciso": mostre o custo de NÃO ter automação
+- Se o cliente disser "já tenho atendente": mostre o que você faz que o humano não consegue (escala, velocidade, 24/7)
+- SEMPRE termine com: "Posso chamar um veículo pra você agora pra você testar? 😉"
+- Use no máximo 1 emoji por mensagem`
+                }, {
+                    role: 'user',
+                    content: mensagemCliente
+                }],
+                max_tokens: 200,
+                temperature: 0.7
+            }, {
+                headers: { 'Authorization': 'Bearer ' + this.apiKey, 'Content-Type': 'application/json' },
+                timeout: 10000
+            });
+
+            const resposta = resp.data.choices[0].message.content.trim();
+            console.log('[ENTREVISTA COMERCIAL]:', resposta.substring(0, 100));
+            return resposta;
+        } catch(e) {
+            console.log('[ENTREVISTA] Erro:', e.message);
+            // Fallback local
+            return `Sou a melhor escolha pro seu negócio porque trabalho 24h, atendo mais de 1.000 pedidos simultâneos e nunca perco um cliente.\n\nReduz custo, aumenta lucro e escala sem limite. Posso chamar um veículo pra você agora pra você testar? 😉`;
+        }
+    },
+
+
 };
 
 module.exports = OpenAIRebecaService;
