@@ -1517,7 +1517,6 @@ document.addEventListener('DOMContentLoaded', function() {
             // Chamar backend para redespacho automático
             if (corridaAtual && corridaAtual._id) {
                 try {
-                    const token = localStorage.getItem('motoristaToken') || localStorage.getItem('token');
                     await fetch('/api/motorista-app/recusar', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
@@ -1747,8 +1746,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             } catch (e) {
                 toast('Erro de conexão ao finalizar', 'error');
+                if (btn) { btn.disabled = false; btn.textContent = '✅ FINALIZAR'; }
+                return;
             }
-            // SEMPRE resetar UI - evita motorista preso
+            // Só reseta UI se backend confirmou
             corridaAtual = null;
             motorista.status = 'disponivel';
             atualizarStatusUI();
