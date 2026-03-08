@@ -285,6 +285,23 @@ REGRAS DE COMPORTAMENTO:
         } catch(e) {
             console.log('[AUDIO] Fallback GPT falhou:', e.message);
         }
+        // Fallback final — resposta mínima baseada na etapa
+        try {
+            const etapa = (contextoConversa && contextoConversa.etapa) || 'inicio';
+            const respostasFallback = {
+                'inicio': 'Qual o endereço de onde você está?',
+                'pedir_origem': 'Qual o endereço de onde você está?',
+                'pedir_destino': 'Qual o endereço de destino?',
+                'confirmar_corrida': 'Confirma a corrida? Responde *1* para sim ou *CANCELAR* para cancelar.',
+                'aguardando_motorista': '⏳ Estou localizando o motorista mais próximo...',
+                'pedir_aparencia': 'Qual a cor da sua camisa? 👕'
+            };
+            const resp = respostasFallback[etapa];
+            if (resp) {
+                console.log('[AUDIO] Fallback etapa:', etapa);
+                return '__RESPOSTA_DIRETA__' + resp;
+            }
+        } catch(e2) {}
         return null;
     },
 
