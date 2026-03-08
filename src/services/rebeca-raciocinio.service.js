@@ -23,15 +23,16 @@ const RaciocinioService = {
                 return { tipo: 'texto_invalido', confianca: 0.95, enderecoLimpo: texto };
             }
 
-            // Claramente não é endereço
+            // Claramente não é endereço — certeza total, não precisa de IA
             if (/^(sim|nao|não|ok|oi|ola|olá|bom dia|boa tarde|boa noite|obrigad|valeu|cancelar|ajuda|menu|1|2|3|4|5|6|7|8|9|0)$/i.test(t)) {
                 return { tipo: 'texto_invalido', confianca: 0.99, enderecoLimpo: texto };
             }
 
-            // Ponto de referência
-            if (/(shopping|rodoviaria|rodoviária|hospital|upa|ubs|posto de saude|mercado|supermercado|escola|colegio|colégio|igreja|praça|praca|terminal|aeroporto|estação|estacao|forum|fórum|prefeitura|banco|farmacia|farmácia|posto de gasolina|lanchonete|restaurante|hotel|clube|ginasio|ginásio|estadio|estádio|parque|cemiterio|cemitério|cartorio|cartório|delegacia)/i.test(t)) {
+            // Ponto de referência conhecido — alta confiança local
+            const ePontoConhecido = /(shopping|rodoviaria|rodoviária|hospital|upa|ubs|posto de saude|mercado|supermercado|escola|colegio|colégio|igreja|praça|praca|terminal|aeroporto|estação|estacao|forum|fórum|prefeitura|banco|farmacia|farmácia|posto de gasolina|lanchonete|restaurante|hotel|clube|ginasio|ginásio|estadio|estádio|parque|cemiterio|cemitério|cartorio|cartório|delegacia)/i.test(t);
+            if (ePontoConhecido) {
                 const limpo = texto.replace(/^(no|na|nos|nas|perto do|perto da|aqui no|aqui na|em frente ao|em frente à)\s+/i, '').trim();
-                return { tipo: 'ponto_referencia', confianca: 0.85, enderecoLimpo: limpo };
+                return { tipo: 'ponto_referencia', confianca: 0.9, enderecoLimpo: limpo };
             }
 
             // Tem número — provavelmente endereço parcial
@@ -48,6 +49,44 @@ const RaciocinioService = {
             if (/(bairro|vila|jardim|setor|quadra|qd|lote|conjunto|residencial)/i.test(t)) {
                 return { tipo: 'endereco_parcial', confianca: 0.8, enderecoLimpo: texto };
             }
+
+            // AMBÍGUO — usar Claude para classificar com precisão
+            // Claude só classifica o tipo, nunca gera resposta ao cliente
+            try {
+                const anthropicKey = process.env.ANTHROPIC_API_KEY;
+                if (!anthropicKey) throw new Error('sem chave');
+                const axios = require('axios');
+                const resp = await axios.post('https://api.anthropic.com/v1/messages', {
+                    model: 'claude-haiku-4-5-20251001',
+                    max_tokens: 80,
+                    messages: [{
+                        role: 'user',
+                        content: `Classifique o texto abaixo como um dos tipos:
+- ponto_referencia: nome de local conhecido (bairro, estabelecimento, praça, etc)
+- endereco_parcial: parece endereço incompleto (falta número ou bairro)
+- texto_invalido: não é endereço nem local (saudação, pergunta, resposta, etc)
+
+Responda APENAS com JSON no formato: {"tipo":"...", "enderecoLimpo":"..."}
+Onde enderecoLimpo é o texto com palavras desnecessárias removidas.
+Nunca invente informações. Se não souber, classifique como texto_invalido.
+
+Texto: "${texto.replace(/"/g, "'")}"`
+                    }]
+                }, {
+                    headers: {
+                        'x-api-key': anthropicKey,
+                        'anthropic-version': '2023-06-01',
+                        'content-type': 'application/json'
+                    },
+                    timeout: 4000
+                });
+
+                const raw = resp.data?.content?.[0]?.text?.trim();
+                const json = JSON.parse(raw.replace(/```json|```/g, '').trim());
+                if (json.tipo && ['ponto_referencia','endereco_parcial','texto_invalido','endereco_outro_formato'].includes(json.tipo)) {
+                    return { tipo: json.tipo, confianca: 0.85, enderecoLimpo: json.enderecoLimpo || texto };
+                }
+            } catch(e) { /* fallback abaixo */ }
 
             return { tipo: 'texto_invalido', confianca: 0.5, enderecoLimpo: texto };
 
