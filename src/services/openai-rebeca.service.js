@@ -710,7 +710,7 @@ REGRA HORARIO: Se a intencao for AGENDAMENTO ou se o cliente mencionar data/hora
             console.error('[OPENAI] Erro:', e.message);
             return null;
         }
-    }
+    },
     /**
      * combaterObjecaoComercial
      * Usa GPT-4o-mini para responder perguntas comerciais sobre a Rebeca
