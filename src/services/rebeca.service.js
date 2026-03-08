@@ -1700,9 +1700,7 @@ Me manda o endereço de *onde você está*!`;
                             conversas.set(telefone, conversa);
                             return `📍 *${conversa.dados.origem}*
 
-Como você está? Me descreva sua aparência para o motorista te encontrar mais fácil 👕
-
-Ex: _camisa azul, portão verde, chapéu preto_
+Qual a cor da sua camisa? 👕
 
 _(ou mande *0* para pular)_`;
                         } else if (classifTL.tipo === 'texto_invalido' && classifTL.confianca > 0.8) {
@@ -1779,9 +1777,7 @@ _(ou mande *0* para pular)_`;
             conversas.set(telefone, conversa);
             return `📍 *${conversa.dados.origem}*
 
-Como você está? Me descreva sua aparência para o motorista te encontrar 👕
-
-Ex: _camisa azul, chapéu preto, mochila vermelha_
+Qual a cor da sua camisa? 👕
 
 _(ou mande *0* para pular)_`;
             
@@ -2715,9 +2711,7 @@ Pode me passar o endereço completo? Ex: Rua X, número, bairro`;
                         conversas.set(telefone, conversa);
                         return `📍 *${conversa.dados.origem}*
 
-Como você está? Me descreva sua aparência para o motorista te encontrar 👕
-
-Ex: _camisa azul, chapéu preto, mochila vermelha_
+Qual a cor da sua camisa? 👕
 
 _(ou mande *0* para pular)_`;
                     }
