@@ -1246,6 +1246,27 @@ Me manda o endereço de *onde você está*!`;
                 }
             } catch (e) { console.log('[REBECA] Erro encaminhar msg:', e.message); }
             
+            // Verificar se quer falar com responsável ou cancelar durante espera
+            const _querResponsavel = msg.match(/(responsavel|responsável|dono|gerente|falar com|chamar|humano|atendente|pessoa)/i);
+            if (_querResponsavel) {
+                try {
+                    const { Admin } = require('../models');
+                    const _admR = await Admin.findById(conversa.adminId);
+                    if (_admR && _admR.telefone) {
+                        const _instR = await require('../models').InstanciaWhatsapp.findOne({ adminId: conversa.adminId, status: 'conectado' });
+                        if (_instR) {
+                            const _msgR = '📩 *CLIENTE QUER FALAR COM RESPONSÁVEL*\n\n' +
+                                '👤 *Cliente:* ' + (nome || telefone) + '\n' +
+                                '📱 *Contato:* wa.me/' + telefone + '\n' +
+                                '💬 *Mensagem:* ' + msg;
+                            await EvolutionMultiService.enviarMensagem(_instR._id, _admR.telefone, _msgR);
+                        }
+                    }
+                } catch(e) { console.log('[RESPONSAVEL] Erro:', e.message); }
+                conversas.set(telefone, conversa);
+                return 'Já avisei o responsável! 🙏 Em breve alguém entra em contato com você.\n\nEnquanto isso, seu motorista está sendo localizado 🚗';
+            }
+
             // Sem motorista ainda
             conversas.set(telefone, conversa);
             return '⏳ Estou localizando o motorista mais próximo...\n\nAssim que um aceitar, te aviso! Para cancelar, digite *CANCELAR*.';
