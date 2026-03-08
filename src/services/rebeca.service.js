@@ -279,6 +279,12 @@ const RebecaService = {
         return { latitude: parseFloat(partes[0]), longitude: parseFloat(partes[1]) };
     },
 
+    ePontoDeReferencia: (texto) => {
+        const t = (texto || '').toLowerCase();
+        return /(shopping|rodoviaria|rodoviária|aeroporto|hospital|upa |ubs |terminal|mercado|supermercado|escola|colegio|colégio|universidade|faculdade|igreja|catedral|praça|praca|forum|fórum|prefeitura|banco |farmacia|farmácia|correios|delegacia|bombeiros|cartorio|cartório|detran|sesi|senai|senac|sesc|parque |feira|padaria|posto de saude|posto de saúde|pronto socorro|ginasio|ginásio|estadio|estádio|cemiterio|cemitério|loterica|lotérica|clube |hotel |restaurante |lanchonete )/.test(t) ||
+            /(me busca|me pega|busca aqui|pega aqui|aqui no |aqui na |estou no |estou na |to no |to na |tô no |tô na |manda um carro|manda carro)/.test(t);
+    },
+
     getFavoritos: (telefone) => favoritosClientes.get(telefone) || {},
     
     // Carregar favoritos do MongoDB para memória (chamado no inicio da conversa)
