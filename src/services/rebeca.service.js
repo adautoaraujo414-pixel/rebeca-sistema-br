@@ -1138,6 +1138,58 @@ Me manda o endereço de *onde você está*!`;
             }
         }
  
+        // ========== INTERCEPTOR UNIVERSAL — roda em QUALQUER etapa ==========
+        // Detecta intenções críticas antes de qualquer processamento de etapa
+        const _etapasAtivas = ['aguardando_motorista','em_corrida','aguardando_embarque','motorista_a_caminho','pedir_origem','pedir_destino','confirmar_corrida','confirmar_preco','pedir_aparencia','pedir_bairro_origem','pedir_bairro_destino'];
+        if (_etapasAtivas.includes(conversa.etapa)) {
+            // FALAR COM RESPONSÁVEL em qualquer etapa
+            const _eFalarResp = msg.match(/(quero falar|falar com|chamar|responsavel|responsável|dono|gerente|humano|atendente real|pessoa real)/i);
+            if (_eFalarResp) {
+                try {
+                    const { Admin } = require('../models');
+                    const _admInt = await Admin.findById(conversa.adminId);
+                    if (_admInt && _admInt.telefone) {
+                        const _instInt = await require('../models').InstanciaWhatsapp.findOne({ adminId: conversa.adminId, status: 'conectado' });
+                        if (_instInt) {
+                            await EvolutionMultiService.enviarMensagem(_instInt._id, _admInt.telefone,
+                                '📩 *CLIENTE QUER FALAR COM RESPONSÁVEL*\n\n' +
+                                '👤 *Cliente:* ' + (nome || telefone) + '\n' +
+                                '📱 *Contato:* wa.me/' + telefone + '\n' +
+                                '📍 *Etapa atual:* ' + conversa.etapa + '\n' +
+                                '💬 *Mensagem:* ' + msgOriginal);
+                        }
+                    }
+                } catch(e) { console.log('[INTERCEPTOR] Erro notif responsavel:', e.message); }
+                conversas.set(telefone, conversa);
+                return 'Já avisei o responsável! 🙏 Em breve alguém entra em contato com você diretamente.';
+            }
+
+            // RECLAMAÇÃO em qualquer etapa — usar Claude para responder
+            const _eReclamacao = msg.match(/(pessimo|péssimo|horrivel|horrível|absurdo|ridiculo|ridículo|vergonha|lixo|raiva|indignado|cancelar tudo|nunca mais|reclamar|reclamacao|reclamação)/i);
+            if (_eReclamacao && RaciocinioService.isAtivo()) {
+                try {
+                    const _resRac = await Promise.race([
+                        RaciocinioService.raciocinar(telefone, msgOriginal, conversa, { nome }),
+                        new Promise(r => setTimeout(() => r(null), 5000))
+                    ]);
+                    if (_resRac && _resRac.resposta) {
+                        // Notificar admin
+                        try {
+                            const { Admin } = require('../models');
+                            const _admRec = await Admin.findById(conversa.adminId);
+                            if (_admRec && _admRec.telefone) {
+                                const _instRec = await require('../models').InstanciaWhatsapp.findOne({ adminId: conversa.adminId, status: 'conectado' });
+                                if (_instRec) await EvolutionMultiService.enviarMensagem(_instRec._id, _admRec.telefone,
+                                    '🟠 *RECLAMAÇÃO*\n\n👤 ' + (nome || telefone) + '\n💬 ' + msgOriginal);
+                            }
+                        } catch(e) {}
+                        conversas.set(telefone, conversa);
+                        return _resRac.resposta;
+                    }
+                } catch(e) { console.log('[INTERCEPTOR] Erro raciocinio reclamacao:', e.message); }
+            }
+        }
+
         // ========== AGUARDANDO MOTORISTA OU EM CORRIDA ==========
         if ((conversa.etapa === 'aguardando_motorista' || conversa.etapa === 'em_corrida') && !msg.includes('cancelar')) {
             // CLIENTE NERVOSO/RECLAMANDO DA DEMORA → Redirecionar corrida
