@@ -111,11 +111,13 @@ const EvolutionMultiService = {
             const whKey = instancia.apiKey || EVOLUTION_GLOBAL_KEY;
             try {
                 const wr = await axios.post(instancia.apiUrl + '/webhook/set/' + instancia.nomeInstancia, {
-                    enabled: true,
-                    url: webhookUrl,
-                    webhookByEvents: false,
-                    webhookBase64: false,
-                    events: ['MESSAGES_UPSERT', 'CONNECTION_UPDATE', 'MESSAGES_UPDATE']
+                    webhook: {
+                        enabled: true,
+                        url: webhookUrl,
+                        webhookByEvents: false,
+                        webhookBase64: false,
+                        events: ['MESSAGES_UPSERT', 'CONNECTION_UPDATE', 'MESSAGES_UPDATE']
+                    }
                 }, { headers: { 'apikey': whKey, 'Content-Type': 'application/json' } });
                 console.log('[EVO] Webhook OK:', webhookUrl);
                 console.log('[EVO] Webhook resp:', JSON.stringify(wr.data).substring(0, 200));
