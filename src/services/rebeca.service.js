@@ -527,7 +527,19 @@ Me manda o endereço de *onde você está*!`;
                 conversas.set(telefone, conversa);
                 resposta = `Tudo bem! Me manda o endereço de *onde você está* então! 😊`;
             } else {
-                // Pode ter mandado o endereço direto
+                // Pode ter mandado endereço ou mensagem — raciocinar
+                if (RaciocinioService.isAtivo()) {
+                    try {
+                        const _racDest = await Promise.race([
+                            RaciocinioService.raciocinar(telefone, msgOriginal, conversa, { nome }),
+                            new Promise(r => setTimeout(() => r(null), 5000))
+                        ]);
+                        if (_racDest && _racDest.resposta) {
+                            conversas.set(telefone, conversa);
+                            return _racDest.resposta;
+                        }
+                    } catch(e) {}
+                }
                 conversa.etapa = 'inicio';
                 conversas.set(telefone, conversa);
                 // Deixa cair no fluxo normal de endereço
@@ -1341,6 +1353,20 @@ Me manda o endereço de *onde você está*!`;
 
         // ========== AGUARDANDO EMBARQUE — resposta para msgs normais ==========
         if (conversa.etapa === 'aguardando_embarque' && !resposta) {
+            // Mensagem fora do padrão — raciocinar antes de responder com frase fixa
+            const _eMsgEspecial = msg.match(/(nao chegou|não chegou|cadê|cade|onde|motorista|chegou|esperando|não vejo|nao vejo|cancelar|problema|errado|errada)/i);
+            if (_eMsgEspecial && RaciocinioService.isAtivo()) {
+                try {
+                    const _racEmb = await Promise.race([
+                        RaciocinioService.raciocinar(telefone, msgOriginal, conversa, { nome }),
+                        new Promise(r => setTimeout(() => r(null), 5000))
+                    ]);
+                    if (_racEmb && _racEmb.resposta) {
+                        conversas.set(telefone, conversa);
+                        return _racEmb.resposta;
+                    }
+                } catch(e) { console.log('[EMBARQUE] Raciocinio falhou:', e.message); }
+            }
             const _frasesEmbarque = [
                 'Seu motorista já está te esperando! É só subir no veículo. 🚗',
                 'Ele está no local! Pode ir que a corrida começa assim que embarcar. 😊',
@@ -1355,6 +1381,19 @@ Me manda o endereço de *onde você está*!`;
             if (NLPService.eCancelar(msg)) {
                 resposta = 'Seu motorista ja esta a caminho! Para cancelar agora precisaria entrar em contato direto com ele.\n\nSe precisar de ajuda manda mensagem aqui!';
             } else {
+                // Raciocinar antes de resposta genérica
+                if (RaciocinioService.isAtivo()) {
+                    try {
+                        const _racCam = await Promise.race([
+                            RaciocinioService.raciocinar(telefone, msgOriginal, conversa, { nome }),
+                            new Promise(r => setTimeout(() => r(null), 5000))
+                        ]);
+                        if (_racCam && _racCam.resposta) {
+                            conversas.set(telefone, conversa);
+                            return _racCam.resposta;
+                        }
+                    } catch(e) {}
+                }
                 const _frasesCaminho = [
                     'Seu motorista está a caminho! 🚗 Fique de olho no WhatsApp, ele vai te avisar quando chegar.',
                     'Ele já está indo até você! Assim que chegar no local você recebe uma mensagem aqui. 😊',
@@ -1501,6 +1540,19 @@ Me manda o endereço de *onde você está*!`;
         }
         // ========== FILA DE ESPERA ==========
         if (conversa.etapa === 'oferecer_fila_espera') {
+            // Raciocinar sobre resposta ambígua antes de processar
+            if (!NLPService.eSim(msg) && !NLPService.eNao(msg) && RaciocinioService.isAtivo()) {
+                try {
+                    const _racFila = await Promise.race([
+                        RaciocinioService.raciocinar(telefone, msgOriginal, conversa, { nome }),
+                        new Promise(r => setTimeout(() => r(null), 5000))
+                    ]);
+                    if (_racFila && _racFila.resposta) {
+                        conversas.set(telefone, conversa);
+                        return _racFila.resposta;
+                    }
+                } catch(e) {}
+            }
             if (NLPService.eSim(msg)) {
                 // Cliente quer entrar na fila
                 const resultado = await RebecaService.adicionarFilaEspera(
@@ -1972,7 +2024,21 @@ _(ou mande *0* para pular)_`;
                 conversa.etapa = 'pedir_destino_encomenda';
                 resposta = 'Certo! E qual o endereço de entrega?';
             } else {
-                resposta = 'Não consegui encontrar esse endereço. Pode informar com mais detalhes?';
+                // Endereço inválido — tentar raciocinar (pode ser ponto de referência)
+                if (RaciocinioService.isAtivo()) {
+                    try {
+                        const _racEnc = await Promise.race([
+                            RaciocinioService.raciocinar(telefone, msgOriginal, conversa, { nome }),
+                            new Promise(r => setTimeout(() => r(null), 5000))
+                        ]);
+                        if (_racEnc && _racEnc.resposta) { resposta = _racEnc.resposta; }
+                        else if (_racEnc && _racEnc.endereco) {
+                            conversa.dados.origem = _racEnc.endereco;
+                            conversa.etapa = 'pedir_destino_encomenda';
+                            resposta = 'Certo! E qual o endereço de entrega?';
+                        } else { resposta = 'Não consegui encontrar esse endereço. Pode informar com mais detalhes?'; }
+                    } catch(e) { resposta = 'Não consegui encontrar esse endereço. Pode informar com mais detalhes?'; }
+                } else { resposta = 'Não consegui encontrar esse endereço. Pode informar com mais detalhes?'; }
             }
         }
         else if (conversa.etapa === 'pedir_destino_encomenda') {
@@ -1982,7 +2048,20 @@ _(ou mande *0* para pular)_`;
                 conversa.etapa = 'pedir_descricao_encomenda';
                 resposta = 'Perfeito! O que vai ser transportado?';
             } else {
-                resposta = 'Não consegui encontrar esse endereço. Pode informar com mais detalhes?';
+                if (RaciocinioService.isAtivo()) {
+                    try {
+                        const _racEncD = await Promise.race([
+                            RaciocinioService.raciocinar(telefone, msgOriginal, conversa, { nome }),
+                            new Promise(r => setTimeout(() => r(null), 5000))
+                        ]);
+                        if (_racEncD && _racEncD.resposta) { resposta = _racEncD.resposta; }
+                        else if (_racEncD && _racEncD.endereco) {
+                            conversa.dados.destino = _racEncD.endereco;
+                            conversa.etapa = 'pedir_descricao_encomenda';
+                            resposta = 'Perfeito! O que vai ser transportado?';
+                        } else { resposta = 'Não consegui encontrar esse endereço. Pode informar com mais detalhes?'; }
+                    } catch(e) { resposta = 'Não consegui encontrar esse endereço. Pode informar com mais detalhes?'; }
+                } else { resposta = 'Não consegui encontrar esse endereço. Pode informar com mais detalhes?'; }
             }
         }
         else if (conversa.etapa === 'pedir_descricao_encomenda') {
