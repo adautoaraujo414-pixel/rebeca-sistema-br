@@ -3760,7 +3760,7 @@ _(ou mande *0* para pular)_`;
                 console.log('[REBECA] Não enviou foto do cliente:', fotoErr.message);
             }
 
-            return `✅ *CORRIDA ACEITA!*\n\n📍 ${corrida?.origem?.endereco || 'Ver no app'}\n💰 R$ ${corrida?.precoEstimado?.toFixed(2) || '?'}\n\n💬 Use o chat do app para falar com o cliente!\n\nDigite *CHEGUEI* ao chegar.\nDigite *FINALIZAR* ao concluir.`;
+            return `✅ *CORRIDA ACEITA!*\n\n📍 ${corrida?.origem?.endereco || 'Ver no app'}\n💰 R$ ${corrida?.precoEstimado?.toFixed(2) || '?'}\n\nUse o app para:\n1️⃣ *CHEGUEI NO LOCAL* → avisa o cliente\n2️⃣ *INICIAR CORRIDA* → quando cliente embarcar\n3️⃣ *FINALIZAR* → ao concluir`;
         } catch (e) {
             console.error('[REBECA] Erro ao aceitar:', e.message);
             return '❌ Erro ao processar. Tente novamente.';
@@ -3775,6 +3775,12 @@ _(ou mande *0* para pular)_`;
             // Buscar corrida ativa do motorista
             const corrida = await CorridaService.buscarCorridaAtivaMotorista(motorista._id);
             if (!corrida) return '❌ Você não tem corrida ativa.';
+            
+            // Só permite CHEGUEI se ainda não iniciou a corrida
+            const statusPermitidos = ['aceita', 'a_caminho', 'motorista_a_caminho'];
+            if (!statusPermitidos.includes(corrida.status)) {
+                return '⚠️ Corrida já iniciada. Use *FINALIZAR* ao concluir.';
+            }
             
             // Notificar cliente
             if (corrida.clienteTelefone && instanciaId) {
