@@ -270,7 +270,18 @@ EXEMPLOS DE RACIOCÍNIO CORRETO:
             const contextoEtapa = this.descreverEtapa(conversa.etapa, conversa.dados);
             const promptMestre = this.buildPromptMestre(nomeEmpresa, nomeAssistente);
 
-            const userPrompt = 'HISTÓRICO:\n' + historico + '\n\n' + 'ETAPA ATUAL: ' + conversa.etapa + '\n' + 'SITUAÇÃO: ' + contextoEtapa + '\n' + 'DADOS COLETADOS: ' + JSON.stringify(conversa.dados || {}) + '\n' + 'CLIENTE: ' + (nome || telefone) + '\n' + 'MENSAGEM ATUAL: "' + msgOriginal + '"\n\n' + 'Responda de forma natural. Retorne APENAS o JSON.';
+            const agora = new Date();
+            const hora_atual = agora.getHours() + 'h' + String(agora.getMinutes()).padStart(2,'0');
+            const dias = ['domingo','segunda','terça','quarta','quinta','sexta','sábado'];
+            const dia_semana = dias[agora.getDay()];
+            const ultimaMsg = conversa.historico && conversa.historico.length > 0
+                ? conversa.historico[conversa.historico.length - 1]
+                : null;
+            const minutos_ausente = ultimaMsg && ultimaMsg.remetente === 'cliente'
+                ? Math.floor((Date.now() - new Date(ultimaMsg.timestamp || Date.now())) / 60000)
+                : 0;
+
+            const userPrompt = 'HORA ATUAL: ' + hora_atual + '\n' + 'DIA DA SEMANA: ' + dia_semana + '\n' + 'MINUTOS SEM RESPOSTA DO CLIENTE: ' + minutos_ausente + '\n\n' + 'HISTÓRICO:\n' + historico + '\n\n' + 'ETAPA ATUAL: ' + conversa.etapa + '\n' + 'SITUAÇÃO: ' + contextoEtapa + '\n' + 'DADOS COLETADOS: ' + JSON.stringify(conversa.dados || {}) + '\n' + 'CLIENTE: ' + (nome || telefone) + '\n' + 'MENSAGEM ATUAL: "' + msgOriginal + '"\n\n' + 'Responda de forma natural. Retorne APENAS o JSON.';
 
             const resp = await axios.post('https://api.anthropic.com/v1/messages', {
                 model: 'claude-sonnet-4-6',
