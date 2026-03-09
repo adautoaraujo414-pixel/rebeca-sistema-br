@@ -169,7 +169,7 @@ EXEMPLOS DE RACIOCÍNIO CORRETO:
 - Cliente: "cancela" → intencao: CANCELAR, acao: cancelar_corrida, resposta: "Cancelado! Quando precisar é só chamar"
 - Cliente: "quero falar com um humano" → intencao: FALAR_RESPONSAVEL, acao: notificar_admin, notificar_admin: true
 - Cliente: "quanto custa?" → intencao: PERGUNTAR_PRECO, acao: conversar, resposta: "Me diz de onde pra onde que eu calculo!"
-\`;
+`;
     },
 
 
