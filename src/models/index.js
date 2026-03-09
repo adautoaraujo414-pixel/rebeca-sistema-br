@@ -126,11 +126,13 @@ module.exports.ConfigFinanceiro = ConfigFinanceiro;
 // ==================== CONTATOS EMERGÊNCIA ====================
 const ContatoEmergenciaSchema = new mongoose.Schema({
     nome: { type: String, required: true },
-    telefone: { type: String, required: true, index: true },
+    telefone: { type: String, required: true },
+    tipo: { type: String, default: 'admin' },
     categoria: { type: String, enum: ['admin', 'mecanico', 'guincho', 'borracheiro', 'suporte', 'policia', 'hospital', 'outro'], default: 'outro' },
     descricao: String,
     disponivel24h: { type: Boolean, default: false },
-    ativo: { type: Boolean, default: true }
+    ativo: { type: Boolean, default: true },
+    adminId: { type: mongoose.Schema.Types.ObjectId, index: true }
 }, { timestamps: true });
 
 const ContatoEmergencia = mongoose.model('ContatoEmergencia', ContatoEmergenciaSchema);
