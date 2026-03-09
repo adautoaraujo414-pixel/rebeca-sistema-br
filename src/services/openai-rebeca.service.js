@@ -253,6 +253,7 @@ const OpenAIRebecaService = {
             const json = JSON.parse(raw);
             console.log('[AUDIO RACIOCINIO GPT]', JSON.stringify(json).substring(0, 200));
             if (json.origem_extraida || json.destino_extraido || json.confirmacao || json.cancelamento || json.nome_cliente || json.cor_camisa) {
+                json.texto_original = raw; // salvar transcricao original para o cerebro Claude usar
                 return '__AUDIO_RACIOCINIO__' + JSON.stringify(json);
             }
             return textoTranscrito;
