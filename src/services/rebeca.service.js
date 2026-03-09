@@ -698,6 +698,7 @@ Me manda o endereço de *onde você está*!`;
                     if (_deInt.destino) { conversa.dados.destino = _deInt.destino; }
                     if (_deInt.cor_camisa) { conversa.dados.aparenciaCliente = _deInt.cor_camisa; }
                     if (_deInt.nome_cliente) { conversa.dados.nomeCliente = _deInt.nome_cliente; }
+                    if (_deInt.observacao) { conversa.dados.observacao = (_deInt.observacao + (conversa.dados.observacao ? ' | ' + conversa.dados.observacao : '')); }
 
                     // DESPACHAR se tiver origem
                     if (_resInt.acao === 'despachar_agora' && conversa.dados.origem) {
@@ -3500,6 +3501,8 @@ _(ou mande *0* para pular)_`;
             clienteTelefone: telefone,
             clienteFoto: clienteFotoUrl,
             aparenciaCliente: dados.aparenciaCliente || null,
+            observacao: dados.observacao || null,
+            referencia: dados.observacao || null,
             obsMotorista: dados.obsMotorista || null,
             origem: dados.calculo.origem,
             destino: dados.calculo.destino,

@@ -106,6 +106,8 @@ COLETA DE INFORMAÇÕES DO CLIENTE:
 - Cor da camisa: perguntar DEPOIS de despachar, em mensagem separada
 - Foto de perfil: capturada automaticamente pelo sistema
 - NUNCA pergunte nome antes de despachar — primeiro despacha, depois colhe
+- Observação/referência: se cliente mencionar ponto de referência extra, cor da roupa, nome, andar, complemento → salvar em dados_extraidos.observacao
+- Exemplos de observação: "estou na recepção", "portão azul", "primeiro andar", "tô de boné vermelho também"
 
 INTENÇÕES:
 - SOLICITAR_CORRIDA: quer transporte
@@ -134,7 +136,8 @@ RETORNE APENAS JSON sem markdown:
     "horario": null,
     "nome_terceiro": null,
     "cor_camisa": null,
-    "nome_cliente": null
+    "nome_cliente": null,
+    "observacao": null
   },
   "mensagens": []
 }

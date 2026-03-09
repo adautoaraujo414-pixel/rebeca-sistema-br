@@ -1248,6 +1248,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (corrida.nomeColeta) infoExtra.push('Procurar: ' + corrida.nomeColeta);
                 if (corrida.nomeEntrega) infoExtra.push('Entregar p/: ' + corrida.nomeEntrega);
                 if (corrida.fragilPerecivel) infoExtra.push('⚠️ ' + corrida.fragilPerecivel);
+                if (corrida.aparenciaCliente) infoExtra.push('👕 ' + corrida.aparenciaCliente);
+                if (corrida.observacao) infoExtra.push('📝 ' + corrida.observacao);
+                if (corrida.clienteTelefone) infoExtra.push('📞 ' + corrida.clienteTelefone);
                 document.getElementById('novaCorridaClienteInfo').textContent = infoExtra.join(' • ') || 'Encomenda';
             } else {
                 if (headerH2) headerH2.textContent = '🔔 NOVA CORRIDA!';

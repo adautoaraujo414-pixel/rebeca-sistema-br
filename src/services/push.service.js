@@ -79,13 +79,18 @@ const PushService = {
     async notificarNovaCorrida(adminId, corrida) {
         const tipo = corrida.tipo === 'encomenda' ? '📦 NOVA ENCOMENDA!' : '🚗 NOVA CORRIDA!';
         const valor = 'R$ ' + (corrida.precoEstimado || 0).toFixed(2);
+        const _camisa = corrida.aparenciaCliente || '';
+        const _corpoTexto = valor + ' — ' + (corrida.clienteNome || 'Cliente') + (_camisa ? ' | 👕 ' + _camisa : '');
         return await PushService.enviarParaDisponiveis(adminId, {
-            titulo: tipo, corpo: valor + ' - ' + (corrida.clienteNome || 'Cliente'),
+            titulo: tipo, corpo: _corpoTexto,
             corridaId: corrida._id, tipo: 'nova_corrida',
             clienteFoto: corrida.clienteFoto || null,
             clienteNome: corrida.clienteNome || 'Cliente',
+            clienteTelefone: corrida.clienteTelefone || '',
+            aparenciaCliente: _camisa,
             origem: corrida.enderecoOrigemTexto || corrida.origem?.endereco || '',
             destino: corrida.enderecoDestinoTexto || corrida.destino?.endereco || '',
+            observacao: corrida.observacao || corrida.referencia || '',
             precoEstimado: corrida.precoEstimado || 0
         });
     },
