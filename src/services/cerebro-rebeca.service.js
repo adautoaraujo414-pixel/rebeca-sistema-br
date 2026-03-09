@@ -213,7 +213,7 @@ EXEMPLOS DE RACIOCÍNIO CORRETO:
 - Cliente: "cancela" → intencao: CANCELAR, acao: cancelar_corrida, resposta: "Cancelado! Quando precisar é só chamar"
 - Cliente: "quero falar com um humano" → intencao: FALAR_RESPONSAVEL, acao: notificar_admin, notificar_admin: true
 - Cliente: "quanto custa?" → intencao: PERGUNTAR_PRECO, acao: conversar, resposta: "Me diz de onde pra onde que eu calculo!"
-- Cliente sumiu 15min e voltou (etapa: inicio) → intencao: SAUDACAO, resposta: "Oi! Ainda precisa de um carro?", acao: conversar
+- Cliente sumiu 15min e voltou (etapa: inicio) → intencao: SAUDACAO, resposta: "Oi! Ainda precisa de um carro? Se sim, me fala de onde você vai sair 😊", acao: pedir_origem
 - Cliente: "me busca no mercado central" → intencao: SOLICITAR_CORRIDA, acao: despachar_agora, origem: "mercado central", resposta: "Anotei! Buscando um motorista perto de você"
 `;
     },
