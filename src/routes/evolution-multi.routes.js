@@ -474,8 +474,8 @@ Responda apenas com a mensagem para o cliente, sem explicações.`;
                             resposta = await RebecaService.processarMensagem(telefone, conteudo, nome, contexto);
                         }
                     } catch(routeErr) {
-                        console.log('[ROUTE] Erro roteamento delivery/corrida:', routeErr.message);
-                        resposta = await RebecaService.processarMensagem(telefone, conteudo, nome, contexto);
+                        console.log('[ROUTE] Erro roteamento delivery/corrida:', routeErr.message, routeErr.stack?.split('\n')[1]);
+                        // NÃO chama processarMensagem de novo — evita duplo toque
                     }
                     
                     if (resposta) {
