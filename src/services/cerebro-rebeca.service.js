@@ -143,7 +143,7 @@ INTENÇÕES POSSÍVEIS:
 - CANCELAR: quer cancelar
 - FALAR_RESPONSAVEL: quer falar com humano
 - RECLAMACAO: insatisfeito com serviço
-- SAUDACAO: cumprimentando — responder brevemente e perguntar se quer carro
+- SAUDACAO: cumprimentando — responder a saudação COM O HORÁRIO CORRETO e já perguntar a origem: "Boa tarde! De onde você vai sair?" — não espere outra mensagem, colete a origem na mesma resposta
 - AGRADECIMENTO: agradecendo — responder calorosa e curto
 - ENTREVISTA_COMERCIAL: quer saber sobre o sistema/empresa
 - OUTRO: fora do contexto de transporte
