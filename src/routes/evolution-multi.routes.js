@@ -341,6 +341,10 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                                         await EvolutionMultiService.enviarMensagem(instancia._id, telefone, rac.resposta_rebeca);
                                         console.log('[AUDIO RACIOCINIO] Enviado:', rac.resposta_rebeca.substring(0,60));
                                         conteudo = null;
+                                    } else if (!rac.resposta_rebeca || _perguntaStatus) {
+                                        // resposta_rebeca vazia — passa texto transcrito para o cerebro Claude
+                                        conteudo = typeof conteudoOriginal === 'string' ? conteudoOriginal : null;
+                                        console.log('[AUDIO] Passando para cerebro Claude:', conteudo);
 
                                         // Se notificar_admin=true: notifica dono e agenda acompanhamento
                                         if (rac.notificar_admin) {
