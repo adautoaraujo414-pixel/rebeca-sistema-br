@@ -673,7 +673,105 @@ Me manda o endereço de *onde você está*!`;
             return _msgGps;
         }
         // ========== RACIOCÍNIO AMPLIFICADO: endereço não detectado por regex mas pode ser pedido de corrida ==========
-        // Fallback global: se RaciocinioService falhar em qualquer etapa intermediária, usar OpenAI diretamente
+        // ========== CÉREBRO NAS ETAPAS INTERMEDIÁRIAS ==========
+        // Roda em qualquer etapa ativa — lê histórico e age de forma inteligente
+        const _etapasComCerebro = ['pedir_origem','pedir_destino','confirmar_corrida','pedir_aparencia','pedir_bairro_origem','pedir_bairro_destino','confirmar_preco','avaliar','aguardando_fila'];
+        if (_etapasComCerebro.includes(conversa.etapa) && CerebroRebeca.isAtivo()) {
+            try {
+                let _nomeEmp2 = 'Central de Corridas', _nomeAss2 = 'Rebeca';
+                try {
+                    const { Admin } = require('../models');
+                    const _adm2 = await Admin.findById(conversa.adminId);
+                    if (_adm2) { _nomeEmp2 = _adm2.nomeMarca || _adm2.empresa || _nomeEmp2; _nomeAss2 = _adm2.nomeAssistente || _nomeAss2; }
+                } catch(e) {}
+
+                const _resInt = await Promise.race([
+                    CerebroRebeca.raciocinar(telefone, msgOriginal, conversa, { nome, nomeEmpresa: _nomeEmp2, nomeAssistente: _nomeAss2 }),
+                    new Promise(r => setTimeout(() => r(null), 6000))
+                ]);
+
+                if (_resInt) {
+                    const _deInt = _resInt.dados_extraidos || {};
+
+                    // Extrair dados que o Cérebro identificou
+                    if (_deInt.origem) { conversa.dados.origem = _deInt.origem; conversa.dados.origemValidada = { valido: true, precisao: 'cerebro', endereco: _deInt.origem }; }
+                    if (_deInt.destino) { conversa.dados.destino = _deInt.destino; }
+                    if (_deInt.cor_camisa) { conversa.dados.aparenciaCliente = _deInt.cor_camisa; }
+                    if (_deInt.nome_cliente) { conversa.dados.nomeCliente = _deInt.nome_cliente; }
+
+                    // DESPACHAR se tiver origem
+                    if (_resInt.acao === 'despachar_agora' && conversa.dados.origem) {
+                        try {
+                            const _motsInt = await MotoristaService.listarDisponiveis(conversa.adminId);
+                            if (_motsInt.length === 0) {
+                                conversa.etapa = 'oferecer_fila_espera';
+                                conversas.set(telefone, conversa);
+                                const _mf = 'Poxa, todos os motoristas estão ocupados agora. Posso te avisar quando um desocupar?';
+                                CerebroRebeca.salvarHistorico(conversa, _mf, 'rebeca');
+                                return _mf;
+                            }
+                            if (!conversa.dados.calculo) {
+                                conversa.dados.calculo = { origem: { endereco: conversa.dados.origem }, destino: conversa.dados.destino ? { endereco: conversa.dados.destino } : null, distanciaKm: 0, tempoMinutos: 0, preco: 15, faixa: { nome: 'padrao', multiplicador: 1 } };
+                            }
+                            const _corrInt = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
+                            if (_corrInt && _corrInt.cooldown) return 'Aguarda ' + Math.ceil(_corrInt.segundosRestantes / 60) + ' min para nova corrida.';
+                            if (_corrInt && _corrInt.duplicada) return 'Você já tem uma corrida ativa!';
+                            conversa.etapa = 'pedir_aparencia';
+                            conversa.dados.corridaId = _corrInt.id;
+                            conversas.set(telefone, conversa);
+                            const _instDi = await require('../models').InstanciaWhatsapp.findById(conversa.instanciaId).catch(() => null);
+                            if (_instDi) {
+                                await EvolutionMultiService.enviarMensagem(conversa.instanciaId, telefone, 'Certo, já chamei um motorista!');
+                                await new Promise(r => setTimeout(r, 700));
+                                await EvolutionMultiService.enviarMensagem(conversa.instanciaId, telefone, 'Qual a cor da sua camisa? 👕');
+                                CerebroRebeca.salvarHistorico(conversa, 'Certo, já chamei um motorista!', 'rebeca');
+                                CerebroRebeca.salvarHistorico(conversa, 'Qual a cor da sua camisa? 👕', 'rebeca');
+                                return null;
+                            }
+                            const _mOk = 'Certo! Motorista chamado. Qual a cor da sua camisa? 👕';
+                            CerebroRebeca.salvarHistorico(conversa, _mOk, 'rebeca');
+                            return _mOk;
+                        } catch(e) { console.log('[CEREBRO_INT] Erro despachar:', e.message); }
+                    }
+
+                    // CANCELAR
+                    if (_resInt.intencao === 'CANCELAR') {
+                        conversa.etapa = 'inicio';
+                        conversa.dados = {};
+                        conversas.set(telefone, conversa);
+                        const _mc = 'Tudo bem, cancelado! Quando precisar é só chamar.';
+                        CerebroRebeca.salvarHistorico(conversa, _mc, 'rebeca');
+                        return _mc;
+                    }
+
+                    // Resposta normal do cérebro
+                    if (_resInt.resposta) {
+                        if (_resInt.acao === 'pedir_destino') conversa.etapa = 'pedir_destino';
+                        if (_resInt.acao === 'pedir_origem') conversa.etapa = 'pedir_origem';
+                        // Enviar em múltiplas mensagens se necessário
+                        if (_resInt.mensagens && _resInt.mensagens.length > 1) {
+                            const _instMs2 = await require('../models').InstanciaWhatsapp.findById(conversa.instanciaId).catch(() => null);
+                            if (_instMs2) {
+                                for (let _mi = 0; _mi < _resInt.mensagens.length; _mi++) {
+                                    if (_resInt.mensagens[_mi]) {
+                                        await EvolutionMultiService.enviarMensagem(conversa.instanciaId, telefone, _resInt.mensagens[_mi]);
+                                        CerebroRebeca.salvarHistorico(conversa, _resInt.mensagens[_mi], 'rebeca');
+                                        if (_mi < _resInt.mensagens.length - 1) await new Promise(r => setTimeout(r, 600));
+                                    }
+                                }
+                                conversas.set(telefone, conversa);
+                                return null;
+                            }
+                        }
+                        CerebroRebeca.salvarHistorico(conversa, _resInt.resposta, 'rebeca');
+                        conversas.set(telefone, conversa);
+                        return _resInt.resposta;
+                    }
+                }
+            } catch(e) { console.log('[CEREBRO_INT] Erro:', e.message); }
+        }
+
+        // Fallback global: se CerebroRebeca falhar, usar OpenAI diretamente
         const _etapasComRaciocinio = ['pedir_origem','pedir_destino','confirmar_corrida','pedir_aparencia','pedir_bairro_origem'];
         if (_etapasComRaciocinio.includes(conversa.etapa) && !RaciocinioService.isAtivo()) {
             try {
@@ -3645,7 +3743,10 @@ _(ou mande *0* para pular)_`;
                 if (corrida.clienteFoto && instanciaId && motorista.whatsapp) {
                     const _nomeCliente = corrida.clienteNome || 'Cliente';
                     const _telCliente = corrida.clienteTelefone ? corrida.clienteTelefone.replace(/\D/g,'').slice(-9) : '';
-                    const legenda = `👤 *${_nomeCliente}*\n📞 *${_telCliente}*\n\n📍 ${corrida.origem?.endereco || corrida.enderecoOrigemTexto || 'Ver no app'}`;
+                    const _camisaLeg = corrida.aparenciaCliente || '';
+                    const legenda = `👤 *${_nomeCliente}*\n📞 *${_telCliente}*` +
+                        (_camisaLeg ? `\n👕 *${_camisaLeg}*` : '') +
+                        `\n\n📍 ${corrida.origem?.endereco || corrida.enderecoOrigemTexto || 'Ver no app'}`;
                     await new Promise(r => setTimeout(r, 1000));
                     await EvolutionMultiService.enviarImagem(instanciaId, motorista.whatsapp, corrida.clienteFoto, legenda);
                     console.log('[REBECA] Foto do cliente enviada para motorista:', motorista.whatsapp);
