@@ -720,6 +720,7 @@ Me manda o endereço de *onde você está*!`;
                             conversa.etapa = 'pedir_aparencia';
                             conversa.dados.corridaId = _corrInt.id;
                             conversas.set(telefone, conversa);
+                            _agendarTimeoutAparencia(telefone, conversa.instanciaId, _corrInt.id, conversas);
                             const _instDi = await require('../models').InstanciaWhatsapp.findById(conversa.instanciaId).catch(() => null);
                             if (_instDi) {
                                 await EvolutionMultiService.enviarMensagem(conversa.instanciaId, telefone, 'Certo, já chamei um motorista!');
@@ -869,6 +870,7 @@ Me manda o endereço de *onde você está*!`;
                             conversa.etapa = 'pedir_aparencia';
                             conversa.dados.corridaId = _corridaC.id;
                             conversas.set(telefone, conversa);
+                            _agendarTimeoutAparencia(telefone, conversa.instanciaId, _corridaC.id, conversas);
 
                             // Enviar confirmação em 2 mensagens separadas, naturais
                             const _instDesp = await require('../models').InstanciaWhatsapp.findById(conversa.instanciaId);
@@ -4118,6 +4120,35 @@ setInterval(async () => {
         }
     } catch(_cron) { console.log('[FILA-CRON] Erro:', _cron.message); }
 }, 5 * 60 * 1000); // a cada 5 minutos
+
+
+
+// ===== TIMEOUT APARENCIA: 30s sem resposta → avança para aguardando_motorista =====
+const _agendarTimeoutAparencia = (telefone, instanciaId, corridaId, conversas) => {
+    if (!global._timeoutsAparencia) global._timeoutsAparencia = new Map();
+    const _chave = telefone + '_aparencia';
+    // Cancela timeout anterior se existir
+    if (global._timeoutsAparencia.has(_chave)) {
+        clearTimeout(global._timeoutsAparencia.get(_chave));
+    }
+    const _tid = setTimeout(async () => {
+        global._timeoutsAparencia.delete(_chave);
+        const _conv = conversas.get(telefone);
+        if (!_conv || _conv.etapa !== 'pedir_aparencia') return; // cliente já respondeu
+        _conv.etapa = 'aguardando_motorista';
+        conversas.set(telefone, _conv);
+        console.log('[APARENCIA_TIMEOUT] 30s sem resposta, avançando:', telefone);
+        try {
+            const { InstanciaWhatsapp } = require('../models');
+            const _inst = await InstanciaWhatsapp.findById(instanciaId).catch(() => null);
+            if (_inst) {
+                await EvolutionMultiService.enviarMensagem(instanciaId, telefone,
+                    'Tudo certo! O motorista já está sendo chamado 🚗');
+            }
+        } catch(e) { console.log('[APARENCIA_TIMEOUT] Erro:', e.message); }
+    }, 30 * 1000);
+    global._timeoutsAparencia.set(_chave, _tid);
+};
 
 module.exports = RebecaService;
 
