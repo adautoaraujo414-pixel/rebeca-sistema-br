@@ -226,16 +226,7 @@ EXEMPLOS DE RACIOCÍNIO CORRETO:
             const contextoEtapa = this.descreverEtapa(conversa.etapa, conversa.dados);
             const promptMestre = this.buildPromptMestre(nomeEmpresa, nomeAssistente);
 
-            const userPrompt = `HISTÓRICO:
-${historico}
-
-ETAPA ATUAL: ${conversa.etapa}
-SITUAÇÃO: ${contextoEtapa}
-DADOS COLETADOS: ${JSON.stringify(conversa.dados || {})}
-CLIENTE: ${nome || telefone}
-MENSAGEM ATUAL: "${msgOriginal}"
-
-Responda de forma natural. Retorne APENAS o JSON.`;
+            const userPrompt = 'HISTÓRICO:\n' + historico + '\n\n' + 'ETAPA ATUAL: ' + conversa.etapa + '\n' + 'SITUAÇÃO: ' + contextoEtapa + '\n' + 'DADOS COLETADOS: ' + JSON.stringify(conversa.dados || {}) + '\n' + 'CLIENTE: ' + (nome || telefone) + '\n' + 'MENSAGEM ATUAL: "' + msgOriginal + '"\n\n' + 'Responda de forma natural. Retorne APENAS o JSON.';
 
             const resp = await axios.post('https://api.anthropic.com/v1/messages', {
                 model: 'claude-haiku-4-5',
