@@ -407,7 +407,11 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
 
                 // Anti-duplicata de MENSAGENS RECEBIDAS — bloqueia webhook duplicado
                 if (!global._mensagensProcessadas) global._mensagensProcessadas = new Map();
-                const _chaveMsgRecebida = telefone + '_' + (typeof conteudo === 'string' ? conteudo.substring(0,40) : 'GPS') + '_' + Math.floor(Date.now()/3000);
+                // Usa msgId do webhook se disponível (mais preciso), senão janela de 15s
+                const _msgIdDedup = msg?.key?.id || msg?.id || null;
+                const _chaveMsgRecebida = _msgIdDedup
+                    ? (telefone + '_' + _msgIdDedup)
+                    : (telefone + '_' + (typeof conteudo === 'string' ? conteudo.substring(0,40) : 'GPS') + '_' + Math.floor(Date.now()/15000));
                 if (global._mensagensProcessadas.has(_chaveMsgRecebida)) {
                     console.log('[ANTI-DUP] Mensagem duplicada bloqueada para', telefone);
                     continue;
@@ -415,7 +419,7 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                 global._mensagensProcessadas.set(_chaveMsgRecebida, Date.now());
                 // Limpar entradas antigas (mais de 10s)
                 for (const [k, v] of global._mensagensProcessadas) {
-                    if (Date.now() - v > 10000) global._mensagensProcessadas.delete(k);
+                    if (Date.now() - v > 60000) global._mensagensProcessadas.delete(k);
                 }
                 
                 console.log('[REBECA-' + (adminId || 'GLOBAL') + '] Msg de ' + telefone + ':', typeof conteudo === 'string' ? conteudo.substring(0, 30) : 'GPS');
