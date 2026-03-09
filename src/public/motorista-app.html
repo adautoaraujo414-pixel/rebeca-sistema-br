@@ -342,7 +342,45 @@ document.addEventListener('DOMContentLoaded', function() {
 </head>
 <body>
     <!-- Login Section -->
-    <div id="loginSection" class="login-container">
+            <!-- Modal GPS bloqueado -->
+        <div id="gpsAvisoModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9999;align-items:center;justify-content:center;padding:20px;">
+            <div style="background:#1a1a2e;border:2px solid #e74c3c;border-radius:20px;padding:30px;max-width:360px;text-align:center;">
+                <div style="font-size:50px;margin-bottom:15px;">📍</div>
+                <h3 style="color:#e74c3c;margin-bottom:10px;">GPS Bloqueado</h3>
+                <p style="color:#ccc;font-size:14px;line-height:1.6;margin-bottom:20px;">
+                    O GPS é <strong>obrigatório</strong> para receber corridas.<br><br>
+                    <strong>Como ativar:</strong><br>
+                    1. Toque no 🔒 na barra de endereço<br>
+                    2. Localização → <strong>Permitir</strong><br>
+                    3. Recarregue a página
+                </p>
+                <button onclick="document.getElementById('gpsAvisoModal').style.display='none';location.reload();"
+                    style="background:#00d4ff;color:#000;border:none;padding:12px 30px;border-radius:10px;font-weight:bold;font-size:15px;cursor:pointer;">
+                    ✅ Já ativei — Recarregar
+                </button>
+            </div>
+        </div>
+
+        <!-- Modal boas-vindas permissões -->
+        <div id="boasVindasModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:9998;align-items:center;justify-content:center;padding:20px;">
+            <div style="background:#1a1a2e;border:2px solid #00d4ff;border-radius:20px;padding:30px;max-width:360px;text-align:center;">
+                <div style="font-size:50px;margin-bottom:15px;">🚗</div>
+                <h3 style="color:#00d4ff;margin-bottom:10px;">Bem-vindo ao app!</h3>
+                <p style="color:#ccc;font-size:14px;line-height:1.6;margin-bottom:25px;">
+                    Para funcionar corretamente, o app precisa de:<br><br>
+                    <span style="font-size:22px;">📍</span> <strong>Localização</strong><br>
+                    <small style="color:#aaa;">Para receber corridas próximas a você</small><br><br>
+                    <span style="font-size:22px;">🔔</span> <strong>Notificações</strong><br>
+                    <small style="color:#aaa;">Para avisar quando chegar uma corrida nova</small>
+                </p>
+                <button onclick="autorizarTudo()"
+                    style="background:#00d4ff;color:#000;border:none;padding:14px 30px;border-radius:10px;font-weight:bold;font-size:16px;cursor:pointer;width:100%;">
+                    ✅ Permitir tudo e começar
+                </button>
+            </div>
+        </div>
+
+        <div id="loginSection" class="login-container">
         <div class="login-logo">
             <h1 id="headerMarca">🚗 Motorista</h1>
             <p>Motorista</p>
