@@ -1986,7 +1986,7 @@ document.addEventListener('DOMContentLoaded', function() {
         async function abrirEmergencia() {
             abrirModal('modalEmergencia');
             try {
-                const res = await fetch('/api/config/emergencia', { headers: { 'Authorization': 'Bearer ' + token } });
+                const res = await fetch('/api/emergencia/motorista', { headers: { 'Authorization': 'Bearer ' + token } });
                 const data = await res.json();
                 renderizarEmergencia(data.contatos || []);
             } catch (e) {
@@ -2231,11 +2231,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         // Funções do menu que faltavam
-        function abrirEmergencia() {
-            const m = document.getElementById('modalEmergencia');
-            if (m) m.style.display = 'flex';
-            else toast('Ligue: 190 (Polícia) | 192 (SAMU) | 193 (Bombeiros)', 'error');
-        }
+        // abrirEmergencia definida acima (async com fetch)
 
         function abrirAvaria() {
             toast('Foto de avaria: envie pelo chat com a central', 'success');
