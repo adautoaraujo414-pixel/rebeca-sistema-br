@@ -380,7 +380,8 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                                 } catch(racErr) {
                                     console.log('[AUDIO] Erro raciocinio:', racErr.message);
                                 }
-                                continue;
+                                // NÃO faz continue — deixa cair no processamento normal do cerebro Claude
+                                if (!conteudo) continue;
                             } else if (transcricao) {
                                 conteudo = transcricao;
                                 console.log('[WEBHOOK] Audio transcrito OK:', transcricao.substring(0, 80));
