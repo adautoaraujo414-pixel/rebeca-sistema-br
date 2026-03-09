@@ -301,6 +301,7 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                                 console.log('[AUDIO] Resposta direta GPT:', msgDireta.substring(0,60));
                                 continue;
                             } else if (transcricao && transcricao.startsWith('__AUDIO_RACIOCINIO__')) {
+                                const conteudoOriginal = transcricao.replace('__AUDIO_RACIOCINIO__', '').split('|||')[0] || '';
                                 try {
                                     const jsonStr = transcricao.replace('__AUDIO_RACIOCINIO__', '');
                                     const rac = JSON.parse(jsonStr);
@@ -334,7 +335,8 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
 
                                     // Se o áudio é pergunta de status — ignorar resposta_rebeca e deixar
                                     // a Rebeca responder com dados reais do banco
-                                    const _audioTranscrito = typeof conteudoOriginal === 'string' ? conteudoOriginal.toLowerCase() : '';
+                                    const _textoAudio = (rac && rac.texto_original) ? rac.texto_original : jsonStr;
+                                    const _audioTranscrito = typeof _textoAudio === 'string' ? _textoAudio.toLowerCase() : '';
                                     const _perguntaStatus = _audioTranscrito.match(/(cadê|cade|chegando|chegou|a caminho|onde (está|esta|fica)|quanto tempo|meu carro|minha corrida|agendad|status|motorista)/);
                                     
                                     if (rac.resposta_rebeca && !_perguntaStatus) {
@@ -343,8 +345,8 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                                         conteudo = null;
                                     } else if (!rac.resposta_rebeca || _perguntaStatus) {
                                         // resposta_rebeca vazia — passa texto transcrito para o cerebro Claude
-                                        conteudo = typeof conteudoOriginal === 'string' ? conteudoOriginal : null;
-                                        console.log('[AUDIO] Passando para cerebro Claude:', conteudo);
+                                        conteudo = (rac && rac.texto_original) ? rac.texto_original : jsonStr;
+                                        console.log('[AUDIO] Passando para cerebro Claude:', conteudo ? conteudo.substring(0,80) : 'null');
 
                                         // Se notificar_admin=true: notifica dono e agenda acompanhamento
                                         if (rac.notificar_admin) {
