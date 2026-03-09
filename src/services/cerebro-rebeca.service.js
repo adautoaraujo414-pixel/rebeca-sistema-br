@@ -200,7 +200,7 @@ EXEMPLOS DE RACIOCÍNIO CORRETO:
             'pedir_origem_encomenda': 'Aguardando origem da encomenda',
             'pedir_destino_encomenda': 'Aguardando destino da encomenda',
         };
-        return d[etapa] || `Etapa: ${etapa}`;
+        return d[etapa] || ('Etapa: ' + etapa);
     },
 
     salvarHistorico(conversa, texto, remetente = 'cliente') {
