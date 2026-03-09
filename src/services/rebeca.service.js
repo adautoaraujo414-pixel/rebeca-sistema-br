@@ -725,6 +725,56 @@ Me manda o endereço de *onde você está*!`;
                             }
                         } catch(e) {}
                     }
+
+                    // Extrair dados que o Cérebro identificou
+                    const _de = _resCerebro.dados_extraidos || {};
+                    if (_de.origem) { conversa.dados.origem = _de.origem; conversa.dados.origemValidada = { valido: true, precisao: 'cerebro', endereco: _de.origem }; }
+                    if (_de.destino) { conversa.dados.destino = _de.destino; conversa.dados.destinoValidado = { valido: true, precisao: 'cerebro', endereco: _de.destino }; }
+                    if (_de.nome_terceiro) conversa.dados.nomeTerceiro = _de.nome_terceiro;
+                    if (_de.horario) conversa.dados.horarioAgendamento = _de.horario;
+
+                    // DESPACHAR AGORA — tem origem e destino, sem burocracia
+                    if (_resCerebro.acao === 'despachar_agora' && conversa.dados.origem) {
+                        try {
+                            const _motsC = await MotoristaService.listarDisponiveis(conversa.adminId);
+                            if (_motsC.length === 0) {
+                                const _estC = await RebecaService.estimarTempoEspera(conversa.adminId);
+                                conversa.etapa = 'oferecer_fila_espera';
+                                conversas.set(telefone, conversa);
+                                const _msgFila = 'Poxa, todos os motoristas estão em corrida agora. ' + _estC.texto + '\n\nPosso te avisar quando um desocupar?';
+                                CerebroRebeca.salvarHistorico(conversa, _msgFila, 'rebeca');
+                                return _msgFila;
+                            }
+                            if (!conversa.dados.calculo) {
+                                conversa.dados.calculo = {
+                                    origem: { endereco: conversa.dados.origem, latitude: null, longitude: null },
+                                    destino: conversa.dados.destino ? { endereco: conversa.dados.destino } : null,
+                                    distanciaKm: 0, tempoMinutos: 0, preco: 15,
+                                    faixa: { nome: 'padrao', multiplicador: 1 }
+                                };
+                            }
+                            const _corridaC = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
+                            if (_corridaC.cooldown) return '⏳ Aguarde ' + Math.ceil(_corridaC.segundosRestantes / 60) + ' min para nova corrida.';
+                            if (_corridaC.duplicada) return '⚠️ Você já tem uma corrida ativa!';
+                            conversa.etapa = 'aguardando_motorista';
+                            conversa.dados.corridaId = _corridaC.id;
+                            conversas.set(telefone, conversa);
+                            let _msgOk = '✅ Certo! Buscando motorista...\n📍 ' + conversa.dados.origem;
+                            if (conversa.dados.destino) _msgOk += '\n🏁 ' + conversa.dados.destino;
+                            CerebroRebeca.salvarHistorico(conversa, _msgOk, 'rebeca');
+                            return _msgOk;
+                        } catch(e) {
+                            console.log('[CEREBRO] Erro despachar:', e.message);
+                        }
+                    }
+
+                    // Atualizar etapa se o Cérebro sugeriu
+                    if (_resCerebro.acao === 'pedir_destino' && conversa.dados.origem) {
+                        conversa.etapa = 'pedir_destino';
+                    } else if (_resCerebro.acao === 'pedir_origem') {
+                        conversa.etapa = 'pedir_origem';
+                    }
+
                     // Salvar resposta no histórico
                     CerebroRebeca.salvarHistorico(conversa, _resCerebro.resposta, 'rebeca');
                     conversas.set(telefone, conversa);

@@ -70,11 +70,22 @@ INTENÇÕES:
 - ENTREVISTA_COMERCIAL: quer saber sobre o sistema
 - OUTRO: fora de contexto — redirecionar para corrida
 
+COMPORTAMENTO CRÍTICO — DESPACHO INTELIGENTE:
+- Cliente manda só endereço de origem → confirme com "Ok, de onde você está indo?" para pegar destino, MAS se já tiver destino no histórico, despache direto
+- Cliente manda origem E destino na mesma mensagem → acao: "despachar_agora"
+- Cliente manda destino e já tem origem no histórico → acao: "despachar_agora"  
+- Cliente manda ponto de referência (mercado, escola, hospital, praça, nome de rua) → aceitar como endereço válido, acao: "despachar_agora" se tiver origem+destino
+- NUNCA peça confirmação burocrática — se tiver os dois endereços, despache
+- Mensagens divididas: cliente pode mandar origem numa mensagem e destino em outra — cruzar com histórico
+- Se só tiver origem: acao: "pedir_destino"
+- Se só tiver destino e histórico tiver origem: acao: "despachar_agora"
+- origem_extraida e destino_extraido: extrair QUALQUER referência de lugar mencionada pelo cliente
+
 RETORNE APENAS JSON sem markdown:
 {
   "intencao": "SOLICITAR_CORRIDA",
-  "resposta": "De onde você vai sair?",
-  "acao": "pedir_origem",
+  "resposta": "Pra onde vai?",
+  "acao": "pedir_destino",
   "humor_cliente": "NORMAL",
   "notificar_admin": false,
   "dados_extraidos": {
