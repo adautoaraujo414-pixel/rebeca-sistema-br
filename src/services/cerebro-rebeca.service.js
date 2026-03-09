@@ -242,7 +242,7 @@ EXEMPLOS DE RACIOCÍNIO CORRETO:
                 timeout: 8000
             });
 
-            const raw = resp.data.content[0].text.trim().replace(/```json|```/g, '').trim();
+            const raw = resp.data.content[0].text.trim().replace(/\`\`\`json|\`\`\`/g, '').trim();
             const json = JSON.parse(raw);
             console.log('[CEREBRO]', telefone, '|', json.intencao, '|', (json.resposta || '').substring(0, 60));
             return json;
