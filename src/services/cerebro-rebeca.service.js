@@ -177,7 +177,7 @@ EXEMPLOS DE RACIOCÍNIO CORRETO:
         if (!conversa || !conversa.historico || conversa.historico.length === 0) {
             return '(primeira mensagem)';
         }
-        return conversa.historico.slice(-12).map(h => {
+        return conversa.historico.slice(-30).map(h => {
             return (h.remetente === 'cliente' ? 'Cliente' : 'Rebeca') + ': ' + h.texto;
         }).join('\n');
     },
@@ -210,8 +210,8 @@ EXEMPLOS DE RACIOCÍNIO CORRETO:
             remetente,
             ts: Date.now()
         });
-        if (conversa.historico.length > 20) {
-            conversa.historico = conversa.historico.slice(-20);
+        if (conversa.historico.length > 30) {
+            conversa.historico = conversa.historico.slice(-30);
         }
         return conversa;
     },
@@ -229,8 +229,8 @@ EXEMPLOS DE RACIOCÍNIO CORRETO:
             const userPrompt = 'HISTÓRICO:\n' + historico + '\n\n' + 'ETAPA ATUAL: ' + conversa.etapa + '\n' + 'SITUAÇÃO: ' + contextoEtapa + '\n' + 'DADOS COLETADOS: ' + JSON.stringify(conversa.dados || {}) + '\n' + 'CLIENTE: ' + (nome || telefone) + '\n' + 'MENSAGEM ATUAL: "' + msgOriginal + '"\n\n' + 'Responda de forma natural. Retorne APENAS o JSON.';
 
             const resp = await axios.post('https://api.anthropic.com/v1/messages', {
-                model: 'claude-haiku-4-5',
-                max_tokens: 350,
+                model: 'claude-sonnet-4-6',
+                max_tokens: 600,
                 system: promptMestre,
                 messages: [{ role: 'user', content: userPrompt }]
             }, {
@@ -239,7 +239,7 @@ EXEMPLOS DE RACIOCÍNIO CORRETO:
                     'anthropic-version': '2023-06-01',
                     'Content-Type': 'application/json'
                 },
-                timeout: 8000
+                timeout: 12000
             });
 
             const raw = resp.data.content[0].text.trim().replace(/\`\`\`json|\`\`\`/g, '').trim();
