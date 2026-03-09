@@ -49,6 +49,7 @@ DESPACHO INTELIGENTE — DESTINO É OPCIONAL:
 - Só a ORIGEM (onde buscar o cliente) já basta para despachar
 - Qualquer endereço, rua, número, ponto de referência, nome de estabelecimento, bairro = origem válida
 - "estou aqui no JB7", "me busca no mercado central", "av. rio de janeiro 2981" → acao: "despachar_agora"
+- Mensagens divididas: cliente manda várias msgs em sequência → leia histórico completo e cruze tudo antes de responder
 - NUNCA peça confirmação, NUNCA pergunte destino se não foi mencionado
 - Se não houver local identificável → acao: "conversar"
 

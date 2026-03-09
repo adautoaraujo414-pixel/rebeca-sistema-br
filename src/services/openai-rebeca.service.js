@@ -187,11 +187,58 @@ const OpenAIRebecaService = {
         try {
             const etapaAtual = (contextoConversa && contextoConversa.etapa) || 'inicio';
             const dadosAtuais = (contextoConversa && contextoConversa.dados) ? JSON.stringify(contextoConversa.dados) : '{}';
+
+            // --- TENTAR CEREBRO REBECA PRIMEIRO (usa histórico completo) ---
+            try {
+                const CerebroRebeca = require('./cerebro-rebeca.service');
+                if (CerebroRebeca.isAtivo() && contextoConversa) {
+                    // Salvar transcrição no histórico antes de raciocinar
+                    CerebroRebeca.salvarHistorico(contextoConversa, '[áudio] ' + textoTranscrito, 'cliente');
+
+                    const _resCerebro = await Promise.race([
+                        CerebroRebeca.raciocinar(
+                            contextoConversa.telefone || 'desconhecido',
+                            textoTranscrito,
+                            contextoConversa,
+                            {
+                                nome: contextoConversa.dados && contextoConversa.dados.nome || '',
+                                nomeEmpresa: contextoConversa._nomeEmpresa || 'Central de Corridas',
+                                nomeAssistente: contextoConversa._nomeAssistente || 'Rebeca'
+                            }
+                        ),
+                        new Promise(r => setTimeout(() => r(null), 7000))
+                    ]);
+
+                    if (_resCerebro) {
+                        const _de = _resCerebro.dados_extraidos || {};
+                        // Montar JSON compatível com o fluxo de áudio existente
+                        const jsonCerebro = {
+                            origem_extraida: _de.origem || null,
+                            destino_extraido: _de.destino || null,
+                            horario_agendamento: _de.horario || null,
+                            confirmacao: _resCerebro.acao === 'confirmar' || _resCerebro.intencao === 'CONFIRMAR',
+                            cancelamento: _resCerebro.intencao === 'CANCELAR',
+                            nome_cliente: _de.nome_cliente || null,
+                            cor_camisa: _de.cor_camisa || null,
+                            resposta_rebeca: (_resCerebro.acao === 'despachar_agora' || _resCerebro.acao === 'conversar') ? (_resCerebro.mensagens && _resCerebro.mensagens.length ? _resCerebro.mensagens.join(' | ') : _resCerebro.resposta) : '',
+                            proxima_etapa: _resCerebro.acao === 'despachar_agora' ? 'despachar' : (_resCerebro.acao || ''),
+                            notificar_admin: _resCerebro.notificar_admin || false,
+                            acao_cerebro: _resCerebro.acao || ''
+                        };
+                        console.log('[AUDIO CEREBRO]', JSON.stringify(jsonCerebro).substring(0, 200));
+                        return '__AUDIO_RACIOCINIO__' + JSON.stringify(jsonCerebro);
+                    }
+                }
+            } catch(eCerebro) {
+                console.log('[AUDIO] CerebroRebeca falhou, usando GPT:', eCerebro.message);
+            }
+
+            // --- FALLBACK: GPT-4o-mini extrai dados ---
             const resp = await axios.post('https://api.openai.com/v1/chat/completions', {
                 model: 'gpt-4o-mini',
                 messages: [{
                     role: 'system',
-                    content: 'Analise o audio transcrito e extraia APENAS os dados mencionados pelo cliente. Retorne APENAS JSON sem markdown. NAO gere resposta_rebeca — deixe sempre vazio, pois o sistema responde com dados reais do banco. ETAPA ATUAL: "' + etapaAtual + '". DADOS JA COLETADOS: ' + dadosAtuais + '. REGRAS: (1) resposta_rebeca SEMPRE vazio — o sistema cuida das respostas. (2) Extraia origem_extraida se cliente mencionou endereco de partida. (3) Extraia destino_extraido se cliente mencionou destino. (4) horario_agendamento em ISO 8601 se cliente mencionou data/hora. (5) confirmacao=true se cliente confirmou (sim, isso, correto, 1). (6) cancelamento=true se cliente cancelou. (7) nome_cliente se cliente disse o nome. (8) notificar_admin=true APENAS se cliente reclamou ou pediu atendimento humano. Retorne APENAS JSON: {"origem_extraida":null,"destino_extraido":null,"horario_agendamento":null,"confirmacao":false,"cancelamento":false,"nome_cliente":null,"resposta_rebeca":"","proxima_etapa":"","notificar_admin":false}'
+                    content: 'Analise o audio transcrito e extraia APENAS os dados mencionados pelo cliente. Retorne APENAS JSON sem markdown. NAO gere resposta_rebeca — deixe sempre vazio, pois o sistema responde com dados reais do banco. ETAPA ATUAL: "' + etapaAtual + '". DADOS JA COLETADOS: ' + dadosAtuais + '. REGRAS: (1) resposta_rebeca SEMPRE vazio. (2) Extraia origem_extraida se cliente mencionou endereco de partida — ponto de referencia, estabelecimento, rua, bairro = valido. (3) Extraia destino_extraido se cliente mencionou destino. (4) horario_agendamento em ISO 8601 se cliente mencionou data/hora. (5) confirmacao=true se cliente confirmou. (6) cancelamento=true se cliente cancelou. (7) nome_cliente se cliente disse o nome. (8) cor_camisa se cliente mencionou cor da roupa. (9) notificar_admin=true APENAS se reclamou ou pediu atendimento humano. Retorne APENAS JSON: {"origem_extraida":null,"destino_extraido":null,"horario_agendamento":null,"confirmacao":false,"cancelamento":false,"nome_cliente":null,"cor_camisa":null,"resposta_rebeca":"","proxima_etapa":"","notificar_admin":false}'
                 }, {
                     role: 'user',
                     content: 'Audio transcrito: "' + textoTranscrito + '"'
@@ -204,8 +251,8 @@ const OpenAIRebecaService = {
             });
             const raw = resp.data.choices[0].message.content.trim().replace(/```json|```/g, '').trim();
             const json = JSON.parse(raw);
-            console.log('[AUDIO RACIOCINIO]', JSON.stringify(json).substring(0, 200));
-            if (json.resposta_rebeca) {
+            console.log('[AUDIO RACIOCINIO GPT]', JSON.stringify(json).substring(0, 200));
+            if (json.origem_extraida || json.destino_extraido || json.confirmacao || json.cancelamento || json.nome_cliente || json.cor_camisa) {
                 return '__AUDIO_RACIOCINIO__' + JSON.stringify(json);
             }
             return textoTranscrito;
