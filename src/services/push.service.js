@@ -112,6 +112,20 @@ const PushService = {
             corridaId: corrida._id, tipo: 'cancelamento'
         });
     }
+    // Notificar motorista específico (chat, status, etc.)
+    async notificarMotorista(motoristaId, { titulo, corpo, tipo, corridaId }) {
+        try {
+            const { Motorista } = require('../models');
+            const mot = await Motorista.findById(motoristaId).select('pushToken fcmToken');
+            if (!mot?.pushToken && !mot?.fcmToken) return { sucesso: false };
+            const token = mot.pushToken || mot.fcmToken;
+            return await PushService._enviar(token, titulo, corpo, { tipo, corridaId: corridaId?.toString() });
+        } catch(e) {
+            console.log('[PUSH] notificarMotorista erro:', e.message);
+            return { sucesso: false };
+        }
+    },
+
 };
 
 module.exports = PushService;

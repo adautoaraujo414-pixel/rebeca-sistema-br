@@ -53,6 +53,17 @@ router.post('/motorista-para-cliente', async (req, res) => {
 
         await MensagemCorrida.findByIdAndUpdate(msg._id, { entregue: true }, { new: true });
         
+        // Push notification pro motorista
+        try {
+            const PushService = require('../services/push.service');
+            await PushService.notificarMotorista(motorista._id, {
+                titulo: '💬 Mensagem do Cliente',
+                corpo: (corrida.clienteNome || 'Cliente') + ': ' + mensagem.substring(0, 80),
+                tipo: 'chat_cliente',
+                corridaId: corridaId
+            });
+        } catch(_p) { console.log('[CHAT] Push motorista erro:', _p.message); }
+
         res.json({ 
             sucesso: true, 
             mensagem: 'Mensagem enviada via Rebeca!',

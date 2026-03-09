@@ -2604,10 +2604,31 @@ async function carregarMensagensCliente() {
         
         container.scrollTop = container.scrollHeight;
         
-        // Marcar como lidas
-        const naoLidas = msgs.filter(m => m.destinatario === 'motorista' && !m.lida);
-        for (const msg of naoLidas) {
-            await fetch(`/api/comunicacao/marcar-lida/${msg._id}`, { method: 'POST' });
+        // Badge de não lidas
+        const naoLidas = msgs.filter(m => m.remetente !== 'motorista' && !m.lida);
+        const badge = document.getElementById('chatBadge');
+        if (badge) {
+            if (naoLidas.length > 0) {
+                badge.textContent = naoLidas.length;
+                badge.style.display = 'inline-block';
+                // Som de notificação
+                if (naoLidas.length > (window._lastUnread || 0)) {
+                    try { new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAA...').play(); } catch(e) {}
+                    // Vibrar no mobile
+                    if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+                }
+                window._lastUnread = naoLidas.length;
+            } else {
+                if (badge) badge.style.display = 'none';
+                window._lastUnread = 0;
+            }
+        }
+        // Marcar como lidas se chat aberto
+        const chatModal = document.getElementById('modalChatCliente');
+        if (chatModal && chatModal.style.display !== 'none') {
+            for (const msg of naoLidas) {
+                await fetch(`/api/comunicacao/marcar-lida/${msg._id}`, { method: 'POST' });
+            }
         }
     } catch (e) {}
 }
