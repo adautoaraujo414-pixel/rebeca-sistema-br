@@ -2557,6 +2557,43 @@ document.addEventListener('DOMContentLoaded', function() {
 function fecharPWABanner(){document.getElementById('pwa-banner').style.display='none';sessionStorage.setItem('pwa-fechado','1');}
 </script>
 <!-- ===== FIM PWA ===== -->
+
+    <script>
+    // PWA — capturar evento de instalação
+    let _pwaPrompt = null;
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        _pwaPrompt = e;
+        // Mostrar banner se não instalou ainda
+        const _banner = document.getElementById('pwaBanner');
+        if (_banner && !localStorage.getItem('pwaInstalado')) {
+            _banner.style.display = 'flex';
+        }
+    });
+
+    window.addEventListener('appinstalled', () => {
+        localStorage.setItem('pwaInstalado', '1');
+        const _banner = document.getElementById('pwaBanner');
+        if (_banner) _banner.style.display = 'none';
+        if (typeof toast === 'function') toast('✅ App instalado com sucesso!', 'success');
+    });
+
+    async function instalarPWA() {
+        if (!_pwaPrompt) {
+            // iOS — mostrar instrução manual
+            document.getElementById('pwaIOSAviso').style.display = 'block';
+            return;
+        }
+        _pwaPrompt.prompt();
+        const { outcome } = await _pwaPrompt.userChoice;
+        if (outcome === 'accepted') {
+            localStorage.setItem('pwaInstalado', '1');
+        }
+        document.getElementById('pwaBanner').style.display = 'none';
+        _pwaPrompt = null;
+    }
+    </script>
+
 </body>
 </html>
 
