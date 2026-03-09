@@ -60,4 +60,37 @@ router.get('/preco-atual', async (req, res) => {
     }
 });
 
+
+// ========== CONTATOS DE EMERGÊNCIA ==========
+// Listar contatos de emergência do adm
+router.get('/emergencia', async (req, res) => {
+    try {
+        const adminId = req.query.adminId || req.headers['x-admin-id'] || req.body.adminId;
+        const { ContatoEmergencia } = require('../models');
+        const contatos = await ContatoEmergencia.find({ adminId, ativo: true }).sort({ categoria: 1 });
+        res.json({ sucesso: true, contatos });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// Criar contato de emergência
+router.post('/emergencia', async (req, res) => {
+    try {
+        const adminId = req.query.adminId || req.headers['x-admin-id'] || req.body.adminId;
+        const { nome, telefone, tipo } = req.body;
+        if (!nome || !telefone) return res.status(400).json({ erro: 'Nome e telefone obrigatórios' });
+        const { ContatoEmergencia } = require('../models');
+        const contato = await ContatoEmergencia.create({ nome, telefone, tipo: tipo || 'admin', adminId, ativo: true });
+        res.json({ sucesso: true, contato });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// Deletar contato de emergência
+router.delete('/emergencia/:id', async (req, res) => {
+    try {
+        const { ContatoEmergencia } = require('../models');
+        await ContatoEmergencia.findByIdAndUpdate(req.params.id, { ativo: false });
+        res.json({ sucesso: true });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
 module.exports = router;
