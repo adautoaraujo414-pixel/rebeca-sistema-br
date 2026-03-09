@@ -733,34 +733,55 @@ Me manda o endereço de *onde você está*!`;
                     if (_de.nome_terceiro) conversa.dados.nomeTerceiro = _de.nome_terceiro;
                     if (_de.horario) conversa.dados.horarioAgendamento = _de.horario;
 
-                    // DESPACHAR AGORA — tem origem e destino, sem burocracia
-                    if (_resCerebro.acao === 'despachar_agora' && conversa.dados.origem) {
+                    // DESPACHAR AGORA — só origem já basta
+                    if (_resCerebro.acao === 'despachar_agora' && _de.origem) {
+                        conversa.dados.origem = _de.origem;
+                        conversa.dados.origemValidada = { valido: true, precisao: 'cerebro', endereco: _de.origem };
+                        if (_de.nome_cliente) conversa.dados.nomeCliente = _de.nome_cliente;
                         try {
                             const _motsC = await MotoristaService.listarDisponiveis(conversa.adminId);
                             if (_motsC.length === 0) {
                                 const _estC = await RebecaService.estimarTempoEspera(conversa.adminId);
                                 conversa.etapa = 'oferecer_fila_espera';
                                 conversas.set(telefone, conversa);
-                                const _msgFila = 'Poxa, todos os motoristas estão em corrida agora. ' + _estC.texto + '\n\nPosso te avisar quando um desocupar?';
+                                const _msgFila = 'Poxa, todos os motoristas estão ocupados. ' + (_estC ? _estC.texto : '') + ' Posso te avisar quando um desocupar?';
                                 CerebroRebeca.salvarHistorico(conversa, _msgFila, 'rebeca');
                                 return _msgFila;
                             }
                             if (!conversa.dados.calculo) {
                                 conversa.dados.calculo = {
-                                    origem: { endereco: conversa.dados.origem, latitude: null, longitude: null },
-                                    destino: conversa.dados.destino ? { endereco: conversa.dados.destino } : null,
+                                    origem: { endereco: _de.origem, latitude: null, longitude: null },
+                                    destino: _de.destino ? { endereco: _de.destino } : null,
                                     distanciaKm: 0, tempoMinutos: 0, preco: 15,
                                     faixa: { nome: 'padrao', multiplicador: 1 }
                                 };
                             }
                             const _corridaC = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
-                            if (_corridaC.cooldown) return '⏳ Aguarde ' + Math.ceil(_corridaC.segundosRestantes / 60) + ' min para nova corrida.';
-                            if (_corridaC.duplicada) return '⚠️ Você já tem uma corrida ativa!';
-                            conversa.etapa = 'aguardando_motorista';
+                            if (_corridaC && _corridaC.cooldown) {
+                                const _mc = 'Aguarda ' + Math.ceil(_corridaC.segundosRestantes / 60) + ' minutinhos para pedir outra corrida.';
+                                CerebroRebeca.salvarHistorico(conversa, _mc, 'rebeca');
+                                return _mc;
+                            }
+                            if (_corridaC && _corridaC.duplicada) {
+                                const _md = 'Você já tem uma corrida ativa! Aguarda o motorista chegar.';
+                                CerebroRebeca.salvarHistorico(conversa, _md, 'rebeca');
+                                return _md;
+                            }
+                            conversa.etapa = 'pedir_aparencia';
                             conversa.dados.corridaId = _corridaC.id;
                             conversas.set(telefone, conversa);
-                            let _msgOk = '✅ Certo! Buscando motorista...\n📍 ' + conversa.dados.origem;
-                            if (conversa.dados.destino) _msgOk += '\n🏁 ' + conversa.dados.destino;
+
+                            // Enviar confirmação em 2 mensagens separadas, naturais
+                            const _instDesp = await require('../models').InstanciaWhatsapp.findById(conversa.instanciaId);
+                            if (_instDesp) {
+                                await EvolutionMultiService.enviarMensagem(conversa.instanciaId, telefone, 'Certo, já tô chamando um motorista pra você!');
+                                await new Promise(r => setTimeout(r, 800));
+                                await EvolutionMultiService.enviarMensagem(conversa.instanciaId, telefone, 'Qual a cor da sua camisa? 👕');
+                                CerebroRebeca.salvarHistorico(conversa, 'Certo, já tô chamando um motorista pra você!', 'rebeca');
+                                CerebroRebeca.salvarHistorico(conversa, 'Qual a cor da sua camisa? 👕', 'rebeca');
+                                return null; // já enviou direto
+                            }
+                            const _msgOk = 'Certo! Já chamei um motorista. Qual a cor da sua camisa? 👕';
                             CerebroRebeca.salvarHistorico(conversa, _msgOk, 'rebeca');
                             return _msgOk;
                         } catch(e) {
@@ -775,6 +796,22 @@ Me manda o endereço de *onde você está*!`;
                         conversa.etapa = 'pedir_origem';
                     }
 
+                    // Enviar em múltiplas mensagens se Cérebro retornou array
+                    if (_resCerebro.mensagens && _resCerebro.mensagens.length > 1) {
+                        const _instMs = await require('../models').InstanciaWhatsapp.findById(conversa.instanciaId).catch(() => null);
+                        if (_instMs) {
+                            for (let _mi = 0; _mi < _resCerebro.mensagens.length; _mi++) {
+                                const _mtxt = _resCerebro.mensagens[_mi];
+                                if (_mtxt) {
+                                    await EvolutionMultiService.enviarMensagem(conversa.instanciaId, telefone, _mtxt);
+                                    CerebroRebeca.salvarHistorico(conversa, _mtxt, 'rebeca');
+                                    if (_mi < _resCerebro.mensagens.length - 1) await new Promise(r => setTimeout(r, 600));
+                                }
+                            }
+                            conversas.set(telefone, conversa);
+                            return null;
+                        }
+                    }
                     // Salvar resposta no histórico
                     CerebroRebeca.salvarHistorico(conversa, _resCerebro.resposta, 'rebeca');
                     conversas.set(telefone, conversa);
