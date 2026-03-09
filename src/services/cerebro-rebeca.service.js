@@ -177,7 +177,7 @@ EXEMPLOS DE RACIOCÍNIO CORRETO:
         if (!conversa || !conversa.historico || conversa.historico.length === 0) {
             return '(primeira mensagem)';
         }
-        return conversa.historico.slice(-16).map(h => {
+        return conversa.historico.slice(-12).map(h => {
             return (h.remetente === 'cliente' ? 'Cliente' : 'Rebeca') + ': ' + h.texto;
         }).join('\n');
     },
@@ -186,8 +186,8 @@ EXEMPLOS DE RACIOCÍNIO CORRETO:
         const d = {
             'inicio': 'Início — cliente ainda não pediu corrida',
             'pedir_origem': 'Aguardando endereço de ORIGEM',
-            'pedir_destino': `Origem: "${dados.origem || '?'}" — aguardando DESTINO`,
-            'confirmar_corrida': `Origem: "${dados.origem || '?'}" / Destino: "${dados.destino || '?'}" — aguardando CONFIRMAÇÃO`,
+            'pedir_destino': 'Origem: "' + (dados.origem || '?') + '" — aguardando DESTINO',
+            'confirmar_corrida': 'Origem: "' + (dados.origem || '?') + '" / Destino: "' + (dados.destino || '?') + '" — aguardando CONFIRMAÇÃO',
             'aguardando_motorista': 'Corrida criada — procurando motorista',
             'motorista_a_caminho': 'Motorista a caminho do cliente',
             'aguardando_embarque': 'Motorista chegou — cliente deve embarcar',
@@ -210,8 +210,8 @@ EXEMPLOS DE RACIOCÍNIO CORRETO:
             remetente,
             ts: Date.now()
         });
-        if (conversa.historico.length > 24) {
-            conversa.historico = conversa.historico.slice(-24);
+        if (conversa.historico.length > 20) {
+            conversa.historico = conversa.historico.slice(-20);
         }
         return conversa;
     },
@@ -238,8 +238,8 @@ MENSAGEM ATUAL: "${msgOriginal}"
 Responda de forma natural. Retorne APENAS o JSON.`;
 
             const resp = await axios.post('https://api.anthropic.com/v1/messages', {
-                model: 'claude-sonnet-4-6',
-                max_tokens: 600,
+                model: 'claude-haiku-4-5',
+                max_tokens: 350,
                 system: promptMestre,
                 messages: [{ role: 'user', content: userPrompt }]
             }, {
@@ -248,7 +248,7 @@ Responda de forma natural. Retorne APENAS o JSON.`;
                     'anthropic-version': '2023-06-01',
                     'Content-Type': 'application/json'
                 },
-                timeout: 12000
+                timeout: 8000
             });
 
             const raw = resp.data.content[0].text.trim().replace(/```json|```/g, '').trim();
