@@ -124,7 +124,7 @@ const PushService = {
             console.log('[PUSH] notificarMotorista erro:', e.message);
             return { sucesso: false };
         }
-    },
+    }
 
 };
 
