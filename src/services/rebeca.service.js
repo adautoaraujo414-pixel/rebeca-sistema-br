@@ -12,6 +12,7 @@ const IAService = require('./ia.service');
 const OpenAIRebecaService = require('./openai-rebeca.service');
 const AprendizadoService = require('./rebeca-aprendizado.service');
 const RaciocinioService = require('./rebeca-raciocinio.service');
+const CerebroRebeca = require('./cerebro-rebeca.service');
 
 const conversas = new Map();
 
@@ -687,6 +688,53 @@ Me manda o endereço de *onde você está*!`;
             } catch(e) { console.log('[FALLBACK_OAI]', e.message); }
         }
 
+        // ========== CÉREBRO CENTRAL — raciocínio unificado no início ==========
+        if (conversa.etapa === 'inicio' && CerebroRebeca.isAtivo()) {
+            try {
+                // Buscar nome da empresa do admin
+                let _nomeEmpresaCerebro = 'Central de Corridas';
+                let _nomeAssistenteCerebro = 'Rebeca';
+                try {
+                    const { Admin } = require('../models');
+                    const _admCerebro = await Admin.findById(conversa.adminId);
+                    if (_admCerebro) {
+                        _nomeEmpresaCerebro = _admCerebro.nomeMarca || _admCerebro.empresa || _nomeEmpresaCerebro;
+                        _nomeAssistenteCerebro = _admCerebro.nomeAssistente || _nomeAssistenteCerebro;
+                    }
+                } catch(e) {}
+
+                const _resCerebro = await Promise.race([
+                    CerebroRebeca.raciocinar(telefone, msgOriginal, conversa, {
+                        nome,
+                        nomeEmpresa: _nomeEmpresaCerebro,
+                        nomeAssistente: _nomeAssistenteCerebro
+                    }),
+                    new Promise(r => setTimeout(() => r(null), 6000))
+                ]);
+
+                if (_resCerebro && _resCerebro.resposta) {
+                    // Notificar admin se necessário
+                    if (_resCerebro.notificar_admin) {
+                        try {
+                            const { Admin } = require('../models');
+                            const _admN = await Admin.findById(conversa.adminId);
+                            if (_admN && _admN.telefone) {
+                                const _instN = await require('../models').InstanciaWhatsapp.findOne({ adminId: conversa.adminId, status: 'conectado' });
+                                if (_instN) await EvolutionMultiService.enviarMensagem(_instN._id, _admN.telefone,
+                                    '📩 *NOTIFICAÇÃO*\n\n👤 ' + (nome || telefone) + '\n💬 ' + msgOriginal);
+                            }
+                        } catch(e) {}
+                    }
+                    // Salvar resposta no histórico
+                    CerebroRebeca.salvarHistorico(conversa, _resCerebro.resposta, 'rebeca');
+                    conversas.set(telefone, conversa);
+                    return _resCerebro.resposta;
+                }
+            } catch(e) {
+                console.log('[CEREBRO] Erro no inicio:', e.message);
+            }
+        }
+
         if (conversa.etapa === 'inicio' && RaciocinioService.isAtivo()) {
             // Verificar se parece pedido de corrida com endereço informal (ex: "avenida brasilia 80", "me busca no mercado X")
             const _msgLower = msg.toLowerCase();
@@ -1165,6 +1213,11 @@ Me manda o endereço de *onde você está*!`;
             }
         }
  
+        // ========== SALVAR HISTÓRICO — toda mensagem do cliente ==========
+        if (CerebroRebeca.isAtivo()) {
+            CerebroRebeca.salvarHistorico(conversa, msgOriginal, 'cliente');
+        }
+
         // ========== INTERCEPTOR UNIVERSAL — roda em QUALQUER etapa ==========
         // Detecta intenções críticas antes de qualquer processamento de etapa
         const _etapasAtivas = ['aguardando_motorista','em_corrida','aguardando_embarque','motorista_a_caminho','pedir_origem','pedir_destino','confirmar_corrida','confirmar_preco','pedir_aparencia','pedir_bairro_origem','pedir_bairro_destino'];
