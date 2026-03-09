@@ -60,7 +60,7 @@ router.get('/dashboard', async (req, res) => {
 // ========== CONTABILIDADE POR ADMIN ==========
 router.get('/contabilidade', async (req, res) => {
     try {
-        const admins = await Admin.find({ ativo: true });
+        const admins = await Admin.find({ ativo: true }).select('-senha');
         const contabilidade = await Promise.all(admins.map(async (admin) => {
             const motoristasAtivos = await Motorista.countDocuments({ adminId: admin._id, status: { $ne: 'inativo' } });
             const corridasMes = await Corrida.countDocuments({ adminId: admin._id, createdAt: { $gte: new Date(new Date().setDate(1)) } });
@@ -84,7 +84,7 @@ router.get('/contabilidade', async (req, res) => {
 // ========== GERENCIAR ADMINS ==========
 router.get('/admins', async (req, res) => {
     try {
-        const admins = await Admin.find().sort({ createdAt: -1 });
+        const admins = await Admin.find().sort({ createdAt: -1 }).select('-senha');
         const adminsComDados = await Promise.all(admins.map(async (admin) => {
             const motoristas = await Motorista.countDocuments({ adminId: admin._id });
             const corridasMes = await Corrida.countDocuments({ adminId: admin._id, createdAt: { $gte: new Date(new Date().setDate(1)) } });
@@ -96,7 +96,7 @@ router.get('/admins', async (req, res) => {
 
 router.get('/admins/pendentes', async (req, res) => {
     try {
-        const admins = await Admin.find({ ativo: false, aprovadoPor: null }).sort({ createdAt: -1 });
+        const admins = await Admin.find({ ativo: false, aprovadoPor: null }).sort({ createdAt: -1 }).select('-senha');
         res.json(admins);
     } catch (e) { res.status(500).json({ erro: e.message }); }
 });
@@ -427,7 +427,7 @@ router.post('/reset-senha-email', async (req, res) => {
 // ========== GESTÃO DE CLIENTES LANDING PAGE ==========
 router.get('/clientes-landing', async (req, res) => {
     try {
-        const admins = await Admin.find({ origem: 'landing_page' }).sort({ createdAt: -1 }).lean();
+        const admins = await Admin.find({ origem: 'landing_page' }).sort({ createdAt: -1 }).select('-senha').lean();
         const agora = new Date();
         const resultado = admins.map(a => {
             const diasAtivo = Math.ceil((agora - new Date(a.createdAt)) / 86400000);
