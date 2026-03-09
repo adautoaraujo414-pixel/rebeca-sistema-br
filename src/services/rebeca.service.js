@@ -3848,6 +3848,18 @@ RebecaService.atualizarConversa = function(telefone, adminId, dados) {
     if (dados.nome) conversa.dados.nome = dados.nome;
     if (dados.etapa) conversa.etapa = dados.etapa;
     conversa.ts = Date.now();
+
+    // Salvar no histórico do CerebroRebeca — aprende com dados do áudio
+    try {
+        const CerebroRebeca = require('./cerebro-rebeca.service');
+        if (dados.textoOriginal) {
+            CerebroRebeca.salvarHistorico(conversa, '[áudio] ' + dados.textoOriginal, 'cliente');
+        }
+        if (dados.origem) CerebroRebeca.salvarHistorico(conversa, '[dados áudio] origem: ' + dados.origem, 'sistema');
+        if (dados.destino) CerebroRebeca.salvarHistorico(conversa, '[dados áudio] destino: ' + dados.destino, 'sistema');
+        if (dados.nome) CerebroRebeca.salvarHistorico(conversa, '[dados áudio] nome cliente: ' + dados.nome, 'sistema');
+    } catch(e) {}
+
     conversas.set(telefone, conversa);
     console.log('[AUDIO] Conversa atualizada no Map:', telefone, '| etapa:', conversa.etapa);
 };
