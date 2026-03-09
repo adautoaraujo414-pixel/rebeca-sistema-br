@@ -111,7 +111,7 @@ const PushService = {
             titulo: '❌ Corrida Cancelada', corpo: 'O cliente cancelou a corrida',
             corridaId: corrida._id, tipo: 'cancelamento'
         });
-    }
+    },
     // Notificar motorista específico (chat, status, etc.)
     async notificarMotorista(motoristaId, { titulo, corpo, tipo, corridaId }) {
         try {
