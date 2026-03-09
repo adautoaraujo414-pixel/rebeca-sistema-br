@@ -675,7 +675,7 @@ Me manda o endereço de *onde você está*!`;
         // ========== RACIOCÍNIO AMPLIFICADO: endereço não detectado por regex mas pode ser pedido de corrida ==========
         // ========== CÉREBRO NAS ETAPAS INTERMEDIÁRIAS ==========
         // Roda em qualquer etapa ativa — lê histórico e age de forma inteligente
-        const _etapasComCerebro = ['pedir_origem','pedir_destino','confirmar_corrida','pedir_aparencia','pedir_bairro_origem','pedir_bairro_destino','confirmar_preco','avaliar','aguardando_fila'];
+        const _etapasComCerebro = ['pedir_origem','pedir_destino','confirmar_corrida','pedir_aparencia','pedir_bairro_origem','pedir_bairro_destino','confirmar_preco','avaliar','aguardando_fila','aguardando_motorista','em_corrida','aguardando_embarque','motorista_a_caminho'];
         if (_etapasComCerebro.includes(conversa.etapa) && CerebroRebeca.isAtivo()) {
             try {
                 let _nomeEmp2 = 'Central de Corridas', _nomeAss2 = 'Rebeca';
