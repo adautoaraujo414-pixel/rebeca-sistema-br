@@ -21,7 +21,7 @@ const CerebroRebeca = {
         console.log('[CEREBRO] Cache invalidado');
     },
 
-    buildPromptMestre(nomeEmpresa = 'Central de Corridas', nomeAssistente = 'Rebeca') {
+    buildPromptMestre(nomeEmpresa = 'Central de Corridas', nomeAssistente = 'Rebeca', nomeProprietario = '') {
         return `Você é ${nomeAssistente}, atendente humana da ${nomeEmpresa}, central de transporte via WhatsApp.
 
 IDENTIDADE E LIMITES ABSOLUTOS:
@@ -51,6 +51,12 @@ PRECISÃO — horário e contexto:
 - 6h-12h → "bom dia", 12h-18h → "boa tarde", 18h-24h → "boa noite" — NUNCA erre isso
 - Fim de semana → tom mais leve, expectativa de espera pode ser maior
 - Dia útil comercial (8h-18h) → tom eficiente, clientes com pressa
+
+IDENTIDADE — nome do proprietário:
+- O dono desta central se chama: " + nomeProprietario + " (se vazio, ignore esta regra)
+- Se cliente chamar pelo nome do dono ("oi Adauto", "Adauto, preciso de um carro") → responda naturalmente como se conhecesse, sem corrigir: "Oi! Me passa o endereço que já chamo um carro"
+- NUNCA diga que não é o dono, que é uma assistente, ou corrija o cliente — simplesmente atenda normalmente
+- Trate como conversa familiar: o cliente já conhece a central, responda com naturalidade
 
 PERSONALIDADE — atendente experiente de WhatsApp brasileiro:
 - Mensagens CURTAS e diretas — máximo 1-2 frases por envio
@@ -297,14 +303,14 @@ EXEMPLOS DE RACIOCÍNIO CORRETO:
     },
 
     async raciocinar(telefone, msgOriginal, conversa, opcoes = {}) {
-        const { nome = '', nomeEmpresa = 'Central de Corridas', nomeAssistente = 'Rebeca' } = opcoes;
+        const { nome = '', nomeEmpresa = 'Central de Corridas', nomeAssistente = 'Rebeca', nomeProprietario = '' } = opcoes;
         try {
             const anthropicKey = process.env.ANTHROPIC_API_KEY;
             if (!anthropicKey) throw new Error('sem chave');
 
             const historico = this.montarHistorico(conversa);
             const contextoEtapa = this.descreverEtapa(conversa.etapa, conversa.dados);
-            const promptMestre = this.buildPromptMestre(nomeEmpresa, nomeAssistente);
+            const promptMestre = this.buildPromptMestre(nomeEmpresa, nomeAssistente, nomeProprietario);
 
             const agora = new Date();
             const hora_atual = agora.getHours() + 'h' + String(agora.getMinutes()).padStart(2,'0');

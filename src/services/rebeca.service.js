@@ -682,11 +682,11 @@ Me manda o endereço de *onde você está*!`;
                 try {
                     const { Admin } = require('../models');
                     const _adm2 = await Admin.findById(conversa.adminId);
-                    if (_adm2) { _nomeEmp2 = _adm2.nomeMarca || _adm2.empresa || _nomeEmp2; _nomeAss2 = _adm2.nomeAssistente || _nomeAss2; }
+                    if (_adm2) { _nomeEmp2 = _adm2.nomeMarca || _adm2.empresa || _nomeEmp2; _nomeAss2 = _adm2.nomeAssistente || _nomeAss2; _nomePropr2 = _adm2.nome || ''; }
                 } catch(e) {}
 
                 const _resInt = await Promise.race([
-                    CerebroRebeca.raciocinar(telefone, msgOriginal, conversa, { nome, nomeEmpresa: _nomeEmp2, nomeAssistente: _nomeAss2 }),
+                    CerebroRebeca.raciocinar(telefone, msgOriginal, conversa, { nome, nomeEmpresa: _nomeEmp2, nomeAssistente: _nomeAss2, nomeProprietario: _nomePropr2 }),
                     new Promise(r => setTimeout(() => r(null), 6000))
                 ]);
 
@@ -794,12 +794,14 @@ Me manda o endereço de *onde você está*!`;
                 // Buscar nome da empresa do admin
                 let _nomeEmpresaCerebro = 'Central de Corridas';
                 let _nomeAssistenteCerebro = 'Rebeca';
+                let _nomeProprietarioCerebro = '';
                 try {
                     const { Admin } = require('../models');
                     const _admCerebro = await Admin.findById(conversa.adminId);
                     if (_admCerebro) {
                         _nomeEmpresaCerebro = _admCerebro.nomeMarca || _admCerebro.empresa || _nomeEmpresaCerebro;
                         _nomeAssistenteCerebro = _admCerebro.nomeAssistente || _nomeAssistenteCerebro;
+                        _nomeProprietarioCerebro = _admCerebro.nome || '';
                     }
                 } catch(e) {}
 
@@ -807,7 +809,8 @@ Me manda o endereço de *onde você está*!`;
                     CerebroRebeca.raciocinar(telefone, msgOriginal, conversa, {
                         nome,
                         nomeEmpresa: _nomeEmpresaCerebro,
-                        nomeAssistente: _nomeAssistenteCerebro
+                        nomeAssistente: _nomeAssistenteCerebro,
+                        nomeProprietario: _nomeProprietarioCerebro
                     }),
                     new Promise(r => setTimeout(() => r(null), 6000))
                 ]);
