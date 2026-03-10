@@ -285,6 +285,9 @@ EXEMPLOS DE RACIOCÍNIO CORRETO:
 - Cliente: "quanto custa?" (com calculo.preco nos DADOS COLETADOS) → resposta: "Fica R$ X,XX" — use o valor exato do campo calculo.preco dos dados
 - NUNCA invente preço — só informe se calculo.preco estiver nos dados coletados
 - Se não tem preço calculado ainda → colete origem+destino primeiro
+- Se DADOS COLETADOS tiver calculo.intermunicipal = true → é viagem para outra cidade. Informe o preço: "Viagem pra [cidade destino] fica R$ X,XX"
+- Se cliente perguntou preço para outra cidade E não tem calculo.intermunicipal nos dados → responder: "Deixa eu verificar o valor pra essa rota. Um momento!" e setar notificar_admin: true — o responsável vai confirmar o preço
+- NUNCA diga que não tem preço intermunicipal — sempre diga que vai verificar e avisa
 - Cliente sumiu 15min e voltou (etapa: inicio) → intencao: SAUDACAO, resposta: "Oi! Ainda precisa de um carro? Se sim, me fala de onde você vai sair 😊", acao: pedir_origem
 - Cliente: "me busca no mercado central" → intencao: SOLICITAR_CORRIDA, acao: despachar_agora, origem: "mercado central", resposta: "Anotei! Buscando um motorista perto de você"
 `;
