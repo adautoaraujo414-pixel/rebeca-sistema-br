@@ -133,7 +133,8 @@ const OpenAIRebecaService = {
                 formData.append('file', Buffer.from(buf), { filename: 'audio.' + ext, contentType: mime });
                 formData.append('model', 'whisper-1');
                 formData.append('language', 'pt');
-                formData.append('prompt', 'Transcrição de pedido de corrida em português brasileiro. Nomes comuns: JB7, JB3, Avenida Rio de Janeiro, Avenida Getúlio Vargas, Praça Central, rua, avenida, bairro, número, destino, origem, Uber, mototaxi, confirmar, cancelar, sim, não, obrigado, quero, preciso, me busca, me manda, aqui no, perto do, em frente ao. NUNCA substitua letras por sons parecidos — transcreva exatamente o que foi dito.');
+                formData.append('temperature', '0');
+                formData.append('prompt', 'Transcrição fiel em português brasileiro. REGRAS: (1) Transcreva EXATAMENTE o que foi dito — nunca substitua por palavra parecida. (2) Siglas e códigos como JB7, JB3, AP2, KM5 devem ser transcritos letra por letra como foram pronunciados. (3) Nomes de ruas, bairros e pontos de referência: transcreva o som exato, não interprete. (4) Se não entendeu uma palavra, deixe como está — não invente.');
                 const resp = await axios.post('https://api.openai.com/v1/audio/transcriptions', formData, {
                     headers: { 'Authorization': 'Bearer ' + this.apiKey, ...formData.getHeaders() },
                     timeout: 8000
