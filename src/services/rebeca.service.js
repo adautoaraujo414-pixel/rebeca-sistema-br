@@ -3289,9 +3289,9 @@ _(ou mande *0* para pular)_`;
     },
     gerarLinkRastreamento: (corridaId, token = null) => {
         const base = process.env.BASE_URL || 'https://rebeca-sistema-br.onrender.com';
-        const codigo = token || (corridaId ? corridaId.toString().slice(-8) : 'xxx');
+        // Sempre usa os últimos 8 chars do corridaId — a rota /rastrear/:codigo busca por endsWith
+        const codigo = corridaId ? corridaId.toString().slice(-8) : 'xxx';
         return `${base}/rastrear.html?c=${codigo}`;
-        return `${base}/rastrear/${corridaId.slice(-8)}`;
     },
 
     gerarTokenRastreamento: () => {
