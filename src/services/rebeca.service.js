@@ -1311,10 +1311,11 @@ Me manda o endereço de *onde você está*!`;
                                 const _corrGPT = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
                                 if (_corrGPT.cooldown) return '⏳ Aguarde ' + Math.ceil(_corrGPT.segundosRestantes / 60) + ' min.';
                                 if (_corrGPT.duplicada) return '⚠️ Já tem corrida ativa! Digite *CANCELAR* para cancelar.';
-                                conversa.etapa = 'aguardando_motorista';
+                                conversa.etapa = 'pedir_aparencia';
                                 conversa.dados.corridaId = _corrGPT.id;
                                 conversas.set(telefone, conversa);
-                                return '🚗 Chamando motorista!\n\n📍 ' + _enderecoFinal + '\n🏁 ' + conversa.dados.destino + '\n\n⏳ Buscando...\n_CANCELAR para cancelar_';
+                                _agendarTimeoutAparencia(telefone, conversa.instanciaId, _corrGPT.id, conversas);
+                                return 'Certo, já chamei um motorista! Qual a cor da sua camisa? 👕';
                             }
 
                             // Pedir destino — sempre, proativamente
@@ -1331,21 +1332,26 @@ Me manda o endereço de *onde você está*!`;
                                 const valor = calc.precoFinal || calc.preco || 0;
                                 // Despacha direto
                                 const _corrP = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
-                                conversa.etapa = 'aguardando_motorista';
+                                conversa.etapa = 'pedir_aparencia';
                                 conversa.dados.corridaId = _corrP.id;
                                 conversas.set(telefone, conversa);
-                                return '🚗 Chamando motorista!\n\n💰 *R$ ' + valor.toFixed(2) + '*\n📍 ' + (calc.origem?.endereco||'') + '\n🏁 ' + (calc.destino?.endereco||'') + '\n\n⏳ Buscando...\n_CANCELAR para cancelar_';
+                                _agendarTimeoutAparencia(telefone, conversa.instanciaId, _corrP.id, conversas);
+                                return 'Certo, já chamei! 💰 *R$ ' + valor.toFixed(2) + '* — Qual a cor da sua camisa? 👕';
                             }
                             return await RebecaService.enviarTabelaPrecos(conversa.adminId);
                         }
                         
                         // Cancelamento
                         if (resultadoGPT.intencao === 'CANCELAMENTO') {
-                            // Processar cancelamento
-                            conversa.etapa = 'inicio';
-                            conversa.dados = {};
+                            if (conversa.dados._aguardandoCancelamento) {
+                                conversa.etapa = 'inicio';
+                                conversa.dados = {};
+                                conversas.set(telefone, conversa);
+                                return 'Cancelado! Quando precisar é só chamar 😊';
+                            }
+                            conversa.dados._aguardandoCancelamento = true;
                             conversas.set(telefone, conversa);
-                            return 'Corrida cancelada! Quando precisar é só chamar 😊';
+                            return 'Confirma o cancelamento?';
                         }
                         
                         // Reclamação - resposta empática
