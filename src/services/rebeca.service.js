@@ -2718,6 +2718,8 @@ _(ou mande *0* para pular)_`;
             conversa.dados.calculo = calculo;
             
             const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
+            if (corrida.cooldown) { conversas.set(telefone, conversa); return '⏳ Aguarde ' + Math.ceil(corrida.segundosRestantes / 60) + ' min para nova corrida.'; }
+            if (corrida.duplicada) { conversas.set(telefone, conversa); return '⚠️ Você já tem corrida ativa! Digite *CANCELAR* para cancelar.'; }
             conversa.etapa = 'pedir_aparencia';
             conversa.dados.corridaId = corrida.id;
             _agendarTimeoutAparencia(telefone, conversa.instanciaId, corrida.id, conversas);
@@ -2805,7 +2807,7 @@ _(ou mande *0* para pular)_`;
             } else if (msg === 'trabalho' && favoritos.trabalho) {
                 conversa.dados.destino = favoritos.trabalho.endereco;
             } else {
-                const validacao = await RebecaService.validarEndereco(msgOriginal);
+                let validacao = await RebecaService.validarEndereco(msgOriginal);
                 if (!validacao.valido) {
                     // Aceitar como referência de destino — não travar
                     conversa.dados.destino = msgOriginal;
@@ -2972,7 +2974,9 @@ _(ou mande *0* para pular)_`;
                                 resposta = 'Sim, estamos funcionando! Me manda sua localização 📍';
                             }
                         } else {
-                            resposta = 'Oi! 😊 Vai precisar de um carro hoje? Me manda o endereço de onde você está 📍';
+                            // Nao setar aguardando_admin para perguntas gerais — responder e liberar
+                            conversa.etapa = 'inicio';
+                            resposta = 'Posso te ajudar a pedir um carro! Me manda o endereço de onde você está 📍';
                         }
                     } else {
                         resposta = 'Posso te ajudar a pedir um carro! Me passa o endereço?';
