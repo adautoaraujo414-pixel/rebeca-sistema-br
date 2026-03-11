@@ -1890,13 +1890,24 @@ Me manda o endereço de *onde você está*!`;
 
         // ========== AGUARDANDO RESPOSTA DO ADMIN ==========
         if (conversa.etapa === 'aguardando_resposta_admin') {
-            if (msg.includes('cancelar') || msg.includes('desistir')) {
+            if (msg.includes('cancelar') || msg.includes('desistir') || msg.includes('deixa') || msg.includes('esquece')) {
                 conversa.etapa = 'inicio';
                 conversa.dados = {};
                 conversas.set(telefone, conversa);
                 return 'Ok! Se precisar de algo é só chamar!';
             }
-            return 'Sua dúvida foi enviada ao responsável! Aguarde a resposta. Se quiser cancelar, digite *CANCELAR*.';
+            // Liberar após 10 min sem resposta do admin — não prender o cliente
+            const _tsAdmin = conversa.dados?._aguardandoAdminTs || Date.now();
+            if (!conversa.dados._aguardandoAdminTs) conversa.dados._aguardandoAdminTs = Date.now();
+            const _minAdmin = (Date.now() - _tsAdmin) / 60000;
+            if (_minAdmin > 10) {
+                conversa.etapa = 'inicio';
+                conversa.dados = {};
+                conversas.set(telefone, conversa);
+                return 'O responsável ainda não respondeu. Pode me perguntar qualquer coisa!';
+            }
+            conversas.set(telefone, conversa);
+            return 'Sua mensagem foi enviada ao responsável! Aguarde. Se quiser cancelar, digite *CANCELAR*.';
         }
 
         if (conversa.etapa === 'confirmar_preco') {
@@ -1910,11 +1921,12 @@ Me manda o endereço de *onde você está*!`;
                     return `Agendado para ${_hA}! Te aviso 30 minutos antes. Qualquer coisa é só falar.`;
                 }
                 if (corrida.duplicada) return '⚠️ Você já tem uma corrida em andamento!\n\nDigite *CANCELAR* para cancelar ou aguarde.';
-                conversa.etapa = 'aguardando_motorista';
+                conversa.etapa = 'pedir_aparencia';
                 conversa.dados.corridaId = corrida.id;
                 conversas.set(telefone, conversa);
+                _agendarTimeoutAparencia(telefone, conversa.instanciaId, corrida.id, conversas);
                 const _precoConf = conversa.dados?.calculo?.preco || conversa.dados?.calculo?.precoFinal || 0;
-                return '✅ Corrida confirmada!' + (_precoConf > 0 ? '\n💰 *Valor: R$ ' + _precoConf.toFixed(2) + '*' : '') + '\n\n⏳ Buscando motorista mais próximo...\n_Digite CANCELAR se precisar_';
+                return 'Certo!' + (_precoConf > 0 ? ' 💰 *R$ ' + _precoConf.toFixed(2) + '*' : '') + ' Já chamei um motorista! Qual a cor da sua camisa? 👕';
             } else if (msg.includes('nao') || msg.includes('não') || msg.includes('cancelar') || msg.includes('desisto')) {
                 conversa.etapa = 'inicio';
                 conversa.dados = {};
@@ -1930,10 +1942,11 @@ Me manda o endereço de *onde você está*!`;
                     ]);
                     if (_racPreco && (_racPreco.acao === 'confirmar' || _racPreco.acao === 'avancar')) {
                         const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
-                        conversa.etapa = 'aguardando_motorista';
+                        conversa.etapa = 'pedir_aparencia';
                         conversa.dados.corridaId = corrida.id;
                         conversas.set(telefone, conversa);
-                        return '✅ Corrida confirmada!\n\n⏳ Buscando motorista mais próximo...\n_Digite CANCELAR se precisar_';
+                        _agendarTimeoutAparencia(telefone, conversa.instanciaId, corrida.id, conversas);
+                        return 'Certo! Já chamei um motorista. Qual a cor da sua camisa? 👕';
                     }
                     if (_racPreco && _racPreco.resposta) {
                         conversas.set(telefone, conversa);
