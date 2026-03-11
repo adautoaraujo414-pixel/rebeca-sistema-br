@@ -489,18 +489,19 @@ Responda apenas com a mensagem para o cliente, sem explicações.`;
                     }
                     
                     if (resposta) {
-                        // Anti-repeticao de RESPOSTAS
+                        // Anti-repeticao de RESPOSTAS — janela 15s, chave robusta
                         if (!global._respostasEnviadas) global._respostasEnviadas = new Map();
-                        const chaveResposta = telefone + '_' + resposta.substring(0, 50);
+                        const _resHash = resposta.replace(/\s+/g, ' ').trim().substring(0, 80);
+                        const chaveResposta = telefone + '|' + _resHash;
                         const ultimaResposta = global._respostasEnviadas.get(chaveResposta);
                         
-                        if (ultimaResposta && (Date.now() - ultimaResposta) < 5000) {
-                            console.log('[ANTI-REP] Resposta repetida bloqueada para', telefone);
+                        if (ultimaResposta && (Date.now() - ultimaResposta) < 15000) {
+                            console.log('[ANTI-REP] Resposta repetida bloqueada para', telefone, ':', _resHash.substring(0,40));
                         } else {
                             global._respostasEnviadas.set(chaveResposta, Date.now());
-                            // Limpar respostas antigas (mais de 2 min)
+                            // Limpar respostas antigas (mais de 5 min)
                             for (const [k, v] of global._respostasEnviadas) { 
-                                if (Date.now() - v > 120000) global._respostasEnviadas.delete(k); 
+                                if (Date.now() - v > 300000) global._respostasEnviadas.delete(k); 
                             }
                             // Verificar se resposta tem partes (mais humano)
                             if (resposta.includes('|||')) {

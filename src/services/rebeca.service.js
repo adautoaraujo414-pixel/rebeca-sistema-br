@@ -935,8 +935,9 @@ Me manda o endereço de *onde você está*!`;
             }
         }
 
-        if (conversa.etapa === 'inicio' && RaciocinioService.isAtivo()) {
+        if (conversa.etapa === 'inicio' && RaciocinioService.isAtivo() && !conversa.dados.origem) {
             // Verificar se parece pedido de corrida com endereço informal (ex: "avenida brasilia 80", "me busca no mercado X")
+            // Só entra aqui se origem ainda não foi coletada (evita reprocessar após CerebroRebeca)
             const _msgLower = msg.toLowerCase();
             const _pareceCorridaInformal = (
                 _msgLower.match(/(me busca|me pega|vem aqui|manda um carro|quero carro|preciso de carro|to na|to no|estou na|estou no|aqui no|aqui na|me buscar em|ir para|ir pra|quero ir|chama um carro|chama o carro|manda o carro|me leva|pode me buscar|pode me pegar|quero uma corrida|preciso de corrida|quero corrida|me chama|busca aqui|pega aqui|to aqui|tô aqui|sou daqui|to em|tô em|to no|tô no|to na|tô na|saindo de|saindo do|saindo da|partindo de|partindo do|partindo da)/) ||
@@ -3551,9 +3552,16 @@ _(ou mande *0* para pular)_`;
                 }
                 console.log('[REBECA] Corrida aguardando_cliente cancelada (timeout 30min):', corridaAtiva._id);
             } else if (corridaAtiva.status === 'pendente' && minutosPendente > 10) {
-                // Corrida pendente antiga - cancelar e permitir nova
+                // Corrida pendente sem motorista por 10min - cancelar
                 await Corrida.findByIdAndUpdate(corridaAtiva._id, { status: 'cancelada', motivoCancelamento: 'timeout_10min' });
                 console.log('[REBECA] Corrida pendente antiga cancelada (timeout 10min):', corridaAtiva._id);
+            } else if (['aceita', 'em_andamento', 'motorista_a_caminho'].includes(corridaAtiva.status) && minutosPendente > 120) {
+                // Corrida aceita/em andamento há mais de 2h — provavelmente esquecida
+                await Corrida.findByIdAndUpdate(corridaAtiva._id, { status: 'cancelada', motivoCancelamento: 'timeout_2h_sem_finalizacao' });
+                if (corridaAtiva.motoristaId) {
+                    try { await MotoristaService.atualizarStatus(corridaAtiva.motoristaId, 'disponivel'); } catch(e) {}
+                }
+                console.log('[REBECA] Corrida aceita/em_andamento cancelada (timeout 2h):', corridaAtiva._id);
             } else {
                 // Corrida ativa recente - bloquear duplicada
                 console.log('[REBECA] Corrida duplicada bloqueada para', telefone, '- Status:', corridaAtiva.status, '- Minutos:', minutosPendente.toFixed(1));
