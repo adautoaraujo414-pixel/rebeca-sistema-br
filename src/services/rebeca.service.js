@@ -942,57 +942,49 @@ Me manda o endereço de *onde você está*!`;
                 _msgLower.match(/(me busca|me pega|vem aqui|manda um carro|quero carro|preciso de carro|to na|to no|estou na|estou no|aqui no|aqui na|me buscar em|ir para|ir pra|quero ir)/) ||
                 (_msgLower.match(/\d+/) && _msgLower.match(/(rua|av|avenida|r\.|travessa|alameda|estrada|bairro|praça|praca)/i))
             );
-            // Regra: se cliente mandou endereço/ponto → despacha direto
+            // Regra: endereço/ponto/rua com número → despacha direto
             //        rua/av SEM número → pede só o número
-            //        rua/av COM número → despacha direto
+            //        Maps não validou → despacha mesmo assim
             if (_pareceCorridaInformal) {
                 try {
-                    // Extrair endereço após preposições comuns
                     const _matchEmb = msgOriginal.match(/(?:na|no|em|desde|saindo de|sou d[ao]?|estou n[ao]?|t[oô] n[ao]?|aqui n[ao]?|busca n[ao]?|buscar n[ao]?|carro n[ao]?|carro em|me busca|me pega)\s+(.{4,60}?)(?:\s*,|\s*$)/i);
                     const _endEmb = _matchEmb ? _matchEmb[1].trim() : (RebecaService.pareceEndereco(msgOriginal) ? msgOriginal.trim() : null);
                     if (_endEmb) {
-                        // Verificar se é rua/av sem número
+                        // Rua/av sem número → pede só o número
                         const _eRuaSemNum = _endEmb.match(/(rua|av|avenida|r\.|travessa|alameda|estrada)/i) && !_endEmb.match(/\d+/) && !_endEmb.match(/s\/n|sn\b/i);
                         if (_eRuaSemNum) {
-                            // Pede só o número, sem repetir o endereço
                             conversa.dados.origemTexto = _endEmb;
                             conversa.etapa = 'pedir_numero_origem';
                             conversas.set(telefone, conversa);
                             return `📍 *${_endEmb}*\n\nQual o número?`;
                         }
-                        // Tem número ou é ponto de referência → validar e despachar
-                        const _valEmb = await RebecaService.validarEndereco(_endEmb);
-                        if (_valEmb.valido) {
-                            conversa.dados.origem = _valEmb.endereco;
-                            conversa.dados.origemValidada = _valEmb;
-                            conversa.dados.calculo = { origem: { endereco: _valEmb.endereco, latitude: _valEmb.latitude, longitude: _valEmb.longitude }, destino: null, distanciaKm: 0, tempoMinutos: 0, preco: 15, faixa: { nome: 'padrao', multiplicador: 1 } };
-                            const _motsEmb = await MotoristaService.listarDisponiveis(conversa.adminId);
-                            if (_motsEmb.length === 0) {
-                                const _estEmb = await RebecaService.estimarTempoEspera(conversa.adminId);
-                                conversa.etapa = 'oferecer_fila_espera';
-                                conversas.set(telefone, conversa);
-                                return 'Poxa, todos os motoristas estão em corrida! Previsão: ' + _estEmb.texto + '.\n\nPosso te avisar quando um desocupar? Responde *SIM*!';
+                        // Com número ou ponto de referência → tenta validar mas despacha de qualquer jeito
+                        let _origemFinal = _endEmb;
+                        let _origemValidada = { valido: true, precisao: 'texto_livre', endereco: _endEmb, latitude: null, longitude: null };
+                        try {
+                            const _valEmb = await RebecaService.validarEndereco(_endEmb);
+                            if (_valEmb.valido) {
+                                _origemFinal = _valEmb.endereco;
+                                _origemValidada = _valEmb;
                             }
-                            const _corrEmb = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
-                            if (_corrEmb.cooldown) return '⏳ Aguarde ' + Math.ceil(_corrEmb.segundosRestantes / 60) + ' min para nova corrida.';
-                            if (_corrEmb.duplicada) return '⚠️ Você já tem corrida ativa! Digite *CANCELAR* para cancelar.';
-                            conversa.etapa = 'pedir_aparencia';
-                            conversa.dados.corridaId = _corrEmb.id;
+                        } catch(_eVal) {}
+                        conversa.dados.origem = _origemFinal;
+                        conversa.dados.origemValidada = _origemValidada;
+                        conversa.dados.calculo = { origem: { endereco: _origemFinal, latitude: _origemValidada.latitude || null, longitude: _origemValidada.longitude || null }, destino: null, distanciaKm: 0, tempoMinutos: 0, preco: 15, faixa: { nome: 'padrao', multiplicador: 1 } };
+                        const _motsEmb = await MotoristaService.listarDisponiveis(conversa.adminId);
+                        if (_motsEmb.length === 0) {
+                            const _estEmb = await RebecaService.estimarTempoEspera(conversa.adminId);
+                            conversa.etapa = 'oferecer_fila_espera';
                             conversas.set(telefone, conversa);
-                            return 'Anotei! Já chamei um motorista. Qual a cor da sua camisa? 👕';
-                        } else {
-                            // Maps não achou mas tem número → despacha com texto livre
-                            conversa.dados.origem = _endEmb;
-                            conversa.dados.origemValidada = { valido: true, precisao: 'texto_livre', endereco: _endEmb };
-                            conversa.dados.calculo = { origem: { endereco: _endEmb }, destino: null, distanciaKm: 0, tempoMinutos: 0, preco: 15, faixa: { nome: 'padrao', multiplicador: 1 } };
-                            const _corrTL = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
-                            if (_corrTL.cooldown) return '⏳ Aguarde ' + Math.ceil(_corrTL.segundosRestantes / 60) + ' min para nova corrida.';
-                            if (_corrTL.duplicada) return '⚠️ Você já tem corrida ativa! Digite *CANCELAR* para cancelar.';
-                            conversa.etapa = 'pedir_aparencia';
-                            conversa.dados.corridaId = _corrTL.id;
-                            conversas.set(telefone, conversa);
-                            return 'Anotei! Já chamei um motorista. Qual a cor da sua camisa? 👕';
+                            return 'Poxa, todos os motoristas estão em corrida! Previsão: ' + _estEmb.texto + '.\n\nPosso te avisar quando um desocupar? Responde *SIM*!';
                         }
+                        const _corrEmb = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
+                        if (_corrEmb.cooldown) return '⏳ Aguarde ' + Math.ceil(_corrEmb.segundosRestantes / 60) + ' min para nova corrida.';
+                        if (_corrEmb.duplicada) return '⚠️ Você já tem corrida ativa! Digite *CANCELAR* para cancelar.';
+                        conversa.etapa = 'pedir_aparencia';
+                        conversa.dados.corridaId = _corrEmb.id;
+                        conversas.set(telefone, conversa);
+                        return 'Anotei! Já chamei um motorista. Qual a cor da sua camisa? 👕';
                     }
                 } catch(_eEmb) { console.log('[EMBUTIDO]', _eEmb.message); }
             }
