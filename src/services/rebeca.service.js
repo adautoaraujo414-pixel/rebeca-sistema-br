@@ -2957,7 +2957,6 @@ _(ou mande *0* para pular)_`;
                         telefone, nome, msgOriginal, conversa.adminId, conversa.instanciaId
                     );
                     if (duvida) {
-                        conversa.etapa = 'aguardando_resposta_admin';
                         conversa.dados.duvidaId = duvida._id;
                         // Verificar se pergunta sobre disponibilidade
                         const perguntaDisponibilidade = msgOriginal.toLowerCase().match(/(tem carro|tem motorista|tem veiculo|tem veículo|disponivel|disponível|funcionando|aberto|atende)/);
@@ -2979,10 +2978,12 @@ _(ou mande *0* para pular)_`;
                             resposta = 'Posso te ajudar a pedir um carro! Me manda o endereço de onde você está 📍';
                         }
                     } else {
-                        resposta = 'Posso te ajudar a pedir um carro! Me passa o endereço?';
+                        conversa.etapa = 'inicio';
+                        resposta = 'Oi! 😊 Me manda o endereço de onde você está que chamo um carro pra você 📍';
                     }
                 } else {
-                    resposta = 'Posso te ajudar a pedir um carro! Me passa o endereço?';
+                    conversa.etapa = 'inicio';
+                    resposta = 'Oi! 😊 Me manda o endereço de onde você está que chamo um carro pra você 📍';
                 }
             }
         }
@@ -3010,13 +3011,16 @@ _(ou mande *0* para pular)_`;
                                 resposta = 'Sim, estamos funcionando! Me manda sua localização 📍';
                             }
                         } else {
-                            resposta = 'Oi! 😊 Vai precisar de um carro hoje? Me manda o endereço de onde você está 📍';
+                            conversa.etapa = 'inicio';
+                            resposta = 'Oi! 😊 Pra pedir um carro é só me mandar de onde você está 📍';
                         }
                     } else {
-                        resposta = 'Posso te ajudar a pedir um carro! Me passa o endereço?';
+                        conversa.etapa = 'inicio';
+                        resposta = 'Oi! 😊 Me manda o endereço de onde você está que chamo um carro pra você 📍';
                     }
                 } else {
-                    resposta = 'Posso te ajudar a pedir um carro! Me passa o endereço?';
+                    conversa.etapa = 'inicio';
+                    resposta = 'Oi! 😊 Me manda o endereço de onde você está que chamo um carro pra você 📍';
                 }
         }
 
