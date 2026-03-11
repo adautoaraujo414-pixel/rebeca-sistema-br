@@ -43,8 +43,8 @@ router.post('/mensagem', async (req, res) => {
             return res.status(400).json({ error: 'adminId obrigatório' });
         }
 
-        // Anti-duplicação: ignorar mesmo messageId nos últimos 60s
-        const dedupKey = messageId || (telefone + '_' + mensagem.slice(0, 30) + '_' + Math.floor(Date.now() / 3000));
+        // Anti-duplicação: ignorar mesmo conteúdo nos últimos 30s
+        const dedupKey = messageId || (telefone + '_' + mensagem.slice(0, 50).replace(/\s+/g,' ').trim() + '_' + Math.floor(Date.now() / 30000));
         if (global._msgProcessadas.has(dedupKey)) {
             console.log('[REBECA] Mensagem duplicada ignorada:', dedupKey);
             return res.json({ sucesso: true, resposta: null, duplicada: true });
