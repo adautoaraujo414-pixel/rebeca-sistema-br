@@ -1631,7 +1631,7 @@ Me manda o endereço de *onde você está*!`;
                 const telsC = [telefone, '55' + telefone, telefone.replace(/^55/, '')];
                 const queryMsg = { 
                     clienteTelefone: { $in: telsC }, 
-                    status: { $in: ['aceita', 'em_andamento', 'motorista_a_caminho'] }
+                    status: { $in: ['aceita', 'em_andamento', 'motorista_a_caminho', 'aguardando_cliente'] }
                 };
                 if (conversa.adminId) queryMsg.adminId = conversa.adminId;
                 const corridaAtiva = await Corrida.findOne(queryMsg);
