@@ -390,11 +390,13 @@ router.post('/chat', auth, async (req, res) => {
         // Enviar via WhatsApp para o cliente
         const EvolutionMultiService = require('../services/evolution-multi.service');
         const { InstanciaWhatsapp } = require('../models');
-        const instancia = await InstanciaWhatsapp.findOne({ adminId: corrida.adminId, status: 'conectado' });
+        const instancia = await InstanciaWhatsapp.findOne({ adminId: corrida.adminId, status: { $in: ['conectado', 'open', 'connected'] } });
+        console.log('[CHAT] adminId:', corrida.adminId, '| instancia:', instancia ? instancia.nomeInstancia + ' status:' + instancia.status : 'NAO ENCONTRADA');
         
         if (instancia) {
             const msgCliente = '🚗 *Mensagem do motorista ' + (req.motorista.nomeCompleto || req.motorista.nome) + ':*\n\n' + texto;
             await EvolutionMultiService.enviarMensagem(instancia._id, corrida.clienteTelefone, msgCliente);
+            console.log('[CHAT] Mensagem enviada para', corrida.clienteTelefone);
         }
         
         const novaMensagem = { texto, remetente: req.motorista._id, nomeRemetente: req.motorista.nomeCompleto || req.motorista.nome, data: new Date(), tipo: 'motorista' };
