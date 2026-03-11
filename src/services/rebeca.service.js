@@ -4123,9 +4123,18 @@ RebecaService.atualizarConversa = function(telefone, adminId, dados) {
         conversa = { telefone, adminId, etapa: 'inicio', dados: {}, historico: [], ts: Date.now() };
     }
     if (dados.origem) conversa.dados = conversa.dados || {};
-    if (dados.origem) conversa.dados.origem = dados.origem;
+    if (dados.origem) {
+        conversa.dados.origem = dados.origem;
+        conversa.dados.origemValidada = conversa.dados.origemValidada || { valido: true, precisao: 'texto_livre', endereco: dados.origem, latitude: null, longitude: null };
+        conversa.dados.calculo = conversa.dados.calculo || { origem: { endereco: dados.origem }, destino: null, distanciaKm: 0, tempoMinutos: 0, preco: 15, faixa: { nome: 'padrao', multiplicador: 1 } };
+    }
     if (dados.destino) conversa.dados.destino = dados.destino;
     if (dados.nome) conversa.dados.nome = dados.nome;
+    // Campos úteis do áudio para o motorista
+    if (dados.obs_motorista) conversa.dados.obsMotorista = dados.obs_motorista;
+    if (dados.ponto_referencia) conversa.dados.observacao = dados.ponto_referencia;
+    if (dados.observacao_origem) conversa.dados.observacaoOrigem = dados.observacao_origem;
+    if (dados.cor_camisa) conversa.dados.aparenciaCliente = dados.cor_camisa;
     if (dados.etapa) conversa.etapa = dados.etapa;
     conversa.ts = Date.now();
 
