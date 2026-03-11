@@ -738,12 +738,20 @@ Me manda o endereço de *onde você está*!`;
 
                     // CANCELAR
                     if (_resInt.intencao === 'CANCELAR') {
-                        conversa.etapa = 'inicio';
-                        conversa.dados = {};
+                        // Verificar se já estava aguardando confirmação de cancelamento
+                        if (conversa.dados._aguardandoCancelamento) {
+                            conversa.etapa = 'inicio';
+                            conversa.dados = {};
+                            conversas.set(telefone, conversa);
+                            const _mc = 'Cancelado! Quando precisar é só chamar.';
+                            CerebroRebeca.salvarHistorico(conversa, _mc, 'rebeca');
+                            return _mc;
+                        }
+                        conversa.dados._aguardandoCancelamento = true;
                         conversas.set(telefone, conversa);
-                        const _mc = 'Tudo bem, cancelado! Quando precisar é só chamar.';
-                        CerebroRebeca.salvarHistorico(conversa, _mc, 'rebeca');
-                        return _mc;
+                        const _mcConf = 'Confirma o cancelamento?';
+                        CerebroRebeca.salvarHistorico(conversa, _mcConf, 'rebeca');
+                        return _mcConf;
                     }
 
                     // Resposta normal do cérebro
@@ -953,16 +961,10 @@ Me manda o endereço de *onde você está*!`;
                             const corridaRac = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
                             if (corridaRac.cooldown) return '⏳ Aguarde ' + Math.ceil(corridaRac.segundosRestantes / 60) + ' min para nova corrida.';
                             if (corridaRac.duplicada) return '⚠️ Você já tem corrida ativa! Digite *CANCELAR* para cancelar.';
-                            conversa.etapa = 'aguardando_motorista';
+                            conversa.etapa = 'pedir_aparencia';
                             conversa.dados.corridaId = corridaRac.id;
                             conversas.set(telefone, conversa);
-                            const _precoRac = conversa.dados?.calculo?.preco || corridaRac.preco || 0;
-                            let _msgRac = `✅ *Corrida solicitada!*\n\n📍 *Origem:* ${valRacInicio.endereco}`;
-                            if (_precoRac > 0) _msgRac += `\n💰 *Valor estimado: R$ ${_precoRac.toFixed(2)}*`;
-                            _msgRac += `\n\n⏳ Buscando o motorista mais próximo...`;
-                            // Link de rastreamento enviado após motorista aceitar
-                            _msgRac += `\n\n_Digite CANCELAR se precisar_`;
-                            return _msgRac;
+                            return 'Certo, já chamei um motorista! Qual a cor da sua camisa? 👕';
                         }
                     }
                 } catch(_eRac) { console.log('[RAC_INICIO]', _eRac.message); }
@@ -1037,11 +1039,11 @@ Me manda o endereço de *onde você está*!`;
                                     conversa.dados.calculo = { origem: { endereco: valFreq.endereco, latitude: valFreq.latitude, longitude: valFreq.longitude }, destino: null, distanciaKm: 0, tempoMinutos: 0, preco: 15, faixa: { nome: 'padrao', multiplicador: 1 } };
                                     const corridaDir = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
                                     if (!corridaDir.duplicada && !corridaDir.cooldown) {
-                                        conversa.etapa = 'aguardando_motorista';
+                                        conversa.etapa = 'pedir_aparencia';
                                         conversa.dados.corridaId = corridaDir.id;
                                         conversas.set(telefone, conversa);
-                                        const _precoDir = conversa.dados?.calculo?.preco || 0;
-                                        return 'Oi ' + (nome || '') + '! Já mandei pro mesmo lugar 🚗\n\n📍 ' + valFreq.endereco + (_precoDir > 0 ? '\n💰 *R$ ' + _precoDir.toFixed(2) + '*' : '') + '\n\n' + variar('buscando') + '\n' + variar('cancelar_hint');
+                                        _agendarTimeoutAparencia(telefone, conversa.instanciaId, corridaDir.id, conversas);
+                                        return 'Oi ' + (nome || '') + '! Já mandei pro mesmo lugar 🚗 Qual a cor da sua camisa? 👕';
                                     }
                                 }
                             }
@@ -1140,7 +1142,28 @@ Me manda o endereço de *onde você está*!`;
             }
                         
                         // Saudação, agradecimento, outro
-                        if (['SAUDACAO', 'AGRADECIMENTO', 'INFORMACAO'].includes(resultadoGPT.intencao)) {
+                        if (['AGRADECIMENTO', 'INFORMACAO'].includes(resultadoGPT.intencao)) {
+                            conversas.set(telefone, conversa);
+                            return resultadoGPT.resposta;
+                        }
+                        if (resultadoGPT.intencao === 'SAUDACAO') {
+                            // Se saudacao veio com origem na mesma mensagem, despachar direto
+                            const _origSaud = resultadoGPT.origem || resultadoGPT.endereco || resultadoGPT.endereco_corrigido;
+                            if (_origSaud) {
+                                conversa.dados.origem = _origSaud;
+                                conversa.dados.origemValidada = { valido: true, precisao: 'gpt', endereco: _origSaud };
+                                conversa.dados.calculo = { origem: { endereco: _origSaud, latitude: null, longitude: null }, destino: null, distanciaKm: 0, tempoMinutos: 0, preco: 15, faixa: { nome: 'padrao', multiplicador: 1 } };
+                                const _motsS = await MotoristaService.listarDisponiveis(conversa.adminId);
+                                if (_motsS.length > 0) {
+                                    const _cS = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
+                                    if (!_cS.cooldown && !_cS.duplicada) {
+                                        conversa.etapa = 'pedir_aparencia';
+                                        conversa.dados.corridaId = _cS.id;
+                                        conversas.set(telefone, conversa);
+                                        return (resultadoGPT.resposta ? resultadoGPT.resposta + ' ' : '') + 'Já chamei um motorista! Qual a cor da sua camisa? 👕';
+                                    }
+                                }
+                            }
                             conversas.set(telefone, conversa);
                             return resultadoGPT.resposta;
                         }
