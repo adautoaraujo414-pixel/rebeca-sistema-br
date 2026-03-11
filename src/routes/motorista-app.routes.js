@@ -119,7 +119,7 @@ router.post('/aceitar', auth, async (req, res) => {
                 const corM = m.veiculo?.cor || '';
                 const placaM = m.veiculo?.placa || m.placa || '';
                 const baseUrl = process.env.BASE_URL || 'https://rebeca-sistema-br.onrender.com';
-                const linkRastreio = baseUrl + '/rastrear.html?c=' + corridaId.slice(-8);
+                const linkRastreio = baseUrl + '/rastrear/' + corridaId.slice(-8);
                 
                 const valorCorrida = corrida.precoEstimado || corrida.precoFinal || 0;
                 const etaMin = corrida.tempoEstimado || 0;
