@@ -939,8 +939,9 @@ Me manda o endereço de *onde você está*!`;
             // Verificar se parece pedido de corrida com endereço informal (ex: "avenida brasilia 80", "me busca no mercado X")
             const _msgLower = msg.toLowerCase();
             const _pareceCorridaInformal = (
-                _msgLower.match(/(me busca|me pega|vem aqui|manda um carro|quero carro|preciso de carro|to na|to no|estou na|estou no|aqui no|aqui na|me buscar em|ir para|ir pra|quero ir)/) ||
-                (_msgLower.match(/\d+/) && _msgLower.match(/(rua|av|avenida|r\.|travessa|alameda|estrada|bairro|praça|praca)/i))
+                _msgLower.match(/(me busca|me pega|vem aqui|manda um carro|quero carro|preciso de carro|to na|to no|estou na|estou no|aqui no|aqui na|me buscar em|ir para|ir pra|quero ir|chama um carro|chama o carro|manda o carro|me leva|pode me buscar|pode me pegar|quero uma corrida|preciso de corrida|quero corrida|me chama|busca aqui|pega aqui|to aqui|tô aqui|sou daqui|to em|tô em|to no|tô no|to na|tô na|saindo de|saindo do|saindo da|partindo de|partindo do|partindo da)/) ||
+                (_msgLower.match(/\d+/) && _msgLower.match(/(rua|av|avenida|r\.|travessa|alameda|estrada|bairro|praça|praca|quadra|qd|setor|conjunto|cj|vila|jardim|jd|residencial|res\.)/i)) ||
+                RebecaService.pareceEndereco(msgOriginal)
             );
             // Regra: endereço/ponto/rua com número → despacha direto
             //        rua/av SEM número → pede só o número

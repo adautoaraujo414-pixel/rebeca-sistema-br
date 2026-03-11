@@ -307,12 +307,16 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                                     const rac = JSON.parse(jsonStr);
                                     // Atualizar conversa no Map do RebecaService (nao usa banco)
                                     try {
-                                        if (rac.origem_extraida || rac.destino_extraido || rac.proxima_etapa) {
+                                        if (rac.origem_extraida || rac.destino_extraido || rac.proxima_etapa || rac.obs_motorista || rac.ponto_referencia || rac.cor_camisa) {
                                             await RebecaService.atualizarConversa(telefone, adminId, {
                                                 origem: rac.origem_extraida,
                                                 destino: rac.destino_extraido,
                                                 nome: rac.nome_cliente,
-                                                etapa: rac.proxima_etapa
+                                                etapa: rac.proxima_etapa,
+                                                obs_motorista: rac.obs_motorista,
+                                                ponto_referencia: rac.ponto_referencia,
+                                                observacao_origem: rac.observacao_origem,
+                                                cor_camisa: rac.cor_camisa
                                             });
                                         }
                                     } catch(_mapErr) {
@@ -342,7 +346,13 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                                     if (rac.resposta_rebeca && !_perguntaStatus) {
                                         await EvolutionMultiService.enviarMensagem(instancia._id, telefone, rac.resposta_rebeca);
                                         console.log('[AUDIO RACIOCINIO] Enviado:', rac.resposta_rebeca.substring(0,60));
-                                        conteudo = null;
+                                        // Se origem extraída: deixar cair no processarMensagem para despachar
+                                        if (rac.origem_extraida) {
+                                            conteudo = rac.texto_original || rac.origem_extraida;
+                                            console.log('[AUDIO] Origem extraída, passando para despacho:', rac.origem_extraida);
+                                        } else {
+                                            conteudo = null;
+                                        }
                                     } else if (!rac.resposta_rebeca || _perguntaStatus) {
                                         // resposta_rebeca vazia — passa texto transcrito para o cerebro Claude
                                         conteudo = (rac && rac.texto_original) ? rac.texto_original : jsonStr;
