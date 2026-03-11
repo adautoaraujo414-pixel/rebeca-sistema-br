@@ -2593,11 +2593,11 @@ _(ou mande *0* para pular)_`;
                 return '⚠️ Você já tem uma corrida em andamento!\n\nDigite *CANCELAR* para cancelar ou aguarde o motorista.';
             }
             
-            conversa.etapa = 'aguardando_motorista';
+            conversa.etapa = 'pedir_aparencia';
             conversa.dados.corridaId = corrida.id;
+            _agendarTimeoutAparencia(telefone, conversa.instanciaId, corrida.id, conversas);
             conversas.set(telefone, conversa);
-            
-            return `📍 ${conversa.dados.origem}${conversa.dados.observacaoOrigem ? '\n📌 ' + conversa.dados.observacaoOrigem : ''}\n\n⏳ Buscando motorista...\n_CANCELAR se precisar_`;
+            return 'Certo! Já chamei um motorista. Qual a cor da sua camisa? 👕';
         }
         // ========== OBSERVAÇÃO ==========
         else if (conversa.etapa === 'pedir_observacao_origem') {
@@ -2709,20 +2709,12 @@ _(ou mande *0* para pular)_`;
             conversa.dados.calculo = calculo;
             
             const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
-            conversa.etapa = 'inicio';
-            
-            resposta = `🚗 *CARRO SOLICITADO!*\n\n📍 *De:* ${conversa.dados.origem}`;
-            if (conversa.dados.observacaoOrigem) resposta += `\n📝 _${conversa.dados.observacaoOrigem}_`;
-            resposta += `\n\n🏁 *Para:* ${conversa.dados.destino}`;
-            if (conversa.dados.observacaoDestino) resposta += `\n📝 _${conversa.dados.observacaoDestino}_`;
-            resposta += `\n\n📏 ${calculo.distancia} | ⏱️ ${calculo.tempo}\n💰 *R$ ${corrida.preco.toFixed(2)}*`;
-            resposta += `\n\n⏳ Buscando motorista...\n🔢 #${corrida.id.slice(-6)}`;
-            
-            if (_cfg.enviarLinkRastreamento) {
-                resposta += `\n\n📲 ${RebecaService.gerarLinkRastreamento(corrida.id)}`;
-            }
-            
-            conversa.dados = {};
+            conversa.etapa = 'pedir_aparencia';
+            conversa.dados.corridaId = corrida.id;
+            _agendarTimeoutAparencia(telefone, conversa.instanciaId, corrida.id, conversas);
+            conversas.set(telefone, conversa);
+            const _precoRapido = calculo?.preco || corrida?.preco || 0;
+            resposta = 'Certo!' + (_precoRapido > 0 ? ' 💰 *R$ ' + _precoRapido.toFixed(2) + '*' : '') + ' Já chamei um motorista! Qual a cor da sua camisa? 👕';
         }
         // ========== OBSERVAÇÃO DESTINO ==========
         else if (conversa.etapa === 'pedir_observacao_destino') {
@@ -2732,20 +2724,12 @@ _(ou mande *0* para pular)_`;
             conversa.dados.calculo = calculo;
             
             const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
-            conversa.etapa = 'inicio';
-            
-            resposta = `🚗 *CARRO SOLICITADO!*\n\n📍 *De:* ${conversa.dados.origem}`;
-            if (conversa.dados.observacaoOrigem) resposta += `\n📝 _${conversa.dados.observacaoOrigem}_`;
-            resposta += `\n\n🏁 *Para:* ${conversa.dados.destino}`;
-            if (conversa.dados.observacaoDestino) resposta += `\n📝 _${conversa.dados.observacaoDestino}_`;
-            resposta += `\n\n📏 ${calculo.distancia} | ⏱️ ${calculo.tempo}\n💰 *R$ ${corrida.preco.toFixed(2)}*`;
-            resposta += `\n\n⏳ Buscando motorista...\n🔢 #${corrida.id.slice(-6)}`;
-            
-            if (_cfg.enviarLinkRastreamento) {
-                resposta += `\n\n📲 ${RebecaService.gerarLinkRastreamento(corrida.id)}`;
-            }
-            
-            conversa.dados = {};
+            conversa.etapa = 'pedir_aparencia';
+            conversa.dados.corridaId = corrida.id;
+            _agendarTimeoutAparencia(telefone, conversa.instanciaId, corrida.id, conversas);
+            conversas.set(telefone, conversa);
+            const _precoObsDest = calculo?.preco || corrida?.preco || 0;
+            resposta = 'Certo!' + (_precoObsDest > 0 ? ' 💰 *R$ ' + _precoObsDest.toFixed(2) + '*' : '') + ' Já chamei um motorista! Qual a cor da sua camisa? 👕';
         }
         // ========== PEDIR ORIGEM NORMAL ==========
         else if (conversa.etapa === 'pedir_origem') {
@@ -2832,10 +2816,11 @@ _(ou mande *0* para pular)_`;
                                     conversa.dados.calculo = calculoRac;
                                     // Despacha direto
                                     const _corrRac = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
-                                    conversa.etapa = 'aguardando_motorista';
+                                    conversa.etapa = 'pedir_aparencia';
                                     conversa.dados.corridaId = _corrRac.id;
+                                    _agendarTimeoutAparencia(telefone, conversa.instanciaId, _corrRac.id, conversas);
                                     conversas.set(telefone, conversa);
-                                    return `🚗 Chamando motorista!\n\n📍 ${conversa.dados.origem}\n🏁 ${conversa.dados.destino}\n\n📏 ${calculoRac.distancia} | ⏱️ ${calculoRac.tempo}\n💰 *R$ ${calculoRac.preco.toFixed(2)}*\n\n⏳ Buscando...\n_CANCELAR para cancelar_`;
+                                    return 'Certo! Já chamei um motorista. Qual a cor da sua camisa? 👕';
                                 }
                             } else if (rac.acao === 'cancelar' || rac.acao === 'negar') {
                                 conversa.etapa = 'inicio'; conversa.dados = {};
@@ -2854,10 +2839,11 @@ _(ou mande *0* para pular)_`;
                     conversa.dados.calculo = calculoTL;
                     // Despacha direto
                     const _corrTL = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
-                    conversa.etapa = 'aguardando_motorista';
+                    conversa.etapa = 'pedir_aparencia';
                     conversa.dados.corridaId = _corrTL.id;
+                    _agendarTimeoutAparencia(telefone, conversa.instanciaId, _corrTL.id, conversas);
                     conversas.set(telefone, conversa);
-                    return `🚗 Chamando motorista!\n\n📍 ${conversa.dados.origem}\n🏁 ${conversa.dados.destino}\n\n📏 ${calculoTL.distancia} | ⏱️ ${calculoTL.tempo}\n💰 *R$ ${calculoTL.preco.toFixed(2)}*\n\n⏳ Buscando...\n_CANCELAR para cancelar_`;
+                    return 'Certo! Já chamei um motorista. Qual a cor da sua camisa? 👕';
                 }
                 conversa.dados.destino = validacao.endereco;
             }
@@ -2866,21 +2852,19 @@ _(ou mande *0* para pular)_`;
             const calculo = await RebecaService.calcularCorrida(conversa.dados.origem, conversa.dados.destino);
             conversa.dados.calculo = calculo;
             const _corr2141 = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
-            conversa.etapa = 'aguardando_motorista';
+            conversa.etapa = 'pedir_aparencia';
             conversa.dados.corridaId = _corr2141.id;
+            _agendarTimeoutAparencia(telefone, conversa.instanciaId, _corr2141.id, conversas);
             conversas.set(telefone, conversa);
-            resposta = `🚗 Chamando motorista!\n\n📍 ${conversa.dados.origem}\n🏁 ${conversa.dados.destino}\n\n📏 ${calculo.distancia} | ⏱️ ${calculo.tempo}\n💰 *R$ ${calculo.preco.toFixed(2)}*\n\n⏳ Buscando...\n_CANCELAR para cancelar_`;
+            resposta = 'Certo! Já chamei um motorista. Qual a cor da sua camisa? 👕';
         }
         else if (conversa.etapa === 'confirmar_corrida') {
             if (msg === '1' || NLPService.eSim(msg)) {
                 const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
-                conversa.etapa = 'aguardando_motorista';
+                conversa.etapa = 'pedir_aparencia';
                 conversa.dados.corridaId = corrida.id;
-                resposta = `🎉 *CONFIRMADO!*\n\n🔢 #${corrida.id.slice(-6)}\n💰 R$ ${corrida.preco.toFixed(2)}\n\n⏳ Buscando motorista...`;
-                if (_cfg.enviarLinkRastreamento) {
-                    resposta += `\n\n📲 ${RebecaService.gerarLinkRastreamento(corrida.id)}`;
-                }
-                conversa.dados = {};
+                _agendarTimeoutAparencia(telefone, conversa.instanciaId, corrida.id, conversas);
+                resposta = 'Certo! Já chamei um motorista. Qual a cor da sua camisa? 👕';
             } else if (msg === '2' || NLPService.eNao(msg)) {
                 conversa.etapa = 'inicio';
                 conversa.dados = {};
@@ -2895,11 +2879,10 @@ _(ou mande *0* para pular)_`;
                     if (rac) {
                         if (rac.acao === 'confirmar' || rac.acao === 'avancar') {
                             const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
-                            conversa.etapa = 'aguardando_motorista';
+                            conversa.etapa = 'pedir_aparencia';
                             conversa.dados.corridaId = corrida.id;
-                            resposta = `🎉 *CONFIRMADO!*\n\n🔢 #${corrida.id.slice(-6)}\n💰 R$ ${corrida.preco.toFixed(2)}\n\n⏳ Buscando motorista...`;
-                            if (_cfg.enviarLinkRastreamento) resposta += `\n\n📲 ${RebecaService.gerarLinkRastreamento(corrida.id)}`;
-                            conversa.dados = {};
+                            _agendarTimeoutAparencia(telefone, conversa.instanciaId, corrida.id, conversas);
+                            resposta = 'Certo! Já chamei um motorista. Qual a cor da sua camisa? 👕';
                         } else if (rac.acao === 'negar' || rac.acao === 'cancelar') {
                             conversa.etapa = 'inicio'; conversa.dados = {};
                             resposta = `Tudo bem! Corrida cancelada. Quando precisar é só chamar 😊`;
@@ -3101,13 +3084,11 @@ _(ou mande *0* para pular)_`;
                         
                         // Despacha direto
                         const _corr2329 = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
-                        conversa.etapa = 'aguardando_motorista';
+                        conversa.etapa = 'pedir_aparencia';
                         conversa.dados.corridaId = _corr2329.id;
+                        _agendarTimeoutAparencia(telefone, conversa.instanciaId, _corr2329.id, conversas);
                         conversas.set(telefone, conversa);
-                        let resp = `🚗 Chamando motorista!\n\n📍 *De:* ${conversa.dados.origem}\n🏁 *Para:* ${conversa.dados.destino}`;
-                        if (analise.observacao) resp += `\n📝 _${analise.observacao}_`;
-                        resp += `\n\n📏 ${calculo.distancia} | ⏱️ ${calculo.tempo}\n💰 *R$ ${calculo.preco.toFixed(2)}*\n\n⏳ Buscando...\n_CANCELAR para cancelar_`;
-                        return resp;
+                        return 'Certo! Já chamei um motorista. Qual a cor da sua camisa? 👕';
                     }
                 }
                 
