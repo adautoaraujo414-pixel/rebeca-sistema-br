@@ -4311,8 +4311,8 @@ const filaEsperaFunctions = {
             // Atualizar conversa do cliente
             const conversa = conversas.get(proximo.clienteTelefone);
             if (conversa) {
-                conversa.etapa = 'inicio';
-                conversa.dados = { origem: proximo.origem };
+                conversa.etapa = 'pedir_origem';
+                conversa.dados = {};
                 conversas.set(proximo.clienteTelefone, conversa);
             }
             
@@ -4374,8 +4374,8 @@ RebecaService.transcreverAudio = async function(audioMessage, instancia) {
         formData.append('file', Buffer.from(audioBuffer.data), { filename: 'audio.ogg', contentType: 'audio/ogg' });
         formData.append('model', 'whisper-1');
         formData.append('language', 'pt');
-        formData.append('prompt', 'Rebeca, corrida, endereço, rua, avenida, bairro, número, destino, origem, Uber, mototaxi, delivery, pedido, cancelar, confirmar, sim, não, obrigado');
-        formData.append('language', 'pt');
+        formData.append('temperature', '0');
+        formData.append('prompt', 'Rebeca, corrida, endereço, rua, avenida, bairro, número, destino, origem, mototaxi, delivery, pedido, cancelar, confirmar, sim, não, obrigado');
         
         const whisperResponse = await axios.post('https://api.openai.com/v1/audio/transcriptions', formData, {
             headers: {
