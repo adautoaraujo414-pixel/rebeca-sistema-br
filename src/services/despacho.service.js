@@ -261,6 +261,7 @@ const DespachoService = {
             await executarRegra(0);
             return; // Executor de regras assumiu o controle
         } catch(regraErr) { console.log('[DESPACHO REGRAS] Erro:', regraErr.message); }
+        return; // Se chegou aqui após erro no executor de regras, não continuar com fluxo legado
 
         // Buscar foto do cliente no WhatsApp e salvar endereço em texto
         try {

@@ -294,6 +294,7 @@ const OpenAIRebecaService = {
 
             if (dados.origem) ctxHistorico += 'Ja sei a origem: ' + dados.origem + '. ';
             if (dados.destino) ctxHistorico += 'Ja sei o destino: ' + dados.destino + '. ';
+            const dadosAtuais = JSON.stringify(dados);
 
             // Se cliente recorrente em etapa inicio, oferecer endereco anterior direto
             if (etapa === 'inicio' && ultimoEndereco && !dados.origem) {
@@ -461,7 +462,7 @@ REGRAS DE COMPORTAMENTO:
         }
         
         if (msg.match(/^(cancelar|cancela|desistir|desisto|nao quero|não quero)$/)) {
-            return { intencao: 'CANCELAMENTO', resposta: 'Corrida cancelada! Quando precisar é só chamar.' };
+            return { intencao: 'CANCELAMENTO', resposta: 'Confirma o cancelamento?' };
         }
         
         // PERGUNTAS SOBRE A EMPRESA/ASSISTENTE
