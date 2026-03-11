@@ -3996,7 +3996,7 @@ _(ou mande *0* para pular)_`;
         try {
             const { Corrida: CM } = require('../models');
             const tels = [telefoneCliente, '55'+telefoneCliente, telefoneCliente.replace(/^55/,'')];
-            const corrida = await CM.findOne({ clienteTelefone:{$in:tels}, adminId, status:{$in:['aceita','em_andamento','motorista_a_caminho']} });
+            const corrida = await CM.findOne({ clienteTelefone:{$in:tels}, adminId, status:{$in:['aceita','em_andamento','motorista_a_caminho','aguardando_cliente']} });
             if (!corrida || !corrida.motoristaId) return null;
             const mot = await MotoristaService.buscarPorId(corrida.motoristaId);
             if (!mot || !mot.whatsapp) return null;
