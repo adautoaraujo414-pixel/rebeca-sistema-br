@@ -2993,7 +2993,7 @@ _(ou mande *0* para pular)_`;
                         telefone, nome, msgOriginal, conversa.adminId, conversa.instanciaId
                     );
                     if (duvida) {
-                        conversa.etapa = 'aguardando_resposta_admin';
+                        // Nao setar aguardando_admin — cliente fica preso. Apenas informar e liberar
                         conversa.dados.duvidaId = duvida._id;
                         // Verificar se pergunta sobre disponibilidade
                         const perguntaDisponibilidade = msgOriginal.toLowerCase().match(/(tem carro|tem motorista|tem veiculo|tem veículo|disponivel|disponível|funcionando|aberto|atende)/);
