@@ -2286,32 +2286,6 @@ _(ou mande *0* para pular)_`;
 Qual a cor da sua camisa? 👕
 
 _(ou mande *0* para pular)_`;
-            
-            // Criar corrida e despachar
-            const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
-            
-            // Se cooldown ativo
-            if (corrida.cooldown) {
-                return '⏳ Aguarde um momento...\n\nVocê finalizou uma corrida há pouco.\nPode pedir nova corrida em ' + Math.ceil(corrida.segundosRestantes / 60) + ' minuto(s).';
-            }
-            
-            // Se duplicada, avisar cliente
-            if (corrida.duplicada) {
-                return '⚠️ Você já tem uma corrida em andamento!\n\nDigite *CANCELAR* para cancelar ou aguarde o motorista.';
-            }
-            
-            conversa.etapa = 'aguardando_motorista';
-            conversa.dados.corridaId = corrida.id;
-            conversas.set(telefone, conversa);
-            
-            // Feedback rápido se não tem motorista
-            const motoristasAgora2 = await MotoristaService.listarDisponiveis(conversa.adminId);
-            if (motoristasAgora2.length === 0) {
-                return `📍 ${conversa.dados.origem}\n📌 ${msgOriginal}\n\nCorrida registrada! Todos os motoristas estão ocupados, te aviso assim que um aceitar.`;
-            }
-            
-            const _precoGps = conversa.dados?.calculo?.preco || 0;
-            return `📍 ${conversa.dados.origem}\n📌 ${msgOriginal}` + (_precoGps > 0 ? `\n💰 *Valor: R$ ${_precoGps.toFixed(2)}*` : '') + `\n\n⏳ Buscando motorista...\n_CANCELAR se precisar_`;
         }
         // ========== CLIENTE RECORRENTE - CONFIRMAR ENDEREÇO ==========
         else if (conversa.etapa === 'confirmar_endereco_anterior') {
@@ -2409,15 +2383,12 @@ _(ou mande *0* para pular)_`;
                 const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
                 if (corrida.cooldown) return 'Aguarde um momento. Você finalizou uma corrida há pouco.';
                 if (corrida.duplicada) return 'Você já tem uma corrida em andamento!';
-                conversa.etapa = 'aguardando_motorista';
+                conversa.etapa = 'pedir_aparencia';
                 conversa.dados.corridaId = corrida.id;
+                _agendarTimeoutAparencia(telefone, conversa.instanciaId, corrida.id, conversas);
                 conversas.set(telefone, conversa);
-                const motoristasAgora = await MotoristaService.listarDisponiveis(conversa.adminId);
-                if (motoristasAgora.length === 0) {
-                    return 'Encomenda registrada! Todos os motoristas estão ocupados. Te aviso assim que um aceitar.';
-                }
                 const _precoEnc = conversa.dados?.calculo?.preco || 0;
-                return 'Encomenda confirmada!' + (_precoEnc > 0 ? '\n💰 *Valor: R$ ' + _precoEnc.toFixed(2) + '*' : '') + '\n\n⏳ Buscando motorista...\n_Digite CANCELAR se precisar_';
+                return 'Encomenda confirmada!' + (_precoEnc > 0 ? ' 💰 *R$ ' + _precoEnc.toFixed(2) + '*' : '') + ' Qual a cor da sua camisa? 👕';
             } else {
                 conversa.etapa = 'inicio';
                 conversa.dados = {};
@@ -2435,15 +2406,11 @@ _(ou mande *0* para pular)_`;
                 const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
                 if (corrida.cooldown) return `⏳ Aguarde ${Math.ceil(corrida.segundosRestantes / 60)} min para nova corrida.`;
                 if (corrida.duplicada) return '⚠️ Você já tem corrida ativa! Digite *CANCELAR* para cancelar.';
-                conversa.etapa = 'aguardando_motorista';
+                conversa.etapa = 'pedir_aparencia';
                 conversa.dados.corridaId = corrida.id;
+                _agendarTimeoutAparencia(telefone, conversa.instanciaId, corrida.id, conversas);
                 conversas.set(telefone, conversa);
-                return `✅ Confirmado!
-
-📍 ${val.endereco}
-
-⏳ Buscando motorista...
-_Digite CANCELAR se precisar_`;
+                return 'Confirmado! Já chamei um motorista. Qual a cor da sua camisa? 👕';
             } else {
                 conversa.etapa = 'inicio';
                 conversa.dados.origemValidadaSuspeita = null;
@@ -2471,11 +2438,11 @@ _Digite CANCELAR se precisar_`;
                     const corridaNum = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
                     if (corridaNum.cooldown) return '⏳ Aguarde ' + Math.ceil(corridaNum.segundosRestantes / 60) + ' min para nova corrida.';
                     if (corridaNum.duplicada) return '⚠️ Você já tem corrida ativa! Digite *CANCELAR* para cancelar.';
-                    conversa.etapa = 'aguardando_motorista';
+                    conversa.etapa = 'pedir_aparencia';
                     conversa.dados.corridaId = corridaNum.id;
+                    _agendarTimeoutAparencia(telefone, conversa.instanciaId, corridaNum.id, conversas);
                     conversas.set(telefone, conversa);
-                    const _precoCpl = conversa.dados?.calculo?.preco || 0;
-                    return '📍 ' + enderecoCompleto + (_precoCpl > 0 ? '\n💰 *Valor: R$ ' + _precoCpl.toFixed(2) + '*' : '') + '\n\n⏳ Buscando motorista...\n_Digite CANCELAR se precisar_';
+                    return 'Certo! Já chamei um motorista. Qual a cor da sua camisa? 👕';
                 }
             } else {
                 resposta = '🔢 Por favor, informe o *número* da casa/prédio (ou *SN* se não tiver):';
@@ -2519,11 +2486,11 @@ _Digite CANCELAR se precisar_`;
                 return '⚠️ Você já tem uma corrida em andamento!\n\nDigite *CANCELAR* para cancelar ou aguarde o motorista.';
             }
             
-            conversa.etapa = 'aguardando_motorista';
+            conversa.etapa = 'pedir_aparencia';
             conversa.dados.corridaId = corridaBairro.id;
+            _agendarTimeoutAparencia(telefone, conversa.instanciaId, corridaBairro.id, conversas);
             conversas.set(telefone, conversa);
-            const _precoBairro = conversa.dados?.calculo?.preco || 0;
-            return `📍 ${enderecoCompleto}` + (_precoBairro > 0 ? `\n💰 *Valor: R$ ${_precoBairro.toFixed(2)}*` : '') + `\n\n⏳ Buscando motorista...\n_CANCELAR se precisar_`;
+            return 'Certo! Já chamei um motorista. Qual a cor da sua camisa? 👕';
         }
         // ========== REFERÊNCIA (NOVO FLUXO DIRETO) ==========
         // ========== BUSCAR TERCEIRO — NOME ==========
