@@ -3181,13 +3181,11 @@ Pode me passar o endereço completo? Ex: Rua X, número, bairro`;
                             
                             // Despacha direto
                             const _corr2359 = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
-                            conversa.etapa = 'aguardando_motorista';
+                            conversa.etapa = 'pedir_aparencia';
                             conversa.dados.corridaId = _corr2359.id;
+                            _agendarTimeoutAparencia(telefone, conversa.instanciaId, _corr2359.id, conversas);
                             conversas.set(telefone, conversa);
-                            let resp = `🚗 Chamando motorista!\n\n📍 *De:* ${conversa.dados.origem}`;
-                            if (conversa.dados.observacaoOrigem) resp += `\n📝 _${conversa.dados.observacaoOrigem}_`;
-                            resp += `\n\n🏁 *Para:* ${conversa.dados.destino}\n\n📏 ${calculo.distancia} | ⏱️ ${calculo.tempo}\n💰 *R$ ${calculo.preco.toFixed(2)}*\n\n⏳ Buscando...\n_CANCELAR para cancelar_`;
-                            return resp;
+                            return 'Certo! Já chamei um motorista. Qual a cor da sua camisa? 👕';
                         }
                     }
                     
