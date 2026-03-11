@@ -1279,10 +1279,10 @@ Me manda o endereço de *onde você está*!`;
                         
                         // Endereço sem bairro
                         if (resultadoGPT.intencao === 'INFORMAR_ENDERECO_SEM_BAIRRO') {
-                            // Tentar com cidade do admin
-                            conversa.etapa = 'pedir_numero_origem';
+                            conversa.dados.origemTexto = msgOriginal;
+                            conversa.etapa = 'pedir_bairro_origem';
                             conversas.set(telefone, conversa);
-                            return resultadoGPT.resposta;
+                            return resultadoGPT.resposta || '📍 Qual o *bairro*? (ex: Centro, Jardim América)';
                         }
                         
                         // Endereço completo - processar normalmente
@@ -1997,8 +1997,10 @@ Me manda o endereço de *onde você está*!`;
                 
                 // Rebeca aprende com a avaliação
                 try {
-                    if (ultimaCorrida) {
-                        await AprendizadoService.aprenderComAvaliacao(ultimaCorrida._id, nota, conversa.adminId);
+                    const { Corrida: _CorrAval } = require('../models');
+                    const _ucAval = await _CorrAval.findOne({ clienteTelefone: telefone, avaliacao: nota }).sort({ updatedAt: -1 });
+                    if (_ucAval) {
+                        await AprendizadoService.aprenderComAvaliacao(_ucAval._id, nota, conversa.adminId);
                     }
                 } catch(e) { console.log('[CATCH]', e.message); }
                 
@@ -2042,6 +2044,13 @@ Me manda o endereço de *onde você está*!`;
             resposta += `\n*1* - Cadastrar Casa\n*2* - Cadastrar Trabalho\n*0* - Voltar`;
         }
         else if (msg.includes("cancelar")) {
+            // Pedir confirmação antes de cancelar (exceto se já confirmou)
+            if (!conversa.dados._aguardandoCancelamento) {
+                conversa.dados._aguardandoCancelamento = true;
+                conversas.set(telefone, conversa);
+                resposta = "Confirma o cancelamento? Responde *SIM* para confirmar.";
+            } else {
+            conversa.dados._aguardandoCancelamento = false;
             // Buscar corrida ativa do cliente
             let cancelou = false;
             try {
@@ -2085,6 +2094,7 @@ Me manda o endereço de *onde você está*!`;
             } else {
                 resposta = 'Você não tem corrida ativa.\n\nEnvie sua localização para pedir! 📍';
             }
+            } // fim else confirmacao cancelamento
         }
         else if (msg.includes('rastrear') || msg.includes('onde está') || msg.includes('cadê') || msg.includes('cade o motorista')) {
             resposta = await RebecaService.enviarRastreamento(telefone);
@@ -2533,25 +2543,24 @@ _(ou mande *0* para pular)_`;
                     'Posso te avisar assim que um motorista desocupar? Responde *SIM*!';
             }
 
-            // Criar corrida e despachar
-            const corridaAp = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
-
-            if (corridaAp.cooldown) {
-                return '⏳ Você finalizou uma corrida recentemente. Aguarde ' + Math.ceil(corridaAp.segundosRestantes / 60) + ' minuto(s).';
-            }
-            if (corridaAp.duplicada) {
-                return '⚠️ Você já tem uma corrida em andamento!\n\nDigite *CANCELAR* para cancelar ou aguarde o motorista.';
+            // Usar corridaId existente — corrida já foi criada antes de pedir_aparencia
+            const _corridaIdAp = conversa.dados.corridaId;
+            if (!_corridaIdAp) {
+                // Fallback: criar se por algum motivo não existe
+                const corridaApFb = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
+                if (corridaApFb.cooldown) return '⏳ Aguarde ' + Math.ceil(corridaApFb.segundosRestantes / 60) + ' min.';
+                if (corridaApFb.duplicada) return '⚠️ Você já tem corrida ativa! Digite *CANCELAR* para cancelar.';
+                conversa.dados.corridaId = corridaApFb.id;
             }
 
             // Salvar aparência na corrida no banco
-            if (conversa.dados.aparenciaCliente && corridaAp.id) {
+            if (conversa.dados.aparenciaCliente && conversa.dados.corridaId) {
                 try {
-                    await require('../models').Corrida.findByIdAndUpdate(corridaAp.id, { aparenciaCliente: conversa.dados.aparenciaCliente });
+                    await require('../models').Corrida.findByIdAndUpdate(conversa.dados.corridaId, { aparenciaCliente: conversa.dados.aparenciaCliente });
                 } catch(e) { console.log('[REBECA] Erro salvar aparencia:', e.message); }
             }
 
             conversa.etapa = 'aguardando_motorista';
-            conversa.dados.corridaId = corridaAp.id;
             conversas.set(telefone, conversa);
 
             let msgAp = `📍 *${conversa.dados.origem}*`;
