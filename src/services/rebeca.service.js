@@ -3669,9 +3669,9 @@ _(ou mande *0* para pular)_`;
     },
 
     async historicoCliente(telefone) {
-        const cliente = ClienteService.buscarPorTelefone(telefone);
+        const cliente = await ClienteService.buscarPorTelefone(telefone);
         if (!cliente) return `📋 Sem corridas. Envie endereço para pedir!`;
-        const corridas = CorridaService.listarPorCliente(cliente.id);
+        const corridas = await CorridaService.listarPorCliente(cliente.id);
         if (!corridas?.length) return `📋 Sem corridas. Envie endereço para pedir!`;
         let m = `📋 *CORRIDAS*\n\n`;
         corridas.slice(0, 5).forEach(c => {
