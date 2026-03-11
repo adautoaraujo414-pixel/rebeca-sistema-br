@@ -3309,7 +3309,7 @@ _(ou mande *0* para pular)_`;
         // Verificar se cliente ja usou antes
         let jaUsou = false;
         try {
-            const cl = await ClienteService.buscarPorTelefone(telefone);
+            const cl = ClienteService.buscarPorTelefone(telefone);
             if (cl) jaUsou = true;
         } catch(e) { console.log('[CATCH]', e.message); }
         
