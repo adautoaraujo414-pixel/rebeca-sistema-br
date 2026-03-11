@@ -395,8 +395,10 @@ router.post('/chat', auth, async (req, res) => {
         
         if (instancia) {
             const msgCliente = '🚗 *Mensagem do motorista ' + (req.motorista.nomeCompleto || req.motorista.nome) + ':*\n\n' + texto;
-            await EvolutionMultiService.enviarMensagem(instancia._id, corrida.clienteTelefone, msgCliente);
-            console.log('[CHAT] Mensagem enviada para', corrida.clienteTelefone);
+            const envioResult = await EvolutionMultiService.enviarMensagem(instancia._id, corrida.clienteTelefone, msgCliente);
+            console.log('[CHAT] Envio resultado:', JSON.stringify(envioResult));
+        } else {
+            console.log('[CHAT] FALHA: Nenhuma instancia conectada para adminId:', corrida.adminId);
         }
         
         const novaMensagem = { texto, remetente: req.motorista._id, nomeRemetente: req.motorista.nomeCompleto || req.motorista.nome, data: new Date(), tipo: 'motorista' };

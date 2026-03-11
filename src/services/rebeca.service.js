@@ -3800,7 +3800,7 @@ _(ou mande *0* para pular)_`;
             
             // Notificar cliente que motorista está a caminho COM TEMPO ESTIMADO
             const corrida = await CorridaService.buscarPorId(notif.corridaId);
-            if (corrida && corrida.clienteTelefone && instanciaId) {
+            if (corrida && corrida.clienteTelefone) {
                 // Calcular tempo estimado de chegada
                 let tempoEstimado = '';
                 if (motorista.latitude && motorista.longitude && corrida.origem?.latitude && corrida.origem?.longitude) {
@@ -3830,7 +3830,18 @@ _(ou mande *0* para pular)_`;
                 if (tempoEstimado) msgCliente += tempoEstimado;
                 msgCliente += `\n\n📲 *Acompanhe o motorista em tempo real:*\n${linkRastreamento}`;
                 msgCliente += `\n\n💬 Qualquer dúvida pode falar aqui!`;
-                await EvolutionMultiService.enviarMensagem(instanciaId, corrida.clienteTelefone, msgCliente);
+
+                // Buscar instância disponível — usa instanciaId da conversa ou qualquer conectada do admin
+                const { InstanciaWhatsapp } = require('../models');
+                const instEnvio = instanciaId
+                    ? await InstanciaWhatsapp.findById(instanciaId)
+                    : await InstanciaWhatsapp.findOne({ adminId, status: { $in: ['conectado','open','connected'] } });
+                if (instEnvio) {
+                    await EvolutionMultiService.enviarMensagem(instEnvio._id, corrida.clienteTelefone, msgCliente);
+                    console.log('[ACEITAR-WA] Notificação enviada para cliente via', instEnvio.nomeInstancia);
+                } else {
+                    console.log('[ACEITAR-WA] FALHA: nenhuma instancia disponivel para adminId:', adminId);
+                }
             }
             
             // ===== ENVIAR FOTO DO CLIENTE PARA O MOTORISTA =====
