@@ -3309,7 +3309,7 @@ _(ou mande *0* para pular)_`;
         // Verificar se cliente ja usou antes
         let jaUsou = false;
         try {
-            const cl = ClienteService.buscarPorTelefone(telefone);
+            const cl = await ClienteService.buscarPorTelefone(telefone);
             if (cl) jaUsou = true;
         } catch(e) { console.log('[CATCH]', e.message); }
         
@@ -3367,14 +3367,16 @@ _(ou mande *0* para pular)_`;
         return t + `\n\n_Me manda o endereço para calcular o valor exato!_`;
     },
 
-    async enviarExemplosPreco() {
-        const faixa = await PrecoAdminService.getFaixaAtual(adminId);
-        let m = `📊 *EXEMPLOS* _(${faixa.nome})_\n\n`;
-        for (const km of [3, 5, 10, 15, 20]) {
-            const calc = await PrecoAdminService.calcularPreco(adminId, km);
-            m += `${km}km → R$ ${calc.preco.toFixed(2)}\n`;
-        }
-        return m;
+    async enviarExemplosPreco(adminId = null) {
+        try {
+            const faixa = await PrecoAdminService.getFaixaAtual(adminId);
+            let m = `📊 *EXEMPLOS* _(${faixa.nome})_\n\n`;
+            for (const km of [3, 5, 10, 15, 20]) {
+                const calc = await PrecoAdminService.calcularPreco(adminId, km);
+                if (calc?.precoFinal) m += `${km}km → R$ ${calc.precoFinal.toFixed(2)}\n`;
+            }
+            return m;
+        } catch(e) { return null; }
     },
 
     async calcularCorrida(origem, destino, adminId = null) {
