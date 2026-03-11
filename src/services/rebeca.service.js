@@ -837,9 +837,10 @@ Me manda o endereço de *onde você está*!`;
                     if (_de.horario) conversa.dados.horarioAgendamento = _de.horario;
 
                     // DESPACHAR AGORA — só origem já basta
-                    if (_resCerebro.acao === 'despachar_agora' && _de.origem) {
-                        conversa.dados.origem = _de.origem;
-                        conversa.dados.origemValidada = { valido: true, precisao: 'cerebro', endereco: _de.origem };
+                    const _origemFinal = _de.origem || conversa.dados.origem;
+                    if (_resCerebro.acao === 'despachar_agora' && _origemFinal) {
+                        conversa.dados.origem = _origemFinal;
+                        conversa.dados.origemValidada = { valido: true, precisao: 'cerebro', endereco: _origemFinal };
                         if (_de.nome_cliente) conversa.dados.nomeCliente = _de.nome_cliente;
                         try {
                             const _motsC = await MotoristaService.listarDisponiveis(conversa.adminId);
