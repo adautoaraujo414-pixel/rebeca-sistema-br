@@ -2147,13 +2147,26 @@ Me manda o endereço de *onde você está*!`;
                             // Liberar motorista
                             await MotoristaService.atualizarStatus(corridaAtiva.motoristaId, 'disponivel');
                             console.log('[CANCELAR] Motorista liberado para novas corridas');
+                            // Limpar conversa do motorista no mapa de conversas
+                            try {
+                                if (motorista.whatsapp) {
+                                    const _telMot = motorista.whatsapp.replace(/\D/g, '');
+                                    const _convMot = conversas.get(_telMot);
+                                    if (_convMot) {
+                                        conversas.set(_telMot, { etapa: 'inicio', dados: {}, adminId: _convMot.adminId, instanciaId: _convMot.instanciaId });
+                                        console.log('[CANCELAR] Conversa do motorista resetada:', _telMot);
+                                    }
+                                }
+                            } catch(eConv) { console.log('[CANCELAR] Erro reset conversa motorista:', eConv.message); }
                         } catch(e) { console.log('[REBECA] Erro notificar motorista cancelamento:', e.message); }
                     }
                 }
             } catch(e) { console.log('[REBECA] Erro cancelar:', e.message); }
             
+            // Resetar conversa do cliente completamente
             conversa.etapa = 'inicio';
             conversa.dados = {};
+            conversas.set(telefone, conversa);
             if (cancelou) {
                 resposta = '✅ Corrida cancelada!\n\nQuando precisar, é só chamar! 📍';
             } else {
