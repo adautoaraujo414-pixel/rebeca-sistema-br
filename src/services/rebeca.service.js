@@ -4283,7 +4283,7 @@ const _agendarTimeoutAparencia = (telefone, instanciaId, corridaId, conversas) =
         if (!_conv || _conv.etapa !== 'pedir_aparencia') return; // cliente já respondeu
         _conv.etapa = 'aguardando_motorista';
         conversas.set(telefone, _conv);
-        console.log('[APARENCIA_TIMEOUT] 30s sem resposta, avançando:', telefone);
+        console.log('[APARENCIA_TIMEOUT] 15s sem resposta, avançando:', telefone);
         try {
             const { InstanciaWhatsapp } = require('../models');
             const _inst = await InstanciaWhatsapp.findById(instanciaId).catch(() => null);
