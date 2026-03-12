@@ -101,11 +101,12 @@ router.get('/rastrear/:codigo', async (req, res) => {
             return res.status(404).json({ error: 'Corrida não encontrada' });
         }
         
-        // Link expira quando corrida inicia, finaliza ou cancela
-        if (['finalizada', 'cancelada'].includes(corrida.status)) {
+        // Link expira quando corrida finaliza ou cancela
+        const statusCorrida = corrida.status || 'pendente';
+        if (['finalizada', 'cancelada'].includes(statusCorrida)) {
             return res.json({ 
                 expirado: true, 
-                status: corrida.status,
+                status: statusCorrida,
                 mensagem: corrida.status === 'finalizada' ? 'Corrida finalizada - obrigado!' : 'Corrida cancelada'
             });
         }

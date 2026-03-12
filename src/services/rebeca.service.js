@@ -4020,7 +4020,13 @@ _(ou mande *0* para pular)_`;
             const corrida = await CorridaService.buscarCorridaAtivaMotorista(mot._id);
             if (!corrida || !corrida.clienteTelefone) return null;
             const nomeMot = mot.nomeCompleto || mot.nome;
-            await EvolutionMultiService.enviarMensagem(instanciaId, corrida.clienteTelefone, '💬 *' + nomeMot + ':* ' + mensagem);
+            // Buscar instância com fallback
+            const { InstanciaWhatsapp: IWm } = require('../models');
+            const instMot = instanciaId
+                ? await IWm.findById(instanciaId).catch(() => null)
+                : await IWm.findOne({ adminId, status: { $in: ['conectado','open','connected'] } });
+            if (!instMot) { console.log('[CHAT] Sem instancia para motorista->cliente, adminId:', adminId); return null; }
+            await EvolutionMultiService.enviarMensagem(instMot._id, corrida.clienteTelefone, '💬 *' + nomeMot + ':* ' + mensagem);
             try { const { Corrida: CM } = require('../models'); await CM.findByIdAndUpdate(corrida._id, { $push: { chatMensagens: { texto: mensagem, remetente: 'motorista', nomeRemetente: nomeMot, data: new Date() } } }); } catch(e){}
             console.log('[CHAT] Motorista->Cliente:', mensagem.substring(0,40));
             return { enviado: true };
@@ -4031,7 +4037,9 @@ _(ou mande *0* para pular)_`;
         try {
             const { Corrida: CM } = require('../models');
             const tels = [telefoneCliente, '55'+telefoneCliente, telefoneCliente.replace(/^55/,'')];
-            const corrida = await CM.findOne({ clienteTelefone:{$in:tels}, adminId, status:{$in:['aceita','em_andamento','motorista_a_caminho','aguardando_cliente']} });
+            const queryChat = { clienteTelefone:{$in:tels}, status:{$in:['aceita','em_andamento','motorista_a_caminho','aguardando_cliente']} };
+            if (adminId) queryChat.adminId = adminId;
+            const corrida = await CM.findOne(queryChat);
             if (!corrida || !corrida.motoristaId) return null;
             const mot = await MotoristaService.buscarPorId(corrida.motoristaId);
             if (!mot || !mot.whatsapp) return null;
