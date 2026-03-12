@@ -4293,11 +4293,25 @@ const _agendarTimeoutAparencia = (telefone, instanciaId, corridaId, conversas) =
         conversas.set(telefone, _conv);
         console.log('[APARENCIA_TIMEOUT] 15s sem resposta, avançando:', telefone);
         try {
-            const { InstanciaWhatsapp } = require('../models');
-            const _inst = await InstanciaWhatsapp.findById(instanciaId).catch(() => null);
+            const { InstanciaWhatsapp: IWT, Corrida: CT } = require('../models');
+            const _inst = instanciaId
+                ? await IWT.findById(instanciaId).catch(() => null)
+                : await IWT.findOne({ status: { $in: ['conectado','open','connected'] } });
             if (_inst) {
-                await EvolutionMultiService.enviarMensagem(instanciaId, telefone,
+                await EvolutionMultiService.enviarMensagem(_inst._id, telefone,
                     'Tudo certo! O motorista já está sendo chamado 🚗');
+            }
+            // Avisar motorista que cliente não informou cor
+            if (corridaId) {
+                const _corrT = await CT.findById(corridaId).lean();
+                if (_corrT && _corrT.motoristaId) {
+                    const _motT = await MotoristaService.buscarPorId(_corrT.motoristaId);
+                    if (_motT && _motT.whatsapp && _inst) {
+                        await EvolutionMultiService.enviarMensagem(_inst._id, _motT.whatsapp,
+                            '👕 *Aparência do cliente:* não informada');
+                        console.log('[APARENCIA_TIMEOUT] Motorista avisado: sem cor informada');
+                    }
+                }
             }
         } catch(e) { console.log('[APARENCIA_TIMEOUT] Erro:', e.message); }
     }, 30 * 1000);
