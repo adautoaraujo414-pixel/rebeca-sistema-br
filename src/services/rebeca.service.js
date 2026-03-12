@@ -2625,6 +2625,30 @@ _(ou mande *0* para pular)_`;
                 } catch(e) { console.log('[REBECA] Erro salvar aparencia:', e.message); }
             }
 
+            // Repassar cor da camisa ao motorista via WhatsApp
+            if (conversa.dados.aparenciaCliente && conversa.dados.corridaId) {
+                try {
+                    const { Corrida: _CA, InstanciaWhatsapp: _IWA } = require('../models');
+                    const _corrAp = await _CA.findById(conversa.dados.corridaId).lean();
+                    if (_corrAp && _corrAp.motoristaId) {
+                        const _motAp = await MotoristaService.buscarPorId(_corrAp.motoristaId);
+                        if (_motAp && _motAp.whatsapp) {
+                            const _instAp = conversa.instanciaId
+                                ? await _IWA.findById(conversa.instanciaId).catch(() => null)
+                                : await _IWA.findOne({ adminId: conversa.adminId, status: { $in: ['conectado','open','connected'] } });
+                            if (_instAp) {
+                                await EvolutionMultiService.enviarMensagem(
+                                    _instAp._id,
+                                    _motAp.whatsapp,
+                                    '👕 *Aparência do cliente:* ' + conversa.dados.aparenciaCliente
+                                );
+                                console.log('[APARENCIA] Cor enviada ao motorista:', conversa.dados.aparenciaCliente);
+                            }
+                        }
+                    }
+                } catch(eAp) { console.log('[APARENCIA] Erro enviar ao motorista:', eAp.message); }
+            }
+
             conversa.etapa = 'aguardando_motorista';
             conversas.set(telefone, conversa);
 
