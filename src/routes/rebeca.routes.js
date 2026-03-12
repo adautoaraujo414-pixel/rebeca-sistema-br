@@ -114,8 +114,8 @@ router.get('/rastrear/:codigo', async (req, res) => {
         let motoristaGPS = null;
         
         if (corrida.motoristaId) {
-            motorista = await Motorista.findById(corrida.motoristaId);
-            motoristaGPS = GPSIntegradoService.obterLocalizacao(corrida.motoristaId.toString());
+            try { motorista = await Motorista.findById(corrida.motoristaId); } catch(e) {}
+            try { motoristaGPS = GPSIntegradoService.obterLocalizacao(corrida.motoristaId.toString()); } catch(e) {}
         }
         
         res.json({
