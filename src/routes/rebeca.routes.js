@@ -85,8 +85,12 @@ router.get('/rastrear/:codigo', async (req, res) => {
         // Buscar corrida pelo código (últimos caracteres do ID)
         // ObjectId não suporta regex, então buscamos as recentes e filtramos
         let corrida = null;
-        const recentes = await Corrida.find({}).sort({ createdAt: -1 }).limit(100).lean();
-        corrida = recentes.find(c => c._id.toString().endsWith(codigo)) || recentes.find(c => c._id.toString().includes(codigo));
+        // Buscar por tokenRastreamento primeiro
+        corrida = await Corrida.findOne({ tokenRastreamento: codigo }).lean();
+        if (!corrida) {
+            const recentes = await Corrida.find({}).sort({ createdAt: -1 }).limit(500).lean();
+            corrida = recentes.find(c => c._id.toString().endsWith(codigo)) || recentes.find(c => c._id.toString().includes(codigo));
+        }
         
         // Fallback: tentar como ID completo
         if (!corrida && codigo.length >= 20) {
