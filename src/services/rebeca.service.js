@@ -4065,6 +4065,29 @@ _(ou mande *0* para pular)_`;
     // Colocar em modo avaliacao
 
     
+    // ===== PONTOS DE REFERÊNCIA DO BANCO =====
+    async buscarPontoReferenciaBanco(texto, adminId) {
+        try {
+            const { PontoReferencia } = require('../models');
+            if (!PontoReferencia) return null;
+            const lower = texto.toLowerCase().trim();
+            // Busca exata ou similar no banco
+            const pontos = await PontoReferencia.find({
+                adminId,
+                $or: [
+                    { nome: { $regex: lower, $options: 'i' } },
+                    { apelidos: { $regex: lower, $options: 'i' } }
+                ],
+                ativo: { $ne: false }
+            }).limit(3).lean();
+            if (pontos.length > 0) {
+                // Retornar o mais similar
+                return pontos[0];
+            }
+        } catch(e) { /* modelo pode não existir */ }
+        return null;
+    },
+
     // ===== CHAT INTERMEDIADO MOTORISTA↔CLIENTE =====
     async motoristaMensagemParaCliente(telefoneMotorista, mensagem, adminId, instanciaId) {
         try {
@@ -4100,10 +4123,12 @@ _(ou mande *0* para pular)_`;
             // Buscar instância com fallback
             const { InstanciaWhatsapp: IW } = require('../models');
             const instChat = instanciaId
-                ? await IW.findById(instanciaId)
+                ? await IW.findById(instanciaId).catch(() => null)
                 : await IW.findOne({ adminId, status: { $in: ['conectado','open','connected'] } });
-            if (!instChat) { console.log('[CHAT] Sem instancia disponivel para adminId:', adminId); return null; }
-            await EvolutionMultiService.enviarMensagem(instChat._id, mot.whatsapp, '💬 *' + nomeCli + ':* ' + mensagem + '\n_Responda aqui que eu repasso!_');
+            // Fallback: qualquer instância conectada do admin
+            const instFinalChat = instChat || await IW.findOne({ adminId, status: { $in: ['conectado','open','connected'] } }).catch(() => null);
+            if (!instFinalChat) { console.log('[CHAT] Sem instancia disponivel para adminId:', adminId); return null; }
+            await EvolutionMultiService.enviarMensagem(instFinalChat._id, mot.whatsapp, '💬 *' + nomeCli + ':* ' + mensagem + '\n_Responda aqui que eu repasso!_');
             await CM.findByIdAndUpdate(corrida._id, { $push: { chatMensagens: { texto: mensagem, remetente: 'cliente', nomeRemetente: nomeCli, data: new Date() } } });
             console.log('[CHAT] Cliente->Motorista:', mensagem.substring(0,40));
             return { enviado: true, motoristaNome: mot.nomeCompleto||mot.nome };
