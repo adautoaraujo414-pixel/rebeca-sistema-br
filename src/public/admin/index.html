@@ -277,6 +277,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="menu-section">Sistema</div>
             <div class="menu-item" data-page="usuarios">👤 Usuários Admin</div>
             <div class="menu-item" data-page="areas">🗺️ Áreas</div>
+            <div class="menu-item" data-page="pontos-ref">📍 Pontos de Referência</div>
             <div class="menu-item" data-page="config">⚙️ Configurações</div>
             <div class="menu-item" data-page="logs">📜 Logs</div>
         </nav>
@@ -1328,6 +1329,160 @@ function fecharPWABanner(){document.getElementById('pwa-banner').style.display='
 <div class="form-group"><label>Novo PIN (6 dígitos) — deixe em branco para não alterar</label><input type="text" id="editMotSenhaPin" maxlength="6" pattern="[0-9]{6}" placeholder="Deixe em branco para manter" style="width:100%;padding:15px;background:#1a1a2e;border:1px solid #333;border-radius:8px;color:#fff;font-size:18px;letter-spacing:8px;text-align:center"></div>
 <button type="submit" class="btn btn-success" style="width:100%;padding:12px;">💾 Salvar Alterações</button>
 </form></div></div>
+
+<!-- ===== PONTOS DE REFERÊNCIA ===== -->
+<div id="page-pontos-ref" class="page" style="display:none; padding:20px;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+    <h2 style="color:#e94560; margin:0;">📍 Pontos de Referência</h2>
+    <button onclick="abrirModalPonto()" style="background:#e94560; color:white; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-size:0.95em;">+ Novo Ponto</button>
+  </div>
+  <p style="color:#aaa; margin-bottom:20px; font-size:0.9em;">Cadastre pontos conhecidos (hospitais, shoppings, escolas...) para a Rebeca reconhecer automaticamente quando o cliente mencionar.</p>
+
+  <div style="margin-bottom:15px;">
+    <input id="busca-ponto" type="text" placeholder="🔍 Buscar ponto..." oninput="filtrarPontos()" style="width:100%; padding:10px; background:#1a1a2e; border:1px solid #333; border-radius:8px; color:white; font-size:0.95em; box-sizing:border-box;">
+  </div>
+
+  <div id="lista-pontos" style="display:grid; gap:10px;"></div>
+
+  <!-- Modal cadastro/edição -->
+  <div id="modal-ponto" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:9999; justify-content:center; align-items:center;">
+    <div style="background:#1a1a2e; border:1px solid #e94560; border-radius:12px; padding:30px; width:90%; max-width:500px;">
+      <h3 style="color:#e94560; margin:0 0 20px;">📍 <span id="modal-ponto-titulo">Novo Ponto</span></h3>
+      <input type="hidden" id="ponto-id">
+      <div style="margin-bottom:12px;">
+        <label style="color:#aaa; font-size:0.85em;">Nome principal *</label>
+        <input id="ponto-nome" type="text" placeholder="Ex: Hospital Municipal" style="width:100%; padding:10px; background:#0f0f1a; border:1px solid #333; border-radius:6px; color:white; margin-top:4px; box-sizing:border-box;">
+      </div>
+      <div style="margin-bottom:12px;">
+        <label style="color:#aaa; font-size:0.85em;">Apelidos (separados por vírgula)</label>
+        <input id="ponto-apelidos" type="text" placeholder="Ex: hospital, UPA, pronto socorro" style="width:100%; padding:10px; background:#0f0f1a; border:1px solid #333; border-radius:6px; color:white; margin-top:4px; box-sizing:border-box;">
+      </div>
+      <div style="margin-bottom:12px;">
+        <label style="color:#aaa; font-size:0.85em;">Endereço</label>
+        <input id="ponto-endereco" type="text" placeholder="Ex: Rua das Flores, 123 - Centro" style="width:100%; padding:10px; background:#0f0f1a; border:1px solid #333; border-radius:6px; color:white; margin-top:4px; box-sizing:border-box;">
+      </div>
+      <div style="margin-bottom:20px;">
+        <label style="color:#aaa; font-size:0.85em;">Tipo</label>
+        <select id="ponto-tipo" style="width:100%; padding:10px; background:#0f0f1a; border:1px solid #333; border-radius:6px; color:white; margin-top:4px;">
+          <option value="outro">Outro</option>
+          <option value="hospital">Hospital / UPA</option>
+          <option value="shopping">Shopping</option>
+          <option value="escola">Escola / Faculdade</option>
+          <option value="comercio">Comércio</option>
+          <option value="rodoviaria">Rodoviária / Terminal</option>
+          <option value="lazer">Lazer / Praça</option>
+        </select>
+      </div>
+      <div style="display:flex; gap:10px;">
+        <button onclick="salvarPonto()" style="flex:1; background:#e94560; color:white; border:none; padding:12px; border-radius:8px; cursor:pointer; font-size:1em;">Salvar</button>
+        <button onclick="fecharModalPonto()" style="flex:1; background:#333; color:white; border:none; padding:12px; border-radius:8px; cursor:pointer; font-size:1em;">Cancelar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== PONTOS DE REFERÊNCIA =====
+let _pontosRef = [];
+
+async function carregarPontos() {
+    try {
+        const token = localStorage.getItem('adminToken');
+        const r = await fetch('/api/pontos-referencia', { headers: { 'Authorization': 'Bearer ' + token } });
+        const data = await r.json();
+        _pontosRef = data.pontos || data || [];
+        renderizarPontos(_pontosRef);
+    } catch(e) { document.getElementById('lista-pontos').innerHTML = '<p style="color:#e94560">Erro ao carregar pontos.</p>'; }
+}
+
+function renderizarPontos(pontos) {
+    const el = document.getElementById('lista-pontos');
+    if (!pontos.length) { el.innerHTML = '<p style="color:#888; text-align:center; padding:40px;">Nenhum ponto cadastrado ainda.<br>Clique em "+ Novo Ponto" para adicionar.</p>'; return; }
+    el.innerHTML = pontos.map(p => `
+        <div style="background:#16213e; border:1px solid #2a2a4a; border-radius:10px; padding:15px; display:flex; justify-content:space-between; align-items:center;">
+            <div>
+                <div style="color:white; font-weight:bold; font-size:1em;">${p.nome}</div>
+                ${p.apelidos && p.apelidos.length ? `<div style="color:#aaa; font-size:0.8em; margin-top:3px;">🏷️ ${p.apelidos.join(', ')}</div>` : ''}
+                ${p.endereco ? `<div style="color:#888; font-size:0.8em; margin-top:2px;">📍 ${p.endereco}</div>` : ''}
+                <div style="margin-top:5px;"><span style="background:#e94560; color:white; font-size:0.75em; padding:2px 8px; border-radius:20px;">${p.tipo || 'outro'}</span></div>
+            </div>
+            <div style="display:flex; gap:8px;">
+                <button onclick="editarPonto('${p._id}')" style="background:#252542; color:#00d4ff; border:1px solid #00d4ff; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.85em;">✏️</button>
+                <button onclick="excluirPonto('${p._id}')" style="background:#252542; color:#e94560; border:1px solid #e94560; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.85em;">🗑️</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function filtrarPontos() {
+    const q = document.getElementById('busca-ponto').value.toLowerCase();
+    const filtrado = _pontosRef.filter(p => p.nome.toLowerCase().includes(q) || (p.apelidos || []).some(a => a.toLowerCase().includes(q)) || (p.endereco || '').toLowerCase().includes(q));
+    renderizarPontos(filtrado);
+}
+
+function abrirModalPonto() {
+    document.getElementById('ponto-id').value = '';
+    document.getElementById('ponto-nome').value = '';
+    document.getElementById('ponto-apelidos').value = '';
+    document.getElementById('ponto-endereco').value = '';
+    document.getElementById('ponto-tipo').value = 'outro';
+    document.getElementById('modal-ponto-titulo').textContent = 'Novo Ponto';
+    document.getElementById('modal-ponto').style.display = 'flex';
+}
+
+function editarPonto(id) {
+    const p = _pontosRef.find(x => x._id === id);
+    if (!p) return;
+    document.getElementById('ponto-id').value = p._id;
+    document.getElementById('ponto-nome').value = p.nome;
+    document.getElementById('ponto-apelidos').value = (p.apelidos || []).join(', ');
+    document.getElementById('ponto-endereco').value = p.endereco || '';
+    document.getElementById('ponto-tipo').value = p.tipo || 'outro';
+    document.getElementById('modal-ponto-titulo').textContent = 'Editar Ponto';
+    document.getElementById('modal-ponto').style.display = 'flex';
+}
+
+function fecharModalPonto() { document.getElementById('modal-ponto').style.display = 'none'; }
+
+async function salvarPonto() {
+    const id = document.getElementById('ponto-id').value;
+    const nome = document.getElementById('ponto-nome').value.trim();
+    if (!nome) { alert('Nome é obrigatório!'); return; }
+    const dados = {
+        nome,
+        apelidos: document.getElementById('ponto-apelidos').value.split(',').map(s => s.trim()).filter(Boolean),
+        endereco: document.getElementById('ponto-endereco').value.trim(),
+        tipo: document.getElementById('ponto-tipo').value
+    };
+    try {
+        const token = localStorage.getItem('adminToken');
+        const url = id ? '/api/pontos-referencia/' + id : '/api/pontos-referencia';
+        const method = id ? 'PUT' : 'POST';
+        const r = await fetch(url, { method, headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify(dados) });
+        if (r.ok) { fecharModalPonto(); carregarPontos(); }
+        else { const e = await r.json(); alert('Erro: ' + (e.error || 'desconhecido')); }
+    } catch(e) { alert('Erro ao salvar: ' + e.message); }
+}
+
+async function excluirPonto(id) {
+    if (!confirm('Excluir este ponto?')) return;
+    try {
+        const token = localStorage.getItem('adminToken');
+        await fetch('/api/pontos-referencia/' + id, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + token } });
+        carregarPontos();
+    } catch(e) { alert('Erro ao excluir'); }
+}
+
+// Carregar ao abrir a aba
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.menu-item').forEach(item => {
+        if (item.dataset.page === 'pontos-ref') {
+            item.addEventListener('click', () => { carregarPontos(); });
+        }
+    });
+});
+</script>
+
 </body>
 </html>
 

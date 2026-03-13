@@ -94,3 +94,37 @@ router.delete('/emergencia/:id', async (req, res) => {
 });
 
 module.exports = router;
+
+// ===== PONTOS DE REFERÊNCIA =====
+const { PontoReferencia } = require('../models');
+
+router.get('/pontos-referencia', authMiddleware, async (req, res) => {
+    try {
+        const pontos = await PontoReferencia.find({ adminId: req.adminId, ativo: { $ne: false } }).sort({ nome: 1 }).lean();
+        res.json({ pontos });
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+router.post('/pontos-referencia', authMiddleware, async (req, res) => {
+    try {
+        const { nome, apelidos, endereco, tipo } = req.body;
+        if (!nome) return res.status(400).json({ error: 'Nome obrigatório' });
+        const ponto = await PontoReferencia.create({ adminId: req.adminId, nome, apelidos: apelidos || [], endereco: endereco || '', tipo: tipo || 'outro' });
+        res.json({ ponto });
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+router.put('/pontos-referencia/:id', authMiddleware, async (req, res) => {
+    try {
+        const ponto = await PontoReferencia.findOneAndUpdate({ _id: req.params.id, adminId: req.adminId }, req.body, { new: true });
+        if (!ponto) return res.status(404).json({ error: 'Não encontrado' });
+        res.json({ ponto });
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+router.delete('/pontos-referencia/:id', authMiddleware, async (req, res) => {
+    try {
+        await PontoReferencia.findOneAndUpdate({ _id: req.params.id, adminId: req.adminId }, { ativo: false });
+        res.json({ ok: true });
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
