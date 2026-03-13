@@ -449,8 +449,12 @@ const RebecaService = {
             // Chat intermediado: motorista com corrida ativa repassa msg pro cliente
             const _corridaMot = await CorridaService.buscarCorridaAtivaMotorista(ehMotorista._id);
             if (_corridaMot && _corridaMot.clienteTelefone) {
-                const _resChat = await RebecaService.motoristaMensagemParaCliente(telefone, msgOriginal, adminId, contexto.instanciaId);
+                // Usar adminId da corrida se o contexto não trouxer
+                const _adminChat = adminId || _corridaMot.adminId?.toString();
+                const _instChat = contexto.instanciaId || _corridaMot.instanciaId?.toString();
+                const _resChat = await RebecaService.motoristaMensagemParaCliente(telefone, msgOriginal, _adminChat, _instChat);
                 if (_resChat && _resChat.enviado) return '✅ Mensagem enviada pro cliente!';
+                console.log('[CHAT] motorista->cliente falhou, adminId:', _adminChat, 'instanciaId:', _instChat);
             }
             return null;
         }
@@ -4015,12 +4019,24 @@ _(ou mande *0* para pular)_`;
                 const msgCliente = '❌ *CORRIDA CANCELADA*\n\nO motorista precisou cancelar.\n\nEnvie sua localização para solicitar outro motorista.';
                 const { InstanciaWhatsapp } = require('../models');
                 const instEnvio = instanciaId
-                    ? await InstanciaWhatsapp.findById(instanciaId)
+                    ? await InstanciaWhatsapp.findById(instanciaId).catch(() => null)
                     : await InstanciaWhatsapp.findOne({ adminId, status: { $in: ['conectado','open','connected'] } });
-                if (instEnvio) {
-                    await EvolutionMultiService.enviarMensagem(instEnvio._id, corrida.clienteTelefone, msgCliente);
-                    console.log('[CANCEL-MOT] Cliente notificado do cancelamento');
+                // Fallback: buscar qualquer instância conectada do admin
+                const instFinal = instEnvio || await InstanciaWhatsapp.findOne({ adminId, status: { $in: ['conectado','open','connected'] } }).catch(() => null);
+                if (instFinal) {
+                    await EvolutionMultiService.enviarMensagem(instFinal._id, corrida.clienteTelefone, msgCliente);
+                    console.log('[CANCEL-MOT] Cliente notificado do cancelamento via:', instFinal._id);
+                } else {
+                    console.log('[CANCEL-MOT] ERRO: nenhuma instância disponível para notificar cliente, adminId:', adminId);
                 }
+                // Resetar conversa do cliente para inicio
+                try {
+                    const _telCli = corrida.clienteTelefone.replace(/\D/g, '');
+                    const _convCli = conversas.get(_telCli) || conversas.get('55' + _telCli) || conversas.get(_telCli.replace(/^55/, ''));
+                    const _keyReset = conversas.has(_telCli) ? _telCli : conversas.has('55' + _telCli) ? '55' + _telCli : _telCli.replace(/^55/, '');
+                    conversas.set(_keyReset, { etapa: 'inicio', dados: {}, adminId, instanciaId });
+                    console.log('[CANCEL-MOT] Conversa do cliente resetada:', _keyReset);
+                } catch(eReset) { console.log('[CANCEL-MOT] Erro reset cliente:', eReset.message); }
             }
             
             return '❌ Corrida cancelada.\n\nVocê está *DISPONÍVEL* novamente.';
