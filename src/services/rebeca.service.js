@@ -753,6 +753,30 @@ Me manda o endereço de *onde você está*!`;
                             conversa.etapa = 'inicio';
                             conversa.dados = {};
                             conversas.set(telefone, conversa);
+
+                            // === NOTIFICAR MOTORISTA QUE CLIENTE CANCELOU ===
+                            try {
+                                const { Corrida: _CorrCanc, InstanciaWhatsapp: _InstCanc } = require('../models');
+                                const _corridaCanc = await _CorrCanc.findOne({
+                                    clienteTelefone: telefone,
+                                    status: { $in: ['pendente','aceita','motorista_a_caminho','aguardando_cliente','em_andamento'] },
+                                    adminId: conversa.adminId
+                                }).sort({ createdAt: -1 });
+                                if (_corridaCanc && _corridaCanc.motoristaId) {
+                                    const { Motorista: _MotCanc } = require('../models');
+                                    const _motCanc = await _MotCanc.findById(_corridaCanc.motoristaId);
+                                    if (_motCanc && _motCanc.whatsapp) {
+                                        const _instCanc = await _InstCanc.findOne({ adminId: conversa.adminId, status: { $in: ['conectado','open','connected'] } });
+                                        if (_instCanc) {
+                                            await EvolutionMultiService.enviarMensagem(_instCanc._id, _motCanc.whatsapp, '❌ *CORRIDA CANCELADA*\n\nO cliente cancelou a corrida.\n\nVocê está *DISPONÍVEL* novamente.');
+                                            await require('./motorista.service').atualizarStatus(_corridaCanc.motoristaId, 'disponivel');
+                                            console.log('[CANCEL-CLI] Motorista notificado:', _motCanc.whatsapp);
+                                        }
+                                    }
+                                    await _CorrCanc.findByIdAndUpdate(_corridaCanc._id, { status: 'cancelada', motivoCancelamento: 'Cancelado pelo cliente' });
+                                }
+                            } catch(_eCanc) { console.log('[CANCEL-CLI] Erro notif motorista:', _eCanc.message); }
+                            // =====================================================
                             const _mc = 'Cancelado! Quando precisar é só chamar.';
                             CerebroRebeca.salvarHistorico(conversa, _mc, 'rebeca');
                             return _mc;
@@ -1405,6 +1429,30 @@ Me manda o endereço de *onde você está*!`;
                                 conversa.etapa = 'inicio';
                                 conversa.dados = {};
                                 conversas.set(telefone, conversa);
+
+                            // === NOTIFICAR MOTORISTA QUE CLIENTE CANCELOU ===
+                            try {
+                                const { Corrida: _CorrCanc, InstanciaWhatsapp: _InstCanc } = require('../models');
+                                const _corridaCanc = await _CorrCanc.findOne({
+                                    clienteTelefone: telefone,
+                                    status: { $in: ['pendente','aceita','motorista_a_caminho','aguardando_cliente','em_andamento'] },
+                                    adminId: conversa.adminId
+                                }).sort({ createdAt: -1 });
+                                if (_corridaCanc && _corridaCanc.motoristaId) {
+                                    const { Motorista: _MotCanc } = require('../models');
+                                    const _motCanc = await _MotCanc.findById(_corridaCanc.motoristaId);
+                                    if (_motCanc && _motCanc.whatsapp) {
+                                        const _instCanc = await _InstCanc.findOne({ adminId: conversa.adminId, status: { $in: ['conectado','open','connected'] } });
+                                        if (_instCanc) {
+                                            await EvolutionMultiService.enviarMensagem(_instCanc._id, _motCanc.whatsapp, '❌ *CORRIDA CANCELADA*\n\nO cliente cancelou a corrida.\n\nVocê está *DISPONÍVEL* novamente.');
+                                            await require('./motorista.service').atualizarStatus(_corridaCanc.motoristaId, 'disponivel');
+                                            console.log('[CANCEL-CLI] Motorista notificado:', _motCanc.whatsapp);
+                                        }
+                                    }
+                                    await _CorrCanc.findByIdAndUpdate(_corridaCanc._id, { status: 'cancelada', motivoCancelamento: 'Cancelado pelo cliente' });
+                                }
+                            } catch(_eCanc) { console.log('[CANCEL-CLI] Erro notif motorista:', _eCanc.message); }
+                            // =====================================================
                                 return 'Cancelado! Quando precisar é só chamar 😊';
                             }
                             conversa.dados._aguardandoCancelamento = true;
@@ -3390,9 +3438,17 @@ _(ou mande *0* para pular)_`;
             return analise.respostaPergunta;
         }
         
-        // Saudacao - responder curto
+        // Saudacao - responder de forma humana e variada
         if (analise.intencao === 'saudacao') {
-            return 'Oi! Pra onde vai? 🚗';
+            const hora = new Date().getHours();
+            const saudTemporal = hora >= 5 && hora < 12 ? 'Bom dia' : hora < 18 ? 'Boa tarde' : 'Boa noite';
+            const opcoes = [
+                `${saudTemporal}! 😊 Pra onde você vai hoje?`,
+                `${saudTemporal}! Tô aqui prontinha. Me manda o endereço! 📍`,
+                `${saudTemporal}! 😊 Me diz de onde você está que chamo um motorista!`,
+                `Olá! ${saudTemporal}! Pode falar, pra onde vamos? 🚗`
+            ];
+            return opcoes[Math.floor(Math.random() * opcoes.length)];
         }
         
         // Confirmacao
@@ -3402,7 +3458,13 @@ _(ou mande *0* para pular)_`;
         
         // Agradecimento
         if (analise.intencao === 'agradecimento') {
-            return 'Por nada! Quando precisar, é só chamar. 🚗';
+            const opcoes = [
+                'Por nada! Foi um prazer te atender 😊 Qualquer hora é só chamar!',
+                'Imagina! Fico feliz em ajudar 😊 Até a próxima!',
+                'Disponha! 😊 Estarei aqui sempre que precisar.',
+                'De nada! Foi ótimo te atender 🚗 Até logo!'
+            ];
+            return opcoes[Math.floor(Math.random() * opcoes.length)];
         }
 
         // Qualquer outra intencao nao mapeada — nao retornar null, responder algo util
