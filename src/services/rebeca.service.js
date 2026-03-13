@@ -232,6 +232,12 @@ const RebecaService = {
         for (const p of pontosReferencia) {
             if (lower.includes(p)) return true;
         }
+        // PONTOS CADASTRADOS PELO ADMIN (banco + memória)
+        try {
+            const localidadeService = require('./localidade.service');
+            const pontosAdmin = localidadeService.buscarPontos(lower);
+            if (pontosAdmin.length > 0) return true;
+        } catch(e) {}
         
         // Frases de pedido com localização (ex: "manda um carro aqui no frei gabriel", "me busca no centro")
         const frasesPedidoLocal = /(manda|busca|pega|vem|carro|moto).*(aqui|no |na |em |pro |pra )/i;
@@ -4065,26 +4071,34 @@ _(ou mande *0* para pular)_`;
     // Colocar em modo avaliacao
 
     
-    // ===== PONTOS DE REFERÊNCIA DO BANCO =====
-    async buscarPontoReferenciaBanco(texto, adminId) {
+    // ===== PONTOS DE REFERÊNCIA — localidade.service + MongoDB =====
+    async buscarPontoReferencia(texto, adminId) {
+        const lower = texto.toLowerCase().trim();
+        // 1. Buscar no banco MongoDB (pontos cadastrados pelo admin)
         try {
             const { PontoReferencia } = require('../models');
-            if (!PontoReferencia) return null;
-            const lower = texto.toLowerCase().trim();
-            // Busca exata ou similar no banco
-            const pontos = await PontoReferencia.find({
+            const pontosBanco = await PontoReferencia.find({
                 adminId,
                 $or: [
                     { nome: { $regex: lower, $options: 'i' } },
-                    { apelidos: { $regex: lower, $options: 'i' } }
+                    { apelidos: { $elemMatch: { $regex: lower, $options: 'i' } } }
                 ],
                 ativo: { $ne: false }
             }).limit(3).lean();
-            if (pontos.length > 0) {
-                // Retornar o mais similar
-                return pontos[0];
+            if (pontosBanco.length > 0) {
+                console.log('[PONTO_REF] Encontrado no banco:', pontosBanco[0].nome);
+                return pontosBanco[0];
             }
-        } catch(e) { /* modelo pode não existir */ }
+        } catch(e) { /* continua */ }
+        // 2. Buscar no localidade.service (memória)
+        try {
+            const localidadeService = require('./localidade.service');
+            const pontosMemoria = localidadeService.buscarPontos(lower);
+            if (pontosMemoria.length > 0) {
+                console.log('[PONTO_REF] Encontrado em memória:', pontosMemoria[0].nome);
+                return pontosMemoria[0];
+            }
+        } catch(e) { /* continua */ }
         return null;
     },
 

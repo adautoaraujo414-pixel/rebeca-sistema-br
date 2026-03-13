@@ -68,14 +68,24 @@ const localidadeService = {
             .slice(0, 10);
     },
 
-    criarPontoReferencia: (dados) => {
+    criarPontoReferencia: async (dados) => {
         const id = 'pt_' + uuidv4().slice(0, 8);
         const novo = {
             id, nome: dados.nome, tipo: dados.tipo || 'outro',
             localidadeId: dados.localidadeId || null, endereco: dados.endereco || '',
-            latitude: dados.latitude || null, longitude: dados.longitude || null, ativo: true
+            latitude: dados.latitude || null, longitude: dados.longitude || null,
+            apelidos: dados.apelidos || [], adminId: dados.adminId || null, ativo: true
         };
         pontosReferencia.set(id, novo);
+        // Persistir no MongoDB
+        try {
+            const { PontoReferencia } = require('../models');
+            await PontoReferencia.create({
+                adminId: dados.adminId, nome: dados.nome, tipo: dados.tipo || 'outro',
+                endereco: dados.endereco || '', latitude: dados.latitude || null,
+                longitude: dados.longitude || null, apelidos: dados.apelidos || [], ativo: true
+            });
+        } catch(e) { console.log('[LOCALIDADE] Erro persistir ponto:', e.message); }
         return novo;
     },
 

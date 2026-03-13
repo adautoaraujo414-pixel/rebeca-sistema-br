@@ -525,3 +525,20 @@ ZonaPrecoSchema.index({ adminId: 1, ativo: 1 });
 
 const ZonaPreco = mongoose.model('ZonaPreco', ZonaPrecoSchema);
 module.exports.ZonaPreco = ZonaPreco;
+
+
+// ===== PONTO DE REFERÊNCIA (cadastrado pelo admin, usado pela Rebeca) =====
+const PontoReferenciaSchema = new mongoose.Schema({
+    adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin', required: true, index: true },
+    nome: { type: String, required: true },
+    apelidos: [{ type: String }], // nomes alternativos ex: ["UPA", "posto de saude"]
+    tipo: { type: String, default: 'outro' }, // hospital, shopping, escola, etc
+    endereco: { type: String, default: '' },
+    latitude: { type: Number },
+    longitude: { type: Number },
+    ativo: { type: Boolean, default: true }
+}, { timestamps: true });
+PontoReferenciaSchema.index({ adminId: 1, ativo: 1 });
+
+const PontoReferencia = mongoose.model('PontoReferencia', PontoReferenciaSchema);
+module.exports.PontoReferencia = PontoReferencia;
