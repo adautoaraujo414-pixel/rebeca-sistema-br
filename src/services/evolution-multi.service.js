@@ -164,10 +164,10 @@ const EvolutionMultiService = {
         try {
             let instancia = await InstanciaWhatsapp.findById(instanciaId);
             if (!instancia) {
-                // Tentar encontrar qualquer instância conectada
                 instancia = await InstanciaWhatsapp.findOne({ status: 'conectado' });
                 if (!instancia) throw new Error('Nenhuma instancia disponivel');
             }
+            console.log('[EVO-DEBUG] instanciaId:', instanciaId, '| nome:', instancia.nomeInstancia, '| url:', instancia.apiUrl, '| status:', instancia.status, '| apiKey:', instancia.apiKey ? 'OK' : 'VAZIA');
             
             let numero = telefone.replace(/\D/g, '');
             if (numero.length <= 11) numero = '55' + numero;
