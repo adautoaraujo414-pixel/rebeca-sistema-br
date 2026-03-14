@@ -1727,7 +1727,7 @@ Me manda o endereço de *onde você está*!`;
                             }
                             conversas.set(telefone, conversa);
                             if (_resChatCli && _resChatCli.enviado) {
-                                return '✅ Enviado!';
+                                return null;
                             }
                             // Fallback: enviar direto pelo WhatsApp mesmo sem corrida no cache
                             const { InstanciaWhatsapp: _IWFb, Corrida: _CFb } = require('../models');
@@ -1742,14 +1742,20 @@ Me manda o endereço de *onde você está*!`;
                                     $push: { chatMensagens: { texto: msgOriginal, remetente: 'cliente', nomeRemetente: _nomeCli, data: new Date() } }
                                 });
                                 console.log('[CHAT] Fallback direto -> motorista:', motoristaAtivo.whatsapp);
-                                return '✅ Enviado!';
+                                return null;
                             }
                         } catch(e2) { console.log('[CHAT] Erro chat cliente->motorista:', e2.message); }
                         conversas.set(telefone, conversa);
-                        return '✅ Enviado!';
+                        return null;
                     }
                 }
             } catch (e) { console.log('[REBECA] Erro encaminhar msg:', e.message); }
+
+            // Se está em corrida ativa, qualquer mensagem que chegou até aqui
+            // não tem motorista ainda — manter silêncio para não reiniciar fluxo
+            if (conversa.etapa === 'em_corrida') {
+                return null;
+            }
             
             // Verificar se quer falar com responsável ou cancelar durante espera
             const _querResponsavel = msg.match(/(responsavel|responsável|dono|gerente|falar com|chamar|humano|atendente|pessoa)/i);
