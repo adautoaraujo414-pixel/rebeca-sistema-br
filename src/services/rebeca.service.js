@@ -1606,6 +1606,39 @@ Me manda o endereço de *onde você está*!`;
             }
         }
 
+        // ========== CANCELAMENTO DURANTE CORRIDA/ESPERA ==========
+        if ((conversa.etapa === 'em_corrida' || conversa.etapa === 'aguardando_motorista' || conversa.etapa === 'motorista_a_caminho') && NLPService.eCancelar(msg)) {
+            try {
+                const { Corrida: _CCanc, InstanciaWhatsapp: _ICanc } = require('../models');
+                const _qC = { clienteTelefone: { $in: [telefone, '55'+telefone, telefone.replace(/^55/,'')] }, status: { $in: ['pendente','aceita','motorista_a_caminho','aguardando_cliente','em_andamento'] } };
+                if (conversa.adminId) _qC.adminId = conversa.adminId;
+                const _corrC = conversa.dados && conversa.dados.corridaId
+                    ? await _CCanc.findById(conversa.dados.corridaId)
+                    : await _CCanc.findOne(_qC).sort({ createdAt: -1 });
+                if (_corrC) {
+                    await _CCanc.findByIdAndUpdate(_corrC._id, { status: 'cancelada', motivoCancelamento: 'Cancelado pelo cliente via WhatsApp' });
+                    if (_corrC.motoristaId) {
+                        try {
+                            await MotoristaService.atualizarStatus(_corrC.motoristaId, 'disponivel');
+                            const _motC = await MotoristaService.buscarPorId(_corrC.motoristaId);
+                            const _instC = conversa.instanciaId
+                                ? await _ICanc.findById(conversa.instanciaId).catch(() => null)
+                                : await _ICanc.findOne({ adminId: conversa.adminId, status: { $in: ['conectado','open','connected'] } });
+                            if (_motC && _motC.whatsapp && _instC) {
+                                const _msgCanc = 'Corrida cancelada pelo cliente ' + (_corrC.clienteNome || '') + '. Voce esta disponivel novamente.';
+                                await EvolutionMultiService.enviarMensagem(_instC._id, _motC.whatsapp, _msgCanc);
+                            }
+                        } catch(_eM) { console.log('[CANCEL-DIRETO] Erro motorista:', _eM.message); }
+                    }
+                    console.log('[CANCEL-DIRETO] Corrida cancelada:', _corrC._id);
+                }
+            } catch(_eCd) { console.log('[CANCEL-DIRETO] Erro:', _eCd.message); }
+            conversa.etapa = 'inicio';
+            conversa.dados = {};
+            conversas.set(telefone, conversa);
+            return 'Corrida cancelada! Quando precisar e so chamar.';
+        }
+
         // ========== AGUARDANDO MOTORISTA OU EM CORRIDA ==========
         // EM CORRIDA: encaminhar mensagem direto ao motorista via WhatsApp
         if (conversa.etapa === 'em_corrida' && !NLPService.eCancelar(msg)) {
