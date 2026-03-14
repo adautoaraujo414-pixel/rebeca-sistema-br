@@ -1228,6 +1228,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         atualizarStatusUI();
                         document.getElementById('corridaAtiva').classList.remove('active');
                         document.getElementById('semCorrida').style.display = 'block';
+                        pararPollingChat(); // para polling - cliente cancelou
                         toast('❌ Corrida cancelada pelo cliente', 'error');
                         if (navigator.vibrate) navigator.vibrate([300, 100, 300]);
                         return;
@@ -1241,6 +1242,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     atualizarStatusUI();
                     document.getElementById('corridaAtiva').classList.remove('active');
                     document.getElementById('semCorrida').style.display = 'block';
+                    pararPollingChat(); // para polling - corrida sumiu
                     toast('❌ Corrida cancelada pelo cliente', 'error');
                     if (navigator.vibrate) navigator.vibrate([300, 100, 300]);
                 }
@@ -1894,6 +1896,7 @@ document.addEventListener('DOMContentLoaded', function() {
         let chatPollingInterval = null;
         function iniciarPollingChat() {
             if (chatPollingInterval) clearInterval(chatPollingInterval);
+            _ultimoCountChat = 0; // reseta contador para nova corrida
             chatPollingInterval = setInterval(carregarChat, 5000);
             carregarChat(); // carregar imediatamente
         }
@@ -2669,8 +2672,7 @@ async function abrirChatCliente() {
     carregarMensagensRapidas();
     carregarMensagensCliente();
     
-    // Atualizar a cada 5 segundos
-    chatClienteInterval = setInterval(carregarMensagensCliente, 5000);
+    // polling central (iniciarPollingChat) ja cuida das notificacoes
 }
 
 function fecharChatCliente() {
