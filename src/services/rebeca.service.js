@@ -4298,7 +4298,7 @@ _(ou mande *0* para pular)_`;
         try {
             const { Corrida: CM } = require('../models');
             const tels = [telefoneCliente, '55'+telefoneCliente, telefoneCliente.replace(/^55/,'')];
-            const queryChat = { clienteTelefone:{$in:tels}, status:{$in:['aceita','em_andamento','motorista_a_caminho','aguardando_cliente']} };
+            const queryChat = { clienteTelefone:{$in:tels}, status:{$in:['aceita','em_andamento','motorista_a_caminho','aguardando_cliente','em_corrida','aguardando_embarque']} };
             if (adminId) queryChat.adminId = adminId;
             const corrida = await CM.findOne(queryChat);
             if (!corrida || !corrida.motoristaId) return null;
