@@ -4092,10 +4092,24 @@ _(ou mande *0* para pular)_`;
             // Finalizar corrida (isso libera o motorista automaticamente)
             await CorridaService.finalizarCorrida(corrida._id, corrida.precoEstimado);
             
-            // Notificar cliente
-            if (corrida.clienteTelefone && instanciaId) {
-                const msgCliente = `✅ *CORRIDA FINALIZADA!*\n\n💰 Valor: R$ ${corrida.precoEstimado?.toFixed(2) || '?'}\n\n⭐ Avalie o motorista de 1 a 5\n\nObrigado por usar nosso serviço!`;
-                await EvolutionMultiService.enviarMensagem(instanciaId, corrida.clienteTelefone, msgCliente);
+            // Notificar cliente com agradecimento
+            if (corrida.clienteTelefone) {
+                try {
+                    const { InstanciaWhatsapp: _IWFin } = require('../models');
+                    const _instFin = instanciaId
+                        ? await _IWFin.findById(instanciaId).catch(() => null)
+                        : await _IWFin.findOne({ adminId, status: { $in: ['conectado','open','connected'] } });
+                    const _instFinalFin = _instFin || await _IWFin.findOne({ adminId, status: { $in: ['conectado','open','connected'] } }).catch(() => null);
+                    if (_instFinalFin) {
+                        const _nomeMotorista = motorista.nomeCompleto || motorista.nome || 'motorista';
+                        const msgCliente = '✅ *Corrida finalizada!*\n\n' +
+                            '💰 Valor: R$ ' + (corrida.precoEstimado?.toFixed(2) || '?') + '\n\n' +
+                            'Obrigado por usar nosso serviço! 🙏\n' +
+                            'Foi um prazer te atender. Sempre que precisar, é só chamar! 🚗';
+                        await EvolutionMultiService.enviarMensagem(_instFinalFin._id, corrida.clienteTelefone, msgCliente);
+                        console.log('[FINALIZAR] Cliente notificado:', corrida.clienteTelefone);
+                    }
+                } catch(_eFin) { console.log('[FINALIZAR] Erro notif cliente:', _eFin.message); }
             }
             
             return `✅ *CORRIDA FINALIZADA!*\n\n💰 R$ ${corrida.precoEstimado?.toFixed(2) || '?'}\n\nVocê está *DISPONÍVEL* para novas corridas!\n\n📊 Bom trabalho!`;
