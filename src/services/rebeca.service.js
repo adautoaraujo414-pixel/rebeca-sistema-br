@@ -751,45 +751,48 @@ Me manda o endereço de *onde você está*!`;
 
                     // CANCELAR
                     if (_resInt.intencao === 'CANCELAR') {
-                        // Cancelar direto, sem exigir dupla confirmação
-                        conversa.dados._aguardandoCancelamento = true;
-                        if (true || conversa.dados._aguardandoCancelamento) {
-                            conversa.etapa = 'inicio';
-                            conversa.dados = {};
-                            conversas.set(telefone, conversa);
-
-                            // === NOTIFICAR MOTORISTA QUE CLIENTE CANCELOU ===
-                            try {
-                                const { Corrida: _CorrCanc, InstanciaWhatsapp: _InstCanc } = require('../models');
-                                const _corridaCanc = await _CorrCanc.findOne({
-                                    clienteTelefone: telefone,
-                                    status: { $in: ['pendente','aceita','motorista_a_caminho','aguardando_cliente','em_andamento'] },
-                                    adminId: conversa.adminId
-                                }).sort({ createdAt: -1 });
-                                if (_corridaCanc && _corridaCanc.motoristaId) {
+                        const _corridaIdCanc2 = conversa.dados?.corridaId;
+                        conversa.etapa = 'inicio';
+                        conversa.dados = {};
+                        conversas.set(telefone, conversa);
+                        // === NOTIFICAR MOTORISTA QUE CLIENTE CANCELOU ===
+                        try {
+                            const { Corrida: _CorrCanc, InstanciaWhatsapp: _InstCanc } = require('../models');
+                            // Buscar com variações do telefone (com/sem 55)
+                            const _tels2 = [telefone, '55'+telefone, telefone.replace(/^55/,'')];
+                            const _qCanc2 = {
+                                clienteTelefone: { $in: _tels2 },
+                                status: { $in: ['pendente','aceita','motorista_a_caminho','aguardando_cliente','em_andamento'] }
+                            };
+                            if (conversa.adminId) _qCanc2.adminId = conversa.adminId;
+                            const _corridaCanc = _corridaIdCanc2
+                                ? await _CorrCanc.findById(_corridaIdCanc2)
+                                : await _CorrCanc.findOne(_qCanc2).sort({ createdAt: -1 });
+                            if (_corridaCanc) {
+                                // Cancelar no banco SEMPRE, independente de ter motorista
+                                await _CorrCanc.findByIdAndUpdate(_corridaCanc._id, { status: 'cancelada', motivoCancelamento: 'Cancelado pelo cliente' });
+                                console.log('[CANCEL-CLI2] Corrida cancelada no banco:', _corridaCanc._id);
+                                if (_corridaCanc.motoristaId) {
                                     const { Motorista: _MotCanc } = require('../models');
                                     const _motCanc = await _MotCanc.findById(_corridaCanc.motoristaId);
                                     if (_motCanc && _motCanc.whatsapp) {
-                                        const _instCanc = await _InstCanc.findOne({ adminId: conversa.adminId, status: { $in: ['conectado','open','connected'] } });
+                                        const _instCanc = _corridaCanc.instanciaId
+                                            ? await _InstCanc.findById(_corridaCanc.instanciaId).catch(() => null)
+                                            : await _InstCanc.findOne({ adminId: conversa.adminId, status: { $in: ['conectado','open','connected'] } });
                                         if (_instCanc) {
-                                            await EvolutionMultiService.enviarMensagem(_instCanc._id, _motCanc.whatsapp, '❌ *CORRIDA CANCELADA*\n\nO cliente cancelou a corrida.\n\nVocê está *DISPONÍVEL* novamente.');
+                                            await EvolutionMultiService.enviarMensagem(_instCanc._id, _motCanc.whatsapp, '❌ *CORRIDA CANCELADA*\n\nO cliente cancelou.\n\nVocê está *DISPONÍVEL* novamente.');
                                             await require('./motorista.service').atualizarStatus(_corridaCanc.motoristaId, 'disponivel');
-                                            console.log('[CANCEL-CLI] Motorista notificado:', _motCanc.whatsapp);
+                                            console.log('[CANCEL-CLI2] Motorista notificado:', _motCanc.whatsapp);
                                         }
                                     }
-                                    await _CorrCanc.findByIdAndUpdate(_corridaCanc._id, { status: 'cancelada', motivoCancelamento: 'Cancelado pelo cliente' });
                                 }
-                            } catch(_eCanc) { console.log('[CANCEL-CLI] Erro notif motorista:', _eCanc.message); }
-                            // =====================================================
-                            const _mc = 'Cancelado! Quando precisar é só chamar.';
-                            CerebroRebeca.salvarHistorico(conversa, _mc, 'rebeca');
-                            return _mc;
-                        }
-                        conversa.dados._aguardandoCancelamento = true;
-                        conversas.set(telefone, conversa);
-                        const _mcConf = 'Confirma o cancelamento?';
-                        CerebroRebeca.salvarHistorico(conversa, _mcConf, 'rebeca');
-                        return _mcConf;
+                            } else {
+                                console.log('[CANCEL-CLI2] Corrida não encontrada para tels:', _tels2);
+                            }
+                        } catch(_eCanc) { console.log('[CANCEL-CLI2] Erro:', _eCanc.message); }
+                        const _mc = 'Cancelado! Quando precisar é só chamar.';
+                        CerebroRebeca.salvarHistorico(conversa, _mc, 'rebeca');
+                        return _mc;
                     }
 
                     // Resposta normal do cérebro
