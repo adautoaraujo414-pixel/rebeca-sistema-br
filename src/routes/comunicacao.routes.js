@@ -16,9 +16,9 @@ router.post('/motorista-para-cliente', async (req, res) => {
             return res.status(403).json({ erro: 'Acesso negado' });
         }
         
-        // Verificar se corrida ainda não iniciou
-        if (corrida.status === 'em_andamento' || corrida.status === 'finalizada') {
-            return res.status(400).json({ erro: 'Comunicação só permitida antes de iniciar a corrida' });
+        // Bloquear apenas se corrida já finalizada/cancelada
+        if (['finalizada', 'cancelada'].includes(corrida.status)) {
+            return res.status(400).json({ erro: 'Corrida já encerrada' });
         }
         
         // Salvar mensagem do motorista
