@@ -40,11 +40,26 @@ router.post('/motorista-para-cliente', async (req, res) => {
             const EvolutionMultiService = require('../services/evolution-multi.service');
             // Buscar instância: primeiro pelo adminId, depois qualquer conectada
             // Usar instanciaId da corrida para garantir que vai no mesmo número do cliente
+            // 1. instanciaId salvo na corrida
             let inst = corrida.instanciaId
                 ? await InstanciaWhatsapp.findById(corrida.instanciaId).catch(() => null)
                 : null;
+            // 2. Fallback: buscar pelo mapa de conversas da Rebeca
+            if (!inst) {
+                try {
+                    const RebecaSvc = require('../services/rebeca.service');
+                    const _tels = [corrida.clienteTelefone, '55'+corrida.clienteTelefone, corrida.clienteTelefone.replace(/^55/,'')];
+                    for (const _t of _tels) {
+                        const _cv = RebecaSvc.conversas?.get(_t);
+                        if (_cv && _cv.instanciaId) {
+                            inst = await InstanciaWhatsapp.findById(_cv.instanciaId).catch(() => null);
+                            if (inst) { console.log('[CHAT] instancia via conversa:', inst.nomeInstancia); break; }
+                        }
+                    }
+                } catch(_e) {}
+            }
+            // 3. Fallback: mesma instância do adminId
             if (!inst) inst = await InstanciaWhatsapp.findOne({ adminId: corrida.adminId, status: { $in: ['conectado','open','connected'] } });
-            if (!inst) inst = await InstanciaWhatsapp.findOne({ status: { $in: ['conectado','open','connected'] } });
             console.log('[CHAT] instanciaId da corrida:', corrida.instanciaId, '| instância encontrada:', inst ? inst.nomeInstancia : 'NENHUMA');
             if (inst) {
                 await EvolutionMultiService.enviarMensagem(inst._id, corrida.clienteTelefone, mensagemRebeca);
