@@ -1373,6 +1373,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
 
+            window._aceitandoCorrida = false;
+            const btnAc = document.querySelector('.btn-aceitar');
+            if (btnAc) { btnAc.disabled = false; btnAc.textContent = '✅ ACEITAR'; }
             document.getElementById('novaCorridaOverlay').classList.add('active');
 
             // URGENCIA: cliente bravo esperando
