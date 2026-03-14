@@ -257,7 +257,7 @@ setInterval(async () => {
         const admins = await Admin.find({ ativo: true, tipoAdmin: 'transporte' }).lean();
         
         for (const admin of admins) {
-            const instancia = await InstanciaWhatsapp.findOne({ adminId: admin._id, status: 'conectado' });
+            const instancia = await InstanciaWhatsapp.findOne({ adminId: admin._id, status: { $in: ['conectado','open','connected'] } });
             if (!instancia) continue;
             
             // Buscar clientes que não pedem há 7-14 dias
