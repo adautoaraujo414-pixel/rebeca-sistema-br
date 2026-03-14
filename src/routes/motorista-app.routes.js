@@ -478,7 +478,7 @@ router.post('/chat', auth, async (req, res) => {
         console.log('[CHAT] adminId:', corrida.adminId, '| instancia:', instancia ? instancia.nomeInstancia + ' status:' + instancia.status : 'NAO ENCONTRADA');
         
         if (instancia) {
-            const msgCliente = '🚗 *Mensagem do motorista ' + (req.motorista.nomeCompleto || req.motorista.nome) + ':*\n\n' + texto;
+            const _nomeM = (req.motorista.nomeCompleto || req.motorista.nome || 'Motorista').split(' ')[0]; const msgCliente = '💬 *' + _nomeM + ':* ' + texto;
             const envioResult = await EvolutionMultiService.enviarMensagem(instancia._id, corrida.clienteTelefone, msgCliente);
             console.log('[CHAT] Envio resultado:', JSON.stringify(envioResult));
         } else {
