@@ -3791,6 +3791,23 @@ _(ou mande *0* para pular)_`;
                 if (resultadoDespacho.sucesso) {
                     // Motoristas recebem APENAS no painel/app (sem WhatsApp)
                     console.log('[REBECA] Corrida despachada no painel - Modo:', resultadoDespacho.modo, '- Motoristas:', motoristasDisponiveis.length);
+
+                    // Timer 2min: se nenhum motorista aceitou ainda, avisar cliente
+                    const _corridaIdTimer = (corrida._id || corrida.id)?.toString();
+                    setTimeout(async () => {
+                        try {
+                            const { Corrida: _CT2, InstanciaWhatsapp: _IW2 } = require('../models');
+                            const _corr2 = await _CT2.findById(_corridaIdTimer).lean();
+                            if (!_corr2 || _corr2.status !== 'pendente') return; // já foi aceita ou cancelada
+                            const _inst2 = await _IW2.findOne({ adminId, status: { $in: ['conectado','open','connected'] } });
+                            if (_inst2 && _corr2.clienteTelefone) {
+                                const EvSvc = require('./evolution-multi.service');
+                                await EvSvc.enviarMensagem(_inst2._id, _corr2.clienteTelefone,
+                                    '⏳ Todos os motoristas estão ocupados no momento.\n\nVocê está na fila e será o próximo a ser atendido assim que um motorista ficar livre! 😊');
+                                console.log('[DESPACHO-2MIN] Cliente avisado da fila:', _corr2.clienteTelefone);
+                            }
+                        } catch(_e2) { console.log('[DESPACHO-2MIN] Erro:', _e2.message); }
+                    }, 2 * 60 * 1000);
                 }
                 
                 console.log('[REBECA] Despacho:', resultadoDespacho.modo, '- Motoristas:', motoristasDisponiveis.length);
