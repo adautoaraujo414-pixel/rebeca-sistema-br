@@ -1441,6 +1441,7 @@ Me manda o endereço de *onde você está*!`;
                                 const { Corrida: _CorrCanc, InstanciaWhatsapp: _InstCanc } = require('../models');
                                 const _qCanc = { clienteTelefone: { $in: [telefone, '55'+telefone, telefone.replace(/^55/,'')] }, status: { $in: ['pendente','aceita','motorista_a_caminho','aguardando_cliente','em_andamento'] } };
                                 if (conversa.adminId) _qCanc.adminId = conversa.adminId;
+                                // Log para debug
                                 const _corridaCanc = _corridaIdCanc
                                     ? await _CorrCanc.findById(_corridaIdCanc)
                                     : await _CorrCanc.findOne(_qCanc).sort({ createdAt: -1 });
@@ -3718,9 +3719,9 @@ _(ou mande *0* para pular)_`;
                 // Corrida pendente sem motorista por 10min - cancelar
                 await Corrida.findByIdAndUpdate(corridaAtiva._id, { status: 'cancelada', motivoCancelamento: 'timeout_10min' });
                 console.log('[REBECA] Corrida pendente antiga cancelada (timeout 10min):', corridaAtiva._id);
-            } else if (['aceita', 'em_andamento', 'motorista_a_caminho'].includes(corridaAtiva.status) && minutosPendente > 120) {
-                // Corrida aceita/em andamento há mais de 2h — provavelmente esquecida
-                await Corrida.findByIdAndUpdate(corridaAtiva._id, { status: 'cancelada', motivoCancelamento: 'timeout_2h_sem_finalizacao' });
+            } else if (['aceita', 'em_andamento', 'motorista_a_caminho'].includes(corridaAtiva.status) && minutosPendente > 30) {
+                // Corrida aceita/em andamento há mais de 30min — provavelmente esquecida
+                await Corrida.findByIdAndUpdate(corridaAtiva._id, { status: 'cancelada', motivoCancelamento: 'timeout_30min_sem_finalizacao' });
                 if (corridaAtiva.motoristaId) {
                     try { await MotoristaService.atualizarStatus(corridaAtiva.motoristaId, 'disponivel'); } catch(e) {}
                 }
