@@ -1427,41 +1427,39 @@ Me manda o endereço de *onde você está*!`;
                             return await RebecaService.enviarTabelaPrecos(conversa.adminId);
                         }
                         
-                        // Cancelamento
+                        // Cancelamento — direto, sem dupla confirmação
                         if (resultadoGPT.intencao === 'CANCELAMENTO') {
-                            if (conversa.dados._aguardandoCancelamento) {
-                                conversa.etapa = 'inicio';
-                                conversa.dados = {};
-                                conversas.set(telefone, conversa);
-
-                            // === NOTIFICAR MOTORISTA QUE CLIENTE CANCELOU ===
+                            const _corridaIdCanc = conversa.dados?.corridaId;
+                            conversa.etapa = 'inicio';
+                            conversa.dados = {};
+                            conversas.set(telefone, conversa);
+                            // Notificar motorista
                             try {
                                 const { Corrida: _CorrCanc, InstanciaWhatsapp: _InstCanc } = require('../models');
-                                const _corridaCanc = await _CorrCanc.findOne({
-                                    clienteTelefone: telefone,
-                                    status: { $in: ['pendente','aceita','motorista_a_caminho','aguardando_cliente','em_andamento'] },
-                                    adminId: conversa.adminId
-                                }).sort({ createdAt: -1 });
-                                if (_corridaCanc && _corridaCanc.motoristaId) {
-                                    const { Motorista: _MotCanc } = require('../models');
-                                    const _motCanc = await _MotCanc.findById(_corridaCanc.motoristaId);
-                                    if (_motCanc && _motCanc.whatsapp) {
-                                        const _instCanc = await _InstCanc.findOne({ adminId: conversa.adminId, status: { $in: ['conectado','open','connected'] } });
-                                        if (_instCanc) {
-                                            await EvolutionMultiService.enviarMensagem(_instCanc._id, _motCanc.whatsapp, '❌ *CORRIDA CANCELADA*\n\nO cliente cancelou a corrida.\n\nVocê está *DISPONÍVEL* novamente.');
-                                            await require('./motorista.service').atualizarStatus(_corridaCanc.motoristaId, 'disponivel');
-                                            console.log('[CANCEL-CLI] Motorista notificado:', _motCanc.whatsapp);
+                                const _qCanc = { clienteTelefone: { $in: [telefone, '55'+telefone, telefone.replace(/^55/,'')] }, status: { $in: ['pendente','aceita','motorista_a_caminho','aguardando_cliente','em_andamento'] } };
+                                if (conversa.adminId) _qCanc.adminId = conversa.adminId;
+                                const _corridaCanc = _corridaIdCanc
+                                    ? await _CorrCanc.findById(_corridaIdCanc)
+                                    : await _CorrCanc.findOne(_qCanc).sort({ createdAt: -1 });
+                                if (_corridaCanc) {
+                                    await _CorrCanc.findByIdAndUpdate(_corridaCanc._id, { status: 'cancelada', motivoCancelamento: 'Cancelado pelo cliente' });
+                                    if (_corridaCanc.motoristaId) {
+                                        const { Motorista: _MotCanc } = require('../models');
+                                        const _motCanc = await _MotCanc.findById(_corridaCanc.motoristaId);
+                                        if (_motCanc && _motCanc.whatsapp) {
+                                            const _instCanc = _corridaCanc.instanciaId
+                                                ? await _InstCanc.findById(_corridaCanc.instanciaId).catch(() => null)
+                                                : await _InstCanc.findOne({ adminId: conversa.adminId, status: { $in: ['conectado','open','connected'] } });
+                                            if (_instCanc) {
+                                                await EvolutionMultiService.enviarMensagem(_instCanc._id, _motCanc.whatsapp, '❌ *CORRIDA CANCELADA*\n\nO cliente cancelou.\n\nVocê está *DISPONÍVEL* novamente.');
+                                                await require('./motorista.service').atualizarStatus(_corridaCanc.motoristaId, 'disponivel');
+                                                console.log('[CANCEL-CLI-GPT] Motorista notificado:', _motCanc.whatsapp);
+                                            }
                                         }
                                     }
-                                    await _CorrCanc.findByIdAndUpdate(_corridaCanc._id, { status: 'cancelada', motivoCancelamento: 'Cancelado pelo cliente' });
                                 }
-                            } catch(_eCanc) { console.log('[CANCEL-CLI] Erro notif motorista:', _eCanc.message); }
-                            // =====================================================
-                                return 'Cancelado! Quando precisar é só chamar 😊';
-                            }
-                            conversa.dados._aguardandoCancelamento = true;
-                            conversas.set(telefone, conversa);
-                            return 'Confirma o cancelamento?';
+                            } catch(_eCanc) { console.log('[CANCEL-CLI-GPT] Erro:', _eCanc.message); }
+                            return 'Cancelado! Quando precisar é só chamar 😊';
                         }
                         
                         // Reclamação - resposta empática
