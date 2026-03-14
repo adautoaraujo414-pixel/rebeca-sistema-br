@@ -73,7 +73,7 @@ router.post('/mensagem', async (req, res) => {
 // ==================== RASTREAMENTO ====================
 // Página HTML de rastreamento
 router.get('/rastrear-page/:codigo', (req, res) => {
-    res.sendFile('rastrear.html', { root: 'public' });
+    res.sendFile(require('path').join(__dirname, '../public/rastrear.html'));
 });
 
 // API de rastreamento

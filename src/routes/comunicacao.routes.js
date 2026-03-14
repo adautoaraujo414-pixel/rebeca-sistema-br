@@ -41,8 +41,8 @@ router.post('/motorista-para-cliente', async (req, res) => {
             const { InstanciaWhatsapp } = require('../models');
             const EvolutionMultiService = require('../services/evolution-multi.service');
             // Buscar instância: primeiro pelo adminId, depois qualquer conectada
-            let inst = await InstanciaWhatsapp.findOne({ adminId: corrida.adminId, status: 'conectado' });
-            if (!inst) inst = await InstanciaWhatsapp.findOne({ status: 'conectado' });
+            let inst = await InstanciaWhatsapp.findOne({ adminId: corrida.adminId, status: { $in: ['conectado','open','connected'] } });
+            if (!inst) inst = await InstanciaWhatsapp.findOne({ status: { $in: ['conectado','open','connected'] } });
             console.log('[CHAT] adminId da corrida:', corrida.adminId, '| instância encontrada:', inst ? inst.nomeInstancia : 'NENHUMA');
             if (inst) {
                 await EvolutionMultiService.enviarMensagem(inst._id, corrida.clienteTelefone, mensagemRebeca);
@@ -92,7 +92,26 @@ router.post('/cliente-para-motorista', async (req, res) => {
             destinatario: 'motorista',
             mensagem
         });
-        
+
+        // Enviar WhatsApp ao motorista
+        try {
+            const { InstanciaWhatsapp, Motorista } = require('../models');
+            const EvolutionMultiService = require('../services/evolution-multi.service');
+            if (corrida.motoristaId) {
+                const motorista = await Motorista.findById(corrida.motoristaId);
+                if (motorista && motorista.whatsapp) {
+                    let inst = await InstanciaWhatsapp.findOne({ adminId: corrida.adminId, status: { $in: ['conectado','open','connected'] } });
+                    if (!inst) inst = await InstanciaWhatsapp.findOne({ status: { $in: ['conectado','open','connected'] } });
+                    if (inst) {
+                        const nomeCliente = corrida.clienteNome || 'Cliente';
+                        const msgMotorista = `💬 *Mensagem do Cliente*\n\n*${nomeCliente}* diz:\n"${mensagem}"\n\n_Responda pelo app._`;
+                        await EvolutionMultiService.enviarMensagem(inst._id, motorista.whatsapp, msgMotorista);
+                        console.log('[CHAT] ✅ Mensagem do cliente enviada ao motorista:', motorista.whatsapp);
+                    }
+                }
+            }
+        } catch(e) { console.log('[CHAT] Erro enviar motorista:', e.message); }
+
         res.json({ sucesso: true, msg });
     } catch (e) {
         res.status(500).json({ erro: e.message });
