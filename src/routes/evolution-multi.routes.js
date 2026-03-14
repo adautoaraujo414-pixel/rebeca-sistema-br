@@ -128,7 +128,7 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                     // Delivery também pausa
                     if (!global._modoHumanoDelivery) global._modoHumanoDelivery = new Map();
                     global._modoHumanoDelivery.set(chaveHumano, Date.now());
-                    console.log('[MODO-HUMANO] Operador respondeu para', telefoneTemp, '(admin:', adminId, ') - Rebeca pausada por 2 min');
+                    console.log('[MODO-HUMANO] Operador respondeu para', telefoneTemp, '(admin:', adminId, ') - Rebeca pausada por 5 min');
                     continue;
                 }
                 
@@ -137,11 +137,11 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                     // Usar chave composta: adminId + telefone para isolar por admin
                     const chaveHumano = adminId + '_' + telefoneTemp;
                     const ultimaHumana = global._modoHumano.get(chaveHumano);
-                    if (ultimaHumana && (Date.now() - ultimaHumana) < 120000) {
+                    if (ultimaHumana && (Date.now() - ultimaHumana) < 300000) {
                         console.log('[MODO-HUMANO] Rebeca pausada para', telefoneTemp, '(admin:', adminId, ') - humano no controle');
                         continue; // Não processa - humano está atendendo
                     } else if (ultimaHumana) {
-                        // Passou 2 min - limpar e Rebeca volta
+                        // Passou 5 min - limpar e Rebeca volta
                         global._modoHumano.delete(chaveHumano);
                         console.log('[MODO-HUMANO] Rebeca retomou controle de', telefoneTemp, '(admin:', adminId, ')');
                     }
