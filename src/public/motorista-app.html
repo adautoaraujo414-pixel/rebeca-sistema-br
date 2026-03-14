@@ -464,7 +464,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         </div>
                         <div class="corrida-ativa-body">
                             <div class="corrida-cliente">
-                                <div class="cliente-avatar" id="avatarCorridaAtiva">${c.clienteFoto ? '<img src="'+c.clienteFoto+'" style="width:50px;height:50px;border-radius:50%;object-fit:cover;" onerror="this.textContent='👤'">' : '👤'}</div>
+                                <div class="cliente-avatar" id="avatarCorridaAtiva">👤</div>
                                 <div class="cliente-info">
                                     <h3 id="clienteNomeAtiva">Cliente</h3>
                                     <span id="clienteCorridasAtiva">0 corridas</span>
@@ -1596,6 +1596,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
             document.getElementById('corridaValorAtiva').textContent = 'R$ ' + (corridaAtual.precoEstimado || 0).toFixed(2);
             document.getElementById('clienteNomeAtiva').textContent = corridaAtual.clienteNome || 'Cliente';
+            // Avatar do cliente
+            const _avatarDiv = document.getElementById('avatarCorridaAtiva');
+            if (_avatarDiv) {
+                if (corridaAtual.clienteFoto) {
+                    _avatarDiv.innerHTML = '<img src="' + corridaAtual.clienteFoto + '" style="width:50px;height:50px;border-radius:50%;object-fit:cover;" onerror="this.parentElement.textContent='👤'">';
+                } else {
+                    _avatarDiv.textContent = '👤';
+                }
+            }
             document.getElementById('origemAtiva').textContent = formatarEndereco(corridaAtual.origem);
             document.getElementById('destinoAtiva').textContent = formatarEndereco(corridaAtual.destino);
             // Botao navegar destino
