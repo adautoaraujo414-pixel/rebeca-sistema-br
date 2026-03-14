@@ -2002,13 +2002,28 @@ Me manda o endereço de *onde você está*!`;
 
         // ========== AGUARDANDO NA FILA ==========
         if (conversa.etapa === 'aguardando_fila') {
-            if (msg.includes('cancelar') || msg.includes('desistir') || msg.includes('sair')) {
+            const _msgFila = msg.toLowerCase().trim();
+            const _querSair = _msgFila.includes('cancelar') || _msgFila.includes('desistir') || _msgFila.includes('sair')
+                || _msgFila.includes('nao precisa') || _msgFila.includes('não precisa')
+                || _msgFila.includes('nao preciso') || _msgFila.includes('não preciso')
+                || _msgFila.includes('pode cancelar') || _msgFila.includes('deixa') 
+                || _msgFila.includes('esquece') || _msgFila.includes('esquece')
+                || _msgFila.includes('vou chamar outro') || _msgFila.includes('vou pegar outro')
+                || _msgFila.includes('consegui') || _msgFila.includes('achei')
+                || _msgFila.includes('obrigad') || _msgFila.includes('valeu')
+                || _msgFila.includes('tudo bem') || _msgFila.includes('tá bom')
+                || _msgFila.includes('ta bom') || _msgFila.includes('ok obrigad')
+                || _msgFila.includes('nao quero') || _msgFila.includes('não quero')
+                || _msgFila.includes('desisti') || _msgFila.includes('vou de') 
+                || NLPService.eNao(_msgFila);
+            if (_querSair) {
                 await RebecaService.removerDaFila(telefone, conversa.adminId);
                 conversa.etapa = 'inicio';
+                conversa.dados = {};
                 conversas.set(telefone, conversa);
-                return 'Ok, te tirei da fila! Quando precisar é só chamar!';
+                return 'Tudo bem! 😊 Te tirei da fila. Quando precisar é só me chamar!';
             }
-            return 'Você ainda está na fila de espera! Assim que um motorista desocupar eu te aviso. Se quiser desistir, digite *CANCELAR*.';
+            return 'Você ainda está na fila! Assim que um motorista desocupar eu te aviso. Se quiser sair da fila é só falar!';
         }
 
 
