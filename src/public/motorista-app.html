@@ -474,7 +474,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <div class="rota-icon origem">A</div>
                                 <div class="rota-content">
                                     <label>BUSCAR EM</label>
-                                    <p id="origemAtiva" style="font-size:16px;font-weight:bold;color:#1a73e8;margin:5px 0;">-</p>
+                                    <p id="origemAtiva" style="font-size:16px;font-weight:bold;color:#ffffff;margin:5px 0;text-shadow:0 0 8px #00d4ff;">-</p>
                                     <button id="btnNavegarOrigem" onclick="abrirNavegacao('origem')" style="background:#1a73e8;color:#fff;border:none;padding:8px 16px;border-radius:20px;font-size:13px;cursor:pointer;margin-top:5px;">🗺️ ABRIR NO MAPA</button>
                                     <div id="refOrigemAtivaBox" style="margin-top:8px;padding:10px;background:#fff3e0;border-left:4px solid #ff9800;border-radius:4px;display:none;">
                                         <span style="color:#e65100;font-weight:bold;">📌 REFERÊNCIA:</span>
@@ -1769,7 +1769,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         async function chegueiLocal() {
             const btn = document.getElementById('btnCheguei');
-            if (btn) { btn.disabled = true; btn.textContent = '⏳ NOTIFICANDO...'; }
+            if (btn) { btn.disabled = true; btn.textContent = '⏳ NOTIFICANDO...'; setTimeout(() => { if(btn){ btn.disabled = false; btn.textContent = '📍 CHEGUEI NO LOCAL'; } }, 5000); }
             try {
                 await fetch('/api/motorista-app/cheguei', {
                     method: 'POST',
