@@ -1619,7 +1619,7 @@ Me manda o endereço de *onde você está*!`;
             try {
                 const _resChatEmCorrida = await RebecaService.clienteMensagemParaMotorista(telefone, msgOriginal, conversa.adminId, conversa.instanciaId);
                 if (_resChatEmCorrida && _resChatEmCorrida.enviado) {
-                    return '✅ Enviado!';
+                    return null; // Silencioso - não responder ao cliente
                 }
                 // Fallback direto
                 const { InstanciaWhatsapp: _IWEc, Corrida: _CEc } = require('../models');
@@ -1635,7 +1635,7 @@ Me manda o endereço de *onde você está*!`;
                         await EvolutionMultiService.enviarMensagem(_instEc._id, _motEc.whatsapp, _msgEc);
                         await _CEc.findByIdAndUpdate(_corrEc._id, { $push: { chatMensagens: { texto: msgOriginal, remetente: 'cliente', nomeRemetente: _corrEc.clienteNome || 'Cliente', data: new Date() } } });
                         console.log('[CHAT-EC] Cliente->Motorista direto:', _motEc.whatsapp);
-                        return '✅ Enviado!';
+                        return null; // Silencioso - não responder ao cliente
                     }
                 }
             } catch(_eEc) { console.log('[CHAT-EC] Erro:', _eEc.message); }
