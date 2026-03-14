@@ -1608,7 +1608,7 @@ Me manda o endereço de *onde você está*!`;
 
         // ========== AGUARDANDO MOTORISTA OU EM CORRIDA ==========
         // EM CORRIDA: encaminhar mensagem direto ao motorista via WhatsApp
-        if (conversa.etapa === 'em_corrida' && !msg.includes('cancelar')) {
+        if (conversa.etapa === 'em_corrida' && !NLPService.eCancelar(msg)) {
             try {
                 const _resChatEmCorrida = await RebecaService.clienteMensagemParaMotorista(telefone, msgOriginal, conversa.adminId, conversa.instanciaId);
                 if (_resChatEmCorrida && _resChatEmCorrida.enviado) {
@@ -1634,7 +1634,7 @@ Me manda o endereço de *onde você está*!`;
             } catch(_eEc) { console.log('[CHAT-EC] Erro:', _eEc.message); }
         }
 
-        if ((conversa.etapa === 'aguardando_motorista' || conversa.etapa === 'em_corrida') && !msg.includes('cancelar')) {
+        if ((conversa.etapa === 'aguardando_motorista' || conversa.etapa === 'em_corrida') && !NLPService.eCancelar(msg)) {
             // CLIENTE NERVOSO/RECLAMANDO DA DEMORA → Redirecionar corrida
             const _reclamaDemora = msg.match(/(demora|demorando|cadê|cade|onde|tá onde|ta onde|quanto tempo|muito tempo|esperando|cansei|absurdo|ridiculo|ridículo|péssimo|pessimo|horrível|horrivel|nunca chega|não chega|nao chega|vou cancelar|demais|muito lento)/);
             if (_reclamaDemora && (conversa.etapa === 'aguardando_motorista' || conversa.etapa === 'em_corrida')) {
