@@ -3525,11 +3525,10 @@ _(ou mande *0* para pular)_`;
 
     // ==================== FUNÇÕES AUXILIARES ====================
     menuPrincipal: (nome, telefone) => {
-        const hora = new Date().getHours();
+        const hora = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' })).getHours();
         let saudacao = 'Oi';
         if (hora >= 5 && hora < 12) saudacao = 'Bom dia';
         else if (hora >= 12 && hora < 18) saudacao = 'Boa tarde';
-        else if (hora >= 18 || hora < 5) saudacao = 'Boa noite';
         else saudacao = 'Boa noite';
         
         // Verificar se cliente ja usou antes
