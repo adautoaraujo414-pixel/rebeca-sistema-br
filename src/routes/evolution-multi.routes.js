@@ -433,7 +433,53 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                 }
                 
                 console.log('[REBECA-' + (adminId || 'GLOBAL') + '] Msg de ' + telefone + ':', typeof conteudo === 'string' ? conteudo.substring(0, 30) : 'GPS');
-                
+
+                // DEBOUNCE: acumula até 4 mensagens ou 3s, depois processa como uma só
+                if (typeof conteudo === 'string' && conteudo !== '__AUDIO_SEM_TRANSCRICAO__') {
+                    if (!global._debounceBuffer) global._debounceBuffer = new Map();
+                    const _dbKey = telefone + '_' + (adminId || 'g');
+                    const _dbEntry = global._debounceBuffer.get(_dbKey) || { msgs: [], timer: null, instanciaId: instancia._id, adminId, nome };
+                    _dbEntry.msgs.push(conteudo);
+                    if (_dbEntry.timer) clearTimeout(_dbEntry.timer);
+                    global._debounceBuffer.set(_dbKey, _dbEntry);
+                    // Processar imediatamente se já tem 4 mensagens
+                    const _dbDispatch = async () => {
+                        const _entry = global._debounceBuffer.get(_dbKey);
+                        if (!_entry) return;
+                        global._debounceBuffer.delete(_dbKey);
+                        const _msgFinal = _entry.msgs.join(' ');
+                        console.log('[DEBOUNCE] Processando ' + _entry.msgs.length + ' msg(s) de ' + telefone + ':', _msgFinal.substring(0, 60));
+                        try {
+                            const contextoDb = { adminId: _entry.adminId, instanciaId: _entry.instanciaId };
+                            const { Admin: AdminModel2 } = require('../models');
+                            const adminDoc2 = await AdminModel2.findById(_entry.adminId).select('tipoAdmin').lean();
+                            let respostaDb;
+                            if (adminDoc2 && adminDoc2.tipoAdmin === 'delivery') {
+                                respostaDb = await RebecaDeliveryService.processarMensagem(telefone, _msgFinal, _entry.nome, contextoDb);
+                            } else {
+                                respostaDb = await RebecaService.processarMensagem(telefone, _msgFinal, _entry.nome, contextoDb);
+                            }
+                            if (respostaDb) {
+                                if (!global._respostasEnviadas) global._respostasEnviadas = new Map();
+                                const _resHashDb = respostaDb.replace(/\s+/g, ' ').trim().substring(0, 80);
+                                const _chaveRespDb = telefone + '|' + _resHashDb;
+                                if (!global._respostasEnviadas.has(_chaveRespDb)) {
+                                    global._respostasEnviadas.set(_chaveRespDb, Date.now());
+                                    await EvolutionMultiService.enviarMensagem(_entry.instanciaId, telefone, respostaDb);
+                                    console.log('[DEBOUNCE] Resposta enviada para', telefone);
+                                }
+                            }
+                        } catch(dbErr) { console.log('[DEBOUNCE] Erro:', dbErr.message); }
+                    };
+                    if (_dbEntry.msgs.length >= 4) {
+                        await _dbDispatch();
+                    } else {
+                        _dbEntry.timer = setTimeout(_dbDispatch, 3000);
+                        global._debounceBuffer.set(_dbKey, _dbEntry);
+                    }
+                    continue; // Não cai no fluxo normal abaixo
+                }
+
                 try {
                     // PASSAR adminId PARA REBECA (contexto multi-tenant)
                     const contexto = { adminId: adminId, instanciaId: instancia._id };
