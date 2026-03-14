@@ -1609,7 +1609,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const _avatarDiv = document.getElementById('avatarCorridaAtiva');
             if (_avatarDiv) {
                 if (corridaAtual.clienteFoto) {
-                    _avatarDiv.innerHTML = '<img src="' + corridaAtual.clienteFoto + '" style="width:50px;height:50px;border-radius:50%;object-fit:cover;" onerror="this.parentElement.textContent='👤'">';
+                    _avatarDiv.innerHTML = '<img src="' + corridaAtual.clienteFoto + '" style="width:50px;height:50px;border-radius:50%;object-fit:cover;" onerror="this.parentElement.textContent=String.fromCodePoint(128100)">' + '';
                 } else {
                     _avatarDiv.textContent = '👤';
                 }
