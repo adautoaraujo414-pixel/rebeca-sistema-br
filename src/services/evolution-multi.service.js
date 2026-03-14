@@ -164,7 +164,7 @@ const EvolutionMultiService = {
         try {
             let instancia = await InstanciaWhatsapp.findById(instanciaId);
             if (!instancia) {
-                instancia = await InstanciaWhatsapp.findOne({ status: 'conectado' });
+                instancia = await InstanciaWhatsapp.findOne({ status: { $in: ['conectado','open','connected'] } });
                 if (!instancia) throw new Error('Nenhuma instancia disponivel');
             }
             console.log('[EVO-DEBUG] instanciaId:', instanciaId, '| nome:', instancia.nomeInstancia, '| url:', instancia.apiUrl, '| status:', instancia.status, '| apiKey:', instancia.apiKey ? 'OK' : 'VAZIA');
@@ -200,7 +200,7 @@ const EvolutionMultiService = {
                         // Verificar status
                         const statusRes = await axios.get(instancia.apiUrl + '/instance/connectionState/' + instancia.nomeInstancia, { headers: { 'apikey': instancia.apiKey || EVOLUTION_GLOBAL_KEY }, timeout: 6000 });
                         if (statusRes.data?.instance?.state === 'open') {
-                            await InstanciaWhatsapp.findByIdAndUpdate(instancia._id, { status: 'conectado', ultimaConexao: new Date() });
+                            await InstanciaWhatsapp.findByIdAndUpdate(instancia._id, { status: 'open', ultimaConexao: new Date() });
                             console.log('[EVO] Reconectado com sucesso!');
                             
                             // Retry
@@ -228,7 +228,7 @@ const EvolutionMultiService = {
     enviarImagem: async (instanciaId, telefone, urlImagem, legenda = '') => {
         try {
             let instancia = await InstanciaWhatsapp.findById(instanciaId);
-            if (!instancia) instancia = await InstanciaWhatsapp.findOne({ status: 'conectado' });
+            if (!instancia) instancia = await InstanciaWhatsapp.findOne({ status: { $in: ['conectado','open','connected'] } });
             if (!instancia) throw new Error('Nenhuma instancia disponivel');
 
             let numero = telefone.replace(/\D/g, '');
