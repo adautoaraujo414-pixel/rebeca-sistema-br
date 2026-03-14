@@ -1832,20 +1832,16 @@ Me manda o endereço de *onde você está*!`;
                     }
                 } catch(e) { console.log('[EMBARQUE] Raciocinio falhou:', e.message); }
             }
-            const _frasesEmbarque = [
-                'Seu motorista já está te esperando! É só subir no veículo. 🚗',
-                'Ele está no local! Pode ir que a corrida começa assim que embarcar. 😊',
-                'Motorista aguardando você! Dirija-se ao veículo. 🚙',
-                'Já pode ir! O motorista está no local esperando você.'
-            ];
-            resposta = _frasesEmbarque[Math.floor(Math.random() * _frasesEmbarque.length)];
+            // Silencioso — qualquer mensagem durante embarque vai pro motorista
+            try {
+                await RebecaService.clienteMensagemParaMotorista(telefone, msgOriginal, conversa.adminId, conversa.instanciaId);
+            } catch(_e) {}
+            return null;
         }
 
         // ========== MOTORISTA A CAMINHO (aceitou, indo buscar cliente) ==========
         if (conversa.etapa === 'motorista_a_caminho') {
-            if (NLPService.eCancelar(msg)) {
-                resposta = 'Seu motorista ja esta a caminho! Para cancelar agora precisaria entrar em contato direto com ele.\n\nSe precisar de ajuda manda mensagem aqui!';
-            } else {
+            if (!NLPService.eCancelar(msg)) {
                 // Raciocinar antes de resposta genérica
                 if (RaciocinioService.isAtivo()) {
                     try {
