@@ -101,13 +101,21 @@ router.get('/rastrear/:codigo', async (req, res) => {
             return res.status(404).json({ error: 'Corrida não encontrada' });
         }
         
-        // Link expira quando corrida finaliza ou cancela
+        // Link expira quando corrida finaliza, cancela ou após 60 minutos
         const statusCorrida = corrida.status || 'pendente';
         if (['finalizada', 'cancelada'].includes(statusCorrida)) {
             return res.json({ 
                 expirado: true, 
                 status: statusCorrida,
-                mensagem: corrida.status === 'finalizada' ? 'Corrida finalizada - obrigado!' : 'Corrida cancelada'
+                mensagem: statusCorrida === 'finalizada' ? 'Corrida finalizada - obrigado!' : 'Corrida cancelada'
+            });
+        }
+        const _criadoHa = Date.now() - new Date(corrida.createdAt).getTime();
+        if (_criadoHa > 60 * 60 * 1000) {
+            return res.json({
+                expirado: true,
+                status: 'expirado',
+                mensagem: 'Link de rastreamento expirado.'
             });
         }
         
