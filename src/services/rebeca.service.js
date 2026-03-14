@@ -748,8 +748,9 @@ Me manda o endereço de *onde você está*!`;
 
                     // CANCELAR
                     if (_resInt.intencao === 'CANCELAR') {
-                        // Verificar se já estava aguardando confirmação de cancelamento
-                        if (conversa.dados._aguardandoCancelamento) {
+                        // Cancelar direto, sem exigir dupla confirmação
+                        conversa.dados._aguardandoCancelamento = true;
+                        if (true || conversa.dados._aguardandoCancelamento) {
                             conversa.etapa = 'inicio';
                             conversa.dados = {};
                             conversas.set(telefone, conversa);
