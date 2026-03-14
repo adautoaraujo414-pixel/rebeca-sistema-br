@@ -282,7 +282,9 @@ router.post('/iniciar', auth, async (req, res) => {
         if (corrida && corrida.clienteTelefone) {
             const EvolutionMultiService = require('../services/evolution-multi.service');
             const { InstanciaWhatsapp } = require('../models');
-            let instancia = await InstanciaWhatsapp.findOne({ adminId: corrida.adminId, status: 'conectado' });
+            const instancia = corrida.instanciaId
+                ? await InstanciaWhatsapp.findById(corrida.instanciaId).catch(() => null)
+                : await InstanciaWhatsapp.findOne({ adminId: corrida.adminId, status: { $in: ['conectado','open','connected'] } });
             if (instancia) {
                 await EvolutionMultiService.enviarMensagem(instancia._id, corrida.clienteTelefone,
                     '🚗 *Corrida iniciada!*\n\n' +
