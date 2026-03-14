@@ -1904,12 +1904,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
                 const data = await res.json();
                 const msgs = data.mensagens || [];
-                // Notificar novas mensagens recebidas
-                const recebidas = msgs.filter(m => m.remetente?.toString() !== motorista?._id?.toString());
+                // Notificar novas mensagens recebidas (cliente ou sistema, nunca do proprio motorista)
+                const recebidas = msgs.filter(m => m.remetente === 'cliente' || m.remetente === 'sistema');
                 if (recebidas.length > _ultimoCountChat) {
                     const novas = recebidas.slice(_ultimoCountChat);
                     novas.forEach(m => {
-                        toast('💬 ' + (m.nomeRemetente || 'Mensagem') + ': ' + (m.texto || '').substring(0, 50), 'success');
+                        const _icone = m.remetente === 'sistema' ? '🔔' : '💬';
+                        toast(_icone + ' ' + (m.nomeRemetente || 'Cliente') + ': ' + (m.texto || '').substring(0, 50), 'success');
                         if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
                     });
                     _ultimoCountChat = recebidas.length;
