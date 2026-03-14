@@ -244,19 +244,48 @@ router.post('/cheguei', auth, async (req, res) => {
             }
         } catch(_re) { console.log('[CHEGUEI] Rebeca state:', _re.message); }
 
-        // Notificar cliente via WhatsApp — tenta todas as instâncias
+        // Notificar cliente via WhatsApp — instância correta da corrida
         if (corrida.clienteTelefone) {
-            const instancias = await InstanciaWhatsapp.find({ adminId: corrida.adminId }).sort({ ultimaConexao: -1 });
-            const nomeM = req.motorista.nomeCompleto || req.motorista.nome || 'Motorista';
-            const veic = req.motorista.veiculo?.modelo || '';
-            const cor = req.motorista.veiculo?.cor || '';
-            const placa = req.motorista.veiculo?.placa || req.motorista.placa || '';
-            const msgCheg = '\ud83d\ude97 *MOTORISTA CHEGOU!*\n\nSeu motorista *' + nomeM + '* est\u00e1 te aguardando no local.\n\n\ud83d\udccd Dirija-se ao ve\u00edculo:\n\ud83d\ude99 ' + veic + ' ' + cor + (placa ? ' - *' + placa + '*' : '');
-            for (const inst of instancias) {
+            let instCheg = corrida.instanciaId
+                ? await InstanciaWhatsapp.findById(corrida.instanciaId).catch(() => null)
+                : null;
+            if (!instCheg) {
                 try {
-                    const r = await EvolutionMultiService.enviarMensagem(inst._id, corrida.clienteTelefone, msgCheg);
-                    if (r && r.sucesso) { console.log('[CHEGUEI] Notif enviada via', inst.nomeInstancia); break; }
-                } catch(_ci) {}
+                    const RebSvc = require('../services/rebeca.service');
+                    const _tels = [corrida.clienteTelefone, '55'+corrida.clienteTelefone, corrida.clienteTelefone.replace(/^55/,'')];
+                    for (const _t of _tels) {
+                        const _cv = RebSvc.conversas?.get(_t);
+                        if (_cv && _cv.instanciaId) {
+                            instCheg = await InstanciaWhatsapp.findById(_cv.instanciaId).catch(() => null);
+                            if (instCheg) break;
+                        }
+                    }
+                } catch(_e) {}
+            }
+            if (!instCheg) instCheg = await InstanciaWhatsapp.findOne({ adminId: corrida.adminId, status: { $in: ['conectado','open','connected'] } });
+            if (instCheg) {
+                const nomeM = req.motorista.nomeCompleto || req.motorista.nome || 'Motorista';
+                const veic = req.motorista.veiculo?.modelo || '';
+                const corV = req.motorista.veiculo?.cor || '';
+                const placa = req.motorista.veiculo?.placa || req.motorista.placa || '';
+                const msgCheg = '🚗 Boa notícia! *' + nomeM + '* chegou e está te esperando no local!\n\n🚙 ' + veic + ' ' + corV + (placa ? ' — *' + placa + '*' : '') + '\n\nJá desço! 👋';
+                await EvolutionMultiService.enviarMensagem(instCheg._id, corrida.clienteTelefone, msgCheg);
+                console.log('[CHEGUEI] Notif enviada via', instCheg.nomeInstancia);
+
+                // Perguntar cor da camisa para identificação
+                if (corrida.aparenciaCliente) {
+                    // Já tem aparência registrada — não perguntar
+                } else {
+                    setTimeout(async () => {
+                        try {
+                            await EvolutionMultiService.enviarMensagem(instCheg._id, corrida.clienteTelefone,
+                                'Para facilitar sua identificação, qual é a cor da sua roupa agora? 👕');
+                            // Marcar que perguntou cor
+                            const { Corrida: _CR } = require('../models');
+                            await _CR.findByIdAndUpdate(corridaId, { perguntouCorCamisa: true, perguntouCorCamisaEm: new Date() });
+                        } catch(_e) {}
+                    }, 2000);
+                }
             }
         }
         console.log('[CHEGUEI] Motorista', req.motorista.nomeCompleto, 'chegou na corrida', corridaId);
