@@ -1702,26 +1702,31 @@ Me manda o endereço de *onde você está*!`;
                         // CHAT VIA WHATSAPP: repassar pro motorista
                         try {
                             const _resChatCli = await RebecaService.clienteMensagemParaMotorista(telefone, msgOriginal, conversa.adminId, conversa.instanciaId);
-                            if (_resChatCli && _resChatCli.enviado) {
-                                // Se estava aguardando_cliente (motorista chegou), reinicia o fluxo
-                                if (conversa.etapa === 'aguardando_cliente') {
-                                    conversa.etapa = 'em_corrida';
-                                    conversas.set(telefone, conversa);
-                                }
-                                conversas.set(telefone, conversa);
-                                return variar('msg_enviada');
+                            if (conversa.etapa === 'aguardando_cliente') {
+                                conversa.etapa = 'em_corrida';
                             }
-                        } catch(e2) { console.log('[CHAT] Fallback painel:', e2.message); }
-                        // Fallback: salvar no painel
-                        try {
-                            const { Corrida } = require('../models');
-                            await Corrida.findByIdAndUpdate(corridaAtiva._id, {
-                                $push: { chatMensagens: { texto: msgOriginal, remetente: 'cliente', nomeRemetente: nome, data: new Date(), tipo: 'cliente' } }
-                            });
-                        } catch(e) { console.log('[CATCH]', e.message); }
-                        console.log('[REBECA] Mensagem cliente salva no painel para motorista:', motoristaAtivo.nomeCompleto || motoristaAtivo.nome);
+                            conversas.set(telefone, conversa);
+                            if (_resChatCli && _resChatCli.enviado) {
+                                return '✅ Enviado!';
+                            }
+                            // Fallback: enviar direto pelo WhatsApp mesmo sem corrida no cache
+                            const { InstanciaWhatsapp: _IWFb, Corrida: _CFb } = require('../models');
+                            const _instFb = conversa.instanciaId
+                                ? await _IWFb.findById(conversa.instanciaId).catch(() => null)
+                                : await _IWFb.findOne({ adminId: conversa.adminId, status: { $in: ['conectado','open','connected'] } });
+                            if (_instFb && motoristaAtivo.whatsapp) {
+                                const _nomeCli = corridaAtiva.clienteNome || nome || 'Cliente';
+                                const _msgFb = '💬 *' + _nomeCli + ':* ' + msgOriginal + '\n_Responda pelo app._';
+                                await EvolutionMultiService.enviarMensagem(_instFb._id, motoristaAtivo.whatsapp, _msgFb);
+                                await _CFb.findByIdAndUpdate(corridaAtiva._id, {
+                                    $push: { chatMensagens: { texto: msgOriginal, remetente: 'cliente', nomeRemetente: _nomeCli, data: new Date() } }
+                                });
+                                console.log('[CHAT] Fallback direto -> motorista:', motoristaAtivo.whatsapp);
+                                return '✅ Enviado!';
+                            }
+                        } catch(e2) { console.log('[CHAT] Erro chat cliente->motorista:', e2.message); }
                         conversas.set(telefone, conversa);
-                        return '✅ Mensagem enviada para o motorista *' + (motoristaAtivo.nomeCompleto || motoristaAtivo.nome) + '*!';
+                        return '✅ Enviado!';
                     }
                 }
             } catch (e) { console.log('[REBECA] Erro encaminhar msg:', e.message); }
