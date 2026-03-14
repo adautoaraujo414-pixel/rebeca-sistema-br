@@ -315,7 +315,9 @@ router.post('/finalizar', auth, async (req, res) => {
         if (corridaFinal && corridaFinal.clienteTelefone) {
             const EvolutionMultiService = require('../services/evolution-multi.service');
             const { InstanciaWhatsapp } = require('../models');
-            let instancia = await InstanciaWhatsapp.findOne({ adminId: corridaFinal.adminId, status: 'conectado' });
+            const instancia = corridaFinal.instanciaId
+                ? await InstanciaWhatsapp.findById(corridaFinal.instanciaId).catch(() => null)
+                : await InstanciaWhatsapp.findOne({ adminId: corridaFinal.adminId, status: { $in: ['conectado','open','connected'] } });
             if (instancia) {
                 const valor = precoFinal || corridaFinal.precoFinal || corridaFinal.precoEstimado || 0;
                 // Colocar cliente em modo avaliacao
