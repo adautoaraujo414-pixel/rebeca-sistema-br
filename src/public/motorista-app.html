@@ -1204,6 +1204,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 const data = await res.json();
                 if (data.corridas && data.corridas.length > 0 && !corridaAtual) {
                     mostrarNovaCorrida(data.corridas[0]);
+                } else if (!data.corridas || data.corridas.length === 0) {
+                    // Nenhuma corrida disponível — fechar overlay se estiver aberto
+                    const overlay = document.getElementById('novaCorridaOverlay');
+                    if (overlay && overlay.classList.contains('active')) {
+                        overlay.classList.remove('active');
+                    }
                 }
             } catch (e) {}
         }
