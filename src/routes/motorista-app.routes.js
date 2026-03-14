@@ -273,18 +273,36 @@ router.post('/cheguei', auth, async (req, res) => {
                 console.log('[CHEGUEI] Notif enviada via', instCheg.nomeInstancia);
 
                 // Perguntar cor da camisa para identificação
-                if (corrida.aparenciaCliente) {
-                    // Já tem aparência registrada — não perguntar
-                } else {
+                if (!corrida.aparenciaCliente) {
+                    const _instChegRef = instCheg;
+                    const _telCheg = corrida.clienteTelefone;
+                    const _adminCheg = corrida.adminId;
+                    const _motIdCheg = corrida.motoristaId;
+                    // Perguntar após 2s
                     setTimeout(async () => {
                         try {
-                            await EvolutionMultiService.enviarMensagem(instCheg._id, corrida.clienteTelefone,
+                            await EvolutionMultiService.enviarMensagem(_instChegRef._id, _telCheg,
                                 'Para facilitar sua identificação, qual é a cor da sua roupa agora? 👕');
-                            // Marcar que perguntou cor
                             const { Corrida: _CR } = require('../models');
                             await _CR.findByIdAndUpdate(corridaId, { perguntouCorCamisa: true, perguntouCorCamisaEm: new Date() });
                         } catch(_e) {}
                     }, 2000);
+                    // Timer 15s — se não respondeu, avisar motorista sem cor
+                    setTimeout(async () => {
+                        try {
+                            const { Corrida: _CR2 } = require('../models');
+                            const _corrAtual = await _CR2.findById(corridaId);
+                            if (_corrAtual && !_corrAtual.aparenciaCliente && _motIdCheg) {
+                                const MotoristaService = require('../services/motorista.service');
+                                const _motCheg = await MotoristaService.buscarPorId(_motIdCheg);
+                                if (_motCheg && _motCheg.whatsapp) {
+                                    await EvolutionMultiService.enviarMensagem(_instChegRef._id, _motCheg.whatsapp,
+                                        '⏱ Cliente não informou a cor da roupa. Procure o cliente no local!');
+                                    console.log('[COR-CAMISA] Timeout 15s — motorista avisado sem cor');
+                                }
+                            }
+                        } catch(_e) {}
+                    }, 17000);
                 }
             }
         }
