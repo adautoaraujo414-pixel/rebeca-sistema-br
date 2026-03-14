@@ -561,7 +561,7 @@ router.post('/avaria', auth, async (req, res) => {
         // Notificar admin via WhatsApp
         const admin = await Admin.findById(req.motorista.adminId);
         if (admin && admin.telefone) {
-            const instancia = await InstanciaWhatsapp.findOne({ adminId: admin._id, status: 'conectado' });
+            const instancia = await InstanciaWhatsapp.findOne({ adminId: admin._id, status: { $in: ['conectado','open','connected'] } });
             if (instancia) {
                 const msg = '⚠️ *AVARIA REPORTADA*\n\n' +
                     '👤 Motorista: *' + req.motorista.nomeCompleto + '*\n' +
@@ -752,7 +752,7 @@ router.post('/recusar', auth, async (req, res) => {
                 if (corridaCanc) {
                     const inst = corridaCanc.instanciaId
                         ? await InstanciaWhatsapp.findById(corridaCanc.instanciaId)
-                        : await InstanciaWhatsapp.findOne({ adminId: corridaCanc.adminId, status: 'conectado' });
+                        : await InstanciaWhatsapp.findOne({ adminId: corridaCanc.adminId, status: { $in: ['conectado','open','connected'] } });
                     if (inst && corridaCanc.clienteTelefone) {
                         await EvolutionMultiService.enviarMensagem(
                             inst._id, corridaCanc.clienteTelefone,

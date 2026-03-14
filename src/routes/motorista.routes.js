@@ -98,7 +98,7 @@ router.post('/', async (req, res) => {
         let whatsappEnviado = false;
         if (req.body.enviarWhatsApp !== false) {
             try {
-                const instancia = await InstanciaWhatsapp.findOne({ adminId, status: 'conectado' });
+                const instancia = await InstanciaWhatsapp.findOne({ adminId, status: { $in: ['conectado','open','connected'] } });
                 if (instancia) {
                     const EvolutionMultiService = require('../services/evolution-multi.service');
                     const linkApp = 'https://rebeca-sistema-br.onrender.com/motorista-app.html';

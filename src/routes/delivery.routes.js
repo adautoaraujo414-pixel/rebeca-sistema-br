@@ -114,7 +114,7 @@ router.put('/pedidos/:id/status', authDelivery, async (req, res) => {
             try {
                 const EvolutionMultiService = require('../services/evolution-multi.service');
                 const { InstanciaWhatsapp } = require('../models');
-                const inst = await InstanciaWhatsapp.findOne({ adminId: req.adminId, status: 'conectado' });
+                const inst = await InstanciaWhatsapp.findOne({ adminId: req.adminId, status: { $in: ['conectado','open','connected'] } });
                 if (inst) {
                     const config = await ConfigDelivery.findOne({ adminId: req.adminId });
                     let msg = '';
@@ -255,7 +255,7 @@ router.put('/cozinha/:id/rejeitar', authDelivery, async (req, res) => {
         try {
             const EvolutionMultiService = require('../services/evolution-multi.service');
             const { InstanciaWhatsapp } = require('../models');
-            const inst = await InstanciaWhatsapp.findOne({ adminId: req.adminId, status: 'conectado' });
+            const inst = await InstanciaWhatsapp.findOne({ adminId: req.adminId, status: { $in: ['conectado','open','connected'] } });
             if (inst) await EvolutionMultiService.enviarMensagem(inst._id, pedido.clienteTelefone, 'Pedido #' + pedido.numero + ' cancelado. ' + motivo + '. Desculpe pelo transtorno!');
         } catch(e) {}
         res.json(pedido);
@@ -477,7 +477,7 @@ router.post('/pedido/:id/contato-cliente', async (req, res) => {
         const { Pedido, InstanciaWhatsapp } = require('../models');
         const pedido = await Pedido.findById(req.params.id);
         if (!pedido) return res.status(404).json({ erro: 'Pedido não encontrado' });
-        const instancia = await InstanciaWhatsapp.findOne({ adminId: pedido.adminId, status: 'conectado' });
+        const instancia = await InstanciaWhatsapp.findOne({ adminId: pedido.adminId, status: { $in: ['conectado','open','connected'] } });
         if (!instancia) return res.status(400).json({ erro: 'WhatsApp não conectado' });
         const { EvolutionMultiService } = require('../services/evolution-multi.service');
         const entregadorNome = req.body.entregadorNome || 'Entregador';
