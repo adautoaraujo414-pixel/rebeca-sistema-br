@@ -1614,6 +1614,33 @@ Me manda o endereço de *onde você está*!`;
         }
 
         // ========== AGUARDANDO MOTORISTA OU EM CORRIDA ==========
+        // EM CORRIDA: encaminhar mensagem direto ao motorista via WhatsApp
+        if (conversa.etapa === 'em_corrida' && !msg.includes('cancelar')) {
+            try {
+                const _resChatEmCorrida = await RebecaService.clienteMensagemParaMotorista(telefone, msgOriginal, conversa.adminId, conversa.instanciaId);
+                if (_resChatEmCorrida && _resChatEmCorrida.enviado) {
+                    return '✅ Enviado!';
+                }
+                // Fallback direto
+                const { InstanciaWhatsapp: _IWEc, Corrida: _CEc } = require('../models');
+                const _telsEc = [telefone, '55'+telefone, telefone.replace(/^55/,'')];
+                const _corrEc = await _CEc.findOne({ clienteTelefone: { $in: _telsEc }, status: { $in: ['aceita','em_andamento','motorista_a_caminho','aguardando_cliente'] }, adminId: conversa.adminId });
+                if (_corrEc && _corrEc.motoristaId) {
+                    const _motEc = await MotoristaService.buscarPorId(_corrEc.motoristaId);
+                    const _instEc = conversa.instanciaId
+                        ? await _IWEc.findById(conversa.instanciaId).catch(() => null)
+                        : await _IWEc.findOne({ adminId: conversa.adminId, status: { $in: ['conectado','open','connected'] } });
+                    if (_motEc && _motEc.whatsapp && _instEc) {
+                        const _msgEc = '💬 *' + (_corrEc.clienteNome || 'Cliente') + ':* ' + msgOriginal + '\n_Responda pelo app._';
+                        await EvolutionMultiService.enviarMensagem(_instEc._id, _motEc.whatsapp, _msgEc);
+                        await _CEc.findByIdAndUpdate(_corrEc._id, { $push: { chatMensagens: { texto: msgOriginal, remetente: 'cliente', nomeRemetente: _corrEc.clienteNome || 'Cliente', data: new Date() } } });
+                        console.log('[CHAT-EC] Cliente->Motorista direto:', _motEc.whatsapp);
+                        return '✅ Enviado!';
+                    }
+                }
+            } catch(_eEc) { console.log('[CHAT-EC] Erro:', _eEc.message); }
+        }
+
         if ((conversa.etapa === 'aguardando_motorista' || conversa.etapa === 'em_corrida') && !msg.includes('cancelar')) {
             // CLIENTE NERVOSO/RECLAMANDO DA DEMORA → Redirecionar corrida
             const _reclamaDemora = msg.match(/(demora|demorando|cadê|cade|onde|tá onde|ta onde|quanto tempo|muito tempo|esperando|cansei|absurdo|ridiculo|ridículo|péssimo|pessimo|horrível|horrivel|nunca chega|não chega|nao chega|vou cancelar|demais|muito lento)/);
