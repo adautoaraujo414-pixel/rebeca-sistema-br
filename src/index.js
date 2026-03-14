@@ -131,6 +131,7 @@ const mensalidadeRoutes = require('./routes/mensalidade.routes');
 const evolutionMultiRoutes = require('./routes/evolution-multi.routes');
 const precoAdminRoutes = require('./routes/preco-admin.routes');
 const adminRoutes = require('./routes/admin.routes');
+const comunicacaoRoutes = require('./routes/comunicacao.routes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/usuarios', usuariosRoutes);
@@ -149,6 +150,7 @@ const _authAdmin = (req, res, next) => {
 
 app.use('/api/motoristas', _authAdmin, motoristaRoutes);
 app.use('/api/motorista-app', motoristaAppRoutes);
+app.use('/api/comunicacao', comunicacaoRoutes);
 app.use('/api/corridas', _authAdmin, corridaRoutes);
 app.use('/api/admin-master', adminMasterRoutes);
 app.use('/api/cerebro', cerebroRoutes);

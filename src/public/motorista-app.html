@@ -1897,8 +1897,8 @@ document.addEventListener('DOMContentLoaded', function() {
         function iniciarPollingChat() {
             if (chatPollingInterval) clearInterval(chatPollingInterval);
             _ultimoCountChat = 0; // reseta contador para nova corrida
-            chatPollingInterval = setInterval(carregarChat, 5000);
-            carregarChat(); // carregar imediatamente
+            chatPollingInterval = setInterval(async () => { carregarChat(); await verificarMensagensNaoLidas(); }, 5000);
+            carregarChat();
         }
         function pararPollingChat() {
             if (chatPollingInterval) { clearInterval(chatPollingInterval); chatPollingInterval = null; }
@@ -2663,16 +2663,16 @@ async function abrirChatCliente() {
         return;
     }
     
-    if (corridaAtual.status === 'em_andamento' || corridaAtual.status === 'finalizada') {
-        toast('Chat disponível apenas antes de iniciar', 'error');
+    if (corridaAtual.status === 'finalizada' || corridaAtual.status === 'cancelada') {
+        toast('Corrida já encerrada', 'error');
         return;
     }
     
     document.getElementById('modalChatCliente').classList.add('active');
     carregarMensagensRapidas();
     carregarMensagensCliente();
-    
-    // polling central (iniciarPollingChat) ja cuida das notificacoes
+    // polling do modal (UI em tempo real enquanto aberto)
+    chatClienteInterval = setInterval(carregarMensagensCliente, 4000);
 }
 
 function fecharChatCliente() {

@@ -4288,7 +4288,7 @@ _(ou mande *0* para pular)_`;
             if (!instMot) instMot = await IWm.findOne({ status: { $in: ['conectado','open','connected'] } }).catch(() => null);
             if (!instMot) { console.log('[CHAT] Sem instancia disponivel para motorista->cliente'); return null; }
             await EvolutionMultiService.enviarMensagem(instMot._id, corrida.clienteTelefone, '💬 *' + nomeMot + ':* ' + mensagem);
-            try { const { Corrida: CM } = require('../models'); await CM.findByIdAndUpdate(corrida._id, { $push: { chatMensagens: { texto: mensagem, remetente: 'motorista', nomeRemetente: nomeMot, data: new Date() } } }); } catch(e){}
+            try { const { Corrida: CM, MensagemCorrida: MCm } = require('../models'); await CM.findByIdAndUpdate(corrida._id, { $push: { chatMensagens: { texto: mensagem, remetente: 'motorista', nomeRemetente: nomeMot, data: new Date() } } }); await MCm.create({ corridaId: corrida._id, remetente: 'motorista', destinatario: 'cliente', mensagem, entregue: true }); } catch(e){}
             console.log('[CHAT] Motorista->Cliente:', mensagem.substring(0,40));
             return { enviado: true };
         } catch(e) { return null; }
@@ -4315,6 +4315,7 @@ _(ou mande *0* para pular)_`;
             if (!instFinalChat) { console.log('[CHAT] Sem instancia disponivel para adminId:', adminId); return null; }
             await EvolutionMultiService.enviarMensagem(instFinalChat._id, mot.whatsapp, '💬 *' + nomeCli + ':* ' + mensagem + '\n_Responda aqui que eu repasso!_');
             await CM.findByIdAndUpdate(corrida._id, { $push: { chatMensagens: { texto: mensagem, remetente: 'cliente', nomeRemetente: nomeCli, data: new Date() } } });
+            try { const { MensagemCorrida: MCc } = require('../models'); await MCc.create({ corridaId: corrida._id, remetente: 'cliente', destinatario: 'motorista', mensagem, entregue: true }); } catch(_mc){}
             console.log('[CHAT] Cliente->Motorista:', mensagem.substring(0,40));
             return { enviado: true, motoristaNome: mot.nomeCompleto||mot.nome };
         } catch(e) { return null; }
