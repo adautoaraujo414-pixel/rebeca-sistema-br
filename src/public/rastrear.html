@@ -279,9 +279,12 @@
                     } else if (d.status === 'finalizada') {
                         document.getElementById('expirado-titulo').textContent = '✅ Corrida finalizada';
                         document.getElementById('expirado-msg').textContent = 'Obrigado por usar Rebeca Corridas!';
+                    } else if (d.status === 'expirado') {
+                        document.getElementById('expirado-titulo').textContent = '⏰ Link expirado';
+                        document.getElementById('expirado-msg').textContent = 'Este link de rastreamento não está mais disponível.';
                     } else {
                         document.getElementById('expirado-titulo').textContent = '❌ Corrida cancelada';
-                        document.getElementById('expirado-msg').textContent = '';
+                        document.getElementById('expirado-msg').textContent = 'Esta corrida foi cancelada.';
                     }
                     clearInterval(intervalo);
                     return;
