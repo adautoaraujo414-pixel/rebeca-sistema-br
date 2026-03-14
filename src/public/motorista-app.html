@@ -1481,6 +1481,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
         async function aceitarCorrida() {
             if (!corridaAtual) return;
+            // Evitar duplo clique
+            if (window._aceitandoCorrida) return;
+            window._aceitandoCorrida = true;
             clearInterval(timerInterval);
             if (window._somRepetir) clearInterval(window._somRepetir);
             const btn = document.querySelector('.btn-aceitar');
@@ -1503,11 +1506,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else {
                     toast(data.erro || 'Erro ao aceitar', 'error');
                     if (btn) { btn.disabled = false; btn.textContent = '✅ ACEITAR'; }
+                    window._aceitandoCorrida = false;
                     recusarCorrida();
                 }
             } catch (e) {
                 toast('Erro de conexão', 'error');
                 if (btn) { btn.disabled = false; btn.textContent = '✅ ACEITAR'; }
+                window._aceitandoCorrida = false;
             }
         }
 
@@ -1573,6 +1578,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         async function recusarCorrida() {
+            window._aceitandoCorrida = false;
             clearInterval(timerInterval);
             if (window._somRepetir) clearInterval(window._somRepetir);
             document.getElementById('novaCorridaOverlay').classList.remove('active');
