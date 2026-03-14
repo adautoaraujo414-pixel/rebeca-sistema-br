@@ -247,7 +247,8 @@ app.listen(PORT, () => {
 // ===== CRON: Reativação de clientes sumidos (roda 1x por dia às 10h) =====
 setInterval(async () => {
     const agora = new Date();
-    if (agora.getHours() !== 10 || agora.getMinutes() > 5) return; // Só roda às 10h
+    const _agoraBR = new Date(agora.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+    if (_agoraBR.getHours() !== 10 || _agoraBR.getMinutes() > 5) return; // Só roda às 10h Brasilia
     
     try {
         const { Cliente, Corrida, Admin, InstanciaWhatsapp } = require('./models');

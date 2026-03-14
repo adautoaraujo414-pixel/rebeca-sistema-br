@@ -55,7 +55,7 @@ const PrecoSimplesService = {
             }
 
             // 3. Usar preço simples por dia/período
-            const agora = new Date();
+            const agora = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
             const hora = agora.getHours();
             const diaSemana = agora.getDay();
             

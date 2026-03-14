@@ -60,7 +60,7 @@ const ConfigService = {
     },
 
     getMultiplicadorHorario() {
-        const agora = new Date();
+        const agora = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
         const hora = agora.getHours();
         
         // Horário noturno (22h - 6h)

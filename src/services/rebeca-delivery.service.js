@@ -155,7 +155,7 @@ class RebecaDeliveryService {
             return 'Nao encontrei pedido anterior. Me diz o que quer! 🍔';
         } else {
             let saudacao = '';
-            const hora = new Date().getHours();
+            const hora = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' })).getHours();
             if (hora < 12) saudacao = 'Bom dia';
             else if (hora < 18) saudacao = 'Boa tarde';
             else saudacao = 'Boa noite';

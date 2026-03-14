@@ -19,7 +19,7 @@ const PrecoAdminService = {
         if (!adminId || !lat || !lng) return null;
         try {
             const { ZonaPreco } = require('../models');
-            const agora = new Date();
+            const agora = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
             const diaAtual = agora.getDay();
             const horaAtual = agora.getHours().toString().padStart(2,'0') + ':' + agora.getMinutes().toString().padStart(2,'0');
 
@@ -73,7 +73,7 @@ const PrecoAdminService = {
 
     // Buscar faixa atual do admin
     async getFaixaAtual(adminId) {
-        const agora = new Date();
+        const agora = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
         const diaSemana = diasSemana[agora.getDay()];
         const horaAtual = agora.getHours().toString().padStart(2, '0') + ':' + agora.getMinutes().toString().padStart(2, '0');
         
