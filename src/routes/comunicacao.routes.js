@@ -122,7 +122,7 @@ router.post('/cliente-para-motorista', async (req, res) => {
                     if (!inst) inst = await InstanciaWhatsapp.findOne({ status: { $in: ['conectado','open','connected'] } });
                     if (inst) {
                         const nomeCliente = corrida.clienteNome || 'Cliente';
-                        const msgMotorista = `💬 *Mensagem do Cliente*\n\n*${nomeCliente}* diz:\n"${mensagem}"\n\n_Responda pelo app._`;
+                        const msgMotorista = '💬 *' + nomeCliente + ':* ' + mensagem + '\n_Responda pelo app._';
                         await EvolutionMultiService.enviarMensagem(inst._id, motorista.whatsapp, msgMotorista);
                         console.log('[CHAT] ✅ Mensagem do cliente enviada ao motorista:', motorista.whatsapp);
                     }
