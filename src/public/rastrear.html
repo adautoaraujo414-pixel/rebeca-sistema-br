@@ -33,9 +33,25 @@
         .spinner { width: 50px; height: 50px; border: 4px solid #333; border-top-color: #00d4aa; border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
         .hidden { display: none !important; }
+        .modal-loc { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.75); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .modal-loc-box { background: #16213e; border-radius: 20px; padding: 28px 24px; max-width: 340px; width: 100%; text-align: center; border: 1px solid #00d4aa33; }
+        .modal-loc-box h2 { font-size: 22px; margin-bottom: 8px; }
+        .modal-loc-box p { color: #aaa; font-size: 14px; margin-bottom: 24px; line-height: 1.5; }
+        .modal-loc-sim { width: 100%; padding: 14px; background: #00d4aa; color: #000; border: none; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; margin-bottom: 10px; }
+        .modal-loc-nao { width: 100%; padding: 12px; background: transparent; color: #aaa; border: 1px solid #333; border-radius: 12px; font-size: 14px; cursor: pointer; }
     </style>
 </head>
 <body>
+    <!-- Modal de localização -->
+    <div id="modal-loc" class="modal-loc hidden">
+        <div class="modal-loc-box">
+            <h2>📍 Sua localização</h2>
+            <p>Quer compartilhar sua localização para ver a distância até o motorista em tempo real?</p>
+            <button class="modal-loc-sim" onclick="aceitarLocalizacao()">✅ Sim, quero ver a distância</button>
+            <button class="modal-loc-nao" onclick="recusarLocalizacao()">Não, só ver o mapa</button>
+        </div>
+    </div>
+
     <div id="loading" class="loading">
         <div class="spinner"></div>
         <p style="margin-top: 20px; color: #aaa;">Carregando rastreamento...</p>
@@ -81,6 +97,16 @@
         let map, motoristaMarker, clienteMarker, linhaDistancia;
         let motoristaPos = null, clientePos = null;
         let localizacaoAtiva = false;
+        let _modalMostrado = false;
+
+        function aceitarLocalizacao() {
+            document.getElementById('modal-loc').classList.add('hidden');
+            pedirLocalizacao();
+        }
+        function recusarLocalizacao() {
+            document.getElementById('modal-loc').classList.add('hidden');
+            document.getElementById('btn-loc').classList.remove('hidden');
+        }
         let intervalo = null;
 
         // Ícones personalizados
@@ -288,9 +314,10 @@
                     if (!map) initMap(_lat, _lng);
                 }
                 
-                // Perguntar localização após primeiro carregamento
-                if (!localizacaoAtiva && 'geolocation' in navigator) {
-                    document.getElementById('btn-loc').classList.remove('hidden');
+                // Perguntar localização via modal (apenas na primeira vez)
+                if (!localizacaoAtiva && !_modalMostrado && 'geolocation' in navigator) {
+                    _modalMostrado = true;
+                    document.getElementById('modal-loc').classList.remove('hidden');
                 }
                 
             } catch (e) {
