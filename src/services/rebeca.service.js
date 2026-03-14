@@ -3803,7 +3803,7 @@ _(ou mande *0* para pular)_`;
                             if (_inst2 && _corr2.clienteTelefone) {
                                 const EvSvc = require('./evolution-multi.service');
                                 await EvSvc.enviarMensagem(_inst2._id, _corr2.clienteTelefone,
-                                    '⏳ Todos os motoristas estão ocupados no momento.\n\nVocê está na fila e será o próximo a ser atendido assim que um motorista ficar livre! 😊');
+                                    'Oi! 😊 Todos os nossos motoristas estão em corrida agora, mas não se preocupa não! Você já está na fila e assim que um ficar livre eu te chamo na hora, tá bom? 🚗💨');
                                 console.log('[DESPACHO-2MIN] Cliente avisado da fila:', _corr2.clienteTelefone);
                             }
                         } catch(_e2) { console.log('[DESPACHO-2MIN] Erro:', _e2.message); }
