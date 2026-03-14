@@ -459,7 +459,10 @@ const RebecaService = {
                 const _adminChat = adminId || _corridaMot.adminId?.toString();
                 const _instChat = contexto.instanciaId || _corridaMot.instanciaId?.toString();
                 const _resChat = await RebecaService.motoristaMensagemParaCliente(telefone, msgOriginal, _adminChat, _instChat);
-                if (_resChat && _resChat.enviado) return '✅ Mensagem enviada pro cliente!';
+                if (_resChat && _resChat.enviado) {
+                    console.log('[CHAT] Motorista->Cliente enviado com sucesso');
+                    return null; // Silencioso — não responder ao motorista via WhatsApp
+                }
                 console.log('[CHAT] motorista->cliente falhou, adminId:', _adminChat, 'instanciaId:', _instChat);
             }
             return null;
@@ -4221,10 +4224,14 @@ _(ou mande *0* para pular)_`;
             const nomeMot = mot.nomeCompleto || mot.nome;
             // Buscar instância com fallback
             const { InstanciaWhatsapp: IWm } = require('../models');
-            const instMot = instanciaId
-                ? await IWm.findById(instanciaId).catch(() => null)
-                : await IWm.findOne({ adminId, status: { $in: ['conectado','open','connected'] } });
-            if (!instMot) { console.log('[CHAT] Sem instancia para motorista->cliente, adminId:', adminId); return null; }
+            // Buscar instância: pela corrida primeiro, depois pelo adminId, depois qualquer conectada
+            let instMot = corrida.instanciaId
+                ? await IWm.findById(corrida.instanciaId).catch(() => null)
+                : null;
+            if (!instMot && instanciaId) instMot = await IWm.findById(instanciaId).catch(() => null);
+            if (!instMot && adminId) instMot = await IWm.findOne({ adminId, status: { $in: ['conectado','open','connected'] } }).catch(() => null);
+            if (!instMot) instMot = await IWm.findOne({ status: { $in: ['conectado','open','connected'] } }).catch(() => null);
+            if (!instMot) { console.log('[CHAT] Sem instancia disponivel para motorista->cliente'); return null; }
             await EvolutionMultiService.enviarMensagem(instMot._id, corrida.clienteTelefone, '💬 *' + nomeMot + ':* ' + mensagem);
             try { const { Corrida: CM } = require('../models'); await CM.findByIdAndUpdate(corrida._id, { $push: { chatMensagens: { texto: mensagem, remetente: 'motorista', nomeRemetente: nomeMot, data: new Date() } } }); } catch(e){}
             console.log('[CHAT] Motorista->Cliente:', mensagem.substring(0,40));
