@@ -4451,9 +4451,13 @@ const _agendarTimeoutAparencia = (telefone, instanciaId, corridaId, conversas) =
             const _inst = instanciaId
                 ? await IWT.findById(instanciaId).catch(() => null)
                 : await IWT.findOne({ status: { $in: ['conectado','open','connected'] } });
-            if (_inst) {
-                await EvolutionMultiService.enviarMensagem(_inst._id, telefone,
-                    'Tudo certo! O motorista já está sendo chamado 🚗');
+            // Só avisar cliente se motorista já aceitou
+            if (corridaId) {
+                const _corrT = await CT.findById(corridaId).lean();
+                if (_corrT && _corrT.motoristaId && _inst) {
+                    await EvolutionMultiService.enviarMensagem(_inst._id, telefone,
+                        'Tudo certo! O motorista já está sendo chamado 🚗');
+                }
             }
             // Avisar motorista que cliente não informou cor
             if (corridaId) {
