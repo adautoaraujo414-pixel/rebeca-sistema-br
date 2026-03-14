@@ -281,9 +281,11 @@
                 // GPS do motorista
                 if (d.motoristaGPS && d.motoristaGPS.latitude && d.motoristaGPS.longitude) {
                     atualizarMotorista(d.motoristaGPS.latitude, d.motoristaGPS.longitude);
-                } else if (d.corrida?.origemLat && d.corrida?.origemLng) {
-                    // Fallback: usar origem da corrida
-                    if (!map) initMap(d.corrida.origemLat, d.corrida.origemLng);
+                } else {
+                    // Fallback: origem da corrida (campo correto do banco)
+                    const _lat = d.corrida?.origem?.latitude || d.corrida?.origemLat || -15.7801;
+                    const _lng = d.corrida?.origem?.longitude || d.corrida?.origemLng || -47.9292;
+                    if (!map) initMap(_lat, _lng);
                 }
                 
                 // Perguntar localização após primeiro carregamento
