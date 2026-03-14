@@ -139,7 +139,7 @@ const DespachoService = {
                             await Corrida.findByIdAndUpdate(corridaId, { status: 'cancelada', motivoCancelamento: 'sem_motorista' });
                             corridasPendentes.delete(corridaId);
                             // Buscar instância para enviar mensagem ao cliente
-                            const inst = await InstanciaWhatsapp.findOne({ adminId: corridaFinal.adminId?.toString(), status: 'conectado' });
+                            const inst = await InstanciaWhatsapp.findOne({ adminId: corridaFinal.adminId?.toString(), status: { $in: ['conectado','open','connected'] } });
                             if (inst && corridaFinal.clienteTelefone) {
                                 const msg = `⏳ *Poxa, que pena!*\n\nNo momento todos os nossos motoristas estão ocupados e não conseguimos atender sua corrida.\n\n🔔 Assim que um motorista ficar disponível, te aviso caso ainda queira uma corrida!\n\nPara solicitar novamente é só me chamar. 😊`;
                                 await EvolutionMultiService.enviarMensagem(inst._id, corridaFinal.clienteTelefone, msg);
@@ -267,7 +267,7 @@ const DespachoService = {
         try {
             const { InstanciaWhatsapp } = require('../models');
             const axios = require('axios');
-            const inst = await InstanciaWhatsapp.findOne({ adminId: corrida.adminId || adminId, status: 'conectado' });
+            const inst = await InstanciaWhatsapp.findOne({ adminId: corrida.adminId || adminId, status: { $in: ['conectado','open','connected'] } });
             if (inst && corrida.clienteTelefone && !corrida.clienteFoto) {
                 try {
                     const fotoResp = await axios.get(
@@ -621,7 +621,7 @@ const DespachoService = {
                         if (corridaRedir && corridaRedir.clienteTelefone) {
                             const instRedir = corridaRedir.instanciaId
                                 ? await InstanciaWhatsapp.findById(corridaRedir.instanciaId)
-                                : await InstanciaWhatsapp.findOne({ adminId: corridaRedir.adminId, status: 'conectado' });
+                                : await InstanciaWhatsapp.findOne({ adminId: corridaRedir.adminId, status: { $in: ['conectado','open','connected'] } });
                             if (instRedir) {
                                 const EvolutionMultiService = require('./evolution-multi.service');
                                 const msgs = [

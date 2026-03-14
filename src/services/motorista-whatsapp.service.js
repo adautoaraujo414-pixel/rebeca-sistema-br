@@ -266,7 +266,7 @@ const MotoristaWhatsappService = {
                 inst = await InstanciaWhatsapp.findById(instanciaId);
             }
             if (!inst && adminId) {
-                inst = await InstanciaWhatsapp.findOne({ adminId, status: 'conectado' });
+                inst = await InstanciaWhatsapp.findOne({ adminId, status: { $in: ['conectado','open','connected'] } });
             }
             if (!inst) return false;
 

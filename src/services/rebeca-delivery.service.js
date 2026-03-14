@@ -445,7 +445,7 @@ class RebecaDeliveryService {
     async notificarSaiuEntrega(pedidoId, entregadorNome) {
         try {
             var pedido = await PedidoDelivery.findById(pedidoId);
-            var inst = await InstanciaWhatsapp.findOne({ adminId: pedido.adminId, status: 'conectado' });
+            var inst = await InstanciaWhatsapp.findOne({ adminId: pedido.adminId, status: { $in: ['conectado','open','connected'] } });
             var Evo = require('./evolution-multi.service');
             const link = (process.env.BASE_URL || 'https://rebeca-sistema-br.onrender.com') + '/delivery-rastrear/' + pedido._id.toString().slice(-8);
             await Evo.enviarMensagem(inst._id, pedido.clienteTelefone, '*Pedido #' + pedido.numero + ' saiu pra entrega!*\n\nEntregador: *' + (entregadorNome || 'A caminho') + '*\n\nAcompanhe em tempo real:\n' + link);
@@ -455,7 +455,7 @@ class RebecaDeliveryService {
     async notificarClienteEntregue(pedidoId) {
         try {
             var pedido = await PedidoDelivery.findById(pedidoId);
-            var inst = await InstanciaWhatsapp.findOne({ adminId: pedido.adminId, status: 'conectado' });
+            var inst = await InstanciaWhatsapp.findOne({ adminId: pedido.adminId, status: { $in: ['conectado','open','connected'] } });
             var Evo = require('./evolution-multi.service');
             await Evo.enviarMensagem(inst._id, pedido.clienteTelefone, '*Pedido #' + pedido.numero + ' entregue!*\n\nObrigado pela preferencia!\n\nAvalie de 1 a 5!');
             var conv = this.obterConversa(pedido.clienteTelefone, pedido.adminId.toString());
