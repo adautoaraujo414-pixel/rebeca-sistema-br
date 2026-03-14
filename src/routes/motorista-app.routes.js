@@ -360,16 +360,30 @@ router.post('/cancelar', auth, async (req, res) => {
         const resultado = await CorridaService.cancelar(corridaId, motivo || 'Cancelado pelo motorista');
         // Resetar Rebeca para cliente poder pedir nova corrida
         if (corridaAntes && corridaAntes.clienteTelefone) {
-            try { const RebecaService = require('../services/rebeca.service'); RebecaService.setEtapaConversa(corridaAntes.clienteTelefone, 'inicio'); } catch(e) { console.log('[CATCH]', e.message); }
-        }
-        if (corridaAntes && corridaAntes.clienteTelefone) {
             const EvolutionMultiService = require('../services/evolution-multi.service');
             const { InstanciaWhatsapp } = require('../models');
-            let instancia = await InstanciaWhatsapp.findOne({ adminId: corridaAntes.adminId, status: 'conectado' });
+            const instancia = corridaAntes.instanciaId
+                ? await InstanciaWhatsapp.findById(corridaAntes.instanciaId).catch(() => null)
+                : await InstanciaWhatsapp.findOne({ adminId: corridaAntes.adminId, status: { $in: ['conectado','open','connected'] } });
             if (instancia) {
                 await EvolutionMultiService.enviarMensagem(instancia._id, corridaAntes.clienteTelefone,
-                    '\u274c *CORRIDA CANCELADA*\n\nInfelizmente o motorista precisou cancelar.\n\nQuer que eu busque outro? Mande sua localizacao!');
+                    'Poxa, que situação! 😔 O motorista teve um imprevisto e precisou cancelar sua corrida.\n\nMas não se preocupa, já estou procurando outro pra você! Me manda sua localização que eu chamo na hora 📍🚗');
             }
+            // Resetar conversa para o cliente poder pedir de novo normalmente
+            try {
+                const RebecaService = require('../services/rebeca.service');
+                const _telsReset = [corridaAntes.clienteTelefone, '55'+corridaAntes.clienteTelefone, corridaAntes.clienteTelefone.replace(/^55/,'')];
+                for (const _t of _telsReset) {
+                    const _cv = RebecaService.conversas?.get(_t);
+                    if (_cv) {
+                        _cv.etapa = 'inicio';
+                        _cv.dados = {};
+                        RebecaService.conversas.set(_t, _cv);
+                        console.log('[CANCEL-MOT] Conversa cliente resetada:', _t);
+                        break;
+                    }
+                }
+            } catch(_eReset) { console.log('[CANCEL-MOT] Erro reset conversa:', _eReset.message); }
         }
         res.json(resultado);
     } catch (e) { res.json({ sucesso: false, erro: e.message }); }
