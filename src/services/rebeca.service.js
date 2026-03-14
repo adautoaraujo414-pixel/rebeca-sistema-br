@@ -4489,29 +4489,35 @@ const _agendarTimeoutAparencia = (telefone, instanciaId, corridaId, conversas) =
     const _tid = setTimeout(async () => {
         global._timeoutsAparencia.delete(_chave);
         const _conv = conversas.get(telefone);
-        if (!_conv || _conv.etapa !== 'pedir_aparencia') return; // cliente já respondeu
+        if (!_conv || _conv.etapa !== 'pedir_aparencia') return; // cliente já respondeu a cor
+        // Avançar etapa — despachar sem cor
         _conv.etapa = 'aguardando_motorista';
         conversas.set(telefone, _conv);
-        console.log('[APARENCIA_TIMEOUT] 15s sem resposta, avançando:', telefone);
+        console.log('[APARENCIA_TIMEOUT] 15s sem resposta — despachando sem cor:', telefone);
         try {
             const { InstanciaWhatsapp: IWT, Corrida: CT } = require('../models');
             const _inst = instanciaId
                 ? await IWT.findById(instanciaId).catch(() => null)
                 : await IWT.findOne({ status: { $in: ['conectado','open','connected'] } });
-            // Só avisar cliente se motorista já aceitou
-            if (corridaId) {
-                const _corrT = await CT.findById(corridaId).lean();
-                if (_corrT && _corrT.motoristaId && _inst) {
-                    await EvolutionMultiService.enviarMensagem(_inst._id, telefone,
-                        'Tudo certo! O motorista já está sendo chamado 🚗');
+
+            if (!corridaId) return;
+            const _corrT = await CT.findById(corridaId).lean();
+            if (!_corrT) return;
+
+            // Despachar corrida se ainda não foi despachada (sem motorista ainda)
+            if (!_corrT.motoristaId) {
+                const _motsDisp = await MotoristaService.listarDisponiveis(_corrT.adminId);
+                if (_motsDisp.length > 0) {
+                    await DespachoService.despacharCorrida(_corrT, _motsDisp, _corrT.adminId);
+                    console.log('[APARENCIA_TIMEOUT] Corrida despachada automaticamente após 15s');
+                } else {
+                    console.log('[APARENCIA_TIMEOUT] Sem motoristas disponíveis para despachar');
                 }
-            }
-            // Avisar motorista que cliente não informou cor
-            if (corridaId) {
-                const _corrT = await CT.findById(corridaId).lean();
-                if (_corrT && _corrT.motoristaId) {
+            } else {
+                // Já tem motorista — só avisar que cliente não informou cor
+                if (_inst) {
                     const _motT = await MotoristaService.buscarPorId(_corrT.motoristaId);
-                    if (_motT && _motT.whatsapp && _inst) {
+                    if (_motT && _motT.whatsapp) {
                         await EvolutionMultiService.enviarMensagem(_inst._id, _motT.whatsapp,
                             '👕 *Aparência do cliente:* não informada');
                         console.log('[APARENCIA_TIMEOUT] Motorista avisado: sem cor informada');
@@ -4519,7 +4525,7 @@ const _agendarTimeoutAparencia = (telefone, instanciaId, corridaId, conversas) =
                 }
             }
         } catch(e) { console.log('[APARENCIA_TIMEOUT] Erro:', e.message); }
-    }, 30 * 1000);
+    }, 15 * 1000);
     global._timeoutsAparencia.set(_chave, _tid);
 };
 
