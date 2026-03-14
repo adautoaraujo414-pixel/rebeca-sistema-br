@@ -22,6 +22,7 @@ app.use(express.static(path.join(__dirname, 'public'), { etag: false, lastModifi
 app.get('/admin-master', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin-master.html')));
 
 // ========== REBECA LANDING PAGE ==========
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'rebeca-landing.html')));
 
 // ========== REBECA DELIVERY LANDING (ISOLADO) ==========
 app.get('/rebeca-delivery', (req, res) => res.sendFile(path.join(__dirname, 'public', 'rebeca-delivery-landing.html')));
