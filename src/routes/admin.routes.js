@@ -1,5 +1,5 @@
 const express = require('express');
-const { authMiddleware } = require('../middleware/auth.middleware');
+const { authMiddleware } = require('../middlewares/auth.middleware');
 const router = express.Router();
 const PrecoSimplesService = require('../services/preco-simples.service');
 
