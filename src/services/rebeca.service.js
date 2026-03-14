@@ -4105,10 +4105,20 @@ _(ou mande *0* para pular)_`;
                         const _nomeMotorista = motorista.nomeCompleto || motorista.nome || 'motorista';
                         const msgCliente = '✅ *Corrida finalizada!*\n\n' +
                             '💰 Valor: R$ ' + (corrida.precoEstimado?.toFixed(2) || '?') + '\n\n' +
-                            'Obrigado por usar nosso serviço! 🙏\n' +
-                            'Foi um prazer te atender. Sempre que precisar, é só chamar! 🚗';
+                            'Obrigado por utilizar nossos serviços! 😊\n' +
+                            'Até a próxima!';
                         await EvolutionMultiService.enviarMensagem(_instFinalFin._id, corrida.clienteTelefone, msgCliente);
                         console.log('[FINALIZAR] Cliente notificado:', corrida.clienteTelefone);
+                        // Resetar conversa do cliente para inicio
+                        const _telsFin = [corrida.clienteTelefone, '55'+corrida.clienteTelefone, corrida.clienteTelefone.replace(/^55/,'')];
+                        for (const _t of _telsFin) {
+                            if (conversas.has(_t)) {
+                                const _convFin = conversas.get(_t);
+                                conversas.set(_t, { etapa: 'inicio', dados: {}, adminId: _convFin.adminId, instanciaId: _convFin.instanciaId });
+                                console.log('[FINALIZAR] Conversa cliente resetada:', _t);
+                                break;
+                            }
+                        }
                     }
                 } catch(_eFin) { console.log('[FINALIZAR] Erro notif cliente:', _eFin.message); }
             }
