@@ -3497,7 +3497,7 @@ _(ou mande *0* para pular)_`;
         
         // Saudacao - responder de forma humana e variada
         if (analise.intencao === 'saudacao') {
-            const hora = new Date().getHours();
+            const hora = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' })).getHours();
             const saudTemporal = hora >= 5 && hora < 12 ? 'Bom dia' : hora < 18 ? 'Boa tarde' : 'Boa noite';
             const opcoes = [
                 `${saudTemporal}! 😊 Pra onde você vai hoje?`,

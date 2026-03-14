@@ -103,10 +103,12 @@ const NLPService = {
 
     // ==================== SAUDAÇÃO TEMPORAL ====================
     saudacaoTemporal() {
-        const h = new Date().getHours();
+        // Fuso horário de Brasília (UTC-3)
+        const agora = new Date();
+        const h = new Date(agora.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' })).getHours();
         if (h >= 5 && h < 12) return 'Bom dia';
         if (h >= 12 && h < 18) return 'Boa tarde';
-        if (h >= 18 && h < 23) return 'Boa noite';
+        if (h >= 18 || h < 5) return 'Boa noite';
         return 'Olá';
     },
 
