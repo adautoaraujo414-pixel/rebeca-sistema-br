@@ -4496,7 +4496,7 @@ setInterval(async () => {
             try {
                 const inst = entrada.instanciaId
                     ? await InstanciaWhatsapp.findById(entrada.instanciaId)
-                    : await InstanciaWhatsapp.findOne({ adminId: entrada.adminId, status: 'conectado' });
+                    : await InstanciaWhatsapp.findOne({ adminId: entrada.adminId, status: { $in: ['conectado','open','connected'] } });
                 if (inst) {
                     const EvolutionMultiService = require('./evolution-multi.service');
                     await EvolutionMultiService.enviarMensagem(
@@ -4519,7 +4519,7 @@ setInterval(async () => {
                 await FilaEspera.findByIdAndUpdate(entrada._id, { status: 'cancelado' });
                 const inst = entrada.instanciaId
                     ? await InstanciaWhatsapp.findById(entrada.instanciaId)
-                    : await InstanciaWhatsapp.findOne({ adminId: entrada.adminId, status: 'conectado' });
+                    : await InstanciaWhatsapp.findOne({ adminId: entrada.adminId, status: { $in: ['conectado','open','connected'] } });
                 if (inst) {
                     const EvolutionMultiService = require('./evolution-multi.service');
                     await EvolutionMultiService.enviarMensagem(
