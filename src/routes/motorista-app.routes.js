@@ -154,6 +154,25 @@ router.post('/aceitar', auth, async (req, res) => {
                 if (!enviado) {
                     console.log('[ACEITAR] ❌ FALHA: Não conseguiu enviar por nenhuma instância!');
                 }
+                // Atualizar etapa da conversa do cliente para em_corrida
+                try {
+                    const RebecaService = require('../services/rebeca.service');
+                    const _conversas = RebecaService.conversas;
+                    if (_conversas) {
+                        const _telsC = [clienteTel, '55'+clienteTel, clienteTel.replace(/^55/,'')];
+                        for (const _t of _telsC) {
+                            const _cv = _conversas.get(_t);
+                            if (_cv) {
+                                _cv.etapa = 'em_corrida';
+                                _cv.dados = _cv.dados || {};
+                                _cv.dados.corridaId = corridaId;
+                                _conversas.set(_t, _cv);
+                                console.log('[ACEITAR] Etapa cliente -> em_corrida:', _t);
+                                break;
+                            }
+                        }
+                    }
+                } catch(_eCv) { console.log('[ACEITAR] Erro update etapa:', _eCv.message); }
             }
         } else {
             console.log('[ACEITAR] Sem clienteTelefone na corrida');
