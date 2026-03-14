@@ -62,13 +62,14 @@ router.post('/motorista-para-cliente', async (req, res) => {
             if (!inst) inst = await InstanciaWhatsapp.findOne({ adminId: corrida.adminId, status: { $in: ['conectado','open','connected'] } });
             console.log('[CHAT] instanciaId da corrida:', corrida.instanciaId, '| instância encontrada:', inst ? inst.nomeInstancia : 'NENHUMA');
             if (inst) {
+                console.log('[CHAT] Tentando enviar para:', corrida.clienteTelefone, '| inst._id:', inst._id, '| msg:', mensagemRebeca);
                 await EvolutionMultiService.enviarMensagem(inst._id, corrida.clienteTelefone, mensagemRebeca);
                 console.log('[CHAT] ✅ Mensagem enviada ao cliente via WhatsApp:', corrida.clienteTelefone);
             } else {
                 console.log('[CHAT] Sem instância conectada para enviar ao cliente');
             }
         } catch(wppErr) {
-            console.log('[CHAT] Erro ao enviar WhatsApp:', wppErr.message);
+            console.log('[CHAT] Erro ao enviar WhatsApp:', wppErr.message, wppErr.stack);
         }
 
         await MensagemCorrida.findByIdAndUpdate(msg._id, { entregue: true }, { new: true });
