@@ -4008,6 +4008,19 @@ _(ou mande *0* para pular)_`;
                 if (instEnvio) {
                     await EvolutionMultiService.enviarMensagem(instEnvio._id, corrida.clienteTelefone, msgCliente);
                     console.log('[ACEITAR-WA] Notificação enviada para cliente via', instEnvio.nomeInstancia);
+                    // Atualizar etapa da conversa do cliente para em_corrida
+                    const _telsCli = [corrida.clienteTelefone, '55'+corrida.clienteTelefone, corrida.clienteTelefone.replace(/^55/,'')];
+                    for (const _t of _telsCli) {
+                        const _convCli = conversas.get(_t);
+                        if (_convCli) {
+                            _convCli.etapa = 'em_corrida';
+                            _convCli.dados = _convCli.dados || {};
+                            _convCli.dados.corridaId = corrida._id?.toString();
+                            conversas.set(_t, _convCli);
+                            console.log('[ACEITAR-WA] Etapa cliente atualizada para em_corrida:', _t);
+                            break;
+                        }
+                    }
                 } else {
                     console.log('[ACEITAR-WA] FALHA: nenhuma instancia disponivel para adminId:', adminId);
                 }
