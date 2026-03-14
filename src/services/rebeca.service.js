@@ -1894,42 +1894,7 @@ Me manda o endereço de *onde você está*!`;
         }
 
         // ========== EM CORRIDA (corrida em andamento) ==========
-        if (conversa.etapa === 'em_corrida') {
-            if (NLPService.eCancelar(msg)) {
-                resposta = 'A corrida ja foi iniciada e nao pode ser cancelada agora.\n\nSe tiver algum problema, fale diretamente com o motorista.';
-                conversas.set(telefone, conversa);
-            } else {
-                try {
-                    const { Corrida } = require('../models');
-                    if (conversa.dados && conversa.dados.corridaId) {
-                        const corridaAtiva = await Corrida.findById(conversa.dados.corridaId);
-                        if (corridaAtiva && corridaAtiva.motoristaId) {
-                            const mot = await MotoristaService.buscarPorId(corridaAtiva.motoristaId);
-                            if (mot && mot.whatsapp) {
-                                const inst = await require('../models').InstanciaWhatsapp.findOne({ adminId, status: 'conectado' });
-                                if (inst) {
-                                    await EvolutionMultiService.enviarMensagem(
-                                        inst._id, mot.whatsapp,
-                                        'Mensagem do cliente ' + (nome || '') + ':\n\n' + msgOriginal
-                                    );
-                                    await Corrida.findByIdAndUpdate(corridaAtiva._id, {
-                                        $push: { chatMensagens: {
-                                            texto: msgOriginal, remetente: 'cliente',
-                                            nomeRemetente: nome, data: new Date(), tipo: 'cliente'
-                                        }}
-                                    });
-                                    resposta = 'Mensagem enviada ao motorista!';
-                                }
-                            }
-                        }
-                    }
-                } catch(_ec) {}
-                if (!resposta) {
-                    resposta = 'Sua corrida esta em andamento! Pode mandar mensagem aqui para falar com o motorista.';
-                }
-                conversas.set(telefone, conversa);
-            }
-        }
+        // bloco em_corrida antigo removido — tratado no bloco novo linha 1611
 
         // ========== AVALIACAO ==========
         if (conversa.etapa === 'avaliar') {
