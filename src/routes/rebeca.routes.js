@@ -118,13 +118,12 @@ router.get('/rastrear/:codigo', async (req, res) => {
             try { motorista = await Motorista.findById(corrida.motoristaId); } catch(e) {}
             // Buscar GPS: primeiro no serviço em memória (mais atualizado), depois no banco
             try {
-                const gpsService = require('../services/gps.service');
-                const gpsMemoria = gpsService.obterLocalizacao(corrida.motoristaId.toString());
-                if (gpsMemoria && gpsMemoria.latitude) {
-                    motoristaGPS = gpsMemoria;
-                } else {
-                    motoristaGPS = GPSIntegradoService.obterLocalizacao(corrida.motoristaId.toString());
-                }
+                // Tentar gps.service em memória (mais atualizado)
+                try {
+                    const gpsService = require('../services/gps.service');
+                    const gpsMemoria = gpsService.obterLocalizacao(corrida.motoristaId.toString());
+                    if (gpsMemoria && gpsMemoria.latitude) motoristaGPS = gpsMemoria;
+                } catch(_e) {}
                 // Fallback: usar lat/lng do banco do motorista
                 if (!motoristaGPS && motorista && motorista.latitude) {
                     motoristaGPS = { latitude: motorista.latitude, longitude: motorista.longitude, atualizadoEm: motorista.updatedAt };
