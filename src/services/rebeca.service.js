@@ -1843,28 +1843,53 @@ Me manda o endereço de *onde você está*!`;
                 try {
                     const { Corrida } = require('../models');
                     if (conversa.dados && conversa.dados.corridaId) {
-                        const corridaCancelar = await Corrida.findById(conversa.dados.corridaId);
-                        if (corridaCancelar) {
-                            await Corrida.findByIdAndUpdate(corridaCancelar._id, {
-                                status: 'cancelada',
-                                motivoCancelamento: 'cliente_cancelou_apos_chegada'
-                            });
-                            // Notificação de cancelamento via app (sem WhatsApp)
-                        }
+                        await Corrida.findByIdAndUpdate(conversa.dados.corridaId, {
+                            status: 'cancelada',
+                            motivoCancelamento: 'cliente_cancelou_apos_chegada'
+                        });
                     }
                 } catch(_ce) {}
                 conversa.etapa = 'inicio';
                 conversa.dados = {};
                 conversas.set(telefone, conversa);
-                resposta = 'Corrida cancelada. Pedimos desculpas pela situacao.\n\nQuando precisar e so chamar!';
+                resposta = 'Corrida cancelada. Quando precisar é só chamar!';
             } else {
-                const _opcs = [
-                    'Seu motorista esta te aguardando! Por favor, dirija-se ao veiculo.',
-                    'Motorista no local, pode ir! Ele esta esperando voce.',
-                    'Seu motorista chegou e esta aguardando. Se precisar cancelar, manda CANCELAR.'
-                ];
-                resposta = _opcs[Math.floor(Math.random() * _opcs.length)];
-                conversas.set(telefone, conversa);
+                // Verificar se é resposta de cor da camisa
+                const _corridaEmb = conversa.dados?.corridaId;
+                if (_corridaEmb) {
+                    try {
+                        const { Corrida: _CEmb } = require('../models');
+                        const _corrEmb = await _CEmb.findById(_corridaEmb);
+                        if (_corrEmb && _corrEmb.perguntouCorCamisa && !_corrEmb.aparenciaCliente) {
+                            // Cliente respondeu a cor da camisa — salvar e encaminhar pro motorista
+                            const _corResp = msgOriginal.trim();
+                            await _CEmb.findByIdAndUpdate(_corridaEmb, { aparenciaCliente: _corResp });
+                            conversa.dados.aparenciaCliente = _corResp;
+                            conversas.set(telefone, conversa);
+                            // Encaminhar cor pro motorista via app (chatMensagens)
+                            if (_corrEmb.motoristaId) {
+                                const _instEmb = conversa.instanciaId
+                                    ? await require('../models').InstanciaWhatsapp.findById(conversa.instanciaId).catch(() => null)
+                                    : await require('../models').InstanciaWhatsapp.findOne({ adminId: conversa.adminId, status: { $in: ['conectado','open','connected'] } });
+                                const _motEmb = await MotoristaService.buscarPorId(_corrEmb.motoristaId);
+                                if (_instEmb && _motEmb && _motEmb.whatsapp) {
+                                    await EvolutionMultiService.enviarMensagem(_instEmb._id, _motEmb.whatsapp,
+                                        '👕 *Cor da roupa do cliente:* ' + _corResp);
+                                    console.log('[COR-CAMISA] Enviada ao motorista:', _corResp);
+                                }
+                                await _CEmb.findByIdAndUpdate(_corridaEmb, {
+                                    $push: { chatMensagens: { texto: '👕 Cor da roupa: ' + _corResp, remetente: 'sistema', data: new Date() } }
+                                });
+                            }
+                            return null; // Silencioso — não responder
+                        }
+                    } catch(_eEmb) { console.log('[COR-CAMISA] Erro:', _eEmb.message); }
+                }
+                // Mensagem genérica durante embarque — encaminhar pro motorista silenciosamente
+                try {
+                    await RebecaService.clienteMensagemParaMotorista(telefone, msgOriginal, conversa.adminId, conversa.instanciaId);
+                } catch(_e) {}
+                return null; // Silencioso
             }
         }
 
