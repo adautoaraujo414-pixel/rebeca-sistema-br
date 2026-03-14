@@ -776,14 +776,8 @@ Me manda o endereço de *onde você está*!`;
                                     const { Motorista: _MotCanc } = require('../models');
                                     const _motCanc = await _MotCanc.findById(_corridaCanc.motoristaId);
                                     if (_motCanc && _motCanc.whatsapp) {
-                                        const _instCanc = _corridaCanc.instanciaId
-                                            ? await _InstCanc.findById(_corridaCanc.instanciaId).catch(() => null)
-                                            : await _InstCanc.findOne({ adminId: conversa.adminId, status: { $in: ['conectado','open','connected'] } });
-                                        if (_instCanc) {
-                                            await EvolutionMultiService.enviarMensagem(_instCanc._id, _motCanc.whatsapp, '❌ *CORRIDA CANCELADA*\n\nO cliente cancelou.\n\nVocê está *DISPONÍVEL* novamente.');
-                                            await require('./motorista.service').atualizarStatus(_corridaCanc.motoristaId, 'disponivel');
-                                            console.log('[CANCEL-CLI2] Motorista notificado:', _motCanc.whatsapp);
-                                        }
+                                        await require('./motorista.service').atualizarStatus(_corridaCanc.motoristaId, 'disponivel');
+                                        console.log('[CANCEL-CLI2] Motorista status atualizado (sem whats):', _motCanc.whatsapp);
                                     }
                                 }
                             } else {
@@ -1451,14 +1445,8 @@ Me manda o endereço de *onde você está*!`;
                                         const { Motorista: _MotCanc } = require('../models');
                                         const _motCanc = await _MotCanc.findById(_corridaCanc.motoristaId);
                                         if (_motCanc && _motCanc.whatsapp) {
-                                            const _instCanc = _corridaCanc.instanciaId
-                                                ? await _InstCanc.findById(_corridaCanc.instanciaId).catch(() => null)
-                                                : await _InstCanc.findOne({ adminId: conversa.adminId, status: { $in: ['conectado','open','connected'] } });
-                                            if (_instCanc) {
-                                                await EvolutionMultiService.enviarMensagem(_instCanc._id, _motCanc.whatsapp, '❌ *CORRIDA CANCELADA*\n\nO cliente cancelou.\n\nVocê está *DISPONÍVEL* novamente.');
-                                                await require('./motorista.service').atualizarStatus(_corridaCanc.motoristaId, 'disponivel');
-                                                console.log('[CANCEL-CLI-GPT] Motorista notificado:', _motCanc.whatsapp);
-                                            }
+                                            await require('./motorista.service').atualizarStatus(_corridaCanc.motoristaId, 'disponivel');
+                                            console.log('[CANCEL-CLI-GPT] Motorista status atualizado (sem whats):', _motCanc.whatsapp);
                                         }
                                     }
                                 }
@@ -1855,18 +1843,7 @@ Me manda o endereço de *onde você está*!`;
                                 status: 'cancelada',
                                 motivoCancelamento: 'cliente_cancelou_apos_chegada'
                             });
-                            try {
-                                const inst = await require('../models').InstanciaWhatsapp.findOne({ adminId, status: 'conectado' });
-                                if (inst && corridaCancelar.motoristaId) {
-                                    const mot = await MotoristaService.buscarPorId(corridaCancelar.motoristaId);
-                                    if (mot && mot.whatsapp) {
-                                        await EvolutionMultiService.enviarMensagem(
-                                            inst._id, mot.whatsapp,
-                                            'O cliente cancelou a corrida apos sua chegada.\n\nVoce esta disponivel para novas corridas!'
-                                        );
-                                    }
-                                }
-                            } catch(_mn) {}
+                            // Notificação de cancelamento via app (sem WhatsApp)
                         }
                     }
                 } catch(_ce) {}
@@ -2234,11 +2211,7 @@ Me manda o endereço de *onde você está*!`;
                                 const instMot = conversa.instanciaId
                                     ? await InstanciaWhatsapp.findById(conversa.instanciaId)
                                     : await InstanciaWhatsapp.findOne({ adminId: conversa.adminId, status: { $in: ['conectado','open','connected'] } });
-                                if (instMot && motorista.whatsapp) {
-                                    await EvolutionMultiService.enviarMensagem(instMot._id, motorista.whatsapp,
-                                        '❌ *CORRIDA CANCELADA PELO CLIENTE*\n\nVocê está disponível para novas corridas!');
-                                    console.log('[CANCELAR] Motorista notificado via WhatsApp');
-                                }
+                                console.log('[CANCELAR] Motorista liberado via app (sem WhatsApp)');
                             } catch(eMot) { console.log('[CANCELAR] Erro notif motorista:', eMot.message); }
                             // Liberar motorista
                             await MotoristaService.atualizarStatus(corridaAtiva.motoristaId, 'disponivel');
