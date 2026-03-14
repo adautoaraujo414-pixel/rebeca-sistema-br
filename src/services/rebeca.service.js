@@ -37,7 +37,7 @@ setInterval(async () => {
                 const { Corrida } = require('../models');
                 const EvolutionMultiService = require('./evolution-multi.service');
                 const { InstanciaWhatsapp } = require('../models');
-                const inst = await InstanciaWhatsapp.findOne({ adminId: conversa.adminId, status: 'conectado' });
+                const inst = await InstanciaWhatsapp.findOne({ adminId: conversa.adminId, status: { $in: ['conectado','open','connected'] } });
                 
                 if (conversa.dados?.corridaId && minutos <= 10) {
                     // 5-10min: tentar redirecionar
@@ -865,7 +865,7 @@ Me manda o endereço de *onde você está*!`;
                             const { Admin } = require('../models');
                             const _admN = await Admin.findById(conversa.adminId);
                             if (_admN && _admN.telefone) {
-                                const _instN = await require('../models').InstanciaWhatsapp.findOne({ adminId: conversa.adminId, status: 'conectado' });
+                                const _instN = await require('../models').InstanciaWhatsapp.findOne({ adminId: conversa.adminId, status: { $in: ['conectado','open','connected'] } });
                                 if (_instN) await EvolutionMultiService.enviarMensagem(_instN._id, _admN.telefone,
                                     '📩 *NOTIFICAÇÃO*\n\n👤 ' + (nome || telefone) + '\n💬 ' + msgOriginal);
                             }
@@ -1565,7 +1565,7 @@ Me manda o endereço de *onde você está*!`;
                     const { Admin } = require('../models');
                     const _admInt = await Admin.findById(conversa.adminId);
                     if (_admInt && _admInt.telefone) {
-                        const _instInt = await require('../models').InstanciaWhatsapp.findOne({ adminId: conversa.adminId, status: 'conectado' });
+                        const _instInt = await require('../models').InstanciaWhatsapp.findOne({ adminId: conversa.adminId, status: { $in: ['conectado','open','connected'] } });
                         if (_instInt) {
                             await EvolutionMultiService.enviarMensagem(_instInt._id, _admInt.telefone,
                                 '📩 *CLIENTE QUER FALAR COM RESPONSÁVEL*\n\n' +
@@ -1594,7 +1594,7 @@ Me manda o endereço de *onde você está*!`;
                             const { Admin } = require('../models');
                             const _admRec = await Admin.findById(conversa.adminId);
                             if (_admRec && _admRec.telefone) {
-                                const _instRec = await require('../models').InstanciaWhatsapp.findOne({ adminId: conversa.adminId, status: 'conectado' });
+                                const _instRec = await require('../models').InstanciaWhatsapp.findOne({ adminId: conversa.adminId, status: { $in: ['conectado','open','connected'] } });
                                 if (_instRec) await EvolutionMultiService.enviarMensagem(_instRec._id, _admRec.telefone,
                                     '🟠 *RECLAMAÇÃO*\n\n👤 ' + (nome || telefone) + '\n💬 ' + msgOriginal);
                             }
@@ -1692,7 +1692,7 @@ Me manda o endereço de *onde você está*!`;
                                 const { Admin } = require('../models');
                                 const _admDoc = await Admin.findById(conversa.adminId);
                                 if (_admDoc && _admDoc.telefone) {
-                                    const _instUrgente = await require('../models').InstanciaWhatsapp.findOne({ adminId: conversa.adminId, status: 'conectado' });
+                                    const _instUrgente = await require('../models').InstanciaWhatsapp.findOne({ adminId: conversa.adminId, status: { $in: ['conectado','open','connected'] } });
                                     if (_instUrgente) {
                                         const _msgUrgAdmin = '🚨 *CLIENTE URGENTE — DEMORA NA CORRIDA*\n\n' +
                                             '👤 *Cliente:* ' + (nome || telefone) + '\n' +
@@ -1713,7 +1713,7 @@ Me manda o endereço de *onde você está*!`;
                         try {
                             const _motUrgente = await MotoristaService.buscarPorId(_corridaPend.motoristaId);
                             if (_motUrgente && _motUrgente.whatsapp) {
-                                const _instUrg = await require('../models').InstanciaWhatsapp.findOne({ adminId: conversa.adminId, status: 'conectado' });
+                                const _instUrg = await require('../models').InstanciaWhatsapp.findOne({ adminId: conversa.adminId, status: { $in: ['conectado','open','connected'] } });
                                 if (_instUrg) {
                                     const _msgMot = '🚨 *ATENÇÃO — CLIENTE URGENTE*\n\n' +
                                         'O cliente *' + (nome || telefone) + '* está esperando e ficou ansioso.\n' +
@@ -1797,7 +1797,7 @@ Me manda o endereço de *onde você está*!`;
                     const { Admin } = require('../models');
                     const _admR = await Admin.findById(conversa.adminId);
                     if (_admR && _admR.telefone) {
-                        const _instR = await require('../models').InstanciaWhatsapp.findOne({ adminId: conversa.adminId, status: 'conectado' });
+                        const _instR = await require('../models').InstanciaWhatsapp.findOne({ adminId: conversa.adminId, status: { $in: ['conectado','open','connected'] } });
                         if (_instR) {
                             const _msgR = '📩 *CLIENTE QUER FALAR COM RESPONSÁVEL*\n\n' +
                                 '👤 *Cliente:* ' + (nome || telefone) + '\n' +
@@ -3754,7 +3754,7 @@ _(ou mande *0* para pular)_`;
         let clienteFotoUrl = null;
         try {
             const { InstanciaWhatsapp } = require('../models');
-            const inst = await InstanciaWhatsapp.findOne({ adminId, status: 'conectado' });
+            const inst = await InstanciaWhatsapp.findOne({ adminId, status: { $in: ['conectado','open','connected'] } });
             if (inst) {
                 const _evoUrl = inst.apiUrl + '/chat/fetchProfilePictureUrl/' + inst.nomeInstancia;
                 const _evoKey = inst.apiKey || process.env.EVOLUTION_API_KEY;
@@ -3879,7 +3879,7 @@ _(ou mande *0* para pular)_`;
                         })
                         .sort((a, b) => new Date(a.updatedAt || a.createdAt) - new Date(b.updatedAt || b.createdAt))[0];
 
-                    const _instNotif = await InstanciaWhatsapp.findOne({ adminId, status: 'conectado' });
+                    const _instNotif = await InstanciaWhatsapp.findOne({ adminId, status: { $in: ['conectado','open','connected'] } });
 
                     if (_maisAntiga?.motoristaId?.whatsapp && _instNotif) {
                         const EvoService = require('./evolution-multi.service');
@@ -4346,7 +4346,7 @@ _(ou mande *0* para pular)_`;
             
             // Buscar instância para enviar mensagem
             const instancia = await InstanciaWhatsapp.findById(instanciaId) || 
-                await InstanciaWhatsapp.findOne({ adminId, status: 'conectado' });
+                await InstanciaWhatsapp.findOne({ adminId, status: { $in: ['conectado','open','connected'] } });
             
             if (!instancia) {
                 console.log('[DUVIDA] Sem instância conectada');
@@ -4396,7 +4396,7 @@ _(ou mande *0* para pular)_`;
             
             // Buscar instância
             const instancia = await InstanciaWhatsapp.findById(instanciaId) || 
-                await InstanciaWhatsapp.findOne({ adminId, status: 'conectado' });
+                await InstanciaWhatsapp.findOne({ adminId, status: { $in: ['conectado','open','connected'] } });
             
             if (!instancia) return null;
             
@@ -4713,7 +4713,7 @@ const filaEsperaFunctions = {
             
             // Buscar instância
             const instancia = await InstanciaWhatsapp.findById(instanciaId) || 
-                await InstanciaWhatsapp.findOne({ adminId, status: 'conectado' });
+                await InstanciaWhatsapp.findOne({ adminId, status: { $in: ['conectado','open','connected'] } });
             
             if (!instancia) return null;
             
