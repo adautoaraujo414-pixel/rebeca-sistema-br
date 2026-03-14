@@ -1602,6 +1602,7 @@ document.addEventListener('DOMContentLoaded', function() {
         function mostrarCorridaAtiva() {
             document.getElementById('semCorrida').style.display = 'none';
             document.getElementById('corridaAtiva').classList.add('active');
+            iniciarPollingChat(); // inicia polling em background
 
             document.getElementById('corridaValorAtiva').textContent = 'R$ ' + (corridaAtual.precoEstimado || 0).toFixed(2);
             document.getElementById('clienteNomeAtiva').textContent = corridaAtual.clienteNome || 'Cliente';
@@ -1835,6 +1836,7 @@ document.addEventListener('DOMContentLoaded', function() {
             atualizarStatusUI();
             document.getElementById('corridaAtiva').classList.remove('active');
             document.getElementById('semCorrida').style.display = 'block';
+            pararPollingChat(); // para polling ao finalizar
             if (btn) { btn.disabled = false; btn.textContent = '✅ FINALIZAR CORRIDA'; }
             carregarDashboard();
         }
@@ -1848,6 +1850,7 @@ document.addEventListener('DOMContentLoaded', function() {
             atualizarStatusUI();
             document.getElementById('corridaAtiva').classList.remove('active');
             document.getElementById('semCorrida').style.display = 'block';
+            pararPollingChat(); // para polling ao cancelar
             toast('Corrida cancelada', 'error');
             try {
                 await fetch('/api/motorista-app/cancelar', {
@@ -1892,6 +1895,7 @@ document.addEventListener('DOMContentLoaded', function() {
         function iniciarPollingChat() {
             if (chatPollingInterval) clearInterval(chatPollingInterval);
             chatPollingInterval = setInterval(carregarChat, 5000);
+            carregarChat(); // carregar imediatamente
         }
         function pararPollingChat() {
             if (chatPollingInterval) { clearInterval(chatPollingInterval); chatPollingInterval = null; }
@@ -2297,8 +2301,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (pageId === 'pageFinanceiro') carregarFinanceiro();
             if (pageId === 'pageRelatorios') setPeriodo('hoje');
-            if (pageId === 'pageChat') { carregarChat(); iniciarPollingChat(); }
-            else pararPollingChat();
+            if (pageId === 'pageChat') { carregarChat(); }
+            // polling continua em background para notificacoes
         }
 
         // ========== MODAIS ==========
