@@ -59,7 +59,9 @@ router.post('/motorista-para-cliente', async (req, res) => {
                 } catch(_e) {}
             }
             // 3. Fallback: mesma instância do adminId
-            if (!inst) inst = await InstanciaWhatsapp.findOne({ adminId: corrida.adminId, status: { $in: ['conectado','open','connected'] } });
+            // Fallback final: qualquer instância do adminId (sem filtrar status — status pode variar)
+            if (!inst) inst = await InstanciaWhatsapp.findOne({ adminId: corrida.adminId, status: { $in: ['conectado','open','connected','ativo','active'] } });
+            if (!inst) inst = await InstanciaWhatsapp.findOne({ adminId: corrida.adminId });
             console.log('[CHAT] instanciaId da corrida:', corrida.instanciaId, '| instância encontrada:', inst ? inst.nomeInstancia : 'NENHUMA');
             if (inst) {
                 console.log('[CHAT] Tentando enviar para:', corrida.clienteTelefone, '| inst._id:', inst._id, '| msg:', mensagemRebeca);
