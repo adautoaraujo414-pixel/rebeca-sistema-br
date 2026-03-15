@@ -2968,6 +2968,10 @@ _(ou mande *0* para pular)_`;
         }
         // ========== PEDIR ORIGEM NORMAL ==========
         else if (conversa.etapa === 'pedir_origem') {
+            if (NLPService.eCancelar(msg)) {
+                conversa.etapa = 'inicio'; conversa.dados = {}; conversas.set(telefone, conversa);
+                return 'Ok! Cancelado. Quando precisar é só chamar! 😊';
+            }
             if (msg === 'casa' && favoritos.casa) {
                 conversa.dados.origem = favoritos.casa.endereco;
                 conversa.dados.origemValidada = { valido: true, precisao: 'favorito', ...favoritos.casa };
@@ -3026,6 +3030,10 @@ _(ou mande *0* para pular)_`;
             }
         }
         else if (conversa.etapa === 'pedir_destino') {
+            if (NLPService.eCancelar(msg)) {
+                conversa.etapa = 'inicio'; conversa.dados = {}; conversas.set(telefone, conversa);
+                return 'Ok! Cancelado. Quando precisar é só chamar! 😊';
+            }
             if (msg === 'casa' && favoritos.casa) {
                 conversa.dados.destino = favoritos.casa.endereco;
             } else if (msg === 'trabalho' && favoritos.trabalho) {
