@@ -482,6 +482,10 @@ const RebecaService = {
         let resposta = null; // null = sem resposta ainda (diferente de '' que ativa anti-repeticao)
 
         // ========== CLIENTE FREQUENTE — oferecer destinos recentes ==========
+        if (NLPService.eSaudacao(msg) && !['aguardando_motorista','em_corrida','aguardando_embarque','motorista_a_caminho','avaliar','aguardando_fila'].includes(conversa.etapa)) {
+            conversa.etapa = 'inicio';
+            conversa.dados = {};
+        }
         if (conversa.etapa === 'inicio' && NLPService.eSaudacao(msg)) {
             try {
                 const ultimosDestinos = await ClienteService.buscarUltimosDestinos(telefone, adminId);
