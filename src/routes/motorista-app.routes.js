@@ -347,9 +347,7 @@ router.post('/iniciar', auth, async (req, res) => {
             const instancia = await _buscarInstancia(corrida);
             if (instancia) {
                 await EvolutionMultiService.enviarMensagem(instancia._id, corrida.clienteTelefone,
-                    '🚗 *Corrida iniciada!*\n\n' +
-                    '*' + (req.motorista?.nomeCompleto || req.motorista?.nome || 'Seu motorista') + '* está a caminho do seu destino.\n\n' +
-                    'Boa viagem! 😊');
+                    '🚗 *Corrida iniciada!*\n\nBoa viagem! 😊');
             }
         }
         // Sincronizar estado Rebeca — em_corrida
@@ -487,7 +485,7 @@ router.post('/chat', auth, async (req, res) => {
         console.log('[CHAT] instancia:', instancia ? instancia.nomeInstancia : 'NAO ENCONTRADA');
         
         if (instancia) {
-            const _nomeM = (req.motorista.nomeCompleto || req.motorista.nome || 'Motorista').split(' ')[0]; const msgCliente = '💬 *' + _nomeM + ':* ' + texto;
+            const _nomeM = (req.motorista.nomeCompleto || req.motorista.nome || 'Motorista').split(' ')[0]; const msgCliente = '💬 *Motorista ' + _nomeM + ':* ' + texto;
             const envioResult = await EvolutionMultiService.enviarMensagem(instancia._id, corrida.clienteTelefone, msgCliente);
             console.log('[CHAT] Envio resultado:', JSON.stringify(envioResult));
         } else {
