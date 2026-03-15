@@ -1678,6 +1678,30 @@ Me manda o endereço de *onde você está*!`;
         }
 
         if ((conversa.etapa === 'aguardando_motorista' || conversa.etapa === 'em_corrida') && !NLPService.eCancelar(msg)) {
+            // CLIENTE MANDOU COR DA CAMISA DEPOIS DO DESPACHO → atualizar corrida e notificar motorista
+            const _pareceCor = msg.length < 40 && !msg.match(/(demora|cade|onde|cancelar|quanto tempo|espera)/) && !conversa.dados.aparenciaCliente;
+            if (_pareceCor && conversa.dados.corridaId) {
+                try {
+                    const { Corrida: _CCor, InstanciaWhatsapp: _IWCor } = require('../models');
+                    conversa.dados.aparenciaCliente = msgOriginal;
+                    await _CCor.findByIdAndUpdate(conversa.dados.corridaId, { aparenciaCliente: msgOriginal });
+                    const _corrCor = await _CCor.findById(conversa.dados.corridaId).lean();
+                    if (_corrCor && _corrCor.motoristaId) {
+                        const _motCor = await MotoristaService.buscarPorId(_corrCor.motoristaId);
+                        if (_motCor && _motCor.whatsapp) {
+                            const _instCor = conversa.instanciaId
+                                ? await _IWCor.findById(conversa.instanciaId).catch(() => null)
+                                : await _IWCor.findOne({ adminId: conversa.adminId, status: { $in: ['conectado','open','connected'] } });
+                            if (_instCor) {
+                                await EvolutionMultiService.enviarMensagem(_instCor._id, _motCor.whatsapp, '👕 *Aparência do cliente:* ' + msgOriginal);
+                                console.log('[APARENCIA-TARDIA] Cor enviada ao motorista:', msgOriginal);
+                            }
+                        }
+                    }
+                    conversas.set(telefone, conversa);
+                    return 'Anotado! Já avisei o motorista 👕';
+                } catch(eCor) { console.log('[APARENCIA-TARDIA] Erro:', eCor.message); }
+            }
             // CLIENTE NERVOSO/RECLAMANDO DA DEMORA → Redirecionar corrida
             const _reclamaDemora = msg.match(/(demora|demorando|cadê|cade|onde|tá onde|ta onde|quanto tempo|muito tempo|esperando|cansei|absurdo|ridiculo|ridículo|péssimo|pessimo|horrível|horrivel|nunca chega|não chega|nao chega|vou cancelar|demais|muito lento)/);
             if (_reclamaDemora && (conversa.etapa === 'aguardando_motorista' || conversa.etapa === 'em_corrida')) {
