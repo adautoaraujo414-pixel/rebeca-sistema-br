@@ -1645,7 +1645,7 @@ Me manda o endereço de *onde você está*!`;
             try {
                 const _resChatEmCorrida = await RebecaService.clienteMensagemParaMotorista(telefone, msgOriginal, conversa.adminId, conversa.instanciaId);
                 if (_resChatEmCorrida && _resChatEmCorrida.enviado) {
-                    return null; // Silencioso - não responder ao cliente
+                    return '✅ Mensagem enviada ao motorista!';
                 }
                 // Fallback direto
                 const { InstanciaWhatsapp: _IWEc, Corrida: _CEc } = require('../models');
@@ -2035,9 +2035,6 @@ Me manda o endereço de *onde você está*!`;
                 || _msgFila.includes('esquece') || _msgFila.includes('esquece')
                 || _msgFila.includes('vou chamar outro') || _msgFila.includes('vou pegar outro')
                 || _msgFila.includes('consegui') || _msgFila.includes('achei')
-                || _msgFila.includes('obrigad') || _msgFila.includes('valeu')
-                || _msgFila.includes('tudo bem') || _msgFila.includes('tá bom')
-                || _msgFila.includes('ta bom') || _msgFila.includes('ok obrigad')
                 || _msgFila.includes('nao quero') || _msgFila.includes('não quero')
                 || _msgFila.includes('desisti') || _msgFila.includes('vou de') 
                 || NLPService.eNao(_msgFila);
@@ -2127,6 +2124,10 @@ Me manda o endereço de *onde você está*!`;
         if (conversa.etapa === 'avaliar') {
             const nota = parseInt(msg);
             // Feedback em texto livre — passar pelo Claude para interpretar e responder
+            if (isNaN(nota) && msg.length > 2 && !RaciocinioService.isAtivo()) {
+                conversas.set(telefone, conversa);
+                return 'Como você avalia a corrida? Manda um número de *1* a *5* ⭐';
+            }
             if (isNaN(nota) && msg.length > 2 && RaciocinioService.isAtivo()) {
                 try {
                     const _racAval = await Promise.race([
