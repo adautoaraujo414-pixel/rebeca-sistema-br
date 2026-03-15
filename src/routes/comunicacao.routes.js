@@ -58,10 +58,16 @@ router.post('/motorista-para-cliente', async (req, res) => {
                     }
                 } catch(_e) {}
             }
-            // 3. Fallback: mesma instância do adminId
-            // Fallback final: qualquer instância do adminId (sem filtrar status — status pode variar)
-            if (!inst) inst = await InstanciaWhatsapp.findOne({ adminId: corrida.adminId, status: { $in: ['conectado','open','connected','ativo','active'] } });
-            if (!inst) inst = await InstanciaWhatsapp.findOne({ adminId: corrida.adminId });
+            // 3. Fallback: adminId da corrida
+            if (!inst && corrida.adminId) inst = await InstanciaWhatsapp.findOne({ adminId: corrida.adminId, status: { $in: ['conectado','open','connected','ativo','active'] } }).catch(() => null);
+            if (!inst && corrida.adminId) inst = await InstanciaWhatsapp.findOne({ adminId: corrida.adminId }).catch(() => null);
+            // 4. Fallback: adminId do motorista
+            if (!inst && motorista?.adminId) inst = await InstanciaWhatsapp.findOne({ adminId: motorista.adminId, status: { $in: ['conectado','open','connected','ativo','active'] } }).catch(() => null);
+            if (!inst && motorista?.adminId) inst = await InstanciaWhatsapp.findOne({ adminId: motorista.adminId }).catch(() => null);
+            // 5. Fallback GLOBAL: qualquer instância conectada no sistema
+            if (!inst) inst = await InstanciaWhatsapp.findOne({ status: { $in: ['conectado','open','connected','ativo','active'] } }).catch(() => null);
+            if (!inst) inst = await InstanciaWhatsapp.findOne({}).catch(() => null);
+            if (inst) console.log('[CHAT] instancia encontrada via fallback:', inst.nomeInstancia);
             console.log('[CHAT] instanciaId da corrida:', corrida.instanciaId, '| instância encontrada:', inst ? inst.nomeInstancia : 'NENHUMA');
             if (inst) {
                 console.log('[CHAT] Tentando enviar para:', corrida.clienteTelefone, '| inst._id:', inst._id, '| msg:', mensagemRebeca);
