@@ -335,10 +335,9 @@ router.post('/cheguei', auth, async (req, res) => {
                             if (_corrAtual && !_corrAtual.aparenciaCliente && _motIdCheg) {
                                 const MotoristaService = require('../services/motorista.service');
                                 const _motCheg = await MotoristaService.buscarPorId(_motIdCheg);
-                                if (_motCheg && _motCheg.whatsapp) {
-                                    await EvolutionMultiService.enviarMensagem(_instChegRef._id, _motCheg.whatsapp,
-                                        '⏱ Cliente não informou a cor da roupa. Procure o cliente no local!');
-                                    console.log('[COR-CAMISA] Timeout 15s — motorista avisado sem cor');
+                                if (_motCheg) {
+                                    // Notificar apenas na plataforma — NÃO enviar WhatsApp ao motorista
+                                    console.log('[COR-CAMISA] Timeout 15s — motorista avisado só na plataforma');
                                 }
                             }
                         } catch(_e) {}
