@@ -1800,10 +1800,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 const data = await res.json();
                 if (data.sucesso) {
                     corridaAtual.status = 'em_andamento';
-                    if (btn) { btn.disabled = false; }
+                    if (btn) { btn.disabled = false; btn.style.display = 'none'; }
                     atualizarBotoesCorridaAtiva();
                     toast('Corrida iniciada!', 'success');
-                    setTimeout(() => carregarCorridaAtiva(), 1000);
+                    setTimeout(() => carregarCorridaAtiva(), 500);
                 } else {
                     toast(data.erro || 'Erro ao iniciar', 'error');
                     if (btn) { btn.disabled = false; btn.textContent = '▶️ INICIAR CORRIDA'; }
@@ -2712,7 +2712,7 @@ async function carregarMensagensCliente() {
                         ? 'background:#00d4ff;color:#000;border-bottom-right-radius:5px;' 
                         : m.remetente === 'rebeca'
                             ? 'background:#9c27b0;color:#fff;border-bottom-left-radius:5px;'
-                            : 'background:#00d4ff;color:#000;border-bottom-left-radius:5px;'
+                            : 'background:#1a1a2e;color:#a0a0b0;border-bottom-left-radius:5px;border:1px solid #333;'
                 }">
                     ${m.mensagem}
                 </div>
