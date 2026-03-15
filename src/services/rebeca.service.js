@@ -664,6 +664,7 @@ Me manda o endereço de *onde você está*!`;
                 return `Agendado para ${_hAg}! Te mando um lembrete 30 minutos antes. Qualquer coisa é só chamar.`;
             }
             
+            if (!corridaGps) return 'Ops, tive um problema ao criar sua corrida. Tenta de novo! 😅';
             if (corridaGps.cooldown) {
                 return '⏳ Aguarde um momento...\n\nVocê finalizou uma corrida há pouco.\nPode pedir nova corrida em ' + Math.ceil(corridaGps.segundosRestantes / 60) + ' minuto(s).';
             }
@@ -728,8 +729,9 @@ Me manda o endereço de *onde você está*!`;
                                 conversa.dados.calculo = { origem: { endereco: conversa.dados.origem }, destino: conversa.dados.destino ? { endereco: conversa.dados.destino } : null, distanciaKm: 0, tempoMinutos: 0, preco: 15, faixa: { nome: 'padrao', multiplicador: 1 } };
                             }
                             const _corrInt = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
-                            if (_corrInt && _corrInt.cooldown) return 'Aguarda ' + Math.ceil(_corrInt.segundosRestantes / 60) + ' min para nova corrida.';
-                            if (_corrInt && _corrInt.duplicada) return 'Você já tem uma corrida ativa!';
+                            if (!_corrInt) return 'Ops, tive um problema ao criar sua corrida. Tenta de novo! 😅';
+                            if (_corrInt.cooldown) return 'Aguarda ' + Math.ceil(_corrInt.segundosRestantes / 60) + ' min para nova corrida.';
+                            if (_corrInt.duplicada) return 'Você já tem uma corrida ativa!';
                             conversa.etapa = 'pedir_aparencia';
                             conversa.dados.corridaId = _corrInt.id;
                             conversas.set(telefone, conversa);
