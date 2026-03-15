@@ -408,7 +408,7 @@ router.post('/finalizar', auth, async (req, res) => {
                             '⭐⭐⭐ *3* - Ok\n' +
                             '⭐⭐⭐⭐ *4* - Bom\n' +
                             '⭐⭐⭐⭐⭐ *5* - Excelente\n\n' +
-                            'Manda o número da sua avaliação! 😊\n\nMuito obrigada! Tenha um ' + saudacao + '! 😊';
+                            'Manda o número da sua avaliação! 😊';
                     })());
             }
         }

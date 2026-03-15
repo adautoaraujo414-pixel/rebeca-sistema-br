@@ -1971,14 +1971,15 @@ Me manda o endereço de *onde você está*!`;
                 conversa.dados = {};
                 conversas.set(telefone, conversa);
 
+                const _saud1 = (() => { const h = new Date(new Date().toLocaleString('en-US',{timeZone:'America/Sao_Paulo'})).getHours(); return h>=5&&h<12?'ótimo dia':h>=12&&h<18?'ótima tarde':'ótima noite'; })();
                 const respostas = {
-                    1: 'Lamentamos muito pela experiência ruim 😔 Vamos verificar o que aconteceu. Obrigada pelo feedback!',
-                    2: 'Poxa, lamentamos que não foi tão bom 😕 Seu feedback nos ajuda a melhorar!',
-                    3: 'Obrigada pela avaliação! Estamos sempre buscando melhorar 😊',
-                    4: 'Que ótimo! Fico feliz que foi uma boa experiência 😊 Até a próxima!',
-                    5: 'Incrível! Ficamos muito felizes 😍⭐ Até a próxima corrida!'
+                    1: 'Lamentamos muito pela experiência ruim 😔 Vamos verificar o que aconteceu. Muito obrigada pelo feedback! Tenha um ' + _saud1 + '! 😊',
+                    2: 'Poxa, lamentamos que não foi tão bom 😕 Seu feedback nos ajuda a melhorar! Muito obrigada! Tenha um ' + _saud1 + '! 😊',
+                    3: 'Obrigada pela avaliação! Estamos sempre buscando melhorar 😊 Tenha um ' + _saud1 + '!',
+                    4: 'Que ótimo! Fico feliz que foi uma boa experiência 😊 Muito obrigada! Tenha um ' + _saud1 + '!',
+                    5: 'Incrível! Ficamos muito felizes 😍⭐ Muito obrigada! Tenha um ' + _saud1 + '!'
                 };
-                resposta = respostas[nota] || 'Obrigada pela avaliação! 😊';
+                resposta = respostas[nota] || ('Muito obrigada pela avaliação! 😊 Tenha um ' + _saud1 + '!');
             } else if (NLPService.eCancelar(msg) || msg === 'pular' || msg === 'depois') {
                 conversa.etapa = 'inicio';
                 conversa.dados = {};
@@ -2185,7 +2186,7 @@ Me manda o endereço de *onde você está*!`;
                 conversa.etapa = 'inicio';
                 conversa.dados = {};
                 conversas.set(telefone, conversa);
-                return estrelas + ' Obrigada pela avaliacao! Sua opiniao e muito importante pra gente.\n\nQuando precisar, e so chamar!';
+                const _saud2 = (() => { const h = new Date(new Date().toLocaleString('en-US',{timeZone:'America/Sao_Paulo'})).getHours(); return h>=5&&h<12?'ótimo dia':h>=12&&h<18?'ótima tarde':'ótima noite'; })(); return estrelas + ' Muito obrigada pela avaliação! Tenha um ' + _saud2 + '! 😊';
             } else if (msg === 'menu' || msg === 'oi' || msg === 'ola' || msg.length > 5) {
                 conversa.etapa = 'inicio';
                 conversa.dados = {};
