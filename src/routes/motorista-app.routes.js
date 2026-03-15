@@ -118,16 +118,16 @@ router.post('/aceitar', auth, async (req, res) => {
               $setOnInsert: {} },
             { new: true }
         );
-        // Garantir adminId e instanciaId na corrida para notificações futuras
-        if (corridaLocked && !corridaLocked.adminId && req.motorista.adminId) {
-            await Corrida.findByIdAndUpdate(corridaId, { adminId: req.motorista.adminId });
-            corridaLocked.adminId = req.motorista.adminId;
-            console.log('[ACEITAR] adminId corrigido na corrida:', req.motorista.adminId);
-        }
         if (!corridaLocked) {
             const existente = await Corrida.findById(corridaId);
             console.log('[ACEITAR] Corrida já processada:', corridaId, '- Status:', existente?.status);
             return res.json({ sucesso: true, corrida: existente, mensagem: 'Corrida já aceita por outro motorista' });
+        }
+        // Garantir adminId na corrida para notificações futuras (cheguei/iniciar/finalizar/cancelar)
+        if (!corridaLocked.adminId && req.motorista.adminId) {
+            await Corrida.findByIdAndUpdate(corridaId, { adminId: req.motorista.adminId });
+            corridaLocked.adminId = req.motorista.adminId;
+            console.log('[ACEITAR] adminId corrigido na corrida:', req.motorista.adminId);
         }
         const corrida = corridaLocked;
         
@@ -371,7 +371,8 @@ router.post('/iniciar', auth, async (req, res) => {
             { new: true }
         );
         if (!locked) return res.json({ sucesso: false, erro: 'Corrida não pode ser iniciada' });
-        const corrida = locked;
+        // Re-buscar corrida para garantir todos os campos incluindo adminId
+        const corrida = await Corrida.findById(locked._id) || locked;
         if (corrida && corrida.clienteTelefone) {
             const EvolutionMultiService = require('../services/evolution-multi.service');
             const { InstanciaWhatsapp } = require('../models');
