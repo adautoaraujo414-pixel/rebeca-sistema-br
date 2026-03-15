@@ -46,8 +46,11 @@ async function _buscarInstancia(corrida) {
     // 3. adminId da corrida com status conectado
     if (!inst && corrida?.adminId) inst = await InstanciaWhatsapp.findOne({ adminId: corrida.adminId, status: { $in: ['conectado','open','connected','ativo','active'] } }).catch(() => null);
     if (!inst && corrida?.adminId) inst = await InstanciaWhatsapp.findOne({ adminId: corrida.adminId }).catch(() => null);
-    // 4. Fallback global — apenas se não achou nada acima
-    if (!inst) inst = await InstanciaWhatsapp.findOne({ status: { $in: ['conectado','open','connected','ativo','active'] }, adminId: corrida?.adminId || { $exists: true } }).catch(() => null);
+    // 4. Fallback global restrito ao adminId da corrida
+    if (!inst && corrida?.adminId) inst = await InstanciaWhatsapp.findOne({ adminId: corrida.adminId }).catch(() => null);
+    // 5. Último recurso: qualquer instância conectada
+    if (!inst) inst = await InstanciaWhatsapp.findOne({ status: { $in: ['conectado','open','connected','ativo','active'] } }).catch(() => null);
+    if (inst) console.log('[INST] usando:', inst.nomeInstancia);
     return inst;
 }
 
