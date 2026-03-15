@@ -67,6 +67,8 @@ router.get('/corridas-disponiveis', auth, async (req, res) => {
 router.post('/aceitar', auth, async (req, res) => {
     const { corridaId } = req.body;
     try {
+        // PROTEÇÃO: Verificar blacklist do cliente
+        try { const { Corrida: _CB } = require('../models'); const _cB = await _CB.findById(corridaId).select('clienteTelefone'); if (_cB?.clienteTelefone) { const AF = require('../services/antifraude.service'); const _bl = AF.verificarBlacklist('telefone', _cB.clienteTelefone); if (_bl) return res.json({ sucesso: false, erro: 'Corrida bloqueada — cliente na blacklist.' }); } } catch(_baf) {}
         // PROTEÇÃO: Verificar inadimplência
         if (req.motorista.bloqueadoPorMensalidade || req.motorista.ativo === false) {
             return res.json({ sucesso: false, erro: 'Sua conta está bloqueada por mensalidade em atraso. Entre em contato com o administrador.' });

@@ -3940,6 +3940,9 @@ _(ou mande *0* para pular)_`;
         // Push notification para motoristas disponíveis
         try { const PushService = require('./push.service'); await PushService.notificarNovaCorrida(adminId, corrida); } catch(e) { console.log('[CATCH]', e.message); }
         
+        // Antifraude — analisar corrida em background (nao bloqueia)
+        try { const AF = require('./antifraude.service'); AF.analisarCorrida({ id: corrida._id?.toString(), distanciaKm: dados.calculo?.distanciaKm || 0, dataSolicitacao: new Date(), precoEstimado: dados.calculo?.preco || 0 }); } catch(_af) {}
+        
         return { id: corrida._id || corrida.id, origem: dados.origem, destino: dados.destino, preco: dados.calculo.preco, tempoEstimado: dados.calculo?.tempoMinutos || 0 };
     },
 
