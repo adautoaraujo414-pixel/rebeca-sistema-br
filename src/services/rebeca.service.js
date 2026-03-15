@@ -1764,7 +1764,7 @@ Me manda o endereço de *onde você está*!`;
                             }
                             conversas.set(telefone, conversa);
                             if (_resChatCli && _resChatCli.enviado) {
-                                return null;
+                                return '✅ Mensagem enviada ao motorista!';
                             }
                             // Fallback: enviar direto pelo WhatsApp mesmo sem corrida no cache
                             const { InstanciaWhatsapp: _IWFb, Corrida: _CFb } = require('../models');
@@ -1779,7 +1779,7 @@ Me manda o endereço de *onde você está*!`;
                                     $push: { chatMensagens: { texto: msgOriginal, remetente: 'cliente', nomeRemetente: _nomeCli, data: new Date() } }
                                 });
                                 console.log('[CHAT] Fallback direto -> motorista:', motoristaAtivo.whatsapp);
-                                return null;
+                                return '✅ Mensagem enviada ao motorista!';
                             }
                         } catch(e2) { console.log('[CHAT] Erro chat cliente->motorista:', e2.message); }
                         conversas.set(telefone, conversa);
@@ -1914,15 +1914,15 @@ Me manda o endereço de *onde você está*!`;
                                     $push: { chatMensagens: { texto: '👕 Cor da roupa: ' + _corResp, remetente: 'sistema', data: new Date() } }
                                 });
                             }
-                            return null; // Silencioso — não responder
+                            return '👕 Perfeito! Já repassei sua cor de roupa ao motorista. Ele está a caminho! 🚗';
                         }
                     } catch(_eEmb) { console.log('[COR-CAMISA] Erro:', _eEmb.message); }
                 }
-                // Mensagem genérica durante embarque — encaminhar pro motorista silenciosamente
+                // Mensagem genérica durante embarque — encaminhar pro motorista
                 try {
                     await RebecaService.clienteMensagemParaMotorista(telefone, msgOriginal, conversa.adminId, conversa.instanciaId);
                 } catch(_e) {}
-                return null; // Silencioso
+                return '✅ Mensagem enviada ao motorista! Ele já está a caminho 🚗';
             }
         }
 
