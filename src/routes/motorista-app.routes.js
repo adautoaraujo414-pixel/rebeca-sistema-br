@@ -402,7 +402,13 @@ router.post('/finalizar', auth, async (req, res) => {
                         const saudacao = hora >= 5 && hora < 12 ? 'Bom dia' : hora >= 12 && hora < 18 ? 'Boa tarde' : 'Boa noite';
                         return '🏁 *Corrida encerrada!*\n\n' +
                             (valor > 0 ? '💰 *Valor: R$ ' + valor.toFixed(2).replace('.', ',') + '*\n\n' : '') +
-                            saudacao + '! Muito obrigada. 😊';
+                            'Como foi sua experiência com *' + (req.motorista?.nomeCompleto?.split(' ')[0] || 'o motorista') + '*?\n\n' +
+                            '⭐ *1* - Péssimo\n' +
+                            '⭐⭐ *2* - Ruim\n' +
+                            '⭐⭐⭐ *3* - Ok\n' +
+                            '⭐⭐⭐⭐ *4* - Bom\n' +
+                            '⭐⭐⭐⭐⭐ *5* - Excelente\n\n' +
+                            'Manda o número da sua avaliação! 😊\n\nMuito obrigada! Tenha um ' + saudacao + '! 😊';
                     })());
             }
         }
