@@ -114,9 +114,16 @@ router.post('/aceitar', auth, async (req, res) => {
         // LOCK ATÔMICO - só um motorista consegue aceitar
         const corridaLocked = await Corrida.findOneAndUpdate(
             { _id: corridaId, status: 'pendente' },
-            { status: 'aceita', motoristaId: req.motorista._id, motoristaNome: req.motorista.nome || req.motorista.nomeCompleto, aceitaEm: new Date() },
+            { $set: { status: 'aceita', motoristaId: req.motorista._id, motoristaNome: req.motorista.nome || req.motorista.nomeCompleto, aceitaEm: new Date() },
+              $setOnInsert: {} },
             { new: true }
         );
+        // Garantir adminId e instanciaId na corrida para notificações futuras
+        if (corridaLocked && !corridaLocked.adminId && req.motorista.adminId) {
+            await Corrida.findByIdAndUpdate(corridaId, { adminId: req.motorista.adminId });
+            corridaLocked.adminId = req.motorista.adminId;
+            console.log('[ACEITAR] adminId corrigido na corrida:', req.motorista.adminId);
+        }
         if (!corridaLocked) {
             const existente = await Corrida.findById(corridaId);
             console.log('[ACEITAR] Corrida já processada:', corridaId, '- Status:', existente?.status);
