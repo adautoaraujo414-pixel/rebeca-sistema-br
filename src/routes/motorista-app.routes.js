@@ -396,16 +396,14 @@ router.post('/finalizar', auth, async (req, res) => {
                     }
                 } catch(_re) { console.log('[FINALIZAR] state:', _re.message); }
                 await EvolutionMultiService.enviarMensagem(instancia._id, corridaFinal.clienteTelefone,
-                    '🏁 *Corrida finalizada!*\n\n' +
-                    (valor > 0 ? '💰 *Valor: R$ ' + valor.toFixed(2).replace('.', ',') + '*\n\n' : '') +
-                    'Obrigada por viajar com a gente! ❤️\n\n' +
-                    'Como foi sua experiência com *' + (req.motorista?.nomeCompleto?.split(' ')[0] || 'o motorista') + '*?\n\n' +
-                    '⭐ *1* - Péssimo\n' +
-                    '⭐⭐ *2* - Ruim\n' +
-                    '⭐⭐⭐ *3* - Ok\n' +
-                    '⭐⭐⭐⭐ *4* - Bom\n' +
-                    '⭐⭐⭐⭐⭐ *5* - Excelente\n\n' +
-                    'Manda o número da sua avaliação! 😊');
+                    (() => {
+                        const agora = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+                        const hora = agora.getHours();
+                        const saudacao = hora >= 5 && hora < 12 ? 'Bom dia' : hora >= 12 && hora < 18 ? 'Boa tarde' : 'Boa noite';
+                        return '🏁 *Corrida encerrada!*\n\n' +
+                            (valor > 0 ? '💰 *Valor: R$ ' + valor.toFixed(2).replace('.', ',') + '*\n\n' : '') +
+                            saudacao + '! Muito obrigada. 😊';
+                    })());
             }
         }
         res.json(corrida);
