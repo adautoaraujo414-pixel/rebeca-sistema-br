@@ -22,6 +22,19 @@ const auth = async (req, res, next) => {
 };
 
 // Login
+
+// Helper: buscar instância WhatsApp com fallback global
+async function _buscarInstancia(corrida) {
+    const { InstanciaWhatsapp } = require('../models');
+    let inst = null;
+    if (corrida?.instanciaId) inst = await InstanciaWhatsapp.findById(corrida.instanciaId).catch(() => null);
+    if (!inst && corrida?.adminId) inst = await InstanciaWhatsapp.findOne({ adminId: corrida.adminId, status: { $in: ['conectado','open','connected','ativo','active'] } }).catch(() => null);
+    if (!inst && corrida?.adminId) inst = await InstanciaWhatsapp.findOne({ adminId: corrida.adminId }).catch(() => null);
+    if (!inst) inst = await InstanciaWhatsapp.findOne({ status: { $in: ['conectado','open','connected','ativo','active'] } }).catch(() => null);
+    if (!inst) inst = await InstanciaWhatsapp.findOne({}).catch(() => null);
+    return inst;
+}
+
 router.post('/login', async (req, res) => {
     try {
         const { whatsapp, senha } = req.body;
@@ -268,7 +281,7 @@ router.post('/cheguei', auth, async (req, res) => {
                     }
                 } catch(_e) {}
             }
-            if (!instCheg) instCheg = await InstanciaWhatsapp.findOne({ adminId: corrida.adminId, status: { $in: ['conectado','open','connected'] } });
+            if (!instCheg) instCheg = await _buscarInstancia(corrida);
             if (instCheg) {
                 const nomeM = req.motorista.nomeCompleto || req.motorista.nome || 'Motorista';
                 const veic = req.motorista.veiculo?.modelo || '';
@@ -335,9 +348,7 @@ router.post('/iniciar', auth, async (req, res) => {
         if (corrida && corrida.clienteTelefone) {
             const EvolutionMultiService = require('../services/evolution-multi.service');
             const { InstanciaWhatsapp } = require('../models');
-            const instancia = corrida.instanciaId
-                ? await InstanciaWhatsapp.findById(corrida.instanciaId).catch(() => null)
-                : await InstanciaWhatsapp.findOne({ adminId: corrida.adminId, status: { $in: ['conectado','open','connected'] } });
+            const instancia = await _buscarInstancia(corrida);
             if (instancia) {
                 await EvolutionMultiService.enviarMensagem(instancia._id, corrida.clienteTelefone,
                     '🚗 *Corrida iniciada!*\n\n' +
@@ -370,9 +381,7 @@ router.post('/finalizar', auth, async (req, res) => {
         if (corridaFinal && corridaFinal.clienteTelefone) {
             const EvolutionMultiService = require('../services/evolution-multi.service');
             const { InstanciaWhatsapp } = require('../models');
-            const instancia = corridaFinal.instanciaId
-                ? await InstanciaWhatsapp.findById(corridaFinal.instanciaId).catch(() => null)
-                : await InstanciaWhatsapp.findOne({ adminId: corridaFinal.adminId, status: { $in: ['conectado','open','connected'] } });
+            const instancia = await _buscarInstancia(corridaFinal);
             if (instancia) {
                 const valor = precoFinal || corridaFinal.precoFinal || corridaFinal.precoEstimado || 0;
                 // Colocar cliente em modo avaliacao
@@ -419,9 +428,7 @@ router.post('/cancelar', auth, async (req, res) => {
         if (corridaAntes && corridaAntes.clienteTelefone) {
             const EvolutionMultiService = require('../services/evolution-multi.service');
             const { InstanciaWhatsapp } = require('../models');
-            const instancia = corridaAntes.instanciaId
-                ? await InstanciaWhatsapp.findById(corridaAntes.instanciaId).catch(() => null)
-                : await InstanciaWhatsapp.findOne({ adminId: corridaAntes.adminId, status: { $in: ['conectado','open','connected'] } });
+            const instancia = await _buscarInstancia(corridaAntes);
             if (instancia) {
                 await EvolutionMultiService.enviarMensagem(instancia._id, corridaAntes.clienteTelefone,
                     'Poxa, que situação! 😔 O motorista teve um imprevisto e precisou cancelar sua corrida.\n\nMas não se preocupa, já estou procurando outro pra você! Me manda sua localização que eu chamo na hora 📍🚗');

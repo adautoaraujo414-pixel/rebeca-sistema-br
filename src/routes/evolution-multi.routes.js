@@ -434,6 +434,22 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                 
                 console.log('[REBECA-' + (adminId || 'GLOBAL') + '] Msg de ' + telefone + ':', typeof conteudo === 'string' ? conteudo.substring(0, 30) : 'GPS');
 
+                // RELAY: se cliente tem corrida ativa, encaminhar mensagem para o motorista via chat
+                if (typeof conteudo === 'string' && conteudo !== '__AUDIO_SEM_TRANSCRICAO__') {
+                    try {
+                        const { Corrida: _CR, MensagemCorrida: _MC } = require('../models');
+                        const _corridaAtiva = await _CR.findOne({
+                            clienteTelefone: { $in: [telefone, telefone.replace(/^55/,''), '55'+telefone] },
+                            status: { $in: ['aceita','aguardando_cliente','em_andamento','motorista_a_caminho'] }
+                        }).sort({ createdAt: -1 }).lean();
+                        if (_corridaAtiva) {
+                            // Salvar mensagem do cliente no chat da corrida
+                            await _MC.create({ corridaId: _corridaAtiva._id, remetente: 'cliente', destinatario: 'motorista', mensagem: conteudo, entregue: false });
+                            console.log('[RELAY] Msg cliente salva no chat da corrida:', _corridaAtiva._id);
+                        }
+                    } catch(_re) {}
+                }
+
                 // DEBOUNCE: acumula até 4 mensagens ou 3s, depois processa como uma só
                 if (typeof conteudo === 'string' && conteudo !== '__AUDIO_SEM_TRANSCRICAO__') {
                     if (!global._debounceBuffer) global._debounceBuffer = new Map();
