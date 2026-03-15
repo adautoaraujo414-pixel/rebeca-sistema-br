@@ -448,6 +448,7 @@ router.post('/cancelar', auth, async (req, res) => {
             const EvolutionMultiService = require('../services/evolution-multi.service');
             const { InstanciaWhatsapp } = require('../models');
             const instancia = await _buscarInstancia(corridaAntes);
+            console.log('[CANCEL] instancia:', instancia ? instancia.nomeInstancia : 'NENHUMA', '| corridaAntes.instanciaId:', corridaAntes?.instanciaId);
             if (instancia) {
                 await EvolutionMultiService.enviarMensagem(instancia._id, corridaAntes.clienteTelefone,
                     'Poxa, que situação! 😔 O motorista teve um imprevisto e precisou cancelar sua corrida.\n\nMas não se preocupa, já estou procurando outro pra você! Me manda sua localização que eu chamo na hora 📍🚗');
@@ -505,9 +506,8 @@ router.post('/chat', auth, async (req, res) => {
         
         // Enviar via WhatsApp para o cliente
         const EvolutionMultiService = require('../services/evolution-multi.service');
-        const { InstanciaWhatsapp } = require('../models');
-        const instancia = await InstanciaWhatsapp.findOne({ adminId: corrida.adminId, status: { $in: ['conectado', 'open', 'connected'] } });
-        console.log('[CHAT] adminId:', corrida.adminId, '| instancia:', instancia ? instancia.nomeInstancia + ' status:' + instancia.status : 'NAO ENCONTRADA');
+        const instancia = await _buscarInstancia(corrida);
+        console.log('[CHAT] instancia:', instancia ? instancia.nomeInstancia : 'NAO ENCONTRADA');
         
         if (instancia) {
             const _nomeM = (req.motorista.nomeCompleto || req.motorista.nome || 'Motorista').split(' ')[0]; const msgCliente = '💬 *' + _nomeM + ':* ' + texto;
