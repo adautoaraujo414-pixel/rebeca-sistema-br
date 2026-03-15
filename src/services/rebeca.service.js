@@ -2499,6 +2499,7 @@ _(ou mande *0* para pular)_`;
         }
         // ========== CLIENTE RECORRENTE - CONFIRMAR ENDEREÇO ==========
         else if (conversa.etapa === 'confirmar_endereco_anterior') {
+            if (NLPService.eCancelar(msg)) { conversa.etapa = 'inicio'; conversa.dados = {}; conversas.set(telefone, conversa); return 'Ok! Cancelado. Quando precisar é só chamar! 😊'; }
             // Cliente recorrente - confirmando se quer usar endereço anterior
             if (msg === '1' || NLPService.eSim(msg)) {
                 conversa.dados.origem = conversa.dados.ultimoEnderecoSugerido;
@@ -2629,6 +2630,7 @@ _(ou mande *0* para pular)_`;
             }
         }
         else if (conversa.etapa === 'pedir_numero_origem') {
+            if (NLPService.eCancelar(msg)) { conversa.etapa = 'inicio'; conversa.dados = {}; conversas.set(telefone, conversa); return 'Ok! Cancelado. Quando precisar é só chamar! 😊'; }
             // Cliente mandou endereço sem número, pedimos o número
             const numero = msgOriginal.trim();
             if (numero && (numero.match(/\d+/) || numero.toLowerCase() === 'sn' || numero.toLowerCase() === 's/n')) {
@@ -2843,6 +2845,7 @@ _(ou mande *0* para pular)_`;
         }
         // ========== CONFIRMAR ORIGEM ==========
         else if (conversa.etapa === 'confirmar_origem_auto') {
+            if (NLPService.eCancelar(msg)) { conversa.etapa = 'inicio'; conversa.dados = {}; conversas.set(telefone, conversa); return 'Ok! Cancelado. Quando precisar é só chamar! 😊'; }
             if (msg === '1' || msg.includes('sim') || msg.includes('confirmar') || msg.includes('isso')) {
                 conversa.etapa = 'confirmar_corrida';
                 resposta = `✅ *Origem confirmada!*\n\nConfirma a corrida?\n\n*1* - Sim\n*CANCELAR* - Cancelar`;
@@ -3144,6 +3147,7 @@ _(ou mande *0* para pular)_`;
         }
         // ========== COTAÇÃO ==========
         else if (conversa.etapa === 'cotacao_origem') {
+            if (NLPService.eCancelar(msg)) { conversa.etapa = 'inicio'; conversa.dados = {}; conversas.set(telefone, conversa); return 'Ok! Cancelado. Quando precisar é só chamar! 😊'; }
             const validacao = await RebecaService.validarEndereco(msgOriginal);
             if (!validacao.valido) {
                 conversa.dados.origem = msgOriginal;
@@ -3156,6 +3160,7 @@ _(ou mande *0* para pular)_`;
             }
         }
         else if (conversa.etapa === 'cotacao_destino') {
+            if (NLPService.eCancelar(msg)) { conversa.etapa = 'inicio'; conversa.dados = {}; conversas.set(telefone, conversa); return 'Ok! Cancelado. Quando precisar é só chamar! 😊'; }
             const validacao = await RebecaService.validarEndereco(msgOriginal);
             if (!validacao.valido) {
                 conversa.etapa = 'inicio';
