@@ -27,11 +27,27 @@ const auth = async (req, res, next) => {
 async function _buscarInstancia(corrida) {
     const { InstanciaWhatsapp } = require('../models');
     let inst = null;
+    // 1. instanciaId salvo na corrida (mais confiável)
     if (corrida?.instanciaId) inst = await InstanciaWhatsapp.findById(corrida.instanciaId).catch(() => null);
+    // 2. Buscar pelo mapa de conversas da Rebeca (telefone do cliente)
+    if (!inst && corrida?.clienteTelefone) {
+        try {
+            const RebecaSvc = require('../services/rebeca.service');
+            const _tels = [corrida.clienteTelefone, '55'+corrida.clienteTelefone, corrida.clienteTelefone.replace(/^55/,'')];
+            for (const _t of _tels) {
+                const _cv = RebecaSvc.conversas?.get(_t);
+                if (_cv && _cv.instanciaId) {
+                    inst = await InstanciaWhatsapp.findById(_cv.instanciaId).catch(() => null);
+                    if (inst) { console.log('[INST] via conversa cliente:', inst.nomeInstancia); break; }
+                }
+            }
+        } catch(_e) {}
+    }
+    // 3. adminId da corrida com status conectado
     if (!inst && corrida?.adminId) inst = await InstanciaWhatsapp.findOne({ adminId: corrida.adminId, status: { $in: ['conectado','open','connected','ativo','active'] } }).catch(() => null);
     if (!inst && corrida?.adminId) inst = await InstanciaWhatsapp.findOne({ adminId: corrida.adminId }).catch(() => null);
-    if (!inst) inst = await InstanciaWhatsapp.findOne({ status: { $in: ['conectado','open','connected','ativo','active'] } }).catch(() => null);
-    if (!inst) inst = await InstanciaWhatsapp.findOne({}).catch(() => null);
+    // 4. Fallback global — apenas se não achou nada acima
+    if (!inst) inst = await InstanciaWhatsapp.findOne({ status: { $in: ['conectado','open','connected','ativo','active'] }, adminId: corrida?.adminId || { $exists: true } }).catch(() => null);
     return inst;
 }
 
