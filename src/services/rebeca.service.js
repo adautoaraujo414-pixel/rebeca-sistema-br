@@ -1582,6 +1582,10 @@ Me manda o endereço de *onde você está*!`;
 
             // RECLAMAÇÃO em qualquer etapa — usar Claude para responder
             const _eReclamacao = msg.match(/(pessimo|péssimo|horrivel|horrível|absurdo|ridiculo|ridículo|vergonha|lixo|raiva|indignado|cancelar tudo|nunca mais|reclamar|reclamacao|reclamação)/i);
+            if (_eReclamacao && !RaciocinioService.isAtivo()) {
+                conversas.set(telefone, conversa);
+                return 'Lamentamos muito pelo transtorno 😔 Já registrei sua reclamação e vou repassar ao responsável. Em breve alguém entra em contato!';
+            }
             if (_eReclamacao && RaciocinioService.isAtivo()) {
                 try {
                     const _resRac = await Promise.race([
@@ -1661,7 +1665,7 @@ Me manda o endereço de *onde você está*!`;
                         await EvolutionMultiService.enviarMensagem(_instEc._id, _motEc.whatsapp, _msgEc);
                         await _CEc.findByIdAndUpdate(_corrEc._id, { $push: { chatMensagens: { texto: msgOriginal, remetente: 'cliente', nomeRemetente: _corrEc.clienteNome || 'Cliente', data: new Date() } } });
                         console.log('[CHAT-EC] Cliente->Motorista direto:', _motEc.whatsapp);
-                        return null; // Silencioso - não responder ao cliente
+                        return '✅ Mensagem enviada ao motorista!';
                     }
                 }
             } catch(_eEc) { console.log('[CHAT-EC] Erro:', _eEc.message); }
@@ -1832,11 +1836,11 @@ Me manda o endereço de *onde você está*!`;
                     }
                 } catch(e) { console.log('[EMBARQUE] Raciocinio falhou:', e.message); }
             }
-            // Silencioso — qualquer mensagem durante embarque vai pro motorista
+            // Encaminhar ao motorista e confirmar ao cliente
             try {
                 await RebecaService.clienteMensagemParaMotorista(telefone, msgOriginal, conversa.adminId, conversa.instanciaId);
             } catch(_e) {}
-            return null;
+            return '✅ Mensagem enviada ao motorista! Ele já está a caminho 🚗';
         }
 
         // ========== MOTORISTA A CAMINHO (aceitou, indo buscar cliente) ==========
