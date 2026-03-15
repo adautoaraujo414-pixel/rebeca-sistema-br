@@ -1800,8 +1800,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 const data = await res.json();
                 if (data.sucesso) {
                     corridaAtual.status = 'em_andamento';
+                    if (btn) { btn.disabled = false; }
                     atualizarBotoesCorridaAtiva();
                     toast('Corrida iniciada!', 'success');
+                    setTimeout(() => carregarCorridaAtiva(), 1000);
                 } else {
                     toast(data.erro || 'Erro ao iniciar', 'error');
                     if (btn) { btn.disabled = false; btn.textContent = '▶️ INICIAR CORRIDA'; }

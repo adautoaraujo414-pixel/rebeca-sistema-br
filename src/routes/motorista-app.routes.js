@@ -315,41 +315,9 @@ router.post('/cheguei', auth, async (req, res) => {
                 const veic = req.motorista.veiculo?.modelo || '';
                 const corV = req.motorista.veiculo?.cor || '';
                 const placa = req.motorista.veiculo?.placa || req.motorista.placa || '';
-                const msgCheg = '🚗 Boa notícia! *' + nomeM + '* chegou e está te esperando no local!\n\n🚙 ' + veic + ' ' + corV + (placa ? ' — *' + placa + '*' : '') + '\n\nJá desço! 👋';
+                const msgCheg = '🚗 Boa notícia! *' + nomeM + '* chegou e está te esperando no local!\n\n🚙 ' + veic + ' ' + corV + (placa ? ' — *' + placa + '*' : '');
                 await EvolutionMultiService.enviarMensagem(instCheg._id, corrida.clienteTelefone, msgCheg);
                 console.log('[CHEGUEI] Notif enviada via', instCheg.nomeInstancia);
-
-                // Perguntar cor da camisa para identificação
-                if (!corrida.aparenciaCliente) {
-                    const _instChegRef = instCheg;
-                    const _telCheg = corrida.clienteTelefone;
-                    const _adminCheg = corrida.adminId;
-                    const _motIdCheg = corrida.motoristaId;
-                    // Perguntar após 2s
-                    setTimeout(async () => {
-                        try {
-                            await EvolutionMultiService.enviarMensagem(_instChegRef._id, _telCheg,
-                                'Para facilitar sua identificação, qual é a cor da sua roupa agora? 👕');
-                            const { Corrida: _CR } = require('../models');
-                            await _CR.findByIdAndUpdate(corridaId, { perguntouCorCamisa: true, perguntouCorCamisaEm: new Date() });
-                        } catch(_e) {}
-                    }, 2000);
-                    // Timer 15s — se não respondeu, avisar motorista sem cor
-                    setTimeout(async () => {
-                        try {
-                            const { Corrida: _CR2 } = require('../models');
-                            const _corrAtual = await _CR2.findById(corridaId);
-                            if (_corrAtual && !_corrAtual.aparenciaCliente && _motIdCheg) {
-                                const MotoristaService = require('../services/motorista.service');
-                                const _motCheg = await MotoristaService.buscarPorId(_motIdCheg);
-                                if (_motCheg) {
-                                    // Notificar apenas na plataforma — NÃO enviar WhatsApp ao motorista
-                                    console.log('[COR-CAMISA] Timeout 15s — motorista avisado só na plataforma');
-                                }
-                            }
-                        } catch(_e) {}
-                    }, 17000);
-                }
             }
         }
         console.log('[CHEGUEI] Motorista', req.motorista.nomeCompleto, 'chegou na corrida', corridaId);
