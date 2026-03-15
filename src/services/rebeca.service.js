@@ -736,7 +736,7 @@ Me manda o endereço de *onde você está*!`;
                             if (!_corrInt) return 'Ops, tive um problema ao criar sua corrida. Tenta de novo! 😅';
                             if (_corrInt.cooldown) return 'Aguarda ' + Math.ceil(_corrInt.segundosRestantes / 60) + ' min para nova corrida.';
                             if (_corrInt.duplicada) return 'Você já tem uma corrida ativa!';
-                            conversa.etapa = 'pedir_aparencia';
+                            conversa.etapa = (conversa.dados.origemValidada?.precisao === 'ponto_referencia' || conversa.dados.isPontoReferencia) ? 'pedir_aparencia' : 'aguardando_motorista';
                             conversa.dados.corridaId = _corrInt.id;
                             conversas.set(telefone, conversa);
                             _agendarTimeoutAparencia(telefone, conversa.instanciaId, _corrInt.id, conversas);
@@ -920,7 +920,7 @@ Me manda o endereço de *onde você está*!`;
                                 CerebroRebeca.salvarHistorico(conversa, _md, 'rebeca');
                                 return _md;
                             }
-                            conversa.etapa = 'pedir_aparencia';
+                            conversa.etapa = (conversa.dados.origemValidada?.precisao === 'ponto_referencia' || conversa.dados.isPontoReferencia) ? 'pedir_aparencia' : 'aguardando_motorista';
                             conversa.dados.corridaId = _corridaC.id;
                             conversas.set(telefone, conversa);
                             _agendarTimeoutAparencia(telefone, conversa.instanciaId, _corridaC.id, conversas);
@@ -1024,10 +1024,10 @@ Me manda o endereço de *onde você está*!`;
                         const _corrEmb = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
                         if (_corrEmb.cooldown) return '⏳ Aguarde ' + Math.ceil(_corrEmb.segundosRestantes / 60) + ' min para nova corrida.';
                         if (_corrEmb.duplicada) return '⚠️ Você já tem corrida ativa! Digite *CANCELAR* para cancelar.';
-                        conversa.etapa = 'pedir_aparencia';
+                        conversa.etapa = (conversa.dados.origemValidada?.precisao === 'ponto_referencia' || conversa.dados.isPontoReferencia) ? 'pedir_aparencia' : 'aguardando_motorista';
                         conversa.dados.corridaId = _corrEmb.id;
                         conversas.set(telefone, conversa);
-                        return 'Anotei! Já chamei um motorista. Qual a cor da sua camisa? 👕';
+                        return 'Anotei! Já chamei um motorista. ' + ((conversa.dados.origemValidada?.precisao === 'ponto_referencia' || conversa.dados.isPontoReferencia) ? ' Qual a cor da sua camisa? 👕' : '') + '';
                     }
                 } catch(_eEmb) { console.log('[EMBUTIDO]', _eEmb.message); }
             }
@@ -1050,10 +1050,10 @@ Me manda o endereço de *onde você está*!`;
                             const corridaRac = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
                             if (corridaRac.cooldown) return '⏳ Aguarde ' + Math.ceil(corridaRac.segundosRestantes / 60) + ' min para nova corrida.';
                             if (corridaRac.duplicada) return '⚠️ Você já tem corrida ativa! Digite *CANCELAR* para cancelar.';
-                            conversa.etapa = 'pedir_aparencia';
+                            conversa.etapa = (conversa.dados.origemValidada?.precisao === 'ponto_referencia' || conversa.dados.isPontoReferencia) ? 'pedir_aparencia' : 'aguardando_motorista';
                             conversa.dados.corridaId = corridaRac.id;
                             conversas.set(telefone, conversa);
-                            return 'Certo, já chamei um motorista! Qual a cor da sua camisa? 👕';
+                            return 'Certo, já chamei um motorista! ' + ((conversa.dados.origemValidada?.precisao === 'ponto_referencia' || conversa.dados.isPontoReferencia) ? ' Qual a cor da sua camisa? 👕' : '') + '';
                         }
                     }
                 } catch(_eRac) { console.log('[RAC_INICIO]', _eRac.message); }
@@ -1128,7 +1128,7 @@ Me manda o endereço de *onde você está*!`;
                                     conversa.dados.calculo = { origem: { endereco: valFreq.endereco, latitude: valFreq.latitude, longitude: valFreq.longitude }, destino: null, distanciaKm: 0, tempoMinutos: 0, preco: 15, faixa: { nome: 'padrao', multiplicador: 1 } };
                                     const corridaDir = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
                                     if (!corridaDir.duplicada && !corridaDir.cooldown) {
-                                        conversa.etapa = 'pedir_aparencia';
+                                        conversa.etapa = (conversa.dados.origemValidada?.precisao === 'ponto_referencia' || conversa.dados.isPontoReferencia) ? 'pedir_aparencia' : 'aguardando_motorista';
                                         conversa.dados.corridaId = corridaDir.id;
                                         conversas.set(telefone, conversa);
                                         _agendarTimeoutAparencia(telefone, conversa.instanciaId, corridaDir.id, conversas);
@@ -1246,7 +1246,7 @@ Me manda o endereço de *onde você está*!`;
                                 if (_motsS.length > 0) {
                                     const _cS = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
                                     if (!_cS.cooldown && !_cS.duplicada) {
-                                        conversa.etapa = 'pedir_aparencia';
+                                        conversa.etapa = (conversa.dados.origemValidada?.precisao === 'ponto_referencia' || conversa.dados.isPontoReferencia) ? 'pedir_aparencia' : 'aguardando_motorista';
                                         conversa.dados.corridaId = _cS.id;
                                         conversas.set(telefone, conversa);
                                         return (resultadoGPT.resposta ? resultadoGPT.resposta + ' ' : '') + 'Já chamei um motorista! Qual a cor da sua camisa? 👕';
@@ -1303,10 +1303,10 @@ Me manda o endereço de *onde você está*!`;
                                 if (_motsGPT.length > 0) {
                                     const _cGPT = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
                                     if (!_cGPT.cooldown && !_cGPT.duplicada) {
-                                        conversa.etapa = 'pedir_aparencia';
+                                        conversa.etapa = (conversa.dados.origemValidada?.precisao === 'ponto_referencia' || conversa.dados.isPontoReferencia) ? 'pedir_aparencia' : 'aguardando_motorista';
                                         conversa.dados.corridaId = _cGPT.id;
                                         conversas.set(telefone, conversa);
-                                        return 'Certo, já chamei um motorista! Qual a cor da sua camisa? 👕';
+                                        return 'Certo, já chamei um motorista! ' + ((conversa.dados.origemValidada?.precisao === 'ponto_referencia' || conversa.dados.isPontoReferencia) ? ' Qual a cor da sua camisa? 👕' : '') + '';
                                     }
                                 }
                             }
@@ -1400,11 +1400,11 @@ Me manda o endereço de *onde você está*!`;
                                 const _corrGPT = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
                                 if (_corrGPT.cooldown) return '⏳ Aguarde ' + Math.ceil(_corrGPT.segundosRestantes / 60) + ' min.';
                                 if (_corrGPT.duplicada) return '⚠️ Já tem corrida ativa! Digite *CANCELAR* para cancelar.';
-                                conversa.etapa = 'pedir_aparencia';
+                                conversa.etapa = (conversa.dados.origemValidada?.precisao === 'ponto_referencia' || conversa.dados.isPontoReferencia) ? 'pedir_aparencia' : 'aguardando_motorista';
                                 conversa.dados.corridaId = _corrGPT.id;
                                 conversas.set(telefone, conversa);
                                 _agendarTimeoutAparencia(telefone, conversa.instanciaId, _corrGPT.id, conversas);
-                                return 'Certo, já chamei um motorista! Qual a cor da sua camisa? 👕';
+                                return 'Certo, já chamei um motorista! ' + ((conversa.dados.origemValidada?.precisao === 'ponto_referencia' || conversa.dados.isPontoReferencia) ? ' Qual a cor da sua camisa? 👕' : '') + '';
                             }
 
                             // Pedir destino — sempre, proativamente
@@ -1421,7 +1421,7 @@ Me manda o endereço de *onde você está*!`;
                                 const valor = calc.precoFinal || calc.preco || 0;
                                 // Despacha direto
                                 const _corrP = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
-                                conversa.etapa = 'pedir_aparencia';
+                                conversa.etapa = (conversa.dados.origemValidada?.precisao === 'ponto_referencia' || conversa.dados.isPontoReferencia) ? 'pedir_aparencia' : 'aguardando_motorista';
                                 conversa.dados.corridaId = _corrP.id;
                                 conversas.set(telefone, conversa);
                                 _agendarTimeoutAparencia(telefone, conversa.instanciaId, _corrP.id, conversas);
@@ -2120,7 +2120,7 @@ Me manda o endereço de *onde você está*!`;
                     return `Agendado para ${_hA}! Te aviso 30 minutos antes. Qualquer coisa é só falar.`;
                 }
                 if (corrida.duplicada) return '⚠️ Você já tem uma corrida em andamento!\n\nDigite *CANCELAR* para cancelar ou aguarde.';
-                conversa.etapa = 'pedir_aparencia';
+                conversa.etapa = (conversa.dados.origemValidada?.precisao === 'ponto_referencia' || conversa.dados.isPontoReferencia) ? 'pedir_aparencia' : 'aguardando_motorista';
                 conversa.dados.corridaId = corrida.id;
                 conversas.set(telefone, conversa);
                 _agendarTimeoutAparencia(telefone, conversa.instanciaId, corrida.id, conversas);
@@ -2141,11 +2141,11 @@ Me manda o endereço de *onde você está*!`;
                     ]);
                     if (_racPreco && (_racPreco.acao === 'confirmar' || _racPreco.acao === 'avancar')) {
                         const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
-                        conversa.etapa = 'pedir_aparencia';
+                        conversa.etapa = (conversa.dados.origemValidada?.precisao === 'ponto_referencia' || conversa.dados.isPontoReferencia) ? 'pedir_aparencia' : 'aguardando_motorista';
                         conversa.dados.corridaId = corrida.id;
                         conversas.set(telefone, conversa);
                         _agendarTimeoutAparencia(telefone, conversa.instanciaId, corrida.id, conversas);
-                        return 'Certo! Já chamei um motorista. Qual a cor da sua camisa? 👕';
+                        return 'Certo! Já chamei um motorista. ' + ((conversa.dados.origemValidada?.precisao === 'ponto_referencia' || conversa.dados.isPontoReferencia) ? ' Qual a cor da sua camisa? 👕' : '') + '';
                     }
                     if (_racPreco && _racPreco.resposta) {
                         conversas.set(telefone, conversa);
@@ -2405,11 +2405,11 @@ Me manda o endereço de *onde você está*!`;
                             if (!corridaDireta) return 'Ops, tive um problema ao criar sua corrida. Tenta de novo!';
                             if (corridaDireta.cooldown) return '⏳ Aguarde ' + Math.ceil(corridaDireta.segundosRestantes / 60) + ' min para nova corrida.';
                             if (corridaDireta.duplicada) return '⚠️ Você já tem corrida ativa! Digite *CANCELAR* para cancelar.';
-                            conversa.etapa = 'pedir_aparencia';
+                            conversa.etapa = (conversa.dados.origemValidada?.precisao === 'ponto_referencia' || conversa.dados.isPontoReferencia) ? 'pedir_aparencia' : 'aguardando_motorista';
                             conversa.dados.corridaId = corridaDireta.id;
                             achouComCidade = true;
                             conversas.set(telefone, conversa);
-                            return 'Certo, já chamei um motorista! Qual a cor da sua camisa? 👕';
+                            return 'Certo, já chamei um motorista! ' + ((conversa.dados.origemValidada?.precisao === 'ponto_referencia' || conversa.dados.isPontoReferencia) ? ' Qual a cor da sua camisa? 👕' : '') + '';
                         }
                     }
                 } catch(e) { console.log('[CATCH]', e.message); }
@@ -2428,11 +2428,11 @@ Me manda o endereço de *onde você está*!`;
                             // Motorista provavelmente conhece — pedir aparência antes de despachar
                             conversa.dados.origem = classifTL.enderecoLimpo || msgOriginal;
                             conversa.dados.origemPontoRef = true;
-                            conversa.etapa = 'pedir_aparencia';
+                            conversa.etapa = (conversa.dados.origemValidada?.precisao === 'ponto_referencia' || conversa.dados.isPontoReferencia) ? 'pedir_aparencia' : 'aguardando_motorista';
                             conversas.set(telefone, conversa);
                             return `📍 *${conversa.dados.origem}*
 
-Qual a cor da sua camisa? 👕
+' + ((conversa.dados.origemValidada?.precisao === 'ponto_referencia' || conversa.dados.isPontoReferencia) ? ' Qual a cor da sua camisa? 👕' : '') + '
 
 _(ou mande *0* para pular)_`;
                         } else if (classifTL.tipo === 'texto_invalido' && classifTL.confianca > 0.8) {
@@ -2494,10 +2494,10 @@ _(ou mande *0* para pular)_`;
                 if (conversa.dados.destino) {
                     const _corrD = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
                     if (!_corrD.cooldown && !_corrD.duplicada) {
-                        conversa.etapa = 'pedir_aparencia';
+                        conversa.etapa = (conversa.dados.origemValidada?.precisao === 'ponto_referencia' || conversa.dados.isPontoReferencia) ? 'pedir_aparencia' : 'aguardando_motorista';
                         conversa.dados.corridaId = _corrD.id;
                         conversas.set(telefone, conversa);
-                        return 'Certo, já chamei um motorista! Qual a cor da sua camisa? 👕';
+                        return 'Certo, já chamei um motorista! ' + ((conversa.dados.origemValidada?.precisao === 'ponto_referencia' || conversa.dados.isPontoReferencia) ? ' Qual a cor da sua camisa? 👕' : '') + '';
                     }
                 }
                 conversa.etapa = 'pedir_destino';
@@ -2514,11 +2514,11 @@ _(ou mande *0* para pular)_`;
             
             // Ir para pedir_aparencia — motorista precisa encontrar o cliente no ponto
             conversa.dados.origemPontoRef = true;
-            conversa.etapa = 'pedir_aparencia';
+            conversa.etapa = (conversa.dados.origemValidada?.precisao === 'ponto_referencia' || conversa.dados.isPontoReferencia) ? 'pedir_aparencia' : 'aguardando_motorista';
             conversas.set(telefone, conversa);
             return `📍 *${conversa.dados.origem}*
 
-Qual a cor da sua camisa? 👕
+' + ((conversa.dados.origemValidada?.precisao === 'ponto_referencia' || conversa.dados.isPontoReferencia) ? ' Qual a cor da sua camisa? 👕' : '') + '
 
 _(ou mande *0* para pular)_`;
         }
@@ -2619,7 +2619,7 @@ _(ou mande *0* para pular)_`;
                 const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
                 if (corrida.cooldown) return 'Aguarde um momento. Você finalizou uma corrida há pouco.';
                 if (corrida.duplicada) return 'Você já tem uma corrida em andamento!';
-                conversa.etapa = 'pedir_aparencia';
+                conversa.etapa = (conversa.dados.origemValidada?.precisao === 'ponto_referencia' || conversa.dados.isPontoReferencia) ? 'pedir_aparencia' : 'aguardando_motorista';
                 conversa.dados.corridaId = corrida.id;
                 _agendarTimeoutAparencia(telefone, conversa.instanciaId, corrida.id, conversas);
                 conversas.set(telefone, conversa);
@@ -2642,11 +2642,11 @@ _(ou mande *0* para pular)_`;
                 const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
                 if (corrida.cooldown) return `⏳ Aguarde ${Math.ceil(corrida.segundosRestantes / 60)} min para nova corrida.`;
                 if (corrida.duplicada) return '⚠️ Você já tem corrida ativa! Digite *CANCELAR* para cancelar.';
-                conversa.etapa = 'pedir_aparencia';
+                conversa.etapa = (conversa.dados.origemValidada?.precisao === 'ponto_referencia' || conversa.dados.isPontoReferencia) ? 'pedir_aparencia' : 'aguardando_motorista';
                 conversa.dados.corridaId = corrida.id;
                 _agendarTimeoutAparencia(telefone, conversa.instanciaId, corrida.id, conversas);
                 conversas.set(telefone, conversa);
-                return 'Confirmado! Já chamei um motorista. Qual a cor da sua camisa? 👕';
+                return 'Confirmado! Já chamei um motorista. ' + ((conversa.dados.origemValidada?.precisao === 'ponto_referencia' || conversa.dados.isPontoReferencia) ? ' Qual a cor da sua camisa? 👕' : '') + '';
             } else {
                 conversa.etapa = 'inicio';
                 conversa.dados.origemValidadaSuspeita = null;
@@ -2675,11 +2675,11 @@ _(ou mande *0* para pular)_`;
                     const corridaNum = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
                     if (corridaNum.cooldown) return '⏳ Aguarde ' + Math.ceil(corridaNum.segundosRestantes / 60) + ' min para nova corrida.';
                     if (corridaNum.duplicada) return '⚠️ Você já tem corrida ativa! Digite *CANCELAR* para cancelar.';
-                    conversa.etapa = 'pedir_aparencia';
+                    conversa.etapa = (conversa.dados.origemValidada?.precisao === 'ponto_referencia' || conversa.dados.isPontoReferencia) ? 'pedir_aparencia' : 'aguardando_motorista';
                     conversa.dados.corridaId = corridaNum.id;
                     _agendarTimeoutAparencia(telefone, conversa.instanciaId, corridaNum.id, conversas);
                     conversas.set(telefone, conversa);
-                    return 'Certo! Já chamei um motorista. Qual a cor da sua camisa? 👕';
+                    return 'Certo! Já chamei um motorista. ' + ((conversa.dados.origemValidada?.precisao === 'ponto_referencia' || conversa.dados.isPontoReferencia) ? ' Qual a cor da sua camisa? 👕' : '') + '';
                 }
             } else {
                 resposta = '🔢 Por favor, informe o *número* da casa/prédio (ou *SN* se não tiver):';
@@ -2723,11 +2723,11 @@ _(ou mande *0* para pular)_`;
                 return '⚠️ Você já tem uma corrida em andamento!\n\nDigite *CANCELAR* para cancelar ou aguarde o motorista.';
             }
             
-            conversa.etapa = 'pedir_aparencia';
+            conversa.etapa = (conversa.dados.origemValidada?.precisao === 'ponto_referencia' || conversa.dados.isPontoReferencia) ? 'pedir_aparencia' : 'aguardando_motorista';
             conversa.dados.corridaId = corridaBairro.id;
             _agendarTimeoutAparencia(telefone, conversa.instanciaId, corridaBairro.id, conversas);
             conversas.set(telefone, conversa);
-            return 'Certo! Já chamei um motorista. Qual a cor da sua camisa? 👕';
+            return 'Certo! Já chamei um motorista. ' + ((conversa.dados.origemValidada?.precisao === 'ponto_referencia' || conversa.dados.isPontoReferencia) ? ' Qual a cor da sua camisa? 👕' : '') + '';
         }
         // ========== REFERÊNCIA (NOVO FLUXO DIRETO) ==========
         // ========== BUSCAR TERCEIRO — NOME ==========
@@ -2754,6 +2754,14 @@ _(ou mande *0* para pular)_`;
 
         // ========== APARÊNCIA DO CLIENTE (ponto de referência) ==========
         else if (conversa.etapa === 'pedir_aparencia') {
+            // Só pede cor da camisa em ponto de referência
+            const _ehRef = conversa.dados.origemValidada?.precisao === 'ponto_referencia' || conversa.dados.isPontoReferencia;
+            if (!_ehRef) {
+                // Endereço normal → pular direto para aguardando_motorista
+                conversa.etapa = 'aguardando_motorista';
+                conversas.set(telefone, conversa);
+                return null; // deixa o fluxo continuar normalmente
+            }
             // Salvar aparência (ou pular com 0)
             if (msg !== '0' && msg !== 'nao' && msg !== 'não' && msg !== 'n') {
                 conversa.dados.aparenciaCliente = msgOriginal;
@@ -2853,11 +2861,11 @@ _(ou mande *0* para pular)_`;
                 return '⚠️ Você já tem uma corrida em andamento!\n\nDigite *CANCELAR* para cancelar ou aguarde o motorista.';
             }
             
-            conversa.etapa = 'pedir_aparencia';
+            conversa.etapa = (conversa.dados.origemValidada?.precisao === 'ponto_referencia' || conversa.dados.isPontoReferencia) ? 'pedir_aparencia' : 'aguardando_motorista';
             conversa.dados.corridaId = corrida.id;
             _agendarTimeoutAparencia(telefone, conversa.instanciaId, corrida.id, conversas);
             conversas.set(telefone, conversa);
-            return 'Certo! Já chamei um motorista. Qual a cor da sua camisa? 👕';
+            return 'Certo! Já chamei um motorista. ' + ((conversa.dados.origemValidada?.precisao === 'ponto_referencia' || conversa.dados.isPontoReferencia) ? ' Qual a cor da sua camisa? 👕' : '') + '';
         }
         // ========== OBSERVAÇÃO ==========
         else if (conversa.etapa === 'pedir_observacao_origem') {
@@ -2972,7 +2980,7 @@ _(ou mande *0* para pular)_`;
             const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
             if (corrida.cooldown) { conversas.set(telefone, conversa); return '⏳ Aguarde ' + Math.ceil(corrida.segundosRestantes / 60) + ' min para nova corrida.'; }
             if (corrida.duplicada) { conversas.set(telefone, conversa); return '⚠️ Você já tem corrida ativa! Digite *CANCELAR* para cancelar.'; }
-            conversa.etapa = 'pedir_aparencia';
+            conversa.etapa = (conversa.dados.origemValidada?.precisao === 'ponto_referencia' || conversa.dados.isPontoReferencia) ? 'pedir_aparencia' : 'aguardando_motorista';
             conversa.dados.corridaId = corrida.id;
             _agendarTimeoutAparencia(telefone, conversa.instanciaId, corrida.id, conversas);
             conversas.set(telefone, conversa);
@@ -2987,7 +2995,7 @@ _(ou mande *0* para pular)_`;
             conversa.dados.calculo = calculo;
             
             const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
-            conversa.etapa = 'pedir_aparencia';
+            conversa.etapa = (conversa.dados.origemValidada?.precisao === 'ponto_referencia' || conversa.dados.isPontoReferencia) ? 'pedir_aparencia' : 'aguardando_motorista';
             conversa.dados.corridaId = corrida.id;
             _agendarTimeoutAparencia(telefone, conversa.instanciaId, corrida.id, conversas);
             conversas.set(telefone, conversa);
@@ -3087,11 +3095,11 @@ _(ou mande *0* para pular)_`;
                                     conversa.dados.calculo = calculoRac;
                                     // Despacha direto
                                     const _corrRac = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
-                                    conversa.etapa = 'pedir_aparencia';
+                                    conversa.etapa = (conversa.dados.origemValidada?.precisao === 'ponto_referencia' || conversa.dados.isPontoReferencia) ? 'pedir_aparencia' : 'aguardando_motorista';
                                     conversa.dados.corridaId = _corrRac.id;
                                     _agendarTimeoutAparencia(telefone, conversa.instanciaId, _corrRac.id, conversas);
                                     conversas.set(telefone, conversa);
-                                    return 'Certo! Já chamei um motorista. Qual a cor da sua camisa? 👕';
+                                    return 'Certo! Já chamei um motorista. ' + ((conversa.dados.origemValidada?.precisao === 'ponto_referencia' || conversa.dados.isPontoReferencia) ? ' Qual a cor da sua camisa? 👕' : '') + '';
                                 }
                             } else if (rac.acao === 'cancelar' || rac.acao === 'negar') {
                                 conversa.etapa = 'inicio'; conversa.dados = {};
@@ -3110,11 +3118,11 @@ _(ou mande *0* para pular)_`;
                     conversa.dados.calculo = calculoTL;
                     // Despacha direto
                     const _corrTL = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
-                    conversa.etapa = 'pedir_aparencia';
+                    conversa.etapa = (conversa.dados.origemValidada?.precisao === 'ponto_referencia' || conversa.dados.isPontoReferencia) ? 'pedir_aparencia' : 'aguardando_motorista';
                     conversa.dados.corridaId = _corrTL.id;
                     _agendarTimeoutAparencia(telefone, conversa.instanciaId, _corrTL.id, conversas);
                     conversas.set(telefone, conversa);
-                    return 'Certo! Já chamei um motorista. Qual a cor da sua camisa? 👕';
+                    return 'Certo! Já chamei um motorista. ' + ((conversa.dados.origemValidada?.precisao === 'ponto_referencia' || conversa.dados.isPontoReferencia) ? ' Qual a cor da sua camisa? 👕' : '') + '';
                 }
                 conversa.dados.destino = validacao.endereco;
             }
@@ -3123,7 +3131,7 @@ _(ou mande *0* para pular)_`;
             const calculo = await RebecaService.calcularCorrida(conversa.dados.origem, conversa.dados.destino);
             conversa.dados.calculo = calculo;
             const _corr2141 = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
-            conversa.etapa = 'pedir_aparencia';
+            conversa.etapa = (conversa.dados.origemValidada?.precisao === 'ponto_referencia' || conversa.dados.isPontoReferencia) ? 'pedir_aparencia' : 'aguardando_motorista';
             conversa.dados.corridaId = _corr2141.id;
             _agendarTimeoutAparencia(telefone, conversa.instanciaId, _corr2141.id, conversas);
             conversas.set(telefone, conversa);
@@ -3132,7 +3140,7 @@ _(ou mande *0* para pular)_`;
         else if (conversa.etapa === 'confirmar_corrida') {
             if (msg === '1' || NLPService.eSim(msg)) {
                 const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
-                conversa.etapa = 'pedir_aparencia';
+                conversa.etapa = (conversa.dados.origemValidada?.precisao === 'ponto_referencia' || conversa.dados.isPontoReferencia) ? 'pedir_aparencia' : 'aguardando_motorista';
                 conversa.dados.corridaId = corrida.id;
                 _agendarTimeoutAparencia(telefone, conversa.instanciaId, corrida.id, conversas);
                 resposta = 'Certo! Já chamei um motorista. Qual a cor da sua camisa? 👕';
@@ -3150,7 +3158,7 @@ _(ou mande *0* para pular)_`;
                     if (rac) {
                         if (rac.acao === 'confirmar' || rac.acao === 'avancar') {
                             const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
-                            conversa.etapa = 'pedir_aparencia';
+                            conversa.etapa = (conversa.dados.origemValidada?.precisao === 'ponto_referencia' || conversa.dados.isPontoReferencia) ? 'pedir_aparencia' : 'aguardando_motorista';
                             conversa.dados.corridaId = corrida.id;
                             _agendarTimeoutAparencia(telefone, conversa.instanciaId, corrida.id, conversas);
                             resposta = 'Certo! Já chamei um motorista. Qual a cor da sua camisa? 👕';
@@ -3363,11 +3371,11 @@ _(ou mande *0* para pular)_`;
                         
                         // Despacha direto
                         const _corr2329 = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
-                        conversa.etapa = 'pedir_aparencia';
+                        conversa.etapa = (conversa.dados.origemValidada?.precisao === 'ponto_referencia' || conversa.dados.isPontoReferencia) ? 'pedir_aparencia' : 'aguardando_motorista';
                         conversa.dados.corridaId = _corr2329.id;
                         _agendarTimeoutAparencia(telefone, conversa.instanciaId, _corr2329.id, conversas);
                         conversas.set(telefone, conversa);
-                        return 'Certo! Já chamei um motorista. Qual a cor da sua camisa? 👕';
+                        return 'Certo! Já chamei um motorista. ' + ((conversa.dados.origemValidada?.precisao === 'ponto_referencia' || conversa.dados.isPontoReferencia) ? ' Qual a cor da sua camisa? 👕' : '') + '';
                     }
                 }
                 
@@ -3460,11 +3468,11 @@ Pode me passar o endereço completo? Ex: Rua X, número, bairro`;
                             
                             // Despacha direto
                             const _corr2359 = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
-                            conversa.etapa = 'pedir_aparencia';
+                            conversa.etapa = (conversa.dados.origemValidada?.precisao === 'ponto_referencia' || conversa.dados.isPontoReferencia) ? 'pedir_aparencia' : 'aguardando_motorista';
                             conversa.dados.corridaId = _corr2359.id;
                             _agendarTimeoutAparencia(telefone, conversa.instanciaId, _corr2359.id, conversas);
                             conversas.set(telefone, conversa);
-                            return 'Certo! Já chamei um motorista. Qual a cor da sua camisa? 👕';
+                            return 'Certo! Já chamei um motorista. ' + ((conversa.dados.origemValidada?.precisao === 'ponto_referencia' || conversa.dados.isPontoReferencia) ? ' Qual a cor da sua camisa? 👕' : '') + '';
                         }
                     }
                     
@@ -3478,11 +3486,11 @@ Pode me passar o endereço completo? Ex: Rua X, número, bairro`;
                     const _eraPedidoLocal = /(me busca|me pega|busca aqui|aqui na|aqui no|estou na|estou no|tô na|tô no)/i.test(msgOriginal);
                     if (_eraPedidoLocal || conversa.dados.origemPontoRef) {
                         conversa.dados.origemPontoRef = true;
-                        conversa.etapa = 'pedir_aparencia';
+                        conversa.etapa = (conversa.dados.origemValidada?.precisao === 'ponto_referencia' || conversa.dados.isPontoReferencia) ? 'pedir_aparencia' : 'aguardando_motorista';
                         conversas.set(telefone, conversa);
                         return `📍 *${conversa.dados.origem}*
 
-Qual a cor da sua camisa? 👕
+' + ((conversa.dados.origemValidada?.precisao === 'ponto_referencia' || conversa.dados.isPontoReferencia) ? ' Qual a cor da sua camisa? 👕' : '') + '
 
 _(ou mande *0* para pular)_`;
                     }
