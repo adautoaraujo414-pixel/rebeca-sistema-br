@@ -2081,6 +2081,7 @@ Me manda o endereço de *onde você está*!`;
             if (msg.includes('sim') || msg.includes('confirma') || msg.includes('pode') || msg.includes('ok') || msg.includes('bora') || msg.includes('vai') || msg.includes('quero') || msg === 's') {
                 // Cliente confirmou - criar corrida
                 const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
+                if (!corrida) { conversas.set(telefone, conversa); return 'Ops, tive um problema ao criar sua corrida. Tenta de novo! 😅'; }
                 if (corrida && corrida.agendado) {
                     const _dtA = new Date(conversa.dados.horario_agendamento);
                     const _hA = _dtA.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
@@ -2370,6 +2371,7 @@ Me manda o endereço de *onde você está*!`;
                             conversa.dados.origemValidada = val2;
                             conversa.dados.calculo = { origem: { endereco: val2.endereco, latitude: val2.latitude, longitude: val2.longitude }, destino: null, distanciaKm: 0, tempoMinutos: 0, preco: 15, faixa: { nome: 'padrao', multiplicador: 1 } };
                             const corridaDireta = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
+                            if (!corridaDireta) return 'Ops, tive um problema ao criar sua corrida. Tenta de novo!';
                             if (corridaDireta.cooldown) return '⏳ Aguarde ' + Math.ceil(corridaDireta.segundosRestantes / 60) + ' min para nova corrida.';
                             if (corridaDireta.duplicada) return '⚠️ Você já tem corrida ativa! Digite *CANCELAR* para cancelar.';
                             conversa.etapa = 'pedir_aparencia';
