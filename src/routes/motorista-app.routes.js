@@ -67,6 +67,10 @@ router.get('/corridas-disponiveis', auth, async (req, res) => {
 router.post('/aceitar', auth, async (req, res) => {
     const { corridaId } = req.body;
     try {
+        // PROTEÇÃO: Verificar inadimplência
+        if (req.motorista.bloqueadoPorMensalidade || req.motorista.ativo === false) {
+            return res.json({ sucesso: false, erro: 'Sua conta está bloqueada por mensalidade em atraso. Entre em contato com o administrador.' });
+        }
         // PROTEÇÃO: Verificar se corrida já foi aceita
         const { Corrida, InstanciaWhatsapp } = require('../models');
         const EvolutionMultiService = require('../services/evolution-multi.service');
