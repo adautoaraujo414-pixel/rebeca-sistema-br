@@ -5,10 +5,11 @@ function logout() { localStorage.clear(); window.location.href = '/admin/login';
 document.querySelectorAll('.menu-item').forEach(item => {
     item.addEventListener('click', () => {
         document.querySelectorAll('.menu-item').forEach(i => i.classList.remove('active'));
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.page').forEach(p => { p.classList.remove('active'); p.style.display = 'none'; });
         item.classList.add('active');
         const page = item.getAttribute('data-page');
-        document.getElementById(page).classList.add('active');
+        const pageEl = document.getElementById(page);
+        if (pageEl) { pageEl.classList.add('active'); pageEl.style.display = 'block'; }
         // Para polling de centrais ao trocar de página
         if (typeof _pontosPollingInterval !== 'undefined' && _pontosPollingInterval) {
             clearInterval(_pontosPollingInterval);
@@ -23,7 +24,7 @@ document.querySelectorAll('.menu-item').forEach(item => {
 });
 
 function carregarPagina(p) {
-    const fn = { dashboard:carregarDashboard, mapa:carregarMapa, corridas:carregarCorridas, despacho:carregarDespacho, motoristas:carregarMotoristas, clientes:carregarClientes, rotas:carregarRotas, faturamento:carregarFaturamento, precos:carregarPrecosSimples, ranking:carregarRanking, antifraude:carregarAntiFraude, blacklist:carregarBlacklist, reclamacoes:carregarReclamacoes, whatsapp:carregarWhatsApp, usuarios:carregarUsuarios, areas:carregarAreas, config:carregarConfig, logs:carregarLogs, fila:carregarFilaEspera, pontos:carregarPontos, empresa:carregarEmpresa };
+    const fn = { dashboard:carregarDashboard, mapa:carregarMapa, corridas:carregarCorridas, despacho:carregarDespacho, motoristas:carregarMotoristas, clientes:carregarClientes, rotas:carregarRotas, faturamento:carregarFaturamento, precos:carregarPrecosSimples, ranking:carregarRanking, antifraude:carregarAntiFraude, blacklist:carregarBlacklist, reclamacoes:carregarReclamacoes, whatsapp:carregarWhatsApp, usuarios:carregarUsuarios, areas:carregarAreas, config:carregarConfig, logs:carregarLogs, fila:carregarFilaEspera, pontos:carregarPontos, empresa:carregarEmpresa, mensalidades:carregarMensalidades };
     if (fn[p]) fn[p]();
 }
 
