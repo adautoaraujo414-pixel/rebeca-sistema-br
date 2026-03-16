@@ -11,7 +11,7 @@ router.get('/estatisticas', (req, res) => {
 
 // ==================== ALERTAS ====================
 router.get('/alertas', (req, res) => {
-    const adminId = req.query.adminId || req.headers['x-admin-id'];
+    const adminId = req.query.adminId || req.headers['x-admin-id'] || req.body?.adminId;
     if (!adminId) return res.status(400).json({ error: 'adminId obrigatório' });
     const filtros = { adminId, status: req.query.status, nivel: req.query.nivel, tipo: req.query.tipo };
     res.json(AntiFraudeService.listarAlertas(filtros));

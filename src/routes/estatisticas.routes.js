@@ -6,7 +6,7 @@ const EstatisticasService = require('../services/estatisticas.service');
 // Dashboard completo
 router.get('/dashboard', async (req, res) => {
     try {
-        const adminId = req.query.adminId || req.headers['x-admin-id'];
+        const adminId = req.query.adminId || req.headers['x-admin-id'] || req.body?.adminId;
         const dashboard = await EstatisticasService.dashboardCompleto(adminId);
         res.json(dashboard);
     } catch (e) {
@@ -17,7 +17,7 @@ router.get('/dashboard', async (req, res) => {
 // Corridas por dia
 router.get('/corridas-por-dia', async (req, res) => {
     try {
-        const adminId = req.query.adminId || req.headers['x-admin-id'];
+        const adminId = req.query.adminId || req.headers['x-admin-id'] || req.body?.adminId;
         // adminId opcional — sem ele retorna dados globais
         const dias = parseInt(req.query.dias) || 7;
         const resultado = await EstatisticasService.corridasPorDia(dias, adminId);
@@ -30,7 +30,7 @@ router.get('/corridas-por-dia', async (req, res) => {
 // Faturamento por período
 router.get('/faturamento', async (req, res) => {
     try {
-        const adminId = req.query.adminId || req.headers['x-admin-id'];
+        const adminId = req.query.adminId || req.headers['x-admin-id'] || req.body?.adminId;
         // adminId opcional — sem ele retorna dados globais
         const periodo = req.query.periodo || 'hoje';
         const resultado = await EstatisticasService.faturamentoPorPeriodo(periodo, adminId);
@@ -43,7 +43,7 @@ router.get('/faturamento', async (req, res) => {
 // Ranking motoristas
 router.get('/ranking-motoristas', async (req, res) => {
     try {
-        const adminId = req.query.adminId || req.headers['x-admin-id'];
+        const adminId = req.query.adminId || req.headers['x-admin-id'] || req.body?.adminId;
         // adminId opcional — sem ele retorna dados globais
         const limite = parseInt(req.query.limite) || 5;
         const ranking = await EstatisticasService.rankingMotoristas(limite, adminId);
@@ -55,7 +55,7 @@ router.get('/ranking-motoristas', async (req, res) => {
 
 router.get('/ranking', async (req, res) => {
     try {
-        const adminId = req.query.adminId || req.headers['x-admin-id'];
+        const adminId = req.query.adminId || req.headers['x-admin-id'] || req.body?.adminId;
         // adminId opcional — sem ele retorna dados globais
         const limite = parseInt(req.query.limite) || 10;
         const ranking = await EstatisticasService.rankingMotoristas(limite, adminId);
@@ -68,7 +68,7 @@ router.get('/ranking', async (req, res) => {
 // Horários de pico
 router.get('/horarios-pico', async (req, res) => {
     try {
-        const adminId = req.query.adminId || req.headers['x-admin-id'];
+        const adminId = req.query.adminId || req.headers['x-admin-id'] || req.body?.adminId;
         // adminId opcional — sem ele retorna dados globais
         const horarios = await EstatisticasService.horariosPico(adminId);
         res.json(horarios);
@@ -80,7 +80,7 @@ router.get('/horarios-pico', async (req, res) => {
 // Estatísticas de cancelamento
 router.get('/cancelamentos', async (req, res) => {
     try {
-        const adminId = req.query.adminId || req.headers['x-admin-id'];
+        const adminId = req.query.adminId || req.headers['x-admin-id'] || req.body?.adminId;
         // adminId opcional — sem ele retorna dados globais
         const stats = await EstatisticasService.estatisticasCancelamento(adminId);
         res.json(stats);

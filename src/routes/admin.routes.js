@@ -7,7 +7,7 @@ const PrecoSimplesService = require('../services/preco-simples.service');
 router.get('/fila-espera', async (req, res) => {
     try {
         const { FilaEspera } = require('../models');
-        const adminId = req.query.adminId || req.headers['x-admin-id'];
+        const adminId = req.query.adminId || req.headers['x-admin-id'] || req.body?.adminId;
         
         const fila = await FilaEspera.find({ 
             adminId, 
@@ -33,7 +33,7 @@ router.delete('/fila-espera/:id', async (req, res) => {
 // ========== PREÇOS SIMPLES ==========
 router.get('/precos-simples', async (req, res) => {
     try {
-        const adminId = req.query.adminId || req.headers['x-admin-id'];
+        const adminId = req.query.adminId || req.headers['x-admin-id'] || req.body?.adminId;
         const config = await PrecoSimplesService.getConfig(adminId);
         res.json(config);
     } catch (e) {
@@ -43,7 +43,7 @@ router.get('/precos-simples', async (req, res) => {
 
 router.post('/precos-simples', async (req, res) => {
     try {
-        const adminId = req.query.adminId || req.headers['x-admin-id'] || req.body.adminId;
+        const adminId = req.query.adminId || req.headers['x-admin-id'] || req.body?.adminId || req.body.adminId;
         const resultado = await PrecoSimplesService.salvarPrecos(adminId, req.body);
         res.json(resultado);
     } catch (e) {
@@ -53,7 +53,7 @@ router.post('/precos-simples', async (req, res) => {
 
 router.get('/preco-atual', async (req, res) => {
     try {
-        const adminId = req.query.adminId || req.headers['x-admin-id'];
+        const adminId = req.query.adminId || req.headers['x-admin-id'] || req.body?.adminId;
         const preco = await PrecoSimplesService.calcularPreco(adminId);
         res.json(preco);
     } catch (e) {
@@ -66,7 +66,7 @@ router.get('/preco-atual', async (req, res) => {
 // Listar contatos de emergência do adm
 router.get('/emergencia', async (req, res) => {
     try {
-        const adminId = req.query.adminId || req.headers['x-admin-id'] || req.body.adminId;
+        const adminId = req.query.adminId || req.headers['x-admin-id'] || req.body?.adminId || req.body.adminId;
         const { ContatoEmergencia } = require('../models');
         const contatos = await ContatoEmergencia.find({ adminId, ativo: true }).sort({ categoria: 1 });
         res.json({ sucesso: true, contatos });
@@ -76,7 +76,7 @@ router.get('/emergencia', async (req, res) => {
 // Criar contato de emergência
 router.post('/emergencia', async (req, res) => {
     try {
-        const adminId = req.query.adminId || req.headers['x-admin-id'] || req.body.adminId;
+        const adminId = req.query.adminId || req.headers['x-admin-id'] || req.body?.adminId || req.body.adminId;
         const { nome, telefone, tipo } = req.body;
         if (!nome || !telefone) return res.status(400).json({ erro: 'Nome e telefone obrigatórios' });
         const { ContatoEmergencia } = require('../models');

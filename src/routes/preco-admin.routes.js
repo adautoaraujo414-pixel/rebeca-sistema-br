@@ -5,7 +5,7 @@ const PrecoAdminService = require('../services/preco-admin.service');
 // Buscar configuração de preços do admin
 router.get('/config', async (req, res) => {
     try {
-        const adminId = req.headers['x-admin-id'];
+        const adminId = req.headers['x-admin-id'] || req.query.adminId;
         const config = await PrecoAdminService.getConfig(adminId);
         res.json(config);
     } catch (e) {
@@ -16,7 +16,7 @@ router.get('/config', async (req, res) => {
 // Salvar configuração de preços
 router.post('/config', async (req, res) => {
     try {
-        const adminId = req.headers['x-admin-id'];
+        const adminId = req.headers['x-admin-id'] || req.query.adminId || req.body?.adminId;
         if (!adminId) return res.status(400).json({ erro: 'AdminId obrigatório' });
         
         const resultado = await PrecoAdminService.salvarConfig(adminId, req.body);

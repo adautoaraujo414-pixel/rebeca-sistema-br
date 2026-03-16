@@ -16,7 +16,7 @@ router.get('/config', (req, res) => {
 });
 
 router.put('/config', (req, res) => {
-    const adminId = req.body.adminId || req.headers['x-admin-id'];
+    const adminId = req.body.adminId || req.headers['x-admin-id'] || req.query.adminId;
     if (!adminId) return res.status(400).json({ error: 'adminId obrigatório' });
     const config = RebecaService.setConfig({ ...req.body, adminId });
     LogsService.registrar({ tipo: 'config', acao: 'Configurações Rebeca atualizadas', adminId, detalhes: req.body });

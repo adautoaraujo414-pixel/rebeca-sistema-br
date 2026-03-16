@@ -3,7 +3,7 @@ const router = express.Router();
 const { ZonaPreco } = require('../models');
 
 const authAdmin = async (req, res, next) => {
-    const adminId = req.headers['x-admin-id'];
+    const adminId = req.headers['x-admin-id'] || req.query.adminId || req.body?.adminId;
     if (!adminId) return res.status(401).json({ erro: 'Sem adminId' });
     req.adminId = adminId;
     next();
