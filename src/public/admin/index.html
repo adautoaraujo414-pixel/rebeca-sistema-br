@@ -2115,9 +2115,10 @@ async function buscarEnderecoZona() {
     const q = document.getElementById('zonaBuscaEndereco').value.trim();
     if (!q) return alert('Digite um endereço ou bairro para buscar.');
     try {
-        const res = await fetch('/api/maps/geocodificar?endereco=' + encodeURIComponent(q), {
-            headers: { 'Authorization': localStorage.getItem('adminToken') }
-        });
+        const res = await fetch('/api/maps/geocodificar', {
+            method: 'POST',
+            body: JSON.stringify({ endereco: q + ', Brasil' })
+            headers: { 'Content-Type': 'application/json', 'Authorization': localStorage.getItem('token') },
         const data = await res.json();
         if (data.sucesso && data.latitude && data.longitude) {
             const lat = data.latitude, lng = data.longitude;
