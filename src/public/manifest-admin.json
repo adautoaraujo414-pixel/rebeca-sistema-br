@@ -1,58 +1,58 @@
 {
-    "name": "Rebeca Motorista",
-    "short_name": "🚗 Motorista",
-    "description": "App do Motorista - Rebeca Corridas",
-    "start_url": "/motorista-app.html",
+    "name": "Rebeca ADM",
+    "short_name": "⚙️ ADM Rebeca",
+    "description": "Painel Administrativo - Rebeca Corridas",
+    "start_url": "/admin/index.html",
     "display": "standalone",
-    "background_color": "#1a1a2e",
-    "theme_color": "#00d4ff",
+    "background_color": "#1a0a0a",
+    "theme_color": "#e94560",
     "orientation": "portrait",
     "lang": "pt-BR",
     "icons": [
         {
-            "src": "/icons/icon-72.png",
+            "src": "/icons/admin-icon-72.png",
             "sizes": "72x72",
             "type": "image/png",
             "purpose": "any maskable"
         },
         {
-            "src": "/icons/icon-96.png",
+            "src": "/icons/admin-icon-96.png",
             "sizes": "96x96",
             "type": "image/png",
             "purpose": "any maskable"
         },
         {
-            "src": "/icons/icon-128.png",
+            "src": "/icons/admin-icon-128.png",
             "sizes": "128x128",
             "type": "image/png",
             "purpose": "any maskable"
         },
         {
-            "src": "/icons/icon-144.png",
+            "src": "/icons/admin-icon-144.png",
             "sizes": "144x144",
             "type": "image/png",
             "purpose": "any maskable"
         },
         {
-            "src": "/icons/icon-152.png",
+            "src": "/icons/admin-icon-152.png",
             "sizes": "152x152",
             "type": "image/png",
             "purpose": "any maskable"
         },
         {
-            "src": "/icons/icon-192.png",
+            "src": "/icons/admin-icon-192.png",
             "sizes": "192x192",
             "type": "image/png",
             "purpose": "any maskable"
         },
         {
-            "src": "/icons/icon-384.png",
+            "src": "/icons/admin-icon-384.png",
             "sizes": "384x384",
             "type": "image/png",
             "purpose": "any maskable"
         },
         {
-            "src": "/icons/icon-512.png",
+            "src": "/icons/admin-icon-512.png",
             "sizes": "512x512",
             "type": "image/png",
             "purpose": "any maskable"
