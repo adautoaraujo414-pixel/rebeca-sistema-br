@@ -2117,8 +2117,9 @@ async function buscarEnderecoZona() {
     try {
         const res = await fetch('/api/maps/geocodificar', {
             method: 'POST',
-            body: JSON.stringify({ endereco: q + ', Brasil' })
             headers: { 'Content-Type': 'application/json', 'Authorization': localStorage.getItem('token') },
+            body: JSON.stringify({ endereco: q + ', Brasil' })
+        });
         const data = await res.json();
         if (data.sucesso && data.latitude && data.longitude) {
             const lat = data.latitude, lng = data.longitude;
