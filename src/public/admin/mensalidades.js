@@ -1,11 +1,19 @@
+// Helper token
+function _getHeaders(json = false) {
+    const token = localStorage.getItem('token') || localStorage.getItem('adminToken') || '';
+    const h = { 'Authorization': token };
+    if (json) h['Content-Type'] = 'application/json';
+    return h;
+}
+
 // ========== MENSALIDADES ==========
 
 async function carregarMensalidades() {
     try {
         const [mensalidades, stats, config] = await Promise.all([
-            fetch('/api/mensalidades').then(r => r.json()),
-            fetch('/api/mensalidades/estatisticas').then(r => r.json()),
-            fetch('/api/mensalidades/config').then(r => r.json())
+            fetch('/api/mensalidades', { headers: _getHeaders() }).then(r => r.json()),
+            fetch('/api/mensalidades/estatisticas', { headers: _getHeaders() }).then(r => r.json()),
+            fetch('/api/mensalidades/config', { headers: _getHeaders() }).then(r => r.json())
         ]);
 
         // Stats
@@ -77,7 +85,7 @@ async function salvarConfigFinanceiro() {
     try {
         const res = await fetch('/api/mensalidades/config', {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
+            headers: _getHeaders(true),
             body: JSON.stringify(config)
         });
         const data = await res.json();
@@ -93,7 +101,7 @@ async function confirmarPagamento(mensalidadeId) {
     if (!confirm('Confirmar pagamento desta mensalidade?')) return;
 
     try {
-        const res = await fetch(`/api/mensalidades/${mensalidadeId}/confirmar`, {
+        const res = await fetch(`/api/mensalidades/${mensalidadeId}/confirmar`, { 
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ observacao: 'Confirmado pelo admin' })
@@ -112,7 +120,7 @@ async function bloquearMotorista(motoristaId) {
     if (!confirm('Bloquear este motorista por inadimplência?')) return;
 
     try {
-        await fetch(`/api/mensalidades/bloquear/${motoristaId}`, { method: 'POST' });
+        await fetch(`/api/mensalidades/bloquear/${motoristaId}`, { method: 'POST', headers: _getHeaders() });
         alert('🔒 Motorista bloqueado!');
         carregarMensalidades();
     } catch (e) {
@@ -124,7 +132,7 @@ async function desbloquearMotorista(motoristaId) {
     if (!confirm('Desbloquear este motorista?')) return;
 
     try {
-        await fetch(`/api/mensalidades/desbloquear/${motoristaId}`, { method: 'POST' });
+        await fetch(`/api/mensalidades/desbloquear/${motoristaId}`, { method: 'POST', headers: _getHeaders() });
         alert('🔓 Motorista desbloqueado!');
         carregarMensalidades();
     } catch (e) {
@@ -144,7 +152,7 @@ async function criarMensalidadeManual() {
     }
 
     try {
-        const res = await fetch('/api/mensalidades', {
+        const res = await fetch('/api/mensalidades', { 
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ motoristaId, plano, valor, dataVencimento })
@@ -162,7 +170,7 @@ async function criarMensalidadeManual() {
 
 async function verificarVencimentosManual() {
     try {
-        const res = await fetch('/api/mensalidades/verificar-vencimentos', { method: 'POST' });
+        const res = await fetch('/api/mensalidades/verificar-vencimentos', { method: 'POST', headers: _getHeaders() });
         const data = await res.json();
         alert(`✅ Verificação concluída! ${data.notificacoes?.length || 0} notificações.`);
         carregarMensalidades();
@@ -345,7 +353,7 @@ document.addEventListener('DOMContentLoaded', () => {
 async function abrirModalNovaMensalidade() {
     // Carregar motoristas
     try {
-        const res = await fetch('/api/motoristas');
+        const res = await fetch('/api/motoristas', { headers: _getHeaders() });
         const motoristas = await res.json();
         const select = document.getElementById('mensMotoristaId');
         select.innerHTML = motoristas.map(m => 
@@ -354,7 +362,7 @@ async function abrirModalNovaMensalidade() {
     } catch (e) {}
     
     // Preencher valor padrão
-    const config = await fetch('/api/mensalidades/config').then(r => r.json());
+    const config = await fetch('/api/mensalidades/config', { headers: _getHeaders() }).then(r => r.json());
     document.getElementById('mensValor').value = config.valorMensalidade || 100;
     
     // Data padrão: próximo mês
