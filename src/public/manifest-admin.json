@@ -2,7 +2,7 @@
     "name": "Rebeca ADM",
     "short_name": "⚙️ ADM Rebeca",
     "description": "Painel Administrativo - Rebeca Corridas",
-    "start_url": "/admin/index.html",
+    "start_url": "/admin",
     "display": "standalone",
     "background_color": "#1a0a0a",
     "theme_color": "#e94560",
@@ -57,5 +57,6 @@
             "type": "image/svg+xml",
             "purpose": "any maskable"
         }
-    ]
+    ],
+    "scope": "/admin"
 }
