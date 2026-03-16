@@ -686,9 +686,18 @@ Me manda o endereço de *onde você está*!`;
             conversas.set(telefone, conversa);
             
             const _preco1 = conversa.dados?.calculo?.preco || conversa.dados?.calculo?.precoFinal || corridaGps.preco || 0;
+            let _avisoPreco = '';
+            try {
+                const { Admin } = require('../models');
+                const _adm = await Admin.findById(conversa.adminId);
+                if (_adm?.precoFixo?.ativo && _adm.precoFixo.valor) {
+                    const _motivo = _adm.precoFixo.motivo ? ' — ' + _adm.precoFixo.motivo : '';
+                    _avisoPreco = `\n🎉 *Preço especial em vigor${_motivo}*`;
+                }
+            } catch(e) {}
             let _msgGps = `✅ *Corrida solicitada!*\n\n📍 *Origem:* ${conversa.dados.origem}`;
-            if (_preco1 > 0) _msgGps += `\n💰 *Valor estimado: R$ ${_preco1.toFixed(2)}*`;
-            _msgGps += `\n\n⏳ Buscando o motorista mais próximo...`;
+            if (_preco1 > 0) _msgGps += `\n💰 *Valor: R$ ${_preco1.toFixed(2)}*${_avisoPreco}`;
+            else if (_avisoPreco) _msgGps += _avisoPreco;
             if (_cfg.enviarLinkRastreamento) {
                 _msgGps += `\n\n📲 *Acompanhe em tempo real:*\n${RebecaService.gerarLinkRastreamento(corridaGps.id)}`;
             }
