@@ -1,20 +1,35 @@
 const express = require('express');
 const router = express.Router();
 const MensalidadeService = require('../services/mensalidade.service');
-const { Motorista } = require('../models');
+const { Motorista, Admin } = require('../models');
+const jwt = require('jsonwebtoken');
+
+// Middleware para extrair adminId do token
+const getAdminId = async (req) => {
+    try {
+        const token = (req.headers.authorization || '').replace('Bearer ', '');
+        if (!token) return null;
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'rebeca_secret');
+        return decoded.adminId || decoded.id || decoded._id || null;
+    } catch(e) { return null; }
+};
 
 // Listar todas mensalidades
 router.get('/', async (req, res) => {
-    try {    const { status, motoristaId } = req.query;
-    const mensalidades = await MensalidadeService.listar({ status, motoristaId });
-    res.json(mensalidades);
+    try {
+        const { status, motoristaId } = req.query;
+        const adminId = await getAdminId(req);
+        const mensalidades = await MensalidadeService.listar({ status, motoristaId, adminId });
+        res.json(mensalidades);
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
 // Estatísticas
 router.get('/estatisticas', async (req, res) => {
-    try {    const stats = await MensalidadeService.estatisticas();
-    res.json(stats);
+    try {
+        const adminId = await getAdminId(req);
+        const stats = await MensalidadeService.estatisticas(adminId);
+        res.json(stats);
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 

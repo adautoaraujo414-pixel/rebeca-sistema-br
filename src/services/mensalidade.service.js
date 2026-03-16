@@ -7,12 +7,36 @@ const MensalidadeService = {
         return await mensalidade.save();
     },
 
-    // Listar todas
+    // Listar todas (filtrado por adminId)
     async listar(filtros = {}) {
         const query = {};
         if (filtros.status) query.status = filtros.status;
         if (filtros.motoristaId) query.motoristaId = filtros.motoristaId;
+
+        // Filtrar por adminId — busca IDs dos motoristas deste admin
+        if (filtros.adminId) {
+            const motoristas = await Motorista.find({ adminId: filtros.adminId }).select('_id');
+            const ids = motoristas.map(m => m._id);
+            query.motoristaId = filtros.motoristaId
+                ? (ids.map(String).includes(String(filtros.motoristaId)) ? filtros.motoristaId : null)
+                : { $in: ids };
+        }
+
         return await Mensalidade.find(query).sort({ dataVencimento: -1 });
+    },
+
+    // Estatísticas filtradas por admin
+    async estatisticas(adminId = null) {
+        const query = {};
+        if (adminId) {
+            const motoristas = await Motorista.find({ adminId }).select('_id');
+            query.motoristaId = { $in: motoristas.map(m => m._id) };
+        }
+        const total = await Mensalidade.countDocuments(query);
+        const pagas = await Mensalidade.countDocuments({ ...query, status: 'pago' });
+        const pendentes = await Mensalidade.countDocuments({ ...query, status: 'pendente' });
+        const atrasadas = await Mensalidade.countDocuments({ ...query, status: 'atrasado' });
+        return { total, pagas, pendentes, atrasadas };
     },
 
     // Buscar por ID
