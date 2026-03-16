@@ -443,9 +443,19 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                             status: { $in: ['aceita','aguardando_cliente','em_andamento','motorista_a_caminho'] }
                         }).sort({ createdAt: -1 }).lean();
                         if (_corridaAtiva) {
-                            // Salvar mensagem do cliente no chat da corrida
-                            await _MC.create({ corridaId: _corridaAtiva._id, remetente: 'cliente', destinatario: 'motorista', mensagem: conteudo, entregue: false });
-                            console.log('[RELAY] Msg cliente salva no chat da corrida:', _corridaAtiva._id);
+                            // Anti-duplicata relay: checar se mesma mensagem já foi salva nos últimos 10s
+                            if (!global._relayDedup) global._relayDedup = new Map();
+                            const _relayKey = String(_corridaAtiva._id) + '_' + conteudo.substring(0, 60);
+                            const _relayUlt = global._relayDedup.get(_relayKey);
+                            if (_relayUlt && (Date.now() - _relayUlt) < 10000) {
+                                console.log('[RELAY] Msg duplicada ignorada para corrida:', _corridaAtiva._id);
+                            } else {
+                                global._relayDedup.set(_relayKey, Date.now());
+                                // Limpar entradas antigas
+                                for (const [k, v] of global._relayDedup) { if (Date.now() - v > 60000) global._relayDedup.delete(k); }
+                                await _MC.create({ corridaId: _corridaAtiva._id, remetente: 'cliente', destinatario: 'motorista', mensagem: conteudo, entregue: false });
+                                console.log('[RELAY] Msg cliente salva no chat da corrida:', _corridaAtiva._id);
+                            }
                         }
                     } catch(_re) {}
                 }

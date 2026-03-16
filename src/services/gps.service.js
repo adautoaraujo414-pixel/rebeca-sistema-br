@@ -4,12 +4,31 @@ const localizacoes = new Map();
 
 const gpsService = {
     atualizarLocalizacao: (motoristaId, dados) => {
+        const lat = parseFloat(dados.latitude);
+        const lon = parseFloat(dados.longitude);
+        const precisao = dados.precisao ? parseFloat(dados.precisao) : null;
+
+        // Validar coordenadas — rejeitar posições inválidas ou fora do Brasil
+        if (isNaN(lat) || isNaN(lon)) {
+            console.log('[GPS] Coordenadas inválidas para motorista', motoristaId);
+            return localizacoes.get(motoristaId) || null;
+        }
+        if (lat < -34 || lat > 5 || lon < -74 || lon > -28) {
+            console.log('[GPS] Coordenadas fora do Brasil rejeitadas:', lat, lon);
+            return localizacoes.get(motoristaId) || null;
+        }
+        // Rejeitar precisão muito ruim (>150m) — mantém última posição válida
+        if (precisao !== null && precisao > 150) {
+            console.log('[GPS] Precisão ruim (' + precisao + 'm) rejeitada para motorista', motoristaId);
+            return localizacoes.get(motoristaId) || null;
+        }
+
         const localizacao = {
             id: uuidv4(),
             motoristaId,
-            latitude: dados.latitude,
-            longitude: dados.longitude,
-            precisao: dados.precisao || null,
+            latitude: lat,
+            longitude: lon,
+            precisao,
             velocidade: dados.velocidade || null,
             timestamp: new Date().toISOString()
         };
