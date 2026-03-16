@@ -84,6 +84,7 @@ async function salvarConfigFinanceiro() {
 
     try {
         const res = await fetch('/api/mensalidades/config', {
+            headers: _getHeaders(true),
             method: 'PUT',
             headers: _getHeaders(true),
             body: JSON.stringify(config)
@@ -102,7 +103,8 @@ async function confirmarPagamento(mensalidadeId) {
 
     try {
         const res = await fetch(`/api/mensalidades/${mensalidadeId}/confirmar`, { 
-            method: 'POST',
+        const res = await fetch(`/api/mensalidades/${mensalidadeId}/confirmar`, {
+            headers: _getHeaders(true),
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ observacao: 'Confirmado pelo admin' })
         });
@@ -153,7 +155,8 @@ async function criarMensalidadeManual() {
 
     try {
         const res = await fetch('/api/mensalidades', { 
-            method: 'POST',
+        const res = await fetch('/api/mensalidades', {
+            headers: _getHeaders(true),
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ motoristaId, plano, valor, dataVencimento })
         });
