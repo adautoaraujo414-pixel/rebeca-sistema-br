@@ -71,12 +71,14 @@ const PrecoSimplesService = {
 
             const preco = precos[tipoDia]?.[periodo] || 15.00;
 
+            const _diaNome = { semana: 'Seg–Sex', sabado: 'Sábado', domingo: 'Domingo' }[tipoDia] || tipoDia;
+            const _perNome = { manha: 'Manhã (06–12h)', tarde: 'Tarde (12–18h)', noite: 'Noite (18–00h)', madrugada: 'Madrugada (00–06h)' }[periodo] || periodo;
             return {
                 preco,
                 periodo,
                 tipoDia,
                 horaAtual: hora,
-                detalhes: `${tipoDia} - ${periodo}`
+                detalhes: `${_diaNome} · ${_perNome}`
             };
         } catch (e) {
             console.error('[PRECO-SIMPLES] Erro:', e.message);

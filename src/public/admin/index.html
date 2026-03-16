@@ -2045,13 +2045,31 @@ async function carregarPrecosSimples() {
 
 async function carregarPrecoAtual() {
     try {
-        const res = await fetch('/api/admin/preco-atual', {
-            headers: { 'Authorization': localStorage.getItem('adminToken') }
+        const adminId = localStorage.getItem('adminId');
+        const res = await fetch('/api/admin/preco-atual' + (adminId ? '?adminId=' + adminId : ''), {
+            headers: { 'Authorization': localStorage.getItem('adminToken'), 'x-admin-id': adminId || '' }
         });
         const preco = await res.json();
-        document.getElementById('precoAtualValor').textContent = 'R$ ' + (preco.preco || 15).toFixed(2).replace('.', ',');
-        document.getElementById('precoAtualInfo').textContent = preco.detalhes || (preco.tipoDia + ' - ' + preco.periodo);
+        const valor = (preco.preco || 15).toFixed(2).replace('.', ',');
+        document.getElementById('precoAtualValor').textContent = 'R$ ' + valor;
+        // Montar descrição legível
+        let info = '';
+        if (preco.detalhes) {
+            info = preco.detalhes;
+        } else {
+            const _d = { semana: 'Seg–Sex', sabado: 'Sábado', domingo: 'Domingo' };
+            const _p = { manha: 'Manhã (06–12h)', tarde: 'Tarde (12–18h)', noite: 'Noite (18–00h)', madrugada: 'Madrugada (00–06h)' };
+            info = (_d[preco.tipoDia] || preco.tipoDia || '') + ' · ' + (_p[preco.periodo] || preco.periodo || '');
+        }
+        document.getElementById('precoAtualInfo').textContent = info;
+        // Cor especial se for preço fixo/evento
+        const elValor = document.getElementById('precoAtualValor');
+        elValor.style.color = preco.periodo === 'fixo' ? '#9b59b6' : preco.periodo === 'zona' ? '#e67e22' : '#27ae60';
     } catch (e) {}
+}
+// Atualizar card a cada 60s automaticamente
+if (!window._precoAtualTimer) {
+    window._precoAtualTimer = setInterval(carregarPrecoAtual, 60000);
 }
 
 function togglePrecoFixo() {
