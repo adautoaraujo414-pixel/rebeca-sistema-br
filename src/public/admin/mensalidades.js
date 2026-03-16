@@ -11,9 +11,13 @@ function _getHeaders(json = false) {
 async function carregarMensalidades() {
     try {
         const [mensalidades, stats, config] = await Promise.all([
-            fetch('/api/mensalidades', { headers: _getHeaders() }).then(r => r.json()),
+            fetch('/api/mensalidades', {
+            headers: _getHeaders(true),
+headers: _getHeaders() }).then(r => r.json()),
             fetch('/api/mensalidades/estatisticas', { headers: _getHeaders() }).then(r => r.json()),
-            fetch('/api/mensalidades/config', { headers: _getHeaders() }).then(r => r.json())
+            fetch('/api/mensalidades/config', {
+            headers: _getHeaders(true),
+headers: _getHeaders() }).then(r => r.json())
         ]);
 
         // Stats
@@ -85,7 +89,7 @@ async function salvarConfigFinanceiro() {
     try {
         const res = await fetch('/api/mensalidades/config', {
             headers: _getHeaders(true),
-            method: 'PUT',
+method: 'PUT',
             headers: _getHeaders(true),
             body: JSON.stringify(config)
         });
@@ -102,10 +106,11 @@ async function confirmarPagamento(mensalidadeId) {
     if (!confirm('Confirmar pagamento desta mensalidade?')) return;
 
     try {
-        const res = await fetch(`/api/mensalidades/${mensalidadeId}/confirmar`, { 
         const res = await fetch(`/api/mensalidades/${mensalidadeId}/confirmar`, {
             headers: _getHeaders(true),
-            headers: { 'Content-Type': 'application/json' },
+const res = await fetch(`/api/mensalidades/${mensalidadeId}/confirmar`, {
+            headers: _getHeaders(true),
+headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ observacao: 'Confirmado pelo admin' })
         });
         const data = await res.json();
@@ -154,10 +159,11 @@ async function criarMensalidadeManual() {
     }
 
     try {
-        const res = await fetch('/api/mensalidades', { 
         const res = await fetch('/api/mensalidades', {
             headers: _getHeaders(true),
-            headers: { 'Content-Type': 'application/json' },
+const res = await fetch('/api/mensalidades', {
+            headers: _getHeaders(true),
+headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ motoristaId, plano, valor, dataVencimento })
         });
         const data = await res.json();
@@ -365,7 +371,9 @@ async function abrirModalNovaMensalidade() {
     } catch (e) {}
     
     // Preencher valor padrão
-    const config = await fetch('/api/mensalidades/config', { headers: _getHeaders() }).then(r => r.json());
+    const config = await fetch('/api/mensalidades/config', {
+            headers: _getHeaders(true),
+headers: _getHeaders() }).then(r => r.json());
     document.getElementById('mensValor').value = config.valorMensalidade || 100;
     
     // Data padrão: próximo mês
