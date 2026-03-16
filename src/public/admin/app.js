@@ -270,7 +270,7 @@ async function salvarRegras() {
     if (!regrasDespacho.length) return alert('Adicione pelo menos uma regra antes de salvar.');
     try {
         await api('/api/despacho/config', { method: 'PUT', body: JSON.stringify({ regras: regrasDespacho }) });
-        toast('✅ Regras de despacho salvas!', 'success');
+        alert('✅ Regras de despacho salvas!');
     } catch(e) { alert('Erro ao salvar: ' + e.message); }
 }
 
