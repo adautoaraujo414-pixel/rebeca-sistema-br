@@ -107,7 +107,7 @@ const OpenAIRebecaService = {
     // Limpar ruídos do áudio
     limparTranscricao(texto) {
         let limpo = texto
-            .replace(/\b(éé+|ãã+|hm+|ah+|eh+|tipo assim|né|então|assim|sabe|entendeu)\b/gi, '')
+            .replace(/\b(éé+|ãã+|hm+|ah+|eh+|tipo assim|sabe|entendeu)\b/gi, '')
             .replace(/\s+/g, ' ')
             .trim();
         
@@ -134,10 +134,10 @@ const OpenAIRebecaService = {
                 formData.append('model', 'whisper-1');
                 formData.append('language', 'pt');
                 formData.append('temperature', '0');
-                formData.append('prompt', 'Transcrição fiel em português brasileiro. REGRAS: (1) Transcreva EXATAMENTE o que foi dito — nunca substitua por palavra parecida. (2) Siglas e códigos como JB7, JB3, AP2, KM5 devem ser transcritos letra por letra como foram pronunciados. (3) Nomes de ruas, bairros e pontos de referência: transcreva o som exato, não interprete. (4) Se não entendeu uma palavra, deixe como está — não invente.');
+                formData.append('prompt', 'Transcrição fiel em português brasileiro. Contexto: serviço de corridas e transporte urbano. Termos comuns: rua, avenida, bairro, endereço, corrida, motorista, origem, destino, ponto de referência, JB7, JB3, AP2, KM5, rodoviária, terminal, mercado, farmácia, hospital, praça. REGRAS: (1) Transcreva EXATAMENTE o que foi dito — nunca substitua por palavra parecida. (2) Siglas e códigos como JB7, JB3, AP2, KM5 devem ser transcritos letra por letra como foram pronunciados. (3) Nomes de ruas, bairros e pontos de referência: transcreva o som exato, não interprete. (4) Se não entendeu uma palavra, deixe como está — não invente.');
                 const resp = await axios.post('https://api.openai.com/v1/audio/transcriptions', formData, {
                     headers: { 'Authorization': 'Bearer ' + this.apiKey, ...formData.getHeaders() },
-                    timeout: 8000
+                    timeout: 15000
                 });
                 return resp.data.text || '';
             } catch(e) {
@@ -230,6 +230,7 @@ const OpenAIRebecaService = {
                             acao_cerebro: _resCerebro.acao || ''
                         };
                         console.log('[AUDIO CEREBRO]', JSON.stringify(jsonCerebro).substring(0, 200));
+                            jsonCerebro.texto_original = textoTranscrito;
                         return '__AUDIO_RACIOCINIO__' + JSON.stringify(jsonCerebro);
                     }
                 }
@@ -324,7 +325,7 @@ REGRAS DE COMPORTAMENTO:
                     role: 'user',
                     content: 'Cliente mandou um audio curto. Responda de forma OBJETIVA e DIRETA conforme a etapa atual. SEM saudacoes genericas tipo "espero que esteja bem". Se etapa for inicio: pergunte so o endereco de origem. Se ja tem origem: pergunte so o destino. Se ja tem origem e destino: peca confirmacao. Maximo 1 linha.'
                 }],
-                max_tokens: 80,
+                max_tokens: 150,
                 temperature: 0.2
             }, {
                 headers: { 'Authorization': 'Bearer ' + this.apiKey, 'Content-Type': 'application/json' },
