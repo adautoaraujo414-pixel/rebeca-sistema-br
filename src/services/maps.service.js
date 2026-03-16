@@ -51,10 +51,23 @@ const MapsService = {
     },
 
     geocodificarOffline(endereco) {
-        // Coordenadas aproximadas para Osasco e região
+        // Coordenadas aproximadas — Brasil
         const locais = {
+            // Frutal e Triângulo Mineiro
+            'frutal': { lat: -20.0228, lng: -48.9369 },
+            'frutal mg': { lat: -20.0228, lng: -48.9369 },
+            'centro frutal': { lat: -20.0228, lng: -48.9369 },
+            'uberaba': { lat: -19.7486, lng: -47.9397 },
+            'uberlandia': { lat: -18.9186, lng: -48.2772 },
+            'uberlândia': { lat: -18.9186, lng: -48.2772 },
+            'ituiutaba': { lat: -18.9686, lng: -49.4644 },
+            'prata': { lat: -19.3089, lng: -48.9228 },
+            'campina verde': { lat: -19.5378, lng: -49.4894 },
+            'delta': { lat: -19.9719, lng: -47.7728 },
+            'conceicao das alagoas': { lat: -19.9167, lng: -48.3833 },
+            // Osasco e região
             'osasco': { lat: -23.5327, lng: -46.7917 },
-            'centro': { lat: -23.5324, lng: -46.7916 },
+            'centro': { lat: -20.0228, lng: -48.9369 },
             'presidente altino': { lat: -23.5256, lng: -46.7678 },
             'bela vista': { lat: -23.5412, lng: -46.7823 },
             'pestana': { lat: -23.5189, lng: -46.7912 },
