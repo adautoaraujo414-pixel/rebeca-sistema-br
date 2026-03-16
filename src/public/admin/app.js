@@ -1,5 +1,6 @@
 if (usuario.nome) { document.getElementById('userName').textContent = usuario.nome; document.getElementById('userRole').textContent = usuario.nivel || 'Admin'; }
 
+function _getAdminId() { const _u = (typeof usuario !== "undefined" && usuario) || JSON.parse(localStorage.getItem("usuario") || "{}"); return _u._id || _u.id || null; }
 function logout() { localStorage.clear(); window.location.href = '/admin/login'; }
 
 document.querySelectorAll('.menu-item').forEach(item => {
@@ -705,7 +706,7 @@ async function toggleUsuario(id, ativo) {
 }
 
 // ÁREAS
-async function carregarAreas() { const a=await api('/api/config/areas'); document.getElementById('areasTable').innerHTML=a.length?a.map(x=>`<tr><td><strong>${x.nome}</strong></td><td>${x.cidade}</td><td>${x.bairros?.join(', ')||'-'}</td><td>R$ ${(x.taxaExtra||0).toFixed(2)}</td><td><button class="btn btn-danger btn-sm" onclick="excluirArea('${x.id}')">🗑️</button></td></tr>`).join(''):'<tr><td colspan="5">Nenhuma</td></tr>'; }
+async function carregarAreas() { const a=await api('/api/config/areas?adminId='+_getAdminId()); document.getElementById('areasTable').innerHTML=a.length?a.map(x=>`<tr><td><strong>${x.nome}</strong></td><td>${x.cidade}</td><td>${x.bairros?.join(', ')||'-'}</td><td>R$ ${(x.taxaExtra||0).toFixed(2)}</td><td><button class="btn btn-danger btn-sm" onclick="excluirArea('${x.id}')">🗑️</button></td></tr>`).join(''):'<tr><td colspan="5">Nenhuma</td></tr>'; }
 // abrirModalArea: ver versão async abaixo
 document.getElementById('formArea')?.addEventListener('submit',async(e)=>{ e.preventDefault(); await api('/api/config/areas','POST',{nome:document.getElementById('areaNome').value,cidade:document.getElementById('areaCidade').value,bairros:document.getElementById('areaBairros').value.split(',').map(b=>b.trim()).filter(b=>b),taxaExtra:parseFloat(document.getElementById('areaTaxa').value)||0}); fecharModal('modalArea'); carregarAreas(); });
 let _excluindoArea = false;
@@ -720,8 +721,8 @@ async function excluirArea(id) {
 }
 
 // CONFIG
-async function carregarConfig() { const c=await api('/api/config'); document.getElementById('cfgTempoEspera').value=c.tempoMaximoEspera||10; document.getElementById('cfgRaioBusca').value=c.raioMaximoBusca||15; document.getElementById('cfgComissao').value=c.comissaoEmpresa||15; }
-async function salvarConfiguracoes() { await api('/api/config','PUT',{tempoMaximoEspera:parseInt(document.getElementById('cfgTempoEspera').value),raioMaximoBusca:parseInt(document.getElementById('cfgRaioBusca').value),comissaoEmpresa:parseInt(document.getElementById('cfgComissao').value)}); alert('Salvo!'); }
+async function carregarConfig() { const c=await api('/api/config?adminId='+_getAdminId()); document.getElementById('cfgTempoEspera').value=c.tempoMaximoEspera||10; document.getElementById('cfgRaioBusca').value=c.raioMaximoBusca||15; document.getElementById('cfgComissao').value=c.comissaoEmpresa||15; }
+async function salvarConfiguracoes() { await api('/api/config','PUT',{adminId:_getAdminId(),tempoMaximoEspera:parseInt(document.getElementById('cfgTempoEspera').value),raioMaximoBusca:parseInt(document.getElementById('cfgRaioBusca').value),comissaoEmpresa:parseInt(document.getElementById('cfgComissao').value)}); alert('Salvo!'); }
 
 // LOGS
 async function carregarLogs() { const st=await api('/api/logs/estatisticas'); document.getElementById('logTotal').textContent=st.total||0; document.getElementById('logHoje').textContent=st.hoje||0; document.getElementById('logErros').textContent=st.porTipo?.erro||0; const l=await api('/api/logs?limite=50'); document.getElementById('logsLista').innerHTML=l.length?l.map(x=>`<div class="log-item"><span style="color:#999;font-size:0.85em;">${new Date(x.dataHora).toLocaleString('pt-BR')}</span> <strong>${x.acao}</strong> - ${x.usuarioNome||'Sistema'}</div>`).join(''):'<p style="color:#999">Nenhum</p>'; }
