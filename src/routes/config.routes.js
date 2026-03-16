@@ -14,6 +14,56 @@ const authMot = async (req, res, next) => {
     } catch(e) { res.status(500).json({ erro: e.message }); }
 };
 
+
+const getAdminId = (req) => req.query.adminId || req.headers['x-admin-id'] || req.body?.adminId || null;
+
+// GET configuracoes do admin
+router.get('/', async (req, res) => {
+    try {
+        const adminId = getAdminId(req);
+        if (!adminId) return res.status(400).json({ error: 'adminId obrigatorio' });
+        const mongoose = require('mongoose');
+        if (!mongoose.Types.ObjectId.isValid(adminId)) return res.status(400).json({ error: 'adminId invalido' });
+        const admin = await Admin.findById(adminId).select('config tempoMaximoEspera raioMaximoBusca comissaoEmpresa').lean();
+        if (!admin) return res.status(404).json({ error: 'Admin nao encontrado' });
+        res.json({
+            tempoMaximoEspera: admin.tempoMaximoEspera || admin.config?.tempoMaximoEspera || 10,
+            raioMaximoBusca: admin.raioMaximoBusca || admin.config?.raioMaximoBusca || 15,
+            comissaoEmpresa: admin.comissaoEmpresa || admin.config?.comissaoEmpresa || 15
+        });
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// PUT salvar configuracoes do admin
+router.put('/', async (req, res) => {
+    try {
+        const adminId = getAdminId(req);
+        if (!adminId) return res.status(400).json({ error: 'adminId obrigatorio' });
+        const mongoose = require('mongoose');
+        if (!mongoose.Types.ObjectId.isValid(adminId)) return res.status(400).json({ error: 'adminId invalido' });
+        const { tempoMaximoEspera, raioMaximoBusca, comissaoEmpresa } = req.body;
+        await Admin.findByIdAndUpdate(adminId, {
+            $set: { tempoMaximoEspera, raioMaximoBusca, comissaoEmpresa }
+        });
+        res.json({ ok: true });
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// POST configuracoes (alias do PUT)
+router.post('/', async (req, res) => {
+    try {
+        const adminId = getAdminId(req);
+        if (!adminId) return res.status(400).json({ error: 'adminId obrigatorio' });
+        const mongoose = require('mongoose');
+        if (!mongoose.Types.ObjectId.isValid(adminId)) return res.status(400).json({ error: 'adminId invalido' });
+        const { tempoMaximoEspera, raioMaximoBusca, comissaoEmpresa } = req.body;
+        await Admin.findByIdAndUpdate(adminId, {
+            $set: { tempoMaximoEspera, raioMaximoBusca, comissaoEmpresa }
+        });
+        res.json({ ok: true });
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
 // GET contatos de emergência do adm do motorista
 router.get('/emergencia', authMot, async (req, res) => {
     try {
