@@ -626,7 +626,19 @@ async function removerBlacklist(id) {
 }
 
 // RECLAMAÇÕES
-async function carregarReclamacoes() { const st=await api('/api/reclamacoes/estatisticas'); document.getElementById('recPendentes').textContent=st.pendentes||0; document.getElementById('recAndamento').textContent=st.emAndamento||0; document.getElementById('recResolvidas').textContent=st.resolvidas||0; const r=await api('/api/reclamacoes'); document.getElementById('reclamacoesTable').innerHTML=r.length?r.map(x=>`<tr><td>${new Date(x.dataAbertura).toLocaleDateString('pt-BR')}</td><td>${x.clienteNome}</td><td>${x.assunto}</td><td><span class="badge ${x.status==='resolvida'?'green':'yellow'}">${x.status}</span></td><td>${x.status!=='resolvida'?`<button class="btn btn-success btn-sm" onclick="resolverReclamacao('${x.id}')">✓</button>`:''}</td></tr>`).join(''):'<tr><td colspan="5" style="text-align:center;color:#999">Nenhuma</td></tr>'; }
+async function carregarReclamacoes() {
+    try {
+        const st = await api('/api/reclamacoes/estatisticas');
+        document.getElementById('recPendentes').textContent = st.hoje || 0;
+        document.getElementById('recAndamento').textContent = st.total || 0;
+        document.getElementById('recResolvidas').textContent = 0;
+        const r = await api('/api/reclamacoes');
+        const lista = Array.isArray(r) ? r : [];
+        document.getElementById('reclamacoesTable').innerHTML = lista.length
+            ? lista.map(x => '<tr><td>' + new Date(x.createdAt||x.updatedAt).toLocaleDateString('pt-BR') + '</td><td>' + (x.clienteNome||x.cliente||'-') + '</td><td>' + (x.motivoCancelamento||'-') + '</td><td><span class="badge yellow">' + (x.status||'cancelada') + '</span></td><td>-</td></tr>').join('')
+            : '<tr><td colspan="5" style="text-align:center;color:#999">Nenhuma reclamação</td></tr>';
+    } catch(e) { console.error(e); }
+}
 // abrirModalReclamacao: ver versão async abaixo
 document.getElementById('formReclamacao')?.addEventListener('submit',async(e)=>{ e.preventDefault(); await api('/api/reclamacoes','POST',{clienteNome:document.getElementById('recClienteNome').value,clienteTelefone:document.getElementById('recClienteTel').value,assunto:document.getElementById('recAssunto').value,descricao:document.getElementById('recDescricao').value}); fecharModal('modalReclamacao'); carregarReclamacoes(); });
 let _resolvendoRec = false;
