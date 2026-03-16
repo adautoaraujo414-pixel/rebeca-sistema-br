@@ -665,7 +665,12 @@ Me manda o endereço de *onde você está*!`;
                 conversa.etapa = 'inicio';
                 conversa.dados = {};
                 conversas.set(telefone, conversa);
-                return `Agendado para ${_hAg}! Te mando um lembrete 30 minutos antes. Qualquer coisa é só chamar.`;
+                return `✅ *Agendado com sucesso!*
+
+📅 *Data/Hora:* ${_hAg}
+📍 *Origem:* ${conversa.dados.origem || 'Confirmado'}${conversa.dados.destino ? '\n🏁 *Destino:* ' + conversa.dados.destino : ''}
+
+⏰ Te mando um lembrete 30 minutos antes. Qualquer coisa é só chamar! 😊`;
             }
             
             if (!corridaGps) return 'Ops, tive um problema ao criar sua corrida. Tenta de novo! 😅';
@@ -1329,7 +1334,7 @@ Me manda o endereço de *onde você está*!`;
                             conversa.dados.tipo = 'passageiro';
                             conversa.dados.buscandoTerceiro = true;
                             conversas.set(telefone, conversa);
-                            return resultadoGPT.resposta || 'Claro! Qual o nome da pessoa que devo buscar? 😊';
+                            return resultadoGPT.resposta || 'Claro! Qual o *nome* da pessoa que devo buscar? 😊';
                         }
                         
                         // Perguntas sobre a empresa (white-label)
@@ -2041,9 +2046,9 @@ Me manda o endereço de *onde você está*!`;
                     conversa.etapa = 'aguardando_fila';
                     conversas.set(telefone, conversa);
                     if (resultado.posicao === 1) {
-                        return 'Pronto! Você é o próximo da fila! Assim que um motorista desocupar eu te aviso e já crio sua corrida automaticamente!';
+                        return '✅ Pronto! Você é o *próximo da fila!*\n\nAssim que um motorista desocupar eu te aviso *automaticamente* e já crio sua corrida! 🚗\n\n_Se mudar de ideia, é só falar "cancelar fila"_';
                     }
-                    return 'Pronto! Te coloquei na fila, você é o ' + resultado.posicao + 'º da vez! Assim que um motorista desocupar eu te aviso!';
+                    return '✅ Pronto! Você é o *' + resultado.posicao + 'º da fila!*\n\nAssim que chegar sua vez eu te aviso e já crio a corrida automaticamente! 🚗\n\n_Se mudar de ideia, é só falar "cancelar fila"_';
                 }
                 conversa.etapa = 'inicio';
                 conversas.set(telefone, conversa);
@@ -2080,7 +2085,7 @@ Me manda o endereço de *onde você está*!`;
                 conversas.set(telefone, conversa);
                 return 'Tudo bem! 😊 Te tirei da fila. Quando precisar é só me chamar!';
             }
-            return 'Você ainda está na fila! Assim que um motorista desocupar eu te aviso. Se quiser sair da fila é só falar!';
+            return '⏳ Você ainda está na fila! Assim que um motorista desocupar eu te aviso automaticamente.\n\nSe quiser sair da fila é só falar *cancelar fila*! 😊';
         }
 
 
@@ -2733,9 +2738,19 @@ _(ou mande *0* para pular)_`;
         // ========== BUSCAR TERCEIRO — NOME ==========
         else if (conversa.etapa === 'pedir_nome_buscado') {
             conversa.dados.nomeBuscado = msgOriginal;
+            conversa.etapa = 'pedir_telefone_buscado';
+            conversas.set(telefone, conversa);
+            return `Anotado! 📝 Qual o *número de WhatsApp* de *${conversa.dados.nomeBuscado}* para o motorista entrar em contato? 📱\n\n_(ou mande *0* para pular)_`;
+        }
+
+        // ===== BUSCAR TERCEIRO — TELEFONE =====
+        else if (conversa.etapa === 'pedir_telefone_buscado') {
+            if (msg !== '0' && msg !== 'nao' && msg !== 'não') {
+                conversa.dados.telefoneBuscado = msgOriginal;
+            }
             conversa.etapa = 'pedir_aparencia_buscado';
             conversas.set(telefone, conversa);
-            return `Qual a cor da camisa de *${conversa.dados.nomeBuscado}*? 👕\n\n_(ou mande *0* para pular)_`;
+            return `Ótimo! 👍 Agora, qual a cor da camisa de *${conversa.dados.nomeBuscado}*? 👕\n\n_(para o motorista reconhecê-la — ou mande *0* para pular)_`;
         }
 
         // ========== BUSCAR TERCEIRO — APARÊNCIA ==========
@@ -3138,6 +3153,9 @@ _(ou mande *0* para pular)_`;
             resposta = 'Certo! Já chamei um motorista. Qual a cor da sua camisa? 👕';
         }
         else if (conversa.etapa === 'confirmar_corrida') {
+            // Despacho direto — se cliente confirmou claramente (sim/pode/fechado/bora/ok/manda)
+            const _confirmaRapida = /^(sim|pode|s|ok|bora|vai|manda|fecha|fechado|confirma|confirmado|pode ser|tá bom|ta bom|claro|quero|vamos|vai lá|vai la|manda ver|pode mandar)$/i.test(msg.trim());
+            // (fluxo normal continua abaixo)
             if (msg === '1' || NLPService.eSim(msg)) {
                 const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
                 conversa.etapa = (conversa.dados.origemValidada?.precisao === 'ponto_referencia' || conversa.dados.isPontoReferencia) ? 'pedir_aparencia' : 'aguardando_motorista';
