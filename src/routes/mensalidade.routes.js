@@ -1,16 +1,16 @@
 const express = require('express');
 const router = express.Router();
 const MensalidadeService = require('../services/mensalidade.service');
-const { Motorista, Admin } = require('../models');
-const jwt = require('jsonwebtoken');
+const { Motorista } = require('../models');
 
-// Middleware para extrair adminId do token
-const getAdminId = async (req) => {
+// Extrair adminId do token (formato: ADMIN_<adminId>)
+const getAdminId = (req) => {
     try {
         const token = (req.headers.authorization || '').replace('Bearer ', '');
-        if (!token) return null;
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'rebeca_secret');
-        return decoded.adminId || decoded.id || decoded._id || null;
+        if (token.startsWith('ADMIN_')) {
+            return token.split('_')[1] || null;
+        }
+        return null;
     } catch(e) { return null; }
 };
 
