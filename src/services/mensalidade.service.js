@@ -167,34 +167,6 @@ const MensalidadeService = {
         return notificacoes;
     },
 
-    // Estatísticas
-    async estatisticas() {
-        const total = await Mensalidade.countDocuments();
-        const pagas = await Mensalidade.countDocuments({ status: 'pago' });
-        const pendentes = await Mensalidade.countDocuments({ status: 'pendente' });
-        const atrasadas = await Mensalidade.countDocuments({ status: 'atrasado' });
-        const bloqueadas = await Mensalidade.countDocuments({ status: 'bloqueado' });
-
-        const faturamento = await Mensalidade.aggregate([
-            { $match: { status: 'pago' } },
-            { $group: { _id: null, total: { $sum: '$valor' } } }
-        ]);
-
-        const pendente = await Mensalidade.aggregate([
-            { $match: { status: { $in: ['pendente', 'atrasado'] } } },
-            { $group: { _id: null, total: { $sum: '$valor' } } }
-        ]);
-
-        return {
-            total,
-            pagas,
-            pendentes,
-            atrasadas,
-            bloqueadas,
-            faturamento: faturamento[0]?.total || 0,
-            valorPendente: pendente[0]?.total || 0
-        };
-    },
 
     // Config Financeiro
     async getConfigFinanceiro() {
