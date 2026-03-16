@@ -1349,7 +1349,7 @@ function fecharPWABanner(){document.getElementById('pwa-banner').style.display='
 <!-- ===== PONTOS DE REFERÊNCIA ===== -->
 
 <!-- ===== PÁGINA MENSALIDADES ===== -->
-<div id="page-mensalidades" class="page" style="display:none;">
+<div id="mensalidades" class="page" style="display:none;">
 
     <!-- Cards de estatísticas -->
     <div class="cards">
@@ -2325,41 +2325,32 @@ if (menuPrecos) {
 
 // ===== NAVEGAÇÃO MENSALIDADES =====
 (function() {
-    // Sistema de navegação de páginas
-    function mostrarPagina(nome) {
-        document.querySelectorAll('.page').forEach(p => { p.style.display = 'none'; p.classList.remove('active'); });
-        document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
-        const pag = document.getElementById('page-' + nome);
-        if (pag) { pag.style.display = 'block'; pag.classList.add('active'); }
-        const menu = document.querySelector('[data-page="' + nome + '"]');
-        if (menu) menu.classList.add('active');
-    }
-
-    // Listener mensalidades
     const menuMens = document.querySelector('[data-page="mensalidades"]');
     if (menuMens) {
         menuMens.addEventListener('click', function() {
-            mostrarPagina('mensalidades');
+            // Usar o mesmo padrão do sistema: esconder tudo e mostrar a página
+            document.querySelectorAll('.main-content .page').forEach(p => {
+                p.classList.remove('active');
+                p.style.display = 'none';
+            });
+            document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
+            const pag = document.getElementById('mensalidades');
+            if (pag) { pag.style.display = 'block'; pag.classList.add('active'); }
+            menuMens.classList.add('active');
             setTimeout(carregarMensalidades, 100);
         });
     }
 
     // Fechar modal clicando fora
+    window.fecharModal = function(id) {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+    };
     const modalNova = document.getElementById('modalNovaMensalidade');
     if (modalNova) {
         modalNova.addEventListener('click', function(e) {
-            if (e.target === modalNova) { modalNova.style.display = 'none'; }
+            if (e.target === modalNova) modalNova.style.display = 'none';
         });
-        // Exibir modal com flex quando abrir
-        const origAbrirModal = window.abrirModalNovaMensalidade;
-        window.abrirModalNovaMensalidade = async function() {
-            await origAbrirModal();
-            modalNova.style.display = 'flex';
-        };
-        window.fecharModal = function(id) {
-            const el = document.getElementById(id);
-            if (el) el.style.display = 'none';
-        };
     }
 })();
 </script>
