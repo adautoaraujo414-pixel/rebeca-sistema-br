@@ -2,7 +2,7 @@
 
 async function carregarEmergenciaAdmin() {
     try {
-        const res = await fetch('/api/emergencia');
+        const res = await fetch('/api/emergencia?' + new URLSearchParams({adminId: _getAdminId()}), {headers: _getHeaders()});
         const contatos = await res.json();
         
         const tbody = document.getElementById('emergenciaTable');
@@ -59,8 +59,7 @@ async function salvarContato() {
     try {
         const res = await fetch(url, {
             method,
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(contato)
+            headers: _getHeaders(true),
         });
         const data = await res.json();
         if (data.sucesso) {
@@ -76,8 +75,9 @@ async function salvarContato() {
 
 async function editarContato(id) {
     try {
-        const res = await fetch('/api/emergencia');
-        const contatos = await res.json();
+        const res = await fetch('/api/emergencia?' + new URLSearchParams({adminId: _getAdminId()}), {headers: _getHeaders()});
+        const data = await res.json();
+        const contatos = Array.isArray(data) ? data : (data.contatos || []);
         const contato = contatos.find(c => c._id === id);
         
         if (contato) {
@@ -96,7 +96,7 @@ async function excluirContato(id) {
     if (!confirm('Excluir este contato?')) return;
     
     try {
-        await fetch(`/api/emergencia/${id}`, { method: 'DELETE' });
+        await fetch(`/api/emergencia/${id}`, { method: 'DELETE', headers: _getHeaders() });
         alert('✅ Contato excluído!');
         carregarEmergenciaAdmin();
     } catch (e) {
