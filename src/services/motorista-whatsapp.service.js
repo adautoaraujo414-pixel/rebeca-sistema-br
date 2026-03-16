@@ -217,7 +217,7 @@ const MotoristaWhatsappService = {
             // Enviar para o cliente
             const nomeMotorista = motorista.nomeCompleto?.split(' ')[0] || 'Motorista';
             await this.notificarCliente(corrida, adminId, instanciaId,
-                `💬 *Mensagem do motorista ${nomeMotorista}:*\n\n${mensagem}`
+                `🚗 *Motorista ${nomeMotorista}:* ${mensagem}`
             );
             return `✅ Mensagem enviada ao cliente!`;
         } catch(e) {
