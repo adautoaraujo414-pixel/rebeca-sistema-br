@@ -47,10 +47,11 @@ const EstatisticasService = {
             dataInicio.setMonth(dataInicio.getMonth() - 1);
         }
         
-        const corridas = await Corrida.find({
-            status: 'finalizada',
-            createdAt: { $gte: dataInicio }
-        });
+        const mongoose = require('mongoose');
+        const aid = adminId && mongoose.Types.ObjectId.isValid(adminId) ? new mongoose.Types.ObjectId(adminId) : null;
+        const queryFat = { status: 'finalizada', createdAt: { $gte: dataInicio } };
+        if (aid) queryFat.adminId = aid;
+        const corridas = await Corrida.find(queryFat);
         
         return {
             total: corridas.reduce((s, c) => s + (c.precoFinal || 0), 0),
@@ -60,15 +61,20 @@ const EstatisticasService = {
     },
 
     // Ranking motoristas
-    async rankingMotoristas(limite = 10, adminId = null) {
-        const motoristas = await Motorista.find({ ativo: true , ...(adminId ? { adminId } : {})})
+    async rankingMotoristas(limite = 10, adminId = null, periodo = 'semana') {
+        const mongoose = require('mongoose');
+        const aid = adminId && mongoose.Types.ObjectId.isValid(adminId) ? new mongoose.Types.ObjectId(adminId) : null;
+        const query = { ativo: true };
+        if (aid) query.adminId = aid;
+        const motoristas = await Motorista.find(query)
             .sort({ corridasRealizadas: -1 })
             .limit(limite);
         
         return motoristas.map((m, i) => ({
             posicao: i + 1,
-            nome: m.nomeCompleto,
-            corridas: m.corridasRealizadas || 0,
+            nome: m.nomeCompleto || m.nome || 'Sem nome',
+            corridasRealizadas: m.corridasRealizadas || 0,
+            faturamento: m.faturamentoTotal || 0,
             avaliacao: m.avaliacao || 5
         }));
     },
@@ -77,7 +83,8 @@ const EstatisticasService = {
     async horariosPico(adminId = null) {
         const mongoose = require('mongoose');
         if (!adminId || !mongoose.Types.ObjectId.isValid(adminId)) return [];
-        const corridas = await Corrida.find({ status: 'finalizada' , ...(adminId ? { adminId } : {})});
+        const aid = new mongoose.Types.ObjectId(adminId);
+        const corridas = await Corrida.find({ status: 'finalizada', adminId: aid });
         const horarios = {};
         
         corridas.forEach(c => {
@@ -86,10 +93,20 @@ const EstatisticasService = {
                 horarios[hora] = (horarios[hora] || 0) + 1;
             }
         });
-        
+
+        const max = Math.max(...Object.values(horarios), 1);
         return Object.entries(horarios)
-            .map(([hora, total]) => ({ hora: parseInt(hora), total }))
-            .sort((a, b) => b.total - a.total);
+            .map(([hora, corridas]) => {
+                const h = parseInt(hora);
+                const pct = corridas / max;
+                return {
+                    hora: h,
+                    corridas,
+                    horaFormatada: h.toString().padStart(2,'0') + ':00',
+                    nivel: pct > 0.75 ? 'alto' : pct > 0.4 ? 'medio' : 'baixo'
+                };
+            })
+            .sort((a, b) => b.corridas - a.corridas);
     },
 
     // Dashboard completo
@@ -135,7 +152,10 @@ const EstatisticasService = {
 
     // Estatísticas de cancelamento
     async estatisticasCancelamento(adminId = null) {
-        const corridas = await Corrida.find({ ...(adminId ? { adminId } : {}) });
+        const mongoose = require('mongoose');
+        const aid = adminId && mongoose.Types.ObjectId.isValid(adminId) ? new mongoose.Types.ObjectId(adminId) : null;
+        const q = aid ? { adminId: aid } : {};
+        const corridas = await Corrida.find(q);
         const canceladas = corridas.filter(c => c.status === 'cancelada');
         
         return {

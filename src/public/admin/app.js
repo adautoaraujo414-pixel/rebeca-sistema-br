@@ -629,15 +629,21 @@ async function removerBlacklist(id) {
 async function carregarReclamacoes() {
     try {
         const st = await api('/api/reclamacoes/estatisticas');
-        document.getElementById('recPendentes').textContent = st.hoje || 0;
-        document.getElementById('recAndamento').textContent = st.total || 0;
-        document.getElementById('recResolvidas').textContent = 0;
+        document.getElementById('recPendentes').textContent = st.pendentes || 0;
+        document.getElementById('recAndamento').textContent = st.cancelamentos || 0;
+        document.getElementById('recResolvidas').textContent = st.resolvidas || 0;
         const r = await api('/api/reclamacoes');
         const lista = Array.isArray(r) ? r : [];
         document.getElementById('reclamacoesTable').innerHTML = lista.length
-            ? lista.map(x => '<tr><td>' + new Date(x.createdAt||x.updatedAt).toLocaleDateString('pt-BR') + '</td><td>' + (x.clienteNome||x.cliente||'-') + '</td><td>' + (x.motivoCancelamento||'-') + '</td><td><span class="badge yellow">' + (x.status||'cancelada') + '</span></td><td>-</td></tr>').join('')
+            ? lista.map(x => '<tr>' +
+                '<td>' + new Date(x.data).toLocaleDateString('pt-BR') + '</td>' +
+                '<td>' + (x.clienteNome || '-') + '</td>' +
+                '<td>' + (x.tipo === 'avaliacao_ruim' ? '⭐ ' + (x.avaliacao || '-') + ' estrelas' : (x.motivo || '-')) + '</td>' +
+                '<td><span class="badge ' + (x.tipo === 'avaliacao_ruim' ? 'orange' : 'red') + '">' + (x.tipo === 'avaliacao_ruim' ? 'Avaliação Ruim' : 'Cancelamento') + '</span></td>' +
+                '<td>' + (x.status !== 'resolvida' ? '<button class="btn btn-success btn-sm" onclick="resolverReclamacao(\'' + x._id + '\')">✓ Resolver</button>' : '<span class="badge green">Resolvida</span>') + '</td>' +
+                '</tr>').join('')
             : '<tr><td colspan="5" style="text-align:center;color:#999">Nenhuma reclamação</td></tr>';
-    } catch(e) { console.error(e); }
+    } catch(e) { console.error('Erro reclamacoes:', e); }
 }
 // abrirModalReclamacao: ver versão async abaixo
 document.getElementById('formReclamacao')?.addEventListener('submit',async(e)=>{ e.preventDefault(); await api('/api/reclamacoes','POST',{clienteNome:document.getElementById('recClienteNome').value,clienteTelefone:document.getElementById('recClienteTel').value,assunto:document.getElementById('recAssunto').value,descricao:document.getElementById('recDescricao').value}); fecharModal('modalReclamacao'); carregarReclamacoes(); });
