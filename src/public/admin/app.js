@@ -84,11 +84,11 @@ async function carregarDashboard() {
     document.getElementById('alertasFraude').textContent = fraude.alertas?.pendentes ?? 0;
     const cd = await api('/api/estatisticas/corridas-por-dia?dias=7'); criarGraficoCorridas(cd);
     const hr = await api('/api/estatisticas/horarios-pico');
-    const picos = hr.filter(h=>h.corridas>0).sort((a,b)=>b.corridas-a.corridas).slice(0,8);
+    const picos = (Array.isArray(hr) ? hr : []).filter(h=>h.corridas>0).sort((a,b)=>b.corridas-a.corridas).slice(0,8);
     const mx = Math.max(...picos.map(h=>h.corridas),1);
     document.getElementById('horariosPico').innerHTML = picos.map(h=>`<div class="pico-container"><span class="hora-label">${h.horaFormatada}</span><div class="pico-bar ${h.nivel}" style="width:${(h.corridas/mx)*200}px;"></div><span class="pico-value">${h.corridas}</span></div>`).join('') || '<p style="color:#999">Sem dados</p>';
     const top = await api('/api/estatisticas/ranking-motoristas?limite=5&periodo=semana');
-    document.getElementById('topMotoristas').innerHTML = top.length ? top.map((m,i)=>`<div class="ranking-item"><div class="ranking-pos ${i===0?'gold':i===1?'silver':i===2?'bronze':'normal'}">${m.posicao}</div><div class="ranking-info"><h4>${m.nome}</h4><small>${m.corridasRealizadas} corridas</small></div><div class="ranking-stats"><div class="valor">R$ ${(m.faturamento||0).toFixed(2)}</div></div></div>`).join('') : '<p style="color:#999">Sem dados</p>';
+    document.getElementById('topMotoristas').innerHTML = Array.isArray(top) && top.length ? top.map((m,i)=>`<div class="ranking-item"><div class="ranking-pos ${i===0?'gold':i===1?'silver':i===2?'bronze':'normal'}">${m.posicao}</div><div class="ranking-info"><h4>${m.nome}</h4><small>${m.corridasRealizadas} corridas</small></div><div class="ranking-stats"><div class="valor">R$ ${(m.faturamento||0).toFixed(2)}</div></div></div>`).join('') : '<p style="color:#999">Sem dados</p>';
     const at = await api('/api/corridas/ativas');
     document.getElementById('corridasAtivasTable').innerHTML = Array.isArray(at) && at.length ? at.slice(0,5).map(c=>`<tr><td>${c.clienteNome||'-'}</td><td>${c.motoristaNome||'<span class="badge yellow">Aguardando</span>'}</td><td><span class="badge ${getStatusColor(c.status)}">${formatStatus(c.status)}</span></td><td><button class="btn btn-danger btn-sm" onclick="cancelarCorrida('${c.id}')">✕</button></td></tr>`).join('') : '<tr><td colspan="4" style="text-align:center;color:#999">Nenhuma</td></tr>';
 }
