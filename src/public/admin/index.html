@@ -559,6 +559,15 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div style="display:flex;flex-direction:column;gap:12px;">
                             <div style="background:#fff;border:1px solid #e0e0e0;border-radius:10px;padding:18px;">
                                 <h3 style="margin:0 0 16px;font-size:0.95em;color:#2c3e50;">➕ Nova Zona de Preço</h3>
+                                <div style="margin-bottom:12px;">
+                                    <label style="font-size:0.78em;font-weight:700;color:#555;display:block;margin-bottom:4px;">BUSCAR LOCALIZAÇÃO</label>
+                                    <div style="display:flex;gap:6px;">
+                                        <input id="zonaBuscaEndereco" type="text" placeholder="Ex: Centro, Frutal MG ou Rua das Flores..." style="flex:1;padding:9px 12px;border:1px solid #ddd;border-radius:6px;font-size:0.9em;">
+                                        <button onclick="buscarEnderecoZona()" style="background:#3498db;color:white;border:none;padding:9px 14px;border-radius:6px;font-weight:700;cursor:pointer;white-space:nowrap;">🔍</button>
+                                    </div>
+                                    <p style="font-size:0.74em;color:#888;margin:3px 0 0;">Ou clique diretamente no mapa para marcar o centro</p>
+                                </div>
+
 
                                 <div style="margin-bottom:12px;">
                                     <label style="font-size:0.78em;font-weight:700;color:#555;display:block;margin-bottom:4px;">NOME DA ZONA *</label>
@@ -637,7 +646,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             </label>
                         </div>
                         <div id="precoFixoConfig" style="display:none;">
-                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
                                 <div>
                                     <label style="font-size:0.78em;font-weight:700;color:#555;display:block;margin-bottom:4px;">VALOR FIXO (R$)</label>
                                     <div style="position:relative;">
@@ -649,6 +658,12 @@ document.addEventListener('DOMContentLoaded', () => {
                                     <label style="font-size:0.78em;font-weight:700;color:#555;display:block;margin-bottom:4px;">MOTIVO / DESCRIÇÃO</label>
                                     <input type="text" id="precoFixoMotivo" placeholder="Ex: Carnaval 2025, Réveillon..." style="width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:8px;font-size:0.95em;">
                                 </div>
+                            </div>
+                            <div style="background:#f5eeff;border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:0.83em;color:#7d3c98;">
+                                ⚠️ A Rebeca vai informar automaticamente ao cliente: <em>"Hoje temos preço especial de R$ XX,00 — [motivo]"</em>
+                            </div>
+                            <div style="display:flex;justify-content:flex-end;">
+                                <button onclick="salvarPrecoEspecial()" style="background:#9b59b6;color:white;border:none;padding:11px 28px;border-radius:8px;font-weight:700;font-size:0.95em;cursor:pointer;">💾 Ativar Preço Especial</button>
                             </div>
                         </div>
                     </div>
@@ -2041,7 +2056,71 @@ async function carregarPrecoAtual() {
 
 function togglePrecoFixo() {
     const ativo = document.getElementById('precoFixoAtivo').checked;
-    document.getElementById('precoFixoConfig').style.display = ativo ? 'flex' : 'none';
+    document.getElementById('precoFixoConfig').style.display = ativo ? 'block' : 'none';
+    if (!ativo) {
+        // Ao desativar direto pelo toggle, salva imediatamente como inativo
+        salvarPrecoEspecial(false);
+    }
+}
+
+async function salvarPrecoEspecial(forcarInativo = null) {
+    const ativo = forcarInativo !== null ? forcarInativo : document.getElementById('precoFixoAtivo').checked;
+    const valor = parseFloat(document.getElementById('precoFixoValor').value) || 25;
+    const motivo = document.getElementById('precoFixoMotivo')?.value || '';
+    if (ativo && (!valor || valor <= 0)) {
+        alert('Informe um valor maior que zero para o preço especial!');
+        return;
+    }
+    try {
+        const res = await fetch('/api/admin/precos-simples', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': localStorage.getItem('adminToken') },
+            body: JSON.stringify({ precoFixo: { ativo, valor, motivo } })
+        });
+        const data = await res.json();
+        if (data.sucesso) {
+            const msg = ativo
+                ? '✅ Preço especial de R$ ' + valor.toFixed(2) + ' ativado! A Rebeca vai informar os clientes.'
+                : '✅ Preço especial desativado.';
+            alert(msg);
+        } else {
+            alert('Erro ao salvar: ' + (data.erro || 'tente novamente'));
+        }
+    } catch(e) {
+        alert('Erro de conexão: ' + e.message);
+    }
+}
+
+async function buscarEnderecoZona() {
+    const q = document.getElementById('zonaBuscaEndereco').value.trim();
+    if (!q) return alert('Digite um endereço ou bairro para buscar.');
+    try {
+        const res = await fetch('/api/maps/geocodificar?endereco=' + encodeURIComponent(q), {
+            headers: { 'Authorization': localStorage.getItem('adminToken') }
+        });
+        const data = await res.json();
+        if (data.sucesso && data.latitude && data.longitude) {
+            const lat = data.latitude, lng = data.longitude;
+            if (window._mapaZona) {
+                window._mapaZona.setView([lat, lng], 15);
+                // Simular clique no mapa para setar as coordenadas
+                window._zonaLat = lat;
+                window._zonaLng = lng;
+                if (window._marcadorZona) window._mapaZona.removeLayer(window._marcadorZona);
+                window._marcadorZona = L.marker([lat, lng]).addTo(window._mapaZona);
+                if (window._circuloZona) window._mapaZona.removeLayer(window._circuloZona);
+                const raio = parseFloat(document.getElementById('zonaRaio').value) || 2;
+                window._circuloZona = L.circle([lat, lng], { radius: raio * 1000, color: '#3498db', fillOpacity: 0.15 }).addTo(window._mapaZona);
+                document.getElementById('zonaCoordDisplay').textContent = lat.toFixed(5) + ', ' + lng.toFixed(5);
+                document.getElementById('zonaCoordsInfo').style.display = 'block';
+                document.getElementById('zonaCoordsTexto').textContent = lat.toFixed(5) + ', ' + lng.toFixed(5);
+            }
+        } else {
+            alert('Endereço não encontrado. Tente ser mais específico, ex: "Centro, Frutal, MG".');
+        }
+    } catch(e) {
+        alert('Erro ao buscar endereço: ' + e.message);
+    }
 }
 
 async function salvarPrecosSimples() {
