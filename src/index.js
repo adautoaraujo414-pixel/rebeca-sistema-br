@@ -165,6 +165,23 @@ app.use('/api/pontos-referencia', pontosReferenciaRoutes);
 app.use('/api/preco-dinamico', precoDinamicoRoutes);
 app.use('/api/whatsapp', whatsappRoutes);
 app.use('/api/rebeca', rebecaRoutes);
+
+// Rota IA config (stub)
+app.get('/api/ia/config', (req, res) => {
+    res.json({ ativo: false, modelo: 'rebeca-v1', mensagem: 'IA nao configurada' });
+});
+
+// Rota config areas
+app.get('/api/config/areas', async (req, res) => {
+    try {
+        const mongoose = require('mongoose');
+        const adminId = req.query.adminId || req.headers['x-admin-id'];
+        if (!adminId || !mongoose.Types.ObjectId.isValid(adminId)) return res.json([]);
+        // Retorna array vazio por padrao - areas configuradas via painel
+        res.json([]);
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
 app.use('/api/config', configRoutes);
 app.use('/api/reclamacoes', reclamacoesRoutes);
 app.use('/api/logs', logsRoutes);
