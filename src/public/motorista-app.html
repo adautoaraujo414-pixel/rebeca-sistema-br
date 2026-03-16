@@ -2119,17 +2119,26 @@ document.addEventListener('DOMContentLoaded', function() {
         async function verValoresHorario() {
             abrirModal('modalPrecos');
             try {
-                const res = await fetch('/api/preco-dinamico/atual', { headers: { 'Authorization': 'Bearer ' + token } });
+                const adminId = motorista?.adminId || '';
+                const res = await fetch('/api/admin/preco-atual' + (adminId ? '?adminId=' + adminId : ''), {
+                    headers: { 'Authorization': 'Bearer ' + token, 'x-admin-id': adminId }
+                });
                 const data = await res.json();
+                const _d = { semana: 'Seg–Sex', sabado: 'Sábado', domingo: 'Domingo' };
+                const _p = { manha: 'Manhã (06–12h)', tarde: 'Tarde (12–18h)', noite: 'Noite (18–00h)', madrugada: 'Madrugada (00–06h)' };
+                const _diaNome = _d[data.tipoDia] || data.tipoDia || '';
+                const _perNome = _p[data.periodo] || data.periodo || '';
+                const _info = data.detalhes || (_diaNome + ' · ' + _perNome);
+                const _cor = data.periodo === 'fixo' ? '#9b59b6' : data.periodo === 'zona' ? '#e67e22' : '#00ff88';
                 document.getElementById('tabelaPrecos').innerHTML = `
                     <div style="text-align:center;padding:20px;">
-                        <h2 style="color:#00d4ff;margin-bottom:10px;">Multiplicador Atual</h2>
-                        <div style="font-size:48px;font-weight:bold;color:#00ff88;">${data.multiplicador || 1}x</div>
-                        <p style="color:#888;margin-top:10px;">${data.faixa || 'Normal'}</p>
+                        <h2 style="color:#00d4ff;margin-bottom:10px;">💰 Tarifa Atual</h2>
+                        <div style="font-size:48px;font-weight:bold;color:${_cor};">R$ ${(data.preco || 15).toFixed(2).replace('.',',')}</div>
+                        <p style="color:#aaa;margin-top:10px;font-size:14px;">${_info}</p>
+                        ${data.periodo === 'fixo' ? '<p style="color:#9b59b6;font-size:13px;">🎉 ' + (data.motivo || 'Preço especial') + '</p>' : ''}
+                        ${data.periodo === 'zona' ? '<p style="color:#e67e22;font-size:13px;">📍 ' + (data.zona || 'Zona especial') + '</p>' : ''}
                         <hr style="border-color:#333;margin:20px 0;">
-                        <p>Taxa Base: R$ ${data.taxaBase || 5}</p>
-                        <p>Preço/Km: R$ ${data.precoKm || 2.5}</p>
-                        <p>Mínimo: R$ ${data.taxaMinima || 15}</p>
+                        <p style="color:#888;font-size:13px;">Este é o valor cobrado dos clientes agora.<br>Atualiza automaticamente conforme o horário.</p>
                     </div>
                 `;
             } catch (e) {}
@@ -2712,7 +2721,7 @@ async function carregarMensagensCliente() {
                         ? 'background:#00d4ff;color:#000;border-bottom-right-radius:5px;' 
                         : m.remetente === 'rebeca'
                             ? 'background:#9c27b0;color:#fff;border-bottom-left-radius:5px;'
-                            : 'background:#1a1a2e;color:#a0a0b0;border-bottom-left-radius:5px;border:1px solid #333;'
+                            : 'background:#00d4ff;color:#000;border-bottom-left-radius:5px;'
                 }">
                     ${m.mensagem}
                 </div>
