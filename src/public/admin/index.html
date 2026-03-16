@@ -2045,9 +2045,11 @@ async function carregarPrecosSimples() {
 
 async function carregarPrecoAtual() {
     try {
-        const adminId = localStorage.getItem('adminId');
-        const res = await fetch('/api/admin/preco-atual' + (adminId ? '?adminId=' + adminId : ''), {
-            headers: { 'Authorization': localStorage.getItem('adminToken'), 'x-admin-id': adminId || '' }
+        const _usr = JSON.parse(localStorage.getItem('usuario') || '{}');
+        const adminId = _usr._id || _usr.id || localStorage.getItem('adminId') || '';
+        const token = localStorage.getItem('token') || localStorage.getItem('adminToken') || '';
+        const res = await fetch('/api/admin/preco-atual', {
+            headers: { 'Authorization': token, 'x-admin-id': adminId }
         });
         const preco = await res.json();
         const valor = (preco.preco || 15).toFixed(2).replace('.', ',');
