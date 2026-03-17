@@ -398,7 +398,11 @@ document.addEventListener('DOMContentLoaded', function() {
     <div id="appSection" style="display:none;">
         <!-- Header -->
         <div class="header"><button class="menu-toggle-global" onclick="toggleMenuGlobal()">☰</button>
-            <div style="display:flex;align-items:center;gap:10px;justify-content:center;"><img src="/icons/rebecar-logo.png" style="height:36px;width:36px;border-radius:6px;object-fit:cover;" alt="R"><span id="headerMarca" style="font-size:15px;font-weight:700;color:#FFD700;letter-spacing:1px;">REBECAR</span></div>
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px 16px 12px;width:100%;">
+    <img src="/icons/rebecar-logo.png" style="height:72px;width:72px;border-radius:14px;object-fit:cover;margin-bottom:10px;box-shadow:0 4px 16px rgba(0,0,0,0.3);" alt="REBECAR" onerror="this.style.display='none'">
+    <span id="headerMarca" style="font-size:22px;font-weight:800;color:#FFD700;letter-spacing:2px;">REBECAR</span>
+    <span id="headerNomeMotorista" style="font-size:13px;color:#aad4ff;font-weight:500;margin-top:4px;">Motorista</span>
+  </div>
             <div class="header-actions">
                 <button class="header-btn" id="btnDarkMode" onclick="toggleDarkMode()">🌙</button>
                 <button class="header-btn" onclick="toggleSound()">🔔</button>
