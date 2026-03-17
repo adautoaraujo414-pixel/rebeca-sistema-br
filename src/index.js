@@ -182,6 +182,20 @@ app.get('/api/config/areas', async (req, res) => {
     } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
+
+// ROTA TEMPORARIA - deletar todas corridas do admin
+app.delete('/api/admin/limpar-corridas/:adminId', async (req, res) => {
+    try {
+        const mongoose = require('mongoose');
+        const { Corrida } = require('./src/models');
+        const adminId = req.params.adminId;
+        if (!mongoose.Types.ObjectId.isValid(adminId)) return res.status(400).json({ error: 'adminId invalido' });
+        const aid = new mongoose.Types.ObjectId(adminId);
+        const result = await Corrida.deleteMany({ adminId: aid });
+        res.json({ deletados: result.deletedCount });
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
 app.use('/api/config', configRoutes);
 app.use('/api/reclamacoes', reclamacoesRoutes);
 app.use('/api/logs', logsRoutes);
