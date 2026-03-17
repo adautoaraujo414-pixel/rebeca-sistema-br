@@ -2413,8 +2413,9 @@ async function iniciarMapaGPS() {
 async function atualizarMapaGPS() {
     try {
         const usr = JSON.parse(localStorage.getItem('usuario') || '{}');
-        const adminId = usr._id || usr.id;
-        const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
+        const token = localStorage.getItem('token') || localStorage.getItem('adminToken') || '';
+        // Extrair adminId do token ADMIN_<id>_<timestamp> como fallback
+        const adminId = usr._id || usr.id || (token.startsWith('ADMIN_') ? token.split('_')[1] : null);
         
         // Buscar motoristas com GPS do banco
         const res = await fetch('/api/motoristas', {
