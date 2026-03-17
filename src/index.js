@@ -187,7 +187,7 @@ app.get('/api/config/areas', async (req, res) => {
 app.delete('/api/admin/limpar-corridas/:adminId', async (req, res) => {
     try {
         const mongoose = require('mongoose');
-        const { Corrida } = require('./src/models');
+        const { Corrida } = require('./models');
         const adminId = req.params.adminId;
         if (!mongoose.Types.ObjectId.isValid(adminId)) return res.status(400).json({ error: 'adminId invalido' });
         const aid = new mongoose.Types.ObjectId(adminId);
