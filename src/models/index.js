@@ -473,6 +473,7 @@ const PontoEmbarqueSchema = new mongoose.Schema({
     maxCorridasBroadcast: { type: Number, default: 5 }, // corridas para todos
     tempoAceiteSegundos: { type: Number, default: 30 },
     principal: { type: Boolean, default: false },
+    cidade: { type: String, default: '' }, // cidade de atuacao da central
     createdAt: { type: Date, default: Date.now }
 });
 

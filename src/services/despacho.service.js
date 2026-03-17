@@ -164,13 +164,25 @@ const DespachoService = {
                 let motoristasParaNotificar = [];
 
                 if (regra.tipo === 'central') {
-                    // Buscar central mais próxima e sua fila
+                    // Buscar central por cidade da corrida, depois mais próxima como fallback
                     try {
                         const { PontoEmbarque, FilaPonto } = require('../models');
-                        const centrais = await PontoEmbarque.find({ adminId: adminIdStr, ativo: true });
+                        const todasCentrais = await PontoEmbarque.find({ adminId: adminIdStr, ativo: true });
                         let centralProxima = null, menorDist = Infinity;
                         const oLat = corrida.origem?.latitude || corrida.origem?.lat || corrida.origemLat;
                         const oLng = corrida.origem?.longitude || corrida.origem?.lng || corrida.origemLng;
+                        const cidadeCorreia = (corrida.cidadeOrigem || '').toLowerCase().trim();
+
+                        // 1º — tentar achar central da mesma cidade da corrida
+                        const centraisDaCidade = cidadeCorreia
+                            ? todasCentrais.filter(c => c.cidade && c.cidade.toLowerCase().trim() === cidadeCorreia)
+                            : [];
+
+                        // Pool: se achou centrais da cidade usa só elas, senão usa todas
+                        const centrais = centraisDaCidade.length > 0 ? centraisDaCidade : todasCentrais;
+                        if (centraisDaCidade.length > 0) {
+                            console.log(`[DESPACHO] Filtrando centrais por cidade: ${cidadeCorreia} (${centraisDaCidade.length} encontradas)`);
+                        }
 
                         for (const c of centrais) {
                             if (!c.lat || !c.lng) continue;
