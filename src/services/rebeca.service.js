@@ -1276,7 +1276,7 @@ Me manda o endereço de *onde você está*!`;
                             conversas.set(telefone, conversa);
                             const _respostaOUTRO = (resultadoGPT.resposta || '').toLowerCase();
                             // Filtrar respostas genéricas proibidas
-                            const _proibidas = ['como posso ajudar', 'posso te ajudar', 'posso fazer por você', 'aqui é a rebeca', 'da ubmax', 'em que posso', 'é só chamar', 'quando precisar de um carro'];
+                            const _proibidas = ['como posso ajudar', 'posso te ajudar', 'posso fazer por você', 'aqui é a rebeca', 'da rebecacorridas', 'em que posso', 'é só chamar', 'quando precisar de um carro'];
                             const _temProibida = _proibidas.some(p => _respostaOUTRO.includes(p));
                             if (!_temProibida && resultadoGPT.resposta && resultadoGPT.resposta.length > 5) {
                                 return resultadoGPT.resposta;

@@ -318,7 +318,7 @@ setInterval(async () => {
 app.use((req, res) => res.status(404).json({ error: 'Rota não encontrada' }));
 
 app.listen(PORT, () => {
-    console.log('🚀 UBMAX v3.4.1 - Sistema Completo');
+    console.log('🚀 REBECA CORRIDAS v3.4.1 - Sistema Completo');
     console.log('📡 Porta:', PORT);
     console.log('🚗 App Motorista: /motorista');
     console.log('💰 Mensalidades: Ativo');

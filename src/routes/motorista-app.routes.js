@@ -530,7 +530,7 @@ router.get('/chat', auth, async (req, res) => {
 });
 
 
-// Rota white-label: /m/:slug (ex: /m/ubmax)
+// Rota white-label: /m/:slug (ex: /m/rebecacorridas)
 router.get('/m/:slug', async (req, res) => {
     try {
         const { Admin } = require('../models');
@@ -546,7 +546,7 @@ router.get('/m/:slug', async (req, res) => {
         }
         
         // Redireciona para o app do motorista com adminId
-        res.redirect('/motorista-app.html?admin=' + admin._id + '&marca=' + encodeURIComponent(admin.nomeMarca || 'UBMAX'));
+        res.redirect('/motorista-app.html?admin=' + admin._id + '&marca=' + encodeURIComponent(admin.nomeMarca || 'REBECA CORRIDAS'));
     } catch (e) {
         res.status(500).send('Erro: ' + e.message);
     }

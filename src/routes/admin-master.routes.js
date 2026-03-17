@@ -359,11 +359,11 @@ router.post('/cadastro-admin', async (req, res) => {
 router.post('/setup', async (req, res) => {
     try {
         // Criar master padrão
-        let master = await AdminMaster.findOne({ email: 'master@ubmax.com' });
+        let master = await AdminMaster.findOne({ email: 'master@rebecacorridas.com' });
         if (!master) {
             master = await AdminMaster.create({ 
                 nome: 'Admin Master', 
-                email: 'master@ubmax.com', 
+                email: 'master@rebecacorridas.com', 
                 senha: 'master123', 
                 telefone: '11999999999' 
             });
@@ -385,11 +385,11 @@ router.post('/setup', async (req, res) => {
             config = await ConfigMaster.create({
                 comissaoPlataforma: 10,
                 diasTolerancia: 5,
-                mensagemBoasVindas: 'Bem-vindo ao UBMAX! Sua plataforma de gestão de corridas.'
+                mensagemBoasVindas: 'Bem-vindo ao REBECA CORRIDAS! Sua plataforma de gestão de corridas.'
             });
         }
         
-        res.json({ sucesso: true, mensagem: 'Setup completo!', master: { email: 'master@ubmax.com', senha: 'master123' } });
+        res.json({ sucesso: true, mensagem: 'Setup completo!', master: { email: 'master@rebecacorridas.com', senha: 'master123' } });
     } catch (e) { res.status(500).json({ erro: e.message }); }
 });
 

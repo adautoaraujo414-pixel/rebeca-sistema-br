@@ -157,7 +157,7 @@ module.exports.MensagemCorrida = MensagemCorrida;
 const ConfigFinanceiroSchemaUpdate = {
     evolutionApiUrl: String,
     evolutionApiKey: String,
-    evolutionInstance: { type: String, default: 'ubmax' },
+    evolutionInstance: { type: String, default: 'rebecacorridas' },
     whatsappConectado: { type: Boolean, default: false }
 };
 
@@ -191,11 +191,11 @@ const AdminSchema = new mongoose.Schema({
     telefone: String,
     empresa: String,
     // White-label - Personalização da marca
-    nomeMarca: { type: String, default: 'UBMAX' },
+    nomeMarca: { type: String, default: 'REBECA CORRIDAS' },
     nomeAssistente: { type: String, default: 'Rebeca' },
     corPrimaria: { type: String, default: '#00d4ff' },
     logoUrl: String,
-    slugMotorista: String, // URL única para motoristas: /m/ubmax
+    slugMotorista: String, // URL única para motoristas: /m/rebecacorridas
     horario: { type: String, default: '24 horas' },
     pagamento: { type: String, default: 'Dinheiro, PIX' },
     boasVindas: String,

@@ -27,7 +27,7 @@ async function setupCompleto() {
     // ========== 2. LIMPAR DADOS DEMO ==========
     console.log('2️⃣ Limpando dados demo antigos...');
     try {
-        await AdminMaster.deleteMany({ email: 'master@ubmax.com' });
+        await AdminMaster.deleteMany({ email: 'master@rebecacorridas.com' });
         await AdminMaster.deleteMany({ email: 'admin@demo.com' });
         console.log('   ✅ Dados demo removidos!\n');
     } catch (e) {

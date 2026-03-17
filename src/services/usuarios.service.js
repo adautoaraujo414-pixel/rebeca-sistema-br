@@ -17,7 +17,7 @@ const usuariosDefault = [
     {
         id: 'usr_001',
         nome: 'Administrador',
-        email: 'admin@ubmax.com',
+        email: 'admin@rebecacorridas.com',
         login: 'admin',
         senha: 'admin123',
         nivel: 'admin',
@@ -30,7 +30,7 @@ const usuariosDefault = [
     {
         id: 'usr_002',
         nome: 'Gerente Operacional',
-        email: 'gerente@ubmax.com',
+        email: 'gerente@rebecacorridas.com',
         login: 'gerente',
         senha: 'gerente123',
         nivel: 'gerente',
@@ -43,7 +43,7 @@ const usuariosDefault = [
     {
         id: 'usr_003',
         nome: 'Operador Central',
-        email: 'operador@ubmax.com',
+        email: 'operador@rebecacorridas.com',
         login: 'operador',
         senha: 'operador123',
         nivel: 'operador',
