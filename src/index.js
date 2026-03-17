@@ -185,6 +185,63 @@ app.get('/api/config/areas', async (req, res) => {
 
 // ROTA TEMPORARIA - deletar todas corridas do admin
 
+
+// PRE-CADASTRO MOTORISTA PARCEIRO
+app.post('/api/parceiro-motorista', async (req, res) => {
+    try {
+        const mongoose = require('mongoose');
+        const { nome, telefone, cidade, carro, ano, appAtual } = req.body;
+        if (!nome || !telefone || !cidade || !carro || !ano) {
+            return res.status(400).json({ error: 'Campos obrigatorios faltando' });
+        }
+        // Salvar na collection parceiros_motoristas
+        const col = mongoose.connection.collection('parceiros_motoristas');
+        await col.insertOne({
+            nome, telefone, cidade, carro, ano: parseInt(ano), appAtual: appAtual || '',
+            status: 'pendente', criadoEm: new Date()
+        });
+        res.json({ ok: true });
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// VCF - salvar contato da Rebeca
+app.get('/contato-rebeca.vcf', (req, res) => {
+    const vcf = `BEGIN:VCARD
+VERSION:3.0
+FN:Rebeca Corridas
+TEL;TYPE=CELL:+5534984039955
+URL:https://rebeca-sistema-br.onrender.com
+NOTE:Peça seu transporte pelo WhatsApp!
+END:VCARD`;
+    res.setHeader('Content-Type', 'text/vcard');
+    res.setHeader('Content-Disposition', 'attachment; filename="Rebeca-Corridas.vcf"');
+    res.send(vcf);
+});
+
+
+// Listar parceiros motoristas (admin master)
+app.get('/api/parceiro-motorista', async (req, res) => {
+    try {
+        const mongoose = require('mongoose');
+        const col = mongoose.connection.collection('parceiros_motoristas');
+        const parceiros = await col.find({}).sort({ criadoEm: -1 }).toArray();
+        res.json(parceiros);
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// Atualizar status parceiro
+app.put('/api/parceiro-motorista/:id', async (req, res) => {
+    try {
+        const mongoose = require('mongoose');
+        const col = mongoose.connection.collection('parceiros_motoristas');
+        await col.updateOne(
+            { _id: new mongoose.Types.ObjectId(req.params.id) },
+            { $set: { status: req.body.status, observacao: req.body.observacao || '' } }
+        );
+        res.json({ ok: true });
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
 app.use('/api/config', configRoutes);
 app.use('/api/reclamacoes', reclamacoesRoutes);
 app.use('/api/logs', logsRoutes);
