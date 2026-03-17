@@ -255,6 +255,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="menu-item" data-page="despacho">📡 Despacho</div>
             <div class="menu-item" data-page="pontos">🏢 Centrais</div>
             <div class="menu-item" data-page="motoristas">👨‍✈️ Motoristas</div>
+            <div class="menu-item" data-page="mapa-gps">🗺️ Mapa GPS</div>
             <div class="menu-item" data-page="clientes">👥 Clientes</div>
             <div class="menu-item" data-page="rotas">📍 Calcular Rota</div>
             
@@ -396,6 +397,39 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 <div class="panel"><table><thead><tr><th>Nome</th><th>WhatsApp</th><th>Veículo</th><th>Placa</th><th>Status</th><th>Ações</th></tr></thead><tbody id="motoristasTable"></tbody></table></div>
             </div>
+
+            
+<!-- MAPA GPS MOTORISTAS -->
+<div id="page-mapa-gps" class="page" style="display:none; padding:20px;">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; flex-wrap:wrap; gap:10px;">
+        <h2 style="color:#e94560; margin:0;">🗺️ Mapa GPS — Motoristas</h2>
+        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+            <select id="gpsFiltromotorista" style="padding:8px 12px; border-radius:8px; border:1px solid #ccc; font-size:14px;">
+                <option value="todos">Todos os motoristas</option>
+            </select>
+            <button onclick="atualizarMapaGPS()" style="background:#e94560; color:#fff; border:none; padding:8px 16px; border-radius:8px; cursor:pointer; font-size:14px;">🔄 Atualizar</button>
+            <span id="gpsUltimaAtualizacao" style="font-size:12px; color:#888;"></span>
+        </div>
+    </div>
+    <div style="display:flex; gap:12px; margin-bottom:16px; flex-wrap:wrap;">
+        <div style="background:#fff; border-radius:10px; padding:12px 20px; border:1px solid #eee; min-width:120px; text-align:center;">
+            <div style="font-size:22px; font-weight:bold; color:#27ae60;" id="gpsContOnline">0</div>
+            <div style="font-size:12px; color:#666;">🟢 Online</div>
+        </div>
+        <div style="background:#fff; border-radius:10px; padding:12px 20px; border:1px solid #eee; min-width:120px; text-align:center;">
+            <div style="font-size:22px; font-weight:bold; color:#e74c3c;" id="gpsContOffline">0</div>
+            <div style="font-size:12px; color:#666;">🔴 Offline</div>
+        </div>
+        <div style="background:#fff; border-radius:10px; padding:12px 20px; border:1px solid #eee; min-width:120px; text-align:center;">
+            <div style="font-size:22px; font-weight:bold; color:#f39c12;" id="gpsContSemGps">0</div>
+            <div style="font-size:12px; color:#666;">📡 Sem GPS</div>
+        </div>
+    </div>
+    <div style="background:#fff; border-radius:12px; padding:16px; border:1px solid #eee;">
+        <div id="mapaGpsMotoristas" style="height:480px; border-radius:10px; z-index:1;"></div>
+    </div>
+    <div id="gpsListaMotoristas" style="margin-top:16px; background:#fff; border-radius:12px; padding:16px; border:1px solid #eee;"></div>
+</div>
 
             <!-- CLIENTES -->
             <div id="clientes" class="page">
@@ -2357,4 +2391,154 @@ if (menuPrecos) {
         });
     }
 })();
+
+// ========== MAPA GPS MOTORISTAS ==========
+let _mapaGPS = null;
+let _marcadoresGPS = {};
+let _gpsAutoInterval = null;
+
+async function iniciarMapaGPS() {
+    if (_mapaGPS) return;
+    await new Promise(r => setTimeout(r, 200)); // aguarda DOM
+    const el = document.getElementById('mapaGpsMotoristas');
+    if (!el) return;
+    
+    _mapaGPS = L.map('mapaGpsMotoristas').setView([-19.72, -49.0], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap',
+        maxZoom: 18
+    }).addTo(_mapaGPS);
+}
+
+async function atualizarMapaGPS() {
+    try {
+        const usr = JSON.parse(localStorage.getItem('usuario') || '{}');
+        const adminId = usr._id || usr.id;
+        const token = localStorage.getItem('token') || localStorage.getItem('adminToken');
+        
+        // Buscar motoristas com GPS do banco
+        const res = await fetch('/api/motoristas?adminId=' + adminId, {
+            headers: { 'Authorization': 'Bearer ' + token, 'x-admin-id': adminId }
+        });
+        const motoristas = await res.json();
+        if (!Array.isArray(motoristas)) return;
+        
+        await iniciarMapaGPS();
+        
+        // Atualizar select de filtro
+        const sel = document.getElementById('gpsFiltromotorista');
+        const valorAtual = sel.value;
+        sel.innerHTML = '<option value="todos">Todos os motoristas</option>';
+        motoristas.forEach(m => {
+            const op = document.createElement('option');
+            op.value = m._id;
+            op.textContent = m.nome + ' (' + (m.status || 'offline') + ')';
+            sel.appendChild(op);
+        });
+        sel.value = valorAtual;
+        
+        const filtro = sel.value;
+        
+        // Remover marcadores antigos
+        Object.values(_marcadoresGPS).forEach(mk => _mapaGPS.removeLayer(mk));
+        _marcadoresGPS = {};
+        
+        let online = 0, offline = 0, semGps = 0;
+        let primeiroComGps = null;
+        let listaHtml = '<div style="font-size:14px;"><strong>Motoristas cadastrados:</strong><br><br>';
+        
+        const motoristasVisiveis = filtro === 'todos' ? motoristas : motoristas.filter(m => m._id === filtro);
+        
+        motoristasVisiveis.forEach(m => {
+            const temGps = m.latitude && m.longitude;
+            const isOnline = m.status === 'disponivel' || m.status === 'em_corrida';
+            
+            if (isOnline) online++;
+            else offline++;
+            if (!temGps) semGps++;
+            
+            // Ícone colorido por status
+            const cor = m.status === 'disponivel' ? '#27ae60' :
+                        m.status === 'em_corrida' ? '#f39c12' : '#e74c3c';
+            const emoji = m.status === 'disponivel' ? '🟢' :
+                          m.status === 'em_corrida' ? '🚕' : '🔴';
+            
+            if (temGps) {
+                if (!primeiroComGps) primeiroComGps = [m.latitude, m.longitude];
+                
+                const icone = L.divIcon({
+                    html: `<div style="background:${cor};color:#fff;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:18px;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.3);">${emoji}</div>`,
+                    className: '',
+                    iconSize: [36, 36],
+                    iconAnchor: [18, 18]
+                });
+                
+                const mk = L.marker([m.latitude, m.longitude], { icon: icone })
+                    .addTo(_mapaGPS)
+                    .bindPopup(`
+                        <div style="min-width:180px;">
+                            <strong style="font-size:15px;">${m.nome}</strong><br>
+                            <span style="color:${cor};">${emoji} ${m.status || 'offline'}</span><br>
+                            📱 ${m.telefone || '-'}<br>
+                            🚗 ${m.veiculo || '-'}<br>
+                            📍 ${m.latitude.toFixed(5)}, ${m.longitude.toFixed(5)}<br>
+                            <small style="color:#888;">Atualizado: ${m.ultimaAtualizacaoGPS ? new Date(m.ultimaAtualizacaoGPS).toLocaleTimeString('pt-BR') : 'desconhecido'}</small>
+                        </div>
+                    `);
+                _marcadoresGPS[m._id] = mk;
+            }
+            
+            const agoMs = m.ultimaAtualizacaoGPS ? Date.now() - new Date(m.ultimaAtualizacaoGPS).getTime() : null;
+            const agoStr = agoMs ? (agoMs < 60000 ? Math.round(agoMs/1000) + 's atrás' : Math.round(agoMs/60000) + 'min atrás') : 'nunca';
+            
+            listaHtml += `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f0f0f0;">
+                <span style="font-size:20px;">${emoji}</span>
+                <div style="flex:1;">
+                    <strong>${m.nome}</strong> — ${m.veiculo || 'veículo não informado'}<br>
+                    <small style="color:#888;">📡 ${temGps ? 'GPS ativo · ' + agoStr : '<span style="color:#e74c3c;">Sem posição GPS</span>'}</small>
+                </div>
+                ${temGps ? `<button onclick="_mapaGPS.setView([${m.latitude},${m.longitude}],16);_marcadoresGPS['${m._id}']?.openPopup();" style="background:#e94560;color:#fff;border:none;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:12px;">📍 Ver</button>` : ''}
+            </div>`;
+        });
+        
+        listaHtml += '</div>';
+        document.getElementById('gpsListaMotoristas').innerHTML = listaHtml;
+        document.getElementById('gpsContOnline').textContent = online;
+        document.getElementById('gpsContOffline').textContent = offline;
+        document.getElementById('gpsContSemGps').textContent = semGps;
+        document.getElementById('gpsUltimaAtualizacao').textContent = 'Atualizado: ' + new Date().toLocaleTimeString('pt-BR');
+        
+        // Centralizar no primeiro motorista com GPS ou na cidade do admin
+        if (primeiroComGps && filtro !== 'todos') {
+            _mapaGPS.setView(primeiroComGps, 15);
+        } else if (primeiroComGps) {
+            _mapaGPS.setView(primeiroComGps, 13);
+        }
+        
+        setTimeout(() => _mapaGPS.invalidateSize(), 100);
+        
+    } catch(e) { console.error('[MAPA GPS] Erro:', e); }
+}
+
+// Ao clicar no menu mapa-gps
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.menu-item').forEach(item => {
+        item.addEventListener('click', () => {
+            if (item.dataset.page === 'mapa-gps') {
+                setTimeout(() => atualizarMapaGPS(), 300);
+                // Auto-refresh a cada 15s
+                if (_gpsAutoInterval) clearInterval(_gpsAutoInterval);
+                _gpsAutoInterval = setInterval(atualizarMapaGPS, 15000);
+            } else {
+                if (_gpsAutoInterval) { clearInterval(_gpsAutoInterval); _gpsAutoInterval = null; }
+            }
+        });
+    });
+    
+    // Filtro por motorista
+    const sel = document.getElementById('gpsFiltromotorista');
+    if (sel) sel.addEventListener('change', atualizarMapaGPS);
+});
+// ========== FIM MAPA GPS ==========
+
 </script>
