@@ -2414,11 +2414,11 @@ async function atualizarMapaGPS() {
     try {
         const usr = JSON.parse(localStorage.getItem('usuario') || '{}');
         const adminId = usr._id || usr.id;
-        const token = localStorage.getItem('token') || localStorage.getItem('adminToken');
+        const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
         
         // Buscar motoristas com GPS do banco
-        const res = await fetch('/api/motoristas?adminId=' + adminId, {
-            headers: { 'Authorization': 'Bearer ' + token, 'x-admin-id': adminId }
+        const res = await fetch('/api/motoristas', {
+            headers: { 'Authorization': token, 'x-admin-id': adminId }
         });
         const motoristas = await res.json();
         if (!Array.isArray(motoristas)) return;
