@@ -12,7 +12,7 @@ const MapsService = {
     // ==================== GEOCODING ====================
     async geocodificar(endereco) {
         if (!MapsService.apiKey) {
-            return MapsService.geocodificarOffline(endereco);
+            return MapsService.geocodificarNominatim(endereco);
         }
         
         try {
@@ -46,6 +46,38 @@ const MapsService = {
             } else {
                 console.error('[MAPS] geocodificar erro:', error.message);
             }
+            return MapsService.geocodificarOffline(endereco);
+        }
+    },
+
+    // Nominatim (OpenStreetMap) — gratuito, sem API key
+    async geocodificarNominatim(endereco) {
+        try {
+            const url = 'https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(endereco) + '&limit=1&addressdetails=1&countrycodes=br';
+            const controller = new AbortController();
+            const t = setTimeout(() => controller.abort(), 8000);
+            let response, data;
+            try {
+                response = await fetch(url, {
+                    signal: controller.signal,
+                    headers: { 'User-Agent': 'RebecaApp/1.0' }
+                });
+                data = await response.json();
+            } finally { clearTimeout(t); }
+
+            if (data && data.length > 0) {
+                const r = data[0];
+                return {
+                    sucesso: true,
+                    endereco: r.display_name,
+                    latitude: parseFloat(r.lat),
+                    longitude: parseFloat(r.lon),
+                    fonte: 'nominatim'
+                };
+            }
+            return MapsService.geocodificarOffline(endereco);
+        } catch(e) {
+            console.warn('[MAPS] Nominatim falhou:', e.message);
             return MapsService.geocodificarOffline(endereco);
         }
     },
