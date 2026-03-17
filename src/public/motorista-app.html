@@ -2311,7 +2311,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         function abrirPerfil() {
-            showPage('pageMenu');
+            abrirModalPerfil();
         }
 
         function toggleMenuGlobal() {
@@ -2650,6 +2650,31 @@ function fecharPWABanner(){document.getElementById('pwa-banner').style.display='
     }
     </script>
 
+
+<!-- MODAL PERFIL COM FOTO -->
+<div id="modalPerfilFoto" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);z-index:9999;align-items:center;justify-content:center;padding:20px;">
+    <div style="background:#1a1a2e;border:2px solid #00d4ff;border-radius:20px;padding:25px;max-width:360px;width:100%;text-align:center;">
+        <h3 style="color:#00d4ff;margin-bottom:20px;">👤 Meu Perfil</h3>
+        
+        <!-- Foto -->
+        <div style="position:relative;display:inline-block;margin-bottom:15px;">
+            <div id="perfilFotoPreview" onclick="document.getElementById('inputFotoPerfil').click()" style="width:100px;height:100px;border-radius:50%;background:#0d2137;border:3px solid #00d4ff;display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;margin:0 auto;">
+                <span id="perfilFotoEmoji" style="font-size:40px;">👤</span>
+                <img id="perfilFotoImg" src="" style="display:none;width:100%;height:100%;object-fit:cover;" />
+            </div>
+            <div onclick="document.getElementById('inputFotoPerfil').click()" style="position:absolute;bottom:0;right:0;background:#00d4ff;color:#000;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer;">📷</div>
+        </div>
+        <input type="file" id="inputFotoPerfil" accept="image/*" style="display:none;" onchange="processarFotoPerfil(event)">
+        
+        <div id="perfilNomeDisplay" style="font-size:18px;font-weight:bold;color:#fff;margin-bottom:4px;"></div>
+        <div id="perfilVeiculoDisplay" style="font-size:13px;color:#aaa;margin-bottom:20px;"></div>
+        
+        <div id="perfilFotoStatus" style="font-size:13px;color:#aaa;margin-bottom:15px;min-height:20px;"></div>
+        
+        <button onclick="fecharModalPerfil()" style="width:100%;padding:12px;background:#333;color:#fff;border:none;border-radius:10px;font-size:15px;cursor:pointer;">Fechar</button>
+    </div>
+</div>
+
 </body>
 </html>
 
@@ -2884,4 +2909,94 @@ const iniciarGPSOriginal = iniciarGPS;
 iniciarGPS = function() {
     iniciarGPSPersistente();
 };
+
+// ===== MODAL PERFIL COM FOTO =====
+function abrirModalPerfil() {
+    const modal = document.getElementById('modalPerfilFoto');
+    if (!modal) return;
+    modal.style.display = 'flex';
+    
+    // Preencher dados
+    const nome = localStorage.getItem('motoristaNome') || motorista?.nomeCompleto || 'Motorista';
+    document.getElementById('perfilNomeDisplay').textContent = nome;
+    
+    const veiculo = motorista?.veiculo?.modelo ? motorista.veiculo.modelo + ' • ' + (motorista.veiculo.placa || '') : '';
+    document.getElementById('perfilVeiculoDisplay').textContent = veiculo;
+    
+    // Carregar foto salva
+    const fotoCache = localStorage.getItem('motoristaFoto') || motorista?.foto;
+    if (fotoCache) {
+        document.getElementById('perfilFotoEmoji').style.display = 'none';
+        const img = document.getElementById('perfilFotoImg');
+        img.src = fotoCache;
+        img.style.display = 'block';
+    }
+}
+
+function fecharModalPerfil() {
+    document.getElementById('modalPerfilFoto').style.display = 'none';
+}
+
+async function processarFotoPerfil(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    const status = document.getElementById('perfilFotoStatus');
+    status.textContent = '⏳ Processando foto...';
+    status.style.color = '#aaa';
+    
+    // Comprimir para max ~800px
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+        const img = new Image();
+        img.onload = async () => {
+            const canvas = document.createElement('canvas');
+            const max = 600;
+            let w = img.width, h = img.height;
+            if (w > max || h > max) {
+                if (w > h) { h = Math.round(h * max / w); w = max; }
+                else { w = Math.round(w * max / h); h = max; }
+            }
+            canvas.width = w; canvas.height = h;
+            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+            const base64 = canvas.toDataURL('image/jpeg', 0.7);
+            
+            // Mostrar preview
+            document.getElementById('perfilFotoEmoji').style.display = 'none';
+            const imgEl = document.getElementById('perfilFotoImg');
+            imgEl.src = base64; imgEl.style.display = 'block';
+            
+            // Atualizar foto no header também
+            const headerNome = document.getElementById('headerNomeMotorista');
+            if (headerNome) headerNome.textContent = localStorage.getItem('motoristaNome') || '';
+            
+            // Enviar para o servidor
+            try {
+                status.textContent = '⬆️ Enviando...';
+                const res = await fetch('/api/motorista-app/foto-perfil', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                    body: JSON.stringify({ foto: base64 })
+                });
+                const data = await res.json();
+                if (data.sucesso) {
+                    localStorage.setItem('motoristaFoto', base64);
+                    status.textContent = '✅ Foto atualizada!';
+                    status.style.color = '#27ae60';
+                    setTimeout(() => status.textContent = '', 3000);
+                } else {
+                    status.textContent = '❌ ' + (data.erro || 'Erro ao salvar');
+                    status.style.color = '#e74c3c';
+                }
+            } catch(err) {
+                status.textContent = '❌ Erro de conexão';
+                status.style.color = '#e74c3c';
+            }
+        };
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+// ===== FIM MODAL PERFIL =====
+
 </script>

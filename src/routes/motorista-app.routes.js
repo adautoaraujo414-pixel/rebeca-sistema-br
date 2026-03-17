@@ -65,6 +65,20 @@ router.post('/login', async (req, res) => {
 });
 
 // Perfil
+
+// Upload foto de perfil (base64)
+router.post('/foto-perfil', auth, async (req, res) => {
+    try {
+        const { foto } = req.body;
+        if (!foto) return res.status(400).json({ erro: 'Foto não enviada' });
+        // Validar tamanho (max 2MB em base64 ~ 2.7M chars)
+        if (foto.length > 2800000) return res.status(400).json({ erro: 'Foto muito grande. Use uma imagem menor.' });
+        const { Motorista } = require('../models');
+        await Motorista.findByIdAndUpdate(req.motorista._id, { foto });
+        res.json({ sucesso: true, foto });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
 router.get('/perfil', auth, async (req, res) => {
     try {
         res.json({ motorista: req.motorista });
