@@ -88,7 +88,28 @@ const CorridaService = {
                 await RebecaService.notificarFilaQuandoDisponivel(corrida.adminId, null);
             }, 3000); // Aguarda 3 segundos para motorista ficar disponível
         } catch(e) { console.log('[CORRIDA] Erro notificar fila:', e.message); }
-        if (precoFinal) corrida.precoFinal = precoFinal;
+        // Garantir que precoFinal seja sempre salvo
+        if (precoFinal && precoFinal > 0) {
+            corrida.precoFinal = precoFinal;
+        } else if (!corrida.precoFinal || corrida.precoFinal === 0) {
+            // Recalcular pelo preço configurado pelo admin
+            try {
+                const PrecoAdminService = require('./preco-admin.service');
+                const distancia = corrida.distanciaKm || 0;
+                const tempo = corrida.tempoEstimado || 0;
+                const adminIdStr = corrida.adminId?.toString();
+                if (adminIdStr) {
+                    const calc = await PrecoAdminService.calcularPreco(adminIdStr, distancia, tempo);
+                    corrida.precoFinal = calc?.precoFinal || calc?.preco || corrida.precoEstimado || 0;
+                    console.log(`[CORRIDA] precoFinal recalculado: R$ ${corrida.precoFinal}`);
+                } else {
+                    corrida.precoFinal = corrida.precoEstimado || 0;
+                }
+            } catch(e) {
+                console.log('[CORRIDA] Erro calcular precoFinal:', e.message);
+                corrida.precoFinal = corrida.precoEstimado || 0;
+            }
+        }
         await corrida.save();
 
         console.log('[CORRIDA] Motorista liberado - Status: disponivel');
