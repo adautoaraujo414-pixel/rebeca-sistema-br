@@ -25,7 +25,7 @@ document.querySelectorAll('.menu-item').forEach(item => {
 });
 
 function carregarPagina(p) {
-    const fn = { dashboard:carregarDashboard, mapa:carregarMapa, corridas:carregarCorridas, despacho:carregarDespacho, motoristas:carregarMotoristas, clientes:carregarClientes, rotas:carregarRotas, faturamento:carregarFaturamento, precos:carregarPrecosSimples, ranking:carregarRanking, antifraude:carregarAntiFraude, blacklist:carregarBlacklist, reclamacoes:carregarReclamacoes, whatsapp:carregarWhatsApp, usuarios:carregarUsuarios, areas:carregarAreas, config:carregarConfig, logs:carregarLogs, fila:carregarFilaEspera, pontos:carregarPontos, empresa:carregarEmpresa, mensalidades:carregarMensalidades };
+    const fn = { dashboard:carregarDashboard, mapa:carregarMapa, corridas:carregarCorridas, despacho:carregarDespacho, motoristas:carregarMotoristas, clientes:carregarClientes, rotas:carregarRotas, faturamento:carregarFaturamento, precos:carregarPrecosSimples, ranking:carregarRanking, antifraude:carregarAntiFraude, blacklist:carregarBlacklist, reclamacoes:carregarReclamacoes, whatsapp:carregarWhatsApp, usuarios:carregarUsuarios, areas:carregarAreas, config:carregarConfig, logs:carregarLogs, fila:carregarFilaEspera, pontos:carregarPontos, empresa:carregarEmpresa, mensalidades:carregarMensalidades, 'pontos-ref':carregarPontosRef };
     if (fn[p]) fn[p]();
 }
 
@@ -789,6 +789,41 @@ async function abrirModalNovoPonto() {
 }
 
 let _pontosPollingInterval = null;
+
+async function carregarPontosRef() {
+    if (typeof carregarPontos === 'function' && document.getElementById('lista-pontos')) {
+        // chama a função definida no index.html
+        const token = localStorage.getItem('adminToken');
+        const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
+        const adminId = usuario._id || usuario.id || '';
+        try {
+            const r = await fetch('/api/pontos-referencia?adminId=' + adminId, { headers: { 'Authorization': 'Bearer ' + token, 'x-admin-id': adminId } });
+            const data = await r.json();
+            window._pontosRef = Array.isArray(data) ? data : (data.pontos || []);
+            const el = document.getElementById('lista-pontos');
+            if (!el) return;
+            if (!window._pontosRef.length) {
+                el.innerHTML = '<p style="color:#888;text-align:center;padding:40px;">Nenhum ponto cadastrado ainda.<br>Clique em "+ Novo Ponto" para adicionar.</p>';
+                return;
+            }
+            el.innerHTML = window._pontosRef.map(p => `
+                <div style="background:#16213e;border:1px solid #2a2a4a;border-radius:10px;padding:15px;display:flex;justify-content:space-between;align-items:center;">
+                    <div>
+                        <strong style="color:#e94560">${p.nome || '-'}</strong>
+                        <div style="color:#aaa;font-size:0.85em;margin-top:4px;">${p.endereco || ''}</div>
+                        <div style="color:#888;font-size:0.8em;">${p.tipo || 'outro'}${p.cidade ? ' · ' + p.cidade : ''}</div>
+                    </div>
+                    <div style="display:flex;gap:8px;">
+                        <button onclick="editarPonto('${p._id}')" style="background:#1a1a2e;color:#e94560;border:1px solid #e94560;padding:6px 12px;border-radius:6px;cursor:pointer;">✏️</button>
+                        <button onclick="excluirPonto('${p._id}')" style="background:#e94560;color:white;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;">🗑️</button>
+                    </div>
+                </div>`).join('');
+        } catch(e) {
+            const el = document.getElementById('lista-pontos');
+            if (el) el.innerHTML = '<p style="color:#e94560">Erro ao carregar pontos.</p>';
+        }
+    }
+}
 
 async function carregarPontos() {
     try {
