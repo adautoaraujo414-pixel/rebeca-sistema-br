@@ -381,7 +381,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
         <div id="loginSection" class="login-container">
         <div class="login-logo">
-            <h1 id="headerMarca">🚗 Motorista</h1>
+            <div style="display:flex;flex-direction:column;align-items:flex-start;gap:1px;">
+                <h1 id="headerMarca">🚗 Motorista</h1>
+                <span id="headerNomeMotorista" style="font-size:11px;color:#aad4ff;font-weight:500;padding-left:2px;display:none;"></span>
+            </div>
             <p>Motorista</p>
         </div>
         <div class="login-form">
@@ -868,6 +871,14 @@ document.addEventListener('DOMContentLoaded', function() {
         let corridaAtual = null;
         let gpsInterval = null;
         // Restaurar dark mode salvo
+        // Restaurar nome do motorista no header ao recarregar
+        try {
+            const nomeCache = localStorage.getItem('motoristaNome');
+            if (nomeCache) {
+                const headerNome = document.getElementById('headerNomeMotorista');
+                if (headerNome) { headerNome.textContent = nomeCache; headerNome.style.display = 'block'; }
+            }
+        } catch(e) {}
         try { if (localStorage.getItem('darkMode') === '1') { document.body.classList.add('dark-mode'); const b = document.getElementById('btnDarkMode'); if (b) b.textContent = '☀️'; } } catch(e) {}
         let checkInterval = null;
         let timerInterval = null;
@@ -1012,6 +1023,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     localStorage.setItem('motoristaToken', token);
                     iniciarApp();
                     toast('Bem-vindo, ' + motorista.nomeCompleto + '!', 'success');
+                    // Mostrar nome no header
+                    const headerNome = document.getElementById('headerNomeMotorista');
+                    if (headerNome) {
+                        headerNome.textContent = motorista.nomeCompleto || motorista.nome || '';
+                        headerNome.style.display = 'block';
+                    }
+                    localStorage.setItem('motoristaNome', motorista.nomeCompleto || motorista.nome || '');
                 } else {
                     toast(data.erro || 'Erro no login', 'error');
                 }
