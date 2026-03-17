@@ -554,13 +554,25 @@ document.addEventListener('DOMContentLoaded', function() {
                     <input type="text" id="motCidade" placeholder="Ex: Frutal, MG">
                 </div>
             </div>
+            <div class="mot-group">
+                <label>Tipo de veículo *</label>
+                <div style="display:flex;gap:12px;margin-top:6px;">
+                    <label onclick="selecionarCategoria('carro')" id="catCarroBtn" style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;border:2px solid #00d4ff;border-radius:10px;cursor:pointer;background:rgba(0,212,255,0.15);color:#fff;font-weight:600;font-size:15px;transition:all 0.2s;">
+                        🚗 Carro
+                    </label>
+                    <label onclick="selecionarCategoria('moto')" id="catMotoBtn" style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;border:2px solid #444;border-radius:10px;cursor:pointer;background:transparent;color:#aaa;font-weight:600;font-size:15px;transition:all 0.2s;">
+                        🏍️ Moto
+                    </label>
+                </div>
+                <input type="hidden" id="motCategoria" value="carro">
+            </div>
             <div class="mot-row">
                 <div class="mot-group">
-                    <label>Modelo do carro *</label>
+                    <label id="labelModelo">Modelo do carro *</label>
                     <input type="text" id="motCarro" placeholder="Ex: HB20, Ônix">
                 </div>
                 <div class="mot-group">
-                    <label>Ano do carro *</label>
+                    <label id="labelAno">Ano do carro *</label>
                     <input type="number" id="motAno" placeholder="Ex: 2020" min="2000" max="2026">
                 </div>
             </div>
@@ -593,6 +605,7 @@ async function enviarCadastroMotorista() {
     const carro = document.getElementById('motCarro').value.trim();
     const ano = document.getElementById('motAno').value.trim();
     const app = document.getElementById('motApp').value;
+    const categoria = document.getElementById('motCategoria')?.value || 'carro';
     
     if (!nome || !telefone || !cidade || !carro || !ano) {
         const el = document.getElementById('motError');
@@ -608,7 +621,7 @@ async function enviarCadastroMotorista() {
         const res = await fetch('/api/parceiro-motorista', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ nome, telefone, cidade, carro, ano, appAtual: app })
+            body: JSON.stringify({ nome, telefone, cidade, carro, ano, appAtual: app, categoria })
         });
         const data = await res.json();
         if (data.ok) {
@@ -624,6 +637,38 @@ async function enviarCadastroMotorista() {
         el.textContent = '❌ Erro ao enviar. Tente novamente!';
     }
 }
+
+function selecionarCategoria(tipo) {
+    document.getElementById('motCategoria').value = tipo;
+    const btnCarro = document.getElementById('catCarroBtn');
+    const btnMoto = document.getElementById('catMotoBtn');
+    const labelModelo = document.getElementById('labelModelo');
+    const labelAno = document.getElementById('labelAno');
+    const inputModelo = document.getElementById('motCarro');
+
+    if (tipo === 'carro') {
+        btnCarro.style.borderColor = '#00d4ff';
+        btnCarro.style.background = 'rgba(0,212,255,0.15)';
+        btnCarro.style.color = '#fff';
+        btnMoto.style.borderColor = '#444';
+        btnMoto.style.background = 'transparent';
+        btnMoto.style.color = '#aaa';
+        labelModelo.textContent = 'Modelo do carro *';
+        labelAno.textContent = 'Ano do carro *';
+        inputModelo.placeholder = 'Ex: HB20, Ônix';
+    } else {
+        btnMoto.style.borderColor = '#00d4ff';
+        btnMoto.style.background = 'rgba(0,212,255,0.15)';
+        btnMoto.style.color = '#fff';
+        btnCarro.style.borderColor = '#444';
+        btnCarro.style.background = 'transparent';
+        btnCarro.style.color = '#aaa';
+        labelModelo.textContent = 'Modelo da moto *';
+        labelAno.textContent = 'Ano da moto *';
+        inputModelo.placeholder = 'Ex: CG 160, Biz, Factor';
+    }
+}
+
 </script>
 </body>
 </html>
