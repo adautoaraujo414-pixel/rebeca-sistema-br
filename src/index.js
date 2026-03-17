@@ -102,8 +102,8 @@ app.post('/api/rebeca-login', async (req, res) => {
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
-app.get('/cadastro-admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'cadastro-admin.html')));
-app.get('/parceiro', (req, res) => res.sendFile(path.join(__dirname, 'public', 'cadastro-admin.html')));
+app.get('/cadastro-admin', (req, res) => res.redirect('/'));
+app.get('/parceiro', (req, res) => res.redirect('/'));
 
 const authRoutes = require('./routes/auth.routes');
 const usuariosRoutes = require('./routes/usuarios.routes');
