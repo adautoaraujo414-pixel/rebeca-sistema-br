@@ -934,10 +934,20 @@ async function criarPonto() {
         diasSemana
     };
     _criandoPonto = true;
+    // Feedback visual no botão
+    const btn = container.querySelector('button.btn-primary');
+    const txtOriginal = btn ? btn.textContent : '';
+    if (btn) { btn.textContent = '⏳ Salvando...'; btn.disabled = true; }
     try {
-        await api('/api/pontos', { method: 'POST', body: JSON.stringify(body) });
+        const res = await api('/api/pontos', { method: 'POST', body: JSON.stringify(body) });
         ocultarFormCentral();
+        // Toast de sucesso
+        if (typeof toast === 'function') toast('✅ Central "' + nome + '" criada!', 'success');
+        else { const t = document.createElement('div'); t.style.cssText='position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#27ae60;color:#fff;padding:12px 24px;border-radius:10px;font-size:15px;z-index:9999;font-weight:600;box-shadow:0 4px 12px rgba(0,0,0,0.2)'; t.textContent='✅ Central "'+nome+'" criada!'; document.body.appendChild(t); setTimeout(()=>t.remove(),3000); }
         carregarPontos();
+    } catch(e) {
+        if (btn) { btn.textContent = txtOriginal; btn.disabled = false; }
+        alert('Erro ao salvar central: ' + (e.message || 'Tente novamente'));
     } finally {
         _criandoPonto = false;
     }
