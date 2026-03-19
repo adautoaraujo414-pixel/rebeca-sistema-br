@@ -1,8 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const gpsService = require('../services/gps.service');
+const { _authAdmin } = require('../middlewares/auth');
 
-router.get('/', (req, res) => {
+router.get('/', _authAdmin, (req, res) => {
     const localizacoes = gpsService.listarLocalizacoes();
     res.json(localizacoes);
 });
