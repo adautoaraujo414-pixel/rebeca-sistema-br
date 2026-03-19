@@ -460,6 +460,27 @@ REGRAS DE COMPORTAMENTO:
         // Detectar URGÊNCIA
         const urgente = msg.match(/(urgente|urgência|urgencia|atrasado|atrasada|rápido|rapido|correndo|pressa|emergência|emergencia|depressa|logo)/);
         
+        // ── MELHORIA: Gírias e confirmações brasileiras curtas ──
+        // Confirmações curtas que a IA pode não pegar
+        if (msg.match(/^(é|ham|hm|isso|exato|exatamente|sim isso|é isso|é esse|é essa|é lá|é aqui|tá certo|tá bom|pode ser|pode|tá|ta)$/i)) {
+            return { intencao: 'CONFIRMACAO', resposta: null }; // deixa IA tratar com contexto
+        }
+        
+        // Gírias MG e regionais como pedido de corrida
+        if (msg.match(/(uai me busca|uai me leva|sô me busca|sô me leva|mô me busca|rapaiz me busca|trem me busca)/i)) {
+            return { intencao: 'SOLICITAR_CORRIDA', resposta: 'Claro! Qual o endereço? 😊' };
+        }
+        
+        // Endereços abreviados comuns no Brasil
+        if (msg.match(/^(to no|tô no|to na|tô na|to em|tô em|estou no|estou na|estou em)s+w+/i)) {
+            return { intencao: 'INFORMAR_ENDERECO_COMPLETO', temEndereco: true, temNumero: false, pontoReferencia: true, enderecoFormatado: msg.replace(/^(to no|tô no|to na|tô na|to em|tô em|estou no|estou na|estou em)s+/i, '').trim() };
+        }
+        
+        // Abreviações de pontos comuns
+        if (msg.match(/(hops|hosp|upa|ubs|rodo|term|shp|shop|igrej|farm|droga|banco|bb|caixa|correio|prefeit)/i)) {
+            return { intencao: 'INFORMAR_ENDERECO_COMPLETO', temEndereco: true, temNumero: false, pontoReferencia: true, enderecoFormatado: msg };
+        }
+
         // Detectar CLIENTE NERVOSO/AGRESSIVO
         const nervoso = msg.match(/(absurdo|palhaçada|palhacada|ridiculo|ridículo|incompetente|péssimo|pessimo|horrível|horrivel|vergonha|lixo|merda|porra|caralho|desgraça|desgraca|nunca mais|vou processar|procon|reclamar)/);
         
