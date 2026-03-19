@@ -109,13 +109,25 @@ gpsIntegradoService.notificarMotorista = async (motorista, corrida) => {
             (dist ? "\uD83D\uDCCF *Distancia:* " + dist + "\n" : "") +
             "\uD83D\uDCB0 *Valor:* " + preco + obsGeral + "\n\n" +
             "Responda *ACEITAR* para aceitar ou ignore para recusar.";
+        // Bug 4: validar se foto ainda e acessivel (URLs do WhatsApp expiram)
+        let fotoValida = false;
         if (corrida.clienteFoto) {
-            // Envia foto do cliente com mensagem completa como legenda — tudo em uma notificacao
             try {
-                await EvolutionMultiService.enviarImagem(inst._id, telefone, corrida.clienteFoto, msg);
-                console.log("[NOTIF-MOT] Foto+mensagem enviadas juntas ao motorista:", telefone);
+                const axios = require("axios");
+                const check = await axios.head(corrida.clienteFoto, { timeout: 3000 });
+                fotoValida = check.status >= 200 && check.status < 400;
+            } catch(_e) { fotoValida = false; }
+        }
+
+        // Bug 5: legenda limitada a 1000 chars (WhatsApp rejeita acima de 1024)
+        const legenda = msg.length > 1000 ? msg.substring(0, 997) + "..." : msg;
+
+        if (fotoValida) {
+            try {
+                await EvolutionMultiService.enviarImagem(inst._id, telefone, corrida.clienteFoto, legenda);
+                console.log("[NOTIF-MOT] Foto+msg juntas ao motorista:", telefone);
             } catch(fe) {
-                console.log("[NOTIF-MOT] Foto falhou, enviando so texto:", fe.message);
+                console.log("[NOTIF-MOT] Foto falhou, enviando texto:", fe.message);
                 await EvolutionMultiService.enviarMensagem(inst._id, telefone, msg);
             }
         } else {
