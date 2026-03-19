@@ -106,12 +106,17 @@ gpsIntegradoService.notificarMotorista = async (motorista, corrida) => {
             "\uD83D\uDCB0 *Valor:* " + preco + obsGeral + "\n\n" +
             "Responda *ACEITAR* para aceitar ou ignore para recusar.";
         if (corrida.clienteFoto) {
+            // Envia foto do cliente com mensagem completa como legenda — tudo em uma notificacao
             try {
-                await EvolutionMultiService.enviarImagem(inst._id, telefone, corrida.clienteFoto, "Cliente: " + (corrida.clienteNome || ""));
-                console.log("[NOTIF-MOT] Foto enviada ao motorista:", telefone);
-            } catch(fe) { console.log("[NOTIF-MOT] Foto nao enviada:", fe.message); }
+                await EvolutionMultiService.enviarImagem(inst._id, telefone, corrida.clienteFoto, msg);
+                console.log("[NOTIF-MOT] Foto+mensagem enviadas juntas ao motorista:", telefone);
+            } catch(fe) {
+                console.log("[NOTIF-MOT] Foto falhou, enviando so texto:", fe.message);
+                await EvolutionMultiService.enviarMensagem(inst._id, telefone, msg);
+            }
+        } else {
+            await EvolutionMultiService.enviarMensagem(inst._id, telefone, msg);
         }
-        await EvolutionMultiService.enviarMensagem(inst._id, telefone, msg);
         console.log("[NOTIF-MOT] Motorista notificado:", telefone);
         return true;
     } catch(e) { console.error("[NOTIF-MOT] Erro:", e.message); return false; }
