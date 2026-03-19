@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mapa de Motoristas — Rebeca</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; height: 100vh; display: flex; flex-direction: column; }
+  #header { background: #1e293b; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #334155; }
+  #header h1 { font-size: 18px; font-weight: 700; color: #38bdf8; }
+  #status-bar { display: flex; gap: 20px; font-size: 13px; }
+  .badge { padding: 4px 12px; border-radius: 20px; font-weight: 600; }
+  .badge-livre { background: #16a34a; color: #fff; }
+  .badge-corrida { background: #dc2626; color: #fff; }
+  .badge-offline { background: #475569; color: #fff; }
+  #map { flex: 1; }
+  #update-info { background: #1e293b; padding: 6px 20px; font-size: 12px; color: #94a3b8; text-align: right; }
+</style>
+</head>
+<body>
+<div id="header">
+  <h1>🗺️ Mapa de Motoristas — Rebeca</h1>
+  <div id="status-bar">
+    <span class="badge badge-livre">🟢 Livres: <span id="cnt-livre">0</span></span>
+    <span class="badge badge-corrida">🔴 Em corrida: <span id="cnt-corrida">0</span></span>
+    <span class="badge badge-offline">⚫ Offline: <span id="cnt-offline">0</span></span>
+  </div>
+</div>
+<div id="map"></div>
+<div id="update-info">Aguardando atualização...</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const map = L.map('map').setView([-19.72, -49.0], 13);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© OpenStreetMap'
+}).addTo(map);
+
+const markers = {};
+
+function criarIcone(status) {
+  const cor = status === 'disponivel' ? '#16a34a' : status === 'em_corrida' ? '#dc2626' : '#475569';
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="48" viewBox="0 0 40 48">
+      <text x="4" y="32" font-size="26">🚗</text>
+      <circle cx="30" cy="8" r="8" fill="${cor}" stroke="white" stroke-width="2"/>
+    </svg>`;
+  return L.divIcon({ html: svg, iconSize: [40, 48], iconAnchor: [20, 40], className: '' });
+}
+
+function getToken() {
+  return localStorage.getItem('token') || sessionStorage.getItem('token') || '';
+}
+
+async function atualizarMapa() {
+  try {
+    const headers = { 'Authorization': 'Bearer ' + getToken(), 'Content-Type': 'application/json' };
+    const [resGPS, resMot] = await Promise.all([
+      fetch('/api/gps', { headers }),
+      fetch('/api/motoristas', { headers })
+    ]);
+
+    if (!resGPS.ok || !resMot.ok) {
+      document.getElementById('update-info').textContent = '⚠️ Erro ao buscar dados — verifique autenticação';
+      return;
+    }
+
+    const gpsData = await resGPS.json();
+    const motData = await resMot.json();
+
+    const motoristas = Array.isArray(motData) ? motData : (motData.motoristas || motData.data || []);
+    const gps = Array.isArray(gpsData) ? gpsData : (gpsData.localizacoes || gpsData.data || []);
+
+    const statusMap = {};
+    motoristas.forEach(m => { statusMap[m.id || m._id] = m.status || 'offline'; });
+
+    let livre = 0, corrida = 0, offline = 0;
+    const idsAtivos = new Set();
+
+    gps.forEach(loc => {
+      const id = loc.motoristaId || loc.id || loc._id;
+      const lat = parseFloat(loc.latitude || loc.lat);
+      const lng = parseFloat(loc.longitude || loc.lng);
+      if (!id || isNaN(lat) || isNaN(lng)) return;
+
+      const status = statusMap[id] || 'offline';
+      idsAtivos.add(String(id));
+
+      if (status === 'disponivel') livre++;
+      else if (status === 'em_corrida') corrida++;
+      else offline++;
+
+      const nome = loc.nome || motoristas.find(m => String(m.id || m._id) === String(id))?.nome || 'Motorista';
+      const popup = `<b>${nome}</b><br>Status: ${status}<br>Lat: ${lat.toFixed(5)}<br>Lng: ${lng.toFixed(5)}<br>${loc.atualizadoEm ? 'Atualizado: ' + new Date(loc.atualizadoEm).toLocaleTimeString('pt-BR') : ''}`;
+
+      if (markers[id]) {
+        markers[id].setLatLng([lat, lng]);
+        markers[id].setIcon(criarIcone(status));
+        markers[id].getPopup()?.setContent(popup);
+      } else {
+        markers[id] = L.marker([lat, lng], { icon: criarIcone(status) })
+          .bindPopup(popup)
+          .addTo(map);
+      }
+    });
+
+    // Remove marcadores de motoristas que saíram
+    Object.keys(markers).forEach(id => {
+      if (!idsAtivos.has(String(id))) {
+        map.removeLayer(markers[id]);
+        delete markers[id];
+      }
+    });
+
+    document.getElementById('cnt-livre').textContent = livre;
+    document.getElementById('cnt-corrida').textContent = corrida;
+    document.getElementById('cnt-offline').textContent = offline;
+    document.getElementById('update-info').textContent = '🔄 Atualizado em ' + new Date().toLocaleTimeString('pt-BR');
+
+  } catch (e) {
+    document.getElementById('update-info').textContent = '❌ Erro: ' + e.message;
+  }
+}
+
+atualizarMapa();
+setInterval(atualizarMapa, 2000);
+</script>
+</body>
+</html>
