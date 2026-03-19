@@ -90,6 +90,9 @@ router.post('/gps', auth, async (req, res) => {
     try {
         const { latitude, longitude } = req.body;
         await MotoristaService.atualizarGPS(req.motorista._id, latitude, longitude);
+        // Atualizar GPS isolado por adminId no serviço de mapa
+        const gpsService = require('../services/gps.service');
+        gpsService.atualizarLocalizacao(String(req.motorista._id), { latitude, longitude }, String(req.motorista.adminId));
         res.json({ sucesso: true });
     } catch(e) { res.json({ sucesso: false, erro: e.message }); }
 });
