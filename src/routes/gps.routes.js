@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const gpsService = require('../services/gps.service');
-const { _authAdmin } = require('../middlewares/auth');
+const { _authAdmin } = require('../middleware/auth');
 
 router.get('/', _authAdmin, (req, res) => {
     const adminId = req.usuario?.id || req.usuario?._id || 'global';
