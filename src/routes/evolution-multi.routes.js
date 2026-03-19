@@ -286,11 +286,21 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                             const audioBuffer = Buffer.from(base64, 'base64');
                             console.log('[AUDIO] Buffer size:', audioBuffer.length, 'bytes');
                             const mimeType = msg.message.audioMessage.mimetype || 'audio/ogg';
+                            // Buscar tipoAdmin para rotear audio corretamente (delivery vs corrida)
+                            let _tipoAdminAudio = 'corrida';
+                            try {
+                                const { Admin: _AdminAudio } = require('../models');
+                                const _adAudio = await _AdminAudio.findById(adminId).select('tipoAdmin').lean();
+                                if (_adAudio && _adAudio.tipoAdmin === 'delivery') _tipoAdminAudio = 'delivery';
+                            } catch(_) {}
                             // Buscar conversa atual para contexto do audio
                             let conversaCtx = null;
                             try {
-                                const { Conversa } = require('../models');
-                                conversaCtx = await Conversa.findOne({ telefone, adminId }).lean();
+                                if (_tipoAdminAudio === 'corrida') {
+                                    const { Conversa } = require('../models');
+                                    conversaCtx = await Conversa.findOne({ telefone, adminId }).lean();
+                                }
+                                // delivery: conversaCtx fica null — RebecaDeliveryService gerencia o estado
                             } catch(_) {}
 
 
@@ -319,6 +329,30 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                                     }
                                 }
                             }
+                            // ── ROTEAMENTO DE ÁUDIO: delivery vai direto para RebecaDeliveryService ──
+                            if (_tipoAdminAudio === 'delivery') {
+                                try {
+                                    const _textoDelivery = (transcricao && !transcricao.startsWith('__')) ? transcricao : null;
+                                    const _msgDelivery = _textoDelivery || conteudo || '';
+                                    if (_msgDelivery && _msgDelivery !== '__AUDIO_SEM_TRANSCRICAO__') {
+                                        const _respDelivery = await RebecaDeliveryService.processarMensagem(
+                                            telefone, { text: _msgDelivery }, nome, { adminId, instanciaId: instancia._id }
+                                        );
+                                        if (_respDelivery) {
+                                            await EvolutionMultiService.enviarMensagem(instancia._id, telefone, _respDelivery);
+                                            console.log('[AUDIO-DELIVERY] Respondido:', _respDelivery.substring(0, 60));
+                                        }
+                                    } else {
+                                        await EvolutionMultiService.enviarMensagem(instancia._id, telefone,
+                                            'Não entendi seu áudio 🎤 Pode repetir em texto ou mandar outro áudio?'
+                                        );
+                                    }
+                                } catch(_de) {
+                                    console.log('[AUDIO-DELIVERY] Erro:', _de.message);
+                                }
+                                continue; // Não cai no fluxo de corridas
+                            }
+
                             if (transcricao && transcricao.startsWith('__RESPOSTA_DIRETA__')) {
                                 const msgDireta = transcricao.replace('__RESPOSTA_DIRETA__', '');
                                 await EvolutionMultiService.enviarMensagem(instancia._id, telefone, msgDireta);
