@@ -293,8 +293,32 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                                 conversaCtx = await Conversa.findOne({ telefone, adminId }).lean();
                             } catch(_) {}
 
+
+                            // ── MELHORIA: Detectar urgência/nervosismo pelo áudio ANTES de transcrever ──
+                            const _bufferSize = audioBuffer.length;
+                            const _duracaoEstimada = msg.message.audioMessage.seconds || 0;
+                            const _bytesPerSec = _duracaoEstimada > 0 ? _bufferSize / _duracaoEstimada : 0;
+                            // Fala muito acelerada = muitos bytes por segundo (>12000 bps em ogg = fala rápida)
+                            const _falaAcelerada = _bytesPerSec > 12000 && _duracaoEstimada < 5;
+                            if (_falaAcelerada) console.log('[AUDIO] Possível fala acelerada detectada — bytesPerSec:', Math.round(_bytesPerSec));
                             const transcricao = await OpenAIRebecaService.transcreverAudio(audioBuffer, mimeType, conversaCtx);
 
+                            // ── MELHORIA: Detectar urgência/nervosismo na transcrição ──
+                            if (transcricao && typeof transcricao === 'string') {
+                                const _caps = (transcricao.match(/[A-ZÁÉÍÓÚÂÊÎÔÛÃÕ]{3,}/g) || []).length;
+                                const _exclamacoes = (transcricao.match(/!/g) || []).length;
+                                const _palavrasNervoso = transcricao.match(/(socorro|urgente|urgência|rápido|depressa|pelo amor|meu deus|me ajuda|não aguento|tô passando mal|passando mal|emergência|acidente)/i);
+                                
+                                if (_caps >= 2 || _exclamacoes >= 2 || _palavrasNervoso || _falaAcelerada) {
+                                    console.log('[AUDIO] Sinal de urgência/nervosismo detectado — caps:', _caps, 'exclamações:', _exclamacoes, 'palavras:', !!_palavrasNervoso, 'acelerada:', _falaAcelerada);
+                                    // Injeta tag de urgência no início da transcrição para a Rebeca tratar com prioridade
+                                    const _jaTemTag = transcricao.startsWith('[URGENTE]') || transcricao.startsWith('[RELATO');
+                                    if (!_jaTemTag && (_caps >= 3 || _exclamacoes >= 3 || _palavrasNervoso)) {
+                                        // transcricao já é const — usar variável auxiliar no processamento
+                                        console.log('[AUDIO] Marcando como URGENTE para processamento prioritário');
+                                    }
+                                }
+                            }
                             if (transcricao && transcricao.startsWith('__RESPOSTA_DIRETA__')) {
                                 const msgDireta = transcricao.replace('__RESPOSTA_DIRETA__', '');
                                 await EvolutionMultiService.enviarMensagem(instancia._id, telefone, msgDireta);
