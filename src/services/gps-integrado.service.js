@@ -80,4 +80,40 @@ function calcularDistancia(lat1, lon1, lat2, lon2) {
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }
 
+
+// ==================== NOTIFICAR MOTORISTA DE NOVA CORRIDA ====================
+gpsIntegradoService.notificarMotorista = async (motorista, corrida) => {
+    try {
+        const { InstanciaWhatsapp } = require("../models");
+        const EvolutionMultiService = require("./evolution-multi.service");
+        const adminId = corrida.adminId || motorista.adminId;
+        const telefone = motorista.whatsapp || motorista.telefone;
+        if (!telefone) return false;
+        const inst = await InstanciaWhatsapp.findOne({ adminId, status: { $in: ["conectado","open","connected"] } });
+        if (!inst) { console.log("[NOTIF-MOT] Sem instancia:", adminId); return false; }
+        const origem  = corrida.enderecoOrigemTexto  || corrida.origem?.endereco  || "Nao informado";
+        const destino = corrida.enderecoDestinoTexto || corrida.destino?.endereco || "Nao informado";
+        const preco   = corrida.precoEstimado ? "R$ " + Number(corrida.precoEstimado).toFixed(2).replace(".", ",") : "A combinar";
+        const dist    = corrida.distanciaKm ? corrida.distanciaKm + " km" : "";
+        const obsOri  = corrida.observacaoOrigem  ? "\n Obs origem: "  + corrida.observacaoOrigem  : "";
+        const obsDes  = corrida.observacaoDestino ? "\n Obs destino: " + corrida.observacaoDestino : "";
+        const obsGeral = (corrida.obsMotorista || corrida.observacao) ? "\n Obs: " + (corrida.obsMotorista || corrida.observacao) : "";
+        const msg = "\uD83D\uDEA8 *NOVA CORRIDA!*\n\n" +
+            "\uD83D\uDC64 *Cliente:* " + (corrida.clienteNome || "Cliente") + "\n" +
+            "\uD83D\uDCCD *Origem:* " + origem + obsOri + "\n" +
+            "\uD83C\uDFC1 *Destino:* " + destino + obsDes + "\n" +
+            (dist ? "\uD83D\uDCCF *Distancia:* " + dist + "\n" : "") +
+            "\uD83D\uDCB0 *Valor:* " + preco + obsGeral + "\n\n" +
+            "Responda *ACEITAR* para aceitar ou ignore para recusar.";
+        if (corrida.clienteFoto) {
+            try {
+                await EvolutionMultiService.enviarImagem(inst._id, telefone, corrida.clienteFoto, "Cliente: " + (corrida.clienteNome || ""));
+                console.log("[NOTIF-MOT] Foto enviada ao motorista:", telefone);
+            } catch(fe) { console.log("[NOTIF-MOT] Foto nao enviada:", fe.message); }
+        }
+        await EvolutionMultiService.enviarMensagem(inst._id, telefone, msg);
+        console.log("[NOTIF-MOT] Motorista notificado:", telefone);
+        return true;
+    } catch(e) { console.error("[NOTIF-MOT] Erro:", e.message); return false; }
+};
 module.exports = gpsIntegradoService;
