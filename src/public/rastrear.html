@@ -300,6 +300,11 @@
                 // Motorista
                 if (d.motorista) {
                     document.getElementById('motorista-nome').textContent = d.motorista.nome || 'Motorista';
+                    // Foto do motorista no avatar
+                    const _av = document.getElementById('motorista-avatar');
+                    if (_av && d.motorista.foto) {
+                        _av.innerHTML = '<img src="' + d.motorista.foto + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.parentElement.textContent=\u{1F9D1}">';
+                    }
                     let veiculoInfo = '';
                     if (d.motorista.veiculo) veiculoInfo += d.motorista.veiculo;
                     if (d.motorista.cor) veiculoInfo += ' ' + d.motorista.cor;
