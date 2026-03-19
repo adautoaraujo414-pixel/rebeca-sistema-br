@@ -152,6 +152,12 @@ const NLPService = {
             'terminei', 'terminou', 'encerrei', 'corrida finalizada'].some(p => m.includes(p))) {
             return 'FINALIZAR';
         }
+        // ACEITAR CORRIDA
+        if (['aceitar', 'aceito', 'aceita', 'sim', 'bora', 'pode ser', 'vou', 'pego',
+            'pego sim', 'aceito sim', 'ok', 'combinado', 'top', 'pode', 'topo',
+            'estou indo', 'vou buscar', 'confirmado'].some(p => m === p || m.includes(p))) {
+            return 'ACEITAR';
+        }
         // CANCELAR CORRIDA (motorista)
         if (['nao consigo', 'nao vou conseguir', 'cancelar corrida', 'recusar',
             'nao posso aceitar', 'pegar outra', 'recuso'].some(p => m.includes(p))) {
