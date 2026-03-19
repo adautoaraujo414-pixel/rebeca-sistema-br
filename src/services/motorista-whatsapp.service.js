@@ -191,6 +191,55 @@ const MotoristaWhatsappService = {
         return `🏁 *Corrida finalizada!*\n\nAvisamos o cliente.\nVocê está disponível para novas corridas! 🚗\n\nBom trabalho! 💪`;
     },
 
+    // ==================== ACEITAR ====================
+    async processarAceitar(motorista, adminId, instanciaId) {
+        try {
+            const { Corrida, Motorista } = require('../models');
+
+            // Buscar corrida pendente mais recente do admin
+            const corrida = await Corrida.findOne({
+                adminId,
+                status: 'pendente'
+            }).sort({ createdAt: -1 });
+
+            if (!corrida) {
+                return motorista.nomeCompleto?.split(' ')[0] + ', nao ha corrida pendente para aceitar no momento. Aguarde a proxima! 🚗';
+            }
+
+            // Verificar se ja foi aceita por outro motorista
+            if (corrida.motoristaId && corrida.motoristaId.toString() !== motorista._id.toString()) {
+                return 'Essa corrida ja foi aceita por outro motorista. Aguarde a proxima! 🚗';
+            }
+
+            // Aceitar a corrida
+            await Corrida.findByIdAndUpdate(corrida._id, {
+                motoristaId: motorista._id,
+                motoristaNome: motorista.nomeCompleto || motorista.nome,
+                status: 'aceita',
+                aceitaEm: new Date()
+            });
+
+            await Motorista.findByIdAndUpdate(motorista._id, { status: 'em_corrida' });
+
+            // Notificar cliente
+            const nomeMotorista = motorista.nomeCompleto || 'Motorista';
+            const veiculo = motorista.veiculo?.modelo ? motorista.veiculo.modelo + ' ' + (motorista.veiculo.cor || '') + ' - Placa ' + (motorista.veiculo.placa || '') : '';
+            await this.notificarCliente(corrida, adminId, instanciaId,
+                'Otima noticia! Seu motorista *' + nomeMotorista + '* aceitou sua corrida e esta a caminho!' +
+                (veiculo ? '\n\nVeiculo: *' + veiculo + '*' : '') +
+                '\n\nFique de olho! 🚗'
+            );
+
+            const origem = corrida.enderecoOrigemTexto || corrida.origem?.endereco || 'endereco do cliente';
+            console.log('[ACEITAR] Corrida', corrida._id, 'aceita por', nomeMotorista);
+            return 'Corrida aceita! ✅\n\nVa ate o cliente em:\n*' + origem + '*\n\nQuando chegar manda *CHEGUEI* 📍';
+
+        } catch(e) {
+            console.error('[ACEITAR] Erro:', e.message);
+            return 'Erro ao aceitar corrida. Tente novamente.';
+        }
+    },
+
     // ==================== RECUSAR ====================
     async processarRecusar(motorista, corrida, adminId) {
         if (!corrida) return null;
