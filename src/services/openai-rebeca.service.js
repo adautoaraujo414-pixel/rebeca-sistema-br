@@ -107,7 +107,9 @@ const OpenAIRebecaService = {
     // Limpar ruídos do áudio
     limparTranscricao(texto) {
         let limpo = texto
-            .replace(/\b(éé+|ãã+|hm+|ah+|eh+|tipo assim|sabe|entendeu)\b/gi, '')
+            .replace(/\b(éé+|ãã+|hm+|ah+|eh+|tipo assim|sabe|entendeu|né|né não|num sei|sei lá|é isso|é nós|tá bom|tá|tô|oxe|eita|vish|nossa|cara|mano|bicho|véi|vei)\b/gi, '')
+            .replace(/\b(legendas|legenda|closed caption|cc|subtitles|transcrição automática)\b/gi, '')
+            .replace(/[\[\(].*?[\]\)]/g, '')
             .replace(/\s+/g, ' ')
             .trim();
         
@@ -134,7 +136,7 @@ const OpenAIRebecaService = {
                 formData.append('model', 'whisper-1');
                 formData.append('language', 'pt');
                 formData.append('temperature', '0');
-                formData.append('prompt', 'Transcrição fiel em português brasileiro. Contexto: serviço de corridas e transporte urbano. Termos comuns: rua, avenida, bairro, endereço, corrida, motorista, origem, destino, ponto de referência, JB7, JB3, AP2, KM5, rodoviária, terminal, mercado, farmácia, hospital, praça. REGRAS: (1) Transcreva EXATAMENTE o que foi dito — nunca substitua por palavra parecida. (2) Siglas e códigos como JB7, JB3, AP2, KM5 devem ser transcritos letra por letra como foram pronunciados. (3) Nomes de ruas, bairros e pontos de referência: transcreva o som exato, não interprete. (4) Se não entendeu uma palavra, deixe como está — não invente.');
+                formData.append('prompt', 'Transcrição fiel em português brasileiro. Contexto: serviço de corridas e transporte urbano. Termos comuns: rua, avenida, bairro, endereço, corrida, motorista, origem, destino, ponto de referência, JB7, JB3, AP2, KM5, rodoviária, terminal, mercado, farmácia, hospital, praça. Gírias comuns em áudio de WhatsApp: "tô aqui ó", "manda aqui", "tô lá no", "me busca aqui", "pode vir", "tô na frente do", "aqui ó", "lá no fundo", "pertinho do", "ali do lado", "bem aqui", "esse aqui mesmo", "aqui no meu serviço", "tô no trampo", "no trabalho", "aqui em casa", "saindo agora", "já tô na rua", "chega logo", "corre que tô atrasado", "tô com pressa", "pode mandar", "manda logo", "vai pro de sempre", "mesmo lugar de antes", "lugar de sempre", "mesmo endereço". REGRAS: (1) Transcreva EXATAMENTE o que foi dito — nunca substitua por palavra parecida. (2) Siglas e códigos como JB7, JB3, AP2, KM5 devem ser transcritos letra por letra como foram pronunciados. (3) Nomes de ruas, bairros e pontos de referência: transcreva o som exato, não interprete. (4) Se não entendeu uma palavra, deixe como está — não invente. (5) Áudio com ruído de carro, vento ou rua: foque nas palavras mais claras e ignore o fundo.');
                 const resp = await axios.post('https://api.openai.com/v1/audio/transcriptions', formData, {
                     headers: { 'Authorization': 'Bearer ' + this.apiKey, ...formData.getHeaders() },
                     timeout: 15000
@@ -186,6 +188,15 @@ const OpenAIRebecaService = {
 
     async raciocionarSobreAudio(textoTranscrito, contextoConversa) {
         try {
+            // Cliente falou "mesmo lugar de antes" — usar histórico direto
+            if (textoTranscrito && textoTranscrito.startsWith('__USAR_HISTORICO__')) {
+                const ultimoEnd = contextoConversa && contextoConversa.dados && contextoConversa.dados.ultimoEndereco;
+                if (ultimoEnd) {
+                    return '__RESPOSTA_DIRETA__Mesmo lugar de antes? 😊\n\n📍 ' + ultimoEnd + '\n\n*1* - Sim\n*2* - Outro endereço';
+                }
+                // Se não tem histórico, trata normalmente
+                textoTranscrito = textoTranscrito.replace('__USAR_HISTORICO__', '');
+            }
             const etapaAtual = (contextoConversa && contextoConversa.etapa) || 'inicio';
             const dadosAtuais = (contextoConversa && contextoConversa.dados) ? JSON.stringify(contextoConversa.dados) : '{}';
 
@@ -376,7 +387,22 @@ REGRAS DE COMPORTAMENTO:
         
         // Normalizar pedidos de corrida falados naturalmente
         // "Ô Rebeca manda um carro aqui no JB 7" → "manda um carro aqui no JB 7"
-        limpo = limpo.replace(/^(ô|oh|ei|oi|olha|ó)s+(rebeca|rebecca)s*/gi, '');
+        limpo = limpo.replace(/^(ô|oh|ei|oi|olha|ó)\s+(rebeca|rebecca)\s*/gi, '');
+
+        // Detectar "mesmo lugar de antes" / "lugar de sempre" → sinalizar para usar histórico
+        if (/(mesmo lugar|lugar de sempre|mesmo endereço|mesmo de antes|mesmo de sempre|igual da última vez|igual da outra vez|como sempre|de sempre|o de sempre)/i.test(limpo)) {
+            return '__USAR_HISTORICO__' + limpo;
+        }
+
+        // Detectar urgência falada — "corre que tô atrasado", "tô com pressa"
+        if (/(corre que|tô atrasado|tou atrasado|com pressa|urgente|preciso já|preciso agora|depressa|rápido|rapido|logo logo)/i.test(limpo)) {
+            limpo = '[URGENTE] ' + limpo;
+        }
+
+        // Detectar localização vaga falada — "tô aqui ó", "aqui na frente"
+        if (/^(tô aqui|to aqui|estou aqui|aqui ó|aqui o|aqui mesmo|aqui na frente|na frente aqui)/i.test(limpo)) {
+            limpo = limpo + ' [cliente não especificou endereço — perguntar]';
+        }
         
         // "Eu quero um carro lá no hospital" → "quero um carro no hospital"
         limpo = limpo.replace(/^eus+/gi, '');
