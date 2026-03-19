@@ -51,6 +51,9 @@ const MotoristaWhatsappService = {
             if (comando === 'FINALIZAR') {
                 return await this.processarFinalizar(motorista, corrida, adminId, instanciaId);
             }
+            if (comando === 'ACEITAR') {
+                return await this.processarAceitar(motorista, adminId, instanciaId);
+            }
             if (comando === 'RECUSAR') {
                 return await this.processarRecusar(motorista, corrida, adminId);
             }
