@@ -1,47 +1,54 @@
 const { v4: uuidv4 } = require('uuid');
 
-const localizacoes = new Map();
+// Map isolado por adminId: { adminId -> { motoristaId -> localizacao } }
+const localizacoesPorAdmin = new Map();
+
+function getMapAdmin(adminId) {
+    if (!localizacoesPorAdmin.has(adminId)) {
+        localizacoesPorAdmin.set(adminId, new Map());
+    }
+    return localizacoesPorAdmin.get(adminId);
+}
 
 const gpsService = {
-    atualizarLocalizacao: (motoristaId, dados) => {
+    atualizarLocalizacao: (motoristaId, dados, adminId = 'global') => {
         const lat = parseFloat(dados.latitude);
         const lon = parseFloat(dados.longitude);
         const precisao = dados.precisao ? parseFloat(dados.precisao) : null;
 
-        // Validar coordenadas — rejeitar posições inválidas ou fora do Brasil
         if (isNaN(lat) || isNaN(lon)) {
             console.log('[GPS] Coordenadas inválidas para motorista', motoristaId);
-            return localizacoes.get(motoristaId) || null;
+            return getMapAdmin(adminId).get(motoristaId) || null;
         }
         if (lat < -34 || lat > 5 || lon < -74 || lon > -28) {
             console.log('[GPS] Coordenadas fora do Brasil rejeitadas:', lat, lon);
-            return localizacoes.get(motoristaId) || null;
+            return getMapAdmin(adminId).get(motoristaId) || null;
         }
-        // Rejeitar precisão muito ruim (>150m) — mantém última posição válida
         if (precisao !== null && precisao > 150) {
             console.log('[GPS] Precisão ruim (' + precisao + 'm) rejeitada para motorista', motoristaId);
-            return localizacoes.get(motoristaId) || null;
+            return getMapAdmin(adminId).get(motoristaId) || null;
         }
 
         const localizacao = {
             id: uuidv4(),
             motoristaId,
+            adminId,
             latitude: lat,
             longitude: lon,
             precisao,
             velocidade: dados.velocidade || null,
             timestamp: new Date().toISOString()
         };
-        localizacoes.set(motoristaId, localizacao);
+        getMapAdmin(adminId).set(motoristaId, localizacao);
         return localizacao;
     },
 
-    obterLocalizacao: (motoristaId) => {
-        return localizacoes.get(motoristaId) || null;
+    obterLocalizacao: (motoristaId, adminId = 'global') => {
+        return getMapAdmin(adminId).get(motoristaId) || null;
     },
 
-    listarLocalizacoes: () => {
-        return Array.from(localizacoes.values());
+    listarLocalizacoes: (adminId = 'global') => {
+        return Array.from(getMapAdmin(adminId).values());
     },
 
     calcularDistancia: (lat1, lon1, lat2, lon2) => {
@@ -55,9 +62,9 @@ const gpsService = {
         return Math.round(R * c * 100) / 100;
     },
 
-    buscarProximos: (latitude, longitude, raioKm = 10) => {
+    buscarProximos: (latitude, longitude, raioKm = 10, adminId = 'global') => {
         const proximos = [];
-        localizacoes.forEach((loc, motoristaId) => {
+        getMapAdmin(adminId).forEach((loc) => {
             const distancia = gpsService.calcularDistancia(latitude, longitude, loc.latitude, loc.longitude);
             if (distancia <= raioKm) {
                 proximos.push({ ...loc, distancia });
@@ -67,8 +74,8 @@ const gpsService = {
         return proximos;
     },
 
-    removerLocalizacao: (motoristaId) => {
-        return localizacoes.delete(motoristaId);
+    removerLocalizacao: (motoristaId, adminId = 'global') => {
+        return getMapAdmin(adminId).delete(motoristaId);
     }
 };
 

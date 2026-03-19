@@ -4,7 +4,8 @@ const gpsService = require('../services/gps.service');
 const { _authAdmin } = require('../middlewares/auth');
 
 router.get('/', _authAdmin, (req, res) => {
-    const localizacoes = gpsService.listarLocalizacoes();
+    const adminId = req.usuario?.id || req.usuario?._id || 'global';
+    const localizacoes = gpsService.listarLocalizacoes(adminId);
     res.json(localizacoes);
 });
 
@@ -15,10 +16,12 @@ router.get('/proximos', (req, res) => {
         return res.status(400).json({ error: 'Latitude e longitude obrigatórios' });
     }
 
+    const adminId = req.query.adminId || req.usuario?.id || 'global';
     const proximos = gpsService.buscarProximos(
         parseFloat(latitude),
         parseFloat(longitude),
-        parseFloat(raio) || 10
+        parseFloat(raio) || 10,
+        adminId
     );
     res.json(proximos);
 });
@@ -38,9 +41,10 @@ router.post('/atualizar', (req, res) => {
         return res.status(400).json({ error: 'Dados incompletos' });
     }
 
+    const adminId = req.body.adminId || 'global';
     const localizacao = gpsService.atualizarLocalizacao(motoristaId, {
         latitude, longitude, precisao, velocidade
-    });
+    }, adminId);
     res.json(localizacao);
 });
 
