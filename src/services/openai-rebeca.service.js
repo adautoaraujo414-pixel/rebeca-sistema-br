@@ -113,6 +113,36 @@ const OpenAIRebecaService = {
             .replace(/\s+/g, ' ')
             .trim();
         
+        // ── Complemento: correções de fala colada e ruídos comuns do Whisper ──
+        // Fala colada — separar logradouro emendado
+        const coladasMap = [
+            [/\bmebusc[ao]/gi, 'me busca'],
+            [/\btoaqui\b/gi, 'tô aqui'],
+            [/\btôaqui\b/gi, 'tô aqui'],
+            [/\bmandaum\b/gi, 'manda um'],
+            [/\bqueroum\b/gi, 'quero um'],
+            [/\bpodevim\b/gi, 'pode vim'],
+            [/\bpodevir\b/gi, 'pode vir'],
+            [/\bvoupra\b/gi, 'vou pra'],
+            [/\bvoupro\b/gi, 'vou pro'],
+            [/\btôno\b/gi, 'tô no'],
+            [/\btôna\b/gi, 'tô na'],
+        ];
+        coladasMap.forEach(([de, para]) => { limpo = limpo.replace(de, para); });
+
+        // Ruídos textuais comuns do Whisper em áudio de rua/carro
+        limpo = limpo
+            .replace(/\[música\]/gi, '')
+            .replace(/\[ruído\]/gi, '')
+            .replace(/\[inaudível\]/gi, '')
+            .replace(/\[barulho\]/gi, '')
+            .replace(/\[silêncio\]/gi, '')
+            .replace(/\bmusic\b/gi, '')
+            .replace(/\bnoise\b/gi, '')
+            .replace(/\bapplause\b/gi, '')
+            .replace(/\s+/g, ' ')
+            .trim();
+        
         limpo = this.converterNumerosExtenso(limpo);
         return limpo;
     },
