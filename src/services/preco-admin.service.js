@@ -178,26 +178,27 @@ const PrecoAdminService = {
             }
         }
         
-        // FALLBACK: Usar cálculo por km
+        // FALLBACK: Usar cálculo por km com config real do admin
         const config = await this.getConfig(adminId);
         const faixa = await this.getFaixaAtual(adminId);
-        
+        const taxaMinima = faixa.taxaMinima || config.taxaMinima || 15;
+
         // Cálculo base
-        let preco = config.taxaBase + (distanciaKm * config.precoKm);
-        
+        let preco = (config.taxaBase || 5) + (distanciaKm * (config.precoKm || 2.50));
+
         // Adicionar tempo se houver
         if (tempoMinutos > 0) {
-            preco += tempoMinutos * config.precoMinuto;
+            preco += tempoMinutos * (config.precoMinuto || 0.50);
         }
-        
+
         // Aplicar multiplicador da faixa
-        preco = preco * faixa.multiplicador;
-        
+        preco = preco * (faixa.multiplicador || 1);
+
         // Adicionar taxa adicional da faixa
-        preco += faixa.taxaAdicional;
-        
+        preco += (faixa.taxaAdicional || 0);
+
         // Garantir taxa mínima
-        if (preco < config.taxaMinima) {
+        if (preco < taxaMinima) {
             preco = config.taxaMinima;
         }
         
