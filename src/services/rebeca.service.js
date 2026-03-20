@@ -2151,7 +2151,19 @@ Me manda o endereço de *onde você está*!`;
                 conversa.dados.corridaId = corrida.id;
                 conversas.set(telefone, conversa);
                 _agendarTimeoutAparencia(telefone, conversa.instanciaId, corrida.id, conversas);
-                const _precoConf = conversa.dados?.calculo?.preco || conversa.dados?.calculo?.precoFinal || 0;
+                let _precoConf = conversa.dados?.calculo?.preco || conversa.dados?.calculo?.precoFinal || 0;
+                // Se preço ainda é placeholder R$15 e temos distância, recalcular
+                if (_precoConf === 15 && conversa.dados?.calculo?.distanciaKm > 0) {
+                    try {
+                        const _recalc = await PrecoAdminService.calcularPreco(adminId, conversa.dados.calculo.distanciaKm, conversa.dados.calculo.tempoMinutos || 0);
+                        if (_recalc?.preco || _recalc?.precoFinal) {
+                            _precoConf = _recalc.preco || _recalc.precoFinal;
+                            conversa.dados.calculo.preco = _precoConf;
+                            conversa.dados.calculo.precoFinal = _precoConf;
+                            conversas.set(telefone, conversa);
+                        }
+                    } catch(_pe) { console.log('[PRECO CONF] Erro recalc:', _pe.message); }
+                }
                 return 'Certo!' + (_precoConf > 0 ? ' 💰 *R$ ' + _precoConf.toFixed(2) + '*' : '') + ' Já chamei um motorista! Qual a cor da sua camisa? 👕';
             } else if (msg.includes('nao') || msg.includes('não') || msg.includes('cancelar') || msg.includes('desisto')) {
                 conversa.etapa = 'inicio';
@@ -3754,6 +3766,9 @@ _(ou mande *0* para pular)_`;
         const calc = precoZona || await PrecoAdminService.calcularPreco(adminId, km);
         // Garantir que preco ficou no calculo (unificar precoFinal/preco)
         if (calc && calc.precoFinal && !calc.preco) calc.preco = calc.precoFinal;
+        if (calc && calc.preco && !calc.precoFinal) calc.precoFinal = calc.preco;
+        const _precoFinalNorm = calc?.preco || calc?.precoFinal || 15;
+        console.log('[REBECA PRECO] Admin', adminId, '| Dist:', km, 'km | Preco: R$', _precoFinalNorm, '| Modo:', calc?.modoPreco || 'calculado', '| Faixa:', calc?.faixa?.nome || '?');
         return {
             distancia: rota.sucesso ? rota.distancia.texto : `~${km} km`,
             tempo: rota.sucesso ? rota.duracao.texto : `~${min} min`,
