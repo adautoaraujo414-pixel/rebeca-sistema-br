@@ -1,5 +1,4 @@
 const { PrecoIntermunicipal } = require('../models');
-const PrecoDinamicoService = require('./preco-dinamico.service');
 const PrecoAdminService = require('./preco-admin.service');
 const MapsService = require('./maps.service');
 const CorridaService = require('./corrida.service');
