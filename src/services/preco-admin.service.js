@@ -50,20 +50,26 @@ const PrecoAdminService = {
         }
     },
 
-    // Buscar configuração de preço do admin
+    // Buscar configuração de preço do admin — retorna tudo
     async getConfig(adminId) {
         if (!adminId) return configPadrao;
-        
         try {
-            const admin = await Admin.findById(adminId);
-            if (!admin || !admin.configPrecos) return configPadrao;
-            
+            const admin = await Admin.findById(adminId).lean();
+            if (!admin) return configPadrao;
+            const cp = admin.configPrecos || {};
             return {
-                taxaBase: admin.configPrecos.taxaBase || configPadrao.taxaBase,
-                precoKm: admin.configPrecos.precoKm || configPadrao.precoKm,
-                taxaMinima: admin.configPrecos.taxaMinima || configPadrao.taxaMinima,
-                taxaBandeira2: admin.configPrecos.taxaBandeira2 || configPadrao.taxaBandeira2,
-                precoMinuto: admin.configPrecos.precoMinuto || configPadrao.precoMinuto
+                // taxas base
+                taxaBase:      cp.taxaBase      || configPadrao.taxaBase,
+                precoKm:       cp.precoKm       || configPadrao.precoKm,
+                taxaMinima:    cp.taxaMinima    || configPadrao.taxaMinima,
+                taxaBandeira2: cp.taxaBandeira2 || configPadrao.taxaBandeira2,
+                precoMinuto:   cp.precoMinuto   || configPadrao.precoMinuto,
+                // modo e estruturas completas
+                modoPreco:     admin.modoPreco     || 'simples',
+                precosSimples: admin.precosSimples || null,
+                precoFixo:     admin.precoFixo     || { ativo: false, valor: 0 },
+                faixasPreco:   admin.faixasPreco   || [],
+                configDespacho:admin.configDespacho|| { modo: 'broadcast', tempoAceite: 30 }
             };
         } catch (e) {
             console.error('[PRECO] Erro ao buscar config:', e.message);
@@ -71,40 +77,55 @@ const PrecoAdminService = {
         }
     },
 
-    // Buscar faixa atual do admin
+    // Buscar faixa atual do admin — lê do banco, com fallback para precosSimples
     async getFaixaAtual(adminId) {
         const agora = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
-        const diaSemana = diasSemana[agora.getDay()];
-        const horaAtual = agora.getHours().toString().padStart(2, '0') + ':' + agora.getMinutes().toString().padStart(2, '0');
-        
-        // Faixa padrão
-        const faixaPadrao = { nome: 'Normal', multiplicador: 1, taxaAdicional: 0 };
-        
+        const diasSemanaStr = ['domingo','segunda','terca','quarta','quinta','sexta','sabado'];
+        const diaSemana = diasSemanaStr[agora.getDay()];
+        const horaAtual = agora.getHours().toString().padStart(2,'0') + ':' + agora.getMinutes().toString().padStart(2,'0');
+
+        const faixaPadrao = { id: 'padrao', nome: 'Padrão', multiplicador: 1.0, taxaAdicional: 0, tipo: 'multiplicador' };
+
         if (!adminId) return faixaPadrao;
-        
         try {
-            const admin = await Admin.findById(adminId);
-            if (!admin || !admin.faixasPreco || admin.faixasPreco.length === 0) {
-                // Usar faixas padrão do sistema
-                return this.getFaixaPadraoSistema(diaSemana, horaAtual);
+            const admin = await Admin.findById(adminId).lean();
+            if (!admin) return faixaPadrao;
+
+            // 1) precoFixo de evento ativo — sobrescreve tudo
+            if (admin.precoFixo?.ativo && admin.precoFixo?.valor) {
+                return { id: 'fixo_evento', nome: admin.precoFixo.motivo || 'Evento', tipo: 'fixo', valorFixo: admin.precoFixo.valor, multiplicador: 1, taxaAdicional: 0 };
             }
-            
-            // Buscar faixa do admin
-            // Item 1: suportar diasSemana como array ["segunda","terca"] OU string "segunda"
-            const faixa = admin.faixasPreco.find(f => {
-                if (!f.ativo) return false;
-                if (f.horaInicio && horaAtual < f.horaInicio) return false;
-                if (f.horaFim && horaAtual > f.horaFim) return false;
-                if (!f.diasSemana && !f.diaSemana) return true; // sem restrição de dia
+
+            // 2) faixasPreco personalizadas do admin (salvas no banco)
+            const faixas = (admin.faixasPreco || []).filter(f => f.ativo !== false);
+            for (const f of faixas) {
                 const dias = Array.isArray(f.diasSemana) ? f.diasSemana : [f.diaSemana];
-                return dias.includes(diaSemana);
-            });
-            
-            return faixa || faixaPadrao;
-        } catch (e) {
-            return faixaPadrao;
-        }
+                if (!dias.includes(diaSemana) && !dias.includes('todos')) continue;
+                if (horaAtual >= f.horaInicio && horaAtual <= f.horaFim) {
+                    return { id: f._id?.toString() || 'faixa', nome: f.nome || 'Faixa', multiplicador: f.multiplicador || 1, taxaAdicional: f.taxaAdicional || 0, tipo: 'multiplicador' };
+                }
+            }
+
+            // 3) precosSimples (semana/sabado/domingo por período)
+            if (admin.modoPreco === 'simples' && admin.precosSimples) {
+                const ps = admin.precosSimples;
+                const grupo = (agora.getDay() === 0) ? ps.domingo : (agora.getDay() === 6) ? ps.sabado : ps.semana;
+                if (grupo) {
+                    const h = agora.getHours();
+                    let periodo, valor;
+                    if (h >= 6  && h < 12) { periodo = 'manha';     valor = grupo.manha; }
+                    else if (h >= 12 && h < 18) { periodo = 'tarde';     valor = grupo.tarde; }
+                    else if (h >= 18 && h < 24) { periodo = 'noite';     valor = grupo.noite; }
+                    else                        { periodo = 'madrugada'; valor = grupo.madrugada; }
+                    if (valor) return { id: 'simples_' + periodo, nome: periodo.charAt(0).toUpperCase() + periodo.slice(1), tipo: 'fixo_minimo', taxaMinima: valor, multiplicador: 1, taxaAdicional: 0 };
+                }
+            }
+        } catch(e) { console.log('[FAIXA] Erro:', e.message); }
+        return faixaPadrao;
     },
+
+    // Alias para compatibilidade
+    async getFaixaHoraria(adminId) { return this.getFaixaAtual(adminId); },,
 
     // Faixas padrão do sistema
     getFaixaPadraoSistema(diaSemana, horaAtual) {
@@ -192,14 +213,57 @@ const PrecoAdminService = {
         };
     },
 
-    // Salvar configuração de preço do admin
+    // Salvar configuração de preço do admin — persiste TUDO no banco
     async salvarConfig(adminId, novaConfig) {
         try {
-            const admin = await Admin.findByIdAndUpdate(adminId, {
-                configPrecos: novaConfig
-            }, { new: true });
-            return { sucesso: true, config: admin.configPrecos };
+            const update = {};
+
+            // configPrecos (taxas base)
+            if (novaConfig.taxaBase !== undefined || novaConfig.precoKm !== undefined ||
+                novaConfig.taxaMinima !== undefined || novaConfig.taxaBandeira2 !== undefined ||
+                novaConfig.precoMinuto !== undefined || novaConfig.configPrecos) {
+                const cp = novaConfig.configPrecos || novaConfig;
+                update.configPrecos = {
+                    taxaBase:     parseFloat(cp.taxaBase)     || 5.00,
+                    precoKm:      parseFloat(cp.precoKm)      || 2.50,
+                    taxaMinima:   parseFloat(cp.taxaMinima)   || 15.00,
+                    taxaBandeira2:parseFloat(cp.taxaBandeira2)|| 3.00,
+                    precoMinuto:  parseFloat(cp.precoMinuto)  || 0.50
+                };
+            }
+
+            // modoPreco (simples | calculado)
+            if (novaConfig.modoPreco) update.modoPreco = novaConfig.modoPreco;
+
+            // precosSimples (semana/sabado/domingo por período)
+            if (novaConfig.precosSimples) update.precosSimples = novaConfig.precosSimples;
+
+            // precoFixo (evento/festa)
+            if (novaConfig.precoFixo !== undefined) update.precoFixo = novaConfig.precoFixo;
+
+            // faixasPreco (array de faixas personalizadas)
+            if (Array.isArray(novaConfig.faixasPreco)) update.faixasPreco = novaConfig.faixasPreco;
+
+            // configDespacho
+            if (novaConfig.configDespacho) update.configDespacho = novaConfig.configDespacho;
+
+            const admin = await Admin.findByIdAndUpdate(adminId, update, { new: true });
+            if (!admin) return { sucesso: false, erro: 'Admin não encontrado' };
+
+            console.log('[PRECO] Config salva para admin', adminId, '— campos:', Object.keys(update).join(', '));
+            return {
+                sucesso: true,
+                config: {
+                    configPrecos:  admin.configPrecos,
+                    modoPreco:     admin.modoPreco,
+                    precosSimples: admin.precosSimples,
+                    precoFixo:     admin.precoFixo,
+                    faixasPreco:   admin.faixasPreco,
+                    configDespacho:admin.configDespacho
+                }
+            };
         } catch (e) {
+            console.error('[PRECO] Erro salvarConfig:', e.message);
             return { sucesso: false, erro: e.message };
         }
     },

@@ -2,12 +2,14 @@ const express = require('express');
 const router = express.Router();
 const PrecoAdminService = require('../services/preco-admin.service');
 
-// Buscar configuração de preços do admin
+// Buscar configuração de preços do admin — retorna config completa
 router.get('/config', async (req, res) => {
     try {
         const adminId = req.headers['x-admin-id'] || req.query.adminId;
+        if (!adminId) return res.status(400).json({ erro: 'AdminId obrigatório' });
         const config = await PrecoAdminService.getConfig(adminId);
-        res.json(config);
+        const faixaAtual = await PrecoAdminService.getFaixaAtual(adminId);
+        res.json({ ...config, faixaAtual });
     } catch (e) {
         res.status(500).json({ erro: e.message });
     }

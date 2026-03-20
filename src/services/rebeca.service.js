@@ -14,6 +14,19 @@ const AprendizadoService = require('./rebeca-aprendizado.service');
 const RaciocinioService = require('./rebeca-raciocinio.service');
 const CerebroRebeca = require('./cerebro-rebeca.service');
 
+
+// ===== HELPER: calcular preço real pelo admin (evita hardcode de R$15) =====
+async function _calcularPrecoReal(adminId, distanciaKm, tempoMinutos) {
+    try {
+        if (!adminId || !distanciaKm || distanciaKm <= 0) return null;
+        const result = await PrecoAdminService.calcularPreco(adminId, distanciaKm, tempoMinutos || 0);
+        if (result && (result.precoFinal || result.preco)) {
+            return result.precoFinal || result.preco;
+        }
+    } catch(e) { console.log('[PRECO_HELPER] Erro:', e.message); }
+    return null;
+}
+
 const conversas = new Map();
 
 // Carregar conversas do banco ao iniciar
@@ -3737,7 +3750,10 @@ _(ou mande *0* para pular)_`;
                 if (zonaRes && zonaRes.periodo === 'zona') precoZona = zonaRes;
             } catch(e) { console.log('[REBECA] Erro catch silencioso:', e.message); }
         }
+        // Preco real do admin (respeita faixas, precosSimples, zonas)
         const calc = precoZona || await PrecoAdminService.calcularPreco(adminId, km);
+        // Garantir que preco ficou no calculo (unificar precoFinal/preco)
+        if (calc && calc.precoFinal && !calc.preco) calc.preco = calc.precoFinal;
         return {
             distancia: rota.sucesso ? rota.distancia.texto : `~${km} km`,
             tempo: rota.sucesso ? rota.duracao.texto : `~${min} min`,
