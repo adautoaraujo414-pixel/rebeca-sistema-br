@@ -62,6 +62,8 @@ const ConfigSchema = new mongoose.Schema({
 
 const Agendamento = require('./Agendamento');
 
+const PrecoCidade = require('./PrecoCidade');
+
 module.exports = {
     PrecoCidade,
     Agendamento,
@@ -546,5 +548,4 @@ const PontoReferenciaSchema = new mongoose.Schema({
 PontoReferenciaSchema.index({ adminId: 1, ativo: 1 });
 
 const PontoReferencia = mongoose.model('PontoReferencia', PontoReferenciaSchema);
-const PrecoCidade = require('./PrecoCidade');
 module.exports.PontoReferencia = PontoReferencia;
