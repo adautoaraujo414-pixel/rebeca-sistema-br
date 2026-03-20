@@ -159,7 +159,7 @@ const PrecoAdminService = {
         
         // FALLBACK: Usar cálculo por km
         const config = await this.getConfig(adminId);
-        const faixa = await this.getFaixaAtual(adminId);
+        const faixa = await this.getFaixaHoraria(adminId);
         
         // Cálculo base
         let preco = config.taxaBase + (distanciaKm * config.precoKm);
@@ -250,7 +250,7 @@ const PrecoAdminService = {
             // Cidade não cadastrada — calcular por km
             if (distanciaKm) {
                 const config = await this.getConfig(adminId);
-                const faixa = await this.getFaixaAtual(adminId);
+                const faixa = await this.getFaixaHoraria(adminId);
                 const precoKm = (config.precoKm || 2.50) * (faixa.multiplicador || 1);
                 const preco = Math.max(config.taxaMinima || 15, distanciaKm * precoKm + (config.taxaBase || 5));
                 console.log('[PRECO CIDADE] Rota por km:', distanciaKm, 'km x R$', precoKm, '= R$', preco.toFixed(2));

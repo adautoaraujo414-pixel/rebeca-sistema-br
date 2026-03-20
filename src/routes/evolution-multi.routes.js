@@ -707,4 +707,15 @@ router.post('/instancia/:id/reconfigurar-webhook', async (req, res) => {
     }
 });
 
+
+// Listener: envia mensagens emitidas por outros services (evita require circular)
+process.on('rebeca:enviar_mensagem', async ({ instanciaId, telefone, mensagem }) => {
+    try {
+        await EvolutionMultiService.enviarMensagem(instanciaId, telefone, mensagem);
+        console.log('[EVENT] rebeca:enviar_mensagem enviado para', telefone);
+    } catch(e) {
+        console.log('[EVENT] Erro ao enviar mensagem via evento:', e.message);
+    }
+});
+
 module.exports = router;

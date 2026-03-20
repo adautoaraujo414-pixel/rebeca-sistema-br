@@ -249,20 +249,24 @@ const MotoristaWhatsappService = {
             motoristaId: null, motoristaNome: null, status: 'pendente'
         });
         await Motorista.findByIdAndUpdate(motorista._id, { status: 'disponivel' });
-        // Notificar cliente que estamos buscando outro motorista
+        // Notificar cliente via event emitter (evita require circular)
         try {
             const corridaAtual = await Corrida.findById(corrida._id).lean();
             if (corridaAtual && corridaAtual.clienteTelefone) {
-                const EvolutionMultiService = require('./evolution-multi.service');
                 const { InstanciaWhatsapp } = require('../models');
                 const inst = await InstanciaWhatsapp.findOne({
-                    adminId, status: { $in: ['conectado','open','connected'] }
-                });
+                    adminId,
+                    status: { $in: ['conectado','open','connected'] }
+                }).sort({ ultimaConexao: -1 }).lean();
                 if (inst) {
-                    await EvolutionMultiService.enviarMensagem(
-                        inst._id, corridaAtual.clienteTelefone,
-                        'Estamos buscando outro motorista para você, um momento! 🚗'
-                    );
+                    // Emite evento — evolution-multi.routes escuta e envia
+                    process.nextTick(() => {
+                        process.emit('rebeca:enviar_mensagem', {
+                            instanciaId: inst._id,
+                            telefone: corridaAtual.clienteTelefone,
+                            mensagem: 'Estamos buscando outro motorista para você, um momento! 🚗'
+                        });
+                    });
                 }
             }
         } catch(_re) { console.log('[RECUSAR] Erro notif cliente:', _re.message); }
