@@ -39,6 +39,16 @@ const gpsIntegradoService = {
         if (maisProximo.distancia > (raioKm || 10)) return null;
         return maisProximo;
     },
+
+    // Buscar todos os motoristas dentro do raio (para despacho individual por fila)
+    buscarDentroDoRaio: async (adminId, latitude, longitude, raioKm = 2.5) => {
+        const disponiveis = await gpsIntegradoService.listarDisponiveis(adminId, latitude, longitude);
+        // Filtrar só os que estão dentro do raio configurado
+        const dentroDoRaio = disponiveis.filter(m => m.distancia <= raioKm);
+        console.log('[GPS] Motoristas dentro do raio ' + raioKm + 'km:', dentroDoRaio.length, '/ total disponíveis:', disponiveis.length);
+        // Retorna ordenado por distância (fila — mais próximo primeiro)
+        return dentroDoRaio;
+    },
     atualizar: async (motoristaId, dados) => {
         const update = {};
         if (dados.latitude && dados.longitude) {
