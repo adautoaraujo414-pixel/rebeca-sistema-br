@@ -242,16 +242,33 @@ const MotoristaWhatsappService = {
 
     // ==================== RECUSAR ====================
     async processarRecusar(motorista, corrida, adminId) {
-        if (!corrida) return null;
-        // Apenas avisar — o redespacho é tratado pelo DespachoService
-        const { Corrida } = require('../models');
+        if (!corrida) return 'Sem corrida ativa para recusar.';
+        const { Corrida, Motorista } = require('../models');
+        // Liberar motorista e corrida sem pedir localização novamente
         await Corrida.findByIdAndUpdate(corrida._id, {
             motoristaId: null, motoristaNome: null, status: 'pendente'
         });
-        const { Motorista } = require('../models');
         await Motorista.findByIdAndUpdate(motorista._id, { status: 'disponivel' });
-        return `Ok, entendido! Vou redespachar para outro motorista.\n\nVocê está disponível para outras corridas! 🚗`;
-    },
+        // Notificar cliente que estamos buscando outro motorista
+        try {
+            const corridaAtual = await Corrida.findById(corrida._id).lean();
+            if (corridaAtual && corridaAtual.clienteTelefone) {
+                const EvolutionMultiService = require('./evolution-multi.service');
+                const { InstanciaWhatsapp } = require('../models');
+                const inst = await InstanciaWhatsapp.findOne({
+                    adminId, status: { $in: ['conectado','open','connected'] }
+                });
+                if (inst) {
+                    await EvolutionMultiService.enviarMensagem(
+                        inst._id, corridaAtual.clienteTelefone,
+                        'Estamos buscando outro motorista para você, um momento! 🚗'
+                    );
+                }
+            }
+        } catch(_re) { console.log('[RECUSAR] Erro notif cliente:', _re.message); }
+        console.log('[RECUSAR] Motorista', motorista.nomeCompleto, 'recusou corrida', corrida._id);
+        return 'Entendido! Você está livre para outras corridas 🚗';
+},
 
     // ==================== REPASSAR MENSAGEM PARA CLIENTE ====================
     async repassarParaCliente(motorista, corrida, mensagem, adminId, instanciaId) {

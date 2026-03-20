@@ -90,12 +90,15 @@ const PrecoAdminService = {
             }
             
             // Buscar faixa do admin
-            const faixa = admin.faixasPreco.find(f => 
-                f.ativo && 
-                f.diaSemana === diaSemana && 
-                horaAtual >= f.horaInicio && 
-                horaAtual <= f.horaFim
-            );
+            // Item 1: suportar diasSemana como array ["segunda","terca"] OU string "segunda"
+            const faixa = admin.faixasPreco.find(f => {
+                if (!f.ativo) return false;
+                if (f.horaInicio && horaAtual < f.horaInicio) return false;
+                if (f.horaFim && horaAtual > f.horaFim) return false;
+                if (!f.diasSemana && !f.diaSemana) return true; // sem restrição de dia
+                const dias = Array.isArray(f.diasSemana) ? f.diasSemana : [f.diaSemana];
+                return dias.includes(diaSemana);
+            });
             
             return faixa || faixaPadrao;
         } catch (e) {
@@ -224,5 +227,41 @@ const PrecoAdminService = {
         }
     }
 };
+
+    // Item 3 — Calcular preço para cidade cadastrada (fixo) ou por km (não cadastrada)
+    async calcularPrecoCidade(adminId, cidadeOrigem, cidadeDestino, distanciaKm) {
+        try {
+            const { PrecoCidade } = require('../models');
+            // Buscar preço fixo cadastrado para essa rota
+            const rota = await PrecoCidade.findOne({
+                adminId,
+                ativo: true,
+                $or: [
+                    { cidadeOrigem: new RegExp(cidadeOrigem, 'i'), cidadeDestino: new RegExp(cidadeDestino, 'i') },
+                    { cidadeOrigem: new RegExp(cidadeDestino, 'i'), cidadeDestino: new RegExp(cidadeOrigem, 'i') }
+                ]
+            }).lean();
+
+            if (rota && rota.precoFixo) {
+                console.log('[PRECO CIDADE] Rota cadastrada:', cidadeOrigem, '->', cidadeDestino, 'R$', rota.precoFixo);
+                return { precoFixo: rota.precoFixo, tipo: 'fixo', rota: rota.nome || cidadeDestino };
+            }
+
+            // Cidade não cadastrada — calcular por km
+            if (distanciaKm) {
+                const config = await this.getConfig(adminId);
+                const faixa = await this.getFaixaAtual(adminId);
+                const precoKm = (config.precoKm || 2.50) * (faixa.multiplicador || 1);
+                const preco = Math.max(config.taxaMinima || 15, distanciaKm * precoKm + (config.taxaBase || 5));
+                console.log('[PRECO CIDADE] Rota por km:', distanciaKm, 'km x R$', precoKm, '= R$', preco.toFixed(2));
+                return { precoFixo: parseFloat(preco.toFixed(2)), tipo: 'km', distanciaKm };
+            }
+
+            return null; // sem dados suficientes
+        } catch(e) {
+            console.log('[PRECO CIDADE] Erro:', e.message);
+            return null;
+        }
+    },
 
 module.exports = PrecoAdminService;
