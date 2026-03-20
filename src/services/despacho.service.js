@@ -231,6 +231,22 @@ const DespachoService = {
                     return;
 
                 } else if (regra.tipo === 'proximo') {
+                    // Tentar buscar motoristas dentro do raio via GPS integrado
+                    try {
+                        const origemLat = corrida.origem?.latitude || corrida.origemLat;
+                        const origemLng = corrida.origem?.longitude || corrida.origemLng;
+                        if (origemLat && origemLng && adminId) {
+                            const filaRaio = await GPSIntegradoService.buscarDentroDoRaio(adminId, origemLat, origemLng, 2.5);
+                            if (filaRaio && filaRaio.length > 0) {
+                                const idsRaio = new Set(filaRaio.map(m => (m._id || m.motoristaId)?.toString()));
+                                const filtrados = motoristasDisponiveis.filter(m => idsRaio.has((m._id || m.id)?.toString()));
+                                if (filtrados.length > 0) {
+                                    motoristasDisponiveis = filtrados;
+                                    console.log('[DESPACHO] Raio 2.5km filtrou para', filtrados.length, 'motoristas');
+                                }
+                            }
+                        }
+                    } catch(_rr) { console.log('[DESPACHO] Erro raio GPS:', _rr.message); }
                     // Motorista mais próximo com GPS — filtro por raio 2.5km
                     const _raioKm = 2.5;
                     const _origemLat = corrida.origem?.latitude || corrida.origem?.lat || corrida.origemLat;
@@ -259,6 +275,22 @@ const DespachoService = {
 
                 } else { // broadcast
                     motoristasParaNotificar = motoristasDisponiveis;
+                }
+
+                // Filtro preferência motorista mulher (se corrida solicitou)
+                if (corrida.prefereMotristaMulher && motoristasParaNotificar.length > 0) {
+                    const { Motorista } = require('../models');
+                    try {
+                        const ids = motoristasParaNotificar.map(m => m._id || m.id).filter(Boolean);
+                        const mulheres = await Motorista.find({ _id: { $in: ids }, genero: 'feminino' }).lean();
+                        if (mulheres.length > 0) {
+                            const idsF = new Set(mulheres.map(m => m._id.toString()));
+                            motoristasParaNotificar = motoristasParaNotificar.filter(m => idsF.has((m._id || m.id)?.toString()));
+                            console.log('[DESPACHO] Filtro mulher ativo — motoristas:', motoristasParaNotificar.length);
+                        } else {
+                            console.log('[DESPACHO] Prefere mulher mas nenhuma disponivel — despachando todos');
+                        }
+                    } catch(_gf) { console.log('[DESPACHO] Erro filtro genero:', _gf.message); }
                 }
 
                 // Notificar motoristas desta regra

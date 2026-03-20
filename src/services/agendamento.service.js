@@ -50,21 +50,53 @@ const AgendamentoService = {
                         } catch(e) { console.log('[AGENDAMENTO] Erro lembrete 5min:', e.message); }
                     }
 
-                    // 10 min antes — despachar motorista
-                    if (diff <= 10 * 60 * 1000 + janela && diff > 10 * 60 * 1000 - janela) {
+                    // 10 min antes — criar corrida e despachar diretamente (sem passar pela Rebeca)
+                    if (diff <= 10 * 60 * 1000 + janela && diff > 10 * 60 * 1000 - janela &&
+                        ag.status !== 'despachado') {
                         try {
-                            const RebecaService = require('./rebeca.service');
-                            const contexto = { adminId: ag.adminId, instanciaId: ag.instanciaId, agendamento: true };
-                            // Forçar solicitação de corrida com origem já definida
-                            await RebecaService.processarMensagem(
-                                ag.telefone,
-                                `quero um carro agora em ${ag.origem}`,
-                                ag.nomeCliente,
-                                contexto
-                            );
-                            await Agendamento.findByIdAndUpdate(ag._id, { status: 'despachado' });
-                            console.log('[AGENDAMENTO] Motorista despachado para', ag.telefone);
-                        } catch(e) { console.log('[AGENDAMENTO] Erro despacho:', e.message); }
+                            const { Corrida, InstanciaWhatsapp } = require('../models');
+                            const PrecoAdminService = require('./preco-admin.service');
+                            const DespachoService = require('./despacho.service');
+                            const MotoristaService = require('./motorista.service');
+                            const EvoService = require('./evolution-multi.service');
+
+                            // Calcular preço real
+                            const calc = await PrecoAdminService.calcularPreco(ag.adminId, 1, 0);
+                            const precoEstimado = calc?.preco || calc?.precoFinal || 15;
+
+                            // Criar corrida diretamente no banco
+                            const corrida = await Corrida.create({
+                                adminId: ag.adminId,
+                                clienteNome: ag.nomeCliente,
+                                clienteTelefone: ag.telefone,
+                                origem: { endereco: ag.origem },
+                                destino: ag.destino ? { endereco: ag.destino } : null,
+                                status: 'pendente',
+                                precoEstimado,
+                                agendamentoId: ag._id,
+                                origem_tipo: 'agendamento'
+                            });
+
+                            // Buscar motoristas disponíveis e despachar
+                            const motoristas = await MotoristaService.listarDisponiveis(ag.adminId);
+                            if (motoristas.length > 0) {
+                                await DespachoService.despacharCorrida(corrida, motoristas, ag.adminId);
+                            }
+
+                            // Notificar cliente
+                            const inst = await InstanciaWhatsapp.findOne({
+                                adminId: ag.adminId,
+                                status: { $in: ['conectado','open','connected'] }
+                            }).sort({ ultimaConexao: -1 }).lean();
+                            if (inst) {
+                                await EvoService.enviarMensagem(inst._id, ag.telefone,
+                                    `🚗 Sua corrida agendada está chegando! Estou chamando um motorista para buscar você em *${ag.origem}*. Um momento!`
+                                );
+                            }
+
+                            await Agendamento.findByIdAndUpdate(ag._id, { status: 'despachado', corridaId: corrida._id });
+                            console.log('[AGENDAMENTO] Corrida criada e despachada:', corrida._id, '| cliente:', ag.telefone);
+                        } catch(e) { console.log('[AGENDAMENTO] Erro despacho direto:', e.message); }
                     }
 
                     // Expirado sem despachar (passou do horário + 15min)

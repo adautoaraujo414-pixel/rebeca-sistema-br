@@ -3863,6 +3863,23 @@ _(ou mande *0* para pular)_`;
             }
         }
         
+        // Recalcular preço real antes de criar corrida (evita R$15 hardcoded no banco)
+        if (adminId && dados?.calculo) {
+            const _km = dados.calculo.distanciaKm || 0;
+            const _min = dados.calculo.tempoMinutos || 0;
+            const _precoAtual = dados.calculo.preco || dados.calculo.precoFinal || 0;
+            if (_precoAtual <= 15 || _precoAtual === 15) {
+                try {
+                    const _recalcCriacao = await PrecoAdminService.calcularPreco(adminId, _km > 0 ? _km : 1, _min);
+                    if (_recalcCriacao?.preco || _recalcCriacao?.precoFinal) {
+                        dados.calculo.preco = _recalcCriacao.preco || _recalcCriacao.precoFinal;
+                        dados.calculo.precoFinal = dados.calculo.preco;
+                        console.log('[CRIAR CORRIDA] Preco recalculado:', dados.calculo.preco, '| km:', _km);
+                    }
+                } catch(_rce) { console.log('[CRIAR CORRIDA] Erro recalc preco:', _rce.message); }
+            }
+        }
+
         let cliente = await ClienteService.buscarPorTelefone(telefone, adminId);
         if (!cliente) cliente = await ClienteService.criar({ nome: nomeCliente, telefone, adminId });
         
