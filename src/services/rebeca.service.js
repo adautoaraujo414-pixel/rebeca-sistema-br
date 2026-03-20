@@ -3269,7 +3269,7 @@ _(ou mande *0* para pular)_`;
                     if (adm) infoEmpresa = { nomeEmpresa: adm.empresa || adm.nome || '', telefoneEmpresa: adm.telefone || '' };
                 }
             } catch(e) { console.log('[CATCH]', e.message); }
-            const respostaIA = await IAService.responderPergunta(msgOriginal, { ...PrecoDinamicoService.getConfig(), ...infoEmpresa });
+            const respostaIA = await IAService.responderPergunta(msgOriginal, { ...infoEmpresa });
             if (respostaIA) {
                 resposta = respostaIA + `\n\n`;
             } else {
