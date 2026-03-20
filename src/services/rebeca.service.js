@@ -488,6 +488,16 @@ const RebecaService = {
         if (adminId) conversa.adminId = adminId;
         if (contexto.instanciaId) conversa.instanciaId = contexto.instanciaId;
         // Carregar favoritos do MongoDB (atualiza cache em memória)
+        // Detectar preferência motorista mulher
+        const _msgMulher = msg.toLowerCase();
+        if (_msgMulher.includes('motorista mulher') || _msgMulher.includes('motorista feminina') ||
+            _msgMulher.includes('quero mulher') || _msgMulher.includes('prefiro mulher') ||
+            _msgMulher.includes('so mulher') || _msgMulher.includes('motorista do sexo feminino') ||
+            _msgMulher.includes('mulher por favor')) {
+            if (!conversa.dados) conversa.dados = {};
+            conversa.dados.prefereMotristaMulher = true;
+            console.log('[REBECA] Preferencia motorista mulher detectada para', telefone);
+        }
         await RebecaService.carregarFavoritos(telefone, adminId);
         const favoritos = RebecaService.getFavoritos(telefone);
         
