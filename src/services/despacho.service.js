@@ -231,9 +231,20 @@ const DespachoService = {
                     return;
 
                 } else if (regra.tipo === 'proximo') {
-                    // Motorista mais próximo com GPS
-                    const comGPS = motoristasDisponiveis.filter(m => m.latitude && m.longitude);
-                    if (comGPS.length > 0 && (corrida.origem?.latitude || corrida.origem?.lat || corrida.origemLat)) {
+                    // Motorista mais próximo com GPS — filtro por raio 2.5km
+                    const _raioKm = 2.5;
+                    const _origemLat = corrida.origem?.latitude || corrida.origem?.lat || corrida.origemLat;
+                    const _origemLng = corrida.origem?.longitude || corrida.origem?.lng || corrida.origemLng;
+                    const comGPS = motoristasDisponiveis.filter(m => {
+                        if (!m.latitude || !m.longitude) return false;
+                        if (!_origemLat || !_origemLng) return true;
+                        const dLat = (m.latitude - _origemLat) * 111;
+                        const dLng = (m.longitude - _origemLng) * 111 * Math.cos(_origemLat * Math.PI / 180);
+                        const dist = Math.sqrt(dLat*dLat + dLng*dLng);
+                        return dist <= _raioKm;
+                    });
+                    console.log("[DESPACHO] Motoristas dentro do raio", _raioKm, "km:", comGPS.length);
+                    if (comGPS.length > 0 && (_origemLat)) {
                         const oLat = corrida.origem?.latitude || corrida.origem?.lat || corrida.origemLat;
                         const oLng = corrida.origem?.longitude || corrida.origem?.lng || corrida.origemLng;
                         comGPS.sort((a, b) => {
