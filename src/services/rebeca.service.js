@@ -4476,6 +4476,7 @@ _(ou mande *0* para pular)_`;
                 adminId,
                 clienteTelefone: telefoneCliente,
                 clienteNome: nomeCliente,
+                prefereMotristaMulher: dados?.prefereMotristaMulher || false,
                 mensagemCliente,
                 instanciaId,
                 status: 'pendente'
@@ -4776,6 +4777,7 @@ const filaEsperaFunctions = {
             const entrada = await FilaEspera.create({
                 clienteTelefone: telefoneCliente,
                 clienteNome: nomeCliente,
+                prefereMotristaMulher: dados?.prefereMotristaMulher || false,
                 origem,
                 destino,
                 posicao: aguardando + 1,
