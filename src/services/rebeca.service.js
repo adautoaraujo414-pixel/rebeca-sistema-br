@@ -3696,8 +3696,8 @@ _(ou mande *0* para pular)_`;
                 return t + `\n\n_Me manda o endereço para calcular o valor exato!_`;
             }
         } catch(e) { console.log('[CATCH]', e.message); }
-        const config = PrecoDinamicoService.getConfig();
-        const faixa = PrecoDinamicoService.obterFaixaAtual();
+        const config = await PrecoAdminService.getConfig(adminId);
+        const faixa = await PrecoAdminService.getFaixaAtual(adminId);
         let t = `💰 *TABELA DE PREÇOS*\n\n• Taxa: R$ ${config.taxaBase.toFixed(2)}\n• Km: R$ ${config.precoKm.toFixed(2)}\n\n🕐 *Agora:* ${faixa.nome}`;
         if (faixa.multiplicador > 1) t += ` (${faixa.multiplicador}x)`;
         return t + `\n\n_Me manda o endereço para calcular o valor exato!_`;
@@ -3775,7 +3775,7 @@ _(ou mande *0* para pular)_`;
             distanciaKm: km, tempoMinutos: min,
             preco: precoZona ? precoZona.preco : calc.precoFinal,
             detalhes: calc.detalhes,
-            faixa: PrecoDinamicoService.obterFaixaAtual(),
+            faixa: await PrecoAdminService.getFaixaAtual(adminId),
             origem: rota.sucesso ? rota.origem : { endereco: origem },
             destino: rota.sucesso ? rota.destino : { endereco: destino }
         };

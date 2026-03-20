@@ -6,7 +6,7 @@ const CorridaService = require('./corrida.service');
 const ClienteService = require('./cliente.service');
 const GPSIntegradoService = require('./gps-integrado.service');
 const LocalidadeService = require('./localidade.service');
-const PrecoDinamicoService = require('./preco-dinamico.service');
+const PrecoAdminService = require('./preco-admin.service');
 const WhatsAppService = require('./whatsapp.service');
 
 const CONFIG = { raioMaximoBuscaKm: 10, tempoMaximoEsperaMin: 15 };
@@ -31,7 +31,7 @@ const RebecaIntegradaService = {
             origem.latitude, origem.longitude, destino.latitude, destino.longitude
         );
         
-        const calculo = PrecoDinamicoService.calcularPreco(distanciaKm);
+        const calculo = await PrecoAdminService.calcularPreco(adminId, distanciaKm, 0);
         
         const corrida = CorridaService.criar({
             clienteId: cliente.id, clienteNome: cliente.nome, clienteTelefone: cliente.telefone,
@@ -129,7 +129,7 @@ const RebecaIntegradaService = {
         const distanciaKm = RebecaIntegradaService.calcularDistancia(
             origem.latitude, origem.longitude, destino.latitude, destino.longitude
         );
-        const calculo = PrecoDinamicoService.calcularPreco(distanciaKm);
+        const calculo = await PrecoAdminService.calcularPreco(adminId, distanciaKm, 0);
         return { distanciaKm, precoEstimado: calculo.precoFinal, tempoEstimadoMin: Math.max(5, Math.round(distanciaKm * 2)) };
     },
 
