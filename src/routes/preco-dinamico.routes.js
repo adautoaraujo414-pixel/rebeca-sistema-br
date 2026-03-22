@@ -225,7 +225,7 @@ router.post('/calcular', async (req, res) => {
             const resultado = await PrecoAdminService.calcularPreco(adminId, parseFloat(distanciaKm), parseInt(tempoMinutos) || 0);
             return res.json(resultado);
         }
-    } catch(e) {}
+    } catch(e) { /* fallback abaixo */ }
     const data = dataHora ? new Date(dataHora) : new Date();
     res.json(PrecoDinamicoService.calcularPreco(parseFloat(distanciaKm), parseInt(tempoMinutos) || 0, data));
 });
@@ -240,7 +240,7 @@ router.get('/calcular/:distanciaKm', async (req, res) => {
             const resultado = await PrecoAdminService.calcularPreco(adminId, distanciaKm, tempoMinutos);
             return res.json(resultado);
         }
-    } catch(e) {}
+    } catch(e) { /* fallback abaixo */ }
     res.json(PrecoDinamicoService.calcularPreco(distanciaKm, tempoMinutos));
 });
 
@@ -365,7 +365,7 @@ router.get('/rebeca/tabela', async (req, res) => {
     faixasHoje.forEach(f => {
         const emoji = f.multiplicador > 1.3 ? '🔴' : f.multiplicador > 1.1 ? '🟡' : '🟢';
         tabela += `${emoji} ${f.horaInicio}-${f.horaFim}: ${f.nome} (${f.multiplicador}x)`;
-        if (f.taxaAdicional > 0) tabela += ` +R$${f.taxaAdicional.toFixed(2)}`;
+        if (f.taxaAdicional > 0) tabela += ` +R$${(f.taxaAdicional || 0).toFixed(2)}`;
         tabela += '\n';
     });
 
