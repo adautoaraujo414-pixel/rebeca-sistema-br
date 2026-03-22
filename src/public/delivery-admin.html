@@ -349,7 +349,7 @@
             document.getElementById('loginContainer').style.display = 'none';
             document.getElementById('dashboardContainer').style.display = 'block';
             document.querySelector('.dashboard').style.display = 'block';
-            carregarDashboard();
+            setTimeout(() => carregarDashboard(), 100);
         }
 
         async function fazerLogin() {
