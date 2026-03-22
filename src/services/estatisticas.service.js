@@ -97,29 +97,26 @@ const EstatisticasService = {
         const mongoose = require('mongoose');
         if (!adminId || !mongoose.Types.ObjectId.isValid(adminId)) return [];
         const aid = new mongoose.Types.ObjectId(adminId);
-        const corridas = await Corrida.find({ status: 'finalizada', adminId: aid });
-        const horarios = {};
-        
-        corridas.forEach(c => {
-            if (c.createdAt) {
-                const hora = new Date(c.createdAt).getHours();
-                horarios[hora] = (horarios[hora] || 0) + 1;
-            }
-        });
+        const agg = await Corrida.aggregate([
+            { $match: { status: 'finalizada', adminId: aid } },
+            { $group: {
+                _id: { $hour: { date: '$createdAt', timezone: 'America/Sao_Paulo' } },
+                corridas: { $sum: 1 }
+            }}
+        ]);
 
-        const max = Math.max(...Object.values(horarios), 1);
-        return Object.entries(horarios)
-            .map(([hora, corridas]) => {
-                const h = parseInt(hora);
-                const pct = corridas / max;
-                return {
-                    hora: h,
-                    corridas,
-                    horaFormatada: h.toString().padStart(2,'0') + ':00',
-                    nivel: pct > 0.75 ? 'alto' : pct > 0.4 ? 'medio' : 'baixo'
-                };
-            })
-            .sort((a, b) => b.corridas - a.corridas);
+        if (!agg.length) return [];
+        const max = Math.max(...agg.map(r => r.corridas), 1);
+        return agg.map(r => {
+            const h = r._id;
+            const pct = r.corridas / max;
+            return {
+                hora: h,
+                corridas: r.corridas,
+                horaFormatada: h.toString().padStart(2,'0') + ':00',
+                nivel: pct > 0.75 ? 'alto' : pct > 0.4 ? 'medio' : 'baixo'
+            };
+        }).sort((a, b) => b.corridas - a.corridas);
     },
 
     // Dashboard completo
@@ -135,31 +132,45 @@ const EstatisticasService = {
         
         const aid = new mongoose.Types.ObjectId(adminId);
         const [
-            corridasHoje,
+            resumoHoje,
+            resumoTotal,
             motoristas,
-            clientes,
-            todasCorridas
+            clientes
         ] = await Promise.all([
-            Corrida.find({ adminId: aid, createdAt: { $gte: hoje } }),
-            Motorista.find({ adminId: aid }),
-            Cliente.countDocuments({ adminId: aid }),
-            Corrida.find({ adminId: aid })
+            Corrida.aggregate([
+                { $match: { adminId: aid, createdAt: { $gte: hoje } } },
+                { $group: {
+                    _id: null,
+                    total: { $sum: 1 },
+                    finalizadas: { $sum: { $cond: [{ $eq: ['$status','finalizada'] }, 1, 0] } },
+                    faturamento: { $sum: { $cond: [{ $eq: ['$status','finalizada'] }, { $ifNull: ['$precoFinal',0] }, 0] } }
+                }}
+            ]),
+            Corrida.aggregate([
+                { $match: { adminId: aid } },
+                { $group: {
+                    _id: null,
+                    total: { $sum: 1 },
+                    faturamento: { $sum: { $cond: [{ $eq: ['$status','finalizada'] }, { $ifNull: ['$precoFinal',0] }, 0] } }
+                }}
+            ]),
+            Motorista.find({ adminId: aid }).select('status').lean(),
+            Cliente.countDocuments({ adminId: aid })
         ]);
-        
-        const faturamentoHoje = corridasHoje
-            .filter(c => c.status === 'finalizada')
-            .reduce((s, c) => s + (c.precoFinal || 0), 0);
-        
+
+        const h = resumoHoje[0] || { total: 0, finalizadas: 0, faturamento: 0 };
+        const t = resumoTotal[0] || { total: 0, faturamento: 0 };
+
         return {
-            corridasHoje: corridasHoje.length,
-            corridasFinalizadasHoje: corridasHoje.filter(c => c.status === 'finalizada').length,
-            faturamentoHoje,
+            corridasHoje: h.total,
+            corridasFinalizadasHoje: h.finalizadas,
+            faturamentoHoje: h.faturamento,
             motoristasTotal: motoristas.length,
             motoristasOnline: motoristas.filter(m => m.status === 'disponivel').length,
             motoristasEmCorrida: motoristas.filter(m => m.status === 'em_corrida').length,
             clientesTotal: clientes,
-            corridasTotal: todasCorridas.length,
-            faturamentoTotal: todasCorridas.reduce((s, c) => s + (c.precoFinal || 0), 0)
+            corridasTotal: t.total,
+            faturamentoTotal: t.faturamento
         };
     },
 
