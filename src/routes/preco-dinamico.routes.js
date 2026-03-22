@@ -312,10 +312,10 @@ router.post('/rebeca/cotacao', async (req, res) => {
 💰 *VALOR: R$ ${resultado.precoFinal.toFixed(2)}*
 
 📊 *Detalhes:*
-- Taxa base: R$ ${config.taxaBase.toFixed(2)}
-- Preço/km: R$ ${config.precoKm.toFixed(2)}
-- Faixa atual: ${faixa.nome} (${faixa.multiplicador}x)
-${faixa.taxaAdicional > 0 ? `• Taxa adicional: R$ ${faixa.taxaAdicional.toFixed(2)}` : ''}
+- Taxa base: R$ ${(config.taxaBase || 5).toFixed(2)}
+- Preço/km: R$ ${(config.precoKm || 2.5).toFixed(2)}
+- Faixa atual: ${faixa.nome || 'Padrão'} (${(faixa.multiplicador || 1)}x)
+${faixa.taxaAdicional > 0 ? `• Taxa adicional: R$ ${(faixa.taxaAdicional || 0).toFixed(2)}` : ''}
 
 ⏰ Preço válido para o horário atual.
 _Valores podem variar conforme horário e demanda._
@@ -336,13 +336,17 @@ router.get('/rebeca/tabela', async (req, res) => {
     const diasSemana = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado'];
     const diaHoje = diasSemana[new Date().getDay()];
     let config, faixaAtual, faixasHoje;
-    if (adminId) {
-        config = await PrecoAdminService.getConfig(adminId);
-        faixaAtual = await PrecoAdminService.getFaixaAtual(adminId);
-        const { Admin } = require('../models');
-        const admin = await Admin.findById(adminId).lean();
-        faixasHoje = ((admin?.faixasPreco || []).filter(f => f.ativo !== false && (!f.diaSemana || f.diaSemana === diaHoje || f.diaSemana === 'todos')));
-    } else {
+    try {
+        if (adminId) {
+            config = await PrecoAdminService.getConfig(adminId);
+            faixaAtual = await PrecoAdminService.getFaixaAtual(adminId);
+            const { Admin } = require('../models');
+            const admin = await Admin.findById(adminId).lean();
+            faixasHoje = ((admin?.faixasPreco || []).filter(f => f.ativo !== false && (!f.diaSemana || f.diaSemana === diaHoje || f.diaSemana === 'todos')));
+        } else {
+            throw new Error('sem adminId');
+        }
+    } catch(e) {
         config = PrecoDinamicoService.getConfig();
         faixaAtual = PrecoDinamicoService.obterFaixaAtual();
         faixasHoje = PrecoDinamicoService.listarFaixas(diaHoje).filter(f => f.ativo);
@@ -387,10 +391,14 @@ router.get('/rebeca/exemplos', async (req, res) => {
     const calculos = [];
     for (const km of kms) {
         let preco;
-        if (adminId) {
-            const r = await PrecoAdminService.calcularPreco(adminId, km, 0);
-            preco = r.precoFinal ?? r.preco ?? r.total ?? 15;
-        } else {
+        try {
+            if (adminId) {
+                const r = await PrecoAdminService.calcularPreco(adminId, km, 0);
+                preco = r.precoFinal ?? r.preco ?? r.total ?? 15;
+            } else {
+                throw new Error('sem adminId');
+            }
+        } catch(e) {
             preco = PrecoDinamicoService.calcularPreco(km).precoFinal;
         }
         mensagem += `📍 ${km} km → *R$ ${preco.toFixed(2)}*\n`;
