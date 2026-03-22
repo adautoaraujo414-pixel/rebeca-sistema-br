@@ -730,6 +730,94 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
+
+// ===== ADMINS DELIVERY =====
+async function carregarDeliveryAdmins() {
+    const status = document.getElementById('dlFiltroStatus')?.value || '';
+    const url = '/api/delivery-master/lista' + (status ? '?status=' + status : '');
+    try {
+        const r = await fetch(url, { headers: { 'Authorization': 'Bearer ' + masterToken } });
+        const d = await r.json();
+        if (!d.sucesso) return;
+        document.getElementById('dlTotal').textContent = d.resumo.total;
+        document.getElementById('dlTrial').textContent = d.resumo.trial;
+        document.getElementById('dlAtivo').textContent = d.resumo.ativo;
+        document.getElementById('dlBloqueado').textContent = d.resumo.bloqueado;
+        const tbody = document.getElementById('tabelaDeliveryAdmins');
+        if (!d.lista.length) {
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#666;padding:30px;">Nenhum admin delivery cadastrado ainda.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = d.lista.map(a => {
+            const statusColor = a.status === 'ativo' ? '#00cc6a' : a.status === 'trial' ? '#ff9a56' : '#ff4444';
+            const statusLabel = a.status === 'ativo' ? '✅ Ativo' : a.status === 'trial' ? '⏳ Trial' : '🔒 Bloqueado';
+            const trialFim = a.trialFim ? new Date(a.trialFim).toLocaleDateString('pt-BR') : '-';
+            const diasR = a.status === 'trial' && a.trialFim ? Math.max(0, Math.ceil((new Date(a.trialFim) - new Date()) / 86400000)) : null;
+            const trialInfo = diasR !== null ? trialFim + ' <span style="color:' + (diasR <= 1 ? '#ff4444' : '#ff9a56') + ';font-size:11px;">(' + diasR + 'd)</span>' : trialFim;
+            return '<tr>' +
+                '<td><strong>' + a.nomeComercio + '</strong><br><span style="color:#666;font-size:12px;">' + (a.tipoNegocio||'') + '</span></td>' +
+                '<td>' + a.nome + '<br><span style="color:#666;font-size:12px;">' + a.email + '</span></td>' +
+                '<td>' + a.telefone + '</td>' +
+                '<td>' + (a.cidade||'-') + '</td>' +
+                '<td><span style="color:' + statusColor + ';font-weight:600;">' + statusLabel + '</span>' + (a.motivoBloqueio ? '<br><span style="color:#666;font-size:11px;">' + a.motivoBloqueio + '</span>' : '') + '</td>' +
+                '<td>' + trialInfo + '</td>' +
+                '<td>' + (a.plano||'basico') + '</td>' +
+                '<td style="white-space:nowrap;">' +
+                    (a.status !== 'ativo' ? '<button onclick="liberarDelivery(\'' + a._id + '\')" style="padding:5px 12px;background:rgba(0,204,106,0.15);border:1px solid rgba(0,204,106,0.3);border-radius:6px;color:#00cc6a;cursor:pointer;font-size:12px;margin:2px;">✅ Liberar</button>' : '') +
+                    (a.status !== 'bloqueado' ? '<button onclick="bloquearDelivery(\'' + a._id + '\')" style="padding:5px 12px;background:rgba(255,68,68,0.15);border:1px solid rgba(255,68,68,0.3);border-radius:6px;color:#ff4444;cursor:pointer;font-size:12px;margin:2px;">🔒 Bloquear</button>' : '') +
+                    '<button onclick="extenderTrialDelivery(\'' + a._id + '\')" style="padding:5px 12px;background:rgba(255,154,86,0.15);border:1px solid rgba(255,154,86,0.3);border-radius:6px;color:#ff9a56;cursor:pointer;font-size:12px;margin:2px;">⏳ +dias</button>' +
+                '</td></tr>';
+        }).join('');
+    } catch(e) { console.error('[DELIVERY ADMINS]', e.message); }
+}
+
+async function liberarDelivery(id) {
+    const plano = prompt('Plano (basico/pro):', 'basico');
+    if (plano === null) return;
+    const r = await fetch('/api/delivery-master/liberar/' + id, {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + masterToken, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plano, valorMensal: plano === 'pro' ? 197 : 97 })
+    });
+    const d = await r.json();
+    if (d.sucesso) { alert('✅ Conta liberada!'); carregarDeliveryAdmins(); }
+    else alert('Erro: ' + d.erro);
+}
+
+async function bloquearDelivery(id) {
+    const motivo = prompt('Motivo do bloqueio:');
+    if (motivo === null) return;
+    const r = await fetch('/api/delivery-master/bloquear/' + id, {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + masterToken, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ motivo })
+    });
+    const d = await r.json();
+    if (d.sucesso) { alert('🔒 Conta bloqueada.'); carregarDeliveryAdmins(); }
+    else alert('Erro: ' + d.erro);
+}
+
+async function extenderTrialDelivery(id) {
+    const dias = prompt('Quantos dias adicionar?', '7');
+    if (!dias) return;
+    const r = await fetch('/api/delivery-master/extender-trial/' + id, {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + masterToken, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dias: parseInt(dias) })
+    });
+    const d = await r.json();
+    if (d.sucesso) { alert('⏳ Trial extendido!'); carregarDeliveryAdmins(); }
+    else alert('Erro: ' + d.erro);
+}
+
+// Hook navegação
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.menu-item[data-page]').forEach(item => {
+        item.addEventListener('click', () => {
+            if (item.dataset.page === 'admins-delivery') carregarDeliveryAdmins();
+        });
+    });
+});
 </script>
 
 </body>
