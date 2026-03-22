@@ -176,7 +176,6 @@ const AdminDeliverySchema = new mongoose.Schema({
     origem: { type: String, default: 'landing' }
 }, { timestamps: true });
 
-AdminDeliverySchema.index({ email: 1 });
 AdminDeliverySchema.index({ token: 1 });
 AdminDeliverySchema.index({ status: 1 });
 

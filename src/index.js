@@ -394,3 +394,10 @@ console.log('✅ Cron reativação de clientes ativo')
 const AgendamentoService = require('./services/agendamento.service');
 AgendamentoService.iniciarCron();;
 
+// Cron delivery trial — bloqueia trials vencidos todo dia às 06h
+const DeliveryTrialService = require('./services/delivery-trial.service');
+const cron = require('node-cron');
+cron.schedule('0 6 * * *', () => DeliveryTrialService.verificarTrialsVencidos());
+DeliveryTrialService.verificarTrialsVencidos();
+console.log('✅ Cron delivery trial ativo');
+
