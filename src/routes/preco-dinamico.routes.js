@@ -309,7 +309,7 @@ router.post('/rebeca/cotacao', async (req, res) => {
 🏁 *Destino:* ${destino || 'Não informado'}
 📏 *Distância:* ${parseFloat(distanciaKm).toFixed(1)} km
 
-💰 *VALOR: R$ ${resultado.precoFinal.toFixed(2)}*
+💰 *VALOR: R$ ${(resultado.precoFinal || 15).toFixed(2)}*
 
 📊 *Detalhes:*
 - Taxa base: R$ ${(config.taxaBase || 5).toFixed(2)}
