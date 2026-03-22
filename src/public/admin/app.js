@@ -1032,7 +1032,7 @@ async function salvarConfigPreco() {
             taxaBandeira2: parseFloat(document.getElementById('taxaBandeira2')?.value || 3),
             precoMinuto: parseFloat(document.getElementById('precoMinuto')?.value || 0.5)
         };
-        const r = await api('/api/preco-dinamico/config', 'POST', body);
+        const r = await api('/api/preco-dinamico/config', 'PUT', body);
         if (r?.sucesso || r?._id) {
             const btn = document.querySelector('[onclick="salvarConfigPreco()"]');
             if (btn) { const t = btn.textContent; btn.textContent = '✅ Salvo!'; setTimeout(() => btn.textContent = t, 2000); }
@@ -1491,4 +1491,42 @@ document.getElementById('formEditarMotorista')?.addEventListener('submit', async
     fecharModal('modalEditarMotorista');
     carregarMotoristas();
     alert('✅ Motorista atualizado com sucesso!');
+});
+
+// ==================== NOVA FAIXA (listener que estava faltando) ====================
+function selecionarTipoPreco(tipo) {
+    tipoPrecoSelecionado = tipo;
+    document.getElementById('faixaTipo').value = tipo;
+    document.getElementById('tipoMult').classList.toggle('active', tipo === 'multiplicador');
+    document.getElementById('tipoFixo').classList.toggle('active', tipo === 'fixo');
+    document.getElementById('camposMultiplicador').classList.toggle('active', tipo === 'multiplicador');
+    document.getElementById('camposFixo').classList.toggle('active', tipo === 'fixo');
+}
+
+document.getElementById('formFaixa')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const tipo = document.getElementById('faixaTipo').value || 'multiplicador';
+    const dados = {
+        nome: document.getElementById('faixaNome').value,
+        diaSemana: diaSelecionado,
+        horaInicio: document.getElementById('faixaInicio').value,
+        horaFim: document.getElementById('faixaFim').value,
+        tipo: tipo,
+        multiplicador: tipo === 'multiplicador' ? parseFloat(document.getElementById('faixaMult').value) : 1.0,
+        taxaAdicional: tipo === 'multiplicador' ? parseFloat(document.getElementById('faixaTaxa').value) : 0,
+        valorFixo: tipo === 'fixo' ? parseFloat(document.getElementById('faixaValorFixo').value) : 0
+    };
+    try {
+        const r = await api('/api/preco-dinamico/faixas', 'POST', dados);
+        if (r && (r.id || r._id || r.sucesso)) {
+            fecharModal('modalFaixa');
+            document.getElementById('formFaixa').reset();
+            tipoPrecoSelecionado = 'multiplicador';
+            document.getElementById('faixaTipo').value = 'multiplicador';
+            carregarFaixasDia(diaSelecionado);
+            alert('✅ Faixa criada!');
+        } else {
+            alert('Erro ao criar: ' + (r?.error || r?.erro || JSON.stringify(r)));
+        }
+    } catch(e) { alert('Erro: ' + e.message); }
 });
