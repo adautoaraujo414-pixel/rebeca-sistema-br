@@ -38,7 +38,7 @@ const PrecoAdminService = {
                           Math.sin(dLng/2) * Math.sin(dLng/2);
                 const distKm = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 
-                if (distKm <= z.raioKm) {
+                if (!isNaN(distKm) && distKm <= z.raioKm) {
                     console.log('[ZONA PRECO] Origem dentro da zona "' + z.nome + '" (dist: ' + distKm.toFixed(2) + 'km / raio: ' + z.raioKm + 'km) — R$ ' + z.precoFixo);
                     return { zona: z, precoFixo: z.precoFixo, distKm };
                 }
@@ -183,6 +183,20 @@ const PrecoAdminService = {
         const faixa = await this.getFaixaAtual(adminId);
         const taxaMinima = faixa.taxaMinima || config.taxaMinima || 15;
 
+        // Se faixa é tipo fixo_minimo (precosSimples), usar o valor como taxa mínima direta
+        if (faixa.tipo === 'fixo_minimo' && faixa.taxaMinima) {
+            const precoFinal = Math.max(faixa.taxaMinima, (config.taxaBase || 5) + (distanciaKm * (config.precoKm || 2.50)));
+            return {
+                preco: precoFinal,
+                precoFinal,
+                distanciaKm,
+                tempoMinutos,
+                faixa: { nome: faixa.nome, multiplicador: 1 },
+                modoPreco: 'simples_faixa',
+                config
+            };
+        }
+
         // Cálculo base
         let preco = (config.taxaBase || 5) + (distanciaKm * (config.precoKm || 2.50));
 
@@ -202,8 +216,10 @@ const PrecoAdminService = {
             preco = config.taxaMinima;
         }
         
+        const precoFinal = Math.round(preco * 100) / 100;
         return {
-            preco: Math.round(preco * 100) / 100,
+            preco: precoFinal,
+            precoFinal,
             distanciaKm,
             tempoMinutos,
             faixa: {
