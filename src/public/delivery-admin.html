@@ -336,6 +336,10 @@
     </div>
 
     <script>
+        // Aceitar token via URL (redirect da landing)
+        const _urlParams = new URLSearchParams(window.location.search);
+        const _tokenUrl = _urlParams.get('token');
+        if (_tokenUrl) { localStorage.setItem('delivery_token', _tokenUrl); history.replaceState({}, '', '/delivery-admin'); }
         let token = localStorage.getItem('delivery_token') || '';
         let adminData = null;
         let categorias = [];
