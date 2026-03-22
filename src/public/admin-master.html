@@ -127,6 +127,7 @@
                 <div class="menu-section">Clientes</div>
                 <div class="menu-item" data-page="clientes-landing">🚀 Clientes Landing</div>
                 <div class="menu-item" data-page="precadastros-delivery">🍔 Pré-cadastros Delivery</div>
+                <div class="menu-item" data-page="admins-delivery">🛵 Admins Delivery</div>
                 <div class="menu-section">Sistema</div>
                 <div class="menu-item" data-page="logs">📋 Logs</div>
                 <div class="menu-item" data-page="suporte">🎧 Suporte</div>
@@ -173,6 +174,33 @@
                 <div class="page" id="page-mensalidades">
                     <h2 style="margin-bottom:20px;">💰 Mensalidades</h2>
                     <div class="panel"><table><thead><tr><th>Admin</th><th>Valor</th><th>Vencimento</th><th>Status</th><th>Pagamento</th><th>Ações</th></tr></thead><tbody id="tabelaMensalidades"></tbody></table></div>
+                </div>
+                <div class="page" id="page-admins-delivery">
+                    <h2 style="margin-bottom:20px;">🛵 Admins Delivery</h2>
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px;">
+                        <div class="stat-card"><div class="stat-number" id="dlTotal">-</div><div class="stat-label">Total</div></div>
+                        <div class="stat-card"><div class="stat-number" id="dlTrial" style="color:#ff9a56;">-</div><div class="stat-label">Em Trial</div></div>
+                        <div class="stat-card"><div class="stat-number" id="dlAtivo" style="color:#00cc6a;">-</div><div class="stat-label">Ativos</div></div>
+                        <div class="stat-card"><div class="stat-number" id="dlBloqueado" style="color:#ff4444;">-</div><div class="stat-label">Bloqueados</div></div>
+                    </div>
+                    <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
+                        <button onclick="carregarDeliveryAdmins()" style="padding:8px 18px;background:#252542;border:1px solid #3a3a5e;border-radius:8px;color:#fff;cursor:pointer;font-size:13px;">🔄 Atualizar</button>
+                        <select id="dlFiltroStatus" onchange="carregarDeliveryAdmins()" style="padding:8px 14px;background:#252542;border:1px solid #3a3a5e;border-radius:8px;color:#fff;font-size:13px;">
+                            <option value="">Todos os status</option>
+                            <option value="trial">Em Trial</option>
+                            <option value="ativo">Ativos</option>
+                            <option value="bloqueado">Bloqueados</option>
+                        </select>
+                    </div>
+                    <div class="panel">
+                        <table>
+                            <thead><tr>
+                                <th>Comércio</th><th>Responsável</th><th>WhatsApp</th><th>Cidade</th>
+                                <th>Status</th><th>Trial até</th><th>Plano</th><th>Ações</th>
+                            </tr></thead>
+                            <tbody id="tabelaDeliveryAdmins"></tbody>
+                        </table>
+                    </div>
                 </div>
                 <div class="page" id="page-logs">
                     <h2 style="margin-bottom:20px;">📋 Logs do Sistema</h2>

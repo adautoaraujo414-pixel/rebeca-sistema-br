@@ -9,327 +9,351 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Inter', sans-serif; background: #0a0a1a; color: #e0e0e0; overflow-x: hidden; }
-        .hero { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; position: relative; overflow: hidden; }
-        .hero::before { content: ''; position: absolute; width: 600px; height: 600px; background: radial-gradient(circle, rgba(255,107,53,0.15), transparent 70%); top: -100px; right: -100px; border-radius: 50%; }
-        .hero::after { content: ''; position: absolute; width: 400px; height: 400px; background: radial-gradient(circle, rgba(255,154,86,0.1), transparent 70%); bottom: -50px; left: -50px; border-radius: 50%; }
-        .logo { font-size: 64px; font-weight: 900; background: linear-gradient(135deg, #ff6b35, #ff9a56); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 10px; position: relative; z-index: 1; }
-        .logo span { font-size: 20px; display: block; font-weight: 400; -webkit-text-fill-color: #888; }
-        .dor-frase { background: linear-gradient(135deg,rgba(255,107,53,0.12),rgba(255,154,86,0.08)); border: 1px solid rgba(255,107,53,0.3); border-radius: 16px; padding: 18px 28px; max-width: 680px; margin: 18px auto 10px; position: relative; z-index: 1; }
-        .dor-frase p { font-size: 18px; font-weight: 600; color: #ff9a56; line-height: 1.5; }
-        .hero h2 { font-size: 22px; font-weight: 300; color: #ccc; margin: 16px 0 10px; max-width: 620px; line-height: 1.6; position: relative; z-index: 1; }
-        .hero-badge { display: inline-flex; align-items: center; gap: 8px; background: rgba(0,204,106,0.1); border: 1px solid rgba(0,204,106,0.3); border-radius: 50px; padding: 8px 20px; font-size: 13px; color: #00cc6a; margin-bottom: 18px; position: relative; z-index: 1; }
+        .nav { position: fixed; top: 0; left: 0; right: 0; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; z-index: 50; background: rgba(10,10,26,0.95); backdrop-filter: blur(10px); border-bottom: 1px solid #1a1a3e; }
+        .nav-logo { font-size: 22px; font-weight: 800; background: linear-gradient(135deg, #ff6b35, #ff9a56); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .nav-btns { display: flex; gap: 10px; }
+        .nav-btn { padding: 9px 22px; border-radius: 25px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: all 0.3s; font-family: Inter, sans-serif; }
+        .nav-btn.login { background: transparent; color: #ff6b35; border: 1px solid #ff6b35; }
+        .nav-btn.login:hover { background: rgba(255,107,53,0.1); }
+        .nav-btn.cadastro { background: linear-gradient(135deg, #ff6b35, #ff9a56); color: #fff; }
+        .hero { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 100px 20px 60px; position: relative; overflow: hidden; }
+        .hero::before { content: ''; position: absolute; width: 600px; height: 600px; background: radial-gradient(circle, rgba(255,107,53,0.12), transparent 70%); top: -100px; right: -100px; border-radius: 50%; }
+        .hero::after { content: ''; position: absolute; width: 400px; height: 400px; background: radial-gradient(circle, rgba(255,154,86,0.08), transparent 70%); bottom: -50px; left: -50px; border-radius: 50%; }
+        .hero-badge { display: inline-flex; align-items: center; gap: 8px; background: rgba(0,204,106,0.1); border: 1px solid rgba(0,204,106,0.3); border-radius: 50px; padding: 8px 20px; font-size: 13px; color: #00cc6a; margin-bottom: 20px; position: relative; z-index: 1; }
         .hero-badge .dot { width: 8px; height: 8px; background: #00cc6a; border-radius: 50%; animation: pulse 2s infinite; }
-        .launch-badge { display: inline-flex; align-items: center; gap: 10px; background: rgba(255,107,53,0.1); border: 1px solid rgba(255,107,53,0.35); border-radius: 50px; padding: 10px 24px; font-size: 14px; font-weight: 700; color: #ff9a56; margin-bottom: 20px; position: relative; z-index: 1; }
+        .logo { font-size: 58px; font-weight: 900; background: linear-gradient(135deg, #ff6b35, #ff9a56); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 6px; position: relative; z-index: 1; }
+        .logo span { font-size: 18px; display: block; font-weight: 400; -webkit-text-fill-color: #888; }
+        .dor-frase { background: rgba(255,107,53,0.08); border: 1px solid rgba(255,107,53,0.25); border-radius: 16px; padding: 18px 28px; max-width: 660px; margin: 20px auto 16px; position: relative; z-index: 1; }
+        .dor-frase p { font-size: 17px; font-weight: 600; color: #ff9a56; line-height: 1.5; }
+        .hero h2 { font-size: 20px; font-weight: 300; color: #ccc; margin: 14px 0 8px; max-width: 600px; line-height: 1.6; position: relative; z-index: 1; }
+        .trial-badge { display: inline-flex; align-items: center; gap: 10px; background: rgba(255,107,53,0.1); border: 1px solid rgba(255,107,53,0.35); border-radius: 50px; padding: 10px 24px; font-size: 14px; font-weight: 700; color: #ff9a56; margin-bottom: 20px; position: relative; z-index: 1; }
         @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.3} }
-        .hero-cta { display: flex; gap: 15px; flex-wrap: wrap; justify-content: center; position: relative; z-index: 1; margin-top: 16px; }
-        .btn { padding: 16px 40px; border: none; border-radius: 50px; font-size: 16px; font-weight: 700; cursor: pointer; transition: all 0.3s; text-decoration: none; display: inline-block; }
+        .hero-cta { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; position: relative; z-index: 1; margin-top: 16px; }
+        .btn { padding: 15px 38px; border: none; border-radius: 50px; font-size: 16px; font-weight: 700; cursor: pointer; transition: all 0.3s; text-decoration: none; display: inline-block; font-family: Inter, sans-serif; }
         .btn-primary { background: linear-gradient(135deg, #ff6b35, #ff9a56); color: #fff; }
         .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(255,107,53,0.3); }
         .btn-secondary { background: transparent; border: 2px solid #ff6b35; color: #ff6b35; }
         .btn-secondary:hover { background: rgba(255,107,53,0.1); }
         section { padding: 80px 20px; max-width: 1100px; margin: 0 auto; }
-        .section-title { font-size: 36px; font-weight: 800; text-align: center; margin-bottom: 15px; }
+        .section-title { font-size: 34px; font-weight: 800; text-align: center; margin-bottom: 14px; }
         .section-title span { background: linear-gradient(135deg, #ff6b35, #ff9a56); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .section-subtitle { text-align: center; color: #888; font-size: 18px; margin-bottom: 50px; max-width: 640px; margin-left: auto; margin-right: auto; line-height: 1.6; }
-        .benefits-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px; }
-        .benefit-card { background: linear-gradient(145deg, #111128, #0d0d22); border: 1px solid #1a1a3e; border-radius: 20px; padding: 35px; transition: all 0.3s; }
-        .benefit-card:hover { border-color: #ff6b35; transform: translateY(-5px); box-shadow: 0 15px 40px rgba(255,107,53,0.1); }
-        .benefit-icon { font-size: 40px; margin-bottom: 15px; }
-        .benefit-card h3 { font-size: 20px; margin-bottom: 10px; color: #fff; }
-        .benefit-card p { color: #888; line-height: 1.7; font-size: 15px; }
-        .steps { display: flex; flex-direction: column; gap: 30px; }
-        .step { display: flex; gap: 25px; align-items: flex-start; background: #111128; border-radius: 20px; padding: 30px; border: 1px solid #1a1a3e; transition: all 0.3s; }
+        .section-subtitle { text-align: center; color: #888; font-size: 17px; margin-bottom: 48px; max-width: 620px; margin-left: auto; margin-right: auto; line-height: 1.6; }
+        .benefits-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 22px; }
+        .benefit-card { background: #111128; border: 1px solid #1a1a3e; border-radius: 20px; padding: 32px; transition: all 0.3s; }
+        .benefit-card:hover { border-color: #ff6b35; transform: translateY(-4px); box-shadow: 0 12px 35px rgba(255,107,53,0.1); }
+        .benefit-icon { font-size: 38px; margin-bottom: 14px; }
+        .benefit-card h3 { font-size: 18px; margin-bottom: 10px; color: #fff; }
+        .benefit-card p { color: #888; line-height: 1.7; font-size: 14px; }
+        .steps { display: flex; flex-direction: column; gap: 24px; }
+        .step { display: flex; gap: 22px; align-items: flex-start; background: #111128; border-radius: 18px; padding: 26px; border: 1px solid #1a1a3e; transition: border 0.3s; }
         .step:hover { border-color: #ff6b35; }
-        .step-number { min-width: 50px; height: 50px; background: linear-gradient(135deg, #ff6b35, #ff9a56); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 900; color: #fff; }
-        .step h3 { font-size: 18px; color: #fff; margin-bottom: 8px; }
-        .step p { color: #888; line-height: 1.6; }
-        .diff-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
-        .diff-item { text-align: center; padding: 30px; background: #111128; border-radius: 20px; border: 1px solid #1a1a3e; }
-        .diff-item .number { font-size: 48px; font-weight: 900; background: linear-gradient(135deg, #ff6b35, #ff9a56); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .diff-item p { color: #888; margin-top: 5px; }
-        .suporte-section { background: linear-gradient(145deg,#111128,#0d0d22); border: 1px solid #1a1a3e; border-radius: 25px; padding: 50px; text-align: center; margin: 0 auto; }
-        .suporte-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap: 25px; margin-top: 35px; }
-        .suporte-card { padding: 25px; border-radius: 15px; background: rgba(255,107,53,0.05); border: 1px solid rgba(255,107,53,0.15); }
-        .suporte-card h4 { color: #ff9a56; margin-bottom: 8px; font-size: 16px; }
-        .suporte-card p { color: #888; font-size: 14px; line-height: 1.5; }
-        /* Nav */
-        .nav { position: fixed; top: 0; left: 0; right: 0; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; z-index: 50; background: rgba(10,10,26,0.95); backdrop-filter: blur(10px); border-bottom: 1px solid #1a1a3e; }
-        .nav-logo { font-size: 24px; font-weight: 800; background: linear-gradient(135deg, #ff6b35, #ff9a56); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .nav-btns { display: flex; gap: 10px; }
-        .nav-btn { padding: 10px 24px; border-radius: 25px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; transition: all 0.3s; }
-        .nav-btn.login { background: transparent; color: #ff6b35; border: 1px solid #ff6b35; }
-        .nav-btn.login:hover { background: rgba(255,107,53,0.1); }
-        .nav-btn.cadastro { background: linear-gradient(135deg, #ff6b35, #ff9a56); color: #fff; }
-        /* Pré-cadastro */
-        .pc-wrap { background: linear-gradient(145deg,#111128,#0d0d22); border: 1px solid #2a1a3e; border-radius: 25px; padding: 50px 40px; text-align: center; max-width: 780px; margin: 0 auto; }
-        .pc-label { display: inline-block; background: rgba(255,107,53,0.1); border: 1px solid rgba(255,107,53,0.3); border-radius: 50px; padding: 6px 18px; font-size: 12px; font-weight: 700; color: #ff9a56; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 18px; }
-        .cd-blocks { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin-bottom: 36px; }
-        .cd-block { background: #0a0a1a; border: 1px solid #1a1a3e; border-radius: 14px; padding: 16px 20px; min-width: 80px; text-align: center; }
-        .cd-num { font-size: 36px; font-weight: 900; background: linear-gradient(135deg,#ff6b35,#ff9a56); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1; }
-        .cd-label { font-size: 10px; color: #666; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
-        .pc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; text-align: left; margin-bottom: 14px; }
-        .pc-field label { display: block; font-size: 11px; font-weight: 700; color: #666; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 7px; }
-        .pc-field input, .pc-field select { width: 100%; padding: 13px 15px; background: #0a0a1a; border: 1px solid #1a1a3e; border-radius: 12px; color: #fff; font-size: 14px; outline: none; font-family: Inter,sans-serif; transition: border 0.3s; }
-        .pc-field input:focus, .pc-field select:focus { border-color: #ff6b35; }
-        .pc-full { text-align: left; margin-bottom: 20px; }
-        .pc-full label { display: block; font-size: 11px; font-weight: 700; color: #666; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 7px; }
-        .pc-full select { width: 100%; padding: 13px 15px; background: #0a0a1a; border: 1px solid #1a1a3e; border-radius: 12px; color: #fff; font-size: 14px; outline: none; font-family: Inter,sans-serif; }
-        .pc-btn { width: 100%; padding: 17px; background: linear-gradient(135deg,#ff6b35,#ff9a56); color: #fff; border: none; border-radius: 14px; font-size: 17px; font-weight: 700; cursor: pointer; font-family: Inter,sans-serif; transition: all 0.3s; }
-        .pc-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(255,107,53,0.35); }
-        .pc-erro { background: rgba(255,68,68,0.12); border: 1px solid rgba(255,68,68,0.25); color: #ff6b6b; padding: 12px 16px; border-radius: 10px; font-size: 13px; margin-bottom: 16px; display: none; }
-        .pc-sucesso { display: none; background: rgba(0,204,106,0.08); border: 1px solid rgba(0,204,106,0.25); border-radius: 16px; padding: 30px; }
-        /* WhatsApp float */
-        .whatsapp-float { position: fixed; bottom: 25px; right: 25px; width: 60px; height: 60px; background: #25d366; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 30px; text-decoration: none; z-index: 100; box-shadow: 0 5px 20px rgba(37,211,102,0.4); transition: transform 0.3s; }
+        .step-number { min-width: 46px; height: 46px; background: linear-gradient(135deg, #ff6b35, #ff9a56); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 900; color: #fff; }
+        .step h3 { font-size: 17px; color: #fff; margin-bottom: 7px; }
+        .step p { color: #888; line-height: 1.6; font-size: 14px; }
+        .diff-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 18px; }
+        .diff-item { text-align: center; padding: 28px; background: #111128; border-radius: 18px; border: 1px solid #1a1a3e; }
+        .diff-item .number { font-size: 44px; font-weight: 900; background: linear-gradient(135deg, #ff6b35, #ff9a56); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .diff-item p { color: #888; margin-top: 5px; font-size: 14px; }
+        .suporte-section { background: #111128; border: 1px solid #1a1a3e; border-radius: 24px; padding: 48px; text-align: center; }
+        .suporte-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(200px,1fr)); gap: 22px; margin-top: 32px; }
+        .suporte-card { padding: 22px; border-radius: 14px; background: rgba(255,107,53,0.05); border: 1px solid rgba(255,107,53,0.15); }
+        .suporte-card h4 { color: #ff9a56; margin-bottom: 8px; font-size: 15px; }
+        .suporte-card p { color: #888; font-size: 13px; line-height: 1.5; }
+        /* MODAL */
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 200; align-items: center; justify-content: center; padding: 20px; }
+        .modal-overlay.show { display: flex; }
+        .modal { background: #111128; border: 1px solid #2a1a3e; border-radius: 24px; padding: 40px 36px; width: 100%; max-width: 480px; position: relative; max-height: 90vh; overflow-y: auto; }
+        .modal-close { position: absolute; top: 16px; right: 20px; background: none; border: none; color: #666; font-size: 22px; cursor: pointer; }
+        .modal-tabs { display: flex; gap: 0; margin-bottom: 28px; background: #0a0a1a; border-radius: 12px; padding: 4px; }
+        .modal-tab { flex: 1; padding: 10px; text-align: center; font-size: 14px; font-weight: 600; cursor: pointer; border-radius: 10px; color: #666; transition: all 0.2s; border: none; background: none; font-family: Inter, sans-serif; }
+        .modal-tab.active { background: linear-gradient(135deg, #ff6b35, #ff9a56); color: #fff; }
+        .form-group { margin-bottom: 14px; text-align: left; }
+        .form-group label { display: block; font-size: 11px; font-weight: 700; color: #666; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+        .form-group input, .form-group select { width: 100%; padding: 12px 14px; background: #0a0a1a; border: 1px solid #1a1a3e; border-radius: 11px; color: #fff; font-size: 14px; outline: none; font-family: Inter, sans-serif; transition: border 0.3s; }
+        .form-group input:focus, .form-group select:focus { border-color: #ff6b35; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .form-btn { width: 100%; padding: 15px; background: linear-gradient(135deg, #ff6b35, #ff9a56); color: #fff; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; font-family: Inter, sans-serif; transition: all 0.3s; margin-top: 6px; }
+        .form-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(255,107,53,0.35); }
+        .form-btn:disabled { opacity: 0.6; transform: none; }
+        .form-erro { background: rgba(255,68,68,0.1); border: 1px solid rgba(255,68,68,0.25); color: #ff6b6b; padding: 10px 14px; border-radius: 9px; font-size: 13px; margin-bottom: 14px; display: none; }
+        .form-sucesso { display: none; text-align: center; padding: 20px 0; }
+        .trial-info { background: rgba(0,204,106,0.08); border: 1px solid rgba(0,204,106,0.2); border-radius: 10px; padding: 12px 16px; font-size: 13px; color: #00cc6a; margin-bottom: 18px; text-align: center; }
+        .whatsapp-float { position: fixed; bottom: 25px; right: 25px; width: 58px; height: 58px; background: #25d366; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; text-decoration: none; z-index: 100; box-shadow: 0 5px 18px rgba(37,211,102,0.4); transition: transform 0.3s; }
         .whatsapp-float:hover { transform: scale(1.1); }
-        footer { text-align: center; padding: 40px 20px; color: #444; font-size: 13px; border-top: 1px solid #1a1a3e; }
+        footer { text-align: center; padding: 36px 20px; color: #444; font-size: 13px; border-top: 1px solid #1a1a3e; }
         footer a { color: #ff6b35; text-decoration: none; }
-        @media(max-width:768px){.logo{font-size:42px}.hero h2{font-size:18px}.section-title{font-size:26px}.step{flex-direction:column}.nav{padding:10px 15px}.pc-grid{grid-template-columns:1fr}.pc-wrap{padding:30px 20px}}
+        @media(max-width:768px){ .logo{font-size:38px} .hero h2{font-size:17px} .section-title{font-size:24px} .step{flex-direction:column} .nav{padding:10px 15px} .modal{padding:28px 20px} .form-row{grid-template-columns:1fr} }
     </style>
 </head>
 <body>
-    <nav class="nav">
-        <div class="nav-logo">🍔 Rebeca Delivery</div>
-        <div class="nav-btns">
-            <button class="nav-btn login" onclick="document.getElementById('precadastro').scrollIntoView({behavior:'smooth'})">Pré-cadastro</button>
-            <button class="nav-btn cadastro" onclick="window.location.href='/delivery-admin'">Entrar</button>
+
+<nav class="nav">
+    <div class="nav-logo">🍔 Rebeca Delivery</div>
+    <div class="nav-btns">
+        <button class="nav-btn login" onclick="abrirModal('login')">Entrar</button>
+        <button class="nav-btn cadastro" onclick="abrirModal('cadastro')">Teste Grátis 7 dias</button>
+    </div>
+</nav>
+
+<!-- MODAL LOGIN / CADASTRO -->
+<div class="modal-overlay" id="modalOverlay" onclick="fecharModalFora(event)">
+    <div class="modal">
+        <button class="modal-close" onclick="fecharModal()">✕</button>
+
+        <div class="modal-tabs">
+            <button class="modal-tab active" id="tabCadastro" onclick="trocarTab('cadastro')">Criar conta grátis</button>
+            <button class="modal-tab" id="tabLogin" onclick="trocarTab('login')">Já tenho conta</button>
         </div>
-    </nav>
 
-    <section class="hero" style="padding-top:80px;">
-        <div class="hero-badge"><span class="dot"></span> Suporte 24/7 — Resposta em menos de 30 minutos</div>
-        <div class="launch-badge">🚀 Disponível a partir de <span style="color:#fff;margin-left:4px;">30/03/2026</span> &nbsp;·&nbsp; <span id="cdInline">...</span></div>
-        <div class="logo">Rebeca Delivery<span>Sistemas BR</span></div>
-
-        <div class="dor-frase">
-            <p>😤 "Funcionário bom é difícil de achar, caro para manter e ainda some no final de semana."<br>
-            <span style="color:#fff;font-weight:400;font-size:16px;">A Rebeca atende 24h, nunca falta, nunca reclama e ainda vende mais do que qualquer atendente.</span></p>
-        </div>
-
-        <h2>Automação completa para seu restaurante — do pedido no WhatsApp até a entrega na porta do cliente.</h2>
-
-        <div class="hero-cta">
-            <button class="btn btn-primary" onclick="document.getElementById('precadastro').scrollIntoView({behavior:'smooth'})">🎯 Garantir Pré-cadastro VIP</button>
-            <a href="#beneficios" class="btn btn-secondary">Ver o que ela faz</a>
-        </div>
-    </section>
-
-    <section id="beneficios">
-        <h2 class="section-title">O que a <span>Rebeca Delivery</span> faz?</h2>
-        <p class="section-subtitle">Não é um chatbot. É uma funcionária de verdade que conhece seu cardápio, seus preços e seu restaurante.</p>
-        <div class="benefits-grid">
-            <div class="benefit-card">
-                <div class="benefit-icon">🧠</div>
-                <h3>IA que Entende Pedidos</h3>
-                <p>Cliente manda texto ou áudio pedindo o lanche e a Rebeca entende tudo, monta o pedido, calcula o valor e confirma. Sem menus confusos, sem bots travados.</p>
-            </div>
-            <div class="benefit-card">
-                <div class="benefit-icon">📸</div>
-                <h3>Cardápio por Foto</h3>
-                <p>Tire uma foto do seu cardápio físico e a IA transcreve tudo automaticamente — categorias, itens e preços. Você só revisa e salva. Pronto em 1 minuto.</p>
-            </div>
-            <div class="benefit-card">
-                <div class="benefit-icon">🎙️</div>
-                <h3>Entende Áudios</h3>
-                <p>Cliente mandou áudio pedindo o lanche? A Rebeca transcreve com Whisper, entende o pedido e responde. Funciona com texto, áudio e localização GPS.</p>
-            </div>
-            <div class="benefit-card">
-                <div class="benefit-icon">💡</div>
-                <h3>Sugestões que Vendem Mais</h3>
-                <p>Cliente pediu lanche e não pediu bebida? A Rebeca sugere. Não tem o item? Ela oferece algo parecido do seu cardápio. Venda mais sem esforço.</p>
-            </div>
-            <div class="benefit-card">
-                <div class="benefit-icon">👨‍🍳</div>
-                <h3>Painel da Cozinha</h3>
-                <p>Pedidos aparecem em tempo real no painel da cozinha: Novos, Preparando, Prontos — com alerta sonoro. Cada restaurante tem seu painel isolado.</p>
-            </div>
-            <div class="benefit-card">
-                <div class="benefit-icon">🏍️</div>
-                <h3>Painel do Entregador</h3>
-                <p>Assim que o pedido fica pronto, a Rebeca despacha automaticamente para o entregador disponível. Ele recebe notificação no celular com endereço, mapa e dados do cliente — aceita com um toque.</p>
-            </div>
-            <div class="benefit-card">
-                <div class="benefit-icon">📍</div>
-                <h3>Rastreio em Tempo Real</h3>
-                <p>Quando o entregador sai, o cliente recebe link de rastreio com GPS ao vivo. Igual iFood, mas no SEU WhatsApp, com sua identidade.</p>
-            </div>
-            <div class="benefit-card">
-                <div class="benefit-icon">💬</div>
-                <h3>Atendimento Humanizado</h3>
-                <p>Fala com calor humano, chama pelo nome, confirma pedido item por item. Ninguém percebe que é uma IA. A melhor funcionária que você já teve.</p>
-            </div>
-            <div class="benefit-card">
-                <div class="benefit-icon">📊</div>
-                <h3>Dashboard Completo</h3>
-                <p>Veja pedidos por dia, horários de pico, itens mais vendidos, avaliações e faturamento em tempo real. Tudo em um painel simples e bonito.</p>
-            </div>
-            <div class="benefit-card">
-                <div class="benefit-icon">🔒</div>
-                <h3>Sistema Isolado por Restaurante</h3>
-                <p>Cada restaurante tem seu ambiente fechado — cardápio, pedidos, cozinha, entregadores. Ninguém vê dados de outro. Total segurança e privacidade.</p>
-            </div>
-        </div>
-    </section>
-
-    <section id="como-funciona">
-        <h2 class="section-title">Como <span>funciona</span>?</h2>
-        <p class="section-subtitle">Em 4 passos simples você automatiza todo o atendimento</p>
-        <div class="steps">
-            <div class="step"><div class="step-number">1</div><div><h3>Cadastre-se e faça o teste grátis</h3><p>Crie sua conta em 30 segundos. Teste grátis por 3 dias, sem cartão, sem compromisso.</p></div></div>
-            <div class="step"><div class="step-number">2</div><div><h3>Conecte seu WhatsApp e cadastre o cardápio</h3><p>Escaneie o QR Code no painel. Cadastre itens manualmente ou tire foto do cardápio — a IA transcreve tudo. A Rebeca começa a atender pelo seu número.</p></div></div>
-            <div class="step"><div class="step-number">3</div><div><h3>Abra o painel da cozinha e do entregador</h3><p>Acesse os links da Cozinha e do Entregador no seu painel admin. Compartilhe com sua equipe. Cada pedido aparece em tempo real.</p></div></div>
-            <div class="step"><div class="step-number">4</div><div><h3>A Rebeca cuida do resto</h3><p>Cliente manda msg → Rebeca mostra cardápio → monta pedido → envia pra cozinha → despacha entregador → envia rastreio → pede avaliação. Tudo automático.</p></div></div>
-        </div>
-    </section>
-
-    <section>
-        <h2 class="section-title">Em <span>números</span></h2>
-        <div class="diff-grid">
-            <div class="diff-item"><div class="number">24/7</div><p>Atendimento ininterrupto</p></div>
-            <div class="diff-item"><div class="number">&lt;3s</div><p>Tempo de resposta</p></div>
-            <div class="diff-item"><div class="number">+30%</div><p>Mais vendas com sugestões</p></div>
-            <div class="diff-item"><div class="number">0</div><p>Erros de pedido</p></div>
-        </div>
-    </section>
-
-    <section>
-        <div class="suporte-section">
-            <h2 class="section-title">Suporte <span>de verdade</span></h2>
-            <p style="color:#888;font-size:16px;margin-top:10px;">Não é chatbot de suporte. É gente real que resolve na hora.</p>
-            <div class="suporte-grid">
-                <div class="suporte-card"><h4>⚡ Menos de 30 min</h4><p>Todo chamado respondido em menos de 30 minutos. Dia ou noite, feriado ou fim de semana.</p></div>
-                <div class="suporte-card"><h4>🔧 Melhorias Sob Demanda</h4><p>Precisa de uma funcionalidade nova? A gente desenvolve pra você. Seu feedback vira atualização.</p></div>
-                <div class="suporte-card"><h4>📱 WhatsApp Direto</h4><p>Suporte via WhatsApp com a equipe técnica. Sem fila, sem ticket, sem espera. Resolvemos na hora.</p></div>
-                <div class="suporte-card"><h4>🔄 Atualizações Semanais</h4><p>Sistema atualizado toda semana com melhorias e novas funcionalidades baseadas no uso real.</p></div>
-            </div>
-        </div>
-    </section>
-
-    <section id="precadastro" style="padding-bottom:100px;">
-        <div class="pc-wrap">
-            <div class="pc-label">🎯 Lista VIP — Pré-cadastro</div>
-            <h2 style="font-size:clamp(24px,4vw,38px);font-weight:800;color:#fff;margin-bottom:12px;line-height:1.2;">
-                Garanta seu acesso em<br>
-                <span style="background:linear-gradient(135deg,#ff6b35,#ff9a56);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">30 de Março de 2026</span>
-            </h2>
-            <p style="color:#888;font-size:15px;line-height:1.65;max-width:480px;margin:0 auto 30px;">
-                Preencha abaixo e entre na lista VIP. Nossa equipe entra em contato antes do lançamento com condições exclusivas e onboarding personalizado.
-            </p>
-
-            <div class="cd-blocks">
-                <div class="cd-block"><div class="cd-num" id="cdDias">00</div><div class="cd-label">Dias</div></div>
-                <div class="cd-block"><div class="cd-num" id="cdHoras">00</div><div class="cd-label">Horas</div></div>
-                <div class="cd-block"><div class="cd-num" id="cdMin">00</div><div class="cd-label">Min</div></div>
-                <div class="cd-block"><div class="cd-num" id="cdSeg">00</div><div class="cd-label">Seg</div></div>
-            </div>
-
-            <div class="pc-erro" id="pcErro"></div>
-
-            <div id="pcFormWrap">
-                <div class="pc-grid">
-                    <div class="pc-field"><label>Nome do responsável *</label><input type="text" id="pcNome" placeholder="João Silva"></div>
-                    <div class="pc-field"><label>Nome do comércio *</label><input type="text" id="pcComercio" placeholder="Restaurante Sabor Casa"></div>
-                    <div class="pc-field"><label>WhatsApp *</label><input type="tel" id="pcTelefone" placeholder="(34) 9 9999-9999"></div>
-                    <div class="pc-field"><label>Cidade *</label><input type="text" id="pcCidade" placeholder="Uberlândia, MG"></div>
+        <!-- CADASTRO -->
+        <div id="formCadastro">
+            <div class="trial-info">🎉 7 dias grátis — sem cartão, sem compromisso</div>
+            <div class="form-erro" id="erroC"></div>
+            <div id="camposCadastro">
+                <div class="form-row">
+                    <div class="form-group"><label>Seu nome *</label><input type="text" id="cNome" placeholder="João Silva"></div>
+                    <div class="form-group"><label>WhatsApp *</label><input type="tel" id="cTelefone" placeholder="(34) 99999-9999"></div>
                 </div>
-                <div class="pc-full">
-                    <label>Tipo de negócio</label>
-                    <select id="pcTipo">
-                        <option value="">Selecione...</option>
-                        <option value="restaurante">Restaurante</option>
-                        <option value="lanchonete">Lanchonete / Hamburgueria</option>
-                        <option value="pizzaria">Pizzaria</option>
-                        <option value="sorveteria">Sorveteria / Açaí</option>
-                        <option value="mercado">Mercado / Minimercado</option>
-                        <option value="farmacia">Farmácia</option>
-                        <option value="outro">Outro comércio</option>
-                    </select>
+                <div class="form-group"><label>Nome do restaurante / comércio *</label><input type="text" id="cComercio" placeholder="Burguer do João"></div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Tipo de negócio</label>
+                        <select id="cTipo">
+                            <option value="restaurante">Restaurante</option>
+                            <option value="lanchonete">Lanchonete / Hamburgueria</option>
+                            <option value="pizzaria">Pizzaria</option>
+                            <option value="sorveteria">Sorveteria / Açaí</option>
+                            <option value="mercado">Mercado</option>
+                            <option value="outro">Outro</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>Cidade</label><input type="text" id="cCidade" placeholder="Uberlândia, MG"></div>
                 </div>
-                <button class="pc-btn" id="pcBtn" onclick="enviarPreCadastro()">🚀 Garantir meu pré-cadastro VIP</button>
-                <p style="font-size:12px;color:#555;margin-top:14px;line-height:1.5;">✅ Sem compromisso. Você entra na lista VIP e nossa equipe entra em contato antes do lançamento.</p>
+                <div class="form-group"><label>E-mail *</label><input type="email" id="cEmail" placeholder="joao@email.com"></div>
+                <div class="form-row">
+                    <div class="form-group"><label>Senha * (mín. 6 caracteres)</label><input type="password" id="cSenha" placeholder="••••••••"></div>
+                    <div class="form-group"><label>Confirmar senha *</label><input type="password" id="cSenha2" placeholder="••••••••"></div>
+                </div>
+                <button class="form-btn" id="btnCadastro" onclick="cadastrar()">🚀 Começar teste grátis</button>
+                <p style="font-size:12px;color:#555;margin-top:12px;text-align:center;">Ao criar sua conta você concorda com nossos termos de uso.</p>
             </div>
-
-            <div class="pc-sucesso" id="pcSucesso">
-                <div style="font-size:52px;margin-bottom:14px;">🎉</div>
-                <h3 style="color:#00cc6a;font-size:22px;margin-bottom:10px;">Pré-cadastro confirmado!</h3>
-                <p style="color:#888;font-size:14px;line-height:1.6;">Você está na lista VIP da Rebeca Delivery!<br>Nossa equipe entrará em contato via WhatsApp antes do lançamento.</p>
+            <div class="form-sucesso" id="sucessoCadastro">
+                <div style="font-size:48px;margin-bottom:12px;">🎉</div>
+                <h3 style="color:#00cc6a;font-size:20px;margin-bottom:8px;">Conta criada com sucesso!</h3>
+                <p style="color:#888;font-size:14px;margin-bottom:18px;">Seus 7 dias de teste começaram agora. Redirecionando para o painel...</p>
             </div>
         </div>
-    </section>
 
-    <footer>
-        <p>Rebeca Delivery — Sistemas BR — Automação Inteligente para Restaurantes</p>
-        <p style="margin-top:8px;">Dúvidas? <a href="https://wa.me/5534984039955">WhatsApp (34) 98403-9955</a></p>
-        <p style="margin-top:5px;color:#333;">Sistema 100% seguro — Dados isolados por restaurante</p>
-    </footer>
+        <!-- LOGIN -->
+        <div id="formLogin" style="display:none;">
+            <div class="form-erro" id="erroL"></div>
+            <div id="camposLogin">
+                <div class="form-group"><label>E-mail</label><input type="email" id="lEmail" placeholder="seu@email.com"></div>
+                <div class="form-group"><label>Senha</label><input type="password" id="lSenha" placeholder="••••••••" onkeydown="if(event.key==='Enter')login()"></div>
+                <button class="form-btn" id="btnLogin" onclick="login()">Entrar no painel</button>
+            </div>
+            <div class="form-sucesso" id="sucessoLogin">
+                <div style="font-size:48px;margin-bottom:12px;">✅</div>
+                <h3 style="color:#00cc6a;font-size:20px;margin-bottom:8px;">Login realizado!</h3>
+                <p style="color:#888;font-size:14px;">Redirecionando para o painel...</p>
+            </div>
+        </div>
+    </div>
+</div>
 
-    <a href="https://wa.me/5534984039955" target="_blank" class="whatsapp-float">💬</a>
+<section class="hero">
+    <div class="hero-badge"><span class="dot"></span> Suporte 24/7 — Resposta em menos de 30 minutos</div>
+    <div class="trial-badge">🎁 7 dias grátis — sem cartão de crédito</div>
+    <div class="logo">Rebeca Delivery<span>Sistemas BR</span></div>
+    <div class="dor-frase">
+        <p>😤 "Funcionário bom é difícil de achar, caro para manter e ainda some no final de semana."<br>
+        <span style="color:#fff;font-weight:400;font-size:15px;">A Rebeca atende 24h, nunca falta, nunca reclama e ainda vende mais do que qualquer atendente.</span></p>
+    </div>
+    <h2>Automação completa para seu restaurante — do pedido no WhatsApp até a entrega na porta do cliente.</h2>
+    <div class="hero-cta">
+        <button class="btn btn-primary" onclick="abrirModal('cadastro')">🎯 Começar teste grátis agora</button>
+        <a href="#beneficios" class="btn btn-secondary">Ver o que ela faz</a>
+    </div>
+</section>
 
-    <script>
-    // COUNTDOWN
-    function atualizarCD() {
-        const alvo = new Date('2026-03-30T00:00:00');
-        const agora = new Date();
-        const diff = alvo - agora;
-        if (diff <= 0) { document.querySelectorAll('.cd-num').forEach(el => el.textContent = '00'); return; }
-        const dias = Math.floor(diff / 86400000);
-        const horas = Math.floor((diff % 86400000) / 3600000);
-        const min = Math.floor((diff % 3600000) / 60000);
-        const seg = Math.floor((diff % 60000) / 1000);
-        const fmt = n => String(n).padStart(2,'0');
-        document.getElementById('cdDias').textContent = fmt(dias);
-        document.getElementById('cdHoras').textContent = fmt(horas);
-        document.getElementById('cdMin').textContent = fmt(min);
-        document.getElementById('cdSeg').textContent = fmt(seg);
-        const il = document.getElementById('cdInline');
-        if (il) il.textContent = dias + 'd ' + fmt(horas) + 'h ' + fmt(min) + 'm';
-    }
-    atualizarCD();
-    setInterval(atualizarCD, 1000);
+<section id="beneficios">
+    <h2 class="section-title">O que a <span>Rebeca Delivery</span> faz?</h2>
+    <p class="section-subtitle">Não é um chatbot. É uma funcionária de verdade que conhece seu cardápio, seus preços e seu restaurante.</p>
+    <div class="benefits-grid">
+        <div class="benefit-card"><div class="benefit-icon">🧠</div><h3>IA que Entende Pedidos</h3><p>Cliente manda texto ou áudio pedindo o lanche e a Rebeca entende tudo, monta o pedido, calcula o valor e confirma. Sem menus confusos, sem bots travados.</p></div>
+        <div class="benefit-card"><div class="benefit-icon">📸</div><h3>Cardápio por Foto</h3><p>Tire uma foto do seu cardápio físico e a IA transcreve tudo automaticamente — categorias, itens e preços. Pronto em 1 minuto.</p></div>
+        <div class="benefit-card"><div class="benefit-icon">🎙️</div><h3>Entende Áudios</h3><p>Cliente mandou áudio? A Rebeca transcreve, entende o pedido e responde. Funciona com texto, áudio e localização GPS.</p></div>
+        <div class="benefit-card"><div class="benefit-icon">💡</div><h3>Sugestões que Vendem Mais</h3><p>Cliente pediu lanche sem bebida? A Rebeca sugere. Não tem o item? Ela oferece algo parecido. Venda mais sem esforço.</p></div>
+        <div class="benefit-card"><div class="benefit-icon">👨‍🍳</div><h3>Painel da Cozinha</h3><p>Pedidos em tempo real: Novos, Preparando, Prontos — com alerta sonoro. Cada restaurante tem seu painel isolado.</p></div>
+        <div class="benefit-card"><div class="benefit-icon">🏍️</div><h3>Painel do Entregador</h3><p>Despacho automático com endereço, mapa e dados do cliente. Aceita com um toque no celular.</p></div>
+        <div class="benefit-card"><div class="benefit-icon">📍</div><h3>Rastreio em Tempo Real</h3><p>Cliente recebe link GPS ao vivo. Igual iFood, mas no SEU WhatsApp, com sua identidade.</p></div>
+        <div class="benefit-card"><div class="benefit-icon">📊</div><h3>Dashboard Completo</h3><p>Pedidos por dia, horários de pico, itens mais vendidos, avaliações e faturamento em tempo real.</p></div>
+        <div class="benefit-card"><div class="benefit-icon">🔒</div><h3>Sistema Isolado</h3><p>Cada restaurante tem seu ambiente fechado. Ninguém vê dados de outro. Total segurança e privacidade.</p></div>
+    </div>
+</section>
 
-    // PRÉ-CADASTRO
-    async function enviarPreCadastro() {
-        const nome = document.getElementById('pcNome').value.trim();
-        const comercio = document.getElementById('pcComercio').value.trim();
-        const telefone = document.getElementById('pcTelefone').value.trim();
-        const cidade = document.getElementById('pcCidade').value.trim();
-        const tipo = document.getElementById('pcTipo').value;
-        const erro = document.getElementById('pcErro');
-        erro.style.display = 'none';
-        if (!nome || !comercio || !telefone || !cidade) {
-            erro.textContent = '⚠️ Preencha todos os campos obrigatórios (*)';
-            erro.style.display = 'block';
-            return;
-        }
-        const btn = document.getElementById('pcBtn');
-        btn.disabled = true; btn.textContent = 'Enviando...';
-        try {
-            const r = await fetch('/api/delivery/pre-cadastro', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ nome, comercio, telefone, cidade, tipo, origem: 'landing_delivery' })
-            });
-            const d = await r.json();
-            if (d.sucesso || r.ok) {
-                document.getElementById('pcFormWrap').style.display = 'none';
-                document.getElementById('pcSucesso').style.display = 'block';
-            } else {
-                erro.textContent = d.erro || 'Erro ao enviar. Tente novamente.';
-                erro.style.display = 'block';
-                btn.disabled = false; btn.textContent = '🚀 Garantir meu pré-cadastro VIP';
-            }
-        } catch(e) {
-            document.getElementById('pcFormWrap').style.display = 'none';
-            document.getElementById('pcSucesso').style.display = 'block';
-        }
-    }
+<section id="como-funciona">
+    <h2 class="section-title">Como <span>funciona</span>?</h2>
+    <p class="section-subtitle">Em 4 passos simples você automatiza todo o atendimento</p>
+    <div class="steps">
+        <div class="step"><div class="step-number">1</div><div><h3>Crie sua conta grátis agora</h3><p>Cadastro em 30 segundos. 7 dias de teste completo, sem cartão, sem compromisso. Acesso imediato ao painel.</p></div></div>
+        <div class="step"><div class="step-number">2</div><div><h3>Conecte seu WhatsApp e cadastre o cardápio</h3><p>Escaneie o QR Code no painel. Cadastre itens ou tire foto do cardápio — a IA transcreve tudo.</p></div></div>
+        <div class="step"><div class="step-number">3</div><div><h3>Abra a cozinha e o painel do entregador</h3><p>Compartilhe os links com sua equipe. Cada pedido aparece em tempo real com alerta sonoro.</p></div></div>
+        <div class="step"><div class="step-number">4</div><div><h3>A Rebeca cuida do resto</h3><p>Cliente manda msg → Rebeca mostra cardápio → monta pedido → envia pra cozinha → despacha entregador → envia rastreio → pede avaliação.</p></div></div>
+    </div>
+</section>
 
-    // Smooth scroll
-    document.querySelectorAll('a[href^="#"]').forEach(a => {
-        a.addEventListener('click', e => {
-            e.preventDefault();
-            document.querySelector(a.getAttribute('href')).scrollIntoView({ behavior: 'smooth' });
+<section>
+    <h2 class="section-title">Em <span>números</span></h2>
+    <div class="diff-grid">
+        <div class="diff-item"><div class="number">24/7</div><p>Atendimento ininterrupto</p></div>
+        <div class="diff-item"><div class="number">&lt;3s</div><p>Tempo de resposta</p></div>
+        <div class="diff-item"><div class="number">+30%</div><p>Mais vendas com sugestões</p></div>
+        <div class="diff-item"><div class="number">0</div><p>Erros de pedido</p></div>
+    </div>
+</section>
+
+<section>
+    <div class="suporte-section">
+        <h2 class="section-title">Suporte <span>de verdade</span></h2>
+        <p style="color:#888;font-size:15px;margin-top:10px;">Não é chatbot de suporte. É gente real que resolve na hora.</p>
+        <div class="suporte-grid">
+            <div class="suporte-card"><h4>⚡ Menos de 30 min</h4><p>Todo chamado respondido em menos de 30 minutos. Dia ou noite, feriado ou fim de semana.</p></div>
+            <div class="suporte-card"><h4>🔧 Melhorias Sob Demanda</h4><p>Precisa de funcionalidade nova? A gente desenvolve. Seu feedback vira atualização.</p></div>
+            <div class="suporte-card"><h4>📱 WhatsApp Direto</h4><p>Suporte via WhatsApp com a equipe técnica. Sem fila, sem ticket. Resolvemos na hora.</p></div>
+            <div class="suporte-card"><h4>🔄 Atualizações Semanais</h4><p>Sistema atualizado toda semana com melhorias baseadas no uso real.</p></div>
+        </div>
+    </div>
+</section>
+
+<section style="text-align:center;padding-bottom:100px;">
+    <h2 class="section-title">Pronto para <span>começar?</span></h2>
+    <p class="section-subtitle">Crie sua conta agora e teste 7 dias grátis. Sem cartão, sem risco.</p>
+    <button class="btn btn-primary" style="font-size:18px;padding:18px 48px;" onclick="abrirModal('cadastro')">🚀 Criar conta grátis agora</button>
+</section>
+
+<footer>
+    <p>Rebeca Delivery — Sistemas BR — Automação Inteligente para Restaurantes</p>
+    <p style="margin-top:8px;">Dúvidas? <a href="https://wa.me/5534984039955">WhatsApp (34) 98403-9955</a></p>
+    <p style="margin-top:5px;color:#333;">Sistema 100% seguro — Dados isolados por restaurante</p>
+</footer>
+
+<a href="https://wa.me/5534984039955" target="_blank" class="whatsapp-float">💬</a>
+
+<script>
+function abrirModal(tab) {
+    document.getElementById('modalOverlay').classList.add('show');
+    trocarTab(tab || 'cadastro');
+    document.body.style.overflow = 'hidden';
+}
+function fecharModal() {
+    document.getElementById('modalOverlay').classList.remove('show');
+    document.body.style.overflow = '';
+}
+function fecharModalFora(e) {
+    if (e.target === document.getElementById('modalOverlay')) fecharModal();
+}
+function trocarTab(tab) {
+    const isCad = tab === 'cadastro';
+    document.getElementById('formCadastro').style.display = isCad ? 'block' : 'none';
+    document.getElementById('formLogin').style.display = isCad ? 'none' : 'block';
+    document.getElementById('tabCadastro').classList.toggle('active', isCad);
+    document.getElementById('tabLogin').classList.toggle('active', !isCad);
+}
+
+async function cadastrar() {
+    const nome = document.getElementById('cNome').value.trim();
+    const telefone = document.getElementById('cTelefone').value.trim();
+    const comercio = document.getElementById('cComercio').value.trim();
+    const tipo = document.getElementById('cTipo').value;
+    const cidade = document.getElementById('cCidade').value.trim();
+    const email = document.getElementById('cEmail').value.trim();
+    const senha = document.getElementById('cSenha').value;
+    const senha2 = document.getElementById('cSenha2').value;
+    const erro = document.getElementById('erroC');
+    erro.style.display = 'none';
+
+    if (!nome || !telefone || !comercio || !email || !senha)
+        return mostrarErro(erro, '⚠️ Preencha todos os campos obrigatórios (*)');
+    if (senha.length < 6)
+        return mostrarErro(erro, '⚠️ Senha deve ter pelo menos 6 caracteres');
+    if (senha !== senha2)
+        return mostrarErro(erro, '⚠️ As senhas não coincidem');
+
+    const btn = document.getElementById('btnCadastro');
+    btn.disabled = true; btn.textContent = 'Criando conta...';
+
+    try {
+        const r = await fetch('/api/delivery-auth/cadastro', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nome, telefone, nomeComercio: comercio, tipoNegocio: tipo, cidade, email, senha, origem: 'landing' })
         });
+        const d = await r.json();
+        if (d.sucesso && d.token) {
+            localStorage.setItem('delivery_token', d.token);
+            localStorage.setItem('delivery_adminId', d.adminId);
+            document.getElementById('camposCadastro').style.display = 'none';
+            document.getElementById('sucessoCadastro').style.display = 'block';
+            setTimeout(() => { window.location.href = '/delivery-admin'; }, 2000);
+        } else {
+            mostrarErro(erro, d.erro || 'Erro ao criar conta. Tente novamente.');
+            btn.disabled = false; btn.textContent = '🚀 Começar teste grátis';
+        }
+    } catch(e) {
+        mostrarErro(erro, 'Erro de conexão. Tente novamente.');
+        btn.disabled = false; btn.textContent = '🚀 Começar teste grátis';
+    }
+}
+
+async function login() {
+    const email = document.getElementById('lEmail').value.trim();
+    const senha = document.getElementById('lSenha').value;
+    const erro = document.getElementById('erroL');
+    erro.style.display = 'none';
+
+    if (!email || !senha) return mostrarErro(erro, '⚠️ Preencha e-mail e senha');
+
+    const btn = document.getElementById('btnLogin');
+    btn.disabled = true; btn.textContent = 'Entrando...';
+
+    try {
+        const r = await fetch('/api/delivery-auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, senha })
+        });
+        const d = await r.json();
+        if (d.sucesso && d.token) {
+            localStorage.setItem('delivery_token', d.token);
+            localStorage.setItem('delivery_adminId', d.adminId);
+            document.getElementById('camposLogin').style.display = 'none';
+            document.getElementById('sucessoLogin').style.display = 'block';
+            setTimeout(() => { window.location.href = '/delivery-admin'; }, 1500);
+        } else {
+            mostrarErro(erro, d.erro || 'Erro ao fazer login.');
+            btn.disabled = false; btn.textContent = 'Entrar no painel';
+        }
+    } catch(e) {
+        mostrarErro(erro, 'Erro de conexão. Tente novamente.');
+        btn.disabled = false; btn.textContent = 'Entrar no painel';
+    }
+}
+
+function mostrarErro(el, msg) {
+    el.textContent = msg;
+    el.style.display = 'block';
+}
+
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+        e.preventDefault();
+        const t = document.querySelector(a.getAttribute('href'));
+        if (t) t.scrollIntoView({ behavior: 'smooth' });
     });
-    </script>
+});
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') fecharModal(); });
+</script>
 </body>
 </html>

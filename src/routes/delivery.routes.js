@@ -1,18 +1,23 @@
 const express = require('express');
 const router = express.Router();
-const { CategoriaCardapio, ItemCardapio, PedidoDelivery, ConfigDelivery } = require('../models/delivery.models');
-const { Admin } = require('../models');
+const { CategoriaCardapio, ItemCardapio, PedidoDelivery, ConfigDelivery, AdminDelivery } = require('../models/delivery.models');
 
 // ========== AUTENTICAÇÃO DELIVERY ==========
 const authDelivery = async (req, res, next) => {
-    const token = req.headers.authorization?.replace('Bearer ', '') || req.query.token;
-    if (!token) return res.status(401).json({ erro: 'Token obrigatório' });
-    const admin = await Admin.findOne({ token, tipoAdmin: { $in: ['delivery', 'multi'] } });
-    if (!admin) return res.status(401).json({ erro: 'Token inválido ou admin não é delivery' });
-    if (admin.bloqueado) return res.status(403).json({ erro: 'Conta bloqueada' });
-    req.adminId = admin._id;
-    req.admin = admin;
-    next();
+    try {
+        const token = req.headers.authorization?.replace('Bearer ', '') || req.query.token;
+        if (!token) return res.status(401).json({ erro: 'Token obrigatório' });
+        const admin = await AdminDelivery.findOne({ token });
+        if (!admin) return res.status(401).json({ erro: 'Token inválido' });
+        if (admin.status === 'bloqueado') return res.status(403).json({ erro: 'Conta bloqueada. Entre em contato: (34) 98403-9955', bloqueado: true });
+        if (admin.status === 'trial' && new Date() > admin.trialFim) {
+            await AdminDelivery.findByIdAndUpdate(admin._id, { status: 'bloqueado', motivoBloqueio: 'Trial expirado' });
+            return res.status(403).json({ erro: 'Período de teste encerrado.', trialExpirado: true });
+        }
+        req.adminId = admin._id;
+        req.admin = admin;
+        next();
+    } catch(e) { res.status(500).json({ erro: e.message }); }
 };
 
 // ========== CATEGORIAS ==========
