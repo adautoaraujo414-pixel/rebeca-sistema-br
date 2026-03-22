@@ -191,7 +191,7 @@ router.post('/faixas/copiar', (req, res) => {
 // ==================== CÁLCULO DE PREÇO (USADO PELA REBECA) ====================
 
 // Obter faixa atual
-router.get('/faixa-atual', (req, res) => {
+router.get('/faixa-atual', async (req, res) => {
     try {
         const adminId = getAdminId(req);
         if (adminId) {
