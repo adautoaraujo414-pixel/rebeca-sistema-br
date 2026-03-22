@@ -176,16 +176,29 @@ router.delete('/faixas/:id', async (req, res) => {
 });
 
 // Copiar faixas de um dia para outro
-router.post('/faixas/copiar', (req, res) => {
+router.post('/faixas/copiar', async (req, res) => {
     const { diaOrigem, diaDestino } = req.body;
-    
-    if (!diaOrigem || !diaDestino) {
-        return res.status(400).json({ error: 'diaOrigem e diaDestino são obrigatórios' });
-    }
-    
-    const faixas = PrecoDinamicoService.copiarFaixas(diaOrigem, diaDestino);
-    LogsService.registrar({ tipo: 'config', acao: 'Faixas copiadas', detalhes: { de: diaOrigem, para: diaDestino } });
-    res.json({ sucesso: true, faixas });
+    if (!diaOrigem || !diaDestino) return res.status(400).json({ error: 'diaOrigem e diaDestino são obrigatórios' });
+    try {
+        const adminId = getAdminId(req);
+        if (adminId) {
+            const admin = await Admin.findById(adminId).lean();
+            const faixasOrigem = (admin?.faixasPreco || []).filter(f => f.ativo !== false && (f.diaSemana === diaOrigem || f.diaSemana === 'todos'));
+            const novasFaixas = faixasOrigem.map(f => ({
+                ...f,
+                _id: new mongoose.Types.ObjectId(),
+                diaSemana: diaDestino
+            }));
+            if (novasFaixas.length > 0) {
+                await Admin.findByIdAndUpdate(adminId, { $push: { faixasPreco: { $each: novasFaixas } } });
+            }
+            LogsService.registrar({ tipo: 'config', acao: 'Faixas copiadas no banco', detalhes: { de: diaOrigem, para: diaDestino, qtd: novasFaixas.length } });
+            return res.json({ sucesso: true, copiadas: novasFaixas.length });
+        }
+        const faixas = PrecoDinamicoService.copiarFaixas(diaOrigem, diaDestino);
+        LogsService.registrar({ tipo: 'config', acao: 'Faixas copiadas', detalhes: { de: diaOrigem, para: diaDestino } });
+        res.json({ sucesso: true, faixas });
+    } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
 // ==================== CÁLCULO DE PREÇO (USADO PELA REBECA) ====================
@@ -274,12 +287,16 @@ router.post('/rebeca/cotacao', async (req, res) => {
     
     const adminId = getAdminId(req);
     let resultado, config, faixa;
-    if (adminId) {
-        resultado = await PrecoAdminService.calcularPreco(adminId, parseFloat(distanciaKm), 0);
-        config = await PrecoAdminService.getConfig(adminId);
-        faixa = await PrecoAdminService.getFaixaAtual(adminId);
-        resultado.precoFinal = resultado.precoFinal ?? resultado.preco ?? resultado.total ?? 15;
-    } else {
+    try {
+        if (adminId) {
+            resultado = await PrecoAdminService.calcularPreco(adminId, parseFloat(distanciaKm), 0);
+            config = await PrecoAdminService.getConfig(adminId);
+            faixa = await PrecoAdminService.getFaixaAtual(adminId);
+            resultado.precoFinal = resultado.precoFinal ?? resultado.preco ?? resultado.total ?? 15;
+        } else {
+            throw new Error('sem adminId');
+        }
+    } catch(e) {
         resultado = PrecoDinamicoService.calcularPreco(parseFloat(distanciaKm));
         config = PrecoDinamicoService.getConfig();
         faixa = PrecoDinamicoService.obterFaixaAtual();
@@ -290,7 +307,7 @@ router.post('/rebeca/cotacao', async (req, res) => {
 
 📍 *Origem:* ${origem || 'Não informada'}
 🏁 *Destino:* ${destino || 'Não informado'}
-📏 *Distância:* ${distanciaKm.toFixed(1)} km
+📏 *Distância:* ${parseFloat(distanciaKm).toFixed(1)} km
 
 💰 *VALOR: R$ ${resultado.precoFinal.toFixed(2)}*
 
@@ -334,9 +351,9 @@ router.get('/rebeca/tabela', async (req, res) => {
     let tabela = `📋 *TABELA DE PREÇOS*
 
 💵 *Valores Base:*
-- Taxa inicial: R$ ${config.taxaBase.toFixed(2)}
-- Por km: R$ ${config.precoKm.toFixed(2)}
-- Mínimo: R$ ${config.taxaMinima.toFixed(2)}
+- Taxa inicial: R$ ${(config.taxaBase || 5).toFixed(2)}
+- Por km: R$ ${(config.precoKm || 2.5).toFixed(2)}
+- Mínimo: R$ ${(config.taxaMinima || 15).toFixed(2)}
 
 ⏰ *Faixas de hoje (${diaHoje}):*
 `;
