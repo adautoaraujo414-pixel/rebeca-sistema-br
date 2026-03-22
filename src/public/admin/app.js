@@ -542,10 +542,16 @@ document.getElementById('formEditarFaixa')?.addEventListener('submit', async (e)
         taxaAdicional: tipo === 'multiplicador' ? parseFloat(document.getElementById('editFaixaTaxa').value) : 0,
         valorFixo: tipo === 'fixo' ? parseFloat(document.getElementById('editFaixaValorFixo').value) : 0
     };
-    await api('/api/preco-dinamico/faixas/' + id, 'PUT', dados);
-    fecharModal('modalEditarFaixa');
-    carregarFaixasDia(diaSelecionado); carregarIntermunicipais();
-    alert('✅ Faixa atualizada!');
+    try {
+        const r = await api('/api/preco-dinamico/faixas/' + id, 'PUT', dados);
+        if (r && (r.sucesso || r.faixa)) {
+            fecharModal('modalEditarFaixa');
+            carregarFaixasDia(diaSelecionado); carregarIntermunicipais();
+            alert('✅ Faixa atualizada!');
+        } else {
+            alert('Erro ao salvar: ' + (r?.error || r?.erro || JSON.stringify(r)));
+        }
+    } catch(e) { alert('Erro ao salvar: ' + e.message); }
 });
 
 let _excluindoFaixa = false;
