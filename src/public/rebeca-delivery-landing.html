@@ -295,7 +295,7 @@ async function cadastrar() {
             localStorage.setItem('delivery_adminId', d.adminId);
             document.getElementById('camposCadastro').style.display = 'none';
             document.getElementById('sucessoCadastro').style.display = 'block';
-            setTimeout(() => { window.location.replace('/delivery-admin'); }, 1000);
+            setTimeout(() => { window.location.replace('/delivery-admin?token=' + d.token); }, 1000);
         } else {
             mostrarErro(erro, d.erro || 'Erro ao criar conta. Tente novamente.');
             btn.disabled = false; btn.textContent = '🚀 Começar teste grátis';
@@ -329,7 +329,7 @@ async function login() {
             localStorage.setItem('delivery_adminId', d.adminId);
             document.getElementById('camposLogin').style.display = 'none';
             document.getElementById('sucessoLogin').style.display = 'block';
-            setTimeout(() => { window.location.replace('/delivery-admin'); }, 1000);
+            setTimeout(() => { window.location.replace('/delivery-admin?token=' + d.token); }, 1000);
         } else {
             mostrarErro(erro, d.erro || 'Erro ao fazer login.');
             btn.disabled = false; btn.textContent = 'Entrar no painel';
