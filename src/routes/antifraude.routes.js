@@ -1,142 +1,87 @@
 const express = require('express');
 const router = express.Router();
-const AntiFraudeService = require('../services/antifraude.service');
+const AF = require('../services/antifraude.service');
 const LogsService = require('../services/logs.service');
 
-// ==================== DASHBOARD ====================
-router.get('/estatisticas', (req, res) => {
-    const adminId = req.query.adminId || req.headers['x-admin-id'];
-    res.json(AntiFraudeService.obterEstatisticas(adminId));
+function getAdminId(req) {
+    return req.headers['x-admin-id'] || req.query.adminId || req.body?.adminId || null;
+}
+
+router.get('/estatisticas', async (req, res) => {
+    res.json(await AF.obterEstatisticas(getAdminId(req)));
 });
 
-// ==================== ALERTAS ====================
-router.get('/alertas', (req, res) => {
-    const adminId = req.query.adminId || req.headers['x-admin-id'] || req.body?.adminId;
+router.get('/alertas', async (req, res) => {
+    const adminId = getAdminId(req);
     if (!adminId) return res.status(400).json({ error: 'adminId obrigatório' });
-    const filtros = { adminId, status: req.query.status, nivel: req.query.nivel, tipo: req.query.tipo };
-    res.json(AntiFraudeService.listarAlertas(filtros));
+    res.json(await AF.listarAlertas({ adminId, status: req.query.status, nivel: req.query.nivel, tipo: req.query.tipo }));
 });
 
-router.get('/alertas/:id', (req, res) => {
-    const alerta = AntiFraudeService.obterAlerta(req.params.id);
-    if (!alerta) return res.status(404).json({ error: 'Alerta não encontrado' });
-    res.json(alerta);
+router.get('/alertas/:id', async (req, res) => {
+    const a = await AF.obterAlerta(getAdminId(req), req.params.id);
+    if (!a) return res.status(404).json({ error: 'Alerta não encontrado' });
+    res.json(a);
 });
 
-router.put('/alertas/:id/analisar', (req, res) => {
-    const { analisadoPor } = req.body;
-    const alerta = AntiFraudeService.analisarAlerta(req.params.id, analisadoPor || 'Admin');
-    if (!alerta) return res.status(404).json({ error: 'Alerta não encontrado' });
-    
-    LogsService.registrar({ tipo: 'antifraude', acao: 'Alerta em análise', detalhes: { alertaId: alerta.id } });
-    res.json({ sucesso: true, alerta });
+router.put('/alertas/:id/analisar', async (req, res) => {
+    const r = await AF.analisarAlerta(getAdminId(req), req.params.id, req.body.analisadoPor || 'Admin');
+    res.json({ sucesso: true, alerta: r });
 });
 
-router.put('/alertas/:id/resolver', (req, res) => {
-    const { resolucao, acao } = req.body;
-    if (!resolucao) return res.status(400).json({ error: 'Resolução é obrigatória' });
-    
-    const alerta = AntiFraudeService.resolverAlerta(req.params.id, resolucao, acao);
-    if (!alerta) return res.status(404).json({ error: 'Alerta não encontrado' });
-    
-    LogsService.registrar({ 
-        tipo: 'antifraude', 
-        acao: 'Alerta resolvido' + (acao === 'bloquear' ? ' (bloqueado)' : ''), 
-        detalhes: { alertaId: alerta.id, resolucao } 
-    });
-    res.json({ sucesso: true, alerta });
+router.put('/alertas/:id/resolver', async (req, res) => {
+    if (!req.body.resolucao) return res.status(400).json({ error: 'Resolução obrigatória' });
+    const r = await AF.resolverAlerta(getAdminId(req), req.params.id, req.body.resolucao);
+    LogsService.registrar({ tipo: 'antifraude', acao: 'Alerta resolvido', detalhes: { id: req.params.id } });
+    res.json({ sucesso: true, alerta: r });
 });
 
-router.put('/alertas/:id/ignorar', (req, res) => {
-    const { motivo } = req.body;
-    const alerta = AntiFraudeService.ignorarAlerta(req.params.id, motivo || 'Falso positivo');
-    if (!alerta) return res.status(404).json({ error: 'Alerta não encontrado' });
-    
-    LogsService.registrar({ tipo: 'antifraude', acao: 'Alerta ignorado', detalhes: { alertaId: alerta.id } });
-    res.json({ sucesso: true, alerta });
+router.put('/alertas/:id/ignorar', async (req, res) => {
+    const r = await AF.ignorarAlerta(getAdminId(req), req.params.id, req.body.motivo || 'Falso positivo');
+    res.json({ sucesso: true, alerta: r });
 });
 
-// ==================== BLACKLIST ====================
-router.get('/blacklist', (req, res) => {
-    const tipo = req.query.tipo;
-    res.json(AntiFraudeService.listarBlacklist(tipo));
+router.get('/blacklist', async (req, res) => {
+    res.json(await AF.listarBlacklist(getAdminId(req), req.query.tipo));
 });
 
-router.post('/blacklist', (req, res) => {
+router.post('/blacklist', async (req, res) => {
     const { tipo, valor, motivo } = req.body;
-    
-    if (!tipo || !valor) {
-        return res.status(400).json({ error: 'Tipo e valor são obrigatórios' });
-    }
-    
-    // Verificar se já existe
-    const existente = AntiFraudeService.verificarBlacklist(tipo, valor);
-    if (existente) {
-        return res.status(400).json({ error: 'Item já está na blacklist' });
-    }
-    
-    const item = AntiFraudeService.adicionarBlacklist({
-        tipo,
-        valor,
-        motivo: motivo || 'Adicionado manualmente',
-        bloqueadoPor: 'Admin'
-    });
-    
+    if (!tipo || !valor) return res.status(400).json({ error: 'Tipo e valor obrigatórios' });
+    const adminId = getAdminId(req);
+    const existente = await AF.verificarBlacklist(tipo, valor, adminId);
+    if (existente) return res.status(400).json({ error: 'Já está na blacklist' });
+    const item = await AF.adicionarBlacklist(adminId, { tipo, valor, motivo, bloqueadoPor: 'Admin' });
     LogsService.registrar({ tipo: 'antifraude', acao: 'Adicionado à blacklist', detalhes: { tipo, valor } });
     res.status(201).json(item);
 });
 
-router.delete('/blacklist/:id', (req, res) => {
-    AntiFraudeService.removerBlacklist(req.params.id);
+router.delete('/blacklist/:id', async (req, res) => {
+    await AF.removerBlacklist(getAdminId(req), req.params.id);
     LogsService.registrar({ tipo: 'antifraude', acao: 'Removido da blacklist', detalhes: { id: req.params.id } });
     res.json({ sucesso: true });
 });
 
-router.get('/blacklist/verificar', (req, res) => {
+router.get('/blacklist/verificar', async (req, res) => {
     const { tipo, valor } = req.query;
-    if (!tipo || !valor) {
-        return res.status(400).json({ error: 'Tipo e valor são obrigatórios' });
-    }
-    
-    const resultado = AntiFraudeService.verificarBlacklist(tipo, valor);
+    if (!tipo || !valor) return res.status(400).json({ error: 'Tipo e valor obrigatórios' });
+    const resultado = await AF.verificarBlacklist(tipo, valor, getAdminId(req));
     res.json({ bloqueado: !!resultado, item: resultado });
 });
 
-// ==================== REGRAS ====================
-router.get('/regras', (req, res) => {
-    res.json(AntiFraudeService.listarRegras());
-});
-
+router.get('/regras', (req, res) => res.json(AF.listarRegras()));
 router.get('/regras/:id', (req, res) => {
-    const regra = AntiFraudeService.obterRegra(req.params.id);
-    if (!regra) return res.status(404).json({ error: 'Regra não encontrada' });
-    res.json(regra);
+    const r = AF.obterRegra(req.params.id);
+    if (!r) return res.status(404).json({ error: 'Regra não encontrada' });
+    res.json(r);
 });
-
 router.put('/regras/:id', (req, res) => {
-    const regra = AntiFraudeService.atualizarRegra(req.params.id, req.body);
-    if (!regra) return res.status(404).json({ error: 'Regra não encontrada' });
-    
-    LogsService.registrar({ tipo: 'antifraude', acao: 'Regra atualizada', detalhes: { regraId: regra.id } });
-    res.json({ sucesso: true, regra });
+    const r = AF.atualizarRegra(req.params.id, req.body);
+    if (!r) return res.status(404).json({ error: 'Regra não encontrada' });
+    res.json({ sucesso: true, regra: r });
 });
 
-// ==================== ANÁLISE MANUAL ====================
-router.post('/analisar/corrida', (req, res) => {
-    const resultado = AntiFraudeService.analisarCorrida(req.body);
-    res.json(resultado);
-});
-
-router.post('/analisar/motorista', (req, res) => {
-    const { motorista, estatisticas } = req.body;
-    const resultado = AntiFraudeService.analisarMotorista(motorista, estatisticas);
-    res.json(resultado);
-});
-
-router.post('/analisar/cliente', (req, res) => {
-    const { cliente, estatisticas } = req.body;
-    const resultado = AntiFraudeService.analisarCliente(cliente, estatisticas);
-    res.json(resultado);
-});
+router.post('/analisar/corrida', (req, res) => res.json(AF.analisarCorrida(req.body)));
+router.post('/analisar/motorista', (req, res) => res.json(AF.analisarMotorista(req.body.motorista, req.body.estatisticas)));
+router.post('/analisar/cliente', (req, res) => res.json(AF.analisarCliente(req.body.cliente, req.body.estatisticas)));
 
 module.exports = router;

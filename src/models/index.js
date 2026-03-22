@@ -552,3 +552,30 @@ PontoReferenciaSchema.index({ adminId: 1, ativo: 1 });
 
 const PontoReferencia = mongoose.model('PontoReferencia', PontoReferenciaSchema);
 module.exports.PontoReferencia = PontoReferencia;
+// ==================== ANTIFRAUDE: blacklist e alertas no Admin ====================
+if (Admin.schema) {
+    Admin.schema.add({
+        blacklist: [{
+            id: String,
+            tipo: String,
+            valor: String,
+            motivo: String,
+            dataBloqueio: String,
+            bloqueadoPor: String
+        }],
+        alertasAntifraude: [{
+            id: String,
+            tipo: String,
+            entidadeId: String,
+            entidadeNome: String,
+            nivel: String,
+            pontuacao: Number,
+            motivos: [String],
+            status: { type: String, default: 'pendente' },
+            dataCriacao: String,
+            dataAnalise: String,
+            analisadoPor: String,
+            resolucao: String
+        }]
+    });
+}

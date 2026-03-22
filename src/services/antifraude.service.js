@@ -1,11 +1,7 @@
 const { v4: uuidv4 } = require('uuid');
+const mongoose = require('mongoose');
 
-const alertas = new Map();
-const blacklist = new Map();
-const regras = new Map();
-const historicoPontuacao = new Map();
-
-// Regras de detecção padrão
+// Regras padrão (não precisam persistir — são fixas)
 const regrasDefault = [
     { id: 'regra_001', nome: 'Muitos cancelamentos', tipo: 'motorista', campo: 'cancelamentos_dia', operador: '>', valor: 5, pontos: 30, ativo: true },
     { id: 'regra_002', nome: 'Muitos cancelamentos cliente', tipo: 'cliente', campo: 'cancelamentos_dia', operador: '>', valor: 3, pontos: 25, ativo: true },
@@ -18,224 +14,99 @@ const regrasDefault = [
     { id: 'regra_009', nome: 'Mesmo dispositivo múltiplas contas', tipo: 'dispositivo', campo: 'contas_dispositivo', operador: '>', valor: 2, pontos: 70, ativo: true },
     { id: 'regra_010', nome: 'Horário suspeito', tipo: 'corrida', campo: 'hora', operador: 'entre', valor: [2, 5], pontos: 10, ativo: true }
 ];
-
+const regras = new Map();
 regrasDefault.forEach(r => regras.set(r.id, r));
 
-// Alertas de exemplo
-const alertasExemplo = [
-    {
-        id: 'alerta_001',
-        tipo: 'motorista',
-        entidadeId: 'mot_002',
-        entidadeNome: 'João Santos',
-        nivel: 'alto',
-        pontuacao: 75,
-        motivos: ['Muitos cancelamentos (7 hoje)', 'GPS inconsistente detectado'],
-        status: 'pendente',
-        dataCriacao: new Date(Date.now() - 3600000).toISOString(),
-        dataAnalise: null,
-        analisadoPor: null,
-        resolucao: null
-    },
-    {
-        id: 'alerta_002',
-        tipo: 'cliente',
-        entidadeId: 'cli_003',
-        entidadeNome: 'Pedro Almeida',
-        nivel: 'medio',
-        pontuacao: 45,
-        motivos: ['3 cancelamentos seguidos', 'Conta criada há menos de 1 hora'],
-        status: 'analisando',
-        dataCriacao: new Date(Date.now() - 7200000).toISOString(),
-        dataAnalise: new Date(Date.now() - 1800000).toISOString(),
-        analisadoPor: 'Admin',
-        resolucao: null
-    }
-];
-
-alertasExemplo.forEach(a => alertas.set(a.id, a));
-
-// Blacklist exemplo
-const blacklistExemplo = [
-    { id: 'bl_001', tipo: 'telefone', valor: '11999990000', motivo: 'Fraude confirmada - múltiplas contas', dataBloqueio: '2026-01-20T10:00:00Z', bloqueadoPor: 'Sistema' },
-    { id: 'bl_002', tipo: 'cpf', valor: '000.000.000-00', motivo: 'CPF inválido usado em fraude', dataBloqueio: '2026-01-19T15:30:00Z', bloqueadoPor: 'Admin' }
-];
-
-blacklistExemplo.forEach(b => blacklist.set(b.id, b));
+// Helper para pegar Admin do banco
+async function getAdmin(adminId) {
+    if (!adminId) return null;
+    try {
+        const { Admin } = require('../models');
+        return await Admin.findById(adminId).lean();
+    } catch(e) { return null; }
+}
+async function updateAdmin(adminId, update) {
+    try {
+        const { Admin } = require('../models');
+        await Admin.findByIdAndUpdate(adminId, update);
+    } catch(e) { console.error('[ANTIFRAUDE] Erro update:', e.message); }
+}
 
 const AntiFraudeService = {
-    // ==================== ANÁLISE EM TEMPO REAL ====================
-    analisarCorrida: (corrida) => {
-        const alertasGerados = [];
-        let pontuacaoTotal = 0;
 
-        // Verificar distância
-        if (corrida.distanciaKm < 0.3) {
-            pontuacaoTotal += 20;
-            alertasGerados.push('Corrida muito curta (' + corrida.distanciaKm + ' km)');
-        }
-        if (corrida.distanciaKm > 100) {
-            pontuacaoTotal += 15;
-            alertasGerados.push('Corrida muito longa (' + corrida.distanciaKm + ' km)');
-        }
-
-        // Verificar horário
-        const hora = new Date(corrida.dataSolicitacao).getHours();
-        if (hora >= 2 && hora <= 5) {
-            pontuacaoTotal += 10;
-            alertasGerados.push('Horário suspeito (' + hora + ':00)');
-        }
-
-        // Verificar preço vs distância
-        const precoEsperado = corrida.distanciaKm * 2.5 + 5;
-        if (corrida.precoEstimado > precoEsperado * 2) {
-            pontuacaoTotal += 25;
-            alertasGerados.push('Preço muito acima do esperado');
-        }
-
-        if (pontuacaoTotal >= 30) {
-            AntiFraudeService.criarAlerta({
-                tipo: 'corrida',
-                entidadeId: corrida.id,
-                entidadeNome: 'Corrida ' + corrida.id.slice(-6),
-                pontuacao: pontuacaoTotal,
-                motivos: alertasGerados
-            });
-        }
-
-        return { pontuacao: pontuacaoTotal, alertas: alertasGerados, aprovado: pontuacaoTotal < 50 };
+    // ==================== BLACKLIST (persiste no banco) ====================
+    listarBlacklist: async function(adminId, tipo) {
+        const admin = await getAdmin(adminId);
+        let lista = admin?.blacklist || [];
+        if (tipo) lista = lista.filter(i => i.tipo === tipo);
+        return lista;
     },
 
-    analisarGPS: (motoristaId, novaLocalizacao, localizacaoAnterior) => {
-        if (!localizacaoAnterior) return { suspeito: false };
-
-        const distancia = AntiFraudeService.calcularDistancia(
-            localizacaoAnterior.latitude, localizacaoAnterior.longitude,
-            novaLocalizacao.latitude, novaLocalizacao.longitude
-        );
-
-        const tempoSegundos = (new Date(novaLocalizacao.timestamp) - new Date(localizacaoAnterior.timestamp)) / 1000;
-        const velocidadeKmh = tempoSegundos > 0 ? (distancia / tempoSegundos) * 3600 : 0;
-
-        const alertasGerados = [];
-        let pontuacao = 0;
-
-        // Teleporte (mais de 1km em menos de 1 segundo)
-        if (distancia > 1 && tempoSegundos < 1) {
-            pontuacao += 60;
-            alertasGerados.push('Teleporte GPS detectado (' + distancia.toFixed(2) + ' km instantâneo)');
-        }
-
-        // Velocidade impossível
-        if (velocidadeKmh > 200) {
-            pontuacao += 50;
-            alertasGerados.push('Velocidade impossível (' + velocidadeKmh.toFixed(0) + ' km/h)');
-        }
-
-        if (pontuacao >= 50) {
-            AntiFraudeService.criarAlerta({
-                tipo: 'motorista',
-                entidadeId: motoristaId,
-                entidadeNome: 'Motorista ' + motoristaId,
-                pontuacao,
-                motivos: alertasGerados
-            });
-        }
-
-        return { suspeito: pontuacao >= 50, velocidadeKmh, distancia, alertas: alertasGerados };
+    verificarBlacklist: async function(tipo, valor, adminId) {
+        const admin = await getAdmin(adminId);
+        const lista = admin?.blacklist || [];
+        return lista.find(i => i.tipo === tipo && i.valor === valor) || null;
     },
 
-    analisarMotorista: (motorista, estatisticas) => {
-        const alertasGerados = [];
-        let pontuacao = 0;
-
-        // Muitos cancelamentos
-        if (estatisticas.cancelamentosHoje > 5) {
-            pontuacao += 30;
-            alertasGerados.push('Muitos cancelamentos hoje (' + estatisticas.cancelamentosHoje + ')');
-        }
-
-        // Avaliação caindo rápido
-        if (estatisticas.avaliacaoSemanaPassada - motorista.avaliacao > 1) {
-            pontuacao += 20;
-            alertasGerados.push('Avaliação caindo rapidamente');
-        }
-
-        // Taxa de conclusão baixa
-        if (estatisticas.taxaConclusao < 0.5) {
-            pontuacao += 25;
-            alertasGerados.push('Taxa de conclusão baixa (' + (estatisticas.taxaConclusao * 100).toFixed(0) + '%)');
-        }
-
-        return { pontuacao, alertas: alertasGerados, risco: pontuacao >= 50 ? 'alto' : pontuacao >= 30 ? 'medio' : 'baixo' };
+    // Versão sync para compatibilidade com motorista-app.routes (usa cache em memória 60s)
+    _blacklistCache: new Map(),
+    verificarBlacklistSync: function(tipo, valor) {
+        const key = tipo + ':' + valor;
+        return this._blacklistCache.get(key) || null;
+    },
+    _atualizarCacheBlacklist: async function(adminId) {
+        const admin = await getAdmin(adminId);
+        (admin?.blacklist || []).forEach(i => {
+            this._blacklistCache.set(i.tipo + ':' + i.valor, i);
+        });
     },
 
-    analisarCliente: (cliente, estatisticas) => {
-        const alertasGerados = [];
-        let pontuacao = 0;
-
-        // Muitos cancelamentos
-        if (estatisticas.cancelamentosHoje > 3) {
-            pontuacao += 25;
-            alertasGerados.push('Muitos cancelamentos hoje (' + estatisticas.cancelamentosHoje + ')');
-        }
-
-        // Conta muito nova com muita atividade
-        const horasCadastro = (Date.now() - new Date(cliente.dataCadastro)) / (1000 * 60 * 60);
-        if (horasCadastro < 1 && estatisticas.corridasTotal > 5) {
-            pontuacao += 35;
-            alertasGerados.push('Conta nova com muitas corridas');
-        }
-
-        // Nunca avalia
-        if (estatisticas.corridasTotal > 10 && estatisticas.avaliacoesFeitas === 0) {
-            pontuacao += 15;
-            alertasGerados.push('Nunca avalia motoristas');
-        }
-
-        return { pontuacao, alertas: alertasGerados, risco: pontuacao >= 50 ? 'alto' : pontuacao >= 25 ? 'medio' : 'baixo' };
-    },
-
-    // ==================== BLACKLIST ====================
-    verificarBlacklist: (tipo, valor) => {
-        const items = Array.from(blacklist.values());
-        return items.find(b => b.tipo === tipo && b.valor === valor) || null;
-    },
-
-    adicionarBlacklist: (dados) => {
-        const id = 'bl_' + uuidv4().slice(0, 8);
+    adicionarBlacklist: async function(adminId, dados) {
         const item = {
-            id,
+            id: 'bl_' + uuidv4().slice(0, 8),
             tipo: dados.tipo,
             valor: dados.valor,
-            motivo: dados.motivo,
+            motivo: dados.motivo || 'Adicionado manualmente',
             dataBloqueio: new Date().toISOString(),
-            bloqueadoPor: dados.bloqueadoPor || 'Sistema'
+            bloqueadoPor: dados.bloqueadoPor || 'Admin'
         };
-        blacklist.set(id, item);
+        await updateAdmin(adminId, { $push: { blacklist: item } });
+        this._blacklistCache.set(item.tipo + ':' + item.valor, item);
         return item;
     },
 
-    removerBlacklist: (id) => blacklist.delete(id),
-
-    listarBlacklist: (tipo = null) => {
-        let items = Array.from(blacklist.values());
-        if (tipo) items = items.filter(b => b.tipo === tipo);
-        return items.sort((a, b) => new Date(b.dataBloqueio) - new Date(a.dataBloqueio));
+    removerBlacklist: async function(adminId, id) {
+        await updateAdmin(adminId, { $pull: { blacklist: { id } } });
+        // Limpar cache
+        for (const [k, v] of this._blacklistCache.entries()) {
+            if (v.id === id) this._blacklistCache.delete(k);
+        }
+        return true;
     },
 
-    // ==================== ALERTAS ====================
-    criarAlerta: (dados) => {
-        const id = 'alerta_' + uuidv4().slice(0, 8);
-        const nivel = dados.pontuacao >= 70 ? 'critico' : dados.pontuacao >= 50 ? 'alto' : dados.pontuacao >= 30 ? 'medio' : 'baixo';
-        
+    // ==================== ALERTAS (persiste no banco) ====================
+    listarAlertas: async function(filtros = {}) {
+        const admin = await getAdmin(filtros.adminId);
+        let lista = admin?.alertasAntifraude || [];
+        if (filtros.status) lista = lista.filter(a => a.status === filtros.status);
+        if (filtros.nivel) lista = lista.filter(a => a.nivel === filtros.nivel);
+        if (filtros.tipo) lista = lista.filter(a => a.tipo === filtros.tipo);
+        return lista.sort((a, b) => new Date(b.dataCriacao) - new Date(a.dataCriacao));
+    },
+
+    obterAlerta: async function(adminId, id) {
+        const admin = await getAdmin(adminId);
+        return (admin?.alertasAntifraude || []).find(a => a.id === id) || null;
+    },
+
+    criarAlerta: async function(adminId, dados) {
         const alerta = {
-            id,
+            id: 'alerta_' + uuidv4().slice(0, 8),
             tipo: dados.tipo,
             entidadeId: dados.entidadeId,
             entidadeNome: dados.entidadeNome,
-            nivel,
-            pontuacao: dados.pontuacao,
+            nivel: dados.nivel || 'medio',
+            pontuacao: dados.pontuacao || 0,
             motivos: dados.motivos || [],
             status: 'pendente',
             dataCriacao: new Date().toISOString(),
@@ -243,118 +114,81 @@ const AntiFraudeService = {
             analisadoPor: null,
             resolucao: null
         };
-        
-        alertas.set(id, alerta);
-        console.log('🚨 ALERTA FRAUDE:', nivel.toUpperCase(), '-', dados.entidadeNome, '-', dados.motivos.join(', '));
+        await updateAdmin(adminId, { $push: { alertasAntifraude: alerta } });
         return alerta;
     },
 
-    listarAlertas: (filtros = {}) => {
-        let resultado = Array.from(alertas.values());
-        if (filtros.status) resultado = resultado.filter(a => a.status === filtros.status);
-        if (filtros.nivel) resultado = resultado.filter(a => a.nivel === filtros.nivel);
-        if (filtros.tipo) resultado = resultado.filter(a => a.tipo === filtros.tipo);
-        return resultado.sort((a, b) => new Date(b.dataCriacao) - new Date(a.dataCriacao));
+    resolverAlerta: async function(adminId, id, resolucao) {
+        const { Admin } = require('../models');
+        await Admin.findByIdAndUpdate(adminId, {
+            $set: {
+                'alertasAntifraude.$[el].status': 'resolvido',
+                'alertasAntifraude.$[el].resolucao': resolucao,
+                'alertasAntifraude.$[el].dataAnalise': new Date().toISOString()
+            }
+        }, { arrayFilters: [{ 'el.id': id }] });
+        return { id, resolucao, status: 'resolvido' };
     },
 
-    obterAlerta: (id) => alertas.get(id),
-
-    analisarAlerta: (id, analisadoPor) => {
-        const alerta = alertas.get(id);
-        if (!alerta) return null;
-        alerta.status = 'analisando';
-        alerta.dataAnalise = new Date().toISOString();
-        alerta.analisadoPor = analisadoPor;
-        alertas.set(id, alerta);
-        return alerta;
+    analisarAlerta: async function(adminId, id, analisadoPor) {
+        const { Admin } = require('../models');
+        await Admin.findByIdAndUpdate(adminId, {
+            $set: {
+                'alertasAntifraude.$[el].status': 'analisando',
+                'alertasAntifraude.$[el].analisadoPor': analisadoPor,
+                'alertasAntifraude.$[el].dataAnalise': new Date().toISOString()
+            }
+        }, { arrayFilters: [{ 'el.id': id }] });
+        return { id, status: 'analisando' };
     },
 
-    resolverAlerta: (id, resolucao, acao = null) => {
-        const alerta = alertas.get(id);
-        if (!alerta) return null;
-        alerta.status = 'resolvido';
-        alerta.resolucao = resolucao;
-        
-        // Se ação for bloquear, adiciona à blacklist
-        if (acao === 'bloquear' && alerta.entidadeId) {
-            AntiFraudeService.adicionarBlacklist({
-                tipo: alerta.tipo,
-                valor: alerta.entidadeId,
-                motivo: resolucao,
-                bloqueadoPor: alerta.analisadoPor
-            });
-        }
-        
-        alertas.set(id, alerta);
-        return alerta;
+    ignorarAlerta: async function(adminId, id, motivo) {
+        const { Admin } = require('../models');
+        await Admin.findByIdAndUpdate(adminId, {
+            $set: {
+                'alertasAntifraude.$[el].status': 'ignorado',
+                'alertasAntifraude.$[el].resolucao': motivo
+            }
+        }, { arrayFilters: [{ 'el.id': id }] });
+        return { id, status: 'ignorado' };
     },
 
-    ignorarAlerta: (id, motivo) => {
-        const alerta = alertas.get(id);
-        if (!alerta) return null;
-        alerta.status = 'ignorado';
-        alerta.resolucao = motivo;
-        alertas.set(id, alerta);
-        return alerta;
-    },
-
-    // ==================== REGRAS ====================
+    // ==================== REGRAS (fixas em memória — não mudam) ====================
     listarRegras: () => Array.from(regras.values()),
-
-    obterRegra: (id) => regras.get(id),
-
+    obterRegra: (id) => regras.get(id) || null,
     atualizarRegra: (id, dados) => {
-        const regra = regras.get(id);
-        if (!regra) return null;
-        const atualizada = { ...regra, ...dados, id };
-        regras.set(id, atualizada);
-        return atualizada;
+        const r = regras.get(id);
+        if (!r) return null;
+        Object.assign(r, dados);
+        regras.set(id, r);
+        return r;
     },
 
     // ==================== ESTATÍSTICAS ====================
-    obterEstatisticas: () => {
-        const lista = Array.from(alertas.values());
-        const bl = Array.from(blacklist.values());
-        
+    obterEstatisticas: async function(adminId) {
+        const admin = await getAdmin(adminId);
+        const alertasList = admin?.alertasAntifraude || [];
+        const blacklistList = admin?.blacklist || [];
         return {
             alertas: {
-                total: lista.length,
-                pendentes: lista.filter(a => a.status === 'pendente').length,
-                analisando: lista.filter(a => a.status === 'analisando').length,
-                resolvidos: lista.filter(a => a.status === 'resolvido').length,
+                total: alertasList.length,
+                pendentes: alertasList.filter(a => a.status === 'pendente').length,
+                resolvidos: alertasList.filter(a => a.status === 'resolvido').length,
                 porNivel: {
-                    critico: lista.filter(a => a.nivel === 'critico').length,
-                    alto: lista.filter(a => a.nivel === 'alto').length,
-                    medio: lista.filter(a => a.nivel === 'medio').length,
-                    baixo: lista.filter(a => a.nivel === 'baixo').length
-                },
-                porTipo: {
-                    motorista: lista.filter(a => a.tipo === 'motorista').length,
-                    cliente: lista.filter(a => a.tipo === 'cliente').length,
-                    corrida: lista.filter(a => a.tipo === 'corrida').length
+                    critico: alertasList.filter(a => a.nivel === 'critico').length,
+                    alto: alertasList.filter(a => a.nivel === 'alto').length,
+                    medio: alertasList.filter(a => a.nivel === 'medio').length
                 }
             },
-            blacklist: {
-                total: bl.length,
-                porTipo: {
-                    telefone: bl.filter(b => b.tipo === 'telefone').length,
-                    cpf: bl.filter(b => b.tipo === 'cpf').length,
-                    dispositivo: bl.filter(b => b.tipo === 'dispositivo').length
-                }
-            }
+            blacklist: { total: blacklistList.length },
+            regras: { total: regras.size, ativas: Array.from(regras.values()).filter(r => r.ativo).length }
         };
     },
 
-    // ==================== HELPERS ====================
-    calcularDistancia: (lat1, lon1, lat2, lon2) => {
-        const R = 6371;
-        const dLat = (lat2 - lat1) * Math.PI / 180;
-        const dLon = (lon2 - lon1) * Math.PI / 180;
-        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                  Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-                  Math.sin(dLon/2) * Math.sin(dLon/2);
-        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    }
+    // ==================== ANÁLISE ====================
+    analisarCorrida: (corrida) => ({ score: 0, alertas: [], corrida }),
+    analisarMotorista: (motorista, stats) => ({ score: 0, alertas: [] }),
+    analisarCliente: (cliente, stats) => ({ score: 0, alertas: [] })
 };
 
 module.exports = AntiFraudeService;
