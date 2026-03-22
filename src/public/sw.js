@@ -1,4 +1,4 @@
-const CACHE_NAME = 'rebeca-corridas-v2';
+const CACHE_NAME = 'rebeca-v1774201839';
 const urlsToCache = ['/motorista', '/manifest.json'];
 
 // Instalação
