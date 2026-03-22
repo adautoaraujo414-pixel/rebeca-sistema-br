@@ -213,7 +213,7 @@ const PrecoAdminService = {
 
         // Garantir taxa mínima
         if (preco < taxaMinima) {
-            preco = config.taxaMinima;
+            preco = taxaMinima;
         }
         
         const precoFinal = Math.round(preco * 100) / 100;
