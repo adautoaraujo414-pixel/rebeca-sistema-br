@@ -264,7 +264,11 @@ app.use('/api/emergencia', require('./routes/emergencia.routes'));
 
 // ========== DELIVERY (100% ISOLADO) ==========
 const deliveryRoutes = require('./routes/delivery.routes');
+const deliveryAuthRoutes = require('./routes/delivery-auth.routes');
+const deliveryMasterRoutes = require('./routes/delivery-master.routes');
 app.use('/api/delivery', deliveryRoutes);
+app.use('/api/delivery-auth', deliveryAuthRoutes);
+app.use('/api/delivery-master', deliveryMasterRoutes);
 app.use('/api/delivery', require('./routes/delivery-precadastro.routes'));
 app.get('/delivery-admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'delivery-admin.html')));
 app.get('/delivery-entregador', (req, res) => res.sendFile(path.join(__dirname, 'public', 'delivery-entregador.html')));

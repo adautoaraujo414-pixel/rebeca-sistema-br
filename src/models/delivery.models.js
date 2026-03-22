@@ -143,3 +143,43 @@ const PedidoDelivery = mongoose.model('PedidoDelivery', PedidoDeliverySchema);
 const ConfigDelivery = mongoose.model('ConfigDelivery', ConfigDeliverySchema);
 
 module.exports = { CategoriaCardapio, ItemCardapio, PedidoDelivery, ConfigDelivery };
+
+// ========== ADMIN DELIVERY (separado do Admin de corridas) ==========
+const AdminDeliverySchema = new mongoose.Schema({
+    // Dados do responsável
+    nome: { type: String, required: true },
+    email: { type: String, required: true, unique: true, lowercase: true },
+    senha: { type: String, required: true },
+    telefone: { type: String, required: true },
+
+    // Dados do negócio
+    nomeComercio: { type: String, required: true },
+    tipoNegocio: { type: String, default: 'restaurante' },
+    cidade: String,
+
+    // Autenticação
+    token: { type: String, unique: true, sparse: true },
+
+    // Trial / plano
+    status: { type: String, enum: ['trial', 'ativo', 'bloqueado', 'cancelado'], default: 'trial' },
+    trialInicio: { type: Date, default: Date.now },
+    trialFim: { type: Date },
+    plano: { type: String, default: 'basico' },
+    valorMensal: { type: Number, default: 97 },
+
+    // Controle master
+    liberadoPor: String,
+    motivoBloqueio: String,
+    observacoesMaster: String,
+
+    // Origem
+    origem: { type: String, default: 'landing' }
+}, { timestamps: true });
+
+AdminDeliverySchema.index({ email: 1 });
+AdminDeliverySchema.index({ token: 1 });
+AdminDeliverySchema.index({ status: 1 });
+
+const AdminDelivery = mongoose.models.AdminDelivery || mongoose.model('AdminDelivery', AdminDeliverySchema);
+
+module.exports.AdminDelivery = AdminDelivery;
