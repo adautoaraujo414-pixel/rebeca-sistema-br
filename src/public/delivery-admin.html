@@ -344,13 +344,15 @@
         let adminData = null;
         let categorias = [];
 
-        // AUTO-LOGIN
-        if (token) {
-            document.getElementById('loginContainer').style.display = 'none';
-            document.getElementById('dashboardContainer').style.display = 'block';
-            document.querySelector('.dashboard').style.display = 'block';
-            setTimeout(() => carregarDashboard(), 100);
-        }
+        // AUTO-LOGIN — aguarda DOM estar pronto
+        document.addEventListener('DOMContentLoaded', () => {
+            if (token) {
+                document.getElementById('loginContainer').style.display = 'none';
+                document.getElementById('dashboardContainer').style.display = 'block';
+                document.querySelector('.dashboard').style.display = 'block';
+                setTimeout(() => carregarDashboard(), 200);
+            }
+        });
 
         async function fazerLogin() {
             const email = document.getElementById('loginEmail').value;
