@@ -2,16 +2,45 @@ const express = require('express');
 const router = express.Router();
 const PrecoDinamicoService = require('../services/preco-dinamico.service');
 const LogsService = require('../services/logs.service');
+const PrecoAdminService = require('../services/preco-admin.service');
+
+// Helper para pegar adminId de qualquer lugar da request
+function getAdminId(req) {
+    return req.headers['x-admin-id'] || req.query.adminId || req.body?.adminId || null;
+}
 
 // ==================== CONFIG BASE ====================
-router.get('/config', (req, res) => {
-    res.json(PrecoDinamicoService.getConfig());
+router.get('/config', async (req, res) => {
+    try {
+        const adminId = getAdminId(req);
+        if (adminId) {
+            const cfg = await PrecoAdminService.getConfig(adminId);
+            return res.json(cfg);
+        }
+        res.json(PrecoDinamicoService.getConfig());
+    } catch(e) { res.json(PrecoDinamicoService.getConfig()); }
 });
 
-router.put('/config', (req, res) => {
-    const config = PrecoDinamicoService.setConfig(req.body);
-    LogsService.registrar({ tipo: 'config', acao: 'Preços base atualizados', detalhes: config });
-    res.json({ sucesso: true, config });
+router.post('/config', async (req, res) => {
+    try {
+        const adminId = getAdminId(req);
+        if (!adminId) return res.status(400).json({ erro: 'AdminId obrigatório' });
+        const resultado = await PrecoAdminService.salvarConfig(adminId, req.body);
+        res.json(resultado);
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+router.put('/config', async (req, res) => {
+    try {
+        const adminId = getAdminId(req);
+        if (adminId) {
+            const resultado = await PrecoAdminService.salvarConfig(adminId, req.body);
+            return res.json(resultado);
+        }
+        const config = PrecoDinamicoService.setConfig(req.body);
+        LogsService.registrar({ tipo: 'config', acao: 'Preços base atualizados', detalhes: config });
+        res.json({ sucesso: true, config });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
 // ==================== ESTATÍSTICAS ====================
@@ -20,43 +49,130 @@ router.get('/estatisticas', (req, res) => {
 });
 
 // ==================== FAIXAS DE HORÁRIO ====================
-router.get('/faixas', (req, res) => {
-    const diaSemana = req.query.dia;
-    res.json(PrecoDinamicoService.listarFaixas(diaSemana));
+const { Admin } = require('../models');
+const mongoose = require('mongoose');
+
+// ---- helpers de faixa no banco ----
+async function getFaixasBanco(adminId, dia) {
+    const admin = await Admin.findById(adminId).lean();
+    let faixas = (admin?.faixasPreco || []).filter(f => f.ativo !== false);
+    if (dia) faixas = faixas.filter(f => !f.diaSemana || f.diaSemana === dia || f.diaSemana === 'todos');
+    return faixas.map(f => ({
+        id: f._id?.toString() || f.id,
+        nome: f.nome || 'Faixa',
+        diaSemana: f.diaSemana || 'todos',
+        horaInicio: f.horaInicio || '00:00',
+        horaFim: f.horaFim || '23:59',
+        multiplicador: f.multiplicador || 1,
+        taxaAdicional: f.taxaAdicional || 0,
+        tipo: f.tipo || 'multiplicador',
+        valorFixo: f.valorFixo || 0,
+        ativo: f.ativo !== false
+    }));
+}
+
+router.get('/faixas', async (req, res) => {
+    try {
+        const adminId = getAdminId(req);
+        const dia = req.query.dia;
+        if (adminId) {
+            const faixas = await getFaixasBanco(adminId, dia);
+            return res.json(faixas);
+        }
+        res.json(PrecoDinamicoService.listarFaixas(dia));
+    } catch(e) { res.json(PrecoDinamicoService.listarFaixas(req.query.dia)); }
 });
 
-router.get('/faixas/:id', (req, res) => {
-    const faixa = PrecoDinamicoService.buscarFaixa(req.params.id);
-    if (!faixa) return res.status(404).json({ error: 'Faixa não encontrada' });
-    res.json(faixa);
+router.get('/faixas/:id', async (req, res) => {
+    try {
+        const adminId = getAdminId(req);
+        if (adminId) {
+            const admin = await Admin.findById(adminId).lean();
+            const f = (admin?.faixasPreco || []).find(f => f._id?.toString() === req.params.id);
+            if (!f) return res.status(404).json({ error: 'Faixa não encontrada' });
+            return res.json({
+                id: f._id?.toString(),
+                nome: f.nome, diaSemana: f.diaSemana || 'todos',
+                horaInicio: f.horaInicio || '00:00', horaFim: f.horaFim || '23:59',
+                multiplicador: f.multiplicador || 1, taxaAdicional: f.taxaAdicional || 0,
+                tipo: f.tipo || 'multiplicador', valorFixo: f.valorFixo || 0
+            });
+        }
+        const faixa = PrecoDinamicoService.buscarFaixa(req.params.id);
+        if (!faixa) return res.status(404).json({ error: 'Faixa não encontrada' });
+        res.json(faixa);
+    } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
-router.post('/faixas', (req, res) => {
-    const { diaSemana, horaInicio, horaFim, nome, multiplicador, taxaAdicional } = req.body;
-    
-    if (!diaSemana || !horaInicio || !horaFim) {
-        return res.status(400).json({ error: 'diaSemana, horaInicio e horaFim são obrigatórios' });
-    }
-    
-    const faixa = PrecoDinamicoService.criarFaixa(req.body);
-    LogsService.registrar({ tipo: 'config', acao: 'Faixa de preço criada', detalhes: { faixa: faixa.nome, dia: diaSemana } });
-    res.status(201).json(faixa);
+router.post('/faixas', async (req, res) => {
+    try {
+        const adminId = getAdminId(req);
+        const { diaSemana, horaInicio, horaFim, nome, multiplicador, taxaAdicional, tipo, valorFixo } = req.body;
+        if (adminId) {
+            if (!horaInicio || !horaFim) return res.status(400).json({ error: 'horaInicio e horaFim obrigatórios' });
+            const novaFaixa = {
+                _id: new mongoose.Types.ObjectId(),
+                nome: nome || 'Nova Faixa',
+                diaSemana: diaSemana || 'todos',
+                horaInicio, horaFim,
+                multiplicador: parseFloat(multiplicador) || 1,
+                taxaAdicional: parseFloat(taxaAdicional) || 0,
+                tipo: tipo || 'multiplicador',
+                valorFixo: parseFloat(valorFixo) || 0,
+                ativo: true
+            };
+            await Admin.findByIdAndUpdate(adminId, { $push: { faixasPreco: novaFaixa } });
+            LogsService.registrar({ tipo: 'config', acao: 'Faixa criada no banco', detalhes: { nome: novaFaixa.nome } });
+            return res.status(201).json({ ...novaFaixa, id: novaFaixa._id.toString() });
+        }
+        if (!diaSemana || !horaInicio || !horaFim) return res.status(400).json({ error: 'diaSemana, horaInicio e horaFim são obrigatórios' });
+        const faixa = PrecoDinamicoService.criarFaixa(req.body);
+        res.status(201).json(faixa);
+    } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
-router.put('/faixas/:id', (req, res) => {
-    const faixa = PrecoDinamicoService.atualizarFaixa(req.params.id, req.body);
-    if (!faixa) return res.status(404).json({ error: 'Faixa não encontrada' });
-    
-    LogsService.registrar({ tipo: 'config', acao: 'Faixa de preço atualizada', detalhes: { id: req.params.id } });
-    res.json({ sucesso: true, faixa });
+router.put('/faixas/:id', async (req, res) => {
+    try {
+        const adminId = getAdminId(req);
+        if (adminId) {
+            const { nome, horaInicio, horaFim, multiplicador, taxaAdicional, tipo, valorFixo, diaSemana } = req.body;
+            const update = {};
+            if (nome !== undefined) update['faixasPreco.$[el].nome'] = nome;
+            if (horaInicio !== undefined) update['faixasPreco.$[el].horaInicio'] = horaInicio;
+            if (horaFim !== undefined) update['faixasPreco.$[el].horaFim'] = horaFim;
+            if (multiplicador !== undefined) update['faixasPreco.$[el].multiplicador'] = parseFloat(multiplicador);
+            if (taxaAdicional !== undefined) update['faixasPreco.$[el].taxaAdicional'] = parseFloat(taxaAdicional);
+            if (tipo !== undefined) update['faixasPreco.$[el].tipo'] = tipo;
+            if (valorFixo !== undefined) update['faixasPreco.$[el].valorFixo'] = parseFloat(valorFixo);
+            if (diaSemana !== undefined) update['faixasPreco.$[el].diaSemana'] = diaSemana;
+            await Admin.findByIdAndUpdate(
+                adminId,
+                { $set: update },
+                { arrayFilters: [{ 'el._id': new mongoose.Types.ObjectId(req.params.id) }] }
+            );
+            LogsService.registrar({ tipo: 'config', acao: 'Faixa atualizada no banco', detalhes: { id: req.params.id } });
+            return res.json({ sucesso: true });
+        }
+        const faixa = PrecoDinamicoService.atualizarFaixa(req.params.id, req.body);
+        if (!faixa) return res.status(404).json({ error: 'Faixa não encontrada' });
+        res.json({ sucesso: true, faixa });
+    } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
-router.delete('/faixas/:id', (req, res) => {
-    const sucesso = PrecoDinamicoService.excluirFaixa(req.params.id);
-    if (!sucesso) return res.status(404).json({ error: 'Faixa não encontrada' });
-    
-    LogsService.registrar({ tipo: 'config', acao: 'Faixa de preço excluída', detalhes: { id: req.params.id } });
-    res.json({ sucesso: true });
+router.delete('/faixas/:id', async (req, res) => {
+    try {
+        const adminId = getAdminId(req);
+        if (adminId) {
+            await Admin.findByIdAndUpdate(adminId, {
+                $pull: { faixasPreco: { _id: new mongoose.Types.ObjectId(req.params.id) } }
+            });
+            LogsService.registrar({ tipo: 'config', acao: 'Faixa excluída do banco', detalhes: { id: req.params.id } });
+            return res.json({ sucesso: true });
+        }
+        const sucesso = PrecoDinamicoService.excluirFaixa(req.params.id);
+        if (!sucesso) return res.status(404).json({ error: 'Faixa não encontrada' });
+        res.json({ sucesso: true });
+    } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
 // Copiar faixas de um dia para outro
