@@ -5,34 +5,47 @@ const EstatisticasService = {
     async corridasPorDia(dias = 7, adminId = null) {
         const mongoose = require('mongoose');
         if (!adminId || !mongoose.Types.ObjectId.isValid(adminId)) return [];
+
+        const dataInicio = new Date();
+        dataInicio.setDate(dataInicio.getDate() - (dias - 1));
+        dataInicio.setHours(0, 0, 0, 0);
+
+        const aid = new mongoose.Types.ObjectId(adminId);
+
+        // UMA aggregate no lugar de 7 queries separadas
+        const agg = await Corrida.aggregate([
+            { $match: { adminId: aid, createdAt: { $gte: dataInicio } } },
+            { $group: {
+                _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt', timezone: 'America/Sao_Paulo' } },
+                total: { $sum: 1 },
+                finalizadas: { $sum: { $cond: [{ $eq: ['$status', 'finalizada'] }, 1, 0] } },
+                canceladas:  { $sum: { $cond: [{ $eq: ['$status', 'cancelada']  }, 1, 0] } },
+                faturamento: { $sum: { $cond: [{ $eq: ['$status', 'finalizada'] }, { $ifNull: ['$precoFinal', 0] }, 0] } }
+            }},
+            { $sort: { _id: 1 } }
+        ]);
+
+        // Montar array com todos os dias (incluindo dias sem corridas)
+        const dias_nomes = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+        const mapa = {};
+        agg.forEach(r => { mapa[r._id] = r; });
+
         const resultado = [];
-        
         for (let i = dias - 1; i >= 0; i--) {
-            const data = new Date();
-            data.setDate(data.getDate() - i);
-            data.setHours(0, 0, 0, 0);
-            
-            const dataFim = new Date(data);
-            dataFim.setHours(23, 59, 59, 999);
-            
-            const dataStr = data.toISOString().split('T')[0];
-            const diaSemana = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'][data.getDay()];
-            
-            const aid2 = new mongoose.Types.ObjectId(adminId);
-            const corridas = await Corrida.find({
-                adminId: aid2, createdAt: { $gte: data, $lte: dataFim }
-            });
-            
+            const d = new Date();
+            d.setDate(d.getDate() - i);
+            d.setHours(0, 0, 0, 0);
+            const dataStr = d.toISOString().split('T')[0];
+            const r = mapa[dataStr] || {};
             resultado.push({
                 data: dataStr,
-                diaSemana,
-                total: corridas.length,
-                finalizadas: corridas.filter(c => c.status === 'finalizada').length,
-                canceladas: corridas.filter(c => c.status === 'cancelada').length,
-                faturamento: corridas.filter(c => c.status === 'finalizada').reduce((s, c) => s + (c.precoFinal || 0), 0)
+                diaSemana: dias_nomes[d.getDay()],
+                total:       r.total       || 0,
+                finalizadas: r.finalizadas || 0,
+                canceladas:  r.canceladas  || 0,
+                faturamento: r.faturamento || 0
             });
         }
-        
         return resultado;
     },
 
