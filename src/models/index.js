@@ -579,3 +579,16 @@ if (Admin.schema) {
         }]
     });
 }
+
+// ==================== LOCALIDADES no Admin ====================
+if (Admin.schema) {
+    Admin.schema.add({
+        localidades: [{
+            id: String,
+            nome: String,
+            distanciaBase: { type: Number, default: 0 },
+            taxaAdicional: { type: Number, default: 0 },
+            ativo: { type: Boolean, default: true }
+        }]
+    });
+}

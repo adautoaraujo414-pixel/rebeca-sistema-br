@@ -1,112 +1,90 @@
+// Localidades agora persistem no MongoDB via modelo Admin (array localidades)
 const { v4: uuidv4 } = require('uuid');
 
-const localidades = new Map();
-const pontosReferencia = new Map();
-
-const localidadesExemplo = [
-    { id: 'loc_001', nome: 'Osasco', distanciaBase: 0, taxaAdicional: 0, ativo: true },
-    { id: 'loc_002', nome: 'São Paulo - Centro', distanciaBase: 15, taxaAdicional: 10, ativo: true },
-    { id: 'loc_003', nome: 'Barueri', distanciaBase: 8, taxaAdicional: 5, ativo: true },
-    { id: 'loc_004', nome: 'Carapicuíba', distanciaBase: 5, taxaAdicional: 3, ativo: true },
-    { id: 'loc_005', nome: 'Cotia', distanciaBase: 12, taxaAdicional: 8, ativo: true }
-];
-
-const pontosExemplo = [
-    { id: 'pt_001', nome: 'Shopping União', tipo: 'shopping', localidadeId: 'loc_001', endereco: 'Av. dos Autonomistas, 1828', latitude: -23.5327, longitude: -46.7917, ativo: true },
-    { id: 'pt_002', nome: 'Hospital Antonio Giglio', tipo: 'hospital', localidadeId: 'loc_001', endereco: 'Av. Santo Antonio, 200', latitude: -23.5350, longitude: -46.7890, ativo: true },
-    { id: 'pt_003', nome: 'Estação Osasco CPTM', tipo: 'terminal', localidadeId: 'loc_001', endereco: 'Praça Antonio Menck', latitude: -23.5320, longitude: -46.7920, ativo: true },
-    { id: 'pt_004', nome: 'Shopping Tamboré', tipo: 'shopping', localidadeId: 'loc_003', endereco: 'Av. Piracema, 669', latitude: -23.5100, longitude: -46.8200, ativo: true },
-    { id: 'pt_005', nome: 'Aeroporto Congonhas', tipo: 'aeroporto', localidadeId: 'loc_002', endereco: 'Av. Washington Luís', latitude: -23.6273, longitude: -46.6566, ativo: true }
-];
-
-localidadesExemplo.forEach(l => localidades.set(l.id, l));
-pontosExemplo.forEach(p => pontosReferencia.set(p.id, p));
+async function getAdmin(adminId) {
+    if (!adminId) return null;
+    try {
+        const { Admin } = require('../models');
+        return await Admin.findById(adminId).lean();
+    } catch(e) { return null; }
+}
+async function updateAdmin(adminId, update) {
+    try {
+        const { Admin } = require('../models');
+        await Admin.findByIdAndUpdate(adminId, update);
+    } catch(e) { console.error('[LOCALIDADE] Erro:', e.message); }
+}
 
 const localidadeService = {
-    listarLocalidades: (apenasAtivas = false) => {
-        let lista = Array.from(localidades.values());
-        if (apenasAtivas) lista = lista.filter(l => l.ativo);
-        return lista.sort((a, b) => a.nome.localeCompare(b.nome));
+
+    listarLocalidades: async function(adminId, apenasAtivas = false) {
+        const admin = await getAdmin(adminId);
+        let lista = admin?.localidades || [];
+        if (apenasAtivas) lista = lista.filter(l => l.ativo !== false);
+        return lista.sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
     },
 
-    obterLocalidade: (id) => localidades.get(id) || null,
+    obterLocalidade: async function(adminId, id) {
+        const admin = await getAdmin(adminId);
+        return (admin?.localidades || []).find(l => l.id === id) || null;
+    },
 
-    criarLocalidade: (dados) => {
-        const id = 'loc_' + uuidv4().slice(0, 8);
+    criarLocalidade: async function(adminId, dados) {
         const nova = {
-            id, nome: dados.nome, distanciaBase: dados.distanciaBase || 0,
-            taxaAdicional: dados.taxaAdicional || 0, ativo: true
+            id: 'loc_' + uuidv4().slice(0, 8),
+            nome: dados.nome,
+            distanciaBase: dados.distanciaBase || 0,
+            taxaAdicional: dados.taxaAdicional || 0,
+            ativo: true
         };
-        localidades.set(id, nova);
+        await updateAdmin(adminId, { $push: { localidades: nova } });
         return nova;
     },
 
-    atualizarLocalidade: (id, dados) => {
-        const localidade = localidades.get(id);
-        if (!localidade) return null;
-        const atualizada = { ...localidade, ...dados, id };
-        localidades.set(id, atualizada);
-        return atualizada;
+    atualizarLocalidade: async function(adminId, id, dados) {
+        const { Admin } = require('../models');
+        const update = {};
+        if (dados.nome !== undefined) update['localidades.$[el].nome'] = dados.nome;
+        if (dados.distanciaBase !== undefined) update['localidades.$[el].distanciaBase'] = dados.distanciaBase;
+        if (dados.taxaAdicional !== undefined) update['localidades.$[el].taxaAdicional'] = dados.taxaAdicional;
+        if (dados.ativo !== undefined) update['localidades.$[el].ativo'] = dados.ativo;
+        await Admin.findByIdAndUpdate(adminId, { $set: update }, { arrayFilters: [{ 'el.id': id }] });
+        return { id, ...dados };
     },
 
-    excluirLocalidade: (id) => localidades.delete(id),
-
-    listarPontosReferencia: (filtros = {}) => {
-        let lista = Array.from(pontosReferencia.values());
-        if (filtros.localidadeId) lista = lista.filter(p => p.localidadeId === filtros.localidadeId);
-        if (filtros.tipo) lista = lista.filter(p => p.tipo === filtros.tipo);
-        if (filtros.apenasAtivos) lista = lista.filter(p => p.ativo);
-        return lista.sort((a, b) => a.nome.localeCompare(b.nome));
+    excluirLocalidade: async function(adminId, id) {
+        await updateAdmin(adminId, { $pull: { localidades: { id } } });
+        return true;
     },
 
-    obterPontoReferencia: (id) => pontosReferencia.get(id) || null,
-
-    buscarPontos: (texto) => {
-        const textoLower = texto.toLowerCase();
-        return Array.from(pontosReferencia.values())
-            .filter(p => p.nome.toLowerCase().includes(textoLower) || p.endereco?.toLowerCase().includes(textoLower))
-            .slice(0, 10);
-    },
-
-    criarPontoReferencia: async (dados) => {
-        const id = 'pt_' + uuidv4().slice(0, 8);
-        const novo = {
-            id, nome: dados.nome, tipo: dados.tipo || 'outro',
-            localidadeId: dados.localidadeId || null, endereco: dados.endereco || '',
-            latitude: dados.latitude || null, longitude: dados.longitude || null,
-            apelidos: dados.apelidos || [], adminId: dados.adminId || null, ativo: true
-        };
-        pontosReferencia.set(id, novo);
-        // Persistir no MongoDB
+    // Pontos de referência — já usa modelo próprio PontoReferencia no banco
+    carregarPontos: async function(adminId, filtros = {}) {
         try {
             const { PontoReferencia } = require('../models');
-            await PontoReferencia.create({
-                adminId: dados.adminId, nome: dados.nome, tipo: dados.tipo || 'outro',
-                endereco: dados.endereco || '', latitude: dados.latitude || null,
-                longitude: dados.longitude || null, apelidos: dados.apelidos || [], ativo: true
-            });
-        } catch(e) { console.log('[LOCALIDADE] Erro persistir ponto:', e.message); }
-        return novo;
+            const query = { adminId, ativo: true };
+            if (filtros.tipo) query.tipo = filtros.tipo;
+            return await PontoReferencia.find(query).lean();
+        } catch(e) { return []; }
     },
 
-    atualizarPontoReferencia: (id, dados) => {
-        const ponto = pontosReferencia.get(id);
-        if (!ponto) return null;
-        const atualizado = { ...ponto, ...dados, id };
-        pontosReferencia.set(id, atualizado);
-        return atualizado;
+    buscarPontos: async function(adminId, texto) {
+        try {
+            const { PontoReferencia } = require('../models');
+            const regex = new RegExp(texto, 'i');
+            return await PontoReferencia.find({
+                adminId, ativo: true,
+                $or: [{ nome: regex }, { apelidos: regex }, { endereco: regex }]
+            }).lean();
+        } catch(e) { return []; }
     },
 
-    excluirPontoReferencia: (id) => pontosReferencia.delete(id),
-
-    getTiposPontos: () => [
-        { valor: 'shopping', label: 'Shopping' },
-        { valor: 'hospital', label: 'Hospital' },
-        { valor: 'escola', label: 'Escola' },
-        { valor: 'terminal', label: 'Terminal/Estação' },
-        { valor: 'aeroporto', label: 'Aeroporto' },
-        { valor: 'outro', label: 'Outro' }
-    ]
+    criarPonto: async function(adminId, dados) {
+        try {
+            const { PontoReferencia } = require('../models');
+            const ponto = await PontoReferencia.create({ ...dados, adminId });
+            return ponto;
+        } catch(e) { throw e; }
+    }
 };
 
 module.exports = localidadeService;
