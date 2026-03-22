@@ -352,11 +352,11 @@
             const email = document.getElementById('loginEmail').value;
             const senha = document.getElementById('loginSenha').value;
             try {
-                const res = await fetch('/api/delivery/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, senha }) });
+                const res = await fetch('/api/delivery-auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, senha }) });
                 const data = await res.json();
                 if (data.sucesso) {
-                    token = data.admin.token;
-                    adminData = data.admin;
+                    token = data.token;
+                    adminData = data;
                     localStorage.setItem('delivery_token', token);
                     document.getElementById('loginContainer').style.display = 'none';
                     document.getElementById('dashboardContainer').style.display = 'block';
@@ -412,7 +412,6 @@
                 document.querySelectorAll('.menu-item').forEach(i => i.classList.remove('active'));
                 item.classList.add('active');
                 const page = item.dataset.page;
-        // ========== ENTREGADORES ==========
 
         
 
