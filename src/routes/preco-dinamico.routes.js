@@ -265,16 +265,25 @@ router.post('/simular', (req, res) => {
 
 // ==================== ENDPOINT ESPECIAL PARA REBECA ====================
 // Retorna texto formatado para enviar ao cliente
-router.post('/rebeca/cotacao', (req, res) => {
+router.post('/rebeca/cotacao', async (req, res) => {
     const { origem, destino, distanciaKm } = req.body;
     
     if (!distanciaKm) {
         return res.status(400).json({ error: 'distanciaKm é obrigatório' });
     }
     
-    const resultado = PrecoDinamicoService.calcularPreco(parseFloat(distanciaKm));
-    const config = PrecoDinamicoService.getConfig();
-    const faixa = PrecoDinamicoService.obterFaixaAtual();
+    const adminId = getAdminId(req);
+    let resultado, config, faixa;
+    if (adminId) {
+        resultado = await PrecoAdminService.calcularPreco(adminId, parseFloat(distanciaKm), 0);
+        config = await PrecoAdminService.getConfig(adminId);
+        faixa = await PrecoAdminService.getFaixaAtual(adminId);
+        resultado.precoFinal = resultado.precoFinal ?? resultado.preco ?? resultado.total ?? 15;
+    } else {
+        resultado = PrecoDinamicoService.calcularPreco(parseFloat(distanciaKm));
+        config = PrecoDinamicoService.getConfig();
+        faixa = PrecoDinamicoService.obterFaixaAtual();
+    }
     
     // Formatar mensagem para WhatsApp
     const mensagem = `🚗 *COTAÇÃO DE CORRIDA*
@@ -305,13 +314,22 @@ Deseja confirmar a corrida? 🚕`;
 });
 
 // Tabela de preços formatada para WhatsApp
-router.get('/rebeca/tabela', (req, res) => {
-    const config = PrecoDinamicoService.getConfig();
-    const faixaAtual = PrecoDinamicoService.obterFaixaAtual();
+router.get('/rebeca/tabela', async (req, res) => {
+    const adminId = getAdminId(req);
     const diasSemana = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado'];
     const diaHoje = diasSemana[new Date().getDay()];
-    
-    const faixasHoje = PrecoDinamicoService.listarFaixas(diaHoje).filter(f => f.ativo);
+    let config, faixaAtual, faixasHoje;
+    if (adminId) {
+        config = await PrecoAdminService.getConfig(adminId);
+        faixaAtual = await PrecoAdminService.getFaixaAtual(adminId);
+        const { Admin } = require('../models');
+        const admin = await Admin.findById(adminId).lean();
+        faixasHoje = ((admin?.faixasPreco || []).filter(f => f.ativo !== false && (!f.diaSemana || f.diaSemana === diaHoje || f.diaSemana === 'todos')));
+    } else {
+        config = PrecoDinamicoService.getConfig();
+        faixaAtual = PrecoDinamicoService.obterFaixaAtual();
+        faixasHoje = PrecoDinamicoService.listarFaixas(diaHoje).filter(f => f.ativo);
+    }
     
     let tabela = `📋 *TABELA DE PREÇOS*
 
@@ -345,28 +363,24 @@ _Para cotação, envie origem e destino!_`;
 });
 
 // Exemplos de preço para WhatsApp
-router.get('/rebeca/exemplos', (req, res) => {
-    const exemplos = [3, 5, 10, 15, 20]; // km
-    const config = PrecoDinamicoService.getConfig();
-    
-    let mensagem = `📊 *EXEMPLOS DE PREÇO*\n\n`;
-    
-    exemplos.forEach(km => {
-        const calc = PrecoDinamicoService.calcularPreco(km);
-        mensagem += `📍 ${km} km → *R$ ${calc.precoFinal.toFixed(2)}*\n`;
-    });
-    
-    mensagem += `\n_Valores para o horário atual._
-_Sujeito a variação por demanda._`;
-
-    res.json({
-        sucesso: true,
-        mensagem,
-        exemplos: exemplos.map(km => ({
-            distanciaKm: km,
-            preco: PrecoDinamicoService.calcularPreco(km).precoFinal
-        }))
-    });
+router.get('/rebeca/exemplos', async (req, res) => {
+    const adminId = getAdminId(req);
+    const kms = [3, 5, 10, 15, 20];
+    let mensagem = '📊 *EXEMPLOS DE PREÇO*\n\n';
+    const calculos = [];
+    for (const km of kms) {
+        let preco;
+        if (adminId) {
+            const r = await PrecoAdminService.calcularPreco(adminId, km, 0);
+            preco = r.precoFinal ?? r.preco ?? r.total ?? 15;
+        } else {
+            preco = PrecoDinamicoService.calcularPreco(km).precoFinal;
+        }
+        mensagem += `📍 ${km} km → *R$ ${preco.toFixed(2)}*\n`;
+        calculos.push({ distanciaKm: km, preco });
+    }
+    mensagem += '\n_Valores para o horário atual._\n_Sujeito a variação por demanda._';
+    res.json({ sucesso: true, mensagem, exemplos: calculos });
 });
 
 module.exports = router;
