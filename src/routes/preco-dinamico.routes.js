@@ -192,35 +192,43 @@ router.post('/faixas/copiar', (req, res) => {
 
 // Obter faixa atual
 router.get('/faixa-atual', (req, res) => {
-    const faixa = PrecoDinamicoService.obterFaixaAtual();
-    res.json(faixa);
+    try {
+        const adminId = getAdminId(req);
+        if (adminId) {
+            const faixa = await PrecoAdminService.getFaixaAtual(adminId);
+            return res.json(faixa);
+        }
+    } catch(e) {}
+    res.json(PrecoDinamicoService.obterFaixaAtual());
 });
 
 // Calcular preço (endpoint principal para Rebeca)
-router.post('/calcular', (req, res) => {
+router.post('/calcular', async (req, res) => {
     const { distanciaKm, tempoMinutos, dataHora } = req.body;
-    
-    if (distanciaKm === undefined) {
-        return res.status(400).json({ error: 'distanciaKm é obrigatório' });
-    }
-    
+    if (distanciaKm === undefined) return res.status(400).json({ error: 'distanciaKm é obrigatório' });
+    try {
+        const adminId = getAdminId(req);
+        if (adminId) {
+            const resultado = await PrecoAdminService.calcularPreco(adminId, parseFloat(distanciaKm), parseInt(tempoMinutos) || 0);
+            return res.json(resultado);
+        }
+    } catch(e) {}
     const data = dataHora ? new Date(dataHora) : new Date();
-    const resultado = PrecoDinamicoService.calcularPreco(
-        parseFloat(distanciaKm),
-        parseInt(tempoMinutos) || 0,
-        data
-    );
-    
-    res.json(resultado);
+    res.json(PrecoDinamicoService.calcularPreco(parseFloat(distanciaKm), parseInt(tempoMinutos) || 0, data));
 });
 
 // Calcular preço rápido (GET para facilitar integração)
-router.get('/calcular/:distanciaKm', (req, res) => {
+router.get('/calcular/:distanciaKm', async (req, res) => {
     const distanciaKm = parseFloat(req.params.distanciaKm);
     const tempoMinutos = parseInt(req.query.tempo) || 0;
-    
-    const resultado = PrecoDinamicoService.calcularPreco(distanciaKm, tempoMinutos);
-    res.json(resultado);
+    try {
+        const adminId = getAdminId(req);
+        if (adminId) {
+            const resultado = await PrecoAdminService.calcularPreco(adminId, distanciaKm, tempoMinutos);
+            return res.json(resultado);
+        }
+    } catch(e) {}
+    res.json(PrecoDinamicoService.calcularPreco(distanciaKm, tempoMinutos));
 });
 
 // Simular preços do dia (para mostrar ao cliente)

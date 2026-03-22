@@ -1066,7 +1066,7 @@ async function abrirModalFaixa() {
         const mult = parseFloat(prompt('Multiplicador (ex: 1.5 = 50% mais caro):') || '1');
         const horaInicio = prompt('Hora início (HH:MM):') || '07:00';
         const horaFim = prompt('Hora fim (HH:MM):') || '09:00';
-        const r = await api('/api/preco-dinamico/faixas', 'POST', { nome, multiplicador: mult, horaInicio, horaFim });
+        const r = await api('/api/preco-dinamico/faixas', 'POST', { nome, multiplicador: mult, horaInicio, horaFim, diaSemana: diaSelecionado || 'todos' });
         if (r?.sucesso || r?._id) carregarPrecos();
         else alert('Erro: ' + (r?.erro || 'Tente novamente'));
     }
