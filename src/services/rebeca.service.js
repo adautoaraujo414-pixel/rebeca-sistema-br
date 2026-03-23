@@ -927,6 +927,41 @@ Me manda o endereço de *onde você está*!`;
                         conversa.dados.origem = _origemFinal;
                         conversa.dados.origemValidada = { valido: true, precisao: 'cerebro', endereco: _origemFinal };
                         if (_de.nome_cliente) conversa.dados.nomeCliente = _de.nome_cliente;
+                        // === MODO MOTO: montar obsMotorista com tipo de serviço ===
+                        if (conversa._contextoExtraMoto) {
+                            const _tm = conversa.dados.tipoServicoMoto || _de.tipo_servico_moto;
+                            const _obs = [];
+                            if (_tm === 'ENCOMENDA') {
+                                _obs.push('📦 ENCOMENDA');
+                                if (conversa.dados.produtoEncomenda || _de.produto_encomenda) _obs.push('Produto: ' + (conversa.dados.produtoEncomenda || _de.produto_encomenda));
+                                if (conversa.dados.nomeRemetente || _de.nome_remetente) _obs.push('Remetente: ' + (conversa.dados.nomeRemetente || _de.nome_remetente));
+                                if (conversa.dados.enderecoColeta || _de.endereco_coleta) _obs.push('Buscar em: ' + (conversa.dados.enderecoColeta || _de.endereco_coleta));
+                                if (conversa.dados.nomeDestinatario || _de.nome_destinatario) _obs.push('Destinatário: ' + (conversa.dados.nomeDestinatario || _de.nome_destinatario));
+                                if (conversa.dados.enderecoEntrega || _de.endereco_entrega) _obs.push('Entregar em: ' + (conversa.dados.enderecoEntrega || _de.endereco_entrega));
+                            } else if (_tm === 'SOCORRO_GASOLINA') {
+                                _obs.push('⛽ SOCORRO GASOLINA — cliente parado');
+                                if (conversa.dados.valorGasolina || _de.valor_gasolina) _obs.push('Valor solicitado: R$ ' + (conversa.dados.valorGasolina || _de.valor_gasolina));
+                            } else if (_tm === 'URGENCIA_MEDICA') {
+                                _obs.push('🚨 URGÊNCIA MÉDICA — cliente precisa de atendimento imediato');
+                            } else if (_tm === 'BUSCAR_REMEDIO') {
+                                _obs.push('💊 BUSCAR REMÉDIO');
+                                if (conversa.dados.nomeRemedio) _obs.push('Remédio: ' + conversa.dados.nomeRemedio);
+                                if (conversa.dados.enderecoFarmacia) _obs.push('Farmácia: ' + conversa.dados.enderecoFarmacia);
+                            } else if (_tm === 'BUSCAR_OBJETO') {
+                                _obs.push('🗂️ BUSCAR OBJETO ESQUECIDO');
+                                if (conversa.dados.nomeObjeto) _obs.push('Objeto: ' + conversa.dados.nomeObjeto);
+                                if (conversa.dados.enderecoColeta) _obs.push('Buscar em: ' + conversa.dados.enderecoColeta);
+                            } else if (_tm === 'BUSCAR_COMIDA') {
+                                _obs.push('🍱 BUSCAR COMIDA');
+                                if (conversa.dados.localComida) _obs.push('Restaurante: ' + conversa.dados.localComida);
+                            } else if (_tm === 'PAGAMENTO_BANCO') {
+                                _obs.push('💳 PAGAMENTO/BANCO — cliente precisa pagar conta');
+                            } else if (_tm === 'CARRO_ENGUICADO') {
+                                _obs.push('🔧 CARRO ENGUIÇADO/PNEU FURADO — buscar cliente no local');
+                            }
+                            if (conversa.dados.chuva) _obs.push('☔ ATENÇÃO: cliente aguarda na chuva');
+                            if (_obs.length > 0) conversa.dados.obsMotorista = _obs.join(' | ');
+                        }
                         try {
                             const _motsC = await MotoristaService.listarDisponiveis(conversa.adminId);
                             if (_motsC.length === 0) {
@@ -4695,6 +4730,14 @@ RebecaService.atualizarConversa = function(telefone, adminId, dados) {
     if (dados.nome) conversa.dados.nome = dados.nome;
     // Campos úteis do áudio para o motorista
     if (dados.obs_motorista) conversa.dados.obsMotorista = dados.obs_motorista;
+    // === MODO MOTO: salvar campos extraídos em conversa.dados ===
+    if (dados.tipo_servico_moto) conversa.dados.tipoServicoMoto = dados.tipo_servico_moto;
+    if (dados.produto_encomenda) conversa.dados.produtoEncomenda = dados.produto_encomenda;
+    if (dados.endereco_coleta) conversa.dados.enderecoColeta = dados.endereco_coleta;
+    if (dados.endereco_entrega) conversa.dados.enderecoEntrega = dados.endereco_entrega;
+    if (dados.valor_gasolina) conversa.dados.valorGasolina = dados.valor_gasolina;
+    if (dados.nome_destinatario) conversa.dados.nomeDestinatario = dados.nome_destinatario;
+    if (dados.nome_remetente) conversa.dados.nomeRemetente = dados.nome_remetente;
     if (dados.ponto_referencia) conversa.dados.observacao = dados.ponto_referencia;
     if (dados.observacao_origem) conversa.dados.observacaoOrigem = dados.observacao_origem;
     if (dados.cor_camisa) conversa.dados.aparenciaCliente = dados.cor_camisa;
