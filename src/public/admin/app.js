@@ -945,7 +945,7 @@ async function criarPonto() {
     const txtOriginal = btn ? btn.textContent : '';
     if (btn) { btn.textContent = '⏳ Salvando...'; btn.disabled = true; }
     try {
-        const res = await api('/api/pontos', { method: 'POST', body: JSON.stringify(body) });
+        const res = await api('/api/pontos', 'POST', body);
         ocultarFormCentral();
         // Toast de sucesso
         if (typeof toast === 'function') toast('✅ Central "' + nome + '" criada!', 'success');
