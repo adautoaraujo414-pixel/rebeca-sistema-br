@@ -740,7 +740,7 @@ async function excluirArea(id) {
 }
 
 // CONFIG
-async function carregarConfig() { const c=await api('/api/config?adminId='+_getAdminId()); document.getElementById('cfgTempoEspera').value=c.tempoMaximoEspera||10; document.getElementById('cfgRaioBusca').value=c.raioMaximoBusca||15; document.getElementById('cfgComissao').value=c.comissaoEmpresa||15; }
+async function carregarConfig() { const c=await api('/api/config?adminId='+_getAdminId()); document.getElementById('cfgTempoEspera').value=c.tempoMaximoEspera||10; document.getElementById('cfgRaioBusca').value=c.raioMaximoBusca||15; document.getElementById('cfgComissao').value=c.comissaoEmpresa||15; inicializarModoVeiculo(); }
 async function salvarConfiguracoes() { await api('/api/config','PUT',{adminId:_getAdminId(),tempoMaximoEspera:parseInt(document.getElementById('cfgTempoEspera').value),raioMaximoBusca:parseInt(document.getElementById('cfgRaioBusca').value),comissaoEmpresa:parseInt(document.getElementById('cfgComissao').value)}); alert('Salvo!'); }
 
 // LOGS
