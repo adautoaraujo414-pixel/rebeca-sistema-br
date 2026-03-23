@@ -455,8 +455,72 @@ let diaSelecionado = 'segunda';
 let tipoPrecoSelecionado = 'multiplicador';
 let tipoPrecoEditSelecionado = 'multiplicador';
 
-async function carregarPrecosSimples() { return carregarPrecos(); }
-async function carregarPrecosSimples() { return carregarPrecos(); }
+async function carregarPrecosSimples() {
+    try {
+        const cfg = await api('/api/admin/precos-simples');
+        const ps = cfg.precosSimples || {};
+        const dias = ['semana','sabado','domingo','feriado'];
+        const periodos = ['manha','tarde','noite','madrugada'];
+        dias.forEach(d => periodos.forEach(p => {
+            const el = document.getElementById('preco_' + d + '_' + p);
+            if (el) el.value = (ps[d]?.[p] || ps['semana']?.[p] || '');
+        }));
+        // Preço atual em vigor
+        const pa = await api('/api/admin/preco-atual');
+        if (pa && document.getElementById('precoAtualValor')) {
+            document.getElementById('precoAtualValor').textContent = 'R$ ' + (pa.preco||pa.valor||15).toFixed(2);
+            document.getElementById('precoAtualInfo').textContent = (pa.periodo||'') + ' ' + (pa.tipoDia||'');
+        }
+    } catch(e) { console.log('[precos]', e.message); }
+}
+async function salvarPrecosSimples() {
+    const dias = ['semana','sabado','domingo','feriado'];
+    const periodos = ['manha','tarde','noite','madrugada'];
+    const precosSimples = {};
+    dias.forEach(d => {
+        precosSimples[d] = {};
+        periodos.forEach(p => {
+            const el = document.getElementById('preco_' + d + '_' + p);
+            if (el && el.value) precosSimples[d][p] = parseFloat(el.value);
+        });
+    });
+    const r = await api('/api/admin/precos-simples', 'POST', { precosSimples, modoPreco: 'simples' });
+    if (r?.sucesso) toast('✅ Tarifas salvas!', 'success');
+    else toast('Erro ao salvar', 'erro');
+}
+async function carregarPrecosSimples() {
+    try {
+        const cfg = await api('/api/admin/precos-simples');
+        const ps = cfg.precosSimples || {};
+        const dias = ['semana','sabado','domingo','feriado'];
+        const periodos = ['manha','tarde','noite','madrugada'];
+        dias.forEach(d => periodos.forEach(p => {
+            const el = document.getElementById('preco_' + d + '_' + p);
+            if (el) el.value = (ps[d]?.[p] || ps['semana']?.[p] || '');
+        }));
+        // Preço atual em vigor
+        const pa = await api('/api/admin/preco-atual');
+        if (pa && document.getElementById('precoAtualValor')) {
+            document.getElementById('precoAtualValor').textContent = 'R$ ' + (pa.preco||pa.valor||15).toFixed(2);
+            document.getElementById('precoAtualInfo').textContent = (pa.periodo||'') + ' ' + (pa.tipoDia||'');
+        }
+    } catch(e) { console.log('[precos]', e.message); }
+}
+async function salvarPrecosSimples() {
+    const dias = ['semana','sabado','domingo','feriado'];
+    const periodos = ['manha','tarde','noite','madrugada'];
+    const precosSimples = {};
+    dias.forEach(d => {
+        precosSimples[d] = {};
+        periodos.forEach(p => {
+            const el = document.getElementById('preco_' + d + '_' + p);
+            if (el && el.value) precosSimples[d][p] = parseFloat(el.value);
+        });
+    });
+    const r = await api('/api/admin/precos-simples', 'POST', { precosSimples, modoPreco: 'simples' });
+    if (r?.sucesso) toast('✅ Tarifas salvas!', 'success');
+    else toast('Erro ao salvar', 'erro');
+}
 async function carregarPrecos() {
     const cfg = await api('/api/preco-dinamico/config');
     // Preencher campos da aba 5
