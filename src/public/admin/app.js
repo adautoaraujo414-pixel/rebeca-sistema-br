@@ -456,6 +456,7 @@ let tipoPrecoSelecionado = 'multiplicador';
 let tipoPrecoEditSelecionado = 'multiplicador';
 
 async function carregarPrecosSimples() { return carregarPrecos(); }
+async function carregarPrecosSimples() { return carregarPrecos(); }
 async function carregarPrecos() {
     const cfg = await api('/api/preco-dinamico/config');
     // Preencher campos da aba 5
