@@ -678,7 +678,7 @@ Me manda o endereço de *onde você está*!`;
             };
             
             // CRIAR CORRIDA DIRETO - sem pedir referência
-            const corridaGps = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
+            RebecaService._montarObsMotoMotoboy(conversa); const corridaGps = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
 
             // Se foi agendado, responder e sair
             if (corridaGps && corridaGps.agendado) {
@@ -768,7 +768,7 @@ Me manda o endereço de *onde você está*!`;
                             if (!conversa.dados.calculo) {
                                 conversa.dados.calculo = { origem: { endereco: conversa.dados.origem }, destino: conversa.dados.destino ? { endereco: conversa.dados.destino } : null, distanciaKm: 0, tempoMinutos: 0, preco: 15, faixa: { nome: 'padrao', multiplicador: 1 } };
                             }
-                            const _corrInt = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
+                            RebecaService._montarObsMotoMotoboy(conversa); const _corrInt = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
                             if (!_corrInt) return 'Ops, tive um problema ao criar sua corrida. Tenta de novo! 😅';
                             if (_corrInt.cooldown) return 'Aguarda ' + Math.ceil(_corrInt.segundosRestantes / 60) + ' min para nova corrida.';
                             if (_corrInt.duplicada) return 'Você já tem uma corrida ativa!';
@@ -980,7 +980,7 @@ Me manda o endereço de *onde você está*!`;
                                     faixa: { nome: 'padrao', multiplicador: 1 }
                                 };
                             }
-                            const _corridaC = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
+                            RebecaService._montarObsMotoMotoboy(conversa); const _corridaC = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
                             if (_corridaC && _corridaC.cooldown) {
                                 const _mc = 'Aguarda ' + Math.ceil(_corridaC.segundosRestantes / 60) + ' minutinhos para pedir outra corrida.';
                                 CerebroRebeca.salvarHistorico(conversa, _mc, 'rebeca');
@@ -1092,7 +1092,7 @@ Me manda o endereço de *onde você está*!`;
                             conversas.set(telefone, conversa);
                             return 'Poxa, todos os motoristas estão em corrida! Previsão: ' + _estEmb.texto + '.\n\nPosso te avisar quando um desocupar? Responde *SIM*!';
                         }
-                        const _corrEmb = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
+                        RebecaService._montarObsMotoMotoboy(conversa); const _corrEmb = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
                         if (_corrEmb.cooldown) return '⏳ Aguarde ' + Math.ceil(_corrEmb.segundosRestantes / 60) + ' min para nova corrida.';
                         if (_corrEmb.duplicada) return '⚠️ Você já tem corrida ativa! Digite *CANCELAR* para cancelar.';
                         conversa.etapa = (conversa.dados.origemValidada?.precisao === 'ponto_referencia' || conversa.dados.isPontoReferencia) ? 'pedir_aparencia' : 'aguardando_motorista';
@@ -1118,7 +1118,7 @@ Me manda o endereço de *onde você está*!`;
                                 conversas.set(telefone, conversa);
                                 return 'Poxa, todos os motoristas estão em corrida! Previsão: ' + _estRac.texto + '.\n\nPosso te avisar quando um desocupar? Responde *SIM*!';
                             }
-                            const corridaRac = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
+                            RebecaService._montarObsMotoMotoboy(conversa); const corridaRac = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
                             if (corridaRac.cooldown) return '⏳ Aguarde ' + Math.ceil(corridaRac.segundosRestantes / 60) + ' min para nova corrida.';
                             if (corridaRac.duplicada) return '⚠️ Você já tem corrida ativa! Digite *CANCELAR* para cancelar.';
                             conversa.etapa = (conversa.dados.origemValidada?.precisao === 'ponto_referencia' || conversa.dados.isPontoReferencia) ? 'pedir_aparencia' : 'aguardando_motorista';
@@ -1290,7 +1290,7 @@ MENSAGEM AO MOTOBOY: incluir tipo de serviço claramente — "CORRIDA", "ENCOMEN
                                     conversa.dados.origem = valFreq.endereco;
                                     conversa.dados.origemValidada = valFreq;
                                     conversa.dados.calculo = { origem: { endereco: valFreq.endereco, latitude: valFreq.latitude, longitude: valFreq.longitude }, destino: null, distanciaKm: 0, tempoMinutos: 0, preco: 15, faixa: { nome: 'padrao', multiplicador: 1 } };
-                                    const corridaDir = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
+                                    RebecaService._montarObsMotoMotoboy(conversa); const corridaDir = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
                                     if (!corridaDir.duplicada && !corridaDir.cooldown) {
                                         conversa.etapa = (conversa.dados.origemValidada?.precisao === 'ponto_referencia' || conversa.dados.isPontoReferencia) ? 'pedir_aparencia' : 'aguardando_motorista';
                                         conversa.dados.corridaId = corridaDir.id;
@@ -1408,7 +1408,7 @@ MENSAGEM AO MOTOBOY: incluir tipo de serviço claramente — "CORRIDA", "ENCOMEN
                                 conversa.dados.calculo = { origem: { endereco: _origSaud, latitude: null, longitude: null }, destino: null, distanciaKm: 0, tempoMinutos: 0, preco: 15, faixa: { nome: 'padrao', multiplicador: 1 } };
                                 const _motsS = await MotoristaService.listarDisponiveis(conversa.adminId);
                                 if (_motsS.length > 0) {
-                                    const _cS = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
+                                    RebecaService._montarObsMotoMotoboy(conversa); const _cS = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
                                     if (!_cS.cooldown && !_cS.duplicada) {
                                         conversa.etapa = (conversa.dados.origemValidada?.precisao === 'ponto_referencia' || conversa.dados.isPontoReferencia) ? 'pedir_aparencia' : 'aguardando_motorista';
                                         conversa.dados.corridaId = _cS.id;
@@ -1465,7 +1465,7 @@ MENSAGEM AO MOTOBOY: incluir tipo de serviço claramente — "CORRIDA", "ENCOMEN
                                 conversa.dados.calculo = { origem: { endereco: _origGPT, latitude: null, longitude: null }, destino: null, distanciaKm: 0, tempoMinutos: 0, preco: 15, faixa: { nome: 'padrao', multiplicador: 1 } };
                                 const _motsGPT = await MotoristaService.listarDisponiveis(conversa.adminId);
                                 if (_motsGPT.length > 0) {
-                                    const _cGPT = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
+                                    RebecaService._montarObsMotoMotoboy(conversa); const _cGPT = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
                                     if (!_cGPT.cooldown && !_cGPT.duplicada) {
                                         conversa.etapa = (conversa.dados.origemValidada?.precisao === 'ponto_referencia' || conversa.dados.isPontoReferencia) ? 'pedir_aparencia' : 'aguardando_motorista';
                                         conversa.dados.corridaId = _cGPT.id;
@@ -1561,7 +1561,7 @@ MENSAGEM AO MOTOBOY: incluir tipo de serviço claramente — "CORRIDA", "ENCOMEN
 
                             // Se ja tem destino na mesma mensagem (cliente mandou origem+destino juntos)
                             if (conversa.dados.destino) {
-                                const _corrGPT = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
+                                RebecaService._montarObsMotoMotoboy(conversa); const _corrGPT = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
                                 if (_corrGPT.cooldown) return '⏳ Aguarde ' + Math.ceil(_corrGPT.segundosRestantes / 60) + ' min.';
                                 if (_corrGPT.duplicada) return '⚠️ Já tem corrida ativa! Digite *CANCELAR* para cancelar.';
                                 conversa.etapa = (conversa.dados.origemValidada?.precisao === 'ponto_referencia' || conversa.dados.isPontoReferencia) ? 'pedir_aparencia' : 'aguardando_motorista';
@@ -1584,7 +1584,7 @@ MENSAGEM AO MOTOBOY: incluir tipo de serviço claramente — "CORRIDA", "ENCOMEN
                                 const calc = conversa.dados.calculo;
                                 const valor = calc.precoFinal || calc.preco || 0;
                                 // Despacha direto
-                                const _corrP = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
+                                RebecaService._montarObsMotoMotoboy(conversa); const _corrP = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
                                 conversa.etapa = (conversa.dados.origemValidada?.precisao === 'ponto_referencia' || conversa.dados.isPontoReferencia) ? 'pedir_aparencia' : 'aguardando_motorista';
                                 conversa.dados.corridaId = _corrP.id;
                                 conversas.set(telefone, conversa);
@@ -2276,7 +2276,7 @@ MENSAGEM AO MOTOBOY: incluir tipo de serviço claramente — "CORRIDA", "ENCOMEN
         if (conversa.etapa === 'confirmar_preco') {
             if (msg.includes('sim') || msg.includes('confirma') || msg.includes('pode') || msg.includes('ok') || msg.includes('bora') || msg.includes('vai') || msg.includes('quero') || msg === 's') {
                 // Cliente confirmou - criar corrida
-                const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
+                RebecaService._montarObsMotoMotoboy(conversa); const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
                 if (!corrida) { conversas.set(telefone, conversa); return 'Ops, tive um problema ao criar sua corrida. Tenta de novo! 😅'; }
                 if (corrida && corrida.agendado) {
                     const _dtA = new Date(conversa.dados.horario_agendamento);
@@ -2317,7 +2317,7 @@ MENSAGEM AO MOTOBOY: incluir tipo de serviço claramente — "CORRIDA", "ENCOMEN
                         new Promise(r => setTimeout(() => r(null), 5000))
                     ]);
                     if (_racPreco && (_racPreco.acao === 'confirmar' || _racPreco.acao === 'avancar')) {
-                        const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
+                        RebecaService._montarObsMotoMotoboy(conversa); const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
                         conversa.etapa = (conversa.dados.origemValidada?.precisao === 'ponto_referencia' || conversa.dados.isPontoReferencia) ? 'pedir_aparencia' : 'aguardando_motorista';
                         conversa.dados.corridaId = corrida.id;
                         conversas.set(telefone, conversa);
@@ -2578,7 +2578,7 @@ MENSAGEM AO MOTOBOY: incluir tipo de serviço claramente — "CORRIDA", "ENCOMEN
                             conversa.dados.origem = val2.endereco;
                             conversa.dados.origemValidada = val2;
                             conversa.dados.calculo = { origem: { endereco: val2.endereco, latitude: val2.latitude, longitude: val2.longitude }, destino: null, distanciaKm: 0, tempoMinutos: 0, preco: 15, faixa: { nome: 'padrao', multiplicador: 1 } };
-                            const corridaDireta = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
+                            RebecaService._montarObsMotoMotoboy(conversa); const corridaDireta = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
                             if (!corridaDireta) return 'Ops, tive um problema ao criar sua corrida. Tenta de novo!';
                             if (corridaDireta.cooldown) return '⏳ Aguarde ' + Math.ceil(corridaDireta.segundosRestantes / 60) + ' min para nova corrida.';
                             if (corridaDireta.duplicada) return '⚠️ Você já tem corrida ativa! Digite *CANCELAR* para cancelar.';
@@ -2793,7 +2793,7 @@ _(ou mande *0* para pular)_`;
         }
         else if (conversa.etapa === 'confirmar_encomenda') {
             if (msg === '1' || msg.includes('confirma') || msg.includes('sim')) {
-                const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
+                RebecaService._montarObsMotoMotoboy(conversa); const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
                 if (corrida.cooldown) return 'Aguarde um momento. Você finalizou uma corrida há pouco.';
                 if (corrida.duplicada) return 'Você já tem uma corrida em andamento!';
                 conversa.etapa = (conversa.dados.origemValidada?.precisao === 'ponto_referencia' || conversa.dados.isPontoReferencia) ? 'pedir_aparencia' : 'aguardando_motorista';
@@ -2816,7 +2816,7 @@ _(ou mande *0* para pular)_`;
                 conversa.dados.origem = val.endereco;
                 conversa.dados.origemValidada = val;
                 conversa.dados.calculo = { origem: { endereco: val.endereco, latitude: val.latitude, longitude: val.longitude }, destino: null, distanciaKm: 0, tempoMinutos: 0, preco: 15, faixa: { nome: 'padrao', multiplicador: 1 } };
-                const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
+                RebecaService._montarObsMotoMotoboy(conversa); const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
                 if (corrida.cooldown) return `⏳ Aguarde ${Math.ceil(corrida.segundosRestantes / 60)} min para nova corrida.`;
                 if (corrida.duplicada) return '⚠️ Você já tem corrida ativa! Digite *CANCELAR* para cancelar.';
                 conversa.etapa = (conversa.dados.origemValidada?.precisao === 'ponto_referencia' || conversa.dados.isPontoReferencia) ? 'pedir_aparencia' : 'aguardando_motorista';
@@ -3036,7 +3036,7 @@ _(ou mande *0* para pular)_`;
             }
             
             // Criar corrida e despachar DIRETO
-            const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
+            RebecaService._montarObsMotoMotoboy(conversa); const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
             
             // Se cooldown ativo
             if (corrida.cooldown) {
@@ -3164,7 +3164,7 @@ _(ou mande *0* para pular)_`;
             const calculo = await RebecaService.calcularCorrida(conversa.dados.origem, conversa.dados.destino);
             conversa.dados.calculo = calculo;
             
-            const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
+            RebecaService._montarObsMotoMotoboy(conversa); const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
             if (corrida.cooldown) { conversas.set(telefone, conversa); return '⏳ Aguarde ' + Math.ceil(corrida.segundosRestantes / 60) + ' min para nova corrida.'; }
             if (corrida.duplicada) { conversas.set(telefone, conversa); return '⚠️ Você já tem corrida ativa! Digite *CANCELAR* para cancelar.'; }
             conversa.etapa = (conversa.dados.origemValidada?.precisao === 'ponto_referencia' || conversa.dados.isPontoReferencia) ? 'pedir_aparencia' : 'aguardando_motorista';
@@ -3181,7 +3181,7 @@ _(ou mande *0* para pular)_`;
             const calculo = await RebecaService.calcularCorrida(conversa.dados.origem, conversa.dados.destino);
             conversa.dados.calculo = calculo;
             
-            const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
+            RebecaService._montarObsMotoMotoboy(conversa); const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
             conversa.etapa = (conversa.dados.origemValidada?.precisao === 'ponto_referencia' || conversa.dados.isPontoReferencia) ? 'pedir_aparencia' : 'aguardando_motorista';
             conversa.dados.corridaId = corrida.id;
             _agendarTimeoutAparencia(telefone, conversa.instanciaId, corrida.id, conversas);
@@ -3329,7 +3329,7 @@ _(ou mande *0* para pular)_`;
             const _confirmaRapida = /^(sim|pode|s|ok|bora|vai|manda|fecha|fechado|confirma|confirmado|pode ser|tá bom|ta bom|claro|quero|vamos|vai lá|vai la|manda ver|pode mandar)$/i.test(msg.trim());
             // (fluxo normal continua abaixo)
             if (msg === '1' || NLPService.eSim(msg)) {
-                const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
+                RebecaService._montarObsMotoMotoboy(conversa); const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
                 conversa.etapa = (conversa.dados.origemValidada?.precisao === 'ponto_referencia' || conversa.dados.isPontoReferencia) ? 'pedir_aparencia' : 'aguardando_motorista';
                 conversa.dados.corridaId = corrida.id;
                 _agendarTimeoutAparencia(telefone, conversa.instanciaId, corrida.id, conversas);
@@ -3347,7 +3347,7 @@ _(ou mande *0* para pular)_`;
                     ]);
                     if (rac) {
                         if (rac.acao === 'confirmar' || rac.acao === 'avancar') {
-                            const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
+                            RebecaService._montarObsMotoMotoboy(conversa); const corrida = await RebecaService.criarCorrida(telefone, nome, conversa.dados, conversa.adminId, conversa.instanciaId);
                             conversa.etapa = (conversa.dados.origemValidada?.precisao === 'ponto_referencia' || conversa.dados.isPontoReferencia) ? 'pedir_aparencia' : 'aguardando_motorista';
                             conversa.dados.corridaId = corrida.id;
                             _agendarTimeoutAparencia(telefone, conversa.instanciaId, corrida.id, conversas);
