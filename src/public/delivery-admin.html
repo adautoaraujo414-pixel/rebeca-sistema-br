@@ -344,18 +344,28 @@
         let adminData = null;
         let categorias = [];
 
-        // AUTO-LOGIN
-        function tentarAutoLogin() {
-            // Validar token antes de mostrar dashboard
+        // AUTO-LOGIN — valida token no servidor antes de mostrar dashboard
+        async function tentarAutoLogin() {
             if (!token) return;
             const lc = document.getElementById('loginContainer');
             const dc = document.getElementById('dashboardContainer');
             const dv = document.querySelector('.dashboard');
             if (!lc || !dc) { setTimeout(tentarAutoLogin, 50); return; }
+            try {
+                const r = await fetch('/api/delivery-auth/me', { headers: { 'Authorization': 'Bearer ' + token } });
+                const d = await r.json();
+                if (!d.sucesso) {
+                    localStorage.removeItem('delivery_token');
+                    const erroEl = document.getElementById('loginErro');
+                    if (erroEl && (d.bloqueado || d.trialExpirado)) { erroEl.textContent = d.erro; erroEl.style.display = 'block'; }
+                    return;
+                }
+                adminData = d.admin;
+            } catch(e) { /* erro de rede: continua */ }
             lc.style.cssText = 'display:none!important';
             dc.style.cssText = 'display:block!important';
             if (dv) dv.style.cssText = 'display:block!important';
-            setTimeout(() => carregarDashboard(), 300);
+            carregarDashboard();
         }
         tentarAutoLogin();
 
