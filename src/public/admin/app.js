@@ -1530,3 +1530,12 @@ document.getElementById('formFaixa')?.addEventListener('submit', async (e) => {
         }
     } catch(e) { alert('Erro: ' + e.message); }
 });
+
+// ==================== EDITAR FAIXA: função que estava faltando ====================
+function selecionarTipoPrecoEdit(tipo) {
+    document.getElementById('editFaixaTipo').value = tipo;
+    document.getElementById('editTipoMult')?.classList.toggle('active', tipo === 'multiplicador');
+    document.getElementById('editTipoFixo')?.classList.toggle('active', tipo === 'fixo');
+    document.getElementById('editCamposMultiplicador')?.classList.toggle('active', tipo === 'multiplicador');
+    document.getElementById('editCamposFixo')?.classList.toggle('active', tipo === 'fixo');
+}
