@@ -346,6 +346,7 @@
 
         // AUTO-LOGIN
         function tentarAutoLogin() {
+            // Validar token antes de mostrar dashboard
             if (!token) return;
             const lc = document.getElementById('loginContainer');
             const dc = document.getElementById('dashboardContainer');
@@ -799,7 +800,7 @@
         // ===== WHATSAPP QR CODE DELIVERY =====
         function carregarInstanciaDelivery() {
             if (adminData && adminData._id) {
-                instanciaDeliveryId = localStorage.getItem('instanciaDeliveryId_' + adminData._id) || null;
+                instanciaDeliveryId = adminData && adminData._id ? localStorage.getItem('instanciaDeliveryId_' + adminData._id) || null : null;
             }
         }
         let instanciaDeliveryId = null; // carregado após login em carregarInstanciaDelivery()
