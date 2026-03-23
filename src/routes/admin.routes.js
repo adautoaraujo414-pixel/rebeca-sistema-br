@@ -94,6 +94,25 @@ router.delete('/emergencia/:id', async (req, res) => {
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
+// ========== TIPO VEICULO (moto/carro) ==========
+router.get('/tipo-veiculo', authMiddleware, async (req, res) => {
+    try {
+        const { Admin } = require('../models');
+        const admin = await Admin.findById(req.adminId).select('tipoVeiculo').lean();
+        res.json({ tipoVeiculo: admin?.tipoVeiculo || 'carro' });
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+router.put('/tipo-veiculo', authMiddleware, async (req, res) => {
+    try {
+        const { Admin } = require('../models');
+        const { tipoVeiculo } = req.body;
+        if (!['carro', 'moto'].includes(tipoVeiculo)) return res.status(400).json({ error: 'Tipo inválido' });
+        await Admin.findByIdAndUpdate(req.adminId, { tipoVeiculo });
+        res.json({ sucesso: true, tipoVeiculo });
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
 module.exports = router;
 
 // ===== PONTOS DE REFERÊNCIA =====

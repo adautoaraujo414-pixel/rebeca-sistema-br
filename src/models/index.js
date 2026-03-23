@@ -215,6 +215,7 @@ const AdminSchema = new mongoose.Schema({
     motivoBloqueio: String,
     origem: { type: String, default: 'cadastro_manual' }, // cadastro_manual, landing_page
     tipoAdmin: { type: String, enum: ['transporte', 'delivery', 'multi'], default: 'transporte' },
+    tipoVeiculo: { type: String, enum: ['carro', 'moto'], default: 'carro' }, // modo de atendimento da Rebeca
     aprovadoPor: { type: mongoose.Schema.Types.ObjectId, ref: 'AdminMaster' },
     dataAprovacao: Date,
     ultimoAcesso: Date,
@@ -254,6 +255,7 @@ const AdminSchema = new mongoose.Schema({
     motivoBloqueio: String,
     origem: { type: String, default: 'cadastro_manual' }, // cadastro_manual, landing_page
     tipoAdmin: { type: String, enum: ['transporte', 'delivery', 'multi'], default: 'transporte' },
+    tipoVeiculo: { type: String, enum: ['carro', 'moto'], default: 'carro' }, // modo de atendimento da Rebeca
         valor: { type: Number, default: 15.00 },
         motivo: String // Ex: "Carnaval", "Ano Novo"
     },

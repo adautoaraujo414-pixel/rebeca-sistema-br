@@ -1140,6 +1140,12 @@ Me manda o endereço de *onde você está*!`;
                         const { Admin } = require('../models');
                         const admin = await Admin.findById(conversa.adminId);
                         nomeEmpresa = admin?.empresa || admin?.nome || '';
+                        // Injetar contexto de moto se tipoVeiculo === 'moto'
+                        if (admin?.tipoVeiculo === 'moto') {
+                            conversa._contextoExtraMoto = `MODO MOTO ATIVADO: Este número atende exclusivamente serviços de MOTOTÁXI. Tudo que seria "carro" ou "veículo" vira "moto" ou "mototaxi". Serviços disponíveis: transporte de passageiro de moto, buscar encomenda/pacote de moto, socorro com gasolina, buscar pessoa de moto. Quando cliente pedir carro, explique que aqui é mototaxi. Quando cliente pedir moto, socorro, encomenda ou transporte: atenda normalmente seguindo o mesmo fluxo de corrida. Motoristas aqui são mototaxistas.`;
+                        } else {
+                            conversa._contextoExtraMoto = '';
+                        }
                     }
                     
                     // Buscar contexto do cliente (histórico de corridas)
@@ -1572,7 +1578,8 @@ Me manda o endereço de *onde você está*!`;
                 temCasa: !!favoritos.casa,
                 temTrabalho: !!favoritos.trabalho,
                 nomeEmpresa,
-                telefoneEmpresa
+                telefoneEmpresa,
+                contextoExtra: conversa._contextoExtraMoto || ''
             });
 
             // Se IAService identificou endereço livre mas fluxo já está coletando endereço,

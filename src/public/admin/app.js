@@ -1539,3 +1539,58 @@ function selecionarTipoPrecoEdit(tipo) {
     document.getElementById('editCamposMultiplicador')?.classList.toggle('active', tipo === 'multiplicador');
     document.getElementById('editCamposFixo')?.classList.toggle('active', tipo === 'fixo');
 }
+
+// ==================== MODO VEÍCULO (moto/carro) — só admin adauto ====================
+const ADMIN_ID_MOTO = '69af056c266a29a42bb2c990';
+
+async function inicializarModoVeiculo() {
+    const adminId = localStorage.getItem('adminId') || window._adminId || '';
+    if (adminId !== ADMIN_ID_MOTO) return;
+    const painel = document.getElementById('painelModoVeiculo');
+    if (painel) painel.style.display = 'block';
+    try {
+        const r = await api('/api/admin/tipo-veiculo');
+        atualizarBotoesModoVeiculo(r.tipoVeiculo || 'carro');
+    } catch(e) {}
+}
+
+function atualizarBotoesModoVeiculo(tipo) {
+    const btnCarro = document.getElementById('btnModoVeiculoCarro');
+    const btnMoto = document.getElementById('btnModoVeiculoMoto');
+    if (!btnCarro || !btnMoto) return;
+    if (tipo === 'moto') {
+        btnMoto.style.background = '#ff6b35';
+        btnMoto.style.borderColor = '#ff6b35';
+        btnMoto.style.color = '#fff';
+        btnCarro.style.background = 'transparent';
+        btnCarro.style.borderColor = '#ccc';
+        btnCarro.style.color = '#ccc';
+    } else {
+        btnCarro.style.background = '#00d4ff';
+        btnCarro.style.borderColor = '#00d4ff';
+        btnCarro.style.color = '#000';
+        btnMoto.style.background = 'transparent';
+        btnMoto.style.borderColor = '#ccc';
+        btnMoto.style.color = '#ccc';
+    }
+}
+
+async function salvarModoVeiculo(tipo) {
+    try {
+        const r = await api('/api/admin/tipo-veiculo', 'PUT', { tipoVeiculo: tipo });
+        if (r.sucesso) {
+            atualizarBotoesModoVeiculo(tipo);
+            const msg = document.getElementById('modoVeiculoMsg');
+            if (msg) { msg.style.display = 'inline'; setTimeout(() => msg.style.display = 'none', 2000); }
+        }
+    } catch(e) { alert('Erro ao salvar: ' + e.message); }
+}
+
+// Inicializar quando página config abrir
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.menu-item').forEach(item => {
+        if (item.dataset.page === 'config') {
+            item.addEventListener('click', () => setTimeout(inicializarModoVeiculo, 300));
+        }
+    });
+});
