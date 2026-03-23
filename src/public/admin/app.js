@@ -72,7 +72,7 @@ window.addEventListener('resize', detectarMobile);
 detectarMobile();
 
 function criarGraficoCorridas(d) { const ctx=document.getElementById('chartCorridas'); if(!ctx)return; if(chartCorridas)chartCorridas.destroy(); chartCorridas=new Chart(ctx,{type:'bar',data:{labels:d.map(x=>x.diaSemana),datasets:[{label:'Finalizadas',data:d.map(x=>x.finalizadas),backgroundColor:'#27ae60'},{label:'Canceladas',data:d.map(x=>x.canceladas),backgroundColor:'#e74c3c'}]},options:{responsive:true,maintainAspectRatio:false}}); }
-function criarGraficoFaturamento(d) { const ctx=document.getElementById('chartFaturamento'); if(!ctx)return; if(chartFaturamento)chartFaturamento.destroy(); chartFaturamento=new Chart(ctx,{type:'line',data:{labels:d.map(x=>x.dataFormatada),datasets:[{label:'Faturamento',data:d.map(x=>x.faturamentoBruto),borderColor:'#27ae60',fill:true,backgroundColor:'rgba(39,174,96,0.1)'}]},options:{responsive:true,maintainAspectRatio:false}}); }
+function criarGraficoFaturamento(d) { const ctx=document.getElementById('chartFaturamento'); if(!ctx)return; if(!Array.isArray(d)||!d.length)return; if(chartFaturamento)chartFaturamento.destroy(); chartFaturamento=new Chart(ctx,{type:'line',data:{labels:d.map(x=>x.dataFormatada),datasets:[{label:'Faturamento',data:d.map(x=>x.faturamentoBruto),borderColor:'#27ae60',fill:true,backgroundColor:'rgba(39,174,96,0.1)'}]},options:{responsive:true,maintainAspectRatio:false}}); }
 
 // DASHBOARD
 async function carregarDashboard() {
@@ -427,7 +427,20 @@ async function encontrarMotoristaProximo() {
 }
 
 // FATURAMENTO
-async function carregarFaturamento() { const r=await api('/api/estatisticas/faturamento-resumo'); document.getElementById('fatHoje').textContent=(r.hoje?.bruto||0).toFixed(2); document.getElementById('fatSemana').textContent=(r.semana?.bruto||0).toFixed(2); document.getElementById('fatMes').textContent=(r.mes?.bruto||0).toFixed(2); document.getElementById('fatComissao').textContent=(r.mes?.comissao||0).toFixed(2); const d=await api('/api/estatisticas/faturamento-por-dia?dias=30'); criarGraficoFaturamento(d); }
+async function carregarFaturamento() {
+    try {
+        const r = await api('/api/estatisticas/faturamento?periodo=mes') || {};
+        const hoje = r.hoje || r.resumo?.hoje || {};
+        const semana = r.semana || r.resumo?.semana || {};
+        const mes = r.mes || r.resumo?.mes || r || {};
+        if(document.getElementById('fatHoje')) document.getElementById('fatHoje').textContent = (hoje.bruto||hoje.faturamento||0).toFixed(2);
+        if(document.getElementById('fatSemana')) document.getElementById('fatSemana').textContent = (semana.bruto||semana.faturamento||0).toFixed(2);
+        if(document.getElementById('fatMes')) document.getElementById('fatMes').textContent = (mes.bruto||mes.faturamento||mes.total||0).toFixed(2);
+        if(document.getElementById('fatComissao')) document.getElementById('fatComissao').textContent = (mes.comissao||0).toFixed(2);
+        const d = await api('/api/estatisticas/corridas-por-dia?dias=30');
+        if (Array.isArray(d)) criarGraficoFaturamento(d.map(x => ({ dataFormatada: x.diaSemana||x.data||'', faturamentoBruto: x.faturamento||x.receita||0 })));
+    } catch(e) { console.log('[Faturamento] erro:', e.message); }
+}
 
 // ==================== PREÇOS DINÂMICOS ====================
 let diaSelecionado = 'segunda';
@@ -761,7 +774,7 @@ async function excluirIntermunicipal(id) {
 // ===== SISTEMA DE PONTOS =====
 async function carregarFilaEspera() {
     try {
-        const fila = await api('/api/fila-espera');
+        const fila = await api('/api/admin/fila-espera');
         const el = document.getElementById('filaEsperaContainer');
         if (!el) return;
         const lista = fila.fila || fila || [];
@@ -784,7 +797,7 @@ async function removerFila(id) {
     if (!confirm('Remover da fila?')) return;
     _removendoFila = true;
     try {
-        await api('/api/fila-espera/' + id, 'DELETE');
+        await api('/api/admin/fila-espera/' + id, 'DELETE');
         carregarFilaEspera();
     } catch(e) { console.error(e); } finally { _removendoFila = false; }
 }
