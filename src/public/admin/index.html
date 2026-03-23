@@ -506,6 +506,32 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div style="padding:16px 20px;border-bottom:1px solid #f0f0f0;background:#fafafa;">
                             <h3 style="margin:0;font-size:1em;color:#2c3e50;">📅 Tabela de Tarifas — Dias e Horários</h3>
                             <p style="margin:4px 0 0;font-size:0.82em;color:#888;">Defina o valor da corrida para cada combinação de dia e período do dia</p>
+                            <div style="margin-top:14px;display:flex;flex-wrap:wrap;gap:10px;">
+                                <div style="background:#fff;border:1px solid #e0e0e0;border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:8px;">
+                                    <span style="font-size:0.85em;color:#e67e22;font-weight:700;">☀️ Manhã</span>
+                                    <input type="time" id="hora_manha_inicio" value="06:00" style="border:1px solid #ddd;border-radius:5px;padding:4px 6px;font-size:0.85em;">
+                                    <span style="color:#888;font-size:0.8em;">até</span>
+                                    <input type="time" id="hora_manha_fim" value="12:00" style="border:1px solid #ddd;border-radius:5px;padding:4px 6px;font-size:0.85em;">
+                                </div>
+                                <div style="background:#fff;border:1px solid #e0e0e0;border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:8px;">
+                                    <span style="font-size:0.85em;color:#f39c12;font-weight:700;">🌤️ Tarde</span>
+                                    <input type="time" id="hora_tarde_inicio" value="12:00" style="border:1px solid #ddd;border-radius:5px;padding:4px 6px;font-size:0.85em;">
+                                    <span style="color:#888;font-size:0.8em;">até</span>
+                                    <input type="time" id="hora_tarde_fim" value="18:00" style="border:1px solid #ddd;border-radius:5px;padding:4px 6px;font-size:0.85em;">
+                                </div>
+                                <div style="background:#fff;border:1px solid #e0e0e0;border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:8px;">
+                                    <span style="font-size:0.85em;color:#8e44ad;font-weight:700;">🌙 Noite</span>
+                                    <input type="time" id="hora_noite_inicio" value="18:00" style="border:1px solid #ddd;border-radius:5px;padding:4px 6px;font-size:0.85em;">
+                                    <span style="color:#888;font-size:0.8em;">até</span>
+                                    <input type="time" id="hora_noite_fim" value="00:00" style="border:1px solid #ddd;border-radius:5px;padding:4px 6px;font-size:0.85em;">
+                                </div>
+                                <div style="background:#fff;border:1px solid #e0e0e0;border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:8px;">
+                                    <span style="font-size:0.85em;color:#2c3e50;font-weight:700;">🌃 Madrugada</span>
+                                    <input type="time" id="hora_madrugada_inicio" value="00:00" style="border:1px solid #ddd;border-radius:5px;padding:4px 6px;font-size:0.85em;">
+                                    <span style="color:#888;font-size:0.8em;">até</span>
+                                    <input type="time" id="hora_madrugada_fim" value="06:00" style="border:1px solid #ddd;border-radius:5px;padding:4px 6px;font-size:0.85em;">
+                                </div>
+                            </div>
                         </div>
                         <div style="overflow-x:auto;">
                         <table style="width:100%;border-collapse:collapse;min-width:500px;">
@@ -1451,7 +1477,7 @@ document.addEventListener('DOMContentLoaded', () => {
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="app.js?v=1774282114"></script>
+    <script src="app.js?v=1774282446"></script>
 <script src="mensalidades.js"></script>
 <script src="emergencia.js"></script>
 

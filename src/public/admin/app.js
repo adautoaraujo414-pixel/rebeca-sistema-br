@@ -465,6 +465,15 @@ async function carregarPrecosSimples() {
             const el = document.getElementById('preco_' + d + '_' + p);
             if (el) el.value = (ps[d]?.[p] || ps['semana']?.[p] || '');
         }));
+        // Carregar horários dos períodos
+        const hs = cfg.horariosSimples || {};
+        const hmap = { manha: ['06:00','12:00'], tarde: ['12:00','18:00'], noite: ['18:00','00:00'], madrugada: ['00:00','06:00'] };
+        Object.entries(hmap).forEach(([p, def]) => {
+            const ini = document.getElementById('hora_' + p + '_inicio');
+            const fim = document.getElementById('hora_' + p + '_fim');
+            if (ini) ini.value = hs[p]?.inicio || def[0];
+            if (fim) fim.value = hs[p]?.fim || def[1];
+        });
         // Preço atual em vigor
         const pa = await api('/api/admin/preco-atual');
         if (pa && document.getElementById('precoAtualValor')) {
@@ -484,7 +493,14 @@ async function salvarPrecosSimples() {
             if (el && el.value) precosSimples[d][p] = parseFloat(el.value);
         });
     });
-    const r = await api('/api/admin/precos-simples', 'POST', { precosSimples, modoPreco: 'simples' });
+    const periodos2 = ['manha','tarde','noite','madrugada'];
+    const horariosSimples = {};
+    periodos2.forEach(p => {
+        const ini = document.getElementById('hora_' + p + '_inicio');
+        const fim = document.getElementById('hora_' + p + '_fim');
+        if (ini && fim) horariosSimples[p] = { inicio: ini.value, fim: fim.value };
+    });
+    const r = await api('/api/admin/precos-simples', 'POST', { precosSimples, horariosSimples, modoPreco: 'simples' });
     if (r?.sucesso) toast('✅ Tarifas salvas!', 'success');
     else toast('Erro ao salvar', 'erro');
 }
@@ -498,6 +514,15 @@ async function carregarPrecosSimples() {
             const el = document.getElementById('preco_' + d + '_' + p);
             if (el) el.value = (ps[d]?.[p] || ps['semana']?.[p] || '');
         }));
+        // Carregar horários dos períodos
+        const hs = cfg.horariosSimples || {};
+        const hmap = { manha: ['06:00','12:00'], tarde: ['12:00','18:00'], noite: ['18:00','00:00'], madrugada: ['00:00','06:00'] };
+        Object.entries(hmap).forEach(([p, def]) => {
+            const ini = document.getElementById('hora_' + p + '_inicio');
+            const fim = document.getElementById('hora_' + p + '_fim');
+            if (ini) ini.value = hs[p]?.inicio || def[0];
+            if (fim) fim.value = hs[p]?.fim || def[1];
+        });
         // Preço atual em vigor
         const pa = await api('/api/admin/preco-atual');
         if (pa && document.getElementById('precoAtualValor')) {
@@ -517,7 +542,14 @@ async function salvarPrecosSimples() {
             if (el && el.value) precosSimples[d][p] = parseFloat(el.value);
         });
     });
-    const r = await api('/api/admin/precos-simples', 'POST', { precosSimples, modoPreco: 'simples' });
+    const periodos2 = ['manha','tarde','noite','madrugada'];
+    const horariosSimples = {};
+    periodos2.forEach(p => {
+        const ini = document.getElementById('hora_' + p + '_inicio');
+        const fim = document.getElementById('hora_' + p + '_fim');
+        if (ini && fim) horariosSimples[p] = { inicio: ini.value, fim: fim.value };
+    });
+    const r = await api('/api/admin/precos-simples', 'POST', { precosSimples, horariosSimples, modoPreco: 'simples' });
     if (r?.sucesso) toast('✅ Tarifas salvas!', 'success');
     else toast('Erro ao salvar', 'erro');
 }
