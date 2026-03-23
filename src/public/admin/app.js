@@ -740,7 +740,7 @@ async function excluirArea(id) {
 }
 
 // CONFIG
-async function carregarConfig() { const c=await api('/api/config?adminId='+_getAdminId()); document.getElementById('cfgTempoEspera').value=c.tempoMaximoEspera||10; document.getElementById('cfgRaioBusca').value=c.raioMaximoBusca||15; document.getElementById('cfgComissao').value=c.comissaoEmpresa||15; inicializarModoVeiculo(); }
+async function carregarConfig() { try { const c=await api('/api/config?adminId='+_getAdminId()); if(c && !c.erro) { if(document.getElementById('cfgTempoEspera')) document.getElementById('cfgTempoEspera').value=c.tempoMaximoEspera||10; if(document.getElementById('cfgRaioBusca')) document.getElementById('cfgRaioBusca').value=c.raioMaximoBusca||15; if(document.getElementById('cfgComissao')) document.getElementById('cfgComissao').value=c.comissaoEmpresa||15; } } catch(e){} inicializarModoVeiculo(); }
 async function salvarConfiguracoes() { await api('/api/config','PUT',{adminId:_getAdminId(),tempoMaximoEspera:parseInt(document.getElementById('cfgTempoEspera').value),raioMaximoBusca:parseInt(document.getElementById('cfgRaioBusca').value),comissaoEmpresa:parseInt(document.getElementById('cfgComissao').value)}); alert('Salvo!'); }
 
 // LOGS
