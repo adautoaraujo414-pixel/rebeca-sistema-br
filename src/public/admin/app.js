@@ -1,3 +1,11 @@
+function toast(msg, tipo) {
+    const t = document.createElement('div');
+    t.textContent = msg;
+    t.style.cssText = 'position:fixed;bottom:20px;right:20px;padding:12px 20px;border-radius:8px;color:#fff;font-weight:bold;z-index:99999;font-size:14px;box-shadow:0 4px 12px rgba(0,0,0,0.3);';
+    t.style.background = (tipo === 'erro' || tipo === 'error') ? '#e74c3c' : '#27ae60';
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 3000);
+}
 if (usuario.nome) { document.getElementById('userName').textContent = usuario.nome; document.getElementById('userRole').textContent = usuario.nivel || 'Admin'; }
 
 function _getAdminId() { const _u = (typeof usuario !== "undefined" && usuario) || JSON.parse(localStorage.getItem("usuario") || "{}"); return _u._id || _u.id || null; }
