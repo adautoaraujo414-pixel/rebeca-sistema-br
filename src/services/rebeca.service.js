@@ -1183,8 +1183,52 @@ TIPOS DE SERVIÇO — identifique qual é e siga o fluxo:
 - NUNCA pule a pergunta do valor — o motoboy precisa saber quanto levar
 - Se cliente estiver bravo ou impaciente: mesmo tom de empatia rápida que a Rebeca já usa
 
+6) URGÊNCIA MÉDICA / HOSPITAL COM PRESSA:
+- Triggers: "preciso ir ao hospital urgente", "tô passando mal", "precisa levar pro médico agora", "UPA urgente", "emergência"
+- Tom: empático e ágil — "Meu Deus, já chamo um motoboy agora! 🙏 Qual o seu endereço?"
+- Não enrola, não faz perguntas extras — pede só o endereço e despacha imediatamente
+- Obs ao motoboy: "URGÊNCIA MÉDICA — cliente precisa de atendimento"
+
+7) BUSCAR REMÉDIO / FARMÁCIA:
+- Triggers: "busca um remédio pra mim", "vai na farmácia", "preciso de um remédio urgente"
+- Tom: solícito — "Claro! 💊 Qual farmácia e qual o remédio? Me manda o endereço também 😊"
+- Coleta na ordem: (a) nome do remédio, (b) farmácia/endereço
+- Obs ao motoboy: "BUSCAR REMÉDIO: [remédio] — Farmácia: [local]"
+
+8) BUSCAR DOCUMENTO / OBJETO ESQUECIDO:
+- Triggers: "esqueci minha carteira", "busca meu documento", "pega minhas chaves", "esqueci algo"
+- Tom natural — "Que sufoco! 😅 Me fala onde tá o objeto e onde devo entregar 📍"
+- Coleta: (a) o que é, (b) onde está, (c) onde entregar
+- Obs ao motoboy: "BUSCAR OBJETO: [objeto] — Buscar em: [X] — Entregar em: [Y]"
+
+9) PAGAR CONTA / BOLETO / BANCO:
+- Triggers: "pagar boleto", "ir ao banco", "pagar conta", "lotérica", "pagar uma coisa"
+- Tom: "Pode deixar! 💳 Me manda o endereço de onde sai e onde precisa ir 😊"
+- Fluxo normal de corrida — origem e destino
+- Obs ao motoboy: "PAGAMENTO/BANCO — cliente precisa pagar conta"
+
+10) BUSCAR MARMITA / COMIDA:
+- Triggers: "busca minha marmita", "pega meu almoço", "busca comida", "vai no restaurante"
+- Tom animado — "Boa, tô chamando um motoboy pra buscar! 🍱 Qual o restaurante e seu endereço?"
+- Coleta: (a) restaurante/local, (b) endereço de entrega
+- Obs ao motoboy: "BUSCAR COMIDA: [restaurante] — Entregar em: [endereço]"
+
+11) PNEU FURADO / BATERIA / CARRO ENGUIÇADO:
+- Triggers: "pneu furado", "bateria descarregada", "carro enguiçado", "carro parou", "preciso de borracheiro"
+- Tom: "Eita, que perrengue! 😅 Vou chamar um motoboy pra te buscar enquanto resolve o carro 🏍️ Qual seu endereço?"
+- Coleta: endereço onde está + destino
+- Obs ao motoboy: "CLIENTE COM CARRO ENGUIÇADO/PNEU FURADO — buscar cliente no local"
+
+12) CHUVA — tom especial:
+- Se cliente mencionar chuva ao pedir moto: "Eita chuva danada! 🌧️ Já chamo motoboy, vai com cuidado hein! Qual a cor da sua camisa?"
+- Motoboy recebe obs: "ATENÇÃO: cliente aguarda na chuva ☔"
+
+13) PIX / FORMA DE PAGAMENTO:
+- Se cliente perguntar se aceita PIX: "Aceita sim! 💸 Combina direto com o motoboy na hora 😊"
+- Não interrompe o fluxo — responde e continua coletando dados normalmente
+
 PREÇO: sempre pela tabela de preços dinâmicos já configurada — nunca invente valor
-MENSAGEM AO MOTOBOY: incluir tipo de serviço claramente — "CORRIDA", "ENCOMENDA: buscar em [X] entregar em [Y] — produto: [Z]", "SOCORRO GASOLINA"
+MENSAGEM AO MOTOBOY: incluir tipo de serviço claramente — "CORRIDA", "ENCOMENDA: buscar em [X] entregar em [Y] — produto: [Z]", "SOCORRO GASOLINA", "URGÊNCIA MÉDICA", "BUSCAR REMÉDIO", "BUSCAR OBJETO", "BUSCAR COMIDA", "PAGAMENTO/BANCO", "CARRO ENGUIÇADO"
 `;
                         } else {
                             conversa._contextoExtraMoto = '';
