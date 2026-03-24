@@ -1699,6 +1699,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (item.dataset.page === 'pontos-ref') {
             item.addEventListener('click', () => { carregarPontos(); });
         }
+        if (item.dataset.page === 'pontos') {
+            item.addEventListener('click', () => { carregarCentrais(); });
+        }
     });
 });
 </script>
@@ -2589,5 +2592,101 @@ document.addEventListener('DOMContentLoaded', () => {
     if (sel) sel.addEventListener('change', atualizarMapaGPS);
 });
 // ========== FIM MAPA GPS ==========
+
+
+// ===== CENTRAIS / PONTOS DE EMBARQUE =====
+async function carregarCentrais() {
+    const el = document.getElementById('listaPontos');
+    if (else:) return;
+    el.innerHTML = '<p style="color:#999;text-align:center;padding:40px;">Carregando...</p>';
+    try {
+        const token = localStorage.getItem('token');
+        const adminId = JSON.parse(localStorage.getItem('usuario') || '{}')._id || '';
+        const r = await fetch('/api/pontos?adminId=' + adminId, {
+            headers: { 'Authorization': 'Bearer ' + token, 'x-admin-id': adminId }
+        });
+        const centrais = await r.json();
+            el.innerHTML = '<p style="color:#999;text-align:center;padding:40px;">Nenhuma central cadastrada ainda.<br>Clique em "➕ Nova Central" para adicionar.</p>';
+            return;
+        }
+        el.innerHTML = centrais.map(c => `
+            <div style="background:#fff;border:1px solid #e0e0e0;border-radius:10px;padding:16px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 1px 4px rgba(0,0,0,0.06);">
+                <div>
+                    <div style="font-weight:700;font-size:1em;color:#2c3e50;">
+                        ${c.principal ? '⭐ ' : ''}${c.nome}
+                    </div>
+                    <div style="font-size:0.82em;color:#666;margin-top:3px;">📍 ${c.endereco || 'Sem endereço'}</div>
+                    <div style="font-size:0.78em;color:#888;margin-top:2px;">
+                        🕐 ${c.horarioAbertura || '06:00'} – ${c.horarioFechamento || '22:00'} &nbsp;|&nbsp; 
+                        🚗 Máx ${c.maxCorridasPonto || 3} corridas
+                    </div>
+                    <div style="margin-top:6px;">
+                        <span style="background:${c.ativo !== false ? '#27ae60' : '#e74c3c'};color:white;font-size:0.72em;padding:2px 8px;border-radius:20px;">
+                            ${c.ativo !== false ? 'Ativa' : 'Inativa'}
+                        </span>
+                    </div>
+                </div>
+                <div style="display:flex;gap:8px;">
+                    <button onclick="excluirCentral('${c._id}')" style="background:#fff;color:#e74c3c;border:1px solid #e74c3c;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:0.85em;">🗑️</button>
+                </div>
+            </div>
+        `).join('');
+    } catch(e) {
+        document.getElementById('listaPontos').innerHTML = '<p style="color:#e74c3c;text-align:center;padding:20px;">Erro ao carregar centrais.</p>';
+    }
+}
+
+function mostrarFormCentral() {
+    document.getElementById('formCentralContainer').style.display = 'block';
+    document.getElementById('btnNovaCentral').style.display = 'none';
+}
+
+function ocultarFormCentral() {
+    document.getElementById('formCentralContainer').style.display = 'none';
+    document.getElementById('btnNovaCentral').style.display = '';
+    // Limpar campos
+    ['pontoNome','pontoEndereco'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+}
+
+async function criarPonto() {
+    const nome = document.getElementById('pontoNome').value.trim();
+    const endereco = document.getElementById('pontoEndereco').value.trim();
+    const abertura = document.getElementById('pontoAbertura').value || '06:00';
+    const fechamento = document.getElementById('pontoFechamento').value || '22:00';
+    const maxPonto = parseInt(document.getElementById('pontoMaxPonto').value) || 3;
+    const tempoAceite = parseInt(document.getElementById('pontoTempoAceite').value) || 30;
+    const principal = document.getElementById('pontoPrincipal').checked;
+    const diasSemana = Array.from(document.querySelectorAll('.dia-check:checked')).map(x => parseInt(x.value));
+
+
+    try {
+        const token = localStorage.getItem('token');
+        const adminId = JSON.parse(localStorage.getItem('usuario') || '{}')._id || '';
+        const r = await fetch('/api/pontos', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token, 'x-admin-id': adminId },
+            body: JSON.stringify({ nome, endereco, diasSemana, horarioAbertura: abertura, horarioFechamento: fechamento, maxCorridasPonto: maxPonto, tempoAceiteSegundos: tempoAceite, principal, adminId })
+        });
+        const data = await r.json();
+        if (r.ok) {
+            ocultarFormCentral();
+            await carregarCentrais();
+        } else {
+            alert('Erro: ' + (data.erro || data.error || 'Falha ao criar central'));
+        }
+    } catch(e) { alert('Erro de conexão'); }
+}
+
+async function excluirCentral(id) {
+    try {
+        const token = localStorage.getItem('token');
+        const adminId = JSON.parse(localStorage.getItem('usuario') || '{}')._id || '';
+        await fetch('/api/pontos/' + id, {
+            method: 'DELETE',
+            headers: { 'Authorization': 'Bearer ' + token, 'x-admin-id': adminId }
+        });
+        await carregarCentrais();
+    } catch(e) { alert('Erro ao excluir'); }
+}
 
 </script>
