@@ -27,7 +27,7 @@ document.querySelectorAll('.menu-item').forEach(item => {
         carregarPagina(page);
         // Inicia polling tempo real ao entrar em Centrais
         if (page === 'pontos') {
-            _pontosPollingInterval = setInterval(carregarPontos, 5000);
+            _pontosPollingInterval = setInterval(() => { if (_getAdminId()) carregarPontos(); }, 5000);
         }
     });
 });
@@ -915,7 +915,9 @@ async function carregarPontosRef() {
 
 async function carregarPontos() {
     try {
-        const pontos = await api('/api/pontos');
+        const adminId = _getAdminId();
+        if (!adminId) return;
+        const pontos = await api('/api/pontos?adminId=' + adminId);
         const el = document.getElementById('listaPontos');
         if (!el) return;
         const ts = document.getElementById('pontoUltimaAtualizacao');
