@@ -143,6 +143,10 @@
                 <div class="menu-item" onclick="window.open('/delivery-cozinha?token='+localStorage.getItem('delivery_token'))" style="cursor:pointer">👨‍🍳 Painel Cozinha</div>
                 <div class="menu-item" onclick="window.open('/delivery-entregador?token='+localStorage.getItem('delivery_token'))" style="cursor:pointer">🏍️ Painel Entregador</div>
                 <div class="menu-section">Config</div>
+                <div class="menu-item" data-page="assinantes">👥 Assinantes</div>
+                <div class="menu-item" data-page="cardapio-dia">🍽️ Cardápio do Dia</div>
+                <div class="menu-item" data-page="assinantes">👥 Assinantes</div>
+                <div class="menu-item" data-page="cardapio-dia">🍽️ Cardápio do Dia</div>
                 <div class="menu-item" data-page="config">⚙️ Configurações</div>
             </div>
             <div class="content">
@@ -937,6 +941,138 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.querySelectorAll('.sidebar, .nav-lateral').forEach(el => el.classList.remove('aberto'));
             }
         });
+    });
+});
+</script>
+
+
+<script>
+function _apiAdminId() {
+    try { return JSON.parse(atob((localStorage.getItem('delivery_token')||'').split('.')[1]||'')).adminId || ''; } catch(e) { return ''; }
+}
+function _hdrs(json) {
+    var h = { 'x-admin-id': _apiAdminId(), 'Authorization': 'Bearer ' + (localStorage.getItem('delivery_token')||'') };
+    if (json) h['Content-Type'] = 'application/json';
+    return h;
+}
+async function carregarAssinantes() {
+    var el = document.getElementById('listaAssinantes');
+    try {
+        var r = await fetch('/api/delivery/assinantes', { headers: _hdrs() });
+        var lista = await r.json();
+        if (!Array.isArray(lista) || !lista.length) {
+            el.innerHTML = '<p style="color:#888;text-align:center;padding:40px;">Nenhum assinante cadastrado.<br>Clique em Novo Assinante para comecar.</p>';
+            return;
+        }
+        function badge(s) {
+            if (s === 'ativo') return '<span style="background:#27ae60;color:white;font-size:0.72em;padding:2px 8px;border-radius:20px;">Ativo</span>';
+            if (s === 'inadimplente') return '<span style="background:#e74c3c;color:white;font-size:0.72em;padding:2px 8px;border-radius:20px;">Inadimplente</span>';
+            return '<span style="background:#888;color:white;font-size:0.72em;padding:2px 8px;border-radius:20px;">Inativo</span>';
+        }
+        el.innerHTML = lista.map(function(a) {
+            return '<div style="background:#16213e;border:1px solid #252542;border-radius:10px;padding:16px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;">' +
+                '<div>' +
+                '<div style="font-weight:700;color:white;">' + a.nome + ' ' + badge(a.status) + '</div>' +
+                '<div style="font-size:0.82em;color:#aaa;margin-top:3px;">Tel: ' + a.telefone + ' | R$ ' + (a.valor||0).toFixed(2) + '/mes | Vence dia ' + (a.diaVencimento||1) + '</div>' +
+                (a.endereco ? '<div style="font-size:0.78em;color:#888;margin-top:2px;">Endereco: ' + a.endereco + '</div>' : '') +
+                (a.restricoes ? '<div style="font-size:0.78em;color:#e74c3c;margin-top:2px;">Restricoes: ' + a.restricoes + '</div>' : '') +
+                '<div style="font-size:0.78em;color:#888;margin-top:2px;">Entrega: ' + (a.horarioEntrega||'12:00') + ' | ' + (a.formaPagamento||'pix') + '</div>' +
+                '</div>' +
+                '<div style="display:flex;gap:8px;">' +
+                '<button onclick="confirmarPagAssinante('' + a._id + '')" style="background:#27ae60;color:white;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;">Pago</button>' +
+                '<button onclick="editarAssinante('' + a._id + '')" style="background:#252542;color:#00d4ff;border:1px solid #00d4ff;padding:6px 12px;border-radius:6px;cursor:pointer;">Editar</button>' +
+                '<button onclick="excluirAssinante('' + a._id + '')" style="background:#252542;color:#e74c3c;border:1px solid #e74c3c;padding:6px 12px;border-radius:6px;cursor:pointer;">Excluir</button>' +
+                '</div></div>';
+        }).join('');
+    } catch(e) { el.innerHTML = '<p style="color:#e74c3c;">Erro ao carregar.</p>'; }
+}
+var _assinantesCache = [];
+async function editarAssinante(id) {
+    var r = await fetch('/api/delivery/assinantes', { headers: _hdrs() });
+    _assinantesCache = await r.json();
+    var a = _assinantesCache.find(function(x) { return x._id === id; });
+    if (!a) return;
+    document.getElementById('assinanteId').value = a._id;
+    document.getElementById('assinanteNome').value = a.nome;
+    document.getElementById('assinanteTelefone').value = a.telefone;
+    document.getElementById('assinanteEndereco').value = a.endereco||'';
+    document.getElementById('assinanteValor').value = a.valor;
+    document.getElementById('assinanteDiaVenc').value = a.diaVencimento||5;
+    document.getElementById('assinanteHorario').value = a.horarioEntrega||'12:00';
+    document.getElementById('assinantePagamento').value = a.formaPagamento||'pix';
+    document.getElementById('assinanteStatus').value = a.status||'ativo';
+    document.getElementById('assinanteRestricoes').value = a.restricoes||'';
+    document.getElementById('assinanteObs').value = a.observacoes||'';
+    abrirFormAssinante();
+}
+function abrirFormAssinante() { document.getElementById('formAssinante').style.display = 'block'; }
+function fecharFormAssinante() {
+    document.getElementById('formAssinante').style.display = 'none';
+    document.getElementById('assinanteId').value = '';
+    ['assinanteNome','assinanteTelefone','assinanteEndereco','assinanteValor','assinanteRestricoes','assinanteObs'].forEach(function(id) { var el = document.getElementById(id); if(el) el.value=''; });
+}
+async function salvarAssinante() {
+    var id = document.getElementById('assinanteId').value;
+    var nome = document.getElementById('assinanteNome').value.trim();
+    var telefone = document.getElementById('assinanteTelefone').value.trim();
+    var valor = parseFloat(document.getElementById('assinanteValor').value);
+    if (!nome || !telefone || !valor) { alert('Nome, WhatsApp e Valor sao obrigatorios'); return; }
+    var body = {
+        nome: nome, telefone: telefone, valor: valor,
+        endereco: document.getElementById('assinanteEndereco').value.trim(),
+        diaVencimento: parseInt(document.getElementById('assinanteDiaVenc').value)||5,
+        horarioEntrega: document.getElementById('assinanteHorario').value||'12:00',
+        formaPagamento: document.getElementById('assinantePagamento').value,
+        status: document.getElementById('assinanteStatus').value,
+        restricoes: document.getElementById('assinanteRestricoes').value.trim(),
+        observacoes: document.getElementById('assinanteObs').value.trim()
+    };
+    try {
+        var url = id ? '/api/delivery/assinantes/' + id : '/api/delivery/assinantes';
+        var method = id ? 'PUT' : 'POST';
+        var r = await fetch(url, { method: method, headers: _hdrs(true), body: JSON.stringify(body) });
+        if (r.ok) { fecharFormAssinante(); await carregarAssinantes(); }
+        else { var d = await r.json(); alert('Erro: ' + (d.erro||'Falha')); }
+    } catch(e) { alert('Erro de conexao'); }
+}
+async function excluirAssinante(id) {
+    if (!confirm('Excluir este assinante?')) return;
+    await fetch('/api/delivery/assinantes/' + id, { method: 'DELETE', headers: _hdrs() });
+    await carregarAssinantes();
+}
+async function confirmarPagAssinante(id) {
+    await fetch('/api/delivery/assinantes/' + id + '/pagar', { method: 'POST', headers: _hdrs() });
+    alert('Pagamento confirmado!');
+    await carregarAssinantes();
+}
+async function carregarCardapioDia() {
+    try {
+        var r = await fetch('/api/delivery/cardapio-hoje', { headers: _hdrs() });
+        var c = await r.json();
+        var el = document.getElementById('cardapioDiaInfo');
+        if (c && c.descricao) {
+            document.getElementById('cardapioDiaTexto').value = c.descricao;
+            el.innerHTML = '<div style="color:#888;font-size:0.85em;">' + (c.enviado ? 'Enviado para ' + (c.totalEnviados||0) + ' assinantes hoje' : 'Registrado mas ainda nao enviado') + '</div>';
+        } else {
+            el.innerHTML = '<p style="color:#888;">Nenhum cardapio hoje ainda.</p>';
+        }
+    } catch(e) {}
+}
+async function enviarCardapioDia() {
+    var descricao = document.getElementById('cardapioDiaTexto').value.trim();
+    if (!descricao) { alert('Digite o cardapio do dia'); return; }
+    var statusEl = document.getElementById('cardapioDiaStatus');
+    statusEl.textContent = 'Enviando...';
+    try {
+        var r = await fetch('/api/delivery/cardapio-hoje/enviar', { method: 'POST', headers: _hdrs(true), body: JSON.stringify({ descricao: descricao }) });
+        if (r.ok) { statusEl.textContent = 'Enviado com sucesso!'; await carregarCardapioDia(); }
+        else { statusEl.textContent = 'Erro ao enviar'; }
+    } catch(e) { statusEl.textContent = 'Erro de conexao'; }
+}
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.menu-item').forEach(function(item) {
+        if (item.dataset.page === 'assinantes') item.addEventListener('click', function() { carregarAssinantes(); });
+        if (item.dataset.page === 'cardapio-dia') item.addEventListener('click', function() { carregarCardapioDia(); });
     });
 });
 </script>
