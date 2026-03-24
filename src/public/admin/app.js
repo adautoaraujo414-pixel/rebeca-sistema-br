@@ -475,11 +475,10 @@ async function carregarPrecosSimples() {
             if (fim) fim.value = hs[p]?.fim || def[1];
         });
         // Preço atual em vigor
-        const pa = await api('/api/admin/preco-atual');
-        if (pa && document.getElementById('precoAtualValor')) {
-            document.getElementById('precoAtualValor').textContent = 'R$ ' + (pa.preco||pa.valor||15).toFixed(2);
-            document.getElementById('precoAtualInfo').textContent = (pa.periodo||'') + ' ' + (pa.tipoDia||'');
-        }
+        atualizarPrecoAtualVigente();
+        document.querySelectorAll('[id^="preco_"], [id^="hora_"]').forEach(el => {
+            el.addEventListener('input', atualizarPrecoAtualVigente);
+        });
     } catch(e) { console.log('[precos]', e.message); }
 }
 async function salvarPrecosSimples() {
@@ -524,11 +523,10 @@ async function carregarPrecosSimples() {
             if (fim) fim.value = hs[p]?.fim || def[1];
         });
         // Preço atual em vigor
-        const pa = await api('/api/admin/preco-atual');
-        if (pa && document.getElementById('precoAtualValor')) {
-            document.getElementById('precoAtualValor').textContent = 'R$ ' + (pa.preco||pa.valor||15).toFixed(2);
-            document.getElementById('precoAtualInfo').textContent = (pa.periodo||'') + ' ' + (pa.tipoDia||'');
-        }
+        atualizarPrecoAtualVigente();
+        document.querySelectorAll('[id^="preco_"], [id^="hora_"]').forEach(el => {
+            el.addEventListener('input', atualizarPrecoAtualVigente);
+        });
     } catch(e) { console.log('[precos]', e.message); }
 }
 async function salvarPrecosSimples() {
@@ -1713,3 +1711,37 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
+
+function atualizarPrecoAtualVigente() {
+    const agora = new Date();
+    const horaAtual = agora.getHours() * 60 + agora.getMinutes();
+    const diaSemana = agora.getDay();
+    let tipoDia = 'semana';
+    if (diaSemana === 0) tipoDia = 'domingo';
+    else if (diaSemana === 6) tipoDia = 'sabado';
+    function toMin(hhmm) {
+        if (!hhmm) return null;
+        const [h, m] = hhmm.split(':').map(Number);
+        return h * 60 + m;
+    }
+    const periodos = ['manha', 'tarde', 'noite', 'madrugada'];
+    const nomes = { manha: '☀️ Manhã', tarde: '🌤️ Tarde', noite: '🌙 Noite', madrugada: '🌃 Madrugada' };
+    let periodoAtual = null;
+    for (const p of periodos) {
+        const ini = toMin(document.getElementById('hora_' + p + '_inicio')?.value);
+        const fim = toMin(document.getElementById('hora_' + p + '_fim')?.value);
+        if (ini === null || fim === null) continue;
+        const dentro = fim <= ini ? (horaAtual >= ini || horaAtual < fim) : (horaAtual >= ini && horaAtual < fim);
+        if (dentro) { periodoAtual = p; break; }
+    }
+    if (!periodoAtual) return;
+    const inputPreco = document.getElementById('preco_' + tipoDia + '_' + periodoAtual);
+    const valor = parseFloat(inputPreco?.value) || 0;
+    const elValor = document.getElementById('precoAtualValor');
+    const elInfo = document.getElementById('precoAtualInfo');
+    if (elValor) elValor.textContent = 'R$ ' + valor.toFixed(2).replace('.', ',');
+    if (elInfo) {
+        const diaLabel = tipoDia === 'semana' ? 'Seg–Sex' : tipoDia.charAt(0).toUpperCase() + tipoDia.slice(1);
+        elInfo.textContent = diaLabel + ' · ' + (nomes[periodoAtual] || periodoAtual);
+    }
+}
