@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { Admin } = require('../models');
-const { autenticar } = require('../middlewares/auth.middleware');
+const { validarAdmin } = require('../middlewares/auth.middleware');
 
 // Login - busca admin no MongoDB
 router.post('/login', async (req, res) => {
@@ -128,7 +128,7 @@ router.put('/trocar-senha', async (req, res) => {
 });
 
 // Buscar dados empresa
-router.get('/empresa', autenticar, async (req, res) => {
+router.get('/empresa', validarAdmin, async (req, res) => {
     try {
         const { Admin } = require('../models');
         const adminId = req.adminId || req.usuario?.id || req.usuario?._id;
@@ -147,7 +147,7 @@ router.get('/empresa', autenticar, async (req, res) => {
 });
 
 // Salvar dados empresa
-router.put('/empresa', autenticar, async (req, res) => {
+router.put('/empresa', validarAdmin, async (req, res) => {
     try {
         const { Admin } = require('../models');
         const adminId = req.adminId || req.usuario?.id || req.usuario?._id;
