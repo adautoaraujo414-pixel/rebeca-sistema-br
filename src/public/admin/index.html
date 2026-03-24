@@ -2388,12 +2388,11 @@ async function salvarPrecosSimples() {
     };
     
     try {
+        const _adminId = JSON.parse(localStorage.getItem('usuario')||'{}')._id || '';
         const res = await fetch('/api/admin/precos-simples', {
             method: 'POST',
-            const _adminId = JSON.parse(localStorage.getItem('usuario')||'{}')._id || '';
-        const _headers = { 'Content-Type': 'application/json', 'Authorization': localStorage.getItem('token'), 'x-admin-id': _adminId };
-        // headers substituídos
-            body: JSON.stringify(dados)
+            headers: { 'Content-Type': 'application/json', 'Authorization': localStorage.getItem('token'), 'x-admin-id': _adminId },
+            body: JSON.stringify({ ...dados, adminId: _adminId })
         });
         const result = await res.json();
         if (result.sucesso) {
