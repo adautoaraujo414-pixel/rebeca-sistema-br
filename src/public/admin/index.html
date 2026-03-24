@@ -2300,12 +2300,11 @@ async function salvarPrecoEspecial(forcarInativo = null) {
         return;
     }
     try {
+        const _adminId2 = JSON.parse(localStorage.getItem('usuario')||'{}')._id || '';
         const res = await fetch('/api/admin/precos-simples', {
             method: 'POST',
-            const _adminId = JSON.parse(localStorage.getItem('usuario')||'{}')._id || '';
-        const _headers = { 'Content-Type': 'application/json', 'Authorization': localStorage.getItem('token'), 'x-admin-id': _adminId };
-        // headers substituídos
-            body: JSON.stringify({ precoFixo: { ativo, valor, motivo } })
+            headers: { 'Content-Type': 'application/json', 'Authorization': localStorage.getItem('token'), 'x-admin-id': _adminId2 },
+            body: JSON.stringify({ precoFixo: { ativo, valor, motivo }, adminId: _adminId2 })
         });
         const data = await res.json();
         if (data.sucesso) {
@@ -2327,9 +2326,7 @@ async function buscarEnderecoZona() {
     try {
         const res = await fetch('/api/maps/geocodificar', {
             method: 'POST',
-            const _adminId = JSON.parse(localStorage.getItem('usuario')||'{}')._id || '';
-        const _headers = { 'Content-Type': 'application/json', 'Authorization': localStorage.getItem('token'), 'x-admin-id': _adminId };
-        // headers substituídos
+            headers: { 'Content-Type': 'application/json', 'Authorization': localStorage.getItem('token'), 'x-admin-id': (JSON.parse(localStorage.getItem('usuario')||'{}')._id||'') }
             body: JSON.stringify({ endereco: q + ', Brasil' })
         });
         const data = await res.json();
