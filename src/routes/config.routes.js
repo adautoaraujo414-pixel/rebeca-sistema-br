@@ -90,4 +90,31 @@ router.put('/emergencia', async (req, res) => {
     } catch(e) { res.json({ sucesso: false, erro: e.message }); }
 });
 
+
+// GET config whatsapp
+router.get('/whatsapp', async (req, res) => {
+    try {
+        const adminId = getAdminId(req);
+        if (!adminId) return res.status(400).json({ erro: 'adminId obrigatorio' });
+        const { Admin } = require('../models');
+        const admin = await Admin.findById(adminId).select('whatsappApiUrl whatsappApiKey whatsappInstancia').lean();
+        if (!admin) return res.status(404).json({ erro: 'Admin nao encontrado' });
+        res.json({ sucesso: true, apiUrl: admin.whatsappApiUrl || '', apiKey: admin.whatsappApiKey || '', instancia: admin.whatsappInstancia || '' });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// PUT/POST config whatsapp
+const saveWhatsApp = async (req, res) => {
+    try {
+        const adminId = getAdminId(req);
+        if (!adminId) return res.status(400).json({ erro: 'adminId obrigatorio' });
+        const { Admin } = require('../models');
+        const { apiUrl, apiKey, instancia } = req.body;
+        await Admin.findByIdAndUpdate(adminId, { whatsappApiUrl: apiUrl, whatsappApiKey: apiKey, whatsappInstancia: instancia });
+        res.json({ sucesso: true });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+};
+router.put('/whatsapp', saveWhatsApp);
+router.post('/whatsapp', saveWhatsApp);
+
 module.exports = router;

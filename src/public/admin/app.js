@@ -1116,8 +1116,8 @@ async function salvarConfigPreco() {
             taxaBandeira2: parseFloat(document.getElementById('taxaBandeira2')?.value || 3),
             precoMinuto: parseFloat(document.getElementById('precoMinuto')?.value || 0.5)
         };
-        const r = await api('/api/preco-dinamico/config', 'PUT', body);
-        if (r?.sucesso || r?._id) {
+        const r = await api('/api/preco-dinamico/config', 'PUT', { ...body, adminId: _getAdminId() });
+        if (r?.sucesso || r?._id || r?.ok) {
             const btn = document.querySelector('[onclick="salvarConfigPreco()"]');
             if (btn) { const t = btn.textContent; btn.textContent = '✅ Salvo!'; setTimeout(() => btn.textContent = t, 2000); }
             carregarPrecos();
@@ -1252,7 +1252,7 @@ async function salvarNovaZona() {
     _salvandoZona = true;
     try {
             const r = await api('/api/zona-preco', 'POST', { nome, precoFixo: preco, enderecoReferencia: endereco, raioKm: raio, horaInicio, horaFim, diasSemana, descricao });
-        if (r?.sucesso || r?._id) {
+        if (r?.sucesso || r?._id || r?.ok) {
             alertEl.style.display = 'none';
             fecharFormZona();
             carregarZonas();
@@ -1456,7 +1456,7 @@ async function salvarConfig() {
         const raioMaximoBusca = parseFloat(document.getElementById('cfgRaioBusca')?.value || 15);
         const comissaoEmpresa = parseFloat(document.getElementById('cfgComissao')?.value || 15);
         const r = await api('/api/config', 'POST', { tempoMaximoEspera, raioMaximoBusca, comissaoEmpresa });
-        if (r?.sucesso || r?._id) {
+        if (r?.sucesso || r?._id || r?.ok) {
             const btn = document.querySelector('[onclick="salvarConfig()"]');
             if (btn) { const t = btn.textContent; btn.textContent = '✅ Salvo!'; setTimeout(() => btn.textContent = t, 2000); }
         } else { alert('Erro ao salvar: ' + (r?.erro || 'Tente novamente')); }
@@ -1501,14 +1501,17 @@ async function abrirModalArea() {
 
 async function carregarEmpresa() {
     try {
-        const c = await api('/api/config');
-        if (!c) return;
+        const token = localStorage.getItem('token');
+        const r = await fetch('/api/auth/empresa', { headers: { 'Authorization': 'Bearer ' + token } });
+        const d = await r.json();
+        if (!d || !d.sucesso) return;
+        const c = d.empresa;
         const fields = {
-            empresaNome: c.nomeEmpresa || c.nome || '',
+            empresaNome: c.nome || '',
             empresaTelefone: c.telefone || '',
-            empresaHorario: c.horarioFuncionamento || '',
-            empresaPagamento: c.formasPagamento || '',
-            empresaBoasVindas: c.mensagemBoasVindas || '',
+            empresaHorario: c.horario || '',
+            empresaPagamento: c.pagamento || '',
+            empresaBoasVindas: c.boasVindas || '',
             empresaCidadeAtuacao: c.cidadeAtuacao || ''
         };
         Object.entries(fields).forEach(([id, val]) => {

@@ -1477,7 +1477,7 @@ document.addEventListener('DOMContentLoaded', () => {
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="app.js?v=1774366239"></script>
+    <script src="app.js?v=1774366851"></script>
 <script src="mensalidades.js"></script>
 <script src="emergencia.js"></script>
 
@@ -1603,7 +1603,7 @@ let _pontosRef = [];
 
 async function carregarPontos() {
     try {
-        const token = localStorage.getItem('adminToken');
+        const token = localStorage.getItem('token');
         const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
         const adminId = usuario._id || usuario.id || '';
         const r = await fetch('/api/pontos-referencia?adminId=' + adminId, { headers: { 'Authorization': 'Bearer ' + token, 'x-admin-id': adminId } });
@@ -1673,7 +1673,7 @@ async function salvarPonto() {
         tipo: document.getElementById('ponto-tipo').value
     };
     try {
-        const token = localStorage.getItem('adminToken');
+        const token = localStorage.getItem('token');
         const usuario2 = JSON.parse(localStorage.getItem('usuario') || '{}');
         const adminId2 = usuario2._id || usuario2.id || '';
         const url = id ? '/api/pontos-referencia/' + id : '/api/pontos-referencia';
@@ -1687,7 +1687,7 @@ async function salvarPonto() {
 async function excluirPonto(id) {
     if (!confirm('Excluir este ponto?')) return;
     try {
-        const token = localStorage.getItem('adminToken');
+        const token = localStorage.getItem('token');
         await fetch('/api/pontos-referencia/' + id, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + token } });
         carregarPontos();
     } catch(e) { alert('Erro ao excluir'); }
@@ -2217,8 +2217,10 @@ async function testarAnaliseIA() {
 // ========== PREÇOS SIMPLES ==========
 async function carregarPrecosSimples() {
     try {
-        const res = await fetch('/api/admin/precos-simples', {
-            headers: { 'Authorization': localStorage.getItem('adminToken') }
+        const _usr = JSON.parse(localStorage.getItem('usuario') || '{}');
+        const _aid = _usr._id || _usr.id || '';
+        const res = await fetch('/api/admin/precos-simples?adminId=' + _aid, {
+            headers: { 'Authorization': localStorage.getItem('token'), 'x-admin-id': _aid }
         });
         const config = await res.json();
         
@@ -2252,7 +2254,7 @@ async function carregarPrecoAtual() {
     try {
         const _usr = JSON.parse(localStorage.getItem('usuario') || '{}');
         const adminId = _usr._id || _usr.id || localStorage.getItem('adminId') || '';
-        const token = localStorage.getItem('token') || localStorage.getItem('adminToken') || '';
+        const token = localStorage.getItem('token') || localStorage.getItem('token') || '';
         const res = await fetch('/api/admin/preco-atual', {
             headers: { 'Authorization': token, 'x-admin-id': adminId }
         });
@@ -2299,7 +2301,7 @@ async function salvarPrecoEspecial(forcarInativo = null) {
     try {
         const res = await fetch('/api/admin/precos-simples', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': localStorage.getItem('adminToken') },
+            headers: { 'Content-Type': 'application/json', 'Authorization': localStorage.getItem('token') },
             body: JSON.stringify({ precoFixo: { ativo, valor, motivo } })
         });
         const data = await res.json();
@@ -2383,7 +2385,7 @@ async function salvarPrecosSimples() {
     try {
         const res = await fetch('/api/admin/precos-simples', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': localStorage.getItem('adminToken') },
+            headers: { 'Content-Type': 'application/json', 'Authorization': localStorage.getItem('token') },
             body: JSON.stringify(dados)
         });
         const result = await res.json();
@@ -2456,7 +2458,7 @@ async function iniciarMapaGPS() {
 async function atualizarMapaGPS() {
     try {
         const usr = JSON.parse(localStorage.getItem('usuario') || '{}');
-        const token = localStorage.getItem('token') || localStorage.getItem('adminToken') || '';
+        const token = localStorage.getItem('token') || localStorage.getItem('token') || '';
         // Extrair adminId do token ADMIN_<id>_<timestamp> como fallback
         const adminId = usr._id || usr.id || (token.startsWith('ADMIN_') ? token.split('_')[1] : null);
         
