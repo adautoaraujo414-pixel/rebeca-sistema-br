@@ -94,6 +94,9 @@ const PrecoSimplesService = {
             if (dados.precosSimples) {
                 update.precosSimples = dados.precosSimples;
             }
+            if (dados.horariosSimples) {
+                update.horariosSimples = dados.horariosSimples;
+            }
             if (dados.precoFixo !== undefined) {
                 update.precoFixo = dados.precoFixo;
             }
@@ -119,7 +122,8 @@ const PrecoSimplesService = {
                     semana: { manha: 15, tarde: 15, noite: 18, madrugada: 20 },
                     sabado: { manha: 18, tarde: 18, noite: 22, madrugada: 25 },
                     domingo: { manha: 18, tarde: 18, noite: 20, madrugada: 25 }
-                }
+                },
+                horariosSimples: admin?.horariosSimples || {}
             };
         } catch (e) {
             return {
