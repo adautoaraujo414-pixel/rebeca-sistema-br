@@ -811,6 +811,8 @@ document.querySelectorAll('.modal').forEach(m=>m.addEventListener('click',(e)=>{
 
 carregarDashboard();
 window._dashInterval = setInterval(carregarDashboard, 30000);
+// Pré-carregar preços em background para não perder dados ao navegar
+carregarPrecosSimples();
 window._mapaInterval = setInterval(atualizarMapa, 10000); // Atualizar mapa a cada 10s
 
 // ==================== INTERMUNICIPAIS ====================
