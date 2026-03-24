@@ -270,6 +270,7 @@ app.use('/api/delivery', deliveryRoutes);
 app.use('/api/delivery-auth', deliveryAuthRoutes);
 app.use('/api/delivery-master', deliveryMasterRoutes);
 app.use('/api/delivery', require('./routes/delivery-precadastro.routes'));
+app.use('/api/delivery', require('./routes/delivery-assinantes.routes'));
 app.get('/delivery-admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'delivery-admin.html')));
 app.get('/delivery-entregador', (req, res) => res.sendFile(path.join(__dirname, 'public', 'delivery-entregador.html')));
 app.get('/delivery-cozinha', (req, res) => res.sendFile(path.join(__dirname, 'public', 'delivery-cozinha.html')));
@@ -398,6 +399,11 @@ AgendamentoService.iniciarCron();;
 const DeliveryTrialService = require('./services/delivery-trial.service');
 const cron = require('node-cron');
 cron.schedule('0 6 * * *', () => DeliveryTrialService.verificarTrialsVencidos());
+// Cron delivery cardápio — 7h pergunta ao adm, 8h envia para assinantes
+const CardapioDiaService = require('./services/cardapio-dia.service');
+cron.schedule('0 7 * * *', () => CardapioDiaService.perguntarCardapioAdms());
+console.log('✅ Cron cardápio do dia ativo (7h)');
+
 DeliveryTrialService.verificarTrialsVencidos();
 console.log('✅ Cron delivery trial ativo');
 

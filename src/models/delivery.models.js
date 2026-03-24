@@ -181,3 +181,38 @@ AdminDeliverySchema.index({ status: 1 });
 const AdminDelivery = mongoose.models.AdminDelivery || mongoose.model('AdminDelivery', AdminDeliverySchema);
 
 module.exports.AdminDelivery = AdminDelivery;
+
+// ===== MENSALIDADE DE CLIENTE DELIVERY =====
+const MensalidadeClienteDeliverySchema = new mongoose.Schema({
+    adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin', required: true, index: true },
+    nome: { type: String, required: true },
+    telefone: { type: String, required: true },
+    endereco: { type: String, default: '' },
+    valor: { type: Number, required: true },
+    diaVencimento: { type: Number, default: 1 }, // dia do mês 1-28
+    formaPagamento: { type: String, enum: ['pix', 'dinheiro', 'cartao'], default: 'pix' },
+    status: { type: String, enum: ['ativo', 'inativo', 'inadimplente'], default: 'ativo' },
+    observacoes: { type: String, default: '' },
+    horarioEntrega: { type: String, default: '12:00' }, // horário preferido de entrega
+    restricoes: { type: String, default: '' }, // ex: sem cebola, sem gluten
+    ultimoPagamento: { type: Date },
+    proximoVencimento: { type: Date },
+}, { timestamps: true });
+MensalidadeClienteDeliverySchema.index({ adminId: 1, telefone: 1 });
+const MensalidadeClienteDelivery = mongoose.models.MensalidadeClienteDelivery || mongoose.model('MensalidadeClienteDelivery', MensalidadeClienteDeliverySchema);
+module.exports.MensalidadeClienteDelivery = MensalidadeClienteDelivery;
+
+// ===== CARDÁPIO DO DIA =====
+const CardapioDiaSchema = new mongoose.Schema({
+    adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin', required: true, index: true },
+    data: { type: String, required: true }, // formato YYYY-MM-DD
+    descricao: { type: String, default: '' }, // texto livre do cardápio do dia
+    horarioEnvio: { type: String, default: '08:00' }, // hora que Rebeca manda para assinantes
+    enviado: { type: Boolean, default: false },
+    enviadoEm: { type: Date },
+    totalEnviados: { type: Number, default: 0 },
+}, { timestamps: true });
+CardapioDiaSchema.index({ adminId: 1, data: 1 }, { unique: true });
+const CardapioDia = mongoose.models.CardapioDia || mongoose.model('CardapioDia', CardapioDiaSchema);
+module.exports.CardapioDia = CardapioDia;
+

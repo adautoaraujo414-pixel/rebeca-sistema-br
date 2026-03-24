@@ -4,6 +4,7 @@
 // NUNCA interfere no Rebeca Corridas
 
 const { CategoriaCardapio, ItemCardapio, PedidoDelivery, ConfigDelivery } = require('../models/delivery.models');
+const CardapioDiaService = require('./cardapio-dia.service');
 const IAService = require('./ia.service');
 const EvolutionMultiService = require('./evolution-multi.service');
 const { Admin, InstanciaWhatsapp } = require('../models');
@@ -75,6 +76,11 @@ class RebecaDeliveryService {
             const _reativResp = await RebecaDeliveryReativacao.processarResposta(telefone, adminId, instanciaId, msgTexto);
             if (_reativResp === '__REATIVACAO__') return null; // Rebeca já respondeu diretamente
 
+            // ===== INTERCEPTAR RESPOSTA DO CARDÁPIO DO DIA =====
+            if (CardapioDiaService.isRespostaCardapio(adminId)) {
+                await CardapioDiaService.salvarEEnviarCardapio(adminId, msgTexto, instanciaId);
+                return null; // Rebeca já respondeu no serviço
+            }
             const config = await ConfigDelivery.findOne({ adminId }).lean();
             const nomeRest = config?.nomeRestaurante || 'Nosso Restaurante';
             const cliente = await this.reconhecerCliente(telefone, nome, adminId);
