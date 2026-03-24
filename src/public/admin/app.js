@@ -1697,4 +1697,11 @@ function atualizarPrecoAtualVigente() {
         const diaLabel = tipoDia === 'semana' ? 'Seg–Sex' : tipoDia.charAt(0).toUpperCase() + tipoDia.slice(1);
         elInfo.textContent = diaLabel + ' · ' + (nomes[periodoAtual] || periodoAtual);
     }
+    // Atualizar labels de horário na tabela
+    ['manha','tarde','noite','madrugada'].forEach(p => {
+        const ini = document.getElementById('hora_' + p + '_inicio');
+        const fim = document.getElementById('hora_' + p + '_fim');
+        const lbl = document.getElementById('label_hora_' + p);
+        if (ini && fim && lbl) lbl.textContent = ini.value + ' – ' + fim.value;
+    });
 }
