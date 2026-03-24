@@ -104,7 +104,30 @@ const PrecoSimplesService = {
                 update.modoPreco = dados.modoPreco;
             }
 
-            await Admin.findByIdAndUpdate(adminId, update);
+            // Usar $set com notação de ponto para garantir salvamento de subdocumentos
+            const setObj = {};
+            if (update.modoPreco) setObj['modoPreco'] = update.modoPreco;
+            if (update.precoFixo) setObj['precoFixo'] = update.precoFixo;
+            if (update.horariosSimples) {
+                ['manha','tarde','noite','madrugada'].forEach(p => {
+                    if (update.horariosSimples[p]) {
+                        setObj['horariosSimples.' + p + '.inicio'] = update.horariosSimples[p].inicio;
+                        setObj['horariosSimples.' + p + '.fim'] = update.horariosSimples[p].fim;
+                    }
+                });
+            }
+            if (update.precosSimples) {
+                ['semana','sabado','domingo','feriado'].forEach(d => {
+                    if (update.precosSimples[d]) {
+                        ['manha','tarde','noite','madrugada'].forEach(p => {
+                            if (update.precosSimples[d][p] !== undefined) {
+                                setObj['precosSimples.' + d + '.' + p] = update.precosSimples[d][p];
+                            }
+                        });
+                    }
+                });
+            }
+            await Admin.findByIdAndUpdate(adminId, { $set: setObj }, { new: true });
             return { sucesso: true };
         } catch (e) {
             return { sucesso: false, erro: e.message };
