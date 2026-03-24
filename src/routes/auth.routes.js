@@ -127,31 +127,33 @@ router.put('/trocar-senha', async (req, res) => {
 });
 
 // Buscar dados empresa
-router.get('/empresa', async (req, res) => {
+router.get('/empresa', autenticar, async (req, res) => {
     try {
         const { Admin } = require('../models');
-        const token = req.headers.authorization?.split(' ')[1];
-        const adminId = token?.split('_')[1];
+        const adminId = req.adminId || req.usuario?.id || req.usuario?._id;
+        if (!adminId) return res.status(401).json({ sucesso: false, erro: 'Nao autenticado' });
         const admin = await Admin.findById(adminId);
         if (!admin) return res.json({ sucesso: false, erro: 'Admin nao encontrado' });
-        res.json({ sucesso: true, empresa: { nome: admin.empresa || '', telefone: admin.telefone || '', horario: admin.horario || '24 horas', pagamento: admin.pagamento || 'Dinheiro, PIX', boasVindas: admin.boasVindas || '' } });
+        res.json({ sucesso: true, empresa: {
+            nome: admin.empresa || '',
+            telefone: admin.telefone || '',
+            horario: admin.horario || '24 horas',
+            pagamento: admin.pagamento || 'Dinheiro, PIX',
+            boasVindas: admin.boasVindas || '',
+            cidadeAtuacao: admin.cidadeAtuacao || ''
+        }});
     } catch(e) { res.json({ sucesso: false, erro: e.message }); }
 });
 
 // Salvar dados empresa
-router.put('/empresa', async (req, res) => {
+router.put('/empresa', autenticar, async (req, res) => {
     try {
         const { Admin } = require('../models');
-        const token = req.headers.authorization?.split(' ')[1];
-        
-        
-        const admin = await Admin.findByIdAndUpdate(token?.split("_")[1], {
-            empresa: req.body.empresa,
-            telefone: req.body.telefone,
-            horario: req.body.horario,
-            pagamento: req.body.pagamento,
-            boasVindas: req.body.boasVindas,
-            cidadeAtuacao: req.body.cidadeAtuacao
+        const adminId = req.adminId || req.usuario?.id || req.usuario?._id;
+        if (!adminId) return res.status(401).json({ sucesso: false, erro: 'Nao autenticado' });
+        const { empresa, telefone, horario, pagamento, boasVindas, cidadeAtuacao } = req.body;
+        const admin = await Admin.findByIdAndUpdate(adminId, {
+            empresa, telefone, horario, pagamento, boasVindas, cidadeAtuacao
         }, { new: true });
         res.json({ sucesso: true, admin });
     } catch(e) { res.json({ sucesso: false, erro: e.message }); }

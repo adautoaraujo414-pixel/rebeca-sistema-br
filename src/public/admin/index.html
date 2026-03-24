@@ -1477,7 +1477,7 @@ document.addEventListener('DOMContentLoaded', () => {
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="app.js?v=1774366851"></script>
+    <script src="app.js?v=1774367229"></script>
 <script src="mensalidades.js"></script>
 <script src="emergencia.js"></script>
 
@@ -2198,7 +2198,8 @@ async function testarAnaliseIA() {
             cidadeAtuacao: document.getElementById('empresaCidadeAtuacao').value
         };
         try {
-            const r = await fetch('/api/auth/empresa', { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify(dados) });
+            const _token = localStorage.getItem('token');
+            const r = await fetch('/api/auth/empresa', { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + _token }, body: JSON.stringify(dados) });
             const d = await r.json();
             const msg = document.getElementById('empresaMsg');
             msg.style.display = 'block';
