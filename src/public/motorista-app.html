@@ -2186,8 +2186,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // ===== CENTRAIS DE EMBARQUE =====
         let _centraisPolling = null;
-        let _centralAtualId = null;
-        let _centralAtualNome = null;
+
+        function iniciarPollingCentrais() {
+            if (_centraisPolling) return;
+            iniciarPollingCentrais();
+            _centraisPolling = setInterval(carregarCentrais, 15000);
+        }
+
+        function pararPollingCentrais() {
+            if (_centraisPolling) { clearInterval(_centraisPolling); _centraisPolling = null; }
+        }
+        let _centralAtualId = localStorage.getItem("_centralAtualId") || null;
+        let _centralAtualNome = localStorage.getItem("_centralAtualNome") || null;
 
         async function carregarCentrais() {
             if (!motorista || !motorista.adminId) return;
@@ -2214,6 +2224,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         filaAtiva = fd;
                         _centralAtualId = fd.pontoId;
                         _centralAtualNome = fd.nomeCentral || '';
+                        localStorage.setItem('_centralAtualId', _centralAtualId);
+                        localStorage.setItem('_centralAtualNome', _centralAtualNome);
                         const infoEl = document.getElementById('minhaFilaInfo');
                         if (infoEl) infoEl.style.display = 'block';
                         const nomeEl = document.getElementById('minhaFilaNome');

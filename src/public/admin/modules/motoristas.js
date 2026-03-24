@@ -10,7 +10,10 @@ const MotoristasModule = {
     carregar: async function() {
         try {
             const adminId = this.getAdminId();
-            const response = await fetch('/api/motoristas?adminId=' + adminId);
+            const token = localStorage.getItem('token') || '';
+            const response = await fetch('/api/motoristas?adminId=' + adminId, {
+                headers: { 'Authorization': 'Bearer ' + token, 'x-admin-id': adminId }
+            });
             this.motoristas = await response.json();
             return this.motoristas;
         } catch (error) {

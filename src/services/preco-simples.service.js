@@ -19,7 +19,7 @@ const PrecoSimplesService = {
     // Calcular preço simples
     async calcularPreco(adminId, lat = null, lng = null) {
         try {
-            const admin = await Admin.findById(adminId);
+            const admin = await Admin.findById(adminId).lean();
             if (!admin) return { preco: 15.00, periodo: 'padrao', tipoDia: 'semana' };
 
             // 0. Verificar zona de preço fixo por localização
@@ -137,7 +137,7 @@ const PrecoSimplesService = {
     // Obter configuração atual
     async getConfig(adminId) {
         try {
-            const admin = await Admin.findById(adminId);
+            const admin = await Admin.findById(adminId).lean();
             return {
                 modoPreco: admin?.modoPreco || 'simples',
                 precoFixo: admin?.precoFixo || { ativo: false, valor: 15 },
