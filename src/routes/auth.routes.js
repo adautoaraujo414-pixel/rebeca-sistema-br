@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { Admin } = require('../models');
+const { autenticar } = require('../middleware/auth.middleware');
 
 // Login - busca admin no MongoDB
 router.post('/login', async (req, res) => {
