@@ -479,6 +479,16 @@ async function carregarPrecosSimples() {
         document.querySelectorAll('[id^="preco_"], [id^="hora_"]').forEach(el => {
             el.addEventListener('input', atualizarPrecoAtualVigente);
         });
+        // Atualizar labels de horário imediatamente ao mudar qualquer input de hora
+        ['manha','tarde','noite','madrugada'].forEach(p => {
+            const ini = document.getElementById('hora_' + p + '_inicio');
+            const fim = document.getElementById('hora_' + p + '_fim');
+            const lbl = document.getElementById('label_hora_' + p);
+            function atualizarLabel() { if (ini && fim && lbl) lbl.textContent = ini.value + ' – ' + fim.value; }
+            if (ini) ini.addEventListener('input', atualizarLabel);
+            if (fim) fim.addEventListener('input', atualizarLabel);
+            atualizarLabel(); // já atualiza ao carregar
+        });
     } catch(e) { console.log('[precos]', e.message); }
 }
 async function salvarPrecosSimples() {
