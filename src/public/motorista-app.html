@@ -2190,7 +2190,7 @@ document.addEventListener('DOMContentLoaded', function() {
         function iniciarPollingCentrais() {
             if (_centraisPolling) return;
             carregarCentrais();
-            _centraisPolling = setInterval(carregarCentrais, 15000);
+            _centraisPolling = setInterval(carregarCentrais, 5000);
         }
 
         function pararPollingCentrais() {
