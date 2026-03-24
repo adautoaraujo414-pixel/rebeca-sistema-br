@@ -300,7 +300,15 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                                     const { Conversa } = require('../models');
                                     conversaCtx = await Conversa.findOne({ telefone, adminId }).lean();
                                 }
-                                // delivery: conversaCtx fica null — RebecaDeliveryService gerencia o estado
+                                // delivery: passar contexto do carrinho atual para melhorar transcrição
+                                if (_tipoAdminAudio === 'delivery') {
+                                    const _convDel = RebecaDeliveryService.obterConversa(telefone, adminId);
+                                    if (_convDel) {
+                                        const _itens = (_convDel.carrinho || []).map(i => i.nome).join(', ');
+                                        const _etapa = _convDel.etapa || '';
+                                        conversaCtx = { etapa: _etapa, itensPedido: _itens, tipo: 'delivery' };
+                                    }
+                                }
                             } catch(_) {}
 
 
@@ -329,7 +337,8 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                                     }
                                 }
                             }
-                            // ── ROTEAMENTO DE ÁUDIO: delivery vai direto para RebecaDeliveryService ──
+                            // ── ROTEAMENTO DE ÁUDIO: ISOLAMENTO TOTAL delivery vs corridas ──
+                            // Áudio delivery NUNCA processa pelo fluxo de corridas e vice-versa
                             if (_tipoAdminAudio === 'delivery') {
                                 try {
                                     const _textoDelivery = (transcricao && !transcricao.startsWith('__')) ? transcricao : null;
