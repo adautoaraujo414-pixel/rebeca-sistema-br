@@ -283,6 +283,13 @@ const AdminSchema = new mongoose.Schema({
             madrugada: { type: Number, default: 25.00 }
         }
     },
+    // Horários dos períodos configuráveis
+    horariosSimples: {
+        manha:    { inicio: { type: String, default: '06:00' }, fim: { type: String, default: '12:00' } },
+        tarde:    { inicio: { type: String, default: '12:00' }, fim: { type: String, default: '18:00' } },
+        noite:    { inicio: { type: String, default: '18:00' }, fim: { type: String, default: '00:00' } },
+        madrugada:{ inicio: { type: String, default: '00:00' }, fim: { type: String, default: '06:00' } }
+    },
     // ========== USAR PREÇO SIMPLES OU CALCULADO ==========
     modoPreco: { type: String, enum: ['simples', 'calculado'], default: 'simples' },
     // ========== FAIXAS DE PREÇO PERSONALIZADAS ==========
