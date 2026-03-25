@@ -345,6 +345,13 @@
         const _tokenUrl = _urlParams.get('token');
         if (_tokenUrl) { localStorage.setItem('delivery_token', _tokenUrl); history.replaceState({}, '', '/delivery-admin'); }
         let token = localStorage.getItem('delivery_token') || '';
+        // Esconder login imediatamente se já tem token (evita flicker)
+        if (token) {
+            const _lc = document.getElementById('loginContainer');
+            const _dc = document.getElementById('dashboardContainer');
+            if (_lc) _lc.style.cssText = 'display:none!important';
+            if (_dc) _dc.style.cssText = 'display:block!important';
+        }
         let adminData = null;
         let categorias = [];
 
