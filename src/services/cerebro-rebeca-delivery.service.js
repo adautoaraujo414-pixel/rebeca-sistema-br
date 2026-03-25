@@ -198,12 +198,41 @@ Rebeca: "Ai, que chateação! 😔 Me conta o que aconteceu que eu resolvo agora
     },
 
     // ============================================================
-    // RACIOCINAR — stub até o prompt ser desenvolvido
+    // RACIOCINAR — IA Claude para delivery
     // ============================================================
     async raciocinar(telefone, mensagem, contexto, config = {}) {
-        // TODO: implementar quando o prompt estiver pronto
-        console.log('[CEREBRO-DELIVERY] raciocinar() chamado — prompt ainda não implementado');
-        return null;
+        try {
+            if (!process.env.ANTHROPIC_API_KEY) return null;
+            const axios = require('axios');
+            const prompt = this.buildPromptMestre(
+                config.nomeRestaurante || 'Delivery',
+                'Rebeca',
+                config.nomeProprietario || '',
+                config.cardapioHoje || '',
+                config.assinante || null
+            );
+            const historico = this.montarHistorico(contexto.conversa);
+            const r = await axios.post('https://api.anthropic.com/v1/messages', {
+                model: 'claude-haiku-4-5-20251001',
+                max_tokens: 300,
+                system: prompt,
+                messages: [{ role: 'user', content: 'Historico:
+' + historico + '
+
+Cliente agora: ' + mensagem }]
+            }, {
+                headers: {
+                    'x-api-key': process.env.ANTHROPIC_API_KEY,
+                    'anthropic-version': '2023-06-01',
+                    'content-type': 'application/json'
+                },
+                timeout: 8000
+            });
+            return r.data?.content?.[0]?.text || null;
+        } catch(e) {
+            console.log('[CEREBRO-DELIVERY] Erro IA:', e.message);
+            return null;
+        }
     },
 
 };

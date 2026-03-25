@@ -310,6 +310,9 @@ class RebecaDeliveryService {
                 conversa.carrinho = [];
                 conversa.dados = {};
 
+                // Notificar admin sobre novo pedido
+                try { this.notificarNovoPedido(pedido._id); } catch(e) {}
+
                 const tratamento = conversa.clienteNome && conversa.clienteNome.length > 2
                     ? (conversa.clienteNome.split(' ')[0])
                     : 'você';
@@ -439,13 +442,68 @@ class RebecaDeliveryService {
 
     // Notificações para outros painéis
     async notificarNovoPedido(pedidoId) {
-        // Implementar notificação para painel cozinha
-        console.log('[DELIVERY-NOTIFY] Novo pedido:', pedidoId);
+        try {
+            const pedido = await PedidoDelivery.findById(pedidoId).lean();
+            if (!pedido) return;
+            const inst = await InstanciaWhatsapp.findOne({ adminId: pedido.adminId, status: { $in: ['conectado','open','connected'] } });
+            if (!inst) return;
+            const Evo = require('./evolution-multi.service');
+            const itensTexto = (pedido.itens || []).map(i => i.quantidade + 'x ' + i.nome).join(', ');
+            const msg = '🔔 *NOVO PEDIDO #' + pedido.numero + '*
+
+'
+                + '👤 Cliente: *' + (pedido.clienteNome || 'Cliente') + '*
+'
+                + '📦 Itens: ' + itensTexto + '
+'
+                + '📍 Entrega: ' + (pedido.enderecoEntrega || 'Retirada') + '
+'
+                + '💰 Total: *R$ ' + (pedido.valorTotal || pedido.total || 0).toFixed(2) + '*
+'
+                + (pedido.observacoes ? '📝 Obs: ' + pedido.observacoes + '
+' : '')
+                + '
+👨‍🍳 Acesse o painel para aceitar!';
+            const admin = await Admin.findById(pedido.adminId).lean();
+            if (admin && admin.telefone) {
+                await Evo.enviarMensagem(inst._id, admin.telefone, msg);
+            }
+            console.log('[DELIVERY-NOTIFY] Novo pedido notificado:', pedidoId);
+        } catch(e) { console.log('[DELIVERY-NOTIFY] Erro novo pedido:', e.message); }
+    }
+
+    async notificarClientePreparo(pedidoId) {
+        try {
+            const pedido = await PedidoDelivery.findById(pedidoId).lean();
+            if (!pedido || !pedido.clienteTelefone) return;
+            const inst = await InstanciaWhatsapp.findOne({ adminId: pedido.adminId, status: { $in: ['conectado','open','connected'] } });
+            if (!inst) return;
+            const Evo = require('./evolution-multi.service');
+            const msg = '👨‍🍳 *Pedido #' + pedido.numero + ' está sendo preparado!*
+
+Em breve fica pronto 🍽️';
+            await Evo.enviarMensagem(inst._id, pedido.clienteTelefone, msg);
+        } catch(e) { console.log('[DELIVERY-NOTIFY] Erro notif preparo:', e.message); }
+    }
+
+    async notificarClientePronto(pedidoId) {
+        try {
+            const pedido = await PedidoDelivery.findById(pedidoId).lean();
+            if (!pedido || !pedido.clienteTelefone) return;
+            const inst = await InstanciaWhatsapp.findOne({ adminId: pedido.adminId, status: { $in: ['conectado','open','connected'] } });
+            if (!inst) return;
+            const Evo = require('./evolution-multi.service');
+            const config = await ConfigDelivery.findOne({ adminId: pedido.adminId }).lean();
+            const msg = config?.mensagemPedidoPronto
+                || '✅ *Pedido #' + pedido.numero + ' está pronto!*
+
+🏍️ O entregador vai buscar agora. Em breve na sua porta!';
+            await Evo.enviarMensagem(inst._id, pedido.clienteTelefone, msg);
+        } catch(e) { console.log('[DELIVERY-NOTIFY] Erro notif pronto:', e.message); }
     }
 
     async notificarPedidoPronto(pedidoId) {
-        // Implementar notificação para entregadores
-        console.log('[DELIVERY-NOTIFY] Pedido pronto:', pedidoId);
+        return this.notificarClientePronto(pedidoId);
     }
 
     async notificarSaiuEntrega(pedidoId, entregadorNome) {
