@@ -355,6 +355,18 @@
         let adminData = null;
         let categorias = [];
 
+        async function carregarDashboard() {
+            try {
+                const r = await fetch('/api/delivery/dashboard', { headers: { 'Authorization': 'Bearer ' + token } });
+                const d = await r.json();
+                if (d.erro) return;
+                document.getElementById('statPedidosHoje').textContent = d.pedidosHoje || 0;
+                document.getElementById('statPedidosAtivos').textContent = d.pedidosAtivos || 0;
+                document.getElementById('statFaturamento').textContent = 'R$ ' + (d.faturamentoSemana || 0).toFixed(2).replace('.',',');
+                document.getElementById('statPedidosSemana').textContent = d.pedidosSemana || 0;
+            } catch(e) { console.warn('Dashboard delivery erro:', e.message); }
+        }
+
         // AUTO-LOGIN — valida token no servidor antes de mostrar dashboard
         async function tentarAutoLogin() {
             if (!token) return;
