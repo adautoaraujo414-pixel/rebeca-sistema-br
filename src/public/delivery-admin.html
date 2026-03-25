@@ -445,17 +445,6 @@
                 document.querySelectorAll('.menu-item').forEach(i => i.classList.remove('active'));
                 item.classList.add('active');
                 const page = item.dataset.page;
-
-        
-
-            try {
-                const resp = await apiCall("/entregadores");
-                entregadores = resp.entregadores || [];
-                renderEntregadores();
-            } catch(e) {
-                document.getElementById("listaEntregadores").innerHTML = "<p>Erro ao carregar entregadores</p>";
-            }
-        }
                 document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
                 document.getElementById('page-' + page).classList.add('active');
                 if (page === 'dashboard') carregarDashboard();
