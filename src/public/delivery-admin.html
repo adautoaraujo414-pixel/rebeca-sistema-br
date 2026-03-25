@@ -442,17 +442,6 @@
         document.querySelectorAll('.menu-item').forEach(item => {
             item.addEventListener('click', () => {
         // ========== ENTREGADORES ==========
-
-        
-
-            try {
-                const resp = await apiCall("/entregadores");
-                entregadores = resp.entregadores || [];
-                renderEntregadores();
-            } catch(e) {
-                document.getElementById("listaEntregadores").innerHTML = "<p>Erro ao carregar entregadores</p>";
-            }
-        }
                 document.querySelectorAll('.menu-item').forEach(i => i.classList.remove('active'));
                 item.classList.add('active');
                 const page = item.dataset.page;
@@ -998,9 +987,9 @@ async function carregarAssinantes() {
                 '<div style="font-size:0.78em;color:#888;margin-top:2px;">Entrega: ' + (a.horarioEntrega||'12:00') + ' | ' + (a.formaPagamento||'pix') + '</div>' +
                 '</div>' +
                 '<div style="display:flex;gap:8px;">' +
-                '<button onclick="confirmarPagAssinante('' + a._id + '')" style="background:#27ae60;color:white;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;">Pago</button>' +
-                '<button onclick="editarAssinante('' + a._id + '')" style="background:#252542;color:#00d4ff;border:1px solid #00d4ff;padding:6px 12px;border-radius:6px;cursor:pointer;">Editar</button>' +
-                '<button onclick="excluirAssinante('' + a._id + '')" style="background:#252542;color:#e74c3c;border:1px solid #e74c3c;padding:6px 12px;border-radius:6px;cursor:pointer;">Excluir</button>' +
+                '<button onclick='confirmarPagAssinante(" + a._id + ")'" style="background:#27ae60;color:white;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;">Pago</button>' +
+                '<button onclick='editarAssinante(" + a._id + ")'" style="background:#252542;color:#00d4ff;border:1px solid #00d4ff;padding:6px 12px;border-radius:6px;cursor:pointer;">Editar</button>' +
+                '<button onclick='excluirAssinante(" + a._id + ")'" style="background:#252542;color:#e74c3c;border:1px solid #e74c3c;padding:6px 12px;border-radius:6px;cursor:pointer;">Excluir</button>' +
                 '</div></div>';
         }).join('');
     } catch(e) { el.innerHTML = '<p style="color:#e74c3c;">Erro ao carregar.</p>'; }
