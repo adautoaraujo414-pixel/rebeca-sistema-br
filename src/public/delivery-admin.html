@@ -700,7 +700,7 @@
         }
 
         function copiarLinkCozinha() {
-            const link = location.origin + '/delivery-cozinha?token=' + token;
+            const link = location.origin + '/delivery-cozinha?token=' + (localStorage.getItem('delivery_token') || token || '');
             navigator.clipboard.writeText(link).then(() => toast('Link da cozinha copiado!')).catch(() => {
                 prompt('Copie o link:', link);
             });
