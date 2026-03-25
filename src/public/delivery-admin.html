@@ -103,7 +103,7 @@
 </head>
 <body>
     <!-- LOGIN -->
-    <div id="loginContainer" class="login-container">
+    <div id="loginContainer" class="login-container" style="display:none">
         <div class="login-box">
             <h1>🍔 Rebeca Delivery</h1>
             <p class="sub">Automação inteligente para seu delivery</p>
@@ -121,7 +121,7 @@
     </div>
 
     <!-- DASHBOARD -->
-    <div id="dashboardContainer" class="dashboard">
+    <div id="dashboardContainer" class="dashboard" style="display:block">
         <div class="header"><button class="menu-toggle-global" onclick="toggleMenuGlobal()">☰</button>
             <h1>🍔 Rebeca Delivery <span id="nomeRestaurante"></span></h1>
             <div>
@@ -1076,3 +1076,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
 </body>
 </html>
+<script>
+// FIX: Garantir estado correto login/dashboard ao carregar
+(function() {
+    const tk = localStorage.getItem('delivery_token') || new URLSearchParams(window.location.search).get('token');
+    const lc = document.getElementById('loginContainer');
+    const dc = document.getElementById('dashboardContainer');
+    if (tk && lc && dc) {
+        localStorage.setItem('delivery_token', tk);
+        lc.style.cssText = 'display:none!important';
+        dc.style.cssText = 'display:block!important';
+    } else if (!tk && lc) {
+        lc.style.cssText = 'display:flex!important';
+        if (dc) dc.style.cssText = 'display:none!important';
+    }
+})();
+</script>
