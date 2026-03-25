@@ -405,6 +405,57 @@ router.get('/rastrear-gps/:codigo', async (req, res) => {
 
 
 
+
+// ========== ENTREGADOR: DEFINIR ORDEM DA ROTA ==========
+router.put('/entregador/:id/ordem', authDelivery, async (req, res) => {
+    try {
+        const { ordem } = req.body;
+        const pedido = await PedidoDelivery.findOneAndUpdate(
+            { _id: req.params.id, adminId: req.adminId },
+            { ordemEntrega: ordem },
+            { new: true }
+        );
+        res.json({ sucesso: true, pedido });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// ========== ENTREGADOR: INICIAR ENTREGA DE UM PEDIDO ESPECIFICO ==========
+router.put('/entregador/:id/iniciar-entrega', authDelivery, async (req, res) => {
+    try {
+        const { entregadorNome, entregadorId } = req.body;
+        const pedido = await PedidoDelivery.findOneAndUpdate(
+            { _id: req.params.id, adminId: req.adminId, status: 'pronto' },
+            {
+                status: 'saiu_entrega',
+                dataSaiuEntrega: new Date(),
+                rotaIniciada: new Date(),
+                entregadorNome: entregadorNome || 'Entregador',
+                entregadorId: entregadorId || null
+            },
+            { new: true }
+        );
+        if (!pedido) return res.status(404).json({ erro: 'Pedido nao encontrado ou nao esta pronto' });
+        // Notificar cliente com link de rastreio
+        try {
+            const RebecaDeliveryService = require('../services/rebeca-delivery.service');
+            await RebecaDeliveryService.notificarClienteSaiuEntrega(pedido._id, entregadorNome);
+        } catch(e) { console.log('[ENTREGADOR] Erro notificar:', e.message); }
+        console.log('[ENTREGADOR] Pedido #' + pedido.numero + ' saiu entrega individual');
+        res.json({ sucesso: true, pedido });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// ========== ENTREGADOR: BUSCAR PEDIDOS DA ROTA (pronto + saiu_entrega) ordenados ==========
+router.get('/entregador/rota', authDelivery, async (req, res) => {
+    try {
+        const pedidos = await PedidoDelivery.find({
+            adminId: req.adminId,
+            status: { $in: ['pronto', 'saiu_entrega'] }
+        }).sort({ ordemEntrega: 1, createdAt: 1 }).lean();
+        res.json(pedidos);
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
 // ========== UPLOAD FOTO CARDAPIO (IA TRANSCREVE) ==========
 router.post('/cardapio/upload-foto', authDelivery, async (req, res) => {
     try {

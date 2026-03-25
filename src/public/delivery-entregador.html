@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#0a0a1a">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Entregador">
 <title>Rebeca Delivery - Entregador</title>
 <link rel="manifest" href="/delivery-entregador-manifest.json">
@@ -13,199 +12,327 @@
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0a0a1a;color:#fff;min-height:100vh;max-width:480px;margin:0 auto}
 .header{background:#1a1a2e;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #00d4ff;position:sticky;top:0;z-index:100}
-.header h1{font-size:1.1em;color:#00d4ff;font-weight:700}
-.header-left{display:flex;align-items:center;gap:10px}
-.badge-total{background:#00d4ff;color:#000;padding:3px 10px;border-radius:20px;font-weight:bold;font-size:13px;min-width:28px;text-align:center}
+.header h1{font-size:1.05em;color:#00d4ff;font-weight:700}
+.header-right{display:flex;align-items:center;gap:8px}
 .gps-dot{width:9px;height:9px;border-radius:50%;background:#444;display:inline-block}
 .gps-dot.ativo{background:#00cc6a;animation:pulse 2s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.badge{background:#00d4ff;color:#000;padding:3px 10px;border-radius:20px;font-weight:bold;font-size:13px;min-width:28px;text-align:center}
 .tabs{display:flex;background:#1a1a2e;border-bottom:1px solid #333;position:sticky;top:57px;z-index:99}
-.tab{flex:1;padding:13px 8px;text-align:center;cursor:pointer;border-bottom:3px solid transparent;font-weight:600;font-size:14px;color:#555;transition:all .2s}
+.tab{flex:1;padding:12px 6px;text-align:center;cursor:pointer;border-bottom:3px solid transparent;font-weight:600;font-size:13px;color:#555}
 .tab.active{border-bottom-color:#00d4ff;color:#00d4ff}
-.tab .ct{background:#00d4ff;color:#000;padding:2px 7px;border-radius:10px;font-size:11px;margin-left:4px;font-weight:bold}
-.lista{padding:12px;padding-bottom:70px}
-.card{background:#1a1a2e;border-radius:14px;padding:16px;margin-bottom:14px;border-left:4px solid #f39c12;box-shadow:0 2px 12px rgba(0,0,0,.4)}
+.tab .ct{background:#00d4ff;color:#000;padding:2px 6px;border-radius:10px;font-size:11px;margin-left:3px;font-weight:bold}
+.lista{padding:10px;padding-bottom:80px}
+
+/* BARRA DE ROTA */
+.rota-bar{background:#1a1a2e;border:1px solid #333;border-radius:10px;margin:10px;padding:12px;display:none}
+.rota-bar h3{color:#00d4ff;font-size:13px;margin-bottom:8px}
+.rota-btn{background:linear-gradient(135deg,#4285f4,#2860d4);color:#fff;border:none;padding:10px 14px;border-radius:8px;font-weight:bold;font-size:13px;cursor:pointer;width:100%}
+
+/* CARD PEDIDO */
+.card{background:#1a1a2e;border-radius:14px;padding:14px;margin-bottom:12px;border-left:4px solid #f39c12;position:relative}
 .card.em-entrega{border-left-color:#00d4ff}
-.card.urgente{border-left-color:#ff4444;animation:urg 1.5s infinite}
-@keyframes urg{0%,100%{box-shadow:0 0 0 0 rgba(255,68,68,.4)}50%{box-shadow:0 0 0 8px rgba(255,68,68,0)}}
-.card-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
-.num{font-size:1.2em;font-weight:bold;color:#00d4ff}
-.tag{padding:4px 11px;border-radius:12px;font-size:12px;font-weight:bold}
+.card.entregue-local{border-left-color:#00cc6a;opacity:.7}
+.ordem-badge{position:absolute;top:10px;right:10px;background:#252542;border:1px solid #333;border-radius:8px;padding:4px 10px;font-size:12px;color:#888;display:flex;align-items:center;gap:6px}
+.ordem-badge select{background:transparent;border:none;color:#00d4ff;font-weight:bold;font-size:13px;cursor:pointer;outline:none}
+.card-head{display:flex;align-items:center;gap:8px;margin-bottom:8px;padding-right:80px}
+.num{font-size:1.1em;font-weight:bold;color:#00d4ff}
+.tag{padding:3px 10px;border-radius:10px;font-size:11px;font-weight:bold}
 .tag-pronto{background:#f39c12;color:#fff}
 .tag-entrega{background:#00d4ff;color:#000}
-.info-box{background:#0d1626;border-radius:10px;padding:12px;margin:8px 0}
-.info-row{display:flex;align-items:flex-start;gap:8px;margin-bottom:6px;font-size:14px;line-height:1.4}
-.info-row:last-child{margin-bottom:0}
-.info-icon{font-size:15px;min-width:20px}
+.info-box{background:#0d1626;border-radius:8px;padding:10px;margin:6px 0;font-size:13px}
+.info-row{display:flex;gap:7px;margin-bottom:5px;line-height:1.4;align-items:flex-start}
+.info-row:last-child{margin:0}
+.info-icon{min-width:18px}
 .info-text{color:#ddd}
-.info-label{color:#888;font-size:11px;display:block;margin-bottom:2px}
-.itens-lista{margin:8px 0}
-.item-linha{display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid #1e1e2e;font-size:13px;color:#ccc}
-.item-linha:last-child{border-bottom:none}
-.item-qtd{background:#252542;color:#00d4ff;padding:2px 7px;border-radius:6px;font-weight:bold;font-size:12px;min-width:28px;text-align:center}
-.item-obs{font-size:11px;color:#f39c12}
-.bebida-aviso{background:#0d2a3e;border:1px solid #00d4ff;border-radius:8px;padding:8px 12px;font-size:13px;color:#87ceeb;margin:6px 0;display:flex;align-items:center;gap:6px}
-.obs-aviso{background:#2a1a0d;border:1px solid #f39c12;border-radius:8px;padding:8px 12px;font-size:13px;color:#f39c12;margin:6px 0}
-.urgente-aviso{background:#2a0d0d;border:1px solid #ff4444;border-radius:8px;padding:8px 12px;font-size:13px;color:#ff6666;margin:6px 0;font-weight:bold}
-.pgto-row{display:flex;justify-content:space-between;align-items:center;margin:8px 0}
-.troco-badge{background:#f39c12;color:#000;padding:4px 10px;border-radius:8px;font-size:13px;font-weight:bold}
-.total-val{font-size:1.2em;font-weight:bold;color:#00cc6a}
-.btns{display:flex;flex-direction:column;gap:8px;margin-top:12px}
-.btn{padding:13px;border:none;border-radius:10px;font-weight:bold;cursor:pointer;font-size:14px;width:100%;transition:transform .1s}
+.info-label{color:#888;font-size:11px;display:block}
+.itens-resumo{font-size:12px;color:#aaa;margin:4px 0}
+.bebida{background:#0d2a3e;border:1px solid #00d4ff;border-radius:6px;padding:5px 10px;font-size:12px;color:#87ceeb;margin:4px 0}
+.obs{background:#2a1a0d;border:1px solid #f39c12;border-radius:6px;padding:5px 10px;font-size:12px;color:#f39c12;margin:4px 0}
+.urgente{background:#2a0d0d;border:1px solid #ff4444;border-radius:6px;padding:5px 10px;font-size:12px;color:#ff6666;margin:4px 0;font-weight:bold}
+.pgto-row{display:flex;justify-content:space-between;align-items:center;margin:6px 0;font-size:13px}
+.troco{background:#f39c12;color:#000;padding:3px 8px;border-radius:6px;font-size:12px;font-weight:bold}
+.total{font-size:1.1em;font-weight:bold;color:#00cc6a}
+.btns{display:flex;flex-direction:column;gap:7px;margin-top:10px}
+.btn{padding:12px;border:none;border-radius:9px;font-weight:bold;cursor:pointer;font-size:13px;width:100%;transition:transform .1s}
 .btn:active{transform:scale(.97)}
-.btn-pegar{background:linear-gradient(135deg,#00d4ff,#0099cc);color:#000}
+.btn-saindo{background:linear-gradient(135deg,#00d4ff,#0099cc);color:#000}
 .btn-entregue{background:linear-gradient(135deg,#00cc6a,#009948);color:#fff}
 .btn-maps{background:linear-gradient(135deg,#4285f4,#2860d4);color:#fff}
 .btn-conversa{background:linear-gradient(135deg,#25d366,#128c7e);color:#fff}
-.vazio{text-align:center;padding:60px 20px;color:#555;font-size:15px}
-.notif-banner{position:fixed;top:0;left:0;right:0;background:#ff4444;color:#fff;padding:14px 16px;text-align:center;font-weight:bold;font-size:14px;z-index:9999;display:none;cursor:pointer;max-width:480px;margin:0 auto}
-.gps-bar{background:#1a1a2e;padding:6px 16px;font-size:11px;color:#555;border-top:1px solid #222;text-align:center;position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto}
+.vazio{text-align:center;padding:50px 20px;color:#555}
+.notif-banner{position:fixed;top:0;left:0;right:0;background:#ff4444;color:#fff;padding:12px;text-align:center;font-weight:bold;font-size:13px;z-index:9999;display:none;cursor:pointer;max-width:480px;margin:0 auto}
+.gps-bar{background:#1a1a2e;padding:5px 16px;font-size:11px;color:#555;border-top:1px solid #222;text-align:center;position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto}
 .loading{text-align:center;padding:40px;color:#555}
-.spinner{display:inline-block;width:28px;height:28px;border:3px solid #333;border-top-color:#00d4ff;border-radius:50%;animation:spin 1s linear infinite;margin-bottom:8px}
+.spinner{display:inline-block;width:26px;height:26px;border:3px solid #333;border-top-color:#00d4ff;border-radius:50%;animation:spin 1s linear infinite;margin-bottom:8px}
 @keyframes spin{to{transform:rotate(360deg)}}
+.sep{text-align:center;color:#333;font-size:11px;margin:8px 0;padding:4px;border-top:1px solid #1e1e2e}
 </style>
 </head>
 <body>
-<div id="notifBanner" class="notif-banner" onclick="this.style.display='none';filtrar('pronto')"></div>
+<div id="notifBanner" class="notif-banner" onclick="this.style.display='none'"></div>
 <div class="header">
-  <div class="header-left">
-    <h1>🏍️ ENTREGADOR</h1>
+  <h1>🏍️ ENTREGADOR</h1>
+  <div class="header-right">
     <span class="gps-dot" id="gpsDot"></span>
+    <span class="badge" id="tot">0</span>
   </div>
-  <span class="badge-total" id="tot">0</span>
 </div>
 <div class="tabs">
-  <div class="tab active" onclick="filtrar('pronto')" id="t-pr">Prontos <span class="ct" id="c-pr">0</span></div>
-  <div class="tab" onclick="filtrar('saiu_entrega')" id="t-en">Em Entrega <span class="ct" id="c-en">0</span></div>
+  <div class="tab active" onclick="filtrar('fila')" id="t-fila">Fila <span class="ct" id="c-fila">0</span></div>
+  <div class="tab" onclick="filtrar('saiu_entrega')" id="t-en">Saindo <span class="ct" id="c-en">0</span></div>
+  <div class="tab" onclick="filtrar('entregue')" id="t-ok">Entregues <span class="ct" id="c-ok">0</span></div>
+</div>
+<div id="rotaBar" class="rota-bar">
+  <h3>🗺️ Rota do dia — <span id="rotaQtd">0</span> entrega(s)</h3>
+  <button class="rota-btn" onclick="abrirRotaMaps()">🗺️ Abrir Rota Completa no Maps</button>
 </div>
 <div class="lista" id="lista">
-  <div class="loading"><div class="spinner"></div><p>Carregando pedidos...</p></div>
+  <div class="loading"><div class="spinner"></div><p>Carregando...</p></div>
 </div>
 <div class="gps-bar" id="gpsBar">GPS aguardando...</div>
 <script>
 var TK=localStorage.getItem('delivery_token')||new URLSearchParams(location.search).get('token')||'';
-var ENAME=localStorage.getItem('entregador_nome')||'';
+var ENAME=localStorage.getItem('entregador_nome')||'Entregador';
 var urlEId=new URLSearchParams(location.search).get('entregadorId')||'';
 var B='/api/delivery';
-var F='pronto';
+var F='fila';
 var GPS={lat:null,lng:null};
-var entregaAtiva=null;
 var pedidosAnteriores=new Set();
+var todosPedidos=[];
 if(TK)localStorage.setItem('delivery_token',TK);
 
 async function carregar(){
   try{
-    var r=await fetch(B+'/entregador/pedidos?token='+TK);
+    var r=await fetch(B+'/entregador/rota?token='+TK);
+    if(!r.ok)r=await fetch(B+'/entregador/pedidos?token='+TK);
     var ps=await r.json();
     if(!Array.isArray(ps))return;
-    var pr=ps.filter(function(p){return p.status==='pronto';});
-    var en=ps.filter(function(p){return p.status==='saiu_entrega';});
-    var idsAtuais=new Set(pr.map(function(p){return p._id;}));
-    var novos=pr.filter(function(p){return !pedidosAnteriores.has(p._id);});
+    todosPedidos=ps;
+
+    var fila=ps.filter(function(p){return p.status==='pronto';});
+    var saindo=ps.filter(function(p){return p.status==='saiu_entrega';});
+
+    // detectar novos
+    var idsAtuais=new Set(fila.map(function(p){return p._id;}));
+    var novos=fila.filter(function(p){return !pedidosAnteriores.has(p._id);});
     if(novos.length>0&&pedidosAnteriores.size>0){
-      mostrarBanner('🔔 '+novos.length+' pedido(s) novo(s) prontos!');
-      if(navigator.vibrate)navigator.vibrate([300,100,300,100,300]);
+      mostrarBanner('🔔 '+novos.length+' pedido(s) novo(s) na fila!');
+      if(navigator.vibrate)navigator.vibrate([300,100,300]);
     }
     pedidosAnteriores=idsAtuais;
-    document.getElementById('c-pr').textContent=pr.length;
-    document.getElementById('c-en').textContent=en.length;
-    document.getElementById('tot').textContent=ps.length;
-    var ls=F==='pronto'?pr:en;
-    if(!ls.length){
-      document.getElementById('lista').innerHTML='<div class="vazio">Nenhum pedido '+(F==='pronto'?'pronto':'em entrega')+'</div>';
-      return;
+
+    document.getElementById('c-fila').textContent=fila.length;
+    document.getElementById('c-en').textContent=saindo.length;
+    document.getElementById('c-ok').textContent='';
+    document.getElementById('tot').textContent=fila.length+saindo.length;
+
+    // barra de rota
+    var rotaBar=document.getElementById('rotaBar');
+    var todos=fila.concat(saindo);
+    if(todos.length>0){
+      rotaBar.style.display='block';
+      document.getElementById('rotaQtd').textContent=todos.length;
+    } else {
+      rotaBar.style.display='none';
     }
-    var h='';
-    ls.forEach(function(p){
-      var urgente=p.urgente||p.prioridade==='urgente';
-      var temBebida=false;
-      var itensHtml='';
-      (p.itens||[]).forEach(function(it){
-        if(it.nome&&it.nome.toLowerCase().match(/(coca|refri|suco|guarana|agua|cerveja|fanta|sprite|bebida)/))temBebida=true;
-        itensHtml+='<div class="item-linha"><span class="item-qtd">'+it.quantidade+'x</span> '+it.nome+(it.observacao?' <span class="item-obs">('+it.observacao+')</span>':'')+'</div>';
-      });
-      var pgtoMap={pix:'PIX',dinheiro:'Dinheiro',cartao:'Cartao',na_entrega:'Na entrega'};
-      h+='<div class="card'+(p.status==='saiu_entrega'?' em-entrega':'')+(urgente?' urgente':'')+'"">';
-      h+='<div class="card-head"><span class="num">#'+(p.numero||'?')+'</span>';
-      h+='<span class="tag '+(p.status==='pronto'?'tag-pronto':'tag-entrega')+'">'+(p.status==='pronto'?'PRONTO':'EM ENTREGA')+'</span></div>';
-      if(urgente)h+='<div class="urgente-aviso">🚨 PEDIDO URGENTE!</div>';
-      h+='<div class="info-box">';
-      h+='<div class="info-row"><span class="info-icon">📍</span><span class="info-text"><span class="info-label">Endereço</span>'+(p.enderecoEntrega||'Retirada no local')+'</span></div>';
-      if(p.observacaoEntrega)h+='<div class="info-row"><span class="info-icon">📝</span><span class="info-text"><span class="info-label">Obs entrega</span>'+p.observacaoEntrega+'</span></div>';
-      h+='<div class="info-row"><span class="info-icon">👤</span><span class="info-text"><span class="info-label">Cliente</span>'+(p.clienteNome||p.nomeCliente||'—')+' '+(p.clienteTelefone||p.telefoneCliente||'')+'</span></div>';
-      h+='</div>';
-      if(itensHtml)h+='<div class="itens-lista">'+itensHtml+'</div>';
-      if(temBebida)h+='<div class="bebida-aviso">🧊 Tem bebida neste pedido</div>';
-      if(p.observacoes&&p.observacoes!==p.observacaoEntrega)h+='<div class="obs-aviso">📝 '+p.observacoes+'</div>';
-      h+='<div class="pgto-row"><span>'+(pgtoMap[p.formaPagamento]||'—')+'</span><span class="total-val">R$ '+(p.total||0).toFixed(2).replace('.',',')+'</span></div>';
-      if(p.formaPagamento==='dinheiro'&&p.trocoPara)h+='<div><span class="troco-badge">TROCO P/ R$ '+Number(p.trocoPara).toFixed(2).replace('.',',')+'</span></div>';
-      h+='<div class="btns">';
-      if(p.status==='pronto'){
-        h+='<button class="btn btn-conversa" onclick="falarCliente(\''+p._id+'\',\''+(p.clienteNome||'Cliente')+'\')">💬 Falar com Cliente</button>';
-        h+='<button class="btn btn-pegar" onclick="pegar(\''+p._id+'\')">🏍️ PEGAR PEDIDO</button>';
-      }else{
-        h+='<button class="btn btn-maps" onclick="abrirMaps(\''+encodeURIComponent(p.enderecoEntrega||'')+'\')">📍 ABRIR NO MAPS</button>';
-        h+='<button class="btn btn-entregue" onclick="entregue(\''+p._id+'\')">✅ MARCAR ENTREGUE</button>';
-      }
-      h+='</div></div>';
-    });
-    document.getElementById('lista').innerHTML=h;
+
+    renderLista(fila, saindo);
   }catch(e){console.error(e);}
+}
+
+function renderLista(fila, saindo){
+  var ls=[];
+  if(F==='fila') ls=fila;
+  else if(F==='saiu_entrega') ls=saindo;
+  else ls=[];
+
+  if(!ls.length){
+    document.getElementById('lista').innerHTML='<div class="vazio">'+
+      (F==='fila'?'Nenhum pedido na fila':'F==='saiu_entrega'?'Nenhum pedido saindo':'Sem entregas hoje')+
+    '</div>';
+    return;
+  }
+
+  // Ordenar por ordemEntrega
+  ls.sort(function(a,b){ return (a.ordemEntrega||99)-(b.ordemEntrega||99); });
+
+  var h='';
+  ls.forEach(function(p,idx){
+    var urgente=p.urgente||p.prioridade==='urgente';
+    var temBebida=false;
+    var itensTexto=(p.itens||[]).map(function(it){
+      if(it.nome&&it.nome.toLowerCase().match(/(coca|refri|suco|guarana|agua|cerveja|fanta|sprite|bebida)/))temBebida=true;
+      return it.quantidade+'x '+it.nome+(it.observacao?' ('+it.observacao+')':'');
+    }).join(', ');
+
+    var pgtoMap={pix:'PIX',dinheiro:'Dinheiro',cartao:'Cartao',na_entrega:'Na entrega'};
+    var ordemAtual=p.ordemEntrega||'';
+
+    h+='<div class="card'+(p.status==='saiu_entrega'?' em-entrega':'')+'" id="card-'+p._id+'">';
+
+    // Badge de ordem editável
+    h+='<div class="ordem-badge">📍<select onchange="salvarOrdem(\''+p._id+'\',this.value)" title="Posição na rota">';
+    for(var n=1;n<=10;n++){
+      h+='<option value="'+n+'"'+(ordemAtual==n?' selected':'')+'>'+n+'ª</option>';
+    }
+    h+='</select></div>';
+
+    h+='<div class="card-head"><span class="num">#'+(p.numero||'?')+'</span>';
+    h+='<span class="tag '+(p.status==='pronto'?'tag-pronto':'tag-entrega')+'">'+(p.status==='pronto'?'PRONTO':'SAINDO')+'</span></div>';
+
+    if(urgente)h+='<div class="urgente">🚨 URGENTE!</div>';
+
+    h+='<div class="info-box">';
+    h+='<div class="info-row"><span class="info-icon">📍</span><span class="info-text"><span class="info-label">Endereço</span>'+(p.enderecoEntrega||'Retirada')+'</span></div>';
+    if(p.observacaoEntrega)h+='<div class="info-row"><span class="info-icon">📝</span><span class="info-text"><span class="info-label">Obs entrega</span>'+p.observacaoEntrega+'</span></div>';
+    h+='<div class="info-row"><span class="info-icon">👤</span><span class="info-text"><span class="info-label">Cliente</span>'+(p.clienteNome||'—')+' '+(p.clienteTelefone||'')+'</span></div>';
+    h+='</div>';
+
+    if(itensTexto)h+='<div class="itens-resumo">'+itensTexto+'</div>';
+    if(temBebida)h+='<div class="bebida">🧊 Tem bebida</div>';
+    if(p.observacoes&&p.observacoes!==p.observacaoEntrega)h+='<div class="obs">📝 '+p.observacoes+'</div>';
+
+    h+='<div class="pgto-row"><span>'+(pgtoMap[p.formaPagamento]||'—')+'</span><span class="total">R$ '+(p.total||p.valorTotal||0).toFixed(2).replace('.',',')+'</span></div>';
+    if(p.formaPagamento==='dinheiro'&&p.trocoPara)h+='<div><span class="troco">TROCO P/ R$ '+Number(p.trocoPara).toFixed(2).replace('.',',')+'</span></div>';
+
+    h+='<div class="btns">';
+    if(p.status==='pronto'){
+      h+='<button class="btn btn-maps" onclick="abrirMapsEndereco(\''+encodeURIComponent(p.enderecoEntrega||'')+'\')">🗺️ Ver no Maps</button>';
+      h+='<button class="btn btn-conversa" onclick="falarCliente(\''+p._id+'\',\''+(p.clienteNome||'Cliente')+'\')">💬 Falar com Cliente</button>';
+      h+='<button class="btn btn-saindo" onclick="iniciarEntrega(\''+p._id+'\',\''+p.numero+'\')">🏍️ SAINDO PARA ENTREGA</button>';
+    } else {
+      h+='<button class="btn btn-maps" onclick="abrirMapsEndereco(\''+encodeURIComponent(p.enderecoEntrega||'')+'\')">📍 Navegar no Maps</button>';
+      h+='<button class="btn btn-entregue" onclick="marcarEntregue(\''+p._id+'\')">✅ ENTREGUE</button>';
+    }
+    h+='</div></div>';
+  });
+
+  document.getElementById('lista').innerHTML=h;
 }
 
 function filtrar(s){
   F=s;
-  document.getElementById('t-pr').classList.toggle('active',s==='pronto');
-  document.getElementById('t-en').classList.toggle('active',s==='saiu_entrega');
-  carregar();
+  ['fila','saiu_entrega','entregue'].forEach(function(t){
+    document.getElementById('t-'+t).classList.toggle('active',t===s);
+  });
+  var fila=todosPedidos.filter(function(p){return p.status==='pronto';});
+  var saindo=todosPedidos.filter(function(p){return p.status==='saiu_entrega';});
+  renderLista(fila,saindo);
 }
 
-async function pegar(id){
-  await fetch(B+'/entregador/'+id+'/pegar?token='+TK,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({entregadorNome:ENAME||'Entregador',entregadorId:urlEId})});
-  entregaAtiva=id;
-  iniciarGPS();
-  filtrar('saiu_entrega');
+async function salvarOrdem(id,ordem){
+  try{
+    await fetch(B+'/entregador/'+id+'/ordem?token='+TK,{
+      method:'PUT',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ordem:parseInt(ordem)})
+    });
+    // Reordenar visualmente
+    todosPedidos.forEach(function(p){ if(p._id===id) p.ordemEntrega=parseInt(ordem); });
+    var fila=todosPedidos.filter(function(p){return p.status==='pronto';});
+    var saindo=todosPedidos.filter(function(p){return p.status==='saiu_entrega';});
+    renderLista(fila,saindo);
+  }catch(e){}
 }
 
-async function entregue(id){
-  await fetch(B+'/entregador/'+id+'/entregue?token='+TK,{method:'PUT',headers:{'Content-Type':'application/json'}});
-  entregaAtiva=null;
-  filtrar('pronto');
+async function iniciarEntrega(id, numero){
+  if(!confirm('Confirma que está saindo para entregar o pedido #'+numero+'?\n\nO cliente receberá o link de rastreio em tempo real!'))return;
+  try{
+    var r=await fetch(B+'/entregador/'+id+'/iniciar-entrega?token='+TK,{
+      method:'PUT',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({entregadorNome:ENAME,entregadorId:urlEId})
+    });
+    if(r.ok){
+      iniciarGPS(id);
+      mostrarBanner('✅ Entrega iniciada! Link de rastreio enviado para o cliente.');
+      filtrar('saiu_entrega');
+      carregar();
+    }
+  }catch(e){alert('Erro ao iniciar entrega');}
 }
 
-function abrirMaps(end){window.open('https://www.google.com/maps/search/'+end,'_blank');}
+async function marcarEntregue(id){
+  if(!confirm('Confirmar entrega realizada?'))return;
+  try{
+    await fetch(B+'/entregador/'+id+'/entregue?token='+TK,{
+      method:'PUT',headers:{'Content-Type':'application/json'}
+    });
+    mostrarBanner('✅ Entrega confirmada!');
+    filtrar('fila');
+    carregar();
+  }catch(e){}
+}
+
+function abrirMapsEndereco(end){
+  window.open('https://www.google.com/maps/dir/?api=1&destination='+end,'_blank');
+}
+
+function abrirRotaMaps(){
+  var todos=todosPedidos.filter(function(p){return p.status==='pronto'||p.status==='saiu_entrega';});
+  todos.sort(function(a,b){return (a.ordemEntrega||99)-(b.ordemEntrega||99);});
+  if(!todos.length)return alert('Nenhum pedido na rota');
+  if(GPS.lat){
+    var origin='origin='+GPS.lat+','+GPS.lng+'&';
+  } else {
+    var origin='';
+  }
+  var waypoints=todos.slice(0,-1).map(function(p){return encodeURIComponent(p.enderecoEntrega||'');}).join('|');
+  var dest=encodeURIComponent(todos[todos.length-1].enderecoEntrega||'');
+  var url='https://www.google.com/maps/dir/?api=1&'+origin+'destination='+dest+(waypoints?'&waypoints='+waypoints:'')+'&travelmode=driving';
+  window.open(url,'_blank');
+}
 
 function falarCliente(pedidoId,nomeCliente){
   if(!confirm('Iniciar conversa com '+nomeCliente+' via Rebeca?'))return;
-  fetch('/api/delivery/pedido/'+pedidoId+'/contato-cliente',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({entregadorNome:ENAME||'Entregador'})})
-  .then(function(r){return r.json();}).then(function(d){
-    if(d.sucesso)alert('Mensagem enviada! Rebeca esta intermediando.');
+  fetch('/api/delivery/pedido/'+pedidoId+'/contato-cliente',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({entregadorNome:ENAME})
+  }).then(function(r){return r.json();}).then(function(d){
+    if(d.sucesso)alert('Mensagem enviada!');
     else alert('Erro: '+(d.erro||'falha'));
-  }).catch(function(){alert('Erro de conexao');});
+  }).catch(function(){alert('Erro de conexão');});
 }
 
-function iniciarGPS(){
+var _gpsWatch=null;
+var _entregasAtivas=new Set();
+function iniciarGPS(pedidoId){
+  if(pedidoId)_entregasAtivas.add(pedidoId);
+  if(_gpsWatch)return;
   if(!navigator.geolocation)return;
-  navigator.geolocation.watchPosition(function(pos){
+  _gpsWatch=navigator.geolocation.watchPosition(function(pos){
     GPS.lat=pos.coords.latitude;GPS.lng=pos.coords.longitude;
     document.getElementById('gpsDot').classList.add('ativo');
     document.getElementById('gpsBar').textContent='📍 GPS: '+GPS.lat.toFixed(5)+', '+GPS.lng.toFixed(5);
-    if(entregaAtiva){
-      fetch(B+'/entregador/'+entregaAtiva+'/gps',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({latitude:GPS.lat,longitude:GPS.lng})}).catch(function(){});
-    }
-  },function(err){document.getElementById('gpsBar').textContent='GPS: '+err.message;},{enableHighAccuracy:true,maximumAge:10000});
+    // Enviar GPS para todos os pedidos em entrega
+    _entregasAtivas.forEach(function(pid){
+      fetch(B+'/entregador/'+pid+'/gps',{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({latitude:GPS.lat,longitude:GPS.lng})
+      }).catch(function(){});
+    });
+  },function(err){
+    document.getElementById('gpsBar').textContent='GPS: '+err.message;
+  },{enableHighAccuracy:true,maximumAge:5000});
+}
+
+// Iniciar GPS se já tem pedidos em entrega
+function verificarGPSAtivo(){
+  var saindo=todosPedidos.filter(function(p){return p.status==='saiu_entrega';});
+  if(saindo.length>0){
+    saindo.forEach(function(p){_entregasAtivas.add(p._id);});
+    iniciarGPS();
+  }
 }
 
 function mostrarBanner(msg){
   var b=document.getElementById('notifBanner');
   b.textContent=msg;b.style.display='block';
-  setTimeout(function(){b.style.display='none';},8000);
+  setTimeout(function(){b.style.display='none';},6000);
 }
 
 if('Notification' in window&&Notification.permission==='default')Notification.requestPermission();
-iniciarGPS();
 carregar();
-setInterval(carregar,8000);
+setInterval(function(){carregar();verificarGPSAtivo();},8000);
 </script>
 </body>
 </html>

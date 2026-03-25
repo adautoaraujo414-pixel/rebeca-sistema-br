@@ -3,175 +3,142 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Rastreamento - Rebeca Delivery</title>
+<title>Rastreio - Rebeca Delivery</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Segoe UI',sans-serif;background:#0a0a1a;color:#fff;min-height:100vh}
-.container{max-width:500px;margin:0 auto;padding:20px}
-.header{text-align:center;padding:20px 0}
-.header h1{color:#ff6b35;font-size:1.5em}
-.header p{color:#888;font-size:.9em}
-.card{background:#1a1a2e;border:1px solid #333;border-radius:12px;padding:20px;margin-bottom:15px}
-.card h3{color:#ff6b35;margin-bottom:10px;font-size:1em}
-.status-track{display:flex;flex-direction:column;gap:0}
-.step{display:flex;align-items:flex-start;gap:12px;padding:12px 0;position:relative}
-.step-dot{width:24px;height:24px;border-radius:50%;border:2px solid #333;display:flex;align-items:center;justify-content:center;font-size:.7em;flex-shrink:0;background:#0a0a1a}
-.step.done .step-dot{background:#00cc6a;border-color:#00cc6a;color:#000}
-.step.active .step-dot{background:#ff6b35;border-color:#ff6b35;color:#fff;animation:pulse 1.5s infinite}
-.step-info{flex:1}
-.step-info h4{font-size:.9em;color:#fff}
-.step-info p{font-size:.8em;color:#888}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0a0a1a;color:#fff;min-height:100vh}
+.container{max-width:500px;margin:0 auto;padding:16px}
+.header{text-align:center;padding:16px 0 10px}
+.header h1{color:#00d4ff;font-size:1.3em}
+.header p{color:#888;font-size:.85em;margin-top:4px}
+.card{background:#1a1a2e;border:1px solid #333;border-radius:12px;padding:16px;margin-bottom:14px}
+.card h3{color:#00d4ff;margin-bottom:12px;font-size:.95em}
+.step-track{display:flex;flex-direction:column;gap:0}
+.step{display:flex;align-items:flex-start;gap:12px;padding:10px 0;position:relative}
+.step-dot{width:26px;height:26px;border-radius:50%;border:2px solid #333;display:flex;align-items:center;justify-content:center;font-size:.75em;flex-shrink:0;background:#0a0a1a}
+.step.done .step-dot{background:#00cc6a;border-color:#00cc6a;color:#000;font-weight:bold}
+.step.active .step-dot{background:#00d4ff;border-color:#00d4ff;color:#000;animation:pulse 1.5s infinite}
+.step-info h4{font-size:.88em;color:#888}
 .step.done .step-info h4{color:#00cc6a}
-.step.active .step-info h4{color:#ff6b35}
-.step-line{position:absolute;left:11px;top:36px;width:2px;height:calc(100% - 24px);background:#333}
+.step.active .step-info h4{color:#00d4ff;font-weight:bold}
+.step-line{position:absolute;left:12px;top:36px;width:2px;height:calc(100% - 10px);background:#333}
 .step.done .step-line{background:#00cc6a}
 .step:last-child .step-line{display:none}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
-.itens{margin:10px 0}
-.item{padding:6px 0;border-bottom:1px solid #222;font-size:.9em;display:flex;justify-content:space-between}
-.item:last-child{border:none}
-.total{font-size:1.2em;font-weight:bold;color:#00cc6a;text-align:right;margin-top:10px}
-.endereco{background:#252542;padding:12px;border-radius:8px;margin:10px 0;font-size:.9em}
-.endereco-icon{color:#00d4ff}
-.entregador{background:#252542;padding:12px;border-radius:8px;margin:10px 0}
-.entregador h4{color:#ff6b35;font-size:.9em}
-.entregador p{color:#ccc;font-size:.85em}
-.mapa{width:100%;height:250px;border-radius:10px;margin:10px 0;background:#252542;display:flex;align-items:center;justify-content:center;color:#888}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.item-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #222;font-size:.88em}
+.item-row:last-child{border:none}
+.total-row{text-align:right;font-size:1.1em;font-weight:bold;color:#00cc6a;margin-top:8px}
+.end-box{background:#252542;border-radius:8px;padding:10px;font-size:.88em;color:#ddd;display:flex;gap:8px;align-items:flex-start}
+.entregador-box{background:#252542;border-radius:8px;padding:10px}
+.entregador-box h4{color:#00d4ff;font-size:.88em;margin-bottom:4px}
+.entregador-box p{color:#ccc;font-size:.85em}
+.mapa-box{width:100%;border-radius:10px;overflow:hidden;margin-top:10px;background:#252542}
+.mapa-box iframe{width:100%;height:260px;border:none;display:block}
+.mapa-loading{height:260px;display:flex;align-items:center;justify-content:center;color:#888;font-size:.88em;flex-direction:column;gap:8px}
+.spinner{width:24px;height:24px;border:3px solid #333;border-top-color:#00d4ff;border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.gps-info{text-align:center;font-size:.75em;color:#555;margin-top:6px}
+.status-badge{display:inline-block;padding:4px 12px;border-radius:20px;font-size:.8em;font-weight:bold;margin-left:8px}
+.badge-saiu{background:#00d4ff;color:#000}
+.badge-pronto{background:#f39c12;color:#fff}
+.badge-entregue{background:#00cc6a;color:#000}
 .vazio{text-align:center;padding:60px 20px;color:#888}
-.vazio h2{color:#ff6b35;margin-bottom:10px}
+.vazio h2{color:#00d4ff;margin-bottom:8px}
 </style>
 </head>
 <body>
 <div class="container">
-<div class="header"><button class="menu-toggle-global" onclick="toggleMenuGlobal()">☰</button>
-<h1>&#x1F6F5; Rebeca Delivery</h1>
-<p>Acompanhe seu pedido em tempo real</p>
-</div>
-<div id="conteudo"><div class="vazio"><h2>Carregando...</h2></div></div>
+  <div class="header">
+    <h1>🏍️ Rebeca Delivery</h1>
+    <p>Acompanhe seu pedido em tempo real</p>
+  </div>
+  <div id="conteudo"><div class="vazio"><div class="spinner" style="margin:0 auto 12px"></div><p>Carregando...</p></div></div>
 </div>
 <script>
-var codigo = location.pathname.split('/').pop();
-var BASE = '/api/delivery';
+var codigo=location.pathname.split('/').pop();
+var BASE='/api/delivery';
+var _intervalo=null;
 
-async function carregar() {
-try {
-var r = await fetch(BASE + '/rastrear-gps/' + codigo);
-if (r.status === 404) { document.getElementById('conteudo').innerHTML = '<div class="vazio"><h2>Pedido nao encontrado</h2><p>Verifique o link</p></div>'; return; }
-var p = await r.json();
-var statusList = ['novo','confirmado','preparando','pronto','saiu_entrega','entregue'];
-var statusNomes = {novo:'Pedido recebido',confirmado:'Confirmado',preparando:'Em preparo',pronto:'Pronto',saiu_entrega:'Saiu para entrega',entregue:'Entregue'};
-var statusEmoji = {novo:'&#x1F4CB;',confirmado:'&#x2705;',preparando:'&#x1F373;',pronto:'&#x2705;',saiu_entrega:'&#x1F6F5;',entregue:'&#x1F389;'};
-var idxAtual = statusList.indexOf(p.status);
-
-var h = '<div class="card"><h3>Pedido #' + (p.numero || '?') + '</h3>';
-h += '<div class="status-track">';
-for (var i = 0; i < statusList.length; i++) {
-var s = statusList[i];
-var cls = i < idxAtual ? 'done' : i === idxAtual ? 'active' : '';
-h += '<div class="step ' + cls + '">';
-h += '<div class="step-dot">' + (i < idxAtual ? '&#x2713;' : statusEmoji[s]) + '</div>';
-h += '<div class="step-info"><h4>' + statusNomes[s] + '</h4></div>';
-if (i < statusList.length - 1) h += '<div class="step-line"></div>';
-h += '</div>';
-}
-h += '</div></div>';
-
-h += '<div class="card"><h3>Itens</h3><div class="itens">';
-var tot = 0;
-for (var j = 0; j < (p.itens || []).length; j++) {
-var it = p.itens[j];
-h += '<div class="item"><span>' + it.quantidade + 'x ' + it.nome + '</span><span>R$ ' + (it.subtotal || 0).toFixed(2) + '</span></div>';
-tot += (it.subtotal || 0);
-}
-h += '</div><div class="total">Total: R$ ' + tot.toFixed(2) + '</div></div>';
-
-if (p.enderecoEntrega) {
-h += '<div class="card"><div class="endereco"><span class="endereco-icon">&#x1F4CD;</span> ' + p.enderecoEntrega + '</div></div>';
+async function carregar(){
+  try{
+    var r=await fetch(BASE+'/rastrear-gps/'+codigo);
+    if(r.status===404){
+      document.getElementById('conteudo').innerHTML='<div class="vazio"><h2>Pedido não encontrado</h2><p>Verifique o link</p></div>';
+      return;
+    }
+    var p=await r.json();
+    renderPedido(p);
+    // Se entregue, parar de atualizar
+    if(p.status==='entregue' && _intervalo){clearInterval(_intervalo);_intervalo=null;}
+  }catch(e){console.error(e);}
 }
 
-if (p.entregadorNome) {
-h += '<div class="card"><div class="entregador"><h4>&#x1F6F5; Entregador</h4><p>' + p.entregadorNome + '</p></div></div>';
-}
+function renderPedido(p){
+  var steps=[
+    {s:'novo',label:'Pedido recebido',icon:'📋'},
+    {s:'confirmado',label:'Confirmado',icon:'✅'},
+    {s:'preparando',label:'Sendo preparado',icon:'👨‍🍳'},
+    {s:'pronto',label:'Pronto para entrega',icon:'✅'},
+    {s:'saiu_entrega',label:'Saiu para entrega',icon:'🏍️'},
+    {s:'entregue',label:'Entregue!',icon:'🎉'}
+  ];
+  var statusList=['novo','confirmado','preparando','pronto','saiu_entrega','entregue'];
+  var idxAtual=statusList.indexOf(p.status);
 
-if (p.status === 'saiu_entrega' && p.entregadorLatitude && p.entregadorLongitude) {
-h += '<div class="card"><h3>Localizacao do entregador</h3>';
-h += '<div class="mapa" id="mapa">GPS: ' + p.entregadorLatitude.toFixed(4) + ', ' + p.entregadorLongitude.toFixed(4) + '</div>';
-h += '<p style="font-size:.8em;color:#888;text-align:center">Atualizado: ' + (p.gpsAtualizado ? new Date(p.gpsAtualizado).toLocaleTimeString() : '-') + '</p></div>';
-}
+  var h='<div class="card"><h3>Pedido #'+(p.numero||'?');
+  if(p.status==='saiu_entrega')h+='<span class="status-badge badge-saiu">🏍️ A caminho!</span>';
+  else if(p.status==='entregue')h+='<span class="status-badge badge-entregue">✅ Entregue</span>';
+  else if(p.status==='pronto')h+='<span class="status-badge badge-pronto">✅ Pronto</span>';
+  h+='</h3><div class="step-track">';
 
-if (p.status === 'entregue') {
-h += '<div class="card" style="text-align:center"><h3 style="color:#00cc6a">&#x1F389; Pedido Entregue!</h3><p style="color:#888">Obrigado pela preferencia!</p></div>';
-}
+  steps.forEach(function(st,i){
+    var cls=i<idxAtual?'done':i===idxAtual?'active':'';
+    h+='<div class="step '+cls+'">';
+    h+='<div class="step-dot">'+(i<idxAtual?'✓':st.icon)+'</div>';
+    h+='<div class="step-info"><h4>'+st.label+'</h4></div>';
+    if(i<steps.length-1)h+='<div class="step-line"></div>';
+    h+='</div>';
+  });
+  h+='</div></div>';
 
-document.getElementById('conteudo').innerHTML = h;
-} catch(e) { console.error(e); }
+  // Itens
+  h+='<div class="card"><h3>📦 Itens do pedido</h3>';
+  var tot=0;
+  (p.itens||[]).forEach(function(it){
+    var sub=it.subtotal||(it.preco*(it.quantidade||1))||0;
+    h+='<div class="item-row"><span>'+it.quantidade+'x '+it.nome+(it.observacao?' <small style="color:#f39c12">('+it.observacao+')</small>':'')+'</span><span>R$ '+sub.toFixed(2)+'</span></div>';
+    tot+=sub;
+  });
+  if(tot>0)h+='<div class="total-row">Total: R$ '+tot.toFixed(2)+'</div>';
+  h+='</div>';
+
+  // Endereço
+  if(p.enderecoEntrega){
+    h+='<div class="card"><div class="end-box"><span>📍</span><span>'+p.enderecoEntrega+'</span></div></div>';
+  }
+
+  // Entregador + Mapa em tempo real
+  if(p.status==='saiu_entrega'){
+    h+='<div class="card"><h3>🏍️ Entregador a caminho</h3>';
+    if(p.entregadorNome)h+='<div class="entregador-box"><h4>Entregador</h4><p>'+p.entregadorNome+'</p></div>';
+    h+='<div class="mapa-box">';
+    if(p.entregadorLatitude&&p.entregadorLongitude){
+      var lat=p.entregadorLatitude,lng=p.entregadorLongitude;
+      var mapaUrl='https://www.google.com/maps/embed/v1/place?key=AIzaSyD-9tSrke72PouQMnMX-a7eZSW0jkFMBWY&q='+lat+','+lng+'&zoom=15';
+      // Fallback sem API key - usar link direto
+      h+='<iframe src="https://maps.google.com/maps?q='+lat+','+lng+'&z=16&output=embed" allowfullscreen loading="lazy"></iframe>';
+      h+='<div class="gps-info">📍 Atualizado: '+(p.gpsAtualizado?new Date(p.gpsAtualizado).toLocaleTimeString('pt-BR'):'-')+'</div>';
+    } else {
+      h+='<div class="mapa-loading"><div class="spinner"></div><p>Aguardando localização do entregador...</p></div>';
+    }
+    h+='</div></div>';
+  }
+
+  document.getElementById('conteudo').innerHTML=h;
 }
 
 carregar();
-setInterval(carregar, 8000);
+_intervalo=setInterval(carregar,10000);
 </script>
-
-<style id="mobile-responsive">
-/* ===== RESPONSIVO GLOBAL MOBILE ===== */
-* { box-sizing: border-box; }
-img { max-width: 100%; }
-.menu-toggle-global { display: none; background: none; border: none; color: white; font-size: 1.6em; cursor: pointer; padding: 5px 10px; }
-
-@media (max-width: 768px) {
-    .menu-toggle-global { display: block !important; }
-    .sidebar, .nav-lateral { width: 100% !important; max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
-    .sidebar.aberto, .nav-lateral.aberto { max-height: 700px !important; }
-    .container, .layout, .main-wrap { flex-direction: column !important; }
-    .main-content, .content, .page-content { padding: 10px !important; width: 100% !important; }
-    .cards, .grid, .stats-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 10px !important; }
-    .panel-grid { grid-template-columns: 1fr !important; }
-    .card { padding: 12px !important; }
-    .card .value { font-size: 1.3em !important; }
-    table { font-size: 0.78em !important; display: block; overflow-x: auto; white-space: nowrap; }
-    .btn { padding: 6px 10px !important; font-size: 0.8em !important; }
-    .header, .top-bar { padding: 10px 12px !important; flex-wrap: wrap; gap: 8px; }
-    .header h1, .top-bar h1 { font-size: 1.1em !important; }
-    input, select, textarea { width: 100% !important; font-size: 16px !important; }
-    .modal, .overlay-box { width: 95vw !important; max-width: 95vw !important; margin: 10px auto !important; }
-    .form-row, .form-grid { flex-direction: column !important; }
-    .col-2, .col-3, .col-4 { width: 100% !important; }
-}
-
-@media (max-width: 480px) {
-    .cards, .grid, .stats-grid { grid-template-columns: 1fr 1fr !important; }
-    .card-icon { font-size: 1.3em !important; }
-    h1 { font-size: 1.2em !important; }
-    h2 { font-size: 1em !important; }
-}
-</style>
-<script>
-// Toggle menu mobile global
-function toggleMenuGlobal() {
-    document.querySelectorAll('.sidebar, .nav-lateral').forEach(el => el.classList.toggle('aberto'));
-}
-// Auto-detectar mobile
-(function() {
-    function ajustar() {
-        const isMobile = window.innerWidth <= 768;
-        document.body.classList.toggle('is-mobile', isMobile);
-        if (!isMobile) {
-            document.querySelectorAll('.sidebar, .nav-lateral').forEach(el => el.classList.remove('aberto'));
-        }
-    }
-    window.addEventListener('resize', ajustar);
-    document.addEventListener('DOMContentLoaded', ajustar);
-})();
-// Fechar menu ao clicar em item
-document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.menu-item, .nav-item').forEach(item => {
-        item.addEventListener('click', () => {
-            if (window.innerWidth <= 768) {
-                document.querySelectorAll('.sidebar, .nav-lateral').forEach(el => el.classList.remove('aberto'));
-            }
-        });
-    });
-});
-</script>
-
 </body>
 </html>

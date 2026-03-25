@@ -89,6 +89,8 @@ const PedidoDeliverySchema = new mongoose.Schema({
     // Entregador
     entregadorId: { type: mongoose.Schema.Types.ObjectId, ref: 'Motorista' },
     entregadorNome: String,
+    ordemEntrega: Number,
+    rotaIniciada: Date,
     
     // Avaliação
     avaliacao: { type: Number, min: 1, max: 5 },
