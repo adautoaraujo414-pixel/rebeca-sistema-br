@@ -500,6 +500,9 @@
                 if (page === 'entregadores') carregarEntregadores();
                 if (page === 'cardapio') carregarCardapio();
                 if (page === 'config') carregarConfig();
+                if (page === 'assinantes') carregarAssinantes();
+                if (page === 'cardapio-dia') carregarCardapioDia();
+                if (page === 'upload-cardapio') { /* nada */ }
             });
         });
 
@@ -822,37 +825,7 @@
                 limparTranscricao();
             } catch(e) { toast('Erro ao salvar cardapio','error'); }
         }
-        // ========== ENTREGADORES ==========
-
-        
-
-            try {
-                const resp = await apiCall("/entregadores");
-                entregadores = resp.entregadores || [];
-                renderEntregadores();
-            } catch(e) {
-                document.getElementById("listaEntregadores").innerHTML = "<p>Erro ao carregar entregadores</p>";
-            }
-        }
-                document.querySelectorAll('.menu-item').forEach(function(m){m.classList.remove('active');});
-        // ========== ENTREGADORES ==========
-
-        
-
-            try {
-                const resp = await apiCall("/entregadores");
-                entregadores = resp.entregadores || [];
-                renderEntregadores();
-            } catch(e) {
-                document.getElementById("listaEntregadores").innerHTML = "<p>Erro ao carregar entregadores</p>";
-            }
-        }
-                document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
-                document.querySelector('[data-page="cardapio"]').classList.add('active');
-                document.getElementById('page-cardapio').classList.add('active');
-                carregarCardapio();
-            } catch(err) { toast('Erro: ' + err.message, 'error'); }
-        }
+        // ===== FIM CARDAPIO IA =====
         function limparFoto() { document.getElementById('uploadArea').style.display='block'; document.getElementById('previewFoto').style.display='none'; document.getElementById('inputFotoCardapio').value=''; document.getElementById('iaLoading').style.display='none'; }
         function limparTranscricao() { dadosTranscritos=null; document.getElementById('resultadoTranscricao').style.display='none'; limparFoto(); }
 
@@ -1220,29 +1193,7 @@ async function enviarCardapioDia() {
         else { statusEl.textContent = 'Erro ao enviar'; }
     } catch(e) { statusEl.textContent = 'Erro de conexao'; }
 }
-document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.menu-item').forEach(function(item) {
-        if (item.dataset.page === 'assinantes') item.addEventListener('click', function() { carregarAssinantes(); });
-        if (item.dataset.page === 'cardapio-dia') item.addEventListener('click', function() { carregarCardapioDia(); });
-    });
-});
 </script>
 
 </body>
 </html>
-<script>
-// FIX: Garantir estado correto login/dashboard ao carregar
-(function() {
-    const tk = localStorage.getItem('delivery_token') || new URLSearchParams(window.location.search).get('token');
-    const lc = document.getElementById('loginContainer');
-    const dc = document.getElementById('dashboardContainer');
-    if (tk && lc && dc) {
-        localStorage.setItem('delivery_token', tk);
-        lc.style.cssText = 'display:none!important';
-        dc.style.cssText = 'display:block!important';
-    } else if (!tk && lc) {
-        lc.style.cssText = 'display:flex!important';
-        if (dc) dc.style.cssText = 'display:none!important';
-    }
-})();
-</script>
