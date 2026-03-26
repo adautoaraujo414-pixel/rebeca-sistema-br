@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { CategoriaCardapio, ItemCardapio, PedidoDelivery, ConfigDelivery, AdminDelivery } = require('../models/delivery.models');
+const { CategoriaCardapio, ItemCardapio, PedidoDelivery, ConfigDelivery, AdminDelivery, Entregador } = require('../models/delivery.models');
 
 // ========== AUTENTICAÇÃO DELIVERY ==========
 const authDelivery = async (req, res, next) => {
@@ -282,7 +282,7 @@ router.get('/cozinha/pedidos', authDelivery, async (req, res) => {
 // ========== CRUD ENTREGADORES ==========
 router.get('/entregadores', authDelivery, async (req, res) => {
     try {
-        const entregadores = await Motorista.find({ adminId: req.adminId, tipo: 'entregador' }).sort({ nome: 1 });
+        const entregadores = await Entregador.find({ adminId: req.adminId, tipo: 'entregador' }).sort({ nome: 1 });
         res.json({ entregadores });
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
@@ -290,7 +290,7 @@ router.get('/entregadores', authDelivery, async (req, res) => {
 router.post('/entregadores', authDelivery, async (req, res) => {
     try {
         const { nome, telefone, veiculo } = req.body;
-        const entregador = await Motorista.create({
+        const entregador = await Entregador.create({
             nome, telefone, veiculo, adminId: req.adminId,
             tipo: 'entregador', ativo: true
         });
@@ -301,7 +301,7 @@ router.post('/entregadores', authDelivery, async (req, res) => {
 router.put('/entregadores/:id', authDelivery, async (req, res) => {
     try {
         const { nome, telefone, veiculo } = req.body;
-        const entregador = await Motorista.findOneAndUpdate(
+        const entregador = await Entregador.findOneAndUpdate(
             { _id: req.params.id, adminId: req.adminId },
             { nome, telefone, veiculo },
             { new: true }
@@ -312,7 +312,7 @@ router.put('/entregadores/:id', authDelivery, async (req, res) => {
 
 router.put('/entregadores/:id/toggle', authDelivery, async (req, res) => {
     try {
-        const entregador = await Motorista.findOne({ _id: req.params.id, adminId: req.adminId });
+        const entregador = await Entregador.findOne({ _id: req.params.id, adminId: req.adminId });
         await entregador.save();
         res.json({ entregador });
     } catch(e) { res.status(500).json({ erro: e.message }); }
