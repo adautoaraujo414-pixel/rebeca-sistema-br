@@ -449,21 +449,13 @@ class RebecaDeliveryService {
             if (!inst) return;
             const Evo = require('./evolution-multi.service');
             const itensTexto = (pedido.itens || []).map(i => i.quantidade + 'x ' + i.nome).join(', ');
-            const msg = '🔔 *NOVO PEDIDO #' + pedido.numero + '*
-
-'
-                + '👤 Cliente: *' + (pedido.clienteNome || 'Cliente') + '*
-'
-                + '📦 Itens: ' + itensTexto + '
-'
-                + '📍 Entrega: ' + (pedido.enderecoEntrega || 'Retirada') + '
-'
-                + '💰 Total: *R$ ' + (pedido.valorTotal || pedido.total || 0).toFixed(2) + '*
-'
-                + (pedido.observacoes ? '📝 Obs: ' + pedido.observacoes + '
-' : '')
-                + '
-👨‍🍳 Acesse o painel para aceitar!';
+            const msg = '🔔 *NOVO PEDIDO #' + pedido.numero + '*\n'
+                + '👤 Cliente: *' + (pedido.clienteNome || 'Cliente') + '*\n'
+                + '📦 Itens: ' + itensTexto + '\n'
+                + '📍 Entrega: ' + (pedido.enderecoEntrega || 'Retirada') + '\n'
+                + '💰 Total: *R$ ' + (pedido.valorTotal || pedido.total || 0).toFixed(2) + '*\n'
+                + (pedido.observacoes ? '📝 Obs: ' + pedido.observacoes + '\n' : '')
+                + '\n👨‍🍳 Acesse o painel para aceitar!';
             const admin = await Admin.findById(pedido.adminId).lean();
             if (admin && admin.telefone) {
                 await Evo.enviarMensagem(inst._id, admin.telefone, msg);
