@@ -460,6 +460,7 @@
                     token = data.token;
                     adminData = data;
                     localStorage.setItem('delivery_token', token);
+                    localStorage.setItem('delivery_adminId', data.adminId);
                     document.getElementById('loginContainer').style.display = 'none';
                     document.getElementById('dashboardContainer').style.display = 'block';
                     document.querySelector('.dashboard').style.display = 'block';
@@ -1098,7 +1099,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <script>
 function _apiAdminId() {
-    try { return JSON.parse(atob((localStorage.getItem('delivery_token')||'').split('.')[1]||'')).adminId || ''; } catch(e) { return ''; }
+    return localStorage.getItem('delivery_adminId') || '';
 }
 function _hdrs(json) {
     var h = { 'x-admin-id': _apiAdminId(), 'Authorization': 'Bearer ' + (localStorage.getItem('delivery_token')||'') };
