@@ -32,6 +32,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#0a0a1a;
 .pgto{font-size:.85em;color:#aaa}
 .end{font-size:.85em;color:#87ceeb;margin-top:5px}
 .bebida{background:#1a3a5c;padding:6px 10px;border-radius:8px;margin-top:8px;font-size:.85em;color:#87ceeb}
+.obs-card{background:#2a1a0d;border:1px solid #f39c12;padding:6px 10px;border-radius:8px;margin-top:8px;font-size:.85em;color:#f39c12}
 .btn{padding:10px 20px;border:none;border-radius:8px;font-weight:bold;cursor:pointer;font-size:.95em}
 .btn:active{transform:scale(.95)}
 .btn-ok{background:#00cc6a;color:#fff}
@@ -43,163 +44,175 @@ body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#0a0a1a;
 .tag-novo{background:#ff6b35;color:#fff}
 .tag-preparando{background:#f39c12;color:#fff}
 .tag-pronto{background:#00cc6a;color:#fff}
-.pulse{animation:pulse 1.5s infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.pulse{animation:pulse 1.2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 .troco{background:#f39c12;color:#000;padding:4px 8px;border-radius:6px;font-size:.85em;font-weight:bold;margin-top:5px;display:inline-block}
+.notif-banner{position:fixed;top:0;left:0;right:0;background:#ff6b35;color:#fff;padding:14px;text-align:center;font-weight:bold;font-size:16px;z-index:9999;display:none;cursor:pointer;animation:pulse .8s infinite}
+.som-btn{background:none;border:1px solid #666;color:#fff;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:13px}
+.urgente{background:#2a0d0d;border:1px solid #ff4444;padding:6px 10px;border-radius:8px;margin-top:8px;font-size:.85em;color:#ff6666;font-weight:bold}
 </style>
 </head>
 <body>
-<div class="header"><button class="menu-toggle-global" onclick="toggleMenuGlobal()">☰</button>
-<h1>&#x1F373; COZINHA</h1>
-<div style="display:flex;gap:10px;align-items:center">
-<button onclick="somAtivo=!somAtivo;this.textContent=somAtivo?'&#x1F514; Som':'&#x1F515; Mudo'" style="background:none;border:1px solid #666;color:#fff;padding:6px 12px;border-radius:6px;cursor:pointer">&#x1F514; Som</button>
-<span class="badge" id="tot">0</span>
+<div id="notifBanner" class="notif-banner" onclick="this.style.display='none';filtrar('novo')">
+  🔔 NOVO PEDIDO! Toque para ver
 </div>
+<div class="header">
+  <h1>🍳 COZINHA</h1>
+  <div style="display:flex;gap:10px;align-items:center">
+    <button class="som-btn" id="btnSom" onclick="toggleSom()">🔔 Som ON</button>
+    <span class="badge" id="tot">0</span>
+  </div>
 </div>
 <div class="tabs">
-<div class="tab active" onclick="filtrar('novo')" id="t-novo">Novos <span class="ct" id="c-novo">0</span></div>
-<div class="tab" onclick="filtrar('preparando')" id="t-prep">Preparando <span class="ct" id="c-prep">0</span></div>
-<div class="tab" onclick="filtrar('pronto')" id="t-pront">Prontos <span class="ct" id="c-pront">0</span></div>
+  <div class="tab active" onclick="filtrar('novo')" id="t-novo">Novos <span class="ct" id="c-novo">0</span></div>
+  <div class="tab" onclick="filtrar('preparando')" id="t-prep">Preparando <span class="ct" id="c-prep">0</span></div>
+  <div class="tab" onclick="filtrar('pronto')" id="t-pront">Prontos <span class="ct" id="c-pront">0</span></div>
 </div>
-<div class="pedidos" id="lista"><div class="vazio">&#x1F373; Nenhum pedido</div></div>
+<div class="pedidos" id="lista"><div class="vazio">🍳 Nenhum pedido</div></div>
+
 <script>
 var TK=localStorage.getItem('delivery_token')||new URLSearchParams(location.search).get('token')||'';
 var B='/api/delivery';
 var F='novo';
-var PA=0;
-var somAtivo=true;
+var pedidosAnteriores=new Set();
+var somAtivo=localStorage.getItem('cozinha_som')!=='off';
 if(TK)localStorage.setItem('delivery_token',TK);
 
-function filtrar(s){F=s;document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active')});
-if(s==='novo')document.getElementById('t-novo').classList.add('active');
-if(s==='preparando')document.getElementById('t-prep').classList.add('active');
-if(s==='pronto')document.getElementById('t-pront').classList.add('active');
-carregar();}
+// ===== SOM REAL =====
+var audioCtx=null;
+function getAudioCtx(){
+  if(!audioCtx) audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+  return audioCtx;
+}
+function tocarSom(){
+  if(!somAtivo)return;
+  try{
+    var ctx=getAudioCtx();
+    // Toca 3 bips seguidos — som de pedido novo
+    [0,0.3,0.6].forEach(function(delay){
+      var osc=ctx.createOscillator();
+      var gain=ctx.createGain();
+      osc.connect(gain);gain.connect(ctx.destination);
+      osc.frequency.value=880;
+      osc.type='sine';
+      gain.gain.setValueAtTime(0.8,ctx.currentTime+delay);
+      gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+delay+0.25);
+      osc.start(ctx.currentTime+delay);
+      osc.stop(ctx.currentTime+delay+0.25);
+    });
+  }catch(e){}
+}
+function toggleSom(){
+  somAtivo=!somAtivo;
+  localStorage.setItem('cozinha_som',somAtivo?'on':'off');
+  document.getElementById('btnSom').textContent=somAtivo?'🔔 Som ON':'🔕 Som OFF';
+}
+document.getElementById('btnSom').textContent=somAtivo?'🔔 Som ON':'🔕 Som OFF';
 
-function tempo(d){if(!d)return'';var m=Math.floor((Date.now()-new Date(d).getTime())/60000);if(m<1)return'agora';if(m<60)return m+'min';return Math.floor(m/60)+'h'+(m%60)+'m';}
+// Desbloquear audio no primeiro toque
+document.addEventListener('click',function(){try{getAudioCtx().resume();}catch(e){}},{once:true});
+
+function filtrar(s){
+  F=s;
+  ['novo','preparando','pronto'].forEach(function(t){
+    document.getElementById('t-'+t).classList.toggle('active',t===s);
+  });
+  carregar();
+}
+
+function tempoDecorrido(d){
+  if(!d)return'';
+  var m=Math.floor((Date.now()-new Date(d).getTime())/60000);
+  if(m<1)return'agora';
+  if(m<60)return m+'min';
+  return Math.floor(m/60)+'h'+(m%60?m%60+'m':'');
+}
 
 async function carregar(){
-try{
-var r=await fetch(B+'/cozinha/pedidos?token='+TK);
-var ps=await r.json();
-if(!Array.isArray(ps))return;
-var nv=ps.filter(function(p){return p.status==='novo'});
-var pr=ps.filter(function(p){return p.status==='preparando'});
-var pt=ps.filter(function(p){return p.status==='pronto'});
-document.getElementById('c-novo').textContent=nv.length;
-document.getElementById('c-prep').textContent=pr.length;
-document.getElementById('c-pront').textContent=pt.length;
-document.getElementById('tot').textContent=ps.length;
-if(nv.length>PA&&somAtivo&&PA>0){try{new Audio('data:audio/wav;base64,UklGRl9vT19teleXRlIFdhcm5teleQ=').play();}catch(e){}}
-PA=nv.length;
-var ls=F==='novo'?nv:F==='preparando'?pr:pt;
-if(ls.length===0){document.getElementById('lista').innerHTML='<div class="vazio">Nenhum pedido '+F+'</div>';return;}
-var h='';
-for(var i=0;i<ls.length;i++){
-var p=ls[i];
-var fm={pix:'PIX',dinheiro:'Dinheiro',cartao:'Cartao',na_entrega:'Na entrega'};
-var tb=false;
-var ih='';
-for(var j=0;j<(p.itens||[]).length;j++){
-var it=p.itens[j];
-if(it.nome&&it.nome.toLowerCase().match(/(coca|refri|suco|guarana|agua|cerveja|fanta|sprite)/))tb=true;
-ih+='<div class="it"><div><span class="it-nome">'+it.quantidade+'x '+it.nome+'</span>';
-if(it.observacao)ih+='<br><span class="it-obs">'+it.observacao+'</span>';
-ih+='</div><span>R$ '+(it.subtotal||0).toFixed(2)+'</span></div>';
-}
-h+='<div class="card '+p.status+'">';
-h+='<div class="card-head"><span class="num">#'+(p.numero||'?')+'</span>';
-h+='<span class="tag tag-'+p.status+'">'+p.status.toUpperCase()+'</span>';
-h+='<span class="tempo">'+tempo(p.createdAt)+'</span></div>';
-h+='<div class="cliente">'+(p.clienteNome||'Cliente')+' - '+(p.clienteTelefone||'')+'</div>';
-h+='<div class="itens">'+ih+'</div>';
-if(tb)h+='<div class="bebida">&#x1F9CA; TEM BEBIDA - Separar gelada</div>';
-if(p.enderecoEntrega)h+='<div class="end">&#x1F4CD; '+p.enderecoEntrega+'</div>';
-h+='<div class="foot"><div><span class="total">R$ '+(p.total||0).toFixed(2)+'</span>';
-h+='<br><span class="pgto">'+(fm[p.formaPagamento]||'')+'</span>';
-if(p.formaPagamento==='dinheiro'&&p.trocoPara)h+='<br><span class="troco">TROCO P/ R$ '+p.trocoPara.toFixed(2)+'</span>';
-h+='</div><div class="btns">';
-if(p.status==='novo'){
-h+='<button class="btn btn-rej" onclick="rejeitar(''+p._id+'')">Rejeitar</button>';
-h+='<button class="btn btn-ok pulse" onclick="aceitar(''+p._id+'')">ACEITAR</button>';
-}else if(p.status==='preparando'){
-h+='<button class="btn btn-pronto" onclick="pronto(''+p._id+'')">PRONTO &#x2705;</button>';
-}
-h+='</div></div></div>';
-}
-document.getElementById('lista').innerHTML=h;
-}catch(e){console.error(e);}
+  try{
+    var r=await fetch(B+'/cozinha/pedidos?token='+TK);
+    var ps=await r.json();
+    if(!Array.isArray(ps))return;
+    var nv=ps.filter(function(p){return p.status==='novo';});
+    var pr=ps.filter(function(p){return p.status==='preparando';});
+    var pt=ps.filter(function(p){return p.status==='pronto';});
+
+    document.getElementById('c-novo').textContent=nv.length;
+    document.getElementById('c-prep').textContent=pr.length;
+    document.getElementById('c-pront').textContent=pt.length;
+    document.getElementById('tot').textContent=ps.length;
+
+    // Detectar novos pedidos
+    var idsAtuais=new Set(nv.map(function(p){return p._id;}));
+    var novos=nv.filter(function(p){return !pedidosAnteriores.has(p._id);});
+    if(novos.length>0&&pedidosAnteriores.size>0){
+      tocarSom();
+      document.getElementById('notifBanner').textContent='🔔 '+novos.length+' NOVO(S) PEDIDO(S)! Toque para ver';
+      document.getElementById('notifBanner').style.display='block';
+      setTimeout(function(){document.getElementById('notifBanner').style.display='none';},8000);
+    }
+    pedidosAnteriores=idsAtuais;
+
+    var ls=F==='novo'?nv:F==='preparando'?pr:pt;
+    if(!ls.length){document.getElementById('lista').innerHTML='<div class="vazio">Nenhum pedido</div>';return;}
+
+    var h='';
+    ls.forEach(function(p){
+      var fm={pix:'PIX',dinheiro:'Dinheiro',cartao:'Cartão',na_entrega:'Na entrega'};
+      var temBebida=false;
+      var ih='';
+      (p.itens||[]).forEach(function(it){
+        if(it.nome&&it.nome.toLowerCase().match(/(coca|refri|suco|guarana|agua|cerveja|fanta|sprite|bebida)/))temBebida=true;
+        ih+='<div class="it"><div><span class="it-nome">'+it.quantidade+'x '+it.nome+'</span>';
+        if(it.observacao)ih+='<br><span class="it-obs">📝 '+it.observacao+'</span>';
+        ih+='</div><span>R$ '+(it.subtotal||0).toFixed(2)+'</span></div>';
+      });
+
+      h+='<div class="card '+p.status+'">';
+      h+='<div class="card-head">';
+      h+='<span class="num">#'+(p.numero||'?')+'</span>';
+      h+='<span class="tag tag-'+p.status+'">'+p.status.toUpperCase()+'</span>';
+      h+='<span class="tempo">⏱️ '+tempoDecorrido(p.createdAt)+'</span>';
+      h+='</div>';
+      h+='<div class="cliente">👤 '+(p.clienteNome||'Cliente')+' — '+(p.clienteTelefone||'')+'</div>';
+      h+='<div class="itens">'+ih+'</div>';
+      if(temBebida)h+='<div class="bebida">🧊 TEM BEBIDA — Separar gelada!</div>';
+      if(p.observacoes)h+='<div class="obs-card">📝 '+p.observacoes+'</div>';
+      if(p.enderecoEntrega)h+='<div class="end">📍 '+p.enderecoEntrega+'</div>';
+      h+='<div class="foot"><div>';
+      h+='<span class="total">R$ '+(p.total||p.valorTotal||0).toFixed(2)+'</span>';
+      h+='<br><span class="pgto">'+(fm[p.formaPagamento]||p.formaPagamento||'')+'</span>';
+      if(p.formaPagamento==='dinheiro'&&p.trocoPara)h+='<br><span class="troco">TROCO P/ R$ '+Number(p.trocoPara).toFixed(2)+'</span>';
+      h+='</div><div class="btns">';
+      if(p.status==='novo'){
+        h+='<button class="btn btn-rej" onclick="rejeitar(\''+p._id+'\')">❌ Rejeitar</button>';
+        h+='<button class="btn btn-ok pulse" onclick="aceitar(\''+p._id+'\')">✅ ACEITAR</button>';
+      }else if(p.status==='preparando'){
+        h+='<button class="btn btn-pronto" onclick="pronto(\''+p._id+'\')">✅ PRONTO</button>';
+      }
+      h+='</div></div></div>';
+    });
+    document.getElementById('lista').innerHTML=h;
+  }catch(e){console.error(e);}
 }
 
-async function aceitar(id){await fetch(B+'/cozinha/'+id+'/aceitar?token='+TK,{method:'PUT',headers:{'Content-Type':'application/json'}});carregar();}
-async function pronto(id){await fetch(B+'/cozinha/'+id+'/pronto?token='+TK,{method:'PUT',headers:{'Content-Type':'application/json'}});carregar();}
-async function rejeitar(id){var m=prompt('Motivo:');if(!m)return;await fetch(B+'/cozinha/'+id+'/rejeitar?token='+TK,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({motivo:m})});carregar();}
+async function aceitar(id){
+  await fetch(B+'/cozinha/'+id+'/aceitar?token='+TK,{method:'PUT',headers:{'Content-Type':'application/json'}});
+  carregar();
+}
+async function pronto(id){
+  await fetch(B+'/cozinha/'+id+'/pronto?token='+TK,{method:'PUT',headers:{'Content-Type':'application/json'}});
+  carregar();
+}
+async function rejeitar(id){
+  var m=prompt('Motivo do cancelamento:');
+  if(!m)return;
+  await fetch(B+'/cozinha/'+id+'/rejeitar?token='+TK,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({motivo:m})});
+  carregar();
+}
 
 carregar();
 setInterval(carregar,5000);
 </script>
-
-<style id="mobile-responsive">
-/* ===== RESPONSIVO GLOBAL MOBILE ===== */
-* { box-sizing: border-box; }
-img { max-width: 100%; }
-.menu-toggle-global { display: none; background: none; border: none; color: white; font-size: 1.6em; cursor: pointer; padding: 5px 10px; }
-
-@media (max-width: 768px) {
-    .menu-toggle-global { display: block !important; }
-    .sidebar, .nav-lateral { width: 100% !important; max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
-    .sidebar.aberto, .nav-lateral.aberto { max-height: 700px !important; }
-    .container, .layout, .main-wrap { flex-direction: column !important; }
-    .main-content, .content, .page-content { padding: 10px !important; width: 100% !important; }
-    .cards, .grid, .stats-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 10px !important; }
-    .panel-grid { grid-template-columns: 1fr !important; }
-    .card { padding: 12px !important; }
-    .card .value { font-size: 1.3em !important; }
-    table { font-size: 0.78em !important; display: block; overflow-x: auto; white-space: nowrap; }
-    .btn { padding: 6px 10px !important; font-size: 0.8em !important; }
-    .header, .top-bar { padding: 10px 12px !important; flex-wrap: wrap; gap: 8px; }
-    .header h1, .top-bar h1 { font-size: 1.1em !important; }
-    input, select, textarea { width: 100% !important; font-size: 16px !important; }
-    .modal, .overlay-box { width: 95vw !important; max-width: 95vw !important; margin: 10px auto !important; }
-    .form-row, .form-grid { flex-direction: column !important; }
-    .col-2, .col-3, .col-4 { width: 100% !important; }
-}
-
-@media (max-width: 480px) {
-    .cards, .grid, .stats-grid { grid-template-columns: 1fr 1fr !important; }
-    .card-icon { font-size: 1.3em !important; }
-    h1 { font-size: 1.2em !important; }
-    h2 { font-size: 1em !important; }
-}
-</style>
-<script>
-// Toggle menu mobile global
-function toggleMenuGlobal() {
-    document.querySelectorAll('.sidebar, .nav-lateral').forEach(el => el.classList.toggle('aberto'));
-}
-// Auto-detectar mobile
-(function() {
-    function ajustar() {
-        const isMobile = window.innerWidth <= 768;
-        document.body.classList.toggle('is-mobile', isMobile);
-        if (!isMobile) {
-            document.querySelectorAll('.sidebar, .nav-lateral').forEach(el => el.classList.remove('aberto'));
-        }
-    }
-    window.addEventListener('resize', ajustar);
-    document.addEventListener('DOMContentLoaded', ajustar);
-})();
-// Fechar menu ao clicar em item
-document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.menu-item, .nav-item').forEach(item => {
-        item.addEventListener('click', () => {
-            if (window.innerWidth <= 768) {
-                document.querySelectorAll('.sidebar, .nav-lateral').forEach(el => el.classList.remove('aberto'));
-            }
-        });
-    });
-});
-</script>
-
 </body>
 </html>

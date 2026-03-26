@@ -15,33 +15,32 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .header h1{font-size:1.05em;color:#00d4ff;font-weight:700}
 .header-right{display:flex;align-items:center;gap:8px}
 .gps-dot{width:9px;height:9px;border-radius:50%;background:#444;display:inline-block}
-.gps-dot.ativo{background:#00cc6a;animation:pulse 2s infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.gps-dot.ativo{background:#00cc6a;animation:gp 2s infinite}
+@keyframes gp{0%,100%{opacity:1}50%{opacity:.3}}
 .badge{background:#00d4ff;color:#000;padding:3px 10px;border-radius:20px;font-weight:bold;font-size:13px;min-width:28px;text-align:center}
 .tabs{display:flex;background:#1a1a2e;border-bottom:1px solid #333;position:sticky;top:57px;z-index:99}
-.tab{flex:1;padding:12px 6px;text-align:center;cursor:pointer;border-bottom:3px solid transparent;font-weight:600;font-size:13px;color:#555}
+.tab{flex:1;padding:11px 4px;text-align:center;cursor:pointer;border-bottom:3px solid transparent;font-weight:600;font-size:12px;color:#555}
 .tab.active{border-bottom-color:#00d4ff;color:#00d4ff}
-.tab .ct{background:#00d4ff;color:#000;padding:2px 6px;border-radius:10px;font-size:11px;margin-left:3px;font-weight:bold}
+.tab .ct{background:#00d4ff;color:#000;padding:2px 5px;border-radius:8px;font-size:10px;margin-left:2px;font-weight:bold}
+.tab.ok.active{border-bottom-color:#00cc6a;color:#00cc6a}
+.tab.ok .ct{background:#00cc6a}
 .lista{padding:10px;padding-bottom:80px}
-
-/* BARRA DE ROTA */
-.rota-bar{background:#1a1a2e;border:1px solid #333;border-radius:10px;margin:10px;padding:12px;display:none}
+.rota-bar{background:#1a1a2e;border:1px solid #00d4ff;border-radius:10px;margin:10px;padding:12px;display:none}
 .rota-bar h3{color:#00d4ff;font-size:13px;margin-bottom:8px}
 .rota-btn{background:linear-gradient(135deg,#4285f4,#2860d4);color:#fff;border:none;padding:10px 14px;border-radius:8px;font-weight:bold;font-size:13px;cursor:pointer;width:100%}
-
-/* CARD PEDIDO */
 .card{background:#1a1a2e;border-radius:14px;padding:14px;margin-bottom:12px;border-left:4px solid #f39c12;position:relative}
 .card.em-entrega{border-left-color:#00d4ff}
-.card.entregue-local{border-left-color:#00cc6a;opacity:.7}
-.ordem-badge{position:absolute;top:10px;right:10px;background:#252542;border:1px solid #333;border-radius:8px;padding:4px 10px;font-size:12px;color:#888;display:flex;align-items:center;gap:6px}
+.card.entregue-ok{border-left-color:#00cc6a}
+.ordem-badge{position:absolute;top:10px;right:10px;background:#252542;border:1px solid #333;border-radius:8px;padding:4px 8px;font-size:12px;color:#888;display:flex;align-items:center;gap:4px}
 .ordem-badge select{background:transparent;border:none;color:#00d4ff;font-weight:bold;font-size:13px;cursor:pointer;outline:none}
-.card-head{display:flex;align-items:center;gap:8px;margin-bottom:8px;padding-right:80px}
+.card-head{display:flex;align-items:center;gap:8px;margin-bottom:8px;padding-right:75px}
 .num{font-size:1.1em;font-weight:bold;color:#00d4ff}
-.tag{padding:3px 10px;border-radius:10px;font-size:11px;font-weight:bold}
+.tag{padding:3px 9px;border-radius:10px;font-size:11px;font-weight:bold}
 .tag-pronto{background:#f39c12;color:#fff}
 .tag-entrega{background:#00d4ff;color:#000}
+.tag-entregue{background:#00cc6a;color:#000}
 .info-box{background:#0d1626;border-radius:8px;padding:10px;margin:6px 0;font-size:13px}
-.info-row{display:flex;gap:7px;margin-bottom:5px;line-height:1.4;align-items:flex-start}
+.info-row{display:flex;gap:7px;margin-bottom:5px;align-items:flex-start;line-height:1.4}
 .info-row:last-child{margin:0}
 .info-icon{min-width:18px}
 .info-text{color:#ddd}
@@ -60,13 +59,26 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .btn-entregue{background:linear-gradient(135deg,#00cc6a,#009948);color:#fff}
 .btn-maps{background:linear-gradient(135deg,#4285f4,#2860d4);color:#fff}
 .btn-conversa{background:linear-gradient(135deg,#25d366,#128c7e);color:#fff}
+.btn-outline{background:transparent;border:1px solid #333;color:#aaa;padding:8px}
+/* TEMPOS */
+.tempos-box{background:#0a1a0a;border:1px solid #1a3a1a;border-radius:8px;padding:10px;margin:8px 0}
+.tempos-box h4{color:#00cc6a;font-size:11px;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px}
+.tempo-linha{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;font-size:12px}
+.tempo-linha:last-child{margin:0;padding-top:5px;border-top:1px solid #1a3a1a;font-weight:bold}
+.tempo-label{color:#888}
+.tempo-val{color:#00cc6a;font-weight:bold}
+.tempo-val.lento{color:#f39c12}
+.tempo-val.total{color:#fff;font-size:13px}
 .vazio{text-align:center;padding:50px 20px;color:#555}
 .notif-banner{position:fixed;top:0;left:0;right:0;background:#ff4444;color:#fff;padding:12px;text-align:center;font-weight:bold;font-size:13px;z-index:9999;display:none;cursor:pointer;max-width:480px;margin:0 auto}
 .gps-bar{background:#1a1a2e;padding:5px 16px;font-size:11px;color:#555;border-top:1px solid #222;text-align:center;position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto}
 .loading{text-align:center;padding:40px;color:#555}
 .spinner{display:inline-block;width:26px;height:26px;border:3px solid #333;border-top-color:#00d4ff;border-radius:50%;animation:spin 1s linear infinite;margin-bottom:8px}
 @keyframes spin{to{transform:rotate(360deg)}}
-.sep{text-align:center;color:#333;font-size:11px;margin:8px 0;padding:4px;border-top:1px solid #1e1e2e}
+.resumo-dia{background:#1a1a2e;border:1px solid #333;border-radius:10px;margin:10px;padding:12px;display:flex;gap:15px;justify-content:center}
+.resumo-item{text-align:center}
+.resumo-item .val{font-size:1.3em;font-weight:bold;color:#00cc6a}
+.resumo-item .lab{font-size:11px;color:#888;margin-top:2px}
 </style>
 </head>
 <body>
@@ -81,16 +93,22 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="tabs">
   <div class="tab active" onclick="filtrar('fila')" id="t-fila">Fila <span class="ct" id="c-fila">0</span></div>
   <div class="tab" onclick="filtrar('saiu_entrega')" id="t-en">Saindo <span class="ct" id="c-en">0</span></div>
-  <div class="tab" onclick="filtrar('entregue')" id="t-ok">Entregues <span class="ct" id="c-ok">0</span></div>
+  <div class="tab ok" onclick="filtrar('entregue')" id="t-ok">Entregues <span class="ct" id="c-ok">0</span></div>
 </div>
 <div id="rotaBar" class="rota-bar">
-  <h3>🗺️ Rota do dia — <span id="rotaQtd">0</span> entrega(s)</h3>
+  <h3>🗺️ Rota — <span id="rotaQtd">0</span> entrega(s) pendente(s)</h3>
   <button class="rota-btn" onclick="abrirRotaMaps()">🗺️ Abrir Rota Completa no Maps</button>
+</div>
+<div id="resumoDia" class="resumo-dia" style="display:none">
+  <div class="resumo-item"><div class="val" id="resQtd">0</div><div class="lab">Entregas</div></div>
+  <div class="resumo-item"><div class="val" id="resTotal">R$0</div><div class="lab">Faturado</div></div>
+  <div class="resumo-item"><div class="val" id="resTempo">-</div><div class="lab">Tempo médio</div></div>
 </div>
 <div class="lista" id="lista">
   <div class="loading"><div class="spinner"></div><p>Carregando...</p></div>
 </div>
 <div class="gps-bar" id="gpsBar">GPS aguardando...</div>
+
 <script>
 var TK=localStorage.getItem('delivery_token')||new URLSearchParams(location.search).get('token')||'';
 var ENAME=localStorage.getItem('entregador_nome')||'Entregador';
@@ -100,20 +118,33 @@ var F='fila';
 var GPS={lat:null,lng:null};
 var pedidosAnteriores=new Set();
 var todosPedidos=[];
+var pedidosEntregues=[];
+var _gpsWatch=null;
+var _entregasAtivas=new Set();
 if(TK)localStorage.setItem('delivery_token',TK);
+
+function minutos(val){
+  if(val===null||val===undefined)return'—';
+  if(val<1)return'<1min';
+  if(val<60)return val+'min';
+  return Math.floor(val/60)+'h'+(val%60?val%60+'m':'');
+}
+function classTempo(min,limiteOk){
+  if(min===null||min===undefined)return'';
+  return min>limiteOk?'lento':'';
+}
 
 async function carregar(){
   try{
     var r=await fetch(B+'/entregador/rota?token='+TK);
     if(!r.ok)r=await fetch(B+'/entregador/pedidos?token='+TK);
     var ps=await r.json();
-    if(!Array.isArray(ps))return;
+    if(!Array.isArray(ps))ps=[];
     todosPedidos=ps;
 
     var fila=ps.filter(function(p){return p.status==='pronto';});
     var saindo=ps.filter(function(p){return p.status==='saiu_entrega';});
 
-    // detectar novos
     var idsAtuais=new Set(fila.map(function(p){return p._id;}));
     var novos=fila.filter(function(p){return !pedidosAnteriores.has(p._id);});
     if(novos.length>0&&pedidosAnteriores.size>0){
@@ -124,90 +155,117 @@ async function carregar(){
 
     document.getElementById('c-fila').textContent=fila.length;
     document.getElementById('c-en').textContent=saindo.length;
-    document.getElementById('c-ok').textContent='';
     document.getElementById('tot').textContent=fila.length+saindo.length;
 
-    // barra de rota
     var rotaBar=document.getElementById('rotaBar');
-    var todos=fila.concat(saindo);
-    if(todos.length>0){
+    if(fila.length+saindo.length>0){
       rotaBar.style.display='block';
-      document.getElementById('rotaQtd').textContent=todos.length;
-    } else {
-      rotaBar.style.display='none';
-    }
+      document.getElementById('rotaQtd').textContent=fila.length+saindo.length;
+    } else rotaBar.style.display='none';
 
-    renderLista(fila, saindo);
+    if(F==='fila')renderFila(fila);
+    else if(F==='saiu_entrega')renderFila(saindo);
+
+    // GPS ativo nos pedidos em entrega
+    saindo.forEach(function(p){_entregasAtivas.add(p._id);});
+    if(saindo.length>0)iniciarGPS();
   }catch(e){console.error(e);}
 }
 
-function renderLista(fila, saindo){
-  var ls=[];
-  if(F==='fila') ls=fila;
-  else if(F==='saiu_entrega') ls=saindo;
-  else ls=[];
+async function carregarEntregues(){
+  try{
+    var r=await fetch(B+'/entregador/entregues?token='+TK);
+    var ps=await r.json();
+    if(!Array.isArray(ps))ps=[];
+    pedidosEntregues=ps;
+    document.getElementById('c-ok').textContent=ps.length;
+    renderEntregues(ps);
+  }catch(e){}
+}
 
-  if(!ls.length){
-    document.getElementById('lista').innerHTML='<div class="vazio">'+
-      (F==='fila'?'Nenhum pedido na fila':'F==='saiu_entrega'?'Nenhum pedido saindo':'Sem entregas hoje')+
-    '</div>';
-    return;
-  }
-
-  // Ordenar por ordemEntrega
-  ls.sort(function(a,b){ return (a.ordemEntrega||99)-(b.ordemEntrega||99); });
-
+function renderFila(ls){
+  ls.sort(function(a,b){return (a.ordemEntrega||99)-(b.ordemEntrega||99);});
+  if(!ls.length){document.getElementById('lista').innerHTML='<div class="vazio">'+(F==='fila'?'Nenhum pedido na fila':'Nenhum pedido saindo')+'</div>';return;}
   var h='';
-  ls.forEach(function(p,idx){
+  ls.forEach(function(p){
     var urgente=p.urgente||p.prioridade==='urgente';
     var temBebida=false;
     var itensTexto=(p.itens||[]).map(function(it){
       if(it.nome&&it.nome.toLowerCase().match(/(coca|refri|suco|guarana|agua|cerveja|fanta|sprite|bebida)/))temBebida=true;
       return it.quantidade+'x '+it.nome+(it.observacao?' ('+it.observacao+')':'');
     }).join(', ');
-
     var pgtoMap={pix:'PIX',dinheiro:'Dinheiro',cartao:'Cartao',na_entrega:'Na entrega'};
-    var ordemAtual=p.ordemEntrega||'';
 
-    h+='<div class="card'+(p.status==='saiu_entrega'?' em-entrega':'')+'" id="card-'+p._id+'">';
-
-    // Badge de ordem editável
-    h+='<div class="ordem-badge">📍<select onchange="salvarOrdem(\''+p._id+'\',this.value)" title="Posição na rota">';
-    for(var n=1;n<=10;n++){
-      h+='<option value="'+n+'"'+(ordemAtual==n?' selected':'')+'>'+n+'ª</option>';
-    }
+    h+='<div class="card'+(p.status==='saiu_entrega'?' em-entrega':'')+'">';
+    h+='<div class="ordem-badge">📍<select onchange="salvarOrdem(\''+p._id+'\',this.value)">';
+    for(var n=1;n<=10;n++)h+='<option value="'+n+'"'+(p.ordemEntrega==n?' selected':'')+'>'+n+'ª</option>';
     h+='</select></div>';
-
     h+='<div class="card-head"><span class="num">#'+(p.numero||'?')+'</span>';
     h+='<span class="tag '+(p.status==='pronto'?'tag-pronto':'tag-entrega')+'">'+(p.status==='pronto'?'PRONTO':'SAINDO')+'</span></div>';
-
     if(urgente)h+='<div class="urgente">🚨 URGENTE!</div>';
-
     h+='<div class="info-box">';
     h+='<div class="info-row"><span class="info-icon">📍</span><span class="info-text"><span class="info-label">Endereço</span>'+(p.enderecoEntrega||'Retirada')+'</span></div>';
-    if(p.observacaoEntrega)h+='<div class="info-row"><span class="info-icon">📝</span><span class="info-text"><span class="info-label">Obs entrega</span>'+p.observacaoEntrega+'</span></div>';
+    if(p.observacaoEntrega)h+='<div class="info-row"><span class="info-icon">📝</span><span class="info-text"><span class="info-label">Obs</span>'+p.observacaoEntrega+'</span></div>';
     h+='<div class="info-row"><span class="info-icon">👤</span><span class="info-text"><span class="info-label">Cliente</span>'+(p.clienteNome||'—')+' '+(p.clienteTelefone||'')+'</span></div>';
     h+='</div>';
-
     if(itensTexto)h+='<div class="itens-resumo">'+itensTexto+'</div>';
     if(temBebida)h+='<div class="bebida">🧊 Tem bebida</div>';
     if(p.observacoes&&p.observacoes!==p.observacaoEntrega)h+='<div class="obs">📝 '+p.observacoes+'</div>';
-
     h+='<div class="pgto-row"><span>'+(pgtoMap[p.formaPagamento]||'—')+'</span><span class="total">R$ '+(p.total||p.valorTotal||0).toFixed(2).replace('.',',')+'</span></div>';
     if(p.formaPagamento==='dinheiro'&&p.trocoPara)h+='<div><span class="troco">TROCO P/ R$ '+Number(p.trocoPara).toFixed(2).replace('.',',')+'</span></div>';
-
     h+='<div class="btns">';
     if(p.status==='pronto'){
       h+='<button class="btn btn-maps" onclick="abrirMapsEndereco(\''+encodeURIComponent(p.enderecoEntrega||'')+'\')">🗺️ Ver no Maps</button>';
       h+='<button class="btn btn-conversa" onclick="falarCliente(\''+p._id+'\',\''+(p.clienteNome||'Cliente')+'\')">💬 Falar com Cliente</button>';
       h+='<button class="btn btn-saindo" onclick="iniciarEntrega(\''+p._id+'\',\''+p.numero+'\')">🏍️ SAINDO PARA ENTREGA</button>';
-    } else {
+    }else{
       h+='<button class="btn btn-maps" onclick="abrirMapsEndereco(\''+encodeURIComponent(p.enderecoEntrega||'')+'\')">📍 Navegar no Maps</button>';
       h+='<button class="btn btn-entregue" onclick="marcarEntregue(\''+p._id+'\')">✅ ENTREGUE</button>';
     }
     h+='</div></div>';
   });
+  document.getElementById('lista').innerHTML=h;
+}
 
+function renderEntregues(ps){
+  document.getElementById('rotaBar').style.display='none';
+  if(!ps.length){
+    document.getElementById('lista').innerHTML='<div class="vazio">Nenhuma entrega hoje ainda</div>';
+    document.getElementById('resumoDia').style.display='none';
+    return;
+  }
+  // Resumo do dia
+  var totalFaturado=ps.reduce(function(s,p){return s+(p.total||p.valorTotal||0);},0);
+  var temposValidos=ps.filter(function(p){return p.tempos&&p.tempos.total;});
+  var mediaTotal=temposValidos.length?Math.round(temposValidos.reduce(function(s,p){return s+p.tempos.total;},0)/temposValidos.length):null;
+  document.getElementById('resQtd').textContent=ps.length;
+  document.getElementById('resTotal').textContent='R$'+totalFaturado.toFixed(0);
+  document.getElementById('resTempo').textContent=mediaTotal?mediaTotal+'min':'—';
+  document.getElementById('resumoDia').style.display='flex';
+
+  var h='';
+  ps.forEach(function(p){
+    var t=p.tempos||{};
+    h+='<div class="card entregue-ok">';
+    h+='<div class="card-head"><span class="num">#'+(p.numero||'?')+'</span>';
+    h+='<span class="tag tag-entregue">ENTREGUE ✅</span></div>';
+    h+='<div class="info-box">';
+    h+='<div class="info-row"><span class="info-icon">📍</span><span class="info-text"><span class="info-label">Endereço</span>'+(p.enderecoEntrega||'—')+'</span></div>';
+    h+='<div class="info-row"><span class="info-icon">👤</span><span class="info-text"><span class="info-label">Cliente</span>'+(p.clienteNome||'—')+'</span></div>';
+    h+='</div>';
+    var itensTexto=(p.itens||[]).map(function(it){return it.quantidade+'x '+it.nome;}).join(', ');
+    if(itensTexto)h+='<div class="itens-resumo">'+itensTexto+'</div>';
+    h+='<div class="pgto-row"><span style="color:#aaa;font-size:12px;">'+(p.formaPagamento||'')+'</span><span class="total">R$ '+(p.total||p.valorTotal||0).toFixed(2).replace('.',',')+'</span></div>';
+    // TEMPOS DETALHADOS
+    h+='<div class="tempos-box">';
+    h+='<h4>⏱️ Tempos do pedido</h4>';
+    h+='<div class="tempo-linha"><span class="tempo-label">⏳ Coleta (pedido → cozinha)</span><span class="tempo-val '+classTempo(t.coleta,5)+'">'+minutos(t.coleta)+'</span></div>';
+    h+='<div class="tempo-linha"><span class="tempo-label">🍳 Produção (cozinha)</span><span class="tempo-val '+classTempo(t.producao,20)+'">'+minutos(t.producao)+'</span></div>';
+    h+='<div class="tempo-linha"><span class="tempo-label">🏍️ Entrega (saiu → chegou)</span><span class="tempo-val '+classTempo(t.entrega,30)+'">'+minutos(t.entrega)+'</span></div>';
+    h+='<div class="tempo-linha"><span class="tempo-label">📦 Total do pedido</span><span class="tempo-val total">'+minutos(t.total)+'</span></div>';
+    h+='</div>';
+    h+='</div>';
+  });
   document.getElementById('lista').innerHTML=h;
 }
 
@@ -216,35 +274,30 @@ function filtrar(s){
   ['fila','saiu_entrega','entregue'].forEach(function(t){
     document.getElementById('t-'+t).classList.toggle('active',t===s);
   });
+  if(s==='entregue'){carregarEntregues();return;}
   var fila=todosPedidos.filter(function(p){return p.status==='pronto';});
   var saindo=todosPedidos.filter(function(p){return p.status==='saiu_entrega';});
-  renderLista(fila,saindo);
+  renderFila(s==='fila'?fila:saindo);
 }
 
 async function salvarOrdem(id,ordem){
   try{
-    await fetch(B+'/entregador/'+id+'/ordem?token='+TK,{
-      method:'PUT',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({ordem:parseInt(ordem)})
-    });
-    // Reordenar visualmente
-    todosPedidos.forEach(function(p){ if(p._id===id) p.ordemEntrega=parseInt(ordem); });
+    await fetch(B+'/entregador/'+id+'/ordem?token='+TK,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({ordem:parseInt(ordem)})});
+    todosPedidos.forEach(function(p){if(p._id===id)p.ordemEntrega=parseInt(ordem);});
     var fila=todosPedidos.filter(function(p){return p.status==='pronto';});
     var saindo=todosPedidos.filter(function(p){return p.status==='saiu_entrega';});
-    renderLista(fila,saindo);
+    renderFila(F==='fila'?fila:saindo);
   }catch(e){}
 }
 
-async function iniciarEntrega(id, numero){
-  if(!confirm('Confirma que está saindo para entregar o pedido #'+numero+'?\n\nO cliente receberá o link de rastreio em tempo real!'))return;
+async function iniciarEntrega(id,numero){
+  if(!confirm('Confirma saída para o pedido #'+numero+'?\n\nO cliente receberá o link de rastreio em tempo real! 🏍️'))return;
   try{
-    var r=await fetch(B+'/entregador/'+id+'/iniciar-entrega?token='+TK,{
-      method:'PUT',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({entregadorNome:ENAME,entregadorId:urlEId})
-    });
+    var r=await fetch(B+'/entregador/'+id+'/iniciar-entrega?token='+TK,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({entregadorNome:ENAME,entregadorId:urlEId})});
     if(r.ok){
-      iniciarGPS(id);
-      mostrarBanner('✅ Entrega iniciada! Link de rastreio enviado para o cliente.');
+      _entregasAtivas.add(id);
+      iniciarGPS();
+      mostrarBanner('✅ Saindo! Link de rastreio enviado para o cliente.');
       filtrar('saiu_entrega');
       carregar();
     }
@@ -254,9 +307,8 @@ async function iniciarEntrega(id, numero){
 async function marcarEntregue(id){
   if(!confirm('Confirmar entrega realizada?'))return;
   try{
-    await fetch(B+'/entregador/'+id+'/entregue?token='+TK,{
-      method:'PUT',headers:{'Content-Type':'application/json'}
-    });
+    _entregasAtivas.delete(id);
+    await fetch(B+'/entregador/'+id+'/entregue?token='+TK,{method:'PUT',headers:{'Content-Type':'application/json'}});
     mostrarBanner('✅ Entrega confirmada!');
     filtrar('fila');
     carregar();
@@ -264,37 +316,26 @@ async function marcarEntregue(id){
 }
 
 function abrirMapsEndereco(end){
-  window.open('https://www.google.com/maps/dir/?api=1&destination='+end,'_blank');
+  window.open('https://www.google.com/maps/dir/?api=1&destination='+end+'&travelmode=driving','_blank');
 }
 
 function abrirRotaMaps(){
   var todos=todosPedidos.filter(function(p){return p.status==='pronto'||p.status==='saiu_entrega';});
   todos.sort(function(a,b){return (a.ordemEntrega||99)-(b.ordemEntrega||99);});
   if(!todos.length)return alert('Nenhum pedido na rota');
-  if(GPS.lat){
-    var origin='origin='+GPS.lat+','+GPS.lng+'&';
-  } else {
-    var origin='';
-  }
-  var waypoints=todos.slice(0,-1).map(function(p){return encodeURIComponent(p.enderecoEntrega||'');}).join('|');
+  var origin=GPS.lat?'&origin='+GPS.lat+','+GPS.lng:'';
   var dest=encodeURIComponent(todos[todos.length-1].enderecoEntrega||'');
-  var url='https://www.google.com/maps/dir/?api=1&'+origin+'destination='+dest+(waypoints?'&waypoints='+waypoints:'')+'&travelmode=driving';
+  var wp=todos.slice(0,-1).map(function(p){return encodeURIComponent(p.enderecoEntrega||'');}).join('|');
+  var url='https://www.google.com/maps/dir/?api=1'+origin+'&destination='+dest+(wp?'&waypoints='+wp:'')+'&travelmode=driving';
   window.open(url,'_blank');
 }
 
 function falarCliente(pedidoId,nomeCliente){
-  if(!confirm('Iniciar conversa com '+nomeCliente+' via Rebeca?'))return;
-  fetch('/api/delivery/pedido/'+pedidoId+'/contato-cliente',{
-    method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({entregadorNome:ENAME})
-  }).then(function(r){return r.json();}).then(function(d){
-    if(d.sucesso)alert('Mensagem enviada!');
-    else alert('Erro: '+(d.erro||'falha'));
-  }).catch(function(){alert('Erro de conexão');});
+  if(!confirm('Falar com '+nomeCliente+' via Rebeca?'))return;
+  fetch('/api/delivery/pedido/'+pedidoId+'/contato-cliente',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({entregadorNome:ENAME})})
+  .then(function(r){return r.json();}).then(function(d){alert(d.sucesso?'Mensagem enviada!':'Erro: '+(d.erro||'falha'));}).catch(function(){alert('Erro');});
 }
 
-var _gpsWatch=null;
-var _entregasAtivas=new Set();
 function iniciarGPS(pedidoId){
   if(pedidoId)_entregasAtivas.add(pedidoId);
   if(_gpsWatch)return;
@@ -302,26 +343,11 @@ function iniciarGPS(pedidoId){
   _gpsWatch=navigator.geolocation.watchPosition(function(pos){
     GPS.lat=pos.coords.latitude;GPS.lng=pos.coords.longitude;
     document.getElementById('gpsDot').classList.add('ativo');
-    document.getElementById('gpsBar').textContent='📍 GPS: '+GPS.lat.toFixed(5)+', '+GPS.lng.toFixed(5);
-    // Enviar GPS para todos os pedidos em entrega
+    document.getElementById('gpsBar').textContent='📍 GPS ativo: '+GPS.lat.toFixed(5)+', '+GPS.lng.toFixed(5);
     _entregasAtivas.forEach(function(pid){
-      fetch(B+'/entregador/'+pid+'/gps',{
-        method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({latitude:GPS.lat,longitude:GPS.lng})
-      }).catch(function(){});
+      fetch(B+'/entregador/'+pid+'/gps',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({latitude:GPS.lat,longitude:GPS.lng})}).catch(function(){});
     });
-  },function(err){
-    document.getElementById('gpsBar').textContent='GPS: '+err.message;
-  },{enableHighAccuracy:true,maximumAge:5000});
-}
-
-// Iniciar GPS se já tem pedidos em entrega
-function verificarGPSAtivo(){
-  var saindo=todosPedidos.filter(function(p){return p.status==='saiu_entrega';});
-  if(saindo.length>0){
-    saindo.forEach(function(p){_entregasAtivas.add(p._id);});
-    iniciarGPS();
-  }
+  },function(err){document.getElementById('gpsBar').textContent='GPS: '+err.message;},{enableHighAccuracy:true,maximumAge:2000});
 }
 
 function mostrarBanner(msg){
@@ -332,7 +358,7 @@ function mostrarBanner(msg){
 
 if('Notification' in window&&Notification.permission==='default')Notification.requestPermission();
 carregar();
-setInterval(function(){carregar();verificarGPSAtivo();},8000);
+setInterval(carregar,8000);
 </script>
 </body>
 </html>

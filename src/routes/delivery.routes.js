@@ -456,6 +456,39 @@ router.get('/entregador/rota', authDelivery, async (req, res) => {
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
+
+// ========== ENTREGADOR: PEDIDOS ENTREGUES DO DIA ==========
+router.get('/entregador/entregues', authDelivery, async (req, res) => {
+    try {
+        const inicio = new Date();
+        inicio.setHours(0,0,0,0);
+        const pedidos = await PedidoDelivery.find({
+            adminId: req.adminId,
+            status: 'entregue',
+            dataEntregue: { $gte: inicio }
+        }).sort({ dataEntregue: -1 }).lean();
+        // Calcular tempos de cada etapa
+        const resultado = pedidos.map(p => {
+            const criado = p.createdAt ? new Date(p.createdAt) : null;
+            const preparando = p.dataPreparando ? new Date(p.dataPreparando) : null;
+            const pronto = p.dataPronto ? new Date(p.dataPronto) : null;
+            const saiu = p.dataSaiuEntrega ? new Date(p.dataSaiuEntrega) : null;
+            const entregue = p.dataEntregue ? new Date(p.dataEntregue) : null;
+            const min = (a, b) => (a && b) ? Math.round((b-a)/60000) : null;
+            return {
+                ...p,
+                tempos: {
+                    coleta: min(criado, preparando),       // pedido -> cozinha aceitar
+                    producao: min(preparando, pronto),     // cozinha aceitar -> pronto
+                    entrega: min(saiu || pronto, entregue),// saiu -> entregue
+                    total: min(criado, entregue)           // total pedido -> entregue
+                }
+            };
+        });
+        res.json(resultado);
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
 // ========== UPLOAD FOTO CARDAPIO (IA TRANSCREVE) ==========
 router.post('/cardapio/upload-foto', authDelivery, async (req, res) => {
     try {

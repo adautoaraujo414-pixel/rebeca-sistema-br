@@ -13,12 +13,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .header p{color:#888;font-size:.85em;margin-top:4px}
 .card{background:#1a1a2e;border:1px solid #333;border-radius:12px;padding:16px;margin-bottom:14px}
 .card h3{color:#00d4ff;margin-bottom:12px;font-size:.95em}
-.step-track{display:flex;flex-direction:column;gap:0}
+.step-track{display:flex;flex-direction:column}
 .step{display:flex;align-items:flex-start;gap:12px;padding:10px 0;position:relative}
 .step-dot{width:26px;height:26px;border-radius:50%;border:2px solid #333;display:flex;align-items:center;justify-content:center;font-size:.75em;flex-shrink:0;background:#0a0a1a}
 .step.done .step-dot{background:#00cc6a;border-color:#00cc6a;color:#000;font-weight:bold}
 .step.active .step-dot{background:#00d4ff;border-color:#00d4ff;color:#000;animation:pulse 1.5s infinite}
-.step-info h4{font-size:.88em;color:#888}
+.step-info h4{font-size:.88em;color:#555}
 .step.done .step-info h4{color:#00cc6a}
 .step.active .step-info h4{color:#00d4ff;font-weight:bold}
 .step-line{position:absolute;left:12px;top:36px;width:2px;height:calc(100% - 10px);background:#333}
@@ -28,22 +28,25 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .item-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #222;font-size:.88em}
 .item-row:last-child{border:none}
 .total-row{text-align:right;font-size:1.1em;font-weight:bold;color:#00cc6a;margin-top:8px}
-.end-box{background:#252542;border-radius:8px;padding:10px;font-size:.88em;color:#ddd;display:flex;gap:8px;align-items:flex-start}
-.entregador-box{background:#252542;border-radius:8px;padding:10px}
+.end-box{background:#252542;border-radius:8px;padding:10px;font-size:.88em;color:#ddd;display:flex;gap:8px}
+.entregador-box{background:#252542;border-radius:8px;padding:10px;margin-bottom:10px}
 .entregador-box h4{color:#00d4ff;font-size:.88em;margin-bottom:4px}
 .entregador-box p{color:#ccc;font-size:.85em}
-.mapa-box{width:100%;border-radius:10px;overflow:hidden;margin-top:10px;background:#252542}
-.mapa-box iframe{width:100%;height:260px;border:none;display:block}
-.mapa-loading{height:260px;display:flex;align-items:center;justify-content:center;color:#888;font-size:.88em;flex-direction:column;gap:8px}
+/* MAPA */
+.mapa-wrap{position:relative;border-radius:10px;overflow:hidden;background:#0d1626;margin-top:10px}
+#mapaCanvas{width:100%;height:280px;display:block;background:#0d1626}
+.mapa-overlay{position:absolute;bottom:8px;right:8px;background:rgba(0,0,0,.7);padding:4px 8px;border-radius:6px;font-size:11px;color:#00d4ff}
+.mapa-loading{height:280px;display:flex;align-items:center;justify-content:center;color:#888;flex-direction:column;gap:8px}
 .spinner{width:24px;height:24px;border:3px solid #333;border-top-color:#00d4ff;border-radius:50%;animation:spin 1s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-.gps-info{text-align:center;font-size:.75em;color:#555;margin-top:6px}
+.gps-update{text-align:center;font-size:.75em;color:#555;margin-top:6px}
 .status-badge{display:inline-block;padding:4px 12px;border-radius:20px;font-size:.8em;font-weight:bold;margin-left:8px}
 .badge-saiu{background:#00d4ff;color:#000}
 .badge-pronto{background:#f39c12;color:#fff}
 .badge-entregue{background:#00cc6a;color:#000}
 .vazio{text-align:center;padding:60px 20px;color:#888}
 .vazio h2{color:#00d4ff;margin-bottom:8px}
+.link-maps{display:block;text-align:center;margin-top:10px;padding:10px;background:#4285f4;border-radius:8px;color:#fff;text-decoration:none;font-weight:bold;font-size:14px}
 </style>
 </head>
 <body>
@@ -52,12 +55,96 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <h1>🏍️ Rebeca Delivery</h1>
     <p>Acompanhe seu pedido em tempo real</p>
   </div>
-  <div id="conteudo"><div class="vazio"><div class="spinner" style="margin:0 auto 12px"></div><p>Carregando...</p></div></div>
+  <div id="conteudo">
+    <div class="mapa-loading"><div class="spinner"></div><p>Carregando...</p></div>
+  </div>
 </div>
 <script>
 var codigo=location.pathname.split('/').pop();
 var BASE='/api/delivery';
 var _intervalo=null;
+var _gpsAnterior={lat:null,lng:null};
+var _angulo=0;
+
+// ===== MAPA COM CANVAS (motinha animada) =====
+function desenharMapa(lat,lng,atualizado){
+  var canvas=document.getElementById('mapaCanvas');
+  if(!canvas)return;
+  var ctx=canvas.getContext('2d');
+  var W=canvas.width=canvas.offsetWidth;
+  var H=canvas.height=280;
+
+  // Fundo escuro estilo mapa noturno
+  ctx.fillStyle='#0d1626';
+  ctx.fillRect(0,0,W,H);
+
+  // Grade de ruas simulada
+  ctx.strokeStyle='#1a2a3a';
+  ctx.lineWidth=1;
+  for(var x=0;x<W;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+  for(var y=0;y<H;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+
+  // Ruas principais
+  ctx.strokeStyle='#1e3a5a';ctx.lineWidth=8;
+  ctx.beginPath();ctx.moveTo(0,H/2);ctx.lineTo(W,H/2);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(W/2,0);ctx.lineTo(W/2,H);ctx.stroke();
+  ctx.strokeStyle='#0f2a3a';ctx.lineWidth=4;
+  ctx.beginPath();ctx.moveTo(0,H/3);ctx.lineTo(W,H/3);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(0,H*2/3);ctx.lineTo(W,H*2/3);ctx.stroke();
+
+  var cx=W/2, cy=H/2;
+
+  // Círculo de alcance
+  ctx.beginPath();
+  ctx.arc(cx,cy,60,0,Math.PI*2);
+  ctx.fillStyle='rgba(0,212,255,0.08)';
+  ctx.fill();
+  ctx.strokeStyle='rgba(0,212,255,0.2)';
+  ctx.lineWidth=1;
+  ctx.stroke();
+
+  // MOTINHA 🏍️
+  var motoSize=28;
+  ctx.save();
+  ctx.translate(cx,cy);
+  ctx.rotate(_angulo);
+  ctx.font=motoSize+'px serif';
+  ctx.textAlign='center';
+  ctx.textBaseline='middle';
+  // Sombra
+  ctx.shadowColor='rgba(0,212,255,0.8)';
+  ctx.shadowBlur=15;
+  ctx.fillText('🏍️',0,0);
+  ctx.restore();
+
+  // Ponto pulsante
+  var pulso=0.5+0.5*Math.sin(Date.now()/300);
+  ctx.beginPath();
+  ctx.arc(cx,cy,8+pulso*6,0,Math.PI*2);
+  ctx.fillStyle='rgba(0,212,255,'+(0.1+0.1*pulso)+')';
+  ctx.fill();
+
+  // Coords
+  ctx.fillStyle='rgba(0,212,255,0.7)';
+  ctx.font='11px monospace';
+  ctx.textAlign='left';
+  ctx.fillText(lat.toFixed(5)+', '+lng.toFixed(5),8,H-10);
+
+  // Atualização
+  ctx.textAlign='right';
+  ctx.fillStyle='#555';
+  ctx.fillText(atualizado||'',W-8,H-10);
+}
+
+function animarMoto(){
+  _angulo+=0.02;
+  var canvas=document.getElementById('mapaCanvas');
+  if(canvas&&_gpsAnterior.lat){
+    var atualizado=document.getElementById('gpsUpdate')?document.getElementById('gpsUpdate').textContent:'';
+    desenharMapa(_gpsAnterior.lat,_gpsAnterior.lng,atualizado);
+  }
+  requestAnimationFrame(animarMoto);
+}
 
 async function carregar(){
   try{
@@ -68,8 +155,7 @@ async function carregar(){
     }
     var p=await r.json();
     renderPedido(p);
-    // Se entregue, parar de atualizar
-    if(p.status==='entregue' && _intervalo){clearInterval(_intervalo);_intervalo=null;}
+    if(p.status==='entregue'&&_intervalo){clearInterval(_intervalo);_intervalo=null;}
   }catch(e){console.error(e);}
 }
 
@@ -77,9 +163,9 @@ function renderPedido(p){
   var steps=[
     {s:'novo',label:'Pedido recebido',icon:'📋'},
     {s:'confirmado',label:'Confirmado',icon:'✅'},
-    {s:'preparando',label:'Sendo preparado',icon:'👨‍🍳'},
+    {s:'preparando',label:'Sendo preparado',icon:'🍳'},
     {s:'pronto',label:'Pronto para entrega',icon:'✅'},
-    {s:'saiu_entrega',label:'Saiu para entrega',icon:'🏍️'},
+    {s:'saiu_entrega',label:'Saiu para entrega 🏍️',icon:'🏍️'},
     {s:'entregue',label:'Entregue!',icon:'🎉'}
   ];
   var statusList=['novo','confirmado','preparando','pronto','saiu_entrega','entregue'];
@@ -90,11 +176,9 @@ function renderPedido(p){
   else if(p.status==='entregue')h+='<span class="status-badge badge-entregue">✅ Entregue</span>';
   else if(p.status==='pronto')h+='<span class="status-badge badge-pronto">✅ Pronto</span>';
   h+='</h3><div class="step-track">';
-
   steps.forEach(function(st,i){
     var cls=i<idxAtual?'done':i===idxAtual?'active':'';
-    h+='<div class="step '+cls+'">';
-    h+='<div class="step-dot">'+(i<idxAtual?'✓':st.icon)+'</div>';
+    h+='<div class="step '+cls+'"><div class="step-dot">'+(i<idxAtual?'✓':st.icon)+'</div>';
     h+='<div class="step-info"><h4>'+st.label+'</h4></div>';
     if(i<steps.length-1)h+='<div class="step-line"></div>';
     h+='</div>';
@@ -102,7 +186,7 @@ function renderPedido(p){
   h+='</div></div>';
 
   // Itens
-  h+='<div class="card"><h3>📦 Itens do pedido</h3>';
+  h+='<div class="card"><h3>📦 Seu pedido</h3>';
   var tot=0;
   (p.itens||[]).forEach(function(it){
     var sub=it.subtotal||(it.preco*(it.quantidade||1))||0;
@@ -113,32 +197,37 @@ function renderPedido(p){
   h+='</div>';
 
   // Endereço
-  if(p.enderecoEntrega){
-    h+='<div class="card"><div class="end-box"><span>📍</span><span>'+p.enderecoEntrega+'</span></div></div>';
-  }
+  if(p.enderecoEntrega)h+='<div class="card"><div class="end-box"><span>📍</span><span>'+p.enderecoEntrega+'</span></div></div>';
 
-  // Entregador + Mapa em tempo real
+  // Mapa com motinha em tempo real
   if(p.status==='saiu_entrega'){
     h+='<div class="card"><h3>🏍️ Entregador a caminho</h3>';
-    if(p.entregadorNome)h+='<div class="entregador-box"><h4>Entregador</h4><p>'+p.entregadorNome+'</p></div>';
-    h+='<div class="mapa-box">';
+    if(p.entregadorNome)h+='<div class="entregador-box"><h4>Entregador</h4><p>🏍️ '+p.entregadorNome+'</p></div>';
+
     if(p.entregadorLatitude&&p.entregadorLongitude){
-      var lat=p.entregadorLatitude,lng=p.entregadorLongitude;
-      var mapaUrl='https://www.google.com/maps/embed/v1/place?key=AIzaSyD-9tSrke72PouQMnMX-a7eZSW0jkFMBWY&q='+lat+','+lng+'&zoom=15';
-      // Fallback sem API key - usar link direto
-      h+='<iframe src="https://maps.google.com/maps?q='+lat+','+lng+'&z=16&output=embed" allowfullscreen loading="lazy"></iframe>';
-      h+='<div class="gps-info">📍 Atualizado: '+(p.gpsAtualizado?new Date(p.gpsAtualizado).toLocaleTimeString('pt-BR'):'-')+'</div>';
-    } else {
+      _gpsAnterior.lat=p.entregadorLatitude;
+      _gpsAnterior.lng=p.entregadorLongitude;
+      var atualizadoStr=p.gpsAtualizado?new Date(p.gpsAtualizado).toLocaleTimeString('pt-BR'):'';
+      h+='<div class="mapa-wrap"><canvas id="mapaCanvas"></canvas><div class="mapa-overlay">📡 GPS ao vivo</div></div>';
+      h+='<div class="gps-update" id="gpsUpdate">Atualizado: '+atualizadoStr+'</div>';
+      // Link para abrir no Maps real
+      h+='<a class="link-maps" href="https://www.google.com/maps/search/?api=1&query='+p.entregadorLatitude+','+p.entregadorLongitude+'" target="_blank">📍 Ver no Google Maps</a>';
+    }else{
       h+='<div class="mapa-loading"><div class="spinner"></div><p>Aguardando localização do entregador...</p></div>';
     }
-    h+='</div></div>';
+    h+='</div>';
   }
 
   document.getElementById('conteudo').innerHTML=h;
+
+  // Iniciar animação da motinha
+  if(p.status==='saiu_entrega'&&p.entregadorLatitude){
+    requestAnimationFrame(animarMoto);
+  }
 }
 
 carregar();
-_intervalo=setInterval(carregar,10000);
+_intervalo=setInterval(carregar,2000);
 </script>
 </body>
 </html>
