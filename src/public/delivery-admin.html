@@ -819,6 +819,8 @@
                 if (data.erro) return toast(data.erro,'error');
                 toast('Cardapio salvo! ' + data.categorias + ' categorias, ' + data.itens + ' itens');
                 limparTranscricao();
+            } catch(e) { toast('Erro ao salvar cardapio','error'); }
+        }
         // ========== ENTREGADORES ==========
 
         
