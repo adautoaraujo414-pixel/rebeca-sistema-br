@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { CategoriaCardapio, ItemCardapio, PedidoDelivery, ConfigDelivery, AdminDelivery, Entregador } = require('../models/delivery.models');
+const { CategoriaCardapio, ItemCardapio, PedidoDelivery, ConfigDelivery, AdminDelivery, Entregador, MensalidadeClienteDelivery, CardapioDia } = require('../models/delivery.models');
 
 // ========== AUTENTICAÇÃO DELIVERY ==========
 const authDelivery = async (req, res, next) => {
@@ -573,5 +573,103 @@ router.post('/pedido/:id/contato-cliente', async (req, res) => {
         const msg = `🛵 *Mensagem do Entregador*\n\nOlá! Sou o entregador do seu pedido #${pedido.numeroPedido || pedido._id.toString().slice(-4)}.\nEstou a caminho! Caso precise falar comigo, responda esta mensagem e a Rebeca vai me repassar.`;
         await EvolutionMultiService.enviarMensagem(instancia.nomeInstancia, pedido.telefoneCliente, msg);
         res.json({ sucesso: true });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+
+// ========== ASSINANTES ==========
+router.get('/assinantes', authDelivery, async (req, res) => {
+    try {
+        const assinantes = await MensalidadeClienteDelivery.find({ adminId: req.adminId }).sort({ nome: 1 });
+        res.json({ assinantes });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+router.post('/assinantes', authDelivery, async (req, res) => {
+    try {
+        const { nome, telefone, endereco, valor, diaVencimento, formaPagamento, horarioEntrega, restricoes, observacoes } = req.body;
+        const assinante = await MensalidadeClienteDelivery.create({
+            adminId: req.adminId, nome, telefone, endereco, valor, diaVencimento,
+            formaPagamento, horarioEntrega, restricoes, observacoes, status: 'ativo'
+        });
+        res.json({ assinante });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+router.put('/assinantes/:id', authDelivery, async (req, res) => {
+    try {
+        const assinante = await MensalidadeClienteDelivery.findOneAndUpdate(
+            { _id: req.params.id, adminId: req.adminId },
+            req.body,
+            { new: true }
+        );
+        res.json({ assinante });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+router.delete('/assinantes/:id', authDelivery, async (req, res) => {
+    try {
+        await MensalidadeClienteDelivery.findOneAndDelete({ _id: req.params.id, adminId: req.adminId });
+        res.json({ sucesso: true });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+router.post('/assinantes/:id/pagar', authDelivery, async (req, res) => {
+    try {
+        const assinante = await MensalidadeClienteDelivery.findOneAndUpdate(
+            { _id: req.params.id, adminId: req.adminId },
+            { ultimoPagamento: new Date(), status: 'ativo' },
+            { new: true }
+        );
+        res.json({ assinante });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// ========== CARDÁPIO DO DIA ==========
+router.get('/cardapio-hoje', authDelivery, async (req, res) => {
+    try {
+        const hoje = new Date().toISOString().split('T')[0];
+        let cardapio = await CardapioDia.findOne({ adminId: req.adminId, data: hoje });
+        if (!cardapio) {
+            cardapio = { data: hoje, descricao: '', enviado: false, totalEnviados: 0 };
+        }
+        const totalAssinantes = await MensalidadeClienteDelivery.countDocuments({ adminId: req.adminId, status: 'ativo' });
+        res.json({ cardapio, totalAssinantes });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+router.post('/cardapio-hoje/enviar', authDelivery, async (req, res) => {
+    try {
+        const { descricao } = req.body;
+        const hoje = new Date().toISOString().split('T')[0];
+        const cardapio = await CardapioDia.findOneAndUpdate(
+            { adminId: req.adminId, data: hoje },
+            { descricao, enviado: true, enviadoEm: new Date(), adminId: req.adminId, data: hoje },
+            { upsert: true, new: true }
+        );
+        // Buscar assinantes ativos e enviar mensagem
+        const assinantes = await MensalidadeClienteDelivery.find({ adminId: req.adminId, status: 'ativo' });
+        let enviados = 0;
+        try {
+            const { InstanciaWhatsapp } = require('../models');
+            const instancia = await InstanciaWhatsapp.findOne({ adminId: req.adminId, status: 'conectado' });
+            if (instancia) {
+                const EvolutionMultiService = require('../services/evolution-multi.service');
+                for (const a of assinantes) {
+                    try {
+                        await EvolutionMultiService.enviarMensagem(instancia._id, a.telefone,
+                            '🍽️ *Cardápio do Dia!*
+
+' + descricao + '
+
+_Para fazer seu pedido, responda esta mensagem!_'
+                        );
+                        enviados++;
+                    } catch(_) {}
+                }
+            }
+        } catch(_) {}
+        await CardapioDia.findOneAndUpdate({ _id: cardapio._id }, { totalEnviados: enviados });
+        res.json({ sucesso: true, enviados, totalAssinantes: assinantes.length });
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
