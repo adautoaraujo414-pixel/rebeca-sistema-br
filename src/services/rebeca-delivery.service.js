@@ -471,9 +471,7 @@ class RebecaDeliveryService {
             const inst = await InstanciaWhatsapp.findOne({ adminId: pedido.adminId, status: { $in: ['conectado','open','connected'] } });
             if (!inst) return;
             const Evo = require('./evolution-multi.service');
-            const msg = '👨‍🍳 *Pedido #' + pedido.numero + ' está sendo preparado!*
-
-Em breve fica pronto 🍽️';
+            const msg = '👨‍🍳 *Pedido #' + pedido.numero + ' está sendo preparado!*\n\nEm breve fica pronto 🍽️';
             await Evo.enviarMensagem(inst._id, pedido.clienteTelefone, msg);
         } catch(e) { console.log('[DELIVERY-NOTIFY] Erro notif preparo:', e.message); }
     }
@@ -487,9 +485,7 @@ Em breve fica pronto 🍽️';
             const Evo = require('./evolution-multi.service');
             const config = await ConfigDelivery.findOne({ adminId: pedido.adminId }).lean();
             const msg = config?.mensagemPedidoPronto
-                || '✅ *Pedido #' + pedido.numero + ' está pronto!*
-
-🏍️ O entregador vai buscar agora. Em breve na sua porta!';
+                || '✅ *Pedido #' + pedido.numero + ' está pronto!*\n\n🏍️ O entregador vai buscar agora. Em breve na sua porta!';
             await Evo.enviarMensagem(inst._id, pedido.clienteTelefone, msg);
         } catch(e) { console.log('[DELIVERY-NOTIFY] Erro notif pronto:', e.message); }
     }
