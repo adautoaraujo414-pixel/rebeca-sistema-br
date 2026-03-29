@@ -408,7 +408,7 @@ EXEMPLOS DE RACIOCÍNIO CORRETO:
             console.log('[CEREBRO]', telefone, '|', json.intencao, '|', (json.resposta || '').substring(0, 60));
             return json;
         } catch(e) {
-            console.log('[CEREBRO] Erro:', e.message);
+            console.log('[CEREBRO] Erro:', e.message, e.response?.data ? JSON.stringify(e.response.data) : '');
             return null;
         }
     }
