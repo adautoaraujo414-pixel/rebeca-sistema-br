@@ -658,11 +658,7 @@ router.post('/cardapio-hoje/enviar', authDelivery, async (req, res) => {
                 for (const a of assinantes) {
                     try {
                         await EvolutionMultiService.enviarMensagem(instancia._id, a.telefone,
-                            '🍽️ *Cardápio do Dia!*
-
-' + descricao + '
-
-_Para fazer seu pedido, responda esta mensagem!_'
+                            '\xf0\x9f\x8d\xbd\xef\xb8\x8f *Cardápio do Dia!*\n\n' + descricao + '\n\n_Para fazer seu pedido, responda esta mensagem!_'
                         );
                         enviados++;
                     } catch(_) {}
