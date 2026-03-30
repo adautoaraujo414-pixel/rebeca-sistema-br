@@ -390,7 +390,7 @@ EXEMPLOS DE RACIOCÍNIO CORRETO:
             const userPrompt = 'HORA ATUAL: ' + hora_atual + '\n' + 'DIA DA SEMANA: ' + dia_semana + '\n' + 'MINUTOS SEM RESPOSTA DO CLIENTE: ' + minutos_ausente + '\n\n' + 'HISTÓRICO:\n' + historico + '\n\n' + 'ETAPA ATUAL: ' + conversa.etapa + '\n' + 'SITUAÇÃO: ' + contextoEtapa + '\n' + 'DADOS COLETADOS: ' + JSON.stringify(conversa.dados || {}) + '\n' + 'CLIENTE: ' + (nome || telefone) + '\n' + 'MENSAGEM ATUAL: "' + msgOriginal + '"\n\n' + 'Responda de forma natural. Retorne APENAS o JSON.';
 
             const resp = await axios.post('https://api.anthropic.com/v1/messages', {
-                model: 'claude-sonnet-4-5-20251001',
+                model: 'claude-haiku-4-5-20251001',
                 max_tokens: 600,
                 system: promptMestre,
                 messages: [{ role: 'user', content: userPrompt }]
@@ -408,7 +408,7 @@ EXEMPLOS DE RACIOCÍNIO CORRETO:
             console.log('[CEREBRO]', telefone, '|', json.intencao, '|', (json.resposta || '').substring(0, 60));
             return json;
         } catch(e) {
-            console.log('[CEREBRO] Erro:', e.message, e.response?.data ? JSON.stringify(e.response.data) : '');
+            console.log('[CEREBRO] Erro COMPLETO:', JSON.stringify({msg: e.message, status: e.response?.status, data: e.response?.data}));
             return null;
         }
     }
