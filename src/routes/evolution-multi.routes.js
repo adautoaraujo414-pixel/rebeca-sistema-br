@@ -422,7 +422,9 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                                         }
                                     } else if (!rac.resposta_rebeca || _perguntaStatus) {
                                         // resposta_rebeca vazia — passa texto transcrito para o cerebro Claude
-                                        conteudo = (rac && rac.texto_original) ? rac.texto_original : jsonStr;
+                                        // Sempre usar texto original transcrito, nunca o JSON bruto
+                                        const _textoFinal = (rac && rac.texto_original && typeof rac.texto_original === 'string') ? rac.texto_original : transcricao;
+                                        conteudo = _textoFinal || null;
                                         console.log('[AUDIO] Passando para cerebro Claude:', conteudo ? conteudo.substring(0,80) : 'null');
 
                                         // Se notificar_admin=true: notifica dono e agenda acompanhamento
