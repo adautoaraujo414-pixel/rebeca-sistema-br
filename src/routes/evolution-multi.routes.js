@@ -406,7 +406,7 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
 
                                     // Se o áudio é pergunta de status — ignorar resposta_rebeca e deixar
                                     // a Rebeca responder com dados reais do banco
-                                    const _textoAudio = (rac && rac.texto_original) ? rac.texto_original : jsonStr;
+                                    const _textoAudio = (rac && rac.texto_original && typeof rac.texto_original === 'string') ? rac.texto_original : transcricao;
                                     const _audioTranscrito = typeof _textoAudio === 'string' ? _textoAudio.toLowerCase() : '';
                                     const _perguntaStatus = _audioTranscrito.match(/(cadê|cade|chegando|chegou|a caminho|onde (está|esta|fica)|quanto tempo|meu carro|minha corrida|agendad|status|motorista)/);
                                     
