@@ -79,7 +79,7 @@ setInterval(async () => {
             console.log('[CLEANUP] Timeout aguardando_motorista:', telefone);
             continue;
         }
-        if (conversa.etapa === 'avaliar' && minutos > 1) {
+        if (conversa.etapa === 'avaliar' && minutos > 2) {
             conversa.etapa = 'inicio';
             conversa.dados = {};
             conversas.set(telefone, conversa);
