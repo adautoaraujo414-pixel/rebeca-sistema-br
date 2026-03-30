@@ -369,8 +369,8 @@ EXEMPLOS DE RACIOCÍNIO CORRETO:
     async raciocinar(telefone, msgOriginal, conversa, opcoes = {}) {
         const { nome = '', nomeEmpresa = 'Central de Corridas', nomeAssistente = 'Rebeca', nomeProprietario = '' } = opcoes;
         try {
-            const anthropicKey = process.env.ANTHROPIC_API_KEY;
-            if (!anthropicKey) throw new Error('sem chave');
+            const openaiKey = process.env.OPENAI_API_KEY;
+            if (!openaiKey) throw new Error('sem chave openai');
 
             const historico = this.montarHistorico(conversa);
             const contextoEtapa = this.descreverEtapa(conversa.etapa, conversa.dados);
@@ -389,21 +389,22 @@ EXEMPLOS DE RACIOCÍNIO CORRETO:
 
             const userPrompt = 'HORA ATUAL: ' + hora_atual + '\n' + 'DIA DA SEMANA: ' + dia_semana + '\n' + 'MINUTOS SEM RESPOSTA DO CLIENTE: ' + minutos_ausente + '\n\n' + 'HISTÓRICO:\n' + historico + '\n\n' + 'ETAPA ATUAL: ' + conversa.etapa + '\n' + 'SITUAÇÃO: ' + contextoEtapa + '\n' + 'DADOS COLETADOS: ' + JSON.stringify(conversa.dados || {}) + '\n' + 'CLIENTE: ' + (nome || telefone) + '\n' + 'MENSAGEM ATUAL: "' + msgOriginal + '"\n\n' + 'Responda de forma natural. Retorne APENAS o JSON.';
 
-            const resp = await axios.post('https://api.anthropic.com/v1/messages', {
-                model: 'claude-haiku-4-5-20251001',
+            const resp = await axios.post('https://api.openai.com/v1/chat/completions', {
+                model: 'gpt-4o-mini',
                 max_tokens: 600,
-                system: promptMestre,
-                messages: [{ role: 'user', content: userPrompt }]
+                messages: [
+                    { role: 'system', content: promptMestre },
+                    { role: 'user', content: userPrompt }
+                ]
             }, {
                 headers: {
-                    'x-api-key': anthropicKey,
-                    'anthropic-version': '2023-06-01',
+                    'Authorization': 'Bearer ' + openaiKey,
                     'Content-Type': 'application/json'
                 },
                 timeout: 12000
             });
 
-            const raw = resp.data.content[0].text.trim().replace(/\`\`\`json|\`\`\`/g, '').trim();
+            const raw = resp.data.choices[0].message.content.trim().replace(/\`\`\`json|\`\`\`/g, '').trim();
             const json = JSON.parse(raw);
             console.log('[CEREBRO]', telefone, '|', json.intencao, '|', (json.resposta || '').substring(0, 60));
             return json;
