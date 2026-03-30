@@ -420,9 +420,8 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                                         } else {
                                             conteudo = null;
                                         }
-                                    } else if (!rac.resposta_rebeca || _perguntaStatus) {
-                                        // resposta_rebeca vazia — passa texto transcrito para o cerebro Claude
-                                        // Sempre usar texto original transcrito, nunca o JSON bruto
+                                    } else {
+                                        // SEMPRE usar texto transcrito — nunca JSON bruto
                                         const _textoFinal = (rac && rac.texto_original && typeof rac.texto_original === 'string') ? rac.texto_original : transcricao;
                                         conteudo = _textoFinal || null;
                                         console.log('[AUDIO] Passando para cerebro Claude:', conteudo ? conteudo.substring(0,80) : 'null');
