@@ -95,10 +95,8 @@ const MotoristaWhatsappService = {
 
         // Notificar cliente via WhatsApp
         await this.notificarCliente(corrida, adminId, instanciaId,
-            `🚗 *Seu motorista chegou!*\n\n` +
-            `*${motorista.nomeCompleto}* está te aguardando.\n` +
-            `Veículo: *${motorista.veiculo?.modelo || 'Veículo'} ${motorista.veiculo?.cor || ''}* - Placa *${motorista.veiculo?.placa || ''}*\n\n` +
-            `Por favor, dirija-se ao veículo! 🙏`
+            `Seu motorista chegou! 🚗\n` +
+            `${motorista.veiculo?.modelo || 'Veículo'} ${motorista.veiculo?.cor || ''} - Placa ${motorista.veiculo?.placa || ''}`
         );
 
         return `✅ Perfeito! Avisamos o cliente que você chegou.\n\nQuando a corrida iniciar, manda *INICIAR* pra mim! 🚗`;
@@ -120,8 +118,6 @@ const MotoristaWhatsappService = {
         // Notificar cliente
         const destino = corrida.destino?.endereco || corrida.enderecoDestinoTexto || 'seu destino';
         await this.notificarCliente(corrida, adminId, instanciaId,
-            `🛣️ *Corrida iniciada!*\n\n` +
-            `Você está a caminho de *${destino.substring(0, 60)}*.\n\n` +
             `Boa viagem! 😊`
         );
 
@@ -164,15 +160,13 @@ const MotoristaWhatsappService = {
         // Notificar cliente + pedir avaliação
         const preco = corridaAtual?.precoEstimado ? `R$ ${(corridaAtual.precoEstimado).toFixed(2).replace('.', ',')}` : '';
         await this.notificarCliente(corrida, adminId, instanciaId,
-            `✅ *Corrida finalizada!*\n\n` +
-            `${preco ? `Valor: *${preco}*\n\n` : ''}` +
-            `Como foi sua experiência?\n\n` +
-            `⭐ *1* - Péssimo\n` +
-            `⭐⭐ *2* - Ruim\n` +
-            `⭐⭐⭐ *3* - Ok\n` +
-            `⭐⭐⭐⭐ *4* - Bom\n` +
-            `⭐⭐⭐⭐⭐ *5* - Excelente\n\n` +
-            `Manda o número da sua avaliação! 😊`
+            `${preco ? `Valor: *${preco}*\n` : ''}` +
+            `Ei, me conta rapidinho — o que você achou dessa corrida? 😊\n\n` +
+            `1 - Ruim\n` +
+            `2 - Regular\n` +
+            `3 - Ok\n` +
+            `4 - Bom\n` +
+            `5 - Excelente`
         );
 
         // Registrar etapa de avaliação na conversa do cliente
