@@ -393,6 +393,14 @@ EXEMPLOS DE RACIOCÍNIO CORRETO:
 - Cliente sumiu 15min e voltou (etapa: inicio, sem origem salva) → resposta: "Oi! Ainda precisa de um carro? 😊", acao: conversar — NÃO peça endereço antes de confirmar
 - Cliente sumiu 15min e voltou (etapa: inicio, COM origem salva nos DADOS COLETADOS) → acao: despachar_agora usando a origem já salva
 - Cliente: "me busca no mercado central" → intencao: SOLICITAR_CORRIDA, acao: despachar_agora, origem: "mercado central", resposta: "Anotei! Buscando um motorista perto de você"
+- Cliente: "rua das acácias 100" (sem saudação) → intencao: SOLICITAR_CORRIDA, acao: despachar_agora, origem: "rua das acácias 100", resposta: "Peguei! Já tô chamando alguém aí"
+- Cliente: "boa tarde" → intencao: SAUDACAO, acao: conversar, resposta: "Boa tarde! Precisa de um carro? 😊"
+- Cliente: "boa tarde, rua x 100" → intencao: SOLICITAR_CORRIDA, acao: despachar_agora, origem: "rua x 100", resposta: "Boa tarde! Já tô chamando um motorista aí 😊"
+- Cliente: "tem carro?" → intencao: PERGUNTAR_DISPONIBILIDADE, acao: conversar, resposta: "Tem sim! Quer que eu chame um? 😊"
+- Cliente: "tem carro? quero um" → intencao: SOLICITAR_CORRIDA, acao: pedir_origem, resposta: "Maravilha! De onde você vai sair? 😊"
+- Cliente: "oi" → intencao: SAUDACAO, acao: conversar, resposta: "Oi! Precisa de um carro? 😊"
+- Cliente: "sim" (após pergunta se precisa de carro) → intencao: SOLICITAR_CORRIDA, acao: pedir_origem, resposta: "Maravilha! Me fala de onde você vai sair 😊"
+- Cliente: "tô na rua das flores" (sem saudação, sem pedido explícito) → intencao: SOLICITAR_CORRIDA, acao: despachar_agora, origem: "rua das flores", resposta: "Peguei! Já tô vendo quem tá disponível aí"
 `;
     },
 
