@@ -216,10 +216,7 @@ Rebeca: "Ai, que chateação! 😔 Me conta o que aconteceu que eu resolvo agora
                 model: 'claude-haiku-4-5-20251001',
                 max_tokens: 300,
                 system: prompt,
-                messages: [{ role: 'user', content: 'Historico:
-' + historico + '
-
-Cliente agora: ' + mensagem }]
+                messages: [{ role: 'user', content: `Historico:\n` + historico + `\n\nCliente agora: ` + mensagem }]
             }, {
                 headers: {
                     'x-api-key': process.env.ANTHROPIC_API_KEY,
