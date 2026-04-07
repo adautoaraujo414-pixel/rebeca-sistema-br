@@ -212,20 +212,21 @@ Rebeca: "Ai, que chateação! 😔 Me conta o que aconteceu que eu resolvo agora
                 config.assinante || null
             );
             const historico = this.montarHistorico(contexto.conversa);
-            const r = await axios.post('https://api.anthropic.com/v1/messages', {
-                model: 'claude-haiku-4-5-20251001',
+            const r = await axios.post('https://api.openai.com/v1/chat/completions', {
+                model: 'gpt-4o-mini',
                 max_tokens: 300,
-                system: prompt,
-                messages: [{ role: 'user', content: `Historico:\n` + historico + `\n\nCliente agora: ` + mensagem }]
+                messages: [
+                    { role: 'system', content: prompt },
+                    { role: 'user', content: `Historico:\n` + historico + `\n\nCliente agora: ` + mensagem }
+                ]
             }, {
                 headers: {
-                    'x-api-key': process.env.ANTHROPIC_API_KEY,
-                    'anthropic-version': '2023-06-01',
+                    'Authorization': 'Bearer ' + process.env.OPENAI_API_KEY,
                     'content-type': 'application/json'
                 },
                 timeout: 8000
             });
-            return r.data?.content?.[0]?.text || null;
+            return r.data?.choices?.[0]?.message?.content || null;
         } catch(e) {
             console.log('[CEREBRO-DELIVERY] Erro IA:', e.message);
             return null;
