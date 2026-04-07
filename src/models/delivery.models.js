@@ -104,6 +104,25 @@ const PedidoDeliverySchema = new mongoose.Schema({
         data: { type: Date, default: Date.now }
     }],
     
+    // Origem do pedido
+    origemPedido: { type: String, enum: ['whatsapp', 'caixa', 'app'], default: 'whatsapp' },
+    
+    // Mesa (para pedidos presenciais)
+    tipoLocal: { type: String, enum: ['mesa', 'balcao', 'delivery', 'retirada'], default: 'delivery' },
+    numeroMesa: { type: Number },
+    nomeComanda: String, // identificador da comanda se não tiver número
+    
+    // Pagamento parcial / fechamento
+    pago: { type: Boolean, default: false },
+    dataPagamento: Date,
+    formasPagamento: [{ // múltiplas formas de pagamento
+        forma: { type: String, enum: ['dinheiro', 'pix', 'cartao_debito', 'cartao_credito'] },
+        valor: Number,
+        data: { type: Date, default: Date.now }
+    }],
+    totalPago: { type: Number, default: 0 },
+    troco: { type: Number, default: 0 },
+    
     // Observação geral
     observacao: String
 }, { timestamps: true });

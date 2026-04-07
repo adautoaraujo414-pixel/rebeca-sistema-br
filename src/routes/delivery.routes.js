@@ -669,3 +669,82 @@ router.post('/cardapio-hoje/enviar', authDelivery, async (req, res) => {
         res.json({ sucesso: true, enviados, totalAssinantes: assinantes.length });
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
+
+// ========== CAIXA ==========
+
+// Criar pedido manual pelo caixa
+router.post('/caixa/pedido', authDelivery, async (req, res) => {
+    try {
+        const { clienteNome, clienteTelefone, itens, tipoLocal, numeroMesa, 
+                nomeComanda, observacao, formaPagamento, subtotal, total, taxaEntrega } = req.body;
+        
+        const pedido = new PedidoDelivery({
+            adminId: req.adminId,
+            clienteNome: clienteNome || 'Cliente Balcão',
+            clienteTelefone: clienteTelefone || '0000000000',
+            itens,
+            tipoLocal: tipoLocal || 'balcao',
+            numeroMesa,
+            nomeComanda,
+            observacao,
+            origemPedido: 'caixa',
+            formaPagamento: formaPagamento || 'na_entrega',
+            subtotal: subtotal || 0,
+            total: total || 0,
+            taxaEntrega: taxaEntrega || 0,
+            status: 'confirmado',
+            tipoEntrega: tipoLocal === 'delivery' ? 'delivery' : 'retirada'
+        });
+        
+        await pedido.save();
+        res.json({ sucesso: true, pedido });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// Buscar pedidos ativos do caixa (mesa + balcão + delivery pendente)
+router.get('/caixa/pedidos', authDelivery, async (req, res) => {
+    try {
+        const pedidos = await PedidoDelivery.find({
+            adminId: req.adminId,
+            status: { $nin: ['entregue', 'cancelado'] },
+            pago: { $ne: true }
+        }).sort({ createdAt: -1 });
+        res.json(pedidos);
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// Registrar pagamento (total ou parcial)
+router.post('/caixa/pedido/:id/pagar', authDelivery, async (req, res) => {
+    try {
+        const { formas, total } = req.body; // formas: [{forma, valor}]
+        const pedido = await PedidoDelivery.findOne({ _id: req.params.id, adminId: req.adminId });
+        if (!pedido) return res.status(404).json({ erro: 'Pedido não encontrado' });
+        
+        pedido.formasPagamento = formas;
+        pedido.totalPago = formas.reduce((s, f) => s + f.valor, 0);
+        pedido.troco = Math.max(0, pedido.totalPago - pedido.total);
+        pedido.pago = true;
+        pedido.dataPagamento = new Date();
+        pedido.status = 'entregue';
+        pedido.dataEntregue = new Date();
+        
+        await pedido.save();
+        res.json({ sucesso: true, troco: pedido.troco, pedido });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// Adicionar item a pedido existente (comanda aberta)
+router.post('/caixa/pedido/:id/item', authDelivery, async (req, res) => {
+    try {
+        const { item } = req.body;
+        const pedido = await PedidoDelivery.findOne({ _id: req.params.id, adminId: req.adminId });
+        if (!pedido) return res.status(404).json({ erro: 'Pedido não encontrado' });
+        
+        pedido.itens.push(item);
+        pedido.subtotal = pedido.itens.reduce((s, i) => s + (i.subtotal || 0), 0);
+        pedido.total = pedido.subtotal + (pedido.taxaEntrega || 0) - (pedido.desconto || 0);
+        
+        await pedido.save();
+        res.json({ sucesso: true, pedido });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
