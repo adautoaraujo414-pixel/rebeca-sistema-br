@@ -53,11 +53,11 @@ const RaciocinioService = {
             // AMBÍGUO — usar Claude para classificar com precisão
             // Claude só classifica o tipo, nunca gera resposta ao cliente
             try {
-                const anthropicKey = process.env.ANTHROPIC_API_KEY;
+                const anthropicKey = process.env.OPENAI_API_KEY;
                 if (!anthropicKey) throw new Error('sem chave');
                 const axios = require('axios');
-                const resp = await axios.post('https://api.anthropic.com/v1/messages', {
-                    model: 'claude-haiku-4-5-20251001',
+                const resp = await axios.post('https://api.openai.com/v1/chat/completions', {
+                    model: 'gpt-4o-mini',
                     max_tokens: 80,
                     messages: [{
                         role: 'user',
@@ -74,14 +74,13 @@ Texto: "${texto.replace(/"/g, "'")}"`
                     }]
                 }, {
                     headers: {
-                        'x-api-key': anthropicKey,
-                        'anthropic-version': '2023-06-01',
+                        'Authorization': 'Bearer ' + anthropicKey,
                         'content-type': 'application/json'
                     },
                     timeout: 4000
                 });
 
-                const raw = resp.data?.content?.[0]?.text?.trim();
+                const raw = resp.data?.choices?.[0]?.message?.content?.trim();
                 const json = JSON.parse(raw.replace(/```json|```/g, '').trim());
                 if (json.tipo && ['ponto_referencia','endereco_parcial','texto_invalido','endereco_outro_formato'].includes(json.tipo)) {
                     return { tipo: json.tipo, confianca: 0.85, enderecoLimpo: json.enderecoLimpo || texto };
@@ -190,12 +189,12 @@ Texto: "${texto.replace(/"/g, "'")}"`
      */
     async extrairPontoReferencia(mensagem) {
         try {
-            const anthropicKey = process.env.ANTHROPIC_API_KEY;
+            const anthropicKey = process.env.OPENAI_API_KEY;
             if (!anthropicKey) throw new Error('sem chave');
 
             const axios = require('axios');
-            const resp = await axios.post('https://api.anthropic.com/v1/messages', {
-                model: 'claude-haiku-4-5-20251001',
+            const resp = await axios.post('https://api.openai.com/v1/chat/completions', {
+                model: 'gpt-4o-mini',
                 max_tokens: 60,
                 messages: [{
                     role: 'user',
@@ -212,14 +211,13 @@ Mensagem: "${mensagem.replace(/"/g, "'")}"`
                 }]
             }, {
                 headers: {
-                    'x-api-key': anthropicKey,
-                    'anthropic-version': '2023-06-01',
+                    'Authorization': 'Bearer ' + anthropicKey,
                     'content-type': 'application/json'
                 },
                 timeout: 4000
             });
 
-            const resultado = resp.data?.content?.[0]?.text?.trim();
+            const resultado = resp.data?.choices?.[0]?.message?.content?.trim();
             if (resultado && resultado.length > 1 && resultado.length < 80) {
                 return resultado;
             }
