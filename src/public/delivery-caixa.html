@@ -345,8 +345,16 @@ async function iniciarApp(admin) {
   document.getElementById('login-screen').style.display = 'none';
   const app = document.getElementById('app');
   app.style.display = 'flex';
-  if(admin?.nomeComercio || admin?.nomeRestaurante)
-    document.getElementById('nome-restaurante').textContent = admin.nomeComercio || admin.nomeRestaurante || 'Delivery';
+  // Buscar nome do restaurante da config
+  try {
+    const rc = await fetch('/api/delivery/config', {headers:{'Authorization':'Bearer '+token}});
+    const dc = await rc.json();
+    if(dc?.nomeRestaurante) document.getElementById('nome-restaurante').textContent = dc.nomeRestaurante;
+    else if(admin?.nomeComercio || admin?.nomeRestaurante)
+      document.getElementById('nome-restaurante').textContent = admin.nomeComercio || admin.nomeRestaurante || 'Delivery';
+  } catch(e) {
+    if(admin?.nomeComercio) document.getElementById('nome-restaurante').textContent = admin.nomeComercio;
+  }
   await carregarCardapio();
   await carregarPedidos();
   await carregarStats();
@@ -361,9 +369,11 @@ async function carregarCardapio() {
       fetch('/api/delivery/categorias', {headers:{'Authorization':'Bearer '+token}}),
       fetch('/api/delivery/cardapio', {headers:{'Authorization':'Bearer '+token}})
     ]);
-    categorias = await rCats.json();
+    const catsRaw = await rCats.json();
     const itensRaw = await rItens.json();
-    // itens pode vir com populate ou não
+    // GET /categorias retorna array direto
+    categorias = Array.isArray(catsRaw) ? catsRaw : (catsRaw.categorias || []);
+    // GET /cardapio retorna array de itens com populate (categoriaId como objeto)
     itensTodos = Array.isArray(itensRaw) ? itensRaw : (itensRaw.itens || []);
     renderCategorias();
     renderItens();
@@ -395,7 +405,14 @@ function buscarItem(q) {
 function getCatId(item) {
   if(!item.categoriaId) return null;
   if(typeof item.categoriaId === 'string') return item.categoriaId;
-  return item.categoriaId._id || item.categoriaId.toString();
+  if(typeof item.categoriaId === 'object') return (item.categoriaId._id || item.categoriaId).toString();
+  return item.categoriaId.toString();
+}
+
+function matchCat(item, catId) {
+  if(!catId) return true;
+  const itemCatId = getCatId(item);
+  return itemCatId === catId || itemCatId === catId.toString();
 }
 
 function renderItens(busca = '') {
@@ -411,7 +428,7 @@ function renderItens(busca = '') {
   }
 
   if(catAtiva) {
-    itens = itens.filter(i => getCatId(i) === catAtiva);
+    itens = itens.filter(i => matchCat(i, catAtiva));
     container.innerHTML = itens.length
       ? '<div class="items-grid">' + itens.map(itemCard).join('') + '</div>'
       : '<div class="empty">Nenhum item nesta categoria</div>';
@@ -426,7 +443,7 @@ function renderItens(busca = '') {
 
   let html = '';
   categorias.forEach(cat => {
-    const catItens = itens.filter(i => getCatId(i) === cat._id.toString());
+    const catItens = itens.filter(i => matchCat(i, cat._id.toString()));
     if(!catItens.length) return;
     html += `<div class="cat-section">
       <div class="cat-label">${cat.emoji||'🍽️'} ${cat.nome}</div>
@@ -434,7 +451,7 @@ function renderItens(busca = '') {
     </div>`;
   });
   // Itens sem categoria
-  const semCat = itens.filter(i => !getCatId(i));
+  const semCat = itens.filter(i => !getCatId(i) || !categorias.find(c => matchCat(i, c._id.toString())));
   if(semCat.length) html += `<div class="items-grid">${semCat.map(itemCard).join('')}</div>`;
   container.innerHTML = html || '<div class="empty">Nenhum item disponível</div>';
 }
