@@ -9,6 +9,7 @@ const EvolutionMultiService = {
         try {
             const admin = await Admin.findById(adminId);
             if (!admin) throw new Error('Admin nao encontrado');
+            // Admin delivery é válido
             const nomeInstancia = 'rebeca_' + nomeEmpresa.toLowerCase().replace(/[^a-z0-9]/g, '_') + '_' + Date.now();
             let evolutionResponse = null;
             try {
