@@ -50,6 +50,46 @@ router.delete('/categorias/:id', authDelivery, async (req, res) => {
 });
 
 // ========== ITENS DO CARDÁPIO ==========
+
+// ========== GERAR IMAGEM DO ITEM VIA DALL-E (1x por item) ==========
+async function gerarImagemItem(nome, descricao) {
+    try {
+        const apiKey = process.env.OPENAI_API_KEY;
+        if (!apiKey) return null;
+        const axios = require('axios');
+
+        // Prompt profissional: fundo amadeirado, item centralizado, sem distorção
+        const prompt = `Professional food photography of "${nome}"` +
+            (descricao ? `, with ${descricao}` : '') +
+            `. Place the food centered on a beautiful warm wooden rustic table surface, ` +
+            `shot from slightly above (45 degree angle), soft natural lighting from the side, ` +
+            `shallow depth of field, bokeh background, appetizing and vibrant colors, ` +
+            `no text, no watermark, no distortion, ultra realistic, 4K quality, ` +
+            `restaurant menu style photo, food styled beautifully.`;
+
+        console.log('[IMG-ITEM] Gerando imagem para:', nome);
+
+        const resp = await axios.post('https://api.openai.com/v1/images/generations', {
+            model: 'dall-e-3',
+            prompt: prompt,
+            n: 1,
+            size: '1024x1024',
+            quality: 'standard',
+            style: 'natural'
+        }, {
+            headers: { 'Authorization': 'Bearer ' + apiKey, 'Content-Type': 'application/json' },
+            timeout: 60000
+        });
+
+        const url = resp.data.data[0]?.url;
+        console.log('[IMG-ITEM] Imagem gerada:', url ? 'OK' : 'FALHOU');
+        return url || null;
+    } catch(e) {
+        console.log('[IMG-ITEM] Erro ao gerar imagem:', e.message);
+        return null;
+    }
+}
+
 router.get('/cardapio', authDelivery, async (req, res) => {
     try {
         const itens = await ItemCardapio.find({ adminId: req.adminId, ativo: true }).sort({ ordem: 1 }).populate('categoriaId', 'nome emoji');
@@ -59,14 +99,41 @@ router.get('/cardapio', authDelivery, async (req, res) => {
 
 router.post('/cardapio', authDelivery, async (req, res) => {
     try {
-        const item = await ItemCardapio.create({ ...req.body, adminId: req.adminId });
+        const dados = { ...req.body, adminId: req.adminId };
+        // Gerar imagem automaticamente se não foi enviada
+        if (!dados.imagem && (dados.nome || dados.descricao)) {
+            const urlImagem = await gerarImagemItem(dados.nome || '', dados.descricao || '');
+            if (urlImagem) dados.imagem = urlImagem;
+        }
+        const item = await ItemCardapio.create(dados);
         res.json(item);
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
 router.put('/cardapio/:id', authDelivery, async (req, res) => {
     try {
-        const item = await ItemCardapio.findOneAndUpdate({ _id: req.params.id, adminId: req.adminId }, req.body, { new: true });
+        const dados = { ...req.body };
+        // Regerar imagem se nome ou descrição foi alterado (ou se pediu explicitamente)
+        const itemAtual = await ItemCardapio.findOne({ _id: req.params.id, adminId: req.adminId }).lean();
+        const nomeChanged = dados.nome && itemAtual && dados.nome !== itemAtual.nome;
+        const descChanged = dados.descricao && itemAtual && dados.descricao !== itemAtual.descricao;
+        const semImagem = !itemAtual?.imagem && (dados.nome || dados.descricao);
+        const regerarExplicito = dados.regenerarImagem === true;
+
+        if (regerarExplicito || nomeChanged || descChanged || semImagem) {
+            const nomeFinal = dados.nome || itemAtual?.nome || '';
+            const descFinal = dados.descricao || itemAtual?.descricao || '';
+            console.log('[IMG-ITEM] Regenerando imagem por mudança em:', nomeFinal);
+            const urlImagem = await gerarImagemItem(nomeFinal, descFinal);
+            if (urlImagem) dados.imagem = urlImagem;
+        }
+        delete dados.regenerarImagem;
+
+        const item = await ItemCardapio.findOneAndUpdate(
+            { _id: req.params.id, adminId: req.adminId },
+            dados,
+            { new: true }
+        );
         res.json(item);
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
