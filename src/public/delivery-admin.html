@@ -151,12 +151,22 @@
             <div class="content">
                 <!-- DASHBOARD -->
                 <div id="page-dashboard" class="page active">
-                    <h2 style="margin-bottom:20px;">📊 Dashboard</h2>
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px">
+                        <h2>📊 Dashboard</h2>
+                        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                            <div id="waStatusBadge" style="padding:5px 12px;border-radius:20px;font-size:12px;font-weight:700;background:#333;color:#aaa">📱 WhatsApp: verificando...</div>
+                            <button class="btn" onclick="exportarPedidosCSV()" style="background:#252542;color:#fff;padding:6px 12px;font-size:12px;">📥 Exportar CSV</button>
+                            <button class="btn" onclick="toggleSomNotif()" id="btnSom" style="background:#252542;color:#fff;padding:6px 12px;font-size:12px;">🔔 Som: ON</button>
+                        </div>
+                    </div>
                     <div class="stats-grid">
                         <div class="stat-card"><div class="valor" id="statPedidosHoje">0</div><div class="label">Pedidos Hoje</div></div>
                         <div class="stat-card"><div class="valor" id="statPedidosAtivos">0</div><div class="label">Pedidos Ativos</div></div>
                         <div class="stat-card"><div class="valor" id="statFaturamento">R$ 0</div><div class="label">Faturamento Semana</div></div>
                         <div class="stat-card"><div class="valor" id="statPedidosSemana">0</div><div class="label">Pedidos Semana</div></div>
+                    </div>
+                    <div id="alertaNovoPedido" style="display:none;background:linear-gradient(135deg,#f97316,#ea580c);color:#fff;padding:14px 20px;border-radius:12px;margin-bottom:16px;font-weight:700;font-size:15px;animation:pulse 1s infinite;cursor:pointer" onclick="document.getElementById('alertaNovoPedido').style.display='none'">
+                        🔔 Novo pedido recebido! Clique para fechar.
                     </div>
                     <div class="panel">
                         <h3>📋 Pedidos Ativos</h3>
@@ -422,6 +432,11 @@
 
 
         // AUTO-LOGIN — valida token no servidor antes de mostrar dashboard
+        // Pedir permissão de notificação
+        if(Notification.permission === 'default') Notification.requestPermission();
+        // Inicializar som
+        document.getElementById('btnSom') && (document.getElementById('btnSom').textContent = '🔔 Som: ' + (_somNotifAtivo ? 'ON' : 'OFF'));
+
         async function tentarAutoLogin() {
             if (!token) return;
             const lc = document.getElementById('loginContainer');
@@ -505,6 +520,7 @@
                 if (page === 'entregadores') carregarEntregadores();
                 if (page === 'cardapio') carregarCardapio();
                 if (page === 'config') carregarConfig();
+                if (page === 'dashboard') { verificarStatusWADashboard(); }
                 if (page === 'assinantes') carregarAssinantes();
                 if (page === 'cardapio-dia') carregarCardapioDia();
                 if (page === 'upload-cardapio') { /* nada */ }
@@ -869,6 +885,86 @@
             }
         }
         let instanciaDeliveryId = null; // carregado após login em carregarInstanciaDelivery()
+        let _somNotifAtivo = localStorage.getItem('somNotif') !== 'off';
+        let _ultimosPedidosIds = new Set();
+        let _audioCtx = null;
+
+        // Som de notificação (Web Audio API — sem arquivo externo)
+        function tocarSomNotif() {
+            if(!_somNotifAtivo) return;
+            try {
+                if(!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = _audioCtx.createOscillator();
+                const gain = _audioCtx.createGain();
+                osc.connect(gain); gain.connect(_audioCtx.destination);
+                osc.frequency.setValueAtTime(880, _audioCtx.currentTime);
+                osc.frequency.setValueAtTime(660, _audioCtx.currentTime + 0.1);
+                osc.frequency.setValueAtTime(880, _audioCtx.currentTime + 0.2);
+                gain.gain.setValueAtTime(0.4, _audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, _audioCtx.currentTime + 0.4);
+                osc.start(_audioCtx.currentTime);
+                osc.stop(_audioCtx.currentTime + 0.4);
+            } catch(e) {}
+        }
+
+        function toggleSomNotif() {
+            _somNotifAtivo = !_somNotifAtivo;
+            localStorage.setItem('somNotif', _somNotifAtivo ? 'on' : 'off');
+            document.getElementById('btnSom').textContent = '🔔 Som: ' + (_somNotifAtivo ? 'ON' : 'OFF');
+            if(_somNotifAtivo) tocarSomNotif();
+        }
+
+        // Verificar status WhatsApp no dashboard
+        async function verificarStatusWADashboard() {
+            try {
+                const instId = instanciaDeliveryId || localStorage.getItem('instanciaDeliveryId_' + (adminData?._id || ''));
+                if(!instId) { document.getElementById('waStatusBadge').textContent = '📱 WhatsApp: não conectado'; return; }
+                const r = await fetch('/api/evolution/instancia/' + instId + '/status', {headers:{'Authorization':'Bearer '+token}});
+                const d = await r.json();
+                const conectado = d.status === 'conectado' || d.state === 'open' || d.status === 'open';
+                const badge = document.getElementById('waStatusBadge');
+                badge.textContent = conectado ? '📱 WhatsApp: ✅ Conectado' : '📱 WhatsApp: ❌ Desconectado';
+                badge.style.background = conectado ? 'rgba(34,197,94,.2)' : 'rgba(239,68,68,.2)';
+                badge.style.color = conectado ? '#4ade80' : '#f87171';
+            } catch(e) {}
+        }
+
+        // Exportar pedidos do dia em CSV
+        async function exportarPedidosCSV() {
+            try {
+                const r = await api('/pedidos?status=');
+                const pedidos = await r.json();
+                const linhas = [['#','Cliente','Telefone','Itens','Total','Status','Origem','Data']];
+                pedidos.forEach(p => {
+                    const itens = (p.itens||[]).map(i=>i.quantidade+'x '+i.nome).join(' | ');
+                    const data = new Date(p.createdAt).toLocaleString('pt-BR');
+                    linhas.push([p.numero||'',p.clienteNome||'',p.clienteTelefone||'',itens,
+                        'R$ '+(p.total||0).toFixed(2),p.status||'',p.origemPedido||'',data]);
+                });
+                const csv = linhas.map(l => l.map(v => '"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
+                const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url; a.download = 'pedidos_'+new Date().toISOString().slice(0,10)+'.csv';
+                a.click(); URL.revokeObjectURL(url);
+            } catch(e) { alert('Erro ao exportar: '+e.message); }
+        }
+
+        // Detectar novo pedido e notificar
+        function verificarNovosPedidos(pedidosAtivos) {
+            const novos = pedidosAtivos.filter(p => p.status === 'novo' && !_ultimosPedidosIds.has(p._id));
+            if(novos.length > 0) {
+                tocarSomNotif();
+                const alerta = document.getElementById('alertaNovoPedido');
+                alerta.textContent = '🔔 ' + novos.length + ' novo(s) pedido(s) recebido(s)! Clique para fechar.';
+                alerta.style.display = 'block';
+                // Notificação do navegador
+                if(Notification.permission === 'granted') {
+                    new Notification('🍔 Novo Pedido!', {body: novos.map(p=>'#'+p.numero+' - '+p.clienteNome).join('\n'), icon:'/icons/icon-192.png'});
+                }
+            }
+            pedidosAtivos.forEach(p => _ultimosPedidosIds.add(p._id));
+        }
 
         // Abrir cardápio digital
         function abrirCardapioDigital() {
