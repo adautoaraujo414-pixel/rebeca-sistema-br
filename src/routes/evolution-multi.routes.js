@@ -12,6 +12,7 @@ const OpenAIRebecaService = require('../services/openai-rebeca.service');
 router.post('/instancia', async (req, res) => {
     try {
         const { adminId, nomeEmpresa } = req.body;
+        console.log('[INSTANCIA] adminId recebido:', adminId, '| nomeEmpresa:', nomeEmpresa);
         if (!adminId || !nomeEmpresa) return res.status(400).json({ erro: 'adminId e nomeEmpresa obrigatorios' });
         const resultado = await EvolutionMultiService.criarInstancia(adminId, nomeEmpresa);
         res.json(resultado);
