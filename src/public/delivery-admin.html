@@ -461,7 +461,16 @@
             } catch(e) { document.getElementById('loginErro').textContent = 'Erro de conexão'; }
         }
 
-        function logout() { localStorage.removeItem('delivery_token'); location.href = '/rebeca-delivery'; }
+        function logout() {
+            localStorage.removeItem('delivery_token');
+            localStorage.removeItem('delivery_adminId');
+            // Limpar cache do SW e forçar navegação sem cache
+            if ('caches' in window) {
+                caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
+            }
+            // Forçar reload da landing sem cache
+            window.location.replace('/rebeca-delivery?t=' + Date.now());
+        }
 
         function api(path, opts = {}) {
             return fetch('/api/delivery' + path, { ...opts, headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', ...opts.headers } });
