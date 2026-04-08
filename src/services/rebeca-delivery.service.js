@@ -509,7 +509,15 @@ class RebecaDeliveryService {
             var pedido = await PedidoDelivery.findById(pedidoId);
             var inst = await InstanciaWhatsapp.findOne({ adminId: pedido.adminId, status: { $in: ['conectado','open','connected'] } });
             var Evo = require('./evolution-multi.service');
-            await Evo.enviarMensagem(inst._id, pedido.clienteTelefone, '*Pedido #' + pedido.numero + ' entregue!*\n\nObrigado pela preferencia!\n\nAvalie de 1 a 5!');
+            var nome = pedido.clienteNome ? pedido.clienteNome.split(' ')[0] : '';
+            var saudacao = nome ? 'Oi ' + nome + '! ' : '';
+            var msgs = [
+                saudacao + 'Seu pedido #' + pedido.numero + ' foi entregue! 🎉\n\nBom apetite! 🍽️ Espero que goste muito! 😋\n\nQue nota você dá pra gente? De *1 a 5* ⭐',
+                saudacao + 'Chegou fresquinho! 🔥 Pedido #' + pedido.numero + ' entregue com sucesso!\n\nBom apetite! 😊 Obrigado pela preferência! 💛\n\nDe *1 a 5*, qual nota você dá?',
+                saudacao + 'Pedido #' + pedido.numero + ' entregue! ✅\n\nEspero que esteja tudo delicioso! Bom apetite! 🍽️💛\n\nNos conta: de *1 a 5*, como foi?'
+            ];
+            var msg = msgs[Math.floor(Math.random() * msgs.length)];
+            await Evo.enviarMensagem(inst._id, pedido.clienteTelefone, msg);
             var conv = this.obterConversa(pedido.clienteTelefone, pedido.adminId.toString());
             conv.etapa = 'avaliar';
             conv.dados = { pedidoId: pedido._id };
