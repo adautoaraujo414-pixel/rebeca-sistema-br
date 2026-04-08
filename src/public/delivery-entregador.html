@@ -243,17 +243,23 @@ function renderFila(ls){
     h+='<div class="ordem-badge">📍<select onchange="salvarOrdem(\''+p._id+'\',this.value)">';
     for(var n=1;n<=10;n++)h+='<option value="'+n+'"'+(p.ordemEntrega==n?' selected':'')+'>'+n+'ª</option>';
     h+='</select></div>';
+    // Destacar primeiro da fila
+    var isPrimeiro=ls.indexOf(p)===0&&F==='fila';
+    if(isPrimeiro)h+='<div style="background:#f97316;color:#fff;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;margin-bottom:6px;">⭐ PRÓXIMA ENTREGA</div>';
     h+='<div class="card-head"><span class="num">#'+(p.numero||'?')+'</span>';
     h+='<span class="tag '+(p.status==='pronto'?'tag-pronto':'tag-entrega')+'">'+(p.status==='pronto'?'PRONTO':'SAINDO')+'</span></div>';
     if(urgente)h+='<div class="urgente">🚨 URGENTE!</div>';
+    // Observação DESTACADA
+    var obsGeral=p.observacao||p.observacoes||'';
+    if(obsGeral)h+='<div style="background:#7c2d12;border:2px solid #f97316;padding:8px;border-radius:8px;margin-bottom:6px;font-size:13px;font-weight:700;color:#fed7aa;">⚠️ OBS: '+obsGeral+'</div>';
     h+='<div class="info-box">';
-    h+='<div class="info-row"><span class="info-icon">📍</span><span class="info-text"><span class="info-label">Endereço</span>'+(p.enderecoEntrega||'Retirada')+'</span></div>';
-    if(p.observacaoEntrega)h+='<div class="info-row"><span class="info-icon">📝</span><span class="info-text"><span class="info-label">Obs</span>'+p.observacaoEntrega+'</span></div>';
+    // Endereço destacado
+    h+='<div class="info-row"><span class="info-icon">📍</span><span class="info-text" style="font-weight:700;color:#93c5fd;font-size:14px;"><span class="info-label">Endereço</span>'+(p.enderecoEntrega||'Retirada/Balcão')+'</span></div>';
+    if(p.observacaoEntrega)h+='<div class="info-row"><span class="info-icon">🏠</span><span class="info-text" style="color:#fbbf24;font-weight:600;"><span class="info-label">Complemento</span>'+p.observacaoEntrega+'</span></div>';
     h+='<div class="info-row"><span class="info-icon">👤</span><span class="info-text"><span class="info-label">Cliente</span>'+(p.clienteNome||'—')+' '+(p.clienteTelefone||'')+'</span></div>';
     h+='</div>';
     if(itensTexto)h+='<div class="itens-resumo">'+itensTexto+'</div>';
-    if(temBebida)h+='<div class="bebida">🧊 Tem bebida</div>';
-    if(p.observacoes&&p.observacoes!==p.observacaoEntrega)h+='<div class="obs">📝 '+p.observacoes+'</div>';
+    if(temBebida)h+='<div class="bebida">🧊 ⚠️ TEM BEBIDA — SEPARAR GELADA!</div>';
     h+='<div class="pgto-row"><span>'+(pgtoMap[p.formaPagamento]||'—')+'</span><span class="total">R$ '+(p.total||p.valorTotal||0).toFixed(2).replace('.',',')+'</span></div>';
     if(p.formaPagamento==='dinheiro'&&p.trocoPara)h+='<div><span class="troco">TROCO P/ R$ '+Number(p.trocoPara).toFixed(2).replace('.',',')+'</span></div>';
     h+='<div class="btns">';
