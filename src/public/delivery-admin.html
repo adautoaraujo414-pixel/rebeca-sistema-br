@@ -394,6 +394,12 @@
                 <div class="form-group"><label>Tempo Preparo (min)</label><input type="number" id="itemTempo" value="20"></div>
             </div>
             <div class="form-group"><label><input type="checkbox" id="itemDestaque"> Destaque</label></div>
+            <div class="form-group" id="itemImagemBox" style="display:none">
+                <label>🖼️ Imagem atual</label>
+                <img id="itemImagemPreview" src="" style="width:100%;height:140px;object-fit:cover;border-radius:8px;margin-top:6px;">
+                <button class="btn" id="btnRegerarImg" onclick="regerarImagemItem()" style="width:100%;margin-top:8px;background:#7c3aed;color:#fff;">🎨 Regerar Imagem com IA</button>
+                <p id="regerarStatus" style="font-size:12px;color:#aaa;margin-top:6px;text-align:center;"></p>
+            </div>
             <button class="btn btn-primary" style="width:100%;margin-top:10px;" onclick="salvarItem()">💾 Salvar</button>
         </div>
     </div>
@@ -637,6 +643,33 @@
             document.getElementById('modalItem').classList.add('active');
         }
 
+        function regerarImagemItem() {
+            const id = document.getElementById('itemEditId').value;
+            const nome = document.getElementById('itemNome').value;
+            const desc = document.getElementById('itemDesc').value;
+            if(!id) { alert('Salve o item primeiro!'); return; }
+            if(!nome) { alert('Preencha o nome!'); return; }
+            document.getElementById('regerarStatus').textContent = '⏳ Gerando imagem... (pode levar até 30s)';
+            document.getElementById('btnRegerarImg').disabled = true;
+            api('/cardapio/' + id, {
+                method: 'PUT',
+                body: JSON.stringify({ nome, descricao: desc, regenerarImagem: true })
+            }).then(r => r.json()).then(d => {
+                if(d.imagem) {
+                    document.getElementById('itemImagemPreview').src = d.imagem;
+                    document.getElementById('itemImagemBox').style.display = 'block';
+                    document.getElementById('regerarStatus').textContent = '✅ Imagem gerada com sucesso!';
+                } else {
+                    document.getElementById('regerarStatus').textContent = '❌ Erro ao gerar imagem';
+                }
+                document.getElementById('btnRegerarImg').disabled = false;
+                carregarCardapio();
+            }).catch(() => {
+                document.getElementById('regerarStatus').textContent = '❌ Erro de conexão';
+                document.getElementById('btnRegerarImg').disabled = false;
+            });
+        }
+
         function fecharModalItem() { document.getElementById('modalItem').classList.remove('active'); }
 
         async function salvarItem() {
@@ -836,6 +869,18 @@
             }
         }
         let instanciaDeliveryId = null; // carregado após login em carregarInstanciaDelivery()
+
+        // Abrir cardápio digital
+        function abrirCardapioDigital() {
+            if(!adminData?._id) { alert('Faça login primeiro'); return; }
+            const url = window.location.origin + '/delivery-cardapio/' + adminData._id;
+            // Copiar link para clipboard
+            navigator.clipboard.writeText(url).then(() => {
+                alert('🔗 Link copiado!\n\n' + url + '\n\nEnvie este link para seus clientes pelo WhatsApp!');
+            }).catch(() => {
+                window.open(url, '_blank');
+            });
+        }
 
         async function conectarWhatsappDelivery() {
             const box = document.getElementById('qrDeliveryBox');
