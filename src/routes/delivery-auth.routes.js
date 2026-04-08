@@ -55,13 +55,12 @@ router.post('/login', async (req, res) => {
         }
         if (!admin) return res.status(401).json({ erro: 'E-mail não encontrado' });
 
-        // Verificar senha
+        // Verificar senha (bcrypt ou texto puro)
         let ok = false;
-        if (isAdminPrincipal) {
-            // Admin principal usa bcrypt também
+        if (admin.senha && admin.senha.startsWith('$2')) {
             ok = await bcrypt.compare(senha, admin.senha);
         } else {
-            ok = await bcrypt.compare(senha, admin.senha);
+            ok = (senha === admin.senha);
         }
         if (!ok) return res.status(401).json({ erro: 'Senha incorreta' });
 
