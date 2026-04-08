@@ -72,9 +72,7 @@ class RebecaDeliveryService {
                 return '❌ Tudo bem! Cancelei aqui. Quando quiser pedir é só chamar! 😊';
             }
 
-            // ===== REATIVAÇÃO: processar resposta antes do fluxo normal =====
-            const _reativResp = await RebecaDeliveryReativacao.processarResposta(telefone, adminId, instanciaId, msgTexto);
-            if (_reativResp === '__REATIVACAO__') return null; // Rebeca já respondeu diretamente
+            // ===== REATIVAÇÃO: bloco removido (serviço não importado) =====
 
             // ===== INTERCEPTAR RESPOSTA DO CARDÁPIO DO DIA =====
             if (CardapioDiaService.isRespostaCardapio(adminId)) {
@@ -547,28 +545,7 @@ class RebecaDeliveryService {
         }
     }
 
-    async _montarCardapioCompletoLEGACY(adminId) {
-        try {
-            const [categorias, config] = await Promise.all([
-                CategoriaCardapio.find({ adminId, ativo: true }).lean(),
-                ConfigDelivery.findOne({ adminId }).lean()
-            ]);
-            const nomeRest = config?.nomeRestaurante || 'Cardápio';
-            let cardapio = '📋 *' + nomeRest.toUpperCase() + '*\n\n';
-            
-            for (let cat of categorias) {
-                cardapio += '🔸 *' + cat.nome + '*\n';
-                const itens = await ItemCardapio.find({ adminId, categoriaId: cat._id, ativo: true }).lean();
-                for (let item of itens) {
-                    cardapio += '• ' + item.nome + ' - R$ ' + item.preco.toFixed(2) + '\n';
-                    if (item.descricao) cardapio += '   _' + item.descricao + '_\n';
-                }
-                cardapio += '\n';
-            }
-        } catch (error) {
-            return '📋 *CARDAPIO*\n\nOps, problema ao carregar. Me diz o que quer! 😊';
-        }
-    }
+
 
     _montarResumoItens(conversa) {
         let resumo = '🛒 *SEU PEDIDO:*\n\n';
@@ -583,11 +560,17 @@ class RebecaDeliveryService {
     }
 
     _montarOpcoesPagamento(config) {
-        // Usar formas de pagamento cadastradas pelo admin ou padrão
-        const formas = config?.formasPagamento || ['dinheiro', 'cartao', 'pix'];
-        const emojis = { dinheiro: '💵 *DINHEIRO*', cartao: '💳 *CARTÃO*', pix: '📱 *PIX*', credito: '💳 *CRÉDITO*', debito: '💳 *DÉBITO*' };
-        const lista = formas.map(f => '• ' + (emojis[f.toLowerCase()] || ('💳 *' + f.toUpperCase() + '*'))).join('\n');
-        return '💳 *Como vai pagar?*\n\n' + lista;
+        // Usar campos reais do ConfigDelivery
+        const formas = [];
+        if (config?.aceitaDinheiro !== false) formas.push('💵 *DINHEIRO*');
+        if (config?.aceitaCartao) formas.push('💳 *CARTÃO*');
+        if (config?.aceitaPix !== false) formas.push('📱 *PIX*');
+        if (formas.length === 0) formas.push('💵 *DINHEIRO*', '📱 *PIX*');
+        return this._escolher(null, null, [
+            '💳 *Como vai pagar?*\n\n' + formas.map(f => '• ' + f).join('\n'),
+            '💳 *Forma de pagamento?*\n\n' + formas.map(f => '• ' + f).join('\n'),
+            '💳 *Qual a forma de pagamento?*\n\n' + formas.map(f => '• ' + f).join('\n')
+        ].slice(0,1)[0]);
     }
 
     _montarResumoFinal(conversa) {
@@ -618,8 +601,11 @@ class RebecaDeliveryService {
                 + '💰 Total: *R$ ' + (pedido.valorTotal || pedido.total || 0).toFixed(2) + '*\n'
                 + (pedido.observacoes ? '📝 Obs: ' + pedido.observacoes + '\n' : '')
                 + '\n👨‍🍳 Acesse o painel para aceitar!';
-            const admin = await Admin.findById(pedido.adminId).lean();
-            if (admin && admin.telefone) {
+            // Buscar telefone do admin — pode ser AdminDelivery ou Admin
+            const { AdminDelivery } = require('../models/delivery.models');
+            let adminDoc = await AdminDelivery.findById(pedido.adminId).lean();
+            if (!adminDoc) adminDoc = await Admin.findById(pedido.adminId).lean();
+            if (adminDoc && adminDoc.telefone) {
                 await Evo.enviarMensagem(inst._id, admin.telefone, msg);
             }
             console.log('[DELIVERY-NOTIFY] Novo pedido notificado:', pedidoId);
