@@ -289,10 +289,18 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                             const mimeType = msg.message.audioMessage.mimetype || 'audio/ogg';
                             // Buscar tipoAdmin para rotear audio corretamente (delivery vs corrida)
                             let _tipoAdminAudio = 'corrida';
+                            // Checar se adminId é do AdminDelivery (isolamento)
                             try {
                                 const { Admin: _AdminAudio } = require('../models');
-                                const _adAudio = await _AdminAudio.findById(adminId).select('tipoAdmin').lean();
-                                if (_adAudio && _adAudio.tipoAdmin === 'delivery') _tipoAdminAudio = 'delivery';
+                                let _adAudio = await _AdminAudio.findById(adminId).select('tipoAdmin').lean();
+                                if (_adAudio && _adAudio.tipoAdmin === 'delivery') {
+                                    _tipoAdminAudio = 'delivery';
+                                } else if (!_adAudio) {
+                                    // Checar AdminDelivery
+                                    const { AdminDelivery: _AdDel } = require('../models/delivery.models');
+                                    const _adDel = await _AdDel.findById(adminId).lean();
+                                    if (_adDel) _tipoAdminAudio = 'delivery';
+                                }
                             } catch(_) {}
                             // Buscar conversa atual para contexto do audio
                             let conversaCtx = null;
@@ -547,7 +555,12 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                         try {
                             const contextoDb = { adminId: _entry.adminId, instanciaId: _entry.instanciaId };
                             const { Admin: AdminModel2 } = require('../models');
-                            const adminDoc2 = await AdminModel2.findById(_entry.adminId).select('tipoAdmin').lean();
+                            let adminDoc2 = await AdminModel2.findById(_entry.adminId).select('tipoAdmin').lean();
+                            if (!adminDoc2) {
+                                const { AdminDelivery: _AdDel2 } = require('../models/delivery.models');
+                                const _adDel2 = await _AdDel2.findById(_entry.adminId).lean();
+                                if (_adDel2) adminDoc2 = { tipoAdmin: 'delivery' };
+                            }
                             let respostaDb;
                             if (adminDoc2 && adminDoc2.tipoAdmin === 'delivery') {
                                 respostaDb = await RebecaDeliveryService.processarMensagem(telefone, _msgFinal, _entry.nome, contextoDb);
@@ -582,7 +595,13 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                     let resposta;
                     try {
                         const { Admin: AdminModel } = require('../models');
-                        const adminDoc = await AdminModel.findById(adminId).select('tipoAdmin').lean();
+                        const { AdminDelivery: AdminDeliveryModel } = require('../models/delivery.models');
+                        let adminDoc = await AdminModel.findById(adminId).select('tipoAdmin').lean();
+                        // Se não achou em Admin, checar AdminDelivery (isolamento delivery)
+                        if (!adminDoc) {
+                            const adDel = await AdminDeliveryModel.findById(adminId).lean();
+                            if (adDel) adminDoc = { tipoAdmin: 'delivery' };
+                        }
                         // Fallback inteligente de áudio por tipo
                         if (conteudo === '__AUDIO_SEM_TRANSCRICAO__') {
                             // Usar GPT para interpretar o contexto do cliente e gerar resposta natural
