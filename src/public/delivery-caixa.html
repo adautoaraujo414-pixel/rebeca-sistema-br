@@ -103,18 +103,33 @@ button{cursor:pointer;border:none;border-radius:8px;padding:10px 18px;font-size:
     </div>
   </header>
 
+  <!-- Stats do dia -->
+  <div id="stats-bar" style="background:#16213e;padding:10px 16px;display:flex;gap:12px;flex-wrap:wrap;border-bottom:1px solid #333;font-size:13px;">
+    <div style="display:flex;gap:6px;align-items:center;color:#f97316;">📦 Ativos: <strong id="s-ativos">0</strong></div>
+    <div style="display:flex;gap:6px;align-items:center;color:#22c55e;">✅ Entregues: <strong id="s-entregues">0</strong></div>
+    <div style="display:flex;gap:6px;align-items:center;color:#3b82f6;">📱 WhatsApp: <strong id="s-whats">0</strong></div>
+    <div style="display:flex;gap:6px;align-items:center;color:#f97316;">🧾 Caixa: <strong id="s-caixa">0</strong></div>
+    <div style="display:flex;gap:6px;align-items:center;color:#a78bfa;">⏱️ Previsão entrega: <strong id="s-prev">—</strong></div>
+    <div style="display:flex;gap:6px;align-items:center;color:#22c55e;">💰 Total dia: <strong id="s-total">R$ 0,00</strong></div>
+  </div>
   <div class="layout">
     <!-- Esquerda: Cardápio + Pedidos -->
     <div class="left-panel">
       <div class="tabs">
         <div class="tab active" onclick="mudarTab('cardapio',this)">🛒 Novo Pedido</div>
-        <div class="tab" onclick="mudarTab('pedidos',this)">📋 Pedidos Ativos <span id="badge-pedidos" style="background:#f97316;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px">0</span></div>
+        <div class="tab" onclick="mudarTab('pedidos',this)">📋 Ativos <span id="badge-pedidos" style="background:#f97316;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px">0</span></div>
+        <div class="tab" onclick="mudarTab('todos',this)">📊 Todos do Dia</div>
       </div>
 
       <!-- Tab Cardápio -->
       <div id="tab-cardapio">
         <div id="categorias-tabs" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px"></div>
         <div class="cardapio-grid" id="itens-grid"></div>
+      </div>
+
+      <!-- Tab Todos do Dia -->
+      <div id="tab-todos" style="display:none">
+        <div id="todos-lista"><div class="empty">Carregando...</div></div>
       </div>
 
       <!-- Tab Pedidos -->
@@ -224,7 +239,9 @@ async function iniciarApp(admin){
     document.getElementById('nome-restaurante').textContent=admin.nomeComercio||admin.nomeRestaurante||'Delivery';
   await carregarCardapio();
   await carregarPedidos();
+  await carregarStats();
   setInterval(carregarPedidos,15000);
+  setInterval(carregarStats,30000);
 }
 
 async function carregarCardapio(){
@@ -505,6 +522,58 @@ function mudarTab(tab,el){
   el.classList.add('active');
   document.getElementById('tab-cardapio').style.display=tab==='cardapio'?'block':'none';
   document.getElementById('tab-pedidos').style.display=tab==='pedidos'?'block':'none';
+}
+
+// ===== STATS =====
+async function carregarStats(){
+  try{
+    const r=await fetch('/api/delivery/caixa/stats',{headers:{'Authorization':'Bearer '+token}});
+    const d=await r.json();
+    document.getElementById('s-ativos').textContent=d.ativos||0;
+    document.getElementById('s-entregues').textContent=d.entreguesHoje||0;
+    document.getElementById('s-whats').textContent=d.doWhatsapp||0;
+    document.getElementById('s-caixa').textContent=d.doCaixa||0;
+    document.getElementById('s-prev').textContent=d.mediaEntregaMin?d.mediaEntregaMin+'min':'—';
+    document.getElementById('s-total').textContent=fmt(d.totalDia||0);
+  }catch(e){}
+}
+
+// ===== TODOS DO DIA =====
+async function carregarTodos(){
+  try{
+    const r=await fetch('/api/delivery/caixa/todos',{headers:{'Authorization':'Bearer '+token}});
+    const ps=await r.json();
+    const el=document.getElementById('todos-lista');
+    if(!ps.length){el.innerHTML='<div class="empty">Nenhum pedido hoje</div>';return;}
+    const statusLabel={novo:'🆕 Novo',confirmado:'✅ Confirmado',preparando:'🍳 Preparando',pronto:'🎉 Pronto',saiu_entrega:'🛵 A Caminho',entregue:'✅ Entregue',cancelado:'❌ Cancelado'};
+    const origemLabel={whatsapp:'📱',caixa:'🧾',app:'📲'};
+    el.innerHTML=ps.map(p=>{
+      const local=p.tipoLocal==='mesa'?'Mesa '+p.numeroMesa:p.tipoLocal==='balcao'?'Balcão':'Delivery';
+      const itens=p.itens?.map(i=>i.quantidade+'x '+i.nome).join(', ')||'';
+      const obs=p.observacao||p.observacoes||'';
+      return `<div style="background:#16213e;border:1px solid #333;border-radius:10px;padding:12px;margin-bottom:8px;border-left:4px solid ${p.status==='entregue'?'#22c55e':p.status==='cancelado'?'#ef4444':'#f97316'}">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <span style="font-weight:700;color:#f97316">#${p.numero||'?'} ${origemLabel[p.origemPedido]||'📱'} ${local}</span>
+          <span style="font-size:12px;color:#aaa">${statusLabel[p.status]||p.status}</span>
+        </div>
+        <div style="font-size:12px;color:#ccc;margin-bottom:4px">${itens}</div>
+        ${obs?`<div style="background:#7c2d12;border:1px solid #f97316;padding:6px;border-radius:6px;font-size:12px;color:#fed7aa;margin-bottom:4px">⚠️ ${obs}</div>`:''}
+        <div style="display:flex;justify-content:space-between;font-size:13px">
+          <span style="color:#aaa">${p.clienteNome||'Cliente'}</span>
+          <span style="color:#22c55e;font-weight:700">${fmt(p.total||0)}</span>
+        </div>
+      </div>`;
+    }).join('');
+  }catch(e){}
+}
+
+function mudarTab(tab,el){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('tab-cardapio').style.display=tab==='cardapio'?'block':'none';
+  document.getElementById('tab-pedidos').style.display=tab==='pedidos'?'block':'none';
+  document.getElementById('tab-todos').style.display=tab==='todos'?'block':'none';
+  if(tab==='todos')carregarTodos();
 }
 
 // Auto-login se token salvo
