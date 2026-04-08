@@ -69,7 +69,7 @@ class RebecaDeliveryService {
                 conversa.etapa = 'inicio';
                 conversa.carrinho = [];
                 conversa.dados = {};
-                return '❌ Pedido cancelado. Quando quiser eh so chamar! 😊';
+                return '❌ Tudo bem! Cancelei aqui. Quando quiser pedir é só chamar! 😊';
             }
 
             // ===== REATIVAÇÃO: processar resposta antes do fluxo normal =====
@@ -111,7 +111,7 @@ class RebecaDeliveryService {
             }
         } catch (error) {
             console.error('[REBECA-DELIVERY] Erro:', error);
-            return 'Ops, deu um probleminha aqui. Tenta de novo! 😅';
+            return 'Eita, deu um probleminha aqui 😅 Tenta de novo!';
         }
     }
 
@@ -166,7 +166,12 @@ class RebecaDeliveryService {
             else if (hora < 18) saudacao = 'Boa tarde';
             else saudacao = 'Boa noite';
             
-            return 'Oi! 😊 O que vai ser hoje?\n\nDigita o que quer ou manda *CARDAPIO* pra ver as opcoes! 🍔';
+            const _boasVindas = [
+                'Oi! 😊 Que bom te ver por aqui!\n\nO que vai ser hoje? Me diz o que quer ou manda *CARDAPIO* 🍔',
+                'Oii! 😊 Bem-vindo!\n\nVai querer pedir alguma coisa? Manda *CARDAPIO* pra ver as opções ou me diz direto! 🍔',
+                'Oi, tudo bem? 😊\n\nQuer pedir alguma coisa? É só me dizer o que quer ou mandar *CARDAPIO*! 🍔'
+            ];
+            return _boasVindas[Math.floor(Math.random() * _boasVindas.length)];
         }
     }
 
@@ -189,7 +194,8 @@ class RebecaDeliveryService {
             if (ultimo.opcionais && ultimo.opcionais.length > 0) {
                 return '📝 Anotado: _' + msgTexto + '_ no ' + ultimo.nome + '\n\nQuer algum opcional? *' + ultimo.opcionais.join(', ') + '*\n\nOu me diz mais alguma coisa!';
             }
-            return '📝 Anotado! Mais alguma coisa? 😊';
+            const _anotados = ['📝 Anotado! Mais alguma coisa? 😊', '✅ Beleza! Quer mais alguma coisa?', '📝 Anotei! Vai mais alguma coisa?'];
+            return _anotados[Math.floor(Math.random() * _anotados.length)];
         } else {
             // IA tenta entender o que o cliente quis dizer
             if (IAService.isAtivo()) {
@@ -206,7 +212,12 @@ class RebecaDeliveryService {
     async _etapaConfirmarPedido(conversa, msgLower, msgTexto, config, nomeRest, adminId) {
         if (msgLower === 'sim' || msgLower.includes('confirma') || msgLower.includes('certo')) {
             conversa.etapa = 'pedir_endereco';
-            return '📍 Qual o *endereco de entrega*?\n\nRua, numero, bairro...';
+            const _enderecos = [
+                '📍 Me manda o *endereço de entrega*!\n\nRua, número e bairro tá bom 😊',
+                '📍 Qual o endereço pra entrega?\n\nManda a rua, número e bairro! 🛵',
+                '📍 Pra onde vai o pedido?\n\nMe manda a rua, número e bairro! 😊'
+            ];
+            return _enderecos[Math.floor(Math.random() * _enderecos.length)];
         } else {
             return 'Nao entendi 😅 Responde *SIM* pra confirmar ou me diz o que quer mudar!';
         }
@@ -230,7 +241,7 @@ class RebecaDeliveryService {
             }
         }
         if (msgTexto.length < 10) {
-            return '📍 Manda o endereco completo com rua e numero!';
+            return '📍 Hmm, preciso do endereço completo! Manda a rua, número e bairro 😊';
         }
         conversa.dados.endereco = msgTexto;
         conversa.etapa = 'pedir_pagamento';
@@ -260,10 +271,15 @@ class RebecaDeliveryService {
                     conversa.dados.troco = valor[0];
                     return this._montarResumoFinal(conversa) + '\n\n*Confirma o pedido?* (SIM/NAO)';
                 }
-                else { return '💵 Diz o valor da nota pra eu separar o troco (ex: *50*) ou responde *NAO*.'; }
+                else { return '💵 Me fala o valor da nota pra eu calcular o troco (ex: *50*), ou manda *NAO* se não precisar 😊'; }
             }
         } else {
-            return '💵 Como vai ser o *pagamento*?\n\n• *DINHEIRO* 💵\n• *CARTAO* 💳\n• *PIX* 📱';
+            const _pgtos = [
+                '💳 Como vai pagar?\n\n💵 *DINHEIRO*\n💳 *CARTAO*\n📱 *PIX*',
+                '💳 E o pagamento, como fica?\n\n💵 *DINHEIRO*\n💳 *CARTAO*\n📱 *PIX* 😊',
+                '💳 Forma de pagamento?\n\n💵 *Dinheiro*\n💳 *Cartão*\n📱 *Pix*'
+            ];
+            return _pgtos[Math.floor(Math.random() * _pgtos.length)];
         }
     }
 
@@ -326,7 +342,7 @@ class RebecaDeliveryService {
             conversa.etapa = 'inicio';
             conversa.carrinho = [];
             conversa.dados = {};
-            return '❌ Pedido cancelado. Quando quiser eh so chamar! 😊';
+            return '❌ Tudo bem! Cancelei aqui. Quando quiser pedir é só chamar! 😊';
         }
     }
 

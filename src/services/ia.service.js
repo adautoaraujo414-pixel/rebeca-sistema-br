@@ -139,13 +139,14 @@ const IAService = {
         const msgLower = mensagem.toLowerCase().trim();
 
         const varDelivery = {
-            cardapio: ['O que vai ser hoje? 🍔', 'Manda *CARDAPIO* pra ver as opcoes!', 'Me diz o que quer hoje! 😊'],
+            cardapio: ['O que vai ser hoje? 🍔', 'Manda *CARDAPIO* pra ver as opções! 😊', 'Me diz o que quer hoje! 🍔', 'Vai querer pedir? Me fala! 😊', 'Qual vai ser a escolha de hoje? 🍔'],
             random: (arr) => arr[Math.floor(Math.random() * arr.length)]
         };
 
         // ========== SAUDAÇÕES HUMANIZADAS ==========
         if (msgLower.match(/^(oi|ola|olá|e ai|eai|opa)$/)) {
-            return { usarIA: true, intencao: 'saudacao', respostaCurta: 'Oi! Tudo bem? 😊' };
+            const _sauds = ['Oi! Tudo bem? 😊', 'Oii! 😊 Tudo certo?', 'Oi! 😊 Como posso te ajudar?'];
+            return { usarIA: true, intencao: 'saudacao', respostaCurta: _sauds[Math.floor(Math.random()*_sauds.length)] };
         }
         if (msgLower.match(/^(oi|ola|olá).*(tudo bem|tudo bom|como vai)/)) {
             return { usarIA: true, intencao: 'saudacao', respostaCurta: 'Tudo sim! E você? 😊' };
@@ -162,7 +163,7 @@ const IAService = {
 
         // Resposta de tudo bem → avança pro cardápio
         if (msgLower.match(/^(tudo|tudo bem|tudo bom|tudo certo|bem|to bem|tô bem|estou bem)$/)) {
-            return { usarIA: true, intencao: 'pos_saudacao', respostaCurta: 'Que bom! ' + varDelivery.random(varDelivery.cardapio) };
+            return { usarIA: true, intencao: 'pos_saudacao', respostaCurta: 'Que bom! 😊 ' + varDelivery.random(varDelivery.cardapio) };
         }
         if (msgLower.match(/(e você|e vc|e tu|tudo sim)/)) {
             return { usarIA: true, intencao: 'pos_saudacao', respostaCurta: 'Também! ' + varDelivery.random(varDelivery.cardapio) };
@@ -194,7 +195,8 @@ const IAService = {
 
         // ========== AGRADECIMENTOS ==========
         if (msgLower.match(/(obrigad|valeu|vlw|brigad)/)) {
-            return { usarIA: true, intencao: 'agradecimento', respostaCurta: 'Por nada! Sempre que quiser é só chamar 😊🍔' };
+            const _agrs = ['Por nada! Sempre que quiser é só chamar 😊🍔', 'Imagina! Qualquer coisa tô aqui 😊', 'Fico feliz em ajudar! Até a próxima 😊🍔'];
+            return { usarIA: true, intencao: 'agradecimento', respostaCurta: _agrs[Math.floor(Math.random()*_agrs.length)] };
         }
 
         // ========== EXPRESSÕES REGIONAIS ==========
