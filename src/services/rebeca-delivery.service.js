@@ -115,13 +115,41 @@ class RebecaDeliveryService {
         }
     }
 
+    // ===== SISTEMA ANTI-REPETIÇÃO INTELIGENTE =====
+    // Memoriza até 10 últimas respostas por conversa e nunca repete
     _antiRep(telefone, adminId, resposta) {
         if (!global._respostasDelivery) global._respostasDelivery = new Map();
-        const chave = adminId + '_' + telefone + '_' + resposta.substring(0, 40);
-        const ultima = global._respostasDelivery.get(chave);
-        if (ultima && (Date.now() - ultima) < 30000) return true; // bloqueado
-        global._respostasDelivery.set(chave, Date.now());
-        return false;
+        const chave = adminId + '_' + telefone;
+        const historico = global._respostasDelivery.get(chave) || [];
+        const hash = resposta.replace(/\s+/g, ' ').trim().substring(0, 60);
+        const jaUsou = historico.includes(hash);
+        if (!jaUsou) {
+            historico.push(hash);
+            if (historico.length > 10) historico.shift(); // mantém só as 10 últimas
+            global._respostasDelivery.set(chave, historico);
+        }
+        return jaUsou;
+    }
+
+    // Escolhe resposta de um array que ainda não foi usada nesta conversa
+    _escolher(telefone, adminId, opcoes) {
+        if (!global._respostasDelivery) global._respostasDelivery = new Map();
+        const chave = adminId + '_' + telefone;
+        const historico = global._respostasDelivery.get(chave) || [];
+        // Filtra opções não usadas recentemente
+        const disponiveis = opcoes.filter(op => {
+            const hash = op.replace(/\s+/g, ' ').trim().substring(0, 60);
+            return !historico.includes(hash);
+        });
+        // Se todas já foram usadas, reseta e usa qualquer uma
+        const pool = disponiveis.length > 0 ? disponiveis : opcoes;
+        const escolha = pool[Math.floor(Math.random() * pool.length)];
+        // Registrar a escolha no histórico
+        const hash = escolha.replace(/\s+/g, ' ').trim().substring(0, 60);
+        historico.push(hash);
+        if (historico.length > 10) historico.shift();
+        global._respostasDelivery.set(chave, historico);
+        return escolha;
     }
 
     async _etapaInicio(conversa, msgLower, msgTexto, nome, cliente, config, nomeRest, adminId) {
@@ -166,12 +194,13 @@ class RebecaDeliveryService {
             else if (hora < 18) saudacao = 'Boa tarde';
             else saudacao = 'Boa noite';
             
-            const _boasVindas = [
+            return this._escolher(conversa.clienteTelefone, adminId, [
                 'Oi! 😊 Que bom te ver por aqui!\n\nO que vai ser hoje? Me diz o que quer ou manda *CARDAPIO* 🍔',
                 'Oii! 😊 Bem-vindo!\n\nVai querer pedir alguma coisa? Manda *CARDAPIO* pra ver as opções ou me diz direto! 🍔',
-                'Oi, tudo bem? 😊\n\nQuer pedir alguma coisa? É só me dizer o que quer ou mandar *CARDAPIO*! 🍔'
-            ];
-            return _boasVindas[Math.floor(Math.random() * _boasVindas.length)];
+                'Oi, tudo bem? 😊\n\nQuer pedir alguma coisa? É só me dizer o que quer ou mandar *CARDAPIO*! 🍔',
+                'Olá! 😊 Tudo bem? O que vai ser hoje?\n\nManda *CARDAPIO* ou me diz direto o que quer! 🍔',
+                'Ei, oi! 😊 Que bom!\n\nQuer pedir alguma coisa? Me fala o que quer ou manda *CARDAPIO*! 🍔'
+            ]);
         }
     }
 
@@ -194,8 +223,13 @@ class RebecaDeliveryService {
             if (ultimo.opcionais && ultimo.opcionais.length > 0) {
                 return '📝 Anotado: _' + msgTexto + '_ no ' + ultimo.nome + '\n\nQuer algum opcional? *' + ultimo.opcionais.join(', ') + '*\n\nOu me diz mais alguma coisa!';
             }
-            const _anotados = ['📝 Anotado! Mais alguma coisa? 😊', '✅ Beleza! Quer mais alguma coisa?', '📝 Anotei! Vai mais alguma coisa?'];
-            return _anotados[Math.floor(Math.random() * _anotados.length)];
+            return this._escolher(conversa.clienteTelefone, adminId, [
+                '📝 Anotado! Mais alguma coisa? 😊',
+                '✅ Beleza! Quer mais alguma coisa?',
+                '📝 Anotei! Vai mais alguma coisa?',
+                '✅ Anotei aqui! Mais alguma coisa pra adicionar?',
+                '😊 Perfeito! Vai querer mais alguma coisa?'
+            ]);
         } else {
             // IA tenta entender o que o cliente quis dizer
             if (IAService.isAtivo()) {
@@ -212,12 +246,12 @@ class RebecaDeliveryService {
     async _etapaConfirmarPedido(conversa, msgLower, msgTexto, config, nomeRest, adminId) {
         if (msgLower === 'sim' || msgLower.includes('confirma') || msgLower.includes('certo')) {
             conversa.etapa = 'pedir_endereco';
-            const _enderecos = [
+            return this._escolher(conversa.clienteTelefone, adminId, [
                 '📍 Me manda o *endereço de entrega*!\n\nRua, número e bairro tá bom 😊',
                 '📍 Qual o endereço pra entrega?\n\nManda a rua, número e bairro! 🛵',
-                '📍 Pra onde vai o pedido?\n\nMe manda a rua, número e bairro! 😊'
-            ];
-            return _enderecos[Math.floor(Math.random() * _enderecos.length)];
+                '📍 Pra onde vai o pedido?\n\nMe manda a rua, número e bairro! 😊',
+                '📍 Me passa o endereço completo!\n\nRua, número, bairro 😊'
+            ]);
         } else {
             return 'Nao entendi 😅 Responde *SIM* pra confirmar ou me diz o que quer mudar!';
         }
@@ -274,12 +308,12 @@ class RebecaDeliveryService {
                 else { return '💵 Me fala o valor da nota pra eu calcular o troco (ex: *50*), ou manda *NAO* se não precisar 😊'; }
             }
         } else {
-            const _pgtos = [
+            return this._escolher(conversa.clienteTelefone, adminId, [
                 '💳 Como vai pagar?\n\n💵 *DINHEIRO*\n💳 *CARTAO*\n📱 *PIX*',
                 '💳 E o pagamento, como fica?\n\n💵 *DINHEIRO*\n💳 *CARTAO*\n📱 *PIX* 😊',
-                '💳 Forma de pagamento?\n\n💵 *Dinheiro*\n💳 *Cartão*\n📱 *Pix*'
-            ];
-            return _pgtos[Math.floor(Math.random() * _pgtos.length)];
+                '💳 Forma de pagamento?\n\n💵 *Dinheiro*\n💳 *Cartão*\n📱 *Pix*',
+                '💳 Como prefere pagar?\n\n💵 Dinheiro · 💳 Cartão · 📱 Pix'
+            ]);
         }
     }
 
