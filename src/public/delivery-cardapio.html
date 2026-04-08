@@ -165,7 +165,10 @@ function renderizarCardapio(data) {
   // Agrupar itens por categoria
   data.categorias.forEach(function(cat, i) {
     var itensCat = (data.itens || []).filter(function(it) {
-      return it.categoriaId && it.categoriaId.toString() === cat._id.toString();
+      // categoriaId pode vir como string ou ObjectId
+      var catId = it.categoriaId;
+      if (catId && typeof catId === 'object') catId = catId._id || catId.toString();
+      return catId && catId.toString() === cat._id.toString();
     });
     if (itensCat.length === 0) return;
 

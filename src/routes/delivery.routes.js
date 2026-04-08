@@ -254,12 +254,21 @@ router.get('/cardapio-publico/:adminId', async (req, res) => {
         const categorias = await CategoriaCardapio.find({ adminId, ativo: true }).sort({ ordem: 1 }).lean();
         const itens = await ItemCardapio.find({ adminId, ativo: true, disponivel: true }).sort({ ordem: 1 }).lean();
         
+        // Formas de pagamento aceitas
+        const formasPgto = [];
+        if (config?.aceitaDinheiro !== false) formasPgto.push('dinheiro');
+        if (config?.aceitaCartao) formasPgto.push('cartao');
+        if (config?.aceitaPix !== false) formasPgto.push('pix');
+
         res.json({
             restaurante: config?.nomeRestaurante || 'Delivery',
-            aberto: config?.aberto || false,
+            aberto: config?.aberto !== false,
             horario: config?.horarioFuncionamento || '',
             pedidoMinimo: config?.pedidoMinimo || 0,
             taxaEntrega: config?.taxaEntregaFixa || 0,
+            tempoEntrega: config?.tempoMedioEntrega || 40,
+            chavePix: config?.aceitaPix ? config?.chavePix || '' : null,
+            formasPagamento: formasPgto,
             categorias,
             itens
         });

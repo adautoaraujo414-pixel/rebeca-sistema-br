@@ -324,16 +324,31 @@ class RebecaDeliveryService {
                 const numeroPedido = Date.now().toString().slice(-6);
                 const valorTotal = conversa.carrinho.reduce((total, item) => total + (item.preco * item.quantidade), 0);
                 
+                // Normalizar itens para o schema correto
+                const itensSalvar = conversa.carrinho.map(item => ({
+                    itemId: item._id || null,
+                    nome: item.nome,
+                    quantidade: item.quantidade || 1,
+                    precoUnitario: item.preco || 0,
+                    subtotal: (item.preco || 0) * (item.quantidade || 1),
+                    observacao: item.observacao || item.obs || '',
+                    opcionais: item.opcionais || []
+                }));
+
                 const pedido = await PedidoDelivery.create({
-                    adminId, numero: numeroPedido,
+                    adminId,
                     clienteNome: conversa.clienteNome,
                     clienteTelefone: conversa.clienteTelefone,
-                    itens: conversa.carrinho,
+                    itens: itensSalvar,
                     enderecoEntrega: conversa.dados.endereco,
-                    formaPagamento: conversa.dados.pagamento,
-                    valorTroco: conversa.dados.troco || null,
-                    valorTotal, status: 'novo',
-                    observacoes: conversa.dados.observacoes || ''
+                    formaPagamento: conversa.dados.pagamento || 'na_entrega',
+                    trocoPara: conversa.dados.troco && conversa.dados.troco !== 'nao' ? parseFloat(conversa.dados.troco) : null,
+                    subtotal: valorTotal,
+                    total: valorTotal,
+                    taxaEntrega: 0,
+                    status: 'novo',
+                    origemPedido: 'whatsapp',
+                    observacao: conversa.dados.observacoes || ''
                 });
 
                 // ===== VERIFICAR FILA E TEMPO REAL =====
@@ -504,33 +519,30 @@ class RebecaDeliveryService {
             ]);
             const nomeRest = config?.nomeRestaurante || 'Cardápio';
             const BASE_URL = process.env.BASE_URL || 'https://rebeca-sistema-br.onrender.com';
+            const linkCardapio = BASE_URL + '/delivery-cardapio/' + adminId + (telefone ? '?tel=' + telefone : '');
 
-            // Contar itens disponíveis
-            const totalItens = await ItemCardapio.countDocuments({ adminId, ativo: true, disponivel: true });
+            // Sempre envia o link digital + texto resumido
+            let cardapio = '📋 *' + nomeRest.toUpperCase() + '*\n\n';
 
-            if (totalItens === 0) {
-                // Sem itens ainda — mostrar texto simples
-                let cardapio = '📋 *' + nomeRest.toUpperCase() + '*\n\n';
-                for (let cat of categorias) {
-                    cardapio += '🔸 *' + cat.nome + '*\n';
-                    const itens = await ItemCardapio.find({ adminId, categoriaId: cat._id, ativo: true }).lean();
-                    for (let item of itens) {
-                        cardapio += '• ' + item.nome + ' - R$ ' + item.preco.toFixed(2) + '\n';
-                        if (item.descricao) cardapio += '   _' + item.descricao + '_\n';
-                    }
-                    cardapio += '\n';
+            for (let cat of categorias) {
+                const itens = await ItemCardapio.find({ adminId, categoriaId: cat._id, ativo: true, disponivel: true }).lean();
+                if (itens.length === 0) continue;
+                cardapio += (cat.emoji || '🔸') + ' *' + cat.nome + '*\n';
+                for (let item of itens) {
+                    cardapio += '• ' + item.nome + ' — R$ ' + Number(item.preco).toFixed(2) + '\n';
                 }
-            // Adicionar info de entrega/retirada do admin
-            if (config) {
-                if (config.taxaEntregaFixa) cardapio += '🛵 *Taxa de entrega:* R$ ' + Number(config.taxaEntregaFixa).toFixed(2) + '\n';
-                if (config.pedidoMinimo) cardapio += '🛒 *Pedido mínimo:* R$ ' + Number(config.pedidoMinimo).toFixed(2) + '\n';
-                if (config.horarioFuncionamento) cardapio += '🕐 *Horário:* ' + config.horarioFuncionamento + '\n';
                 cardapio += '\n';
             }
-            // Link do cardápio digital
-            const linkCardapio = BASE_URL + '/delivery-cardapio/' + adminId + (telefone ? '?tel=' + telefone : '');
-            return cardapio + '\n🔗 *Acesse nosso cardápio digital:*\n' + linkCardapio + '\n\nSelecione os itens e confirme direto pelo link! 😊';
+
+            // Info do restaurante
+            if (config?.taxaEntregaFixa) cardapio += '🛵 *Taxa de entrega:* R$ ' + Number(config.taxaEntregaFixa).toFixed(2) + '\n';
+            if (config?.pedidoMinimo) cardapio += '🛒 *Pedido mínimo:* R$ ' + Number(config.pedidoMinimo).toFixed(2) + '\n';
+            if (config?.horarioFuncionamento) cardapio += '🕐 *Horário:* ' + config.horarioFuncionamento + '\n';
+
+            cardapio += '\n🔗 *Cardápio digital com fotos:*\n' + linkCardapio + '\n\n👆 Acesse, escolha os itens e confirme direto pelo link! 😊';
+            return cardapio;
         } catch (error) {
+            console.error('[DELIVERY] Erro _montarCardapioCompleto:', error.message);
             return '📋 Ops, problema ao carregar. Me diz o que quer! 😊';
         }
     }
