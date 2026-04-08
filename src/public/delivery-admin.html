@@ -884,7 +884,7 @@
         async function carregarEntregadores() {
             const el = document.getElementById('listaEntregadores');
             try {
-                const res = await api('/entregadores');
+                const res = await api('/entregadores/detalhes');
                 const data = await res.json();
                 entregadores = data.entregadores || [];
                 renderEntregadores();
@@ -898,10 +898,14 @@
                 <div style="background:#252542;border-radius:10px;padding:16px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
                     <div>
                         <div style="font-weight:700;color:#fff;">${e.nome} ${e.ativo!==false?'<span style="background:#27ae60;color:#fff;font-size:11px;padding:2px 8px;border-radius:12px;">Ativo</span>':'<span style="background:#888;color:#fff;font-size:11px;padding:2px 8px;border-radius:12px;">Inativo</span>'}</div>
-                        <div style="color:#aaa;font-size:13px;margin-top:3px;">📱 ${e.telefone||'—'} | 🏍️ ${e.veiculo||'—'}</div>
+                        <div style="color:#aaa;font-size:13px;margin-top:3px;">📱 ${e.telefone||'—'} | 🏍️ ${e.veiculo||'—'} ${e.placa?'('+e.placa+')':''}</div>
+                        <div style="color:#aaa;font-size:13px;">💰 R$ ${(e.valorPorEntrega||0).toFixed(2)} por entrega | 📦 ${e.totalEntregas||0} entregas</div>
+                        ${e.token?'<div style="font-size:11px;color:#555;margin-top:4px;">🔑 Senha: ••••••</div>':'<div style="font-size:11px;color:#e74c3c;">⚠️ Sem senha cadastrada</div>'}
                     </div>
                     <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                        <button onclick="copiarLinkEntregador('${e._id}')" style="background:#1a3a5c;color:#22c55e;border:1px solid #22c55e;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;">🔗 Copiar Link</button>
                         <button onclick="gerarQREntregador('${e._id}','${e.nome}')" style="background:#1a3a5c;color:#00d4ff;border:1px solid #00d4ff;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;">📱 QR App</button>
+                        <button onclick="redefinirSenhaEntregador('${e._id}')" style="background:#1a3a5c;color:#f97316;border:1px solid #f97316;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;">🔑 Senha</button>
                         <button onclick="editarEntregador('${e._id}')" style="background:#252542;color:#00d4ff;border:1px solid #00d4ff;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;">✏️ Editar</button>
                         <button onclick="toggleEntregador('${e._id}')" style="background:#252542;color:${e.ativo!==false?'#e74c3c':'#27ae60'};border:1px solid ${e.ativo!==false?'#e74c3c':'#27ae60'};padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;">${e.ativo!==false?'⏸ Desativar':'▶ Ativar'}</button>
                         <button onclick="excluirEntregador('${e._id}')" style="background:#252542;color:#e74c3c;border:1px solid #e74c3c;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;">🗑️</button>
@@ -910,7 +914,9 @@
         }
         function abrirModalEntregador() {
             document.getElementById('tituloModalEntregador').textContent = '🏍️ Novo Entregador';
-            ['entregadorId','entregadorNome','entregadorTelefone','entregadorVeiculo'].forEach(id => document.getElementById(id).value = '');
+            ['entregadorId','entregadorNome','entregadorTelefone','entregadorVeiculo','entregadorPlaca','entregadorSenha','entregadorValor'].forEach(id => {
+                const el = document.getElementById(id); if(el) el.value = '';
+            });
             document.getElementById('modalEntregador').classList.add('active');
         }
         function fecharModalEntregador() { document.getElementById('modalEntregador').classList.remove('active'); }
@@ -919,16 +925,49 @@
             const nome = document.getElementById('entregadorNome').value.trim();
             const telefone = document.getElementById('entregadorTelefone').value.trim();
             const veiculo = document.getElementById('entregadorVeiculo').value.trim();
+            const placa = document.getElementById('entregadorPlaca')?.value.trim()||'';
+            const senha = document.getElementById('entregadorSenha')?.value.trim()||'';
+            const valorPorEntrega = parseFloat(document.getElementById('entregadorValor')?.value||0);
             if (!nome) return toast('Nome é obrigatório', 'error');
+            if (!id && !senha) return toast('Senha obrigatória para novo entregador', 'error');
+            if (!id && !telefone) return toast('Telefone obrigatório', 'error');
             try {
-                const res = id ? await api('/entregadores/'+id, {method:'PUT',body:JSON.stringify({nome,telefone,veiculo})})
-                              : await api('/entregadores', {method:'POST',body:JSON.stringify({nome,telefone,veiculo})});
+                // Usar rota de cadastro completo para novo entregador
+                const res = id
+                    ? await api('/entregadores/'+id, {method:'PUT',body:JSON.stringify({nome,telefone,veiculo,placa,valorPorEntrega})})
+                    : await api('/entregadores/cadastrar', {method:'POST',body:JSON.stringify({nome,telefone,senha,veiculo,placa,valorPorEntrega})});
                 const data = await res.json();
                 if (data.erro) return toast(data.erro,'error');
                 fecharModalEntregador();
-                toast(id ? 'Entregador atualizado!' : 'Entregador cadastrado!');
+                if (data.linkApp) {
+                    // Mostrar link do app para copiar
+                    const copiou = confirm('✅ Entregador cadastrado!\n\nLink do app:\n'+data.linkApp+'\n\nClique OK para copiar o link.');
+                    if (copiou) { navigator.clipboard?.writeText(data.linkApp); toast('Link copiado!'); }
+                } else {
+                    toast(id ? 'Entregador atualizado!' : 'Entregador cadastrado!');
+                }
                 carregarEntregadores();
             } catch(e) { toast('Erro de conexão','error'); }
+        }
+        async function copiarLinkEntregador(eid) {
+            const e = entregadores.find(x => x._id === eid);
+            if (!e?.token) { toast('Sem token. Redefina a senha.', 'error'); return; }
+            const link = location.origin + '/delivery-entregador?token=' + e.token + '&entregadorId=' + eid;
+            await navigator.clipboard?.writeText(link);
+            toast('Link copiado! Envie para o entregador 😊');
+        }
+        async function redefinirSenhaEntregador(eid) {
+            const senha = prompt('Nova senha para o entregador:');
+            if (!senha) return;
+            try {
+                const res = await api('/entregadores/'+eid+'/senha', {method:'PUT', body:JSON.stringify({senha})});
+                const data = await res.json();
+                if (data.linkApp) {
+                    const copiou = confirm('✅ Senha redefinida!\n\nNovo link do app:\n'+data.linkApp+'\n\nOK para copiar.');
+                    if (copiou) { navigator.clipboard?.writeText(data.linkApp); toast('Link copiado!'); }
+                }
+                carregarEntregadores();
+            } catch(e) { toast('Erro','error'); }
         }
         async function editarEntregador(id) {
             const e = entregadores.find(x => x._id === id); if (!e) return;
@@ -937,6 +976,9 @@
             document.getElementById('entregadorNome').value = e.nome;
             document.getElementById('entregadorTelefone').value = e.telefone||'';
             document.getElementById('entregadorVeiculo').value = e.veiculo||'';
+            const pl = document.getElementById('entregadorPlaca'); if(pl) pl.value = e.placa||'';
+            const vl = document.getElementById('entregadorValor'); if(vl) vl.value = e.valorPorEntrega||0;
+            const sn = document.getElementById('entregadorSenha'); if(sn) sn.value = '';
             document.getElementById('modalEntregador').classList.add('active');
         }
         async function toggleEntregador(id) {
@@ -956,7 +998,9 @@
             if (idx >= 0 && entregadores[idx]) gerarQREntregador(entregadores[idx]._id, entregadores[idx].nome);
         }
         function gerarQREntregador(eid, enome) {
-            const tk = localStorage.getItem('delivery_token') || token || '';
+            const e = entregadores.find(x => x._id === eid);
+            const tk = e?.token || '';
+            if (!tk) { toast('Entregador sem token. Cadastre com senha primeiro.', 'error'); return; }
             const link = location.origin + '/delivery-entregador?token=' + tk + '&entregadorId=' + eid;
             document.getElementById('qrEntregadorNome').textContent = '🏍️ ' + enome;
             document.getElementById('qrEntregadorLink').textContent = link;
@@ -974,11 +1018,17 @@
         <div class="modal-box">
             <button class="modal-close" onclick="fecharModalEntregador()">&times;</button>
             <h2 id="tituloModalEntregador">🏍️ Novo Entregador</h2>
-            <div class="form-group"><label>Nome completo</label><input type="text" id="entregadorNome" placeholder="Nome do entregador"></div>
-            <div class="form-group"><label>WhatsApp (ex: 5511999999999)</label><input type="text" id="entregadorTelefone" placeholder="5511999999999"></div>
-            <div class="form-group"><label>Veículo</label><input type="text" id="entregadorVeiculo" placeholder="Ex: Moto Honda CG 160 Vermelha"></div>
+            <div class="form-group"><label>Nome completo *</label><input type="text" id="entregadorNome" placeholder="Nome do entregador"></div>
+            <div class="form-group"><label>WhatsApp * (ex: 5534999999999)</label><input type="tel" id="entregadorTelefone" placeholder="5534999999999"></div>
+            <div class="form-group"><label>Senha de acesso ao app *</label><input type="text" id="entregadorSenha" placeholder="Ex: 123456 (deixe vazio para não alterar)"></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                <div class="form-group"><label>Veículo</label><input type="text" id="entregadorVeiculo" placeholder="Ex: Honda CG 160"></div>
+                <div class="form-group"><label>Placa</label><input type="text" id="entregadorPlaca" placeholder="Ex: ABC1234"></div>
+            </div>
+            <div class="form-group"><label>💰 Valor por entrega (R$)</label><input type="number" id="entregadorValor" placeholder="0.00" min="0" step="0.50"></div>
             <input type="hidden" id="entregadorId">
-            <button class="btn btn-primary" style="width:100%;margin-top:10px;" onclick="salvarEntregador()">💾 Salvar</button>
+            <p style="color:#888;font-size:12px;margin-bottom:8px;">* Após cadastrar, o link do app será gerado automaticamente para enviar ao entregador.</p>
+            <button class="btn btn-primary" style="width:100%;margin-top:6px;" onclick="salvarEntregador()">💾 Salvar Entregador</button>
         </div>
     </div>
     <div id="modalQREntregador" class="modal-overlay">
