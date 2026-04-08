@@ -144,6 +144,7 @@
                 <div class="menu-item" onclick="window.open('/delivery-cozinha?token='+localStorage.getItem('delivery_token'))" style="cursor:pointer">👨‍🍳 Painel Cozinha</div>
                 <div class="menu-item" onclick="window.open('/delivery-entregador?token='+localStorage.getItem('delivery_token'))" style="cursor:pointer">🏍️ Painel Entregador</div>
                 <div class="menu-section">Config</div>
+                <div class="menu-item" data-page="avaliacoes">⭐ Avaliações</div>
                 <div class="menu-item" data-page="assinantes">👥 Assinantes</div>
                 <div class="menu-item" data-page="cardapio-dia">🍽️ Cardápio do Dia</div>
                 <div class="menu-item" data-page="config">⚙️ Configurações</div>
@@ -176,17 +177,22 @@
 
                 <!-- PEDIDOS -->
                 <div id="page-pedidos" class="page">
-                    <h2 style="margin-bottom:20px;">📋 Todos os Pedidos</h2>
-                    <div style="margin-bottom:15px;">
-                        <select id="filtroPedidos" onchange="carregarPedidos()" style="padding:8px 14px;background:#252542;border:1px solid #333;border-radius:8px;color:#fff;">
-                            <option value="">Todos</option>
-                            <option value="novo">Novos</option>
-                            <option value="preparando">Preparando</option>
-                            <option value="pronto">Prontos</option>
-                            <option value="saiu_entrega">Em Entrega</option>
-                            <option value="entregue">Entregues</option>
-                            <option value="cancelado">Cancelados</option>
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+                        <h2>📋 Todos os Pedidos</h2>
+                        <button class="btn" onclick="exportarPedidosCSV()" style="background:#252542;color:#fff;padding:6px 14px;font-size:13px;">📥 Exportar CSV</button>
+                    </div>
+                    <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+                        <select id="filtroPedidos" onchange="carregarPedidos()" style="padding:8px 14px;background:#252542;border:1px solid #333;border-radius:8px;color:#fff;flex:1;min-width:140px">
+                            <option value="">Todos os status</option>
+                            <option value="novo">🆕 Novos</option>
+                            <option value="preparando">🍳 Preparando</option>
+                            <option value="pronto">🎉 Prontos</option>
+                            <option value="saiu_entrega">🛵 Em Entrega</option>
+                            <option value="entregue">✅ Entregues</option>
+                            <option value="cancelado">❌ Cancelados</option>
                         </select>
+                        <input type="date" id="filtroPedidosData" onchange="carregarPedidos()" style="padding:8px 12px;background:#252542;border:1px solid #333;border-radius:8px;color:#fff;flex:1;min-width:140px">
+                        <input type="text" id="filtroPedidosBusca" oninput="filtrarPedidosLocal(this.value)" placeholder="🔍 Buscar cliente..." style="padding:8px 12px;background:#252542;border:1px solid #333;border-radius:8px;color:#fff;flex:1;min-width:160px">
                     </div>
                     <div id="pedidosLista"></div>
                 </div>
@@ -269,6 +275,18 @@
                         </div>
                         <div id="listaEntregadores"><p style="color:#888;text-align:center;padding:20px;">Carregando...</p></div>
                     </div>
+                </div>
+
+                <div id="page-avaliacoes" class="page">
+                    <h2 style="margin-bottom:20px;">⭐ Avaliações dos Clientes</h2>
+                    <div class="panel" id="avaliacoesResumo" style="margin-bottom:16px">
+                        <div style="display:flex;gap:24px;flex-wrap:wrap">
+                            <div style="text-align:center"><div style="font-size:2.5em;font-weight:800;color:#f97316" id="avgNota">—</div><div style="color:#888;font-size:13px">Nota Média</div></div>
+                            <div style="text-align:center"><div style="font-size:2.5em;font-weight:800;color:#22c55e" id="totalAvaliacoes">0</div><div style="color:#888;font-size:13px">Total Avaliações</div></div>
+                            <div style="flex:1;min-width:200px" id="distribuicaoNotas"></div>
+                        </div>
+                    </div>
+                    <div id="avaliacoesLista" class="panel"><div style="color:#888">Carregando...</div></div>
                 </div>
 
                 <div id="page-assinantes" class="page">
@@ -521,6 +539,7 @@
                 if (page === 'cardapio') carregarCardapio();
                 if (page === 'config') carregarConfig();
                 if (page === 'dashboard') { verificarStatusWADashboard(); }
+                if (page === 'avaliacoes') carregarAvaliacoes();
                 if (page === 'assinantes') carregarAssinantes();
                 if (page === 'cardapio-dia') carregarCardapioDia();
                 if (page === 'upload-cardapio') { /* nada */ }
@@ -540,6 +559,7 @@
                 
                 const res2 = await api('/pedidos/ativos');
                 const ativos = await res2.json();
+                verificarNovosPedidos(ativos);
                 renderPedidos(ativos, 'pedidosAtivosLista');
 
                 const cfgRes = await api('/config');
@@ -915,6 +935,58 @@
         }
 
         // Verificar status WhatsApp no dashboard
+        // Filtrar pedidos localmente por texto
+        let _todosPedidos = [];
+        function filtrarPedidosLocal(q) {
+            if(!q) { renderPedidos(_todosPedidos, 'pedidosLista'); return; }
+            const ql = q.toLowerCase();
+            const filtrados = _todosPedidos.filter(p =>
+                (p.clienteNome||'').toLowerCase().includes(ql) ||
+                (p.clienteTelefone||'').includes(q) ||
+                String(p.numero||'').includes(q)
+            );
+            renderPedidos(filtrados, 'pedidosLista');
+        }
+
+        // Carregar avaliações
+        async function carregarAvaliacoes() {
+            try {
+                const r = await api('/pedidos?status=entregue&limit=200');
+                const pedidos = await r.json();
+                const comAv = pedidos.filter(p => p.avaliacao);
+                const total = comAv.length;
+                const soma = comAv.reduce((s,p) => s + p.avaliacao, 0);
+                const media = total ? (soma/total).toFixed(1) : '—';
+                document.getElementById('avgNota').textContent = total ? media + ' ⭐' : '—';
+                document.getElementById('totalAvaliacoes').textContent = total;
+                // Distribuição
+                const dist = {1:0,2:0,3:0,4:0,5:0};
+                comAv.forEach(p => dist[p.avaliacao] = (dist[p.avaliacao]||0)+1);
+                let distHtml = '';
+                for(let i=5;i>=1;i--) {
+                    const pct = total ? Math.round((dist[i]||0)/total*100) : 0;
+                    distHtml += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">'
+                        + '<span style="font-size:12px;min-width:30px">'+i+' ⭐</span>'
+                        + '<div style="flex:1;background:#333;border-radius:4px;height:8px"><div style="width:'+pct+'%;background:#f97316;height:8px;border-radius:4px"></div></div>'
+                        + '<span style="font-size:12px;color:#888;min-width:35px">'+pct+'%</span></div>';
+                }
+                document.getElementById('distribuicaoNotas').innerHTML = distHtml;
+                // Lista
+                const lista = comAv.sort((a,b) => new Date(b.createdAt)-new Date(a.createdAt)).slice(0,50);
+                const estrelas = n => '⭐'.repeat(n) + '☆'.repeat(5-n);
+                document.getElementById('avaliacoesLista').innerHTML = lista.length
+                    ? lista.map(p => '<div style="padding:12px;border-bottom:1px solid #333">'
+                        + '<div style="display:flex;justify-content:space-between;margin-bottom:4px">'
+                        + '<span style="font-weight:600">'+( p.clienteNome||'Cliente')+'</span>'
+                        + '<span>'+estrelas(p.avaliacao)+'</span></div>'
+                        + '<div style="font-size:12px;color:#888">'+new Date(p.createdAt).toLocaleDateString('pt-BR')
+                        + ' · Pedido #'+p.numero+'</div>'
+                        + (p.avaliacaoComentario?'<div style="margin-top:6px;font-size:13px;color:#ccc">💬 '+p.avaliacaoComentario+'</div>':'')
+                        +'</div>').join('')
+                    : '<div style="color:#888;text-align:center;padding:20px">Nenhuma avaliação ainda</div>';
+            } catch(e) { document.getElementById('avaliacoesLista').innerHTML = '<div style="color:#e74c3c">Erro ao carregar</div>'; }
+        }
+
         async function verificarStatusWADashboard() {
             try {
                 const instId = instanciaDeliveryId || localStorage.getItem('instanciaDeliveryId_' + (adminData?._id || ''));
