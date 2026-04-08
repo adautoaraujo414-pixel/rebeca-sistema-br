@@ -525,8 +525,4 @@ class RebecaDeliveryService {
     }
 }
 
-
-
-module.exports = new RebecaDeliveryService();
-
 module.exports = new RebecaDeliveryService();
