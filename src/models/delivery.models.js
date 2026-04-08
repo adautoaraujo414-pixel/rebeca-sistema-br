@@ -239,13 +239,12 @@ module.exports.CardapioDia = CardapioDia;
 
 // ===== ENTREGADORES =====
 const EntregadorSchema = new mongoose.Schema({
-    adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'AdminDelivery', required: true, index: true },
+    adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin', required: true, index: true },
     nome: { type: String, required: true },
     telefone: { type: String, default: '' },
     veiculo: { type: String, default: '' },
     tipo: { type: String, default: 'entregador' },
     ativo: { type: Boolean, default: true },
 }, { timestamps: true });
-EntregadorSchema.index({ adminId: 1 });
 const Entregador = mongoose.models.Entregador || mongoose.model('Entregador', EntregadorSchema);
 module.exports.Entregador = Entregador;
