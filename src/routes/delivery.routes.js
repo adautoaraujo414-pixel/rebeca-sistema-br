@@ -272,7 +272,7 @@ router.get('/cozinha/pedidos', authDelivery, async (req, res) => {
     try {
         const pedidos = await PedidoDelivery.find({
             adminId: req.adminId,
-            status: { $in: ['novo', 'preparando', 'pronto'] }
+            status: { $in: ['novo', 'confirmado', 'preparando', 'pronto'] }
         }).sort({ createdAt: 1 });
         res.json(pedidos);
     } catch(e) { res.status(500).json({ erro: e.message }); }
@@ -892,6 +892,17 @@ router.get('/caixa/todos', authDelivery, async (req, res) => {
             adminId: req.adminId,
             createdAt: { $gte: hoje }
         }).sort({ createdAt: -1 });
+        res.json(pedidos);
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// ========== CAIXA — INFO ENTREGADORES ATIVOS ==========
+router.get('/caixa/entregadores-ativos', authDelivery, async (req, res) => {
+    try {
+        const pedidos = await PedidoDelivery.find({
+            adminId: req.adminId,
+            status: 'saiu_entrega'
+        }).select('numero clienteNome enderecoEntrega entregadorNome dataSaiuEntrega total');
         res.json(pedidos);
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
