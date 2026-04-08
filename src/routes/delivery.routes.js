@@ -837,3 +837,61 @@ router.post('/caixa/pedido/:id/item', authDelivery, async (req, res) => {
         res.json({ sucesso: true, pedido });
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
+
+// ========== CAIXA — ESTATÍSTICAS E PAINEL COMPLETO ==========
+
+// Estatísticas do dia para o caixa
+router.get('/caixa/stats', authDelivery, async (req, res) => {
+    try {
+        const hoje = new Date();
+        hoje.setHours(0,0,0,0);
+        
+        const [ativos, entregues, cancelados] = await Promise.all([
+            PedidoDelivery.find({ adminId: req.adminId, status: { $nin: ['entregue','cancelado'] } }),
+            PedidoDelivery.find({ adminId: req.adminId, status: 'entregue', dataEntregue: { $gte: hoje } }),
+            PedidoDelivery.countDocuments({ adminId: req.adminId, status: 'cancelado', createdAt: { $gte: hoje } })
+        ]);
+
+        // Calcular previsão média de entrega
+        const temposEntrega = entregues
+            .filter(p => p.dataSaiuEntrega && p.dataEntregue)
+            .map(p => Math.round((new Date(p.dataEntregue) - new Date(p.dataSaiuEntrega)) / 60000));
+        const mediaEntrega = temposEntrega.length 
+            ? Math.round(temposEntrega.reduce((a,b) => a+b, 0) / temposEntrega.length)
+            : null;
+
+        const totalDia = entregues.reduce((s, p) => s + (p.total || 0), 0);
+        const ticketMedio = entregues.length ? totalDia / entregues.length : 0;
+
+        // Pedidos por origem
+        const doWhatsapp = [...ativos, ...entregues].filter(p => p.origemPedido === 'whatsapp' || !p.origemPedido).length;
+        const doCaixa = [...ativos, ...entregues].filter(p => p.origemPedido === 'caixa').length;
+
+        res.json({
+            ativos: ativos.length,
+            entreguesHoje: entregues.length,
+            canceladosHoje: cancelados,
+            totalDia,
+            ticketMedio,
+            mediaEntregaMin: mediaEntrega,
+            doWhatsapp,
+            doCaixa,
+            emPreparacao: ativos.filter(p => p.status === 'preparando').length,
+            prontos: ativos.filter(p => p.status === 'pronto').length,
+            saindoEntrega: ativos.filter(p => p.status === 'saiu_entrega').length,
+        });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// Todos pedidos do dia (WhatsApp + Caixa) para o caixa
+router.get('/caixa/todos', authDelivery, async (req, res) => {
+    try {
+        const hoje = new Date();
+        hoje.setHours(0,0,0,0);
+        const pedidos = await PedidoDelivery.find({
+            adminId: req.adminId,
+            createdAt: { $gte: hoje }
+        }).sort({ createdAt: -1 });
+        res.json(pedidos);
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});

@@ -169,16 +169,34 @@ async function carregar(){
       });
 
       h+='<div class="card '+p.status+'">';
+      // Origem e local
+      var origemIcon=p.origemPedido==='caixa'?'🧾 Caixa':'📱 WhatsApp';
+      var localInfo='';
+      if(p.tipoLocal==='mesa')localInfo='<span style="background:#f97316;color:#fff;padding:3px 10px;border-radius:8px;font-weight:700;font-size:14px;">🍽️ MESA '+p.numeroMesa+'</span>';
+      else if(p.tipoLocal==='balcao')localInfo='<span style="background:#3b82f6;color:#fff;padding:3px 10px;border-radius:8px;font-weight:700;font-size:14px;">🏪 BALCÃO</span>';
+      else if(p.tipoLocal==='delivery'||p.tipoEntrega==='delivery')localInfo='<span style="background:#22c55e;color:#fff;padding:3px 10px;border-radius:8px;font-weight:700;font-size:14px;">🛵 DELIVERY</span>';
+
       h+='<div class="card-head">';
+      h+='<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">';
       h+='<span class="num">#'+(p.numero||'?')+'</span>';
+      h+=localInfo;
+      h+='<span style="font-size:11px;color:#888;">'+origemIcon+'</span>';
+      h+='</div>';
+      h+='<div style="text-align:right;">';
       h+='<span class="tag tag-'+p.status+'">'+p.status.toUpperCase()+'</span>';
-      h+='<span class="tempo">⏱️ '+tempoDecorrido(p.createdAt)+'</span>';
+      h+='<br><span class="tempo">⏱️ '+tempoDecorrido(p.createdAt)+'</span>';
+      h+='</div>';
       h+='</div>';
       h+='<div class="cliente">👤 '+(p.clienteNome||'Cliente')+' — '+(p.clienteTelefone||'')+'</div>';
       h+='<div class="itens">'+ih+'</div>';
-      if(temBebida)h+='<div class="bebida">🧊 TEM BEBIDA — Separar gelada!</div>';
-      if(p.observacoes)h+='<div class="obs-card">📝 '+p.observacoes+'</div>';
-      if(p.enderecoEntrega)h+='<div class="end">📍 '+p.enderecoEntrega+'</div>';
+      // Observações DESTACADAS
+      if(p.observacao||p.observacoes){
+        var obs=p.observacao||p.observacoes;
+        h+='<div style="background:#7c2d12;border:2px solid #f97316;padding:10px;border-radius:8px;margin-top:8px;font-size:14px;font-weight:700;color:#fed7aa;">⚠️ OBS: '+obs+'</div>';
+      }
+      if(temBebida)h+='<div class="bebida" style="font-weight:700;font-size:14px;">🧊 ⚠️ TEM BEBIDA — SEPARAR GELADA!</div>';
+      // Endereço destacado para delivery
+      if(p.enderecoEntrega)h+='<div style="background:#1e3a5f;border:1px solid #3b82f6;padding:8px;border-radius:8px;margin-top:6px;font-size:13px;color:#93c5fd;">📍 ENTREGAR EM: <strong>'+p.enderecoEntrega+'</strong></div>';
       h+='<div class="foot"><div>';
       h+='<span class="total">R$ '+(p.total||p.valorTotal||0).toFixed(2)+'</span>';
       h+='<br><span class="pgto">'+(fm[p.formaPagamento]||p.formaPagamento||'')+'</span>';
