@@ -45,10 +45,24 @@ router.post('/login', async (req, res) => {
         const { email, senha } = req.body;
         if (!email || !senha) return res.status(400).json({ erro: 'Email e senha obrigatórios' });
 
-        const admin = await AdminDelivery.findOne({ email: email.toLowerCase() });
+        // Buscar em AdminDelivery ou Admin (tipoAdmin: delivery)
+        let admin = await AdminDelivery.findOne({ email: email.toLowerCase() });
+        let isAdminPrincipal = false;
+        if (!admin) {
+            const { Admin } = require('../models');
+            admin = await Admin.findOne({ email: email.toLowerCase(), tipoAdmin: 'delivery' });
+            isAdminPrincipal = true;
+        }
         if (!admin) return res.status(401).json({ erro: 'E-mail não encontrado' });
 
-        const ok = await bcrypt.compare(senha, admin.senha);
+        // Verificar senha
+        let ok = false;
+        if (isAdminPrincipal) {
+            // Admin principal usa bcrypt também
+            ok = await bcrypt.compare(senha, admin.senha);
+        } else {
+            ok = await bcrypt.compare(senha, admin.senha);
+        }
         if (!ok) return res.status(401).json({ erro: 'Senha incorreta' });
 
         if (admin.status === 'bloqueado')
@@ -78,7 +92,12 @@ router.get('/me', async (req, res) => {
     try {
         const token = req.headers.authorization?.replace('Bearer ', '') || req.query.token;
         if (!token) return res.status(401).json({ erro: 'Token obrigatório' });
-        const admin = await AdminDelivery.findOne({ token }).select('-senha');
+        // Buscar em AdminDelivery ou Admin (tipoAdmin: delivery)
+        let admin = await AdminDelivery.findOne({ token }).select('-senha');
+        if (!admin) {
+            const { Admin } = require('../models');
+            admin = await Admin.findOne({ token, tipoAdmin: 'delivery' }).select('-senha');
+        }
         if (!admin) return res.status(401).json({ erro: 'Token inválido' });
         if (admin.status === 'bloqueado') return res.status(403).json({ erro: 'Conta bloqueada', bloqueado: true });
         if (admin.status === 'trial' && new Date() > admin.trialFim) {
