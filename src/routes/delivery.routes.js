@@ -670,6 +670,95 @@ router.post('/cardapio-hoje/enviar', authDelivery, async (req, res) => {
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
+
+// ========== ENTREGADOR — AUTH ==========
+
+// Login do entregador
+router.post('/entregador/login', async (req, res) => {
+    try {
+        const { telefone, senha } = req.body;
+        if (!telefone || !senha) return res.status(400).json({ erro: 'Telefone e senha obrigatórios' });
+        const entregador = await Entregador.findOne({ telefone: telefone.replace(/\D/g,'') });
+        if (!entregador) return res.status(401).json({ erro: 'Entregador não encontrado' });
+        if (!entregador.ativo) return res.status(401).json({ erro: 'Conta desativada. Fale com o restaurante.' });
+        if (entregador.senha !== senha) return res.status(401).json({ erro: 'Senha incorreta' });
+        // Gerar token se não tiver
+        if (!entregador.token) {
+            entregador.token = crypto.randomBytes(32).toString('hex');
+            await entregador.save();
+        }
+        res.json({ sucesso: true, token: entregador.token, entregador: {
+            _id: entregador._id, nome: entregador.nome, telefone: entregador.telefone,
+            veiculo: entregador.veiculo, placa: entregador.placa, foto: entregador.foto,
+            valorPorEntrega: entregador.valorPorEntrega, adminId: entregador.adminId
+        }});
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// Cadastrar entregador (pelo admin)
+router.post('/entregadores/cadastrar', authDelivery, async (req, res) => {
+    try {
+        const { nome, telefone, senha, veiculo, placa, valorPorEntrega, foto } = req.body;
+        if (!nome || !telefone || !senha) return res.status(400).json({ erro: 'Nome, telefone e senha obrigatórios' });
+        const telefoneLimpo = telefone.replace(/\D/g,'');
+        const existe = await Entregador.findOne({ adminId: req.adminId, telefone: telefoneLimpo });
+        if (existe) return res.status(400).json({ erro: 'Já existe entregador com esse telefone' });
+        const token = crypto.randomBytes(32).toString('hex');
+        const entregador = await Entregador.create({
+            adminId: req.adminId, nome, telefone: telefoneLimpo, senha,
+            veiculo: veiculo || '', placa: placa || '',
+            valorPorEntrega: valorPorEntrega || 0, foto: foto || '',
+            token, ativo: true, tipo: 'entregador'
+        });
+        const linkApp = (process.env.APP_URL || 'https://rebeca-sistema-br.onrender.com') + '/delivery-entregador?token=' + token;
+        res.json({ sucesso: true, entregador, linkApp });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// Listar entregadores com detalhes (pelo admin)
+router.get('/entregadores/detalhes', authDelivery, async (req, res) => {
+    try {
+        const entregadores = await Entregador.find({ adminId: req.adminId }).sort({ nome: 1 });
+        const BASE = process.env.APP_URL || 'https://rebeca-sistema-br.onrender.com';
+        const lista = entregadores.map(e => ({
+            ...e.toObject(),
+            linkApp: BASE + '/delivery-entregador?token=' + (e.token || ''),
+            senhaMascarada: e.senha ? '••••••' : 'Sem senha'
+        }));
+        res.json({ entregadores: lista });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// Atualizar senha do entregador (pelo admin)
+router.put('/entregadores/:id/senha', authDelivery, async (req, res) => {
+    try {
+        const { senha } = req.body;
+        const entregador = await Entregador.findOne({ _id: req.params.id, adminId: req.adminId });
+        if (!entregador) return res.status(404).json({ erro: 'Não encontrado' });
+        entregador.senha = senha;
+        entregador.token = crypto.randomBytes(32).toString('hex');
+        await entregador.save();
+        const linkApp = (process.env.APP_URL || 'https://rebeca-sistema-br.onrender.com') + '/delivery-entregador?token=' + entregador.token;
+        res.json({ sucesso: true, linkApp });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// Entregador atualiza próprio status online/offline
+router.put('/entregador/status', async (req, res) => {
+    try {
+        const token = req.headers.authorization?.replace('Bearer ','') || req.query.token;
+        const { online, latitude, longitude } = req.body;
+        const entregador = await Entregador.findOne({ token });
+        if (!entregador) return res.status(401).json({ erro: 'Token inválido' });
+        entregador.online = online;
+        if (latitude && longitude) {
+            entregador.ultimaLocalizacao = { latitude, longitude, atualizadoEm: new Date() };
+        }
+        await entregador.save();
+        res.json({ sucesso: true });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
 // ========== CAIXA ==========
 
 // Criar pedido manual pelo caixa
