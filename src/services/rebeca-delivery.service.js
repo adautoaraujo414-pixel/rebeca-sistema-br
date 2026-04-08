@@ -397,8 +397,16 @@ class RebecaDeliveryService {
 
     // Métodos auxiliares
     _detectarPedido(texto) {
-        const palavrasChave = ['quero', 'pedir', 'pizza', 'lanche', 'hambur', 'refri', 'coca', 'guarana', 'agua'];
-        return palavrasChave.some(p => texto.toLowerCase().includes(p));
+        const t = texto.toLowerCase();
+        // Intenção de pedido — palavras genéricas
+        const intencao = ['quero', 'pedir', 'me manda', 'me traz', 'queria', 'pode me mandar',
+            'vou querer', 'tô com fome', 'to com fome', 'com fome', 'pedido', 'fazer pedido'];
+        // Alimentos genéricos comuns
+        const alimentos = ['pizza', 'lanche', 'hambur', 'burger', 'refri', 'coca', 'guarana',
+            'agua', 'suco', 'frango', 'carne', 'batata', 'porcao', 'porcão', 'combo',
+            'marmita', 'prato', 'sanduiche', 'sanduíche', 'acai', 'açaí', 'sorvete',
+            'pastel', 'esfiha', 'tapioca', 'crepe', 'wrap', 'salada', 'macarrao', 'macarrão'];
+        return intencao.some(p => t.includes(p)) || alimentos.some(p => t.includes(p));
     }
 
     _extrairEndereco(texto) {
@@ -411,26 +419,72 @@ class RebecaDeliveryService {
     }
 
     async _parsearPedido(texto, adminId) {
-        // Implementação simples - busca itens no cardápio
-        return [];
+        try {
+            const itens = await ItemCardapio.find({ adminId, ativo: true }).lean();
+            const textoLower = texto.toLowerCase();
+            const encontrados = [];
+            
+            for (const item of itens) {
+                const nomeLower = item.nome.toLowerCase();
+                // Busca exata ou parcial (normaliza acentos)
+                const nomeNorm = nomeLower.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                const textoNorm = textoLower.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                
+                if (textoNorm.includes(nomeNorm) || nomeNorm.split(' ').every(p => p.length > 2 && textoNorm.includes(p))) {
+                    // Detectar quantidade (ex: "2 pizzas", "duas cervejas")
+                    const numeros = { 'uma':1,'um':1,'dois':2,'duas':2,'tres':3,'três':3,'quatro':4,'cinco':5 };
+                    let qtd = 1;
+                    const matchNum = textoNorm.match(new RegExp('(\\d+)\\s*' + nomeNorm.split(' ')[0]));
+                    if (matchNum) qtd = parseInt(matchNum[1]);
+                    else {
+                        for (const [palavra, num] of Object.entries(numeros)) {
+                            if (textoNorm.includes(palavra + ' ' + nomeNorm.split(' ')[0])) { qtd = num; break; }
+                        }
+                    }
+                    encontrados.push({
+                        _id: item._id, nome: item.nome,
+                        preco: item.preco, quantidade: qtd,
+                        opcionais: item.opcionais || []
+                    });
+                }
+            }
+            return encontrados;
+        } catch(e) {
+            console.error('[DELIVERY] Erro _parsearPedido:', e.message);
+            return [];
+        }
     }
 
     async _buscarNoCardapio(texto, adminId) {
         try {
             const itens = await ItemCardapio.find({ adminId, ativo: true }).lean();
-            const encontrados = itens.filter(item => 
-                item.nome.toLowerCase().includes(texto.toLowerCase()) ||
-                item.descricao?.toLowerCase().includes(texto.toLowerCase())
-            );
-            
+            const norm = s => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+            const textoNorm = norm(texto);
+            const palavras = textoNorm.split(/\s+/).filter(p => p.length > 2);
+
+            const encontrados = itens.filter(item => {
+                const nomeNorm = norm(item.nome);
+                const descNorm = norm(item.descricao || '');
+                // Match exato do nome
+                if (textoNorm.includes(nomeNorm)) return true;
+                // Match por palavras relevantes do nome (todas devem estar presentes)
+                const palavrasNome = nomeNorm.split(/\s+/).filter(p => p.length > 2);
+                if (palavrasNome.length > 0 && palavrasNome.every(p => textoNorm.includes(p))) return true;
+                // Match na descrição
+                if (descNorm && palavras.some(p => descNorm.includes(p))) return true;
+                return false;
+            });
+
+            // Detectar quantidade na mensagem
+            const matchQtd = textoNorm.match(/(\d+)\s/);
+            const qtd = matchQtd ? parseInt(matchQtd[1]) : 1;
+
             if (encontrados.length > 0) {
                 return {
                     encontrou: true,
                     itens: encontrados.map(item => ({
-                        _id: item._id,
-                        nome: item.nome,
-                        preco: item.preco,
-                        quantidade: 1,
+                        _id: item._id, nome: item.nome,
+                        preco: item.preco, quantidade: qtd,
                         opcionais: item.opcionais || []
                     }))
                 };
@@ -444,8 +498,12 @@ class RebecaDeliveryService {
 
     async _montarCardapioCompleto(adminId) {
         try {
-            const categorias = await CategoriaCardapio.find({ adminId, ativo: true }).lean();
-            let cardapio = '📋 *CARDAPIO*\n\n';
+            const [categorias, config] = await Promise.all([
+                CategoriaCardapio.find({ adminId, ativo: true }).lean(),
+                ConfigDelivery.findOne({ adminId }).lean()
+            ]);
+            const nomeRest = config?.nomeRestaurante || 'Cardápio';
+            let cardapio = '📋 *' + nomeRest.toUpperCase() + '*\n\n';
             
             for (let cat of categorias) {
                 cardapio += `🔸 *${cat.nome}*\n`;
@@ -456,7 +514,14 @@ class RebecaDeliveryService {
                 }
                 cardapio += '\n';
             }
-            return cardapio + 'Me diz o que quer! 😊';
+            // Adicionar info de entrega/retirada do admin
+            if (config) {
+                if (config.taxaEntrega) cardapio += '🛵 *Taxa de entrega:* R$ ' + Number(config.taxaEntrega).toFixed(2) + '\n';
+                if (config.pedidoMinimo) cardapio += '🛒 *Pedido mínimo:* R$ ' + Number(config.pedidoMinimo).toFixed(2) + '\n';
+                if (config.horarioFuncionamento) cardapio += '🕐 *Horário:* ' + config.horarioFuncionamento + '\n';
+                cardapio += '\n';
+            }
+            return cardapio + 'Me diz o que quer pedir! 😊';
         } catch (error) {
             return '📋 *CARDAPIO*\n\nOps, problema ao carregar. Me diz o que quer! 😊';
         }
@@ -475,7 +540,11 @@ class RebecaDeliveryService {
     }
 
     _montarOpcoesPagamento(config) {
-        return '💵 *Como vai ser o pagamento?*\n\n• *DINHEIRO* 💵\n• *CARTAO* 💳\n• *PIX* 📱';
+        // Usar formas de pagamento cadastradas pelo admin ou padrão
+        const formas = config?.formasPagamento || ['dinheiro', 'cartao', 'pix'];
+        const emojis = { dinheiro: '💵 *DINHEIRO*', cartao: '💳 *CARTÃO*', pix: '📱 *PIX*', credito: '💳 *CRÉDITO*', debito: '💳 *DÉBITO*' };
+        const lista = formas.map(f => '• ' + (emojis[f.toLowerCase()] || ('💳 *' + f.toUpperCase() + '*'))).join('\n');
+        return '💳 *Como vai pagar?*\n\n' + lista;
     }
 
     _montarResumoFinal(conversa) {
