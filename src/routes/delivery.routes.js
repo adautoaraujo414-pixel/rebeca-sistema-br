@@ -229,11 +229,13 @@ router.put('/config', authDelivery, async (req, res) => {
 router.get('/dashboard', authDelivery, async (req, res) => {
     try {
         const hoje = new Date(); hoje.setHours(0,0,0,0);
+        const mongoose = require('mongoose');
+        const adminObjId = new mongoose.Types.ObjectId(req.adminId);
         const [pedidosHoje, pedidosAtivos, totalSemana] = await Promise.all([
-            PedidoDelivery.countDocuments({ adminId: req.adminId, createdAt: { $gte: hoje } }),
-            PedidoDelivery.countDocuments({ adminId: req.adminId, status: { $in: ['novo', 'confirmado', 'preparando', 'pronto', 'saiu_entrega'] } }),
+            PedidoDelivery.countDocuments({ adminId: adminObjId, createdAt: { $gte: hoje } }),
+            PedidoDelivery.countDocuments({ adminId: adminObjId, status: { $in: ['novo', 'confirmado', 'preparando', 'pronto', 'saiu_entrega'] } }),
             PedidoDelivery.aggregate([
-                { $match: { adminId: req.adminId, createdAt: { $gte: new Date(Date.now() - 7*86400000) }, status: 'entregue' } },
+                { $match: { adminId: adminObjId, createdAt: { $gte: new Date(Date.now() - 7*86400000) }, status: 'entregue' } },
                 { $group: { _id: null, total: { $sum: '$total' }, count: { $sum: 1 } } }
             ])
         ]);
