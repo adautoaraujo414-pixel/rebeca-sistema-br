@@ -206,7 +206,7 @@ class RebecaDeliveryService {
 
     async _etapaMontandoPedido(conversa, msgLower, msgTexto, adminId, config) {
         if (msgLower.includes('cardap') || msgLower.includes('menu')) {
-            return await this._montarCardapioCompleto(adminId);
+            return await this._montarCardapioCompleto(adminId, conversa.clienteTelefone);
         }
         if (msgLower === 'sim' && conversa.dados.sugestaoRepetir) {
             const cliente = await this.reconhecerCliente(conversa.clienteTelefone, conversa.clienteNome, adminId);
@@ -496,7 +496,46 @@ class RebecaDeliveryService {
         }
     }
 
-    async _montarCardapioCompleto(adminId) {
+    async _montarCardapioCompleto(adminId, telefone) {
+        try {
+            const [categorias, config] = await Promise.all([
+                CategoriaCardapio.find({ adminId, ativo: true }).lean(),
+                ConfigDelivery.findOne({ adminId }).lean()
+            ]);
+            const nomeRest = config?.nomeRestaurante || 'Cardápio';
+            const BASE_URL = process.env.BASE_URL || 'https://rebeca-sistema-br.onrender.com';
+
+            // Contar itens disponíveis
+            const totalItens = await ItemCardapio.countDocuments({ adminId, ativo: true, disponivel: true });
+
+            if (totalItens === 0) {
+                // Sem itens ainda — mostrar texto simples
+                let cardapio = '📋 *' + nomeRest.toUpperCase() + '*\n\n';
+                for (let cat of categorias) {
+                    cardapio += '🔸 *' + cat.nome + '*\n';
+                    const itens = await ItemCardapio.find({ adminId, categoriaId: cat._id, ativo: true }).lean();
+                    for (let item of itens) {
+                        cardapio += '• ' + item.nome + ' - R$ ' + item.preco.toFixed(2) + '\n';
+                        if (item.descricao) cardapio += '   _' + item.descricao + '_\n';
+                    }
+                    cardapio += '\n';
+                }
+            // Adicionar info de entrega/retirada do admin
+            if (config) {
+                if (config.taxaEntregaFixa) cardapio += '🛵 *Taxa de entrega:* R$ ' + Number(config.taxaEntregaFixa).toFixed(2) + '\n';
+                if (config.pedidoMinimo) cardapio += '🛒 *Pedido mínimo:* R$ ' + Number(config.pedidoMinimo).toFixed(2) + '\n';
+                if (config.horarioFuncionamento) cardapio += '🕐 *Horário:* ' + config.horarioFuncionamento + '\n';
+                cardapio += '\n';
+            }
+            // Link do cardápio digital
+            const linkCardapio = BASE_URL + '/delivery-cardapio/' + adminId + (telefone ? '?tel=' + telefone : '');
+            return cardapio + '\n🔗 *Acesse nosso cardápio digital:*\n' + linkCardapio + '\n\nSelecione os itens e confirme direto pelo link! 😊';
+        } catch (error) {
+            return '📋 Ops, problema ao carregar. Me diz o que quer! 😊';
+        }
+    }
+
+    async _montarCardapioCompletoLEGACY(adminId) {
         try {
             const [categorias, config] = await Promise.all([
                 CategoriaCardapio.find({ adminId, ativo: true }).lean(),
@@ -506,22 +545,14 @@ class RebecaDeliveryService {
             let cardapio = '📋 *' + nomeRest.toUpperCase() + '*\n\n';
             
             for (let cat of categorias) {
-                cardapio += `🔸 *${cat.nome}*\n`;
-                const itens = await ItemCardapio.find({ adminId, categoria: cat._id, ativo: true }).lean();
+                cardapio += '🔸 *' + cat.nome + '*\n';
+                const itens = await ItemCardapio.find({ adminId, categoriaId: cat._id, ativo: true }).lean();
                 for (let item of itens) {
-                    cardapio += `• ${item.nome} - R$ ${item.preco.toFixed(2)}\n`;
-                    if (item.descricao) cardapio += `   _${item.descricao}_\n`;
+                    cardapio += '• ' + item.nome + ' - R$ ' + item.preco.toFixed(2) + '\n';
+                    if (item.descricao) cardapio += '   _' + item.descricao + '_\n';
                 }
                 cardapio += '\n';
             }
-            // Adicionar info de entrega/retirada do admin
-            if (config) {
-                if (config.taxaEntrega) cardapio += '🛵 *Taxa de entrega:* R$ ' + Number(config.taxaEntrega).toFixed(2) + '\n';
-                if (config.pedidoMinimo) cardapio += '🛒 *Pedido mínimo:* R$ ' + Number(config.pedidoMinimo).toFixed(2) + '\n';
-                if (config.horarioFuncionamento) cardapio += '🕐 *Horário:* ' + config.horarioFuncionamento + '\n';
-                cardapio += '\n';
-            }
-            return cardapio + 'Me diz o que quer pedir! 😊';
         } catch (error) {
             return '📋 *CARDAPIO*\n\nOps, problema ao carregar. Me diz o que quer! 😊';
         }

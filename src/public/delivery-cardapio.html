@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Cardápio Digital</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0f0f0f;color:#fff;min-height:100vh;padding-bottom:120px}
+.header{background:linear-gradient(135deg,#ff6b35,#f7931e);padding:20px 16px;text-align:center;position:sticky;top:0;z-index:100;box-shadow:0 4px 20px rgba(255,107,53,.4)}
+.header h1{font-size:1.4em;font-weight:800;text-shadow:0 2px 4px rgba(0,0,0,.3)}
+.header p{font-size:.82em;opacity:.9;margin-top:3px}
+.badge-aberto{display:inline-block;background:#00cc6a;color:#fff;padding:3px 10px;border-radius:20px;font-size:.75em;font-weight:700;margin-top:6px}
+.badge-fechado{display:inline-block;background:#e74c3c;color:#fff;padding:3px 10px;border-radius:20px;font-size:.75em;font-weight:700;margin-top:6px}
+.info-bar{background:#1a1a1a;display:flex;justify-content:center;gap:24px;padding:10px;border-bottom:1px solid #2a2a2a;font-size:.78em;color:#aaa}
+.info-bar span{display:flex;align-items:center;gap:4px}
+.cats-nav{display:flex;gap:8px;padding:12px 16px;overflow-x:auto;background:#111;border-bottom:1px solid #222;position:sticky;top:82px;z-index:99;scrollbar-width:none}
+.cats-nav::-webkit-scrollbar{display:none}
+.cat-btn{background:#1e1e1e;border:1px solid #333;color:#ccc;padding:6px 14px;border-radius:20px;font-size:.8em;white-space:nowrap;cursor:pointer;transition:all .2s;flex-shrink:0}
+.cat-btn.active{background:#ff6b35;border-color:#ff6b35;color:#fff;font-weight:700}
+.section{padding:0 16px;margin-top:20px}
+.section-title{font-size:1em;font-weight:700;color:#ff6b35;margin-bottom:12px;display:flex;align-items:center;gap:6px;border-bottom:1px solid #2a2a2a;padding-bottom:8px}
+.item-card{background:#1a1a1a;border:1px solid #2a2a2a;border-radius:14px;margin-bottom:12px;overflow:hidden;display:flex;transition:all .2s;position:relative}
+.item-card.selected{border-color:#ff6b35;background:#1f1a17;box-shadow:0 0 0 2px rgba(255,107,53,.3)}
+.item-img{width:90px;height:90px;object-fit:cover;flex-shrink:0;background:#2a2a2a}
+.item-img-placeholder{width:90px;height:90px;flex-shrink:0;background:linear-gradient(135deg,#2a2a2a,#1a1a1a);display:flex;align-items:center;justify-content:center;font-size:2em}
+.item-info{flex:1;padding:12px}
+.item-name{font-size:.92em;font-weight:700;color:#fff;margin-bottom:4px}
+.item-desc{font-size:.75em;color:#888;line-height:1.4;margin-bottom:8px}
+.item-bottom{display:flex;align-items:center;justify-content:space-between}
+.item-price{font-size:1em;font-weight:800;color:#ff6b35}
+.item-controls{display:flex;align-items:center;gap:8px}
+.btn-qty{width:28px;height:28px;border-radius:50%;border:none;background:#ff6b35;color:#fff;font-size:1.1em;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1}
+.btn-qty.minus{background:#2a2a2a;color:#ccc}
+.qty-num{font-size:.9em;font-weight:700;min-width:20px;text-align:center}
+.obs-input{display:none;width:100%;margin-top:8px;background:#111;border:1px solid #333;border-radius:8px;color:#fff;padding:8px;font-size:.8em;resize:none}
+.obs-input.show{display:block}
+/* CARRINHO FIXO */
+.cart-bar{position:fixed;bottom:0;left:0;right:0;background:#ff6b35;padding:14px 20px;display:none;z-index:200;box-shadow:0 -4px 20px rgba(255,107,53,.4)}
+.cart-bar.show{display:flex;align-items:center;justify-content:space-between}
+.cart-info{color:#fff}
+.cart-info .qty{font-size:.82em;opacity:.85}
+.cart-info .total{font-size:1.1em;font-weight:800}
+.btn-confirmar{background:#fff;color:#ff6b35;border:none;padding:10px 20px;border-radius:20px;font-weight:800;font-size:.92em;cursor:pointer}
+/* TELA CONFIRMAÇÃO */
+.tela{display:none;position:fixed;inset:0;background:#0f0f0f;z-index:300;overflow-y:auto;padding:20px}
+.tela.show{display:block}
+.tela h2{color:#ff6b35;text-align:center;margin-bottom:20px;font-size:1.2em}
+.resumo-item{background:#1a1a1a;border-radius:10px;padding:12px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
+.resumo-item .nome{font-size:.9em;font-weight:600}
+.resumo-item .sub{font-size:.78em;color:#888}
+.resumo-item .preco{color:#ff6b35;font-weight:700}
+.total-box{background:#ff6b35;border-radius:10px;padding:14px;text-align:center;margin:16px 0}
+.total-box .label{font-size:.82em;opacity:.85}
+.total-box .valor{font-size:1.5em;font-weight:800}
+.btn-enviar{width:100%;background:#00cc6a;color:#fff;border:none;padding:16px;border-radius:14px;font-size:1em;font-weight:800;cursor:pointer;margin-top:10px}
+.btn-voltar{width:100%;background:#2a2a2a;color:#ccc;border:none;padding:12px;border-radius:14px;font-size:.9em;cursor:pointer;margin-top:8px}
+/* SUCESSO */
+.sucesso-tela{text-align:center;padding:40px 20px}
+.sucesso-icon{font-size:4em;margin-bottom:16px}
+.sucesso-tela h2{color:#00cc6a;font-size:1.3em;margin-bottom:8px}
+.sucesso-tela p{color:#888;font-size:.88em;line-height:1.5}
+.loading{text-align:center;padding:60px 20px;color:#888}
+.spinner{width:32px;height:32px;border:3px solid #2a2a2a;border-top-color:#ff6b35;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.vazio{text-align:center;padding:60px 20px;color:#666;font-size:.9em}
+</style>
+</head>
+<body>
+
+<div id="loading" class="loading">
+  <div class="spinner"></div>
+  <p>Carregando cardápio...</p>
+</div>
+
+<div id="app" style="display:none">
+  <div class="header">
+    <h1 id="nomeRest">🍔 Delivery</h1>
+    <p id="horario"></p>
+    <span id="badgeStatus" class="badge-aberto">● Aberto</span>
+  </div>
+  <div class="info-bar">
+    <span id="infoEntrega">🛵 Taxa: R$ 0,00</span>
+    <span id="infoMinimo">🛒 Mínimo: R$ 0,00</span>
+  </div>
+  <div class="cats-nav" id="catsNav"></div>
+  <div id="cardapioContent"></div>
+</div>
+
+<!-- CARRINHO FIXO -->
+<div class="cart-bar" id="cartBar">
+  <div class="cart-info">
+    <div class="qty" id="cartQty">0 itens</div>
+    <div class="total" id="cartTotal">R$ 0,00</div>
+  </div>
+  <button class="btn-confirmar" onclick="abrirConfirmacao()">Ver Pedido ›</button>
+</div>
+
+<!-- TELA CONFIRMAÇÃO -->
+<div class="tela" id="telaConfirmacao">
+  <h2>🛒 Seu Pedido</h2>
+  <div id="resumoItens"></div>
+  <div class="total-box">
+    <div class="label">Total</div>
+    <div class="valor" id="totalFinal">R$ 0,00</div>
+  </div>
+  <button class="btn-enviar" onclick="enviarPedido()">✅ Confirmar pelo WhatsApp</button>
+  <button class="btn-voltar" onclick="fecharConfirmacao()">‹ Continuar escolhendo</button>
+</div>
+
+<!-- TELA SUCESSO -->
+<div class="tela" id="telaSucesso">
+  <div class="sucesso-tela">
+    <div class="sucesso-icon">✅</div>
+    <h2>Pedido enviado!</h2>
+    <p>A Rebeca já recebeu seu pedido e vai confirmar em instantes pelo WhatsApp! 😊</p>
+  </div>
+</div>
+
+<script>
+// Pegar adminId da URL: /delivery-cardapio/ADMINID?tel=TELEFONE
+var pathParts = location.pathname.split('/');
+var adminId = pathParts[pathParts.length - 1];
+var params = new URLSearchParams(location.search);
+var telefoneCliente = params.get('tel') || '';
+var nomeCliente = params.get('nome') || '';
+
+var cardapioData = null;
+var carrinho = []; // [{itemId, nome, preco, quantidade, obs}]
+
+async function carregarCardapio() {
+  try {
+    var r = await fetch('/api/delivery/cardapio-publico/' + adminId);
+    var data = await r.json();
+    cardapioData = data;
+    renderizarCardapio(data);
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+  } catch(e) {
+    document.getElementById('loading').innerHTML = '<p style="color:#e74c3c">Erro ao carregar cardápio 😅</p>';
+  }
+}
+
+function renderizarCardapio(data) {
+  document.getElementById('nomeRest').textContent = '🍔 ' + (data.restaurante || 'Delivery');
+  document.title = data.restaurante || 'Cardápio';
+  document.getElementById('horario').textContent = data.horario || '';
+  var badge = document.getElementById('badgeStatus');
+  badge.textContent = data.aberto ? '● Aberto' : '● Fechado';
+  badge.className = data.aberto ? 'badge-aberto' : 'badge-fechado';
+  document.getElementById('infoEntrega').textContent = '🛵 Taxa: R$ ' + (data.taxaEntrega||0).toFixed(2);
+  document.getElementById('infoMinimo').textContent = '🛒 Mínimo: R$ ' + (data.pedidoMinimo||0).toFixed(2);
+
+  // Categorias nav
+  var nav = document.getElementById('catsNav');
+  var content = document.getElementById('cardapioContent');
+  nav.innerHTML = '';
+  content.innerHTML = '';
+
+  if (!data.categorias || data.categorias.length === 0) {
+    content.innerHTML = '<div class="vazio">Nenhum item no cardápio ainda 😊</div>';
+    return;
+  }
+
+  // Agrupar itens por categoria
+  data.categorias.forEach(function(cat, i) {
+    var itensCat = (data.itens || []).filter(function(it) {
+      return it.categoriaId && it.categoriaId.toString() === cat._id.toString();
+    });
+    if (itensCat.length === 0) return;
+
+    // Botão nav
+    var btn = document.createElement('button');
+    btn.className = 'cat-btn' + (i === 0 ? ' active' : '');
+    btn.textContent = (cat.emoji || '🍽️') + ' ' + cat.nome;
+    btn.onclick = function() {
+      document.querySelectorAll('.cat-btn').forEach(function(b){b.classList.remove('active');});
+      btn.classList.add('active');
+      document.getElementById('sec-' + cat._id).scrollIntoView({behavior:'smooth', block:'start'});
+    };
+    nav.appendChild(btn);
+
+    // Seção
+    var sec = document.createElement('div');
+    sec.className = 'section';
+    sec.id = 'sec-' + cat._id;
+    sec.innerHTML = '<div class="section-title">' + (cat.emoji||'🍽️') + ' ' + cat.nome + '</div>';
+
+    itensCat.forEach(function(item) {
+      var card = document.createElement('div');
+      card.className = 'item-card';
+      card.id = 'card-' + item._id;
+
+      var imgHtml = item.imagem
+        ? '<img class="item-img" src="' + item.imagem + '" alt="' + item.nome + '" onerror="this.style.display=\'none\'">'
+        : '<div class="item-img-placeholder">' + (cat.emoji||'🍔') + '</div>';
+
+      card.innerHTML = imgHtml +
+        '<div class="item-info">' +
+          '<div class="item-name">' + item.nome + '</div>' +
+          '<div class="item-desc">' + (item.descricao||'') + '</div>' +
+          '<div class="item-bottom">' +
+            '<div class="item-price">R$ ' + (item.preco||0).toFixed(2) + '</div>' +
+            '<div class="item-controls">' +
+              '<button class="btn-qty minus" onclick="mudarQtd(\'' + item._id + '\',-1,this)">−</button>' +
+              '<span class="qty-num" id="qty-' + item._id + '">0</span>' +
+              '<button class="btn-qty" onclick="mudarQtd(\'' + item._id + '\',1,this)">+</button>' +
+            '</div>' +
+          '</div>' +
+          '<textarea class="obs-input" id="obs-' + item._id + '" placeholder="Observação (opcional)..." rows="2" onchange="atualizarObs(\'' + item._id + '\')"></textarea>' +
+        '</div>';
+
+      // Guardar dados do item no card
+      card.dataset.itemId = item._id;
+      card.dataset.nome = item.nome;
+      card.dataset.preco = item.preco || 0;
+
+      sec.appendChild(card);
+    });
+
+    content.appendChild(sec);
+  });
+}
+
+function mudarQtd(itemId, delta, btn) {
+  var card = document.getElementById('card-' + itemId);
+  var qtyEl = document.getElementById('qty-' + itemId);
+  var obsEl = document.getElementById('obs-' + itemId);
+  var atual = parseInt(qtyEl.textContent) || 0;
+  var nova = Math.max(0, atual + delta);
+  qtyEl.textContent = nova;
+
+  // Atualizar carrinho
+  var idx = carrinho.findIndex(function(c){return c.itemId === itemId;});
+  if (nova === 0) {
+    if (idx >= 0) carrinho.splice(idx, 1);
+    card.classList.remove('selected');
+    obsEl.classList.remove('show');
+  } else {
+    card.classList.add('selected');
+    obsEl.classList.add('show');
+    if (idx >= 0) {
+      carrinho[idx].quantidade = nova;
+    } else {
+      carrinho.push({
+        itemId: itemId,
+        nome: card.dataset.nome,
+        preco: parseFloat(card.dataset.preco),
+        quantidade: nova,
+        obs: ''
+      });
+    }
+  }
+  atualizarCartBar();
+}
+
+function atualizarObs(itemId) {
+  var obs = document.getElementById('obs-' + itemId).value;
+  var idx = carrinho.findIndex(function(c){return c.itemId === itemId;});
+  if (idx >= 0) carrinho[idx].obs = obs;
+}
+
+function atualizarCartBar() {
+  var totalQty = carrinho.reduce(function(s,c){return s+c.quantidade;},0);
+  var totalVal = carrinho.reduce(function(s,c){return s+(c.preco*c.quantidade);},0);
+  var bar = document.getElementById('cartBar');
+  if (totalQty > 0) {
+    bar.classList.add('show');
+    document.getElementById('cartQty').textContent = totalQty + ' ' + (totalQty===1?'item':'itens');
+    document.getElementById('cartTotal').textContent = 'R$ ' + totalVal.toFixed(2);
+  } else {
+    bar.classList.remove('show');
+  }
+}
+
+function abrirConfirmacao() {
+  var resumo = document.getElementById('resumoItens');
+  resumo.innerHTML = '';
+  var total = 0;
+  carrinho.forEach(function(item) {
+    var sub = item.preco * item.quantidade;
+    total += sub;
+    var div = document.createElement('div');
+    div.className = 'resumo-item';
+    div.innerHTML = '<div><div class="nome">' + item.nome + ' x' + item.quantidade + '</div>' +
+      (item.obs ? '<div class="sub">Obs: ' + item.obs + '</div>' : '') + '</div>' +
+      '<div class="preco">R$ ' + sub.toFixed(2) + '</div>';
+    resumo.appendChild(div);
+  });
+  document.getElementById('totalFinal').textContent = 'R$ ' + total.toFixed(2);
+  document.getElementById('telaConfirmacao').classList.add('show');
+}
+
+function fecharConfirmacao() {
+  document.getElementById('telaConfirmacao').classList.remove('show');
+}
+
+async function enviarPedido() {
+  if (carrinho.length === 0) return;
+  try {
+    // Montar texto do pedido para enviar via API
+    var itensTexto = carrinho.map(function(item) {
+      return item.quantidade + 'x ' + item.nome + (item.obs ? ' ('+item.obs+')' : '');
+    }).join(', ');
+    var total = carrinho.reduce(function(s,c){return s+(c.preco*c.quantidade);},0);
+
+    // Enviar para backend que vai notificar a Rebeca
+    var r = await fetch('/api/delivery/pedido-cardapio-digital', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        adminId: adminId,
+        telefoneCliente: telefoneCliente,
+        nomeCliente: nomeCliente,
+        itens: carrinho,
+        total: total
+      })
+    });
+    var data = await r.json();
+    if (data.sucesso || data.ok) {
+      document.getElementById('telaConfirmacao').classList.remove('show');
+      document.getElementById('telaSucesso').classList.add('show');
+    } else {
+      alert('Erro ao enviar pedido. Tente novamente!');
+    }
+  } catch(e) {
+    alert('Erro de conexão. Tente novamente!');
+  }
+}
+
+// Scroll spy para nav
+window.addEventListener('scroll', function() {
+  var sections = document.querySelectorAll('.section');
+  var btns = document.querySelectorAll('.cat-btn');
+  var scrollY = window.scrollY + 200;
+  sections.forEach(function(sec, i) {
+    if (sec.offsetTop <= scrollY) {
+      btns.forEach(function(b){b.classList.remove('active');});
+      if (btns[i]) btns[i].classList.add('active');
+    }
+  });
+});
+
+carregarCardapio();
+</script>
+</body>
+</html>

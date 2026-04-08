@@ -551,6 +551,72 @@ router.post('/cardapio/confirmar-transcricao', authDelivery, async (req, res) =>
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
+
+// ========== PEDIDO VIA CARDÁPIO DIGITAL ==========
+router.post('/pedido-cardapio-digital', async (req, res) => {
+    try {
+        const { adminId, telefoneCliente, nomeCliente, itens, total } = req.body;
+        if (!adminId || !itens || itens.length === 0) {
+            return res.status(400).json({ erro: 'Dados inválidos' });
+        }
+
+        // Montar texto do pedido
+        const itensTexto = itens.map(i => 
+            i.quantidade + 'x ' + i.nome + (i.obs ? ' (' + i.obs + ')' : '')
+        ).join(', ');
+
+        console.log('[CARDAPIO-DIGITAL] Pedido de', telefoneCliente, ':', itensTexto);
+
+        // Se tem telefone do cliente, enviar para a Rebeca processar
+        if (telefoneCliente) {
+            try {
+                const { InstanciaWhatsapp } = require('../models');
+                const EvolutionMultiService = require('../services/evolution-multi.service');
+                const RebecaDeliveryService = require('../services/rebeca-delivery.service');
+
+                const inst = await InstanciaWhatsapp.findOne({ 
+                    adminId, 
+                    status: { $in: ['conectado','open','connected'] } 
+                });
+
+                if (inst) {
+                    // Carregar conversa e preencher carrinho direto
+                    const conversa = RebecaDeliveryService.obterConversa(telefoneCliente, adminId);
+                    conversa.carrinho = itens.map(i => ({
+                        _id: i.itemId,
+                        nome: i.nome,
+                        preco: i.preco,
+                        quantidade: i.quantidade,
+                        observacao: i.obs || ''
+                    }));
+                    conversa.clienteNome = nomeCliente || conversa.clienteNome || 'Cliente';
+                    conversa.etapa = 'pedir_endereco';
+
+                    // Montar resumo bonito
+                    const resumo = itens.map(i => 
+                        '• ' + i.quantidade + 'x *' + i.nome + '* — R$ ' + (i.preco * i.quantidade).toFixed(2)
+                    ).join('\n');
+
+                    const msg = '🛒 *Pedido recebido pelo cardápio digital!*\n\n' 
+                        + resumo 
+                        + '\n\n💰 *Total: R$ ' + Number(total).toFixed(2) + '*'
+                        + '\n\n📍 Qual o *endereço de entrega*?\n\nManda a rua, número e bairro! 😊';
+
+                    await EvolutionMultiService.enviarMensagem(inst._id, telefoneCliente, msg);
+                    console.log('[CARDAPIO-DIGITAL] Mensagem enviada para', telefoneCliente);
+                }
+            } catch(e) {
+                console.log('[CARDAPIO-DIGITAL] Erro notificar cliente:', e.message);
+            }
+        }
+
+        res.json({ sucesso: true });
+    } catch(e) {
+        console.error('[CARDAPIO-DIGITAL] Erro:', e.message);
+        res.status(500).json({ erro: e.message });
+    }
+});
+
 module.exports = router;
 
 // ========== LOGIN DELIVERY ==========
