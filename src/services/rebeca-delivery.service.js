@@ -62,7 +62,7 @@ class RebecaDeliveryService {
         conversa.clienteNome = nome;
 
         try {
-            const msgTexto = conteudo.text || '';
+            const msgTexto = typeof conteudo === 'string' ? conteudo : (conteudo?.text || conteudo?.caption || '');
             const msgLower = msgTexto.toLowerCase().trim();
             
             if (msgLower === 'cancelar') {
