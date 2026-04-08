@@ -110,9 +110,46 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="gps-bar" id="gpsBar">GPS aguardando...</div>
 
 <script>
+// ===== LOGIN =====
 var TK=localStorage.getItem('delivery_token')||new URLSearchParams(location.search).get('token')||'';
 var ENAME=localStorage.getItem('entregador_nome')||'Entregador';
-var urlEId=new URLSearchParams(location.search).get('entregadorId')||'';
+var urlEId=new URLSearchParams(location.search).get('entregadorId')||localStorage.getItem('entregador_id')||'';
+
+async function fazerLoginEntregador(){
+  var tel=document.getElementById('login-tel').value.replace(/\D/g,'');
+  var sen=document.getElementById('login-senha').value;
+  if(!tel||!sen){alert('Preencha telefone e senha');return;}
+  try{
+    var r=await fetch('/api/delivery/entregador/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({telefone:tel,senha:sen})});
+    var d=await r.json();
+    if(d.token){
+      localStorage.setItem('delivery_token',d.token);
+      localStorage.setItem('entregador_nome',d.entregador.nome);
+      localStorage.setItem('entregador_id',d.entregador._id);
+      TK=d.token;ENAME=d.entregador.nome;urlEId=d.entregador._id;
+      document.getElementById('login-screen-ent').style.display='none';
+      document.getElementById('app-ent').style.display='block';
+      carregarPedidos();
+    }else{
+      document.getElementById('login-erro-ent').textContent=d.erro||'Erro ao entrar';
+    }
+  }catch(e){document.getElementById('login-erro-ent').textContent='Erro de conexão';}
+}
+
+function sairEntregador(){
+  localStorage.removeItem('delivery_token');
+  localStorage.removeItem('entregador_nome');
+  localStorage.removeItem('entregador_id');
+  location.reload();
+}
+
+// Verificar se já tem token
+if(!TK){
+  document.addEventListener('DOMContentLoaded',function(){
+    document.getElementById('login-screen-ent').style.display='flex';
+    document.getElementById('app-ent').style.display='none';
+  });
+}
 var B='/api/delivery';
 var F='fila';
 var GPS={lat:null,lng:null};
@@ -121,7 +158,13 @@ var todosPedidos=[];
 var pedidosEntregues=[];
 var _gpsWatch=null;
 var _entregasAtivas=new Set();
-if(TK)localStorage.setItem('delivery_token',TK);
+if(TK){
+  localStorage.setItem('delivery_token',TK);
+  document.addEventListener('DOMContentLoaded',function(){
+    var btnSair=document.getElementById('btn-sair-ent');
+    if(btnSair)btnSair.style.display='block';
+  });
+}
 
 function minutos(val){
   if(val===null||val===undefined)return'—';
@@ -360,5 +403,6 @@ if('Notification' in window&&Notification.permission==='default')Notification.re
 carregar();
 setInterval(carregar,8000);
 </script>
+</div>
 </body>
 </html>
