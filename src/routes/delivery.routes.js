@@ -386,8 +386,12 @@ router.post('/entregador/:id/gps', async (req, res) => {
 router.get('/rastrear-gps/:codigo', async (req, res) => {
     try {
         const codigo = req.params.codigo;
-        const recentes = await PedidoDelivery.find({ status: { $in: ['preparando', 'pronto', 'saiu_entrega'] } }).sort({ createdAt: -1 }).limit(200).lean();
-        const pedido = recentes.find(function(p) { return p._id.toString().endsWith(codigo); });
+        // Buscar em todos os status recentes
+        const recentes = await PedidoDelivery.find({
+            status: { $in: ['confirmado', 'preparando', 'pronto', 'saiu_entrega', 'entregue'] }
+        }).sort({ createdAt: -1 }).limit(500).lean();
+        const pedido = recentes.find(function(p) { return p._id.toString().slice(-8) === codigo || p._id.toString().endsWith(codigo); });
+        if (!pedido) return res.status(404).json({ erro: 'Pedido não encontrado' });
         res.json({
             numero: pedido.numero,
             status: pedido.status,
