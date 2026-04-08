@@ -7,9 +7,13 @@ const EVOLUTION_GLOBAL_KEY = process.env.EVOLUTION_API_KEY || '';
 const EvolutionMultiService = {
     criarInstancia: async (adminId, nomeEmpresa) => {
         try {
-            const admin = await Admin.findById(adminId);
+            // Buscar em Admin (corridas) ou AdminDelivery
+            let admin = await Admin.findById(adminId);
+            if (!admin) {
+                const { AdminDelivery } = require('../models/delivery.models');
+                admin = await AdminDelivery.findById(adminId);
+            }
             if (!admin) throw new Error('Admin nao encontrado');
-            // Admin delivery é válido
             const nomeInstancia = 'rebeca_' + nomeEmpresa.toLowerCase().replace(/[^a-z0-9]/g, '_') + '_' + Date.now();
             let evolutionResponse = null;
             try {
