@@ -129,7 +129,7 @@ async function fazerLoginEntregador(){
       TK=d.token;ENAME=d.entregador.nome;urlEId=d.entregador._id;
       document.getElementById('login-screen-ent').style.display='none';
       document.getElementById('app-ent').style.display='block';
-      carregarPedidos();
+      carregar();
     }else{
       document.getElementById('login-erro-ent').textContent=d.erro||'Erro ao entrar';
     }
