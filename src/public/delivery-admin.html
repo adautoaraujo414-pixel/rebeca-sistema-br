@@ -461,7 +461,7 @@
             } catch(e) { document.getElementById('loginErro').textContent = 'Erro de conexão'; }
         }
 
-        function logout() { localStorage.removeItem('delivery_token'); location.href = '/delivery-admin'; }
+        function logout() { localStorage.removeItem('delivery_token'); location.href = '/rebeca-delivery'; }
 
         function api(path, opts = {}) {
             return fetch('/api/delivery' + path, { ...opts, headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', ...opts.headers } });
