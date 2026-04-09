@@ -438,6 +438,7 @@
         const _tokenUrl = _urlParams.get('token');
         if (_tokenUrl) { localStorage.setItem('delivery_token', _tokenUrl); history.replaceState({}, '', '/delivery-admin'); }
         let token = localStorage.getItem('delivery_token') || '';
+        let _somNotifAtivo = localStorage.getItem('somNotif') !== 'off';
         // Esconder login imediatamente se já tem token (evita flicker)
         if (token) {
             const _lc = document.getElementById('loginContainer');
@@ -905,7 +906,6 @@
             }
         }
         let instanciaDeliveryId = null; // carregado após login em carregarInstanciaDelivery()
-        let _somNotifAtivo = localStorage.getItem('somNotif') !== 'off';
         let _ultimosPedidosIds = new Set();
         let _audioCtx = null;
 
