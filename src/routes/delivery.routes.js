@@ -371,31 +371,16 @@ router.post('/entregadores/enviar-credenciais', authDelivery, async (req, res) =
         const { telefone, nome, senha, linkApp } = req.body;
         if (!telefone) return res.json({ sucesso: false, erro: 'Telefone obrigatório' });
 
-        // Buscar instância WhatsApp do admin
-        const admin = await AdminDelivery.findById(req.adminId).lean();
-        const InstanciaWhatsapp = require('../models/instancia.model');
-        const instancia = await InstanciaWhatsapp.findOne({ adminId: req.adminId }).lean();
+        const { InstanciaWhatsapp } = require('../models');
+        const inst = await InstanciaWhatsapp.findOne({ adminId: req.adminId, status: { $in: ['conectado','open','connected'] } });
+        if (!inst) return res.json({ sucesso: false, erro: 'WhatsApp não conectado' });
 
-        if (!instancia?.instanciaId) return res.json({ sucesso: false, erro: 'WhatsApp não conectado' });
+        const tel = telefone.replace(/[^0-9]/g, '');
+        const telWpp = tel.startsWith('55') ? tel : '55' + tel;
+        const linkEnt = linkApp || (process.env.BASE_URL || 'https://rebeca-sistema-br.onrender.com') + '/delivery-entregador';
+        const msg = '🏍️ *Olá, ' + nome + '!*\n\nVocê foi cadastrado como entregador.\n\n*Seus dados de acesso:*\n📱 Telefone: ' + telefone + '\n🔑 Senha: ' + senha + '\n\n*Acesse o app:*\n👉 ' + linkEnt + '\n\n_Guarde em local seguro!_';
 
-        const telFormatado = telefone.replace(/\D/g, '');
-        const telWpp = telFormatado.startsWith('55') ? telFormatado : '55' + telFormatado;
-
-        const msg = `🏍️ *Olá, ${nome}!*
-
-Você foi cadastrado como entregador.
-
-*Seus dados de acesso:*
-📱 Telefone: ${telefone}
-🔑 Senha: ${senha}
-
-*Para acessar o app:*
-👉 ${linkApp}
-
-_Guarde suas credenciais em local seguro!_`;
-
-        const { enviarMensagemWhatsApp } = require('../services/evolution.service');
-        await enviarMensagemWhatsApp(instancia.instanciaId, telWpp, msg);
+        await EvolutionMultiService.enviarMensagem(inst._id, telWpp, msg);
 
         res.json({ sucesso: true });
     } catch(e) {
