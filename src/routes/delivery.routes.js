@@ -365,6 +365,45 @@ router.get('/entregadores', authDelivery, async (req, res) => {
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
+// Enviar credenciais do entregador por WhatsApp
+router.post('/entregadores/enviar-credenciais', authDelivery, async (req, res) => {
+    try {
+        const { telefone, nome, senha, linkApp } = req.body;
+        if (!telefone) return res.json({ sucesso: false, erro: 'Telefone obrigatório' });
+
+        // Buscar instância WhatsApp do admin
+        const admin = await AdminDelivery.findById(req.adminId).lean();
+        const InstanciaWhatsapp = require('../models/instancia.model');
+        const instancia = await InstanciaWhatsapp.findOne({ adminId: req.adminId }).lean();
+
+        if (!instancia?.instanciaId) return res.json({ sucesso: false, erro: 'WhatsApp não conectado' });
+
+        const telFormatado = telefone.replace(/\D/g, '');
+        const telWpp = telFormatado.startsWith('55') ? telFormatado : '55' + telFormatado;
+
+        const msg = `🏍️ *Olá, ${nome}!*
+
+Você foi cadastrado como entregador.
+
+*Seus dados de acesso:*
+📱 Telefone: ${telefone}
+🔑 Senha: ${senha}
+
+*Para acessar o app:*
+👉 ${linkApp}
+
+_Guarde suas credenciais em local seguro!_`;
+
+        const { enviarMensagemWhatsApp } = require('../services/evolution.service');
+        await enviarMensagemWhatsApp(instancia.instanciaId, telWpp, msg);
+
+        res.json({ sucesso: true });
+    } catch(e) {
+        console.error('[ENTREGADOR WPP]', e.message);
+        res.json({ sucesso: false, erro: e.message });
+    }
+});
+
 router.post('/entregadores', authDelivery, async (req, res) => {
     try {
         const { nome, telefone, veiculo } = req.body;

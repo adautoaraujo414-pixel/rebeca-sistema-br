@@ -142,7 +142,7 @@
                 <div class="menu-section">Operação</div>
                 <div class="menu-item" onclick="window.open('/delivery-caixa?token='+localStorage.getItem('delivery_token'),'_blank')" style="cursor:pointer">🧾 Caixa / Comanda</div>
                 <div class="menu-item" onclick="window.open('/delivery-cozinha?token='+localStorage.getItem('delivery_token'))" style="cursor:pointer">👨‍🍳 Painel Cozinha</div>
-                <div class="menu-item" onclick="window.open('/delivery-entregador?token='+localStorage.getItem('delivery_token'))" style="cursor:pointer">🏍️ Painel Entregador</div>
+
                 <div class="menu-section">Config</div>
                 <div class="menu-item" data-page="avaliacoes">⭐ Avaliações</div>
                 <div class="menu-item" data-page="assinantes">👥 Assinantes</div>
@@ -1162,12 +1162,24 @@
                 const data = await res.json();
                 if (data.erro) return toast(data.erro,'error');
                 fecharModalEntregador();
-                if (data.linkApp) {
-                    // Mostrar link do app para copiar
-                    const copiou = confirm('✅ Entregador cadastrado!\n\nLink do app:\n'+data.linkApp+'\n\nClique OK para copiar o link.');
-                    if (copiou) { navigator.clipboard?.writeText(data.linkApp); toast('Link copiado!'); }
+                if (!id && telefone) {
+                    // Enviar credenciais por WhatsApp automaticamente
+                    try {
+                        await api('/entregadores/enviar-credenciais', {
+                            method: 'POST',
+                            body: JSON.stringify({
+                                telefone,
+                                nome,
+                                senha,
+                                linkApp: data.linkApp || (location.origin + '/delivery-entregador')
+                            })
+                        });
+                        toast('✅ Entregador cadastrado! Credenciais enviadas por WhatsApp 📱');
+                    } catch(e) {
+                        toast('✅ Cadastrado! Mas não foi possível enviar WhatsApp.');
+                    }
                 } else {
-                    toast(id ? 'Entregador atualizado!' : 'Entregador cadastrado!');
+                    toast(id ? 'Entregador atualizado!' : '✅ Entregador cadastrado!');
                 }
                 carregarEntregadores();
             } catch(e) { toast('Erro de conexão','error'); }
