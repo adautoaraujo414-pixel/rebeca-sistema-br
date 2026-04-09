@@ -345,16 +345,12 @@ async function iniciarApp(admin) {
   document.getElementById('login-screen').style.display = 'none';
   const app = document.getElementById('app');
   app.style.display = 'flex';
-  // Buscar nome do restaurante da config
+  // Buscar nome do restaurante da config (ignora nomeComercio do cadastro)
   try {
     const rc = await fetch('/api/delivery/config', {headers:{'Authorization':'Bearer '+token}});
     const dc = await rc.json();
     if(dc?.nomeRestaurante) document.getElementById('nome-restaurante').textContent = dc.nomeRestaurante;
-    else if(admin?.nomeComercio || admin?.nomeRestaurante)
-      document.getElementById('nome-restaurante').textContent = admin.nomeComercio || admin.nomeRestaurante || 'Delivery';
-  } catch(e) {
-    if(admin?.nomeComercio) document.getElementById('nome-restaurante').textContent = admin.nomeComercio;
-  }
+  } catch(e) {}
   await carregarCardapio();
   await carregarPedidos();
   await carregarStats();
