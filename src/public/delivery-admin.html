@@ -675,24 +675,27 @@
         // CARDÁPIO
         async function carregarCardapio() {
             try {
-            await carregarCategorias();
-            const res = await api('/cardapio');
-            const data2 = await res.json();
-            const itens = Array.isArray(data2) ? data2 : [];
-            document.getElementById('cardapioLista').innerHTML = itens.map(i => 
-                `<div class="item-card">
-                    <div class="item-info">
-                        <h4>${i.destaque ? '⭐ ' : ''}${i.nome}</h4>
-                        <p>${i.descricao || ''} — ${i.categoriaId?.nome || ''}</p>
-                        <p>⏱️ ${i.tempoPreparoMin || 20}min</p>
-                    </div>
-                    <div style="display:flex;align-items:center;gap:15px;">
-                        <span class="item-preco">R$ ${(i.preco||0).toFixed(2)}</span>
-                        <button class="btn btn-small" style="background:#252542;color:#00d4ff;" onclick="editarItem('${i._id}')">✏️</button>
-                        <button class="btn btn-small btn-danger" onclick="deletarItem('${i._id}')">🗑️</button>
-                    </div>
-                </div>`
-            ).join('') || '<p style="color:#888;text-align:center;">Nenhum item no cardápio</p>';
+                await carregarCategorias();
+                const res = await api('/cardapio');
+                const data2 = await res.json();
+                const itens = Array.isArray(data2) ? data2 : [];
+                const el = document.getElementById('cardapioLista');
+                if (!el) return;
+                el.innerHTML = itens.map(i =>
+                    `<div class="item-card">
+                        <div class="item-info">
+                            <h4>${i.destaque ? '⭐ ' : ''}${i.nome}</h4>
+                            <p>${i.descricao || ''} — ${i.categoriaId?.nome || ''}</p>
+                            <p>⏱️ ${i.tempoPreparoMin || 20}min</p>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:15px;">
+                            <span class="item-preco">R$ ${(i.preco||0).toFixed(2)}</span>
+                            <button class="btn btn-small" style="background:#252542;color:#00d4ff;" onclick="editarItem('${i._id}')">✏️</button>
+                            <button class="btn btn-small btn-danger" onclick="deletarItem('${i._id}')">🗑️</button>
+                        </div>
+                    </div>`
+                ).join('') || '<p style="color:#888;text-align:center;">Nenhum item no cardápio</p>';
+            } catch(e) { console.log('[CARDAPIO] Erro:', e.message); }
         }
 
         function abrirModalItem() {
