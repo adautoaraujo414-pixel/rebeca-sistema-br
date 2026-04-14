@@ -138,10 +138,10 @@
                 <div class="menu-item" data-page="categorias">📁 Categorias</div>
                 <div class="menu-item" data-page="cardapio">🍔 Itens</div>
                 <div class="menu-item" data-page="upload-cardapio">📸 Upload Cardápio IA</div>
-                <div class="menu-item" data-page="entregadores">📦 Entregadores</div>
                 <div class="menu-section">Operação</div>
                 <div class="menu-item" onclick="window.open('/delivery-caixa?token='+localStorage.getItem('delivery_token'),'_blank')" style="cursor:pointer">🧾 Caixa / Comanda</div>
                 <div class="menu-item" onclick="window.open('/delivery-cozinha?token='+localStorage.getItem('delivery_token'))" style="cursor:pointer">👨‍🍳 Painel Cozinha</div>
+                <div class="menu-item" data-page="entregadores">🏍️ Entregadores</div>
 
                 <div class="menu-section">Config</div>
                 <div class="menu-item" data-page="avaliacoes">⭐ Avaliações</div>
@@ -268,10 +268,22 @@
 
                 <div id="page-entregadores" class="page">
                     <h2 style="margin-bottom:20px;">🏍️ Entregadores</h2>
+                    <div class="panel" style="margin-bottom:16px;">
+                        <h3 style="margin-bottom:16px;">➕ Cadastrar Entregador</h3>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                            <div class="form-group"><label>Nome *</label><input type="text" id="cadNome" placeholder="Nome completo"></div>
+                            <div class="form-group"><label>WhatsApp *</label><input type="text" id="cadTelefone" placeholder="5534999999999"></div>
+                            <div class="form-group"><label>Veículo</label><input type="text" id="cadVeiculo" placeholder="Moto, Bicicleta..."></div>
+                            <div class="form-group"><label>Placa</label><input type="text" id="cadPlaca" placeholder="ABC-1234"></div>
+                            <div class="form-group"><label>Senha *</label><input type="text" id="cadSenha" placeholder="Senha de acesso ao app"></div>
+                            <div class="form-group"><label>Valor por entrega (R$)</label><input type="number" id="cadValor" step="0.50" value="0"></div>
+                        </div>
+                        <button class="btn btn-primary" style="margin-top:14px;" onclick="cadastrarEntregadorNovo()">➕ Cadastrar e Enviar Acesso por WhatsApp</button>
+                    </div>
                     <div class="panel">
-                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px;">
-                            <h3>Lista de Entregadores</h3>
-                            <button class="btn btn-primary" onclick="abrirModalEntregador()">+ Novo Entregador</button>
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                            <h3>Entregadores Cadastrados</h3>
+                            <button class="btn" style="background:#252542;" onclick="carregarEntregadores()">🔄 Atualizar</button>
                         </div>
                         <div id="listaEntregadores"><p style="color:#888;text-align:center;padding:20px;">Carregando...</p></div>
                     </div>
@@ -1113,28 +1125,98 @@
                 renderEntregadores();
             } catch(e) { if(el) el.innerHTML = '<p style="color:#e74c3c;text-align:center;">Erro ao carregar</p>'; }
         }
+
         function renderEntregadores() {
             const el = document.getElementById('listaEntregadores');
             if (!el) return;
-            if (!entregadores.length) { el.innerHTML = '<p style="color:#888;text-align:center;padding:30px;">Nenhum entregador. Clique em + Novo Entregador.</p>'; return; }
-            el.innerHTML = entregadores.map(e => `
-                <div style="background:#252542;border-radius:10px;padding:16px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
-                    <div>
-                        <div style="font-weight:700;color:#fff;">${e.nome} ${e.ativo!==false?'<span style="background:#27ae60;color:#fff;font-size:11px;padding:2px 8px;border-radius:12px;">Ativo</span>':'<span style="background:#888;color:#fff;font-size:11px;padding:2px 8px;border-radius:12px;">Inativo</span>'}</div>
-                        <div style="color:#aaa;font-size:13px;margin-top:3px;">📱 ${e.telefone||'—'} | 🏍️ ${e.veiculo||'—'} ${e.placa?'('+e.placa+')':''}</div>
-                        <div style="color:#aaa;font-size:13px;">💰 R$ ${(e.valorPorEntrega||0).toFixed(2)} por entrega | 📦 ${e.totalEntregas||0} entregas</div>
-                        ${e.token?'<div style="font-size:11px;color:#555;margin-top:4px;">🔑 Senha: ••••••</div>':'<div style="font-size:11px;color:#e74c3c;">⚠️ Sem senha cadastrada</div>'}
+            if (!entregadores.length) {
+                el.innerHTML = '<p style="color:#888;text-align:center;padding:30px;">Nenhum entregador cadastrado ainda.</p>';
+                return;
+            }
+            el.innerHTML = entregadores.map(e => {
+                const ativo = e.ativo !== false;
+                return `<div style="background:#252542;border-radius:10px;padding:16px;margin-bottom:10px;">
+                    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;">
+                        <div>
+                            <div style="font-weight:700;color:#fff;font-size:15px;">
+                                ${e.nome}
+                                ${ativo
+                                    ? '<span style="background:#27ae60;color:#fff;font-size:11px;padding:2px 8px;border-radius:12px;margin-left:6px;">Ativo</span>'
+                                    : '<span style="background:#888;color:#fff;font-size:11px;padding:2px 8px;border-radius:12px;margin-left:6px;">Inativo</span>'}
+                            </div>
+                            <div style="color:#aaa;font-size:13px;margin-top:4px;">📱 ${e.telefone||'—'} | 🏍️ ${e.veiculo||'—'} ${e.placa?'('+e.placa+')':''}</div>
+                            <div style="color:#aaa;font-size:13px;">💰 R$ ${(e.valorPorEntrega||0).toFixed(2)}/entrega | 📦 ${e.totalEntregas||0} entregas</div>
+                            ${e.token
+                                ? '<div style="font-size:11px;color:#555;margin-top:4px;">🔑 Token ativo</div>'
+                                : '<div style="font-size:11px;color:#e74c3c;margin-top:4px;">⚠️ Sem senha — cadastre uma senha</div>'}
+                        </div>
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                            <button onclick="copiarLinkEntregador(\'${e._id}\')"
+                                style="background:#163a20;color:#22c55e;border:1px solid #22c55e;padding:7px 13px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;">
+                                🔗 Copiar Link Login
+                            </button>
+                            <button onclick="redefinirSenhaEntregador(\'${e._id}\')"
+                                style="background:#2d1e0e;color:#f97316;border:1px solid #f97316;padding:7px 13px;border-radius:6px;cursor:pointer;font-size:12px;">
+                                🔑 Nova Senha
+                            </button>
+                            <button onclick="toggleEntregador(\'${e._id}\')"
+                                style="background:#252542;color:${ativo?'#e74c3c':'#27ae60'};border:1px solid ${ativo?'#e74c3c':'#27ae60'};padding:7px 13px;border-radius:6px;cursor:pointer;font-size:12px;">
+                                ${ativo ? '⏸ Desativar' : '▶ Ativar'}
+                            </button>
+                            <button onclick="excluirEntregador(\'${e._id}\')"
+                                style="background:#252542;color:#e74c3c;border:1px solid #e74c3c;padding:7px 13px;border-radius:6px;cursor:pointer;font-size:12px;">
+                                🗑️
+                            </button>
+                        </div>
                     </div>
-                    <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                        <button onclick="copiarLinkEntregador('${e._id}')" style="background:#1a3a5c;color:#22c55e;border:1px solid #22c55e;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;">🔗 Copiar Link</button>
-                        <button onclick="gerarQREntregador('${e._id}','${e.nome}')" style="background:#1a3a5c;color:#00d4ff;border:1px solid #00d4ff;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;">📱 QR App</button>
-                        <button onclick="redefinirSenhaEntregador('${e._id}')" style="background:#1a3a5c;color:#f97316;border:1px solid #f97316;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;">🔑 Senha</button>
-                        <button onclick="editarEntregador('${e._id}')" style="background:#252542;color:#00d4ff;border:1px solid #00d4ff;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;">✏️ Editar</button>
-                        <button onclick="toggleEntregador('${e._id}')" style="background:#252542;color:${e.ativo!==false?'#e74c3c':'#27ae60'};border:1px solid ${e.ativo!==false?'#e74c3c':'#27ae60'};padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;">${e.ativo!==false?'⏸ Desativar':'▶ Ativar'}</button>
-                        <button onclick="excluirEntregador('${e._id}')" style="background:#252542;color:#e74c3c;border:1px solid #e74c3c;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;">🗑️</button>
-                    </div>
-                </div>`).join('');
+                </div>`;
+            }).join('');
         }
+
+        async function cadastrarEntregadorNovo() {
+            const nome     = (document.getElementById('cadNome')?.value||'').trim();
+            const telefone = (document.getElementById('cadTelefone')?.value||'').trim();
+            const veiculo  = (document.getElementById('cadVeiculo')?.value||'').trim();
+            const placa    = (document.getElementById('cadPlaca')?.value||'').trim();
+            const senha    = (document.getElementById('cadSenha')?.value||'').trim();
+            const valor    = parseFloat(document.getElementById('cadValor')?.value||0);
+            if (!nome)     return toast('Nome é obrigatório', 'error');
+            if (!telefone) return toast('WhatsApp é obrigatório', 'error');
+            if (!senha)    return toast('Senha é obrigatória', 'error');
+            try {
+                const res  = await api('/entregadores/cadastrar', {
+                    method: 'POST',
+                    body: JSON.stringify({ nome, telefone, senha, veiculo, placa, valorPorEntrega: valor })
+                });
+                const data = await res.json();
+                if (data.erro) return toast(data.erro, 'error');
+                try {
+                    await api('/entregadores/enviar-credenciais', {
+                        method: 'POST',
+                        body: JSON.stringify({ telefone, nome, senha, linkApp: data.linkApp })
+                    });
+                    toast('✅ Entregador cadastrado! Credenciais enviadas por WhatsApp 📱');
+                } catch(e) {
+                    toast('✅ Cadastrado! WhatsApp indisponível — copie o link manualmente.');
+                }
+                ['cadNome','cadTelefone','cadVeiculo','cadPlaca','cadSenha'].forEach(id => {
+                    const el = document.getElementById(id); if(el) el.value = '';
+                });
+                document.getElementById('cadValor').value = '0';
+                carregarEntregadores();
+            } catch(e) { toast('Erro de conexão', 'error'); }
+        }
+
+        async function copiarLinkEntregador(eid) {
+            const e = entregadores.find(x => x._id === eid);
+            if (!e || !e.token) { toast('Sem token. Redefina a senha primeiro.', 'error'); return; }
+            const link = location.origin + '/delivery-entregador?token=' + e.token + '&entregadorId=' + eid;
+            try {
+                await navigator.clipboard.writeText(link);
+                toast('🔗 Link copiado! Envie para o entregador 😊');
+            } catch(err) { prompt('Copie o link:', link); }
+        }
+
         function abrirModalEntregador() {
             document.getElementById('tituloModalEntregador').textContent = '🏍️ Novo Entregador';
             ['entregadorId','entregadorNome','entregadorTelefone','entregadorVeiculo','entregadorPlaca','entregadorSenha','entregadorValor'].forEach(id => {
