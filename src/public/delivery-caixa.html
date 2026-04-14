@@ -885,7 +885,7 @@ function imprimirCupom(pedido, troco) {
 <div id="cupom-print"></div>
 
 <!-- TOGGLE IMPRESSÃO AUTOMÁTICA -->
-<div id="toggle-impressao" style="position:fixed;bottom:16px;right:16px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px 16px;display:flex;align-items:center;gap:10px;z-index:999;box-shadow:0 8px 32px rgba(0,0,0,.4);">
+<div id="toggle-impressao" style="position:fixed;top:58px;right:16px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:8px 14px;display:flex;align-items:center;gap:10px;z-index:999;box-shadow:0 4px 20px rgba(0,0,0,.4);">
   <span style="font-size:.82em;color:var(--text2);">🖨️ Imprimir ao pagar</span>
   <label style="position:relative;display:inline-block;width:36px;height:20px;">
     <input type="checkbox" id="chk-impressao" style="opacity:0;width:0;height:0;" onchange="localStorage.setItem('impressaoAuto',this.checked)">
