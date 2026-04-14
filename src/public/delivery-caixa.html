@@ -793,8 +793,23 @@ if(token) {
 }
 
 // ── IMPRESSÃO DE CUPOM TÉRMICO ──────────────────────────────
+let _configCupom = {};
+async function _carregarConfigCupom() {
+  try {
+    const r = await fetch('/api/delivery/config', {headers:{'Authorization':'Bearer '+token}});
+    _configCupom = await r.json();
+  } catch(e) {}
+}
+_carregarConfigCupom();
+
 function imprimirCupom(pedido, troco) {
-  const nomeRest = document.querySelector('.header-restaurant')?.textContent?.trim() || 'Restaurante';
+  const cfg = _configCupom;
+  const nomeRest = cfg.nomeRestaurante || document.querySelector('.header-restaurant')?.textContent?.trim() || 'Restaurante';
+  const cnpj = cfg.cnpj || '';
+  const telefoneContato = cfg.telefoneContato || '';
+  const enderecoCompleto = cfg.enderecoCompleto || cfg.endereco || '';
+  const cidadeEstado = cfg.cidadeEstado || '';
+  const rodape = cfg.msgRodapeCupom || 'Obrigado pela preferência! Volte sempre!';
   const agora = new Date();
   const dataHora = agora.toLocaleDateString('pt-BR') + ' ' + agora.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'});
   const local = pedido.tipoLocal === 'mesa' ? 'Mesa ' + (pedido.numeroMesa || '?')
@@ -825,6 +840,10 @@ function imprimirCupom(pedido, troco) {
   document.getElementById('cupom-print').innerHTML = `
     <div class="cupom-header">
       <h2>${nomeRest}</h2>
+      ${enderecoCompleto ? `<p>${enderecoCompleto}</p>` : ''}
+      ${cidadeEstado ? `<p>${cidadeEstado}</p>` : ''}
+      ${telefoneContato ? `<p>Tel: ${telefoneContato}</p>` : ''}
+      ${cnpj ? `<p>CNPJ: ${cnpj}</p>` : ''}
       <p>${dataHora}</p>
     </div>
     <hr class="cupom-divider">
@@ -839,8 +858,7 @@ function imprimirCupom(pedido, troco) {
     ${obsHtml}
     <hr class="cupom-divider">
     <div class="cupom-footer">
-      <p>Obrigado pela preferência! 💛</p>
-      <p>Volte sempre!</p>
+      <p>${rodape}</p>
     </div>
     <div class="cupom-corte">- - - - - - - - - - - - - - -</div>
   `;

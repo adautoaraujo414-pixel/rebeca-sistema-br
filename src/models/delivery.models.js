@@ -155,7 +155,13 @@ const ConfigDeliverySchema = new mongoose.Schema({
     mensagemPedidoConfirmado: { type: String, default: 'Seu pedido foi confirmado! Estamos preparando com carinho 🍳' },
     mensagemPedidoPronto: { type: String, default: 'Seu pedido está pronto! Já já sai para entrega 🏍️' },
     aberto: { type: Boolean, default: true },
-    usarEntregadorProprio: { type: Boolean, default: true }
+    usarEntregadorProprio: { type: Boolean, default: true },
+    // Dados fiscais para cupom
+    cnpj: { type: String, default: '' },
+    telefoneContato: { type: String, default: '' },
+    enderecoCompleto: { type: String, default: '' },
+    cidadeEstado: { type: String, default: '' },
+    msgRodapeCupom: { type: String, default: 'Obrigado pela preferência! Volte sempre!' }
 }, { timestamps: true });
 
 const CategoriaCardapio = mongoose.model('CategoriaCardapio', CategoriaCardapioSchema);
