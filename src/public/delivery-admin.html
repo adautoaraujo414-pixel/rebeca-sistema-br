@@ -639,14 +639,19 @@
 
         // CATEGORIAS
         async function carregarCategorias() {
-            const res = await api('/categorias');
-            categorias = await res.json();
-            document.getElementById('categoriasLista').innerHTML = categorias.map(c => 
-                `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px;border-bottom:1px solid #333;">
-                    <span>${c.emoji || '📁'} ${c.nome}</span>
-                    <button class="btn btn-small btn-danger" onclick="deletarCategoria('${c._id}')">🗑️</button>
-                </div>`
-            ).join('') || '<p style="color:#888;">Nenhuma categoria</p>';
+            try {
+                const res = await api('/categorias');
+                const data = await res.json();
+                categorias = Array.isArray(data) ? data : [];
+                const el = document.getElementById('categoriasLista');
+                if (!el) return;
+                el.innerHTML = categorias.map(c =>
+                    `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px;border-bottom:1px solid #333;">
+                        <span>${c.emoji || '📁'} ${c.nome}</span>
+                        <button class="btn btn-small btn-danger" onclick="deletarCategoria('${c._id}')">🗑️</button>
+                    </div>`
+                ).join('') || '<p style="color:#888;">Nenhuma categoria</p>';
+            } catch(e) { console.log('[CATEGORIAS] Erro:', e.message); categorias = []; }
         }
 
         async function criarCategoria() {
@@ -669,9 +674,11 @@
 
         // CARDÁPIO
         async function carregarCardapio() {
+            try {
             await carregarCategorias();
             const res = await api('/cardapio');
-            const itens = await res.json();
+            const data2 = await res.json();
+            const itens = Array.isArray(data2) ? data2 : [];
             document.getElementById('cardapioLista').innerHTML = itens.map(i => 
                 `<div class="item-card">
                     <div class="item-info">
@@ -1139,8 +1146,9 @@
             const el = document.getElementById('listaEntregadores');
             try {
                 const res = await api('/entregadores/detalhes');
+                if (!res.ok) { if(el) el.innerHTML = '<p style="color:#888;text-align:center;">Faça login novamente.</p>'; return; }
                 const data = await res.json();
-                entregadores = data.entregadores || [];
+                entregadores = Array.isArray(data.entregadores) ? data.entregadores : [];
                 renderEntregadores();
             } catch(e) { if(el) el.innerHTML = '<p style="color:#e74c3c;text-align:center;">Erro ao carregar</p>'; }
         }
