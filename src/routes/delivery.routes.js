@@ -319,6 +319,10 @@ router.put('/cozinha/:id/pronto', authDelivery, async (req, res) => {
         );
         try {
             const RebecaDeliveryService = require('../services/rebeca-delivery.service');
+            await RebecaDeliveryService.notificarPedidoPronto(pedido._id);
+        } catch(e) { console.log('[COZINHA] Erro notificar pronto:', e.message); }
+        try {
+            const RebecaDeliveryService = require('../services/rebeca-delivery.service');
             await RebecaDeliveryService.notificarClientePronto(pedido._id);
         } catch(e) { console.log('[COZINHA] Erro notificar pronto:', e.message); }
         console.log('[COZINHA] Pedido #' + pedido.numero + ' PRONTO');
@@ -446,8 +450,8 @@ router.put('/entregador/:id/pegar', authDelivery, async (req, res) => {
         );
         try {
             const RebecaDeliveryService = require('../services/rebeca-delivery.service');
-            await RebecaDeliveryService.notificarClienteSaiuEntrega(pedido._id, entregadorNome);
-        } catch(e) { console.log('[ENTREGADOR] Erro notificar:', e.message); }
+            await RebecaDeliveryService.notificarSaiuEntrega(pedido._id, entregadorNome);
+        } catch(e) { console.log('[ENTREGADOR] Erro notificar saiu:', e.message); }
         console.log('[ENTREGADOR] Pedido #' + pedido.numero + ' saiu entrega com', entregadorNome);
         res.json(pedido);
     } catch(e) { res.status(500).json({ erro: e.message }); }
@@ -544,8 +548,8 @@ router.put('/entregador/:id/iniciar-entrega', authDelivery, async (req, res) => 
         // Notificar cliente com link de rastreio
         try {
             const RebecaDeliveryService = require('../services/rebeca-delivery.service');
-            await RebecaDeliveryService.notificarClienteSaiuEntrega(pedido._id, entregadorNome);
-        } catch(e) { console.log('[ENTREGADOR] Erro notificar:', e.message); }
+            await RebecaDeliveryService.notificarSaiuEntrega(pedido._id, entregadorNome);
+        } catch(e) { console.log('[ENTREGADOR] Erro notificar saiu individual:', e.message); }
         console.log('[ENTREGADOR] Pedido #' + pedido.numero + ' saiu entrega individual');
         res.json({ sucesso: true, pedido });
     } catch(e) { res.status(500).json({ erro: e.message }); }
