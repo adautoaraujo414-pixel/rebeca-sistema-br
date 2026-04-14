@@ -750,7 +750,7 @@ async function confirmarPagamento() {
       const d = await r.json();
       if(d.sucesso) {
         alert('✅ Pago!'+(d.troco>0?'\n💵 Troco: '+fmt(d.troco):''));
-        if(document.getElementById('chk-impressao')?.checked) {
+        if(_impressaoAtiva) {
           const pPago = pedidos.find(x=>x._id===pedidoPagandoId);
           if(pPago) imprimirCupom(pPago, d.troco||0);
         }
@@ -866,17 +866,33 @@ function imprimirCupom(pedido, troco) {
   window.print();
 }
 
-// Restaurar toggle de impressão automática
-(function() {
-  const chk = document.getElementById('chk-impressao');
+// Toggle impressão automática
+let _impressaoAtiva = localStorage.getItem('impressaoAuto') === 'true';
+function toggleImpressao() {
+  _impressaoAtiva = !_impressaoAtiva;
+  localStorage.setItem('impressaoAuto', _impressaoAtiva);
   const knob = document.getElementById('toggle-knob');
-  if (!chk || !knob) return;
-  const salvo = localStorage.getItem('impressaoAuto') === 'true';
-  chk.checked = salvo;
-  knob.style.background = salvo ? 'var(--accent)' : 'var(--surface3)';
-  chk.addEventListener('change', () => {
-    knob.style.background = chk.checked ? 'var(--accent)' : 'var(--surface3)';
-  });
+  const ball = document.getElementById('toggle-ball');
+  const label = document.getElementById('toggle-impressao-label');
+  if (_impressaoAtiva) {
+    knob.style.background = '#22c55e';
+    knob.style.borderColor = '#22c55e';
+    ball.style.left = '25px';
+    ball.style.background = '#fff';
+    label.style.color = '#22c55e';
+    label.textContent = '🖨️ Imprimir ao pagar: ON';
+  } else {
+    knob.style.background = 'var(--surface3)';
+    knob.style.borderColor = 'var(--border)';
+    ball.style.left = '3px';
+    ball.style.background = '#aaa';
+    label.style.color = 'var(--text2)';
+    label.textContent = '🖨️ Imprimir ao pagar';
+  }
+}
+// Restaurar estado salvo
+(function() {
+  if (_impressaoAtiva) toggleImpressao();
 })();
 
 </script>
@@ -886,11 +902,10 @@ function imprimirCupom(pedido, troco) {
 
 <!-- TOGGLE IMPRESSÃO AUTOMÁTICA -->
 <div id="toggle-impressao" style="position:fixed;top:58px;right:16px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:8px 14px;display:flex;align-items:center;gap:10px;z-index:999;box-shadow:0 4px 20px rgba(0,0,0,.4);">
-  <span style="font-size:.82em;color:var(--text2);">🖨️ Imprimir ao pagar</span>
-  <label style="position:relative;display:inline-block;width:36px;height:20px;">
-    <input type="checkbox" id="chk-impressao" style="opacity:0;width:0;height:0;" onchange="localStorage.setItem('impressaoAuto',this.checked)">
-    <span onclick="document.getElementById('chk-impressao').click()" style="position:absolute;inset:0;background:var(--surface3);border-radius:20px;cursor:pointer;transition:.3s;border:1px solid var(--border);" id="toggle-knob"></span>
-  </label>
+  <span style="font-size:.82em;color:var(--text2);" id="toggle-impressao-label">🖨️ Imprimir ao pagar</span>
+  <div onclick="toggleImpressao()" id="toggle-knob" style="width:48px;height:26px;border-radius:20px;background:var(--surface3);border:1px solid var(--border);cursor:pointer;transition:all .3s;position:relative;flex-shrink:0;">
+    <div id="toggle-ball" style="position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#aaa;transition:all .3s;"></div>
+  </div>
 </div>
 
 </body>
