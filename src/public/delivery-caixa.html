@@ -169,6 +169,35 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
   .main-layout{grid-template-columns:1fr}
   .right{display:none}
 }
+
+/* ── CUPOM TÉRMICO ──────────────────────────────────── */
+@media print {
+  body > *:not(#cupom-print) { display: none !important; }
+  #cupom-print { display: block !important; }
+}
+#cupom-print {
+  display: none;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 12px;
+  width: 80mm;
+  max-width: 80mm;
+  padding: 6px 4px;
+  background: #fff;
+  color: #000;
+}
+.cupom-header { text-align: center; margin-bottom: 6px; }
+.cupom-header h2 { font-size: 14px; font-weight: bold; margin: 0; }
+.cupom-header p { font-size: 11px; margin: 2px 0; }
+.cupom-divider { border: none; border-top: 1px dashed #000; margin: 6px 0; }
+.cupom-linha { display: flex; justify-content: space-between; font-size: 11px; margin: 2px 0; }
+.cupom-item-nome { flex: 1; }
+.cupom-item-qtd { width: 24px; text-align: center; }
+.cupom-item-val { width: 60px; text-align: right; }
+.cupom-total { display: flex; justify-content: space-between; font-weight: bold; font-size: 13px; margin-top: 4px; }
+.cupom-obs { font-size: 10px; font-style: italic; color: #333; margin-top: 2px; }
+.cupom-footer { text-align: center; font-size: 10px; margin-top: 8px; }
+.cupom-corte { text-align: center; letter-spacing: 2px; color: #000; font-size: 11px; margin: 8px 0 2px; }
+
 </style>
 </head>
 <body>
@@ -596,6 +625,7 @@ function renderPedidos() {
       <div class="pedido-btns">
         <button class="btn btn-sm btn-green" onclick="abrirPagamentoPedido('${p._id}',${p.total})">💰 Pagar</button>
         <button class="btn btn-sm btn-blue" onclick="adicionarAoPedido('${p._id}')">➕ Add item</button>
+        <button class="btn btn-sm" style="background:#4a2d0e;color:#fb923c;border:1px solid #fb923c;" onclick="imprimirCupom(${JSON.stringify(p).replace(/`/g,"'")})">🖨️</button>
         <button class="btn btn-sm btn-red" onclick="cancelarPedido('${p._id}')">✕</button>
       </div>
     </div>`;
@@ -718,7 +748,14 @@ async function confirmarPagamento() {
         body: JSON.stringify({formas, total:pedidoPagandoTotal})
       });
       const d = await r.json();
-      if(d.sucesso) { alert('✅ Pago!'+(d.troco>0?'\n💵 Troco: '+fmt(d.troco):'')); fecharModal(); await carregarPedidos(); }
+      if(d.sucesso) {
+        alert('✅ Pago!'+(d.troco>0?'\n💵 Troco: '+fmt(d.troco):''));
+        if(document.getElementById('chk-impressao')?.checked) {
+          const pPago = pedidos.find(x=>x._id===pedidoPagandoId);
+          if(pPago) imprimirCupom(pPago, d.troco||0);
+        }
+        fecharModal(); await carregarPedidos();
+      }
       else alert('Erro: '+d.erro);
     } else {
       const sub = carrinho.reduce((s,i) => s+i.subtotal, 0);
@@ -754,6 +791,89 @@ if(token) {
     .then(d => { if(d.sucesso) iniciarApp(d.admin||{}); })
     .catch(() => {});
 }
+
+// ── IMPRESSÃO DE CUPOM TÉRMICO ──────────────────────────────
+function imprimirCupom(pedido, troco) {
+  const nomeRest = document.querySelector('.header-restaurant')?.textContent?.trim() || 'Restaurante';
+  const agora = new Date();
+  const dataHora = agora.toLocaleDateString('pt-BR') + ' ' + agora.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'});
+  const local = pedido.tipoLocal === 'mesa' ? 'Mesa ' + (pedido.numeroMesa || '?')
+              : pedido.tipoLocal === 'balcao' ? 'Balcão'
+              : 'Delivery — ' + (pedido.enderecoEntrega || '');
+  const pagamento = pedido.formaPagamento ? pedido.formaPagamento.toUpperCase() : 'NA ENTREGA';
+
+  let itensHtml = '';
+  for (const it of (pedido.itens || [])) {
+    const sub = ((it.precoUnitario || 0) * (it.quantidade || 1)).toFixed(2);
+    itensHtml += `
+      <div class="cupom-linha">
+        <span class="cupom-item-qtd">${it.quantidade}x</span>
+        <span class="cupom-item-nome">${it.nome}</span>
+        <span class="cupom-item-val">R$ ${sub}</span>
+      </div>`;
+    if (it.observacao) itensHtml += `<div class="cupom-obs">&nbsp;&nbsp;↳ ${it.observacao}</div>`;
+  }
+
+  const trocoHtml = troco && troco > 0
+    ? `<div class="cupom-linha"><span>Troco</span><span>R$ ${parseFloat(troco).toFixed(2)}</span></div>`
+    : '';
+
+  const obsHtml = pedido.observacao
+    ? `<hr class="cupom-divider"><div class="cupom-obs">📝 ${pedido.observacao}</div>`
+    : '';
+
+  document.getElementById('cupom-print').innerHTML = `
+    <div class="cupom-header">
+      <h2>${nomeRest}</h2>
+      <p>${dataHora}</p>
+    </div>
+    <hr class="cupom-divider">
+    <div class="cupom-linha"><span><b>Pedido #${pedido.numero || '?'}</b></span><span>${local}</span></div>
+    ${pedido.clienteNome && pedido.clienteNome !== 'Cliente Balcão' ? `<div class="cupom-linha"><span>Cliente</span><span>${pedido.clienteNome}</span></div>` : ''}
+    <hr class="cupom-divider">
+    ${itensHtml}
+    <hr class="cupom-divider">
+    <div class="cupom-total"><span>TOTAL</span><span>R$ ${parseFloat(pedido.total || 0).toFixed(2)}</span></div>
+    <div class="cupom-linha"><span>Pagamento</span><span>${pagamento}</span></div>
+    ${trocoHtml}
+    ${obsHtml}
+    <hr class="cupom-divider">
+    <div class="cupom-footer">
+      <p>Obrigado pela preferência! 💛</p>
+      <p>Volte sempre!</p>
+    </div>
+    <div class="cupom-corte">- - - - - - - - - - - - - - -</div>
+  `;
+
+  window.print();
+}
+
+// Restaurar toggle de impressão automática
+(function() {
+  const chk = document.getElementById('chk-impressao');
+  const knob = document.getElementById('toggle-knob');
+  if (!chk || !knob) return;
+  const salvo = localStorage.getItem('impressaoAuto') === 'true';
+  chk.checked = salvo;
+  knob.style.background = salvo ? 'var(--accent)' : 'var(--surface3)';
+  chk.addEventListener('change', () => {
+    knob.style.background = chk.checked ? 'var(--accent)' : 'var(--surface3)';
+  });
+})();
+
 </script>
+
+<!-- CUPOM TÉRMICO (invisível, só aparece no print) -->
+<div id="cupom-print"></div>
+
+<!-- TOGGLE IMPRESSÃO AUTOMÁTICA -->
+<div id="toggle-impressao" style="position:fixed;bottom:16px;right:16px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px 16px;display:flex;align-items:center;gap:10px;z-index:999;box-shadow:0 8px 32px rgba(0,0,0,.4);">
+  <span style="font-size:.82em;color:var(--text2);">🖨️ Imprimir ao pagar</span>
+  <label style="position:relative;display:inline-block;width:36px;height:20px;">
+    <input type="checkbox" id="chk-impressao" style="opacity:0;width:0;height:0;" onchange="localStorage.setItem('impressaoAuto',this.checked)">
+    <span onclick="document.getElementById('chk-impressao').click()" style="position:absolute;inset:0;background:var(--surface3);border-radius:20px;cursor:pointer;transition:.3s;border:1px solid var(--border);" id="toggle-knob"></span>
+  </label>
+</div>
+
 </body>
 </html>
