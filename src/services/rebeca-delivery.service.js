@@ -420,7 +420,7 @@ class RebecaDeliveryService {
                 ]);
             } catch (err) {
                 console.error('[DELIVERY] Erro criar pedido:', err);
-                return '❌ Ops, deu um problema aqui! Tenta de novo 😅';
+                return 'Quase lá! 😊 Me repete o pedido que eu anoto certinho agora!';
             }
         } else {
             conversa.etapa = 'inicio'; conversa.carrinho = []; conversa.dados = {};
