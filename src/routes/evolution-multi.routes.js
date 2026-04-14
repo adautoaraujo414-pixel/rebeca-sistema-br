@@ -362,7 +362,10 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                                         }
                                     } else {
                                         await EvolutionMultiService.enviarMensagem(instancia._id, telefone,
-                                            'Não entendi seu áudio 🎤 Pode repetir em texto ou mandar outro áudio?'
+                                            ['Não captei bem o áudio 🎤 Manda em texto ou grava de novo! 😊',
+                                             'Eita, não consegui ouvir direito 😅 Manda escrito ou tenta outro áudio!',
+                                             'O áudio não ficou claro 🎤 Pode mandar em texto pra mim? 😊'
+                                            ][Math.floor(Math.random()*3)]
                                         );
                                     }
                                 } catch(_de) {

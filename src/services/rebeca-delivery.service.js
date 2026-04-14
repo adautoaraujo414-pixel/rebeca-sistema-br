@@ -153,7 +153,7 @@ class RebecaDeliveryService {
             }
         } catch (error) {
             console.error('[REBECA-DELIVERY] Erro:', error);
-            return 'Eita, deu um probleminha aqui 😅 Tenta de novo!';
+            return 'Me fala de novo o que você quer! 😊';
         }
     }
 
