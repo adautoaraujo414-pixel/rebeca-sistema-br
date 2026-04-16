@@ -1592,6 +1592,134 @@ async function enviarCardapioDia() {
         else { statusEl.textContent = 'Erro ao enviar'; }
     } catch(e) { statusEl.textContent = 'Erro de conexao'; }
 }
+
+        // ===== ESTOQUE =====
+        async function carregarEstoque() {
+            const el = document.getElementById('estoqueItens');
+            try {
+                const res = await api('/estoque');
+                const itens = await res.json();
+                if (!Array.isArray(itens) || !itens.length) {
+                    el.innerHTML = '<p style="color:#888;text-align:center;padding:20px;">Nenhum item no cardápio. Cadastre itens primeiro.</p>';
+                    return;
+                }
+                el.innerHTML = itens.map(i => {
+                    const pct = i.estoqueAtivo && i.estoqueMinimo > 0
+                        ? Math.min(100, Math.round((i.estoqueAtual / (i.estoqueMinimo * 4)) * 100))
+                        : 0;
+                    const cor = i.estoqueAtual === 0 ? '#e74c3c' : i.estoqueAtual <= i.estoqueMinimo ? '#f97316' : '#22c55e';
+                    return `<div style="background:#252542;border-radius:10px;padding:14px;margin-bottom:10px;border-left:3px solid ${cor};">
+                        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+                            <div>
+                                <div style="font-weight:700;color:#fff;">${i.nome} <span style="color:#888;font-size:12px;">${i.categoriaId?.nome||''}</span></div>
+                                ${i.estoqueAtivo ? `
+                                <div style="display:flex;gap:12px;margin-top:6px;flex-wrap:wrap;">
+                                    <span style="color:${cor};font-size:13px;">📦 ${i.estoqueAtual} un. restantes</span>
+                                    <span style="color:#888;font-size:13px;">⚠️ Mínimo: ${i.estoqueMinimo}</span>
+                                    <span style="color:#888;font-size:13px;">📉 ${i.unidadePorPedido||1} un/pedido</span>
+                                </div>
+                                <div style="background:#333;border-radius:4px;height:6px;margin-top:8px;overflow:hidden;">
+                                    <div style="width:${pct}%;height:100%;background:${cor};transition:.3s;"></div>
+                                </div>` : '<span style="color:#888;font-size:12px;">Controle desativado</span>'}
+                            </div>
+                            <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+                                ${i.estoqueAtivo ? `
+                                <button onclick="reporEstoque('${i._id}','${i.nome}')" style="padding:6px 12px;border-radius:6px;border:1px solid #22c55e;background:transparent;color:#22c55e;cursor:pointer;font-size:12px;">+ Repor</button>
+                                <button onclick="desativarEstoque('${i._id}')" style="padding:6px 12px;border-radius:6px;border:1px solid #888;background:transparent;color:#888;cursor:pointer;font-size:12px;">Desativar</button>
+                                ` : `
+                                <button onclick="ativarEstoque('${i._id}','${i.nome}')" style="padding:6px 12px;border-radius:6px;border:1px solid #f97316;background:transparent;color:#f97316;cursor:pointer;font-size:12px;">📦 Ativar Controle</button>
+                                `}
+                            </div>
+                        </div>
+                    </div>`;
+                }).join('');
+            } catch(e) { el.innerHTML = '<p style="color:#e74c3c;text-align:center;">Erro ao carregar estoque</p>'; }
+        }
+
+        async function ativarEstoque(id, nome) {
+            const qtd = prompt(`Quantidade atual em estoque de "${nome}":`);
+            if (qtd === null) return;
+            const min = prompt(`Quantidade mínima (aviso de compra):`, '2');
+            if (min === null) return;
+            const unid = prompt(`Unidades consumidas por pedido:`, '1');
+            await api('/estoque/' + id, {
+                method: 'PUT',
+                body: JSON.stringify({
+                    estoqueAtivo: true,
+                    estoqueAtual: parseInt(qtd) || 0,
+                    estoqueMinimo: parseInt(min) || 2,
+                    unidadePorPedido: parseInt(unid) || 1
+                })
+            });
+            toast('✅ Controle de estoque ativado!');
+            carregarEstoque();
+            carregarListaCompras();
+        }
+
+        async function desativarEstoque(id) {
+            if (!confirm('Desativar controle de estoque deste item?')) return;
+            await api('/estoque/' + id, {
+                method: 'PUT',
+                body: JSON.stringify({ estoqueAtivo: false })
+            });
+            toast('Controle desativado');
+            carregarEstoque();
+        }
+
+        async function reporEstoque(id, nome) {
+            const qtd = prompt(`Quantas unidades de "${nome}" estão sendo repostas?`);
+            if (!qtd || isNaN(qtd)) return;
+            await api('/estoque/' + id + '/repor', {
+                method: 'POST',
+                body: JSON.stringify({ quantidade: parseInt(qtd) })
+            });
+            toast(`✅ +${qtd} unidades adicionadas!`);
+            carregarEstoque();
+            carregarListaCompras();
+        }
+
+        async function carregarListaCompras() {
+            const el = document.getElementById('listaCompras');
+            try {
+                const res = await api('/lista-compras');
+                const data = await res.json();
+                const lista = data.lista || [];
+                if (!lista.length) {
+                    el.innerHTML = '<p style="color:#888;text-align:center;padding:16px;">Nenhum item com controle de estoque ativo. Ative o controle nos itens acima.</p>';
+                    return;
+                }
+                const precisam = lista.filter(i => i.precisaComprar);
+                const ok = lista.filter(i => !i.precisaComprar);
+                let html2 = '';
+                if (precisam.length) {
+                    html2 += `<div style="color:#f97316;font-weight:700;font-size:13px;margin-bottom:8px;">⚠️ ${precisam.length} iten(s) para comprar:</div>`;
+                    html2 += precisam.map(i => `
+                        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:${i.urgente?'rgba(231,76,60,.1)':'rgba(249,115,22,.08)'};border-radius:8px;margin-bottom:6px;border-left:3px solid ${i.urgente?'#e74c3c':'#f97316'};">
+                            <div>
+                                <span style="font-weight:600;color:#fff;">${i.nome}</span>
+                                <span style="color:#888;font-size:12px;margin-left:8px;">${i.categoria}</span>
+                                <div style="font-size:12px;color:#aaa;margin-top:2px;">
+                                    📦 ${i.estoqueAtual} restantes · 📊 ${i.vendidoSemana} vendidos/semana · ⏰ ${i.diasRestantes === 99 ? 'sem histórico' : i.diasRestantes + ' dias restantes'}
+                                </div>
+                            </div>
+                            <div style="text-align:right;">
+                                <div style="color:${i.urgente?'#e74c3c':'#f97316'};font-weight:700;">${i.urgente?'🚨 ESGOTADO':'🛒 COMPRAR'}</div>
+                                <div style="color:#aaa;font-size:12px;">Sugestão: <b style="color:#fff;">${i.sugestaoCompra} un.</b></div>
+                            </div>
+                        </div>`).join('');
+                }
+                if (ok.length) {
+                    html2 += `<div style="color:#22c55e;font-weight:700;font-size:13px;margin:12px 0 8px;">✅ Estoque OK:</div>`;
+                    html2 += ok.map(i => `
+                        <div style="display:flex;justify-content:space-between;padding:8px 12px;background:rgba(34,197,94,.06);border-radius:8px;margin-bottom:4px;border-left:3px solid #22c55e;">
+                            <span style="color:#ccc;">${i.nome} <span style="color:#888;font-size:12px;">${i.categoria}</span></span>
+                            <span style="color:#22c55e;font-size:13px;">📦 ${i.estoqueAtual} un. · ${i.diasRestantes === 99 ? '—' : '~'+i.diasRestantes+' dias'}</span>
+                        </div>`).join('');
+                }
+                el.innerHTML = html2;
+            } catch(e) { el.innerHTML = '<p style="color:#e74c3c;text-align:center;">Erro ao gerar lista</p>'; }
+        }
+
 </script>
 
 </body>

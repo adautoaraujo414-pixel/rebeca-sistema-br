@@ -409,6 +409,18 @@ class RebecaDeliveryService {
 
                 conversa.etapa = 'inicio'; conversa.carrinho = []; conversa.dados = {};
 
+                // Baixar estoque dos itens vendidos
+                try {
+                    for (const item of itensSalvar) {
+                        if (item.itemId) {
+                            await ItemCardapio.findOneAndUpdate(
+                                { _id: item.itemId, estoqueAtivo: true },
+                                { $inc: { estoqueAtual: -(item.quantidade * 1) } }
+                            );
+                        }
+                    }
+                } catch(eEstq) { console.log('[ESTOQUE] Erro:', eEstq.message); }
+
                 // Notificar admin/cozinha
                 try { this.notificarNovoPedido(pedido._id); } catch(e) {}
 
