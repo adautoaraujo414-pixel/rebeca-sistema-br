@@ -336,7 +336,14 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 
 <script>
 let token = localStorage.getItem('caixa_token') || new URLSearchParams(location.search).get('token') || '';
+// Limpar token 'null' literal
+if(token === 'null' || token === 'undefined') token = '';
 if(token) localStorage.setItem('caixa_token', token);
+// Bloquear acesso sem token válido
+if(!token || token.length < 10) {
+  document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#0d0d0f;color:#aaa;font-family:sans-serif;flex-direction:column;gap:16px"><span style="font-size:2em">🔒</span><p>Acesse o caixa pelo painel administrativo.</p><a href="/delivery-admin" style="color:#f97316;text-decoration:none;border:1px solid #f97316;padding:8px 20px;border-radius:8px;">Ir para o painel</a></div>';
+  throw new Error('Token inválido');
+}
 let carrinho = [], tipoAtual = 'balcao', categorias = [], itensTodos = [], catAtiva = null, pedidoEditando = null;
 const fmt = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
 
