@@ -208,6 +208,19 @@
                             <div class="form-group" style="align-self:flex-end;"><button class="btn btn-primary" onclick="criarCategoria()">+ Adicionar</button></div>
                         </div>
                     </div>
+                    <div class="panel" style="background:#1a1a3e;border:1px dashed #444;margin-bottom:10px;">
+                        <p style="color:#aaa;font-size:13px;margin-bottom:10px;">⚡ Criar categorias comuns de uma vez:</p>
+                        <div style="display:flex;flex-wrap:wrap;gap:8px;">
+                            <button class="btn" style="background:#252542;font-size:13px;" onclick="criarCategoriaRapida('🍔','Lanches')">🍔 Lanches</button>
+                            <button class="btn" style="background:#252542;font-size:13px;" onclick="criarCategoriaRapida('🥤','Bebidas')">🥤 Bebidas</button>
+                            <button class="btn" style="background:#252542;font-size:13px;" onclick="criarCategoriaRapida('🍕','Pizzas')">🍕 Pizzas</button>
+                            <button class="btn" style="background:#252542;font-size:13px;" onclick="criarCategoriaRapida('🍱','Marmitas')">🍱 Marmitas</button>
+                            <button class="btn" style="background:#252542;font-size:13px;" onclick="criarCategoriaRapida('🍰','Sobremesas')">🍰 Sobremesas</button>
+                            <button class="btn" style="background:#252542;font-size:13px;" onclick="criarCategoriaRapida('🍟','Porções')">🍟 Porções</button>
+                            <button class="btn" style="background:#252542;font-size:13px;" onclick="criarCategoriaRapida('🥗','Saudável')">🥗 Saudável</button>
+                            <button class="btn" style="background:#252542;font-size:13px;" onclick="criarCategoriaRapida('☕','Cafés')">☕ Cafés</button>
+                        </div>
+                    </div>
                     <div id="categoriasLista" class="panel"></div>
                 </div>
 
@@ -462,7 +475,8 @@
                 <div class="form-group"><label>Preço (R$)</label><input type="number" id="itemPreco" step="0.50"></div>
                 <div class="form-group"><label>Tempo Preparo (min)</label><input type="number" id="itemTempo" value="20"></div>
             </div>
-            <div class="form-group"><label><input type="checkbox" id="itemDestaque"> Destaque</label></div>
+            <div class="form-group"><label><input type="checkbox" id="itemDestaque"> ⭐ Destaque</label></div>
+            <div class="form-group"><label><input type="checkbox" id="itemDisponivel" checked> ✅ Disponível</label></div>
             <div class="form-group" id="itemImagemBox" style="display:none">
                 <label>🖼️ Imagem atual</label>
                 <img id="itemImagemPreview" src="" style="width:100%;height:140px;object-fit:cover;border-radius:8px;margin-top:6px;">
@@ -673,6 +687,15 @@
                     </div>`
                 ).join('') || '<p style="color:#888;">Nenhuma categoria</p>';
             } catch(e) { console.log('[CATEGORIAS] Erro:', e.message); categorias = []; }
+        }
+
+        async function criarCategoriaRapida(emoji, nome) {
+            // Verifica se já existe
+            const jaExiste = categorias.find(c => c.nome.toLowerCase() === nome.toLowerCase());
+            if (jaExiste) { toast(nome + ' já existe!', 'error'); return; }
+            await api('/categorias', { method: 'POST', body: JSON.stringify({ nome, emoji }) });
+            toast('✅ ' + emoji + ' ' + nome + ' criada!');
+            carregarCategorias();
         }
 
         async function criarCategoria() {
