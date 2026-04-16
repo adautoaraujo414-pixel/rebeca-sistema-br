@@ -785,6 +785,15 @@
             carregarCardapio();
         }
 
+        async function toggleDisponivel(id, tornarDisponivel) {
+            await api('/cardapio/' + id, {
+                method: 'PUT',
+                body: JSON.stringify({ disponivel: tornarDisponivel })
+            });
+            toast(tornarDisponivel ? '✅ Item disponível!' : '❌ Item marcado como esgotado');
+            carregarCardapio();
+        }
+
         // CONFIG
         async function carregarConfig() {
             const res = await api('/config');
