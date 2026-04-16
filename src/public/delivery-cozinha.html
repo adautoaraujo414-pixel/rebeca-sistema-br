@@ -130,7 +130,7 @@ function tempoDecorrido(d){
 
 async function carregar(){
   try{
-    var r=await fetch(B+'/cozinha/pedidos?token='+TK);
+    var r=await fetch(B+'/cozinha/pedidos',{headers:{'Authorization':'Bearer '+TK}});
     var ps=await r.json();
     if(!Array.isArray(ps))return;
     var nv=ps.filter(function(p){return p.status==='novo';});
@@ -215,22 +215,28 @@ async function carregar(){
 }
 
 async function aceitar(id){
-  await fetch(B+'/cozinha/'+id+'/aceitar?token='+TK,{method:'PUT',headers:{'Content-Type':'application/json'}});
+  await fetch(B+'/cozinha/'+id+'/aceitar',{method:'PUT',headers:{'Content-Type':'application/json','Authorization':'Bearer '+TK}});
   carregar();
 }
 async function pronto(id){
-  await fetch(B+'/cozinha/'+id+'/pronto?token='+TK,{method:'PUT',headers:{'Content-Type':'application/json'}});
+  await fetch(B+'/cozinha/'+id+'/pronto',{method:'PUT',headers:{'Content-Type':'application/json','Authorization':'Bearer '+TK}});
   carregar();
 }
 async function rejeitar(id){
   var m=prompt('Motivo do cancelamento:');
   if(!m)return;
-  await fetch(B+'/cozinha/'+id+'/rejeitar?token='+TK,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({motivo:m})});
+  await fetch(B+'/cozinha/'+id+'/rejeitar',{method:'PUT',headers:{'Content-Type':'application/json','Authorization':'Bearer '+TK},body:JSON.stringify({motivo:m})});
   carregar();
 }
 
 carregar();
-setInterval(carregar,5000);
+// Só faz polling se tiver token válido
+if(TK && TK !== 'null' && TK !== 'undefined' && TK.length > 10) {
+  carregar();
+  setInterval(carregar, 5000);
+} else {
+  document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#0d0d0f;color:#aaa;font-family:sans-serif;flex-direction:column;gap:16px"><span style="font-size:2em">🔒</span><p>Token inválido. Abra a cozinha pelo painel administrativo.</p><a href="/delivery-admin" style="color:#f97316;text-decoration:none;border:1px solid #f97316;padding:8px 20px;border-radius:8px;">Ir para o painel</a></div>';
+}
 </script>
 </body>
 </html>
