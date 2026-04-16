@@ -146,6 +146,7 @@
                 <div class="menu-section">Config</div>
                 <div class="menu-item" data-page="avaliacoes">⭐ Avaliações</div>
                 <div class="menu-item" data-page="assinantes">👥 Assinantes</div>
+                <div class="menu-item" data-page="estoque">📦 Estoque</div>
                 <div class="menu-item" data-page="cardapio-dia">🍽️ Cardápio do Dia</div>
                 <div class="menu-item" data-page="config">⚙️ Configurações</div>
             </div>
@@ -361,6 +362,25 @@
                     </div>
                 </div>
 
+                <div id="page-estoque" class="page">
+                    <h2 style="margin-bottom:6px;">&#x1F4E6; Controle de Estoque</h2>
+                    <p style="color:#aaa;font-size:13px;margin-bottom:20px;">Ative o controle por item. A Rebeca baixa o estoque automaticamente a cada pedido confirmado.</p>
+                    <div class="panel" style="margin-bottom:16px;border-left:3px solid #f97316;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+                            <h3>&#x1F6D2; Lista de Compras</h3>
+                            <button class="btn" style="background:#252542;" onclick="carregarListaCompras()">&#x1F504; Atualizar</button>
+                        </div>
+                        <div id="listaCompras"><p style="color:#888;text-align:center;padding:20px;">Clique em Atualizar para gerar a lista</p></div>
+                    </div>
+                    <div class="panel">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
+                            <h3>&#x1F4CA; Estoque por Item</h3>
+                            <button class="btn" style="background:#252542;" onclick="carregarEstoque()">&#x1F504; Atualizar</button>
+                        </div>
+                        <div id="estoqueItens"><p style="color:#888;text-align:center;padding:20px;">Carregando...</p></div>
+                    </div>
+                </div>
+
                 <div id="page-config" class="page">
                     <h2 style="margin-bottom:20px;">⚙️ Configurações</h2>
                     <div class="panel">
@@ -564,6 +584,7 @@
                 if (page === 'avaliacoes') carregarAvaliacoes();
                 if (page === 'assinantes') carregarAssinantes();
                 if (page === 'cardapio-dia') carregarCardapioDia();
+                if (page === 'estoque') { carregarEstoque(); carregarListaCompras(); }
                 if (page === 'upload-cardapio') { /* nada */ }
             });
         });
