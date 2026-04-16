@@ -723,7 +723,7 @@ router.post('/pedido-cardapio-digital', async (req, res) => {
     }
 });
 
-module.exports = router;
+
 
 // ========== LOGIN DELIVERY ==========
 router.post('/login', async (req, res) => {
