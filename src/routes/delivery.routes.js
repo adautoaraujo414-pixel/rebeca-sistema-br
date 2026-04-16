@@ -1082,3 +1082,88 @@ router.get('/caixa/entregadores-ativos', authDelivery, async (req, res) => {
         res.json(pedidos);
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
+
+// ========== ESTOQUE ==========
+
+router.get('/estoque', authDelivery, async (req, res) => {
+    try {
+        const itens = await ItemCardapio.find({ adminId: req.adminId, ativo: true })
+            .populate('categoriaId', 'nome emoji').sort({ nome: 1 }).lean();
+        res.json(itens);
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+router.put('/estoque/:id', authDelivery, async (req, res) => {
+    try {
+        const { estoqueAtivo, estoqueAtual, estoqueMinimo, unidadePorPedido } = req.body;
+        const item = await ItemCardapio.findOneAndUpdate(
+            { _id: req.params.id, adminId: req.adminId },
+            { estoqueAtivo, estoqueAtual, estoqueMinimo, unidadePorPedido },
+            { new: true }
+        );
+        if (item && item.estoqueAtivo && item.estoqueAtual <= 0) {
+            await ItemCardapio.findByIdAndUpdate(item._id, { disponivel: false });
+        }
+        res.json({ sucesso: true, item });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+router.post('/estoque/:id/repor', authDelivery, async (req, res) => {
+    try {
+        const { quantidade } = req.body;
+        const item = await ItemCardapio.findOneAndUpdate(
+            { _id: req.params.id, adminId: req.adminId },
+            { $inc: { estoqueAtual: parseInt(quantidade) || 0 }, disponivel: true },
+            { new: true }
+        );
+        res.json({ sucesso: true, item });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+router.get('/lista-compras', authDelivery, async (req, res) => {
+    try {
+        const itens = await ItemCardapio.find({ adminId: req.adminId, ativo: true, estoqueAtivo: true }).lean();
+        const seteDias = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+        const pedidos = await PedidoDelivery.find({
+            adminId: req.adminId,
+            status: { $in: ['entregue', 'preparando', 'pronto'] },
+            createdAt: { $gte: seteDias }
+        }).lean();
+        const consumo = {};
+        for (const p of pedidos) {
+            for (const it of (p.itens || [])) {
+                if (it.itemId) {
+                    const id = it.itemId.toString();
+                    consumo[id] = (consumo[id] || 0) + (it.quantidade || 1);
+                }
+            }
+        }
+        const lista = itens.map(item => {
+            const id = item._id.toString();
+            const vendidoSemana = consumo[id] || 0;
+            const mediaDiaria = Math.ceil(vendidoSemana / 7);
+            const diasRestantes = item.estoqueAtual > 0 && mediaDiaria > 0
+                ? Math.floor(item.estoqueAtual / mediaDiaria)
+                : item.estoqueAtual > 0 ? 99 : 0;
+            const precisaComprar = item.estoqueAtual <= item.estoqueMinimo;
+            const sugestaoCompra = mediaDiaria > 0
+                ? Math.max(mediaDiaria * 7 - item.estoqueAtual, 0)
+                : item.estoqueMinimo * 3;
+            return {
+                _id: item._id,
+                nome: item.nome,
+                estoqueAtual: item.estoqueAtual,
+                estoqueMinimo: item.estoqueMinimo,
+                vendidoSemana,
+                mediaDiaria,
+                diasRestantes,
+                precisaComprar,
+                sugestaoCompra: Math.ceil(sugestaoCompra),
+                urgente: item.estoqueAtual === 0
+            };
+        }).sort((a, b) => a.diasRestantes - b.diasRestantes);
+        res.json({ lista, totalItens: lista.length, precisamCompra: lista.filter(i => i.precisaComprar).length });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+module.exports = router;
