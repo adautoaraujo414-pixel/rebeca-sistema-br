@@ -385,6 +385,11 @@ async function iniciarApp(admin) {
   await carregarStats();
   setInterval(carregarPedidos, 15000);
   setInterval(carregarStats, 30000);
+  // Atualiza cardapio a cada 2 min sem resetar carrinho ativo
+  setInterval(async () => {
+    const temCarrinho = carrinho && carrinho.length > 0;
+    if (!temCarrinho) await carregarCardapio();
+  }, 120000);
 }
 
 // CARDÁPIO
