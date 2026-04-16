@@ -702,20 +702,26 @@
                 const itens = Array.isArray(data2) ? data2 : [];
                 const el = document.getElementById('cardapioLista');
                 if (!el) return;
-                el.innerHTML = itens.map(i =>
-                    `<div class="item-card">
-                        <div class="item-info">
-                            <h4>${i.destaque ? '⭐ ' : ''}${i.nome}</h4>
-                            <p>${i.descricao || ''} — ${i.categoriaId?.nome || ''}</p>
-                            <p>⏱️ ${i.tempoPreparoMin || 20}min</p>
+                el.innerHTML = itens.map(i => {
+                    const disp = i.disponivel !== false;
+                    const cor = disp ? '#22c55e' : '#e74c3c';
+                    return `<div class="item-card" style="opacity:${disp?'1':'0.55'};flex-wrap:wrap;gap:10px;">
+                        <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;">
+                            ${i.imagem ? `<img src="${i.imagem}" style="width:50px;height:50px;object-fit:cover;border-radius:8px;flex-shrink:0;">` : '<div style="width:50px;height:50px;background:#333;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">🍽️</div>'}
+                            <div style="min-width:0;">
+                                <h4 style="margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${i.destaque?'⭐ ':''}${i.nome} <span style="font-size:11px;padding:2px 7px;border-radius:10px;background:${cor};color:#fff;">${disp?'Disponível':'Indisponível'}</span></h4>
+                                <p style="margin:2px 0;font-size:12px;color:#aaa;">${i.descricao||''}</p>
+                                <p style="margin:0;font-size:12px;color:#888;">📁 ${i.categoriaId?.nome||''} · ⏱️ ${i.tempoPreparoMin||20}min</p>
+                            </div>
                         </div>
-                        <div style="display:flex;align-items:center;gap:15px;">
+                        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
                             <span class="item-preco">R$ ${(i.preco||0).toFixed(2)}</span>
+                            <button onclick="toggleDisponivel('${i._id}',${!disp})" style="padding:5px 10px;border-radius:6px;border:1px solid ${disp?'#e74c3c':'#22c55e'};background:transparent;color:${disp?'#e74c3c':'#22c55e'};cursor:pointer;font-size:11px;">${disp?'❌ Esgotar':'✅ Repor'}</button>
                             <button class="btn btn-small" style="background:#252542;color:#00d4ff;" onclick="editarItem('${i._id}')">✏️</button>
                             <button class="btn btn-small btn-danger" onclick="deletarItem('${i._id}')">🗑️</button>
                         </div>
-                    </div>`
-                ).join('') || '<p style="color:#888;text-align:center;">Nenhum item no cardápio</p>';
+                    </div>`;
+                }).join('') || '<p style="color:#888;text-align:center;">Nenhum item. Clique em + Novo Item!</p>';
             } catch(e) { console.log('[CARDAPIO] Erro:', e.message); }
         }
 
@@ -727,6 +733,9 @@
             document.getElementById('itemPreco').value = '';
             document.getElementById('itemTempo').value = '20';
             document.getElementById('itemDestaque').checked = false;
+            const _dEl = document.getElementById('itemDisponivel');
+            if (_dEl) _dEl.checked = true;
+            document.getElementById('itemImagemBox').style.display = 'none';
             // Popular categorias no select
             document.getElementById('itemCategoria').innerHTML = categorias.map(c => `<option value="${c._id}">${c.emoji || ''} ${c.nome}</option>`).join('');
             document.getElementById('modalItem').classList.add('active');
@@ -769,7 +778,8 @@
                 descricao: document.getElementById('itemDesc').value,
                 preco: parseFloat(document.getElementById('itemPreco').value) || 0,
                 tempoPreparoMin: parseInt(document.getElementById('itemTempo').value) || 20,
-                destaque: document.getElementById('itemDestaque').checked
+                destaque: document.getElementById('itemDestaque').checked,
+                disponivel: document.getElementById('itemDisponivel') ? document.getElementById('itemDisponivel').checked : true
             };
             if (!body.nome || !body.preco) return toast('Nome e preço obrigatórios', 'error');
             if (id) {
@@ -796,6 +806,14 @@
             document.getElementById('itemPreco').value = item.preco;
             document.getElementById('itemTempo').value = item.tempoPreparoMin || 20;
             document.getElementById('itemDestaque').checked = item.destaque;
+            const _dispEl = document.getElementById('itemDisponivel');
+            if (_dispEl) _dispEl.checked = item.disponivel !== false;
+            if (item.imagem) {
+                document.getElementById('itemImagemPreview').src = item.imagem;
+                document.getElementById('itemImagemBox').style.display = 'block';
+            } else {
+                document.getElementById('itemImagemBox').style.display = 'none';
+            }
             document.getElementById('modalItem').classList.add('active');
         }
 
