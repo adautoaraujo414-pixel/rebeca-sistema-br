@@ -1154,13 +1154,22 @@
         // Abrir cardápio digital
         function abrirCardapioDigital() {
             if(!adminData?._id) { alert('Faça login primeiro'); return; }
-            const url = window.location.origin + '/delivery-cardapio/' + adminData._id;
-            // Copiar link para clipboard
-            navigator.clipboard.writeText(url).then(() => {
-                alert('🔗 Link copiado!\n\n' + url + '\n\nEnvie este link para seus clientes pelo WhatsApp!');
-            }).catch(() => {
-                window.open(url, '_blank');
-            });
+            const urlCliente = window.location.origin + '/delivery-cardapio/' + adminData._id;
+            const urlAdmin = urlCliente + '?admin=' + (localStorage.getItem('delivery_token') || token);
+            const escolha = confirm(
+                '🔗 Cardápio Digital\n\n' +
+                'Clique OK para abrir como ADMIN (editar nome, horário, taxas)\n' +
+                'Clique Cancelar para copiar o link para clientes'
+            );
+            if (escolha) {
+                window.open(urlAdmin, '_blank');
+            } else {
+                navigator.clipboard.writeText(urlCliente).then(() => {
+                    alert('✅ Link copiado!\n\n' + urlCliente + '\n\nEnvie para seus clientes pelo WhatsApp!');
+                }).catch(() => {
+                    prompt('Copie o link abaixo:', urlCliente);
+                });
+            }
         }
 
         async function conectarWhatsappDelivery() {
