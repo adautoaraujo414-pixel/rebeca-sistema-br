@@ -301,10 +301,16 @@ function renderizarCardapio(data) {
       var card = document.createElement('div');
       card.className = 'item-card';
       card.id = 'card-' + item._id;
+      card.style.cursor = 'pointer';
 
       var imgHtml = item.imagem
         ? '<img class="item-img" src="' + item.imagem + '" alt="' + item.nome + '" onerror="this.style.display=\'none\'">'
         : '<div class="item-img-placeholder">' + (cat.emoji||'🍔') + '</div>';
+
+      var qtdNoCarrinho = carrinho.filter(function(c){return c.itemId===item._id;}).reduce(function(s,c){return s+c.quantidade;},0);
+      var qtdBadge = qtdNoCarrinho > 0
+        ? '<span style="background:#ff6b35;color:#fff;border-radius:12px;padding:2px 8px;font-size:.72em;font-weight:700;">' + qtdNoCarrinho + ' no carrinho</span>'
+        : '<span style="color:#ff6b35;font-size:.78em;font-weight:600;">+ Adicionar</span>';
 
       card.innerHTML = imgHtml +
         '<div class="item-info">' +
@@ -312,19 +318,13 @@ function renderizarCardapio(data) {
           '<div class="item-desc">' + (item.descricao||'') + '</div>' +
           '<div class="item-bottom">' +
             '<div class="item-price">R$ ' + (item.preco||0).toFixed(2) + '</div>' +
-            '<div class="item-controls">' +
-              '<button class="btn-qty minus" onclick="mudarQtd(\'' + item._id + '\',-1,this)">−</button>' +
-              '<span class="qty-num" id="qty-' + item._id + '">0</span>' +
-              '<button class="btn-qty" onclick="mudarQtd(\'' + item._id + '\',1,this)">+</button>' +
-            '</div>' +
+            qtdBadge +
           '</div>' +
-          '<textarea class="obs-input" id="obs-' + item._id + '" placeholder="Observação (opcional)..." rows="2" onchange="atualizarObs(\'' + item._id + '\')"></textarea>' +
         '</div>';
 
-      // Guardar dados do item no card
-      card.dataset.itemId = item._id;
-      card.dataset.nome = item.nome;
-      card.dataset.preco = item.preco || 0;
+      // Abrir modal ao clicar
+      var itemData = JSON.stringify(item);
+      card.addEventListener('click', function() { abrirModalItem(itemData); });
 
       sec.appendChild(card);
     });
@@ -451,6 +451,142 @@ window.addEventListener('scroll', function() {
     }
   });
 });
+
+// ===== MODAL DE PERSONALIZAÇÃO DO ITEM =====
+var modalItem = null;
+var modalQtdVal = 1;
+var modalOpcionaisSel = [];
+var modalIngredientesRetirar = [];
+
+function abrirModalItem(itemDataStr) {
+  var item = typeof itemDataStr === 'string' ? JSON.parse(itemDataStr) : itemDataStr;
+  modalItem = item;
+  modalQtdVal = 1;
+  modalOpcionaisSel = [];
+  modalIngredientesRetirar = [];
+
+  var imgEl = document.getElementById('modalItemImg');
+  imgEl.innerHTML = item.imagem
+    ? '<img class="modal-item-img" src="' + item.imagem + '" onerror="this.style.display='none'">'
+    : '<div class="modal-item-img-ph">🍔</div>';
+
+  document.getElementById('modalItemNome').textContent = item.nome;
+  document.getElementById('modalItemDesc').textContent = item.descricao || '';
+  document.getElementById('modalItemPrecoBase').textContent = 'R$ ' + Number(item.preco||0).toFixed(2);
+  document.getElementById('modalItemObs').value = '';
+  document.getElementById('modalQtdNum').textContent = '1';
+
+  // Opções/adicionais
+  var opcoesEl = document.getElementById('modalItemOpcoes');
+  if (item.opcoes && item.opcoes.length > 0) {
+    var html = '';
+    item.opcoes.forEach(function(grupo) {
+      if (!grupo.itens || !grupo.itens.length) return;
+      html += '<div class="modal-secao"><div class="modal-secao-title">➕ ' + grupo.nome + '</div>';
+      grupo.itens.forEach(function(op) {
+        var key = (grupo.nome + '_' + op.nome).replace(/[^a-zA-Z0-9]/g,'_');
+        html += '<div class="opcao-item">' +
+          '<div><div class="opcao-nome">' + op.nome + '</div>' +
+          (op.preco > 0 ? '<div class="opcao-preco">+ R$ ' + Number(op.preco).toFixed(2) + '</div>' : '') +
+          '</div>' +
+          '<div class="opcao-check" id="chk_' + key + '" onclick="toggleOpcao(this,'' + grupo.nome + '','' + op.nome + '',' + (op.preco||0) + ')"></div>' +
+        '</div>';
+      });
+      html += '</div>';
+    });
+    opcoesEl.innerHTML = html;
+  } else {
+    opcoesEl.innerHTML = '';
+  }
+
+  // Ingredientes para retirar (da descrição separada por vírgula)
+  var ingEl = document.getElementById('modalItemIngredientes');
+  if (item.descricao && item.descricao.indexOf(',') >= 0) {
+    var ings = item.descricao.split(',').map(function(s){return s.trim();}).filter(function(s){return s.length > 1 && s.length < 30;});
+    if (ings.length > 1) {
+      var html = '<div class="modal-secao"><div class="modal-secao-title">🚫 Retirar ingrediente</div>';
+      ings.forEach(function(ing) {
+        var key = ing.replace(/[^a-zA-Z0-9]/g,'_');
+        html += '<div class="ingrediente-item">' +
+          '<span class="ingrediente-nome">' + ing + '</span>' +
+          '<button class="btn-retirar" id="ing_' + key + '" onclick="toggleIngrediente(this,'' + ing.replace(/'/g,"\'") + '')">Retirar</button></div>';
+      });
+      html += '</div>';
+      ingEl.innerHTML = html;
+    } else { ingEl.innerHTML = ''; }
+  } else { ingEl.innerHTML = ''; }
+
+  atualizarTotalModal();
+  document.getElementById('modalItem').classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+
+function fecharModalItem() {
+  document.getElementById('modalItem').classList.remove('show');
+  document.body.style.overflow = '';
+}
+
+function toggleOpcao(el, grupo, nome, preco) {
+  var key = grupo + ':' + nome;
+  var idx = modalOpcionaisSel.findIndex(function(o){return o.key===key;});
+  if (idx >= 0) {
+    modalOpcionaisSel.splice(idx, 1);
+    el.classList.remove('on');
+    el.textContent = '';
+  } else {
+    modalOpcionaisSel.push({key:key, grupo:grupo, nome:nome, preco:preco});
+    el.classList.add('on');
+    el.textContent = '✓';
+  }
+  atualizarTotalModal();
+}
+
+function toggleIngrediente(el, ing) {
+  var idx = modalIngredientesRetirar.indexOf(ing);
+  if (idx >= 0) {
+    modalIngredientesRetirar.splice(idx, 1);
+    el.classList.remove('on');
+    el.textContent = 'Retirar';
+  } else {
+    modalIngredientesRetirar.push(ing);
+    el.classList.add('on');
+    el.textContent = 'Retirado ✓';
+  }
+}
+
+function modalQtd(delta) {
+  modalQtdVal = Math.max(1, modalQtdVal + delta);
+  document.getElementById('modalQtdNum').textContent = modalQtdVal;
+  atualizarTotalModal();
+}
+
+function atualizarTotalModal() {
+  if (!modalItem) return;
+  var base = Number(modalItem.preco||0);
+  var extras = modalOpcionaisSel.reduce(function(s,o){return s+(o.preco||0);},0);
+  document.getElementById('modalItemTotal').textContent = 'R$ ' + ((base+extras)*modalQtdVal).toFixed(2);
+}
+
+function adicionarDoModal() {
+  if (!modalItem) return;
+  var base = Number(modalItem.preco||0);
+  var extras = modalOpcionaisSel.reduce(function(s,o){return s+(o.preco||0);},0);
+  var obs = document.getElementById('modalItemObs').value;
+  if (modalIngredientesRetirar.length > 0) {
+    obs = 'Sem: ' + modalIngredientesRetirar.join(', ') + (obs ? '. ' + obs : '');
+  }
+  carrinho.push({
+    itemId: modalItem._id,
+    nome: modalItem.nome,
+    preco: base + extras,
+    quantidade: modalQtdVal,
+    obs: obs,
+    opcionais: modalOpcionaisSel.map(function(o){return {nome:o.nome,preco:o.preco};})
+  });
+  fecharModalItem();
+  atualizarCartBar();
+  renderizarCardapio(cardapioData);
+}
 
 // ===== PAINEL ADMIN =====
 var adminToken = params.get('admin') || '';
