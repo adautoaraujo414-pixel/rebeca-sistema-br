@@ -15,6 +15,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .info-bar{background:#1a1a1a;display:flex;justify-content:center;gap:24px;padding:10px;border-bottom:1px solid #2a2a2a;font-size:.78em;color:#aaa}
 .info-bar span{display:flex;align-items:center;gap:4px}
 .cats-nav{display:flex;gap:8px;padding:12px 16px;overflow-x:auto;background:#111;border-bottom:1px solid #222;position:sticky;top:82px;z-index:99;scrollbar-width:none}
+.btn-pgto{background:#1a1a1a;border:1px solid #333;color:#ccc;padding:8px 14px;border-radius:20px;font-size:.82em;cursor:pointer;transition:all .2s}
+.btn-pgto.on{background:#ff6b35;border-color:#ff6b35;color:#fff;font-weight:700}
 /* MODAL ITEM */
 .modal-item-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:500;display:none;align-items:flex-end;justify-content:center}
 .modal-item-overlay.show{display:flex}
@@ -207,11 +209,36 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="tela" id="telaConfirmacao">
   <h2>🛒 Seu Pedido</h2>
   <div id="resumoItens"></div>
-  <div class="total-box">
-    <div class="label">Total</div>
-    <div class="valor" id="totalFinal">R$ 0,00</div>
+  <div class="total-box"><div class="label">Subtotal</div><div class="valor" id="totalFinal">R$ 0,00</div></div>
+  <div class="total-box" id="boxTaxa" style="display:none;border-top:none;padding-top:0"><div class="label" style="font-size:.82em;color:#888">🛵 Taxa entrega</div><div class="valor" id="totalTaxa" style="font-size:.9em">R$ 0,00</div></div>
+  <div class="total-box" id="boxTotalGeral" style="border-top:2px solid #ff6b35"><div class="label" style="font-weight:800">💰 Total</div><div class="valor" id="totalGeral" style="color:#ff6b35">R$ 0,00</div></div>
+  <div style="margin:16px 0;display:flex;flex-direction:column;gap:10px">
+    <div id="campoNome" style="display:flex;flex-direction:column;gap:4px">
+      <label style="font-size:.75em;color:#888;text-transform:uppercase;letter-spacing:.5px">Seu nome</label>
+      <input type="text" id="inputNome" placeholder="Como quer ser chamado?" style="background:#1a1a1a;border:1px solid #333;border-radius:8px;color:#fff;padding:10px 12px;font-size:.9em;width:100%;box-sizing:border-box">
+    </div>
+    <div style="display:flex;flex-direction:column;gap:4px">
+      <label style="font-size:.75em;color:#888;text-transform:uppercase;letter-spacing:.5px">Endereço de entrega</label>
+      <input type="text" id="inputEndereco" placeholder="Rua, número e bairro" style="background:#1a1a1a;border:1px solid #333;border-radius:8px;color:#fff;padding:10px 12px;font-size:.9em;width:100%;box-sizing:border-box">
+    </div>
+    <div style="display:flex;flex-direction:column;gap:4px">
+      <label style="font-size:.75em;color:#888;text-transform:uppercase;letter-spacing:.5px">Forma de pagamento</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap" id="divFormasPgto">
+        <button class="btn-pgto" onclick="selecionarPgto(this,'dinheiro')">💵 Dinheiro</button>
+        <button class="btn-pgto" onclick="selecionarPgto(this,'pix')">📱 Pix</button>
+        <button class="btn-pgto" onclick="selecionarPgto(this,'cartao')">💳 Cartão</button>
+      </div>
+    </div>
+    <div id="campoTroco" style="display:none;flex-direction:column;gap:4px">
+      <label style="font-size:.75em;color:#888;text-transform:uppercase;letter-spacing:.5px">Troco para quanto?</label>
+      <input type="number" id="inputTroco" placeholder="Ex: 50.00" style="background:#1a1a1a;border:1px solid #333;border-radius:8px;color:#fff;padding:10px 12px;font-size:.9em;width:100%;box-sizing:border-box">
+    </div>
+    <div style="display:flex;flex-direction:column;gap:4px">
+      <label style="font-size:.75em;color:#888;text-transform:uppercase;letter-spacing:.5px">Observação geral (opcional)</label>
+      <textarea id="inputObsGeral" placeholder="Ex: portão azul, interfone 201..." rows="2" style="background:#1a1a1a;border:1px solid #333;border-radius:8px;color:#fff;padding:10px 12px;font-size:.9em;width:100%;box-sizing:border-box;resize:none;font-family:inherit"></textarea>
+    </div>
   </div>
-  <button class="btn-enviar" onclick="enviarPedido()">✅ Confirmar pelo WhatsApp</button>
+  <button class="btn-enviar" onclick="enviarPedido()">✅ Confirmar Pedido</button>
   <button class="btn-voltar" onclick="fecharConfirmacao()">‹ Continuar escolhendo</button>
 </div>
 
@@ -384,21 +411,43 @@ function atualizarCartBar() {
   }
 }
 
+var formaPagamentoSel = '';
+
+function selecionarPgto(el, forma) {
+  document.querySelectorAll('.btn-pgto').forEach(function(b){b.classList.remove('on');});
+  el.classList.add('on');
+  formaPagamentoSel = forma;
+  document.getElementById('campoTroco').style.display = forma === 'dinheiro' ? 'flex' : 'none';
+}
+
 function abrirConfirmacao() {
+  if (carrinho.length === 0) return;
   var resumo = document.getElementById('resumoItens');
   resumo.innerHTML = '';
-  var total = 0;
+  var subtotal = 0;
   carrinho.forEach(function(item) {
     var sub = item.preco * item.quantidade;
-    total += sub;
+    subtotal += sub;
     var div = document.createElement('div');
     div.className = 'resumo-item';
-    div.innerHTML = '<div><div class="nome">' + item.nome + ' x' + item.quantidade + '</div>' +
-      (item.obs ? '<div class="sub">Obs: ' + item.obs + '</div>' : '') + '</div>' +
+    var opcStr = item.opcionais && item.opcionais.length ? ' + ' + item.opcionais.map(function(o){return o.nome;}).join(', ') : '';
+    div.innerHTML = '<div><div class="nome">' + item.nome + ' x' + item.quantidade + opcStr + '</div>' +
+      (item.obs ? '<div class="sub" style="font-size:.75em;color:#888">Obs: ' + item.obs + '</div>' : '') + '</div>' +
       '<div class="preco">R$ ' + sub.toFixed(2) + '</div>';
     resumo.appendChild(div);
   });
-  document.getElementById('totalFinal').textContent = 'R$ ' + total.toFixed(2);
+  var taxa = cardapioData ? (cardapioData.taxaEntrega || 0) : 0;
+  var total = subtotal + taxa;
+  document.getElementById('totalFinal').textContent = 'R$ ' + subtotal.toFixed(2);
+  if (taxa > 0) {
+    document.getElementById('boxTaxa').style.display = 'flex';
+    document.getElementById('totalTaxa').textContent = 'R$ ' + taxa.toFixed(2);
+  }
+  document.getElementById('totalGeral').textContent = 'R$ ' + total.toFixed(2);
+  // Preencher nome se já tem
+  if (nomeCliente) document.getElementById('inputNome').value = nomeCliente;
+  // Ocultar campo nome se já tem telefone (Rebeca já sabe quem é)
+  document.getElementById('campoNome').style.display = telefoneCliente ? 'none' : 'flex';
   document.getElementById('telaConfirmacao').classList.add('show');
 }
 
@@ -408,23 +457,33 @@ function fecharConfirmacao() {
 
 async function enviarPedido() {
   if (carrinho.length === 0) return;
-  try {
-    // Montar texto do pedido para enviar via API
-    var itensTexto = carrinho.map(function(item) {
-      return item.quantidade + 'x ' + item.nome + (item.obs ? ' ('+item.obs+')' : '');
-    }).join(', ');
-    var total = carrinho.reduce(function(s,c){return s+(c.preco*c.quantidade);},0);
+  var endereco = document.getElementById('inputEndereco').value.trim();
+  var nomeInput = document.getElementById('inputNome').value.trim() || nomeCliente;
+  var obsGeral = document.getElementById('inputObsGeral').value.trim();
+  var troco = document.getElementById('inputTroco') ? document.getElementById('inputTroco').value : '';
 
-    // Enviar para backend que vai notificar a Rebeca
+  if (!endereco) { alert('Informe o endereço de entrega!'); document.getElementById('inputEndereco').focus(); return; }
+  if (!formaPagamentoSel) { alert('Selecione a forma de pagamento!'); return; }
+
+  var taxa = cardapioData ? (cardapioData.taxaEntrega || 0) : 0;
+  var subtotal = carrinho.reduce(function(s,c){return s+(c.preco*c.quantidade);},0);
+  var total = subtotal + taxa;
+
+  try {
     var r = await fetch('/api/delivery/pedido-cardapio-digital', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({
         adminId: adminId,
         telefoneCliente: telefoneCliente,
-        nomeCliente: nomeCliente,
+        nomeCliente: nomeInput,
         itens: carrinho,
-        total: total
+        total: total,
+        taxaEntrega: taxa,
+        enderecoEntrega: endereco,
+        formaPagamento: formaPagamentoSel,
+        troco: formaPagamentoSel === 'dinheiro' && troco ? parseFloat(troco) : null,
+        observacaoGeral: obsGeral
       })
     });
     var data = await r.json();
