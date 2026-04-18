@@ -129,7 +129,7 @@ const EvolutionMultiService = {
             } catch (e) { console.log('[EVO] Webhook FALHOU:', e.response?.status, JSON.stringify(e.response?.data || e.message)); }
 
             // 6. Salvar
-            instancia.qrCode = qrData || ('QR_' + instancia.nomeInstancia);
+            instancia.qrCode = qrData || null;
             instancia.qrCodeExpira = new Date(Date.now() + 60000);
             instancia.status = 'conectando';
             instancia.webhookUrl = webhookUrl;

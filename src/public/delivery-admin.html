@@ -1282,15 +1282,24 @@
                 if (r.jaConectado || r.status === 'conectado') {
                     box.innerHTML = '<p style="color:#00d4ff;font-size:18px;">✅ WhatsApp já conectado!</p>';
                 } else if (qr) {
-                    let qrSrc = '';
-                    try {
-                        qrSrc = qr.startsWith('data:') ? qr : 'data:image/png;base64,' + qr;
-                        // Validar se é base64 real
-                        if (!qrSrc.includes(',') || qrSrc.length < 100) qrSrc = '';
-                    } catch(e) { qrSrc = ''; }
-                    box.innerHTML = '<img src="' + qrSrc + '" style="max-width:250px;border-radius:12px;"><p style="color:#aaa;margin-top:10px;">Escaneie com o WhatsApp</p>';
+                    // Verificar se é base64 de imagem ou código de texto
+                    const isBase64Img = qr.length > 200 && (qr.startsWith('data:image') || /^[A-Za-z0-9+/=]{100,}$/.test(qr.substring(0, 50)));
+                    if (isBase64Img) {
+                        const qrSrc = qr.startsWith('data:') ? qr : 'data:image/png;base64,' + qr;
+                        box.innerHTML = '<img src="' + qrSrc + '" style="max-width:250px;border-radius:12px;" onerror="this.parentNode.innerHTML='<p style=color:#c0392b>Erro ao exibir QR — tente novamente</p>'">' +
+                            '<p style="color:#aaa;margin-top:10px;font-size:.85em;">Escaneie com o WhatsApp</p>' +
+                            '<p style="color:#666;font-size:.75em;">O QR expira em 60 segundos</p>';
+                    } else {
+                        // Pairing code ou QR em texto
+                        box.innerHTML = '<div style="background:#111;border:2px solid #ff6b35;border-radius:12px;padding:20px;text-align:center">' +
+                            '<p style="color:#aaa;font-size:.85em;margin-bottom:8px">Código de pareamento:</p>' +
+                            '<p style="color:#ff6b35;font-size:1.8em;font-weight:800;letter-spacing:4px">' + qr + '</p>' +
+                            '<p style="color:#666;font-size:.75em;margin-top:8px">WhatsApp → Aparelhos conectados → Conectar aparelho → Inserir código</p>' +
+                            '</div>';
+                    }
                 } else {
-                    box.innerHTML = '<p style="color:#c0392b">Erro ao gerar QR: ' + (r.erro||'tente novamente') + '</p>';
+                    box.innerHTML = '<p style="color:#c0392b">QR não gerado ainda. Aguarde alguns segundos e tente novamente.</p>' +
+                        '<button class="btn btn-primary" onclick="gerarQRDelivery()" style="margin-top:10px">🔄 Tentar novamente</button>';
                 }
             } catch(e) { box.innerHTML = '<p style="color:#c0392b">Erro de conexão</p>'; }
         }
