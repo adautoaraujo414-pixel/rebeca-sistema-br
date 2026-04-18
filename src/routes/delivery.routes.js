@@ -253,18 +253,36 @@ router.get('/dashboard', authDelivery, async (req, res) => {
 router.get('/cardapio-publico/:adminId', async (req, res) => {
     try {
         const adminId = req.params.adminId;
-        const config = await ConfigDelivery.findOne({ adminId }).lean();
-        const categorias = await CategoriaCardapio.find({ adminId, ativo: true }).sort({ ordem: 1 }).lean();
-        const itens = await ItemCardapio.find({ adminId, ativo: true, disponivel: true }).sort({ ordem: 1 }).lean();
-        
+        const [config, admin, categorias, itens] = await Promise.all([
+            ConfigDelivery.findOne({ adminId }).lean(),
+            AdminDelivery.findById(adminId).lean(),
+            CategoriaCardapio.find({ adminId, ativo: true }).sort({ ordem: 1 }).lean(),
+            ItemCardapio.find({ adminId, ativo: true, disponivel: true }).sort({ ordem: 1 }).lean()
+        ]);
+
+        // Nome: config > nomeComercio do admin > fallback
+        const nomeRestaurante = config?.nomeRestaurante || admin?.nomeComercio || 'Delivery';
+
         // Formas de pagamento aceitas
         const formasPgto = [];
         if (config?.aceitaDinheiro !== false) formasPgto.push('dinheiro');
         if (config?.aceitaCartao) formasPgto.push('cartao');
         if (config?.aceitaPix !== false) formasPgto.push('pix');
 
+        // Normalizar categoriaId dos itens para string (evitar falha de comparação no frontend)
+        const itensNorm = itens.map(it => ({
+            ...it,
+            categoriaId: it.categoriaId ? it.categoriaId.toString() : null
+        }));
+
+        // Normalizar _id das categorias para string
+        const categoriasNorm = categorias.map(c => ({
+            ...c,
+            _id: c._id.toString()
+        }));
+
         res.json({
-            restaurante: config?.nomeRestaurante || 'Delivery',
+            restaurante: nomeRestaurante,
             aberto: config?.aberto !== false,
             horario: config?.horarioFuncionamento || '',
             pedidoMinimo: config?.pedidoMinimo || 0,
@@ -272,8 +290,8 @@ router.get('/cardapio-publico/:adminId', async (req, res) => {
             tempoEntrega: config?.tempoMedioEntrega || 40,
             chavePix: config?.aceitaPix ? config?.chavePix || '' : null,
             formasPagamento: formasPgto,
-            categorias,
-            itens
+            categorias: categoriasNorm,
+            itens: itensNorm
         });
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
