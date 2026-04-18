@@ -455,6 +455,54 @@
                         </div>
                         <div id="statusDeliveryWA" style="margin-top:10px;padding:10px;border-radius:8px;display:none;"></div>
                     </div>
+                        <!-- PAGAMENTOS -->
+                        <div class="panel" style="margin-top:16px">
+                          <h3>💳 Formas de Pagamento</h3>
+                          <div class="form-row">
+                            <div class="form-group" style="flex-direction:row;align-items:center;gap:10px">
+                              <input type="checkbox" id="cfgAceitaDinheiro" style="width:18px;height:18px">
+                              <label>💵 Dinheiro</label>
+                            </div>
+                            <div class="form-group" style="flex-direction:row;align-items:center;gap:10px">
+                              <input type="checkbox" id="cfgAceitaCartao" style="width:18px;height:18px">
+                              <label>💳 Cartão na entrega</label>
+                            </div>
+                            <div class="form-group" style="flex-direction:row;align-items:center;gap:10px">
+                              <input type="checkbox" id="cfgAceitaPix" style="width:18px;height:18px">
+                              <label>📱 Pix</label>
+                            </div>
+                          </div>
+                          <div class="form-group" id="grupoPix">
+                            <label>Chave Pix</label>
+                            <input type="text" id="cfgChavePix" placeholder="CPF, CNPJ, email, telefone ou chave aleatória">
+                          </div>
+                          <div class="form-group" id="grupoPixNome">
+                            <label>Nome para exibir no Pix</label>
+                            <input type="text" id="cfgNomePix" placeholder="Ex: João Silva">
+                          </div>
+                          <div class="form-group" id="grupoPixBanco">
+                            <label>Banco / Integração</label>
+                            <select id="cfgBancoPix" style="background:#2a2a2a;border:1px solid #444;color:#fff;padding:8px;border-radius:6px;width:100%">
+                              <option value="">Selecione o banco (opcional)</option>
+                              <option value="mercadopago">Mercado Pago</option>
+                              <option value="picpay">PicPay</option>
+                              <option value="nubank">Nubank</option>
+                              <option value="itau">Itaú</option>
+                              <option value="bradesco">Bradesco</option>
+                              <option value="bb">Banco do Brasil</option>
+                              <option value="inter">Inter</option>
+                              <option value="c6">C6 Bank</option>
+                              <option value="sicoob">Sicoob</option>
+                              <option value="outro">Outro</option>
+                            </select>
+                          </div>
+                          <div class="form-group" id="grupoPixQR" style="display:none">
+                            <label>QR Code Pix (imagem URL ou upload)</label>
+                            <input type="text" id="cfgPixQrUrl" placeholder="https://... ou deixe vazio para usar chave">
+                          </div>
+                          <p style="font-size:.75em;color:#666;margin-top:8px">💡 A Rebeca mostrará as formas de pagamento aceitas automaticamente no atendimento e no cardápio digital.</p>
+                        </div>
+
                         <button class="btn btn-primary" onclick="salvarConfig()">💾 Salvar Configurações</button>
                         <button class="btn" id="btnAberto" onclick="toggleAberto()" style="background:#00cc6a;color:#000;">🟢 ABERTO</button>
                     </div>
@@ -862,6 +910,30 @@
             const res = await api('/config');
             const c = await res.json();
             document.getElementById('cfgNome').value = c.nomeRestaurante || '';
+            document.getElementById('cfgAceitaDinheiro').checked = c.aceitaDinheiro !== false;
+            document.getElementById('cfgAceitaCartao').checked = !!c.aceitaCartao;
+            document.getElementById('cfgAceitaPix').checked = c.aceitaPix !== false;
+            document.getElementById('cfgChavePix').value = c.chavePix || '';
+            document.getElementById('cfgNomePix').value = c.nomePix || '';
+            if (document.getElementById('cfgBancoPix')) document.getElementById('cfgBancoPix').value = c.bancoPix || '';
+            if (document.getElementById('cfgPixQrUrl')) document.getElementById('cfgPixQrUrl').value = c.pixQrUrl || '';
+            // Mostrar/ocultar grupo pix
+            var grupoPix = document.getElementById('grupoPix');
+            if (grupoPix) grupoPix.style.display = c.aceitaPix !== false ? 'flex' : 'none';
+            var cfgPix = document.getElementById('cfgAceitaPix');
+            if (cfgPix) cfgPix.addEventListener('change', function(){ document.getElementById('grupoPix').style.display = this.checked ? 'flex' : 'none'; document.getElementById('grupoPixNome').style.display = this.checked ? 'flex' : 'none'; document.getElementById('grupoPixBanco').style.display = this.checked ? 'flex' : 'none'; });
+            document.getElementById('cfgAceitaDinheiro').checked = c.aceitaDinheiro !== false;
+            document.getElementById('cfgAceitaCartao').checked = !!c.aceitaCartao;
+            document.getElementById('cfgAceitaPix').checked = c.aceitaPix !== false;
+            document.getElementById('cfgChavePix').value = c.chavePix || '';
+            document.getElementById('cfgNomePix').value = c.nomePix || '';
+            if (document.getElementById('cfgBancoPix')) document.getElementById('cfgBancoPix').value = c.bancoPix || '';
+            if (document.getElementById('cfgPixQrUrl')) document.getElementById('cfgPixQrUrl').value = c.pixQrUrl || '';
+            // Mostrar/ocultar grupo pix
+            var grupoPix = document.getElementById('grupoPix');
+            if (grupoPix) grupoPix.style.display = c.aceitaPix !== false ? 'flex' : 'none';
+            var cfgPix = document.getElementById('cfgAceitaPix');
+            if (cfgPix) cfgPix.addEventListener('change', function(){ document.getElementById('grupoPix').style.display = this.checked ? 'flex' : 'none'; document.getElementById('grupoPixNome').style.display = this.checked ? 'flex' : 'none'; document.getElementById('grupoPixBanco').style.display = this.checked ? 'flex' : 'none'; });
             if(document.getElementById('cfgCnpj')) document.getElementById('cfgCnpj').value = c.cnpj||'';
             if(document.getElementById('cfgTelefoneContato')) document.getElementById('cfgTelefoneContato').value = c.telefoneContato||'';
             if(document.getElementById('cfgEnderecoCompleto')) document.getElementById('cfgEnderecoCompleto').value = c.enderecoCompleto||'';
@@ -890,6 +962,20 @@
         async function salvarConfig() {
             await api('/config', { method: 'PUT', body: JSON.stringify({
                 nomeRestaurante: document.getElementById('cfgNome').value,
+                aceitaDinheiro: document.getElementById('cfgAceitaDinheiro')?.checked !== false,
+                aceitaCartao: !!document.getElementById('cfgAceitaCartao')?.checked,
+                aceitaPix: !!document.getElementById('cfgAceitaPix')?.checked,
+                chavePix: document.getElementById('cfgChavePix')?.value || '',
+                nomePix: document.getElementById('cfgNomePix')?.value || '',
+                bancoPix: document.getElementById('cfgBancoPix')?.value || '',
+                pixQrUrl: document.getElementById('cfgPixQrUrl')?.value || '',
+                aceitaDinheiro: document.getElementById('cfgAceitaDinheiro')?.checked !== false,
+                aceitaCartao: !!document.getElementById('cfgAceitaCartao')?.checked,
+                aceitaPix: !!document.getElementById('cfgAceitaPix')?.checked,
+                chavePix: document.getElementById('cfgChavePix')?.value || '',
+                nomePix: document.getElementById('cfgNomePix')?.value || '',
+                bancoPix: document.getElementById('cfgBancoPix')?.value || '',
+                pixQrUrl: document.getElementById('cfgPixQrUrl')?.value || '',
                 cnpj: document.getElementById('cfgCnpj')?.value || '',
                 telefoneContato: document.getElementById('cfgTelefoneContato')?.value || '',
                 enderecoCompleto: document.getElementById('cfgEnderecoCompleto')?.value || '',

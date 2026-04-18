@@ -680,62 +680,69 @@ router.post('/cardapio/confirmar-transcricao', authDelivery, async (req, res) =>
 // ========== PEDIDO VIA CARDÁPIO DIGITAL ==========
 router.post('/pedido-cardapio-digital', async (req, res) => {
     try {
-        const { adminId, telefoneCliente, nomeCliente, itens, total } = req.body;
+        const { adminId, telefoneCliente, nomeCliente, itens, total, taxaEntrega, enderecoEntrega, formaPagamento, troco, observacaoGeral } = req.body;
         if (!adminId || !itens || itens.length === 0) {
             return res.status(400).json({ erro: 'Dados inválidos' });
         }
 
-        // Montar texto do pedido
-        const itensTexto = itens.map(i => 
-            i.quantidade + 'x ' + i.nome + (i.obs ? ' (' + i.obs + ')' : '')
-        ).join(', ');
+        // Salvar pedido no banco
+        const { PedidoDelivery } = require('../models');
+        const numeroPedido = Date.now().toString().slice(-6);
+        const pedidoSalvo = await PedidoDelivery.create({
+            adminId,
+            numero: numeroPedido,
+            clienteNome: nomeCliente || 'Cliente Digital',
+            clienteTelefone: telefoneCliente || '',
+            enderecoEntrega: enderecoEntrega || '',
+            formaPagamento: formaPagamento || 'dinheiro',
+            troco: troco || null,
+            observacao: observacaoGeral || '',
+            itens: itens.map(i => ({
+                itemId: i.itemId,
+                nome: i.nome,
+                preco: i.preco,
+                quantidade: i.quantidade,
+                observacao: i.obs || ''
+            })),
+            subtotal: itens.reduce((s,i) => s + (i.preco * i.quantidade), 0),
+            taxaEntrega: taxaEntrega || 0,
+            total: Number(total),
+            status: 'novo',
+            origem: 'cardapio_digital'
+        });
 
-        console.log('[CARDAPIO-DIGITAL] Pedido de', telefoneCliente, ':', itensTexto);
+        console.log('[CARDAPIO-DIGITAL] Pedido #' + numeroPedido + ' salvo de', telefoneCliente || 'sem telefone');
 
-        // Se tem telefone do cliente, enviar para a Rebeca processar
+        // Notificar cliente pelo WhatsApp se tiver telefone
         if (telefoneCliente) {
             try {
                 const { InstanciaWhatsapp } = require('../models');
                 const EvolutionMultiService = require('../services/evolution-multi.service');
-                const RebecaDeliveryService = require('../services/rebeca-delivery.service');
-
                 const inst = await InstanciaWhatsapp.findOne({ 
-                    adminId, 
-                    status: { $in: ['conectado','open','connected'] } 
+                    adminId, status: { $in: ['conectado','open','connected'] } 
                 });
-
                 if (inst) {
-                    // Carregar conversa e preencher carrinho direto
-                    const conversa = RebecaDeliveryService.obterConversa(telefoneCliente, adminId);
-                    conversa.carrinho = itens.map(i => ({
-                        _id: i.itemId,
-                        nome: i.nome,
-                        preco: i.preco,
-                        quantidade: i.quantidade,
-                        observacao: i.obs || ''
-                    }));
-                    conversa.clienteNome = nomeCliente || conversa.clienteNome || 'Cliente';
-                    conversa.etapa = 'pedir_endereco';
-
-                    // Montar resumo bonito
                     const resumo = itens.map(i => 
                         '• ' + i.quantidade + 'x *' + i.nome + '* — R$ ' + (i.preco * i.quantidade).toFixed(2)
                     ).join('\n');
-
-                    const msg = '🛒 *Pedido recebido pelo cardápio digital!*\n\n' 
-                        + resumo 
+                    const pgtoLabel = { dinheiro: '💵 Dinheiro', pix: '📱 Pix', cartao: '💳 Cartão na entrega' }[formaPagamento] || formaPagamento;
+                    let msg = '✅ *Pedido #' + numeroPedido + ' confirmado!*\n\n'
+                        + resumo
+                        + (taxaEntrega ? '\n🛵 Taxa: R$ ' + Number(taxaEntrega).toFixed(2) : '')
                         + '\n\n💰 *Total: R$ ' + Number(total).toFixed(2) + '*'
-                        + '\n\n📍 Qual o *endereço de entrega*?\n\nManda a rua, número e bairro! 😊';
-
+                        + '\n📍 *Entrega:* ' + (enderecoEntrega || 'A confirmar')
+                        + '\n💳 *Pagamento:* ' + pgtoLabel
+                        + (troco ? '\n💵 *Troco para:* R$ ' + Number(troco).toFixed(2) : '')
+                        + (observacaoGeral ? '\n📝 *Obs:* ' + observacaoGeral : '')
+                        + '\n\n⏳ Estamos preparando seu pedido! Em breve avisamos. 😊';
                     await EvolutionMultiService.enviarMensagem(inst._id, telefoneCliente, msg);
-                    console.log('[CARDAPIO-DIGITAL] Mensagem enviada para', telefoneCliente);
                 }
             } catch(e) {
                 console.log('[CARDAPIO-DIGITAL] Erro notificar cliente:', e.message);
             }
         }
 
-        res.json({ sucesso: true });
+        res.json({ sucesso: true, pedidoId: pedidoSalvo._id, numero: numeroPedido });
     } catch(e) {
         console.error('[CARDAPIO-DIGITAL] Erro:', e.message);
         res.status(500).json({ erro: e.message });
