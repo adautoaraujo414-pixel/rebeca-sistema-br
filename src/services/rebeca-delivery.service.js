@@ -200,6 +200,16 @@ class RebecaDeliveryService {
         // Cliente novo
         const hora = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' })).getHours();
         const sd = hora < 12 ? 'Bom dia' : hora < 18 ? 'Boa tarde' : 'Boa noite';
+
+        // Usar mensagem personalizada do admin se configurada
+        if (config?.mensagemBoasVindas) {
+            const msg = config.mensagemBoasVindas
+                .replace('{nome}', primeiroNome || 'cliente')
+                .replace('{restaurante}', nomeRest)
+                .replace('{saudacao}', sd);
+            return msg;
+        }
+
         return this._unico(conversa, [
             `${sd}! 😊 Bem-vindo ao *${nomeRest}*!\n\nO que vai ser hoje? Me fala o que tá afim ou manda *CARDAPIO* pra ver as opções! 🍔`,
             `Oi${primeiroNome ? ' ' + primeiroNome : ''}! 😄 Chegou na hora certa no *${nomeRest}*!\n\nQuer ver o cardápio? Manda *CARDAPIO* ou me diz logo o que quer! 🔥`,
