@@ -694,6 +694,8 @@
                         ${p.status === 'preparando' ? '<button class="btn btn-small btn-success" onclick="mudarStatus(\''+p._id+'\',\'pronto\')">✅ Pronto!</button>' : ''}
                         ${p.status === 'pronto' ? '<button class="btn btn-small" style="background:#00d4ff;color:#000;" onclick="mudarStatus(\''+p._id+'\',\'saiu_entrega\')">🏍️ Saiu Entrega</button>' : ''}
                         ${p.status === 'saiu_entrega' ? '<button class="btn btn-small btn-success" onclick="mudarStatus(\''+p._id+'\',\'entregue\')">✅ Entregue</button>' : ''}
+                        <button class="btn btn-small" style="background:#555;color:#fff;" onclick="_imprimirPedido('"+p._id+"')">🖨️ Comanda</button>
+                        ${p.origemPedido === 'cardapio_digital' ? '<span style="background:#ff6b35;color:#fff;border-radius:10px;padding:2px 8px;font-size:.7em;font-weight:700;">📱 Digital</span>' : ''}
                     </div>
                 </div>`;
             }).join('') || '<p style="color:#888;text-align:center;">Nenhum pedido</p>';
