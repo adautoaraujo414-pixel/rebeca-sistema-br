@@ -678,6 +678,7 @@
 
         function renderPedidos(pedidos, containerId) {
             const container = document.getElementById(containerId);
+            pedidos.forEach(p => { _cachePedidos[p._id] = p; });
             container.innerHTML = pedidos.map(p => {
                 const itensTexto = (p.itens || []).map(i => i.quantidade + 'x ' + i.nome).join(', ');
                 return `<div class="pedido-card ${p.status}">
@@ -698,6 +699,12 @@
             }).join('') || '<p style="color:#888;text-align:center;">Nenhum pedido</p>';
         }
 
+        var _cachePedidos = {};
+        function _imprimirPedido(id) {
+            var p = _cachePedidos[id];
+            if (!p) { alert('Pedido não encontrado'); return; }
+            imprimirComanda(p);
+        }
         function imprimirComanda(p) {
             const itens = (p.itens || []).map(i =>
                 '<tr><td style="padding:4px 8px">' + i.quantidade + 'x ' + i.nome +
