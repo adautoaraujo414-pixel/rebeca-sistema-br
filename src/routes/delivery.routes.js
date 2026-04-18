@@ -3,6 +3,7 @@ const router = express.Router();
 const { AdminDelivery, PedidoDelivery, ItemCardapio, CategoriaCardapio, ConfigDelivery,
         EntregadorDelivery, ClienteDelivery, InstanciaWhatsapp, AvaliacaoDelivery,
         AssinanteDelivery } = require('../models');
+const { Entregador, MensalidadeClienteDelivery, CardapioDia } = require('../models/delivery.models');
 const EvolutionMultiService = require('../services/evolution-multi.service');
 const RebecaDeliveryService = require('../services/rebeca-delivery.service');
 
@@ -768,7 +769,7 @@ router.post('/pedido/:id/contato-cliente', async (req, res) => {
         if (!pedido) return res.status(404).json({ erro: 'Pedido não encontrado' });
         const instancia = await InstanciaWhatsapp.findOne({ adminId: pedido.adminId, status: { $in: ['conectado','open','connected'] } });
         if (!instancia) return res.status(400).json({ erro: 'WhatsApp não conectado' });
-        const { EvolutionMultiService } = require('../services/evolution-multi.service');
+
         const entregadorNome = req.body.entregadorNome || 'Entregador';
         const msg = `🛵 *Mensagem do Entregador*\n\nOlá! Sou o entregador do seu pedido #${pedido.numeroPedido || pedido._id.toString().slice(-4)}.\nEstou a caminho! Caso precise falar comigo, responda esta mensagem e a Rebeca vai me repassar.`;
         await EvolutionMultiService.enviarMensagem(instancia.nomeInstancia, pedido.telefoneCliente, msg);
