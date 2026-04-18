@@ -257,7 +257,7 @@ router.get('/cardapio-publico/:adminId', async (req, res) => {
             ConfigDelivery.findOne({ adminId }).lean(),
             AdminDelivery.findById(adminId).lean(),
             CategoriaCardapio.find({ adminId, ativo: true }).sort({ ordem: 1 }).lean(),
-            ItemCardapio.find({ adminId, ativo: true, disponivel: true }).sort({ ordem: 1 }).lean()
+            ItemCardapio.find({ adminId, ativo: true, disponivel: { $ne: false } }).sort({ ordem: 1 }).lean()
         ]);
 
         // Nome: config > nomeComercio do admin > fallback
