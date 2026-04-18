@@ -180,6 +180,7 @@ const AdminMasterSchema = new mongoose.Schema({
     senha: { type: String, required: true },
     telefone: String,
     ativo: { type: Boolean, default: true },
+    token: { type: String, index: true },
     ultimoAcesso: Date,
     permissoes: {
         gerenciarAdmins: { type: Boolean, default: true },
