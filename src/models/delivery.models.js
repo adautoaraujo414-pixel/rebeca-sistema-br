@@ -110,7 +110,7 @@ const PedidoDeliverySchema = new mongoose.Schema({
     }],
     
     // Origem do pedido
-    origemPedido: { type: String, enum: ['whatsapp', 'caixa', 'app'], default: 'whatsapp' },
+    origemPedido: { type: String, enum: ['whatsapp', 'caixa', 'app', 'cardapio_digital'], default: 'whatsapp' },
     
     // Mesa (para pedidos presenciais)
     tipoLocal: { type: String, enum: ['mesa', 'balcao', 'delivery', 'retirada'], default: 'delivery' },

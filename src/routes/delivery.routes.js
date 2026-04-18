@@ -1,6 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const { CategoriaCardapio, ItemCardapio, PedidoDelivery, ConfigDelivery, AdminDelivery, Entregador, MensalidadeClienteDelivery, CardapioDia } = require('../models/delivery.models');
+const { AdminDelivery, PedidoDelivery, ItemCardapio, CategoriaCardapio, ConfigDelivery,
+        EntregadorDelivery, ClienteDelivery, InstanciaWhatsapp, AvaliacaoDelivery,
+        AssinanteDelivery } = require('../models');
+const EvolutionMultiService = require('../services/evolution-multi.service');
+const RebecaDeliveryService = require('../services/rebeca-delivery.service');
 
 // ========== AUTENTICAÇÃO DELIVERY ==========
 const authDelivery = async (req, res, next) => {
@@ -186,7 +190,6 @@ router.put('/pedidos/:id/status', authDelivery, async (req, res) => {
         if (pedido && pedido.clienteTelefone) {
             try {
                 const EvolutionMultiService = require('../services/evolution-multi.service');
-                const { InstanciaWhatsapp } = require('../models');
                 const inst = await InstanciaWhatsapp.findOne({ adminId: req.adminId, status: { $in: ['conectado','open','connected'] } });
                 if (inst) {
                     const config = await ConfigDelivery.findOne({ adminId: req.adminId });
@@ -360,7 +363,6 @@ router.put('/cozinha/:id/rejeitar', authDelivery, async (req, res) => {
         );
         try {
             const EvolutionMultiService = require('../services/evolution-multi.service');
-            const { InstanciaWhatsapp } = require('../models');
             const inst = await InstanciaWhatsapp.findOne({ adminId: req.adminId, status: { $in: ['conectado','open','connected'] } });
             if (inst) await EvolutionMultiService.enviarMensagem(inst._id, pedido.clienteTelefone, 'Pedido #' + pedido.numero + ' cancelado. ' + motivo + '. Desculpe pelo transtorno!');
         } catch(e) {}
@@ -394,7 +396,6 @@ router.post('/entregadores/enviar-credenciais', authDelivery, async (req, res) =
         const { telefone, nome, senha, linkApp } = req.body;
         if (!telefone) return res.json({ sucesso: false, erro: 'Telefone obrigatório' });
 
-        const { InstanciaWhatsapp } = require('../models');
         const inst = await InstanciaWhatsapp.findOne({ adminId: req.adminId, status: { $in: ['conectado','open','connected'] } });
         if (!inst) return res.json({ sucesso: false, erro: 'WhatsApp não conectado' });
 
@@ -686,7 +687,6 @@ router.post('/pedido-cardapio-digital', async (req, res) => {
         }
 
         // Salvar pedido no banco
-        const { PedidoDelivery } = require('../models');
         const numeroPedido = Date.now().toString().slice(-6);
         const pedidoSalvo = await PedidoDelivery.create({
             adminId,
@@ -708,7 +708,7 @@ router.post('/pedido-cardapio-digital', async (req, res) => {
             taxaEntrega: taxaEntrega || 0,
             total: Number(total),
             status: 'novo',
-            origem: 'cardapio_digital'
+            origemPedido: 'cardapio_digital'
         });
 
         console.log('[CARDAPIO-DIGITAL] Pedido #' + numeroPedido + ' salvo de', telefoneCliente || 'sem telefone');
@@ -716,7 +716,6 @@ router.post('/pedido-cardapio-digital', async (req, res) => {
         // Notificar cliente pelo WhatsApp se tiver telefone
         if (telefoneCliente) {
             try {
-                const { InstanciaWhatsapp } = require('../models');
                 const EvolutionMultiService = require('../services/evolution-multi.service');
                 const inst = await InstanciaWhatsapp.findOne({ 
                     adminId, status: { $in: ['conectado','open','connected'] } 
@@ -765,7 +764,6 @@ router.post('/login', async (req, res) => {
 // ===== CONTATO ENTREGADOR -> CLIENTE VIA REBECA =====
 router.post('/pedido/:id/contato-cliente', async (req, res) => {
     try {
-        const { Pedido, InstanciaWhatsapp } = require('../models');
         const pedido = await Pedido.findById(req.params.id);
         if (!pedido) return res.status(404).json({ erro: 'Pedido não encontrado' });
         const instancia = await InstanciaWhatsapp.findOne({ adminId: pedido.adminId, status: { $in: ['conectado','open','connected'] } });
@@ -853,7 +851,6 @@ router.post('/cardapio-hoje/enviar', authDelivery, async (req, res) => {
         const assinantes = await MensalidadeClienteDelivery.find({ adminId: req.adminId, status: 'ativo' });
         let enviados = 0;
         try {
-            const { InstanciaWhatsapp } = require('../models');
             const instancia = await InstanciaWhatsapp.findOne({ adminId: req.adminId, status: 'conectado' });
             if (instancia) {
                 const EvolutionMultiService = require('../services/evolution-multi.service');
