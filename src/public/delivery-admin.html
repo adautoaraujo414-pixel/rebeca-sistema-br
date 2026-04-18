@@ -698,6 +698,50 @@
             }).join('') || '<p style="color:#888;text-align:center;">Nenhum pedido</p>';
         }
 
+        function imprimirComanda(p) {
+            const itens = (p.itens || []).map(i =>
+                '<tr><td style="padding:4px 8px">' + i.quantidade + 'x ' + i.nome +
+                (i.observacao ? '<br><small style="color:#666">obs: '+i.observacao+'</small>' : '') +
+                '</td><td style="padding:4px 8px;text-align:right">R$ ' + ((i.preco||0)*(i.quantidade||1)).toFixed(2) + '</td></tr>'
+            ).join('');
+            const pgto = { dinheiro:'💵 Dinheiro', pix:'📱 Pix', cartao:'💳 Cartão' }[p.formaPagamento] || p.formaPagamento || '-';
+            const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+            <title>Comanda #${p.numero||'?'}</title>
+            <style>
+                body{font-family:monospace;max-width:300px;margin:0 auto;padding:10px;font-size:13px}
+                h2{text-align:center;margin:0;font-size:16px}
+                .sep{border-top:1px dashed #000;margin:8px 0}
+                table{width:100%;border-collapse:collapse}
+                .total{font-weight:bold;font-size:15px}
+                @media print{body{max-width:100%}}
+            </style></head><body>
+            <h2>${adminData?.nomeComercio || 'Delivery'}</h2>
+            <div class="sep"></div>
+            <p><b>Pedido #${p.numero||'?'}</b> — ${new Date().toLocaleString('pt-BR')}</p>
+            <p><b>Cliente:</b> ${p.clienteNome||'-'}</p>
+            <p><b>Tel:</b> ${p.clienteTelefone||'-'}</p>
+            <p><b>Endereço:</b> ${p.enderecoEntrega||'Retirada'}</p>
+            <div class="sep"></div>
+            <table>${itens}</table>
+            <div class="sep"></div>
+            <table>
+                ${p.taxaEntrega ? '<tr><td>🛵 Taxa entrega</td><td style="text-align:right">R$ '+(p.taxaEntrega||0).toFixed(2)+'</td></tr>' : ''}
+                ${p.desconto ? '<tr><td>🎟️ Desconto</td><td style="text-align:right">-R$ '+(p.desconto||0).toFixed(2)+'</td></tr>' : ''}
+                <tr class="total"><td>TOTAL</td><td style="text-align:right">R$ ${(p.total||0).toFixed(2)}</td></tr>
+            </table>
+            <div class="sep"></div>
+            <p><b>Pagamento:</b> ${pgto}</p>
+            ${p.troco ? '<p><b>Troco para:</b> R$ '+Number(p.troco).toFixed(2)+'</p>' : ''}
+            ${p.observacao ? '<p><b>Obs:</b> '+p.observacao+'</p>' : ''}
+            <div class="sep"></div>
+            <p style="text-align:center;font-size:11px">Obrigado pela preferência! 😊</p>
+            <script>window.onload=function(){window.print();}<\/script>
+            </body></html>`;
+            const w = window.open('','_blank','width=350,height=600');
+            w.document.write(html);
+            w.document.close();
+        }
+
         async function mudarStatus(id, status) {
             try {
                 await api('/pedidos/' + id + '/status', { method: 'PUT', body: JSON.stringify({ status }) });
