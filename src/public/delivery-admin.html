@@ -503,8 +503,10 @@
                           <p style="font-size:.75em;color:#666;margin-top:8px">💡 A Rebeca mostrará as formas de pagamento aceitas automaticamente no atendimento e no cardápio digital.</p>
                         </div>
 
-                        <button class="btn btn-primary" onclick="salvarConfig()">💾 Salvar Configurações</button>
-                        <button class="btn" id="btnAberto" onclick="toggleAberto()" style="background:#00cc6a;color:#000;">🟢 ABERTO</button>
+                        <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap">
+                          <button class="btn btn-primary" onclick="salvarConfig()" style="flex:1;min-width:160px;">💾 Salvar Configurações</button>
+                          <button class="btn" id="btnAberto" onclick="toggleAberto()" style="background:#00cc6a;color:#000;min-width:120px;">🟢 ABERTO</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1280,7 +1282,12 @@
                 if (r.jaConectado || r.status === 'conectado') {
                     box.innerHTML = '<p style="color:#00d4ff;font-size:18px;">✅ WhatsApp já conectado!</p>';
                 } else if (qr) {
-                    const qrSrc = qr.startsWith('data:') ? qr : 'data:image/png;base64,' + qr;
+                    let qrSrc = '';
+                    try {
+                        qrSrc = qr.startsWith('data:') ? qr : 'data:image/png;base64,' + qr;
+                        // Validar se é base64 real
+                        if (!qrSrc.includes(',') || qrSrc.length < 100) qrSrc = '';
+                    } catch(e) { qrSrc = ''; }
                     box.innerHTML = '<img src="' + qrSrc + '" style="max-width:250px;border-radius:12px;"><p style="color:#aaa;margin-top:10px;">Escaneie com o WhatsApp</p>';
                 } else {
                     box.innerHTML = '<p style="color:#c0392b">Erro ao gerar QR: ' + (r.erro||'tente novamente') + '</p>';
