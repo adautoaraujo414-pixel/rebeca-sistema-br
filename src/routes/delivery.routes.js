@@ -151,7 +151,8 @@ router.get('/pedidos', authDelivery, async (req, res) => {
         const { status } = req.query;
         const filtro = { adminId: req.adminId };
         if (status) filtro.status = status;
-        const pedidos = await PedidoDelivery.find(filtro).sort({ createdAt: -1 }).limit(50);
+        const limit = parseInt(req.query.limit) || 50;
+        const pedidos = await PedidoDelivery.find(filtro).sort({ createdAt: -1 }).limit(Math.min(limit, 500));
         res.json(pedidos);
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
