@@ -13,10 +13,12 @@ router.post('/login', async (req, res) => {
         const { email, senha } = req.body;
         const master = await AdminMaster.findOne({ email, senha, ativo: true });
         if (!master) return res.status(401).json({ erro: 'Credenciais inválidas' });
+        // Gerar token se não tiver
+        if (!master.token) master.token = gerarToken();
         master.ultimoAcesso = new Date();
         await master.save();
         await LogSistema.create({ tipo: 'acesso', usuario: master.email, tipoUsuario: 'master', acao: 'Login Master', ip: req.ip });
-        res.json({ sucesso: true, master: { id: master._id, nome: master.nome, email: master.email, permissoes: master.permissoes } });
+        res.json({ sucesso: true, token: master.token, master: { id: master._id, nome: master.nome, email: master.email, permissoes: master.permissoes } });
     } catch (e) { res.status(500).json({ erro: e.message }); }
 });
 

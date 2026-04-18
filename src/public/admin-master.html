@@ -358,6 +358,9 @@
                 case 'config': carregarConfig(); break;
             }
         }
+        // Token master para chamadas autenticadas
+        let masterToken = localStorage.getItem('master_token') || localStorage.getItem('rebeca_master_token') || '';
+
         async function fazerLogin() {
             const email = document.getElementById('loginEmail').value;
             const senha = document.getElementById('loginSenha').value;
@@ -366,6 +369,12 @@
                 const data = await res.json();
                 if (data.sucesso) {
                     masterLogado = data.master;
+                    // Salvar token para chamadas autenticadas (delivery-master, etc)
+                    if (data.token) {
+                        localStorage.setItem('master_token', data.token);
+                        localStorage.setItem('rebeca_master_token', data.token);
+                        masterToken = data.token;
+                    }
                     document.getElementById('userNome').textContent = masterLogado.nome;
                     document.getElementById('loginContainer').style.display = 'none';
                     document.getElementById('dashboard').style.display = 'block';
