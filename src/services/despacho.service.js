@@ -406,7 +406,7 @@ const DespachoService = {
             id: 'desp_' + uuidv4().slice(0, 8),
             corridaId: corrida.id,
             modo: 'proximo',
-            motoristaId: motoristaMaisProximo.id,
+            motoristaId: motoristaMaisProximo._id?.toString() || motoristaMaisProximo.id,
             motoristaNome: motoristaMaisProximo.nome || motoristaMaisProximo.nomeCompleto,
             distanciaKm: motoristaMaisProximo.distanciaKm,
             tempoEstimadoMinutos: tempoEstimado,
@@ -424,10 +424,11 @@ const DespachoService = {
         corridasPendentes.set(corrida.id, despacho);
 
         // Registrar notificação para o motorista
-        if (!notificacoesMotoristas.has(motoristaMaisProximo.id)) {
-            notificacoesMotoristas.set(motoristaMaisProximo.id, []);
+        const _motId = motoristaMaisProximo._id?.toString() || motoristaMaisProximo.id;
+        if (!notificacoesMotoristas.has(_motId)) {
+            notificacoesMotoristas.set(_motId, []);
         }
-        notificacoesMotoristas.get(motoristaMaisProximo.id).push({
+        notificacoesMotoristas.get(_motId).push({
             corridaId: corrida.id,
             tipo: 'nova_corrida',
             enviadoEm: new Date().toISOString(),
@@ -589,7 +590,7 @@ const DespachoService = {
         }
 
         // Modo próximo: verificar se é o motorista certo
-        if (despacho.modo === 'proximo' && despacho.motoristaId !== motoristaId) {
+        if (despacho.modo === 'proximo' && despacho.motoristaId?.toString() !== motoristaId?.toString()) {
             return { sucesso: false, error: 'Esta corrida foi enviada para outro motorista' };
         }
 
