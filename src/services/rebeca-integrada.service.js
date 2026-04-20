@@ -52,14 +52,14 @@ const RebecaIntegradaService = {
     },
 
     aceitarCorrida: async (corridaId, motoristaId) => {
-        const corrida = CorridaService.buscarPorId(corridaId);
+        const corrida = await CorridaService.buscarPorId(corridaId);
         if (!corrida) return { sucesso: false, erro: 'Corrida não encontrada' };
 
-        const motorista = MotoristaService.buscarPorId(motoristaId);
+        const motorista = await MotoristaService.buscarPorId(motoristaId);
         if (!motorista) return { sucesso: false, erro: 'Motorista não encontrado' };
 
-        const corridaAtualizada = CorridaService.atribuirMotorista(corridaId, motorista.id, motorista.nome);
-        MotoristaService.atualizarStatus(motoristaId, 'a_caminho');
+        const corridaAtualizada = await CorridaService.atribuirMotorista(corridaId, motorista._id, motorista.nomeCompleto || motorista.nome);
+        await MotoristaService.atualizarStatus(motoristaId, 'a_caminho');
         GPSIntegradoService.atualizar(motoristaId, { status: 'a_caminho' });
 
         await WhatsAppService.notificarCorridaAceita(corrida.clienteTelefone, {
