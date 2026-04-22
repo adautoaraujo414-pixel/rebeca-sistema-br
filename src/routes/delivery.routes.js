@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const { AdminDelivery, PedidoDelivery, ItemCardapio, CategoriaCardapio, ConfigDelivery,
-        EntregadorDelivery, ClienteDelivery, InstanciaWhatsapp, AvaliacaoDelivery,
+const { Entregador, MensalidadeClienteDelivery, CardapioDia, GarcomDelivery,
+        AdminDelivery, PedidoDelivery, ItemCardapio, CategoriaCardapio, ConfigDelivery } = require('../models/delivery.models');
+const { EntregadorDelivery, ClienteDelivery, InstanciaWhatsapp, AvaliacaoDelivery,
         AssinanteDelivery } = require('../models');
-const { Entregador, MensalidadeClienteDelivery, CardapioDia, GarcomDelivery } = require('../models/delivery.models');
 const EvolutionMultiService = require('../services/evolution-multi.service');
 const RebecaDeliveryService = require('../services/rebeca-delivery.service');
 

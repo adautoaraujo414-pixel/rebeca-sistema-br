@@ -177,7 +177,10 @@ const ItemCardapio = mongoose.model('ItemCardapio', ItemCardapioSchema);
 const PedidoDelivery = mongoose.model('PedidoDelivery', PedidoDeliverySchema);
 const ConfigDelivery = mongoose.model('ConfigDelivery', ConfigDeliverySchema);
 
-module.exports = { CategoriaCardapio, ItemCardapio, PedidoDelivery, ConfigDelivery };
+module.exports.CategoriaCardapio = CategoriaCardapio;
+module.exports.ItemCardapio = ItemCardapio;
+module.exports.PedidoDelivery = PedidoDelivery;
+module.exports.ConfigDelivery = ConfigDelivery;
 
 // ========== ADMIN DELIVERY (separado do Admin de corridas) ==========
 const AdminDeliverySchema = new mongoose.Schema({
