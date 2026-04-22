@@ -1409,7 +1409,7 @@
                     const isBase64Img = qr.length > 200 && (qr.startsWith('data:image') || /^[A-Za-z0-9+/=]{100,}$/.test(qr.substring(0, 50)));
                     if (isBase64Img) {
                         const qrSrc = qr.startsWith('data:') ? qr : 'data:image/png;base64,' + qr;
-                        box.innerHTML = '<img src="' + qrSrc + '" style="max-width:250px;border-radius:12px;" onerror="this.style.display='none'">' +
+                        box.innerHTML = '<img src="' + qrSrc + '" style="max-width:250px;border-radius:12px;" onerror="this.style.display=`none`">' +
                             '<p style="color:#aaa;margin-top:10px;font-size:.85em;">Escaneie com o WhatsApp</p>' +
                             '<p style="color:#666;font-size:.75em;">O QR expira em 60 segundos</p>';
                     } else {
