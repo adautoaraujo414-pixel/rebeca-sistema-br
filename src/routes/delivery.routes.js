@@ -3,7 +3,7 @@ const router = express.Router();
 const { AdminDelivery, PedidoDelivery, ItemCardapio, CategoriaCardapio, ConfigDelivery,
         EntregadorDelivery, ClienteDelivery, InstanciaWhatsapp, AvaliacaoDelivery,
         AssinanteDelivery } = require('../models');
-const { Entregador, MensalidadeClienteDelivery, CardapioDia } = require('../models/delivery.models');
+const { Entregador, MensalidadeClienteDelivery, CardapioDia, GarcomDelivery } = require('../models/delivery.models');
 const EvolutionMultiService = require('../services/evolution-multi.service');
 const RebecaDeliveryService = require('../services/rebeca-delivery.service');
 
@@ -1256,5 +1256,147 @@ router.put('/salon/mesa/:mesa/fechar', authDelivery, async (req, res) => {
             { status: 'entregue', dataEntrega: new Date() }
         );
         res.json({ sucesso: true });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// ========== GARÇONS ==========
+const crypto = require('crypto');
+
+router.get('/garcons', authDelivery, async (req, res) => {
+    try {
+        const garcons = await GarcomDelivery.find({ adminId: req.adminId }).sort({ nome: 1 });
+        res.json({ sucesso: true, garcons });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+router.post('/garcons', authDelivery, async (req, res) => {
+    try {
+        const { nome, telefone } = req.body;
+        const token = 'GRC-' + crypto.randomBytes(6).toString('hex').toUpperCase();
+        const garcom = await GarcomDelivery.create({ adminId: req.adminId, nome, telefone, token, ativo: true });
+        res.json({ sucesso: true, garcom });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+router.put('/garcons/:id', authDelivery, async (req, res) => {
+    try {
+        const garcom = await GarcomDelivery.findOneAndUpdate(
+            { _id: req.params.id, adminId: req.adminId },
+            { $set: req.body },
+            { new: true }
+        );
+        res.json({ sucesso: true, garcom });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+router.put('/garcons/:id/toggle', authDelivery, async (req, res) => {
+    try {
+        const g = await GarcomDelivery.findOne({ _id: req.params.id, adminId: req.adminId });
+        g.ativo = !g.ativo;
+        await g.save();
+        res.json({ sucesso: true, ativo: g.ativo });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+router.post('/garcons/:id/novo-token', authDelivery, async (req, res) => {
+    try {
+        const token = 'GRC-' + crypto.randomBytes(6).toString('hex').toUpperCase();
+        const g = await GarcomDelivery.findOneAndUpdate(
+            { _id: req.params.id, adminId: req.adminId },
+            { $set: { token } }, { new: true }
+        );
+        res.json({ sucesso: true, token: g.token });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+router.get('/garcons/:id/historico', authDelivery, async (req, res) => {
+    try {
+        const garcom = await GarcomDelivery.findOne({ _id: req.params.id, adminId: req.adminId });
+        if (!garcom) return res.status(404).json({ erro: 'Garçom não encontrado' });
+
+        const { dias = 30 } = req.query;
+        const desde = new Date();
+        desde.setDate(desde.getDate() - parseInt(dias));
+
+        const pedidos = await PedidoDelivery.find({
+            adminId: req.adminId,
+            garcom: garcom.nome,
+            createdAt: { $gte: desde }
+        }).sort({ createdAt: -1 });
+
+        // Agrupar por dia
+        const porDia = {};
+        pedidos.forEach(p => {
+            const dia = p.createdAt.toISOString().split('T')[0];
+            if (!porDia[dia]) porDia[dia] = { dia, pedidos: 0, mesas: new Set(), total: 0 };
+            porDia[dia].pedidos++;
+            if (p.mesa) porDia[dia].mesas.add(p.mesa);
+            porDia[dia].total += p.total || 0;
+        });
+        const historicoDias = Object.values(porDia).map(d => ({
+            ...d, mesas: d.mesas.size
+        })).sort((a,b) => b.dia.localeCompare(a.dia));
+
+        const totalMesas = new Set(pedidos.filter(p=>p.mesa).map(p=>p.mesa)).size;
+        const totalVendido = pedidos.reduce((s,p) => s+( p.total||0), 0);
+
+        res.json({
+            sucesso: true,
+            garcom,
+            resumo: { totalPedidos: pedidos.length, totalMesas, totalVendido },
+            historicoDias,
+            ultimosPedidos: pedidos.slice(0, 20)
+        });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// Autenticação pelo token do garçom (para tela delivery-garcom)
+router.get('/salon/garcom-info', async (req, res) => {
+    try {
+        const token = req.headers.authorization?.replace('Bearer ', '') || req.query.token;
+        if (!token) return res.status(401).json({ erro: 'Token obrigatório' });
+        const garcom = await GarcomDelivery.findOne({ token, ativo: true });
+        if (!garcom) {
+            // fallback: token do admin
+            const admin = await AdminDelivery.findOne({ token });
+            if (admin) return res.json({ sucesso: true, tipo: 'admin', nome: 'Admin', adminId: admin._id });
+            return res.status(401).json({ erro: 'Token inválido' });
+        }
+        const admin = await AdminDelivery.findById(garcom.adminId);
+        res.json({ sucesso: true, tipo: 'garcom', garcom, nomeComercio: admin?.nomeComercio, adminToken: admin?.token });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// ========== ENTREGADORES: histórico por entregador ==========
+router.get('/entregadores/:id/historico', authDelivery, async (req, res) => {
+    try {
+        const entregador = await Entregador.findOne({ _id: req.params.id, adminId: req.adminId });
+        if (!entregador) return res.status(404).json({ erro: 'Entregador não encontrado' });
+
+        const { dias = 30 } = req.query;
+        const desde = new Date();
+        desde.setDate(desde.getDate() - parseInt(dias));
+
+        const pedidos = await PedidoDelivery.find({
+            adminId: req.adminId,
+            'entregador.nome': entregador.nome,
+            createdAt: { $gte: desde }
+        }).sort({ createdAt: -1 });
+
+        const porDia = {};
+        pedidos.forEach(p => {
+            const dia = p.createdAt.toISOString().split('T')[0];
+            if (!porDia[dia]) porDia[dia] = { dia, entregas: 0, total: 0 };
+            porDia[dia].entregas++;
+            porDia[dia].total += p.total || 0;
+        });
+
+        const totalVendido = pedidos.reduce((s,p) => s+(p.total||0), 0);
+        res.json({
+            sucesso: true, entregador,
+            resumo: { totalEntregas: pedidos.length, totalVendido },
+            historicoDias: Object.values(porDia).sort((a,b) => b.dia.localeCompare(a.dia)),
+            ultimosPedidos: pedidos.slice(0, 20)
+        });
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });

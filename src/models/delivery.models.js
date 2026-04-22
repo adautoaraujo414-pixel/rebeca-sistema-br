@@ -262,3 +262,18 @@ const EntregadorSchema = new mongoose.Schema({
 }, { timestamps: true });
 const Entregador = mongoose.models.Entregador || mongoose.model('Entregador', EntregadorSchema);
 module.exports.Entregador = Entregador;
+
+// ===== GARÇONS =====
+const GarcomDeliverySchema = new mongoose.Schema({
+    adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin', required: true, index: true },
+    nome: { type: String, required: true },
+    telefone: { type: String, default: '' },
+    token: { type: String, unique: true, sparse: true },
+    ativo: { type: Boolean, default: true },
+    totalMesas: { type: Number, default: 0 },
+    totalPedidos: { type: Number, default: 0 },
+    totalVendido: { type: Number, default: 0 },
+}, { timestamps: true });
+GarcomDeliverySchema.index({ adminId: 1 });
+const GarcomDelivery = mongoose.models.GarcomDelivery || mongoose.model('GarcomDelivery', GarcomDeliverySchema);
+module.exports.GarcomDelivery = GarcomDelivery;
