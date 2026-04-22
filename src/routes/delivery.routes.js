@@ -1191,3 +1191,70 @@ router.get('/lista-compras', authDelivery, async (req, res) => {
 });
 
 module.exports = router;
+
+// ========== GARÇOM: MESAS E PEDIDOS SALON ==========
+router.get('/salon/mesas', authDelivery, async (req, res) => {
+    try {
+        const pedidos = await PedidoDelivery.find({
+            adminId: req.adminId,
+            tipoEntrega: 'mesa',
+            status: { $in: ['novo', 'confirmado', 'preparando', 'pronto'] }
+        }).sort({ createdAt: -1 });
+
+        const mesas = {};
+        pedidos.forEach(p => {
+            const m = p.mesa || 'S/N';
+            if (!mesas[m]) mesas[m] = { mesa: m, pedidos: [], total: 0 };
+            mesas[m].pedidos.push(p);
+            mesas[m].total += p.total || 0;
+        });
+        res.json({ sucesso: true, mesas: Object.values(mesas) });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+router.post('/salon/pedido', authDelivery, async (req, res) => {
+    try {
+        const { mesa, itens, observacao, garcom } = req.body;
+        const admin = await AdminDelivery.findById(req.adminId);
+        const ultimo = await PedidoDelivery.findOne({ adminId: req.adminId }).sort({ numero: -1 });
+        const numero = (ultimo?.numero || 0) + 1;
+        const token = 'MESA-' + mesa + '-' + Date.now().toString(36).toUpperCase();
+
+        let total = 0;
+        itens.forEach(i => { total += (i.preco || 0) * (i.quantidade || 1); });
+
+        const pedido = await PedidoDelivery.create({
+            adminId: req.adminId,
+            numero,
+            token,
+            mesa,
+            garcom: garcom || 'Garçom',
+            tipoEntrega: 'mesa',
+            itens,
+            total,
+            observacao,
+            status: 'novo',
+            formaPagamento: 'mesa',
+            cliente: { nome: 'Mesa ' + mesa, telefone: '' },
+            endereco: { logradouro: 'Mesa ' + mesa }
+        });
+        res.json({ sucesso: true, pedido, token, numero });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+router.get('/salon/cardapio', authDelivery, async (req, res) => {
+    try {
+        const admin = await AdminDelivery.findById(req.adminId).select('cardapio categorias nomeComercio');
+        res.json({ sucesso: true, cardapio: admin?.cardapio || [], categorias: admin?.categorias || [], nomeComercio: admin?.nomeComercio });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+router.put('/salon/mesa/:mesa/fechar', authDelivery, async (req, res) => {
+    try {
+        await PedidoDelivery.updateMany(
+            { adminId: req.adminId, mesa: req.params.mesa, status: { $nin: ['cancelado', 'entregue'] } },
+            { status: 'entregue', dataEntrega: new Date() }
+        );
+        res.json({ sucesso: true });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});

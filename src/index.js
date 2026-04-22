@@ -274,6 +274,7 @@ app.use('/api/delivery', require('./routes/delivery-assinantes.routes'));
 app.get('/delivery-admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'delivery-admin.html')));
 app.get('/delivery-entregador', (req, res) => res.sendFile(path.join(__dirname, 'public', 'delivery-entregador.html')));
 app.get('/delivery-cozinha', (req, res) => res.sendFile(path.join(__dirname, 'public', 'delivery-cozinha.html')));
+app.get('/delivery-garcom', (req, res) => res.sendFile(path.join(__dirname, 'public', 'delivery-garcom.html')));
 app.get('/delivery-caixa', (req, res) => res.sendFile(path.join(__dirname, 'public', 'delivery-caixa.html')));
 app.get('/delivery-rastrear/:codigo', (req, res) => res.sendFile(path.join(__dirname, 'public', 'delivery-rastrear.html')));
 app.get('/delivery-cardapio/:adminId', (req, res) => res.sendFile(path.join(__dirname, 'public', 'delivery-cardapio.html')));
