@@ -590,7 +590,7 @@
             const texto = `Email: ${document.getElementById('credEmail').textContent}\nSenha: ${document.getElementById('credSenha').textContent}\nToken: ${document.getElementById('credToken').textContent}`;
             navigator.clipboard.writeText(texto).then(() => alert('Credenciais copiadas!'));
         }
-        fetch(`${API}/setup`, { method: 'POST' });
+        // fetch setup removido — não chamar automaticamente
 
         // ========== CLIENTES LANDING ==========
         async function carregarClientesLanding() {
