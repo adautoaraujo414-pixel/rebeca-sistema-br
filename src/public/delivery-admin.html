@@ -1775,7 +1775,7 @@ async function salvarGarcom() {
     const nome = document.getElementById('garcomNome').value.trim();
     const telefone = document.getElementById('garcomTelefone').value.trim();
     if (!nome) { alert('Informe o nome'); return; }
-    const url = API + '/garcons' + (id ? '/' + id : '');
+    const url = '/api/delivery/garcons' + (id ? '/' + id : '');
     const method = id ? 'PUT' : 'POST';
     await fetch(url, { method, headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }, body: JSON.stringify({ nome, telefone }) });
     document.getElementById('modalNovoGarcom').style.display = 'none';
