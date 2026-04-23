@@ -1724,7 +1724,7 @@
 
 // ===== GARÇONS =====
 async function carregarGarcons() {
-    const r = await fetch(API + '/garcons', { headers: { Authorization: 'Bearer ' + token } });
+    const r = await fetch('/api/delivery/garcons', { headers: { Authorization: 'Bearer ' + token } });
     const d = await r.json();
     const el = document.getElementById('listaGarcons');
     if (!d.garcons || !d.garcons.length) {
@@ -1784,13 +1784,13 @@ async function salvarGarcom() {
 
 async function toggleGarcom(id, ativo) {
     if (!confirm(ativo ? 'Desativar garçom?' : 'Ativar garçom?')) return;
-    await fetch(API + '/garcons/' + id + '/toggle', { method: 'PUT', headers: { Authorization: 'Bearer ' + token } });
+    await fetch('/api/delivery/garcons/' + id + '/toggle', { method: 'PUT', headers: { Authorization: 'Bearer ' + token } });
     carregarGarcons();
 }
 
 async function novoTokenGarcom(id) {
     if (!confirm('Gerar novo token? O token anterior vai parar de funcionar.')) return;
-    const r = await fetch(API + '/garcons/' + id + '/novo-token', { method: 'POST', headers: { Authorization: 'Bearer ' + token } });
+    const r = await fetch('/api/delivery/garcons/' + id + '/novo-token', { method: 'POST', headers: { Authorization: 'Bearer ' + token } });
     const d = await r.json();
     alert('Novo token: ' + d.token);
     carregarGarcons();
@@ -1800,7 +1800,7 @@ async function verFichaGarcom(id, nome) {
     document.getElementById('fichaGarcomNome').textContent = '🧑‍🍽️ ' + nome;
     document.getElementById('fichaGarcomConteudo').innerHTML = '<div style="text-align:center;padding:30px;color:#555">Carregando...</div>';
     document.getElementById('modalFichaGarcom').style.display = 'flex';
-    const r = await fetch(API + '/garcons/' + id + '/historico?dias=30', { headers: { Authorization: 'Bearer ' + token } });
+    const r = await fetch('/api/delivery/garcons/' + id + '/historico?dias=30', { headers: { Authorization: 'Bearer ' + token } });
     const d = await r.json();
     if (!d.sucesso) { document.getElementById('fichaGarcomConteudo').innerHTML = '<p style="color:#ff4444">Erro ao carregar</p>'; return; }
     const { resumo, historicoDias, ultimosPedidos } = d;
@@ -1852,7 +1852,7 @@ async function verFichaEntregador(id, nome) {
     document.getElementById('fichaEntregadorNome').textContent = '🏍️ ' + nome;
     document.getElementById('fichaEntregadorConteudo').innerHTML = '<div style="text-align:center;padding:30px;color:#555">Carregando...</div>';
     document.getElementById('modalFichaEntregador').style.display = 'flex';
-    const r = await fetch(API + '/entregadores/' + id + '/historico?dias=30', { headers: { Authorization: 'Bearer ' + token } });
+    const r = await fetch('/api/delivery/entregadores/' + id + '/historico?dias=30', { headers: { Authorization: 'Bearer ' + token } });
     const d = await r.json();
     if (!d.sucesso) { document.getElementById('fichaEntregadorConteudo').innerHTML = '<p style="color:#ff4444">Erro ao carregar</p>'; return; }
     const { resumo, historicoDias, ultimosPedidos } = d;
