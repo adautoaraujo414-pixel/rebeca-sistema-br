@@ -276,7 +276,7 @@ async function fazerLogin() {
     token = tk;
     document.getElementById('nomeGarcom').textContent = '👤 ' + (d.garcom?.nome || d.nome || 'Garçom');
     const nomeRest = document.getElementById('nomeRestaurante');
-    if (d.nomeComercio) { nomeRest.textContent = d.nomeComercio; nomeRest.style.display = ''; }
+    if (d.nomeComercio && nomeRest) { nomeRest.textContent = d.nomeComercio; nomeRest.style.display = ''; }
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app').style.display = 'flex';
     carregarCardapio();
