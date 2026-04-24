@@ -1823,7 +1823,7 @@ async function _salvarItemReal() {
             const nome = document.getElementById('gNome').value.trim();
             const telefone = document.getElementById('gTelefone').value.trim();
             const senha = document.getElementById('gSenha').value.trim();
-            const mesas = document.getElementById('gMesas').value.trim();
+            const mesas = '';
             if (!nome || !senha) { alert('Nome e senha são obrigatórios!'); return; }
             const btn = event.target;
             btn.disabled = true; btn.textContent = 'Cadastrando...';
@@ -1836,7 +1836,7 @@ async function _salvarItemReal() {
                 const d = await r.json();
                 if (d.sucesso) {
                     alert('Garçom cadastrado! Token: ' + d.garcom.token);
-                    ['gNome','gTelefone','gSenha','gMesas'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+                    ['gNome','gTelefone','gSenha'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
                     carregarGarcons();
                 } else { alert('Erro: ' + (d.erro || 'Falha ao cadastrar')); }
             } catch(e) { alert('Erro de conexão: ' + e.message); }
