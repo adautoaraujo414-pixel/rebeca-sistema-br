@@ -1487,11 +1487,17 @@ router.get('/garcons/cardapio', async (req, res) => {
         if (!garcomToken) return res.status(400).json({ erro: 'Token nao informado' });
         const g = await GarcomDelivery.findOne({ token: garcomToken, ativo: true });
         if (!g) return res.status(401).json({ erro: 'Token invalido ou garcom inativo' });
-        const CardapioDelivery = require('../models/CardapioDelivery');
-        const itens = await CardapioDelivery.find({ adminId: g.adminId, ativo: true }).sort({ categoria: 1, nome: 1 });
-        const AdminDelivery = require('../models/AdminDelivery');
+        const itens = await ItemCardapio.find({ adminId: g.adminId, ativo: true })
+            .sort({ ordem: 1 })
+            .populate('categoriaId', 'nome emoji');
         const admin = await AdminDelivery.findById(g.adminId).select('nomeEstabelecimento');
-        res.json({ sucesso: true, itens, nomeEstabelecimento: admin ? admin.nomeEstabelecimento : 'Restaurante', garcom: { nome: g.nome, mesas: g.mesas, adminId: g.adminId } });
+        const cats = [...new Set(itens.map(i => i.categoriaId?.nome).filter(Boolean))];
+        res.json({
+            sucesso: true,
+            itens,
+            nomeEstabelecimento: admin ? admin.nomeEstabelecimento : 'Restaurante',
+            garcom: { nome: g.nome, mesas: g.mesas, adminId: g.adminId }
+        });
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 

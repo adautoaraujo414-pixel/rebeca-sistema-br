@@ -275,6 +275,8 @@ const GarcomDeliverySchema = new mongoose.Schema({
     adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin', required: true, index: true },
     nome: { type: String, required: true },
     telefone: { type: String, default: '' },
+    senha:    { type: String, default: '' },
+    mesas:    { type: String, default: '' },
     token: { type: String, unique: true, sparse: true },
     ativo: { type: Boolean, default: true },
     totalMesas: { type: Number, default: 0 },

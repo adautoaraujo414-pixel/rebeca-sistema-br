@@ -346,10 +346,16 @@ function sair() {
 function iniciarApp(d) {
   document.getElementById("loginWrap").style.display = "none";
   document.getElementById("app").style.display = "block";
-  if (d.nomeComercio) document.getElementById("nomeRestaurante").textContent = d.nomeComercio;
-  cardapio = d.cardapio || [];
+  // Suporta formato da rota /garcons/cardapio (itens, nomeEstabelecimento)
+  // e formato antigo (cardapio, nomeComercio)
+  const nome = d.nomeEstabelecimento || d.nomeComercio || 'Restaurante';
+  document.getElementById("nomeRestaurante").textContent = nome;
+  // itens vem como array flat; montar cardapio e categorias
+  const itens = d.itens || d.cardapio || [];
+  cardapio = itens;
+  const cats = [...new Set(itens.map(i => i.categoria).filter(Boolean))];
   gerarMesasRapidas(d.totalMesas || 12);
-  renderCats(d.categorias || []);
+  renderCats(cats);
   renderItens();
   atualizarBadgeMesa();
   carregarMesas();
