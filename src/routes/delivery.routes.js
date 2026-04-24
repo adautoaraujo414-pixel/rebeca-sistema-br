@@ -1557,10 +1557,13 @@ router.get('/mesa/qr', authDelivery, async (req, res) => {
 
 
 // Pedidos novos de mesa para o garçom
-router.get('/mesa/pedidos-novos', authDelivery, async (req, res) => {
+router.get('/mesa/pedidos-novos', async (req, res) => {
     try {
+        const garcomToken = req.headers.authorization?.replace('Bearer ','') || req.query.garcomToken;
+        const g = await GarcomDelivery.findOne({ token: garcomToken, ativo: true });
+        if (!g) return res.status(401).json({ erro: 'Token invalido' });
         const pedidos = await PedidoDelivery.find({
-            adminId: req.adminId,
+            adminId: g.adminId,
             tipo: 'mesa',
             origem: 'qrcode',
             status: 'novo',
@@ -1571,10 +1574,13 @@ router.get('/mesa/pedidos-novos', authDelivery, async (req, res) => {
 });
 
 // Confirmar pedido de mesa (garçom)
-router.post('/mesa/confirmar/:id', authDelivery, async (req, res) => {
+router.post('/mesa/confirmar/:id', async (req, res) => {
     try {
+        const garcomToken = req.headers.authorization?.replace('Bearer ','') || req.query.garcomToken;
+        const g = await GarcomDelivery.findOne({ token: garcomToken, ativo: true });
+        if (!g) return res.status(401).json({ erro: 'Token invalido' });
         await PedidoDelivery.findOneAndUpdate(
-            { _id: req.params.id, adminId: req.adminId },
+            { _id: req.params.id, adminId: g.adminId },
             { status: 'preparo' }
         );
         res.json({ sucesso: true });
