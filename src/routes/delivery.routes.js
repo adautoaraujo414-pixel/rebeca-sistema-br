@@ -1520,12 +1520,15 @@ router.post('/garcons/pedido', async (req, res) => {
         const g = await GarcomDelivery.findOne({ token: garcomToken, ativo: true });
         if (!g) return res.status(401).json({ erro: 'Token invalido' });
         const total = itens.reduce((s, i) => s + (i.preco * (i.qtd || i.quantidade || 1)), 0);
+        const { nomeCliente } = req.body;
         const pedido = await PedidoDelivery.create({
             adminId: g.adminId,
             tipo: 'mesa',
             mesa: mesa || 'S/N',
             garcom: g.nome,
             garcomToken: g.token,
+            clienteNome: nomeCliente || g.nome,
+            clienteTelefone: '00000000000',
             itens,
             total,
             observacao: observacao || '',
