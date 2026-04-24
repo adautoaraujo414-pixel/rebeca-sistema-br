@@ -3,131 +3,168 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Garçom — Delivery</title>
+<title>Garçom</title>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
-  --bg:#f5f5f7;--surface:#ffffff;--surface2:#f0f0f2;--surface3:#e5e5ea;
+  --bg:#f5f5f7;--surface:#fff;--surface2:#f0f0f2;--surface3:#e5e5ea;
   --border:#d1d1d6;--accent:#f97316;--accent2:#fb923c;--green:#16a34a;
-  --blue:#2563eb;--red:#dc2626;--purple:#7c3aed;
-  --text:#1c1c1e;--text2:#3a3a3c;--text3:#636366;
+  --blue:#2563eb;--red:#dc2626;--text:#1c1c1e;--text2:#3a3a3c;--text3:#636366;
   --radius:12px;--radius-sm:8px;
 }
-body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow:hidden}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
 
 /* LOGIN */
 #login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:radial-gradient(ellipse at 60% 40%,#fff3e0 0%,var(--bg) 70%)}
 .login-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:40px 36px;width:360px;box-shadow:0 8px 40px rgba(0,0,0,.1)}
 .login-logo{font-size:2.4em;margin-bottom:8px;text-align:center}
-.login-card h2{text-align:center;font-size:1.3em;font-weight:800;color:var(--text);margin-bottom:4px}
+.login-card h2{text-align:center;font-size:1.3em;font-weight:800;margin-bottom:4px}
 .login-card p{text-align:center;color:var(--text3);font-size:.85em;margin-bottom:24px}
 .field{margin-bottom:14px}
 .field label{display:block;font-size:.78em;font-weight:600;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
-.field input{width:100%;padding:11px 14px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:.92em;font-family:inherit;transition:border .2s}
+.field input{width:100%;padding:11px 14px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:.92em;font-family:inherit}
 .field input:focus{outline:none;border-color:var(--accent)}
-.btn-login{width:100%;padding:13px;border-radius:var(--radius-sm);border:none;background:var(--accent);color:#fff;font-weight:700;font-size:.95em;cursor:pointer;margin-top:8px;transition:all .2s}
-.btn-login:hover{background:var(--accent2)}
+.btn-login{width:100%;padding:13px;border-radius:var(--radius-sm);border:none;background:var(--accent);color:#fff;font-weight:700;font-size:.95em;cursor:pointer;margin-top:8px;font-family:inherit}
 #login-erro{color:var(--red);font-size:.82em;text-align:center;margin-top:10px;min-height:18px}
 
 /* APP */
 #app{display:none;height:100vh;flex-direction:column}
 header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 20px;height:52px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
-.header-left{display:flex;align-items:center;gap:12px}
-.header-logo{font-size:1.3em;font-weight:800;color:var(--text)}
+.header-left{display:flex;align-items:center;gap:10px}
+.header-logo{font-size:1.2em;font-weight:800;color:var(--text)}
 .header-logo span{color:var(--accent)}
-.header-info{font-size:.82em;color:var(--text3);background:var(--surface2);padding:3px 10px;border-radius:20px}
+.badge{font-size:.78em;color:var(--text3);background:var(--surface2);padding:3px 10px;border-radius:20px}
 .header-right{display:flex;align-items:center;gap:10px}
-.clock{font-size:.85em;color:var(--text2);font-weight:600;font-variant-numeric:tabular-nums}
-.btn-sair{padding:6px 14px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text2);font-size:.8em;font-weight:600;cursor:pointer;transition:all .2s;font-family:inherit}
+.clock{font-size:.85em;color:var(--text2);font-weight:600}
+.btn-sair{padding:6px 14px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text2);font-size:.8em;font-weight:600;cursor:pointer;font-family:inherit}
 .btn-sair:hover{border-color:var(--red);color:var(--red)}
 
-/* LAYOUT */
-.main-layout{display:grid;grid-template-columns:1fr 360px;flex:1;overflow:hidden;min-height:0}
+/* TABS */
+.tabs{display:flex;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0}
+.tab{flex:1;padding:12px;text-align:center;font-size:.85em;font-weight:700;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
 
-/* PAINEL ESQUERDO — CARDÁPIO */
-.left{display:flex;flex-direction:column;overflow:hidden;min-height:0;padding:16px;gap:12px}
+/* MAPA DE MESAS */
+#tela-mapa{flex:1;overflow-y:auto;padding:20px}
+.mapa-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.mapa-header h2{font-size:1em;font-weight:800}
+.legenda{display:flex;gap:12px;font-size:.75em;color:var(--text3)}
+.leg{display:flex;align-items:center;gap:4px}
+.leg-dot{width:10px;height:10px;border-radius:50%}
+.mesas-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:12px}
+.mesa-card{background:var(--surface);border:2px solid var(--border);border-radius:var(--radius);padding:16px 12px;text-align:center;cursor:pointer;transition:all .2s;position:relative}
+.mesa-card:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.1)}
+.mesa-card.ocupada{border-color:#f97316;background:#fff7ed}
+.mesa-card.livre{border-color:#d1d1d6}
+.mesa-num{font-size:1.4em;font-weight:800;color:var(--text)}
+.mesa-status{font-size:.7em;font-weight:700;margin-top:4px}
+.mesa-card.ocupada .mesa-status{color:var(--accent)}
+.mesa-card.livre .mesa-status{color:var(--text3)}
+.mesa-total{font-size:.8em;font-weight:700;color:var(--green);margin-top:4px}
+.mesa-dot{width:8px;height:8px;border-radius:50%;position:absolute;top:8px;right:8px}
+.mesa-card.ocupada .mesa-dot{background:var(--accent)}
+.mesa-card.livre .mesa-dot{background:#d1d1d6}
+.btn-nova-comanda{padding:10px 20px;border-radius:var(--radius-sm);border:none;background:var(--accent);color:#fff;font-weight:700;font-size:.88em;cursor:pointer;font-family:inherit}
+
+/* TELA CARDÁPIO (nova comanda) */
+#tela-cardapio{flex:1;display:none;overflow:hidden;flex-direction:column}
+.cardapio-header{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 16px;display:flex;align-items:center;gap:12px;flex-shrink:0}
+.btn-back{padding:6px 14px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text2);font-size:.82em;font-weight:600;cursor:pointer;font-family:inherit}
+.cardapio-title{font-weight:800;font-size:.95em}
+.main-layout{display:grid;grid-template-columns:1fr 340px;flex:1;overflow:hidden;min-height:0}
+.left{display:flex;flex-direction:column;overflow:hidden;padding:12px;gap:10px}
 .search-bar{position:relative}
-.search-bar input{width:100%;padding:10px 14px 10px 36px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:.88em;font-family:inherit}
+.search-bar input{width:100%;padding:9px 14px 9px 34px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:.86em;font-family:inherit}
 .search-bar input:focus{outline:none;border-color:var(--accent)}
-.search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:.9em}
-.cats-scroll{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;flex-shrink:0}
+.search-icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:.85em}
+.cats-scroll{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;flex-shrink:0}
 .cats-scroll::-webkit-scrollbar{display:none}
-.cat-chip{padding:6px 14px;border-radius:20px;border:1px solid var(--border);background:var(--surface);color:var(--text2);font-size:.78em;font-weight:600;cursor:pointer;white-space:nowrap;transition:all .2s;flex-shrink:0}
+.cat-chip{padding:5px 12px;border-radius:20px;border:1px solid var(--border);background:var(--surface);color:var(--text2);font-size:.76em;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0}
 .cat-chip.active{background:var(--accent);border-color:var(--accent);color:#fff}
-.items-area{flex:1;overflow-y:auto;min-height:0}
-.cat-label{font-size:.72em;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin:16px 0 8px;display:flex;align-items:center;gap:6px}
+.items-area{flex:1;overflow-y:auto}
+.cat-label{font-size:.7em;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin:14px 0 8px;display:flex;align-items:center;gap:6px}
 .cat-label::after{content:'';flex:1;height:1px;background:var(--border)}
-.items-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
+.items-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
 .item-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;transition:all .2s;overflow:hidden;position:relative}
-.item-card:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 6px 20px rgba(249,115,22,.12)}
-.item-img-placeholder{width:100%;height:80px;background:linear-gradient(135deg,var(--surface3),var(--surface2));display:flex;align-items:center;justify-content:center;font-size:1.8em}
-.item-info{padding:10px}
-.item-name{font-size:.82em;font-weight:700;color:var(--text);margin-bottom:2px;line-height:1.3}
-.item-tempo{font-size:.7em;color:var(--text3);margin-bottom:4px}
-.item-price{font-size:.9em;font-weight:800;color:var(--accent)}
-.item-add-btn{position:absolute;bottom:8px;right:8px;width:26px;height:26px;border-radius:50%;background:var(--accent);border:none;color:#fff;font-size:1.1em;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .2s}
-.item-card:hover .item-add-btn{opacity:1}
+.item-card:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 4px 16px rgba(249,115,22,.1)}
+.item-img{width:100%;height:72px;background:linear-gradient(135deg,var(--surface3),var(--surface2));display:flex;align-items:center;justify-content:center;font-size:1.6em}
+.item-info{padding:8px}
+.item-name{font-size:.8em;font-weight:700;line-height:1.3;margin-bottom:2px}
+.item-tempo{font-size:.68em;color:var(--text3);margin-bottom:3px}
+.item-price{font-size:.88em;font-weight:800;color:var(--accent)}
+.item-add{position:absolute;bottom:6px;right:6px;width:24px;height:24px;border-radius:50%;background:var(--accent);border:none;color:#fff;font-size:1em;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .2s}
+.item-card:hover .item-add{opacity:1}
 
-/* PAINEL DIREITO — COMANDA */
+/* COMANDA DIREITA */
 .right{background:var(--surface);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
-.comanda-header{padding:14px 16px;border-bottom:1px solid var(--border);flex-shrink:0}
-.comanda-title{font-size:.88em;font-weight:800;color:var(--text);margin-bottom:10px}
+.comanda-header{padding:12px 14px;border-bottom:1px solid var(--border);flex-shrink:0}
+.comanda-title{font-size:.86em;font-weight:800;margin-bottom:8px}
 .mesa-selector{display:flex;gap:8px;align-items:center}
-.mesa-selector label{font-size:.78em;font-weight:600;color:var(--text2);white-space:nowrap}
-.mesa-input{flex:1;padding:8px 12px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:.9em;font-family:inherit}
+.mesa-selector label{font-size:.76em;font-weight:600;color:var(--text2);white-space:nowrap}
+.mesa-input{flex:1;padding:7px 10px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:.88em;font-family:inherit}
 .mesa-input:focus{outline:none;border-color:var(--accent)}
-.cliente-input{width:100%;padding:8px 12px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:.85em;font-family:inherit;margin-top:8px}
+.cliente-input{width:100%;padding:7px 10px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:.82em;font-family:inherit;margin-top:6px}
 .cliente-input:focus{outline:none;border-color:var(--accent)}
-.comanda-itens{flex:1;overflow-y:auto;padding:12px 16px;min-height:0}
-.comanda-vazia{text-align:center;color:var(--text3);padding:40px 20px;font-size:.88em}
-.comanda-item{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)}
+.comanda-itens{flex:1;overflow-y:auto;padding:10px 14px}
+.comanda-vazia{text-align:center;color:var(--text3);padding:32px 16px;font-size:.85em}
+.comanda-item{display:flex;align-items:center;gap:6px;padding:7px 0;border-bottom:1px solid var(--border)}
 .comanda-item:last-child{border-bottom:none}
-.ci-qtd{display:flex;align-items:center;gap:6px;flex-shrink:0}
-.ci-btn{width:24px;height:24px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);font-size:.9em;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;font-family:inherit}
+.ci-qtd{display:flex;align-items:center;gap:4px;flex-shrink:0}
+.ci-btn{width:22px;height:22px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);font-size:.85em;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit}
 .ci-btn:hover{border-color:var(--accent);color:var(--accent)}
-.ci-num{font-size:.85em;font-weight:700;min-width:20px;text-align:center}
-.ci-nome{flex:1;font-size:.83em;color:var(--text)}
-.ci-preco{font-size:.83em;font-weight:700;color:var(--accent);flex-shrink:0}
-.ci-del{background:none;border:none;color:var(--text3);cursor:pointer;font-size:.9em;padding:2px;transition:color .2s}
+.ci-num{font-size:.82em;font-weight:700;min-width:18px;text-align:center}
+.ci-nome{flex:1;font-size:.8em;color:var(--text)}
+.ci-preco{font-size:.8em;font-weight:700;color:var(--accent);flex-shrink:0}
+.ci-del{background:none;border:none;color:var(--text3);cursor:pointer;font-size:.85em;padding:2px}
 .ci-del:hover{color:var(--red)}
-.obs-area{padding:0 16px 12px;flex-shrink:0}
-.obs-input{width:100%;padding:8px 12px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:.83em;font-family:inherit;resize:none;height:60px}
+.obs-area{padding:0 14px 10px;flex-shrink:0}
+.obs-input{width:100%;padding:7px 10px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:.8em;font-family:inherit;resize:none;height:52px}
 .obs-input:focus{outline:none;border-color:var(--accent)}
-.comanda-footer{padding:12px 16px;border-top:1px solid var(--border);flex-shrink:0}
-.total-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
-.total-label{font-size:.85em;color:var(--text3)}
-.total-val{font-size:1.2em;font-weight:800;color:var(--green)}
-.btn-enviar{width:100%;padding:13px;border-radius:var(--radius-sm);border:none;background:var(--accent);color:#fff;font-weight:700;font-size:.95em;cursor:pointer;transition:all .2s;font-family:inherit}
-.btn-enviar:hover{background:var(--accent2)}
+.comanda-footer{padding:10px 14px;border-top:1px solid var(--border);flex-shrink:0}
+.total-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.total-label{font-size:.82em;color:var(--text3)}
+.total-val{font-size:1.15em;font-weight:800;color:var(--green)}
+.btn-enviar{width:100%;padding:12px;border-radius:var(--radius-sm);border:none;background:var(--accent);color:#fff;font-weight:700;font-size:.92em;cursor:pointer;font-family:inherit}
 .btn-enviar:disabled{background:var(--surface3);color:var(--text3);cursor:not-allowed}
-.btn-limpar{width:100%;padding:8px;border-radius:var(--radius-sm);border:1px solid var(--border);background:transparent;color:var(--text3);font-size:.82em;cursor:pointer;margin-top:6px;font-family:inherit;transition:all .2s}
+.btn-limpar{width:100%;padding:7px;border-radius:var(--radius-sm);border:1px solid var(--border);background:transparent;color:var(--text3);font-size:.8em;cursor:pointer;margin-top:5px;font-family:inherit}
 .btn-limpar:hover{border-color:var(--red);color:var(--red)}
 
-/* OVERLAY PEDIDO DE MESA (QR Code) */
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:999;display:none;align-items:center;justify-content:center;padding:20px}
+/* MODAL MESA OCUPADA */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:999;display:none;align-items:center;justify-content:center;padding:16px}
 .overlay.show{display:flex}
-.overlay-box{background:var(--surface);border-radius:20px;padding:28px 24px;width:100%;max-width:400px;border:2px solid var(--accent)}
-.overlay-title{font-size:.75em;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;font-weight:700}
-.overlay-mesa{font-size:1.8em;font-weight:800;color:var(--text)}
-.overlay-cliente{color:var(--text3);font-size:.88em;margin:4px 0 16px}
-.overlay-item{background:var(--surface2);border-radius:8px;padding:10px 14px;margin-bottom:6px;display:flex;justify-content:space-between;font-size:.85em}
-.overlay-timer{font-size:1.2em;font-weight:800;color:var(--blue);margin-top:12px;font-variant-numeric:tabular-nums}
-.overlay-total{display:flex;justify-content:space-between;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);font-weight:700}
-.btn-confirmar{width:100%;padding:13px;background:var(--green);border:none;color:#fff;border-radius:var(--radius-sm);font-weight:700;font-size:.95em;cursor:pointer;margin-top:14px;font-family:inherit}
+.modal{background:var(--surface);border-radius:20px;width:100%;max-width:480px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden}
+.modal-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.modal-title{font-size:1em;font-weight:800}
+.modal-close{background:none;border:none;font-size:1.2em;cursor:pointer;color:var(--text3);padding:4px}
+.modal-body{flex:1;overflow-y:auto;padding:16px 20px}
+.modal-footer{padding:12px 20px;border-top:1px solid var(--border);display:flex;gap:8px;flex-shrink:0}
+.comanda-info{background:var(--surface2);border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:.82em;color:var(--text2)}
+.comanda-info strong{color:var(--accent)}
+.pedido-item-linha{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:.83em}
+.pedido-item-linha:last-child{border-bottom:none}
+.modal-total{display:flex;justify-content:space-between;margin-top:12px;padding-top:10px;border-top:2px solid var(--border);font-weight:800}
+.btn-pagar{flex:1;padding:11px;border-radius:var(--radius-sm);border:none;background:var(--green);color:#fff;font-weight:700;cursor:pointer;font-family:inherit;font-size:.9em}
+.btn-add-item{flex:1;padding:11px;border-radius:var(--radius-sm);border:none;background:var(--accent);color:#fff;font-weight:700;cursor:pointer;font-family:inherit;font-size:.9em}
+.btn-fechar-modal{padding:11px 16px;border-radius:var(--radius-sm);border:1px solid var(--border);background:transparent;color:var(--text2);font-weight:600;cursor:pointer;font-family:inherit;font-size:.9em}
 
-/* TOAST */
+/* MODAL PAGAMENTO */
+.pag-opcoes{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.pag-btn{padding:12px;border-radius:var(--radius-sm);border:2px solid var(--border);background:transparent;font-weight:700;font-size:.88em;cursor:pointer;font-family:inherit;transition:all .2s}
+.pag-btn.sel{border-color:var(--accent);background:#fff7ed;color:var(--accent)}
+.pag-valor{width:100%;padding:10px 12px;border-radius:var(--radius-sm);border:1px solid var(--border);font-size:1em;font-family:inherit;margin-bottom:10px}
+.pag-valor:focus{outline:none;border-color:var(--green)}
+
+/* TOAST / SUCCESS */
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--text);color:#fff;padding:10px 20px;border-radius:10px;font-size:.85em;font-weight:600;z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
 .toast.show{opacity:1}
-
-/* SUCCESS OVERLAY */
-.success-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:999;display:none;align-items:center;justify-content:center}
+.success-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9998;display:none;align-items:center;justify-content:center}
 .success-overlay.show{display:flex}
-.success-box{background:var(--surface);border-radius:20px;padding:40px 32px;text-align:center;max-width:320px;width:90%}
-.success-icon{font-size:3em;margin-bottom:12px}
-.success-box h3{font-size:1.2em;font-weight:800;margin-bottom:8px}
-.success-box p{color:var(--text3);font-size:.88em}
-.btn-ok{padding:12px 32px;background:var(--accent);border:none;color:#fff;border-radius:var(--radius-sm);font-weight:700;cursor:pointer;margin-top:20px;font-family:inherit;font-size:.95em}
+.success-box{background:var(--surface);border-radius:20px;padding:36px 28px;text-align:center;max-width:300px;width:90%}
+.success-icon{font-size:3em;margin-bottom:10px}
+.success-box h3{font-size:1.1em;font-weight:800;margin-bottom:6px}
+.success-box p{color:var(--text3);font-size:.85em}
+.btn-ok{padding:11px 28px;background:var(--accent);border:none;color:#fff;border-radius:var(--radius-sm);font-weight:700;cursor:pointer;margin-top:16px;font-family:inherit}
 </style>
 </head>
 <body>
@@ -156,8 +193,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
   <header>
     <div class="header-left">
       <div class="header-logo">🧑‍🍽️ <span>Garçom</span></div>
-      <div class="header-info" id="nomeGarcom">—</div>
-      
+      <div class="badge" id="nomeGarcom">—</div>
     </div>
     <div class="header-right">
       <div class="clock" id="clock">00:00</div>
@@ -165,67 +201,114 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
     </div>
   </header>
 
-  <div class="main-layout" style="flex:1;overflow:hidden">
-    <!-- CARDÁPIO -->
-    <div class="left">
-      <div class="search-bar">
-        <span class="search-icon">🔍</span>
-        <input type="text" id="busca" placeholder="Buscar item..." oninput="filtrarItens()">
-      </div>
-      <div class="cats-scroll" id="categorias"></div>
-      <div class="items-area" id="itensArea"></div>
-    </div>
+  <div class="tabs">
+    <div class="tab active" id="tab-mapa" onclick="mostrarTela('mapa')">🗺️ Mapa de Mesas</div>
+    <div class="tab" id="tab-nova" onclick="iniciarNovaComanda()">➕ Nova Comanda</div>
+  </div>
 
-    <!-- COMANDA -->
-    <div class="right">
-      <div class="comanda-header">
-        <div class="comanda-title">🧾 Nova Comanda</div>
-        <div class="mesa-selector">
-          <label>Mesa</label>
-          <input type="number" class="mesa-input" id="numMesa" placeholder="Nº da mesa" min="1">
+  <!-- MAPA DE MESAS -->
+  <div id="tela-mapa" style="flex:1;overflow-y:auto;padding:20px;display:block">
+    <div class="mapa-header">
+      <h2>Mesas do Restaurante</h2>
+      <div class="legenda">
+        <div class="leg"><div class="leg-dot" style="background:#d1d1d6"></div> Livre</div>
+        <div class="leg"><div class="leg-dot" style="background:var(--accent)"></div> Ocupada</div>
+      </div>
+    </div>
+    <div class="mesas-grid" id="mesasGrid">
+      <div style="color:var(--text3);font-size:.85em">Carregando mesas...</div>
+    </div>
+  </div>
+
+  <!-- TELA CARDÁPIO / NOVA COMANDA -->
+  <div id="tela-cardapio" style="flex:1;display:none;flex-direction:column;overflow:hidden">
+    <div class="cardapio-header">
+      <button class="btn-back" onclick="mostrarTela('mapa')">← Voltar</button>
+      <div class="cardapio-title" id="cardapio-titulo">Nova Comanda</div>
+    </div>
+    <div class="main-layout" style="flex:1;overflow:hidden">
+      <div class="left">
+        <div class="search-bar">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="busca" placeholder="Buscar item..." oninput="renderItens()">
         </div>
-        <input type="text" class="cliente-input" id="nomeCliente" placeholder="Nome do cliente (opcional)">
+        <div class="cats-scroll" id="categorias"></div>
+        <div class="items-area" id="itensArea"></div>
       </div>
-      <div class="comanda-itens" id="comandaItens">
-        <div class="comanda-vazia">🛒<br>Adicione itens do cardápio</div>
-      </div>
-      <div class="obs-area">
-        <textarea class="obs-input" id="observacao" placeholder="Observações (ex: sem cebola, bem passado...)"></textarea>
-      </div>
-      <div class="comanda-footer">
-        <div class="total-row">
-          <span class="total-label">Total</span>
-          <span class="total-val" id="totalVal">R$ 0,00</span>
+      <div class="right">
+        <div class="comanda-header">
+          <div class="comanda-title">🧾 Comanda</div>
+          <div class="mesa-selector">
+            <label>Mesa</label>
+            <input type="number" class="mesa-input" id="numMesa" placeholder="Nº" min="1">
+          </div>
+          <input type="text" class="cliente-input" id="nomeCliente" placeholder="Nome do cliente (opcional)">
         </div>
-        <button class="btn-enviar" id="btnEnviar" onclick="enviarPedido()">✅ Enviar para Cozinha</button>
-        <button class="btn-limpar" onclick="limparComanda()">Limpar comanda</button>
+        <div class="comanda-itens" id="comandaItens">
+          <div class="comanda-vazia">🛒<br>Adicione itens</div>
+        </div>
+        <div class="obs-area">
+          <textarea class="obs-input" id="observacao" placeholder="Observações..."></textarea>
+        </div>
+        <div class="comanda-footer">
+          <div class="total-row">
+            <span class="total-label">Total</span>
+            <span class="total-val" id="totalVal">R$ 0,00</span>
+          </div>
+          <button class="btn-enviar" id="btnEnviar" onclick="enviarPedido()">✅ Enviar para Cozinha</button>
+          <button class="btn-limpar" onclick="limparComanda()">Limpar comanda</button>
+        </div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- OVERLAY PEDIDO QR -->
-<div class="overlay" id="overlayQR">
-  <div class="overlay-box">
-    <div class="overlay-title">🔔 Pedido via QR Code</div>
-    <div class="overlay-mesa" id="ovMesa">Mesa —</div>
-    <div class="overlay-cliente" id="ovCliente">Cliente: —</div>
-    <div id="ovItens"></div>
-    <div class="overlay-timer" id="ovTimer">00:00</div>
-    <div class="overlay-total">
-      <span>Total</span>
-      <span id="ovTotal" style="color:var(--green)">R$ 0,00</span>
+<!-- MODAL MESA OCUPADA -->
+<div class="overlay" id="overlayMesa">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modalMesaTitulo">Mesa —</div>
+      <button class="modal-close" onclick="fecharModalMesa()">✕</button>
     </div>
-    <button class="btn-confirmar" onclick="confirmarQR()">✅ Confirmar — Em Preparo</button>
+    <div class="modal-body" id="modalMesaBody"></div>
+    <div class="modal-footer">
+      <button class="btn-fechar-modal" onclick="fecharModalMesa()">Fechar</button>
+      <button class="btn-add-item" onclick="adicionarItemMesaAtual()">+ Add Item</button>
+      <button class="btn-pagar" onclick="abrirPagamento()">💰 Pagar</button>
+    </div>
   </div>
 </div>
 
-<!-- OVERLAY SUCESSO -->
+<!-- MODAL PAGAMENTO -->
+<div class="overlay" id="overlayPagamento">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">💰 Fechar Conta</div>
+      <button class="modal-close" onclick="fecharPagamento()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="comanda-info" id="pagInfo">Total: R$ 0,00</div>
+      <div class="pag-opcoes">
+        <button class="pag-btn" onclick="selPag('dinheiro',this)">💵 Dinheiro</button>
+        <button class="pag-btn" onclick="selPag('pix',this)">📱 PIX</button>
+        <button class="pag-btn" onclick="selPag('cartao',this)">💳 Cartão</button>
+        <button class="pag-btn" onclick="selPag('na_entrega',this)">🔖 Na entrega</button>
+      </div>
+      <input type="number" class="pag-valor" id="pagValor" placeholder="Valor recebido (deixe em branco para valor exato)">
+    </div>
+    <div class="modal-footer">
+      <button class="btn-fechar-modal" onclick="fecharPagamento()">Cancelar</button>
+      <button class="btn-pagar" onclick="confirmarPagamento()">✅ Confirmar Pagamento</button>
+    </div>
+  </div>
+</div>
+
+<!-- SUCESSO -->
 <div class="success-overlay" id="successOverlay">
   <div class="success-box">
     <div class="success-icon">✅</div>
     <h3>Pedido Enviado!</h3>
-    <p>Comanda enviada para a cozinha com sucesso.</p>
+    <p>Comanda enviada para a cozinha.</p>
     <button class="btn-ok" onclick="fecharSucesso()">OK</button>
   </div>
 </div>
@@ -235,26 +318,24 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 <script>
 const API = '/api/delivery';
 let token = '';
+let garcomNome = '';
 let cardapio = [];
 let comanda = [];
 let catAtiva = 'Todos';
-let pedidosQRVistos = new Set();
-let timerQR = null;
-let timerSeg = 0;
-let pedidoQRAtual = null;
+let mesasOcupadas = {}; // { "5": [pedido1, pedido2] }
+let totalMesas = 20;
+let mesaAtual = null; // mesa selecionada no modal
+let pedidoAtualId = null;
+let pagForma = '';
 
-// Pegar token da URL se vier como parâmetro
 const urlParams = new URLSearchParams(location.search);
 const tokenURL = urlParams.get('token');
-if (tokenURL) {
-  document.getElementById('inputToken').value = tokenURL;
-}
+if (tokenURL) document.getElementById('inputToken').value = tokenURL;
 
 // Relógio
 setInterval(() => {
-  const now = new Date();
-  document.getElementById('clock').textContent =
-    String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+  const n = new Date();
+  document.getElementById('clock').textContent = String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');
 }, 1000);
 
 // LOGIN
@@ -264,109 +345,231 @@ async function fazerLogin() {
   const err = document.getElementById('login-erro');
   err.textContent = '';
   if (!tk) { err.textContent = 'Informe o token'; return; }
-
   try {
-    const r = await fetch(API + '/garcons/login', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ token: tk, senha })
+    const r = await fetch(API+'/garcons/login', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({token:tk, senha})
     });
     const d = await r.json();
-    if (!d.sucesso) { err.textContent = d.erro || 'Token ou senha inválidos'; return; }
+    if (!d.sucesso) { err.textContent = d.erro||'Token ou senha inválidos'; return; }
     token = tk;
-    document.getElementById('nomeGarcom').textContent = '👤 ' + (d.garcom?.nome || d.nome || 'Garçom');
-    const nomeRest = document.getElementById('nomeRestaurante');
-    if (d.nomeComercio && nomeRest) { nomeRest.textContent = d.nomeComercio; nomeRest.style.display = ''; }
+    garcomNome = d.garcom?.nome || 'Garçom';
+    document.getElementById('nomeGarcom').textContent = '👤 '+garcomNome;
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app').style.display = 'flex';
-    carregarCardapio();
-    setInterval(verificarPedidosQR, 8000);
-  } catch(e) { err.textContent = 'Erro de conexão: ' + e.message; }
+    await carregarCardapio();
+    await carregarMesas();
+    setInterval(carregarMesas, 10000);
+  } catch(e) { err.textContent = 'Erro de conexão'; }
 }
 
 document.addEventListener('keydown', e => {
-  if (e.key === 'Enter' && document.getElementById('login-screen').style.display !== 'none') fazerLogin();
+  if (e.key==='Enter' && document.getElementById('login-screen').style.display!=='none') fazerLogin();
 });
+
+// TELAS
+function mostrarTela(tela) {
+  document.getElementById('tela-mapa').style.display = tela==='mapa' ? 'block' : 'none';
+  document.getElementById('tela-cardapio').style.display = tela==='cardapio' ? 'flex' : 'none';
+  document.getElementById('tab-mapa').classList.toggle('active', tela==='mapa');
+  document.getElementById('tab-nova').classList.toggle('active', tela==='cardapio');
+  if (tela==='mapa') carregarMesas();
+}
+
+function iniciarNovaComanda() {
+  mesaAtual = null;
+  limparComanda();
+  document.getElementById('cardapio-titulo').textContent = 'Nova Comanda';
+  document.getElementById('numMesa').value = '';
+  document.getElementById('numMesa').readOnly = false;
+  mostrarTela('cardapio');
+}
+
+// MAPA DE MESAS
+async function carregarMesas() {
+  try {
+    const r = await fetch(API+'/caixa/pedidos', {
+      headers: { Authorization: 'Bearer '+token }
+    });
+    const pedidos = await r.json();
+    mesasOcupadas = {};
+    if (Array.isArray(pedidos)) {
+      pedidos.forEach(p => {
+        const m = p.numeroMesa || p.mesa;
+        if (m && (p.tipoLocal==='mesa' || p.tipo==='mesa')) {
+          if (!mesasOcupadas[m]) mesasOcupadas[m] = [];
+          mesasOcupadas[m].push(p);
+        }
+      });
+    }
+    renderMesas();
+  } catch(e) { console.error(e); }
+}
+
+function renderMesas() {
+  const grid = document.getElementById('mesasGrid');
+  let html = '';
+  for (let i = 1; i <= totalMesas; i++) {
+    const m = String(i);
+    const ocupada = !!mesasOcupadas[m];
+    const total = ocupada ? mesasOcupadas[m].reduce((s,p)=>s+p.total,0) : 0;
+    html += `<div class="mesa-card ${ocupada?'ocupada':'livre'}" onclick="${ocupada?'abrirMesa(\''+m+'\')':'selecionarMesaLivre(\''+m+'\')'}">
+      <div class="mesa-dot"></div>
+      <div class="mesa-num">${i}</div>
+      <div class="mesa-status">${ocupada?'🔴 Ocupada':'🟢 Livre'}</div>
+      ${ocupada?`<div class="mesa-total">R$ ${total.toFixed(2)}</div>`:''}
+    </div>`;
+  }
+  grid.innerHTML = html;
+}
+
+function selecionarMesaLivre(num) {
+  limparComanda();
+  document.getElementById('numMesa').value = num;
+  document.getElementById('numMesa').readOnly = true;
+  document.getElementById('cardapio-titulo').textContent = 'Nova Comanda — Mesa '+num;
+  mostrarTela('cardapio');
+}
+
+function abrirMesa(num) {
+  mesaAtual = num;
+  const pedidos = mesasOcupadas[num] || [];
+  document.getElementById('modalMesaTitulo').textContent = '🍽️ Mesa '+num;
+  
+  let html = '';
+  let totalGeral = 0;
+  pedidos.forEach(p => {
+    html += `<div class="comanda-info"><strong>Pedido #${p.numero||'?'}</strong> — ${p.clienteNome||'Cliente'} — ${p.status}</div>`;
+    (p.itens||[]).forEach(it => {
+      html += `<div class="pedido-item-linha">
+        <span>${it.quantidade||1}x ${it.nome}</span>
+        <span style="color:var(--accent)">R$ ${((it.precoUnitario||it.preco||0)*(it.quantidade||1)).toFixed(2)}</span>
+      </div>`;
+    });
+    totalGeral += p.total||0;
+    pedidoAtualId = p._id; // usa o último pedido para pagamento
+  });
+  html += `<div class="modal-total"><span>Total da Mesa</span><span style="color:var(--green)">R$ ${totalGeral.toFixed(2)}</span></div>`;
+  
+  document.getElementById('modalMesaBody').innerHTML = html;
+  document.getElementById('overlayMesa').classList.add('show');
+}
+
+function fecharModalMesa() {
+  document.getElementById('overlayMesa').classList.remove('show');
+}
+
+function adicionarItemMesaAtual() {
+  fecharModalMesa();
+  limparComanda();
+  document.getElementById('numMesa').value = mesaAtual;
+  document.getElementById('numMesa').readOnly = true;
+  document.getElementById('cardapio-titulo').textContent = 'Add Itens — Mesa '+mesaAtual;
+  mostrarTela('cardapio');
+}
+
+// PAGAMENTO
+function abrirPagamento() {
+  fecharModalMesa();
+  const pedidos = mesasOcupadas[mesaAtual] || [];
+  const total = pedidos.reduce((s,p)=>s+p.total,0);
+  document.getElementById('pagInfo').innerHTML = `Mesa <strong>${mesaAtual}</strong> — Total: <strong style="color:var(--green)">R$ ${total.toFixed(2)}</strong>`;
+  document.getElementById('pagValor').value = '';
+  pagForma = '';
+  document.querySelectorAll('.pag-btn').forEach(b=>b.classList.remove('sel'));
+  document.getElementById('overlayPagamento').classList.add('show');
+}
+
+function selPag(forma, btn) {
+  pagForma = forma;
+  document.querySelectorAll('.pag-btn').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel');
+}
+
+function fecharPagamento() {
+  document.getElementById('overlayPagamento').classList.remove('show');
+}
+
+async function confirmarPagamento() {
+  if (!pagForma) { toast('Selecione a forma de pagamento'); return; }
+  const pedidos = mesasOcupadas[mesaAtual] || [];
+  const total = pedidos.reduce((s,p)=>s+p.total,0);
+  const valorInput = parseFloat(document.getElementById('pagValor').value) || total;
+  
+  try {
+    // Pagar todos os pedidos da mesa
+    for (const p of pedidos) {
+      await fetch(API+'/caixa/pedido/'+p._id+'/pagar', {
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+        body: JSON.stringify({ formas:[{forma:pagForma, valor:valorInput}], total:p.total })
+      });
+    }
+    fecharPagamento();
+    toast('✅ Mesa '+mesaAtual+' fechada!');
+    await carregarMesas();
+  } catch(e) { toast('Erro ao processar pagamento'); }
+}
 
 // CARDÁPIO
 async function carregarCardapio() {
   try {
-    const r = await fetch(API + '/garcons/cardapio?garcomToken=' + token);
+    const r = await fetch(API+'/garcons/cardapio?garcomToken='+token);
     const d = await r.json();
-    if (!d.sucesso) return;
-    cardapio = d.itens || [];
-    renderCategorias();
-    renderItens();
-  } catch(e) { console.error(e); }
+    if (d.sucesso) { cardapio = d.itens||[]; renderCategorias(); renderItens(); }
+  } catch(e) {}
 }
 
 function renderCategorias() {
-  const cats = ['Todos', ...new Set(cardapio.map(i => i.categoriaId?.nome || 'Outros').filter(Boolean))];
-  const el = document.getElementById('categorias');
-  el.innerHTML = cats.map(c =>
+  const cats = ['Todos',...new Set(cardapio.map(i=>i.categoriaId?.nome||'Outros').filter(Boolean))];
+  document.getElementById('categorias').innerHTML = cats.map(c=>
     `<div class="cat-chip${c===catAtiva?' active':''}" onclick="filtrarCat('${c}')">${c}</div>`
   ).join('');
 }
 
-function filtrarCat(cat) {
-  catAtiva = cat;
-  renderCategorias();
-  renderItens();
-}
-
-function filtrarItens() { renderItens(); }
+function filtrarCat(cat) { catAtiva=cat; renderCategorias(); renderItens(); }
 
 function renderItens() {
   const busca = document.getElementById('busca').value.toLowerCase();
   const el = document.getElementById('itensArea');
-  let itens = cardapio.filter(i => {
-    const matchCat = catAtiva === 'Todos' || (i.categoriaId?.nome || 'Outros') === catAtiva;
-    const matchBusca = !busca || i.nome.toLowerCase().includes(busca);
-    return matchCat && matchBusca;
+  let itens = cardapio.filter(i=>{
+    const mc = catAtiva==='Todos'||(i.categoriaId?.nome||'Outros')===catAtiva;
+    const mb = !busca||i.nome.toLowerCase().includes(busca);
+    return mc&&mb;
   });
-  if (!itens.length) { el.innerHTML = '<div style="text-align:center;color:var(--text3);padding:40px">Nenhum item encontrado</div>'; return; }
-
+  if (!itens.length) { el.innerHTML='<div style="text-align:center;color:var(--text3);padding:32px">Nenhum item</div>'; return; }
   const porCat = {};
-  itens.forEach(i => {
-    const c = i.categoriaId?.nome || 'Outros';
-    if (!porCat[c]) porCat[c] = [];
-    porCat[c].push(i);
-  });
-
-  el.innerHTML = Object.entries(porCat).map(([cat, its]) => `
+  itens.forEach(i=>{ const c=i.categoriaId?.nome||'Outros'; if(!porCat[c])porCat[c]=[]; porCat[c].push(i); });
+  el.innerHTML = Object.entries(porCat).map(([cat,its])=>`
     <div class="cat-label">${cat}</div>
     <div class="items-grid">
-      ${its.map(i => `
+      ${its.map(i=>`
         <div class="item-card" onclick='addItem(${JSON.stringify({_id:i._id,nome:i.nome,preco:i.preco||0,tempoPreparoMin:i.tempoPreparoMin||20})})'>
-          <div class="item-img-placeholder">${i.categoriaId?.emoji || '🍽️'}</div>
+          <div class="item-img">${i.categoriaId?.emoji||'🍽️'}</div>
           <div class="item-info">
             <div class="item-name">${i.nome}</div>
-            <div class="item-tempo">⏱️ ~${i.tempoPreparoMin||20} min</div>
+            <div class="item-tempo">⏱️ ~${i.tempoPreparoMin||20}min</div>
             <div class="item-price">R$ ${(i.preco||0).toFixed(2)}</div>
           </div>
-          <button class="item-add-btn">+</button>
+          <button class="item-add">+</button>
         </div>`).join('')}
     </div>`).join('');
 }
 
 // COMANDA
 function addItem(item) {
-  const ex = comanda.find(c => c._id === item._id);
-  if (ex) ex.qtd++;
-  else comanda.push({...item, qtd: 1});
+  const ex = comanda.find(c=>c._id===item._id);
+  if (ex) ex.qtd++; else comanda.push({...item,qtd:1});
   renderComanda();
-  toast('Adicionado: ' + item.nome);
+  toast('+ '+item.nome);
 }
 
 function renderComanda() {
   const el = document.getElementById('comandaItens');
-  const total = comanda.reduce((s,i) => s + i.preco * i.qtd, 0);
-  document.getElementById('totalVal').textContent = 'R$ ' + total.toFixed(2);
-  if (!comanda.length) {
-    el.innerHTML = '<div class="comanda-vazia">🛒<br>Adicione itens do cardápio</div>';
-    return;
-  }
-  el.innerHTML = comanda.map((i, idx) => `
+  const total = comanda.reduce((s,i)=>s+i.preco*i.qtd,0);
+  document.getElementById('totalVal').textContent = 'R$ '+total.toFixed(2);
+  if (!comanda.length) { el.innerHTML='<div class="comanda-vazia">🛒<br>Adicione itens</div>'; return; }
+  el.innerHTML = comanda.map((i,idx)=>`
     <div class="comanda-item">
       <div class="ci-qtd">
         <button class="ci-btn" onclick="mudarQtd(${idx},-1)">−</button>
@@ -379,21 +582,9 @@ function renderComanda() {
     </div>`).join('');
 }
 
-function mudarQtd(idx, delta) {
-  comanda[idx].qtd += delta;
-  if (comanda[idx].qtd <= 0) comanda.splice(idx, 1);
-  renderComanda();
-}
-
-function removerItem(idx) { comanda.splice(idx, 1); renderComanda(); }
-
-function limparComanda() {
-  comanda = [];
-  document.getElementById('numMesa').value = '';
-  document.getElementById('nomeCliente').value = '';
-  document.getElementById('observacao').value = '';
-  renderComanda();
-}
+function mudarQtd(idx,delta){ comanda[idx].qtd+=delta; if(comanda[idx].qtd<=0)comanda.splice(idx,1); renderComanda(); }
+function removerItem(idx){ comanda.splice(idx,1); renderComanda(); }
+function limparComanda(){ comanda=[]; document.getElementById('nomeCliente').value=''; document.getElementById('observacao').value=''; renderComanda(); }
 
 async function enviarPedido() {
   const mesa = document.getElementById('numMesa').value.trim();
@@ -402,88 +593,37 @@ async function enviarPedido() {
   if (!mesa) { toast('Informe o número da mesa'); return; }
   if (!comanda.length) { toast('Adicione itens à comanda'); return; }
   const btn = document.getElementById('btnEnviar');
-  btn.disabled = true; btn.textContent = 'Enviando...';
+  btn.disabled=true; btn.textContent='Enviando...';
   try {
-    const r = await fetch(API + '/garcons/pedido', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
+    const r = await fetch(API+'/garcons/pedido', {
+      method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
-        garcomToken: token,
-        mesa,
-        nomeCliente,
-        observacao: obs,
-        itens: comanda.map(i => ({itemId: i._id, nome: i.nome, preco: i.preco, quantidade: i.qtd}))
+        garcomToken:token, mesa, nomeCliente, observacao:obs,
+        itens: comanda.map(i=>({itemId:i._id,nome:i.nome,preco:i.preco,qtd:i.qtd}))
       })
     });
     const d = await r.json();
     if (d.sucesso) {
       limparComanda();
+      document.getElementById('numMesa').readOnly=false;
       document.getElementById('successOverlay').classList.add('show');
-    } else { toast('Erro: ' + (d.erro || 'Falha ao enviar')); }
+      await carregarMesas();
+    } else { toast('Erro: '+(d.erro||'Falha')); }
   } catch(e) { toast('Erro de conexão'); }
-  finally { btn.disabled = false; btn.textContent = '✅ Enviar para Cozinha'; }
+  finally { btn.disabled=false; btn.textContent='✅ Enviar para Cozinha'; }
 }
 
-function fecharSucesso() { document.getElementById('successOverlay').classList.remove('show'); }
-
-// PEDIDOS QR
-async function verificarPedidosQR() {
-  if (!token) return;
-  try {
-    const r = await fetch(API + '/mesa/pedidos-novos', {
-      headers: { Authorization: 'Bearer ' + token }
-    });
-    if (!r.ok) return;
-    const d = await r.json();
-    if (!d.pedidos?.length) return;
-    const novo = d.pedidos.find(p => !pedidosQRVistos.has(p._id));
-    if (!novo) return;
-    pedidosQRVistos.add(novo._id);
-    mostrarQR(novo);
-  } catch(e) {}
+function fecharSucesso() {
+  document.getElementById('successOverlay').classList.remove('show');
+  mostrarTela('mapa');
 }
 
-function mostrarQR(pedido) {
-  pedidoQRAtual = pedido;
-  document.getElementById('ovMesa').textContent = 'Mesa ' + (pedido.mesa || '?');
-  document.getElementById('ovCliente').textContent = 'Cliente: ' + (pedido.nomeCliente || 'Anônimo');
-  const itens = pedido.itens || [];
-  document.getElementById('ovItens').innerHTML = itens.map(i =>
-    `<div class="overlay-item"><span>${i.quantidade||i.qtd||1}x ${i.nome}</span><span style="color:var(--accent)">R$ ${((i.preco||0)*(i.quantidade||i.qtd||1)).toFixed(2)}</span></div>`
-  ).join('');
-  document.getElementById('ovTotal').textContent = 'R$ ' + (pedido.total||0).toFixed(2);
-  timerSeg = 0;
-  if (timerQR) clearInterval(timerQR);
-  timerQR = setInterval(() => {
-    timerSeg++;
-    const m = String(Math.floor(timerSeg/60)).padStart(2,'0');
-    const s = String(timerSeg%60).padStart(2,'0');
-    document.getElementById('ovTimer').textContent = '⏱️ ' + m + ':' + s + ' desde o pedido';
-  }, 1000);
-  document.getElementById('overlayQR').classList.add('show');
-}
-
-async function confirmarQR() {
-  if (!pedidoQRAtual) return;
-  try {
-    await fetch(API + '/mesa/confirmar/' + pedidoQRAtual._id, {
-      method: 'POST', headers: { Authorization: 'Bearer ' + token }
-    });
-  } catch(e) {}
-  if (timerQR) clearInterval(timerQR);
-  document.getElementById('overlayQR').classList.remove('show');
-  pedidoQRAtual = null;
-  toast('Pedido confirmado — em preparo');
-  setTimeout(verificarPedidosQR, 500);
-}
-
-function sair() { token = ''; location.reload(); }
+function sair() { token=''; location.reload(); }
 
 function toast(msg) {
-  const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.classList.add('show');
-  setTimeout(() => el.classList.remove('show'), 2500);
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'),2500);
 }
 </script>
 </body>
