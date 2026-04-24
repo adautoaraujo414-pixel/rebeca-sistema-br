@@ -1,4 +1,5 @@
 const express = require('express');
+const crypto = require('crypto');
 const router = express.Router();
 const { Entregador, MensalidadeClienteDelivery, CardapioDia, GarcomDelivery,
         AdminDelivery, PedidoDelivery, ItemCardapio, CategoriaCardapio, ConfigDelivery } = require('../models/delivery.models');
@@ -1534,7 +1535,7 @@ router.get('/mesa/qr', authDelivery, async (req, res) => {
         if (!admin.slug) {
             const base = (admin.nomeComercio || admin.nomeEstabelecimento || 'rest')
                 .toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 12);
-            admin.slug = base + '-' + crypto.randomBytes(3).toString('hex');
+            admin.slug = base + '-' + Math.random().toString(36).slice(2, 8);
             await admin.save();
         }
         const url = req.protocol + '://' + req.get('host') + '/mesa?r=' + admin.slug;
