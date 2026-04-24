@@ -1210,10 +1210,38 @@ router.get('/garcons', authDelivery, async (req, res) => {
 
 router.post('/garcons', authDelivery, async (req, res) => {
     try {
-        const { nome, telefone } = req.body;
+        const { nome, telefone, senha, mesas } = req.body;
+        if (!nome || !senha) return res.status(400).json({ erro: 'Nome e senha obrigatorios' });
         const token = 'GRC-' + crypto.randomBytes(6).toString('hex').toUpperCase();
-        const garcom = await GarcomDelivery.create({ adminId: req.adminId, nome, telefone, token, ativo: true });
+        const garcom = await GarcomDelivery.create({ adminId: req.adminId, nome, telefone, senha, mesas: mesas || '', token, ativo: true });
         res.json({ sucesso: true, garcom });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+router.post('/garcons/:id/toggle', authDelivery, async (req, res) => {
+    try {
+        const g = await GarcomDelivery.findOne({ _id: req.params.id, adminId: req.adminId });
+        if (!g) return res.status(404).json({ erro: 'Nao encontrado' });
+        g.ativo = !g.ativo;
+        await g.save();
+        res.json({ sucesso: true, ativo: g.ativo });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+router.delete('/garcons/:id', authDelivery, async (req, res) => {
+    try {
+        await GarcomDelivery.deleteOne({ _id: req.params.id, adminId: req.adminId });
+        res.json({ sucesso: true });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// Login do garcom pelo app
+router.post('/garcons/login', async (req, res) => {
+    try {
+        const { token, senha } = req.body;
+        const g = await GarcomDelivery.findOne({ token, senha, ativo: true });
+        if (!g) return res.status(401).json({ erro: 'Token ou senha inválidos' });
+        res.json({ sucesso: true, garcom: { nome: g.nome, token: g.token, mesas: g.mesas, adminId: g.adminId } });
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
@@ -1450,5 +1478,45 @@ router.get('/salon/pix-key', authDelivery, async (req, res) => {
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
+
+
+// Cardapio para o garcom (autenticado pelo token pessoal GRC-xxx)
+router.get('/garcons/cardapio', async (req, res) => {
+    try {
+        const garcomToken = req.query.garcomToken;
+        if (!garcomToken) return res.status(400).json({ erro: 'Token nao informado' });
+        const g = await GarcomDelivery.findOne({ token: garcomToken, ativo: true });
+        if (!g) return res.status(401).json({ erro: 'Token invalido ou garcom inativo' });
+        const CardapioDelivery = require('../models/CardapioDelivery');
+        const itens = await CardapioDelivery.find({ adminId: g.adminId, ativo: true }).sort({ categoria: 1, nome: 1 });
+        const AdminDelivery = require('../models/AdminDelivery');
+        const admin = await AdminDelivery.findById(g.adminId).select('nomeEstabelecimento');
+        res.json({ sucesso: true, itens, nomeEstabelecimento: admin ? admin.nomeEstabelecimento : 'Restaurante', garcom: { nome: g.nome, mesas: g.mesas, adminId: g.adminId } });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// Pedido do garcom (autenticado pelo token pessoal GRC-xxx)
+router.post('/garcons/pedido', async (req, res) => {
+    try {
+        const { garcomToken, mesa, itens, observacao } = req.body;
+        if (!garcomToken) return res.status(400).json({ erro: 'Token nao informado' });
+        const g = await GarcomDelivery.findOne({ token: garcomToken, ativo: true });
+        if (!g) return res.status(401).json({ erro: 'Token invalido' });
+        const PedidoDelivery = require('../models/PedidoDelivery');
+        const total = itens.reduce((s, i) => s + (i.preco * i.qtd), 0);
+        const pedido = await PedidoDelivery.create({
+            adminId: g.adminId,
+            tipo: 'mesa',
+            mesa: mesa || 'S/N',
+            garcom: g.nome,
+            garcomToken: g.token,
+            itens,
+            total,
+            observacao: observacao || '',
+            status: 'novo'
+        });
+        res.json({ sucesso: true, pedido });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
 
 module.exports = router;

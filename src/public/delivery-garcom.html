@@ -159,8 +159,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;backgrou
       <button class="login-tab" id="ltab-admin" onclick="setLoginTab('admin')">Sou Admin</button>
     </div>
     <div id="form-garcom">
-      <div class="field"><label>Token do Restaurante</label><input type="text" id="inputToken" placeholder="Cole o token aqui..." autocomplete="off"></div>
-      <div class="field"><label>Seu nome</label><input type="text" id="inputNome" placeholder="Ex: Joao" autocomplete="off"></div>
+      <div class="field"><label>Seu Token (GRC-...)</label><input type="text" id="inputToken" placeholder="GRC-XXXXXX" autocomplete="off" style="text-transform:uppercase"></div>
+      <div class="field"><label>Sua Senha</label><input type="password" id="inputSenha" placeholder="Senha cadastrada pelo admin" autocomplete="off"></div>
     </div>
     <div id="form-admin" style="display:none">
       <div class="field"><label>Token Admin</label><input type="text" id="inputTokenAdmin" placeholder="Token do painel admin..." autocomplete="off"></div>
@@ -310,19 +310,30 @@ async function fazerLogin() {
     } catch(e) { err.textContent = "Erro de conexao"; }
     return;
   }
-  const t = document.getElementById("inputToken").value.trim();
-  const n = document.getElementById("inputNome").value.trim();
-  if (!t) { err.textContent = "Informe o token"; return; }
-  if (!n) { err.textContent = "Informe seu nome"; return; }
+  const t = document.getElementById("inputToken").value.trim().toUpperCase();
+  const s = document.getElementById("inputSenha").value.trim();
+  if (!t) { err.textContent = "Informe o token GRC-..."; return; }
+  if (!s) { err.textContent = "Informe sua senha"; return; }
   try {
-    const r = await fetch(API+"/salon/cardapio", { headers: { Authorization: "Bearer "+t } });
-    const d = await r.json();
-    if (d.erro || !d.sucesso) { err.textContent = "Token invalido"; return; }
-    token = t; nomeGarcom = n;
+    const rLogin = await fetch(API+"/garcons/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token: t, senha: s })
+    });
+    const dLogin = await rLogin.json();
+    if (!dLogin.sucesso) { err.textContent = dLogin.erro || "Token ou senha invalidos"; return; }
+    const g = dLogin.garcom;
+    token = g.adminToken || t;
+    nomeGarcom = g.nome;
+    garcomToken = t;
     localStorage.setItem("garcom_token", t);
-    localStorage.setItem("garcom_nome", n);
-    iniciarApp(d);
-  } catch(e) { err.textContent = "Erro de conexao"; }
+    localStorage.setItem("garcom_nome", g.nome);
+    localStorage.setItem("garcom_admin_token_ref", g.adminId || "");
+    // Buscar cardapio usando adminId
+    const rCard = await fetch(API+"/garcons/cardapio?garcomToken="+t);
+    const dCard = await rCard.json();
+    iniciarApp(dCard);
+  } catch(e) { err.textContent = "Erro de conexao: "+e.message; }
 }
 
 function sair() {

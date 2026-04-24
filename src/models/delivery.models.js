@@ -196,7 +196,9 @@ const AdminDeliverySchema = new mongoose.Schema({
     cidade: String,
 
     // Autenticação
-    token: { type: String, unique: true, sparse: true },
+    senha: { type: String, default: "" },
+  mesas: { type: String, default: "" },
+  token: { type: String, unique: true, sparse: true },
 
     // Trial / plano
     status: { type: String, enum: ['trial', 'ativo', 'bloqueado', 'cancelado'], default: 'trial' },
