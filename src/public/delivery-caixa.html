@@ -102,6 +102,14 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 .pedido-local{font-size:.75em;color:var(--text2);margin-bottom:6px}
 .pedido-itens{font-size:.78em;color:var(--text3);margin-bottom:8px;line-height:1.5}
 .pedido-obs{font-size:.75em;background:rgba(249,115,22,.1);border:1px solid rgba(249,115,22,.3);border-radius:6px;padding:6px 8px;color:#fb923c;margin-bottom:8px}
+.timer-chip{font-family:monospace;font-size:.72em;font-weight:700;padding:2px 8px;border-radius:10px;background:rgba(249,115,22,.15);color:#fb923c;border:1px solid rgba(249,115,22,.3)}
+.timer-chip.pronto{background:rgba(34,197,94,.15);color:#4ade80;border-color:rgba(34,197,94,.3)}
+.timer-chip.urgente{background:rgba(239,68,68,.15);color:#f87171;border-color:rgba(239,68,68,.3)}
+.producao-panel{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:8px;border-left:3px solid var(--accent)}
+.producao-panel.pronto{border-left-color:var(--green)}
+.producao-panel.entregue{border-left-color:#aaa;opacity:.6}
+.delivery-fields{display:none;flex-direction:column;gap:6px;margin-bottom:8px;padding:10px;background:var(--surface2);border-radius:6px;border:1px solid var(--border)}
+.delivery-fields.show{display:flex}
 .pedido-total{font-size:1em;font-weight:800;color:var(--green);margin-bottom:10px}
 .pedido-btns{display:flex;gap:6px;flex-wrap:wrap}
 
@@ -201,6 +209,13 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 </style>
 </head>
 <body>
+<div id="painelProducao" style="position:fixed;bottom:0;left:0;right:0;background:#1a1a2e;border-top:2px solid #f97316;z-index:999;max-height:220px;overflow-y:auto;padding:10px 12px;display:none;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+    <span style="color:#f97316;font-weight:700;font-size:.85em;">🍳 EM PRODUÇÃO / PRONTOS</span>
+    <button onclick="document.getElementById('painelProducao').style.display='none'" style="background:none;border:none;color:#888;cursor:pointer;font-size:1.2em;">✕</button>
+  </div>
+  <div id="listaPainelProducao" style="color:#888;font-size:.82em;">Carregando...</div>
+</div>
 
 <!-- LOGIN -->
 <div id="login-screen">
@@ -228,7 +243,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
       <span class="clock" id="hora-atual">--:--</span>
       <button class="btn-sair" onclick="sair()">Sair</button>
     </div>
-  </header>
+  </header><button onclick="togglePainelProducao()" style="position:fixed;bottom:12px;right:12px;background:#f97316;border:none;border-radius:50%;width:52px;height:52px;font-size:1.3em;cursor:pointer;z-index:1000;box-shadow:0 4px 12px rgba(249,115,22,0.4);">🍳</button>
 
   <!-- Stats -->
   <div class="stats-bar">
@@ -248,7 +263,8 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
       <div class="tabs-nav">
         <button class="tab-btn active" onclick="mudarTab('cardapio',this)">🛒 Novo Pedido</button>
         <button class="tab-btn" onclick="mudarTab('pedidos',this)">📋 Ativos <span class="badge" id="badge-pedidos">0</span></button>
-        <button class="tab-btn" onclick="mudarTab('todos',this)">📊 Todos do Dia</button>
+        <button class="tab-btn" onclick="mudarTab('producao',this)">🍳 Producao <span class="badge" style="background:var(--green)" id="badge-producao">0</span></button>
+        <button class="tab-btn" onclick="mudarTab('todos',this)">📊 Todos</button>
       </div>
       <div class="tab-content">
 
@@ -265,6 +281,17 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
         <!-- Pedidos Ativos -->
         <div id="tab-pedidos" style="display:none">
           <div id="pedidos-lista"><div class="empty">Nenhum pedido ativo</div></div>
+        </div>
+
+        <!-- Producao -->
+        <div id="tab-producao" style="display:none">
+          <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+            <button class="cat-chip active" onclick="filtrarProducao('todos',this)">Todos</button>
+            <button class="cat-chip" onclick="filtrarProducao('preparando',this)">🍳 Preparando</button>
+            <button class="cat-chip" onclick="filtrarProducao('pronto',this)">✅ Prontos</button>
+            <button class="cat-chip" onclick="filtrarProducao('entregue',this)">📦 Entregues</button>
+          </div>
+          <div id="producao-lista"><div class="empty">Nenhum pedido</div></div>
         </div>
 
         <!-- Todos do Dia -->
@@ -290,6 +317,10 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
         <div class="form-row">
           <input type="text" id="cliente-nome" placeholder="Nome do cliente">
           <input type="tel" id="cliente-tel" placeholder="Telefone" style="width:140px;flex-shrink:0">
+        </div>
+        <div class="delivery-fields" id="delivery-fields">
+          <input type="text" id="delivery-endereco" placeholder="Rua e numero">
+          <input type="text" id="delivery-bairro" placeholder="Bairro">
         </div>
       </div>
 
@@ -390,7 +421,7 @@ async function iniciarApp(admin) {
   await carregarCardapio();
   await carregarPedidos();
   await carregarStats();
-  setInterval(carregarPedidos, 8000); // 8s — pedidos WhatsApp aparecem rápido
+  setInterval(function(){ carregarPedidos(); carregarProducao(); }, 8000); // 8s — pedidos WhatsApp aparecem rápido
   setInterval(carregarStats, 30000);
   // Atualiza cardapio a cada 2 min sem resetar carrinho ativo
   setInterval(async () => {
@@ -560,6 +591,8 @@ function setTipo(tipo, el) {
   document.querySelectorAll('.tipo-btn').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
   document.getElementById('mesa-input').style.display = tipo === 'mesa' ? 'block' : 'none';
+  const df = document.getElementById('delivery-fields');
+  if(df) df.classList.toggle('show', tipo === 'delivery');
 }
 
 function limparCarrinho() {
@@ -574,10 +607,13 @@ async function enviarPedido() {
   if(!carrinho.length) { alert('Adicione itens!'); return; }
   const sub = carrinho.reduce((s,i) => s+i.subtotal, 0);
   const body = {
-    clienteNome: document.getElementById('cliente-nome').value || 'Cliente Balcão',
+    clienteNome: document.getElementById('cliente-nome').value || 'Cliente Balcao',
     clienteTelefone: document.getElementById('cliente-tel').value || '0000000000',
     itens: carrinho, tipoLocal: tipoAtual,
     numeroMesa: document.getElementById('numero-mesa').value || undefined,
+    enderecoEntrega: tipoAtual==='delivery'
+      ? (document.getElementById('delivery-endereco').value||'') + (document.getElementById('delivery-bairro').value ? ', '+document.getElementById('delivery-bairro').value : '')
+      : undefined,
     observacao: document.getElementById('obs-geral').value,
     subtotal: sub, total: sub, taxaEntrega: 0
   };
@@ -661,6 +697,71 @@ async function cancelarPedido(id) {
   await carregarPedidos();
 }
 
+// TIMERS
+function iniciarTimersCaixa() {
+  if(window._timerCaixaId) clearInterval(window._timerCaixaId);
+  window._timerCaixaId = setInterval(function() {
+    document.querySelectorAll('[data-timer]').forEach(function(el) {
+      var inicio = parseInt(el.dataset.timer);
+      var seg = Math.floor((Date.now()-inicio)/1000);
+      var mm = Math.floor(seg/60), ss = seg%60;
+      el.textContent = mm+'m'+String(ss).padStart(2,'0')+'s';
+      el.className = 'timer-chip'+(seg>=1800?' urgente':el.classList.contains('pronto')?' pronto':'');
+    });
+  }, 1000);
+}
+
+// PAINEL PRODUCAO
+var _filtroProducao = 'todos';
+var _todosPedidosDia = [];
+
+function filtrarProducao(f, btn) {
+  _filtroProducao = f;
+  document.querySelectorAll('#tab-producao .cat-chip').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  renderProducao();
+}
+
+function renderProducao() {
+  var el = document.getElementById('producao-lista');
+  var lista = _todosPedidosDia;
+  if(_filtroProducao !== 'todos') lista = lista.filter(function(p){ return p.status === _filtroProducao; });
+  if(!lista.length) { el.innerHTML = '<div class="empty">Nenhum pedido</div>'; return; }
+  var sLabel = {novo:'Novo',confirmado:'Confirmado',preparando:'Preparando',pronto:'Pronto',saiu_entrega:'Saiu',entregue:'Entregue',cancelado:'Cancelado'};
+  el.innerHTML = lista.map(function(p) {
+    var inicio = p.createdAt ? new Date(p.createdAt).getTime() : Date.now();
+    var seg = Math.floor((Date.now()-inicio)/1000);
+    var mm = Math.floor(seg/60), ss = seg%60;
+    var cls = p.status==='pronto'?'pronto':p.status==='entregue'?'entregue':'';
+    var itensStr = (p.itens||[]).map(function(i){ return i.quantidade+'x '+i.nome+(i.observacao?' ('+i.observacao+')':''); }).join(' · ');
+    var obs = p.observacao||p.observacoes||'';
+    var endStr = p.enderecoEntrega ? '<div style="font-size:.75em;color:var(--text3)">Entrega: '+p.enderecoEntrega+'</div>' : '';
+    return '<div class="producao-panel '+cls+'">'
+      +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">'
+      +'<span style="font-weight:800;color:var(--accent);font-size:.88em">#'+(p.numero||'?')+' '+(p.tipoLocal==='mesa'?'Mesa '+(p.numeroMesa||'?'):p.tipoLocal==='delivery'?'Delivery':'Balcao')+'</span>'
+      +'<span class="timer-chip '+(p.status==='pronto'?'pronto':'')+'" data-timer="'+inicio+'">'+mm+'m'+String(ss).padStart(2,'0')+'s</span>'
+      +'<span style="font-size:.75em;background:var(--surface3);padding:2px 8px;border-radius:8px">'+(sLabel[p.status]||p.status)+'</span>'
+      +'</div>'
+      +'<div style="font-size:.78em;color:var(--text3);margin-bottom:2px">'+itensStr+'</div>'
+      +endStr
+      +(obs?'<div style="font-size:.75em;color:var(--accent);margin-top:4px">'+obs+'</div>':'')
+      +'</div>';
+  }).join('');
+  iniciarTimersCaixa();
+}
+
+async function carregarProducao() {
+  try {
+    var r = await fetch('/api/delivery/caixa/todos', {headers:{'Authorization':'Bearer '+token}});
+    _todosPedidosDia = await r.json();
+    var prontos = _todosPedidosDia.filter(function(p){ return p.status==='pronto'; }).length;
+    var prep = _todosPedidosDia.filter(function(p){ return p.status==='preparando'||p.status==='novo'||p.status==='confirmado'; }).length;
+    var badge = document.getElementById('badge-producao');
+    if(badge) badge.textContent = prontos||prep||0;
+    renderProducao();
+  } catch(e) {}
+}
+
 // TODOS DO DIA
 async function carregarTodos() {
   try {
@@ -713,6 +814,7 @@ function mudarTab(tab, el) {
     document.getElementById('tab-'+t).style.display = t===tab ? 'block' : 'none';
   });
   if(tab==='todos') carregarTodos();
+  if(tab==='producao') carregarProducao();
 }
 
 // PAGAMENTO

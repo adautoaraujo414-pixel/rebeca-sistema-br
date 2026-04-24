@@ -162,7 +162,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   </div>
 
   <div class="cats-nav" id="catsNav"></div>
-  <div id="cardapioContent"></div>
+  <div id="filtrosCategorias" style="display:flex;gap:8px;overflow-x:auto;padding:12px 16px;scrollbar-width:none;"></div>
+<input type="text" id="buscaItem" placeholder="🔍 Buscar item..." oninput="filtrarBusca(this.value)"
+  style="margin:0 16px 12px;width:calc(100% - 32px);background:#1e1e1e;border:1px solid #333;border-radius:10px;padding:10px 14px;color:#fff;font-size:.9em;box-sizing:border-box;">
+<div id="cardapioContent"></div>
 </div>
 
 <!-- MODAL PERSONALIZAÇÃO DO ITEM -->
@@ -219,7 +222,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     </div>
     <div style="display:flex;flex-direction:column;gap:4px">
       <label style="font-size:.75em;color:#888;text-transform:uppercase;letter-spacing:.5px">Endereço de entrega</label>
-      <input type="text" id="inputEndereco" placeholder="Rua, número e bairro" style="background:#1a1a1a;border:1px solid #333;border-radius:8px;color:#fff;padding:10px 12px;font-size:.9em;width:100%;box-sizing:border-box">
+      <input type="text" id="inputEndereco" placeholder="Rua e número" style="background:#1a1a1a;border:1px solid #333;border-radius:8px;color:#fff;padding:10px 12px;font-size:.9em;width:100%;box-sizing:border-box;margin-bottom:6px">
+      <input type="text" id="inputBairro" placeholder="Bairro" style="background:#1a1a1a;border:1px solid #333;border-radius:8px;color:#fff;padding:10px 12px;font-size:.9em;width:100%;box-sizing:border-box">
     </div>
     <div style="display:flex;flex-direction:column;gap:4px">
       <label style="font-size:.75em;color:#888;text-transform:uppercase;letter-spacing:.5px">Forma de pagamento</label>
@@ -262,17 +266,34 @@ var nomeCliente = params.get('nome') || '';
 var cardapioData = null;
 var carrinho = []; // [{itemId, nome, preco, quantidade, obs}]
 
-async function carregarCardapio() {
-  try {
-    var r = await fetch('/api/delivery/cardapio-publico/' + adminId);
-    var data = await r.json();
-    cardapioData = data;
-    renderizarCardapio(data);
-    preencherPainelAdmin(data);
-    document.getElementById('loading').style.display = 'none';
-    document.getElementById('app').style.display = 'block';
-  } catch(e) {
-    document.getElementById('loading').innerHTML = '<p style="color:#e74c3c">Erro ao carregar cardápio 😅</p>';
+async function carregarCardapio(tentativa) {
+  tentativa = tentativa || 1; {
+  var maxTentativas = 3;
+  for (var t = 1; t <= maxTentativas; t++) {
+    try {
+      var controller = new AbortController();
+      var tid = setTimeout(function(){ controller.abort(); }, 10000);
+      var r = await fetch('/api/delivery/cardapio-publico/' + adminId, { signal: controller.signal });
+      clearTimeout(tid);
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      var data = await r.json();
+      cardapioData = data;
+      renderizarCardapio(data);
+      preencherPainelAdmin(data);
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+      return;
+    } catch(e) {
+  if (tentativa < 3) {
+    setTimeout(() => carregarCardapio(tentativa+1), 2000);
+    document.getElementById('loading').innerHTML = '<div class="spinner"></div><p style="color:#aaa;">Tentando reconectar... ('+tentativa+'/3)</p>';
+  } else {
+    document.getElementById('loading').innerHTML = '<p style="color:#e74c3c;margin-bottom:12px;">❌ Erro ao carregar cardápio</p><p style="color:#888;font-size:13px;">'+e.message+'</p><button onclick="carregarCardapio()" style="margin-top:12px;background:#ff6b35;border:none;border-radius:8px;padding:10px 20px;color:#fff;cursor:pointer;">🔄 Tentar novamente</button>';
+  }
+} else {
+        await new Promise(function(res){ setTimeout(res, 1500 * t); });
+      }
+    }
   }
 }
 
@@ -463,6 +484,8 @@ async function enviarPedido() {
   var troco = document.getElementById('inputTroco') ? document.getElementById('inputTroco').value : '';
 
   if (!endereco) { alert('Informe o endereço de entrega!'); document.getElementById('inputEndereco').focus(); return; }
+  var bairro = document.getElementById('inputBairro') ? document.getElementById('inputBairro').value.trim() : '';
+  if (!bairro) { alert('Informe o bairro!'); document.getElementById('inputBairro').focus(); return; }
   if (!formaPagamentoSel) { alert('Selecione a forma de pagamento!'); return; }
 
   var taxa = cardapioData ? (cardapioData.taxaEntrega || 0) : 0;
@@ -480,7 +503,7 @@ async function enviarPedido() {
         itens: carrinho,
         total: total,
         taxaEntrega: taxa,
-        enderecoEntrega: endereco,
+        enderecoEntrega: endereco + (document.getElementById('inputBairro').value.trim() ? ', ' + document.getElementById('inputBairro').value.trim() : ''),
         formaPagamento: formaPagamentoSel,
         troco: formaPagamentoSel === 'dinheiro' && troco ? parseFloat(troco) : null,
         observacaoGeral: obsGeral
@@ -718,6 +741,30 @@ async function salvarConfigAdmin() {
 }
 
 carregarCardapio();
+
+var categoriaAtiva = 'todas';
+function filtrarCategoria(catId) {
+  categoriaAtiva = catId;
+  document.querySelectorAll('.btn-cat').forEach(b => b.classList.toggle('ativo', b.dataset.cat===catId));
+  renderizarCardapio(cardapioData);
+}
+function filtrarBusca(q) {
+  if (!cardapioData) return;
+  const busca = q.toLowerCase();
+  document.querySelectorAll('.item-card').forEach(el => {
+    const nome = (el.dataset.nome||'').toLowerCase();
+    el.style.display = (!busca || nome.includes(busca)) ? '' : 'none';
+  });
+}
+function renderizarFiltros(data) {
+  const el = document.getElementById('filtrosCategorias');
+  if (!el || !data) return;
+  const cats = data.categorias || [];
+  el.innerHTML = `<button class="btn-cat ativo" data-cat="todas" onclick="filtrarCategoria('todas')"
+    style="flex-shrink:0;background:#ff6b35;border:none;border-radius:20px;padding:7px 16px;color:#fff;font-size:.82em;font-weight:600;cursor:pointer;white-space:nowrap;">🍽️ Todos</button>`
+    + cats.map(c => `<button class="btn-cat" data-cat="${c._id}" onclick="filtrarCategoria('${c._id}')"
+      style="flex-shrink:0;background:#1e1e1e;border:1px solid #333;border-radius:20px;padding:7px 16px;color:#aaa;font-size:.82em;font-weight:600;cursor:pointer;white-space:nowrap;">${c.emoji||''} ${c.nome}</button>`).join('');
+}
 </script>
 </body>
 </html>

@@ -1190,6 +1190,39 @@ router.get('/lista-compras', authDelivery, async (req, res) => {
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
+// ===== PREVIEW IMAGEM AO DIGITAR NOME =====
+router.post('/cardapio/gerar-imagem-preview', authDelivery, async (req, res) => {
+    try {
+        const { nome, descricao } = req.body;
+        if (!nome) return res.json({ imagem: null });
+        const url = await gerarImagemItem(nome, descricao || '');
+        res.json({ imagem: url });
+    } catch(e) { res.json({ imagem: null }); }
+});
+
+// ===== GARCONS CRUD =====
+router.get('/garcons', authDelivery, async (req, res) => {
+    try {
+        const lista = await GarcomDelivery.find({ adminId: req.adminId, ativo: true }).sort({ createdAt: -1 });
+        res.json(lista);
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+router.post('/garcons', authDelivery, async (req, res) => {
+    try {
+        const { nome, telefone } = req.body;
+        if (!nome) return res.status(400).json({ erro: 'Nome obrigatório' });
+        const token = require('uuid').v4().replace(/-/g,'').substring(0,12);
+        const g = await GarcomDelivery.create({ adminId: req.adminId, nome, telefone: telefone||'', token });
+        res.json(g);
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+router.delete('/garcons/:id', authDelivery, async (req, res) => {
+    try {
+        await GarcomDelivery.findOneAndUpdate({ _id: req.params.id, adminId: req.adminId }, { ativo: false });
+        res.json({ sucesso: true });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
 module.exports = router;
 
 // ========== GARÇOM: MESAS E PEDIDOS SALON ==========

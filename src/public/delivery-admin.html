@@ -62,6 +62,17 @@
         
         /* Cardápio item */
         .item-card { display: flex; justify-content: space-between; align-items: center; background: #252542; border-radius: 10px; padding: 15px; margin-bottom: 10px; }
+.img-preview-box { width: 80px; height: 80px; border-radius: 10px; object-fit: cover; background: #333; border: 1px solid #444; display: flex; align-items: center; justify-content: center; font-size: 2em; flex-shrink: 0; overflow: hidden; }
+.img-preview-box img { width: 100%; height: 100%; object-fit: cover; }
+.save-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.75); z-index: 9998; align-items: center; justify-content: center; flex-direction: column; gap: 16px; }
+.save-overlay.show { display: flex; }
+.save-box { background: #1a1a2e; border: 1px solid #333; border-radius: 16px; padding: 28px 32px; text-align: center; min-width: 280px; }
+.save-box h3 { color: #00d4ff; margin-bottom: 8px; font-size: 1em; }
+.save-box p { color: #888; font-size: .85em; margin-bottom: 16px; }
+.progress-bar { background: #252542; border-radius: 10px; height: 8px; overflow: hidden; width: 100%; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, #00d4ff, #00cc6a); border-radius: 10px; width: 0%; transition: width .4s ease; }
+.save-status { font-size: .82em; color: #888; margin-top: 8px; min-height: 18px; }
+.img-gerada-preview { width: 100px; height: 100px; border-radius: 10px; object-fit: cover; margin: 10px auto 0; display: none; border: 2px solid #00cc6a; }
         .item-info h4 { margin-bottom: 3px; }
         .item-info p { color: #888; font-size: 13px; }
         .item-preco { font-size: 20px; font-weight: bold; color: #00cc6a; }
@@ -521,8 +532,25 @@
             <button class="modal-close" onclick="fecharModalItem()">&times;</button>
             <h2 id="modalItemTitulo">Novo Item</h2>
             <input type="hidden" id="itemEditId">
-            <div class="form-group"><label>Categoria</label><select id="itemCategoria" style="width:100%;padding:10px;background:#252542;border:1px solid #333;border-radius:8px;color:#fff;"></select></div>
-            <div class="form-group"><label>Nome</label><input type="text" id="itemNome" placeholder="X-Burguer"></div>
+            <div class="form-group"><label>Categoria</label><select id="itemCategoria" style="width:100%;padding:10px;background:#252542;border:1px solid #333;border-radius:8px;color:#fff;"></select>
+<div id="camposBebida" style="display:none;margin-top:10px;background:#1a1a2e;border-radius:8px;padding:12px;border:1px solid rgba(249,115,22,0.3);">
+  <div style="color:#f97316;font-size:.82em;font-weight:700;margin-bottom:10px;text-transform:uppercase;">🥤 Campos de Bebida</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+    <div><label style="color:#aaa;font-size:.8em;display:block;margin-bottom:4px;">Volume</label>
+      <select id="bebidaVolume" style="width:100%;background:#0f0f1a;border:1px solid #333;border-radius:8px;padding:8px;color:#fff;font-size:.85em;">
+        <option value="">Selecione</option>
+        <option value="lata 350ml">Lata 350ml</option>
+        <option value="600ml">Garrafa 600ml</option>
+        <option value="1 litro">1 Litro</option>
+        <option value="1,5 litro">1,5 Litro</option>
+        <option value="2 litros">2 Litros</option>
+        <option value="copo">Copo</option>
+      </select></div>
+    <div><label style="color:#aaa;font-size:.8em;display:block;margin-bottom:4px;">Qtd em Estoque</label>
+      <input type="number" id="bebidaEstoque" placeholder="Ex: 24" min="0" style="width:100%;background:#0f0f1a;border:1px solid #333;border-radius:8px;padding:8px;color:#fff;font-size:.85em;"></div>
+  </div>
+</div></div>
+            <div class="form-group"><label>Nome</label><input type="text" id="itemNome" placeholder="X-Burguer" oninput="debounceImagem(this.value)"></div>
             <div class="form-group"><label>Descrição</label><input type="text" id="itemDesc" placeholder="Pão, hambúrguer, queijo..."></div>
             <div class="form-row">
                 <div class="form-group"><label>Preço (R$)</label><input type="number" id="itemPreco" step="0.50"></div>
@@ -1022,7 +1050,43 @@
 
         function fecharModalItem() { document.getElementById('modalItem').classList.remove('active'); }
 
-        async function salvarItem() {
+        function setProgress(pct, msg) {
+  var fill = document.getElementById('saveFill');
+  var status = document.getElementById('saveStatus');
+  if (fill) fill.style.width = pct + '%';
+  if (status) status.textContent = msg || '';
+}
+
+function mostrarSaveOverlay(titulo, msg) {
+  var ov = document.getElementById('saveOverlay');
+  var tt = document.getElementById('saveTitle');
+  var ms = document.getElementById('saveMsg');
+  var prev = document.getElementById('imgGeradaPreview');
+  if (ov) ov.classList.add('show');
+  if (tt) tt.textContent = titulo || 'Salvando...';
+  if (ms) ms.textContent = msg || '';
+  if (prev) { prev.style.display = 'none'; prev.src = ''; }
+  setProgress(0, 'Iniciando...');
+}
+
+function fecharSaveOverlay() {
+  var ov = document.getElementById('saveOverlay');
+  if (ov) ov.classList.remove('show');
+}
+
+function mostrarImgGerada(url) {
+  var prev = document.getElementById('imgGeradaPreview');
+  if (prev && url) { prev.src = url; prev.style.display = 'block'; }
+}
+
+async function salvarItem() {
+  const btn = document.querySelector('[onclick="salvarItem()"]');
+  if (btn) { btn.disabled=true; btn.textContent='⏳ Salvando...'; btn.style.opacity='0.6'; }
+  try { await _salvarItemReal(); } finally {
+    if (btn) { setTimeout(()=>{ btn.disabled=false; btn.textContent='💾 Salvar Item'; btn.style.opacity='1'; },1500); }
+  }
+}
+async function _salvarItemReal() {
             const id = document.getElementById('itemEditId').value;
             const body = {
                 categoriaId: document.getElementById('itemCategoria').value,
@@ -2289,5 +2353,15 @@ async function enviarCardapioDia() {
   </div>
 </div>
 
+<!-- OVERLAY SALVAMENTO -->
+<div class="save-overlay" id="saveOverlay">
+  <div class="save-box">
+    <h3 id="saveTitle">Salvando item...</h3>
+    <p id="saveMsg">Gerando imagem automaticamente com IA</p>
+    <div class="progress-bar"><div class="progress-fill" id="saveFill"></div></div>
+    <div class="save-status" id="saveStatus">Aguarde...</div>
+    <img class="img-gerada-preview" id="imgGeradaPreview" src="" alt="">
+  </div>
+</div>
 </body>
 </html>
