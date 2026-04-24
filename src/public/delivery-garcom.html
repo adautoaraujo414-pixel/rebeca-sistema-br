@@ -644,6 +644,12 @@ async function fecharMesa(mesa) {
         itensHtml += '<div class="ci-item"><span>'+it.nome+' x'+(it.quantidade||1)+'</span><span>R$ '+subtotal+'</span></div>';
       });
     });
+    if (!window._pixKey) {
+        fetch(API+'/salon/pix-key', { headers:{ Authorization:'Bearer '+token } })
+            .then(function(res){ return res.json(); })
+            .then(function(d){ window._pixKey = d.pixKey||''; window._nomeRest = d.nome||'Restaurante'; })
+            .catch(function(){});
+    }
     document.getElementById('mdMesaNum').textContent = mesa;
     document.getElementById('mdTotalStr').textContent = 'R$ '+total.toFixed(2).replace('.',',');
     document.getElementById('mdItens').innerHTML = itensHtml||'<p style="color:#888;text-align:center;padding:8px">Sem itens abertos</p>';
@@ -669,7 +675,7 @@ function selPag(forma,btn) {
 }
 
 function gerarQRPix(valor) {
-  const chave = window._pixKey||'contato@restaurante.com';
+  const chave = window._pixKey||'';
   const nome = (window._nomeRest||'Restaurante').substring(0,25).toUpperCase().replace(/[^A-Z0-9 ]/g,'');
   function emv(id,v){ return id+String(v.length).padStart(2,'0')+v; }
   const ma = emv('00','br.gov.bcb.pix')+emv('01',chave);

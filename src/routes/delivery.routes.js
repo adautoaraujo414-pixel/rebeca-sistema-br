@@ -1441,5 +1441,14 @@ router.get('/salon/stats', authDelivery, async (req, res) => {
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
+// GET /salon/pix-key - retorna chave pix configurada
+router.get('/salon/pix-key', authDelivery, async (req, res) => {
+    try {
+        const AdminDelivery = require('../models/AdminDelivery');
+        const admin = await AdminDelivery.findById(req.adminId).select('pixKey nomeEstabelecimento');
+        res.json({ pixKey: admin && admin.pixKey ? admin.pixKey : '', nome: admin && admin.nomeEstabelecimento ? admin.nomeEstabelecimento : 'Restaurante' });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
 
 module.exports = router;

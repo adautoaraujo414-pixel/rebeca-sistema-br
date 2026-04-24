@@ -1086,7 +1086,8 @@ document.addEventListener('DOMContentLoaded',function(){
 </div>
 <script>
 async function carregarStatsGarcom() {
-  const tk = localStorage.getItem('delivery_token')||localStorage.getItem('admin_token')||'';
+  const tk = localStorage.getItem('delivery_token')||localStorage.getItem('admin_token')||localStorage.getItem('token')||'';
+    if (!tk) { console.warn('stats: token nao encontrado'); return; }
   try {
     const r = await fetch('/api/delivery/salon/stats', { headers:{ Authorization:'Bearer '+tk } });
     if(!r.ok) return;
