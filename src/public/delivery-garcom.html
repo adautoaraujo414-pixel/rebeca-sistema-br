@@ -274,7 +274,7 @@ async function fazerLogin() {
     const d = await r.json();
     if (!d.sucesso) { err.textContent = d.erro || 'Token ou senha inválidos'; return; }
     token = tk;
-    document.getElementById('nomeGarcom').textContent = '👤 ' + (d.garcom || d.nome || 'Garçom');
+    document.getElementById('nomeGarcom').textContent = '👤 ' + (d.garcom?.nome || d.nome || 'Garçom');
     const nomeRest = document.getElementById('nomeRestaurante');
     if (d.nomeComercio) { nomeRest.textContent = d.nomeComercio; nomeRest.style.display = ''; }
     document.getElementById('login-screen').style.display = 'none';

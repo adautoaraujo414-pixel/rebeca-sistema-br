@@ -1251,7 +1251,8 @@ router.post('/garcons/login', async (req, res) => {
         const { token, senha } = req.body;
         const g = await GarcomDelivery.findOne({ token, senha, ativo: true });
         if (!g) return res.status(401).json({ erro: 'Token ou senha inválidos' });
-        res.json({ sucesso: true, garcom: { nome: g.nome, token: g.token, mesas: g.mesas, adminId: g.adminId } });
+        const adminG = await AdminDelivery.findById(g.adminId).select('nomeComercio');
+        res.json({ sucesso: true, garcom: { nome: g.nome, token: g.token, mesas: g.mesas, adminId: g.adminId }, nomeComercio: adminG?.nomeComercio || '' });
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
@@ -1518,8 +1519,7 @@ router.post('/garcons/pedido', async (req, res) => {
         if (!garcomToken) return res.status(400).json({ erro: 'Token nao informado' });
         const g = await GarcomDelivery.findOne({ token: garcomToken, ativo: true });
         if (!g) return res.status(401).json({ erro: 'Token invalido' });
-        const PedidoDelivery = require('../models/PedidoDelivery');
-        const total = itens.reduce((s, i) => s + (i.preco * i.qtd), 0);
+        const total = itens.reduce((s, i) => s + (i.preco * (i.qtd || i.quantidade || 1)), 0);
         const pedido = await PedidoDelivery.create({
             adminId: g.adminId,
             tipo: 'mesa',
