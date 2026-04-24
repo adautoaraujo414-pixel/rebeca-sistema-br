@@ -1223,7 +1223,6 @@ router.delete('/garcons/:id', authDelivery, async (req, res) => {
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
-module.exports = router;
 
 // ========== GARÇOM: MESAS E PEDIDOS SALON ==========
 router.get('/salon/mesas', authDelivery, async (req, res) => {
@@ -1433,3 +1432,5 @@ router.get('/entregadores/:id/historico', authDelivery, async (req, res) => {
         });
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
+
+module.exports = router;
