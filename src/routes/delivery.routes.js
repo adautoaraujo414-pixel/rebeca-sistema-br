@@ -1521,6 +1521,13 @@ router.post('/garcons/pedido', async (req, res) => {
         if (!g) return res.status(401).json({ erro: 'Token invalido' });
         const total = itens.reduce((s, i) => s + (i.preco * (i.qtd || i.quantidade || 1)), 0);
         const { nomeCliente } = req.body;
+        const itensMapeados = itens.map(i => ({
+            itemId: i.itemId || i._id,
+            nome: i.nome,
+            quantidade: i.qtd || i.quantidade || 1,
+            precoUnitario: i.preco || i.precoUnitario || 0,
+            subtotal: (i.preco || i.precoUnitario || 0) * (i.qtd || i.quantidade || 1)
+        }));
         const pedido = await PedidoDelivery.create({
             adminId: g.adminId,
             tipo: 'mesa',
@@ -1529,10 +1536,12 @@ router.post('/garcons/pedido', async (req, res) => {
             garcomToken: g.token,
             clienteNome: nomeCliente || g.nome,
             clienteTelefone: '00000000000',
-            itens,
+            itens: itensMapeados,
             total,
             observacao: observacao || '',
-            status: 'novo'
+            status: 'novo',
+            tipoEntrega: 'retirada',
+            formaPagamento: 'na_entrega'
         });
         res.json({ sucesso: true, pedido });
     } catch(e) { res.status(500).json({ erro: e.message }); }
