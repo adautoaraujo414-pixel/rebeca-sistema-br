@@ -1228,6 +1228,70 @@ router.post('/garcons', authDelivery, async (req, res) => {
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
+router.post('/garcons/login', async (req, res) => {
+    try {
+        const { token, senha } = req.body;
+        const g = await GarcomDelivery.findOne({ token, senha, ativo: true });
+        if (!g) return res.status(401).json({ erro: 'Token ou senha inválidos' });
+        const adminG = await AdminDelivery.findById(g.adminId).select('nomeComercio');
+        res.json({ sucesso: true, garcom: { nome: g.nome, token: g.token, mesas: g.mesas, adminId: g.adminId }, nomeComercio: adminG?.nomeComercio || '' });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+router.get('/garcons/cardapio', async (req, res) => {
+    try {
+        const garcomToken = req.query.garcomToken;
+        if (!garcomToken) return res.status(400).json({ erro: 'Token nao informado' });
+        const g = await GarcomDelivery.findOne({ token: garcomToken, ativo: true });
+        if (!g) return res.status(401).json({ erro: 'Token invalido ou garcom inativo' });
+        const itens = await ItemCardapio.find({ adminId: g.adminId, ativo: true })
+            .sort({ ordem: 1 })
+            .populate('categoriaId', 'nome emoji');
+        const admin = await AdminDelivery.findById(g.adminId).select('nomeEstabelecimento');
+        const cats = [...new Set(itens.map(i => i.categoriaId?.nome).filter(Boolean))];
+        res.json({
+            sucesso: true,
+            itens,
+            nomeEstabelecimento: admin ? admin.nomeEstabelecimento : 'Restaurante',
+            garcom: { nome: g.nome, mesas: g.mesas, adminId: g.adminId }
+        });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+router.post('/garcons/pedido', async (req, res) => {
+    try {
+        const { garcomToken, mesa, itens, observacao } = req.body;
+        if (!garcomToken) return res.status(400).json({ erro: 'Token nao informado' });
+        const g = await GarcomDelivery.findOne({ token: garcomToken, ativo: true });
+        if (!g) return res.status(401).json({ erro: 'Token invalido' });
+        const total = itens.reduce((s, i) => s + (i.preco * (i.qtd || i.quantidade || 1)), 0);
+        const { nomeCliente } = req.body;
+        const itensMapeados = itens.map(i => ({
+            itemId: i.itemId || i._id,
+            nome: i.nome,
+            quantidade: i.qtd || i.quantidade || 1,
+            precoUnitario: i.preco || i.precoUnitario || 0,
+            subtotal: (i.preco || i.precoUnitario || 0) * (i.qtd || i.quantidade || 1)
+        }));
+        const pedido = await PedidoDelivery.create({
+            adminId: g.adminId,
+            tipo: 'mesa',
+            mesa: mesa || 'S/N',
+            garcom: g.nome,
+            garcomToken: g.token,
+            clienteNome: nomeCliente || g.nome,
+            clienteTelefone: '00000000000',
+            itens: itensMapeados,
+            total,
+            observacao: observacao || '',
+            status: 'novo',
+            tipoEntrega: 'retirada',
+            formaPagamento: 'na_entrega'
+        });
+        res.json({ sucesso: true, pedido });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
 router.post('/garcons/:id/toggle', authDelivery, async (req, res) => {
     try {
         const g = await GarcomDelivery.findOne({ _id: req.params.id, adminId: req.adminId });
@@ -1246,15 +1310,6 @@ router.delete('/garcons/:id', authDelivery, async (req, res) => {
 });
 
 // Login do garcom pelo app
-router.post('/garcons/login', async (req, res) => {
-    try {
-        const { token, senha } = req.body;
-        const g = await GarcomDelivery.findOne({ token, senha, ativo: true });
-        if (!g) return res.status(401).json({ erro: 'Token ou senha inválidos' });
-        const adminG = await AdminDelivery.findById(g.adminId).select('nomeComercio');
-        res.json({ sucesso: true, garcom: { nome: g.nome, token: g.token, mesas: g.mesas, adminId: g.adminId }, nomeComercio: adminG?.nomeComercio || '' });
-    } catch(e) { res.status(500).json({ erro: e.message }); }
-});
 
 router.put('/garcons/:id', authDelivery, async (req, res) => {
     try {
@@ -1492,60 +1547,8 @@ router.get('/salon/pix-key', authDelivery, async (req, res) => {
 
 
 // Cardapio para o garcom (autenticado pelo token pessoal GRC-xxx)
-router.get('/garcons/cardapio', async (req, res) => {
-    try {
-        const garcomToken = req.query.garcomToken;
-        if (!garcomToken) return res.status(400).json({ erro: 'Token nao informado' });
-        const g = await GarcomDelivery.findOne({ token: garcomToken, ativo: true });
-        if (!g) return res.status(401).json({ erro: 'Token invalido ou garcom inativo' });
-        const itens = await ItemCardapio.find({ adminId: g.adminId, ativo: true })
-            .sort({ ordem: 1 })
-            .populate('categoriaId', 'nome emoji');
-        const admin = await AdminDelivery.findById(g.adminId).select('nomeEstabelecimento');
-        const cats = [...new Set(itens.map(i => i.categoriaId?.nome).filter(Boolean))];
-        res.json({
-            sucesso: true,
-            itens,
-            nomeEstabelecimento: admin ? admin.nomeEstabelecimento : 'Restaurante',
-            garcom: { nome: g.nome, mesas: g.mesas, adminId: g.adminId }
-        });
-    } catch(e) { res.status(500).json({ erro: e.message }); }
-});
 
 // Pedido do garcom (autenticado pelo token pessoal GRC-xxx)
-router.post('/garcons/pedido', async (req, res) => {
-    try {
-        const { garcomToken, mesa, itens, observacao } = req.body;
-        if (!garcomToken) return res.status(400).json({ erro: 'Token nao informado' });
-        const g = await GarcomDelivery.findOne({ token: garcomToken, ativo: true });
-        if (!g) return res.status(401).json({ erro: 'Token invalido' });
-        const total = itens.reduce((s, i) => s + (i.preco * (i.qtd || i.quantidade || 1)), 0);
-        const { nomeCliente } = req.body;
-        const itensMapeados = itens.map(i => ({
-            itemId: i.itemId || i._id,
-            nome: i.nome,
-            quantidade: i.qtd || i.quantidade || 1,
-            precoUnitario: i.preco || i.precoUnitario || 0,
-            subtotal: (i.preco || i.precoUnitario || 0) * (i.qtd || i.quantidade || 1)
-        }));
-        const pedido = await PedidoDelivery.create({
-            adminId: g.adminId,
-            tipo: 'mesa',
-            mesa: mesa || 'S/N',
-            garcom: g.nome,
-            garcomToken: g.token,
-            clienteNome: nomeCliente || g.nome,
-            clienteTelefone: '00000000000',
-            itens: itensMapeados,
-            total,
-            observacao: observacao || '',
-            status: 'novo',
-            tipoEntrega: 'retirada',
-            formaPagamento: 'na_entrega'
-        });
-        res.json({ sucesso: true, pedido });
-    } catch(e) { res.status(500).json({ erro: e.message }); }
-});
 
 
 // QR Code do restaurante - gerar slug se não tiver
