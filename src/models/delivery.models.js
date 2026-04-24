@@ -133,12 +133,15 @@ const PedidoDeliverySchema = new mongoose.Schema({
 }, { timestamps: true });
 
 // Auto-incremento do número do pedido
-PedidoDeliverySchema.pre('save', async function(next) {
+PedidoDeliverySchema.pre('save', async function() {
     if (this.isNew && !this.numero) {
-        const ultimo = await this.constructor.findOne({ adminId: this.adminId }).sort({ numero: -1 });
-        this.numero = (ultimo?.numero || 0) + 1;
+        try {
+            const ultimo = await this.constructor.findOne({ adminId: this.adminId }).sort({ numero: -1 });
+            this.numero = (ultimo?.numero || 0) + 1;
+        } catch(e) {
+            this.numero = Date.now();
+        }
     }
-    next();
 });
 
 // ========== CONFIG DELIVERY ==========
