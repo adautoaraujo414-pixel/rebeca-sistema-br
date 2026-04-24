@@ -1024,5 +1024,38 @@ function toggleImpressao() {
   </div>
 </div>
 
+<script>
+async function atualizarPainelProducao() {
+  const el = document.getElementById('listaPainelProducao');
+  if (!el) return;
+  try {
+    const tk = localStorage.getItem('delivery_token') || localStorage.getItem('admin_token') || token || '';
+    const r = await fetch('/api/delivery/pedidos?status=preparando,pronto&limit=30', { headers:{'Authorization':'Bearer '+tk} });
+    const data = await r.json();
+    const lista = Array.isArray(data) ? data : (data.pedidos||[]);
+    if (!lista.length) { el.innerHTML='<p style="color:#888;text-align:center;padding:12px;">Nenhum pedido em produção</p>'; return; }
+    el.innerHTML = lista.map(p=>{
+      const min = Math.round((Date.now()-new Date(p.dataPreparando||p.createdAt).getTime())/60000);
+      const cor = p.status==='pronto'?'#22c55e':'#f97316';
+      const local = p.numeroMesa?'Mesa '+p.numeroMesa:(p.tipoLocal==='delivery'?'🛵 Delivery':'Balcão');
+      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px;background:#0f0f1a;border-radius:8px;margin-bottom:6px;border-left:3px solid '+cor+';">'+
+        '<div><span style="color:'+cor+';font-weight:700;">#'+p.numero+'</span>'+
+        '<span style="color:#ccc;margin-left:8px;">'+(p.clienteNome||'Cliente')+'</span>'+
+        '<span style="color:#888;font-size:.78em;margin-left:8px;">'+local+'</span></div>'+
+        '<div style="display:flex;align-items:center;gap:6px;">'+
+        '<span style="color:#aaa;font-size:.75em;">⏱️ '+min+'min</span>'+
+        '<span style="background:'+cor+'22;color:'+cor+';padding:3px 8px;border-radius:6px;font-size:.78em;font-weight:600;">'+(p.status==='pronto'?'✅ PRONTO':'🍳 FAZENDO')+'</span>'+
+        '</div></div>';
+    }).join('');
+  } catch(e) { if(el) el.innerHTML='<p style="color:#e74c3c;">Erro ao carregar</p>'; }
+}
+function togglePainelProducao() {
+  const el = document.getElementById('painelProducao');
+  if (!el) return;
+  el.style.display = el.style.display==='none'?'block':'none';
+  if (el.style.display==='block') atualizarPainelProducao();
+}
+setInterval(()=>{ const el=document.getElementById('painelProducao'); if(el&&el.style.display==='block') atualizarPainelProducao(); },15000);
+</script>
 </body>
 </html>

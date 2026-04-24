@@ -774,5 +774,42 @@ document.addEventListener('DOMContentLoaded', () => {
   observer.observe(document.body, {subtree:true, attributes:true, attributeFilter:['style']});
 });
 </script>
+<script>
+async function carregarGarconsPg() {
+  const adminTk = localStorage.getItem('garcom_admin_token') || token;
+  const el = document.getElementById('listaGarconsPg');
+  if (!el) return;
+  try {
+    const r = await fetch('/api/delivery/garcons', { headers:{'Authorization':'Bearer '+adminTk} });
+    const lista = await r.json();
+    if (!Array.isArray(lista)||!lista.length) { el.innerHTML='<p style="color:#888;text-align:center;padding:16px;">Nenhum garçom cadastrado</p>'; return; }
+    el.innerHTML = lista.map(g=>'<div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:#0f0f1a;border-radius:8px;margin-bottom:8px;border:1px solid #222;">'+
+      '<div><div style="color:#fff;font-weight:600;">'+g.nome+'</div>'+
+      '<div style="color:#888;font-size:.78em;">'+(g.telefone||'sem telefone')+' · Token: '+(g.token||'-')+'</div>'+
+      '<div style="color:#aaa;font-size:.75em;">Pedidos: '+(g.totalPedidos||0)+' · R$ '+(g.totalVendido||0).toFixed(2)+'</div></div>'+
+      '<button onclick="excluirGarcom(''+g._id+'')" style="background:#e74c3c;border:none;border-radius:6px;padding:6px 10px;color:#fff;cursor:pointer;">🗑️</button></div>'
+    ).join('');
+  } catch(e) { if(el) el.innerHTML='<p style="color:#e74c3c;">Erro ao carregar</p>'; }
+}
+async function excluirGarcom(id) {
+  if (!confirm('Remover garçom?')) return;
+  const adminTk = localStorage.getItem('garcom_admin_token') || token;
+  await fetch('/api/delivery/garcons/'+id, { method:'DELETE', headers:{'Authorization':'Bearer '+adminTk} });
+  carregarGarconsPg();
+}
+function calcTimerGarcom(data) {
+  const diff = Date.now()-new Date(data).getTime();
+  const min = Math.floor(diff/60000);
+  const seg = Math.floor((diff%60000)/1000);
+  const cor = min>=20?'#e74c3c':min>=10?'#f97316':'#22c55e';
+  return '<span style="color:'+cor+';font-weight:700;">⏱️ '+min+'m'+seg+'s</span>';
+}
+setInterval(()=>{
+  document.querySelectorAll('[data-criado-garcom]').forEach(el=>{
+    const ti = el.querySelector('.timer-garcom');
+    if(ti) ti.innerHTML = calcTimerGarcom(el.dataset.criadoGarcom);
+  });
+}, 1000);
+</script>
 </body>
 </html>
