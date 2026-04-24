@@ -294,7 +294,17 @@
                 </div>
 
 
-                <div id="page-entregadores" class="page">
+                
+<!-- ===== PÁGINA GARÇONS ===== -->
+<div id="page-garcons" class="page">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+    <h2 style="color:#00d4ff;font-size:1.3em">🧑‍🍽️ Garçons</h2>
+    <button onclick="abrirModalNovoGarcom()" style="background:#00d4ff;border:none;color:#000;padding:10px 20px;border-radius:8px;font-weight:700;cursor:pointer">+ Novo Garçom</button>
+  </div>
+  <div id="listaGarcons"></div>
+</div>
+
+<div id="page-entregadores" class="page">
                     <h2 style="margin-bottom:20px;">🏍️ Entregadores</h2>
                     <div class="panel" style="margin-bottom:16px;">
                         <h3 style="margin-bottom:16px;">➕ Cadastrar Entregador</h3>
@@ -845,17 +855,7 @@
             <div class="sep"></div>
             <p style="text-align:center;font-size:11px">Obrigado pela preferência! 😊</p>
             <script>window.onload=function(){window.print();}<\/script>
-            
-<!-- ===== PÁGINA GARÇONS ===== -->
-<div id="page-garcons" class="page">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
-    <h2 style="color:#00d4ff;font-size:1.3em">🧑‍🍽️ Garçons</h2>
-    <button onclick="abrirModalNovoGarcom()" style="background:#00d4ff;border:none;color:#000;padding:10px 20px;border-radius:8px;font-weight:700;cursor:pointer">+ Novo Garçom</button>
-  </div>
-  <div id="listaGarcons"></div>
-</div>
-
-<!-- Modal ficha garçom -->
+            <!-- Modal ficha garçom -->
 <div id="modalFichaGarcom" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:9000;align-items:center;justify-content:center">
   <div style="background:#1a1a2e;border-radius:16px;padding:28px;width:95%;max-width:600px;max-height:90vh;overflow-y:auto;border:1px solid #333">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
