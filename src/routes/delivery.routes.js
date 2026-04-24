@@ -1361,7 +1361,7 @@ router.get('/salon/mesas', authDelivery, async (req, res) => {
 
 router.post('/salon/pedido', authDelivery, async (req, res) => {
     try {
-        const { clienteNome, itens, numeroMesa, nomeComanda, observacao, formaPagamento, subtotal, total, garcomId } = req.body;
+        const { clienteNome, itens, numeroMesa, nomeComanda, observacao, formaPagamento, subtotal, total, garcomId, garcomNome } = req.body;
         if (!itens || !itens.length) return res.status(400).json({ erro: 'Itens obrigatorios' });
         const pedido = new PedidoDelivery({
             adminId: req.adminId,
@@ -1374,6 +1374,7 @@ router.post('/salon/pedido', authDelivery, async (req, res) => {
             observacao,
             origemPedido: 'garcom',
             garcomId,
+            garcomNome: garcomNome||"",
             formaPagamento: formaPagamento || 'na_entrega',
             subtotal: subtotal || 0,
             total: total || 0,
@@ -1415,5 +1416,30 @@ router.get('/salon/pedidos-mesa/:mesa', authDelivery, async (req, res) => {
         res.json(pedidos);
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
+// GET /salon/stats - estatísticas do dia por garçom
+router.get('/salon/stats', authDelivery, async (req, res) => {
+    try {
+        const hoje = new Date(); hoje.setHours(0,0,0,0);
+        const pedidos = await PedidoDelivery.find({ adminId: req.adminId, createdAt: { $gte: hoje } });
+        const statsMap = {};
+        let totalDia = 0, comandasFechadas = 0;
+        pedidos.forEach(p => {
+            const gId = String(p.garcomId || p.origemPedido || 'sistema');
+            const gNome = p.garcomNome || (p.origemPedido==='garcom'?'Garçom':(p.origemPedido==='caixa'?'Caixa':'Sistema'));
+            if (!statsMap[gId]) statsMap[gId] = { id:gId, nome:gNome, pedidos:0, comandas:0, total:0 };
+            statsMap[gId].pedidos++;
+            if (p.status==='entregue' && p.pago) {
+                statsMap[gId].total += (p.total||0);
+                totalDia += (p.total||0);
+                if (p.origemPedido==='garcom') { statsMap[gId].comandas++; comandasFechadas++; }
+            }
+        });
+        const mesasAtivas = await PedidoDelivery.distinct('numeroMesa', {
+            adminId: req.adminId, tipoLocal:'mesa', status:{ $nin:['entregue','cancelado'] }
+        });
+        res.json({ totalDia, comandasFechadas, mesasAtivas:(mesasAtivas||[]).filter(Boolean).length, porGarcom:Object.values(statsMap) });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
 
 module.exports = router;

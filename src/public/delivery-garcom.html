@@ -633,10 +633,75 @@ function renderMesas(mesas) {
 }
 
 async function fecharMesa(mesa) {
-  if (!confirm("Fechar mesa "+mesa+"?")) return;
-  await fetch(API+"/salon/mesa/"+mesa+"/fechar", { method:"PUT", headers:{ Authorization:"Bearer "+token } });
-  showToast("Mesa "+mesa+" fechada!", "success");
-  carregarMesas();
+  try {
+    const r = await fetch(API+"/salon/pedidos-mesa/"+mesa, { headers:{ Authorization:"Bearer "+token } });
+    const pedidos = await r.json();
+    let total = 0, itensHtml = '';
+    pedidos.forEach(p => {
+      total += p.total||0;
+      (p.itens||[]).forEach(it => {
+        const subtotal = ((it.preco||0)*(it.quantidade||1)).toFixed(2).replace('.',',');
+        itensHtml += '<div class="ci-item"><span>'+it.nome+' x'+(it.quantidade||1)+'</span><span>R$ '+subtotal+'</span></div>';
+      });
+    });
+    document.getElementById('mdMesaNum').textContent = mesa;
+    document.getElementById('mdTotalStr').textContent = 'R$ '+total.toFixed(2).replace('.',',');
+    document.getElementById('mdItens').innerHTML = itensHtml||'<p style="color:#888;text-align:center;padding:8px">Sem itens abertos</p>';
+    document.getElementById('mdMesa').value = mesa;
+    document.getElementById('mdTotal').value = total;
+    document.getElementById('mdForma').value = '';
+    document.querySelectorAll('.pag-btn').forEach(b=>b.classList.remove('sel'));
+    document.getElementById('pixSec').style.display='none';
+    document.getElementById('modalComanda').style.display='flex';
+  } catch(e) { showToast('Erro ao carregar mesa','error'); }
+}
+
+function selPag(forma,btn) {
+  document.querySelectorAll('.pag-btn').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel');
+  document.getElementById('mdForma').value = forma;
+  if (forma==='pix') {
+    gerarQRPix(parseFloat(document.getElementById('mdTotal').value)||0);
+    document.getElementById('pixSec').style.display='block';
+  } else {
+    document.getElementById('pixSec').style.display='none';
+  }
+}
+
+function gerarQRPix(valor) {
+  const chave = window._pixKey||'contato@restaurante.com';
+  const nome = (window._nomeRest||'Restaurante').substring(0,25).toUpperCase().replace(/[^A-Z0-9 ]/g,'');
+  function emv(id,v){ return id+String(v.length).padStart(2,'0')+v; }
+  const ma = emv('00','br.gov.bcb.pix')+emv('01',chave);
+  const payload = emv('00','01')+emv('26',ma)+emv('52','0000')+emv('53','986')
+    +emv('54',valor.toFixed(2))+emv('58','BR')+emv('59',nome)+emv('60','BRASIL')
+    +emv('62',emv('05','MESA'+Date.now()))+'6304';
+  function crc16(s){ let c=0xFFFF; for(let i=0;i<s.length;i++){c^=s.charCodeAt(i)<<8; for(let j=0;j<8;j++)c=(c&0x8000)?((c<<1)^0x1021):(c<<1);} return(c&0xFFFF).toString(16).toUpperCase().padStart(4,'0'); }
+  const full = payload+crc16(payload);
+  document.getElementById('qrImg').src='https://api.qrserver.com/v1/create-qr-code/?size=200x200&data='+encodeURIComponent(full);
+  document.getElementById('pixCopia').value=full;
+}
+
+function copiarPix(){ navigator.clipboard.writeText(document.getElementById('pixCopia').value).then(()=>showToast('PIX copiado!','success')); }
+
+async function confirmarComanda() {
+  const mesa=document.getElementById('mdMesa').value;
+  const forma=document.getElementById('mdForma').value;
+  if(!forma){ showToast('Escolha a forma de pagamento','error'); return; }
+  const total=parseFloat(document.getElementById('mdTotal').value)||0;
+  const btn=document.getElementById('btnConfirmar');
+  btn.disabled=true; btn.textContent='Fechando...';
+  try {
+    await fetch(API+"/salon/mesa/"+mesa+"/fechar",{
+      method:'PUT',
+      headers:{ Authorization:'Bearer '+token,'Content-Type':'application/json' },
+      body:JSON.stringify({ formaPagamento:forma, total, garcomId:garcomInfo?.id||'', garcomNome:garcomInfo?.nome||'' })
+    });
+    document.getElementById('modalComanda').style.display='none';
+    showToast('Mesa '+mesa+' fechada! '+forma.toUpperCase()+' R$ '+total.toFixed(2).replace('.',','),'success');
+    carregarMesas();
+  } catch(e){ showToast('Erro ao fechar comanda','error'); }
+  btn.disabled=false; btn.textContent='✅ Confirmar Pagamento';
 }
 
 function mudarTab(tab) {
@@ -811,5 +876,43 @@ setInterval(()=>{
   });
 }, 1000);
 </script>
+
+<!-- Modal Fechar Comanda -->
+<div id="modalComanda" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9999;align-items:center;justify-content:center;padding:16px">
+  <div style="background:#1a1a2e;border-radius:18px;width:100%;max-width:400px;max-height:90vh;overflow-y:auto;padding:22px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <h3 style="color:#fff;font-size:1.1em">🍽️ Fechar Mesa <span id="mdMesaNum"></span></h3>
+      <button onclick="document.getElementById('modalComanda').style.display='none'" style="background:none;border:none;color:#aaa;font-size:1.5em;cursor:pointer;line-height:1">✕</button>
+    </div>
+    <div id="mdItens" style="border:1px solid #2a2a4a;border-radius:10px;padding:10px;max-height:180px;overflow-y:auto;margin-bottom:12px"></div>
+    <div style="display:flex;justify-content:space-between;font-size:1.25em;font-weight:800;color:#4ade80;margin-bottom:18px;padding:0 2px">
+      <span>Total</span><span id="mdTotalStr">R$ 0,00</span>
+    </div>
+    <p style="color:#aaa;font-size:.82em;margin-bottom:8px;font-weight:600">Forma de pagamento:</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+      <button class="pag-btn" onclick="selPag('dinheiro',this)" style="padding:13px 8px;border-radius:10px;border:2px solid #2a2a4a;background:#0f0f1a;color:#fff;cursor:pointer;font-size:.88em;font-weight:600">💵 Dinheiro</button>
+      <button class="pag-btn" onclick="selPag('pix',this)" style="padding:13px 8px;border-radius:10px;border:2px solid #2a2a4a;background:#0f0f1a;color:#fff;cursor:pointer;font-size:.88em;font-weight:600">📱 PIX</button>
+      <button class="pag-btn" onclick="selPag('debito',this)" style="padding:13px 8px;border-radius:10px;border:2px solid #2a2a4a;background:#0f0f1a;color:#fff;cursor:pointer;font-size:.88em;font-weight:600">💳 Débito</button>
+      <button class="pag-btn" onclick="selPag('credito',this)" style="padding:13px 8px;border-radius:10px;border:2px solid #2a2a4a;background:#0f0f1a;color:#fff;cursor:pointer;font-size:.88em;font-weight:600">💳 Crédito</button>
+    </div>
+    <div id="pixSec" style="display:none;text-align:center;margin-bottom:14px;background:#0f0f1a;border-radius:10px;padding:14px">
+      <p style="color:#aaa;font-size:.78em;margin-bottom:10px">Cliente escaneia o QR Code para pagar</p>
+      <img id="qrImg" src="" alt="QR PIX" style="width:180px;height:180px;border-radius:8px;background:#fff;padding:6px">
+      <div style="margin-top:10px;display:flex;gap:6px;align-items:center">
+        <input id="pixCopia" type="text" readonly style="flex:1;background:#1a1a2e;border:1px solid #2a2a4a;border-radius:8px;color:#888;padding:7px 8px;font-size:.72em;min-width:0">
+        <button onclick="copiarPix()" style="padding:7px 12px;background:#6366f1;border:none;border-radius:8px;color:#fff;cursor:pointer;font-size:.8em;white-space:nowrap">Copiar</button>
+      </div>
+    </div>
+    <input type="hidden" id="mdMesa">
+    <input type="hidden" id="mdTotal">
+    <input type="hidden" id="mdForma">
+    <button id="btnConfirmar" onclick="confirmarComanda()" style="width:100%;padding:15px;background:#22c55e;border:none;border-radius:12px;color:#fff;font-size:1em;font-weight:700;cursor:pointer;transition:opacity .2s">✅ Confirmar Pagamento</button>
+  </div>
+</div>
+<style>
+.pag-btn.sel{border-color:#6366f1!important;background:#3730a3!important;color:#fff!important}
+.ci-item{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #1e1e3a;font-size:.83em;color:#ddd;gap:8px}
+.ci-item span:last-child{font-weight:700;color:#4ade80;white-space:nowrap}
+</style>
 </body>
 </html>
