@@ -388,15 +388,15 @@ function iniciarNovaComanda() {
 // MAPA DE MESAS
 async function carregarMesas() {
   try {
-    const r = await fetch(API+'/caixa/pedidos', {
+    const r = await fetch(API+'/garcons/mesas-ativas', {
       headers: { Authorization: 'Bearer '+token }
     });
-    const pedidos = await r.json();
+    const d = await r.json();
+    const pedidos = d.pedidos || [];
     mesasOcupadas = {};
-    if (Array.isArray(pedidos)) {
-      pedidos.forEach(p => {
-        const m = p.numeroMesa || p.mesa;
-        if (m && (p.tipoLocal==='mesa' || p.tipo==='mesa')) {
+    pedidos.forEach(p => {
+        const m = String(p.numeroMesa || p.mesa || '');
+        if (m) {
           if (!mesasOcupadas[m]) mesasOcupadas[m] = [];
           mesasOcupadas[m].push(p);
         }
