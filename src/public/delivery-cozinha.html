@@ -214,7 +214,7 @@ function renderCard(p){
   var corCrono=segs<300?'':segs<600?'amarelo':'vermelho';
 
   var origemTag='';
-  if(p.tipoLocal==='mesa') origemTag='<span class="tag-mesa">🍽️ MESA '+(p.numeroMesa||p.mesa||'?')+'</span>';
+  if(p.tipoLocal==='mesa') origemTag='<span class="tag-mesa">🍽️ MESA '+(p.mesa||p.numeroMesa||'?')+(p.garcom?' · '+p.garcom:'')+'</span>';
   else if(p.tipoLocal==='delivery'||p.tipo==='delivery') origemTag='<span class="tag-delivery">🛵 DELIVERY</span>';
   else origemTag='<span class="tag-balcao">🏪 BALCÃO</span>';
 
@@ -322,7 +322,7 @@ function atualizarCronometros(){
 
 async function acao(id, status){
   try {
-    await fetch(B+'/cozinha/pedido/'+id,{
+    await fetch(B+'/pedidos/'+id+'/status',{
       method:'PUT',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+TK},
       body:JSON.stringify({status:status})

@@ -1277,6 +1277,8 @@ router.post('/garcons/pedido', async (req, res) => {
             adminId: g.adminId,
             tipo: 'mesa',
             mesa: mesa || 'S/N',
+            numeroMesa: mesa || 'S/N',
+            tipoLocal: 'mesa',
             garcom: g.nome,
             garcomToken: g.token,
             clienteNome: nomeCliente || g.nome,
