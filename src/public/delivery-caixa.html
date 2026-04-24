@@ -1057,5 +1057,18 @@ function togglePainelProducao() {
 }
 setInterval(()=>{ const el=document.getElementById('painelProducao'); if(el&&el.style.display==='block') atualizarPainelProducao(); },15000);
 </script>
-</body>
+<script>
+document.addEventListener('DOMContentLoaded',function(){
+  var inputs = document.querySelectorAll('input[placeholder]');
+  inputs.forEach(function(el){
+    var ph = (el.placeholder||'').toLowerCase();
+    if((ph.includes('endere')||ph.includes('rua'))&&!document.getElementById('bairroCaixa')){
+      var b=document.createElement('input');
+      b.type='text';b.id='bairroCaixa';b.placeholder='🏘️ Bairro';
+      b.style='width:100%;background:#0f0f1a;border:1px solid #333;border-radius:8px;padding:10px;color:#fff;font-size:.9em;box-sizing:border-box;margin-top:6px;display:block;';
+      el.parentNode.insertBefore(b,el.nextSibling);
+    }
+  });
+});
+</script></body>
 </html>
