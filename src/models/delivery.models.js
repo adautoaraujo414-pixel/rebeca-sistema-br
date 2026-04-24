@@ -192,6 +192,8 @@ const AdminDeliverySchema = new mongoose.Schema({
 
     // Dados do negócio
     nomeComercio: { type: String, required: true },
+    slug: { type: String, unique: true, sparse: true },
+    nomeEstabelecimento: { type: String, default: '' },
     tipoNegocio: { type: String, default: 'restaurante' },
     cidade: String,
 

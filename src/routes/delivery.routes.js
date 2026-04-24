@@ -1525,4 +1525,47 @@ router.post('/garcons/pedido', async (req, res) => {
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
+
+// QR Code do restaurante - gerar slug se não tiver
+router.get('/mesa/qr', authDelivery, async (req, res) => {
+    try {
+        let admin = await AdminDelivery.findById(req.adminId);
+        if (!admin) return res.status(404).json({ erro: 'Admin nao encontrado' });
+        if (!admin.slug) {
+            const base = (admin.nomeComercio || admin.nomeEstabelecimento || 'rest')
+                .toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 12);
+            admin.slug = base + '-' + crypto.randomBytes(3).toString('hex');
+            await admin.save();
+        }
+        const url = req.protocol + '://' + req.get('host') + '/mesa?r=' + admin.slug;
+        res.json({ sucesso: true, slug: admin.slug, url });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+
+// Pedidos novos de mesa para o garçom
+router.get('/mesa/pedidos-novos', authDelivery, async (req, res) => {
+    try {
+        const pedidos = await PedidoDelivery.find({
+            adminId: req.adminId,
+            tipo: 'mesa',
+            origem: 'qrcode',
+            status: 'novo',
+            createdAt: { $gte: new Date(Date.now() - 4*60*60*1000) }
+        }).sort({ createdAt: -1 }).limit(10);
+        res.json({ sucesso: true, pedidos });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// Confirmar pedido de mesa (garçom)
+router.post('/mesa/confirmar/:id', authDelivery, async (req, res) => {
+    try {
+        await PedidoDelivery.findOneAndUpdate(
+            { _id: req.params.id, adminId: req.adminId },
+            { status: 'preparo' }
+        );
+        res.json({ sucesso: true });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
 module.exports = router;

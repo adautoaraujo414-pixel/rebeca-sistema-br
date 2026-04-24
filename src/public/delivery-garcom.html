@@ -143,6 +143,19 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;backgrou
 .vazio{text-align:center;padding:30px;color:#444;font-size:.88em}
 .form-novo-garcon{background:#1a1a2e;border-radius:12px;padding:14px;margin-bottom:14px;border:1px solid rgba(249,115,22,0.25)}
 .form-novo-garcon h3{color:#f97316;margin-bottom:12px;font-size:.9em}
+
+/* Overlay pedido mesa/QR */
+.overlay-pedido{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:9999;display:none;align-items:center;justify-content:center;padding:20px}
+.overlay-pedido.show{display:flex}
+.overlay-pedido-box{background:#1a1a2e;border-radius:20px;padding:28px 24px;width:100%;max-width:400px;border:2px solid #ff9900;animation:pulseIn .4s ease}
+@keyframes pulseIn{from{transform:scale(.8);opacity:0}to{transform:scale(1);opacity:1}}
+.overlay-pedido-mesa{font-size:2em;font-weight:700;color:#ff9900}
+.overlay-pedido-cliente{color:#aaa;font-size:.9em;margin:4px 0 16px}
+.overlay-pedido-item{background:#0f0f1a;border-radius:8px;padding:10px 14px;margin-bottom:8px;display:flex;justify-content:space-between}
+.overlay-timer{font-size:1.4em;font-weight:700;color:#00d4ff;margin-top:12px}
+.overlay-timer span{font-size:.7em;color:#888;font-weight:400}
+.btn-confirmar{width:100%;padding:14px;background:#00cc6a;border:none;color:#000;border-radius:10px;font-weight:700;font-size:1em;cursor:pointer;margin-top:16px}
+.btn-confirmar:hover{background:#00aa55}
 </style>
 </head>
 <body>
@@ -806,6 +819,73 @@ window.onload = () => {
   }
   if (mesaAtual) atualizarBadgeMesa();
 };
+
+// ====== OVERLAY PEDIDOS DE MESA (QR CODE) ======
+let pedidosMesaVisto = new Set();
+let timerPedido = null;
+let timerSegundos = 0;
+let pedidoAtual = null;
+
+async function verificarPedidosMesa() {
+  if (!token) return;
+  try {
+    const r = await fetch(API+"/mesa/pedidos-novos", { headers: { Authorization: "Bearer "+token } });
+    if (!r.ok) return;
+    const d = await r.json();
+    if (!d.pedidos || !d.pedidos.length) return;
+    // Pegar o primeiro não visto
+    const novo = d.pedidos.find(p => !pedidosMesaVisto.has(p._id));
+    if (!novo) return;
+    pedidosMesaVisto.add(novo._id);
+    mostrarOverlayPedido(novo);
+  } catch(e) {}
+}
+
+function mostrarOverlayPedido(pedido) {
+  pedidoAtual = pedido;
+  document.getElementById('ovMesa').textContent = 'Mesa ' + (pedido.mesa || '?');
+  document.getElementById('ovCliente').textContent = 'Cliente: ' + (pedido.nomeCliente || 'Anônimo');
+  const itens = pedido.itens || [];
+  document.getElementById('ovItens').innerHTML = itens.map(i =>
+    `<div class="overlay-pedido-item">
+      <span>${i.qtd || i.quantidade || 1}x ${i.nome}</span>
+      <span style="color:#00cc6a">R$ ${((i.preco||0)*(i.qtd||i.quantidade||1)).toFixed(2)}</span>
+    </div>`).join('');
+  document.getElementById('ovTotal').textContent = 'R$ ' + (pedido.total||0).toFixed(2);
+  timerSegundos = 0;
+  if (timerPedido) clearInterval(timerPedido);
+  timerPedido = setInterval(() => {
+    timerSegundos++;
+    const m = String(Math.floor(timerSegundos/60)).padStart(2,'0');
+    const s = String(timerSegundos%60).padStart(2,'0');
+    document.getElementById('ovTimer').innerHTML = m+':'+s+' <span>desde o pedido</span>';
+  }, 1000);
+  document.getElementById('overlayPedido').classList.add('show');
+  // Som de notificação
+  try { new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAA...').play(); } catch(e) {}
+}
+
+async function confirmarPedidoMesa() {
+  if (!pedidoAtual) return;
+  const btn = document.getElementById('btnConfirmar');
+  btn.disabled = true; btn.textContent = 'Confirmando...';
+  try {
+    await fetch(API+"/mesa/confirmar/"+pedidoAtual._id, {
+      method: 'POST',
+      headers: { Authorization: "Bearer "+token }
+    });
+  } catch(e) {}
+  if (timerPedido) clearInterval(timerPedido);
+  document.getElementById('overlayPedido').classList.remove('show');
+  btn.disabled = false; btn.textContent = '✅ Confirmar — Em Preparo';
+  pedidoAtual = null;
+  // Verificar se há mais pedidos
+  setTimeout(verificarPedidosMesa, 500);
+}
+
+// Polling a cada 8 segundos
+setInterval(verificarPedidosMesa, 8000);
+
 </script>
 <div id="painelGarcomProducao" style="position:fixed;bottom:0;left:0;right:0;background:#1a1a2e;border-top:2px solid #f97316;z-index:999;max-height:240px;overflow-y:auto;padding:10px 12px;display:none;">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
@@ -937,5 +1017,27 @@ setInterval(()=>{
 .ci-item{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #1e1e3a;font-size:.83em;color:#ddd;gap:8px}
 .ci-item span:last-child{font-weight:700;color:#4ade80;white-space:nowrap}
 </style>
+
+<!-- OVERLAY PEDIDO MESA (QR Code) -->
+<div class="overlay-pedido" id="overlayPedido">
+  <div class="overlay-pedido-box">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div>
+        <div style="font-size:.75em;color:#ff9900;text-transform:uppercase;letter-spacing:1px">🔔 Novo Pedido pela Mesa</div>
+        <div class="overlay-pedido-mesa" id="ovMesa">Mesa —</div>
+        <div class="overlay-pedido-cliente" id="ovCliente">Cliente: —</div>
+      </div>
+      <div style="text-align:right">
+        <div class="overlay-timer" id="ovTimer">00:00 <span>aguardando</span></div>
+      </div>
+    </div>
+    <div id="ovItens"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;padding-top:12px;border-top:1px solid #252542">
+      <div style="color:#aaa;font-size:.85em">Total</div>
+      <div style="font-size:1.3em;font-weight:700;color:#00cc6a" id="ovTotal">R$ 0,00</div>
+    </div>
+    <button class="btn-confirmar" id="btnConfirmar" onclick="confirmarPedidoMesa()">✅ Confirmar — Em Preparo</button>
+  </div>
+</div>
 </body>
 </html>

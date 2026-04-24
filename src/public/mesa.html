@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cardápio</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#0f0f1a;color:#fff;min-height:100vh}
+.header{background:#1a1a2e;padding:16px;text-align:center;border-bottom:1px solid #252542}
+.header h1{font-size:1.3em;color:#00d4ff}
+.header p{font-size:.85em;color:#888;margin-top:4px}
+
+/* LOGIN */
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.login-box{background:#1a1a2e;border-radius:16px;padding:32px 24px;width:100%;max-width:380px;text-align:center}
+.login-box h2{font-size:1.4em;margin-bottom:8px;color:#00d4ff}
+.login-box p{color:#888;font-size:.9em;margin-bottom:24px}
+.field{margin-bottom:16px;text-align:left}
+.field label{display:block;font-size:.82em;color:#aaa;margin-bottom:6px}
+.field input{width:100%;padding:12px;background:#0f0f1a;border:1px solid #333;border-radius:10px;color:#fff;font-size:1em}
+.btn-entrar{width:100%;padding:14px;background:#00d4ff;color:#000;border:none;border-radius:10px;font-size:1em;font-weight:700;cursor:pointer;margin-top:8px}
+.err{color:#f77;font-size:.85em;margin-top:10px;min-height:20px}
+
+/* APP */
+#app{display:none}
+.tabs{display:flex;background:#1a1a2e;border-bottom:1px solid #252542}
+.tab{flex:1;padding:14px;text-align:center;font-size:.85em;color:#666;cursor:pointer;border-bottom:3px solid transparent}
+.tab.active{color:#00d4ff;border-bottom-color:#00d4ff}
+.page{display:none;padding:16px}
+.page.active{display:block}
+
+/* CARDAPIO */
+.cat-title{font-size:.8em;color:#00d4ff;text-transform:uppercase;letter-spacing:1px;margin:20px 0 10px;padding-bottom:6px;border-bottom:1px solid #252542}
+.item-card{background:#1a1a2e;border-radius:12px;padding:14px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.item-info{flex:1}
+.item-nome{font-weight:600;font-size:.95em}
+.item-desc{font-size:.78em;color:#888;margin-top:3px}
+.item-meta{font-size:.75em;color:#555;margin-top:4px}
+.item-preco{font-size:1.1em;font-weight:700;color:#00cc6a;white-space:nowrap}
+.btn-add{background:#00d4ff;border:none;color:#000;width:32px;height:32px;border-radius:50%;font-size:1.2em;cursor:pointer;font-weight:700;flex-shrink:0}
+
+/* CARRINHO */
+.carrinho-item{background:#1a1a2e;border-radius:10px;padding:12px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
+.carrinho-vazio{text-align:center;color:#555;padding:40px 20px}
+.total-box{background:#252542;border-radius:12px;padding:16px;margin-top:16px;text-align:center}
+.total-val{font-size:1.6em;font-weight:700;color:#00cc6a}
+.btn-pedir{width:100%;padding:14px;background:#00cc6a;color:#000;border:none;border-radius:10px;font-size:1em;font-weight:700;cursor:pointer;margin-top:12px}
+.btn-pedir:disabled{background:#333;color:#666;cursor:not-allowed}
+
+/* MINHA CONTA */
+.conta-item{background:#1a1a2e;border-radius:10px;padding:12px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
+.conta-status{font-size:.75em;padding:3px 10px;border-radius:10px;font-weight:600}
+.st-novo{background:#ff990022;color:#ff9900}
+.st-preparo{background:#00d4ff22;color:#00d4ff}
+.st-pronto{background:#00cc6a22;color:#00cc6a}
+.total-conta{background:#252542;border-radius:12px;padding:20px;text-align:center;margin-top:16px}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#00cc6a;color:#000;padding:12px 24px;border-radius:10px;font-weight:700;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none}
+.toast.show{opacity:1}
+
+/* OVERLAY PEDIDO CONFIRMADO */
+.overlay-ok{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:998;display:none;align-items:center;justify-content:center}
+.overlay-ok.show{display:flex}
+.overlay-box{background:#1a1a2e;border-radius:20px;padding:32px 24px;text-align:center;max-width:320px;width:90%}
+.overlay-box h2{font-size:1.5em;margin-bottom:12px}
+.overlay-tempo{font-size:3em;font-weight:700;color:#00d4ff;margin:16px 0}
+.overlay-box p{color:#aaa;font-size:.9em}
+.btn-ok{padding:12px 32px;background:#00d4ff;border:none;color:#000;border-radius:10px;font-weight:700;cursor:pointer;margin-top:20px;font-size:1em}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginWrap" class="login-wrap">
+  <div class="login-box">
+    <h2>🍽️ Bem-vindo!</h2>
+    <p>Informe sua mesa para acessar o cardápio</p>
+    <div class="field"><label>Número da Mesa</label><input type="number" id="inputMesa" placeholder="Ex: 5" min="1"></div>
+    <div class="field"><label>Seu Nome</label><input type="text" id="inputNome" placeholder="Ex: João"></div>
+    <button class="btn-entrar" onclick="entrar()">Acessar Cardápio</button>
+    <p class="err" id="loginErr"></p>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="header">
+    <h1 id="nomeRest">Restaurante</h1>
+    <p id="infoMesa">Mesa — · Olá, —</p>
+  </div>
+  <div class="tabs">
+    <div class="tab active" id="tab-cardapio" onclick="mudarTab('cardapio')">🍴 Cardápio</div>
+    <div class="tab" id="tab-carrinho" onclick="mudarTab('carrinho')">🛒 Carrinho <span id="badgeCarrinho" style="display:none;background:#f55;color:#fff;border-radius:10px;padding:1px 7px;font-size:.75em"></span></div>
+    <div class="tab" id="tab-conta" onclick="mudarTab('conta')">🧾 Minha Conta</div>
+  </div>
+
+  <div id="pg-cardapio" class="page active"></div>
+
+  <div id="pg-carrinho" class="page">
+    <div id="listaCarrinho"></div>
+    <div id="totalBox" style="display:none" class="total-box">
+      <div style="color:#aaa;font-size:.85em;margin-bottom:4px">Total do pedido</div>
+      <div class="total-val" id="totalVal">R$ 0,00</div>
+      <button class="btn-pedir" id="btnPedir" onclick="enviarPedido()">✅ Enviar Pedido para Cozinha</button>
+    </div>
+  </div>
+
+  <div id="pg-conta" class="page">
+    <div id="listaConta"></div>
+  </div>
+</div>
+
+<!-- OVERLAY CONFIRMAÇÃO -->
+<div class="overlay-ok" id="overlayOk">
+  <div class="overlay-box">
+    <div style="font-size:3em">✅</div>
+    <h2>Pedido Enviado!</h2>
+    <div style="color:#aaa;font-size:.85em">Tempo estimado de preparo</div>
+    <div class="overlay-tempo" id="overlayTempo">~20 min</div>
+    <p>Seu garçom será notificado. Fique à vontade!</p>
+    <button class="btn-ok" onclick="fecharOverlay()">OK, obrigado!</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = '/api/delivery';
+let adminSlug = new URLSearchParams(location.search).get('r') || '';
+let mesa = '', nomeCliente = '', cardapio = [], carrinho = [];
+
+// ====== LOGIN ======
+async function entrar() {
+  const m = document.getElementById('inputMesa').value.trim();
+  const n = document.getElementById('inputNome').value.trim();
+  const err = document.getElementById('loginErr');
+  err.textContent = '';
+  if (!m) { err.textContent = 'Informe o número da mesa'; return; }
+  if (!n) { err.textContent = 'Informe seu nome'; return; }
+  if (!adminSlug) { err.textContent = 'QR Code inválido (sem restaurante)'; return; }
+  try {
+    const r = await fetch(`${API}/mesa/cardapio?r=${adminSlug}`);
+    const d = await r.json();
+    if (!d.sucesso) { err.textContent = d.erro || 'Restaurante não encontrado'; return; }
+    mesa = m; nomeCliente = n;
+    cardapio = d.itens || [];
+    document.getElementById('nomeRest').textContent = d.nomeEstabelecimento || 'Restaurante';
+    document.getElementById('infoMesa').textContent = `Mesa ${mesa} · Olá, ${nomeCliente}!`;
+    document.getElementById('loginWrap').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    renderCardapio();
+    carregarConta();
+  } catch(e) { err.textContent = 'Erro de conexão: ' + e.message; }
+}
+
+// ====== CARDÁPIO ======
+function renderCardapio() {
+  const el = document.getElementById('pg-cardapio');
+  if (!cardapio.length) { el.innerHTML = '<div style="text-align:center;color:#555;padding:40px">Cardápio não disponível</div>'; return; }
+  const cats = {};
+  cardapio.forEach(i => {
+    const cat = i.categoriaId?.nome || 'Outros';
+    if (!cats[cat]) cats[cat] = [];
+    cats[cat].push(i);
+  });
+  el.innerHTML = Object.entries(cats).map(([cat, itens]) => `
+    <div class="cat-title">${cat}</div>
+    ${itens.map(i => `
+      <div class="item-card">
+        <div class="item-info">
+          <div class="item-nome">${i.nome}</div>
+          ${i.descricao ? `<div class="item-desc">${i.descricao}</div>` : ''}
+          <div class="item-meta">⏱️ ~${i.tempoPreparoMin || 20} min</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px">
+          <div class="item-preco">R$ ${(i.preco||0).toFixed(2)}</div>
+          <button class="btn-add" onclick='addCarrinho(${JSON.stringify({_id:i._id,nome:i.nome,preco:i.preco,tempoPreparoMin:i.tempoPreparoMin||20})})'>+</button>
+        </div>
+      </div>`).join('')}`).join('');
+}
+
+// ====== CARRINHO ======
+function addCarrinho(item) {
+  const existe = carrinho.find(c => c._id === item._id);
+  if (existe) existe.qtd++;
+  else carrinho.push({...item, qtd: 1});
+  renderCarrinho();
+  toast('Adicionado: ' + item.nome);
+}
+
+function renderCarrinho() {
+  const el = document.getElementById('listaCarrinho');
+  const totalBox = document.getElementById('totalBox');
+  const badge = document.getElementById('badgeCarrinho');
+  const total = carrinho.reduce((s,i) => s + i.preco*i.qtd, 0);
+  const qtdTotal = carrinho.reduce((s,i) => s + i.qtd, 0);
+  badge.textContent = qtdTotal;
+  badge.style.display = qtdTotal ? 'inline' : 'none';
+  if (!carrinho.length) {
+    el.innerHTML = '<div class="carrinho-vazio">🛒<br>Carrinho vazio<br><small style="color:#444">Adicione itens do cardápio</small></div>';
+    totalBox.style.display = 'none'; return;
+  }
+  el.innerHTML = carrinho.map((i,idx) => `
+    <div class="carrinho-item">
+      <div>
+        <div style="font-weight:600">${i.nome}</div>
+        <div style="color:#888;font-size:.82em">R$ ${i.preco.toFixed(2)} × ${i.qtd}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-weight:700;color:#00cc6a">R$ ${(i.preco*i.qtd).toFixed(2)}</span>
+        <button onclick="removerCarrinho(${idx})" style="background:#f5525222;border:1px solid #f55;color:#f55;border-radius:6px;padding:4px 8px;cursor:pointer">✕</button>
+      </div>
+    </div>`).join('');
+  totalBox.style.display = 'block';
+  document.getElementById('totalVal').textContent = 'R$ ' + total.toFixed(2);
+}
+
+function removerCarrinho(idx) {
+  carrinho.splice(idx, 1);
+  renderCarrinho();
+}
+
+// ====== ENVIAR PEDIDO ======
+async function enviarPedido() {
+  if (!carrinho.length) return;
+  const btn = document.getElementById('btnPedir');
+  btn.disabled = true; btn.textContent = 'Enviando...';
+  try {
+    const r = await fetch(`${API}/mesa/pedido`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ adminSlug, mesa, nomeCliente, itens: carrinho.map(i=>({itemId:i._id,nome:i.nome,preco:i.preco,qtd:i.qtd,tempoPreparoMin:i.tempoPreparoMin})) })
+    });
+    const d = await r.json();
+    if (d.sucesso) {
+      const tempoMax = Math.max(...carrinho.map(i=>i.tempoPreparoMin||20));
+      document.getElementById('overlayTempo').textContent = `~${tempoMax} min`;
+      document.getElementById('overlayOk').classList.add('show');
+      carrinho = [];
+      renderCarrinho();
+      carregarConta();
+    } else { toast('Erro: ' + (d.erro||'Falha'), true); }
+  } catch(e) { toast('Erro de conexão', true); }
+  finally { btn.disabled = false; btn.textContent = '✅ Enviar Pedido para Cozinha'; }
+}
+
+function fecharOverlay() {
+  document.getElementById('overlayOk').classList.remove('show');
+  mudarTab('conta');
+}
+
+// ====== MINHA CONTA ======
+async function carregarConta() {
+  if (!mesa || !adminSlug) return;
+  try {
+    const r = await fetch(`${API}/mesa/conta?r=${adminSlug}&mesa=${mesa}`);
+    const d = await r.json();
+    const el = document.getElementById('listaConta');
+    if (!d.pedidos || !d.pedidos.length) {
+      el.innerHTML = '<div class="carrinho-vazio">🧾<br>Nenhum pedido ainda</div>'; return;
+    }
+    const total = d.pedidos.reduce((s,p) => s + (p.total||0), 0);
+    el.innerHTML = d.pedidos.map(p => `
+      <div style="margin-bottom:16px">
+        <div style="font-size:.75em;color:#555;margin-bottom:6px">${new Date(p.createdAt).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</div>
+        ${(p.itens||[]).map(i => `
+          <div class="conta-item">
+            <div>
+              <div style="font-size:.9em;font-weight:600">${i.nome}</div>
+              <div style="font-size:.78em;color:#888">${i.qtd}x · R$ ${(i.preco||0).toFixed(2)}</div>
+            </div>
+            <span class="conta-status st-${p.status||'novo'}">${{novo:'Recebido',preparo:'Preparando',pronto:'Pronto!'}[p.status]||p.status}</span>
+          </div>`).join('')}
+      </div>`).join('') +
+      `<div class="total-conta">
+        <div style="color:#aaa;font-size:.85em">Total consumido</div>
+        <div style="font-size:2em;font-weight:700;color:#00cc6a;margin-top:4px">R$ ${total.toFixed(2)}</div>
+        <div style="color:#555;font-size:.78em;margin-top:8px">Solicite o fechamento ao garçom</div>
+      </div>`;
+  } catch(e) { console.error(e); }
+}
+
+// ====== UTILS ======
+function mudarTab(tab) {
+  ['cardapio','carrinho','conta'].forEach(t => {
+    document.getElementById('pg-'+t).classList.toggle('active', t===tab);
+    document.getElementById('tab-'+t).classList.toggle('active', t===tab);
+  });
+  if (tab==='conta') carregarConta();
+}
+
+function toast(msg, erro=false) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.style.background = erro ? '#f55' : '#00cc6a';
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+// Auto-refresh da conta
+setInterval(() => { if (mesa) carregarConta(); }, 15000);
+</script>
+</body>
+</html>
