@@ -1784,14 +1784,14 @@ async function _salvarItemReal() {
             const sn = document.getElementById('entregadorSenha'); if(sn) sn.value = '';
             document.getElementById('modalEntregador').classList.add('active');
         }
-        async function toggleEntregador(id) {
+        async async function toggleEntregador(id) {
             try { await api('/entregadores/'+id+'/toggle',{method:'PUT'}); toast('Status atualizado!'); carregarEntregadores(); }
-            catch(e) { toast('Erro','error'); }
+            catch(e) { toast('Erro ao atualizar status','error'); }
         }
-        async function excluirEntregador(id) {
+        async async function excluirEntregador(id) {
             if (!confirm('Remover este entregador?')) return;
-            try { await api('/entregadores/'+id,{method:'DELETE'}); toast('Removido'); carregarEntregadores(); }
-            catch(e) { toast('Erro','error'); }
+            try { await api('/entregadores/'+id,{method:'DELETE'}); toast('Removido!'); carregarEntregadores(); }
+            catch(e) { toast('Erro ao remover','error'); }
         }
         function abrirQREntregador() {
             if (!entregadores.length) return toast('Cadastre um entregador primeiro','error');

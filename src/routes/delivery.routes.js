@@ -441,12 +441,21 @@ router.put('/entregadores/:id', authDelivery, async (req, res) => {
 router.put('/entregadores/:id/toggle', authDelivery, async (req, res) => {
     try {
         const entregador = await Entregador.findOne({ _id: req.params.id, adminId: req.adminId });
+        entregador.ativo = !entregador.ativo;
         await entregador.save();
         res.json({ entregador });
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
 // ========== ENTREGADOR: LISTAR PEDIDOS PRONTOS ==========
+
+router.delete('/entregadores/:id', authDelivery, async (req, res) => {
+    try {
+        await Entregador.deleteOne({ _id: req.params.id, adminId: req.adminId });
+        res.json({ sucesso: true });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
 router.get('/entregador/pedidos', authDelivery, async (req, res) => {
     try {
         const pedidos = await PedidoDelivery.find({
