@@ -41,7 +41,7 @@ const PedidoDeliverySchema = new mongoose.Schema({
     adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin', required: true, index: true },
     numero: { type: Number }, // Auto-incremento por admin
     clienteNome: String,
-    clienteTelefone: { type: String, required: true, index: true },
+    clienteTelefone: { type: String, default: '', index: true },
     instanciaId: mongoose.Schema.Types.ObjectId,
     
     itens: [{
