@@ -1286,6 +1286,8 @@ router.post('/garcons/pedido', async (req, res) => {
             observacao: observacao || '',
             status: 'novo',
             tipoEntrega: 'retirada',
+            tipoLocal: 'mesa',
+            origemPedido: 'garcom',
             formaPagamento: 'na_entrega'
         });
         res.json({ sucesso: true, pedido });
