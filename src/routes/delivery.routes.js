@@ -1296,6 +1296,22 @@ router.post('/garcons/pedido', async (req, res) => {
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
+
+router.get('/garcons/mesas-ativas', async (req, res) => {
+    try {
+        const garcomToken = req.headers.authorization?.replace('Bearer ','') || req.query.garcomToken;
+        const g = await GarcomDelivery.findOne({ token: garcomToken, ativo: true });
+        if (!g) return res.status(401).json({ erro: 'Token invalido' });
+        const pedidos = await PedidoDelivery.find({
+            adminId: g.adminId,
+            tipoLocal: 'mesa',
+            status: { $nin: ['entregue','cancelado'] },
+            pago: { $ne: true }
+        }).sort({ createdAt: -1 });
+        res.json({ sucesso: true, pedidos });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
 router.post('/garcons/:id/toggle', authDelivery, async (req, res) => {
     try {
         const g = await GarcomDelivery.findOne({ _id: req.params.id, adminId: req.adminId });
