@@ -408,18 +408,25 @@ async function carregarMesas() {
 
 function renderMesas() {
   const grid = document.getElementById('mesasGrid');
-  let html = '';
-  for (let i = 1; i <= totalMesas; i++) {
-    const m = String(i);
-    const ocupada = !!mesasOcupadas[m];
-    const total = ocupada ? mesasOcupadas[m].reduce((s,p)=>s+p.total,0) : 0;
-    html += `<div class="mesa-card ${ocupada?'ocupada':'livre'}" onclick="${ocupada?'abrirMesa(\''+m+'\')':'selecionarMesaLivre(\''+m+'\')'}">
-      <div class="mesa-dot"></div>
-      <div class="mesa-num">${i}</div>
-      <div class="mesa-status">${ocupada?'🔴 Ocupada':'🟢 Livre'}</div>
-      ${ocupada?`<div class="mesa-total">R$ ${total.toFixed(2)}</div>`:''}
-    </div>`;
+  const mesas = Object.keys(mesasOcupadas).sort((a,b)=>Number(a)-Number(b));
+  let html = `<div class="mesa-card livre" onclick="iniciarNovaComanda()" style="border-style:dashed;border-color:var(--accent)">
+    <div class="mesa-num" style="font-size:2em">+</div>
+    <div class="mesa-status" style="color:var(--accent)">Nova Mesa</div>
+  </div>`;
+  if (mesas.length === 0) {
+    html += `<div style="grid-column:1/-1;text-align:center;color:var(--text3);padding:40px;font-size:.88em">Nenhuma mesa ocupada no momento</div>`;
   }
+  mesas.forEach(m => {
+    const total = mesasOcupadas[m].reduce((s,p)=>s+(p.total||0),0);
+    const nPedidos = mesasOcupadas[m].length;
+    html += `<div class="mesa-card ocupada" onclick="abrirMesa('${m}')">
+      <div class="mesa-dot"></div>
+      <div class="mesa-num">${m}</div>
+      <div class="mesa-status">🔴 Ocupada</div>
+      <div class="mesa-total">R$ ${total.toFixed(2)}</div>
+      <div style="font-size:.68em;color:var(--text3);margin-top:2px">${nPedidos} pedido(s)</div>
+    </div>`;
+  });
   grid.innerHTML = html;
 }
 
