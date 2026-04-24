@@ -1816,6 +1816,10 @@ async function carregarGarcons() {
                 <button onclick="toggleGarcom('${g._id}',${g.ativo})" style="padding:8px 14px;background:rgba(255,255,255,.05);border:1px solid #444;color:${g.ativo?'#ff4444':'#00cc6a'};border-radius:8px;cursor:pointer;font-size:.82em">${g.ativo ? '⏸ Desativar' : '▶ Ativar'}</button>
             </div>
         </div>`).join('');
+    } catch(e) {
+        console.error('Erro carregarGarcons:', e);
+        el.innerHTML = '<div style="color:#f55;padding:20px">Erro ao carregar. Veja o console (F12).</div>';
+    }
 }
 
 function copiarToken(token) {
