@@ -1340,4 +1340,80 @@ router.get('/entregadores/:id/historico', authDelivery, async (req, res) => {
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
+// ===== SALON / GARCOM PEDIDOS =====
+router.get('/salon/mesas', authDelivery, async (req, res) => {
+    try {
+        const pedidos = await PedidoDelivery.find({
+            adminId: req.adminId,
+            tipoLocal: 'mesa',
+            status: { $nin: ['entregue','cancelado'] }
+        }).sort({ createdAt: -1 });
+        const mesas = {};
+        pedidos.forEach(p => {
+            const m = p.numeroMesa || 'S/N';
+            if (!mesas[m]) mesas[m] = { mesa: m, pedidos: [], total: 0 };
+            mesas[m].pedidos.push(p);
+            mesas[m].total += p.total || 0;
+        });
+        res.json(Object.values(mesas));
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+router.post('/salon/pedido', authDelivery, async (req, res) => {
+    try {
+        const { clienteNome, itens, numeroMesa, nomeComanda, observacao, formaPagamento, subtotal, total, garcomId } = req.body;
+        if (!itens || !itens.length) return res.status(400).json({ erro: 'Itens obrigatorios' });
+        const pedido = new PedidoDelivery({
+            adminId: req.adminId,
+            clienteNome: clienteNome || 'Mesa ' + (numeroMesa||''),
+            clienteTelefone: '0000000000',
+            itens,
+            tipoLocal: 'mesa',
+            numeroMesa,
+            nomeComanda,
+            observacao,
+            origemPedido: 'garcom',
+            garcomId,
+            formaPagamento: formaPagamento || 'na_entrega',
+            subtotal: subtotal || 0,
+            total: total || 0,
+            taxaEntrega: 0,
+            status: 'pendente',
+            tipoEntrega: 'retirada'
+        });
+        await pedido.save();
+        res.json({ sucesso: true, pedido });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+router.get('/salon/cardapio', authDelivery, async (req, res) => {
+    try {
+        const categorias = await CategoriaDelivery.find({ adminId: req.adminId, ativa: true }).sort({ ordem: 1 });
+        const itens = await ItemCardapioDelivery.find({ adminId: req.adminId, disponivel: true }).sort({ ordem: 1 });
+        res.json({ categorias, itens });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+router.put('/salon/mesa/:mesa/fechar', authDelivery, async (req, res) => {
+    try {
+        const { formaPagamento } = req.body;
+        await PedidoDelivery.updateMany(
+            { adminId: req.adminId, numeroMesa: req.params.mesa, status: { $nin: ['entregue','cancelado'] } },
+            { status: 'entregue', pago: true, formaPagamento: formaPagamento || 'dinheiro', dataPagamento: new Date() }
+        );
+        res.json({ sucesso: true });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+router.get('/salon/pedidos-mesa/:mesa', authDelivery, async (req, res) => {
+    try {
+        const pedidos = await PedidoDelivery.find({
+            adminId: req.adminId,
+            numeroMesa: req.params.mesa,
+            status: { $nin: ['entregue','cancelado'] }
+        }).sort({ createdAt: -1 });
+        res.json(pedidos);
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
 module.exports = router;
