@@ -1788,13 +1788,17 @@ async function _salvarItemReal() {
 
 // ===== GARÇONS =====
 async function carregarGarcons() {
-    const r = await fetch('/api/delivery/garcons', { headers: { Authorization: 'Bearer ' + token } });
-    const d = await r.json();
     const el = document.getElementById('listaGarcons');
-    if (!d.garcons || !d.garcons.length) {
-        el.innerHTML = '<div style="text-align:center;color:#555;padding:40px">Nenhum garçom cadastrado</div>';
-        return;
-    }
+    if (!el) { console.warn('listaGarcons nao encontrado'); return; }
+    el.innerHTML = '<div style="text-align:center;color:#555;padding:30px">Carregando...</div>';
+    try {
+        const r = await fetch('/api/delivery/garcons', { headers: { Authorization: 'Bearer ' + token } });
+        if (!r.ok) { el.innerHTML = '<div style="color:#f55;padding:20px">Erro ' + r.status + ' ao carregar garcons</div>'; return; }
+        const d = await r.json();
+        if (!d.garcons || !d.garcons.length) {
+            el.innerHTML = '<div style="text-align:center;color:#555;padding:40px">Nenhum garcom cadastrado</div>';
+            return;
+        }
     el.innerHTML = d.garcons.map(g => `
         <div style="background:#252542;border-radius:12px;padding:18px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;border-left:4px solid ${g.ativo ? '#00d4ff' : '#555'}">
             <div>
