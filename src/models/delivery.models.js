@@ -115,6 +115,8 @@ const PedidoDeliverySchema = new mongoose.Schema({
     // Mesa (para pedidos presenciais)
     tipoLocal: { type: String, enum: ['mesa', 'balcao', 'delivery', 'retirada'], default: 'delivery' },
     numeroMesa: { type: Number },
+    garcomNome: { type: String },
+    garcom: { type: String },
     nomeComanda: String, // identificador da comanda se não tiver número
     
     // Pagamento parcial / fechamento
