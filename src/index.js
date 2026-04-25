@@ -292,7 +292,7 @@ app.get('/health', (req, res) => {
     const IAService = require('./services/ia.service');
     res.json({ 
         status: 'ok', 
-        versao: '3.4.0',
+        versao: '3.5.0',
         banco: mongoose.connection.readyState === 1 ? 'MongoDB CONECTADO' : 'Desconectado',
         ia: IAService.isAtivo() ? 'ATIVA (Claude)' : 'Desativada',
         funcionalidades: ['MongoDB', 'IA Claude', 'GPS Real', 'App Motorista', 'Mensalidades', 'Rastreamento']
