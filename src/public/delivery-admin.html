@@ -1694,15 +1694,7 @@ async function _salvarItemReal() {
             } catch(e) { toast('Erro de conexão', 'error'); }
         }
 
-        async function copiarLinkEntregador(eid) {
-            const e = entregadores.find(x => x._id === eid);
-            if (!e || !e.token) { toast('Sem token. Redefina a senha primeiro.', 'error'); return; }
-            const link = location.origin + '/delivery-entregador?token=' + e.token + '&entregadorId=' + eid;
-            try {
-                await navigator.clipboard.writeText(link);
-                toast('🔗 Link copiado! Envie para o entregador 😊');
-            } catch(err) { prompt('Copie o link:', link); }
-        }
+        async 
 
         function abrirModalEntregador() {
             document.getElementById('tituloModalEntregador').textContent = '🏍️ Novo Entregador';
@@ -1813,9 +1805,7 @@ async function _salvarItemReal() {
             document.getElementById('qrEntregadorImg').innerHTML = '<img src="'+qrUrl+'" style="width:200px;height:200px;">';
             document.getElementById('modalQREntregador').classList.add('active');
         }
-        function copiarLinkEntregador() {
-            navigator.clipboard.writeText(window._linkEnt||'').then(()=>toast('Link copiado!')).catch(()=>prompt('Copie:',window._linkEnt));
-        }
+        
     
 
 // ===== GARÇONS =====
