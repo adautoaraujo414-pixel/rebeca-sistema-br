@@ -787,9 +787,9 @@
             setTimeout(function() { if (alerta.parentNode) alerta.remove(); }, 10000);
             // Notificação nativa do browser
             if (Notification.permission === 'granted') {
-                new Notification('🔔 Novo Pedido - ' + origem, {
-                    body: (p.clienteNome||'Cliente') + ' • R$ ' + (p.total||0).toFixed(2),
-                    icon: '/favicon.ico'
+                new Notification('🍔 Novo Pedido - ' + origem, {
+                    body: (p.clienteNome||'Cliente') + ' • R$ ' + (p.total||0).toFixed(2) + (p.tipoLocal==='mesa'?' 🍽️ Mesa '+(p.numeroMesa||p.mesa||''):p.tipoLocal==='delivery'?' 🛵 Delivery':' 🏪 Balcão'),
+                    icon: '/icons/icon-192.png'
                 });
             } else if (Notification.permission !== 'denied') {
                 Notification.requestPermission();
@@ -1506,7 +1506,7 @@ async function _salvarItemReal() {
                 alerta.style.display = 'block';
                 // Notificação do navegador
                 if(Notification.permission === 'granted') {
-                    new Notification('🍔 Novo Pedido!', {body: novos.map(p=>'#'+p.numero+' - '+p.clienteNome).join('\n'), icon:'/icons/icon-192.png'});
+                    new Notification('🍔 Novo Pedido!', {body: novos.map(p=>'#'+(p.numero||'?')+' - '+(p.clienteNome||'Cliente')+' '+(p.tipoLocal==='mesa'?'🍽️ Mesa '+(p.numeroMesa||p.mesa||''):p.tipoLocal==='delivery'?'🛵 Delivery':'🏪 Balcão')).join('\n'), icon:'/icons/icon-192.png'});
                 }
             }
             pedidosAtivos.forEach(p => _ultimosPedidosIds.add(p._id));
