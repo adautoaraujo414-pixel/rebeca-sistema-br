@@ -1231,7 +1231,10 @@ router.post('/garcons', authDelivery, async (req, res) => {
 router.post('/garcons/login', async (req, res) => {
     try {
         const { token, senha } = req.body;
-        const g = await GarcomDelivery.findOne({ token, senha, ativo: true });
+        // Aceitar garçons sem senha ou com senha vazia
+        const query = { token, ativo: true };
+        if (senha && senha.trim()) query.senha = senha;
+        const g = await GarcomDelivery.findOne(query);
         if (!g) return res.status(401).json({ erro: 'Token ou senha inválidos' });
         const adminG = await AdminDelivery.findById(g.adminId).select('nomeComercio');
         res.json({ sucesso: true, garcom: { nome: g.nome, token: g.token, mesas: g.mesas, adminId: g.adminId }, nomeComercio: adminG?.nomeComercio || '' });

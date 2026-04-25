@@ -1834,18 +1834,7 @@ async function _salvarItemReal() {
             finally { btn.disabled = false; btn.textContent = '➕ Cadastrar Garçom'; }
         }
 
-        async function toggleGarcom(id, ativo) {
-            if (!confirm(ativo ? 'Desativar garçom?' : 'Ativar garçom?')) return;
-            try {
-                const r = await fetch('/api/delivery/garcons/' + id + '/toggle', {
-                    method: 'POST',
-                    headers: { Authorization: 'Bearer ' + token }
-                });
-                const d = await r.json();
-                if (d.sucesso) carregarGarcons();
-                else alert('Erro: ' + d.erro);
-            } catch(e) { alert('Erro: ' + e.message); }
-        }
+        async 
 
         async function excluirGarcom(id) {
             if (!confirm('Excluir garçom permanentemente?')) return;
