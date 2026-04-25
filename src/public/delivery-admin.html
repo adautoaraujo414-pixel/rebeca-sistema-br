@@ -1745,12 +1745,18 @@ async function _salvarItemReal() {
                 carregarEntregadores();
             } catch(e) { toast('Erro de conexão','error'); }
         }
-        async function copiarLinkEntregador(eid) {
-            const e = entregadores.find(x => x._id === eid);
-            if (!e?.token) { toast('Sem token. Redefina a senha.', 'error'); return; }
-            const link = location.origin + '/delivery-entregador?token=' + e.token + '&entregadorId=' + eid;
-            await navigator.clipboard?.writeText(link);
-            toast('Link copiado! Envie para o entregador 😊');
+        async async function copiarLinkEntregador(eid) {
+            // Suporte a chamada sem parâmetro (usa window._entregadorAtual)
+            const id = eid || window._entregadorAtual;
+            const e = entregadores.find(x => x._id === id);
+            if (!e?.token) { toast('Sem token. Redefina a senha primeiro.', 'error'); return; }
+            const link = location.origin + '/delivery-entregador?token=' + e.token + '&entregadorId=' + id;
+            try {
+                await navigator.clipboard.writeText(link);
+                toast('✅ Link copiado! Envie para o entregador 😊');
+            } catch(err) {
+                prompt('Copie o link manualmente:', link);
+            }
         }
         async function redefinirSenhaEntregador(eid) {
             const senha = prompt('Nova senha para o entregador:');
@@ -1781,7 +1787,7 @@ async function _salvarItemReal() {
             try { await api('/entregadores/'+id+'/toggle',{method:'PUT'}); toast('Status atualizado!'); carregarEntregadores(); }
             catch(e) { toast('Erro ao atualizar status','error'); }
         }
-        async function excluirEntregador(id) {
+        async async function excluirEntregador(id) {
             if (!confirm('Remover este entregador?')) return;
             try { await api('/entregadores/'+id,{method:'DELETE'}); toast('Removido!'); carregarEntregadores(); }
             catch(e) { toast('Erro ao remover','error'); }
@@ -1794,6 +1800,7 @@ async function _salvarItemReal() {
             if (idx >= 0 && entregadores[idx]) gerarQREntregador(entregadores[idx]._id, entregadores[idx].nome);
         }
         function gerarQREntregador(eid, enome) {
+            window._entregadorAtual = eid;
             const e = entregadores.find(x => x._id === eid);
             const tk = e?.token || '';
             if (!tk) { toast('Entregador sem token. Cadastre com senha primeiro.', 'error'); return; }
