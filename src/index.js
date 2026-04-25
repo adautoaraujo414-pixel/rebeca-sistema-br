@@ -271,6 +271,7 @@ app.use('/api/delivery-auth', deliveryAuthRoutes);
 app.use('/api/delivery-master', deliveryMasterRoutes);
 app.use('/api/delivery', require('./routes/delivery-precadastro.routes'));
 app.use('/api/delivery', require('./routes/delivery-assinantes.routes'));
+app.get('/delivery-migracao', (req, res) => res.sendFile(path.join(__dirname, 'public', 'delivery-migracao.html')));
 app.get('/delivery-admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'delivery-admin.html')));
 app.get('/delivery-entregador', (req, res) => res.sendFile(path.join(__dirname, 'public', 'delivery-entregador.html')));
 app.get('/delivery-cozinha', (req, res) => res.sendFile(path.join(__dirname, 'public', 'delivery-cozinha.html')));
