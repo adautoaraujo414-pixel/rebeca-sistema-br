@@ -6,50 +6,53 @@
     <title>Rebeca Delivery - Painel Admin</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', sans-serif; background: #0a0a1a; color: #fff; }
+        body { font-family: 'Plus Jakarta Sans', 'Segoe UI', sans-serif; background: #f5f5f7; color: #1c1c1e; }
         
         /* Login */
-        .login-container { display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        .login-box { background: #1a1a2e; padding: 40px; border-radius: 15px; width: 100%; max-width: 400px; box-shadow: 0 10px 40px rgba(255,107,53,0.2); }
-        .login-box h1 { color: #00d4ff; text-align: center; margin-bottom: 5px; font-size: 28px; }
-        .login-box .sub { color: #888; text-align: center; margin-bottom: 30px; font-size: 14px; }
+        .login-container { display: flex; justify-content: center; align-items: center; min-height: 100vh; background: linear-gradient(135deg,#fff7ed 0%,#f5f5f7 60%,#fff 100%); }
+        .login-box { background: #fff; padding: 40px; border-radius: 20px; width: 100%; max-width: 400px; box-shadow: 0 12px 48px rgba(249,115,22,.12),0 2px 12px rgba(0,0,0,.06); border: 1px solid #f0d9c8; }
+        .login-box h1 { color: #f97316; text-align: center; margin-bottom: 5px; font-size: 26px; font-weight: 800; }
+        .login-box .sub { color: #8e8e93; text-align: center; margin-bottom: 28px; font-size: 14px; }
         
         /* Dashboard */
         .dashboard { display: none; }
-        .header { background: linear-gradient(135deg, #1a1a2e, #252542); padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }
-        .header h1 { color: #00d4ff; font-size: 20px; }
-        .header h1 span { color: #00d4ff; font-size: 14px; }
+        .header { background: linear-gradient(135deg,#f97316 0%,#ea580c 100%); padding: 0 24px; height: 60px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 16px rgba(249,115,22,.25); }
+        .header-center { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+        .header-center img { height: 32px; object-fit: contain; display: block; }
+        .header-adm-badge { font-size: .65em; font-weight: 800; color: rgba(255,255,255,.9); letter-spacing: 3px; text-transform: uppercase; background: rgba(255,255,255,.2); padding: 2px 10px; border-radius: 20px; }
+        .header h1 { color: #fff; font-size: 18px; font-weight: 800; }
+        .header h1 span { color: rgba(255,255,255,.8); font-size: 13px; font-weight: 500; }
         .main { display: flex; min-height: calc(100vh - 60px); }
-        .sidebar { width: 240px; background: #1a1a2e; padding: 15px 0; }
-        .menu-item { padding: 14px 20px; color: #888; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: all 0.3s; font-size: 14px; }
-        .menu-item:hover, .menu-item.active { background: #252542; color: #00d4ff; border-left: 3px solid #00d4ff; }
-        .menu-section { color: #555; font-size: 11px; padding: 12px 20px 5px; text-transform: uppercase; }
-        .content { flex: 1; padding: 25px; overflow-y: auto; }
+        .sidebar { width: 240px; background: #fff; padding: 15px 0; border-right: 1px solid #e8e8ed; box-shadow: 2px 0 8px rgba(0,0,0,.04); }
+        .menu-item { padding: 13px 20px; color: #636366; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: all 0.2s; font-size: 14px; font-weight: 500; }
+        .menu-item:hover, .menu-item.active { background: #fff7ed; color: #f97316; border-left: 3px solid #f97316; }
+        .menu-section { color: #b0b0b8; font-size: 11px; padding: 14px 20px 5px; text-transform: uppercase; font-weight: 700; letter-spacing: .5px; }
+        .content { flex: 1; padding: 25px; overflow-y: auto; background: #f5f5f7; }
         .page { display: none; }
         .page.active { display: block; }
         #page-garcons { padding: 20px; max-width: 900px; }
         
         /* Cards */
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
-        .stat-card { background: #1a1a2e; border: 1px solid #333; border-radius: 12px; padding: 20px; text-align: center; }
-        .stat-card .valor { font-size: 32px; font-weight: bold; color: #00d4ff; }
+        .stat-card { background: #fff; border: 1px solid #e8e8ed; border-radius: 14px; box-shadow: 0 2px 10px rgba(0,0,0,.06); padding: 20px; text-align: center; }
+        .stat-card .valor { font-size: 32px; font-weight: bold; color: #f97316; }
         .stat-card .label { font-size: 12px; color: #888; margin-top: 5px; }
         
         /* Panel */
         .panel { background: #1a1a2e; border-radius: 12px; padding: 20px; margin-bottom: 20px; border: 1px solid #333; }
-        .panel h3 { color: #00d4ff; margin-bottom: 15px; font-size: 16px; }
+        .panel h3 { color: #f97316; margin-bottom: 15px; font-size: 16px; }
         
         /* Forms */
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; color: #888; margin-bottom: 5px; font-size: 13px; }
         .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px 14px; background: #252542; border: 1px solid #333; border-radius: 8px; color: #fff; font-size: 14px; }
-        .form-group input:focus, .form-group select:focus { outline: none; border-color: #00d4ff; }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: #f97316; }
         .form-row { display: flex; gap: 15px; }
         .form-row .form-group { flex: 1; }
         
         /* Buttons */
         .btn { padding: 10px 20px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 14px; }
-        .btn-primary { background: #00d4ff; color: #fff; }
+        .btn-primary { background: #f97316; color: #fff; }
         .btn-primary:hover { opacity: 0.9; }
         .btn-success { background: #00cc6a; color: #000; }
         .btn-danger { background: #ff4444; color: #fff; }
@@ -57,7 +60,7 @@
         
         /* Table */
         table { width: 100%; border-collapse: collapse; }
-        th { text-align: left; padding: 10px; color: #00d4ff; font-size: 13px; border-bottom: 1px solid #333; }
+        th { text-align: left; padding: 10px; color: #f97316; font-size: 13px; border-bottom: 1px solid #333; }
         td { padding: 10px; border-bottom: 1px solid #222; font-size: 14px; }
         
         /* Cardápio item */
@@ -67,7 +70,7 @@
 .save-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.75); z-index: 9998; align-items: center; justify-content: center; flex-direction: column; gap: 16px; }
 .save-overlay.show { display: flex; }
 .save-box { background: #1a1a2e; border: 1px solid #333; border-radius: 16px; padding: 28px 32px; text-align: center; min-width: 280px; }
-.save-box h3 { color: #00d4ff; margin-bottom: 8px; font-size: 1em; }
+.save-box h3 { color: #f97316; margin-bottom: 8px; font-size: 1em; }
 .save-box p { color: #888; font-size: .85em; margin-bottom: 16px; }
 .progress-bar { background: #252542; border-radius: 10px; height: 8px; overflow: hidden; width: 100%; }
 .progress-fill { height: 100%; background: linear-gradient(90deg, #00d4ff, #00cc6a); border-radius: 10px; width: 0%; transition: width .4s ease; }
@@ -87,23 +90,23 @@
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 9999; align-items: center; justify-content: center; }
         .modal-overlay.active { display: flex; }
         .modal-box { background: #1a1a2e; border: 1px solid #333; border-radius: 15px; padding: 30px; width: 90%; max-width: 500px; max-height: 80vh; overflow-y: auto; }
-        .modal-box h2 { color: #00d4ff; margin-bottom: 20px; font-size: 18px; }
+        .modal-box h2 { color: #f97316; margin-bottom: 20px; font-size: 18px; }
         .modal-close { float: right; background: none; border: none; color: #888; font-size: 20px; cursor: pointer; }
         
         /* Pedidos tempo real */
         .pedido-card { background: #252542; border-radius: 12px; padding: 15px; margin-bottom: 12px; border-left: 4px solid #00d4ff; }
         .pedido-card.novo { border-left-color: #ffc107; }
-        .pedido-card.preparando { border-left-color: #00d4ff; }
+        .pedido-card.preparando { border-left-color: #f97316; }
         .pedido-card.pronto { border-left-color: #00cc6a; }
-        .pedido-card.saiu_entrega { border-left-color: #00d4ff; }
+        .pedido-card.saiu_entrega { border-left-color: #f97316; }
         .pedido-header { display: flex; justify-content: space-between; margin-bottom: 8px; }
         .pedido-num { font-weight: bold; font-size: 16px; }
         .pedido-status { padding: 3px 10px; border-radius: 15px; font-size: 12px; font-weight: bold; }
         .status-novo { background: #ffc107; color: #000; }
         .status-confirmado { background: #2196f3; color: #fff; }
-        .status-preparando { background: #00d4ff; color: #fff; }
+        .status-preparando { background: #f97316; color: #fff; }
         .status-pronto { background: #00cc6a; color: #000; }
-        .status-saiu_entrega { background: #00d4ff; color: #000; }
+        .status-saiu_entrega { background: #f97316; color: #000; }
         .status-entregue { background: #4caf50; color: #fff; }
         .status-cancelado { background: #ff4444; color: #fff; }
         
@@ -134,8 +137,12 @@
 
     <!-- DASHBOARD -->
     <div id="dashboardContainer" class="dashboard" style="display:block">
-        <div class="header"><button class="menu-toggle-global" onclick="toggleMenuGlobal()">☰</button>
-            <h1>🍔 Rebeca Delivery <span id="nomeRestaurante"></span></h1>
+        <div class="header" style="display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px">
+            <button class="menu-toggle-global" onclick="toggleMenuGlobal()" style="color:#fff;background:rgba(255,255,255,.15);border:none;border-radius:8px;padding:6px 10px;font-size:1.2em;cursor:pointer">☰</button>
+            <div style="text-align:center">
+              <img src="/logo-rebeca.png" style="height:32px;object-fit:contain;display:block;margin:0 auto 2px">
+              <span style="font-size:.6em;font-weight:800;color:rgba(255,255,255,.9);letter-spacing:3px;text-transform:uppercase;background:rgba(255,255,255,.2);padding:1px 10px;border-radius:20px">ADM</span>
+            </div>
             <div>
                 <button class="btn btn-small" style="background:#252542;color:#888;" onclick="copiarLinkCozinha()">👨‍🍳 Link Cozinha</button>
                 <button class="btn btn-small btn-danger" onclick="logout()">Sair</button>
@@ -266,7 +273,7 @@
                         </div>
                         <div id="iaLoading" style="display:none;text-align:center;padding:30px;">
                             <div style="font-size:32px;animation:spin 1s linear infinite;display:inline-block;">🤖</div>
-                            <p style="color:#00d4ff;margin-top:10px;font-size:16px;">A IA está lendo seu cardápio...</p>
+                            <p style="color:#f97316;margin-top:10px;font-size:16px;">A IA está lendo seu cardápio...</p>
                             <p style="color:#888;font-size:13px;">Isso pode levar até 30 segundos</p>
                             <style>@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}</style>
                         </div>
@@ -275,7 +282,7 @@
                         <div class="panel" style="margin-top:15px;">
                             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;">
                                 <h3>✅ Cardápio Transcrito — Revise e ajuste</h3>
-                                <span id="contadorItens" style="color:#00d4ff;font-size:14px;"></span>
+                                <span id="contadorItens" style="color:#f97316;font-size:14px;"></span>
                             </div>
                             <div id="transcricaoLista"></div>
                         </div>
@@ -360,7 +367,7 @@
                             <button class="btn btn-primary" onclick="abrirFormAssinante()">+ Novo Assinante</button>
                         </div>
                         <div id="formAssinante" style="display:none;background:#252542;border-radius:10px;padding:20px;margin-bottom:20px;">
-                            <h4 style="color:#00d4ff;margin-bottom:15px;">Cadastrar / Editar Assinante</h4>
+                            <h4 style="color:#f97316;margin-bottom:15px;">Cadastrar / Editar Assinante</h4>
                             <input type="hidden" id="assinanteId">
                             <div class="form-row">
                                 <div class="form-group"><label>Nome</label><input type="text" id="assinanteNome" placeholder="Nome do assinante"></div>
@@ -442,14 +449,14 @@
                             <div id="qrCodeImg" style="background:#fff;display:inline-block;padding:16px;border-radius:12px;margin-bottom:12px"></div>
                             <div style="margin-bottom:8px">
                                 <small style="color:#aaa">Link:</small><br>
-                                <a id="qrLink" href="#" target="_blank" style="color:#00d4ff;font-size:.85em;word-break:break-all"></a>
+                                <a id="qrLink" href="#" target="_blank" style="color:#f97316;font-size:.85em;word-break:break-all"></a>
                             </div>
                             <div style="display:flex;gap:8px;flex-wrap:wrap">
-                                <button onclick="copiarQR()" style="padding:8px 16px;background:#00d4ff22;border:1px solid #00d4ff;color:#00d4ff;border-radius:8px;cursor:pointer">📋 Copiar Link</button>
+                                <button onclick="copiarQR()" style="padding:8px 16px;background:#f9731622;border:1px solid #00d4ff;color:#f97316;border-radius:8px;cursor:pointer">📋 Copiar Link</button>
                                 <button onclick="imprimirQR()" style="padding:8px 16px;background:#fff2;border:1px solid #555;color:#fff;border-radius:8px;cursor:pointer">🖨️ Imprimir QR</button>
                             </div>
                         </div>
-                        <button onclick="gerarQR()" id="btnGerarQR" style="padding:12px 24px;background:#00d4ff;border:none;color:#000;border-radius:10px;font-weight:700;cursor:pointer">🔲 Gerar QR Code</button>
+                        <button onclick="gerarQR()" id="btnGerarQR" style="padding:12px 24px;background:#f97316;border:none;color:#000;border-radius:10px;font-weight:700;cursor:pointer">🔲 Gerar QR Code</button>
                     </div>
 
                     <div class="panel">
@@ -832,9 +839,9 @@
                     <p style="font-size:13px;margin-top:5px;">📍 ${p.enderecoEntrega || 'Retirada'} | 💰 R$ ${(p.total||0).toFixed(2)} | 💳 ${p.formaPagamento || '-'}</p>
                     <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
                         ${p.status === 'novo' ? '<button class="btn btn-small btn-success" onclick="mudarStatus(\''+p._id+'\',\'confirmado\')">✅ Confirmar</button><button class="btn btn-small btn-danger" onclick="cancelarPedido(\''+p._id+'\')">❌ Cancelar</button>' : ''}
-                        ${p.status === 'confirmado' ? '<button class="btn btn-small" style="background:#00d4ff;color:#fff;" onclick="mudarStatus(\''+p._id+'\',\'preparando\')">👨‍🍳 Preparar</button>' : ''}
+                        ${p.status === 'confirmado' ? '<button class="btn btn-small" style="background:#f97316;color:#fff;" onclick="mudarStatus(\''+p._id+'\',\'preparando\')">👨‍🍳 Preparar</button>' : ''}
                         ${p.status === 'preparando' ? '<button class="btn btn-small btn-success" onclick="mudarStatus(\''+p._id+'\',\'pronto\')">✅ Pronto!</button>' : ''}
-                        ${p.status === 'pronto' ? '<button class="btn btn-small" style="background:#00d4ff;color:#000;" onclick="mudarStatus(\''+p._id+'\',\'saiu_entrega\')">🏍️ Saiu Entrega</button>' : ''}
+                        ${p.status === 'pronto' ? '<button class="btn btn-small" style="background:#f97316;color:#000;" onclick="mudarStatus(\''+p._id+'\',\'saiu_entrega\')">🏍️ Saiu Entrega</button>' : ''}
                         ${p.status === 'saiu_entrega' ? '<button class="btn btn-small btn-success" onclick="mudarStatus(\''+p._id+'\',\'entregue\')">✅ Entregue</button>' : ''}
                         <button class="btn btn-small" style="background:#555;color:#fff;" onclick="_imprimirPedido('"+p._id+"')">🖨️ Comanda</button>
                         ${p.origemPedido === 'cardapio_digital' ? '<span style="background:#ff6b35;color:#fff;border-radius:10px;padding:2px 8px;font-size:.7em;font-weight:700;">📱 Digital</span>' : ''}
@@ -891,7 +898,7 @@
 <div id="modalFichaGarcom" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:9000;align-items:center;justify-content:center">
   <div style="background:#1a1a2e;border-radius:16px;padding:28px;width:95%;max-width:600px;max-height:90vh;overflow-y:auto;border:1px solid #333">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
-      <h3 id="fichaGarcomNome" style="color:#00d4ff;font-size:1.2em"></h3>
+      <h3 id="fichaGarcomNome" style="color:#f97316;font-size:1.2em"></h3>
       <button onclick="fecharFichaGarcom()" style="background:transparent;border:1px solid #444;color:#888;padding:6px 14px;border-radius:6px;cursor:pointer">✕ Fechar</button>
     </div>
     <div id="fichaGarcomConteudo"></div>
@@ -901,7 +908,7 @@
 <!-- Modal novo/editar garçom -->
 <div id="modalNovoGarcom" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:9001;align-items:center;justify-content:center">
   <div style="background:#1a1a2e;border-radius:16px;padding:28px;width:95%;max-width:440px;border:1px solid #333">
-    <h3 style="color:#00d4ff;margin-bottom:20px" id="tituloModalGarcom">Novo Garçom</h3>
+    <h3 style="color:#f97316;margin-bottom:20px" id="tituloModalGarcom">Novo Garçom</h3>
     <input type="hidden" id="garcomEditId">
     <div style="margin-bottom:14px">
       <label style="display:block;color:#aaa;font-size:.82em;margin-bottom:6px">NOME</label>
@@ -912,7 +919,7 @@
       <input id="garcomTelefone" type="text" placeholder="(xx) xxxxx-xxxx" style="width:100%;padding:11px;background:#0f0f1a;border:1px solid #333;border-radius:8px;color:#fff;font-size:.95em">
     </div>
     <div style="display:flex;gap:10px">
-      <button onclick="salvarGarcom()" style="flex:1;padding:13px;background:#00d4ff;border:none;border-radius:8px;color:#000;font-weight:700;cursor:pointer">Salvar</button>
+      <button onclick="salvarGarcom()" style="flex:1;padding:13px;background:#f97316;border:none;border-radius:8px;color:#000;font-weight:700;cursor:pointer">Salvar</button>
       <button onclick="document.getElementById('modalNovoGarcom').style.display='none'" style="flex:1;padding:13px;background:transparent;border:1px solid #444;border-radius:8px;color:#888;cursor:pointer">Cancelar</button>
     </div>
   </div>
@@ -1029,7 +1036,7 @@
                         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
                             <span class="item-preco">R$ ${(i.preco||0).toFixed(2)}</span>
                             <button onclick="toggleDisponivel('${i._id}',${!disp})" style="padding:5px 10px;border-radius:6px;border:1px solid ${disp?'#e74c3c':'#22c55e'};background:transparent;color:${disp?'#e74c3c':'#22c55e'};cursor:pointer;font-size:11px;">${disp?'❌ Esgotar':'✅ Repor'}</button>
-                            <button class="btn btn-small" style="background:#252542;color:#00d4ff;" onclick="editarItem('${i._id}')">✏️</button>
+                            <button class="btn btn-small" style="background:#252542;color:#f97316;" onclick="editarItem('${i._id}')">✏️</button>
                             <button class="btn btn-small btn-danger" onclick="deletarItem('${i._id}')">🗑️</button>
                         </div>
                     </div>`;
@@ -1554,7 +1561,7 @@ async function _salvarItemReal() {
                 const r = await fetch('/api/evolution/instancia/' + instanciaDeliveryId + '/qrcode', { headers: {'Authorization':'Bearer '+token} }).then(x=>x.json());
                 const qr = r.qrcode || r.qrCode || r.base64 || null;
                 if (r.jaConectado || r.status === 'conectado') {
-                    box.innerHTML = '<p style="color:#00d4ff;font-size:18px;">✅ WhatsApp já conectado!</p>';
+                    box.innerHTML = '<p style="color:#f97316;font-size:18px;">✅ WhatsApp já conectado!</p>';
                 } else if (qr) {
                     // Verificar se é base64 de imagem ou código de texto
                     const isBase64Img = qr.length > 200 && (qr.startsWith('data:image') || /^[A-Za-z0-9+/=]{100,}$/.test(qr.substring(0, 50)));
@@ -1878,15 +1885,15 @@ async function carregarGarcons() {
                     <div style="background:#1e1e35;border-radius:12px;padding:18px;margin-bottom:12px;border-left:4px solid ${g.ativo ? '#00d4ff' : '#555'}">
                         <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;">
                             <div>
-                                <div style="font-weight:700;font-size:1.05em;color:${g.ativo ? '#fff' : '#777'}">${g.nome} ${g.ativo ? '<span style="background:#00d4ff22;color:#00d4ff;font-size:.75em;padding:2px 8px;border-radius:10px;margin-left:6px">Ativo</span>' : '<span style="background:#55555522;color:#555;font-size:.75em;padding:2px 8px;border-radius:10px;margin-left:6px">Inativo</span>'}</div>
+                                <div style="font-weight:700;font-size:1.05em;color:${g.ativo ? '#fff' : '#777'}">${g.nome} ${g.ativo ? '<span style="background:#f9731622;color:#f97316;font-size:.75em;padding:2px 8px;border-radius:10px;margin-left:6px">Ativo</span>' : '<span style="background:#55555522;color:#555;font-size:.75em;padding:2px 8px;border-radius:10px;margin-left:6px">Inativo</span>'}</div>
                                 <div style="color:#888;font-size:.85em;margin-top:4px">${g.telefone || 'Sem telefone'}</div>
                                 ${g.mesas ? '<div style="color:#aaa;font-size:.8em;margin-top:2px">🪑 Mesas: ' + g.mesas + '</div>' : ''}
-                                <div style="margin-top:8px;background:#0f0f1a;border-radius:6px;padding:6px 10px;font-size:.78em;color:#00d4ff;font-family:monospace">
+                                <div style="margin-top:8px;background:#0f0f1a;border-radius:6px;padding:6px 10px;font-size:.78em;color:#f97316;font-family:monospace">
                                     🔑 Token: ${g.token}
                                 </div>
                             </div>
                             <div style="display:flex;flex-direction:column;gap:7px;min-width:160px;">
-                                <button onclick="copiarLinkGarcom('${g.token}')" style="padding:8px 14px;background:#00d4ff;border:none;color:#000;border-radius:8px;cursor:pointer;font-size:.82em;font-weight:700">📲 Link do App</button>
+                                <button onclick="copiarLinkGarcom('${g.token}')" style="padding:8px 14px;background:#f97316;border:none;color:#000;border-radius:8px;cursor:pointer;font-size:.82em;font-weight:700">📲 Link do App</button>
                                 <button onclick="toggleGarcom('${g._id}',${g.ativo})" style="padding:8px 14px;background:rgba(255,255,255,.05);border:1px solid #444;color:${g.ativo ? '#ff7' : '#7f7'};border-radius:8px;cursor:pointer;font-size:.82em">${g.ativo ? '⏸ Desativar' : '▶ Ativar'}</button>
                                 <button onclick="excluirGarcom('${g._id}')" style="padding:8px 14px;background:rgba(255,255,255,.05);border:1px solid #633;color:#f77;border-radius:8px;cursor:pointer;font-size:.82em">🗑 Excluir</button>
                             </div>
@@ -1956,7 +1963,7 @@ async function verFichaGarcom(id, nome) {
     document.getElementById('fichaGarcomConteudo').innerHTML = `
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px">
             <div style="background:#0f0f1a;border-radius:10px;padding:14px;text-align:center">
-                <div style="font-size:1.6em;font-weight:800;color:#00d4ff">${resumo.totalPedidos}</div>
+                <div style="font-size:1.6em;font-weight:800;color:#f97316">${resumo.totalPedidos}</div>
                 <div style="color:#666;font-size:.78em;margin-top:4px">Pedidos (30d)</div>
             </div>
             <div style="background:#0f0f1a;border-radius:10px;padding:14px;text-align:center">
@@ -1975,7 +1982,7 @@ async function verFichaGarcom(id, nome) {
                     <span style="color:#fff;font-size:.9em">${new Date(d.dia+'T12:00:00').toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'short'})}</span>
                 </div>
                 <div style="display:flex;gap:16px">
-                    <span style="color:#00d4ff;font-size:.85em">${d.pedidos} pedidos</span>
+                    <span style="color:#f97316;font-size:.85em">${d.pedidos} pedidos</span>
                     <span style="color:#f97316;font-size:.85em">${d.mesas} mesas</span>
                     <span style="color:#00cc6a;font-size:.85em;font-weight:700">R$${d.total.toFixed(2).replace('.',',')}</span>
                 </div>
@@ -2059,13 +2066,13 @@ async function verFichaEntregador(id, nome) {
     <div id="modalQREntregador" class="modal-overlay">
         <div class="modal-box" style="max-width:420px;text-align:center;">
             <button class="modal-close" onclick="document.getElementById('modalQREntregador').classList.remove('active')">&times;</button>
-            <h2 style="color:#00d4ff;margin-bottom:5px;">📱 App do Entregador</h2>
+            <h2 style="color:#f97316;margin-bottom:5px;">📱 App do Entregador</h2>
             <p style="color:#aaa;font-size:13px;margin-bottom:15px;">Entregador escaneia com a câmera do celular</p>
             <div id="qrEntregadorImg" style="background:#fff;padding:15px;border-radius:12px;display:inline-block;margin-bottom:12px;"></div>
-            <p id="qrEntregadorNome" style="color:#00d4ff;font-weight:bold;margin:5px 0;"></p>
+            <p id="qrEntregadorNome" style="color:#f97316;font-weight:bold;margin:5px 0;"></p>
             <div style="background:#252542;border-radius:8px;padding:10px;margin:8px 0 12px;">
                 <p style="font-size:11px;color:#888;margin-bottom:3px;">Link direto:</p>
-                <p id="qrEntregadorLink" style="font-size:11px;color:#00d4ff;word-break:break-all;"></p>
+                <p id="qrEntregadorLink" style="font-size:11px;color:#f97316;word-break:break-all;"></p>
             </div>
             <div style="display:flex;gap:10px;">
                 <button class="btn btn-primary" style="flex:1;" onclick="copiarLinkEntregador()">📋 Copiar Link</button>
@@ -2173,7 +2180,7 @@ async function carregarAssinantes() {
                 '</div>' +
                 '<div style="display:flex;gap:8px;">' +
                 '<button onclick="confirmarPagAssinante(' + a._id + ')" style="background:#27ae60;color:white;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;">Pago</button>' +
-                '<button onclick="editarAssinante(' + a._id + ')" style="background:#252542;color:#00d4ff;border:1px solid #00d4ff;padding:6px 12px;border-radius:6px;cursor:pointer;">Editar</button>' +
+                '<button onclick="editarAssinante(' + a._id + ')" style="background:#252542;color:#f97316;border:1px solid #00d4ff;padding:6px 12px;border-radius:6px;cursor:pointer;">Editar</button>' +
                 '<button onclick="excluirAssinante(' + a._id + ')" style="background:#252542;color:#e74c3c;border:1px solid #e74c3c;padding:6px 12px;border-radius:6px;cursor:pointer;">Excluir</button>' +
                 '</div></div>';
         }).join('');
@@ -2400,7 +2407,7 @@ async function enviarCardapioDia() {
 <div id="modalFichaGarcom" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:9000;align-items:center;justify-content:center">
   <div style="background:#1a1a2e;border-radius:16px;padding:28px;width:95%;max-width:600px;max-height:90vh;overflow-y:auto;border:1px solid #333">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
-      <h3 id="fichaGarcomNome" style="color:#00d4ff;font-size:1.2em"></h3>
+      <h3 id="fichaGarcomNome" style="color:#f97316;font-size:1.2em"></h3>
       <button onclick="fecharFichaGarcom()" style="background:transparent;border:1px solid #444;color:#888;padding:6px 14px;border-radius:6px;cursor:pointer">✕ Fechar</button>
     </div>
     <div id="fichaGarcomConteudo"></div>
@@ -2410,7 +2417,7 @@ async function enviarCardapioDia() {
 <!-- Modal novo/editar garçom -->
 <div id="modalNovoGarcom" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:9001;align-items:center;justify-content:center">
   <div style="background:#1a1a2e;border-radius:16px;padding:28px;width:95%;max-width:440px;border:1px solid #333">
-    <h3 style="color:#00d4ff;margin-bottom:20px" id="tituloModalGarcom">Novo Garçom</h3>
+    <h3 style="color:#f97316;margin-bottom:20px" id="tituloModalGarcom">Novo Garçom</h3>
     <input type="hidden" id="garcomEditId">
     <div style="margin-bottom:14px">
       <label style="display:block;color:#aaa;font-size:.82em;margin-bottom:6px">NOME</label>
@@ -2421,7 +2428,7 @@ async function enviarCardapioDia() {
       <input id="garcomTelefone" type="text" placeholder="(xx) xxxxx-xxxx" style="width:100%;padding:11px;background:#0f0f1a;border:1px solid #333;border-radius:8px;color:#fff;font-size:.95em">
     </div>
     <div style="display:flex;gap:10px">
-      <button onclick="salvarGarcom()" style="flex:1;padding:13px;background:#00d4ff;border:none;border-radius:8px;color:#000;font-weight:700;cursor:pointer">Salvar</button>
+      <button onclick="salvarGarcom()" style="flex:1;padding:13px;background:#f97316;border:none;border-radius:8px;color:#000;font-weight:700;cursor:pointer">Salvar</button>
       <button onclick="document.getElementById('modalNovoGarcom').style.display='none'" style="flex:1;padding:13px;background:transparent;border:1px solid #444;border-radius:8px;color:#888;cursor:pointer">Cancelar</button>
     </div>
   </div>
