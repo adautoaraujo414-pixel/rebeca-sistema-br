@@ -1753,7 +1753,7 @@ async function _salvarItemReal() {
                 carregarEntregadores();
             } catch(e) { toast('Erro de conexão','error'); }
         }
-        async async function copiarLinkEntregador(eid) {
+        async function copiarLinkEntregador(eid) {
             // Suporte a chamada sem parâmetro (usa window._entregadorAtual)
             const id = eid || window._entregadorAtual;
             const e = entregadores.find(x => x._id === id);
