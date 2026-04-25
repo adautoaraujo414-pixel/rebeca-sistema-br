@@ -291,9 +291,6 @@ async function carregarCardapio(tentativa) {
   } else {
     document.getElementById('loading').innerHTML = '<p style="color:#e74c3c;margin-bottom:12px;">❌ Erro ao carregar cardápio</p><p style="color:#888;font-size:13px;">'+e.message+'</p><button onclick="carregarCardapio()" style="margin-top:12px;background:#ff6b35;border:none;border-radius:8px;padding:10px 20px;color:#fff;cursor:pointer;">🔄 Tentar novamente</button>';
   }
-} else {
-        await new Promise(function(res){ setTimeout(res, 1500 * t); });
-      }
     }
   }
 }
