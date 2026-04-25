@@ -248,7 +248,12 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
   </header><button onclick="togglePainelProducao()" style="position:fixed;bottom:12px;right:12px;background:#f97316;border:none;border-radius:50%;width:52px;height:52px;font-size:1.3em;cursor:pointer;z-index:1000;box-shadow:0 4px 12px rgba(249,115,22,0.4);">🍳</button>
 
   <!-- Stats -->
-  <div class="stats-bar">
+  <div class="stats-bar" style="display:flex;align-items:center;flex-wrap:wrap;gap:6px">
+    <div id="btn-caixa-wrapper" style="margin-right:8px">
+      <button id="btn-abrir-caixa" onclick="abrirCaixa()" style="background:#16a34a;color:#fff;border:none;border-radius:20px;padding:5px 14px;font-weight:700;font-size:.8em;cursor:pointer;display:none">🟢 Abrir Caixa</button>
+      <button id="btn-fechar-caixa" onclick="fecharCaixa()" style="background:#dc2626;color:#fff;border:none;border-radius:20px;padding:5px 14px;font-weight:700;font-size:.8em;cursor:pointer;display:none">🔴 Fechar Caixa</button>
+      <span id="badge-caixa" style="font-size:.75em;font-weight:700;padding:3px 10px;border-radius:20px;background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;display:none">✅ Caixa Aberto</span>
+    </div>
     <div class="stat-pill orange">📦 Ativos <span class="val" id="s-ativos">0</span></div>
     <div class="stat-pill green">✅ Entregues <span class="val" id="s-entregues">0</span></div>
     <div class="stat-pill blue">📱 WhatsApp <span class="val" id="s-whats">0</span></div>
@@ -1129,6 +1134,69 @@ document.addEventListener('DOMContentLoaded',function(){
   carregarStatsGarcom();
   setInterval(carregarStatsGarcom,30000);
 });
+
+// ===== ABERTURA / FECHAMENTO DE CAIXA =====
+let caixaAtual = null;
+
+async function verificarStatusCaixa() {
+    try {
+        const d = await api('/caixa/status');
+        caixaAtual = d.caixa;
+        const btnAbrir = document.getElementById('btn-abrir-caixa');
+        const btnFechar = document.getElementById('btn-fechar-caixa');
+        const badge = document.getElementById('badge-caixa');
+        if (d.aberto) {
+            btnAbrir.style.display = 'none';
+            btnFechar.style.display = 'inline-block';
+            badge.style.display = 'inline-block';
+            badge.textContent = '✅ Caixa Aberto';
+            badge.style.background = '#f0fdf4';
+            badge.style.color = '#16a34a';
+            badge.style.borderColor = '#bbf7d0';
+        } else {
+            btnAbrir.style.display = 'inline-block';
+            btnFechar.style.display = 'none';
+            badge.style.display = 'inline-block';
+            badge.textContent = '🔴 Caixa Fechado';
+            badge.style.background = '#fef2f2';
+            badge.style.color = '#dc2626';
+            badge.style.borderColor = '#fecaca';
+        }
+    } catch(e) { console.log('Erro ao verificar caixa:', e); }
+}
+
+async function abrirCaixa() {
+    if (!confirm('Abrir o caixa agora?')) return;
+    try {
+        const d = await api('/caixa/abrir', { method: 'POST', body: JSON.stringify({ operador: 'admin' }) });
+        if (d.sucesso) {
+            toast('✅ Caixa aberto com sucesso!');
+            verificarStatusCaixa();
+        } else toast('Erro: ' + d.erro, 'error');
+    } catch(e) { toast('Erro ao abrir caixa', 'error'); }
+}
+
+async function fecharCaixa() {
+    if (!confirm('⚠️ Fechar o caixa? Isso irá gerar o relatório do dia.')) return;
+    const obs = prompt('Observações (opcional):') || '';
+    try {
+        const d = await api('/caixa/fechar', { method: 'POST', body: JSON.stringify({ operador: 'admin', observacoes: obs }) });
+        if (d.sucesso) {
+            const r = d.relatorio;
+            verificarStatusCaixa();
+            // Mostrar resumo
+            setTimeout(() => {
+                alert(`✅ Caixa Fechado!\n\n📦 Total Pedidos: ${r.totalPedidos}\n✅ Entregues: ${r.totalEntregues}\n❌ Cancelados: ${r.totalCancelados}\n💰 Faturamento: R$ ${r.totalFaturamento.toFixed(2)}\n\n🏆 Top Produtos:\n${r.produtosMaisVendidos.slice(0,5).map(p => `  ${p.nome}: ${p.quantidade}x`).join('\n')}`);
+            }, 300);
+        } else toast('Erro: ' + d.erro, 'error');
+    } catch(e) { toast('Erro ao fechar caixa', 'error'); }
+}
+
+// Verificar status ao carregar
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(verificarStatusCaixa, 1500);
+});
+
 </script>
 </body>
 </html>
