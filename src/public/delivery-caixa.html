@@ -19,7 +19,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 /* LOGIN */
 #login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:radial-gradient(ellipse at 60% 40%,#fff3e0 0%,var(--bg) 70%)}
 .login-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:40px 36px;width:360px;box-shadow:0 24px 80px rgba(0,0,0,.6)}
-.login-logo{font-size:2.4em;margin-bottom:8px;text-align:center}
+.login-logo{margin-bottom:0;text-align:center}
 .login-card h2{text-align:center;font-size:1.3em;font-weight:800;color:var(--text);margin-bottom:4px}
 .login-card p{text-align:center;color:var(--text3);font-size:.85em;margin-bottom:24px}
 .field{margin-bottom:14px}
@@ -220,7 +220,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 <!-- LOGIN -->
 <div id="login-screen">
   <div class="login-card">
-    <div class="login-logo">🍔</div>
+    <div style="text-align:center;margin-bottom:24px"><img src="/logo-rebeca.png" style="height:110px;object-fit:contain;filter:drop-shadow(0 4px 16px rgba(249,115,22,.2))"></div>
     <h2>Caixa Delivery</h2>
     <p>Acesse com suas credenciais</p>
     <div class="field"><label>E-mail</label><input type="email" id="login-email" placeholder="seu@email.com"></div>
@@ -236,7 +236,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
   <!-- Header -->
   <header>
     <div class="header-left">
-      <div class="header-logo">🍔 <span>Caixa</span></div>
+      <div class="header-logo"><img src="/logo-rebeca.png" style="height:36px;object-fit:contain"></div>
       <div class="header-restaurant" id="nome-restaurante">Rebeca Delivery</div>
     </div>
     <div class="header-right">
