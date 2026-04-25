@@ -115,6 +115,7 @@
             .form-row { flex-direction: column; }
         }
     </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 </head>
 <body>
     <!-- LOGIN -->
@@ -158,6 +159,8 @@
                 <div class="menu-item" data-page="categorias">📁 Categorias</div>
                 <div class="menu-item" data-page="cardapio">🍔 Itens</div>
                 <div class="menu-item" data-page="upload-cardapio">📸 Upload Cardápio IA</div>
+                <div class="menu-section">Relatórios</div>
+                <div class="menu-item" data-page="relatorios" onclick="carregarRelatorios()">📈 Relatórios de Caixa</div>
                 <div class="menu-section">Operação</div>
                 <div class="menu-item" onclick="window.open('/delivery-caixa?token='+(localStorage.getItem('delivery_token')||token),'_blank')" style="cursor:pointer">🧾 Caixa / Comanda</div>
                 <div class="menu-item" onclick="window.open('/delivery-cozinha?token='+(localStorage.getItem('delivery_token')||token))" style="cursor:pointer">👨‍🍳 Painel Cozinha</div>
@@ -305,7 +308,65 @@
 
                 
 <!-- ===== PÁGINA GARÇONS ===== -->
-<div id="page-garcons" class="page">
+
+<div id="page-relatorios" class="page" style="padding:20px;max-width:1100px">
+  <h2 style="margin-bottom:20px;color:#1c1c1e;font-size:1.4em">📈 Relatórios de Caixa</h2>
+
+  <!-- Cards resumo -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:28px" id="rel-cards">
+    <div style="background:#fff;border-radius:14px;padding:18px;box-shadow:0 2px 10px rgba(0,0,0,.06);border:1px solid #e8e8ed">
+      <div style="font-size:.8em;color:#8e8e93;margin-bottom:4px">Total de Fechamentos</div>
+      <div style="font-size:1.8em;font-weight:900;color:#f97316" id="rel-total-fechamentos">-</div>
+    </div>
+    <div style="background:#fff;border-radius:14px;padding:18px;box-shadow:0 2px 10px rgba(0,0,0,.06);border:1px solid #e8e8ed">
+      <div style="font-size:.8em;color:#8e8e93;margin-bottom:4px">Faturamento Total</div>
+      <div style="font-size:1.8em;font-weight:900;color:#16a34a" id="rel-fat-total">-</div>
+    </div>
+    <div style="background:#fff;border-radius:14px;padding:18px;box-shadow:0 2px 10px rgba(0,0,0,.06);border:1px solid #e8e8ed">
+      <div style="font-size:.8em;color:#8e8e93;margin-bottom:4px">Média por Dia</div>
+      <div style="font-size:1.8em;font-weight:900;color:#2563eb" id="rel-media-dia">-</div>
+    </div>
+    <div style="background:#fff;border-radius:14px;padding:18px;box-shadow:0 2px 10px rgba(0,0,0,.06);border:1px solid #e8e8ed">
+      <div style="font-size:.8em;color:#8e8e93;margin-bottom:4px">Total Pedidos</div>
+      <div style="font-size:1.8em;font-weight:900;color:#7c3aed" id="rel-total-pedidos">-</div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px">
+    <!-- Gráfico de faturamento por dia -->
+    <div style="background:#fff;border-radius:14px;padding:20px;box-shadow:0 2px 10px rgba(0,0,0,.06);border:1px solid #e8e8ed">
+      <h3 style="font-size:1em;margin-bottom:16px;color:#1c1c1e">💰 Faturamento por Fechamento</h3>
+      <canvas id="grafico-faturamento" height="200"></canvas>
+    </div>
+    <!-- Produtos mais vendidos -->
+    <div style="background:#fff;border-radius:14px;padding:20px;box-shadow:0 2px 10px rgba(0,0,0,.06);border:1px solid #e8e8ed">
+      <h3 style="font-size:1em;margin-bottom:16px;color:#1c1c1e">🏆 Produtos Mais Vendidos</h3>
+      <div id="lista-produtos-rel" style="display:flex;flex-direction:column;gap:8px"></div>
+    </div>
+  </div>
+
+  <!-- Histórico de caixas -->
+  <div style="background:#fff;border-radius:14px;padding:20px;box-shadow:0 2px 10px rgba(0,0,0,.06);border:1px solid #e8e8ed">
+    <h3 style="font-size:1em;margin-bottom:16px;color:#1c1c1e">📋 Histórico de Fechamentos</h3>
+    <div id="historico-caixas" style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:.85em">
+        <thead>
+          <tr style="border-bottom:2px solid #f0f0f0;color:#8e8e93;text-align:left">
+            <th style="padding:8px">Data Abertura</th>
+            <th style="padding:8px">Fechamento</th>
+            <th style="padding:8px">Pedidos</th>
+            <th style="padding:8px">Entregues</th>
+            <th style="padding:8px">Faturamento</th>
+            <th style="padding:8px">Obs</th>
+          </tr>
+        </thead>
+        <tbody id="tbody-caixas"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+            <div id="page-garcons" class="page">
   <h2 style="margin-bottom:20px;">🧑‍🍽️ Garçons</h2>
   <div class="panel" style="margin-bottom:16px;">
     <h3 style="margin-bottom:16px;">➕ Cadastrar Garçom</h3>
@@ -2396,6 +2457,66 @@ async function enviarCardapioDia() {
             } catch(e) { el.innerHTML = '<p style="color:#e74c3c;text-align:center;">Erro ao gerar lista</p>'; }
         }
 
+
+
+// ===== RELATÓRIOS DE CAIXA =====
+async function carregarRelatorios() {
+    try {
+        const d = await api('/caixa/historico?limite=30');
+        const caixas = d.caixas || [];
+        
+        // Cards resumo
+        const fatTotal = caixas.reduce((s,c) => s + (c.totalFaturamento||0), 0);
+        const pedTotal = caixas.reduce((s,c) => s + (c.totalPedidos||0), 0);
+        document.getElementById('rel-total-fechamentos').textContent = caixas.length;
+        document.getElementById('rel-fat-total').textContent = 'R$ ' + fatTotal.toFixed(2);
+        document.getElementById('rel-media-dia').textContent = caixas.length ? 'R$ ' + (fatTotal/caixas.length).toFixed(2) : 'R$ 0';
+        document.getElementById('rel-total-pedidos').textContent = pedTotal;
+
+        // Gráfico faturamento
+        const ctx = document.getElementById('grafico-faturamento');
+        if (ctx && window.Chart) {
+            if (window._graficoFat) window._graficoFat.destroy();
+            const labels = caixas.slice(0,15).reverse().map(c => new Date(c.dataFechamento).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}));
+            const dados = caixas.slice(0,15).reverse().map(c => c.totalFaturamento||0);
+            window._graficoFat = new Chart(ctx, {
+                type: 'bar',
+                data: { labels, datasets: [{ label: 'Faturamento R$', data: dados, backgroundColor: '#f97316', borderRadius: 6 }] },
+                options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+            });
+        }
+
+        // Produtos mais vendidos (agregar de todos os caixas)
+        const prods = {};
+        caixas.forEach(c => (c.produtosMaisVendidos||[]).forEach(p => {
+            if (!prods[p.nome]) prods[p.nome] = { nome: p.nome, quantidade: 0, total: 0 };
+            prods[p.nome].quantidade += p.quantidade;
+            prods[p.nome].total += p.total;
+        }));
+        const topProds = Object.values(prods).sort((a,b) => b.quantidade-a.quantidade).slice(0,8);
+        const maxQtd = topProds[0]?.quantidade || 1;
+        document.getElementById('lista-produtos-rel').innerHTML = topProds.map(p => `
+            <div style="display:flex;align-items:center;gap:10px">
+              <div style="width:120px;font-size:.82em;font-weight:600;color:#1c1c1e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.nome}</div>
+              <div style="flex:1;background:#f5f5f7;border-radius:6px;height:18px;overflow:hidden">
+                <div style="width:${Math.round(p.quantidade/maxQtd*100)}%;background:#f97316;height:100%;border-radius:6px"></div>
+              </div>
+              <div style="font-size:.8em;color:#8e8e93;width:50px;text-align:right">${p.quantidade}x</div>
+            </div>`).join('');
+
+        // Tabela histórico
+        document.getElementById('tbody-caixas').innerHTML = caixas.map(c => `
+            <tr style="border-bottom:1px solid #f5f5f7">
+              <td style="padding:8px">${new Date(c.dataAbertura).toLocaleString('pt-BR')}</td>
+              <td style="padding:8px">${c.dataFechamento ? new Date(c.dataFechamento).toLocaleString('pt-BR') : '-'}</td>
+              <td style="padding:8px">${c.totalPedidos}</td>
+              <td style="padding:8px;color:#16a34a">${c.totalEntregues}</td>
+              <td style="padding:8px;font-weight:700;color:#f97316">R$ ${(c.totalFaturamento||0).toFixed(2)}</td>
+              <td style="padding:8px;color:#8e8e93;font-size:.8em">${c.observacoes||'-'}</td>
+            </tr>`).join('');
+
+    } catch(e) { console.log('Erro relatórios:', e); }
+}
 
 </script>
 
