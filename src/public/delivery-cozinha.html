@@ -276,6 +276,13 @@ function renderCard(p){
 
   var clienteNome=p.cliente&&p.cliente.nome?p.cliente.nome:(p.nomeCliente||'Cliente');
   var pgto={pix:'PIX 💰',dinheiro:'Dinheiro 💵',cartao:'Cartão 💳',na_entrega:'Na entrega'}[p.formaPagamento]||(p.formaPagamento||'');
+  var enderecoHtml='';
+  if((p.tipoLocal==='delivery'||p.tipo==='delivery')&&(p.enderecoEntrega||p.clienteEndereco)){
+    var end=p.enderecoEntrega||p.clienteEndereco||'';
+    var tel=p.clienteTelefone?'<span style="margin-left:8px">📞 '+p.clienteTelefone+'</span>':'';
+    enderecoHtml='<div class="obs-destaque" style="background:#eff6ff;border-color:#2563eb;color:#1e40af;margin-top:6px">'+
+      '<span style="font-weight:800">🏠 ENTREGA: </span>'+end+tel+'</div>';
+  }
 
   return '<div class="card '+p.status+(urgente?' urgente':'')+'" data-id="'+p._id+'" data-criado="'+p.createdAt+'">'+
     '<div class="card-stripe"></div>'+
