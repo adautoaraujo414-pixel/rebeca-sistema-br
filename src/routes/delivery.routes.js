@@ -81,15 +81,18 @@ async function gerarImagemItem(nome, descricao) {
             n: 1,
             size: '1024x1024',
             quality: 'standard',
-            style: 'natural'
+            style: 'natural',
+            response_format: 'b64_json'
         }, {
             headers: { 'Authorization': 'Bearer ' + apiKey, 'Content-Type': 'application/json' },
             timeout: 60000
         });
 
-        const url = resp.data.data[0]?.url;
-        console.log('[IMG-ITEM] Imagem gerada:', url ? 'OK' : 'FALHOU');
-        return url || null;
+        const b64 = resp.data.data[0]?.b64_json;
+        if (!b64) return null;
+        const dataUrl = 'data:image/png;base64,' + b64;
+        console.log('[IMG-ITEM] Imagem salva em base64 permanente: OK');
+        return dataUrl;
     } catch(e) {
         console.log('[IMG-ITEM] Erro ao gerar imagem:', e.message);
         return null;
