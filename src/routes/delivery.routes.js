@@ -2,7 +2,7 @@ const express = require('express');
 const crypto = require('crypto');
 const router = express.Router();
 const { Entregador, MensalidadeClienteDelivery, CardapioDia, GarcomDelivery,
-        AdminDelivery, PedidoDelivery, ItemCardapio, CategoriaCardapio, ConfigDelivery } = require('../models/delivery.models');
+        AdminDelivery, PedidoDelivery, ItemCardapio, CategoriaCardapio, ConfigDelivery, CaixaDelivery } = require('../models/delivery.models');
 const { EntregadorDelivery, ClienteDelivery, InstanciaWhatsapp, AvaliacaoDelivery,
         AssinanteDelivery } = require('../models');
 const EvolutionMultiService = require('../services/evolution-multi.service');
@@ -1624,5 +1624,98 @@ router.post('/mesa/confirmar/:id', async (req, res) => {
         res.json({ sucesso: true });
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
+
+
+// ===== ABERTURA / FECHAMENTO DE CAIXA =====
+
+// Ver status atual do caixa
+router.get('/caixa/status', authDelivery, async (req, res) => {
+    try {
+        const caixa = await CaixaDelivery.findOne({ adminId: req.adminId, status: 'aberto' }).sort({ dataAbertura: -1 });
+        res.json({ caixa: caixa || null, aberto: !!caixa });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// Abrir caixa
+router.post('/caixa/abrir', authDelivery, async (req, res) => {
+    try {
+        const jaAberto = await CaixaDelivery.findOne({ adminId: req.adminId, status: 'aberto' });
+        if (jaAberto) return res.json({ sucesso: true, caixa: jaAberto, msg: 'Caixa já estava aberto' });
+        const caixa = await CaixaDelivery.create({
+            adminId: req.adminId,
+            status: 'aberto',
+            abertoPor: req.body.operador || 'admin',
+            dataAbertura: new Date()
+        });
+        res.json({ sucesso: true, caixa });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// Fechar caixa - gera relatório e zera pedidos do dia
+router.post('/caixa/fechar', authDelivery, async (req, res) => {
+    try {
+        const caixa = await CaixaDelivery.findOne({ adminId: req.adminId, status: 'aberto' });
+        if (!caixa) return res.status(400).json({ erro: 'Nenhum caixa aberto' });
+
+        // Buscar todos pedidos desde abertura do caixa
+        const pedidos = await PedidoDelivery.find({
+            adminId: req.adminId,
+            criadoEm: { $gte: caixa.dataAbertura }
+        });
+
+        // Calcular totais
+        const entregues = pedidos.filter(p => p.status === 'entregue');
+        const cancelados = pedidos.filter(p => p.status === 'cancelado');
+        const totalFaturamento = entregues.reduce((s, p) => s + (p.total || 0), 0);
+
+        // Produtos mais vendidos
+        const contagem = {};
+        pedidos.forEach(p => {
+            (p.itens || []).forEach(it => {
+                const nome = it.nome || 'Item';
+                if (!contagem[nome]) contagem[nome] = { nome, quantidade: 0, total: 0 };
+                contagem[nome].quantidade += it.quantidade || 1;
+                contagem[nome].total += (it.preco || 0) * (it.quantidade || 1);
+            });
+        });
+        const produtosMaisVendidos = Object.values(contagem)
+            .sort((a, b) => b.quantidade - a.quantidade)
+            .slice(0, 10);
+
+        // Fechar o caixa com relatório
+        caixa.status = 'fechado';
+        caixa.fechadoPor = req.body.operador || 'admin';
+        caixa.dataFechamento = new Date();
+        caixa.totalPedidos = pedidos.length;
+        caixa.totalFaturamento = totalFaturamento;
+        caixa.totalEntregues = entregues.length;
+        caixa.totalCancelados = cancelados.length;
+        caixa.produtosMaisVendidos = produtosMaisVendidos;
+        caixa.pedidosIds = pedidos.map(p => p._id);
+        caixa.observacoes = req.body.observacoes || '';
+        await caixa.save();
+
+        res.json({ sucesso: true, caixa, relatorio: {
+            totalPedidos: pedidos.length,
+            totalFaturamento,
+            totalEntregues: entregues.length,
+            totalCancelados: cancelados.length,
+            produtosMaisVendidos
+        }});
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// Histórico de caixas fechados (relatórios)
+router.get('/caixa/historico', authDelivery, async (req, res) => {
+    try {
+        const limite = parseInt(req.query.limite) || 30;
+        const caixas = await CaixaDelivery.find({ adminId: req.adminId, status: 'fechado' })
+            .sort({ dataFechamento: -1 })
+            .limit(limite)
+            .select('-pedidosIds');
+        res.json({ caixas });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
 
 module.exports = router;
