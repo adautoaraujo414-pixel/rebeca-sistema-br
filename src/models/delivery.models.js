@@ -78,7 +78,7 @@ const PedidoDeliverySchema = new mongoose.Schema({
     // Status do pedido
     status: { 
         type: String, 
-        enum: ['novo', 'confirmado', 'preparando', 'pronto', 'saiu_entrega', 'entregue', 'cancelado'],
+        enum: ['novo', 'pendente', 'confirmado', 'preparando', 'pronto', 'saiu_entrega', 'entregue', 'cancelado'],
         default: 'novo',
         index: true
     },

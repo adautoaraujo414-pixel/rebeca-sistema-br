@@ -991,7 +991,7 @@ router.post('/caixa/pedido', authDelivery, async (req, res) => {
             subtotal: subtotal || 0,
             total: total || 0,
             taxaEntrega: taxaEntrega || 0,
-            status: 'pendente',
+            status: 'novo',
             tipoEntrega: tipoLocal === 'delivery' ? 'delivery' : 'retirada'
         });
         
