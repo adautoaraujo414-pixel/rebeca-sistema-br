@@ -294,3 +294,22 @@ const GarcomDeliverySchema = new mongoose.Schema({
 GarcomDeliverySchema.index({ adminId: 1 });
 const GarcomDelivery = mongoose.models.GarcomDelivery || mongoose.model('GarcomDelivery', GarcomDeliverySchema);
 module.exports.GarcomDelivery = GarcomDelivery;
+
+// ===== CAIXA (abertura/fechamento) =====
+const CaixaDeliverySchema = new mongoose.Schema({
+    adminId: { type: mongoose.Schema.Types.ObjectId, required: true, index: true },
+    status: { type: String, enum: ['aberto', 'fechado'], default: 'aberto' },
+    abertoPor: { type: String, default: 'admin' },
+    fechadoPor: { type: String, default: '' },
+    dataAbertura: { type: Date, default: Date.now },
+    dataFechamento: { type: Date },
+    totalPedidos: { type: Number, default: 0 },
+    totalFaturamento: { type: Number, default: 0 },
+    totalEntregues: { type: Number, default: 0 },
+    totalCancelados: { type: Number, default: 0 },
+    produtosMaisVendidos: [{ nome: String, quantidade: Number, total: Number }],
+    pedidosIds: [{ type: mongoose.Schema.Types.ObjectId }],
+    observacoes: { type: String, default: '' }
+}, { timestamps: true });
+const CaixaDelivery = mongoose.models.CaixaDelivery || mongoose.model('CaixaDelivery', CaixaDeliverySchema);
+module.exports.CaixaDelivery = CaixaDelivery;
