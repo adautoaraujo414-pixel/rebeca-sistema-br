@@ -1795,7 +1795,7 @@ async function _salvarItemReal() {
             try { await api('/entregadores/'+id+'/toggle',{method:'PUT'}); toast('Status atualizado!'); carregarEntregadores(); }
             catch(e) { toast('Erro ao atualizar status','error'); }
         }
-        async async function excluirEntregador(id) {
+        async function excluirEntregador(id) {
             if (!confirm('Remover este entregador?')) return;
             try { await api('/entregadores/'+id,{method:'DELETE'}); toast('Removido!'); carregarEntregadores(); }
             catch(e) { toast('Erro ao remover','error'); }
@@ -1848,8 +1848,6 @@ async function _salvarItemReal() {
             } catch(e) { alert('Erro de conexão: ' + e.message); }
             finally { btn.disabled = false; btn.textContent = '➕ Cadastrar Garçom'; }
         }
-
-        async 
 
         async function excluirGarcom(id) {
             if (!confirm('Excluir garçom permanentemente?')) return;
