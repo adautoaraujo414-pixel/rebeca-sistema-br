@@ -313,6 +313,15 @@ function renderizar() {
   var itens = d.itens || d.cardapio || [];
   var catsNav = document.getElementById('catsNav');
   catsNav.innerHTML = '<button class="cat-btn active" data-cat="todas" onclick="filtrarCat(\'todas\',this)">🍽️ Todos</button>';
+  // Botão combos
+  if (cardapioData && cardapioData.combos && cardapioData.combos.length) {
+    var btnC = document.createElement('button');
+    btnC.className = 'cat-btn';
+    btnC.dataset.cat = '_combos';
+    btnC.textContent = '🎁 Combos';
+    btnC.onclick = function(){ filtrarCat('_combos', btnC); };
+    catsNav.appendChild(btnC);
+  }
   cats.forEach(function(c) {
     var temItens = itens.some(function(i){ return i.categoria === c._id || i.categoria?._id === c._id; });
     if (!temItens) return;
