@@ -358,18 +358,60 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 
 <!-- Modal Pagamento -->
 <div class="modal-overlay" id="modal-pagamento">
-  <div class="modal">
+  <div class="modal" style="max-width:420px;width:95%">
     <h3>💰 Receber Pagamento</h3>
-    <div class="total-show" id="modal-total">R$ 0,00</div>
-    <div class="pgto-grid">
-      <div class="pgto-item"><label>💵 Dinheiro</label><input type="number" id="pag-dinheiro" placeholder="0,00" oninput="calcTroco()" min="0" step="0.01"></div>
-      <div class="pgto-item"><label>📱 PIX</label><input type="number" id="pag-pix" placeholder="0,00" oninput="calcTroco()" min="0" step="0.01"></div>
-      <div class="pgto-item"><label>💳 Débito</label><input type="number" id="pag-debito" placeholder="0,00" oninput="calcTroco()" min="0" step="0.01"></div>
-      <div class="pgto-item"><label>💳 Crédito</label><input type="number" id="pag-credito" placeholder="0,00" oninput="calcTroco()" min="0" step="0.01"></div>
+
+    <!-- Total e pendente -->
+    <div style="text-align:center;margin-bottom:14px">
+      <div class="total-show" id="modal-total" style="font-size:2em;color:#16a34a;font-weight:900">R$ 0,00</div>
+      <div id="pgto-pendente-box" style="display:none;margin-top:6px;background:#fef2f2;border-radius:8px;padding:6px 12px;font-size:.85em;color:#dc2626;font-weight:700">
+        ⏳ Já recebido: <span id="pgto-ja-recebido">R$ 0,00</span> &nbsp;|&nbsp; Falta: <span id="pgto-falta">R$ 0,00</span>
+      </div>
     </div>
+
+    <!-- Botões rápidos para cartão -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+      <button onclick="pagarTotal('debito')" style="background:#2563eb;color:#fff;border:none;border-radius:10px;padding:10px;font-weight:700;font-size:.85em;cursor:pointer">💳 Débito — Total</button>
+      <button onclick="pagarTotal('credito')" style="background:#7c3aed;color:#fff;border:none;border-radius:10px;padding:10px;font-weight:700;font-size:.85em;cursor:pointer">💳 Crédito — Total</button>
+      <button onclick="pagarTotal('pix')" style="background:#0891b2;color:#fff;border:none;border-radius:10px;padding:10px;font-weight:700;font-size:.85em;cursor:pointer">📱 PIX — Total</button>
+      <button onclick="limparPagamento()" style="background:#6b7280;color:#fff;border:none;border-radius:10px;padding:10px;font-weight:700;font-size:.85em;cursor:pointer">🗑️ Limpar</button>
+    </div>
+
+    <!-- Inputs manuais -->
+    <div class="pgto-grid" style="margin-bottom:10px">
+      <div class="pgto-item">
+        <label>💵 Dinheiro</label>
+        <input type="number" id="pag-dinheiro" placeholder="0,00" oninput="calcTroco()" min="0" step="0.01">
+      </div>
+      <div class="pgto-item">
+        <label>📱 PIX</label>
+        <input type="number" id="pag-pix" placeholder="0,00" oninput="calcTroco()" min="0" step="0.01">
+      </div>
+      <div class="pgto-item">
+        <label>💳 Débito</label>
+        <input type="number" id="pag-debito" placeholder="0,00" oninput="calcTroco()" min="0" step="0.01">
+      </div>
+      <div class="pgto-item">
+        <label>💳 Crédito</label>
+        <input type="number" id="pag-credito" placeholder="0,00" oninput="calcTroco()" min="0" step="0.01">
+      </div>
+    </div>
+
+    <!-- Pagamento parcial -->
+    <div style="background:#fff7ed;border-radius:10px;padding:10px 14px;margin-bottom:12px;border:1px solid #fed7aa">
+      <div style="font-size:.8em;font-weight:700;color:#f97316;margin-bottom:8px">🔄 PAGAMENTO PARCIAL (dividir conta)</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input type="number" id="pag-parcial" placeholder="Valor parcial..." min="0" step="0.01"
+               style="flex:1;padding:8px;border-radius:8px;border:1px solid #fed7aa;background:#fff;font-size:.9em">
+        <button onclick="registrarParcial()" style="background:#f97316;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-weight:700;font-size:.85em;cursor:pointer;white-space:nowrap">➕ Registrar</button>
+      </div>
+      <div id="lista-parciais" style="margin-top:8px;font-size:.8em;color:#636366"></div>
+    </div>
+
     <div class="troco-box" id="troco-info">💵 Troco: <span id="troco-valor">R$ 0,00</span></div>
+
     <div class="modal-actions">
-      <button class="btn btn-green" style="flex:1" onclick="confirmarPagamento()">✅ Confirmar</button>
+      <button class="btn btn-green" style="flex:1" onclick="confirmarPagamento()">✅ Confirmar Pagamento</button>
       <button class="btn btn-ghost" onclick="fecharModal()">Cancelar</button>
     </div>
   </div>
@@ -1196,6 +1238,120 @@ async function fecharCaixa() {
 document.addEventListener('DOMContentLoaded', () => {
     setTimeout(verificarStatusCaixa, 1500);
 });
+
+
+// ===== PAGAMENTO MELHORADO =====
+let _parciais = []; // lista de pagamentos parciais registrados
+
+function pagarTotal(tipo) {
+    // Preenche o campo do tipo com o valor total pendente
+    const pendente = pedidoPagandoTotal - _parciais.reduce((s,p) => s+p.valor, 0);
+    const val = Math.max(0, pendente).toFixed(2);
+    limparCamposPagamento();
+    const ids = { pix: 'pag-pix', debito: 'pag-debito', credito: 'pag-credito', dinheiro: 'pag-dinheiro' };
+    const el = document.getElementById(ids[tipo]);
+    if (el) { el.value = val; el.style.borderColor = '#f97316'; }
+    calcTroco();
+}
+
+function limparCamposPagamento() {
+    ['pag-dinheiro','pag-pix','pag-debito','pag-credito'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) { el.value = ''; el.style.borderColor = ''; }
+    });
+}
+
+function limparPagamento() {
+    limparCamposPagamento();
+    _parciais = [];
+    atualizarListaParciais();
+    calcTroco();
+}
+
+function registrarParcial() {
+    const input = document.getElementById('pag-parcial');
+    const val = parseFloat(input?.value) || 0;
+    if (val <= 0) return;
+
+    // Detectar qual forma foi preenchida
+    const formas = [
+        { id: 'pag-dinheiro', nome: '💵 Dinheiro' },
+        { id: 'pag-pix',      nome: '📱 PIX' },
+        { id: 'pag-debito',   nome: '💳 Débito' },
+        { id: 'pag-credito',  nome: '💳 Crédito' },
+    ];
+    let forma = '💵 Dinheiro';
+    for (const f of formas) {
+        const v = parseFloat(document.getElementById(f.id)?.value) || 0;
+        if (v > 0) { forma = f.nome; break; }
+    }
+
+    _parciais.push({ valor: val, forma });
+    input.value = '';
+    limparCamposPagamento();
+    atualizarListaParciais();
+    calcTroco();
+    toast(`✅ R$ ${val.toFixed(2)} registrado (${forma})`);
+}
+
+function atualizarListaParciais() {
+    const lista = document.getElementById('lista-parciais');
+    const box = document.getElementById('pgto-pendente-box');
+    const jaRecebido = document.getElementById('pgto-ja-recebido');
+    const falta = document.getElementById('pgto-falta');
+    if (!lista) return;
+
+    const totalParcial = _parciais.reduce((s,p) => s+p.valor, 0);
+    const pendente = Math.max(0, pedidoPagandoTotal - totalParcial);
+
+    if (_parciais.length > 0) {
+        lista.innerHTML = _parciais.map((p,i) =>
+            `<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #fed7aa">
+              <span>${p.forma}</span>
+              <span style="font-weight:700">R$ ${p.valor.toFixed(2)}
+                <button onclick="_parciais.splice(${i},1);atualizarListaParciais();calcTroco()"
+                  style="background:none;border:none;color:#dc2626;cursor:pointer;font-size:.85em;margin-left:4px">✕</button>
+              </span>
+            </div>`
+        ).join('');
+        if (box) box.style.display = 'block';
+        if (jaRecebido) jaRecebido.textContent = 'R$ ' + totalParcial.toFixed(2);
+        if (falta) falta.textContent = 'R$ ' + pendente.toFixed(2);
+    } else {
+        lista.innerHTML = '';
+        if (box) box.style.display = 'none';
+    }
+}
+
+// Sobrescrever calcTroco para considerar parciais
+function calcTroco() {
+    const totalParcial = _parciais.reduce((s,p) => s+p.valor, 0);
+    const pagoAgora = ['pag-dinheiro','pag-pix','pag-debito','pag-credito']
+        .reduce((s,id) => s + (parseFloat(document.getElementById(id)?.value) || 0), 0);
+    const totalPago = totalParcial + pagoAgora;
+    const troco = totalPago - pedidoPagandoTotal;
+    const el = document.getElementById('troco-info');
+    if (troco > 0.005) {
+        if (el) el.style.display = 'block';
+        const tv = document.getElementById('troco-valor');
+        if (tv) tv.textContent = 'R$ ' + troco.toFixed(2);
+    } else {
+        if (el) el.style.display = 'none';
+    }
+    atualizarListaParciais();
+}
+
+// Limpar parciais ao abrir modal
+const _origAbrirModalPagamento = window.abrirModalPagamento;
+if (typeof abrirModalPagamento === 'function') {
+    window._origAbrirPgto = abrirModalPagamento;
+    window.abrirModalPagamento = function(...args) {
+        _parciais = [];
+        atualizarListaParciais();
+        limparCamposPagamento();
+        window._origAbrirPgto(...args);
+    };
+}
 
 </script>
 </body>
