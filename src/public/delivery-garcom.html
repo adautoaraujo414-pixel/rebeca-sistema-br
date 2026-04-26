@@ -752,11 +752,11 @@ function grcDividir(n) {
   const res = document.getElementById('grc-divisor-resultado');
   if (res) {
     res.style.display = 'block';
-    res.innerHTML = `👥 ${n} pessoas → <strong>R$ ${val.toFixed(2)}</strong> cada &nbsp;
-      <button onclick="grcUsarDivisao(${val.toFixed(2)})"
-        style="background:#16a34a;color:#fff;border:none;border-radius:6px;padding:3px 10px;font-size:.8em;cursor:pointer;margin-left:4px">
-        Usar no parcial
-      </button>`;
+    const valStr = val.toFixed(2);
+  res.innerHTML = '👥 ' + n + ' pessoas → <strong>R$ ' + valStr + '</strong> cada &nbsp;' +
+    '<button onclick="grcUsarDivisao(' + valStr + ')" ' +
+    'style="background:#16a34a;color:#fff;border:none;border-radius:6px;padding:3px 10px;font-size:.8em;cursor:pointer;margin-left:4px">' +
+    'Usar no parcial</button>';
   }
 }
 
