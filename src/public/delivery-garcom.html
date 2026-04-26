@@ -285,24 +285,81 @@ header{background:linear-gradient(135deg,#f97316 0%,#ea580c 100%);padding:0 20px
 
 <!-- MODAL PAGAMENTO -->
 <div class="overlay" id="overlayPagamento">
-  <div class="modal">
+  <div class="modal" style="max-width:420px;width:95%;max-height:90vh;overflow-y:auto">
     <div class="modal-header">
       <div class="modal-title">💰 Fechar Conta</div>
       <button class="modal-close" onclick="fecharPagamento()">✕</button>
     </div>
-    <div class="modal-body">
-      <div class="comanda-info" id="pagInfo">Total: R$ 0,00</div>
-      <div class="pag-opcoes">
-        <button class="pag-btn" onclick="selPag('dinheiro',this)">💵 Dinheiro</button>
-        <button class="pag-btn" onclick="selPag('pix',this)">📱 PIX</button>
-        <button class="pag-btn" onclick="selPag('cartao',this)">💳 Cartão</button>
-        <button class="pag-btn" onclick="selPag('na_entrega',this)">🔖 Na entrega</button>
+    <div class="modal-body" style="padding:16px">
+
+      <!-- Total -->
+      <div style="text-align:center;margin-bottom:14px">
+        <div id="pagInfo" style="font-size:2em;font-weight:900;color:#16a34a">R$ 0,00</div>
+        <div id="grc-pendente-box" style="display:none;margin-top:6px;background:#fef2f2;border-radius:8px;padding:6px 12px;font-size:.82em;color:#dc2626;font-weight:700">
+          ⏳ Recebido: <span id="grc-ja-recebido">R$ 0,00</span> &nbsp;|&nbsp; Falta: <span id="grc-falta">R$ 0,00</span>
+        </div>
       </div>
-      <input type="number" class="pag-valor" id="pagValor" placeholder="Valor recebido (deixe em branco para valor exato)">
+
+      <!-- Botões rápidos -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+        <button onclick="grcPagarTotal('debito')" style="background:#2563eb;color:#fff;border:none;border-radius:10px;padding:10px;font-weight:700;font-size:.85em;cursor:pointer">💳 Débito — Total</button>
+        <button onclick="grcPagarTotal('credito')" style="background:#7c3aed;color:#fff;border:none;border-radius:10px;padding:10px;font-weight:700;font-size:.85em;cursor:pointer">💳 Crédito — Total</button>
+        <button onclick="grcPagarTotal('pix')" style="background:#0891b2;color:#fff;border:none;border-radius:10px;padding:10px;font-weight:700;font-size:.85em;cursor:pointer">📱 PIX — Total</button>
+        <button onclick="grcPagarTotal('dinheiro')" style="background:#16a34a;color:#fff;border:none;border-radius:10px;padding:10px;font-weight:700;font-size:.85em;cursor:pointer">💵 Dinheiro — Total</button>
+      </div>
+
+      <!-- Inputs manuais -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+        <div><label style="font-size:.78em;color:#636366;display:block;margin-bottom:3px">💵 Dinheiro</label>
+          <input type="number" id="grc-dinheiro" placeholder="0,00" oninput="grcCalcTroco()" min="0" step="0.01"
+            style="width:100%;padding:8px;border-radius:8px;border:1px solid #e8e8ed;font-size:.9em"></div>
+        <div><label style="font-size:.78em;color:#636366;display:block;margin-bottom:3px">📱 PIX</label>
+          <input type="number" id="grc-pix" placeholder="0,00" oninput="grcCalcTroco()" min="0" step="0.01"
+            style="width:100%;padding:8px;border-radius:8px;border:1px solid #e8e8ed;font-size:.9em"></div>
+        <div><label style="font-size:.78em;color:#636366;display:block;margin-bottom:3px">💳 Débito</label>
+          <input type="number" id="grc-debito" placeholder="0,00" oninput="grcCalcTroco()" min="0" step="0.01"
+            style="width:100%;padding:8px;border-radius:8px;border:1px solid #e8e8ed;font-size:.9em"></div>
+        <div><label style="font-size:.78em;color:#636366;display:block;margin-bottom:3px">💳 Crédito</label>
+          <input type="number" id="grc-credito" placeholder="0,00" oninput="grcCalcTroco()" min="0" step="0.01"
+            style="width:100%;padding:8px;border-radius:8px;border:1px solid #e8e8ed;font-size:.9em"></div>
+      </div>
+
+      <!-- Divisor de conta -->
+      <div style="background:#f0fdf4;border-radius:10px;padding:10px 14px;margin-bottom:10px;border:1px solid #bbf7d0">
+        <div style="font-size:.78em;font-weight:700;color:#16a34a;margin-bottom:8px">➗ DIVIDIR CONTA</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+          <button onclick="grcDividir(2)" style="background:#16a34a;color:#fff;border:none;border-radius:8px;padding:6px 12px;font-weight:700;cursor:pointer">2</button>
+          <button onclick="grcDividir(3)" style="background:#16a34a;color:#fff;border:none;border-radius:8px;padding:6px 12px;font-weight:700;cursor:pointer">3</button>
+          <button onclick="grcDividir(4)" style="background:#16a34a;color:#fff;border:none;border-radius:8px;padding:6px 12px;font-weight:700;cursor:pointer">4</button>
+          <button onclick="grcDividir(5)" style="background:#16a34a;color:#fff;border:none;border-radius:8px;padding:6px 12px;font-weight:700;cursor:pointer">5</button>
+          <input type="number" id="grc-divisor" placeholder="N" min="2" max="20"
+            style="width:50px;padding:6px;border-radius:8px;border:1px solid #bbf7d0;text-align:center;font-size:.9em">
+          <button onclick="grcDividir(parseInt(document.getElementById('grc-divisor').value)||2)"
+            style="background:#16a34a;color:#fff;border:none;border-radius:8px;padding:6px 10px;font-weight:700;cursor:pointer">÷</button>
+        </div>
+        <div id="grc-divisor-resultado" style="margin-top:6px;font-size:.82em;color:#16a34a;font-weight:700;display:none"></div>
+      </div>
+
+      <!-- Pagamento parcial -->
+      <div style="background:#fff7ed;border-radius:10px;padding:10px 14px;margin-bottom:10px;border:1px solid #fed7aa">
+        <div style="font-size:.78em;font-weight:700;color:#f97316;margin-bottom:8px">🔄 PAGAMENTO PARCIAL</div>
+        <div style="display:flex;gap:8px">
+          <input type="number" id="grc-parcial" placeholder="Valor parcial..." min="0" step="0.01"
+            style="flex:1;padding:8px;border-radius:8px;border:1px solid #fed7aa;font-size:.9em">
+          <button onclick="grcRegistrarParcial()" style="background:#f97316;color:#fff;border:none;border-radius:8px;padding:8px 12px;font-weight:700;cursor:pointer;white-space:nowrap">➕ Registrar</button>
+        </div>
+        <div id="grc-lista-parciais" style="margin-top:6px;font-size:.8em;color:#636366"></div>
+      </div>
+
+      <!-- Troco -->
+      <div id="grc-troco-info" style="display:none;background:#f0fdf4;border-radius:8px;padding:8px 12px;margin-bottom:10px;color:#16a34a;font-weight:700;font-size:.9em">
+        💵 Troco: <span id="grc-troco-valor">R$ 0,00</span>
+      </div>
     </div>
+
     <div class="modal-footer">
       <button class="btn-fechar-modal" onclick="fecharPagamento()">Cancelar</button>
-      <button class="btn-pagar" onclick="confirmarPagamento()">✅ Confirmar Pagamento</button>
+      <button class="btn-pagar" onclick="confirmarPagamento()">✅ Confirmar e Fechar Mesa</button>
     </div>
   </div>
 </div>
@@ -483,9 +540,11 @@ function adicionarItemMesaAtual() {
 function abrirPagamento() {
   fecharModalMesa();
   const pedidos = mesasOcupadas[mesaAtual] || [];
-  const total = pedidos.reduce((s,p)=>s+p.total,0);
-  document.getElementById('pagInfo').innerHTML = `Mesa <strong>${mesaAtual}</strong> — Total: <strong style="color:var(--green)">R$ ${total.toFixed(2)}</strong>`;
-  document.getElementById('pagValor').value = '';
+  grcTotalMesa = pedidos.reduce((s,p)=>s+p.total,0);
+  grcParciais = [];
+  grcLimparCampos();
+  grcAtualizarParciais();
+  document.getElementById('pagInfo').textContent = 'R$ ' + grcTotalMesa.toFixed(2);
   pagForma = '';
   document.querySelectorAll('.pag-btn').forEach(b=>b.classList.remove('sel'));
   document.getElementById('overlayPagamento').classList.add('show');
@@ -502,22 +561,36 @@ function fecharPagamento() {
 }
 
 async function confirmarPagamento() {
-  if (!pagForma) { toast('Selecione a forma de pagamento'); return; }
   const pedidos = mesasOcupadas[mesaAtual] || [];
   const total = pedidos.reduce((s,p)=>s+p.total,0);
-  const valorInput = parseFloat(document.getElementById('pagValor').value) || total;
-  
+
+  // Montar formas de pagamento
+  const formasMap = {dinheiro:'grc-dinheiro', pix:'grc-pix', debito:'grc-debito', credito:'grc-credito'};
+  const formas = [];
+  for (const [forma, id] of Object.entries(formasMap)) {
+    const v = parseFloat(document.getElementById(id)?.value) || 0;
+    if (v > 0) formas.push({forma, valor:v});
+  }
+  // Adicionar parciais
+  for (const p of grcParciais) formas.push({forma: p.forma, valor: p.valor});
+
+  // Se nada preenchido, verificar se parciais cobrem o total
+  const totalPago = formas.reduce((s,f)=>s+f.valor, 0);
+  if (formas.length === 0) { toast('Selecione a forma de pagamento', 'error'); return; }
+  if (totalPago < total - 0.01) {
+    if (!confirm(`Pago R$ ${totalPago.toFixed(2)} de R$ ${total.toFixed(2)}. Confirmar pagamento parcial?`)) return;
+  }
+
   try {
-    // Pagar todos os pedidos da mesa
     for (const p of pedidos) {
       await fetch(API+'/caixa/pedido/'+p._id+'/pagar', {
         method:'POST',
         headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
-        body: JSON.stringify({ formas:[{forma:pagForma, valor:valorInput}], total:p.total })
+        body: JSON.stringify({ formas, total:p.total })
       });
     }
     fecharPagamento();
-    toast('✅ Mesa '+mesaAtual+' fechada!');
+    toast('✅ Mesa '+mesaAtual+' fechada e enviada ao caixa!');
     await carregarMesas();
   } catch(e) { toast('Erro ao processar pagamento'); }
 }
@@ -636,6 +709,115 @@ function toast(msg) {
   el.textContent=msg; el.classList.add('show');
   setTimeout(()=>el.classList.remove('show'),2500);
 }
+
+// ===== PAGAMENTO GARÇOM - DIVISÃO E PARCIAIS =====
+let grcTotalMesa = 0;
+let grcParciais = [];
+
+function grcLimparCampos() {
+  ['grc-dinheiro','grc-pix','grc-debito','grc-credito'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  const tr = document.getElementById('grc-troco-info');
+  if (tr) tr.style.display = 'none';
+}
+
+function grcPagarTotal(tipo) {
+  const pendente = Math.max(0, grcTotalMesa - grcParciais.reduce((s,p)=>s+p.valor,0));
+  grcLimparCampos();
+  const ids = {pix:'grc-pix', debito:'grc-debito', credito:'grc-credito', dinheiro:'grc-dinheiro'};
+  const el = document.getElementById(ids[tipo]);
+  if (el) { el.value = pendente.toFixed(2); el.style.borderColor='#f97316'; }
+  grcCalcTroco();
+}
+
+function grcCalcTroco() {
+  const totalParcial = grcParciais.reduce((s,p)=>s+p.valor,0);
+  const pagoAgora = ['grc-dinheiro','grc-pix','grc-debito','grc-credito']
+    .reduce((s,id) => s + (parseFloat(document.getElementById(id)?.value)||0), 0);
+  const troco = (totalParcial + pagoAgora) - grcTotalMesa;
+  const el = document.getElementById('grc-troco-info');
+  if (troco > 0.005) {
+    if (el) { el.style.display='block'; document.getElementById('grc-troco-valor').textContent = 'R$ '+troco.toFixed(2); }
+  } else {
+    if (el) el.style.display = 'none';
+  }
+  grcAtualizarParciais();
+}
+
+function grcDividir(n) {
+  if (!n || n < 1) return;
+  const val = grcTotalMesa / n;
+  const res = document.getElementById('grc-divisor-resultado');
+  if (res) {
+    res.style.display = 'block';
+    res.innerHTML = `👥 ${n} pessoas → <strong>R$ ${val.toFixed(2)}</strong> cada &nbsp;
+      <button onclick="grcUsarDivisao(${val.toFixed(2)})"
+        style="background:#16a34a;color:#fff;border:none;border-radius:6px;padding:3px 10px;font-size:.8em;cursor:pointer;margin-left:4px">
+        Usar no parcial
+      </button>`;
+  }
+}
+
+function grcUsarDivisao(val) {
+  const input = document.getElementById('grc-parcial');
+  if (input) { input.value = parseFloat(val).toFixed(2); input.focus(); }
+}
+
+function grcRegistrarParcial() {
+  const input = document.getElementById('grc-parcial');
+  const val = parseFloat(input?.value) || 0;
+  if (val <= 0) return;
+
+  const formasMap = [
+    {id:'grc-dinheiro', nome:'💵 Dinheiro'},
+    {id:'grc-pix',      nome:'📱 PIX'},
+    {id:'grc-debito',   nome:'💳 Débito'},
+    {id:'grc-credito',  nome:'💳 Crédito'},
+  ];
+  let forma = '💵 Dinheiro';
+  for (const f of formasMap) {
+    if (parseFloat(document.getElementById(f.id)?.value) > 0) { forma = f.nome; break; }
+  }
+
+  grcParciais.push({valor: val, forma});
+  input.value = '';
+  grcLimparCampos();
+  grcAtualizarParciais();
+  grcCalcTroco();
+  toast(`✅ R$ ${val.toFixed(2)} registrado (${forma})`);
+}
+
+function grcAtualizarParciais() {
+  const lista = document.getElementById('grc-lista-parciais');
+  const box = document.getElementById('grc-pendente-box');
+  const jaRec = document.getElementById('grc-ja-recebido');
+  const falta = document.getElementById('grc-falta');
+  if (!lista) return;
+
+  const totalParcial = grcParciais.reduce((s,p)=>s+p.valor,0);
+  const pendente = Math.max(0, grcTotalMesa - totalParcial);
+
+  if (grcParciais.length > 0) {
+    lista.innerHTML = grcParciais.map((p,i) =>
+      `<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #fed7aa">
+        <span>${p.forma}</span>
+        <span style="font-weight:700">R$ ${p.valor.toFixed(2)}
+          <button onclick="grcParciais.splice(${i},1);grcAtualizarParciais();grcCalcTroco()"
+            style="background:none;border:none;color:#dc2626;cursor:pointer;font-size:.85em;margin-left:4px">✕</button>
+        </span>
+      </div>`
+    ).join('');
+    if (box) box.style.display = 'block';
+    if (jaRec) jaRec.textContent = 'R$ '+totalParcial.toFixed(2);
+    if (falta) falta.textContent = 'R$ '+pendente.toFixed(2);
+  } else {
+    lista.innerHTML = '';
+    if (box) box.style.display = 'none';
+  }
+}
+
 </script>
 </body>
 </html>
