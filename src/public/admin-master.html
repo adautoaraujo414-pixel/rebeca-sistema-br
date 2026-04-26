@@ -770,11 +770,21 @@ async function carregarDeliveryAdmins() {
                 '<td>' + (a.cidade||'-') + '</td>' +
                 '<td><span style="color:' + statusColor + ';font-weight:600;">' + statusLabel + '</span>' + (a.motivoBloqueio ? '<br><span style="color:#666;font-size:11px;">' + a.motivoBloqueio + '</span>' : '') + '</td>' +
                 '<td>' + trialInfo + '</td>' +
-                '<td>' + (a.plano||'basico') + '</td>' +
+                '<td>' + (() => {
+                    const p = a.plano || 'confort';
+                    const cores = { confort: '#f97316', plus: '#3b82f6', premium: '#a78bfa' };
+                    const cor = cores[p] || '#888';
+                    const venc = a.planoDataVencimento ? new Date(a.planoDataVencimento).toLocaleDateString('pt-BR') : '-';
+                    const dias = a.planoDataVencimento ? Math.ceil((new Date(a.planoDataVencimento) - new Date()) / 86400000) : null;
+                    const alertaVenc = dias !== null && dias <= 5 ? '<br><span style="color:#ff4444;font-size:10px;">⚠️ vence em ' + dias + 'd</span>' : '';
+                    return '<span style="background:' + cor + '22;color:' + cor + ';border:1px solid ' + cor + '55;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;">' + p.toUpperCase() + '</span>' +
+                           '<br><span style="color:#555;font-size:11px;">R$ ' + ({confort:179,plus:298.90,premium:459}[p]||'-') + '/mês</span>' + alertaVenc;
+                })() + '</td>' +
                 '<td style="white-space:nowrap;">' +
                     (a.status !== 'ativo' ? '<button onclick="liberarDelivery(\'' + a._id + '\')" style="padding:5px 12px;background:rgba(0,204,106,0.15);border:1px solid rgba(0,204,106,0.3);border-radius:6px;color:#00cc6a;cursor:pointer;font-size:12px;margin:2px;">✅ Liberar</button>' : '') +
                     (a.status !== 'bloqueado' ? '<button onclick="bloquearDelivery(\'' + a._id + '\')" style="padding:5px 12px;background:rgba(255,68,68,0.15);border:1px solid rgba(255,68,68,0.3);border-radius:6px;color:#ff4444;cursor:pointer;font-size:12px;margin:2px;">🔒 Bloquear</button>' : '') +
                     '<button onclick="extenderTrialDelivery(\'' + a._id + '\')" style="padding:5px 12px;background:rgba(255,154,86,0.15);border:1px solid rgba(255,154,86,0.3);border-radius:6px;color:#ff9a56;cursor:pointer;font-size:12px;margin:2px;">⏳ +dias</button>' +
+                    '<button onclick="alterarPlanoCliente(\'' + a._id + '\',\'' + (a.plano||'confort') + '\')" style="padding:5px 12px;background:rgba(167,139,250,0.15);border:1px solid rgba(167,139,250,0.3);border-radius:6px;color:#a78bfa;cursor:pointer;font-size:12px;margin:2px;">💎 Plano</button>' +
                 '</td></tr>';
         }).join('');
     } catch(e) { console.error('[DELIVERY ADMINS]', e.message); }
@@ -827,6 +837,62 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 });
+
+        async function alterarPlanoCliente(adminId, planoAtual) {
+            const opcoes = { confort: 'R$ 179,00', plus: 'R$ 298,90', premium: 'R$ 459,00' };
+            const html = Object.entries(opcoes).map(([k,v]) =>
+                `<option value="${k}" ${k === planoAtual ? 'selected' : ''}>${k.toUpperCase()} - ${v}/mês</option>`
+            ).join('');
+            const div = document.createElement('div');
+            div.id = 'modalAlterarPlano';
+            div.style.cssText = 'position:fixed;inset:0;background:#000a;z-index:9999;display:flex;align-items:center;justify-content:center;';
+            div.innerHTML = `
+            <div style="background:#13132b;border-radius:16px;padding:32px;max-width:400px;width:90%;border:1px solid #3a3a5e;">
+                <h3 style="color:#fff;margin:0 0 8px 0">🔄 Alterar Plano do Cliente</h3>
+                <p style="color:#888;font-size:.85em;margin-bottom:20px">A alteração é imediata. Na próxima cobrança o valor já será do novo plano.</p>
+                <label style="color:#aaa;font-size:.82em;display:block;margin-bottom:6px">PLANO</label>
+                <select id="novoPlanoSelect" style="width:100%;padding:12px;background:#0a0a1a;border:1px solid #3a3a5e;color:#fff;border-radius:8px;font-size:1em;margin-bottom:14px;">${html}</select>
+                <label style="color:#aaa;font-size:.82em;display:block;margin-bottom:6px">STATUS</label>
+                <select id="novoStatusSelect" style="width:100%;padding:12px;background:#0a0a1a;border:1px solid #3a3a5e;color:#fff;border-radius:8px;font-size:1em;margin-bottom:20px;">
+                    <option value="ativo">✅ Ativo</option>
+                    <option value="trial">🕐 Trial</option>
+                    <option value="suspenso">🔒 Suspenso</option>
+                    <option value="cancelado">❌ Cancelado</option>
+                </select>
+                <div style="display:flex;gap:10px;">
+                    <button onclick="document.getElementById('modalAlterarPlano').remove()" style="flex:1;padding:12px;background:#1a1a3e;border:1px solid #3a3a5e;color:#aaa;border-radius:8px;cursor:pointer;">Cancelar</button>
+                    <button onclick="confirmarAlteracaoPlano('${adminId}')" style="flex:1;padding:12px;background:#f97316;color:#000;border:none;border-radius:8px;font-weight:800;cursor:pointer;">Confirmar</button>
+                </div>
+            </div>`;
+            document.body.appendChild(div);
+        }
+
+        async function confirmarAlteracaoPlano(adminId) {
+            const plano = document.getElementById('novoPlanoSelect').value;
+            const status = document.getElementById('novoStatusSelect').value;
+            try {
+                const r = await fetch(`/api/delivery/admin/${adminId}/plano`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ plano, planoStatus: status })
+                });
+                const d = await r.json();
+                if (d.sucesso) {
+                    document.getElementById('modalAlterarPlano')?.remove();
+                    const cores = { confort:'#f97316', plus:'#f97316', premium:'#a78bfa' };
+                    const cor = cores[plano] || '#22c55e';
+                    const ok = document.createElement('div');
+                    ok.style.cssText = `position:fixed;bottom:24px;right:24px;background:#0f1f0f;border:2px solid ${cor};color:#fff;padding:16px 22px;border-radius:14px;font-size:.9em;font-weight:600;z-index:9999;max-width:320px;`;
+                    ok.innerHTML = `✅ Plano alterado para <strong style="color:${cor}">${plano.toUpperCase()}</strong><br><span style="color:#888;font-size:.85em">Próxima cobrança: R$ ${{confort:179,plus:298.90,premium:459}[plano]}/mês</span>`;
+                    document.body.appendChild(ok);
+                    setTimeout(() => ok.remove(), 5000);
+                    carregarDeliveryAdmins();
+                } else {
+                    alert('Erro: ' + (d.erro || 'Tente novamente'));
+                }
+            } catch(e) { alert('Erro de conexão'); }
+        }
+
 </script>
 
 </body>

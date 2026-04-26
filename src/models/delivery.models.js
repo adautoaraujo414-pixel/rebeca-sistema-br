@@ -209,6 +209,9 @@ const AdminDeliverySchema = new mongoose.Schema({
     planoDataInicio: { type: Date, default: Date.now },
     planoDataVencimento: { type: Date, default: () => new Date(Date.now() + 30*24*60*60*1000) },
     planoValor: { type: Number, default: 179 },
+    planoAnterior: { type: String, default: '' },
+    planoUpgradeSolicitadoEm: { type: Date },
+    planoHistorico: [{ plano: String, valor: Number, data: Date }],
     cidade: String,
 
     // Autenticação

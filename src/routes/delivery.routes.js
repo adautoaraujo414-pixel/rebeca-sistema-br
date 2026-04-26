@@ -1847,4 +1847,59 @@ router.get('/meu-plano', authDelivery, async (req, res) => {
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
+
+// ===== SOLICITAR UPGRADE DE PLANO (cliente solicita, ativa imediatamente) =====
+router.post('/solicitar-upgrade', authDelivery, async (req, res) => {
+    try {
+        const { planoSolicitado } = req.body;
+        const planosValidos = ['plus', 'premium'];
+        const valores = { confort: 179, plus: 298.90, premium: 459 };
+
+        if (!planosValidos.includes(planoSolicitado)) {
+            return res.status(400).json({ erro: 'Plano inválido' });
+        }
+
+        const admin = await AdminDelivery.findById(req.adminId);
+        if (!admin) return res.status(404).json({ erro: 'Admin não encontrado' });
+
+        // Verificar se é realmente um upgrade (não downgrade)
+        const ordemPlanos = ['confort', 'plus', 'premium'];
+        const idxAtual = ordemPlanos.indexOf(admin.plano || 'confort');
+        const idxNovo = ordemPlanos.indexOf(planoSolicitado);
+        if (idxNovo <= idxAtual) {
+            return res.status(400).json({ erro: 'Só é permitido upgrade para plano superior' });
+        }
+
+        // Calcular próximo vencimento (30 dias a partir de hoje)
+        const novoVencimento = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
+        // Ativar o novo plano imediatamente
+        await AdminDelivery.findByIdAndUpdate(req.adminId, {
+            $set: {
+                plano: planoSolicitado,
+                planoStatus: 'ativo',
+                planoValor: valores[planoSolicitado],
+                planoDataVencimento: novoVencimento,
+                planoUpgradeSolicitadoEm: new Date(),
+                planoAnterior: admin.plano
+            }
+        });
+
+        // Log do upgrade para o admin master acompanhar
+        console.log(`[UPGRADE] Admin ${admin.nomeComercio} (${admin._id}): ${admin.plano} → ${planoSolicitado} | Valor: R$ ${valores[planoSolicitado]} | Venc: ${novoVencimento.toLocaleDateString('pt-BR')}`);
+
+        res.json({
+            sucesso: true,
+            plano: planoSolicitado,
+            valor: valores[planoSolicitado],
+            vencimento: novoVencimento,
+            mensagem: `Plano ${planoSolicitado} ativado com sucesso! Próxima cobrança: R$ ${valores[planoSolicitado]}`
+        });
+
+    } catch(e) {
+        console.error('Erro upgrade:', e);
+        res.status(500).json({ erro: e.message });
+    }
+});
+
 module.exports = router;

@@ -886,7 +886,62 @@
 
         async function solicitarUpgrade() {
             document.getElementById('modalUpgradePlano').style.display = 'none';
-            alert('✅ Solicitação enviada! Nossa equipe entrará em contato em breve para realizar o upgrade do seu plano.');
+            // Mostrar modal de confirmação de upgrade
+            const upgrade = PLANO_UPGRADE[_planoAtual];
+            if (!upgrade) return;
+            const confirmar = confirm(
+                '🚀 Confirmar upgrade para o plano ' + upgrade.proximo + '?\n\n' +
+                'Valor: ' + upgrade.valor + '/mês\n' +
+                'O novo plano será ativado IMEDIATAMENTE e\n' +
+                'a próxima cobrança já será no valor do plano ' + upgrade.proximo + '.\n\n' +
+                'Confirmar?'
+            );
+            if (!confirmar) return;
+
+            try {
+                const novoPlano = upgrade.proximo.toLowerCase();
+                const r = await fetch('/api/delivery/solicitar-upgrade', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-admin-id': localStorage.getItem('delivery_adminId'),
+                        'Authorization': 'Bearer ' + localStorage.getItem('delivery_token')
+                    },
+                    body: JSON.stringify({ planoSolicitado: novoPlano })
+                });
+                const d = await r.json();
+                if (d.sucesso) {
+                    // Atualizar plano local imediatamente
+                    _planoAtual = novoPlano;
+                    aplicarBloqueioPlano(novoPlano);
+                    // Fechar modal e mostrar sucesso
+                    mostrarSucessoUpgrade(upgrade.proximo, upgrade.valor);
+                } else {
+                    alert('Erro ao solicitar upgrade: ' + (d.erro || 'Tente novamente'));
+                }
+            } catch(e) {
+                alert('Erro de conexão. Tente novamente.');
+            }
+        }
+
+        function mostrarSucessoUpgrade(novoPlano, valor) {
+            let modal = document.createElement('div');
+            modal.style.cssText = 'position:fixed;inset:0;background:#000c;z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
+            modal.innerHTML = `
+            <div style="background:#0f1f0f;border:2px solid #22c55e;border-radius:20px;padding:40px 32px;max-width:420px;width:100%;text-align:center;">
+                <div style="font-size:3em;margin-bottom:16px">🎉</div>
+                <h3 style="color:#22c55e;margin:0 0 10px 0;font-size:1.5em">Upgrade realizado!</h3>
+                <p style="color:#aaa;font-size:.95em;margin-bottom:8px">Você agora tem acesso ao plano <strong style="color:#fff">${novoPlano}</strong></p>
+                <p style="color:#888;font-size:.85em;margin-bottom:24px">Próxima cobrança: <strong style="color:#f97316">${valor}/mês</strong></p>
+                <div style="background:#22c55e11;border:1px solid #22c55e33;border-radius:10px;padding:12px;margin-bottom:24px;font-size:.85em;color:#86efac;">
+                    ✅ Todos os módulos do plano ${novoPlano} foram desbloqueados agora mesmo.
+                </div>
+                <button onclick="this.closest('div[style*=fixed]').remove(); location.reload();" 
+                    style="background:#22c55e;color:#000;border:none;padding:14px 32px;border-radius:12px;font-weight:800;font-size:1em;cursor:pointer;width:100%;">
+                    Explorar novos recursos →
+                </button>
+            </div>`;
+            document.body.appendChild(modal);
         }
 
         async function carregarMeuPlano() {
