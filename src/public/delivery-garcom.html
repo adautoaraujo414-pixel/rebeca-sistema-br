@@ -391,7 +391,24 @@ let pagForma = '';
 
 const urlParams = new URLSearchParams(location.search);
 const tokenURL = urlParams.get('token');
-if (tokenURL) document.getElementById('inputToken').value = tokenURL;
+
+// Persistência: salvar token da URL e recuperar credenciais salvas
+const _savedToken = tokenURL || localStorage.getItem('garcom_token') || '';
+const _savedSenha = localStorage.getItem('garcom_senha') || '';
+
+if (_savedToken) {
+  document.getElementById('inputToken').value = _savedToken;
+  // Salvar token da URL para uso futuro
+  if (tokenURL) localStorage.setItem('garcom_token', tokenURL);
+}
+if (_savedSenha) {
+  document.getElementById('inputSenha').value = _savedSenha;
+}
+
+// Auto-login se tiver credenciais salvas
+if (_savedToken && _savedSenha) {
+  window.addEventListener('DOMContentLoaded', () => setTimeout(fazerLogin, 300));
+}
 
 // Relógio
 setInterval(() => {
@@ -415,6 +432,9 @@ async function fazerLogin() {
     if (!d.sucesso) { err.textContent = d.erro||'Token ou senha inválidos'; return; }
     token = tk;
     garcomNome = d.garcom?.nome || 'Garçom';
+    // Salvar credenciais para auto-login
+    localStorage.setItem('garcom_token', tk);
+    localStorage.setItem('garcom_senha', senha);
     document.getElementById('nomeGarcom').textContent = '👤 '+garcomNome;
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app').style.display = 'flex';
@@ -702,7 +722,12 @@ function fecharSucesso() {
   mostrarTela('mapa');
 }
 
-function sair() { token=''; location.reload(); }
+function sair() {
+  if (confirm('Sair do app? As credenciais serão mantidas para próximo acesso.')) {
+    token = '';
+    location.reload();
+  }
+}
 
 function toast(msg) {
   const el=document.getElementById('toast');
