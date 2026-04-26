@@ -268,6 +268,11 @@ async function init() {
     var r = await fetch('/api/delivery/cardapio-publico/' + adminId);
     if (!r.ok) throw new Error('Erro ' + r.status);
     cardapioData = await r.json();
+    // Buscar combos em paralelo
+    try {
+      var rc = await fetch('/api/delivery/combos-publicos/' + adminId);
+      cardapioData.combos = rc.ok ? await rc.json() : [];
+    } catch(ec) { cardapioData.combos = []; }
     renderizar();
   } catch(e) {
     document.getElementById('loading').innerHTML = '<div style="font-size:2em">😕</div><div style="color:var(--text3);margin-top:12px;font-size:.9em">Cardápio indisponível no momento.</div><button onclick="location.reload()" style="margin-top:16px;padding:10px 24px;border-radius:20px;border:none;background:var(--accent);color:#fff;font-weight:700;cursor:pointer;font-family:inherit">Tentar novamente</button>';
@@ -355,6 +360,19 @@ function renderItens(itens, cats) {
     var grid = sec.querySelector('.items-grid');
     grupo.itens.forEach(function(item){ grid.appendChild(criarCard(item)); });
   });
+
+  // Seção de combos
+  var combos = (cardapioData && cardapioData.combos) || [];
+  if (combos.length) {
+    var secCombo = document.createElement('div');
+    secCombo.className = 'section';
+    secCombo.dataset.cat = '_combos';
+    secCombo.innerHTML = '<div class="section-title">🎁 Combos Especiais</div>' +
+      '<div class="items-grid" id="grid-combos"></div>';
+    conteudo.appendChild(secCombo);
+    var gridC = secCombo.querySelector('.items-grid');
+    combos.forEach(function(combo) { gridC.appendChild(criarCardCombo(combo)); });
+  }
 }
 
 function criarCard(item) {
@@ -381,6 +399,76 @@ function criarCard(item) {
       '</div>' +
     '</div>';
   return div;
+}
+
+function criarCardCombo(combo) {
+  var div = document.createElement('div');
+  div.className = 'item-card';
+  div.dataset.id = combo._id;
+  div.dataset.nome = combo.nome;
+
+  var imgHtml = combo.imagem
+    ? '<img class="item-img" src="' + combo.imagem + '" loading="lazy" onerror="this.parentNode.innerHTML='<div class=item-img-ph>🎁</div>'">'
+    : '<div class="item-img-ph">🎁</div>';
+
+  var itensList = (combo.itens||[]).map(function(i){ return i.quantidade + 'x ' + i.nome; }).join(' + ');
+  var total = (combo.itens||[]).reduce(function(a,i){ return a + (i.preco||0)*(i.quantidade||1); }, 0);
+  var economia = total > combo.preco ? '<span style="font-size:.68em;color:#22c55e;font-weight:700;"> -R$' + (total-combo.preco).toFixed(2).replace('.',',') + '</span>' : '';
+
+  div.innerHTML = imgHtml +
+    '<div class="item-body">' +
+      '<div class="item-name">🎁 ' + combo.nome + economia + '</div>' +
+      '<div class="item-desc">' + (combo.descricao || itensList) + '</div>' +
+      '<div class="item-footer">' +
+        '<div class="item-price">R$ ' + Number(combo.preco||0).toFixed(2).replace('.',',') + '</div>' +
+        '<button class="item-add-btn" onclick="event.stopPropagation();adicionarComboRapido('' + combo._id + '')">+</button>' +
+      '</div>' +
+    '</div>';
+
+  div.onclick = function(){ abrirCombo(combo); };
+  return div;
+}
+
+function adicionarComboRapido(comboId) {
+  var combos = (cardapioData && cardapioData.combos) || [];
+  var combo = combos.find(function(c){ return c._id === comboId; });
+  if (!combo) return;
+  carrinho.push({
+    itemId: combo._id, nome: '🎁 ' + combo.nome,
+    preco: Number(combo.preco||0), qty: 1, obs: '',
+    imagem: combo.imagem||'', emoji: '🎁'
+  });
+  atualizarCartUI();
+  showToast('✅ ' + combo.nome + ' adicionado!');
+}
+
+function abrirCombo(combo) {
+  var itensList = (combo.itens||[]).map(function(i){ return '• ' + i.quantidade + 'x ' + i.nome; }).join('<br>');
+  var total = (combo.itens||[]).reduce(function(a,i){ return a + (i.preco||0)*(i.quantidade||1); }, 0);
+  var economia = total > combo.preco
+    ? '<div style="background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);border-radius:10px;padding:10px 14px;margin-bottom:16px;font-size:.85em;color:#22c55e;font-weight:700;">✅ Economia de R$ ' + (total-combo.preco).toFixed(2).replace('.',',') + ' comprando o combo!</div>'
+    : '';
+
+  var imgHtml = combo.imagem
+    ? '<img class="modal-img" src="' + combo.imagem + '">'
+    : '<div class="modal-img-ph">🎁</div>';
+
+  document.getElementById('modalItemConteudo').innerHTML =
+    imgHtml +
+    '<div class="modal-body">' +
+      '<div class="modal-name">🎁 ' + combo.nome + '</div>' +
+      '<div class="modal-desc">' + (combo.descricao||'') + '</div>' +
+      '<div class="modal-price">R$ ' + Number(combo.preco||0).toFixed(2).replace('.',',') + '</div>' +
+      economia +
+      '<div style="background:var(--surface2);border-radius:10px;padding:12px 14px;margin-bottom:16px;">' +
+        '<div style="font-size:.72em;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">📦 Incluso no combo</div>' +
+        '<div style="font-size:.85em;color:var(--text2);line-height:1.8;">' + itensList + '</div>' +
+      '</div>' +
+      '<button class="btn-add-cart" onclick="adicionarComboRapido('' + combo._id + '');fecharItem({target:document.getElementById('overlayItem')})">Adicionar Combo — R$ ' + Number(combo.preco||0).toFixed(2).replace('.',',') + '</button>' +
+    '</div>';
+
+  document.getElementById('overlayItem').classList.add('show');
+  document.body.style.overflow = 'hidden';
 }
 
 function abrirItem(item) {
