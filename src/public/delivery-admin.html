@@ -645,7 +645,7 @@
             <button class="modal-close" onclick="fecharModalItem()">&times;</button>
             <h2 id="modalItemTitulo">Novo Item</h2>
             <input type="hidden" id="itemEditId">
-            <div class="form-group"><label>Categoria</label><select id="itemCategoria" style="width:100%;padding:10px;background:#252542;border:1px solid #333;border-radius:8px;color:#fff;" onchange="toggleCamposBebida()"></select></div>
+            <div class="form-group"><label>Categoria</label><select id="itemCategoria" style="width:100%;padding:10px;background:#252542;border:1px solid #333;border-radius:8px;color:#fff;" onchange="toggleCamposBebida(); atualizarPlaceholders(); atualizarLabelNome()"></select></div>
 
             <div id="camposBebida" style="display:none;margin-bottom:14px;background:#1a1a2e;border-radius:10px;padding:14px;border:1px solid rgba(249,115,22,0.4);">
               <div style="color:#f97316;font-size:.82em;font-weight:700;margin-bottom:10px;text-transform:uppercase;letter-spacing:1px;">🥤 Informações da Bebida</div>
@@ -671,7 +671,7 @@
               </div>
             </div>
 
-            <div class="form-group"><label>Nome da Bebida / Lanche</label><input type="text" id="itemNome" placeholder="Ex: Coca-Cola, X-Burguer..." oninput="debounceImagem(this.value); atualizarPlaceholders()"></div>
+            <div class="form-group"><label><span id="labelNomeItem">Nome do Item</span></label><input type="text" id="itemNome" placeholder="Ex: Coca-Cola, X-Burguer..." oninput="debounceImagem(this.value); atualizarPlaceholders()"></div>
             <div class="form-group" id="grupoDescricao"><label id="labelDesc">Descrição <span id="descOpcional" style="color:#666;font-size:.8em;display:none">(opcional)</span></label><input type="text" id="itemDesc" placeholder="Pão, hambúrguer, queijo..."></div>
             <div class="form-row">
                 <div class="form-group"><label>Preço (R$)</label><input type="number" id="itemPreco" step="0.50"></div>
