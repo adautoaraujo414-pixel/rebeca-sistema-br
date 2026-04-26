@@ -1818,4 +1818,33 @@ router.post('/cardapio/confirmar-transcricao', authDelivery, async (req, res) =>
     }
 });
 
+
+// ===== ROTAS DE PLANO =====
+// Atualizar plano (admin master)
+router.put('/admin/:id/plano', async (req, res) => {
+    try {
+        const { plano, planoStatus, planoDataVencimento } = req.body;
+        const valores = { confort: 179, plus: 298.90, premium: 459 };
+        const update = {};
+        if (plano) { update.plano = plano; update.planoValor = valores[plano] || 179; }
+        if (planoStatus) update.planoStatus = planoStatus;
+        if (planoDataVencimento) update.planoDataVencimento = new Date(planoDataVencimento);
+        const admin = await AdminDelivery.findByIdAndUpdate(req.params.id, { $set: update }, { new: true });
+        if (!admin) return res.status(404).json({ erro: 'Admin não encontrado' });
+        res.json({ sucesso: true, admin: { plano: admin.plano, planoStatus: admin.planoStatus, planoDataVencimento: admin.planoDataVencimento, planoValor: admin.planoValor } });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// Ver plano do admin logado
+router.get('/meu-plano', authDelivery, async (req, res) => {
+    try {
+        const admin = await AdminDelivery.findById(req.adminId).select('plano planoStatus planoDataVencimento planoValor nomeComercio');
+        if (!admin) return res.status(404).json({ erro: 'Admin não encontrado' });
+        const hoje = new Date();
+        const venc = new Date(admin.planoDataVencimento);
+        const diasRestantes = Math.ceil((venc - hoje) / (1000*60*60*24));
+        res.json({ sucesso: true, plano: admin.plano, status: admin.planoStatus, vencimento: admin.planoDataVencimento, diasRestantes, valor: admin.planoValor });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
 module.exports = router;

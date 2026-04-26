@@ -203,6 +203,12 @@ const AdminDeliverySchema = new mongoose.Schema({
     slug: { type: String, unique: true, sparse: true },
     nomeEstabelecimento: { type: String, default: '' },
     tipoNegocio: { type: String, default: 'restaurante' },
+    // Plano de assinatura
+    plano: { type: String, enum: ['confort', 'plus', 'premium'], default: 'confort' },
+    planoStatus: { type: String, enum: ['ativo', 'suspenso', 'cancelado', 'trial'], default: 'trial' },
+    planoDataInicio: { type: Date, default: Date.now },
+    planoDataVencimento: { type: Date, default: () => new Date(Date.now() + 30*24*60*60*1000) },
+    planoValor: { type: Number, default: 179 },
     cidade: String,
 
     // Autenticação
