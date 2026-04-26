@@ -690,8 +690,19 @@
                         <input type="number" id="itemEstoqueQtdBebida" placeholder="Ex: 24" min="0" style="width:100%;padding:10px;background:#252542;border:1px solid #333;border-radius:8px;color:#fff;">
                     </div>
                     <div style="flex:1">
-                        <label style="font-size:.8em;color:#aaa">Volume unitário (ml/L)</label>
-                        <input type="text" id="itemEstoqueVolume" placeholder="Ex: 350ml, 1L" style="width:100%;padding:10px;background:#252542;border:1px solid #333;border-radius:8px;color:#fff;">
+                        <label style="font-size:.8em;color:#aaa">Volume unitário</label>
+                        <select id="itemEstoqueVolume" style="width:100%;padding:10px;background:#252542;border:1px solid #333;border-radius:8px;color:#fff;">
+                            <option value="200ml">200ml (caixinha)</option>
+                            <option value="269ml">269ml (latinha pequena)</option>
+                            <option value="350ml" selected>350ml (latinha)</option>
+                            <option value="473ml">473ml (lata grande)</option>
+                            <option value="500ml">500ml (garrafa)</option>
+                            <option value="600ml">600ml (garrafa média)</option>
+                            <option value="1L">1 Litro</option>
+                            <option value="1.5L">1,5 Litro</option>
+                            <option value="2L">2 Litros</option>
+                            <option value="2.5L">2,5 Litros</option>
+                        </select>
                     </div>
                 </div>
                 <span style="color:#666;font-size:.78em">Desconta 1 unidade do estoque a cada venda realizada.</span>
@@ -1380,6 +1391,8 @@
             // Popular categorias no select
             document.getElementById('itemCategoria').innerHTML = categorias.map(c => `<option value="${c._id}">${c.emoji || ''} ${c.nome}</option>`).join('');
             document.getElementById('modalItem').classList.add('active');
+            // Atualizar campos conforme categoria padrão ao abrir
+            setTimeout(() => { toggleCamposBebida(); atualizarPlaceholders(); atualizarLabelNome(); }, 50);
         }
 
         function regerarImagemItem() {
