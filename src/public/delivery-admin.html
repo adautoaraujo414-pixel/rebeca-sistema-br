@@ -810,7 +810,7 @@
         var _ultimoPedidoVisto = localStorage.getItem('ultimoPedidoVisto') || '';
         var _pollingAtivo = false;
 
-        function iniciarPollingPedidos() {
+        async function iniciarPollingPedidos() {
             if (_pollingAtivo) return;
             _pollingAtivo = true;
             setInterval(async function() {
