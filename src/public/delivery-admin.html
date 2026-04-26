@@ -1389,10 +1389,13 @@
             if (_dEl) _dEl.checked = true;
             document.getElementById('itemImagemBox').style.display = 'none';
             // Popular categorias no select
-            document.getElementById('itemCategoria').innerHTML = categorias.map(c => `<option value="${c._id}">${c.emoji || ''} ${c.nome}</option>`).join('');
+            const _selCat = document.getElementById('itemCategoria');
+            _selCat.innerHTML = categorias.map(c => `<option value="${c._id}">${c.emoji || ''} ${c.nome}</option>`).join('');
             document.getElementById('modalItem').classList.add('active');
-            // Atualizar campos conforme categoria padrão ao abrir
-            setTimeout(() => { toggleCamposBebida(); atualizarPlaceholders(); atualizarLabelNome(); }, 50);
+            // Atualizar campos imediatamente após popular select
+            toggleCamposBebida();
+            atualizarPlaceholders();
+            atualizarLabelNome();
         }
 
         function regerarImagemItem() {
