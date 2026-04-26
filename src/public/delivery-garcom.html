@@ -407,8 +407,12 @@ if (_savedSenha) {
 
 // Auto-login se tiver credenciais salvas
 if (_savedToken && _savedSenha) {
-  // Auto-login após tudo carregar
-setTimeout(fazerLogin, 500);
+  // Auto-login após DOM carregar
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => setTimeout(fazerLogin, 400));
+} else {
+  setTimeout(fazerLogin, 400);
+}
 }
 
 // Relógio
