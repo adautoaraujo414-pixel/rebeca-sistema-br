@@ -758,11 +758,11 @@ function renderizarFiltros(data) {
   const el = document.getElementById('filtrosCategorias');
   if (!el || !data) return;
   const cats = data.categorias || [];
-  el.innerHTML = `<button class="btn-cat ativo" data-cat="todas" onclick="filtrarCategoria('todas')"
-    style="flex-shrink:0;background:#ff6b35;border:none;border-radius:20px;padding:7px 16px;color:#fff;font-size:.82em;font-weight:600;cursor:pointer;white-space:nowrap;">🍽️ Todos</button>`
-    + cats.map(c => `<button class="btn-cat" data-cat="${c._id}" onclick="filtrarCategoria('${c._id}')"
-      style="flex-shrink:0;background:#1e1e1e;border:1px solid #333;border-radius:20px;padding:7px 16px;color:#aaa;font-size:.82em;font-weight:600;cursor:pointer;white-space:nowrap;">${c.emoji||''} ${c.nome}</button>`).join('');
-}
+  let html = '<button class="btn-cat ativo" data-cat="todas" onclick="filtrarCategoria('todas')" style="flex-shrink:0;background:#ff6b35;border:none;border-radius:20px;padding:7px 16px;color:#fff;font-size:.82em;font-weight:600;cursor:pointer;white-space:nowrap;">🍽️ Todos</button>';
+  cats.forEach(function(c) {
+    html += '<button class="btn-cat" data-cat="' + c._id + '" onclick="filtrarCategoria('' + c._id + '')" style="flex-shrink:0;background:#1e1e1e;border:1px solid #333;border-radius:20px;padding:7px 16px;color:#aaa;font-size:.82em;font-weight:600;cursor:pointer;white-space:nowrap;">' + (c.emoji||'') + ' ' + c.nome + '</button>';
+  });
+  el.innerHTML = html;
 }
 </script>
 </body>
