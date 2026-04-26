@@ -172,7 +172,7 @@ function minutos(val){
   if(val<60)return val+'min';
   return Math.floor(val/60)+'h'+(val%60?val%60+'m':'');
 }
-function classTempo(min,limiteOk){
+async function classTempo(min,limiteOk){
   if(min===null||min===undefined)return'';
   return min>limiteOk?'lento':'';
 }

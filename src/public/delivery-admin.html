@@ -138,7 +138,7 @@
 
     <!-- DASHBOARD -->
     <div id="dashboardContainer" class="dashboard" style="display:block">
-        <div class="header" style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:0;background:#fff;border-bottom:3px solid #f97316;box-shadow:0 2px 8px rgba(0,0,0,.06);height:64px;overflow:hidden">
+        <div class="header" style="display:grid;grid-template-columns:auto 1fr auto;align-items:center;padding:0;background:#fff;border-bottom:3px solid #f97316;box-shadow:0 2px 8px rgba(0,0,0,.06);height:64px;overflow:hidden">
             <div style="display:flex;align-items:center">
               <button class="menu-toggle-global" onclick="toggleMenuGlobal()" style="color:#f97316;background:none;border:none;padding:0 14px;font-size:1.3em;cursor:pointer;height:64px">☰</button>
               <img src="/logo-rebeca.png" style="height:64px;object-fit:cover;object-position:left center;display:block">
@@ -801,7 +801,7 @@
         var _ultimoPedidoVisto = localStorage.getItem('ultimoPedidoVisto') || '';
         var _pollingAtivo = false;
 
-        async function iniciarPollingPedidos() {
+        function iniciarPollingPedidos() {
             if (_pollingAtivo) return;
             _pollingAtivo = true;
             setInterval(async function() {
@@ -867,7 +867,7 @@
             }
         }
 
-        async function carregarDashboard() {rd() {
+        async function carregarDashboard() {
             carregarInstanciaDelivery();
             try {
                 const res = await api('/dashboard');
@@ -1005,7 +1005,7 @@
             w.document.close();
         }
 
-  async function mudarStatus(id, status) {d, status) {
+        async function mudarStatus(id, status) {
             try {
                 await api('/pedidos/' + id + '/status', { method: 'PUT', body: JSON.stringify({ status }) });
                 toast('Status atualizado!');
@@ -1013,7 +1013,9 @@
                 carregarPedidos();
                 iniciarPollingPedidos();
             } catch(e) { toast('Erro', 'error'); }
-       async function cancelarPedido(id) {ncelarPedido(id) {
+        }
+
+        async function cancelarPedido(id) {
             const motivo = prompt('Motivo do cancelamento:');
             if (!motivo) return;
             await api('/pedidos/' + id + '/status', { method: 'PUT', body: JSON.stringify({ status: 'cancelado', motivo }) });
@@ -1021,14 +1023,16 @@
             carregarDashboard();
         }
 
-        /async function carregarPedidos() {tion carregarPedidos() {
+        // PEDIDOS
+        async function carregarPedidos() {
             const status = document.getElementById('filtroPedidos')?.value || '';
             const res = await api('/pedidos' + (status ? '?status=' + status : ''));
             const pedidos = await res.json();
             renderPedidos(pedidos, 'pedidosLista');
         }
 
-      async function carregarCategorias() {unction carregarCategorias() {
+        // CATEGORIAS
+        async function carregarCategorias() {
             try {
                 const res = await api('/categorias');
                 const data = await res.json();
@@ -1041,13 +1045,18 @@
                         <button class="btn btn-small btn-danger" onclick="deletarCategoria('${c._id}')">🗑️</button>
                     </div>`
                 ).join('') || '<p style="color:#888;">Nenhuma categoria</p>';
-            } catch(e) { console.log('[CATEGORIAS] Erro:', e.message); categoriasync function criarCategoriaRapida(emoji, nome) { criarCategoriaRapida(emoji, nome) {
+            } catch(e) { console.log('[CATEGORIAS] Erro:', e.message); categorias = []; }
+        }
+
+        async function criarCategoriaRapida(emoji, nome) {
             // Verifica se já existe
             const jaExiste = categorias.find(c => c.nome.toLowerCase() === nome.toLowerCase());
             if (jaExiste) { toast(nome + ' já existe!', 'error'); return; }
             await api('/categorias', { method: 'POST', body: JSON.stringify({ nome, emoji }) });
             toast('✅ ' + emoji + ' ' + nome + ' criada!');
-            carreasync function criarCategoria() {
+            carregarCategorias();
+        }
+
         async function criarCategoria() {
             const nome = document.getElementById('catNome').value.trim();
             const emoji = document.getElementById('catEmoji').value.trim();
@@ -1056,13 +1065,17 @@
             document.getElementById('catNome').value = '';
             document.getElementById('catEmoji').value = '';
             toast('Categoria criada!');
-           async function deletarCategoria(id) {}
+            carregarCategorias();
+        }
 
         async function deletarCategoria(id) {
             if (!confirm('Remover categoria?')) return;
             await api('/categorias/' + id, { method: 'DELETE' });
             toast('Removida');
-            carregarCategasync function carregarCardapio() {/ CARDÁPIO
+            carregarCategorias();
+        }
+
+        // CARDÁPIO
         async function carregarCardapio() {
             try {
                 await carregarCategorias();
@@ -1159,12 +1172,13 @@ function mostrarSaveOverlay(titulo, msg) {
 }
 
 function fecharSaveOverlay() {
-  var ov = document.getElementByIasync function mostrarImgGerada(url) {lassList.remove('show');
+  var ov = document.getElementById('saveOverlay');
+  if (ov) ov.classList.remove('show');
 }
 
 function mostrarImgGerada(url) {
   var prev = document.getElementById('imgGeradaPreview');
-  if (prev &async function salvarItem() {; prev.style.display = 'block'; }
+  if (prev && url) { prev.src = url; prev.style.display = 'block'; }
 }
 
 async function salvarItem() {
@@ -1192,7 +1206,8 @@ async function _salvarItemReal() {
                 await api('/cardapio', { method: 'POST', body: JSON.stringify(body) });
             }
             fecharModalItem();
-            toast(id ? 'Item atualizado!' : 'Iasync function editarItem(id) {  carregarCardapio();
+            toast(id ? 'Item atualizado!' : 'Item criado!');
+            carregarCardapio();
         }
 
         async function editarItem(id) {
@@ -1217,13 +1232,14 @@ async function _salvarItemReal() {
             } else {
                 document.getElementById('itemImagemBox').style.display = 'none';
             }
-            document.async function deletarItem(id) {).classList.add('active');
+            document.getElementById('modalItem').classList.add('active');
         }
 
         async function deletarItem(id) {
             if (!confirm('Remover item?')) return;
             await api('/cardapio/' + id, { method: 'DELETE' });
-    async function toggleDisponivel(id, tornarDisponivel) {rdapio();
+            toast('Removido');
+            carregarCardapio();
         }
 
         async function toggleDisponivel(id, tornarDisponivel) {
@@ -1231,7 +1247,8 @@ async function _salvarItemReal() {
                 method: 'PUT',
                 body: JSON.stringify({ disponivel: tornarDisponivel })
             });
-            toast(tornarDisponivel ? '✅ Item disponível!' : '❌ Item marcado coasync function carregarConfig() {carregarCardapio();
+            toast(tornarDisponivel ? '✅ Item disponível!' : '❌ Item marcado como esgotado');
+            carregarCardapio();
         }
 
         // CONFIG
@@ -1284,7 +1301,8 @@ async function _salvarItemReal() {
             document.getElementById('cfgMsgPronto').value = c.mensagemPedidoPronto || '';
             const btn = document.getElementById('btnAberto');
             btn.textContent = c.aberto ? '🟢 ABERTO' : '🔴 FECHADO';
-            btn.style.background = c.aberto ? '#00cc6a' async function salvarConfig() {btn.style.color = c.aberto ? '#000' : '#fff';
+            btn.style.background = c.aberto ? '#00cc6a' : '#ff4444';
+            btn.style.color = c.aberto ? '#000' : '#fff';
         }
 
         async function salvarConfig() {
@@ -1322,7 +1340,8 @@ async function _salvarItemReal() {
                 chavePix: document.getElementById('cfgChavePix').value,
                 mensagemBoasVindas: document.getElementById('cfgBoasVindas').value,
                 mensagemPedidoConfirmado: document.getElementById('cfgMsgConfirmado').value,
-                mensagemPedidoPronto: document.getElementById('cfgMsgasync function toggleAberto() {  })});
+                mensagemPedidoPronto: document.getElementById('cfgMsgPronto').value
+            })});
             toast('Configurações salvas!');
         }
 
@@ -1413,9 +1432,10 @@ async function _salvarItemReal() {
             dadosTranscritos.categorias = dadosTranscritos.categorias.filter(function(c){return c.itens.length>0;});
             if (!dadosTranscritos.categorias.length) return toast('Nenhum item valido','error');
             try {
-                var data = await api('/cardapio/confirmar-transcricao', { method:'POST', body:JSON.stringify({ categorias:dadosTranscritos.categorias, limparExistente:document.getElementById('limparExistente').checked }) });
+                var res = await api('/cardapio/confirmar-transcricao', { method:'POST', body:JSON.stringify({ categorias:dadosTranscritos.categorias, limparExistente:document.getElementById('limparExistente').checked }) });
+                var data = await res.json();
                 if (data.erro) return toast(data.erro,'error');
-                toast('✅ Cardápio salvo! ' + data.categorias + ' categorias, ' + data.itens + ' itens criados. Imagens sendo geradas em segundo plano...');
+                toast('Cardapio salvo! ' + data.categorias + ' categorias, ' + data.itens + ' itens');
                 limparTranscricao();
             } catch(e) { toast('Erro ao salvar cardapio','error'); }
         }
@@ -1470,7 +1490,7 @@ async function _salvarItemReal() {
                 (p.clienteTelefone||'').includes(q) ||
                 String(p.numero||'').includes(q)
             );
-  async function carregarAvaliacoes() {os, 'pedidosLista');
+            renderPedidos(filtrados, 'pedidosLista');
         }
 
         // Carregar avaliações
@@ -1509,7 +1529,7 @@ async function _salvarItemReal() {
                         + (p.avaliacaoComentario?'<div style="margin-top:6px;font-size:13px;color:#ccc">💬 '+p.avaliacaoComentario+'</div>':'')
                         +'</div>').join('')
                     : '<div style="color:#888;text-align:center;padding:20px">Nenhuma avaliação ainda</div>';
-            } catch(e) { document.getElementByasync function verificarStatusWADashboard() { style="color:#e74c3c">Erro ao carregar</div>'; }
+            } catch(e) { document.getElementById('avaliacoesLista').innerHTML = '<div style="color:#e74c3c">Erro ao carregar</div>'; }
         }
 
         async function verificarStatusWADashboard() {
@@ -1522,7 +1542,8 @@ async function _salvarItemReal() {
                 const badge = document.getElementById('waStatusBadge');
                 badge.textContent = conectado ? '📱 WhatsApp: ✅ Conectado' : '📱 WhatsApp: ❌ Desconectado';
                 badge.style.background = conectado ? 'rgba(34,197,94,.2)' : 'rgba(239,68,68,.2)';
-                badge.style.color = conectadasync function exportarPedidosCSV() {        } catch(e) {}
+                badge.style.color = conectado ? '#4ade80' : '#f87171';
+            } catch(e) {}
         }
 
         // Exportar pedidos do dia em CSV
@@ -1591,7 +1612,8 @@ async function _salvarItemReal() {
                 if (!r._id && !r.sucesso) { box.innerHTML = '<p style="color:#c0392b">Erro: ' + (r.erro||'Falha ao criar') + '</p>'; return; }
                 instanciaDeliveryId = r._id || r.instancia?._id;
                 if (instanciaDeliveryId) localStorage.setItem('instanciaDeliveryId_' + adminData._id, instanciaDeliveryId);
-                await gerarQRDeasync function gerarQRDelivery() {h(e) { box.innerHTML = '<p style="color:#c0392b">Erro de conexão</p>'; }
+                await gerarQRDelivery();
+            } catch(e) { box.innerHTML = '<p style="color:#c0392b">Erro de conexão</p>'; }
         }
 
         async function gerarQRDelivery() {
@@ -1622,7 +1644,8 @@ async function _salvarItemReal() {
                 } else {
                     box.innerHTML = '<p style="color:#c0392b">QR não gerado ainda. Aguarde alguns segundos e tente novamente.</p>' +
                         '<button class="btn btn-primary" onclick="gerarQRDelivery()" style="margin-top:10px">🔄 Tentar novamente</button>';
-  async function verificarStatusDelivery() {e) { box.innerHTML = '<p style="color:#c0392b">Erro de conexão</p>'; }
+                }
+            } catch(e) { box.innerHTML = '<p style="color:#c0392b">Erro de conexão</p>'; }
         }
 
         async function verificarStatusDelivery() {
@@ -1635,7 +1658,7 @@ async function _salvarItemReal() {
                 const r = await fetch('/api/evolution/instancia/' + instanciaDeliveryId + '/status', { headers: {'Authorization':'Bearer '+token} }).then(x=>x.json());
                 const conectado = r.status === 'conectado' || r.state === 'open';
                 el.style.background = conectado ? '#1a4a1a' : '#4a1a1a';
-                el.textContent = conectado ? '✅ WhatsApp conectasync function desconectarWhatsappDelivery() {mente';
+                el.textContent = conectado ? '✅ WhatsApp conectado!' : '❌ Desconectado — gere o QR novamente';
             } catch(e) { el.textContent = 'Erro ao verificar'; }
         }
 
@@ -1644,7 +1667,7 @@ async function _salvarItemReal() {
             if (!confirm('Desconectar WhatsApp?')) return;
             await fetch('/api/evolution/instancia/' + instanciaDeliveryId + '/desconectar', { method: 'POST', headers: {'Authorization':'Bearer '+token} });
             document.getElementById('qrDeliveryBox').innerHTML = '<p style="color:#888">Desconectado. Clique em Conectar para reconectar.</p>';
-            document.getElemasync function carregarEntregadores() {.display = 'none';
+            document.getElementById('statusDeliveryWA').style.display = 'none';
         }
 
         // ===== ENTREGADORES =====
@@ -1800,7 +1823,8 @@ async function _salvarItemReal() {
             const link = location.origin + '/delivery-entregador?token=' + e.token + '&entregadorId=' + id;
             try {
                 await navigator.clipboard.writeText(link);
-                toast('✅ Link copiado! Envasync function redefinirSenhaEntregador(eid) {catch(err) {
+                toast('✅ Link copiado! Envie para o entregador 😊');
+            } catch(err) {
                 prompt('Copie o link manualmente:', link);
             }
         }
@@ -1826,11 +1850,11 @@ async function _salvarItemReal() {
             document.getElementById('entregadorVeiculo').value = e.veiculo||'';
             const pl = document.getElementById('entregadorPlaca'); if(pl) pl.value = e.placa||'';
             const vl = document.getElementById('entregadorValor'); if(vl) vl.value = e.valorPorEntrega||0;
-            const sn = document.getElasync function toggleEntregador(id) {f(sn) sn.value = '';
+            const sn = document.getElementById('entregadorSenha'); if(sn) sn.value = '';
             document.getElementById('modalEntregador').classList.add('active');
         }
         async function toggleEntregador(id) {
-            try { await api('/entregadores/'+id+'/toggle',{masync function excluirEntregador(id) {alizado!'); carregarEntregadores(); }
+            try { await api('/entregadores/'+id+'/toggle',{method:'PUT'}); toast('Status atualizado!'); carregarEntregadores(); }
             catch(e) { toast('Erro ao atualizar status','error'); }
         }
         async function excluirEntregador(id) {
@@ -1883,7 +1907,7 @@ async function _salvarItemReal() {
                     ['gNome','gTelefone','gSenha'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
                     carregarGarcons();
                 } else { alert('Erro: ' + (d.erro || 'Falha ao cadastrar')); }
-          async function excluirGarcom(id) {e conexão: ' + e.message); }
+            } catch(e) { alert('Erro de conexão: ' + e.message); }
             finally { btn.disabled = false; btn.textContent = '➕ Cadastrar Garçom'; }
         }
 
@@ -1901,7 +1925,7 @@ async function _salvarItemReal() {
         }
 
         function copiarLinkGarcom(token) {
-            const lasync function carregarGarcons() { + '/garcom?token=' + token;
+            const link = window.location.origin + '/garcom?token=' + token;
             navigator.clipboard.writeText(link).then(() => alert('Link do app copiado!\n' + link));
         }
 
@@ -1970,19 +1994,20 @@ async function salvarGarcom() {
     if (!nome) { alert('Informe o nome'); return; }
     const url = '/api/delivery/garcons' + (id ? '/' + id : '');
     const method = id ? 'PUT' : 'POST';
-    await fetch(url, { method, headers: { 'Content-Type': 'application/json', Authasync function toggleGarcom(id, ativo) {dy: JSON.stringify({ nome, telefone }) });
+    await fetch(url, { method, headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }, body: JSON.stringify({ nome, telefone }) });
     document.getElementById('modalNovoGarcom').style.display = 'none';
     carregarGarcons();
 }
 
 async function toggleGarcom(id, ativo) {
-    if (!confirm(ativo ? 'Desativar garçom?' :async function novoTokenGarcom(id) {  await fetch('/api/delivery/garcons/' + id + '/toggle', { method: 'PUT', headers: { Authorization: 'Bearer ' + token } });
+    if (!confirm(ativo ? 'Desativar garçom?' : 'Ativar garçom?')) return;
+    await fetch('/api/delivery/garcons/' + id + '/toggle', { method: 'PUT', headers: { Authorization: 'Bearer ' + token } });
     carregarGarcons();
 }
 
 async function novoTokenGarcom(id) {
     if (!confirm('Gerar novo token? O token anterior vai parar de funcionar.')) return;
-    const r = await fetch('/api/delivery/garconsasync function verFichaGarcom(id, nome) {'POST', headers: { Authorization: 'Bearer ' + token } });
+    const r = await fetch('/api/delivery/garcons/' + id + '/novo-token', { method: 'POST', headers: { Authorization: 'Bearer ' + token } });
     const d = await r.json();
     alert('Novo token: ' + d.token);
     carregarGarcons();
@@ -2186,7 +2211,8 @@ document.addEventListener('DOMContentLoaded', function() {
 function _apiAdminId() {
     return localStorage.getItem('delivery_adminId') || '';
 }
-function _hdrs(json) async function carregarAssinantes() {apiAdminId(), 'Authorization': 'Bearer ' + (localStorage.getItem('delivery_token')||'') };
+function _hdrs(json) {
+    var h = { 'x-admin-id': _apiAdminId(), 'Authorization': 'Bearer ' + (localStorage.getItem('delivery_token')||'') };
     if (json) h['Content-Type'] = 'application/json';
     return h;
 }
@@ -2216,7 +2242,7 @@ async function carregarAssinantes() {
                 '<div style="display:flex;gap:8px;">' +
                 '<button onclick="confirmarPagAssinante(' + a._id + ')" style="background:#27ae60;color:white;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;">Pago</button>' +
                 '<button onclick="editarAssinante(' + a._id + ')" style="background:#252542;color:#f97316;border:1px solid #00d4ff;padding:6px 12px;border-radius:6px;cursor:pointer;">Editar</button>' +
-                '<button onclick="excluirAssinante(' + a._id + ')" style="background:#252542;color:#e74c3c;border:1px solid #e74c3c;padding:6px 12px;border-radius:6px;cursorasync function editarAssinante(id) {
+                '<button onclick="excluirAssinante(' + a._id + ')" style="background:#252542;color:#e74c3c;border:1px solid #e74c3c;padding:6px 12px;border-radius:6px;cursor:pointer;">Excluir</button>' +
                 '</div></div>';
         }).join('');
     } catch(e) { el.innerHTML = '<p style="color:#e74c3c;">Erro ao carregar.</p>'; }
@@ -2265,7 +2291,8 @@ async function salvarAssinante() {
     try {
         var url = id ? '/api/delivery/assinantes/' + id : '/api/delivery/assinantes';
         var method = id ? 'PUT' : 'POST';
-        var r = await fetch(url, { method: method, headers: _hdrs(true), body: JSON.stringify(bodyasync function excluirAssinante(id) {rFormAssinante(); await carregarAssinantes(); }
+        var r = await fetch(url, { method: method, headers: _hdrs(true), body: JSON.stringify(body) });
+        if (r.ok) { fecharFormAssinante(); await carregarAssinantes(); }
         else { var d = await r.json(); alert('Erro: ' + (d.erro||'Falha')); }
     } catch(e) { alert('Erro de conexao'); }
 }
@@ -2274,7 +2301,7 @@ async function excluirAssinante(id) {
     await fetch('/api/delivery/assinantes/' + id, { method: 'DELETE', headers: _hdrs() });
     await carregarAssinantes();
 }
-asyasync function carregarCardapioDia() {e(id) {
+async function confirmarPagAssinante(id) {
     await fetch('/api/delivery/assinantes/' + id + '/pagar', { method: 'POST', headers: _hdrs() });
     alert('Pagamento confirmado!');
     await carregarAssinantes();
@@ -2299,7 +2326,7 @@ async function enviarCardapioDia() {
     statusEl.textContent = 'Enviando...';
     try {
         var r = await fetch('/api/delivery/cardapio-hoje/enviar', { method: 'POST', headers: _hdrs(true), body: JSON.stringify({ descricao: descricao }) });
-        if (r.ok) { statusEl.textContent = async function carregarEstoque() {t carregarCardapioDia(); }
+        if (r.ok) { statusEl.textContent = 'Enviado com sucesso!'; await carregarCardapioDia(); }
         else { statusEl.textContent = 'Erro ao enviar'; }
     } catch(e) { statusEl.textContent = 'Erro de conexao'; }
 }
@@ -2359,7 +2386,7 @@ async function enviarCardapioDia() {
                     estoqueAtivo: true,
                     estoqueAtual: parseInt(qtd) || 0,
                     estoqueMinimo: parseInt(min) || 2,
-          async function desativarEstoque(id) {seInt(unid) || 1
+                    unidadePorPedido: parseInt(unid) || 1
                 })
             });
             toast('✅ Controle de estoque ativado!');
@@ -2369,7 +2396,8 @@ async function enviarCardapioDia() {
 
         async function desativarEstoque(id) {
             if (!confirm('Desativar controle de estoque deste item?')) return;
-            awaasync function reporEstoque(id, nome) {          method: 'PUT',
+            await api('/estoque/' + id, {
+                method: 'PUT',
                 body: JSON.stringify({ estoqueAtivo: false })
             });
             toast('Controle desativado');
@@ -2380,7 +2408,8 @@ async function enviarCardapioDia() {
             const qtd = prompt(`Quantas unidades de "${nome}" estão sendo repostas?`);
             if (!qtd || isNaN(qtd)) return;
             await api('/estoque/' + id + '/repor', {
-                methodasync function carregarListaCompras() {SON.stringify({ quantidade: parseInt(qtd) })
+                method: 'POST',
+                body: JSON.stringify({ quantidade: parseInt(qtd) })
             });
             toast(`✅ +${qtd} unidades adicionadas!`);
             carregarEstoque();
@@ -2423,7 +2452,8 @@ async function enviarCardapioDia() {
                         <div style="display:flex;justify-content:space-between;padding:8px 12px;background:rgba(34,197,94,.06);border-radius:8px;margin-bottom:4px;border-left:3px solid #22c55e;">
                             <span style="color:#ccc;">${i.nome} <span style="color:#888;font-size:12px;">${i.categoria}</span></span>
                             <span style="color:#22c55e;font-size:13px;">📦 ${i.estoqueAtual} un. · ${i.diasRestantes === 99 ? '—' : '~'+i.diasRestantes+' dias'}</span>
-                    async function carregarRelatorios() {        }
+                        </div>`).join('');
+                }
                 el.innerHTML = html2;
             } catch(e) { el.innerHTML = '<p style="color:#e74c3c;text-align:center;">Erro ao gerar lista</p>'; }
         }
@@ -2482,7 +2512,7 @@ async function carregarRelatorios() {
               <td style="padding:8px">${c.dataFechamento ? new Date(c.dataFechamento).toLocaleString('pt-BR') : '-'}</td>
               <td style="padding:8px">${c.totalPedidos}</td>
               <td style="padding:8px;color:#16a34a">${c.totalEntregues}</td>
-              <td style="padding:8px;font-weight:700async function migrarImagens() {talFaturamento||0).toFixed(2)}</td>
+              <td style="padding:8px;font-weight:700;color:#f97316">R$ ${(c.totalFaturamento||0).toFixed(2)}</td>
               <td style="padding:8px;color:#8e8e93;font-size:.8em">${c.observacoes||'-'}</td>
             </tr>`).join('');
 
@@ -2492,11 +2522,11 @@ async function carregarRelatorios() {
 
 async function migrarImagens() {
     if (!confirm('Corrigir imagens expiradas do cardápio? Pode demorar alguns minutos.')) return;
-    toast('⏳ Migrando imagens... aguarde', 'info');
+    toast('⏳ Migrando imagens... aguarde');
     try {
         const d = await api('/cardapio/migrar-imagens', { method: 'POST' });
         if (d.sucesso) {
-            alert(`✅ Imagens corrigidas!\n\n✅ Migradas: ${d.migrados}\n⚠️ Expiradas (removidas): ${d.erros}\n✓ Já em base64: ${d.jaBase64}\n📦 Total: ${d.total}`);
+            alert('✅ Imagens corrigidas!\n\n✅ Migradas: ' + d.migrados + '\n⚠️ Expiradas (removidas): ' + d.erros + '\n✓ Já em base64: ' + d.jaBase64 + '\n📦 Total: ' + d.total);
         } else toast('Erro: ' + d.erro, 'error');
     } catch(e) { toast('Erro ao migrar imagens', 'error'); }
 }

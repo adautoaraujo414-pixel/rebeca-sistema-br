@@ -380,7 +380,7 @@ function mostrarTela(tela) {
   if (tela==='mapa') carregarMesas();
 }
 
-function iniciarNovaComanda() {
+async function iniciarNovaComanda() {
   mesaAtual = null;
   limparComanda();
   document.getElementById('cardapio-titulo').textContent = 'Nova Comanda';

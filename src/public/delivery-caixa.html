@@ -413,7 +413,7 @@ async function fazerLogin() {
   } catch(e) { document.getElementById('login-erro').textContent = 'Erro de conexão'; }
 }
 
-function sair() {
+async function sair() {
   localStorage.removeItem('caixa_token');
   location.reload();
 }
@@ -692,7 +692,7 @@ function renderPedidos() {
   }).join('');
 }
 
-function adicionarAoPedido(id) {
+async function adicionarAoPedido(id) {
   pedidoEditando = id; limparCarrinho();
   mudarTab('cardapio', document.querySelectorAll('.tab-btn')[0]);
   alert('Selecione os itens e clique em "Enviar Cozinha"');
@@ -1126,7 +1126,7 @@ async function carregarStatsGarcom() {
     el.innerHTML = html;
   } catch(e) { console.error('stats garcom:', e); }
 }
-function abrirPainelGarcons() {
+async function abrirPainelGarcons() {
   document.getElementById('painelGarcons').style.display='flex';
   carregarStatsGarcom();
 }
