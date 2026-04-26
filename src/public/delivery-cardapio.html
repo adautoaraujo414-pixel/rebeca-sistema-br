@@ -430,7 +430,7 @@ function criarCardCombo(combo) {
       '<div class="item-desc">' + (combo.descricao || itensList) + '</div>' +
       '<div class="item-footer">' +
         '<div class="item-price">R$ ' + Number(combo.preco||0).toFixed(2).replace('.',',') + '</div>' +
-        '<button class="item-add-btn" onclick="event.stopPropagation();adicionarComboRapido('' + combo._id + '')">+</button>' +
+        '<button class="item-add-btn" onclick="event.stopPropagation();adicionarComboRapido(\'' + combo._id + '\')">+</button>' +
       '</div>' +
     '</div>';
 
@@ -473,7 +473,7 @@ function abrirCombo(combo) {
         '<div style="font-size:.72em;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">📦 Incluso no combo</div>' +
         '<div style="font-size:.85em;color:var(--text2);line-height:1.8;">' + itensList + '</div>' +
       '</div>' +
-      '<button class="btn-add-cart" onclick="adicionarComboRapido('' + combo._id + '');fecharItem({target:document.getElementById('overlayItem')})">Adicionar Combo — R$ ' + Number(combo.preco||0).toFixed(2).replace('.',',') + '</button>' +
+      '<button class="btn-add-cart" onclick="adicionarComboRapido(\'' + combo._id + '\');fecharItem({target:document.getElementById('overlayItem')})">Adicionar Combo — R$ ' + Number(combo.preco||0).toFixed(2).replace('.',',') + '</button>' +
     '</div>';
 
   document.getElementById('overlayItem').classList.add('show');
