@@ -1755,4 +1755,92 @@ router.post('/cardapio/migrar-imagens', authDelivery, async (req, res) => {
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
+
+// ===== CONFIRMAR TRANSCRIÇÃO DO CARDÁPIO IA =====
+router.post('/cardapio/confirmar-transcricao', authDelivery, async (req, res) => {
+    try {
+        const { categorias, limparExistente } = req.body;
+        if (!categorias || !categorias.length) return res.status(400).json({ erro: 'Nenhuma categoria recebida' });
+
+        // Desativar itens antigos se solicitado
+        if (limparExistente) {
+            await ItemCardapio.updateMany({ adminId: req.adminId }, { ativo: false });
+            await CategoriaCardapio.updateMany({ adminId: req.adminId }, { ativo: false });
+        }
+
+        let totalCats = 0, totalItens = 0;
+
+        for (const cat of categorias) {
+            if (!cat.nome || !cat.itens?.length) continue;
+
+            // Criar ou reusar categoria
+            let categoriaDoc = await CategoriaCardapio.findOne({ 
+                adminId: req.adminId, 
+                nome: { $regex: new RegExp(cat.nome.trim(), 'i') }
+            });
+            if (!categoriaDoc) {
+                categoriaDoc = await CategoriaCardapio.create({
+                    adminId: req.adminId,
+                    nome: cat.nome.trim(),
+                    emoji: cat.emoji || '🍽️',
+                    ativo: true,
+                    ordem: totalCats
+                });
+            } else {
+                categoriaDoc.ativo = true;
+                await categoriaDoc.save();
+            }
+            totalCats++;
+
+            // Criar itens da categoria
+            for (const item of cat.itens) {
+                if (!item.nome?.trim()) continue;
+                
+                // Verificar se já existe item com mesmo nome
+                let itemDoc = await ItemCardapio.findOne({
+                    adminId: req.adminId,
+                    nome: { $regex: new RegExp(item.nome.trim(), 'i') }
+                });
+
+                if (itemDoc) {
+                    // Atualizar item existente
+                    itemDoc.preco = item.preco || itemDoc.preco;
+                    itemDoc.descricao = item.descricao || itemDoc.descricao;
+                    itemDoc.ativo = true;
+                    itemDoc.categoriaId = categoriaDoc._id;
+                    await itemDoc.save();
+                } else {
+                    // Criar novo item
+                    itemDoc = await ItemCardapio.create({
+                        adminId: req.adminId,
+                        categoriaId: categoriaDoc._id,
+                        nome: item.nome.trim(),
+                        descricao: item.descricao || '',
+                        preco: item.preco || 0,
+                        ativo: true,
+                        ordem: totalItens,
+                        imagem: null
+                    });
+                }
+
+                // Gerar imagem em background (não bloqueia a resposta)
+                if (!itemDoc.imagem) {
+                    gerarImagemItem(item.nome, item.descricao).then(async (img) => {
+                        if (img) {
+                            itemDoc.imagem = img;
+                            await itemDoc.save();
+                        }
+                    }).catch(() => {});
+                }
+                totalItens++;
+            }
+        }
+
+        res.json({ sucesso: true, categorias: totalCats, itens: totalItens });
+    } catch(e) { 
+        console.error('[TRANSCRICAO]', e);
+        res.status(500).json({ erro: e.message }); 
+    }
+});
+
 module.exports = router;

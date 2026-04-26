@@ -1432,10 +1432,9 @@ async function _salvarItemReal() {
             dadosTranscritos.categorias = dadosTranscritos.categorias.filter(function(c){return c.itens.length>0;});
             if (!dadosTranscritos.categorias.length) return toast('Nenhum item valido','error');
             try {
-                var res = await api('/cardapio/confirmar-transcricao', { method:'POST', body:JSON.stringify({ categorias:dadosTranscritos.categorias, limparExistente:document.getElementById('limparExistente').checked }) });
-                var data = await res.json();
+                var data = await api('/cardapio/confirmar-transcricao', { method:'POST', body:JSON.stringify({ categorias:dadosTranscritos.categorias, limparExistente:document.getElementById('limparExistente').checked }) });
                 if (data.erro) return toast(data.erro,'error');
-                toast('Cardapio salvo! ' + data.categorias + ' categorias, ' + data.itens + ' itens');
+                toast('✅ Cardápio salvo! ' + data.categorias + ' categorias, ' + data.itens + ' itens criados. Imagens sendo geradas em segundo plano...');
                 limparTranscricao();
             } catch(e) { toast('Erro ao salvar cardapio','error'); }
         }
