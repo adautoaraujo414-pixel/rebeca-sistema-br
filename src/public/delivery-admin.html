@@ -2811,30 +2811,57 @@ async function migrarImagens() {
 
 // ===== CAMPOS DINÂMICOS BEBIDA =====
 function toggleCamposBebida() {
-    const sel = document.getElementById('itemCategoria');
-    const opt = sel.options[sel.selectedIndex];
-    const nomeCat = opt ? opt.text.toLowerCase() : '';
-    const ehBebida = nomeCat.includes('bebida') || nomeCat.includes('drink') || 
-                     nomeCat.includes('suco') || nomeCat.includes('refri') ||
-                     nomeCat.includes('água') || nomeCat.includes('agua') ||
-                     nomeCat.includes('cerveja') || nomeCat.includes('vinho') ||
-                     nomeCat.includes('alcoól') || nomeCat.includes('alcool');
+    var sel = document.getElementById('itemCategoria');
+    var opt = sel ? sel.options[sel.selectedIndex] : null;
+    var nomeCat = opt ? opt.text.toLowerCase() : '';
+    var ehBebida = nomeCat.includes('bebida') || nomeCat.includes('drink') ||
+                   nomeCat.includes('suco') || nomeCat.includes('refri') ||
+                   nomeCat.includes('agua') || nomeCat.includes('água') ||
+                   nomeCat.includes('cerveja') || nomeCat.includes('vinho') ||
+                   nomeCat.includes('alcool') || nomeCat.includes('alcoól');
 
-    const campos = document.getElementById('camposBebida');
-    const preparo = document.getElementById('grupoPreparo');
-
+    // Campos extras de bebida
+    var campos = document.getElementById('camposBebida');
     if (campos) campos.style.display = ehBebida ? 'block' : 'none';
+
+    // Tempo de preparo
+    var preparo = document.getElementById('grupoPreparo');
     if (preparo) {
-        if (ehBebida) {
-            preparo.style.display = 'none';
-            // Bebida não precisa de tempo de preparo
-            const inputTempo = document.getElementById('itemTempo');
-            if (inputTempo) inputTempo.value = '0';
-        } else {
-            preparo.style.display = 'block';
-            const inputTempo = document.getElementById('itemTempo');
-            if (inputTempo && inputTempo.value == '0') inputTempo.value = '20';
-        }
+        preparo.style.display = ehBebida ? 'none' : 'block';
+        var inputTempo = document.getElementById('itemTempo');
+        if (inputTempo) inputTempo.value = ehBebida ? '0' : (inputTempo.value == '0' ? '20' : inputTempo.value);
+    }
+
+    // Estoque por tipo
+    var estoqueUnidade = document.getElementById('grupoEstoqueUnidade');
+    var estoqueBebida = document.getElementById('grupoEstoqueBebida');
+    if (estoqueUnidade) estoqueUnidade.style.display = ehBebida ? 'none' : 'block';
+    if (estoqueBebida) estoqueBebida.style.display = ehBebida ? 'block' : 'none';
+
+    // Label do nome
+    var label = document.getElementById('labelNomeItem');
+    if (label) {
+        if (ehBebida) label.textContent = 'Nome da Bebida';
+        else if (nomeCat.includes('pizza') || nomeCat.includes('massa')) label.textContent = 'Nome da Pizza';
+        else if (nomeCat.includes('sobremesa') || nomeCat.includes('doce') || nomeCat.includes('sorvete')) label.textContent = 'Nome da Sobremesa';
+        else if (nomeCat.includes('prato') || nomeCat.includes('refeicao') || nomeCat.includes('almoco')) label.textContent = 'Nome do Prato';
+        else label.textContent = 'Nome do Item';
+    }
+
+    // Placeholder
+    var inputNome = document.getElementById('itemNome');
+    var inputDesc = document.getElementById('itemDesc');
+    var descOpcional = document.getElementById('descOpcional');
+    if (ehBebida) {
+        if (inputNome) inputNome.placeholder = 'Ex: Coca-Cola, Suco de Laranja, Heineken...';
+        if (inputDesc) inputDesc.placeholder = 'Sabor, marca, observacao... (opcional)';
+        if (descOpcional) descOpcional.style.display = 'inline';
+    } else {
+        if (inputNome) inputNome.placeholder = 'Ex: X-Burguer, Frango Grelhado...';
+        if (inputDesc) inputDesc.placeholder = 'Pao, hamburguer, queijo...';
+        if (descOpcional) descOpcional.style.display = 'none';
+    }
+}
     }
 }
 
