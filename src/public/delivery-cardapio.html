@@ -417,7 +417,7 @@ function criarCardCombo(combo) {
   div.dataset.nome = combo.nome;
 
   var imgHtml = combo.imagem
-    ? '<img class="item-img" src="' + combo.imagem + '" loading="lazy" onerror="this.parentNode.innerHTML='<div class=item-img-ph>🎁</div>'">'
+    ? '<img class="item-img" src="' + combo.imagem + '" loading="lazy" onerror=\"this.parentNode.style.display=\'none\'">'
     : '<div class="item-img-ph">🎁</div>';
 
   var itensList = (combo.itens||[]).map(function(i){ return i.quantidade + 'x ' + i.nome; }).join(' + ');
