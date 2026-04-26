@@ -1934,7 +1934,7 @@ async function _salvarItemReal() {
         }
 
         function copiarLinkGarcom(token) {
-            const link = window.location.origin + '/garcom?token=' + token;
+            const link = window.location.origin + '/delivery-garcom?token=' + token;
             navigator.clipboard.writeText(link).then(() => alert('Link do app copiado!\n' + link));
         }
 
