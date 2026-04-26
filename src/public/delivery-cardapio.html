@@ -763,6 +763,7 @@ function renderizarFiltros(data) {
     + cats.map(c => `<button class="btn-cat" data-cat="${c._id}" onclick="filtrarCategoria('${c._id}')"
       style="flex-shrink:0;background:#1e1e1e;border:1px solid #333;border-radius:20px;padding:7px 16px;color:#aaa;font-size:.82em;font-weight:600;cursor:pointer;white-space:nowrap;">${c.emoji||''} ${c.nome}</button>`).join('');
 }
+}
 </script>
 </body>
 </html>
