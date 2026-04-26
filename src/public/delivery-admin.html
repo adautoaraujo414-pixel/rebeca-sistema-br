@@ -1007,6 +1007,39 @@
   </div>
 </div>
 
+
+<!-- Modal Editar Garçom -->
+<div id="modalEditarGarcom" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:9000;align-items:center;justify-content:center">
+  <div style="background:#1a1a2e;border-radius:16px;padding:28px;width:95%;max-width:420px;border:1px solid #333">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <h3 style="color:#fff;margin:0">✏️ Editar Garçom</h3>
+      <button onclick="fecharEditarGarcom()" style="background:none;border:none;color:#aaa;font-size:1.4em;cursor:pointer">✕</button>
+    </div>
+    <input type="hidden" id="editGarcomId">
+    <div style="margin-bottom:12px">
+      <label style="color:#aaa;font-size:.85em;display:block;margin-bottom:4px">Nome</label>
+      <input type="text" id="editGarcomNome" style="width:100%;padding:10px;background:#252542;border:1px solid #333;border-radius:8px;color:#fff;font-size:.95em">
+    </div>
+    <div style="margin-bottom:12px">
+      <label style="color:#aaa;font-size:.85em;display:block;margin-bottom:4px">Telefone</label>
+      <input type="text" id="editGarcomTel" style="width:100%;padding:10px;background:#252542;border:1px solid #333;border-radius:8px;color:#fff;font-size:.95em">
+    </div>
+    <div style="margin-bottom:12px">
+      <label style="color:#aaa;font-size:.85em;display:block;margin-bottom:4px">Nova Senha <span style="color:#666;font-size:.8em">(deixe em branco para manter)</span></label>
+      <input type="text" id="editGarcomSenha" placeholder="Nova senha..." style="width:100%;padding:10px;background:#252542;border:1px solid #333;border-radius:8px;color:#fff;font-size:.95em">
+    </div>
+    <div style="margin-bottom:20px">
+      <label style="color:#aaa;font-size:.85em;display:block;margin-bottom:4px">Gerar Nova Senha Automática</label>
+      <button onclick="gerarSenhaAleatoria()" style="background:#252542;border:1px solid #f97316;color:#f97316;border-radius:8px;padding:8px 16px;cursor:pointer;font-size:.85em">🎲 Gerar Senha</button>
+      <span id="senhaGeradaPreview" style="color:#f97316;font-size:.85em;margin-left:10px;font-family:monospace"></span>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button onclick="salvarEdicaoGarcom()" style="flex:1;background:#f97316;border:none;color:#000;border-radius:8px;padding:12px;font-weight:700;cursor:pointer">💾 Salvar</button>
+      <button onclick="fecharEditarGarcom()" style="background:#333;border:none;color:#aaa;border-radius:8px;padding:12px 20px;cursor:pointer">Cancelar</button>
+    </div>
+  </div>
+</div>
+
 </body></html>`;
             const w = window.open('','_blank','width=350,height=600');
             w.document.write(html);
@@ -1964,6 +1997,8 @@ async function carregarGarcons() {
                             </div>
                             <div style="display:flex;flex-direction:column;gap:7px;min-width:160px;">
                                 <button onclick="copiarLinkGarcom('${g.token}')" style="padding:8px 14px;background:#f97316;border:none;color:#000;border-radius:8px;cursor:pointer;font-size:.82em;font-weight:700">📲 Link do App</button>
+                                <button onclick="copiarTokenGarcom('${g.token}')" style="padding:8px 14px;background:#252542;border:1px solid #f97316;color:#f97316;border-radius:8px;cursor:pointer;font-size:.82em;font-weight:700">📋 Copiar Token</button>
+                                <button onclick="abrirEditarGarcom('${g._id}','${g.nome}','${g.telefone||''}','${g.senha||''}')" style="padding:8px 14px;background:#252542;border:1px solid #00d4ff;color:#00d4ff;border-radius:8px;cursor:pointer;font-size:.82em">✏️ Editar</button>
                                 <button onclick="toggleGarcom('${g._id}',${g.ativo})" style="padding:8px 14px;background:rgba(255,255,255,.05);border:1px solid #444;color:${g.ativo ? '#ff7' : '#7f7'};border-radius:8px;cursor:pointer;font-size:.82em">${g.ativo ? '⏸ Desativar' : '▶ Ativar'}</button>
                                 <button onclick="excluirGarcom('${g._id}')" style="padding:8px 14px;background:rgba(255,255,255,.05);border:1px solid #633;color:#f77;border-radius:8px;cursor:pointer;font-size:.82em">🗑 Excluir</button>
                             </div>
@@ -2620,6 +2655,63 @@ const _origToggleCamposBebida = toggleCamposBebida;
 function toggleCamposBebida() {
     _origToggleCamposBebida && _origToggleCamposBebida();
     atualizarPlaceholders();
+}
+
+
+// ===== GARÇOM - COPIAR TOKEN E EDITAR =====
+function copiarTokenGarcom(tk) {
+    navigator.clipboard.writeText(tk).then(() => {
+        toast('✅ Token copiado: ' + tk);
+    }).catch(() => {
+        prompt('Copie o token:', tk);
+    });
+}
+
+function abrirEditarGarcom(id, nome, tel, senha) {
+    document.getElementById('editGarcomId').value = id;
+    document.getElementById('editGarcomNome').value = nome;
+    document.getElementById('editGarcomTel').value = tel;
+    document.getElementById('editGarcomSenha').value = '';
+    document.getElementById('senhaGeradaPreview').textContent = '';
+    document.getElementById('modalEditarGarcom').style.display = 'flex';
+}
+
+function fecharEditarGarcom() {
+    document.getElementById('modalEditarGarcom').style.display = 'none';
+}
+
+function gerarSenhaAleatoria() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let senha = '';
+    for (let i = 0; i < 6; i++) senha += chars[Math.floor(Math.random() * chars.length)];
+    document.getElementById('editGarcomSenha').value = senha;
+    document.getElementById('senhaGeradaPreview').textContent = '→ ' + senha;
+}
+
+async function salvarEdicaoGarcom() {
+    const id = document.getElementById('editGarcomId').value;
+    const nome = document.getElementById('editGarcomNome').value.trim();
+    const telefone = document.getElementById('editGarcomTel').value.trim();
+    const senha = document.getElementById('editGarcomSenha').value.trim();
+
+    if (!nome) { toast('Nome obrigatório', 'error'); return; }
+
+    const body = { nome, telefone };
+    if (senha) body.senha = senha;
+
+    try {
+        const r = await fetch('/api/delivery/garcons/' + id, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+            body: JSON.stringify(body)
+        });
+        const d = await r.json();
+        if (d.sucesso) {
+            fecharEditarGarcom();
+            toast('✅ Garçom atualizado!');
+            carregarGarcons();
+        } else toast('Erro: ' + (d.erro || 'Falha'), 'error');
+    } catch(e) { toast('Erro de conexão', 'error'); }
 }
 
 </script>
