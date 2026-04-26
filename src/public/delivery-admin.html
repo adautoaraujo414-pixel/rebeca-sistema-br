@@ -158,6 +158,7 @@
                 <div class="menu-section">Cardápio</div>
                 <div class="menu-item" data-page="categorias">📁 Categorias</div>
                 <div class="menu-item" data-page="cardapio">🍔 Itens</div>
+                <div class="menu-item" onclick="migrarImagens()" style="color:#f97316;font-size:.82em">🖼️ Corrigir Imagens</div>
                 <div class="menu-item" data-page="upload-cardapio">📸 Upload Cardápio IA</div>
                 <div class="menu-section">Relatórios</div>
                 <div class="menu-item" data-page="relatorios" onclick="carregarRelatorios()">📈 Relatórios de Caixa</div>
@@ -2516,6 +2517,18 @@ async function carregarRelatorios() {
             </tr>`).join('');
 
     } catch(e) { console.log('Erro relatórios:', e); }
+}
+
+
+async function migrarImagens() {
+    if (!confirm('Corrigir imagens expiradas do cardápio? Pode demorar alguns minutos.')) return;
+    toast('⏳ Migrando imagens... aguarde', 'info');
+    try {
+        const d = await api('/cardapio/migrar-imagens', { method: 'POST' });
+        if (d.sucesso) {
+            alert(`✅ Imagens corrigidas!\n\n✅ Migradas: ${d.migrados}\n⚠️ Expiradas (removidas): ${d.erros}\n✓ Já em base64: ${d.jaBase64}\n📦 Total: ${d.total}`);
+        } else toast('Erro: ' + d.erro, 'error');
+    } catch(e) { toast('Erro ao migrar imagens', 'error'); }
 }
 
 </script>

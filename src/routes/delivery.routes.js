@@ -1718,4 +1718,41 @@ router.get('/caixa/historico', authDelivery, async (req, res) => {
 });
 
 
+
+// ===== MIGRAR IMAGENS ANTIGAS PARA BASE64 =====
+router.post('/cardapio/migrar-imagens', authDelivery, async (req, res) => {
+    try {
+        const axios = require('axios');
+        const itens = await ItemCardapio.find({ adminId: req.adminId, ativo: true });
+        let migrados = 0, erros = 0, jaBase64 = 0;
+
+        for (const item of itens) {
+            if (!item.imagem) continue;
+            // Já é base64 - pular
+            if (item.imagem.startsWith('data:')) { jaBase64++; continue; }
+            // É URL externa - baixar e converter
+            try {
+                const resp = await axios.get(item.imagem, { 
+                    responseType: 'arraybuffer', 
+                    timeout: 15000,
+                    headers: { 'User-Agent': 'Mozilla/5.0' }
+                });
+                const base64 = Buffer.from(resp.data).toString('base64');
+                const mime = resp.headers['content-type'] || 'image/png';
+                item.imagem = `data:${mime};base64,${base64}`;
+                await item.save();
+                migrados++;
+                console.log(`[IMG-MIGRAR] OK: ${item.nome}`);
+            } catch(e) {
+                // URL expirou ou erro - gerar emoji placeholder
+                item.imagem = null;
+                await item.save();
+                erros++;
+                console.log(`[IMG-MIGRAR] Erro ${item.nome}: ${e.message}`);
+            }
+        }
+        res.json({ sucesso: true, migrados, erros, jaBase64, total: itens.length });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
 module.exports = router;
