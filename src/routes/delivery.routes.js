@@ -667,32 +667,7 @@ router.post('/cardapio/upload-foto', authDelivery, async (req, res) => {
     } catch(e) { console.error('[CARDAPIO-IA] Erro:', e.message); res.status(500).json({ erro: 'Erro ao processar imagem: ' + e.message }); }
 });
 
-router.post('/cardapio/confirmar-transcricao', authDelivery, async (req, res) => {
-    try {
-        const { categorias, limparExistente } = req.body;
-        if (!categorias || !categorias.length) return res.status(400).json({ erro: 'Nenhuma categoria' });
-        if (limparExistente) {
-            await ItemCardapio.updateMany({ adminId: req.adminId }, { ativo: false });
-            await CategoriaCardapio.updateMany({ adminId: req.adminId }, { ativo: false });
-        }
-        let totalCats = 0, totalItens = 0;
-        for (let i = 0; i < categorias.length; i++) {
-            const catData = categorias[i];
-            const cat = await CategoriaCardapio.create({ adminId: req.adminId, nome: catData.nome, emoji: catData.emoji || '', ordem: i, ativo: true });
-            totalCats++;
-            for (let j = 0; j < catData.itens.length; j++) {
-                const it = catData.itens[j];
-                await ItemCardapio.create({ adminId: req.adminId, categoriaId: cat._id, nome: it.nome, descricao: it.descricao || '', preco: parseFloat(it.preco) || 0, ordem: j, ativo: true, disponivel: true });
-                totalItens++;
-            }
-        }
-        console.log('[CARDAPIO-IA] Salvo: ' + totalCats + ' cats, ' + totalItens + ' itens');
-        res.json({ sucesso: true, categorias: totalCats, itens: totalItens });
-    } catch(e) { res.status(500).json({ erro: e.message }); }
-});
 
-
-// ========== PEDIDO VIA CARDÁPIO DIGITAL ==========
 router.post('/pedido-cardapio-digital', async (req, res) => {
     try {
         const { adminId, telefoneCliente, nomeCliente, itens, total, taxaEntrega, enderecoEntrega, formaPagamento, troco, observacaoGeral } = req.body;
