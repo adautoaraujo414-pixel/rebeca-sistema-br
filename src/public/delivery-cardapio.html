@@ -438,6 +438,12 @@ function criarCardCombo(combo) {
   return div;
 }
 
+function adicionarComboCart(btn) {
+  adicionarComboRapido(btn.dataset.cid);
+  document.getElementById('overlayItem').classList.remove('show');
+  document.body.style.overflow = '';
+}
+
 function adicionarComboRapido(comboId) {
   var combos = (cardapioData && cardapioData.combos) || [];
   var combo = combos.find(function(c){ return c._id === comboId; });
