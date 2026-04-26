@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -1008,6 +1009,8 @@
 </div>
 
 
+
+
 <!-- Modal Editar Garçom -->
 <div id="modalEditarGarcom" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:9000;align-items:center;justify-content:center">
   <div style="background:#1a1a2e;border-radius:16px;padding:28px;width:95%;max-width:420px;border:1px solid #333">
@@ -1039,7 +1042,6 @@
     </div>
   </div>
 </div>
-
 </body></html>`;
             const w = window.open('','_blank','width=350,height=600');
             w.document.write(html);
@@ -1806,7 +1808,6 @@ async function _salvarItemReal() {
             } catch(e) { toast('Erro de conexão', 'error'); }
         }
 
-        async 
 
         function abrirModalEntregador() {
             document.getElementById('tituloModalEntregador').textContent = '🏍️ Novo Entregador';
