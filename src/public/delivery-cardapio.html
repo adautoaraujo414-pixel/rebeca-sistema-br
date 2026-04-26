@@ -569,7 +569,7 @@ function abrirModalItem(itemDataStr) {
           '<div><div class="opcao-nome">' + op.nome + '</div>' +
           (op.preco > 0 ? '<div class="opcao-preco">+ R$ ' + Number(op.preco).toFixed(2) + '</div>' : '') +
           '</div>' +
-          '<div class="opcao-check" id="chk_' + key + '" onclick="toggleOpcao(this,'' + grupo.nome + '','' + op.nome + '',' + (op.preco||0) + ')"></div>' +
+          '<div class="opcao-check" id="chk_' + key + '" onclick="toggleOpcao(this,\'' + grupo.nome + '\',\'' + op.nome + '\',' + (op.preco||0) + ')"></div>' +
         '</div>';
       });
       html += '</div>';
