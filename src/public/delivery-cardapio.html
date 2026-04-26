@@ -308,7 +308,7 @@ function renderPgtoOpcoes() {
   if (secao) secao.style.display = 'block';
   container.innerHTML = opcoes.map(function(o) {
     return '<label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);">' +
-      '<input type="radio" name="pgto" value="' + o.id + '" onchange="selecionarPgto('' + o.id + '')" style="accent-color:var(--accent);">' +
+      '<input type="radio" name="pgto" data-tipo="' + o.id + '" value="' + o.id + '" onchange="selecionarPgto(this.dataset.tipo)" style="accent-color:var(--accent);">' +
       '<div><div style="font-size:.85em;font-weight:700;">' + o.label + '</div>' +
       '<div style="font-size:.72em;color:var(--text3);">' + o.sub + '</div></div></label>';
   }).join('');
