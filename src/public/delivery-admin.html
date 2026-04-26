@@ -677,6 +677,25 @@
                 <div class="form-group"><label>Preço (R$)</label><input type="number" id="itemPreco" step="0.50"></div>
                 <div class="form-group" id="grupoPreparo"><label>Tempo Preparo (min)</label><input type="number" id="itemTempo" value="20"></div>
             </div>
+            <div class="form-group" id="grupoEstoqueUnidade" style="display:block">
+                <label>📦 Estoque (unidades)</label>
+                <input type="number" id="itemEstoqueQtd" placeholder="Ex: 50" min="0" style="width:100%;padding:10px;background:#252542;border:1px solid #333;border-radius:8px;color:#fff;">
+                <span style="color:#666;font-size:.78em">Quantidade disponível em estoque. Desconta automaticamente a cada venda.</span>
+            </div>
+            <div class="form-group" id="grupoEstoqueBebida" style="display:none">
+                <label>🧴 Estoque de Bebidas</label>
+                <div style="display:flex;gap:10px;">
+                    <div style="flex:1">
+                        <label style="font-size:.8em;color:#aaa">Quantidade (un/garrafas/latas)</label>
+                        <input type="number" id="itemEstoqueQtdBebida" placeholder="Ex: 24" min="0" style="width:100%;padding:10px;background:#252542;border:1px solid #333;border-radius:8px;color:#fff;">
+                    </div>
+                    <div style="flex:1">
+                        <label style="font-size:.8em;color:#aaa">Volume unitário (ml/L)</label>
+                        <input type="text" id="itemEstoqueVolume" placeholder="Ex: 350ml, 1L" style="width:100%;padding:10px;background:#252542;border:1px solid #333;border-radius:8px;color:#fff;">
+                    </div>
+                </div>
+                <span style="color:#666;font-size:.78em">Desconta 1 unidade do estoque a cada venda realizada.</span>
+            </div>
             <div class="form-group"><label><input type="checkbox" id="itemDestaque"> ⭐ Destaque</label></div>
             <div class="form-group"><label><input type="checkbox" id="itemDisponivel" checked> ✅ Disponível</label></div>
             <div class="form-group" id="itemImagemBox" style="display:none">
@@ -2846,6 +2865,34 @@ function atualizarPlaceholders() {
         if (inputDesc) inputDesc.placeholder = 'Pão, hambúrguer, queijo...';
         if (descOpcional) descOpcional.style.display = 'none';
     }
+}
+
+function atualizarLabelNome() {
+    const sel = document.getElementById('itemCategoria');
+    const opt = sel ? sel.options[sel.selectedIndex] : null;
+    const nomeCat = opt ? opt.text.toLowerCase() : '';
+    const label = document.getElementById('labelNomeItem');
+    if (!label) return;
+    const ehBebida = nomeCat.includes('bebida') || nomeCat.includes('drink') ||
+                     nomeCat.includes('suco') || nomeCat.includes('refri') ||
+                     nomeCat.includes('água') || nomeCat.includes('agua') ||
+                     nomeCat.includes('cerveja') || nomeCat.includes('vinho');
+    const ehSobremesa = nomeCat.includes('sobremesa') || nomeCat.includes('doce') || nomeCat.includes('sorvete');
+    const ehPizza = nomeCat.includes('pizza') || nomeCat.includes('massa');
+    const ehPrato = nomeCat.includes('prato') || nomeCat.includes('refeição') || nomeCat.includes('almoço');
+
+    // Atualizar label do nome
+    if (ehBebida) label.textContent = 'Nome da Bebida';
+    else if (ehSobremesa) label.textContent = 'Nome da Sobremesa';
+    else if (ehPizza) label.textContent = 'Nome da Pizza';
+    else if (ehPrato) label.textContent = 'Nome do Prato';
+    else label.textContent = 'Nome do Item';
+
+    // Mostrar campos de estoque por tipo
+    const grupoEstoqueBebida = document.getElementById('grupoEstoqueBebida');
+    const grupoEstoqueUnidade = document.getElementById('grupoEstoqueUnidade');
+    if (grupoEstoqueBebida) grupoEstoqueBebida.style.display = ehBebida ? 'block' : 'none';
+    if (grupoEstoqueUnidade) grupoEstoqueUnidade.style.display = ehBebida ? 'none' : 'block';
 }
 
 // Chamar atualizarPlaceholders junto com toggleCamposBebida
