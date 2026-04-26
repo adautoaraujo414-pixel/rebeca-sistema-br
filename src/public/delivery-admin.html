@@ -558,6 +558,61 @@
                 <div id="page-config" class="page">
                     <h2 style="margin-bottom:20px;">⚙️ Configurações</h2>
 
+                    <!-- PAGAMENTOS -->
+                    <div class="panel" style="margin-bottom:20px;border:2px solid #22c55e22">
+                        <h3>💳 Formas de Pagamento</h3>
+                        <p style="color:#888;font-size:.88em;margin:8px 0 16px">Configure as formas de pagamento que seu estabelecimento aceita.</p>
+
+                        <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:20px;">
+                            <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:12px;border-radius:10px;border:1px solid #e8e8ed;background:#fafafa;">
+                                <input type="checkbox" id="pgtoPixAtivo" onchange="salvarPagamentos()" style="width:18px;height:18px;accent-color:#f97316;">
+                                <div>
+                                    <div style="font-weight:700;font-size:.9em;">🏦 PIX</div>
+                                    <div style="font-size:.78em;color:#888;">Cliente paga via PIX antes da entrega</div>
+                                </div>
+                            </label>
+
+                            <div id="pixDados" style="display:none;padding:12px;background:#f0fdf4;border-radius:10px;border:1px solid #bbf7d0;">
+                                <div style="margin-bottom:10px;">
+                                    <label style="font-size:.8em;font-weight:700;color:#666;display:block;margin-bottom:4px;">Tipo de Chave PIX</label>
+                                    <select id="pixTipo" onchange="salvarPagamentos()" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ddd;font-family:inherit;">
+                                        <option value="cpf">CPF</option>
+                                        <option value="cnpj">CNPJ</option>
+                                        <option value="telefone">Telefone</option>
+                                        <option value="email">E-mail</option>
+                                        <option value="aleatoria">Chave Aleatória</option>
+                                    </select>
+                                </div>
+                                <div style="margin-bottom:10px;">
+                                    <label style="font-size:.8em;font-weight:700;color:#666;display:block;margin-bottom:4px;">Chave PIX *</label>
+                                    <input type="text" id="pixChave" placeholder="Ex: 11999999999" onchange="salvarPagamentos()" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ddd;font-family:inherit;">
+                                </div>
+                                <div>
+                                    <label style="font-size:.8em;font-weight:700;color:#666;display:block;margin-bottom:4px;">Nome do Beneficiário *</label>
+                                    <input type="text" id="pixNome" placeholder="Ex: João Restaurante" onchange="salvarPagamentos()" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ddd;font-family:inherit;">
+                                </div>
+                            </div>
+
+                            <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:12px;border-radius:10px;border:1px solid #e8e8ed;background:#fafafa;">
+                                <input type="checkbox" id="pgtoCartaoAtivo" onchange="salvarPagamentos()" style="width:18px;height:18px;accent-color:#f97316;">
+                                <div>
+                                    <div style="font-weight:700;font-size:.9em;">💳 Cartão na Entrega</div>
+                                    <div style="font-size:.78em;color:#888;">Débito e/ou crédito — maquininha na entrega</div>
+                                </div>
+                            </label>
+
+                            <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:12px;border-radius:10px;border:1px solid #e8e8ed;background:#fafafa;">
+                                <input type="checkbox" id="pgtoDinheiroAtivo" onchange="salvarPagamentos()" style="width:18px;height:18px;accent-color:#f97316;">
+                                <div>
+                                    <div style="font-weight:700;font-size:.9em;">💵 Dinheiro</div>
+                                    <div style="font-size:.78em;color:#888;">Pagamento em espécie — com opção de troco</div>
+                                </div>
+                            </label>
+                        </div>
+
+                        <div id="pgtoStatus" style="font-size:.82em;color:#22c55e;display:none;">✅ Salvo!</div>
+                    </div>
+
                     <!-- QR CODE DA MESA -->
                     <div class="panel" style="margin-bottom:20px;border:2px solid #00d4ff22">
                         <h3>📱 QR Code do Cardápio (Mesas)</h3>
@@ -1076,7 +1131,7 @@
                 if (page === 'entregadores') carregarEntregadores();
                 if (page === 'garcons') carregarGarcons();
                 if (page === 'cardapio') carregarCardapio();
-                if (page === 'config') carregarConfig();
+                if (page === 'config') { carregarConfig(); carregarPagamentos(); }
                 if (page === 'dashboard') { verificarStatusWADashboard(); }
                 if (page === 'avaliacoes') carregarAvaliacoes();
                 if (page === 'assinantes') carregarAssinantes();
@@ -3298,6 +3353,64 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
+
+
+
+// ═══════════════════════════════════════
+// PAGAMENTOS
+// ═══════════════════════════════════════
+function carregarPagamentos() {
+    fetch('/api/delivery/config', { headers: { 'x-token': token } })
+        .then(r => r.json())
+        .then(d => {
+            var pg = d.pagamentos || {};
+            var pixAtivo = document.getElementById('pgtoPixAtivo');
+            var cartaoAtivo = document.getElementById('pgtoCartaoAtivo');
+            var dinheiroAtivo = document.getElementById('pgtoDinheiroAtivo');
+            var pixChave = document.getElementById('pixChave');
+            var pixNome = document.getElementById('pixNome');
+            var pixTipo = document.getElementById('pixTipo');
+            if (pixAtivo) pixAtivo.checked = !!pg.pix;
+            if (cartaoAtivo) cartaoAtivo.checked = !!pg.cartao;
+            if (dinheiroAtivo) dinheiroAtivo.checked = !!pg.dinheiro;
+            if (pixChave) pixChave.value = pg.pixChave || '';
+            if (pixNome) pixNome.value = pg.pixNome || '';
+            if (pixTipo) pixTipo.value = pg.pixTipo || 'telefone';
+            togglePixDados();
+        }).catch(() => {});
+}
+
+function togglePixDados() {
+    var ativo = document.getElementById('pgtoPixAtivo');
+    var box = document.getElementById('pixDados');
+    if (box) box.style.display = (ativo && ativo.checked) ? 'block' : 'none';
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    var pixAtivo = document.getElementById('pgtoPixAtivo');
+    if (pixAtivo) pixAtivo.addEventListener('change', togglePixDados);
+});
+
+async function salvarPagamentos() {
+    togglePixDados();
+    var pg = {
+        pix: document.getElementById('pgtoPixAtivo') ? document.getElementById('pgtoPixAtivo').checked : false,
+        cartao: document.getElementById('pgtoCartaoAtivo') ? document.getElementById('pgtoCartaoAtivo').checked : false,
+        dinheiro: document.getElementById('pgtoDinheiroAtivo') ? document.getElementById('pgtoDinheiroAtivo').checked : false,
+        pixChave: document.getElementById('pixChave') ? document.getElementById('pixChave').value : '',
+        pixNome: document.getElementById('pixNome') ? document.getElementById('pixNome').value : '',
+        pixTipo: document.getElementById('pixTipo') ? document.getElementById('pixTipo').value : 'telefone'
+    };
+    try {
+        await fetch('/api/delivery/config', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'x-token': token },
+            body: JSON.stringify({ pagamentos: pg })
+        });
+        var st = document.getElementById('pgtoStatus');
+        if (st) { st.style.display = 'block'; setTimeout(() => st.style.display = 'none', 2000); }
+    } catch(e) {}
+}
 
 </script>
 
