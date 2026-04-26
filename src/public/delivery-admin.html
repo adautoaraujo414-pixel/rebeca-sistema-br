@@ -1999,7 +1999,7 @@ async function carregarGarcons() {
                             <div style="display:flex;flex-direction:column;gap:7px;min-width:160px;">
                                 <button onclick="copiarLinkGarcom('${g.token}')" style="padding:8px 14px;background:#f97316;border:none;color:#000;border-radius:8px;cursor:pointer;font-size:.82em;font-weight:700">📲 Link do App</button>
                                 <button onclick="copiarTokenGarcom('${g.token}')" style="padding:8px 14px;background:#252542;border:1px solid #f97316;color:#f97316;border-radius:8px;cursor:pointer;font-size:.82em;font-weight:700">📋 Copiar Token</button>
-                                <button onclick="abrirEditarGarcom('${g._id}','${g.nome}','${g.telefone||''}','${g.senha||''}')" style="padding:8px 14px;background:#252542;border:1px solid #00d4ff;color:#00d4ff;border-radius:8px;cursor:pointer;font-size:.82em">✏️ Editar</button>
+                                <button onclick="abrirEditarGarcomCard(this)" data-id="${g._id}" data-nome="${g.nome}" data-tel="${g.telefone||''}" data-senha="${g.senha||''}" style="padding:8px 14px;background:#252542;border:1px solid #00d4ff;color:#00d4ff;border-radius:8px;cursor:pointer;font-size:.82em">✏️ Editar</button>
                                 <button onclick="toggleGarcom('${g._id}',${g.ativo})" style="padding:8px 14px;background:rgba(255,255,255,.05);border:1px solid #444;color:${g.ativo ? '#ff7' : '#7f7'};border-radius:8px;cursor:pointer;font-size:.82em">${g.ativo ? '⏸ Desativar' : '▶ Ativar'}</button>
                                 <button onclick="excluirGarcom('${g._id}')" style="padding:8px 14px;background:rgba(255,255,255,.05);border:1px solid #633;color:#f77;border-radius:8px;cursor:pointer;font-size:.82em">🗑 Excluir</button>
                             </div>
@@ -2668,6 +2668,13 @@ function copiarTokenGarcom(tk) {
     });
 }
 
+function abrirEditarGarcomCard(btn) {
+    const id = btn.dataset.id;
+    const nome = btn.dataset.nome;
+    const tel = btn.dataset.tel;
+    const senha = btn.dataset.senha;
+    abrirEditarGarcom(id, nome, tel, senha);
+}
 function abrirEditarGarcom(id, nome, tel, senha) {
     document.getElementById('editGarcomId').value = id;
     document.getElementById('editGarcomNome').value = nome;
