@@ -96,6 +96,16 @@
 </nav>
 
 
+
+<style>
+@media (max-width: 900px) {
+  #planosGrid { grid-template-columns: 1fr !important; max-width: 480px; margin: 0 auto; }
+}
+@media (max-width: 480px) {
+  #planosGrid > div { padding: 18px 14px !important; }
+  #planosGrid .plano-preco { font-size: 1.8em !important; }
+}
+</style>
 <!-- SEÇÃO DE PLANOS -->
 <section id="planos" style="padding:60px 16px;background:linear-gradient(180deg,#07071a 0%,#0d0d2b 100%)">
   <div style="max-width:1280px;margin:0 auto">
@@ -106,7 +116,7 @@
       Sem fidelidade. Cancele quando quiser. Suporte incluso em todos os planos.
     </p>
 
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;align-items:start">
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;align-items:start" id="planosGrid"">
 
       <!-- CONFORT -->
       <div style="background:#0f0f24;border-radius:18px;padding:24px 20px;border:1px solid #1e1e40;transition:.3s" onmouseover="this.style.borderColor='#f97316'" onmouseout="this.style.borderColor='#1e1e40'">
