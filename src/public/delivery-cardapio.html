@@ -755,14 +755,38 @@ function filtrarBusca(q) {
   });
 }
 function renderizarFiltros(data) {
-  const el = document.getElementById('filtrosCategorias');
+  var el = document.getElementById("filtrosCategorias");
   if (!el || !data) return;
-  const cats = data.categorias || [];
-  let html = '<button class="btn-cat ativo" data-cat="todas" onclick="filtrarCategoria('todas')" style="flex-shrink:0;background:#ff6b35;border:none;border-radius:20px;padding:7px 16px;color:#fff;font-size:.82em;font-weight:600;cursor:pointer;white-space:nowrap;">🍽️ Todos</button>';
+  var cats = data.categorias || [];
+  var html = "<button class=\"btn-cat ativo\" data-cat=\"todas\" onclick=\"filtrarCategoria(&apos;todas&apos;)\" style=\"flex-shrink:0;background:#ff6b35;border:none;border-radius:20px;padding:7px 16px;color:#fff;font-size:.82em;font-weight:600;cursor:pointer;white-space:nowrap;\">🍽️ Todos</button>";
   cats.forEach(function(c) {
-    html += '<button class="btn-cat" data-cat="' + c._id + '" onclick="filtrarCategoria('' + c._id + '')" style="flex-shrink:0;background:#1e1e1e;border:1px solid #333;border-radius:20px;padding:7px 16px;color:#aaa;font-size:.82em;font-weight:600;cursor:pointer;white-space:nowrap;">' + (c.emoji||'') + ' ' + c.nome + '</button>';
+    var catId = c._id;
+    var btn = document.createElement("button");
+    btn.className = "btn-cat";
+    btn.dataset.cat = catId;
+    btn.setAttribute("style","flex-shrink:0;background:#1e1e1e;border:1px solid #333;border-radius:20px;padding:7px 16px;color:#aaa;font-size:.82em;font-weight:600;cursor:pointer;white-space:nowrap;");
+    btn.textContent = (c.emoji||"") + " " + c.nome;
+    btn.onclick = function(){ filtrarCategoria(catId); };
+    el.appendChild(btn);
   });
-  el.innerHTML = html;
+  var btnTodas = document.createElement("button");
+  btnTodas.className = "btn-cat ativo";
+  btnTodas.dataset.cat = "todas";
+  btnTodas.setAttribute("style","flex-shrink:0;background:#ff6b35;border:none;border-radius:20px;padding:7px 16px;color:#fff;font-size:.82em;font-weight:600;cursor:pointer;white-space:nowrap;");
+  btnTodas.textContent = "🍽️ Todos";
+  btnTodas.onclick = function(){ filtrarCategoria("todas"); };
+  el.innerHTML = "";
+  el.appendChild(btnTodas);
+  cats.forEach(function(c) {
+    var catId = c._id;
+    var btn = document.createElement("button");
+    btn.className = "btn-cat";
+    btn.dataset.cat = catId;
+    btn.setAttribute("style","flex-shrink:0;background:#1e1e1e;border:1px solid #333;border-radius:20px;padding:7px 16px;color:#aaa;font-size:.82em;font-weight:600;cursor:pointer;white-space:nowrap;");
+    btn.textContent = (c.emoji||"") + " " + c.nome;
+    btn.onclick = function(){ filtrarCategoria(catId); };
+    el.appendChild(btn);
+  });
 }
 </script>
 </body>
