@@ -1197,7 +1197,8 @@ async function _salvarItemReal() {
                 preco: parseFloat(document.getElementById('itemPreco').value) || 0,
                 tempoPreparoMin: parseInt(document.getElementById('itemTempo').value) || 20,
                 destaque: document.getElementById('itemDestaque').checked,
-                disponivel: document.getElementById('itemDisponivel') ? document.getElementById('itemDisponivel').checked : true
+                disponivel: document.getElementById('itemDisponivel') ? document.getElementById('itemDisponivel').checked : true,
+                ...getBebidaExtra()
             };
             if (!body.nome || !body.preco) return toast('Nome e preço obrigatórios', 'error');
             if (id) {

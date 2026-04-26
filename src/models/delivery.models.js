@@ -30,6 +30,8 @@ const ItemCardapioSchema = new mongoose.Schema({
     tempoPreparoMin: { type: Number, default: 20 },
     tempoEstimadoPreparo: { type: Number }, // tempo real informado pela cozinha // minutos
     disponivel: { type: Boolean, default: true },
+    bebidaVolume: { type: String, default: '' },
+    bebidaEstoque: { type: Number, default: 0 },
     // Controle de estoque
     estoqueAtivo: { type: Boolean, default: false },   // se false, não controla estoque
     estoqueAtual: { type: Number, default: 0 },        // unidades restantes
