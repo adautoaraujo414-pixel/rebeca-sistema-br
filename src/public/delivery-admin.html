@@ -644,7 +644,7 @@
             <button class="modal-close" onclick="fecharModalItem()">&times;</button>
             <h2 id="modalItemTitulo">Novo Item</h2>
             <input type="hidden" id="itemEditId">
-            <div class="form-group"><label>Categoria</label><select id="itemCategoria" style="width:100%;padding:10px;background:#252542;border:1px solid #333;border-radius:8px;color:#fff;"></select>
+            <div class="form-group"><label>Categoria</label><select id="itemCategoria" style="width:100%;padding:10px;background:#252542;border:1px solid #333;border-radius:8px;color:#fff;" onchange="toggleCamposBebida()"></select>
 <div id="camposBebida" style="display:none;margin-top:10px;background:#1a1a2e;border-radius:8px;padding:12px;border:1px solid rgba(249,115,22,0.3);">
   <div style="color:#f97316;font-size:.82em;font-weight:700;margin-bottom:10px;text-transform:uppercase;">🥤 Campos de Bebida</div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
@@ -666,7 +666,7 @@
             <div class="form-group"><label>Descrição</label><input type="text" id="itemDesc" placeholder="Pão, hambúrguer, queijo..."></div>
             <div class="form-row">
                 <div class="form-group"><label>Preço (R$)</label><input type="number" id="itemPreco" step="0.50"></div>
-                <div class="form-group"><label>Tempo Preparo (min)</label><input type="number" id="itemTempo" value="20"></div>
+                <div class="form-group" id="grupoPreparo"><label>Tempo Preparo (min)</label><input type="number" id="itemTempo" value="20"></div>
             </div>
             <div class="form-group"><label><input type="checkbox" id="itemDestaque"> ⭐ Destaque</label></div>
             <div class="form-group"><label><input type="checkbox" id="itemDisponivel" checked> ✅ Disponível</label></div>
@@ -2529,6 +2529,53 @@ async function migrarImagens() {
             alert('✅ Imagens corrigidas!\n\n✅ Migradas: ' + d.migrados + '\n⚠️ Expiradas (removidas): ' + d.erros + '\n✓ Já em base64: ' + d.jaBase64 + '\n📦 Total: ' + d.total);
         } else toast('Erro: ' + d.erro, 'error');
     } catch(e) { toast('Erro ao migrar imagens', 'error'); }
+}
+
+
+// ===== CAMPOS DINÂMICOS BEBIDA =====
+function toggleCamposBebida() {
+    const sel = document.getElementById('itemCategoria');
+    const opt = sel.options[sel.selectedIndex];
+    const nomeCat = opt ? opt.text.toLowerCase() : '';
+    const ehBebida = nomeCat.includes('bebida') || nomeCat.includes('drink') || 
+                     nomeCat.includes('suco') || nomeCat.includes('refri') ||
+                     nomeCat.includes('água') || nomeCat.includes('agua') ||
+                     nomeCat.includes('cerveja') || nomeCat.includes('vinho') ||
+                     nomeCat.includes('alcoól') || nomeCat.includes('alcool');
+
+    const campos = document.getElementById('camposBebida');
+    const preparo = document.getElementById('grupoPreparo');
+
+    if (campos) campos.style.display = ehBebida ? 'block' : 'none';
+    if (preparo) {
+        if (ehBebida) {
+            preparo.style.display = 'none';
+            // Bebida não precisa de tempo de preparo
+            const inputTempo = document.getElementById('itemTempo');
+            if (inputTempo) inputTempo.value = '0';
+        } else {
+            preparo.style.display = 'block';
+            const inputTempo = document.getElementById('itemTempo');
+            if (inputTempo && inputTempo.value == '0') inputTempo.value = '20';
+        }
+    }
+}
+
+// Chamar ao abrir modal de edição
+const _origAbrirModalItem = window.abrirModalItem;
+function abrirModalItemComBebida(item) {
+    if (typeof _origAbrirModalItem === 'function') _origAbrirModalItem(item);
+    setTimeout(toggleCamposBebida, 100);
+}
+
+// Salvar campos de bebida junto com o item
+function getBebidaExtra() {
+    const campos = document.getElementById('camposBebida');
+    if (!campos || campos.style.display === 'none') return {};
+    return {
+        bebidaVolume: document.getElementById('bebidaVolume')?.value || '',
+        bebidaEstoque: parseInt(document.getElementById('bebidaEstoque')?.value) || 0,
+    };
 }
 
 </script>
