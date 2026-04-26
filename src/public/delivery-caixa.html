@@ -397,6 +397,26 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
       </div>
     </div>
 
+    <!-- Divisor de conta -->
+    <div style="background:#f0fdf4;border-radius:10px;padding:10px 14px;margin-bottom:10px;border:1px solid #bbf7d0">
+      <div style="font-size:.8em;font-weight:700;color:#16a34a;margin-bottom:8px">➗ DIVIDIR CONTA</div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <span style="font-size:.85em;color:#374151">Dividir por</span>
+        <div style="display:flex;gap:6px">
+          <button onclick="dividirConta(2)" style="background:#16a34a;color:#fff;border:none;border-radius:8px;padding:7px 14px;font-weight:700;cursor:pointer">2</button>
+          <button onclick="dividirConta(3)" style="background:#16a34a;color:#fff;border:none;border-radius:8px;padding:7px 14px;font-weight:700;cursor:pointer">3</button>
+          <button onclick="dividirConta(4)" style="background:#16a34a;color:#fff;border:none;border-radius:8px;padding:7px 14px;font-weight:700;cursor:pointer">4</button>
+          <button onclick="dividirConta(5)" style="background:#16a34a;color:#fff;border:none;border-radius:8px;padding:7px 14px;font-weight:700;cursor:pointer">5</button>
+        </div>
+        <span style="font-size:.8em;color:#6b7280">ou</span>
+        <input type="number" id="divisor-custom" placeholder="N" min="2" max="20"
+               style="width:60px;padding:7px;border-radius:8px;border:1px solid #bbf7d0;background:#fff;font-size:.9em;text-align:center">
+        <button onclick="dividirConta(parseInt(document.getElementById('divisor-custom').value)||2)"
+                style="background:#16a34a;color:#fff;border:none;border-radius:8px;padding:7px 12px;font-weight:700;cursor:pointer">÷</button>
+      </div>
+      <div id="divisor-resultado" style="margin-top:8px;font-size:.85em;color:#16a34a;font-weight:700;display:none"></div>
+    </div>
+
     <!-- Pagamento parcial -->
     <div style="background:#fff7ed;border-radius:10px;padding:10px 14px;margin-bottom:12px;border:1px solid #fed7aa">
       <div style="font-size:.8em;font-weight:700;color:#f97316;margin-bottom:8px">🔄 PAGAMENTO PARCIAL (dividir conta)</div>
@@ -1351,6 +1371,26 @@ if (typeof abrirModalPagamento === 'function') {
         limparCamposPagamento();
         window._origAbrirPgto(...args);
     };
+}
+
+
+function dividirConta(n) {
+    if (!n || n < 1) return;
+    const valorPorPessoa = pedidoPagandoTotal / n;
+    const resultado = document.getElementById('divisor-resultado');
+    if (resultado) {
+        resultado.style.display = 'block';
+        resultado.innerHTML = `👥 ${n} pessoas → <strong>R$ ${valorPorPessoa.toFixed(2)}</strong> cada &nbsp;
+            <button onclick="usarValorDivisao(${valorPorPessoa.toFixed(2)})"
+              style="background:#16a34a;color:#fff;border:none;border-radius:6px;padding:3px 10px;font-size:.8em;cursor:pointer;margin-left:4px">
+              Usar no parcial
+            </button>`;
+    }
+}
+
+function usarValorDivisao(val) {
+    const input = document.getElementById('pag-parcial');
+    if (input) { input.value = val.toFixed(2); input.focus(); }
 }
 
 </script>
