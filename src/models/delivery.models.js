@@ -324,3 +324,22 @@ const CaixaDeliverySchema = new mongoose.Schema({
 }, { timestamps: true });
 const CaixaDelivery = mongoose.models.CaixaDelivery || mongoose.model('CaixaDelivery', CaixaDeliverySchema);
 module.exports.CaixaDelivery = CaixaDelivery;
+
+// ===== COMBO =====
+const ComboDeliverySchema = new mongoose.Schema({
+    adminId: { type: mongoose.Schema.Types.ObjectId, required: true, index: true },
+    nome: { type: String, required: true },
+    descricao: { type: String, default: '' },
+    preco: { type: Number, required: true },
+    imagem: { type: String, default: '' },
+    ativo: { type: Boolean, default: true },
+    itens: [{
+        itemId: { type: String },
+        nome: { type: String },
+        preco: { type: Number, default: 0 },
+        quantidade: { type: Number, default: 1 }
+    }]
+}, { timestamps: true });
+ComboDeliverySchema.index({ adminId: 1 });
+const ComboDelivery = mongoose.models.ComboDelivery || mongoose.model('ComboDelivery', ComboDeliverySchema);
+module.exports.ComboDelivery = ComboDelivery;

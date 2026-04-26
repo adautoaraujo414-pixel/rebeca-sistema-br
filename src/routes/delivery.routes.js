@@ -2,7 +2,7 @@ const express = require('express');
 const crypto = require('crypto');
 const router = express.Router();
 const { Entregador, MensalidadeClienteDelivery, CardapioDia, GarcomDelivery,
-        AdminDelivery, PedidoDelivery, ItemCardapio, CategoriaCardapio, ConfigDelivery, CaixaDelivery } = require('../models/delivery.models');
+        AdminDelivery, PedidoDelivery, ItemCardapio, CategoriaCardapio, ConfigDelivery, CaixaDelivery, ComboDelivery } = require('../models/delivery.models');
 const { EntregadorDelivery, ClienteDelivery, InstanciaWhatsapp, AvaliacaoDelivery,
         AssinanteDelivery } = require('../models');
 const EvolutionMultiService = require('../services/evolution-multi.service');
@@ -1900,6 +1900,75 @@ router.post('/solicitar-upgrade', authDelivery, async (req, res) => {
         console.error('Erro upgrade:', e);
         res.status(500).json({ erro: e.message });
     }
+});
+
+
+// ═══════════════════════════════════════
+// ROTAS DE COMBOS
+// ═══════════════════════════════════════
+
+// Listar combos
+router.get('/combos', async (req, res) => {
+    try {
+        const admin = await AdminDelivery.findOne({ token: req.headers['x-token'] });
+        if (!admin) return res.status(401).json({ erro: 'Não autorizado' });
+        const combos = await ComboDelivery.find({ adminId: admin._id, ativo: true }).sort({ createdAt: -1 });
+        res.json(combos);
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// Criar combo
+router.post('/combos', async (req, res) => {
+    try {
+        const admin = await AdminDelivery.findOne({ token: req.headers['x-token'] });
+        if (!admin) return res.status(401).json({ erro: 'Não autorizado' });
+        const { nome, descricao, preco, itens, imagem } = req.body;
+        if (!nome || !preco) return res.status(400).json({ erro: 'Nome e preço obrigatórios' });
+        const combo = await ComboDelivery.create({
+            adminId: admin._id, nome, descricao: descricao||'',
+            preco: Number(preco), itens: itens||[], imagem: imagem||''
+        });
+        res.json(combo);
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// Editar combo
+router.put('/combos/:id', async (req, res) => {
+    try {
+        const admin = await AdminDelivery.findOne({ token: req.headers['x-token'] });
+        if (!admin) return res.status(401).json({ erro: 'Não autorizado' });
+        const { nome, descricao, preco, itens, imagem } = req.body;
+        const combo = await ComboDelivery.findOneAndUpdate(
+            { _id: req.params.id, adminId: admin._id },
+            { nome, descricao, preco: Number(preco), itens: itens||[], imagem: imagem||'' },
+            { new: true }
+        );
+        if (!combo) return res.status(404).json({ erro: 'Combo não encontrado' });
+        res.json(combo);
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// Excluir combo (soft delete)
+router.delete('/combos/:id', async (req, res) => {
+    try {
+        const admin = await AdminDelivery.findOne({ token: req.headers['x-token'] });
+        if (!admin) return res.status(401).json({ erro: 'Não autorizado' });
+        await ComboDelivery.findOneAndUpdate(
+            { _id: req.params.id, adminId: admin._id },
+            { ativo: false }
+        );
+        res.json({ sucesso: true });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// Combos públicos (para o cardápio digital)
+router.get('/combos-publicos/:adminId', async (req, res) => {
+    try {
+        const admin = await AdminDelivery.findById(req.params.adminId);
+        if (!admin) return res.status(404).json({ erro: 'Restaurante não encontrado' });
+        const combos = await ComboDelivery.find({ adminId: admin._id, ativo: true }).sort({ createdAt: -1 });
+        res.json(combos);
+    } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
 module.exports = router;
