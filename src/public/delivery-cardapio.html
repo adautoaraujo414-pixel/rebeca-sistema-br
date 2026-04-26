@@ -589,7 +589,7 @@ function abrirModalItem(itemDataStr) {
         var key = ing.replace(/[^a-zA-Z0-9]/g,'_');
         html += '<div class="ingrediente-item">' +
           '<span class="ingrediente-nome">' + ing + '</span>' +
-          '<button class="btn-retirar" id="ing_' + key + '" onclick="toggleIngrediente(this,'' + ing.replace(/'/g,"\'") + '')">Retirar</button></div>';
+          '<button class="btn-retirar" id="ing_' + key + '" onclick="toggleIngrediente(this, this.dataset.ing)" data-ing=\"' + ing.replace(/"/g,'&quot;') + '\">Retirar</button></div>'
       });
       html += '</div>';
       ingEl.innerHTML = html;
