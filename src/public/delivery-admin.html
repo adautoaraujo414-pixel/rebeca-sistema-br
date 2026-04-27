@@ -2629,7 +2629,7 @@ var combosData = [];
 var comboImgGerada = '';
 
 function carregarCombos() {
-    fetch('/api/delivery/combos', { headers: { 'x-token': token } })
+    fetch('/api/delivery/combos', { headers: { 'Authorization': 'Bearer ' + token } })
         .then(r => r.json())
         .then(d => {
             combosData = d.combos || d || [];
@@ -2827,7 +2827,7 @@ async function gerarImagemCombo() {
     try {
         var r = await fetch('/api/delivery/gerar-imagem', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'x-token': token },
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
             body: JSON.stringify({ prompt: prompt, nome: nome })
         });
         var d = await r.json();
@@ -2861,7 +2861,7 @@ async function salvarCombo() {
     try {
         var r = await fetch(url, {
             method: method,
-            headers: { 'Content-Type': 'application/json', 'x-token': token },
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
             body: JSON.stringify(body)
         });
         var d = await r.json();
@@ -2898,7 +2898,7 @@ function editarCombo(id) {
 async function excluirCombo(id) {
     if (!confirm('Excluir este combo?')) return;
     try {
-        await fetch('/api/delivery/combos/' + id, { method: 'DELETE', headers: { 'x-token': token } });
+        await fetch('/api/delivery/combos/' + id, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + token } });
         carregarCombos();
     } catch(e) { alert('Erro ao excluir'); }
 }
@@ -2921,7 +2921,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Pré-carregar itens do cardápio para o modal
                 if (!window.itensCadastrados || !window.itensCadastrados.length) {
                     var tk2 = localStorage.getItem('delivery_token') || token || '';
-                        fetch('/api/delivery/cardapio', { headers: { 'x-token': tk2 } })
+                        fetch('/api/delivery/cardapio', { headers: { 'Authorization': 'Bearer ' + tk2 } })
                         .then(function(r){ return r.json(); })
                         .then(function(d) {
                             window.itensCadastrados = Array.isArray(d) ? d : (d.itens || d.cardapio || []);
@@ -2938,7 +2938,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // PAGAMENTOS
 // ═══════════════════════════════════════
 function carregarPagamentos() {
-    fetch('/api/delivery/config', { headers: { 'x-token': token } })
+    fetch('/api/delivery/config', { headers: { 'Authorization': 'Bearer ' + token } })
         .then(r => r.json())
         .then(d => {
             var pg = d.pagamentos || {};
@@ -2982,7 +2982,7 @@ async function salvarPagamentos() {
         var tk = localStorage.getItem('delivery_token') || token || '';
         await fetch('/api/delivery/config', {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json', 'x-token': tk },
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + tk },
             body: JSON.stringify(body)
         });
         var st = document.getElementById('pgtoStatus');
@@ -3013,7 +3013,7 @@ async function salvarDadosEstabelecimento() {
     try {
         await fetch('/api/delivery/config', {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json', 'x-token': token },
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
             body: JSON.stringify(body)
         });
         var st = document.getElementById('cfgEstabStatus');
