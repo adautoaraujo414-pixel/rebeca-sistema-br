@@ -2576,12 +2576,12 @@ function popularItensCombo(selecionados) {
         var sel = selecionados.find(function(s){ return s.itemId === item._id; });
         var qty = sel ? sel.quantidade : 0;
         return '<div style="display:flex;align-items:center;gap:8px;padding:7px 6px;border-radius:6px;' + (qty > 0 ? 'background:#fff7ed;' : '') + '">' +
-            '<input type="checkbox" id="chk-' + item._id + '" ' + (qty > 0 ? 'checked' : '') + ' onchange="toggleItemCombo('' + item._id + '',this)" style="width:16px;height:16px;accent-color:#f97316;">' +
+            '<input type="checkbox" id="chk-' + item._id + '" ' + (qty > 0 ? 'checked' : '') + ' data-iid="' + item._id + '" onchange="toggleItemCombo(this.dataset.iid,this)" style="width:16px;height:16px;accent-color:#f97316;">' +
             '<label for="chk-' + item._id + '" style="flex:1;font-size:.85em;cursor:pointer;">' + item.nome + ' <span style="color:#f97316;font-size:.8em;">R$ ' + Number(item.preco||0).toFixed(2).replace('.',',') + '</span></label>' +
             '<div style="display:flex;align-items:center;gap:4px;">' +
-              '<button onclick="mudarQtyCombo('' + item._id + '',-1)" style="width:22px;height:22px;border-radius:50%;border:1px solid #ddd;background:#f9f9f9;cursor:pointer;font-size:.85em;display:flex;align-items:center;justify-content:center;">−</button>' +
+              '<button data-iid="' + item._id + '" onclick="mudarQtyCombo(this.dataset.iid,-1)" style="width:22px;height:22px;border-radius:50%;border:1px solid #ddd;background:#f9f9f9;cursor:pointer;font-size:.85em;display:flex;align-items:center;justify-content:center;">−</button>' +
               '<span id="qty-' + item._id + '" style="font-size:.85em;font-weight:700;min-width:16px;text-align:center;">' + (qty||1) + '</span>' +
-              '<button onclick="mudarQtyCombo('' + item._id + '',1)" style="width:22px;height:22px;border-radius:50%;border:1px solid #ddd;background:#f9f9f9;cursor:pointer;font-size:.85em;display:flex;align-items:center;justify-content:center;">+</button>' +
+              '<button data-iid="' + item._id + '" onclick="mudarQtyCombo(this.dataset.iid,1)" style="width:22px;height:22px;border-radius:50%;border:1px solid #ddd;background:#f9f9f9;cursor:pointer;font-size:.85em;display:flex;align-items:center;justify-content:center;">+</button>' +
             '</div>' +
           '</div>';
     }).join('');
