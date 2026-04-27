@@ -125,7 +125,7 @@ const RebecaIntegradaService = {
         return Math.round(R * c * 10) / 10;
     },
 
-    simularCotacao: (origem, destino) => {
+    simularCotacao: async (origem, destino) => {
         const distanciaKm = RebecaIntegradaService.calcularDistancia(
             origem.latitude, origem.longitude, destino.latitude, destino.longitude
         );
