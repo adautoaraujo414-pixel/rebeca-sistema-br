@@ -2531,9 +2531,9 @@ function renderCombos() {
               '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;">' +
                 '<span style="font-size:1.1em;font-weight:900;color:#f97316;">R$ ' + Number(c.preco||0).toFixed(2).replace('.',',') + '</span>' +
                 '<div style="display:flex;gap:6px;">' +
-                  (c.imagem ? '<button onclick="baixarImagemCombo('' + c.imagem + '','' + c.nome + '')" style="padding:6px 10px;border-radius:6px;border:1px solid #e8e8ed;background:#f9f9f9;cursor:pointer;font-size:.75em;">📥 Imagem</button>' : '') +
-                  '<button onclick="editarCombo('' + c._id + '')" style="padding:6px 10px;border-radius:6px;border:1px solid #e8e8ed;background:#f9f9f9;cursor:pointer;font-size:.75em;">✏️ Editar</button>' +
-                  '<button onclick="excluirCombo('' + c._id + '')" style="padding:6px 10px;border-radius:6px;border:1px solid rgba(239,68,68,.2);background:rgba(239,68,68,.05);color:#ef4444;cursor:pointer;font-size:.75em;">🗑️</button>' +
+                  (c.imagem ? '<button onclick="baixarImagemCombo(this.dataset.img, this.dataset.nome)" style="padding:6px 10px;border-radius:6px;border:1px solid #e8e8ed;background:#f9f9f9;cursor:pointer;font-size:.75em;">📥 Imagem</button>' : '') +
+                  '<button data-id="' + c._id + '" onclick="editarCombo(this.dataset.id)" style="padding:6px 10px;border-radius:6px;border:1px solid #e8e8ed;background:#f9f9f9;cursor:pointer;font-size:.75em;">✏️ Editar</button>' +
+                  '<button data-id="' + c._id + '" onclick="excluirCombo(this.dataset.id)" style="padding:6px 10px;border-radius:6px;border:1px solid rgba(239,68,68,.2);background:rgba(239,68,68,.05);color:#ef4444;cursor:pointer;font-size:.75em;">🗑️</button>' +
                 '</div>' +
               '</div>' +
             '</div>' +
