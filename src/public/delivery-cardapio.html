@@ -320,9 +320,12 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 
 <!-- INFO BAR -->
 <div class="info-bar" id="infoBar" style="display:none">
-  <div class="info-item">📍 <strong id="infoEndereco">—</strong></div>
-  <div class="info-item">📞 <strong id="infoTelefone">—</strong></div>
   <div class="info-item">🕐 <strong id="infoHorario">—</strong></div>
+  <div class="info-item">⏱️ <strong id="infoTempo">40 min</strong></div>
+  <div class="info-item">🛵 <strong id="infoTaxa">—</strong></div>
+  <div class="info-item">💰 <strong id="infoMinimo">—</strong></div>
+  <div class="info-item">📍 <strong id="infoEndereco" style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">—</strong></div>
+  <div class="info-item">📞 <strong id="infoTelefone">—</strong></div>
 </div>
 
 <!-- CATEGORIAS -->
@@ -486,26 +489,37 @@ async function init() {
 
 function renderizar() {
   var d = cardapioData;
-  var rest = d.restaurante || d;
+  // A API retorna campos direto em d (não aninhado em d.restaurante)
+  var nomeRest = typeof d.restaurante === 'string' ? d.restaurante : (d.restaurante?.nome || d.nomeComercio || 'Restaurante');
 
   // Header
-  document.getElementById('headerNome').textContent = rest.nomeComercio || rest.nome || 'Restaurante';
-  document.getElementById('headerSub').textContent = rest.tipoNegocio || 'Cardápio Digital';
-  if (rest.logo) {
+  document.getElementById('headerNome').textContent = nomeRest;
+  document.getElementById('headerSub').textContent = d.tipoNegocio || 'Cardápio Digital';
+  if (d.logo) {
     var img = document.createElement('img');
-    img.src = rest.logo;
+    img.src = d.logo;
     img.className = 'header-logo';
-    document.getElementById('headerLogoWrap').replaceWith(img);
+    var wrap = document.getElementById('headerLogoWrap');
+    if (wrap) wrap.replaceWith(img);
   }
-  var aberto = rest.aberto !== false;
+  var aberto = d.aberto !== false;
   var badge = document.getElementById('badgeStatus');
   badge.textContent = aberto ? '● Aberto' : '● Fechado';
   badge.className = 'badge-status ' + (aberto ? 'badge-aberto' : 'badge-fechado');
 
-  // Info bar
-  if (rest.endereco) document.getElementById('infoEndereco').textContent = rest.endereco;
-  if (rest.telefone) document.getElementById('infoTelefone').textContent = rest.telefone;
-  if (rest.horarioFuncionamento) document.getElementById('infoHorario').textContent = rest.horarioFuncionamento;
+  // Info bar — usar campos diretos da API
+  var infoEnd = document.getElementById('infoEndereco');
+  var infoTel = document.getElementById('infoTelefone');
+  var infoHor = document.getElementById('infoHorario');
+  var infoTempo = document.getElementById('infoTempo');
+  var infoTaxa = document.getElementById('infoTaxa');
+  var infoMin = document.getElementById('infoMinimo');
+  if (infoEnd) infoEnd.textContent = d.endereco || '—';
+  if (infoTel) infoTel.textContent = d.telefone || '—';
+  if (infoHor) infoHor.textContent = d.horario || d.horarioFuncionamento || '—';
+  if (infoTempo) infoTempo.textContent = (d.tempoEntrega || 40) + ' min';
+  if (infoTaxa) infoTaxa.textContent = d.taxaEntrega > 0 ? 'R$ ' + Number(d.taxaEntrega).toFixed(2).replace('.',',') : 'Grátis';
+  if (infoMin) infoMin.textContent = d.pedidoMinimo > 0 ? 'R$ ' + Number(d.pedidoMinimo).toFixed(2).replace('.',',') : 'Sem mínimo';
 
   // Mostrar UI
   document.getElementById('loading').style.display = 'none';
