@@ -261,6 +261,14 @@ router.get('/dashboard', authDelivery, async (req, res) => {
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
+// ========== ITENS (autenticado — para combos) ==========
+router.get('/itens', authDelivery, async (req, res) => {
+    try {
+        const itens = await ItemDelivery.find({ adminId: req.adminId }).lean();
+        res.json(itens);
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
 // ========== CARDÁPIO PÚBLICO (sem auth - para clientes verem) ==========
 router.get('/cardapio-publico/:adminId', async (req, res) => {
     try {
