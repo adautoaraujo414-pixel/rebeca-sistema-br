@@ -2782,7 +2782,17 @@ function baixarImagemCombo(url, nome) {
 document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.menu-item[data-page]').forEach(function(item) {
         item.addEventListener('click', function() {
-            if (this.dataset.page === 'combos') carregarCombos();
+            if (this.dataset.page === 'combos') {
+                carregarCombos();
+                // Pré-carregar itens do cardápio para o modal
+                if (!window.itensCadastrados || !window.itensCadastrados.length) {
+                    fetch('/api/delivery/cardapio', { headers: { 'x-token': token } })
+                        .then(function(r){ return r.json(); })
+                        .then(function(d) {
+                            window.itensCadastrados = d.itens || d.cardapio || (Array.isArray(d) ? d : []);
+                        }).catch(function(){});
+                }
+            }
         });
     });
 });

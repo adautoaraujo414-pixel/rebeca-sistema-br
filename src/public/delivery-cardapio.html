@@ -285,12 +285,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
   .cart-modal { max-width: 420px; }
 }
 
-/* DESKTOP — acima de 900px */
-@media (min-width: 901px) {
-  body { max-width: 480px; margin: 0 auto; }
-  .header { border-radius: 0 0 0 0; }
-  .cart-modal { max-width: 420px; margin: 0 auto; }
-}
+
 
 </style>
 </head>
@@ -320,12 +315,12 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 
 <!-- INFO BAR -->
 <div class="info-bar" id="infoBar" style="display:none">
-  <div class="info-item">🕐 <strong id="infoHorario">—</strong></div>
-  <div class="info-item">⏱️ <strong id="infoTempo">40 min</strong></div>
-  <div class="info-item">🛵 <strong id="infoTaxa">—</strong></div>
-  <div class="info-item">💰 <strong id="infoMinimo">—</strong></div>
-  <div class="info-item">📍 <strong id="infoEndereco" style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">—</strong></div>
-  <div class="info-item">📞 <strong id="infoTelefone">—</strong></div>
+  <div class="info-item" id="itemHorario" style="display:none">🕐 <strong id="infoHorario"></strong></div>
+  <div class="info-item" id="itemTempo">⏱️ <strong id="infoTempo">40 min</strong></div>
+  <div class="info-item" id="itemTaxa" style="display:none">🛵 <strong id="infoTaxa"></strong></div>
+  <div class="info-item" id="itemMinimo" style="display:none">💰 <strong id="infoMinimo"></strong></div>
+  <div class="info-item" id="itemEndereco" style="display:none">📍 <strong id="infoEndereco" style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></strong></div>
+  <div class="info-item" id="itemTelefone" style="display:none">📞 <strong id="infoTelefone"></strong></div>
 </div>
 
 <!-- CATEGORIAS -->
@@ -514,12 +509,19 @@ function renderizar() {
   var infoTempo = document.getElementById('infoTempo');
   var infoTaxa = document.getElementById('infoTaxa');
   var infoMin = document.getElementById('infoMinimo');
-  if (infoEnd) infoEnd.textContent = d.endereco || '—';
-  if (infoTel) infoTel.textContent = d.telefone || '—';
-  if (infoHor) infoHor.textContent = d.horario || d.horarioFuncionamento || '—';
+  // Mostrar só campos com dados reais
+  var showEl = function(id, val) {
+    var wrap = document.getElementById('item' + id);
+    var el = document.getElementById('info' + id);
+    if (el && val) { el.textContent = val; if (wrap) wrap.style.display = 'flex'; }
+  };
+  showEl('Horario', d.horario || d.horarioFuncionamento);
+  showEl('Endereco', d.endereco);
+  showEl('Telefone', d.telefone);
+  showEl('Taxa', d.taxaEntrega > 0 ? 'R$ ' + Number(d.taxaEntrega).toFixed(2).replace('.',',') : (d.taxaEntrega === 0 ? 'Grátis' : null));
+  showEl('Minimo', d.pedidoMinimo > 0 ? 'Mín. R$ ' + Number(d.pedidoMinimo).toFixed(2).replace('.',',') : null);
   if (infoTempo) infoTempo.textContent = (d.tempoEntrega || 40) + ' min';
-  if (infoTaxa) infoTaxa.textContent = d.taxaEntrega > 0 ? 'R$ ' + Number(d.taxaEntrega).toFixed(2).replace('.',',') : 'Grátis';
-  if (infoMin) infoMin.textContent = d.pedidoMinimo > 0 ? 'R$ ' + Number(d.pedidoMinimo).toFixed(2).replace('.',',') : 'Sem mínimo';
+  document.getElementById('itemTempo').style.display = 'flex';
 
   // Mostrar UI
   document.getElementById('loading').style.display = 'none';
