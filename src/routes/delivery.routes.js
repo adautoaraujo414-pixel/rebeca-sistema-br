@@ -289,18 +289,29 @@ router.get('/cardapio-publico/:adminId', async (req, res) => {
             _id: c._id.toString()
         }));
 
+        // Só enviar campos que o admin configurou explicitamente (não defaults automáticos)
+        const DEFAULTS = {
+            horarioFuncionamento: '18:00 - 23:00',
+            tempoMedioEntrega: 40,
+            taxaEntregaFixa: 5.00,
+            pedidoMinimo: 15.00
+        };
+        const configExiste = !!config;
         res.json({
             restaurante: nomeRestaurante,
             aberto: config?.aberto !== false,
-            horario: config?.horarioFuncionamento || '',
-            horarioFuncionamento: config?.horarioFuncionamento || '',
-            endereco: config?.endereco || admin?.endereco || '',
-            telefone: admin?.telefone || admin?.whatsapp || '',
-            logo: admin?.logo || config?.logo || '',
-            pedidoMinimo: config?.pedidoMinimo || 0,
-            taxaEntrega: config?.taxaEntregaFixa || 0,
-            tempoEntrega: config?.tempoMedioEntrega || 40,
-            chavePix: config?.aceitaPix ? config?.chavePix || '' : null,
+            // Horário: só mostrar se existir e for diferente do padrão
+            horario: (configExiste && config.horarioFuncionamento && config.horarioFuncionamento !== DEFAULTS.horarioFuncionamento) ? config.horarioFuncionamento : null,
+            // Endereço: só se preenchido
+            endereco: config?.endereco || null,
+            // Telefone: só se o admin cadastrou telefone de exibição separado (não o de login)
+            telefone: config?.telefoneExibicao || null,
+            logo: admin?.logo || config?.logo || null,
+            // Numéricos: só mostrar se admin alterou do padrão
+            pedidoMinimo: (configExiste && config.pedidoMinimo !== DEFAULTS.pedidoMinimo) ? config.pedidoMinimo : null,
+            taxaEntrega: (configExiste && config.taxaEntregaFixa !== DEFAULTS.taxaEntregaFixa) ? config.taxaEntregaFixa : null,
+            tempoEntrega: (configExiste && config.tempoMedioEntrega !== DEFAULTS.tempoMedioEntrega) ? config.tempoMedioEntrega : null,
+            chavePix: config?.aceitaPix ? config?.chavePix || null : null,
             formasPagamento: formasPgto,
             categorias: categoriasNorm,
             itens: itensNorm

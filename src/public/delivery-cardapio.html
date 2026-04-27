@@ -509,19 +509,26 @@ function renderizar() {
   var infoTempo = document.getElementById('infoTempo');
   var infoTaxa = document.getElementById('infoTaxa');
   var infoMin = document.getElementById('infoMinimo');
-  // Mostrar só campos com dados reais
+  // Mostrar APENAS campos que vieram com dado real (não null/vazio)
   var showEl = function(id, val) {
     var wrap = document.getElementById('item' + id);
     var el = document.getElementById('info' + id);
-    if (el && val) { el.textContent = val; if (wrap) wrap.style.display = 'flex'; }
+    if (el && val !== null && val !== undefined && val !== '') {
+      el.textContent = val;
+      if (wrap) wrap.style.display = 'flex';
+    }
   };
-  showEl('Horario', d.horario || d.horarioFuncionamento);
-  showEl('Endereco', d.endereco);
-  showEl('Telefone', d.telefone);
-  showEl('Taxa', d.taxaEntrega > 0 ? 'R$ ' + Number(d.taxaEntrega).toFixed(2).replace('.',',') : (d.taxaEntrega === 0 ? 'Grátis' : null));
-  showEl('Minimo', d.pedidoMinimo > 0 ? 'Mín. R$ ' + Number(d.pedidoMinimo).toFixed(2).replace('.',',') : null);
-  if (infoTempo) infoTempo.textContent = (d.tempoEntrega || 40) + ' min';
-  document.getElementById('itemTempo').style.display = 'flex';
+  showEl('Horario', d.horario || null);
+  showEl('Endereco', d.endereco || null);
+  showEl('Telefone', d.telefone || null);
+  showEl('Taxa', d.taxaEntrega !== null && d.taxaEntrega !== undefined ? (d.taxaEntrega > 0 ? 'R$ ' + Number(d.taxaEntrega).toFixed(2).replace('.',',') : 'Grátis') : null);
+  showEl('Minimo', d.pedidoMinimo !== null && d.pedidoMinimo !== undefined ? 'Mín. R$ ' + Number(d.pedidoMinimo).toFixed(2).replace('.',',') : null);
+  // Tempo só mostrar se configurado
+  if (d.tempoEntrega !== null && d.tempoEntrega !== undefined) {
+    if (infoTempo) infoTempo.textContent = d.tempoEntrega + ' min';
+    var wrapTempo = document.getElementById('itemTempo');
+    if (wrapTempo) wrapTempo.style.display = 'flex';
+  }
 
   // Mostrar UI
   document.getElementById('loading').style.display = 'none';
