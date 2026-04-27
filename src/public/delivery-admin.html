@@ -2687,8 +2687,7 @@ function popularItensCombo(selecionados) {
     if (!container) return;
     var itens = (window.itensCadastrados || []);
     if (!itens.length) {
-        var tk = localStorage.getItem('delivery_token') || token || '';
-        var tkC = localStorage.getItem('delivery_token') || '';
+        var tkC = localStorage.getItem('delivery_token') || token || '';
         fetch('/api/delivery/itens', { headers: { 'x-token': tkC } })
             .then(function(r){ return r.json(); })
             .then(function(d) {
