@@ -15,7 +15,7 @@ const PROMPT_CACHE_TTL = 5 * 60 * 1000;
 const CerebroRebecaDelivery = {
 
     isAtivo() {
-        return !!(process.env.ANTHROPIC_API_KEY);
+        return !!(process.env.OPENAI_API_KEY);
     },
 
     invalidarCache() {
