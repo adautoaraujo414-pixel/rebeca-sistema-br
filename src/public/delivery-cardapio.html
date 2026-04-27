@@ -64,6 +64,8 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 .item-body{padding:10px}
 .item-name{font-size:.82em;font-weight:700;color:var(--text);margin-bottom:3px;line-height:1.3}
 .item-desc{font-size:.72em;color:var(--text3);margin-bottom:8px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.item-tag{font-size:.72em;color:var(--accent);font-weight:700;margin:2px 0;padding:2px 0;}
+.item-tag-sm{font-size:.68em;color:var(--text2);margin:1px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
 .item-footer{display:flex;align-items:center;justify-content:space-between}
 .item-price{font-size:.9em;font-weight:800;color:var(--accent)}
 .item-add-btn{width:28px;height:28px;border-radius:50%;background:var(--accent);border:none;color:#fff;font-size:1.2em;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:transform .15s}
@@ -652,6 +654,11 @@ function criarCard(item) {
     '<div class="item-body">' +
       '<div class="item-name">' + item.nome + '</div>' +
       '<div class="item-desc">' + (item.descricao||'') + '</div>' +
+      (item.bebidaVolume ? '<div class="item-tag">🥤 ' + item.bebidaVolume + '</div>' : '') +
+      (item.acaiTamanho ? '<div class="item-tag">🍇 ' + item.acaiTamanho + '</div>' : '') +
+      (item.acaiAcompanhamentos ? '<div class="item-tag-sm">+ ' + item.acaiAcompanhamentos + '</div>' : '') +
+      (item.marmitaTamanho ? '<div class="item-tag">🍱 Tam. ' + item.marmitaTamanho + (item.marmitaPeso ? ' · ' + item.marmitaPeso : '') + '</div>' : '') +
+      (item.marmitaConteudo ? '<div class="item-tag-sm">' + item.marmitaConteudo + '</div>' : '') +
       '<div class="item-footer">' +
         '<div class="item-price">R$ ' + Number(item.preco||0).toFixed(2).replace('.',',') + '</div>' +
         '<button class="item-add-btn" onclick="event.stopPropagation();adicionarRapido(event,\'' + item._id + '\')">+</button>' +
