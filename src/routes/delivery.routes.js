@@ -222,14 +222,18 @@ router.put('/pedidos/:id/status', authDelivery, async (req, res) => {
 router.get('/config', authDelivery, async (req, res) => {
     try {
         let config = await ConfigDelivery.findOne({ adminId: req.adminId });
-        if (!config) config = await ConfigDelivery.create({ adminId: req.adminId, nomeRestaurante: req.admin.empresa });
-        res.json(config);
+        // Não criar automaticamente — só retornar o que existe
+        res.json(config || {});
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
 router.put('/config', authDelivery, async (req, res) => {
     try {
-        const config = await ConfigDelivery.findOneAndUpdate({ adminId: req.adminId }, req.body, { new: true, upsert: true });
+        const config = await ConfigDelivery.findOneAndUpdate(
+            { adminId: req.adminId },
+            { $set: { ...req.body, adminId: req.adminId } },
+            { new: true, upsert: true }
+        );
         res.json(config);
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
