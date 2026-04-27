@@ -564,6 +564,44 @@
                 <div id="page-config" class="page">
                     <h2 style="margin-bottom:20px;">⚙️ Configurações</h2>
 
+                    <!-- IDENTIDADE -->
+                    <div class="panel" style="margin-bottom:20px;border:2px solid #f9731622">
+                        <h3>🏪 Dados do Estabelecimento</h3>
+                        <p style="color:#888;font-size:.88em;margin:8px 0 16px">Informações que aparecem no cardápio digital.</p>
+                        <div style="display:flex;flex-direction:column;gap:12px;">
+                            <div>
+                                <label style="font-size:.8em;font-weight:700;color:#555;display:block;margin-bottom:5px;">Nome do Estabelecimento</label>
+                                <input type="text" id="cfgNomeEstabelecimento" placeholder="Ex: Lanchonete da Maria" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid #ddd;font-family:inherit;font-size:.9em;box-sizing:border-box;">
+                            </div>
+                            <div>
+                                <label style="font-size:.8em;font-weight:700;color:#555;display:block;margin-bottom:5px;">Horário de Funcionamento</label>
+                                <input type="text" id="cfgHorario" placeholder="Ex: 18:00 - 23:00" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid #ddd;font-family:inherit;font-size:.9em;box-sizing:border-box;">
+                            </div>
+                            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+                                <div>
+                                    <label style="font-size:.8em;font-weight:700;color:#555;display:block;margin-bottom:5px;">Tempo de Entrega (min)</label>
+                                    <input type="number" id="cfgTempo" placeholder="Ex: 40" min="0" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid #ddd;font-family:inherit;font-size:.9em;box-sizing:border-box;">
+                                </div>
+                                <div>
+                                    <label style="font-size:.8em;font-weight:700;color:#555;display:block;margin-bottom:5px;">Taxa de Entrega (R$)</label>
+                                    <input type="number" id="cfgTaxa" placeholder="Ex: 5.00" min="0" step="0.50" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid #ddd;font-family:inherit;font-size:.9em;box-sizing:border-box;">
+                                </div>
+                                <div>
+                                    <label style="font-size:.8em;font-weight:700;color:#555;display:block;margin-bottom:5px;">Pedido Mínimo (R$)</label>
+                                    <input type="number" id="cfgMinimo" placeholder="Ex: 15.00" min="0" step="0.50" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid #ddd;font-family:inherit;font-size:.9em;box-sizing:border-box;">
+                                </div>
+                            </div>
+                            <div>
+                                <label style="font-size:.8em;font-weight:700;color:#555;display:block;margin-bottom:5px;">Endereço</label>
+                                <input type="text" id="cfgEndereco" placeholder="Ex: Rua das Flores, 123 - Centro" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid #ddd;font-family:inherit;font-size:.9em;box-sizing:border-box;">
+                            </div>
+                            <div style="display:flex;align-items:center;gap:10px;margin-top:4px;">
+                                <button onclick="salvarDadosEstabelecimento()" style="background:#f97316;color:#fff;border:none;border-radius:8px;padding:10px 22px;font-weight:700;cursor:pointer;font-size:.88em;">💾 Salvar Dados</button>
+                                <div id="cfgEstabStatus" style="display:none;color:#22c55e;font-size:.82em;font-weight:700;">✅ Salvo!</div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- PAGAMENTOS -->
                     <div class="panel" style="margin-bottom:20px;border:2px solid #22c55e22">
                         <h3>💳 Formas de Pagamento</h3>
@@ -2782,6 +2820,7 @@ function baixarImagemCombo(url, nome) {
 document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.menu-item[data-page]').forEach(function(item) {
         item.addEventListener('click', function() {
+            if (this.dataset.page === 'config') carregarDadosEstabelecimento();
             if (this.dataset.page === 'combos') {
                 carregarCombos();
                 // Pré-carregar itens do cardápio para o modal
@@ -2855,6 +2894,45 @@ async function salvarPagamentos() {
 }
 
 
+
+async function salvarDadosEstabelecimento() {
+    var body = {};
+    var nome = document.getElementById('cfgNomeEstabelecimento');
+    var horario = document.getElementById('cfgHorario');
+    var tempo = document.getElementById('cfgTempo');
+    var taxa = document.getElementById('cfgTaxa');
+    var minimo = document.getElementById('cfgMinimo');
+    var endereco = document.getElementById('cfgEndereco');
+    if (nome && nome.value.trim()) body.nomeRestaurante = nome.value.trim();
+    if (horario && horario.value.trim()) body.horarioFuncionamento = horario.value.trim();
+    if (tempo && tempo.value !== '') body.tempoMedioEntrega = Number(tempo.value);
+    if (taxa && taxa.value !== '') body.taxaEntregaFixa = Number(taxa.value);
+    if (minimo && minimo.value !== '') body.pedidoMinimo = Number(minimo.value);
+    if (endereco && endereco.value.trim()) body.endereco = endereco.value.trim();
+    try {
+        await fetch('/api/delivery/config', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'x-token': token },
+            body: JSON.stringify(body)
+        });
+        var st = document.getElementById('cfgEstabStatus');
+        if (st) { st.style.display = 'block'; setTimeout(function(){ st.style.display='none'; }, 2500); }
+    } catch(e) { alert('Erro ao salvar: ' + e.message); }
+}
+
+async function carregarDadosEstabelecimento() {
+    try {
+        var r = await fetch('/api/delivery/config', { headers: { 'x-token': token } });
+        var cfg = await r.json();
+        var set = function(id, val) { var el = document.getElementById(id); if (el && val !== undefined && val !== null) el.value = val; };
+        set('cfgNomeEstabelecimento', cfg.nomeRestaurante);
+        set('cfgHorario', cfg.horarioFuncionamento);
+        set('cfgTempo', cfg.tempoMedioEntrega);
+        set('cfgTaxa', cfg.taxaEntregaFixa);
+        set('cfgMinimo', cfg.pedidoMinimo);
+        set('cfgEndereco', cfg.endereco);
+    } catch(e) {}
+}
 </script>
 
     <div id="modalEntregador" class="modal-overlay">
