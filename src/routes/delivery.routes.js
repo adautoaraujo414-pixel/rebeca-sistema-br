@@ -160,6 +160,12 @@ router.get('/pedidos', authDelivery, async (req, res) => {
         const { status } = req.query;
         const filtro = { adminId: req.adminId };
         if (status) filtro.status = status;
+        const data = req.query.data;
+        if (data) {
+            const inicio = new Date(data + 'T00:00:00.000Z');
+            const fim    = new Date(data + 'T23:59:59.999Z');
+            filtro.createdAt = { $gte: inicio, $lte: fim };
+        }
         const limit = parseInt(req.query.limit) || 50;
         const pedidos = await PedidoDelivery.find(filtro).sort({ createdAt: -1 }).limit(Math.min(limit, 500));
         res.json(pedidos);
