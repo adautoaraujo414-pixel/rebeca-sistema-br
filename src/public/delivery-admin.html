@@ -2612,12 +2612,13 @@ function popularItensCombo(selecionados) {
     if (!container) return;
     var itens = (window.itensCadastrados || []);
     if (!itens.length) {
-        fetch('/api/delivery/cardapio', { headers: { 'x-token': token } })
+        var tk = localStorage.getItem('delivery_token') || token || '';
+        fetch('/api/delivery/cardapio', { headers: { 'x-token': tk } })
             .then(function(r){ return r.json(); })
             .then(function(d) {
-                window.itensCadastrados = d.itens || d.cardapio || d || [];
+                window.itensCadastrados = Array.isArray(d) ? d : (d.itens || d.cardapio || []);
                 popularItensCombo(selecionados);
-            });
+            }).catch(function(e){ console.error('Erro ao carregar itens:', e); });
         return;
     }
     container.innerHTML = itens.map(function(item) {
@@ -2825,10 +2826,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 carregarCombos();
                 // Pré-carregar itens do cardápio para o modal
                 if (!window.itensCadastrados || !window.itensCadastrados.length) {
-                    fetch('/api/delivery/cardapio', { headers: { 'x-token': token } })
+                    var tk2 = localStorage.getItem('delivery_token') || token || '';
+                        fetch('/api/delivery/cardapio', { headers: { 'x-token': tk2 } })
                         .then(function(r){ return r.json(); })
                         .then(function(d) {
-                            window.itensCadastrados = d.itens || d.cardapio || (Array.isArray(d) ? d : []);
+                            window.itensCadastrados = Array.isArray(d) ? d : (d.itens || d.cardapio || []);
                         }).catch(function(){});
                 }
             }
