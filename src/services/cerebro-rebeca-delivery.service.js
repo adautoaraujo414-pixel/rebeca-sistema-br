@@ -15,7 +15,7 @@ const PROMPT_CACHE_TTL = 5 * 60 * 1000;
 const CerebroRebecaDelivery = {
 
     isAtivo() {
-        return !!(process.env.OPENAI_API_KEY);
+        return !!(process.env.ANTHROPIC_API_KEY);
     },
 
     invalidarCache() {
@@ -202,7 +202,7 @@ Rebeca: "Ai, que chateação! 😔 Me conta o que aconteceu que eu resolvo agora
     // ============================================================
     async raciocinar(telefone, mensagem, contexto, config = {}) {
         try {
-            if (!process.env.OPENAI_API_KEY) return null;
+            if (!process.env.ANTHROPIC_API_KEY) return null;
             const axios = require('axios');
             const prompt = this.buildPromptMestre(
                 config.nomeRestaurante || 'Delivery',
@@ -212,21 +212,33 @@ Rebeca: "Ai, que chateação! 😔 Me conta o que aconteceu que eu resolvo agora
                 config.assinante || null
             );
             const historico = this.montarHistorico(contexto.conversa);
-            const r = await axios.post('https://api.openai.com/v1/chat/completions', {
-                model: 'gpt-4o-mini',
-                max_tokens: 300,
+
+            // Usar Claude com thinking para raciocínio mais profundo
+            const r = await axios.post('https://api.anthropic.com/v1/messages', {
+                model: 'claude-sonnet-4-5',
+                max_tokens: 16000,
+                thinking: {
+                    type: 'enabled',
+                    budget_tokens: 10000
+                },
+                system: prompt,
                 messages: [
-                    { role: 'system', content: prompt },
-                    { role: 'user', content: `Historico:\n` + historico + `\n\nCliente agora: ` + mensagem }
+                    { role: 'user', content: 'Historico:\n' + historico + '\n\nCliente agora: ' + mensagem }
                 ]
             }, {
                 headers: {
-                    'Authorization': 'Bearer ' + process.env.OPENAI_API_KEY,
+                    'x-api-key': process.env.ANTHROPIC_API_KEY,
+                    'anthropic-version': '2023-06-01',
                     'content-type': 'application/json'
                 },
-                timeout: 8000
+                timeout: 30000
             });
-            return r.data?.choices?.[0]?.message?.content || null;
+
+            // Extrair apenas o texto (ignorar bloco thinking)
+            const blocos = r.data?.content || [];
+            const texto = blocos.filter(b => b.type === 'text').map(b => b.text).join('');
+            console.log('[CEREBRO-DELIVERY] Claude thinking ativado, resposta gerada');
+            return texto || null;
         } catch(e) {
             console.log('[CEREBRO-DELIVERY] Erro IA:', e.message);
             return null;
