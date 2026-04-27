@@ -150,7 +150,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 .toast.show{opacity:1}
 
 /* RESULTADO */
-.resultado-wrap{position:fixed;inset:0;background:var(--bg);z-index:9999;display:none;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center}
+.resultado-wrap{position:fixed;inset:0;background:var(--bg);z-index:9999;display:none;flex-direction:column;align-items:flex-start;justify-content:flex-start;padding:0;overflow-y:auto;text-align:left}
 .resultado-wrap.show{display:flex}
 .resultado-icon{font-size:4em;margin-bottom:16px}
 .resultado-titulo{font-size:1.4em;font-weight:900;margin-bottom:8px}
@@ -396,12 +396,33 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 </div>
 
 <!-- RESULTADO -->
-<div class="resultado-wrap" id="resultadoWrap">
-  <div class="resultado-icon">🎉</div>
-  <div class="resultado-titulo" id="resultTitulo">Pedido enviado!</div>
-  <div class="resultado-sub" id="resultSub">Seu pedido foi recebido com sucesso.</div>
-  <div class="resultado-tempo" id="resultTempo" style="display:none"></div>
-  <button class="btn-novo-pedido" onclick="novoPedido()">🛒 Fazer novo pedido</button>
+<div class="resultado-wrap" id="resultadoWrap" style="overflow-y:auto;justify-content:flex-start;padding:24px 16px;">
+  <div style="width:100%;max-width:480px;margin:0 auto;">
+    <div class="resultado-icon" style="font-size:3.5em;text-align:center;margin:20px 0 10px;">🎉</div>
+    <div class="resultado-titulo" id="resultTitulo" style="text-align:center;font-size:1.5em;font-weight:900;margin-bottom:6px;">Pedido recebido!</div>
+    <div class="resultado-sub" id="resultSub" style="text-align:center;font-size:.88em;color:var(--text2);margin-bottom:16px;line-height:1.6;"></div>
+    <div class="resultado-tempo" id="resultTempo" style="display:none;text-align:center;margin-bottom:16px;"></div>
+
+    <!-- RECIBO -->
+    <div id="reciboBox" style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px;margin-bottom:16px;">
+      <div style="font-size:.7em;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;display:flex;align-items:center;gap:8px;">
+        🧾 Recibo do Pedido
+        <span id="reciboPgto" style="margin-left:auto;font-size:1em;text-transform:none;font-weight:700;color:var(--accent);"></span>
+      </div>
+      <div id="reciboItens" style="font-size:.85em;color:var(--text);margin-bottom:12px;border-bottom:1px dashed var(--border);padding-bottom:12px;"></div>
+      <div style="display:flex;justify-content:space-between;font-size:.85em;color:var(--text2);margin-bottom:4px;" id="reciboTaxaRow" style="display:none;">
+        <span>Taxa de entrega</span><span id="reciboTaxa"></span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:1em;font-weight:900;color:var(--text);margin-top:8px;">
+        <span>Total</span><span id="reciboTotal" style="color:var(--accent);"></span>
+      </div>
+      <div id="reciboPgtoBox" style="margin-top:12px;padding:10px;background:rgba(249,115,22,.08);border-radius:10px;font-size:.82em;display:none;"></div>
+    </div>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <button class="btn-novo-pedido" onclick="novoPedido()" style="flex:1;min-width:140px;">🛒 Fazer novo pedido</button>
+    </div>
+  </div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -954,7 +975,7 @@ async function finalizarPedido() {
     var d = await r.json();
     if (d.sucesso || d._id) {
       fecharCarrinho();
-      mostrarResultado(nome, tipoAtual, d.tempoEstimado);
+      mostrarResultado(nome, tipoAtual, d.tempoEstimado, body);
     } else {
       throw new Error(d.erro || 'Erro ao enviar');
     }
@@ -965,20 +986,64 @@ async function finalizarPedido() {
   }
 }
 
-function mostrarResultado(nome, tipo, tempo) {
+function mostrarResultado(nome, tipo, tempo, dadosPedido) {
+  var carrinhoRecibo = (dadosPedido && dadosPedido.itens) ? dadosPedido.itens : [];
+  var totalRecibo = dadosPedido ? dadosPedido.total : 0;
+  var pgto = dadosPedido ? dadosPedido.formaPagamento : '';
+  var troco = dadosPedido ? dadosPedido.troco : '';
+
   carrinho = [];
   atualizarCartUI();
   atualizarBadgesCards();
+
   var wrap = document.getElementById('resultadoWrap');
   document.getElementById('resultTitulo').textContent = tipo === 'entrega' ? '🎉 Pedido recebido!' : '🎉 Pedido confirmado!';
   document.getElementById('resultSub').textContent = tipo === 'entrega'
     ? 'Olá ' + nome + '! Seu pedido foi enviado e está sendo preparado. Em breve sairá para entrega!'
     : 'Olá ' + nome + '! Seu pedido está sendo preparado. Venha buscar em breve!';
+
   var tempoEl = document.getElementById('resultTempo');
   if (tempo || tipo === 'retirada') {
     tempoEl.style.display = 'block';
-    tempoEl.textContent = '⏱️ Tempo estimado: ' + (tempo || document.getElementById('tempoVal').textContent);
+    tempoEl.textContent = '⏱️ Tempo estimado: ' + (tempo || '40 min');
   }
+
+  // Preencher recibo
+  var itensEl = document.getElementById('reciboItens');
+  if (itensEl && carrinhoRecibo.length) {
+    itensEl.innerHTML = carrinhoRecibo.map(function(i) {
+      var qty = i.quantidade || i.qty || 1;
+      var preco = Number(i.preco || 0);
+      return '<div style="display:flex;justify-content:space-between;margin-bottom:6px;">' +
+        '<span>' + qty + 'x ' + (i.nome || '') + '</span>' +
+        '<span style="font-weight:700;">R$ ' + (preco * qty).toFixed(2).replace('.',',') + '</span>' +
+      '</div>';
+    }).join('');
+  }
+
+  var totalEl = document.getElementById('reciboTotal');
+  if (totalEl) totalEl.textContent = 'R$ ' + Number(totalRecibo || 0).toFixed(2).replace('.',',');
+
+  var pgtoMap = { pix:'🏦 PIX', dinheiro:'💵 Dinheiro', cartao:'💳 Maquininha de Cartão' };
+  var reciboPgto = document.getElementById('reciboPgto');
+  if (reciboPgto) reciboPgto.textContent = pgtoMap[pgto] || pgto || '';
+
+  var pgtoBox = document.getElementById('reciboPgtoBox');
+  if (pgtoBox) {
+    if (pgto === 'dinheiro' && troco) {
+      pgtoBox.style.display = 'block';
+      pgtoBox.innerHTML = '💵 Pagamento em dinheiro — Troco para: <strong>R$ ' + Number(troco).toFixed(2).replace('.',',') + '</strong>';
+    } else if (pgto === 'cartao') {
+      pgtoBox.style.display = 'block';
+      pgtoBox.innerHTML = '💳 Pagamento na maquininha — o entregador levará a maquininha.';
+    } else if (pgto === 'pix') {
+      pgtoBox.style.display = 'block';
+      pgtoBox.innerHTML = '🏦 Pagamento via PIX — envie o comprovante ao entregador.';
+    } else {
+      pgtoBox.style.display = 'none';
+    }
+  }
+
   wrap.classList.add('show');
 }
 
