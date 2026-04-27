@@ -253,12 +253,6 @@ app.use('/api/despacho', despachoRoutes);
 app.use('/api/ia', iaRoutes);
 app.use('/api/mensalidades', mensalidadeRoutes);
 app.use('/api/evolution', evolutionMultiRoutes);
-// CAIXA + COMANDA
-const caixaRoutes   = require('./routes/caixa.routes');
-const comandaRoutes = require('./routes/comanda.routes');
-app.use('/api/caixa',   caixaRoutes);
-app.use('/api/comanda', comandaRoutes);
-
 app.use('/api/precos', precoAdminRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/pontos', require('./routes/pontos.routes'));
