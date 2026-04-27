@@ -90,7 +90,6 @@ const EvolutionMultiService = {
                 console.log('[EVO] Connect OK:', JSON.stringify(cn.data).substring(0, 300));
                 if (cn.data?.base64) qrData = cn.data.base64;
                 else if (cn.data?.code) qrData = cn.data.code;
-            } catch (e) { console.log('[EVO] Connect falhou:', e.response?.status, e.message); }
 
             }
 
