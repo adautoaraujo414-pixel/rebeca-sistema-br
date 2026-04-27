@@ -2023,7 +2023,11 @@ router.get('/config-publica/:adminId', async (req, res) => {
             },
             tempoEntrega: config.tempoMedioEntrega,
             taxaEntrega: config.taxaEntregaFixa,
-            pedidoMinimo: config.pedidoMinimo
+            pedidoMinimo: config.pedidoMinimo,
+            logo: config.logo || null,
+            nomeRestaurante: config.nomeRestaurante || '',
+            horario: config.horarioFuncionamento || '',
+            aberto: config.aberto !== false
         });
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });

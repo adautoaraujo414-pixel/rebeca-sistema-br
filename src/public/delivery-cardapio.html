@@ -451,6 +451,38 @@ async function carregarPagamentosConfig() {
     var r = await fetch('/api/delivery/config-publica/' + adminId);
     var d = await r.json();
     pagamentosConfig = d.pagamentos || {};
+    // Aplicar logo e nome do estabelecimento
+    if (d.nomeRestaurante) {
+        var el = document.getElementById('nomeEstab');
+        if (el) el.textContent = d.nomeRestaurante;
+    }
+    if (d.logo) {
+        var logoEl = document.getElementById('logoEstab');
+        if (!logoEl) {
+            logoEl = document.createElement('img');
+            logoEl.id = 'logoEstab';
+            logoEl.style.cssText = 'max-height:52px;border-radius:10px;margin:0 auto 6px;display:block;object-fit:contain;';
+            logoEl.onerror = function(){ this.style.display='none'; };
+            var hdr = document.getElementById('nomeEstab');
+            if (hdr && hdr.parentNode) hdr.parentNode.insertBefore(logoEl, hdr);
+        }
+        logoEl.src = d.logo;
+    }
+    // Mostrar horário/status aberto
+    if (d.horario) {
+        var hrEl = document.getElementById('horarioEstab');
+        if (hrEl) hrEl.textContent = d.horario;
+    }
+    if (d.aberto === false) {
+        var aviso = document.getElementById('avisoFechado');
+        if (!aviso) {
+            aviso = document.createElement('div');
+            aviso.id = 'avisoFechado';
+            aviso.style.cssText = 'background:#fee2e2;color:#b91c1c;text-align:center;padding:10px;font-weight:700;font-size:.9em;';
+            aviso.textContent = '🔴 Estabelecimento fechado no momento';
+            document.body.insertBefore(aviso, document.body.firstChild);
+        }
+    }
     renderPgtoOpcoes();
   } catch(e) { pagamentosConfig = {}; }
 }
