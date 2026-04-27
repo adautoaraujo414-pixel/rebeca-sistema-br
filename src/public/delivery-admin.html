@@ -2634,13 +2634,14 @@ var combosData = [];
 var comboImgGerada = '';
 
 async function carregarCombos() {
-    fetch('/api/delivery/combos', { headers: { 'Authorization': 'Bearer ' + token } })
-        .then(r => r.json())
-        .then(d => {
-            combosData = d.combos || d || [];
-            renderCombos();
-        })
-        .catch(() => { combosData = []; renderCombos(); });
+    try {
+        var r = await fetch('/api/delivery/combos', { headers: { 'Authorization': 'Bearer ' + token } });
+        var d = await r.json();
+        combosData = d.combos || d || [];
+    } catch(e) {
+        combosData = [];
+    }
+    renderCombos();
 }
 
 function renderCombos() {
