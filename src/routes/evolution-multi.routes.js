@@ -14,6 +14,14 @@ router.post('/instancia', async (req, res) => {
         const { adminId, nomeEmpresa } = req.body;
         console.log('[INSTANCIA] adminId recebido:', adminId, '| nomeEmpresa:', nomeEmpresa);
         if (!adminId || !nomeEmpresa) return res.status(400).json({ erro: 'adminId e nomeEmpresa obrigatorios' });
+
+        // Verificar se já existe instância para esse admin — nunca duplicar
+        const instExistente = await InstanciaWhatsapp.findOne({ adminId }).sort({ createdAt: -1 }).lean();
+        if (instExistente) {
+            console.log('[INSTANCIA] Retornando instância existente para admin:', adminId, '| id:', instExistente._id);
+            return res.json({ sucesso: true, _id: instExistente._id, instancia: instExistente, existente: true });
+        }
+
         const resultado = await EvolutionMultiService.criarInstancia(adminId, nomeEmpresa);
         res.json(resultado);
     } catch(e) { res.status(500).json({ erro: e.message }); }
@@ -59,6 +67,8 @@ router.get('/instancias', async (req, res) => {
 router.get('/instancias/admin/:adminId', async (req, res) => {
     try {
         const resultado = await EvolutionMultiService.listarPorAdmin(req.params.adminId);
+        // Garantir formato { instancias: [...] } para o frontend
+        if (Array.isArray(resultado)) return res.json({ instancias: resultado });
         res.json(resultado);
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });

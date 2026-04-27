@@ -2125,14 +2125,34 @@ async function _salvarItemReal() {
 
         async function conectarWhatsappDelivery() {
             const box = document.getElementById('qrDeliveryBox');
-            box.innerHTML = '<div style="text-align:center"><div style="border:4px solid #00d4ff;border-top-color:transparent;border-radius:50%;width:40px;height:40px;animation:spin 1s linear infinite;margin:0 auto"></div><p style="color:#aaa;margin-top:10px;">Criando instância...</p></div>';
+            box.innerHTML = '<div style="text-align:center"><div style="border:4px solid #00d4ff;border-top-color:transparent;border-radius:50%;width:40px;height:40px;animation:spin 1s linear infinite;margin:0 auto"></div><p style="color:#aaa;margin-top:10px;">Verificando instância...</p></div>';
             try {
-                const r = await fetch('/api/evolution/instancia', { method: 'POST', headers: {'Content-Type':'application/json','Authorization':'Bearer '+token}, body: JSON.stringify({ adminId: adminData._id, nomeEmpresa: 'delivery-' + adminData._id }) }).then(x=>x.json());
+                // 1. Buscar instância existente no servidor (fonte da verdade)
+                const lista = await fetch('/api/evolution/instancias/admin/' + adminData._id, {
+                    headers: {'Authorization':'Bearer '+token}
+                }).then(x=>x.json());
+                
+                const instExistente = lista?.instancias?.[0] || lista?.[0] || null;
+                if (instExistente?._id) {
+                    instanciaDeliveryId = instExistente._id;
+                    localStorage.setItem('instanciaDeliveryId_' + adminData._id, instanciaDeliveryId);
+                    console.log('[WA] Instância existente encontrada:', instanciaDeliveryId);
+                    await gerarQRDelivery();
+                    return;
+                }
+                
+                // 2. Só cria nova se não existe nenhuma
+                box.innerHTML = '<div style="text-align:center"><div style="border:4px solid #00d4ff;border-top-color:transparent;border-radius:50%;width:40px;height:40px;animation:spin 1s linear infinite;margin:0 auto"></div><p style="color:#aaa;margin-top:10px;">Criando instância...</p></div>';
+                const r = await fetch('/api/evolution/instancia', {
+                    method: 'POST',
+                    headers: {'Content-Type':'application/json','Authorization':'Bearer '+token},
+                    body: JSON.stringify({ adminId: adminData._id, nomeEmpresa: 'delivery-' + adminData._id })
+                }).then(x=>x.json());
                 if (!r._id && !r.sucesso) { box.innerHTML = '<p style="color:#c0392b">Erro: ' + (r.erro||'Falha ao criar') + '</p>'; return; }
                 instanciaDeliveryId = r._id || r.instancia?._id;
                 if (instanciaDeliveryId) localStorage.setItem('instanciaDeliveryId_' + adminData._id, instanciaDeliveryId);
                 await gerarQRDelivery();
-            } catch(e) { box.innerHTML = '<p style="color:#c0392b">Erro de conexão</p>'; }
+            } catch(e) { box.innerHTML = '<p style="color:#c0392b">Erro de conexão</p>'; console.error('[WA]', e); }
         }
 
         async function gerarQRDelivery() {
