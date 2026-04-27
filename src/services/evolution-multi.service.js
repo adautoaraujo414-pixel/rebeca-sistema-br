@@ -1,7 +1,7 @@
 const axios = require('axios');
 const { InstanciaWhatsapp, Admin } = require('../models');
 
-const EVOLUTION_BASE_URL = process.env.EVOLUTION_API_URL || 'https://evolution-api-production-794f.up.railway.app';
+const EVOLUTION_BASE_URL = process.env.EVOLUTION_API_URL || 'https://evolution-api-production-19af.up.railway.app';
 const EVOLUTION_GLOBAL_KEY = process.env.EVOLUTION_API_KEY || '';
 
 const EvolutionMultiService = {
