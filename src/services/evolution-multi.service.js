@@ -91,8 +91,6 @@ const EvolutionMultiService = {
                 if (cn.data?.base64) qrData = cn.data.base64;
                 else if (cn.data?.code) qrData = cn.data.code;
 
-            }
-
             // 5. Configurar webhook v2 (aguardar instancia pronta)
             await new Promise(r => setTimeout(r, 3000));
             const whKey = instancia.apiKey || EVOLUTION_GLOBAL_KEY;
