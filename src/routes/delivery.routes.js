@@ -740,6 +740,11 @@ router.post('/pedido-cardapio-digital', async (req, res) => {
 
         console.log('[CARDAPIO-DIGITAL] Pedido #' + numeroPedido + ' salvo de', telefoneCliente || 'sem telefone');
 
+        // Enviar recibo oficial via ReciboDeliveryService (salva reciboEnviado no banco)
+        try {
+            const ReciboDeliveryService = require('../services/recibo-delivery.service');
+            await ReciboDeliveryService.enviarRecibo(adminId, pedidoSalvo._id);
+        } catch(re) { console.log('[RECIBO] Erro service:', re.message); }
         // Notificar cliente pelo WhatsApp se tiver telefone
         if (telefoneCliente) {
             try {
