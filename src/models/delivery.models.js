@@ -1,5 +1,17 @@
 
-const mongoose = require('mongoose');
+python3 << 'PYEOF'
+import re
+
+with open('/workspaces/rebeca-sistema-br/src/public/delivery-admin.html') as f:
+    admin = f.read()
+
+# Ver todas as ocorrências de carregarDadosEstabelecimento
+for i, m in enumerate(re.finditer('carregarDadosEstabelecimento', admin)):
+    trecho = admin[m.start():m.start()+250]
+    print(f'--- ocorrência {i+1} pos {m.start()} ---')
+    print(trecho[:200])
+    print()
+PYEOFconst mongoose = require('mongoose');
 
 // ========== CARDÁPIO ==========
 const CategoriaCardapioSchema = new mongoose.Schema({
