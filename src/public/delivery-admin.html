@@ -1681,7 +1681,6 @@ function mostrarImgGerada(url) {
   if (prev && url) { prev.src = url; prev.style.display = 'block'; }
 }
 
-async 
 function selecionarTamanhoMarmita(val, el) {
     document.getElementById('marmitaTamanho').value = val;
     document.querySelectorAll('[onclick^="selecionarTamanhoMarmita"]').forEach(function(l){
@@ -1964,12 +1963,12 @@ async function _salvarItemReal() {
 
 
         // ===== WHATSAPP QR CODE DELIVERY =====
+        let instanciaDeliveryId = null; // carregado após login em carregarInstanciaDelivery()
         function carregarInstanciaDelivery() {
             if (adminData && adminData._id) {
-                instanciaDeliveryId = adminData && adminData._id ? localStorage.getItem('instanciaDeliveryId_' + adminData._id) || null : null;
+                instanciaDeliveryId = localStorage.getItem('instanciaDeliveryId_' + adminData._id) || null;
             }
         }
-        let instanciaDeliveryId = null; // carregado após login em carregarInstanciaDelivery()
         let _ultimosPedidosIds = new Set();
         let _audioCtx = null;
 
