@@ -63,7 +63,7 @@ const EvolutionMultiService = {
         try {
             const instancia = await InstanciaWhatsapp.findById(instanciaId);
             if (!instancia) throw new Error('Instancia nao encontrada');
-            const gH = { 'apikey': EVOLUTION_GLOBAL_KEY, 'Content-Type': 'application/json' };
+            const gH = { 'apikey': instancia.apiKey || EVOLUTION_GLOBAL_KEY, 'Content-Type': 'application/json' };
             const webhookUrl = (process.env.APP_URL || 'https://rebeca-sistema-br.onrender.com') + '/api/evolution/webhook/' + instancia.nomeInstancia;
             let qrData = null;
 
