@@ -810,6 +810,71 @@
               </div>
             </div>
 
+            <!-- AÇAÍ -->
+            <div id="camposAcai" style="display:none;margin-bottom:14px;background:#1a1a2e;border-radius:10px;padding:14px;border:1px solid rgba(139,92,246,0.5);">
+              <div style="color:#a78bfa;font-size:.82em;font-weight:700;margin-bottom:10px;text-transform:uppercase;letter-spacing:1px;">🍇 Informações do Açaí</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+                <div>
+                  <label style="color:#aaa;font-size:.8em;display:block;margin-bottom:4px;">Tamanho / Volume</label>
+                  <select id="acaiTamanho" style="width:100%;background:#0f0f1a;border:1px solid #333;border-radius:8px;padding:9px;color:#fff;font-size:.85em;">
+                    <option value="">Selecione</option>
+                    <option value="300ml">🥤 300ml</option>
+                    <option value="500ml">🥤 500ml</option>
+                    <option value="700ml">🥤 700ml</option>
+                    <option value="1 litro">🍶 1 Litro</option>
+                    <option value="2 litros">🍾 2 Litros</option>
+                    <option value="3 litros">🍾 3 Litros</option>
+                    <option value="5 litros">🪣 5 Litros</option>
+                  </select>
+                </div>
+                <div>
+                  <label style="color:#aaa;font-size:.8em;display:block;margin-bottom:4px;">Qtd em Estoque</label>
+                  <input type="number" id="acaiEstoque" placeholder="Ex: 20" min="0" style="width:100%;background:#0f0f1a;border:1px solid #333;border-radius:8px;padding:9px;color:#fff;font-size:.85em;">
+                </div>
+              </div>
+              <div>
+                <label style="color:#aaa;font-size:.8em;display:block;margin-bottom:4px;">Acompanhamentos inclusos (separados por vírgula)</label>
+                <input type="text" id="acaiAcompanhamentos" placeholder="Ex: Granola, Leite condensado, Banana" style="width:100%;background:#0f0f1a;border:1px solid #333;border-radius:8px;padding:9px;color:#fff;font-size:.85em;">
+              </div>
+            </div>
+
+            <!-- MARMITA -->
+            <div id="camposMarmita" style="display:none;margin-bottom:14px;background:#1a1a2e;border-radius:10px;padding:14px;border:1px solid rgba(34,197,94,0.4);">
+              <div style="color:#22c55e;font-size:.82em;font-weight:700;margin-bottom:10px;text-transform:uppercase;letter-spacing:1px;">🍱 Informações da Marmita</div>
+              <div style="margin-bottom:10px;">
+                <label style="color:#aaa;font-size:.8em;display:block;margin-bottom:6px;">Tamanho</label>
+                <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;">
+                  <label style="cursor:pointer;text-align:center;padding:8px 4px;border-radius:8px;border:1.5px solid #333;background:#0f0f1a;font-size:.78em;color:#fff;" onclick="selecionarTamanhoMarmita('P',this)"><input type="radio" name="marmitaTam" value="P" style="display:none;">P</label>
+                  <label style="cursor:pointer;text-align:center;padding:8px 4px;border-radius:8px;border:1.5px solid #333;background:#0f0f1a;font-size:.78em;color:#fff;" onclick="selecionarTamanhoMarmita('M',this)"><input type="radio" name="marmitaTam" value="M" style="display:none;">M</label>
+                  <label style="cursor:pointer;text-align:center;padding:8px 4px;border-radius:8px;border:1.5px solid #333;background:#0f0f1a;font-size:.78em;color:#fff;" onclick="selecionarTamanhoMarmita('G',this)"><input type="radio" name="marmitaTam" value="G" style="display:none;">G</label>
+                  <label style="cursor:pointer;text-align:center;padding:8px 4px;border-radius:8px;border:1.5px solid #333;background:#0f0f1a;font-size:.78em;color:#fff;" onclick="selecionarTamanhoMarmita('GG',this)"><input type="radio" name="marmitaTam" value="GG" style="display:none;">GG</label>
+                  <label style="cursor:pointer;text-align:center;padding:8px 4px;border-radius:8px;border:1.5px solid #333;background:#0f0f1a;font-size:.78em;color:#fff;" onclick="selecionarTamanhoMarmita('Extra G',this)"><input type="radio" name="marmitaTam" value="Extra G" style="display:none;">Xtra</label>
+                </div>
+                <input type="hidden" id="marmitaTamanho">
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+                <div>
+                  <label style="color:#aaa;font-size:.8em;display:block;margin-bottom:4px;">Peso (g ou kg)</label>
+                  <input type="text" id="marmitaPeso" placeholder="Ex: 500g ou 1kg" style="width:100%;background:#0f0f1a;border:1px solid #333;border-radius:8px;padding:9px;color:#fff;font-size:.85em;">
+                </div>
+                <div>
+                  <label style="color:#aaa;font-size:.8em;display:block;margin-bottom:4px;">Qtd em Estoque</label>
+                  <input type="number" id="marmitaEstoque" placeholder="Ex: 30" min="0" style="width:100%;background:#0f0f1a;border:1px solid #333;border-radius:8px;padding:9px;color:#fff;font-size:.85em;">
+                </div>
+              </div>
+              <div>
+                <label style="color:#aaa;font-size:.8em;display:block;margin-bottom:4px;">O que vai na marmita (separado por vírgula)</label>
+                <input type="text" id="marmitaConteudo" placeholder="Ex: Arroz, Feijão, Frango grelhado, Salada" style="width:100%;background:#0f0f1a;border:1px solid #333;border-radius:8px;padding:9px;color:#fff;font-size:.85em;margin-bottom:8px;">
+              </div>
+              <div>
+                <label style="color:#aaa;font-size:.8em;display:block;margin-bottom:4px;">Tipo de serviço</label>
+                <select id="marmitaTipo" style="width:100%;background:#0f0f1a;border:1px solid #333;border-radius:8px;padding:9px;color:#fff;font-size:.85em;">
+                  <option value="tradicional">🍱 Tradicional (porção fixa)</option>
+                  <option value="self">⚖️ Self-service (por kg)</option>
+                </select>
+              </div>
+            </div>
+
             <div class="form-group"><label><span id="labelNomeItem">Nome do Item</span></label><input type="text" id="itemNome" placeholder="Ex: Coca-Cola, X-Burguer..." oninput="debounceImagem(this.value); atualizarPlaceholders()"></div>
             <div class="form-group" id="grupoDescricao"><label id="labelDesc">Descrição <span id="descOpcional" style="color:#666;font-size:.8em;display:none">(opcional)</span></label><input type="text" id="itemDesc" placeholder="Pão, hambúrguer, queijo..."></div>
             <div class="form-row">
@@ -1595,6 +1660,14 @@ function mostrarImgGerada(url) {
   if (prev && url) { prev.src = url; prev.style.display = 'block'; }
 }
 
+async 
+function selecionarTamanhoMarmita(val, el) {
+    document.getElementById('marmitaTamanho').value = val;
+    document.querySelectorAll('[onclick^="selecionarTamanhoMarmita"]').forEach(function(l){
+        l.style.borderColor='#333'; l.style.background='#0f0f1a'; l.style.color='#fff';
+    });
+    if(el){ el.style.borderColor='#22c55e'; el.style.background='rgba(34,197,94,0.15)'; el.style.color='#22c55e'; }
+}
 async function salvarItem() {
   const btn = document.querySelector('[onclick="salvarItem()"]');
   if (btn) { btn.disabled=true; btn.textContent='⏳ Salvando...'; btn.style.opacity='0.6'; }
@@ -1609,6 +1682,16 @@ async function _salvarItemReal() {
                 nome: document.getElementById('itemNome').value,
                 descricao: document.getElementById('itemDesc').value,
                 preco: parseFloat(document.getElementById('itemPreco').value) || 0,
+                // Açaí
+                acaiTamanho: document.getElementById('acaiTamanho')?.value || null,
+                acaiEstoque: parseInt(document.getElementById('acaiEstoque')?.value)||null,
+                acaiAcompanhamentos: document.getElementById('acaiAcompanhamentos')?.value || null,
+                // Marmita
+                marmitaTamanho: document.getElementById('marmitaTamanho')?.value || null,
+                marmitaPeso: document.getElementById('marmitaPeso')?.value || null,
+                marmitaEstoque: parseInt(document.getElementById('marmitaEstoque')?.value)||null,
+                marmitaConteudo: document.getElementById('marmitaConteudo')?.value || null,
+                marmitaTipo: document.getElementById('marmitaTipo')?.value || null,
                 tempoPreparoMin: parseInt(document.getElementById('itemTempo').value) || 20,
                 destaque: document.getElementById('itemDestaque').checked,
                 disponivel: document.getElementById('itemDisponivel') ? document.getElementById('itemDisponivel').checked : true,
@@ -2600,12 +2683,21 @@ function popularItensCombo(selecionados) {
     var itens = (window.itensCadastrados || []);
     if (!itens.length) {
         var tk = localStorage.getItem('delivery_token') || token || '';
-        fetch('/api/delivery/cardapio', { headers: { 'x-token': tk } })
+        var tkC = localStorage.getItem('delivery_token') || '';
+        fetch('/api/delivery/itens', { headers: { 'x-token': tkC } })
             .then(function(r){ return r.json(); })
             .then(function(d) {
                 window.itensCadastrados = Array.isArray(d) ? d : (d.itens || d.cardapio || []);
                 popularItensCombo(selecionados);
-            }).catch(function(e){ console.error('Erro ao carregar itens:', e); });
+            }).catch(function(e){
+                // fallback rota cardapio
+                fetch('/api/delivery/cardapio', { headers: { 'x-token': tkC } })
+                .then(function(r2){ return r2.json(); })
+                .then(function(d2){
+                    window.itensCadastrados = Array.isArray(d2) ? d2 : (d2.itens || d2.cardapio || []);
+                    popularItensCombo(selecionados);
+                }).catch(function(e2){ console.error('Erro itens combo:', e2); });
+            });
         return;
     }
     container.innerHTML = itens.map(function(item) {
@@ -3355,63 +3447,56 @@ async function migrarImagens() {
 
 
 // ===== CAMPOS DINÂMICOS BEBIDA =====
-function toggleCamposBebida() {
+function toggleCamposBebida() { toggleCamposPorCategoria(); }
+function toggleCamposPorCategoria() {
     var sel = document.getElementById('itemCategoria');
     var opt = sel ? sel.options[sel.selectedIndex] : null;
     var nomeCat = opt ? opt.text.toLowerCase() : '';
+
     var ehBebida = nomeCat.includes('bebida') || nomeCat.includes('drink') ||
                    nomeCat.includes('suco') || nomeCat.includes('refri') ||
                    nomeCat.includes('agua') || nomeCat.includes('água') ||
                    nomeCat.includes('cerveja') || nomeCat.includes('vinho') ||
                    nomeCat.includes('alcool') || nomeCat.includes('alcoól');
+    var ehAcai   = nomeCat.includes('açaí') || nomeCat.includes('acai');
+    var ehMarmita = nomeCat.includes('marmita') || nomeCat.includes('quentinha') || nomeCat.includes('self') || nomeCat.includes('prato');
 
-    // Campos extras de bebida
-    var campos = document.getElementById('camposBebida');
-    if (campos) campos.style.display = ehBebida ? 'block' : 'none';
+    // Esconder todos os painéis extras
+    var ids = ['camposBebida','camposAcai','camposMarmita'];
+    ids.forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
 
     // Tempo de preparo
     var preparo = document.getElementById('grupoPreparo');
-    if (preparo) {
-        preparo.style.display = ehBebida ? 'none' : 'block';
-        var inputTempo = document.getElementById('itemTempo');
-        if (inputTempo) inputTempo.value = ehBebida ? '0' : (inputTempo.value == '0' ? '20' : inputTempo.value);
+    if (preparo) preparo.style.display = (ehBebida||ehAcai) ? 'none' : 'block';
+
+    // Estoque
+    var estoqueUnidade = document.getElementById('grupoEstoqueUnidade');
+    var estoqueBebida  = document.getElementById('grupoEstoqueBebida');
+    if (estoqueUnidade) estoqueUnidade.style.display = (ehBebida||ehAcai) ? 'none' : 'block';
+    if (estoqueBebida)  estoqueBebida.style.display  = (ehBebida||ehAcai) ? 'block' : 'none';
+
+    // Mostrar painel certo
+    if (ehAcai) {
+        var el = document.getElementById('camposAcai'); if(el) el.style.display='block';
+    } else if (ehMarmita) {
+        var el = document.getElementById('camposMarmita'); if(el) el.style.display='block';
+        if(preparo) preparo.style.display='block';
+    } else if (ehBebida) {
+        var el = document.getElementById('camposBebida'); if(el) el.style.display='block';
     }
 
-    // Estoque por tipo
-    var estoqueUnidade = document.getElementById('grupoEstoqueUnidade');
-    var estoqueBebida = document.getElementById('grupoEstoqueBebida');
-    if (estoqueUnidade) estoqueUnidade.style.display = ehBebida ? 'none' : 'block';
-    if (estoqueBebida) estoqueBebida.style.display = ehBebida ? 'block' : 'none';
-
-    // Label do nome
+    // Label nome
     var label = document.getElementById('labelNomeItem');
     if (label) {
-        if (ehBebida) label.textContent = 'Nome da Bebida';
-        else if (nomeCat.includes('pizza') || nomeCat.includes('massa')) label.textContent = 'Nome da Pizza';
-        else if (nomeCat.includes('sobremesa') || nomeCat.includes('doce') || nomeCat.includes('sorvete')) label.textContent = 'Nome da Sobremesa';
-        else if (nomeCat.includes('prato') || nomeCat.includes('refeicao') || nomeCat.includes('almoco')) label.textContent = 'Nome do Prato';
+        if (ehAcai) label.textContent = 'Nome do Açaí';
+        else if (ehMarmita) label.textContent = 'Nome da Marmita';
+        else if (ehBebida) label.textContent = 'Nome da Bebida';
         else label.textContent = 'Nome do Item';
     }
-
-    // Placeholder
-    var inputNome = document.getElementById('itemNome');
-    var inputDesc = document.getElementById('itemDesc');
-    var descOpcional = document.getElementById('descOpcional');
-    if (ehBebida) {
-        if (inputNome) inputNome.placeholder = 'Ex: Coca-Cola, Suco de Laranja, Heineken...';
-        if (inputDesc) inputDesc.placeholder = 'Sabor, marca, observacao... (opcional)';
-        if (descOpcional) descOpcional.style.display = 'inline';
-    } else {
-        if (inputNome) inputNome.placeholder = 'Ex: X-Burguer, Frango Grelhado...';
-        if (inputDesc) inputDesc.placeholder = 'Pao, hamburguer, queijo...';
-        if (descOpcional) descOpcional.style.display = 'none';
-    }
-}
-    }
+    atualizarPlaceholders();
 }
 
-// Chamar ao abrir modal de edição
-const _origAbrirModalItem = window.abrirModalItem;
+
 function abrirModalItemComBebida(item) {
     if (typeof _origAbrirModalItem === 'function') _origAbrirModalItem(item);
     setTimeout(toggleCamposBebida, 100);
