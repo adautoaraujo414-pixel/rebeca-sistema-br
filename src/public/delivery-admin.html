@@ -1512,8 +1512,12 @@
         // PEDIDOS
         async function carregarPedidos() {
             const status = document.getElementById('filtroPedidos')?.value || '';
-            const res = await api('/pedidos' + (status ? '?status=' + status : ''));
+            const filtroData = document.getElementById('filtroPedidosData')?.value || '';
+            var qs = status ? '?status=' + status : '?';
+            if (filtroData) qs += (status ? '&' : '') + 'data=' + filtroData;
+            const res = await api('/pedidos' + qs);
             const pedidos = await res.json();
+            if (typeof verificarNovoPedido === 'function') verificarNovoPedido(pedidos);
             renderPedidos(pedidos, 'pedidosLista');
         }
 
