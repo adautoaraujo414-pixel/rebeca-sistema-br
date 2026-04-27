@@ -414,3 +414,5 @@ console.log('✅ Cron delivery trial ativo');
 
 
 // redeploy Mon Apr 27 18:18:58 UTC 2026
+
+// force-deploy-1777316296
