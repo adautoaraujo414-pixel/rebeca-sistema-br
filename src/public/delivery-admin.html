@@ -120,6 +120,11 @@
 .status-entrega{background:#e0f2fe;color:#0369a1;border:1.5px solid #0ea5e9}
 .status-entregue{background:#dcfce7;color:#15803d;border:1.5px solid #22c55e}
 .status-cancelado{background:#fee2e2;color:#b91c1c;border:1.5px solid #ef4444}
+
+/* Cards brancos com texto escuro */
+.pedido-card, .combo-card, .panel { color: #1c1c1e !important; }
+.pedido-card *, .combo-card *, .panel * { color: inherit; }
+.pedido-card .status-badge, .combo-card .status-badge { color: inherit !important; }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 </head>
@@ -2628,7 +2633,7 @@ async function verFichaEntregador(id, nome) {
 var combosData = [];
 var comboImgGerada = '';
 
-function carregarCombos() {
+async function carregarCombos() {
     fetch('/api/delivery/combos', { headers: { 'Authorization': 'Bearer ' + token } })
         .then(r => r.json())
         .then(d => {
@@ -2843,7 +2848,7 @@ async function gerarImagemCombo() {
     }
 }
 
-async function salvarCombo() {
+async async function salvarCombo() {
     var nome = document.getElementById('comboNome').value.trim();
     var desc = document.getElementById('comboDesc').value.trim();
     var preco = parseFloat(document.getElementById('comboPreco').value);
