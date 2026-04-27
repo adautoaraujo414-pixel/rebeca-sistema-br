@@ -595,6 +595,10 @@
                                 <label style="font-size:.8em;font-weight:700;color:#555;display:block;margin-bottom:5px;">Endereço</label>
                                 <input type="text" id="cfgEndereco" placeholder="Ex: Rua das Flores, 123 - Centro" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid #ddd;font-family:inherit;font-size:.9em;box-sizing:border-box;">
                             </div>
+                            <div>
+                                <label style="font-size:.8em;font-weight:700;color:#555;display:block;margin-bottom:5px;">Cidade de Atuação</label>
+                                <input type="text" id="cfgCidade" placeholder="Ex: Uberlândia - MG" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid #ddd;font-family:inherit;font-size:.9em;box-sizing:border-box;">
+                            </div>
                             <div style="display:flex;align-items:center;gap:10px;margin-top:4px;">
                                 <button onclick="salvarDadosEstabelecimento()" style="background:#f97316;color:#fff;border:none;border-radius:8px;padding:10px 22px;font-weight:700;cursor:pointer;font-size:.88em;">💾 Salvar Dados</button>
                                 <div id="cfgEstabStatus" style="display:none;color:#22c55e;font-size:.82em;font-weight:700;">✅ Salvo!</div>
@@ -675,23 +679,6 @@
                         <button onclick="gerarQR()" id="btnGerarQR" style="padding:12px 24px;background:#f97316;border:none;color:#000;border-radius:10px;font-weight:700;cursor:pointer">🔲 Gerar QR Code</button>
                     </div>
 
-                    <div class="panel">
-                        <h3>🏪 Restaurante</h3>
-                        <div class="form-row">
-                            <div class="form-group"><label>Nome</label><input type="text" id="cfgNome"></div>
-                            <div class="form-group"><label>Horário</label><input type="text" id="cfgHorario" placeholder="18:00 - 23:00"></div>
-                        </div>
-                        <div class="form-group"><label>Endereço</label><input type="text" id="cfgEndereco"></div>
-                        <div class="form-row">
-                            <div class="form-group"><label>CNPJ / CPF</label><input type="text" id="cfgCnpj" placeholder="00.000.000/0001-00"></div>
-                            <div class="form-group"><label>Telefone do estabelecimento</label><input type="text" id="cfgTelefoneContato" placeholder="(34) 99999-9999"></div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group"><label>Endereço completo (cupom)</label><input type="text" id="cfgEnderecoCompleto" placeholder="Rua X, 123 - Bairro"></div>
-                            <div class="form-group"><label>Cidade / Estado</label><input type="text" id="cfgCidadeEstado" placeholder="Uberlândia - MG"></div>
-                        </div>
-                        <div class="form-group"><label>Mensagem de rodapé do cupom</label><input type="text" id="cfgMsgRodape" placeholder="Obrigado pela preferência! Volte sempre!"></div>
-                    </div>
                     <div class="panel">
                         <h3>🏍️ Entrega</h3>
                         <div class="form-row">
@@ -2911,6 +2898,8 @@ async function salvarDadosEstabelecimento() {
     if (taxa && taxa.value !== '') body.taxaEntregaFixa = Number(taxa.value);
     if (minimo && minimo.value !== '') body.pedidoMinimo = Number(minimo.value);
     if (endereco && endereco.value.trim()) body.endereco = endereco.value.trim();
+    var cidade = document.getElementById('cfgCidade');
+    if (cidade && cidade.value.trim()) body.cidade = cidade.value.trim();
     try {
         await fetch('/api/delivery/config', {
             method: 'PUT',
@@ -2933,6 +2922,7 @@ async function carregarDadosEstabelecimento() {
         set('cfgTaxa', cfg.taxaEntregaFixa);
         set('cfgMinimo', cfg.pedidoMinimo);
         set('cfgEndereco', cfg.endereco);
+        set('cfgCidade', cfg.cidade);
     } catch(e) {}
 }
 </script>
