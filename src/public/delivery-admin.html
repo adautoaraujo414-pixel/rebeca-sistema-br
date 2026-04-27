@@ -1773,7 +1773,7 @@ async function _salvarItemReal() {
         async function carregarConfig() {
             const res = await api('/config');
             const c = await res.json();
-            document.getElementById('cfgNome').value = c.nomeRestaurante || '';
+            if(document.getElementById('cfgNome')) document.getElementById('cfgNome').value = c.nomeRestaurante || '';
             if(document.getElementById('cfgAceitaDinheiro')) document.getElementById('cfgAceitaDinheiro').checked = c.aceitaDinheiro !== false;
             if(document.getElementById('cfgAceitaCartao')) document.getElementById('cfgAceitaCartao').checked = !!c.aceitaCartao;
             if(document.getElementById('cfgAceitaPix')) document.getElementById('cfgAceitaPix').checked = c.aceitaPix !== false;

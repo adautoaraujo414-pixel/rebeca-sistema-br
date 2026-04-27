@@ -8,7 +8,9 @@ const EvolutionMultiService = {
     criarInstancia: async (adminId, nomeEmpresa) => {
         try {
             // ✅ SEMPRE reaproveitar instância existente — nunca criar duplicata
-            const existente = await InstanciaWhatsapp.findOne({ adminId }).sort({ createdAt: -1 }).lean();
+            const existente = await InstanciaWhatsapp.findOne({
+                $or: [{ adminId: adminId }, { adminId: adminId.toString() }]
+            }).sort({ createdAt: -1 }).lean();
             if (existente) {
                 console.log('[EVO] Instancia existente encontrada:', existente.nomeInstancia);
                 return { sucesso: true, instancia: existente, existente: true };
