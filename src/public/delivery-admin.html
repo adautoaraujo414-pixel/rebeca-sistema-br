@@ -2490,6 +2490,301 @@ async function verFichaEntregador(id, nome) {
     `;
 }
 
+
+
+// ═══════════════════════════════════════
+// COMBOS
+// ═══════════════════════════════════════
+var combosData = [];
+var comboImgGerada = '';
+
+function carregarCombos() {
+    fetch('/api/delivery/combos', { headers: { 'x-token': token } })
+        .then(r => r.json())
+        .then(d => {
+            combosData = d.combos || d || [];
+            renderCombos();
+        })
+        .catch(() => { combosData = []; renderCombos(); });
+}
+
+function renderCombos() {
+    var lista = document.getElementById('combosLista');
+    if (!lista) return;
+    if (!combosData.length) {
+        lista.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:#aaa;">Nenhum combo cadastrado. Clique em "+ Novo Combo" para criar.</div>';
+        return;
+    }
+    lista.innerHTML = combosData.map(function(c) {
+        var total = (c.itens||[]).reduce(function(a,i){ return a + (i.preco||0)*(i.quantidade||1); }, 0);
+        var economia = total > c.preco ? 'Economia de R$ ' + (total - c.preco).toFixed(2).replace('.',',') : '';
+        return '<div style="background:#fff;border:1px solid #e8e8ed;border-radius:14px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.06);">' +
+            (c.imagem ? '<img src="' + c.imagem + '" style="width:100%;height:160px;object-fit:cover;">' :
+              '<div style="width:100%;height:80px;background:linear-gradient(135deg,#fff7ed,#fde8d0);display:flex;align-items:center;justify-content:center;font-size:2.5em;">🎁</div>') +
+            '<div style="padding:14px;">' +
+              '<div style="font-weight:800;font-size:.95em;margin-bottom:4px;">' + c.nome + '</div>' +
+              '<div style="font-size:.78em;color:#888;margin-bottom:8px;">' + (c.descricao||'') + '</div>' +
+              '<div style="font-size:.82em;color:#666;margin-bottom:8px;">' +
+                (c.itens||[]).map(function(i){ return '• ' + (i.quantidade||1) + 'x ' + (i.nome||i.itemId); }).join('<br>') +
+              '</div>' +
+              (economia ? '<div style="font-size:.75em;color:#22c55e;font-weight:700;margin-bottom:6px;">✅ ' + economia + '</div>' : '') +
+              '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;">' +
+                '<span style="font-size:1.1em;font-weight:900;color:#f97316;">R$ ' + Number(c.preco||0).toFixed(2).replace('.',',') + '</span>' +
+                '<div style="display:flex;gap:6px;">' +
+                  (c.imagem ? '<button onclick="baixarImagemCombo('' + c.imagem + '','' + c.nome + '')" style="padding:6px 10px;border-radius:6px;border:1px solid #e8e8ed;background:#f9f9f9;cursor:pointer;font-size:.75em;">📥 Imagem</button>' : '') +
+                  '<button onclick="editarCombo('' + c._id + '')" style="padding:6px 10px;border-radius:6px;border:1px solid #e8e8ed;background:#f9f9f9;cursor:pointer;font-size:.75em;">✏️ Editar</button>' +
+                  '<button onclick="excluirCombo('' + c._id + '')" style="padding:6px 10px;border-radius:6px;border:1px solid rgba(239,68,68,.2);background:rgba(239,68,68,.05);color:#ef4444;cursor:pointer;font-size:.75em;">🗑️</button>' +
+                '</div>' +
+              '</div>' +
+            '</div>' +
+          '</div>';
+    }).join('');
+}
+
+function abrirModalCombo() {
+    document.getElementById('comboEditId').value = '';
+    document.getElementById('comboNome').value = '';
+    document.getElementById('comboDesc').value = '';
+    document.getElementById('comboPreco').value = '';
+    document.getElementById('comboPreviewBox').style.display = 'none';
+    comboImgGerada = '';
+    document.getElementById('modalComboTitulo').textContent = 'Novo Combo';
+    popularItensCombo();
+    document.getElementById('modalCombo').classList.add('show');
+}
+
+function fecharModalCombo() {
+    document.getElementById('modalCombo').classList.remove('show');
+}
+
+function popularItensCombo(selecionados) {
+    selecionados = selecionados || [];
+    var container = document.getElementById('comboItensSel');
+    if (!container) return;
+    var itens = (window.itensCadastrados || []);
+    if (!itens.length) {
+        // Tentar buscar
+        fetch('/api/delivery/cardapio', { headers: { 'x-token': token } })
+            .then(r => r.json())
+            .then(d => {
+                window.itensCadastrados = d.itens || d.cardapio || d || [];
+                popularItensCombo(selecionados);
+            });
+        return;
+    }
+    container.innerHTML = itens.map(function(item) {
+        var sel = selecionados.find(function(s){ return s.itemId === item._id; });
+        var qty = sel ? sel.quantidade : 0;
+        return '<div style="display:flex;align-items:center;gap:8px;padding:7px 6px;border-radius:6px;' + (qty > 0 ? 'background:#fff7ed;' : '') + '">' +
+            '<input type="checkbox" id="chk-' + item._id + '" ' + (qty > 0 ? 'checked' : '') + ' onchange="toggleItemCombo('' + item._id + '',this)" style="width:16px;height:16px;accent-color:#f97316;">' +
+            '<label for="chk-' + item._id + '" style="flex:1;font-size:.85em;cursor:pointer;">' + item.nome + ' <span style="color:#f97316;font-size:.8em;">R$ ' + Number(item.preco||0).toFixed(2).replace('.',',') + '</span></label>' +
+            '<div style="display:flex;align-items:center;gap:4px;">' +
+              '<button onclick="mudarQtyCombo('' + item._id + '',-1)" style="width:22px;height:22px;border-radius:50%;border:1px solid #ddd;background:#f9f9f9;cursor:pointer;font-size:.85em;display:flex;align-items:center;justify-content:center;">−</button>' +
+              '<span id="qty-' + item._id + '" style="font-size:.85em;font-weight:700;min-width:16px;text-align:center;">' + (qty||1) + '</span>' +
+              '<button onclick="mudarQtyCombo('' + item._id + '',1)" style="width:22px;height:22px;border-radius:50%;border:1px solid #ddd;background:#f9f9f9;cursor:pointer;font-size:.85em;display:flex;align-items:center;justify-content:center;">+</button>' +
+            '</div>' +
+          '</div>';
+    }).join('');
+}
+
+function toggleItemCombo(itemId, chk) {
+    var row = chk.closest('div[style]');
+    if (chk.checked) {
+        row.style.background = '#fff7ed';
+    } else {
+        row.style.background = '';
+    }
+}
+
+function mudarQtyCombo(itemId, delta) {
+    var el = document.getElementById('qty-' + itemId);
+    var chk = document.getElementById('chk-' + itemId);
+    var v = parseInt(el.textContent) + delta;
+    if (v < 1) v = 1;
+    el.textContent = v;
+    if (!chk.checked) chk.checked = true;
+}
+
+function getItensSelecionadosCombo() {
+    var itens = window.itensCadastrados || [];
+    return itens.filter(function(item) {
+        var chk = document.getElementById('chk-' + item._id);
+        return chk && chk.checked;
+    }).map(function(item) {
+        var qty = parseInt(document.getElementById('qty-' + item._id).textContent) || 1;
+        return { itemId: item._id, nome: item.nome, preco: item.preco, quantidade: qty };
+    });
+}
+
+async function gerarImagemCombo() {
+    var nome = document.getElementById('comboNome').value.trim();
+    var itensSel = getItensSelecionadosCombo();
+    if (!nome) { alert('Informe o nome do combo primeiro.'); return; }
+    if (!itensSel.length) { alert('Selecione pelo menos 1 item.'); return; }
+
+    var status = document.getElementById('comboImgStatus');
+    var preview = document.getElementById('comboPreviewBox');
+    var img = document.getElementById('comboImgPreview');
+    preview.style.display = 'block';
+    img.src = '';
+    status.textContent = '⏳ Gerando imagem com IA... aguarde...';
+
+    var prompt = 'Foto profissional de combo de restaurante: ' + nome + '. Inclui: ' + itensSel.map(function(i){ return i.quantidade + 'x ' + i.nome; }).join(', ') + '. Apresentação apetitosa, iluminação de estúdio, fundo neutro escuro, estilo delivery food photography.';
+
+    try {
+        var r = await fetch('/api/delivery/gerar-imagem', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'x-token': token },
+            body: JSON.stringify({ prompt: prompt, nome: nome })
+        });
+        var d = await r.json();
+        if (d.url || d.imagem) {
+            comboImgGerada = d.url || d.imagem;
+            img.src = comboImgGerada;
+            status.textContent = '✅ Imagem gerada! Salve o combo para confirmar.';
+        } else {
+            status.textContent = '❌ Erro: ' + (d.erro || 'Não foi possível gerar');
+        }
+    } catch(e) {
+        status.textContent = '❌ Erro ao gerar imagem: ' + e.message;
+    }
+}
+
+async function salvarCombo() {
+    var nome = document.getElementById('comboNome').value.trim();
+    var desc = document.getElementById('comboDesc').value.trim();
+    var preco = parseFloat(document.getElementById('comboPreco').value);
+    var editId = document.getElementById('comboEditId').value;
+    var itensSel = getItensSelecionadosCombo();
+
+    if (!nome) { alert('Informe o nome do combo.'); return; }
+    if (!preco || preco <= 0) { alert('Informe o preço do combo.'); return; }
+    if (!itensSel.length) { alert('Selecione pelo menos 1 item.'); return; }
+
+    var body = { nome: nome, descricao: desc, preco: preco, itens: itensSel, imagem: comboImgGerada };
+    var url = editId ? '/api/delivery/combos/' + editId : '/api/delivery/combos';
+    var method = editId ? 'PUT' : 'POST';
+
+    try {
+        var r = await fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json', 'x-token': token },
+            body: JSON.stringify(body)
+        });
+        var d = await r.json();
+        if (d._id || d.sucesso || d.combo) {
+            fecharModalCombo();
+            carregarCombos();
+            alert('✅ Combo salvo com sucesso!');
+        } else {
+            alert('Erro: ' + (d.erro || JSON.stringify(d)));
+        }
+    } catch(e) {
+        alert('Erro ao salvar: ' + e.message);
+    }
+}
+
+function editarCombo(id) {
+    var combo = combosData.find(function(c){ return c._id === id; });
+    if (!combo) return;
+    document.getElementById('comboEditId').value = combo._id;
+    document.getElementById('comboNome').value = combo.nome;
+    document.getElementById('comboDesc').value = combo.descricao || '';
+    document.getElementById('comboPreco').value = combo.preco;
+    document.getElementById('modalComboTitulo').textContent = 'Editar Combo';
+    comboImgGerada = combo.imagem || '';
+    if (combo.imagem) {
+        document.getElementById('comboPreviewBox').style.display = 'block';
+        document.getElementById('comboImgPreview').src = combo.imagem;
+        document.getElementById('comboImgStatus').textContent = 'Imagem atual';
+    }
+    popularItensCombo(combo.itens || []);
+    document.getElementById('modalCombo').classList.add('show');
+}
+
+async function excluirCombo(id) {
+    if (!confirm('Excluir este combo?')) return;
+    try {
+        await fetch('/api/delivery/combos/' + id, { method: 'DELETE', headers: { 'x-token': token } });
+        carregarCombos();
+    } catch(e) { alert('Erro ao excluir'); }
+}
+
+function baixarImagemCombo(url, nome) {
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = nome.replace(/[^a-z0-9]/gi, '_') + '_combo.jpg';
+    a.target = '_blank';
+    a.click();
+}
+
+// Carregar combos quando página for ativada
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.menu-item[data-page]').forEach(function(item) {
+        item.addEventListener('click', function() {
+            if (this.dataset.page === 'combos') carregarCombos();
+        });
+    });
+});
+
+
+
+// ═══════════════════════════════════════
+// PAGAMENTOS
+// ═══════════════════════════════════════
+function carregarPagamentos() {
+    fetch('/api/delivery/config', { headers: { 'x-token': token } })
+        .then(r => r.json())
+        .then(d => {
+            var pg = d.pagamentos || {};
+            var pixAtivo = document.getElementById('pgtoPixAtivo');
+            var cartaoAtivo = document.getElementById('pgtoCartaoAtivo');
+            var dinheiroAtivo = document.getElementById('pgtoDinheiroAtivo');
+            var pixChave = document.getElementById('pixChave');
+            var pixNome = document.getElementById('pixNome');
+            var pixTipo = document.getElementById('pixTipo');
+            if (pixAtivo) pixAtivo.checked = !!d.aceitaPix;
+            if (cartaoAtivo) cartaoAtivo.checked = !!d.aceitaCartao;
+            if (dinheiroAtivo) dinheiroAtivo.checked = !!d.aceitaDinheiro;
+            if (pixChave) pixChave.value = d.chavePix || '';
+            if (pixNome) pixNome.value = d.nomePix || '';
+            if (pixTipo) pixTipo.value = d.pixTipo || 'telefone';
+            togglePixDados();
+        }).catch(() => {});
+}
+
+function togglePixDados() {
+    var ativo = document.getElementById('pgtoPixAtivo');
+    var box = document.getElementById('pixDados');
+    if (box) box.style.display = (ativo && ativo.checked) ? 'block' : 'none';
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    var pixAtivo = document.getElementById('pgtoPixAtivo');
+    if (pixAtivo) pixAtivo.addEventListener('change', togglePixDados);
+});
+
+async function salvarPagamentos() {
+    togglePixDados();
+    var body = {
+        aceitaPix: document.getElementById('pgtoPixAtivo') ? document.getElementById('pgtoPixAtivo').checked : false,
+        aceitaCartao: document.getElementById('pgtoCartaoAtivo') ? document.getElementById('pgtoCartaoAtivo').checked : false,
+        aceitaDinheiro: document.getElementById('pgtoDinheiroAtivo') ? document.getElementById('pgtoDinheiroAtivo').checked : false,
+        chavePix: document.getElementById('pixChave') ? document.getElementById('pixChave').value : '',
+        nomePix: document.getElementById('pixNome') ? document.getElementById('pixNome').value : '',
+    };
+    try {
+        await fetch('/api/delivery/config', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'x-token': token },
+            body: JSON.stringify(body)
+        });
+        var st = document.getElementById('pgtoStatus');
+        if (st) { st.style.display = 'block'; setTimeout(() => st.style.display = 'none', 2000); }
+    } catch(e) {}
+}
+
+
 </script>
 
     <div id="modalEntregador" class="modal-overlay">
@@ -3119,299 +3414,6 @@ async function salvarEdicaoGarcom() {
 
 
 
-// ═══════════════════════════════════════
-// COMBOS
-// ═══════════════════════════════════════
-var combosData = [];
-var comboImgGerada = '';
-
-function carregarCombos() {
-    fetch('/api/delivery/combos', { headers: { 'x-token': token } })
-        .then(r => r.json())
-        .then(d => {
-            combosData = d.combos || d || [];
-            renderCombos();
-        })
-        .catch(() => { combosData = []; renderCombos(); });
-}
-
-function renderCombos() {
-    var lista = document.getElementById('combosLista');
-    if (!lista) return;
-    if (!combosData.length) {
-        lista.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:#aaa;">Nenhum combo cadastrado. Clique em "+ Novo Combo" para criar.</div>';
-        return;
-    }
-    lista.innerHTML = combosData.map(function(c) {
-        var total = (c.itens||[]).reduce(function(a,i){ return a + (i.preco||0)*(i.quantidade||1); }, 0);
-        var economia = total > c.preco ? 'Economia de R$ ' + (total - c.preco).toFixed(2).replace('.',',') : '';
-        return '<div style="background:#fff;border:1px solid #e8e8ed;border-radius:14px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.06);">' +
-            (c.imagem ? '<img src="' + c.imagem + '" style="width:100%;height:160px;object-fit:cover;">' :
-              '<div style="width:100%;height:80px;background:linear-gradient(135deg,#fff7ed,#fde8d0);display:flex;align-items:center;justify-content:center;font-size:2.5em;">🎁</div>') +
-            '<div style="padding:14px;">' +
-              '<div style="font-weight:800;font-size:.95em;margin-bottom:4px;">' + c.nome + '</div>' +
-              '<div style="font-size:.78em;color:#888;margin-bottom:8px;">' + (c.descricao||'') + '</div>' +
-              '<div style="font-size:.82em;color:#666;margin-bottom:8px;">' +
-                (c.itens||[]).map(function(i){ return '• ' + (i.quantidade||1) + 'x ' + (i.nome||i.itemId); }).join('<br>') +
-              '</div>' +
-              (economia ? '<div style="font-size:.75em;color:#22c55e;font-weight:700;margin-bottom:6px;">✅ ' + economia + '</div>' : '') +
-              '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;">' +
-                '<span style="font-size:1.1em;font-weight:900;color:#f97316;">R$ ' + Number(c.preco||0).toFixed(2).replace('.',',') + '</span>' +
-                '<div style="display:flex;gap:6px;">' +
-                  (c.imagem ? '<button onclick="baixarImagemCombo('' + c.imagem + '','' + c.nome + '')" style="padding:6px 10px;border-radius:6px;border:1px solid #e8e8ed;background:#f9f9f9;cursor:pointer;font-size:.75em;">📥 Imagem</button>' : '') +
-                  '<button onclick="editarCombo('' + c._id + '')" style="padding:6px 10px;border-radius:6px;border:1px solid #e8e8ed;background:#f9f9f9;cursor:pointer;font-size:.75em;">✏️ Editar</button>' +
-                  '<button onclick="excluirCombo('' + c._id + '')" style="padding:6px 10px;border-radius:6px;border:1px solid rgba(239,68,68,.2);background:rgba(239,68,68,.05);color:#ef4444;cursor:pointer;font-size:.75em;">🗑️</button>' +
-                '</div>' +
-              '</div>' +
-            '</div>' +
-          '</div>';
-    }).join('');
-}
-
-function abrirModalCombo() {
-    document.getElementById('comboEditId').value = '';
-    document.getElementById('comboNome').value = '';
-    document.getElementById('comboDesc').value = '';
-    document.getElementById('comboPreco').value = '';
-    document.getElementById('comboPreviewBox').style.display = 'none';
-    comboImgGerada = '';
-    document.getElementById('modalComboTitulo').textContent = 'Novo Combo';
-    popularItensCombo();
-    document.getElementById('modalCombo').classList.add('show');
-}
-
-function fecharModalCombo() {
-    document.getElementById('modalCombo').classList.remove('show');
-}
-
-function popularItensCombo(selecionados) {
-    selecionados = selecionados || [];
-    var container = document.getElementById('comboItensSel');
-    if (!container) return;
-    var itens = (window.itensCadastrados || []);
-    if (!itens.length) {
-        // Tentar buscar
-        fetch('/api/delivery/cardapio', { headers: { 'x-token': token } })
-            .then(r => r.json())
-            .then(d => {
-                window.itensCadastrados = d.itens || d.cardapio || d || [];
-                popularItensCombo(selecionados);
-            });
-        return;
-    }
-    container.innerHTML = itens.map(function(item) {
-        var sel = selecionados.find(function(s){ return s.itemId === item._id; });
-        var qty = sel ? sel.quantidade : 0;
-        return '<div style="display:flex;align-items:center;gap:8px;padding:7px 6px;border-radius:6px;' + (qty > 0 ? 'background:#fff7ed;' : '') + '">' +
-            '<input type="checkbox" id="chk-' + item._id + '" ' + (qty > 0 ? 'checked' : '') + ' onchange="toggleItemCombo('' + item._id + '',this)" style="width:16px;height:16px;accent-color:#f97316;">' +
-            '<label for="chk-' + item._id + '" style="flex:1;font-size:.85em;cursor:pointer;">' + item.nome + ' <span style="color:#f97316;font-size:.8em;">R$ ' + Number(item.preco||0).toFixed(2).replace('.',',') + '</span></label>' +
-            '<div style="display:flex;align-items:center;gap:4px;">' +
-              '<button onclick="mudarQtyCombo('' + item._id + '',-1)" style="width:22px;height:22px;border-radius:50%;border:1px solid #ddd;background:#f9f9f9;cursor:pointer;font-size:.85em;display:flex;align-items:center;justify-content:center;">−</button>' +
-              '<span id="qty-' + item._id + '" style="font-size:.85em;font-weight:700;min-width:16px;text-align:center;">' + (qty||1) + '</span>' +
-              '<button onclick="mudarQtyCombo('' + item._id + '',1)" style="width:22px;height:22px;border-radius:50%;border:1px solid #ddd;background:#f9f9f9;cursor:pointer;font-size:.85em;display:flex;align-items:center;justify-content:center;">+</button>' +
-            '</div>' +
-          '</div>';
-    }).join('');
-}
-
-function toggleItemCombo(itemId, chk) {
-    var row = chk.closest('div[style]');
-    if (chk.checked) {
-        row.style.background = '#fff7ed';
-    } else {
-        row.style.background = '';
-    }
-}
-
-function mudarQtyCombo(itemId, delta) {
-    var el = document.getElementById('qty-' + itemId);
-    var chk = document.getElementById('chk-' + itemId);
-    var v = parseInt(el.textContent) + delta;
-    if (v < 1) v = 1;
-    el.textContent = v;
-    if (!chk.checked) chk.checked = true;
-}
-
-function getItensSelecionadosCombo() {
-    var itens = window.itensCadastrados || [];
-    return itens.filter(function(item) {
-        var chk = document.getElementById('chk-' + item._id);
-        return chk && chk.checked;
-    }).map(function(item) {
-        var qty = parseInt(document.getElementById('qty-' + item._id).textContent) || 1;
-        return { itemId: item._id, nome: item.nome, preco: item.preco, quantidade: qty };
-    });
-}
-
-async function gerarImagemCombo() {
-    var nome = document.getElementById('comboNome').value.trim();
-    var itensSel = getItensSelecionadosCombo();
-    if (!nome) { alert('Informe o nome do combo primeiro.'); return; }
-    if (!itensSel.length) { alert('Selecione pelo menos 1 item.'); return; }
-
-    var status = document.getElementById('comboImgStatus');
-    var preview = document.getElementById('comboPreviewBox');
-    var img = document.getElementById('comboImgPreview');
-    preview.style.display = 'block';
-    img.src = '';
-    status.textContent = '⏳ Gerando imagem com IA... aguarde...';
-
-    var prompt = 'Foto profissional de combo de restaurante: ' + nome + '. Inclui: ' + itensSel.map(function(i){ return i.quantidade + 'x ' + i.nome; }).join(', ') + '. Apresentação apetitosa, iluminação de estúdio, fundo neutro escuro, estilo delivery food photography.';
-
-    try {
-        var r = await fetch('/api/delivery/gerar-imagem', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'x-token': token },
-            body: JSON.stringify({ prompt: prompt, nome: nome })
-        });
-        var d = await r.json();
-        if (d.url || d.imagem) {
-            comboImgGerada = d.url || d.imagem;
-            img.src = comboImgGerada;
-            status.textContent = '✅ Imagem gerada! Salve o combo para confirmar.';
-        } else {
-            status.textContent = '❌ Erro: ' + (d.erro || 'Não foi possível gerar');
-        }
-    } catch(e) {
-        status.textContent = '❌ Erro ao gerar imagem: ' + e.message;
-    }
-}
-
-async function salvarCombo() {
-    var nome = document.getElementById('comboNome').value.trim();
-    var desc = document.getElementById('comboDesc').value.trim();
-    var preco = parseFloat(document.getElementById('comboPreco').value);
-    var editId = document.getElementById('comboEditId').value;
-    var itensSel = getItensSelecionadosCombo();
-
-    if (!nome) { alert('Informe o nome do combo.'); return; }
-    if (!preco || preco <= 0) { alert('Informe o preço do combo.'); return; }
-    if (!itensSel.length) { alert('Selecione pelo menos 1 item.'); return; }
-
-    var body = { nome: nome, descricao: desc, preco: preco, itens: itensSel, imagem: comboImgGerada };
-    var url = editId ? '/api/delivery/combos/' + editId : '/api/delivery/combos';
-    var method = editId ? 'PUT' : 'POST';
-
-    try {
-        var r = await fetch(url, {
-            method: method,
-            headers: { 'Content-Type': 'application/json', 'x-token': token },
-            body: JSON.stringify(body)
-        });
-        var d = await r.json();
-        if (d._id || d.sucesso || d.combo) {
-            fecharModalCombo();
-            carregarCombos();
-            alert('✅ Combo salvo com sucesso!');
-        } else {
-            alert('Erro: ' + (d.erro || JSON.stringify(d)));
-        }
-    } catch(e) {
-        alert('Erro ao salvar: ' + e.message);
-    }
-}
-
-function editarCombo(id) {
-    var combo = combosData.find(function(c){ return c._id === id; });
-    if (!combo) return;
-    document.getElementById('comboEditId').value = combo._id;
-    document.getElementById('comboNome').value = combo.nome;
-    document.getElementById('comboDesc').value = combo.descricao || '';
-    document.getElementById('comboPreco').value = combo.preco;
-    document.getElementById('modalComboTitulo').textContent = 'Editar Combo';
-    comboImgGerada = combo.imagem || '';
-    if (combo.imagem) {
-        document.getElementById('comboPreviewBox').style.display = 'block';
-        document.getElementById('comboImgPreview').src = combo.imagem;
-        document.getElementById('comboImgStatus').textContent = 'Imagem atual';
-    }
-    popularItensCombo(combo.itens || []);
-    document.getElementById('modalCombo').classList.add('show');
-}
-
-async function excluirCombo(id) {
-    if (!confirm('Excluir este combo?')) return;
-    try {
-        await fetch('/api/delivery/combos/' + id, { method: 'DELETE', headers: { 'x-token': token } });
-        carregarCombos();
-    } catch(e) { alert('Erro ao excluir'); }
-}
-
-function baixarImagemCombo(url, nome) {
-    var a = document.createElement('a');
-    a.href = url;
-    a.download = nome.replace(/[^a-z0-9]/gi, '_') + '_combo.jpg';
-    a.target = '_blank';
-    a.click();
-}
-
-// Carregar combos quando página for ativada
-document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.menu-item[data-page]').forEach(function(item) {
-        item.addEventListener('click', function() {
-            if (this.dataset.page === 'combos') carregarCombos();
-        });
-    });
-});
-
-
-
-// ═══════════════════════════════════════
-// PAGAMENTOS
-// ═══════════════════════════════════════
-function carregarPagamentos() {
-    fetch('/api/delivery/config', { headers: { 'x-token': token } })
-        .then(r => r.json())
-        .then(d => {
-            var pg = d.pagamentos || {};
-            var pixAtivo = document.getElementById('pgtoPixAtivo');
-            var cartaoAtivo = document.getElementById('pgtoCartaoAtivo');
-            var dinheiroAtivo = document.getElementById('pgtoDinheiroAtivo');
-            var pixChave = document.getElementById('pixChave');
-            var pixNome = document.getElementById('pixNome');
-            var pixTipo = document.getElementById('pixTipo');
-            if (pixAtivo) pixAtivo.checked = !!d.aceitaPix;
-            if (cartaoAtivo) cartaoAtivo.checked = !!d.aceitaCartao;
-            if (dinheiroAtivo) dinheiroAtivo.checked = !!d.aceitaDinheiro;
-            if (pixChave) pixChave.value = d.chavePix || '';
-            if (pixNome) pixNome.value = d.nomePix || '';
-            if (pixTipo) pixTipo.value = d.pixTipo || 'telefone';
-            togglePixDados();
-        }).catch(() => {});
-}
-
-function togglePixDados() {
-    var ativo = document.getElementById('pgtoPixAtivo');
-    var box = document.getElementById('pixDados');
-    if (box) box.style.display = (ativo && ativo.checked) ? 'block' : 'none';
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-    var pixAtivo = document.getElementById('pgtoPixAtivo');
-    if (pixAtivo) pixAtivo.addEventListener('change', togglePixDados);
-});
-
-async function salvarPagamentos() {
-    togglePixDados();
-    var body = {
-        aceitaPix: document.getElementById('pgtoPixAtivo') ? document.getElementById('pgtoPixAtivo').checked : false,
-        aceitaCartao: document.getElementById('pgtoCartaoAtivo') ? document.getElementById('pgtoCartaoAtivo').checked : false,
-        aceitaDinheiro: document.getElementById('pgtoDinheiroAtivo') ? document.getElementById('pgtoDinheiroAtivo').checked : false,
-        chavePix: document.getElementById('pixChave') ? document.getElementById('pixChave').value : '',
-        nomePix: document.getElementById('pixNome') ? document.getElementById('pixNome').value : '',
-    };
-    try {
-        await fetch('/api/delivery/config', {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json', 'x-token': token },
-            body: JSON.stringify(body)
-        });
-        var st = document.getElementById('pgtoStatus');
-        if (st) { st.style.display = 'block'; setTimeout(() => st.style.display = 'none', 2000); }
-    } catch(e) {}
-}
-
-</script>
 
 
 
