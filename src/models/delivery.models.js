@@ -32,6 +32,16 @@ const ItemCardapioSchema = new mongoose.Schema({
     disponivel: { type: Boolean, default: true },
     bebidaVolume: { type: String, default: '' },
     bebidaEstoque: { type: Number, default: 0 },
+    // Açaí
+    acaiTamanho: { type: String, default: null },
+    acaiEstoque: { type: Number, default: null },
+    acaiAcompanhamentos: { type: String, default: null },
+    // Marmita
+    marmitaTamanho: { type: String, default: null },
+    marmitaPeso: { type: String, default: null },
+    marmitaEstoque: { type: Number, default: null },
+    marmitaConteudo: { type: String, default: null },
+    marmitaTipo: { type: String, default: null },
     // Controle de estoque
     estoqueAtivo: { type: Boolean, default: false },   // se false, não controla estoque
     estoqueAtual: { type: Number, default: 0 },        // unidades restantes
