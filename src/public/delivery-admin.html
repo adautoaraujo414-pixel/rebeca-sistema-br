@@ -1386,12 +1386,12 @@
             const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
             <title>Comanda #${p.numero||'?'}</title>
             <style>
-                body{font-family:monospace;max-width:300px;margin:0 auto;padding:10px;font-size:13px}
+                
                 h2{text-align:center;margin:0;font-size:16px}
                 .sep{border-top:1px dashed #000;margin:8px 0}
                 table{width:100%;border-collapse:collapse}
                 .total{font-weight:bold;font-size:15px}
-                @media print{body{max-width:100%}}
+                @media print{}
             </style></head><body>
             <h2>${adminData?.nomeComercio || 'Delivery'}</h2>
             <div class="sep"></div>
@@ -2848,7 +2848,7 @@ async function gerarImagemCombo() {
     }
 }
 
-async async function salvarCombo() {
+async function salvarCombo() {
     var nome = document.getElementById('comboNome').value.trim();
     var desc = document.getElementById('comboDesc').value.trim();
     var preco = parseFloat(document.getElementById('comboPreco').value);
