@@ -84,45 +84,14 @@ const EvolutionMultiService = {
                 return { sucesso: true, jaConectado: true, status: 'conectado' };
             }
 
-            // 3. Se existe mas desconectada, deletar
-            if (existe) {
-                try {
-                    await axios.delete(instancia.apiUrl + '/instance/delete/' + instancia.nomeInstancia, { headers: gH });
-                    console.log('[EVO] Deletada:', instancia.nomeInstancia);
-                } catch (e) { console.log('[EVO] Erro delete (ok):', e.message); }
-                await new Promise(r => setTimeout(r, 3000));
-            }
-
-            // 4. Criar instancia v2 COM webhook no body
+            // 3. Nunca deletar — só chamar /connect direto
             try {
-                const cr = await axios.post(instancia.apiUrl + '/instance/create', {
-                    instanceName: instancia.nomeInstancia,
-                    integration: 'WHATSAPP-BAILEYS',
-                    qrcode: true,
-                    webhook: {
-                        url: webhookUrl,
-                        webhookByEvents: false,
-                        webhookBase64: false,
-                        enabled: true,
-                        events: ['MESSAGES_UPSERT', 'CONNECTION_UPDATE', 'MESSAGES_UPDATE']
-                    }
-                }, { headers: gH });
-                console.log('[EVO] Criada OK:', JSON.stringify(cr.data).substring(0, 400));
-                // v2: hash e objeto {apikey: "..."}
-                if (cr.data?.hash?.apikey) instancia.apiKey = cr.data.hash.apikey;
-                else if (cr.data?.hash && typeof cr.data.hash === 'string') instancia.apiKey = cr.data.hash;
-                // QR pode vir no create
-                if (cr.data?.qrcode?.base64) qrData = cr.data.qrcode.base64;
-                else if (cr.data?.qrcode) qrData = cr.data.qrcode;
-            } catch (e) {
-                console.log('[EVO] Erro criar:', JSON.stringify(e.response?.data || e.message));
-                // Tentar connect direto se ja existe
-                try {
-                    const cn = await axios.get(instancia.apiUrl + '/instance/connect/' + instancia.nomeInstancia, { headers: gH });
-                    console.log('[EVO] Connect OK:', JSON.stringify(cn.data).substring(0, 300));
-                    if (cn.data?.base64) qrData = cn.data.base64;
-                    else if (cn.data?.code) qrData = cn.data.code;
-                } catch (e2) { console.log('[EVO] Connect falhou:', e2.response?.status, e2.response?.data?.response?.message?.[0] || e2.message); }
+                const cn = await axios.get(instancia.apiUrl + '/instance/connect/' + instancia.nomeInstancia, { headers: gH });
+                console.log('[EVO] Connect OK:', JSON.stringify(cn.data).substring(0, 300));
+                if (cn.data?.base64) qrData = cn.data.base64;
+                else if (cn.data?.code) qrData = cn.data.code;
+            } catch (e) { console.log('[EVO] Connect falhou:', e.response?.status, e.message); }
+
             }
 
             // 5. Configurar webhook v2 (aguardar instancia pronta)
