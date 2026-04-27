@@ -68,13 +68,12 @@ const EvolutionMultiService = {
             let qrData = null;
 
             // 1. Verificar status atual
-            let existe = false, conectada = false;
+            let conectada = false;
             try {
                 const sr = await axios.get(instancia.apiUrl + '/instance/connectionState/' + instancia.nomeInstancia, { headers: gH });
-                existe = true;
                 conectada = sr.data?.instance?.state === 'open';
                 console.log('[EVO] Status:', sr.data?.instance?.state);
-            } catch (e) { console.log('[EVO] Instancia nao existe no Evolution'); }
+            } catch (e) { console.log('[EVO] Erro status:', e.message); }
 
             // 2. Se conectada, retornar
             if (conectada) {
@@ -84,40 +83,33 @@ const EvolutionMultiService = {
                 return { sucesso: true, jaConectado: true, status: 'conectado' };
             }
 
-            // 3. Nunca deletar — só chamar /connect direto
+            // 3. Chamar /connect direto (nunca deletar)
             try {
                 const cn = await axios.get(instancia.apiUrl + '/instance/connect/' + instancia.nomeInstancia, { headers: gH });
                 console.log('[EVO] Connect OK:', JSON.stringify(cn.data).substring(0, 300));
                 if (cn.data?.base64) qrData = cn.data.base64;
                 else if (cn.data?.code) qrData = cn.data.code;
-
             } catch (e) { console.log('[EVO] Connect falhou:', e.response?.status, e.message); }
-            // 5. Configurar webhook v2 (aguardar instancia pronta)
-            await new Promise(r => setTimeout(r, 3000));
-            const whKey = instancia.apiKey || EVOLUTION_GLOBAL_KEY;
+
+            // 4. Configurar webhook
             try {
                 const wr = await axios.post(instancia.apiUrl + '/webhook/set/' + instancia.nomeInstancia, {
-                    webhook: {
-                        enabled: true,
-                        url: webhookUrl,
-                        webhookByEvents: false,
-                        webhookBase64: false,
-                        events: ['MESSAGES_UPSERT', 'CONNECTION_UPDATE', 'MESSAGES_UPDATE']
-                    }
-                }, { headers: { 'apikey': whKey, 'Content-Type': 'application/json' } });
+                    webhook: { url: webhookUrl, enabled: true, webhookByEvents: false, webhookBase64: false, events: ['MESSAGES_UPSERT', 'CONNECTION_UPDATE', 'QRCODE_UPDATED'] }
+                }, { headers: gH });
                 console.log('[EVO] Webhook OK:', webhookUrl);
                 console.log('[EVO] Webhook resp:', JSON.stringify(wr.data).substring(0, 200));
             } catch (e) { console.log('[EVO] Webhook FALHOU:', e.response?.status, JSON.stringify(e.response?.data || e.message)); }
 
-            // 6. Salvar
-            instancia.qrCode = qrData || null;
-            instancia.qrCodeExpira = new Date(Date.now() + 60000);
-            instancia.status = 'conectando';
-            instancia.webhookUrl = webhookUrl;
+            // 5. Salvar QR no banco
+            instancia.qrCode = qrData;
+            instancia.status = 'desconectado';
             await instancia.save();
-            console.log('[EVO] QR salvo, tem base64:', !!qrData);
-            return { sucesso: true, qrCode: instancia.qrCode, expira: instancia.qrCodeExpira };
-        } catch (e) { console.log('[EVO] ERRO GERAL:', e.message); return { sucesso: false, erro: e.message }; }
+            console.log('[EVO] QR salvo, tem base64:', !!(qrData && qrData.startsWith && qrData.startsWith('data:')));
+            return { sucesso: true, qrCode: qrData, instancia };
+        } catch (e) {
+            console.log('[EVO] gerarQRCode erro:', e.message);
+            return { sucesso: false, erro: e.message };
+        }
     },
     verificarStatus: async (instanciaId) => {
         try {
