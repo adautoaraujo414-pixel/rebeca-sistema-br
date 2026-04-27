@@ -1971,4 +1971,28 @@ router.get('/combos-publicos/:adminId', async (req, res) => {
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
+
+// Config pública (pagamentos para o cardápio digital)
+router.get('/config-publica/:adminId', async (req, res) => {
+    try {
+        const admin = await AdminDelivery.findById(req.params.adminId);
+        if (!admin) return res.status(404).json({ erro: 'Não encontrado' });
+        const config = await ConfigDelivery.findOne({ adminId: admin._id });
+        if (!config) return res.json({ pagamentos: {} });
+        res.json({
+            pagamentos: {
+                pix: config.aceitaPix,
+                cartao: config.aceitaCartao,
+                dinheiro: config.aceitaDinheiro,
+                pixChave: config.chavePix || '',
+                pixNome: config.nomePix || '',
+                pixTipo: 'telefone'
+            },
+            tempoEntrega: config.tempoMedioEntrega,
+            taxaEntrega: config.taxaEntregaFixa,
+            pedidoMinimo: config.pedidoMinimo
+        });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
 module.exports = router;

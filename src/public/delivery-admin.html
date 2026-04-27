@@ -3370,12 +3370,12 @@ function carregarPagamentos() {
             var pixChave = document.getElementById('pixChave');
             var pixNome = document.getElementById('pixNome');
             var pixTipo = document.getElementById('pixTipo');
-            if (pixAtivo) pixAtivo.checked = !!pg.pix;
-            if (cartaoAtivo) cartaoAtivo.checked = !!pg.cartao;
-            if (dinheiroAtivo) dinheiroAtivo.checked = !!pg.dinheiro;
-            if (pixChave) pixChave.value = pg.pixChave || '';
-            if (pixNome) pixNome.value = pg.pixNome || '';
-            if (pixTipo) pixTipo.value = pg.pixTipo || 'telefone';
+            if (pixAtivo) pixAtivo.checked = !!d.aceitaPix;
+            if (cartaoAtivo) cartaoAtivo.checked = !!d.aceitaCartao;
+            if (dinheiroAtivo) dinheiroAtivo.checked = !!d.aceitaDinheiro;
+            if (pixChave) pixChave.value = d.chavePix || '';
+            if (pixNome) pixNome.value = d.nomePix || '';
+            if (pixTipo) pixTipo.value = d.pixTipo || 'telefone';
             togglePixDados();
         }).catch(() => {});
 }
@@ -3393,19 +3393,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
 async function salvarPagamentos() {
     togglePixDados();
-    var pg = {
-        pix: document.getElementById('pgtoPixAtivo') ? document.getElementById('pgtoPixAtivo').checked : false,
-        cartao: document.getElementById('pgtoCartaoAtivo') ? document.getElementById('pgtoCartaoAtivo').checked : false,
-        dinheiro: document.getElementById('pgtoDinheiroAtivo') ? document.getElementById('pgtoDinheiroAtivo').checked : false,
-        pixChave: document.getElementById('pixChave') ? document.getElementById('pixChave').value : '',
-        pixNome: document.getElementById('pixNome') ? document.getElementById('pixNome').value : '',
-        pixTipo: document.getElementById('pixTipo') ? document.getElementById('pixTipo').value : 'telefone'
+    var body = {
+        aceitaPix: document.getElementById('pgtoPixAtivo') ? document.getElementById('pgtoPixAtivo').checked : false,
+        aceitaCartao: document.getElementById('pgtoCartaoAtivo') ? document.getElementById('pgtoCartaoAtivo').checked : false,
+        aceitaDinheiro: document.getElementById('pgtoDinheiroAtivo') ? document.getElementById('pgtoDinheiroAtivo').checked : false,
+        chavePix: document.getElementById('pixChave') ? document.getElementById('pixChave').value : '',
+        nomePix: document.getElementById('pixNome') ? document.getElementById('pixNome').value : '',
     };
     try {
         await fetch('/api/delivery/config', {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json', 'x-token': token },
-            body: JSON.stringify({ pagamentos: pg })
+            body: JSON.stringify(body)
         });
         var st = document.getElementById('pgtoStatus');
         if (st) { st.style.display = 'block'; setTimeout(() => st.style.display = 'none', 2000); }
