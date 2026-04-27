@@ -604,6 +604,13 @@
                                 <label style="font-size:.8em;font-weight:700;color:#555;display:block;margin-bottom:5px;">Cidade de Atuação</label>
                                 <input type="text" id="cfgCidade" placeholder="Ex: Uberlândia - MG" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid #ddd;font-family:inherit;font-size:.9em;box-sizing:border-box;">
                             </div>
+                            <div>
+                                <label style="font-size:.8em;font-weight:700;color:#555;display:block;margin-bottom:5px;">🖼️ Logo / Foto do Estabelecimento (URL)</label>
+                                <input type="url" id="cfgLogoUrl" placeholder="https://..." style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid #ddd;font-family:inherit;font-size:.9em;box-sizing:border-box;">
+                                <div id="cfgLogoPreview" style="margin-top:8px;display:none;">
+                                    <img id="cfgLogoImg" style="max-height:80px;border-radius:8px;border:1px solid #ddd;" onerror="this.parentNode.style.display='none'">
+                                </div>
+                            </div>
                             <div style="display:flex;align-items:center;gap:10px;margin-top:4px;">
                                 <button onclick="salvarDadosEstabelecimento()" style="background:#f97316;color:#fff;border:none;border-radius:8px;padding:10px 22px;font-weight:700;cursor:pointer;font-size:.88em;">💾 Salvar Dados</button>
                                 <div id="cfgEstabStatus" style="display:none;color:#22c55e;font-size:.82em;font-weight:700;">✅ Salvo!</div>
@@ -2997,6 +3004,8 @@ async function salvarDadosEstabelecimento() {
     if (endereco && endereco.value.trim()) body.endereco = endereco.value.trim();
     var cidade = document.getElementById('cfgCidade');
     if (cidade && cidade.value.trim()) body.cidade = cidade.value.trim();
+    var logoUrl = document.getElementById('cfgLogoUrl');
+    if (logoUrl && logoUrl.value.trim()) body.logo = logoUrl.value.trim();
     try {
         await fetch('/api/delivery/config', {
             method: 'PUT',
@@ -3021,6 +3030,24 @@ async function carregarDadosEstabelecimento() {
         set('cfgMinimo', cfg.pedidoMinimo);
         set('cfgEndereco', cfg.endereco);
         set('cfgCidade', cfg.cidade);
+        set('cfgLogoUrl', cfg.logo);
+        // Refletir estado aberto/fechado no botão
+        var btnAberto = document.querySelector('[onclick="toggleAberto()"]');
+        if (btnAberto && cfg.aberto !== undefined) {
+            var ab = cfg.aberto !== false;
+            btnAberto.textContent = ab ? '🟢 ABERTO' : '🔴 FECHADO';
+            btnAberto.style.background = ab ? '#00cc6a' : '#e53935';
+            btnAberto.style.color = ab ? '#000' : '#fff';
+        }
+        var prev = document.getElementById('cfgLogoPreview');
+        var img = document.getElementById('cfgLogoImg');
+        if (prev && img && cfg.logo) { img.src = cfg.logo; prev.style.display = 'block'; }
+        var inp = document.getElementById('cfgLogoUrl');
+        if (inp) inp.oninput = function() {
+            var p = document.getElementById('cfgLogoPreview');
+            var i = document.getElementById('cfgLogoImg');
+            if (p && i && this.value) { i.src = this.value; p.style.display = 'block'; }
+        };
     } catch(e) {}
 }
 </script>

@@ -171,6 +171,7 @@ const ConfigDeliverySchema = new mongoose.Schema({
     raioEntregaKm: { type: Number, default: 10 },
     pedidoMinimo: { type: Number, default: null },
     cidade: { type: String, default: null },
+    logo: { type: String, default: null },
     aceitaPix: { type: Boolean, default: true },
     chavePix: String,
     nomePix: String,

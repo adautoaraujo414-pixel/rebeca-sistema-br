@@ -83,6 +83,8 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 .modal-img-ph{width:100%;height:140px;background:linear-gradient(135deg,var(--surface2),var(--surface3));display:flex;align-items:center;justify-content:center;font-size:4em}
 .modal-body{padding:20px}
 .modal-name{font-size:1.2em;font-weight:800;margin-bottom:6px}
+.modal-tag-cat{display:inline-block;background:rgba(249,115,22,.12);color:var(--accent);font-size:.78em;font-weight:700;padding:4px 10px;border-radius:20px;margin:4px 4px 4px 0;border:1px solid rgba(249,115,22,.3)}
+.modal-tag-conteudo{font-size:.78em;color:var(--text2);margin:4px 0 8px;padding:6px 10px;background:var(--surface2);border-radius:8px;line-height:1.5}
 .modal-desc{font-size:.85em;color:var(--text2);line-height:1.6;margin-bottom:12px}
 .modal-price{font-size:1.1em;font-weight:800;color:var(--accent);margin-bottom:20px}
 .modal-section{margin-bottom:18px}
@@ -764,7 +766,12 @@ function abrirItem(item) {
     imgHtml +
     '<div class="modal-body">' +
       '<div class="modal-name">' + item.nome + '</div>' +
-      '<div class="modal-desc">' + (item.descricao||'Sem descrição') + '</div>' +
+      '<div class="modal-desc">' + (item.descricao||'') + '</div>' +
+      (item.bebidaVolume ? '<div class="modal-tag-cat">🥤 ' + item.bebidaVolume + '</div>' : '') +
+      (item.acaiTamanho ? '<div class="modal-tag-cat">🍇 ' + item.acaiTamanho + (item.acaiAcompanhamentos ? ' · ' + item.acaiAcompanhamentos : '') + '</div>' : '') +
+      (item.marmitaTamanho ? '<div class="modal-tag-cat">🍱 Tamanho ' + item.marmitaTamanho + (item.marmitaPeso ? ' · ' + item.marmitaPeso : '') + '</div>' : '') +
+      (item.marmitaConteudo ? '<div class="modal-tag-conteudo">📋 ' + item.marmitaConteudo + '</div>' : '') +
+      (item.marmitaTipo === 'self' ? '<div class="modal-tag-cat">⚖️ Self-service (por kg)</div>' : '') +
       '<div class="modal-price">R$ ' + Number(item.preco||0).toFixed(2).replace('.',',') + '</div>' +
       ingrsHtml +
       '<div class="modal-section"><div class="modal-section-title">📝 Observações</div>' +
