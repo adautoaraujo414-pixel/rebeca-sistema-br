@@ -2699,14 +2699,14 @@ function popularItensCombo(selecionados) {
     var itens = (window.itensCadastrados || []);
     if (!itens.length) {
         var tkC = localStorage.getItem('delivery_token') || token || '';
-        fetch('/api/delivery/itens', { headers: { 'x-token': tkC } })
+        fetch('/api/delivery/itens', { headers: { 'Authorization': 'Bearer ' + tkC } })
             .then(function(r){ return r.json(); })
             .then(function(d) {
                 window.itensCadastrados = Array.isArray(d) ? d : (d.itens || d.cardapio || []);
                 popularItensCombo(selecionados);
             }).catch(function(e){
                 // fallback rota cardapio
-                fetch('/api/delivery/cardapio', { headers: { 'x-token': tkC } })
+                fetch('/api/delivery/cardapio', { headers: { 'Authorization': 'Bearer ' + tkC } })
                 .then(function(r2){ return r2.json(); })
                 .then(function(d2){
                     window.itensCadastrados = Array.isArray(d2) ? d2 : (d2.itens || d2.cardapio || []);
@@ -3024,7 +3024,7 @@ async function salvarDadosEstabelecimento() {
 async function carregarDadosEstabelecimento() {
     try {
         var tk = localStorage.getItem('delivery_token') || token || '';
-        var r = await fetch('/api/delivery/config', { headers: { 'x-token': tk } });
+        var r = await fetch('/api/delivery/config', { headers: { 'Authorization': 'Bearer ' + tk } });
         var cfg = await r.json();
         var set = function(id, val) { var el = document.getElementById(id); if (el && val !== undefined && val !== null) el.value = val; };
         set('cfgNomeEstabelecimento', cfg.nomeRestaurante);
