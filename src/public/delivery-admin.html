@@ -1722,7 +1722,7 @@ async function _salvarItemReal() {
 
         async function salvarConfig() {
             await api('/config', { method: 'PUT', body: JSON.stringify({
-                nomeRestaurante: document.getElementById('cfgNome').value,
+                nomeRestaurante: document.getElementById('cfgNomeEstabelecimento')?.value || '',
                 aceitaDinheiro: document.getElementById('cfgAceitaDinheiro')?.checked !== false,
                 aceitaCartao: !!document.getElementById('cfgAceitaCartao')?.checked,
                 aceitaPix: !!document.getElementById('cfgAceitaPix')?.checked,
@@ -2872,9 +2872,10 @@ async function salvarPagamentos() {
         nomePix: document.getElementById('pixNome') ? document.getElementById('pixNome').value : '',
     };
     try {
+        var tk = localStorage.getItem('delivery_token') || token || '';
         await fetch('/api/delivery/config', {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json', 'x-token': token },
+            headers: { 'Content-Type': 'application/json', 'x-token': tk },
             body: JSON.stringify(body)
         });
         var st = document.getElementById('pgtoStatus');
@@ -2913,7 +2914,8 @@ async function salvarDadosEstabelecimento() {
 
 async function carregarDadosEstabelecimento() {
     try {
-        var r = await fetch('/api/delivery/config', { headers: { 'x-token': token } });
+        var tk = localStorage.getItem('delivery_token') || token || '';
+        var r = await fetch('/api/delivery/config', { headers: { 'x-token': tk } });
         var cfg = await r.json();
         var set = function(id, val) { var el = document.getElementById(id); if (el && val !== undefined && val !== null) el.value = val; };
         set('cfgNomeEstabelecimento', cfg.nomeRestaurante);
