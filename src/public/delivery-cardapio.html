@@ -778,19 +778,21 @@ async function finalizarPedido() {
 
   try {
     var total = carrinho.reduce(function(a,b){ return a + b.preco * b.qty; }, 0);
+    var troco = pgtoSelecionado === 'dinheiro' ? document.getElementById('campoTroco').value : null;
     var body = {
       adminId: adminId,
       nomeCliente: nome,
-      telefone: tel,
-      tipo: tipoAtual,
-      endereco: tipoAtual === 'entrega' ? end : '',
-      observacoes: obs,
+      telefoneCliente: tel,
+      enderecoEntrega: tipoAtual === 'entrega' ? end : '',
+      formaPagamento: pgtoSelecionado || 'dinheiro',
+      troco: troco,
+      observacaoGeral: obs,
       itens: carrinho.map(function(c){ return { itemId: c.itemId, nome: c.nome, preco: c.preco, quantidade: c.qty, obs: c.obs }; }),
-      pagamento: pgtoSelecionado,
-      troco: pgtoSelecionado === 'dinheiro' ? document.getElementById('campoTroco').value : '',
-      total: total
+      total: total,
+      taxaEntrega: 0,
+      tipo: tipoAtual
     };
-    var r = await fetch('/api/delivery/pedido-publico', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+    var r = await fetch('/api/delivery/pedido-cardapio-digital', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
     var d = await r.json();
     if (d.sucesso || d._id) {
       fecharCarrinho();
