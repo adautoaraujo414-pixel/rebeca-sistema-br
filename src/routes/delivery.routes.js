@@ -211,6 +211,11 @@ router.put('/pedidos/:id/status', authDelivery, async (req, res) => {
                     if (status === 'saiu_entrega') {
                         const linkRastreio = (process.env.BASE_URL || 'https://rebeca-sistema-br.onrender.com') + '/delivery-rastrear/' + pedido._id.toString().slice(-8);
                         msg = '🏍️ Pedido #' + pedido.numero + ' saiu para entrega!\n\n📍 Acompanhe: ' + linkRastreio;
+                        // Enviar link rastreamento via ReciboDeliveryService (salva linkEnviado no banco)
+                        try {
+                            const ReciboDeliveryService = require('../services/recibo-delivery.service');
+                            await ReciboDeliveryService.enviarLinkRastreamento(req.adminId, pedido._id, linkRastreio);
+                        } catch(re) { console.log('[RASTREAMENTO] Erro service:', re.message); }
                     }
                     if (status === 'entregue') msg = '✅ Pedido #' + pedido.numero + ' entregue! Obrigado pela preferência! 😊\n\nAvalie de 1 a 5 ⭐';
                     if (status === 'cancelado') msg = '❌ Pedido #' + pedido.numero + ' cancelado. ' + (req.body.motivo || '');
