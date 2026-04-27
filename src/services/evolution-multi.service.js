@@ -8,9 +8,13 @@ const EvolutionMultiService = {
     criarInstancia: async (adminId, nomeEmpresa) => {
         try {
             // ✅ SEMPRE reaproveitar instância existente — nunca criar duplicata
+            const { Types: { ObjectId: ObjId } } = require('mongoose');
             const adminIdStr = adminId.toString();
             const existente = await InstanciaWhatsapp.findOne({
-                adminId: adminIdStr
+                $or: [
+                    { adminId: ObjId.isValid(adminId) ? new ObjId(adminId) : adminId },
+                    { adminId: adminIdStr }
+                ]
             }).sort({ createdAt: -1 }).lean();
             console.log('[EVO] Buscando instancia para adminId:', adminIdStr, '| encontrou:', existente ? existente.nomeInstancia : 'NENHUMA');
             if (existente) {
