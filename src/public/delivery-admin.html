@@ -1329,10 +1329,10 @@
             try {
                 const res = await api('/dashboard');
                 const d = await res.json();
-                document.getElementById('statPedidosHoje').textContent = d.pedidosHoje || 0;
-                document.getElementById('statPedidosAtivos').textContent = d.pedidosAtivos || 0;
-                document.getElementById('statFaturamento').textContent = 'R$ ' + (d.faturamentoSemana || 0).toFixed(2);
-                document.getElementById('statPedidosSemana').textContent = d.pedidosSemana || 0;
+                if(document.getElementById('statPedidosHoje')) document.getElementById('statPedidosHoje').textContent = d.pedidosHoje || 0;
+                if(document.getElementById('statPedidosAtivos')) document.getElementById('statPedidosAtivos').textContent = d.pedidosAtivos || 0;
+                if(document.getElementById('statFaturamento')) document.getElementById('statFaturamento').textContent = 'R$ ' + (d.faturamentoSemana || 0).toFixed(2);
+                if(document.getElementById('statPedidosSemana')) document.getElementById('statPedidosSemana').textContent = d.pedidosSemana || 0;
                 
                 const res2 = await api('/pedidos/ativos');
                 const ativos = await res2.json();
@@ -1341,7 +1341,7 @@
 
                 const cfgRes = await api('/config');
                 const cfg = await cfgRes.json();
-                document.getElementById('nomeRestaurante').textContent = '• ' + (cfg.nomeRestaurante || '');
+                if(document.getElementById('nomeRestaurante')) document.getElementById('nomeRestaurante').textContent = '• ' + (cfg.nomeRestaurante || '');
             } catch(e) { console.log(e); }
         }
 
@@ -1774,26 +1774,13 @@ async function _salvarItemReal() {
             const res = await api('/config');
             const c = await res.json();
             document.getElementById('cfgNome').value = c.nomeRestaurante || '';
-            document.getElementById('cfgAceitaDinheiro').checked = c.aceitaDinheiro !== false;
-            document.getElementById('cfgAceitaCartao').checked = !!c.aceitaCartao;
-            document.getElementById('cfgAceitaPix').checked = c.aceitaPix !== false;
-            document.getElementById('cfgChavePix').value = c.chavePix || '';
-            document.getElementById('cfgNomePix').value = c.nomePix || '';
+            if(document.getElementById('cfgAceitaDinheiro')) document.getElementById('cfgAceitaDinheiro').checked = c.aceitaDinheiro !== false;
+            if(document.getElementById('cfgAceitaCartao')) document.getElementById('cfgAceitaCartao').checked = !!c.aceitaCartao;
+            if(document.getElementById('cfgAceitaPix')) document.getElementById('cfgAceitaPix').checked = c.aceitaPix !== false;
+            if(document.getElementById('cfgChavePix')) document.getElementById('cfgChavePix').value = c.chavePix || '';
+            if(document.getElementById('cfgNomePix')) document.getElementById('cfgNomePix').value = c.nomePix || '';
             if (document.getElementById('cfgBancoPix')) document.getElementById('cfgBancoPix').value = c.bancoPix || '';
             if (document.getElementById('cfgPixQrUrl')) document.getElementById('cfgPixQrUrl').value = c.pixQrUrl || '';
-            // Mostrar/ocultar grupo pix
-            var grupoPix = document.getElementById('grupoPix');
-            if (grupoPix) grupoPix.style.display = c.aceitaPix !== false ? 'flex' : 'none';
-            var cfgPix = document.getElementById('cfgAceitaPix');
-            if (cfgPix) cfgPix.addEventListener('change', function(){ document.getElementById('grupoPix').style.display = this.checked ? 'flex' : 'none'; document.getElementById('grupoPixNome').style.display = this.checked ? 'flex' : 'none'; document.getElementById('grupoPixBanco').style.display = this.checked ? 'flex' : 'none'; });
-            document.getElementById('cfgAceitaDinheiro').checked = c.aceitaDinheiro !== false;
-            document.getElementById('cfgAceitaCartao').checked = !!c.aceitaCartao;
-            document.getElementById('cfgAceitaPix').checked = c.aceitaPix !== false;
-            document.getElementById('cfgChavePix').value = c.chavePix || '';
-            document.getElementById('cfgNomePix').value = c.nomePix || '';
-            if (document.getElementById('cfgBancoPix')) document.getElementById('cfgBancoPix').value = c.bancoPix || '';
-            if (document.getElementById('cfgPixQrUrl')) document.getElementById('cfgPixQrUrl').value = c.pixQrUrl || '';
-            // Mostrar/ocultar grupo pix
             var grupoPix = document.getElementById('grupoPix');
             if (grupoPix) grupoPix.style.display = c.aceitaPix !== false ? 'flex' : 'none';
             var cfgPix = document.getElementById('cfgAceitaPix');

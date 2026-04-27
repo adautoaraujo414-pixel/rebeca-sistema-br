@@ -7,6 +7,12 @@ const EVOLUTION_GLOBAL_KEY = process.env.EVOLUTION_API_KEY || '';
 const EvolutionMultiService = {
     criarInstancia: async (adminId, nomeEmpresa) => {
         try {
+            // ✅ SEMPRE reaproveitar instância existente — nunca criar duplicata
+            const existente = await InstanciaWhatsapp.findOne({ adminId }).sort({ createdAt: -1 }).lean();
+            if (existente) {
+                console.log('[EVO] Instancia existente encontrada:', existente.nomeInstancia);
+                return { sucesso: true, instancia: existente, existente: true };
+            }
             // Buscar em Admin (corridas) ou AdminDelivery
             let admin = await Admin.findById(adminId);
             if (!admin) {
