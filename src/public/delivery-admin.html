@@ -295,6 +295,12 @@
                       <div id="comboItensSel" style="max-height:220px;overflow-y:auto;border:1px solid #e8e8ed;border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:4px;"></div>
                     </div>
 
+                    <div style="display:flex;align-items:center;gap:10px;margin-top:8px;margin-bottom:4px;">
+                      <label style="font-size:.8em;font-weight:700;color:#666;white-space:nowrap;">🏷️ Desconto (%)</label>
+                      <input type="number" id="comboDesconto" min="0" max="90" step="1" placeholder="0" oninput="atualizarSomaCombo()" style="width:80px;padding:6px 10px;border-radius:6px;border:1px solid #ddd;font-family:inherit;font-size:.9em;">
+                      <div id="comboEconomiaInfo" style="display:none;font-size:.75em;color:#22c55e;font-weight:700;"></div>
+                    </div>
+
                     <div id="comboPreviewBox" style="display:none;margin-bottom:16px;background:#f9f9f9;border-radius:10px;padding:12px;border:1px solid #e8e8ed;">
                       <div style="font-size:.78em;font-weight:700;color:#666;margin-bottom:8px;">🖼️ Imagem gerada pela IA</div>
                       <img id="comboImgPreview" src="" style="width:100%;border-radius:8px;max-height:200px;object-fit:cover;">
@@ -2516,23 +2522,28 @@ function renderCombos() {
         return;
     }
     lista.innerHTML = combosData.map(function(c) {
-        var total = (c.itens||[]).reduce(function(a,i){ return a + (i.preco||0)*(i.quantidade||1); }, 0);
-        var economia = total > c.preco ? 'Economia de R$ ' + (total - c.preco).toFixed(2).replace('.',',') : '';
+        var soma = (c.itens||[]).reduce(function(a,i){ return a + (i.preco||0)*(i.quantidade||1); }, 0);
+        var economia = soma > c.preco ? soma - c.preco : 0;
+        var descPct = soma > 0 && economia > 0 ? Math.round((economia/soma)*100) : 0;
         return '<div style="background:#fff;border:1px solid #e8e8ed;border-radius:14px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.06);">' +
             (c.imagem ? '<img src="' + c.imagem + '" style="width:100%;height:160px;object-fit:cover;">' :
               '<div style="width:100%;height:80px;background:linear-gradient(135deg,#fff7ed,#fde8d0);display:flex;align-items:center;justify-content:center;font-size:2.5em;">🎁</div>') +
             '<div style="padding:14px;">' +
-              '<div style="font-weight:800;font-size:.95em;margin-bottom:4px;">' + c.nome + '</div>' +
-              '<div style="font-size:.78em;color:#888;margin-bottom:8px;">' + (c.descricao||'') + '</div>' +
-              '<div style="font-size:.82em;color:#666;margin-bottom:8px;">' +
-                (c.itens||[]).map(function(i){ return '• ' + (i.quantidade||1) + 'x ' + (i.nome||i.itemId); }).join('<br>') +
+              '<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">' +
+                '<div style="font-weight:800;font-size:.95em;">' + c.nome + '</div>' +
+                (descPct > 0 ? '<span style="background:#22c55e;color:#fff;font-size:.65em;font-weight:800;padding:2px 7px;border-radius:20px;">-' + descPct + '%</span>' : '') +
               '</div>' +
-              (economia ? '<div style="font-size:.75em;color:#22c55e;font-weight:700;margin-bottom:6px;">✅ ' + economia + '</div>' : '') +
+              '<div style="font-size:.78em;color:#888;margin-bottom:8px;">' + (c.descricao||'') + '</div>' +
+              '<div style="font-size:.8em;color:#555;margin-bottom:8px;line-height:1.7;">' +
+                (c.itens||[]).map(function(i){ return '• ' + (i.quantidade||1) + 'x ' + (i.nome||i.itemId) + ' <span style="color:#f97316;">R$' + ((i.preco||0)*(i.quantidade||1)).toFixed(2).replace(".",",") + '</span>'; }).join('<br>') +
+              '</div>' +
+              (soma > 0 ? '<div style="font-size:.75em;color:#aaa;text-decoration:line-through;margin-bottom:2px;">Avulso: R$ ' + soma.toFixed(2).replace(".",",") + '</div>' : '') +
+              (economia > 0 ? '<div style="font-size:.75em;color:#22c55e;font-weight:700;margin-bottom:6px;">✅ Economia de R$ ' + economia.toFixed(2).replace(".",",") + '</div>' : '') +
               '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;">' +
-                '<span style="font-size:1.1em;font-weight:900;color:#f97316;">R$ ' + Number(c.preco||0).toFixed(2).replace('.',',') + '</span>' +
+                '<span style="font-size:1.15em;font-weight:900;color:#f97316;">R$ ' + Number(c.preco||0).toFixed(2).replace(".",",") + '</span>' +
                 '<div style="display:flex;gap:6px;">' +
-                  (c.imagem ? '<button onclick="baixarImagemCombo(this.dataset.img, this.dataset.nome)" style="padding:6px 10px;border-radius:6px;border:1px solid #e8e8ed;background:#f9f9f9;cursor:pointer;font-size:.75em;">📥 Imagem</button>' : '') +
-                  '<button data-id="' + c._id + '" onclick="editarCombo(this.dataset.id)" style="padding:6px 10px;border-radius:6px;border:1px solid #e8e8ed;background:#f9f9f9;cursor:pointer;font-size:.75em;">✏️ Editar</button>' +
+                  (c.imagem ? '<button data-img="' + c.imagem + '" data-nome="' + c.nome + '" onclick="baixarImagemCombo(this.dataset.img,this.dataset.nome)" style="padding:6px 10px;border-radius:6px;border:1px solid #e8e8ed;background:#f9f9f9;cursor:pointer;font-size:.75em;">📥</button>' : '') +
+                  '<button data-id="' + c._id + '" onclick="editarCombo(this.dataset.id)" style="padding:6px 10px;border-radius:6px;border:1px solid #e8e8ed;background:#f9f9f9;cursor:pointer;font-size:.75em;">✏️</button>' +
                   '<button data-id="' + c._id + '" onclick="excluirCombo(this.dataset.id)" style="padding:6px 10px;border-radius:6px;border:1px solid rgba(239,68,68,.2);background:rgba(239,68,68,.05);color:#ef4444;cursor:pointer;font-size:.75em;">🗑️</button>' +
                 '</div>' +
               '</div>' +
@@ -2563,10 +2574,9 @@ function popularItensCombo(selecionados) {
     if (!container) return;
     var itens = (window.itensCadastrados || []);
     if (!itens.length) {
-        // Tentar buscar
         fetch('/api/delivery/cardapio', { headers: { 'x-token': token } })
-            .then(r => r.json())
-            .then(d => {
+            .then(function(r){ return r.json(); })
+            .then(function(d) {
                 window.itensCadastrados = d.itens || d.cardapio || d || [];
                 popularItensCombo(selecionados);
             });
@@ -2574,36 +2584,86 @@ function popularItensCombo(selecionados) {
     }
     container.innerHTML = itens.map(function(item) {
         var sel = selecionados.find(function(s){ return s.itemId === item._id; });
-        var qty = sel ? sel.quantidade : 0;
-        return '<div style="display:flex;align-items:center;gap:8px;padding:7px 6px;border-radius:6px;' + (qty > 0 ? 'background:#fff7ed;' : '') + '">' +
-            '<input type="checkbox" id="chk-' + item._id + '" ' + (qty > 0 ? 'checked' : '') + ' data-iid="' + item._id + '" onchange="toggleItemCombo(this.dataset.iid,this)" style="width:16px;height:16px;accent-color:#f97316;">' +
-            '<label for="chk-' + item._id + '" style="flex:1;font-size:.85em;cursor:pointer;">' + item.nome + ' <span style="color:#f97316;font-size:.8em;">R$ ' + Number(item.preco||0).toFixed(2).replace('.',',') + '</span></label>' +
+        var qty = sel ? (sel.quantidade||1) : 1;
+        var checked = !!sel;
+        return '<div style="display:flex;align-items:center;gap:8px;padding:8px 6px;border-radius:8px;border:1px solid ' + (checked ? '#fed7aa' : '#f0f0f0') + ';background:' + (checked ? '#fff7ed' : '#fafafa') + ';margin-bottom:4px;" id="row-' + item._id + '">' +
+            '<input type="checkbox" id="chk-' + item._id + '" ' + (checked ? 'checked' : '') + ' data-iid="' + item._id + '" onchange="toggleItemCombo(this.dataset.iid,this)" style="width:16px;height:16px;accent-color:#f97316;flex-shrink:0;">' +
+            '<label for="chk-' + item._id + '" style="flex:1;font-size:.84em;cursor:pointer;line-height:1.3;">' +
+                item.nome + '<br><span style="color:#f97316;font-size:.85em;">R$ ' + Number(item.preco||0).toFixed(2).replace(".",",") + ' / unid</span>' +
+            '</label>' +
             '<div style="display:flex;align-items:center;gap:4px;">' +
-              '<button data-iid="' + item._id + '" onclick="mudarQtyCombo(this.dataset.iid,-1)" style="width:22px;height:22px;border-radius:50%;border:1px solid #ddd;background:#f9f9f9;cursor:pointer;font-size:.85em;display:flex;align-items:center;justify-content:center;">−</button>' +
-              '<span id="qty-' + item._id + '" style="font-size:.85em;font-weight:700;min-width:16px;text-align:center;">' + (qty||1) + '</span>' +
-              '<button data-iid="' + item._id + '" onclick="mudarQtyCombo(this.dataset.iid,1)" style="width:22px;height:22px;border-radius:50%;border:1px solid #ddd;background:#f9f9f9;cursor:pointer;font-size:.85em;display:flex;align-items:center;justify-content:center;">+</button>' +
+                '<button data-iid="' + item._id + '" onclick="mudarQtyCombo(this.dataset.iid,-1)" style="width:26px;height:26px;border-radius:50%;border:1px solid #ddd;background:#fff;cursor:pointer;font-size:1em;display:flex;align-items:center;justify-content:center;font-weight:700;">−</button>' +
+                '<span id="qty-' + item._id + '" style="font-size:.9em;font-weight:800;min-width:20px;text-align:center;">' + qty + '</span>' +
+                '<button data-iid="' + item._id + '" onclick="mudarQtyCombo(this.dataset.iid,1)" style="width:26px;height:26px;border-radius:50%;border:1px solid #ddd;background:#fff;cursor:pointer;font-size:1em;display:flex;align-items:center;justify-content:center;font-weight:700;">+</button>' +
             '</div>' +
-          '</div>';
+            '<div style="font-size:.78em;color:#888;min-width:50px;text-align:right;" id="subtotal-' + item._id + '">' +
+                (checked ? 'R$ ' + (Number(item.preco||0)*qty).toFixed(2).replace(".",",") : '') +
+            '</div>' +
+        '</div>';
     }).join('');
+    atualizarSomaCombo();
+}
+
+function atualizarSomaCombo() {
+    var itens = window.itensCadastrados || [];
+    var soma = 0;
+    itens.forEach(function(item) {
+        var chk = document.getElementById('chk-' + item._id);
+        var qty = parseInt((document.getElementById('qty-' + item._id)||{}).textContent||'1');
+        var sub = document.getElementById('subtotal-' + item._id);
+        if (chk && chk.checked) {
+            var val = Number(item.preco||0) * qty;
+            soma += val;
+            if (sub) sub.textContent = 'R$ ' + val.toFixed(2).replace('.',',');
+        } else {
+            if (sub) sub.textContent = '';
+        }
+    });
+    var somaEl = document.getElementById('comboSomaItens');
+    var descEl = document.getElementById('comboDesconto');
+    if (somaEl) somaEl.textContent = 'R$ ' + soma.toFixed(2).replace('.',',');
+    // Aplicar desconto automático no preço
+    if (descEl && soma > 0) {
+        var pct = parseFloat(descEl.value) || 0;
+        var preco = soma * (1 - pct/100);
+        var precoEl = document.getElementById('comboPreco');
+        if (precoEl && pct > 0) precoEl.value = preco.toFixed(2);
+        var econEl = document.getElementById('comboEconomiaInfo');
+        if (econEl) {
+            if (pct > 0) {
+                econEl.textContent = '✅ Economia de R$ ' + (soma - preco).toFixed(2).replace('.',',') + ' (' + pct + '% off)';
+                econEl.style.display = 'block';
+            } else {
+                econEl.style.display = 'none';
+            }
+        }
+    }
 }
 
 function toggleItemCombo(itemId, chk) {
-    var row = chk.closest('div[style]');
-    if (chk.checked) {
-        row.style.background = '#fff7ed';
-    } else {
-        row.style.background = '';
+    var row = document.getElementById('row-' + itemId);
+    if (row) {
+        row.style.border = chk.checked ? '1px solid #fed7aa' : '1px solid #f0f0f0';
+        row.style.background = chk.checked ? '#fff7ed' : '#fafafa';
     }
+    atualizarSomaCombo();
 }
 
 function mudarQtyCombo(itemId, delta) {
     var el = document.getElementById('qty-' + itemId);
     var chk = document.getElementById('chk-' + itemId);
+    if (!el) return;
     var v = parseInt(el.textContent) + delta;
     if (v < 1) v = 1;
     el.textContent = v;
-    if (!chk.checked) chk.checked = true;
+    if (chk && !chk.checked) { chk.checked = true; toggleItemCombo(itemId, chk); }
+    atualizarSomaCombo();
 }
+
+
+
+
+
 
 function getItensSelecionadosCombo() {
     var itens = window.itensCadastrados || [];
