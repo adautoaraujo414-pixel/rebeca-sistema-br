@@ -412,3 +412,5 @@ console.log('✅ Cron cardápio do dia ativo (7h)');
 DeliveryTrialService.verificarTrialsVencidos();
 console.log('✅ Cron delivery trial ativo');
 
+
+// redeploy Mon Apr 27 18:18:58 UTC 2026
