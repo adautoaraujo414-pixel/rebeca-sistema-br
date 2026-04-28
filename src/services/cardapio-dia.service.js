@@ -54,7 +54,7 @@ const CardapioDiaService = {
             + `Pode mandar assim:\n_Arroz, feijão, frango grelhado, salada e suco_\n\n`
             + `Que eu cuido do resto com muito carinho! 💪`;
 
-        await EvolutionMultiService.enviarMensagem(instancia._id.toString(), admin.telefone, msg);
+        await EvolutionMultiService.enviarMensagem(instancia._id.toString(), telDono, msg);
         _aguardandoCardapio.set(adminId, { ts: Date.now(), instanciaId: instancia._id.toString() });
         console.log('[CARDAPIO-DIA] Pergunta enviada para admin', adminId);
     },

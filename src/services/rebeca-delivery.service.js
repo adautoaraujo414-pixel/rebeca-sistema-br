@@ -108,9 +108,12 @@ class RebecaDeliveryService {
     }
 
     async processarMensagem(telefone, conteudo, nome, contexto) {
-        const { adminId, instanciaId } = contexto;
+        const { adminId, instanciaId, isAssinante, assinante, cardapioHoje } = contexto;
         const conversa = this.obterConversa(telefone, adminId);
         conversa.clienteNome = nome;
+        if (isAssinante) conversa.isAssinante = true;
+        if (assinante) conversa.assinante = assinante;
+        if (cardapioHoje) conversa.cardapioHoje = cardapioHoje;
 
         try {
             // Suporte a áudio: Evolution manda texto transcrito em conteudo.text ou conteudo
@@ -161,6 +164,17 @@ class RebecaDeliveryService {
     async _etapaInicio(conversa, msgLower, msgTexto, nome, cliente, config, nomeRest, adminId) {
         if (config?.aberto === false) {
             return `😴 O *${nomeRest}* tá fechado agora.\n🕐 Horário: ${config.horarioFuncionamento || '—'}\n\nVolta mais tarde que a gente tá aqui! 😊`;
+        }
+
+        // ── FLUXO ASSINANTE: mostrar cardápio do dia ──
+        if (conversa.isAssinante && conversa.cardapioHoje) {
+            const primeiroNome = nome ? nome.split(' ')[0] : '';
+            conversa.etapa = 'montando_pedido';
+            return this._unico(conversa, [
+                `Oi${primeiroNome ? ' ' + primeiroNome : ''}! 😊 Hoje no *${nomeRest}* temos:\n\n${conversa.cardapioHoje}\n\nO que você vai querer na sua marmita? 🍱`,
+                `${primeiroNome ? primeiroNome + ', q' : 'Q'}ue bom te ver! 💛 O cardápio de hoje é:\n\n${conversa.cardapioHoje}\n\nMe fala o que vai querer! 😋`,
+                `Olá${primeiroNome ? ' ' + primeiroNome : ''}! 🌟 O cardápio de hoje:\n\n${conversa.cardapioHoje}\n\nEscolhe aí e me fala! 🍽️`,
+            ]);
         }
 
         // Detecção rápida de pedido na primeira mensagem
