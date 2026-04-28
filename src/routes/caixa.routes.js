@@ -2,18 +2,17 @@ const express      = require('express');
 const router       = express.Router();
 const CaixaService = require('../services/caixa.service');
 
+const { AdminDelivery } = require('../models/delivery.models');
 const auth = async (req, res, next) => {
     try {
         const token = (req.headers.authorization||'').replace('Bearer ','') || req.query.token;
         if (!token) return res.status(401).json({ erro: 'Token ausente' });
-        const jwt = require('jsonwebtoken');
-        const { Admin } = require('../models');
-        const dec = jwt.verify(token, process.env.JWT_SECRET || 'rebeca_secret');
-        const admin = await Admin.findById(dec.id || dec._id).lean();
-        if (!admin) return res.status(401).json({ erro: 'Admin nao encontrado' });
+        const admin = await AdminDelivery.findOne({ token }).lean();
+        if (!admin) return res.status(401).json({ erro: 'Token invalido' });
         req.admin = admin;
+        req.adminId = admin._id;
         next();
-    } catch(e) { return res.status(401).json({ erro: 'Token invalido' }); }
+    } catch(e) { return res.status(401).json({ erro: 'Erro auth: ' + e.message }); }
 };
 
 router.post('/abrir', auth, async (req, res) => {
