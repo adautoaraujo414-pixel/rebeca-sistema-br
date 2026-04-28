@@ -742,7 +742,7 @@ function criarCardCombo(combo) {
 
   var imgHtml = '<div style="position:relative;">' +
     (combo.imagem
-      ? '<img class="item-img" src="' + combo.imagem + '" loading="lazy" onerror="this.style.display=\'none\'">'
+      ? '<img class="item-img" src="' + combo.imagem + '" loading="lazy" onerror="this.onerror=null;this.style.display=\'none\'">' 
       : '<div class="item-img-ph">🎁</div>') +
     badgeDesconto + badgeDestaque +
   '</div>';
