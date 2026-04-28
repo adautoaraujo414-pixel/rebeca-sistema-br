@@ -172,8 +172,16 @@ const EvolutionMultiService = {
             let numero = telefone.replace(/\D/g, '');
             if (numero.length <= 11) numero = '55' + numero;
             
-            // Delay natural curto
-            const delay = Math.min(500 + (mensagem.length * 10), 1500);
+            // Mostrar "digitando..." antes de responder — efeito imersivo
+            try {
+                await axios.post(instancia.apiUrl + '/chat/presence/' + instancia.nomeInstancia,
+                    { number: numero, presence: 'composing', delay: Math.min(800 + (mensagem.length * 25), 4000) },
+                    { headers: { 'apikey': instancia.apiKey || EVOLUTION_GLOBAL_KEY, 'Content-Type': 'application/json' }, timeout: 5000 }
+                );
+            } catch(_) {} // silencioso se nao suportar
+
+            // Delay natural proporcional ao tamanho da mensagem
+            const delay = Math.min(800 + (mensagem.length * 25), 4000);
             await new Promise(r => setTimeout(r, delay));
             
             try {
