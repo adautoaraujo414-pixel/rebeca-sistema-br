@@ -113,7 +113,7 @@ const CardapioDiaService = {
 
             if (!assinantes.length) return 0;
 
-            const instancia = await InstanciaWhatsapp.findOne({ adminId, ativa: true }).lean();
+            const instancia = await InstanciaWhatsapp.findOne({ adminId }).lean();
             if (!instancia) return 0;
 
             const config = await ConfigDelivery.findOne({ adminId }).lean();
