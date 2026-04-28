@@ -937,19 +937,32 @@ function atualizarBadgesCards() {
     badge.className = 'item-badge-cart' + (qty > 0 ? ' show' : '');
   });
 }
-
 function atualizarCartUI() {
-  var total = carrinho.reduce(function(a,b){ return a + b.preco * b.qty; }, 0);
+  var subtotal = carrinho.reduce(function(a,b){ return a + b.preco * b.qty; }, 0);
+  var taxaEnt  = (tipoAtual === 'entrega') ? (window.cfgTaxaEntrega || 0) : 0;
+  var taxaGarc = (window.cfgGarcomAtivo && window.cfgGarcomPerc > 0) ? Math.round(subtotal * window.cfgGarcomPerc / 100 * 100) / 100 : 0;
+  var taxaBand = window.cfgBandaAtivo ? (window.cfgBandaValor || 0) : 0;
+  var total    = subtotal + taxaEnt + taxaGarc + taxaBand;
   var qtd = carrinho.reduce(function(a,b){ return a + b.qty; }, 0);
   var fab = document.getElementById('cartFab');
+  var fmt = function(v){ return 'R$ ' + Number(v).toFixed(2).replace('.',','); };
   if (qtd > 0) {
     fab.classList.add('show');
     document.getElementById('cartBadge').textContent = qtd;
-    document.getElementById('cartFabTotal').textContent = 'R$ ' + total.toFixed(2).replace('.',',');
+    document.getElementById('cartFabTotal').textContent = fmt(total);
   } else {
     fab.classList.remove('show');
   }
-  document.getElementById('cartTotal').textContent = 'R$ ' + total.toFixed(2).replace('.',',');
+  document.getElementById('cartTotal').textContent = fmt(total);
+  var sub = document.getElementById('cartSubtotal');
+  if (sub) sub.textContent = fmt(subtotal);
+  var rowEnt = document.getElementById('rowTaxaEntrega');
+  if (rowEnt) { rowEnt.style.display = taxaEnt > 0 ? 'flex' : 'none'; var el = document.getElementById('cartTaxaEntrega'); if(el) el.textContent = fmt(taxaEnt); }
+  var rowGarc = document.getElementById('rowTaxaGarcom');
+  if (rowGarc) { rowGarc.style.display = taxaGarc > 0 ? 'flex' : 'none'; var el2 = document.getElementById('cartTaxaGarcom'); if(el2) el2.textContent = fmt(taxaGarc); }
+  var rowBand = document.getElementById('rowTaxaBanda');
+  if (rowBand) { rowBand.style.display = taxaBand > 0 ? 'flex' : 'none'; var el3 = document.getElementById('cartTaxaBanda'); if(el3) el3.textContent = fmt(taxaBand); }
+}
 }
 
 function abrirCarrinho() {
@@ -1044,7 +1057,11 @@ async function finalizarPedido() {
   document.getElementById('btnFinalizar').textContent = 'Enviando...';
 
   try {
-    var total = carrinho.reduce(function(a,b){ return a + b.preco * b.qty; }, 0);
+    var subtotalFin = carrinho.reduce(function(a,b){ return a + b.preco * b.qty; }, 0);
+    var taxaEntFin  = (tipoAtual === 'entrega') ? (window.cfgTaxaEntrega || 0) : 0;
+    var taxaGarcFin = (window.cfgGarcomAtivo && window.cfgGarcomPerc > 0) ? Math.round(subtotalFin * window.cfgGarcomPerc / 100 * 100) / 100 : 0;
+    var taxaBandFin = window.cfgBandaAtivo ? (window.cfgBandaValor || 0) : 0;
+    var total = subtotalFin + taxaEntFin + taxaGarcFin + taxaBandFin;
     var troco = pgtoSelecionado === 'dinheiro' ? document.getElementById('campoTroco').value : null;
     var body = {
       adminId: adminId,
