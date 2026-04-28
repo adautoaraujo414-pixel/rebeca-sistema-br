@@ -842,6 +842,49 @@ router.post('/pedido/:id/contato-cliente', async (req, res) => {
 
 // ========== ASSINANTES ==========
 // ===== CARDÁPIO DO DIA — TOGGLE E CONFIGURAÇÃO =====
+// ===== CARDÁPIO SEMANAL MARMITARIA =====
+const DIAS = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+
+router.get('/cardapio-semanal', authDelivery, async (req, res) => {
+    try {
+        const { CardapioSemanal } = require('../models/delivery.models');
+        const cardapios = await CardapioSemanal.find({ adminId: req.adminId }).sort({ diaSemana: 1 }).lean();
+        res.json({ cardapios });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+router.get('/cardapio-semanal/hoje', async (req, res) => {
+    try {
+        const { CardapioSemanal, AdminDelivery } = require('../models/delivery.models');
+        const { adminId } = req.query;
+        if (!adminId) return res.status(400).json({ erro: 'adminId obrigatorio' });
+        const hoje = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' })).getDay();
+        const cardapio = await CardapioSemanal.findOne({ adminId, diaSemana: hoje, ativo: true }).lean();
+        res.json({ cardapio, diaSemana: hoje, nomeDia: DIAS[hoje] });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+router.post('/cardapio-semanal', authDelivery, async (req, res) => {
+    try {
+        const { CardapioSemanal } = require('../models/delivery.models');
+        const { diaSemana, nomePrato, ingredientes, adicionais, tamanhos, ativo } = req.body;
+        const cardapio = await CardapioSemanal.findOneAndUpdate(
+            { adminId: req.adminId, diaSemana },
+            { adminId: req.adminId, diaSemana, nomePrato, ingredientes, adicionais, tamanhos, ativo: ativo !== false },
+            { upsert: true, new: true }
+        );
+        res.json({ sucesso: true, cardapio });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+router.delete('/cardapio-semanal/:diaSemana', authDelivery, async (req, res) => {
+    try {
+        const { CardapioSemanal } = require('../models/delivery.models');
+        await CardapioSemanal.findOneAndDelete({ adminId: req.adminId, diaSemana: req.params.diaSemana });
+        res.json({ sucesso: true });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
 router.get('/cardapio-dia/config', authDelivery, async (req, res) => {
     try {
         const admin = await AdminDelivery.findById(req.adminId).lean();

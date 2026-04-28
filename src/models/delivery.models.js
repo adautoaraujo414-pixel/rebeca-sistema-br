@@ -285,6 +285,33 @@ const MensalidadeClienteDelivery = mongoose.models.MensalidadeClienteDelivery ||
 module.exports.MensalidadeClienteDelivery = MensalidadeClienteDelivery;
 
 // ===== CARDÁPIO DO DIA =====
+// ===== CARDÁPIO SEMANAL MARMITARIA =====
+const CardapioSemanalSchema = new mongoose.Schema({
+    adminId: { type: mongoose.Schema.Types.ObjectId, required: true, index: true },
+    diaSemana: { type: Number, required: true }, // 0=dom,1=seg,2=ter,3=qua,4=qui,5=sex,6=sab
+    nomePrato: { type: String, required: true }, // Ex: "Frango Grelhado com Arroz"
+    ingredientes: [{ // ingredientes inclusos no preço base
+        nome: String,
+        destaque: { type: Boolean, default: false }
+    }],
+    adicionais: [{ // opcionais pagos
+        nome: String,
+        preco: { type: Number, default: 0 },
+        descricao: String
+    }],
+    tamanhos: [{ // P, M, G, GG com preços
+        tamanho: String,
+        preco: Number,
+        peso: String
+    }],
+    ativo: { type: Boolean, default: true },
+    imagemGerada: { type: String, default: '' }, // URL ou base64 da imagem gerada
+}, { timestamps: true });
+
+CardapioSemanalSchema.index({ adminId: 1, diaSemana: 1 });
+const CardapioSemanal = mongoose.models.CardapioSemanal || mongoose.model('CardapioSemanal', CardapioSemanalSchema);
+module.exports.CardapioSemanal = CardapioSemanal;
+
 const CardapioDiaSchema = new mongoose.Schema({
     adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin', required: true, index: true },
     data: { type: String, required: true }, // formato YYYY-MM-DD

@@ -186,6 +186,7 @@
                 <div class="menu-item" data-page="assinantes">👥 Assinantes</div>
                 <div class="menu-item" data-page="estoque">📦 Estoque</div>
                 <div class="menu-item" data-page="cardapio-dia">🍽️ Cardápio do Dia</div>
+                <div class="menu-item" data-page="cardapio-semanal">🍱 Cardápio Semanal</div>
                 <div class="menu-item" data-page="config">⚙️ Configurações</div>
                 <div class="menu-item" onclick="window.open('/delivery-migracao?token='+(localStorage.getItem('delivery_token')||token),'_blank')" style="cursor:pointer">🔄 Migrar Sistema</div>
             </div>
@@ -532,6 +533,125 @@
                             </div>
                         </div>
                         <div id="listaAssinantes"><p style="color:#888;text-align:center;padding:30px;">Carregando...</p></div>
+                    </div>
+                </div>
+
+                <div id="page-cardapio-semanal" class="page">
+                    <h2 style="margin-bottom:6px;">🍱 Cardápio Semanal — Marmitaria</h2>
+                    <p style="color:#888;font-size:13px;margin-bottom:20px;">Cadastre o prato de cada dia da semana. O sistema atualiza o cardápio digital automaticamente todo dia.</p>
+
+                    <!-- SELETOR DE DIA -->
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;">
+                        <button onclick="selecionarDiaSemanal(1)" id="btnDia1" class="btn-dia ativo">Seg</button>
+                        <button onclick="selecionarDiaSemanal(2)" id="btnDia2" class="btn-dia">Ter</button>
+                        <button onclick="selecionarDiaSemanal(3)" id="btnDia3" class="btn-dia">Qua</button>
+                        <button onclick="selecionarDiaSemanal(4)" id="btnDia4" class="btn-dia">Qui</button>
+                        <button onclick="selecionarDiaSemanal(5)" id="btnDia5" class="btn-dia">Sex</button>
+                        <button onclick="selecionarDiaSemanal(6)" id="btnDia6" class="btn-dia">Sáb</button>
+                        <button onclick="selecionarDiaSemanal(0)" id="btnDia0" class="btn-dia">Dom</button>
+                    </div>
+
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start;" id="gridCardapioSemanal">
+                        <!-- FORMULÁRIO -->
+                        <div class="panel">
+                            <h3 id="tituloDiaSemanal" style="margin-bottom:16px;">Segunda-feira</h3>
+                            
+                            <div class="form-group">
+                                <label>🍽️ Nome do Prato</label>
+                                <input type="text" id="csNomePrato" placeholder="Ex: Frango Grelhado com Arroz e Feijão" style="width:100%;padding:10px;border:1px solid #e8e8ed;border-radius:8px;font-size:14px;">
+                            </div>
+
+                            <div class="form-group">
+                                <label>🥦 Ingredientes Inclusos <span style="color:#888;font-size:12px">(um por linha)</span></label>
+                                <textarea id="csIngredientes" rows="5" placeholder="Arroz branco&#10;Feijão carioca&#10;Frango grelhado&#10;Salada verde&#10;Farofa" style="width:100%;padding:10px;border:1px solid #e8e8ed;border-radius:8px;font-size:13px;resize:vertical;"></textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label>💰 Tamanhos e Preços</label>
+                                <div id="csTamanhos" style="display:flex;flex-direction:column;gap:8px;">
+                                    <div class="cs-tamanho-row" style="display:grid;grid-template-columns:80px 1fr 1fr auto;gap:8px;align-items:center;">
+                                        <span style="font-weight:600;font-size:13px;">P</span>
+                                        <input type="number" placeholder="Preço R$" class="cs-preco" step="0.50" style="padding:8px;border:1px solid #e8e8ed;border-radius:8px;font-size:13px;">
+                                        <input type="text" placeholder="Peso ex: 500g" class="cs-peso" style="padding:8px;border:1px solid #e8e8ed;border-radius:8px;font-size:13px;">
+                                        <span style="color:#22c55e;font-size:12px;">✓</span>
+                                    </div>
+                                    <div class="cs-tamanho-row" style="display:grid;grid-template-columns:80px 1fr 1fr auto;gap:8px;align-items:center;">
+                                        <span style="font-weight:600;font-size:13px;">M</span>
+                                        <input type="number" placeholder="Preço R$" class="cs-preco" step="0.50" style="padding:8px;border:1px solid #e8e8ed;border-radius:8px;font-size:13px;">
+                                        <input type="text" placeholder="Peso ex: 750g" class="cs-peso" style="padding:8px;border:1px solid #e8e8ed;border-radius:8px;font-size:13px;">
+                                        <span style="color:#22c55e;font-size:12px;">✓</span>
+                                    </div>
+                                    <div class="cs-tamanho-row" style="display:grid;grid-template-columns:80px 1fr 1fr auto;gap:8px;align-items:center;">
+                                        <span style="font-weight:600;font-size:13px;">G</span>
+                                        <input type="number" placeholder="Preço R$" class="cs-preco" step="0.50" style="padding:8px;border:1px solid #e8e8ed;border-radius:8px;font-size:13px;">
+                                        <input type="text" placeholder="Peso ex: 1kg" class="cs-peso" style="padding:8px;border:1px solid #e8e8ed;border-radius:8px;font-size:13px;">
+                                        <span style="color:#22c55e;font-size:12px;">✓</span>
+                                    </div>
+                                    <div class="cs-tamanho-row" style="display:grid;grid-template-columns:80px 1fr 1fr auto;gap:8px;align-items:center;">
+                                        <span style="font-weight:600;font-size:13px;">GG</span>
+                                        <input type="number" placeholder="Preço R$" class="cs-preco" step="0.50" style="padding:8px;border:1px solid #e8e8ed;border-radius:8px;font-size:13px;">
+                                        <input type="text" placeholder="Peso ex: 1.5kg" class="cs-peso" style="padding:8px;border:1px solid #e8e8ed;border-radius:8px;font-size:13px;">
+                                        <span style="color:#22c55e;font-size:12px;">✓</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>➕ Adicionais <span style="color:#888;font-size:12px">(opcionais pagos)</span></label>
+                                <div id="csAdicionais" style="display:flex;flex-direction:column;gap:8px;">
+                                    <div class="cs-adicional-row" style="display:grid;grid-template-columns:1fr 100px auto;gap:8px;">
+                                        <input type="text" placeholder="Ex: Churrasco de costela" class="cs-add-nome" style="padding:8px;border:1px solid #e8e8ed;border-radius:8px;font-size:13px;">
+                                        <input type="number" placeholder="R$" class="cs-add-preco" step="0.50" style="padding:8px;border:1px solid #e8e8ed;border-radius:8px;font-size:13px;">
+                                        <button onclick="removerAdicionalCS(this)" style="background:#fee2e2;border:none;border-radius:8px;padding:8px;cursor:pointer;color:#ef4444;">✕</button>
+                                    </div>
+                                </div>
+                                <button onclick="adicionarAdicionalCS()" style="margin-top:8px;background:#f0fdf4;border:1px dashed #22c55e;border-radius:8px;padding:8px 16px;color:#22c55e;cursor:pointer;font-size:13px;width:100%;">+ Adicionar opcional</button>
+                            </div>
+
+                            <div style="display:flex;gap:10px;">
+                                <button class="btn btn-primary" onclick="salvarCardapioSemanal()" style="flex:1;">💾 Salvar</button>
+                                <button class="btn" onclick="limparFormCS()" style="background:#f5f5f7;color:#636366;border:1px solid #e8e8ed;">🗑️ Limpar</button>
+                            </div>
+                            <div id="csStatus" style="margin-top:10px;font-weight:600;color:#22c55e;"></div>
+                        </div>
+
+                        <!-- PREVIEW DO CARDÁPIO -->
+                        <div>
+                            <div class="panel" style="padding:0;overflow:hidden;">
+                                <div id="csPreviewImagem" style="position:relative;height:220px;background:linear-gradient(135deg,#1a0a00,#3d1a00);display:flex;align-items:center;justify-content:center;overflow:hidden;">
+                                    <!-- Imagem de fundo comida brasileira -->
+                                    <div style="position:absolute;inset:0;background-image:url('https://images.unsplash.com/photo-1512058564366-18510be2db19?w=600&q=80');background-size:cover;background-position:center;opacity:0.55;"></div>
+                                    <!-- Efeito fumaça CSS -->
+                                    <div class="fumaca" style="position:absolute;bottom:0;left:0;right:0;height:80px;background:linear-gradient(to top,rgba(255,200,100,0.18),transparent);pointer-events:none;"></div>
+                                    <div class="fumaca2" style="position:absolute;bottom:10px;left:30%;width:40%;height:60px;background:radial-gradient(ellipse,rgba(255,220,150,0.22),transparent);filter:blur(8px);pointer-events:none;"></div>
+                                    <!-- Nome do prato -->
+                                    <div style="position:relative;z-index:2;text-align:center;padding:16px;">
+                                        <div style="font-size:11px;color:#ffd700;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;" id="prevDiaNome">SEGUNDA-FEIRA</div>
+                                        <div style="font-size:20px;font-weight:800;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,0.8);" id="prevNomePrato">Prato do Dia</div>
+                                    </div>
+                                </div>
+                                <div style="padding:16px;">
+                                    <div style="font-size:12px;color:#888;margin-bottom:8px;font-weight:600;text-transform:uppercase;letter-spacing:1px;">Incluso:</div>
+                                    <div id="prevIngredientes" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;">
+                                        <span style="background:#f0fdf4;color:#16a34a;border-radius:20px;padding:4px 10px;font-size:12px;">Arroz</span>
+                                        <span style="background:#f0fdf4;color:#16a34a;border-radius:20px;padding:4px 10px;font-size:12px;">Feijão</span>
+                                    </div>
+                                    <div style="font-size:12px;color:#888;margin-bottom:8px;font-weight:600;text-transform:uppercase;letter-spacing:1px;">Tamanhos:</div>
+                                    <div id="prevTamanhos" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
+                                        <div style="border:1.5px solid #e8e8ed;border-radius:10px;padding:8px 12px;text-align:center;font-size:13px;"><div style="font-weight:700;">P</div><div style="color:#f97316;font-weight:700;">R$ --</div></div>
+                                        <div style="border:1.5px solid #e8e8ed;border-radius:10px;padding:8px 12px;text-align:center;font-size:13px;"><div style="font-weight:700;">M</div><div style="color:#f97316;font-weight:700;">R$ --</div></div>
+                                    </div>
+                                    <div style="font-size:12px;color:#888;margin-bottom:8px;font-weight:600;text-transform:uppercase;letter-spacing:1px;">Adicionais:</div>
+                                    <div id="prevAdicionais" style="font-size:13px;color:#636366;">Nenhum adicional</div>
+                                </div>
+                            </div>
+
+                            <!-- Mini calendário semanal -->
+                            <div class="panel" style="margin-top:16px;">
+                                <h4 style="margin-bottom:12px;font-size:14px;">📅 Semana completa</h4>
+                                <div id="miniCalendario" style="display:flex;flex-direction:column;gap:6px;"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -1115,9 +1235,9 @@
 
         // ===== SISTEMA DE PLANOS =====
         const PLANOS_MODULOS = {
-            confort:  ['dashboard', 'cardapio', 'upload-cardapio', 'categorias', 'pedidos', 'caixa', 'config'],
+            confort:  ['dashboard', 'cardapio', 'upload-cardapio', 'categorias', 'pedidos', 'caixa', 'cardapio-semanal', 'config'],
             plus:     ['dashboard', 'cardapio', 'upload-cardapio', 'categorias', 'pedidos', 'relatorios', 'avaliacoes', 'assinantes', 'config'],
-            premium:  ['dashboard', 'cardapio', 'upload-cardapio', 'categorias', 'pedidos', 'relatorios', 'entregadores', 'garcons', 'avaliacoes', 'assinantes', 'estoque', 'cardapio-dia', 'combos', 'config']
+            premium:  ['dashboard', 'cardapio', 'upload-cardapio', 'categorias', 'pedidos', 'relatorios', 'entregadores', 'garcons', 'avaliacoes', 'assinantes', 'estoque', 'cardapio-dia', 'cardapio-semanal', 'combos', 'config']
         };
 
         const PLANO_UPGRADE = {
@@ -1328,6 +1448,7 @@
                 if (page === 'avaliacoes') carregarAvaliacoes();
                 if (page === 'assinantes') carregarAssinantes();
                 if (page === 'cardapio-dia') { carregarCardapioDia(); carregarConfigCardapioDia(); }
+                if (page === 'cardapio-semanal') carregarCardapioSemanal();
                 if (page === 'estoque') { carregarEstoque(); carregarListaCompras(); }
                 if (page === 'upload-cardapio') { /* nada */ }
                 if (page === 'combos') carregarCombos();
@@ -3313,6 +3434,29 @@ img { max-width: 100%; }
     h2 { font-size: 1em !important; }
 }
         @keyframes slideIn { from { transform: translateX(120%); opacity:0; } to { transform: translateX(0); opacity:1; } }
+                .btn-dia {
+            padding: 8px 14px;
+            border: 2px solid #e8e8ed;
+            border-radius: 20px;
+            background: #fff;
+            color: #636366;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all .2s;
+        }
+        .btn-dia.ativo {
+            background: #f97316;
+            border-color: #f97316;
+            color: #fff;
+        }
+        @keyframes fumacaAnim {
+            0% { opacity:0.1; transform: translateY(0) scaleX(1); }
+            50% { opacity:0.25; transform: translateY(-8px) scaleX(1.1); }
+            100% { opacity:0.1; transform: translateY(0) scaleX(1); }
+        }
+        .fumaca { animation: fumacaAnim 3s ease-in-out infinite; }
+        .fumaca2 { animation: fumacaAnim 2.5s ease-in-out infinite 0.5s; }
         </style>
 <script>
 // Toggle menu mobile global
@@ -3513,6 +3657,177 @@ async function pedirCardapioAgora() {
     toast(d.msg || d.erro || 'Enviado!');
 }
 
+// ===== CARDÁPIO SEMANAL =====
+const DIAS_NOMES = ['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
+const DIAS_CURTOS = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+let _diaSemanalAtual = 1;
+let _cardapiosSemana = {};
+
+async function carregarCardapioSemanal() {
+    var tk = getToken();
+    var r = await fetch('/api/delivery/cardapio-semanal', { headers: { 'Authorization': 'Bearer ' + tk } });
+    var d = await r.json();
+    _cardapiosSemana = {};
+    (d.cardapios || []).forEach(function(c) { _cardapiosSemana[c.diaSemana] = c; });
+    selecionarDiaSemanal(_diaSemanalAtual);
+    renderMiniCalendario();
+}
+
+function selecionarDiaSemanal(dia) {
+    _diaSemanalAtual = dia;
+    // Atualizar botões
+    [0,1,2,3,4,5,6].forEach(function(d) {
+        var btn = document.getElementById('btnDia' + d);
+        if (btn) btn.className = 'btn-dia' + (d === dia ? ' ativo' : '');
+    });
+    document.getElementById('tituloDiaSemanal').textContent = DIAS_NOMES[dia];
+    document.getElementById('prevDiaNome').textContent = DIAS_NOMES[dia].toUpperCase();
+    // Preencher formulário se tiver dados
+    var c = _cardapiosSemana[dia];
+    limparFormCS();
+    if (c) {
+        document.getElementById('csNomePrato').value = c.nomePrato || '';
+        document.getElementById('csIngredientes').value = (c.ingredientes || []).map(function(i){ return i.nome; }).join('
+');
+        // Tamanhos
+        var rows = document.querySelectorAll('.cs-tamanho-row');
+        var tams = ['P','M','G','GG'];
+        rows.forEach(function(row, idx) {
+            var tam = (c.tamanhos || []).find(function(t){ return t.tamanho === tams[idx]; });
+            if (tam) {
+                row.querySelector('.cs-preco').value = tam.preco || '';
+                row.querySelector('.cs-peso').value = tam.peso || '';
+            }
+        });
+        // Adicionais
+        document.getElementById('csAdicionais').innerHTML = '';
+        (c.adicionais || []).forEach(function(ad) { adicionarAdicionalCS(ad.nome, ad.preco); });
+    }
+    atualizarPreviewCS();
+}
+
+function limparFormCS() {
+    document.getElementById('csNomePrato').value = '';
+    document.getElementById('csIngredientes').value = '';
+    document.querySelectorAll('.cs-preco').forEach(function(el){ el.value = ''; });
+    document.querySelectorAll('.cs-peso').forEach(function(el){ el.value = ''; });
+    document.getElementById('csAdicionais').innerHTML = '';
+    adicionarAdicionalCS();
+    document.getElementById('csStatus').textContent = '';
+}
+
+function adicionarAdicionalCS(nome, preco) {
+    var div = document.createElement('div');
+    div.className = 'cs-adicional-row';
+    div.style.cssText = 'display:grid;grid-template-columns:1fr 100px auto;gap:8px;';
+    div.innerHTML = '<input type="text" placeholder="Ex: Churrasco de costela" class="cs-add-nome" value="' + (nome||'') + '" style="padding:8px;border:1px solid #e8e8ed;border-radius:8px;font-size:13px;">' +
+        '<input type="number" placeholder="R$" class="cs-add-preco" value="' + (preco||'') + '" step="0.50" style="padding:8px;border:1px solid #e8e8ed;border-radius:8px;font-size:13px;">' +
+        '<button onclick="removerAdicionalCS(this)" style="background:#fee2e2;border:none;border-radius:8px;padding:8px;cursor:pointer;color:#ef4444;">✕</button>';
+    document.getElementById('csAdicionais').appendChild(div);
+}
+
+function removerAdicionalCS(btn) {
+    btn.closest('.cs-adicional-row').remove();
+}
+
+function atualizarPreviewCS() {
+    var nome = document.getElementById('csNomePrato').value || 'Prato do Dia';
+    document.getElementById('prevNomePrato').textContent = nome;
+    // Ingredientes
+    var ings = document.getElementById('csIngredientes').value.split('
+').filter(function(l){ return l.trim(); });
+    var prevIng = document.getElementById('prevIngredientes');
+    prevIng.innerHTML = ings.slice(0,8).map(function(i){ 
+        return '<span style="background:#f0fdf4;color:#16a34a;border-radius:20px;padding:4px 10px;font-size:12px;">' + i.trim() + '</span>'; 
+    }).join('');
+    // Tamanhos
+    var rows = document.querySelectorAll('.cs-tamanho-row');
+    var tams = ['P','M','G','GG'];
+    var prevTam = document.getElementById('prevTamanhos');
+    prevTam.innerHTML = '';
+    rows.forEach(function(row, idx) {
+        var preco = row.querySelector('.cs-preco').value;
+        var peso = row.querySelector('.cs-peso').value;
+        if (preco) {
+            prevTam.innerHTML += '<div style="border:1.5px solid #e8e8ed;border-radius:10px;padding:8px 12px;text-align:center;font-size:13px;">' +
+                '<div style="font-weight:700;">' + tams[idx] + '</div>' +
+                (peso ? '<div style="color:#888;font-size:11px;">' + peso + '</div>' : '') +
+                '<div style="color:#f97316;font-weight:700;">R$ ' + Number(preco).toFixed(2).replace('.',',') + '</div></div>';
+        }
+    });
+    // Adicionais
+    var adds = document.querySelectorAll('.cs-adicional-row');
+    var prevAdd = document.getElementById('prevAdicionais');
+    var addTexts = [];
+    adds.forEach(function(row) {
+        var n = row.querySelector('.cs-add-nome').value;
+        var p = row.querySelector('.cs-add-preco').value;
+        if (n) addTexts.push('+ ' + n + (p ? ' (R$ ' + Number(p).toFixed(2).replace('.',',') + ')' : ''));
+    });
+    prevAdd.innerHTML = addTexts.length ? addTexts.map(function(t){ return '<div style="color:#636366;font-size:13px;padding:2px 0;">🔸 ' + t + '</div>'; }).join('') : '<div style="color:#aaa;font-size:13px;">Nenhum adicional</div>';
+}
+
+async function salvarCardapioSemanal() {
+    var nome = document.getElementById('csNomePrato').value.trim();
+    if (!nome) { toast('⚠️ Informe o nome do prato'); return; }
+    var ings = document.getElementById('csIngredientes').value.split('
+').filter(function(l){ return l.trim(); }).map(function(l){ return { nome: l.trim() }; });
+    var rows = document.querySelectorAll('.cs-tamanho-row');
+    var tams = ['P','M','G','GG'];
+    var tamanhos = [];
+    rows.forEach(function(row, idx) {
+        var preco = row.querySelector('.cs-preco').value;
+        var peso = row.querySelector('.cs-peso').value;
+        if (preco) tamanhos.push({ tamanho: tams[idx], preco: Number(preco), peso: peso });
+    });
+    var adicionais = [];
+    document.querySelectorAll('.cs-adicional-row').forEach(function(row) {
+        var n = row.querySelector('.cs-add-nome').value.trim();
+        var p = row.querySelector('.cs-add-preco').value;
+        if (n) adicionais.push({ nome: n, preco: Number(p) || 0 });
+    });
+    var tk = getToken();
+    var r = await fetch('/api/delivery/cardapio-semanal', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + tk, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ diaSemana: _diaSemanalAtual, nomePrato: nome, ingredientes: ings, tamanhos: tamanhos, adicionais: adicionais })
+    });
+    var d = await r.json();
+    if (d.sucesso) {
+        _cardapiosSemana[_diaSemanalAtual] = d.cardapio;
+        renderMiniCalendario();
+        toast('✅ ' + DIAS_NOMES[_diaSemanalAtual] + ' salvo!');
+        document.getElementById('csStatus').textContent = '✅ Salvo!';
+        setTimeout(function(){ document.getElementById('csStatus').textContent = ''; }, 3000);
+    } else {
+        toast('❌ Erro: ' + d.erro);
+    }
+}
+
+function renderMiniCalendario() {
+    var el = document.getElementById('miniCalendario');
+    if (!el) return;
+    var html = '';
+    [1,2,3,4,5,6,0].forEach(function(d) {
+        var c = _cardapiosSemana[d];
+        var cor = c ? '#f0fdf4' : '#fafafa';
+        var bordCor = c ? '#22c55e' : '#e8e8ed';
+        var icone = c ? '✅' : '➕';
+        html += '<div onclick="selecionarDiaSemanal(' + d + ')" style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:8px;border:1.5px solid ' + bordCor + ';background:' + cor + ';cursor:pointer;">' +
+            '<span style="font-size:18px;">' + icone + '</span>' +
+            '<div><div style="font-weight:600;font-size:13px;">' + DIAS_NOMES[d] + '</div>' +
+            '<div style="font-size:12px;color:#888;">' + (c ? c.nomePrato : 'Não cadastrado') + '</div></div>' +
+            '</div>';
+    });
+    el.innerHTML = html;
+}
+
+// Live preview ao digitar
+document.addEventListener('input', function(e) {
+    if (e.target.closest('#page-cardapio-semanal')) atualizarPreviewCS();
+});
+
+// Carregar ao abrir página
 // ===== IMPRESSORA =====
 function imprimirPedido(pedidoId) {
     var tk = getToken();
