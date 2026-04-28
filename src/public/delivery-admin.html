@@ -713,6 +713,21 @@
                         </div>
                         <div id="taxaStatus" style="font-size:.82em;color:#22c55e;display:none;">✅ Salvo!</div>
                     </div>
+
+                    <!-- VIAS DE IMPRESSAO -->
+                    <div class="panel" style="margin-bottom:20px;border:2px solid #00d4ff22">
+                        <h3>🖨️ Vias de Impressão (Comanda)</h3>
+                        <p style="color:#888;font-size:.88em;margin:8px 0 16px">Quantas vias imprimir por pedido. Plano Plus imprime automaticamente ao receber o pedido.</p>
+                        <div style="background:#1a1a2e;border-radius:10px;padding:14px;">
+                            <label style="font-size:.82em;color:#aaa;display:block;margin-bottom:6px;">Número de vias</label>
+                            <select id="viasImpressao" onchange="salvarVias()" style="width:100%;padding:9px;background:#0f0f1a;border:1px solid #333;border-radius:8px;color:#fff;font-size:.95em;">
+                                <option value="1">1 via</option>
+                                <option value="2">2 vias (cozinha + cliente)</option>
+                                <option value="3">3 vias (cozinha + caixa + cliente)</option>
+                            </select>
+                        </div>
+                        <div id="viasStatus" style="font-size:.82em;color:#22c55e;display:none;margin-top:8px;">✅ Salvo!</div>
+                    </div>
                     <!-- QR CODE DA MESA -->
                     <div class="panel" style="margin-bottom:20px;border:2px solid #00d4ff22">
                         <h3>📱 QR Code do Cardápio (Mesas)</h3>
@@ -3037,6 +3052,7 @@ function carregarPagamentos() {
             if (pixTipo) pixTipo.value = d.pixTipo || 'telefone';
             togglePixDados();
             carregarTaxas(d);
+            carregarVias(d);
         }).catch(() => {});
 }
 
@@ -3075,6 +3091,25 @@ async function salvarPagamentos() {
 
 
 
+async function salvarVias() {
+    var sel = document.getElementById('viasImpressao');
+    if (!sel) return;
+    try {
+        var tk = localStorage.getItem('delivery_token') || token || '';
+        await fetch('/api/delivery/config', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + tk },
+            body: JSON.stringify({ viasImpressao: Number(sel.value) })
+        });
+        var st = document.getElementById('viasStatus');
+        if (st) { st.style.display = 'block'; setTimeout(() => st.style.display = 'none', 2000); }
+    } catch(e) { console.log('Erro salvarVias:', e); }
+}
+function carregarVias(cfg) {
+    if (!cfg) return;
+    var sel = document.getElementById('viasImpressao');
+    if (sel) sel.value = cfg.viasImpressao || 1;
+}
 async function salvarTaxas() {
     var garcomAtivo = document.getElementById('taxaGarcomAtivo');
     var garcomPerc  = document.getElementById('taxaGarcomPerc');

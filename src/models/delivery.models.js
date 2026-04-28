@@ -185,6 +185,7 @@ const ConfigDeliverySchema = new mongoose.Schema({
     taxaBandaValor: { type: Number, default: 0 },
     cobrarTaxaGarcom: { type: Boolean, default: false },
     cobrarBanda: { type: Boolean, default: false },
+    viasImpressao: { type: Number, default: 1 },
     mensagemBoasVindas: { type: String, default: 'Olá! Bem-vindo ao nosso delivery! 🍔' },
     mensagemPedidoConfirmado: { type: String, default: 'Seu pedido foi confirmado! Estamos preparando com carinho 🍳' },
     mensagemPedidoPronto: { type: String, default: 'Seu pedido está pronto! Já já sai para entrega 🏍️' },
