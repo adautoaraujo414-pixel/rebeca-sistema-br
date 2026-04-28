@@ -19,6 +19,8 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 #loading{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;gap:16px}
 .spinner{width:48px;height:48px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fumacaAnim{0%{opacity:.1;transform:translateY(0) scaleX(1)}50%{opacity:.25;transform:translateY(-8px) scaleX(1.1)}100%{opacity:.1;transform:translateY(0) scaleX(1)}}
+@keyframes fumacaAnim{0%{opacity:.1;transform:translateY(0) scaleX(1)}50%{opacity:.25;transform:translateY(-8px) scaleX(1.1)}100%{opacity:.1;transform:translateY(0) scaleX(1)}}
 
 /* HEADER */
 .header{background:linear-gradient(135deg,#1a0a00,#2a1000);border-bottom:1px solid rgba(249,115,22,.2);padding:16px;position:sticky;top:0;z-index:100;backdrop-filter:blur(20px)}
@@ -446,6 +448,8 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
   </div>
 </div>
 
+<div id="pratoDiaSection" style="display:none;padding:0 16px;margin-top:16px;"></div>
+<div id="pratoDiaSection" style="display:none;padding:0 16px;margin-top:16px;"></div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -544,6 +548,59 @@ function copiarPixChave() {
   });
 }
 
+async function carregarPratoDia() {
+  try {
+    var r = await fetch('/api/delivery/cardapio-semanal/hoje?adminId=' + adminId);
+    var d = await r.json();
+    if (!d.cardapio) return;
+    var c = d.cardapio;
+    var el = document.getElementById('pratoDiaSection');
+    if (!el) return;
+    var tams = (c.tamanhos || []).filter(function(t){ return t.preco; }).sort(function(a,b){ return a.preco - b.preco; });
+    var tamanhoMin = tams[0];
+    var precoFrom = tamanhoMin ? 'A partir de R$ ' + tamanhoMin.preco.toFixed(2).replace('.',',') : '';
+    el.innerHTML = '<div style="background:linear-gradient(135deg,#1a0a00,#3d1a00);border-radius:16px;overflow:hidden;margin-bottom:8px;position:relative;">' +
+      '<div style="position:absolute;inset:0;background-image:url(https://images.unsplash.com/photo-1512058564366-18510be2db19?w=600&q=80);background-size:cover;background-position:center;opacity:0.45;"></div>' +
+      '<div style="position:absolute;bottom:0;left:0;right:0;height:60px;background:linear-gradient(to top,rgba(255,180,80,0.2),transparent);animation:fumacaAnim 3s ease-in-out infinite;"></div>' +
+      '<div style="position:relative;z-index:2;padding:20px 16px 12px;">' +
+      '<div style="font-size:10px;color:#ffd700;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;">\uD83C\uDF71 PRATO DO DIA \u2014 ' + d.nomeDia.toUpperCase() + '</div>' +
+      '<div style="font-size:20px;font-weight:800;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,0.8);margin-bottom:10px;">' + c.nomePrato + '</div>' +
+      '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;">' +
+      (c.ingredientes || []).slice(0,6).map(function(i){ return '<span style="background:rgba(255,255,255,0.15);color:#fff;border-radius:20px;padding:3px 10px;font-size:12px;">' + i.nome + '</span>'; }).join('') +
+      '</div>' +
+      (precoFrom ? '<div style="color:#ffd700;font-weight:700;font-size:13px;margin-bottom:12px;">' + precoFrom + '</div>' : '') +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;">' +
+      tams.map(function(t){ return '<button onclick="abrirModalMarmita(\'' + t.tamanho + '\')" style="background:#f97316;border:none;border-radius:20px;padding:8px 16px;color:#fff;font-weight:700;font-size:13px;cursor:pointer;">' + t.tamanho + ' \u2014 R$ ' + t.preco.toFixed(2).replace('.',',') + '</button>'; }).join('') +
+      '</div></div></div>';
+    el.style.display = 'block';
+    window._marmitaHoje = c;
+  } catch(e) { console.log('[pratoDia]', e.message); }
+}
+
+function abrirModalMarmita(tamanho) {
+  var c = window._marmitaHoje;
+  if (!c) return;
+  var tam = (c.tamanhos || []).find(function(t){ return t.tamanho === tamanho; });
+  if (!tam) return;
+  var nome = c.nomePrato + ' (' + tamanho + ')';
+  var preco = tam.preco;
+  var adds = (c.adicionais || []).filter(function(a){ return a.nome; });
+  if (adds.length) {
+    var escolha = window.prompt(
+      '\uD83C\uDF71 ' + nome + '\n\nAdicionais disponíveis:\n' +
+      adds.map(function(a,i){ return (i+1) + '. ' + a.nome + (a.preco ? ' +R$ ' + Number(a.preco).toFixed(2).replace('.',',') : ' (grátis)'); }).join('\n') +
+      '\n\nDigite o número do adicional desejado (ou Enter para pular):'
+    );
+    if (escolha) {
+      var idx = parseInt(escolha) - 1;
+      if (adds[idx]) { preco += adds[idx].preco || 0; nome += ' + ' + adds[idx].nome; }
+    }
+  }
+  carrinho.push({ _id: 'marmita_' + Date.now(), nome: nome, preco: preco, categoria: 'Marmita' });
+  atualizarCarrinho();
+  toast('\u2705 ' + nome + ' adicionado!');
+}
+
 async function init() {
   try {
     var r = await fetch('/api/delivery/cardapio-publico/' + adminId);
@@ -556,6 +613,7 @@ async function init() {
     } catch(ec) { cardapioData.combos = []; }
     renderizar();
     carregarPagamentosConfig();
+    carregarPratoDia();
   } catch(e) {
     document.getElementById('loading').innerHTML = '<div style="font-size:2em">😕</div><div style="color:var(--text3);margin-top:12px;font-size:.9em">Cardápio indisponível no momento.</div><button onclick="location.reload()" style="margin-top:16px;padding:10px 24px;border-radius:20px;border:none;background:var(--accent);color:#fff;font-weight:700;cursor:pointer;font-family:inherit">Tentar novamente</button>';
   }
