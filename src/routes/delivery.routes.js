@@ -1613,9 +1613,10 @@ router.get('/salon/stats', authDelivery, async (req, res) => {
 // GET /salon/pix-key - retorna chave pix configurada
 router.get('/salon/pix-key', authDelivery, async (req, res) => {
     try {
-        const AdminDelivery = require('../models/AdminDelivery');
-        const admin = await AdminDelivery.findById(req.adminId).select('pixKey nomeEstabelecimento');
-        res.json({ pixKey: admin && admin.pixKey ? admin.pixKey : '', nome: admin && admin.nomeEstabelecimento ? admin.nomeEstabelecimento : 'Restaurante' });
+        const admin = await AdminDelivery.findById(req.adminId).select('pixKey chavePix nomeEstabelecimento nomeComercio').lean();
+        const chave = (admin && (admin.pixKey || admin.chavePix)) || '';
+        const nome = (admin && (admin.nomeEstabelecimento || admin.nomeComercio)) || 'Restaurante';
+        res.json({ pixKey: chave, nome });
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
@@ -1897,6 +1898,10 @@ router.post('/cardapio/confirmar-transcricao', authDelivery, async (req, res) =>
 // Atualizar plano (admin master)
 router.put('/admin/:id/plano', async (req, res) => {
     try {
+        // Apenas admin master pode alterar plano
+        const masterToken = req.headers['x-master-token'] || req.headers['authorization']?.replace('Bearer ','');
+        const MASTER = process.env.ADMIN_MASTER_TOKEN || 'rebeca-master-2024';
+        if (masterToken !== MASTER) return res.status(403).json({ erro: 'Acesso negado. Token master necessario.' });
         const { plano, planoStatus, planoDataVencimento } = req.body;
         const valores = { confort: 179, plus: 298.90, premium: 459 };
         const update = {};
