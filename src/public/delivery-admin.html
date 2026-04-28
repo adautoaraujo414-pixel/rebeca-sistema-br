@@ -2780,6 +2780,7 @@ function abrirModalCombo() {
     document.getElementById('comboPreviewBox').style.display = 'none';
     comboImgGerada = '';
     document.getElementById('modalComboTitulo').textContent = 'Novo Combo';
+    window.itensCadastrados = []; // sempre recarrega ao abrir
     popularItensCombo();
     document.getElementById('modalCombo').classList.add('show');
 }
@@ -2794,6 +2795,7 @@ function popularItensCombo(selecionados) {
     if (!container) return;
     var itens = (window.itensCadastrados || []);
     if (!itens.length) {
+        if (container) container.innerHTML = '<div style="color:#888;font-size:.85em;padding:12px">Carregando itens...</div>';
         var tkC = localStorage.getItem('delivery_token') || token || '';
         fetch('/api/delivery/itens', { headers: { 'Authorization': 'Bearer ' + tkC } })
             .then(function(r){ return r.json(); })
