@@ -706,22 +706,42 @@ function criarCardCombo(combo) {
   div.className = 'item-card';
   div.dataset.id = combo._id;
   div.dataset.nome = combo.nome;
-
-  var imgHtml = combo.imagem
-    ? '<img class="item-img" src="' + combo.imagem + '" loading="lazy" onerror=\"this.parentNode.style.display=\'none\'">'
-    : '<div class="item-img-ph">🎁</div>';
+  if (combo.destaque) div.style.cssText = 'border:2px solid #f97316;';
 
   var itensList = (combo.itens||[]).map(function(i){ return i.quantidade + 'x ' + i.nome; }).join(' + ');
-  var total = (combo.itens||[]).reduce(function(a,i){ return a + (i.preco||0)*(i.quantidade||1); }, 0);
-  var economia = total > combo.preco ? '<span style="font-size:.68em;color:#22c55e;font-weight:700;"> -R$' + (total-combo.preco).toFixed(2).replace('.',',') + '</span>' : '';
+  var precoOrig = combo.precoOriginal || (combo.itens||[]).reduce(function(a,i){ return a + (i.preco||0)*(i.quantidade||1); }, 0);
+  var descPct = combo.descontoPct || (precoOrig > combo.preco ? Math.round((1 - combo.preco/precoOrig)*100) : 0);
+
+  var badgeDesconto = descPct > 0
+    ? '<span style="position:absolute;top:8px;left:8px;background:#ef4444;color:#fff;font-size:11px;font-weight:700;padding:3px 8px;border-radius:20px;z-index:2;">-' + descPct + '%</span>'
+    : '';
+  var badgeDestaque = combo.destaque
+    ? '<span style="position:absolute;top:8px;right:8px;background:#f97316;color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;z-index:2;">Destaque</span>'
+    : '';
+
+  var imgHtml = '<div style="position:relative;">' +
+    (combo.imagem
+      ? '<img class="item-img" src="' + combo.imagem + '" loading="lazy" onerror="this.style.display='none'">'
+      : '<div class="item-img-ph">🎁</div>') +
+    badgeDesconto + badgeDestaque +
+  '</div>';
+
+  var precoRiscado = precoOrig > combo.preco
+    ? '<span style="font-size:.75em;color:#9ca3af;text-decoration:line-through;margin-right:4px;">R$ ' + precoOrig.toFixed(2).replace('.',',') + '</span>'
+    : '';
+  var economia = precoOrig > combo.preco
+    ? '<div style="font-size:.75em;color:#22c55e;font-weight:600;margin-top:2px;">Economia de R$ ' + (precoOrig - combo.preco).toFixed(2).replace('.',',') + '</div>'
+    : '';
 
   div.innerHTML = imgHtml +
     '<div class="item-body">' +
-      '<div class="item-name">🎁 ' + combo.nome + economia + '</div>' +
-      '<div class="item-desc">' + (combo.descricao || itensList) + '</div>' +
-      '<div class="item-footer">' +
-        '<div class="item-price">R$ ' + Number(combo.preco||0).toFixed(2).replace('.',',') + '</div>' +
-        '<button class="item-add-btn" onclick="event.stopPropagation();adicionarComboRapido(\'' + combo._id + '\')">+</button>' +
+      '<div class="item-name">🎁 ' + combo.nome + '</div>' +
+      '<div class="item-desc" style="font-size:.78em;color:#6b7280;margin-bottom:4px;">' + itensList + '</div>' +
+      (combo.descricao ? '<div class="item-desc">' + combo.descricao + '</div>' : '') +
+      economia +
+      '<div class="item-footer" style="margin-top:6px;">' +
+        '<div>' + precoRiscado + '<span class="item-price">R$ ' + Number(combo.preco||0).toFixed(2).replace('.',',') + '</span></div>' +
+        '<button class="item-add-btn" onclick="event.stopPropagation();adicionarComboRapido('' + combo._id + '')">+</button>' +
       '</div>' +
     '</div>';
 

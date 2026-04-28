@@ -1965,11 +1965,14 @@ router.post('/combos', async (req, res) => {
     try {
         const admin = await AdminDelivery.findOne({ token: req.headers['x-token'] });
         if (!admin) return res.status(401).json({ erro: 'Não autorizado' });
-        const { nome, descricao, preco, itens, imagem } = req.body;
+        const { nome, descricao, preco, itens, imagem, destaque } = req.body;
         if (!nome || !preco) return res.status(400).json({ erro: 'Nome e preço obrigatórios' });
+        const precoOriginal = (itens||[]).reduce((s,i) => s + (Number(i.preco||0)*Number(i.quantidade||1)), 0);
+        const descontoPct = precoOriginal > 0 ? Math.round((1 - Number(preco)/precoOriginal)*100) : 0;
         const combo = await ComboDelivery.create({
             adminId: admin._id, nome, descricao: descricao||'',
-            preco: Number(preco), itens: itens||[], imagem: imagem||''
+            preco: Number(preco), precoOriginal, descontoPct,
+            itens: itens||[], imagem: imagem||'', destaque: destaque||false
         });
         res.json(combo);
     } catch(e) { res.status(500).json({ erro: e.message }); }

@@ -342,8 +342,11 @@ const ComboDeliverySchema = new mongoose.Schema({
     nome: { type: String, required: true },
     descricao: { type: String, default: '' },
     preco: { type: Number, required: true },
+    precoOriginal: { type: Number, default: 0 },
+    descontoPct: { type: Number, default: 0 },
     imagem: { type: String, default: '' },
     ativo: { type: Boolean, default: true },
+    destaque: { type: Boolean, default: false },
     itens: [{
         itemId: { type: String },
         nome: { type: String },
