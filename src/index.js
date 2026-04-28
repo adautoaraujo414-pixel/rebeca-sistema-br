@@ -318,6 +318,15 @@ if (_urlSelf) {
     console.log('⚠️  RENDER_EXTERNAL_URL não definida — keep-alive desativado');
 }
 
+// Keep-alive Evolution API (Railway) — ping a cada 8 min para nao hibernar
+const _evolutionUrl = process.env.EVOLUTION_API_URL || 'https://evolution-api-production-19af.up.railway.app';
+setInterval(() => {
+    require('https').get(_evolutionUrl, (r) => {
+        console.log('[EVO-KEEPALIVE] ping OK:', r.statusCode);
+    }).on('error', (e) => console.log('[EVO-KEEPALIVE] erro:', e.message));
+}, 8 * 60 * 1000); // a cada 8 min
+console.log('✅ Keep-alive Evolution API ativo para:', _evolutionUrl);
+
 // Verificar mensalidades a cada hora
 const MensalidadeService = require('./services/mensalidade.service');
 setInterval(async () => {
