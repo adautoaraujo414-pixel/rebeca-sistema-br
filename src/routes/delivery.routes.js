@@ -715,6 +715,14 @@ router.post('/pedido-cardapio-digital', async (req, res) => {
 
         // Salvar pedido no banco
         const numeroPedido = Date.now().toString().slice(-6);
+        // Buscar config para taxas e plano do admin
+        const cfgTaxa = await ConfigDelivery.findOne({ adminId }).lean();
+        const adminDoc = await AdminDelivery.findById(adminId).lean();
+        const isPlanoPlus = adminDoc && ['plus','premium'].includes(adminDoc.plano) && adminDoc.planoStatus === 'ativo';
+        const subtotalItens = itens.reduce((s,i) => s + (Number(i.preco||0)*Number(i.quantidade||1)), 0);
+        const taxaGarcomPerc = cfgTaxa?.cobrarTaxaGarcom ? (cfgTaxa.taxaGarcomPerc || 10) : 0;
+        const taxaGarcom = taxaGarcomPerc > 0 ? Math.round(subtotalItens * taxaGarcomPerc / 100 * 100) / 100 : 0;
+        const taxaBanda = cfgTaxa?.cobrarBanda ? (cfgTaxa.taxaBandaValor || 0) : 0;
         const pedidoSalvo = await PedidoDelivery.create({
             adminId,
             numero: numeroPedido,
@@ -735,7 +743,10 @@ router.post('/pedido-cardapio-digital', async (req, res) => {
             taxaEntrega: taxaEntrega || 0,
             total: Number(total),
             status: 'novo',
-            origemPedido: 'cardapio_digital'
+            origemPedido: 'cardapio_digital',
+            taxaGarcomPerc, taxaGarcom, taxaBanda,
+            planoPlus: isPlanoPlus,
+            vias: cfgTaxa?.viasImpressao || 1,
         });
 
         console.log('[CARDAPIO-DIGITAL] Pedido #' + numeroPedido + ' salvo de', telefoneCliente || 'sem telefone');
