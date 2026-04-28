@@ -83,15 +83,37 @@ const EvolutionMultiService = {
                 return { sucesso: true, jaConectado: true, status: 'conectado' };
             }
 
-            // 3. Chamar /connect direto (nunca deletar)
+            // 3. Verificar se instancia existe na Evolution API — se nao, recriar
+            let instanciaExisteNaApi = false;
             try {
-                const cn = await axios.get(instancia.apiUrl + '/instance/connect/' + instancia.nomeInstancia, { headers: gH });
+                await axios.get(instancia.apiUrl + '/instance/connectionState/' + instancia.nomeInstancia, { headers: gH, timeout: 5000 });
+                instanciaExisteNaApi = true;
+            } catch (e) {
+                if (e.response?.status === 404) {
+                    console.log('[EVO] Instancia nao existe na API, recriando...');
+                    try {
+                        await axios.post(instancia.apiUrl + '/instance/create', {
+                            instanceName: instancia.nomeInstancia,
+                            qrcode: true,
+                            integration: 'WHATSAPP-BAILEYS'
+                        }, { headers: gH, timeout: 10000 });
+                        console.log('[EVO] Instancia recriada na Evolution API');
+                        await new Promise(r => setTimeout(r, 2000));
+                        instanciaExisteNaApi = true;
+                    } catch (e2) { console.log('[EVO] Erro ao recriar instancia:', e2.message); }
+                }
+            }
+
+            // 4. Chamar /connect para gerar QR
+            try {
+                const cn = await axios.get(instancia.apiUrl + '/instance/connect/' + instancia.nomeInstancia, { headers: gH, timeout: 10000 });
                 console.log('[EVO] Connect OK:', JSON.stringify(cn.data).substring(0, 300));
                 if (cn.data?.base64) qrData = cn.data.base64;
                 else if (cn.data?.code) qrData = cn.data.code;
+                else if (cn.data?.qrcode?.base64) qrData = cn.data.qrcode.base64;
             } catch (e) { console.log('[EVO] Connect falhou:', e.response?.status, e.message); }
 
-            // 4. Configurar webhook
+            // 5. Configurar webhook
             try {
                 const wr = await axios.post(instancia.apiUrl + '/webhook/set/' + instancia.nomeInstancia, {
                     webhook: { url: webhookUrl, enabled: true, webhookByEvents: false, webhookBase64: false, events: ['MESSAGES_UPSERT', 'CONNECTION_UPDATE', 'QRCODE_UPDATED'] }
