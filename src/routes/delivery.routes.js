@@ -275,7 +275,7 @@ router.get('/dashboard', authDelivery, async (req, res) => {
 // ========== ITENS (autenticado — para combos) ==========
 router.get('/itens', authDelivery, async (req, res) => {
     try {
-        const itens = await ItemDelivery.find({ adminId: req.adminId }).lean();
+        const itens = await ItemCardapio.find({ adminId: req.adminId }).lean();
         res.json(itens);
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
@@ -1982,26 +1982,22 @@ router.post('/solicitar-upgrade', authDelivery, async (req, res) => {
 // ═══════════════════════════════════════
 
 // Listar combos
-router.get('/combos', async (req, res) => {
+router.get('/combos', authDelivery, async (req, res) => {
     try {
-        const admin = await AdminDelivery.findOne({ token: req.headers['x-token'] });
-        if (!admin) return res.status(401).json({ erro: 'Não autorizado' });
-        const combos = await ComboDelivery.find({ adminId: admin._id, ativo: true }).sort({ createdAt: -1 });
+        const combos = await ComboDelivery.find({ adminId: req.adminId, ativo: true }).sort({ createdAt: -1 });
         res.json(combos);
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
 // Criar combo
-router.post('/combos', async (req, res) => {
+router.post('/combos', authDelivery, async (req, res) => {
     try {
-        const admin = await AdminDelivery.findOne({ token: req.headers['x-token'] });
-        if (!admin) return res.status(401).json({ erro: 'Não autorizado' });
         const { nome, descricao, preco, itens, imagem, destaque } = req.body;
         if (!nome || !preco) return res.status(400).json({ erro: 'Nome e preço obrigatórios' });
         const precoOriginal = (itens||[]).reduce((s,i) => s + (Number(i.preco||0)*Number(i.quantidade||1)), 0);
         const descontoPct = precoOriginal > 0 ? Math.round((1 - Number(preco)/precoOriginal)*100) : 0;
         const combo = await ComboDelivery.create({
-            adminId: admin._id, nome, descricao: descricao||'',
+            adminId: req.adminId, nome, descricao: descricao||'',
             preco: Number(preco), precoOriginal, descontoPct,
             itens: itens||[], imagem: imagem||'', destaque: destaque||false
         });
@@ -2010,13 +2006,11 @@ router.post('/combos', async (req, res) => {
 });
 
 // Editar combo
-router.put('/combos/:id', async (req, res) => {
+router.put('/combos/:id', authDelivery, async (req, res) => {
     try {
-        const admin = await AdminDelivery.findOne({ token: req.headers['x-token'] });
-        if (!admin) return res.status(401).json({ erro: 'Não autorizado' });
         const { nome, descricao, preco, itens, imagem } = req.body;
         const combo = await ComboDelivery.findOneAndUpdate(
-            { _id: req.params.id, adminId: admin._id },
+            { _id: req.params.id, adminId: req.adminId },
             { nome, descricao, preco: Number(preco), itens: itens||[], imagem: imagem||'' },
             { new: true }
         );
@@ -2026,12 +2020,10 @@ router.put('/combos/:id', async (req, res) => {
 });
 
 // Excluir combo (soft delete)
-router.delete('/combos/:id', async (req, res) => {
+router.delete('/combos/:id', authDelivery, async (req, res) => {
     try {
-        const admin = await AdminDelivery.findOne({ token: req.headers['x-token'] });
-        if (!admin) return res.status(401).json({ erro: 'Não autorizado' });
         await ComboDelivery.findOneAndUpdate(
-            { _id: req.params.id, adminId: admin._id },
+            { _id: req.params.id, adminId: req.adminId },
             { ativo: false }
         );
         res.json({ sucesso: true });
