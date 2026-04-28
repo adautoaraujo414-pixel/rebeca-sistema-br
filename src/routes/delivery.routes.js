@@ -756,6 +756,26 @@ router.post('/pedido-cardapio-digital', async (req, res) => {
             const ReciboDeliveryService = require('../services/recibo-delivery.service');
             await ReciboDeliveryService.enviarRecibo(adminId, pedidoSalvo._id);
         } catch(re) { console.log('[RECIBO] Erro service:', re.message); }
+        // Impressao automatica da comanda (planoPlus)
+        if (isPlanoPlus) {
+            try {
+                const ComandaService = require('../services/comanda.service');
+                const nomeEstab = (cfgTaxa && cfgTaxa.nomeRestaurante) || 'Delivery';
+                const vias = (cfgTaxa && cfgTaxa.viasImpressao) || 1;
+                const texto = await ComandaService.gerarComanda(pedidoSalvo, { nomeEstab, vias });
+                // Enviar para a cozinha via WhatsApp do admin
+                const { InstanciaWhatsapp } = require('../models');
+                const Evo = require('../services/evolution-multi.service');
+                const instCoz = await InstanciaWhatsapp.findOne({ adminId, status: { $in: ['conectado','open','connected'] } }).lean();
+                if (instCoz && adminDoc && adminDoc.telefone) {
+                    await Evo.enviarMensagem(instCoz._id, adminDoc.telefone, texto);
+                }
+                // Marcar pedido como confirmado automaticamente
+                const PedidoMdl = require('../models/pedidoDelivery.model');
+                await PedidoMdl.updateOne({ _id: pedidoSalvo._id }, { status: 'confirmado', dataConfirmacao: new Date() });
+                console.log('[PLANO-PLUS] Comanda enviada automaticamente — ' + vias + ' via(s)');
+            } catch(cp) { console.log('[PLANO-PLUS] Erro comanda:', cp.message); }
+        }
         // Notificar cliente pelo WhatsApp se tiver telefone
         if (telefoneCliente) {
             try {
