@@ -2428,6 +2428,40 @@ async function _salvarItemReal() {
             const idx = parseInt(prompt('Escolha:\n'+lista)) - 1;
             if (idx >= 0 && entregadores[idx]) gerarQREntregador(entregadores[idx]._id, entregadores[idx].nome);
         }
+        async function gerarQR() {
+            try {
+                const btnQR = document.getElementById('btnGerarQR');
+                if (btnQR) btnQR.textContent = 'Gerando...';
+                const r = await fetch('/api/delivery/mesa/qr', { headers: { 'Authorization': 'Bearer ' + token } });
+                const d = await r.json();
+                if (!d.sucesso) { toast('Erro ao gerar QR: ' + (d.erro||'desconhecido'), 'error'); return; }
+                const url = d.url;
+                const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=' + encodeURIComponent(url);
+                const imgBox = document.getElementById('qrCodeImg');
+                const linkEl = document.getElementById('qrLink');
+                const box = document.getElementById('qrCodeBox');
+                if (imgBox) imgBox.innerHTML = '<img src="' + qrUrl + '" style="width:250px;height:250px;border-radius:8px;">';
+                if (linkEl) { linkEl.href = url; linkEl.textContent = url; }
+                if (box) box.style.display = 'block';
+                if (btnQR) btnQR.textContent = 'Atualizar QR Code';
+            } catch(e) { toast('Erro ao gerar QR Code: ' + e.message, 'error'); }
+        }
+        function copiarQR() {
+            const linkEl = document.getElementById('qrLink');
+            if (!linkEl || !linkEl.textContent) return toast('Gere o QR Code primeiro', 'error');
+            navigator.clipboard.writeText(linkEl.textContent).then(() => toast('Link copiado!')).catch(() => {
+                prompt('Copie o link:', linkEl.textContent);
+            });
+        }
+        function imprimirQR() {
+            const img = document.querySelector('#qrCodeImg img');
+            const link = document.getElementById('qrLink');
+            if (!img) return toast('Gere o QR Code primeiro', 'error');
+            const w = window.open('','_blank');
+            w.document.write('<html><body style="text-align:center;font-family:sans-serif;padding:40px"><h2>QR Code do Cardapio</h2><img src="' + img.src + '" style="width:300px"><br><p style="word-break:break-all;margin-top:16px;font-size:12px">' + (link?link.textContent:'') + '</p></body></html>');
+            w.document.close();
+            w.print();
+        }
         function gerarQREntregador(eid, enome) {
             window._entregadorAtual = eid;
             const e = entregadores.find(x => x._id === eid);
