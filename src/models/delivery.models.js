@@ -129,6 +129,9 @@ const PedidoDeliverySchema = new mongoose.Schema({
     numeroMesa: { type: Number },
     garcomNome: { type: String },
     garcom: { type: String },
+    taxaGarcomPerc: { type: Number, default: 0 },
+    taxaGarcom: { type: Number, default: 0 },
+    taxaBanda: { type: Number, default: 0 },
     nomeComanda: String, // identificador da comanda se não tiver número
     
     // Pagamento parcial / fechamento
@@ -178,6 +181,10 @@ const ConfigDeliverySchema = new mongoose.Schema({
     pixQrUrl: String,
     aceitaCartao: { type: Boolean, default: false },
     aceitaDinheiro: { type: Boolean, default: true },
+    taxaGarcomPerc: { type: Number, default: 0 },
+    taxaBandaValor: { type: Number, default: 0 },
+    cobrarTaxaGarcom: { type: Boolean, default: false },
+    cobrarBanda: { type: Boolean, default: false },
     mensagemBoasVindas: { type: String, default: 'Olá! Bem-vindo ao nosso delivery! 🍔' },
     mensagemPedidoConfirmado: { type: String, default: 'Seu pedido foi confirmado! Estamos preparando com carinho 🍳' },
     mensagemPedidoPronto: { type: String, default: 'Seu pedido está pronto! Já já sai para entrega 🏍️' },

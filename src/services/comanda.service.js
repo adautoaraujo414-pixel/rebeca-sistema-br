@@ -19,6 +19,12 @@ const ComandaService = {
         }
         L.push(DIV);
         const sub = pedido.total||0, garc = pedido.taxaGarcom||0, banda = pedido.taxaBanda||0;
+        L.push(DIV);
+        L.push('ITENS:');
+        for (const item of (pedido.itens||[])) {
+            L.push(`  ${item.quantidade}x ${item.nome}: ${R((item.preco||0)*(item.quantidade||1))}`);
+        }
+        L.push(DIV);
         L.push(`Subtotal:    ${R(sub)}`);
         if (garc  > 0) L.push(`Taxa garcom: ${R(garc)} (${pedido.taxaGarcomPerc||10}%)`);
         if (banda > 0) L.push(`Banda/Cover: ${R(banda)}`);
