@@ -2921,7 +2921,7 @@ async function gerarImagemCombo() {
     var prompt = 'Foto profissional de combo de restaurante: ' + nome + '. Inclui: ' + itensSel.map(function(i){ return i.quantidade + 'x ' + i.nome; }).join(', ') + '. Apresentação apetitosa, iluminação de estúdio, fundo neutro escuro, estilo delivery food photography.';
 
     try {
-        var r = await fetch('/api/delivery/gerar-imagem', {
+        var r = await fetch('/api/delivery/cardapio/gerar-imagem-preview', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
             body: JSON.stringify({ prompt: prompt, nome: nome })
