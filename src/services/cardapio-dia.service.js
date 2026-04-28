@@ -19,12 +19,15 @@ const CardapioDiaService = {
     async perguntarCardapioAdms() {
         console.log('[CARDAPIO-DIA] Iniciando pergunta do cardápio...');
         try {
-            const configs = await ConfigDelivery.find({}).lean();
-            for (const config of configs) {
+            const { AdminDelivery } = require('../models/delivery.models');
+            // Só pergunta para admins que ativaram o cardápio do dia
+            const admins = await AdminDelivery.find({ cardapioAtivoAssinantes: true, status: { $in: ['ativo','trial'] } }).lean();
+            console.log('[CARDAPIO-DIA]', admins.length, 'admins com cardápio ativo');
+            for (const admin of admins) {
                 try {
-                    await this.perguntarCardapioAdmin(config.adminId.toString());
+                    await this.perguntarCardapioAdmin(admin._id.toString());
                 } catch(e) {
-                    console.error('[CARDAPIO-DIA] Erro admin', config.adminId, e.message);
+                    console.error('[CARDAPIO-DIA] Erro admin', admin._id, e.message);
                 }
             }
         } catch(e) {
@@ -34,13 +37,13 @@ const CardapioDiaService = {
 
     async perguntarCardapioAdmin(adminId) {
         // Buscar instância whatsapp do admin delivery
-        const instancia = await InstanciaWhatsapp.findOne({ adminId, ativa: true }).lean();
+        const { AdminDelivery } = require('../models/delivery.models');
+        const admin = await AdminDelivery.findById(adminId).lean();
+        if (!admin?.cardapioAtivoAssinantes) return;
+        const telDono = admin?.telefoneDono || admin?.telefone;
+        if (!telDono) return;
+        const instancia = await InstanciaWhatsapp.findOne({ adminId }).lean();
         if (!instancia) return;
-
-        // Buscar telefone do admin
-        const { Admin } = require('../models');
-        const admin = await Admin.findById(adminId).lean();
-        if (!admin?.telefone) return;
 
         const nomeRest = (await ConfigDelivery.findOne({ adminId }).lean())?.nomeRestaurante || 'seu restaurante';
         const hoje = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: '2-digit' });
@@ -82,12 +85,13 @@ const CardapioDiaService = {
         _aguardandoCardapio.delete(adminId);
 
         // Confirmar para o adm
-        const { Admin } = require('../models');
-        const admin = await Admin.findById(adminId).lean();
-        const instancia = await InstanciaWhatsapp.findOne({ adminId, ativa: true }).lean();
-        if (admin?.telefone && instancia) {
+        const { AdminDelivery } = require('../models/delivery.models');
+        const admin = await AdminDelivery.findById(adminId).lean();
+        const telDono = admin?.telefoneDono || admin?.telefone;
+        const instancia = await InstanciaWhatsapp.findOne({ adminId }).lean();
+        if (telDono && instancia) {
             await EvolutionMultiService.enviarMensagem(
-                instancia._id.toString(), admin.telefone,
+                instancia._id.toString(), telDono,
                 `✅ *Anotado!* Cardápio de hoje registrado:\n\n_${descricao}_\n\n`
                 + `Vou mandar para todos os assinantes agora mesmo! 🚀💚`
             );

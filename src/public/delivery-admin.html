@@ -537,16 +537,45 @@
 
                 <div id="page-cardapio-dia" class="page">
                     <h2 style="margin-bottom:20px;">🍽️ Cardápio do Dia</h2>
+
+                    <!-- TOGGLE ATIVAÇÃO -->
+                    <div class="panel" style="margin-bottom:16px;border:2px solid #f9731622;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+                            <div>
+                                <h3 style="margin-bottom:4px;">🤖 Rebeca pergunta o cardápio automaticamente</h3>
+                                <p style="color:#888;font-size:13px;margin:0;">Às 7h a Rebeca manda mensagem para você no WhatsApp perguntando o cardápio. Você responde e ela envia para todos os assinantes.</p>
+                            </div>
+                            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                                <span id="cardapioAtivoLabel" style="font-size:13px;color:#888;">Desativado</span>
+                                <div style="position:relative;width:48px;height:26px;" onclick="toggleCardapioAtivo()">
+                                    <input type="checkbox" id="toggleCardapioAtivo" style="opacity:0;width:0;height:0;position:absolute;">
+                                    <div id="sliderCardapio" style="position:absolute;inset:0;background:#333;border-radius:26px;transition:.3s;cursor:pointer;">
+                                        <div id="knobCardapio" style="position:absolute;top:3px;left:3px;width:20px;height:20px;background:#fff;border-radius:50%;transition:.3s;"></div>
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
+                        <div id="cardapioConfigExtra" style="display:none;margin-top:16px;padding-top:16px;border-top:1px solid #e8e8ed;">
+                            <label style="display:block;margin-bottom:6px;font-size:13px;color:#636366;">📱 Telefone para receber a pergunta (WhatsApp)</label>
+                            <div style="display:flex;gap:8px;">
+                                <input id="inputTelefoneDono" type="tel" placeholder="Ex: 34999990000" style="flex:1;padding:10px;border:1px solid #e8e8ed;border-radius:8px;font-size:14px;">
+                                <button class="btn btn-primary" onclick="salvarTelefoneDono()" style="white-space:nowrap;">💾 Salvar</button>
+                            </div>
+                            <button class="btn" style="margin-top:10px;background:#f97316;color:#fff;" onclick="pedirCardapioAgora()">📲 Pedir cardápio agora (teste)</button>
+                        </div>
+                    </div>
+
+                    <!-- CARDÁPIO MANUAL -->
                     <div class="panel">
-                        <h3>Cardápio de Hoje</h3>
-                        <p style="color:#aaa;margin-bottom:15px;font-size:13px;">Enviado via WhatsApp para todos os assinantes ativos.</p>
+                        <h3>📝 Cardápio de Hoje</h3>
+                        <p style="color:#888;margin-bottom:15px;font-size:13px;">Ou escreva manualmente e envie para os assinantes.</p>
                         <div class="form-group">
-                            <textarea id="cardapioDiaTexto" rows="6" style="width:100%;padding:12px;background:#252542;border:1px solid #333;border-radius:8px;color:#fff;font-size:14px;" placeholder="Ex: Hoje temos arroz, feijão, frango grelhado, salada e sobremesa"></textarea>
+                            <textarea id="cardapioDiaTexto" rows="6" style="width:100%;padding:12px;background:#f5f5f7;border:1px solid #e8e8ed;border-radius:8px;color:#1c1c1e;font-size:14px;" placeholder="Ex: Hoje temos arroz, feijão, frango grelhado, salada e sobremesa"></textarea>
                         </div>
                         <div id="cardapioDiaInfo" style="margin-bottom:15px;color:#888;font-size:13px;"></div>
                         <div style="display:flex;gap:10px;">
                             <button class="btn btn-primary" onclick="enviarCardapioDia()">📨 Enviar para Assinantes</button>
-                            <button class="btn" style="background:#252542;" onclick="carregarCardapioDia()">🔄 Atualizar</button>
+                            <button class="btn" style="background:#f5f5f7;color:#636366;border:1px solid #e8e8ed;" onclick="carregarCardapioDia()">🔄 Atualizar</button>
                         </div>
                         <div id="cardapioDiaStatus" style="margin-top:10px;color:#00cc6a;font-weight:bold;"></div>
                     </div>
@@ -1298,7 +1327,7 @@
                 if (page === 'dashboard') { verificarStatusWADashboard(); }
                 if (page === 'avaliacoes') carregarAvaliacoes();
                 if (page === 'assinantes') carregarAssinantes();
-                if (page === 'cardapio-dia') carregarCardapioDia();
+                if (page === 'cardapio-dia') { carregarCardapioDia(); carregarConfigCardapioDia(); }
                 if (page === 'estoque') { carregarEstoque(); carregarListaCompras(); }
                 if (page === 'upload-cardapio') { /* nada */ }
                 if (page === 'combos') carregarCombos();
@@ -3427,6 +3456,63 @@ async function carregarCardapioDia() {
         }
     } catch(e) {}
 }
+// ===== CARDÁPIO DIA — TOGGLE =====
+async function carregarConfigCardapioDia() {
+    try {
+        var tk = getToken();
+        var r = await fetch('/api/delivery/cardapio-dia/config', { headers: { 'Authorization': 'Bearer ' + tk } });
+        var d = await r.json();
+        var ativo = d.cardapioAtivoAssinantes || false;
+        document.getElementById('toggleCardapioAtivo').checked = ativo;
+        document.getElementById('sliderCardapio').style.background = ativo ? '#f97316' : '#333';
+        document.getElementById('knobCardapio').style.left = ativo ? '25px' : '3px';
+        document.getElementById('cardapioAtivoLabel').textContent = ativo ? '✅ Ativado' : 'Desativado';
+        document.getElementById('cardapioAtivoLabel').style.color = ativo ? '#f97316' : '#888';
+        document.getElementById('cardapioConfigExtra').style.display = ativo ? 'block' : 'none';
+        if (d.telefoneDono) document.getElementById('inputTelefoneDono').value = d.telefoneDono;
+    } catch(e) { console.log('Erro config cardapio:', e); }
+}
+
+async function toggleCardapioAtivo() {
+    var cb = document.getElementById('toggleCardapioAtivo');
+    var novoEstado = !cb.checked;
+    cb.checked = novoEstado;
+    document.getElementById('sliderCardapio').style.background = novoEstado ? '#f97316' : '#333';
+    document.getElementById('knobCardapio').style.left = novoEstado ? '25px' : '3px';
+    document.getElementById('cardapioAtivoLabel').textContent = novoEstado ? '✅ Ativado' : 'Desativado';
+    document.getElementById('cardapioAtivoLabel').style.color = novoEstado ? '#f97316' : '#888';
+    document.getElementById('cardapioConfigExtra').style.display = novoEstado ? 'block' : 'none';
+    var tk = getToken();
+    await fetch('/api/delivery/cardapio-dia/toggle', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + tk, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ativo: novoEstado })
+    });
+    toast(novoEstado ? '✅ Cardápio automático ativado!' : 'Cardápio automático desativado');
+}
+
+async function salvarTelefoneDono() {
+    var tel = document.getElementById('inputTelefoneDono').value.trim();
+    if (!tel) { toast('⚠️ Informe o telefone'); return; }
+    var tk = getToken();
+    await fetch('/api/delivery/cardapio-dia/toggle', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + tk, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ativo: true, telefoneDono: tel })
+    });
+    toast('✅ Telefone salvo!');
+}
+
+async function pedirCardapioAgora() {
+    var tk = getToken();
+    var r = await fetch('/api/delivery/cardapio-dia/enviar-agora', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + tk }
+    });
+    var d = await r.json();
+    toast(d.msg || d.erro || 'Enviado!');
+}
+
 async function enviarCardapioDia() {
     var descricao = document.getElementById('cardapioDiaTexto').value.trim();
     if (!descricao) { alert('Digite o cardapio do dia'); return; }

@@ -245,6 +245,10 @@ const AdminDeliverySchema = new mongoose.Schema({
     plano: { type: String, default: 'basico' },
     valorMensal: { type: Number, default: 97 },
 
+    // Cardápio do dia para assinantes
+    cardapioAtivoAssinantes: { type: Boolean, default: false },
+    telefoneDono: { type: String, default: '' }, // telefone para Rebeca perguntar cardápio
+
     // Controle master
     liberadoPor: String,
     motivoBloqueio: String,

@@ -356,6 +356,54 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                                     }
                                 }
                             }
+                            // ── CARDÁPIO DIA: verificar se é resposta do dono ou pedido de assinante ──
+                            const CardapioDiaService = require('../services/cardapio-dia.service');
+                            const adminIdStr = adminId?.toString();
+
+                            // Verificar se é o DONO respondendo o cardápio do dia
+                            if (adminIdStr && CardapioDiaService.isRespostaCardapio(adminIdStr)) {
+                                try {
+                                    await CardapioDiaService.salvarEEnviarCardapio(adminIdStr, conteudo, instancia._id.toString());
+                                    console.log('[CARDAPIO-DIA] Cardápio salvo e enviado para assinantes');
+                                } catch(eCd) {
+                                    console.error('[CARDAPIO-DIA] Erro:', eCd.message);
+                                }
+                                continue;
+                            }
+
+                            // Verificar se remetente é ASSINANTE ativo
+                            const { MensalidadeClienteDelivery } = require('../models/delivery.models');
+                            const telLimpo = telefone.replace(/\D/g, '').replace(/^55/, '');
+                            const assinante = await MensalidadeClienteDelivery.findOne({
+                                adminId,
+                                status: 'ativo',
+                                $or: [
+                                    { telefone: telefone },
+                                    { telefone: telLimpo },
+                                    { telefone: '55' + telLimpo }
+                                ]
+                            }).lean();
+
+                            if (assinante) {
+                                // Buscar cardápio de hoje
+                                const { CardapioDia } = require('../models/delivery.models');
+                                const hoje = new Date().toISOString().split('T')[0];
+                                const cardapioHoje = await CardapioDia.findOne({ adminId, data: hoje }).lean();
+
+                                // Processar pedido do assinante via Rebeca
+                                const RebecaDeliveryService = require('../services/rebeca-delivery.service');
+                                const _respAssinante = await RebecaDeliveryService.processarMensagem(
+                                    telefone,
+                                    { text: conteudo },
+                                    nome,
+                                    { adminId, instanciaId: instancia._id, isAssinante: true, assinante, cardapioHoje: cardapioHoje?.descricao || '' }
+                                );
+                                if (_respAssinante) {
+                                    await EvolutionMultiService.enviarMensagem(instancia._id, telefone, _respAssinante);
+                                }
+                                continue;
+                            }
+
                             // ── ROTEAMENTO DE ÁUDIO: ISOLAMENTO TOTAL delivery vs corridas ──
                             // Áudio delivery NUNCA processa pelo fluxo de corridas e vice-versa
                             if (_tipoAdminAudio === 'delivery') {

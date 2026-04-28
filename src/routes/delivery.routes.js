@@ -841,6 +841,35 @@ router.post('/pedido/:id/contato-cliente', async (req, res) => {
 
 
 // ========== ASSINANTES ==========
+// ===== CARDÁPIO DO DIA — TOGGLE E CONFIGURAÇÃO =====
+router.get('/cardapio-dia/config', authDelivery, async (req, res) => {
+    try {
+        const admin = await AdminDelivery.findById(req.adminId).lean();
+        res.json({ 
+            cardapioAtivoAssinantes: admin?.cardapioAtivoAssinantes || false,
+            telefoneDono: admin?.telefoneDono || admin?.telefone || ''
+        });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+router.post('/cardapio-dia/toggle', authDelivery, async (req, res) => {
+    try {
+        const { ativo, telefoneDono } = req.body;
+        const update = { cardapioAtivoAssinantes: !!ativo };
+        if (telefoneDono !== undefined) update.telefoneDono = telefoneDono;
+        await AdminDelivery.findByIdAndUpdate(req.adminId, update);
+        res.json({ sucesso: true, cardapioAtivoAssinantes: !!ativo });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+router.post('/cardapio-dia/enviar-agora', authDelivery, async (req, res) => {
+    try {
+        const CardapioDiaService = require('../services/cardapio-dia.service');
+        await CardapioDiaService.perguntarCardapioAdmin(req.adminId.toString());
+        res.json({ sucesso: true, msg: 'Pergunta enviada para seu WhatsApp!' });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
 router.get('/assinantes', authDelivery, async (req, res) => {
     try {
         const assinantes = await MensalidadeClienteDelivery.find({ adminId: req.adminId }).sort({ nome: 1 });
