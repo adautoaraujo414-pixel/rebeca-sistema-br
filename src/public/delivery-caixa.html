@@ -242,6 +242,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
       <span style="font-size:1.2em;font-weight:900;color:#f97316;letter-spacing:5px;text-transform:uppercase;background:#fff;padding:5px 20px;border-radius:8px;border:2.5px solid #1c1c1e;box-shadow:2px 2px 0 #1c1c1e">CAIXA</span>
     </div>
     <div style="display:flex;align-items:center;justify-content:flex-end;gap:10px">
+      <span id="nome-operador" style="font-size:.78em;font-weight:700;color:#f97316;background:#fff7ed;border:1px solid #fed7aa;padding:3px 10px;border-radius:20px;display:none"></span>
       <span class="clock" id="hora-atual">--:--</span>
       <button class="btn-sair" onclick="sair()">Sair</button>
     </div>
@@ -442,6 +443,14 @@ let token = localStorage.getItem('caixa_token') || new URLSearchParams(location.
 // Limpar token 'null' literal
 if(token === 'null' || token === 'undefined') token = '';
 if(token) localStorage.setItem('caixa_token', token);
+// Operador e numero do caixa vindos da URL
+const _urlParams = new URLSearchParams(location.search);
+const _operadorURL = _urlParams.get('operador') || '';
+const _numCaixaURL = _urlParams.get('numeroCaixa') || '';
+if(_operadorURL) localStorage.setItem('caixa_operador', _operadorURL);
+if(_numCaixaURL) localStorage.setItem('caixa_numero', _numCaixaURL);
+const _operadorAtual = _operadorURL || localStorage.getItem('caixa_operador') || '';
+const _numAtual = _numCaixaURL || localStorage.getItem('caixa_numero') || '';
 // Bloquear acesso sem token válido
 if(!token || token.length < 10) {
   document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#0d0d0f;color:#aaa;font-family:sans-serif;flex-direction:column;gap:16px"><span style="font-size:2em">🔒</span><p>Acesse o caixa pelo painel administrativo.</p><a href="/delivery-admin" style="color:#f97316;text-decoration:none;border:1px solid #f97316;padding:8px 20px;border-radius:8px;">Ir para o painel</a></div>';
@@ -490,6 +499,14 @@ async function iniciarApp(admin) {
     const dc = await rc.json();
     if(dc?.nomeRestaurante) document.getElementById('nome-restaurante').textContent = dc.nomeRestaurante;
   } catch(e) {}
+  // Exibir operador e numero do caixa no header
+  if(_operadorAtual) {
+    var elOp = document.getElementById('nome-operador');
+    if(elOp) {
+      elOp.textContent = '👤 ' + _operadorAtual + (_numAtual ? ' — Caixa ' + _numAtual : '');
+      elOp.style.display = 'inline-block';
+    }
+  }
   await carregarCardapio();
   await carregarPedidos();
   await carregarStats();

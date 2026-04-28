@@ -175,7 +175,7 @@
                 <div class="menu-section">Relatórios</div>
                 <div class="menu-item" data-page="relatorios" onclick="carregarRelatorios()">📈 Relatórios de Caixa</div>
                 <div class="menu-section">Operação</div>
-                <div class="menu-item" onclick="window.open('/delivery-caixa?token='+(localStorage.getItem('delivery_token')||token),'_blank')" style="cursor:pointer">🧾 Caixa / Comanda</div>
+                <div class="menu-item" onclick="abrirTelaCaixa()" style="cursor:pointer">🧾 Caixa / Comanda</div>
                 <div class="menu-item" onclick="window.open('/delivery-cozinha?token='+(localStorage.getItem('delivery_token')||token))" style="cursor:pointer">👨‍🍳 Painel Cozinha</div>
                 <div class="menu-item" onclick="abrirCardapioDigital()" style="cursor:pointer">🔗 Cardápio Digital</div>
                 <div class="menu-item" data-page="entregadores">🏍️ Entregadores</div>
@@ -3883,5 +3883,97 @@ async function salvarEdicaoGarcom() {
     <img class="img-gerada-preview" id="imgGeradaPreview" src="" alt="">
   </div>
 </div>
+
+<!-- MODAL ABERTURA CAIXA -->
+<div id="modalAbrirCaixa" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:#1a1a2e;border:1px solid #333;border-radius:16px;padding:32px;width:340px;max-width:95vw;">
+    <h3 style="color:#fff;margin-bottom:20px;font-size:1.1em;">🧾 Abrir Caixa</h3>
+    <div style="margin-bottom:14px;">
+      <label style="color:#aaa;font-size:.82em;display:block;margin-bottom:6px;">Nome do operador</label>
+      <input id="caixaOperadorInput" type="text" placeholder="Ex: João, Maria..." style="width:100%;padding:10px;background:#0f0f1a;border:1px solid #444;border-radius:8px;color:#fff;font-size:.95em;">
+    </div>
+    <div style="margin-bottom:14px;">
+      <label style="color:#aaa;font-size:.82em;display:block;margin-bottom:6px;">Número do caixa</label>
+      <select id="caixaNumeroInput" style="width:100%;padding:10px;background:#0f0f1a;border:1px solid #444;border-radius:8px;color:#fff;font-size:.95em;">
+        <option value="1">Caixa 1</option>
+        <option value="2">Caixa 2</option>
+        <option value="3">Caixa 3</option>
+      </select>
+    </div>
+    <div style="margin-bottom:20px;">
+      <label style="color:#aaa;font-size:.82em;display:block;margin-bottom:6px;">Fundo de caixa (R$)</label>
+      <input id="caixaFundoInput" type="number" value="0" min="0" step="0.01" style="width:100%;padding:10px;background:#0f0f1a;border:1px solid #444;border-radius:8px;color:#fff;font-size:.95em;">
+    </div>
+    <div id="caixaErro" style="color:#f87171;font-size:.83em;margin-bottom:12px;display:none;"></div>
+    <div style="display:flex;gap:10px;">
+      <button onclick="document.getElementById('modalAbrirCaixa').style.display='none'" style="flex:1;padding:10px;background:#333;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:.9em;">Cancelar</button>
+      <button onclick="confirmarAbrirCaixa()" id="btnConfirmarCaixa" style="flex:2;padding:10px;background:#f97316;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-size:.95em;">✅ Abrir e Entrar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function abrirTelaCaixa() {
+    document.getElementById('caixaOperadorInput').value = '';
+    document.getElementById('caixaNumeroInput').value = '1';
+    document.getElementById('caixaFundoInput').value = '0';
+    document.getElementById('caixaErro').style.display = 'none';
+    document.getElementById('modalAbrirCaixa').style.display = 'flex';
+    setTimeout(function(){ document.getElementById('caixaOperadorInput').focus(); }, 100);
+}
+
+async function confirmarAbrirCaixa() {
+    var operador = document.getElementById('caixaOperadorInput').value.trim();
+    var numeroCaixa = Number(document.getElementById('caixaNumeroInput').value);
+    var valorAbertura = parseFloat(document.getElementById('caixaFundoInput').value) || 0;
+    var erroEl = document.getElementById('caixaErro');
+    var btn = document.getElementById('btnConfirmarCaixa');
+
+    if (!operador) {
+        erroEl.textContent = '⚠️ Informe o nome do operador';
+        erroEl.style.display = 'block';
+        return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Abrindo...';
+    erroEl.style.display = 'none';
+
+    try {
+        var tk = localStorage.getItem('delivery_token') || token || '';
+        var r = await fetch('/api/caixa/abrir', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + tk },
+            body: JSON.stringify({ operador, numeroCaixa, valorAbertura })
+        });
+        var d = await r.json();
+        if (d.ok || d.caixa || d._id) {
+            document.getElementById('modalAbrirCaixa').style.display = 'none';
+            var url = '/delivery-caixa?token=' + encodeURIComponent(tk) +
+                      '&operador=' + encodeURIComponent(operador) +
+                      '&numeroCaixa=' + numeroCaixa;
+            window.open(url, '_blank');
+        } else {
+            erroEl.textContent = '❌ ' + (d.erro || 'Erro ao abrir caixa');
+            erroEl.style.display = 'block';
+        }
+    } catch(e) {
+        erroEl.textContent = '❌ Erro de conexão: ' + e.message;
+        erroEl.style.display = 'block';
+    }
+
+    btn.disabled = false;
+    btn.textContent = '✅ Abrir e Entrar';
+}
+
+// Fechar modal clicando fora
+document.getElementById('modalAbrirCaixa').addEventListener('click', function(e) {
+    if (e.target === this) this.style.display = 'none';
+});
+// Enter no campo operador
+document.getElementById('caixaOperadorInput').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') confirmarAbrirCaixa();
+});
+</script>
 </body>
 </html>
