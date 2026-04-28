@@ -1115,13 +1115,13 @@
 
         // ===== SISTEMA DE PLANOS =====
         const PLANOS_MODULOS = {
-            confort:  ['dashboard', 'cardapio', 'upload-cardapio', 'categorias', 'config'],
+            confort:  ['dashboard', 'cardapio', 'upload-cardapio', 'categorias', 'pedidos', 'caixa', 'config'],
             plus:     ['dashboard', 'cardapio', 'upload-cardapio', 'categorias', 'pedidos', 'relatorios', 'avaliacoes', 'assinantes', 'config'],
             premium:  ['dashboard', 'cardapio', 'upload-cardapio', 'categorias', 'pedidos', 'relatorios', 'entregadores', 'garcons', 'avaliacoes', 'assinantes', 'estoque', 'cardapio-dia', 'combos', 'config']
         };
 
         const PLANO_UPGRADE = {
-            confort: { proximo: 'Plus', valor: 'R$ 298,90', modulos: ['Pedidos online', 'Módulo financeiro', 'Relatórios', 'Cardápio interativo'] },
+            confort: { proximo: 'Plus', valor: 'R$ 298,90', modulos: ['Relatórios avançados', 'Entregadores', 'Garçons', 'WhatsApp IA completo', 'Assinantes', 'Estoque'] },
             plus:    { proximo: 'Premium', valor: 'R$ 459,00', modulos: ['Tela do garçom', 'Tela da cozinha', 'Entregadores', 'Rastreamento ao vivo', 'WhatsApp IA', 'Estoque', 'Cardápio do dia'] }
         };
 
@@ -3511,6 +3511,22 @@ async function pedirCardapioAgora() {
     });
     var d = await r.json();
     toast(d.msg || d.erro || 'Enviado!');
+}
+
+// ===== IMPRESSORA =====
+function imprimirPedido(pedidoId) {
+    var tk = getToken();
+    var url = '/api/delivery/caixa/pedido/' + pedidoId + '/imprimir?token=' + tk;
+    var win = window.open('', '_blank', 'width=400,height=600');
+    win.document.write('<p>Carregando cupom...</p>');
+    fetch('/api/delivery/caixa/pedido/' + pedidoId + '/imprimir', {
+        headers: { 'Authorization': 'Bearer ' + tk }
+    }).then(r => r.text()).then(html => {
+        win.document.open();
+        win.document.write(html);
+        win.document.close();
+        win.onload = function() { win.print(); };
+    }).catch(e => { win.document.write('Erro: ' + e.message); });
 }
 
 async function enviarCardapioDia() {

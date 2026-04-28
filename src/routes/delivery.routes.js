@@ -1052,6 +1052,30 @@ router.put('/entregador/status', async (req, res) => {
 
 // ========== CAIXA ==========
 
+// ===== IMPRESSORA — gerar cupom 3 vias =====
+router.get('/caixa/pedido/:id/imprimir', authDelivery, async (req, res) => {
+    try {
+        const pedido = await PedidoDelivery.findOne({ _id: req.params.id, adminId: req.adminId }).lean();
+        if (!pedido) return res.status(404).json({ erro: 'Pedido não encontrado' });
+        const config = await ConfigDelivery.findOne({ adminId: req.adminId }).lean();
+        const ImpressoraService = require('../services/impressora.service');
+        const html = ImpressoraService.gerarTresVias(pedido, config || {});
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        res.send(html);
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+router.post('/caixa/pedido/:id/imprimir', authDelivery, async (req, res) => {
+    try {
+        const pedido = await PedidoDelivery.findOne({ _id: req.params.id, adminId: req.adminId }).lean();
+        if (!pedido) return res.status(404).json({ erro: 'Pedido não encontrado' });
+        const config = await ConfigDelivery.findOne({ adminId: req.adminId }).lean();
+        const ImpressoraService = require('../services/impressora.service');
+        const html = ImpressoraService.gerarTresVias(pedido, config || {});
+        res.json({ sucesso: true, html });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
 // Criar pedido manual pelo caixa
 router.post('/caixa/pedido', authDelivery, async (req, res) => {
     try {

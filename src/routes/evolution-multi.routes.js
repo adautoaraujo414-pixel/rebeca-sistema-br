@@ -407,6 +407,24 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                                 continue;
                             }
 
+                            // ── REBECA CONFORT: plano econômico usa serviço sem IA ──
+                            if (_isDeliveryAdmin) {
+                                try {
+                                    const { AdminDelivery: _AdConfort } = require('../models/delivery.models');
+                                    const _admConfort = await _AdConfort.findById(adminId).select('plano').lean();
+                                    if (_admConfort?.plano === 'confort') {
+                                        const RebecaConfort = require('../services/rebeca-confort.service');
+                                        const _respConfort = await RebecaConfort.processar(
+                                            telefone, conteudo || transcricao || '', nome, adminId, instancia._id
+                                        );
+                                        if (_respConfort) {
+                                            await EvolutionMultiService.enviarMensagem(instancia._id, telefone, _respConfort);
+                                        }
+                                        continue;
+                                    }
+                                } catch(_ec) { console.error('[CONFORT]', _ec.message); }
+                            }
+
                             // ── ROTEAMENTO DE ÁUDIO: ISOLAMENTO TOTAL delivery vs corridas ──
                             // Áudio delivery NUNCA processa pelo fluxo de corridas e vice-versa
                             if (_tipoAdminAudio === 'delivery') {
