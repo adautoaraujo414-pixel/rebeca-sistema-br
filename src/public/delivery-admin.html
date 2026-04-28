@@ -2716,9 +2716,11 @@ var comboImgGerada = '';
 
 async function carregarCombos() {
     try {
-        var r = await fetch('/api/delivery/combos', { headers: { 'Authorization': 'Bearer ' + token } });
+        var _tk = localStorage.getItem('delivery_token') || (typeof token !== 'undefined' ? token : '') || '';
+        var r = await fetch('/api/delivery/combos', { headers: { 'Authorization': 'Bearer ' + _tk } });
+        if (!r.ok) { combosData = []; renderCombos(); return; }
         var d = await r.json();
-        combosData = d.combos || d || [];
+        combosData = Array.isArray(d) ? d : (d.combos || []);
     } catch(e) {
         combosData = [];
     }
@@ -2944,6 +2946,7 @@ async function salvarCombo() {
     if (!itensSel.length) { alert('Selecione pelo menos 1 item.'); return; }
 
     var body = { nome: nome, descricao: desc, preco: preco, itens: itensSel, imagem: comboImgGerada };
+    var _tk = localStorage.getItem('delivery_token') || (typeof token !== 'undefined' ? token : '') || '';
     var url = editId ? '/api/delivery/combos/' + editId : '/api/delivery/combos';
     var method = editId ? 'PUT' : 'POST';
 
@@ -2987,7 +2990,8 @@ function editarCombo(id) {
 async function excluirCombo(id) {
     if (!confirm('Excluir este combo?')) return;
     try {
-        await fetch('/api/delivery/combos/' + id, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + token } });
+        var _tk3 = localStorage.getItem('delivery_token') || (typeof token !== 'undefined' ? token : '') || '';
+        await fetch('/api/delivery/combos/' + id, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + _tk3 } });
         carregarCombos();
     } catch(e) { alert('Erro ao excluir'); }
 }
