@@ -3949,7 +3949,7 @@ async function confirmarAbrirCaixa() {
     erroEl.style.display = 'none';
 
     try {
-        var tk = localStorage.getItem('delivery_token') || token || '';
+        var tk = localStorage.getItem('delivery_token') || localStorage.getItem('token') || '';
         var r = await fetch('/api/caixa/abrir', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + tk },
