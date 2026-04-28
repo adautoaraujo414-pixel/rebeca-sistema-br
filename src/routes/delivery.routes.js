@@ -723,6 +723,7 @@ router.post('/pedido-cardapio-digital', async (req, res) => {
         const taxaGarcomPerc = cfgTaxa?.cobrarTaxaGarcom ? (cfgTaxa.taxaGarcomPerc || 10) : 0;
         const taxaGarcom = taxaGarcomPerc > 0 ? Math.round(subtotalItens * taxaGarcomPerc / 100 * 100) / 100 : 0;
         const taxaBanda = cfgTaxa?.cobrarBanda ? (cfgTaxa.taxaBandaValor || 0) : 0;
+        const SseService = require('../services/sse.service');
         const pedidoSalvo = await PedidoDelivery.create({
             adminId,
             numero: numeroPedido,
@@ -1095,6 +1096,12 @@ router.put('/entregador/status', async (req, res) => {
 
 // ========== CAIXA ==========
 
+// ===== SSE — eventos em tempo real =====
+router.get('/eventos', authDelivery, (req, res) => {
+    const SseService = require('../services/sse.service');
+    SseService.registrar(req.adminId.toString(), res);
+});
+
 // ===== IMPRESSORA — gerar cupom 3 vias =====
 router.get('/caixa/pedido/:id/imprimir', authDelivery, async (req, res) => {
     try {
@@ -1121,6 +1128,7 @@ router.post('/caixa/pedido/:id/imprimir', authDelivery, async (req, res) => {
 
 // Criar pedido manual pelo caixa
 router.post('/caixa/pedido', authDelivery, async (req, res) => {
+    const SseService = require('../services/sse.service');
     try {
         const { clienteNome, clienteTelefone, itens, tipoLocal, numeroMesa, 
                 nomeComanda, observacao, formaPagamento, subtotal, total, taxaEntrega } = req.body;
@@ -1144,6 +1152,7 @@ router.post('/caixa/pedido', authDelivery, async (req, res) => {
         });
         
         await pedido.save();
+        try { SseService.emitir(adminId?.toString(), 'novo_pedido', { pedidoId: pedido._id, origem: 'digital' }); } catch(_) {}
         res.json({ sucesso: true, pedido });
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
@@ -1443,6 +1452,7 @@ router.post('/garcons/pedido', async (req, res) => {
             origemPedido: 'garcom',
             formaPagamento: 'na_entrega'
         });
+        try { const _Sse = require('../services/sse.service'); _Sse.emitir(g.adminId?.toString(), 'novo_pedido', { pedidoId: pedido._id, origem: 'garcom' }); } catch(_) {}
         res.json({ sucesso: true, pedido });
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
