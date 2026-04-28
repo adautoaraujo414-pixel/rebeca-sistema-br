@@ -3926,6 +3926,11 @@ async function salvarEdicaoGarcom() {
 </div>
 
 <script>
+// Helper global para token — funciona em qualquer bloco de script
+function getToken() {
+    return localStorage.getItem('delivery_token') || (typeof token !== 'undefined' ? token : '') || '';
+}
+
 function abrirTelaCaixa() {
     document.getElementById('caixaOperadorInput').value = '';
     document.getElementById('caixaNumeroInput').value = '1';
