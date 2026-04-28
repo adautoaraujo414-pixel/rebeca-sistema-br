@@ -357,11 +357,14 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                                 }
                             }
                             // ── CARDÁPIO DIA: verificar se é resposta do dono ou pedido de assinante ──
+                            // Só executa para admins delivery — isolamento total
                             const CardapioDiaService = require('../services/cardapio-dia.service');
                             const adminIdStr = adminId?.toString();
+                            const { AdminDelivery: _AdDelCardapio } = require('../models/delivery.models');
+                            const _isDeliveryAdmin = !!(await _AdDelCardapio.findById(adminId).select('_id').lean());
 
                             // Verificar se é o DONO respondendo o cardápio do dia
-                            if (adminIdStr && CardapioDiaService.isRespostaCardapio(adminIdStr)) {
+                            if (_isDeliveryAdmin && adminIdStr && CardapioDiaService.isRespostaCardapio(adminIdStr)) {
                                 try {
                                     await CardapioDiaService.salvarEEnviarCardapio(adminIdStr, conteudo, instancia._id.toString());
                                     console.log('[CARDAPIO-DIA] Cardápio salvo e enviado para assinantes');
@@ -371,7 +374,7 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                                 continue;
                             }
 
-                            // Verificar se remetente é ASSINANTE ativo
+                            // Verificar se remetente é ASSINANTE ativo (só em delivery)
                             const { MensalidadeClienteDelivery } = require('../models/delivery.models');
                             const telLimpo = telefone.replace(/\D/g, '').replace(/^55/, '');
                             const assinante = await MensalidadeClienteDelivery.findOne({
