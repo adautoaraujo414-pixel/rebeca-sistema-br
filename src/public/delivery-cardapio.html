@@ -762,7 +762,7 @@ function criarCardCombo(combo) {
       economia +
       '<div class="item-footer" style="margin-top:6px;">' +
         '<div>' + precoRiscado + '<span class="item-price">R$ ' + Number(combo.preco||0).toFixed(2).replace('.',',') + '</span></div>' +
-        '<button class="item-add-btn" onclick="event.stopPropagation();adicionarComboRapido('' + combo._id + '')">+</button>' +
+        '<button class="item-add-btn" onclick="event.stopPropagation();adicionarComboRapido(&quot;' + combo._id + '&quot;)">+</button>' +
       '</div>' +
     '</div>';
 
@@ -882,7 +882,6 @@ function toggleIngr(btn) {
     btn.textContent = 'Retirado';
     ingrRetirados.push(ing);
   }
-}
 
 function mudarQty(delta) {
   qtyAtual = Math.max(1, qtyAtual + delta);
