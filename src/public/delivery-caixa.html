@@ -1228,33 +1228,60 @@ async function verificarStatusCaixa() {
 }
 
 async function abrirCaixa() {
-    if (!confirm('Abrir o caixa agora?')) return;
+    const operador = prompt('Nome do operador:');
+    if (!operador || !operador.trim()) return toast('Informe o nome do operador', 'error');
+    const numeroCaixa = prompt('Numero do caixa (1, 2 ou 3):', '1');
+    if (!['1','2','3'].includes((numeroCaixa||'').trim())) return toast('Caixa invalido. Use 1, 2 ou 3.', 'error');
+    const valorAbertura = prompt('Fundo de caixa (R$):', '0') || '0';
     try {
-        const d = await api('/caixa/abrir', { method: 'POST', body: JSON.stringify({ operador: 'admin' }) });
-        if (d.sucesso) {
-            toast('✅ Caixa aberto com sucesso!');
+        const r = await fetch('/api/caixa/abrir', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+            body: JSON.stringify({ operador: operador.trim(), numeroCaixa: Number(numeroCaixa), valorAbertura: Number(valorAbertura) })
+        });
+        const d = await r.json();
+        if (d._id || d.numeroCaixa) {
+            toast('Caixa ' + d.numeroCaixa + ' aberto — Operador: ' + d.operador);
             verificarStatusCaixa();
-        } else toast('Erro: ' + d.erro, 'error');
-    } catch(e) { toast('Erro ao abrir caixa', 'error'); }
+        } else toast('Erro: ' + (d.erro || d.error || 'desconhecido'), 'error');
+    } catch(e) { toast('Erro ao abrir caixa: ' + e.message, 'error'); }
 }
-
 async function fecharCaixa() {
-    if (!confirm('⚠️ Fechar o caixa? Isso irá gerar o relatório do dia.')) return;
-    const obs = prompt('Observações (opcional):') || '';
     try {
-        const d = await api('/caixa/fechar', { method: 'POST', body: JSON.stringify({ operador: 'admin', observacoes: obs }) });
-        if (d.sucesso) {
-            const r = d.relatorio;
+        const ra = await fetch('/api/caixa/abertos', { headers: { 'Authorization': 'Bearer ' + token } });
+        const abertos = await ra.json();
+        if (!abertos || abertos.length === 0) return toast('Nenhum caixa aberto', 'error');
+        let caixaId, caixaNum;
+        if (abertos.length === 1) {
+            caixaId = abertos[0]._id; caixaNum = abertos[0].numeroCaixa;
+        } else {
+            const lista = abertos.map(c => c.numeroCaixa + ' (' + c.operador + ')').join(', ');
+            const escolha = prompt('Qual caixa fechar? Informe o numero (' + lista + '):');
+            const achou = abertos.find(c => String(c.numeroCaixa) === String(escolha));
+            if (!achou) return toast('Caixa nao encontrado', 'error');
+            caixaId = achou._id; caixaNum = achou.numeroCaixa;
+        }
+        if (!confirm('Fechar o Caixa ' + caixaNum + '? Sera gerado o relatorio.')) return;
+        const obs = prompt('Observacoes (opcional):') || '';
+        const valorFechamento = prompt('Valor em caixa ao fechar (R$):', '0') || '0';
+        const r = await fetch('/api/caixa/fechar/' + caixaId, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+            body: JSON.stringify({ valorFechamento: Number(valorFechamento), observacoes: obs })
+        });
+        const d = await r.json();
+        if (d.status === 'fechado' || d.totalVendas !== undefined) {
+            toast('Caixa ' + caixaNum + ' fechado! Relatorio enviado ao admin.');
             verificarStatusCaixa();
-            // Mostrar resumo
-            setTimeout(() => {
-                alert(`✅ Caixa Fechado!\n\n📦 Total Pedidos: ${r.totalPedidos}\n✅ Entregues: ${r.totalEntregues}\n❌ Cancelados: ${r.totalCancelados}\n💰 Faturamento: R$ ${r.totalFaturamento.toFixed(2)}\n\n🏆 Top Produtos:\n${r.produtosMaisVendidos.slice(0,5).map(p => `  ${p.nome}: ${p.quantidade}x`).join('\n')}`);
-            }, 300);
-        } else toast('Erro: ' + d.erro, 'error');
-    } catch(e) { toast('Erro ao fechar caixa', 'error'); }
-}
+            alert('Caixa ' + caixaNum + ' Fechado!
 
-// Verificar status ao carregar
+Total vendas: R$ ' + (d.totalVendas||0).toFixed(2) + '
+Dinheiro: R$ ' + (d.totalDinheiro||0).toFixed(2) + '
+Cartao: R$ ' + (d.totalCartao||0).toFixed(2) + '
+Pix: R$ ' + (d.totalPix||0).toFixed(2));
+        } else toast('Erro: ' + (d.erro || d.error || 'desconhecido'), 'error');
+    } catch(e) { toast('Erro ao fechar caixa: ' + e.message, 'error'); }
+}
 document.addEventListener('DOMContentLoaded', () => {
     setTimeout(verificarStatusCaixa, 1500);
 });
