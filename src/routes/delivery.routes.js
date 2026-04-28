@@ -2068,7 +2068,11 @@ router.get('/config-publica/:adminId', async (req, res) => {
             logo: config.logo || null,
             nomeRestaurante: config.nomeRestaurante || '',
             horario: config.horarioFuncionamento || '',
-            aberto: config.aberto !== false
+            aberto: config.aberto !== false,
+            cobrarTaxaGarcom: config.cobrarTaxaGarcom || false,
+            taxaGarcomPerc: config.taxaGarcomPerc || 0,
+            cobrarBanda: config.cobrarBanda || false,
+            taxaBandaValor: config.taxaBandaValor || 0
         });
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });

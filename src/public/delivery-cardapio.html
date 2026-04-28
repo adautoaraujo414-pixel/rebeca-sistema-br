@@ -392,7 +392,23 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
       </div>
 
       <div class="cart-total-row">
-        <span class="cart-total-label">Total do pedido</span>
+        <span class="cart-total-label">Subtotal</span>
+        <span class="cart-total-val" id="cartSubtotal">R$ 0,00</span>
+      </div>
+      <div class="cart-total-row" id="rowTaxaEntrega" style="display:none">
+        <span class="cart-total-label">🛵 Taxa de entrega</span>
+        <span class="cart-total-val" id="cartTaxaEntrega">R$ 0,00</span>
+      </div>
+      <div class="cart-total-row" id="rowTaxaGarcom" style="display:none">
+        <span class="cart-total-label">🍽️ Taxa garçom</span>
+        <span class="cart-total-val" id="cartTaxaGarcom">R$ 0,00</span>
+      </div>
+      <div class="cart-total-row" id="rowTaxaBanda" style="display:none">
+        <span class="cart-total-label">🎵 Banda/Cover</span>
+        <span class="cart-total-val" id="cartTaxaBanda">R$ 0,00</span>
+      </div>
+      <div class="cart-total-row">
+        <span class="cart-total-label" style="font-weight:700">Total do pedido</span>
         <span class="cart-total-val" id="cartTotal">R$ 0,00</span>
       </div>
       <button class="btn-finalizar" id="btnFinalizar" onclick="finalizarPedido()">✅ Finalizar pedido</button>
@@ -451,6 +467,11 @@ async function carregarPagamentosConfig() {
     var r = await fetch('/api/delivery/config-publica/' + adminId);
     var d = await r.json();
     pagamentosConfig = d.pagamentos || {};
+    window.cfgTaxaEntrega    = d.taxaEntrega || 0;
+    window.cfgGarcomAtivo    = d.cobrarTaxaGarcom || false;
+    window.cfgGarcomPerc     = d.taxaGarcomPerc || 0;
+    window.cfgBandaAtivo     = d.cobrarBanda || false;
+    window.cfgBandaValor     = d.taxaBandaValor || 0;
     // Aplicar logo e nome do estabelecimento
     if (d.nomeRestaurante) {
         var el = document.getElementById('nomeEstab');
@@ -1034,8 +1055,9 @@ async function finalizarPedido() {
       troco: troco,
       observacaoGeral: obs,
       itens: carrinho.map(function(c){ return { itemId: c.itemId, nome: c.nome, preco: c.preco, quantidade: c.qty, obs: c.obs }; }),
+      subtotal: carrinho.reduce(function(a,b){ return a + b.preco * b.qty; }, 0),
       total: total,
-      taxaEntrega: 0,
+      taxaEntrega: (tipoAtual === 'entrega') ? (window.cfgTaxaEntrega || 0) : 0,
       tipo: tipoAtual
     };
     var r = await fetch('/api/delivery/pedido-cardapio-digital', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
