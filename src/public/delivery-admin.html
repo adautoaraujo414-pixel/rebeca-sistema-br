@@ -753,6 +753,40 @@
                 <div id="page-estoque" class="page">
                     <h2 style="margin-bottom:6px;">&#x1F4E6; Controle de Estoque</h2>
                     <p style="color:#aaa;font-size:13px;margin-bottom:20px;">Ative o controle por item. A Rebeca baixa o estoque automaticamente a cada pedido confirmado.</p>
+
+                    <!-- SCANNER DE CODIGO DE BARRAS -->
+                    <div class="panel" style="margin-bottom:16px;border-left:3px solid #3b82f6;">
+                        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+                            <span style="font-size:1.4em;">&#x1F52B;</span>
+                            <div>
+                                <div style="font-weight:800;color:#fff;font-size:.95em;">Scanner / Pistola de Codigo de Barras</div>
+                                <div style="color:#888;font-size:.78em;">Pistola USB ou Bluetooth — escaneie para identificar produto instantaneamente</div>
+                            </div>
+                        </div>
+                        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                            <input type="text" id="inputBarcode" placeholder="Aponte a pistola ou digite o codigo EAN..." 
+                                style="flex:1;min-width:200px;padding:12px 16px;background:#1a1a2e;border:2px solid #3b82f6;border-radius:10px;color:#fff;font-size:1em;outline:none;"
+                                onkeydown="if(event.key==='Enter') buscarBarcode()">
+                            <button onclick="buscarBarcode()" style="padding:12px 20px;background:#3b82f6;border:none;border-radius:10px;color:#fff;font-weight:800;cursor:pointer;">&#x1F50D; Buscar</button>
+                        </div>
+                        <div id="barcodeResultado" style="margin-top:12px;display:none;"></div>
+                    </div>
+
+                    <!-- FORNECEDORES -->
+                    <div class="panel" style="margin-bottom:16px;border-left:3px solid #a855f7;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+                            <div style="display:flex;align-items:center;gap:10px;">
+                                <span style="font-size:1.4em;">&#x1F3ED;</span>
+                                <div>
+                                    <div style="font-weight:800;color:#fff;font-size:.95em;">Fornecedores</div>
+                                    <div style="color:#888;font-size:.78em;">Contatos para reposicao rapida de estoque</div>
+                                </div>
+                            </div>
+                            <button onclick="abrirModalFornecedor()" style="padding:8px 16px;background:rgba(168,85,247,.15);border:1px solid #a855f7;border-radius:8px;color:#a855f7;font-weight:700;cursor:pointer;font-size:.82em;">+ Fornecedor</button>
+                        </div>
+                        <div id="listaFornecedores" style="display:flex;flex-direction:column;gap:8px;"></div>
+                    </div>
+
                     <div class="panel" style="margin-bottom:16px;border-left:3px solid #f97316;">
                         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
                             <h3>&#x1F6D2; Lista de Compras</h3>
@@ -1499,7 +1533,7 @@
                 if (page === 'cardapio-dia') { carregarCardapioDia(); carregarConfigCardapioDia(); }
                 if (page === 'cardapio-semanal') carregarCardapioSemanal();
                 if (page === 'impressora') { /* página estática */ }
-                if (page === 'estoque') { carregarEstoque(); carregarListaCompras(); }
+                if (page === 'estoque') { carregarEstoque(); carregarListaCompras(); renderFornecedores(); document.getElementById('inputBarcode')?.focus(); }
                 if (page === 'upload-cardapio') { /* nada */ }
                 if (page === 'combos') carregarCombos();
             });
@@ -4025,6 +4059,72 @@ async function enviarCardapioDia() {
 </script>
 <script>
         // ===== ESTOQUE =====
+        // ===== SCANNER BARCODE =====
+        async function buscarBarcode() {
+            const codigo = document.getElementById('inputBarcode').value.trim();
+            if (!codigo) { toast('Digite ou escaneie um codigo'); return; }
+            const el = document.getElementById('barcodeResultado');
+            el.style.display = 'block';
+            el.innerHTML = '<p style="color:#888;font-size:.85em;">Buscando...</p>';
+            try {
+                const r = await api('/estoque/barcode/' + encodeURIComponent(codigo));
+                if (r.status === 404) {
+                    el.innerHTML = '<div style="background:rgba(239,68,68,.1);border:1px solid #ef4444;border-radius:10px;padding:14px;">' +
+                        '<p style="color:#ef4444;font-weight:700;">&#x274C; Codigo nao encontrado: ' + codigo + '</p>' +
+                        '<p style="color:#888;font-size:.82em;margin-top:4px;">Cadastre o codigo no item pelo Cardapio > Editar item</p></div>';
+                    return;
+                }
+                const item = await r.json();
+                const cor = item.estoqueAtual === 0 ? '#ef4444' : item.estoqueAtual <= item.estoqueMinimo ? '#f97316' : '#22c55e';
+                el.innerHTML = '<div style="background:rgba(34,197,94,.08);border:1px solid #22c55e;border-radius:12px;padding:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">' +
+                    '<div>' +
+                    '<div style="font-weight:900;color:#fff;font-size:1.05em;">&#x2705; ' + item.nome + '</div>' +
+                    '<div style="color:#888;font-size:.82em;margin-top:4px;">Codigo: ' + item.codigoBarra + ' | Estoque: <span style="color:' + cor + ';font-weight:700;">' + (item.estoqueAtual||0) + ' un</span> | Minimo: ' + (item.estoqueMinimo||0) + '</div>' +
+                    (item.fornecedor ? '<div style="color:#a855f7;font-size:.82em;margin-top:2px;">&#x1F3ED; ' + item.fornecedor + (item.fornecedorTelefone ? ' — ' + item.fornecedorTelefone : '') + '</div>' : '') +
+                    '</div>' +
+                    '<div style="display:flex;gap:8px;">' +
+                    '<button onclick="reporEstoque(\'' + item._id + '\',\'' + item.nome.replace(/'/g,'') + '\')" style="padding:10px 18px;background:#22c55e;border:none;border-radius:8px;color:#fff;font-weight:800;cursor:pointer;">+ Repor Estoque</button>' +
+                    '<button onclick="document.getElementById(\"inputBarcode\").value=\"\";document.getElementById(\"barcodeResultado\").style.display=\"none\";document.getElementById(\"inputBarcode\").focus()" style="padding:10px 14px;background:rgba(255,255,255,.08);border:1px solid #333;border-radius:8px;color:#aaa;cursor:pointer;">Limpar</button>' +
+                    '</div></div>';
+                document.getElementById('inputBarcode').value = '';
+                document.getElementById('inputBarcode').focus();
+            } catch(e) { el.innerHTML = '<p style="color:#ef4444;">Erro: ' + e.message + '</p>'; }
+        }
+
+        // ===== FORNECEDORES =====
+        var _fornecedores = JSON.parse(localStorage.getItem('fornecedores') || '[]');
+
+        function renderFornecedores() {
+            const el = document.getElementById('listaFornecedores');
+            if (!el) return;
+            if (!_fornecedores.length) {
+                el.innerHTML = '<p style="color:#888;font-size:.85em;text-align:center;padding:12px;">Nenhum fornecedor cadastrado. Clique em + Fornecedor para adicionar.</p>';
+                return;
+            }
+            el.innerHTML = _fornecedores.map((f, idx) =>
+                '<div style="background:#1a1a2e;border-radius:10px;padding:14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;border:1px solid rgba(168,85,247,.2);">' +
+                '<div>' +
+                '<div style="font-weight:800;color:#fff;">&#x1F3ED; ' + f.nome + '</div>' +
+                '<div style="color:#888;font-size:.82em;margin-top:3px;">' + (f.produtos || 'Produtos nao especificados') + '</div>' +
+                '</div>' +
+                '<div style="display:flex;gap:6px;align-items:center;">' +
+                (f.telefone ? '<a href="https://wa.me/55' + f.telefone.replace(/\D/g,\'\') + '?text=Ola+' + encodeURIComponent(f.nome) + '+preciso+repor+estoque" target="_blank" style="padding:8px 14px;background:rgba(37,211,102,.15);border:1px solid #25d366;border-radius:8px;color:#25d366;font-size:.8em;font-weight:700;text-decoration:none;">&#x1F4AC; WhatsApp</a>' : '') +
+                '<button onclick="_fornecedores.splice(' + idx + ',1);localStorage.setItem(\"fornecedores\",JSON.stringify(_fornecedores));renderFornecedores();" style="padding:8px 12px;background:rgba(239,68,68,.1);border:1px solid #ef4444;border-radius:8px;color:#ef4444;cursor:pointer;font-size:.78em;">&#x1F5D1;</button>' +
+                '</div></div>'
+            ).join('');
+        }
+
+        function abrirModalFornecedor() {
+            var nome = prompt('Nome do fornecedor:');
+            if (!nome) return;
+            var tel = prompt('WhatsApp/telefone (somente numeros):');
+            var produtos = prompt('Produtos que fornece (ex: Bebidas, Frangos):');
+            _fornecedores.push({ nome: nome.trim(), telefone: (tel||'').replace(/\D/g,''), produtos: produtos||'' });
+            localStorage.setItem('fornecedores', JSON.stringify(_fornecedores));
+            renderFornecedores();
+            toast('&#x2705; Fornecedor ' + nome + ' adicionado!');
+        }
+
         async function carregarEstoque() {
             const el = document.getElementById('estoqueItens');
             try {
