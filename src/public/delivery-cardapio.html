@@ -693,7 +693,7 @@ function criarCardScroll(item, badgeClass, badgeLabel) {
   div.onclick = function(){ abrirItem(item); };
   var badgeHtml = badgeClass ? '<div class="item-badge-top ' + badgeClass + '">' + badgeLabel + '</div>' : '';
   var imgHtml = item.imagem
-    ? '<img class="item-img" src="' + item.imagem + '" loading="lazy" onerror="this.parentNode.innerHTML='<div class=item-img-ph>🍽️</div>'">'
+    ? '<img class="item-img" src="' + item.imagem + '" loading="lazy" onerror="this.style.display='none'">'
     : '<div class="item-img-ph">' + (item.categoria?.emoji || '🍽️') + '</div>';
   div.innerHTML = '<div style="position:relative;">' + badgeHtml + imgHtml + '</div>' +
     '<div class="item-body">' +
