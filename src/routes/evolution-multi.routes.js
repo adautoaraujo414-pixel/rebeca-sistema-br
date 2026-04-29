@@ -316,21 +316,8 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                             const audioBuffer = Buffer.from(base64, 'base64');
                             console.log('[AUDIO] Buffer size:', audioBuffer.length, 'bytes');
                             const mimeType = msg.message.audioMessage.mimetype || 'audio/ogg';
-                            // Buscar tipoAdmin para rotear audio corretamente (delivery vs corrida)
-                            let _tipoAdminAudio = 'corrida';
-                            // Checar se adminId é do AdminDelivery (isolamento)
-                            try {
-                                const { Admin: _AdminAudio } = require('../models');
-                                let _adAudio = await _AdminAudio.findById(adminId).select('tipoAdmin').lean();
-                                if (_adAudio && _adAudio.tipoAdmin === 'delivery') {
-                                    _tipoAdminAudio = 'delivery';
-                                } else if (!_adAudio) {
-                                    // Checar AdminDelivery
-                                    const { AdminDelivery: _AdDel } = require('../models/delivery.models');
-                                    const _adDel = await _AdDel.findById(adminId).lean();
-                                    if (_adDel) _tipoAdminAudio = 'delivery';
-                                }
-                            } catch(_) {}
+                            // Buscar tipoAdmin via cache — evita 2 queries ao banco por áudio
+                            let _tipoAdminAudio = await _getAdminTipo(adminId);
                             // Buscar conversa atual para contexto do audio
                             let conversaCtx = null;
                             try {
@@ -701,14 +688,9 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                     // Rotear: Delivery ou Corridas baseado no tipoAdmin do admin
                     let resposta;
                     try {
-                        const { Admin: AdminModel } = require('../models');
-                        const { AdminDelivery: AdminDeliveryModel } = require('../models/delivery.models');
-                        let adminDoc = await AdminModel.findById(adminId).select('tipoAdmin').lean();
-                        // Se não achou em Admin, checar AdminDelivery (isolamento delivery)
-                        if (!adminDoc) {
-                            const adDel = await AdminDeliveryModel.findById(adminId).lean();
-                            if (adDel) adminDoc = { tipoAdmin: 'delivery' };
-                        }
+                        // Roteamento via cache — evita queries ao banco por mensagem de texto
+                        const _tipoRota = await _getAdminTipo(adminId);
+                        let adminDoc = { tipoAdmin: _tipoRota };
                         // Fallback inteligente de áudio por tipo
                         if (conteudo === '__AUDIO_SEM_TRANSCRICAO__') {
                             // Usar GPT para interpretar o contexto do cliente e gerar resposta natural
