@@ -836,6 +836,10 @@ function renderizar() {
     if (wrapTempo) wrapTempo.style.display = 'flex';
   }
 
+  // Carregar cats e itens ANTES do hero para detectarNicho funcionar
+  var cats = d.categorias || [];
+  var itens = d.itens || d.cardapio || [];
+
   // Hero por nicho
   var nicho = (d.tipoNegocio||'restaurante').toLowerCase();
   var heroCfg = detectarNicho(nicho, cats, itens, d.nome || d.nomeEstabelecimento || '');
@@ -856,8 +860,6 @@ function renderizar() {
   document.getElementById('catsNav').style.display = 'flex';
 
   // Categorias
-  var cats = d.categorias || [];
-  var itens = d.itens || d.cardapio || [];
   var catsNav = document.getElementById('catsNav');
   catsNav.innerHTML = '<button class="cat-btn active" data-cat="todas" onclick="filtrarCat(\'todas\',this)">🍽️ Todos</button>';
   // Botão combos
