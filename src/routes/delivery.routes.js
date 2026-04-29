@@ -1244,6 +1244,15 @@ router.get('/caixa/entregadores-ativos', authDelivery, async (req, res) => {
 
 // ========== ESTOQUE ==========
 
+// Buscar item por código de barras
+router.get('/estoque/barcode/:codigo', authDelivery, async (req, res) => {
+    try {
+        const item = await ItemCardapio.findOne({ adminId: req.adminId, codigoBarra: req.params.codigo, ativo: true }).lean();
+        if (!item) return res.status(404).json({ erro: 'Item nao encontrado para este codigo' });
+        res.json(item);
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
 router.get('/estoque', authDelivery, async (req, res) => {
     try {
         const itens = await ItemCardapio.find({ adminId: req.adminId, ativo: true })

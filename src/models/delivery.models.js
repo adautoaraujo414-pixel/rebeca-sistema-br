@@ -44,7 +44,11 @@ const ItemCardapioSchema = new mongoose.Schema({
     // Controle de estoque
     estoqueAtivo: { type: Boolean, default: false },   // se false, não controla estoque
     estoqueAtual: { type: Number, default: 0 },        // unidades restantes
-    estoqueMinimo: { type: Number, default: 2 },       // aviso quando chegar nesse nível
+    estoqueMinimo: { type: Number, default: 2 },
+    codigoBarra: { type: String, default: '' },      // EAN-13 / código de barras
+    fornecedor: { type: String, default: '' },       // nome do fornecedor
+    fornecedorTelefone: { type: String, default: '' }, // telefone/WhatsApp do fornecedor
+    unidadePorPedido: { type: Number, default: 1 },  // quantas unidades saem por pedido
     unidadePorPedido: { type: Number, default: 1 }     // quantas unidades consome por pedido
 }, { timestamps: true });
 

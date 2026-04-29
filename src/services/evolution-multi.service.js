@@ -180,8 +180,8 @@ const EvolutionMultiService = {
                 );
             } catch(_) {} // silencioso se nao suportar
 
-            // Delay natural proporcional ao tamanho da mensagem
-            const delay = Math.min(800 + (mensagem.length * 25), 4000);
+            // Delay humanizado: varia por tamanho + jitter aleatório para não parecer robô
+            const delay = Math.min(1200 + (mensagem.length * 30), 5000) + Math.floor(Math.random() * 800);
             await new Promise(r => setTimeout(r, delay));
             
             try {
