@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -651,7 +652,7 @@ function renderMaisPedidos(itens) {
   sec.className = 'section';
   sec.id = 'secMaisPedidos';
   sec.innerHTML = '<div class="section-header"><div class="section-title"><span class="section-title-icon">🔥</span> Mais pedidos</div>' +
-    '<div class="section-ver-todos" onclick="filtrarCat('todas',document.querySelector('[data-cat=todas]'))">Ver todos ›</div></div>' +
+    '<div class="section-ver-todos" onclick="filtrarCat(\'todas\',document.querySelector(\'[data-cat=todas]\'))">Ver todos ›</div></div>' +
     '<div class="items-scroll" id="scrollMaisPedidos"></div>';
   var conteudo = document.getElementById('conteudo');
   conteudo.insertBefore(sec, conteudo.firstChild);
