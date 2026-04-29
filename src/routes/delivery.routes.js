@@ -790,6 +790,8 @@ router.post('/pedido-cardapio-digital', async (req, res) => {
         });
 
         console.log('[CARDAPIO-DIGITAL] Pedido #' + numeroPedido + ' salvo de', telefoneCliente || 'sem telefone');
+        // Disparar SSE para impressão automática no admin
+        try { SseService.emitir(adminId?.toString(), 'novo_pedido', { pedidoId: pedidoSalvo._id, origem: 'cardapio_digital' }); } catch(_) {}
 
         // Enviar recibo oficial via ReciboDeliveryService (salva reciboEnviado no banco)
         try {
@@ -849,6 +851,7 @@ router.post('/pedido-cardapio-digital', async (req, res) => {
                         + (taxaEntrega ? '\n🛵 Taxa: R$ ' + Number(taxaEntrega).toFixed(2) : '')
                         + '\n\n💰 *Total: R$ ' + Number(total).toFixed(2) + '*'
                         + '\n📍 *Entrega:* ' + (enderecoEntrega || 'A confirmar')
+                        + (req.body.complementoEntrega ? '\n🏠 *Complemento:* ' + req.body.complementoEntrega : '')
                         + '\n💳 *Pagamento:* ' + pgtoLabel
                         + (troco ? '\n💵 *Troco para:* R$ ' + Number(troco).toFixed(2) : '')
                         + (observacaoGeral ? '\n📝 *Obs:* ' + observacaoGeral : '')
