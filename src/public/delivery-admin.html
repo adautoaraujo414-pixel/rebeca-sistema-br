@@ -3857,8 +3857,7 @@ function selecionarDiaSemanal(dia) {
     limparFormCS();
     if (c) {
         document.getElementById('csNomePrato').value = c.nomePrato || '';
-        document.getElementById('csIngredientes').value = (c.ingredientes || []).map(function(i){ return i.nome; }).join('
-');
+        document.getElementById('csIngredientes').value = (c.ingredientes || []).map(function(i){ return i.nome; }).join('\n');
         // Tamanhos
         var rows = document.querySelectorAll('.cs-tamanho-row');
         var tams = ['P','M','G','GG'];
@@ -3904,8 +3903,7 @@ function atualizarPreviewCS() {
     var nome = document.getElementById('csNomePrato').value || 'Prato do Dia';
     document.getElementById('prevNomePrato').textContent = nome;
     // Ingredientes
-    var ings = document.getElementById('csIngredientes').value.split('
-').filter(function(l){ return l.trim(); });
+    var ings = document.getElementById('csIngredientes').value.split('\n').map(function(s){ return s.trim(); }).filter(Boolean);
     var prevIng = document.getElementById('prevIngredientes');
     prevIng.innerHTML = ings.slice(0,8).map(function(i){ 
         return '<span style="background:#f0fdf4;color:#16a34a;border-radius:20px;padding:4px 10px;font-size:12px;">' + i.trim() + '</span>'; 
@@ -3940,8 +3938,7 @@ function atualizarPreviewCS() {
 async function salvarCardapioSemanal() {
     var nome = document.getElementById('csNomePrato').value.trim();
     if (!nome) { toast('⚠️ Informe o nome do prato'); return; }
-    var ings = document.getElementById('csIngredientes').value.split('
-').filter(function(l){ return l.trim(); }).map(function(l){ return { nome: l.trim() }; });
+    var ings = document.getElementById('csIngredientes').value.split('\n').map(function(s){ return s.trim(); }).filter(Boolean);
     var rows = document.querySelectorAll('.cs-tamanho-row');
     var tams = ['P','M','G','GG'];
     var tamanhos = [];
