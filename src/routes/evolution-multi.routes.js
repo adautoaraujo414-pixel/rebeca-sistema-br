@@ -1,3 +1,4 @@
+
 const axios = require('axios');
 const express = require('express');
 const router = express.Router();
@@ -9,8 +10,28 @@ const NLPService = require('../services/nlp.service');
 const RebecaDeliveryService = require('../services/rebeca-delivery.service');
 
 // ── CACHE DE ADMIN TYPE — evita query ao banco a cada mensagem ──
-const _adminTypeCache = new Map(); // adminId -> { tipo, ts }
+const _adminTypeCache = new Map(); // adminId -> { tipo, plano, ts }
 const _CACHE_TTL = 5 * 60 * 1000; // 5 minutos
+
+// ── CACHE DE ASSINANTE — evita query por mensagem ──
+const _assinanteCache = new Map(); // tel_adminId -> { assinante|null, ts }
+const _CACHE_ASS_TTL = 2 * 60 * 1000; // 2 minutos
+
+async function _getAssinante(telefone, adminId) {
+    const telLimpo = telefone.replace(/\D/g, '').replace(/^55/, '');
+    const key = telLimpo + '_' + adminId?.toString();
+    const cached = _assinanteCache.get(key);
+    if (cached && (Date.now() - cached.ts) < _CACHE_ASS_TTL) return cached.assinante;
+    try {
+        const { MensalidadeClienteDelivery: _MCD } = require('../models/delivery.models');
+        const ass = await _MCD.findOne({
+            adminId, status: 'ativo',
+            $or: [{ telefone }, { telefone: telLimpo }, { telefone: '55' + telLimpo }]
+        }).lean();
+        _assinanteCache.set(key, { assinante: ass || null, ts: Date.now() });
+        return ass || null;
+    } catch(_) { return null; }
+}
 async function _getAdminTipo(adminId, AdminModel, AdminDeliveryModel) {
     const key = adminId?.toString();
     if (!key) return 'corrida';
@@ -18,12 +39,13 @@ async function _getAdminTipo(adminId, AdminModel, AdminDeliveryModel) {
     if (cached && (Date.now() - cached.ts) < _CACHE_TTL) return cached.tipo;
     // Query ao banco apenas se cache expirou
     let tipo = 'corrida';
+    let plano = null;
     try {
         const { AdminDelivery: _AdCheck } = require('../models/delivery.models');
         const adDel = await _AdCheck.findById(adminId).select('_id plano').lean();
-        if (adDel) tipo = 'delivery';
+        if (adDel) { tipo = 'delivery'; plano = adDel.plano || null; }
     } catch(_) {}
-    _adminTypeCache.set(key, { tipo, ts: Date.now() });
+    _adminTypeCache.set(key, { tipo, plano, ts: Date.now() });
     return tipo;
 }
 const OpenAIRebecaService = require('../services/openai-rebeca.service');
@@ -379,18 +401,8 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                                 continue;
                             }
 
-                            // Verificar se remetente é ASSINANTE ativo (só em delivery)
-                            const { MensalidadeClienteDelivery } = require('../models/delivery.models');
-                            const telLimpo = telefone.replace(/\D/g, '').replace(/^55/, '');
-                            const assinante = await MensalidadeClienteDelivery.findOne({
-                                adminId,
-                                status: 'ativo',
-                                $or: [
-                                    { telefone: telefone },
-                                    { telefone: telLimpo },
-                                    { telefone: '55' + telLimpo }
-                                ]
-                            }).lean();
+                            // Verificar se remetente é ASSINANTE ativo — via cache (TTL 2min)
+                            const assinante = _isDeliveryAdmin ? await _getAssinante(telefone, adminId) : null;
 
                             if (assinante) {
                                 // Buscar cardápio de hoje
@@ -415,15 +427,8 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                             // ── REBECA CONFORT: plano econômico usa serviço sem IA ──
                             if (_isDeliveryAdmin) {
                                 try {
-                                    // Plano confort — busca com cache
-                                    const _cacheEntry = _adminTypeCache.get(adminId?.toString());
-                                    let _planoConfort = _cacheEntry?.plano;
-                                    if (!_planoConfort) {
-                                        const { AdminDelivery: _AdConfort } = require('../models/delivery.models');
-                                        const _admConfort = await _AdConfort.findById(adminId).select('plano').lean();
-                                        _planoConfort = _admConfort?.plano;
-                                        if (_cacheEntry) _cacheEntry.plano = _planoConfort;
-                                    }
+                                    // Plano confort — 100% do cache (já salvo em _getAdminTipo)
+                                    const _planoConfort = _adminTypeCache.get(adminId?.toString())?.plano;
                                     if (_planoConfort === 'confort') {
                                         const RebecaConfort = require('../services/rebeca-confort.service');
                                         const _respConfort = await RebecaConfort.processar(
