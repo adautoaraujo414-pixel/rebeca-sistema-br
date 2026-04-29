@@ -587,8 +587,41 @@ function abrirModalMarmita(tamanho) {
   toast('\u2705 ' + nome + ' adicionado!');
 }
 
-function detectarNicho(nicho) {
-  var n = nicho.toLowerCase();
+function detectarNichoPorContexto(nomeRestaurante, cats, itens) {
+  var score = {acai:0,pizza:0,sushi:0,marmita:0,lanche:0,bebida:0,sorvete:0,pastel:0,frango:0};
+  var keywords = {
+    acai:    ['acai','açaí','pitaya','granola','smoothie','frutas'],
+    pizza:   ['pizza','calzone','pizzaria'],
+    sushi:   ['sushi','temaki','uramaki','sashimi','japonês','japonesa','japanese','japa'],
+    marmita: ['marmita','quentinha','prato feito','self service','caseiro','comida caseira','pf '],
+    lanche:  ['hamburguer','hamburger','burger','burguer','smash','x-burguer','xis','coxinha','salgado','hot dog','cachorro quente','sanduiche'],
+    bebida:  ['suco','suqueria','drinks','drink','bar ','cerveja','choperia','bebidas','vitamina','shake','cafeteria','café','coffee','cafezinho'],
+    sorvete: ['sorvete','gelato','sorveteria','milkshake','sundae','ice cream'],
+    pastel:  ['pastel','pastelaria','esfiha','quibe','empada'],
+    frango:  ['frango','galeto','assado','churrasco','espeto','grill','grelhado']
+  };
+  // Nome do restaurante tem peso 5x — se tiver "pizza" no nome já detecta
+  var nomeTexto = (nomeRestaurante||'').toLowerCase();
+  var textos = [nomeTexto,nomeTexto,nomeTexto,nomeTexto,nomeTexto];
+  (cats||[]).forEach(function(c){ textos.push((c.nome||'').toLowerCase()); });
+  (itens||[]).forEach(function(i){
+    textos.push((i.nome||'').toLowerCase());
+    textos.push((i.descricao||'').toLowerCase());
+  });
+  var fullText = textos.join(' ');
+  Object.keys(keywords).forEach(function(k){
+    keywords[k].forEach(function(w){
+      var re = new RegExp(w.trim(),'gi');
+      var m = fullText.match(re);
+      if(m) score[k] += m.length;
+    });
+  });
+  var top = Object.keys(score).sort(function(a,b){ return score[b]-score[a]; })[0];
+  return (score[top] === 0) ? 'lanche' : top;
+}
+
+function detectarNicho(nicho, cats, itens, nomeRestaurante) {
+  var n = detectarNichoPorContexto(nomeRestaurante, cats, itens);
   if (n.includes('acai') || n.includes('açaí')) return {
     img:'https://images.unsplash.com/photo-1590080876351-41c5d3ffaf96?w=800&q=80',
     title:'Seu <span>açaí favorito</span> 🍇',
@@ -805,7 +838,7 @@ function renderizar() {
 
   // Hero por nicho
   var nicho = (d.tipoNegocio||'restaurante').toLowerCase();
-  var heroCfg = detectarNicho(nicho);
+  var heroCfg = detectarNicho(nicho, cats, itens, d.nome || d.nomeEstabelecimento || '');
   var heroEl = document.getElementById('heroSection');
   if (heroEl) {
     document.getElementById('heroBgImg').style.backgroundImage = 'url(' + heroCfg.img + ')';
