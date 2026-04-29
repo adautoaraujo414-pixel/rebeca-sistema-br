@@ -913,7 +913,7 @@ function renderItens(itens, cats) {
     var sec = document.createElement('div');
     sec.className = 'section';
     sec.dataset.cat = catId;
-    sec.innerHTML = '<div class="section-title">' + (grupo.cat.emoji||'') + ' ' + grupo.cat.nome + '</div>' +
+    sec.innerHTML = '<div class="section-header"><div class="section-title"><span class="section-title-icon">' + (grupo.cat.emoji||'🍽️') + '</span> ' + grupo.cat.nome + '</div></div>' +
       '<div class="items-grid" id="grid-' + catId + '"></div>';
     conteudo.appendChild(sec);
     var grid = sec.querySelector('.items-grid');
@@ -1411,7 +1411,9 @@ function novoPedido() {
 function filtrarCat(catId, btn) {
   document.querySelectorAll('.cat-btn').forEach(function(b){ b.classList.remove('active'); });
   if (btn) btn.classList.add('active');
+  var sempreMostrar = ['secMaisPedidos','secSugestoes','extrasSection'];
   document.querySelectorAll('.section').forEach(function(sec) {
+    if (sempreMostrar.indexOf(sec.id) !== -1) { sec.style.display = 'block'; return; }
     sec.style.display = (catId === 'todas' || sec.dataset.cat === catId) ? 'block' : 'none';
   });
 }
