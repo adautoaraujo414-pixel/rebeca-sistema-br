@@ -1,3 +1,4 @@
+
 const express = require('express');
 const crypto = require('crypto');
 const router = express.Router();
@@ -58,20 +59,58 @@ router.delete('/categorias/:id', authDelivery, async (req, res) => {
 // ========== ITENS DO CARDÁPIO ==========
 
 // ========== GERAR IMAGEM DO ITEM VIA DALL-E (1x por item) ==========
-async function gerarImagemItem(nome, descricao) {
+async function gerarImagemItem(nome, descricao, tamanho) {
     try {
         const apiKey = process.env.OPENAI_API_KEY;
         if (!apiKey) return null;
         const axios = require('axios');
 
-        // Prompt profissional: fundo amadeirado, item centralizado, sem distorção
-        const prompt = `Professional food photography of "${nome}"` +
-            (descricao ? `, with ${descricao}` : '') +
-            `. Place the food centered on a beautiful warm wooden rustic table surface, ` +
-            `shot from slightly above (45 degree angle), soft natural lighting from the side, ` +
-            `shallow depth of field, bokeh background, appetizing and vibrant colors, ` +
-            `no text, no watermark, no distortion, ultra realistic, 4K quality, ` +
-            `restaurant menu style photo, food styled beautifully.`;
+        // Detectar se é bebida e qual embalagem usar
+        const nomeLower = (nome || '').toLowerCase();
+        const descLower = (descricao || '').toLowerCase();
+        const isBebida = nomeLower.match(/suco|refrigerante|bebida|cerveja|água|agua|drink|guaraná|guarana|coca|pepsi|fanta|sprite|limonada|vitamina|shake|caldo de cana|mate|chá|cha|energético|energetico|isotônico|isotonico|vinho|caipirinha|dose|whisky|vodka|rum|gin|cerveja|chopp|milk.?shake/) ||
+                         descLower.match(/gelad|gelei|refrescant|ml|litro|garrafa|latinha|lata|caixinha/);
+
+        let embalagемDesc = '';
+        let promptFinal = '';
+
+        if (isBebida && tamanho) {
+            // Mapear tamanho para descrição visual real da embalagem
+            const embalagemMap = {
+                '200ml':  'small 200ml juice box carton (caixinha), with straw',
+                '269ml':  'small 269ml slim aluminum can (latinha pequena)',
+                '350ml':  'standard 350ml aluminum can (latinha)',
+                '473ml':  'tall 473ml aluminum can (lata grande)',
+                '500ml':  '500ml glass bottle (garrafa de vidro 500ml)',
+                '600ml':  '600ml plastic or glass bottle (garrafa 600ml)',
+                '1L':     '1 liter PET bottle (garrafa pet 1 litro)',
+                '1.5L':   '1.5 liter PET bottle (garrafa pet 1,5 litro)',
+                '2L':     '2 liter PET bottle (garrafa pet 2 litros)',
+                '2.5L':   '2.5 liter PET bottle (garrafa pet 2,5 litros)'
+            };
+            embalagemDesc = embalagemMap[tamanho] || tamanho;
+
+            promptFinal = `Ultra realistic product photo of "${nome}" beverage, ` +
+                `served in a ${embalagemDesc}. ` +
+                (descricao ? `Flavor/description: ${descricao}. ` : '') +
+                `The container must look exactly like a real product — correct proportions, ` +
+                `condensation droplets on the outside showing it is cold and refreshing, ` +
+                `placed on a dark wet bar counter or wooden surface with ice cubes nearby, ` +
+                `dramatic studio lighting with a soft glow, bokeh background, ` +
+                `no text, no labels with brand names, no watermark, ` +
+                `ultra realistic, 4K, commercial beverage photography style.`;
+        } else {
+            // Prompt padrão para comidas
+            promptFinal = `Professional food photography of "${nome}"` +
+                (descricao ? `, with ${descricao}` : '') +
+                `. Place the food centered on a beautiful warm wooden rustic table surface, ` +
+                `shot from slightly above (45 degree angle), soft natural lighting from the side, ` +
+                `shallow depth of field, bokeh background, appetizing and vibrant colors, ` +
+                `no text, no watermark, no distortion, ultra realistic, 4K quality, ` +
+                `restaurant menu style photo, food styled beautifully.`;
+        }
+
+        const prompt = promptFinal;
 
         console.log('[IMG-ITEM] Gerando imagem para:', nome);
 
@@ -111,7 +150,7 @@ router.post('/cardapio', authDelivery, async (req, res) => {
         const dados = { ...req.body, adminId: req.adminId };
         // Gerar imagem automaticamente se não foi enviada
         if (!dados.imagem && (dados.nome || dados.descricao)) {
-            const urlImagem = await gerarImagemItem(dados.nome || '', dados.descricao || '');
+            const urlImagem = await gerarImagemItem(dados.nome || '', dados.descricao || '', dados.tamanho || dados.volume || '');
             if (urlImagem) dados.imagem = urlImagem;
         }
         const item = await ItemCardapio.create(dados);
@@ -133,7 +172,7 @@ router.put('/cardapio/:id', authDelivery, async (req, res) => {
             const nomeFinal = dados.nome || itemAtual?.nome || '';
             const descFinal = dados.descricao || itemAtual?.descricao || '';
             console.log('[IMG-ITEM] Regenerando imagem por mudança em:', nomeFinal);
-            const urlImagem = await gerarImagemItem(nomeFinal, descFinal);
+            const urlImagem = await gerarImagemItem(nomeFinal, descFinal, dados.tamanho || dados.volume || itemAtual?.tamanho || itemAtual?.volume || '');
             if (urlImagem) dados.imagem = urlImagem;
         }
         delete dados.regenerarImagem;
@@ -1271,7 +1310,7 @@ router.post('/cardapio/gerar-imagem-preview', authDelivery, async (req, res) => 
     try {
         const { nome, descricao } = req.body;
         if (!nome) return res.json({ imagem: null });
-        const url = await gerarImagemItem(nome, descricao || '');
+        const url = await gerarImagemItem(nome, descricao || '', req.body.tamanho || '');
         res.json({ imagem: url });
     } catch(e) { res.json({ imagem: null }); }
 });

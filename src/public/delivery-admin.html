@@ -1881,9 +1881,10 @@
             if(!nome) { alert('Preencha o nome!'); return; }
             document.getElementById('regerarStatus').textContent = '⏳ Gerando imagem... (pode levar até 30s)';
             document.getElementById('btnRegerarImg').disabled = true;
+            const volume = document.getElementById('itemEstoqueVolume') ? document.getElementById('itemEstoqueVolume').value : '';
             api('/cardapio/' + id, {
                 method: 'PUT',
-                body: JSON.stringify({ nome, descricao: desc, regenerarImagem: true })
+                body: JSON.stringify({ nome, descricao: desc, regenerarImagem: true, tamanho: volume })
             }).then(r => r.json()).then(d => {
                 if(d.imagem) {
                     document.getElementById('itemImagemPreview').src = d.imagem;
