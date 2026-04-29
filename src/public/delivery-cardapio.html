@@ -1,5 +1,5 @@
 
-<!DOCTYPE html>
+/workspaces/rebeca-sistema-br/src/public/delivery-cardapio.html<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -760,7 +760,7 @@ function renderExtrasRapidos(itens) {
     chip.onclick = function(){ adicionarRapido({stopPropagation:function(){}}, item._id); };
     var imgHtml = item.imagem
       ? '<img class="extra-chip-img" src="' + item.imagem + '" loading="lazy">'
-      : '<div class="extra-chip-img-ph">' + (item.categoria?.emoji || '🍽️') + '</div>';
+      : '<div class="extra-chip-img-ph">' + '🍽️</div>';
     chip.innerHTML = imgHtml +
       '<div class="extra-chip-info">' +
         '<div class="extra-chip-nome">' + item.nome + '</div>' +
@@ -843,7 +843,7 @@ function renderizar() {
 
   // Hero por nicho
   var nicho = (d.tipoNegocio||'restaurante').toLowerCase();
-  var heroCfg = detectarNicho(nicho, cats, itens, d.nome || d.nomeEstabelecimento || '');
+  var heroCfg = detectarNicho(nicho, cats, itens, d.restaurante || d.nome || d.nomeEstabelecimento || '');
   var heroEl = document.getElementById('heroSection');
   if (heroEl) {
     document.getElementById('heroBgImg').style.backgroundImage = 'url(' + heroCfg.img + ')';
@@ -948,7 +948,7 @@ function criarCard(item) {
 
   var imgHtml = item.imagem
     ? '<img class="item-img" src="' + item.imagem + '" loading="lazy" onerror="this.parentNode.innerHTML=\'<div class=item-img-ph>🍽️</div>\'">'
-    : '<div class="item-img-ph">' + (item.categoria?.emoji || '🍽️') + '</div>';
+    : '<div class="item-img-ph">' + '🍽️</div>';
 
   var qtdNoCart = carrinho.filter(function(c){ return c.itemId === item._id; }).reduce(function(a,b){ return a+b.qty; }, 0);
 
@@ -1073,7 +1073,7 @@ function abrirItem(item) {
   var ingrs = (item.ingredientes||'').split(',').map(function(s){ return s.trim(); }).filter(Boolean);
   var imgHtml = item.imagem
     ? '<img class="modal-img" src="' + item.imagem + '">'
-    : '<div class="modal-img-ph">' + (item.categoria?.emoji || '🍽️') + '</div>';
+    : '<div class="modal-img-ph">' + '🍽️</div>';
 
   var ingrsHtml = ingrs.length ? '<div class="modal-section"><div class="modal-section-title">🥗 Ingredientes (toque para retirar)</div>' +
     ingrs.map(function(ing){
@@ -1149,7 +1149,7 @@ function adicionarAoCarrinho() {
     qty: qtyAtual,
     obs: obs,
     imagem: itemAtual.imagem || '',
-    emoji: itemAtual.categoria?.emoji || '🍽️'
+    emoji: '🍽️'
   });
   atualizarCartUI();
   document.getElementById('overlayItem').classList.remove('show');
@@ -1166,7 +1166,7 @@ function adicionarRapido(e, itemId) {
   if (!item) return;
   carrinho.push({
     itemId: item._id, nome: item.nome, preco: Number(item.preco||0),
-    qty: 1, obs: '', imagem: item.imagem||'', emoji: item.categoria?.emoji||'🍽️'
+    qty: 1, obs: '', imagem: item.imagem||'', emoji: '🍽️'
   });
   atualizarCartUI();
   showToast('✅ ' + item.nome + ' adicionado!');
