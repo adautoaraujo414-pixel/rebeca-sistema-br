@@ -3717,6 +3717,30 @@ function iniciarSSE() {
     if (!tk) return;
     if (_sseConn) { _sseConn.close(); }
     _sseConn = new EventSource('/api/delivery/eventos?token=' + tk);
+    _sseConn.addEventListener('pedido_pronto', function(e) {
+        var dados = JSON.parse(e.data);
+        // Som diferente para pedido pronto
+        try {
+            var ctx = new (window.AudioContext || window.webkitAudioContext)();
+            var osc = ctx.createOscillator(); var gain = ctx.createGain();
+            osc.connect(gain); gain.connect(ctx.destination);
+            osc.frequency.setValueAtTime(660, ctx.currentTime);
+            osc.frequency.setValueAtTime(880, ctx.currentTime + 0.15);
+            osc.frequency.setValueAtTime(1100, ctx.currentTime + 0.3);
+            gain.gain.setValueAtTime(0.4, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+            osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.5);
+        } catch(e) {}
+        // Toast aviso caixa
+        var t = document.createElement('div');
+        t.style.cssText = 'position:fixed;top:24px;left:50%;transform:translateX(-50%);background:#f97316;color:#fff;padding:16px 28px;border-radius:14px;font-weight:900;font-size:16px;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,0.3);text-align:center;';
+        t.innerHTML = '✅ Pedido #' + dados.numero + ' PRONTO!<br><small style="font-weight:400;font-size:13px;">Retirar na cozinha / Despachar entregador</small>';
+        document.body.appendChild(t);
+        setTimeout(function(){ t.style.opacity='0'; t.style.transition='opacity .5s'; setTimeout(function(){ t.remove(); },500); }, 6000);
+        // Atualizar telas
+        if (document.getElementById('page-pedidos')?.style.display !== 'none') carregarPedidos();
+        if (document.getElementById('page-caixa')?.style.display !== 'none' && typeof carregarPedidosCaixa === 'function') carregarPedidosCaixa();
+    });
     _sseConn.addEventListener('novo_pedido', function(e) {
         var dados = JSON.parse(e.data);
         // Notificação visual

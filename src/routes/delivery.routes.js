@@ -429,6 +429,7 @@ router.put('/cozinha/:id/pronto', authDelivery, async (req, res) => {
             const RebecaDeliveryService = require('../services/rebeca-delivery.service');
             await RebecaDeliveryService.notificarClientePronto(pedido._id);
         } catch(e) { console.log('[COZINHA] Erro notificar pronto:', e.message); }
+        try { const _Sse = require('../services/sse.service'); _Sse.emitir(pedido.adminId?.toString(), 'pedido_pronto', { pedidoId: pedido._id, numero: pedido.numero, origem: pedido.origemPedido || 'cozinha' }); } catch(_) {}
         console.log('[COZINHA] Pedido #' + pedido.numero + ' PRONTO');
         res.json(pedido);
     } catch(e) { res.status(500).json({ erro: e.message }); }

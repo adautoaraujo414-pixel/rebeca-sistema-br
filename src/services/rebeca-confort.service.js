@@ -65,6 +65,35 @@ class RebecaConfortService {
             return txt;
         }
 
+        // Rastreio de pedido — cliente pergunta se saiu ou qual status
+        const perguntaStatus = msg.includes('saiu') || msg.includes('pedido') || msg.includes('status') || msg.includes('cadê') || msg.includes('cade') || msg.includes('quanto tempo') || msg.includes('demora') || msg.includes('entreg') || msg.includes('pronto');
+        if (perguntaStatus) {
+            try {
+                const PedidoDelivery = require('../models/pedidoDelivery.model');
+                const telLimpo = telefone.replace(/\D/g,'');
+                const pedido = await PedidoDelivery.findOne({
+                    adminId,
+                    $or: [
+                        { clienteTelefone: telefone },
+                        { clienteTelefone: telLimpo },
+                        { clienteTelefone: { $regex: telLimpo.slice(-8) } }
+                    ],
+                    status: { $in: ['novo','confirmado','preparando','pronto','saiu_entrega'] }
+                }).sort({ createdAt: -1 }).lean();
+                if (pedido) {
+                    const statusMsg = {
+                        novo: 'acabou de chegar e ja estamos vendo! Em breve confirmamos. ⏳',
+                        confirmado: 'foi confirmado e logo entra em preparo! 👨‍🍳',
+                        preparando: 'esta sendo preparado agora! Quase la. 👨‍🍳🔥',
+                        pronto: 'esta PRONTO! Ja esta saindo para voce. ✅',
+                        saiu_entrega: 'JA SAIU para entrega! Ja ja chega ai. 🏍️😊'
+                    };
+                    const s = statusMsg[pedido.status] || 'esta em andamento!';
+                    return `Oi${primeiroNome ? ' ' + primeiroNome : ''}! Seu pedido #${pedido.numero} ${s}`;
+                }
+            } catch(e) { console.log('[CONFORT] Erro rastreio:', e.message); }
+        }
+
         // Horário
         if (msg.includes('hora') || msg.includes('horario') || msg.includes('horário') || msg.includes('funciona')) {
             return `🕐 Nosso horário: *${config?.horarioFuncionamento || 'Consulte-nos'}*\n\nQualquer dúvida é só perguntar! 😊`;
