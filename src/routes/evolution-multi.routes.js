@@ -653,15 +653,10 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                         console.log('[DEBOUNCE] Processando ' + _entry.msgs.length + ' msg(s) de ' + telefone + ':', _msgFinal.substring(0, 60));
                         try {
                             const contextoDb = { adminId: _entry.adminId, instanciaId: _entry.instanciaId };
-                            const { Admin: AdminModel2 } = require('../models');
-                            let adminDoc2 = await AdminModel2.findById(_entry.adminId).select('tipoAdmin').lean();
-                            if (!adminDoc2) {
-                                const { AdminDelivery: _AdDel2 } = require('../models/delivery.models');
-                                const _adDel2 = await _AdDel2.findById(_entry.adminId).lean();
-                                if (_adDel2) adminDoc2 = { tipoAdmin: 'delivery' };
-                            }
+                            // Debounce usa cache — sem query ao banco
+                            const _tipoDebounce = await _getAdminTipo(_entry.adminId);
                             let respostaDb;
-                            if (adminDoc2 && adminDoc2.tipoAdmin === 'delivery') {
+                            if (_tipoDebounce === 'delivery') {
                                 respostaDb = await RebecaDeliveryService.processarMensagem(telefone, _msgFinal, _entry.nome, contextoDb);
                             } else {
                                 respostaDb = await RebecaService.processarMensagem(telefone, _msgFinal, _entry.nome, contextoDb);
