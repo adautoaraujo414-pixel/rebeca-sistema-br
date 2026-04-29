@@ -287,7 +287,7 @@ module.exports.MensalidadeClienteDelivery = MensalidadeClienteDelivery;
 // ===== CARDÁPIO DO DIA =====
 // ===== CARDÁPIO SEMANAL MARMITARIA =====
 const CardapioSemanalSchema = new mongoose.Schema({
-    adminId: { type: mongoose.Schema.Types.ObjectId, required: true, index: true },
+    adminId: { type: mongoose.Schema.Types.ObjectId, required: true },
     diaSemana: { type: Number, required: true }, // 0=dom,1=seg,2=ter,3=qua,4=qui,5=sex,6=sab
     nomePrato: { type: String, required: true }, // Ex: "Frango Grelhado com Arroz"
     ingredientes: [{ // ingredientes inclusos no preço base
@@ -352,7 +352,7 @@ const GarcomDeliverySchema = new mongoose.Schema({
     totalPedidos: { type: Number, default: 0 },
     totalVendido: { type: Number, default: 0 },
 }, { timestamps: true });
-GarcomDeliverySchema.index({ adminId: 1 });
+// GarcomDelivery adminId index já definido no schema field
 const GarcomDelivery = mongoose.models.GarcomDelivery || mongoose.model('GarcomDelivery', GarcomDeliverySchema);
 module.exports.GarcomDelivery = GarcomDelivery;
 
@@ -393,6 +393,6 @@ const ComboDeliverySchema = new mongoose.Schema({
         quantidade: { type: Number, default: 1 }
     }]
 }, { timestamps: true });
-ComboDeliverySchema.index({ adminId: 1 });
+// ComboDelivery adminId index já definido no schema field
 const ComboDelivery = mongoose.models.ComboDelivery || mongoose.model('ComboDelivery', ComboDeliverySchema);
 module.exports.ComboDelivery = ComboDelivery;

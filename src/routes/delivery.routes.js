@@ -841,7 +841,6 @@ router.post('/pedido/:id/contato-cliente', async (req, res) => {
 });
 
 
-// ========== ASSINANTES ==========
 // ===== CARDÁPIO DO DIA — TOGGLE E CONFIGURAÇÃO =====
 // ===== CARDÁPIO SEMANAL MARMITARIA =====
 const DIAS = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];

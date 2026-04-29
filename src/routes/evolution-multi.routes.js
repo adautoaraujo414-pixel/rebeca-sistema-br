@@ -7,6 +7,25 @@ const RebecaService = require('../services/rebeca.service');
 const MotoristaWhatsappService = require('../services/motorista-whatsapp.service');
 const NLPService = require('../services/nlp.service');
 const RebecaDeliveryService = require('../services/rebeca-delivery.service');
+
+// ── CACHE DE ADMIN TYPE — evita query ao banco a cada mensagem ──
+const _adminTypeCache = new Map(); // adminId -> { tipo, ts }
+const _CACHE_TTL = 5 * 60 * 1000; // 5 minutos
+async function _getAdminTipo(adminId, AdminModel, AdminDeliveryModel) {
+    const key = adminId?.toString();
+    if (!key) return 'corrida';
+    const cached = _adminTypeCache.get(key);
+    if (cached && (Date.now() - cached.ts) < _CACHE_TTL) return cached.tipo;
+    // Query ao banco apenas se cache expirou
+    let tipo = 'corrida';
+    try {
+        const { AdminDelivery: _AdCheck } = require('../models/delivery.models');
+        const adDel = await _AdCheck.findById(adminId).select('_id plano').lean();
+        if (adDel) tipo = 'delivery';
+    } catch(_) {}
+    _adminTypeCache.set(key, { tipo, ts: Date.now() });
+    return tipo;
+}
 const OpenAIRebecaService = require('../services/openai-rebeca.service');
 
 router.post('/instancia', async (req, res) => {
@@ -357,11 +376,10 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                                 }
                             }
                             // ── CARDÁPIO DIA: verificar se é resposta do dono ou pedido de assinante ──
-                            // Só executa para admins delivery — isolamento total
+                            // Usa cache para evitar query ao banco a cada mensagem
                             const CardapioDiaService = require('../services/cardapio-dia.service');
                             const adminIdStr = adminId?.toString();
-                            const { AdminDelivery: _AdDelCardapio } = require('../models/delivery.models');
-                            const _isDeliveryAdmin = !!(await _AdDelCardapio.findById(adminId).select('_id').lean());
+                            const _isDeliveryAdmin = (await _getAdminTipo(adminId)) === 'delivery';
 
                             // Verificar se é o DONO respondendo o cardápio do dia
                             if (_isDeliveryAdmin && adminIdStr && CardapioDiaService.isRespostaCardapio(adminIdStr)) {
@@ -410,9 +428,16 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                             // ── REBECA CONFORT: plano econômico usa serviço sem IA ──
                             if (_isDeliveryAdmin) {
                                 try {
-                                    const { AdminDelivery: _AdConfort } = require('../models/delivery.models');
-                                    const _admConfort = await _AdConfort.findById(adminId).select('plano').lean();
-                                    if (_admConfort?.plano === 'confort') {
+                                    // Plano confort — busca com cache
+                                    const _cacheEntry = _adminTypeCache.get(adminId?.toString());
+                                    let _planoConfort = _cacheEntry?.plano;
+                                    if (!_planoConfort) {
+                                        const { AdminDelivery: _AdConfort } = require('../models/delivery.models');
+                                        const _admConfort = await _AdConfort.findById(adminId).select('plano').lean();
+                                        _planoConfort = _admConfort?.plano;
+                                        if (_cacheEntry) _cacheEntry.plano = _planoConfort;
+                                    }
+                                    if (_planoConfort === 'confort') {
                                         const RebecaConfort = require('../services/rebeca-confort.service');
                                         const _respConfort = await RebecaConfort.processar(
                                             telefone, conteudo || transcricao || '', nome, adminId, instancia._id
