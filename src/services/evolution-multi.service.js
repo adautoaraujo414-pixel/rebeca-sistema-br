@@ -183,12 +183,46 @@ const EvolutionMultiService = {
             // Delay humanizado: varia por tamanho + jitter aleatório para não parecer robô
             const delay = Math.min(1200 + (mensagem.length * 30), 5000) + Math.floor(Math.random() * 800);
             await new Promise(r => setTimeout(r, delay));
-            
+
+            // Modo web humanizado: quebrar mensagens longas em partes como humano faz
+            const _enviarParte = async (texto) => {
+                return axios.post(instancia.apiUrl + '/message/sendText/' + instancia.nomeInstancia,
+                    { number: numero, text: texto },
+                    { headers: { 'apikey': instancia.apiKey || EVOLUTION_GLOBAL_KEY, 'Content-Type': 'application/json' }, timeout: 10000 }
+                );
+            };
+
+            const _quebrarMensagem = (texto) => {
+                // Se menor que 300 chars, manda inteiro
+                if (texto.length < 300) return [texto];
+                // Quebrar em parágrafos (linha dupla) ou pontos naturais
+                const partes = texto.split(/
+
++/);
+                if (partes.length > 1) return partes.filter(p => p.trim());
+                // Se não tem parágrafo, manda inteiro mesmo
+                return [texto];
+            };
+
             try {
                 console.log('[EVO] Enviando msg para:', numero, '(tentativa', tentativa + ')');
-                const response = await axios.post(instancia.apiUrl + '/message/sendText/' + instancia.nomeInstancia, { number: numero, text: mensagem }, { headers: { 'apikey': instancia.apiKey || EVOLUTION_GLOBAL_KEY, 'Content-Type': 'application/json' }, timeout: 10000 });
-                console.log('[EVO] Msg enviada OK');
-                return { sucesso: true, messageId: response.data?.key?.id };
+                const partes = _quebrarMensagem(mensagem);
+                let lastResponse;
+                for (let pi = 0; pi < partes.length; pi++) {
+                    if (pi > 0) {
+                        // Presence + delay entre partes — parece digitando de verdade
+                        try {
+                            await axios.post(instancia.apiUrl + '/chat/presence/' + instancia.nomeInstancia,
+                                { number: numero, presence: 'composing', delay: 600 + Math.floor(Math.random() * 600) },
+                                { headers: { 'apikey': instancia.apiKey || EVOLUTION_GLOBAL_KEY, 'Content-Type': 'application/json' }, timeout: 4000 }
+                            );
+                        } catch(_) {}
+                        await new Promise(r => setTimeout(r, 800 + Math.floor(Math.random() * 700)));
+                    }
+                    lastResponse = await _enviarParte(partes[pi]);
+                }
+                console.log('[EVO] Msg enviada OK (' + partes.length + ' parte(s))');
+                return { sucesso: true, messageId: lastResponse?.data?.key?.id };
             } catch (e) { 
                 const erroMsg = e.response?.data?.response?.message?.[0] || e.message;
                 console.log('[EVO] ERRO ao enviar:', erroMsg);
