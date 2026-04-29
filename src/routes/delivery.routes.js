@@ -796,26 +796,42 @@ router.post('/pedido-cardapio-digital', async (req, res) => {
             const ReciboDeliveryService = require('../services/recibo-delivery.service');
             await ReciboDeliveryService.enviarRecibo(adminId, pedidoSalvo._id);
         } catch(re) { console.log('[RECIBO] Erro service:', re.message); }
-        // Impressao automatica da comanda (planoPlus)
-        if (isPlanoPlus) {
-            try {
-                const ComandaService = require('../services/comanda.service');
-                const nomeEstab = (cfgTaxa && cfgTaxa.nomeRestaurante) || 'Delivery';
-                const vias = (cfgTaxa && cfgTaxa.viasImpressao) || 1;
-                const texto = await ComandaService.gerarComanda(pedidoSalvo, { nomeEstab, vias });
-                // Enviar para a cozinha via WhatsApp do admin
-                const { InstanciaWhatsapp } = require('../models');
-                const Evo = require('../services/evolution-multi.service');
-                const instCoz = await InstanciaWhatsapp.findOne({ adminId, status: { $in: ['conectado','open','connected'] } }).lean();
-                if (instCoz && adminDoc && adminDoc.telefone) {
-                    await Evo.enviarMensagem(instCoz._id, adminDoc.telefone, texto);
-                }
-                // Marcar pedido como confirmado automaticamente
+        // Impressao automatica da comanda — TODOS os planos (confort, plus, premium)
+        try {
+            const ComandaService = require('../services/comanda.service');
+            const ImpressoraService = require('../services/impressora.service');
+            const nomeEstab = (cfgTaxa && cfgTaxa.nomeRestaurante) || 'Delivery';
+            const vias = (cfgTaxa && cfgTaxa.viasImpressao) || 1;
+            const { InstanciaWhatsapp } = require('../models');
+            const Evo = require('../services/evolution-multi.service');
+            const instCoz = await InstanciaWhatsapp.findOne({ adminId, status: { $in: ['conectado','open','connected'] } }).lean();
+
+            // Montar comanda completa com endereço, pagamento, troco, complemento
+            const pedidoParaComanda = {
+                ...pedidoSalvo.toObject ? pedidoSalvo.toObject() : pedidoSalvo,
+                nomeCliente: pedidoSalvo.clienteNome || pedidoSalvo.nomeCliente || '',
+                telefoneCliente: pedidoSalvo.telefoneCliente || '',
+                endereco: pedidoSalvo.enderecoEntrega || '',
+                observacoes: pedidoSalvo.observacaoGeral || pedidoSalvo.observacao || '',
+                formaPagamento: pedidoSalvo.formaPagamento || '',
+                troco: pedidoSalvo.troco || 0,
+                valorPago: pedidoSalvo.valorPago || 0,
+            };
+
+            if (instCoz && adminDoc && adminDoc.telefone) {
+                // Enviar texto da comanda via WhatsApp (para o admin ver/imprimir)
+                const texto = ComandaService.gerarTexto(pedidoParaComanda, { nomeEstab, vias });
+                await Evo.enviarMensagem(instCoz._id, adminDoc.telefone, texto);
+            }
+
+            // Plus/Premium: marcar como confirmado automaticamente
+            if (isPlanoPlus) {
                 const PedidoMdl = require('../models/pedidoDelivery.model');
                 await PedidoMdl.updateOne({ _id: pedidoSalvo._id }, { status: 'confirmado', dataConfirmacao: new Date() });
-                console.log('[PLANO-PLUS] Comanda enviada automaticamente — ' + vias + ' via(s)');
-            } catch(cp) { console.log('[PLANO-PLUS] Erro comanda:', cp.message); }
-        }
+            }
+
+            console.log('[COMANDA-AUTO] Enviada — plano:', adminDoc?.plano, '— vias:', vias);
+        } catch(cp) { console.log('[COMANDA-AUTO] Erro:', cp.message); }
         // Notificar cliente pelo WhatsApp se tiver telefone
         if (telefoneCliente) {
             try {
@@ -1957,7 +1973,7 @@ router.put('/admin/:id/plano', async (req, res) => {
         const MASTER = process.env.ADMIN_MASTER_TOKEN || 'rebeca-master-2024';
         if (masterToken !== MASTER) return res.status(403).json({ erro: 'Acesso negado. Token master necessario.' });
         const { plano, planoStatus, planoDataVencimento } = req.body;
-        const valores = { confort: 179, plus: 298.90, premium: 459 };
+        const valores = { confort: 197.90, plus: 298.90, premium: 459 };
         const update = {};
         if (plano) { update.plano = plano; update.planoValor = valores[plano] || 179; }
         if (planoStatus) update.planoStatus = planoStatus;

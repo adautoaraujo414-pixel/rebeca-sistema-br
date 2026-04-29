@@ -778,7 +778,7 @@ async function carregarDeliveryAdmins() {
                     const dias = a.planoDataVencimento ? Math.ceil((new Date(a.planoDataVencimento) - new Date()) / 86400000) : null;
                     const alertaVenc = dias !== null && dias <= 5 ? '<br><span style="color:#ff4444;font-size:10px;">⚠️ vence em ' + dias + 'd</span>' : '';
                     return '<span style="background:' + cor + '22;color:' + cor + ';border:1px solid ' + cor + '55;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;">' + p.toUpperCase() + '</span>' +
-                           '<br><span style="color:#555;font-size:11px;">R$ ' + ({confort:179,plus:298.90,premium:459}[p]||'-') + '/mês</span>' + alertaVenc;
+                           '<br><span style="color:#555;font-size:11px;">R$ ' + ({confort:197.90,plus:298.90,premium:459}[p]||'-') + '/mês</span>' + alertaVenc;
                 })() + '</td>' +
                 '<td style="white-space:nowrap;">' +
                     (a.status !== 'ativo' ? '<button onclick="liberarDelivery(\'' + a._id + '\')" style="padding:5px 12px;background:rgba(0,204,106,0.15);border:1px solid rgba(0,204,106,0.3);border-radius:6px;color:#00cc6a;cursor:pointer;font-size:12px;margin:2px;">✅ Liberar</button>' : '') +
@@ -839,7 +839,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
         async function alterarPlanoCliente(adminId, planoAtual) {
-            const opcoes = { confort: 'R$ 179,00', plus: 'R$ 298,90', premium: 'R$ 459,00' };
+            const opcoes = { confort: 'R$ 197,90', plus: 'R$ 298,90', premium: 'R$ 459,00' };
             const html = Object.entries(opcoes).map(([k,v]) =>
                 `<option value="${k}" ${k === planoAtual ? 'selected' : ''}>${k.toUpperCase()} - ${v}/mês</option>`
             ).join('');
@@ -883,7 +883,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const cor = cores[plano] || '#22c55e';
                     const ok = document.createElement('div');
                     ok.style.cssText = `position:fixed;bottom:24px;right:24px;background:#0f1f0f;border:2px solid ${cor};color:#fff;padding:16px 22px;border-radius:14px;font-size:.9em;font-weight:600;z-index:9999;max-width:320px;`;
-                    ok.innerHTML = `✅ Plano alterado para <strong style="color:${cor}">${plano.toUpperCase()}</strong><br><span style="color:#888;font-size:.85em">Próxima cobrança: R$ ${{confort:179,plus:298.90,premium:459}[plano]}/mês</span>`;
+                    ok.innerHTML = `✅ Plano alterado para <strong style="color:${cor}">${plano.toUpperCase()}</strong><br><span style="color:#888;font-size:.85em">Próxima cobrança: R$ ${{confort:197.90,plus:298.90,premium:459}[plano]}/mês</span>`;
                     document.body.appendChild(ok);
                     setTimeout(() => ok.remove(), 5000);
                     carregarDeliveryAdmins();

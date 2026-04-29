@@ -64,6 +64,7 @@ router.post('/login', async (req, res) => {
         }
         if (!ok) return res.status(401).json({ erro: 'Senha incorreta' });
 
+
         if (admin.status === 'bloqueado')
             return res.status(403).json({ erro: 'Conta bloqueada. Entre em contato: (34) 98403-9955', bloqueado: true });
 
