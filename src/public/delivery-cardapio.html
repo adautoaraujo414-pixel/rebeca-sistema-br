@@ -535,3 +535,910 @@ function copiarPixChave() {
   });
 }
 
+async function carregarPratoDia() {
+  try {
+    var r = await fetch('/api/delivery/cardapio-semanal/hoje?adminId=' + adminId);
+    var d = await r.json();
+    if (!d.cardapio) return;
+    var c = d.cardapio;
+    var el = document.getElementById('pratoDiaSection');
+    if (!el) return;
+    var tams = (c.tamanhos || []).filter(function(t){ return t.preco; }).sort(function(a,b){ return a.preco - b.preco; });
+    var tamanhoMin = tams[0];
+    var precoFrom = tamanhoMin ? 'A partir de R$ ' + tamanhoMin.preco.toFixed(2).replace('.',',') : '';
+    el.innerHTML = '<div style="background:linear-gradient(135deg,#1a0a00,#3d1a00);border-radius:16px;overflow:hidden;margin-bottom:8px;position:relative;">' +
+      '<div style="position:absolute;inset:0;background-image:url(https://images.unsplash.com/photo-1512058564366-18510be2db19?w=600&q=80);background-size:cover;background-position:center;opacity:0.45;"></div>' +
+      '<div style="position:absolute;bottom:0;left:0;right:0;height:60px;background:linear-gradient(to top,rgba(255,180,80,0.2),transparent);animation:fumacaAnim 3s ease-in-out infinite;"></div>' +
+      '<div style="position:relative;z-index:2;padding:20px 16px 12px;">' +
+      '<div style="font-size:10px;color:#ffd700;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;">\uD83C\uDF71 PRATO DO DIA \u2014 ' + d.nomeDia.toUpperCase() + '</div>' +
+      '<div style="font-size:20px;font-weight:800;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,0.8);margin-bottom:10px;">' + c.nomePrato + '</div>' +
+      '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;">' +
+      (c.ingredientes || []).slice(0,6).map(function(i){ return '<span style="background:rgba(255,255,255,0.15);color:#fff;border-radius:20px;padding:3px 10px;font-size:12px;">' + i.nome + '</span>'; }).join('') +
+      '</div>' +
+      (precoFrom ? '<div style="color:#ffd700;font-weight:700;font-size:13px;margin-bottom:12px;">' + precoFrom + '</div>' : '') +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;">' +
+      tams.map(function(t){ return '<button onclick="abrirModalMarmita(\'' + t.tamanho + '\')" style="background:#f97316;border:none;border-radius:20px;padding:8px 16px;color:#fff;font-weight:700;font-size:13px;cursor:pointer;">' + t.tamanho + ' \u2014 R$ ' + t.preco.toFixed(2).replace('.',',') + '</button>'; }).join('') +
+      '</div></div></div>';
+    el.style.display = 'block';
+    window._marmitaHoje = c;
+  } catch(e) { console.log('[pratoDia]', e.message); }
+}
+
+function abrirModalMarmita(tamanho) {
+  var c = window._marmitaHoje;
+  if (!c) return;
+  var tam = (c.tamanhos || []).find(function(t){ return t.tamanho === tamanho; });
+  if (!tam) return;
+  var nome = c.nomePrato + ' (' + tamanho + ')';
+  var preco = tam.preco;
+  var adds = (c.adicionais || []).filter(function(a){ return a.nome; });
+  if (adds.length) {
+    var escolha = window.prompt(
+      '\uD83C\uDF71 ' + nome + '\n\nAdicionais disponíveis:\n' +
+      adds.map(function(a,i){ return (i+1) + '. ' + a.nome + (a.preco ? ' +R$ ' + Number(a.preco).toFixed(2).replace('.',',') : ' (grátis)'); }).join('\n') +
+      '\n\nDigite o número do adicional desejado (ou Enter para pular):'
+    );
+    if (escolha) {
+      var idx = parseInt(escolha) - 1;
+      if (adds[idx]) { preco += adds[idx].preco || 0; nome += ' + ' + adds[idx].nome; }
+    }
+  }
+  carrinho.push({ _id: 'marmita_' + Date.now(), nome: nome, preco: preco, categoria: 'Marmita' });
+  atualizarCarrinho();
+  toast('\u2705 ' + nome + ' adicionado!');
+}
+
+function detectarNichoPorContexto(nomeRestaurante, cats, itens) {
+  var score = {acai:0,pizza:0,sushi:0,marmita:0,lanche:0,bebida:0,sorvete:0,pastel:0,frango:0};
+  var keywords = {
+    acai:    ['acai','açaí','pitaya','granola','smoothie','frutas'],
+    pizza:   ['pizza','calzone','pizzaria'],
+    sushi:   ['sushi','temaki','uramaki','sashimi','japonês','japonesa','japanese','japa'],
+    marmita: ['marmita','quentinha','prato feito','self service','caseiro','comida caseira','pf '],
+    lanche:  ['hamburguer','hamburger','burger','burguer','smash','x-burguer','xis','coxinha','salgado','hot dog','cachorro quente','sanduiche'],
+    bebida:  ['suco','suqueria','drinks','drink','bar ','cerveja','choperia','bebidas','vitamina','shake','cafeteria','café','coffee','cafezinho'],
+    sorvete: ['sorvete','gelato','sorveteria','milkshake','sundae','ice cream'],
+    pastel:  ['pastel','pastelaria','esfiha','quibe','empada'],
+    frango:  ['frango','galeto','assado','churrasco','espeto','grill','grelhado']
+  };
+  // Nome do restaurante tem peso 5x — se tiver "pizza" no nome já detecta
+  var nomeTexto = (nomeRestaurante||'').toLowerCase();
+  var textos = [nomeTexto,nomeTexto,nomeTexto,nomeTexto,nomeTexto];
+  (cats||[]).forEach(function(c){ textos.push((c.nome||'').toLowerCase()); });
+  (itens||[]).forEach(function(i){
+    textos.push((i.nome||'').toLowerCase());
+    textos.push((i.descricao||'').toLowerCase());
+  });
+  var fullText = textos.join(' ');
+  Object.keys(keywords).forEach(function(k){
+    keywords[k].forEach(function(w){
+      var re = new RegExp(w.trim(),'gi');
+      var m = fullText.match(re);
+      if(m) score[k] += m.length;
+    });
+  });
+  var top = Object.keys(score).sort(function(a,b){ return score[b]-score[a]; })[0];
+  return (score[top] === 0) ? 'lanche' : top;
+}
+
+function detectarNicho(nicho, cats, itens, nomeRestaurante) {
+  var n = detectarNichoPorContexto(nomeRestaurante, cats, itens);
+  if (n.includes('acai') || n.includes('açaí')) return {
+    img:'https://images.unsplash.com/photo-1590080876351-41c5d3ffaf96?w=800&q=80',
+    title:'Seu <span>açaí favorito</span> 🍇',
+    sub:'Combinações irresistíveis com frutas frescas e coberturas especiais.',
+    badge:'🍇 Fresquinho agora',
+    chips:['🍓 <span>Frutas frescas</span>','⚡ <span>Preparo na hora</span>','🥥 <span>Coberturas especiais</span>']
+  };
+  if (n.includes('pizza')) return {
+    img:'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800&q=80',
+    title:'Pizza <span>fresquinha</span> do forno 🍕',
+    sub:'Massa artesanal, ingredientes selecionados, sabor inesquecível.',
+    badge:'🍕 Saindo do forno',
+    chips:['🧀 <span>Queijo especial</span>','🔥 <span>Forno a lenha</span>','❤️ <span>Feita com amor</span>']
+  };
+  if (n.includes('sushi') || n.includes('japones') || n.includes('japonês')) return {
+    img:'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=800&q=80',
+    title:'Sushi <span>fresquinho</span> para você 🍣',
+    sub:'Ingredientes importados, preparo artesanal, experiência autêntica.',
+    badge:'🍣 Fresquinho hoje',
+    chips:['🐟 <span>Peixe fresco</span>','👨‍🍳 <span>Chef especializado</span>','🎋 <span>Receitas originais</span>']
+  };
+  if (n.includes('marmit') || n.includes('comida caseira') || n.includes('caseiro')) return {
+    img:'https://images.unsplash.com/photo-1512058564366-18510be2db19?w=800&q=80',
+    title:'Comida <span>caseira</span> de verdade 🍱',
+    sub:'Pratos feitos com carinho, temperos da vovó e muito sabor.',
+    badge:'🍱 Feito hoje',
+    chips:['🥩 <span>Carne selecionada</span>','🌿 <span>Temperos naturais</span>','❤️ <span>Receita caseira</span>']
+  };
+  if (n.includes('pastel') || n.includes('lanche') || n.includes('snack')) return {
+    img:'https://images.unsplash.com/photo-1553909489-cd47e0907980?w=800&q=80',
+    title:'Lanches <span>irresistíveis</span> 🥪',
+    sub:'Crocante por fora, recheado por dentro, perfeito para qualquer hora.',
+    badge:'🔥 Quentinho agora',
+    chips:['🧀 <span>Recheio cremoso</span>','🔥 <span>Crocante e quente</span>','⚡ <span>Rápido e gostoso</span>']
+  };
+  if (n.includes('sorvete') || n.includes('gelado') || n.includes('ice')) return {
+    img:'https://images.unsplash.com/photo-1497034825429-c343d7c6a68f?w=800&q=80',
+    title:'Sorvetes <span>gelados</span> e saborosos 🍦',
+    sub:'Cremoso, refrescante e do jeitinho que você gosta.',
+    badge:'🍦 Gelado e gostoso',
+    chips:['🍓 <span>Sabores naturais</span>','❄️ <span>Super gelado</span>','🍫 <span>Coberturas especiais</span>']
+  };
+  // Default: hamburgueria / restaurante
+  return {
+    img:'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=800&q=80',
+    title:'Sabor que conquista <span>em cada mordida</span> 🍔',
+    sub:'Ingredientes selecionados para a melhor experiência.',
+    badge:'❤️ Feito na hora, com amor',
+    chips:['🧂 <span>Ingredientes selecionados</span>','⚡ <span>Preparo na hora</span>','❤️ <span>Feito com amor</span>']
+  };
+}
+
+function renderMaisPedidos(itens) {
+  var todos = itens || [];
+  // Usar os primeiros itens disponíveis como "mais pedidos"
+  var destaques = todos.filter(function(i){ return i.disponivel !== false; }).slice(0, 8);
+  if (!destaques.length) return;
+  var badges = ['badge-mais-pedido', 'badge-popular', 'badge-novidade', 'badge-mais-pedido', 'badge-popular'];
+  var labels = ['MAIS PEDIDO', 'POPULAR', 'NOVIDADE', 'MAIS PEDIDO', 'POPULAR'];
+  var sec = document.createElement('div');
+  sec.className = 'section';
+  sec.id = 'secMaisPedidos';
+  sec.innerHTML = '<div class="section-header"><div class="section-title"><span class="section-title-icon">🔥</span> Mais pedidos</div>' +
+    '<div class="section-ver-todos" onclick="filtrarCat(\'todas\',document.querySelector(\'[data-cat=todas]\'))">Ver todos ›</div></div>' +
+    '<div class="items-scroll" id="scrollMaisPedidos"></div>';
+  var conteudo = document.getElementById('conteudo');
+  conteudo.insertBefore(sec, conteudo.firstChild);
+  var scroll = document.getElementById('scrollMaisPedidos');
+  destaques.forEach(function(item, idx) {
+    var card = criarCardScroll(item, badges[idx % badges.length], labels[idx % labels.length]);
+    scroll.appendChild(card);
+  });
+}
+
+function renderSugestoes(itens) {
+  var todos = itens || [];
+  var sugs = todos.filter(function(i){ return i.disponivel !== false; }).slice(3, 9);
+  if (sugs.length < 2) return;
+  var sec = document.createElement('div');
+  sec.className = 'section';
+  sec.id = 'secSugestoes';
+  sec.innerHTML = '<div class="section-header"><div class="section-title"><span class="section-title-icon">✨</span> Sugestões para você</div>' +
+    '<div class="section-ver-todos">Com base no cardápio</div></div>' +
+    '<div class="items-scroll" id="scrollSugestoes"></div>';
+  var conteudo = document.getElementById('conteudo');
+  // Inserir após mais pedidos
+  var maisPed = document.getElementById('secMaisPedidos');
+  if (maisPed && maisPed.nextSibling) conteudo.insertBefore(sec, maisPed.nextSibling);
+  else conteudo.insertBefore(sec, conteudo.firstChild);
+  var scroll = document.getElementById('scrollSugestoes');
+  sugs.forEach(function(item) {
+    var card = criarCardScroll(item, '', '');
+    scroll.appendChild(card);
+  });
+}
+
+function criarCardScroll(item, badgeClass, badgeLabel) {
+  var div = document.createElement('div');
+  div.className = 'item-card item-card-scroll' + (item.disponivel === false ? ' indisponivel' : '');
+  div.dataset.id = item._id;
+  div.dataset.nome = item.nome;
+  div.onclick = function(){ abrirItem(item); };
+  var badgeHtml = badgeClass ? '<div class="item-badge-top ' + badgeClass + '">' + badgeLabel + '</div>' : '';
+  var imgHtml = item.imagem
+    ? '<img class="item-img" src="' + item.imagem + '" loading="lazy" onerror="this.onerror=null">'
+    : '<div class="item-img-ph">🍽️</div>';
+  div.innerHTML = '<div style="position:relative;">' + badgeHtml + imgHtml + '</div>' +
+    '<div class="item-body">' +
+      '<div class="item-name">' + item.nome + '</div>' +
+      '<div class="item-desc">' + (item.descricao||'') + '</div>' +
+      '<div class="item-footer">' +
+        '<div class="item-price">R$ ' + Number(item.preco||0).toFixed(2).replace('.',',') + '</div>' +
+        '<button class="item-add-btn" onclick="event.stopPropagation();adicionarRapido(event,\'' + item._id + '\')">+</button>' +
+      '</div>' +
+    '</div>';
+  return div;
+}
+
+function renderExtrasRapidos(itens) {
+  // Mostrar itens de categorias extras como chips rápidos (bebidas, adicionais etc)
+  var todos = itens || [];
+  var extras = todos.filter(function(i){
+    var catDoc = (typeof i.categoriaId === 'object' ? i.categoriaId : null);
+    var cat = (catDoc?.nome || i.categoria?.nome || i.categoria || '').toLowerCase();
+    return cat.includes('bebida') || cat.includes('adicional') || cat.includes('molho') ||
+           cat.includes('suco') || cat.includes('refrigerante') || cat.includes('sobremesa');
+  }).slice(0, 10);
+  if (!extras.length) return;
+  var sec = document.getElementById('extrasSection');
+  var scroll = document.getElementById('extrasScroll');
+  if (!sec || !scroll) return;
+  scroll.innerHTML = '';
+  extras.forEach(function(item) {
+    var chip = document.createElement('div');
+    chip.className = 'extra-chip';
+    chip.onclick = function(){ adicionarRapido({stopPropagation:function(){}}, item._id); };
+    var imgHtml = item.imagem
+      ? '<img class="extra-chip-img" src="' + item.imagem + '" loading="lazy">'
+      : '<div class="extra-chip-img-ph">' + '🍽️</div>';
+    chip.innerHTML = imgHtml +
+      '<div class="extra-chip-info">' +
+        '<div class="extra-chip-nome">' + item.nome + '</div>' +
+        '<div class="extra-chip-preco">+ R$ ' + Number(item.preco||0).toFixed(2).replace('.',',') + '</div>' +
+      '</div>';
+    scroll.appendChild(chip);
+  });
+  sec.style.display = 'block';
+}
+
+async function init() {
+  try {
+    var r = await fetch('/api/delivery/cardapio-publico/' + adminId);
+    if (!r.ok) throw new Error('Erro ' + r.status);
+    cardapioData = await r.json();
+    // Buscar combos em paralelo
+    try {
+      var rc = await fetch('/api/delivery/combos-publicos/' + adminId);
+      cardapioData.combos = rc.ok ? await rc.json() : [];
+    } catch(ec) { cardapioData.combos = []; }
+    renderizar();
+    carregarPagamentosConfig();
+    carregarPratoDia();
+  } catch(e) {
+    document.getElementById('loading').innerHTML = '<div style="font-size:2em">😕</div><div style="color:var(--text3);margin-top:12px;font-size:.9em">Cardápio indisponível no momento.</div><button onclick="location.reload()" style="margin-top:16px;padding:10px 24px;border-radius:20px;border:none;background:var(--accent);color:#fff;font-weight:700;cursor:pointer;font-family:inherit">Tentar novamente</button>';
+  }
+}
+
+function renderizar() {
+  var d = cardapioData;
+  // A API retorna campos direto em d (não aninhado em d.restaurante)
+  var nomeRest = typeof d.restaurante === 'string' ? d.restaurante : (d.restaurante?.nome || d.nomeComercio || 'Restaurante');
+
+  // Header
+  document.getElementById('headerNome').textContent = nomeRest;
+  document.getElementById('headerSub').textContent = d.tipoNegocio || 'Cardápio Digital';
+  if (d.logo) {
+    var img = document.createElement('img');
+    img.src = d.logo;
+    img.className = 'header-logo';
+    var wrap = document.getElementById('headerLogoWrap');
+    if (wrap) wrap.replaceWith(img);
+  }
+  var aberto = d.aberto !== false;
+  var badge = document.getElementById('badgeStatus');
+  badge.textContent = aberto ? '● Aberto' : '● Fechado';
+  badge.className = 'badge-status ' + (aberto ? 'badge-aberto' : 'badge-fechado');
+
+  // Info bar — usar campos diretos da API
+  var infoEnd = document.getElementById('infoEndereco');
+  var infoTel = document.getElementById('infoTelefone');
+  var infoHor = document.getElementById('infoHorario');
+  var infoTempo = document.getElementById('infoTempo');
+  var infoTaxa = document.getElementById('infoTaxa');
+  var infoMin = document.getElementById('infoMinimo');
+  // Mostrar APENAS campos que vieram com dado real (não null/vazio)
+  var showEl = function(id, val) {
+    var wrap = document.getElementById('item' + id);
+    var el = document.getElementById('info' + id);
+    if (el && val !== null && val !== undefined && val !== '') {
+      el.textContent = val;
+      if (wrap) wrap.style.display = 'flex';
+    }
+  };
+  showEl('Horario', d.horario || null);
+  showEl('Endereco', d.endereco || null);
+  showEl('Telefone', d.telefone || null);
+  showEl('Taxa', d.taxaEntrega !== null && d.taxaEntrega !== undefined ? (d.taxaEntrega > 0 ? 'R$ ' + Number(d.taxaEntrega).toFixed(2).replace('.',',') : 'Grátis') : null);
+  showEl('Minimo', d.pedidoMinimo !== null && d.pedidoMinimo !== undefined ? 'Mín. R$ ' + Number(d.pedidoMinimo).toFixed(2).replace('.',',') : null);
+  // Tempo só mostrar se configurado
+  if (d.tempoEntrega !== null && d.tempoEntrega !== undefined) {
+    if (infoTempo) infoTempo.textContent = d.tempoEntrega + ' min';
+    var wrapTempo = document.getElementById('itemTempo');
+    if (wrapTempo) wrapTempo.style.display = 'flex';
+  }
+
+  // Carregar cats e itens ANTES do hero para detectarNicho funcionar
+  var cats = d.categorias || [];
+  var itens = d.itens || d.cardapio || [];
+
+  // Hero por nicho
+  var nicho = (d.tipoNegocio||'restaurante').toLowerCase();
+  var heroCfg = detectarNicho(nicho, cats, itens, d.restaurante || d.nome || d.nomeEstabelecimento || '');
+  var heroEl = document.getElementById('heroSection');
+  if (heroEl) {
+    document.getElementById('heroBgImg').style.backgroundImage = 'url(' + heroCfg.img + ')';
+    document.getElementById('heroTitle').innerHTML = heroCfg.title;
+    document.getElementById('heroSub').textContent = heroCfg.sub;
+    document.getElementById('heroBadge').textContent = heroCfg.badge;
+    document.getElementById('heroChips').innerHTML = heroCfg.chips.map(function(c){ return '<div class="hero-chip">' + c + '</div>'; }).join('');
+    heroEl.style.display = 'flex';
+  }
+
+  // Mostrar UI
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('header').style.display = 'block';
+  document.getElementById('infoBar').style.display = 'flex';
+  document.getElementById('catsNav').style.display = 'flex';
+
+  // Categorias
+  var catsNav = document.getElementById('catsNav');
+  catsNav.innerHTML = '<button class="cat-btn active" data-cat="todas" onclick="filtrarCat(\'todas\',this)">🍽️ Todos</button>';
+  // Botão combos
+  if (cardapioData && cardapioData.combos && cardapioData.combos.length) {
+    var btnC = document.createElement('button');
+    btnC.className = 'cat-btn';
+    btnC.dataset.cat = '_combos';
+    btnC.textContent = '🎁 Combos';
+    btnC.onclick = function(){ filtrarCat('_combos', btnC); };
+    catsNav.appendChild(btnC);
+  }
+  cats.forEach(function(c) {
+    var temItens = itens.some(function(i){ return i.categoriaId === c._id || i.categoria === c._id || i.categoria?._id === c._id; });
+    if (!temItens) return;
+    var btn = document.createElement('button');
+    btn.className = 'cat-btn';
+    btn.dataset.cat = c._id;
+    btn.textContent = (c.emoji||'') + ' ' + c.nome;
+    btn.onclick = function(){ filtrarCat(c._id, btn); };
+    catsNav.appendChild(btn);
+  });
+
+  renderItens(itens, cats);
+}
+
+function renderItens(itens, cats) {
+  var d = cardapioData;
+  cats = cats || d.categorias || [];
+  itens = itens || d.itens || d.cardapio || [];
+  var conteudo = document.getElementById('conteudo');
+  conteudo.innerHTML = '';
+
+  // Agrupar por categoria
+  var grupos = {};
+  var ordemCats = [];
+  cats.forEach(function(c){ grupos[c._id] = {cat:c, itens:[]}; ordemCats.push(c._id); });
+
+  itens.forEach(function(item) {
+    var catId = item.categoriaId || item.categoria?._id || item.categoria;
+    if (catId && grupos[catId]) grupos[catId].itens.push(item);
+    else {
+      if (!grupos['_sem']) { grupos['_sem'] = {cat:{nome:'Outros',emoji:'📦'},itens:[]}; ordemCats.push('_sem'); }
+      grupos['_sem'].itens.push(item);
+    }
+  });
+
+  ordemCats.forEach(function(catId) {
+    var grupo = grupos[catId];
+    if (!grupo || !grupo.itens.length) return;
+    var sec = document.createElement('div');
+    sec.className = 'section';
+    sec.dataset.cat = catId;
+    sec.innerHTML = '<div class="section-header"><div class="section-title"><span class="section-title-icon">' + (grupo.cat.emoji||'🍽️') + '</span> ' + grupo.cat.nome + '</div></div>' +
+      '<div class="items-grid" id="grid-' + catId + '"></div>';
+    conteudo.appendChild(sec);
+    var grid = sec.querySelector('.items-grid');
+    grupo.itens.forEach(function(item){ grid.appendChild(criarCard(item)); });
+  });
+
+  // Mais pedidos e sugestões (baseado nos itens carregados)
+  renderMaisPedidos(itens);
+  renderSugestoes(itens);
+  renderExtrasRapidos(itens);
+
+  // Seção de combos
+  var combos = (cardapioData && cardapioData.combos) || [];
+  if (combos.length) {
+    var secCombo = document.createElement('div');
+    secCombo.className = 'section';
+    secCombo.dataset.cat = '_combos';
+    secCombo.innerHTML = '<div class="section-title">🎁 Combos Especiais</div>' +
+      '<div class="items-grid" id="grid-combos"></div>';
+    conteudo.appendChild(secCombo);
+    var gridC = secCombo.querySelector('.items-grid');
+    combos.forEach(function(combo) { gridC.appendChild(criarCardCombo(combo)); });
+  }
+}
+
+function criarCard(item) {
+  var div = document.createElement('div');
+  div.className = 'item-card' + (item.disponivel === false ? ' indisponivel' : '');
+  div.dataset.id = item._id;
+  div.dataset.nome = item.nome;
+  div.onclick = function(){ abrirItem(item); };
+
+  var imgHtml = item.imagem
+    ? '<img class="item-img" src="' + item.imagem + '" loading="lazy" onerror="this.parentNode.innerHTML=\'<div class=item-img-ph>🍽️</div>\'">'
+    : '<div class="item-img-ph">' + '🍽️</div>';
+
+  var qtdNoCart = carrinho.filter(function(c){ return c.itemId === item._id; }).reduce(function(a,b){ return a+b.qty; }, 0);
+
+  div.innerHTML = imgHtml +
+    '<div class="item-badge-cart' + (qtdNoCart > 0 ? ' show' : '') + '" id="badge-' + item._id + '">' + (qtdNoCart||'') + '</div>' +
+    '<div class="item-body">' +
+      '<div class="item-name">' + item.nome + '</div>' +
+      '<div class="item-desc">' + (item.descricao||'') + '</div>' +
+      (item.bebidaVolume ? '<div class="item-tag">🥤 ' + item.bebidaVolume + '</div>' : '') +
+      (item.acaiTamanho ? '<div class="item-tag">🍇 ' + item.acaiTamanho + '</div>' : '') +
+      (item.acaiAcompanhamentos ? '<div class="item-tag-sm">+ ' + item.acaiAcompanhamentos + '</div>' : '') +
+      (item.marmitaTamanho ? '<div class="item-tag">🍱 Tam. ' + item.marmitaTamanho + (item.marmitaPeso ? ' · ' + item.marmitaPeso : '') + '</div>' : '') +
+      (item.marmitaConteudo ? '<div class="item-tag-sm">' + item.marmitaConteudo + '</div>' : '') +
+      '<div class="item-footer">' +
+        '<div class="item-price">R$ ' + Number(item.preco||0).toFixed(2).replace('.',',') + '</div>' +
+        '<button class="item-add-btn" onclick="event.stopPropagation();adicionarRapido(event,\'' + item._id + '\')">+</button>' +
+      '</div>' +
+    '</div>';
+  return div;
+}
+
+function criarCardCombo(combo) {
+  var div = document.createElement('div');
+  div.className = 'item-card';
+  div.dataset.id = combo._id;
+  div.dataset.nome = combo.nome;
+  if (combo.destaque) div.style.cssText = 'border:2px solid #f97316;';
+
+  var itensList = (combo.itens||[]).map(function(i){ return i.quantidade + 'x ' + i.nome; }).join(' + ');
+  var precoOrig = combo.precoOriginal || (combo.itens||[]).reduce(function(a,i){ return a + (i.preco||0)*(i.quantidade||1); }, 0);
+  var descPct = combo.descontoPct || (precoOrig > combo.preco ? Math.round((1 - combo.preco/precoOrig)*100) : 0);
+
+  var badgeDesconto = descPct > 0
+    ? '<span style="position:absolute;top:8px;left:8px;background:#ef4444;color:#fff;font-size:11px;font-weight:700;padding:3px 8px;border-radius:20px;z-index:2;">-' + descPct + '%</span>'
+    : '';
+  var badgeDestaque = combo.destaque
+    ? '<span style="position:absolute;top:8px;right:8px;background:#f97316;color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;z-index:2;">Destaque</span>'
+    : '';
+
+  var imgHtml = '<div style="position:relative;">' +
+    (combo.imagem
+      ? '<img class="item-img" src="' + combo.imagem + '" loading="lazy" onerror="this.onerror=null;this.style.display=\'none\'">' 
+      : '<div class="item-img-ph">🎁</div>') +
+    badgeDesconto + badgeDestaque +
+  '</div>';
+
+  var precoRiscado = precoOrig > combo.preco
+    ? '<span style="font-size:.75em;color:#9ca3af;text-decoration:line-through;margin-right:4px;">R$ ' + precoOrig.toFixed(2).replace('.',',') + '</span>'
+    : '';
+  var economia = precoOrig > combo.preco
+    ? '<div style="font-size:.75em;color:#22c55e;font-weight:600;margin-top:2px;">Economia de R$ ' + (precoOrig - combo.preco).toFixed(2).replace('.',',') + '</div>'
+    : '';
+
+  div.innerHTML = imgHtml +
+    '<div class="item-body">' +
+      '<div class="item-name">🎁 ' + combo.nome + '</div>' +
+      '<div class="item-desc" style="font-size:.78em;color:#6b7280;margin-bottom:4px;">' + itensList + '</div>' +
+      (combo.descricao ? '<div class="item-desc">' + combo.descricao + '</div>' : '') +
+      economia +
+      '<div class="item-footer" style="margin-top:6px;">' +
+        '<div>' + precoRiscado + '<span class="item-price">R$ ' + Number(combo.preco||0).toFixed(2).replace('.',',') + '</span></div>' +
+        '<button class="item-add-btn" onclick="event.stopPropagation();adicionarComboRapido(&quot;' + combo._id + '&quot;)">+</button>' +
+      '</div>' +
+    '</div>';
+
+  div.onclick = function(){ abrirCombo(combo); };
+  return div;
+}
+
+function adicionarComboCart(btn) {
+  adicionarComboRapido(btn.dataset.cid);
+  document.getElementById('overlayItem').classList.remove('show');
+  document.body.style.overflow = '';
+}
+
+function adicionarComboRapido(comboId) {
+  var combos = (cardapioData && cardapioData.combos) || [];
+  var combo = combos.find(function(c){ return c._id === comboId; });
+  if (!combo) return;
+  carrinho.push({
+    itemId: combo._id, nome: '🎁 ' + combo.nome,
+    preco: Number(combo.preco||0), qty: 1, obs: '',
+    imagem: combo.imagem||'', emoji: '🎁'
+  });
+  atualizarCartUI();
+  showToast('✅ ' + combo.nome + ' adicionado!');
+}
+
+function abrirCombo(combo) {
+  var itensList = (combo.itens||[]).map(function(i){ return '• ' + i.quantidade + 'x ' + i.nome; }).join('<br>');
+  var total = (combo.itens||[]).reduce(function(a,i){ return a + (i.preco||0)*(i.quantidade||1); }, 0);
+  var economia = total > combo.preco
+    ? '<div style="background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);border-radius:10px;padding:10px 14px;margin-bottom:16px;font-size:.85em;color:#22c55e;font-weight:700;">✅ Economia de R$ ' + (total-combo.preco).toFixed(2).replace('.',',') + ' comprando o combo!</div>'
+    : '';
+
+  var imgHtml = combo.imagem
+    ? '<img class="modal-img" src="' + combo.imagem + '">'
+    : '<div class="modal-img-ph">🎁</div>';
+
+  document.getElementById('modalItemConteudo').innerHTML =
+    imgHtml +
+    '<div class="modal-body">' +
+      '<div class="modal-name">🎁 ' + combo.nome + '</div>' +
+      '<div class="modal-desc">' + (combo.descricao||'') + '</div>' +
+      '<div class="modal-price">R$ ' + Number(combo.preco||0).toFixed(2).replace('.',',') + '</div>' +
+      economia +
+      '<div style="background:var(--surface2);border-radius:10px;padding:12px 14px;margin-bottom:16px;">' +
+        '<div style="font-size:.72em;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">📦 Incluso no combo</div>' +
+        '<div style="font-size:.85em;color:var(--text2);line-height:1.8;">' + itensList + '</div>' +
+      '</div>' +
+      '<button class="btn-add-cart" data-cid="' + combo._id + '" onclick="adicionarComboCart(this)">Adicionar Combo — R$ ' + Number(combo.preco||0).toFixed(2).replace('.',',') + '</button>' +
+    '</div>';
+
+  document.getElementById('overlayItem').classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+
+function abrirItem(item) {
+  itemAtual = item;
+  ingrRetirados = [];
+  qtyAtual = 1;
+  var ingrs = (item.ingredientes||'').split(',').map(function(s){ return s.trim(); }).filter(Boolean);
+  var imgHtml = item.imagem
+    ? '<img class="modal-img" src="' + item.imagem + '">'
+    : '<div class="modal-img-ph">' + '🍽️</div>';
+
+  var ingrsHtml = ingrs.length ? '<div class="modal-section"><div class="modal-section-title">🥗 Ingredientes (toque para retirar)</div>' +
+    ingrs.map(function(ing){
+      var key = ing.replace(/[^a-zA-Z0-9]/g,'_');
+      return '<div class="ingr-item"><span class="ingr-nome">' + ing + '</span>' +
+        '<button class="btn-retirar" id="ingr-' + key + '" data-ing="' + ing.replace(/"/g,'&quot;') + '" onclick="toggleIngr(this)">' +
+        'Retirar</button></div>';
+    }).join('') + '</div>' : '';
+
+  document.getElementById('modalItemConteudo').innerHTML =
+    imgHtml +
+    '<div class="modal-body">' +
+      '<div class="modal-name">' + item.nome + '</div>' +
+      '<div class="modal-desc">' + (item.descricao||'') + '</div>' +
+      (item.bebidaVolume ? '<div class="modal-tag-cat">🥤 ' + item.bebidaVolume + '</div>' : '') +
+      (item.acaiTamanho ? '<div class="modal-tag-cat">🍇 ' + item.acaiTamanho + (item.acaiAcompanhamentos ? ' · ' + item.acaiAcompanhamentos : '') + '</div>' : '') +
+      (item.marmitaTamanho ? '<div class="modal-tag-cat">🍱 Tamanho ' + item.marmitaTamanho + (item.marmitaPeso ? ' · ' + item.marmitaPeso : '') + '</div>' : '') +
+      (item.marmitaConteudo ? '<div class="modal-tag-conteudo">📋 ' + item.marmitaConteudo + '</div>' : '') +
+      (item.marmitaTipo === 'self' ? '<div class="modal-tag-cat">⚖️ Self-service (por kg)</div>' : '') +
+      '<div class="modal-price">R$ ' + Number(item.preco||0).toFixed(2).replace('.',',') + '</div>' +
+      ingrsHtml +
+      '<div class="modal-section"><div class="modal-section-title">📝 Observações</div>' +
+        '<textarea class="obs-input" id="itemObs" placeholder="Ex: sem cebola, ponto da carne..."></textarea>' +
+      '</div>' +
+      '<div class="qty-row">' +
+        '<span style="font-size:.85em;color:var(--text2)">Quantidade</span>' +
+        '<div class="qty-ctrl">' +
+          '<button class="qty-btn" onclick="mudarQty(-1)">−</button>' +
+          '<span class="qty-num" id="qtyNum">1</span>' +
+          '<button class="qty-btn" onclick="mudarQty(1)">+</button>' +
+        '</div>' +
+      '</div>' +
+      '<button class="btn-add-cart" id="btnAddCart" onclick="adicionarAoCarrinho()">Adicionar — R$ ' + Number(item.preco||0).toFixed(2).replace('.',',') + '</button>' +
+    '</div>';
+
+  document.getElementById('overlayItem').classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+
+function fecharItem(e) {
+  if (e && e.target !== document.getElementById('overlayItem')) return;
+  document.getElementById('overlayItem').classList.remove('show');
+  document.body.style.overflow = '';
+}
+
+function toggleIngr(btn) {
+  var ing = btn.dataset.ing;
+  if (btn.classList.contains('retirado')) {
+    btn.classList.remove('retirado');
+    btn.textContent = 'Retirar';
+    ingrRetirados = ingrRetirados.filter(function(i){ return i !== ing; });
+  } else {
+    btn.classList.add('retirado');
+    btn.textContent = 'Retirado';
+    ingrRetirados.push(ing);
+  }
+
+function mudarQty(delta) {
+  qtyAtual = Math.max(1, qtyAtual + delta);
+  document.getElementById('qtyNum').textContent = qtyAtual;
+  var preco = Number(itemAtual.preco||0);
+  document.getElementById('btnAddCart').textContent = 'Adicionar ' + qtyAtual + (qtyAtual>1?' itens':' item') + ' — R$ ' + (preco*qtyAtual).toFixed(2).replace('.',',');
+}
+
+function adicionarAoCarrinho() {
+  if (!itemAtual) return;
+  var obs = document.getElementById('itemObs').value;
+  if (ingrRetirados.length) obs = 'Sem: ' + ingrRetirados.join(', ') + (obs ? '. ' + obs : '');
+  carrinho.push({
+    itemId: itemAtual._id,
+    nome: itemAtual.nome,
+    preco: Number(itemAtual.preco||0),
+    qty: qtyAtual,
+    obs: obs,
+    imagem: itemAtual.imagem || '',
+    emoji: '🍽️'
+  });
+  atualizarCartUI();
+  document.getElementById('overlayItem').classList.remove('show');
+  document.body.style.overflow = '';
+  showToast('✅ ' + itemAtual.nome + ' adicionado!');
+  atualizarBadgesCards();
+}
+
+function adicionarRapido(e, itemId) {
+  e.stopPropagation();
+  var d = cardapioData;
+  var itens = d.itens || d.cardapio || [];
+  var item = itens.find(function(i){ return i._id === itemId; });
+  if (!item) return;
+  carrinho.push({
+    itemId: item._id, nome: item.nome, preco: Number(item.preco||0),
+    qty: 1, obs: '', imagem: item.imagem||'', emoji: '🍽️'
+  });
+  atualizarCartUI();
+  showToast('✅ ' + item.nome + ' adicionado!');
+  atualizarBadgesCards();
+}
+
+function atualizarBadgesCards() {
+  var d = cardapioData;
+  var itens = d.itens || d.cardapio || [];
+  itens.forEach(function(item) {
+    var badge = document.getElementById('badge-' + item._id);
+    if (!badge) return;
+    var qty = carrinho.filter(function(c){ return c.itemId === item._id; }).reduce(function(a,b){ return a+b.qty; }, 0);
+    badge.textContent = qty || '';
+    badge.className = 'item-badge-cart' + (qty > 0 ? ' show' : '');
+  });
+}
+function atualizarCartUI() {
+  var subtotal = carrinho.reduce(function(a,b){ return a + b.preco * b.qty; }, 0);
+  var taxaEnt  = (tipoAtual === 'entrega') ? (window.cfgTaxaEntrega || 0) : 0;
+  var taxaGarc = (window.cfgGarcomAtivo && window.cfgGarcomPerc > 0) ? Math.round(subtotal * window.cfgGarcomPerc / 100 * 100) / 100 : 0;
+  var taxaBand = window.cfgBandaAtivo ? (window.cfgBandaValor || 0) : 0;
+  var total    = subtotal + taxaEnt + taxaGarc + taxaBand;
+  var qtd = carrinho.reduce(function(a,b){ return a + b.qty; }, 0);
+  var fab = document.getElementById('cartFab');
+  var fmt = function(v){ return 'R$ ' + Number(v).toFixed(2).replace('.',','); };
+  if (qtd > 0) {
+    fab.classList.add('show');
+    document.getElementById('cartBadge').textContent = qtd;
+    document.getElementById('cartFabTotal').textContent = fmt(total);
+  } else {
+    fab.classList.remove('show');
+  }
+  document.getElementById('cartTotal').textContent = fmt(total);
+  var sub = document.getElementById('cartSubtotal');
+  if (sub) sub.textContent = fmt(subtotal);
+  var rowEnt = document.getElementById('rowTaxaEntrega');
+  if (rowEnt) { rowEnt.style.display = taxaEnt > 0 ? 'flex' : 'none'; var el = document.getElementById('cartTaxaEntrega'); if(el) el.textContent = fmt(taxaEnt); }
+  var rowGarc = document.getElementById('rowTaxaGarcom');
+  if (rowGarc) { rowGarc.style.display = taxaGarc > 0 ? 'flex' : 'none'; var el2 = document.getElementById('cartTaxaGarcom'); if(el2) el2.textContent = fmt(taxaGarc); }
+  var rowBand = document.getElementById('rowTaxaBanda');
+  if (rowBand) { rowBand.style.display = taxaBand > 0 ? 'flex' : 'none'; var el3 = document.getElementById('cartTaxaBanda'); if(el3) el3.textContent = fmt(taxaBand); }
+}
+}
+
+function abrirCarrinho() {
+  renderCarrinho();
+  document.getElementById('overlayCart').classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+
+function fecharCarrinho() {
+  document.getElementById('overlayCart').classList.remove('show');
+  document.body.style.overflow = '';
+}
+
+function renderCarrinho() {
+  var container = document.getElementById('cartItens');
+  if (!carrinho.length) {
+    container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text3)">🛒<br><br>Carrinho vazio</div>';
+    return;
+  }
+  container.innerHTML = '';
+  carrinho.forEach(function(item, idx) {
+    var div = document.createElement('div');
+    div.className = 'cart-row';
+    var imgHtml = item.imagem
+      ? '<img class="cart-row-img" src="' + item.imagem + '">'
+      : '<div class="cart-row-img-ph">' + item.emoji + '</div>';
+    div.innerHTML = imgHtml +
+      '<div class="cart-row-info">' +
+        '<div class="cart-row-name">' + item.nome + '</div>' +
+        (item.obs ? '<div class="cart-row-obs">' + item.obs + '</div>' : '') +
+      '</div>' +
+      '<div class="cart-row-qty">' +
+        '<button class="cqty-btn" onclick="alterarQtyCart(' + idx + ',-1)">−</button>' +
+        '<span class="cqty-num">' + item.qty + '</span>' +
+        '<button class="cqty-btn" onclick="alterarQtyCart(' + idx + ',1)">+</button>' +
+      '</div>' +
+      '<div class="cart-row-price">R$ ' + (item.preco * item.qty).toFixed(2).replace('.',',') + '</div>';
+    container.appendChild(div);
+  });
+}
+
+function alterarQtyCart(idx, delta) {
+  carrinho[idx].qty = Math.max(0, carrinho[idx].qty + delta);
+  if (carrinho[idx].qty === 0) carrinho.splice(idx, 1);
+  atualizarCartUI();
+  atualizarBadgesCards();
+  renderCarrinho();
+  if (!carrinho.length) fecharCarrinho();
+}
+
+function setTipo(tipo) {
+  tipoAtual = tipo;
+  document.getElementById('btnEntrega').className = 'tipo-btn' + (tipo==='entrega' ? ' active' : '');
+  document.getElementById('btnRetirada').className = 'tipo-btn' + (tipo==='retirada' ? ' active' : '');
+  var endRow = document.getElementById('campoEndereco').parentNode;
+  if (tipo === 'entrega') {
+    document.getElementById('campoEndereco').style.display = 'block';
+    document.getElementById('tempoRetirada').style.display = 'none';
+  } else {
+    document.getElementById('campoEndereco').style.display = 'none';
+    calcularTempoRetirada();
+    document.getElementById('tempoRetirada').style.display = 'block';
+  }
+}
+
+async function calcularTempoRetirada() {
+  try {
+    var r = await fetch('/api/delivery/tempo-espera/' + adminId);
+    var d = await r.json();
+    var tempo = d.tempoMinutos || 20;
+    document.getElementById('tempoVal').textContent = tempo + ' minutos';
+  } catch(e) {
+    document.getElementById('tempoVal').textContent = '~20 minutos';
+  }
+}
+
+async function finalizarPedido() {
+  var nome = document.getElementById('campoNome').value.trim();
+  var tel = document.getElementById('campoTelefone').value.trim();
+  var end = document.getElementById('campoEndereco').value.trim();
+  var obs = document.getElementById('campoObs').value.trim();
+
+  if (!pgtoSelecionado && Object.keys(pagamentosConfig).some(function(k){ return pagamentosConfig[k]; })) {
+    showToast('⚠️ Selecione a forma de pagamento'); return;
+  }
+  if (!nome) { showToast('⚠️ Informe seu nome'); return; }
+  if (!tel) { showToast('⚠️ Informe seu WhatsApp'); return; }
+  if (tipoAtual === 'entrega' && !end) { showToast('⚠️ Informe o endereço de entrega'); return; }
+  if (!carrinho.length) { showToast('⚠️ Carrinho vazio'); return; }
+
+  document.getElementById('btnFinalizar').disabled = true;
+  document.getElementById('btnFinalizar').textContent = 'Enviando...';
+
+  try {
+    var subtotalFin = carrinho.reduce(function(a,b){ return a + b.preco * b.qty; }, 0);
+    var taxaEntFin  = (tipoAtual === 'entrega') ? (window.cfgTaxaEntrega || 0) : 0;
+    var taxaGarcFin = (window.cfgGarcomAtivo && window.cfgGarcomPerc > 0) ? Math.round(subtotalFin * window.cfgGarcomPerc / 100 * 100) / 100 : 0;
+    var taxaBandFin = window.cfgBandaAtivo ? (window.cfgBandaValor || 0) : 0;
+    var total = subtotalFin + taxaEntFin + taxaGarcFin + taxaBandFin;
+    var troco = pgtoSelecionado === 'dinheiro' ? document.getElementById('campoTroco').value : null;
+    var body = {
+      adminId: adminId,
+      nomeCliente: nome,
+      telefoneCliente: tel,
+      enderecoEntrega: tipoAtual === 'entrega' ? end : '',
+      formaPagamento: pgtoSelecionado || 'dinheiro',
+      troco: troco,
+      observacaoGeral: obs,
+      itens: carrinho.map(function(c){ return { itemId: c.itemId, nome: c.nome, preco: c.preco, quantidade: c.qty, obs: c.obs }; }),
+      subtotal: carrinho.reduce(function(a,b){ return a + b.preco * b.qty; }, 0),
+      total: total,
+      taxaEntrega: (tipoAtual === 'entrega') ? (window.cfgTaxaEntrega || 0) : 0,
+      tipo: tipoAtual
+    };
+    var r = await fetch('/api/delivery/pedido-cardapio-digital', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+    var d = await r.json();
+    if (d.sucesso || d._id) {
+      fecharCarrinho();
+      mostrarResultado(nome, tipoAtual, d.tempoEstimado, body);
+    } else {
+      throw new Error(d.erro || 'Erro ao enviar');
+    }
+  } catch(e) {
+    showToast('❌ Erro: ' + e.message);
+    document.getElementById('btnFinalizar').disabled = false;
+    document.getElementById('btnFinalizar').textContent = '✅ Finalizar pedido';
+  }
+}
+
+function mostrarResultado(nome, tipo, tempo, dadosPedido) {
+  var carrinhoRecibo = (dadosPedido && dadosPedido.itens) ? dadosPedido.itens : [];
+  var totalRecibo = dadosPedido ? dadosPedido.total : 0;
+  var pgto = dadosPedido ? dadosPedido.formaPagamento : '';
+  var troco = dadosPedido ? dadosPedido.troco : '';
+
+  carrinho = [];
+  atualizarCartUI();
+  atualizarBadgesCards();
+
+  var wrap = document.getElementById('resultadoWrap');
+  document.getElementById('resultTitulo').textContent = tipo === 'entrega' ? '🎉 Pedido recebido!' : '🎉 Pedido confirmado!';
+  document.getElementById('resultSub').textContent = tipo === 'entrega'
+    ? 'Olá ' + nome + '! Seu pedido foi enviado e está sendo preparado. Em breve sairá para entrega!'
+    : 'Olá ' + nome + '! Seu pedido está sendo preparado. Venha buscar em breve!';
+
+  var tempoEl = document.getElementById('resultTempo');
+  if (tempo || tipo === 'retirada') {
+    tempoEl.style.display = 'block';
+    tempoEl.textContent = '⏱️ Tempo estimado: ' + (tempo || '40 min');
+  }
+
+  // Preencher recibo
+  var itensEl = document.getElementById('reciboItens');
+  if (itensEl && carrinhoRecibo.length) {
+    itensEl.innerHTML = carrinhoRecibo.map(function(i) {
+      var qty = i.quantidade || i.qty || 1;
+      var preco = Number(i.preco || 0);
+      return '<div style="display:flex;justify-content:space-between;margin-bottom:6px;">' +
+        '<span>' + qty + 'x ' + (i.nome || '') + '</span>' +
+        '<span style="font-weight:700;">R$ ' + (preco * qty).toFixed(2).replace('.',',') + '</span>' +
+      '</div>';
+    }).join('');
+  }
+
+  var totalEl = document.getElementById('reciboTotal');
+  if (totalEl) totalEl.textContent = 'R$ ' + Number(totalRecibo || 0).toFixed(2).replace('.',',');
+
+  var pgtoMap = { pix:'🏦 PIX', dinheiro:'💵 Dinheiro', cartao:'💳 Maquininha de Cartão' };
+  var reciboPgto = document.getElementById('reciboPgto');
+  if (reciboPgto) reciboPgto.textContent = pgtoMap[pgto] || pgto || '';
+
+  var pgtoBox = document.getElementById('reciboPgtoBox');
+  if (pgtoBox) {
+    if (pgto === 'dinheiro' && troco) {
+      pgtoBox.style.display = 'block';
+      pgtoBox.innerHTML = '💵 Pagamento em dinheiro — Troco para: <strong>R$ ' + Number(troco).toFixed(2).replace('.',',') + '</strong>';
+    } else if (pgto === 'cartao') {
+      pgtoBox.style.display = 'block';
+      pgtoBox.innerHTML = '💳 Pagamento na maquininha — o entregador levará a maquininha.';
+    } else if (pgto === 'pix') {
+      pgtoBox.style.display = 'block';
+      pgtoBox.innerHTML = '🏦 Pagamento via PIX — envie o comprovante ao entregador.';
+    } else {
+      pgtoBox.style.display = 'none';
+    }
+  }
+
+  wrap.classList.add('show');
+}
+
+function novoPedido() {
+  document.getElementById('resultadoWrap').classList.remove('show');
+  document.getElementById('campoNome').value = '';
+  document.getElementById('campoTelefone').value = '';
+  document.getElementById('campoEndereco').value = '';
+  document.getElementById('campoObs').value = '';
+}
+
+function filtrarCat(catId, btn) {
+  document.querySelectorAll('.cat-btn').forEach(function(b){ b.classList.remove('active'); });
+  if (btn) btn.classList.add('active');
+  var sempreMostrar = ['secMaisPedidos','secSugestoes','extrasSection'];
+  document.querySelectorAll('.section').forEach(function(sec) {
+    if (sempreMostrar.indexOf(sec.id) !== -1) { sec.style.display = 'block'; return; }
+    sec.style.display = (catId === 'todas' || sec.dataset.cat === catId) ? 'block' : 'none';
+  });
+}
+
+function filtrarBusca(q) {
+  var busca = q.toLowerCase().trim();
+  document.querySelectorAll('.cat-btn').forEach(function(b){ b.classList.remove('active'); });
+  document.querySelector('[data-cat="todas"]').classList.add('active');
+
+  document.querySelectorAll('.section').forEach(function(sec){ sec.style.display = 'block'; });
+  document.querySelectorAll('.item-card').forEach(function(card) {
+    var nome = (card.dataset.nome||'').toLowerCase();
+    card.style.display = (!busca || nome.includes(busca)) ? 'block' : 'none';
+  });
+}
+
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(function(){ t.classList.remove('show'); }, 2500);
+}
+
+init();
+</script>
+</body>
+</html>
