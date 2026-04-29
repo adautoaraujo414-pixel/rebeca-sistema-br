@@ -693,7 +693,7 @@ function criarCardScroll(item, badgeClass, badgeLabel) {
   div.onclick = function(){ abrirItem(item); };
   var badgeHtml = badgeClass ? '<div class="item-badge-top ' + badgeClass + '">' + badgeLabel + '</div>' : '';
   var imgHtml = item.imagem
-    ? '<img class="item-img" src="' + item.imagem + '" loading="lazy" onerror="this.style.display='none'">'
+    ? '<img class="item-img" src="' + item.imagem + '" loading="lazy" onerror="this.onerror=null">'
     : '<div class="item-img-ph">' + (item.categoria?.emoji || '🍽️') + '</div>';
   div.innerHTML = '<div style="position:relative;">' + badgeHtml + imgHtml + '</div>' +
     '<div class="item-body">' +
@@ -701,7 +701,7 @@ function criarCardScroll(item, badgeClass, badgeLabel) {
       '<div class="item-desc">' + (item.descricao||'') + '</div>' +
       '<div class="item-footer">' +
         '<div class="item-price">R$ ' + Number(item.preco||0).toFixed(2).replace('.',',') + '</div>' +
-        '<button class="item-add-btn" onclick="event.stopPropagation();adicionarRapido(event,'' + item._id + '')">+</button>' +
+        '<button class="item-add-btn" onclick="event.stopPropagation();adicionarRapido(event,\'' + item._id + '\')">+</button>' +
       '</div>' +
     '</div>';
   return div;
