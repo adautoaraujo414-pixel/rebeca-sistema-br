@@ -281,6 +281,13 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 
         <!-- Cardápio -->
         <div id="tab-cardapio">
+          <!-- SCANNER BARCODE CAIXA -->
+          <div style="display:flex;gap:8px;padding:8px 12px 0;align-items:center;">
+            <input type="text" id="caixaBarcode" placeholder="&#x1F52B; Pistola / codigo de barras..." 
+              style="flex:1;padding:10px 14px;background:#1a1a2e;border:2px solid #3b82f6;border-radius:10px;color:#fff;font-size:.9em;outline:none;"
+              onkeydown="if(event.key==='Enter'){ scanBarcodeCaixa(); event.preventDefault(); }">
+            <div id="caixaBarcodeStatus" style="font-size:.75em;color:#888;white-space:nowrap;"></div>
+          </div>
           <div class="search-bar">
             <span class="icon">🔍</span>
             <input type="text" id="busca-item" placeholder="Buscar item..." oninput="buscarItem(this.value)">
@@ -551,6 +558,44 @@ function filtrarCat(id, el) {
   el.classList.add('active');
   document.getElementById('busca-item').value = '';
   renderItens();
+}
+
+// ===== SCANNER BARCODE NO CAIXA =====
+async function scanBarcodeCaixa() {
+  const input = document.getElementById('caixaBarcode');
+  const status = document.getElementById('caixaBarcodeStatus');
+  const codigo = (input.value || '').trim();
+  if (!codigo) return;
+  status.textContent = 'Buscando...';
+  status.style.color = '#888';
+  try {
+    const tk = new URLSearchParams(location.search).get('token') || localStorage.getItem('delivery_token') || '';
+    const r = await fetch('/api/delivery/estoque/barcode/' + encodeURIComponent(codigo), {
+      headers: { 'Authorization': 'Bearer ' + tk }
+    });
+    if (r.status === 404) {
+      status.textContent = '❌ Codigo nao encontrado';
+      status.style.color = '#ef4444';
+      setTimeout(function(){ status.textContent = ''; }, 2500);
+      input.select();
+      return;
+    }
+    const item = await r.json();
+    // Adicionar ao carrinho usando a função existente
+    const ex = carrinho.find(function(c){ return c.itemId === item._id && !c.observacao; });
+    if (ex) { ex.quantidade++; ex.subtotal = ex.quantidade * ex.precoUnitario; }
+    else { carrinho.push({ itemId: item._id, nome: item.nome, quantidade: 1, precoUnitario: item.preco, subtotal: item.preco, observacao: '', opcionais: [] }); }
+    renderCarrinho();
+    // Feedback visual
+    status.textContent = '✅ ' + item.nome + ' adicionado!';
+    status.style.color = '#22c55e';
+    setTimeout(function(){ status.textContent = ''; }, 2000);
+    input.value = '';
+    input.focus();
+  } catch(e) {
+    status.textContent = '❌ Erro: ' + e.message;
+    status.style.color = '#ef4444';
+  }
 }
 
 function buscarItem(q) {
