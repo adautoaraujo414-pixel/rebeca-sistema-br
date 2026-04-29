@@ -727,7 +727,7 @@ function criarCardScroll(item, badgeClass, badgeLabel) {
   var badgeHtml = badgeClass ? '<div class="item-badge-top ' + badgeClass + '">' + badgeLabel + '</div>' : '';
   var imgHtml = item.imagem
     ? '<img class="item-img" src="' + item.imagem + '" loading="lazy" onerror="this.onerror=null">'
-    : '<div class="item-img-ph">' + (item.categoria?.emoji || '🍽️') + '</div>';
+    : '<div class="item-img-ph">🍽️</div>';
   div.innerHTML = '<div style="position:relative;">' + badgeHtml + imgHtml + '</div>' +
     '<div class="item-body">' +
       '<div class="item-name">' + item.nome + '</div>' +
@@ -744,7 +744,8 @@ function renderExtrasRapidos(itens) {
   // Mostrar itens de categorias extras como chips rápidos (bebidas, adicionais etc)
   var todos = itens || [];
   var extras = todos.filter(function(i){
-    var cat = (i.categoria?.nome || i.categoria || '').toLowerCase();
+    var catDoc = (typeof i.categoriaId === 'object' ? i.categoriaId : null);
+    var cat = (catDoc?.nome || i.categoria?.nome || i.categoria || '').toLowerCase();
     return cat.includes('bebida') || cat.includes('adicional') || cat.includes('molho') ||
            cat.includes('suco') || cat.includes('refrigerante') || cat.includes('sobremesa');
   }).slice(0, 10);
@@ -872,7 +873,7 @@ function renderizar() {
     catsNav.appendChild(btnC);
   }
   cats.forEach(function(c) {
-    var temItens = itens.some(function(i){ return i.categoria === c._id || i.categoria?._id === c._id; });
+    var temItens = itens.some(function(i){ return i.categoriaId === c._id || i.categoria === c._id || i.categoria?._id === c._id; });
     if (!temItens) return;
     var btn = document.createElement('button');
     btn.className = 'cat-btn';
@@ -898,7 +899,7 @@ function renderItens(itens, cats) {
   cats.forEach(function(c){ grupos[c._id] = {cat:c, itens:[]}; ordemCats.push(c._id); });
 
   itens.forEach(function(item) {
-    var catId = item.categoria?._id || item.categoria;
+    var catId = item.categoriaId || item.categoria?._id || item.categoria;
     if (catId && grupos[catId]) grupos[catId].itens.push(item);
     else {
       if (!grupos['_sem']) { grupos['_sem'] = {cat:{nome:'Outros',emoji:'📦'},itens:[]}; ordemCats.push('_sem'); }
