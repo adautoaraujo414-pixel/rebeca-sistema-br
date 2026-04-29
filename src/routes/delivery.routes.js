@@ -248,13 +248,18 @@ router.put('/pedidos/:id/status', authDelivery, async (req, res) => {
                     if (status === 'preparando') msg = '👨‍🍳 Pedido #' + pedido.numero + ' está sendo preparado!';
                     if (status === 'pronto') msg = config?.mensagemPedidoPronto || '✅ Pedido #' + pedido.numero + ' está pronto!';
                     if (status === 'saiu_entrega') {
-                        const linkRastreio = (process.env.BASE_URL || 'https://rebeca-sistema-br.onrender.com') + '/delivery-rastrear/' + pedido._id.toString().slice(-8);
-                        msg = '🏍️ Pedido #' + pedido.numero + ' saiu para entrega!\n\n📍 Acompanhe: ' + linkRastreio;
-                        // Enviar link rastreamento via ReciboDeliveryService (salva linkEnviado no banco)
                         try {
-                            const ReciboDeliveryService = require('../services/recibo-delivery.service');
-                            await ReciboDeliveryService.enviarLinkRastreamento(req.adminId, pedido._id, linkRastreio);
-                        } catch(re) { console.log('[RASTREAMENTO] Erro service:', re.message); }
+                            const AdminDelivery = require('../models/delivery.models').AdminDelivery;
+                            const adm2 = await AdminDelivery.findById(req.adminId).lean();
+                            const isPlus2 = adm2 && ['plus','premium'].includes(adm2.plano) && adm2.planoStatus === 'ativo';
+                            if (isPlus2) {
+                                const linkRastreio = (process.env.BASE_URL || 'https://rebeca-sistema-br.onrender.com') + '/delivery-rastrear/' + pedido._id.toString().slice(-8);
+                                msg = '\uD83C\uDFCD\uFE0F Pedido #' + pedido.numero + ' saiu para entrega!\n\n\uD83D\uDCCD Acompanhe: ' + linkRastreio;
+                                try { const RDS = require('../services/recibo-delivery.service'); await RDS.enviarLinkRastreamento(req.adminId, pedido._id, linkRastreio); } catch(_) {}
+                            } else {
+                                msg = 'Eba! Seu pedido #' + pedido.numero + ' saiu para entrega! Logo logo esta ai \uD83D\uDE0A';
+                            }
+                        } catch(_) { msg = 'Pedido #' + pedido.numero + ' saiu para entrega!'; }
                     }
                     if (status === 'entregue') msg = '✅ Pedido #' + pedido.numero + ' entregue! Obrigado pela preferência! 😊\n\nAvalie de 1 a 5 ⭐';
                     if (status === 'cancelado') msg = '❌ Pedido #' + pedido.numero + ' cancelado. ' + (req.body.motivo || '');

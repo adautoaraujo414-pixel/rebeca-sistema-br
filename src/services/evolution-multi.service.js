@@ -196,9 +196,7 @@ const EvolutionMultiService = {
                 // Se menor que 300 chars, manda inteiro
                 if (texto.length < 300) return [texto];
                 // Quebrar em parágrafos (linha dupla) ou pontos naturais
-                const partes = texto.split(/
-
-+/);
+                const partes = texto.length < 300 ? [texto] : texto.split('\n\n').filter(function(p){ return p.trim(); });
                 if (partes.length > 1) return partes.filter(p => p.trim());
                 // Se não tem parágrafo, manda inteiro mesmo
                 return [texto];
