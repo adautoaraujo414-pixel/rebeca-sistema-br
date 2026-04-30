@@ -2655,11 +2655,11 @@ async function _salvarItemReal() {
                 const res = await api('/entregadores/'+eid+'/senha', {method:'PUT', body:JSON.stringify({senha})});
                 const data = await res.json();
                 if (data.sucesso) {
-                    // Enviar link do cardápio digital por WhatsApp automaticamente
+                    await carregarEntregadores(); // atualizar lista com novo token antes de tudo
                     const e2 = entregadores.find(x => x._id === eid);
                     if (e2 && e2.telefone) {
                         try {
-                            await api('/entregadores/enviar-credenciais', {
+                            const wppRes = await api('/entregadores/enviar-credenciais', {
                                 method:'POST',
                                 body: JSON.stringify({
                                     telefone: e2.telefone,
@@ -2668,9 +2668,15 @@ async function _salvarItemReal() {
                                     linkApp: data.linkApp
                                 })
                             });
-                            toast('✅ Senha redefinida e link enviado por WhatsApp!');
+                            const wppData = await wppRes.json();
+                            if (wppData.sucesso) {
+                                toast('✅ Senha redefinida e link enviado por WhatsApp!');
+                            } else {
+                                // WhatsApp não conectado — copiar link
+                                navigator.clipboard?.writeText(data.linkApp);
+                                toast('⚠️ Senha redefinida! WhatsApp indisponível — link copiado.');
+                            }
                         } catch(we) {
-                            // WhatsApp falhou mas senha foi salva
                             navigator.clipboard?.writeText(data.linkApp);
                             toast('✅ Senha redefinida! Link copiado (WhatsApp indisponível)');
                         }
@@ -2678,8 +2684,9 @@ async function _salvarItemReal() {
                         navigator.clipboard?.writeText(data.linkApp);
                         toast('✅ Senha redefinida! Link copiado.');
                     }
+                } else {
+                    toast('Erro ao redefinir senha: ' + (data.erro||'desconhecido'), 'error');
                 }
-                carregarEntregadores();
             } catch(e) { toast('Erro ao redefinir senha','error'); }
         }
         async function editarEntregador(id) {
