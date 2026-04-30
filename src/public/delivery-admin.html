@@ -2640,7 +2640,7 @@ async function _salvarItemReal() {
             const id = eid || window._entregadorAtual;
             const e = entregadores.find(x => x._id === id);
             if (!e?.token) { toast('Sem token. Redefina a senha primeiro.', 'error'); return; }
-            const link = location.origin + '/delivery-entregador?token=' + e.token + '&entregadorId=' + id;
+            const link = location.origin + '/delivery-entregador?token=' + e.token;
             try {
                 await navigator.clipboard.writeText(link);
                 toast('✅ Link copiado! Envie para o entregador 😊');
@@ -2654,12 +2654,33 @@ async function _salvarItemReal() {
             try {
                 const res = await api('/entregadores/'+eid+'/senha', {method:'PUT', body:JSON.stringify({senha})});
                 const data = await res.json();
-                if (data.linkApp) {
-                    const copiou = confirm('✅ Senha redefinida!\n\nNovo link do app:\n'+data.linkApp+'\n\nOK para copiar.');
-                    if (copiou) { navigator.clipboard?.writeText(data.linkApp); toast('Link copiado!'); }
+                if (data.sucesso) {
+                    // Enviar link do cardápio digital por WhatsApp automaticamente
+                    const e2 = entregadores.find(x => x._id === eid);
+                    if (e2 && e2.telefone) {
+                        try {
+                            await api('/entregadores/enviar-credenciais', {
+                                method:'POST',
+                                body: JSON.stringify({
+                                    telefone: e2.telefone,
+                                    nome: e2.nome,
+                                    senha: senha,
+                                    linkApp: data.linkApp
+                                })
+                            });
+                            toast('✅ Senha redefinida e link enviado por WhatsApp!');
+                        } catch(we) {
+                            // WhatsApp falhou mas senha foi salva
+                            navigator.clipboard?.writeText(data.linkApp);
+                            toast('✅ Senha redefinida! Link copiado (WhatsApp indisponível)');
+                        }
+                    } else {
+                        navigator.clipboard?.writeText(data.linkApp);
+                        toast('✅ Senha redefinida! Link copiado.');
+                    }
                 }
                 carregarEntregadores();
-            } catch(e) { toast('Erro','error'); }
+            } catch(e) { toast('Erro ao redefinir senha','error'); }
         }
         async function editarEntregador(id) {
             const e = entregadores.find(x => x._id === id); if (!e) return;
