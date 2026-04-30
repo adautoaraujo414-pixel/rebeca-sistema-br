@@ -513,11 +513,14 @@ router.post('/entregadores/enviar-credenciais', authDelivery, async (req, res) =
 router.post('/entregadores', authDelivery, async (req, res) => {
     try {
         const { nome, telefone, veiculo } = req.body;
+        const token = crypto.randomBytes(32).toString('hex');
         const entregador = await Entregador.create({
             nome, telefone, veiculo, adminId: req.adminId,
-            tipo: 'entregador', ativo: true
+            tipo: 'entregador', ativo: true, token
         });
-        res.json({ entregador });
+        const BASE = process.env.APP_URL || 'https://rebeca-sistema-br.onrender.com';
+        const linkApp = BASE + '/delivery-entregador?token=' + token;
+        res.json({ entregador, linkApp });
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
