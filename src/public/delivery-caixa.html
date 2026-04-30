@@ -826,7 +826,7 @@ async function adicionarAoPedido(id) {
 async function receberPedidoBalcao(id) {
   if(!confirm('Confirmar recebimento do pedido no balcao?')) return;
   try {
-    await fetch('/api/delivery/cozinha/'+id+'/status', {
+    await fetch('/api/delivery/pedidos/'+id+'/status', {
       method:'PUT',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
       body: JSON.stringify({status:'entregue'})
