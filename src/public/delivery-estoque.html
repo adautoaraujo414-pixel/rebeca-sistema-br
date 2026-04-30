@@ -174,9 +174,39 @@ const token = localStorage.getItem('deliveryToken') || localStorage.getItem('tok
 const BASE = '/api/delivery';
 let todosItens = [];
 let itensCardapio = [];
+let _planoAtual = '';
+
+// ===== VERIFICAR PLANO =====
+async function verificarPlano() {
+  try {
+    const r = await fetch(BASE + '/config', { headers: { Authorization: 'Bearer ' + token } });
+    const d = await r.json();
+    _planoAtual = d.plano || d.config?.plano || '';
+    if (!['plus','premium'].includes(_planoAtual)) {
+      document.body.innerHTML = `
+        <div style="min-height:100vh;background:#0f0f13;display:flex;align-items:center;justify-content:center;padding:24px;">
+          <div style="background:#1a1a24;border:1px solid #2a2a3a;border-radius:20px;padding:32px;max-width:400px;width:100%;text-align:center;">
+            <div style="font-size:3em;margin-bottom:16px;">🔒</div>
+            <div style="font-size:1.3em;font-weight:900;color:#fff;margin-bottom:8px;">Recurso exclusivo</div>
+            <div style="color:#888;font-size:.9em;margin-bottom:24px;">O Estoque Inteligente com leitura de nota fiscal por IA está disponível apenas nos planos <strong style="color:#7c3aed">Plus</strong> e <strong style="color:#a78bfa">Premium</strong>.</div>
+            <div style="background:#0f0f13;border-radius:12px;padding:16px;margin-bottom:24px;text-align:left">
+              <div style="font-size:.8em;color:#888;margin-bottom:8px;font-weight:700">O QUE VOCÊ GANHA:</div>
+              <div style="font-size:.85em;color:#ccc;line-height:1.8">📷 Leitura de nota fiscal por foto<br>📊 Visão geral do estoque em tempo real<br>🛒 Lista de compras inteligente<br>✏️ Ajuste manual por item<br>🔔 Alertas de estoque baixo</div>
+            </div>
+            <a href="/delivery-admin.html" style="display:block;background:#2a2a3a;color:#ccc;border-radius:10px;padding:12px;text-decoration:none;font-weight:700;margin-bottom:10px;">← Voltar ao Admin</a>
+            <a href="https://wa.me/5534984039955?text=Quero+fazer+upgrade+para+Plus+ou+Premium" target="_blank" style="display:block;background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;border-radius:10px;padding:12px;text-decoration:none;font-weight:700;">🚀 Fazer Upgrade Agora</a>
+          </div>
+        </div>`;
+      return false;
+    }
+    return true;
+  } catch(e) { return true; } // se falhar, deixa passar
+}
 
 // ===== INIT =====
 async function init() {
+  const ok = await verificarPlano();
+  if (!ok) return;
   try {
     const r = await fetch(BASE + '/estoque', { headers: { Authorization: 'Bearer ' + token } });
     todosItens = await r.json();

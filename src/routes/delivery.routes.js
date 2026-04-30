@@ -2170,6 +2170,13 @@ module.exports = router;
 // ========== ESTOQUE: LEITURA DE NOTA FISCAL POR FOTO (GPT-4o Vision) ==========
 router.post('/estoque/nota-fiscal', authDelivery, async (req, res) => {
     try {
+        // Apenas plus e premium
+        const _adm = await require('./delivery.routes.js'.includes ? require('../models/delivery.models').AdminDelivery.findById(req.adminId).lean() : null);
+        const AdminDelivery = require('../models/delivery.models').AdminDelivery;
+        const _admDoc = await AdminDelivery.findById(req.adminId).lean();
+        if (!_admDoc || !['plus','premium'].includes(_admDoc.plano) || _admDoc.planoStatus !== 'ativo') {
+            return res.status(403).json({ erro: 'plano_insuficiente', msg: 'Estoque inteligente disponível apenas nos planos Plus e Premium.' });
+        }
         const { imagemBase64, mimeType } = req.body;
         if (!imagemBase64) return res.status(400).json({ erro: 'Imagem obrigatoria' });
         const apiKey = process.env.OPENAI_API_KEY;
@@ -2203,6 +2210,11 @@ router.post('/estoque/nota-fiscal', authDelivery, async (req, res) => {
 // ========== ESTOQUE: ENTRADA EM LOTE (salvar itens da nota) ==========
 router.post('/estoque/entrada-lote', authDelivery, async (req, res) => {
     try {
+        const AdminDelivery2 = require('../models/delivery.models').AdminDelivery;
+        const _admDoc2 = await AdminDelivery2.findById(req.adminId).lean();
+        if (!_admDoc2 || !['plus','premium'].includes(_admDoc2.plano) || _admDoc2.planoStatus !== 'ativo') {
+            return res.status(403).json({ erro: 'plano_insuficiente', msg: 'Estoque inteligente disponível apenas nos planos Plus e Premium.' });
+        }
         const { itens, fornecedor, dataEntrada } = req.body;
         if (!itens || !itens.length) return res.status(400).json({ erro: 'Itens obrigatorios' });
         const resultados = [];
