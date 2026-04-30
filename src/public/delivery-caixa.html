@@ -1355,12 +1355,7 @@ async function fecharCaixa() {
         if (d.status === 'fechado' || d.totalVendas !== undefined) {
             toast('Caixa ' + caixaNum + ' fechado! Relatorio enviado ao admin.');
             verificarStatusCaixa();
-            alert('Caixa ' + caixaNum + ' Fechado!
-
-Total vendas: R$ ' + (d.totalVendas||0).toFixed(2) + '
-Dinheiro: R$ ' + (d.totalDinheiro||0).toFixed(2) + '
-Cartao: R$ ' + (d.totalCartao||0).toFixed(2) + '
-Pix: R$ ' + (d.totalPix||0).toFixed(2));
+            alert('Caixa ' + caixaNum + ' Fechado!\nTotal vendas: R$ ' + (d.totalVendas||0).toFixed(2) + '\nDinheiro: R$ ' + (d.totalDinheiro||0).toFixed(2) + '\nCartao: R$ ' + (d.totalCartao||0).toFixed(2) + '\nPix: R$ ' + (d.totalPix||0).toFixed(2));
         } else toast('Erro: ' + (d.erro || d.error || 'desconhecido'), 'error');
     } catch(e) { toast('Erro ao fechar caixa: ' + e.message, 'error'); }
 }
