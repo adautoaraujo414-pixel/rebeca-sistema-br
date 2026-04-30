@@ -1116,7 +1116,11 @@ function abrirItem(item) {
     }).join('') + '</div>' : '';
 
   document.getElementById('modalItemConteudo').innerHTML =
-    imgHtml +
+    '<div style="position:relative;">' +
+      imgHtml +
+      '<button onclick="document.getElementById(\'overlayItem\').classList.remove(\'show\');document.body.style.overflow=\'\';" ' +
+        'style="position:absolute;top:12px;right:12px;width:36px;height:36px;border-radius:50%;background:rgba(0,0,0,.6);border:none;color:#fff;font-size:1.3em;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);z-index:10;">✕</button>' +
+    '</div>' +
     '<div class="modal-body">' +
       '<div class="modal-name">' + item.nome + '</div>' +
       '<div class="modal-desc">' + (item.descricao||'') + '</div>' +
