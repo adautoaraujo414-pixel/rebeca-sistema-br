@@ -1056,7 +1056,8 @@ router.put('/entregadores/:id/senha', authDelivery, async (req, res) => {
         const entregador = await Entregador.findOne({ _id: req.params.id, adminId: req.adminId });
         if (!entregador) return res.status(404).json({ erro: 'Não encontrado' });
         entregador.senha = senha;
-        entregador.token = crypto.randomBytes(32).toString('hex');
+        // token NÃO muda ao trocar senha — só muda se admin revogar acesso
+        if (!entregador.token) entregador.token = crypto.randomBytes(32).toString('hex');
         await entregador.save();
         const linkApp = (process.env.APP_URL || 'https://rebeca-sistema-br.onrender.com') + '/delivery-entregador?token=' + entregador.token;
         res.json({ sucesso: true, linkApp });
