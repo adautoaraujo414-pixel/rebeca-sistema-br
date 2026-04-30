@@ -49,7 +49,6 @@ const ItemCardapioSchema = new mongoose.Schema({
     fornecedor: { type: String, default: '' },       // nome do fornecedor
     fornecedorTelefone: { type: String, default: '' }, // telefone/WhatsApp do fornecedor
     unidadePorPedido: { type: Number, default: 1 },  // quantas unidades saem por pedido
-    unidadePorPedido: { type: Number, default: 1 }     // quantas unidades consome por pedido
 }, { timestamps: true });
 
 // ========== PEDIDO ==========
