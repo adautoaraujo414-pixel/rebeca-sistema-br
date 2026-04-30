@@ -3769,8 +3769,20 @@ var _sseImpressaoAuto = false;
 function iniciarSSE() {
     var tk = getToken();
     if (!tk) return;
-    if (_sseConn) { _sseConn.close(); }
+    if (_sseConn) { _sseConn.close(); _sseConn = null; }
+    if (!navigator.onLine) return; // não tentar se offline
     _sseConn = new EventSource('/api/delivery/eventos?token=' + tk);
+    _sseConn.onerror = function() {
+        _sseConn.close(); _sseConn = null;
+        // Reconectar só se online, com delay crescente (máx 30s)
+        if (!window._sseRetryDelay) window._sseRetryDelay = 5000;
+        else window._sseRetryDelay = Math.min(window._sseRetryDelay * 2, 30000);
+        clearTimeout(window._sseRetryTimer);
+        window._sseRetryTimer = setTimeout(function() {
+            if (navigator.onLine) { window._sseRetryDelay = 5000; iniciarSSE(); }
+        }, window._sseRetryDelay);
+    };
+    _sseConn.onopen = function() { window._sseRetryDelay = 5000; }; // reset delay ao conectar
     _sseConn.addEventListener('pedido_pronto', function(e) {
         var dados = JSON.parse(e.data);
         // Som diferente para pedido pronto
