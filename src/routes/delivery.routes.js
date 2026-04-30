@@ -1030,6 +1030,11 @@ router.post('/entregadores/cadastrar', authDelivery, async (req, res) => {
             valorPorEntrega: valorPorEntrega || 0, foto: foto || '',
             token, ativo: true, tipo: 'entregador'
         });
+        // Garantia: se por qualquer motivo o token não foi salvo, gera agora
+        if (!entregador.token) {
+            entregador.token = crypto.randomBytes(32).toString('hex');
+            await entregador.save();
+        }
         const linkApp = (process.env.APP_URL || 'https://rebeca-sistema-br.onrender.com') + '/delivery-entregador?token=' + token;
         res.json({ sucesso: true, entregador, linkApp });
     } catch(e) { res.status(500).json({ erro: e.message }); }
