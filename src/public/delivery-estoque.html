@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Estoque — Rebeca</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0f0f13;color:#e8e8f0;min-height:100vh}
+.topbar{background:#1a1a24;border-bottom:1px solid #2a2a3a;padding:14px 20px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100}
+.topbar h1{font-size:1.1em;font-weight:800;color:#fff;flex:1}
+.topbar a{color:#888;text-decoration:none;font-size:.85em}
+.tabs{display:flex;gap:0;background:#1a1a24;border-bottom:1px solid #2a2a3a;overflow-x:auto}
+.tab{padding:12px 20px;font-size:.85em;font-weight:700;color:#888;cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap;transition:.2s}
+.tab.ativa{color:#7c3aed;border-bottom-color:#7c3aed}
+.page{display:none;padding:16px}
+.page.ativa{display:block}
+.card{background:#1a1a24;border:1px solid #2a2a3a;border-radius:14px;padding:16px;margin-bottom:12px}
+.btn{padding:10px 18px;border:none;border-radius:10px;font-weight:700;font-size:.85em;cursor:pointer;transition:.2s}
+.btn-purple{background:#7c3aed;color:#fff}
+.btn-green{background:#059669;color:#fff}
+.btn-red{background:#dc2626;color:#fff}
+.btn-gray{background:#2a2a3a;color:#ccc}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.75em;font-weight:700}
+.badge-red{background:#7f1d1d;color:#fca5a5}
+.badge-yellow{background:#78350f;color:#fcd34d}
+.badge-green{background:#064e3b;color:#6ee7b7}
+.badge-gray{background:#1f2937;color:#9ca3af}
+input,select{background:#0f0f13;border:1px solid #2a2a3a;border-radius:8px;color:#e8e8f0;padding:8px 12px;font-size:.9em;width:100%}
+input:focus,select:focus{outline:none;border-color:#7c3aed}
+label{font-size:.8em;color:#888;display:block;margin-bottom:4px;margin-top:10px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.item-row{display:flex;align-items:center;gap:10px;padding:12px;background:#0f0f13;border-radius:10px;margin-bottom:8px;border:1px solid #2a2a3a}
+.item-nome{flex:1;font-weight:600;font-size:.9em}
+.item-qty{font-size:1.1em;font-weight:800;color:#7c3aed;min-width:32px;text-align:center}
+.nota-drop{border:2px dashed #2a2a3a;border-radius:14px;padding:32px;text-align:center;cursor:pointer;transition:.2s;background:#0f0f13}
+.nota-drop:hover{border-color:#7c3aed;background:#1a1a24}
+.nota-drop.drag{border-color:#7c3aed;background:#1a0a2e}
+.preview-img{max-width:100%;max-height:220px;border-radius:10px;margin-top:12px;object-fit:contain}
+.spinner{display:inline-block;width:20px;height:20px;border:3px solid #2a2a3a;border-top-color:#7c3aed;border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);padding:12px 24px;border-radius:12px;font-weight:700;font-size:.9em;z-index:9999;opacity:0;transition:.3s}
+.toast.show{opacity:1}
+.toast.ok{background:#059669;color:#fff}
+.toast.err{background:#dc2626;color:#fff}
+table{width:100%;border-collapse:collapse;font-size:.85em}
+th{background:#0f0f13;color:#888;font-weight:600;padding:8px 10px;text-align:left;border-bottom:1px solid #2a2a3a}
+td{padding:8px 10px;border-bottom:1px solid #1a1a24;vertical-align:middle}
+td input{padding:4px 8px;font-size:.85em}
+tr:hover td{background:#1a1a24}
+.vinculo-sel{background:#0f0f13;border:1px solid #2a2a3a;border-radius:6px;color:#e8e8f0;padding:4px 6px;font-size:.8em;width:100%}
+.stat-box{background:#0f0f13;border-radius:12px;padding:14px;text-align:center;border:1px solid #2a2a3a}
+.stat-num{font-size:1.8em;font-weight:900;color:#7c3aed}
+.stat-label{font-size:.75em;color:#888;margin-top:2px}
+.search-bar{position:relative;margin-bottom:14px}
+.search-bar input{padding-left:36px}
+.search-bar::before{content:'🔍';position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:.9em}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a href="/delivery-admin.html">← Admin</a>
+  <h1>📦 Estoque</h1>
+  <span id="nomeEmpresa" style="font-size:.8em;color:#888"></span>
+</div>
+
+<div class="tabs">
+  <div class="tab ativa" onclick="mudarTab('visao-geral')">📊 Visão Geral</div>
+  <div class="tab" onclick="mudarTab('nota-fiscal')">📷 Nota Fiscal</div>
+  <div class="tab" onclick="mudarTab('lista-compras')">🛒 Lista de Compras</div>
+  <div class="tab" onclick="mudarTab('ajuste-manual')">✏️ Ajuste Manual</div>
+</div>
+
+<!-- ===== VISÃO GERAL ===== -->
+<div id="page-visao-geral" class="page ativa">
+  <div class="grid3" style="margin-bottom:16px" id="statsBox">
+    <div class="stat-box"><div class="stat-num" id="statTotal">-</div><div class="stat-label">Itens no estoque</div></div>
+    <div class="stat-box"><div class="stat-num" style="color:#dc2626" id="statZerado">-</div><div class="stat-label">Zerados</div></div>
+    <div class="stat-box"><div class="stat-num" style="color:#f59e0b" id="statBaixo">-</div><div class="stat-label">Estoque baixo</div></div>
+  </div>
+  <div class="search-bar"><input type="text" placeholder="Buscar item..." oninput="filtrarItens(this.value)" id="buscaInput"></div>
+  <div id="listaEstoque"><div style="text-align:center;padding:40px;color:#888">Carregando...</div></div>
+</div>
+
+<!-- ===== NOTA FISCAL ===== -->
+<div id="page-nota-fiscal" class="page">
+  <div class="card">
+    <div style="font-weight:800;font-size:1em;margin-bottom:12px">📷 Ler Nota Fiscal com IA</div>
+    <p style="color:#888;font-size:.85em;margin-bottom:16px">Tire uma foto ou carregue uma imagem da nota fiscal. O GPT-4o vai extrair todos os produtos automaticamente.</p>
+
+    <div class="nota-drop" id="notaDrop" onclick="document.getElementById('inputFoto').click()"
+         ondragover="event.preventDefault();this.classList.add('drag')"
+         ondragleave="this.classList.remove('drag')"
+         ondrop="handleDrop(event)">
+      <div style="font-size:2.5em;margin-bottom:8px">📄</div>
+      <div style="font-weight:700;color:#ccc">Toque para tirar foto ou escolher arquivo</div>
+      <div style="font-size:.8em;color:#888;margin-top:4px">JPG, PNG, HEIC — máx 10MB</div>
+      <img id="previewNota" class="preview-img" style="display:none">
+    </div>
+
+    <input type="file" id="inputFoto" accept="image/*" capture="environment" style="display:none" onchange="handleFoto(this)">
+
+    <div style="display:flex;gap:10px;margin-top:14px">
+      <button class="btn btn-gray" style="flex:1" onclick="document.getElementById('inputFoto').removeAttribute('capture');document.getElementById('inputFoto').click()">📁 Galeria</button>
+      <button class="btn btn-purple" style="flex:1" onclick="document.getElementById('inputFoto').setAttribute('capture','environment');document.getElementById('inputFoto').click()">📷 Câmera</button>
+    </div>
+
+    <div id="statusNota" style="margin-top:14px;text-align:center;display:none">
+      <span class="spinner"></span>
+      <span style="margin-left:10px;color:#888">Analisando nota fiscal com IA...</span>
+    </div>
+  </div>
+
+  <!-- Resultado da leitura -->
+  <div id="resultadoNota" style="display:none">
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div style="font-weight:800">✅ Nota lida com sucesso</div>
+        <div id="infoNota" style="font-size:.8em;color:#888"></div>
+      </div>
+      <div class="grid2" style="margin-bottom:12px">
+        <div>
+          <label>Fornecedor</label>
+          <input type="text" id="fornecedorNota" placeholder="Nome do fornecedor">
+        </div>
+        <div>
+          <label>Data de entrada</label>
+          <input type="date" id="dataEntradaNota">
+        </div>
+      </div>
+      <div style="font-weight:700;font-size:.85em;margin-bottom:8px;color:#888">ITENS DETECTADOS — vincule cada um ao seu cardápio:</div>
+      <div style="overflow-x:auto">
+        <table id="tabelaNota">
+          <thead>
+            <tr>
+              <th>Produto (nota)</th>
+              <th>Qtd</th>
+              <th>Vlr Unit</th>
+              <th>Vincular ao cardápio</th>
+              <th>✓</th>
+            </tr>
+          </thead>
+          <tbody id="corpoNota"></tbody>
+        </table>
+      </div>
+      <div style="margin-top:14px;display:flex;gap:10px">
+        <button class="btn btn-gray" style="flex:1" onclick="limparNota()">🗑️ Cancelar</button>
+        <button class="btn btn-green" style="flex:1" onclick="confirmarEntrada()">✅ Confirmar Entrada no Estoque</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== LISTA DE COMPRAS ===== -->
+<div id="page-lista-compras" class="page">
+  <div id="listaCompras"><div style="text-align:center;padding:40px;color:#888">Carregando...</div></div>
+</div>
+
+<!-- ===== AJUSTE MANUAL ===== -->
+<div id="page-ajuste-manual" class="page">
+  <div class="card">
+    <div style="font-weight:800;margin-bottom:12px">✏️ Ajuste Manual de Estoque</div>
+    <div class="search-bar"><input type="text" placeholder="Buscar item para ajustar..." oninput="filtrarAjuste(this.value)" id="buscaAjuste"></div>
+    <div id="listaAjuste"><div style="text-align:center;padding:30px;color:#888">Carregando...</div></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const token = localStorage.getItem('deliveryToken') || localStorage.getItem('token') || '';
+const BASE = '/api/delivery';
+let todosItens = [];
+let itensCardapio = [];
+
+// ===== INIT =====
+async function init() {
+  try {
+    const r = await fetch(BASE + '/estoque', { headers: { Authorization: 'Bearer ' + token } });
+    todosItens = await r.json();
+    itensCardapio = todosItens;
+    renderVisaoGeral();
+    renderAjuste();
+  } catch(e) { showToast('Erro ao carregar estoque', 'err'); }
+}
+
+// ===== TABS =====
+function mudarTab(id) {
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.remove('ativa'));
+  document.querySelectorAll('.page').forEach(p => { p.classList.remove('ativa'); p.style.display='none'; });
+  const pages = ['visao-geral','nota-fiscal','lista-compras','ajuste-manual'];
+  const idx = pages.indexOf(id);
+  document.querySelectorAll('.tab')[idx].classList.add('ativa');
+  const pg = document.getElementById('page-'+id);
+  pg.style.display = 'block';
+  pg.classList.add('ativa');
+  if (id === 'lista-compras') carregarListaCompras();
+}
+
+// ===== VISÃO GERAL =====
+function renderVisaoGeral(filtro) {
+  const itens = filtro ? todosItens.filter(i => i.nome.toLowerCase().includes(filtro.toLowerCase())) : todosItens;
+  const zerados = itens.filter(i => i.estoqueAtivo && i.estoqueAtual <= 0);
+  const baixos = itens.filter(i => i.estoqueAtivo && i.estoqueAtual > 0 && i.estoqueAtual <= i.estoqueMinimo);
+  document.getElementById('statTotal').textContent = itens.filter(i => i.estoqueAtivo).length;
+  document.getElementById('statZerado').textContent = zerados.length;
+  document.getElementById('statBaixo').textContent = baixos.length;
+
+  const html = itens.map(item => {
+    const status = !item.estoqueAtivo ? 'gray'
+      : item.estoqueAtual <= 0 ? 'red'
+      : item.estoqueAtual <= item.estoqueMinimo ? 'yellow' : 'green';
+    const label = !item.estoqueAtivo ? 'Sem controle'
+      : item.estoqueAtual <= 0 ? 'Zerado'
+      : item.estoqueAtual <= item.estoqueMinimo ? 'Baixo' : 'OK';
+    return '<div class="item-row">' +
+      '<div class="item-qty">' + (item.estoqueAtivo ? item.estoqueAtual : '—') + '</div>' +
+      '<div class="item-nome">' + item.nome + (item.fornecedor ? '<br><span style="font-size:.75em;color:#888">' + item.fornecedor + '</span>' : '') + '</div>' +
+      '<span class="badge badge-' + status + '">' + label + '</span>' +
+      '<button class="btn btn-gray" style="padding:6px 12px;font-size:.75em" onclick="abrirRepor(\'' + item._id + '\',\'' + item.nome.replace(/'/g,'') + '\',' + item.estoqueAtual + ')">+ Repor</button>' +
+    '</div>';
+  }).join('');
+  document.getElementById('listaEstoque').innerHTML = html || '<div style="text-align:center;padding:30px;color:#888">Nenhum item encontrado</div>';
+}
+
+function filtrarItens(v) { renderVisaoGeral(v); }
+
+async function abrirRepor(id, nome, atual) {
+  const qty = prompt('Repor estoque de "' + nome + '"\nEstoque atual: ' + atual + '\nQuantidade a adicionar:');
+  if (!qty || isNaN(qty) || parseInt(qty) <= 0) return;
+  try {
+    await fetch(BASE + '/estoque/' + id + '/repor', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+      body: JSON.stringify({ quantidade: parseInt(qty) })
+    });
+    showToast('✅ Estoque atualizado!', 'ok');
+    await init();
+  } catch(e) { showToast('Erro ao repor', 'err'); }
+}
+
+// ===== NOTA FISCAL =====
+let imagemBase64 = null;
+let mimeType = 'image/jpeg';
+
+function handleFoto(input) {
+  const file = input.files[0];
+  if (!file) return;
+  mimeType = file.type || 'image/jpeg';
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const data = e.target.result;
+    imagemBase64 = data.split(',')[1];
+    const prev = document.getElementById('previewNota');
+    prev.src = data; prev.style.display = 'block';
+    document.querySelector('#notaDrop div').style.display = 'none';
+    analisarNota();
+  };
+  reader.readAsDataURL(file);
+}
+
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('notaDrop').classList.remove('drag');
+  const file = e.dataTransfer.files[0];
+  if (!file) return;
+  const fakeInput = { files: [file] };
+  handleFoto(fakeInput);
+}
+
+async function analisarNota() {
+  if (!imagemBase64) return;
+  document.getElementById('statusNota').style.display = 'block';
+  document.getElementById('resultadoNota').style.display = 'none';
+  try {
+    const r = await fetch(BASE + '/estoque/nota-fiscal', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+      body: JSON.stringify({ imagemBase64, mimeType })
+    });
+    const data = await r.json();
+    document.getElementById('statusNota').style.display = 'none';
+    if (!data.sucesso) { showToast(data.erro || 'Erro ao ler nota', 'err'); return; }
+    renderResultadoNota(data.dados);
+  } catch(e) {
+    document.getElementById('statusNota').style.display = 'none';
+    showToast('Erro de conexão', 'err');
+  }
+}
+
+function renderResultadoNota(dados) {
+  document.getElementById('resultadoNota').style.display = 'block';
+  document.getElementById('fornecedorNota').value = dados.fornecedor || '';
+  document.getElementById('dataEntradaNota').value = new Date().toISOString().split('T')[0];
+  if (dados.dataEmissao) {
+    document.getElementById('infoNota').textContent = 'Emissão: ' + dados.dataEmissao + ' • Total: R$ ' + (dados.valorTotalNota || 0).toFixed(2);
+  }
+  const corpo = document.getElementById('corpoNota');
+  corpo.innerHTML = (dados.itens || []).map((item, i) => {
+    const opcoesSelect = '<option value="">— não vincular —</option>' +
+      itensCardapio.map(c => '<option value="' + c._id + '">' + c.nome + '</option>').join('');
+    return '<tr>' +
+      '<td><div style="font-weight:600">' + item.nome + '</div><div style="font-size:.75em;color:#888">' + (item.unidade||'un') + '</div></td>' +
+      '<td><input type="number" id="qty-' + i + '" value="' + (item.quantidade||1) + '" min="0" style="width:60px"></td>' +
+      '<td>R$ <input type="number" id="vlr-' + i + '" value="' + (item.valorUnitario||0).toFixed(2) + '" step="0.01" style="width:70px"></td>' +
+      '<td><select class="vinculo-sel" id="vinc-' + i + '">' + opcoesSelect + '</select></td>' +
+      '<td><input type="checkbox" id="chk-' + i + '" checked style="width:18px;height:18px;accent-color:#7c3aed"></td>' +
+    '</tr>';
+  }).join('');
+  // Auto-vincular por nome parecido
+  (dados.itens || []).forEach((item, i) => {
+    const nomeLower = item.nome.toLowerCase();
+    const match = itensCardapio.find(c => {
+      const n = c.nome.toLowerCase();
+      return n.includes(nomeLower.split(' ')[0]) || nomeLower.includes(n.split(' ')[0]);
+    });
+    if (match) document.getElementById('vinc-' + i).value = match._id;
+  });
+}
+
+async function confirmarEntrada() {
+  const rows = document.getElementById('corpoNota').querySelectorAll('tr');
+  const fornecedor = document.getElementById('fornecedorNota').value;
+  const dataEntrada = document.getElementById('dataEntradaNota').value;
+  const itens = [];
+  rows.forEach((_, i) => {
+    const chk = document.getElementById('chk-' + i);
+    if (!chk || !chk.checked) return;
+    const vinc = document.getElementById('vinc-' + i)?.value;
+    const qty = parseInt(document.getElementById('qty-' + i)?.value) || 0;
+    const vlr = parseFloat(document.getElementById('vlr-' + i)?.value) || 0;
+    if (qty <= 0) return;
+    itens.push({ itemId: vinc || null, nome: _, quantidade: qty, precoCompra: vlr, fornecedor });
+  });
+  if (!itens.length) { showToast('Nenhum item selecionado', 'err'); return; }
+  try {
+    const r = await fetch(BASE + '/estoque/entrada-lote', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+      body: JSON.stringify({ itens, fornecedor, dataEntrada })
+    });
+    const data = await r.json();
+    if (data.sucesso) {
+      const ok = data.resultados.filter(r => r.status === 'ok').length;
+      showToast('✅ ' + ok + ' item(s) adicionado(s) ao estoque!', 'ok');
+      limparNota();
+      await init();
+      mudarTab('visao-geral');
+    } else { showToast(data.erro || 'Erro', 'err'); }
+  } catch(e) { showToast('Erro de conexão', 'err'); }
+}
+
+function limparNota() {
+  imagemBase64 = null;
+  document.getElementById('inputFoto').value = '';
+  document.getElementById('previewNota').style.display = 'none';
+  document.getElementById('previewNota').src = '';
+  document.querySelector('#notaDrop div').style.display = '';
+  document.getElementById('resultadoNota').style.display = 'none';
+  document.getElementById('statusNota').style.display = 'none';
+}
+
+// ===== LISTA DE COMPRAS =====
+async function carregarListaCompras() {
+  document.getElementById('listaCompras').innerHTML = '<div style="text-align:center;padding:30px;color:#888"><span class="spinner"></span></div>';
+  try {
+    const r = await fetch(BASE + '/lista-compras', { headers: { Authorization: 'Bearer ' + token } });
+    const data = await r.json();
+    const lista = data.lista || [];
+    if (!lista.length) { document.getElementById('listaCompras').innerHTML = '<div style="text-align:center;padding:40px;color:#888">Nenhum item com controle de estoque</div>'; return; }
+    const urgentes = lista.filter(i => i.urgente);
+    const baixos = lista.filter(i => !i.urgente && i.precisaComprar);
+    const ok = lista.filter(i => !i.precisaComprar);
+    let html = '';
+    if (urgentes.length) {
+      html += '<div style="font-weight:800;color:#dc2626;margin-bottom:8px;font-size:.85em">🔴 URGENTE — ZERADO</div>';
+      html += urgentes.map(i => itemCompraHtml(i)).join('');
+    }
+    if (baixos.length) {
+      html += '<div style="font-weight:800;color:#f59e0b;margin:14px 0 8px;font-size:.85em">🟡 ESTOQUE BAIXO</div>';
+      html += baixos.map(i => itemCompraHtml(i)).join('');
+    }
+    if (ok.length) {
+      html += '<div style="font-weight:800;color:#059669;margin:14px 0 8px;font-size:.85em">🟢 OK</div>';
+      html += ok.map(i => itemCompraHtml(i)).join('');
+    }
+    document.getElementById('listaCompras').innerHTML = html;
+  } catch(e) { document.getElementById('listaCompras').innerHTML = '<div style="color:#dc2626;padding:20px">Erro ao carregar</div>'; }
+}
+
+function itemCompraHtml(i) {
+  const status = i.urgente ? 'red' : i.precisaComprar ? 'yellow' : 'green';
+  return '<div class="item-row">' +
+    '<div>' +
+      '<div class="item-nome">' + i.nome + '</div>' +
+      '<div style="font-size:.75em;color:#888">Atual: ' + i.estoqueAtual + ' • Mín: ' + i.estoqueMinimo + ' • Vende ' + i.mediaDiaria + '/dia</div>' +
+    '</div>' +
+    '<div style="text-align:right">' +
+      (i.sugestaoCompra > 0 ? '<div style="font-size:.85em;color:#7c3aed;font-weight:700">Comprar: ' + i.sugestaoCompra + '</div>' : '') +
+      '<span class="badge badge-' + status + '">' + (i.urgente ? 'Zerado' : i.precisaComprar ? i.diasRestantes + 'd restam' : 'OK') + '</span>' +
+    '</div>' +
+  '</div>';
+}
+
+// ===== AJUSTE MANUAL =====
+function renderAjuste(filtro) {
+  const itens = filtro ? todosItens.filter(i => i.nome.toLowerCase().includes(filtro.toLowerCase())) : todosItens;
+  document.getElementById('listaAjuste').innerHTML = itens.map(item => {
+    return '<div class="item-row" style="flex-wrap:wrap;gap:8px">' +
+      '<div class="item-nome">' + item.nome + '</div>' +
+      '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">' +
+        '<label style="margin:0;color:#888;font-size:.8em">Estoque:</label>' +
+        '<input type="number" id="est-' + item._id + '" value="' + item.estoqueAtual + '" style="width:70px">' +
+        '<label style="margin:0;color:#888;font-size:.8em">Mín:</label>' +
+        '<input type="number" id="min-' + item._id + '" value="' + item.estoqueMinimo + '" style="width:60px">' +
+        '<button class="btn btn-purple" style="padding:6px 14px;font-size:.8em" onclick="salvarAjuste(\'' + item._id + '\')">Salvar</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function filtrarAjuste(v) { renderAjuste(v); }
+
+async function salvarAjuste(id) {
+  const estoqueAtual = parseInt(document.getElementById('est-' + id)?.value) || 0;
+  const estoqueMinimo = parseInt(document.getElementById('min-' + id)?.value) || 2;
+  try {
+    await fetch(BASE + '/estoque/' + id, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+      body: JSON.stringify({ estoqueAtivo: true, estoqueAtual, estoqueMinimo, unidadePorPedido: 1 })
+    });
+    showToast('✅ Salvo!', 'ok');
+    await init();
+  } catch(e) { showToast('Erro ao salvar', 'err'); }
+}
+
+// ===== UTILS =====
+function showToast(msg, tipo) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + (tipo === 'err' ? 'err' : 'ok');
+  setTimeout(() => t.className = 'toast', 3000);
+}
+
+// Corrigir tabs iniciais
+document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
+document.getElementById('page-visao-geral').style.display = 'block';
+
+init();
+</script>
+</body>
+</html>

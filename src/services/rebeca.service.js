@@ -5082,6 +5082,7 @@ RebecaService.transcreverAudio = async function(audioMessage, instancia) {
         formData.append('temperature', '0');
         formData.append('prompt', 'Rebeca, corrida, endereço, rua, avenida, bairro, número, destino, origem, mototaxi, delivery, pedido, cancelar, confirmar, sim, não, obrigado');
         
+
         const whisperResponse = await axios.post('https://api.openai.com/v1/audio/transcriptions', formData, {
             headers: {
                 'Authorization': 'Bearer ' + process.env.OPENAI_API_KEY,

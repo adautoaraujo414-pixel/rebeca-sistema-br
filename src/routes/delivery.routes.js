@@ -2166,3 +2166,62 @@ router.get('/config-publica/:adminId', async (req, res) => {
 });
 
 module.exports = router;
+
+// ========== ESTOQUE: LEITURA DE NOTA FISCAL POR FOTO (GPT-4o Vision) ==========
+router.post('/estoque/nota-fiscal', authDelivery, async (req, res) => {
+    try {
+        const { imagemBase64, mimeType } = req.body;
+        if (!imagemBase64) return res.status(400).json({ erro: 'Imagem obrigatoria' });
+        const apiKey = process.env.OPENAI_API_KEY;
+        if (!apiKey) return res.status(500).json({ erro: 'OPENAI_API_KEY nao configurada' });
+        const response = await axios.post('https://api.openai.com/v1/chat/completions', {
+            model: 'gpt-4o',
+            max_tokens: 1500,
+            messages: [{
+                role: 'user',
+                content: [
+                    {
+                        type: 'image_url',
+                        image_url: { url: 'data:' + (mimeType || 'image/jpeg') + ';base64,' + imagemBase64, detail: 'high' }
+                    },
+                    {
+                        type: 'text',
+                        text: 'Esta e uma nota fiscal ou cupom fiscal brasileiro. Extraia TODOS os itens/produtos com quantidade e valor unitario. Responda APENAS com JSON valido neste formato exato, sem markdown, sem explicacao:\n{"dataEmissao":"DD/MM/YYYY","fornecedor":"nome da empresa emitente","itens":[{"nome":"nome do produto","quantidade":1,"unidade":"un","valorUnitario":0.00,"valorTotal":0.00}],"valorTotalNota":0.00}\nSe nao conseguir ler algum campo deixe string vazia ou 0. Extraia todos os itens visiveis.'
+                    }
+                ]
+            }]
+        }, { headers: { 'Authorization': 'Bearer ' + apiKey, 'Content-Type': 'application/json' }, timeout: 30000 });
+
+        const txt = response.data.choices?.[0]?.message?.content || '{}';
+        let dados;
+        try { dados = JSON.parse(txt.replace(/```json|```/g, '').trim()); }
+        catch(pe) { return res.status(422).json({ erro: 'Nao foi possivel ler a nota. Tente uma foto mais nitida.', raw: txt }); }
+        res.json({ sucesso: true, dados });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// ========== ESTOQUE: ENTRADA EM LOTE (salvar itens da nota) ==========
+router.post('/estoque/entrada-lote', authDelivery, async (req, res) => {
+    try {
+        const { itens, fornecedor, dataEntrada } = req.body;
+        if (!itens || !itens.length) return res.status(400).json({ erro: 'Itens obrigatorios' });
+        const resultados = [];
+        for (const it of itens) {
+            if (!it.itemId) { resultados.push({ nome: it.nome, status: 'sem_vinculo' }); continue; }
+            const atualizado = await ItemCardapio.findOneAndUpdate(
+                { _id: it.itemId, adminId: req.adminId },
+                {
+                    $inc: { estoqueAtual: parseInt(it.quantidade) || 0 },
+                    $set: {
+                        fornecedor: fornecedor || it.fornecedor || '',
+                        disponivel: true,
+                        ...(it.precoCompra ? { precoCompra: parseFloat(it.precoCompra) } : {})
+                    }
+                },
+                { new: true }
+            );
+            resultados.push({ nome: it.nome, status: atualizado ? 'ok' : 'nao_encontrado', estoqueAtual: atualizado?.estoqueAtual });
+        }
+        res.json({ sucesso: true, resultados });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
