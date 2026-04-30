@@ -88,6 +88,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div class="header-right">
     <span class="gps-dot" id="gpsDot"></span>
     <span class="badge" id="tot">0</span>
+    <button id="btn-sair-ent" onclick="sairEntregador()" style="display:none;background:#ff4444;color:#fff;border:none;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:bold;cursor:pointer;">Sair</button>
   </div>
 </div>
 <div class="tabs">
@@ -104,6 +105,22 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div class="resumo-item"><div class="val" id="resTotal">R$0</div><div class="lab">Faturado</div></div>
   <div class="resumo-item"><div class="val" id="resTempo">-</div><div class="lab">Tempo médio</div></div>
 </div>
+<div id="login-screen-ent" style="display:none;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:30px;background:#0a0a1a;">
+  <img src="/logo-rebeca.png" style="height:60px;object-fit:contain;filter:brightness(0) invert(1);margin-bottom:28px">
+  <div style="background:#1a1a2e;border:1px solid #00d4ff;border-radius:16px;padding:28px 24px;width:100%;max-width:360px;">
+    <h2 style="color:#00d4ff;text-align:center;margin-bottom:20px;font-size:1.2em;">🛵 Entrar como Entregador</h2>
+    <input id="login-tel" type="tel" placeholder="Telefone (somente números)"
+      style="width:100%;padding:12px;border-radius:8px;border:1px solid #333;background:#0d1626;color:#fff;font-size:15px;margin-bottom:12px;box-sizing:border-box;">
+    <input id="login-senha" type="password" placeholder="Senha"
+      style="width:100%;padding:12px;border-radius:8px;border:1px solid #333;background:#0d1626;color:#fff;font-size:15px;margin-bottom:16px;box-sizing:border-box;">
+    <button onclick="fazerLoginEntregador()"
+      style="width:100%;padding:14px;background:linear-gradient(135deg,#00d4ff,#0099cc);color:#000;border:none;border-radius:9px;font-weight:bold;font-size:15px;cursor:pointer;">
+      Entrar
+    </button>
+    <p id="login-erro-ent" style="color:#ff4444;text-align:center;margin-top:12px;font-size:13px;min-height:18px;"></p>
+  </div>
+</div>
+<div id="app-ent">
 <div class="lista" id="lista">
   <div class="loading"><div class="spinner"></div><p>Carregando...</p></div>
 </div>
@@ -410,5 +427,6 @@ carregar();
 setInterval(carregar,8000);
 </script>
 </div>
+</div><!-- /app-ent -->
 </body>
 </html>
