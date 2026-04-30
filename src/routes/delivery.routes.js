@@ -233,7 +233,7 @@ router.put('/pedidos/:id/status', authDelivery, async (req, res) => {
         if (status === 'pronto') update.dataPronto = agora;
         if (status === 'saiu_entrega') update.dataSaiuEntrega = agora;
         if (status === 'entregue') update.dataEntregue = agora;
-        if (status === 'cancelado') { update.dataCancelado = agora; update.motivoCancelamento = req.body.motivo; }
+        if (status === 'cancelado') { update.dataCancelado = agora; update.motivoCancelamento = req.body.motivo; update.canceladoPor = req.body.canceladoPor || null; }
         
         const pedido = await PedidoDelivery.findOneAndUpdate({ _id: req.params.id, adminId: req.adminId }, update, { new: true });
         
@@ -263,7 +263,12 @@ router.put('/pedidos/:id/status', authDelivery, async (req, res) => {
                         } catch(_) { msg = 'Pedido #' + pedido.numero + ' saiu para entrega!'; }
                     }
                     if (status === 'entregue') msg = '✅ Pedido #' + pedido.numero + ' entregue! Obrigado pela preferência! 😊\n\nAvalie de 1 a 5 ⭐';
-                    if (status === 'cancelado') msg = '❌ Pedido #' + pedido.numero + ' cancelado. ' + (req.body.motivo || '');
+                    if (status === 'cancelado') {
+                        const quemCancelou = { caixa: 'pelo Caixa', garcom: 'pelo Garçom', cozinha: 'pela Cozinha', admin: 'pelo Administrador', cliente: 'a pedido do Cliente', sistema: 'pelo Sistema' };
+                        const quem = quemCancelou[req.body.canceladoPor] || '';
+                        const motivo = req.body.motivo ? ' Motivo: ' + req.body.motivo : '';
+                        msg = '❌ Pedido #' + pedido.numero + ' foi cancelado' + (quem ? ' ' + quem : '') + '.' + motivo;
+                    }
                     
                     if (msg) await EvolutionMultiService.enviarMensagem(inst._id, pedido.clienteTelefone, msg);
                 }
@@ -447,13 +452,16 @@ router.put('/cozinha/:id/rejeitar', authDelivery, async (req, res) => {
         const motivo = req.body.motivo || 'Rejeitado pela cozinha';
         const pedido = await PedidoDelivery.findOneAndUpdate(
             { _id: req.params.id, adminId: req.adminId, status: 'novo' },
-            { status: 'cancelado', dataCancelado: new Date(), motivoCancelamento: motivo },
+            { status: 'cancelado', dataCancelado: new Date(), motivoCancelamento: motivo, canceladoPor: req.body.canceladoPor || 'cozinha' },
             { new: true }
         );
         try {
             const EvolutionMultiService = require('../services/evolution-multi.service');
             const inst = await InstanciaWhatsapp.findOne({ adminId: req.adminId, status: { $in: ['conectado','open','connected'] } });
-            if (inst) await EvolutionMultiService.enviarMensagem(inst._id, pedido.clienteTelefone, 'Pedido #' + pedido.numero + ' cancelado. ' + motivo + '. Desculpe pelo transtorno!');
+            const quemCancelou = { caixa: 'pelo Caixa', garcom: 'pelo Garçom', cozinha: 'pela Cozinha', admin: 'pelo Administrador', cliente: 'a pedido do Cliente', sistema: 'pelo Sistema' };
+            const quem = quemCancelou[req.body.canceladoPor || 'cozinha'] || 'pela Cozinha';
+            const msgCancel = '❌ Pedido #' + pedido.numero + ' foi cancelado ' + quem + '. Motivo: ' + motivo + '. Desculpe pelo transtorno!';
+            if (inst && pedido && pedido.clienteTelefone) await EvolutionMultiService.enviarMensagem(inst._id, pedido.clienteTelefone, msgCancel);
         } catch(e) {}
         res.json(pedido);
     } catch(e) { res.status(500).json({ erro: e.message }); }

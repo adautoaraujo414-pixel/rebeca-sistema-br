@@ -105,6 +105,7 @@ const PedidoDeliverySchema = new mongoose.Schema({
     dataEntregue: Date,
     dataCancelado: Date,
     motivoCancelamento: String,
+    canceladoPor: { type: String, enum: ['caixa','garcom','cozinha','cliente','admin','sistema'], default: null },
     
     // Entregador
     entregadorId: { type: mongoose.Schema.Types.ObjectId, ref: 'Motorista' },

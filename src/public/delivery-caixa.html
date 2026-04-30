@@ -843,11 +843,18 @@ async function receberPedidoBalcao(id) {
 }
 
 async function cancelarPedido(id) {
-  if(!confirm('Cancelar pedido?')) return;
-  await fetch('/api/delivery/cozinha/'+id+'/rejeitar', {
-    method:'PUT', headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
-    body: JSON.stringify({motivo:'Cancelado pelo caixa'})
-  });
+  const motivo = prompt('Motivo do cancelamento (obrigatório):');
+  if(!motivo || !motivo.trim()) return;
+  if(!confirm('Cancelar pedido? Esta ação não pode ser desfeita.')) return;
+  try {
+    const r = await fetch('/api/delivery/pedidos/'+id+'/status', {
+      method:'PUT', headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+      body: JSON.stringify({ status:'cancelado', motivo: motivo.trim(), canceladoPor:'caixa' })
+    });
+    const d = await r.json();
+    if(d.erro) { toast('Erro: '+d.erro); return; }
+    toast('Pedido cancelado');
+  } catch(e) { toast('Erro de conexão'); }
   await carregarPedidos();
 }
 

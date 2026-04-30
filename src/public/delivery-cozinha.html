@@ -342,10 +342,17 @@ function atualizarCronometros(){
 
 async function acao(id, status){
   try {
+    let body = { status: status };
+    if(status === 'cancelado') {
+      const motivo = prompt('Motivo do cancelamento:');
+      if(motivo === null) return; // usuário clicou cancelar
+      body.motivo = motivo.trim() || 'Cancelado pela cozinha';
+      body.canceladoPor = 'cozinha';
+    }
     await fetch(B+'/pedidos/'+id+'/status',{
       method:'PUT',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+TK},
-      body:JSON.stringify({status:status})
+      body:JSON.stringify(body)
     });
     await carregar();
   } catch(e){}

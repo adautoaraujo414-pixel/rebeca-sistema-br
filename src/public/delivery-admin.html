@@ -1795,7 +1795,7 @@
         async function cancelarPedido(id) {
             const motivo = prompt('Motivo do cancelamento:');
             if (!motivo) return;
-            await api('/pedidos/' + id + '/status', { method: 'PUT', body: JSON.stringify({ status: 'cancelado', motivo }) });
+            await api('/pedidos/' + id + '/status', { method: 'PUT', body: JSON.stringify({ status: 'cancelado', motivo, canceladoPor: 'admin' }) });
             toast('Pedido cancelado');
             carregarDashboard();
         }
