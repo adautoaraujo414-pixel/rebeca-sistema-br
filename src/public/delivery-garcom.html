@@ -532,7 +532,11 @@ function abrirMesa(num) {
   let html = '';
   let totalGeral = 0;
   pedidos.forEach(p => {
-    html += `<div class="comanda-info"><strong>Pedido #${p.numero||'?'}</strong> — ${p.clienteNome||'Cliente'} — ${p.status}</div>`;
+    const podeCanc = !['entregue','cancelado'].includes(p.status);
+    html += `<div class="comanda-info" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;">
+      <span><strong>Pedido #${p.numero||'?'}</strong> — ${p.clienteNome||'Cliente'} — ${p.status}</span>
+      ${podeCanc ? `<button onclick="cancelarPedidoGarcom('${p._id}')" style="background:#fee2e2;color:#dc2626;border:1px solid #fca5a5;border-radius:7px;padding:4px 10px;font-size:.78em;font-weight:700;cursor:pointer;">❌ Cancelar</button>` : ''}
+    </div>`;
     (p.itens||[]).forEach(it => {
       html += `<div class="pedido-item-linha">
         <span>${it.quantidade||1}x ${it.nome}</span>
@@ -546,6 +550,24 @@ function abrirMesa(num) {
   
   document.getElementById('modalMesaBody').innerHTML = html;
   document.getElementById('overlayMesa').classList.add('show');
+}
+
+async function cancelarPedidoGarcom(id) {
+  const motivo = prompt('Motivo do cancelamento:');
+  if(motivo === null) return;
+  if(!confirm('Cancelar este pedido? Esta ação não pode ser desfeita.')) return;
+  try {
+    const r = await fetch(API+'/pedidos/'+id+'/status', {
+      method:'PUT',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+      body: JSON.stringify({ status:'cancelado', motivo: motivo.trim() || 'Cancelado pelo garçom', canceladoPor:'garcom' })
+    });
+    const d = await r.json();
+    if(d.erro) { toast('Erro: '+d.erro); return; }
+    toast('Pedido cancelado');
+    fecharModalMesa();
+    await carregarMesas();
+  } catch(e) { toast('Erro de conexão'); }
 }
 
 function fecharModalMesa() {
