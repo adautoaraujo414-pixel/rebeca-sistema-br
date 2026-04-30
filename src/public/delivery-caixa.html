@@ -808,6 +808,7 @@ function renderPedidos() {
       <div class="pedido-total">${fmt(p.total)}</div>
       <div class="pedido-btns">
         <button class="btn btn-sm btn-green" onclick="abrirPagamentoPedido('${p._id}',${p.total})">💰 Pagar</button>
+        <button class="btn btn-sm" style="background:#7c3aed;color:#fff;" onclick="receberPedidoBalcao('${p._id}')">🛎️ Receber</button>
         <button class="btn btn-sm btn-blue" onclick="adicionarAoPedido('${p._id}')">➕ Add item</button>
         <button class="btn btn-sm" style="background:#4a2d0e;color:#fb923c;border:1px solid #fb923c;" onclick="imprimirCupom(${JSON.stringify(p).replace(/`/g,"'")})">🖨️</button>
         <button class="btn btn-sm btn-red" onclick="cancelarPedido('${p._id}')">✕</button>
@@ -820,6 +821,24 @@ async function adicionarAoPedido(id) {
   pedidoEditando = id; limparCarrinho();
   mudarTab('cardapio', document.querySelectorAll('.tab-btn')[0]);
   alert('Selecione os itens e clique em "Enviar Cozinha"');
+}
+
+async function receberPedidoBalcao(id) {
+  if(!confirm('Confirmar recebimento do pedido no balcao?')) return;
+  try {
+    await fetch('/api/delivery/cozinha/'+id+'/status', {
+      method:'PUT',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+      body: JSON.stringify({status:'entregue'})
+    });
+    // Toast visual
+    var t = document.createElement('div');
+    t.style.cssText = 'position:fixed;top:24px;left:50%;transform:translateX(-50%);background:#7c3aed;color:#fff;padding:14px 28px;border-radius:12px;font-weight:800;font-size:15px;z-index:9999;';
+    t.textContent = '✅ Pedido entregue no balcao!';
+    document.body.appendChild(t);
+    setTimeout(function(){ t.remove(); }, 3000);
+    await carregarPedidos();
+  } catch(e) { alert('Erro: ' + e.message); }
 }
 
 async function cancelarPedido(id) {
