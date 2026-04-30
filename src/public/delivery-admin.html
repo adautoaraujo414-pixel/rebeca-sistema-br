@@ -1909,6 +1909,25 @@
             atualizarLabelNome();
         }
 
+        // Debounce para busca de imagem ao digitar nome do item
+        let _debounceImgTimer = null;
+        function debounceImagem(nome) {
+            clearTimeout(_debounceImgTimer);
+            if (!nome || nome.length < 3) return;
+            _debounceImgTimer = setTimeout(function() {
+                const id = document.getElementById('itemEditId') ? document.getElementById('itemEditId').value : '';
+                const preview = document.getElementById('itemImagemPreview');
+                const box = document.getElementById('itemImagemBox');
+                // Se item novo (sem id salvo), apenas atualiza placeholder visual
+                if (!id) return;
+                // Se item existente e sem imagem ainda, sugerir regenerar
+                if (preview && (!preview.src || preview.src.endsWith('/') || preview.src === window.location.href)) {
+                    const status = document.getElementById('regerarStatus');
+                    if (status) status.textContent = '💡 Dica: clique em "Gerar imagem" para criar uma imagem para este item.';
+                }
+            }, 800);
+        }
+
         function regerarImagemItem() {
             const id = document.getElementById('itemEditId').value;
             const nome = document.getElementById('itemNome').value;
