@@ -1446,10 +1446,14 @@ function novoPedido() {
 function filtrarCat(catId, btn) {
   document.querySelectorAll('.cat-btn').forEach(function(b){ b.classList.remove('active'); });
   if (btn) btn.classList.add('active');
-  var sempreMostrar = ['secMaisPedidos','secSugestoes','extrasSection'];
+  var mostrarTudo = (catId === 'todas');
   document.querySelectorAll('.section').forEach(function(sec) {
-    if (sempreMostrar.indexOf(sec.id) !== -1) { sec.style.display = 'block'; return; }
-    sec.style.display = (catId === 'todas' || sec.dataset.cat === catId) ? 'block' : 'none';
+    if (mostrarTudo) { sec.style.display = 'block'; return; }
+    // Seções de destaque só aparecem quando "Todos" está selecionado
+    if (sec.id === 'secMaisPedidos' || sec.id === 'secSugestoes' || sec.id === 'extrasSection') {
+      sec.style.display = 'none'; return;
+    }
+    sec.style.display = (sec.dataset.cat === catId) ? 'block' : 'none';
   });
 }
 
