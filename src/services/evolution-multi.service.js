@@ -4,6 +4,92 @@ const { InstanciaWhatsapp, Admin } = require('../models');
 const EVOLUTION_BASE_URL = process.env.EVOLUTION_API_URL || 'https://evolution-api-production-19af.up.railway.app';
 const EVOLUTION_GLOBAL_KEY = process.env.EVOLUTION_API_KEY || '31f8c35a2ed99385b1e2de3855ad43eba929292a8cb22bd42d2522f5567e7bae';
 
+
+// ============================================================
+// SISTEMA ANTI-BLOQUEIO WHATSAPP — proteção completa
+// ============================================================
+const _wppGuard = {
+    // Rate limit: máx 6 msgs/minuto por instância
+    _contadores: {},       // instanciaId -> { count, resetAt }
+    // Cache anti-duplicata: não mandar 2x para o mesmo número em 45s
+    _recentes: {},         // `instId:numero` -> timestamp
+    // Delay progressivo: quanto mais msgs seguidas, maior o intervalo
+    _sequencia: {},        // instanciaId -> { count, ultimaAt }
+
+    // Verificar e registrar envio — retorna { ok, aguardar }
+    checar(instanciaId, numero) {
+        const agora = Date.now();
+        const chaveInst = String(instanciaId);
+        const chaveNum  = chaveInst + ':' + numero;
+
+        // 1. Anti-duplicata — mesma instância + mesmo número em 45s
+        if (this._recentes[chaveNum] && agora - this._recentes[chaveNum] < 45000) {
+            const restam = Math.ceil((45000 - (agora - this._recentes[chaveNum])) / 1000);
+            console.log('[GUARD] Duplicata bloqueada para', numero, '— aguardar', restam, 's');
+            return { ok: false, motivo: 'duplicata', aguardar: restam * 1000 };
+        }
+
+        // 2. Rate limit — máx 6 msgs por minuto por instância
+        if (!this._contadores[chaveInst] || agora > this._contadores[chaveInst].resetAt) {
+            this._contadores[chaveInst] = { count: 0, resetAt: agora + 60000 };
+        }
+        if (this._contadores[chaveInst].count >= 6) {
+            const aguardar = this._contadores[chaveInst].resetAt - agora;
+            console.log('[GUARD] Rate limit atingido para instancia', chaveInst, '— aguardar', Math.ceil(aguardar/1000), 's');
+            return { ok: false, motivo: 'rate_limit', aguardar };
+        }
+
+        // 3. Delay progressivo — sequência de msgs para instâncias diferentes
+        if (!this._sequencia[chaveInst]) this._sequencia[chaveInst] = { count: 0, ultimaAt: 0 };
+        const seq = this._sequencia[chaveInst];
+        const deltaUltima = agora - seq.ultimaAt;
+        // Se mandou há menos de 8s, incrementa sequência; senão reseta
+        if (deltaUltima < 8000) { seq.count = Math.min(seq.count + 1, 10); }
+        else { seq.count = 0; }
+
+        return { ok: true, delayExtra: seq.count * 400 }; // até 4s extra por sequência
+    },
+
+    registrar(instanciaId, numero) {
+        const agora = Date.now();
+        const chaveInst = String(instanciaId);
+        const chaveNum  = chaveInst + ':' + numero;
+        this._recentes[chaveNum] = agora;
+        this._contadores[chaveInst].count++;
+        this._sequencia[chaveInst].ultimaAt = agora;
+        // Limpar cache antigo a cada 200 registros
+        if (Object.keys(this._recentes).length > 200) {
+            const limite = agora - 120000;
+            for (const k in this._recentes) { if (this._recentes[k] < limite) delete this._recentes[k]; }
+        }
+    },
+
+    // Variação sutil no texto — evita mensagens idênticas para múltiplos números
+    variarTexto(texto) {
+        const sufixos = ['', ' ', '  ', '\u200b', '\u200c'];
+        const s = sufixos[Math.floor(Math.random() * sufixos.length)];
+        // Variação na saudação se existir
+        const variacoes = [
+            [/^Oi\b/, ['Oi', 'Olá', 'Oi']],
+            [/^Olá\b/, ['Olá', 'Oi', 'Olá']],
+            [/Obrigado/g, ['Obrigado', 'Obrigada', 'Obrigado']],
+        ];
+        let t = texto;
+        for (const [re, opts] of variacoes) {
+            if (re.test(t)) { t = t.replace(re, opts[Math.floor(Math.random() * opts.length)]); break; }
+        }
+        return t + s;
+    },
+
+    // Verificar horário comercial (6h-23h) — só avisa no log, não bloqueia
+    verificarHorario() {
+        const h = new Date().getHours();
+        if (h < 6 || h >= 23) {
+            console.log('[GUARD] ⚠️ Envio fora do horário comercial (' + h + 'h) — considere agendar');
+        }
+    }
+};
+
 const EvolutionMultiService = {
     criarInstancia: async (adminId, nomeEmpresa) => {
         try {
@@ -171,7 +257,30 @@ const EvolutionMultiService = {
             
             let numero = telefone.replace(/\D/g, '');
             if (numero.length <= 11) numero = '55' + numero;
-            
+
+            // ===== ANTI-BLOQUEIO =====
+            _wppGuard.verificarHorario();
+            const _guard = _wppGuard.checar(instanciaId, numero);
+            if (!_guard.ok) {
+                if (_guard.motivo === 'duplicata') {
+                    console.log('[GUARD] Msg duplicada ignorada para', numero);
+                    return { sucesso: true, ignorado: true, motivo: 'duplicata' };
+                }
+                // Rate limit: aguardar e tentar uma vez
+                if (_guard.aguardar < 65000) {
+                    console.log('[GUARD] Aguardando rate limit:', Math.ceil(_guard.aguardar/1000), 's');
+                    await new Promise(r => setTimeout(r, _guard.aguardar));
+                } else {
+                    return { sucesso: false, erro: 'rate_limit' };
+                }
+            }
+            // Aplicar variação sutil no texto
+            mensagem = _wppGuard.variarTexto(mensagem);
+            // Delay extra progressivo (sequência)
+            if (_guard.ok && _guard.delayExtra > 0) {
+                await new Promise(r => setTimeout(r, _guard.delayExtra));
+            }
+
             // Mostrar "digitando..." antes de responder — efeito imersivo
             try {
                 await axios.post(instancia.apiUrl + '/chat/presence/' + instancia.nomeInstancia,
@@ -220,6 +329,7 @@ const EvolutionMultiService = {
                     lastResponse = await _enviarParte(partes[pi]);
                 }
                 console.log('[EVO] Msg enviada OK (' + partes.length + ' parte(s))');
+                _wppGuard.registrar(instanciaId, numero);
                 return { sucesso: true, messageId: lastResponse?.data?.key?.id };
             } catch (e) { 
                 const erroMsg = e.response?.data?.response?.message?.[0] || e.message;
