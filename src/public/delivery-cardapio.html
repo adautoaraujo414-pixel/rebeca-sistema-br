@@ -1165,8 +1165,8 @@ function toggleIngr(btn) {
     btn.classList.add('retirado');
     btn.textContent = 'Retirado';
     ingrRetirados.push(ing);
-}
   }
+}
 
 function mudarQty(delta) {
   qtyAtual = Math.max(1, qtyAtual + delta);
@@ -1246,7 +1246,6 @@ function atualizarCartUI() {
   if (rowGarc) { rowGarc.style.display = taxaGarc > 0 ? 'flex' : 'none'; var el2 = document.getElementById('cartTaxaGarcom'); if(el2) el2.textContent = fmt(taxaGarc); }
   var rowBand = document.getElementById('rowTaxaBanda');
   if (rowBand) { rowBand.style.display = taxaBand > 0 ? 'flex' : 'none'; var el3 = document.getElementById('cartTaxaBanda'); if(el3) el3.textContent = fmt(taxaBand); }
-}
 }
 
 function abrirCarrinho() {
