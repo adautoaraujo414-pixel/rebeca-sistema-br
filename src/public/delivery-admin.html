@@ -1229,7 +1229,7 @@
                   <div class="pizza-borda-row" style="display:grid;grid-template-columns:1fr 120px auto;gap:6px;margin-bottom:6px;align-items:center;">
                     <input type="text" placeholder="Ex: Sem borda" value="Sem borda" class="pborda-nome" style="padding:8px;border-radius:7px;border:1px solid #333;background:#0d0d1a;color:#fff;font-size:.82em;">
                     <input type="number" placeholder="R$ 0,00" value="0" class="pborda-preco" step="0.50" style="padding:8px;border-radius:7px;border:1px solid #333;background:#0d0d1a;color:#fff;font-size:.82em;">
-                    <button type="button" onclick="this.closest('.pizza-borda-row').remove()" style="padding:6px 10px;background:rgba(239,68,68,.15);border:1px solid #ef4444;border-radius:7px;color:#ef4444;cursor:pointer;font-size:.8em;">✕</button>
+                    <button type="button" onclick="this.closest(&quot;.pizza-borda-row&quot;).remove()" style="padding:6px 10px;background:rgba(239,68,68,.15);border:1px solid #ef4444;border-radius:7px;color:#ef4444;cursor:pointer;font-size:.8em;">✕</button>
                   </div>
                 </div>
               </div>
@@ -2453,7 +2453,6 @@ async function _salvarItemReal() {
 
         // ===== WHATSAPP QR CODE DELIVERY =====
         let instanciaDeliveryId = null; // carregado após login em carregarInstanciaDelivery()
-        var instanciaDeliveryId = null;
         function carregarInstanciaDelivery() {
             if (adminData && adminData._id) {
                 instanciaDeliveryId = localStorage.getItem('instanciaDeliveryId_' + adminData._id) || null;
@@ -4180,7 +4179,7 @@ function adicionarAdicionalCS(nome, preco) {
     div.style.cssText = 'display:grid;grid-template-columns:1fr 100px auto;gap:8px;';
     div.innerHTML = '<input type="text" placeholder="Ex: Churrasco de costela" class="cs-add-nome" value="' + (nome||'') + '" style="padding:8px;border:1px solid #e8e8ed;border-radius:8px;font-size:13px;">' +
         '<input type="number" placeholder="R$" class="cs-add-preco" value="' + (preco||'') + '" step="0.50" style="padding:8px;border:1px solid #e8e8ed;border-radius:8px;font-size:13px;">' +
-        '<button onclick="removerAdicionalCS(this)" style="background:#fee2e2;border:none;border-radius:8px;padding:8px;cursor:pointer;color:#ef4444;">✕</button>';
+        '<button onclick="removerAdicionalCS(this)" style="background:#fee2e2;border:none;border-radius:8px;padding:8px;cursor:pointer;color:#ef4444;">X</button>';
     document.getElementById('csAdicionais').appendChild(div);
 }
 
@@ -4444,7 +4443,7 @@ async function enviarCardapioDia() {
             row.style.cssText = 'display:grid;grid-template-columns:1fr 120px auto;gap:6px;margin-bottom:6px;align-items:center;';
             row.innerHTML = '<input type="text" placeholder="Ex: Catupiry" class="pborda-nome" style="padding:8px;border-radius:7px;border:1px solid #333;background:#0d0d1a;color:#fff;font-size:.82em;">' +
                 '<input type="number" placeholder="R$ 0,00" class="pborda-preco" step="0.50" style="padding:8px;border-radius:7px;border:1px solid #333;background:#0d0d1a;color:#fff;font-size:.82em;">' +
-                '<button type="button" onclick="this.closest('.pizza-borda-row').remove()" style="padding:6px 10px;background:rgba(239,68,68,.15);border:1px solid #ef4444;border-radius:7px;color:#ef4444;cursor:pointer;font-size:.8em;">✕</button>';
+                '<button type="button" onclick="this.closest(&quot;.pizza-borda-row&quot;).remove()" style="padding:6px 10px;background:rgba(239,68,68,.15);border:1px solid #ef4444;border-radius:7px;color:#ef4444;cursor:pointer;font-size:.8em;">X</button>';
             document.getElementById('pizzaBordasContainer').appendChild(row);
         }
         function addPizzaAdicional() {
@@ -4453,7 +4452,7 @@ async function enviarCardapioDia() {
             row.style.cssText = 'display:grid;grid-template-columns:1fr 120px auto;gap:6px;margin-bottom:6px;align-items:center;';
             row.innerHTML = '<input type="text" placeholder="Ex: Bacon extra" class="padic-nome" style="padding:8px;border-radius:7px;border:1px solid #333;background:#0d0d1a;color:#fff;font-size:.82em;">' +
                 '<input type="number" placeholder="R$ 0,00" class="padic-preco" step="0.50" style="padding:8px;border-radius:7px;border:1px solid #333;background:#0d0d1a;color:#fff;font-size:.82em;">' +
-                '<button type="button" onclick="this.closest('.pizza-adic-row').remove()" style="padding:6px 10px;background:rgba(239,68,68,.15);border:1px solid #ef4444;border-radius:7px;color:#ef4444;cursor:pointer;font-size:.8em;">✕</button>';
+                '<button type="button" onclick="this.closest('.pizza-adic-row').remove()" style="padding:6px 10px;background:rgba(239,68,68,.15);border:1px solid #ef4444;border-radius:7px;color:#ef4444;cursor:pointer;font-size:.8em;">X</button>';
             document.getElementById('pizzaAdicionaisContainer').appendChild(row);
         }
         function coletarDadosPizza() {
@@ -4488,7 +4487,7 @@ async function enviarCardapioDia() {
                 row.innerHTML = '<input type="text" class="ptam-nome" value="'+t.nome+'" style="padding:8px;border-radius:7px;border:1px solid #333;background:#0d0d1a;color:#fff;font-size:.82em;text-align:center;font-weight:700;">' +
                     '<input type="text" class="ptam-desc" value="'+(t.descricao||'')+'" style="padding:8px;border-radius:7px;border:1px solid #333;background:#0d0d1a;color:#fff;font-size:.82em;">' +
                     '<input type="number" class="ptam-preco" value="'+t.preco+'" style="padding:8px;border-radius:7px;border:1px solid #333;background:#0d0d1a;color:#fff;font-size:.82em;">' +
-                    '<button type="button" onclick="this.closest('.pizza-tam-row').remove()" style="padding:6px 10px;background:rgba(239,68,68,.15);border:1px solid #ef4444;border-radius:7px;color:#ef4444;cursor:pointer;font-size:.8em;">✕</button>';
+                    '<button type="button" onclick="this.closest('.pizza-tam-row').remove()" style="padding:6px 10px;background:rgba(239,68,68,.15);border:1px solid #ef4444;border-radius:7px;color:#ef4444;cursor:pointer;font-size:.8em;">X</button>';
                 document.getElementById('pizzaTamanhosContainer').appendChild(row);
             });
             document.getElementById('pizzaBordasContainer').innerHTML = '';
@@ -4498,7 +4497,7 @@ async function enviarCardapioDia() {
                 row.style.cssText = 'display:grid;grid-template-columns:1fr 120px auto;gap:6px;margin-bottom:6px;align-items:center;';
                 row.innerHTML = '<input type="text" class="pborda-nome" value="'+b.nome+'" style="padding:8px;border-radius:7px;border:1px solid #333;background:#0d0d1a;color:#fff;font-size:.82em;">' +
                     '<input type="number" class="pborda-preco" value="'+b.preco+'" style="padding:8px;border-radius:7px;border:1px solid #333;background:#0d0d1a;color:#fff;font-size:.82em;">' +
-                    '<button type="button" onclick="this.closest('.pizza-borda-row').remove()" style="padding:6px 10px;background:rgba(239,68,68,.15);border:1px solid #ef4444;border-radius:7px;color:#ef4444;cursor:pointer;font-size:.8em;">✕</button>';
+                    '<button type="button" onclick="this.closest(&quot;.pizza-borda-row&quot;).remove()" style="padding:6px 10px;background:rgba(239,68,68,.15);border:1px solid #ef4444;border-radius:7px;color:#ef4444;cursor:pointer;font-size:.8em;">X</button>';
                 document.getElementById('pizzaBordasContainer').appendChild(row);
             });
             document.getElementById('pizzaAdicionaisContainer').innerHTML = '';
@@ -4508,7 +4507,7 @@ async function enviarCardapioDia() {
                 row.style.cssText = 'display:grid;grid-template-columns:1fr 120px auto;gap:6px;margin-bottom:6px;align-items:center;';
                 row.innerHTML = '<input type="text" class="padic-nome" value="'+a.nome+'" style="padding:8px;border-radius:7px;border:1px solid #333;background:#0d0d1a;color:#fff;font-size:.82em;">' +
                     '<input type="number" class="padic-preco" value="'+a.preco+'" style="padding:8px;border-radius:7px;border:1px solid #333;background:#0d0d1a;color:#fff;font-size:.82em;">' +
-                    '<button type="button" onclick="this.closest('.pizza-adic-row').remove()" style="padding:6px 10px;background:rgba(239,68,68,.15);border:1px solid #ef4444;border-radius:7px;color:#ef4444;cursor:pointer;font-size:.8em;">✕</button>';
+                    '<button type="button" onclick="this.closest('.pizza-adic-row').remove()" style="padding:6px 10px;background:rgba(239,68,68,.15);border:1px solid #ef4444;border-radius:7px;color:#ef4444;cursor:pointer;font-size:.8em;">X</button>';
                 document.getElementById('pizzaAdicionaisContainer').appendChild(row);
             });
         }
