@@ -843,10 +843,20 @@
                                 <input type="text" id="cfgCidade" placeholder="Ex: Uberlândia - MG" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid #ddd;font-family:inherit;font-size:.9em;box-sizing:border-box;">
                             </div>
                             <div>
-                                <label style="font-size:.8em;font-weight:700;color:#555;display:block;margin-bottom:5px;">🖼️ Logo / Foto do Estabelecimento (URL)</label>
-                                <input type="url" id="cfgLogoUrl" placeholder="https://..." style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid #ddd;font-family:inherit;font-size:.9em;box-sizing:border-box;">
-                                <div id="cfgLogoPreview" style="margin-top:8px;display:none;">
-                                    <img id="cfgLogoImg" style="max-height:80px;border-radius:8px;border:1px solid #ddd;" onerror="this.parentNode.style.display='none'">
+                                <label style="font-size:.8em;font-weight:700;color:#555;display:block;margin-bottom:5px;">🖼️ Logo do Estabelecimento</label>
+                                <input type="hidden" id="cfgLogoUrl">
+                                <input type="file" id="inputLogoFile" accept="image/*" style="display:none;" onchange="carregarLogoLocal(this)">
+                                <div onclick="document.getElementById('inputLogoFile').click()" id="logoDropZone"
+                                    style="border:2px dashed #e5e7eb;border-radius:10px;padding:20px 12px;text-align:center;background:#f9fafb;cursor:pointer;transition:border .2s;"
+                                    onmouseover="this.style.borderColor='#f97316'" onmouseout="this.style.borderColor='#e5e7eb'">
+                                    <div id="cfgLogoPreview" style="display:none;margin-bottom:8px;">
+                                        <img id="cfgLogoImg" style="max-height:80px;border-radius:8px;border:1px solid #ddd;margin:0 auto;display:block;" onerror="this.parentNode.style.display='none'">
+                                    </div>
+                                    <div id="logoDropText" style="color:#9ca3af;font-size:.85em;">
+                                        <div style="font-size:1.8em;margin-bottom:4px;">📷</div>
+                                        <div style="font-weight:700;color:#6b7280;margin-bottom:2px;">Clique aqui para carregar sua logo</div>
+                                        <div style="font-size:.78em;">PNG, JPG ou WEBP — aparece no cardápio digital</div>
+                                    </div>
                                 </div>
                             </div>
                             <div style="display:flex;align-items:center;gap:10px;margin-top:4px;">
@@ -1369,6 +1379,31 @@
                 }
             } catch(e) { document.getElementById('loginErro').textContent = 'Erro de conexão'; }
         }
+
+        // ===== UPLOAD DE LOGO LOCAL =====
+        function carregarLogoLocal(input) {
+            const file = input.files[0];
+            if (!file) return;
+            if (file.size > 2 * 1024 * 1024) {
+                alert('A imagem deve ter no máximo 2MB.');
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const base64 = e.target.result;
+                document.getElementById('cfgLogoUrl').value = base64;
+                const img = document.getElementById('cfgLogoImg');
+                const prev = document.getElementById('cfgLogoPreview');
+                const dropText = document.getElementById('logoDropText');
+                img.src = base64;
+                prev.style.display = 'block';
+                if (dropText) dropText.style.display = 'none';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Ao carregar config existente, mostrar preview se tiver logo
+        const _cfgLogoOrigSet = set;
 
         function logout() {
             localStorage.removeItem('delivery_token');
@@ -3602,7 +3637,13 @@ async function carregarDadosEstabelecimento() {
         }
         var prev = document.getElementById('cfgLogoPreview');
         var img = document.getElementById('cfgLogoImg');
-        if (prev && img && cfg.logo) { img.src = cfg.logo; prev.style.display = 'block'; }
+        if (prev && img && cfg.logo) {
+            img.src = cfg.logo;
+            prev.style.display = 'block';
+            var dt = document.getElementById('logoDropText');
+            if (dt) dt.style.display = 'none';
+            document.getElementById('cfgLogoUrl').value = cfg.logo;
+        }
         var inp = document.getElementById('cfgLogoUrl');
         if (inp) inp.oninput = function() {
             var p = document.getElementById('cfgLogoPreview');
