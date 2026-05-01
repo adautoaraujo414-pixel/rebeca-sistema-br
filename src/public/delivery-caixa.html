@@ -262,7 +262,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
     <div class="stat-pill orange">🧾 Caixa <span class="val" id="s-caixa">0</span></div>
     <div class="stat-pill purple">⏱️ Prev. <span class="val" id="s-prev">—</span></div>
     <div class="stat-pill green">💰 Total dia <span class="val" id="s-total">R$ 0,00</span></div>
-    <div class="stat-pill blue" style="cursor:pointer" onclick="abrirPainelGarcons()">🍽️ Mesas <span class="val" id="s-mesas">0</span></div>
+    <div class="stat-pill blue" style="cursor:pointer" onclick="abrirPainelMesas()">🍽️ Mesas <span class="val" id="s-mesas">0</span></div>
     <div class="stat-pill orange" style="cursor:pointer" onclick="abrirPainelGarcons()">📋 Comandas <span class="val" id="s-comandas">0</span></div>
     <div class="stat-pill green" style="cursor:pointer" onclick="abrirPainelGarcons()">👥 Garçons</div>
   </div>
@@ -888,12 +888,12 @@ function renderProducao() {
   var lista = _todosPedidosDia;
   if(_filtroProducao !== 'todos') lista = lista.filter(function(p){ return p.status === _filtroProducao; });
   if(!lista.length) { el.innerHTML = '<div class="empty">Nenhum pedido</div>'; return; }
-  var sLabel = {novo:'Novo',confirmado:'Confirmado',preparando:'Preparando',pronto:'Pronto',saiu_entrega:'Saiu',entregue:'Entregue',cancelado:'Cancelado'};
+  var sLabel = {novo:'Novo',confirmado:'Confirmado',preparando:'Preparando',pronto:'Pronto',saiu_entrega:'Saiu',entregue:'Entregue',cancelado:'Cancelado',pago:'💰 Pago'};
   el.innerHTML = lista.map(function(p) {
     var inicio = p.createdAt ? new Date(p.createdAt).getTime() : Date.now();
     var seg = Math.floor((Date.now()-inicio)/1000);
     var mm = Math.floor(seg/60), ss = seg%60;
-    var cls = p.status==='pronto'?'pronto':p.status==='entregue'?'entregue':'';
+    var cls = p.status==='pronto'?'pronto':p.status==='entregue'?'entregue':p.status==='pago'?'pronto':'';
     var itensStr = (p.itens||[]).map(function(i){ return i.quantidade+'x '+i.nome+(i.observacao?' ('+i.observacao+')':''); }).join(' · ');
     var obs = p.observacao||p.observacoes||'';
     var endStr = p.enderecoEntrega ? '<div style="font-size:.75em;color:var(--text3)">Entrega: '+p.enderecoEntrega+'</div>' : '';
@@ -1171,6 +1171,50 @@ function toggleImpressao() {
 (function() {
   if (_impressaoAtiva) toggleImpressao();
 })();
+
+
+// ===== PAINEL DE MESAS =====
+async function abrirPainelMesas() {
+  let modal = document.getElementById('modalMesas');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'modalMesas';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:1000;display:flex;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto';
+    modal.innerHTML = '<div style="background:#1a1a2e;border-radius:16px;padding:20px;width:100%;max-width:600px;margin-top:20px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><h3 style="color:#6366f1;margin:0">🍽️ Painel de Mesas</h3><button onclick="document.getElementById('modalMesas').remove()" style="background:none;border:none;color:#fff;font-size:1.5em;cursor:pointer">✕</button></div><div id="gridMesas" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px"></div></div>';
+    document.body.appendChild(modal);
+  }
+  const grid = document.getElementById('gridMesas');
+  grid.innerHTML = '<div style="color:#aaa;text-align:center;padding:20px">Carregando...</div>';
+  try {
+    const r = await fetch('/api/delivery/caixa/mesas-painel', { headers: { 'Authorization': 'Bearer ' + token } });
+    const d = await r.json();
+    if (!d.sucesso) { grid.innerHTML = '<div style="color:#f55">Erro ao carregar mesas</div>'; return; }
+    grid.innerHTML = d.mesas.map(m => {
+      const cor = m.ocupada ? '#f97316' : '#22c55e';
+      const bg = m.ocupada ? 'rgba(249,115,22,.15)' : 'rgba(34,197,94,.1)';
+      const status = m.ocupada ? '🔴 Ocupada' : '🟢 Livre';
+      const nomes = m.pedidos.map(p => p.clienteNome || 'Cliente').join(', ');
+      const total = m.ocupada ? '<div style="color:#fff;font-weight:700;margin-top:4px">R$ ' + (m.total||0).toFixed(2).replace('.',',') + '</div>' : '';
+      const btnLiberar = m.ocupada ? '<button onclick="liberarMesa(' + m.numero + ')" style="margin-top:8px;width:100%;padding:6px;background:#ef4444;border:none;color:#fff;border-radius:8px;cursor:pointer;font-size:.78em">💳 Pago / Liberar</button>' : '';
+      return '<div style="background:' + bg + ';border:1px solid ' + cor + ';border-radius:12px;padding:14px;text-align:center">'
+        + '<div style="font-size:1.4em;font-weight:800;color:' + cor + '">Mesa ' + m.numero + '</div>'
+        + '<div style="font-size:.75em;color:' + cor + ';margin-top:2px">' + status + '</div>'
+        + (m.ocupada ? '<div style="font-size:.72em;color:#aaa;margin-top:4px">' + nomes + '</div>' : '')
+        + total + btnLiberar
+        + '</div>';
+    }).join('');
+  } catch(e) { grid.innerHTML = '<div style="color:#f55">Erro de conexão</div>'; }
+}
+
+async function liberarMesa(numero) {
+  if (!confirm('Confirmar pagamento e liberar Mesa ' + numero + '?')) return;
+  try {
+    await fetch('/api/delivery/caixa/mesa/' + numero + '/liberar', { method: 'POST', headers: { 'Authorization': 'Bearer ' + token } });
+    toast('✅ Mesa ' + numero + ' liberada!');
+    abrirPainelMesas();
+    await carregarPedidos();
+  } catch(e) { alert('Erro ao liberar mesa'); }
+}
 
 </script>
 

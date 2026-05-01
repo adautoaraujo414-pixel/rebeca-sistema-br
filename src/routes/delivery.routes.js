@@ -2432,3 +2432,55 @@ router.post('/estoque/entrada-lote', authDelivery, async (req, res) => {
         res.json({ sucesso: true, resultados });
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
+
+// ===== PAINEL DE MESAS DO CAIXA =====
+router.get('/caixa/mesas-painel', async (req, res) => {
+    try {
+        const token = req.headers.authorization?.replace('Bearer ','') || '';
+        const admin = await AdminDelivery.findOne({ token });
+        if (!admin) return res.status(401).json({ erro: 'Token invalido' });
+        const qtdMesas = admin.qtdMesas || 10;
+        const pedidosAtivos = await PedidoDelivery.find({
+            adminId: admin._id,
+            tipoLocal: 'mesa',
+            status: { $nin: ['cancelado', 'entregue'] }
+        }).select('numeroMesa clienteNome status total createdAt').lean();
+        const mesas = [];
+        for (let i = 1; i <= qtdMesas; i++) {
+            const pedidosMesa = pedidosAtivos.filter(p => String(p.numeroMesa) === String(i));
+            mesas.push({
+                numero: i,
+                ocupada: pedidosMesa.length > 0,
+                pedidos: pedidosMesa,
+                total: pedidosMesa.reduce((s, p) => s + (p.total || 0), 0)
+            });
+        }
+        res.json({ sucesso: true, mesas, qtdMesas });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// ===== LIBERAR MESA (caixa) =====
+router.post('/caixa/mesa/:numero/liberar', async (req, res) => {
+    try {
+        const token = req.headers.authorization?.replace('Bearer ','') || '';
+        const admin = await AdminDelivery.findOne({ token });
+        if (!admin) return res.status(401).json({ erro: 'Token invalido' });
+        await PedidoDelivery.updateMany(
+            { adminId: admin._id, numeroMesa: req.params.numero, status: { $nin: ['cancelado', 'entregue'] } },
+            { $set: { status: 'entregue' } }
+        );
+        res.json({ sucesso: true });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// Salvar qtdMesas do admin
+router.post('/caixa/config/mesas', async (req, res) => {
+    try {
+        const token = req.headers.authorization?.replace('Bearer ','') || '';
+        const admin = await AdminDelivery.findOne({ token });
+        if (!admin) return res.status(401).json({ erro: 'Token invalido' });
+        const { qtdMesas } = req.body;
+        await AdminDelivery.updateOne({ _id: admin._id }, { $set: { qtdMesas: Number(qtdMesas) || 10 } });
+        res.json({ sucesso: true });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
