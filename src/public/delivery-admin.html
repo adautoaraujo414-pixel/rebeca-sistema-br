@@ -2149,6 +2149,8 @@ async function _salvarItemReal() {
             document.getElementById('itemNome').value = item.nome;
             document.getElementById('itemDesc').value = item.descricao || '';
             document.getElementById('itemPreco').value = item.preco;
+            var _pctEl = document.getElementById('itemPromoPct');
+            if (_pctEl) { _pctEl.value = item.promocaoPct || ''; atualizarPrecoPromo(); }
             document.getElementById('itemTempo').value = item.tempoPreparoMin || 20;
             document.getElementById('itemDestaque').checked = item.destaque;
             const _dispEl = document.getElementById('itemDisponivel');

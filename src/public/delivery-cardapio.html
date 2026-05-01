@@ -1010,7 +1010,10 @@ function criarCard(item) {
 
   var qtdNoCart = carrinho.filter(function(c){ return c.itemId === item._id; }).reduce(function(a,b){ return a+b.qty; }, 0);
 
-  div.innerHTML = imgHtml +
+  var temPromo = item.promocaoPct > 0 && item.precoPromo > 0;
+  if (temPromo) div.style.position = 'relative';
+  div.innerHTML = (temPromo ? '<div class="item-promo-badge">🔥 -' + item.promocaoPct + '%</div>' : '') +
+    imgHtml +
     '<div class="item-badge-cart' + (qtdNoCart > 0 ? ' show' : '') + '" id="badge-' + item._id + '">' + (qtdNoCart||'') + '</div>' +
     '<div class="item-body">' +
       '<div class="item-name">' + item.nome + '</div>' +
