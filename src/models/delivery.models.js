@@ -49,6 +49,21 @@ const ItemCardapioSchema = new mongoose.Schema({
     fornecedor: { type: String, default: '' },       // nome do fornecedor
     fornecedorTelefone: { type: String, default: '' }, // telefone/WhatsApp do fornecedor
     unidadePorPedido: { type: Number, default: 1 },  // quantas unidades saem por pedido
+    // ===== PIZZA =====
+    tipoProduto: { type: String, default: 'simples' }, // simples | pizza
+    pizzaTamanhos: [{ // P, M, G, GG com preços
+        nome: String,   // "P", "M", "G", "GG"
+        preco: Number,
+        descricao: String // "4 fatias", "8 fatias"
+    }],
+    pizzaBordas: [{ // recheada, catupiry, chocolate...
+        nome: String,
+        preco: { type: Number, default: 0 }
+    }],
+    pizzaAdicionais: [{ // bacon, cheddar, pepperoni...
+        nome: String,
+        preco: { type: Number, default: 0 }
+    }],
 }, { timestamps: true });
 
 // ========== PEDIDO ==========

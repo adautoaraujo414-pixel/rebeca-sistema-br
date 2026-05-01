@@ -1175,6 +1175,60 @@
               </div>
             </div>
 
+            <!-- ===== SEÇÃO PIZZA ===== -->
+            <div id="grupoPizza" style="display:none;background:#1a1a2e;border:1px solid rgba(249,115,22,.3);border-radius:12px;padding:16px;margin-bottom:12px;">
+              <div style="font-weight:800;color:#f97316;margin-bottom:12px;font-size:.9em;">🍕 Configuração de Pizza</div>
+              <!-- Tamanhos -->
+              <div style="margin-bottom:14px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                  <label style="color:#aaa;font-size:.8em;font-weight:700;">Tamanhos e Preços</label>
+                  <button type="button" onclick="addPizzaTamanho()" style="padding:4px 10px;background:rgba(249,115,22,.15);border:1px solid #f97316;border-radius:6px;color:#f97316;cursor:pointer;font-size:.75em;">+ Tamanho</button>
+                </div>
+                <div id="pizzaTamanhosContainer">
+                  <div class="pizza-tam-row" style="display:grid;grid-template-columns:80px 1fr 120px auto;gap:6px;margin-bottom:6px;align-items:center;">
+                    <input type="text" placeholder="Ex: P" value="P" class="ptam-nome" style="padding:8px;border-radius:7px;border:1px solid #333;background:#0d0d1a;color:#fff;font-size:.82em;text-align:center;font-weight:700;">
+                    <input type="text" placeholder="Ex: 4 fatias" class="ptam-desc" style="padding:8px;border-radius:7px;border:1px solid #333;background:#0d0d1a;color:#fff;font-size:.82em;">
+                    <input type="number" placeholder="R$ 0,00" class="ptam-preco" step="0.50" style="padding:8px;border-radius:7px;border:1px solid #333;background:#0d0d1a;color:#fff;font-size:.82em;">
+                    <button type="button" onclick="this.closest('.pizza-tam-row').remove()" style="padding:6px 10px;background:rgba(239,68,68,.15);border:1px solid #ef4444;border-radius:7px;color:#ef4444;cursor:pointer;font-size:.8em;">✕</button>
+                  </div>
+                  <div class="pizza-tam-row" style="display:grid;grid-template-columns:80px 1fr 120px auto;gap:6px;margin-bottom:6px;align-items:center;">
+                    <input type="text" placeholder="Ex: M" value="M" class="ptam-nome" style="padding:8px;border-radius:7px;border:1px solid #333;background:#0d0d1a;color:#fff;font-size:.82em;text-align:center;font-weight:700;">
+                    <input type="text" placeholder="Ex: 6 fatias" class="ptam-desc" style="padding:8px;border-radius:7px;border:1px solid #333;background:#0d0d1a;color:#fff;font-size:.82em;">
+                    <input type="number" placeholder="R$ 0,00" class="ptam-preco" step="0.50" style="padding:8px;border-radius:7px;border:1px solid #333;background:#0d0d1a;color:#fff;font-size:.82em;">
+                    <button type="button" onclick="this.closest('.pizza-tam-row').remove()" style="padding:6px 10px;background:rgba(239,68,68,.15);border:1px solid #ef4444;border-radius:7px;color:#ef4444;cursor:pointer;font-size:.8em;">✕</button>
+                  </div>
+                  <div class="pizza-tam-row" style="display:grid;grid-template-columns:80px 1fr 120px auto;gap:6px;margin-bottom:6px;align-items:center;">
+                    <input type="text" placeholder="Ex: G" value="G" class="ptam-nome" style="padding:8px;border-radius:7px;border:1px solid #333;background:#0d0d1a;color:#fff;font-size:.82em;text-align:center;font-weight:700;">
+                    <input type="text" placeholder="Ex: 8 fatias" class="ptam-desc" style="padding:8px;border-radius:7px;border:1px solid #333;background:#0d0d1a;color:#fff;font-size:.82em;">
+                    <input type="number" placeholder="R$ 0,00" class="ptam-preco" step="0.50" style="padding:8px;border-radius:7px;border:1px solid #333;background:#0d0d1a;color:#fff;font-size:.82em;">
+                    <button type="button" onclick="this.closest('.pizza-tam-row').remove()" style="padding:6px 10px;background:rgba(239,68,68,.15);border:1px solid #ef4444;border-radius:7px;color:#ef4444;cursor:pointer;font-size:.8em;">✕</button>
+                  </div>
+                </div>
+              </div>
+              <!-- Bordas -->
+              <div style="margin-bottom:14px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                  <label style="color:#aaa;font-size:.8em;font-weight:700;">Bordas (opcional)</label>
+                  <button type="button" onclick="addPizzaBorda()" style="padding:4px 10px;background:rgba(168,85,247,.15);border:1px solid #a855f7;border-radius:6px;color:#a855f7;cursor:pointer;font-size:.75em;">+ Borda</button>
+                </div>
+                <div id="pizzaBordasContainer">
+                  <div class="pizza-borda-row" style="display:grid;grid-template-columns:1fr 120px auto;gap:6px;margin-bottom:6px;align-items:center;">
+                    <input type="text" placeholder="Ex: Sem borda" value="Sem borda" class="pborda-nome" style="padding:8px;border-radius:7px;border:1px solid #333;background:#0d0d1a;color:#fff;font-size:.82em;">
+                    <input type="number" placeholder="R$ 0,00" value="0" class="pborda-preco" step="0.50" style="padding:8px;border-radius:7px;border:1px solid #333;background:#0d0d1a;color:#fff;font-size:.82em;">
+                    <button type="button" onclick="this.closest('.pizza-borda-row').remove()" style="padding:6px 10px;background:rgba(239,68,68,.15);border:1px solid #ef4444;border-radius:7px;color:#ef4444;cursor:pointer;font-size:.8em;">✕</button>
+                  </div>
+                </div>
+              </div>
+              <!-- Adicionais -->
+              <div>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                  <label style="color:#aaa;font-size:.8em;font-weight:700;">Adicionais (opcional)</label>
+                  <button type="button" onclick="addPizzaAdicional()" style="padding:4px 10px;background:rgba(34,197,94,.15);border:1px solid #22c55e;border-radius:6px;color:#22c55e;cursor:pointer;font-size:.75em;">+ Adicional</button>
+                </div>
+                <div id="pizzaAdicionaisContainer"></div>
+              </div>
+            </div>
+
             <div class="form-group"><label><span id="labelNomeItem">Nome do Item</span></label><input type="text" id="itemNome" placeholder="Ex: Coca-Cola, X-Burguer..." oninput="debounceImagem(this.value); atualizarPlaceholders()"></div>
             <div class="form-group" id="grupoDescricao"><label id="labelDesc">Descrição <span id="descOpcional" style="color:#666;font-size:.8em;display:none">(opcional)</span></label><input type="text" id="itemDesc" placeholder="Pão, hambúrguer, queijo..."></div>
             <div class="form-row">
@@ -2018,6 +2072,36 @@ async function _salvarItemReal() {
                 marmitaEstoque: parseInt(document.getElementById('marmitaEstoque')?.value)||null,
                 marmitaConteudo: document.getElementById('marmitaConteudo')?.value || null,
                 marmitaTipo: document.getElementById('marmitaTipo')?.value || null,
+                // Pizza
+                tipoProduto: document.getElementById('grupoPizza')?.style.display !== 'none' ? 'pizza' : 'simples',
+                pizzaTamanhos: (function(){
+                    var t=[];
+                    document.querySelectorAll('.pizza-tam-row').forEach(function(r){
+                        var n=r.querySelector('.ptam-nome')?.value.trim();
+                        var p=parseFloat(r.querySelector('.ptam-preco')?.value);
+                        var d=r.querySelector('.ptam-desc')?.value.trim();
+                        if(n&&p) t.push({nome:n,preco:p,descricao:d||''});
+                    });
+                    return t;
+                })(),
+                pizzaBordas: (function(){
+                    var b=[];
+                    document.querySelectorAll('.pizza-borda-row').forEach(function(r){
+                        var n=r.querySelector('.pborda-nome')?.value.trim();
+                        var p=parseFloat(r.querySelector('.pborda-preco')?.value)||0;
+                        if(n) b.push({nome:n,preco:p});
+                    });
+                    return b;
+                })(),
+                pizzaAdicionais: (function(){
+                    var a=[];
+                    document.querySelectorAll('.pizza-adic-row').forEach(function(r){
+                        var n=r.querySelector('.padic-nome')?.value.trim();
+                        var p=parseFloat(r.querySelector('.padic-preco')?.value)||0;
+                        if(n) a.push({nome:n,preco:p});
+                    });
+                    return a;
+                })(),
                 tempoPreparoMin: parseInt(document.getElementById('itemTempo').value) || 20,
                 destaque: document.getElementById('itemDestaque').checked,
                 disponivel: document.getElementById('itemDisponivel') ? document.getElementById('itemDisponivel').checked : true,
@@ -4192,6 +4276,92 @@ async function enviarCardapioDia() {
             }).join('');
         }
 
+        // ===== PIZZA HELPERS =====
+        function addPizzaTamanho() {
+            var row = document.createElement('div');
+            row.className = 'pizza-tam-row';
+            row.style.cssText = 'display:grid;grid-template-columns:80px 1fr 120px auto;gap:6px;margin-bottom:6px;align-items:center;';
+            row.innerHTML = '<input type="text" placeholder="Ex: GG" class="ptam-nome" style="padding:8px;border-radius:7px;border:1px solid #333;background:#0d0d1a;color:#fff;font-size:.82em;text-align:center;font-weight:700;">' +
+                '<input type="text" placeholder="Ex: 10 fatias" class="ptam-desc" style="padding:8px;border-radius:7px;border:1px solid #333;background:#0d0d1a;color:#fff;font-size:.82em;">' +
+                '<input type="number" placeholder="R$ 0,00" class="ptam-preco" step="0.50" style="padding:8px;border-radius:7px;border:1px solid #333;background:#0d0d1a;color:#fff;font-size:.82em;">' +
+                '<button type="button" onclick="this.closest('.pizza-tam-row').remove()" style="padding:6px 10px;background:rgba(239,68,68,.15);border:1px solid #ef4444;border-radius:7px;color:#ef4444;cursor:pointer;font-size:.8em;">✕</button>';
+            document.getElementById('pizzaTamanhosContainer').appendChild(row);
+        }
+        function addPizzaBorda() {
+            var row = document.createElement('div');
+            row.className = 'pizza-borda-row';
+            row.style.cssText = 'display:grid;grid-template-columns:1fr 120px auto;gap:6px;margin-bottom:6px;align-items:center;';
+            row.innerHTML = '<input type="text" placeholder="Ex: Catupiry" class="pborda-nome" style="padding:8px;border-radius:7px;border:1px solid #333;background:#0d0d1a;color:#fff;font-size:.82em;">' +
+                '<input type="number" placeholder="R$ 0,00" class="pborda-preco" step="0.50" style="padding:8px;border-radius:7px;border:1px solid #333;background:#0d0d1a;color:#fff;font-size:.82em;">' +
+                '<button type="button" onclick="this.closest('.pizza-borda-row').remove()" style="padding:6px 10px;background:rgba(239,68,68,.15);border:1px solid #ef4444;border-radius:7px;color:#ef4444;cursor:pointer;font-size:.8em;">✕</button>';
+            document.getElementById('pizzaBordasContainer').appendChild(row);
+        }
+        function addPizzaAdicional() {
+            var row = document.createElement('div');
+            row.className = 'pizza-adic-row';
+            row.style.cssText = 'display:grid;grid-template-columns:1fr 120px auto;gap:6px;margin-bottom:6px;align-items:center;';
+            row.innerHTML = '<input type="text" placeholder="Ex: Bacon extra" class="padic-nome" style="padding:8px;border-radius:7px;border:1px solid #333;background:#0d0d1a;color:#fff;font-size:.82em;">' +
+                '<input type="number" placeholder="R$ 0,00" class="padic-preco" step="0.50" style="padding:8px;border-radius:7px;border:1px solid #333;background:#0d0d1a;color:#fff;font-size:.82em;">' +
+                '<button type="button" onclick="this.closest('.pizza-adic-row').remove()" style="padding:6px 10px;background:rgba(239,68,68,.15);border:1px solid #ef4444;border-radius:7px;color:#ef4444;cursor:pointer;font-size:.8em;">✕</button>';
+            document.getElementById('pizzaAdicionaisContainer').appendChild(row);
+        }
+        function coletarDadosPizza() {
+            var tamanhos = [];
+            document.querySelectorAll('.pizza-tam-row').forEach(function(row) {
+                var nome = row.querySelector('.ptam-nome').value.trim();
+                var preco = parseFloat(row.querySelector('.ptam-preco').value);
+                var desc = row.querySelector('.ptam-desc').value.trim();
+                if (nome && preco) tamanhos.push({ nome, preco, descricao: desc });
+            });
+            var bordas = [];
+            document.querySelectorAll('.pizza-borda-row').forEach(function(row) {
+                var nome = row.querySelector('.pborda-nome').value.trim();
+                var preco = parseFloat(row.querySelector('.pborda-preco').value) || 0;
+                if (nome) bordas.push({ nome, preco });
+            });
+            var adicionais = [];
+            document.querySelectorAll('.pizza-adic-row').forEach(function(row) {
+                var nome = row.querySelector('.padic-nome').value.trim();
+                var preco = parseFloat(row.querySelector('.padic-preco').value) || 0;
+                if (nome) adicionais.push({ nome, preco });
+            });
+            return { tamanhos, bordas, adicionais };
+        }
+        function preencherFormPizza(item) {
+            // Limpar e preencher tamanhos
+            document.getElementById('pizzaTamanhosContainer').innerHTML = '';
+            (item.pizzaTamanhos || []).forEach(function(t) {
+                var row = document.createElement('div');
+                row.className = 'pizza-tam-row';
+                row.style.cssText = 'display:grid;grid-template-columns:80px 1fr 120px auto;gap:6px;margin-bottom:6px;align-items:center;';
+                row.innerHTML = '<input type="text" class="ptam-nome" value="'+t.nome+'" style="padding:8px;border-radius:7px;border:1px solid #333;background:#0d0d1a;color:#fff;font-size:.82em;text-align:center;font-weight:700;">' +
+                    '<input type="text" class="ptam-desc" value="'+(t.descricao||'')+'" style="padding:8px;border-radius:7px;border:1px solid #333;background:#0d0d1a;color:#fff;font-size:.82em;">' +
+                    '<input type="number" class="ptam-preco" value="'+t.preco+'" style="padding:8px;border-radius:7px;border:1px solid #333;background:#0d0d1a;color:#fff;font-size:.82em;">' +
+                    '<button type="button" onclick="this.closest('.pizza-tam-row').remove()" style="padding:6px 10px;background:rgba(239,68,68,.15);border:1px solid #ef4444;border-radius:7px;color:#ef4444;cursor:pointer;font-size:.8em;">✕</button>';
+                document.getElementById('pizzaTamanhosContainer').appendChild(row);
+            });
+            document.getElementById('pizzaBordasContainer').innerHTML = '';
+            (item.pizzaBordas || []).forEach(function(b) {
+                var row = document.createElement('div');
+                row.className = 'pizza-borda-row';
+                row.style.cssText = 'display:grid;grid-template-columns:1fr 120px auto;gap:6px;margin-bottom:6px;align-items:center;';
+                row.innerHTML = '<input type="text" class="pborda-nome" value="'+b.nome+'" style="padding:8px;border-radius:7px;border:1px solid #333;background:#0d0d1a;color:#fff;font-size:.82em;">' +
+                    '<input type="number" class="pborda-preco" value="'+b.preco+'" style="padding:8px;border-radius:7px;border:1px solid #333;background:#0d0d1a;color:#fff;font-size:.82em;">' +
+                    '<button type="button" onclick="this.closest('.pizza-borda-row').remove()" style="padding:6px 10px;background:rgba(239,68,68,.15);border:1px solid #ef4444;border-radius:7px;color:#ef4444;cursor:pointer;font-size:.8em;">✕</button>';
+                document.getElementById('pizzaBordasContainer').appendChild(row);
+            });
+            document.getElementById('pizzaAdicionaisContainer').innerHTML = '';
+            (item.pizzaAdicionais || []).forEach(function(a) {
+                var row = document.createElement('div');
+                row.className = 'pizza-adic-row';
+                row.style.cssText = 'display:grid;grid-template-columns:1fr 120px auto;gap:6px;margin-bottom:6px;align-items:center;';
+                row.innerHTML = '<input type="text" class="padic-nome" value="'+a.nome+'" style="padding:8px;border-radius:7px;border:1px solid #333;background:#0d0d1a;color:#fff;font-size:.82em;">' +
+                    '<input type="number" class="padic-preco" value="'+a.preco+'" style="padding:8px;border-radius:7px;border:1px solid #333;background:#0d0d1a;color:#fff;font-size:.82em;">' +
+                    '<button type="button" onclick="this.closest('.pizza-adic-row').remove()" style="padding:6px 10px;background:rgba(239,68,68,.15);border:1px solid #ef4444;border-radius:7px;color:#ef4444;cursor:pointer;font-size:.8em;">✕</button>';
+                document.getElementById('pizzaAdicionaisContainer').appendChild(row);
+            });
+        }
+
         function abrirModalFornecedor(idxEditar) {
             var f = idxEditar !== undefined ? _fornecedores[idxEditar] : {};
             var dias = ['Dom','Seg','Ter','Qua','Qui','Sex','Sab'];
@@ -4582,6 +4752,10 @@ function atualizarPlaceholders() {
     const sel = document.getElementById('itemCategoria');
     const opt = sel ? sel.options[sel.selectedIndex] : null;
     const nomeCat = opt ? opt.text.toLowerCase() : '';
+    // Mostrar seção pizza se categoria tem "pizza" no nome
+    const isPizza = nomeCat.includes('pizza') || nomeCat.includes('pizz');
+    const grupoPizza = document.getElementById('grupoPizza');
+    if (grupoPizza) grupoPizza.style.display = isPizza ? 'block' : 'none';
     const ehBebida = nomeCat.includes('bebida') || nomeCat.includes('drink') ||
                      nomeCat.includes('suco') || nomeCat.includes('refri') ||
                      nomeCat.includes('água') || nomeCat.includes('agua') ||

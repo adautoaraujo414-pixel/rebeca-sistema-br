@@ -1170,22 +1170,37 @@ function toggleIngr(btn) {
 function mudarQty(delta) {
   qtyAtual = Math.max(1, qtyAtual + delta);
   document.getElementById('qtyNum').textContent = qtyAtual;
-  var preco = Number(itemAtual.preco||0);
+  var isPizza = itemAtual && (itemAtual.tipoProduto === 'pizza' || (itemAtual.pizzaTamanhos && itemAtual.pizzaTamanhos.length > 0));
+  var preco = isPizza ? pizzaPrecoAtual() : Number(itemAtual.preco||0);
   document.getElementById('btnAddCart').textContent = 'Adicionar ' + qtyAtual + (qtyAtual>1?' itens':' item') + ' — R$ ' + (preco*qtyAtual).toFixed(2).replace('.',',');
 }
 
 function adicionarAoCarrinho() {
   if (!itemAtual) return;
+  var isPizza = itemAtual.tipoProduto === 'pizza' || (itemAtual.pizzaTamanhos && itemAtual.pizzaTamanhos.length > 0);
+  if (isPizza && !pizzaSelecionado.tamanho) {
+    showToast('⚠️ Selecione o tamanho da pizza!');
+    return;
+  }
   var obs = document.getElementById('itemObs').value;
   if (ingrRetirados.length) obs = 'Sem: ' + ingrRetirados.join(', ') + (obs ? '. ' + obs : '');
+  var precoFinal = isPizza ? pizzaPrecoAtual() : Number(itemAtual.preco||0);
+  var nomeFinal = itemAtual.nome;
+  if (isPizza) {
+    var partes = [];
+    if (pizzaSelecionado.tamanho) partes.push('Tam: ' + pizzaSelecionado.tamanho.nome);
+    if (pizzaSelecionado.borda) partes.push('Borda: ' + pizzaSelecionado.borda.nome);
+    if (pizzaSelecionado.adicionais.length) partes.push('Add: ' + pizzaSelecionado.adicionais.map(function(a){return a.nome;}).join(', '));
+    if (partes.length) obs = partes.join(' | ') + (obs ? ' | ' + obs : '');
+  }
   carrinho.push({
     itemId: itemAtual._id,
-    nome: itemAtual.nome,
-    preco: Number(itemAtual.preco||0),
+    nome: nomeFinal,
+    preco: precoFinal,
     qty: qtyAtual,
     obs: obs,
     imagem: itemAtual.imagem || '',
-    emoji: '🍽️'
+    emoji: isPizza ? '🍕' : '🍽️'
   });
   atualizarCartUI();
   document.getElementById('overlayItem').classList.remove('show');
