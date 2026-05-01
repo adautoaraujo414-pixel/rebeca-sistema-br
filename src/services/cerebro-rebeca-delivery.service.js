@@ -312,14 +312,10 @@ VARIAÇÕES DE SAUDAÇÃO:
             );
             const historico = this.montarHistorico(contexto.conversa);
 
-            // Usar Claude com thinking para raciocínio mais profundo
+            // Claude Haiku 3.5 — rápido e barato para atendimento de delivery
             const r = await axios.post('https://api.anthropic.com/v1/messages', {
-                model: 'claude-sonnet-4-5',
-                max_tokens: 16000,
-                thinking: {
-                    type: 'enabled',
-                    budget_tokens: 10000
-                },
+                model: 'claude-haiku-4-5',
+                max_tokens: 1024,
                 system: prompt,
                 messages: [
                     { role: 'user', content: 'Historico:\n' + historico + '\n\nCliente agora: ' + mensagem }
