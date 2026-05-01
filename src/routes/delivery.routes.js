@@ -60,7 +60,7 @@ router.delete('/categorias/:id', authDelivery, async (req, res) => {
 // ========== ITENS DO CARDÁPIO ==========
 
 // ========== GERAR IMAGEM DO ITEM VIA DALL-E (1x por item) ==========
-async function gerarImagemItem(nome, descricao, tamanho) {
+async function gerarImagemItem(nome, descricao, tamanho, fotoReferencia) {
     try {
         const apiKey = process.env.OPENAI_API_KEY;
         if (!apiKey) return null;
@@ -109,6 +109,47 @@ async function gerarImagemItem(nome, descricao, tamanho) {
                 `shallow depth of field, bokeh background, appetizing and vibrant colors, ` +
                 `no text, no watermark, no distortion, ultra realistic, 4K quality, ` +
                 `restaurant menu style photo, food styled beautifully.`;
+        }
+
+        // Se tiver foto de referência, usar GPT-4 Vision para enriquecer o prompt
+        if (fotoReferencia && fotoReferencia.length > 100) {
+            try {
+                console.log('[IMG-ITEM] Analisando foto de referencia com GPT-4 Vision...');
+                const base64Data = fotoReferencia.replace(/^data:image\/[a-z]+;base64,/, '');
+                const mediaType = fotoReferencia.startsWith('data:image/png') ? 'image/png' : 'image/jpeg';
+                const visionResp = await axios.post('https://api.openai.com/v1/chat/completions', {
+                    model: 'gpt-4o',
+                    max_tokens: 300,
+                    messages: [{
+                        role: 'user',
+                        content: [
+                            {
+                                type: 'text',
+                                text: 'Analise esta foto de um prato/lanche chamado "' + nome + '". Descreva em inglês, de forma detalhada e técnica para um prompt de geração de imagem profissional: as cores, ingredientes visíveis, textura, apresentação, estilo do prato. Seja específico sobre aparência visual. Responda APENAS com a descrição técnica visual, sem frases introdutórias.'
+                            },
+                            {
+                                type: 'image_url',
+                                image_url: { url: 'data:' + mediaType + ';base64,' + base64Data }
+                            }
+                        ]
+                    }]
+                }, {
+                    headers: { 'Authorization': 'Bearer ' + apiKey, 'Content-Type': 'application/json' },
+                    timeout: 30000
+                });
+                const descricaoVisual = visionResp.data.choices[0]?.message?.content || '';
+                if (descricaoVisual) {
+                    promptFinal = 'Ultra-realistic professional food photography of "' + nome + '". ' +
+                        'Visual reference analysis: ' + descricaoVisual + '. ' +
+                        'Transform into a stunning commercial menu photo: perfect studio lighting, ' +
+                        'beautiful modern background with warm bokeh, food styled elegantly on premium surface, ' +
+                        'shot from 45-degree angle, vibrant appetizing colors, sharp focus on the food, ' +
+                        'no text, no watermarks, no logos, 4K ultra quality, magazine-worthy presentation.';
+                    console.log('[IMG-ITEM] Prompt enriquecido com Vision OK');
+                }
+            } catch(vErr) {
+                console.log('[IMG-ITEM] Vision falhou, usando prompt padrao:', vErr.message);
+            }
         }
 
         const prompt = promptFinal;
@@ -173,10 +214,11 @@ router.put('/cardapio/:id', authDelivery, async (req, res) => {
             const nomeFinal = dados.nome || itemAtual?.nome || '';
             const descFinal = dados.descricao || itemAtual?.descricao || '';
             console.log('[IMG-ITEM] Regenerando imagem por mudança em:', nomeFinal);
-            const urlImagem = await gerarImagemItem(nomeFinal, descFinal, dados.tamanho || dados.volume || itemAtual?.tamanho || itemAtual?.volume || '');
+            const urlImagem = await gerarImagemItem(nomeFinal, descFinal, dados.tamanho || dados.volume || itemAtual?.tamanho || itemAtual?.volume || '', dados.fotoReferencia || null);
             if (urlImagem) dados.imagem = urlImagem;
         }
         delete dados.regenerarImagem;
+        delete dados.fotoReferencia; // nao salvar no banco
 
         const item = await ItemCardapio.findOneAndUpdate(
             { _id: req.params.id, adminId: req.adminId },

@@ -1294,11 +1294,41 @@
             </div>
             <div class="form-group"><label><input type="checkbox" id="itemDestaque"> ⭐ Destaque</label></div>
             <div class="form-group"><label><input type="checkbox" id="itemDisponivel" checked> ✅ Disponível</label></div>
+            <!-- IMAGEM GERADA -->
             <div class="form-group" id="itemImagemBox" style="display:none">
-                <label>🖼️ Imagem atual</label>
+                <label>🖼️ Imagem atual (gerada pela IA)</label>
                 <img id="itemImagemPreview" src="" style="width:100%;height:140px;object-fit:cover;border-radius:8px;margin-top:6px;">
-                <button class="btn" id="btnRegerarImg" onclick="regerarImagemItem()" style="width:100%;margin-top:8px;background:#7c3aed;color:#fff;">🎨 Regerar Imagem com IA</button>
-                <p id="regerarStatus" style="font-size:12px;color:#aaa;margin-top:6px;text-align:center;"></p>
+            </div>
+
+            <!-- UPLOAD FOTO REFERÊNCIA + GERAR IA -->
+            <div class="form-group" style="margin-top:10px;">
+                <label style="font-size:.82em;font-weight:700;color:#aaa;display:block;margin-bottom:8px;">🤖 IA de Imagem do Prato</label>
+                <div style="background:#1a1a2e;border-radius:12px;padding:14px;border:1px solid rgba(124,58,237,0.4);">
+                    <p style="color:#aaa;font-size:.8em;margin-bottom:10px;line-height:1.5;">
+                        Envie uma foto real do seu lanche e nossa IA transforma em uma imagem profissional e moderna para o cardápio.
+                        <br>Ou clique em <strong style="color:#a78bfa;">Gerar sem foto</strong> para criar baseado no nome/descrição.
+                    </p>
+                    <!-- Preview da foto enviada -->
+                    <div id="fotoRefBox" style="display:none;margin-bottom:10px;position:relative;">
+                        <img id="fotoRefPreview" style="width:100%;height:110px;object-fit:cover;border-radius:8px;border:2px solid #7c3aed;">
+                        <div style="position:absolute;top:4px;right:4px;">
+                            <button onclick="limparFotoRef()" style="background:rgba(0,0,0,.7);color:#fff;border:none;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:.75em;">✕ Remover</button>
+                        </div>
+                        <div style="margin-top:4px;font-size:.75em;color:#a78bfa;text-align:center;">📸 Foto de referência carregada</div>
+                    </div>
+                    <!-- Botões -->
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+                        <button onclick="document.getElementById('inputFotoRef').click()" style="padding:10px;background:#252542;border:1px dashed #7c3aed;border-radius:8px;color:#a78bfa;font-size:.82em;cursor:pointer;font-weight:700;">
+                            📷 Enviar foto real
+                        </button>
+                        <button id="btnRegerarImg" onclick="regerarImagemItem()" style="padding:10px;background:linear-gradient(135deg,#7c3aed,#4f46e5);border:none;border-radius:8px;color:#fff;font-size:.82em;cursor:pointer;font-weight:700;">
+                            ✨ Gerar com IA
+                        </button>
+                    </div>
+                    <input type="file" id="inputFotoRef" accept="image/*" style="display:none;" onchange="carregarFotoRef(this)">
+                    <input type="hidden" id="fotoRefBase64">
+                    <p id="regerarStatus" style="font-size:11px;color:#aaa;margin-top:4px;text-align:center;min-height:16px;"></p>
+                </div>
             </div>
             <button class="btn btn-primary" style="width:100%;margin-top:10px;" onclick="salvarItem()">💾 Salvar</button>
         </div>
@@ -2040,18 +2070,44 @@
             }, 800);
         }
 
+        function carregarFotoRef(input) {
+            var file = input.files[0];
+            if (!file) return;
+            if (file.size > 3 * 1024 * 1024) { alert('Foto deve ter no maximo 3MB'); return; }
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('fotoRefBase64').value = e.target.result;
+                document.getElementById('fotoRefPreview').src = e.target.result;
+                document.getElementById('fotoRefBox').style.display = 'block';
+                document.getElementById('regerarStatus').textContent = '✅ Foto carregada! Clique em "Gerar com IA" para criar a imagem profissional.';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function limparFotoRef() {
+            document.getElementById('fotoRefBase64').value = '';
+            document.getElementById('fotoRefPreview').src = '';
+            document.getElementById('fotoRefBox').style.display = 'none';
+            document.getElementById('inputFotoRef').value = '';
+            document.getElementById('regerarStatus').textContent = '';
+        }
+
         function regerarImagemItem() {
             const id = document.getElementById('itemEditId').value;
             const nome = document.getElementById('itemNome').value;
             const desc = document.getElementById('itemDesc').value;
             if(!id) { alert('Salve o item primeiro!'); return; }
             if(!nome) { alert('Preencha o nome!'); return; }
-            document.getElementById('regerarStatus').textContent = '⏳ Gerando imagem... (pode levar até 30s)';
+            const fotoRef = document.getElementById('fotoRefBase64') ? document.getElementById('fotoRefBase64').value : '';
+            const temFoto = fotoRef && fotoRef.length > 100;
+            document.getElementById('regerarStatus').textContent = temFoto
+                ? '⏳ Analisando sua foto e gerando imagem profissional... (30s)'
+                : '⏳ Gerando imagem baseada no nome/descrição... (30s)';
             document.getElementById('btnRegerarImg').disabled = true;
             const volume = document.getElementById('itemEstoqueVolume') ? document.getElementById('itemEstoqueVolume').value : '';
             api('/cardapio/' + id, {
                 method: 'PUT',
-                body: JSON.stringify({ nome, descricao: desc, regenerarImagem: true, tamanho: volume })
+                body: JSON.stringify({ nome, descricao: desc, regenerarImagem: true, tamanho: volume, fotoReferencia: fotoRef || null })
             }).then(r => r.json()).then(d => {
                 if(d.imagem) {
                     document.getElementById('itemImagemPreview').src = d.imagem;
