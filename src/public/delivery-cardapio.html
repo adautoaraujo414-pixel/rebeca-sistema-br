@@ -113,6 +113,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .item-tag-sm{font-size:.66em;color:var(--text2);margin:1px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .item-footer{display:flex;align-items:center;justify-content:space-between;margin-top:4px}
 .item-price{font-size:.88em;font-weight:800;color:var(--accent)}
+.item-preco-riscado{font-size:.75em;color:var(--text3);text-decoration:line-through;margin-right:4px;}
+.item-promo-badge{position:absolute;top:8px;left:8px;background:#ef4444;color:#fff;font-size:.68em;font-weight:800;padding:3px 7px;border-radius:20px;letter-spacing:.5px;z-index:2;}
 .item-add-btn{width:28px;height:28px;border-radius:50%;background:var(--accent);border:none;color:#fff;font-size:1.2em;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:transform .15s;box-shadow:0 2px 8px var(--accent-glow)}
 .item-add-btn:active{transform:scale(.88)}
 
@@ -956,6 +958,31 @@ function renderItens(itens, cats) {
   renderSugestoes(itens);
   renderExtrasRapidos(itens);
 
+  // ===== SEÇÃO PROMOÇÕES (automática) =====
+  var todosItens = [];
+  (cardapioData && cardapioData.categorias || []).forEach(function(cat) {
+    (cat.itens || []).forEach(function(item) { if (item.promocaoPct > 0 && item.precoPromo > 0 && item.disponivel !== false) todosItens.push(item); });
+  });
+  if (todosItens.length) {
+    var secPromo = document.createElement('div');
+    secPromo.className = 'section';
+    secPromo.dataset.cat = '_promocoes';
+    secPromo.innerHTML = '<div class="section-title" style="color:#ef4444;">🔥 Promoções</div>' +
+      '<div class="items-grid" id="grid-promocoes"></div>';
+    conteudo.insertBefore(secPromo, conteudo.firstChild);
+    var gridP = secPromo.querySelector('.items-grid');
+    todosItens.forEach(function(item) { gridP.appendChild(criarCard(item)); });
+    // Botão filtro promoções
+    var btnP = document.createElement('button');
+    btnP.className = 'cat-btn';
+    btnP.dataset.cat = '_promocoes';
+    btnP.textContent = '🔥 Promoções';
+    btnP.style.cssText = 'background:rgba(239,68,68,.15);border-color:#ef4444;color:#ef4444;';
+    btnP.onclick = function(){ filtrarCat('_promocoes', btnP); };
+    var catBar = document.getElementById('catBar') || document.querySelector('.cat-bar');
+    if (catBar) catBar.insertBefore(btnP, catBar.firstChild);
+  }
+
   // Seção de combos
   var combos = (cardapioData && cardapioData.combos) || [];
   if (combos.length) {
@@ -1234,7 +1261,7 @@ function adicionarAoCarrinho() {
   }
   var obs = document.getElementById('itemObs').value;
   if (ingrRetirados.length) obs = 'Sem: ' + ingrRetirados.join(', ') + (obs ? '. ' + obs : '');
-  var precoFinal = isPizza ? pizzaPrecoAtual() : Number(itemAtual.preco||0);
+  var precoFinal = isPizza ? pizzaPrecoAtual() : (itemAtual.promocaoPct > 0 && itemAtual.precoPromo > 0 ? Number(itemAtual.precoPromo) : Number(itemAtual.preco||0));
   var nomeFinal = itemAtual.nome;
   if (isPizza) {
     var partes = [];

@@ -1232,8 +1232,21 @@
             <div class="form-group"><label><span id="labelNomeItem">Nome do Item</span></label><input type="text" id="itemNome" placeholder="Ex: Coca-Cola, X-Burguer..." oninput="debounceImagem(this.value); atualizarPlaceholders()"></div>
             <div class="form-group" id="grupoDescricao"><label id="labelDesc">Descrição <span id="descOpcional" style="color:#666;font-size:.8em;display:none">(opcional)</span></label><input type="text" id="itemDesc" placeholder="Pão, hambúrguer, queijo..."></div>
             <div class="form-row">
-                <div class="form-group"><label>Preço (R$)</label><input type="number" id="itemPreco" step="0.50"></div>
+                <div class="form-group"><label>Preço (R$)</label><input type="number" id="itemPreco" step="0.50" oninput="atualizarPrecoPromo()"></div>
                 <div class="form-group" id="grupoPreparo"><label>Tempo Preparo (min)</label><input type="number" id="itemTempo" value="20"></div>
+            </div>
+            <!-- Promoção -->
+            <div class="form-row" style="margin-bottom:0;">
+                <div class="form-group" style="flex:1;">
+                    <label style="display:flex;align-items:center;gap:6px;">🔥 Promoção <span style="font-size:.75em;color:#f97316;font-weight:700;" id="promoBadgeLabel"></span></label>
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <input type="number" id="itemPromoPct" min="0" max="90" step="1" placeholder="% desconto" oninput="atualizarPrecoPromo()"
+                            style="width:110px;padding:10px;background:#252542;border:1px solid #333;border-radius:8px;color:#fff;">
+                        <span style="color:#aaa;font-size:.85em;">%</span>
+                        <span id="precoPromoPreview" style="color:#22c55e;font-weight:800;font-size:.95em;"></span>
+                    </div>
+                    <span style="color:#666;font-size:.78em;">Digite o % de desconto. Aparece automaticamente no cardápio digital.</span>
+                </div>
             </div>
             <div class="form-group" id="grupoEstoqueUnidade" style="display:block">
                 <label>📦 Estoque (unidades)</label>
@@ -2101,6 +2114,12 @@ async function _salvarItemReal() {
                         if(n) a.push({nome:n,preco:p});
                     });
                     return a;
+                })(),
+                promocaoPct: parseFloat(document.getElementById('itemPromoPct')?.value) || 0,
+                precoPromo: (function(){
+                    var p = parseFloat(document.getElementById('itemPreco')?.value)||0;
+                    var pct = parseFloat(document.getElementById('itemPromoPct')?.value)||0;
+                    return pct > 0 ? parseFloat((p*(1-pct/100)).toFixed(2)) : 0;
                 })(),
                 tempoPreparoMin: parseInt(document.getElementById('itemTempo').value) || 20,
                 destaque: document.getElementById('itemDestaque').checked,
@@ -4277,6 +4296,22 @@ async function enviarCardapioDia() {
         }
 
         // ===== PIZZA HELPERS =====
+        // ===== PROMOÇÃO =====
+        function atualizarPrecoPromo() {
+            var preco = parseFloat(document.getElementById('itemPreco')?.value) || 0;
+            var pct = parseFloat(document.getElementById('itemPromoPct')?.value) || 0;
+            var preview = document.getElementById('precoPromoPreview');
+            var badge = document.getElementById('promoBadgeLabel');
+            if (pct > 0 && preco > 0) {
+                var promoPreco = preco * (1 - pct/100);
+                if (preview) preview.textContent = '→ R$ ' + promoPreco.toFixed(2).replace('.',',');
+                if (badge) badge.textContent = '-' + pct + '%';
+            } else {
+                if (preview) preview.textContent = '';
+                if (badge) badge.textContent = '';
+            }
+        }
+
         function addPizzaTamanho() {
             var row = document.createElement('div');
             row.className = 'pizza-tam-row';
