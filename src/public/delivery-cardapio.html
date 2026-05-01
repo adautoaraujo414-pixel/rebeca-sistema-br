@@ -470,16 +470,29 @@ async function carregarPagamentosConfig() {
         if (el) el.textContent = d.nomeRestaurante;
     }
     if (d.logo) {
+        // Logo no hero/topo
         var logoEl = document.getElementById('logoEstab');
         if (!logoEl) {
             logoEl = document.createElement('img');
             logoEl.id = 'logoEstab';
-            logoEl.style.cssText = 'max-height:52px;border-radius:10px;margin:0 auto 6px;display:block;object-fit:contain;';
+            logoEl.style.cssText = 'max-height:64px;border-radius:12px;margin:0 auto 8px;display:block;object-fit:contain;box-shadow:0 2px 12px rgba(0,0,0,.15);';
             logoEl.onerror = function(){ this.style.display='none'; };
             var hdr = document.getElementById('nomeEstab');
             if (hdr && hdr.parentNode) hdr.parentNode.insertBefore(logoEl, hdr);
         }
         logoEl.src = d.logo;
+
+        // Logo no header fixo (substitui o placeholder 🍽️)
+        var headerWrap = document.getElementById('headerLogoWrap');
+        if (headerWrap) {
+            headerWrap.innerHTML = '';
+            headerWrap.className = 'header-logo';
+            var headerLogoImg = document.createElement('img');
+            headerLogoImg.src = d.logo;
+            headerLogoImg.style.cssText = 'width:42px;height:42px;border-radius:11px;object-fit:cover;border:2px solid var(--accent);';
+            headerLogoImg.onerror = function(){ headerWrap.innerHTML = '🍽️'; headerWrap.className = 'header-logo-ph'; };
+            headerWrap.appendChild(headerLogoImg);
+        }
     }
     // Mostrar horário/status aberto
     if (d.horario) {
