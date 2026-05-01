@@ -345,7 +345,7 @@
 
         <!-- CADASTRO -->
         <div id="formCadastro">
-            <div class="trial-info">✅ Crie sua conta grátis — acesso imediato ao sistema</div>
+            <div class="trial-info">✅ Gratuito para começar — nossa equipe entra em contato após a aprovação</div>
             <div class="form-erro" id="erroC"></div>
             <div id="camposCadastro">
                 <div class="form-row">
@@ -372,7 +372,7 @@
                     <div class="form-group"><label>Senha * (mín. 6 caracteres)</label><input type="password" id="cSenha" placeholder="••••••••"></div>
                     <div class="form-group"><label>Confirmar senha *</label><input type="password" id="cSenha2" placeholder="••••••••"></div>
                 </div>
-                <button class="form-btn" id="btnCadastro" onclick="cadastrar()">🚀 Criar minha conta grátis</button>
+                <button class="form-btn" id="btnCadastro" onclick="cadastrar()">📩 Enviar Solicitação</button>
                 <p style="font-size:12px;color:#555;margin-top:12px;text-align:center;">Ao criar sua conta você concorda com nossos termos de uso.</p>
             </div>
             <div class="form-sucesso" id="sucessoCadastro">
@@ -565,15 +565,31 @@ async function cadastrar() {
             body: JSON.stringify({ nome, telefone, nomeComercio: comercio, tipoNegocio: tipo, cidade, email, senha, origem: 'landing' })
         });
         const d = await r.json();
-        if (d.sucesso && d.token) {
-            localStorage.setItem('delivery_token', d.token);
-            localStorage.setItem('delivery_adminId', d.adminId);
-            document.getElementById('camposCadastro').style.display = 'none';
-            document.getElementById('sucessoCadastro').style.display = 'block';
-            setTimeout(() => { window.location.replace('/delivery-admin?token=' + d.token); }, 1000);
-        } else {
-            mostrarErro(erro, d.erro || 'Erro ao criar conta. Tente novamente.');
-            btn.disabled = false; btn.textContent = '🚀 Criar minha conta grátis';
+        if (!r.ok || d.erro) {
+            mostrarErro(erro, d.erro || 'Erro ao enviar solicitacao');
+            btn.disabled = false;
+            btn.textContent = '📩 Enviar Solicitação';
+            return;
+        }
+        if (d.sucesso && d.pendente) {
+            const modal = document.querySelector('.modal');
+            if (modal) {
+                modal.innerHTML = '<div style="text-align:center;padding:30px 16px;">'
+                    + '<div style="font-size:58px;margin-bottom:16px;">🏆</div>'
+                    + '<h2 style="color:#fff;font-size:1.35em;margin-bottom:10px;">Obrigado pelo seu interesse!</h2>'
+                    + '<p style="color:#aaa;font-size:.93em;line-height:1.8;margin-bottom:22px;">'
+                    + 'Ficamos felizes em ter você aqui.<br>'
+                    + 'Nossa proposta é elevar o nível de gestão do seu negócio — <strong style="color:#ff9a56;">mais rapidez, mais vendas e menos dor de cabeça</strong>, tudo em um só lugar.<br><br>'
+                    + 'Nossa equipe vai analisar sua solicitação e <strong style="color:#fff;">entrar em contato com você pelo WhatsApp em breve</strong> para dar os próximos passos.'
+                    + '</p>'
+                    + '<div style="background:rgba(255,107,53,.08);border:1px solid rgba(255,107,53,.25);border-radius:14px;padding:16px 18px;margin-bottom:24px;">'
+                    + '<div style="color:#ff9a56;font-size:.75em;font-weight:800;letter-spacing:1px;margin-bottom:6px;">FIQUE DE OLHO NO SEU WHATSAPP</div>'
+                    + '<p style="color:#ccc;font-size:.88em;margin:0;line-height:1.6;">Vamos te chamar no número <strong style="color:#fff;">' + telefone + '</strong> para ativar seu acesso premium.</p>'
+                    + '</div>'
+                    + '<button onclick="fecharModal()" style="padding:14px 36px;background:linear-gradient(135deg,#ff6b35,#ff9a56);color:#fff;border:none;border-radius:12px;font-weight:800;font-size:1em;cursor:pointer;">Perfeito, aguardo o contato!</button>'
+                    + '</div>';
+            }
+            return;
         }
     } catch(e) {
         mostrarErro(erro, 'Erro de conexão. Tente novamente.');

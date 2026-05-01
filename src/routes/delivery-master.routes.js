@@ -80,4 +80,40 @@ router.post('/extender-trial/:id', authMaster, async (req, res) => {
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
+// ===== SOLICITAÇÕES PENDENTES =====
+// GET /api/delivery-master/solicitacoes-pendentes
+router.get('/solicitacoes-pendentes', authMaster, async (req, res) => {
+    try {
+        const { AdminDelivery } = require('../models/delivery.models');
+        const pendentes = await AdminDelivery.find({ status: 'pendente' })
+            .select('nome email telefone nomeComercio tipoNegocio cidade createdAt origem')
+            .sort({ createdAt: -1 }).lean();
+        res.json({ sucesso: true, pendentes });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// POST /api/delivery-master/aprovar/:id
+router.post('/aprovar/:id', authMaster, async (req, res) => {
+    try {
+        const { AdminDelivery } = require('../models/delivery.models');
+        const trialInicio = new Date();
+        const trialFim = new Date(trialInicio.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 dias após aprovação
+        const admin = await AdminDelivery.findByIdAndUpdate(req.params.id, {
+            status: 'trial', trialInicio, trialFim
+        }, { new: true });
+        if (!admin) return res.status(404).json({ erro: 'Não encontrado' });
+        console.log('[MASTER] Aprovado:', admin.nome, '|', admin.nomeComercio);
+        res.json({ sucesso: true, mensagem: 'Aprovado com sucesso!', admin });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// DELETE /api/delivery-master/rejeitar/:id
+router.delete('/rejeitar/:id', authMaster, async (req, res) => {
+    try {
+        const { AdminDelivery } = require('../models/delivery.models');
+        await AdminDelivery.findByIdAndUpdate(req.params.id, { status: 'rejeitado' });
+        res.json({ sucesso: true, mensagem: 'Solicitação rejeitada.' });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
 module.exports = router;

@@ -18,23 +18,19 @@ router.post('/cadastro', async (req, res) => {
 
         const hash = await bcrypt.hash(senha, 10);
         const token = crypto.randomBytes(32).toString('hex');
-        const trialInicio = new Date();
-        const trialFim = new Date(trialInicio.getTime() + 1 * 24 * 60 * 60 * 1000); // 24h — após isso solicita pagamento
 
         const admin = await AdminDelivery.create({
             nome, email: email.toLowerCase(), senha: hash,
             telefone, nomeComercio, tipoNegocio: tipoNegocio || 'restaurante',
-            cidade, token, trialInicio, trialFim,
-            status: 'trial', origem: origem || 'landing'
+            cidade, token,
+            status: 'pendente', origem: origem || 'landing'
         });
 
-        console.log('[DELIVERY CADASTRO]', nome, '|', nomeComercio, '| trial até', trialFim.toLocaleDateString('pt-BR'));
+        console.log('[DELIVERY SOLICITACAO]', nome, '|', nomeComercio, '| aguardando aprovacao do master');
         res.json({
             sucesso: true,
-            token,
-            adminId: admin._id,
-            trialFim: trialFim.toISOString(),
-            mensagem: 'Conta criada! Você tem 7 dias grátis.'
+            pendente: true,
+            mensagem: 'Solicitação enviada com sucesso!'
         });
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });

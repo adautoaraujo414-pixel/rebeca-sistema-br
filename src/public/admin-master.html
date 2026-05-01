@@ -382,7 +382,134 @@
                 } else { document.getElementById('loginError').textContent = data.erro || 'Erro ao fazer login'; }
             } catch (e) { document.getElementById('loginError').textContent = 'Erro de conexão'; }
         }
-        function fazerLogout() { location.reload(); }
+        // ===== PENDENTES DE APROVAÇÃO =====
+async function carregarPendentes() {
+    try {
+        const r = await fetch('/api/delivery-master/solicitacoes-pendentes', {
+            headers: { 'Authorization': 'Bearer ' + localStorage.getItem('masterToken') }
+        });
+        const d = await r.json();
+        const tbody = document.getElementById('tabelaPendentes');
+        const stat = document.getElementById('statPendentes');
+        if (stat) stat.textContent = d.pendentes ? d.pendentes.length : 0;
+        if (!d.pendentes || !d.pendentes.length) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#888;padding:30px;">Nenhuma solicitação pendente</td></tr>';
+            return;
+        }
+        tbody.innerHTML = d.pendentes.map(p => {
+            const data = new Date(p.createdAt).toLocaleDateString('pt-BR');
+            const hora = new Date(p.createdAt).toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'});
+            return '<tr>'
+                + '<td><strong>' + p.nome + '</strong></td>'
+                + '<td>' + p.email + '</td>'
+                + '<td>' + (p.nomeComercio || '-') + '<br><small style="color:#888;">' + (p.tipoNegocio || '') + ' • ' + (p.cidade || '') + '</small></td>'
+                + '<td><a href="https://wa.me/55' + p.telefone.replace(/\D/g,'') + '" target="_blank" style="color:#25d366;">' + p.telefone + '</a></td>'
+                + '<td>' + data + ' ' + hora + '</td>'
+                + '<td>'
+                + '<button class="btn btn-success btn-sm" onclick="aprovarPendente('' + p._id + '', this)" style="margin-right:6px;">✅ Aprovar</button>'
+                + '<button class="btn btn-danger btn-sm" onclick="rejeitarPendente('' + p._id + '', this)">❌ Rejeitar</button>'
+                + '</td>'
+                + '</tr>';
+        }).join('');
+    } catch(e) { console.error('Erro pendentes:', e); }
+}
+
+async function aprovarPendente(id, btn) {
+    if (!confirm('Aprovar esta solicitação?')) return;
+    btn.disabled = true; btn.textContent = 'Aprovando...';
+    try {
+        const r = await fetch('/api/delivery-master/aprovar/' + id, {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + localStorage.getItem('masterToken') }
+        });
+        const d = await r.json();
+        if (d.sucesso) {
+            alert('✅ Aprovado! Entre em contato com o cliente para informar.');
+            carregarPendentes();
+        } else {
+            alert('Erro: ' + d.erro);
+            btn.disabled = false; btn.textContent = '✅ Aprovar';
+        }
+    } catch(e) { btn.disabled = false; btn.textContent = '✅ Aprovar'; }
+}
+
+async function rejeitarPendente(id, btn) {
+    if (!confirm('Rejeitar esta solicitação?')) return;
+    btn.disabled = true; btn.textContent = 'Rejeitando...';
+    try {
+        const r = await fetch('/api/delivery-master/rejeitar/' + id, {
+            method: 'DELETE',
+            headers: { 'Authorization': 'Bearer ' + localStorage.getItem('masterToken') }
+        });
+        const d = await r.json();
+        if (d.sucesso) { carregarPendentes(); }
+        else { btn.disabled = false; btn.textContent = '❌ Rejeitar'; }
+    } catch(e) { btn.disabled = false; btn.textContent = '❌ Rejeitar'; }
+}
+
+
+// ===== PENDENTES DE APROVACAO =====
+async function carregarPendentes() {
+    try {
+        const r = await fetch('/api/delivery-master/solicitacoes-pendentes', {
+            headers: { 'Authorization': 'Bearer ' + localStorage.getItem('masterToken') }
+        });
+        const d = await r.json();
+        const tbody = document.getElementById('tabelaPendentes');
+        const stat = document.getElementById('statPendentes');
+        if (stat) stat.textContent = d.pendentes ? d.pendentes.length : 0;
+        if (!d.pendentes || !d.pendentes.length) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#888;padding:30px;">Nenhuma solicitacao pendente</td></tr>';
+            return;
+        }
+        tbody.innerHTML = d.pendentes.map(function(p) {
+            var dt = new Date(p.createdAt).toLocaleDateString('pt-BR');
+            var hr = new Date(p.createdAt).toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'});
+            var fone = p.telefone ? p.telefone.replace(/[^0-9]/g,'') : '';
+            return '<tr>'
+                + '<td><strong>' + p.nome + '</strong></td>'
+                + '<td>' + p.email + '</td>'
+                + '<td>' + (p.nomeComercio||'-') + '<br><small style="color:#888;">' + (p.tipoNegocio||'') + ' - ' + (p.cidade||'') + '</small></td>'
+                + '<td><a href="https://wa.me/55' + fone + '" target="_blank" style="color:#25d366;font-weight:700;">' + p.telefone + '</a></td>'
+                + '<td>' + dt + ' ' + hr + '</td>'
+                + '<td>'
+                + '<button class="btn btn-success btn-sm" style="margin-right:6px;" onclick="aprovarPendente('' + p._id + '')">Aprovar</button>'
+                + '<button class="btn btn-danger btn-sm" onclick="rejeitarPendente('' + p._id + '')">Rejeitar</button>'
+                + '</td></tr>';
+        }).join('');
+    } catch(e) { console.error('Erro pendentes:', e); }
+}
+
+async function aprovarPendente(id) {
+    if (!confirm('Aprovar esta solicitacao e liberar o acesso?')) return;
+    try {
+        const r = await fetch('/api/delivery-master/aprovar/' + id, {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + localStorage.getItem('masterToken') }
+        });
+        const d = await r.json();
+        if (d.sucesso) {
+            alert('Aprovado! Agora entre em contato com o cliente para informar.');
+            carregarPendentes();
+        } else {
+            alert('Erro: ' + (d.erro || 'Tente novamente'));
+        }
+    } catch(e) { alert('Erro ao aprovar'); }
+}
+
+async function rejeitarPendente(id) {
+    if (!confirm('Rejeitar esta solicitacao?')) return;
+    try {
+        const r = await fetch('/api/delivery-master/rejeitar/' + id, {
+            method: 'DELETE',
+            headers: { 'Authorization': 'Bearer ' + localStorage.getItem('masterToken') }
+        });
+        const d = await r.json();
+        if (d.sucesso) carregarPendentes();
+    } catch(e) { alert('Erro ao rejeitar'); }
+}
+
+function fazerLogout() { location.reload(); }
         async function carregarDashboard() {
             try {
                 const res = await fetch(`${API}/dashboard`);
