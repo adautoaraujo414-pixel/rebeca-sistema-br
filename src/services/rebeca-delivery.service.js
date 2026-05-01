@@ -148,6 +148,41 @@ Se quiser pedir mais tarde é só falar, tô à disposição.'
             const nomeRest = config?.nomeRestaurante || 'nosso restaurante';
             const cliente = await this.reconhecerCliente(telefone, nome, adminId);
 
+            // ===== DÚVIDA QUE PRECISA DO PROPRIETÁRIO =====
+            if (this._isDuvidaSemResposta(msgLower)) {
+                const primeiroNome = (nome || '').split(' ')[0] || '';
+                const encaminhou = await this._encaminharAoDono(adminId, instanciaId, telefone, nome, msgTexto);
+                if (encaminhou) {
+                    return this._unico(conversa, [
+                        `${primeiroNome ? primeiroNome + ', entendi.' : 'Entendi.'}
+
+Isso está fora do que consigo resolver diretamente.
+
+Já avisei o responsável pelo estabelecimento com sua mensagem e seu número.
+
+Ele pode entrar em contato com você em breve.`,
+                        `Certo, ${primeiroNome ? primeiroNome + '.' : ''}
+
+Vou encaminhar sua mensagem agora para o responsável pelo restaurante.
+
+Assim que ele ver, pode te responder diretamente.`,
+                        `${primeiroNome ? primeiroNome + ', anotado.' : 'Anotado.'}
+
+Passei sua mensagem para o proprietário com seu número.
+
+Você deve receber um retorno em breve.`,
+                    ]);
+                } else {
+                    return this._unico(conversa, [
+                        `Entendo sua situação.
+
+Nesse caso, recomendo entrar em contato diretamente com o estabelecimento para resolver da melhor forma.
+
+Posso ajudar com mais alguma coisa?`,
+                    ]);
+                }
+            }
+
             // ===== DETECÇÃO DE SENTIMENTOS E SITUAÇÕES =====
             const sentimento = this._detectarSentimento(msgLower);
             if (sentimento) {
@@ -762,6 +797,55 @@ Se quiser pedir mais tarde é só falar, tô à disposição.'
         if (urgencia.some(p => m.includes(p))) return 'urgencia';
 
         return null;
+    }
+
+    // ===== ENCAMINHAR DÚVIDA AO PROPRIETÁRIO =====
+    _isDuvidaSemResposta(msg) {
+        const m = msg.toLowerCase();
+        const padroes = [
+            'falar com o dono','falar com responsavel','falar com responsável',
+            'quero falar com alguem','quero falar com alguém','chamar o gerente',
+            'quero reclamar com','falar com o gerente','falar com o proprietario',
+            'falar com o proprietário','preciso falar com','quero falar com o dono',
+            'tem alguem que','tem alguém que','pode me passar','me passa o contato',
+            'numero do dono','número do dono','nao consigo resolver','não consigo resolver',
+            'isso nao ta certo','isso não tá certo','quero resolucao','quero resolução'
+        ];
+        return padroes.some(p => m.includes(p));
+    }
+
+    async _encaminharAoDono(adminId, instanciaId, telefoneCliente, nomeCliente, mensagem) {
+        try {
+            const { AdminDelivery } = require('../models/delivery.models');
+            const ConfigDelivery = require('../models/delivery.models').ConfigDelivery;
+            const adminDoc = await AdminDelivery.findById(adminId).lean();
+            const config = await ConfigDelivery.findOne({ adminId }).lean();
+            const telefoneDono = adminDoc?.telefoneDono || config?.telefoneDono || '';
+            if (!telefoneDono) return false;
+            const Evo = require('./evolution-multi.service');
+            const inst = await require('../models/delivery.models').InstanciaWhatsapp?.findOne({ adminId, status: { $in: ['conectado','open','connected'] } })
+                || await require('../models').InstanciaWhatsapp?.findOne({ adminId, status: { $in: ['conectado','open','connected'] } });
+            if (!inst) return false;
+            const msg = `📲 *Mensagem encaminhada pela Rebeca*
+
+`
+                + `👤 *Cliente:* ${nomeCliente || 'Cliente'}
+`
+                + `📞 *Número:* ${telefoneCliente}
+`
+                + `💬 *Dúvida/Mensagem:*
+"${mensagem}"
+
+`
+                + `Você pode responder diretamente para o cliente ou pedir para eu responder enviando:
+`
+                + `*REBECA RESPONDE [número] [mensagem]*`;
+            await Evo.enviarMensagem(inst._id, telefoneDono, msg);
+            return true;
+        } catch(e) {
+            console.log('[REBECA-DONO] Erro ao encaminhar:', e.message);
+            return false;
+        }
     }
 
     _responderSentimento(sentimento, nome, conversa, nomeRest) {
