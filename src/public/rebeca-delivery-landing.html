@@ -536,11 +536,11 @@ async function cadastrar() {
             setTimeout(() => { window.location.replace('/delivery-admin?token=' + d.token); }, 1000);
         } else {
             mostrarErro(erro, d.erro || 'Erro ao criar conta. Tente novamente.');
-            btn.disabled = false; btn.textContent = '🚀 Começar teste grátis';
+            btn.disabled = false; btn.textContent = '🚀 Criar minha conta grátis';
         }
     } catch(e) {
         mostrarErro(erro, 'Erro de conexão. Tente novamente.');
-        btn.disabled = false; btn.textContent = '🚀 Começar teste grátis';
+        btn.disabled = false; btn.textContent = '🚀 Criar minha conta grátis';
     }
 }
 
