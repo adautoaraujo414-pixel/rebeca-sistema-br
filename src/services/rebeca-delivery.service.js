@@ -731,6 +731,120 @@ Se quiser pedir mais tarde é só falar, tô à disposição.'
             conv.dados = { pedidoId: pedido._id };
         } catch(e) { console.log('[DELIVERY-NOTIF] Erro entregue:', e.message); }
     }
+
+    // ===== DETECÇÃO DE SENTIMENTO =====
+    _detectarSentimento(msg) {
+        const m = msg.toLowerCase();
+        const elogios = ['muito bom','muito boa','adorei','amei','que delicia','delicioso','deliciosa',
+            'excelente','parabens','ótimo','ótima','nota 10','maravilhoso','maravilhosa','incrivel',
+            'top demais','gostei muito','gostei bastante','recomendo','voltarei','vou voltar',
+            'ficou ótimo','ficou bom','tudo certo','aprovado','superou','que show','sensacional',
+            'muito gostoso','muito gostosa','ficou perfeito','ficou boa'];
+        if (elogios.some(p => m.includes(p))) return 'elogio';
+
+        const reclamacoes = ['demorou','demora','esperando','cade','cadê','sumiu','nao chegou','não chegou',
+            'frio','fria','errado','errada','faltou','faltando','diferente do que pedi',
+            'raiva','absurdo','pessimo','péssimo','horrivel','horrível','nao gostei','não gostei',
+            'decepcionado','decepcionada','frustrante','ruim','muito ruim','insatisfeito',
+            'problema','reclamar','reclamação','entrega atrasada','tarde demais','horas esperando',
+            'uma hora','duas horas','nao to satisfeito','não to satisfeito'];
+        if (reclamacoes.some(p => m.includes(p))) return 'reclamacao';
+
+        const sugestoes = ['sugestao','sugestão','sugiro','seria legal','podia ter','poderia ter',
+            'porque nao tem','por que não tem','falta no cardapio','falta no cardápio',
+            'seria bom ter','gostaria que tivesse','adicionem','coloca no cardapio',
+            'coloca no cardápio','podia adicionar'];
+        if (sugestoes.some(p => m.includes(p))) return 'sugestao';
+
+        const urgencia = ['to esperando','tô esperando','ja faz tempo','já faz tempo',
+            'cade meu pedido','cadê meu pedido','onde ta meu pedido','onde tá meu pedido',
+            'quando chega','vai demorar muito','quanto tempo ainda','faz quanto tempo'];
+        if (urgencia.some(p => m.includes(p))) return 'urgencia';
+
+        return null;
+    }
+
+    _responderSentimento(sentimento, nome, conversa, nomeRest) {
+        const n = nome ? nome + ',' : '';
+        const respostas = {
+            elogio: [
+                `Que bom ouvir isso, ${n} obrigada de verdade!
+
+Pra gente aqui, cada feedback assim faz toda diferença.
+
+Qualquer coisa que precisar, tô aqui.`,
+                `Fico muito feliz, ${n} sério mesmo!
+
+A gente se esforça bastante pra entregar bem.
+
+Foi um prazer atender você.`,
+                `Obrigada, ${n} isso aqui alegrou meu dia!
+
+Se tiver qualquer coisa que queira pedir ou sugerir, pode falar à vontade.
+
+Te esperamos mais vezes por aqui.`,
+                `Que mensagem boa de receber, ${n} muito obrigada!
+
+É pra isso que a gente trabalha.
+
+Se precisar de qualquer coisa, pode contar comigo.`,
+            ],
+            reclamacao: [
+                `${n} lamentamos muito o que aconteceu.
+
+Isso não é o padrão que a gente quer entregar pra você.
+
+Me conta melhor o que foi pra eu poder ajudar a resolver da melhor forma possível.`,
+                `Entendo sua insatisfação, ${n} e me desculpe pelo inconveniente.
+
+Não é assim que a gente quer que seja a experiência de quem nos escolhe.
+
+Me diz o que aconteceu que eu vejo o que posso fazer por você.`,
+                `Poxa, ${n} isso não deveria ter acontecido.
+
+Quero entender melhor o que foi pra resolver do jeito certo.
+
+Pode me contar mais detalhes?`,
+                `${n} sinto muito mesmo.
+
+Isso não é o que a gente quer pra você.
+
+Me fala o que houve que a gente resolve juntos.`,
+            ],
+            sugestao: [
+                `${n} que ótima sugestão, valeu mesmo por compartilhar!
+
+Vou passar isso pra equipe com certeza.
+
+A gente sempre busca melhorar e feedback de quem usa faz toda diferença.`,
+                `Adorei a ideia, ${n} obrigada por sugerir!
+
+Vou anotar aqui pra repassar a quem decide essas coisas.
+
+Tem mais alguma coisa que queira falar ou pedir?`,
+                `Boa sugestão, ${n} faz sentido mesmo!
+
+Vou garantir que chegue a quem precisa ver isso.
+
+Fique à vontade pra sugerir mais sempre que quiser.`,
+            ],
+            urgencia: [
+                `${n} entendo a situação, me desculpa a demora.
+
+Deixa eu verificar o que tá acontecendo com o seu pedido.
+
+Me confirma o que pediu ou quando fez o pedido pra eu conseguir ajudar melhor.`,
+                `Já verifico aqui pra você, ${n} pode deixar.
+
+Me passa mais detalhes do seu pedido que eu te dou um retorno rapidinho.`,
+                `${n} vou checar agora mesmo.
+
+Me confirma o pedido que eu te ajudo a resolver isso.`,
+            ],
+        };
+        const lista = respostas[sentimento] || respostas['elogio'];
+        return this._unico(conversa, lista);
+    }
 }
 
 module.exports = new RebecaDeliveryService();
