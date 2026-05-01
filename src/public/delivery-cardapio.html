@@ -1097,57 +1097,107 @@ function abrirCombo(combo) {
   document.body.style.overflow = 'hidden';
 }
 
+// Estado pizza
+var pizzaSelecionado = { tamanho: null, borda: null, adicionais: [], precoBase: 0 };
+function pizzaPrecoAtual() {
+  var base = pizzaSelecionado.tamanho ? pizzaSelecionado.tamanho.preco : (itemAtual ? Number(itemAtual.preco||0) : 0);
+  var borda = pizzaSelecionado.borda ? (pizzaSelecionado.borda.preco||0) : 0;
+  var adics = pizzaSelecionado.adicionais.reduce(function(s,a){ return s+(a.preco||0); }, 0);
+  return base + borda + adics;
+}
+function atualizarBtnPizza() {
+  var p = pizzaPrecoAtual() * qtyAtual;
+  var btn = document.getElementById('btnAddCart');
+  if (btn) btn.textContent = 'Adicionar ' + qtyAtual + (qtyAtual>1?' itens':' item') + ' — R$ ' + p.toFixed(2).replace('.',',');
+}
+function selecionarTamanhoPizza(idx) {
+  pizzaSelecionado.tamanho = (itemAtual.pizzaTamanhos||[])[idx]||null;
+  document.querySelectorAll('.pizza-tam-btn').forEach(function(b,i){ b.classList.toggle('active',i===idx); });
+  atualizarBtnPizza();
+  var pel=document.getElementById('pizzaPrecoDisplay');
+  if(pel) pel.textContent='R$ '+pizzaPrecoAtual().toFixed(2).replace('.',',');
+}
+function toggleBordaPizza(idx) {
+  var b=(itemAtual.pizzaBordas||[])[idx];
+  if(pizzaSelecionado.borda&&pizzaSelecionado.borda.nome===b.nome){
+    pizzaSelecionado.borda=null;
+    document.querySelectorAll('.pizza-borda-btn').forEach(function(x){x.classList.remove('active');});
+  } else {
+    pizzaSelecionado.borda=b;
+    document.querySelectorAll('.pizza-borda-btn').forEach(function(x,i){x.classList.toggle('active',i===idx);});
+  }
+  atualizarBtnPizza();
+}
+function toggleAdicionalPizza(idx) {
+  var a=(itemAtual.pizzaAdicionais||[])[idx];
+  var pos=pizzaSelecionado.adicionais.findIndex(function(x){return x.nome===a.nome;});
+  if(pos>=0){pizzaSelecionado.adicionais.splice(pos,1);document.querySelectorAll('.pizza-adic-btn')[idx].classList.remove('active');}
+  else{pizzaSelecionado.adicionais.push(a);document.querySelectorAll('.pizza-adic-btn')[idx].classList.add('active');}
+  atualizarBtnPizza();
+}
 function abrirItem(item) {
   itemAtual = item;
   ingrRetirados = [];
   qtyAtual = 1;
+  pizzaSelecionado = { tamanho:null, borda:null, adicionais:[], precoBase:Number(item.preco||0) };
   var ingrs = (item.ingredientes||'').split(',').map(function(s){ return s.trim(); }).filter(Boolean);
-  var imgHtml = item.imagem
-    ? '<img class="modal-img" src="' + item.imagem + '">'
-    : '<div class="modal-img-ph">' + '🍽️</div>';
-
-  var ingrsHtml = ingrs.length ? '<div class="modal-section"><div class="modal-section-title">🥗 Ingredientes (toque para retirar)</div>' +
+  var imgHtml = item.imagem ? '<img class="modal-img" src="'+item.imagem+'">' : '<div class="modal-img-ph">🍽️</div>';
+  var ingrsHtml = ingrs.length ? '<div class="modal-section"><div class="modal-section-title">🥗 Ingredientes (toque para retirar)</div>'+
     ingrs.map(function(ing){
-      var key = ing.replace(/[^a-zA-Z0-9]/g,'_');
-      return '<div class="ingr-item"><span class="ingr-nome">' + ing + '</span>' +
-        '<button class="btn-retirar" id="ingr-' + key + '" data-ing="' + ing.replace(/"/g,'&quot;') + '" onclick="toggleIngr(this)">' +
-        'Retirar</button></div>';
-    }).join('') + '</div>' : '';
-
-  document.getElementById('modalItemConteudo').innerHTML =
-    '<div style="position:relative;">' +
-      imgHtml +
-      '<button onclick="document.getElementById(\'overlayItem\').classList.remove(\'show\');document.body.style.overflow=\'\';" ' +
-        'style="position:absolute;top:12px;right:12px;width:36px;height:36px;border-radius:50%;background:rgba(0,0,0,.6);border:none;color:#fff;font-size:1.3em;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);z-index:10;">✕</button>' +
-    '</div>' +
-    '<div class="modal-body">' +
-      '<div class="modal-name">' + item.nome + '</div>' +
-      '<div class="modal-desc">' + (item.descricao||'') + '</div>' +
-      (item.bebidaVolume ? '<div class="modal-tag-cat">🥤 ' + item.bebidaVolume + '</div>' : '') +
-      (item.acaiTamanho ? '<div class="modal-tag-cat">🍇 ' + item.acaiTamanho + (item.acaiAcompanhamentos ? ' · ' + item.acaiAcompanhamentos : '') + '</div>' : '') +
-      (item.marmitaTamanho ? '<div class="modal-tag-cat">🍱 Tamanho ' + item.marmitaTamanho + (item.marmitaPeso ? ' · ' + item.marmitaPeso : '') + '</div>' : '') +
-      (item.marmitaConteudo ? '<div class="modal-tag-conteudo">📋 ' + item.marmitaConteudo + '</div>' : '') +
-      (item.marmitaTipo === 'self' ? '<div class="modal-tag-cat">⚖️ Self-service (por kg)</div>' : '') +
-      '<div class="modal-price">R$ ' + Number(item.preco||0).toFixed(2).replace('.',',') + '</div>' +
-      ingrsHtml +
-      '<div class="modal-section"><div class="modal-section-title">📝 Observações</div>' +
-        '<textarea class="obs-input" id="itemObs" placeholder="Ex: sem cebola, ponto da carne..."></textarea>' +
-      '</div>' +
-      '<div class="qty-row">' +
-        '<span style="font-size:.85em;color:var(--text2)">Quantidade</span>' +
-        '<div class="qty-ctrl">' +
-          '<button class="qty-btn" onclick="mudarQty(-1)">−</button>' +
-          '<span class="qty-num" id="qtyNum">1</span>' +
-          '<button class="qty-btn" onclick="mudarQty(1)">+</button>' +
-        '</div>' +
-      '</div>' +
-      '<button class="btn-add-cart" id="btnAddCart" onclick="adicionarAoCarrinho()">Adicionar — R$ ' + Number(item.preco||0).toFixed(2).replace('.',',') + '</button>' +
+      var key=ing.replace(/[^a-zA-Z0-9]/g,'_');
+      return '<div class="ingr-item"><span class="ingr-nome">'+ing+'</span><button class="btn-retirar" id="ingr-'+key+'" data-ing="'+ing.replace(/"/g,'&quot;')+'" onclick="toggleIngr(this)">Retirar</button></div>';
+    }).join('')+'</div>' : '';
+  var isPizza = item.tipoProduto==='pizza'||(item.pizzaTamanhos&&item.pizzaTamanhos.length>0);
+  var precoExibir = Number(item.preco||0);
+  var pizzaHtml = '';
+  if(isPizza){
+    var tams=item.pizzaTamanhos||[], bordas=item.pizzaBordas||[], adics=item.pizzaAdicionais||[];
+    if(tams.length) precoExibir=Math.min.apply(null,tams.map(function(t){return t.preco;}));
+    pizzaHtml+='<div class="modal-section"><div class="modal-section-title">🍕 Tamanho *</div><div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:4px;">';
+    tams.forEach(function(t,i){
+      pizzaHtml+='<button class="pizza-tam-btn" onclick="selecionarTamanhoPizza('+i+')" style="padding:10px 16px;border-radius:10px;border:2px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;font-family:inherit;font-size:.85em;transition:all .2s;"><strong>'+t.nome+'</strong>'+(t.descricao?'<br><span style="font-size:.75em;color:var(--text2);">'+t.descricao+'</span>':'')+'<br><span style="color:var(--accent);font-weight:800;">R$ '+Number(t.preco).toFixed(2).replace('.',',')+'</span></button>';
+    });
+    pizzaHtml+='</div></div>';
+    if(bordas.length){
+      pizzaHtml+='<div class="modal-section"><div class="modal-section-title">🧀 Borda</div><div style="display:flex;flex-wrap:wrap;gap:8px;">';
+      bordas.forEach(function(b,i){
+        pizzaHtml+='<button class="pizza-borda-btn" onclick="toggleBordaPizza('+i+')" style="padding:8px 14px;border-radius:20px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;font-size:.82em;font-family:inherit;transition:all .2s;">'+b.nome+(b.preco>0?' <span style="color:var(--accent);">+R$ '+Number(b.preco).toFixed(2).replace('.',',')+'</span>':'')+'</button>';
+      });
+      pizzaHtml+='</div></div>';
+    }
+    if(adics.length){
+      pizzaHtml+='<div class="modal-section"><div class="modal-section-title">➕ Adicionais</div><div style="display:flex;flex-wrap:wrap;gap:8px;">';
+      adics.forEach(function(a,i){
+        pizzaHtml+='<button class="pizza-adic-btn" onclick="toggleAdicionalPizza('+i+')" style="padding:8px 14px;border-radius:20px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;font-size:.82em;font-family:inherit;transition:all .2s;">'+a.nome+(a.preco>0?' <span style="color:var(--accent);">+R$ '+Number(a.preco).toFixed(2).replace('.',',')+'</span>':'')+'</button>';
+      });
+      pizzaHtml+='</div></div>';
+    }
+  }
+  if(!document.getElementById('pizza-style')){
+    var s=document.createElement('style');s.id='pizza-style';
+    s.textContent='.pizza-tam-btn.active,.pizza-borda-btn.active,.pizza-adic-btn.active{background:var(--accent)!important;border-color:var(--accent)!important;color:#fff!important;}';
+    document.head.appendChild(s);
+  }
+  document.getElementById('modalItemConteudo').innerHTML=
+    '<div style="position:relative;">'+imgHtml+
+    '<button onclick="document.getElementById('overlayItem').classList.remove('show');document.body.style.overflow='';" style="position:absolute;top:12px;right:12px;width:36px;height:36px;border-radius:50%;background:rgba(0,0,0,.6);border:none;color:#fff;font-size:1.3em;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);z-index:10;">✕</button></div>'+
+    '<div class="modal-body">'+
+    '<div class="modal-name">'+item.nome+(isPizza?' 🍕':'')+'</div>'+
+    '<div class="modal-desc">'+(item.descricao||'')+'</div>'+
+    (item.bebidaVolume?'<div class="modal-tag-cat">🥤 '+item.bebidaVolume+'</div>':'')+
+    (item.acaiTamanho?'<div class="modal-tag-cat">🍇 '+item.acaiTamanho+'</div>':'')+
+    (item.marmitaTamanho?'<div class="modal-tag-cat">🍱 Tamanho '+item.marmitaTamanho+'</div>':'')+
+    (item.marmitaConteudo?'<div class="modal-tag-conteudo">📋 '+item.marmitaConteudo+'</div>':'')+
+    '<div class="modal-price" id="pizzaPrecoDisplay">'+(isPizza?'A partir de ':'')+'R$ '+precoExibir.toFixed(2).replace('.',',')+'</div>'+
+    pizzaHtml+ingrsHtml+
+    '<div class="modal-section"><div class="modal-section-title">📝 Observações</div><textarea class="obs-input" id="itemObs" placeholder="Ex: sem cebola..."></textarea></div>'+
+    '<div class="qty-row"><span style="font-size:.85em;color:var(--text2)">Quantidade</span><div class="qty-ctrl"><button class="qty-btn" onclick="mudarQty(-1)">−</button><span class="qty-num" id="qtyNum">1</span><button class="qty-btn" onclick="mudarQty(1)">+</button></div></div>'+
+    (isPizza&&tams.length?'<div style="color:#f97316;font-size:.75em;text-align:center;margin-bottom:8px;">* Selecione o tamanho</div>':'')+
+    '<button class="btn-add-cart" id="btnAddCart" onclick="adicionarAoCarrinho()">Adicionar — R$ '+precoExibir.toFixed(2).replace('.',',')+'</button>'+
     '</div>';
-
   document.getElementById('overlayItem').classList.add('show');
-  document.body.style.overflow = 'hidden';
+  document.body.style.overflow='hidden';
 }
-
 function fecharItem(e) {
   if (e && e.target !== document.getElementById('overlayItem')) return;
   document.getElementById('overlayItem').classList.remove('show');
