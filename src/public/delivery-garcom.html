@@ -424,7 +424,7 @@ function mostrarAlertaGarcom(msg, tipo) {
   setTimeout(function(){ el.style.opacity='0'; el.style.transition='opacity .5s'; setTimeout(function(){ el.remove(); },500); }, 5000);
   // Notificação browser
   if (Notification.permission === 'granted') new Notification('Rebeca — Garçom', { body: msg });
-} || '';
+}
 
 if (_savedToken) {
   document.getElementById('inputToken').value = _savedToken;
