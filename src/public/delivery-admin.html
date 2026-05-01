@@ -1330,7 +1330,13 @@
                 if (!d.sucesso) {
                     localStorage.removeItem('delivery_token');
                     const erroEl = document.getElementById('loginErro');
-                    if (erroEl && (d.bloqueado || d.trialExpirado)) { erroEl.textContent = d.erro; erroEl.style.display = 'block'; }
+                    if (d.trialExpirado) {
+                        // Mostrar tela de ativação do plano
+                        document.getElementById('loginContainer').style.display = 'none';
+                        document.getElementById('telaAtivacao').style.display = 'flex';
+                        return;
+                    }
+                    if (erroEl && d.bloqueado) { erroEl.textContent = d.erro; erroEl.style.display = 'block'; }
                     return;
                 }
                 adminData = d.admin;
@@ -5079,5 +5085,32 @@ document.getElementById('caixaOperadorInput').addEventListener('keypress', funct
     if (e.key === 'Enter') confirmarAbrirCaixa();
 });
 </script>
+<!-- ===== TELA DE ATIVAÇÃO DO PLANO ===== -->
+<div id="telaAtivacao" style="display:none;position:fixed;inset:0;background:#07071a;z-index:99999;flex-direction:column;align-items:center;justify-content:center;padding:24px;">
+    <div style="max-width:440px;width:100%;background:#12122a;border-radius:20px;padding:32px 28px;text-align:center;border:1px solid #2a2a4a;">
+        <div style="font-size:48px;margin-bottom:12px;">🔓</div>
+        <h2 style="color:#fff;font-size:1.5em;margin-bottom:8px;">Seu acesso gratuito expirou</h2>
+        <p style="color:#aaa;font-size:.92em;margin-bottom:24px;line-height:1.6;">
+            Você usou seu período gratuito de 24h.<br>
+            Para continuar usando a Rebeca Delivery, ative seu plano agora.
+        </p>
+        <div style="background:#1a1a3a;border-radius:14px;padding:20px;margin-bottom:20px;border:1px solid #f97316;">
+            <div style="color:#f97316;font-weight:800;font-size:.8em;letter-spacing:1px;margin-bottom:6px;">PRÓXIMO PASSO</div>
+            <p style="color:#fff;font-size:.9em;line-height:1.6;margin:0;">
+                Entre em contato com nossa equipe para ativar seu plano e continuar vendendo sem interrupções.
+            </p>
+        </div>
+        <a href="https://wa.me/5534984039955?text=Oi!%20Quero%20ativar%20meu%20plano%20da%20Rebeca%20Delivery"
+           target="_blank"
+           style="display:block;width:100%;padding:16px;background:#25d366;color:#000;border-radius:12px;font-weight:800;font-size:1em;text-decoration:none;margin-bottom:12px;">
+            💬 Falar com a equipe no WhatsApp
+        </a>
+        <button onclick="document.getElementById('telaAtivacao').style.display='none';document.getElementById('loginContainer').style.display='flex';"
+            style="width:100%;padding:12px;background:transparent;color:#666;border:1px solid #333;border-radius:12px;cursor:pointer;font-size:.9em;">
+            Voltar ao login
+        </button>
+    </div>
+</div>
+
 </body>
 </html>

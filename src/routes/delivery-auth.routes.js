@@ -19,7 +19,7 @@ router.post('/cadastro', async (req, res) => {
         const hash = await bcrypt.hash(senha, 10);
         const token = crypto.randomBytes(32).toString('hex');
         const trialInicio = new Date();
-        const trialFim = new Date(trialInicio.getTime() + 7 * 24 * 60 * 60 * 1000);
+        const trialFim = new Date(trialInicio.getTime() + 1 * 24 * 60 * 60 * 1000); // 24h — após isso solicita pagamento
 
         const admin = await AdminDelivery.create({
             nome, email: email.toLowerCase(), senha: hash,
