@@ -766,7 +766,9 @@ function criarCardScroll(item, badgeClass, badgeLabel) {
       '<div class="item-name">' + item.nome + '</div>' +
       '<div class="item-desc">' + (item.descricao||'') + '</div>' +
       '<div class="item-footer">' +
-        '<div class="item-price">R$ ' + Number(item.preco||0).toFixed(2).replace('.',',') + '</div>' +
+        '<div>' + (temPromo
+          ? '<span class="item-preco-riscado">R$ ' + Number(item.preco||0).toFixed(2).replace('.',',') + '</span><span class="item-price" style="color:#ef4444;">R$ ' + Number(item.precoPromo||0).toFixed(2).replace('.',',') + '</span>'
+          : '<span class="item-price">R$ ' + Number(item.preco||0).toFixed(2).replace('.',',') + '</span>') + '</div>' +
         '<button class="item-add-btn" onclick="event.stopPropagation();adicionarRapido(event,\'' + item._id + '\')">+</button>' +
       '</div>' +
     '</div>';

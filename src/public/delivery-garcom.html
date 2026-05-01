@@ -395,7 +395,36 @@ const tokenURL = urlParams.get('token');
 
 // Persistência: salvar token da URL e recuperar credenciais salvas
 const _savedToken = tokenURL || localStorage.getItem('garcom_token') || '';
-const _savedSenha = localStorage.getItem('garcom_senha') || '';
+const _savedSenha = localStorage.getItem('garcom_senha')
+
+// ===== SSE: notificações em tempo real para o garçom =====
+var _garcomSse = null;
+function conectarSSEGarcom(token) {
+  if (_garcomSse) _garcomSse.close();
+  _garcomSse = new EventSource('/api/delivery/garcons/eventos?token=' + token);
+  _garcomSse.addEventListener('novo_pedido_mesa', function(e) {
+    var d = JSON.parse(e.data);
+    mostrarAlertaGarcom('🍽️ Novo pedido! Mesa ' + d.mesa + ' — R$ ' + Number(d.total||0).toFixed(2).replace('.',','), 'pedido');
+    if (navigator.vibrate) navigator.vibrate([300,100,300]);
+    carregarMesas();
+  });
+  _garcomSse.addEventListener('pedido_conta', function(e) {
+    var d = JSON.parse(e.data);
+    mostrarAlertaGarcom('💰 Mesa ' + d.mesa + ' pediu a CONTA!', 'conta');
+    if (navigator.vibrate) navigator.vibrate([500,200,500,200,500]);
+  });
+  _garcomSse.onerror = function() { setTimeout(function(){ if(_garcomToken) conectarSSEGarcom(_garcomToken); }, 5000); };
+}
+function mostrarAlertaGarcom(msg, tipo) {
+  var el = document.createElement('div');
+  var cor = tipo === 'conta' ? '#f59e0b' : '#22c55e';
+  el.style.cssText = 'position:fixed;top:70px;left:50%;transform:translateX(-50%);background:'+cor+';color:#000;padding:14px 24px;border-radius:12px;font-weight:800;z-index:9999;font-size:.95em;box-shadow:0 8px 32px rgba(0,0,0,.3);max-width:90vw;text-align:center;';
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(function(){ el.style.opacity='0'; el.style.transition='opacity .5s'; setTimeout(function(){ el.remove(); },500); }, 5000);
+  // Notificação browser
+  if (Notification.permission === 'granted') new Notification('Rebeca — Garçom', { body: msg });
+} || '';
 
 if (_savedToken) {
   document.getElementById('inputToken').value = _savedToken;
@@ -441,6 +470,10 @@ async function fazerLogin() {
     // Salvar credenciais para auto-login
     localStorage.setItem('garcom_token', tk);
     localStorage.setItem('garcom_senha', senha);
+    // Conectar SSE para notificações em tempo real
+    conectarSSEGarcom(tk);
+    // Pedir permissão de notificação
+    if (Notification.permission === 'default') Notification.requestPermission();
     document.getElementById('nomeGarcom').textContent = '👤 '+garcomNome;
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app').style.display = 'flex';

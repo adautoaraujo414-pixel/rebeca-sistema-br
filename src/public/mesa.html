@@ -130,6 +130,32 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;backgrou
 const API = '/api/delivery';
 let adminSlug = new URLSearchParams(location.search).get('r') || '';
 let mesa = '', nomeCliente = '', cardapio = [], carrinho = [];
+let _adminId = ''; // preenchido após login
+
+async function pedirConta() {
+  const btn = document.getElementById('btnPedirConta');
+  if (!_adminId || !mesa) { alert('Faça o login na mesa primeiro.'); return; }
+  if (!confirm('Deseja solicitar a conta para a Mesa ' + mesa + '?')) return;
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Solicitando...'; }
+  try {
+    const r = await fetch(API + '/garcons/pedir-conta', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminId: _adminId, mesa, nomeCliente })
+    });
+    const d = await r.json();
+    if (d.sucesso) {
+      if (btn) { btn.textContent = '✅ Conta solicitada!'; btn.style.background = '#22c55e'; }
+      showToast('✅ Garçom notificado! A conta está chegando.');
+    } else {
+      if (btn) { btn.disabled = false; btn.textContent = '💰 Pedir a Conta'; }
+      showToast('Erro: ' + (d.erro || 'Tente novamente'));
+    }
+  } catch(e) {
+    if (btn) { btn.disabled = false; btn.textContent = '💰 Pedir a Conta'; }
+    showToast('Erro de conexão. Tente novamente.');
+  }
+}
 
 // ====== LOGIN ======
 async function entrar() {
@@ -146,6 +172,7 @@ async function entrar() {
     if (!d.sucesso) { err.textContent = d.erro || 'Restaurante não encontrado'; return; }
     mesa = m; nomeCliente = n;
     cardapio = d.itens || [];
+    _adminId = d.adminId || '';
     document.getElementById('nomeRest').textContent = d.nomeEstabelecimento || 'Restaurante';
     document.getElementById('infoMesa').textContent = `Mesa ${mesa} · Olá, ${nomeCliente}!`;
     document.getElementById('loginWrap').style.display = 'none';
@@ -278,6 +305,7 @@ async function carregarConta() {
         <div style="color:#aaa;font-size:.85em">Total consumido</div>
         <div style="font-size:2em;font-weight:700;color:#00cc6a;margin-top:4px">R$ ${total.toFixed(2)}</div>
         <div style="color:#555;font-size:.78em;margin-top:8px">Solicite o fechamento ao garçom</div>
+        <button onclick="pedirConta()" style="margin-top:16px;width:100%;padding:14px;background:#f59e0b;color:#000;border:none;border-radius:10px;font-size:1em;font-weight:700;cursor:pointer;" id="btnPedirConta">💰 Pedir a Conta</button>
       </div>`;
   } catch(e) { console.error(e); }
 }

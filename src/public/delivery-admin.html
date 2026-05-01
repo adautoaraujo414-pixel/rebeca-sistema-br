@@ -976,7 +976,11 @@
                                 <button onclick="imprimirQR()" style="padding:8px 16px;background:#fff2;border:1px solid #555;color:#fff;border-radius:8px;cursor:pointer">🖨️ Imprimir QR</button>
                             </div>
                         </div>
-                        <button onclick="gerarQR()" id="btnGerarQR" style="padding:12px 24px;background:#f97316;border:none;color:#000;border-radius:10px;font-weight:700;cursor:pointer">🔲 Gerar QR Code</button>
+                        <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px;">
+                            <label style="color:#aaa;font-size:.85em;white-space:nowrap;">Mesas (1 até):</label>
+                            <input type="number" id="qtdMesas" value="10" min="1" max="50" style="width:80px;padding:8px;border-radius:8px;border:1px solid #333;background:#1a1a2e;color:#fff;font-size:.9em;">
+                        </div>
+                        <button onclick="gerarQR()" id="btnGerarQR" style="padding:12px 24px;background:#f97316;border:none;color:#000;border-radius:10px;font-weight:700;cursor:pointer">🔲 Gerar QR Codes por Mesa</button>
                     </div>
 
                     <div class="panel">
@@ -3916,6 +3920,12 @@ function iniciarSSE() {
         }, window._sseRetryDelay);
     };
     _sseConn.onopen = function() { window._sseRetryDelay = 5000; }; // reset delay ao conectar
+    _sseConn.addEventListener('pedido_conta', function(e) {
+        var d = JSON.parse(e.data);
+        toast('💰 Mesa ' + d.mesa + ' pediu a CONTA! Cliente: ' + (d.nomeCliente||'') , 8000);
+        if (Notification.permission === 'granted') new Notification('💰 Pedido de Conta!', { body: 'Mesa ' + d.mesa + ' solicitou a conta.' });
+        if (navigator.vibrate) navigator.vibrate([500,200,500,200,500]);
+    });
     _sseConn.addEventListener('entregador_sem_resposta', function(e) {
         var d = JSON.parse(e.data);
         toast('⚠️ ' + (d.mensagem || 'Nenhum entregador aceitou o pedido em 3 minutos!'), 6000);

@@ -1492,6 +1492,34 @@ router.get('/garcons/cardapio', async (req, res) => {
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
+// ===== SSE para garçom (por token) =====
+router.get('/garcons/eventos', async (req, res) => {
+    const token = req.query.token || req.headers.authorization?.replace('Bearer ','');
+    if (!token) return res.status(401).end();
+    const g = await GarcomDelivery.findOne({ token, ativo: true });
+    if (!g) return res.status(401).end();
+    const SseService = require('../services/sse.service');
+    // Reutilizar canal do admin para garçom (mesmo adminId)
+    SseService.registrar('garcom_' + g._id.toString(), res);
+});
+
+// ===== PEDIR CONTA (cliente solicita pelo mesa.html) =====
+router.post('/garcons/pedir-conta', async (req, res) => {
+    try {
+        const { adminId, mesa, nomeCliente } = req.body;
+        if (!adminId || !mesa) return res.status(400).json({ erro: 'adminId e mesa obrigatorios' });
+        const SseService = require('../services/sse.service');
+        // Notificar admin
+        SseService.emitir(adminId.toString(), 'pedido_conta', { mesa, nomeCliente: nomeCliente || 'Cliente' });
+        // Notificar todos garçons do admin via SSE
+        const garcons = await GarcomDelivery.find({ adminId, ativo: true });
+        garcons.forEach(g => {
+            SseService.emitir('garcom_' + g._id.toString(), 'pedido_conta', { mesa, nomeCliente: nomeCliente || 'Cliente' });
+        });
+        res.json({ sucesso: true });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
 router.post('/garcons/pedido', async (req, res) => {
     try {
         const { garcomToken, mesa, itens, observacao } = req.body;
@@ -1526,7 +1554,21 @@ router.post('/garcons/pedido', async (req, res) => {
             origemPedido: 'garcom',
             formaPagamento: 'na_entrega'
         });
-        try { const _Sse = require('../services/sse.service'); _Sse.emitir(g.adminId?.toString(), 'novo_pedido', { pedidoId: pedido._id, origem: 'garcom' }); } catch(_) {}
+        try {
+            const _Sse = require('../services/sse.service');
+            // Notificar admin
+            _Sse.emitir(g.adminId?.toString(), 'novo_pedido', { pedidoId: pedido._id, origem: 'mesa', mesa: mesa || 'S/N' });
+            // Notificar todos garçons ativos do admin
+            const _garcons = await GarcomDelivery.find({ adminId: g.adminId, ativo: true });
+            _garcons.forEach(gc => {
+                _Sse.emitir('garcom_' + gc._id.toString(), 'novo_pedido_mesa', {
+                    pedidoId: pedido._id,
+                    mesa: mesa || 'S/N',
+                    total: total,
+                    nomeCliente: nomeCliente || 'Cliente'
+                });
+            });
+        } catch(_) { console.log('[SSE-GARCOM]', _.message); }
         res.json({ sucesso: true, pedido });
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
@@ -1806,6 +1848,25 @@ router.get('/salon/pix-key', authDelivery, async (req, res) => {
 
 // Pedido do garcom (autenticado pelo token pessoal GRC-xxx)
 
+
+// Cardápio público por slug (usado pelo mesa.html)
+router.get('/mesa/cardapio', async (req, res) => {
+    try {
+        const slug = req.query.r;
+        if (!slug) return res.status(400).json({ erro: 'Slug obrigatorio' });
+        const admin = await AdminDelivery.findOne({ slug });
+        if (!admin) return res.status(404).json({ sucesso: false, erro: 'Restaurante não encontrado' });
+        const itens = await ItemCardapio.find({ adminId: admin._id, ativo: true })
+            .sort({ ordem: 1 })
+            .populate('categoriaId', 'nome emoji');
+        res.json({
+            sucesso: true,
+            adminId: admin._id.toString(),
+            nomeEstabelecimento: admin.nomeEstabelecimento || admin.nomeComercio || 'Restaurante',
+            itens
+        });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
 
 // QR Code do restaurante - gerar slug se não tiver
 router.get('/mesa/qr', authDelivery, async (req, res) => {
