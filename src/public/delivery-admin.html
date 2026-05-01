@@ -3811,6 +3811,16 @@ function iniciarSSE() {
         }, window._sseRetryDelay);
     };
     _sseConn.onopen = function() { window._sseRetryDelay = 5000; }; // reset delay ao conectar
+    _sseConn.addEventListener('entregador_sem_resposta', function(e) {
+        var d = JSON.parse(e.data);
+        toast('⚠️ ' + (d.mensagem || 'Nenhum entregador aceitou o pedido em 3 minutos!'), 6000);
+        if (Notification.permission === 'granted') new Notification('⚠️ Entregador sem resposta!', { body: d.mensagem || '' });
+        if (navigator.vibrate) navigator.vibrate([500,200,500,200,500]);
+    });
+    _sseConn.addEventListener('pedido_aceito_entregador', function(e) {
+        var d = JSON.parse(e.data);
+        toast('✅ Pedido #' + d.numero + ' aceito por ' + d.entregadorNome + '!', 4000);
+    });
     _sseConn.addEventListener('pedido_pronto', function(e) {
         var dados = JSON.parse(e.data);
         // Som diferente para pedido pronto
