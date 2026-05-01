@@ -127,9 +127,15 @@ class RebecaDeliveryService {
             if (msgLower === 'cancelar') {
                 conversa.etapa = 'inicio'; conversa.carrinho = []; conversa.dados = {};
                 return this._unico(conversa, [
-                    'Tudo bem! Cancelei tudo por aqui 😊 Quando quiser é só chamar!',
-                    'Ok, cancelado! Qualquer coisa tô aqui 😄',
-                    'Beleza! Zerado por aqui. Se quiser pedir depois é só falar! 💛'
+                    'Tudo bem, cancelei tudo por aqui.
+
+Sempre que quiser fazer um pedido novo é só chamar.',
+                    'Ok, cancelado.
+
+Qualquer coisa que precisar, tô por aqui.',
+                    'Beleza, zerado por aqui.
+
+Se quiser pedir mais tarde é só falar, tô à disposição.'
                 ]);
             }
 
@@ -141,6 +147,13 @@ class RebecaDeliveryService {
             const config = await ConfigDelivery.findOne({ adminId }).lean();
             const nomeRest = config?.nomeRestaurante || 'nosso restaurante';
             const cliente = await this.reconhecerCliente(telefone, nome, adminId);
+
+            // ===== DETECÇÃO DE SENTIMENTOS E SITUAÇÕES =====
+            const sentimento = this._detectarSentimento(msgLower);
+            if (sentimento) {
+                const primeiroNome = (nome || '').split(' ')[0] || '';
+                return this._responderSentimento(sentimento, primeiroNome, conversa, nomeRest);
+            }
 
             switch (conversa.etapa) {
                 case 'inicio':          return await this._etapaInicio(conversa, msgLower, msgTexto, nome, cliente, config, nomeRest, adminId);
