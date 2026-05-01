@@ -169,6 +169,87 @@ if(!TK){
 }
 var B='/api/delivery';
 var F='fila';
+
+// ===== SSE: receber notificações em tempo real =====
+var _sseEnt = null;
+function conectarSSEEntregador() {
+  if (!TK) return;
+  if (_sseEnt) _sseEnt.close();
+  _sseEnt = new EventSource(B + '/entregador/eventos?token=' + TK);
+  _sseEnt.addEventListener('novo_pedido_disponivel', function(e) {
+    var d = JSON.parse(e.data);
+    mostrarPopupAceitar(d);
+    if (navigator.vibrate) navigator.vibrate([400,100,400,100,400]);
+  });
+  _sseEnt.onerror = function() {
+    setTimeout(conectarSSEEntregador, 5000); // reconectar
+  };
+}
+if (TK) conectarSSEEntregador();
+
+function mostrarPopupAceitar(d) {
+  // Remover popup anterior se existir
+  var ant = document.getElementById('popupAceitar');
+  if (ant) ant.remove();
+
+  var popup = document.createElement('div');
+  popup.id = 'popupAceitar';
+  popup.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
+  popup.innerHTML =
+    '<div style="background:#1a1a2e;border:2px solid #f97316;border-radius:16px;padding:24px;width:100%;max-width:380px;text-align:center;">' +
+    '<div style="font-size:2em;margin-bottom:8px;">🏍️</div>' +
+    '<div style="color:#f97316;font-size:1.1em;font-weight:900;margin-bottom:4px;">NOVO PEDIDO!</div>' +
+    '<div style="color:#fff;font-size:1.3em;font-weight:800;margin-bottom:8px;">#' + (d.numero||'?') + '</div>' +
+    '<div style="color:#93c5fd;font-size:.9em;margin-bottom:4px;">📍 ' + (d.endereco||'Retirada') + '</div>' +
+    '<div style="color:#aaa;font-size:.82em;margin-bottom:4px;">' + (d.itens||'') + '</div>' +
+    '<div style="color:#22c55e;font-size:1.1em;font-weight:800;margin-bottom:16px;">R$ ' + Number(d.total||0).toFixed(2).replace('.',',') + '</div>' +
+    '<div id="popupTimer" style="color:#f97316;font-size:.85em;margin-bottom:12px;font-weight:700;">⏱️ <span id="popupSeg">180</span>s para aceitar</div>' +
+    '<button onclick="aceitarPedidoPopup('' + d.pedidoId + '',this)" style="width:100%;padding:14px;background:linear-gradient(135deg,#f97316,#ea580c);border:none;border-radius:10px;color:#fff;font-size:1em;font-weight:900;cursor:pointer;margin-bottom:8px;">✅ ACEITAR ENTREGA</button>' +
+    '<button onclick="document.getElementById('popupAceitar').remove();clearInterval(window._popupTimer);" style="width:100%;padding:10px;background:rgba(239,68,68,.15);border:1px solid #ef4444;border-radius:10px;color:#ef4444;font-size:.85em;cursor:pointer;">❌ Recusar</button>' +
+    '</div>';
+  document.body.appendChild(popup);
+
+  // Countdown
+  var seg = 180;
+  window._popupTimer = setInterval(function() {
+    seg--;
+    var el = document.getElementById('popupSeg');
+    if (el) el.textContent = seg;
+    if (seg <= 0) {
+      clearInterval(window._popupTimer);
+      var p = document.getElementById('popupAceitar');
+      if (p) p.remove();
+    }
+  }, 1000);
+}
+
+async function aceitarPedidoPopup(pedidoId, btn) {
+  btn.disabled = true;
+  btn.textContent = 'Aceitando...';
+  try {
+    var r = await fetch(B + '/entregador/' + pedidoId + '/aceitar?token=' + TK, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    var d = await r.json();
+    clearInterval(window._popupTimer);
+    document.getElementById('popupAceitar').remove();
+    if (r.ok && d.sucesso) {
+      mostrarBanner('✅ Pedido aceito! Você está na rota.');
+      _entregasAtivas.add(pedidoId);
+      iniciarGPS();
+      filtrar('saiu_entrega');
+      carregar();
+    } else {
+      mostrarBanner('⚠️ ' + (d.erro || 'Pedido já foi aceito por outro entregador.'));
+      carregar();
+    }
+  } catch(e) {
+    btn.disabled = false;
+    btn.textContent = '✅ ACEITAR ENTREGA';
+    mostrarBanner('Erro de conexão. Tente novamente.');
+  }
+}
 var GPS={lat:null,lng:null};
 var pedidosAnteriores=new Set();
 var todosPedidos=[];

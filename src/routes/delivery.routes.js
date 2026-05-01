@@ -440,7 +440,25 @@ router.put('/cozinha/:id/pronto', authDelivery, async (req, res) => {
             const RebecaDeliveryService = require('../services/rebeca-delivery.service');
             await RebecaDeliveryService.notificarClientePronto(pedido._id);
         } catch(e) { console.log('[COZINHA] Erro notificar pronto:', e.message); }
-        try { const _Sse = require('../services/sse.service'); _Sse.emitir(pedido.adminId?.toString(), 'pedido_pronto', { pedidoId: pedido._id, numero: pedido.numero, origem: pedido.origemPedido || 'cozinha' }); } catch(_) {}
+        try {
+            const _Sse = require('../services/sse.service');
+            // Notificar admin
+            _Sse.emitir(pedido.adminId?.toString(), 'pedido_pronto', { pedidoId: pedido._id, numero: pedido.numero, origem: pedido.origemPedido || 'cozinha' });
+            // Notificar todos entregadores ativos deste admin via SSE
+            const _entsAtivos = await Entregador.find({ adminId: pedido.adminId, ativo: true }).lean();
+            const _tokens = _entsAtivos.map(e => e.token).filter(Boolean);
+            if (_tokens.length > 0) {
+                _Sse.emitirParaEntregadores(_tokens, 'novo_pedido_disponivel', {
+                    pedidoId: pedido._id.toString(),
+                    numero: pedido.numero,
+                    endereco: pedido.enderecoEntrega || 'Retirada',
+                    total: pedido.total || pedido.valorTotal || 0,
+                    itens: (pedido.itens || []).map(i => i.quantidade + 'x ' + i.nome).join(', ')
+                });
+                // Timer: avisar admin se ninguém aceitar em 3 minutos
+                _Sse.iniciarTimerAlerta(pedido._id.toString(), pedido.adminId.toString(), 180);
+            }
+        } catch(_) { console.log('[SSE-ENTREGADOR] Erro:', _.message); }
         console.log('[COZINHA] Pedido #' + pedido.numero + ' PRONTO');
         res.json(pedido);
     } catch(e) { res.status(500).json({ erro: e.message }); }
@@ -1087,10 +1105,66 @@ router.put('/entregador/status', async (req, res) => {
 
 // ========== CAIXA ==========
 
-// ===== SSE — eventos em tempo real =====
+// ===== SSE — eventos em tempo real (admin) =====
 router.get('/eventos', authDelivery, (req, res) => {
     const SseService = require('../services/sse.service');
     SseService.registrar(req.adminId.toString(), res);
+});
+
+// ===== SSE — eventos para entregador (por token) =====
+router.get('/entregador/eventos', async (req, res) => {
+    const token = req.query.token || req.headers.authorization?.replace('Bearer ','');
+    if (!token) return res.status(401).end();
+    const entregador = await Entregador.findOne({ token }).lean();
+    if (!entregador || !entregador.ativo) return res.status(401).end();
+    const SseService = require('../services/sse.service');
+    SseService.registrarEntregador(token, res);
+});
+
+// ===== ACEITAR PEDIDO (primeiro entregador que aceitar trava) =====
+router.put('/entregador/:id/aceitar', async (req, res) => {
+    try {
+        const token = req.query.token || req.headers.authorization?.replace('Bearer ','');
+        if (!token) return res.status(401).json({ erro: 'Token obrigatório' });
+        const entregador = await Entregador.findOne({ token });
+        if (!entregador || !entregador.ativo) return res.status(401).json({ erro: 'Entregador inválido' });
+
+        // Trava atômica: só aceita se ainda estiver 'pronto' e sem entregador
+        const pedido = await PedidoDelivery.findOneAndUpdate(
+            { _id: req.params.id, adminId: entregador.adminId, status: 'pronto', entregadorId: { $in: [null, undefined] } },
+            {
+                status: 'saiu_entrega',
+                dataSaiuEntrega: new Date(),
+                entregadorNome: entregador.nome,
+                entregadorId: entregador._id
+            },
+            { new: true }
+        );
+
+        if (!pedido) {
+            return res.status(409).json({ erro: 'Pedido já foi aceito por outro entregador ou não está disponível.' });
+        }
+
+        // Cancelar timer de alerta pois alguém aceitou
+        const SseService = require('../services/sse.service');
+        SseService.cancelarTimerAlerta(req.params.id);
+
+        // Notificar admin que entregador aceitou
+        SseService.emitir(entregador.adminId.toString(), 'pedido_aceito_entregador', {
+            pedidoId: pedido._id,
+            numero: pedido.numero,
+            entregadorNome: entregador.nome
+        });
+
+        // Notificar cliente
+        try {
+            const RebecaDeliveryService = require('../services/rebeca-delivery.service');
+            await RebecaDeliveryService.notificarSaiuEntrega(pedido._id, entregador.nome);
+        } catch(e) { console.log('[ACEITAR] Erro notificar cliente:', e.message); }
+
+        console.log('[ACEITAR] Pedido #' + pedido.numero + ' aceito por ' + entregador.nome);
+        res.json({ sucesso: true, pedido });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
 // ===== IMPRESSORA — gerar cupom 3 vias =====
