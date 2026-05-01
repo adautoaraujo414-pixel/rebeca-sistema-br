@@ -1433,7 +1433,7 @@
         }
 
         // Ao carregar config existente, mostrar preview se tiver logo
-        const _cfgLogoOrigSet = set;
+        const _cfgLogoOrigSet = typeof set !== "undefined" ? set : null;
 
         function logout() {
             localStorage.removeItem('delivery_token');
@@ -2453,6 +2453,7 @@ async function _salvarItemReal() {
 
         // ===== WHATSAPP QR CODE DELIVERY =====
         let instanciaDeliveryId = null; // carregado após login em carregarInstanciaDelivery()
+        var instanciaDeliveryId = null;
         function carregarInstanciaDelivery() {
             if (adminData && adminData._id) {
                 instanciaDeliveryId = localStorage.getItem('instanciaDeliveryId_' + adminData._id) || null;
@@ -4434,7 +4435,7 @@ async function enviarCardapioDia() {
             row.innerHTML = '<input type="text" placeholder="Ex: GG" class="ptam-nome" style="padding:8px;border-radius:7px;border:1px solid #333;background:#0d0d1a;color:#fff;font-size:.82em;text-align:center;font-weight:700;">' +
                 '<input type="text" placeholder="Ex: 10 fatias" class="ptam-desc" style="padding:8px;border-radius:7px;border:1px solid #333;background:#0d0d1a;color:#fff;font-size:.82em;">' +
                 '<input type="number" placeholder="R$ 0,00" class="ptam-preco" step="0.50" style="padding:8px;border-radius:7px;border:1px solid #333;background:#0d0d1a;color:#fff;font-size:.82em;">' +
-                '<button type="button" onclick="this.closest('.pizza-tam-row').remove()" style="padding:6px 10px;background:rgba(239,68,68,.15);border:1px solid #ef4444;border-radius:7px;color:#ef4444;cursor:pointer;font-size:.8em;">✕</button>';
+                '<button type="button" onclick="this.closest(\'.pizza-tam-row\').remove()" style="padding:6px 10px;background:rgba(239,68,68,.15);border:1px solid #ef4444;border-radius:7px;color:#ef4444;cursor:pointer;font-size:.8em;">&#x2715;</button>';
             document.getElementById('pizzaTamanhosContainer').appendChild(row);
         }
         function addPizzaBorda() {
