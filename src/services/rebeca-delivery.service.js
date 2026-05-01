@@ -127,15 +127,9 @@ class RebecaDeliveryService {
             if (msgLower === 'cancelar') {
                 conversa.etapa = 'inicio'; conversa.carrinho = []; conversa.dados = {};
                 return this._unico(conversa, [
-                    'Tudo bem, cancelei tudo por aqui.
-
-Sempre que quiser fazer um pedido novo é só chamar.',
-                    'Ok, cancelado.
-
-Qualquer coisa que precisar, tô por aqui.',
-                    'Beleza, zerado por aqui.
-
-Se quiser pedir mais tarde é só falar, tô à disposição.'
+                    'Tudo bem, cancelei tudo por aqui. Sempre que quiser fazer um pedido novo é só chamar.',
+                    'Ok, cancelado. Qualquer coisa que precisar, tô por aqui.',
+                    'Beleza, zerado por aqui. Se quiser pedir mais tarde é só falar, tô à disposição.'
                 ]);
             }
 
