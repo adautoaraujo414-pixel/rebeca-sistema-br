@@ -137,7 +137,7 @@ function adicionarFornProd() {
   row.style.cssText = 'display:flex;gap:6px;margin-bottom:6px;';
   row.innerHTML = '<input class="forn-prod-nome" placeholder="Ex: Coca-Cola 2L" style="flex:2;padding:8px;border-radius:7px;border:1px solid #333;background:#0d0d1a;color:#fff;font-size:.82em;">'
     + '<input class="forn-prod-unidade" placeholder="Un/Cx" style="width:60px;padding:8px;border-radius:7px;border:1px solid #333;background:#0d0d1a;color:#fff;font-size:.82em;">'
-    + '<button type="button" onclick="this.closest('.forn-prod-row').remove()" style="padding:6px 10px;background:rgba(239,68,68,.15);border:1px solid #ef4444;border-radius:7px;color:#ef4444;cursor:pointer;font-size:.8em;">✕</button>';
+    + '<button type="button" onclick="this.closest(\'.forn-prod-row\').remove()" style="padding:6px 10px;background:rgba(239,68,68,.15);border:1px solid #ef4444;border-radius:7px;color:#ef4444;cursor:pointer;font-size:.8em;">✕</button>';
   c.appendChild(row);
 }
 
@@ -5619,7 +5619,7 @@ document.getElementById('caixaOperadorInput').addEventListener('keypress', funct
 
 // ==================== MÓDULO FINANCEIRO ====================
 
-async async function carregarFinanceiroCaixas() {
+async function carregarFinanceiroCaixas() {
   try {
     // 1. Buscar stats do dia
     const rs = await fetch('/api/delivery/caixa/stats', { headers: { Authorization: 'Bearer ' + token } });
