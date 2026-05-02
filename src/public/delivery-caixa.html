@@ -498,7 +498,7 @@ async function sair() {
   location.reload();
 }
 
-async async function iniciarApp(admin) {
+async function iniciarApp(admin) {
   document.getElementById('login-screen').style.display = 'none';
   const app = document.getElementById('app');
   app.style.display = 'flex';
@@ -1562,7 +1562,7 @@ async function fecharCaixa() {
         document.getElementById('fc-pedidos').textContent = stats.totalPedidos || 0;
         document.getElementById('fc-cancelados').textContent = stats.totalCancelados || 0;
         window._fcaixaId = caixa._id;
-    } catch(e) { toast('Erro ao abrir fechamento: ' + e.message, 'error');ge, 'error'); }
+    } catch(e) { toast('Erro ao abrir fechamento: ' + e.message, 'error'); }
 }
 document.addEventListener('DOMContentLoaded', () => {
     setTimeout(verificarStatusCaixa, 1500);
