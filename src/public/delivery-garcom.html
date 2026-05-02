@@ -464,7 +464,7 @@ async function fazerLogin() {
       body: JSON.stringify({token:tk, senha})
     });
     const d = await r.json();
-    if (!d.sucesso) { err.textContent = d.erro||'Token ou senha inválidos'; return; }
+    if (!d.sucesso) { err.textContent = d.erro||'Token ou senha inválidos'; localStorage.removeItem('garcom_token'); localStorage.removeItem('garcom_senha'); return; }
     token = tk;
     garcomNome = d.garcom?.nome || 'Garçom';
     // Salvar credenciais para auto-login
