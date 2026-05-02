@@ -234,22 +234,62 @@ async function carregarConfigNF() {
 
     
                 <!-- FINANCEIRO CAIXAS -->
-                <div id="page-financeiro-caixas" class="page">
-                  <h2 style="margin-bottom:20px">📋 Fechamentos de Caixa</h2>
-                  <div class="stats-grid" id="fc-stats-grid">
-                    <div class="stat-card"><div class="valor" id="fc-total-dia">R$ 0</div><div class="label">Total Vendido Hoje</div></div>
-                    <div class="stat-card"><div class="valor" id="fc-dinheiro-dia" style="color:#22c55e">R$ 0</div><div class="label">💵 Dinheiro</div></div>
-                    <div class="stat-card"><div class="valor" id="fc-cartao-dia" style="color:#3b82f6">R$ 0</div><div class="label">💳 Cartão</div></div>
-                    <div class="stat-card"><div class="valor" id="fc-pix-dia" style="color:#8b5cf6">R$ 0</div><div class="label">📱 Pix</div></div>
+                <div id="page-financeiro-caixas" class="page" style="padding:20px">
+                  <!-- Cabeçalho -->
+                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px">
+                    <h2>📊 Dashboard Financeiro</h2>
+                    <button onclick="carregarFinanceiroCaixas()" style="background:#f97316;color:#fff;border:none;border-radius:10px;padding:9px 20px;cursor:pointer;font-weight:700">🔄 Atualizar</button>
                   </div>
-                  <div class="panel">
-                    <h3>📋 Histórico de Fechamentos</h3>
-                    <div style="display:flex;gap:10px;margin-bottom:15px;flex-wrap:wrap">
-                      <input type="date" id="fc-data-ini" style="padding:8px 12px;border-radius:8px;border:1px solid #ddd;background:#fff">
-                      <input type="date" id="fc-data-fim" style="padding:8px 12px;border-radius:8px;border:1px solid #ddd;background:#fff">
-                      <button onclick="carregarFinanceiroCaixas()" style="background:#f97316;color:#fff;border:none;border-radius:8px;padding:8px 16px;cursor:pointer;font-weight:700">🔍 Filtrar</button>
+
+                  <!-- Cards de totais -->
+                  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:20px">
+                    <div style="background:#fff;border:1px solid #e8e8ed;border-radius:12px;padding:16px;text-align:center">
+                      <div id="fc-total-dia" style="font-size:1.4em;font-weight:900;color:#f97316">R$ 0</div>
+                      <div style="font-size:.78em;color:#888;margin-top:4px">💰 Faturamento Hoje</div>
                     </div>
-                    <div id="fc-lista-caixas"><div style="color:#888;text-align:center;padding:40px">Carregando...</div></div>
+                    <div style="background:#fff;border:1px solid #e8e8ed;border-radius:12px;padding:16px;text-align:center">
+                      <div id="fc-pedidos-dia" style="font-size:1.4em;font-weight:900;color:#3b82f6">0</div>
+                      <div style="font-size:.78em;color:#888;margin-top:4px">📦 Pedidos Hoje</div>
+                    </div>
+                    <div style="background:#fff;border:1px solid #e8e8ed;border-radius:12px;padding:16px;text-align:center">
+                      <div id="fc-ticket-dia" style="font-size:1.4em;font-weight:900;color:#8b5cf6">R$ 0</div>
+                      <div style="font-size:.78em;color:#888;margin-top:4px">🎯 Ticket Médio</div>
+                    </div>
+                    <div style="background:#fff;border:1px solid #e8e8ed;border-radius:12px;padding:16px;text-align:center">
+                      <div id="fc-cancelados-dia" style="font-size:1.4em;font-weight:900;color:#ef4444">0</div>
+                      <div style="font-size:.78em;color:#888;margin-top:4px">❌ Cancelados</div>
+                    </div>
+                    <div id="fc-resultado-card" style="background:#f0fdf4;border:2px solid #22c55e;border-radius:12px;padding:16px;text-align:center">
+                      <div id="fc-resultado-emoji" style="font-size:1.6em">✅</div>
+                      <div id="fc-resultado-label" style="font-size:.78em;font-weight:700;color:#16a34a;margin-top:4px">No Positivo</div>
+                    </div>
+                  </div>
+
+                  <!-- Gráfico de origens + produtos mais vendidos -->
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+                    <!-- Origens -->
+                    <div style="background:#fff;border:1px solid #e8e8ed;border-radius:12px;padding:20px">
+                      <h3 style="font-size:.95em;font-weight:800;margin-bottom:16px">📡 Origem dos Pedidos</h3>
+                      <canvas id="fc-chart-origens" height="180"></canvas>
+                    </div>
+                    <!-- Produtos mais vendidos -->
+                    <div style="background:#fff;border:1px solid #e8e8ed;border-radius:12px;padding:20px">
+                      <h3 style="font-size:.95em;font-weight:800;margin-bottom:12px">🏆 Produtos Mais Vendidos</h3>
+                      <div id="fc-top-produtos"><div style="color:#888;text-align:center;padding:20px">Carregando...</div></div>
+                    </div>
+                  </div>
+
+                  <!-- Histórico -->
+                  <div style="background:#fff;border:1px solid #e8e8ed;border-radius:12px;padding:20px">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+                      <h3 style="font-size:.95em;font-weight:800">📋 Histórico de Fechamentos</h3>
+                      <div style="display:flex;gap:8px;flex-wrap:wrap">
+                        <input type="date" id="fc-data-ini" style="padding:7px 10px;border-radius:8px;border:1px solid #ddd;font-size:.85em">
+                        <input type="date" id="fc-data-fim" style="padding:7px 10px;border-radius:8px;border:1px solid #ddd;font-size:.85em">
+                        <button onclick="carregarFinanceiroCaixas()" style="background:#f97316;color:#fff;border:none;border-radius:8px;padding:7px 14px;cursor:pointer;font-weight:700;font-size:.85em">🔍 Filtrar</button>
+                      </div>
+                    </div>
+                    <div id="fc-lista-caixas"><div style="color:#888;text-align:center;padding:40px">Clique em Atualizar para carregar</div></div>
                   </div>
                 </div>
 
@@ -5579,125 +5619,147 @@ document.getElementById('caixaOperadorInput').addEventListener('keypress', funct
 
 // ==================== MÓDULO FINANCEIRO ====================
 
-async function carregarFinanceiroCaixas() {
+async async function carregarFinanceiroCaixas() {
   try {
-    const r = await fetch('/api/delivery/caixa/historico?limite=50', { headers: { Authorization: 'Bearer ' + token } });
-    const caixas = await r.json();
-    const lista = document.getElementById('fc-lista-caixas');
-    if (!lista) return;
-    if (!caixas.length) { lista.innerHTML = '<div style="color:#888;text-align:center;padding:40px">Nenhum fechamento encontrado</div>'; return; }
-    // Totais do dia
-    const hoje = new Date().toDateString();
-    const diaAtual = caixas.filter(c => new Date(c.dataFechamento).toDateString() === hoje);
-    const tdDia = diaAtual.reduce((s,c) => s + (c.totalFaturamento||0), 0);
-    const tdDin = diaAtual.reduce((s,c) => s + (c.totalDinheiro||0), 0);
-    const tdCart = diaAtual.reduce((s,c) => s + (c.totalCartao||0), 0);
-    const tdPix = diaAtual.reduce((s,c) => s + (c.totalPix||0), 0);
-    const el = (id) => document.getElementById(id);
-    if (el('fc-total-dia')) el('fc-total-dia').textContent = 'R$ ' + tdDia.toFixed(2);
-    if (el('fc-dinheiro-dia')) el('fc-dinheiro-dia').textContent = 'R$ ' + tdDin.toFixed(2);
-    if (el('fc-cartao-dia')) el('fc-cartao-dia').textContent = 'R$ ' + tdCart.toFixed(2);
-    if (el('fc-pix-dia')) el('fc-pix-dia').textContent = 'R$ ' + tdPix.toFixed(2);
-    lista.innerHTML = caixas.map(c => {
-      const diff = c.diferencaDinheiro || 0;
-      const diffHtml = diff === 0 ? '<span style="color:#22c55e">✅ Confere</span>' : (diff > 0 ? '<span style="color:#f59e0b">💰 Sobra R$ '+Math.abs(diff).toFixed(2)+'</span>' : '<span style="color:#ef4444">⚠️ Falta R$ '+Math.abs(diff).toFixed(2)+'</span>');
-      const ops = (c.vendasPorOperador||[]).map(o => `<span style="background:#f5f5f7;padding:2px 8px;border-radius:20px;font-size:.75em;margin-right:4px">${o.operador}: R$ ${(o.totalVendas||0).toFixed(2)}</span>`).join('');
-      return `<div style="background:#fff;border:1px solid #e8e8ed;border-radius:12px;padding:16px;margin-bottom:12px">
-        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
-          <div>
-            <div style="font-weight:700;font-size:.95em">${new Date(c.dataFechamento||c.dataAbertura).toLocaleString('pt-BR')} — <span style="color:#f97316">Caixa ${c.numeroCaixa||1}</span></div>
-            <div style="font-size:.8em;color:#888;margin-top:2px">Operador: ${c.fechadoPor||c.abertoPor||'—'} · ${c.totalPedidos||0} pedidos · ${c.totalCancelados||0} cancelados</div>
-            <div style="margin-top:6px">${ops}</div>
-          </div>
-          <div style="text-align:right">
-            <div style="font-size:1.3em;font-weight:900;color:#f97316">R$ ${(c.totalFaturamento||0).toFixed(2)}</div>
-            <div style="font-size:.75em;color:#888;margin-top:2px">💵 R$ ${(c.totalDinheiro||0).toFixed(2)} · 💳 R$ ${(c.totalCartao||0).toFixed(2)} · 📱 R$ ${(c.totalPix||0).toFixed(2)}</div>
-            <div style="font-size:.8em;margin-top:4px">${diffHtml}</div>
-          </div>
-        </div>
-      </div>`;
-    }).join('');
-  } catch(e) { console.error(e); }
+    // 1. Buscar stats do dia
+    const rs = await fetch('/api/delivery/caixa/stats', { headers: { Authorization: 'Bearer ' + token } });
+    const stats = await rs.json();
+
+    // 2. Preencher cards
+    const totalDia = stats.totalDia || 0;
+    const pedidos = stats.entreguesHoje || 0;
+    const ticket = stats.ticketMedio || 0;
+    const cancelados = stats.canceladosHoje || 0;
+    const contas = JSON.parse(localStorage.getItem('fin_contas_adm')||'[]');
+    const hoje = new Date(); hoje.setHours(0,0,0,0);
+    const despesasHoje = contas.filter(c => c.vencimento && new Date(c.vencimento) >= hoje).reduce((s,c) => s + (parseFloat(c.valor)||0), 0);
+    const lucro = totalDia - despesasHoje;
+
+    const el = id => document.getElementById(id);
+    if(el('fc-total-dia')) el('fc-total-dia').textContent = 'R$ ' + totalDia.toFixed(2);
+    if(el('fc-pedidos-dia')) el('fc-pedidos-dia').textContent = pedidos;
+    if(el('fc-ticket-dia')) el('fc-ticket-dia').textContent = 'R$ ' + ticket.toFixed(2);
+    if(el('fc-cancelados-dia')) el('fc-cancelados-dia').textContent = cancelados;
+
+    // 3. Card resultado verde/vermelho
+    const card = el('fc-resultado-card');
+    const emoji = el('fc-resultado-emoji');
+    const label = el('fc-resultado-label');
+    if(card && emoji && label) {
+      if(lucro >= 0) {
+        card.style.background='#f0fdf4'; card.style.borderColor='#22c55e';
+        emoji.textContent='✅'; label.style.color='#16a34a';
+        label.textContent='Positivo +R$ '+lucro.toFixed(2);
+      } else {
+        card.style.background='#fef2f2'; card.style.borderColor='#ef4444';
+        emoji.textContent='🔴'; label.style.color='#dc2626';
+        label.textContent='No Vermelho R$ '+lucro.toFixed(2);
+      }
+    }
+
+    // 4. Gráfico de origens (pizza simples SVG)
+    const canvas = el('fc-chart-origens');
+    if(canvas) {
+      const wpp = stats.doWhatsapp || 0;
+      const cxa = stats.doCaixa || 0;
+      const total = wpp + cxa || 1;
+      const pWpp = Math.round(wpp/total*100);
+      const pCxa = 100 - pWpp;
+      canvas.outerHTML = '<div id="fc-chart-origens" style="display:flex;flex-direction:column;gap:10px;margin-top:8px">'+
+        '<div>'+
+          '<div style="display:flex;justify-content:space-between;font-size:.82em;margin-bottom:4px"><span>📱 WhatsApp</span><span style="font-weight:700">'+wpp+' ('+pWpp+'%)</span></div>'+
+          '<div style="background:#e5e7eb;border-radius:20px;height:12px"><div style="background:#22c55e;width:'+pWpp+'%;height:100%;border-radius:20px"></div></div>'+
+        '</div>'+
+        '<div>'+
+          '<div style="display:flex;justify-content:space-between;font-size:.82em;margin-bottom:4px"><span>🧾 Caixa</span><span style="font-weight:700">'+cxa+' ('+pCxa+'%)</span></div>'+
+          '<div style="background:#e5e7eb;border-radius:20px;height:12px"><div style="background:#f97316;width:'+pCxa+'%;height:100%;border-radius:20px"></div></div>'+
+        '</div>'+
+        '<div style="margin-top:8px;padding-top:8px;border-top:1px solid #e8e8ed;font-size:.82em;color:#888">'+
+          '<div>📦 Em preparação: <b>'+( stats.emPreparacao||0)+'</b></div>'+
+          '<div>✅ Prontos: <b>'+(stats.prontos||0)+'</b></div>'+
+          '<div>🛵 Saindo: <b>'+(stats.saindoEntrega||0)+'</b></div>'+
+          (stats.mediaEntregaMin?'<div>⏱ Média entrega: <b>'+stats.mediaEntregaMin+' min</b></div>':'')+
+        '</div>'+
+      '</div>';
+    }
+
+    // 5. Produtos mais vendidos (busca pedidos entregues hoje)
+    const topDiv = el('fc-top-produtos');
+    if(topDiv) {
+      try {
+        const rp = await fetch('/api/delivery/pedidos?status=entregue&limite=200', { headers: { Authorization: 'Bearer ' + token } });
+        const pedidosData = await rp.json();
+        const pedidosHoje = (Array.isArray(pedidosData)?pedidosData:pedidosData.pedidos||[]).filter(p => {
+          const d = new Date(p.dataEntregue||p.createdAt||p.updatedAt);
+          return d >= hoje;
+        });
+        const contagem = {};
+        pedidosHoje.forEach(p => {
+          (p.itens||[]).forEach(it => {
+            const nome = it.nome||it.name||'Item';
+            contagem[nome] = (contagem[nome]||0) + (it.quantidade||it.qty||1);
+          });
+        });
+        const top = Object.entries(contagem).sort((a,b)=>b[1]-a[1]).slice(0,6);
+        if(top.length) {
+          const maxQty = top[0][1];
+          topDiv.innerHTML = top.map(([nome,qty],i)=>{
+            const pct = Math.round(qty/maxQty*100);
+            const cores = ['#f97316','#3b82f6','#22c55e','#8b5cf6','#f59e0b','#ec4899'];
+            return '<div style="margin-bottom:10px">'+
+              '<div style="display:flex;justify-content:space-between;font-size:.82em;margin-bottom:3px">'+
+                '<span>'+(i===0?'🥇':i===1?'🥈':i===2?'🥉':'  ')+' '+nome+'</span>'+
+                '<span style="font-weight:700;color:'+cores[i]+'">'+qty+'x</span>'+
+              '</div>'+
+              '<div style="background:#e5e7eb;border-radius:20px;height:10px">'+
+                '<div style="background:'+cores[i]+';width:'+pct+'%;height:100%;border-radius:20px"></div>'+
+              '</div>'+
+            '</div>';
+          }).join('');
+        } else {
+          topDiv.innerHTML = '<div style="color:#888;text-align:center;padding:20px">Nenhum pedido entregue hoje</div>';
+        }
+      } catch(e2) {
+        topDiv.innerHTML = '<div style="color:#888;text-align:center;padding:20px">Não foi possível carregar produtos</div>';
+      }
+    }
+
+    // 6. Histórico de fechamentos
+    const lista = el('fc-lista-caixas');
+    if(lista) {
+      try {
+        const ini = el('fc-data-ini')?.value;
+        const fim2 = el('fc-data-fim')?.value;
+        let url = '/api/delivery/caixa/historico?limite=50';
+        if(ini) url += '&dataIni='+ini;
+        if(fim2) url += '&dataFim='+fim2;
+        const rh = await fetch(url, { headers: { Authorization: 'Bearer ' + token } });
+        const caixas = await rh.json();
+        if(!Array.isArray(caixas)||!caixas.length) {
+          lista.innerHTML = '<div style="color:#888;text-align:center;padding:30px">Nenhum fechamento encontrado</div>';
+        } else {
+          lista.innerHTML = caixas.map(c => {
+            const abertura = new Date(c.dataAbertura).toLocaleString('pt-BR');
+            const fechamento = c.dataFechamento ? new Date(c.dataFechamento).toLocaleString('pt-BR') : '—';
+            const tot = (c.totalVendas||c.totalDia||0).toFixed(2);
+            return '<div style="border:1px solid #e8e8ed;border-radius:10px;padding:14px;margin-bottom:8px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px">'+
+              '<div>'+
+                '<div style="font-weight:700;font-size:.9em">👤 '+(c.abertoPor||c.operador||'—')+'</div>'+
+                '<div style="font-size:.78em;color:#888">🟢 '+abertura+' → 🔴 '+fechamento+'</div>'+
+              '</div>'+
+              '<div style="text-align:right">'+
+                '<div style="font-weight:800;color:#f97316">R$ '+tot+'</div>'+
+                '<div style="font-size:.75em;color:#888">'+(c.totalPedidos||0)+' pedidos</div>'+
+              '</div>'+
+            '</div>';
+          }).join('');
+        }
+      } catch(e3) {
+        lista.innerHTML = '<div style="color:#888;text-align:center;padding:30px">Erro ao carregar histórico</div>';
+      }
+    }
+  } catch(e) { console.error('carregarFinanceiroCaixas:', e); }
 }
-
-async function carregarLucroProdutos() {
-  try {
-    const periodo = document.getElementById('lucro-periodo')?.value || 'mes';
-    let dataIni, dataFim = new Date();
-    if (periodo === 'hoje') { dataIni = new Date(); dataIni.setHours(0,0,0,0); }
-    else if (periodo === 'semana') { dataIni = new Date(Date.now() - 7*24*60*60*1000); }
-    else if (periodo === 'mes') { dataIni = new Date(); dataIni.setDate(1); dataIni.setHours(0,0,0,0); }
-    else { dataIni = new Date(document.getElementById('lucro-data-ini')?.value||Date.now()); dataFim = new Date(document.getElementById('lucro-data-fim')?.value||Date.now()); }
-
-    // Buscar pedidos pagos do período
-    const r = await fetch('/api/delivery/caixa/todos?dataIni='+dataIni.toISOString()+'&dataFim='+dataFim.toISOString(), { headers: { Authorization: 'Bearer ' + token } });
-    const pedidos = await r.json();
-
-    // Buscar itens do cardápio para pegar custo
-    const rc = await fetch('/api/delivery/cardapio', { headers: { Authorization: 'Bearer ' + token } });
-    const cardapio = await rc.json();
-    const custoMap = {};
-    (cardapio.itens||cardapio||[]).forEach(i => { custoMap[i.nome] = i.custoProducao || i.custo || 0; });
-
-    // Calcular lucro por produto
-    const produtos = {};
-    (pedidos||[]).forEach(p => {
-      (p.itens||[]).forEach(it => {
-        const nome = it.nome||'Item';
-        if (!produtos[nome]) produtos[nome] = { nome, qtd:0, receitaTotal:0, custoTotal:0 };
-        const qtd = it.qtd || it.quantidade || 1;
-        const preco = it.preco || it.precoUnitario || 0;
-        const custo = custoMap[nome] || 0;
-        produtos[nome].qtd += qtd;
-        produtos[nome].receitaTotal += preco * qtd;
-        produtos[nome].custoTotal += custo * qtd;
-      });
-    });
-
-    const lista = Object.values(produtos).sort((a,b) => (b.receitaTotal-b.custoTotal)-(a.receitaTotal-a.custoTotal));
-    const totalVendas = lista.reduce((s,p) => s+p.receitaTotal, 0);
-    const totalCusto = lista.reduce((s,p) => s+p.custoTotal, 0);
-    const totalLucro = totalVendas - totalCusto;
-    const margem = totalVendas ? ((totalLucro/totalVendas)*100).toFixed(1) : 0;
-
-    const el = (id) => document.getElementById(id);
-    if (el('lucro-total-vendas')) el('lucro-total-vendas').textContent = 'R$ '+totalVendas.toFixed(2);
-    if (el('lucro-total-custo')) el('lucro-total-custo').textContent = 'R$ '+totalCusto.toFixed(2);
-    if (el('lucro-total-lucro')) el('lucro-total-lucro').textContent = 'R$ '+totalLucro.toFixed(2);
-    if (el('lucro-margem')) el('lucro-margem').textContent = margem+'%';
-
-    const tbody = document.getElementById('lucro-tbody');
-    if (tbody) tbody.innerHTML = lista.length ? lista.map(p => {
-      const lucroUnit = (p.receitaTotal - p.custoTotal) / (p.qtd||1);
-      const margemP = p.receitaTotal ? (((p.receitaTotal-p.custoTotal)/p.receitaTotal)*100).toFixed(1) : 0;
-      const cor = lucroUnit > 0 ? '#22c55e' : '#ef4444';
-      return `<tr style="border-bottom:1px solid #f0f0f0">
-        <td style="padding:10px;font-weight:600">${p.nome}</td>
-        <td style="padding:10px;text-align:right">${p.qtd}</td>
-        <td style="padding:10px;text-align:right">R$ ${(p.receitaTotal/p.qtd).toFixed(2)}</td>
-        <td style="padding:10px;text-align:right;color:#ef4444">R$ ${(p.custoTotal/p.qtd).toFixed(2)}</td>
-        <td style="padding:10px;text-align:right;color:${cor}">R$ ${lucroUnit.toFixed(2)}</td>
-        <td style="padding:10px;text-align:right;color:${cor};font-weight:700">R$ ${(p.receitaTotal-p.custoTotal).toFixed(2)}</td>
-        <td style="padding:10px;text-align:right"><span style="background:${lucroUnit>0?'#dcfce7':'#fee2e2'};color:${cor};padding:3px 10px;border-radius:20px;font-size:.8em;font-weight:700">${margemP}%</span></td>
-      </tr>`;
-    }).join('') : '<tr><td colspan="7" style="text-align:center;padding:40px;color:#888">Nenhum dado no período</td></tr>';
-  } catch(e) { console.error('lucro:', e); }
-}
-
-// Mostrar/ocultar datas personalizadas
-document.addEventListener('DOMContentLoaded', () => {
-  const sel = document.getElementById('lucro-periodo');
-  if (sel) sel.addEventListener('change', () => {
-    const custom = sel.value === 'personalizado';
-    ['lucro-data-ini','lucro-data-fim'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.style.display = custom ? 'block' : 'none';
-    });
-  });
-});
-
-// Contas a Pagar (localStorage por ora)
-let _contasPagar = JSON.parse(localStorage.getItem('contasPagar')||'[]');
 
 function carregarContasPagar() {
   const lista = document.getElementById('contas-lista');
