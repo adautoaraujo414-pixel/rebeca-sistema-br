@@ -5813,7 +5813,7 @@ function whatsappFornecedor(i) {
 }
 
 
-async async function carregarFinanceiroLucro() {
+async function carregarFinanceiroLucro() {
   try {
     const periodo = document.getElementById('fl-periodo')?.value || 'mes';
     let dataIni = new Date(), dataFim = new Date();
@@ -11533,57 +11533,6 @@ function whatsappFornecedor(i) {
 }
 
 
-async async function carregarFinanceiroLucro() {
-  try {
-    const periodo = document.getElementById('fl-periodo')?.value || 'mes';
-    let dataIni = new Date(), dataFim = new Date();
-    if (periodo==='hoje') { dataIni.setHours(0,0,0,0); }
-    else if (periodo==='semana') { dataIni = new Date(Date.now()-7*864e5); }
-    else if (periodo==='mes') { dataIni = new Date(); dataIni.setDate(1); dataIni.setHours(0,0,0,0); }
-    else {
-      dataIni = new Date(document.getElementById('fl-ini')?.value || Date.now());
-      dataFim = new Date(document.getElementById('fl-fim')?.value || Date.now());
-    }
-    const token = localStorage.getItem('admin_token') || localStorage.getItem('token') || '';
-    const headers = token ? {'Authorization':'Bearer '+token} : {};
-    const [rPed, rCard] = await Promise.all([
-      fetch('/api/delivery/caixa/todos?dataIni='+dataIni.toISOString()+'&dataFim='+dataFim.toISOString(), {headers}),
-      fetch('/api/delivery/cardapio', {headers})
-    ]);
-    const pedidos = await rPed.json().catch(()=>[]);
-    const cardapio = await rCard.json().catch(()=>[]);
-    const custoMap = {};
-    (cardapio?.itens||cardapio||[]).forEach(i => { custoMap[i.nome] = i.custoProducao||i.custo||0; });
-    const produtos = {};
-    (Array.isArray(pedidos)?pedidos:[]).forEach(p => {
-      (p.itens||[]).forEach(it => {
-        const nome = it.nome||'Item';
-        if (!produtos[nome]) produtos[nome] = {nome,qtd:0,receita:0,custo:0};
-        const qtd = it.qtd||it.quantidade||1;
-        produtos[nome].qtd += qtd;
-        produtos[nome].receita += (it.preco||0)*qtd;
-        produtos[nome].custo += (custoMap[nome]||0)*qtd;
-      });
-    });
-    const lista = Object.values(produtos).sort((a,b)=>(b.receita-b.custo)-(a.receita-a.custo));
-    const totalV = lista.reduce((s,p)=>s+p.receita,0);
-    const totalC = lista.reduce((s,p)=>s+p.custo,0);
-    const totalL = totalV-totalC;
-    const margem = totalV ? ((totalL/totalV)*100).toFixed(1) : 0;
-    const el = id => document.getElementById(id);
-    if(el('fl-vendas')) el('fl-vendas').textContent = 'R$ '+totalV.toFixed(2);
-    if(el('fl-custo')) el('fl-custo').textContent = 'R$ '+totalC.toFixed(2);
-    if(el('fl-lucro')) el('fl-lucro').textContent = 'R$ '+totalL.toFixed(2);
-    if(el('fl-margem')) el('fl-margem').textContent = margem+'%';
-    const tbody = el('fl-tbody');
-    if(tbody) tbody.innerHTML = lista.length ? lista.map(p => {
-      const lucroU = (p.receita-p.custo)/(p.qtd||1);
-      const mg = p.receita ? (((p.receita-p.custo)/p.receita)*100).toFixed(1) : 0;
-      const cor = lucroU>=0?'#22c55e':'#ef4444';
-      return '<tr style="border-bottom:1px solid #f0f0f0"><td style="padding:8px">'+p.nome+'</td><td style="padding:8px;text-align:right">'+p.qtd+'</td><td style="padding:8px;text-align:right;color:'+cor+'">R$ '+lucroU.toFixed(2)+'</td><td style="padding:8px;text-align:right;color:'+cor+';font-weight:700">R$ '+(p.receita-p.custo).toFixed(2)+'</td><td style="padding:8px;text-align:right"><span style="background:'+(lucroU>=0?'#dcfce7':'#fee2e2')+';color:'+cor+';padding:2px 8px;border-radius:20px;font-size:.8em">'+mg+'%</span></td></tr>';
-    }).join('') : '<tr><td colspan="5" style="text-align:center;padding:30px;color:#888">Nenhum dado</td></tr>';
-  } catch(e) { console.error('fl:', e); }
-}
 
 function carregarFinanceiroContas() {
   const agora = new Date(), em7 = new Date(Date.now()+7*864e5), mesAtual = agora.getMonth();
