@@ -179,6 +179,11 @@ async function entrar(){
   }
   mesa=m;nomeCliente=n;
   sessionStorage.setItem('mesa_num',m);sessionStorage.setItem('mesa_nome',n);sessionStorage.setItem('mesa_slug',adminSlug);
+  // Marcar mesa como ocupada no backend
+  try {
+    await fetch(API+'/mesa/entrar',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({adminSlug,adminId:_adminId,mesa:m,nomeCliente:n})});
+  } catch(e){}
   document.getElementById('loginWrap').style.display='none';
   mostrarApp();
 }

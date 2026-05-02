@@ -1950,6 +1950,42 @@ router.get('/salon/pix-key', authDelivery, async (req, res) => {
 
 
 // Cardápio público por slug (usado pelo mesa.html)
+
+// Registrar cliente na mesa (marca como ocupada antes de pedido)
+router.post('/mesa/entrar', async (req, res) => {
+    try {
+        const { adminSlug, adminId, mesa, nomeCliente } = req.body;
+        let admin;
+        if (adminId) {
+            admin = await AdminDelivery.findById(adminId);
+        } else if (adminSlug) {
+            admin = await AdminDelivery.findOne({ slug: adminSlug });
+        }
+        if (!admin) return res.status(404).json({ sucesso: false, erro: 'Restaurante não encontrado' });
+        // Criar pedido placeholder para marcar mesa como ocupada
+        const jaOcupada = await PedidoDelivery.findOne({
+            adminId: admin._id,
+            numeroMesa: String(mesa),
+            status: { $in: ['novo', 'confirmado', 'preparando', 'pronto'] }
+        });
+        if (jaOcupada) return res.json({ sucesso: true, jaExistia: true });
+        await PedidoDelivery.create({
+            adminId: admin._id,
+            tipo: 'mesa',
+            origem: 'qrcode',
+            tipoLocal: 'mesa',
+            numeroMesa: String(mesa),
+            nomeCliente: nomeCliente || 'Cliente',
+            nomeComanda: nomeCliente || 'Cliente',
+            status: 'novo',
+            itens: [],
+            total: 0,
+            placeholder: true
+        });
+        res.json({ sucesso: true });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
 router.get('/mesa/cardapio', async (req, res) => {
     try {
         const slug = req.query.r;
@@ -1963,6 +1999,9 @@ router.get('/mesa/cardapio', async (req, res) => {
             sucesso: true,
             adminId: admin._id.toString(),
             nomeEstabelecimento: admin.nomeEstabelecimento || admin.nomeComercio || 'Restaurante',
+            tipoNegocio: admin.tipoNegocio || 'Cardápio Digital',
+            logo: admin.logo || null,
+            aberto: admin.aberto !== false,
             itens
         });
     } catch(e) { res.status(500).json({ erro: e.message }); }
