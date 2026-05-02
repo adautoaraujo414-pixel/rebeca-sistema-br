@@ -436,8 +436,8 @@ router.get('/cardapio-publico/:adminId', async (req, res) => {
             ItemCardapio.find({ adminId, ativo: true, disponivel: { $ne: false } }).sort({ ordem: 1 }).lean()
         ]);
 
-        // Nome: config > nomeComercio do admin > fallback
-        const nomeRestaurante = config?.nomeRestaurante || admin?.nomeComercio || 'Delivery';
+        // Nome: fonte única = nomeEstabelecimento (salvo em Configurações) > nomeComercio > config
+        const nomeRestaurante = admin?.nomeEstabelecimento || admin?.nomeComercio || config?.nomeRestaurante || 'Restaurante';
 
         // Formas de pagamento aceitas
         const formasPgto = [];
@@ -467,6 +467,7 @@ router.get('/cardapio-publico/:adminId', async (req, res) => {
         const configExiste = !!config;
         res.json({
             restaurante: nomeRestaurante,
+            nomeEstabelecimento: nomeRestaurante,
             aberto: config?.aberto !== false,
             // Horário: só mostrar se existir e for diferente do padrão
             horario: (configExiste && config.horarioFuncionamento && config.horarioFuncionamento !== DEFAULTS.horarioFuncionamento) ? config.horarioFuncionamento : null,

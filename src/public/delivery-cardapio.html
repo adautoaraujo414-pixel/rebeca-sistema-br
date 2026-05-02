@@ -840,7 +840,7 @@ async function init() {
 function renderizar() {
   var d = cardapioData;
   // A API retorna campos direto em d (não aninhado em d.restaurante)
-  var nomeRest = typeof d.restaurante === 'string' ? d.restaurante : (d.restaurante?.nome || d.nomeComercio || 'Restaurante');
+  var nomeRest = d.nomeEstabelecimento || (typeof d.restaurante === 'string' ? d.restaurante : (d.restaurante?.nome || '')) || d.nomeComercio || 'Restaurante';
 
   // Header
   document.getElementById('headerNome').textContent = nomeRest;
@@ -891,7 +891,7 @@ function renderizar() {
 
   // Hero por nicho
   var nicho = (d.tipoNegocio||'restaurante').toLowerCase();
-  var heroCfg = detectarNicho(nicho, cats, itens, d.restaurante || d.nome || d.nomeEstabelecimento || '');
+  var heroCfg = detectarNicho(nicho, cats, itens, nomeRest);
   var heroEl = document.getElementById('heroSection');
   if (heroEl) {
     document.getElementById('heroBgImg').style.backgroundImage = 'url(' + heroCfg.img + ')';
