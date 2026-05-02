@@ -4,197 +4,223 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Cardápio</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#0f0f1a;color:#fff;min-height:100vh}
-.header{background:#1a1a2e;padding:16px;text-align:center;border-bottom:1px solid #252542}
-.header h1{font-size:1.3em;color:#00d4ff}
-.header p{font-size:.85em;color:#888;margin-top:4px}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --accent:#f97316;--accent2:#fb923c;--accent-dim:rgba(249,115,22,.15);--accent-glow:rgba(249,115,22,.3);
+  --bg:#0a0a0a;--surface:#141414;--surface2:#1c1c1c;--surface3:#222;--border:rgba(255,255,255,.07);
+  --text:#fff;--text2:#b0b0b0;--text3:#555;--green:#22c55e;--red:#ef4444;
+  --radius:16px;--radius-sm:10px;--font:'Plus Jakarta Sans',sans-serif;
+}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:100px;overflow-x:hidden}
+::-webkit-scrollbar{width:3px}
+::-webkit-scrollbar-thumb{background:var(--surface3);border-radius:3px}
+
+/* LOADING */
+#loading{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;gap:16px}
+.spinner{width:44px;height:44px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
 
 /* LOGIN */
-.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
-.login-box{background:#1a1a2e;border-radius:16px;padding:32px 24px;width:100%;max-width:380px;text-align:center}
-.login-box h2{font-size:1.4em;margin-bottom:8px;color:#00d4ff}
-.login-box p{color:#888;font-size:.9em;margin-bottom:24px}
-.field{margin-bottom:16px;text-align:left}
-.field label{display:block;font-size:.82em;color:#aaa;margin-bottom:6px}
-.field input{width:100%;padding:12px;background:#0f0f1a;border:1px solid #333;border-radius:10px;color:#fff;font-size:1em}
-.btn-entrar{width:100%;padding:14px;background:#00d4ff;color:#000;border:none;border-radius:10px;font-size:1em;font-weight:700;cursor:pointer;margin-top:8px}
-.err{color:#f77;font-size:.85em;margin-top:10px;min-height:20px}
+#loginWrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:var(--bg)}
+.login-box{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:32px 24px;width:100%;max-width:380px;text-align:center;animation:fadeUp .4s ease}
+.login-logo{font-size:2.5em;margin-bottom:8px}
+.login-box h2{font-size:1.4em;font-weight:800;margin-bottom:6px;color:var(--accent)}
+.login-box p{color:var(--text2);font-size:.88em;margin-bottom:24px}
+.field{margin-bottom:14px;text-align:left}
+.field label{display:block;font-size:.8em;color:var(--text2);margin-bottom:6px;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.field input{width:100%;padding:14px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:1em;font-family:var(--font);transition:border-color .2s}
+.field input:focus{outline:none;border-color:var(--accent)}
+.btn-entrar{width:100%;padding:15px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius-sm);font-size:1em;font-weight:700;cursor:pointer;font-family:var(--font);margin-top:8px;transition:opacity .2s}
+.btn-entrar:hover{opacity:.9}
+.err{color:var(--red);font-size:.83em;margin-top:10px;min-height:18px}
 
 /* APP */
 #app{display:none}
-.tabs{display:flex;background:#1a1a2e;border-bottom:1px solid #252542}
-.tab{flex:1;padding:14px;text-align:center;font-size:.85em;color:#666;cursor:pointer;border-bottom:3px solid transparent}
-.tab.active{color:#00d4ff;border-bottom-color:#00d4ff}
-.page{display:none;padding:16px}
+
+/* HEADER */
+.header{position:sticky;top:0;z-index:100;background:rgba(10,10,10,.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:14px 16px}
+.header-top{display:flex;justify-content:space-between;align-items:center}
+.header-nome{font-weight:800;font-size:1.05em;color:var(--accent)}
+.header-mesa{font-size:.8em;color:var(--text2);margin-top:2px}
+
+/* TABS */
+.tabs{display:flex;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:57px;z-index:99}
+.tab{flex:1;padding:13px 8px;text-align:center;font-size:.82em;font-weight:600;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:5px;font-family:var(--font)}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.badge{background:var(--accent);color:#fff;border-radius:20px;padding:1px 7px;font-size:.75em;font-weight:700}
+
+/* PÁGINAS */
+.page{display:none;padding:16px;animation:fadeUp .3s ease}
 .page.active{display:block}
 
-/* CARDAPIO */
-.cat-title{font-size:.8em;color:#00d4ff;text-transform:uppercase;letter-spacing:1px;margin:20px 0 10px;padding-bottom:6px;border-bottom:1px solid #252542}
-.item-card{background:#1a1a2e;border-radius:12px;padding:14px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:12px}
-.item-info{flex:1}
-.item-nome{font-weight:600;font-size:.95em}
-.item-desc{font-size:.78em;color:#888;margin-top:3px}
-.item-meta{font-size:.75em;color:#555;margin-top:4px}
-.item-preco{font-size:1.1em;font-weight:700;color:#00cc6a;white-space:nowrap}
-.btn-add{background:#00d4ff;border:none;color:#000;width:32px;height:32px;border-radius:50%;font-size:1.2em;cursor:pointer;font-weight:700;flex-shrink:0}
+/* CATEGORIAS */
+.cats-scroll{display:flex;gap:8px;overflow-x:auto;padding:14px 16px 0;scrollbar-width:none}
+.cats-scroll::-webkit-scrollbar{display:none}
+.cat-pill{flex-shrink:0;padding:7px 16px;border-radius:20px;background:var(--surface2);color:var(--text2);font-size:.82em;font-weight:600;cursor:pointer;border:1px solid var(--border);transition:all .2s;font-family:var(--font)}
+.cat-pill.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+/* CAT TITLE */
+.cat-title{font-size:.78em;color:var(--accent);text-transform:uppercase;letter-spacing:1.5px;font-weight:700;margin:20px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+
+/* ITEM CARD */
+.item-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:10px;display:flex;align-items:stretch;min-height:96px;cursor:pointer;transition:border-color .2s;animation:fadeUp .3s ease}
+.item-card:hover{border-color:var(--accent-dim)}
+.item-body{flex:1;padding:14px;display:flex;flex-direction:column;justify-content:space-between}
+.item-nome{font-weight:700;font-size:.95em;line-height:1.3}
+.item-desc{font-size:.78em;color:var(--text2);margin-top:4px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.item-meta{font-size:.73em;color:var(--text3);margin-top:6px}
+.item-bottom{display:flex;align-items:center;justify-content:space-between;margin-top:10px}
+.item-preco{font-size:1.05em;font-weight:800;color:var(--accent)}
+.btn-add{background:var(--accent);border:none;color:#fff;width:34px;height:34px;border-radius:50%;font-size:1.2em;cursor:pointer;font-weight:700;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:transform .15s}
+.btn-add:active{transform:scale(.9)}
+.item-foto{width:110px;flex-shrink:0;position:relative;overflow:hidden}
+.item-foto img{width:100%;height:100%;object-fit:cover}
+.item-foto-placeholder{width:100%;height:100%;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:1.8em}
 
 /* CARRINHO */
-.carrinho-item{background:#1a1a2e;border-radius:10px;padding:12px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
-.carrinho-vazio{text-align:center;color:#555;padding:40px 20px}
-.total-box{background:#252542;border-radius:12px;padding:16px;margin-top:16px;text-align:center}
-.total-val{font-size:1.6em;font-weight:700;color:#00cc6a}
-.btn-pedir{width:100%;padding:14px;background:#00cc6a;color:#000;border:none;border-radius:10px;font-size:1em;font-weight:700;cursor:pointer;margin-top:12px}
-.btn-pedir:disabled{background:#333;color:#666;cursor:not-allowed}
+.carrinho-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.carrinho-vazio{text-align:center;color:var(--text3);padding:50px 20px;font-size:.9em}
+.total-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-top:14px}
+.total-val{font-size:1.8em;font-weight:800;color:var(--green);margin:6px 0}
+.btn-pedir{width:100%;padding:15px;background:var(--green);color:#fff;border:none;border-radius:var(--radius-sm);font-size:1em;font-weight:700;cursor:pointer;font-family:var(--font);margin-top:12px;transition:opacity .2s}
+.btn-pedir:disabled{background:var(--surface3);color:var(--text3);cursor:not-allowed}
 
-/* MINHA CONTA */
-.conta-item{background:#1a1a2e;border-radius:10px;padding:12px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
-.conta-status{font-size:.75em;padding:3px 10px;border-radius:10px;font-weight:600}
-.st-novo{background:#ff990022;color:#ff9900}
-.st-preparo{background:#00d4ff22;color:#00d4ff}
-.st-pronto{background:#00cc6a22;color:#00cc6a}
-.total-conta{background:#252542;border-radius:12px;padding:20px;text-align:center;margin-top:16px}
+/* CONTA */
+.conta-item{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)}
+.conta-status{font-size:.72em;font-weight:700;padding:3px 10px;border-radius:20px;background:var(--surface2);color:var(--text2)}
+.total-conta{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;text-align:center;margin-top:16px}
+
+/* GARÇOM */
+.garcom-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.btn-garcom{padding:18px 12px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--text);font-size:.88em;font-weight:700;cursor:pointer;font-family:var(--font);text-align:center;transition:all .2s}
+.btn-garcom:hover{border-color:var(--accent);color:var(--accent)}
+.btn-garcom .ico{font-size:1.8em;display:block;margin-bottom:6px}
 
 /* TOAST */
-.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#00cc6a;color:#000;padding:12px 24px;border-radius:10px;font-weight:700;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none}
-.toast.show{opacity:1}
+#toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--green);color:#fff;padding:10px 20px;border-radius:20px;font-size:.85em;font-weight:600;opacity:0;transition:all .3s;z-index:9999;white-space:nowrap;pointer-events:none}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
-/* OVERLAY PEDIDO CONFIRMADO */
-.overlay-ok{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:998;display:none;align-items:center;justify-content:center}
-.overlay-ok.show{display:flex}
-.overlay-box{background:#1a1a2e;border-radius:20px;padding:32px 24px;text-align:center;max-width:320px;width:90%}
-.overlay-box h2{font-size:1.5em;margin-bottom:12px}
-.overlay-tempo{font-size:3em;font-weight:700;color:#00d4ff;margin:16px 0}
-.overlay-box p{color:#aaa;font-size:.9em}
-.btn-ok{padding:12px 32px;background:#00d4ff;border:none;color:#000;border-radius:10px;font-weight:700;cursor:pointer;margin-top:20px;font-size:1em}
+/* OVERLAY OK */
+#overlayOk{display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:9999;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:32px}
+#overlayOk.show{display:flex}
 </style>
 </head>
 <body>
 
+<div id="loading"><div class="spinner"></div></div>
+
 <!-- LOGIN -->
-<div id="loginWrap" class="login-wrap">
+<div id="loginWrap" style="display:none">
   <div class="login-box">
-    <h2>🍽️ Bem-vindo!</h2>
-    <p>Informe sua mesa para acessar o cardápio</p>
-    <div class="field"><label>Número da Mesa</label><input type="number" id="inputMesa" placeholder="Ex: 5" min="1"></div>
-    <div class="field"><label>Seu Nome</label><input type="text" id="inputNome" placeholder="Ex: João"></div>
-    <button class="btn-entrar" onclick="entrar()">Acessar Cardápio</button>
-    <p class="err" id="loginErr"></p>
+    <div class="login-logo">🍽️</div>
+    <h2>Bem-vindo!</h2>
+    <p>Informe sua mesa e nome para começar</p>
+    <div class="field">
+      <label>Número da Mesa</label>
+      <input id="inputMesa" type="number" placeholder="Ex: 5" inputmode="numeric">
+    </div>
+    <div class="field">
+      <label>Seu Nome</label>
+      <input id="inputNome" type="text" placeholder="Ex: João">
+    </div>
+    <button class="btn-entrar" onclick="entrar()">Entrar 🚀</button>
+    <div class="err" id="loginErr"></div>
   </div>
 </div>
 
 <!-- APP -->
 <div id="app">
   <div class="header">
-    <h1 id="nomeRest">Restaurante</h1>
-    <p id="infoMesa">Mesa — · Olá, —</p>
+    <div class="header-top">
+      <div>
+        <div class="header-nome" id="nomeRest">Restaurante</div>
+        <div class="header-mesa" id="infoMesa"></div>
+      </div>
+      <button onclick="chamarGarcom()" style="background:var(--accent-dim);border:1px solid var(--accent);color:var(--accent);border-radius:20px;padding:6px 14px;font-size:.78em;font-weight:700;cursor:pointer;font-family:var(--font)">🔔 Chamar</button>
+    </div>
   </div>
+
   <div class="tabs">
-    <div class="tab active" id="tab-cardapio" onclick="mudarTab('cardapio')">🍴 Cardápio</div>
-    <div class="tab" id="tab-carrinho" onclick="mudarTab('carrinho')">🛒 Carrinho <span id="badgeCarrinho" style="display:none;background:#f55;color:#fff;border-radius:10px;padding:1px 7px;font-size:.75em"></span></div>
-    <div class="tab" id="tab-conta" onclick="mudarTab('conta')">🧾 Minha Conta</div>
+    <div class="tab active" id="tab-cardapio" onclick="mudarTab('cardapio')">🍔 Cardápio</div>
+    <div class="tab" id="tab-carrinho" onclick="mudarTab('carrinho')">🛒 <span class="badge" id="badgeCarrinho" style="display:none">0</span></div>
+    <div class="tab" id="tab-conta" onclick="mudarTab('conta')">🧾 Conta</div>
   </div>
 
-  <div id="pg-cardapio" class="page active"></div>
+  <!-- CARDÁPIO -->
+  <div id="pg-cardapio" class="page active">
+    <div class="cats-scroll" id="catsScroll"></div>
+    <div style="padding:16px" id="listaCardapio"></div>
+  </div>
 
+  <!-- CARRINHO -->
   <div id="pg-carrinho" class="page">
-    <div id="listaCarrinho"></div>
-    <div id="totalBox" style="display:none" class="total-box">
-      <div style="color:#aaa;font-size:.85em;margin-bottom:4px">Total do pedido</div>
+    <div id="listaCarrinho"><div class="carrinho-vazio">🛒<br>Carrinho vazio<br><small style="color:#444">Adicione itens do cardápio</small></div></div>
+    <div class="total-box" id="totalBox" style="display:none">
+      <div style="color:var(--text2);font-size:.85em">Total do pedido</div>
       <div class="total-val" id="totalVal">R$ 0,00</div>
       <button class="btn-pedir" id="btnPedir" onclick="enviarPedido()">✅ Enviar Pedido para Cozinha</button>
     </div>
   </div>
 
+  <!-- CONTA -->
   <div id="pg-conta" class="page">
-    <div id="listaConta"></div>
+    <div id="listaConta"><div class="carrinho-vazio">🧾<br>Nenhum pedido ainda</div></div>
   </div>
 </div>
 
 <!-- OVERLAY CONFIRMAÇÃO -->
-<div class="overlay-ok" id="overlayOk">
-  <div class="overlay-box">
-    <div style="font-size:3em">✅</div>
-    <h2>Pedido Enviado!</h2>
-    <div style="color:#aaa;font-size:.85em">Tempo estimado de preparo</div>
-    <div class="overlay-tempo" id="overlayTempo">~20 min</div>
-    <p>Seu garçom será notificado. Fique à vontade!</p>
-    <button class="btn-ok" onclick="fecharOverlay()">OK, obrigado!</button>
-  </div>
+<div id="overlayOk">
+  <div style="font-size:3em;margin-bottom:16px">🎉</div>
+  <div style="font-weight:800;font-size:1.3em;margin-bottom:8px">Pedido enviado!</div>
+  <div style="color:var(--text2);font-size:.9em;margin-bottom:8px">Tempo estimado:</div>
+  <div style="font-size:2em;font-weight:800;color:var(--accent)" id="overlayTempo">~20 min</div>
+  <button onclick="fecharOverlay()" style="margin-top:24px;padding:14px 32px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius-sm);font-size:1em;font-weight:700;cursor:pointer;font-family:var(--font)">Ver minha conta</button>
 </div>
 
-<div class="toast" id="toast"></div>
+<div id="toast"></div>
 
 <script>
 const API = '/api/delivery';
 let adminSlug = new URLSearchParams(location.search).get('r') || '';
 let mesa = '', nomeCliente = '', cardapio = [], carrinho = [];
-let _adminId = ''; // preenchido após login
+let _adminId = '';
 
-// Restaurar sessao anterior
+// Init
 (async function() {
   const sm = sessionStorage.getItem('mesa_num');
   const sn = sessionStorage.getItem('mesa_nome');
   const ss = sessionStorage.getItem('mesa_slug');
+  document.getElementById('loading').style.display = 'none';
   if (sm && sn && ss && ss === adminSlug) {
-    document.getElementById('inputMesa').value = sm;
-    document.getElementById('inputNome').value = sn;
+    document.getElementById('inputMesa') && (document.getElementById('inputMesa').value = sm);
+    document.getElementById('inputNome') && (document.getElementById('inputNome').value = sn);
+    // Auto-login
+    await entrarDireto(sm, sn);
+  } else {
+    document.getElementById('loginWrap').style.display = 'flex';
   }
 })();
 
-async function pedirConta() {
-  if (!_adminId || !mesa) { alert('Faça o login na mesa primeiro.'); return; }
-  // Calcular total atual
-  const totalEl = document.getElementById('contaTotal');
-  const total = totalEl ? totalEl.textContent : 'Ver acima';
-  // Mostrar modal de fechamento de conta
-  const modal = document.createElement('div');
-  modal.id = 'modalFecharConta';
-  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:9999;display:flex;align-items:flex-end;justify-content:center';
-  modal.innerHTML = `
-    <div style="background:#1a1a2e;border-radius:20px 20px 0 0;padding:24px;width:100%;max-width:480px">
-      <div style="text-align:center;margin-bottom:20px">
-        <div style="font-size:2em">🧾</div>
-        <div style="font-weight:800;font-size:1.1em;color:#fff;margin-top:6px">Fechar Conta — Mesa ${mesa}</div>
-        <div style="color:#22c55e;font-size:1.4em;font-weight:800;margin-top:8px">${total}</div>
-        <div style="color:#888;font-size:.8em;margin-top:4px">Como você vai pagar?</div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
-        <button onclick="confirmarPagamento('Cartão')" style="padding:14px;background:#1e40af;border:none;color:#fff;border-radius:12px;font-weight:700;cursor:pointer;font-size:.95em">💳 Cartão</button>
-        <button onclick="confirmarPagamento('Pix')" style="padding:14px;background:#16a34a;border:none;color:#fff;border-radius:12px;font-weight:700;cursor:pointer;font-size:.95em">📱 Pix</button>
-        <button onclick="confirmarPagamento('Dinheiro')" style="padding:14px;background:#b45309;border:none;color:#fff;border-radius:12px;font-weight:700;cursor:pointer;font-size:.95em">💵 Dinheiro</button>
-        <button onclick="document.getElementById('modalFecharConta').remove()" style="padding:14px;background:#374151;border:none;color:#fff;border-radius:12px;font-weight:600;cursor:pointer;font-size:.9em">✕ Cancelar</button>
-      </div>
-    </div>`;
-  document.body.appendChild(modal);
-}
-
-async function confirmarPagamento(formaPag) {
-  document.getElementById('modalFecharConta')?.remove();
-  const btn = document.getElementById('btnPedirConta');
-  if (btn) { btn.disabled = true; btn.textContent = '⏳ Solicitando...'; }
+async function entrarDireto(m, n) {
   try {
-    const r = await fetch(API + '/garcons/pedir-conta', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ adminId: _adminId, mesa, nomeCliente, formaPagamento: formaPag })
-    });
+    const r = await fetch(`${API}/mesa/cardapio?r=${adminSlug}`);
     const d = await r.json();
-    if (d.sucesso) {
-      if (btn) { btn.textContent = '✅ Conta solicitada!'; btn.style.background = '#22c55e'; btn.disabled = true; }
-      showToast('✅ Caixa notificado! Pagando em ' + formaPag + '.');
-    } else {
-      if (btn) { btn.disabled = false; btn.textContent = '💰 Pedir a Conta'; }
-      showToast('Erro: ' + (d.erro || 'Tente novamente'));
-    }
-  } catch(e) {
-    if (btn) { btn.disabled = false; btn.textContent = '💰 Pedir a Conta'; }
-    showToast('Erro de conexão. Tente novamente.');
-  }
+    if (!d.sucesso) { document.getElementById('loginWrap').style.display = 'flex'; return; }
+    mesa = m; nomeCliente = n;
+    cardapio = d.itens || [];
+    _adminId = d.adminId || '';
+    document.getElementById('nomeRest').textContent = d.nomeEstabelecimento || 'Restaurante';
+    document.getElementById('infoMesa').textContent = `Mesa ${mesa} · Olá, ${nomeCliente}!`;
+    document.getElementById('loginWrap').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    renderCardapio();
+    carregarConta();
+  } catch(e) { document.getElementById('loginWrap').style.display = 'flex'; }
 }
 
-// ====== LOGIN ======
 async function entrar() {
   const m = document.getElementById('inputMesa').value.trim();
   const n = document.getElementById('inputNome').value.trim();
@@ -222,40 +248,92 @@ async function entrar() {
   } catch(e) { err.textContent = 'Erro de conexão: ' + e.message; }
 }
 
-// ====== CARDÁPIO ======
+// CARDÁPIO
+let catAtiva = 'todos';
 function renderCardapio() {
-  const el = document.getElementById('pg-cardapio');
-  if (!cardapio.length) { el.innerHTML = '<div style="text-align:center;color:#555;padding:40px">Cardápio não disponível</div>'; return; }
   const cats = {};
   cardapio.forEach(i => {
     const cat = i.categoriaId?.nome || 'Outros';
     if (!cats[cat]) cats[cat] = [];
     cats[cat].push(i);
   });
+
+  // Pills de categorias
+  const scroll = document.getElementById('catsScroll');
+  const nomes = Object.keys(cats);
+  scroll.innerHTML = `<div class="cat-pill active" onclick="filtrarCat('todos',this)">Todos</div>` +
+    nomes.map(c => `<div class="cat-pill" onclick="filtrarCat('${c}',this)">${c}</div>`).join('');
+
+  renderItens(cats);
+}
+
+function filtrarCat(cat, el) {
+  catAtiva = cat;
+  document.querySelectorAll('.cat-pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  const cats = {};
+  cardapio.forEach(i => {
+    const c = i.categoriaId?.nome || 'Outros';
+    if (!cats[c]) cats[c] = [];
+    cats[c].push(i);
+  });
+  if (cat === 'todos') renderItens(cats);
+  else renderItens({ [cat]: cats[cat] || [] });
+}
+
+function renderItens(cats) {
+  const el = document.getElementById('listaCardapio');
+  if (!cardapio.length) { el.innerHTML = '<div class="carrinho-vazio">Cardápio não disponível</div>'; return; }
   el.innerHTML = Object.entries(cats).map(([cat, itens]) => `
     <div class="cat-title">${cat}</div>
     ${itens.map(i => `
-      <div class="item-card">
-        <div class="item-info">
-          ${i.foto ? `<img src="${i.foto}" style="width:100%;height:100px;object-fit:cover;border-radius:8px;margin-bottom:6px">` : ''}
-          <div class="item-nome">${i.nome}</div>
-          ${i.descricao ? `<div class="item-desc">${i.descricao}</div>` : ''}
-          <div class="item-meta">⏱️ ~${i.tempoPreparoMin || 20} min</div>
+      <div class="item-card" onclick='abrirItem(${JSON.stringify({_id:i._id,nome:i.nome,preco:i.preco,descricao:i.descricao||"",foto:i.foto||"",tempoPreparoMin:i.tempoPreparoMin||20})})'>
+        <div class="item-body">
+          <div>
+            <div class="item-nome">${i.nome}</div>
+            ${i.descricao ? `<div class="item-desc">${i.descricao}</div>` : ''}
+            <div class="item-meta">⏱️ ~${i.tempoPreparoMin||20} min</div>
+          </div>
+          <div class="item-bottom">
+            <div class="item-preco">R$ ${(i.preco||0).toFixed(2)}</div>
+            <button class="btn-add" onclick='event.stopPropagation();addCarrinho({_id:"${i._id}",nome:${JSON.stringify(i.nome)},preco:${i.preco||0},tempoPreparoMin:${i.tempoPreparoMin||20}})'>+</button>
+          </div>
         </div>
-        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px">
-          <div class="item-preco">R$ ${(i.preco||0).toFixed(2)}</div>
-          <button class="btn-add" onclick='addCarrinho(${JSON.stringify({_id:i._id,nome:i.nome,preco:i.preco,tempoPreparoMin:i.tempoPreparoMin||20})})'>+</button>
+        <div class="item-foto">
+          ${i.foto ? `<img src="${i.foto}" alt="${i.nome}" loading="lazy">` : `<div class="item-foto-placeholder">🍽️</div>`}
         </div>
       </div>`).join('')}`).join('');
 }
 
-// ====== CARRINHO ======
+function abrirItem(item) {
+  const modal = document.createElement('div');
+  modal.id = 'modalItem';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:9999;display:flex;align-items:flex-end;justify-content:center';
+  modal.innerHTML = `
+    <div style="background:#141414;border-radius:20px 20px 0 0;width:100%;max-width:480px;overflow:hidden">
+      ${item.foto ? `<img src="${item.foto}" style="width:100%;height:200px;object-fit:cover">` : `<div style="height:120px;background:#1c1c1c;display:flex;align-items:center;justify-content:center;font-size:3em">🍽️</div>`}
+      <div style="padding:20px">
+        <div style="font-weight:800;font-size:1.1em">${item.nome}</div>
+        ${item.descricao ? `<div style="color:#aaa;font-size:.85em;margin-top:6px;line-height:1.5">${item.descricao}</div>` : ''}
+        <div style="font-size:.78em;color:#555;margin-top:6px">⏱️ ~${item.tempoPreparoMin} min</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px">
+          <div style="font-size:1.4em;font-weight:800;color:#f97316">R$ ${(item.preco||0).toFixed(2)}</div>
+          <button onclick="addCarrinho(${JSON.stringify(item).replace(/"/g,'&quot;')});document.getElementById('modalItem').remove()" style="background:#f97316;color:#fff;border:none;border-radius:10px;padding:12px 24px;font-weight:700;font-size:.9em;cursor:pointer">+ Adicionar</button>
+        </div>
+        <button onclick="document.getElementById('modalItem').remove()" style="width:100%;margin-top:10px;padding:12px;background:#222;border:none;color:#aaa;border-radius:10px;font-size:.88em;cursor:pointer">Fechar</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+}
+
+// CARRINHO
 function addCarrinho(item) {
   const existe = carrinho.find(c => c._id === item._id);
   if (existe) existe.qtd++;
   else carrinho.push({...item, qtd: 1});
   renderCarrinho();
-  toast('Adicionado: ' + item.nome);
+  toast('✅ Adicionado: ' + item.nome);
 }
 
 function renderCarrinho() {
@@ -267,34 +345,31 @@ function renderCarrinho() {
   badge.textContent = qtdTotal;
   badge.style.display = qtdTotal ? 'inline' : 'none';
   if (!carrinho.length) {
-    el.innerHTML = '<div class="carrinho-vazio">🛒<br>Carrinho vazio<br><small style="color:#444">Adicione itens do cardápio</small></div>';
+    el.innerHTML = '<div class="carrinho-vazio">🛒<br>Carrinho vazio<br><small style="color:#555">Adicione itens do cardápio</small></div>';
     totalBox.style.display = 'none'; return;
   }
   el.innerHTML = carrinho.map((i,idx) => `
     <div class="carrinho-item">
-      <div>
-        <div style="font-weight:600">${i.nome}</div>
-        <div style="color:#888;font-size:.82em">R$ ${i.preco.toFixed(2)} × ${i.qtd}</div>
+      <div style="flex:1">
+        <div style="font-weight:700;font-size:.95em">${i.nome}</div>
+        <div style="color:#888;font-size:.82em;margin-top:3px">R$ ${i.preco.toFixed(2)} × ${i.qtd}</div>
       </div>
-      <div style="display:flex;align-items:center;gap:10px">
-        <span style="font-weight:700;color:#00cc6a">R$ ${(i.preco*i.qtd).toFixed(2)}</span>
-        <button onclick="removerCarrinho(${idx})" style="background:#f5525222;border:1px solid #f55;color:#f55;border-radius:6px;padding:4px 8px;cursor:pointer">✕</button>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-weight:800;color:#22c55e">R$ ${(i.preco*i.qtd).toFixed(2)}</span>
+        <button onclick="removerCarrinho(${idx})" style="background:rgba(239,68,68,.15);border:1px solid #ef4444;color:#ef4444;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:.8em">✕</button>
       </div>
     </div>`).join('');
   totalBox.style.display = 'block';
   document.getElementById('totalVal').textContent = 'R$ ' + total.toFixed(2);
 }
 
-function removerCarrinho(idx) {
-  carrinho.splice(idx, 1);
-  renderCarrinho();
-}
+function removerCarrinho(idx) { carrinho.splice(idx,1); renderCarrinho(); }
 
-// ====== ENVIAR PEDIDO ======
+// ENVIAR PEDIDO
 async function enviarPedido() {
   if (!carrinho.length) return;
   const btn = document.getElementById('btnPedir');
-  btn.disabled = true; btn.textContent = 'Enviando...';
+  btn.disabled = true; btn.textContent = '⏳ Enviando...';
   try {
     const r = await fetch(`${API}/mesa/pedido`, {
       method: 'POST',
@@ -306,9 +381,7 @@ async function enviarPedido() {
       const tempoMax = Math.max(...carrinho.map(i=>i.tempoPreparoMin||20));
       document.getElementById('overlayTempo').textContent = `~${tempoMax} min`;
       document.getElementById('overlayOk').classList.add('show');
-      carrinho = [];
-      renderCarrinho();
-      carregarConta();
+      carrinho = []; renderCarrinho(); carregarConta();
     } else { toast('Erro: ' + (d.erro||'Falha'), true); }
   } catch(e) { toast('Erro de conexão', true); }
   finally { btn.disabled = false; btn.textContent = '✅ Enviar Pedido para Cozinha'; }
@@ -319,7 +392,19 @@ function fecharOverlay() {
   mudarTab('conta');
 }
 
-// ====== MINHA CONTA ======
+// CHAMAR GARÇOM
+async function chamarGarcom() {
+  if (!_adminId || !mesa) return;
+  try {
+    await fetch(`${API}/garcons/chamar`, {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ adminId: _adminId, mesa, nomeCliente, motivo: 'chamado_mesa' })
+    });
+    toast('🔔 Garçom chamado!');
+  } catch(e) { toast('Erro ao chamar garçom', true); }
+}
+
+// MINHA CONTA
 async function carregarConta() {
   if (!mesa || !adminSlug) return;
   try {
@@ -330,28 +415,79 @@ async function carregarConta() {
       el.innerHTML = '<div class="carrinho-vazio">🧾<br>Nenhum pedido ainda</div>'; return;
     }
     const total = d.pedidos.reduce((s,p) => s + (p.total||0), 0);
+    const statusMap = {novo:'🆕 Recebido',confirmado:'✅ Confirmado',preparando:'🍳 Preparando',pronto:'✅ Na conta',entregue:'📦 Entregue',pago:'💰 Pago',cancelado:'❌ Cancelado'};
     el.innerHTML = d.pedidos.map(p => `
       <div style="margin-bottom:16px">
-        <div style="font-size:.75em;color:#555;margin-bottom:6px">${new Date(p.createdAt).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</div>
+        <div style="font-size:.73em;color:#555;margin-bottom:6px">${new Date(p.createdAt).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</div>
         ${(p.itens||[]).map(i => `
           <div class="conta-item">
             <div>
-              <div style="font-size:.9em;font-weight:600">${i.nome}</div>
+              <div style="font-size:.9em;font-weight:700">${i.nome}</div>
               <div style="font-size:.78em;color:#888">${i.qtd}x · R$ ${(i.preco||0).toFixed(2)}</div>
             </div>
-            <span class="conta-status st-${p.status||'novo'}">${{novo:'🆕 Recebido',confirmado:'✅ Confirmado',preparando:'🍳 Preparando',pronto:'✅ Na conta',entregue:'📦 Entregue',pago:'💰 Pago',cancelado:'❌ Cancelado'}[p.status]||p.status}</span>
+            <span class="conta-status">${statusMap[p.status]||p.status}</span>
           </div>`).join('')}
       </div>`).join('') +
       `<div class="total-conta">
         <div style="color:#aaa;font-size:.85em">Total consumido</div>
-        <div style="font-size:2em;font-weight:700;color:#00cc6a;margin-top:4px">R$ ${total.toFixed(2)}</div>
-        <div style="color:#555;font-size:.78em;margin-top:8px">O garçom virá até sua mesa com a conta</div>
-        <button onclick="pedirConta()" style="margin-top:16px;width:100%;padding:14px;background:#f59e0b;color:#000;border:none;border-radius:10px;font-size:1em;font-weight:700;cursor:pointer;" id="btnPedirConta">💰 Pedir a Conta</button>
+        <div style="font-size:2em;font-weight:800;color:#22c55e;margin-top:6px">R$ ${total.toFixed(2)}</div>
+        <div style="color:#555;font-size:.78em;margin-top:8px">O garçom virá até sua mesa</div>
+        <button onclick="pedirConta()" style="margin-top:16px;width:100%;padding:14px;background:#f59e0b;color:#000;border:none;border-radius:10px;font-size:1em;font-weight:700;cursor:pointer" id="btnPedirConta">💰 Pedir a Conta</button>
       </div>`;
+    document.getElementById('contaTotal');
   } catch(e) { console.error(e); }
 }
 
-// ====== UTILS ======
+// PEDIR CONTA
+async function pedirConta() {
+  if (!_adminId || !mesa) return;
+  const totalEl = document.querySelector('.total-conta div:nth-child(2)');
+  const total = totalEl ? totalEl.textContent : '';
+  const modal = document.createElement('div');
+  modal.id = 'modalFecharConta';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:9999;display:flex;align-items:flex-end;justify-content:center';
+  modal.innerHTML = `
+    <div style="background:#141414;border-radius:20px 20px 0 0;padding:24px;width:100%;max-width:480px">
+      <div style="text-align:center;margin-bottom:20px">
+        <div style="font-size:2em">🧾</div>
+        <div style="font-weight:800;font-size:1.1em;margin-top:8px">Fechar Conta — Mesa ${mesa}</div>
+        <div style="color:#22c55e;font-size:1.4em;font-weight:800;margin-top:8px">${total}</div>
+        <div style="color:#888;font-size:.82em;margin-top:4px">Como você vai pagar?</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+        <button onclick="confirmarPagamento('Cartão')" style="padding:14px;background:#1e40af;border:none;color:#fff;border-radius:12px;font-weight:700;cursor:pointer">💳 Cartão</button>
+        <button onclick="confirmarPagamento('Pix')" style="padding:14px;background:#16a34a;border:none;color:#fff;border-radius:12px;font-weight:700;cursor:pointer">📱 Pix</button>
+        <button onclick="confirmarPagamento('Dinheiro')" style="padding:14px;background:#b45309;border:none;color:#fff;border-radius:12px;font-weight:700;cursor:pointer">💵 Dinheiro</button>
+        <button onclick="document.getElementById('modalFecharConta').remove()" style="padding:14px;background:#374151;border:none;color:#fff;border-radius:12px;font-weight:600;cursor:pointer">✕ Cancelar</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+}
+
+async function confirmarPagamento(formaPag) {
+  document.getElementById('modalFecharConta')?.remove();
+  const btn = document.getElementById('btnPedirConta');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Solicitando...'; }
+  try {
+    const r = await fetch(API + '/garcons/pedir-conta', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ adminId: _adminId, mesa, nomeCliente, formaPagamento: formaPag })
+    });
+    const d = await r.json();
+    if (d.sucesso) {
+      if (btn) { btn.textContent = '✅ Conta solicitada!'; btn.style.background = '#22c55e'; btn.disabled = true; }
+      toast('✅ Caixa notificado! Pagando em ' + formaPag + '.');
+    } else {
+      if (btn) { btn.disabled = false; btn.textContent = '💰 Pedir a Conta'; }
+      toast('Erro: ' + (d.erro||'Tente novamente'), true);
+    }
+  } catch(e) {
+    if (btn) { btn.disabled = false; btn.textContent = '💰 Pedir a Conta'; }
+    toast('Erro de conexão', true);
+  }
+}
+
+// UTILS
 function mudarTab(tab) {
   ['cardapio','carrinho','conta'].forEach(t => {
     document.getElementById('pg-'+t).classList.toggle('active', t===tab);
@@ -363,12 +499,12 @@ function mudarTab(tab) {
 function toast(msg, erro=false) {
   const el = document.getElementById('toast');
   el.textContent = msg;
-  el.style.background = erro ? '#f55' : '#00cc6a';
+  el.style.background = erro ? '#ef4444' : '#22c55e';
   el.classList.add('show');
   setTimeout(() => el.classList.remove('show'), 2500);
 }
 
-// Auto-refresh da conta
+// Auto-refresh
 setInterval(() => { if (mesa) carregarConta(); }, 15000);
 </script>
 </body>
