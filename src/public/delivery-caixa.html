@@ -1556,18 +1556,23 @@ async function fecharCaixa() {
         const d = await r.json();
         if (!d.caixa || d.caixa.status !== 'aberto') return toast('Nenhum caixa aberto', 'error');
         const caixa = d.caixa;
-        // Buscar totais do sistema para conferência
-        const rs = await fetch('/api/delivery/caixa/stats', { headers: { 'Authorization': 'Bearer ' + token } });
-        const stats = await rs.json();
-        // Mostrar modal de fechamento
+        // Mostrar modal de fechamento com dados já carregados na tela
         document.getElementById('modal-fechar-caixa').style.display = 'flex';
         document.getElementById('fc-operador').textContent = caixa.abertoPor || _operadorAtual;
         document.getElementById('fc-abertura').textContent = new Date(caixa.dataAbertura).toLocaleString('pt-BR');
-        document.getElementById('fc-sistema-dinheiro').textContent = 'R$ ' + ((stats.totalDia||0).toFixed(2));
-        document.getElementById('fc-sistema-cartao').textContent = 'R$ ' + ((stats.ticketMedio||0).toFixed(2));
+        // Pegar totais direto da barra superior que já está atualizada
+        const totalDiaEl = document.getElementById('s-total');
+        const totalDiaStr = totalDiaEl ? totalDiaEl.textContent.replace('R$','').replace(',','.').trim() : '0';
+        const totalDiaVal = parseFloat(totalDiaStr) || 0;
+        const ativosEl = document.getElementById('s-ativos');
+        const entreguesEl = document.getElementById('s-entregues');
+        const nAtivos = ativosEl ? parseInt(ativosEl.textContent)||0 : 0;
+        const nEntregues = entreguesEl ? parseInt(entreguesEl.textContent)||0 : 0;
+        document.getElementById('fc-sistema-dinheiro').textContent = 'R$ ' + totalDiaVal.toFixed(2);
+        document.getElementById('fc-sistema-cartao').textContent = '-';
         document.getElementById('fc-sistema-pix').textContent = '-';
-        document.getElementById('fc-sistema-total').textContent = 'R$ ' + ((stats.totalDia||0).toFixed(2));
-        document.getElementById('fc-pedidos').textContent = (stats.entreguesHoje||0) + (stats.ativos||0);
+        document.getElementById('fc-sistema-total').textContent = 'R$ ' + totalDiaVal.toFixed(2);
+        document.getElementById('fc-pedidos').textContent = nAtivos + nEntregues;
         document.getElementById('fc-cancelados').textContent = stats.totalCancelados || 0;
         window._fcaixaId = caixa._id;
     } catch(e) { toast('Erro ao abrir fechamento: ' + e.message, 'error'); }
