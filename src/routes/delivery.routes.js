@@ -2446,7 +2446,10 @@ router.get('/caixa/mesas-painel', async (req, res) => {
             status: { $nin: ['cancelado', 'entregue'] }
         }).select('numeroMesa clienteNome status total createdAt').lean();
         const mesas = [];
-        for (let i = 1; i <= qtdMesas; i++) {
+        // Incluir mesas extras com pedidos ativos fora do range configurado
+        const mesasExtras = [...new Set(pedidosAtivos.map(p => parseInt(p.numeroMesa)).filter(n => n > qtdMesas && !isNaN(n)))].sort((a,b)=>a-b);
+        const totalMesas = Math.max(qtdMesas, mesasExtras.length ? mesasExtras[mesasExtras.length-1] : 0);
+        for (let i = 1; i <= totalMesas; i++) {
             const pedidosMesa = pedidosAtivos.filter(p => String(p.numeroMesa) === String(i));
             mesas.push({
                 numero: i,
@@ -2455,7 +2458,7 @@ router.get('/caixa/mesas-painel', async (req, res) => {
                 total: pedidosMesa.reduce((s, p) => s + (p.total || 0), 0)
             });
         }
-        res.json({ sucesso: true, mesas, qtdMesas });
+        res.json({ sucesso: true, mesas, qtdMesas: totalMesas });
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
