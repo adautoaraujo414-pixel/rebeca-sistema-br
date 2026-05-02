@@ -235,7 +235,7 @@ async function carregarConfigNF() {
     
                 <!-- FINANCEIRO CAIXAS -->
                 <div id="page-financeiro-caixas" class="page">
-                  <h2 style="margin-bottom:20px">🔒 Fechamentos de Caixa</h2>
+                  <h2 style="margin-bottom:20px">📋 Fechamentos de Caixa</h2>
                   <div class="stats-grid" id="fc-stats-grid">
                     <div class="stat-card"><div class="valor" id="fc-total-dia">R$ 0</div><div class="label">Total Vendido Hoje</div></div>
                     <div class="stat-card"><div class="valor" id="fc-dinheiro-dia" style="color:#22c55e">R$ 0</div><div class="label">💵 Dinheiro</div></div>
@@ -352,7 +352,7 @@ async function carregarConfigNF() {
                 <!-- COMBOS DESATIVADO TEMPORARIAMENTE -->
                 <div class="menu-section">Financeiro</div>
                 <div class="menu-item" data-page="relatorios" onclick="carregarRelatorios()">📈 Relatórios de Caixa</div>
-                <div class="menu-item" data-page="financeiro-caixas" onclick="carregarFinanceiroCaixas()">🔒 Fechamentos de Caixa</div>
+                <div class="menu-item" data-page="financeiro-caixas" onclick="carregarFinanceiroCaixas()">📋 Fechamentos de Caixa</div>
                 <div class="menu-item" data-page="financeiro-lucro" onclick="carregarLucroProdutos()">💹 Lucro por Produto</div>
                 <div class="menu-item" data-page="financeiro-contas" onclick="carregarContasPagar()">💸 Contas a Pagar</div>
                 <div class="menu-item" data-page="financeiro-fornecedores" onclick="carregarFornecedores()">🏭 Fornecedores</div>
@@ -1909,6 +1909,10 @@ async function carregarConfigNF() {
                 if (page === 'cardapio-dia') { carregarCardapioDia(); carregarConfigCardapioDia(); }
                 if (page === 'cardapio-semanal') carregarCardapioSemanal();
                 if (page === 'impressora') { /* página estática */ }
+                if (page === 'financeiro-caixas') carregarFinanceiroCaixas();
+                if (page === 'financeiro-lucro') carregarFinanceiroLucro();
+                if (page === 'financeiro-contas') carregarFinanceiroContas();
+                if (page === 'financeiro-fornecedores') carregarFinanceiroFornecedores();
                 if (page === 'estoque') { carregarEstoque(); carregarListaCompras(); renderFornecedores(); document.getElementById('inputBarcode')?.focus(); }
                 if (page === 'upload-cardapio') { /* nada */ }
                 if (page === 'combos') carregarCombos();
@@ -5650,6 +5654,156 @@ function whatsappFornecedor(i) {
   window.open('https://wa.me/55'+num+'?text=Olá+'+encodeURIComponent(f.nome)+',+tudo+bem?','_blank');
 }
 
+
+async function carregarFinanceiroLucro() {
+  try {
+    const periodo = document.getElementById('fl-periodo')?.value || 'mes';
+    let dataIni = new Date(), dataFim = new Date();
+    if (periodo==='hoje') { dataIni.setHours(0,0,0,0); }
+    else if (periodo==='semana') { dataIni = new Date(Date.now()-7*864e5); }
+    else if (periodo==='mes') { dataIni = new Date(); dataIni.setDate(1); dataIni.setHours(0,0,0,0); }
+    else {
+      dataIni = new Date(document.getElementById('fl-ini')?.value || Date.now());
+      dataFim = new Date(document.getElementById('fl-fim')?.value || Date.now());
+    }
+    const token = localStorage.getItem('admin_token') || localStorage.getItem('token') || '';
+    const headers = token ? {'Authorization':'Bearer '+token} : {};
+    const [rPed, rCard] = await Promise.all([
+      fetch('/api/delivery/caixa/todos?dataIni='+dataIni.toISOString()+'&dataFim='+dataFim.toISOString(), {headers}),
+      fetch('/api/delivery/cardapio', {headers})
+    ]);
+    const pedidos = await rPed.json().catch(()=>[]);
+    const cardapio = await rCard.json().catch(()=>[]);
+    const custoMap = {};
+    (cardapio?.itens||cardapio||[]).forEach(i => { custoMap[i.nome] = i.custoProducao||i.custo||0; });
+    const produtos = {};
+    (Array.isArray(pedidos)?pedidos:[]).forEach(p => {
+      (p.itens||[]).forEach(it => {
+        const nome = it.nome||'Item';
+        if (!produtos[nome]) produtos[nome] = {nome,qtd:0,receita:0,custo:0};
+        const qtd = it.qtd||it.quantidade||1;
+        produtos[nome].qtd += qtd;
+        produtos[nome].receita += (it.preco||0)*qtd;
+        produtos[nome].custo += (custoMap[nome]||0)*qtd;
+      });
+    });
+    const lista = Object.values(produtos).sort((a,b)=>(b.receita-b.custo)-(a.receita-a.custo));
+    const totalV = lista.reduce((s,p)=>s+p.receita,0);
+    const totalC = lista.reduce((s,p)=>s+p.custo,0);
+    const totalL = totalV-totalC;
+    const margem = totalV ? ((totalL/totalV)*100).toFixed(1) : 0;
+    const el = id => document.getElementById(id);
+    if(el('fl-vendas')) el('fl-vendas').textContent = 'R$ '+totalV.toFixed(2);
+    if(el('fl-custo')) el('fl-custo').textContent = 'R$ '+totalC.toFixed(2);
+    if(el('fl-lucro')) el('fl-lucro').textContent = 'R$ '+totalL.toFixed(2);
+    if(el('fl-margem')) el('fl-margem').textContent = margem+'%';
+    const tbody = el('fl-tbody');
+    if(tbody) tbody.innerHTML = lista.length ? lista.map(p => {
+      const lucroU = (p.receita-p.custo)/(p.qtd||1);
+      const mg = p.receita ? (((p.receita-p.custo)/p.receita)*100).toFixed(1) : 0;
+      const cor = lucroU>=0?'#22c55e':'#ef4444';
+      return '<tr style="border-bottom:1px solid #f0f0f0"><td style="padding:8px">'+p.nome+'</td><td style="padding:8px;text-align:right">'+p.qtd+'</td><td style="padding:8px;text-align:right;color:'+cor+'">R$ '+lucroU.toFixed(2)+'</td><td style="padding:8px;text-align:right;color:'+cor+';font-weight:700">R$ '+(p.receita-p.custo).toFixed(2)+'</td><td style="padding:8px;text-align:right"><span style="background:'+(lucroU>=0?'#dcfce7':'#fee2e2')+';color:'+cor+';padding:2px 8px;border-radius:20px;font-size:.8em">'+mg+'%</span></td></tr>';
+    }).join('') : '<tr><td colspan="5" style="text-align:center;padding:30px;color:#888">Nenhum dado</td></tr>';
+  } catch(e) { console.error('fl:', e); }
+}
+
+function carregarFinanceiroContas() {
+  const agora = new Date(), em7 = new Date(Date.now()+7*864e5), mesAtual = agora.getMonth();
+  let contas = JSON.parse(localStorage.getItem('fin_contas_adm')||'[]');
+  let pendente=0, vencendo=0, pagoMes=0;
+  contas.forEach(c => {
+    const venc = new Date(c.vencimento);
+    if(c.pago && new Date(c.dataPagamento).getMonth()===mesAtual) pagoMes+=c.valor||0;
+    else if(!c.pago) { pendente+=c.valor||0; if(venc<=em7) vencendo+=c.valor||0; }
+  });
+  const el = id => document.getElementById(id);
+  if(el('fc2-pendente')) el('fc2-pendente').textContent = 'R$ '+pendente.toFixed(2);
+  if(el('fc2-vencendo')) el('fc2-vencendo').textContent = 'R$ '+vencendo.toFixed(2);
+  if(el('fc2-pago')) el('fc2-pago').textContent = 'R$ '+pagoMes.toFixed(2);
+  const lista = el('fc2-lista');
+  if(!lista) return;
+  if(!contas.length) { lista.innerHTML = '<div style="text-align:center;color:#888;padding:40px">Nenhuma conta cadastrada.<br><button onclick="fcNovaContaAdm()" style="margin-top:12px;padding:10px 20px;background:#f97316;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:700">+ Adicionar Conta</button></div>'; return; }
+  lista.innerHTML = contas.map((c,i) => {
+    const venc = new Date(c.vencimento), atrasada = !c.pago && venc<agora;
+    const cor = c.pago?'#22c55e':atrasada?'#ef4444':'#f59e0b';
+    return '<div style="background:#fff;border:1px solid #e8e8ed;border-radius:10px;padding:14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">'+
+      '<div><div style="font-weight:700">'+c.descricao+'</div><div style="font-size:.8em;color:#888">'+(c.categoria||'Geral')+' · Venc: '+venc.toLocaleDateString('pt-BR')+(c.fornecedor?' · '+c.fornecedor:'')+'</div></div>'+
+      '<div style="display:flex;align-items:center;gap:8px">'+
+        '<span style="font-weight:800;color:'+cor+'">R$ '+(c.valor||0).toFixed(2)+'</span>'+
+        '<span style="background:'+(c.pago?'#dcfce7':atrasada?'#fee2e2':'#fef9c3')+';color:'+cor+';padding:2px 8px;border-radius:20px;font-size:.75em;font-weight:700">'+(c.pago?'✅ Pago':atrasada?'❌ Atrasada':'⏳ Pendente')+'</span>'+
+        (!c.pago?'<button onclick="fcPagarContaAdm('+i+')" style="background:#22c55e;color:#fff;border:none;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:.8em">Pagar</button>':'')+
+        '<button onclick="fcRemoverContaAdm('+i+')" style="background:#ef4444;color:#fff;border:none;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:.8em">✕</button>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+function fcNovaContaAdm() {
+  const desc = prompt('Descrição:'); if(!desc) return;
+  const valor = parseFloat(prompt('Valor (R$):')||0); if(!valor) return;
+  const venc = prompt('Vencimento (DD/MM/AAAA):') || '';
+  const cat = prompt('Categoria (Fornecedor/Aluguel/Energia/Outros):') || 'Outros';
+  const forn = prompt('Fornecedor (opcional):') || '';
+  const p = (venc||'').split('/');
+  const dataVenc = p.length===3 ? new Date(p[2],p[1]-1,p[0]) : new Date();
+  const contas = JSON.parse(localStorage.getItem('fin_contas_adm')||'[]');
+  contas.push({descricao:desc,valor,vencimento:dataVenc.toISOString(),categoria:cat,fornecedor:forn,pago:false,criadoEm:new Date().toISOString()});
+  localStorage.setItem('fin_contas_adm', JSON.stringify(contas));
+  carregarFinanceiroContas();
+}
+function fcPagarContaAdm(i) {
+  const contas = JSON.parse(localStorage.getItem('fin_contas_adm')||'[]');
+  contas[i].pago=true; contas[i].dataPagamento=new Date().toISOString();
+  localStorage.setItem('fin_contas_adm', JSON.stringify(contas));
+  carregarFinanceiroContas();
+}
+function fcRemoverContaAdm(i) {
+  if(!confirm('Remover?')) return;
+  const contas = JSON.parse(localStorage.getItem('fin_contas_adm')||'[]');
+  contas.splice(i,1); localStorage.setItem('fin_contas_adm', JSON.stringify(contas));
+  carregarFinanceiroContas();
+}
+
+function carregarFinanceiroFornecedores() {
+  const lista = document.getElementById('ff-lista');
+  if(!lista) return;
+  const forns = JSON.parse(localStorage.getItem('fin_fornecedores_adm')||'[]');
+  if(!forns.length) { lista.innerHTML = '<div style="text-align:center;color:#888;padding:40px">Nenhum fornecedor.<br><button onclick="ffNovoFornAdm()" style="margin-top:12px;padding:10px 20px;background:#f97316;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:700">+ Adicionar</button></div>'; return; }
+  lista.innerHTML = forns.map((f,i) =>
+    '<div style="background:#fff;border:1px solid #e8e8ed;border-radius:10px;padding:16px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">'+
+      '<div><div style="font-weight:700">'+f.nome+(f.empresa?' <span style="color:#888;font-weight:400;font-size:.85em">· '+f.empresa+'</span>':'')+'</div>'+
+        '<div style="font-size:.8em;color:#888;margin-top:3px">📱 '+(f.whatsapp||'—')+' · 📍 '+(f.cidade||'—')+'</div>'+
+        (f.obs?'<div style="font-size:.78em;color:#aaa;margin-top:2px;font-style:italic">'+f.obs+'</div>':'')+
+      '</div>'+
+      '<div style="display:flex;gap:8px">'+
+        (f.whatsapp?'<button onclick="ffWhatsappAdm('+i+')" style="background:#25d366;color:#fff;border:none;border-radius:8px;padding:6px 12px;cursor:pointer;font-size:.8em">📱 WhatsApp</button>':'')+
+        '<button onclick="ffRemoverAdm('+i+')" style="background:#ef4444;color:#fff;border:none;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:.8em">✕</button>'+
+      '</div>'+
+    '</div>'
+  ).join('');
+}
+function ffNovoFornAdm() {
+  const nome = prompt('Nome:'); if(!nome) return;
+  const empresa = prompt('Empresa:') || '';
+  const whatsapp = prompt('WhatsApp (com DDD):') || '';
+  const cidade = prompt('Cidade:') || '';
+  const obs = prompt('Observações:') || '';
+  const forns = JSON.parse(localStorage.getItem('fin_fornecedores_adm')||'[]');
+  forns.push({nome,empresa,whatsapp,cidade,obs,criadoEm:new Date().toISOString()});
+  localStorage.setItem('fin_fornecedores_adm', JSON.stringify(forns));
+  carregarFinanceiroFornecedores();
+}
+function ffRemoverAdm(i) {
+  if(!confirm('Remover?')) return;
+  const forns = JSON.parse(localStorage.getItem('fin_fornecedores_adm')||'[]');
+  forns.splice(i,1); localStorage.setItem('fin_fornecedores_adm', JSON.stringify(forns));
+  carregarFinanceiroFornecedores();
+}
+function ffWhatsappAdm(i) {
+  const forns = JSON.parse(localStorage.getItem('fin_fornecedores_adm')||'[]');
+  const f = forns[i]; if(!f?.whatsapp) return alert('WhatsApp não cadastrado');
+  window.open('https://wa.me/55'+f.whatsapp.replace(/\D/g,'')+'?text=Olá+'+encodeURIComponent(f.nome)+'!','_blank');
+}
 </script>
 <!-- ===== TELA DE ATIVAÇÃO DO PLANO ===== -->
 <div id="telaAtivacao" style="display:none;position:fixed;inset:0;background:#07071a;z-index:99999;flex-direction:column;align-items:center;justify-content:center;padding:24px;">
