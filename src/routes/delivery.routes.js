@@ -1556,7 +1556,7 @@ router.post('/garcons/pedir-conta', async (req, res) => {
         // Notificar todos garçons do admin via SSE
         const garcons = await GarcomDelivery.find({ adminId, ativo: true });
         garcons.forEach(g => {
-            SseService.emitir('garcom_' + g._id.toString(), 'pedido_conta', { mesa, nomeCliente: nomeCliente || 'Cliente', formaPagamento: formaPagamento || '' });
+            SseService.emitir('garcom_' + g._id.toString(), 'pedido_conta', { mesa, nomeCliente: nomeCliente || 'Cliente', formaPagamento: formaPagamento || '' }); // fix
         });
         res.json({ sucesso: true });
     } catch(e) { res.status(500).json({ erro: e.message }); }
