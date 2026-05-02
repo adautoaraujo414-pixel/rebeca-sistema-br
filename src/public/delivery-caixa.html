@@ -1153,6 +1153,27 @@ function imprimirCupom(pedido, troco) {
 
 // impressão controlada pela config do admin
 
+function calcularDiferencaFC() {
+  const sistDin = parseFloat((document.getElementById('fc-sistema-dinheiro')?.textContent||'0').replace('R$','').replace(',','.').trim()) || 0;
+  const sistTotal = parseFloat((document.getElementById('fc-sistema-total')?.textContent||'0').replace('R$','').replace(',','.').trim()) || 0;
+  const contado = parseFloat(document.getElementById('fc-val-dinheiro')?.value) || 0;
+  const sangria = parseFloat(document.getElementById('fc-sangria')?.value) || 0;
+  const difDin = contado - sangria - sistDin;
+  const difTotal = contado - sangria - sistTotal;
+  const elDifDin = document.getElementById('fc-dif-dinheiro');
+  const elDifTotal = document.getElementById('fc-dif-total');
+  const elStatus = document.getElementById('fc-status-conf');
+  const fmt = v => (v >= 0 ? '+' : '') + 'R$ ' + Math.abs(v).toFixed(2).replace('.', ',');
+  const cor = v => v === 0 ? '#16a34a' : v > 0 ? '#f59e0b' : '#dc2626';
+  if (elDifDin) { elDifDin.textContent = fmt(difDin); elDifDin.style.color = cor(difDin); }
+  if (elDifTotal) { elDifTotal.textContent = fmt(difTotal); elDifTotal.style.color = cor(difTotal); }
+  if (elStatus) {
+    if (difDin === 0) { elStatus.textContent = '✅ OK'; elStatus.style.color = '#16a34a'; }
+    else if (difDin > 0) { elStatus.textContent = '💰 Sobra'; elStatus.style.color = '#f59e0b'; }
+    else { elStatus.textContent = '⚠️ Falta'; elStatus.style.color = '#dc2626'; }
+  }
+}
+
 
 // ===== PAINEL DE MESAS =====
 async function abrirPainelMesas() {
@@ -1551,6 +1572,32 @@ async function fecharCaixa() {
         document.getElementById('fc-sistema-pix').textContent = 'R$ ' + totPix.toFixed(2);
         document.getElementById('fc-sistema-total').textContent = 'R$ ' + totGeral.toFixed(2);
         document.getElementById('fc-pedidos').textContent = nPed;
+
+        // Top 3 produtos mais vendidos
+        const contagem = {};
+        pedArr.forEach(p => {
+          if (p.status === 'cancelado') return;
+          (p.itens || []).forEach(it => {
+            const nome = it.nome || 'Item';
+            if (!contagem[nome]) contagem[nome] = { nome, qtd: 0, total: 0 };
+            contagem[nome].qtd += it.quantidade || 1;
+            contagem[nome].total += (it.precoUnitario || it.preco || 0) * (it.quantidade || 1);
+          });
+        });
+        const top3 = Object.values(contagem).sort((a,b) => b.qtd - a.qtd).slice(0,3);
+        const topEl = document.getElementById('fc-top-produtos');
+        if (topEl) {
+          if (top3.length === 0) {
+            topEl.innerHTML = '<div style="color:#aaa;text-align:center">Sem vendas hoje</div>';
+          } else {
+            const medalhas = ['🥇','🥈','🥉'];
+            topEl.innerHTML = top3.map((p,i) => `
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #e9d5ff">
+                <span>${medalhas[i]} <strong>${p.nome}</strong></span>
+                <span style="color:#7c3aed;font-weight:700">${p.qtd}x — R$ ${p.total.toFixed(2)}</span>
+              </div>`).join('');
+          }
+        }
         document.getElementById('fc-cancelados').textContent = stats.totalCancelados || 0;
         window._fcaixaId = (typeof caixa._id === 'object' && caixa._id.$oid) ? caixa._id.$oid : String(caixa._id);
     } catch(e) { toast('Erro ao abrir fechamento: ' + e.message, 'error'); }
@@ -1764,47 +1811,79 @@ function abrirComandaMesa(numero) {
 
 <!-- MODAL FECHAR CAIXA -->
 <div id="modal-fechar-caixa" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;align-items:center;justify-content:center">
-  <div style="background:#fff;border-radius:16px;padding:28px;width:95%;max-width:480px;max-height:90vh;overflow-y:auto">
-    <h2 style="margin:0 0 20px;font-size:1.2em;color:#1c1c1e">🔒 Fechar Caixa</h2>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
-      <div style="background:#f5f5f7;border-radius:10px;padding:12px">
-        <div style="font-size:.75em;color:#888;margin-bottom:2px">Operador</div>
-        <div style="font-weight:700" id="fc-operador">-</div>
+  <div style="background:#fff;border-radius:16px;padding:24px;width:95%;max-width:500px;max-height:92vh;overflow-y:auto">
+    <h2 style="margin:0 0 16px;font-size:1.2em;color:#1c1c1e">🔒 Fechar Caixa</h2>
+
+    <!-- Operador / Abertura -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+      <div style="background:#f5f5f7;border-radius:10px;padding:10px">
+        <div style="font-size:.72em;color:#888;margin-bottom:2px">Operador</div>
+        <div style="font-weight:700;font-size:.9em" id="fc-operador">-</div>
       </div>
-      <div style="background:#f5f5f7;border-radius:10px;padding:12px">
-        <div style="font-size:.75em;color:#888;margin-bottom:2px">Abertura</div>
-        <div style="font-weight:700;font-size:.85em" id="fc-abertura">-</div>
+      <div style="background:#f5f5f7;border-radius:10px;padding:10px">
+        <div style="font-size:.72em;color:#888;margin-bottom:2px">Abertura</div>
+        <div style="font-weight:700;font-size:.8em" id="fc-abertura">-</div>
       </div>
     </div>
-    <div style="background:#f0fdf4;border-radius:10px;padding:14px;margin-bottom:16px">
-      <div style="font-size:.8em;font-weight:700;color:#16a34a;margin-bottom:10px">📊 Totais do Sistema</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:.85em">
-        <div>💵 Dinheiro: <strong id="fc-sistema-dinheiro">R$ 0</strong></div>
-        <div>💳 Cartão: <strong id="fc-sistema-cartao">R$ 0</strong></div>
-        <div>📱 Pix: <strong id="fc-sistema-pix">R$ 0</strong></div>
-        <div>🧾 Total: <strong id="fc-sistema-total">R$ 0</strong></div>
+
+    <!-- Totais do sistema -->
+    <div style="background:#f0fdf4;border-radius:10px;padding:12px;margin-bottom:12px">
+      <div style="font-size:.8em;font-weight:700;color:#16a34a;margin-bottom:8px">📊 Totais do Sistema</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:.83em">
+        <div>💵 Dinheiro: <strong id="fc-sistema-dinheiro">R$ 0,00</strong></div>
+        <div>💳 Cartão: <strong id="fc-sistema-cartao">R$ 0,00</strong></div>
+        <div>📱 Pix: <strong id="fc-sistema-pix">R$ 0,00</strong></div>
+        <div>🧾 Total: <strong id="fc-sistema-total">R$ 0,00</strong></div>
         <div>📦 Pedidos: <strong id="fc-pedidos">0</strong></div>
         <div>❌ Cancelados: <strong id="fc-cancelados">0</strong></div>
       </div>
     </div>
-    <div style="margin-bottom:12px">
-      <label style="font-size:.85em;font-weight:600;color:#555;display:block;margin-bottom:6px">💵 Dinheiro em Caixa (contagem física)</label>
-      <input type="number" id="fc-val-dinheiro" placeholder="0.00" step="0.01" style="width:100%;padding:10px;border-radius:8px;border:1px solid #ddd;font-size:1em;box-sizing:border-box">
+
+    <!-- Top 3 produtos mais vendidos -->
+    <div style="background:#faf5ff;border-radius:10px;padding:12px;margin-bottom:12px">
+      <div style="font-size:.8em;font-weight:700;color:#7c3aed;margin-bottom:8px">🏆 Top 3 Mais Vendidos Hoje</div>
+      <div id="fc-top-produtos" style="font-size:.82em;color:#555">
+        <div style="color:#aaa;text-align:center;padding:6px">Carregando...</div>
+      </div>
     </div>
-    <div style="margin-bottom:12px">
-      <label style="font-size:.85em;font-weight:600;color:#555;display:block;margin-bottom:6px">💸 Sangria (retirada)</label>
-      <input type="number" id="fc-sangria" placeholder="0.00" step="0.01" style="width:100%;padding:10px;border-radius:8px;border:1px solid #ddd;font-size:1em;box-sizing:border-box">
+
+    <!-- Conferência de caixa -->
+    <div style="background:#eff6ff;border-radius:10px;padding:12px;margin-bottom:12px">
+      <div style="font-size:.8em;font-weight:700;color:#2563eb;margin-bottom:8px">🔍 Conferência de Caixa</div>
+      <div style="margin-bottom:8px">
+        <label style="font-size:.8em;font-weight:600;color:#555;display:block;margin-bottom:4px">💵 Dinheiro contado (físico)</label>
+        <input type="number" id="fc-val-dinheiro" placeholder="0.00" step="0.01" oninput="calcularDiferencaFC()" style="width:100%;padding:8px;border-radius:7px;border:1px solid #ddd;font-size:.95em;box-sizing:border-box">
+      </div>
+      <div style="margin-bottom:8px">
+        <label style="font-size:.8em;font-weight:600;color:#555;display:block;margin-bottom:4px">💸 Sangria (retirada)</label>
+        <input type="number" id="fc-sangria" placeholder="0.00" step="0.01" oninput="calcularDiferencaFC()" style="width:100%;padding:8px;border-radius:7px;border:1px solid #ddd;font-size:.95em;box-sizing:border-box">
+      </div>
+      <!-- Resultado da conferência -->
+      <div id="fc-conferencia" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:8px;font-size:.78em">
+        <div style="background:#fff;border-radius:7px;padding:7px;text-align:center">
+          <div style="color:#888;margin-bottom:2px">💵 Dif. Dinheiro</div>
+          <div style="font-weight:800" id="fc-dif-dinheiro">R$ 0,00</div>
+        </div>
+        <div style="background:#fff;border-radius:7px;padding:7px;text-align:center">
+          <div style="color:#888;margin-bottom:2px">📊 Dif. Total</div>
+          <div style="font-weight:800" id="fc-dif-total">R$ 0,00</div>
+        </div>
+        <div style="background:#fff;border-radius:7px;padding:7px;text-align:center">
+          <div style="color:#888;margin-bottom:2px">✅ Status</div>
+          <div style="font-weight:800;font-size:.9em" id="fc-status-conf">—</div>
+        </div>
+      </div>
     </div>
-    <div style="margin-bottom:12px">
-      <div style="background:#fff7ed;border-radius:8px;padding:10px;font-size:.85em">Diferença: <strong id="fc-diferenca" style="color:#f97316">R$ 0,00</strong></div>
+
+    <!-- Observações -->
+    <div style="margin-bottom:14px">
+      <label style="font-size:.8em;font-weight:600;color:#555;display:block;margin-bottom:4px">📝 Observações</label>
+      <textarea id="fc-obs" rows="2" placeholder="Opcional..." style="width:100%;padding:8px;border-radius:7px;border:1px solid #ddd;font-size:.85em;box-sizing:border-box;resize:vertical"></textarea>
     </div>
-    <div style="margin-bottom:16px">
-      <label style="font-size:.85em;font-weight:600;color:#555;display:block;margin-bottom:6px">📝 Observações</label>
-      <textarea id="fc-obs" rows="2" placeholder="Opcional..." style="width:100%;padding:10px;border-radius:8px;border:1px solid #ddd;font-size:.9em;box-sizing:border-box;resize:vertical"></textarea>
-    </div>
+
     <div style="display:flex;gap:10px">
-      <button onclick="document.getElementById('modal-fechar-caixa').style.display='none'" style="flex:1;padding:12px;border-radius:8px;border:1px solid #ddd;background:#fff;cursor:pointer;font-weight:600">Cancelar</button>
-      <button onclick="confirmarFechamentoCaixa()" style="flex:2;padding:12px;border-radius:8px;border:none;background:#dc2626;color:#fff;cursor:pointer;font-weight:700">🔒 Confirmar Fechamento</button>
+      <button onclick="document.getElementById('modal-fechar-caixa').style.display='none'" style="flex:1;padding:11px;border-radius:8px;border:1px solid #ddd;background:#fff;cursor:pointer;font-weight:600">Cancelar</button>
+      <button onclick="confirmarFechamentoCaixa()" style="flex:2;padding:11px;border-radius:8px;border:none;background:#dc2626;color:#fff;cursor:pointer;font-weight:700">🔒 Confirmar Fechamento</button>
     </div>
   </div>
 </div>
