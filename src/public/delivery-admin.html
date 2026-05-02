@@ -140,6 +140,76 @@ function adicionarFornProd() {
   c.appendChild(row);
 }
 
+
+// ===== CONFIG NOTA FISCAL =====
+function carregarCertificado(input) {
+  var file = input.files[0];
+  if (!file) return;
+  document.getElementById('nfCertNome').textContent = '✅ ' + file.name;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    document.getElementById('nfCertBase64').value = e.target.result.split(',')[1];
+  };
+  reader.readAsDataURL(file);
+}
+
+async function salvarConfigNF() {
+  var tk = localStorage.getItem('delivery_token') || token || '';
+  var payload = {
+    nfToken: document.getElementById('nfToken').value.trim(),
+    nfCnpj: document.getElementById('nfCnpj').value.replace(/\D/g,''),
+    nfRegime: document.getElementById('nfRegime').value,
+    nfAmbiente: document.getElementById('nfAmbiente').value,
+    nfCertBase64: document.getElementById('nfCertBase64').value,
+    nfCertSenha: document.getElementById('nfCertSenha').value
+  };
+  if (!payload.nfToken || !payload.nfCnpj) {
+    document.getElementById('nfStatus').style.display = 'block';
+    document.getElementById('nfStatus').style.color = '#ef4444';
+    document.getElementById('nfStatus').textContent = '❌ Token e CNPJ são obrigatórios';
+    return;
+  }
+  try {
+    var r = await fetch('/api/delivery/admin/config-nf', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + tk, 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    var d = await r.json();
+    var el = document.getElementById('nfStatus');
+    el.style.display = 'block';
+    if (d.sucesso) { el.style.color = '#22c55e'; el.textContent = '✅ Salvo!'; }
+    else { el.style.color = '#ef4444'; el.textContent = '❌ ' + (d.erro || 'Erro'); }
+  } catch(e) { console.error(e); }
+}
+
+async function testarConfigNF() {
+  var tk = localStorage.getItem('delivery_token') || token || '';
+  var el = document.getElementById('nfStatus');
+  el.style.display = 'block'; el.style.color = '#aaa'; el.textContent = '⏳ Testando...';
+  try {
+    var r = await fetch('/api/delivery/admin/config-nf/testar', {
+      headers: { 'Authorization': 'Bearer ' + tk }
+    });
+    var d = await r.json();
+    if (d.sucesso) { el.style.color = '#22c55e'; el.textContent = '✅ Conexão OK! Pronto para emitir NF.'; }
+    else { el.style.color = '#ef4444'; el.textContent = '❌ ' + (d.erro || 'Falha na conexão'); }
+  } catch(e) { el.style.color = '#ef4444'; el.textContent = '❌ Erro de conexão'; }
+}
+
+async function carregarConfigNF() {
+  var tk = localStorage.getItem('delivery_token') || token || '';
+  try {
+    var r = await fetch('/api/delivery/admin/config-nf', { headers: { 'Authorization': 'Bearer ' + tk } });
+    var d = await r.json();
+    if (d.nfToken) document.getElementById('nfToken').value = d.nfToken;
+    if (d.nfCnpj) document.getElementById('nfCnpj').value = d.nfCnpj;
+    if (d.nfRegime) document.getElementById('nfRegime').value = d.nfRegime;
+    if (d.nfAmbiente) document.getElementById('nfAmbiente').value = d.nfAmbiente;
+    if (d.nfCertBase64) document.getElementById('nfCertNome').textContent = '✅ Certificado salvo';
+  } catch(e) {}
+}
+
 </script>
 </head>
 <body>
@@ -1004,6 +1074,58 @@ function adicionarFornProd() {
                             <input type="number" id="qtdMesas" value="10" min="1" max="50" style="width:80px;padding:8px;border-radius:8px;border:1px solid #333;background:#1a1a2e;color:#fff;font-size:.9em;">
                         </div>
                         <button onclick="gerarQR()" id="btnGerarQR" style="padding:12px 24px;background:#f97316;border:none;color:#000;border-radius:10px;font-weight:700;cursor:pointer">🔲 Gerar QR Codes por Mesa</button>
+                    </div>
+
+                    
+                    <!-- NOTA FISCAL (NFC-e) -->
+                    <div class="panel" style="margin-bottom:20px;border:2px solid #6366f122">
+                        <h3>🧾 Nota Fiscal Eletrônica (NFC-e)</h3>
+                        <p style="color:#888;font-size:.88em;margin:8px 0 16px">Opcional. Preencha para habilitar a emissão de NFC-e via <strong>Focus NFe</strong>. Cada estabelecimento usa sua própria conta gratuita (até 50 notas/mês).</p>
+                        <div style="background:#1a1a2e;border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:12px;">
+                            <div>
+                                <label style="font-size:.8em;font-weight:700;color:#aaa;display:block;margin-bottom:4px;">Token Focus NFe *</label>
+                                <input type="text" id="nfToken" placeholder="Token da sua conta em app.focusnfe.com.br" style="width:100%;padding:9px;background:#0f0f1a;border:1px solid #333;border-radius:8px;color:#fff;font-size:.85em;box-sizing:border-box;">
+                                <div style="font-size:.72em;color:#666;margin-top:3px;">Crie conta gratuita em <a href="https://app.focusnfe.com.br" target="_blank" style="color:#6366f1">app.focusnfe.com.br</a> e copie o token de API</div>
+                            </div>
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                                <div>
+                                    <label style="font-size:.8em;font-weight:700;color:#aaa;display:block;margin-bottom:4px;">CNPJ do Estabelecimento *</label>
+                                    <input type="text" id="nfCnpj" placeholder="00.000.000/0001-00" maxlength="18" style="width:100%;padding:9px;background:#0f0f1a;border:1px solid #333;border-radius:8px;color:#fff;font-size:.85em;box-sizing:border-box;">
+                                </div>
+                                <div>
+                                    <label style="font-size:.8em;font-weight:700;color:#aaa;display:block;margin-bottom:4px;">Regime Tributário</label>
+                                    <select id="nfRegime" style="width:100%;padding:9px;background:#0f0f1a;border:1px solid #333;border-radius:8px;color:#fff;font-size:.85em;">
+                                        <option value="1">Simples Nacional</option>
+                                        <option value="2">Simples Nacional — Excesso</option>
+                                        <option value="3">Regime Normal</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div>
+                                <label style="font-size:.8em;font-weight:700;color:#aaa;display:block;margin-bottom:4px;">Certificado Digital A1 (.pfx) *</label>
+                                <input type="file" id="nfCertFile" accept=".pfx" style="display:none" onchange="carregarCertificado(this)">
+                                <div onclick="document.getElementById('nfCertFile').click()" style="border:2px dashed #333;border-radius:8px;padding:14px;text-align:center;cursor:pointer;color:#aaa;font-size:.82em;" id="nfCertZone">
+                                    <div id="nfCertNome">📎 Clique para selecionar o arquivo .pfx</div>
+                                </div>
+                                <input type="hidden" id="nfCertBase64">
+                            </div>
+                            <div>
+                                <label style="font-size:.8em;font-weight:700;color:#aaa;display:block;margin-bottom:4px;">Senha do Certificado *</label>
+                                <input type="password" id="nfCertSenha" placeholder="Senha do arquivo .pfx" style="width:100%;padding:9px;background:#0f0f1a;border:1px solid #333;border-radius:8px;color:#fff;font-size:.85em;box-sizing:border-box;">
+                            </div>
+                            <div>
+                                <label style="font-size:.8em;font-weight:700;color:#aaa;display:block;margin-bottom:4px;">Ambiente</label>
+                                <select id="nfAmbiente" style="width:100%;padding:9px;background:#0f0f1a;border:1px solid #333;border-radius:8px;color:#fff;font-size:.85em;">
+                                    <option value="homologacao">🧪 Homologação (testes — notas não valem)</option>
+                                    <option value="producao">✅ Produção (notas fiscais reais)</option>
+                                </select>
+                            </div>
+                            <div style="display:flex;align-items:center;gap:10px;margin-top:4px;">
+                                <button onclick="salvarConfigNF()" style="background:#6366f1;color:#fff;border:none;border-radius:8px;padding:10px 22px;font-weight:700;cursor:pointer;font-size:.88em;">💾 Salvar Config Fiscal</button>
+                                <button onclick="testarConfigNF()" style="background:#252542;color:#aaa;border:1px solid #333;border-radius:8px;padding:10px 18px;font-weight:600;cursor:pointer;font-size:.85em;">🧪 Testar Conexão</button>
+                                <div id="nfStatus" style="display:none;font-size:.82em;font-weight:700;"></div>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="panel">
@@ -3510,7 +3632,7 @@ function baixarImagemCombo(url, nome) {
 document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.menu-item[data-page]').forEach(function(item) {
         item.addEventListener('click', function() {
-            if (this.dataset.page === 'config') carregarDadosEstabelecimento();
+            if (this.dataset.page === 'config') { carregarDadosEstabelecimento(); carregarConfigNF(); }
             if (this.dataset.page === 'combos') {
                 carregarCombos();
                 // Pré-carregar itens do cardápio para o modal

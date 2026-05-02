@@ -441,6 +441,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 
     <div class="modal-actions">
       <button class="btn btn-green" style="flex:1" onclick="confirmarPagamento()">✅ Confirmar Pagamento</button>
+      <button class="btn" style="flex:1;background:#6366f1;color:#fff" onclick="emitirNFCe()">🧾 Emitir NF</button>
       <button class="btn btn-ghost" onclick="fecharModal()">Cancelar</button>
     </div>
   </div>
@@ -1214,6 +1215,27 @@ async function liberarMesa(numero) {
     abrirPainelMesas();
     await carregarPedidos();
   } catch(e) { alert('Erro ao liberar mesa'); }
+}
+
+
+// ===== EMITIR NFC-e =====
+async function emitirNFCe(pedidoId) {
+  var id = pedidoId || pedidoAtual?._id || pedidoSelecionado?._id;
+  if (!id) { toast('Selecione um pedido primeiro'); return; }
+  toast('⏳ Emitindo nota fiscal...');
+  try {
+    var r = await fetch('/api/delivery/caixa/emitir-nfce/' + id, {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    var d = await r.json();
+    if (d.sucesso) {
+      toast('✅ NFC-e emitida! Ref: ' + d.ref);
+      if (d.danfe) window.open(d.danfe, '_blank');
+    } else {
+      toast('❌ ' + (d.erro || 'Erro ao emitir NF'));
+    }
+  } catch(e) { toast('❌ Erro de conexão'); }
 }
 
 </script>

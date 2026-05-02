@@ -2484,3 +2484,120 @@ router.post('/caixa/config/mesas', async (req, res) => {
         res.json({ sucesso: true });
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
+
+// ===== CONFIG NOTA FISCAL =====
+router.get('/admin/config-nf', async (req, res) => {
+    try {
+        const token = req.headers.authorization?.replace('Bearer ','') || '';
+        const admin = await AdminDelivery.findOne({ token });
+        if (!admin) return res.status(401).json({ erro: 'Token invalido' });
+        res.json({
+            nfToken: admin.nfToken || '',
+            nfCnpj: admin.nfCnpj || '',
+            nfRegime: admin.nfRegime || '1',
+            nfAmbiente: admin.nfAmbiente || 'homologacao',
+            nfCertBase64: admin.nfCertBase64 ? '***' : ''
+        });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+router.post('/admin/config-nf', async (req, res) => {
+    try {
+        const token = req.headers.authorization?.replace('Bearer ','') || '';
+        const admin = await AdminDelivery.findOne({ token });
+        if (!admin) return res.status(401).json({ erro: 'Token invalido' });
+        const { nfToken, nfCnpj, nfRegime, nfAmbiente, nfCertBase64, nfCertSenha } = req.body;
+        const update = { nfToken, nfCnpj, nfRegime, nfAmbiente };
+        if (nfCertBase64) update.nfCertBase64 = nfCertBase64;
+        if (nfCertSenha) update.nfCertSenha = nfCertSenha;
+        await AdminDelivery.updateOne({ _id: admin._id }, { $set: update });
+        res.json({ sucesso: true });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+router.get('/admin/config-nf/testar', async (req, res) => {
+    try {
+        const token = req.headers.authorization?.replace('Bearer ','') || '';
+        const admin = await AdminDelivery.findOne({ token });
+        if (!admin) return res.status(401).json({ erro: 'Token invalido' });
+        if (!admin.nfToken || !admin.nfCnpj) return res.json({ sucesso: false, erro: 'Token e CNPJ não configurados' });
+        const base = admin.nfAmbiente === 'producao'
+            ? 'https://api.focusnfe.com.br'
+            : 'https://homologacao.focusnfe.com.br';
+        const r = await fetch(base + '/v2/info', {
+            headers: { 'Authorization': 'Basic ' + Buffer.from(admin.nfToken + ':').toString('base64') }
+        });
+        if (r.ok) res.json({ sucesso: true });
+        else res.json({ sucesso: false, erro: 'Token inválido ou sem conexão com Focus NFe' });
+    } catch(e) { res.json({ sucesso: false, erro: e.message }); }
+});
+
+router.post('/caixa/emitir-nfce/:pedidoId', async (req, res) => {
+    try {
+        const token = req.headers.authorization?.replace('Bearer ','') || '';
+        const admin = await AdminDelivery.findOne({ token });
+        if (!admin) return res.status(401).json({ erro: 'Token invalido' });
+        if (!admin.nfToken || !admin.nfCnpj) return res.json({ sucesso: false, erro: 'Configure a Nota Fiscal nas Configurações primeiro' });
+
+        const pedido = await PedidoDelivery.findById(req.params.pedidoId).lean();
+        if (!pedido) return res.json({ sucesso: false, erro: 'Pedido não encontrado' });
+
+        const ref = 'ped' + pedido._id.toString().slice(-10);
+        const base = admin.nfAmbiente === 'producao'
+            ? 'https://api.focusnfe.com.br'
+            : 'https://homologacao.focusnfe.com.br';
+
+        const itens = (pedido.itens || []).map((it, idx) => ({
+            numero_item: idx + 1,
+            codigo_produto: String(it.itemId || idx + 1).slice(0, 14),
+            descricao: (it.nome || 'Item').slice(0, 120),
+            ncm: '21069090',
+            cfop: '5102',
+            unidade_comercial: 'UN',
+            quantidade_comercial: it.quantidade || 1,
+            valor_unitario_comercial: parseFloat((it.preco || 0).toFixed(2)),
+            valor_bruto: parseFloat(((it.preco || 0) * (it.quantidade || 1)).toFixed(2)),
+            unidade_tributavel: 'UN',
+            quantidade_tributavel: it.quantidade || 1,
+            valor_unitario_tributavel: parseFloat((it.preco || 0).toFixed(2)),
+            icms_situacao_tributaria: admin.nfRegime === '3' ? '102' : '400',
+            icms_origem: 0,
+            pis_situacao_tributaria: '07',
+            cofins_situacao_tributaria: '07',
+            inclui_no_total: 1
+        }));
+
+        const payload = {
+            natureza_operacao: 'VENDA',
+            forma_pagamento: 0,
+            finalidade_emissao: 1,
+            cnpj_emitente: admin.nfCnpj,
+            nome_emitente: admin.nomeComercio || 'Estabelecimento',
+            regime_tributario: parseInt(admin.nfRegime) || 1,
+            indicador_inscricao_estadual_emitente: 9,
+            consumidor_final: 1,
+            modalidade_frete: 9,
+            local_destino: 1,
+            presenca_comprador: 1,
+            itens,
+            formas_pagamento: [{ forma_pagamento: '01', valor: parseFloat((pedido.total || 0).toFixed(2)) }]
+        };
+
+        const headers = {
+            'Authorization': 'Basic ' + Buffer.from(admin.nfToken + ':').toString('base64'),
+            'Content-Type': 'application/json'
+        };
+
+        const r = await fetch(base + '/v2/nfce?ref=' + ref, {
+            method: 'POST', headers, body: JSON.stringify(payload)
+        });
+        const data = await r.json();
+
+        if (r.status === 201 || r.status === 200 || data.status === 'autorizado' || data.caminho_xml_nota_fiscal) {
+            await PedidoDelivery.updateOne({ _id: pedido._id }, { $set: { nfceRef: ref, nfceStatus: 'emitida' } });
+            res.json({ sucesso: true, ref, danfe: data.caminho_danfe || '', chave: data.chave_nfe || '' });
+        } else {
+            res.json({ sucesso: false, erro: data.mensagem_sefaz || data.erros?.[0]?.mensagem || JSON.stringify(data) });
+        }
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});

@@ -204,8 +204,8 @@ function mostrarPopupAceitar(d) {
     '<div style="color:#aaa;font-size:.82em;margin-bottom:4px;">' + (d.itens||'') + '</div>' +
     '<div style="color:#22c55e;font-size:1.1em;font-weight:800;margin-bottom:16px;">R$ ' + Number(d.total||0).toFixed(2).replace('.',',') + '</div>' +
     '<div id="popupTimer" style="color:#f97316;font-size:.85em;margin-bottom:12px;font-weight:700;">⏱️ <span id="popupSeg">180</span>s para aceitar</div>' +
-    '<button onclick="aceitarPedidoPopup('' + d.pedidoId + '',this)" style="width:100%;padding:14px;background:linear-gradient(135deg,#f97316,#ea580c);border:none;border-radius:10px;color:#fff;font-size:1em;font-weight:900;cursor:pointer;margin-bottom:8px;">✅ ACEITAR ENTREGA</button>' +
-    '<button onclick="document.getElementById('popupAceitar').remove();clearInterval(window._popupTimer);" style="width:100%;padding:10px;background:rgba(239,68,68,.15);border:1px solid #ef4444;border-radius:10px;color:#ef4444;font-size:.85em;cursor:pointer;">❌ Recusar</button>' +
+    '<button onclick="aceitarPedidoPopup(" + d.pedidoId + ",this)" style="width:100%;padding:14px;background:linear-gradient(135deg,#f97316,#ea580c);border:none;border-radius:10px;color:#fff;font-size:1em;font-weight:900;cursor:pointer;margin-bottom:8px;">✅ ACEITAR ENTREGA</button>' +
+    '<button onclick="document.getElementById(\"popupAceitar\").remove();clearInterval(window._popupTimer);" style="width:100%;padding:10px;background:rgba(239,68,68,.15);border:1px solid #ef4444;border-radius:10px;color:#ef4444;font-size:.85em;cursor:pointer;">❌ Recusar</button>' +
     '</div>';
   document.body.appendChild(popup);
 
