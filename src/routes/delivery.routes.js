@@ -76,6 +76,38 @@ async function gerarImagemItem(nome, descricao, tamanho, fotoReferencia) {
         let promptFinal = '';
 
         // Detectar tipo específico de bebida
+        // Mapa de marcas de cerveja → descrição visual sem citar a marca
+        const marcasCerveja = {
+            'brahma':     'Brazilian lager beer, golden color, white foam, classic blue and red label style bottle',
+            'bhrama':     'Brazilian lager beer, golden color, white foam, classic blue and red label style bottle',
+            'skol':       'Brazilian lager beer, golden color, white foam, classic red and yellow label aluminum can',
+            'antarctica': 'Brazilian pale lager, golden color, white foam, classic blue label bottle',
+            'heineken':   'European lager, pale golden color, white foam, classic green glass bottle',
+            'budweiser':  'American lager, light golden color, white foam, classic red aluminum can',
+            'corona':     'Mexican lager, pale golden color, clear glass bottle with lime wedge',
+            'stella':     'Belgian lager, golden color, white foam, classic chalice glass',
+            'itaipava':   'Brazilian lager, light golden color, white foam, green label bottle',
+            'original':   'Brazilian craft lager, amber golden color, white foam, dark bottle',
+            'eisenbahn':  'German-style Brazilian craft beer, golden amber, white foam, elegant bottle',
+            'colorado':   'Brazilian craft ale, amber color, creamy foam, rustic bottle',
+            'devassa':    'Brazilian lager, golden color, white foam, stylish dark bottle',
+            'bohemia':    'Brazilian premium lager, golden amber, white foam, vintage styled bottle',
+            'spaten':     'German lager, golden color, white foam, classic bottle',
+            'beck':       'German lager, pale golden, white foam, green bottle',
+            'amstel':     'Dutch lager, golden color, white foam, red label bottle',
+            'serra malte':'Brazilian craft beer, amber golden, white foam, artisanal bottle',
+            'carlsberg':  'Danish lager, pale golden, white foam, classic green bottle',
+            'guinness':   'Irish stout, very dark brown almost black, thick creamy beige foam head',
+            'leffe':      'Belgian abbey ale, amber golden, white foam, elegant glass',
+            'chopp':      'Brazilian draft beer served fresh, golden color, large white foam head, glass mug'
+        };
+
+        // Detectar marca no nome
+        let marcaDesc = '';
+        for (const [marca, desc] of Object.entries(marcasCerveja)) {
+            if (nomeLower.includes(marca)) { marcaDesc = desc; break; }
+        }
+
         const isCerveja = nomeLower.match(/cerveja|chopp|beer|lager|pilsen|ipa|ale|stout|weiss/);
         const isVinho = nomeLower.match(/vinho|wine|espumante|prosecco|champagne/);
         const isCaipirinha = nomeLower.match(/caipirinha|caipiroska|batida/);
@@ -101,7 +133,7 @@ async function gerarImagemItem(nome, descricao, tamanho, fotoReferencia) {
             embalagemDesc = embalagemMap[tamanho] || tamanho;
 
             let tipoDesc = '';
-            if (isCerveja) tipoDesc = 'cold craft beer, amber/golden liquid with white foam head, ';
+            if (isCerveja) tipoDesc = marcaDesc ? marcaDesc + ', ' : 'cold craft beer, amber/golden liquid with white foam head, ';
             else if (isVinho) tipoDesc = 'fine wine, deep red or white wine, ';
             else if (isCaipirinha) tipoDesc = 'Brazilian caipirinha cocktail with lime and ice, ';
             else if (isWhisky) tipoDesc = 'premium spirit drink on the rocks, ';
