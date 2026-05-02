@@ -1151,34 +1151,7 @@ function imprimirCupom(pedido, troco) {
   window.print();
 }
 
-// Toggle impressão automática
-let _impressaoAtiva = localStorage.getItem('impressaoAuto') === 'true';
-function toggleImpressao() {
-  _impressaoAtiva = !_impressaoAtiva;
-  localStorage.setItem('impressaoAuto', _impressaoAtiva);
-  const knob = document.getElementById('toggle-knob');
-  const ball = document.getElementById('toggle-ball');
-  const label = document.getElementById('toggle-impressao-label');
-  if (_impressaoAtiva) {
-    knob.style.background = '#22c55e';
-    knob.style.borderColor = '#22c55e';
-    ball.style.left = '25px';
-    ball.style.background = '#fff';
-    label.style.color = '#22c55e';
-    label.textContent = '🖨️ Imprimir ao pagar: ON';
-  } else {
-    knob.style.background = 'var(--surface3)';
-    knob.style.borderColor = 'var(--border)';
-    ball.style.left = '3px';
-    ball.style.background = '#aaa';
-    label.style.color = 'var(--text2)';
-    label.textContent = '🖨️ Imprimir ao pagar';
-  }
-}
-// Restaurar estado salvo
-(function() {
-  if (_impressaoAtiva) toggleImpressao();
-})();
+// impressão controlada pela config do admin
 
 
 // ===== PAINEL DE MESAS =====
