@@ -283,7 +283,13 @@ app.get('/delivery-entregador', (req, res) => res.sendFile(path.join(__dirname, 
 app.get('/delivery-cozinha', (req, res) => res.sendFile(path.join(__dirname, 'public', 'delivery-cozinha.html')));
 app.get('/delivery-garcom', (req, res) => res.sendFile(path.join(__dirname, 'public', 'delivery-garcom.html')));
 app.get('/garcom', (req, res) => res.sendFile(path.join(__dirname, 'public', 'delivery-garcom.html')));
-app.get('/delivery-caixa', (req, res) => res.sendFile(path.join(__dirname, 'public', 'delivery-caixa.html')));
+app.get('/delivery-caixa', (req, res) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.setHeader('Surrogate-Control', 'no-store');
+  res.sendFile(path.join(__dirname, 'public', 'delivery-caixa.html'));
+});
 app.get('/delivery-rastrear/:codigo', (req, res) => res.sendFile(path.join(__dirname, 'public', 'delivery-rastrear.html')));
 app.get('/delivery-cardapio/:adminId', (req, res) => res.sendFile(path.join(__dirname, 'public', 'delivery-cardapio.html')));
 
