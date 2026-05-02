@@ -1561,13 +1561,13 @@ async function fecharCaixa() {
         const stats = await rs.json();
         // Mostrar modal de fechamento
         document.getElementById('modal-fechar-caixa').style.display = 'flex';
-        document.getElementById('fc-operador').textContent = caixa.abertoPor || operador;
+        document.getElementById('fc-operador').textContent = caixa.abertoPor || _operadorAtual;
         document.getElementById('fc-abertura').textContent = new Date(caixa.dataAbertura).toLocaleString('pt-BR');
-        document.getElementById('fc-sistema-dinheiro').textContent = 'R$ ' + ((stats.totalDinheiro||0).toFixed(2));
-        document.getElementById('fc-sistema-cartao').textContent = 'R$ ' + ((stats.totalCartao||0).toFixed(2));
-        document.getElementById('fc-sistema-pix').textContent = 'R$ ' + ((stats.totalPix||0).toFixed(2));
-        document.getElementById('fc-sistema-total').textContent = 'R$ ' + ((stats.totalVendas||0).toFixed(2));
-        document.getElementById('fc-pedidos').textContent = stats.totalPedidos || 0;
+        document.getElementById('fc-sistema-dinheiro').textContent = 'R$ ' + ((stats.totalDia||0).toFixed(2));
+        document.getElementById('fc-sistema-cartao').textContent = 'R$ ' + ((stats.ticketMedio||0).toFixed(2));
+        document.getElementById('fc-sistema-pix').textContent = '-';
+        document.getElementById('fc-sistema-total').textContent = 'R$ ' + ((stats.totalDia||0).toFixed(2));
+        document.getElementById('fc-pedidos').textContent = (stats.entreguesHoje||0) + (stats.ativos||0);
         document.getElementById('fc-cancelados').textContent = stats.totalCancelados || 0;
         window._fcaixaId = caixa._id;
     } catch(e) { toast('Erro ao abrir fechamento: ' + e.message, 'error'); }
