@@ -394,7 +394,14 @@ const urlParams = new URLSearchParams(location.search);
 const tokenURL = urlParams.get('token');
 
 // Persistência: salvar token da URL e recuperar credenciais salvas
-const _savedToken = tokenURL || localStorage.getItem('garcom_token') || '';
+const _savedToken = localStorage.getItem('garcom_token') || '';
+// Token da URL so usa se for diferente do que esta salvo (evitar loops)
+if (tokenURL && tokenURL !== _savedToken) {
+  // Limpar token salvo antigo e usar o da URL
+  localStorage.removeItem('garcom_token');
+  localStorage.removeItem('garcom_senha');
+}
+const _tokenParaUsar = tokenURL || _savedToken;
 const _savedSenha = localStorage.getItem('garcom_senha')
 
 // ===== SSE: notificações em tempo real para o garçom =====
@@ -426,8 +433,8 @@ function mostrarAlertaGarcom(msg, tipo) {
   if (Notification.permission === 'granted') new Notification('Rebeca — Garçom', { body: msg });
 }
 
-if (_savedToken) {
-  document.getElementById('inputToken').value = _savedToken;
+if (_tokenParaUsar) {
+  document.getElementById('inputToken').value = _tokenParaUsar;
   // Salvar token da URL para uso futuro
   if (tokenURL) localStorage.setItem('garcom_token', tokenURL);
 }
@@ -436,7 +443,7 @@ if (_savedSenha) {
 }
 
 // Auto-login se tiver credenciais salvas
-if (_savedToken && _savedSenha) {
+if (_tokenParaUsar && _savedSenha && !tokenURL) {
   // Auto-login após DOM carregar
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => setTimeout(fazerLogin, 400));
