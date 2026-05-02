@@ -1719,7 +1719,7 @@ async function confirmarFechamentoCaixa() {
     const r = await fetch('/api/delivery/caixa/fechar/' + window._fcaixaId, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-      body: JSON.stringify({ valorDinheiro: valDinheiro, valorSangria: sangria, observacoes: obs, operadorFechamento: operador })
+      body: JSON.stringify({ valorDinheiro: valDinheiro, valorSangria: sangria, observacoes: obs, operadorFechamento: _operadorAtual })
     });
     const d = await r.json();
     if (d.sucesso) {
