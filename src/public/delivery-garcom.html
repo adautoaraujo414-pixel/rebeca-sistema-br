@@ -572,24 +572,50 @@ function abrirMesa(num) {
   const pedidos = mesasOcupadas[num] || [];
   document.getElementById('modalMesaTitulo').textContent = '🍽️ Mesa '+num;
   
+  const sLabel = {
+    novo:'🆕 Novo', confirmado:'✅ Confirmado', preparando:'🍳 Preparando',
+    pronto:'🎉 Pronto!', entregue:'📦 Entregue', pago:'💰 Pago', cancelado:'❌ Cancelado'
+  };
+  const sCor = {
+    novo:'#f97316', confirmado:'#22c55e', preparando:'#f97316',
+    pronto:'#6366f1', entregue:'#0ea5e9', pago:'#22c55e', cancelado:'#ef4444'
+  };
+
   let html = '';
   let totalGeral = 0;
+  let totalItens = 0;
+
+  // Agrupar todos os itens de todos os pedidos em histórico
   pedidos.forEach(p => {
-    const podeCanc = !['entregue','cancelado'].includes(p.status);
-    html += `<div class="comanda-info" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;">
-      <span><strong>Pedido #${p.numero||'?'}</strong> — ${p.clienteNome||'Cliente'} — ${p.status}</span>
-      
-    </div>`;
+    pedidoAtualId = p._id;
+    const cor = sCor[p.status] || '#aaa';
+    const label = sLabel[p.status] || p.status;
+    const hora = p.createdAt ? new Date(p.createdAt).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}) : '';
+    html += `<div style="background:#f8fafc;border-radius:10px;padding:10px 12px;margin-bottom:8px;border-left:3px solid ${cor}">`;
+    html += `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">`;
+    html += `<span style="font-weight:700;font-size:.82em;color:#333">Pedido #${p.numero||'?'} ${p.clienteNome ? '— '+p.clienteNome : ''}</span>`;
+    html += `<span style="font-size:.72em;font-weight:700;color:${cor};background:${cor}18;padding:2px 8px;border-radius:20px">${label}</span>`;
+    html += `</div>`;
     (p.itens||[]).forEach(it => {
-      html += `<div class="pedido-item-linha">
-        <span>${it.quantidade||1}x ${it.nome}</span>
-        <span style="color:var(--accent)">R$ ${((it.precoUnitario||it.preco||0)*(it.quantidade||1)).toFixed(2)}</span>
-      </div>`;
+      const subtotal = ((it.precoUnitario||it.preco||0)*(it.quantidade||1));
+      totalItens += subtotal;
+      html += `<div style="display:flex;justify-content:space-between;font-size:.8em;padding:3px 0;border-bottom:1px solid #eee;color:#444">`;
+      html += `<span>${it.quantidade||1}x ${it.nome}${it.observacao?' <em style=color:#888>('+it.observacao+')</em>':''}</span>`;
+      html += `<span style="font-weight:700;color:#f97316">R$ ${subtotal.toFixed(2).replace('.',',')}</span>`;
+      html += `</div>`;
     });
+    if (hora) html += `<div style="font-size:.68em;color:#aaa;margin-top:4px">às ${hora}</div>`;
+    html += `</div>`;
     totalGeral += p.total||0;
-    pedidoAtualId = p._id; // usa o último pedido para pagamento
   });
-  html += `<div class="modal-total"><span>Total da Mesa</span><span style="color:var(--green)">R$ ${totalGeral.toFixed(2)}</span></div>`;
+
+  if (!pedidos.length) {
+    html = '<div style="text-align:center;color:#aaa;padding:30px;font-size:.88em">Nenhum pedido nesta mesa ainda</div>';
+  }
+
+  html += `<div style="display:flex;justify-content:space-between;padding:12px 4px;font-weight:800;font-size:1em;border-top:2px solid #eee;margin-top:4px">`;
+  html += `<span>Total da Mesa</span><span style="color:#16a34a">R$ ${totalGeral.toFixed(2).replace('.',',')}</span>`;
+  html += `</div>`;
   
   document.getElementById('modalMesaBody').innerHTML = html;
   document.getElementById('overlayMesa').classList.add('show');
