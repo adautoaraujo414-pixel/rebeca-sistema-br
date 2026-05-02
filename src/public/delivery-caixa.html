@@ -1564,19 +1564,26 @@ async function fecharCaixa() {
         document.getElementById('modal-fechar-caixa').style.display = 'flex';
         document.getElementById('fc-operador').textContent = caixa.abertoPor || _operadorAtual;
         document.getElementById('fc-abertura').textContent = new Date(caixa.dataAbertura).toLocaleString('pt-BR');
-        // Pegar totais direto da barra superior que já está atualizada
-        const totalDiaEl = document.getElementById('s-total');
-        const totalDiaStr = totalDiaEl ? totalDiaEl.textContent.replace('R$','').replace(',','.').trim() : '0';
-        const totalDiaVal = parseFloat(totalDiaStr) || 0;
-        const ativosEl = document.getElementById('s-ativos');
-        const entreguesEl = document.getElementById('s-entregues');
-        const nAtivos = ativosEl ? parseInt(ativosEl.textContent)||0 : 0;
-        const nEntregues = entreguesEl ? parseInt(entreguesEl.textContent)||0 : 0;
-        document.getElementById('fc-sistema-dinheiro').textContent = 'R$ ' + totalDiaVal.toFixed(2);
-        document.getElementById('fc-sistema-cartao').textContent = '-';
-        document.getElementById('fc-sistema-pix').textContent = '-';
-        document.getElementById('fc-sistema-total').textContent = 'R$ ' + totalDiaVal.toFixed(2);
-        document.getElementById('fc-pedidos').textContent = nAtivos + nEntregues;
+        // Buscar pedidos do dia para calcular totais por forma de pagamento
+        const rp = await fetch('/api/delivery/caixa/todos', { headers: { 'Authorization': 'Bearer ' + token } });
+        const pedidosDia = await rp.json();
+        const pedArr = Array.isArray(pedidosDia) ? pedidosDia : [];
+        let totDin = 0, totCart = 0, totPix = 0, totGeral = 0, nPed = 0;
+        pedArr.forEach(p => {
+            if (p.status === 'cancelado') return;
+            const val = p.total || 0;
+            totGeral += val;
+            nPed++;
+            const fp = (p.formaPagamento || p.pagamento || '').toLowerCase();
+            if (fp.includes('cart') || fp.includes('card') || fp.includes('debito') || fp.includes('crédito') || fp.includes('credito')) totCart += val;
+            else if (fp.includes('pix')) totPix += val;
+            else totDin += val;
+        });
+        document.getElementById('fc-sistema-dinheiro').textContent = 'R$ ' + totDin.toFixed(2);
+        document.getElementById('fc-sistema-cartao').textContent = 'R$ ' + totCart.toFixed(2);
+        document.getElementById('fc-sistema-pix').textContent = 'R$ ' + totPix.toFixed(2);
+        document.getElementById('fc-sistema-total').textContent = 'R$ ' + totGeral.toFixed(2);
+        document.getElementById('fc-pedidos').textContent = nPed;
         document.getElementById('fc-cancelados').textContent = stats.totalCancelados || 0;
         window._fcaixaId = (typeof caixa._id === 'object' && caixa._id.$oid) ? caixa._id.$oid : String(caixa._id);
     } catch(e) { toast('Erro ao abrir fechamento: ' + e.message, 'error'); }
