@@ -1832,8 +1832,8 @@ async function carregarConfigNF() {
                     localStorage.setItem('delivery_token', token);
                     localStorage.setItem('delivery_adminId', data.adminId);
                     document.getElementById('loginContainer').style.display = 'none';
-                    document.getElementById('dashboardContainer').style.display = 'block';
-                    document.querySelector('.dashboard').style.display = 'block';
+                    const appDiv = document.getElementById('app');
+                    if (appDiv) appDiv.style.display = 'flex';
                     carregarDashboard();
                 } else {
                     document.getElementById('loginErro').textContent = data.erro;
@@ -7574,8 +7574,8 @@ function carregarFinanceiroFornecedores() {
                     localStorage.setItem('delivery_token', token);
                     localStorage.setItem('delivery_adminId', data.adminId);
                     document.getElementById('loginContainer').style.display = 'none';
-                    document.getElementById('dashboardContainer').style.display = 'block';
-                    document.querySelector('.dashboard').style.display = 'block';
+                    const appDiv = document.getElementById('app');
+                    if (appDiv) appDiv.style.display = 'flex';
                     carregarDashboard();
                 } else {
                     document.getElementById('loginErro').textContent = data.erro;
