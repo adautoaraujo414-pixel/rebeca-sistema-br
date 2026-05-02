@@ -601,7 +601,7 @@ function abrirMesa(num) {
       const subtotal = ((it.precoUnitario||it.preco||0)*(it.quantidade||1));
       totalItens += subtotal;
       html += `<div style="display:flex;justify-content:space-between;font-size:.8em;padding:3px 0;border-bottom:1px solid #eee;color:#444">`;
-      html += `<span>${it.quantidade||1}x ${it.nome}${it.observacao?' <em style=color:#888>('+it.observacao+')</em>':''}</span>`;
+      html += `<span style="display:flex;align-items:center;gap:5px">${it.imagem ? '<img src="'+it.imagem+'" style="width:24px;height:24px;border-radius:4px;object-fit:cover">' : ''}<span>${it.quantidade||1}x ${it.nome}${it.observacao?' ('+it.observacao+')':''}</span></span>`;
       html += `<span style="font-weight:700;color:#f97316">R$ ${subtotal.toFixed(2).replace('.',',')}</span>`;
       html += `</div>`;
     });
