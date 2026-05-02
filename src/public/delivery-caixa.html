@@ -356,6 +356,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
         <div class="cart-total-row"><span>TOTAL</span><span id="cart-total">R$ 0,00</span></div>
         <div class="cart-actions">
           <button class="btn btn-orange" onclick="enviarPedido()">📤 Enviar Cozinha</button>
+          <button class="btn" style="background:#6366f1;color:#fff" onclick="soAdicionarSemCozinha()">➕ Só Adicionar</button>
           <button class="btn btn-green" onclick="abrirPagamento()">💰 Pagar</button>
           <button class="btn btn-red" onclick="limparCarrinho()">🗑️</button>
         </div>
@@ -1329,6 +1330,60 @@ function abrirMesaEspecifica(numero) {
   var inputMesa = document.getElementById('numeroMesa') || document.getElementById('mesa-num') || document.getElementById('inputMesa');
   if (inputMesa) { inputMesa.value = numero; inputMesa.dispatchEvent(new Event('change')); }
   toast('Mesa ' + numero + ' selecionada — adicione os itens e confirme');
+}
+
+
+// ===== SÓ ADICIONAR (sem enviar para cozinha) =====
+async function soAdicionarSemCozinha() {
+  if (!carrinho.length) { alert('Adicione itens!'); return; }
+  const sub = carrinho.reduce((s, i) => s + i.subtotal, 0);
+  const body = {
+    clienteNome: document.getElementById('cliente-nome').value || 'Cliente Balcão',
+    clienteTelefone: document.getElementById('cliente-tel').value || '0000000000',
+    itens: carrinho,
+    tipoLocal: tipoAtual,
+    numeroMesa: document.getElementById('numero-mesa').value || undefined,
+    observacao: document.getElementById('obs-geral').value,
+    subtotal: sub, total: sub, taxaEntrega: 0,
+    soAdicionar: true  // flag para backend salvar como entregue
+  };
+  try {
+    let res, d;
+    if (pedidoEditando) {
+      // Modo edição: adicionar item a pedido existente
+      for (const it of carrinho) {
+        res = await fetch('/api/delivery/caixa/pedido/' + pedidoEditando + '/item', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({ item: it })
+        });
+      }
+      d = await res.json();
+    } else {
+      res = await fetch('/api/delivery/caixa/pedido', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify(body)
+      });
+      d = await res.json();
+    }
+    if (d && (d.sucesso || d._id || d.pedido)) {
+      const pid = d._id || d.pedido?._id || pedidoEditando;
+      // Marcar como entregue direto
+      if (pid) {
+        await fetch('/api/delivery/caixa/pedido/' + pid + '/pagar', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({ formaPagamento: 'a_receber', status: 'entregue' })
+        });
+      }
+      alert('✅ Item(s) adicionado(s) à conta!');
+      limparCarrinho();
+      pedidoEditando = null;
+    } else {
+      alert('Erro: ' + (d?.erro || 'Tente novamente'));
+    }
+  } catch(e) { alert('Erro de conexão'); }
 }
 
 </script>
