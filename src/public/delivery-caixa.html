@@ -1530,7 +1530,7 @@ async function abrirCaixa() {
     if (!['1','2','3'].includes((numeroCaixa||'').trim())) return toast('Caixa invalido. Use 1, 2 ou 3.', 'error');
     const valorAbertura = prompt('Fundo de caixa (R$):', '0') || '0';
     try {
-        const r = await fetch('/api/caixa/abrir', {
+        const r = await fetch('/api/delivery/caixa/abrir', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
             body: JSON.stringify({ operador: operador.trim(), numeroCaixa: Number(numeroCaixa), valorAbertura: Number(valorAbertura) })
