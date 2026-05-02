@@ -316,7 +316,8 @@ VARIAÇÕES DE SAUDAÇÃO:
             const r = await axios.post('https://api.anthropic.com/v1/messages', {
                 model: 'claude-haiku-4-5',
 
-                max_tokens: 1024                system: prompt,
+                max_tokens: 1024,
+                system: prompt,
                 messages: [
                     { role: 'user', content: 'Historico:\n' + historico + '\n\nCliente agora: ' + mensagem }
                 ]
