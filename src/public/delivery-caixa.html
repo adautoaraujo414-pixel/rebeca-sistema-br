@@ -1556,6 +1556,10 @@ async function fecharCaixa() {
         const d = await r.json();
         if (!d.caixa || d.caixa.status !== 'aberto') return toast('Nenhum caixa aberto', 'error');
         const caixa = d.caixa;
+        // Salvar ID do caixa para o fechamento
+        window._fcaixaId = caixa._id;
+        // Salvar ID do caixa para o fechamento
+        window._fcaixaId = caixa._id;
         // Mostrar modal de fechamento com dados já carregados na tela
         document.getElementById('modal-fechar-caixa').style.display = 'flex';
         document.getElementById('fc-operador').textContent = caixa.abertoPor || _operadorAtual;
