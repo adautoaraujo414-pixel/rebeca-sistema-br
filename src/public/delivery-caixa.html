@@ -1539,7 +1539,7 @@ async function abrirCaixa() {
         } else toast('Erro: ' + (d.erro || d.error || 'desconhecido'), 'error');
     } catch(e) { toast('Erro ao abrir caixa: ' + e.message, 'error'); }
 }
-async async function fecharCaixa() {
+async async async function fecharCaixa() {
     try {
         const r = await fetch('/api/delivery/caixa/status', { headers: { 'Authorization': 'Bearer ' + token } });
         const d = await r.json();

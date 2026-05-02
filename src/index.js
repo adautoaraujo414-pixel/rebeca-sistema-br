@@ -292,6 +292,7 @@ app.get('/delivery-caixa', (req, res) => {
 });
 app.get('/delivery-rastrear/:codigo', (req, res) => res.sendFile(path.join(__dirname, 'public', 'delivery-rastrear.html')));
 app.get('/delivery-cardapio/:adminId', (req, res) => res.sendFile(path.join(__dirname, 'public', 'delivery-cardapio.html')));
+app.get('/mesa', (req, res) => res.sendFile(path.join(__dirname, 'public', 'mesa.html')));
 
 app.get('/rastrear/:codigo', (req, res) => res.sendFile(path.join(__dirname, 'public', 'rastrear.html')));
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'index.html')));
