@@ -1557,9 +1557,9 @@ async function fecharCaixa() {
         if (!d.caixa || d.caixa.status !== 'aberto') return toast('Nenhum caixa aberto', 'error');
         const caixa = d.caixa;
         // Salvar ID do caixa para o fechamento
-        window._fcaixaId = caixa._id;
+        window._fcaixaId = (typeof caixa._id === 'object' && caixa._id.$oid) ? caixa._id.$oid : String(caixa._id);
         // Salvar ID do caixa para o fechamento
-        window._fcaixaId = caixa._id;
+        window._fcaixaId = (typeof caixa._id === 'object' && caixa._id.$oid) ? caixa._id.$oid : String(caixa._id);
         // Mostrar modal de fechamento com dados já carregados na tela
         document.getElementById('modal-fechar-caixa').style.display = 'flex';
         document.getElementById('fc-operador').textContent = caixa.abertoPor || _operadorAtual;
@@ -1578,7 +1578,7 @@ async function fecharCaixa() {
         document.getElementById('fc-sistema-total').textContent = 'R$ ' + totalDiaVal.toFixed(2);
         document.getElementById('fc-pedidos').textContent = nAtivos + nEntregues;
         document.getElementById('fc-cancelados').textContent = stats.totalCancelados || 0;
-        window._fcaixaId = caixa._id;
+        window._fcaixaId = (typeof caixa._id === 'object' && caixa._id.$oid) ? caixa._id.$oid : String(caixa._id);
     } catch(e) { toast('Erro ao abrir fechamento: ' + e.message, 'error'); }
 }
 document.addEventListener('DOMContentLoaded', () => {
