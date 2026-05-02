@@ -485,6 +485,66 @@ async function carregarConfigNF() {
                     </div>
                 </div>
 
+                <!-- FINANCEIRO LUCRO POR PRODUTO -->
+                <div id="page-financeiro-lucro" class="page" style="padding:20px">
+                  <h2 style="margin-bottom:20px">💹 Lucro por Produto</h2>
+                  <div style="background:#fff;border:1px solid #e8e8ed;border-radius:12px;padding:16px;margin-bottom:16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+                    <select id="fl-periodo" style="padding:8px 12px;border-radius:8px;border:1px solid #ddd;font-size:.9em">
+                      <option value="hoje">Hoje</option>
+                      <option value="semana">Últimos 7 dias</option>
+                      <option value="mes" selected>Este mês</option>
+                    </select>
+                    <button onclick="carregarFinanceiroLucro()" style="background:#f97316;color:#fff;border:none;border-radius:8px;padding:9px 18px;cursor:pointer;font-weight:700">📊 Calcular</button>
+                  </div>
+                  <div class="stats-grid">
+                    <div class="stat-card"><div class="valor" id="fl-vendas">R$ 0</div><div class="label">Total Vendido</div></div>
+                    <div class="stat-card"><div class="valor" id="fl-custo" style="color:#ef4444">R$ 0</div><div class="label">Custo Total</div></div>
+                    <div class="stat-card"><div class="valor" id="fl-lucro" style="color:#22c55e">R$ 0</div><div class="label">Lucro Líquido</div></div>
+                    <div class="stat-card"><div class="valor" id="fl-margem" style="color:#f59e0b">0%</div><div class="label">Margem</div></div>
+                  </div>
+                  <div style="background:#fff;border:1px solid #e8e8ed;border-radius:12px;padding:20px;overflow-x:auto">
+                    <table style="width:100%;border-collapse:collapse;font-size:13px">
+                      <thead><tr style="background:#f5f5f7;color:#888">
+                        <th style="padding:10px;text-align:left">Produto</th>
+                        <th style="padding:10px;text-align:right">Qtd</th>
+                        <th style="padding:10px;text-align:right">Lucro Unit.</th>
+                        <th style="padding:10px;text-align:right">Lucro Total</th>
+                        <th style="padding:10px;text-align:right">Margem</th>
+                      </tr></thead>
+                      <tbody id="fl-tbody"><tr><td colspan="5" style="text-align:center;padding:30px;color:#888">Clique em Calcular</td></tr></tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <!-- FINANCEIRO CONTAS A PAGAR -->
+                <div id="page-financeiro-contas" class="page" style="padding:20px">
+                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px">
+                    <h2>💸 Contas a Pagar</h2>
+                    <button onclick="fcNovaContaAdm()" style="background:#f97316;color:#fff;border:none;border-radius:8px;padding:9px 18px;cursor:pointer;font-weight:700">+ Nova Conta</button>
+                  </div>
+                  <div class="stats-grid">
+                    <div class="stat-card"><div class="valor" id="fc2-pendente" style="color:#ef4444">R$ 0</div><div class="label">⏳ Pendente</div></div>
+                    <div class="stat-card"><div class="valor" id="fc2-vencendo" style="color:#f59e0b">R$ 0</div><div class="label">⚠️ Vence em 7 dias</div></div>
+                    <div class="stat-card"><div class="valor" id="fc2-pago" style="color:#22c55e">R$ 0</div><div class="label">✅ Pago este mês</div></div>
+                  </div>
+                  <div style="background:#fff;border:1px solid #e8e8ed;border-radius:12px;padding:20px">
+                    <div id="fc2-lista"><div style="text-align:center;color:#888;padding:40px">Nenhuma conta</div></div>
+                  </div>
+                </div>
+
+                <!-- FINANCEIRO FORNECEDORES -->
+                <div id="page-financeiro-fornecedores" class="page" style="padding:20px">
+                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px">
+                    <h2>🏭 Fornecedores</h2>
+                    <button onclick="ffNovoFornAdm()" style="background:#f97316;color:#fff;border:none;border-radius:8px;padding:9px 18px;cursor:pointer;font-weight:700">+ Novo Fornecedor</button>
+                  </div>
+                  <div style="background:#fff;border:1px solid #e8e8ed;border-radius:12px;padding:20px">
+                    <div id="ff-lista"><div style="text-align:center;color:#888;padding:40px">Nenhum fornecedor</div></div>
+                  </div>
+                </div>
+
+
+
 
 
 
