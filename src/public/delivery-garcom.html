@@ -443,6 +443,8 @@ if (_savedSenha) {
 
 // Auto-login se tiver credenciais salvas
 if (_tokenParaUsar && _savedSenha && !tokenURL) {
+  // Auto-login silencioso
+  setTimeout(() => { document.getElementById('inputToken').value = _tokenParaUsar; document.getElementById('inputSenha').value = _savedSenha; entrar(); }, 300);
   // Auto-login após DOM carregar
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => setTimeout(fazerLogin, 400));
