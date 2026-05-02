@@ -234,65 +234,7 @@ async function carregarConfigNF() {
 
     
                 <!-- FINANCEIRO CAIXAS -->
-                <div id="page-financeiro-caixas" class="page" style="padding:20px">
-                  <!-- Cabeçalho -->
-                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px">
-                    <h2>📊 Dashboard Financeiro</h2>
-                    <button onclick="carregarFinanceiroCaixas()" style="background:#f97316;color:#fff;border:none;border-radius:10px;padding:9px 20px;cursor:pointer;font-weight:700">🔄 Atualizar</button>
-                  </div>
-
-                  <!-- Cards de totais -->
-                  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:20px">
-                    <div style="background:#fff;border:1px solid #e8e8ed;border-radius:12px;padding:16px;text-align:center">
-                      <div id="fc-total-dia" style="font-size:1.4em;font-weight:900;color:#f97316">R$ 0</div>
-                      <div style="font-size:.78em;color:#888;margin-top:4px">💰 Faturamento Hoje</div>
-                    </div>
-                    <div style="background:#fff;border:1px solid #e8e8ed;border-radius:12px;padding:16px;text-align:center">
-                      <div id="fc-pedidos-dia" style="font-size:1.4em;font-weight:900;color:#3b82f6">0</div>
-                      <div style="font-size:.78em;color:#888;margin-top:4px">📦 Pedidos Hoje</div>
-                    </div>
-                    <div style="background:#fff;border:1px solid #e8e8ed;border-radius:12px;padding:16px;text-align:center">
-                      <div id="fc-ticket-dia" style="font-size:1.4em;font-weight:900;color:#8b5cf6">R$ 0</div>
-                      <div style="font-size:.78em;color:#888;margin-top:4px">🎯 Ticket Médio</div>
-                    </div>
-                    <div style="background:#fff;border:1px solid #e8e8ed;border-radius:12px;padding:16px;text-align:center">
-                      <div id="fc-cancelados-dia" style="font-size:1.4em;font-weight:900;color:#ef4444">0</div>
-                      <div style="font-size:.78em;color:#888;margin-top:4px">❌ Cancelados</div>
-                    </div>
-                    <div id="fc-resultado-card" style="background:#f0fdf4;border:2px solid #22c55e;border-radius:12px;padding:16px;text-align:center">
-                      <div id="fc-resultado-emoji" style="font-size:1.6em">✅</div>
-                      <div id="fc-resultado-label" style="font-size:.78em;font-weight:700;color:#16a34a;margin-top:4px">No Positivo</div>
-                    </div>
-                  </div>
-
-                  <!-- Gráfico de origens + produtos mais vendidos -->
-                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
-                    <!-- Origens -->
-                    <div style="background:#fff;border:1px solid #e8e8ed;border-radius:12px;padding:20px">
-                      <h3 style="font-size:.95em;font-weight:800;margin-bottom:16px">📡 Origem dos Pedidos</h3>
-                      <canvas id="fc-chart-origens" height="180"></canvas>
-                    </div>
-                    <!-- Produtos mais vendidos -->
-                    <div style="background:#fff;border:1px solid #e8e8ed;border-radius:12px;padding:20px">
-                      <h3 style="font-size:.95em;font-weight:800;margin-bottom:12px">🏆 Produtos Mais Vendidos</h3>
-                      <div id="fc-top-produtos"><div style="color:#888;text-align:center;padding:20px">Carregando...</div></div>
-                    </div>
-                  </div>
-
-                  <!-- Histórico -->
-                  <div style="background:#fff;border:1px solid #e8e8ed;border-radius:12px;padding:20px">
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px">
-                      <h3 style="font-size:.95em;font-weight:800">📋 Histórico de Fechamentos</h3>
-                      <div style="display:flex;gap:8px;flex-wrap:wrap">
-                        <input type="date" id="fc-data-ini" style="padding:7px 10px;border-radius:8px;border:1px solid #ddd;font-size:.85em">
-                        <input type="date" id="fc-data-fim" style="padding:7px 10px;border-radius:8px;border:1px solid #ddd;font-size:.85em">
-                        <button onclick="carregarFinanceiroCaixas()" style="background:#f97316;color:#fff;border:none;border-radius:8px;padding:7px 14px;cursor:pointer;font-weight:700;font-size:.85em">🔍 Filtrar</button>
-                      </div>
-                    </div>
-                    <div id="fc-lista-caixas"><div style="color:#888;text-align:center;padding:40px">Clique em Atualizar para carregar</div></div>
-                  </div>
-                </div>
-
+                
                 
               <button class="menu-toggle-global" onclick="toggleMenuGlobal()" style="color:#f97316;background:none;border:none;padding:0 14px;font-size:1.3em;cursor:pointer;height:64px">☰</button>
               <img src="/logo-rebeca.png" style="height:64px;object-fit:cover;object-position:left center;display:block">
@@ -526,6 +468,66 @@ async function carregarConfigNF() {
                 </div>
 
                 <!-- FINANCEIRO LUCRO POR PRODUTO -->
+                <div id="page-financeiro-caixas" class="page" style="padding:20px">
+                  <!-- Cabeçalho -->
+                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px">
+                    <h2>📊 Dashboard Financeiro</h2>
+                    <button onclick="carregarFinanceiroCaixas()" style="background:#f97316;color:#fff;border:none;border-radius:10px;padding:9px 20px;cursor:pointer;font-weight:700">🔄 Atualizar</button>
+                  </div>
+
+                  <!-- Cards de totais -->
+                  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:20px">
+                    <div style="background:#fff;border:1px solid #e8e8ed;border-radius:12px;padding:16px;text-align:center">
+                      <div id="fc-total-dia" style="font-size:1.4em;font-weight:900;color:#f97316">R$ 0</div>
+                      <div style="font-size:.78em;color:#888;margin-top:4px">💰 Faturamento Hoje</div>
+                    </div>
+                    <div style="background:#fff;border:1px solid #e8e8ed;border-radius:12px;padding:16px;text-align:center">
+                      <div id="fc-pedidos-dia" style="font-size:1.4em;font-weight:900;color:#3b82f6">0</div>
+                      <div style="font-size:.78em;color:#888;margin-top:4px">📦 Pedidos Hoje</div>
+                    </div>
+                    <div style="background:#fff;border:1px solid #e8e8ed;border-radius:12px;padding:16px;text-align:center">
+                      <div id="fc-ticket-dia" style="font-size:1.4em;font-weight:900;color:#8b5cf6">R$ 0</div>
+                      <div style="font-size:.78em;color:#888;margin-top:4px">🎯 Ticket Médio</div>
+                    </div>
+                    <div style="background:#fff;border:1px solid #e8e8ed;border-radius:12px;padding:16px;text-align:center">
+                      <div id="fc-cancelados-dia" style="font-size:1.4em;font-weight:900;color:#ef4444">0</div>
+                      <div style="font-size:.78em;color:#888;margin-top:4px">❌ Cancelados</div>
+                    </div>
+                    <div id="fc-resultado-card" style="background:#f0fdf4;border:2px solid #22c55e;border-radius:12px;padding:16px;text-align:center">
+                      <div id="fc-resultado-emoji" style="font-size:1.6em">✅</div>
+                      <div id="fc-resultado-label" style="font-size:.78em;font-weight:700;color:#16a34a;margin-top:4px">No Positivo</div>
+                    </div>
+                  </div>
+
+                  <!-- Gráfico de origens + produtos mais vendidos -->
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+                    <!-- Origens -->
+                    <div style="background:#fff;border:1px solid #e8e8ed;border-radius:12px;padding:20px">
+                      <h3 style="font-size:.95em;font-weight:800;margin-bottom:16px">📡 Origem dos Pedidos</h3>
+                      <canvas id="fc-chart-origens" height="180"></canvas>
+                    </div>
+                    <!-- Produtos mais vendidos -->
+                    <div style="background:#fff;border:1px solid #e8e8ed;border-radius:12px;padding:20px">
+                      <h3 style="font-size:.95em;font-weight:800;margin-bottom:12px">🏆 Produtos Mais Vendidos</h3>
+                      <div id="fc-top-produtos"><div style="color:#888;text-align:center;padding:20px">Carregando...</div></div>
+                    </div>
+                  </div>
+
+                  <!-- Histórico -->
+                  <div style="background:#fff;border:1px solid #e8e8ed;border-radius:12px;padding:20px">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+                      <h3 style="font-size:.95em;font-weight:800">📋 Histórico de Fechamentos</h3>
+                      <div style="display:flex;gap:8px;flex-wrap:wrap">
+                        <input type="date" id="fc-data-ini" style="padding:7px 10px;border-radius:8px;border:1px solid #ddd;font-size:.85em">
+                        <input type="date" id="fc-data-fim" style="padding:7px 10px;border-radius:8px;border:1px solid #ddd;font-size:.85em">
+                        <button onclick="carregarFinanceiroCaixas()" style="background:#f97316;color:#fff;border:none;border-radius:8px;padding:7px 14px;cursor:pointer;font-weight:700;font-size:.85em">🔍 Filtrar</button>
+                      </div>
+                    </div>
+                    <div id="fc-lista-caixas"><div style="color:#888;text-align:center;padding:40px">Clique em Atualizar para carregar</div></div>
+                  </div>
+                </div>
+                </div>
+
                 <div id="page-financeiro-lucro" class="page" style="padding:20px">
                   <h2 style="margin-bottom:20px">💹 Lucro por Produto</h2>
                   <div style="background:#fff;border:1px solid #e8e8ed;border-radius:12px;padding:16px;margin-bottom:16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
