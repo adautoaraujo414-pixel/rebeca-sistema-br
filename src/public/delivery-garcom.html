@@ -568,7 +568,7 @@ function abrirMesa(num) {
     const podeCanc = !['entregue','cancelado'].includes(p.status);
     html += `<div class="comanda-info" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;">
       <span><strong>Pedido #${p.numero||'?'}</strong> — ${p.clienteNome||'Cliente'} — ${p.status}</span>
-      ${podeCanc ? `<button onclick="cancelarPedidoGarcom('${p._id}')" style="background:#fee2e2;color:#dc2626;border:1px solid #fca5a5;border-radius:7px;padding:4px 10px;font-size:.78em;font-weight:700;cursor:pointer;">❌ Cancelar</button>` : ''}
+      
     </div>`;
     (p.itens||[]).forEach(it => {
       html += `<div class="pedido-item-linha">
@@ -585,31 +585,15 @@ function abrirMesa(num) {
   document.getElementById('overlayMesa').classList.add('show');
 }
 
-async function cancelarPedidoGarcom(id) {
-  const motivo = prompt('Motivo do cancelamento:');
-  if(motivo === null) return;
-  if(!confirm('Cancelar este pedido? Esta ação não pode ser desfeita.')) return;
-  try {
-    const r = await fetch(API+'/pedidos/'+id+'/status', {
-      method:'PUT',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
-      body: JSON.stringify({ status:'cancelado', motivo: motivo.trim() || 'Cancelado pelo garçom', canceladoPor:'garcom' })
-    });
-    const d = await r.json();
-    if(d.erro) { toast('Erro: '+d.erro); return; }
-    toast('Pedido cancelado');
-    fecharModalMesa();
-    await carregarMesas();
-  } catch(e) { toast('Erro de conexão'); }
-}
+// cancelarPedidoGarcom removido - so caixa pode cancelar
 
 function fecharModalMesa() {
   document.getElementById('overlayMesa').classList.remove('show');
 }
 
-function adicionarItemMesaAtual() {
+function _adicionarItemMesaAtual_ORIG() {
   fecharModalMesa();
-  limparComanda();
+  // limparComanda removido - nao apaga itens ao adicionar;
   document.getElementById('numMesa').value = mesaAtual;
   document.getElementById('numMesa').readOnly = true;
   document.getElementById('cardapio-titulo').textContent = 'Add Itens — Mesa '+mesaAtual;
@@ -709,7 +693,7 @@ function renderItens() {
     <div class="items-grid">
       ${its.map(i=>`
         <div class="item-card" onclick='addItem(${JSON.stringify({_id:i._id,nome:i.nome,preco:i.preco||0,tempoPreparoMin:i.tempoPreparoMin||20})})'>
-          <div class="item-img">${i.categoriaId?.emoji||'🍽️'}</div>
+          <div class="item-img">${i.foto ? '<img src="'+i.foto+'" style="width:100%;height:100%;object-fit:cover;">' : (i.categoriaId?.emoji||'🍽️')}</div>
           <div class="item-info">
             <div class="item-name">${i.nome}</div>
             <div class="item-tempo">⏱️ ~${i.tempoPreparoMin||20}min</div>
@@ -903,6 +887,15 @@ function grcAtualizarParciais() {
   }
 }
 
+
+function adicionarItemMesaAtual() {
+  fecharModalMesa();
+  document.getElementById('numMesa').value = mesaAtual;
+  document.getElementById('numMesa').readOnly = true;
+  document.getElementById('cardapio-titulo').textContent = 'Add Itens — Mesa '+mesaAtual;
+  mostrarTela('cardapio');
+  toast('Adicione itens — clique Enviar para Cozinha quando pronto');
+}
 </script>
 </body>
 </html>
