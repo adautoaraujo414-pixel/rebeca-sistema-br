@@ -215,6 +215,7 @@ async function carregarConfigNF() {
 </head>
 <body>
     <!-- LOGIN -->
+    <span id="nomeRestaurante" style="display:none"></span>
     <div id="loginContainer" class="login-container" style="display:none">
         <div class="login-box">
             <div style="text-align:center;margin-bottom:20px"><img src="/logo-rebeca.png" style="height:110px;object-fit:contain;filter:drop-shadow(0 4px 16px rgba(249,115,22,.2))"></div>
@@ -396,12 +397,12 @@ async function carregarConfigNF() {
                     </div>
                     <div class="panel">
                         <h3>📋 Pedidos Ativos</h3>
-                        <div id="pedidosAtivosLista"></div>
+                        <div id="pedidosAtivosLista" data-sec="pedidos"></div>
                     </div>
                 </div>
 
                 <!-- PEDIDOS -->
-                <div id="page-pedidos" class="page">
+                <div id="page-pedidos" class="page"><span id="secPedidos"></span>
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px">
                         <h2>📋 Todos os Pedidos</h2>
                         <button class="btn" onclick="exportarPedidosCSV()" style="background:#252542;color:#fff;padding:6px 14px;font-size:13px;">📥 Exportar CSV</button>
@@ -482,7 +483,7 @@ async function carregarConfigNF() {
 
                     <div class="form-group" style="margin-bottom:12px;">
                       <label style="font-size:.8em;font-weight:700;color:#666;display:block;margin-bottom:6px;">Preço do Combo (R$) *</label>
-                      <input type="number" id="comboPreco" step="0.50" placeholder="0,00" style="width:100%;padding:10px;border-radius:8px;border:1px solid #ddd;font-family:inherit;font-size:.9em;">
+                      <input type="number" id="comboPreco" placeholder="0.00" step="0.50" placeholder="0,00" style="width:100%;padding:10px;border-radius:8px;border:1px solid #ddd;font-family:inherit;font-size:.9em;">
                     </div>
 
                     <div class="form-group" style="margin-bottom:16px;">
@@ -492,8 +493,9 @@ async function carregarConfigNF() {
 
                     <div style="display:flex;align-items:center;gap:10px;margin-top:8px;margin-bottom:4px;">
                       <label style="font-size:.8em;font-weight:700;color:#666;white-space:nowrap;">🏷️ Desconto (%)</label>
-                      <input type="number" id="comboDesconto" min="0" max="90" step="1" placeholder="0" oninput="atualizarSomaCombo()" style="width:80px;padding:6px 10px;border-radius:6px;border:1px solid #ddd;font-family:inherit;font-size:.9em;">
-                      <div id="comboEconomiaInfo" style="display:none;font-size:.75em;color:#22c55e;font-weight:700;"></div>
+                      <input type="number" id="comboDesconto" oninput="calcularSomaCombo()" min="0" max="90" step="1" placeholder="0" oninput="atualizarSomaCombo()" style="width:80px;padding:6px 10px;border-radius:6px;border:1px solid #ddd;font-family:inherit;font-size:.9em;">
+                      <div style="font-size:.82em;color:#7c3aed;margin-bottom:6px">Soma dos itens: <strong id="comboSomaItens">R$ 0,00</strong></div>
+            <div id="comboEconomiaInfo" style="display:none" style="display:none;font-size:.75em;color:#22c55e;font-weight:700;"></div>
                     </div>
 
                     <div id="comboPreviewBox" style="display:none;margin-bottom:16px;background:#f9f9f9;border-radius:10px;padding:12px;border:1px solid #e8e8ed;">
@@ -1118,6 +1120,26 @@ async function carregarConfigNF() {
                             <div>
                                 <label style="font-size:.8em;font-weight:700;color:#555;display:block;margin-bottom:5px;">Cidade de Atuação</label>
                                 <input type="text" id="cfgCidade" placeholder="Ex: Uberlândia - MG" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid #ddd;font-family:inherit;font-size:.9em;box-sizing:border-box;">
+                            </div>
+                            <div>
+                                <label style="font-size:.8em;font-weight:700;color:#555;display:block;margin-bottom:5px;">CNPJ / CPF</label>
+                                <input type="text" id="cfgCnpj" placeholder="Ex: 00.000.000/0001-00" style="width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:8px;font-size:.9em;">
+                            </div>
+                            <div>
+                                <label style="font-size:.8em;font-weight:700;color:#555;display:block;margin-bottom:5px;">Telefone de Contato</label>
+                                <input type="text" id="cfgTelefoneContato" placeholder="Ex: (34) 99999-9999" style="width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:8px;font-size:.9em;">
+                            </div>
+                            <div>
+                                <label style="font-size:.8em;font-weight:700;color:#555;display:block;margin-bottom:5px;">Endereço Completo</label>
+                                <input type="text" id="cfgEnderecoCompleto" placeholder="Ex: Rua das Flores, 123, Centro, Uberlândia-MG" style="width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:8px;font-size:.9em;">
+                            </div>
+                            <div>
+                                <label style="font-size:.8em;font-weight:700;color:#555;display:block;margin-bottom:5px;">Cidade / Estado</label>
+                                <input type="text" id="cfgCidadeEstado" placeholder="Ex: Uberlândia - MG" style="width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:8px;font-size:.9em;">
+                            </div>
+                            <div>
+                                <label style="font-size:.8em;font-weight:700;color:#555;display:block;margin-bottom:5px;">Mensagem Rodapé do Cupom</label>
+                                <input type="text" id="cfgMsgRodape" placeholder="Ex: Obrigado pela preferência! Volte sempre!" style="width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:8px;font-size:.9em;">
                             </div>
                             <div>
                                 <label style="font-size:.8em;font-weight:700;color:#555;display:block;margin-bottom:5px;">🖼️ Logo do Estabelecimento</label>
@@ -2618,7 +2640,7 @@ async function _salvarItemReal() {
         async function carregarConfig() {
             const res = await api('/config');
             const c = await res.json();
-            if(document.getElementById('cfgNome')) document.getElementById('cfgNome').value = c.nomeRestaurante || '';
+            if(document.getElementById('cfgNomeEstabelecimento')) document.getElementById('cfgNomeEstabelecimento').value = c.nomeRestaurante || '';
             if(document.getElementById('cfgAceitaDinheiro')) document.getElementById('cfgAceitaDinheiro').checked = c.aceitaDinheiro !== false;
             if(document.getElementById('cfgAceitaCartao')) document.getElementById('cfgAceitaCartao').checked = !!c.aceitaCartao;
             if(document.getElementById('cfgAceitaPix')) document.getElementById('cfgAceitaPix').checked = c.aceitaPix !== false;
@@ -4397,7 +4419,7 @@ function iniciarSSE() {
         setTimeout(function(){ t.style.opacity='0'; t.style.transition='opacity .5s'; setTimeout(function(){ t.remove(); },500); }, 6000);
         // Atualizar telas
         if (document.getElementById('page-pedidos')?.style.display !== 'none') carregarPedidos();
-        if (document.getElementById('page-caixa')?.style.display !== 'none' && typeof carregarPedidosCaixa === 'function') carregarPedidosCaixa();
+        if (document.getElementById('page-pedidos')?.style.display !== 'none' && typeof carregarPedidosCaixa === 'function') carregarPedidosCaixa();
     });
     _sseConn.addEventListener('novo_pedido', function(e) {
         var dados = JSON.parse(e.data);
@@ -4436,7 +4458,7 @@ function mostrarNotificacaoPedido(pedidoId, origem) {
     setTimeout(function(){ t.style.opacity = '0'; t.style.transition = 'opacity .5s'; setTimeout(function(){ t.remove(); }, 500); }, 4000);
     // Atualizar lista de pedidos se estiver na tela
     if (document.getElementById('page-pedidos')?.style.display !== 'none') carregarPedidos();
-    if (document.getElementById('page-caixa')?.style.display !== 'none' && typeof carregarPedidosCaixa === 'function') carregarPedidosCaixa();
+    if (document.getElementById('page-pedidos')?.style.display !== 'none' && typeof carregarPedidosCaixa === 'function') carregarPedidosCaixa();
 }
 
 function toggleImpressaoAuto(el) {
@@ -5897,14 +5919,14 @@ function whatsappFornecedor(i) {
 
 async function carregarFinanceiroLucro() {
   try {
-    const periodo = document.getElementById('fl-periodo')?.value || 'mes';
+    const periodo = document.getElementById('lucro-periodo')?.value || 'mes';
     let dataIni = new Date(), dataFim = new Date();
     if (periodo==='hoje') { dataIni.setHours(0,0,0,0); }
     else if (periodo==='semana') { dataIni = new Date(Date.now()-7*864e5); }
     else if (periodo==='mes') { dataIni = new Date(); dataIni.setDate(1); dataIni.setHours(0,0,0,0); }
     else {
-      dataIni = new Date(document.getElementById('fl-ini')?.value || Date.now());
-      dataFim = new Date(document.getElementById('fl-fim')?.value || Date.now());
+      dataIni = new Date(document.getElementById('lucro-data-ini')?.value || Date.now());
+      dataFim = new Date(document.getElementById('lucro-data-fim')?.value || Date.now());
     }
     const token = localStorage.getItem('admin_token') || localStorage.getItem('token') || '';
     const headers = token ? {'Authorization':'Bearer '+token} : {};
@@ -5933,11 +5955,11 @@ async function carregarFinanceiroLucro() {
     const totalL = totalV-totalC;
     const margem = totalV ? ((totalL/totalV)*100).toFixed(1) : 0;
     const el = id => document.getElementById(id);
-    if(el('fl-vendas')) el('fl-vendas').textContent = 'R$ '+totalV.toFixed(2);
-    if(el('fl-custo')) el('fl-custo').textContent = 'R$ '+totalC.toFixed(2);
-    if(el('fl-lucro')) el('fl-lucro').textContent = 'R$ '+totalL.toFixed(2);
-    if(el('fl-margem')) el('fl-margem').textContent = margem+'%';
-    const tbody = el('fl-tbody');
+    if(el('lucro-total-vendas')) el('lucro-total-vendas').textContent = 'R$ '+totalV.toFixed(2);
+    if(el('lucro-total-custo')) el('lucro-total-custo').textContent = 'R$ '+totalC.toFixed(2);
+    if(el('lucro-total-lucro')) el('lucro-total-lucro').textContent = 'R$ '+totalL.toFixed(2);
+    if(el('lucro-margem')) el('lucro-margem').textContent = margem+'%';
+    const tbody = el('lucro-tbody');
     if(tbody) tbody.innerHTML = lista.length ? lista.map(p => {
       const lucroU = (p.receita-p.custo)/(p.qtd||1);
       const mg = p.receita ? (((p.receita-p.custo)/p.receita)*100).toFixed(1) : 0;
@@ -6005,7 +6027,7 @@ function fcRemoverContaAdm(i) {
 }
 
 function carregarFinanceiroFornecedores() {
-  const lista = document.getElementById('ff-lista');
+  const lista = document.getElementById('forn-lista');
   if(!lista) return;
   const forns = JSON.parse(localStorage.getItem('fin_fornecedores_adm')||'[]');
   if(!forns.length) { lista.innerHTML = '<div style="text-align:center;color:#888;padding:40px">Nenhum fornecedor.<br><button onclick="ffNovoFornAdm()" style="margin-top:12px;padding:10px 20px;background:#f97316;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:700">+ Adicionar</button></div>'; return; }

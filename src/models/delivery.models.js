@@ -49,6 +49,8 @@ const ItemCardapioSchema = new mongoose.Schema({
     fornecedor: { type: String, default: '' },       // nome do fornecedor
     fornecedorTelefone: { type: String, default: '' }, // telefone/WhatsApp do fornecedor
     unidadePorPedido: { type: Number, default: 1 },  // quantas unidades saem por pedido
+    custoProducao: { type: Number, default: 0 },     // custo de produção/compra por unidade
+    precoCompra: { type: Number, default: 0 },       // preço pago ao fornecedor
     // ===== PIZZA =====
     // ===== PROMOÇÃO =====
     promocaoPct: { type: Number, default: 0 },    // % de desconto (0 = sem promoção)
@@ -391,6 +393,15 @@ const CaixaDeliverySchema = new mongoose.Schema({
     totalFaturamento: { type: Number, default: 0 },
     totalEntregues: { type: Number, default: 0 },
     totalCancelados: { type: Number, default: 0 },
+    totalDinheiro: { type: Number, default: 0 },
+    totalCartao: { type: Number, default: 0 },
+    totalPix: { type: Number, default: 0 },
+    totalOutros: { type: Number, default: 0 },
+    totalSangrias: { type: Number, default: 0 },
+    valorFechamento: { type: Number, default: 0 },
+    diferencaDinheiro: { type: Number, default: 0 },
+    sangrias: [{ valor: Number, motivo: String, operador: String, data: Date }],
+    vendasPorOperador: [{ operador: String, totalVendas: Number, qtdPedidos: Number }],
     produtosMaisVendidos: [{ nome: String, quantidade: Number, total: Number }],
     pedidosIds: [{ type: mongoose.Schema.Types.ObjectId }],
     observacoes: { type: String, default: '' }
