@@ -1633,7 +1633,8 @@ router.post('/garcons/pedido', async (req, res) => {
             nome: i.nome,
             quantidade: i.qtd || i.quantidade || 1,
             precoUnitario: i.preco || i.precoUnitario || 0,
-            subtotal: (i.preco || i.precoUnitario || 0) * (i.qtd || i.quantidade || 1)
+            subtotal: (i.preco || i.precoUnitario || 0) * (i.qtd || i.quantidade || 1),
+            observacao: i.observacao || i.obs || ''
         }));
         const pedido = await PedidoDelivery.create({
             adminId: g.adminId,
@@ -2105,22 +2106,22 @@ router.post('/caixa/fechar', authDelivery, async (req, res) => {
         const cancelados = pedidos.filter(p => p.status === 'cancelado');
         const totalFaturamento = entregues.reduce((s, p) => s + (p.total || 0), 0);
 
-        // Produtos mais vendidos
+        // Produtos mais vendidos — usar apenas entregues/pagos, nunca cancelados
         const contagem = {};
-        pedidos.forEach(p => {
+        entregues.forEach(p => {
             (p.itens || []).forEach(it => {
                 const nome = it.nome || 'Item';
                 if (!contagem[nome]) contagem[nome] = { nome, quantidade: 0, total: 0 };
                 contagem[nome].quantidade += it.quantidade || 1;
-                contagem[nome].total += (it.preco || 0) * (it.quantidade || 1);
+                contagem[nome].total += (it.subtotal || (it.precoUnitario || 0) * (it.quantidade || 1));
             });
         });
         const produtosMaisVendidos = Object.values(contagem)
             .sort((a, b) => b.quantidade - a.quantidade)
             .slice(0, 10);
 
-        // Calcular totais por forma de pagamento
-        const pagos = pedidos.filter(p => p.pago);
+        // Calcular totais por forma de pagamento — apenas pedidos marcados como pagos
+        const pagos = pedidos.filter(p => p.pago === true);
         let totalDinheiro = 0, totalCartao = 0, totalPix = 0, totalOutros = 0;
         pagos.forEach(p => {
             if (p.formasPagamento && p.formasPagamento.length) {
@@ -2136,7 +2137,8 @@ router.post('/caixa/fechar', authDelivery, async (req, res) => {
                 if (fp === 'dinheiro') totalDinheiro += p.total || 0;
                 else if (fp === 'debito' || fp === 'credito') totalCartao += p.total || 0;
                 else if (fp === 'pix') totalPix += p.total || 0;
-                else totalOutros += p.total || 0;
+                else if (fp && fp !== 'na_entrega') totalOutros += p.total || 0;
+                // 'na_entrega' = pagamento pendente, não soma em nenhuma categoria
             }
         });
 
