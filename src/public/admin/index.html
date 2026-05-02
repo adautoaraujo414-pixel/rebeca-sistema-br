@@ -261,6 +261,10 @@ document.addEventListener('DOMContentLoaded', () => {
             
             <div class="menu-section">Financeiro</div>
             <div class="menu-item" data-page="faturamento">💰 Faturamento</div>
+            <div class="menu-item" data-page="fin-caixas">🔒 Fechamentos de Caixa</div>
+            <div class="menu-item" data-page="fin-lucro">💹 Lucro por Produto</div>
+            <div class="menu-item" data-page="fin-contas">💸 Contas a Pagar</div>
+            <div class="menu-item" data-page="fin-fornecedores">🏭 Fornecedores</div>
             <div class="menu-item" data-page="precos">💵 Preços Dinâmicos</div>
             <div class="menu-item" data-page="mensalidades">💳 Mensalidades</div>
             <div class="menu-item" data-page="ranking">🏆 Ranking</div>
@@ -1705,6 +1709,89 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 </script>
+
+
+<!-- FIN: FECHAMENTOS DE CAIXA -->
+<div id="page-fin-caixas" class="page" style="display:none;padding:20px">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px">
+    <h2 style="margin:0">🔒 Fechamentos de Caixa</h2>
+    <button onclick="carregarFinCaixas()" style="background:#e94560;color:#fff;border:none;border-radius:8px;padding:8px 16px;cursor:pointer;font-weight:700">🔄 Atualizar</button>
+  </div>
+  <div class="cards">
+    <div class="card"><div class="card-icon">💰</div><div class="card-value" id="fin-total-dia">R$ 0,00</div><div class="card-label">Total Hoje</div></div>
+    <div class="card"><div class="card-icon">💵</div><div class="card-value" id="fin-dinheiro-dia" style="color:#22c55e">R$ 0,00</div><div class="card-label">Dinheiro</div></div>
+    <div class="card"><div class="card-icon">💳</div><div class="card-value" id="fin-cartao-dia" style="color:#3b82f6">R$ 0,00</div><div class="card-label">Cartão</div></div>
+    <div class="card"><div class="card-icon">📱</div><div class="card-value" id="fin-pix-dia" style="color:#8b5cf6">R$ 0,00</div><div class="card-label">Pix</div></div>
+  </div>
+  <div style="background:#fff;border-radius:12px;padding:20px;box-shadow:0 3px 10px rgba(0,0,0,.08)">
+    <h3 style="margin:0 0 16px">📋 Histórico de Fechamentos</h3>
+    <div id="fin-lista-caixas"><div style="color:#888;text-align:center;padding:40px">Carregando...</div></div>
+  </div>
+</div>
+
+<!-- FIN: LUCRO POR PRODUTO -->
+<div id="page-fin-lucro" class="page" style="display:none;padding:20px">
+  <h2 style="margin-bottom:20px">💹 Lucro por Produto</h2>
+  <div style="background:#fff;border-radius:12px;padding:16px;box-shadow:0 3px 10px rgba(0,0,0,.08);margin-bottom:16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+    <select id="fin-lucro-periodo" onchange="this.value==='personalizado'?(document.getElementById('fin-lucro-ini').style.display='inline',document.getElementById('fin-lucro-fim').style.display='inline'):(document.getElementById('fin-lucro-ini').style.display='none',document.getElementById('fin-lucro-fim').style.display='none')" style="padding:8px 12px;border-radius:8px;border:1px solid #ddd">
+      <option value="hoje">Hoje</option>
+      <option value="semana">Últimos 7 dias</option>
+      <option value="mes" selected>Este mês</option>
+      <option value="personalizado">Personalizado</option>
+    </select>
+    <input type="date" id="fin-lucro-ini" style="display:none;padding:8px 12px;border-radius:8px;border:1px solid #ddd">
+    <input type="date" id="fin-lucro-fim" style="display:none;padding:8px 12px;border-radius:8px;border:1px solid #ddd">
+    <button onclick="carregarFinLucro()" style="background:#e94560;color:#fff;border:none;border-radius:8px;padding:8px 16px;cursor:pointer;font-weight:700">📊 Calcular</button>
+  </div>
+  <div class="cards">
+    <div class="card"><div class="card-icon">💰</div><div class="card-value" id="fin-lucro-vendas">R$ 0,00</div><div class="card-label">Total Vendido</div></div>
+    <div class="card"><div class="card-icon">📦</div><div class="card-value" id="fin-lucro-custo" style="color:#ef4444">R$ 0,00</div><div class="card-label">Custo Total</div></div>
+    <div class="card"><div class="card-icon">📈</div><div class="card-value" id="fin-lucro-lucro" style="color:#22c55e">R$ 0,00</div><div class="card-label">Lucro Líquido</div></div>
+    <div class="card"><div class="card-icon">%</div><div class="card-value" id="fin-lucro-margem" style="color:#f59e0b">0%</div><div class="card-label">Margem</div></div>
+  </div>
+  <div style="background:#fff;border-radius:12px;padding:20px;box-shadow:0 3px 10px rgba(0,0,0,.08);overflow-x:auto">
+    <h3 style="margin:0 0 16px">📦 Detalhe por Item</h3>
+    <table style="width:100%;border-collapse:collapse;font-size:13px">
+      <thead><tr style="background:#f5f5f7;color:#888">
+        <th style="padding:10px;text-align:left">Produto</th>
+        <th style="padding:10px;text-align:right">Qtd</th>
+        <th style="padding:10px;text-align:right">Preço Venda</th>
+        <th style="padding:10px;text-align:right">Custo Unit.</th>
+        <th style="padding:10px;text-align:right">Lucro Unit.</th>
+        <th style="padding:10px;text-align:right">Lucro Total</th>
+        <th style="padding:10px;text-align:right">Margem</th>
+      </tr></thead>
+      <tbody id="fin-lucro-tbody"><tr><td colspan="7" style="text-align:center;padding:40px;color:#888">Clique em Calcular</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- FIN: CONTAS A PAGAR -->
+<div id="page-fin-contas" class="page" style="display:none;padding:20px">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px">
+    <h2 style="margin:0">💸 Contas a Pagar</h2>
+    <button onclick="finNovaConta()" style="background:#e94560;color:#fff;border:none;border-radius:8px;padding:8px 16px;cursor:pointer;font-weight:700">+ Nova Conta</button>
+  </div>
+  <div class="cards">
+    <div class="card"><div class="card-icon">⏳</div><div class="card-value" id="fin-contas-pendente" style="color:#ef4444">R$ 0,00</div><div class="card-label">Pendente</div></div>
+    <div class="card"><div class="card-icon">⚠️</div><div class="card-value" id="fin-contas-vencendo" style="color:#f59e0b">R$ 0,00</div><div class="card-label">Vence em 7 dias</div></div>
+    <div class="card"><div class="card-icon">✅</div><div class="card-value" id="fin-contas-pago" style="color:#22c55e">R$ 0,00</div><div class="card-label">Pago este mês</div></div>
+  </div>
+  <div style="background:#fff;border-radius:12px;padding:20px;box-shadow:0 3px 10px rgba(0,0,0,.08)">
+    <div id="fin-contas-lista"><div style="color:#888;text-align:center;padding:40px">Nenhuma conta</div></div>
+  </div>
+</div>
+
+<!-- FIN: FORNECEDORES -->
+<div id="page-fin-fornecedores" class="page" style="display:none;padding:20px">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px">
+    <h2 style="margin:0">🏭 Fornecedores</h2>
+    <button onclick="finNovoFornecedor()" style="background:#e94560;color:#fff;border:none;border-radius:8px;padding:8px 16px;cursor:pointer;font-weight:700">+ Novo Fornecedor</button>
+  </div>
+  <div style="background:#fff;border-radius:12px;padding:20px;box-shadow:0 3px 10px rgba(0,0,0,.08)">
+    <div id="fin-forn-lista"><div style="color:#888;text-align:center;padding:40px">Nenhum fornecedor</div></div>
+  </div>
+</div>
 
 </body>
 </html>
