@@ -498,7 +498,7 @@ async function sair() {
   location.reload();
 }
 
-async function iniciarApp(admin) {
+async async function iniciarApp(admin) {
   document.getElementById('login-screen').style.display = 'none';
   const app = document.getElementById('app');
   app.style.display = 'flex';
@@ -516,6 +516,7 @@ async function iniciarApp(admin) {
       elOp.style.display = 'inline-block';
     }
   }
+  verificarStatusCaixa();
   await carregarCardapio();
   await carregarPedidos();
   await carregarStats();
