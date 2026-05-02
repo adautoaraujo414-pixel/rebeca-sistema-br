@@ -1549,36 +1549,27 @@ async function abrirCaixa() {
         } else toast('Erro: ' + (d.erro || d.error || 'desconhecido'), 'error');
     } catch(e) { toast('Erro ao abrir caixa: ' + e.message, 'error'); }
 }
-async function fecharCaixa() {
+async async function fecharCaixa() {
     try {
-        const ra = await fetch('/api/caixa/abertos', { headers: { 'Authorization': 'Bearer ' + token } });
-        const abertos = await ra.json();
-        if (!abertos || abertos.length === 0) return toast('Nenhum caixa aberto', 'error');
-        let caixaId, caixaNum;
-        if (abertos.length === 1) {
-            caixaId = abertos[0]._id; caixaNum = abertos[0].numeroCaixa;
-        } else {
-            const lista = abertos.map(c => c.numeroCaixa + ' (' + c.operador + ')').join(', ');
-            const escolha = prompt('Qual caixa fechar? Informe o numero (' + lista + '):');
-            const achou = abertos.find(c => String(c.numeroCaixa) === String(escolha));
-            if (!achou) return toast('Caixa nao encontrado', 'error');
-            caixaId = achou._id; caixaNum = achou.numeroCaixa;
-        }
-        if (!confirm('Fechar o Caixa ' + caixaNum + '? Sera gerado o relatorio.')) return;
-        const obs = prompt('Observacoes (opcional):') || '';
-        const valorFechamento = prompt('Valor em caixa ao fechar (R$):', '0') || '0';
-        const r = await fetch('/api/caixa/fechar/' + caixaId, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-            body: JSON.stringify({ valorFechamento: Number(valorFechamento), observacoes: obs })
-        });
+        const r = await fetch('/api/delivery/caixa/status', { headers: { 'Authorization': 'Bearer ' + token } });
         const d = await r.json();
-        if (d.status === 'fechado' || d.totalVendas !== undefined) {
-            toast('Caixa ' + caixaNum + ' fechado! Relatorio enviado ao admin.');
-            verificarStatusCaixa();
-            alert('Caixa ' + caixaNum + ' Fechado!\nTotal vendas: R$ ' + (d.totalVendas||0).toFixed(2) + '\nDinheiro: R$ ' + (d.totalDinheiro||0).toFixed(2) + '\nCartao: R$ ' + (d.totalCartao||0).toFixed(2) + '\nPix: R$ ' + (d.totalPix||0).toFixed(2));
-        } else toast('Erro: ' + (d.erro || d.error || 'desconhecido'), 'error');
-    } catch(e) { toast('Erro ao fechar caixa: ' + e.message, 'error'); }
+        if (!d.caixa || d.caixa.status !== 'aberto') return toast('Nenhum caixa aberto', 'error');
+        const caixa = d.caixa;
+        // Buscar totais do sistema para conferência
+        const rs = await fetch('/api/delivery/caixa/stats', { headers: { 'Authorization': 'Bearer ' + token } });
+        const stats = await rs.json();
+        // Mostrar modal de fechamento
+        document.getElementById('modal-fechar-caixa').style.display = 'flex';
+        document.getElementById('fc-operador').textContent = caixa.abertoPor || operador;
+        document.getElementById('fc-abertura').textContent = new Date(caixa.dataAbertura).toLocaleString('pt-BR');
+        document.getElementById('fc-sistema-dinheiro').textContent = 'R$ ' + ((stats.totalDinheiro||0).toFixed(2));
+        document.getElementById('fc-sistema-cartao').textContent = 'R$ ' + ((stats.totalCartao||0).toFixed(2));
+        document.getElementById('fc-sistema-pix').textContent = 'R$ ' + ((stats.totalPix||0).toFixed(2));
+        document.getElementById('fc-sistema-total').textContent = 'R$ ' + ((stats.totalVendas||0).toFixed(2));
+        document.getElementById('fc-pedidos').textContent = stats.totalPedidos || 0;
+        document.getElementById('fc-cancelados').textContent = stats.totalCancelados || 0;
+        window._fcaixaId = caixa._id;
+    } catch(e) { toast('Erro ao abrir fechamento: ' + e.message, 'error');ge, 'error'); }
 }
 document.addEventListener('DOMContentLoaded', () => {
     setTimeout(verificarStatusCaixa, 1500);
@@ -1717,6 +1708,44 @@ function usarValorDivisao(val) {
     const input = document.getElementById('pag-parcial');
     if (input) { input.value = val.toFixed(2); input.focus(); }
 }
+
+
+async function confirmarFechamentoCaixa() {
+  try {
+    const valDinheiro = parseFloat(document.getElementById('fc-val-dinheiro').value) || 0;
+    const sangria = parseFloat(document.getElementById('fc-sangria').value) || 0;
+    const obs = document.getElementById('fc-obs').value || '';
+    const r = await fetch('/api/delivery/caixa/fechar/' + window._fcaixaId, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ valorDinheiro: valDinheiro, valorSangria: sangria, observacoes: obs, operadorFechamento: operador })
+    });
+    const d = await r.json();
+    if (d.sucesso) {
+      document.getElementById('modal-fechar-caixa').style.display = 'none';
+      const diff = d.diferencaDinheiro || 0;
+      const diffTxt = diff === 0 ? '✅ Caixa conferido, sem diferença!' : (diff > 0 ? '💰 Sobra de R$ ' + diff.toFixed(2) : '⚠️ Falta de R$ ' + Math.abs(diff).toFixed(2));
+      toast('🔒 Caixa fechado! ' + diffTxt);
+      verificarStatusCaixa();
+    } else {
+      toast('Erro: ' + (d.erro || 'desconhecido'), 'error');
+    }
+  } catch(e) { toast('Erro: ' + e.message, 'error'); }
+}
+
+// Calcular diferença em tempo real ao digitar
+document.addEventListener('DOMContentLoaded', () => {
+  const inp = document.getElementById('fc-val-dinheiro');
+  if (inp) inp.addEventListener('input', () => {
+    const sistDin = parseFloat((document.getElementById('fc-sistema-dinheiro')?.textContent||'0').replace('R$ ','')) || 0;
+    const contado = parseFloat(inp.value) || 0;
+    const diff = contado - sistDin;
+    const box = document.getElementById('fc-diff-dinheiro');
+    const diffBox = document.getElementById('fc-diferenca-box');
+    if (box) { box.style.display='block'; box.textContent = diff === 0 ? '✅ Confere!' : (diff > 0 ? '💰 Sobra: R$ ' + diff.toFixed(2) : '⚠️ Falta: R$ ' + Math.abs(diff).toFixed(2)); box.style.color = diff === 0 ? '#22c55e' : diff > 0 ? '#f59e0b' : '#ef4444'; }
+    if (diffBox) { diffBox.style.display='block'; diffBox.textContent = diff === 0 ? '✅ Dinheiro confere com o sistema' : (diff > 0 ? '💰 Sobra R$ ' + diff.toFixed(2) + ' — verificar' : '⚠️ Falta R$ ' + Math.abs(diff).toFixed(2) + ' — verificar'); diffBox.style.background = diff === 0 ? '#14532d' : diff > 0 ? '#78350f' : '#7f1d1d'; }
+  });
+});
 
 </script>
 </body>

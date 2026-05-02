@@ -2051,7 +2051,7 @@ router.post('/caixa/fechar', authDelivery, async (req, res) => {
         // Buscar todos pedidos desde abertura do caixa
         const pedidos = await PedidoDelivery.find({
             adminId: req.adminId,
-            criadoEm: { $gte: caixa.dataAbertura }
+            createdAt: { $gte: caixa.dataAbertura }
         });
 
         // Calcular totais
@@ -2073,26 +2073,78 @@ router.post('/caixa/fechar', authDelivery, async (req, res) => {
             .sort((a, b) => b.quantidade - a.quantidade)
             .slice(0, 10);
 
-        // Fechar o caixa com relatório
+        // Calcular totais por forma de pagamento
+        const pagos = pedidos.filter(p => p.pago);
+        let totalDinheiro = 0, totalCartao = 0, totalPix = 0, totalOutros = 0;
+        pagos.forEach(p => {
+            if (p.formasPagamento && p.formasPagamento.length) {
+                p.formasPagamento.forEach(f => {
+                    const v = f.valor || 0;
+                    if (f.forma === 'dinheiro') totalDinheiro += v;
+                    else if (f.forma === 'debito' || f.forma === 'credito') totalCartao += v;
+                    else if (f.forma === 'pix') totalPix += v;
+                    else totalOutros += v;
+                });
+            } else {
+                const fp = p.formaPagamento || '';
+                if (fp === 'dinheiro') totalDinheiro += p.total || 0;
+                else if (fp === 'debito' || fp === 'credito') totalCartao += p.total || 0;
+                else if (fp === 'pix') totalPix += p.total || 0;
+                else totalOutros += p.total || 0;
+            }
+        });
+
+        // Calcular vendas por operador
+        const porOperador = {};
+        pagos.forEach(p => {
+            const op = p.operadorCaixa || p.origemPedido || 'sistema';
+            if (!porOperador[op]) porOperador[op] = { operador: op, totalVendas: 0, qtdPedidos: 0 };
+            porOperador[op].totalVendas += p.total || 0;
+            porOperador[op].qtdPedidos += 1;
+        });
+
+        // Buscar sangrias do período
+        const sangrias = caixa.sangrias || [];
+        const totalSangrias = sangrias.reduce((s, sg) => s + (sg.valor || 0), 0);
+
+        const totalVendas = totalDinheiro + totalCartao + totalPix + totalOutros;
+        const { valorFechamento, observacoes, valorDinheiro, valorCartao, valorPix } = req.body;
+
+        // Fechar o caixa com relatório completo
         caixa.status = 'fechado';
-        caixa.fechadoPor = req.body.operador || 'admin';
+        caixa.fechadoPor = req.body.operadorFechamento || caixa.abertoPor || 'admin';
         caixa.dataFechamento = new Date();
         caixa.totalPedidos = pedidos.length;
-        caixa.totalFaturamento = totalFaturamento;
-        caixa.totalEntregues = entregues.length;
+        caixa.totalFaturamento = totalVendas;
+        caixa.totalEntregues = pagos.length;
         caixa.totalCancelados = cancelados.length;
+        caixa.totalDinheiro = totalDinheiro;
+        caixa.totalCartao = totalCartao;
+        caixa.totalPix = totalPix;
+        caixa.totalSangrias = totalSangrias;
+        caixa.valorFechamento = valorFechamento || 0;
+        caixa.diferencaDinheiro = (valorDinheiro || 0) - totalDinheiro;
         caixa.produtosMaisVendidos = produtosMaisVendidos;
+        caixa.vendasPorOperador = Object.values(porOperador);
         caixa.pedidosIds = pedidos.map(p => p._id);
-        caixa.observacoes = req.body.observacoes || '';
+        caixa.observacoes = observacoes || '';
         await caixa.save();
 
-        res.json({ sucesso: true, caixa, relatorio: {
+        res.json({
+            sucesso: true,
+            status: 'fechado',
+            totalVendas,
+            totalDinheiro,
+            totalCartao,
+            totalPix,
+            totalSangrias,
+            diferencaDinheiro: (valorDinheiro || 0) - totalDinheiro,
             totalPedidos: pedidos.length,
-            totalFaturamento,
-            totalEntregues: entregues.length,
+            totalPagos: pagos.length,
             totalCancelados: cancelados.length,
+            vendasPorOperador: Object.values(porOperador),
             produtosMaisVendidos
-        }});
+        });
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
