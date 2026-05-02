@@ -3,7 +3,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
+<meta charset="UTF-8"><!-- v3 -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Caixa — Delivery</title>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -1505,7 +1505,7 @@ let caixaAtual = null;
 
 async function verificarStatusCaixa() {
     try {
-        const d = await api('/caixa/status');
+        const r = await fetch('/api/delivery/caixa/status', { headers: { 'Authorization': 'Bearer ' + token } }); const d = await r.json();
         caixaAtual = d.caixa;
         const btnAbrir = document.getElementById('btn-abrir-caixa');
         const btnFechar = document.getElementById('btn-fechar-caixa');
