@@ -5583,7 +5583,7 @@ async function confirmarAbrirCaixa() {
 
     try {
         var tk = localStorage.getItem('delivery_token') || localStorage.getItem('token') || '';
-        var r = await fetch('/api/caixa/abrir', {
+        var r = await fetch('/api/delivery/caixa/abrir', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + tk },
             body: JSON.stringify({ operador, numeroCaixa, valorAbertura })
@@ -6091,7 +6091,7 @@ function fcVerFoto(i) {
   const c = contas[i]; if(!c?.foto) return;
   const modal = document.createElement('div');
   modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px';
-  modal.innerHTML='<div style="position:relative;max-width:90vw;max-height:90vh"><img src="'+c.foto+'" style="max-width:100%;max-height:80vh;border-radius:12px"><button onclick="this.closest('div').parentElement.remove()" style="position:absolute;top:-12px;right:-12px;background:#ef4444;color:#fff;border:none;border-radius:50%;width:28px;height:28px;cursor:pointer;font-weight:700">✕</button></div>';
+  modal.innerHTML='<div style="position:relative;max-width:90vw;max-height:90vh"><img src="'+c.foto+'" style="max-width:100%;max-height:80vh;border-radius:12px"><button onclick="this.parentElement.parentElement.remove()" style="position:absolute;top:-12px;right:-12px;background:#ef4444;color:#fff;border:none;border-radius:50%;width:28px;height:28px;cursor:pointer;font-weight:700">✕</button></div>';
   document.body.appendChild(modal);
   modal.onclick = e => { if(e.target===modal) modal.remove(); };
 }
@@ -7511,7 +7511,7 @@ function carregarFinanceiroFornecedores() {
 
     <script>
         // Aceitar token via URL (redirect da landing)
-        const _urlParams = new URLSearchParams(window.location.search);
+        _urlParams = new URLSearchParams(window.location.search);
         const _tokenUrl = _urlParams.get('token');
         if (_tokenUrl) { localStorage.setItem('delivery_token', _tokenUrl); history.replaceState({}, '', '/delivery-admin'); }
         let token = localStorage.getItem('delivery_token') || '';
@@ -10295,7 +10295,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // ===== CARDÁPIO SEMANAL =====
-const DIAS_NOMES = ['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
+// DIAS_NOMES já declarado acima
 const DIAS_CURTOS = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
 let _diaSemanalAtual = 1;
 let _cardapiosSemana = {};
@@ -11136,7 +11136,7 @@ function atualizarLabelNome() {
 }
 
 // Chamar atualizarPlaceholders junto com toggleCamposBebida
-const _origToggleCamposBebida = toggleCamposBebida;
+// _origToggleCamposBebida já declarado
 
 
 
@@ -11327,7 +11327,7 @@ async function confirmarAbrirCaixa() {
 
     try {
         var tk = localStorage.getItem('delivery_token') || localStorage.getItem('token') || '';
-        var r = await fetch('/api/caixa/abrir', {
+        var r = await fetch('/api/delivery/caixa/abrir', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + tk },
             body: JSON.stringify({ operador, numeroCaixa, valorAbertura })
