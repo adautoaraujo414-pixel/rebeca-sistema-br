@@ -2012,12 +2012,12 @@ router.get('/mesa/qr', authDelivery, async (req, res) => {
     try {
         let admin = await AdminDelivery.findById(req.adminId);
         if (!admin) return res.status(404).json({ erro: 'Admin nao encontrado' });
-        if (!admin.slug) {
-            const base = (admin.nomeComercio || admin.nomeEstabelecimento || 'rest')
-                .toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 12);
-            admin.slug = base + '-' + Math.random().toString(36).slice(2, 8);
-            await admin.save();
-        }
+        // Sempre regenerar slug baseado no nome atual
+        const base = (admin.nomeEstabelecimento || admin.nomeComercio || 'rest')
+            .toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 12);
+        const novoSlug = base + '-' + Math.random().toString(36).slice(2, 8);
+        admin.slug = novoSlug;
+        await admin.save();
         const url = req.protocol + '://' + req.get('host') + '/mesa?r=' + admin.slug;
         res.json({ sucesso: true, slug: admin.slug, url });
     } catch(e) { res.status(500).json({ erro: e.message }); }
