@@ -75,7 +75,16 @@ async function gerarImagemItem(nome, descricao, tamanho, fotoReferencia) {
         let embalagемDesc = '';
         let promptFinal = '';
 
-        if (isBebida && tamanho) {
+        // Detectar tipo específico de bebida
+        const isCerveja = nomeLower.match(/cerveja|chopp|beer|lager|pilsen|ipa|ale|stout|weiss/);
+        const isVinho = nomeLower.match(/vinho|wine|espumante|prosecco|champagne/);
+        const isCaipirinha = nomeLower.match(/caipirinha|caipiroska|batida/);
+        const isWhisky = nomeLower.match(/whisky|whiskey|vodka|rum|gin|dose|drinque|drink/);
+        const isSuco = nomeLower.match(/suco|vitamina|limonada|laranjada|açaí|acai/);
+        const isShake = nomeLower.match(/milk.?shake|shake|milkshake/);
+        const isRefrigerante = nomeLower.match(/refrigerante|coca|pepsi|fanta|sprite|guaraná|guarana|soda/);
+
+        if (isBebida) {
             // Mapear tamanho para descrição visual real da embalagem
             const embalagemMap = {
                 '200ml':  'small 200ml juice box carton (caixinha), with straw',
@@ -91,11 +100,23 @@ async function gerarImagemItem(nome, descricao, tamanho, fotoReferencia) {
             };
             embalagemDesc = embalagemMap[tamanho] || tamanho;
 
-            promptFinal = `Ultra realistic product photo of "${nome}" beverage, ` +
-                `served in a ${embalagemDesc}. ` +
-                (descricao ? `Flavor/description: ${descricao}. ` : '') +
-                `The container must look exactly like a real product — correct proportions, ` +
+            let tipoDesc = '';
+            if (isCerveja) tipoDesc = 'cold craft beer, amber/golden liquid with white foam head, ';
+            else if (isVinho) tipoDesc = 'fine wine, deep red or white wine, ';
+            else if (isCaipirinha) tipoDesc = 'Brazilian caipirinha cocktail with lime and ice, ';
+            else if (isWhisky) tipoDesc = 'premium spirit drink on the rocks, ';
+            else if (isShake) tipoDesc = 'creamy milkshake with whipped cream on top, ';
+            else if (isSuco) tipoDesc = 'fresh natural juice, vibrant fruit colors, ';
+            else if (isRefrigerante) tipoDesc = 'sparkling soda drink with bubbles and ice, ';
+
+            const containerDesc = embalagemDesc ? `served in a ${embalagemDesc}` : (isCerveja ? 'served in a cold glass mug or bottle' : 'served in appropriate container');
+
+            promptFinal = `Ultra realistic product photo of "${nome}", ${tipoDesc}` +
+                `${containerDesc}. ` +
+                (descricao ? `Details: ${descricao}. ` : '') +
+                `The drink must look exactly like the real product — correct proportions, ` +
                 `condensation droplets on the outside showing it is cold and refreshing, ` +
+                (isCerveja ? `golden beer with perfect foam, ` : '') +
                 `placed on a dark wet bar counter or wooden surface with ice cubes nearby, ` +
                 `dramatic studio lighting with a soft glow, bokeh background, ` +
                 `no text, no labels with brand names, no watermark, ` +
