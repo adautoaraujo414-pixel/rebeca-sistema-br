@@ -19,7 +19,7 @@ const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
-app.use(express.static(path.join(__dirname, 'public'), { etag: false, lastModified: false, setHeaders: (res, path) => { if (path.endsWith('.js')) { res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate'); } } }));
+app.use(express.static(path.join(__dirname, 'public'), { etag: false, lastModified: false, setHeaders: (res, path) => { if (path.endsWith('.js') || path.endsWith('.html')) { res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate'); } } }));
 app.get('/manifest.json', (req, res) => res.sendFile(path.join(__dirname, 'public', 'manifest.json')));
 app.get('/manifest-admin.json', (req, res) => res.sendFile(path.join(__dirname, 'public', 'manifest-admin.json')));
 app.get('/admin-master', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin-master.html')));

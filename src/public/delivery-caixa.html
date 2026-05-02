@@ -7,7 +7,7 @@
 <head>
 <meta charset="UTF-8"><!-- v3 -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Caixa — Delivery</title>
+<title>Caixa v10</title>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -796,7 +796,7 @@ function renderPedidos() {
   const el = document.getElementById('pedidos-lista');
   if(!pedidos.length) { el.innerHTML = '<div class="empty">Nenhum pedido ativo</div>'; return; }
   const statusMap = {novo:'status-novo',confirmado:'status-novo',preparando:'status-preparando',pronto:'status-pronto',saiu_entrega:'status-pronto'};
-  const statusLabel = {novo:'🆕 Novo',confirmado:'✅ Confirmado',preparando:'🍳 Preparando',pronto:'🎉 Pronto',saiu_entrega:'🛵 Saiu',entregue:'✅ Entregue'};
+  const statusLabel = {novo:'🆕 Novo',confirmado:'✅ Confirmado',preparando:'🍳 Preparando',pronto:'🎉 Pronto',saiu_entrega:'🛵 Saiu',retirado:'✅ Retirado',despachado:'📦 Despachado',entregue:'✅ Entregue'};
   const localMap = {mesa:'🍽️ Mesa',balcao:'🏪 Balcão',delivery:'🛵 Delivery'};
   el.innerHTML = pedidos.map(p => {
     const local = p.tipoLocal === 'mesa' ? '🍽️ Mesa '+(p.numeroMesa||'?') : (localMap[p.tipoLocal]||'🏪 Balcão');
@@ -806,7 +806,7 @@ function renderPedidos() {
     return `<div class="pedido-card ${p.tipoLocal||'balcao'}">
       <div class="pedido-top">
         <span class="pedido-num">#${p.numero||'?'}${origem}</span>
-        <span class="pedido-status ${statusMap[p.status]||'status-novo'}">${statusLabel[p.status]||p.status}</span>
+        <span class="pedido-status ${statusMap[p.status]||'status-novo'}">${(p.tipoLocal==='retirada'&&p.status==='saiu_entrega'?'📦 Despachado':statusLabel[p.status]||p.status)}</span>
       </div>
       <div class="pedido-local">${local}${p.clienteNome&&p.clienteNome!=='Cliente Balcão'?' · 👤 '+p.clienteNome:''}</div>
       <div class="pedido-itens">${itensStr}</div>
