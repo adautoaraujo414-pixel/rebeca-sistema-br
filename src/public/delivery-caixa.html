@@ -4,7 +4,11 @@
 
 
 
-<!DOCTYPE html>
+python3 << 'PYEOF'
+txt = open('/workspaces/rebeca-sistema-br/src/routes/delivery.routes.js', encoding='utf-8').read()
+idx = txt.find('/caixa/mesas-painel')
+print(repr(txt[idx:idx+1000]))
+PYEOF<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8"><!-- v3 ts=1777717340 -->
