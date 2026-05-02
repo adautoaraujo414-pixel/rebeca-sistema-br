@@ -260,6 +260,7 @@ header{background:linear-gradient(135deg,#f97316 0%,#ea580c 100%);padding:0 20px
             <span class="total-label">Total</span>
             <span class="total-val" id="totalVal">R$ 0,00</span>
           </div>
+          <button id="btnAddItemComanda" onclick="adicionarItemMesaAtual()" style="display:none;width:100%;padding:11px;background:#1e293b;border:1px solid var(--accent);color:var(--accent);border-radius:8px;font-weight:700;cursor:pointer;font-size:.9em;margin-bottom:8px;font-family:inherit">➕ Adicionar Item à Comanda</button>
           <button class="btn-enviar" id="btnEnviar" onclick="enviarPedido()">✅ Enviar para Cozinha</button>
           <button class="btn-limpar" onclick="limparComanda()">Limpar comanda</button>
         </div>
@@ -278,8 +279,6 @@ header{background:linear-gradient(135deg,#f97316 0%,#ea580c 100%);padding:0 20px
     <div class="modal-body" id="modalMesaBody"></div>
     <div class="modal-footer">
       <button class="btn-fechar-modal" onclick="fecharModalMesa()">Fechar</button>
-      <button class="btn-add-item" onclick="adicionarItemMesaAtual()">+ Add Item</button>
-      <button class="btn-pagar" onclick="abrirPagamento()">💰 Pagar</button>
     </div>
   </div>
 </div>
@@ -700,7 +699,7 @@ function renderItens() {
     <div class="items-grid">
       ${its.map(i=>`
         <div class="item-card" onclick='addItem(${JSON.stringify({_id:i._id,nome:i.nome,preco:i.preco||0,tempoPreparoMin:i.tempoPreparoMin||20})})'>
-          <div class="item-img">${i.foto ? '<img src="'+i.foto+'" style="width:100%;height:100%;object-fit:cover;">' : (i.categoriaId?.emoji||'🍽️')}</div>
+          <div class="item-img">${itemImgHtml(i.foto, i.categoriaId?.emoji)}</div>
           <div class="item-info">
             <div class="item-name">${i.nome}</div>
             <div class="item-tempo">⏱️ ~${i.tempoPreparoMin||20}min</div>
@@ -897,12 +896,25 @@ function grcAtualizarParciais() {
 
 function adicionarItemMesaAtual() {
   fecharModalMesa();
-  document.getElementById('numMesa').value = mesaAtual;
-  document.getElementById('numMesa').readOnly = true;
-  document.getElementById('cardapio-titulo').textContent = 'Add Itens — Mesa '+mesaAtual;
-  mostrarTela('cardapio');
-  toast('Adicione itens — clique Enviar para Cozinha quando pronto');
+  // Mostrar botão de Add Item e configurar mesa
+  var btnAdd = document.getElementById('btnAddItemComanda');
+  if (btnAdd) btnAdd.style.display = 'block';
+  var inputMesa = document.getElementById('numMesa');
+  if (inputMesa) { inputMesa.value = mesaAtual; inputMesa.readOnly = true; }
+  var titulo = document.getElementById('cardapio-titulo');
+  if (titulo) titulo.textContent = '➕ Adicionando à Mesa ' + mesaAtual;
+  // Rolar para o cardápio
+  var painel = document.querySelector('.content-left') || document.querySelector('.cardapio-section');
+  if (painel) painel.scrollIntoView({behavior:'smooth'});
+  showToast('Selecione itens e clique em Enviar para Cozinha');
 }
+
+// Helper imagem item
+function itemImgHtml(foto, emoji) {
+  if (foto) return '<img src="' + foto + '" style="width:100%;height:100%;object-fit:cover;">';
+  return emoji || '🍽️';
+}
+
 </script>
 </body>
 </html>

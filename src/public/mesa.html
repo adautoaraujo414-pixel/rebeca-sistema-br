@@ -144,20 +144,46 @@ let _adminId = ''; // preenchido após login
 })();
 
 async function pedirConta() {
-  const btn = document.getElementById('btnPedirConta');
   if (!_adminId || !mesa) { alert('Faça o login na mesa primeiro.'); return; }
-  if (!confirm('Deseja solicitar a conta para a Mesa ' + mesa + '?')) return;
+  // Calcular total atual
+  const totalEl = document.getElementById('contaTotal');
+  const total = totalEl ? totalEl.textContent : 'Ver acima';
+  // Mostrar modal de fechamento de conta
+  const modal = document.createElement('div');
+  modal.id = 'modalFecharConta';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:9999;display:flex;align-items:flex-end;justify-content:center';
+  modal.innerHTML = `
+    <div style="background:#1a1a2e;border-radius:20px 20px 0 0;padding:24px;width:100%;max-width:480px">
+      <div style="text-align:center;margin-bottom:20px">
+        <div style="font-size:2em">🧾</div>
+        <div style="font-weight:800;font-size:1.1em;color:#fff;margin-top:6px">Fechar Conta — Mesa ${mesa}</div>
+        <div style="color:#22c55e;font-size:1.4em;font-weight:800;margin-top:8px">${total}</div>
+        <div style="color:#888;font-size:.8em;margin-top:4px">Como você vai pagar?</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+        <button onclick="confirmarPagamento('Cartão')" style="padding:14px;background:#1e40af;border:none;color:#fff;border-radius:12px;font-weight:700;cursor:pointer;font-size:.95em">💳 Cartão</button>
+        <button onclick="confirmarPagamento('Pix')" style="padding:14px;background:#16a34a;border:none;color:#fff;border-radius:12px;font-weight:700;cursor:pointer;font-size:.95em">📱 Pix</button>
+        <button onclick="confirmarPagamento('Dinheiro')" style="padding:14px;background:#b45309;border:none;color:#fff;border-radius:12px;font-weight:700;cursor:pointer;font-size:.95em">💵 Dinheiro</button>
+        <button onclick="document.getElementById('modalFecharConta').remove()" style="padding:14px;background:#374151;border:none;color:#fff;border-radius:12px;font-weight:600;cursor:pointer;font-size:.9em">✕ Cancelar</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+}
+
+async function confirmarPagamento(formaPag) {
+  document.getElementById('modalFecharConta')?.remove();
+  const btn = document.getElementById('btnPedirConta');
   if (btn) { btn.disabled = true; btn.textContent = '⏳ Solicitando...'; }
   try {
     const r = await fetch(API + '/garcons/pedir-conta', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ adminId: _adminId, mesa, nomeCliente })
+      body: JSON.stringify({ adminId: _adminId, mesa, nomeCliente, formaPagamento: formaPag })
     });
     const d = await r.json();
     if (d.sucesso) {
-      if (btn) { btn.textContent = '✅ Conta solicitada!'; btn.style.background = '#22c55e'; }
-      showToast('✅ Garçom notificado! A conta está chegando.');
+      if (btn) { btn.textContent = '✅ Conta solicitada!'; btn.style.background = '#22c55e'; btn.disabled = true; }
+      showToast('✅ Caixa notificado! Pagando em ' + formaPag + '.');
     } else {
       if (btn) { btn.disabled = false; btn.textContent = '💰 Pedir a Conta'; }
       showToast('Erro: ' + (d.erro || 'Tente novamente'));

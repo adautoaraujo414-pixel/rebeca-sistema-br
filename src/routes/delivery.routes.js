@@ -1548,15 +1548,15 @@ router.get('/garcons/eventos', async (req, res) => {
 // ===== PEDIR CONTA (cliente solicita pelo mesa.html) =====
 router.post('/garcons/pedir-conta', async (req, res) => {
     try {
-        const { adminId, mesa, nomeCliente } = req.body;
+        const { adminId, mesa, nomeCliente, formaPagamento } = req.body;
         if (!adminId || !mesa) return res.status(400).json({ erro: 'adminId e mesa obrigatorios' });
         const SseService = require('../services/sse.service');
         // Notificar admin
-        SseService.emitir(adminId.toString(), 'pedido_conta', { mesa, nomeCliente: nomeCliente || 'Cliente' });
+        SseService.emitir(adminId.toString(), 'pedido_conta', { mesa, nomeCliente: nomeCliente || 'Cliente', formaPagamento: formaPagamento || '' });
         // Notificar todos garçons do admin via SSE
         const garcons = await GarcomDelivery.find({ adminId, ativo: true });
         garcons.forEach(g => {
-            SseService.emitir('garcom_' + g._id.toString(), 'pedido_conta', { mesa, nomeCliente: nomeCliente || 'Cliente' });
+            SseService.emitir('garcom_' + g._id.toString(), 'pedido_conta', { mesa, nomeCliente: nomeCliente || 'Cliente', formaPagamento: formaPagamento || '', nomeCliente || 'Cliente' });
         });
         res.json({ sucesso: true });
     } catch(e) { res.status(500).json({ erro: e.message }); }
