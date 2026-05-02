@@ -1,6 +1,10 @@
 
 
-<!DOCTYPE html>
+python3 -c "
+txt = open('/workspaces/rebeca-sistema-br/src/public/delivery-garcom.html', encoding='utf-8').read()
+idx = txt.find('tokenURL')
+print(repr(txt[idx:idx+300]))
+"<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -179,10 +183,11 @@ header{background:linear-gradient(135deg,#f97316 0%,#ea580c 100%);padding:0 20px
     <div style="text-align:center;margin-bottom:16px;padding-top:4px"><img src="/logo-rebeca.png" style="height:64px;object-fit:contain;display:block;margin:0 auto"></div>
     <h2>Acesso Garçom</h2>
     <p>Entre com seu token de acesso</p>
-    <div class="field">
+    <div class="field" id="fieldToken">
       <label>Token GRC</label>
       <input type="text" id="inputToken" placeholder="GRC-XXXXXXXXXXXXXXXX" autocomplete="off">
     </div>
+    <div id="tokenFixoInfo" style="display:none;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:.85em;color:#166534;font-weight:600">🔐 Acesso vinculado a este dispositivo</div>
     <div class="field">
       <label>Senha</label>
       <input type="password" id="inputSenha" placeholder="Sua senha">
@@ -395,6 +400,20 @@ let pagForma = '';
 const urlParams = new URLSearchParams(location.search);
 const tokenURL = urlParams.get('token');
 
+// Se token vier na URL: esconder campo token, mostrar info, salvar no localStorage
+if (tokenURL) {
+  localStorage.setItem('garcom_token', tokenURL);
+  document.addEventListener('DOMContentLoaded', function() {
+    var ft = document.getElementById('fieldToken');
+    var ti = document.getElementById('tokenFixoInfo');
+    var inp = document.getElementById('inputToken');
+    if (ft) ft.style.display = 'none';
+    if (ti) ti.style.display = 'block';
+    if (inp) inp.value = tokenURL;
+    document.getElementById('inputSenha')?.focus();
+  });
+}
+
 // Persistência: salvar token da URL e recuperar credenciais salvas
 const _savedToken = localStorage.getItem('garcom_token') || '';
 // Token da URL so usa se for diferente do que esta salvo (evitar loops)
@@ -475,7 +494,24 @@ async function fazerLogin() {
       body: JSON.stringify({token:tk, senha})
     });
     const d = await r.json();
-    if (!d.sucesso) { err.textContent = d.erro||'Token ou senha inválidos'; localStorage.removeItem('garcom_token'); localStorage.removeItem('garcom_senha'); return; }
+    if (!d.sucesso) {
+    const msg = d.erro || 'Token ou senha inválidos';
+    if (msg.toLowerCase().includes('inativ') || msg.toLowerCase().includes('suspenso') || msg.toLowerCase().includes('invalido') || msg.toLowerCase().includes('inválido')) {
+      localStorage.removeItem('garcom_token');
+      localStorage.removeItem('garcom_senha');
+      // Se tinha token na URL, mostrar campo token novamente
+      var ft = document.getElementById('fieldToken');
+      var ti = document.getElementById('tokenFixoInfo');
+      if (ft) ft.style.display = 'block';
+      if (ti) ti.style.display = 'none';
+      err.textContent = msg.includes('inativ') || msg.includes('suspenso')
+        ? '⛔ Seu acesso de garçom foi suspenso. Fale com o administrador.'
+        : '❌ Token ou senha inválidos';
+    } else {
+      err.textContent = msg;
+    }
+    return;
+  }
     token = tk;
     garcomNome = d.garcom?.nome || 'Garçom';
     // Salvar credenciais para auto-login
