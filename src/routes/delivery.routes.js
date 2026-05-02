@@ -2069,12 +2069,19 @@ router.get('/caixa/status', authDelivery, async (req, res) => {
 // Abrir caixa
 router.post('/caixa/abrir', authDelivery, async (req, res) => {
     try {
-        const jaAberto = await CaixaDelivery.findOne({ adminId: req.adminId, status: 'aberto' });
-        if (jaAberto) return res.json({ sucesso: true, caixa: jaAberto, msg: 'Caixa já estava aberto' });
+        const { operador, numeroCaixa, fundoCaixa } = req.body;
+        const numCaixa = numeroCaixa || 1;
+        // Fechar automaticamente caixas do mesmo número que ficaram presos
+        await CaixaDelivery.updateMany(
+            { adminId: req.adminId, status: 'aberto', numeroCaixa: numCaixa },
+            { $set: { status: 'fechado', dataFechamento: new Date(), fechadoPor: 'sistema-auto' } }
+        );
         const caixa = await CaixaDelivery.create({
             adminId: req.adminId,
             status: 'aberto',
-            abertoPor: req.body.operador || 'admin',
+            abertoPor: operador || 'admin',
+            numeroCaixa: numCaixa,
+            fundoCaixa: fundoCaixa || 0,
             dataAbertura: new Date()
         });
         res.json({ sucesso: true, caixa });
