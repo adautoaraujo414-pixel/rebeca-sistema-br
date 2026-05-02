@@ -1372,18 +1372,10 @@ async function soAdicionarSemCozinha() {
       d = await res.json();
     }
     if (d && (d.sucesso || d._id || d.pedido)) {
-      const pid = d._id || d.pedido?._id || pedidoEditando;
-      // Marcar como entregue direto
-      if (pid) {
-        await fetch('/api/delivery/caixa/pedido/' + pid + '/pagar', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-          body: JSON.stringify({ formaPagamento: 'a_receber', status: 'entregue' })
-        });
-      }
       alert('✅ Item(s) adicionado(s) à conta!');
       limparCarrinho();
       pedidoEditando = null;
+      carregarPedidos();
     } else {
       alert('Erro: ' + (d?.erro || 'Tente novamente'));
     }

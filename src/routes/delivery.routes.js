@@ -1293,6 +1293,9 @@ router.post('/caixa/pedido', authDelivery, async (req, res) => {
         const { clienteNome, clienteTelefone, itens, tipoLocal, numeroMesa, 
                 nomeComanda, observacao, formaPagamento, subtotal, total, taxaEntrega } = req.body;
         
+        const { soAdicionar } = req.body;
+        const isMesaComanda = soAdicionar && (tipoLocal === 'mesa' || tipoLocal === 'balcao');
+
         const pedido = new PedidoDelivery({
             adminId: req.adminId,
             clienteNome: clienteNome || 'Cliente Balcão',
@@ -1307,12 +1310,14 @@ router.post('/caixa/pedido', authDelivery, async (req, res) => {
             subtotal: subtotal || 0,
             total: total || 0,
             taxaEntrega: taxaEntrega || 0,
-            status: 'novo',
+            status: isMesaComanda ? 'entregue' : 'novo',
             tipoEntrega: tipoLocal === 'delivery' ? 'delivery' : 'retirada'
         });
         
         await pedido.save();
-        try { SseService.emitir(adminId?.toString(), 'novo_pedido', { pedidoId: pedido._id, origem: 'digital' }); } catch(_) {}
+        if (!isMesaComanda) {
+            try { SseService.emitir(req.adminId?.toString(), 'novo_pedido', { pedidoId: pedido._id, origem: 'caixa' }); } catch(_) {}
+        }
         res.json({ sucesso: true, pedido });
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
