@@ -2705,8 +2705,20 @@ async function _salvarItemReal() {
                 pixQrUrl:                 g('cfgPixQrUrl')?.value || '',
                 mensagemBoasVindas:       g('cfgBoasVindas')?.value || '',
                 mensagemPedidoConfirmado: g('cfgMsgConfirmado')?.value || '',
-                mensagemPedidoPronto:     g('cfgMsgPronto')?.value || ''
+                mensagemPedidoPronto:     g('cfgMsgPronto')?.value || '',
+                logo:                     g('cfgLogoUrl')?.value || '',
+                nomeEstabelecimento:      g('cfgNomeEstabelecimento')?.value || ''
             })});
+            // Também salvar logo e nome no AdminDelivery para rotas públicas
+            const logoVal = g('cfgLogoUrl')?.value || '';
+            const nomeVal = g('cfgNomeEstabelecimento')?.value || '';
+            if (logoVal || nomeVal) {
+                await api('/admin/perfil', { method: 'PUT', body: JSON.stringify({
+                    logo: logoVal,
+                    nomeEstabelecimento: nomeVal,
+                    nomeComercio: nomeVal
+                })});
+            }
             toast('Configurações salvas!');
         }
 

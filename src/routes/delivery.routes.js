@@ -375,6 +375,19 @@ router.put('/pedidos/:id/status', authDelivery, async (req, res) => {
 });
 
 // ========== CONFIG ==========
+// Atualizar perfil do admin (logo, nome) — usado pelo salvarConfig
+router.put('/admin/perfil', authDelivery, async (req, res) => {
+    try {
+        const { logo, nomeEstabelecimento, nomeComercio } = req.body;
+        const update = {};
+        if (logo !== undefined) update.logo = logo;
+        if (nomeEstabelecimento) update.nomeEstabelecimento = nomeEstabelecimento;
+        if (nomeComercio) update.nomeComercio = nomeComercio;
+        await AdminDelivery.findByIdAndUpdate(req.adminId, { $set: update });
+        res.json({ sucesso: true });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
 router.get('/config', authDelivery, async (req, res) => {
     try {
         let config = await ConfigDelivery.findOne({ adminId: req.adminId });
@@ -475,7 +488,7 @@ router.get('/cardapio-publico/:adminId', async (req, res) => {
             endereco: config?.endereco || null,
             // Telefone: só se o admin cadastrou telefone de exibição separado (não o de login)
             telefone: config?.telefoneExibicao || null,
-            logo: admin?.logo || config?.logo || null,
+            logo: config?.logo || admin?.logo || null,
             // Numéricos: só mostrar se admin alterou do padrão
             pedidoMinimo: (configExiste && config.pedidoMinimo !== DEFAULTS.pedidoMinimo) ? config.pedidoMinimo : null,
             taxaEntrega: (configExiste && config.taxaEntregaFixa !== DEFAULTS.taxaEntregaFixa) ? config.taxaEntregaFixa : null,
@@ -1994,15 +2007,20 @@ router.get('/mesa/cardapio', async (req, res) => {
         if (!slug) return res.status(400).json({ erro: 'Slug obrigatorio' });
         const admin = await AdminDelivery.findOne({ slug });
         if (!admin) return res.status(404).json({ sucesso: false, erro: 'Restaurante não encontrado' });
-        const itens = await ItemCardapio.find({ adminId: admin._id, ativo: true })
-            .sort({ ordem: 1 })
-            .populate('categoriaId', 'nome emoji');
+        const [itens, config] = await Promise.all([
+            ItemCardapio.find({ adminId: admin._id, ativo: true })
+                .sort({ ordem: 1 })
+                .populate('categoriaId', 'nome emoji'),
+            ConfigDelivery.findOne({ adminId: admin._id }).lean()
+        ]);
+        const nomeEstabelecimento = admin.nomeEstabelecimento || admin.nomeComercio || config?.nomeRestaurante || 'Restaurante';
+        const logo = config?.logo || admin.logo || null;
         res.json({
             sucesso: true,
             adminId: admin._id.toString(),
-            nomeEstabelecimento: admin.nomeEstabelecimento || admin.nomeComercio || 'Restaurante',
+            nomeEstabelecimento,
             tipoNegocio: admin.tipoNegocio || 'Cardápio Digital',
-            logo: admin.logo || null,
+            logo,
             aberto: admin.aberto !== false,
             itens
         });
