@@ -141,7 +141,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 .cart-subtotal{display:flex;justify-content:space-between;font-size:.82em;color:var(--text3);margin-bottom:4px}
 .cart-total-row{display:flex;justify-content:space-between;font-size:1.05em;font-weight:800;color:var(--text);margin-bottom:14px}
 .cart-total-row span:last-child{color:var(--green)}
-.cart-actions{display:flex;gap:6px;margin-bottom:8px}
+.cart-actions{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
 .obs-footer{width:100%;padding:8px 10px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:.8em;font-family:inherit;resize:none;height:44px}
 .obs-footer:focus{outline:none;border-color:var(--accent)}
 
@@ -355,10 +355,10 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
         <div class="cart-subtotal"><span>Subtotal</span><span id="cart-subtotal">R$ 0,00</span></div>
         <div class="cart-total-row"><span>TOTAL</span><span id="cart-total">R$ 0,00</span></div>
         <div class="cart-actions">
-          <button class="btn btn-orange" onclick="enviarPedido()">📤 Enviar Cozinha</button>
-          <button class="btn" style="background:#6366f1;color:#fff" onclick="soAdicionarSemCozinha()">➕ Só Adicionar</button>
-          <button class="btn btn-green" onclick="abrirPagamento()">💰 Pagar</button>
+          <button class="btn btn-orange" style="flex:2" onclick="enviarPedido()">📤 Enviar Cozinha</button>
+          <button class="btn btn-green" style="flex:2" onclick="abrirPagamento()">💰 Pagar</button>
           <button class="btn btn-red" onclick="limparCarrinho()">🗑️</button>
+          <button class="btn" style="width:100%;background:#6366f1;color:#fff;margin-top:2px" onclick="soAdicionarSemCozinha()">➕ Só Adicionar (sem cozinha)</button>
         </div>
         <textarea class="obs-footer" id="obs-geral" placeholder="Observação geral do pedido..."></textarea>
       </div>
