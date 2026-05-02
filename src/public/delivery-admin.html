@@ -1837,7 +1837,7 @@ async function carregarConfigNF() {
             // Mostrar/ocultar itens do menu
             document.querySelectorAll('.menu-item[data-page]').forEach(item => {
                 const page = item.dataset.page;
-                if (!permitidos.includes(page)) {
+                if (!permitidos.includes(page) && !['financeiro-caixas','financeiro-lucro','financeiro-contas','financeiro-fornecedores','relatorios','caixa'].includes(page)) {
                     item.style.opacity = '0.4';
                     item.style.position = 'relative';
                     if (!item.querySelector('.lock-icon')) {
@@ -2004,8 +2004,10 @@ async function carregarConfigNF() {
         document.querySelectorAll('.menu-item[data-page]').forEach(item => {
             item.addEventListener('click', () => {
                 const page = item.dataset.page;
+                // Financeiro e relatórios liberados para todos os planos
+                const semprePermitidos = ['financeiro-caixas','financeiro-lucro','financeiro-contas','financeiro-fornecedores','relatorios','caixa'];
                 const permitidos = PLANOS_MODULOS[_planoAtual] || PLANOS_MODULOS.premium;
-                if (!permitidos.includes(page)) {
+                if (!permitidos.includes(page) && !semprePermitidos.includes(page)) {
                     mostrarModalUpgrade(page);
                     return;
                 }
