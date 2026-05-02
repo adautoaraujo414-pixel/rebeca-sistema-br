@@ -127,7 +127,8 @@
 .pedido-card *, .combo-card *, .panel * { color: inherit; }
 .pedido-card .status-badge, .combo-card .status-badge { color: inherit !important; }
 </style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
 function adicionarFornProd() {
   var c = document.getElementById('fi_prods');
   if (!c) return;
@@ -231,7 +232,100 @@ async function carregarConfigNF() {
         </div>
     </div>
 
-    <!-- DASHBOARD -->
+    
+                <!-- FINANCEIRO CAIXAS -->
+                <div id="page-financeiro-caixas" class="page">
+                  <h2 style="margin-bottom:20px">🔒 Fechamentos de Caixa</h2>
+                  <div class="stats-grid" id="fc-stats-grid">
+                    <div class="stat-card"><div class="valor" id="fc-total-dia">R$ 0</div><div class="label">Total Vendido Hoje</div></div>
+                    <div class="stat-card"><div class="valor" id="fc-dinheiro-dia" style="color:#22c55e">R$ 0</div><div class="label">💵 Dinheiro</div></div>
+                    <div class="stat-card"><div class="valor" id="fc-cartao-dia" style="color:#3b82f6">R$ 0</div><div class="label">💳 Cartão</div></div>
+                    <div class="stat-card"><div class="valor" id="fc-pix-dia" style="color:#8b5cf6">R$ 0</div><div class="label">📱 Pix</div></div>
+                  </div>
+                  <div class="panel">
+                    <h3>📋 Histórico de Fechamentos</h3>
+                    <div style="display:flex;gap:10px;margin-bottom:15px;flex-wrap:wrap">
+                      <input type="date" id="fc-data-ini" style="padding:8px 12px;border-radius:8px;border:1px solid #ddd;background:#fff">
+                      <input type="date" id="fc-data-fim" style="padding:8px 12px;border-radius:8px;border:1px solid #ddd;background:#fff">
+                      <button onclick="carregarFinanceiroCaixas()" style="background:#f97316;color:#fff;border:none;border-radius:8px;padding:8px 16px;cursor:pointer;font-weight:700">🔍 Filtrar</button>
+                    </div>
+                    <div id="fc-lista-caixas"><div style="color:#888;text-align:center;padding:40px">Carregando...</div></div>
+                  </div>
+                </div>
+
+                <!-- FINANCEIRO LUCRO POR PRODUTO -->
+                <div id="page-financeiro-lucro" class="page">
+                  <h2 style="margin-bottom:20px">💹 Lucro por Produto</h2>
+                  <div class="panel" style="margin-bottom:16px">
+                    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+                      <select id="lucro-periodo" style="padding:8px 12px;border-radius:8px;border:1px solid #ddd;background:#fff">
+                        <option value="hoje">Hoje</option>
+                        <option value="semana">Últimos 7 dias</option>
+                        <option value="mes" selected>Este mês</option>
+                        <option value="personalizado">Personalizado</option>
+                      </select>
+                      <input type="date" id="lucro-data-ini" style="padding:8px 12px;border-radius:8px;border:1px solid #ddd;display:none">
+                      <input type="date" id="lucro-data-fim" style="padding:8px 12px;border-radius:8px;border:1px solid #ddd;display:none">
+                      <button onclick="carregarLucroProdutos()" style="background:#f97316;color:#fff;border:none;border-radius:8px;padding:8px 16px;cursor:pointer;font-weight:700">📊 Atualizar</button>
+                    </div>
+                  </div>
+                  <div class="stats-grid">
+                    <div class="stat-card"><div class="valor" id="lucro-total-vendas">R$ 0</div><div class="label">Total Vendido</div></div>
+                    <div class="stat-card"><div class="valor" id="lucro-total-custo" style="color:#ef4444">R$ 0</div><div class="label">Custo Total</div></div>
+                    <div class="stat-card"><div class="valor" id="lucro-total-lucro" style="color:#22c55e">R$ 0</div><div class="label">Lucro Líquido</div></div>
+                    <div class="stat-card"><div class="valor" id="lucro-margem" style="color:#f59e0b">0%</div><div class="label">Margem %</div></div>
+                  </div>
+                  <div class="panel">
+                    <h3>📦 Lucro por Item</h3>
+                    <div style="overflow-x:auto">
+                      <table style="width:100%;border-collapse:collapse;font-size:13px">
+                        <thead>
+                          <tr style="background:#f5f5f7;color:#888">
+                            <th style="padding:10px;text-align:left">Produto</th>
+                            <th style="padding:10px;text-align:right">Qtd Vendida</th>
+                            <th style="padding:10px;text-align:right">Preço Venda</th>
+                            <th style="padding:10px;text-align:right">Custo Unit.</th>
+                            <th style="padding:10px;text-align:right">Lucro Unit.</th>
+                            <th style="padding:10px;text-align:right">Lucro Total</th>
+                            <th style="padding:10px;text-align:right">Margem %</th>
+                          </tr>
+                        </thead>
+                        <tbody id="lucro-tbody"><tr><td colspan="7" style="text-align:center;padding:40px;color:#888">Carregando...</td></tr></tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- FINANCEIRO CONTAS A PAGAR -->
+                <div id="page-financeiro-contas" class="page">
+                  <h2 style="margin-bottom:20px">💸 Contas a Pagar</h2>
+                  <div style="display:flex;justify-content:flex-end;margin-bottom:16px">
+                    <button onclick="abrirModalConta()" style="background:#f97316;color:#fff;border:none;border-radius:10px;padding:10px 20px;font-weight:700;cursor:pointer">+ Nova Conta</button>
+                  </div>
+                  <div class="stats-grid">
+                    <div class="stat-card"><div class="valor" id="contas-pendente" style="color:#ef4444">R$ 0</div><div class="label">⏳ Pendente</div></div>
+                    <div class="stat-card"><div class="valor" id="contas-vencendo" style="color:#f59e0b">R$ 0</div><div class="label">⚠️ Vence em 7 dias</div></div>
+                    <div class="stat-card"><div class="valor" id="contas-pago-mes" style="color:#22c55e">R$ 0</div><div class="label">✅ Pago este mês</div></div>
+                  </div>
+                  <div class="panel">
+                    <h3>📋 Contas</h3>
+                    <div id="contas-lista"><div style="color:#888;text-align:center;padding:40px">Nenhuma conta cadastrada</div></div>
+                  </div>
+                </div>
+
+                <!-- FINANCEIRO FORNECEDORES -->
+                <div id="page-financeiro-fornecedores" class="page">
+                  <h2 style="margin-bottom:20px">🏭 Fornecedores</h2>
+                  <div style="display:flex;justify-content:flex-end;margin-bottom:16px">
+                    <button onclick="abrirModalFornecedor()" style="background:#f97316;color:#fff;border:none;border-radius:10px;padding:10px 20px;font-weight:700;cursor:pointer">+ Novo Fornecedor</button>
+                  </div>
+                  <div class="panel">
+                    <h3>🏭 Fornecedores Cadastrados</h3>
+                    <div id="forn-lista"><div style="color:#888;text-align:center;padding:40px">Nenhum fornecedor</div></div>
+                  </div>
+                </div>
+
+<!-- DASHBOARD -->
     <div id="dashboardContainer" class="dashboard" style="display:block">
         <div class="header" style="display:grid;grid-template-columns:auto 1fr auto;align-items:center;padding:0;background:#fff;border-bottom:3px solid #f97316;box-shadow:0 2px 8px rgba(0,0,0,.06);height:64px;overflow:hidden">
             <div style="display:flex;align-items:center">
@@ -256,8 +350,12 @@ async function carregarConfigNF() {
                 
                 <div class="menu-item" data-page="upload-cardapio">📸 Upload Cardápio IA</div>
                 <!-- COMBOS DESATIVADO TEMPORARIAMENTE -->
-                <div class="menu-section">Relatórios</div>
+                <div class="menu-section">Financeiro</div>
                 <div class="menu-item" data-page="relatorios" onclick="carregarRelatorios()">📈 Relatórios de Caixa</div>
+                <div class="menu-item" data-page="financeiro-caixas" onclick="carregarFinanceiroCaixas()">🔒 Fechamentos de Caixa</div>
+                <div class="menu-item" data-page="financeiro-lucro" onclick="carregarLucroProdutos()">💹 Lucro por Produto</div>
+                <div class="menu-item" data-page="financeiro-contas" onclick="carregarContasPagar()">💸 Contas a Pagar</div>
+                <div class="menu-item" data-page="financeiro-fornecedores" onclick="carregarFornecedores()">🏭 Fornecedores</div>
                 <div class="menu-section">Operação</div>
                 <div class="menu-item" onclick="abrirTelaCaixa()" style="cursor:pointer">🧾 Caixa / Comanda</div>
                 <div class="menu-item" onclick="window.open('/delivery-cozinha?token='+(localStorage.getItem('delivery_token')||token))" style="cursor:pointer">👨‍🍳 Painel Cozinha</div>
@@ -5316,6 +5414,242 @@ document.getElementById('modalAbrirCaixa').addEventListener('click', function(e)
 document.getElementById('caixaOperadorInput').addEventListener('keypress', function(e) {
     if (e.key === 'Enter') confirmarAbrirCaixa();
 });
+
+// ==================== MÓDULO FINANCEIRO ====================
+
+async function carregarFinanceiroCaixas() {
+  try {
+    const r = await fetch('/api/delivery/caixa/historico?limite=50', { headers: { Authorization: 'Bearer ' + token } });
+    const caixas = await r.json();
+    const lista = document.getElementById('fc-lista-caixas');
+    if (!lista) return;
+    if (!caixas.length) { lista.innerHTML = '<div style="color:#888;text-align:center;padding:40px">Nenhum fechamento encontrado</div>'; return; }
+    // Totais do dia
+    const hoje = new Date().toDateString();
+    const diaAtual = caixas.filter(c => new Date(c.dataFechamento).toDateString() === hoje);
+    const tdDia = diaAtual.reduce((s,c) => s + (c.totalFaturamento||0), 0);
+    const tdDin = diaAtual.reduce((s,c) => s + (c.totalDinheiro||0), 0);
+    const tdCart = diaAtual.reduce((s,c) => s + (c.totalCartao||0), 0);
+    const tdPix = diaAtual.reduce((s,c) => s + (c.totalPix||0), 0);
+    const el = (id) => document.getElementById(id);
+    if (el('fc-total-dia')) el('fc-total-dia').textContent = 'R$ ' + tdDia.toFixed(2);
+    if (el('fc-dinheiro-dia')) el('fc-dinheiro-dia').textContent = 'R$ ' + tdDin.toFixed(2);
+    if (el('fc-cartao-dia')) el('fc-cartao-dia').textContent = 'R$ ' + tdCart.toFixed(2);
+    if (el('fc-pix-dia')) el('fc-pix-dia').textContent = 'R$ ' + tdPix.toFixed(2);
+    lista.innerHTML = caixas.map(c => {
+      const diff = c.diferencaDinheiro || 0;
+      const diffHtml = diff === 0 ? '<span style="color:#22c55e">✅ Confere</span>' : (diff > 0 ? '<span style="color:#f59e0b">💰 Sobra R$ '+Math.abs(diff).toFixed(2)+'</span>' : '<span style="color:#ef4444">⚠️ Falta R$ '+Math.abs(diff).toFixed(2)+'</span>');
+      const ops = (c.vendasPorOperador||[]).map(o => `<span style="background:#f5f5f7;padding:2px 8px;border-radius:20px;font-size:.75em;margin-right:4px">${o.operador}: R$ ${(o.totalVendas||0).toFixed(2)}</span>`).join('');
+      return `<div style="background:#fff;border:1px solid #e8e8ed;border-radius:12px;padding:16px;margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+          <div>
+            <div style="font-weight:700;font-size:.95em">${new Date(c.dataFechamento||c.dataAbertura).toLocaleString('pt-BR')} — <span style="color:#f97316">Caixa ${c.numeroCaixa||1}</span></div>
+            <div style="font-size:.8em;color:#888;margin-top:2px">Operador: ${c.fechadoPor||c.abertoPor||'—'} · ${c.totalPedidos||0} pedidos · ${c.totalCancelados||0} cancelados</div>
+            <div style="margin-top:6px">${ops}</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:1.3em;font-weight:900;color:#f97316">R$ ${(c.totalFaturamento||0).toFixed(2)}</div>
+            <div style="font-size:.75em;color:#888;margin-top:2px">💵 R$ ${(c.totalDinheiro||0).toFixed(2)} · 💳 R$ ${(c.totalCartao||0).toFixed(2)} · 📱 R$ ${(c.totalPix||0).toFixed(2)}</div>
+            <div style="font-size:.8em;margin-top:4px">${diffHtml}</div>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  } catch(e) { console.error(e); }
+}
+
+async function carregarLucroProdutos() {
+  try {
+    const periodo = document.getElementById('lucro-periodo')?.value || 'mes';
+    let dataIni, dataFim = new Date();
+    if (periodo === 'hoje') { dataIni = new Date(); dataIni.setHours(0,0,0,0); }
+    else if (periodo === 'semana') { dataIni = new Date(Date.now() - 7*24*60*60*1000); }
+    else if (periodo === 'mes') { dataIni = new Date(); dataIni.setDate(1); dataIni.setHours(0,0,0,0); }
+    else { dataIni = new Date(document.getElementById('lucro-data-ini')?.value||Date.now()); dataFim = new Date(document.getElementById('lucro-data-fim')?.value||Date.now()); }
+
+    // Buscar pedidos pagos do período
+    const r = await fetch('/api/delivery/caixa/todos?dataIni='+dataIni.toISOString()+'&dataFim='+dataFim.toISOString(), { headers: { Authorization: 'Bearer ' + token } });
+    const pedidos = await r.json();
+
+    // Buscar itens do cardápio para pegar custo
+    const rc = await fetch('/api/delivery/cardapio', { headers: { Authorization: 'Bearer ' + token } });
+    const cardapio = await rc.json();
+    const custoMap = {};
+    (cardapio.itens||cardapio||[]).forEach(i => { custoMap[i.nome] = i.custoProducao || i.custo || 0; });
+
+    // Calcular lucro por produto
+    const produtos = {};
+    (pedidos||[]).forEach(p => {
+      (p.itens||[]).forEach(it => {
+        const nome = it.nome||'Item';
+        if (!produtos[nome]) produtos[nome] = { nome, qtd:0, receitaTotal:0, custoTotal:0 };
+        const qtd = it.qtd || it.quantidade || 1;
+        const preco = it.preco || it.precoUnitario || 0;
+        const custo = custoMap[nome] || 0;
+        produtos[nome].qtd += qtd;
+        produtos[nome].receitaTotal += preco * qtd;
+        produtos[nome].custoTotal += custo * qtd;
+      });
+    });
+
+    const lista = Object.values(produtos).sort((a,b) => (b.receitaTotal-b.custoTotal)-(a.receitaTotal-a.custoTotal));
+    const totalVendas = lista.reduce((s,p) => s+p.receitaTotal, 0);
+    const totalCusto = lista.reduce((s,p) => s+p.custoTotal, 0);
+    const totalLucro = totalVendas - totalCusto;
+    const margem = totalVendas ? ((totalLucro/totalVendas)*100).toFixed(1) : 0;
+
+    const el = (id) => document.getElementById(id);
+    if (el('lucro-total-vendas')) el('lucro-total-vendas').textContent = 'R$ '+totalVendas.toFixed(2);
+    if (el('lucro-total-custo')) el('lucro-total-custo').textContent = 'R$ '+totalCusto.toFixed(2);
+    if (el('lucro-total-lucro')) el('lucro-total-lucro').textContent = 'R$ '+totalLucro.toFixed(2);
+    if (el('lucro-margem')) el('lucro-margem').textContent = margem+'%';
+
+    const tbody = document.getElementById('lucro-tbody');
+    if (tbody) tbody.innerHTML = lista.length ? lista.map(p => {
+      const lucroUnit = (p.receitaTotal - p.custoTotal) / (p.qtd||1);
+      const margemP = p.receitaTotal ? (((p.receitaTotal-p.custoTotal)/p.receitaTotal)*100).toFixed(1) : 0;
+      const cor = lucroUnit > 0 ? '#22c55e' : '#ef4444';
+      return `<tr style="border-bottom:1px solid #f0f0f0">
+        <td style="padding:10px;font-weight:600">${p.nome}</td>
+        <td style="padding:10px;text-align:right">${p.qtd}</td>
+        <td style="padding:10px;text-align:right">R$ ${(p.receitaTotal/p.qtd).toFixed(2)}</td>
+        <td style="padding:10px;text-align:right;color:#ef4444">R$ ${(p.custoTotal/p.qtd).toFixed(2)}</td>
+        <td style="padding:10px;text-align:right;color:${cor}">R$ ${lucroUnit.toFixed(2)}</td>
+        <td style="padding:10px;text-align:right;color:${cor};font-weight:700">R$ ${(p.receitaTotal-p.custoTotal).toFixed(2)}</td>
+        <td style="padding:10px;text-align:right"><span style="background:${lucroUnit>0?'#dcfce7':'#fee2e2'};color:${cor};padding:3px 10px;border-radius:20px;font-size:.8em;font-weight:700">${margemP}%</span></td>
+      </tr>`;
+    }).join('') : '<tr><td colspan="7" style="text-align:center;padding:40px;color:#888">Nenhum dado no período</td></tr>';
+  } catch(e) { console.error('lucro:', e); }
+}
+
+// Mostrar/ocultar datas personalizadas
+document.addEventListener('DOMContentLoaded', () => {
+  const sel = document.getElementById('lucro-periodo');
+  if (sel) sel.addEventListener('change', () => {
+    const custom = sel.value === 'personalizado';
+    ['lucro-data-ini','lucro-data-fim'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = custom ? 'block' : 'none';
+    });
+  });
+});
+
+// Contas a Pagar (localStorage por ora)
+let _contasPagar = JSON.parse(localStorage.getItem('contasPagar')||'[]');
+
+function carregarContasPagar() {
+  const lista = document.getElementById('contas-lista');
+  if (!lista) return;
+  const agora = new Date();
+  const em7 = new Date(Date.now() + 7*24*60*60*1000);
+  const mesAtual = agora.getMonth();
+  let pendente=0, vencendo=0, pagoMes=0;
+  _contasPagar.forEach(c => {
+    const venc = new Date(c.vencimento);
+    if (c.pago && new Date(c.dataPagamento).getMonth()===mesAtual) pagoMes += c.valor||0;
+    else if (!c.pago) { pendente += c.valor||0; if (venc <= em7) vencendo += c.valor||0; }
+  });
+  const el = (id) => document.getElementById(id);
+  if (el('contas-pendente')) el('contas-pendente').textContent = 'R$ '+pendente.toFixed(2);
+  if (el('contas-vencendo')) el('contas-vencendo').textContent = 'R$ '+vencendo.toFixed(2);
+  if (el('contas-pago-mes')) el('contas-pago-mes').textContent = 'R$ '+pagoMes.toFixed(2);
+  if (!_contasPagar.length) { lista.innerHTML = '<div style="color:#888;text-align:center;padding:40px">Nenhuma conta cadastrada</div>'; return; }
+  lista.innerHTML = _contasPagar.map((c,i) => {
+    const venc = new Date(c.vencimento);
+    const atrasada = !c.pago && venc < agora;
+    const cor = c.pago ? '#22c55e' : (atrasada ? '#ef4444' : '#f59e0b');
+    return `<div style="background:#fff;border:1px solid #e8e8ed;border-radius:10px;padding:14px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+      <div>
+        <div style="font-weight:700">${c.descricao}</div>
+        <div style="font-size:.8em;color:#888">${c.categoria||'Geral'} · Venc: ${venc.toLocaleDateString('pt-BR')} · ${c.fornecedor||''}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:1.1em;font-weight:900;color:${cor}">R$ ${(c.valor||0).toFixed(2)}</span>
+        <span style="background:${c.pago?'#dcfce7':atrasada?'#fee2e2':'#fef9c3'};color:${cor};padding:3px 10px;border-radius:20px;font-size:.75em;font-weight:700">${c.pago?'✅ Pago':atrasada?'❌ Atrasada':'⏳ Pendente'}</span>
+        ${!c.pago ? `<button onclick="pagarConta(${i})" style="background:#22c55e;color:#fff;border:none;border-radius:8px;padding:5px 12px;cursor:pointer;font-size:.8em">Pagar</button>` : ''}
+        <button onclick="removerConta(${i})" style="background:#ef4444;color:#fff;border:none;border-radius:8px;padding:5px 10px;cursor:pointer;font-size:.8em">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function abrirModalConta() {
+  const desc = prompt('Descrição da conta:'); if (!desc) return;
+  const valor = parseFloat(prompt('Valor (R$):')||0); if (!valor) return;
+  const venc = prompt('Vencimento (DD/MM/AAAA):');
+  const cat = prompt('Categoria (ex: Fornecedor, Aluguel, Energia, Outros):') || 'Outros';
+  const forn = prompt('Fornecedor (opcional):') || '';
+  const partes = (venc||'').split('/');
+  const dataVenc = partes.length===3 ? new Date(partes[2],partes[1]-1,partes[0]) : new Date();
+  _contasPagar.push({ descricao:desc, valor, vencimento:dataVenc.toISOString(), categoria:cat, fornecedor:forn, pago:false, criadoEm:new Date().toISOString() });
+  localStorage.setItem('contasPagar', JSON.stringify(_contasPagar));
+  carregarContasPagar();
+}
+
+function pagarConta(i) {
+  _contasPagar[i].pago = true;
+  _contasPagar[i].dataPagamento = new Date().toISOString();
+  localStorage.setItem('contasPagar', JSON.stringify(_contasPagar));
+  carregarContasPagar();
+}
+
+function removerConta(i) {
+  if (!confirm('Remover esta conta?')) return;
+  _contasPagar.splice(i,1);
+  localStorage.setItem('contasPagar', JSON.stringify(_contasPagar));
+  carregarContasPagar();
+}
+
+// Fornecedores
+function carregarFornecedores() {
+  const lista = document.getElementById('forn-lista');
+  if (!lista) return;
+  const forns = JSON.parse(localStorage.getItem('fornecedores')||'[]');
+  if (!forns.length) { lista.innerHTML = '<div style="color:#888;text-align:center;padding:40px">Nenhum fornecedor cadastrado</div>'; return; }
+  lista.innerHTML = forns.map((f,i) => `
+    <div style="background:#fff;border:1px solid #e8e8ed;border-radius:10px;padding:16px;margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px">
+        <div>
+          <div style="font-weight:700;font-size:1em">${f.nome} <span style="color:#888;font-weight:400;font-size:.85em">· ${f.empresa||''}</span></div>
+          <div style="font-size:.8em;color:#888;margin-top:4px">📱 ${f.whatsapp||'—'} · 📍 ${f.cidade||'—'}</div>
+          ${f.produtos?.length ? `<div style="font-size:.75em;color:#f97316;margin-top:4px">${f.produtos.map(p=>p.nome+' R$'+p.preco).join(' · ')}</div>` : ''}
+        </div>
+        <div style="display:flex;gap:8px">
+          <button onclick="whatsappFornecedor(${i})" style="background:#25d366;color:#fff;border:none;border-radius:8px;padding:6px 12px;cursor:pointer;font-size:.8em">📱 WhatsApp</button>
+          <button onclick="removerFornecedor(${i})" style="background:#ef4444;color:#fff;border:none;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:.8em">✕</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function abrirModalFornecedor() {
+  const nome = prompt('Nome do vendedor:'); if (!nome) return;
+  const empresa = prompt('Empresa/Distribuidora:') || '';
+  const whatsapp = prompt('WhatsApp (com DDD):') || '';
+  const cidade = prompt('Cidade:') || '';
+  const obs = prompt('Observações (dias de visita, etc):') || '';
+  const forns = JSON.parse(localStorage.getItem('fornecedores')||'[]');
+  forns.push({ nome, empresa, whatsapp, cidade, obs, produtos:[], criadoEm:new Date().toISOString() });
+  localStorage.setItem('fornecedores', JSON.stringify(forns));
+  carregarFornecedores();
+}
+
+function removerFornecedor(i) {
+  if (!confirm('Remover fornecedor?')) return;
+  const forns = JSON.parse(localStorage.getItem('fornecedores')||'[]');
+  forns.splice(i,1);
+  localStorage.setItem('fornecedores', JSON.stringify(forns));
+  carregarFornecedores();
+}
+
+function whatsappFornecedor(i) {
+  const forns = JSON.parse(localStorage.getItem('fornecedores')||'[]');
+  const f = forns[i];
+  if (!f?.whatsapp) return alert('WhatsApp não cadastrado');
+  const num = f.whatsapp.replace(/\D/g,'');
+  window.open('https://wa.me/55'+num+'?text=Olá+'+encodeURIComponent(f.nome)+',+tudo+bem?','_blank');
+}
+
 </script>
 <!-- ===== TELA DE ATIVAÇÃO DO PLANO ===== -->
 <div id="telaAtivacao" style="display:none;position:fixed;inset:0;background:#07071a;z-index:99999;flex-direction:column;align-items:center;justify-content:center;padding:24px;">
