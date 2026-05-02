@@ -237,17 +237,12 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
   <header style="display:grid;grid-template-columns:auto 1fr auto;align-items:center;padding:0 16px">
     <div style="display:flex;align-items:center;gap:8px">
       <img src="/logo-rebeca.png" style="height:36px;object-fit:contain;display:block">
-      <div style="display:flex;flex-direction:column;line-height:1.1">
-        <span id="caixa-nome-restaurante" style="font-size:.85em;font-weight:800;color:#1c1c1e;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
-        <span style="font-size:.7em;color:#888;font-weight:500">Sistema de Caixa</span>
-      </div>
     </div>
     <div style="text-align:center">
       <span style="font-size:1.2em;font-weight:900;color:#f97316;letter-spacing:5px;text-transform:uppercase;background:#fff;padding:5px 20px;border-radius:8px;border:2.5px solid #1c1c1e;box-shadow:2px 2px 0 #1c1c1e">CAIXA</span>
     </div>
-    <div style="display:flex;align-items:center;justify-content:flex-end;gap:8px">
+    <div style="display:flex;align-items:center;justify-content:flex-end;gap:10px">
       <span id="nome-operador" style="font-size:.78em;font-weight:700;color:#f97316;background:#fff7ed;border:1px solid #fed7aa;padding:3px 10px;border-radius:20px;display:none"></span>
-      <button id="btn-fechar-caixa-header" onclick="fecharCaixa()" style="display:none;background:#dc2626;color:#fff;border:none;border-radius:20px;padding:4px 12px;font-size:.75em;font-weight:700;cursor:pointer">🔴 Fechar Caixa</button>
       <span class="clock" id="hora-atual">--:--</span>
       <button class="btn-sair" onclick="sair()">Sair</button>
     </div>
@@ -503,7 +498,7 @@ async function sair() {
   location.reload();
 }
 
-async function iniciarApp(admin) {
+async async function iniciarApp(admin) {
   document.getElementById('login-screen').style.display = 'none';
   const app = document.getElementById('app');
   app.style.display = 'flex';
@@ -1508,64 +1503,41 @@ async function verificarStatusCaixa() {
         const btnAbrir = document.getElementById('btn-abrir-caixa');
         const btnFechar = document.getElementById('btn-fechar-caixa');
         const badge = document.getElementById('badge-caixa');
-        // Preencher nome do restaurante no cabeçalho
-        try {
-            const rp = await fetch('/api/delivery/perfil', { headers: { 'Authorization': 'Bearer ' + token } });
-            const dp = await rp.json();
-            const nomeRest = dp.nomeRestaurante || dp.nome || dp.nomeFantasia || '';
-            const spanNome = document.getElementById('caixa-nome-restaurante');
-            if (spanNome && nomeRest) spanNome.textContent = nomeRest;
-        } catch(e2) {}
-        // Botão fechar caixa no header
-        const btnFecHeader = document.getElementById('btn-fechar-caixa-header');
-        // Nome operador no header
-        const nomeOp = document.getElementById('nome-operador');
         if (d.aberto) {
-            if (btnAbrir) btnAbrir.style.display = 'none';
-            if (btnFechar) btnFechar.style.display = 'inline-block';
-            if (badge) { badge.style.display = 'inline-block'; badge.textContent = '✅ Caixa Aberto'; badge.style.background = '#f0fdf4'; badge.style.color = '#16a34a'; badge.style.borderColor = '#bbf7d0'; }
-            if (btnFecHeader) btnFecHeader.style.display = 'inline-block';
-            if (nomeOp && d.caixa?.abertoPor) { nomeOp.textContent = '👤 ' + d.caixa.abertoPor; nomeOp.style.display = 'inline-block'; }
+            btnAbrir.style.display = 'none';
+            btnFechar.style.display = 'inline-block';
+            badge.style.display = 'inline-block';
+            badge.textContent = '✅ Caixa Aberto';
+            badge.style.background = '#f0fdf4';
+            badge.style.color = '#16a34a';
+            badge.style.borderColor = '#bbf7d0';
         } else {
-            if (btnAbrir) btnAbrir.style.display = 'inline-block';
-            if (btnFechar) btnFechar.style.display = 'none';
-            if (badge) { badge.style.display = 'inline-block'; badge.textContent = '🔴 Caixa Fechado'; badge.style.background = '#fef2f2'; badge.style.color = '#dc2626'; badge.style.borderColor = '#fecaca'; }
-            if (btnFecHeader) btnFecHeader.style.display = 'none';
-            if (nomeOp) nomeOp.style.display = 'none';
+            btnAbrir.style.display = 'inline-block';
+            btnFechar.style.display = 'none';
+            badge.style.display = 'inline-block';
+            badge.textContent = '🔴 Caixa Fechado';
+            badge.style.background = '#fef2f2';
+            badge.style.color = '#dc2626';
+            badge.style.borderColor = '#fecaca';
         }
     } catch(e) { console.log('Erro ao verificar caixa:', e); }
 }
 
 async function abrirCaixa() {
-    document.getElementById('modal-abrir-caixa').style.display = 'flex';
-    document.getElementById('ac-operador').focus();
-}
-
-function fecharModalAbrirCaixa() {
-    document.getElementById('modal-abrir-caixa').style.display = 'none';
-    document.getElementById('ac-operador').value = '';
-    document.getElementById('ac-fundo').value = '0';
-}
-
-async function confirmarAbrirCaixa() {
-    const operador = document.getElementById('ac-operador').value.trim();
-    if (!operador) { toast('Informe o nome do operador', 'error'); return; }
-    const valorAbertura = parseFloat(document.getElementById('ac-fundo').value || '0') || 0;
+    const operador = prompt('Nome do operador:');
+    if (!operador || !operador.trim()) return toast('Informe o nome do operador', 'error');
+    const numeroCaixa = prompt('Numero do caixa (1, 2 ou 3):', '1');
+    if (!['1','2','3'].includes((numeroCaixa||'').trim())) return toast('Caixa invalido. Use 1, 2 ou 3.', 'error');
+    const valorAbertura = prompt('Fundo de caixa (R$):', '0') || '0';
     try {
-        const r = await fetch('/api/delivery/caixa/abrir', {
+        const r = await fetch('/api/caixa/abrir', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-            body: JSON.stringify({ operador, valorAbertura })
+            body: JSON.stringify({ operador: operador.trim(), numeroCaixa: Number(numeroCaixa), valorAbertura: Number(valorAbertura) })
         });
         const d = await r.json();
-        if (d.sucesso) {
-            toast('Caixa aberto — Operador: ' + operador);
-            fecharModalAbrirCaixa();
-            // Preencher nome no cabeçalho
-            const nomeOp = document.getElementById('nome-operador');
-            if (nomeOp) { nomeOp.textContent = '👤 ' + operador; nomeOp.style.display = ''; }
-            const btnFec = document.getElementById('btn-fechar-caixa-header');
-            if (btnFec) btnFec.style.display = '';
+        if (d._id || d.numeroCaixa) {
+            toast('Caixa ' + d.numeroCaixa + ' aberto — Operador: ' + d.operador);
             verificarStatusCaixa();
         } else toast('Erro: ' + (d.erro || d.error || 'desconhecido'), 'error');
     } catch(e) { toast('Erro ao abrir caixa: ' + e.message, 'error'); }

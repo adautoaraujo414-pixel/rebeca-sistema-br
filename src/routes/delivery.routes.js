@@ -2069,11 +2069,8 @@ router.get('/caixa/status', authDelivery, async (req, res) => {
 // Abrir caixa
 router.post('/caixa/abrir', authDelivery, async (req, res) => {
     try {
-        // Fechar automaticamente caixas antigos abertos (evita travamento)
-        await CaixaDelivery.updateMany(
-            { adminId: req.adminId, status: 'aberto' },
-            { status: 'fechado', dataFechamento: new Date(), fechadoPor: 'auto' }
-        );
+        const jaAberto = await CaixaDelivery.findOne({ adminId: req.adminId, status: 'aberto' });
+        if (jaAberto) return res.json({ sucesso: true, caixa: jaAberto, msg: 'Caixa já estava aberto' });
         const caixa = await CaixaDelivery.create({
             adminId: req.adminId,
             status: 'aberto',
