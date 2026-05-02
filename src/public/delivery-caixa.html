@@ -1725,7 +1725,7 @@ async function confirmarFechamentoCaixa() {
     const valDinheiro = parseFloat(document.getElementById('fc-val-dinheiro').value) || 0;
     const sangria = parseFloat(document.getElementById('fc-sangria').value) || 0;
     const obs = document.getElementById('fc-obs').value || '';
-    const r = await fetch('/api/delivery/caixa/fechar/' + window._fcaixaId, {
+    const r = await fetch('/api/delivery/caixa/fechar', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
       body: JSON.stringify({ valorDinheiro: valDinheiro, valorSangria: sangria, observacoes: obs, operadorFechamento: _operadorAtual })
