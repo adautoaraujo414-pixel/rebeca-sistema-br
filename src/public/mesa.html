@@ -132,6 +132,17 @@ let adminSlug = new URLSearchParams(location.search).get('r') || '';
 let mesa = '', nomeCliente = '', cardapio = [], carrinho = [];
 let _adminId = ''; // preenchido após login
 
+// Restaurar sessao anterior
+(async function() {
+  const sm = sessionStorage.getItem('mesa_num');
+  const sn = sessionStorage.getItem('mesa_nome');
+  const ss = sessionStorage.getItem('mesa_slug');
+  if (sm && sn && ss && ss === adminSlug) {
+    document.getElementById('inputMesa').value = sm;
+    document.getElementById('inputNome').value = sn;
+  }
+})();
+
 async function pedirConta() {
   const btn = document.getElementById('btnPedirConta');
   if (!_adminId || !mesa) { alert('Faça o login na mesa primeiro.'); return; }
@@ -171,6 +182,9 @@ async function entrar() {
     const d = await r.json();
     if (!d.sucesso) { err.textContent = d.erro || 'Restaurante não encontrado'; return; }
     mesa = m; nomeCliente = n;
+    sessionStorage.setItem('mesa_num', m);
+    sessionStorage.setItem('mesa_nome', n);
+    sessionStorage.setItem('mesa_slug', adminSlug);
     cardapio = d.itens || [];
     _adminId = d.adminId || '';
     document.getElementById('nomeRest').textContent = d.nomeEstabelecimento || 'Restaurante';
@@ -197,6 +211,7 @@ function renderCardapio() {
     ${itens.map(i => `
       <div class="item-card">
         <div class="item-info">
+          ${i.foto ? `<img src="${i.foto}" style="width:100%;height:100px;object-fit:cover;border-radius:8px;margin-bottom:6px">` : ''}
           <div class="item-nome">${i.nome}</div>
           ${i.descricao ? `<div class="item-desc">${i.descricao}</div>` : ''}
           <div class="item-meta">⏱️ ~${i.tempoPreparoMin || 20} min</div>
@@ -298,13 +313,13 @@ async function carregarConta() {
               <div style="font-size:.9em;font-weight:600">${i.nome}</div>
               <div style="font-size:.78em;color:#888">${i.qtd}x · R$ ${(i.preco||0).toFixed(2)}</div>
             </div>
-            <span class="conta-status st-${p.status||'novo'}">${{novo:'Recebido',preparo:'Preparando',pronto:'Pronto!'}[p.status]||p.status}</span>
+            <span class="conta-status st-${p.status||'novo'}">${{novo:'🆕 Recebido',confirmado:'✅ Confirmado',preparando:'🍳 Preparando',pronto:'🎉 Pronto!',entregue:'📦 Entregue',pago:'💰 Pago',cancelado:'❌ Cancelado'}[p.status]||p.status}</span>
           </div>`).join('')}
       </div>`).join('') +
       `<div class="total-conta">
         <div style="color:#aaa;font-size:.85em">Total consumido</div>
         <div style="font-size:2em;font-weight:700;color:#00cc6a;margin-top:4px">R$ ${total.toFixed(2)}</div>
-        <div style="color:#555;font-size:.78em;margin-top:8px">Solicite o fechamento ao garçom</div>
+        <div style="color:#555;font-size:.78em;margin-top:8px">O garçom virá até sua mesa com a conta</div>
         <button onclick="pedirConta()" style="margin-top:16px;width:100%;padding:14px;background:#f59e0b;color:#000;border:none;border-radius:10px;font-size:1em;font-weight:700;cursor:pointer;" id="btnPedirConta">💰 Pedir a Conta</button>
       </div>`;
   } catch(e) { console.error(e); }

@@ -2601,3 +2601,21 @@ router.post('/caixa/emitir-nfce/:pedidoId', async (req, res) => {
         }
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
+
+// ===== CONTA DA MESA (cliente via QR) =====
+router.get('/mesa/conta', async (req, res) => {
+    try {
+        const { r, mesa } = req.query;
+        if (!r || !mesa) return res.json({ pedidos: [] });
+        const admin = await AdminDelivery.findOne({ $or: [{ slug: r }, { token: r }] });
+        if (!admin) return res.json({ pedidos: [] });
+        const pedidos = await PedidoDelivery.find({
+            adminId: admin._id,
+            numeroMesa: String(mesa),
+            tipoLocal: 'mesa',
+            status: { $nin: ['cancelado'] },
+            createdAt: { $gte: new Date(Date.now() - 12*60*60*1000) }
+        }).sort({ createdAt: 1 }).lean();
+        res.json({ sucesso: true, pedidos });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
