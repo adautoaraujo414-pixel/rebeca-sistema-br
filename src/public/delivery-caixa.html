@@ -1216,7 +1216,7 @@ async function abrirPainelMesas() {
   } catch(e) { grid.innerHTML = '<div style="color:#f55">Erro de conexão</div>'; }
 }
 
-async function liberarMesa(numero) {
+async async function liberarMesa(numero) {
   if (!confirm('Confirmar pagamento e liberar Mesa ' + numero + '?')) return;
   try {
     await fetch('/api/delivery/caixa/mesa/' + numero + '/liberar', { method: 'POST', headers: { 'Authorization': 'Bearer ' + token } });
@@ -1308,7 +1308,7 @@ async function renderGridMesas() {
   } catch(e) { grid.innerHTML = '<div style="color:#f55">Erro de conexão</div>'; }
 }
 
-async function liberarMesa(numero) {
+async async function liberarMesa(numero) {
   if (!confirm('Confirmar pagamento e liberar Mesa ' + numero + '?')) return;
   try {
     await fetch('/api/delivery/caixa/mesa/' + numero + '/liberar', { method: 'POST', headers: { 'Authorization': 'Bearer ' + token } });
@@ -1542,7 +1542,7 @@ async function abrirCaixa() {
         } else toast('Erro: ' + (d.erro || d.error || 'desconhecido'), 'error');
     } catch(e) { toast('Erro ao abrir caixa: ' + e.message, 'error'); }
 }
-async function fecharCaixa() {
+async async function fecharCaixa() {
     try {
         const r = await fetch('/api/delivery/caixa/status', { headers: { 'Authorization': 'Bearer ' + token } });
         const d = await r.json();
