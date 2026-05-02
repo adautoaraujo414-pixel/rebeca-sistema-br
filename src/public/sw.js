@@ -19,7 +19,7 @@ self.addEventListener("activate", event => {
 
 self.addEventListener("fetch", event => {
     const url = event.request.url;
-    if (url.includes("/api/") || url.includes("/admin-master") || url.includes("/delivery-admin") || url.includes("/delivery-auth") || url.includes("/rebeca-delivery")) {
+    if (url.includes("/api/") || url.includes("/admin-master") || url.includes("/delivery-admin") || url.includes("/delivery-auth") || url.includes("/rebeca-delivery") || url.includes("/delivery-caixa") || url.includes("/delivery-garcom") || url.includes("/delivery-cozinha")) {
         return;
     }
     event.respondWith(
