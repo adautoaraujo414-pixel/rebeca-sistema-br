@@ -520,15 +520,99 @@ async function carregarConfigNF() {
                 <div id="page-financeiro-contas" class="page" style="padding:20px">
                   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px">
                     <h2>💸 Contas a Pagar</h2>
-                    <button onclick="fcNovaContaAdm()" style="background:#f97316;color:#fff;border:none;border-radius:8px;padding:9px 18px;cursor:pointer;font-weight:700">+ Nova Conta</button>
+                    <button onclick="fcAbrirModalConta()" style="background:#f97316;color:#fff;border:none;border-radius:10px;padding:10px 22px;cursor:pointer;font-weight:700;font-size:.95em">+ Nova Conta</button>
                   </div>
-                  <div class="stats-grid">
-                    <div class="stat-card"><div class="valor" id="fc2-pendente" style="color:#ef4444">R$ 0</div><div class="label">⏳ Pendente</div></div>
-                    <div class="stat-card"><div class="valor" id="fc2-vencendo" style="color:#f59e0b">R$ 0</div><div class="label">⚠️ Vence em 7 dias</div></div>
-                    <div class="stat-card"><div class="valor" id="fc2-pago" style="color:#22c55e">R$ 0</div><div class="label">✅ Pago este mês</div></div>
+                  <div class="stats-grid" style="margin-bottom:20px">
+                    <div class="stat-card"><div class="valor" id="fc2-pendente" style="color:#ef4444">R$ 0,00</div><div class="label">⏳ Total Pendente</div></div>
+                    <div class="stat-card"><div class="valor" id="fc2-vencendo" style="color:#f59e0b">R$ 0,00</div><div class="label">⚠️ Vence em 7 dias</div></div>
+                    <div class="stat-card"><div class="valor" id="fc2-pago" style="color:#22c55e">R$ 0,00</div><div class="label">✅ Pago este mês</div></div>
+                  </div>
+                  <!-- Filtros -->
+                  <div style="background:#fff;border:1px solid #e8e8ed;border-radius:10px;padding:14px;margin-bottom:16px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+                    <select id="fc2-filtro-status" onchange="carregarFinanceiroContas()" style="padding:8px 12px;border-radius:8px;border:1px solid #ddd;font-size:.88em">
+                      <option value="todos">Todas</option>
+                      <option value="pendente">Pendentes</option>
+                      <option value="atrasada">Atrasadas</option>
+                      <option value="pago">Pagas</option>
+                    </select>
+                    <select id="fc2-filtro-cat" onchange="carregarFinanceiroContas()" style="padding:8px 12px;border-radius:8px;border:1px solid #ddd;font-size:.88em">
+                      <option value="todos">Todas categorias</option>
+                      <option value="Fornecedor">Fornecedor</option>
+                      <option value="Aluguel">Aluguel</option>
+                      <option value="Energia">Energia</option>
+                      <option value="Agua">Água</option>
+                      <option value="Internet">Internet</option>
+                      <option value="Folha">Folha de Pagamento</option>
+                      <option value="Outros">Outros</option>
+                    </select>
                   </div>
                   <div style="background:#fff;border:1px solid #e8e8ed;border-radius:12px;padding:20px">
-                    <div id="fc2-lista"><div style="text-align:center;color:#888;padding:40px">Nenhuma conta</div></div>
+                    <div id="fc2-lista"><div style="text-align:center;color:#888;padding:40px">Nenhuma conta cadastrada</div></div>
+                  </div>
+                </div>
+
+                <!-- MODAL NOVA CONTA -->
+                <div id="modal-nova-conta" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center;padding:20px">
+                  <div style="background:#fff;border-radius:16px;padding:28px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+                      <h3 style="font-size:1.1em;font-weight:800">💸 Nova Conta a Pagar</h3>
+                      <button onclick="fcFecharModalConta()" style="background:#f5f5f7;border:none;border-radius:8px;padding:6px 12px;cursor:pointer;font-size:1em">✕</button>
+                    </div>
+                    <div style="display:grid;gap:14px">
+                      <div>
+                        <label style="font-size:.8em;font-weight:700;color:#555;display:block;margin-bottom:5px">📋 Descrição / Nome da Conta *</label>
+                        <input id="cnt-desc" placeholder="Ex: Conta de luz, Fornecedor X..." style="width:100%;padding:10px 14px;border:1px solid #e8e8ed;border-radius:8px;font-size:.92em">
+                      </div>
+                      <div>
+                        <label style="font-size:.8em;font-weight:700;color:#555;display:block;margin-bottom:5px">🏢 Nome da Empresa / Fornecedor</label>
+                        <input id="cnt-empresa" placeholder="Ex: Distribuidora ABC, Copasa..." style="width:100%;padding:10px 14px;border:1px solid #e8e8ed;border-radius:8px;font-size:.92em">
+                      </div>
+                      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                        <div>
+                          <label style="font-size:.8em;font-weight:700;color:#555;display:block;margin-bottom:5px">💰 Valor (R$) *</label>
+                          <input id="cnt-valor" type="number" step="0.01" placeholder="0,00" style="width:100%;padding:10px 14px;border:1px solid #e8e8ed;border-radius:8px;font-size:.92em">
+                        </div>
+                        <div>
+                          <label style="font-size:.8em;font-weight:700;color:#555;display:block;margin-bottom:5px">📅 Vencimento *</label>
+                          <input id="cnt-venc" type="date" style="width:100%;padding:10px 14px;border:1px solid #e8e8ed;border-radius:8px;font-size:.92em">
+                        </div>
+                      </div>
+                      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                        <div>
+                          <label style="font-size:.8em;font-weight:700;color:#555;display:block;margin-bottom:5px">🏷️ Categoria</label>
+                          <select id="cnt-cat" style="width:100%;padding:10px 14px;border:1px solid #e8e8ed;border-radius:8px;font-size:.92em">
+                            <option value="Fornecedor">Fornecedor</option>
+                            <option value="Aluguel">Aluguel</option>
+                            <option value="Energia">Energia</option>
+                            <option value="Agua">Água</option>
+                            <option value="Internet">Internet</option>
+                            <option value="Folha">Folha de Pagamento</option>
+                            <option value="Outros">Outros</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label style="font-size:.8em;font-weight:700;color:#555;display:block;margin-bottom:5px">🔄 Recorrência</label>
+                          <select id="cnt-recorr" style="width:100%;padding:10px 14px;border:1px solid #e8e8ed;border-radius:8px;font-size:.92em">
+                            <option value="unica">Única</option>
+                            <option value="mensal">Mensal</option>
+                            <option value="semanal">Semanal</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div>
+                        <label style="font-size:.8em;font-weight:700;color:#555;display:block;margin-bottom:5px">📝 Observações</label>
+                        <textarea id="cnt-obs" rows="2" placeholder="Detalhes adicionais..." style="width:100%;padding:10px 14px;border:1px solid #e8e8ed;border-radius:8px;font-size:.92em;resize:vertical"></textarea>
+                      </div>
+                      <div>
+                        <label style="font-size:.8em;font-weight:700;color:#555;display:block;margin-bottom:5px">📸 Foto da Conta (boleto, nota fiscal...)</label>
+                        <input id="cnt-foto" type="file" accept="image/*" style="width:100%;padding:8px;border:1px dashed #ddd;border-radius:8px;font-size:.85em">
+                        <div id="cnt-foto-preview" style="margin-top:8px"></div>
+                      </div>
+                    </div>
+                    <div style="display:flex;gap:10px;margin-top:20px">
+                      <button onclick="fcFecharModalConta()" style="flex:1;padding:12px;background:#f5f5f7;border:none;border-radius:8px;cursor:pointer;font-weight:600">Cancelar</button>
+                      <button onclick="fcSalvarContaAdm()" style="flex:2;padding:12px;background:#f97316;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-size:.95em">💾 Salvar Conta</button>
+                    </div>
                   </div>
                 </div>
 
@@ -5725,27 +5809,153 @@ function carregarFinanceiroContas() {
   }).join('');
 }
 
-function fcNovaContaAdm() {
-  const desc = prompt('Descrição:'); if(!desc) return;
-  const valor = parseFloat(prompt('Valor (R$):')||0); if(!valor) return;
-  const venc = prompt('Vencimento (DD/MM/AAAA):') || '';
-  const cat = prompt('Categoria (Fornecedor/Aluguel/Energia/Outros):') || 'Outros';
-  const forn = prompt('Fornecedor (opcional):') || '';
-  const p = (venc||'').split('/');
-  const dataVenc = p.length===3 ? new Date(p[2],p[1]-1,p[0]) : new Date();
+function fcAbrirModalConta(idx=-1) {
+  const modal = document.getElementById('modal-nova-conta');
+  if (!modal) return;
+  // Limpar campos
+  ['cnt-desc','cnt-empresa','cnt-obs'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+  ['cnt-valor'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+  document.getElementById('cnt-venc').value = new Date().toISOString().split('T')[0];
+  document.getElementById('cnt-cat').value = 'Fornecedor';
+  document.getElementById('cnt-recorr').value = 'unica';
+  document.getElementById('cnt-foto-preview').innerHTML = '';
+  modal.dataset.editIdx = idx;
+  if (idx >= 0) {
+    const contas = JSON.parse(localStorage.getItem('fin_contas_adm')||'[]');
+    const c = contas[idx];
+    if (c) {
+      document.getElementById('cnt-desc').value = c.descricao||'';
+      document.getElementById('cnt-empresa').value = c.empresa||'';
+      document.getElementById('cnt-valor').value = c.valor||'';
+      document.getElementById('cnt-venc').value = c.vencimento?.split('T')[0]||'';
+      document.getElementById('cnt-cat').value = c.categoria||'Outros';
+      document.getElementById('cnt-recorr').value = c.recorrencia||'unica';
+      document.getElementById('cnt-obs').value = c.obs||'';
+      if (c.foto) document.getElementById('cnt-foto-preview').innerHTML = '<img src="'+c.foto+'" style="max-width:100%;border-radius:8px;margin-top:4px">';
+    }
+  }
+  // Preview foto
+  document.getElementById('cnt-foto').onchange = function() {
+    const file = this.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => { document.getElementById('cnt-foto-preview').innerHTML = '<img src="'+e.target.result+'" style="max-width:100%;border-radius:8px;margin-top:4px">'; };
+    reader.readAsDataURL(file);
+  };
+  modal.style.display = 'flex';
+}
+
+function fcFecharModalConta() {
+  const modal = document.getElementById('modal-nova-conta');
+  if (modal) modal.style.display = 'none';
+}
+
+async function fcSalvarContaAdm() {
+  const desc = document.getElementById('cnt-desc')?.value?.trim();
+  const valor = parseFloat(document.getElementById('cnt-valor')?.value||0);
+  const venc = document.getElementById('cnt-venc')?.value;
+  if (!desc) { alert('Informe a descrição'); return; }
+  if (!valor) { alert('Informe o valor'); return; }
+  if (!venc) { alert('Informe o vencimento'); return; }
+  const empresa = document.getElementById('cnt-empresa')?.value?.trim()||'';
+  const cat = document.getElementById('cnt-cat')?.value||'Outros';
+  const recorr = document.getElementById('cnt-recorr')?.value||'unica';
+  const obs = document.getElementById('cnt-obs')?.value?.trim()||'';
+  // Foto
+  let foto = '';
+  const fotoPreview = document.getElementById('cnt-foto-preview')?.querySelector('img');
+  if (fotoPreview) foto = fotoPreview.src;
   const contas = JSON.parse(localStorage.getItem('fin_contas_adm')||'[]');
-  contas.push({descricao:desc,valor,vencimento:dataVenc.toISOString(),categoria:cat,fornecedor:forn,pago:false,criadoEm:new Date().toISOString()});
+  const nova = { descricao:desc, empresa, valor, vencimento:new Date(venc+'T12:00:00').toISOString(), categoria:cat, recorrencia:recorr, obs, foto, pago:false, criadoEm:new Date().toISOString() };
+  const modal = document.getElementById('modal-nova-conta');
+  const editIdx = parseInt(modal?.dataset.editIdx??'-1');
+  if (editIdx >= 0) { contas[editIdx] = {...contas[editIdx], ...nova}; }
+  else { contas.push(nova); }
   localStorage.setItem('fin_contas_adm', JSON.stringify(contas));
+  fcFecharModalConta();
   carregarFinanceiroContas();
 }
+
+function fcNovaContaAdm() { fcAbrirModalConta(); }
+
+function carregarFinanceiroContas() {
+  const agora = new Date(), em7 = new Date(Date.now()+7*864e5), mesAtual = agora.getMonth();
+  let contas = JSON.parse(localStorage.getItem('fin_contas_adm')||'[]');
+  const filtroStatus = document.getElementById('fc2-filtro-status')?.value||'todos';
+  const filtroCat = document.getElementById('fc2-filtro-cat')?.value||'todos';
+  let pendente=0, vencendo=0, pagoMes=0;
+  contas.forEach(c => {
+    const venc = new Date(c.vencimento);
+    if (c.pago && new Date(c.dataPagamento||c.criadoEm).getMonth()===mesAtual) pagoMes+=c.valor||0;
+    else if (!c.pago) { pendente+=c.valor||0; if(venc<=em7) vencendo+=c.valor||0; }
+  });
+  const el = id => document.getElementById(id);
+  if(el('fc2-pendente')) el('fc2-pendente').textContent = 'R$ '+pendente.toFixed(2).replace('.',',');
+  if(el('fc2-vencendo')) el('fc2-vencendo').textContent = 'R$ '+vencendo.toFixed(2).replace('.',',');
+  if(el('fc2-pago')) el('fc2-pago').textContent = 'R$ '+pagoMes.toFixed(2).replace('.',',');
+  let filtradas = contas.filter((c,i) => {
+    const venc = new Date(c.vencimento);
+    const atrasada = !c.pago && venc < agora;
+    if (filtroCat !== 'todos' && c.categoria !== filtroCat) return false;
+    if (filtroStatus === 'pendente' && (c.pago || atrasada)) return false;
+    if (filtroStatus === 'atrasada' && !atrasada) return false;
+    if (filtroStatus === 'pago' && !c.pago) return false;
+    return true;
+  });
+  const lista = el('fc2-lista');
+  if (!lista) return;
+  if (!filtradas.length) { lista.innerHTML = '<div style="text-align:center;color:#888;padding:40px">'+(!contas.length?'Nenhuma conta cadastrada.<br><br><button onclick="fcAbrirModalConta()" style="padding:10px 20px;background:#f97316;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:700">+ Adicionar Conta</button>':'Nenhuma conta encontrada para o filtro selecionado.')+'</div>'; return; }
+  lista.innerHTML = filtradas.map((c,i) => {
+    const idxReal = contas.indexOf(c);
+    const venc = new Date(c.vencimento), atrasada = !c.pago && venc<agora;
+    const cor = c.pago?'#22c55e':atrasada?'#ef4444':'#f59e0b';
+    const bgCor = c.pago?'#dcfce7':atrasada?'#fee2e2':'#fef9c3';
+    const status = c.pago?'✅ Pago':atrasada?'❌ Atrasada':'⏳ Pendente';
+    return '<div style="background:#fff;border:1px solid #e8e8ed;border-radius:12px;padding:16px;margin-bottom:10px">'+
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap">'+
+        '<div style="flex:1;min-width:200px">'+
+          '<div style="font-weight:700;font-size:.95em">'+c.descricao+'</div>'+
+          (c.empresa?'<div style="font-size:.8em;color:#666;margin-top:2px">🏢 '+c.empresa+'</div>':'')+
+          '<div style="font-size:.78em;color:#888;margin-top:4px;display:flex;gap:12px;flex-wrap:wrap">'+
+            '<span>🏷️ '+( c.categoria||'Outros')+'</span>'+
+            '<span>📅 Venc: '+venc.toLocaleDateString('pt-BR')+'</span>'+
+            (c.recorrencia&&c.recorrencia!=='unica'?'<span>🔄 '+c.recorrencia+'</span>':'')+
+          '</div>'+
+          (c.obs?'<div style="font-size:.78em;color:#aaa;margin-top:4px;font-style:italic">'+c.obs+'</div>':'')+
+        '</div>'+
+        '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">'+
+          '<div style="font-size:1.1em;font-weight:800;color:'+cor+'">R$ '+(c.valor||0).toFixed(2).replace('.',',')+'</div>'+
+          '<span style="background:'+bgCor+';color:'+cor+';padding:3px 10px;border-radius:20px;font-size:.75em;font-weight:700">'+status+'</span>'+
+          '<div style="display:flex;gap:6px;margin-top:4px">'+
+            (c.foto?'<button onclick="fcVerFoto('+idxReal+')" style="background:#e8e8ed;border:none;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:.75em">📸 Ver</button>':'')+
+            (!c.pago?'<button onclick="fcPagarContaAdm('+idxReal+')" style="background:#22c55e;color:#fff;border:none;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:.78em;font-weight:700">✅ Pagar</button>':'')+
+            '<button onclick="fcAbrirModalConta('+idxReal+')" style="background:#f97316;color:#fff;border:none;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:.75em">✏️</button>'+
+            '<button onclick="fcRemoverContaAdm('+idxReal+')" style="background:#ef4444;color:#fff;border:none;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:.75em">✕</button>'+
+          '</div>'+
+        '</div>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+function fcVerFoto(i) {
+  const contas = JSON.parse(localStorage.getItem('fin_contas_adm')||'[]');
+  const c = contas[i]; if(!c?.foto) return;
+  const modal = document.createElement('div');
+  modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px';
+  modal.innerHTML='<div style="position:relative;max-width:90vw;max-height:90vh"><img src="'+c.foto+'" style="max-width:100%;max-height:80vh;border-radius:12px"><button onclick="this.closest('div').parentElement.remove()" style="position:absolute;top:-12px;right:-12px;background:#ef4444;color:#fff;border:none;border-radius:50%;width:28px;height:28px;cursor:pointer;font-weight:700">✕</button></div>';
+  document.body.appendChild(modal);
+  modal.onclick = e => { if(e.target===modal) modal.remove(); };
+}
+
 function fcPagarContaAdm(i) {
+  if(!confirm('Confirmar pagamento?')) return;
   const contas = JSON.parse(localStorage.getItem('fin_contas_adm')||'[]');
   contas[i].pago=true; contas[i].dataPagamento=new Date().toISOString();
   localStorage.setItem('fin_contas_adm', JSON.stringify(contas));
   carregarFinanceiroContas();
 }
 function fcRemoverContaAdm(i) {
-  if(!confirm('Remover?')) return;
+  if(!confirm('Remover esta conta?')) return;
   const contas = JSON.parse(localStorage.getItem('fin_contas_adm')||'[]');
   contas.splice(i,1); localStorage.setItem('fin_contas_adm', JSON.stringify(contas));
   carregarFinanceiroContas();
