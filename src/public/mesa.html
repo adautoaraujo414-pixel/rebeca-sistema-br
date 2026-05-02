@@ -339,7 +339,7 @@ async function carregarConta() {
               <div style="font-size:.9em;font-weight:600">${i.nome}</div>
               <div style="font-size:.78em;color:#888">${i.qtd}x · R$ ${(i.preco||0).toFixed(2)}</div>
             </div>
-            <span class="conta-status st-${p.status||'novo'}">${{novo:'🆕 Recebido',confirmado:'✅ Confirmado',preparando:'🍳 Preparando',pronto:'🎉 Pronto!',entregue:'📦 Entregue',pago:'💰 Pago',cancelado:'❌ Cancelado'}[p.status]||p.status}</span>
+            <span class="conta-status st-${p.status||'novo'}">${{novo:'🆕 Recebido',confirmado:'✅ Confirmado',preparando:'🍳 Preparando',pronto:'✅ Na conta',entregue:'📦 Entregue',pago:'💰 Pago',cancelado:'❌ Cancelado'}[p.status]||p.status}</span>
           </div>`).join('')}
       </div>`).join('') +
       `<div class="total-conta">
