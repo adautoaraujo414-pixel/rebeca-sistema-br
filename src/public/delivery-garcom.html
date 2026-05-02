@@ -279,6 +279,8 @@ header{background:linear-gradient(135deg,#f97316 0%,#ea580c 100%);padding:0 20px
     <div class="modal-body" id="modalMesaBody"></div>
     <div class="modal-footer">
       <button class="btn-fechar-modal" onclick="fecharModalMesa()">Fechar</button>
+      <button onclick="adicionarItemMesaAtual()" style="flex:1;padding:11px;border-radius:var(--radius-sm);border:none;background:var(--accent);color:#fff;font-weight:700;cursor:pointer;font-size:.9em">➕ Add Item</button>
+      <button onclick="solicitarFechamentoMesa()" style="flex:1;padding:11px;border-radius:var(--radius-sm);border:none;background:#16a34a;color:#fff;font-weight:700;cursor:pointer;font-size:.9em">🔒 Fechar Mesa</button>
     </div>
   </div>
 </div>
@@ -915,6 +917,36 @@ function adicionarItemMesaAtual() {
 function itemImgHtml(foto, emoji) {
   if (foto) return '<img src="' + foto + '" style="width:100%;height:100%;object-fit:cover;">';
   return emoji || '🍽️';
+}
+
+
+// ===== SOLICITAR FECHAMENTO DE MESA AO ADMIN/CAIXA =====
+async function solicitarFechamentoMesa() {
+  if (!mesaAtual) { showToast('Nenhuma mesa selecionada'); return; }
+  const pedidos = mesasOcupadas[mesaAtual] || [];
+  const total = pedidos.reduce((s,p) => s + (p.total||0), 0);
+  if (!confirm('Solicitar fechamento da Mesa ' + mesaAtual + '?\nTotal: R$ ' + total.toFixed(2).replace('.',','))) return;
+  try {
+    const r = await fetch('/api/delivery/garcons/pedir-conta', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({
+        adminId: adminToken,
+        mesa: mesaAtual,
+        nomeCliente: 'Garçom ' + garcomNome,
+        formaPagamento: 'A definir',
+        solicitadoPor: 'garcom',
+        total: total.toFixed(2)
+      })
+    });
+    const d = await r.json();
+    if (d.sucesso) {
+      showToast('✅ Caixa notificado! Mesa ' + mesaAtual + ' — R$ ' + total.toFixed(2).replace('.',','));
+      fecharModalMesa();
+    } else {
+      showToast('Erro: ' + (d.erro || 'Tente novamente'));
+    }
+  } catch(e) { showToast('Erro de conexão'); }
 }
 
 </script>
