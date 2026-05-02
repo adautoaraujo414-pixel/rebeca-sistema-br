@@ -1542,6 +1542,14 @@ async function abrirCaixa() {
         } else toast('Erro: ' + (d.erro || d.error || 'desconhecido'), 'error');
     } catch(e) { toast('Erro ao abrir caixa: ' + e.message, 'error'); }
 }
+function toast(msg, tipo) {
+  const t = document.createElement('div');
+  t.textContent = msg;
+  t.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:9999;padding:12px 20px;border-radius:8px;color:#fff;font-size:.97em;box-shadow:0 2px 12px #0006;' + (tipo==='error' ? 'background:#dc2626;' : 'background:#16a34a;');
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3500);
+}
+
 async function fecharCaixa() {
     try {
         const r = await fetch('/api/delivery/caixa/status', { headers: { 'Authorization': 'Bearer ' + token } });
