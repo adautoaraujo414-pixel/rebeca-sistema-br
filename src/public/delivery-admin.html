@@ -620,10 +620,97 @@ async function carregarConfigNF() {
                 <div id="page-financeiro-fornecedores" class="page" style="padding:20px">
                   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px">
                     <h2>🏭 Fornecedores</h2>
-                    <button onclick="ffNovoFornAdm()" style="background:#f97316;color:#fff;border:none;border-radius:8px;padding:9px 18px;cursor:pointer;font-weight:700">+ Novo Fornecedor</button>
+                    <button onclick="ffAbrirModalForn()" style="background:#f97316;color:#fff;border:none;border-radius:10px;padding:10px 22px;cursor:pointer;font-weight:700;font-size:.95em">+ Novo Fornecedor</button>
                   </div>
-                  <div style="background:#fff;border:1px solid #e8e8ed;border-radius:12px;padding:20px">
-                    <div id="ff-lista"><div style="text-align:center;color:#888;padding:40px">Nenhum fornecedor</div></div>
+                  <!-- Busca -->
+                  <div style="background:#fff;border:1px solid #e8e8ed;border-radius:10px;padding:12px;margin-bottom:16px;display:flex;gap:10px;align-items:center">
+                    <input id="ff-busca" oninput="carregarFinanceiroFornecedores()" placeholder="🔍 Buscar fornecedor..." style="flex:1;padding:9px 14px;border:1px solid #ddd;border-radius:8px;font-size:.9em">
+                    <select id="ff-filtro-cat" onchange="carregarFinanceiroFornecedores()" style="padding:9px 12px;border-radius:8px;border:1px solid #ddd;font-size:.88em">
+                      <option value="todos">Todas categorias</option>
+                      <option value="Alimentos">Alimentos</option>
+                      <option value="Bebidas">Bebidas</option>
+                      <option value="Embalagens">Embalagens</option>
+                      <option value="Limpeza">Limpeza</option>
+                      <option value="Equipamentos">Equipamentos</option>
+                      <option value="Servicos">Serviços</option>
+                      <option value="Outros">Outros</option>
+                    </select>
+                  </div>
+                  <div id="ff-lista"><div style="text-align:center;color:#888;padding:40px">Nenhum fornecedor cadastrado</div></div>
+                </div>
+
+                <!-- MODAL NOVO FORNECEDOR -->
+                <div id="modal-novo-forn" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center;padding:20px">
+                  <div style="background:#fff;border-radius:16px;padding:28px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+                      <h3 style="font-size:1.1em;font-weight:800">🏭 Novo Fornecedor</h3>
+                      <button onclick="ffFecharModalForn()" style="background:#f5f5f7;border:none;border-radius:8px;padding:6px 12px;cursor:pointer;font-size:1em">✕</button>
+                    </div>
+                    <div style="display:grid;gap:14px">
+                      <div>
+                        <label style="font-size:.8em;font-weight:700;color:#555;display:block;margin-bottom:5px">🏢 Nome do Fornecedor *</label>
+                        <input id="ff-nome" placeholder="Ex: Distribuidora São Paulo..." style="width:100%;padding:10px 14px;border:1px solid #e8e8ed;border-radius:8px;font-size:.92em">
+                      </div>
+                      <div>
+                        <label style="font-size:.8em;font-weight:700;color:#555;display:block;margin-bottom:5px">👤 Nome do Contato</label>
+                        <input id="ff-contato" placeholder="Ex: João Silva..." style="width:100%;padding:10px 14px;border:1px solid #e8e8ed;border-radius:8px;font-size:.92em">
+                      </div>
+                      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                        <div>
+                          <label style="font-size:.8em;font-weight:700;color:#555;display:block;margin-bottom:5px">📱 WhatsApp</label>
+                          <input id="ff-whatsapp" placeholder="(31) 99999-9999" style="width:100%;padding:10px 14px;border:1px solid #e8e8ed;border-radius:8px;font-size:.92em">
+                        </div>
+                        <div>
+                          <label style="font-size:.8em;font-weight:700;color:#555;display:block;margin-bottom:5px">📞 Telefone</label>
+                          <input id="ff-telefone" placeholder="(31) 3333-3333" style="width:100%;padding:10px 14px;border:1px solid #e8e8ed;border-radius:8px;font-size:.92em">
+                        </div>
+                      </div>
+                      <div>
+                        <label style="font-size:.8em;font-weight:700;color:#555;display:block;margin-bottom:5px">📧 Email</label>
+                        <input id="ff-email" type="email" placeholder="contato@fornecedor.com" style="width:100%;padding:10px 14px;border:1px solid #e8e8ed;border-radius:8px;font-size:.92em">
+                      </div>
+                      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                        <div>
+                          <label style="font-size:.8em;font-weight:700;color:#555;display:block;margin-bottom:5px">🏷️ Categoria</label>
+                          <select id="ff-cat" style="width:100%;padding:10px 14px;border:1px solid #e8e8ed;border-radius:8px;font-size:.92em">
+                            <option value="Alimentos">Alimentos</option>
+                            <option value="Bebidas">Bebidas</option>
+                            <option value="Embalagens">Embalagens</option>
+                            <option value="Limpeza">Limpeza</option>
+                            <option value="Equipamentos">Equipamentos</option>
+                            <option value="Servicos">Serviços</option>
+                            <option value="Outros">Outros</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label style="font-size:.8em;font-weight:700;color:#555;display:block;margin-bottom:5px">📍 Cidade / Estado</label>
+                          <input id="ff-cidade" placeholder="Belo Horizonte / MG" style="width:100%;padding:10px 14px;border:1px solid #e8e8ed;border-radius:8px;font-size:.92em">
+                        </div>
+                      </div>
+                      <div>
+                        <label style="font-size:.8em;font-weight:700;color:#555;display:block;margin-bottom:5px">📋 CNPJ / CPF</label>
+                        <input id="ff-cnpj" placeholder="00.000.000/0000-00" style="width:100%;padding:10px 14px;border:1px solid #e8e8ed;border-radius:8px;font-size:.92em">
+                      </div>
+                      <div>
+                        <label style="font-size:.8em;font-weight:700;color:#555;display:block;margin-bottom:5px">💳 Condição de Pagamento</label>
+                        <select id="ff-pagamento" style="width:100%;padding:10px 14px;border:1px solid #e8e8ed;border-radius:8px;font-size:.92em">
+                          <option value="a-vista">À Vista</option>
+                          <option value="7-dias">7 dias</option>
+                          <option value="14-dias">14 dias</option>
+                          <option value="28-dias">28 dias</option>
+                          <option value="30-dias">30 dias</option>
+                          <option value="60-dias">60 dias</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label style="font-size:.8em;font-weight:700;color:#555;display:block;margin-bottom:5px">📝 Observações / Produtos fornecidos</label>
+                        <textarea id="ff-obs" rows="3" placeholder="Ex: Fornece carnes, entregas às terças e quintas..." style="width:100%;padding:10px 14px;border:1px solid #e8e8ed;border-radius:8px;font-size:.92em;resize:vertical"></textarea>
+                      </div>
+                    </div>
+                    <div style="display:flex;gap:10px;margin-top:20px">
+                      <button onclick="ffFecharModalForn()" style="flex:1;padding:12px;background:#f5f5f7;border:none;border-radius:8px;cursor:pointer;font-weight:600">Cancelar</button>
+                      <button onclick="ffSalvarFornAdm()" style="flex:2;padding:12px;background:#f97316;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-size:.95em">💾 Salvar Fornecedor</button>
+                    </div>
                   </div>
                 </div>
 
@@ -5979,28 +6066,117 @@ function carregarFinanceiroFornecedores() {
     '</div>'
   ).join('');
 }
-function ffNovoFornAdm() {
-  const nome = prompt('Nome:'); if(!nome) return;
-  const empresa = prompt('Empresa:') || '';
-  const whatsapp = prompt('WhatsApp (com DDD):') || '';
-  const cidade = prompt('Cidade:') || '';
-  const obs = prompt('Observações:') || '';
+function ffAbrirModalForn(idx=-1) {
+  const modal = document.getElementById('modal-novo-forn');
+  if (!modal) return;
+  ['ff-nome','ff-contato','ff-whatsapp','ff-telefone','ff-email','ff-cidade','ff-cnpj','ff-obs'].forEach(id => {
+    const el = document.getElementById(id); if(el) el.value='';
+  });
+  const cat = document.getElementById('ff-cat'); if(cat) cat.value='Alimentos';
+  const pag = document.getElementById('ff-pagamento'); if(pag) pag.value='a-vista';
+  modal.dataset.editIdx = idx;
+  if (idx >= 0) {
+    const forns = JSON.parse(localStorage.getItem('fin_fornecedores_adm')||'[]');
+    const f = forns[idx];
+    if (f) {
+      const set = (id,v) => { const el=document.getElementById(id); if(el) el.value=v||''; };
+      set('ff-nome', f.nome); set('ff-contato', f.contato); set('ff-whatsapp', f.whatsapp);
+      set('ff-telefone', f.telefone); set('ff-email', f.email); set('ff-cidade', f.cidade);
+      set('ff-cnpj', f.cnpj); set('ff-obs', f.obs);
+      if(cat) cat.value = f.categoria||'Outros';
+      if(pag) pag.value = f.pagamento||'a-vista';
+    }
+  }
+  modal.style.display = 'flex';
+}
+
+function ffFecharModalForn() {
+  const modal = document.getElementById('modal-novo-forn');
+  if (modal) modal.style.display = 'none';
+}
+
+function ffSalvarFornAdm() {
+  const nome = document.getElementById('ff-nome')?.value?.trim();
+  if (!nome) { alert('Informe o nome do fornecedor'); return; }
+  const get = id => document.getElementById(id)?.value?.trim()||'';
+  const forn = {
+    nome,
+    contato: get('ff-contato'), whatsapp: get('ff-whatsapp'), telefone: get('ff-telefone'),
+    email: get('ff-email'), cidade: get('ff-cidade'), cnpj: get('ff-cnpj'), obs: get('ff-obs'),
+    categoria: document.getElementById('ff-cat')?.value||'Outros',
+    pagamento: document.getElementById('ff-pagamento')?.value||'a-vista',
+    criadoEm: new Date().toISOString()
+  };
   const forns = JSON.parse(localStorage.getItem('fin_fornecedores_adm')||'[]');
-  forns.push({nome,empresa,whatsapp,cidade,obs,criadoEm:new Date().toISOString()});
+  const modal = document.getElementById('modal-novo-forn');
+  const editIdx = parseInt(modal?.dataset.editIdx??'-1');
+  if (editIdx >= 0) forns[editIdx] = {...forns[editIdx], ...forn};
+  else forns.push(forn);
+  localStorage.setItem('fin_fornecedores_adm', JSON.stringify(forns));
+  ffFecharModalForn();
+  carregarFinanceiroFornecedores();
+  if(typeof toast==='function') toast('Fornecedor salvo!');
+}
+
+function ffNovoFornAdm() { ffAbrirModalForn(); }
+
+function ffRemoverFornAdm(i) {
+  if (!confirm('Remover este fornecedor?')) return;
+  const forns = JSON.parse(localStorage.getItem('fin_fornecedores_adm')||'[]');
+  forns.splice(i,1);
   localStorage.setItem('fin_fornecedores_adm', JSON.stringify(forns));
   carregarFinanceiroFornecedores();
 }
-function ffRemoverAdm(i) {
-  if(!confirm('Remover?')) return;
+
+function carregarFinanceiroFornecedores() {
+  const lista = document.getElementById('ff-lista');
+  if (!lista) return;
   const forns = JSON.parse(localStorage.getItem('fin_fornecedores_adm')||'[]');
-  forns.splice(i,1); localStorage.setItem('fin_fornecedores_adm', JSON.stringify(forns));
-  carregarFinanceiroFornecedores();
+  const busca = (document.getElementById('ff-busca')?.value||'').toLowerCase();
+  const cat = document.getElementById('ff-filtro-cat')?.value||'todos';
+  const filtrados = forns.filter(f => {
+    if (cat !== 'todos' && f.categoria !== cat) return false;
+    if (busca && !f.nome?.toLowerCase().includes(busca) && !f.contato?.toLowerCase().includes(busca)) return false;
+    return true;
+  });
+  if (!filtrados.length) {
+    lista.innerHTML = '<div style="text-align:center;color:#888;padding:40px">'+(
+      !forns.length
+        ? 'Nenhum fornecedor cadastrado.<br><br><button onclick="ffAbrirModalForn()" style="padding:10px 20px;background:#f97316;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:700">+ Adicionar Fornecedor</button>'
+        : 'Nenhum fornecedor encontrado.'
+    )+'</div>';
+    return;
+  }
+  lista.innerHTML = filtrados.map(f => {
+    const idxReal = forns.indexOf(f);
+    const whatsLink = f.whatsapp ? 'https://wa.me/55'+f.whatsapp.replace(/\D/g,'') : '';
+    return '<div style="background:#fff;border:1px solid #e8e8ed;border-radius:12px;padding:16px;margin-bottom:10px">'+
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap">'+
+        '<div style="flex:1;min-width:200px">'+
+          '<div style="font-weight:800;font-size:1em">'+f.nome+'</div>'+
+          (f.contato?'<div style="font-size:.82em;color:#555;margin-top:3px">👤 '+f.contato+'</div>':'')+
+          '<div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:6px;font-size:.8em;color:#888">'+
+            (f.whatsapp?'<span>📱 '+f.whatsapp+'</span>':'')+
+            (f.telefone?'<span>📞 '+f.telefone+'</span>':'')+
+            (f.email?'<span>📧 '+f.email+'</span>':'')+
+            (f.cidade?'<span>📍 '+f.cidade+'</span>':'')+
+            (f.cnpj?'<span>📋 '+f.cnpj+'</span>':'')+
+          '</div>'+
+          (f.obs?'<div style="font-size:.78em;color:#aaa;margin-top:6px;font-style:italic">'+f.obs+'</div>':'')+
+        '</div>'+
+        '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">'+
+          '<span style="background:#fff7ed;color:#f97316;padding:3px 10px;border-radius:20px;font-size:.75em;font-weight:700">'+f.categoria+'</span>'+
+          '<span style="font-size:.75em;color:#888">💳 '+f.pagamento+'</span>'+
+          '<div style="display:flex;gap:6px;margin-top:4px">'+
+            (whatsLink?'<a href="'+whatsLink+'" target="_blank" style="background:#22c55e;color:#fff;border-radius:6px;padding:5px 10px;font-size:.78em;font-weight:700;text-decoration:none">💬 WhatsApp</a>':'')+
+            '<button onclick="ffAbrirModalForn('+idxReal+')" style="background:#f97316;color:#fff;border:none;border-radius:6px;padding:5px 8px;cursor:pointer;font-size:.75em">✏️</button>'+
+            '<button onclick="ffRemoverFornAdm('+idxReal+')" style="background:#ef4444;color:#fff;border:none;border-radius:6px;padding:5px 8px;cursor:pointer;font-size:.75em">✕</button>'+
+          '</div>'+
+        '</div>'+
+      '</div></div>';
+  }).join('');
 }
-function ffWhatsappAdm(i) {
-  const forns = JSON.parse(localStorage.getItem('fin_fornecedores_adm')||'[]');
-  const f = forns[i]; if(!f?.whatsapp) return alert('WhatsApp não cadastrado');
-  window.open('https://wa.me/55'+f.whatsapp.replace(/\D/g,'')+'?text=Olá+'+encodeURIComponent(f.nome)+'!','_blank');
-}
+
 </script>
 <!-- ===== TELA DE ATIVAÇÃO DO PLANO ===== -->
 <div id="telaAtivacao" style="display:none;position:fixed;inset:0;background:#07071a;z-index:99999;flex-direction:column;align-items:center;justify-content:center;padding:24px;">
