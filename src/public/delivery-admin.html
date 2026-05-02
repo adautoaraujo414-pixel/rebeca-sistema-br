@@ -351,6 +351,7 @@ async function carregarConfigNF() {
                 <div class="menu-item" data-page="upload-cardapio">📸 Upload Cardápio IA</div>
                 <!-- COMBOS DESATIVADO TEMPORARIAMENTE -->
                 <div class="menu-section">Financeiro</div>
+                <div class="menu-item" data-page="relatorio-financeiro" onclick="carregarRelatorioFinanceiro()">📊 Relatório Financeiro</div>
                 <div class="menu-item" data-page="relatorios" onclick="carregarRelatorios()">📈 Relatórios de Caixa</div>
                 <div class="menu-item" data-page="financeiro-caixas" onclick="carregarFinanceiroCaixas()">📋 Fechamentos de Caixa</div>
                 <div class="menu-item" data-page="financeiro-lucro" onclick="carregarLucroProdutos()">💹 Lucro por Produto</div>
@@ -620,6 +621,90 @@ async function carregarConfigNF() {
     </div>
   </div>
 </div>
+
+                <!-- RELATÓRIO FINANCEIRO UNIFICADO -->
+                <div id="page-relatorio-financeiro" class="page" style="padding:20px;max-width:1200px">
+                  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px">
+                    <h2 style="color:#1c1c1e;font-size:1.4em;margin:0">📊 Relatório Financeiro</h2>
+                    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+                      <select id="rf-periodo" onchange="carregarRelatorioFinanceiro()" style="padding:8px 12px;border-radius:8px;border:1px solid #ddd;background:#fff;font-weight:600">
+                        <option value="hoje">Hoje</option>
+                        <option value="semana">Últimos 7 dias</option>
+                        <option value="mes" selected>Este mês</option>
+                        <option value="personalizado">Personalizado</option>
+                      </select>
+                      <input type="date" id="rf-data-ini" style="padding:8px 12px;border-radius:8px;border:1px solid #ddd;display:none">
+                      <input type="date" id="rf-data-fim" style="padding:8px 12px;border-radius:8px;border:1px solid #ddd;display:none">
+                      <button onclick="carregarRelatorioFinanceiro()" style="background:#f97316;color:#fff;border:none;border-radius:8px;padding:8px 18px;cursor:pointer;font-weight:700">🔄 Atualizar</button>
+                    </div>
+                  </div>
+
+                  <!-- Cards de resumo -->
+                  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:24px">
+                    <div style="background:#fff;border-radius:14px;padding:18px;box-shadow:0 2px 10px rgba(0,0,0,.06);border-left:4px solid #f97316">
+                      <div style="font-size:.78em;color:#8e8e93;margin-bottom:4px;font-weight:600;text-transform:uppercase">💰 Faturamento</div>
+                      <div style="font-size:1.7em;font-weight:900;color:#f97316" id="rf-faturamento">R$ 0</div>
+                    </div>
+                    <div style="background:#fff;border-radius:14px;padding:18px;box-shadow:0 2px 10px rgba(0,0,0,.06);border-left:4px solid #22c55e">
+                      <div style="font-size:.78em;color:#8e8e93;margin-bottom:4px;font-weight:600;text-transform:uppercase">📈 Lucro Líquido</div>
+                      <div style="font-size:1.7em;font-weight:900;color:#22c55e" id="rf-lucro">R$ 0</div>
+                    </div>
+                    <div style="background:#fff;border-radius:14px;padding:18px;box-shadow:0 2px 10px rgba(0,0,0,.06);border-left:4px solid #ef4444">
+                      <div style="font-size:.78em;color:#8e8e93;margin-bottom:4px;font-weight:600;text-transform:uppercase">💸 Contas Pendentes</div>
+                      <div style="font-size:1.7em;font-weight:900;color:#ef4444" id="rf-contas-pendente">R$ 0</div>
+                    </div>
+                    <div style="background:#fff;border-radius:14px;padding:18px;box-shadow:0 2px 10px rgba(0,0,0,.06);border-left:4px solid #f59e0b">
+                      <div style="font-size:.78em;color:#8e8e93;margin-bottom:4px;font-weight:600;text-transform:uppercase">⚠️ Vence em 7 dias</div>
+                      <div style="font-size:1.7em;font-weight:900;color:#f59e0b" id="rf-contas-vencendo">R$ 0</div>
+                    </div>
+                    <div style="background:#fff;border-radius:14px;padding:18px;box-shadow:0 2px 10px rgba(0,0,0,.06);border-left:4px solid #7c3aed">
+                      <div style="font-size:.78em;color:#8e8e93;margin-bottom:4px;font-weight:600;text-transform:uppercase">🧾 Pedidos</div>
+                      <div style="font-size:1.7em;font-weight:900;color:#7c3aed" id="rf-pedidos">0</div>
+                    </div>
+                    <div style="background:#fff;border-radius:14px;padding:18px;box-shadow:0 2px 10px rgba(0,0,0,.06);border-left:4px solid #2563eb">
+                      <div style="font-size:.78em;color:#8e8e93;margin-bottom:4px;font-weight:600;text-transform:uppercase">📊 Margem</div>
+                      <div style="font-size:1.7em;font-weight:900;color:#2563eb" id="rf-margem">0%</div>
+                    </div>
+                  </div>
+
+                  <!-- Gráfico vendas por dia -->
+                  <div style="background:#fff;border-radius:14px;padding:20px;box-shadow:0 2px 10px rgba(0,0,0,.06);border:1px solid #e8e8ed;margin-bottom:20px">
+                    <h3 style="font-size:1em;margin-bottom:16px;color:#1c1c1e">📅 Vendas por Dia (do Caixa)</h3>
+                    <canvas id="rf-grafico-vendas" height="120"></canvas>
+                  </div>
+
+                  <!-- Lucro por produto + Contas a pagar lado a lado -->
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px">
+                    <!-- Lucro por produto -->
+                    <div style="background:#fff;border-radius:14px;padding:20px;box-shadow:0 2px 10px rgba(0,0,0,.06);border:1px solid #e8e8ed">
+                      <h3 style="font-size:1em;margin-bottom:14px;color:#1c1c1e">💹 Lucro por Produto</h3>
+                      <div style="overflow-x:auto">
+                        <table style="width:100%;border-collapse:collapse;font-size:12px">
+                          <thead>
+                            <tr style="background:#f5f5f7;color:#888">
+                              <th style="padding:8px;text-align:left;border-radius:6px 0 0 6px">Produto</th>
+                              <th style="padding:8px;text-align:right">Qtd</th>
+                              <th style="padding:8px;text-align:right">Lucro</th>
+                              <th style="padding:8px;text-align:right;border-radius:0 6px 6px 0">Margem</th>
+                            </tr>
+                          </thead>
+                          <tbody id="rf-lucro-tbody"><tr><td colspan="4" style="text-align:center;padding:30px;color:#888">Carregando...</td></tr></tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                    <!-- Contas a Pagar -->
+                    <div style="background:#fff;border-radius:14px;padding:20px;box-shadow:0 2px 10px rgba(0,0,0,.06);border:1px solid #e8e8ed">
+                      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+                        <h3 style="font-size:1em;color:#1c1c1e;margin:0">💸 Contas a Pagar</h3>
+                        <button onclick="abrirModalConta()" style="background:#f97316;color:#fff;border:none;border-radius:8px;padding:6px 14px;font-weight:700;cursor:pointer;font-size:.82em">+ Nova</button>
+                      </div>
+                      <div id="rf-contas-lista" style="display:flex;flex-direction:column;gap:8px;max-height:320px;overflow-y:auto">
+                        <div style="color:#888;text-align:center;padding:30px">Nenhuma conta</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
 
             <div id="page-garcons" class="page">
   <h2 style="margin-bottom:20px;">🧑‍🍽️ Garçons</h2>
@@ -4994,6 +5079,147 @@ async function enviarCardapioDia() {
 </script>
 <script>
 // ===== RELATÓRIOS DE CAIXA =====
+async function carregarRelatorioFinanceiro() {
+  showPage('relatorio-financeiro');
+  const periodo = document.getElementById('rf-periodo')?.value || 'mes';
+
+  // Datas
+  let dataIni = '', dataFim = '';
+  const hoje = new Date();
+  if (periodo === 'hoje') {
+    dataIni = dataFim = hoje.toISOString().split('T')[0];
+  } else if (periodo === 'semana') {
+    const s = new Date(hoje); s.setDate(s.getDate()-6);
+    dataIni = s.toISOString().split('T')[0];
+    dataFim = hoje.toISOString().split('T')[0];
+  } else if (periodo === 'mes') {
+    dataIni = new Date(hoje.getFullYear(), hoje.getMonth(), 1).toISOString().split('T')[0];
+    dataFim = hoje.toISOString().split('T')[0];
+  } else {
+    dataIni = document.getElementById('rf-data-ini').value;
+    dataFim = document.getElementById('rf-data-fim').value;
+    document.getElementById('rf-data-ini').style.display = 'inline-block';
+    document.getElementById('rf-data-fim').style.display = 'inline-block';
+  }
+  if (periodo !== 'personalizado') {
+    document.getElementById('rf-data-ini').style.display = 'none';
+    document.getElementById('rf-data-fim').style.display = 'none';
+  }
+
+  try {
+    // Buscar fechamentos de caixa para vendas por dia
+    const rc = await fetch('/api/delivery/caixa/todos', {headers:{'Authorization':'Bearer '+localStorage.getItem('delivery_token')}});
+    const dc = await rc.json();
+    const caixas = (dc.caixas || dc || []).filter(c => {
+      if (!c.dataFechamento) return false;
+      const d = c.dataFechamento.split('T')[0];
+      return (!dataIni || d >= dataIni) && (!dataFim || d <= dataFim);
+    });
+
+    // Totais do caixa
+    const fatTotal = caixas.reduce((s,c) => s+(c.totalVendas||c.faturamento||0), 0);
+    const pedTotal = caixas.reduce((s,c) => s+(c.totalPedidos||0), 0);
+    document.getElementById('rf-faturamento').textContent = 'R$ '+fatTotal.toFixed(2);
+    document.getElementById('rf-pedidos').textContent = pedTotal;
+
+    // Gráfico vendas por dia
+    const porDia = {};
+    caixas.forEach(c => {
+      const d = (c.dataFechamento||'').split('T')[0];
+      if (d) porDia[d] = (porDia[d]||0) + (c.totalVendas||c.faturamento||0);
+    });
+    const dias = Object.keys(porDia).sort();
+    const vals = dias.map(d => porDia[d]);
+    const labels = dias.map(d => { const p=d.split('-'); return p[2]+'/'+p[1]; });
+
+    const ctx = document.getElementById('rf-grafico-vendas').getContext('2d');
+    if (window._rfChart) window._rfChart.destroy();
+    window._rfChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Vendas (R$)',
+          data: vals,
+          backgroundColor: 'rgba(249,115,22,.75)',
+          borderColor: '#f97316',
+          borderWidth: 2,
+          borderRadius: 6
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, ticks: { callback: v => 'R$'+v } } }
+      }
+    });
+
+    // Lucro por produto
+    const rl = await fetch('/api/delivery/lucro-produtos?dataIni='+dataIni+'&dataFim='+dataFim, {headers:{'Authorization':'Bearer '+localStorage.getItem('delivery_token')}});
+    const dl = await rl.json();
+    const itens = dl.itens || dl.produtos || [];
+    let totalVendas = 0, totalLucro = 0, totalCusto = 0;
+    const tbody = document.getElementById('rf-lucro-tbody');
+    if (itens.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:30px;color:#888">Sem dados</td></tr>';
+    } else {
+      tbody.innerHTML = itens.slice(0,15).map(it => {
+        totalVendas += it.totalVendas||0;
+        totalLucro += it.lucroTotal||0;
+        totalCusto += it.custoTotal||0;
+        const margem = it.totalVendas ? ((it.lucroTotal/it.totalVendas)*100).toFixed(1) : '0.0';
+        const cor = parseFloat(margem) >= 30 ? '#22c55e' : parseFloat(margem) >= 10 ? '#f59e0b' : '#ef4444';
+        return `<tr style="border-bottom:1px solid #f0f0f0">
+          <td style="padding:7px 8px;font-weight:600;font-size:.85em">${it.nome||it.produto}</td>
+          <td style="padding:7px 8px;text-align:right;color:#555">${it.qtd||0}</td>
+          <td style="padding:7px 8px;text-align:right;color:#22c55e;font-weight:700">R$ ${(it.lucroTotal||0).toFixed(2)}</td>
+          <td style="padding:7px 8px;text-align:right;font-weight:700;color:${cor}">${margem}%</td>
+        </tr>`;
+      }).join('');
+      const margTotal = totalVendas ? ((totalLucro/totalVendas)*100).toFixed(1) : '0.0';
+      document.getElementById('rf-lucro').textContent = 'R$ '+totalLucro.toFixed(2);
+      document.getElementById('rf-margem').textContent = margTotal+'%';
+    }
+
+    // Contas a pagar
+    const contas = JSON.parse(localStorage.getItem('contas_pagar')||'[]');
+    const hoje2 = new Date(); hoje2.setHours(0,0,0,0);
+    const em7 = new Date(hoje2); em7.setDate(em7.getDate()+7);
+    let pendente = 0, vencendo = 0, pagoMes = 0;
+    contas.forEach(c => {
+      if (c.status === 'pago') { pagoMes += c.valor||0; return; }
+      const venc = c.vencimento ? new Date(c.vencimento+'T00:00:00') : null;
+      pendente += c.valor||0;
+      if (venc && venc <= em7) vencendo += c.valor||0;
+    });
+    document.getElementById('rf-contas-pendente').textContent = 'R$ '+pendente.toFixed(2);
+    document.getElementById('rf-contas-vencendo').textContent = 'R$ '+vencendo.toFixed(2);
+
+    const listaEl = document.getElementById('rf-contas-lista');
+    const contasFiltradas = contas.filter(c => c.status !== 'pago').sort((a,b) => (a.vencimento||'') > (b.vencimento||'') ? 1 : -1);
+    if (contasFiltradas.length === 0) {
+      listaEl.innerHTML = '<div style="color:#888;text-align:center;padding:30px">✅ Sem contas pendentes</div>';
+    } else {
+      listaEl.innerHTML = contasFiltradas.map(c => {
+        const venc = c.vencimento ? new Date(c.vencimento+'T00:00:00') : null;
+        const atrasada = venc && venc < hoje2;
+        const urgente = venc && venc <= em7 && !atrasada;
+        const cor = atrasada ? '#ef4444' : urgente ? '#f59e0b' : '#555';
+        const bg = atrasada ? '#fef2f2' : urgente ? '#fffbeb' : '#f9f9f9';
+        return `<div style="background:${bg};border-radius:8px;padding:10px 12px;border-left:3px solid ${cor}">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="font-weight:700;font-size:.88em;color:#1c1c1e">${c.descricao}</span>
+            <span style="font-weight:900;color:${cor};font-size:.95em">R$ ${(c.valor||0).toFixed(2)}</span>
+          </div>
+          <div style="font-size:.75em;color:${cor};margin-top:3px">${atrasada?'🔴 Atrasada':urgente?'⚠️ Vence em breve':'📅 Vence'} ${c.vencimento||'sem data'}</div>
+        </div>`;
+      }).join('');
+    }
+  } catch(e) {
+    console.error('Erro relatorio financeiro:', e);
+  }
+}
+
 async function carregarRelatorios() {
     try {
         const d = await api('/caixa/historico?limite=30');
