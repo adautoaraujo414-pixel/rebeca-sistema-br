@@ -1203,12 +1203,14 @@ async function abrirPainelMesas() {
       const status = m.ocupada ? '🔴 Ocupada' : '🟢 Livre';
       const nomes = m.pedidos.map(p => p.clienteNome || 'Cliente').join(', ');
       const total = m.ocupada ? '<div style="color:#fff;font-weight:700;margin-top:4px">R$ ' + (m.total||0).toFixed(2).replace('.',',') + '</div>' : '';
-      const btnLiberar = m.ocupada ? '<button onclick="liberarMesa(' + m.numero + ')" style="margin-top:8px;width:100%;padding:6px;background:#ef4444;border:none;color:#fff;border-radius:8px;cursor:pointer;font-size:.78em">💳 Pago / Liberar</button>' : '';
+      const btnLiberar = m.ocupada ? '<button onclick="liberarMesa(' + m.numero + ')" style="margin-top:6px;width:100%;padding:6px;background:#ef4444;border:none;color:#fff;border-radius:8px;cursor:pointer;font-size:.78em">💳 Pago / Liberar</button>' : '';
+      const btnComanda = !m.ocupada ? '<button onclick="abrirComandaMesa(' + m.numero + ')" style="margin-top:8px;width:100%;padding:6px;background:#f97316;border:none;color:#fff;border-radius:8px;cursor:pointer;font-size:.78em">🧾 Abrir Comanda</button>' : '';
+      const btnVer = m.ocupada ? '<button onclick="verPedidosMesa(' + m.numero + ')" style="margin-top:6px;width:100%;padding:6px;background:#1e40af;border:none;color:#fff;border-radius:8px;cursor:pointer;font-size:.78em">👁️ Ver Pedidos</button>' : '';
       return '<div style="background:' + bg + ';border:1px solid ' + cor + ';border-radius:12px;padding:14px;text-align:center">'
         + '<div style="font-size:1.4em;font-weight:800;color:' + cor + '">Mesa ' + m.numero + '</div>'
         + '<div style="font-size:.75em;color:' + cor + ';margin-top:2px">' + status + '</div>'
         + (m.ocupada ? '<div style="font-size:.72em;color:#aaa;margin-top:4px">' + nomes + '</div>' : '')
-        + total + btnLiberar
+        + total + btnVer + btnLiberar + btnComanda
         + '</div>';
     }).join('');
   } catch(e) { grid.innerHTML = '<div style="color:#f55">Erro de conexão</div>'; }
@@ -1738,6 +1740,35 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
+
+function verPedidosMesa(numero) {
+  // Mudar para aba de pedidos filtrando pela mesa
+  const tabs = document.querySelectorAll('.tab-btn, [data-tab]');
+  document.querySelectorAll('.tab-content, .tab-pane, .section').forEach(s => s.style.display='none');
+  // Tentar abrir a seção de pedidos
+  const secPedidos = document.getElementById('secao-pedidos') || document.getElementById('pedidos-section') || document.getElementById('tab-pedidos');
+  if (secPedidos) secPedidos.style.display='block';
+  // Filtrar pedidos pela mesa
+  const filtroMesa = document.getElementById('filtro-mesa') || document.getElementById('busca-mesa');
+  if (filtroMesa) { filtroMesa.value = numero; filtroMesa.dispatchEvent(new Event('input')); }
+  toast('Filtrando pedidos da Mesa ' + numero);
+}
+
+function abrirComandaMesa(numero) {
+  // Selecionar mesa e ir para novo pedido
+  const inputMesa = document.getElementById('numeroMesa') || document.getElementById('mesa-num') || document.getElementById('inputMesa');
+  // Ir para aba de novo pedido
+  const btnNovoPedido = document.querySelector('[onclick*="novoPedido"], [onclick*="abrirNovoPedido"], #btn-novo-pedido');
+  if (btnNovoPedido) btnNovoPedido.click();
+  setTimeout(() => {
+    const inp = document.getElementById('numeroMesa') || document.getElementById('mesa-num');
+    if (inp) { inp.value = numero; inp.dispatchEvent(new Event('change')); }
+    // Selecionar tipo mesa
+    const btnMesa = document.querySelector('[data-tipo="mesa"], [onclick*="tipoLocal=\'mesa\'"]');
+    if (btnMesa) btnMesa.click();
+    toast('Mesa ' + numero + ' selecionada — adicione itens e confirme');
+  }, 300);
+}
 </script>
 </body>
 </html>
