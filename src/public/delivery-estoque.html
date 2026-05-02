@@ -71,6 +71,7 @@ tr:hover td{background:#1a1a24}
   <div class="tab" onclick="mudarTab('nota-fiscal')">📷 Nota Fiscal</div>
   <div class="tab" onclick="mudarTab('lista-compras')">🛒 Lista de Compras</div>
   <div class="tab" onclick="mudarTab('ajuste-manual')">✏️ Ajuste Manual</div>
+  <div class="tab" onclick="mudarTab('lancar-entrada')">📦 Lançar Entrada</div>
 </div>
 
 <!-- ===== VISÃO GERAL ===== -->
@@ -167,6 +168,140 @@ tr:hover td{background:#1a1a24}
   </div>
 </div>
 
+<!-- ===== LANÇAR ENTRADA ===== -->
+<div id="page-lancar-entrada" class="page">
+
+  <!-- Modo seleção -->
+  <div id="le-modo-sel" class="card" style="margin-bottom:12px">
+    <div style="font-weight:800;font-size:1em;margin-bottom:14px">📦 Lançar Entrada de Estoque</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <button onclick="leModo('manual')" class="btn" style="background:#1a1a2e;border:2px solid #7c3aed;color:#a78bfa;padding:20px;border-radius:14px;flex-direction:column;display:flex;align-items:center;gap:8px;font-size:.9em">
+        <span style="font-size:2em">📝</span>
+        <strong>Formulário Manual</strong>
+        <span style="font-size:.75em;color:#888;font-weight:400">Digitar os produtos</span>
+      </button>
+      <button onclick="leModo('foto')" class="btn" style="background:#1a1a2e;border:2px solid #059669;color:#6ee7b7;padding:20px;border-radius:14px;flex-direction:column;display:flex;align-items:center;gap:8px;font-size:.9em">
+        <span style="font-size:2em">📷</span>
+        <strong>Por Foto / Câmera</strong>
+        <span style="font-size:.75em;color:#888;font-weight:400">Nota fiscal ou romaneio</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- MODO MANUAL -->
+  <div id="le-manual" style="display:none">
+    <div class="card" style="margin-bottom:12px">
+      <div style="font-weight:800;margin-bottom:12px">📝 Entrada Manual</div>
+      <div class="grid2" style="margin-bottom:10px">
+        <div>
+          <label>Fornecedor</label>
+          <input type="text" id="le-fornecedor" placeholder="Ex: Distribuidora Central">
+        </div>
+        <div>
+          <label>Data de Entrada</label>
+          <input type="date" id="le-data-entrada">
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:12px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div style="font-weight:800;font-size:.95em">🛒 Itens da Entrada</div>
+        <button class="btn btn-purple" style="padding:6px 14px;font-size:.8em" onclick="leAddItem()">+ Adicionar Item</button>
+      </div>
+      <div id="le-itens-lista"></div>
+      <div id="le-itens-vazio" style="text-align:center;color:#888;padding:20px;font-size:.85em">Clique em "+ Adicionar Item" para começar</div>
+    </div>
+
+    <div class="card" style="margin-bottom:12px">
+      <div style="font-weight:800;font-size:.85em;color:#888;margin-bottom:8px">📊 RESUMO</div>
+      <div class="grid3">
+        <div class="stat-box"><div class="stat-num" style="font-size:1.2em" id="le-res-itens">0</div><div class="stat-label">Itens</div></div>
+        <div class="stat-box"><div class="stat-num" style="font-size:1.2em;color:#059669" id="le-res-total">R$ 0,00</div><div class="stat-label">Total Pago</div></div>
+        <div class="stat-box"><div class="stat-num" style="font-size:1.2em;color:#f59e0b" id="le-res-vinc">0</div><div class="stat-label">Vinculados</div></div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px;margin-bottom:16px">
+      <button class="btn btn-gray" style="flex:1" onclick="leModo(null)">← Voltar</button>
+      <button class="btn btn-green" style="flex:2" onclick="leConfirmarManual()">✅ Confirmar Entrada</button>
+    </div>
+  </div>
+
+  <!-- MODO FOTO -->
+  <div id="le-foto" style="display:none">
+    <div class="card" style="margin-bottom:12px">
+      <div style="font-weight:800;margin-bottom:12px">📷 Entrada por Foto</div>
+      <div class="nota-drop" id="leFotoDrop" onclick="document.getElementById('leFotoInput').click()"
+           ondragover="event.preventDefault();this.classList.add('drag')"
+           ondragleave="this.classList.remove('drag')"
+           ondrop="leFotoHandleDrop(event)">
+        <div style="font-size:2.5em;margin-bottom:8px">📄</div>
+        <div style="font-weight:700;color:#ccc">Toque para tirar foto ou escolher arquivo</div>
+        <div style="font-size:.8em;color:#888;margin-top:4px">Nota fiscal, romaneio, etiqueta — JPG, PNG</div>
+        <img id="leFotoPreview" class="preview-img" style="display:none">
+      </div>
+      <input type="file" id="leFotoInput" accept="image/*" capture="environment" style="display:none" onchange="leFotoHandleFile(this)">
+      <div style="display:flex;gap:10px;margin-top:12px">
+        <button class="btn btn-gray" style="flex:1" onclick="document.getElementById('leFotoInput').removeAttribute('capture');document.getElementById('leFotoInput').click()">🖼️ Galeria</button>
+        <button class="btn btn-purple" style="flex:1" onclick="document.getElementById('leFotoInput').setAttribute('capture','environment');document.getElementById('leFotoInput').click()">📷 Câmera</button>
+      </div>
+      <div id="leFotoStatus" style="margin-top:12px;text-align:center;display:none">
+        <span class="spinner"></span>
+        <span style="margin-left:10px;color:#888">Analisando com IA...</span>
+      </div>
+    </div>
+
+    <!-- Resultado foto -->
+    <div id="leFotoResultado" style="display:none">
+      <div class="card" style="margin-bottom:12px">
+        <div style="font-weight:800;margin-bottom:10px">✅ Itens detectados — vincule ao cardápio</div>
+        <div class="grid2" style="margin-bottom:10px">
+          <div>
+            <label>Fornecedor</label>
+            <input type="text" id="leFotoFornecedor" placeholder="Detectado automaticamente">
+          </div>
+          <div>
+            <label>Data de Entrada</label>
+            <input type="date" id="leFotoData">
+          </div>
+        </div>
+        <div style="overflow-x:auto">
+          <table id="leFotoTabela">
+            <thead>
+              <tr>
+                <th>Produto (nota)</th>
+                <th>Unid.</th>
+                <th>Qtd</th>
+                <th>Vlr Unit</th>
+                <th>Vincular ao cardápio</th>
+                <th>Vcto</th>
+              </tr>
+            </thead>
+            <tbody id="leFotoCorpo"></tbody>
+          </table>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:14px">
+          <button class="btn btn-gray" style="flex:1" onclick="leModo('foto')">🔄 Nova foto</button>
+          <button class="btn btn-green" style="flex:2" onclick="leFotoConfirmar()">✅ Confirmar Entrada</button>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn btn-gray" style="width:100%;margin-bottom:16px" onclick="leModo(null)">← Voltar</button>
+  </div>
+
+  <!-- Histórico de entradas -->
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div style="font-weight:800;font-size:.9em">📋 Últimas Entradas</div>
+      <button class="btn btn-gray" style="padding:5px 12px;font-size:.78em" onclick="leCarregarHistorico()">🔄 Atualizar</button>
+    </div>
+    <div id="le-historico"><div style="text-align:center;color:#888;padding:16px;font-size:.85em">Nenhuma entrada registrada</div></div>
+  </div>
+
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -220,7 +355,7 @@ async function init() {
 function mudarTab(id) {
   document.querySelectorAll('.tab').forEach((t,i) => t.classList.remove('ativa'));
   document.querySelectorAll('.page').forEach(p => { p.classList.remove('ativa'); p.style.display='none'; });
-  const pages = ['visao-geral','nota-fiscal','lista-compras','ajuste-manual'];
+  const pages = ['visao-geral','nota-fiscal','lista-compras','ajuste-manual','lancar-entrada'];
   const idx = pages.indexOf(id);
   document.querySelectorAll('.tab')[idx].classList.add('ativa');
   const pg = document.getElementById('page-'+id);
@@ -268,6 +403,274 @@ async function abrirRepor(id, nome, atual) {
     });
     showToast('✅ Estoque atualizado!', 'ok');
     await init();
+
+// ===== LANÇAR ENTRADA =====
+let leItens = [];
+let leItemCount = 0;
+
+function leModo(modo) {
+  document.getElementById('le-manual').style.display = 'none';
+  document.getElementById('le-foto').style.display = 'none';
+  document.getElementById('le-modo-sel').style.display = modo ? 'none' : 'block';
+  if (modo === 'manual') {
+    document.getElementById('le-manual').style.display = 'block';
+    const hoje = new Date().toISOString().split('T')[0];
+    document.getElementById('le-data-entrada').value = hoje;
+    leItens = [];
+    leItemCount = 0;
+    leRenderItens();
+  } else if (modo === 'foto') {
+    document.getElementById('le-foto').style.display = 'block';
+    document.getElementById('leFotoResultado').style.display = 'none';
+    document.getElementById('leFotoPreview').style.display = 'none';
+    document.getElementById('leFotoPreview').src = '';
+    const hoje = new Date().toISOString().split('T')[0];
+    if (document.getElementById('leFotoData')) document.getElementById('leFotoData').value = hoje;
+  }
+  leCarregarHistorico();
+}
+
+function leAddItem() {
+  const id = 'leitem' + (++leItemCount);
+  leItens.push({ id, nome:'', unidade:'un', quantidade:1, precoUnitario:0, dataVencimento:'', itemId:'' });
+  leRenderItens();
+}
+
+function leRenderItens() {
+  const lista = document.getElementById('le-itens-lista');
+  const vazio = document.getElementById('le-itens-vazio');
+  if (!leItens.length) { lista.innerHTML=''; vazio.style.display='block'; leAtualizarResumo(); return; }
+  vazio.style.display = 'none';
+  lista.innerHTML = leItens.map((it, idx) => `
+    <div style="background:#0f0f13;border-radius:10px;padding:12px;margin-bottom:8px;border:1px solid #2a2a3a">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <span style="font-weight:700;font-size:.85em;color:#a78bfa">Item ${idx+1}</span>
+        <button onclick="leRemoverItem('${it.id}')" style="background:none;border:none;color:#dc2626;cursor:pointer;font-size:1.1em">✕</button>
+      </div>
+      <div class="grid2" style="gap:8px;margin-bottom:8px">
+        <div style="grid-column:span 2">
+          <label>Nome do Produto</label>
+          <input type="text" value="${it.nome}" placeholder="Ex: Fraldinha, Tomate, Cerveja..." oninput="leUpdateItem('${it.id}','nome',this.value)" style="width:100%">
+        </div>
+        <div>
+          <label>Unidade</label>
+          <select onchange="leUpdateItem('${it.id}','unidade',this.value)" style="width:100%">
+            <option value="un" ${it.unidade==='un'?'selected':''}>Unidade (un)</option>
+            <option value="kg" ${it.unidade==='kg'?'selected':''}>Quilograma (kg)</option>
+            <option value="g" ${it.unidade==='g'?'selected':''}>Grama (g)</option>
+            <option value="L" ${it.unidade==='L'?'selected':''}>Litro (L)</option>
+            <option value="cx" ${it.unidade==='cx'?'selected':''}>Caixa (cx)</option>
+            <option value="pct" ${it.unidade==='pct'?'selected':''}>Pacote (pct)</option>
+          </select>
+        </div>
+        <div>
+          <label>Quantidade</label>
+          <input type="number" value="${it.quantidade}" min="0.01" step="0.01" oninput="leUpdateItem('${it.id}','quantidade',parseFloat(this.value)||0)" style="width:100%">
+        </div>
+        <div>
+          <label>Valor Unitário (R$)</label>
+          <input type="number" value="${it.precoUnitario}" min="0" step="0.01" oninput="leUpdateItem('${it.id}','precoUnitario',parseFloat(this.value)||0)" style="width:100%">
+        </div>
+        <div>
+          <label>Data de Vencimento</label>
+          <input type="date" value="${it.dataVencimento}" onchange="leUpdateItem('${it.id}','dataVencimento',this.value)" style="width:100%">
+        </div>
+      </div>
+      <div>
+        <label>Vincular ao Cardápio (opcional)</label>
+        <select onchange="leUpdateItem('${it.id}','itemId',this.value)" style="width:100%">
+          <option value="">— Não vincular (só registrar entrada) —</option>
+          ${itensCardapio.map(c => `<option value="${c._id}" ${it.itemId===String(c._id)?'selected':''}>${c.nome}</option>`).join('')}
+        </select>
+      </div>
+      <div style="font-size:.78em;color:#888;margin-top:6px;text-align:right">
+        Total: <strong style="color:#7c3aed">R$ ${((it.quantidade||0)*(it.precoUnitario||0)).toFixed(2)}</strong>
+      </div>
+    </div>`).join('');
+  leAtualizarResumo();
+}
+
+function leUpdateItem(id, campo, valor) {
+  const it = leItens.find(x => x.id === id);
+  if (it) { it[campo] = valor; leAtualizarResumo(); }
+}
+
+function leRemoverItem(id) {
+  leItens = leItens.filter(x => x.id !== id);
+  leRenderItens();
+}
+
+function leAtualizarResumo() {
+  const total = leItens.reduce((s,i) => s + (i.quantidade||0)*(i.precoUnitario||0), 0);
+  const vinc = leItens.filter(i => i.itemId).length;
+  document.getElementById('le-res-itens').textContent = leItens.length;
+  document.getElementById('le-res-total').textContent = 'R$ ' + total.toFixed(2).replace('.',',');
+  document.getElementById('le-res-vinc').textContent = vinc;
+}
+
+async function leConfirmarManual() {
+  if (!leItens.length) { showToast('Adicione pelo menos 1 item', 'err'); return; }
+  const semNome = leItens.filter(i => !i.nome.trim());
+  if (semNome.length) { showToast('Preencha o nome de todos os itens', 'err'); return; }
+  const fornecedor = document.getElementById('le-fornecedor').value.trim();
+  const dataEntrada = document.getElementById('le-data-entrada').value;
+  const payload = {
+    fornecedor, dataEntrada,
+    itens: leItens.map(i => ({
+      nome: i.nome, unidade: i.unidade,
+      quantidade: i.quantidade, precoCompra: i.precoUnitario,
+      dataVencimento: i.dataVencimento, itemId: i.itemId || null
+    }))
+  };
+  try {
+    const r = await fetch(BASE + '/estoque/entrada-lote', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+      body: JSON.stringify(payload)
+    });
+    const d = await r.json();
+    if (d.sucesso) {
+      const ok = (d.resultados||[]).filter(x=>x.status==='ok').length;
+      const sv = (d.resultados||[]).filter(x=>x.status==='sem_vinculo').length;
+      showToast(`✅ Entrada registrada! ${ok} atualizados, ${sv} sem vínculo`, 'ok');
+      leItens = []; leItemCount = 0;
+      leModo(null);
+      await init();
+    } else {
+      showToast('Erro: ' + (d.erro || d.msg || 'desconhecido'), 'err');
+    }
+  } catch(e) { showToast('Erro ao confirmar entrada', 'err'); }
+}
+
+// === MODO FOTO ===
+async function leFotoHandleFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const preview = document.getElementById('leFotoPreview');
+  preview.src = URL.createObjectURL(file);
+  preview.style.display = 'block';
+  document.getElementById('leFotoStatus').style.display = 'block';
+  document.getElementById('leFotoResultado').style.display = 'none';
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    const base64 = e.target.result.split(',')[1];
+    try {
+      const r = await fetch(BASE + '/estoque/nota-fiscal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+        body: JSON.stringify({ imagem: base64, mimeType: file.type })
+      });
+      const d = await r.json();
+      document.getElementById('leFotoStatus').style.display = 'none';
+      if (d.itens && d.itens.length) {
+        leFotoRenderTabela(d);
+        document.getElementById('leFotoResultado').style.display = 'block';
+        if (d.fornecedor) document.getElementById('leFotoFornecedor').value = d.fornecedor;
+      } else {
+        showToast('IA não detectou itens. Tente foto mais nítida.', 'err');
+      }
+    } catch(e2) {
+      document.getElementById('leFotoStatus').style.display = 'none';
+      showToast('Erro ao analisar imagem', 'err');
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+function leFotoHandleDrop(e) {
+  e.preventDefault();
+  document.getElementById('leFotoDrop').classList.remove('drag');
+  const file = e.dataTransfer.files[0];
+  if (file) {
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    document.getElementById('leFotoInput').files = dt.files;
+    leFotoHandleFile(document.getElementById('leFotoInput'));
+  }
+}
+
+function leFotoRenderTabela(d) {
+  const tbody = document.getElementById('leFotoCorpo');
+  tbody.innerHTML = (d.itens || []).map((it, i) => `
+    <tr>
+      <td><strong>${it.nome || ''}</strong><br><span style="font-size:.75em;color:#888">${it.unidade||'un'}</span></td>
+      <td><input type="number" id="lf-un-${i}" value="${it.unidade||'un'}" style="width:50px;display:none">
+          <select id="lf-unsel-${i}" style="width:60px;font-size:.8em">
+            <option value="un" ${(it.unidade||'un')==='un'?'selected':''}>un</option>
+            <option value="kg" ${it.unidade==='kg'?'selected':''}>kg</option>
+            <option value="g" ${it.unidade==='g'?'selected':''}>g</option>
+            <option value="L" ${it.unidade==='L'?'selected':''}>L</option>
+            <option value="cx" ${it.unidade==='cx'?'selected':''}>cx</option>
+          </select>
+      </td>
+      <td><input type="number" id="lf-qty-${i}" value="${it.quantidade||1}" step="0.01" style="width:60px"></td>
+      <td><input type="number" id="lf-vl-${i}" value="${it.precoUnitario||it.valorUnitario||0}" step="0.01" style="width:70px"></td>
+      <td>
+        <select id="lf-card-${i}" class="vinculo-sel" style="width:130px;font-size:.78em">
+          <option value="">— sem vínculo —</option>
+          ${itensCardapio.map(c=>`<option value="${c._id}">${c.nome}</option>`).join('')}
+        </select>
+      </td>
+      <td><input type="date" id="lf-vcto-${i}" style="width:110px"></td>
+    </tr>`).join('');
+  window._leFotoItens = d.itens || [];
+}
+
+async function leFotoConfirmar() {
+  const itens = (window._leFotoItens || []).map((it, i) => ({
+    nome: it.nome,
+    unidade: document.getElementById('lf-unsel-'+i)?.value || 'un',
+    quantidade: parseFloat(document.getElementById('lf-qty-'+i)?.value) || 1,
+    precoCompra: parseFloat(document.getElementById('lf-vl-'+i)?.value) || 0,
+    dataVencimento: document.getElementById('lf-vcto-'+i)?.value || '',
+    itemId: document.getElementById('lf-card-'+i)?.value || null
+  }));
+  if (!itens.length) { showToast('Nenhum item para confirmar', 'err'); return; }
+  const fornecedor = document.getElementById('leFotoFornecedor').value.trim();
+  const dataEntrada = document.getElementById('leFotoData').value;
+  try {
+    const r = await fetch(BASE + '/estoque/entrada-lote', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+      body: JSON.stringify({ fornecedor, dataEntrada, itens })
+    });
+    const d = await r.json();
+    if (d.sucesso) {
+      const ok = (d.resultados||[]).filter(x=>x.status==='ok').length;
+      showToast(`✅ Entrada confirmada! ${ok} item(ns) atualizados no estoque`, 'ok');
+      leModo(null);
+      await init();
+    } else {
+      showToast('Erro: ' + (d.erro || d.msg || 'desconhecido'), 'err');
+    }
+  } catch(e) { showToast('Erro ao confirmar entrada', 'err'); }
+}
+
+async function leCarregarHistorico() {
+  // histórico simples: últimas atualizações de estoque
+  const el = document.getElementById('le-historico');
+  if (!el) return;
+  try {
+    const r = await fetch(BASE + '/estoque', { headers: { Authorization: 'Bearer ' + token } });
+    const itens = await r.json();
+    const comFornecedor = itens.filter(i => i.fornecedor || i.precoCompra);
+    if (!comFornecedor.length) {
+      el.innerHTML = '<div style="text-align:center;color:#888;padding:16px;font-size:.85em">Nenhuma entrada registrada ainda</div>';
+      return;
+    }
+    el.innerHTML = comFornecedor.slice(0,10).map(i => `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:#0f0f13;border-radius:9px;margin-bottom:7px;border-left:3px solid #7c3aed">
+        <div>
+          <div style="font-weight:700;font-size:.88em">${i.nome}</div>
+          <div style="font-size:.75em;color:#888">${i.fornecedor || '—'} ${i.precoCompra ? '• Custo: R$ '+parseFloat(i.precoCompra).toFixed(2) : ''}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-weight:800;color:#7c3aed">${i.estoqueAtual} ${i.unidade||'un'}</div>
+          <div style="font-size:.72em;color:#888">em estoque</div>
+        </div>
+      </div>`).join('');
+  } catch(e) { el.innerHTML = '<div style="color:#dc2626;padding:10px;font-size:.85em">Erro ao carregar</div>'; }
+}
   } catch(e) { showToast('Erro ao repor', 'err'); }
 }
 
