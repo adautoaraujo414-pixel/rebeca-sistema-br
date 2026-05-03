@@ -2632,8 +2632,6 @@ router.post('/estoque/nota-fiscal', authDelivery, async (req, res) => {
 // ========== ESTOQUE: ENTRADA EM LOTE (salvar itens da nota) ==========
 router.post('/estoque/entrada-lote', authDelivery, async (req, res) => {
     try {
-            return res.status(403).json({ erro: 'plano_insuficiente', msg: 'Estoque inteligente disponível apenas nos planos Plus e Premium.' });
-        }
         const { itens, fornecedor, dataEntrada } = req.body;
         if (!itens || !itens.length) return res.status(400).json({ erro: 'Itens obrigatorios' });
         const resultados = [];
