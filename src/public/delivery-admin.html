@@ -29,9 +29,9 @@
         .menu-item { padding: 13px 20px; color: #636366; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: all 0.2s; font-size: 14px; font-weight: 500; }
         .menu-item:hover, .menu-item.active { background: #fff7ed; color: #f97316; border-left: 3px solid #f97316; }
         .menu-section { color: #b0b0b8; font-size: 11px; padding: 14px 20px 5px; text-transform: uppercase; font-weight: 700; letter-spacing: .5px; }
-        .content { flex: 1; padding: 25px; overflow-y: auto; background: #f5f5f7; }
-        .page { display: none; }
-        .page.active { display: block; }
+        .content { flex: 1; padding: 25px; overflow-y: auto; background: #f5f5f7; width: 100%; min-width: 0; }
+        .page { display: none; width: 100%; box-sizing: border-box; }
+        .page.active { display: block; width: 100%; box-sizing: border-box; }
         #page-garcons { padding: 20px; max-width: 900px; }
         
         /* Cards */
@@ -1848,9 +1848,9 @@ async function carregarConfigNF() {
 
         // ===== SISTEMA DE PLANOS =====
         const PLANOS_MODULOS = {
-            confort:  ['dashboard', 'cardapio', 'upload-cardapio', 'categorias', 'pedidos', 'caixa', 'cardapio-semanal', 'impressora', 'config', 'relatorios', 'financeiro-caixas', 'financeiro-lucro', 'financeiro-contas', 'financeiro-fornecedores', 'relatorio-financeiro'],
-            plus:     ['dashboard', 'cardapio', 'upload-cardapio', 'categorias', 'pedidos', 'caixa', 'relatorios', 'avaliacoes', 'assinantes', 'estoque', 'cardapio-dia', 'cardapio-semanal', 'impressora', 'combos', 'config', 'financeiro-caixas', 'financeiro-lucro', 'financeiro-contas', 'financeiro-fornecedores', 'relatorio-financeiro'],
-            premium:  ['dashboard', 'cardapio', 'upload-cardapio', 'categorias', 'pedidos', 'relatorios', 'entregadores', 'garcons', 'avaliacoes', 'assinantes', 'estoque', 'cardapio-dia', 'cardapio-semanal', 'impressora', 'combos', 'config', 'financeiro-caixas', 'financeiro-lucro', 'financeiro-contas', 'financeiro-fornecedores', 'relatorio-financeiro']
+            confort:  ['dashboard', 'cardapio', 'upload-cardapio', 'categorias', 'pedidos', 'caixa', 'cardapio-semanal', 'impressora', 'config', 'relatorios', 'financeiro-caixas', 'financeiro-lucro', 'financeiro-contas', 'financeiro-fornecedores', 'relatorio-financeiro', 'entrada-insumos'],
+            plus:     ['dashboard', 'cardapio', 'upload-cardapio', 'categorias', 'pedidos', 'caixa', 'relatorios', 'avaliacoes', 'assinantes', 'estoque', 'cardapio-dia', 'cardapio-semanal', 'impressora', 'combos', 'config', 'financeiro-caixas', 'financeiro-lucro', 'financeiro-contas', 'financeiro-fornecedores', 'relatorio-financeiro', 'entrada-insumos'],
+            premium:  ['dashboard', 'cardapio', 'upload-cardapio', 'categorias', 'pedidos', 'relatorios', 'entregadores', 'garcons', 'avaliacoes', 'assinantes', 'estoque', 'cardapio-dia', 'cardapio-semanal', 'impressora', 'combos', 'config', 'financeiro-caixas', 'financeiro-lucro', 'financeiro-contas', 'financeiro-fornecedores', 'relatorio-financeiro', 'entrada-insumos']
         };
 
         const PLANO_UPGRADE = {
