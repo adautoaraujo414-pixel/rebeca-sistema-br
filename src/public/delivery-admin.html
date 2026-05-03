@@ -6206,6 +6206,15 @@ async function salvarEntradaInsumos() {
     valorUnitario: parseFloat(r.querySelector('.ei-custo')?.value) || 0,
     fornecedor
   })).filter(i => i.nome);
+  if (!fornecedor) { toast('Preencha o nome do fornecedor', 'error'); document.getElementById('ei-fornecedor').style.border='2px solid #ef4444'; return; }
+  document.getElementById('ei-fornecedor').style.border='1px solid #ddd';
+  // Validar itens sem nome
+  let itemVazio = false;
+  document.querySelectorAll('#ei-itens-lista .ei-nome').forEach(input => {
+    if (!input.value.trim()) { input.style.border='2px solid #ef4444'; itemVazio=true; }
+    else input.style.border='1px solid #ddd';
+  });
+  if (itemVazio) { toast('Preencha o nome de todos os itens', 'error'); return; }
   if (!itens.length) { toast('Adicione ao menos um item', 'error'); return; }
   try {
     const resp = await api('/estoque/entrada-lote', { method: 'POST', body: JSON.stringify({ itens, fornecedor, dataEntrada }) });
