@@ -1955,6 +1955,36 @@ function conectarSSECaixa() {
         setTimeout(() => div.remove(), 5000);
       } catch(err) {}
     });
+    // cardapio_atualizado — recarrega cardápio sem resetar carrinho
+    es.addEventListener('cardapio_atualizado', function(e) {
+      try {
+        const dados = JSON.parse(e.data);
+        // Recarregar cardápio silenciosamente (sem resetar carrinho ativo)
+        carregarCardapio(true);
+        // Se item ficou esgotado, mostrar aviso rápido
+        if (dados.novoEstoque !== undefined && dados.novoEstoque <= 0) {
+          const div = document.createElement('div');
+          div.style.cssText = 'position:fixed;bottom:80px;right:16px;background:#ef4444;color:#fff;padding:10px 16px;border-radius:10px;font-size:.85em;font-weight:700;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,.2)';
+          div.textContent = '⚠️ Item esgotado no estoque!';
+          document.body.appendChild(div);
+          setTimeout(() => div.remove(), 4000);
+        }
+      } catch(err) {}
+    });
+
+    // nova_venda_balanca — notifica caixa sobre venda registrada na balança
+    es.addEventListener('nova_venda_balanca', function(e) {
+      try {
+        const dados = JSON.parse(e.data);
+        carregarStats();
+        const div = document.createElement('div');
+        div.style.cssText = 'position:fixed;bottom:80px;right:16px;background:#c41e1e;color:#fff;padding:10px 16px;border-radius:10px;font-size:.85em;font-weight:700;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,.2)';
+        div.innerHTML = '⚖️ Balança: <b>' + (dados.itemNome || 'Item') + '</b> — ' + Number(dados.pesoKg||0).toFixed(3) + ' kg — R$ ' + Number(dados.total||0).toFixed(2);
+        document.body.appendChild(div);
+        setTimeout(() => div.remove(), 5000);
+      } catch(err) {}
+    });
+
     es.onerror = function() {
       // Reconectar após 5s se cair
       setTimeout(conectarSSECaixa, 5000);
