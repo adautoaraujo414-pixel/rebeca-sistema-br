@@ -805,7 +805,13 @@ function renderPedidos() {
         <span class="pedido-num">#${p.numero||'?'}${origem}</span>
         <span class="pedido-status ${statusMap[p.status]||'status-novo'}">${(p.tipoLocal==='retirada'&&p.status==='saiu_entrega'?'📦 Despachado':statusLabel[p.status]||p.status)}</span>
       </div>
-      <div class="pedido-local">${local}${p.clienteNome&&p.clienteNome!=='Cliente Balcão'?' · 👤 '+p.clienteNome:''}</div>
+      <div class="pedido-local" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">
+        <span>${local}</span>
+        ${p.clienteNome&&p.clienteNome!=='Cliente Balcão'&&p.clienteNome!=='Cliente Digital'?`<span style="background:#fff3e0;color:#f97316;border-radius:20px;padding:2px 10px;font-size:.78em;font-weight:800">👤 ${p.clienteNome}</span>`:''}
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">
+        <div style="font-size:.72em;color:#aaa" id="timer-caixa-${p._id}" data-criado="${p.createdAt||''}">⏱️ —</div>
+      </div>
       <div class="pedido-itens">${itensStr}</div>
       ${obs?`<div class="pedido-obs">📝 ${obs}</div>`:''}
       <div class="pedido-total">${fmt(p.total)}</div>
@@ -1807,6 +1813,20 @@ function abrirComandaMesa(numero) {
     toast('Mesa ' + numero + ' selecionada — adicione itens e confirme');
   }, 300);
 }
+
+// ===== TIMER DOS PEDIDOS NO CAIXA =====
+function atualizarTimersCaixa() {
+  document.querySelectorAll('[id^="timer-caixa-"]').forEach(el => {
+    const criado = el.dataset.criado;
+    if (!criado) return;
+    const segs = Math.floor((Date.now() - new Date(criado).getTime()) / 1000);
+    const m = Math.floor(segs / 60), s = segs % 60;
+    const str = (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+    const cor = segs > 1800 ? '#ef4444' : segs > 900 ? '#f59e0b' : '#22c55e';
+    el.innerHTML = `<span style="color:${cor};font-weight:700">⏱️ ${str}</span>`;
+  });
+}
+setInterval(atualizarTimersCaixa, 1000);
 </script>
 
 <!-- MODAL FECHAR CAIXA -->

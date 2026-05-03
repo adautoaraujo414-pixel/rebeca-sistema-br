@@ -303,6 +303,7 @@ function renderCard(p){
       '<div class="card-info">'+
         '<div class="card-origem">'+origemTag+statusTag+'</div>'+
         '<div class="card-sub">Pedido <strong>#'+(p.numero||p._id.slice(-4))+'</strong> · '+horaStr+'</div>'+
+        (clienteNome&&clienteNome!=='Cliente'?'<div style="font-size:.82em;font-weight:800;color:#f97316;margin-top:3px">👤 '+clienteNome+'</div>':'')+
         garcomInfo+
       '</div>'+
       '<div class="cronometro">'+
