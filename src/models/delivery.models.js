@@ -449,3 +449,17 @@ const ComboDeliverySchema = new mongoose.Schema({
 // ComboDelivery adminId index já definido no schema field
 const ComboDelivery = mongoose.models.ComboDelivery || mongoose.model('ComboDelivery', ComboDeliverySchema);
 module.exports.ComboDelivery = ComboDelivery;
+
+// ========== CONTAS A PAGAR ==========
+const ContaPagarSchema = new mongoose.Schema({
+    adminId: { type: String, required: true, index: true },
+    descricao: { type: String, required: true },
+    valor: { type: Number, required: true },
+    vencimento: { type: String, default: '' },
+    categoria: { type: String, default: 'outros' },
+    status: { type: String, default: 'pendente' }, // pendente | pago
+    dataPagamento: { type: Date, default: null },
+    observacoes: { type: String, default: '' }
+}, { timestamps: true });
+const ContaPagar = mongoose.models.ContaPagar || mongoose.model('ContaPagar', ContaPagarSchema);
+module.exports.ContaPagar = ContaPagar;

@@ -1513,6 +1513,7 @@ router.get('/caixa/entregadores-ativos', authDelivery, async (req, res) => {
 router.get('/estoque/entradas', authDelivery, async (req, res) => {
     try {
         const { EntradaInsumo } = require('../models/delivery.models');
+const { ContaPagar } = require('../models/delivery.models');
         const entradas = await EntradaInsumo.find({ adminId: req.adminId })
             .sort({ createdAt: -1 }).limit(50).lean();
         res.json({ entradas });
@@ -2666,6 +2667,7 @@ router.post('/estoque/entrada-lote', authDelivery, async (req, res) => {
         // Salvar registro de entrada no histórico
         try {
             const { EntradaInsumo } = require('../models/delivery.models');
+const { ContaPagar } = require('../models/delivery.models');
             await EntradaInsumo.create({
                 adminId: req.adminId,
                 fornecedor: fornecedor || '',
@@ -2925,6 +2927,41 @@ router.get('/lucro-produtos', authDelivery, async (req, res) => {
         const margemGeral = totalVendas > 0 ? ((totalLucro / totalVendas) * 100).toFixed(1) : '0.0';
 
         res.json({ itens, totalVendas, totalLucro, totalCusto, margemGeral });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// ========== CONTAS A PAGAR ==========
+router.get('/contas-pagar', authDelivery, async (req, res) => {
+    try {
+        const contas = await ContaPagar.find({ adminId: req.adminId }).sort({ vencimento: 1 }).lean();
+        res.json({ contas });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+router.post('/contas-pagar', authDelivery, async (req, res) => {
+    try {
+        const { descricao, valor, vencimento, categoria, observacoes } = req.body;
+        if (!descricao || !valor) return res.status(400).json({ erro: 'Descricao e valor obrigatorios' });
+        const conta = await ContaPagar.create({ adminId: req.adminId, descricao, valor, vencimento, categoria: categoria||'outros', observacoes: observacoes||'' });
+        res.json({ sucesso: true, conta });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+router.patch('/contas-pagar/:id/pagar', authDelivery, async (req, res) => {
+    try {
+        const conta = await ContaPagar.findOneAndUpdate(
+            { _id: req.params.id, adminId: req.adminId },
+            { status: 'pago', dataPagamento: new Date() },
+            { new: true }
+        );
+        res.json({ sucesso: true, conta });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+router.delete('/contas-pagar/:id', authDelivery, async (req, res) => {
+    try {
+        await ContaPagar.findOneAndDelete({ _id: req.params.id, adminId: req.adminId });
+        res.json({ sucesso: true });
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
