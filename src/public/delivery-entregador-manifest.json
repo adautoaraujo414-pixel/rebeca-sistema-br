@@ -1,4 +1,12 @@
-{
+python3 << 'PYEOF'
+path = '/workspaces/rebeca-sistema-br/src/public/delivery-admin.html'
+txt = open(path, encoding='utf-8').read()
+lines = txt.split('\n')
+
+# Contar e mostrar L373-L375 para ver a duplicação exata
+for i in range(371, 376):
+    print(f'L{i+1}: {repr(lines[i][:120])}')
+PYEOF{
   "name": "Rebeca Delivery - Entregador",
   "short_name": "Entregador",
   "description": "App do entregador",
