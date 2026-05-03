@@ -1077,58 +1077,65 @@ async function carregarConfigNF() {
 </div>
 
 <div id="page-estoque" class="page">
-                    <h2 style="margin-bottom:6px;">&#x1F4E6; Controle de Estoque</h2>
-                    <p style="color:#aaa;font-size:13px;margin-bottom:20px;">Ative o controle por item. A Rebeca baixa o estoque automaticamente a cada pedido confirmado.</p>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:10px">
+    <div>
+      <h2 style="margin:0;font-size:1.3em">📦 Estoque</h2>
+      <div style="color:#888;font-size:.82em;margin-top:3px">Estado atual por produto · atualizado em tempo real</div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button onclick="carregarEstoqueDashboard()" style="padding:8px 16px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;color:#0284c7;font-weight:700;font-size:.85em;cursor:pointer">🔄 Atualizar</button>
+      <button onclick="navegarPara('entrada-insumos');carregarEntradaInsumos()" style="padding:8px 16px;background:#f0fdf4;border:1px solid #86efac;border-radius:8px;color:#16a34a;font-weight:700;font-size:.85em;cursor:pointer">➕ Entrada de Insumos</button>
+    </div>
+  </div>
 
-                    <a href="/delivery-estoque.html" style="display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,#7c3aed,#4f46e5);border-radius:14px;padding:16px 20px;margin-bottom:20px;text-decoration:none;color:#fff;"><span style="font-size:2em;">📷</span><div><div style="font-weight:800;font-size:1em;">Abrir Gestão de Estoque Completa</div><div style="font-size:.8em;opacity:.8;margin-top:2px;">Nota fiscal por foto • Lista de compras • Ajuste manual</div></div><span style="margin-left:auto;font-size:1.3em;">→</span></a>
-                    <!-- SCANNER DE CODIGO DE BARRAS -->
-                    <div class="panel" style="margin-bottom:16px;border-left:3px solid #3b82f6;">
-                        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
-                            <span style="font-size:1.4em;">&#x1F52B;</span>
-                            <div>
-                                <div style="font-weight:800;color:#fff;font-size:.95em;">Scanner / Pistola de Codigo de Barras</div>
-                                <div style="color:#888;font-size:.78em;">Pistola USB ou Bluetooth — escaneie para identificar produto instantaneamente</div>
-                            </div>
-                        </div>
-                        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-                            <input type="text" id="inputBarcode" placeholder="Aponte a pistola ou digite o codigo EAN..." 
-                                style="flex:1;min-width:200px;padding:12px 16px;background:#1a1a2e;border:2px solid #3b82f6;border-radius:10px;color:#fff;font-size:1em;outline:none;"
-                                onkeydown="if(event.key==='Enter') buscarBarcode()">
-                            <button onclick="buscarBarcode()" style="padding:12px 20px;background:#3b82f6;border:none;border-radius:10px;color:#fff;font-weight:800;cursor:pointer;">&#x1F50D; Buscar</button>
-                        </div>
-                        <div id="barcodeResultado" style="margin-top:12px;display:none;"></div>
-                    </div>
+  <!-- RESUMO CARDS -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:20px">
+    <div style="background:#fff;border:1px solid #e8e8ed;border-radius:12px;padding:14px;text-align:center">
+      <div style="font-size:1.6em;font-weight:900;color:#1c1c1e" id="est-total-itens">—</div>
+      <div style="font-size:.75em;color:#888;margin-top:3px">Total de itens</div>
+    </div>
+    <div style="background:#fff;border:1px solid #e8e8ed;border-radius:12px;padding:14px;text-align:center">
+      <div style="font-size:1.6em;font-weight:900;color:#22c55e" id="est-ok">—</div>
+      <div style="font-size:.75em;color:#888;margin-top:3px">✅ Em estoque</div>
+    </div>
+    <div style="background:#fff;border:1px solid #e8e8ed;border-radius:12px;padding:14px;text-align:center">
+      <div style="font-size:1.6em;font-weight:900;color:#f59e0b" id="est-baixo">—</div>
+      <div style="font-size:.75em;color:#888;margin-top:3px">⚠️ Estoque baixo</div>
+    </div>
+    <div style="background:#fff;border:1px solid #e8e8ed;border-radius:12px;padding:14px;text-align:center">
+      <div style="font-size:1.6em;font-weight:900;color:#ef4444" id="est-zerado">—</div>
+      <div style="font-size:.75em;color:#888;margin-top:3px">🔴 Zerado</div>
+    </div>
+  </div>
 
-                    <!-- FORNECEDORES -->
-                    <div class="panel" style="margin-bottom:16px;border-left:3px solid #a855f7;">
-                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
-                            <div style="display:flex;align-items:center;gap:10px;">
-                                <span style="font-size:1.4em;">&#x1F3ED;</span>
-                                <div>
-                                    <div style="font-weight:800;color:#fff;font-size:.95em;">Fornecedores</div>
-                                    <div style="color:#888;font-size:.78em;">Contatos para reposicao rapida de estoque</div>
-                                </div>
-                            </div>
-                            <button onclick="abrirModalFornecedor()" style="padding:8px 16px;background:rgba(168,85,247,.15);border:1px solid #a855f7;border-radius:8px;color:#a855f7;font-weight:700;cursor:pointer;font-size:.82em;">+ Fornecedor</button>
-                        </div>
-                        <div id="listaFornecedores" style="display:flex;flex-direction:column;gap:8px;"></div>
-                    </div>
+  <!-- FILTROS -->
+  <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
+    <input id="est-busca" oninput="filtrarEstoque()" placeholder="🔍 Buscar produto..." style="flex:1;min-width:160px;padding:8px 12px;border:1px solid #ddd;border-radius:8px;font-size:.88em">
+    <select id="est-filtro-status" onchange="filtrarEstoque()" style="padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-size:.85em;background:#fff">
+      <option value="">Todos os status</option>
+      <option value="ok">✅ OK</option>
+      <option value="baixo">⚠️ Baixo</option>
+      <option value="zerado">🔴 Zerado</option>
+      <option value="inativo">⚪ Inativo</option>
+    </select>
+    <select id="est-filtro-cat" onchange="filtrarEstoque()" style="padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-size:.85em;background:#fff">
+      <option value="">Todas as categorias</option>
+    </select>
+  </div>
 
-                    <div class="panel" style="margin-bottom:16px;border-left:3px solid #f97316;">
-                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
-                            <h3>&#x1F6D2; Lista de Compras</h3>
-                            <button class="btn" style="background:#252542;" onclick="carregarListaCompras()">&#x1F504; Atualizar</button>
-                        </div>
-                        <div id="listaCompras"><p style="color:#888;text-align:center;padding:20px;">Clique em Atualizar para gerar a lista</p></div>
-                    </div>
-                    <div class="panel">
-                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
-                            <h3>&#x1F4CA; Estoque por Item</h3>
-                            <button class="btn" style="background:#252542;" onclick="carregarEstoque()">&#x1F504; Atualizar</button>
-                        </div>
-                        <div id="estoqueItens"><p style="color:#888;text-align:center;padding:20px;">Carregando...</p></div>
-                    </div>
-                </div>
+  <!-- LISTA POR CATEGORIA -->
+  <div id="est-lista">
+    <div style="text-align:center;padding:40px;color:#888">⏳ Carregando estoque...</div>
+  </div>
+
+  <!-- MODAL HISTÓRICO DO PRODUTO -->
+  <div id="est-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:9999;padding:20px;overflow-y:auto">
+    <div style="background:#fff;border-radius:16px;max-width:500px;margin:0 auto;padding:24px;position:relative">
+      <button onclick="document.getElementById('est-modal').style.display='none'" style="position:absolute;top:14px;right:14px;background:#fee2e2;border:none;border-radius:50%;width:30px;height:30px;font-size:1em;cursor:pointer;color:#ef4444">✕</button>
+      <div id="est-modal-conteudo"></div>
+    </div>
+  </div>
+</div>
 
                 <div id="page-config" class="page">
                     <h2 style="margin-bottom:20px;">⚙️ Configurações</h2>
@@ -6350,6 +6357,192 @@ async function editarEntradaEI(id) {
   toast('✏️ Entrada carregada para edição. Ajuste e salve novamente.');
 }
 
+
+
+// ========== ESTOQUE DASHBOARD ==========
+let _estoqueDados = [];
+
+async function carregarEstoqueDashboard() {
+  document.getElementById('est-lista').innerHTML = '<div style="text-align:center;padding:40px;color:#888">⏳ Carregando...</div>';
+  try {
+    const r = await api('/estoque/dashboard');
+    const d = await r.json();
+    _estoqueDados = d.itens || [];
+
+    // Resumo
+    const ok = _estoqueDados.filter(i => i.status === 'ok').length;
+    const baixo = _estoqueDados.filter(i => i.status === 'baixo').length;
+    const zerado = _estoqueDados.filter(i => i.status === 'zerado').length;
+    document.getElementById('est-total-itens').textContent = _estoqueDados.length;
+    document.getElementById('est-ok').textContent = ok;
+    document.getElementById('est-baixo').textContent = baixo;
+    document.getElementById('est-zerado').textContent = zerado;
+
+    // Popular filtro categorias
+    const cats = [...new Set(_estoqueDados.map(i => i.categoria))].sort();
+    const selCat = document.getElementById('est-filtro-cat');
+    selCat.innerHTML = '<option value="">Todas as categorias</option>' +
+      cats.map(c => `<option value="${c}">${c}</option>`).join('');
+
+    filtrarEstoque();
+  } catch(e) {
+    document.getElementById('est-lista').innerHTML = '<div style="color:#ef4444;padding:20px">Erro ao carregar: ' + e.message + '</div>';
+  }
+}
+
+function filtrarEstoque() {
+  const busca = (document.getElementById('est-busca')?.value || '').toLowerCase();
+  const filtroStatus = document.getElementById('est-filtro-status')?.value || '';
+  const filtroCat = document.getElementById('est-filtro-cat')?.value || '';
+
+  let itens = _estoqueDados.filter(i => {
+    if (busca && !i.nome.toLowerCase().includes(busca)) return false;
+    if (filtroStatus && i.status !== filtroStatus) return false;
+    if (filtroCat && i.categoria !== filtroCat) return false;
+    return true;
+  });
+
+  // Agrupar por categoria
+  const porCat = {};
+  for (const it of itens) {
+    if (!porCat[it.categoria]) porCat[it.categoria] = { emoji: it.categoriaEmoji, itens: [] };
+    porCat[it.categoria].itens.push(it);
+  }
+
+  if (!itens.length) {
+    document.getElementById('est-lista').innerHTML = '<div style="text-align:center;padding:40px;color:#888">Nenhum produto encontrado</div>';
+    return;
+  }
+
+  let html = '';
+  for (const [cat, grupo] of Object.entries(porCat)) {
+    html += `
+    <div style="margin-bottom:20px">
+      <div style="font-weight:800;font-size:.88em;color:#555;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid #f0f0f5">
+        ${grupo.emoji} ${cat}
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        ${grupo.itens.map(it => {
+          const corStatus = it.status === 'ok' ? '#22c55e' : it.status === 'baixo' ? '#f59e0b' : it.status === 'zerado' ? '#ef4444' : '#aaa';
+          const bgStatus = it.status === 'ok' ? '#f0fdf4' : it.status === 'baixo' ? '#fffbeb' : it.status === 'zerado' ? '#fef2f2' : '#f9f9f9';
+          const labelStatus = it.status === 'ok' ? '✅ OK' : it.status === 'baixo' ? '⚠️ Baixo' : it.status === 'zerado' ? '🔴 Zerado' : '⚪ Inativo';
+          const ultimaEnt = it.ultimaEntrada ? new Date(it.ultimaEntrada).toLocaleDateString('pt-BR') : '—';
+          return `
+          <div onclick="verHistoricoProduto('${it._id}','${it.nome.replace(/'/g,'')}')" 
+               style="background:#fff;border:1px solid #e8e8ed;border-radius:12px;padding:12px 14px;cursor:pointer;transition:box-shadow .15s"
+               onmouseover="this.style.boxShadow='0 2px 12px rgba(0,0,0,.08)'" onmouseout="this.style.boxShadow='none'">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+              <div style="display:flex;align-items:center;gap:10px;min-width:0">
+                ${it.imagem ? `<img src="${it.imagem}" style="width:36px;height:36px;border-radius:8px;object-fit:cover;flex-shrink:0">` : `<div style="width:36px;height:36px;border-radius:8px;background:#f0f0f5;display:flex;align-items:center;justify-content:center;font-size:1.2em;flex-shrink:0">📦</div>`}
+                <div style="min-width:0">
+                  <div style="font-weight:700;font-size:.92em;color:#1c1c1e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${it.nome}</div>
+                  <div style="font-size:.74em;color:#888;margin-top:2px">Última entrada: ${ultimaEnt}</div>
+                </div>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
+                <div style="text-align:right">
+                  <div style="font-size:1.3em;font-weight:900;color:${corStatus}">${it.estoqueAtual}</div>
+                  <div style="font-size:.7em;color:#888">${it.unidade}</div>
+                </div>
+                <div style="background:${bgStatus};color:${corStatus};border:1px solid ${corStatus}33;border-radius:20px;padding:3px 10px;font-size:.72em;font-weight:700;white-space:nowrap">${labelStatus}</div>
+                <span style="color:#ccc;font-size:.9em">›</span>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px;padding-top:10px;border-top:1px solid #f5f5f7">
+              <div style="text-align:center">
+                <div style="font-weight:800;font-size:.95em;color:#1c1c1e">${it.vendas.hoje}</div>
+                <div style="font-size:.68em;color:#888">Hoje</div>
+              </div>
+              <div style="text-align:center">
+                <div style="font-weight:800;font-size:.95em;color:#1c1c1e">${it.vendas.ontem}</div>
+                <div style="font-size:.68em;color:#888">Ontem</div>
+              </div>
+              <div style="text-align:center">
+                <div style="font-weight:800;font-size:.95em;color:#1c1c1e">${it.vendas.semana}</div>
+                <div style="font-size:.68em;color:#888">Esta semana</div>
+              </div>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  }
+
+  document.getElementById('est-lista').innerHTML = html;
+}
+
+async function verHistoricoProduto(id, nome) {
+  const modal = document.getElementById('est-modal');
+  const conteudo = document.getElementById('est-modal-conteudo');
+  modal.style.display = 'block';
+  conteudo.innerHTML = '<div style="text-align:center;padding:30px;color:#888">⏳ Carregando histórico...</div>';
+
+  try {
+    // Buscar entradas do produto
+    const [rEnt, rEst] = await Promise.all([
+      api('/estoque/entradas'),
+      api('/estoque/dashboard')
+    ]);
+    const dEnt = await rEnt.json();
+    const dEst = await rEst.json();
+
+    const item = (dEst.itens || []).find(i => i._id == id);
+    const entradas = (dEnt.entradas || []).filter(e =>
+      (e.itens || []).some(i => i.nome?.toLowerCase().trim() === nome.toLowerCase().trim())
+    ).slice(0, 15);
+
+    const corStatus = item?.status === 'ok' ? '#22c55e' : item?.status === 'baixo' ? '#f59e0b' : '#ef4444';
+
+    conteudo.innerHTML = `
+      <h3 style="margin:0 0 4px;font-size:1.1em">📦 ${nome}</h3>
+      <div style="color:#888;font-size:.8em;margin-bottom:16px">${item?.categoria || ''}</div>
+
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:18px">
+        <div style="background:#f8f8f8;border-radius:10px;padding:12px;text-align:center">
+          <div style="font-size:1.8em;font-weight:900;color:${corStatus}">${item?.estoqueAtual || 0}</div>
+          <div style="font-size:.75em;color:#888">Em estoque (${item?.unidade || 'Un'})</div>
+        </div>
+        <div style="background:#f8f8f8;border-radius:10px;padding:12px;text-align:center">
+          <div style="font-size:1.8em;font-weight:900;color:#6366f1">${item?.entradasMes || 0}</div>
+          <div style="font-size:.75em;color:#888">Entradas (30 dias)</div>
+        </div>
+        <div style="background:#f8f8f8;border-radius:10px;padding:12px;text-align:center">
+          <div style="font-size:1.8em;font-weight:900;color:#f97316">${item?.vendas?.hoje || 0}</div>
+          <div style="font-size:.75em;color:#888">Vendidos hoje</div>
+        </div>
+        <div style="background:#f8f8f8;border-radius:10px;padding:12px;text-align:center">
+          <div style="font-size:1.8em;font-weight:900;color:#f97316">${item?.vendas?.semana || 0}</div>
+          <div style="font-size:.75em;color:#888">Vendidos na semana</div>
+        </div>
+      </div>
+
+      <div style="font-weight:700;font-size:.85em;color:#555;margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px">📋 Histórico de Entradas</div>
+      ${entradas.length === 0 ? '<div style="color:#aaa;text-align:center;padding:20px;font-size:.85em">Nenhuma entrada registrada nos últimos 30 dias</div>' :
+        entradas.map(e => {
+          const it = (e.itens || []).find(i => i.nome?.toLowerCase().trim() === nome.toLowerCase().trim());
+          const dataFmt = new Date(e.dataEntrada || e.createdAt).toLocaleDateString('pt-BR');
+          const custo = it?.valorUnitario || it?.custo || 0;
+          return `<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid #f5f5f7;font-size:.85em">
+            <div>
+              <div style="font-weight:600">📅 ${dataFmt}</div>
+              <div style="color:#888;font-size:.8em">${e.fornecedor || 'Sem fornecedor'}</div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-weight:700">${it?.quantidade || 0} ${it?.unidade || 'Un'}</div>
+              ${custo > 0 ? `<div style="color:#f97316;font-size:.8em">R$ ${custo.toFixed(2)}/un</div>` : ''}
+            </div>
+          </div>`;
+        }).join('')
+      }
+    `;
+  } catch(e) {
+    conteudo.innerHTML = '<div style="color:#ef4444;padding:20px">Erro: ' + e.message + '</div>';
+  }
+}
+
+async function carregarEstoque() {
+  carregarEstoqueDashboard();
+}
 
 // ===== CÂMERA NOTA FISCAL =====
 let _cameraStream = null;

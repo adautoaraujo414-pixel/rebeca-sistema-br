@@ -1549,6 +1549,81 @@ router.delete('/estoque/entradas/:id', authDelivery, async (req, res) => {
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
+
+// ========== ESTOQUE DASHBOARD POR PRODUTO ==========
+router.get('/estoque/dashboard', authDelivery, async (req, res) => {
+    try {
+        const { EntradaInsumo } = require('../models/delivery.models');
+        const mongoose = require('mongoose');
+        const adminObjId = mongoose.Types.ObjectId.isValid(req.adminId)
+            ? new mongoose.Types.ObjectId(req.adminId) : null;
+
+        const itens = await ItemCardapio.find({ adminId: req.adminId })
+            .populate('categoriaId', 'nome emoji').sort({ nome: 1 }).lean();
+
+        const ha30dias = new Date(); ha30dias.setDate(ha30dias.getDate() - 30);
+        const entradas = await EntradaInsumo.find({ adminId: req.adminId, createdAt: { $gte: ha30dias } }).lean();
+
+        const hoje = new Date(); hoje.setHours(0,0,0,0);
+        const ontem = new Date(hoje); ontem.setDate(ontem.getDate() - 1);
+        const semanaAtras = new Date(hoje); semanaAtras.setDate(semanaAtras.getDate() - 7);
+
+        const pedidos = adminObjId ? await PedidoDelivery.find({
+            adminId: adminObjId,
+            status: { $in: ['entregue', 'pronto', 'confirmado'] },
+            createdAt: { $gte: semanaAtras }
+        }).lean() : [];
+
+        const vendasPorItem = {};
+        for (const ped of pedidos) {
+            const dataP = new Date(ped.createdAt); dataP.setHours(0,0,0,0);
+            for (const it of (ped.itens || [])) {
+                const k = (it.nome || '').toLowerCase().trim();
+                if (!vendasPorItem[k]) vendasPorItem[k] = { hoje: 0, ontem: 0, semana: 0 };
+                const qtd = it.quantidade || 1;
+                vendasPorItem[k].semana += qtd;
+                if (dataP.getTime() === hoje.getTime()) vendasPorItem[k].hoje += qtd;
+                if (dataP.getTime() === ontem.getTime()) vendasPorItem[k].ontem += qtd;
+            }
+        }
+
+        const entradasPorItem = {};
+        for (const ent of entradas) {
+            for (const it of (ent.itens || [])) {
+                const k = (it.nome || '').toLowerCase().trim();
+                if (!entradasPorItem[k]) entradasPorItem[k] = { qtd: 0, ultimaEntrada: null, valorUnitario: 0 };
+                entradasPorItem[k].qtd += it.quantidade || 0;
+                if (it.valorUnitario) entradasPorItem[k].valorUnitario = it.valorUnitario;
+                if (!entradasPorItem[k].ultimaEntrada || new Date(ent.createdAt) > new Date(entradasPorItem[k].ultimaEntrada))
+                    entradasPorItem[k].ultimaEntrada = ent.createdAt;
+            }
+        }
+
+        const result = itens.map(it => {
+            const k = (it.nome || '').toLowerCase().trim();
+            const vendas = vendasPorItem[k] || { hoje: 0, ontem: 0, semana: 0 };
+            const entInfo = entradasPorItem[k] || { qtd: 0, ultimaEntrada: null, valorUnitario: 0 };
+            const estAtual = it.estoqueAtual || 0;
+            const estMin = it.estoqueMinimo || 0;
+            const status = !it.estoqueAtivo ? 'inativo' : estAtual === 0 ? 'zerado' : estAtual <= estMin ? 'baixo' : 'ok';
+            return {
+                _id: it._id, nome: it.nome,
+                categoria: it.categoriaId?.nome || 'Sem categoria',
+                categoriaEmoji: it.categoriaId?.emoji || '📦',
+                unidade: it.unidade || 'Un',
+                estoqueAtual: estAtual, estoqueMinimo: estMin,
+                estoqueAtivo: it.estoqueAtivo || false, status,
+                vendas, ultimaEntrada: entInfo.ultimaEntrada,
+                entradasMes: entInfo.qtd,
+                valorUnitario: entInfo.valorUnitario || it.custoProducao || 0,
+                imagem: it.imagem || ''
+            };
+        });
+
+        res.json({ itens: result });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
 router.get('/estoque/barcode/:codigo', authDelivery, async (req, res) => {
     try {
         const item = await ItemCardapio.findOne({ adminId: req.adminId, codigoBarra: req.params.codigo, ativo: true }).lean();
