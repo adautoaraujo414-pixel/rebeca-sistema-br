@@ -6579,98 +6579,54 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Contas a Pagar (localStorage por ora)
-let _contasPagar = JSON.parse(localStorage.getItem('contasPagar')||'[]');
+let _contasPagar = []; // carregado via API
 
-function carregarContasPagar() {
+async function carregarContasPagar() {
   const lista = document.getElementById('contas-lista');
   if (!lista) return;
-  const agora = new Date();
-  const em7 = new Date(Date.now() + 7*24*60*60*1000);
-  const mesAtual = agora.getMonth();
-  let pendente=0, vencendo=0, pagoMes=0;
-  _contasPagar.forEach(c => {
-    const venc = new Date(c.vencimento);
-    if (c.pago && new Date(c.dataPagamento).getMonth()===mesAtual) pagoMes += c.valor||0;
-    else if (!c.pago) { pendente += c.valor||0; if (venc <= em7) vencendo += c.valor||0; }
-  });
-  const el = (id) => document.getElementById(id);
-  if (el('contas-pendente')) el('contas-pendente').textContent = 'R$ '+pendente.toFixed(2);
-  if (el('contas-vencendo')) el('contas-vencendo').textContent = 'R$ '+vencendo.toFixed(2);
-  if (el('contas-pago-mes')) el('contas-pago-mes').textContent = 'R$ '+pagoMes.toFixed(2);
-  if (!_contasPagar.length) { lista.innerHTML = '<div style="color:#888;text-align:center;padding:40px">Nenhuma conta cadastrada</div>'; return; }
-  lista.innerHTML = _contasPagar.map((c,i) => {
-    const venc = new Date(c.vencimento);
-    const atrasada = !c.pago && venc < agora;
-    const cor = c.pago ? '#22c55e' : (atrasada ? '#ef4444' : '#f59e0b');
-    return `<div style="background:#fff;border:1px solid #e8e8ed;border-radius:10px;padding:14px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
-      <div>
-        <div style="font-weight:700">${c.descricao}</div>
-        <div style="font-size:.8em;color:#888">${c.categoria||'Geral'} · Venc: ${venc.toLocaleDateString('pt-BR')} · ${c.fornecedor||''}</div>
-      </div>
-      <div style="display:flex;align-items:center;gap:10px">
-        <span style="font-size:1.1em;font-weight:900;color:${cor}">R$ ${(c.valor||0).toFixed(2)}</span>
-        <span style="background:${c.pago?'#dcfce7':atrasada?'#fee2e2':'#fef9c3'};color:${cor};padding:3px 10px;border-radius:20px;font-size:.75em;font-weight:700">${c.pago?'✅ Pago':atrasada?'❌ Atrasada':'⏳ Pendente'}</span>
-        ${!c.pago ? `<button onclick="pagarConta(${i})" style="background:#22c55e;color:#fff;border:none;border-radius:8px;padding:5px 12px;cursor:pointer;font-size:.8em">Pagar</button>` : ''}
-        <button onclick="removerConta(${i})" style="background:#ef4444;color:#fff;border:none;border-radius:8px;padding:5px 10px;cursor:pointer;font-size:.8em">✕</button>
-      </div>
-    </div>`;
-  }).join('');
+  try {
+    const r = await api('/contas-pagar');
+    const contas = await r.json();
+    _contasPagar = Array.isArray(contas) ? contas : [];
+    const agora = new Date();
+    const em7 = new Date(Date.now() + 7*24*60*60*1000);
+    const mesAtual = agora.getMonth();
+    let pendente=0, vencendo=0, pagoMes=0;
+    _contasPagar.forEach(c => {
+      const venc = new Date(c.vencimento);
+      if (c.pago && new Date(c.dataPagamento||c.updatedAt).getMonth()===mesAtual) pagoMes += c.valor||0;
+      else if (!c.pago) { pendente += c.valor||0; if (venc <= em7) vencendo += c.valor||0; }
+    });
+    const el = (id) => document.getElementById(id);
+    if (el('contas-pendente')) el('contas-pendente').textContent = 'R$ '+pendente.toFixed(2);
+    if (el('contas-vencendo')) el('contas-vencendo').textContent = 'R$ '+vencendo.toFixed(2);
+    if (el('contas-pago-mes')) el('contas-pago-mes').textContent = 'R$ '+pagoMes.toFixed(2);
+    if (!_contasPagar.length) { lista.innerHTML = '<div style="color:#888;text-align:center;padding:40px">Nenhuma conta cadastrada</div>'; return; }
+    lista.innerHTML = _contasPagar.map((c) => {
+      const venc = new Date(c.vencimento);
+      const atrasada = !c.pago && venc < agora;
+      const cor = c.pago ? '#22c55e' : (atrasada ? '#ef4444' : '#f59e0b');
+      return `<div style="background:#fff;border:1px solid #e8e8ed;border-radius:10px;padding:14px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+        <div>
+          <div style="font-weight:700">${c.descricao}</div>
+          <div style="font-size:.8em;color:#888">${c.categoria||'Geral'} · Venc: ${venc.toLocaleDateString('pt-BR')}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:1.1em;font-weight:900;color:${cor}">R$ ${(c.valor||0).toFixed(2)}</span>
+          <span style="background:${c.pago?'#dcfce7':atrasada?'#fee2e2':'#fef9c3'};color:${cor};padding:3px 10px;border-radius:20px;font-size:.78em;font-weight:700">${c.pago?'PAGO':atrasada?'ATRASADA':'PENDENTE'}</span>
+          ${!c.pago ? `<button onclick="pagarConta('${c._id}')" style="background:#22c55e;color:#fff;border:none;border-radius:8px;padding:6px 12px;cursor:pointer;font-size:.8em;font-weight:700">✓ Pagar</button>` : ''}
+          <button onclick="excluirConta('${c._id}')" style="background:#ef4444;color:#fff;border:none;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:.8em">✕</button>
+        </div>
+      </div>`;
+    }).join('');
+  } catch(e) { console.error('carregarContasPagar:', e); }
 }
 
-function abrirModalConta() {
-  const desc = prompt('Descrição da conta:'); if (!desc) return;
-  const valor = parseFloat(prompt('Valor (R$):')||0); if (!valor) return;
-  const venc = prompt('Vencimento (DD/MM/AAAA):');
-  const cat = prompt('Categoria (ex: Fornecedor, Aluguel, Energia, Outros):') || 'Outros';
-  const forn = prompt('Fornecedor (opcional):') || '';
-  const partes = (venc||'').split('/');
-  const dataVenc = partes.length===3 ? new Date(partes[2],partes[1]-1,partes[0]) : new Date();
-  _contasPagar.push({ descricao:desc, valor, vencimento:dataVenc.toISOString(), categoria:cat, fornecedor:forn, pago:false, criadoEm:new Date().toISOString() });
-  localStorage.setItem('contasPagar', JSON.stringify(_contasPagar));
-  carregarContasPagar();
-}
-
-
-function removerConta(i) {
-  if (!confirm('Remover esta conta?')) return;
-  _contasPagar.splice(i,1);
-  localStorage.setItem('contasPagar', JSON.stringify(_contasPagar));
-  carregarContasPagar();
-}
 
 // Fornecedores
-function carregarFornecedores() {
-  const lista = document.getElementById('forn-lista');
-  if (!lista) return;
-  const forns = JSON.parse(localStorage.getItem('fornecedores')||'[]');
-  if (!forns.length) { lista.innerHTML = '<div style="color:#888;text-align:center;padding:40px">Nenhum fornecedor cadastrado</div>'; return; }
-  lista.innerHTML = forns.map((f,i) => `
-    <div style="background:#fff;border:1px solid #e8e8ed;border-radius:10px;padding:16px;margin-bottom:10px">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px">
-        <div>
-          <div style="font-weight:700;font-size:1em">${f.nome} <span style="color:#888;font-weight:400;font-size:.85em">· ${f.empresa||''}</span></div>
-          <div style="font-size:.8em;color:#888;margin-top:4px">📱 ${f.whatsapp||'—'} · 📍 ${f.cidade||'—'}</div>
-          ${f.produtos?.length ? `<div style="font-size:.75em;color:#f97316;margin-top:4px">${f.produtos.map(p=>p.nome+' R$'+p.preco).join(' · ')}</div>` : ''}
-        </div>
-        <div style="display:flex;gap:8px">
-          <button onclick="whatsappFornecedor(${i})" style="background:#25d366;color:#fff;border:none;border-radius:8px;padding:6px 12px;cursor:pointer;font-size:.8em">📱 WhatsApp</button>
-          <button onclick="removerFornecedor(${i})" style="background:#ef4444;color:#fff;border:none;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:.8em">✕</button>
-        </div>
-      </div>
-    </div>`).join('');
-}
-
-
-function removerFornecedor(i) {
-  if (!confirm('Remover fornecedor?')) return;
-  const forns = JSON.parse(localStorage.getItem('fornecedores')||'[]');
-  forns.splice(i,1);
-  localStorage.setItem('fornecedores', JSON.stringify(forns));
-  carregarFornecedores();
-}
 
 function whatsappFornecedor(i) {
-  const forns = JSON.parse(localStorage.getItem('fornecedores')||'[]');
+  const forns = Array.isArray(window._fornecedores) ? window._fornecedores : [];
   const f = forns[i];
   if (!f?.whatsapp) return alert('WhatsApp não cadastrado');
   const num = f.whatsapp.replace(/\D/g,'');
@@ -6730,103 +6686,42 @@ async function carregarFinanceiroLucro() {
   } catch(e) { console.error('fl:', e); }
 }
 
-function carregarFinanceiroContas() {
-  const agora = new Date(), em7 = new Date(Date.now()+7*864e5), mesAtual = agora.getMonth();
-  let contas = JSON.parse(localStorage.getItem('fin_contas_adm')||'[]');
-  let pendente=0, vencendo=0, pagoMes=0;
-  contas.forEach(c => {
-    const venc = new Date(c.vencimento);
-    if(c.pago && new Date(c.dataPagamento).getMonth()===mesAtual) pagoMes+=c.valor||0;
-    else if(!c.pago) { pendente+=c.valor||0; if(venc<=em7) vencendo+=c.valor||0; }
-  });
-  const el = id => document.getElementById(id);
-  if(el('fc2-pendente')) el('fc2-pendente').textContent = 'R$ '+pendente.toFixed(2);
-  if(el('fc2-vencendo')) el('fc2-vencendo').textContent = 'R$ '+vencendo.toFixed(2);
-  if(el('fc2-pago')) el('fc2-pago').textContent = 'R$ '+pagoMes.toFixed(2);
-  const lista = el('fc2-lista');
-  if(!lista) return;
-  if(!contas.length) { lista.innerHTML = '<div style="text-align:center;color:#888;padding:40px">Nenhuma conta cadastrada.<br><button onclick="fcNovaContaAdm()" style="margin-top:12px;padding:10px 20px;background:#f97316;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:700">+ Adicionar Conta</button></div>'; return; }
-  lista.innerHTML = contas.map((c,i) => {
-    const venc = new Date(c.vencimento), atrasada = !c.pago && venc<agora;
-    const cor = c.pago?'#22c55e':atrasada?'#ef4444':'#f59e0b';
-    return '<div style="background:#fff;border:1px solid #e8e8ed;border-radius:10px;padding:14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">'+
-      '<div><div style="font-weight:700">'+c.descricao+'</div><div style="font-size:.8em;color:#888">'+(c.categoria||'Geral')+' · Venc: '+venc.toLocaleDateString('pt-BR')+(c.fornecedor?' · '+c.fornecedor:'')+'</div></div>'+
-      '<div style="display:flex;align-items:center;gap:8px">'+
-        '<span style="font-weight:800;color:'+cor+'">R$ '+(c.valor||0).toFixed(2)+'</span>'+
-        '<span style="background:'+(c.pago?'#dcfce7':atrasada?'#fee2e2':'#fef9c3')+';color:'+cor+';padding:2px 8px;border-radius:20px;font-size:.75em;font-weight:700">'+(c.pago?'✅ Pago':atrasada?'❌ Atrasada':'⏳ Pendente')+'</span>'+
-        (!c.pago?'<button onclick="fcPagarContaAdm('+i+')" style="background:#22c55e;color:#fff;border:none;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:.8em">Pagar</button>':'')+
-        '<button onclick="fcRemoverContaAdm('+i+')" style="background:#ef4444;color:#fff;border:none;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:.8em">✕</button>'+
-      '</div>'+
-    '</div>';
-  }).join('');
+async function carregarFinanceiroContas() {
+  try {
+    const r = await api('/contas-pagar');
+    const contas = await r.json();
+    if (!Array.isArray(contas)) return;
+    const agora = new Date(), em7 = new Date(Date.now()+7*864e5), mesAtual = agora.getMonth();
+    let pendente=0, vencendo=0, pagoMes=0;
+    contas.forEach(c => {
+      const venc = new Date(c.vencimento);
+      if(c.pago && new Date(c.dataPagamento||c.updatedAt).getMonth()===mesAtual) pagoMes+=c.valor||0;
+      else if(!c.pago) { pendente+=c.valor||0; if(venc<=em7) vencendo+=c.valor||0; }
+    });
+    const el = id => document.getElementById(id);
+    if(el('fc2-pendente')) el('fc2-pendente').textContent = 'R$ '+pendente.toFixed(2);
+    if(el('fc2-vencendo')) el('fc2-vencendo').textContent = 'R$ '+vencendo.toFixed(2);
+    if(el('fc2-pago')) el('fc2-pago').textContent = 'R$ '+pagoMes.toFixed(2);
+    const lista = el('fc2-lista');
+    if(!lista) return;
+    if(!contas.length) { lista.innerHTML = '<div style="text-align:center;color:#888;padding:40px">Nenhuma conta cadastrada</div>'; return; }
+    lista.innerHTML = contas.map(c => {
+      const venc = new Date(c.vencimento), atrasada = !c.pago && venc<agora;
+      const cor = c.pago?'#22c55e':atrasada?'#ef4444':'#f59e0b';
+      return '<div style="background:#fff;border:1px solid #e8e8ed;border-radius:10px;padding:14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">'+
+        '<div><div style="font-weight:700">'+c.descricao+'</div><div style="font-size:.8em;color:#888">'+(c.categoria||'Geral')+' · Venc: '+venc.toLocaleDateString('pt-BR')+'</div></div>'+
+        '<div style="display:flex;align-items:center;gap:8px">'+
+          '<span style="font-weight:800;color:'+cor+'">R$ '+(c.valor||0).toFixed(2)+'</span>'+
+          '<span style="background:'+(c.pago?'#dcfce7':atrasada?'#fee2e2':'#fef9c3')+';color:'+cor+';padding:2px 10px;border-radius:20px;font-size:.75em;font-weight:700">'+(c.pago?'PAGO':atrasada?'ATRASADA':'PENDENTE')+'</span>'+
+          (!c.pago?'<button onclick="pagarConta(\''+c._id+'\')" style="background:#22c55e;color:#fff;border:none;border-radius:8px;padding:5px 10px;cursor:pointer;font-size:.78em;font-weight:700">✓ Pagar</button>':'')+
+          '<button onclick="excluirConta(\''+c._id+'\')" style="background:#ef4444;color:#fff;border:none;border-radius:8px;padding:5px 8px;cursor:pointer;font-size:.78em">✕</button>'+
+        '</div>'+
+      '</div>';
+    }).join('');
+  } catch(e) { console.error('carregarFinanceiroContas:', e); }
 }
 
-function fcNovaContaAdm() {
-  const desc = prompt('Descrição:'); if(!desc) return;
-  const valor = parseFloat(prompt('Valor (R$):')||0); if(!valor) return;
-  const venc = prompt('Vencimento (DD/MM/AAAA):') || '';
-  const cat = prompt('Categoria (Fornecedor/Aluguel/Energia/Outros):') || 'Outros';
-  const forn = prompt('Fornecedor (opcional):') || '';
-  const p = (venc||'').split('/');
-  const dataVenc = p.length===3 ? new Date(p[2],p[1]-1,p[0]) : new Date();
-  const contas = JSON.parse(localStorage.getItem('fin_contas_adm')||'[]');
-  contas.push({descricao:desc,valor,vencimento:dataVenc.toISOString(),categoria:cat,fornecedor:forn,pago:false,criadoEm:new Date().toISOString()});
-  localStorage.setItem('fin_contas_adm', JSON.stringify(contas));
-  carregarFinanceiroContas();
-}
-function fcPagarContaAdm(i) {
-  const contas = JSON.parse(localStorage.getItem('fin_contas_adm')||'[]');
-  contas[i].pago=true; contas[i].dataPagamento=new Date().toISOString();
-  localStorage.setItem('fin_contas_adm', JSON.stringify(contas));
-  carregarFinanceiroContas();
-}
-function fcRemoverContaAdm(i) {
-  if(!confirm('Remover?')) return;
-  const contas = JSON.parse(localStorage.getItem('fin_contas_adm')||'[]');
-  contas.splice(i,1); localStorage.setItem('fin_contas_adm', JSON.stringify(contas));
-  carregarFinanceiroContas();
-}
 
-function carregarFinanceiroFornecedores() {
-  const lista = document.getElementById('forn-lista');
-  if(!lista) return;
-  const forns = JSON.parse(localStorage.getItem('fin_fornecedores_adm')||'[]');
-  if(!forns.length) { lista.innerHTML = '<div style="text-align:center;color:#888;padding:40px">Nenhum fornecedor.<br><button onclick="ffNovoFornAdm()" style="margin-top:12px;padding:10px 20px;background:#f97316;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:700">+ Adicionar</button></div>'; return; }
-  lista.innerHTML = forns.map((f,i) =>
-    '<div style="background:#fff;border:1px solid #e8e8ed;border-radius:10px;padding:16px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">'+
-      '<div><div style="font-weight:700">'+f.nome+(f.empresa?' <span style="color:#888;font-weight:400;font-size:.85em">· '+f.empresa+'</span>':'')+'</div>'+
-        '<div style="font-size:.8em;color:#888;margin-top:3px">📱 '+(f.whatsapp||'—')+' · 📍 '+(f.cidade||'—')+'</div>'+
-        (f.obs?'<div style="font-size:.78em;color:#aaa;margin-top:2px;font-style:italic">'+f.obs+'</div>':'')+
-      '</div>'+
-      '<div style="display:flex;gap:8px">'+
-        (f.whatsapp?'<button onclick="ffWhatsappAdm('+i+')" style="background:#25d366;color:#fff;border:none;border-radius:8px;padding:6px 12px;cursor:pointer;font-size:.8em">📱 WhatsApp</button>':'')+
-        '<button onclick="ffRemoverAdm('+i+')" style="background:#ef4444;color:#fff;border:none;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:.8em">✕</button>'+
-      '</div>'+
-    '</div>'
-  ).join('');
-}
-function ffNovoFornAdm() {
-  const nome = prompt('Nome:'); if(!nome) return;
-  const empresa = prompt('Empresa:') || '';
-  const whatsapp = prompt('WhatsApp (com DDD):') || '';
-  const cidade = prompt('Cidade:') || '';
-  const obs = prompt('Observações:') || '';
-  const forns = JSON.parse(localStorage.getItem('fin_fornecedores_adm')||'[]');
-  forns.push({nome,empresa,whatsapp,cidade,obs,criadoEm:new Date().toISOString()});
-  localStorage.setItem('fin_fornecedores_adm', JSON.stringify(forns));
-  carregarFinanceiroFornecedores();
-}
-function ffRemoverAdm(i) {
-  if(!confirm('Remover?')) return;
-  const forns = JSON.parse(localStorage.getItem('fin_fornecedores_adm')||'[]');
-  forns.splice(i,1); localStorage.setItem('fin_fornecedores_adm', JSON.stringify(forns));
-  carregarFinanceiroFornecedores();
-}
-function ffWhatsappAdm(i) {
-  const forns = JSON.parse(localStorage.getItem('fin_fornecedores_adm')||'[]');
-  const f = forns[i]; if(!f?.whatsapp) return alert('WhatsApp não cadastrado');
-  window.open('https://wa.me/55'+f.whatsapp.replace(/\D/g,'')+'?text=Olá+'+encodeURIComponent(f.nome)+'!','_blank');
-}
 
 // ===== ENTRADA DE INSUMOS =====
 function adicionarItemEI(nome='', unidade='', quantidade=1, custo=0, validade='') {
