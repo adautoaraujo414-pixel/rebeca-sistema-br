@@ -33,6 +33,10 @@ const authDelivery = async (req, res, next) => {
 // ========== UTILITÁRIO: BAIXA AUTOMÁTICA DE ESTOQUE ==========
 async function baixarEstoquePedido(pedido, adminId) {
     try {
+        const config = await ConfigDelivery.findOne({ adminId }).lean();
+        const alertar = config?.alertaEstoqueBaixo;
+        const telefoneDono = config?.telefoneDono || config?.telefoneContato || '';
+
         for (const it of (pedido.itens || [])) {
             if (!it.itemId) continue;
             const item = await ItemCardapio.findOne({ _id: it.itemId, adminId, estoqueAtivo: true });
@@ -43,6 +47,27 @@ async function baixarEstoquePedido(pedido, adminId) {
                 estoqueAtual: novoEstoque,
                 ...(novoEstoque <= 0 ? { disponivel: false } : {})
             });
+
+            // Avisar dono se estoque baixo/zerado e alerta ativado
+            if (alertar && telefoneDono && novoEstoque <= (item.estoqueMinimo || 0)) {
+                try {
+                    const EvolutionMultiService = require('../services/evolution-multi.service');
+                    const inst = await InstanciaWhatsapp.findOne({ adminId, status: { $in: ['conectado','open'] } }).lean();
+                    if (inst) {
+                        const emoji = novoEstoque <= 0 ? '🔴' : '⚠️';
+                        const situacao = novoEstoque <= 0 ? 'ZEROU' : 'está BAIXO';
+                        const msg = `${emoji} *Alerta de Estoque*
+
+O produto *${item.nome}* ${situacao}!
+
+📦 Estoque atual: *${novoEstoque} ${item.unidade || 'Un'}*
+⚠️ Mínimo configurado: ${item.estoqueMinimo || 0}
+
+_Acesse o painel para repor o estoque._`;
+                        await EvolutionMultiService.enviarMensagem(inst._id, telefoneDono, msg);
+                    }
+                } catch(ea) { console.log('[ESTOQUE] Erro alerta dono:', ea.message); }
+            }
         }
     } catch(e) { console.log('[ESTOQUE] Erro baixa automatica:', e.message); }
 }

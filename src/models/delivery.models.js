@@ -221,7 +221,8 @@ const ConfigDeliverySchema = new mongoose.Schema({
     telefoneContato: { type: String, default: '' },
     enderecoCompleto: { type: String, default: '' },
     cidadeEstado: { type: String, default: '' },
-    msgRodapeCupom: { type: String, default: 'Obrigado pela preferência! Volte sempre!' }
+    msgRodapeCupom: { type: String, default: 'Obrigado pela preferência! Volte sempre!' },
+    alertaEstoqueBaixo: { type: Boolean, default: false }, // Rebeca avisa dono quando estoque baixar
 }, { timestamps: true });
 
 const CategoriaCardapio = mongoose.model('CategoriaCardapio', CategoriaCardapioSchema);

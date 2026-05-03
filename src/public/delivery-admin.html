@@ -1183,6 +1183,16 @@ async function carregarConfigNF() {
                                 <label style="font-size:.8em;font-weight:700;color:#555;display:block;margin-bottom:5px;">Telefone de Contato</label>
                                 <input type="text" id="cfgTelefoneContato" placeholder="Ex: (34) 99999-9999" style="width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:8px;font-size:.9em;">
                             </div>
+                            <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center">
+                                <div>
+                                    <div style="font-weight:700;font-size:.88em;color:#16a34a">🔔 Alertas de Estoque Baixo</div>
+                                    <div style="font-size:.75em;color:#555;margin-top:2px">Rebeca avisa o dono pelo WhatsApp quando um produto zerar ou ficar abaixo do mínimo</div>
+                                </div>
+                                <label style="position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0">
+                                    <input type="checkbox" id="cfgAlertaEstoque" style="opacity:0;width:0;height:0">
+                                    <span onclick="this.previousElementSibling.checked=!this.previousElementSibling.checked" style="position:absolute;cursor:pointer;inset:0;background:#ccc;border-radius:24px;transition:.3s"></span>
+                                </label>
+                            </div>
                             <div>
                                 <label style="font-size:.8em;font-weight:700;color:#555;display:block;margin-bottom:5px;">Endereço Completo</label>
                                 <input type="text" id="cfgEnderecoCompleto" placeholder="Ex: Rua das Flores, 123, Centro, Uberlândia-MG" style="width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:8px;font-size:.9em;">
@@ -2713,6 +2723,7 @@ async function _salvarItemReal() {
             if (cfgPix) cfgPix.addEventListener('change', function(){ document.getElementById('grupoPix').style.display = this.checked ? 'flex' : 'none'; document.getElementById('grupoPixNome').style.display = this.checked ? 'flex' : 'none'; document.getElementById('grupoPixBanco').style.display = this.checked ? 'flex' : 'none'; });
             if(document.getElementById('cfgCnpj')) document.getElementById('cfgCnpj').value = c.cnpj||'';
             if(document.getElementById('cfgTelefoneContato')) document.getElementById('cfgTelefoneContato').value = c.telefoneContato||'';
+        if(document.getElementById('cfgAlertaEstoque')) document.getElementById('cfgAlertaEstoque').checked = !!(c.alertaEstoqueBaixo);o||'';
             if(document.getElementById('cfgEnderecoCompleto')) document.getElementById('cfgEnderecoCompleto').value = c.enderecoCompleto||'';
             if(document.getElementById('cfgCidadeEstado')) document.getElementById('cfgCidadeEstado').value = c.cidadeEstado||'';
             if(document.getElementById('cfgMsgRodape')) document.getElementById('cfgMsgRodape').value = c.msgRodapeCupom||'';
@@ -2766,7 +2777,8 @@ async function _salvarItemReal() {
                 mensagemPedidoConfirmado: g('cfgMsgConfirmado')?.value || '',
                 mensagemPedidoPronto:     g('cfgMsgPronto')?.value || '',
                 logo:                     g('cfgLogoUrl')?.value || '',
-                nomeEstabelecimento:      g('cfgNomeEstabelecimento')?.value || ''
+                nomeEstabelecimento:      g('cfgNomeEstabelecimento')?.value || '',
+                alertaEstoqueBaixo:       !!(g('cfgAlertaEstoque')?.checked)
             })});
             // Também salvar logo e nome no AdminDelivery para rotas públicas
             const logoVal = g('cfgLogoUrl')?.value || '';
