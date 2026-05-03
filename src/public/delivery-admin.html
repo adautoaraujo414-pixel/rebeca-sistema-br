@@ -6155,12 +6155,13 @@ function adicionarItemEI(nome='', unidade='', quantidade=1, custo=0) {
   const lista = document.getElementById('ei-itens-lista');
   if (!lista) return;
   const row = document.createElement('div');
-  row.style.cssText = 'display:grid;grid-template-columns:2fr 100px 90px 110px 32px;gap:8px;align-items:center;background:#f9f9f9;padding:8px;border-radius:10px;border:1px solid #eee;margin-bottom:4px';
+  row.style.cssText = 'display:grid;grid-template-columns:2fr 100px 90px 110px 110px 32px;gap:8px;align-items:center;background:#f9f9f9;padding:8px;border-radius:10px;border:1px solid #eee;margin-bottom:4px';
   const unidades = ['Un','Kg','g','L','ml','Cx','Pct','Fd','Dz'];
   const opts = unidades.map(u => `<option value="${u}" ${u===unidade?'selected':''}>${u}</option>`).join('');
   row.innerHTML = `
     <input class="ei-nome" placeholder="📦 Nome do item (obrigatório)" value="${nome}" style="padding:9px 12px;border:1px solid #ddd;border-radius:8px;font-size:.9em">
     <select class="ei-unidade" style="padding:9px 8px;border:1px solid #ddd;border-radius:8px;font-size:.9em;background:#fff"><option value="">Unidade</option>${opts}</select>
+    <input class="ei-validade" type="date" title="Validade" style="padding:9px 8px;border:1px solid #ddd;border-radius:8px;font-size:.85em">
     <input class="ei-qtd" type="number" placeholder="Qtd" value="${quantidade}" min="0" step="0.01" style="padding:8px;border:1px solid #ddd;border-radius:7px">
     <input class="ei-custo" type="number" placeholder="Custo R$" value="${custo}" min="0" step="0.01" style="padding:8px;border:1px solid #ddd;border-radius:7px">
     <button onclick="this.closest('div').remove()" style="padding:6px;background:#fee2e2;border:none;border-radius:7px;cursor:pointer;color:#ef4444">✕</button>
@@ -6204,6 +6205,7 @@ async function salvarEntradaInsumos() {
   const itens = Array.from(rows).map(r => ({
     nome: r.querySelector('.ei-nome')?.value || '',
     unidade: r.querySelector('.ei-unidade')?.value || 'Un',
+    validade: r.querySelector('.ei-validade')?.value || '',
     quantidade: parseFloat(r.querySelector('.ei-qtd')?.value) || 0,
     valorUnitario: parseFloat(r.querySelector('.ei-custo')?.value) || 0,
     fornecedor
@@ -6251,7 +6253,7 @@ async function carregarHistoricoEI() {
       const total = (e.itens||[]).reduce((s,i) => s + (i.valorUnitario||0)*(i.quantidade||0), 0);
       const itensHtml = (e.itens||[]).map(i => `
         <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f5f5f7;font-size:.85em">
-          <span>📦 <b>${i.nome||'-'}</b> — ${i.quantidade||0} ${i.unidade||'Un'}</span>
+          <span>📦 <b>${i.nome||'-'}</b> — ${i.quantidade||0} ${i.unidade||'Un'}${i.validade ? ' · ⏳ val: '+new Date(i.validade).toLocaleDateString("pt-BR") : ''}</span>
           <span style="color:#f97316;font-weight:700">R$ ${((i.valorUnitario||0)*(i.quantidade||0)).toFixed(2)}</span>
         </div>`).join('');
       const fotoHtml = e.notaFiscalBase64 ? `<img src="data:image/jpeg;base64,${e.notaFiscalBase64}" style="max-width:100%;border-radius:8px;margin-top:10px">` : '';
