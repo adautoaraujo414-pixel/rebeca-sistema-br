@@ -292,6 +292,7 @@ router.post('/cardapio', authDelivery, async (req, res) => {
             if (urlImagem) dados.imagem = urlImagem;
         }
         const item = await ItemCardapio.create(dados);
+        try { SseService.emitir(req.adminId.toString(), 'cardapio_atualizado', { acao: 'criado', itemId: item._id }); } catch(_){}
         res.json(item);
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
@@ -321,6 +322,7 @@ router.put('/cardapio/:id', authDelivery, async (req, res) => {
             dados,
             { new: true }
         );
+        try { SseService.emitir(req.adminId.toString(), 'cardapio_atualizado', { acao: 'atualizado', itemId: req.params.id }); } catch(_){}
         res.json(item);
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
@@ -328,6 +330,7 @@ router.put('/cardapio/:id', authDelivery, async (req, res) => {
 router.delete('/cardapio/:id', authDelivery, async (req, res) => {
     try {
         await ItemCardapio.findOneAndUpdate({ _id: req.params.id, adminId: req.adminId }, { ativo: false });
+        try { SseService.emitir(req.adminId.toString(), 'cardapio_atualizado', { acao: 'removido', itemId: req.params.id }); } catch(_){}
         res.json({ sucesso: true });
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
@@ -2687,9 +2690,15 @@ router.post('/cardapio/confirmar-transcricao', authDelivery, async (req, res) =>
                     itemDoc.descricao = item.descricao || itemDoc.descricao;
                     itemDoc.ativo = true;
                     itemDoc.categoriaId = categoriaDoc._id;
+                    if (item.estoqueDia > 0) {
+                        itemDoc.estoqueAtivo = true;
+                        itemDoc.estoqueAtual = parseInt(item.estoqueDia);
+                        itemDoc.estoqueMinimo = Math.max(1, Math.floor(item.estoqueDia * 0.1));
+                    }
                     await itemDoc.save();
                 } else {
                     // Criar novo item
+                    const estDia = parseInt(item.estoqueDia) || 0;
                     itemDoc = await ItemCardapio.create({
                         adminId: req.adminId,
                         categoriaId: categoriaDoc._id,
@@ -2698,7 +2707,11 @@ router.post('/cardapio/confirmar-transcricao', authDelivery, async (req, res) =>
                         preco: item.preco || 0,
                         ativo: true,
                         ordem: totalItens,
-                        imagem: null
+                        imagem: null,
+                        estoqueAtivo: estDia > 0,
+                        estoqueAtual: estDia,
+                        estoqueMinimo: Math.max(1, Math.floor(estDia * 0.1)),
+                        disponivel: estDia > 0 || true
                     });
                 }
 
@@ -2715,6 +2728,8 @@ router.post('/cardapio/confirmar-transcricao', authDelivery, async (req, res) =>
             }
         }
 
+        try { SseService.emitir(req.adminId.toString(), 'cardapio_atualizado', { acao: 'transcricao', categorias: totalCats, itens: totalItens }); } catch(_){}
+        try { SseService.emitir(req.adminId.toString(), 'cardapio_atualizado', { acao: 'transcricao', categorias: totalCats, itens: totalItens }); } catch(_){}
         res.json({ sucesso: true, categorias: totalCats, itens: totalItens });
     } catch(e) { 
         console.error('[TRANSCRICAO]', e);
