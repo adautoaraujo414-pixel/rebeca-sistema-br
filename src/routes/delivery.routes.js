@@ -2874,4 +2874,58 @@ router.get('/mesa/conta', async (req, res) => {
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
+// ========== LUCRO POR PRODUTO (Relatório Financeiro) ==========
+router.get('/lucro-produtos', authDelivery, async (req, res) => {
+    try {
+        const { dataIni, dataFim } = req.query;
+        const filtro = { adminId: req.adminId, status: 'entregue' };
+        if (dataIni || dataFim) {
+            filtro.createdAt = {};
+            if (dataIni) filtro.createdAt.$gte = new Date(dataIni + 'T00:00:00');
+            if (dataFim) filtro.createdAt.$lte = new Date(dataFim + 'T23:59:59');
+        }
+        const pedidos = await PedidoDelivery.find(filtro).lean();
+
+        // Agrupar por produto
+        const mapa = {};
+        for (const p of pedidos) {
+            for (const it of (p.itens || [])) {
+                const nome = it.nome || 'Item';
+                const qtd = it.quantidade || 1;
+                const venda = (it.subtotal || (it.precoUnitario || 0) * qtd);
+                if (!mapa[nome]) mapa[nome] = { nome, qtd: 0, totalVendas: 0, custoTotal: 0, lucroTotal: 0 };
+                mapa[nome].qtd += qtd;
+                mapa[nome].totalVendas += venda;
+                // Buscar custo do item no cardápio
+                if (it.itemId) {
+                    const item = await ItemCardapio.findById(it.itemId).select('custoProducao precoCompra').lean();
+                    if (item) {
+                        const custo = (item.custoProducao || item.precoCompra || 0) * qtd;
+                        mapa[nome].custoTotal += custo;
+                        mapa[nome].lucroTotal += venda - custo;
+                    } else {
+                        mapa[nome].lucroTotal += venda;
+                    }
+                } else {
+                    mapa[nome].lucroTotal += venda;
+                }
+            }
+        }
+
+        const itens = Object.values(mapa)
+            .sort((a, b) => b.totalVendas - a.totalVendas)
+            .map(it => ({
+                ...it,
+                margem: it.totalVendas > 0 ? ((it.lucroTotal / it.totalVendas) * 100).toFixed(1) : '0.0'
+            }));
+
+        const totalVendas = itens.reduce((s, i) => s + i.totalVendas, 0);
+        const totalLucro = itens.reduce((s, i) => s + i.lucroTotal, 0);
+        const totalCusto = itens.reduce((s, i) => s + i.custoTotal, 0);
+        const margemGeral = totalVendas > 0 ? ((totalLucro / totalVendas) * 100).toFixed(1) : '0.0';
+
+        res.json({ itens, totalVendas, totalLucro, totalCusto, margemGeral });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
 module.exports = router;
