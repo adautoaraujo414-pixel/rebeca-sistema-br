@@ -1432,13 +1432,50 @@ router.get('/caixa/stats', authDelivery, async (req, res) => {
 // Todos pedidos do dia (WhatsApp + Caixa) para o caixa
 router.get('/caixa/todos', authDelivery, async (req, res) => {
     try {
-        const hoje = new Date();
-        hoje.setHours(0,0,0,0);
-        const pedidos = await PedidoDelivery.find({
-            adminId: req.adminId,
-            createdAt: { $gte: hoje }
-        }).sort({ createdAt: -1 });
+        const { dataIni, dataFim, tipo } = req.query;
+        const filtro = { adminId: req.adminId };
+
+        if (dataIni || dataFim) {
+            filtro.createdAt = {};
+            if (dataIni) {
+                const ini = new Date(dataIni); ini.setHours(0,0,0,0);
+                filtro.createdAt.$gte = ini;
+            }
+            if (dataFim) {
+                const fim = new Date(dataFim); fim.setHours(23,59,59,999);
+                filtro.createdAt.$lte = fim;
+            }
+        } else {
+            // padrão: hoje
+            const hoje = new Date(); hoje.setHours(0,0,0,0);
+            filtro.createdAt = { $gte: hoje };
+        }
+
+        // Tipo: 'fechamentos' = retorna CaixaDelivery, senão PedidoDelivery
+        if (tipo === 'fechamentos') {
+            const CaixaDelivery = require('../models/delivery.models').CaixaDelivery;
+            const caixas = await CaixaDelivery.find(filtro).sort({ createdAt: -1 }).lean();
+            return res.json({ caixas });
+        }
+
+        const pedidos = await PedidoDelivery.find(filtro).sort({ createdAt: -1 });
         res.json(pedidos);
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// ========== CAIXA — FECHAMENTOS COM FILTRO DE DATAS ==========
+router.get('/caixa/fechamentos', authDelivery, async (req, res) => {
+    try {
+        const { dataIni, dataFim } = req.query;
+        const filtro = { adminId: req.adminId, status: 'fechado' };
+        if (dataIni || dataFim) {
+            filtro.dataFechamento = {};
+            if (dataIni) { const ini = new Date(dataIni); ini.setHours(0,0,0,0); filtro.dataFechamento.$gte = ini; }
+            if (dataFim) { const fim = new Date(dataFim); fim.setHours(23,59,59,999); filtro.dataFechamento.$lte = fim; }
+        }
+        const { CaixaDelivery } = require('../models/delivery.models');
+        const caixas = await CaixaDelivery.find(filtro).sort({ dataFechamento: -1 }).lean();
+        res.json({ caixas });
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
@@ -1456,6 +1493,17 @@ router.get('/caixa/entregadores-ativos', authDelivery, async (req, res) => {
 // ========== ESTOQUE ==========
 
 // Buscar item por código de barras
+// Histórico de entradas de insumos
+router.get('/estoque/entradas', authDelivery, async (req, res) => {
+    try {
+        const EntradaInsumo = require('../models/delivery.models').EntradaInsumo;
+        if (!EntradaInsumo) return res.json({ entradas: [] });
+        const entradas = await EntradaInsumo.find({ adminId: req.adminId })
+            .sort({ createdAt: -1 }).limit(50).lean();
+        res.json({ entradas });
+    } catch(e) { res.json({ entradas: [] }); }
+});
+
 router.get('/estoque/barcode/:codigo', authDelivery, async (req, res) => {
     try {
         const item = await ItemCardapio.findOne({ adminId: req.adminId, codigoBarra: req.params.codigo, ativo: true }).lean();

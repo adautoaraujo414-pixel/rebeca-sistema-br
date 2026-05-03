@@ -233,8 +233,8 @@ async function carregarConfigNF() {
         </div>
     </div>
 
-    
-                <!-- FINANCEIRO CAIXAS -->
+            <div class="content">
+<!-- FINANCEIRO CAIXAS -->
                 <div id="page-financeiro-caixas" class="page">
                   <h2 style="margin-bottom:20px">📋 Fechamentos de Caixa</h2>
                   <div class="stats-grid" id="fc-stats-grid">
@@ -369,13 +369,14 @@ async function carregarConfigNF() {
                 <div class="menu-item" data-page="avaliacoes">⭐ Avaliações</div>
                 <div class="menu-item" data-page="assinantes">👥 Assinantes</div>
                 <div class="menu-item" data-page="estoque">📦 Estoque</div>
+                <div class="menu-item" data-page="entrada-insumos" onclick="carregarEntradaInsumos()">📥 Entrada de Insumos</div>
                 <div class="menu-item" data-page="cardapio-dia">🍽️ Cardápio do Dia</div>
                 <div class="menu-item" data-page="cardapio-semanal">🍱 Cardápio Semanal</div>
                 <div class="menu-item" data-page="impressora">🖨️ Impressora</div>
                 <div class="menu-item" data-page="config">⚙️ Configurações</div>
                 <div class="menu-item" onclick="window.open('/delivery-migracao?token='+(localStorage.getItem('delivery_token')||token),'_blank')" style="cursor:pointer">🔄 Migrar Sistema</div>
             </div>
-            <div class="content">
+
                 <!-- DASHBOARD -->
                 <div id="page-dashboard" class="page active">
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px">
@@ -1029,7 +1030,42 @@ async function carregarConfigNF() {
                     </div>
                 </div>
 
-                <div id="page-estoque" class="page">
+                <div id="page-entrada-insumos" class="page" style="padding:20px;max-width:1000px">
+  <h2 style="margin-bottom:20px">📥 Entrada de Insumos</h2>
+  <div style="background:#fff;border-radius:14px;padding:20px;box-shadow:0 2px 10px rgba(0,0,0,.06);margin-bottom:20px">
+    <h3 style="margin-bottom:16px;font-size:1em;color:#1c1c1e">📋 Lançar Entrada Manual</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+      <div>
+        <label style="font-size:.82em;color:#666;display:block;margin-bottom:4px">Fornecedor</label>
+        <input id="ei-fornecedor" placeholder="Nome do fornecedor" style="width:100%;padding:9px 12px;border:1px solid #ddd;border-radius:8px;box-sizing:border-box">
+      </div>
+      <div>
+        <label style="font-size:.82em;color:#666;display:block;margin-bottom:4px">Data da Entrada</label>
+        <input id="ei-data" type="date" style="width:100%;padding:9px 12px;border:1px solid #ddd;border-radius:8px;box-sizing:border-box">
+      </div>
+    </div>
+    <div style="margin-bottom:12px">
+      <label style="font-size:.82em;color:#666;display:block;margin-bottom:4px">Nota Fiscal (foto/PDF)</label>
+      <input id="ei-nota" type="file" accept="image/*,application/pdf" style="width:100%;padding:9px;border:1px solid #ddd;border-radius:8px;background:#f9f9f9">
+      <button onclick="processarNotaFiscalEI()" style="margin-top:8px;padding:8px 16px;background:#6366f1;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:.85em">🤖 Ler Nota com IA</button>
+      <span id="ei-nota-status" style="margin-left:10px;font-size:.82em;color:#888"></span>
+    </div>
+    <div id="ei-itens-container">
+      <label style="font-size:.82em;color:#666;display:block;margin-bottom:6px">Itens da Entrada</label>
+      <div id="ei-itens-lista" style="display:flex;flex-direction:column;gap:6px"></div>
+      <button onclick="adicionarItemEI()" style="margin-top:8px;padding:7px 14px;background:#f0f0f0;border:none;border-radius:8px;cursor:pointer;font-size:.83em">+ Adicionar Item</button>
+    </div>
+    <div style="margin-top:16px;padding-top:16px;border-top:1px solid #f0f0f0;display:flex;gap:10px">
+      <button onclick="salvarEntradaInsumos()" style="padding:10px 24px;background:#f97316;color:#fff;border:none;border-radius:10px;font-weight:700;cursor:pointer">💾 Salvar Entrada</button>
+    </div>
+  </div>
+  <div style="background:#fff;border-radius:14px;padding:20px;box-shadow:0 2px 10px rgba(0,0,0,.06)">
+    <h3 style="margin-bottom:14px;font-size:1em;color:#1c1c1e">📜 Histórico de Entradas</h3>
+    <div id="ei-historico">Carregando...</div>
+  </div>
+</div>
+
+<div id="page-estoque" class="page">
                     <h2 style="margin-bottom:6px;">&#x1F4E6; Controle de Estoque</h2>
                     <p style="color:#aaa;font-size:13px;margin-bottom:20px;">Ative o controle por item. A Rebeca baixa o estoque automaticamente a cada pedido confirmado.</p>
 
@@ -2036,6 +2072,7 @@ async function carregarConfigNF() {
                 if (page === 'estoque') { carregarEstoque(); carregarListaCompras(); renderFornecedores(); document.getElementById('inputBarcode')?.focus(); }
                 if (page === 'upload-cardapio') { /* nada */ }
                 if (page === 'combos') carregarCombos();
+                if (page === 'entrada-insumos') carregarEntradaInsumos();
             });
         });
 
@@ -5130,7 +5167,12 @@ async function enviarCardapioDia() {
 <script>
 // ===== RELATÓRIOS DE CAIXA =====
 async function carregarRelatorioFinanceiro() {
-  showPage('relatorio-financeiro');
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const pRF = document.getElementById('page-relatorio-financeiro');
+  if (pRF) pRF.classList.add('active');
+  document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
+  const mRF = document.querySelector('[data-page="relatorio-financeiro"]');
+  if (mRF) mRF.classList.add('active');
   const periodo = document.getElementById('rf-periodo')?.value || 'mes';
 
   // Datas
@@ -5158,7 +5200,9 @@ async function carregarRelatorioFinanceiro() {
 
   try {
     // Buscar fechamentos de caixa para vendas por dia
-    const rc = await fetch('/api/delivery/caixa/todos', {headers:{'Authorization':'Bearer '+localStorage.getItem('delivery_token')}});
+    const _tkRF = localStorage.getItem('delivery_token');
+    const _urlRF = '/api/delivery/caixa/fechamentos?' + new URLSearchParams({ dataIni, dataFim }).toString();
+    const rc = await fetch(_urlRF, {headers:{'Authorization':'Bearer '+_tkRF}});
     const dc = await rc.json();
     const caixas = (dc.caixas || dc || []).filter(c => {
       if (!c.dataFechamento) return false;
@@ -5166,11 +5210,19 @@ async function carregarRelatorioFinanceiro() {
       return (!dataIni || d >= dataIni) && (!dataFim || d <= dataFim);
     });
 
-    // Totais do caixa
-    const fatTotal = caixas.reduce((s,c) => s+(c.totalVendas||c.faturamento||0), 0);
+    // Totais do caixa — campos reais do CaixaDelivery
+    const fatTotal = caixas.reduce((s,c) => s+(c.totalFaturamento||c.totalVendas||c.faturamento||0), 0);
     const pedTotal = caixas.reduce((s,c) => s+(c.totalPedidos||0), 0);
-    document.getElementById('rf-faturamento').textContent = 'R$ '+fatTotal.toFixed(2);
+    const dinTotal = caixas.reduce((s,c) => s+(c.totalDinheiro||0), 0);
+    const pixTotal = caixas.reduce((s,c) => s+(c.totalPix||0), 0);
+    const carTotal = caixas.reduce((s,c) => s+(c.totalCartao||0), 0);
+    document.getElementById('rf-faturamento').textContent = 'R$ '+fatTotal.toFixed(2).replace('.',',');
     document.getElementById('rf-pedidos').textContent = pedTotal;
+    // Atualizar breakdown por forma se existirem os elementos
+    ['rf-dinheiro','rf-pix','rf-cartao'].forEach((id,idx) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = 'R$ '+([dinTotal,pixTotal,carTotal][idx]).toFixed(2).replace('.',',');
+    });
 
     // Gráfico vendas por dia
     const porDia = {};
@@ -6080,6 +6132,104 @@ function ffWhatsappAdm(i) {
   const f = forns[i]; if(!f?.whatsapp) return alert('WhatsApp não cadastrado');
   window.open('https://wa.me/55'+f.whatsapp.replace(/\D/g,'')+'?text=Olá+'+encodeURIComponent(f.nome)+'!','_blank');
 }
+
+// ===== ENTRADA DE INSUMOS =====
+function adicionarItemEI(nome='', unidade='', quantidade=1, custo=0) {
+  const lista = document.getElementById('ei-itens-lista');
+  if (!lista) return;
+  const row = document.createElement('div');
+  row.style.cssText = 'display:grid;grid-template-columns:2fr 80px 90px 100px 32px;gap:6px;align-items:center';
+  row.innerHTML = `
+    <input class="ei-nome" placeholder="Nome do item" value="${nome}" style="padding:8px;border:1px solid #ddd;border-radius:7px">
+    <input class="ei-unidade" placeholder="Un/Kg" value="${unidade}" style="padding:8px;border:1px solid #ddd;border-radius:7px">
+    <input class="ei-qtd" type="number" placeholder="Qtd" value="${quantidade}" min="0" step="0.01" style="padding:8px;border:1px solid #ddd;border-radius:7px">
+    <input class="ei-custo" type="number" placeholder="Custo R$" value="${custo}" min="0" step="0.01" style="padding:8px;border:1px solid #ddd;border-radius:7px">
+    <button onclick="this.closest('div').remove()" style="padding:6px;background:#fee2e2;border:none;border-radius:7px;cursor:pointer;color:#ef4444">✕</button>
+  `;
+  lista.appendChild(row);
+}
+
+async function processarNotaFiscalEI() {
+  const input = document.getElementById('ei-nota');
+  const status = document.getElementById('ei-nota-status');
+  if (!input.files[0]) { status.textContent = 'Selecione um arquivo'; return; }
+  status.textContent = '⏳ Lendo nota com IA...';
+  try {
+    const file = input.files[0];
+    const base64 = await new Promise((res, rej) => {
+      const r = new FileReader();
+      r.onload = () => res(r.result.split(',')[1]);
+      r.onerror = rej;
+      r.readAsDataURL(file);
+    });
+    const resp = await api('/estoque/processar-nota', {
+      method: 'POST',
+      body: JSON.stringify({ base64, tipo: file.type })
+    });
+    const data = await resp.json();
+    if (data.itens && data.itens.length) {
+      document.getElementById('ei-itens-lista').innerHTML = '';
+      data.itens.forEach(it => adicionarItemEI(it.nome||it.descricao||'', it.unidade||'Un', it.quantidade||1, it.valorUnitario||it.preco||0));
+      if (data.fornecedor) document.getElementById('ei-fornecedor').value = data.fornecedor;
+      status.textContent = `✅ ${data.itens.length} itens extraídos`;
+    } else {
+      status.textContent = '⚠️ Nenhum item extraído — adicione manualmente';
+    }
+  } catch(e) { status.textContent = '❌ Erro: ' + e.message; }
+}
+
+async function salvarEntradaInsumos() {
+  const fornecedor = document.getElementById('ei-fornecedor').value.trim();
+  const dataEntrada = document.getElementById('ei-data').value || new Date().toISOString().split('T')[0];
+  const rows = document.querySelectorAll('#ei-itens-lista > div');
+  const itens = Array.from(rows).map(r => ({
+    nome: r.querySelector('.ei-nome')?.value || '',
+    unidade: r.querySelector('.ei-unidade')?.value || 'Un',
+    quantidade: parseFloat(r.querySelector('.ei-qtd')?.value) || 0,
+    valorUnitario: parseFloat(r.querySelector('.ei-custo')?.value) || 0,
+    fornecedor
+  })).filter(i => i.nome);
+  if (!itens.length) { toast('Adicione ao menos um item', 'error'); return; }
+  try {
+    const resp = await api('/estoque/entrada-lote', { method: 'POST', body: JSON.stringify({ itens, fornecedor, dataEntrada }) });
+    const data = await resp.json();
+    if (data.sucesso || data.ok || data._id || Array.isArray(data)) {
+      toast(`✅ Entrada salva — ${itens.length} itens`);
+      document.getElementById('ei-itens-lista').innerHTML = '';
+      document.getElementById('ei-fornecedor').value = '';
+      carregarHistoricoEI();
+    } else { toast(data.erro || 'Erro ao salvar', 'error'); }
+  } catch(e) { toast('Erro: ' + e.message, 'error'); }
+}
+
+async function carregarEntradaInsumos() {
+  const dataHoje = new Date().toISOString().split('T')[0];
+  document.getElementById('ei-data').value = dataHoje;
+  if (document.querySelectorAll('#ei-itens-lista > div').length === 0) adicionarItemEI();
+  carregarHistoricoEI();
+}
+
+async function carregarHistoricoEI() {
+  const div = document.getElementById('ei-historico');
+  if (!div) return;
+  div.innerHTML = '⏳ Carregando...';
+  try {
+    const resp = await api('/estoque/entradas');
+    const data = await resp.json();
+    const entradas = data.entradas || data || [];
+    if (!entradas.length) { div.innerHTML = '<p style="color:#888;font-size:.9em">Nenhuma entrada registrada.</p>'; return; }
+    div.innerHTML = entradas.slice(0,20).map(e => {
+      const data = (e.dataEntrada||e.createdAt||'').split('T')[0] || '-';
+      const itens = (e.itens||[]).length;
+      const total = (e.itens||[]).reduce((s,i) => s + (i.valorUnitario||0)*(i.quantidade||0), 0);
+      return `<div style="padding:12px;border:1px solid #f0f0f0;border-radius:10px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">
+        <div><b style="font-size:.92em">${e.fornecedor||'Sem fornecedor'}</b><br><span style="font-size:.8em;color:#888">${data} · ${itens} itens</span></div>
+        <div style="font-weight:700;color:#f97316">R$ ${total.toFixed(2).replace('.',',')}</div>
+      </div>`;
+    }).join('');
+  } catch(e) { div.innerHTML = '<p style="color:#888">Erro ao carregar histórico.</p>'; }
+}
+
 </script>
 <!-- ===== TELA DE ATIVAÇÃO DO PLANO ===== -->
 <div id="telaAtivacao" style="display:none;position:fixed;inset:0;background:#07071a;z-index:99999;flex-direction:column;align-items:center;justify-content:center;padding:24px;">
