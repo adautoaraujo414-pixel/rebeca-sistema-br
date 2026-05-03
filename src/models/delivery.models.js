@@ -223,6 +223,7 @@ const ConfigDeliverySchema = new mongoose.Schema({
     cidadeEstado: { type: String, default: '' },
     msgRodapeCupom: { type: String, default: 'Obrigado pela preferência! Volte sempre!' },
     alertaEstoqueBaixo: { type: Boolean, default: false }, // Rebeca avisa dono quando estoque baixar
+    telaCozinhaAtiva: { type: Boolean, default: true }, // se false, usa apenas impressoras
 }, { timestamps: true });
 
 const CategoriaCardapio = mongoose.model('CategoriaCardapio', CategoriaCardapioSchema);

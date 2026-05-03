@@ -808,61 +808,97 @@ async function carregarConfigNF() {
                 </div>
 
                 <div id="page-impressora" class="page">
-                    <h2 style="margin-bottom:6px;">🖨️ Impressora</h2>
-                    <p style="color:#888;font-size:13px;margin-bottom:24px;">Configure a impressão automática de pedidos. Quando chegar um pedido novo, o sistema abre o cupom para imprimir automaticamente.</p>
+                  <h2 style="margin:0 0 4px">🖨️ Impressoras & Destinos</h2>
+                  <div style="color:#888;font-size:.82em;margin-bottom:20px">Configure impressoras e para onde cada pedido é enviado</div>
 
-                    <div class="panel" style="max-width:480px;">
-                        <h3 style="margin-bottom:16px;">⚡ Impressão Automática</h3>
-                        <div style="display:flex;align-items:center;gap:16px;padding:16px;background:#f0fdf4;border-radius:12px;margin-bottom:20px;">
-                            <div style="flex:1;">
-                                <div style="font-weight:700;font-size:14px;">Imprimir ao receber pedido</div>
-                                <div style="font-size:12px;color:#888;margin-top:4px;">Abre o cupom automaticamente quando chegar pedido novo</div>
-                            </div>
-                            <label style="position:relative;display:inline-block;width:52px;height:28px;cursor:pointer;">
-                                <input type="checkbox" id="toggleImpAuto" onchange="toggleImpressaoAuto(this)" style="opacity:0;width:0;height:0;">
-                                <span style="position:absolute;inset:0;background:#ccc;border-radius:28px;transition:.3s;" id="sliderImpAuto"></span>
-                            </label>
-                        </div>
-                        <!-- Imprimir cupom ao pagar -->
-                        <div style="display:flex;align-items:center;justify-content:space-between;padding:14px;background:var(--surface2);border-radius:10px;margin-top:10px">
-                            <div>
-                                <div style="font-weight:700;font-size:14px;">🖨️ Imprimir cupom ao pagar</div>
-                                <div style="font-size:12px;color:#888;margin-top:4px;">Imprime o cupom automaticamente ao confirmar pagamento no caixa</div>
-                            </div>
-                            <label style="position:relative;display:inline-block;width:52px;height:28px;cursor:pointer;">
-                                <input type="checkbox" id="toggleImpCupomAuto" onchange="salvarConfig()" style="opacity:0;width:0;height:0;">
-                                <span style="position:absolute;inset:0;background:#ccc;border-radius:28px;transition:.3s;" id="sliderImpCupomAuto"></span>
-                            </label>
-                        </div>
-                        <script>
-                            (function(){
-                                var el = document.getElementById('toggleImpAuto');
-                                var sl = document.getElementById('sliderImpAuto');
-                                if (el && localStorage.getItem('impressaoAuto') === '1') {
-                                    el.checked = true;
-                                    if(sl) sl.style.background = '#22c55e';
-                                }
-                                if (el) el.addEventListener('change', function() {
-                                    if(sl) sl.style.background = el.checked ? '#22c55e' : '#ccc';
-                                });
-                            })();
-                        </script>
-
-                        <h3 style="margin:20px 0 12px;">🔌 Tipo de Impressora</h3>
-                        <div style="display:flex;flex-direction:column;gap:10px;">
-                            <label style="display:flex;align-items:center;gap:12px;padding:14px;border:2px solid #e8e8ed;border-radius:12px;cursor:pointer;" id="opt-browser">
-                                <input type="radio" name="tipoImpressora" value="browser" checked onchange="salvarTipoImpressora('browser')" style="accent-color:#f97316;">
-                                <div>
-                                    <div style="font-weight:700;">🌐 Impressão via Browser</div>
-                                    <div style="font-size:12px;color:#888;">Abre janela de impressão do navegador — funciona com qualquer impressora conectada no computador</div>
-                                </div>
-                            </label>
-                        </div>
-
-                        <h3 style="margin:20px 0 12px;">🧪 Teste de Impressão</h3>
-                        <button class="btn btn-primary" onclick="imprimirTeste()" style="width:100%;">🖨️ Imprimir cupom de teste</button>
-                        <div id="statusImpressora" style="margin-top:12px;font-size:13px;color:#888;"></div>
+                  <!-- IMPRESSÃO AUTOMÁTICA -->
+                  <div style="background:#fff;border:1px solid #e8e8ed;border-radius:14px;padding:18px;margin-bottom:16px">
+                    <div style="font-weight:800;font-size:.95em;margin-bottom:14px">⚡ Impressão Automática</div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:#f8f8f8;border-radius:10px;margin-bottom:10px">
+                      <div>
+                        <div style="font-weight:700;font-size:.88em">Imprimir ao receber pedido</div>
+                        <div style="font-size:.75em;color:#888;margin-top:2px">Abre cupom automaticamente quando chega pedido novo</div>
+                      </div>
+                      <label style="position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0">
+                        <input type="checkbox" id="toggleImpAuto" onchange="toggleImpressaoAuto(this)" style="opacity:0;width:0;height:0">
+                        <span onclick="this.previousElementSibling.checked=!this.previousElementSibling.checked;toggleImpressaoAuto(this.previousElementSibling)" style="position:absolute;cursor:pointer;inset:0;background:#ccc;border-radius:24px;transition:.3s" id="sliderImpAuto"></span>
+                      </label>
                     </div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:#f8f8f8;border-radius:10px">
+                      <div>
+                        <div style="font-weight:700;font-size:.88em">🖨️ Imprimir cupom ao pagar</div>
+                        <div style="font-size:.75em;color:#888;margin-top:2px">Imprime automaticamente ao fechar pedido no caixa</div>
+                      </div>
+                      <label style="position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0">
+                        <input type="checkbox" id="toggleImpCupomAuto" onchange="salvarConfig()" style="opacity:0;width:0;height:0">
+                        <span onclick="this.previousElementSibling.checked=!this.previousElementSibling.checked;salvarConfig()" style="position:absolute;cursor:pointer;inset:0;background:#ccc;border-radius:24px;transition:.3s"></span>
+                      </label>
+                    </div>
+                  </div>
+
+                  <!-- IMPRESSORAS CADASTRADAS -->
+                  <div style="background:#fff;border:1px solid #e8e8ed;border-radius:14px;padding:18px;margin-bottom:16px">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+                      <div style="font-weight:800;font-size:.95em">🖨️ Impressoras Cadastradas</div>
+                      <button onclick="abrirModalImpressora()" style="padding:7px 14px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;color:#0284c7;font-weight:700;font-size:.82em;cursor:pointer">+ Adicionar</button>
+                    </div>
+                    <div id="lista-impressoras">
+                      <div style="text-align:center;padding:20px;color:#aaa;font-size:.85em">Nenhuma impressora cadastrada.<br>Clique em + Adicionar para começar.</div>
+                    </div>
+                  </div>
+
+                  <!-- TIPO DE IMPRESSORA -->
+                  <div style="background:#fff;border:1px solid #e8e8ed;border-radius:14px;padding:18px;margin-bottom:16px">
+                    <div style="font-weight:800;font-size:.95em;margin-bottom:14px">🔌 Tipo de Conexão</div>
+                    <div style="display:flex;flex-direction:column;gap:10px">
+                      <label style="display:flex;align-items:center;gap:12px;padding:14px;border:2px solid #e8e8ed;border-radius:10px;cursor:pointer">
+                        <input type="radio" name="tipoImpressora" value="browser" checked onchange="salvarTipoImpressora('browser')">
+                        <div>
+                          <div style="font-weight:700;font-size:.88em">🌐 Via Browser</div>
+                          <div style="font-size:.75em;color:#888">Abre janela de impressão do navegador — funciona com qualquer impressora conectada ao computador</div>
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+
+                  <!-- TESTE -->
+                  <div style="background:#fff;border:1px solid #e8e8ed;border-radius:14px;padding:18px">
+                    <div style="font-weight:800;font-size:.95em;margin-bottom:12px">🧪 Teste de Impressão</div>
+                    <button class="btn btn-primary" onclick="imprimirTeste()" style="width:100%">🖨️ Imprimir cupom de teste</button>
+                    <div id="statusImpressora" style="margin-top:12px;font-size:.82em;color:#888"></div>
+                  </div>
+
+                  <!-- MODAL ADICIONAR IMPRESSORA -->
+                  <div id="modal-impressora" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:9999;padding:20px;display:none;align-items:center;justify-content:center">
+                    <div style="background:#fff;border-radius:16px;width:100%;max-width:420px;padding:24px;position:relative">
+                      <button onclick="fecharModalImpressora()" style="position:absolute;top:14px;right:14px;background:#fee2e2;border:none;border-radius:50%;width:28px;height:28px;cursor:pointer;color:#ef4444;font-weight:700">✕</button>
+                      <h3 style="margin:0 0 16px;font-size:1em">🖨️ Cadastrar Impressora</h3>
+                      <div style="display:flex;flex-direction:column;gap:12px">
+                        <div>
+                          <label style="font-size:.8em;font-weight:700;color:#555;display:block;margin-bottom:5px">Nome da impressora *</label>
+                          <input id="imp-nome" type="text" placeholder="Ex: Cozinha, Bar, Caixa..." style="width:100%;padding:9px;border:1px solid #ddd;border-radius:8px;font-size:.88em;box-sizing:border-box">
+                        </div>
+                        <div>
+                          <label style="font-size:.8em;font-weight:700;color:#555;display:block;margin-bottom:5px">Destino / Finalidade *</label>
+                          <select id="imp-destino" style="width:100%;padding:9px;border:1px solid #ddd;border-radius:8px;font-size:.88em;background:#fff">
+                            <option value="cozinha">🍳 Cozinha — recebe pedidos de comida</option>
+                            <option value="bar">🍹 Bar — recebe pedidos de bebidas/drinks</option>
+                            <option value="caixa">💰 Caixa — recebe todos os pedidos</option>
+                            <option value="todos">📋 Todos — recebe qualquer pedido</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label style="font-size:.8em;font-weight:700;color:#555;display:block;margin-bottom:5px">IP da impressora (rede local, opcional)</label>
+                          <input id="imp-ip" type="text" placeholder="Ex: 192.168.1.100" style="width:100%;padding:9px;border:1px solid #ddd;border-radius:8px;font-size:.88em;box-sizing:border-box">
+                        </div>
+                        <div>
+                          <label style="font-size:.8em;font-weight:700;color:#555;display:block;margin-bottom:5px">Categorias que imprime (separe por vírgula, vazio = todas)</label>
+                          <input id="imp-categorias" type="text" placeholder="Ex: Bebidas, Drinks, Sobremesas" style="width:100%;padding:9px;border:1px solid #ddd;border-radius:8px;font-size:.88em;box-sizing:border-box">
+                        </div>
+                        <button onclick="salvarImpressora()" style="padding:10px;background:#2563eb;color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:.9em">✅ Salvar Impressora</button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 <div id="page-cardapio-semanal" class="page">
@@ -1190,6 +1226,16 @@ async function carregarConfigNF() {
                                 </div>
                                 <label style="position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0">
                                     <input type="checkbox" id="cfgAlertaEstoque" style="opacity:0;width:0;height:0">
+                                    <span onclick="this.previousElementSibling.checked=!this.previousElementSibling.checked" style="position:absolute;cursor:pointer;inset:0;background:#ccc;border-radius:24px;transition:.3s"></span>
+                                </label>
+                            </div>
+                            <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center">
+                                <div>
+                                    <div style="font-weight:700;font-size:.88em;color:#2563eb">🖥️ Tela da Cozinha</div>
+                                    <div style="font-size:.75em;color:#555;margin-top:2px">Pedidos aparecem na tela da cozinha em tempo real. Desative se usar apenas impressoras.</div>
+                                </div>
+                                <label style="position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0">
+                                    <input type="checkbox" id="cfgTelaCozinha" style="opacity:0;width:0;height:0">
                                     <span onclick="this.previousElementSibling.checked=!this.previousElementSibling.checked" style="position:absolute;cursor:pointer;inset:0;background:#ccc;border-radius:24px;transition:.3s"></span>
                                 </label>
                             </div>
@@ -2723,7 +2769,9 @@ async function _salvarItemReal() {
             if (cfgPix) cfgPix.addEventListener('change', function(){ document.getElementById('grupoPix').style.display = this.checked ? 'flex' : 'none'; document.getElementById('grupoPixNome').style.display = this.checked ? 'flex' : 'none'; document.getElementById('grupoPixBanco').style.display = this.checked ? 'flex' : 'none'; });
             if(document.getElementById('cfgCnpj')) document.getElementById('cfgCnpj').value = c.cnpj||'';
             if(document.getElementById('cfgTelefoneContato')) document.getElementById('cfgTelefoneContato').value = c.telefoneContato||'';
-        if(document.getElementById('cfgAlertaEstoque')) document.getElementById('cfgAlertaEstoque').checked = !!(c.alertaEstoqueBaixo);o||'';
+        if(document.getElementById('cfgAlertaEstoque')) document.getElementById('cfgAlertaEstoque').checked = !!(c.alertaEstoqueBaixo);
+        if(document.getElementById('cfgTelaCozinha')) document.getElementById('cfgTelaCozinha').checked = c.telaCozinhaAtiva !== false;
+        if(document.getElementById('cfgTelaCozinha')) document.getElementById('cfgTelaCozinha').checked = c.telaCozinhaAtiva !== false;o||'';
             if(document.getElementById('cfgEnderecoCompleto')) document.getElementById('cfgEnderecoCompleto').value = c.enderecoCompleto||'';
             if(document.getElementById('cfgCidadeEstado')) document.getElementById('cfgCidadeEstado').value = c.cidadeEstado||'';
             if(document.getElementById('cfgMsgRodape')) document.getElementById('cfgMsgRodape').value = c.msgRodapeCupom||'';
@@ -2778,7 +2826,9 @@ async function _salvarItemReal() {
                 mensagemPedidoPronto:     g('cfgMsgPronto')?.value || '',
                 logo:                     g('cfgLogoUrl')?.value || '',
                 nomeEstabelecimento:      g('cfgNomeEstabelecimento')?.value || '',
-                alertaEstoqueBaixo:       !!(g('cfgAlertaEstoque')?.checked)
+                alertaEstoqueBaixo:       !!(g('cfgAlertaEstoque')?.checked),
+                telaCozinhaAtiva:         !!(g('cfgTelaCozinha')?.checked),
+                telaCozinhaAtiva:         !!(g('cfgTelaCozinha')?.checked)
             })});
             // Também salvar logo e nome no AdminDelivery para rotas públicas
             const logoVal = g('cfgLogoUrl')?.value || '';
@@ -4724,6 +4774,79 @@ document.addEventListener('input', function(e) {
 });
 
 // Carregar ao abrir página
+
+// ===== IMPRESSORAS =====
+let _impressoras = JSON.parse(localStorage.getItem('impressoras_cfg') || '[]');
+
+function renderListaImpressoras() {
+  const el = document.getElementById('lista-impressoras');
+  if (!el) return;
+  if (!_impressoras.length) {
+    el.innerHTML = '<div style="text-align:center;padding:20px;color:#aaa;font-size:.85em">Nenhuma impressora cadastrada.<br>Clique em + Adicionar para começar.</div>';
+    return;
+  }
+  const destinoLabel = { cozinha:'🍳 Cozinha', bar:'🍹 Bar', caixa:'💰 Caixa', todos:'📋 Todos' };
+  el.innerHTML = _impressoras.map((imp, idx) => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border:1px solid #e8e8ed;border-radius:10px;margin-bottom:8px">
+      <div>
+        <div style="font-weight:700;font-size:.9em">🖨️ ${imp.nome}</div>
+        <div style="font-size:.75em;color:#888;margin-top:2px">${destinoLabel[imp.destino]||imp.destino}${imp.ip?' · IP: '+imp.ip:''}${imp.categorias?' · '+imp.categorias:''}</div>
+      </div>
+      <div style="display:flex;gap:6px">
+        <button onclick="testarImpressora(${idx})" style="padding:5px 10px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:7px;font-size:.75em;cursor:pointer;color:#0284c7;font-weight:600">🧪 Testar</button>
+        <button onclick="removerImpressora(${idx})" style="padding:5px 10px;background:#fee2e2;border:1px solid #fecaca;border-radius:7px;font-size:.75em;cursor:pointer;color:#ef4444;font-weight:600">🗑️</button>
+      </div>
+    </div>`).join('');
+}
+
+function abrirModalImpressora() {
+  document.getElementById('imp-nome').value = '';
+  document.getElementById('imp-destino').value = 'cozinha';
+  document.getElementById('imp-ip').value = '';
+  document.getElementById('imp-categorias').value = '';
+  const m = document.getElementById('modal-impressora');
+  m.style.display = 'flex';
+}
+
+function fecharModalImpressora() {
+  document.getElementById('modal-impressora').style.display = 'none';
+}
+
+function salvarImpressora() {
+  const nome = document.getElementById('imp-nome').value.trim();
+  const destino = document.getElementById('imp-destino').value;
+  const ip = document.getElementById('imp-ip').value.trim();
+  const categorias = document.getElementById('imp-categorias').value.trim();
+  if (!nome) { toast('Informe o nome da impressora', 'error'); return; }
+  _impressoras.push({ nome, destino, ip, categorias, id: Date.now() });
+  localStorage.setItem('impressoras_cfg', JSON.stringify(_impressoras));
+  fecharModalImpressora();
+  renderListaImpressoras();
+  toast('✅ Impressora ' + nome + ' cadastrada!');
+}
+
+function removerImpressora(idx) {
+  if (!confirm('Remover esta impressora?')) return;
+  _impressoras.splice(idx, 1);
+  localStorage.setItem('impressoras_cfg', JSON.stringify(_impressoras));
+  renderListaImpressoras();
+  toast('Impressora removida');
+}
+
+function testarImpressora(idx) {
+  const imp = _impressoras[idx];
+  toast('🖨️ Enviando teste para ' + imp.nome + '...');
+  // Abre janela de impressão do browser como teste
+  const w = window.open('', '_blank', 'width=400,height=600');
+  w.document.write('<html><body style="font-family:monospace;padding:20px"><h2>TESTE DE IMPRESSÃO</h2><p>Impressora: <b>' + imp.nome + '</b></p><p>Destino: ' + imp.destino + '</p><p>Data: ' + new Date().toLocaleString("pt-BR") + '</p><hr><p>Se você vê este texto, a impressão está funcionando! ✅</p></body></html>');
+  w.print();
+}
+
+// Inicializar lista ao carregar a página de impressora
+document.addEventListener('DOMContentLoaded', function() {
+  renderListaImpressoras();
+});
+
 // ===== IMPRESSORA =====
 function salvarTipoImpressora(tipo) {
     localStorage.setItem('tipoImpressora', tipo);
