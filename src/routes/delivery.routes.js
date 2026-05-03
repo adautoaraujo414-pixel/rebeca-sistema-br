@@ -2857,3 +2857,5 @@ router.get('/mesa/conta', async (req, res) => {
         res.json({ sucesso: true, pedidos });
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
+
+module.exports = router;

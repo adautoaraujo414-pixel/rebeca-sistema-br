@@ -235,7 +235,7 @@ async function carregarConfigNF() {
 
             <div class="content">
 <!-- FINANCEIRO CAIXAS -->
-                <div id="page-financeiro-caixas" class="page">
+                <div id="page-financeiro-caixas" class="page" style="padding:20px;max-width:1200px;margin:0 auto">
                   <h2 style="margin-bottom:20px">📋 Fechamentos de Caixa</h2>
                   <div class="stats-grid" id="fc-stats-grid">
                     <div class="stat-card"><div class="valor" id="fc-total-dia">R$ 0</div><div class="label">Total Vendido Hoje</div></div>
@@ -255,7 +255,7 @@ async function carregarConfigNF() {
                 </div>
 
                 <!-- FINANCEIRO LUCRO POR PRODUTO -->
-                <div id="page-financeiro-lucro" class="page">
+                <div id="page-financeiro-lucro" class="page" style="padding:20px;max-width:1200px;margin:0 auto">
                   <h2 style="margin-bottom:20px">💹 Lucro por Produto</h2>
                   <div class="panel" style="margin-bottom:16px">
                     <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
@@ -298,7 +298,7 @@ async function carregarConfigNF() {
                 </div>
 
                 <!-- FINANCEIRO CONTAS A PAGAR -->
-                <div id="page-financeiro-contas" class="page">
+                <div id="page-financeiro-contas" class="page" style="padding:20px;max-width:1200px;margin:0 auto">
                   <h2 style="margin-bottom:20px">💸 Contas a Pagar</h2>
                   <div style="display:flex;justify-content:flex-end;margin-bottom:16px">
                     <button onclick="abrirModalConta()" style="background:#f97316;color:#fff;border:none;border-radius:10px;padding:10px 20px;font-weight:700;cursor:pointer">+ Nova Conta</button>
@@ -315,7 +315,7 @@ async function carregarConfigNF() {
                 </div>
 
                 <!-- FINANCEIRO FORNECEDORES -->
-                <div id="page-financeiro-fornecedores" class="page">
+                <div id="page-financeiro-fornecedores" class="page" style="padding:20px;max-width:1200px;margin:0 auto">
                   <h2 style="margin-bottom:20px">🏭 Fornecedores</h2>
                   <div style="display:flex;justify-content:flex-end;margin-bottom:16px">
                     <button onclick="abrirModalFornecedor()" style="background:#f97316;color:#fff;border:none;border-radius:10px;padding:10px 20px;font-weight:700;cursor:pointer">+ Novo Fornecedor</button>
@@ -1848,9 +1848,9 @@ async function carregarConfigNF() {
 
         // ===== SISTEMA DE PLANOS =====
         const PLANOS_MODULOS = {
-            confort:  ['dashboard', 'cardapio', 'upload-cardapio', 'categorias', 'pedidos', 'caixa', 'cardapio-semanal', 'impressora', 'config', 'relatorios', 'financeiro-caixas', 'financeiro-lucro', 'financeiro-contas', 'financeiro-fornecedores'],
-            plus:     ['dashboard', 'cardapio', 'upload-cardapio', 'categorias', 'pedidos', 'caixa', 'relatorios', 'avaliacoes', 'assinantes', 'estoque', 'cardapio-dia', 'cardapio-semanal', 'impressora', 'combos', 'config', 'financeiro-caixas', 'financeiro-lucro', 'financeiro-contas', 'financeiro-fornecedores'],
-            premium:  ['dashboard', 'cardapio', 'upload-cardapio', 'categorias', 'pedidos', 'relatorios', 'entregadores', 'garcons', 'avaliacoes', 'assinantes', 'estoque', 'cardapio-dia', 'cardapio-semanal', 'impressora', 'combos', 'config', 'financeiro-caixas', 'financeiro-lucro', 'financeiro-contas', 'financeiro-fornecedores']
+            confort:  ['dashboard', 'cardapio', 'upload-cardapio', 'categorias', 'pedidos', 'caixa', 'cardapio-semanal', 'impressora', 'config', 'relatorios', 'financeiro-caixas', 'financeiro-lucro', 'financeiro-contas', 'financeiro-fornecedores', 'relatorio-financeiro'],
+            plus:     ['dashboard', 'cardapio', 'upload-cardapio', 'categorias', 'pedidos', 'caixa', 'relatorios', 'avaliacoes', 'assinantes', 'estoque', 'cardapio-dia', 'cardapio-semanal', 'impressora', 'combos', 'config', 'financeiro-caixas', 'financeiro-lucro', 'financeiro-contas', 'financeiro-fornecedores', 'relatorio-financeiro'],
+            premium:  ['dashboard', 'cardapio', 'upload-cardapio', 'categorias', 'pedidos', 'relatorios', 'entregadores', 'garcons', 'avaliacoes', 'assinantes', 'estoque', 'cardapio-dia', 'cardapio-semanal', 'impressora', 'combos', 'config', 'financeiro-caixas', 'financeiro-lucro', 'financeiro-contas', 'financeiro-fornecedores', 'relatorio-financeiro']
         };
 
         const PLANO_UPGRADE = {
