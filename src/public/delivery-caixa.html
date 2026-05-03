@@ -1130,31 +1130,50 @@ function imprimirCupom(pedido, troco) {
     ? `<hr class="cupom-divider"><div class="cupom-obs">📝 ${pedido.observacao}</div>`
     : '';
 
-  document.getElementById('cupom-print').innerHTML = `
-    <div class="cupom-header">
-      <h2>${nomeRest}</h2>
-      ${enderecoCompleto ? `<p>${enderecoCompleto}</p>` : ''}
-      ${cidadeEstado ? `<p>${cidadeEstado}</p>` : ''}
-      ${telefoneContato ? `<p>Tel: ${telefoneContato}</p>` : ''}
-      ${cnpj ? `<p>CNPJ: ${cnpj}</p>` : ''}
-      <p>${dataHora}</p>
-    </div>
-    <hr class="cupom-divider">
-    <div class="cupom-linha"><span><b>Pedido #${pedido.numero || '?'}</b></span><span>${local}</span></div>
-    ${pedido.clienteNome && pedido.clienteNome !== 'Cliente Balcão' ? `<div class="cupom-linha"><span>Cliente</span><span>${pedido.clienteNome}</span></div>` : ''}
-    <hr class="cupom-divider">
-    ${itensHtml}
-    <hr class="cupom-divider">
-    <div class="cupom-total"><span>TOTAL</span><span>R$ ${parseFloat(pedido.total || 0).toFixed(2)}</span></div>
-    <div class="cupom-linha"><span>Pagamento</span><span>${pagamento}</span></div>
-    ${trocoHtml}
-    ${obsHtml}
-    <hr class="cupom-divider">
-    <div class="cupom-footer">
-      <p>${rodape}</p>
-    </div>
-    <div class="cupom-corte">- - - - - - - - - - - - - - -</div>
-  `;
+  const origemLabel = pedido.origemPedido === 'mesa_digital' ? '📱 Cardápio Digital'
+    : pedido.origemPedido === 'whatsapp' ? '💬 WhatsApp'
+    : pedido.origem === 'qrcode' ? '📲 QR Code'
+    : '🖥️ Caixa';
+  const tipoLabel = pedido.tipoLocal === 'mesa' ? '🪑 Mesa ' + (pedido.numeroMesa||'') : pedido.tipoLocal === 'balcao' ? '🏪 Balcão' : '🛵 Delivery';
+  const statusLabel = (pedido.status === 'entregue' || pedido.status === 'pago') ? '✅ PAGO' : '⏳ PENDENTE';
+  const nomeCliente = (pedido.clienteNome && pedido.clienteNome !== 'Cliente Balcão' && pedido.clienteNome !== 'Cliente') ? pedido.clienteNome : '';
+  const vias = parseInt(_configCupom.viasImpressao || 1);
+  let todosCupons = '';
+  for (let via = 1; via <= vias; via++) {
+    todosCupons += `
+    <div style="${via > 1 ? 'margin-top:28px;border-top:2px dashed #000;padding-top:14px' : ''}">
+      ${vias > 1 ? `<div style="text-align:center;font-size:.7em;font-weight:700;margin-bottom:4px;letter-spacing:2px">── VIA ${via}${via===1?' — ESTABELECIMENTO':' — CLIENTE'} ──</div>` : ''}
+      <div class="cupom-header">
+        <h2>${nomeRest}</h2>
+        ${enderecoCompleto ? `<p>${enderecoCompleto}</p>` : ''}
+        ${cidadeEstado ? `<p>${cidadeEstado}</p>` : ''}
+        ${telefoneContato ? `<p>Tel: ${telefoneContato}</p>` : ''}
+        ${cnpj ? `<p>CNPJ: ${cnpj}</p>` : ''}
+        <p>${dataHora}</p>
+      </div>
+      <hr class="cupom-divider">
+      <div class="cupom-linha"><span><b>Pedido #${pedido.numero || '?'}</b></span><span style="font-weight:700">${statusLabel}</span></div>
+      <div class="cupom-linha"><span>${tipoLabel}</span><span style="font-size:.75em;color:#555">${origemLabel}</span></div>
+      ${nomeCliente ? `<div class="cupom-linha"><span>👤 Cliente</span><span><b>${nomeCliente}</b></span></div>` : ''}
+      ${pedido.garcom ? `<div class="cupom-linha"><span>🧑 Garçom</span><span>${pedido.garcom}</span></div>` : ''}
+      <hr class="cupom-divider">
+      <div style="font-size:.7em;font-weight:700;letter-spacing:1px;margin-bottom:4px">ITENS</div>
+      ${itensHtml}
+      <hr class="cupom-divider">
+      ${pedido.taxaEntrega && pedido.taxaEntrega > 0 ? `<div class="cupom-linha"><span>Taxa de entrega</span><span>R$ ${parseFloat(pedido.taxaEntrega).toFixed(2)}</span></div>` : ''}
+      ${pedido.desconto && pedido.desconto > 0 ? `<div class="cupom-linha"><span>🎁 Desconto</span><span>- R$ ${parseFloat(pedido.desconto).toFixed(2)}</span></div>` : ''}
+      <div class="cupom-total"><span>TOTAL</span><span>R$ ${parseFloat(pedido.total || 0).toFixed(2)}</span></div>
+      <hr class="cupom-divider">
+      <div style="font-size:.7em;font-weight:700;letter-spacing:1px;margin-bottom:4px">PAGAMENTO</div>
+      <div class="cupom-linha"><span>${pagamento}</span><span>R$ ${parseFloat(pedido.total||0).toFixed(2)}</span></div>
+      ${trocoHtml}
+      ${obsHtml}
+      <hr class="cupom-divider">
+      <div class="cupom-footer"><p>${rodape}</p></div>
+      <div class="cupom-corte">- - - - - - - - - - - - - - -</div>
+    </div>`;
+  }
+  document.getElementById('cupom-print').innerHTML = todosCupons;
 
   window.print();
 }
@@ -1855,6 +1874,106 @@ function conectarSSECaixa() {
   } catch(e) { console.log('[CAIXA] SSE erro:', e.message); }
 }
 
+
+// ===== RELATÓRIO DE FECHAMENTO DE CAIXA =====
+function imprimirRelatorioCaixa() {
+  const cfg = _configCupom || {};
+  const nomeRest = cfg.nomeRestaurante || document.querySelector('.header-restaurant')?.textContent?.trim() || 'Restaurante';
+  const cnpj = cfg.cnpj || '';
+  const endereco = cfg.enderecoCompleto || '';
+  const agora = new Date();
+  const dataHora = agora.toLocaleDateString('pt-BR') + ' ' + agora.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  const operador = document.getElementById('fc-operador')?.textContent || '-';
+  const abertura = document.getElementById('fc-abertura')?.textContent || '-';
+  const totDin  = document.getElementById('fc-sistema-dinheiro')?.textContent || 'R$ 0,00';
+  const totCart = document.getElementById('fc-sistema-cartao')?.textContent || 'R$ 0,00';
+  const totPix  = document.getElementById('fc-sistema-pix')?.textContent || 'R$ 0,00';
+  const totGeral= document.getElementById('fc-sistema-total')?.textContent || 'R$ 0,00';
+  const nPed    = document.getElementById('fc-pedidos')?.textContent || '0';
+  const nCanc   = document.getElementById('fc-cancelados')?.textContent || '0';
+  const difDin  = document.getElementById('fc-dif-dinheiro')?.textContent || '-';
+  const difTot  = document.getElementById('fc-dif-total')?.textContent || '-';
+  const status  = document.getElementById('fc-status-conf')?.textContent || '-';
+  const sangria = document.getElementById('fc-sangria')?.value || '0';
+  const contado = document.getElementById('fc-val-dinheiro')?.value || '0';
+  const obs     = document.getElementById('fc-obs')?.value || '';
+
+  // Top produtos
+  const topEl = document.getElementById('fc-top-produtos');
+  let topHtml = '';
+  if (topEl) {
+    const items = topEl.querySelectorAll('div[style*="border-bottom"]');
+    items.forEach(el => { topHtml += `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:12px">${el.innerHTML}</div>`; });
+    if (!topHtml) topHtml = '<div style="color:#aaa;font-size:12px">Sem vendas</div>';
+  }
+
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family: 'Courier New', monospace; font-size: 12px; width: 80mm; padding: 8px; }
+    h1 { font-size: 15px; text-align: center; margin-bottom: 2px; }
+    .sub { text-align:center; font-size:11px; color:#555; margin-bottom:2px; }
+    .div { border-top: 1px dashed #000; margin: 6px 0; }
+    .div2 { border-top: 2px solid #000; margin: 8px 0; }
+    .titulo { font-weight:700; font-size:11px; letter-spacing:1px; margin: 6px 0 3px; text-transform:uppercase; }
+    .linha { display:flex; justify-content:space-between; padding:2px 0; font-size:12px; }
+    .linha b { font-weight:700; }
+    .total-linha { display:flex; justify-content:space-between; padding:4px 0; font-size:13px; font-weight:700; border-top:1px solid #000; margin-top:4px; }
+    .destaque { background:#f0f0f0; padding:4px 6px; border-radius:3px; margin:3px 0; }
+    .ok { color:#16a34a; font-weight:800; }
+    .erro { color:#dc2626; font-weight:800; }
+    .centro { text-align:center; }
+    @media print { @page { margin:0; size:80mm auto; } }
+  </style></head><body>
+  <h1>${nomeRest}</h1>
+  ${endereco ? `<div class="sub">${endereco}</div>` : ''}
+  ${cnpj ? `<div class="sub">CNPJ: ${cnpj}</div>` : ''}
+  <div class="div2"></div>
+  <div class="centro" style="font-size:13px;font-weight:700;letter-spacing:2px">RELATÓRIO DE CAIXA</div>
+  <div class="centro sub">Emitido em ${dataHora}</div>
+  <div class="div"></div>
+
+  <div class="titulo">📋 Informações do Turno</div>
+  <div class="linha"><span>Operador</span><b>${operador}</b></div>
+  <div class="linha"><span>Abertura</span><b>${abertura}</b></div>
+  <div class="linha"><span>Fechamento</span><b>${dataHora}</b></div>
+  <div class="div"></div>
+
+  <div class="titulo">📊 Vendas por Forma de Pagamento</div>
+  <div class="linha"><span>💵 Dinheiro</span><b>${totDin}</b></div>
+  <div class="linha"><span>💳 Cartão</span><b>${totCart}</b></div>
+  <div class="linha"><span>📱 Pix</span><b>${totPix}</b></div>
+  <div class="total-linha"><span>TOTAL VENDAS</span><b>${totGeral}</b></div>
+  <div class="div"></div>
+
+  <div class="titulo">📦 Resumo de Pedidos</div>
+  <div class="linha"><span>Pedidos finalizados</span><b>${nPed}</b></div>
+  <div class="linha"><span>Pedidos cancelados</span><b>${nCanc}</b></div>
+  <div class="div"></div>
+
+  <div class="titulo">🏆 Mais Vendidos</div>
+  ${topHtml}
+  <div class="div"></div>
+
+  <div class="titulo">🔍 Conferência de Caixa</div>
+  <div class="linha"><span>Dinheiro sistema</span><b>${totDin}</b></div>
+  <div class="linha"><span>Dinheiro contado</span><b>R$ ${parseFloat(contado||0).toFixed(2)}</b></div>
+  <div class="linha"><span>Sangria</span><b>R$ ${parseFloat(sangria||0).toFixed(2)}</b></div>
+  <div class="linha"><span>Diferença dinheiro</span><b class="${difDin.startsWith('-') ? 'erro' : 'ok'}">${difDin}</b></div>
+  <div class="linha"><span>Diferença total</span><b class="${difTot.startsWith('-') ? 'erro' : 'ok'}">${difTot}</b></div>
+  <div class="destaque linha"><span>Status</span><b class="${status.includes('✅') ? 'ok' : status.includes('⚠️') ? '' : 'erro'}">${status}</b></div>
+  ${obs ? `<div class="div"></div><div class="titulo">📝 Observações</div><div style="font-size:11px">${obs}</div>` : ''}
+  <div class="div2"></div>
+  <div class="centro sub">Assinatura: _______________________</div>
+  <div class="centro sub" style="margin-top:6px">Documento gerado pelo sistema Rebeca</div>
+  </body></html>`;
+
+  const w = window.open('', '_blank', 'width=400,height=700');
+  w.document.write(html);
+  w.document.close();
+  setTimeout(() => w.print(), 400);
+}
+
 // ===== TIMER DOS PEDIDOS NO CAIXA =====
 function atualizarTimersCaixa() {
   document.querySelectorAll('[id^="timer-caixa-"]').forEach(el => {
@@ -1943,6 +2062,7 @@ setInterval(atualizarTimersCaixa, 1000);
     </div>
 
     <div style="display:flex;gap:10px">
+    <div style="display:flex;gap:8px;margin-bottom:10px"><button onclick="imprimirRelatorioCaixa()" style="width:100%;padding:11px;border-radius:8px;border:1px solid #2563eb;background:#eff6ff;color:#2563eb;font-weight:700;cursor:pointer;font-size:.88em">🖨️ Imprimir Relatório do Caixa</button></div>
       <button onclick="document.getElementById('modal-fechar-caixa').style.display='none'" style="flex:1;padding:11px;border-radius:8px;border:1px solid #ddd;background:#fff;cursor:pointer;font-weight:600">Cancelar</button>
       <button onclick="confirmarFechamentoCaixa()" style="flex:2;padding:11px;border-radius:8px;border:none;background:#dc2626;color:#fff;cursor:pointer;font-weight:700">🔒 Confirmar Fechamento</button>
     </div>
