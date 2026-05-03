@@ -521,6 +521,8 @@ async function iniciarApp(admin) {
   await carregarPedidos();
   await carregarStats();
   setInterval(function(){ carregarPedidos(); carregarProducao(); }, 8000); // 8s — pedidos WhatsApp aparecem rápido
+  // SSE para atualização instantânea
+  conectarSSECaixa();
   setInterval(carregarStats, 30000);
   // Atualiza cardapio a cada 2 min sem resetar carrinho ativo
   setInterval(async () => {
@@ -1812,6 +1814,45 @@ function abrirComandaMesa(numero) {
     if (btnMesa) btnMesa.click();
     toast('Mesa ' + numero + ' selecionada — adicione itens e confirme');
   }, 300);
+}
+
+
+// ===== SSE CAIXA — atualização em tempo real =====
+function conectarSSECaixa() {
+  if (!token) return;
+  try {
+    const es = new EventSource('/api/delivery/sse?token=' + token);
+    es.addEventListener('novo_pedido', function(e) {
+      try {
+        const dados = JSON.parse(e.data);
+        carregarPedidos();
+        // Som/notificação visual
+        const t = document.getElementById('toast-container') || document.body;
+        const div = document.createElement('div');
+        div.style.cssText = 'position:fixed;top:16px;right:16px;background:#22c55e;color:#fff;padding:12px 18px;border-radius:10px;font-weight:700;z-index:99999;font-size:.9em;box-shadow:0 4px 16px rgba(0,0,0,.2)';
+        div.innerHTML = '🔔 Novo pedido #' + (dados.pedido?.numero || '') + (dados.pedido?.clienteNome ? ' — ' + dados.pedido.clienteNome : '');
+        document.body.appendChild(div);
+        setTimeout(() => div.remove(), 4000);
+      } catch(err) {}
+    });
+    es.addEventListener('pedido_pronto', function(e) {
+      try {
+        const dados = JSON.parse(e.data);
+        carregarPedidos();
+        const div = document.createElement('div');
+        div.style.cssText = 'position:fixed;top:16px;right:16px;background:#f97316;color:#fff;padding:12px 18px;border-radius:10px;font-weight:700;z-index:99999;font-size:.9em;box-shadow:0 4px 16px rgba(0,0,0,.2)';
+        div.innerHTML = '✅ Pedido #' + (dados.numero || '') + ' PRONTO para retirada!';
+        document.body.appendChild(div);
+        setTimeout(() => div.remove(), 5000);
+      } catch(err) {}
+    });
+    es.onerror = function() {
+      // Reconectar após 5s se cair
+      setTimeout(conectarSSECaixa, 5000);
+      es.close();
+    };
+    console.log('[CAIXA] SSE conectado');
+  } catch(e) { console.log('[CAIXA] SSE erro:', e.message); }
 }
 
 // ===== TIMER DOS PEDIDOS NO CAIXA =====
