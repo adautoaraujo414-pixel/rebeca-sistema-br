@@ -368,7 +368,26 @@ router.put('/pedidos/:id/status', authDelivery, async (req, res) => {
         
         if (status === 'confirmado') update.dataConfirmado = agora;
         if (status === 'preparando') update.dataPreparando = agora;
-        if (status === 'pronto') update.dataPronto = agora;
+        if (status === 'pronto') {
+            update.dataPronto = agora;
+            // SSE para admin e garçom saberem que pedido ficou pronto
+            try {
+                SseService.emitir(req.adminId.toString(), 'pedido_pronto', {
+                    pedidoId: req.params.id,
+                    mesa: pedido?.numeroMesa,
+                    clienteNome: pedido?.clienteNome || pedido?.nomeComanda || 'Cliente',
+                    numero: pedido?.numero
+                });
+                // Avisar entregadores que há pedido disponível para delivery
+                if (pedido?.tipoLocal === 'delivery' || pedido?.tipo === 'delivery') {
+                    SseService.emitir(req.adminId.toString(), 'novo_pedido_disponivel', {
+                        pedidoId: req.params.id,
+                        numero: pedido?.numero,
+                        endereco: pedido?.enderecoEntrega
+                    });
+                }
+            } catch(es) {}
+        }
         if (status === 'saiu_entrega') update.dataSaiuEntrega = agora;
         if (status === 'entregue') update.dataEntregue = agora;
         if (status === 'cancelado') { update.dataCancelado = agora; update.motivoCancelamento = req.body.motivo; update.canceladoPor = req.body.canceladoPor || null; }
@@ -2222,6 +2241,92 @@ router.post('/mesa/entrar', async (req, res) => {
             placeholder: true
         });
         res.json({ sucesso: true });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+
+// ========== MESA: ENVIAR PEDIDO (cliente pelo QR Code) ==========
+router.post('/mesa/pedido', async (req, res) => {
+    try {
+        const { adminSlug, adminId, mesa, nomeCliente, itens } = req.body;
+        if (!itens || !itens.length) return res.status(400).json({ erro: 'Carrinho vazio' });
+
+        let admin;
+        if (adminId) admin = await AdminDelivery.findById(adminId);
+        else if (adminSlug) admin = await AdminDelivery.findOne({ slug: adminSlug });
+        if (!admin) return res.status(404).json({ erro: 'Restaurante não encontrado' });
+
+        const adminObjId = admin._id;
+
+        // Calcular total
+        const itensMapped = itens.map(i => ({
+            itemId: i.itemId || i._id || null,
+            nome: i.nome,
+            quantidade: i.qtd || i.quantidade || 1,
+            precoUnitario: i.preco || 0,
+            subtotal: (i.preco || 0) * (i.qtd || i.quantidade || 1)
+        }));
+        const total = itensMapped.reduce((s, i) => s + i.subtotal, 0);
+
+        // Gerar número sequencial
+        const ultimo = await PedidoDelivery.findOne({ adminId: adminObjId }).sort({ numero: -1 }).lean();
+        const numero = (ultimo?.numero || 0) + 1;
+
+        // Remover placeholder vazio da mesma mesa se existir
+        await PedidoDelivery.deleteMany({
+            adminId: adminObjId,
+            numeroMesa: String(mesa),
+            placeholder: true,
+            itens: { $size: 0 }
+        });
+
+        // Criar pedido real
+        const pedido = await PedidoDelivery.create({
+            adminId: adminObjId,
+            numero,
+            tipo: 'mesa',
+            origem: 'qrcode',
+            tipoLocal: 'mesa',
+            origemPedido: 'mesa_digital',
+            numeroMesa: String(mesa),
+            nomeComanda: nomeCliente || 'Cliente',
+            clienteNome: nomeCliente || 'Cliente',
+            nomeCliente: nomeCliente || 'Cliente',
+            status: 'novo',
+            itens: itensMapped,
+            subtotal: total,
+            total,
+            formaPagamento: 'na_entrega'
+        });
+
+        // Emitir SSE para caixa, cozinha e garçom
+        SseService.emitir(adminObjId.toString(), 'novo_pedido', {
+            pedido: {
+                _id: pedido._id,
+                numero,
+                mesa: String(mesa),
+                numeroMesa: String(mesa),
+                clienteNome: nomeCliente || 'Cliente',
+                nomeCliente: nomeCliente || 'Cliente',
+                nomeComanda: nomeCliente || 'Cliente',
+                itens: itensMapped,
+                total,
+                status: 'novo',
+                tipoLocal: 'mesa',
+                origemPedido: 'mesa_digital',
+                createdAt: pedido.createdAt
+            }
+        });
+        SseService.emitir(adminObjId.toString(), 'novo_pedido_mesa', {
+            pedidoId: pedido._id,
+            mesa: String(mesa),
+            nomeCliente: nomeCliente || 'Cliente',
+            itens: itensMapped,
+            total,
+            numero
+        });
+
+        res.json({ sucesso: true, pedidoId: pedido._id, numero });
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
