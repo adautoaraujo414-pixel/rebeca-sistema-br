@@ -6630,12 +6630,6 @@ function abrirModalConta() {
   carregarContasPagar();
 }
 
-function pagarConta(i) {
-  _contasPagar[i].pago = true;
-  _contasPagar[i].dataPagamento = new Date().toISOString();
-  localStorage.setItem('contasPagar', JSON.stringify(_contasPagar));
-  carregarContasPagar();
-}
 
 function removerConta(i) {
   if (!confirm('Remover esta conta?')) return;
@@ -6666,17 +6660,6 @@ function carregarFornecedores() {
     </div>`).join('');
 }
 
-function abrirModalFornecedor() {
-  const nome = prompt('Nome do vendedor:'); if (!nome) return;
-  const empresa = prompt('Empresa/Distribuidora:') || '';
-  const whatsapp = prompt('WhatsApp (com DDD):') || '';
-  const cidade = prompt('Cidade:') || '';
-  const obs = prompt('Observações (dias de visita, etc):') || '';
-  const forns = JSON.parse(localStorage.getItem('fornecedores')||'[]');
-  forns.push({ nome, empresa, whatsapp, cidade, obs, produtos:[], criadoEm:new Date().toISOString() });
-  localStorage.setItem('fornecedores', JSON.stringify(forns));
-  carregarFornecedores();
-}
 
 function removerFornecedor(i) {
   if (!confirm('Remover fornecedor?')) return;
@@ -7211,9 +7194,6 @@ async function verHistoricoProduto(id, nome) {
   }
 }
 
-async function carregarEstoque() {
-  carregarEstoqueDashboard();
-}
 
 // ===== CÂMERA NOTA FISCAL =====
 let _cameraStream = null;
