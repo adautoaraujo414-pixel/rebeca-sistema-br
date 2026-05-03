@@ -673,7 +673,7 @@ async function carregarConfigNF() {
                   <!-- Gráfico vendas por dia -->
                   <div style="background:#fff;border-radius:14px;padding:20px;box-shadow:0 2px 10px rgba(0,0,0,.06);border:1px solid #e8e8ed;margin-bottom:20px">
                     <h3 style="font-size:1em;margin-bottom:16px;color:#1c1c1e">📅 Vendas por Dia (do Caixa)</h3>
-                    <canvas id="rf-grafico-vendas" height="120"></canvas>
+                    <canvas id="rf-grafico-vendas" style="max-height:260px" height="120"></canvas>
                   </div>
 
                   <!-- Lucro por produto + Contas a pagar lado a lado -->
@@ -2073,6 +2073,8 @@ async function carregarConfigNF() {
                 if (page === 'upload-cardapio') { /* nada */ }
                 if (page === 'combos') carregarCombos();
                 if (page === 'entrada-insumos') carregarEntradaInsumos();
+                if (page === 'relatorios') carregarRelatorios();
+                if (page === 'relatorio-financeiro') carregarRelatorioFinanceiro();
             });
         });
 
@@ -5228,13 +5230,16 @@ async function carregarRelatorioFinanceiro() {
     const porDia = {};
     caixas.forEach(c => {
       const d = (c.dataFechamento||'').split('T')[0];
-      if (d) porDia[d] = (porDia[d]||0) + (c.totalVendas||c.faturamento||0);
+      if (d) porDia[d] = (porDia[d]||0) + (c.totalFaturamento||c.totalVendas||c.faturamento||0);
     });
     const dias = Object.keys(porDia).sort();
     const vals = dias.map(d => porDia[d]);
     const labels = dias.map(d => { const p=d.split('-'); return p[2]+'/'+p[1]; });
 
-    const ctx = document.getElementById('rf-grafico-vendas').getContext('2d');
+    const rfCanvas = document.getElementById('rf-grafico-vendas');
+    if (rfCanvas) { rfCanvas.style.maxHeight = '260px'; rfCanvas.style.height = '260px'; }
+    const ctx = rfCanvas ? rfCanvas.getContext('2d') : null;
+    if (!ctx) { console.warn('canvas rf-grafico-vendas não encontrado'); } else {
     if (window._rfChart) window._rfChart.destroy();
     window._rfChart = new Chart(ctx, {
       type: 'bar',
@@ -5251,8 +5256,9 @@ async function carregarRelatorioFinanceiro() {
       },
       options: {
         responsive: true,
+        maintainAspectRatio: false,
         plugins: { legend: { display: false } },
-        scales: { y: { beginAtZero: true, ticks: { callback: v => 'R$'+v } } }
+        scales: { y: { beginAtZero: true, ticks: { callback: v => 'R$ '+v.toLocaleString('pt-BR') } } }
       }
     });
 
@@ -5751,8 +5757,14 @@ document.getElementById('caixaOperadorInput').addEventListener('keypress', funct
 
 async function carregarFinanceiroCaixas() {
   try {
-    const r = await fetch('/api/delivery/caixa/historico?limite=50', { headers: { Authorization: 'Bearer ' + token } });
-    const caixas = await r.json();
+    const fcIni = document.getElementById('fc-data-ini')?.value || '';
+    const fcFim = document.getElementById('fc-data-fim')?.value || '';
+    const fcParams = new URLSearchParams({ limite: 100 });
+    if (fcIni) fcParams.set('dataIni', fcIni);
+    if (fcFim) fcParams.set('dataFim', fcFim);
+    const r = await fetch('/api/delivery/caixa/fechamentos?' + fcParams.toString(), { headers: { Authorization: 'Bearer ' + token } });
+    const fcData = await r.json();
+    const caixas = fcData.caixas || fcData || [];
     const lista = document.getElementById('fc-lista-caixas');
     if (!lista) return;
     if (!caixas.length) { lista.innerHTML = '<div style="color:#888;text-align:center;padding:40px">Nenhum fechamento encontrado</div>'; return; }
@@ -6162,7 +6174,7 @@ async function processarNotaFiscalEI() {
       r.onerror = rej;
       r.readAsDataURL(file);
     });
-    const resp = await api('/estoque/processar-nota', {
+    const resp = await api('/estoque/nota-fiscal', {
       method: 'POST',
       body: JSON.stringify({ base64, tipo: file.type })
     });

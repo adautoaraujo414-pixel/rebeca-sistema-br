@@ -1496,8 +1496,7 @@ router.get('/caixa/entregadores-ativos', authDelivery, async (req, res) => {
 // Histórico de entradas de insumos
 router.get('/estoque/entradas', authDelivery, async (req, res) => {
     try {
-        const EntradaInsumo = require('../models/delivery.models').EntradaInsumo;
-        if (!EntradaInsumo) return res.json({ entradas: [] });
+        const { EntradaInsumo } = require('../models/delivery.models');
         const entradas = await EntradaInsumo.find({ adminId: req.adminId })
             .sort({ createdAt: -1 }).limit(50).lean();
         res.json({ entradas });
@@ -2267,7 +2266,14 @@ router.post('/caixa/fechar', authDelivery, async (req, res) => {
 router.get('/caixa/historico', authDelivery, async (req, res) => {
     try {
         const limite = parseInt(req.query.limite) || 30;
-        const caixas = await CaixaDelivery.find({ adminId: req.adminId, status: 'fechado' })
+        const { dataIni, dataFim } = req.query;
+        const filtroHist = { adminId: req.adminId, status: 'fechado' };
+        if (dataIni || dataFim) {
+            filtroHist.dataFechamento = {};
+            if (dataIni) { const ini = new Date(dataIni); ini.setHours(0,0,0,0); filtroHist.dataFechamento.$gte = ini; }
+            if (dataFim) { const fim = new Date(dataFim); fim.setHours(23,59,59,999); filtroHist.dataFechamento.$lte = fim; }
+        }
+        const caixas = await CaixaDelivery.find(filtroHist)
             .sort({ dataFechamento: -1 })
             .limit(limite)
             .select('-pedidosIds');
@@ -2590,12 +2596,8 @@ module.exports = router;
 // ========== ESTOQUE: LEITURA DE NOTA FISCAL POR FOTO (GPT-4o Vision) ==========
 router.post('/estoque/nota-fiscal', authDelivery, async (req, res) => {
     try {
-        // Apenas plus e premium
         const _adm = await require('./delivery.routes.js'.includes ? require('../models/delivery.models').AdminDelivery.findById(req.adminId).lean() : null);
         const AdminDelivery = require('../models/delivery.models').AdminDelivery;
-        const _admDoc = await AdminDelivery.findById(req.adminId).lean();
-        if (!_admDoc || !['plus','premium'].includes(_admDoc.plano) || _admDoc.planoStatus !== 'ativo') {
-            return res.status(403).json({ erro: 'plano_insuficiente', msg: 'Estoque inteligente disponível apenas nos planos Plus e Premium.' });
         }
         const { imagemBase64, mimeType } = req.body;
         if (!imagemBase64) return res.status(400).json({ erro: 'Imagem obrigatoria' });
@@ -2630,9 +2632,6 @@ router.post('/estoque/nota-fiscal', authDelivery, async (req, res) => {
 // ========== ESTOQUE: ENTRADA EM LOTE (salvar itens da nota) ==========
 router.post('/estoque/entrada-lote', authDelivery, async (req, res) => {
     try {
-        const AdminDelivery2 = require('../models/delivery.models').AdminDelivery;
-        const _admDoc2 = await AdminDelivery2.findById(req.adminId).lean();
-        if (!_admDoc2 || !['plus','premium'].includes(_admDoc2.plano) || _admDoc2.planoStatus !== 'ativo') {
             return res.status(403).json({ erro: 'plano_insuficiente', msg: 'Estoque inteligente disponível apenas nos planos Plus e Premium.' });
         }
         const { itens, fornecedor, dataEntrada } = req.body;
@@ -2654,6 +2653,23 @@ router.post('/estoque/entrada-lote', authDelivery, async (req, res) => {
             );
             resultados.push({ nome: it.nome, status: atualizado ? 'ok' : 'nao_encontrado', estoqueAtual: atualizado?.estoqueAtual });
         }
+        // Salvar registro de entrada no histórico
+        try {
+            const { EntradaInsumo } = require('../models/delivery.models');
+            await EntradaInsumo.create({
+                adminId: req.adminId,
+                fornecedor: fornecedor || '',
+                dataEntrada: dataEntrada ? new Date(dataEntrada) : new Date(),
+                itens: itens.map(it => ({
+                    nome: it.nome || '',
+                    unidade: it.unidade || 'Un',
+                    quantidade: parseFloat(it.quantidade) || 0,
+                    valorUnitario: parseFloat(it.valorUnitario || it.custo || 0),
+                    fornecedor: it.fornecedor || fornecedor || '',
+                    itemId: it.itemId || null
+                }))
+            });
+        } catch(e2) { console.error('EntradaInsumo save error:', e2.message); }
         res.json({ sucesso: true, resultados });
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });

@@ -409,6 +409,25 @@ const CaixaDeliverySchema = new mongoose.Schema({
 const CaixaDelivery = mongoose.models.CaixaDelivery || mongoose.model('CaixaDelivery', CaixaDeliverySchema);
 module.exports.CaixaDelivery = CaixaDelivery;
 
+// ===== ENTRADA DE INSUMOS =====
+const EntradaInsumoSchema = new mongoose.Schema({
+    adminId: { type: mongoose.Schema.Types.ObjectId, required: true, index: true },
+    fornecedor: { type: String, default: '' },
+    dataEntrada: { type: Date, default: Date.now },
+    itens: [{
+        nome: String,
+        unidade: { type: String, default: 'Un' },
+        quantidade: { type: Number, default: 0 },
+        valorUnitario: { type: Number, default: 0 },
+        fornecedor: String,
+        itemId: { type: mongoose.Schema.Types.ObjectId, default: null }
+    }],
+    notaFiscalBase64: { type: String, default: '' },
+    observacoes: { type: String, default: '' }
+}, { timestamps: true });
+const EntradaInsumo = mongoose.models.EntradaInsumo || mongoose.model('EntradaInsumo', EntradaInsumoSchema);
+module.exports.EntradaInsumo = EntradaInsumo;
+
 // ===== COMBO =====
 const ComboDeliverySchema = new mongoose.Schema({
     adminId: { type: mongoose.Schema.Types.ObjectId, required: true, index: true },
