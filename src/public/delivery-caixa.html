@@ -254,6 +254,90 @@ body.acougue-theme #acougue-stats-kg { display:flex !important; }
 /* Stats extras açougue */
 #acougue-stats-kg { display:none; }
 
+
+/* ===== LAYOUT AÇOUGUE — só ativo com body.acougue-theme ===== */
+body.acougue-theme .main-layout { display:grid; grid-template-columns:1fr 380px; }
+
+/* Cards de carne */
+body.acougue-theme .items-grid { grid-template-columns:repeat(4,1fr) !important; gap:10px !important; }
+body.acougue-theme .item-card { border-radius:10px !important; overflow:hidden; border:1px solid #e8e8e8 !important; background:#fff !important; cursor:pointer; transition:box-shadow .2s; }
+body.acougue-theme .item-card:hover { box-shadow:0 4px 16px rgba(196,30,30,.18) !important; border-color:#c41e1e !important; transform:none !important; }
+body.acougue-theme .item-img { width:100%; height:110px; object-fit:cover; display:block; }
+body.acougue-theme .item-img-placeholder { width:100%; height:110px; display:flex; align-items:center; justify-content:center; font-size:2.5em; background:#f5f5f5; }
+body.acougue-theme .item-info { padding:8px 10px 4px; }
+body.acougue-theme .item-name { font-size:.82em; font-weight:800; color:#1a1a1a; text-transform:uppercase; letter-spacing:.3px; margin-bottom:2px; }
+body.acougue-theme .item-price { font-size:.8em; font-weight:700; color:#c41e1e; margin-bottom:6px; }
+body.acougue-theme .item-add { display:none !important; }
+
+/* Botões de peso no card açougue */
+.acougue-peso-btns { display:flex; gap:4px; padding:0 8px 6px; flex-wrap:wrap; }
+.acougue-peso-btns button { font-size:.68em; padding:3px 7px; border:1px solid #ddd; border-radius:6px; background:#f8f8f8; color:#555; cursor:pointer; font-weight:600; }
+.acougue-peso-btns button:hover { border-color:#c41e1e; color:#c41e1e; background:#fff5f5; }
+.acougue-digitar-peso { width:100%; margin:0 8px 8px; box-sizing:border-box; padding:6px 10px; border:1px solid #e0e0e0; border-radius:8px; font-size:.78em; background:#fff; color:#c41e1e; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:6px; justify-content:center; }
+.acougue-digitar-peso:hover { background:#fff5f5; border-color:#c41e1e; }
+
+/* Painel direito açougue */
+body.acougue-theme .right { background:#fff; border-left:1px solid #e8e8e8; display:flex; flex-direction:column; }
+body.acougue-theme .comanda-header { padding:12px 14px 8px; border-bottom:1px solid #f0f0f0; }
+
+/* Tipo venda açougue */
+#acougue-tipo-venda { display:none; gap:8px; margin-bottom:10px; }
+body.acougue-theme #acougue-tipo-venda { display:grid; grid-template-columns:1fr 1fr 1fr; }
+body.acougue-theme .tipo-btns { display:none; }
+.acougue-tipo-btn { padding:10px 6px; border:2px solid #e0e0e0; border-radius:10px; background:#fff; font-size:.78em; font-weight:700; cursor:pointer; text-align:center; color:#555; transition:all .15s; }
+.acougue-tipo-btn.active { border-color:#c41e1e; background:#c41e1e; color:#fff; }
+
+/* Carrinho açougue */
+body.acougue-theme .cart-item { display:flex; align-items:center; gap:8px; padding:10px 14px; border-bottom:1px solid #f5f5f5; }
+body.acougue-theme .cart-item-img { width:44px; height:44px; border-radius:8px; object-fit:cover; background:#f5f5f5; flex-shrink:0; }
+body.acougue-theme .cart-item-name { font-weight:700; font-size:.85em; color:#1a1a1a; }
+body.acougue-theme .cart-item-sub { font-size:.75em; color:#888; margin-top:1px; }
+body.acougue-theme .cart-item-price { font-weight:800; color:#c41e1e; font-size:.9em; margin-left:auto; white-space:nowrap; }
+
+/* Botões ação açougue */
+#acougue-cart-actions { display:none; flex-direction:column; gap:6px; padding:10px 14px; border-top:1px solid #f0f0f0; }
+body.acougue-theme #acougue-cart-actions { display:flex; }
+body.acougue-theme .cart-actions { display:none; }
+.acougue-btn-finalizar { padding:14px; background:#f97316; color:#fff; border:none; border-radius:10px; font-weight:800; font-size:.92em; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; }
+.acougue-btn-pagar { padding:14px; background:#16a34a; color:#fff; border:none; border-radius:10px; font-weight:800; font-size:.92em; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; }
+.acougue-btn-etiqueta { padding:11px; background:#2563eb; color:#fff; border:none; border-radius:10px; font-weight:700; font-size:.85em; cursor:pointer; }
+.acougue-btn-comprovante { padding:11px; background:#f8f8f8; color:#333; border:1px solid #ddd; border-radius:10px; font-weight:700; font-size:.85em; cursor:pointer; }
+.acougue-row-2 { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+
+/* Barra inferior açougue */
+#acougue-toolbar { display:none; background:#fff; border-top:1px solid #e0e0e0; padding:8px 14px; gap:8px; }
+body.acougue-theme #acougue-toolbar { display:flex; }
+.acougue-tool-btn { flex:1; padding:9px 4px; border:1px solid #e0e0e0; border-radius:8px; background:#fafafa; font-size:.72em; font-weight:700; color:#444; cursor:pointer; text-align:center; }
+.acougue-tool-btn:hover { border-color:#c41e1e; color:#c41e1e; background:#fff5f5; }
+.acougue-tool-btn.red { color:#ef4444; border-color:#fecaca; }
+.acougue-tool-btn.red:hover { background:#fff5f5; }
+
+/* Rodapé açougue */
+#acougue-footer { display:none; background:#1a1a1a; color:#fff; padding:6px 20px; font-size:.72em; justify-content:space-between; align-items:center; }
+body.acougue-theme #acougue-footer { display:flex; }
+
+/* Sugestões açougue */
+#acougue-sugestoes { display:none; padding:10px 14px 0; }
+body.acougue-theme #acougue-sugestoes { display:block; }
+.acougue-sug-title { font-size:.72em; font-weight:800; color:#888; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px; }
+.acougue-sug-grid { display:flex; gap:8px; overflow-x:auto; padding-bottom:4px; }
+.acougue-sug-item { min-width:90px; border:1px solid #e0e0e0; border-radius:10px; padding:8px; background:#fff; cursor:pointer; flex-shrink:0; }
+.acougue-sug-item:hover { border-color:#c41e1e; }
+.acougue-sug-img { width:42px; height:42px; object-fit:cover; border-radius:6px; background:#f5f5f5; margin-bottom:4px; }
+.acougue-sug-nome { font-size:.68em; font-weight:700; color:#1a1a1a; }
+.acougue-sug-preco { font-size:.65em; color:#888; }
+.acougue-sug-add { width:22px; height:22px; border-radius:50%; background:#c41e1e; color:#fff; border:none; font-size:1em; cursor:pointer; float:right; margin-top:-22px; }
+
+/* Modal peso açougue */
+#modal-peso-acougue { display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:9999; align-items:center; justify-content:center; }
+#modal-peso-acougue.show { display:flex; }
+.modal-peso-box { background:#fff; border-radius:16px; padding:24px; width:320px; max-width:95vw; }
+.modal-peso-nome { font-weight:800; font-size:1em; margin-bottom:4px; }
+.modal-peso-preco { font-size:.82em; color:#c41e1e; font-weight:700; margin-bottom:14px; }
+.modal-peso-input { width:100%; padding:14px; font-size:1.4em; font-weight:800; text-align:center; border:2px solid #c41e1e; border-radius:10px; margin-bottom:8px; box-sizing:border-box; }
+.modal-peso-total { text-align:center; font-size:1.1em; font-weight:900; color:#c41e1e; margin-bottom:14px; }
+.modal-peso-btns { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+
 </style>
 </head>
 <body>
@@ -372,6 +456,12 @@ body.acougue-theme #acougue-stats-kg { display:flex !important; }
     <!-- Direita: Comanda -->
     <div class="right">
       <div class="comanda-header">
+        <div class="comanda-title" id="acougue-comanda-title" style="display:none;font-weight:800;font-size:.88em;color:#555;margin-bottom:8px">TIPO DE VENDA</div>
+        <div id="acougue-tipo-venda">
+          <button class="acougue-tipo-btn active" onclick="setTipoAcougue('balcao',this)">👤 BALCÃO</button>
+          <button class="acougue-tipo-btn" onclick="setTipoAcougue('delivery',this)">🛵 ENTREGA</button>
+          <button class="acougue-tipo-btn" onclick="setTipoAcougue('encomenda',this)">📅 ENCOMENDA</button>
+        </div>
         <div class="comanda-title">🧾 Comanda</div>
         <div class="tipo-btns">
           <button class="tipo-btn active" onclick="setTipo('balcao',this)">🏪 Balcão</button>
@@ -409,9 +499,60 @@ body.acougue-theme #acougue-stats-kg { display:flex !important; }
         </div>
         <textarea class="obs-footer" id="obs-geral" placeholder="Observação geral do pedido..."></textarea>
       </div>
-    </div>
 
+      <!-- AÇÕES AÇOUGUE -->
+      <div id="acougue-cart-actions">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <span style="font-size:.78em;color:#888">Subtotal</span>
+          <span style="font-size:.78em;font-weight:700" id="acougue-subtotal">R$ 0,00</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px">
+          <span style="font-size:.82em;color:#555">DESCONTO</span>
+          <button onclick="abrirDescontoAcougue()" style="font-size:.72em;border:1px solid #ddd;border-radius:6px;padding:3px 10px;background:#f8f8f8;cursor:pointer">APLICAR DESCONTO</button>
+          <span style="font-size:.82em;color:#888" id="acougue-desconto">R$ 0,00</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding-top:6px;border-top:2px solid #f0f0f0">
+          <span style="font-size:1em;font-weight:800">TOTAL</span>
+          <span style="font-size:1.4em;font-weight:900;color:#c41e1e" id="acougue-total">R$ 0,00</span>
+        </div>
+        <button class="acougue-btn-finalizar" onclick="finalizarPesarAcougue()">⚖️ FINALIZAR E PESAR</button>
+        <button class="acougue-btn-pagar" onclick="abrirPagamento()">💳 RECEBER PAGAMENTO</button>
+        <div class="acougue-row-2">
+          <button class="acougue-btn-etiqueta" onclick="imprimirEtiquetaCarrinho()">🖨️ IMPRIMIR ETIQUETA</button>
+          <button class="acougue-btn-comprovante" onclick="gerarComprovante()">📄 GERAR COMPROVANTE</button>
+        </div>
+      </div>
+
+      <!-- SUGESTÕES -->
+      <div id="acougue-sugestoes">
+        <div class="acougue-sug-title">Sugestões para seu cliente</div>
+        <div class="acougue-sug-grid" id="acougue-sug-grid">
+          <div style="color:#bbb;font-size:.8em;padding:8px">Carregando...</div>
+        </div>
+      </div>
+
+    </div>
   </div>
+
+  <!-- TOOLBAR AÇOUGUE -->
+  <div id="acougue-toolbar">
+    <button class="acougue-tool-btn" onclick="abrirTecladoRapido()">⌨️ TECLADO RÁPIDO</button>
+    <button class="acougue-tool-btn" onclick="abrirGaveta()">🗄️ ABRIR GAVETA</button>
+    <button class="acougue-tool-btn red" onclick="cancelarVendaAcougue()">✕ CANCELAR VENDA</button>
+    <button class="acougue-tool-btn" onclick="verHistoricoVendas()">🕐 HISTÓRICO DE VENDAS</button>
+  </div>
+
+  <!-- RODAPÉ AÇOUGUE -->
+  <div id="acougue-footer">
+    <div id="acougue-footer-balanca">
+      <span id="acougue-balanca-dot" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#22c55e;margin-right:6px"></span>
+      <span id="acougue-balanca-txt">BALANÇA CONECTADA</span>
+      <span style="color:#aaa;margin-left:8px;font-size:.9em" id="acougue-balanca-sub">Peso automático ativado</span>
+    </div>
+    <div style="color:#aaa">Última atualização: <span id="acougue-ultima-atualizacao">--:--:--</span></div>
+    <div style="color:#888">Rebeca Sistema para Açougues · Versão 1.0.0</div>
+  </div>
+
 </div>
 
 <!-- Modal Pagamento -->
@@ -2086,7 +2227,284 @@ function imprimirRelatorioCaixa() {
   <div class="div2"></div>
   <div class="centro sub">Assinatura: _______________________</div>
   <div class="centro sub" style="margin-top:6px">Documento gerado pelo sistema Rebeca</div>
+  
+<!-- Modal Peso Açougue -->
+<div id="modal-peso-acougue">
+  <div class="modal-peso-box">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div style="font-weight:800;font-size:1em">⚖️ Digitar Peso</div>
+      <button onclick="fecharModalPeso()" style="background:none;border:none;font-size:1.3em;cursor:pointer;color:#888">✕</button>
+    </div>
+    <div class="modal-peso-nome" id="modal-peso-nome">Picanha</div>
+    <div class="modal-peso-preco" id="modal-peso-preco">R$ 0,00/kg</div>
+    <input type="number" class="modal-peso-input" id="modal-peso-kg" placeholder="0,000" step="0.001" min="0"
+      oninput="calcModalPeso()">
+    <div class="modal-peso-total" id="modal-peso-total">Total: R$ 0,00</div>
+    <div class="modal-peso-btns">
+      <button onclick="fecharModalPeso()" style="padding:12px;border:1px solid #ddd;border-radius:10px;background:#f8f8f8;font-weight:700;cursor:pointer">Cancelar</button>
+      <button onclick="confirmarPeso()" style="padding:12px;background:#c41e1e;color:#fff;border:none;border-radius:10px;font-weight:800;cursor:pointer">Adicionar</button>
+    </div>
+  </div>
+</div>
+
+
+<script>
+// ===== AÇOUGUE — layout e funções exclusivas =====
+let _pesoItem = null; // item sendo pesado no modal
+let _descontoAcougue = 0;
+let _tipoVendaAcougue = 'balcao';
+
+// Ativar layout açougue após detecção do tipoNegocio
+function ativarLayoutAcougue() {
+  // Mostrar título tipo venda
+  const t = document.getElementById('acougue-comanda-title');
+  if (t) t.style.display = 'block';
+  // Atualizar rodapé com hora
+  setInterval(() => {
+    const el = document.getElementById('acougue-ultima-atualizacao');
+    if (el) el.textContent = new Date().toLocaleTimeString('pt-BR');
+  }, 1000);
+  // Status balança
+  atualizarStatusBalancaFooter();
+  // Carregar sugestões (últimos itens de outras categorias)
+  carregarSugestoesAcougue();
+}
+
+function atualizarStatusBalancaFooter() {
+  // Verifica se balança está configurada como ativa via config
+  fetch('/api/delivery/caixa/tipo-negocio', {headers:{'Authorization':'Bearer '+token}})
+    .then(r => r.json()).then(d => {
+      const dot = document.getElementById('acougue-balanca-dot');
+      const txt2 = document.getElementById('acougue-balanca-txt');
+      const sub = document.getElementById('acougue-balanca-sub');
+      if (dot && d.tipoNegocio === 'acougue') {
+        dot.style.background = '#22c55e';
+        if (txt2) txt2.textContent = 'BALANÇA CONECTADA';
+        if (sub) sub.textContent = 'Peso automático ativado';
+      }
+    }).catch(() => {});
+}
+
+function setTipoAcougue(tipo, el) {
+  _tipoVendaAcougue = tipo;
+  tipoAtual = tipo === 'encomenda' ? 'balcao' : tipo;
+  document.querySelectorAll('.acougue-tipo-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// Card de item açougue com botões de peso
+function itemCardAcougue(item) {
+  const img = item.imagem
+    ? `<img class="item-img" src="${item.imagem}" alt="${item.nome}" onerror="this.style.display='none'">`
+    : `<div class="item-img-placeholder">🥩</div>`;
+  const data = encodeURIComponent(JSON.stringify({_id:item._id, nome:item.nome, preco:item.preco}));
+  return `<div class="item-card">
+    ${img}
+    <div class="item-info">
+      <div class="item-name">${item.nome}</div>
+      <div class="item-price">R$ ${Number(item.preco||0).toFixed(2).replace('.',',')} /kg</div>
+    </div>
+    <div class="acougue-peso-btns">
+      <button onclick="addPesoRapido('${data}',0.1)">+100g</button>
+      <button onclick="addPesoRapido('${data}',0.5)">+500g</button>
+      <button onclick="addPesoRapido('${data}',1)">+1kg</button>
+    </div>
+    <button class="acougue-digitar-peso" onclick="abrirModalPeso('${data}')">⚖️ DIGITAR PESO</button>
+  </div>`;
+}
+
+function addPesoRapido(data, kg) {
+  const item = JSON.parse(decodeURIComponent(data));
+  const ex = carrinho.find(c => c.itemId === item._id);
+  if (ex) { ex.quantidade = parseFloat((ex.quantidade + kg).toFixed(3)); ex.subtotal = ex.quantidade * ex.precoUnitario; }
+  else carrinho.push({ itemId: item._id, nome: item.nome, quantidade: kg, unidade: 'kg', precoUnitario: item.preco, subtotal: parseFloat((kg * item.preco).toFixed(2)) });
+  renderCarrinho();
+  atualizarTotaisAcougue();
+}
+
+function abrirModalPeso(data) {
+  _pesoItem = JSON.parse(decodeURIComponent(data));
+  document.getElementById('modal-peso-nome').textContent = _pesoItem.nome;
+  document.getElementById('modal-peso-preco').textContent = 'R$ ' + Number(_pesoItem.preco||0).toFixed(2).replace('.',',') + '/kg';
+  document.getElementById('modal-peso-kg').value = '';
+  document.getElementById('modal-peso-total').textContent = 'Total: R$ 0,00';
+  document.getElementById('modal-peso-acougue').classList.add('show');
+}
+
+function fecharModalPeso() {
+  document.getElementById('modal-peso-acougue').classList.remove('show');
+  _pesoItem = null;
+}
+
+function calcModalPeso() {
+  if (!_pesoItem) return;
+  const kg = parseFloat(document.getElementById('modal-peso-kg').value) || 0;
+  const total = kg * (_pesoItem.preco || 0);
+  document.getElementById('modal-peso-total').textContent = 'Total: R$ ' + total.toFixed(2).replace('.',',');
+}
+
+function confirmarPeso() {
+  if (!_pesoItem) return;
+  const kg = parseFloat(document.getElementById('modal-peso-kg').value) || 0;
+  if (kg <= 0) { alert('Informe o peso!'); return; }
+  addPesoRapido(encodeURIComponent(JSON.stringify(_pesoItem)), kg);
+  fecharModalPeso();
+}
+
+function atualizarTotaisAcougue() {
+  const sub = carrinho.reduce((s,i) => s + (i.subtotal||0), 0);
+  const total = sub - _descontoAcougue;
+  const elS = document.getElementById('acougue-subtotal');
+  const elT = document.getElementById('acougue-total');
+  if (elS) elS.textContent = 'R$ ' + sub.toFixed(2).replace('.',',');
+  if (elT) elT.textContent = 'R$ ' + Math.max(0,total).toFixed(2).replace('.',',');
+  // Sync com cart normal também
+  document.getElementById('cart-subtotal').textContent = 'R$ ' + sub.toFixed(2).replace('.',',');
+  document.getElementById('cart-total').textContent = 'R$ ' + Math.max(0,total).toFixed(2).replace('.',',');
+}
+
+function abrirDescontoAcougue() {
+  const v = prompt('Valor do desconto (R$):');
+  const n = parseFloat((v||'').replace(',','.')) || 0;
+  _descontoAcougue = n;
+  const el = document.getElementById('acougue-desconto');
+  if (el) el.textContent = 'R$ ' + n.toFixed(2).replace('.',',');
+  atualizarTotaisAcougue();
+}
+
+function finalizarPesarAcougue() {
+  if (!carrinho.length) { alert('Adicione itens!'); return; }
+  // Enviar pedido e abrir pagamento
+  enviarPedido().then ? enviarPedido() : null;
+  setTimeout(() => abrirPagamento(), 800);
+}
+
+function imprimirEtiquetaCarrinho() {
+  if (!carrinho.length) { alert('Adicione itens ao carrinho!'); return; }
+  carrinho.forEach(it => {
+    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
+      *{margin:0;padding:0;box-sizing:border-box}
+      body{font-family:'Courier New',monospace;width:60mm;padding:6px;font-size:11px}
+      .nome{font-size:13px;font-weight:900;text-align:center;margin-bottom:4px}
+      .linha{display:flex;justify-content:space-between;padding:2px 0}
+      .total{font-size:16px;font-weight:900;text-align:center;margin-top:6px;border-top:1px dashed #000;padding-top:4px}
+      @media print{@page{margin:0;size:60mm auto}}
+    </style></head><body>
+      <div class="nome">🥩 ${it.nome.toUpperCase()}</div>
+      <div class="linha"><span>Peso:</span><span><b>${Number(it.quantidade).toFixed(3)} kg</b></span></div>
+      <div class="linha"><span>Preço/kg:</span><span>R$ ${Number(it.precoUnitario||0).toFixed(2)}</span></div>
+      <div class="total">R$ ${Number(it.subtotal||0).toFixed(2)}</div>
+      <div style="text-align:center;font-size:9px;margin-top:4px;color:#555">${new Date().toLocaleString('pt-BR')}</div>
+    </body></html>`;
+    const w = window.open('','_blank','width=300,height=400');
+    w.document.write(html); w.document.close();
+    setTimeout(() => w.print(), 400);
+  });
+}
+
+function gerarComprovante() {
+  if (!carrinho.length) { alert('Carrinho vazio!'); return; }
+  const sub = carrinho.reduce((s,i) => s+(i.subtotal||0),0);
+  const total = sub - _descontoAcougue;
+  const linhas = carrinho.map(it =>
+    `${it.nome.padEnd(18).slice(0,18)} ${Number(it.quantidade).toFixed(3)}kg x R$${Number(it.precoUnitario||0).toFixed(2)} = R$${Number(it.subtotal||0).toFixed(2)}`
+  ).join('\n');
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Courier New',monospace;width:80mm;padding:8px;font-size:11px}
+    .centro{text-align:center} .linha{border-top:1px dashed #000;margin:6px 0}
+    @media print{@page{margin:0;size:80mm auto}}
+  </style></head><body>
+    <div class="centro"><b>COMPROVANTE DE VENDA</b></div>
+    <div class="centro" style="font-size:9px">${new Date().toLocaleString('pt-BR')}</div>
+    <div class="linha"></div>
+    <pre style="font-size:10px">${linhas}</pre>
+    <div class="linha"></div>
+    ${_descontoAcougue > 0 ? `<div style="display:flex;justify-content:space-between"><span>Desconto:</span><span>R$ ${_descontoAcougue.toFixed(2)}</span></div>` : ''}
+    <div style="display:flex;justify-content:space-between;font-weight:900;font-size:13px"><span>TOTAL:</span><span>R$ ${Math.max(0,total).toFixed(2)}</span></div>
   </body></html>`;
+  const w = window.open('','_blank','width:350,height:600');
+  w.document.write(html); w.document.close();
+  setTimeout(() => w.print(), 400);
+}
+
+function abrirTecladoRapido() {
+  alert('Teclado rápido: use o campo de busca ou pistola de código de barras.');
+}
+
+function abrirGaveta() {
+  // Comando padrão ESC/POS para abrir gaveta via impressora
+  const w = window.open('about:blank','_blank','width=1,height=1');
+  if(w) { w.document.write('<script>window.close();<\/script>'); w.close(); }
+  if(window._cfgImpressora) {
+    fetch('/api/delivery/impressora/gaveta', {method:'POST', headers:{'Authorization':'Bearer '+token}})
+      .catch(()=>{});
+  }
+  alert('Sinal enviado para abrir gaveta.');
+}
+
+function cancelarVendaAcougue() {
+  if (!carrinho.length || confirm('Cancelar a venda atual?')) {
+    _descontoAcougue = 0;
+    const elD = document.getElementById('acougue-desconto');
+    if (elD) elD.textContent = 'R$ 0,00';
+    limparCarrinho();
+    atualizarTotaisAcougue();
+  }
+}
+
+function verHistoricoVendas() {
+  mudarTab('todos', document.querySelector('.tab-btn[onclick*="todos"]'));
+}
+
+async function carregarSugestoesAcougue() {
+  try {
+    const r = await fetch('/api/delivery/cardapio', {headers:{'Authorization':'Bearer '+token}});
+    const d = await r.json();
+    const itens = Array.isArray(d) ? d : (d.itens || d.items || []);
+    // Pegar itens sem foto ou de outras categorias como sugestão
+    const sug = itens.filter(i => i.disponivel !== false && i.ativo !== false).slice(0, 6);
+    const el = document.getElementById('acougue-sug-grid');
+    if (!el) return;
+    el.innerHTML = sug.map(i => {
+      const data = encodeURIComponent(JSON.stringify({_id:i._id, nome:i.nome, preco:i.preco}));
+      const img = i.imagem ? `<img class="acougue-sug-img" src="${i.imagem}" onerror="this.style.display='none'">` : `<div class="acougue-sug-img" style="display:flex;align-items:center;justify-content:center;font-size:1.5em">🥩</div>`;
+      return `<div class="acougue-sug-item">
+        ${img}
+        <div class="acougue-sug-nome">${i.nome}</div>
+        <div class="acougue-sug-preco">R$ ${Number(i.preco||0).toFixed(2).replace('.',',')}</div>
+        <button class="acougue-sug-add" onclick="addPesoRapido('${data}',0.5)">+</button>
+      </div>`;
+    }).join('');
+  } catch(e) {}
+}
+
+// Sobrescrever itemCard e atualizarTotais quando for açougue
+const _itemCardOriginal = typeof itemCard === 'function' ? itemCard : null;
+const _atualizarTotaisOriginal = typeof atualizarTotais === 'function' ? atualizarTotais : null;
+
+function itemCard(i) {
+  if (window._tipoNegocio === 'acougue') return itemCardAcougue(i);
+  return _itemCardOriginal ? _itemCardOriginal(i) : '';
+}
+
+function atualizarTotais() {
+  if (window._tipoNegocio === 'acougue') { atualizarTotaisAcougue(); return; }
+  if (_atualizarTotaisOriginal) _atualizarTotaisOriginal();
+}
+
+// Ativar layout ao detectar açougue
+document.addEventListener('DOMContentLoaded', function() {
+  const checkAcougue = setInterval(() => {
+    if (window._tipoNegocio !== undefined) {
+      clearInterval(checkAcougue);
+      if (window._tipoNegocio === 'acougue') ativarLayoutAcougue();
+    }
+  }, 200);
+});
+</script>
+
+</body></html>`;
 
   const w = window.open('', '_blank', 'width=400,height=700');
   w.document.write(html);
