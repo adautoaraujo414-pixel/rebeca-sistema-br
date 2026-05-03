@@ -320,9 +320,58 @@ async function enviarPedido(){
 function fecharOverlay(){document.getElementById('overlayOk').classList.remove('show');mudarTab('conta');}
 async function chamarGarcom(){
   if(!_adminId||!mesa)return;
-  try{await fetch(API+'/garcons/chamar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({adminId:_adminId,mesa,nomeCliente,motivo:'chamado_mesa'})});toast('🔔 Garçom chamado!');}
-  catch(e){toast('Erro ao chamar garçom',true);}
+  // Modal com opções de motivo
+  const opcoes = [
+    { icon:'🧻', label:'Preciso de algo' },
+    { icon:'🍽️', label:'Pedir mais itens' },
+    { icon:'💰', label:'Fechar a conta' },
+    { icon:'🤔', label:'Dúvida / Informação' },
+    { icon:'⚠️', label:'Problema na mesa' },
+  ];
+  const modal = document.createElement('div');
+  modal.id = 'modalChamarGarcom';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:9999;display:flex;align-items:flex-end;justify-content:center';
+  modal.innerHTML = `
+    <div style="background:#141414;border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:20px;padding-bottom:calc(20px + env(safe-area-inset-bottom))">
+      <div style="width:36px;height:4px;background:#333;border-radius:2px;margin:0 auto 16px"></div>
+      <div style="font-weight:800;font-size:1.05em;margin-bottom:4px">🔔 Chamar Garçom</div>
+      <div style="font-size:.8em;color:#888;margin-bottom:16px">Mesa ${mesa} — Como podemos ajudar?</div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px">
+        ${opcoes.map(o => `
+          <button onclick="enviarChamada('${o.label}')" style="display:flex;align-items:center;gap:12px;padding:14px;background:#1c1c1c;border:1px solid #333;border-radius:12px;color:#fff;font-size:.9em;font-weight:600;cursor:pointer;text-align:left;width:100%">
+            <span style="font-size:1.3em">${o.icon}</span> ${o.label}
+          </button>`).join('')}
+      </div>
+      <button onclick="document.getElementById('modalChamarGarcom').remove()" style="width:100%;padding:13px;background:#222;border:none;border-radius:10px;color:#888;font-weight:600;cursor:pointer">Cancelar</button>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if(e.target === modal) modal.remove(); });
 }
+
+async function enviarChamada(motivo) {
+  document.getElementById('modalChamarGarcom')?.remove();
+  const btn = document.querySelector('.btn-chamar');
+  if(btn){ btn.disabled=true; btn.textContent='⏳ Chamando...'; }
+  try {
+    const r = await fetch(API+'/garcons/chamar', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ adminId:_adminId, adminSlug, mesa, nomeCliente, motivo })
+    });
+    const d = await r.json();
+    if(d.sucesso){
+      toast('✅ Garçom chamado! Aguarde...');
+      if(btn){ btn.textContent='✅ Chamado!'; btn.style.background='rgba(34,197,94,.15)'; btn.style.borderColor='#22c55e'; btn.style.color='#22c55e'; }
+      setTimeout(()=>{ if(btn){ btn.disabled=false; btn.textContent='🔔 Chamar'; btn.style.background=''; btn.style.borderColor=''; btn.style.color=''; } }, 30000);
+    } else {
+      toast('Erro ao chamar garçom', true);
+      if(btn){ btn.disabled=false; btn.textContent='🔔 Chamar'; }
+    }
+  } catch(e) {
+    toast('Erro ao chamar garçom', true);
+    if(btn){ btn.disabled=false; btn.textContent='🔔 Chamar'; }
+  }
+}
+
 async function carregarConta(){
   if(!mesa||!adminSlug)return;
   try{

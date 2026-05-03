@@ -1852,6 +1852,39 @@ router.get('/garcons/eventos', async (req, res) => {
 });
 
 // ===== PEDIR CONTA (cliente solicita pelo mesa.html) =====
+
+// ========== MESA: CHAMAR GARÇOM ==========
+router.post('/garcons/chamar', async (req, res) => {
+    try {
+        const { adminId, adminSlug, mesa, nomeCliente, motivo } = req.body;
+        let admin;
+        if (adminId) admin = await AdminDelivery.findById(adminId).catch(() => null);
+        if (!admin && adminSlug) admin = await AdminDelivery.findOne({ $or: [{ slug: adminSlug }, { token: adminSlug }] });
+        if (!admin) return res.status(404).json({ erro: 'Restaurante não encontrado' });
+
+        const adminObjId = admin._id.toString();
+        const motivoLabel = motivo || 'Chamado pelo cliente';
+
+        // Emitir SSE para o garçom
+        SseService.emitir(adminObjId, 'garcom_chamado', {
+            mesa: String(mesa),
+            nomeCliente: nomeCliente || 'Cliente',
+            motivo: motivoLabel,
+            hora: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+            ts: Date.now()
+        });
+
+        // Emitir também para o caixa/admin saberem
+        SseService.emitir(adminObjId, 'novo_pedido', {
+            tipo: 'chamada_garcom',
+            mesa: String(mesa),
+            nomeCliente: nomeCliente || 'Cliente'
+        });
+
+        res.json({ sucesso: true });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
 router.post('/garcons/pedir-conta', async (req, res) => {
     try {
         const { adminId, mesa, nomeCliente, formaPagamento } = req.body;

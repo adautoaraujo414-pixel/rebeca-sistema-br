@@ -456,11 +456,18 @@ function conectarSSEGarcom(token) {
     mostrarAlertaGarcom('💰 Mesa ' + d.mesa + ' pediu a CONTA!', 'conta');
     if (navigator.vibrate) navigator.vibrate([500,200,500,200,500]);
   });
+  _garcomSse.addEventListener('garcom_chamado', function(e) {
+    var d = JSON.parse(e.data);
+    var msg = '🔔 Mesa ' + d.mesa + ' está chamando!' + (d.motivo && d.motivo !== 'Chamado pelo cliente' ? ' — ' + d.motivo : '') + (d.nomeCliente && d.nomeCliente !== 'Cliente' ? '\n👤 ' + d.nomeCliente : '');
+    mostrarAlertaGarcom(msg, 'chamada');
+    if (navigator.vibrate) navigator.vibrate([200,100,200,100,200,100,400]);
+    carregarMesas();
+  });
   _garcomSse.onerror = function() { setTimeout(function(){ if(_garcomToken) conectarSSEGarcom(_garcomToken); }, 5000); };
 }
 function mostrarAlertaGarcom(msg, tipo) {
   var el = document.createElement('div');
-  var cor = tipo === 'conta' ? '#f59e0b' : '#22c55e';
+  var cor = tipo === 'conta' ? '#f59e0b' : tipo === 'chamada' ? '#f97316' : '#22c55e';
   el.style.cssText = 'position:fixed;top:70px;left:50%;transform:translateX(-50%);background:'+cor+';color:#000;padding:14px 24px;border-radius:12px;font-weight:800;z-index:9999;font-size:.95em;box-shadow:0 8px 32px rgba(0,0,0,.3);max-width:90vw;text-align:center;';
   el.textContent = msg;
   document.body.appendChild(el);
