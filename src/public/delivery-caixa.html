@@ -206,6 +206,54 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 .cupom-footer { text-align: center; font-size: 10px; margin-top: 8px; }
 .cupom-corte { text-align: center; letter-spacing: 2px; color: #000; font-size: 11px; margin: 8px 0 2px; }
 
+
+/* ===== TEMA AÇOUGUE ===== */
+body.acougue-theme {
+  --bg:#fafafa;--surface:#fff;--surface2:#f8f8f8;
+  --accent:#c41e1e;--accent2:#e02020;--green:#16a34a;
+  --border:#e5e5e5;--text:#1a1a1a;
+}
+body.acougue-theme header {
+  background:#c41e1e !important;
+  border-bottom:none !important;
+}
+body.acougue-theme .header-logo { color:#fff !important; }
+body.acougue-theme .header-logo span { color:#ffd700 !important; }
+body.acougue-theme .header-restaurant { background:rgba(255,255,255,.15) !important; color:#fff !important; }
+body.acougue-theme .clock { color:#ffe4e4 !important; }
+body.acougue-theme .btn-sair { border-color:rgba(255,255,255,.4) !important; color:#fff !important; }
+body.acougue-theme .btn-sair:hover { border-color:#ffd700 !important; color:#ffd700 !important; }
+body.acougue-theme .stats-bar { background:#1a1a1a !important; border-bottom:2px solid #c41e1e !important; }
+body.acougue-theme .stat-pill { background:#2a2a2a !important; border-color:#444 !important; color:#fff !important; }
+body.acougue-theme .stat-pill.orange { border-color:#c41e1e !important; color:#ff6b6b !important; }
+body.acougue-theme .stat-pill.green { border-color:#16a34a44 !important; color:#4ade80 !important; }
+body.acougue-theme .stat-pill.blue { border-color:#2563eb44 !important; color:#60a5fa !important; }
+body.acougue-theme .cat-chip.active { background:#c41e1e !important; border-color:#c41e1e !important; }
+body.acougue-theme .item-card:hover { border-color:#c41e1e !important; box-shadow:0 8px 24px rgba(196,30,30,.2) !important; }
+body.acougue-theme .btn-add { background:#c41e1e !important; }
+body.acougue-theme .btn-add:hover { background:#e02020 !important; }
+body.acougue-theme #painel-direito .btn-pagar { background:#c41e1e !important; }
+body.acougue-theme .tab-btn.active { color:#c41e1e !important; }
+body.acougue-theme #btn-abrir-caixa { background:#c41e1e !important; }
+
+/* Header açougue especial */
+#acougue-header-badge {
+  display:none;
+  background:#ffd700;
+  color:#1a1a1a;
+  font-size:.65em;
+  font-weight:900;
+  padding:2px 10px;
+  border-radius:20px;
+  letter-spacing:2px;
+  text-transform:uppercase;
+}
+body.acougue-theme #acougue-header-badge { display:inline-block; }
+body.acougue-theme #acougue-stats-kg { display:flex !important; }
+
+/* Stats extras açougue */
+#acougue-stats-kg { display:none; }
+
 </style>
 </head>
 <body>
@@ -239,9 +287,9 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
       <img src="/logo-rebeca.png" style="height:36px;object-fit:contain;display:block">
     </div>
     <div style="text-align:center">
-      <span style="font-size:1.2em;font-weight:900;color:#f97316;letter-spacing:5px;text-transform:uppercase;background:#fff;padding:5px 20px;border-radius:8px;border:2.5px solid #1c1c1e;box-shadow:2px 2px 0 #1c1c1e">CAIXA</span>
+      <span id="header-titulo" style="font-size:1.2em;font-weight:900;color:#f97316;letter-spacing:5px;text-transform:uppercase;background:linear-gradient(135deg,#f97316,#fb923c);-webkit-background-clip:text;-webkit-text-fill-color:transparent">REBECA</span>
+      <span id="acougue-header-badge" style="display:none;background:#ffd700;color:#1a1a1a;font-size:.6em;font-weight:900;padding:2px 10px;border-radius:20px;letter-spacing:2px;text-transform:uppercase;margin-left:8px;-webkit-text-fill-color:#1a1a1a">🥩 AÇOUGUE</span>
     </div>
-    <div style="display:flex;align-items:center;justify-content:flex-end;gap:10px">
       <span id="nome-operador" style="font-size:.78em;font-weight:700;color:#f97316;background:#fff7ed;border:1px solid #fed7aa;padding:3px 10px;border-radius:20px;display:none"></span>
       <span class="clock" id="hora-atual">--:--</span>
       <button class="btn-sair" onclick="sair()">Sair</button>
@@ -262,6 +310,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
     <div class="stat-pill purple">⏱️ Prev. <span class="val" id="s-prev">—</span></div>
     <div class="stat-pill green">💰 Total dia <span class="val" id="s-total">R$ 0,00</span></div>
     <div class="stat-pill blue" style="cursor:pointer" onclick="abrirPainelMesas()">🍽️ Mesas <span class="val" id="s-mesas">0</span></div>
+    <div class="stat-pill orange" id="acougue-stats-kg" style="display:none">⚖️ KG hoje <span class="val" id="s-kg">0 kg</span></div>
     <div class="stat-pill orange" style="cursor:pointer" onclick="abrirPainelGarcons()">📋 Comandas <span class="val" id="s-comandas">0</span></div>
     <div class="stat-pill green" style="cursor:pointer" onclick="abrirPainelGarcons()">👥 Garçons</div>
   </div>
@@ -516,6 +565,32 @@ async function iniciarApp(admin) {
       elOp.style.display = 'inline-block';
     }
   }
+  // Detectar tipo de negócio e aplicar tema
+  try {
+    const rTipo = await fetch('/api/delivery/caixa/tipo-negocio', {headers:{'Authorization':'Bearer '+token}});
+    const dTipo = await rTipo.json();
+    window._tipoNegocio = dTipo.tipoNegocio || 'restaurante';
+    if (window._tipoNegocio === 'acougue') {
+      document.body.classList.add('acougue-theme');
+      // Badge açougue no header
+      const badge = document.getElementById('acougue-header-badge');
+      if (badge) badge.style.display = 'inline-block';
+      // Stat KG visível
+      const kgStat = document.getElementById('acougue-stats-kg');
+      if (kgStat) kgStat.style.display = 'flex';
+      // Título do login card
+      const h2 = document.querySelector('.login-card h2');
+      if (h2) h2.textContent = 'Caixa Açougue';
+      // Título do header
+      const titulo = document.getElementById('header-titulo');
+      if (titulo) {
+        titulo.style.webkitTextFillColor = '#fff';
+        titulo.style.background = 'none';
+        titulo.style.color = '#fff';
+        titulo.textContent = dTipo.nome || 'AÇOUGUE';
+      }
+    }
+  } catch(e) {}
   verificarStatusCaixa();
   await carregarCardapio();
   await carregarPedidos();
@@ -980,6 +1055,21 @@ async function carregarStats() {
     document.getElementById('s-caixa').textContent = d.doCaixa||0;
     document.getElementById('s-prev').textContent = d.mediaEntregaMin?d.mediaEntregaMin+'min':'—';
     document.getElementById('s-total').textContent = fmt(d.totalDia||0);
+  // Açougue: calcular KG vendidos hoje
+  if (window._tipoNegocio === 'acougue') {
+    try {
+      const rKg = await fetch('/api/delivery/caixa/todos', {headers:{'Authorization':'Bearer '+token}});
+      const dKg = await rKg.json();
+      let totalKg = 0;
+      (Array.isArray(dKg) ? dKg : []).forEach(p => {
+        if (p.status === 'entregue') {
+          (p.itens||[]).forEach(it => { totalKg += (it.quantidade||0); });
+        }
+      });
+      const elKg = document.getElementById('s-kg');
+      if (elKg) elKg.textContent = totalKg.toFixed(3).replace('.',',') + ' kg';
+    } catch(e) {}
+  }
   } catch(e) {}
 }
 

@@ -491,6 +491,15 @@ router.put('/config', authDelivery, async (req, res) => {
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
+
+// ===== TIPO DE NEGÓCIO DO CAIXA =====
+router.get('/caixa/tipo-negocio', authDelivery, async (req, res) => {
+    try {
+        const admin = await AdminDelivery.findById(req.adminId).select('tipoNegocio nomeComercio nomeEstabelecimento').lean();
+        res.json({ tipoNegocio: admin?.tipoNegocio || 'restaurante', nome: admin?.nomeEstabelecimento || admin?.nomeComercio || '' });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
 // ========== DASHBOARD ==========
 router.get('/dashboard', authDelivery, async (req, res) => {
     try {
