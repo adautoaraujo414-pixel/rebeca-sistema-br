@@ -385,15 +385,29 @@ async function carregarConfigNF() {
                             <button class="btn" onclick="toggleSomNotif()" id="btnSom" style="background:#252542;color:#fff;padding:6px 12px;font-size:12px;">🔔 Som: ON</button>
                         </div>
                     </div>
-                    <div class="stats-grid">
-                        <div class="stat-card"><div class="valor" id="statPedidosHoje">0</div><div class="label">Pedidos Hoje</div></div>
-                        <div class="stat-card"><div class="valor" id="statPedidosAtivos">0</div><div class="label">Pedidos Ativos</div></div>
-                        <div class="stat-card"><div class="valor" id="statFaturamento">R$ 0</div><div class="label">Faturamento Semana</div></div>
-                        <div class="stat-card"><div class="valor" id="statPedidosSemana">0</div><div class="label">Pedidos Semana</div></div>
+                    <div class="stats-grid" style="grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:16px">
+                        <div class="stat-card"><div class="valor" id="statPedidosHoje">0</div><div class="label">📦 Pedidos Hoje</div></div>
+                        <div class="stat-card"><div class="valor" id="statPedidosAtivos" style="color:#f97316">0</div><div class="label">⏳ Em Aberto</div></div>
+                        <div class="stat-card"><div class="valor" id="statFaturamentoHoje" style="color:#22c55e">R$ 0</div><div class="label">💰 Faturamento Hoje</div></div>
+                        <div class="stat-card"><div class="valor" id="statTicketMedio" style="color:#3b82f6">R$ 0</div><div class="label">🎯 Ticket Médio</div></div>
+                        <div class="stat-card"><div class="valor" id="statFaturamento" style="color:#8b5cf6">R$ 0</div><div class="label">📈 Fat. Semana</div></div>
+                        <div class="stat-card"><div class="valor" id="statPedidosSemana">0</div><div class="label">🗓️ Pedidos Semana</div></div>
                     </div>
-                    <div id="alertaNovoPedido" style="display:none;background:linear-gradient(135deg,#f97316,#ea580c);color:#fff;padding:14px 20px;border-radius:12px;margin-bottom:16px;font-weight:700;font-size:15px;animation:pulse 1s infinite;cursor:pointer" onclick="document.getElementById('alertaNovoPedido').style.display='none'">
+                    <div id="alertaNovoPedido" style="display:none;background:linear-gradient(135deg,#f97316,#dc2626);color:#fff;padding:12px 16px;border-radius:10px;margin-bottom:12px;cursor:pointer;font-weight:700" onclick="this.style.display='none'">
                         🔔 Novo pedido recebido! Clique para fechar.
                     </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+                        <div class="panel" style="margin:0">
+                            <h3 style="font-size:.85em;margin-bottom:8px">🏆 Top Produtos (semana)</h3>
+                            <div id="dashTopProdutos" style="font-size:.82em;color:#555">Carregando...</div>
+                        </div>
+                        <div class="panel" style="margin:0">
+                            <h3 style="font-size:.85em;margin-bottom:8px">⚠️ Estoque Baixo</h3>
+                            <div id="dashEstoqueBaixo" style="font-size:.82em;color:#555">Carregando...</div>
+                        </div>
+                    </div>
+                    <div id="dashContasVencer" style="display:none;background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;padding:12px;margin-bottom:12px;font-size:.83em"></div>
+                    <div id="dashCaixaStatus" style="margin-bottom:12px"></div>
                     <div class="panel">
                         <h3>📋 Pedidos Ativos</h3>
                         <div id="pedidosAtivosLista" data-sec="pedidos"></div>
@@ -2227,11 +2241,73 @@ async function carregarConfigNF() {
             try {
                 const res = await api('/dashboard');
                 const d = await res.json();
-                if(document.getElementById('statPedidosHoje')) document.getElementById('statPedidosHoje').textContent = d.pedidosHoje || 0;
-                if(document.getElementById('statPedidosAtivos')) document.getElementById('statPedidosAtivos').textContent = d.pedidosAtivos || 0;
-                if(document.getElementById('statFaturamento')) document.getElementById('statFaturamento').textContent = 'R$ ' + (d.faturamentoSemana || 0).toFixed(2);
-                if(document.getElementById('statPedidosSemana')) document.getElementById('statPedidosSemana').textContent = d.pedidosSemana || 0;
-                
+                const el = id => document.getElementById(id);
+                const fmt = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
+
+                // Cards principais
+                if(el('statPedidosHoje')) el('statPedidosHoje').textContent = d.pedidosHoje || 0;
+                if(el('statPedidosAtivos')) el('statPedidosAtivos').textContent = d.pedidosAtivos || 0;
+                if(el('statFaturamentoHoje')) el('statFaturamentoHoje').textContent = fmt(d.faturamentoHoje);
+                if(el('statTicketMedio')) el('statTicketMedio').textContent = fmt(d.ticketMedioHoje);
+                if(el('statFaturamento')) el('statFaturamento').textContent = fmt(d.faturamentoSemana);
+                if(el('statPedidosSemana')) el('statPedidosSemana').textContent = d.pedidosSemana || 0;
+
+                // Status do caixa
+                const divCaixa = el('dashCaixaStatus');
+                if(divCaixa) {
+                    if(d.caixaAberto) {
+                        const desde = new Date(d.caixaAberto.desde).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+                        divCaixa.innerHTML = `<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:10px 14px;font-size:.84em;display:flex;justify-content:space-between;align-items:center"><span>🟢 <b>Caixa aberto</b> desde ${desde} por <b>${d.caixaAberto.por}</b></span><a onclick="irPara('caixa')" style="color:#16a34a;font-weight:700;cursor:pointer">Acessar →</a></div>`;
+                    } else {
+                        divCaixa.innerHTML = `<div style="background:#fef9c3;border:1px solid #fde047;border-radius:8px;padding:10px 14px;font-size:.84em">⚠️ <b>Caixa fechado.</b> <a onclick="irPara('caixa')" style="color:#854d0e;font-weight:700;cursor:pointer">Abrir caixa →</a></div>`;
+                    }
+                }
+
+                // Top produtos
+                const divTop = el('dashTopProdutos');
+                if(divTop) {
+                    if(d.topProdutosSemana && d.topProdutosSemana.length) {
+                        divTop.innerHTML = d.topProdutosSemana.map((p,i) =>
+                            `<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #f0f0f0">
+                                <span>${['🥇','🥈','🥉','4️⃣','5️⃣'][i]||'•'} ${p.nome}</span>
+                                <span style="color:#f97316;font-weight:700">${p.quantidade}x</span>
+                            </div>`
+                        ).join('');
+                    } else {
+                        divTop.innerHTML = '<span style="color:#bbb">Sem vendas esta semana</span>';
+                    }
+                }
+
+                // Estoque baixo
+                const divEst = el('dashEstoqueBaixo');
+                if(divEst) {
+                    if(d.estoqueBaixo && d.estoqueBaixo.length) {
+                        divEst.innerHTML = d.estoqueBaixo.map(i =>
+                            `<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #f0f0f0">
+                                <span>${i.zerado ? '🔴' : '⚠️'} ${i.nome}</span>
+                                <span style="color:${i.zerado?'#ef4444':'#f59e0b'};font-weight:700">${i.atual} un</span>
+                            </div>`
+                        ).join('');
+                    } else {
+                        divEst.innerHTML = '<span style="color:#22c55e">✅ Estoque OK</span>';
+                    }
+                }
+
+                // Contas a vencer
+                const divContas = el('dashContasVencer');
+                if(divContas && d.contasVencer && d.contasVencer.length) {
+                    const total = d.contasVencer.reduce((s,c)=>s+(c.valor||0),0);
+                    divContas.style.display = 'block';
+                    divContas.innerHTML = `<b>💳 Contas a vencer nos próximos 7 dias — R$ ${total.toFixed(2)}</b><br>` +
+                        d.contasVencer.map(c => {
+                            const venc = new Date(c.vencimento).toLocaleDateString('pt-BR');
+                            return `<span style="margin-right:12px">• ${c.descricao} <b>R$ ${(c.valor||0).toFixed(2)}</b> (${venc})</span>`;
+                        }).join('');
+                } else if(divContas) {
+                    divContas.style.display = 'none';
+                }
+
+                // Pedidos ativos
                 const res2 = await api('/pedidos/ativos');
                 const ativos = await res2.json();
                 verificarNovosPedidos(ativos);
@@ -2239,7 +2315,7 @@ async function carregarConfigNF() {
 
                 const cfgRes = await api('/config');
                 const cfg = await cfgRes.json();
-                if(document.getElementById('nomeRestaurante')) document.getElementById('nomeRestaurante').textContent = '• ' + (cfg.nomeRestaurante || '');
+                if(el('nomeRestaurante')) el('nomeRestaurante').textContent = cfg.nomeRestaurante || '';
             } catch(e) { console.log(e); }
         }
 

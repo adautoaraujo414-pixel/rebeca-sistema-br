@@ -48,6 +48,9 @@ async function baixarEstoquePedido(pedido, adminId) {
                 ...(novoEstoque <= 0 ? { disponivel: false } : {})
             });
 
+            // SSE: atualizar cardápio digital em tempo real quando estoque muda
+            try { SseService.emitir(adminId.toString(), 'cardapio_atualizado', { acao: 'estoque', itemId: it.itemId, novoEstoque }); } catch(_) {}
+
             // Avisar dono se estoque baixo/zerado e alerta ativado
             if (alertar && telefoneDono && novoEstoque <= (item.estoqueMinimo || 0)) {
                 try {
@@ -494,19 +497,75 @@ router.get('/dashboard', authDelivery, async (req, res) => {
         const hoje = new Date(); hoje.setHours(0,0,0,0);
         const mongoose = require('mongoose');
         const adminObjId = new mongoose.Types.ObjectId(req.adminId);
-        const [pedidosHoje, pedidosAtivos, totalSemana] = await Promise.all([
+
+        const [pedidosHoje, pedidosAtivos, totalSemana, totalHoje, estoqueBaixo, topProdutosSemana, caixaAberto, contasVencer] = await Promise.all([
+            // Total pedidos hoje
             PedidoDelivery.countDocuments({ adminId: adminObjId, createdAt: { $gte: hoje } }),
-            PedidoDelivery.countDocuments({ adminId: adminObjId, status: { $in: ['novo', 'confirmado', 'preparando', 'pronto', 'saiu_entrega'] } }),
+            // Pedidos em aberto
+            PedidoDelivery.countDocuments({ adminId: adminObjId, status: { $in: ['novo','confirmado','preparando','pronto','saiu_entrega'] } }),
+            // Faturamento semana
             PedidoDelivery.aggregate([
-                { $match: { adminId: adminObjId, createdAt: { $gte: new Date(Date.now() - 7*86400000) }, status: 'entregue' } },
+                { $match: { adminId: adminObjId, createdAt: { $gte: new Date(Date.now()-7*86400000) }, status: 'entregue' } },
                 { $group: { _id: null, total: { $sum: '$total' }, count: { $sum: 1 } } }
-            ])
+            ]),
+            // Faturamento hoje
+            PedidoDelivery.aggregate([
+                { $match: { adminId: adminObjId, createdAt: { $gte: hoje }, status: 'entregue' } },
+                { $group: { _id: null, total: { $sum: '$total' }, count: { $sum: 1 } } }
+            ]),
+            // Itens com estoque baixo ou zerado
+            ItemCardapio.find({ adminId: adminObjId, estoqueAtivo: true, $expr: { $lte: ['$estoqueAtual', '$estoqueMinimo'] } })
+                .select('nome estoqueAtual estoqueMinimo disponivel').limit(10).lean(),
+            // Top 5 produtos mais vendidos na semana
+            PedidoDelivery.aggregate([
+                { $match: { adminId: adminObjId, createdAt: { $gte: new Date(Date.now()-7*86400000) }, status: 'entregue' } },
+                { $unwind: '$itens' },
+                { $group: { _id: '$itens.nome', quantidade: { $sum: '$itens.quantidade' }, receita: { $sum: '$itens.subtotal' } } },
+                { $sort: { quantidade: -1 } },
+                { $limit: 5 }
+            ]),
+            // Caixa aberto?
+            require('../models/delivery.models').CaixaDelivery.findOne({ adminId: adminObjId, status: 'aberto' }).select('dataAbertura abertoPor').lean(),
+            // Contas a vencer nos próximos 7 dias
+            require('../models/delivery.models').ContaPagar.find({
+                adminId: adminObjId,
+                status: 'pendente',
+                vencimento: { $lte: new Date(Date.now()+7*86400000) }
+            }).select('descricao valor vencimento').sort({ vencimento: 1 }).limit(5).lean()
         ]);
+
+        const faturamentoHoje = totalHoje[0]?.total || 0;
+        const pedidosEntreguesHoje = totalHoje[0]?.count || 0;
+        const ticketMedioHoje = pedidosEntreguesHoje ? faturamentoHoje / pedidosEntreguesHoje : 0;
+
         res.json({
             pedidosHoje,
             pedidosAtivos,
             faturamentoSemana: totalSemana[0]?.total || 0,
-            pedidosSemana: totalSemana[0]?.count || 0
+            pedidosSemana: totalSemana[0]?.count || 0,
+            faturamentoHoje,
+            pedidosEntreguesHoje,
+            ticketMedioHoje,
+            estoqueBaixo: estoqueBaixo.map(i => ({
+                nome: i.nome,
+                atual: i.estoqueAtual,
+                minimo: i.estoqueMinimo,
+                zerado: i.estoqueAtual <= 0 || i.disponivel === false
+            })),
+            topProdutosSemana: topProdutosSemana.map(p => ({
+                nome: p._id,
+                quantidade: p.quantidade,
+                receita: p.receita || 0
+            })),
+            caixaAberto: caixaAberto ? {
+                desde: caixaAberto.dataAbertura,
+                por: caixaAberto.abertoPor
+            } : null,
+            contasVencer: contasVencer.map(c => ({
+                descricao: c.descricao,
+                valor: c.valor,
+                vencimento: c.vencimento
+            }))
         });
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
@@ -2560,6 +2619,19 @@ router.post('/caixa/fechar', authDelivery, async (req, res) => {
         caixa.vendasPorOperador = Object.values(porOperador);
         caixa.pedidosIds = pedidos.map(p => p._id);
         caixa.observacoes = observacoes || '';
+
+        // Contas a pagar do período para resultado líquido
+        const { ContaPagar } = require('../models/delivery.models');
+        const contasPagas = await ContaPagar.find({
+            adminId: req.adminId,
+            status: 'pago',
+            dataPagamento: { $gte: caixa.dataAbertura, $lte: new Date() }
+        }).lean();
+        const totalDespesas = contasPagas.reduce((s, c) => s + (c.valor || 0), 0);
+        const resultadoLiquido = totalVendas - totalSangrias - totalDespesas;
+
+        caixa.totalDespesas = totalDespesas;
+        caixa.resultadoLiquido = resultadoLiquido;
         await caixa.save();
 
         res.json({
@@ -2570,6 +2642,8 @@ router.post('/caixa/fechar', authDelivery, async (req, res) => {
             totalCartao,
             totalPix,
             totalSangrias,
+            totalDespesas,
+            resultadoLiquido,
             diferencaDinheiro: (valorDinheiro || 0) - totalDinheiro,
             totalPedidos: pedidos.length,
             totalPagos: pagos.length,

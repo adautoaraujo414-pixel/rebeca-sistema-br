@@ -406,7 +406,9 @@ const CaixaDeliverySchema = new mongoose.Schema({
     vendasPorOperador: [{ operador: String, totalVendas: Number, qtdPedidos: Number }],
     produtosMaisVendidos: [{ nome: String, quantidade: Number, total: Number }],
     pedidosIds: [{ type: mongoose.Schema.Types.ObjectId }],
-    observacoes: { type: String, default: '' }
+    observacoes: { type: String, default: '' },
+    totalDespesas: { type: Number, default: 0 },
+    resultadoLiquido: { type: Number, default: 0 }
 }, { timestamps: true });
 const CaixaDelivery = mongoose.models.CaixaDelivery || mongoose.model('CaixaDelivery', CaixaDeliverySchema);
 module.exports.CaixaDelivery = CaixaDelivery;
