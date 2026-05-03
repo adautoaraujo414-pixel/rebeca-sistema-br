@@ -6157,20 +6157,41 @@ function ffWhatsappAdm(i) {
 }
 
 // ===== ENTRADA DE INSUMOS =====
-function adicionarItemEI(nome='', unidade='', quantidade=1, custo=0) {
+function adicionarItemEI(nome='', unidade='', quantidade=1, custo=0, validade='') {
   const lista = document.getElementById('ei-itens-lista');
   if (!lista) return;
   const row = document.createElement('div');
-  row.style.cssText = 'display:grid;grid-template-columns:2fr 100px 90px 110px 110px 32px;gap:8px;align-items:center;background:#f9f9f9;padding:8px;border-radius:10px;border:1px solid #eee;margin-bottom:4px';
+  row.style.cssText = 'background:#fff;border:1px solid #e8e8ed;border-radius:12px;padding:12px 14px;margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,.04)';
   const unidades = ['Un','Kg','g','L','ml','Cx','Pct','Fd','Dz'];
   const opts = unidades.map(u => `<option value="${u}" ${u===unidade?'selected':''}>${u}</option>`).join('');
   row.innerHTML = `
-    <input class="ei-nome" placeholder="📦 Nome do item (obrigatório)" value="${nome}" style="padding:9px 12px;border:1px solid #ddd;border-radius:8px;font-size:.9em">
-    <select class="ei-unidade" style="padding:9px 8px;border:1px solid #ddd;border-radius:8px;font-size:.9em;background:#fff"><option value="">Unidade</option>${opts}</select>
-    <input class="ei-validade" type="date" title="Validade" style="padding:9px 8px;border:1px solid #ddd;border-radius:8px;font-size:.85em">
-    <input class="ei-qtd" type="number" placeholder="Qtd" value="${quantidade}" min="0" step="0.01" style="padding:8px;border:1px solid #ddd;border-radius:7px">
-    <input class="ei-custo" type="number" placeholder="Custo R$" value="${custo}" min="0" step="0.01" style="padding:8px;border:1px solid #ddd;border-radius:7px">
-    <button onclick="this.closest('div').remove()" style="padding:6px;background:#fee2e2;border:none;border-radius:7px;cursor:pointer;color:#ef4444">✕</button>
+    <div style="display:grid;grid-template-columns:2fr 100px 100px 110px 120px auto;gap:10px;align-items:end">
+      <div>
+        <div style="font-size:.72em;font-weight:600;color:#888;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">📦 Nome do Item</div>
+        <input class="ei-nome" placeholder="Ex: Patinho Moído" value="${nome}" style="width:100%;padding:9px 12px;border:1px solid #ddd;border-radius:8px;font-size:.9em;box-sizing:border-box">
+      </div>
+      <div>
+        <div style="font-size:.72em;font-weight:600;color:#888;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">Unidade</div>
+        <select class="ei-unidade" style="width:100%;padding:9px 8px;border:1px solid #ddd;border-radius:8px;font-size:.9em;background:#fff;box-sizing:border-box">
+          <option value="">--</option>${opts}
+        </select>
+      </div>
+      <div>
+        <div style="font-size:.72em;font-weight:600;color:#888;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">📅 Validade</div>
+        <input class="ei-validade" type="date" value="${validade}" style="width:100%;padding:9px 8px;border:1px solid #ddd;border-radius:8px;font-size:.85em;box-sizing:border-box">
+      </div>
+      <div>
+        <div style="font-size:.72em;font-weight:600;color:#888;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">Quantidade</div>
+        <input class="ei-qtd" type="number" placeholder="0" value="${quantidade}" min="0" step="0.01" style="width:100%;padding:9px 10px;border:1px solid #ddd;border-radius:8px;font-size:.9em;box-sizing:border-box">
+      </div>
+      <div>
+        <div style="font-size:.72em;font-weight:600;color:#888;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">💰 Custo R$</div>
+        <input class="ei-custo" type="number" placeholder="0,00" value="${custo}" min="0" step="0.01" style="width:100%;padding:9px 10px;border:1px solid #ddd;border-radius:8px;font-size:.9em;box-sizing:border-box">
+      </div>
+      <div style="padding-bottom:2px">
+        <button onclick="this.closest('div').closest('div').remove()" style="padding:9px 12px;background:#fee2e2;border:none;border-radius:8px;cursor:pointer;color:#ef4444;font-size:1em">✕</button>
+      </div>
+    </div>
   `;
   lista.appendChild(row);
 }
