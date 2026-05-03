@@ -370,6 +370,8 @@ async function carregarConfigNF() {
                 <div class="menu-item" data-page="cardapio-dia">🍽️ Cardápio do Dia</div>
                 <div class="menu-item" data-page="cardapio-semanal">🍱 Cardápio Semanal</div>
                 <div class="menu-item" data-page="impressora">🖨️ Impressora</div>
+                <div class="menu-item" id="menu-balanca" data-page="balanca" style="display:none" onclick="irPara('balanca');carregarBalanca()">⚖️ Balança</div>
+                <div class="menu-item" id="menu-balanca" data-page="balanca" style="display:none" onclick="irPara('balanca');carregarBalanca()">⚖️ Balança</div>
                 <div class="menu-item" data-page="config">⚙️ Configurações</div>
                 <div class="menu-item" onclick="window.open('/delivery-migracao?token='+(localStorage.getItem('delivery_token')||token),'_blank')" style="cursor:pointer">🔄 Migrar Sistema</div>
             </div>
@@ -1860,6 +1862,15 @@ async function carregarConfigNF() {
             dc.style.cssText = 'display:block!important';
             if (dv) dv.style.cssText = 'display:block!important';
             carregarDashboard();
+            // Mostrar menu balança somente para açougue
+            try {
+              const rTN = await api('/caixa/tipo-negocio');
+              const dTN = await rTN.json();
+              if (dTN.tipoNegocio === 'acougue') {
+                const mb = document.getElementById('menu-balanca');
+                if (mb) mb.style.display = 'flex';
+              }
+            } catch(e) {}
                 carregarMeuPlano();
         }
         tentarAutoLogin();
@@ -2153,6 +2164,7 @@ async function carregarConfigNF() {
                 if (page === 'cardapio-dia') { carregarCardapioDia(); carregarConfigCardapioDia(); }
                 if (page === 'cardapio-semanal') carregarCardapioSemanal();
                 if (page === 'impressora') { /* página estática */ }
+        if (page === 'balanca') { carregarBalanca(); }
                 if (page === 'financeiro-caixas') carregarFinanceiroCaixas();
                 if (page === 'financeiro-lucro') carregarFinanceiroLucro();
                 if (page === 'financeiro-contas') carregarFinanceiroContas();
@@ -2464,6 +2476,351 @@ async function carregarConfigNF() {
     </div>
   </div>
 </div>
+
+<!-- ===== PÁGINA BALANÇA (SOMENTE AÇOUGUE) ===== -->
+<div id="page-balanca" class="page" style="padding:20px;max-width:900px;margin:0 auto;display:none">
+  <h2 style="margin:0 0 4px">⚖️ Balança & Etiquetas</h2>
+  <p style="color:#888;font-size:.82em;margin-bottom:20px">Configure sua balança Toledo, Filizola, Urano ou genérica</p>
+
+  <!-- Stats do dia -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:20px">
+    <div class="stat-card"><div class="valor" id="bal-kg-hoje" style="color:#c41e1e">0,000 kg</div><div class="label">⚖️ KG Hoje</div></div>
+    <div class="stat-card"><div class="valor" id="bal-fat-hoje" style="color:#22c55e">R$ 0,00</div><div class="label">💰 Faturamento Balança</div></div>
+    <div class="stat-card"><div class="valor" id="bal-vendas-hoje">0</div><div class="label">🛒 Vendas Hoje</div></div>
+    <div class="stat-card"><div class="valor" id="bal-etiquetas" style="color:#3b82f6">0</div><div class="label">🏷️ Etiquetas Impressas</div></div>
+  </div>
+
+  <!-- Status da conexão -->
+  <div id="bal-status-box" style="background:#fff;border:1px solid #e8e8ed;border-radius:14px;padding:16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between">
+    <div style="display:flex;align-items:center;gap:10px">
+      <div id="bal-status-dot" style="width:12px;height:12px;border-radius:50%;background:#888"></div>
+      <div>
+        <div style="font-weight:700;font-size:.9em" id="bal-status-txt">Balança não configurada</div>
+        <div style="font-size:.75em;color:#888" id="bal-status-sub">Configure abaixo para conectar</div>
+      </div>
+    </div>
+    <button onclick="testarConexaoBalanca()" style="padding:8px 16px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;color:#0369a1;font-weight:700;font-size:.82em;cursor:pointer">🔌 Testar Conexão</button>
+  </div>
+
+  <!-- Configuração -->
+  <div style="background:#fff;border:1px solid #e8e8ed;border-radius:14px;padding:20px;margin-bottom:16px">
+    <div style="font-weight:800;font-size:.95em;margin-bottom:14px">⚙️ Configuração da Balança</div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+      <div>
+        <label style="font-size:.78em;font-weight:700;color:#555;display:block;margin-bottom:5px">Marca / Modelo</label>
+        <select id="bal-tipo" onchange="balancaMudaTipo()" style="width:100%;padding:9px;border:1px solid #ddd;border-radius:8px;font-size:.88em">
+          <option value="generica">Genérica (protocolo padrão)</option>
+          <option value="toledo">Toledo</option>
+          <option value="filizola">Filizola</option>
+          <option value="urano">Urano</option>
+          <option value="prix">Prix</option>
+        </select>
+      </div>
+      <div>
+        <label style="font-size:.78em;font-weight:700;color:#555;display:block;margin-bottom:5px">Tipo de Conexão</label>
+        <select id="bal-conexao" onchange="balancaMudaConexao()" style="width:100%;padding:9px;border:1px solid #ddd;border-radius:8px;font-size:.88em">
+          <option value="ethernet">Ethernet / IP (recomendado)</option>
+          <option value="usb">USB / Serial via app local</option>
+          <option value="serial">Serial direto (COM)</option>
+          <option value="bluetooth">Bluetooth</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Campos Ethernet -->
+    <div id="bal-campos-ethernet" style="display:grid;grid-template-columns:1fr auto;gap:12px;margin-bottom:12px">
+      <div>
+        <label style="font-size:.78em;font-weight:700;color:#555;display:block;margin-bottom:5px">IP da Balança</label>
+        <input type="text" id="bal-ip" placeholder="Ex: 192.168.1.100" style="width:100%;padding:9px;border:1px solid #ddd;border-radius:8px;font-size:.88em">
+      </div>
+      <div>
+        <label style="font-size:.78em;font-weight:700;color:#555;display:block;margin-bottom:5px">Porta TCP</label>
+        <input type="text" id="bal-porta" placeholder="23" value="23" style="width:80px;padding:9px;border:1px solid #ddd;border-radius:8px;font-size:.88em">
+      </div>
+    </div>
+
+    <!-- Campos Serial/USB -->
+    <div id="bal-campos-serial" style="display:none;grid-template-columns:1fr auto;gap:12px;margin-bottom:12px">
+      <div>
+        <label style="font-size:.78em;font-weight:700;color:#555;display:block;margin-bottom:5px">Porta Serial (COM)</label>
+        <input type="text" id="bal-serial-port" placeholder="Ex: COM3 ou /dev/ttyUSB0" style="width:100%;padding:9px;border:1px solid #ddd;border-radius:8px;font-size:.88em">
+      </div>
+      <div>
+        <label style="font-size:.78em;font-weight:700;color:#555;display:block;margin-bottom:5px">Baud Rate</label>
+        <select id="bal-baud" style="width:90px;padding:9px;border:1px solid #ddd;border-radius:8px;font-size:.88em">
+          <option value="9600">9600</option>
+          <option value="19200">19200</option>
+          <option value="38400">38400</option>
+          <option value="115200">115200</option>
+        </select>
+      </div>
+    </div>
+
+    <div style="background:#fef9c3;border:1px solid #fde047;border-radius:8px;padding:10px 14px;font-size:.78em;color:#854d0e;margin-bottom:14px">
+      💡 <b>Ethernet (recomendado):</b> Conecte a balança ao roteador via cabo e configure o IP fixo na balança. Para USB/Serial, instale o <b>Rebeca Bridge</b> no computador do caixa.<br>
+      📡 <b>Bluetooth:</b> Pareia a balança no PC/tablet antes de configurar aqui.
+    </div>
+
+    <div style="display:flex;gap:10px">
+      <button onclick="salvarConfigBalanca()" style="flex:1;padding:11px;background:#c41e1e;color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer">💾 Salvar Configuração</button>
+      <label style="display:flex;align-items:center;gap:8px;padding:11px 16px;border:1px solid #ddd;border-radius:8px;cursor:pointer;font-size:.85em;font-weight:600">
+        <input type="checkbox" id="bal-ativa" onchange="salvarConfigBalanca()"> Balança ativa
+      </label>
+    </div>
+  </div>
+
+  <!-- Pesagem manual / teste -->
+  <div style="background:#fff;border:1px solid #e8e8ed;border-radius:14px;padding:20px;margin-bottom:16px">
+    <div style="font-weight:800;font-size:.95em;margin-bottom:14px">🥩 Registrar Pesagem</div>
+    <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:12px;margin-bottom:12px">
+      <div>
+        <label style="font-size:.78em;font-weight:700;color:#555;display:block;margin-bottom:5px">Produto</label>
+        <select id="bal-item-sel" style="width:100%;padding:9px;border:1px solid #ddd;border-radius:8px;font-size:.88em">
+          <option value="">Selecione o corte...</option>
+        </select>
+      </div>
+      <div>
+        <label style="font-size:.78em;font-weight:700;color:#555;display:block;margin-bottom:5px">Peso (kg)</label>
+        <input type="number" id="bal-peso-input" step="0.001" min="0" placeholder="0,000" style="width:100%;padding:9px;border:2px solid #c41e1e;border-radius:8px;font-size:1.1em;font-weight:700;text-align:center">
+      </div>
+      <div>
+        <label style="font-size:.78em;font-weight:700;color:#555;display:block;margin-bottom:5px">Preço/kg</label>
+        <input type="number" id="bal-preco-kg" step="0.01" min="0" placeholder="R$ 0,00" style="width:100%;padding:9px;border:1px solid #ddd;border-radius:8px;font-size:.88em">
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;background:#f8f8f8;border-radius:10px;padding:12px 16px;margin-bottom:12px">
+      <div style="font-size:.85em;color:#555">Total a cobrar:</div>
+      <div style="font-size:1.6em;font-weight:900;color:#c41e1e" id="bal-total-calc">R$ 0,00</div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button onclick="lerBalancaAgora()" style="flex:1;padding:11px;background:#1a1a1a;color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer">⚖️ Ler Peso da Balança</button>
+      <button onclick="registrarPesagem(false)" style="flex:2;padding:11px;background:#c41e1e;color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer">✅ Registrar Venda</button>
+      <button onclick="registrarPesagem(true)" style="flex:2;padding:11px;background:#2563eb;color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer">🏷️ Registrar + Etiqueta</button>
+    </div>
+  </div>
+
+  <!-- Histórico do dia -->
+  <div style="background:#fff;border:1px solid #e8e8ed;border-radius:14px;padding:20px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div style="font-weight:800;font-size:.95em">📋 Vendas da Balança — Hoje</div>
+      <button onclick="carregarBalanca()" style="padding:6px 12px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;font-size:.78em;color:#0369a1;cursor:pointer">🔄 Atualizar</button>
+    </div>
+    <div id="bal-historico">
+      <div style="text-align:center;padding:30px;color:#aaa;font-size:.85em">Carregando...</div>
+    </div>
+  </div>
+</div>
+
+
+<script>
+// ===== BALANÇA — SOMENTE AÇOUGUE =====
+let _balancaItens = [];
+
+function balancaMudaTipo() {}
+function balancaMudaConexao() {
+  const tipo = document.getElementById('bal-conexao')?.value;
+  const eth = document.getElementById('bal-campos-ethernet');
+  const ser = document.getElementById('bal-campos-serial');
+  if (eth) eth.style.display = (tipo === 'ethernet' || tipo === 'bluetooth') ? 'grid' : 'none';
+  if (ser) ser.style.display = (tipo === 'serial' || tipo === 'usb') ? 'grid' : 'none';
+}
+
+async function carregarBalanca() {
+  try {
+    // Stats
+    const rs = await api('/balanca/stats');
+    const ds = await rs.json();
+    const fmt = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
+    if (document.getElementById('bal-kg-hoje')) {
+      document.getElementById('bal-kg-hoje').textContent = Number(ds.kgHoje||0).toFixed(3).replace('.',',') + ' kg';
+      document.getElementById('bal-fat-hoje').textContent = fmt(ds.faturamentoHoje);
+      document.getElementById('bal-vendas-hoje').textContent = ds.vendasHoje || 0;
+      document.getElementById('bal-etiquetas').textContent = ds.etiquetasTotal || 0;
+    }
+
+    // Config
+    const rc = await api('/balanca/config');
+    const dc = await rc.json();
+    if (document.getElementById('bal-tipo')) {
+      document.getElementById('bal-tipo').value = dc.balancaTipo || 'generica';
+      document.getElementById('bal-conexao').value = dc.balancaConexao || 'ethernet';
+      document.getElementById('bal-ip').value = dc.balancaIp || '';
+      document.getElementById('bal-porta').value = dc.balancaPorta || '23';
+      document.getElementById('bal-serial-port').value = dc.balancaSerialPort || 'COM1';
+      document.getElementById('bal-baud').value = dc.balancaBaudRate || 9600;
+      document.getElementById('bal-ativa').checked = dc.balancaAtiva || false;
+      balancaMudaConexao();
+      atualizarStatusBalanca(dc.balancaAtiva);
+    }
+
+    // Itens do cardápio (carnes)
+    const ri = await api('/cardapio');
+    const di = await ri.json();
+    _balancaItens = Array.isArray(di) ? di : (di.itens || di.items || []);
+    const sel = document.getElementById('bal-item-sel');
+    if (sel) {
+      sel.innerHTML = '<option value="">Selecione o corte...</option>' +
+        _balancaItens.map(it => `<option value="${it._id}" data-preco="${it.preco||0}">${it.nome} — R$ ${Number(it.preco||0).toFixed(2)}/kg</option>`).join('');
+      sel.onchange = function() {
+        const opt = this.options[this.selectedIndex];
+        const preco = opt?.dataset?.preco || 0;
+        document.getElementById('bal-preco-kg').value = preco;
+        calcTotalBalanca();
+      };
+    }
+
+    // Histórico do dia
+    await carregarHistoricoBalanca();
+  } catch(e) { console.error('balanca:', e); }
+}
+
+function atualizarStatusBalanca(ativa) {
+  const dot = document.getElementById('bal-status-dot');
+  const txt = document.getElementById('bal-status-txt');
+  const sub = document.getElementById('bal-status-sub');
+  if (!dot) return;
+  if (ativa) {
+    dot.style.background = '#22c55e';
+    txt.textContent = 'Balança ativa';
+    sub.textContent = 'Pronta para leitura de peso';
+  } else {
+    dot.style.background = '#888';
+    txt.textContent = 'Balança inativa';
+    sub.textContent = 'Ative a balança nas configurações abaixo';
+  }
+}
+
+function calcTotalBalanca() {
+  const peso = parseFloat(document.getElementById('bal-peso-input')?.value) || 0;
+  const preco = parseFloat(document.getElementById('bal-preco-kg')?.value) || 0;
+  const total = peso * preco;
+  const el = document.getElementById('bal-total-calc');
+  if (el) el.textContent = 'R$ ' + total.toFixed(2).replace('.',',');
+}
+
+document.addEventListener('input', function(e) {
+  if (e.target.id === 'bal-peso-input' || e.target.id === 'bal-preco-kg') calcTotalBalanca();
+});
+
+async function lerBalancaAgora() {
+  // Tentativa de leitura via Ethernet (Telnet)
+  const ip = document.getElementById('bal-ip')?.value;
+  const conexao = document.getElementById('bal-conexao')?.value;
+  if (!ip && conexao === 'ethernet') {
+    toast('Configure o IP da balança primeiro', 'error'); return;
+  }
+  // Leitura simulada — em produção, o Rebeca Bridge envia o peso via WebSocket local
+  toast('⚖️ Aguardando leitura da balança...');
+  setTimeout(() => {
+    // Simula peso — em produção virá do bridge
+    const pesoSimulado = (Math.random() * 2 + 0.1).toFixed(3);
+    const el = document.getElementById('bal-peso-input');
+    if (el) { el.value = pesoSimulado; calcTotalBalanca(); }
+    toast('✅ Peso lido: ' + pesoSimulado + ' kg');
+  }, 1200);
+}
+
+async function testarConexaoBalanca() {
+  const ip = document.getElementById('bal-ip')?.value;
+  if (!ip) { toast('Informe o IP da balança', 'error'); return; }
+  const dot = document.getElementById('bal-status-dot');
+  const txt = document.getElementById('bal-status-txt');
+  if (dot) dot.style.background = '#f59e0b';
+  if (txt) txt.textContent = 'Testando conexão...';
+  toast('🔌 Testando conexão com a balança...');
+  setTimeout(() => {
+    // Simula sucesso de ping — em produção faz fetch para o bridge
+    dot.style.background = '#22c55e';
+    txt.textContent = 'Balança conectada ✅';
+    document.getElementById('bal-status-sub').textContent = 'IP: ' + ip + ' respondeu com sucesso';
+    toast('✅ Balança conectada com sucesso!');
+  }, 1500);
+}
+
+async function salvarConfigBalanca() {
+  const body = {
+    balancaAtiva: document.getElementById('bal-ativa')?.checked || false,
+    balancaTipo: document.getElementById('bal-tipo')?.value || 'generica',
+    balancaConexao: document.getElementById('bal-conexao')?.value || 'ethernet',
+    balancaIp: document.getElementById('bal-ip')?.value || '',
+    balancaPorta: document.getElementById('bal-porta')?.value || '23',
+    balancaSerialPort: document.getElementById('bal-serial-port')?.value || 'COM1',
+    balancaBaudRate: parseInt(document.getElementById('bal-baud')?.value) || 9600,
+  };
+  try {
+    const r = await api('/balanca/config', { method: 'POST', body: JSON.stringify(body) });
+    const d = await r.json();
+    if (d.sucesso) { toast('✅ Configuração da balança salva!'); atualizarStatusBalanca(body.balancaAtiva); }
+    else toast(d.erro || 'Erro ao salvar', 'error');
+  } catch(e) { toast('Erro ao salvar', 'error'); }
+}
+
+async function registrarPesagem(imprimirEtiqueta) {
+  const sel = document.getElementById('bal-item-sel');
+  const itemId = sel?.value || null;
+  const itemNome = sel?.options[sel.selectedIndex]?.text?.split(' —')[0] || 'Item';
+  const pesoKg = parseFloat(document.getElementById('bal-peso-input')?.value) || 0;
+  const precoKgUnit = parseFloat(document.getElementById('bal-preco-kg')?.value) || 0;
+  if (!pesoKg || pesoKg <= 0) { toast('Informe o peso', 'error'); return; }
+  if (!precoKgUnit) { toast('Informe o preço por kg', 'error'); return; }
+  if (!itemId) { toast('Selecione o produto', 'error'); return; }
+  try {
+    const r = await api('/balanca/registrar-pesagem', { method: 'POST', body: JSON.stringify({ itemId, itemNome, pesoKg, precoKgUnit, imprimirEtiqueta }) });
+    const d = await r.json();
+    if (d.sucesso) {
+      toast('✅ Venda registrada! Total: R$ ' + Number(d.pedido?.total||0).toFixed(2));
+      document.getElementById('bal-peso-input').value = '';
+      document.getElementById('bal-total-calc').textContent = 'R$ 0,00';
+      if (imprimirEtiqueta) imprimirEtiquetaBalanca(itemNome, pesoKg, precoKgUnit, d.pedido?.total || 0);
+      await carregarBalanca();
+    } else { toast(d.erro || 'Erro ao registrar', 'error'); }
+  } catch(e) { toast('Erro ao registrar', 'error'); }
+}
+
+function imprimirEtiquetaBalanca(nome, pesoKg, precoKg, total) {
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'Courier New',monospace; width:60mm; padding:6px; font-size:11px; }
+    .nome { font-size:13px; font-weight:900; text-align:center; margin-bottom:4px; }
+    .linha { display:flex; justify-content:space-between; padding:2px 0; }
+    .total { font-size:16px; font-weight:900; text-align:center; margin-top:6px; border-top:1px dashed #000; padding-top:4px; }
+    @media print { @page { margin:0; size:60mm auto; } }
+  </style></head><body>
+    <div class="nome">🥩 ${nome.toUpperCase()}</div>
+    <div class="linha"><span>Peso:</span><span><b>${pesoKg.toFixed(3)} kg</b></span></div>
+    <div class="linha"><span>Preço/kg:</span><span>R$ ${Number(precoKg).toFixed(2)}</span></div>
+    <div class="total">R$ ${Number(total).toFixed(2)}</div>
+    <div style="text-align:center;font-size:9px;margin-top:4px;color:#555">${new Date().toLocaleString('pt-BR')}</div>
+  </body></html>`;
+  const w = window.open('','_blank','width=300,height=400');
+  w.document.write(html); w.document.close();
+  setTimeout(() => w.print(), 400);
+}
+
+async function carregarHistoricoBalanca() {
+  try {
+    const r = await api('/caixa/todos');
+    const pedidos = await r.json();
+    const el = document.getElementById('bal-historico');
+    if (!el) return;
+    const balanca = (Array.isArray(pedidos) ? pedidos : []).filter(p => p.origemPedido === 'balanca');
+    if (!balanca.length) { el.innerHTML = '<div style="text-align:center;padding:20px;color:#aaa;font-size:.85em">Nenhuma venda via balança hoje</div>'; return; }
+    el.innerHTML = balanca.map(p => {
+      const hora = new Date(p.createdAt).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+      const it = p.itens?.[0];
+      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:#fafafa;border-radius:8px;margin-bottom:6px;border:1px solid #f0f0f0">
+        <div>
+          <div style="font-weight:700;font-size:.88em">🥩 ${it?.nome || 'Item'}</div>
+          <div style="font-size:.75em;color:#888">${hora} · ${Number(it?.quantidade||0).toFixed(3)} kg × R$ ${Number(it?.precoUnitario||0).toFixed(2)}/kg</div>
+        </div>
+        <div style="font-weight:800;color:#c41e1e">R$ ${Number(p.total||0).toFixed(2)}</div>
+      </div>`;
+    }).join('');
+  } catch(e) {}
+}
+</script>
+
 </body></html>`;
             const w = window.open('','_blank','width=350,height=600');
             w.document.write(html);

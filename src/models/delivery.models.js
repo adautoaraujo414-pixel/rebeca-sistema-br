@@ -224,6 +224,16 @@ const ConfigDeliverySchema = new mongoose.Schema({
     msgRodapeCupom: { type: String, default: 'Obrigado pela preferência! Volte sempre!' },
     alertaEstoqueBaixo: { type: Boolean, default: false }, // Rebeca avisa dono quando estoque baixar
     telaCozinhaAtiva: { type: Boolean, default: true }, // se false, usa apenas impressoras
+    // ===== BALANÇA (açougue) =====
+    balancaAtiva: { type: Boolean, default: false },
+    balancaTipo: { type: String, enum: ['toledo', 'filizola', 'urano', 'prix', 'generica'], default: 'generica' },
+    balancaConexao: { type: String, enum: ['serial', 'usb', 'ethernet', 'bluetooth'], default: 'ethernet' },
+    balancaIp: { type: String, default: '' },
+    balancaPorta: { type: String, default: '23' },
+    balancaSerialPort: { type: String, default: 'COM1' },
+    balancaBaudRate: { type: Number, default: 9600 },
+    etiquetasImpressas: { type: Number, default: 0 },
+    kgVendidosTotal: { type: Number, default: 0 },
 }, { timestamps: true });
 
 const CategoriaCardapio = mongoose.model('CategoriaCardapio', CategoriaCardapioSchema);

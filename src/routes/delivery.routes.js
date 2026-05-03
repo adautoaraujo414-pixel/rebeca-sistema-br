@@ -500,6 +500,157 @@ router.get('/caixa/tipo-negocio', authDelivery, async (req, res) => {
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
+
+// ===== BALANÇA — SOMENTE AÇOUGUE =====
+
+// GET config da balança
+router.get('/balanca/config', authDelivery, async (req, res) => {
+    try {
+        const admin = await AdminDelivery.findById(req.adminId).select('tipoNegocio').lean();
+        if (admin?.tipoNegocio !== 'acougue') return res.status(403).json({ erro: 'Recurso exclusivo para açougues' });
+        const config = await ConfigDelivery.findOne({ adminId: req.adminId }).lean();
+        res.json({
+            balancaAtiva: config?.balancaAtiva || false,
+            balancaTipo: config?.balancaTipo || 'generica',
+            balancaConexao: config?.balancaConexao || 'ethernet',
+            balancaIp: config?.balancaIp || '',
+            balancaPorta: config?.balancaPorta || '23',
+            balancaSerialPort: config?.balancaSerialPort || 'COM1',
+            balancaBaudRate: config?.balancaBaudRate || 9600,
+            etiquetasImpressas: config?.etiquetasImpressas || 0,
+            kgVendidosTotal: config?.kgVendidosTotal || 0,
+        });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// POST salvar config da balança
+router.post('/balanca/config', authDelivery, async (req, res) => {
+    try {
+        const admin = await AdminDelivery.findById(req.adminId).select('tipoNegocio').lean();
+        if (admin?.tipoNegocio !== 'acougue') return res.status(403).json({ erro: 'Recurso exclusivo para açougues' });
+        const { balancaAtiva, balancaTipo, balancaConexao, balancaIp, balancaPorta, balancaSerialPort, balancaBaudRate } = req.body;
+        await ConfigDelivery.findOneAndUpdate(
+            { adminId: req.adminId },
+            { $set: { balancaAtiva, balancaTipo, balancaConexao, balancaIp, balancaPorta, balancaSerialPort, balancaBaudRate } },
+            { upsert: true }
+        );
+        res.json({ sucesso: true });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// POST registrar pesagem e venda (açougue)
+// Recebe: { itemId, itemNome, pesoKg, precoKgUnit, operador }
+// Cria pedido, baixa estoque, reporta financeiro
+router.post('/balanca/registrar-pesagem', authDelivery, async (req, res) => {
+    try {
+        const admin = await AdminDelivery.findById(req.adminId).select('tipoNegocio').lean();
+        if (admin?.tipoNegocio !== 'acougue') return res.status(403).json({ erro: 'Exclusivo açougue' });
+
+        const { itemId, itemNome, pesoKg, precoKgUnit, clienteNome, operador, imprimirEtiqueta } = req.body;
+        if (!pesoKg || pesoKg <= 0) return res.status(400).json({ erro: 'Peso inválido' });
+        const preco = Number(precoKgUnit || 0);
+        const total = parseFloat((pesoKg * preco).toFixed(2));
+
+        // Criar pedido de caixa
+        const config = await ConfigDelivery.findOne({ adminId: req.adminId }).lean();
+        const ultimo = await PedidoDelivery.findOne({ adminId: req.adminId }).sort({ numero: -1 }).lean();
+        const numero = (ultimo?.numero || 0) + 1;
+
+        const pedido = await PedidoDelivery.create({
+            adminId: req.adminId,
+            numero,
+            status: 'entregue',
+            pago: true,
+            dataPagamento: new Date(),
+            dataEntregue: new Date(),
+            tipoLocal: 'balcao',
+            origemPedido: 'balanca',
+            clienteNome: clienteNome || 'Cliente Balcão',
+            operadorCaixa: operador || 'caixa',
+            itens: [{
+                itemId: itemId || null,
+                nome: itemNome || 'Item',
+                quantidade: pesoKg,
+                unidade: 'kg',
+                precoUnitario: preco,
+                subtotal: total
+            }],
+            subtotal: total,
+            total,
+            formaPagamento: 'a_receber',
+            formasPagamento: []
+        });
+
+        // Baixar estoque em kg
+        if (itemId) {
+            try {
+                const item = await ItemCardapio.findOne({ _id: itemId, adminId: req.adminId, estoqueAtivo: true });
+                if (item) {
+                    const novoEstoque = Math.max(0, (item.estoqueAtual || 0) - pesoKg);
+                    await ItemCardapio.findByIdAndUpdate(itemId, {
+                        estoqueAtual: novoEstoque,
+                        ...(novoEstoque <= 0 ? { disponivel: false } : {})
+                    });
+                    SseService.emitir(req.adminId.toString(), 'cardapio_atualizado', { acao: 'estoque', itemId, novoEstoque });
+                }
+            } catch(e) { console.log('[BALANCA] Erro estoque:', e.message); }
+        }
+
+        // Incrementar etiquetas e kgVendidos
+        if (imprimirEtiqueta) {
+            await ConfigDelivery.findOneAndUpdate({ adminId: req.adminId }, { $inc: { etiquetasImpressas: 1, kgVendidosTotal: pesoKg } });
+        } else {
+            await ConfigDelivery.findOneAndUpdate({ adminId: req.adminId }, { $inc: { kgVendidosTotal: pesoKg } });
+        }
+
+        // SSE para caixa saber da venda
+        SseService.emitir(req.adminId.toString(), 'nova_venda_balanca', {
+            pedidoId: pedido._id,
+            numero,
+            itemNome: itemNome || 'Item',
+            pesoKg,
+            total,
+            operador
+        });
+
+        res.json({ sucesso: true, pedido: { _id: pedido._id, numero, total, pesoKg } });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// GET estatísticas da balança do dia
+router.get('/balanca/stats', authDelivery, async (req, res) => {
+    try {
+        const admin = await AdminDelivery.findById(req.adminId).select('tipoNegocio').lean();
+        if (admin?.tipoNegocio !== 'acougue') return res.status(403).json({ erro: 'Exclusivo açougue' });
+
+        const hoje = new Date(); hoje.setHours(0,0,0,0);
+        const pedidosHoje = await PedidoDelivery.find({
+            adminId: req.adminId,
+            origemPedido: 'balanca',
+            createdAt: { $gte: hoje }
+        }).lean();
+
+        let kgHoje = 0, faturamentoHoje = 0, etiquetasHoje = 0;
+        pedidosHoje.forEach(p => {
+            faturamentoHoje += p.total || 0;
+            (p.itens || []).forEach(it => {
+                if (it.unidade === 'kg') kgHoje += it.quantidade || 0;
+            });
+        });
+
+        const config = await ConfigDelivery.findOne({ adminId: req.adminId }).select('etiquetasImpressas kgVendidosTotal balancaAtiva').lean();
+
+        res.json({
+            kgHoje: parseFloat(kgHoje.toFixed(3)),
+            faturamentoHoje: parseFloat(faturamentoHoje.toFixed(2)),
+            vendasHoje: pedidosHoje.length,
+            etiquetasTotal: config?.etiquetasImpressas || 0,
+            kgTotal: parseFloat((config?.kgVendidosTotal || 0).toFixed(3)),
+            balancaAtiva: config?.balancaAtiva || false
+        });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
 // ========== DASHBOARD ==========
 router.get('/dashboard', authDelivery, async (req, res) => {
     try {
