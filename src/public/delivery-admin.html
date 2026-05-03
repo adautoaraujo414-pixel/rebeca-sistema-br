@@ -6308,6 +6308,37 @@ async function carregarHistoricoEI() {
 }
 
 
+
+async function excluirEntradaEI(id) {
+  if (!confirm('Excluir esta entrada? O estoque será revertido.')) return;
+  const r = await api('/estoque/entradas/' + id, { method: 'DELETE' });
+  const d = await r.json();
+  if (d.sucesso || d.ok) { toast('✅ Entrada excluída!'); carregarHistoricoEI(); }
+  else toast(d.erro || 'Erro ao excluir', 'error');
+}
+
+async function editarEntradaEI(id) {
+  const r = await api('/estoque/entradas/' + id);
+  const d = await r.json();
+  const e = d.entrada || d;
+  if (!e) { toast('Entrada não encontrada', 'error'); return; }
+  // Preencher formulário com dados da entrada
+  document.getElementById('ei-fornecedor').value = e.fornecedor || '';
+  document.getElementById('ei-data').value = (e.dataEntrada||e.createdAt||'').split('T')[0];
+  if (e.observacoes) document.getElementById('ei-obs').value = e.observacoes;
+  // Limpar e repopular itens
+  document.getElementById('ei-itens-lista').innerHTML = '';
+  (e.itens||[]).forEach(i => {
+    const custo = i.custoUnitario||i.valorUnitario||i.custo||0;
+    adicionarItemEI(i.nome||'', i.unidade||'', i.quantidade||1, custo, (i.validade||'').split('T')[0]);
+  });
+  // Marcar como edição
+  document.getElementById('ei-itens-lista').dataset.editId = id;
+  // Scroll ao formulário
+  document.getElementById('ei-fornecedor').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  toast('✏️ Entrada carregada para edição. Ajuste e salve novamente.');
+}
+
 // ===== CONTAS A PAGAR =====
 async function pagarConta(id) {
   if (!confirm('Marcar como paga?')) return;

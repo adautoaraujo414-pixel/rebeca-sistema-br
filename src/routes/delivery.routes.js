@@ -1520,6 +1520,35 @@ const { ContaPagar } = require('../models/delivery.models');
     } catch(e) { res.json({ entradas: [] }); }
 });
 
+
+router.get('/estoque/entradas/:id', authDelivery, async (req, res) => {
+    try {
+        const { EntradaInsumo } = require('../models/delivery.models');
+        const entrada = await EntradaInsumo.findOne({ _id: req.params.id, adminId: req.adminId }).lean();
+        if (!entrada) return res.status(404).json({ erro: 'Entrada não encontrada' });
+        res.json({ entrada });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+router.delete('/estoque/entradas/:id', authDelivery, async (req, res) => {
+    try {
+        const { EntradaInsumo } = require('../models/delivery.models');
+        const entrada = await EntradaInsumo.findOne({ _id: req.params.id, adminId: req.adminId }).lean();
+        if (!entrada) return res.status(404).json({ erro: 'Entrada não encontrada' });
+        // Reverter estoque dos itens
+        for (const item of (entrada.itens || [])) {
+            if (item.nome) {
+                await ItemCardapio.findOneAndUpdate(
+                    { adminId: req.adminId, nome: new RegExp('^' + item.nome.trim() + '$', 'i') },
+                    { $inc: { estoqueAtual: -(item.quantidade || 0) } }
+                );
+            }
+        }
+        await EntradaInsumo.findByIdAndDelete(req.params.id);
+        res.json({ sucesso: true });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
 router.get('/estoque/barcode/:codigo', authDelivery, async (req, res) => {
     try {
         const item = await ItemCardapio.findOne({ adminId: req.adminId, codigoBarra: req.params.codigo, ativo: true }).lean();
