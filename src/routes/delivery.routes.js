@@ -370,6 +370,22 @@ router.put('/pedidos/:id/status', authDelivery, async (req, res) => {
             } catch(e) { console.log('[DELIVERY] Erro notificar:', e.message); }
         }
         
+        // Baixa automática de estoque ao entregar
+        if (status === 'entregue' && pedido) {
+            try {
+                for (const it of (pedido.itens || [])) {
+                    if (!it.itemId) continue;
+                    const item = await ItemCardapio.findOne({ _id: it.itemId, adminId: req.adminId, estoqueAtivo: true });
+                    if (!item) continue;
+                    const baixa = (it.quantidade || 1) * (item.unidadePorPedido || 1);
+                    const novoEstoque = Math.max(0, (item.estoqueAtual || 0) - baixa);
+                    await ItemCardapio.findByIdAndUpdate(it.itemId, {
+                        estoqueAtual: novoEstoque,
+                        ...(novoEstoque <= 0 ? { disponivel: false } : {})
+                    });
+                }
+            } catch(e) { console.log('[ESTOQUE] Erro baixa:', e.message); }
+        }
         res.json(pedido);
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
