@@ -611,9 +611,11 @@ async function carregarConfigNF() {
           <tr style="border-bottom:2px solid #f0f0f0;color:#8e8e93;text-align:left">
             <th style="padding:8px">Data Abertura</th>
             <th style="padding:8px">Fechamento</th>
+            <th style="padding:8px">Operador</th>
             <th style="padding:8px">Pedidos</th>
             <th style="padding:8px">Entregues</th>
             <th style="padding:8px">Faturamento</th>
+            <th style="padding:8px">Top 3 Produtos</th>
             <th style="padding:8px">Obs</th>
           </tr>
         </thead>
@@ -5371,15 +5373,20 @@ async function carregarRelatorios() {
             </div>`).join('');
 
         // Tabela histórico
-        document.getElementById('tbody-caixas').innerHTML = caixas.map(c => `
+        document.getElementById('tbody-caixas').innerHTML = caixas.map(c => {
+          const top3 = (c.produtosMaisVendidos||[]).slice(0,3).map(p => `${p.nome} (${p.quantidade}x)`).join(', ') || '-';
+          return `
             <tr style="border-bottom:1px solid #f5f5f7">
               <td style="padding:8px">${new Date(c.dataAbertura).toLocaleString('pt-BR')}</td>
               <td style="padding:8px">${c.dataFechamento ? new Date(c.dataFechamento).toLocaleString('pt-BR') : '-'}</td>
+              <td style="padding:8px;color:#636366">${c.fechadoPor||c.abertoPor||'—'}</td>
               <td style="padding:8px">${c.totalPedidos}</td>
               <td style="padding:8px;color:#16a34a">${c.totalEntregues}</td>
               <td style="padding:8px;font-weight:700;color:#f97316">R$ ${(c.totalFaturamento||0).toFixed(2)}</td>
+              <td style="padding:8px;font-size:.8em;color:#636366">${top3}</td>
               <td style="padding:8px;color:#8e8e93;font-size:.8em">${c.observacoes||'-'}</td>
-            </tr>`).join('');
+            </tr>`;
+        }).join('');
 
     } catch(e) { console.log('Erro relatórios:', e); }
 }
