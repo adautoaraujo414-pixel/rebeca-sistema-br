@@ -29,6 +29,24 @@ const authDelivery = async (req, res, next) => {
 };
 
 // ========== CATEGORIAS ==========
+
+// ========== UTILITÁRIO: BAIXA AUTOMÁTICA DE ESTOQUE ==========
+async function baixarEstoquePedido(pedido, adminId) {
+    try {
+        for (const it of (pedido.itens || [])) {
+            if (!it.itemId) continue;
+            const item = await ItemCardapio.findOne({ _id: it.itemId, adminId, estoqueAtivo: true });
+            if (!item) continue;
+            const baixa = (it.quantidade || 1) * (item.unidadePorPedido || 1);
+            const novoEstoque = Math.max(0, (item.estoqueAtual || 0) - baixa);
+            await ItemCardapio.findByIdAndUpdate(it.itemId, {
+                estoqueAtual: novoEstoque,
+                ...(novoEstoque <= 0 ? { disponivel: false } : {})
+            });
+        }
+    } catch(e) { console.log('[ESTOQUE] Erro baixa automatica:', e.message); }
+}
+
 router.get('/categorias', authDelivery, async (req, res) => {
     try {
         const cats = await CategoriaCardapio.find({ adminId: req.adminId, ativo: true }).sort({ ordem: 1 });
@@ -737,6 +755,8 @@ router.put('/entregador/:id/entregue', authDelivery, async (req, res) => {
             { status: 'entregue', dataEntregue: new Date() },
             { new: true }
         );
+        // Baixa automática de estoque ao entregar
+        if (pedido) await baixarEstoquePedido(pedido, req.adminId);
         try {
             const RebecaDeliveryService = require('../services/rebeca-delivery.service');
             await RebecaDeliveryService.notificarClienteEntregue(pedido._id);
@@ -1380,6 +1400,8 @@ router.post('/caixa/pedido/:id/pagar', authDelivery, async (req, res) => {
         pedido.dataEntregue = new Date();
         
         await pedido.save();
+        // Baixa automática de estoque ao pagar no caixa
+        await baixarEstoquePedido(pedido, req.adminId);
         res.json({ sucesso: true, troco: pedido.troco, pedido });
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
@@ -2071,6 +2093,15 @@ router.get('/salon/cardapio', authDelivery, async (req, res) => {
 
 router.put('/salon/mesa/:mesa/fechar', authDelivery, async (req, res) => {
     try {
+        // Baixar estoque de todos os pedidos da mesa ao fechar
+        try {
+            const pedidosMesa = await PedidoDelivery.find({
+                adminId: req.adminId,
+                mesa: req.params.mesa,
+                status: { $nin: ['cancelado', 'estoque_baixado'] }
+            }).lean();
+            for (const ped of pedidosMesa) await baixarEstoquePedido(ped, req.adminId);
+        } catch(em) { console.log('[MESA] Erro baixa estoque:', em.message); }
         const { formaPagamento } = req.body;
         await PedidoDelivery.updateMany(
             { adminId: req.adminId, numeroMesa: req.params.mesa, status: { $nin: ['entregue','cancelado'] } },
