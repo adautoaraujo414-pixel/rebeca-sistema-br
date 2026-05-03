@@ -317,28 +317,120 @@ async function carregarConta(){
     const r=await fetch(API+'/mesa/conta?r='+adminSlug+'&mesa='+mesa);
     const d=await r.json();
     const el=document.getElementById('listaConta');
-    if(!d.pedidos||!d.pedidos.length){el.innerHTML='<div class="carrinho-vazio">🧾<br>Nenhum pedido ainda</div>';return;}
-    const total=d.pedidos.reduce((s,p)=>s+(p.total||0),0);
-    const sm={novo:'🆕 Recebido',confirmado:'✅ Confirmado',preparando:'🍳 Preparando',pronto:'✅ Pronto',entregue:'📦 Entregue',pago:'💰 Pago',cancelado:'❌ Cancelado'};
-    el.innerHTML=d.pedidos.map(p=>
-      '<div style="margin-bottom:16px">'+
-        '<div style="font-size:.73em;color:#555;margin-bottom:6px">'+new Date(p.createdAt).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})+'</div>'+
-        (p.itens||[]).map(i=>
-          '<div class="conta-item">'+
-            '<div><div style="font-size:.9em;font-weight:700">'+i.nome+'</div><div style="font-size:.78em;color:#888">'+i.qtd+'x · R$ '+(i.preco||0).toFixed(2)+'</div></div>'+
-            '<span class="conta-status">'+(sm[p.status]||p.status)+'</span>'+
-          '</div>'
-        ).join('')+
-      '</div>'
-    ).join('')+
-    '<div class="total-conta">'+
-      '<div style="color:#aaa;font-size:.85em">Total consumido</div>'+
-      '<div style="font-size:2em;font-weight:800;color:#22c55e;margin-top:6px">R$ '+total.toFixed(2)+'</div>'+
-      '<div style="color:#555;font-size:.78em;margin-top:8px">O garçom virá até sua mesa</div>'+
-      '<button id="btnPedirConta" onclick="pedirConta()" style="margin-top:16px;width:100%;padding:14px;background:#f59e0b;color:#000;border:none;border-radius:10px;font-size:1em;font-weight:700;cursor:pointer">💰 Pedir a Conta</button>'+
-    '</div>';
+    if(!d.pedidos||!d.pedidos.length){
+      el.innerHTML='<div class="carrinho-vazio">🧾<br>Nenhum pedido ainda nesta mesa</div>';
+      return;
+    }
+
+    const statusIcon={novo:'🆕',confirmado:'✅',preparando:'🍳',pronto:'🔔',entregue:'📦',pago:'💰',cancelado:'❌'};
+    const statusLabel={novo:'Recebido',confirmado:'Confirmado',preparando:'Preparando',pronto:'Pronto p/ servir',entregue:'Entregue',pago:'Pago',cancelado:'Cancelado'};
+
+    // ── Agrupar por pessoa ──────────────────────────────────────
+    const porPessoa = {};
+    let totalMesa = 0;
+
+    d.pedidos.forEach(p => {
+      if(p.status==='cancelado') return;
+      const nome = p.clienteNome || p.nomeComanda || p.nomeCliente || 'Cliente';
+      if(!porPessoa[nome]) porPessoa[nome] = { pedidos:[], total:0 };
+      porPessoa[nome].pedidos.push(p);
+      porPessoa[nome].total += (p.total||0);
+      totalMesa += (p.total||0);
+    });
+
+    const pessoas = Object.entries(porPessoa);
+    const cores = ['#f97316','#3b82f6','#22c55e','#a855f7','#ec4899','#14b8a6'];
+
+    let html = '';
+
+    // ── Cabeçalho resumo da mesa ───────────────────────────────
+    html += `
+    <div style="background:linear-gradient(135deg,#1a1a1a,#222);border:1px solid #333;border-radius:16px;padding:16px;margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div style="font-weight:800;font-size:1em">🪑 Mesa ${mesa}</div>
+        <div style="font-size:.75em;color:#888">${pessoas.length} pessoa${pessoas.length!==1?'s':''} · ${d.pedidos.filter(p=>p.status!=='cancelado').length} pedido${d.pedidos.length!==1?'s':''}</div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(${Math.min(pessoas.length,3)},1fr);gap:8px;margin-bottom:12px">
+        ${pessoas.map(([nome,dados],idx)=>`
+          <div style="background:#111;border:1px solid ${cores[idx%cores.length]}33;border-radius:10px;padding:10px;text-align:center">
+            <div style="font-size:1.3em">👤</div>
+            <div style="font-size:.78em;font-weight:700;color:${cores[idx%cores.length]};margin-top:3px;word-break:break-word">${nome}</div>
+            <div style="font-size:.85em;font-weight:800;color:#fff;margin-top:4px">R$ ${dados.total.toFixed(2)}</div>
+          </div>`).join('')}
+      </div>
+      <div style="border-top:1px solid #333;padding-top:10px;display:flex;justify-content:space-between;align-items:center">
+        <div style="font-size:.82em;color:#aaa">Total da mesa</div>
+        <div style="font-size:1.5em;font-weight:800;color:#22c55e">R$ ${totalMesa.toFixed(2)}</div>
+      </div>
+    </div>`;
+
+    // ── Cards por pessoa ───────────────────────────────────────
+    pessoas.forEach(([nome, dados], idx) => {
+      const cor = cores[idx % cores.length];
+      html += `
+      <div style="background:#111;border:2px solid ${cor}44;border-radius:14px;padding:14px;margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <div style="width:32px;height:32px;border-radius:50%;background:${cor}22;border:2px solid ${cor};display:flex;align-items:center;justify-content:center;font-size:.9em">👤</div>
+            <div style="font-weight:800;font-size:.95em;color:${cor}">${nome}</div>
+          </div>
+          <div style="font-size:.9em;font-weight:800;color:#fff">R$ ${dados.total.toFixed(2)}</div>
+        </div>`;
+
+      // Pedidos desta pessoa
+      dados.pedidos.forEach(p => {
+        const hora = new Date(p.createdAt).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+        const stIcon = statusIcon[p.status] || '•';
+        const stLabel = statusLabel[p.status] || p.status;
+        const stCor = p.status==='pronto'||p.status==='entregue'?'#22c55e':p.status==='preparando'?'#f59e0b':'#888';
+
+        html += `
+        <div style="background:#1a1a1a;border-radius:10px;padding:10px;margin-bottom:8px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+            <div style="font-size:.72em;color:#555">Pedido #${p.numero||'?'} · ${hora}</div>
+            <div style="font-size:.72em;font-weight:700;color:${stCor}">${stIcon} ${stLabel}</div>
+          </div>`;
+
+        (p.itens||[]).forEach(it => {
+          const sub = ((it.precoUnitario||0)*(it.quantidade||1)).toFixed(2);
+          html += `
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #222">
+            <div>
+              <span style="font-size:.85em;font-weight:600">${it.quantidade}x ${it.nome}</span>
+              ${it.observacao?`<div style="font-size:.72em;color:#888">↳ ${it.observacao}</div>`:''}
+            </div>
+            <span style="font-size:.82em;color:#aaa">R$ ${sub}</span>
+          </div>`;
+        });
+
+        html += `
+          <div style="display:flex;justify-content:flex-end;margin-top:6px">
+            <span style="font-size:.8em;font-weight:700;color:#fff">Subtotal: R$ ${(p.total||0).toFixed(2)}</span>
+          </div>
+        </div>`;
+      });
+
+      html += `
+        <div style="border-top:1px solid ${cor}33;padding-top:8px;display:flex;justify-content:space-between;align-items:center">
+          <div style="font-size:.78em;color:#888">Total de ${nome}</div>
+          <div style="font-size:1.1em;font-weight:800;color:${cor}">R$ ${dados.total.toFixed(2)}</div>
+        </div>
+      </div>`;
+    });
+
+    // ── Botão fechar conta ─────────────────────────────────────
+    html += `
+    <div style="background:#111;border:1px solid #333;border-radius:14px;padding:16px;text-align:center">
+      <div style="font-size:.8em;color:#888;margin-bottom:8px">O garçom virá até sua mesa para fechar a conta</div>
+      <button id="btnPedirConta" onclick="pedirConta()" style="width:100%;padding:14px;background:linear-gradient(135deg,#f59e0b,#d97706);border:none;border-radius:10px;color:#fff;font-weight:800;font-size:.95em;cursor:pointer">
+        💰 Pedir a Conta — R$ ${totalMesa.toFixed(2)}
+      </button>
+    </div>`;
+
+    el.innerHTML = html;
   }catch(e){console.error(e);}
 }
+
 async function pedirConta(){
   const totalEl=document.querySelector('.total-conta div:nth-child(2)');
   const totalTxt=totalEl?totalEl.textContent:'';
