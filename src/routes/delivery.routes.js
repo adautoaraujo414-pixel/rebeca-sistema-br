@@ -2641,33 +2641,35 @@ router.get('/config-publica/:adminId', async (req, res) => {
 // ========== ESTOQUE: LEITURA DE NOTA FISCAL POR FOTO (GPT-4o Vision) ==========
 router.post('/estoque/nota-fiscal', authDelivery, async (req, res) => {
     try {
-        const { imagemBase64, mimeType } = req.body;
-        if (!imagemBase64) return res.status(400).json({ erro: 'Imagem obrigatoria' });
+        const { base64, imagemBase64, tipo, mimeType } = req.body;
+        const imgData = base64 || imagemBase64;
+        const imgMime = tipo || mimeType || 'image/jpeg';
+        if (!imgData) return res.status(400).json({ erro: 'Imagem obrigatoria' });
         const apiKey = process.env.OPENAI_API_KEY;
         if (!apiKey) return res.status(500).json({ erro: 'OPENAI_API_KEY nao configurada' });
         const response = await axios.post('https://api.openai.com/v1/chat/completions', {
             model: 'gpt-4o',
-            max_tokens: 1500,
+            max_tokens: 2000,
             messages: [{
                 role: 'user',
                 content: [
                     {
                         type: 'image_url',
-                        image_url: { url: 'data:' + (mimeType || 'image/jpeg') + ';base64,' + imagemBase64, detail: 'high' }
+                        image_url: { url: 'data:' + imgMime + ';base64,' + imgData, detail: 'high' }
                     },
                     {
                         type: 'text',
-                        text: 'Esta e uma nota fiscal ou cupom fiscal brasileiro. Extraia TODOS os itens/produtos com quantidade e valor unitario. Responda APENAS com JSON valido neste formato exato, sem markdown, sem explicacao:\n{"dataEmissao":"DD/MM/YYYY","fornecedor":"nome da empresa emitente","itens":[{"nome":"nome do produto","quantidade":1,"unidade":"un","valorUnitario":0.00,"valorTotal":0.00}],"valorTotalNota":0.00}\nSe nao conseguir ler algum campo deixe string vazia ou 0. Extraia todos os itens visiveis.'
+                        text: 'Voce e um leitor de notas fiscais brasileiras. Analise esta imagem e extraia TODOS os produtos/itens.\n\nRetorne SOMENTE um JSON valido neste formato exato, sem texto adicional:\n{\n  "fornecedor": "nome do fornecedor/empresa emitente ou vazio",\n  "dataEmissao": "data no formato YYYY-MM-DD ou vazio",\n  "itens": [\n    {\n      "nome": "nome do produto exatamente como esta na nota",\n      "quantidade": 1.0,\n      "unidade": "Un",\n      "valorUnitario": 0.00,\n      "valorTotal": 0.00,\n      "validade": ""\n    }\n  ]\n}\n\nRegras:\n- unidade deve ser: Un, Kg, g, L, ml, Cx, Pct, Fd ou Dz\n- quantidade e valorUnitario devem ser numeros decimais com ponto\n- valorUnitario e o preco de CUSTO por unidade\n- Extraia TODOS os itens visiveis na nota sem excluir nenhum'
                     }
                 ]
             }]
         }, { headers: { 'Authorization': 'Bearer ' + apiKey, 'Content-Type': 'application/json' }, timeout: 30000 });
 
-        const txt = response.data.choices?.[0]?.message?.content || '{}';
+        const txtResp = response.data.choices?.[0]?.message?.content || '{}';
         let dados;
-        try { dados = JSON.parse(txt.replace(/```json|```/g, '').trim()); }
-        catch(pe) { return res.status(422).json({ erro: 'Nao foi possivel ler a nota. Tente uma foto mais nitida.', raw: txt }); }
-        res.json({ sucesso: true, dados });
+        try { dados = JSON.parse(txtResp.replace(/```json|```/g, '').trim()); }
+        catch(pe) { return res.status(422).json({ erro: 'Nao foi possivel ler a nota. Tente uma foto mais nitida.', raw: txtResp }); }
+        res.json({ sucesso: true, itens: dados.itens || [], fornecedor: dados.fornecedor || '', dataEmissao: dados.dataEmissao || '' });
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
