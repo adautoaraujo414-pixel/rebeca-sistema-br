@@ -883,6 +883,48 @@ async function carregarConfigNF() {
                     <div id="statusImpressora" style="margin-top:12px;font-size:.82em;color:#888"></div>
                   </div>
 
+                  <!-- GAVETA — AÇOUGUE E OUTROS -->
+                  <div style="background:#fff;border:1px solid #e8e8ed;border-radius:14px;padding:18px;margin-bottom:16px">
+                    <div style="font-weight:800;font-size:.95em;margin-bottom:4px">🗄️ Gaveta de Dinheiro</div>
+                    <div style="font-size:.78em;color:#888;margin-bottom:14px">Configure a gaveta conectada à impressora ou via rede</div>
+
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+                      <div>
+                        <label style="font-size:.78em;font-weight:700;color:#555;display:block;margin-bottom:5px">Tipo de Conexão</label>
+                        <select id="gav-tipo" onchange="gavetaMudaTipo()" style="width:100%;padding:9px;border:1px solid #ddd;border-radius:8px;font-size:.88em">
+                          <option value="impressora">Via Impressora (ESC/POS) — recomendado</option>
+                          <option value="ethernet">Ethernet / IP direto</option>
+                          <option value="usb">USB / Serial (bridge local)</option>
+                          <option value="serial">Serial direto (COM)</option>
+                        </select>
+                      </div>
+                      <div id="gav-campos-ip" style="display:none">
+                        <label style="font-size:.78em;font-weight:700;color:#555;display:block;margin-bottom:5px">IP da Gaveta</label>
+                        <input type="text" id="gav-ip" placeholder="Ex: 192.168.1.101" style="width:100%;padding:9px;border:1px solid #ddd;border-radius:8px;font-size:.88em">
+                      </div>
+                    </div>
+
+                    <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:10px 14px;font-size:.78em;color:#166534;margin-bottom:14px">
+                      💡 <b>Via Impressora (recomendado):</b> A gaveta é conectada à impressora via cabo RJ11. O comando ESC/POS abre a gaveta automaticamente ao finalizar o pagamento.<br>
+                      🔌 <b>Ethernet:</b> Gaveta inteligente com IP próprio na rede.<br>
+                      🖥️ <b>USB/Serial:</b> Requer Rebeca Bridge instalado no computador do caixa.
+                    </div>
+
+                    <div style="display:flex;gap:10px;margin-bottom:10px">
+                      <label style="display:flex;align-items:center;gap:8px;font-size:.85em;font-weight:600;cursor:pointer">
+                        <input type="checkbox" id="gav-ativa" onchange="salvarConfigGaveta()"> Gaveta ativa
+                      </label>
+                      <label style="display:flex;align-items:center;gap:8px;font-size:.85em;font-weight:600;cursor:pointer">
+                        <input type="checkbox" id="gav-abrir-pagamento" checked onchange="salvarConfigGaveta()"> Abrir automaticamente ao receber pagamento
+                      </label>
+                    </div>
+
+                    <div style="display:flex;gap:8px">
+                      <button onclick="salvarConfigGaveta()" style="flex:1;padding:10px;background:#1a1a1a;color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer">💾 Salvar</button>
+                      <button onclick="testarGaveta()" style="flex:1;padding:10px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;color:#0369a1;font-weight:700;cursor:pointer">🗄️ Testar Abertura</button>
+                    </div>
+                  </div>
+
                   <!-- MODAL ADICIONAR IMPRESSORA -->
                   <div id="modal-impressora" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:9999;padding:20px;display:none;align-items:center;justify-content:center">
                     <div style="background:#fff;border-radius:16px;width:100%;max-width:420px;padding:24px;position:relative">
@@ -2791,7 +2833,58 @@ function imprimirEtiquetaBalanca(nome, pesoKg, precoKg, total) {
     <div class="linha"><span>Preço/kg:</span><span>R$ ${Number(precoKg).toFixed(2)}</span></div>
     <div class="total">R$ ${Number(total).toFixed(2)}</div>
     <div style="text-align:center;font-size:9px;margin-top:4px;color:#555">${new Date().toLocaleString('pt-BR')}</div>
-  </body></html>`;
+  
+<script>
+// ===== GAVETA ADMIN =====
+function gavetaMudaTipo() {
+  const tipo = document.getElementById('gav-tipo')?.value;
+  const ipDiv = document.getElementById('gav-campos-ip');
+  if (ipDiv) ipDiv.style.display = (tipo === 'ethernet') ? 'block' : 'none';
+}
+
+async function carregarConfigGaveta() {
+  try {
+    const r = await api('/impressora/gaveta/config');
+    const d = await r.json();
+    const el = id => document.getElementById(id);
+    if (el('gav-tipo')) {
+      el('gav-tipo').value = d.tipoGaveta || 'impressora';
+      el('gav-ativa').checked = d.gavetaAtiva || false;
+      el('gav-abrir-pagamento').checked = d.gavetaAbrirNoPagamento !== false;
+      if (el('gav-ip')) el('gav-ip').value = d.gavetaIp || '';
+      gavetaMudaTipo();
+    }
+  } catch(e) {}
+}
+
+async function salvarConfigGaveta() {
+  try {
+    const body = {
+      gavetaAtiva: document.getElementById('gav-ativa')?.checked || false,
+      tipoGaveta: document.getElementById('gav-tipo')?.value || 'impressora',
+      gavetaIp: document.getElementById('gav-ip')?.value || '',
+      gavetaAbrirNoPagamento: document.getElementById('gav-abrir-pagamento')?.checked !== false,
+    };
+    const r = await api('/impressora/gaveta/config', { method: 'POST', body: JSON.stringify(body) });
+    const d = await r.json();
+    if (d.sucesso) toast('✅ Configuração da gaveta salva!');
+    else toast(d.erro || 'Erro ao salvar', 'error');
+  } catch(e) { toast('Erro ao salvar gaveta', 'error'); }
+}
+
+async function testarGaveta() {
+  try {
+    const r = await api('/impressora/gaveta', { method: 'POST', body: '{}' });
+    const d = await r.json();
+    toast(d.mensagem || '🗄️ Sinal enviado para gaveta!');
+  } catch(e) { toast('Erro ao testar gaveta', 'error'); }
+}
+
+// Carregar config gaveta ao entrar na página impressora
+const _irParaOriginal = typeof irPara === 'function' ? irPara : null;
+</script>
+
+</body></html>`;
   const w = window.open('','_blank','width=300,height=400');
   w.document.write(html); w.document.close();
   setTimeout(() => w.print(), 400);

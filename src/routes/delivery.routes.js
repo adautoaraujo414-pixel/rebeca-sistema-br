@@ -651,6 +651,61 @@ router.get('/balanca/stats', authDelivery, async (req, res) => {
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
+
+// ===== GAVETA — AÇOUGUE =====
+router.post('/impressora/gaveta', authDelivery, async (req, res) => {
+    try {
+        const config = await ConfigDelivery.findOne({ adminId: req.adminId })
+            .select('gavetaAtiva tipoGaveta gavetaIp gavetaPorta gavetaSerialPort tipoImpressora ipImpressora portaImpressora').lean();
+
+        // Retorna as configurações para o frontend executar a abertura
+        // (abertura real via ESC/POS é feita pelo browser ou bridge local)
+        res.json({
+            sucesso: true,
+            gavetaAtiva: config?.gavetaAtiva || false,
+            tipoGaveta: config?.tipoGaveta || 'impressora',
+            gavetaIp: config?.gavetaIp || '',
+            gavetaPorta: config?.gavetaPorta || '9100',
+            instrucao: 'ESC/POS: \x1B\x70\x00\x19\xFA', // comando padrão ESC/POS para gaveta
+            mensagem: config?.gavetaAtiva ? 'Sinal enviado para gaveta' : 'Gaveta não configurada'
+        });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// GET config gaveta
+router.get('/impressora/gaveta/config', authDelivery, async (req, res) => {
+    try {
+        const config = await ConfigDelivery.findOne({ adminId: req.adminId })
+            .select('gavetaAtiva tipoGaveta gavetaIp gavetaPorta gavetaSerialPort gavetaAbrirNoPagamento ipImpressora portaImpressora tipoImpressora').lean();
+        res.json({
+            gavetaAtiva: config?.gavetaAtiva || false,
+            tipoGaveta: config?.tipoGaveta || 'impressora',
+            gavetaIp: config?.gavetaIp || '',
+            gavetaPorta: config?.gavetaPorta || '9100',
+            gavetaSerialPort: config?.gavetaSerialPort || 'COM1',
+            gavetaAbrirNoPagamento: config?.gavetaAbrirNoPagamento !== false,
+            ipImpressora: config?.ipImpressora || '',
+            portaImpressora: config?.portaImpressora || '9100',
+            tipoImpressora: config?.tipoImpressora || 'browser',
+        });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// POST salvar config gaveta + impressora
+router.post('/impressora/gaveta/config', authDelivery, async (req, res) => {
+    try {
+        const { gavetaAtiva, tipoGaveta, gavetaIp, gavetaPorta, gavetaSerialPort,
+                gavetaAbrirNoPagamento, ipImpressora, portaImpressora, tipoImpressora } = req.body;
+        await ConfigDelivery.findOneAndUpdate(
+            { adminId: req.adminId },
+            { $set: { gavetaAtiva, tipoGaveta, gavetaIp, gavetaPorta, gavetaSerialPort,
+                      gavetaAbrirNoPagamento, ipImpressora, portaImpressora, tipoImpressora } },
+            { upsert: true }
+        );
+        res.json({ sucesso: true });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
 // ========== DASHBOARD ==========
 router.get('/dashboard', authDelivery, async (req, res) => {
     try {

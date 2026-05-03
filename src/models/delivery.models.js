@@ -234,6 +234,16 @@ const ConfigDeliverySchema = new mongoose.Schema({
     balancaBaudRate: { type: Number, default: 9600 },
     etiquetasImpressas: { type: Number, default: 0 },
     kgVendidosTotal: { type: Number, default: 0 },
+    // ===== GAVETA & IMPRESSORA =====
+    gavetaAtiva: { type: Boolean, default: false },
+    tipoGaveta: { type: String, enum: ['usb', 'serial', 'ethernet', 'impressora'], default: 'impressora' },
+    gavetaIp: { type: String, default: '' },
+    gavetaPorta: { type: String, default: '9100' },
+    gavetaSerialPort: { type: String, default: 'COM1' },
+    gavetaAbrirNoPagamento: { type: Boolean, default: true },
+    ipImpressora: { type: String, default: '' },
+    portaImpressora: { type: String, default: '9100' },
+    tipoImpressora: { type: String, enum: ['browser', 'ethernet', 'usb', 'serial'], default: 'browser' },
 }, { timestamps: true });
 
 const CategoriaCardapio = mongoose.model('CategoriaCardapio', CategoriaCardapioSchema);
