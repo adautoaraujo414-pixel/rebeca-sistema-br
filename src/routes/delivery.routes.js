@@ -2591,14 +2591,10 @@ router.get('/config-publica/:adminId', async (req, res) => {
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
-module.exports = router;
 
 // ========== ESTOQUE: LEITURA DE NOTA FISCAL POR FOTO (GPT-4o Vision) ==========
 router.post('/estoque/nota-fiscal', authDelivery, async (req, res) => {
     try {
-        const _adm = await require('./delivery.routes.js'.includes ? require('../models/delivery.models').AdminDelivery.findById(req.adminId).lean() : null);
-        const AdminDelivery = require('../models/delivery.models').AdminDelivery;
-        }
         const { imagemBase64, mimeType } = req.body;
         if (!imagemBase64) return res.status(400).json({ erro: 'Imagem obrigatoria' });
         const apiKey = process.env.OPENAI_API_KEY;
