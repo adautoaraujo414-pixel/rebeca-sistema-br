@@ -787,35 +787,91 @@ async function scanBarcodeCaixa() {
   const status = document.getElementById('caixaBarcodeStatus');
   const codigo = (input.value || '').trim();
   if (!codigo) return;
-  status.textContent = 'Buscando...';
+  input.value = '';
+  status.textContent = '🔍 Buscando...';
   status.style.color = '#888';
   try {
-    const tk = new URLSearchParams(location.search).get('token') || localStorage.getItem('delivery_token') || '';
     const r = await fetch('/api/delivery/estoque/barcode/' + encodeURIComponent(codigo), {
-      headers: { 'Authorization': 'Bearer ' + tk }
+      headers: { 'Authorization': 'Bearer ' + token }
     });
     if (r.status === 404) {
-      status.textContent = '❌ Codigo nao encontrado';
+      status.textContent = '❌ Código não encontrado';
       status.style.color = '#ef4444';
-      setTimeout(function(){ status.textContent = ''; }, 2500);
-      input.select();
+      setTimeout(function(){ status.textContent = ''; }, 3000);
+      input.focus();
       return;
     }
     const item = await r.json();
-    // Adicionar ao carrinho usando a função existente
-    const ex = carrinho.find(function(c){ return c.itemId === item._id && !c.observacao; });
+    if (window._tipoNegocio === 'acougue') {
+      status.textContent = '⚖️ ' + item.nome + ' — informe o peso';
+      status.style.color = '#c41e1e';
+      setTimeout(function(){ status.textContent = ''; }, 5000);
+      _pesoItem = { _id: item._id, nome: item.nome, preco: item.preco };
+      document.getElementById('modal-peso-nome').textContent = item.nome;
+      document.getElementById('modal-peso-preco').textContent = 'R$ ' + Number(item.preco||0).toFixed(2).replace('.',',') + '/kg';
+      document.getElementById('modal-peso-kg').value = '';
+      document.getElementById('modal-peso-total').textContent = 'Total: R$ 0,00';
+      document.getElementById('modal-peso-acougue').classList.add('show');
+      setTimeout(function(){ var inp = document.getElementById('modal-peso-kg'); if(inp) inp.focus(); }, 150);
+      input.focus();
+      return;
+    }
+    var ex = carrinho.find(function(c){ return c.itemId === item._id && !c.observacao; });
     if (ex) { ex.quantidade++; ex.subtotal = ex.quantidade * ex.precoUnitario; }
     else { carrinho.push({ itemId: item._id, nome: item.nome, quantidade: 1, precoUnitario: item.preco, subtotal: item.preco, observacao: '', opcionais: [] }); }
     renderCarrinho();
-    // Feedback visual
+    atualizarTotais();
     status.textContent = '✅ ' + item.nome + ' adicionado!';
     status.style.color = '#22c55e';
     setTimeout(function(){ status.textContent = ''; }, 2000);
-    input.value = '';
     input.focus();
   } catch(e) {
     status.textContent = '❌ Erro: ' + e.message;
     status.style.color = '#ef4444';
+    setTimeout(function(){ status.textContent = ''; }, 3000);
+  }
+}
+
+    const item = await r.json();
+
+    // ── AÇOUGUE: abrir modal de peso ao invés de adicionar qtd 1 ──
+    if (window._tipoNegocio === 'acougue') {
+      status.textContent = '⚖️ ' + item.nome + ' — informe o peso';
+      status.style.color = '#c41e1e';
+      setTimeout(function(){ status.textContent = ''; }, 4000);
+      // Preencher modal de peso com item lido pela pistola
+      _pesoItem = { _id: item._id, nome: item.nome, preco: item.preco };
+      document.getElementById('modal-peso-nome').textContent = item.nome;
+      document.getElementById('modal-peso-preco').textContent =
+        'R$ ' + Number(item.preco || 0).toFixed(2).replace('.', ',') + '/kg';
+      document.getElementById('modal-peso-kg').value = '';
+      document.getElementById('modal-peso-total').textContent = 'Total: R$ 0,00';
+      document.getElementById('modal-peso-acougue').classList.add('show');
+      // Focar no input de peso automaticamente
+      setTimeout(function(){
+        const inp = document.getElementById('modal-peso-kg');
+        if (inp) inp.focus();
+      }, 150);
+      input.focus();
+      return;
+    }
+
+    // ── OUTROS tipos de negócio: comportamento original ──
+    const ex = carrinho.find(function(c){ return c.itemId === item._id && !c.observacao; });
+    if (ex) { ex.quantidade++; ex.subtotal = ex.quantidade * ex.precoUnitario; }
+    else { carrinho.push({ itemId: item._id, nome: item.nome, quantidade: 1, precoUnitario: item.preco, subtotal: item.preco, observacao: '', opcionais: [] }); }
+    renderCarrinho();
+    atualizarTotais();
+
+    status.textContent = '✅ ' + item.nome + ' adicionado!';
+    status.style.color = '#22c55e';
+    setTimeout(function(){ status.textContent = ''; }, 2000);
+    input.focus();
+
+  } catch(e) {
+    status.textContent = '❌ Erro: ' + e.message;
+    status.style.color = '#ef4444';
+    setTimeout(function(){ status.textContent = ''; }, 3000);
   }
 }
 
@@ -2343,12 +2399,38 @@ function calcModalPeso() {
   document.getElementById('modal-peso-total').textContent = 'Total: R$ ' + total.toFixed(2).replace('.',',');
 }
 
-function confirmarPeso() {
+async function confirmarPeso() {
   if (!_pesoItem) return;
   const kg = parseFloat(document.getElementById('modal-peso-kg').value) || 0;
   if (kg <= 0) { alert('Informe o peso!'); return; }
+
+  // 1. Adicionar ao carrinho local (exibicao imediata)
   addPesoRapido(encodeURIComponent(JSON.stringify(_pesoItem)), kg);
   fecharModalPeso();
+
+  // 2. Registrar pesagem na rota real — baixa estoque + SSE + incrementa kgVendidos
+  try {
+    const body = {
+      itemId: _pesoItem._id,
+      itemNome: _pesoItem.nome,
+      pesoKg: kg,
+      precoKg: _pesoItem.preco,
+      total: parseFloat((kg * (_pesoItem.preco || 0)).toFixed(2)),
+      operador: '',
+      imprimirEtiqueta: false
+    };
+    const r = await fetch('/api/delivery/balanca/registrar-pesagem', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    const d = await r.json();
+    if (!d.sucesso) console.warn('[BALANCA] Erro ao registrar pesagem:', d.erro);
+    else {
+      // Atualizar stats do dia se elemento existir
+      if (typeof carregarStats === 'function') carregarStats();
+    }
+  } catch(e) { console.warn('[BALANCA] Falha ao registrar pesagem:', e.message); }
 }
 
 function atualizarTotaisAcougue() {
