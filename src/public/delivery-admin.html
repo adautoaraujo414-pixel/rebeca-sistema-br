@@ -232,28 +232,6 @@ async function carregarConfigNF() {
             <p id="loginErro" style="color:#ff4444;text-align:center;margin-top:10px;"></p>
         </div>
     </div>
-
-<!-- FINANCEIRO CAIXAS -->
-                <div id="page-financeiro-caixas" class="page" style="padding:20px;max-width:1200px;margin:0 auto">
-                  <h2 style="margin-bottom:20px">📋 Fechamentos de Caixa</h2>
-                  <div class="stats-grid" id="fc-stats-grid">
-                    <div class="stat-card"><div class="valor" id="fc-total-dia">R$ 0</div><div class="label">Total Vendido Hoje</div></div>
-                    <div class="stat-card"><div class="valor" id="fc-dinheiro-dia" style="color:#22c55e">R$ 0</div><div class="label">💵 Dinheiro</div></div>
-                    <div class="stat-card"><div class="valor" id="fc-cartao-dia" style="color:#3b82f6">R$ 0</div><div class="label">💳 Cartão</div></div>
-                    <div class="stat-card"><div class="valor" id="fc-pix-dia" style="color:#8b5cf6">R$ 0</div><div class="label">📱 Pix</div></div>
-                  </div>
-                  <div class="panel">
-                    <h3>📋 Histórico de Fechamentos</h3>
-                    <div style="display:flex;gap:10px;margin-bottom:15px;flex-wrap:wrap">
-                      <input type="date" id="fc-data-ini" style="padding:8px 12px;border-radius:8px;border:1px solid #ddd;background:#fff">
-                      <input type="date" id="fc-data-fim" style="padding:8px 12px;border-radius:8px;border:1px solid #ddd;background:#fff">
-                      <button onclick="carregarFinanceiroCaixas()" style="background:#f97316;color:#fff;border:none;border-radius:8px;padding:8px 16px;cursor:pointer;font-weight:700">🔍 Filtrar</button>
-                    </div>
-                    <div id="fc-lista-caixas"><div style="color:#888;text-align:center;padding:40px">Carregando...</div></div>
-                  </div>
-                </div>
-
-                <!-- FINANCEIRO LUCRO POR PRODUTO -->
                 <div id="page-financeiro-lucro" class="page" style="padding:20px;max-width:1200px;margin:0 auto">
                   <h2 style="margin-bottom:20px">💹 Lucro por Produto</h2>
                   <div class="panel" style="margin-bottom:16px">
@@ -375,6 +353,27 @@ async function carregarConfigNF() {
                 <div class="menu-item" onclick="window.open('/delivery-migracao?token='+(localStorage.getItem('delivery_token')||token),'_blank')" style="cursor:pointer">🔄 Migrar Sistema</div>
             </div>
             <div class="content">
+
+
+                <!-- FINANCEIRO CAIXAS -->
+                <div id="page-financeiro-caixas" class="page" style="padding:20px;max-width:1200px;margin:0 auto">
+                  <h2 style="margin-bottom:20px">📋 Fechamentos de Caixa</h2>
+                  <div class="stats-grid" id="fc-stats-grid">
+                    <div class="stat-card"><div class="valor" id="fc-total-dia">R$ 0</div><div class="label">Total Vendido Hoje</div></div>
+                    <div class="stat-card"><div class="valor" id="fc-dinheiro-dia" style="color:#22c55e">R$ 0</div><div class="label">💵 Dinheiro</div></div>
+                    <div class="stat-card"><div class="valor" id="fc-cartao-dia" style="color:#3b82f6">R$ 0</div><div class="label">💳 Cartão</div></div>
+                    <div class="stat-card"><div class="valor" id="fc-pix-dia" style="color:#8b5cf6">R$ 0</div><div class="label">🟪 Pix</div></div>
+                  </div>
+                  <div class="panel">
+                    <h3>📋 Histórico de Fechamentos</h3>
+                    <div style="display:flex;gap:10px;margin-bottom:15px;flex-wrap:wrap">
+                      <input type="date" id="fc-data-ini" style="padding:8px 12px;border-radius:8px;border:1px solid #ddd">
+                      <input type="date" id="fc-data-fim" style="padding:8px 12px;border-radius:8px;border:1px solid #ddd">
+                      <button onclick="carregarFinanceiroCaixas()" style="background:#f97316;color:#fff;border:none;border-radius:8px;padding:8px 18px;cursor:pointer;font-weight:700">🔍 Filtrar</button>
+                    </div>
+                    <div id="fc-lista-caixas"><div style="color:#888;text-align:center;padding:40px">Carregando...</div></div>
+                  </div>
+                </div>
 
                 <!-- DASHBOARD -->
                 <div id="page-dashboard" class="page active">
