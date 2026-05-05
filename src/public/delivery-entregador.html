@@ -80,6 +80,60 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .resumo-item .val{font-size:1.3em;font-weight:bold;color:#00cc6a}
 .resumo-item .lab{font-size:11px;color:#888;margin-top:2px}
 </style>
+
+  <link rel="manifest" href="/manifest-entregador.json">
+  <meta name="theme-color" content="#f97316">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Rebeca Entregador">
+  <link rel="apple-touch-icon" href="/icon-rebeca-192.png">
+
+  <style id="rebeca-mobile-entregador">
+  #fab-menu-btn-entregador{
+    display:none;position:fixed;bottom:22px;right:22px;z-index:9999;
+    width:58px;height:58px;border-radius:50%;
+    background:#f97316;color:#fff;border:none;
+    font-size:26px;cursor:pointer;
+    box-shadow:0 4px 18px rgba(249,115,22,.55);
+    align-items:center;justify-content:center;transition:transform .2s;
+  }
+  #fab-menu-btn-entregador:active{transform:scale(.92);}
+  #fab-menu-drawer-entregador{
+    display:none;position:fixed;bottom:92px;right:18px;z-index:9998;
+    background:#fff;border-radius:18px;
+    box-shadow:0 8px 32px rgba(0,0,0,.18);
+    padding:10px 0;min-width:200px;flex-direction:column;
+  }
+  #fab-menu-drawer-entregador.open{display:flex;}
+  .fab-item-entregador{
+    display:flex;align-items:center;gap:12px;padding:13px 20px;
+    cursor:pointer;font-size:15px;color:#1e293b;
+    border:none;background:none;width:100%;text-align:left;
+  }
+  .fab-item-entregador:hover{background:#fff7ed;}
+  #pwa-banner-entregador{
+    display:none;position:fixed;bottom:0;left:0;right:0;z-index:10000;
+    background:#1e293b;color:#fff;padding:14px 18px;
+    align-items:center;gap:12px;font-size:14px;
+    box-shadow:0 -4px 20px rgba(0,0,0,.3);
+  }
+  #pwa-banner-entregador .pwa-btn{
+    background:#f97316;color:#fff;border:none;border-radius:8px;
+    padding:8px 16px;font-weight:700;cursor:pointer;white-space:nowrap;
+  }
+  #pwa-banner-entregador .pwa-x{
+    background:transparent;color:#94a3b8;border:none;font-size:22px;
+    cursor:pointer;padding:0 6px;margin-left:auto;
+  }
+  @media(max-width:768px){
+    #fab-menu-btn-entregador{display:flex;}
+    body{padding-bottom:80px!important;}
+    .stats-grid{grid-template-columns:1fr 1fr!important;}
+    .panel{padding:12px!important;}
+    h2{font-size:1.1rem!important;}
+    table{font-size:13px!important;}
+  }
+  </style>
 </head>
 <body>
 <div id="notifBanner" class="notif-banner" onclick="this.style.display='none'"></div>

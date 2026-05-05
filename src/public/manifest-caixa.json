@@ -1,17 +1,15 @@
 {
-  "name": "Rebeca Admin",
-  "short_name": "Rebeca ADM",
-  "description": "Painel administrativo Rebeca Delivery",
-  "start_url": "/delivery-admin",
+  "name": "Rebeca Caixa",
+  "short_name": "Caixa",
+  "description": "Caixa e PDV Rebeca Delivery",
+  "start_url": "/delivery-caixa",
   "display": "standalone",
-  "background_color": "#f5f5f7",
+  "background_color": "#0f172a",
   "theme_color": "#f97316",
   "orientation": "portrait",
   "lang": "pt-BR",
   "icons": [
     { "src": "/icon-rebeca-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
     { "src": "/icon-rebeca-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
-  ],
-  "screenshots": [],
-  "categories": ["business", "productivity"]
+  ]
 }

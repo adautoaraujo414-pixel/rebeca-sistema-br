@@ -1,0 +1,25 @@
+{
+  "name": "Rebeca Estoque",
+  "short_name": "Estoque",
+  "description": "Controle de Estoque - Rebeca",
+  "start_url": "/delivery-estoque",
+  "display": "standalone",
+  "background_color": "#f5f5f7",
+  "theme_color": "#f97316",
+  "orientation": "portrait",
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "/icon-rebeca-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-rebeca-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
