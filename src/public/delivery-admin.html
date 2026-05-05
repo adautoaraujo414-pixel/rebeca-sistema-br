@@ -3080,26 +3080,46 @@ const _irParaOriginal = typeof irPara === 'function' ? irPara : null;
 <div id="saveFill" style="display:none"></div>
 <div id="saveMsg" style="display:none"></div>
 <div id="saveOverlay" style="display:none"></div>
+
+<div id="modalConta" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9001;align-items:center;justify-content:center"></div>
+<div id="modalContaCorrente" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9001;align-items:center;justify-content:center"></div>
+<div id="saveStatus" style="display:none"></div>
+<div id="saveTitle" style="display:none"></div>
 <script id="rebeca-stubs-admin-v2">
 document.addEventListener('DOMContentLoaded', function() {
+
+  // abrirModalConta — tenta vários IDs de modal conhecidos
   if (typeof abrirModalConta === 'undefined') {
     window.abrirModalConta = function() {
-      var m = document.getElementById('modalUpgradePlano')
-           || document.getElementById('modalConta')
-           || document.getElementById('modalContaCorrente');
-      if (m) { m.style.display = 'flex'; }
-      else console.warn('abrirModalConta: modal não encontrado');
+      var ids = ['modalConta','modalContaCorrente','modalUpgradePlano','modalPlano'];
+      for (var id of ids) {
+        var el = document.getElementById(id);
+        if (el) { el.style.display = 'flex'; return; }
+      }
+      console.warn('abrirModalConta: nenhum modal encontrado');
     };
   }
+
+  // carregarFornecedores — navega para a aba ou faz fetch
   if (typeof carregarFornecedores === 'undefined') {
     window.carregarFornecedores = function() {
-      var item = document.querySelector('[data-page="financeiro-fornecedores"]');
-      if (item) item.click();
-      else fetch('/api/delivery/fornecedores')
-        .then(r=>r.json()).then(d=>console.log('fornecedores:',d))
-        .catch(e=>console.warn('carregarFornecedores:',e));
+      var item = document.querySelector('[data-page="financeiro-fornecedores"], [data-page="fornecedores"]');
+      if (item) { item.click(); return; }
+      var lista = document.getElementById('listaFornecedores');
+      if (!lista) return;
+      fetch('/api/delivery/fornecedores')
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+          if (Array.isArray(d)) {
+            lista.innerHTML = d.map(function(f){
+              return '<div style="padding:8px;border-bottom:1px solid #333">' + (f.nome||f.name||JSON.stringify(f)) + '</div>';
+            }).join('');
+          }
+        })
+        .catch(function(e){ console.warn('carregarFornecedores:', e); });
     };
   }
+
 });
 </script>
 </body></html>`;
