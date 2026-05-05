@@ -87,6 +87,59 @@
             .stats-grid { grid-template-columns: repeat(2, 1fr); }
         }
     </style>
+
+  <link rel="manifest" href="/manifest-admin-master.json">
+  <meta name="theme-color" content="#f97316">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Rebeca Master">
+  <link rel="apple-touch-icon" href="/icon-rebeca-192.png">
+  <style id="rebeca-mobile-master">
+  #fab-btn-master{
+    display:none;position:fixed;bottom:22px;right:22px;z-index:9999;
+    width:58px;height:58px;border-radius:50%;
+    background:#f97316;color:#fff;border:none;font-size:26px;cursor:pointer;
+    box-shadow:0 4px 18px rgba(249,115,22,.55);
+    align-items:center;justify-content:center;transition:transform .2s;
+  }
+  #fab-btn-master:active{transform:scale(.92);}
+  #fab-drawer-master{
+    display:none;position:fixed;bottom:92px;right:18px;z-index:9998;
+    background:#fff;border-radius:18px;
+    box-shadow:0 8px 32px rgba(0,0,0,.18);
+    padding:10px 0;min-width:210px;flex-direction:column;
+  }
+  #fab-drawer-master.open{display:flex;}
+  .fab-item-master{
+    display:flex;align-items:center;gap:12px;padding:13px 20px;
+    cursor:pointer;font-size:15px;color:#1e293b;
+    border:none;background:none;width:100%;text-align:left;
+  }
+  .fab-item-master:hover{background:#fff7ed;}
+  #pwa-banner-master{
+    display:none;position:fixed;bottom:0;left:0;right:0;z-index:10000;
+    background:#1e293b;color:#fff;padding:14px 18px;
+    align-items:center;gap:12px;font-size:14px;
+    box-shadow:0 -4px 20px rgba(0,0,0,.3);
+  }
+  #pwa-banner-master .pwa-btn{
+    background:#f97316;color:#fff;border:none;border-radius:8px;
+    padding:8px 16px;font-weight:700;cursor:pointer;white-space:nowrap;
+  }
+  #pwa-banner-master .pwa-x{
+    background:transparent;color:#94a3b8;border:none;
+    font-size:22px;cursor:pointer;padding:0 6px;margin-left:auto;
+  }
+  @media(max-width:768px){
+    #fab-btn-master{display:flex;}
+    .sidebar{display:none!important;}
+    .content{margin-left:0!important;padding:10px!important;}
+    .stats-grid{grid-template-columns:1fr 1fr!important;}
+    .panel{padding:12px!important;}
+    h2{font-size:1.1rem!important;}
+    body{padding-bottom:80px!important;}
+  }
+  </style>
 </head>
 <body>
     <div class="login-container" id="loginContainer">
@@ -1037,5 +1090,59 @@ document.addEventListener('DOMContentLoaded', () => {
 
 </script>
 
+
+  <!-- FAB MOBILE MASTER -->
+  <button id="fab-btn-master" title="Menu">☰</button>
+  <div id="fab-drawer-master"></div>
+  <div id="pwa-banner-master" style="display:none">
+    <span>📱 Instale o <b>Rebeca Master</b> no celular</span>
+    <button class="pwa-btn" id="pwa-install-master">Instalar App</button>
+    <button class="pwa-x" id="pwa-dismiss-master">✕</button>
+  </div>
+  <script id="rebeca-pwa-master">
+  (function(){
+    if('serviceWorker' in navigator){
+      navigator.serviceWorker.register('/sw-rebeca.js').catch(function(){});
+    }
+    var deferredPrompt = null;
+    window.addEventListener('beforeinstallprompt', function(e){
+      e.preventDefault(); deferredPrompt = e;
+      if(!localStorage.getItem('pwa-dismissed-master'))
+        document.getElementById('pwa-banner-master').style.display='flex';
+    });
+    document.addEventListener('DOMContentLoaded', function(){
+      var fab = document.getElementById('fab-btn-master');
+      var drawer = document.getElementById('fab-drawer-master');
+      if(fab && drawer){
+        var items = document.querySelectorAll('.sidebar .menu-item');
+        items.forEach(function(item){
+          var btn = document.createElement('button');
+          btn.className = 'fab-item-master';
+          btn.textContent = item.textContent.trim().substring(0,35);
+          btn.onclick = function(){ item.click(); drawer.classList.remove('open'); };
+          drawer.appendChild(btn);
+        });
+        fab.onclick = function(){ drawer.classList.toggle('open'); };
+        document.addEventListener('click', function(e){
+          if(!fab.contains(e.target)&&!drawer.contains(e.target))
+            drawer.classList.remove('open');
+        });
+      }
+      var btnI = document.getElementById('pwa-install-master');
+      var btnD = document.getElementById('pwa-dismiss-master');
+      var banner = document.getElementById('pwa-banner-master');
+      if(btnI) btnI.onclick = function(){
+        if(deferredPrompt){ deferredPrompt.prompt(); deferredPrompt=null; }
+        if(banner) banner.style.display='none';
+      };
+      if(btnD) btnD.onclick = function(){
+        if(banner) banner.style.display='none';
+        localStorage.setItem('pwa-dismissed-master','1');
+      };
+      if('Notification' in window && Notification.permission==='default')
+        setTimeout(function(){ Notification.requestPermission(); }, 5000);
+    });
+  })();
+  </script>
 </body>
 </html>
