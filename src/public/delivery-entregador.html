@@ -690,5 +690,54 @@ min-width:280px;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,.5)">
     <button onclick="recusarCorrida()" style="background:#ef4444;color:#fff;border:none;border-radius:10px;padding:10px 20px;font-weight:700;cursor:pointer">✕ Recusar</button>
   </div>
 </div>
+<script id="rebeca-corrida-fns">
+// Funções de aceitar/recusar corrida para o popupAceitar
+window._corridaAtual = null;
+
+function mostrarPopupCorrida(corrida) {
+  window._corridaAtual = corrida;
+  var popup = document.getElementById('popupAceitar');
+  var info  = document.getElementById('popupAceitarInfo');
+  if (!popup) return;
+  if (info) {
+    info.textContent = (corrida.enderecoEntrega || corrida.destino || 'Nova corrida')
+      + (corrida.valor ? ' — R$ ' + parseFloat(corrida.valor).toFixed(2) : '');
+  }
+  popup.style.display = 'flex';
+  // Auto-fechar após 30s
+  window._corridaTimer = setTimeout(function() {
+    recusarCorrida();
+  }, 30000);
+}
+
+function aceitarCorrida() {
+  var popup = document.getElementById('popupAceitar');
+  if (popup) popup.style.display = 'none';
+  clearTimeout(window._corridaTimer);
+  if (!window._corridaAtual) return;
+  var token = localStorage.getItem('delivery_token') || '';
+  fetch('/api/delivery/corridas/' + window._corridaAtual._id + '/aceitar', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+    body: JSON.stringify({ token: token })
+  })
+  .then(r => r.json())
+  .then(d => {
+    if (d.sucesso || d.ok) {
+      if (typeof carregarPedidos === 'function') carregarPedidos();
+    } else {
+      alert(d.erro || 'Erro ao aceitar corrida');
+    }
+  })
+  .catch(e => console.error('aceitarCorrida:', e));
+}
+
+function recusarCorrida() {
+  var popup = document.getElementById('popupAceitar');
+  if (popup) popup.style.display = 'none';
+  clearTimeout(window._corridaTimer);
+  window._corridaAtual = null;
+}
+</script>
 </body>
 </html>

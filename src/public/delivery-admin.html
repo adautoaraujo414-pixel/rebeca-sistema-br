@@ -3060,37 +3060,7 @@ const _irParaOriginal = typeof irPara === 'function' ? irPara : null;
   });
   </script>
 
-  <script id="rebeca-stubs-admin-v2">
-  // Stubs completos para funções referenciadas via onclick
-  document.addEventListener('DOMContentLoaded', function() {
-
-    if (typeof abrirModalConta === 'undefined') {
-      window.abrirModalConta = function() {
-        // Tentar abrir modal por ID comum
-        var ids = ['modalConta','modal-conta','modalContaCorrente','modalContaBancaria'];
-        for (var id of ids) {
-          var el = document.getElementById(id);
-          if (el) { el.style.display = 'flex'; return; }
-        }
-        console.warn('abrirModalConta: modal não encontrado');
-      };
-    }
-
-    if (typeof carregarFornecedores === 'undefined') {
-      window.carregarFornecedores = function() {
-        // Tentar disparar clique na aba fornecedores
-        var item = document.querySelector('[data-page="fornecedores"], .menu-item[data-page="fornecedores"]');
-        if (item) { item.click(); return; }
-        // Tentar fetch direto
-        fetch('/api/delivery/fornecedores')
-          .then(r => r.json())
-          .then(d => console.log('fornecedores:', d))
-          .catch(e => console.warn('carregarFornecedores:', e));
-      };
-    }
-
-  });
-  </script>
+  
 
 <!-- IDs referenciados no JS — elementos de fallback -->
 <input id="barcodeResultado" type="text" style="display:none">
@@ -3105,6 +3075,33 @@ const _irParaOriginal = typeof irPara === 'function' ? irPara : null;
 <div id="listaCompras" style="display:none"></div>
 <div id="listaFornecedores" style="display:none"></div>
 <div id="modalAbrirCaixa" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9001;align-items:center;justify-content:center"></div>
+<div id="modalUpgradePlano" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9001;align-items:center;justify-content:center"></div>
+<span id="planoBadge" style="display:none"></span>
+<div id="saveFill" style="display:none"></div>
+<div id="saveMsg" style="display:none"></div>
+<div id="saveOverlay" style="display:none"></div>
+<script id="rebeca-stubs-admin-v2">
+document.addEventListener('DOMContentLoaded', function() {
+  if (typeof abrirModalConta === 'undefined') {
+    window.abrirModalConta = function() {
+      var m = document.getElementById('modalUpgradePlano')
+           || document.getElementById('modalConta')
+           || document.getElementById('modalContaCorrente');
+      if (m) { m.style.display = 'flex'; }
+      else console.warn('abrirModalConta: modal não encontrado');
+    };
+  }
+  if (typeof carregarFornecedores === 'undefined') {
+    window.carregarFornecedores = function() {
+      var item = document.querySelector('[data-page="financeiro-fornecedores"]');
+      if (item) item.click();
+      else fetch('/api/delivery/fornecedores')
+        .then(r=>r.json()).then(d=>console.log('fornecedores:',d))
+        .catch(e=>console.warn('carregarFornecedores:',e));
+    };
+  }
+});
+</script>
 </body></html>`;
   const w = window.open('','_blank','width=300,height=400');
   w.document.write(html); w.document.close();
