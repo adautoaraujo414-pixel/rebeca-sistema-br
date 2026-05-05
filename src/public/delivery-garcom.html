@@ -76,12 +76,12 @@ header{background:linear-gradient(135deg,#f97316 0%,#ea580c 100%);padding:0 20px
 .btn-nova-comanda{padding:10px 20px;border-radius:var(--radius-sm);border:none;background:var(--accent);color:#fff;font-weight:700;font-size:.88em;cursor:pointer;font-family:inherit}
 
 /* TELA CARDÁPIO (nova comanda) */
-#tela-cardapio{flex:1;display:none;overflow:hidden;flex-direction:column}
+#tela-cardapio{flex:1;display:none;overflow: visible;flex-direction:column}
 .cardapio-header{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 16px;display:flex;align-items:center;gap:12px;flex-shrink:0}
 .btn-back{padding:6px 14px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text2);font-size:.82em;font-weight:600;cursor:pointer;font-family:inherit}
 .cardapio-title{font-weight:800;font-size:.95em}
-.main-layout{display:grid;grid-template-columns:1fr 340px;flex:1;overflow:hidden;min-height:0}
-.left{display:flex;flex-direction:column;overflow:hidden;padding:12px;gap:10px}
+.main-layout{display:grid;grid-template-columns:1fr 340px;flex:1;overflow: auto;min-height:0}
+.left{display:flex;flex-direction:column;overflow-y: auto;padding:12px;gap:10px}
 .search-bar{position:relative}
 .search-bar input{width:100%;padding:9px 14px 9px 34px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:.86em;font-family:inherit}
 .search-bar input:focus{outline:none;border-color:var(--accent)}
@@ -226,6 +226,79 @@ header{background:linear-gradient(135deg,#f97316 0%,#ea580c 100%);padding:0 20px
     .panel{padding:12px!important;}
     h2{font-size:1.1rem!important;}
     table{font-size:13px!important;}
+  }
+  </style>
+
+  <style id="garcom-mobile-fix">
+  @media(max-width:768px){
+    .main-layout{
+      grid-template-columns: 1fr !important;
+      overflow: visible !important;
+      height: auto !important;
+    }
+    .left{ overflow-y: auto !important; }
+    #tela-cardapio{ overflow: visible !important; }
+    body{ overflow-x: hidden !important; }
+  }
+  </style>
+
+  <style id="rebeca-global-fix">
+  /* ===== CORREÇÕES GLOBAIS REBECA ===== */
+
+  /* Scroll geral — nunca travar o body */
+  html, body {
+    overflow-x: hidden !important;
+    scroll-behavior: smooth;
+  }
+
+  /* Z-index ordenado — evitar sobreposição */
+  /* FAB: 9999 | Drawer: 9998 | Banner PWA: 10000 | Modais: 9001+ | Toast: 99999 */
+
+  /* Modais — garantir scroll interno */
+  [class*="modal"], [id*="modal"] {
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Tabelas — scroll horizontal em mobile */
+  @media(max-width:768px){
+    table {
+      display: block;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      white-space: nowrap;
+    }
+    /* Evitar sobreposição do FAB com conteúdo */
+    body { padding-bottom: 80px !important; }
+
+    /* Cards empilhados corretamente */
+    .stats-grid, [class*="grid"] {
+      grid-template-columns: 1fr 1fr !important;
+    }
+
+    /* Inputs e botões — tamanho mínimo tocável */
+    input, select, button, textarea {
+      min-height: 40px;
+      font-size: 14px !important;
+    }
+
+    /* Padding adequado nas páginas */
+    .page, .panel, .content, main {
+      padding: 10px !important;
+    }
+
+    /* Header não sobrepõe conteúdo */
+    .header, header {
+      position: sticky !important;
+      top: 0;
+      z-index: 100;
+    }
+  }
+
+  /* Fix duplo clique em botões — evitar submit duplo */
+  button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
   }
   </style>
 </head>
@@ -1127,6 +1200,24 @@ async function solicitarFechamentoMesa() {
       }
     });
   })();
+  </script>
+
+  <script id="rebeca-anti-double-click">
+  // Prevenir duplo clique em botões de ação
+  document.addEventListener('DOMContentLoaded', function(){
+    document.addEventListener('click', function(e){
+      var btn = e.target.closest('button');
+      if(!btn) return;
+      // Não bloquear FAB nem drawer
+      if(btn.id && (btn.id.includes('fab') || btn.id.includes('pwa'))) return;
+      // Botões de confirmar/salvar/enviar
+      if(btn.textContent.match(/salvar|confirmar|enviar|cadastrar|criar|atualizar/i)){
+        if(btn.dataset.clicking) { e.preventDefault(); e.stopPropagation(); return; }
+        btn.dataset.clicking = '1';
+        setTimeout(function(){ delete btn.dataset.clicking; }, 2000);
+      }
+    }, true);
+  });
   </script>
 </body>
 </html>

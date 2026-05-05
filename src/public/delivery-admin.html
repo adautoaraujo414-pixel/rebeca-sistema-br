@@ -274,6 +274,66 @@ async function carregarConfigNF() {
     body{padding-bottom:80px!important;}
   }
   </style>
+
+  <style id="rebeca-global-fix">
+  /* ===== CORREÇÕES GLOBAIS REBECA ===== */
+
+  /* Scroll geral — nunca travar o body */
+  html, body {
+    overflow-x: hidden !important;
+    scroll-behavior: smooth;
+  }
+
+  /* Z-index ordenado — evitar sobreposição */
+  /* FAB: 9999 | Drawer: 9998 | Banner PWA: 10000 | Modais: 9001+ | Toast: 99999 */
+
+  /* Modais — garantir scroll interno */
+  [class*="modal"], [id*="modal"] {
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Tabelas — scroll horizontal em mobile */
+  @media(max-width:768px){
+    table {
+      display: block;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      white-space: nowrap;
+    }
+    /* Evitar sobreposição do FAB com conteúdo */
+    body { padding-bottom: 80px !important; }
+
+    /* Cards empilhados corretamente */
+    .stats-grid, [class*="grid"] {
+      grid-template-columns: 1fr 1fr !important;
+    }
+
+    /* Inputs e botões — tamanho mínimo tocável */
+    input, select, button, textarea {
+      min-height: 40px;
+      font-size: 14px !important;
+    }
+
+    /* Padding adequado nas páginas */
+    .page, .panel, .content, main {
+      padding: 10px !important;
+    }
+
+    /* Header não sobrepõe conteúdo */
+    .header, header {
+      position: sticky !important;
+      top: 0;
+      z-index: 100;
+    }
+  }
+
+  /* Fix duplo clique em botões — evitar submit duplo */
+  button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  </style>
 </head>
 <body>
     <!-- LOGIN -->
@@ -1581,7 +1641,7 @@ async function carregarConfigNF() {
                         </div>
                         <div class="form-row">
                             <div class="form-group"><label>Pedido Mínimo (R$)</label><input type="number" id="cfgPedidoMin" step="1"></div>
-                            <div class="form-group"><label>Tempo Médio (min)</label><input type="number" id="cfgTempo"></div>
+                            <div class="form-group"><label>Tempo Médio (min)</label><input type="number" id="cfgTempo-2"></div>
                         </div>
                     </div>
                     <div class="panel">
@@ -1632,7 +1692,7 @@ async function carregarConfigNF() {
                           </div>
                           <div class="form-group" id="grupoPix">
                             <label>Chave Pix</label>
-                            <input type="text" id="cfgChavePix" placeholder="CPF, CNPJ, email, telefone ou chave aleatória">
+                            <input type="text" id="cfgChavePix-2" placeholder="CPF, CNPJ, email, telefone ou chave aleatória">
                           </div>
                           <div class="form-group" id="grupoPixNome">
                             <label>Nome para exibir no Pix</label>
@@ -2950,6 +3010,46 @@ const _irParaOriginal = typeof irPara === 'function' ? irPara : null;
   if('serviceWorker' in navigator){
     navigator.serviceWorker.register('/sw-rebeca.js').catch(function(){});
   }
+  </script>
+
+  <script id="rebeca-stubs-admin">
+  // Stubs de funções referenciadas mas não definidas localmente
+  // (podem estar em scripts externos carregados via fetch)
+  if(typeof carregarFornecedores === 'undefined'){
+    window.carregarFornecedores = function(){
+      console.warn("carregarFornecedores: aguardando carregamento do módulo");
+    };
+  }
+  if(typeof navegarPara === 'undefined'){
+    window.navegarPara = function(pagina){
+      var item = document.querySelector('.menu-item[data-page="'+pagina+'"]');
+      if(item) item.click();
+      else console.warn("navegarPara: página não encontrada:", pagina);
+    };
+  }
+  if(typeof abrirModalConta === 'undefined'){
+    window.abrirModalConta = function(){
+      console.warn("abrirModalConta: aguardando carregamento do módulo");
+    };
+  }
+  </script>
+
+  <script id="rebeca-anti-double-click">
+  // Prevenir duplo clique em botões de ação
+  document.addEventListener('DOMContentLoaded', function(){
+    document.addEventListener('click', function(e){
+      var btn = e.target.closest('button');
+      if(!btn) return;
+      // Não bloquear FAB nem drawer
+      if(btn.id && (btn.id.includes('fab') || btn.id.includes('pwa'))) return;
+      // Botões de confirmar/salvar/enviar
+      if(btn.textContent.match(/salvar|confirmar|enviar|cadastrar|criar|atualizar/i)){
+        if(btn.dataset.clicking) { e.preventDefault(); e.stopPropagation(); return; }
+        btn.dataset.clicking = '1';
+        setTimeout(function(){ delete btn.dataset.clicking; }, 2000);
+      }
+    }, true);
+  });
   </script>
 </body></html>`;
   const w = window.open('','_blank','width=300,height=400');
@@ -6372,28 +6472,28 @@ async function salvarEdicaoGarcom() {
 </script>
 
 <!-- Modal ficha garçom -->
-<div id="modalFichaGarcom" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:9000;align-items:center;justify-content:center">
+<div id="modalFichaGarcom-2" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:9000;align-items:center;justify-content:center">
   <div style="background:#1a1a2e;border-radius:16px;padding:28px;width:95%;max-width:600px;max-height:90vh;overflow-y:auto;border:1px solid #333">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
-      <h3 id="fichaGarcomNome" style="color:#f97316;font-size:1.2em"></h3>
+      <h3 id="fichaGarcomNome-2" style="color:#f97316;font-size:1.2em"></h3>
       <button onclick="fecharFichaGarcom()" style="background:transparent;border:1px solid #444;color:#888;padding:6px 14px;border-radius:6px;cursor:pointer">✕ Fechar</button>
     </div>
-    <div id="fichaGarcomConteudo"></div>
+    <div id="fichaGarcomConteudo-2"></div>
   </div>
 </div>
 
 <!-- Modal novo/editar garçom -->
-<div id="modalNovoGarcom" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:9001;align-items:center;justify-content:center">
+<div id="modalNovoGarcom-2" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:9001;align-items:center;justify-content:center">
   <div style="background:#1a1a2e;border-radius:16px;padding:28px;width:95%;max-width:440px;border:1px solid #333">
-    <h3 style="color:#f97316;margin-bottom:20px" id="tituloModalGarcom">Novo Garçom</h3>
-    <input type="hidden" id="garcomEditId">
+    <h3 style="color:#f97316;margin-bottom:20px" id="tituloModalGarcom-2">Novo Garçom</h3>
+    <input type="hidden" id="garcomEditId-2">
     <div style="margin-bottom:14px">
       <label style="display:block;color:#aaa;font-size:.82em;margin-bottom:6px">NOME</label>
-      <input id="garcomNome" type="text" placeholder="Nome do garçom" style="width:100%;padding:11px;background:#0f0f1a;border:1px solid #333;border-radius:8px;color:#fff;font-size:.95em">
+      <input id="garcomNome-2" type="text" placeholder="Nome do garçom" style="width:100%;padding:11px;background:#0f0f1a;border:1px solid #333;border-radius:8px;color:#fff;font-size:.95em">
     </div>
     <div style="margin-bottom:20px">
       <label style="display:block;color:#aaa;font-size:.82em;margin-bottom:6px">TELEFONE (opcional)</label>
-      <input id="garcomTelefone" type="text" placeholder="(xx) xxxxx-xxxx" style="width:100%;padding:11px;background:#0f0f1a;border:1px solid #333;border-radius:8px;color:#fff;font-size:.95em">
+      <input id="garcomTelefone-2" type="text" placeholder="(xx) xxxxx-xxxx" style="width:100%;padding:11px;background:#0f0f1a;border:1px solid #333;border-radius:8px;color:#fff;font-size:.95em">
     </div>
     <div style="display:flex;gap:10px">
       <button onclick="salvarGarcom()" style="flex:1;padding:13px;background:#f97316;border:none;border-radius:8px;color:#000;font-weight:700;cursor:pointer">Salvar</button>
@@ -6403,13 +6503,13 @@ async function salvarEdicaoGarcom() {
 </div>
 
 <!-- Modal ficha entregador histórico -->
-<div id="modalFichaEntregador" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:9000;align-items:center;justify-content:center">
+<div id="modalFichaEntregador-2" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:9000;align-items:center;justify-content:center">
   <div style="background:#1a1a2e;border-radius:16px;padding:28px;width:95%;max-width:600px;max-height:90vh;overflow-y:auto;border:1px solid #333">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
-      <h3 id="fichaEntregadorNome" style="color:#f97316;font-size:1.2em"></h3>
+      <h3 id="fichaEntregadorNome-2" style="color:#f97316;font-size:1.2em"></h3>
       <button onclick="document.getElementById('modalFichaEntregador').style.display='none'" style="background:transparent;border:1px solid #444;color:#888;padding:6px 14px;border-radius:6px;cursor:pointer">✕ Fechar</button>
     </div>
-    <div id="fichaEntregadorConteudo"></div>
+    <div id="fichaEntregadorConteudo-2"></div>
   </div>
 </div>
 

@@ -53,10 +53,10 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 .stat-pill.purple{border-color:rgba(167,139,250,.3);color:#c4b5fd}
 
 /* LAYOUT */
-.main-layout{display:grid;grid-template-columns:1fr 380px;flex:1;overflow:hidden;min-height:0}
+.main-layout{display:grid;grid-template-columns:1fr 380px;flex:1;overflow: auto;min-height:0}
 
 /* PAINEL ESQUERDO */
-.left{display:flex;flex-direction:column;overflow:hidden;min-height:0}
+.left{display:flex;flex-direction:column;overflow-y: auto;min-height:0}
 .tabs-nav{display:flex;gap:4px;padding:12px 16px 0;flex-shrink:0}
 .tab-btn{padding:8px 16px;border-radius:8px 8px 0 0;border:1px solid transparent;background:transparent;color:var(--text3);font-size:.82em;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s;display:flex;align-items:center;gap:6px}
 .tab-btn.active{background:var(--surface);border-color:var(--border);border-bottom-color:var(--surface);color:var(--text);margin-bottom:-1px;z-index:1}
@@ -393,6 +393,92 @@ body.acougue-theme #acougue-sugestoes { display:block; }
     .panel{padding:12px!important;}
     h2{font-size:1.1rem!important;}
     table{font-size:13px!important;}
+  }
+  </style>
+
+  <style id="caixa-mobile-fix">
+  @media(max-width:768px){
+    .main-layout{
+      grid-template-columns: 1fr !important;
+      overflow: visible !important;
+      height: auto !important;
+    }
+    .left{
+      overflow-y: visible !important;
+      min-height: 0;
+    }
+    .right-panel, .cart-panel, [class*="cart"], [class*="pedido-lateral"]{
+      position: fixed !important;
+      bottom: 0; left: 0; right: 0;
+      height: 50vh !important;
+      z-index: 500;
+      border-radius: 20px 20px 0 0;
+      display: none;
+    }
+    .right-panel.open, .cart-panel.open{
+      display: flex !important;
+    }
+    body{ overflow-x: hidden !important; }
+  }
+  </style>
+
+  <style id="rebeca-global-fix">
+  /* ===== CORREÇÕES GLOBAIS REBECA ===== */
+
+  /* Scroll geral — nunca travar o body */
+  html, body {
+    overflow-x: hidden !important;
+    scroll-behavior: smooth;
+  }
+
+  /* Z-index ordenado — evitar sobreposição */
+  /* FAB: 9999 | Drawer: 9998 | Banner PWA: 10000 | Modais: 9001+ | Toast: 99999 */
+
+  /* Modais — garantir scroll interno */
+  [class*="modal"], [id*="modal"] {
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Tabelas — scroll horizontal em mobile */
+  @media(max-width:768px){
+    table {
+      display: block;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      white-space: nowrap;
+    }
+    /* Evitar sobreposição do FAB com conteúdo */
+    body { padding-bottom: 80px !important; }
+
+    /* Cards empilhados corretamente */
+    .stats-grid, [class*="grid"] {
+      grid-template-columns: 1fr 1fr !important;
+    }
+
+    /* Inputs e botões — tamanho mínimo tocável */
+    input, select, button, textarea {
+      min-height: 40px;
+      font-size: 14px !important;
+    }
+
+    /* Padding adequado nas páginas */
+    .page, .panel, .content, main {
+      padding: 10px !important;
+    }
+
+    /* Header não sobrepõe conteúdo */
+    .header, header {
+      position: sticky !important;
+      top: 0;
+      z-index: 100;
+    }
+  }
+
+  /* Fix duplo clique em botões — evitar submit duplo */
+  button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
   }
   </style>
 </head>
@@ -2542,6 +2628,24 @@ function imprimirEtiquetaCarrinho() {
       }
     });
   })();
+  </script>
+
+  <script id="rebeca-anti-double-click">
+  // Prevenir duplo clique em botões de ação
+  document.addEventListener('DOMContentLoaded', function(){
+    document.addEventListener('click', function(e){
+      var btn = e.target.closest('button');
+      if(!btn) return;
+      // Não bloquear FAB nem drawer
+      if(btn.id && (btn.id.includes('fab') || btn.id.includes('pwa'))) return;
+      // Botões de confirmar/salvar/enviar
+      if(btn.textContent.match(/salvar|confirmar|enviar|cadastrar|criar|atualizar/i)){
+        if(btn.dataset.clicking) { e.preventDefault(); e.stopPropagation(); return; }
+        btn.dataset.clicking = '1';
+        setTimeout(function(){ delete btn.dataset.clicking; }, 2000);
+      }
+    }, true);
+  });
   </script>
 </body></html>`;
     const w = window.open('','_blank','width=300,height=400');

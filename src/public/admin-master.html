@@ -140,6 +140,66 @@
     body{padding-bottom:80px!important;}
   }
   </style>
+
+  <style id="rebeca-global-fix">
+  /* ===== CORREÇÕES GLOBAIS REBECA ===== */
+
+  /* Scroll geral — nunca travar o body */
+  html, body {
+    overflow-x: hidden !important;
+    scroll-behavior: smooth;
+  }
+
+  /* Z-index ordenado — evitar sobreposição */
+  /* FAB: 9999 | Drawer: 9998 | Banner PWA: 10000 | Modais: 9001+ | Toast: 99999 */
+
+  /* Modais — garantir scroll interno */
+  [class*="modal"], [id*="modal"] {
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Tabelas — scroll horizontal em mobile */
+  @media(max-width:768px){
+    table {
+      display: block;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      white-space: nowrap;
+    }
+    /* Evitar sobreposição do FAB com conteúdo */
+    body { padding-bottom: 80px !important; }
+
+    /* Cards empilhados corretamente */
+    .stats-grid, [class*="grid"] {
+      grid-template-columns: 1fr 1fr !important;
+    }
+
+    /* Inputs e botões — tamanho mínimo tocável */
+    input, select, button, textarea {
+      min-height: 40px;
+      font-size: 14px !important;
+    }
+
+    /* Padding adequado nas páginas */
+    .page, .panel, .content, main {
+      padding: 10px !important;
+    }
+
+    /* Header não sobrepõe conteúdo */
+    .header, header {
+      position: sticky !important;
+      top: 0;
+      z-index: 100;
+    }
+  }
+
+  /* Fix duplo clique em botões — evitar submit duplo */
+  button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  </style>
 </head>
 <body>
     <div class="login-container" id="loginContainer">
@@ -323,7 +383,7 @@
                 <p><strong>🔗 Link Motoristas:</strong><br><span class="valor" id="credLinkMotorista" style="color:#00d4ff;font-size:12px;word-break:break-all;"></span></p>
                 <hr style="border-color:#333;margin:15px 0;">
                 <h4 style="color:#00ff88;">🔗 Links para compartilhar:</h4>
-                <p><strong>Link Motoristas:</strong> <span class="valor" id="credLinkMotorista" style="color:#00d4ff;word-break:break-all;"></span></p>
+                <p><strong>Link Motoristas:</strong> <span class="valor" id="credLinkMotorista-2" style="color:#00d4ff;word-break:break-all;"></span></p>
             </div>
             <p style="color:#ffaa00;text-align:center;">⚠️ Salve essas informações! A senha não poderá ser recuperada.</p>
             <button class="btn btn-primary" style="width:100%;margin-top:15px;" onclick="copiarCredenciais()">📋 Copiar Credenciais</button>
@@ -1143,6 +1203,24 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(function(){ Notification.requestPermission(); }, 5000);
     });
   })();
+  </script>
+
+  <script id="rebeca-anti-double-click">
+  // Prevenir duplo clique em botões de ação
+  document.addEventListener('DOMContentLoaded', function(){
+    document.addEventListener('click', function(e){
+      var btn = e.target.closest('button');
+      if(!btn) return;
+      // Não bloquear FAB nem drawer
+      if(btn.id && (btn.id.includes('fab') || btn.id.includes('pwa'))) return;
+      // Botões de confirmar/salvar/enviar
+      if(btn.textContent.match(/salvar|confirmar|enviar|cadastrar|criar|atualizar/i)){
+        if(btn.dataset.clicking) { e.preventDefault(); e.stopPropagation(); return; }
+        btn.dataset.clicking = '1';
+        setTimeout(function(){ delete btn.dataset.clicking; }, 2000);
+      }
+    }, true);
+  });
   </script>
 </body>
 </html>
