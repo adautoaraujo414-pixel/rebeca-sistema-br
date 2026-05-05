@@ -3031,6 +3031,7 @@ async function testarGaveta() {
 
 // Carregar config gaveta ao entrar na página impressora
 const _irParaOriginal = typeof irPara === 'function' ? irPara : null;
+}
 </script>
 
 
@@ -3147,6 +3148,44 @@ function carregarFornecedores() {
       }
     })
     .catch(function(e){ console.warn('carregarFornecedores:',e); });
+}
+</script>
+<script id="rebeca-nav-fns">
+// Funcoes de navegacao e combo — usadas via onclick no admin
+function irPara(pagina) {
+  // Tentar via showPage primeiro
+  if (typeof showPage === 'function') { showPage(pagina); return; }
+  // Tentar via data-page
+  var item = document.querySelector('[data-page="' + pagina + '"]');
+  if (item) { item.click(); return; }
+  // Tentar esconder todas as secoes e mostrar a certa
+  document.querySelectorAll('[id$="-section"], [id$="Section"], .page-section').forEach(function(el) {
+    el.style.display = 'none';
+  });
+  var target = document.getElementById(pagina + '-section') ||
+               document.getElementById(pagina + 'Section') ||
+               document.getElementById(pagina);
+  if (target) target.style.display = 'block';
+}
+
+function navegarPara(pagina) {
+  irPara(pagina);
+}
+
+function calcularSomaCombo() {
+  // Somar itens selecionados no combo
+  var total = 0;
+  document.querySelectorAll('.combo-item-check:checked').forEach(function(cb) {
+    var preco = parseFloat(cb.dataset.preco || cb.closest('[data-preco]')?.dataset?.preco || 0);
+    total += preco;
+  });
+  var descEl = document.getElementById('comboDesconto');
+  var desc = descEl ? parseFloat(descEl.value) || 0 : 0;
+  var totalFinal = total * (1 - desc/100);
+  var totalEl = document.getElementById('comboTotal') || document.getElementById('combo-total');
+  if (totalEl) totalEl.textContent = 'R$ ' + totalFinal.toFixed(2);
+  var precoEl = document.getElementById('comboPreco') || document.getElementById('combo-preco-final');
+  if (precoEl && precoEl.tagName !== 'INPUT') precoEl.textContent = 'R$ ' + totalFinal.toFixed(2);
 }
 </script>
 </body></html>`;
