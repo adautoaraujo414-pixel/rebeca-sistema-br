@@ -3086,47 +3086,61 @@ const _irParaOriginal = typeof irPara === 'function' ? irPara : null;
 <div id="modalContaCorrente" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9001;align-items:center;justify-content:center"></div>
 <div id="saveStatus" style="display:none"></div>
 <div id="saveTitle" style="display:none"></div>
-<script id="rebeca-stubs-admin-v2">
-document.addEventListener('DOMContentLoaded', function() {
 
-  // abrirModalConta — tenta vários IDs de modal conhecidos
-  if (typeof abrirModalConta === 'undefined') {
+<input id="sliderImpCupomAuto" type="range" min="0" max="1" step="1" value="0" style="display:none">
+<div id="toast" style="display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:10px 20px;border-radius:10px;z-index:99999;font-size:.9em;pointer-events:none"></div>
+
+
+<span id="comboTotal" style="display:none;font-weight:700;color:#22c55e"></span>
+<script id="rebeca-delivery-stubs">
+(function() {
+  // carregarFornecedores — apenas navega para aba (dados no localStorage)
+  if (typeof window.carregarFornecedores === 'undefined') {
+    window.carregarFornecedores = function() {
+      var item = document.querySelector('[data-page="financeiro-fornecedores"]');
+      if (item) item.click();
+    };
+  }
+
+  // abrirModalConta — tenta modais conhecidos
+  if (typeof window.abrirModalConta === 'undefined') {
     window.abrirModalConta = function() {
       var ids = ['modalConta','modalContaCorrente','modalUpgradePlano','modalPlano'];
       for (var id of ids) {
         var el = document.getElementById(id);
         if (el) { el.style.display = 'flex'; return; }
       }
-      console.warn('abrirModalConta: nenhum modal encontrado');
     };
   }
 
-  // carregarFornecedores — navega para a aba ou faz fetch
-  if (typeof carregarFornecedores === 'undefined') {
-    window.carregarFornecedores = function() {
-      var item = document.querySelector('[data-page="financeiro-fornecedores"], [data-page="fornecedores"]');
+  // irPara / navegarPara — navega por data-page
+  if (typeof window.irPara === 'undefined') {
+    window.irPara = function(pagina) {
+      var item = document.querySelector('[data-page="' + pagina + '"]');
       if (item) { item.click(); return; }
-      var lista = document.getElementById('listaFornecedores');
-      if (!lista) return;
-      fetch('/api/delivery/fornecedores')
-        .then(function(r){ return r.json(); })
-        .then(function(d){
-          if (Array.isArray(d)) {
-            lista.innerHTML = d.map(function(f){
-              return '<div style="padding:8px;border-bottom:1px solid #333">' + (f.nome||f.name||JSON.stringify(f)) + '</div>';
-            }).join('');
-          }
-        })
-        .catch(function(e){ console.warn('carregarFornecedores:', e); });
+      if (typeof showPage === 'function') showPage(pagina);
     };
   }
+  if (typeof window.navegarPara === 'undefined') {
+    window.navegarPara = function(pagina) { window.irPara(pagina); };
+  }
 
-});
+  // calcularSomaCombo
+  if (typeof window.calcularSomaCombo === 'undefined') {
+    window.calcularSomaCombo = function() {
+      var total = 0;
+      document.querySelectorAll('.combo-item-check:checked').forEach(function(cb) {
+        total += parseFloat(cb.dataset.preco || 0);
+      });
+      var desc = parseFloat((document.getElementById('comboDesconto') || {}).value) || 0;
+      var final = total * (1 - desc / 100);
+      var el = document.getElementById('comboTotal') || document.getElementById('combo-total');
+      if (el) el.textContent = 'R$ ' + final.toFixed(2);
+    };
+  }
+})();
 </script>
-<input id="sliderImpCupomAuto" type="range" min="0" max="1" step="1" value="0" style="display:none">
-<div id="toast" style="display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:10px 20px;border-radius:10px;z-index:99999;font-size:.9em;pointer-events:none"></div>
-<script id="rebeca-fn-aliases">
-// Aliases de função para garantia de detecção e chamada direta
+<script id="rebeca-delivery-aliases">
 function abrirModalConta() {
   var ids = ['modalConta','modalContaCorrente','modalUpgradePlano'];
   for (var id of ids) {
@@ -3135,60 +3149,27 @@ function abrirModalConta() {
   }
 }
 function carregarFornecedores() {
-  var item = document.querySelector('[data-page="financeiro-fornecedores"],[data-page="fornecedores"]');
+  var item = document.querySelector('[data-page="financeiro-fornecedores"]');
   if (item) { item.click(); return; }
-  fetch('/api/delivery/fornecedores')
-    .then(function(r){ return r.json(); })
-    .then(function(d){
-      var lista = document.getElementById('listaFornecedores');
-      if (lista && Array.isArray(d)) {
-        lista.innerHTML = d.map(function(f){
-          return '<div style="padding:8px;border-bottom:1px solid #333">'+(f.nome||f.name||'-')+'</div>';
-        }).join('');
-      }
-    })
-    .catch(function(e){ console.warn('carregarFornecedores:',e); });
+  if (typeof carregarFinanceiroFornecedores === 'function') carregarFinanceiroFornecedores();
 }
-</script>
-<script id="rebeca-nav-fns">
-// Funcoes de navegacao e combo — usadas via onclick no admin
 function irPara(pagina) {
-  // Tentar via showPage primeiro
-  if (typeof showPage === 'function') { showPage(pagina); return; }
-  // Tentar via data-page
   var item = document.querySelector('[data-page="' + pagina + '"]');
   if (item) { item.click(); return; }
-  // Tentar esconder todas as secoes e mostrar a certa
-  document.querySelectorAll('[id$="-section"], [id$="Section"], .page-section').forEach(function(el) {
-    el.style.display = 'none';
-  });
-  var target = document.getElementById(pagina + '-section') ||
-               document.getElementById(pagina + 'Section') ||
-               document.getElementById(pagina);
-  if (target) target.style.display = 'block';
+  if (typeof showPage === 'function') showPage(pagina);
 }
-
-function navegarPara(pagina) {
-  irPara(pagina);
-}
-
+function navegarPara(pagina) { irPara(pagina); }
 function calcularSomaCombo() {
-  // Somar itens selecionados no combo
   var total = 0;
   document.querySelectorAll('.combo-item-check:checked').forEach(function(cb) {
-    var preco = parseFloat(cb.dataset.preco || cb.closest('[data-preco]')?.dataset?.preco || 0);
-    total += preco;
+    total += parseFloat(cb.dataset.preco || 0);
   });
-  var descEl = document.getElementById('comboDesconto');
-  var desc = descEl ? parseFloat(descEl.value) || 0 : 0;
-  var totalFinal = total * (1 - desc/100);
-  var totalEl = document.getElementById('comboTotal') || document.getElementById('combo-total');
-  if (totalEl) totalEl.textContent = 'R$ ' + totalFinal.toFixed(2);
-  var precoEl = document.getElementById('comboPreco') || document.getElementById('combo-preco-final');
-  if (precoEl && precoEl.tagName !== 'INPUT') precoEl.textContent = 'R$ ' + totalFinal.toFixed(2);
+  var desc = parseFloat((document.getElementById('comboDesconto') || {}).value) || 0;
+  var final = total * (1 - desc / 100);
+  var el = document.getElementById('comboTotal') || document.getElementById('combo-total');
+  if (el) el.textContent = 'R$ ' + final.toFixed(2);
 }
 </script>
-<span id="comboTotal" style="display:none;font-weight:700;color:#22c55e"></span>
 </body></html>`;
   const w = window.open('','_blank','width=300,height=400');
   w.document.write(html); w.document.close();
