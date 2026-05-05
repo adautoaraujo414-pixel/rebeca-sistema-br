@@ -2851,7 +2851,7 @@ async function carregarBalanca() {
     const sel = document.getElementById('bal-item-sel');
     if (sel) {
       sel.innerHTML = '<option value="">Selecione o corte...</option>' +
-        _balancaItens.map(it => `<option value="${it._id}" data-preco="${it.preco||0}">${it.nome} — R$ ${Number(it.preco||0).toFixed(2)}/kg</option>`).join('');
+        _balancaItens.map(it => `<option value="${it._id}" data-preco="${it.preco||0}">${it.nome}  -  R$ ${Number(it.preco||0).toFixed(2)}/kg</option>`).join('');
       sel.onchange = function() {
         const opt = this.options[this.selectedIndex];
         const preco = opt?.dataset?.preco || 0;
@@ -3197,7 +3197,6 @@ async function carregarHistoricoBalanca() {
   } catch(e) {}
 }
 ${'<'}/script>
-
 </body></html>`;
             const w = window.open('','_blank','width=350,height=600');
             w.document.write(html);
