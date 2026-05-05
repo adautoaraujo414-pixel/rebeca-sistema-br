@@ -3191,11 +3191,6 @@ async function carregarHistoricoBalanca() {
     }).join('');
   } catch(e) {}
 }
-</body></html>`;
-            const w = window.open('','_blank','width=350,height=600');
-            w.document.write(html);
-            w.document.close();
-
         async function mudarStatus(id, status) {
             try {
                 await api('/pedidos/' + id + '/status', { method: 'PUT', body: JSON.stringify({ status }) });
