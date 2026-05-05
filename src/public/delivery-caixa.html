@@ -2505,7 +2505,45 @@ function imprimirEtiquetaCarrinho() {
       <div class="linha"><span>Preço/kg:</span><span>R$ ${Number(it.precoUnitario||0).toFixed(2)}</span></div>
       <div class="total">R$ ${Number(it.subtotal||0).toFixed(2)}</div>
       <div style="text-align:center;font-size:9px;margin-top:4px;color:#555">${new Date().toLocaleString('pt-BR')}</div>
-    </body></html>`;
+    
+  <script id="rebeca-nav-fix-caixa">
+  (function(){
+    // Registrar SW
+    if('serviceWorker' in navigator){
+      navigator.serviceWorker.register('/sw-rebeca.js').catch(function(){});
+    }
+
+    // Navegação entre apps no FAB drawer
+    document.addEventListener('DOMContentLoaded', function(){
+      // Tentar todos os possíveis IDs de drawer
+      var drawer = document.getElementById('fab-menu-drawer-caixa')
+                || document.getElementById('fab-drawer-caixa');
+      var fab    = document.getElementById('fab-menu-btn-caixa')
+                || document.getElementById('fab-btn-caixa');
+
+      if(drawer){
+        var tok = localStorage.getItem('delivery_token') || '';
+        var base = window.location.origin;
+        drawer.innerHTML =
+          '<div style="padding:8px 20px 4px;font-size:11px;font-weight:700;color:#94a3b8;letter-spacing:1px;text-transform:uppercase">Acessar</div>'
+          + '<a href="'+base+'/delivery-admin?token='+tok+'" style="display:flex;align-items:center;gap:12px;padding:12px 20px;font-size:15px;color:#1e293b;text-decoration:none;border-bottom:1px solid #f1f5f9;background:none">🍊 ADM</a>'
+          + '<a href="'+base+'/delivery-caixa?token='+tok+'" style="display:flex;align-items:center;gap:12px;padding:12px 20px;font-size:15px;color:#1e293b;text-decoration:none;border-bottom:1px solid #f1f5f9;background:none">🧾 Caixa</a>'
+          + '<a href="'+base+'/delivery-garcom?token='+tok+'" style="display:flex;align-items:center;gap:12px;padding:12px 20px;font-size:15px;color:#1e293b;text-decoration:none;border-bottom:1px solid #f1f5f9;background:none">🧑‍🍽️ Garçom</a>'
+          + '<a href="'+base+'/delivery-cozinha?token='+tok+'" style="display:flex;align-items:center;gap:12px;padding:12px 20px;font-size:15px;color:#1e293b;text-decoration:none;border-bottom:1px solid #f1f5f9;background:none">👨‍🍳 Cozinha</a>'
+          + '<a href="'+base+'/delivery-entregador?token='+tok+'" style="display:flex;align-items:center;gap:12px;padding:12px 20px;font-size:15px;color:#1e293b;text-decoration:none;background:none">🏍️ Entregador</a>';
+      }
+
+      if(fab && drawer){
+        fab.onclick = function(){ drawer.classList.toggle('open'); };
+        document.addEventListener('click', function(e){
+          if(!fab.contains(e.target) && !drawer.contains(e.target))
+            drawer.classList.remove('open');
+        });
+      }
+    });
+  })();
+  </script>
+</body></html>`;
     const w = window.open('','_blank','width=300,height=400');
     w.document.write(html); w.document.close();
     setTimeout(() => w.print(), 400);

@@ -2945,6 +2945,12 @@ async function testarGaveta() {
 const _irParaOriginal = typeof irPara === 'function' ? irPara : null;
 </script>
 
+
+  <script id="rebeca-sw-admin">
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('/sw-rebeca.js').catch(function(){});
+  }
+  </script>
 </body></html>`;
   const w = window.open('','_blank','width=300,height=400');
   w.document.write(html); w.document.close();
