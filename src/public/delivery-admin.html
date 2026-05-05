@@ -3188,6 +3188,7 @@ function calcularSomaCombo() {
   if (precoEl && precoEl.tagName !== 'INPUT') precoEl.textContent = 'R$ ' + totalFinal.toFixed(2);
 }
 </script>
+<span id="comboTotal" style="display:none;font-weight:700;color:#22c55e"></span>
 </body></html>`;
   const w = window.open('','_blank','width=300,height=400');
   w.document.write(html); w.document.close();
