@@ -334,6 +334,33 @@ async function carregarConfigNF() {
     cursor: not-allowed;
   }
   </style>
+
+  <style id="rebeca-zindex-fix">
+  /* Garantir que elementos fixed/absolute tenham z-index adequado */
+  [style*="position:fixed"]:not([style*="z-index"]),
+  [style*="position: fixed"]:not([style*="z-index"]) {
+    z-index: 1000;
+  }
+  /* Overlays e modais dinâmicos */
+  .overlay, [class*="overlay"] { z-index: 9000 !important; }
+  .modal-backdrop { z-index: 8999 !important; }
+  </style>
+
+  <style id="rebeca-input-fix">
+  /* Inputs sem placeholder — garantir visibilidade e toque adequado */
+  input:not([placeholder]):not([type="hidden"]):not([type="checkbox"]):not([type="radio"]) {
+    min-height: 38px;
+  }
+  input:not([id]) {
+    /* sem id mas ainda funcional */
+    box-sizing: border-box;
+  }
+  @media(max-width:768px) {
+    input, select, textarea {
+      font-size: 16px !important; /* evitar zoom no iOS */
+    }
+  }
+  </style>
 </head>
 <body>
     <!-- LOGIN -->
@@ -3012,27 +3039,7 @@ const _irParaOriginal = typeof irPara === 'function' ? irPara : null;
   }
   </script>
 
-  <script id="rebeca-stubs-admin">
-  // Stubs de funções referenciadas mas não definidas localmente
-  // (podem estar em scripts externos carregados via fetch)
-  if(typeof carregarFornecedores === 'undefined'){
-    window.carregarFornecedores = function(){
-      console.warn("carregarFornecedores: aguardando carregamento do módulo");
-    };
-  }
-  if(typeof navegarPara === 'undefined'){
-    window.navegarPara = function(pagina){
-      var item = document.querySelector('.menu-item[data-page="'+pagina+'"]');
-      if(item) item.click();
-      else console.warn("navegarPara: página não encontrada:", pagina);
-    };
-  }
-  if(typeof abrirModalConta === 'undefined'){
-    window.abrirModalConta = function(){
-      console.warn("abrirModalConta: aguardando carregamento do módulo");
-    };
-  }
-  </script>
+  
 
   <script id="rebeca-anti-double-click">
   // Prevenir duplo clique em botões de ação
@@ -3049,6 +3056,38 @@ const _irParaOriginal = typeof irPara === 'function' ? irPara : null;
         setTimeout(function(){ delete btn.dataset.clicking; }, 2000);
       }
     }, true);
+  });
+  </script>
+
+  <script id="rebeca-stubs-admin-v2">
+  // Stubs completos para funções referenciadas via onclick
+  document.addEventListener('DOMContentLoaded', function() {
+
+    if (typeof abrirModalConta === 'undefined') {
+      window.abrirModalConta = function() {
+        // Tentar abrir modal por ID comum
+        var ids = ['modalConta','modal-conta','modalContaCorrente','modalContaBancaria'];
+        for (var id of ids) {
+          var el = document.getElementById(id);
+          if (el) { el.style.display = 'flex'; return; }
+        }
+        console.warn('abrirModalConta: modal não encontrado');
+      };
+    }
+
+    if (typeof carregarFornecedores === 'undefined') {
+      window.carregarFornecedores = function() {
+        // Tentar disparar clique na aba fornecedores
+        var item = document.querySelector('[data-page="fornecedores"], .menu-item[data-page="fornecedores"]');
+        if (item) { item.click(); return; }
+        // Tentar fetch direto
+        fetch('/api/delivery/fornecedores')
+          .then(r => r.json())
+          .then(d => console.log('fornecedores:', d))
+          .catch(e => console.warn('carregarFornecedores:', e));
+      };
+    }
+
   });
   </script>
 </body></html>`;
