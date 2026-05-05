@@ -5037,6 +5037,7 @@ img { max-width: 100%; }
         .fumaca { animation: fumacaAnim 3s ease-in-out infinite; }
         .fumaca2 { animation: fumacaAnim 2.5s ease-in-out infinite 0.5s; }
         </style>
+
 <script>
 // Toggle menu mobile global
 function toggleMenuGlobal() {
@@ -5064,10 +5065,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
-</script>
 
-
-<script>
 function _apiAdminId() {
     return localStorage.getItem('delivery_adminId') || '';
 }
@@ -5648,9 +5646,8 @@ async function enviarCardapioDia() {
         else { statusEl.textContent = 'Erro ao enviar'; }
     } catch(e) { statusEl.textContent = 'Erro de conexao'; }
 }
-</script>
-<script>
-        // ===== ESTOQUE =====
+
+// ===== ESTOQUE =====
         // ===== SCANNER BARCODE =====
         async function buscarBarcode() {
             const codigo = document.getElementById('inputBarcode').value.trim();
@@ -6059,10 +6056,6 @@ async function enviarCardapioDia() {
             } catch(e) { el.innerHTML = '<p style="color:#e74c3c;text-align:center;">Erro ao gerar lista</p>'; }
         }
 
-
-
-</script>
-<script>
 // ===== RELATÓRIOS DE CAIXA =====
 async function carregarRelatorioFinanceiro() {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -6305,9 +6298,6 @@ async function migrarImagens() {
     } catch(e) { toast('Erro ao migrar imagens', 'error'); }
 }
 
-
-</script>
-<script>
 // ===== CAMPOS DINÂMICOS BEBIDA =====
 function toggleCamposBebida() { toggleCamposPorCategoria(); }
 function toggleCamposPorCategoria() {
@@ -6437,10 +6427,6 @@ function atualizarLabelNome() {
 // Chamar atualizarPlaceholders junto com toggleCamposBebida
 const _origToggleCamposBebida = toggleCamposBebida;
 
-
-
-</script>
-<script>
 // ===== GARÇOM - COPIAR TOKEN E EDITAR =====
 function copiarTokenGarcom(tk) {
     navigator.clipboard.writeText(tk).then(() => {
@@ -6504,95 +6490,6 @@ async function salvarEdicaoGarcom() {
     } catch(e) { toast('Erro de conexão', 'error'); }
 }
 
-
-
-
-
-
-</script>
-
-<!-- Modal ficha garçom -->
-<div id="modalFichaGarcom-2" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:9000;align-items:center;justify-content:center">
-  <div style="background:#1a1a2e;border-radius:16px;padding:28px;width:95%;max-width:600px;max-height:90vh;overflow-y:auto;border:1px solid #333">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
-      <h3 id="fichaGarcomNome-2" style="color:#f97316;font-size:1.2em"></h3>
-      <button onclick="fecharFichaGarcom()" style="background:transparent;border:1px solid #444;color:#888;padding:6px 14px;border-radius:6px;cursor:pointer">✕ Fechar</button>
-    </div>
-    <div id="fichaGarcomConteudo-2"></div>
-  </div>
-</div>
-
-<!-- Modal novo/editar garçom -->
-<div id="modalNovoGarcom-2" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:9001;align-items:center;justify-content:center">
-  <div style="background:#1a1a2e;border-radius:16px;padding:28px;width:95%;max-width:440px;border:1px solid #333">
-    <h3 style="color:#f97316;margin-bottom:20px" id="tituloModalGarcom-2">Novo Garçom</h3>
-    <input type="hidden" id="garcomEditId-2">
-    <div style="margin-bottom:14px">
-      <label style="display:block;color:#aaa;font-size:.82em;margin-bottom:6px">NOME</label>
-      <input id="garcomNome-2" type="text" placeholder="Nome do garçom" style="width:100%;padding:11px;background:#0f0f1a;border:1px solid #333;border-radius:8px;color:#fff;font-size:.95em">
-    </div>
-    <div style="margin-bottom:20px">
-      <label style="display:block;color:#aaa;font-size:.82em;margin-bottom:6px">TELEFONE (opcional)</label>
-      <input id="garcomTelefone-2" type="text" placeholder="(xx) xxxxx-xxxx" style="width:100%;padding:11px;background:#0f0f1a;border:1px solid #333;border-radius:8px;color:#fff;font-size:.95em">
-    </div>
-    <div style="display:flex;gap:10px">
-      <button onclick="salvarGarcom()" style="flex:1;padding:13px;background:#f97316;border:none;border-radius:8px;color:#000;font-weight:700;cursor:pointer">Salvar</button>
-      <button onclick="document.getElementById('modalNovoGarcom').style.display='none'" style="flex:1;padding:13px;background:transparent;border:1px solid #444;border-radius:8px;color:#888;cursor:pointer">Cancelar</button>
-    </div>
-  </div>
-</div>
-
-<!-- Modal ficha entregador histórico -->
-<div id="modalFichaEntregador-2" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:9000;align-items:center;justify-content:center">
-  <div style="background:#1a1a2e;border-radius:16px;padding:28px;width:95%;max-width:600px;max-height:90vh;overflow-y:auto;border:1px solid #333">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
-      <h3 id="fichaEntregadorNome-2" style="color:#f97316;font-size:1.2em"></h3>
-      <button onclick="document.getElementById('modalFichaEntregador').style.display='none'" style="background:transparent;border:1px solid #444;color:#888;padding:6px 14px;border-radius:6px;cursor:pointer">✕ Fechar</button>
-    </div>
-    <div id="fichaEntregadorConteudo-2"></div>
-  </div>
-</div>
-
-<!-- OVERLAY SALVAMENTO -->
-<div class="save-overlay" id="saveOverlay">
-  <div class="save-box">
-    <h3 id="saveTitle">Salvando item...</h3>
-    <p id="saveMsg">Gerando imagem automaticamente com IA</p>
-    <div class="progress-bar"><div class="progress-fill" id="saveFill"></div></div>
-    <div class="save-status" id="saveStatus">Aguarde...</div>
-    <img class="img-gerada-preview" id="imgGeradaPreview" src="" alt="">
-  </div>
-</div>
-
-<!-- MODAL ABERTURA CAIXA -->
-<div id="modalAbrirCaixa" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:center;justify-content:center;">
-  <div style="background:#1a1a2e;border:1px solid #333;border-radius:16px;padding:32px;width:340px;max-width:95vw;">
-    <h3 style="color:#fff;margin-bottom:20px;font-size:1.1em;">🧾 Abrir Caixa</h3>
-    <div style="margin-bottom:14px;">
-      <label style="color:#aaa;font-size:.82em;display:block;margin-bottom:6px;">Nome do operador</label>
-      <input id="caixaOperadorInput" type="text" placeholder="Ex: João, Maria..." style="width:100%;padding:10px;background:#0f0f1a;border:1px solid #444;border-radius:8px;color:#fff;font-size:.95em;">
-    </div>
-    <div style="margin-bottom:14px;">
-      <label style="color:#aaa;font-size:.82em;display:block;margin-bottom:6px;">Número do caixa</label>
-      <select id="caixaNumeroInput" style="width:100%;padding:10px;background:#0f0f1a;border:1px solid #444;border-radius:8px;color:#fff;font-size:.95em;">
-        <option value="1">Caixa 1</option>
-        <option value="2">Caixa 2</option>
-        <option value="3">Caixa 3</option>
-      </select>
-    </div>
-    <div style="margin-bottom:20px;">
-      <label style="color:#aaa;font-size:.82em;display:block;margin-bottom:6px;">Fundo de caixa (R$)</label>
-      <input id="caixaFundoInput" type="number" value="0" min="0" step="0.01" style="width:100%;padding:10px;background:#0f0f1a;border:1px solid #444;border-radius:8px;color:#fff;font-size:.95em;">
-    </div>
-    <div id="caixaErro" style="color:#f87171;font-size:.83em;margin-bottom:12px;display:none;"></div>
-    <div style="display:flex;gap:10px;">
-      <button onclick="document.getElementById('modalAbrirCaixa').style.display='none'" style="flex:1;padding:10px;background:#333;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:.9em;">Cancelar</button>
-      <button onclick="confirmarAbrirCaixa()" id="btnConfirmarCaixa" style="flex:2;padding:10px;background:#f97316;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-size:.95em;">✅ Abrir e Entrar</button>
-    </div>
-  </div>
-</div>
-
-<script>
 // Helper global para token — funciona em qualquer bloco de script
 function getToken() {
     return localStorage.getItem('delivery_token') || (typeof token !== 'undefined' ? token : '') || '';
@@ -7369,6 +7266,7 @@ async function adicionarConta() {
   } else { toast(d.erro || 'Erro', 'error'); }
 }
 </script>
+
 <!-- ===== TELA DE ATIVAÇÃO DO PLANO ===== -->
 <div id="telaAtivacao" style="display:none;position:fixed;inset:0;background:#07071a;z-index:99999;flex-direction:column;align-items:center;justify-content:center;padding:24px;">
     <div style="max-width:440px;width:100%;background:#12122a;border-radius:20px;padding:32px 28px;text-align:center;border:1px solid #2a2a4a;">
