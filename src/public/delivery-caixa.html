@@ -2593,7 +2593,11 @@ function imprimirEtiquetaCarrinho() {
       <div style="text-align:center;font-size:9px;margin-top:4px;color:#555">${new Date().toLocaleString('pt-BR')}</div>
     
   <script id="rebeca-nav-fix-caixa">
-window.onload=function(){window.print();setTimeout(()=>window.close(),500);}<\/script></body></html>');
+window.onload=function(){window.print();setTimeout(()=>window.close(),500);}<\/script>
+<!-- fallback IDs -->
+<input id="inputMesa" type="text" style="display:none">
+<div id="modalMesas" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9001;align-items:center;justify-content:center"></div>
+</body></html>');
           w.document.close();
         }
       }

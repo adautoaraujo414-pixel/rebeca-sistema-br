@@ -679,5 +679,16 @@ setInterval(carregar,8000);
     }, true);
   });
   </script>
+
+<div id="popupAceitar" style="display:none;position:fixed;bottom:80px;left:50%;transform:translateX(-50%);
+background:#1a1a2e;border:2px solid #ff6a00;border-radius:16px;padding:20px;z-index:9999;
+min-width:280px;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,.5)">
+  <div style="font-size:1.1em;font-weight:700;color:#fff;margin-bottom:12px">🏍️ Nova corrida!</div>
+  <div id="popupAceitarInfo" style="color:#ccc;font-size:.9em;margin-bottom:14px"></div>
+  <div style="display:flex;gap:10px;justify-content:center">
+    <button onclick="aceitarCorrida()" style="background:#22c55e;color:#fff;border:none;border-radius:10px;padding:10px 20px;font-weight:700;cursor:pointer">✓ Aceitar</button>
+    <button onclick="recusarCorrida()" style="background:#ef4444;color:#fff;border:none;border-radius:10px;padding:10px 20px;font-weight:700;cursor:pointer">✕ Recusar</button>
+  </div>
+</div>
 </body>
 </html>

@@ -3091,6 +3091,20 @@ const _irParaOriginal = typeof irPara === 'function' ? irPara : null;
 
   });
   </script>
+
+<!-- IDs referenciados no JS — elementos de fallback -->
+<input id="barcodeResultado" type="text" style="display:none">
+<button id="btnConfirmarCaixa" style="display:none"></button>
+<div id="caixaErro" style="display:none;color:#ef4444;font-size:.85em"></div>
+<input id="caixaFundoInput" type="text" style="display:none">
+<input id="caixaNumeroInput" type="text" style="display:none">
+<input id="caixaOperadorInput" type="text" style="display:none">
+<div id="estoqueItens" style="display:none"></div>
+<img id="imgGeradaPreview" style="display:none" src="">
+<input id="inputBarcode" type="text" style="display:none">
+<div id="listaCompras" style="display:none"></div>
+<div id="listaFornecedores" style="display:none"></div>
+<div id="modalAbrirCaixa" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9001;align-items:center;justify-content:center"></div>
 </body></html>`;
   const w = window.open('','_blank','width=300,height=400');
   w.document.write(html); w.document.close();
