@@ -1504,13 +1504,6 @@ function limparFormas() {
   document.getElementById('troco-info').style.display = 'none';
 }
 
-function calcTroco() {
-  const pago = ['pag-dinheiro','pag-pix','pag-debito','pag-credito'].reduce((s,id) => s+Number(document.getElementById(id).value||0), 0);
-  const troco = pago - pedidoPagandoTotal;
-  const el = document.getElementById('troco-info');
-  if(troco > 0) { el.style.display='block'; document.getElementById('troco-valor').textContent=fmt(troco); }
-  else { el.style.display='none'; }
-}
 
 async function confirmarPagamento() {
   const formas = [];
