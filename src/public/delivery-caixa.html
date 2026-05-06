@@ -1292,7 +1292,7 @@ function renderPedidos() {
         <button class="btn btn-sm btn-green" onclick="abrirPagamentoPedido('${p._id}',${p.total})">💰 Pagar</button>
         <button class="btn btn-sm" style="background:#7c3aed;color:#fff;" onclick="receberPedidoBalcao('${p._id}')">🛎️ Receber</button>
         <button class="btn btn-sm btn-blue" onclick="adicionarAoPedido('${p._id}')">➕ Add item</button>
-        <button class="btn btn-sm" style="background:#4a2d0e;color:#fb923c;border:1px solid #fb923c;" onclick="imprimirCupom(${JSON.stringify(p).replace(/`/g,"'")})">🖨️</button>
+        <button class="btn btn-sm" style="background:#4a2d0e;color:#fb923c;border:1px solid #fb923c;" onclick="imprimirCupom(${JSON.stringify(p).replace(/\x60/g,\"'\")})">🖨️</button>
         <button class="btn btn-sm btn-red" onclick="cancelarPedido('${p._id}')">✕</button>
       </div>
     </div>`;
