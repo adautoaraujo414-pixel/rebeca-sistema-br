@@ -595,7 +595,7 @@ function fazerLogout() { location.reload(); }
                 document.getElementById('tabelaAdmins').innerHTML = html || '<tr><td colspan="7" style="text-align:center;color:#888">Nenhum admin cadastrado</td></tr>';
             } catch (e) { console.error(e); }
         }
-        async function carregarPendentes() {
+        async function carregarAdminsPendentes(){
             try {
                 const res = await fetch(`${API}/admins/pendentes`);
                 const admins = await res.json();
@@ -746,10 +746,10 @@ function fazerLogout() { location.reload(); }
                 }
                 document.getElementById('modalCredenciais').classList.add('active');
             }
-            carregarAdmins(); carregarPendentes(); carregarDashboard();
+            carregarAdmins(); carregarAdminsPendentes(); carregarDashboard();
         }
         async function bloquearAdmin(id) { if (!confirm('Bloquear?')) return; try { await fetch(`${API}/admins/${id}/bloquear`, { method: 'PUT' }); carregarAdmins(); } catch(e) { alert('Erro ao bloquear'); console.error(e); } }
-        async function excluirAdmin(id) { if (!confirm('Excluir permanentemente?')) return; try { await fetch(`${API}/admins/${id}`, { method: 'DELETE' }); carregarAdmins(); carregarPendentes(); } catch(e) { alert('Erro ao excluir'); console.error(e); } }
+        async function excluirAdmin(id) { if (!confirm('Excluir permanentemente?')) return; try { await fetch(`${API}/admins/${id}`, { method: 'DELETE' }); carregarAdmins(); carregarAdminsPendentes(); } catch(e) { alert('Erro ao excluir'); console.error(e); } }
         async function resetarSenha(id) {
             if (!confirm('Resetar senha deste admin?')) return;
             const res = await fetch(`${API}/admins/${id}/resetar-senha`, { method: 'PUT' });
