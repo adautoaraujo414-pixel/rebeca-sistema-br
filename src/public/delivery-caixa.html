@@ -2227,6 +2227,15 @@ function conectarSSECaixa() {
   if (!token) return;
   try {
     const es = new EventSource('/api/delivery/eventos?token=' + token);
+    let sseErros = 0;
+    es.onerror = function() {
+        sseErros++;
+        if (sseErros > 3) {
+            es.close();
+            console.log('[CAIXA] SSE encerrado após erros repetidos');
+        }
+    };
+    es.onopen = function() { sseErros = 0; };
     es.addEventListener('novo_pedido', function(e) {
       try {
         const dados = JSON.parse(e.data);
