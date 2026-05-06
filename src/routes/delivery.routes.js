@@ -2135,6 +2135,19 @@ router.get('/garcons/eventos', async (req, res) => {
     SseService.registrar('garcom_' + g._id.toString(), res);
 });
 
+
+// ===== SSE público para mesa (cliente) — sem token, usa adminId =====
+router.get('/sse', async (req, res) => {
+    try {
+        const adminId = req.query.adminId;
+        if (!adminId) return res.status(400).end();
+        const admin = await AdminDelivery.findById(adminId).lean();
+        if (!admin) return res.status(404).end();
+        const SseService = require('../services/sse.service');
+        SseService.registrar(adminId.toString(), res);
+    } catch(e) { res.status(500).end(); }
+});
+
 // ===== PEDIR CONTA (cliente solicita pelo mesa.html) =====
 
 // ========== MESA: CHAMAR GARÇOM ==========
