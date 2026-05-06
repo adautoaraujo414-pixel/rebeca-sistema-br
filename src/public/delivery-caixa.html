@@ -463,103 +463,60 @@ body.acougue-theme #acougue-sugestoes { display:block; }
   </style>
 
 <style id="rebeca-responsive-fix">
-/* ===== LAYOUT RESPONSIVO CAIXA ===== */
-/* Desktop: sidebar fixa + área de conteúdo */
-@media (min-width: 769px) {
-  body { overflow-x: hidden; }
-  #app, .app-container, [id*="container"], [id*="main"] {
-    display: flex !important;
-    flex-direction: row !important;
-    height: 100vh !important;
-    overflow: hidden !important;
-  }
-  /* Carrinho lateral fixo no desktop */
-  #carrinho-panel, .cart-panel, [id*="carrinho"] {
-    width: 340px !important;
-    min-width: 300px !important;
-    max-width: 380px !important;
-    height: 100vh !important;
-    overflow-y: auto !important;
-    flex-shrink: 0 !important;
-  }
-  /* Área de produtos ocupa o resto */
-  #produtos-panel, .produtos-area, [id*="cardapio"], [id*="produtos"] {
-    flex: 1 !important;
-    height: 100vh !important;
-    overflow-y: auto !important;
-  }
-}
-/* Mobile: tudo em coluna, tabs para alternar */
 @media (max-width: 768px) {
-  body { font-size: 15px !important; }
-  /* Header compacto */
-  header, .header, [id*="header"] {
-    padding: 8px 12px !important;
-    font-size: 0.9em !important;
-  }
-  /* Carrinho vira painel inferior ou aba */
-  #carrinho-panel, .cart-panel {
-    width: 100% !important;
-    max-width: 100% !important;
+  .main-layout { grid-template-columns: 1fr !important; }
+  .left { height: calc(100vh - 52px - 46px) !important; overflow-y: auto !important; }
+  .right {
+    display: flex !important;
+    position: fixed !important;
+    bottom: 0 !important; left: 0 !important; right: 0 !important;
+    height: 72vh !important;
+    z-index: 500 !important;
+    border-radius: 20px 20px 0 0 !important;
+    border-top: 2px solid var(--accent) !important;
     border-left: none !important;
-    border-top: 1px solid var(--border, #333) !important;
-  }
-  /* Cards de produto em grid 2 colunas */
-  .items-grid, #items-grid, [id*="grid-itens"], .produto-grid {
-    grid-template-columns: repeat(2, 1fr) !important;
-    gap: 8px !important;
-    padding: 8px !important;
-  }
-  /* Cards menores no mobile */
-  .item-card {
-    padding: 8px !important;
-    font-size: 0.9em !important;
-  }
-  .item-img, .item-img-placeholder {
-    height: 80px !important;
-  }
-  /* Botões de ação maiores (touch) */
-  button { min-height: 40px !important; }
-  /* Modais ocupam tela toda */
-  .modal {
-    width: 95vw !important;
-    max-width: 95vw !important;
-    margin: 10px auto !important;
-    padding: 16px !important;
-  }
-  /* Tabs de navegação */
-  .tab-btn, [class*="tab-btn"] {
-    padding: 8px 10px !important;
-    font-size: 0.8em !important;
-  }
-  /* Esconder textos longos, manter ícones */
-  .tab-label-long { display: none !important; }
-  /* Scroll horizontal em tabelas */
-  table { display: block !important; overflow-x: auto !important; }
-  /* Stats em coluna no mobile */
-  .stats-row, [id*="stats"] {
+    box-shadow: 0 -8px 32px rgba(0,0,0,.3) !important;
+    transform: translateY(100%) !important;
+    transition: transform .3s cubic-bezier(.4,0,.2,1) !important;
+    overflow-y: auto !important;
     flex-direction: column !important;
-    gap: 6px !important;
   }
+  .right.mobile-open { transform: translateY(0) !important; }
+  #mobile-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 499; }
+  #mobile-overlay.show { display: block; }
+  #fab-comanda { display: flex !important; }
+  header { padding: 0 10px !important; height: 48px !important; }
+  .clock { display: none !important; }
+  .stats-bar { flex-wrap: nowrap !important; overflow-x: auto !important; padding: 6px 10px !important; }
+  .tab-btn { padding: 6px 8px !important; font-size: .72em !important; }
+  .items-grid { grid-template-columns: repeat(2, 1fr) !important; }
+  body.acougue-theme .items-grid { grid-template-columns: repeat(2, 1fr) !important; }
+  .modal { width: 96vw !important; max-width: 96vw !important; padding: 16px !important; max-height: 88vh !important; overflow-y: auto !important; }
+  input, select, textarea { font-size: 16px !important; }
+  body { padding-bottom: 0 !important; }
 }
-/* Tablet (769-1024px) */
 @media (min-width: 769px) and (max-width: 1024px) {
-  #carrinho-panel, .cart-panel {
-    width: 280px !important;
-    min-width: 260px !important;
-  }
-  .items-grid, #items-grid {
-    grid-template-columns: repeat(2, 1fr) !important;
-  }
+  .main-layout { grid-template-columns: 1fr 300px !important; }
+  .items-grid { grid-template-columns: repeat(2, 1fr) !important; }
+  #fab-comanda { display: none !important; }
 }
-/* Desktop grande (>1200px) */
-@media (min-width: 1200px) {
-  .items-grid, #items-grid {
-    grid-template-columns: repeat(3, 1fr) !important;
-  }
-  #carrinho-panel, .cart-panel {
-    width: 380px !important;
-  }
+@media (min-width: 1025px) {
+  #fab-comanda { display: none !important; }
+}
+#fab-comanda {
+  display: none;
+  position: fixed; bottom: 72px; right: 16px; z-index: 498;
+  background: var(--accent); color: #fff; border: none;
+  border-radius: 50px; padding: 12px 18px;
+  font-weight: 800; font-size: .85em; cursor: pointer;
+  box-shadow: 0 4px 16px rgba(249,115,22,.5);
+  gap: 6px; align-items: center; transition: transform .2s;
+}
+#fab-comanda:active { transform: scale(.95); }
+.fab-count {
+  background: #fff; color: var(--accent); border-radius: 50%;
+  width: 20px; height: 20px; font-size: .8em;
+  display: flex; align-items: center; justify-content: center; font-weight: 900;
 }
 </style>
 </head>
@@ -2483,7 +2440,48 @@ function imprimirRelatorioCaixa() {
   <div class="centro sub">Assinatura: _______________________</div>
   <div class="centro sub" style="margin-top:6px">Documento gerado pelo sistema Rebeca</div>
   
-  </body></html>`;
+  
+<!-- MOBILE: overlay + FAB comanda -->
+<div id="mobile-overlay" onclick="fecharComandaMobile()"></div>
+<button id="fab-comanda" onclick="toggleComandaMobile()">
+  🧾 Comanda <span class="fab-count" id="fab-count">0</span>
+</button>
+
+<script>
+function toggleComandaMobile() {
+  const right = document.querySelector('.right');
+  const overlay = document.getElementById('mobile-overlay');
+  if (right.classList.contains('mobile-open')) {
+    right.classList.remove('mobile-open');
+    overlay.classList.remove('show');
+  } else {
+    right.classList.add('mobile-open');
+    overlay.classList.add('show');
+  }
+}
+function fecharComandaMobile() {
+  document.querySelector('.right').classList.remove('mobile-open');
+  document.getElementById('mobile-overlay').classList.remove('show');
+}
+// Atualizar contador do FAB quando itens mudam no carrinho
+const _fabOrig = window.renderCart;
+function atualizarFabCount() {
+  try {
+    const count = (window.cart || []).reduce((s, i) => s + (i.qty || 1), 0);
+    const el = document.getElementById('fab-count');
+    if (el) el.textContent = count;
+  } catch(e) {}
+}
+// Observer no cart-body para detectar mudanças
+document.addEventListener('DOMContentLoaded', () => {
+  const cartBody = document.getElementById('cart-body');
+  if (cartBody) {
+    new MutationObserver(atualizarFabCount).observe(cartBody, { childList: true, subtree: true });
+  }
+});
+</script>
+
+</body></html>`;
   var _wRel = window.open('','_blank','width=320,height=600');
   _wRel.document.write(html);
   _wRel.document.close();
@@ -2683,7 +2681,48 @@ function imprimirEtiquetaCarrinho() {
       <div class="linha"><span>Preço/kg:</span><span>R$ ${Number(it.precoUnitario||0).toFixed(2)}</span></div>
       <div class="total">R$ ${Number(it.subtotal||0).toFixed(2)}</div>
       <div style="text-align:center;font-size:9px;margin-top:4px;color:#555">${new Date().toLocaleString('pt-BR')}</div>
-    </body></html>`;
+    
+<!-- MOBILE: overlay + FAB comanda -->
+<div id="mobile-overlay" onclick="fecharComandaMobile()"></div>
+<button id="fab-comanda" onclick="toggleComandaMobile()">
+  🧾 Comanda <span class="fab-count" id="fab-count">0</span>
+</button>
+
+<script>
+function toggleComandaMobile() {
+  const right = document.querySelector('.right');
+  const overlay = document.getElementById('mobile-overlay');
+  if (right.classList.contains('mobile-open')) {
+    right.classList.remove('mobile-open');
+    overlay.classList.remove('show');
+  } else {
+    right.classList.add('mobile-open');
+    overlay.classList.add('show');
+  }
+}
+function fecharComandaMobile() {
+  document.querySelector('.right').classList.remove('mobile-open');
+  document.getElementById('mobile-overlay').classList.remove('show');
+}
+// Atualizar contador do FAB quando itens mudam no carrinho
+const _fabOrig = window.renderCart;
+function atualizarFabCount() {
+  try {
+    const count = (window.cart || []).reduce((s, i) => s + (i.qty || 1), 0);
+    const el = document.getElementById('fab-count');
+    if (el) el.textContent = count;
+  } catch(e) {}
+}
+// Observer no cart-body para detectar mudanças
+document.addEventListener('DOMContentLoaded', () => {
+  const cartBody = document.getElementById('cart-body');
+  if (cartBody) {
+    new MutationObserver(atualizarFabCount).observe(cartBody, { childList: true, subtree: true });
+  }
+});
+</script>
+
+</body></html>`;
     const _wEt = window.open('','_blank','width=300,height=400');
     _wEt.document.write(html);
     _wEt.document.close();
@@ -2784,7 +2823,48 @@ function gerarComprovante() {
     <div class="linha"></div>
     ${_descontoAcougue > 0 ? `<div style="display:flex;justify-content:space-between"><span>Desconto:</span><span>R$ ${_descontoAcougue.toFixed(2)}</span></div>` : ''}
     <div style="display:flex;justify-content:space-between;font-weight:900;font-size:13px"><span>TOTAL:</span><span>R$ ${Math.max(0,total).toFixed(2)}</span></div>
-  </body></html>`;
+  
+<!-- MOBILE: overlay + FAB comanda -->
+<div id="mobile-overlay" onclick="fecharComandaMobile()"></div>
+<button id="fab-comanda" onclick="toggleComandaMobile()">
+  🧾 Comanda <span class="fab-count" id="fab-count">0</span>
+</button>
+
+<script>
+function toggleComandaMobile() {
+  const right = document.querySelector('.right');
+  const overlay = document.getElementById('mobile-overlay');
+  if (right.classList.contains('mobile-open')) {
+    right.classList.remove('mobile-open');
+    overlay.classList.remove('show');
+  } else {
+    right.classList.add('mobile-open');
+    overlay.classList.add('show');
+  }
+}
+function fecharComandaMobile() {
+  document.querySelector('.right').classList.remove('mobile-open');
+  document.getElementById('mobile-overlay').classList.remove('show');
+}
+// Atualizar contador do FAB quando itens mudam no carrinho
+const _fabOrig = window.renderCart;
+function atualizarFabCount() {
+  try {
+    const count = (window.cart || []).reduce((s, i) => s + (i.qty || 1), 0);
+    const el = document.getElementById('fab-count');
+    if (el) el.textContent = count;
+  } catch(e) {}
+}
+// Observer no cart-body para detectar mudanças
+document.addEventListener('DOMContentLoaded', () => {
+  const cartBody = document.getElementById('cart-body');
+  if (cartBody) {
+    new MutationObserver(atualizarFabCount).observe(cartBody, { childList: true, subtree: true });
+  }
+});
+</script>
+
+</body></html>`;
   const w = window.open('','_blank','width:350,height:600');
   w.document.write(html); w.document.close();
   setTimeout(() => w.print(), 400);
@@ -2807,7 +2887,48 @@ async function abrirGaveta() {
       if (d.tipoGaveta === 'impressora' || d.tipoGaveta === 'usb') {
         const w = window.open('','_blank','width=1,height=1,left=-100,top=-100');
         if (w) {
-          w.document.write('<html><body><scr'+'ipt>setTimeout(()=>{window.print();window.close();},100);<'+'/script></body></html>');
+          w.document.write('<html><body><scr'+'ipt>setTimeout(()=>{window.print();window.close();},100);<'+'/script>
+<!-- MOBILE: overlay + FAB comanda -->
+<div id="mobile-overlay" onclick="fecharComandaMobile()"></div>
+<button id="fab-comanda" onclick="toggleComandaMobile()">
+  🧾 Comanda <span class="fab-count" id="fab-count">0</span>
+</button>
+
+<script>
+function toggleComandaMobile() {
+  const right = document.querySelector('.right');
+  const overlay = document.getElementById('mobile-overlay');
+  if (right.classList.contains('mobile-open')) {
+    right.classList.remove('mobile-open');
+    overlay.classList.remove('show');
+  } else {
+    right.classList.add('mobile-open');
+    overlay.classList.add('show');
+  }
+}
+function fecharComandaMobile() {
+  document.querySelector('.right').classList.remove('mobile-open');
+  document.getElementById('mobile-overlay').classList.remove('show');
+}
+// Atualizar contador do FAB quando itens mudam no carrinho
+const _fabOrig = window.renderCart;
+function atualizarFabCount() {
+  try {
+    const count = (window.cart || []).reduce((s, i) => s + (i.qty || 1), 0);
+    const el = document.getElementById('fab-count');
+    if (el) el.textContent = count;
+  } catch(e) {}
+}
+// Observer no cart-body para detectar mudanças
+document.addEventListener('DOMContentLoaded', () => {
+  const cartBody = document.getElementById('cart-body');
+  if (cartBody) {
+    new MutationObserver(atualizarFabCount).observe(cartBody, { childList: true, subtree: true });
+  }
+});
+</script>
+
+</body></html>');
 
   const w = window.open('', '_blank', 'width=400,height=700');
   w.document.write(html);
@@ -2909,5 +3030,46 @@ setInterval(atualizarTimersCaixa, 1000);
     </div>
   </div>
 </script>
+
+<!-- MOBILE: overlay + FAB comanda -->
+<div id="mobile-overlay" onclick="fecharComandaMobile()"></div>
+<button id="fab-comanda" onclick="toggleComandaMobile()">
+  🧾 Comanda <span class="fab-count" id="fab-count">0</span>
+</button>
+
+<script>
+function toggleComandaMobile() {
+  const right = document.querySelector('.right');
+  const overlay = document.getElementById('mobile-overlay');
+  if (right.classList.contains('mobile-open')) {
+    right.classList.remove('mobile-open');
+    overlay.classList.remove('show');
+  } else {
+    right.classList.add('mobile-open');
+    overlay.classList.add('show');
+  }
+}
+function fecharComandaMobile() {
+  document.querySelector('.right').classList.remove('mobile-open');
+  document.getElementById('mobile-overlay').classList.remove('show');
+}
+// Atualizar contador do FAB quando itens mudam no carrinho
+const _fabOrig = window.renderCart;
+function atualizarFabCount() {
+  try {
+    const count = (window.cart || []).reduce((s, i) => s + (i.qty || 1), 0);
+    const el = document.getElementById('fab-count');
+    if (el) el.textContent = count;
+  } catch(e) {}
+}
+// Observer no cart-body para detectar mudanças
+document.addEventListener('DOMContentLoaded', () => {
+  const cartBody = document.getElementById('cart-body');
+  if (cartBody) {
+    new MutationObserver(atualizarFabCount).observe(cartBody, { childList: true, subtree: true });
+  }
+});
+</script>
+
 </body>
 </html>
