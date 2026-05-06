@@ -6736,8 +6736,8 @@ function abrirTelaCaixa() {
             if (d.aberto && d.caixa) {
                 // Caixa já aberto — ir direto
                 var url = '/delivery-caixa?token=' + encodeURIComponent(tk) +
-                          '&operador=' + encodeURIComponent(d.caixa.operador || 'operador') +
-                          '&numeroCaixa=' + (d.caixa.numeroCaixa || 1);
+                          '&operador=' + encodeURIComponent(d.caixa.abertoPor || d.caixa.operador || '') +
+                          '&numeroCaixa=' + (d.caixa.numeroCaixa || d.caixa.numCaixa || 1);
                 window.open(url, '_blank');
             } else {
                 // Caixa fechado — mostrar modal para abrir
