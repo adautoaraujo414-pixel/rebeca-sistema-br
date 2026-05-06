@@ -65,9 +65,20 @@ router.post('/login', async (req, res) => {
             return res.status(403).json({ erro: 'Conta bloqueada. Entre em contato: (34) 98403-9955', bloqueado: true });
 
         // Verificar trial vencido
-        if (admin.status === 'trial' && new Date() > admin.trialFim) {
-            await AdminDelivery.findByIdAndUpdate(admin._id, { status: 'bloqueado', motivoBloqueio: 'Trial expirado' });
+        if (admin.status === 'trial' && admin.trialFim && new Date() > admin.trialFim) {
+            if (!isAdminPrincipal) {
+                await AdminDelivery.findByIdAndUpdate(admin._id, { status: 'bloqueado', motivoBloqueio: 'Trial expirado' });
+            }
             return res.status(403).json({ erro: 'Período de teste encerrado. Entre em contato para assinar.', trialExpirado: true });
+        }
+
+        // Garantir que o token existe — gerar se não tiver (Admin genérico pode não ter token)
+        if (!admin.token) {
+            const crypto = require('crypto');
+            const novoToken = crypto.randomBytes(32).toString('hex');
+            const ModeloUsar = isAdminPrincipal ? require('../models').Admin : AdminDelivery;
+            await ModeloUsar.findByIdAndUpdate(admin._id, { token: novoToken });
+            admin.token = novoToken;
         }
 
         res.json({
