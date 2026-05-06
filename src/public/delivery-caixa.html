@@ -461,6 +461,107 @@ body.acougue-theme #acougue-sugestoes { display:block; }
   }
   */
   </style>
+
+<style id="rebeca-responsive-fix">
+/* ===== LAYOUT RESPONSIVO CAIXA ===== */
+/* Desktop: sidebar fixa + área de conteúdo */
+@media (min-width: 769px) {
+  body { overflow-x: hidden; }
+  #app, .app-container, [id*="container"], [id*="main"] {
+    display: flex !important;
+    flex-direction: row !important;
+    height: 100vh !important;
+    overflow: hidden !important;
+  }
+  /* Carrinho lateral fixo no desktop */
+  #carrinho-panel, .cart-panel, [id*="carrinho"] {
+    width: 340px !important;
+    min-width: 300px !important;
+    max-width: 380px !important;
+    height: 100vh !important;
+    overflow-y: auto !important;
+    flex-shrink: 0 !important;
+  }
+  /* Área de produtos ocupa o resto */
+  #produtos-panel, .produtos-area, [id*="cardapio"], [id*="produtos"] {
+    flex: 1 !important;
+    height: 100vh !important;
+    overflow-y: auto !important;
+  }
+}
+/* Mobile: tudo em coluna, tabs para alternar */
+@media (max-width: 768px) {
+  body { font-size: 15px !important; }
+  /* Header compacto */
+  header, .header, [id*="header"] {
+    padding: 8px 12px !important;
+    font-size: 0.9em !important;
+  }
+  /* Carrinho vira painel inferior ou aba */
+  #carrinho-panel, .cart-panel {
+    width: 100% !important;
+    max-width: 100% !important;
+    border-left: none !important;
+    border-top: 1px solid var(--border, #333) !important;
+  }
+  /* Cards de produto em grid 2 colunas */
+  .items-grid, #items-grid, [id*="grid-itens"], .produto-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
+    padding: 8px !important;
+  }
+  /* Cards menores no mobile */
+  .item-card {
+    padding: 8px !important;
+    font-size: 0.9em !important;
+  }
+  .item-img, .item-img-placeholder {
+    height: 80px !important;
+  }
+  /* Botões de ação maiores (touch) */
+  button { min-height: 40px !important; }
+  /* Modais ocupam tela toda */
+  .modal {
+    width: 95vw !important;
+    max-width: 95vw !important;
+    margin: 10px auto !important;
+    padding: 16px !important;
+  }
+  /* Tabs de navegação */
+  .tab-btn, [class*="tab-btn"] {
+    padding: 8px 10px !important;
+    font-size: 0.8em !important;
+  }
+  /* Esconder textos longos, manter ícones */
+  .tab-label-long { display: none !important; }
+  /* Scroll horizontal em tabelas */
+  table { display: block !important; overflow-x: auto !important; }
+  /* Stats em coluna no mobile */
+  .stats-row, [id*="stats"] {
+    flex-direction: column !important;
+    gap: 6px !important;
+  }
+}
+/* Tablet (769-1024px) */
+@media (min-width: 769px) and (max-width: 1024px) {
+  #carrinho-panel, .cart-panel {
+    width: 280px !important;
+    min-width: 260px !important;
+  }
+  .items-grid, #items-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+/* Desktop grande (>1200px) */
+@media (min-width: 1200px) {
+  .items-grid, #items-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+  #carrinho-panel, .cart-panel {
+    width: 380px !important;
+  }
+}
+</style>
 </head>
 <body>
 <div id="painelProducao" style="position:fixed;bottom:0;left:0;right:0;background:#1a1a2e;border-top:2px solid #f97316;z-index:999;max-height:220px;overflow-y:auto;padding:10px 12px;display:none;">
@@ -2701,82 +2802,7 @@ async function abrirGaveta() {
       if (d.tipoGaveta === 'impressora' || d.tipoGaveta === 'usb') {
         const w = window.open('','_blank','width=1,height=1,left=-100,top=-100');
         if (w) {
-          w.document.write('<html><body><script>function cancelarVendaAcougue() {
-  if (!carrinho.length || confirm('Cancelar a venda atual?')) {
-    _descontoAcougue = 0;
-    const elD = document.getElementById('acougue-desconto');
-    if (elD) elD.textContent = 'R$ 0,00';
-    limparCarrinho();
-    atualizarTotaisAcougue();
-  }
-}
-
-function verHistoricoVendas() {
-  mudarTab('todos', document.querySelector('.tab-btn[onclick*="todos"]'));
-}
-
-async function carregarSugestoesAcougue() {
-  try {
-    const r = await fetch('/api/delivery/cardapio', {headers:{'Authorization':'Bearer '+token}});
-    const d = await r.json();
-    const itens = Array.isArray(d) ? d : (d.itens || d.items || []);
-    // Pegar itens sem foto ou de outras categorias como sugestão
-    const sug = itens.filter(i => i.disponivel !== false && i.ativo !== false).slice(0, 6);
-    const el = document.getElementById('acougue-sug-grid');
-    if (!el) return;
-    el.innerHTML = sug.map(i => {
-      const data = encodeURIComponent(JSON.stringify({_id:i._id, nome:i.nome, preco:i.preco}));
-      const img = i.imagem ? `<img class="acougue-sug-img" src="${i.imagem}" onerror="this.style.display='none'">` : `<div class="acougue-sug-img" style="display:flex;align-items:center;justify-content:center;font-size:1.5em">🥩</div>`;
-      return `<div class="acougue-sug-item">
-        ${img}
-        <div class="acougue-sug-nome">${i.nome}</div>
-        <div class="acougue-sug-preco">R$ ${Number(i.preco||0).toFixed(2).replace('.',',')}</div>
-        <button class="acougue-sug-add" onclick="addPesoRapido('${data}',0.5)">+</button>
-      </div>`;
-    }).join('');
-  } catch(e) {}
-}
-
-// Sobrescrever itemCard e atualizarTotais quando for açougue
-const _itemCardOriginal = typeof itemCard === 'function' ? itemCard : null;
-const _atualizarTotaisOriginal = typeof atualizarTotais === 'function' ? atualizarTotais : null;
-
-function itemCard(i) {
-  if (window._tipoNegocio === 'acougue') return itemCardAcougue(i);
-  // Renderizar card normal
-  const img = i.imagem
-    ? `<img class="item-img" src="${i.imagem}" alt="${i.nome}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">` 
-      + `<div class="item-img-placeholder" style="display:none">🍔</div>`
-    : `<div class="item-img-placeholder">🍔</div>`;
-  const data = encodeURIComponent(JSON.stringify({_id:i._id,nome:i.nome,preco:i.preco}));
-  return `<div class="item-card" onclick="addItem('${data}')">
-    ${img}
-    <div class="item-info">
-      <div class="item-name">${i.nome}</div>
-      ${i.descricao ? `<div class="item-desc">${i.descricao}</div>` : ''}
-      <div class="item-price">${'R$ ' + Number(i.preco||0).toFixed(2).replace('.',',')}</div>
-    </div>
-    <button class="item-add">+</button>
-  </div>`;
-}
-
-function atualizarTotais() {
-  if (window._tipoNegocio === 'acougue') { atualizarTotaisAcougue(); return; }
-  if (_atualizarTotaisOriginal) _atualizarTotaisOriginal();
-}
-
-// Ativar layout ao detectar açougue
-document.addEventListener('DOMContentLoaded', function() {
-  const checkAcougue = setInterval(() => {
-    if (window._tipoNegocio !== undefined) {
-      clearInterval(checkAcougue);
-      if (window._tipoNegocio === 'acougue') ativarLayoutAcougue();
-    }
-  }, 500);
-});
-<\/script>
-
-</body></html>`;
+          w.document.write('<html><body><scr'+'ipt>setTimeout(()=>{window.print();window.close();},100);<'+'/script></body></html>');
 
   const w = window.open('', '_blank', 'width=400,height=700');
   w.document.write(html);
