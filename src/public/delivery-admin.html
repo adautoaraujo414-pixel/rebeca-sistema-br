@@ -2983,8 +2983,12 @@ function imprimirEtiquetaBalanca(nome, pesoKg, precoKg, total) {
     <div class="linha"><span>Preço/kg:</span><span>R$ ${Number(precoKg).toFixed(2)}</span></div>
     <div class="total">R$ ${Number(total).toFixed(2)}</div>
     <div style="text-align:center;font-size:9px;margin-top:4px;color:#555">${new Date().toLocaleString('pt-BR')}</div>
-  
-<script>
+  </body></html>`;
+  const w = window.open('','_blank','width=300,height=400');
+  w.document.write(html);
+  w.document.close();
+  setTimeout(() => w.print(), 400);
+}
 // ===== GAVETA ADMIN =====
 function gavetaMudaTipo() {
   const tipo = document.getElementById('gav-tipo')?.value;
