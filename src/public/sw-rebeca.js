@@ -1,4 +1,4 @@
-const CACHE = 'rebeca-v1';
+const CACHE = 'rebeca-v2';
 const STATIC = ['/logo-rebeca.png', '/icon-rebeca-192.png'];
 
 self.addEventListener('install', e => {
@@ -15,11 +15,13 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
-  // Nunca cachear API
+  // Nunca cachear API nem SSE
   if (e.request.url.includes('/api/')) return;
   // Network first para HTML
   if (e.request.destination === 'document') {
-    e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
+    e.respondWith(
+      fetch(e.request).catch(() => caches.match(e.request).then(r => r || Response.error()))
+    );
     return;
   }
   // Cache first para assets estáticos
@@ -27,17 +29,16 @@ self.addEventListener('fetch', e => {
     caches.match(e.request).then(cached => {
       if (cached) return cached;
       return fetch(e.request).then(r => {
-        if (r.ok) {
+        if (r && r.ok) {
           const clone = r.clone();
           caches.open(CACHE).then(c => c.put(e.request, clone));
         }
         return r;
-      }).catch(() => cached);
+      }).catch(() => cached || Response.error());
     })
   );
 });
 
-// Push Notifications
 self.addEventListener('push', e => {
   const data = e.data ? e.data.json() : {};
   const title = data.title || '🍊 Rebeca';
