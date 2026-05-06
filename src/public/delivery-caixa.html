@@ -1,10 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <meta http-equiv="Pragma" content="no-cache">
-  <meta http-equiv="Expires" content="0"><!-- v3 ts=1777717340 -->
+<meta charset="UTF-8"><!-- v3 ts=1777717340 -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Caixa v10-1777717340</title>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -20,8 +17,8 @@
 body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x: hidden}
 
 /* LOGIN */
-#login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;width:100vw;background:radial-gradient(ellipse at 60% 40%,#fff3e0 0%,var(--bg) 70%)}
-.login-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:40px 36px;width:100%;max-width:420px;box-shadow:0 24px 80px rgba(0,0,0,.6)}
+#login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:radial-gradient(ellipse at 60% 40%,#fff3e0 0%,var(--bg) 70%)}
+.login-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:40px 36px;width:360px;box-shadow:0 24px 80px rgba(0,0,0,.6)}
 .login-logo{margin-bottom:0;text-align:center}
 .login-card h2{text-align:center;font-size:1.3em;font-weight:800;color:var(--text);margin-bottom:4px}
 .login-card p{text-align:center;color:var(--text3);font-size:.85em;margin-bottom:24px}
@@ -1507,6 +1504,13 @@ function limparFormas() {
   document.getElementById('troco-info').style.display = 'none';
 }
 
+function calcTroco() {
+  const pago = ['pag-dinheiro','pag-pix','pag-debito','pag-credito'].reduce((s,id) => s+Number(document.getElementById(id).value||0), 0);
+  const troco = pago - pedidoPagandoTotal;
+  const el = document.getElementById('troco-info');
+  if(troco > 0) { el.style.display='block'; document.getElementById('troco-valor').textContent=fmt(troco); }
+  else { el.style.display='none'; }
+}
 
 async function confirmarPagamento() {
   const formas = [];
@@ -2746,7 +2750,7 @@ function imprimirEtiquetaCarrinho() {
       }
     });
   })();
-  </script>
+  <\/script>
 
   <script id="rebeca-anti-double-click">
   // Prevenir duplo clique em botões de ação
@@ -2764,7 +2768,7 @@ function imprimirEtiquetaCarrinho() {
       }
     }, true);
   });
-  </script>
+  <\/script>
 <script>
 
 function gerarComprovante() {
