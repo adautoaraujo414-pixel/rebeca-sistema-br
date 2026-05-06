@@ -2441,16 +2441,17 @@ function imprimirRelatorioCaixa() {
   <div class="centro sub" style="margin-top:6px">Documento gerado pelo sistema Rebeca</div>
   
   
+
+
 <!-- MOBILE: overlay + FAB comanda -->
 <div id="mobile-overlay" onclick="fecharComandaMobile()"></div>
 <button id="fab-comanda" onclick="toggleComandaMobile()">
-  🧾 Comanda <span class="fab-count" id="fab-count">0</span>
+  &#x1F9FE; Comanda <span class="fab-count" id="fab-count">0</span>
 </button>
-
 <script>
 function toggleComandaMobile() {
-  const right = document.querySelector('.right');
-  const overlay = document.getElementById('mobile-overlay');
+  var right = document.querySelector('.right');
+  var overlay = document.getElementById('mobile-overlay');
   if (right.classList.contains('mobile-open')) {
     right.classList.remove('mobile-open');
     overlay.classList.remove('show');
@@ -2463,24 +2464,19 @@ function fecharComandaMobile() {
   document.querySelector('.right').classList.remove('mobile-open');
   document.getElementById('mobile-overlay').classList.remove('show');
 }
-// Atualizar contador do FAB quando itens mudam no carrinho
-const _fabOrig = window.renderCart;
-function atualizarFabCount() {
-  try {
-    const count = (window.cart || []).reduce((s, i) => s + (i.qty || 1), 0);
-    const el = document.getElementById('fab-count');
-    if (el) el.textContent = count;
-  } catch(e) {}
-}
-// Observer no cart-body para detectar mudanças
-document.addEventListener('DOMContentLoaded', () => {
-  const cartBody = document.getElementById('cart-body');
+document.addEventListener('DOMContentLoaded', function() {
+  var cartBody = document.getElementById('cart-body');
   if (cartBody) {
-    new MutationObserver(atualizarFabCount).observe(cartBody, { childList: true, subtree: true });
+    new MutationObserver(function() {
+      try {
+        var count = (window.carrinho || []).reduce(function(s,i){ return s+(i.qty||i.quantidade||1); }, 0);
+        var el = document.getElementById('fab-count');
+        if (el) el.textContent = count || 0;
+      } catch(e) {}
+    }).observe(cartBody, { childList: true, subtree: true });
   }
 });
 </script>
-
 </body></html>`;
   var _wRel = window.open('','_blank','width=320,height=600');
   _wRel.document.write(html);
@@ -2682,16 +2678,17 @@ function imprimirEtiquetaCarrinho() {
       <div class="total">R$ ${Number(it.subtotal||0).toFixed(2)}</div>
       <div style="text-align:center;font-size:9px;margin-top:4px;color:#555">${new Date().toLocaleString('pt-BR')}</div>
     
+
+
 <!-- MOBILE: overlay + FAB comanda -->
 <div id="mobile-overlay" onclick="fecharComandaMobile()"></div>
 <button id="fab-comanda" onclick="toggleComandaMobile()">
-  🧾 Comanda <span class="fab-count" id="fab-count">0</span>
+  &#x1F9FE; Comanda <span class="fab-count" id="fab-count">0</span>
 </button>
-
 <script>
 function toggleComandaMobile() {
-  const right = document.querySelector('.right');
-  const overlay = document.getElementById('mobile-overlay');
+  var right = document.querySelector('.right');
+  var overlay = document.getElementById('mobile-overlay');
   if (right.classList.contains('mobile-open')) {
     right.classList.remove('mobile-open');
     overlay.classList.remove('show');
@@ -2704,24 +2701,19 @@ function fecharComandaMobile() {
   document.querySelector('.right').classList.remove('mobile-open');
   document.getElementById('mobile-overlay').classList.remove('show');
 }
-// Atualizar contador do FAB quando itens mudam no carrinho
-const _fabOrig = window.renderCart;
-function atualizarFabCount() {
-  try {
-    const count = (window.cart || []).reduce((s, i) => s + (i.qty || 1), 0);
-    const el = document.getElementById('fab-count');
-    if (el) el.textContent = count;
-  } catch(e) {}
-}
-// Observer no cart-body para detectar mudanças
-document.addEventListener('DOMContentLoaded', () => {
-  const cartBody = document.getElementById('cart-body');
+document.addEventListener('DOMContentLoaded', function() {
+  var cartBody = document.getElementById('cart-body');
   if (cartBody) {
-    new MutationObserver(atualizarFabCount).observe(cartBody, { childList: true, subtree: true });
+    new MutationObserver(function() {
+      try {
+        var count = (window.carrinho || []).reduce(function(s,i){ return s+(i.qty||i.quantidade||1); }, 0);
+        var el = document.getElementById('fab-count');
+        if (el) el.textContent = count || 0;
+      } catch(e) {}
+    }).observe(cartBody, { childList: true, subtree: true });
   }
 });
 </script>
-
 </body></html>`;
     const _wEt = window.open('','_blank','width=300,height=400');
     _wEt.document.write(html);
@@ -2782,7 +2774,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   })();
-  <\/script>
+  </script>
 
   <script id="rebeca-anti-double-click">
   // Prevenir duplo clique em botões de ação
@@ -2800,7 +2792,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }, true);
   });
-  <\/script>
+  </script>
 <script>
 
 function gerarComprovante() {
@@ -2824,16 +2816,17 @@ function gerarComprovante() {
     ${_descontoAcougue > 0 ? `<div style="display:flex;justify-content:space-between"><span>Desconto:</span><span>R$ ${_descontoAcougue.toFixed(2)}</span></div>` : ''}
     <div style="display:flex;justify-content:space-between;font-weight:900;font-size:13px"><span>TOTAL:</span><span>R$ ${Math.max(0,total).toFixed(2)}</span></div>
   
+
+
 <!-- MOBILE: overlay + FAB comanda -->
 <div id="mobile-overlay" onclick="fecharComandaMobile()"></div>
 <button id="fab-comanda" onclick="toggleComandaMobile()">
-  🧾 Comanda <span class="fab-count" id="fab-count">0</span>
+  &#x1F9FE; Comanda <span class="fab-count" id="fab-count">0</span>
 </button>
-
 <script>
 function toggleComandaMobile() {
-  const right = document.querySelector('.right');
-  const overlay = document.getElementById('mobile-overlay');
+  var right = document.querySelector('.right');
+  var overlay = document.getElementById('mobile-overlay');
   if (right.classList.contains('mobile-open')) {
     right.classList.remove('mobile-open');
     overlay.classList.remove('show');
@@ -2846,24 +2839,19 @@ function fecharComandaMobile() {
   document.querySelector('.right').classList.remove('mobile-open');
   document.getElementById('mobile-overlay').classList.remove('show');
 }
-// Atualizar contador do FAB quando itens mudam no carrinho
-const _fabOrig = window.renderCart;
-function atualizarFabCount() {
-  try {
-    const count = (window.cart || []).reduce((s, i) => s + (i.qty || 1), 0);
-    const el = document.getElementById('fab-count');
-    if (el) el.textContent = count;
-  } catch(e) {}
-}
-// Observer no cart-body para detectar mudanças
-document.addEventListener('DOMContentLoaded', () => {
-  const cartBody = document.getElementById('cart-body');
+document.addEventListener('DOMContentLoaded', function() {
+  var cartBody = document.getElementById('cart-body');
   if (cartBody) {
-    new MutationObserver(atualizarFabCount).observe(cartBody, { childList: true, subtree: true });
+    new MutationObserver(function() {
+      try {
+        var count = (window.carrinho || []).reduce(function(s,i){ return s+(i.qty||i.quantidade||1); }, 0);
+        var el = document.getElementById('fab-count');
+        if (el) el.textContent = count || 0;
+      } catch(e) {}
+    }).observe(cartBody, { childList: true, subtree: true });
   }
 });
 </script>
-
 </body></html>`;
   const w = window.open('','_blank','width:350,height:600');
   w.document.write(html); w.document.close();
@@ -2888,16 +2876,17 @@ async function abrirGaveta() {
         const w = window.open('','_blank','width=1,height=1,left=-100,top=-100');
         if (w) {
           w.document.write('<html><body><scr'+'ipt>setTimeout(()=>{window.print();window.close();},100);<'+'/script>
+
+
 <!-- MOBILE: overlay + FAB comanda -->
 <div id="mobile-overlay" onclick="fecharComandaMobile()"></div>
 <button id="fab-comanda" onclick="toggleComandaMobile()">
-  🧾 Comanda <span class="fab-count" id="fab-count">0</span>
+  &#x1F9FE; Comanda <span class="fab-count" id="fab-count">0</span>
 </button>
-
 <script>
 function toggleComandaMobile() {
-  const right = document.querySelector('.right');
-  const overlay = document.getElementById('mobile-overlay');
+  var right = document.querySelector('.right');
+  var overlay = document.getElementById('mobile-overlay');
   if (right.classList.contains('mobile-open')) {
     right.classList.remove('mobile-open');
     overlay.classList.remove('show');
@@ -2910,24 +2899,19 @@ function fecharComandaMobile() {
   document.querySelector('.right').classList.remove('mobile-open');
   document.getElementById('mobile-overlay').classList.remove('show');
 }
-// Atualizar contador do FAB quando itens mudam no carrinho
-const _fabOrig = window.renderCart;
-function atualizarFabCount() {
-  try {
-    const count = (window.cart || []).reduce((s, i) => s + (i.qty || 1), 0);
-    const el = document.getElementById('fab-count');
-    if (el) el.textContent = count;
-  } catch(e) {}
-}
-// Observer no cart-body para detectar mudanças
-document.addEventListener('DOMContentLoaded', () => {
-  const cartBody = document.getElementById('cart-body');
+document.addEventListener('DOMContentLoaded', function() {
+  var cartBody = document.getElementById('cart-body');
   if (cartBody) {
-    new MutationObserver(atualizarFabCount).observe(cartBody, { childList: true, subtree: true });
+    new MutationObserver(function() {
+      try {
+        var count = (window.carrinho || []).reduce(function(s,i){ return s+(i.qty||i.quantidade||1); }, 0);
+        var el = document.getElementById('fab-count');
+        if (el) el.textContent = count || 0;
+      } catch(e) {}
+    }).observe(cartBody, { childList: true, subtree: true });
   }
 });
 </script>
-
 </body></html>');
 
   const w = window.open('', '_blank', 'width=400,height=700');
@@ -3031,16 +3015,17 @@ setInterval(atualizarTimersCaixa, 1000);
   </div>
 </script>
 
+
+
 <!-- MOBILE: overlay + FAB comanda -->
 <div id="mobile-overlay" onclick="fecharComandaMobile()"></div>
 <button id="fab-comanda" onclick="toggleComandaMobile()">
-  🧾 Comanda <span class="fab-count" id="fab-count">0</span>
+  &#x1F9FE; Comanda <span class="fab-count" id="fab-count">0</span>
 </button>
-
 <script>
 function toggleComandaMobile() {
-  const right = document.querySelector('.right');
-  const overlay = document.getElementById('mobile-overlay');
+  var right = document.querySelector('.right');
+  var overlay = document.getElementById('mobile-overlay');
   if (right.classList.contains('mobile-open')) {
     right.classList.remove('mobile-open');
     overlay.classList.remove('show');
@@ -3053,23 +3038,18 @@ function fecharComandaMobile() {
   document.querySelector('.right').classList.remove('mobile-open');
   document.getElementById('mobile-overlay').classList.remove('show');
 }
-// Atualizar contador do FAB quando itens mudam no carrinho
-const _fabOrig = window.renderCart;
-function atualizarFabCount() {
-  try {
-    const count = (window.cart || []).reduce((s, i) => s + (i.qty || 1), 0);
-    const el = document.getElementById('fab-count');
-    if (el) el.textContent = count;
-  } catch(e) {}
-}
-// Observer no cart-body para detectar mudanças
-document.addEventListener('DOMContentLoaded', () => {
-  const cartBody = document.getElementById('cart-body');
+document.addEventListener('DOMContentLoaded', function() {
+  var cartBody = document.getElementById('cart-body');
   if (cartBody) {
-    new MutationObserver(atualizarFabCount).observe(cartBody, { childList: true, subtree: true });
+    new MutationObserver(function() {
+      try {
+        var count = (window.carrinho || []).reduce(function(s,i){ return s+(i.qty||i.quantidade||1); }, 0);
+        var el = document.getElementById('fab-count');
+        if (el) el.textContent = count || 0;
+      } catch(e) {}
+    }).observe(cartBody, { childList: true, subtree: true });
   }
 });
 </script>
-
 </body>
 </html>
