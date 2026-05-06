@@ -2459,9 +2459,26 @@ async function carregarConfigNF() {
                 if(divCaixa) {
                     if(d.caixaAberto) {
                         const desde = new Date(d.caixaAberto.desde).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-                        divCaixa.innerHTML = `<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:10px 14px;font-size:.84em;display:flex;justify-content:space-between;align-items:center"><span>🟢 <b>Caixa aberto</b> desde ${desde} por <b>${d.caixaAberto.por}</b></span><a onclick="irPara('caixa')" style="color:#16a34a;font-weight:700;cursor:pointer">Acessar →</a></div>`;
+                        const _caixaUrl = '/delivery-caixa?token=' + encodeURIComponent(token) + '&operador=' + encodeURIComponent(d.caixaAberto.por) + (d.caixaAberto.numeroCaixa ? '&numeroCaixa=' + d.caixaAberto.numeroCaixa : '');
+                        divCaixa.innerHTML = `<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:10px 14px;font-size:.84em;display:flex;justify-content:space-between;align-items:center;gap:10px"><span>🟢 <b>Caixa aberto</b> desde ${desde} por <b>${d.caixaAberto.por}</b></span><a href="${_caixaUrl}" target="_blank" style="color:#16a34a;font-weight:700;cursor:pointer;white-space:nowrap">Acessar →</a></div>`;
                     } else {
-                        divCaixa.innerHTML = `<div style="background:#fef9c3;border:1px solid #fde047;border-radius:8px;padding:10px 14px;font-size:.84em">⚠️ <b>Caixa fechado.</b> <a onclick="irPara('caixa')" style="color:#854d0e;font-weight:700;cursor:pointer">Abrir caixa →</a></div>`;
+                        // Buscar ultimo fechamento
+                        divCaixa.innerHTML = '<div style="background:#fef9c3;border:1px solid #fde047;border-radius:8px;padding:10px 14px;font-size:.84em">⏳ Verificando fechamentos...</div>';
+                        try {
+                            const _hoje = new Date().toISOString().slice(0,10);
+                            const _rf = await fetch('/api/delivery/caixa/fechamentos?dataIni=' + _hoje + '&dataFim=' + _hoje, { headers: { Authorization: 'Bearer ' + token } });
+                            const _df = await _rf.json();
+                            if (_df && _df.length) {
+                                const _ult = _df[_df.length - 1];
+                                const _horF = new Date(_ult.fechadoEm || _ult.createdAt).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+                                const _totalF = 'R$ ' + Number(_ult.totalVendas||0).toFixed(2).replace('.',',');
+                                divCaixa.innerHTML = `<div style="background:#fef9c3;border:1px solid #fde047;border-radius:8px;padding:10px 14px;font-size:.84em;display:flex;justify-content:space-between;align-items:center;gap:10px"><span>🔒 <b>Caixa fechado</b> às ${_horF} por <b>${_ult.operador||'-'}</b> · Total: <b style="color:#f97316">${_totalF}</b></span><a onclick="irPara('caixa')" style="color:#854d0e;font-weight:700;cursor:pointer;white-space:nowrap">Abrir caixa →</a></div>`;
+                            } else {
+                                divCaixa.innerHTML = '<div style="background:#fef9c3;border:1px solid #fde047;border-radius:8px;padding:10px 14px;font-size:.84em;display:flex;justify-content:space-between;align-items:center;gap:10px"><span>⚠️ <b>Caixa fechado</b> — nenhum movimento hoje</span><a onclick="irPara(\'caixa\')" style="color:#854d0e;font-weight:700;cursor:pointer;white-space:nowrap">Abrir caixa →</a></div>';
+                            }
+                        } catch(_e) {
+                            divCaixa.innerHTML = '<div style="background:#fef9c3;border:1px solid #fde047;border-radius:8px;padding:10px 14px;font-size:.84em">⚠️ <b>Caixa fechado.</b> <a onclick="irPara(\'caixa\')" style="color:#854d0e;font-weight:700;cursor:pointer">Abrir caixa →</a></div>';
+                        }
                     }
                 }
 
