@@ -6728,19 +6728,39 @@ function getToken() {
 }
 
 function abrirTelaCaixa() {
-    var modal = document.getElementById('modalAbrirCaixa');
-    if (!modal) { alert('Modal do caixa não encontrado. Recarregue a página.'); return; }
-    var op = document.getElementById('caixaOperadorInput');
-    var num = document.getElementById('caixaNumeroInput');
-    var fundo = document.getElementById('caixaFundoInput');
-    var erro = document.getElementById('caixaErro');
-    if (op) op.value = '';
-    if (num) num.value = '1';
-    if (fundo) fundo.value = '0';
-    if (erro) erro.style.display = 'none';
-    modal.style.display = 'flex';
-    modal.style.zIndex = '99999';
-    setTimeout(function(){ if (op) op.focus(); }, 100);
+    var tk = localStorage.getItem('delivery_token') || (typeof token !== 'undefined' ? token : '') || '';
+    // Verificar se já tem caixa aberto — se sim, abrir direto
+    fetch('/api/delivery/caixa/status', { headers: { 'Authorization': 'Bearer ' + tk } })
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+            if (d.aberto && d.caixa) {
+                // Caixa já aberto — ir direto
+                var url = '/delivery-caixa?token=' + encodeURIComponent(tk) +
+                          '&operador=' + encodeURIComponent(d.caixa.operador || 'operador') +
+                          '&numeroCaixa=' + (d.caixa.numeroCaixa || 1);
+                window.open(url, '_blank');
+            } else {
+                // Caixa fechado — mostrar modal para abrir
+                var modal = document.getElementById('modalAbrirCaixa');
+                if (!modal) { alert('Modal não encontrado. Recarregue a página.'); return; }
+                var op = document.getElementById('caixaOperadorInput');
+                var num = document.getElementById('caixaNumeroInput');
+                var fundo = document.getElementById('caixaFundoInput');
+                var erro = document.getElementById('caixaErro');
+                if (op) op.value = '';
+                if (num) num.value = '1';
+                if (fundo) fundo.value = '0';
+                if (erro) erro.style.display = 'none';
+                modal.style.display = 'flex';
+                modal.style.zIndex = '99999';
+                setTimeout(function(){ if (op) op.focus(); }, 100);
+            }
+        })
+        .catch(function(){
+            // Fallback: abrir modal
+            var modal = document.getElementById('modalAbrirCaixa');
+            if (modal) { modal.style.display = 'flex'; modal.style.zIndex = '99999'; }
+        });
 }
 
 async function confirmarAbrirCaixa() {
