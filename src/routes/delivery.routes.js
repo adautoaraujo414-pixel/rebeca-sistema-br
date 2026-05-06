@@ -3589,4 +3589,44 @@ router.delete('/contas-pagar/:id', authDelivery, async (req, res) => {
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
+
+// ===== FORNECEDORES =====
+router.get('/fornecedores', authDelivery, async (req, res) => {
+    try {
+        const { FornecedorDelivery } = require('../models/delivery.models');
+        const forns = await FornecedorDelivery.find({ adminId: req.adminId, ativo: true }).sort({ nome: 1 });
+        res.json(forns);
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+router.post('/fornecedores', authDelivery, async (req, res) => {
+    try {
+        const { FornecedorDelivery } = require('../models/delivery.models');
+        const forn = await FornecedorDelivery.create({ ...req.body, adminId: req.adminId });
+        res.json({ ok: true, fornecedor: forn });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+router.put('/fornecedores/:id', authDelivery, async (req, res) => {
+    try {
+        const { FornecedorDelivery } = require('../models/delivery.models');
+        const forn = await FornecedorDelivery.findOneAndUpdate(
+            { _id: req.params.id, adminId: req.adminId },
+            req.body, { new: true }
+        );
+        res.json({ ok: true, fornecedor: forn });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+router.delete('/fornecedores/:id', authDelivery, async (req, res) => {
+    try {
+        const { FornecedorDelivery } = require('../models/delivery.models');
+        await FornecedorDelivery.findOneAndUpdate(
+            { _id: req.params.id, adminId: req.adminId },
+            { ativo: false }
+        );
+        res.json({ ok: true });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
 module.exports = router;

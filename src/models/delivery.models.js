@@ -487,3 +487,18 @@ const ContaPagarSchema = new mongoose.Schema({
 }, { timestamps: true });
 const ContaPagar = mongoose.models.ContaPagar || mongoose.model('ContaPagar', ContaPagarSchema);
 module.exports.ContaPagar = ContaPagar;
+
+// ===== FORNECEDOR =====
+const FornecedorDeliverySchema = new mongoose.Schema({
+    adminId: { type: mongoose.Schema.Types.ObjectId, required: true, index: true },
+    nome: { type: String, required: true },
+    contato: { type: String, default: '' },
+    telefone: { type: String, default: '' },
+    email: { type: String, default: '' },
+    categoria: { type: String, default: '' },
+    observacoes: { type: String, default: '' },
+    ativo: { type: Boolean, default: true }
+}, { timestamps: true });
+
+const FornecedorDelivery = mongoose.model('FornecedorDelivery', FornecedorDeliverySchema);
+module.exports.FornecedorDelivery = FornecedorDelivery;
