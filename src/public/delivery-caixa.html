@@ -2556,16 +2556,13 @@ function imprimirEtiquetaCarrinho() {
       <div class="linha"><span>Preço/kg:</span><span>R$ ${Number(it.precoUnitario||0).toFixed(2)}</span></div>
       <div class="total">R$ ${Number(it.subtotal||0).toFixed(2)}</div>
       <div style="text-align:center;font-size:9px;margin-top:4px;color:#555">${new Date().toLocaleString('pt-BR')}</div>
-    
-  <script id="rebeca-nav-fix-caixa">
-window.onload=function(){window.print();setTimeout(()=>window.close(),500);}<\/script>
-<!-- fallback IDs -->
-<input id="inputMesa" type="text" style="display:none">
-<div id="modalMesas" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9001;align-items:center;justify-content:center"></div>
-</body></html>');
-          w.document.close();
-        }
-      }
+    </body></html>`;
+    const _wEt = window.open('','_blank','width=300,height=400');
+    _wEt.document.write(html);
+    _wEt.document.close();
+    setTimeout(() => _wEt.print(), 400);
+  });
+}
       // Toast de confirmação
       const div = document.createElement('div');
       div.style.cssText = 'position:fixed;bottom:120px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:10px 20px;border-radius:10px;font-size:.85em;font-weight:700;z-index:9999';
