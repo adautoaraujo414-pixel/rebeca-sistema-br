@@ -6084,7 +6084,7 @@ async function enviarCardapioDia() {
             document.body.insertAdjacentHTML('beforeend', html);
         }
 
-        function salvarFornecedor(idxEditar) {
+        async function salvarFornecedor(idxEditar) {
             var nome = document.getElementById('fi_nome').value.trim();
             if (!nome) { alert('Nome do vendedor obrigatório!'); return; }
             var tel = document.getElementById('fi_tel').value.replace(/\D/g,'');

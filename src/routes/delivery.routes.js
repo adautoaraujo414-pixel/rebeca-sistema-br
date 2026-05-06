@@ -1582,14 +1582,20 @@ router.put('/entregador/status', async (req, res) => {
 router.get('/eventos', async (req, res) => {
     try {
         const token = req.headers.authorization?.replace('Bearer ', '') || req.query.token;
-        if (!token) return res.status(401).end();
+        if (!token) { res.status(401).end(); return; }
         const { AdminDelivery } = require('../models/delivery.models');
         let adminSse = await AdminDelivery.findOne({ token });
         if (!adminSse) {
             const { Admin } = require('../models');
             adminSse = await Admin.findOne({ token, tipoAdmin: 'delivery' });
         }
-        if (!adminSse) return res.status(401).end();
+        if (!adminSse) { res.status(401).end(); return; }
+        // Headers SSE obrigatórios ANTES de registrar
+        res.setHeader('Content-Type', 'text/event-stream');
+        res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('Connection', 'keep-alive');
+        res.setHeader('X-Accel-Buffering', 'no');
+        res.flushHeaders();
         const SseService = require('../services/sse.service');
         SseService.registrar(adminSse._id.toString(), res);
     } catch(e) { res.status(500).end(); }
