@@ -6728,12 +6728,19 @@ function getToken() {
 }
 
 function abrirTelaCaixa() {
-    document.getElementById('caixaOperadorInput').value = '';
-    document.getElementById('caixaNumeroInput').value = '1';
-    document.getElementById('caixaFundoInput').value = '0';
-    document.getElementById('caixaErro').style.display = 'none';
-    document.getElementById('modalAbrirCaixa').style.display = 'flex';
-    setTimeout(function(){ document.getElementById('caixaOperadorInput').focus(); }, 100);
+    var modal = document.getElementById('modalAbrirCaixa');
+    if (!modal) { alert('Modal do caixa não encontrado. Recarregue a página.'); return; }
+    var op = document.getElementById('caixaOperadorInput');
+    var num = document.getElementById('caixaNumeroInput');
+    var fundo = document.getElementById('caixaFundoInput');
+    var erro = document.getElementById('caixaErro');
+    if (op) op.value = '';
+    if (num) num.value = '1';
+    if (fundo) fundo.value = '0';
+    if (erro) erro.style.display = 'none';
+    modal.style.display = 'flex';
+    modal.style.zIndex = '99999';
+    setTimeout(function(){ if (op) op.focus(); }, 100);
 }
 
 async function confirmarAbrirCaixa() {
