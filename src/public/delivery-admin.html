@@ -3176,10 +3176,34 @@ function abrirModalConta() {
     if (el) { el.style.display = 'flex'; return; }
   }
 }
-function carregarFornecedores() {
-  var item = document.querySelector('[data-page="financeiro-fornecedores"]');
-  if (item) { item.click(); return; }
-  if (typeof carregarFinanceiroFornecedores === 'function') carregarFinanceiroFornecedores();
+async function carregarFornecedores() {
+  const el = document.getElementById('forn-lista');
+  if (!el) return;
+  el.innerHTML = '<div style="text-align:center;padding:40px;color:#888">Carregando...</div>';
+  try {
+    const r = await api('/fornecedores');
+    const lista = await r.json();
+    const forns = Array.isArray(lista) ? lista : (lista.fornecedores || []);
+    if (!forns.length) {
+      el.innerHTML = '<div style="color:#888;text-align:center;padding:40px">Nenhum fornecedor cadastrado</div>';
+      return;
+    }
+    el.innerHTML = forns.map(f => `
+      <div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div style="font-weight:700;font-size:1em">🏭 ${f.nome || ''}</div>
+          <div style="font-size:.82em;color:#666;margin-top:4px">${f.contato || ''} ${f.telefone ? '· '+f.telefone : ''}</div>
+          <div style="font-size:.8em;color:#aaa">${f.categoria || ''}</div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button onclick="editarFornecedor('${f._id}')" style="background:#f97316;color:#fff;border:none;border-radius:8px;padding:6px 14px;cursor:pointer;font-size:.85em">Editar</button>
+          <button onclick="excluirFornecedor('${f._id}')" style="background:#ef4444;color:#fff;border:none;border-radius:8px;padding:6px 14px;cursor:pointer;font-size:.85em">Excluir</button>
+        </div>
+      </div>
+    `).join('');
+  } catch(e) {
+    el.innerHTML = '<div style="color:#ef4444;text-align:center;padding:40px">Erro ao carregar fornecedores</div>';
+  }
 }
 function irPara(pagina) {
   var item = document.querySelector('[data-page="' + pagina + '"]');
