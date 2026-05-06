@@ -2157,11 +2157,29 @@ router.get('/garcons/eventos', async (req, res) => {
 router.get('/sse', async (req, res) => {
     try {
         const adminId = req.query.adminId;
-        if (!adminId) return res.status(400).end();
-        const admin = await AdminDelivery.findById(adminId).lean();
-        if (!admin) return res.status(404).end();
+        const token = req.query.token || req.headers.authorization?.replace('Bearer ','');
+        let admin = null;
+        if (adminId) {
+            admin = await AdminDelivery.findById(adminId).lean();
+            if (!admin) {
+                const { Admin } = require('../models');
+                admin = await Admin.findById(adminId).lean();
+            }
+        } else if (token) {
+            admin = await AdminDelivery.findOne({ token }).lean();
+            if (!admin) {
+                const { Admin } = require('../models');
+                admin = await Admin.findOne({ token, tipoAdmin: 'delivery' }).lean();
+            }
+        }
+        if (!admin) return res.status(401).end();
+        res.setHeader('Content-Type', 'text/event-stream');
+        res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('Connection', 'keep-alive');
+        res.setHeader('X-Accel-Buffering', 'no');
+        res.flushHeaders();
         const SseService = require('../services/sse.service');
-        SseService.registrar(adminId.toString(), res);
+        SseService.registrar(admin._id.toString(), res);
     } catch(e) { res.status(500).end(); }
 });
 
