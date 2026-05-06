@@ -2603,7 +2603,11 @@ function imprimirEtiquetaCarrinho() {
   (function(){
     // Registrar SW
     if('serviceWorker' in navigator){
-      navigator.serviceWorker.register('/sw-rebeca.js').catch(function(){});
+      // Desregistrar todos os SWs antigos e registrar o novo limpo
+      navigator.serviceWorker.getRegistrations().then(function(regs){
+        regs.forEach(function(r){ r.unregister(); });
+        navigator.serviceWorker.register('/sw-rebeca.js').catch(function(){});
+      });
     }
 
     // Navegação entre apps no FAB drawer

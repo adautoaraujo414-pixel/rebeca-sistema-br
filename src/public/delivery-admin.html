@@ -3065,7 +3065,10 @@ const _irParaOriginal = typeof irPara === 'function' ? irPara : null;
 
   <script id="rebeca-sw-admin">
   if('serviceWorker' in navigator){
-    navigator.serviceWorker.register('/sw-rebeca.js').catch(function(){});
+    navigator.serviceWorker.getRegistrations().then(function(regs){
+      regs.forEach(function(r){ r.unregister(); });
+      navigator.serviceWorker.register('/sw-rebeca.js').catch(function(){});
+    });
   }
   </script>
 
