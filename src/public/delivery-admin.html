@@ -6781,14 +6781,14 @@ async function confirmarAbrirCaixa() {
     erroEl.style.display = 'none';
 
     try {
-        var tk = localStorage.getItem('delivery_token') || localStorage.getItem('token') || '';
+        var tk = localStorage.getItem('delivery_token') || (typeof token !== 'undefined' ? token : '') || localStorage.getItem('token') || '';
         var r = await fetch('/api/delivery/caixa/abrir', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + tk },
-            body: JSON.stringify({ operador, numeroCaixa, valorAbertura })
+            body: JSON.stringify({ operador, numeroCaixa, fundoCaixa: valorAbertura })
         });
         var d = await r.json();
-        if (d.ok || d.caixa || d._id) {
+        if (d.ok || d.sucesso || d.caixa || d._id) {
             document.getElementById('modalAbrirCaixa').style.display = 'none';
             var url = '/delivery-caixa?token=' + encodeURIComponent(tk) +
                       '&operador=' + encodeURIComponent(operador) +
