@@ -2769,12 +2769,7 @@ function imprimirEtiquetaCarrinho() {
     }, true);
   });
   <\/script>
-</body></html>`;
-    const w = window.open('','_blank','width=300,height=400');
-    w.document.write(html); w.document.close();
-    setTimeout(() => w.print(), 400);
-  });
-}
+</body></html>
 
 function gerarComprovante() {
   if (!carrinho.length) { alert('Carrinho vazio!'); return; }
