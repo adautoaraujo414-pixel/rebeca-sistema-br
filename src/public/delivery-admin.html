@@ -2466,7 +2466,7 @@ async function carregarConfigNF() {
                 if(divCaixa) {
                     if(d.caixaAberto) {
                         const desde = new Date(d.caixaAberto.desde).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-                        const _caixaUrl = '/delivery-caixa?token=' + encodeURIComponent(token) + '&operador=' + encodeURIComponent(d.caixaAberto.por) + (d.caixaAberto.numeroCaixa ? '&numeroCaixa=' + d.caixaAberto.numeroCaixa : '');
+                        const _caixaUrl = '/delivery-caixa?token=' + encodeURIComponent(localStorage.getItem('delivery_token')||token||'') + '&operador=' + encodeURIComponent(d.caixaAberto.por) + (d.caixaAberto.numeroCaixa ? '&numeroCaixa=' + d.caixaAberto.numeroCaixa : '');
                         divCaixa.innerHTML = `<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:10px 14px;font-size:.84em;display:flex;justify-content:space-between;align-items:center;gap:10px"><span>🟢 <b>Caixa aberto</b> desde ${desde} por <b>${d.caixaAberto.por}</b></span><a href="${_caixaUrl}" target="_blank" style="color:#16a34a;font-weight:700;cursor:pointer;white-space:nowrap">Acessar →</a></div>`;
                     } else {
                         // Buscar ultimo fechamento
