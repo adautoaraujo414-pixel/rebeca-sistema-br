@@ -22,8 +22,11 @@ const authDelivery = async (req, res, next) => {
         }
         if (!admin) return res.status(401).json({ erro: 'Token inválido' });
         if (admin.status === 'bloqueado') return res.status(403).json({ erro: 'Conta bloqueada. Entre em contato: (34) 98403-9955', bloqueado: true });
-        if (admin.status === 'trial' && new Date() > admin.trialFim) {
-            await AdminDelivery.findByIdAndUpdate(admin._id, { status: 'bloqueado', motivoBloqueio: 'Trial expirado' });
+        if (admin.status === 'trial' && admin.trialFim && new Date() > admin.trialFim) {
+            // Só bloquear se for AdminDelivery (tem trialFim), não Admin genérico
+            if (admin.constructor && admin.constructor.modelName === 'AdminDelivery') {
+                await AdminDelivery.findByIdAndUpdate(admin._id, { status: 'bloqueado', motivoBloqueio: 'Trial expirado' });
+            }
             return res.status(403).json({ erro: 'Período de teste encerrado.', trialExpirado: true });
         }
         req.adminId = admin._id;
@@ -1581,10 +1584,14 @@ router.get('/eventos', async (req, res) => {
         const token = req.headers.authorization?.replace('Bearer ', '') || req.query.token;
         if (!token) return res.status(401).end();
         const { AdminDelivery } = require('../models/delivery.models');
-        const admin = await AdminDelivery.findOne({ token });
-        if (!admin) return res.status(401).end();
+        let adminSse = await AdminDelivery.findOne({ token });
+        if (!adminSse) {
+            const { Admin } = require('../models');
+            adminSse = await Admin.findOne({ token, tipoAdmin: 'delivery' });
+        }
+        if (!adminSse) return res.status(401).end();
         const SseService = require('../services/sse.service');
-        SseService.registrar(admin._id.toString(), res);
+        SseService.registrar(adminSse._id.toString(), res);
     } catch(e) { res.status(500).end(); }
 });
 
