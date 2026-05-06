@@ -1464,13 +1464,29 @@ async function confirmarPagamento() {
 
 function fecharModal() { document.getElementById('modal-pagamento').classList.remove('show'); }
 
-// AUTO-LOGIN
-if(token) {
-  fetch('/api/delivery-auth/me', {headers:{'Authorization':'Bearer '+token}})
-    .then(r => r.json())
-    .then(d => { if(d.sucesso) iniciarApp(d.admin||{}); })
-    .catch(() => {});
-}
+// AUTO-LOGIN — aguarda DOM pronto
+document.addEventListener('DOMContentLoaded', function() {
+  if(token) {
+    fetch('/api/delivery-auth/me', {headers:{'Authorization':'Bearer '+token}})
+      .then(r => r.json())
+      .then(d => {
+        if(d.sucesso) {
+          iniciarApp(d.admin||{});
+        } else {
+          // Token inválido — mostrar tela de login
+          document.getElementById('login-screen').style.display = 'flex';
+          document.getElementById('app').style.display = 'none';
+          var el = document.getElementById('login-erro');
+          if(el) el.textContent = d.erro || 'Sessão expirada, faça login novamente';
+        }
+      })
+      .catch(() => {
+        document.getElementById('login-screen').style.display = 'flex';
+      });
+  } else {
+    document.getElementById('login-screen').style.display = 'flex';
+  }
+});
 
 // ── IMPRESSÃO DE CUPOM TÉRMICO ──────────────────────────────
 let _configCupom = {};
