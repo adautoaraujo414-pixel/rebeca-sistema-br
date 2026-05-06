@@ -2763,7 +2763,21 @@ const _atualizarTotaisOriginal = typeof atualizarTotais === 'function' ? atualiz
 
 function itemCard(i) {
   if (window._tipoNegocio === 'acougue') return itemCardAcougue(i);
-  return _itemCardOriginal ? _itemCardOriginal(i) : '';
+  // Renderizar card normal
+  const img = i.imagem
+    ? `<img class="item-img" src="${i.imagem}" alt="${i.nome}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">` 
+      + `<div class="item-img-placeholder" style="display:none">🍔</div>`
+    : `<div class="item-img-placeholder">🍔</div>`;
+  const data = encodeURIComponent(JSON.stringify({_id:i._id,nome:i.nome,preco:i.preco}));
+  return `<div class="item-card" onclick="addItem('${data}')">
+    ${img}
+    <div class="item-info">
+      <div class="item-name">${i.nome}</div>
+      ${i.descricao ? `<div class="item-desc">${i.descricao}</div>` : ''}
+      <div class="item-price">${'R$ ' + Number(i.preco||0).toFixed(2).replace('.',',')}</div>
+    </div>
+    <button class="item-add">+</button>
+  </div>`;
 }
 
 function atualizarTotais() {
