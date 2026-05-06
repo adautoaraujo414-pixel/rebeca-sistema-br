@@ -1572,9 +1572,16 @@ router.put('/entregador/status', async (req, res) => {
 // ========== CAIXA ==========
 
 // ===== SSE — eventos em tempo real (admin) =====
-router.get('/eventos', authDelivery, (req, res) => {
-    const SseService = require('../services/sse.service');
-    SseService.registrar(req.adminId.toString(), res);
+router.get('/eventos', async (req, res) => {
+    try {
+        const token = req.headers.authorization?.replace('Bearer ', '') || req.query.token;
+        if (!token) return res.status(401).end();
+        const { AdminDelivery } = require('../models/delivery.models');
+        const admin = await AdminDelivery.findOne({ token });
+        if (!admin) return res.status(401).end();
+        const SseService = require('../services/sse.service');
+        SseService.registrar(admin._id.toString(), res);
+    } catch(e) { res.status(500).end(); }
 });
 
 // ===== SSE — eventos para entregador (por token) =====
