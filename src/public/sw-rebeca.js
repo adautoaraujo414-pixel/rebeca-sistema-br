@@ -1,42 +1,21 @@
-const CACHE = 'rebeca-v2';
-const STATIC = ['/logo-rebeca.png', '/icon-rebeca-192.png'];
+const CACHE = 'rebeca-v3';
 
 self.addEventListener('install', e => {
   self.skipWaiting();
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(STATIC.filter(Boolean))).catch(()=>{}));
 });
 
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
+      Promise.all(keys.map(k => caches.delete(k)))
     ).then(() => self.clients.claim())
   );
 });
 
 self.addEventListener('fetch', e => {
-  // Nunca cachear API nem SSE
-  if (e.request.url.includes('/api/')) return;
-  // Network first para HTML
-  if (e.request.destination === 'document') {
-    e.respondWith(
-      fetch(e.request).catch(() => caches.match(e.request).then(r => r || Response.error()))
-    );
-    return;
-  }
-  // Cache first para assets estáticos
-  e.respondWith(
-    caches.match(e.request).then(cached => {
-      if (cached) return cached;
-      return fetch(e.request).then(r => {
-        if (r && r.ok) {
-          const clone = r.clone();
-          caches.open(CACHE).then(c => c.put(e.request, clone));
-        }
-        return r;
-      }).catch(() => cached || Response.error());
-    })
-  );
+  // Nunca interceptar nada — deixar tudo passar direto para a rede
+  // Isso resolve o Maximum call stack e network error no caixa
+  return;
 });
 
 self.addEventListener('push', e => {
