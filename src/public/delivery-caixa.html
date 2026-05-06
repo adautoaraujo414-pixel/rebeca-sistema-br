@@ -898,13 +898,20 @@ async function carregarCardapio(silencioso) {
     ]);
     const catsRaw = await rCats.json();
     const itensRaw = await rItens.json();
-    // GET /categorias retorna array direto
     categorias = Array.isArray(catsRaw) ? catsRaw : (catsRaw.categorias || []);
-    // GET /cardapio retorna array de itens com populate (categoriaId como objeto)
     itensTodos = Array.isArray(itensRaw) ? itensRaw : (itensRaw.itens || []);
     renderCategorias();
     renderItens();
-  } catch(e) { console.log('[CAIXA] Erro cardápio:', e.message); }
+    // Mensagem se cardápio vazio
+    if (!itensTodos.length) {
+      const c = document.getElementById('itens-container');
+      if (c) c.innerHTML = '<div style="text-align:center;padding:60px 20px;color:#aaa"><div style="font-size:2em">🛒</div><div style="margin-top:8px">Nenhum item no cardápio.<br>Cadastre itens no painel admin.</div></div>';
+    }
+  } catch(e) {
+    console.log('[CAIXA] Erro cardápio:', e.message);
+    const c = document.getElementById('itens-container');
+    if (c) c.innerHTML = '<div style="text-align:center;padding:60px 20px;color:#ef4444">❌ Erro ao carregar cardápio.<br>Verifique sua conexão.</div>';
+  }
 }
 
 function renderCategorias() {

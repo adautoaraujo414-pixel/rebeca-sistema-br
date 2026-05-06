@@ -6408,7 +6408,8 @@ async function carregarRelatorioFinanceiro() {
 
 async function carregarRelatorios() {
     try {
-        const d = await api('/caixa/historico?limite=30');
+        const _rHist = await api('/caixa/historico?limite=30');
+        const d = await _rHist.json();
         const caixas = d.caixas || [];
         
         // Cards resumo
