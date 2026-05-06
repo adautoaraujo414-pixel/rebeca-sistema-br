@@ -397,33 +397,12 @@ body.acougue-theme #acougue-sugestoes { display:block; }
   </style>
 
   <style id="caixa-mobile-fix">
-  @media(max-width:768px){
-    .main-layout{
-      grid-template-columns: 1fr !important;
-      overflow: visible !important;
-      height: auto !important;
-    }
-    .left{
-      overflow-y: visible !important;
-      min-height: 0;
-    }
-    .right-panel, .cart-panel, [class*="cart"], [class*="pedido-lateral"]{
-      position: fixed !important;
-      bottom: 0; left: 0; right: 0;
-      height: 50vh !important;
-      z-index: 500;
-      border-radius: 20px 20px 0 0;
-      display: none;
-    }
-    .right-panel.open, .cart-panel.open{
-      display: flex !important;
-    }
-    body{ overflow-x: hidden !important; }
-  }
+  /* removido — conflitava com layout do caixa */
   </style>
 
   <style id="rebeca-global-fix">
-  /* ===== CORREÇÕES GLOBAIS REBECA ===== */
+  /* ===== CORREÇÕES GLOBAIS REBECA — desativado no caixa ===== */
+  /*
 
   /* Scroll geral — nunca travar o body */
   html, body {
@@ -480,6 +459,7 @@ body.acougue-theme #acougue-sugestoes { display:block; }
     opacity: 0.6;
     cursor: not-allowed;
   }
+  */
   </style>
 </head>
 <body>
