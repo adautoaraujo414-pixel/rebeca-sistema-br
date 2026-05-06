@@ -15,7 +15,11 @@ const authDelivery = async (req, res, next) => {
     try {
         const token = req.headers.authorization?.replace('Bearer ', '') || req.query.token;
         if (!token) return res.status(401).json({ erro: 'Token obrigatório' });
-        const admin = await AdminDelivery.findOne({ token });
+        let admin = await AdminDelivery.findOne({ token });
+        if (!admin) {
+            const { Admin } = require('../models');
+            admin = await Admin.findOne({ token, tipoAdmin: 'delivery' });
+        }
         if (!admin) return res.status(401).json({ erro: 'Token inválido' });
         if (admin.status === 'bloqueado') return res.status(403).json({ erro: 'Conta bloqueada. Entre em contato: (34) 98403-9955', bloqueado: true });
         if (admin.status === 'trial' && new Date() > admin.trialFim) {
