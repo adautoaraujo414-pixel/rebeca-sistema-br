@@ -3103,17 +3103,27 @@ const _irParaOriginal = typeof irPara === 'function' ? irPara : null;
 
 <!-- IDs referenciados no JS — elementos de fallback -->
 <input id="barcodeResultado" type="text" style="display:none">
-<button id="btnConfirmarCaixa" style="display:none"></button>
-<div id="caixaErro" style="display:none;color:#ef4444;font-size:.85em"></div>
-<input id="caixaFundoInput" type="text" style="display:none">
-<input id="caixaNumeroInput" type="text" style="display:none">
-<input id="caixaOperadorInput" type="text" style="display:none">
 <div id="estoqueItens" style="display:none"></div>
 <img id="imgGeradaPreview" style="display:none" src="">
 <input id="inputBarcode" type="text" style="display:none">
 <div id="listaCompras" style="display:none"></div>
 <div id="listaFornecedores" style="display:none"></div>
-<div id="modalAbrirCaixa" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9001;align-items:center;justify-content:center"></div>
+<div id="modalAbrirCaixa" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9001;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:16px;padding:32px;width:340px;max-width:95vw;box-shadow:0 8px 32px rgba(0,0,0,.3)">
+    <h3 style="margin:0 0 20px;font-size:1.2em;color:#1e293b">🔓 Abrir Caixa</h3>
+    <label style="display:block;margin-bottom:6px;font-size:.85em;color:#64748b;font-weight:600">Nome do Operador *</label>
+    <input id="caixaOperadorInput" type="text" placeholder="Ex: João" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:1em;margin-bottom:14px;box-sizing:border-box">
+    <label style="display:block;margin-bottom:6px;font-size:.85em;color:#64748b;font-weight:600">Número do Caixa</label>
+    <input id="caixaNumeroInput" type="number" value="1" min="1" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:1em;margin-bottom:14px;box-sizing:border-box">
+    <label style="display:block;margin-bottom:6px;font-size:.85em;color:#64748b;font-weight:600">Fundo de Caixa (R$)</label>
+    <input id="caixaFundoInput" type="number" value="0" min="0" step="0.01" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:1em;margin-bottom:14px;box-sizing:border-box">
+    <div id="caixaErro" style="display:none;color:#ef4444;font-size:.85em;margin-bottom:12px"></div>
+    <div style="display:flex;gap:10px">
+      <button onclick="document.getElementById('modalAbrirCaixa').style.display='none'" style="flex:1;padding:11px;border:1.5px solid #e2e8f0;border-radius:8px;background:#f8fafc;cursor:pointer;font-size:.95em">Cancelar</button>
+      <button id="btnConfirmarCaixa" onclick="confirmarAbrirCaixa()" style="flex:2;padding:11px;border:none;border-radius:8px;background:#22c55e;color:#fff;font-weight:700;cursor:pointer;font-size:.95em">✅ Abrir Caixa</button>
+    </div>
+  </div>
+</div>
 <div id="modalUpgradePlano" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9001;align-items:center;justify-content:center"></div>
 <span id="planoBadge" style="display:none"></span>
 <div id="saveFill" style="display:none"></div>
