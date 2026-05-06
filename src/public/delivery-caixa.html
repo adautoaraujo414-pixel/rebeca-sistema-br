@@ -890,7 +890,7 @@ async function iniciarApp(admin) {
 }
 
 // CARDÁPIO
-async function carregarCardapio() {
+async function carregarCardapio(silencioso) {
   try {
     const [rCats, rItens] = await Promise.all([
       fetch('/api/delivery/categorias', {headers:{'Authorization':'Bearer '+token}}),
@@ -2199,7 +2199,7 @@ function abrirComandaMesa(numero) {
 function conectarSSECaixa() {
   if (!token) return;
   try {
-    const es = new EventSource('/api/delivery/sse?token=' + token);
+    const es = new EventSource('/api/delivery/eventos?token=' + token);
     es.addEventListener('novo_pedido', function(e) {
       try {
         const dados = JSON.parse(e.data);
