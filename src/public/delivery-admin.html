@@ -3211,6 +3211,46 @@ function irPara(pagina) {
   if (typeof showPage === 'function') showPage(pagina);
 }
 function navegarPara(pagina) { irPara(pagina); }
+// Editar/Excluir fornecedor por ID (página financeiro-fornecedores)
+async function editarFornecedor(id) {
+  try {
+    const r = await api('/fornecedores');
+    const lista = await r.json();
+    const forns = Array.isArray(lista) ? lista : (lista.fornecedores || []);
+    const f = forns.find(x => x._id === id);
+    if (!f) return toast('Fornecedor não encontrado', 'error');
+    // Montar objeto compatível com abrirModalFornecedor
+    const idx = _fornecedores.findIndex(x => x._id === id);
+    if (idx >= 0) {
+      abrirModalFornecedor(idx);
+    } else {
+      // Inserir temporariamente no array local
+      const obj = {
+        _id: f._id,
+        nome: f.contato || f.nome,
+        empresa: f.nome,
+        telefone: f.telefone || '',
+        cidade: f.cidade || '',
+        obs: f.observacoes || '',
+        listaProdutos: f.listaProdutos || [],
+        diasVisita: f.diasVisita || [],
+        diasEntrega: f.diasEntrega || []
+      };
+      _fornecedores.push(obj);
+      abrirModalFornecedor(_fornecedores.length - 1);
+    }
+  } catch(e) { toast('Erro ao carregar fornecedor', 'error'); }
+}
+
+async function excluirFornecedor(id) {
+  if (!confirm('Excluir este fornecedor?')) return;
+  try {
+    await api('/fornecedores/' + id, { method: 'DELETE' });
+    toast('Fornecedor excluído!');
+    carregarFornecedores();
+  } catch(e) { toast('Erro ao excluir', 'error'); }
+}
+
 function calcularSomaCombo() {
   var total = 0;
   document.querySelectorAll('.combo-item-check:checked').forEach(function(cb) {
@@ -6041,8 +6081,34 @@ async function enviarCardapioDia() {
                 _fornecedores.push(obj);
             }
             localStorage.setItem('fornecedores', JSON.stringify(_fornecedores));
+            // Salvar também na API para cruzar dados com página de fornecedores
+            try {
+                const idApi = obj._id || (idxEditar !== undefined ? _fornecedores[idxEditar]?._id : null);
+                const payload = {
+                    nome: obj.nome || obj.empresa || '',
+                    contato: obj.nome,
+                    telefone: obj.telefone,
+                    email: '',
+                    categoria: obj.produtos || '',
+                    observacoes: obj.obs || '',
+                    diasVisita: obj.diasVisita,
+                    diasEntrega: obj.diasEntrega,
+                    listaProdutos: obj.listaProdutos,
+                    empresa: obj.empresa,
+                    cidade: obj.cidade
+                };
+                if (idApi) {
+                    await api('/fornecedores/' + idApi, { method: 'PUT', body: JSON.stringify(payload) });
+                } else {
+                    const r = await api('/fornecedores', { method: 'POST', body: JSON.stringify(payload) });
+                    const d = await r.json();
+                    if (d.fornecedor?._id) obj._id = d.fornecedor._id;
+                }
+            } catch(e) { console.warn('Fornecedor salvo local, erro API:', e); }
             document.getElementById('modalFornecedor').remove();
             renderFornecedores();
+            // Recarregar lista da página de fornecedores se estiver ativa
+            if (document.getElementById('forn-lista')) carregarFornecedores();
             toast('✅ Fornecedor ' + nome + ' salvo!');
         }
 
