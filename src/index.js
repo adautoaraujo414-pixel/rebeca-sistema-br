@@ -278,7 +278,17 @@ app.use('/api/delivery-master', deliveryMasterRoutes);
 app.use('/api/delivery', require('./routes/delivery-precadastro.routes'));
 app.use('/api/delivery', require('./routes/delivery-assinantes.routes'));
 app.get('/delivery-migracao', (req, res) => res.sendFile(path.join(__dirname, 'public', 'delivery-migracao.html')));
-app.get('/delivery-admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'delivery-admin.html')));
+app.get('/delivery-admin', (req, res) => {
+  const ua = req.headers['user-agent'] || '';
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|mobile|CriOS/i.test(ua);
+  const forceMobile = req.query.mobile === '1';
+  const forceDesktop = req.query.desktop === '1';
+  // Adicionar header para o HTML saber o dispositivo
+  res.setHeader('X-Device-Type', isMobile ? 'mobile' : 'desktop');
+  res.sendFile(path.join(__dirname, 'public', 'delivery-admin.html'), {
+    headers: { 'X-Device-Type': isMobile && !forceDesktop ? 'mobile' : 'desktop' }
+  });
+});
 app.get('/delivery-entregador', (req, res) => res.sendFile(path.join(__dirname, 'public', 'delivery-entregador.html')));
 app.get('/delivery-cozinha', (req, res) => res.sendFile(path.join(__dirname, 'public', 'delivery-cozinha.html')));
 app.get('/delivery-garcom', (req, res) => res.sendFile(path.join(__dirname, 'public', 'delivery-garcom.html')));
