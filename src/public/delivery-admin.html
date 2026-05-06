@@ -2590,6 +2590,12 @@ async function carregarConfigNF() {
             <div class="sep"></div>
             <p style="text-align:center;font-size:11px">Obrigado pela preferência! 😊</p>
             <scr'+'ipt>window.onload=function(){window.print();}<'+'/script>
+            </body></html>`;
+            const w = window.open('','_blank','width=380,height=600');
+            w.document.write(html);
+            w.document.close();
+            setTimeout(() => w.print(), 500);
+        }
             <!-- Modal ficha garçom -->
 <div id="modalFichaGarcom" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:9000;align-items:center;justify-content:center">
   <div style="background:#1a1a2e;border-radius:16px;padding:28px;width:95%;max-width:600px;max-height:90vh;overflow-y:auto;border:1px solid #333">
