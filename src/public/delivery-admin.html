@@ -2036,14 +2036,21 @@ async function carregarConfigNF() {
                 const d = await r.json();
                 if (!d.sucesso) {
                     localStorage.removeItem('delivery_token');
-                    const erroEl = document.getElementById('loginErro');
+                    token = '';
                     if (d.trialExpirado) {
-                        // Mostrar tela de ativação do plano
                         document.getElementById('loginContainer').style.display = 'none';
                         document.getElementById('telaAtivacao').style.display = 'flex';
                         return;
                     }
-                    if (erroEl && d.bloqueado) { erroEl.textContent = d.erro; erroEl.style.display = 'block'; }
+                    // Token inválido/expirado — forçar tela de login
+                    if (lc) lc.style.display = 'flex';
+                    if (dc) dc.style.display = 'none';
+                    if (dv) dv.style.display = 'none';
+                    const erroEl = document.getElementById('loginErro');
+                    if (erroEl) {
+                        erroEl.textContent = d.bloqueado ? d.erro : '⚠️ Sessão expirada. Faça login novamente.';
+                        erroEl.style.display = 'block';
+                    }
                     return;
                 }
                 adminData = d.admin;
