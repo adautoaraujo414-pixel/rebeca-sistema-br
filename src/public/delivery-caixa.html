@@ -1480,14 +1480,18 @@ document.addEventListener('DOMContentLoaded', function() {
         if(d.sucesso) {
           iniciarApp(d.admin||{});
         } else {
-          // Token inválido — mostrar tela de login
+          // Limpar token inválido do localStorage
+          localStorage.removeItem('caixa_token');
+          token = '';
           document.getElementById('login-screen').style.display = 'flex';
           document.getElementById('app').style.display = 'none';
           var el = document.getElementById('login-erro');
-          if(el) el.textContent = d.erro || 'Sessão expirada, faça login novamente';
+          if(el) el.textContent = '⚠️ ' + (d.erro || 'Sessão expirada. Faça login ou reabra o caixa pelo admin.');
         }
       })
       .catch(() => {
+        localStorage.removeItem('caixa_token');
+        token = '';
         document.getElementById('login-screen').style.display = 'flex';
       });
   } else {
