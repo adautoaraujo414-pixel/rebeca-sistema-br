@@ -2186,6 +2186,9 @@ router.get('/sse', async (req, res) => {
 // ===== PEDIR CONTA (cliente solicita pelo mesa.html) =====
 
 // ========== MESA: CHAMAR GARÇOM ==========
+// Mapa de chamadas pendentes em memória
+const _chamadasPendentes = new Map();
+
 router.post('/garcons/chamar', async (req, res) => {
     try {
         const { adminId, adminSlug, mesa, nomeCliente, motivo } = req.body;
@@ -2196,23 +2199,65 @@ router.post('/garcons/chamar', async (req, res) => {
 
         const adminObjId = admin._id.toString();
         const motivoLabel = motivo || 'Chamado pelo cliente';
+        const chave = adminObjId + '_mesa_' + String(mesa);
+        const agora = Date.now();
 
-        // Emitir SSE para o garçom
-        SseService.emitir(adminObjId, 'garcom_chamado', {
+        // Verificar se é segunda chamada (dentro de 2 minutos)
+        const chamadaAnterior = _chamadasPendentes.get(chave);
+        const ehSegundaChamada = chamadaAnterior && (agora - chamadaAnterior.ts) < 120000;
+
+        const payload = {
             mesa: String(mesa),
             nomeCliente: nomeCliente || 'Cliente',
             motivo: motivoLabel,
             hora: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-            ts: Date.now()
-        });
+            ts: agora,
+            segundaChamada: ehSegundaChamada
+        };
 
-        // Emitir também para o caixa/admin saberem
+        // Emitir SSE para o garçom
+        SseService.emitir(adminObjId, 'garcom_chamado', payload);
+
+        // Emitir para caixa/admin
         SseService.emitir(adminObjId, 'novo_pedido', {
             tipo: 'chamada_garcom',
             mesa: String(mesa),
-            nomeCliente: nomeCliente || 'Cliente'
+            nomeCliente: nomeCliente || 'Cliente',
+            segundaChamada: ehSegundaChamada
         });
 
+        // Se for segunda chamada — alerta urgente para o admin
+        if (ehSegundaChamada) {
+            SseService.emitir(adminObjId, 'alerta_admin', {
+                tipo: 'segunda_chamada_garcom',
+                mesa: String(mesa),
+                nomeCliente: nomeCliente || 'Cliente',
+                msg: '⚠️ Mesa ' + mesa + ' chamou o garçom 2x sem atendimento!',
+                hora: payload.hora
+            });
+        }
+
+        // Registrar chamada pendente
+        _chamadasPendentes.set(chave, { ts: agora, mesa, adminObjId });
+
+        // Limpar após 2 minutos
+        setTimeout(() => {
+            const atual = _chamadasPendentes.get(chave);
+            if (atual && atual.ts === agora) _chamadasPendentes.delete(chave);
+        }, 120000);
+
+        res.json({ sucesso: true, segundaChamada: ehSegundaChamada });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// Garçom confirmou atendimento — limpar chamada pendente
+router.post('/garcons/confirmar-atendimento', async (req, res) => {
+    try {
+        const { adminId, mesa } = req.body;
+        if (!adminId || !mesa) return res.status(400).json({ erro: 'adminId e mesa obrigatorios' });
+        const chave = adminId + '_mesa_' + String(mesa);
+        _chamadasPendentes.delete(chave);
+        SseService.emitir(adminId, 'mesa_atendida', { mesa: String(mesa) });
         res.json({ sucesso: true });
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
