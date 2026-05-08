@@ -459,19 +459,32 @@ async function iniciarApp(admin) {
 
 function conectarSseCaixa() {
   if (window._sseCaixa) { try { window._sseCaixa.close(); } catch(e){} }
-  const sse = new EventSource('/api/delivery/sse?token=' + encodeURIComponent(token));
-  window._sseCaixa = sse;
-  ['novo_pedido','pedido_atualizado','mesa_atualizada','mesa_atendida'].forEach(function(evt) {
-    sse.addEventListener(evt, function() {
-      carregarMesasCaixa();
-      carregarStats();
+  // Tentar SSE — se Render fechar, polling cobre
+  try {
+    const sse = new EventSource('/api/delivery/sse?token=' + encodeURIComponent(token));
+    window._sseCaixa = sse;
+    sse.onopen = function() { console.log('[SSE Caixa] conectado'); };
+    ['novo_pedido','pedido_atualizado','mesa_atualizada','mesa_atendida'].forEach(function(evt) {
+      sse.addEventListener(evt, function() {
+        carregarMesasCaixa();
+        carregarStats();
+      });
     });
-  });
-  sse.addEventListener('novo_pedido', function() { carregarPedidos(); });
-  sse.onerror = function() {
-    setTimeout(function() { if(token) conectarSseCaixa(); }, 5000);
-  };
-  registrarSseMesas(sse);
+    sse.addEventListener('novo_pedido', function() { carregarPedidos(); });
+    sse.onerror = function() {
+      console.log('[SSE Caixa] erro — reconectando em 8s');
+      try { sse.close(); } catch(e){}
+      setTimeout(function() { if(token) conectarSseCaixa(); }, 8000);
+    };
+    registrarSseMesas(sse);
+  } catch(e) { console.error('[SSE Caixa] falha:', e); }
+  // Polling fallback a cada 20s independente do SSE
+  if (!window._caixaPolling) {
+    window._caixaPolling = setInterval(function() {
+      carregarPedidos();
+      carregarStats();
+    }, 20000);
+  }
 }
 
 // CARDÁPIO
