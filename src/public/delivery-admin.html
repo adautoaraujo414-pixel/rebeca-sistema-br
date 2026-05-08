@@ -3844,6 +3844,7 @@ async function _salvarItemReal() {
             document.getElementById('cfgBoasVindas').value = c.mensagemBoasVindas || '';
             document.getElementById('cfgMsgConfirmado').value = c.mensagemPedidoConfirmado || '';
             document.getElementById('cfgMsgPronto').value = c.mensagemPedidoPronto || '';
+            if(document.getElementById('qtdMesas')) document.getElementById('qtdMesas').value = c.qtdMesas || 10;
             const btn = document.getElementById('btnAberto');
             btn.textContent = c.aberto ? '🟢 ABERTO' : '🔴 FECHADO';
             btn.style.background = c.aberto ? '#00cc6a' : '#ff4444';
@@ -3881,8 +3882,9 @@ async function _salvarItemReal() {
                 nomeEstabelecimento:      g('cfgNomeEstabelecimento')?.value || '',
                 alertaEstoqueBaixo:       !!(g('cfgAlertaEstoque')?.checked),
                 telaCozinhaAtiva:         !!(g('cfgTelaCozinha')?.checked),
-                telaCozinhaAtiva:         !!(g('cfgTelaCozinha')?.checked)
-            })});
+                telaCozinhaAtiva:         !!(g('cfgTelaCozinha')?.checked),
+                qtdMesas:                 parseInt(g('qtdMesas')?.value) || 10
+            }});
             // Também salvar logo e nome no AdminDelivery para rotas públicas
             const logoVal = g('cfgLogoUrl')?.value || '';
             const nomeVal = g('cfgNomeEstabelecimento')?.value || '';

@@ -494,6 +494,10 @@ router.put('/config', authDelivery, async (req, res) => {
             { $set: { ...req.body, adminId: req.adminId } },
             { new: true, upsert: true }
         );
+        // Salvar qtdMesas no AdminDelivery também (usado pela rota mesas-painel)
+        if (req.body.qtdMesas) {
+            await AdminDelivery.findByIdAndUpdate(req.adminId, { $set: { qtdMesas: Number(req.body.qtdMesas) || 10 } });
+        }
         res.json(config);
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
