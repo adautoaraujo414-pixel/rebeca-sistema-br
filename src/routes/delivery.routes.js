@@ -3665,3 +3665,129 @@ router.delete('/fornecedores/:id', authDelivery, async (req, res) => {
 });
 
 module.exports = router;
+
+// ===== GERAR INSTALADOR LOCAL PERSONALIZADO =====
+router.get('/gerar-instalador', authDelivery, async (req, res) => {
+  try {
+    const archiver = require('archiver');
+    const path = require('path');
+    const fs = require('fs');
+    
+    const adminId = req.adminId;
+    const admin = await require('../models/DeliveryAdmin').findById(adminId);
+    if (!admin) return res.status(404).json({ erro: 'Admin não encontrado' });
+
+    const nomeRestaurante = (admin.nomeRestaurante || 'Rebeca').replace(/[^a-zA-Z0-9]/g, '-');
+    const apiUrl = process.env.RENDER_EXTERNAL_URL || 'https://rebeca-sistema-br.onrender.com';
+
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', `attachment; filename=rebeca-${nomeRestaurante}-instalador.zip`);
+
+    const archive = archiver('zip', { zlib: { level: 9 } });
+    archive.pipe(res);
+
+    // docker-compose personalizado
+    const dockerCompose = `version: '3.8'
+services:
+  mongodb:
+    image: mongo:7
+    container_name: rebeca-mongo
+    restart: always
+    volumes:
+      - rebeca-data:/data/db
+    ports:
+      - "27017:27017"
+  rebeca:
+    image: node:18-alpine
+    container_name: rebeca-app
+    restart: always
+    working_dir: /app
+    ports:
+      - "3000:10000"
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017/rebeca
+      - JWT_SECRET=rebeca-local-${adminId}
+      - NODE_ENV=production
+      - PORT=10000
+      - ADMIN_ID=${adminId}
+      - API_NUVEM=${apiUrl}
+      - SYNC_NUVEM=true
+    depends_on:
+      - mongodb
+    volumes:
+      - ./app:/app
+    command: sh -c "cd /app && npm install --production && node src/index.js"
+volumes:
+  rebeca-data:
+`;
+
+    // Instalador Windows
+    const batContent = `@echo off
+title Instalador Rebeca - ${admin.nomeRestaurante || 'Sistema'}
+color 0A
+echo.
+echo  =============================================
+echo   REBECA DELIVERY - ${admin.nomeRestaurante || 'Sistema'}
+echo   Instalador Local - Funciona SEM INTERNET
+echo  =============================================
+echo.
+
+docker --version >nul 2>&1
+if %errorlevel% neq 0 (
+    echo [!] Docker nao encontrado. Abrindo download...
+    start https://www.docker.com/products/docker-desktop/
+    echo.
+    echo  Instale o Docker Desktop e execute novamente.
+    pause
+    exit
+)
+
+echo [OK] Docker encontrado!
+echo.
+echo [->] Iniciando ${admin.nomeRestaurante || 'Rebeca'}...
+docker-compose up -d
+echo.
+echo [OK] Sistema iniciado!
+echo.
+echo  Acesse: http://localhost:3000
+echo.
+timeout /t 3 >nul
+start http://localhost:3000
+pause
+`;
+
+    const leiaMeContent = `REBECA DELIVERY - ${admin.nomeRestaurante || 'Sistema'}
+Sistema Local - Funciona sem internet
+
+COMO INSTALAR:
+1. Instale o Docker Desktop: https://www.docker.com/products/docker-desktop/
+2. Clique duas vezes em: INSTALAR.bat
+3. Aguarde e acesse: http://localhost:3000
+
+MÓDULOS DISPONÍVEIS:
+- Admin: http://localhost:3000/delivery-admin
+- Caixa: http://localhost:3000/delivery-caixa  
+- Cozinha: http://localhost:3000/delivery-cozinha
+- Garçom: http://localhost:3000/delivery-garcom
+
+SINCRONIZAÇÃO:
+Quando tiver internet, o sistema sincroniza automaticamente com a nuvem.
+
+SUPORTE: Entre em contato com a equipe Rebeca via WhatsApp.
+`;
+
+    archive.append(dockerCompose, { name: 'docker-compose.yml' });
+    archive.append(batContent, { name: 'INSTALAR.bat' });
+    archive.append(leiaMeContent, { name: 'LEIA-ME.txt' });
+
+    // Incluir arquivos do sistema
+    const srcPath = path.join(__dirname, '../../');
+    archive.glob('src/**/*', { cwd: srcPath, ignore: ['src/public/admin/**', 'node_modules/**'] });
+    archive.glob('package*.json', { cwd: srcPath });
+
+    await archive.finalize();
+  } catch (err) {
+    console.error('Erro gerar instalador:', err);
+    if (!res.headersSent) res.status(500).json({ erro: 'Erro ao gerar instalador' });
+  }
+});

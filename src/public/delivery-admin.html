@@ -1381,6 +1381,51 @@ async function carregarConfigNF() {
 
                 <div id="page-config" class="page">
                     <h2 style="margin-bottom:20px;">⚙️ Configurações</h2>
+                    <!-- SISTEMA LOCAL -->
+                    <div class="panel" style="margin-bottom:20px;border:2px solid #f9731622;background:linear-gradient(135deg,#fff8f5,#fff)">
+                        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+                            <span style="font-size:1.8em">💻</span>
+                            <div>
+                                <h3 style="margin:0">Sistema Local — Funciona Sem Internet</h3>
+                                <p style="color:#888;font-size:.85em;margin:4px 0 0">Instale o Rebeca no seu computador. Caixa, admin, garçom e cozinha funcionam mesmo sem conexão.</p>
+                            </div>
+                        </div>
+                        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:16px">
+                            <div style="background:#f0fff4;border:1px solid #22c55e33;border-radius:10px;padding:12px;font-size:.82em">✅ Caixa e Comanda</div>
+                            <div style="background:#f0fff4;border:1px solid #22c55e33;border-radius:10px;padding:12px;font-size:.82em">✅ Painel Admin</div>
+                            <div style="background:#f0fff4;border:1px solid #22c55e33;border-radius:10px;padding:12px;font-size:.82em">✅ Garçom e Cozinha</div>
+                            <div style="background:#f0fff4;border:1px solid #22c55e33;border-radius:10px;padding:12px;font-size:.82em">✅ Impressoras locais</div>
+                            <div style="background:#fff8f0;border:1px solid #f9731633;border-radius:10px;padding:12px;font-size:.82em">🔄 Sincroniza quando voltar net</div>
+                        </div>
+                        <div id="instalador-locked" style="background:#fff3e0;border:1px solid #f9731644;border-radius:12px;padding:20px;text-align:center">
+                            <div style="font-size:2em;margin-bottom:8px">🔒</div>
+                            <div style="font-weight:700;margin-bottom:6px">Download Protegido</div>
+                            <div style="color:#888;font-size:.85em;margin-bottom:14px">Digite a senha para liberar o download do instalador</div>
+                            <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+                                <input type="password" id="senha-instalador" placeholder="Senha de acesso" 
+                                    style="padding:10px 14px;border-radius:8px;border:1px solid #ddd;font-size:.9em;width:200px"
+                                    onkeydown="if(event.key==='Enter')verificarSenhaInstalador()">
+                                <button onclick="verificarSenhaInstalador()" 
+                                    style="background:#f97316;color:#fff;border:none;border-radius:8px;padding:10px 20px;font-weight:700;cursor:pointer">
+                                    🔓 Desbloquear
+                                </button>
+                            </div>
+                            <div id="senha-erro" style="color:#ef4444;font-size:.82em;margin-top:8px;display:none">Senha incorreta</div>
+                        </div>
+                        <div id="instalador-desbloqueado" style="display:none">
+                            <div style="background:#f0fff4;border:1px solid #22c55e44;border-radius:12px;padding:20px;text-align:center">
+                                <div style="font-size:2em;margin-bottom:8px">✅</div>
+                                <div style="font-weight:700;margin-bottom:6px;color:#16a34a">Acesso Liberado!</div>
+                                <div style="color:#888;font-size:.85em;margin-bottom:16px">Clique para baixar o instalador completo do seu sistema</div>
+                                <button onclick="baixarInstalador()" 
+                                    style="background:linear-gradient(135deg,#f97316,#ea580c);color:#fff;border:none;border-radius:10px;padding:14px 28px;font-weight:800;cursor:pointer;font-size:1em;box-shadow:0 4px 16px rgba(249,115,22,.4)">
+                                    ⬇️ Baixar Instalador Windows
+                                </button>
+                                <div style="color:#888;font-size:.78em;margin-top:10px">Inclui: Docker + MongoDB + Sistema completo configurado</div>
+                            </div>
+                        </div>
+                    </div>
+
 
                     <!-- IDENTIDADE -->
                     <div class="panel" style="margin-bottom:20px;border:2px solid #f9731622">
