@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:7
+    container_name: rebeca-mongo
+    restart: always
+    volumes:
+      - rebeca-data:/data/db
+    ports:
+      - "27017:27017"
+
+  rebeca:
+    build: .
+    container_name: rebeca-app
+    restart: always
+    ports:
+      - "3000:10000"
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017/rebeca
+      - JWT_SECRET=rebeca-local-secret-2024
+      - NODE_ENV=production
+      - PORT=10000
+    depends_on:
+      - mongodb
+    volumes:
+      - ./src/public:/app/src/public
+
+volumes:
+  rebeca-data:
