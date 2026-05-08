@@ -482,8 +482,10 @@ router.put('/admin/perfil', authDelivery, async (req, res) => {
 router.get('/config', authDelivery, async (req, res) => {
     try {
         let config = await ConfigDelivery.findOne({ adminId: req.adminId });
-        // Não criar automaticamente — só retornar o que existe
-        res.json(config || {});
+        const adminData = await AdminDelivery.findById(req.adminId).select('qtdMesas').lean();
+        const result = config ? config.toObject() : {};
+        result.qtdMesas = adminData?.qtdMesas || result.qtdMesas || 10;
+        res.json(result);
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
