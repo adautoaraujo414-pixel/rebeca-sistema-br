@@ -671,6 +671,7 @@ async function fazerLogin() {
     // Salvar credenciais para auto-login
     localStorage.setItem('garcom_token', tk);
     localStorage.setItem('garcom_senha', senha);
+    if (d.garcom?.adminId) localStorage.setItem('garcom_adminId', d.garcom.adminId);
     // Conectar SSE para notificações em tempo real
     conectarSSEGarcom(tk);
     // Pedir permissão de notificação
