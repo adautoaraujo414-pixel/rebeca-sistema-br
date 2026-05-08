@@ -376,6 +376,25 @@ async function iniciarApp(admin) {
   await carregarStats();
   setInterval(carregarPedidos, 15000);
   setInterval(carregarStats, 30000);
+  // Conectar SSE para atualizações em tempo real
+  conectarSseCaixa();
+}
+
+function conectarSseCaixa() {
+  if (window._sseCaixa) { try { window._sseCaixa.close(); } catch(e){} }
+  const sse = new EventSource('/api/delivery/sse?token=' + encodeURIComponent(token));
+  window._sseCaixa = sse;
+  ['novo_pedido','pedido_atualizado','mesa_atualizada','mesa_atendida'].forEach(function(evt) {
+    sse.addEventListener(evt, function() {
+      carregarMesasCaixa();
+      carregarStats();
+    });
+  });
+  sse.addEventListener('novo_pedido', function() { carregarPedidos(); });
+  sse.onerror = function() {
+    setTimeout(function() { if(token) conectarSseCaixa(); }, 5000);
+  };
+  registrarSseMesas(sse);
 }
 
 // CARDÁPIO
@@ -790,6 +809,16 @@ async function carregarMesasCaixa() {
   } catch(e) { console.error('Erro mesas caixa:', e); }
 }
 
+// SSE: atualizar mesas em tempo real
+function registrarSseMesas(sse) {
+  if (!sse) return;
+  ['novo_pedido','pedido_atualizado','mesa_atualizada','mesa_atendida'].forEach(function(evt) {
+    sse.addEventListener(evt, function() {
+      carregarMesasCaixa();
+    });
+  });
+}
+
 function renderMesasCaixa(mesas) {
   const el = document.getElementById('mapa-mesas-caixa');
   if (!el) return;
@@ -856,6 +885,10 @@ async function abrirDetalhesMesa(num) {
         <span>TOTAL</span><span style="color:#f97316">R$ ${total.toFixed(2).replace('.',',')}</span>
       </div>
       <div style="display:flex;gap:8px">
+        <button onclick="this.closest('[style*=fixed]').remove();abrirMesaNoCaixa(${num})"
+          style="flex:1;padding:12px;background:#22c55e;color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer">
+          ➕ Add Item
+        </button>
         <button onclick="fecharMesaCaixa(${num});this.closest('[style*=fixed]').remove()" 
           style="flex:1;padding:12px;background:#ef4444;color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer">
           💳 Fechar Mesa
