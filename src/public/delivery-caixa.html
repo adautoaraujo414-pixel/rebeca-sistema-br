@@ -59,6 +59,16 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 .left{display:flex;flex-direction:column;overflow:hidden;min-height:0}
 .tabs-nav{display:flex;gap:4px;padding:12px 16px 0;flex-shrink:0}
 .tab-btn{padding:8px 16px;border-radius:8px 8px 0 0;border:1px solid transparent;background:transparent;color:var(--text3);font-size:.82em;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s;display:flex;align-items:center;gap:6px}
+.mesa-card{border-radius:12px;padding:14px;cursor:pointer;border:2px solid var(--border);background:var(--surface);transition:all .2s;position:relative}
+.mesa-card.ocupada{border-color:#f97316;background:#fff8f5}
+.mesa-card.livre{border-color:#22c55e;background:#f0fff4}
+.mesa-card:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,.1)}
+.mesa-num{font-size:1.4em;font-weight:800;margin-bottom:4px}
+.mesa-status{font-size:.75em;font-weight:700;padding:2px 8px;border-radius:20px;display:inline-block}
+.mesa-status.ocupada{background:#f9731622;color:#f97316}
+.mesa-status.livre{background:#22c55e22;color:#16a34a}
+.mesa-total{font-size:.9em;font-weight:700;color:#f97316;margin-top:6px}
+.mesa-nomes{font-size:.72em;color:var(--text3);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tab-btn.active{background:var(--surface);border-color:var(--border);border-bottom-color:var(--surface);color:var(--text);margin-bottom:-1px;z-index:1}
 .badge{background:var(--accent);color:#fff;border-radius:10px;padding:1px 7px;font-size:.75em;font-weight:700}
 .tab-content{background:var(--surface);border:1px solid var(--border);border-radius:0 12px 0 0;flex:1;overflow-y:auto;min-height:0;padding:16px}
@@ -219,6 +229,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
       <div class="tabs-nav">
         <button class="tab-btn active" onclick="mudarTab('cardapio',this)">🛒 Novo Pedido</button>
         <button class="tab-btn" onclick="mudarTab('pedidos',this)">📋 Ativos <span class="badge" id="badge-pedidos">0</span></button>
+        <button class="tab-btn" onclick="mudarTab('mesas',this)">🍽️ Mesas <span class="badge" id="badge-mesas">0</span></button>
         <button class="tab-btn" onclick="mudarTab('todos',this)">📊 Todos do Dia</button>
       </div>
       <div class="tab-content">
@@ -236,6 +247,11 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
         <!-- Pedidos Ativos -->
         <div id="tab-pedidos" style="display:none">
           <div id="pedidos-lista"><div class="empty">Nenhum pedido ativo</div></div>
+        </div>
+
+        <!-- Mesas -->
+        <div id="tab-mesas" class="tab-pane" style="display:none">
+          <div id="mapa-mesas-caixa" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;padding:4px"></div>
         </div>
 
         <!-- Todos do Dia -->
@@ -758,6 +774,135 @@ if(token) {
     .then(d => { if(d.sucesso) iniciarApp(d.admin||{}); })
     .catch(() => {});
 }
+
+// ===== MESAS NO CAIXA =====
+async function carregarMesasCaixa() {
+  try {
+    const r = await fetch('/api/delivery/caixa/mesas-painel', {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    const mesas = await r.json();
+    renderMesasCaixa(mesas);
+    const ocupadas = mesas.filter(m => m.ocupada).length;
+    const badge = document.getElementById('badge-mesas');
+    if (badge) badge.textContent = ocupadas || '';
+    if (badge) badge.style.display = ocupadas ? 'inline' : 'none';
+  } catch(e) { console.error('Erro mesas caixa:', e); }
+}
+
+function renderMesasCaixa(mesas) {
+  const el = document.getElementById('mapa-mesas-caixa');
+  if (!el) return;
+  if (!mesas.length) {
+    el.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text3)">Nenhuma mesa cadastrada</div>';
+    return;
+  }
+  el.innerHTML = mesas.map(m => {
+    const cls = m.ocupada ? 'ocupada' : 'livre';
+    const nomes = m.pedidos && m.pedidos.length ? m.pedidos.map(p => p.clienteNome||'Cliente').join(', ') : '';
+    const total = m.total ? 'R$ ' + m.total.toFixed(2).replace('.',',') : '';
+    const tempoAberta = m.abertoEm ? calcTempo(m.abertoEm) : '';
+    return `<div class="mesa-card ${cls}" onclick="abrirDetalhesMesa(${m.numero})">
+      <div class="mesa-num">🍽️ Mesa ${m.numero}</div>
+      <div class="mesa-status ${cls}">${m.ocupada ? '🔴 Ocupada' : '🟢 Livre'}</div>
+      ${m.ocupada ? `<div class="mesa-total">${total}</div>` : ''}
+      ${nomes ? `<div class="mesa-nomes">👤 ${nomes}</div>` : ''}
+      ${tempoAberta ? `<div style="font-size:.7em;color:var(--text3);margin-top:4px">⏱️ ${tempoAberta}</div>` : ''}
+      ${m.ocupada ? `<div style="display:flex;gap:4px;margin-top:8px">
+        <button onclick="event.stopPropagation();abrirDetalhesMesa(${m.numero})" style="flex:1;padding:5px;background:#f97316;color:#fff;border:none;border-radius:6px;font-size:.72em;cursor:pointer;font-weight:700">📋 Ver</button>
+        <button onclick="event.stopPropagation();fecharMesaCaixa(${m.numero})" style="flex:1;padding:5px;background:#ef4444;color:#fff;border:none;border-radius:6px;font-size:.72em;cursor:pointer;font-weight:700">💳 Fechar</button>
+      </div>` : `<div style="margin-top:8px">
+        <button onclick="event.stopPropagation();abrirMesaNoCaixa(${m.numero})" style="width:100%;padding:5px;background:#22c55e;color:#fff;border:none;border-radius:6px;font-size:.72em;cursor:pointer;font-weight:700">+ Abrir Comanda</button>
+      </div>`}
+    </div>`;
+  }).join('');
+}
+
+function calcTempo(abertoEm) {
+  const diff = Math.floor((Date.now() - new Date(abertoEm)) / 60000);
+  if (diff < 60) return diff + 'min';
+  return Math.floor(diff/60) + 'h ' + (diff%60) + 'min';
+}
+
+async function abrirDetalhesMesa(num) {
+  try {
+    const r = await fetch('/api/delivery/mesa/pedidos-mesa/' + num, {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    const dados = await r.json();
+    const pedidos = dados.pedidos || dados || [];
+    const total = pedidos.reduce((s,p) => s + (p.total||0), 0);
+    
+    const itens = pedidos.map(p => 
+      (p.itens||[]).map(i => `<tr><td>${i.nome}</td><td style="text-align:center">${i.quantidade||1}</td><td style="text-align:right">R$ ${((i.preco||0)*(i.quantidade||1)).toFixed(2).replace('.',',')}</td></tr>`).join('')
+    ).join('');
+
+    const modal = document.createElement('div');
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:center;justify-content:center';
+    modal.innerHTML = `<div style="background:var(--surface);border-radius:16px;padding:24px;width:95%;max-width:500px;max-height:88vh;overflow-y:auto">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <h3 style="margin:0">🍽️ Mesa ${num}</h3>
+        <button onclick="this.closest('[style*=fixed]').remove()" style="background:none;border:none;font-size:1.4em;cursor:pointer">✕</button>
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:.85em;margin-bottom:16px">
+        <thead><tr style="border-bottom:2px solid var(--border)">
+          <th style="text-align:left;padding:6px">Item</th>
+          <th style="text-align:center;padding:6px">Qtd</th>
+          <th style="text-align:right;padding:6px">Valor</th>
+        </tr></thead>
+        <tbody>${itens || '<tr><td colspan="3" style="text-align:center;padding:12px;color:var(--text3)">Nenhum item</td></tr>'}</tbody>
+      </table>
+      <div style="display:flex;justify-content:space-between;font-weight:800;font-size:1.1em;border-top:2px solid var(--border);padding-top:12px;margin-bottom:16px">
+        <span>TOTAL</span><span style="color:#f97316">R$ ${total.toFixed(2).replace('.',',')}</span>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button onclick="fecharMesaCaixa(${num});this.closest('[style*=fixed]').remove()" 
+          style="flex:1;padding:12px;background:#ef4444;color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer">
+          💳 Fechar Mesa
+        </button>
+        <button onclick="this.closest('[style*=fixed]').remove()" 
+          style="flex:1;padding:12px;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:8px;font-weight:700;cursor:pointer">
+          Fechar
+        </button>
+      </div>
+    </div>`;
+    document.body.appendChild(modal);
+  } catch(e) { alert('Erro ao carregar mesa'); }
+}
+
+async function fecharMesaCaixa(num) {
+  if (!confirm('Confirmar pagamento e fechar Mesa ' + num + '?')) return;
+  try {
+    await fetch('/api/delivery/caixa/mesa/' + num + '/liberar', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    carregarMesasCaixa();
+    alert('Mesa ' + num + ' fechada com sucesso!');
+  } catch(e) { alert('Erro ao fechar mesa'); }
+}
+
+function abrirMesaNoCaixa(num) {
+  // Selecionar tipo mesa e preencher número
+  setTipo('mesa', document.querySelector('.tipo-btn'));
+  const inputMesa = document.getElementById('numero-mesa');
+  if (inputMesa) inputMesa.value = num;
+  mudarTab('cardapio', document.querySelector('.tab-btn'));
+}
+
+// Carregar mesas quando abrir a aba
+const _mudarTabOrig = mudarTab;
+mudarTab = function(tab, btn) {
+  _mudarTabOrig(tab, btn);
+  if (tab === 'mesas') carregarMesasCaixa();
+};
+
+// Atualizar mesas a cada 30s
+setInterval(() => {
+  const tabMesas = document.getElementById('tab-mesas');
+  if (tabMesas && tabMesas.style.display !== 'none') carregarMesasCaixa();
+}, 30000);
+
 </script>
 </body>
 </html>
