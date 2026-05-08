@@ -1,726 +1,474 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rebeca Delivery - Automação Inteligente para Restaurantes</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Inter', sans-serif; background: #0a0a1a; color: #e0e0e0; overflow-x: hidden; }
-        .nav { position: fixed; top: 0; left: 0; right: 0; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; z-index: 50; background: rgba(10,10,26,0.95); backdrop-filter: blur(10px); border-bottom: 1px solid #1a1a3e; }
-        .nav-logo { font-size: 22px; font-weight: 800; background: linear-gradient(135deg, #ff6b35, #ff9a56); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .nav-btns { display: flex; gap: 10px; }
-        .nav-btn { padding: 9px 22px; border-radius: 25px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: all 0.3s; font-family: Inter, sans-serif; }
-        .nav-btn.login { background: transparent; color: #ff6b35; border: 1px solid #ff6b35; }
-        .nav-btn.login:hover { background: rgba(255,107,53,0.1); }
-        .nav-btn.cadastro { background: linear-gradient(135deg, #ff6b35, #ff9a56); color: #fff; }
-        .hero { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 140px 20px 60px; position: relative; overflow: hidden; }
-        .hero::before { content: ''; position: absolute; width: 600px; height: 600px; background: radial-gradient(circle, rgba(255,107,53,0.12), transparent 70%); top: -100px; right: -100px; border-radius: 50%; }
-        .hero::after { content: ''; position: absolute; width: 400px; height: 400px; background: radial-gradient(circle, rgba(255,154,86,0.08), transparent 70%); bottom: -50px; left: -50px; border-radius: 50%; }
-        .hero-badge { display: inline-flex; align-items: center; gap: 8px; background: rgba(0,204,106,0.1); border: 1px solid rgba(0,204,106,0.3); border-radius: 50px; padding: 8px 20px; font-size: 13px; color: #00cc6a; margin-bottom: 20px; position: relative; z-index: 1; }
-        .hero-badge .dot { width: 8px; height: 8px; background: #00cc6a; border-radius: 50%; animation: pulse 2s infinite; }
-        .logo { font-size: 58px; font-weight: 900; background: linear-gradient(135deg, #ff6b35, #ff9a56); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 6px; position: relative; z-index: 1; }
-        .logo span { font-size: 18px; display: block; font-weight: 400; -webkit-text-fill-color: #888; }
-        .dor-frase { background: rgba(255,107,53,0.08); border: 1px solid rgba(255,107,53,0.25); border-radius: 16px; padding: 18px 28px; max-width: 660px; margin: 20px auto 16px; position: relative; z-index: 1; }
-        .dor-frase p { font-size: 17px; font-weight: 600; color: #ff9a56; line-height: 1.5; }
-        .hero h2 { font-size: 20px; font-weight: 300; color: #ccc; margin: 14px 0 8px; max-width: 600px; line-height: 1.6; position: relative; z-index: 1; }
-        .trial-badge { display: inline-flex; align-items: center; gap: 10px; background: rgba(255,107,53,0.1); border: 1px solid rgba(255,107,53,0.35); border-radius: 50px; padding: 10px 24px; font-size: 14px; font-weight: 700; color: #ff9a56; margin-bottom: 20px; position: relative; z-index: 1; }
-        @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.3} }
-        .hero-cta { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; position: relative; z-index: 1; margin-top: 16px; }
-        .btn { padding: 15px 38px; border: none; border-radius: 50px; font-size: 16px; font-weight: 700; cursor: pointer; transition: all 0.3s; text-decoration: none; display: inline-block; font-family: Inter, sans-serif; }
-        .btn-primary { background: linear-gradient(135deg, #ff6b35, #ff9a56); color: #fff; }
-        .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(255,107,53,0.3); }
-        .btn-secondary { background: transparent; border: 2px solid #ff6b35; color: #ff6b35; }
-        .btn-secondary:hover { background: rgba(255,107,53,0.1); }
-        section { padding: 80px 20px; max-width: 1100px; margin: 0 auto; }
-        .section-title { font-size: 34px; font-weight: 800; text-align: center; margin-bottom: 14px; }
-        .section-title span { background: linear-gradient(135deg, #ff6b35, #ff9a56); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .section-subtitle { text-align: center; color: #888; font-size: 17px; margin-bottom: 48px; max-width: 620px; margin-left: auto; margin-right: auto; line-height: 1.6; }
-        .benefits-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 22px; }
-        .benefit-card { background: #111128; border: 1px solid #1a1a3e; border-radius: 20px; padding: 32px; transition: all 0.3s; }
-        .benefit-card:hover { border-color: #ff6b35; transform: translateY(-4px); box-shadow: 0 12px 35px rgba(255,107,53,0.1); }
-        .benefit-icon { font-size: 38px; margin-bottom: 14px; }
-        .benefit-card h3 { font-size: 18px; margin-bottom: 10px; color: #fff; }
-        .benefit-card p { color: #888; line-height: 1.7; font-size: 14px; }
-        .steps { display: flex; flex-direction: column; gap: 24px; }
-        .step { display: flex; gap: 22px; align-items: flex-start; background: #111128; border-radius: 18px; padding: 26px; border: 1px solid #1a1a3e; transition: border 0.3s; }
-        .step:hover { border-color: #ff6b35; }
-        .step-number { min-width: 46px; height: 46px; background: linear-gradient(135deg, #ff6b35, #ff9a56); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 900; color: #fff; }
-        .step h3 { font-size: 17px; color: #fff; margin-bottom: 7px; }
-        .step p { color: #888; line-height: 1.6; font-size: 14px; }
-        .diff-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 18px; }
-        .diff-item { text-align: center; padding: 28px; background: #111128; border-radius: 18px; border: 1px solid #1a1a3e; }
-        .diff-item .number { font-size: 44px; font-weight: 900; background: linear-gradient(135deg, #ff6b35, #ff9a56); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .diff-item p { color: #888; margin-top: 5px; font-size: 14px; }
-        .suporte-section { background: #111128; border: 1px solid #1a1a3e; border-radius: 24px; padding: 48px; text-align: center; }
-        .suporte-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(200px,1fr)); gap: 22px; margin-top: 32px; }
-        .suporte-card { padding: 22px; border-radius: 14px; background: rgba(255,107,53,0.05); border: 1px solid rgba(255,107,53,0.15); }
-        .suporte-card h4 { color: #ff9a56; margin-bottom: 8px; font-size: 15px; }
-        .suporte-card p { color: #888; font-size: 13px; line-height: 1.5; }
-        /* MODAL */
-        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 200; align-items: center; justify-content: center; padding: 20px; }
-        .modal-overlay.show { display: flex; }
-        .modal { background: #111128; border: 1px solid #2a1a3e; border-radius: 24px; padding: 40px 36px; width: 100%; max-width: 480px; position: relative; max-height: 90vh; overflow-y: auto; }
-        .modal-close { position: absolute; top: 16px; right: 20px; background: none; border: none; color: #666; font-size: 22px; cursor: pointer; }
-        .modal-tabs { display: flex; gap: 0; margin-bottom: 28px; background: #0a0a1a; border-radius: 12px; padding: 4px; }
-        .modal-tab { flex: 1; padding: 10px; text-align: center; font-size: 14px; font-weight: 600; cursor: pointer; border-radius: 10px; color: #666; transition: all 0.2s; border: none; background: none; font-family: Inter, sans-serif; }
-        .modal-tab.active { background: linear-gradient(135deg, #ff6b35, #ff9a56); color: #fff; }
-        .form-group { margin-bottom: 14px; text-align: left; }
-        .form-group label { display: block; font-size: 11px; font-weight: 700; color: #666; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
-        .form-group input, .form-group select { width: 100%; padding: 12px 14px; background: #0a0a1a; border: 1px solid #1a1a3e; border-radius: 11px; color: #fff; font-size: 14px; outline: none; font-family: Inter, sans-serif; transition: border 0.3s; }
-        .form-group input:focus, .form-group select:focus { border-color: #ff6b35; }
-        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .form-btn { width: 100%; padding: 15px; background: linear-gradient(135deg, #ff6b35, #ff9a56); color: #fff; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; font-family: Inter, sans-serif; transition: all 0.3s; margin-top: 6px; }
-        .form-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(255,107,53,0.35); }
-        .form-btn:disabled { opacity: 0.6; transform: none; }
-        .form-erro { background: rgba(255,68,68,0.1); border: 1px solid rgba(255,68,68,0.25); color: #ff6b6b; padding: 10px 14px; border-radius: 9px; font-size: 13px; margin-bottom: 14px; display: none; }
-        .form-sucesso { display: none; text-align: center; padding: 20px 0; }
-        .trial-info { background: rgba(0,204,106,0.08); border: 1px solid rgba(0,204,106,0.2); border-radius: 10px; padding: 12px 16px; font-size: 13px; color: #00cc6a; margin-bottom: 18px; text-align: center; }
-        .whatsapp-float { position: fixed; bottom: 25px; right: 25px; width: 58px; height: 58px; background: #25d366; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; text-decoration: none; z-index: 100; box-shadow: 0 5px 18px rgba(37,211,102,0.4); transition: transform 0.3s; }
-        .whatsapp-float:hover { transform: scale(1.1); }
-        footer { text-align: center; padding: 36px 20px; color: #444; font-size: 13px; border-top: 1px solid #1a1a3e; }
-        footer a { color: #ff6b35; text-decoration: none; }
-        @media(max-width:768px){ .logo{font-size:38px} .hero h2{font-size:17px} .section-title{font-size:24px} .step{flex-direction:column} .nav{padding:10px 15px} .modal{padding:28px 20px} .form-row{grid-template-columns:1fr} }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rebeca Delivery — 30 Dias Grátis | Sistema para Restaurantes</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:#0a0a1a;color:#e0e0e0;overflow-x:hidden}
+.nav{position:fixed;top:0;left:0;right:0;padding:15px 30px;display:flex;justify-content:space-between;align-items:center;z-index:50;background:rgba(10,10,26,0.95);backdrop-filter:blur(10px);border-bottom:1px solid #1a1a3e}
+.nav-logo{font-size:22px;font-weight:800;background:linear-gradient(135deg,#ff6b35,#ff9a56);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.nav-btns{display:flex;gap:10px}
+.nav-btn{padding:9px 22px;border-radius:25px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .3s;font-family:Inter,sans-serif}
+.nav-btn.login{background:transparent;color:#ff6b35;border:1px solid #ff6b35}
+.nav-btn.cadastro{background:linear-gradient(135deg,#ff6b35,#ff9a56);color:#fff}
+/* HERO */
+.hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:140px 20px 80px;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;width:700px;height:700px;background:radial-gradient(circle,rgba(255,107,53,.13),transparent 70%);top:-150px;right:-150px;border-radius:50%}
+.hero::after{content:'';position:absolute;width:500px;height:500px;background:radial-gradient(circle,rgba(255,154,86,.08),transparent 70%);bottom:-100px;left:-100px;border-radius:50%}
+.hero-live{display:inline-flex;align-items:center;gap:8px;background:rgba(0,204,106,.1);border:1px solid rgba(0,204,106,.3);border-radius:50px;padding:8px 20px;font-size:13px;color:#00cc6a;margin-bottom:24px;position:relative;z-index:1}
+.hero-live .dot{width:8px;height:8px;background:#00cc6a;border-radius:50%;animation:pulse 2s infinite}
+.logo{font-size:60px;font-weight:900;background:linear-gradient(135deg,#ff6b35,#ff9a56);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px;position:relative;z-index:1}
+.hero-sub{font-size:20px;font-weight:300;color:#ccc;max-width:600px;line-height:1.6;margin-bottom:32px;position:relative;z-index:1}
+/* 30 DIAS BADGE GRANDE */
+.trial-hero{display:flex;align-items:center;justify-content:center;gap:32px;flex-wrap:wrap;margin-bottom:36px;position:relative;z-index:1}
+.trial-box{background:linear-gradient(135deg,rgba(255,107,53,.15),rgba(255,154,86,.08));border:2px solid rgba(255,107,53,.4);border-radius:20px;padding:20px 32px;text-align:center}
+.trial-box .num{font-size:52px;font-weight:900;background:linear-gradient(135deg,#ff6b35,#ff9a56);-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1}
+.trial-box .label{font-size:14px;color:#ff9a56;font-weight:600;margin-top:4px}
+.trial-box .sub{font-size:11px;color:#888;margin-top:2px}
+.hero-cta{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;position:relative;z-index:1}
+.btn{padding:16px 40px;border:none;border-radius:50px;font-size:16px;font-weight:700;cursor:pointer;transition:all .3s;text-decoration:none;display:inline-block;font-family:Inter,sans-serif}
+.btn-primary{background:linear-gradient(135deg,#ff6b35,#ff9a56);color:#fff;box-shadow:0 8px 24px rgba(255,107,53,.3)}
+.btn-primary:hover{transform:translateY(-3px);box-shadow:0 14px 36px rgba(255,107,53,.4)}
+.btn-secondary{background:transparent;border:2px solid #ff6b35;color:#ff6b35}
+.btn-secondary:hover{background:rgba(255,107,53,.1)}
+/* DIFERENCIAIS TOP */
+.diferenciais-top{background:linear-gradient(135deg,rgba(255,107,53,.06),rgba(255,154,86,.03));border-top:1px solid rgba(255,107,53,.15);border-bottom:1px solid rgba(255,107,53,.15);padding:28px 20px}
+.diferenciais-top .inner{max-width:1100px;margin:0 auto;display:flex;justify-content:center;gap:0;flex-wrap:wrap}
+.dif-item{display:flex;align-items:center;gap:12px;padding:12px 32px;border-right:1px solid rgba(255,107,53,.2)}
+.dif-item:last-child{border-right:none}
+.dif-icon{font-size:26px}
+.dif-text strong{display:block;font-size:14px;font-weight:700;color:#ff9a56}
+.dif-text span{font-size:12px;color:#888}
+/* SECTIONS */
+section{padding:80px 20px;max-width:1100px;margin:0 auto}
+.section-title{font-size:34px;font-weight:800;text-align:center;margin-bottom:14px}
+.section-title span{background:linear-gradient(135deg,#ff6b35,#ff9a56);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.section-subtitle{text-align:center;color:#888;font-size:17px;margin-bottom:48px;max-width:620px;margin-left:auto;margin-right:auto;line-height:1.6}
+/* CARDS BENEFÍCIOS */
+.benefits-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:22px}
+.benefit-card{background:#111128;border:1px solid #1a1a3e;border-radius:20px;padding:32px;transition:all .3s}
+.benefit-card:hover{border-color:#ff6b35;transform:translateY(-4px);box-shadow:0 12px 35px rgba(255,107,53,.1)}
+.benefit-icon{font-size:38px;margin-bottom:14px}
+.benefit-card h3{font-size:18px;margin-bottom:10px;color:#fff}
+.benefit-card p{color:#888;line-height:1.7;font-size:14px}
+/* MIGRAÇÃO DESTAQUE */
+.migracao-banner{background:linear-gradient(135deg,#0d1f0d,#0a1a0a);border:1px solid rgba(0,204,106,.25);border-radius:24px;padding:48px;text-align:center;margin:0 20px 0}
+.migracao-banner h2{font-size:30px;font-weight:800;color:#fff;margin-bottom:16px}
+.migracao-banner h2 span{color:#00cc6a}
+.migracao-banner p{color:#aaa;font-size:16px;line-height:1.7;max-width:640px;margin:0 auto 32px}
+.migracao-steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:32px}
+.mig-step{background:rgba(0,204,106,.06);border:1px solid rgba(0,204,106,.15);border-radius:14px;padding:20px}
+.mig-step .mig-icon{font-size:28px;margin-bottom:8px}
+.mig-step h4{color:#00cc6a;font-size:14px;font-weight:700;margin-bottom:6px}
+.mig-step p{color:#777;font-size:12px;line-height:1.5}
+/* OFFLINE/ONLINE */
+.offline-banner{background:linear-gradient(135deg,#0d0d20,#12122a);border:1px solid rgba(99,102,241,.25);border-radius:24px;padding:48px;margin:60px 20px 0}
+.offline-inner{display:flex;align-items:center;gap:48px;flex-wrap:wrap;justify-content:center}
+.offline-text h2{font-size:30px;font-weight:800;color:#fff;margin-bottom:16px}
+.offline-text h2 span{background:linear-gradient(135deg,#6366f1,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.offline-text p{color:#aaa;font-size:15px;line-height:1.7;max-width:480px;margin-bottom:24px}
+.offline-badges{display:flex;gap:12px;flex-wrap:wrap}
+.offline-badge{display:flex;align-items:center;gap:8px;background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.2);border-radius:10px;padding:10px 16px;font-size:13px;font-weight:600;color:#a78bfa}
+.offline-visual{display:flex;flex-direction:column;gap:12px;flex-shrink:0}
+.wifi-card{background:#111128;border:1px solid #1a1a3e;border-radius:14px;padding:16px 24px;display:flex;align-items:center;gap:12px;font-size:14px;font-weight:600;min-width:200px}
+.wifi-card.on{border-color:rgba(0,204,106,.3);color:#00cc6a}
+.wifi-card.off{border-color:rgba(239,68,68,.3);color:#f87171}
+/* STEPS */
+.steps{display:flex;flex-direction:column;gap:24px}
+.step{display:flex;gap:22px;align-items:flex-start;background:#111128;border-radius:18px;padding:26px;border:1px solid #1a1a3e;transition:border .3s}
+.step:hover{border-color:#ff6b35}
+.step-number{min-width:46px;height:46px;background:linear-gradient(135deg,#ff6b35,#ff9a56);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;color:#fff}
+.step h3{font-size:17px;color:#fff;margin-bottom:7px}
+.step p{color:#888;line-height:1.6;font-size:14px}
+/* NÚMEROS */
+.diff-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:18px}
+.diff-item{text-align:center;padding:28px;background:#111128;border-radius:18px;border:1px solid #1a1a3e}
+.diff-item .number{font-size:44px;font-weight:900;background:linear-gradient(135deg,#ff6b35,#ff9a56);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.diff-item p{color:#888;margin-top:5px;font-size:14px}
+/* SUPORTE */
+.suporte-section{background:#111128;border:1px solid #1a1a3e;border-radius:24px;padding:48px;text-align:center}
+.suporte-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:22px;margin-top:32px}
+.suporte-card{padding:22px;border-radius:14px;background:rgba(255,107,53,.05);border:1px solid rgba(255,107,53,.15)}
+.suporte-card h4{color:#ff9a56;margin-bottom:8px;font-size:15px}
+.suporte-card p{color:#888;font-size:13px;line-height:1.5}
+/* CTA FINAL */
+.cta-final{background:linear-gradient(135deg,rgba(255,107,53,.12),rgba(255,154,86,.06));border:1px solid rgba(255,107,53,.25);border-radius:24px;padding:60px 40px;text-align:center;margin:0 20px}
+.cta-final h2{font-size:36px;font-weight:900;color:#fff;margin-bottom:16px}
+.cta-final h2 span{background:linear-gradient(135deg,#ff6b35,#ff9a56);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.cta-final p{color:#aaa;font-size:16px;margin-bottom:32px}
+.cta-garantias{display:flex;justify-content:center;gap:24px;flex-wrap:wrap;margin-top:24px}
+.garantia{display:flex;align-items:center;gap:8px;font-size:13px;color:#888}
+.garantia span{color:#00cc6a;font-weight:700}
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.show{display:flex}
+.modal{background:#111128;border:1px solid #2a1a3e;border-radius:24px;padding:40px 36px;width:100%;max-width:480px;position:relative;max-height:90vh;overflow-y:auto}
+.modal-close{position:absolute;top:16px;right:20px;background:none;border:none;color:#666;font-size:22px;cursor:pointer}
+.modal-tabs{display:flex;gap:0;margin-bottom:28px;background:#0a0a1a;border-radius:12px;padding:4px}
+.modal-tab{flex:1;padding:10px;text-align:center;font-size:14px;font-weight:600;cursor:pointer;border-radius:10px;color:#666;transition:all .2s;border:none;background:none;font-family:Inter,sans-serif}
+.modal-tab.active{background:linear-gradient(135deg,#ff6b35,#ff9a56);color:#fff}
+.form-group{margin-bottom:14px;text-align:left}
+.form-group label{display:block;font-size:11px;font-weight:700;color:#666;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.form-group input,.form-group select{width:100%;padding:12px 14px;background:#0a0a1a;border:1px solid #1a1a3e;border-radius:11px;color:#fff;font-size:14px;outline:none;font-family:Inter,sans-serif;transition:border .3s}
+.form-group input:focus,.form-group select:focus{border-color:#ff6b35}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-btn{width:100%;padding:15px;background:linear-gradient(135deg,#ff6b35,#ff9a56);color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;font-family:Inter,sans-serif;transition:all .3s;margin-top:6px}
+.form-btn:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(255,107,53,.35)}
+.form-btn:disabled{opacity:.6;transform:none}
+.form-erro{background:rgba(255,68,68,.1);border:1px solid rgba(255,68,68,.25);color:#ff6b6b;padding:10px 14px;border-radius:9px;font-size:13px;margin-bottom:14px;display:none}
+.form-sucesso{display:none;text-align:center;padding:20px 0}
+.trial-info{background:rgba(0,204,106,.08);border:1px solid rgba(0,204,106,.2);border-radius:10px;padding:12px 16px;font-size:13px;color:#00cc6a;margin-bottom:18px;text-align:center}
+.whatsapp-float{position:fixed;bottom:25px;right:25px;width:58px;height:58px;background:#25d366;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;text-decoration:none;z-index:100;box-shadow:0 5px 18px rgba(37,211,102,.4);transition:transform .3s}
+.whatsapp-float:hover{transform:scale(1.1)}
+footer{text-align:center;padding:36px 20px;color:#444;font-size:13px;border-top:1px solid #1a1a3e}
+footer a{color:#ff6b35;text-decoration:none}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+@media(max-width:768px){.logo{font-size:40px}.hero-sub{font-size:16px}.section-title{font-size:24px}.step{flex-direction:column}.nav{padding:10px 15px}.modal{padding:28px 20px}.form-row{grid-template-columns:1fr}.dif-item{border-right:none;border-bottom:1px solid rgba(255,107,53,.2)}.offline-inner{flex-direction:column}.cta-final{padding:40px 20px}}
+</style>
 </head>
 <body>
 
 <nav class="nav">
-    <div class="nav-logo"><svg width="32" height="28" viewBox="0 0 80 64" fill="none" xmlns="http://www.w3.org/2000/svg" style="vertical-align:middle;margin-right:7px;margin-bottom:1px;"><line x1="2" y1="28" x2="18" y2="28" stroke="#ff6b35" stroke-width="3" stroke-linecap="round"/><line x1="5" y1="38" x2="18" y2="38" stroke="#ff6b35" stroke-width="3" stroke-linecap="round"/><line x1="8" y1="48" x2="18" y2="48" stroke="#ff6b35" stroke-width="3" stroke-linecap="round"/><rect x="18" y="44" width="56" height="6" rx="3" fill="#ff6b35"/><path d="M22 44 Q24 20 46 16 Q68 20 70 44Z" fill="#ff6b35"/><ellipse cx="46" cy="16" rx="12" ry="4" fill="#ff9a56"/><ellipse cx="46" cy="13" rx="5" ry="3" fill="#ff9a56"/></svg>Rebeca Delivery</div>
-    <div class="nav-btns">
-        <button class="nav-btn login" onclick="abrirModal('login')">Entrar</button>
-        <button class="nav-btn cadastro" onclick="abrirModal('cadastro')">Fazer Solicitação</button>
-    </div>
+  <div class="nav-logo">🍽️ Rebeca Delivery</div>
+  <div class="nav-btns">
+    <button class="nav-btn login" onclick="abrirModal('login')">Entrar</button>
+    <button class="nav-btn cadastro" onclick="abrirModal('cadastro')">30 Dias Grátis</button>
+  </div>
 </nav>
 
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-live"><span class="dot"></span> Sistema ativo em restaurantes agora</div>
+  <div class="logo">Rebeca Delivery</div>
+  <p class="hero-sub">O sistema completo de gestão para restaurantes, lanchonetes e pizzarias.<br>Do pedido à entrega — tudo integrado, tudo em tempo real.</p>
 
-
-<style>
-@media (max-width: 900px) {
-  #planosGrid { grid-template-columns: 1fr !important; max-width: 480px; margin: 0 auto; }
-}
-@media (max-width: 480px) {
-  #planosGrid > div { padding: 18px 14px !important; }
-  #planosGrid .plano-preco { font-size: 1.8em !important; }
-}
-</style>
-<!-- SEÇÃO DE PLANOS -->
-<section id="planos" style="padding:60px 16px;background:linear-gradient(180deg,#07071a 0%,#0d0d2b 100%)">
-  <div style="max-width:1280px;margin:0 auto">
-    <h2 style="text-align:center;font-size:2em;font-weight:900;color:#fff;margin-bottom:8px">
-      Escolha o plano <span style="color:#f97316">certo para o seu negócio</span>
-    </h2>
-    <p style="text-align:center;color:#aaa;font-size:.95em;margin-bottom:40px">
-      Sem fidelidade. Cancele quando quiser. Suporte incluso em todos os planos.
-    </p>
-
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;align-items:start" id="planosGrid"">
-
-      <!-- CONFORT -->
-      <div style="background:#0f0f24;border-radius:18px;padding:24px 20px;border:1px solid #1e1e40;transition:.3s" onmouseover="this.style.borderColor='#f97316'" onmouseout="this.style.borderColor='#1e1e40'">
-        <div style="display:inline-block;background:#f9731622;color:#f97316;font-size:.65em;font-weight:800;letter-spacing:2px;padding:3px 10px;border-radius:20px;margin-bottom:10px">CONFORT</div>
-        <div style="font-size:2.2em;font-weight:900;color:#fff;line-height:1;margin-bottom:4px">R$&nbsp;197,90<span style="font-size:.35em;color:#888;font-weight:400">/mês</span></div>
-        <p style="color:#666;font-size:.78em;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid #1e1e40">Comece a vender com sistema profissional desde o primeiro dia</p>
-
-        <div style="margin-bottom:14px">
-          <div style="font-size:.62em;font-weight:800;color:#f97316;letter-spacing:1.5px;margin-bottom:7px">🖥️ PDV — PONTO DE VENDA</div>
-          <div style="display:flex;flex-direction:column;gap:5px">
-            <div style="color:#bbb;font-size:.78em;display:flex;gap:6px"><span style="color:#22c55e;flex-shrink:0">✓</span>PDV completo — lança pedido direto no caixa</div>
-            <div style="color:#bbb;font-size:.78em;display:flex;gap:6px"><span style="color:#22c55e;flex-shrink:0">✓</span>Abertura e fechamento de caixa</div>
-            <div style="color:#bbb;font-size:.78em;display:flex;gap:6px"><span style="color:#22c55e;flex-shrink:0">✓</span>Controle de sangria e suprimento</div>
-            <div style="color:#bbb;font-size:.78em;display:flex;gap:6px"><span style="color:#22c55e;flex-shrink:0">✓</span>Histórico de vendas do dia</div>
-            <div style="color:#bbb;font-size:.78em;display:flex;gap:6px"><span style="color:#22c55e;flex-shrink:0">✓</span>Impressão de comanda / recibo</div>
-          </div>
-        </div>
-
-        <div style="margin-bottom:14px">
-          <div style="font-size:.62em;font-weight:800;color:#f97316;letter-spacing:1.5px;margin-bottom:7px">📋 CARDÁPIO DIGITAL</div>
-          <div style="display:flex;flex-direction:column;gap:5px">
-            <div style="color:#bbb;font-size:.78em;display:flex;gap:6px"><span style="color:#22c55e;flex-shrink:0">✓</span>Cardápio online com link para compartilhar</div>
-            <div style="color:#bbb;font-size:.78em;display:flex;gap:6px"><span style="color:#22c55e;flex-shrink:0">✓</span>Geração automática de fotos dos pratos com IA</div>
-            <div style="color:#bbb;font-size:.78em;display:flex;gap:6px"><span style="color:#22c55e;flex-shrink:0">✓</span>Categorias, preços e descrições</div>
-            <div style="color:#bbb;font-size:.78em;display:flex;gap:6px"><span style="color:#22c55e;flex-shrink:0">✓</span>Produtos ilimitados</div>
-            <div style="color:#bbb;font-size:.78em;display:flex;gap:6px"><span style="color:#22c55e;flex-shrink:0">✓</span>Upload de cardápio em massa</div>
-          </div>
-        </div>
-
-        <div style="margin-bottom:18px">
-          <div style="font-size:.62em;font-weight:800;color:#2a2a3a;letter-spacing:1.5px;margin-bottom:7px">🔒 NÃO INCLUSO</div>
-          <div style="display:flex;flex-direction:column;gap:4px">
-            <div style="color:#bbb;font-size:.78em;display:flex;gap:6px"><span style="color:#22c55e;flex-shrink:0">✓</span>App do garçom — abre mesa pelo celular</div>
-            <div style="color:#2e2e42;font-size:.76em;display:flex;gap:6px"><span>✕</span>Pedidos online pelo cardápio</div>
-            <div style="color:#2e2e42;font-size:.76em;display:flex;gap:6px"><span>✕</span>Tela da cozinha</div>
-            <div style="color:#2e2e42;font-size:.76em;display:flex;gap:6px"><span>✕</span>Entregadores e rastreamento</div>
-            <div style="color:#2e2e42;font-size:.76em;display:flex;gap:6px"><span>✕</span>WhatsApp com IA</div>
-            <div style="color:#2e2e42;font-size:.76em;display:flex;gap:6px"><span>✕</span>Controle de estoque</div>
-          </div>
-        </div>
-
-        <a href="#cadastro" onclick="abrirModal()" style="display:block;text-align:center;background:#f97316;color:#000;font-weight:800;padding:12px;border-radius:12px;text-decoration:none;font-size:.85em">
-          Começar no Confort →
-        </a>
-      </div>
-
-      <!-- PLUS -->
-      <div style="background:#0f0f24;border-radius:18px;padding:24px 20px;border:2px solid #f97316;position:relative">
-        <div style="position:absolute;top:-13px;left:50%;transform:translateX(-50%);background:#f97316;color:#000;font-size:.62em;font-weight:900;padding:4px 16px;border-radius:20px;white-space:nowrap">⭐ MAIS ESCOLHIDO</div>
-        <div style="display:inline-block;background:#f9731622;color:#f97316;font-size:.65em;font-weight:800;letter-spacing:2px;padding:3px 10px;border-radius:20px;margin-bottom:10px">PLUS</div>
-        <div style="font-size:2.2em;font-weight:900;color:#fff;line-height:1;margin-bottom:4px">R$&nbsp;298<span style="color:#f97316;font-size:.4em;font-weight:900">,90</span><span style="font-size:.35em;color:#888;font-weight:400">/mês</span></div>
-        <p style="color:#666;font-size:.78em;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid #1e1e40">PDV + garçom digital + pedidos online no mesmo sistema</p>
-
-        <div style="margin-bottom:14px">
-          <div style="font-size:.62em;font-weight:800;color:#f97316;letter-spacing:1.5px;margin-bottom:7px">🖥️ PDV — PONTO DE VENDA</div>
-          <div style="display:flex;flex-direction:column;gap:5px">
-            <div style="color:#bbb;font-size:.78em;display:flex;gap:6px"><span style="color:#22c55e;flex-shrink:0">✓</span>PDV completo — lança pedido direto no caixa</div>
-            <div style="color:#bbb;font-size:.78em;display:flex;gap:6px"><span style="color:#22c55e;flex-shrink:0">✓</span>Abertura e fechamento de caixa</div>
-            <div style="color:#bbb;font-size:.78em;display:flex;gap:6px"><span style="color:#22c55e;flex-shrink:0">✓</span>Controle de sangria e suprimento</div>
-            <div style="color:#bbb;font-size:.78em;display:flex;gap:6px"><span style="color:#22c55e;flex-shrink:0">✓</span>Histórico de vendas do dia</div>
-            <div style="color:#bbb;font-size:.78em;display:flex;gap:6px"><span style="color:#22c55e;flex-shrink:0">✓</span>Impressão de comanda / recibo</div>
-          </div>
-        </div>
-
-        <div style="margin-bottom:14px">
-          <div style="font-size:.62em;font-weight:800;color:#f97316;letter-spacing:1.5px;margin-bottom:7px">📋 CARDÁPIO DIGITAL</div>
-          <div style="display:flex;flex-direction:column;gap:5px">
-            <div style="color:#bbb;font-size:.78em;display:flex;gap:6px"><span style="color:#22c55e;flex-shrink:0">✓</span>Cardápio online com link para compartilhar</div>
-            <div style="color:#bbb;font-size:.78em;display:flex;gap:6px"><span style="color:#22c55e;flex-shrink:0">✓</span>Geração automática de fotos dos pratos com IA</div>
-            <div style="color:#bbb;font-size:.78em;display:flex;gap:6px"><span style="color:#22c55e;flex-shrink:0">✓</span>Categorias, preços e descrições</div>
-            <div style="color:#bbb;font-size:.78em;display:flex;gap:6px"><span style="color:#22c55e;flex-shrink:0">✓</span>Produtos ilimitados</div>
-            <div style="color:#bbb;font-size:.78em;display:flex;gap:6px"><span style="color:#22c55e;flex-shrink:0">✓</span>Upload de cardápio em massa</div>
-          </div>
-        </div>
-
-        <div style="margin-bottom:14px">
-          <div style="font-size:.62em;font-weight:800;color:#f97316;letter-spacing:1.5px;margin-bottom:7px">🍽️ TELA DO GARÇOM</div>
-          <div style="display:flex;flex-direction:column;gap:5px">
-            <div style="color:#bbb;font-size:.78em;display:flex;gap:6px"><span style="color:#22c55e;flex-shrink:0">✓</span>App do garçom — abre mesa pelo celular</div>
-            <div style="color:#bbb;font-size:.78em;display:flex;gap:6px"><span style="color:#22c55e;flex-shrink:0">✓</span>Lança pedido na mesa em tempo real</div>
-            <div style="color:#bbb;font-size:.78em;display:flex;gap:6px"><span style="color:#22c55e;flex-shrink:0">✓</span>Fecha comanda e envia para o caixa</div>
-            <div style="color:#bbb;font-size:.78em;display:flex;gap:6px"><span style="color:#22c55e;flex-shrink:0">✓</span>Visualiza status dos pedidos da mesa</div>
-          </div>
-        </div>
-
-        <div style="margin-bottom:14px">
-          <div style="font-size:.62em;font-weight:800;color:#f97316;letter-spacing:1.5px;margin-bottom:7px">🛒 PEDIDOS ONLINE</div>
-          <div style="display:flex;flex-direction:column;gap:5px">
-            <div style="color:#bbb;font-size:.78em;display:flex;gap:6px"><span style="color:#22c55e;flex-shrink:0">✓</span>Cliente monta o pedido pelo cardápio</div>
-            <div style="color:#bbb;font-size:.78em;display:flex;gap:6px"><span style="color:#22c55e;flex-shrink:0">✓</span>Pedidos chegam em tempo real no painel</div>
-            <div style="color:#bbb;font-size:.78em;display:flex;gap:6px"><span style="color:#22c55e;flex-shrink:0">✓</span>Avaliações de clientes</div>
-            <div style="color:#bbb;font-size:.78em;display:flex;gap:6px"><span style="color:#22c55e;flex-shrink:0">✓</span>Gestão de clientes assinantes</div>
-          </div>
-        </div>
-
-        <div style="margin-bottom:18px">
-          <div style="font-size:.62em;font-weight:800;color:#2a2a3a;letter-spacing:1.5px;margin-bottom:7px">🔒 NÃO INCLUSO</div>
-          <div style="display:flex;flex-direction:column;gap:4px">
-            <div style="color:#2e2e42;font-size:.76em;display:flex;gap:6px"><span>✕</span>Tela da cozinha</div>
-            <div style="color:#2e2e42;font-size:.76em;display:flex;gap:6px"><span>✕</span>Entregadores e rastreamento</div>
-            <div style="color:#2e2e42;font-size:.76em;display:flex;gap:6px"><span>✕</span>WhatsApp com IA</div>
-            <div style="color:#2e2e42;font-size:.76em;display:flex;gap:6px"><span>✕</span>Controle de estoque</div>
-          </div>
-        </div>
-
-        <a href="#cadastro" onclick="abrirModal()" style="display:block;text-align:center;background:#f97316;color:#000;font-weight:800;padding:12px;border-radius:12px;text-decoration:none;font-size:.85em">
-          Quero o Plus →
-        </a>
-      </div>
-
-      <!-- PREMIUM -->
-      <div style="background:linear-gradient(160deg,#130a2e 0%,#0f0f24 100%);border-radius:18px;padding:24px 20px;border:1px solid #5b21b6;transition:.3s;position:relative" onmouseover="this.style.borderColor='#7c3aed'" onmouseout="this.style.borderColor='#5b21b6'">
-        <div style="position:absolute;top:-13px;left:50%;transform:translateX(-50%);background:linear-gradient(90deg,#7c3aed,#f97316);color:#fff;font-size:.62em;font-weight:900;padding:4px 16px;border-radius:20px;white-space:nowrap">🚀 SISTEMA COMPLETO</div>
-        <div style="display:inline-block;background:#7c3aed22;color:#a78bfa;font-size:.65em;font-weight:800;letter-spacing:2px;padding:3px 10px;border-radius:20px;margin-bottom:10px">PREMIUM</div>
-        <div style="font-size:2.2em;font-weight:900;color:#fff;line-height:1;margin-bottom:4px">R$&nbsp;459<span style="font-size:.35em;color:#888;font-weight:400">/mês</span></div>
-        <p style="color:#666;font-size:.78em;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid #2a1a4a">Operação completa — caixa, salão, cozinha, delivery e IA</p>
-
-        <div style="margin-bottom:14px">
-          <div style="font-size:.62em;font-weight:800;color:#a78bfa;letter-spacing:1.5px;margin-bottom:7px">🖥️ PDV — PONTO DE VENDA</div>
-          <div style="display:flex;flex-direction:column;gap:5px">
-            <div style="color:#bbb;font-size:.78em;display:flex;gap:6px"><span style="color:#22c55e;flex-shrink:0">✓</span>PDV completo — lança pedido direto no caixa</div>
-            <div style="color:#bbb;font-size:.78em;display:flex;gap:6px"><span style="color:#22c55e;flex-shrink:0">✓</span>Abertura e fechamento de caixa</div>
-            <div style="color:#bbb;font-size:.78em;display:flex;gap:6px"><span style="color:#22c55e;flex-shrink:0">✓</span>Controle de sangria e suprimento</div>
-            <div style="color:#bbb;font-size:.78em;display:flex;gap:6px"><span style="color:#22c55e;flex-shrink:0">✓</span>Histórico de vendas do dia</div>
-            <div style="color:#bbb;font-size:.78em;display:flex;gap:6px"><span style="color:#22c55e;flex-shrink:0">✓</span>Impressão de comanda / recibo</div>
-          </div>
-        </div>
-
-        <div style="margin-bottom:14px">
-          <div style="font-size:.62em;font-weight:800;color:#a78bfa;letter-spacing:1.5px;margin-bottom:7px">📋 CARDÁPIO DIGITAL</div>
-          <div style="display:flex;flex-direction:column;gap:5px">
-            <div style="color:#bbb;font-size:.78em;display:flex;gap:6px"><span style="color:#22c55e;flex-shrink:0">✓</span>Cardápio online com link para compartilhar</div>
-            <div style="color:#bbb;font-size:.78em;display:flex;gap:6px"><span style="color:#22c55e;flex-shrink:0">✓</span>Geração automática de fotos dos pratos com IA</div>
-            <div style="color:#bbb;font-size:.78em;display:flex;gap:6px"><span style="color:#22c55e;flex-shrink:0">✓</span>Categorias, preços e descrições</div>
-            <div style="color:#bbb;font-size:.78em;display:flex;gap:6px"><span style="color:#22c55e;flex-shrink:0">✓</span>Produtos ilimitados</div>
-            <div style="color:#bbb;font-size:.78em;display:flex;gap:6px"><span style="color:#22c55e;flex-shrink:0">✓</span>Upload de cardápio em massa</div>
-            <div style="color:#bbb;font-size:.78em;display:flex;gap:6px"><span style="color:#22c55e;flex-shrink:0">✓</span>Cardápio do dia automático</div>
-          </div>
-        </div>
-
-        <div style="margin-bottom:14px">
-          <div style="font-size:.62em;font-weight:800;color:#a78bfa;letter-spacing:1.5px;margin-bottom:7px">🍽️ TELA DO GARÇOM</div>
-          <div style="display:flex;flex-direction:column;gap:5px">
-            <div style="color:#bbb;font-size:.78em;display:flex;gap:6px"><span style="color:#22c55e;flex-shrink:0">✓</span>App do garçom — abre mesa pelo celular</div>
-            <div style="color:#bbb;font-size:.78em;display:flex;gap:6px"><span style="color:#22c55e;flex-shrink:0">✓</span>Lança pedido na mesa em tempo real</div>
-            <div style="color:#bbb;font-size:.78em;display:flex;gap:6px"><span style="color:#22c55e;flex-shrink:0">✓</span>Fecha comanda e envia para o caixa</div>
-            <div style="color:#bbb;font-size:.78em;display:flex;gap:6px"><span style="color:#22c55e;flex-shrink:0">✓</span>Visualiza status dos pedidos da mesa</div>
-          </div>
-        </div>
-
-        <div style="margin-bottom:14px">
-          <div style="font-size:.62em;font-weight:800;color:#a78bfa;letter-spacing:1.5px;margin-bottom:7px">🛒 PEDIDOS ONLINE</div>
-          <div style="display:flex;flex-direction:column;gap:5px">
-            <div style="color:#bbb;font-size:.78em;display:flex;gap:6px"><span style="color:#22c55e;flex-shrink:0">✓</span>Cliente monta o pedido pelo cardápio</div>
-            <div style="color:#bbb;font-size:.78em;display:flex;gap:6px"><span style="color:#22c55e;flex-shrink:0">✓</span>Pedidos chegam em tempo real no painel</div>
-            <div style="color:#bbb;font-size:.78em;display:flex;gap:6px"><span style="color:#22c55e;flex-shrink:0">✓</span>Avaliações de clientes</div>
-            <div style="color:#bbb;font-size:.78em;display:flex;gap:6px"><span style="color:#22c55e;flex-shrink:0">✓</span>Gestão de clientes assinantes</div>
-          </div>
-        </div>
-
-        <div style="margin-bottom:14px">
-          <div style="font-size:.62em;font-weight:800;color:#a78bfa;letter-spacing:1.5px;margin-bottom:7px">👨‍🍳 TELA DA COZINHA</div>
-          <div style="display:flex;flex-direction:column;gap:5px">
-            <div style="color:#bbb;font-size:.78em;display:flex;gap:6px"><span style="color:#22c55e;flex-shrink:0">✓</span>Pedidos chegam automaticamente na cozinha</div>
-            <div style="color:#bbb;font-size:.78em;display:flex;gap:6px"><span style="color:#22c55e;flex-shrink:0">✓</span>Cozinheiro confirma e despacha em 1 clique</div>
-            <div style="color:#bbb;font-size:.78em;display:flex;gap:6px"><span style="color:#22c55e;flex-shrink:0">✓</span>Fila de preparo organizada por ordem</div>
-          </div>
-        </div>
-
-        <div style="margin-bottom:14px">
-          <div style="font-size:.62em;font-weight:800;color:#a78bfa;letter-spacing:1.5px;margin-bottom:7px">🛵 ENTREGADORES</div>
-          <div style="display:flex;flex-direction:column;gap:5px">
-            <div style="color:#bbb;font-size:.78em;display:flex;gap:6px"><span style="color:#22c55e;flex-shrink:0">✓</span>Cadastro e gestão de entregadores</div>
-            <div style="color:#bbb;font-size:.78em;display:flex;gap:6px"><span style="color:#22c55e;flex-shrink:0">✓</span>Mapa ao vivo no painel admin</div>
-            <div style="color:#bbb;font-size:.78em;display:flex;gap:6px"><span style="color:#22c55e;flex-shrink:0">✓</span>Link de rastreamento enviado ao cliente</div>
-            <div style="color:#bbb;font-size:.78em;display:flex;gap:6px"><span style="color:#22c55e;flex-shrink:0">✓</span>Controle de estoque integrado</div>
-          </div>
-        </div>
-
-        <div style="margin-bottom:18px">
-          <div style="font-size:.62em;font-weight:800;color:#a78bfa;letter-spacing:1.5px;margin-bottom:7px">🤖 IA NO WHATSAPP</div>
-          <div style="display:flex;flex-direction:column;gap:5px">
-            <div style="color:#bbb;font-size:.78em;display:flex;gap:6px"><span style="color:#22c55e;flex-shrink:0">✓</span>Atendimento humanizado 24h — nunca erra</div>
-            <div style="color:#bbb;font-size:.78em;display:flex;gap:6px"><span style="color:#22c55e;flex-shrink:0">✓</span>Entende mensagens de áudio</div>
-            <div style="color:#bbb;font-size:.78em;display:flex;gap:6px"><span style="color:#22c55e;flex-shrink:0">✓</span>Reconhece clientes recorrentes e mensalistas</div>
-            <div style="color:#bbb;font-size:.78em;display:flex;gap:6px"><span style="color:#22c55e;flex-shrink:0">✓</span>Envia cardápio do dia automaticamente</div>
-          </div>
-        </div>
-
-        <div style="margin-bottom:18px">
-          <div style="font-size:.62em;font-weight:800;color:#a78bfa;letter-spacing:1.5px;margin-bottom:7px">🎁 COMBOS COM IA</div>
-          <div style="display:flex;flex-direction:column;gap:5px">
-            <div style="color:#bbb;font-size:.78em;display:flex;gap:6px"><span style="color:#22c55e;flex-shrink:0">✓</span>Crie combos com itens do cardápio</div>
-            <div style="color:#bbb;font-size:.78em;display:flex;gap:6px"><span style="color:#22c55e;flex-shrink:0">✓</span>IA gera foto profissional do combo automaticamente</div>
-            <div style="color:#bbb;font-size:.78em;display:flex;gap:6px"><span style="color:#22c55e;flex-shrink:0">✓</span>Baixe a imagem para publicar no Instagram</div>
-            <div style="color:#bbb;font-size:.78em;display:flex;gap:6px"><span style="color:#22c55e;flex-shrink:0">✓</span>Combo aparece no cardápio digital com economia</div>
-          </div>
-        </div>
-
-        <a href="#cadastro" onclick="abrirModal()" style="display:block;text-align:center;background:linear-gradient(90deg,#7c3aed,#f97316);color:#fff;font-weight:800;padding:12px;border-radius:12px;text-decoration:none;font-size:.85em">
-          Quero o Premium →
-        </a>
-      </div>
-
+  <div class="trial-hero">
+    <div class="trial-box">
+      <div class="num">30</div>
+      <div class="label">DIAS GRÁTIS</div>
+      <div class="sub">Sem cartão de crédito</div>
     </div>
+    <div class="trial-box" style="border-color:rgba(0,204,106,.4);background:linear-gradient(135deg,rgba(0,204,106,.1),rgba(0,204,106,.04))">
+      <div class="num" style="background:linear-gradient(135deg,#00cc6a,#00e87a);-webkit-background-clip:text;-webkit-text-fill-color:transparent">100%</div>
+      <div class="label" style="color:#00cc6a">MIGRAÇÃO GRÁTIS</div>
+      <div class="sub">Migramos seus dados do sistema anterior</div>
+    </div>
+    <div class="trial-box" style="border-color:rgba(99,102,241,.4);background:linear-gradient(135deg,rgba(99,102,241,.1),rgba(99,102,241,.04))">
+      <div class="num" style="background:linear-gradient(135deg,#6366f1,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent">✓</div>
+      <div class="label" style="color:#a78bfa">OFFLINE + ONLINE</div>
+      <div class="sub">Funciona mesmo sem internet</div>
+    </div>
+  </div>
 
-    <div style="margin-top:36px;display:flex;flex-wrap:wrap;justify-content:center;gap:24px">
-      <div style="color:#555;font-size:.82em">💳 Pagamento mensal</div>
-      <div style="color:#555;font-size:.82em">🔓 Sem fidelidade</div>
-      <div style="color:#555;font-size:.82em">📞 Suporte incluso</div>
-      <div style="color:#555;font-size:.82em">⚡ Ativação imediata</div>
-      <div style="color:#555;font-size:.82em">🔄 Upgrade a qualquer hora</div>
+  <div class="hero-cta">
+    <button class="btn btn-primary" onclick="abrirModal('cadastro')">🚀 Começar 30 dias grátis agora</button>
+    <button class="btn btn-secondary" onclick="abrirModal('login')">Já tenho conta</button>
+  </div>
+</div>
+
+<!-- DIFERENCIAIS RÁPIDOS -->
+<div class="diferenciais-top">
+  <div class="inner">
+    <div class="dif-item"><div class="dif-icon">📦</div><div class="dif-text"><strong>Gestão de Pedidos</strong><span>Mesa, balcão e delivery</span></div></div>
+    <div class="dif-item"><div class="dif-icon">🍽️</div><div class="dif-text"><strong>Mapa de Mesas</strong><span>Tempo real para caixa e garçom</span></div></div>
+    <div class="dif-item"><div class="dif-icon">📊</div><div class="dif-text"><strong>Financeiro Completo</strong><span>Caixa, sangrias e relatórios</span></div></div>
+    <div class="dif-item"><div class="dif-icon">📦</div><div class="dif-text"><strong>Controle de Estoque</strong><span>Alerta de itens críticos</span></div></div>
+    <div class="dif-item"><div class="dif-icon">🖨️</div><div class="dif-text"><strong>Impressão Térmica</strong><span>Comanda e relatório na maquininha</span></div></div>
+  </div>
+</div>
+
+<!-- BENEFÍCIOS -->
+<section>
+  <h2 class="section-title">Tudo que seu restaurante <span>precisa</span></h2>
+  <p class="section-subtitle">Um sistema completo que conecta cozinha, caixa, garçom e entregador em tempo real.</p>
+  <div class="benefits-grid">
+    <div class="benefit-card">
+      <div class="benefit-icon">🍽️</div>
+      <h3>Mapa de Mesas ao Vivo</h3>
+      <p>Garçom e caixa veem todas as mesas em tempo real. Mesa livre, ocupada, valor total, nome do cliente — tudo atualizado automaticamente via SSE.</p>
+    </div>
+    <div class="benefit-card">
+      <div class="benefit-icon">💰</div>
+      <h3>Caixa ao Vivo</h3>
+      <p>Acompanhe entradas por dinheiro, débito, crédito, Pix e outros em tempo real. Relatório completo para imprimir na maquininha com um clique.</p>
+    </div>
+    <div class="benefit-card">
+      <div class="benefit-icon">🔔</div>
+      <h3>Chamada de Garçom Inteligente</h3>
+      <p>Cliente chama o garçom pelo celular. Se chamar duas vezes em menos de 2 minutos, dispara alerta urgente em vermelho para o admin.</p>
+    </div>
+    <div class="benefit-card">
+      <div class="benefit-icon">📦</div>
+      <h3>Estoque Integrado</h3>
+      <p>Estoque desconta automaticamente a cada venda. Alertas de itens críticos zerados ou abaixo do mínimo — visível no painel do caixa ao vivo.</p>
+    </div>
+    <div class="benefit-card">
+      <div class="benefit-icon">🛵</div>
+      <h3>Rastreamento de Entregadores</h3>
+      <p>Acompanhe entregadores em tempo real no mapa. Cliente recebe link de rastreamento ao vivo da entrega pelo WhatsApp.</p>
+    </div>
+    <div class="benefit-card">
+      <div class="benefit-icon">📱</div>
+      <h3>Cardápio Digital com QR Code</h3>
+      <p>Cliente escaneia o QR da mesa e faz o pedido direto pelo celular. Chega em tempo real para a cozinha sem precisar chamar garçom.</p>
     </div>
   </div>
 </section>
 
-<!-- MODAL LOGIN / CADASTRO -->
-<div class="modal-overlay" id="modalOverlay" onclick="fecharModalFora(event)">
-    <div class="modal">
-        <button class="modal-close" onclick="fecharModal()">✕</button>
-
-        <div class="modal-tabs">
-            <button class="modal-tab active" id="tabCadastro" onclick="trocarTab('cadastro')">Solicitar acesso</button>
-            <button class="modal-tab" id="tabLogin" onclick="trocarTab('login')">Já tenho conta</button>
-        </div>
-
-        <!-- CADASTRO -->
-        <div id="formCadastro">
-            <div class="trial-info">✅ Gratuito para começar — nossa equipe entra em contato após a aprovação</div>
-            <div class="form-erro" id="erroC"></div>
-            <div id="camposCadastro">
-                <div class="form-row">
-                    <div class="form-group"><label>Seu nome *</label><input type="text" id="cNome" placeholder="João Silva"></div>
-                    <div class="form-group"><label>WhatsApp *</label><input type="tel" id="cTelefone" placeholder="(34) 99999-9999"></div>
-                </div>
-                <div class="form-group"><label>Nome do restaurante / comércio *</label><input type="text" id="cComercio" placeholder="Burguer do João"></div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Tipo de negócio</label>
-                        <select id="cTipo">
-                            <option value="restaurante">Restaurante</option>
-                            <option value="lanchonete">Lanchonete / Hamburgueria</option>
-                            <option value="pizzaria">Pizzaria</option>
-                            <option value="sorveteria">Sorveteria / Açaí</option>
-                            <option value="mercado">Mercado</option>
-                            <option value="outro">Outro</option>
-                        </select>
-                    </div>
-                    <div class="form-group"><label>Cidade</label><input type="text" id="cCidade" placeholder="Uberlândia, MG"></div>
-                </div>
-                <div class="form-group"><label>E-mail *</label><input type="email" id="cEmail" placeholder="joao@email.com"></div>
-                <div class="form-row">
-                    <div class="form-group"><label>Senha * (mín. 6 caracteres)</label><input type="password" id="cSenha" placeholder="••••••••"></div>
-                    <div class="form-group"><label>Confirmar senha *</label><input type="password" id="cSenha2" placeholder="••••••••"></div>
-                </div>
-                <button class="form-btn" id="btnCadastro" onclick="cadastrar()">📩 Enviar Solicitação</button>
-                <p style="font-size:12px;color:#555;margin-top:12px;text-align:center;">Ao criar sua conta você concorda com nossos termos de uso.</p>
-            </div>
-            <div class="form-sucesso" id="sucessoCadastro">
-                <div style="font-size:48px;margin-bottom:12px;">🎉</div>
-                <h3 style="color:#00cc6a;font-size:20px;margin-bottom:8px;">Conta criada com sucesso!</h3>
-                <p style="color:#888;font-size:14px;margin-bottom:18px;">Sua conta foi criada! Acesso liberado. Redirecionando para o painel...</p>
-            </div>
-        </div>
-
-        <!-- LOGIN -->
-        <div id="formLogin" style="display:none;">
-            <div class="form-erro" id="erroL"></div>
-            <div id="camposLogin">
-                <div class="form-group"><label>E-mail</label><input type="email" id="lEmail" placeholder="seu@email.com"></div>
-                <div class="form-group"><label>Senha</label><input type="password" id="lSenha" placeholder="••••••••" onkeydown="if(event.key==='Enter')login()"></div>
-                <button class="form-btn" id="btnLogin" onclick="login()">Entrar no painel</button>
-            </div>
-            <div class="form-sucesso" id="sucessoLogin">
-                <div style="font-size:48px;margin-bottom:12px;">✅</div>
-                <h3 style="color:#00cc6a;font-size:20px;margin-bottom:8px;">Login realizado!</h3>
-                <p style="color:#888;font-size:14px;">Redirecionando para o painel...</p>
-            </div>
-        </div>
+<!-- MIGRAÇÃO -->
+<div class="migracao-banner" style="max-width:1100px;margin:0 auto 0;padding:0 20px">
+  <div class="migracao-banner">
+    <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(0,204,106,.1);border:1px solid rgba(0,204,106,.25);border-radius:50px;padding:8px 20px;font-size:13px;color:#00cc6a;margin-bottom:20px">
+      🔄 Serviço exclusivo Rebeca
     </div>
+    <h2>Migração <span>gratuita</span> do seu sistema atual</h2>
+    <p>Não perca nenhum dado. Nossa equipe migra todo o histórico do seu sistema anterior para o Rebeca — cardápio, clientes, financeiro — sem que você precise fazer nada.</p>
+    <div class="migracao-steps">
+      <div class="mig-step">
+        <div class="mig-icon">📋</div>
+        <h4>1. Nos envie os dados</h4>
+        <p>Exportação, planilha ou print do sistema atual — aceitamos qualquer formato.</p>
+      </div>
+      <div class="mig-step">
+        <div class="mig-icon">⚙️</div>
+        <h4>2. A gente importa tudo</h4>
+        <p>Nossa equipe configura cardápio, categorias, mesas e histórico financeiro para você.</p>
+      </div>
+      <div class="mig-step">
+        <div class="mig-icon">✅</div>
+        <h4>3. Começa a usar no mesmo dia</h4>
+        <p>Sistema pronto, dados migrados, equipe treinada. Sem perder um dia de operação.</p>
+      </div>
+      <div class="mig-step">
+        <div class="mig-icon">🛡️</div>
+        <h4>Zero risco</h4>
+        <p>30 dias grátis para testar. Se não gostar, cancelamento imediato sem multa.</p>
+      </div>
+    </div>
+    <button class="btn btn-primary" style="font-size:17px;padding:18px 48px" onclick="abrirModal('cadastro')">🚀 Quero migrar meu sistema agora</button>
+  </div>
 </div>
 
-<section class="hero">
-    <div class="hero-badge"><span class="dot"></span> Suporte 24/7 — Resposta em menos de 30 minutos</div>
-    <div class="trial-badge">🚀 Solicite seu acesso e comece a vender hoje</div>
-    <div class="logo">Rebeca Delivery<span>Sistemas BR</span></div>
-    <div class="dor-frase">
-        <p>😤 "Funcionário bom é difícil de achar, caro para manter e ainda some no final de semana."<br>
-        <span style="color:#fff;font-weight:400;font-size:15px;">A Rebeca atende 24h, nunca falta, nunca reclama e ainda vende mais do que qualquer atendente.</span></p>
+<!-- OFFLINE + ONLINE -->
+<div class="offline-banner" style="max-width:1100px;margin:60px auto 0">
+  <div class="offline-inner">
+    <div class="offline-text">
+      <h2>Funciona <span>offline e online</span></h2>
+      <p>Acabou a internet no restaurante? O sistema continua funcionando normalmente. Pedidos, mesas, caixa — tudo opera localmente e sincroniza automaticamente quando a conexão voltar.</p>
+      <div class="offline-badges">
+        <div class="offline-badge">📶 Com internet — tempo real</div>
+        <div class="offline-badge">📴 Sem internet — local</div>
+        <div class="offline-badge">🔄 Sincroniza automático</div>
+      </div>
     </div>
-    <h2>Automação completa para seu restaurante — do pedido no WhatsApp até a entrega na porta do cliente.</h2>
-    <div class="hero-cta">
-        <button class="btn btn-primary" onclick="abrirModal('cadastro')">🎯 Solicitar meu acesso</button>
-        <a href="#beneficios" class="btn btn-secondary">Ver o que ela faz</a>
+    <div class="offline-visual">
+      <div class="wifi-card on">📶 <span>Online — sincronizando pedidos</span></div>
+      <div style="text-align:center;color:#555;font-size:12px;padding:4px 0">⬇️ queda de internet ⬇️</div>
+      <div class="wifi-card off">📴 <span>Offline — operando localmente</span></div>
+      <div style="text-align:center;color:#555;font-size:12px;padding:4px 0">⬆️ internet volta ⬆️</div>
+      <div class="wifi-card on">🔄 <span>Sincronizando dados automaticamente</span></div>
     </div>
-</section>
+  </div>
+</div>
 
-<section id="beneficios">
-    <h2 class="section-title">O que a <span>Rebeca Delivery</span> faz?</h2>
-    <p class="section-subtitle">Não é um chatbot. É uma funcionária de verdade que conhece seu cardápio, seus preços e seu restaurante.</p>
-    <div class="benefits-grid">
-        <div class="benefit-card" style="border-color:#ff6b35;position:relative;overflow:hidden;">
-            <div style="position:absolute;top:14px;right:14px;background:linear-gradient(135deg,#ff6b35,#ff9a56);color:#fff;font-size:10px;font-weight:800;padding:3px 10px;border-radius:20px;letter-spacing:.5px;">MAIS PEDIDO</div>
-            <div class="benefit-icon">🤖</div>
-            <h3>Atende Sozinha — 24 Horas por Dia</h3>
-            <p>Enquanto você dorme, a Rebeca está vendendo. Cliente manda mensagem às 2h da manhã e recebe resposta em menos de 3 segundos. <strong style="color:#ff9a56;">Você não perde mais nenhum pedido.</strong></p>
-        </div>
-        <div class="benefit-card">
-            <div class="benefit-icon">📲</div>
-            <h3>Chega de Pagar Comissão pro iFood</h3>
-            <p>Todo pedido feito no <strong style="color:#ff9a56;">seu WhatsApp, com sua marca</strong>, sem pagar 12% a 30% de comissão por pedido. O dinheiro fica todo no seu bolso.</p>
-        </div>
-        <div class="benefit-card">
-            <div class="benefit-icon">🎙️</div>
-            <h3>Entende Texto, Áudio e até Gíria</h3>
-            <p>Cliente mandou áudio "me manda dois X com tudo"? Entendeu. Escreveu errado? Entendeu. A Rebeca fala o mesmo idioma do seu cliente.</p>
-        </div>
-        <div class="benefit-card">
-            <div class="benefit-icon">💰</div>
-            <h3>Vende Mais Sem Contratar Ninguém</h3>
-            <p>A Rebeca sugere bebida, borda, adicional e combo automaticamente. <strong style="color:#ff9a56;">Ticket médio sobe sem você fazer nada.</strong> Como um vendedor treinado, o dia todo.</p>
-        </div>
-        <div class="benefit-card">
-            <div class="benefit-icon">🍕</div>
-            <h3>Cardápio Digital com Promoções em Tempo Real</h3>
-            <p>Monte combos, defina promoções com % de desconto e o sistema atualiza o cardápio na hora. Pizza P/M/G, com borda ou sem — tudo configurável do seu painel.</p>
-        </div>
-        <div class="benefit-card">
-            <div class="benefit-icon">👨‍🍳</div>
-            <h3>Cozinha e Entregador em Sintonia</h3>
-            <p>Pedido confirmado → cozinha recebe com alerta sonoro → entregador é despachado automaticamente → cliente recebe rastreio GPS ao vivo. <strong style="color:#ff9a56;">Zero falha de comunicação.</strong></p>
-        </div>
-        <div class="benefit-card">
-            <div class="benefit-icon">🪑</div>
-            <h3>Pedido por Mesa com QR Code</h3>
-            <p>Cliente senta, escaneia o QR, faz o pedido e pede a conta — tudo pelo celular. O garçom recebe a notificação com a mesa indicada. <strong style="color:#ff9a56;">Menos erro, mais giro de mesa.</strong></p>
-        </div>
-        <div class="benefit-card">
-            <div class="benefit-icon">📊</div>
-            <h3>Você Sabe Exatamente o que Está Vendendo</h3>
-            <p>Dashboard completo: faturamento do dia, horário de pico, itens mais pedidos, avaliações dos clientes. Decida com dados, não com chute.</p>
-        </div>
-        <div class="benefit-card">
-            <div class="benefit-icon">🧠</div>
-            <h3>Rebeca Identifica Problemas e Avisa Você</h3>
-            <p>Quando o cliente reclama ou pede para falar com o responsável, a Rebeca <strong style="color:#ff9a56;">manda mensagem direto no seu WhatsApp</strong> com o número do cliente e o assunto. Você resolve na hora.</p>
-        </div>
-    </div>
-</section>
-
-<section id="como-funciona">
-    <h2 class="section-title">Como <span>funciona</span>?</h2>
-    <p class="section-subtitle">Em 4 passos simples você automatiza todo o atendimento</p>
-    <div class="steps">
-        <div class="step"><div class="step-number">1</div><div><h3>Faça sua solicitação de acesso</h3><p>Preencha o formulário em 30 segundos. Nossa equipe analisa e entra em contato pelo WhatsApp para ativar seu acesso.</p></div></div>
-        <div class="step"><div class="step-number">2</div><div><h3>Conecte seu WhatsApp e cadastre o cardápio</h3><p>Escaneie o QR Code no painel. Cadastre itens ou tire foto do cardápio — a IA transcreve tudo.</p></div></div>
-        <div class="step"><div class="step-number">3</div><div><h3>Abra a cozinha e o painel do entregador</h3><p>Compartilhe os links com sua equipe. Cada pedido aparece em tempo real com alerta sonoro.</p></div></div>
-        <div class="step"><div class="step-number">4</div><div><h3>A Rebeca cuida do resto</h3><p>Cliente manda msg → Rebeca mostra cardápio → monta pedido → envia pra cozinha → despacha entregador → envia rastreio → pede avaliação.</p></div></div>
-    </div>
-</section>
-
+<!-- COMO FUNCIONA -->
 <section>
-    <h2 class="section-title">Em <span>números</span></h2>
-    <div class="diff-grid">
-        <div class="diff-item"><div class="number">24/7</div><p>Atendimento ininterrupto</p></div>
-        <div class="diff-item"><div class="number">&lt;3s</div><p>Tempo de resposta</p></div>
-        <div class="diff-item"><div class="number">+30%</div><p>Mais vendas com sugestões</p></div>
-        <div class="diff-item"><div class="number">0</div><p>Erros de pedido</p></div>
-    </div>
+  <h2 class="section-title">Como <span>funciona</span></h2>
+  <p class="section-subtitle">Em menos de 1 hora você já está operando com o Rebeca.</p>
+  <div class="steps">
+    <div class="step"><div class="step-number">1</div><div><h3>Solicite seu acesso grátis</h3><p>Preencha o formulário em menos de 2 minutos. Sem cartão de crédito, sem burocracia. Nossa equipe aprova em até 2h.</p></div></div>
+    <div class="step"><div class="step-number">2</div><div><h3>Migramos seus dados</h3><p>Nos envie os dados do sistema atual. Nossa equipe migra cardápio, mesas e histórico — você não precisa fazer nada.</p></div></div>
+    <div class="step"><div class="step-number">3</div><div><h3>Configure em minutos</h3><p>Adicione sua equipe (garçom, cozinha, caixa, entregador), configure as mesas e já começa a usar.</p></div></div>
+    <div class="step"><div class="step-number">4</div><div><h3>Opere com tudo integrado</h3><p>Pedidos chegam na cozinha, garçom vê as mesas, caixa controla o financeiro — tudo em tempo real, tudo conectado.</p></div></div>
+  </div>
 </section>
 
+<!-- NÚMEROS -->
 <section>
-    <div class="suporte-section">
-        <h2 class="section-title">Suporte <span>de verdade</span></h2>
-        <p style="color:#888;font-size:15px;margin-top:10px;">Não é chatbot de suporte. É gente real que resolve na hora.</p>
-        <div class="suporte-grid">
-            <div class="suporte-card"><h4>⚡ Menos de 30 min</h4><p>Todo chamado respondido em menos de 30 minutos. Dia ou noite, feriado ou fim de semana.</p></div>
-            <div class="suporte-card"><h4>🔧 Melhorias Sob Demanda</h4><p>Precisa de funcionalidade nova? A gente desenvolve. Seu feedback vira atualização.</p></div>
-            <div class="suporte-card"><h4>📱 WhatsApp Direto</h4><p>Suporte via WhatsApp com a equipe técnica. Sem fila, sem ticket. Resolvemos na hora.</p></div>
-            <div class="suporte-card"><h4>🔄 Atualizações Semanais</h4><p>Sistema atualizado toda semana com melhorias baseadas no uso real.</p></div>
-        </div>
-    </div>
+  <h2 class="section-title">Números que <span>falam</span></h2>
+  <div class="diff-grid">
+    <div class="diff-item"><div class="number">30</div><p>dias grátis sem compromisso</p></div>
+    <div class="diff-item"><div class="number">0</div><p>custo de migração de dados</p></div>
+    <div class="diff-item"><div class="number">100%</div><p>funciona offline e online</p></div>
+    <div class="diff-item"><div class="number">6</div><p>módulos integrados em tempo real</p></div>
+  </div>
 </section>
 
-<section style="text-align:center;padding-bottom:100px;">
-    <h2 class="section-title">Pronto para <span>começar?</span></h2>
-    <p class="section-subtitle">Envie sua solicitação agora e nossa equipe entra em contato para ativar seu acesso.</p>
-    <button class="btn btn-primary" style="font-size:18px;padding:18px 48px;" onclick="abrirModal('cadastro')">🚀 Solicitar acesso agora</button>
+<!-- SUPORTE -->
+<section>
+  <div class="suporte-section">
+    <h2 class="section-title">Suporte que <span>resolve</span></h2>
+    <p style="color:#888;margin-bottom:0">Não te deixamos sozinho. Nossa equipe acompanha a implementação do início ao fim.</p>
+    <div class="suporte-grid">
+      <div class="suporte-card"><h4>💬 WhatsApp direto</h4><p>Fale com a equipe de suporte direto no WhatsApp. Resposta em menos de 1h no horário comercial.</p></div>
+      <div class="suporte-card"><h4>🔄 Migração assistida</h4><p>Um especialista da nossa equipe cuida de todo o processo de migração dos seus dados.</p></div>
+      <div class="suporte-card"><h4>🎓 Treinamento incluso</h4><p>Treinamos garçom, cozinha, caixa e admin. Tudo online via vídeo chamada, sem custo adicional.</p></div>
+      <div class="suporte-card"><h4>🔧 Atualizações grátis</h4><p>Novas funcionalidades entram automaticamente. Você sempre tem o sistema mais atualizado.</p></div>
+    </div>
+  </div>
 </section>
+
+<!-- CTA FINAL -->
+<div style="max-width:1100px;margin:0 auto;padding:0 20px 80px">
+  <div class="cta-final">
+    <h2>Comece <span>30 dias grátis</span> hoje mesmo</h2>
+    <p>Sem cartão de crédito. Sem taxa de setup. Com migração gratuita dos seus dados.</p>
+    <button class="btn btn-primary" style="font-size:18px;padding:20px 56px" onclick="abrirModal('cadastro')">🚀 Solicitar acesso grátis agora</button>
+    <div class="cta-garantias">
+      <div class="garantia"><span>✓</span> 30 dias grátis</div>
+      <div class="garantia"><span>✓</span> Migração gratuita</div>
+      <div class="garantia"><span>✓</span> Funciona offline</div>
+      <div class="garantia"><span>✓</span> Sem cartão de crédito</div>
+      <div class="garantia"><span>✓</span> Cancelamento imediato</div>
+    </div>
+  </div>
+</div>
+
+<a href="https://wa.me/5500000000000" class="whatsapp-float" target="_blank">💬</a>
 
 <footer>
-    <p>Rebeca Delivery — Sistemas BR — Automação Inteligente para Restaurantes</p>
-    <p style="margin-top:8px;">Dúvidas? <a href="https://wa.me/5534984039955">WhatsApp (34) 98403-9955</a></p>
-    <p style="margin-top:5px;color:#333;">Sistema 100% seguro — Dados isolados por restaurante</p>
+  <p>© 2025 Rebeca Delivery · <a href="#">Termos de uso</a> · <a href="#">Privacidade</a></p>
 </footer>
 
-<a href="https://wa.me/5534984039955" target="_blank" class="whatsapp-float">💬</a>
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <button class="modal-close" onclick="fecharModal()">✕</button>
+    <div class="modal-tabs">
+      <button class="modal-tab active" id="tabCadastro" onclick="trocarTab('cadastro')">🚀 30 dias grátis</button>
+      <button class="modal-tab" id="tabLogin" onclick="trocarTab('login')">Entrar</button>
+    </div>
+
+    <!-- CADASTRO -->
+    <div id="formCadastro">
+      <div class="trial-info">✅ 30 dias grátis · Sem cartão · Migração incluída</div>
+      <div class="form-erro" id="erroCad"></div>
+      <div class="form-sucesso" id="sucessoCad">
+        <div style="font-size:48px;margin-bottom:16px">🎉</div>
+        <h3 style="color:#fff;margin-bottom:8px">Solicitação enviada!</h3>
+        <p style="color:#888;font-size:14px;line-height:1.6">Nossa equipe vai entrar em contato em até <strong style="color:#ff9a56">2 horas</strong> para liberar seu acesso e iniciar a migração dos seus dados.</p>
+        <div id="sucessoLoginBtn" style="display:none;margin-top:20px"></div>
+      </div>
+      <div id="formCadFields">
+        <div class="form-row">
+          <div class="form-group"><label>Seu nome</label><input type="text" id="cad-nome" placeholder="João Silva"></div>
+          <div class="form-group"><label>WhatsApp</label><input type="tel" id="cad-tel" placeholder="(11) 99999-9999"></div>
+        </div>
+        <div class="form-group"><label>Nome do restaurante</label><input type="text" id="cad-comercio" placeholder="Pizzaria do João"></div>
+        <div class="form-row">
+          <div class="form-group"><label>Cidade</label><input type="text" id="cad-cidade" placeholder="São Paulo"></div>
+          <div class="form-group"><label>Tipo de negócio</label>
+            <select id="cad-tipo">
+              <option value="">Selecione...</option>
+              <option>Restaurante</option>
+              <option>Pizzaria</option>
+              <option>Lanchonete</option>
+              <option>Bar</option>
+              <option>Hamburgueria</option>
+              <option>Cafeteria</option>
+              <option>Outro</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group"><label>E-mail</label><input type="email" id="cad-email" placeholder="joao@pizzaria.com"></div>
+        <div class="form-group"><label>Senha</label><input type="password" id="cad-senha" placeholder="Mínimo 6 caracteres"></div>
+        <div class="form-group" style="background:rgba(0,204,106,.06);border:1px solid rgba(0,204,106,.15);border-radius:10px;padding:12px">
+          <label style="color:#00cc6a">Sistema atual (opcional)</label>
+          <input type="text" id="cad-sistema-atual" placeholder="Ex: iFood, Anota AI, próprio, nenhum..." style="border-color:rgba(0,204,106,.2)">
+        </div>
+        <button class="form-btn" onclick="enviarCadastro()">🚀 Solicitar 30 dias grátis</button>
+      </div>
+    </div>
+
+    <!-- LOGIN -->
+    <div id="formLogin" style="display:none">
+      <div class="form-erro" id="erroLogin"></div>
+      <div class="form-group"><label>E-mail</label><input type="email" id="login-email" placeholder="seu@email.com"></div>
+      <div class="form-group"><label>Senha</label><input type="password" id="login-senha" placeholder="••••••••" onkeydown="if(event.key==='Enter')fazerLogin()"></div>
+      <button class="form-btn" onclick="fazerLogin()">Entrar no sistema</button>
+    </div>
+  </div>
+</div>
 
 <script>
 function abrirModal(tab) {
-    document.getElementById('modalOverlay').classList.add('show');
-    trocarTab(tab || 'cadastro');
-    document.body.style.overflow = 'hidden';
+  document.getElementById('modalOverlay').classList.add('show');
+  trocarTab(tab || 'cadastro');
 }
 function fecharModal() {
-    document.getElementById('modalOverlay').classList.remove('show');
-    document.body.style.overflow = '';
+  document.getElementById('modalOverlay').classList.remove('show');
 }
-function fecharModalFora(e) {
-    if (e.target === document.getElementById('modalOverlay')) fecharModal();
-}
-function trocarTab(tab) {
-    const isCad = tab === 'cadastro';
-    document.getElementById('formCadastro').style.display = isCad ? 'block' : 'none';
-    document.getElementById('formLogin').style.display = isCad ? 'none' : 'block';
-    document.getElementById('tabCadastro').classList.toggle('active', isCad);
-    document.getElementById('tabLogin').classList.toggle('active', !isCad);
-}
-
-async function cadastrar() {
-    const nome = document.getElementById('cNome').value.trim();
-    const telefone = document.getElementById('cTelefone').value.trim();
-    const comercio = document.getElementById('cComercio').value.trim();
-    const tipo = document.getElementById('cTipo').value;
-    const cidade = document.getElementById('cCidade').value.trim();
-    const email = document.getElementById('cEmail').value.trim();
-    const senha = document.getElementById('cSenha').value;
-    const senha2 = document.getElementById('cSenha2').value;
-    const erro = document.getElementById('erroC');
-    erro.style.display = 'none';
-
-    if (!nome || !telefone || !comercio || !email || !senha)
-        return mostrarErro(erro, '⚠️ Preencha todos os campos obrigatórios (*)');
-    if (senha.length < 6)
-        return mostrarErro(erro, '⚠️ Senha deve ter pelo menos 6 caracteres');
-    if (senha !== senha2)
-        return mostrarErro(erro, '⚠️ As senhas não coincidem');
-
-    const btn = document.getElementById('btnCadastro');
-    btn.disabled = true; btn.textContent = 'Criando conta...';
-
-    try {
-        const r = await fetch('/api/delivery-auth/cadastro', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ nome, telefone, nomeComercio: comercio, tipoNegocio: tipo, cidade, email, senha, origem: 'landing' })
-        });
-        const d = await r.json();
-        if (!r.ok || d.erro) {
-            mostrarErro(erro, d.erro || 'Erro ao enviar solicitacao');
-            btn.disabled = false;
-            btn.textContent = '📩 Enviar Solicitação';
-            return;
-        }
-        if (d.sucesso && d.pendente) {
-            const modal = document.querySelector('.modal');
-            if (modal) {
-                modal.innerHTML = '<div style="text-align:center;padding:30px 16px;">'
-                    + '<div style="font-size:58px;margin-bottom:16px;">🏆</div>'
-                    + '<h2 style="color:#fff;font-size:1.35em;margin-bottom:10px;">Obrigado pelo seu interesse!</h2>'
-                    + '<p style="color:#aaa;font-size:.93em;line-height:1.8;margin-bottom:22px;">'
-                    + 'Ficamos felizes em ter você aqui.<br>'
-                    + 'Nossa proposta é elevar o nível de gestão do seu negócio — <strong style="color:#ff9a56;">mais rapidez, mais vendas e menos dor de cabeça</strong>, tudo em um só lugar.<br><br>'
-                    + 'Nossa equipe vai analisar sua solicitação e <strong style="color:#fff;">entrar em contato com você pelo WhatsApp em breve</strong> para dar os próximos passos.'
-                    + '</p>'
-                    + '<div style="background:rgba(255,107,53,.08);border:1px solid rgba(255,107,53,.25);border-radius:14px;padding:16px 18px;margin-bottom:24px;">'
-                    + '<div style="color:#ff9a56;font-size:.75em;font-weight:800;letter-spacing:1px;margin-bottom:6px;">FIQUE DE OLHO NO SEU WHATSAPP</div>'
-                    + '<p style="color:#ccc;font-size:.88em;margin:0;line-height:1.6;">Vamos te chamar no número <strong style="color:#fff;">' + telefone + '</strong> para ativar seu acesso premium.</p>'
-                    + '</div>'
-                    + '<button onclick="fecharModal()" style="padding:14px 36px;background:linear-gradient(135deg,#ff6b35,#ff9a56);color:#fff;border:none;border-radius:12px;font-weight:800;font-size:1em;cursor:pointer;">Perfeito, aguardo o contato!</button>'
-                    + '</div>';
-            }
-            return;
-        }
-    } catch(e) {
-        mostrarErro(erro, 'Erro de conexão. Tente novamente.');
-        btn.disabled = false; btn.textContent = '🚀 Criar minha conta grátis';
-    }
-}
-
-async function login() {
-    const email = document.getElementById('lEmail').value.trim();
-    const senha = document.getElementById('lSenha').value;
-    const erro = document.getElementById('erroL');
-    erro.style.display = 'none';
-
-    if (!email || !senha) return mostrarErro(erro, '⚠️ Preencha e-mail e senha');
-
-    const btn = document.getElementById('btnLogin');
-    btn.disabled = true; btn.textContent = 'Entrando...';
-
-    try {
-        const r = await fetch('/api/delivery-auth/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, senha })
-        });
-        const d = await r.json();
-        if (d.sucesso && d.token) {
-            localStorage.setItem('delivery_token', d.token);
-            localStorage.setItem('delivery_adminId', d.adminId);
-            document.getElementById('camposLogin').style.display = 'none';
-            document.getElementById('sucessoLogin').style.display = 'block';
-            setTimeout(() => { window.location.replace('/delivery-admin?token=' + d.token); }, 1000);
-        } else {
-            mostrarErro(erro, d.erro || 'Erro ao fazer login.');
-            btn.disabled = false; btn.textContent = 'Entrar no painel';
-        }
-    } catch(e) {
-        mostrarErro(erro, 'Erro de conexão. Tente novamente.');
-        btn.disabled = false; btn.textContent = 'Entrar no painel';
-    }
-}
-
-function mostrarErro(el, msg) {
-    el.textContent = msg;
-    el.style.display = 'block';
-}
-
-document.querySelectorAll('a[href^="#"]').forEach(a => {
-    a.addEventListener('click', e => {
-        e.preventDefault();
-        const t = document.querySelector(a.getAttribute('href'));
-        if (t) t.scrollIntoView({ behavior: 'smooth' });
-    });
+document.getElementById('modalOverlay').addEventListener('click', function(e) {
+  if (e.target === this) fecharModal();
 });
-
-document.addEventListener('keydown', e => { if (e.key === 'Escape') fecharModal(); });
+function trocarTab(tab) {
+  const isCad = tab === 'cadastro';
+  document.getElementById('formCadastro').style.display = isCad ? 'block' : 'none';
+  document.getElementById('formLogin').style.display = isCad ? 'none' : 'block';
+  document.getElementById('tabCadastro').classList.toggle('active', isCad);
+  document.getElementById('tabLogin').classList.toggle('active', !isCad);
+}
+async function enviarCadastro() {
+  const nome = document.getElementById('cad-nome').value.trim();
+  const tel = document.getElementById('cad-tel').value.trim();
+  const comercio = document.getElementById('cad-comercio').value.trim();
+  const cidade = document.getElementById('cad-cidade').value.trim();
+  const tipo = document.getElementById('cad-tipo').value;
+  const email = document.getElementById('cad-email').value.trim();
+  const senha = document.getElementById('cad-senha').value;
+  const sistemaAtual = document.getElementById('cad-sistema-atual').value.trim();
+  const erro = document.getElementById('erroCad');
+  erro.style.display = 'none';
+  if (!nome || !tel || !comercio || !cidade || !email || !senha)
+    return (erro.textContent = 'Preencha todos os campos obrigatórios', erro.style.display = 'block');
+  const btn = document.querySelector('#formCadFields .form-btn');
+  btn.disabled = true; btn.textContent = 'Enviando...';
+  try {
+    const r = await fetch('/api/delivery-auth/cadastro', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ nome, telefone: tel, nomeComercio: comercio, cidade, tipoNegocio: tipo, email, senha, sistemaAtual, origem: 'landing_30dias' })
+    });
+    const d = await r.json();
+    if (d.token) {
+      document.getElementById('formCadFields').style.display = 'none';
+      const suc = document.getElementById('sucessoCad');
+      suc.style.display = 'block';
+      // Redirecionar para o admin com o token
+      setTimeout(() => { window.location.href = '/delivery-admin?token=' + d.token; }, 3000);
+    } else if (d.sucesso) {
+      document.getElementById('formCadFields').style.display = 'none';
+      document.getElementById('sucessoCad').style.display = 'block';
+    } else {
+      erro.textContent = d.erro || 'Erro ao enviar. Tente novamente.';
+      erro.style.display = 'block';
+      btn.disabled = false; btn.textContent = '🚀 Solicitar 30 dias grátis';
+    }
+  } catch(e) {
+    erro.textContent = 'Erro de conexão. Tente novamente.';
+    erro.style.display = 'block';
+    btn.disabled = false; btn.textContent = '🚀 Solicitar 30 dias grátis';
+  }
+}
+async function fazerLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const senha = document.getElementById('login-senha').value;
+  const erro = document.getElementById('erroLogin');
+  erro.style.display = 'none';
+  if (!email || !senha) return (erro.textContent = 'Preencha e-mail e senha', erro.style.display = 'block');
+  try {
+    const r = await fetch('/api/delivery-auth/login', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email,senha})});
+    const d = await r.json();
+    if (d.token) {
+      window.location.href = '/delivery-admin?token=' + d.token;
+    } else {
+      erro.textContent = d.erro || 'E-mail ou senha inválidos';
+      erro.style.display = 'block';
+    }
+  } catch(e) { erro.textContent = 'Erro de conexão'; erro.style.display = 'block'; }
+}
 </script>
-
-    <!-- SEÇÃO COMPARATIVO — Quem compara escolhe Rebeca -->
-    <section style="padding:80px 20px;background:linear-gradient(180deg,#0a0a1a,#0d0d20);position:relative;overflow:hidden;">
-      <div style="max-width:900px;margin:0 auto;text-align:center;">
-        <div style="display:inline-block;background:rgba(255,107,53,.1);border:1px solid rgba(255,107,53,.3);border-radius:50px;padding:8px 22px;font-size:13px;color:#ff9a56;font-weight:700;margin-bottom:24px;letter-spacing:1px;">🔍 COMPARATIVO HONESTO</div>
-        <h2 style="font-size:clamp(1.8em,4vw,2.8em);font-weight:900;color:#fff;margin-bottom:12px;line-height:1.2;">Quem compara, <span style="background:linear-gradient(135deg,#ff6b35,#ff9a56);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">escolhe Rebeca</span></h2>
-        <p style="color:#888;font-size:1em;margin-bottom:50px;max-width:600px;margin-left:auto;margin-right:auto;">Sem taxa por pedido. Sem % sobre o faturamento. Sem contrato. Você paga um valor fixo e o sistema trabalha por você 24h.</p>
-
-        <!-- Tabela comparativa -->
-        <div style="overflow-x:auto;border-radius:20px;border:1px solid rgba(255,107,53,.2);">
-          <table style="width:100%;border-collapse:collapse;font-size:.9em;min-width:560px;">
-            <thead>
-              <tr style="background:rgba(255,107,53,.12);">
-                <th style="padding:16px 20px;text-align:left;color:#ff9a56;font-weight:800;">Recurso</th>
-                <th style="padding:16px 20px;text-align:center;color:#ff6b35;font-weight:900;font-size:1.1em;">Rebeca ✦</th>
-                <th style="padding:16px 20px;text-align:center;color:#555;font-weight:700;">iFood / Rappi</th>
-                <th style="padding:16px 20px;text-align:center;color:#555;font-weight:700;">Outros sistemas</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr style="border-top:1px solid rgba(255,255,255,.05);">
-                <td style="padding:14px 20px;color:#ccc;">Taxa por pedido</td>
-                <td style="padding:14px 20px;text-align:center;color:#00cc6a;font-weight:800;">✅ Zero</td>
-                <td style="padding:14px 20px;text-align:center;color:#ef4444;">❌ 12–30%</td>
-                <td style="padding:14px 20px;text-align:center;color:#f59e0b;">⚠️ Varia</td>
-              </tr>
-              <tr style="border-top:1px solid rgba(255,255,255,.05);background:rgba(255,255,255,.02);">
-                <td style="padding:14px 20px;color:#ccc;">IA atendendo no WhatsApp</td>
-                <td style="padding:14px 20px;text-align:center;color:#00cc6a;font-weight:800;">✅ 24h</td>
-                <td style="padding:14px 20px;text-align:center;color:#ef4444;">❌ Não</td>
-                <td style="padding:14px 20px;text-align:center;color:#ef4444;">❌ Não</td>
-              </tr>
-              <tr style="border-top:1px solid rgba(255,255,255,.05);">
-                <td style="padding:14px 20px;color:#ccc;">Impressão automática 3 vias</td>
-                <td style="padding:14px 20px;text-align:center;color:#00cc6a;font-weight:800;">✅ Incluso</td>
-                <td style="padding:14px 20px;text-align:center;color:#ef4444;">❌ Não</td>
-                <td style="padding:14px 20px;text-align:center;color:#f59e0b;">⚠️ Pago à parte</td>
-              </tr>
-              <tr style="border-top:1px solid rgba(255,255,255,.05);background:rgba(255,255,255,.02);">
-                <td style="padding:14px 20px;color:#ccc;">Cardápio digital próprio</td>
-                <td style="padding:14px 20px;text-align:center;color:#00cc6a;font-weight:800;">✅ Incluso</td>
-                <td style="padding:14px 20px;text-align:center;color:#f59e0b;">⚠️ Deles</td>
-                <td style="padding:14px 20px;text-align:center;color:#f59e0b;">⚠️ Extra</td>
-              </tr>
-              <tr style="border-top:1px solid rgba(255,255,255,.05);">
-                <td style="padding:14px 20px;color:#ccc;">Controle de caixa + estoque</td>
-                <td style="padding:14px 20px;text-align:center;color:#00cc6a;font-weight:800;">✅ Incluso</td>
-                <td style="padding:14px 20px;text-align:center;color:#ef4444;">❌ Não</td>
-                <td style="padding:14px 20px;text-align:center;color:#f59e0b;">⚠️ Pago à parte</td>
-              </tr>
-              <tr style="border-top:1px solid rgba(255,255,255,.05);background:rgba(255,255,255,.02);">
-                <td style="padding:14px 20px;color:#ccc;">Seus clientes são seus</td>
-                <td style="padding:14px 20px;text-align:center;color:#00cc6a;font-weight:800;">✅ 100%</td>
-                <td style="padding:14px 20px;text-align:center;color:#ef4444;">❌ São deles</td>
-                <td style="padding:14px 20px;text-align:center;color:#00cc6a;">✅ Sim</td>
-              </tr>
-              <tr style="border-top:1px solid rgba(255,255,255,.05);">
-                <td style="padding:14px 20px;color:#ccc;">Valor mensal fixo</td>
-                <td style="padding:14px 20px;text-align:center;color:#00cc6a;font-weight:800;">✅ R$ 197,90</td>
-                <td style="padding:14px 20px;text-align:center;color:#ef4444;">❌ % do faturamento</td>
-                <td style="padding:14px 20px;text-align:center;color:#f59e0b;">⚠️ Varia muito</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <!-- CTA pós-comparativo -->
-        <div style="margin-top:48px;padding:40px 30px;background:linear-gradient(135deg,rgba(255,107,53,.1),rgba(255,154,86,.05));border:1px solid rgba(255,107,53,.25);border-radius:24px;">
-          <p style="font-size:1.2em;font-weight:800;color:#fff;margin-bottom:8px;">Se você faz 100 pedidos/mês no iFood, paga até <span style="color:#ef4444;">R$ 900 de taxa.</span></p>
-          <p style="color:#888;margin-bottom:24px;font-size:.95em;">Com a Rebeca, você paga R$ 197,90 fixo e fica com <strong style="color:#00cc6a;">todo o lucro</strong>.</p>
-          <a href="#planos" style="display:inline-block;background:linear-gradient(135deg,#ff6b35,#ff9a56);color:#fff;font-weight:900;font-size:1em;padding:14px 36px;border-radius:50px;text-decoration:none;box-shadow:0 4px 20px rgba(255,107,53,.4);">Quero começar agora →</a>
-        </div>
-      </div>
-    </section>
-
 </body>
 </html>
