@@ -483,6 +483,7 @@ async function carregarConfigNF() {
                 <div class="menu-item" data-page="relatorio-financeiro" onclick="carregarRelatorioFinanceiro()">📊 Relatório Financeiro</div>
                 <div class="menu-item" data-page="relatorios" onclick="carregarRelatorios()">📈 Relatórios de Caixa</div>
                 <div class="menu-item" data-page="financeiro-caixas" onclick="carregarFinanceiroCaixas()">📋 Fechamentos de Caixa</div>
+                <div class="menu-item" data-page="caixa-tempo-real" onclick="iniciarPainelCaixaTempoReal()">🟢 Caixa ao Vivo</div>
                 <div class="menu-item" data-page="financeiro-fornecedores" onclick="carregarFornecedores()">🏭 Fornecedores</div>
                 <div class="menu-section">Operação</div>
                 <div class="menu-item" onclick="abrirTelaCaixa()" style="cursor:pointer">🧾 Caixa / Comanda</div>
@@ -506,6 +507,105 @@ async function carregarConfigNF() {
 
 
                 <!-- FINANCEIRO CAIXAS -->
+
+                <!-- CAIXA AO VIVO -->
+                <div id="page-caixa-tempo-real" class="page" style="padding:20px;max-width:1200px;margin:0 auto">
+                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px">
+                    <h2 style="margin:0">🟢 Caixa ao Vivo</h2>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap">
+                      <div id="ctv-status-badge" style="padding:6px 16px;border-radius:20px;font-size:.82em;font-weight:700;background:#dcfce7;color:#16a34a">● Carregando...</div>
+                      <button onclick="iniciarPainelCaixaTempoReal()" style="background:#f97316;color:#fff;border:none;border-radius:8px;padding:8px 16px;cursor:pointer;font-weight:700;font-size:.85em">🔄 Atualizar</button>
+                      <button onclick="abrirModalFecharCaixa()" style="background:#ef4444;color:#fff;border:none;border-radius:8px;padding:8px 16px;cursor:pointer;font-weight:700;font-size:.85em">🔒 Fechar Caixa</button>
+                    </div>
+                  </div>
+
+                  <!-- Info abertura -->
+                  <div id="ctv-info-abertura" style="background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:12px 16px;margin-bottom:16px;font-size:.85em;display:flex;gap:20px;flex-wrap:wrap"></div>
+
+                  <!-- Cards totais por forma de pagamento -->
+                  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:20px">
+                    <div class="stat-card" style="border-top:3px solid #22c55e">
+                      <div class="valor" id="ctv-total" style="color:#f97316">R$ 0,00</div>
+                      <div class="label">💰 Total Geral</div>
+                    </div>
+                    <div class="stat-card" style="border-top:3px solid #22c55e">
+                      <div class="valor" id="ctv-dinheiro" style="color:#22c55e">R$ 0,00</div>
+                      <div class="label">💵 Dinheiro</div>
+                    </div>
+                    <div class="stat-card" style="border-top:3px solid #3b82f6">
+                      <div class="valor" id="ctv-debito" style="color:#3b82f6">R$ 0,00</div>
+                      <div class="label">💳 Débito</div>
+                    </div>
+                    <div class="stat-card" style="border-top:3px solid #6366f1">
+                      <div class="valor" id="ctv-credito" style="color:#6366f1">R$ 0,00</div>
+                      <div class="label">💳 Crédito</div>
+                    </div>
+                    <div class="stat-card" style="border-top:3px solid #8b5cf6">
+                      <div class="valor" id="ctv-pix" style="color:#8b5cf6">R$ 0,00</div>
+                      <div class="label">🟪 Pix</div>
+                    </div>
+                    <div class="stat-card" style="border-top:3px solid #f59e0b">
+                      <div class="valor" id="ctv-outros" style="color:#f59e0b">R$ 0,00</div>
+                      <div class="label">🔄 Outros</div>
+                    </div>
+                    <div class="stat-card" style="border-top:3px solid #ef4444">
+                      <div class="valor" id="ctv-sangrias" style="color:#ef4444">R$ 0,00</div>
+                      <div class="label">📤 Sangrias</div>
+                    </div>
+                    <div class="stat-card" style="border-top:3px solid #888">
+                      <div class="valor" id="ctv-pedidos">0</div>
+                      <div class="label">📦 Pedidos</div>
+                    </div>
+                    <div class="stat-card" style="border-top:3px solid #ef4444">
+                      <div class="valor" id="ctv-cancelados" style="color:#ef4444">0</div>
+                      <div class="label">❌ Cancelados</div>
+                    </div>
+                  </div>
+
+                  <!-- Top produtos -->
+                  <div class="panel" style="margin-bottom:16px">
+                    <h3 style="margin-bottom:12px">🏆 Produtos Mais Vendidos</h3>
+                    <div id="ctv-top-produtos" style="font-size:.85em"></div>
+                  </div>
+
+                  <!-- Estoque crítico -->
+                  <div class="panel" style="margin-bottom:16px">
+                    <h3 style="margin-bottom:12px">⚠️ Estoque Crítico</h3>
+                    <div id="ctv-estoque-critico" style="font-size:.85em"></div>
+                  </div>
+                </div>
+
+                <!-- MODAL FECHAR CAIXA -->
+                <div id="modal-fechar-caixa-adm" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;align-items:center;justify-content:center">
+                  <div style="background:#fff;border-radius:16px;padding:24px;width:95%;max-width:520px;max-height:92vh;overflow-y:auto">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+                      <h3 style="margin:0">🔒 Fechar Caixa</h3>
+                      <button onclick="document.getElementById('modal-fechar-caixa-adm').style.display='none'" style="background:none;border:none;font-size:1.4em;cursor:pointer">✕</button>
+                    </div>
+                    <div id="modal-fc-resumo" style="margin-bottom:16px"></div>
+                    <div style="margin-bottom:12px">
+                      <label style="font-size:.82em;font-weight:700;color:#555;display:block;margin-bottom:6px">💵 Dinheiro em caixa (contado)</label>
+                      <input type="number" id="fc-valor-dinheiro-contado" placeholder="0,00" step="0.01"
+                        style="width:100%;padding:10px;border-radius:8px;border:1px solid #ddd;font-size:1em">
+                    </div>
+                    <div style="margin-bottom:12px">
+                      <label style="font-size:.82em;font-weight:700;color:#555;display:block;margin-bottom:6px">📝 Observações</label>
+                      <textarea id="fc-obs" placeholder="Observações do fechamento..." rows="3"
+                        style="width:100%;padding:10px;border-radius:8px;border:1px solid #ddd;font-size:.9em;resize:vertical"></textarea>
+                    </div>
+                    <div style="display:flex;gap:8px">
+                      <button onclick="confirmarFecharCaixaAdm()"
+                        style="flex:1;padding:12px;background:#ef4444;color:#fff;border:none;border-radius:8px;font-weight:800;cursor:pointer;font-size:.95em">
+                        🔒 Confirmar Fechamento
+                      </button>
+                      <button onclick="imprimirRelatorioCaixa()"
+                        style="flex:1;padding:12px;background:#1a1a2e;color:#fff;border:none;border-radius:8px;font-weight:800;cursor:pointer;font-size:.95em">
+                        🖨️ Imprimir Relatório
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
                 <div id="page-financeiro-caixas" class="page" style="padding:20px;max-width:1200px;margin:0 auto">
                   <h2 style="margin-bottom:20px">📋 Fechamentos de Caixa</h2>
                   <div class="stats-grid" id="fc-stats-grid">
@@ -7579,6 +7679,209 @@ async function adicionarConta() {
     carregarRelatorioFinanceiro();
   } else { toast(d.erro || 'Erro', 'error'); }
 }
+
+// ===== CAIXA AO VIVO =====
+let _ctvInterval = null;
+
+async function iniciarPainelCaixaTempoReal() {
+  await carregarResumoCaixaTempoReal();
+  await carregarEstoqueCritico();
+  // Atualizar a cada 30s
+  if (_ctvInterval) clearInterval(_ctvInterval);
+  _ctvInterval = setInterval(async () => {
+    const page = document.getElementById('page-caixa-tempo-real');
+    if (page && page.classList.contains('active')) {
+      await carregarResumoCaixaTempoReal();
+    }
+  }, 30000);
+}
+
+function fmtR(v) { return 'R$ ' + (v||0).toFixed(2).replace('.',','); }
+
+async function carregarResumoCaixaTempoReal() {
+  try {
+    const r = await fetch('/api/delivery/caixa/resumo-tempo-real', { headers: { Authorization: 'Bearer ' + token } });
+    const d = await r.json();
+    const el = (id) => document.getElementById(id);
+
+    // Badge status
+    const badge = el('ctv-status-badge');
+    if (badge) {
+      badge.textContent = d.caixaAberto ? '● Caixa Aberto' : '● Caixa Fechado';
+      badge.style.background = d.caixaAberto ? '#dcfce7' : '#fee2e2';
+      badge.style.color = d.caixaAberto ? '#16a34a' : '#dc2626';
+    }
+
+    // Info abertura
+    const info = el('ctv-info-abertura');
+    if (info && d.caixa) {
+      const abertura = new Date(d.dataAbertura).toLocaleString('pt-BR');
+      const tempo = Math.floor((Date.now() - new Date(d.dataAbertura)) / 60000);
+      const horas = Math.floor(tempo/60), mins = tempo%60;
+      info.innerHTML = `<span>👤 <b>Operador:</b> ${d.abertoPor}</span>
+        <span>🕐 <b>Abertura:</b> ${abertura}</span>
+        <span>⏱️ <b>Tempo aberto:</b> ${horas}h ${mins}min</span>
+        <span>💰 <b>Fundo de caixa:</b> ${fmtR(d.fundoCaixa)}</span>`;
+    } else if (info) {
+      info.innerHTML = '<span style="color:#888">Nenhum caixa aberto no momento</span>';
+    }
+
+    // Cards valores
+    if (el('ctv-total')) el('ctv-total').textContent = fmtR(d.totalGeral);
+    if (el('ctv-dinheiro')) el('ctv-dinheiro').textContent = fmtR(d.totalDinheiro);
+    if (el('ctv-debito')) el('ctv-debito').textContent = fmtR(d.totalDebito);
+    if (el('ctv-credito')) el('ctv-credito').textContent = fmtR(d.totalCredito);
+    if (el('ctv-pix')) el('ctv-pix').textContent = fmtR(d.totalPix);
+    if (el('ctv-outros')) el('ctv-outros').textContent = fmtR(d.totalOutros);
+    if (el('ctv-sangrias')) el('ctv-sangrias').textContent = fmtR(d.totalSangrias);
+    if (el('ctv-pedidos')) el('ctv-pedidos').textContent = d.totalPagos + '/' + d.totalPedidos;
+    if (el('ctv-cancelados')) el('ctv-cancelados').textContent = d.totalCancelados;
+
+    // Top produtos
+    const tp = el('ctv-top-produtos');
+    if (tp) {
+      if (!d.topProdutos || !d.topProdutos.length) {
+        tp.innerHTML = '<div style="color:#888;text-align:center;padding:20px">Nenhum produto vendido ainda</div>';
+      } else {
+        const max = d.topProdutos[0].quantidade;
+        tp.innerHTML = d.topProdutos.map((p, i) => `
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f0f0f0">
+            <div style="width:24px;height:24px;border-radius:50%;background:${i===0?'#f97316':i===1?'#6366f1':'#888'};color:#fff;display:flex;align-items:center;justify-content:center;font-size:.75em;font-weight:800;flex-shrink:0">${i+1}</div>
+            <div style="flex:1;min-width:0">
+              <div style="font-weight:700;font-size:.88em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.nome}</div>
+              <div style="background:#f0f0f0;border-radius:4px;height:6px;margin-top:4px">
+                <div style="background:#f97316;height:6px;border-radius:4px;width:${Math.round(p.quantidade/max*100)}%"></div>
+              </div>
+            </div>
+            <div style="text-align:right;flex-shrink:0">
+              <div style="font-weight:800;color:#f97316">${p.quantidade}x</div>
+              <div style="font-size:.75em;color:#888">${fmtR(p.total)}</div>
+            </div>
+          </div>`).join('');
+      }
+    }
+
+    // Guardar dados para modal de fechamento
+    window._ctvDados = d;
+  } catch(e) { console.error('Erro caixa ao vivo:', e); }
+}
+
+async function carregarEstoqueCritico() {
+  try {
+    const r = await fetch('/api/delivery/cardapio', { headers: { Authorization: 'Bearer ' + token } });
+    const data = await r.json();
+    const itens = data.itens || data || [];
+    const criticos = itens.filter(i => i.estoqueAtivo && (i.estoqueAtual || 0) <= (i.estoqueMinimo || 0));
+    const el = document.getElementById('ctv-estoque-critico');
+    if (!el) return;
+    if (!criticos.length) {
+      el.innerHTML = '<div style="color:#22c55e;font-weight:700">✅ Todos os itens com estoque OK</div>';
+      return;
+    }
+    el.innerHTML = criticos.map(i => `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;margin-bottom:6px">
+        <div>
+          <div style="font-weight:700;font-size:.88em">${i.nome}</div>
+          <div style="font-size:.75em;color:#888">Mínimo: ${i.estoqueMinimo||0} · Atual: ${i.estoqueAtual||0}</div>
+        </div>
+        <div style="padding:3px 10px;border-radius:20px;font-size:.75em;font-weight:700;background:${(i.estoqueAtual||0)===0?'#fee2e2':'#fff7ed'};color:${(i.estoqueAtual||0)===0?'#dc2626':'#f97316'}">
+          ${(i.estoqueAtual||0)===0?'⛔ Zerado':'⚠️ Baixo'}
+        </div>
+      </div>`).join('');
+  } catch(e) { console.error('Erro estoque:', e); }
+}
+
+function abrirModalFecharCaixa() {
+  const d = window._ctvDados;
+  const resumo = document.getElementById('modal-fc-resumo');
+  if (resumo && d) {
+    resumo.innerHTML = `
+      <div style="background:#f8f9fa;border-radius:10px;padding:14px;margin-bottom:4px">
+        <div style="font-weight:800;margin-bottom:10px;font-size:.95em">📊 Resumo do Caixa</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:.85em">
+          <div>💵 Dinheiro: <b>${fmtR(d.totalDinheiro)}</b></div>
+          <div>💳 Débito: <b>${fmtR(d.totalDebito)}</b></div>
+          <div>💳 Crédito: <b>${fmtR(d.totalCredito)}</b></div>
+          <div>🟪 Pix: <b>${fmtR(d.totalPix)}</b></div>
+          <div>🔄 Outros: <b>${fmtR(d.totalOutros)}</b></div>
+          <div>📤 Sangrias: <b style="color:#ef4444">${fmtR(d.totalSangrias)}</b></div>
+        </div>
+        <div style="border-top:2px solid #e0e0e0;margin-top:10px;padding-top:10px;display:flex;justify-content:space-between;font-weight:900">
+          <span>TOTAL GERAL</span><span style="color:#f97316;font-size:1.1em">${fmtR(d.totalGeral)}</span>
+        </div>
+        <div style="font-size:.78em;color:#888;margin-top:6px">📦 ${d.totalPagos} pedidos pagos · ❌ ${d.totalCancelados} cancelados</div>
+      </div>`;
+  }
+  document.getElementById('modal-fechar-caixa-adm').style.display = 'flex';
+}
+
+async function confirmarFecharCaixaAdm() {
+  if (!confirm('Confirmar fechamento do caixa?')) return;
+  try {
+    const valorDinheiro = parseFloat(document.getElementById('fc-valor-dinheiro-contado')?.value || 0);
+    const obs = document.getElementById('fc-obs')?.value || '';
+    const r = await fetch('/api/delivery/caixa/fechar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+      body: JSON.stringify({ valorFechamento: valorDinheiro, observacoes: obs })
+    });
+    const d = await r.json();
+    if (d.sucesso || d.caixa) {
+      document.getElementById('modal-fechar-caixa-adm').style.display = 'none';
+      alert('✅ Caixa fechado com sucesso!');
+      iniciarPainelCaixaTempoReal();
+    } else {
+      alert('Erro: ' + (d.erro || 'Não foi possível fechar o caixa'));
+    }
+  } catch(e) { alert('Erro de conexão'); }
+}
+
+function imprimirRelatorioCaixa() {
+  const d = window._ctvDados;
+  if (!d) { alert('Carregue o caixa primeiro'); return; }
+  const top = (d.topProdutos||[]).map((p,i) => `${i+1}. ${p.nome} — ${p.quantidade}x — ${fmtR(p.total)}`).join('\n');
+  const abertura = d.dataAbertura ? new Date(d.dataAbertura).toLocaleString('pt-BR') : '-';
+  const agora = new Date().toLocaleString('pt-BR');
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <style>body{font-family:monospace;font-size:12px;margin:0;padding:10px;max-width:300px}
+  h2{text-align:center;font-size:14px;margin:4px 0}.line{border-top:1px dashed #000;margin:6px 0}
+  .row{display:flex;justify-content:space-between}.bold{font-weight:bold}.center{text-align:center}</style></head>
+  <body>
+  <h2>RELATÓRIO DE CAIXA</h2>
+  <div class="center">${agora}</div>
+  <div class="line"></div>
+  <div class="row"><span>Operador:</span><span>${d.abertoPor||'-'}</span></div>
+  <div class="row"><span>Abertura:</span><span>${abertura}</span></div>
+  <div class="row"><span>Pedidos:</span><span>${d.totalPagos}/${d.totalPedidos}</span></div>
+  <div class="line"></div>
+  <div class="row bold"><span>💵 Dinheiro</span><span>${fmtR(d.totalDinheiro)}</span></div>
+  <div class="row bold"><span>💳 Débito</span><span>${fmtR(d.totalDebito)}</span></div>
+  <div class="row bold"><span>💳 Crédito</span><span>${fmtR(d.totalCredito)}</span></div>
+  <div class="row bold"><span>🟪 Pix</span><span>${fmtR(d.totalPix)}</span></div>
+  <div class="row bold"><span>🔄 Outros</span><span>${fmtR(d.totalOutros)}</span></div>
+  <div class="row" style="color:red"><span>📤 Sangrias</span><span>-${fmtR(d.totalSangrias)}</span></div>
+  <div class="line"></div>
+  <div class="row bold" style="font-size:14px"><span>TOTAL</span><span>${fmtR(d.totalGeral)}</span></div>
+  <div class="line"></div>
+  <div class="bold">🏆 TOP PRODUTOS:</div>
+  <pre style="font-size:11px;margin:4px 0">${top}</pre>
+  <div class="line"></div>
+  <div class="center">Sistema Rebeca</div>
+  </body></html>`;
+  const w = window.open('','_blank','width=400,height=600');
+  w.document.write(html);
+  w.document.close();
+  setTimeout(() => { w.print(); }, 300);
+}
+
+// SSE: atualizar caixa ao vivo quando chegar novo pedido/pagamento
+if (typeof _sseEventos !== 'undefined') {
+  _sseEventos.addEventListener('novo_pedido', function() {
+    const page = document.getElementById('page-caixa-tempo-real');
+    if (page && page.classList.contains('active')) carregarResumoCaixaTempoReal();
+  });
+}
+
 </script>
 
 <!-- ===== TELA DE ATIVAÇÃO DO PLANO ===== -->

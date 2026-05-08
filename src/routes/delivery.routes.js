@@ -3836,3 +3836,77 @@ SUPORTE: Entre em contato com a equipe Rebeca via WhatsApp.
     if (!res.headersSent) res.status(500).json({ erro: 'Erro ao gerar instalador' });
   }
 });
+
+// ===== RESUMO CAIXA EM TEMPO REAL =====
+router.get('/caixa/resumo-tempo-real', authDelivery, async (req, res) => {
+    try {
+        const caixa = await CaixaDelivery.findOne({ adminId: req.adminId, status: 'aberto' }).sort({ dataAbertura: -1 });
+        const hoje = new Date(); hoje.setHours(0,0,0,0);
+        const dataRef = caixa ? caixa.dataAbertura : hoje;
+
+        const pedidos = await PedidoDelivery.find({
+            adminId: req.adminId,
+            createdAt: { $gte: dataRef }
+        });
+
+        const pagos = pedidos.filter(p => p.pago === true || p.status === 'entregue');
+        const cancelados = pedidos.filter(p => p.status === 'cancelado');
+
+        let totalDinheiro=0, totalDebito=0, totalCredito=0, totalPix=0, totalOutros=0;
+        pagos.forEach(p => {
+            if (p.formasPagamento && p.formasPagamento.length) {
+                p.formasPagamento.forEach(f => {
+                    const v = f.valor || 0;
+                    if (f.forma==='dinheiro') totalDinheiro+=v;
+                    else if (f.forma==='debito') totalDebito+=v;
+                    else if (f.forma==='credito') totalCredito+=v;
+                    else if (f.forma==='pix') totalPix+=v;
+                    else totalOutros+=v;
+                });
+            } else {
+                const fp = p.formaPagamento || '';
+                const v = p.total || 0;
+                if (fp==='dinheiro') totalDinheiro+=v;
+                else if (fp==='debito') totalDebito+=v;
+                else if (fp==='credito') totalCredito+=v;
+                else if (fp==='pix') totalPix+=v;
+                else if (fp && fp!=='na_entrega') totalOutros+=v;
+            }
+        });
+
+        // Produtos mais vendidos
+        const contagem = {};
+        pagos.forEach(p => {
+            (p.itens||[]).forEach(it => {
+                const nome = it.nome||'Item';
+                if (!contagem[nome]) contagem[nome] = { nome, quantidade:0, total:0 };
+                contagem[nome].quantidade += it.quantidade||1;
+                contagem[nome].total += it.subtotal||(it.precoUnitario||0)*(it.quantidade||1);
+            });
+        });
+        const topProdutos = Object.values(contagem).sort((a,b)=>b.quantidade-a.quantidade).slice(0,10);
+
+        // Sangrias
+        const totalSangrias = (caixa?.sangrias||[]).reduce((s,sg)=>s+(sg.valor||0),0);
+        const totalGeral = totalDinheiro+totalDebito+totalCredito+totalPix+totalOutros;
+
+        res.json({
+            caixaAberto: !!caixa,
+            caixa: caixa || null,
+            totalPedidos: pedidos.length,
+            totalPagos: pagos.length,
+            totalCancelados: cancelados.length,
+            totalGeral,
+            totalDinheiro,
+            totalDebito,
+            totalCredito,
+            totalPix,
+            totalOutros,
+            totalSangrias,
+            fundoCaixa: caixa?.fundoCaixa || 0,
+            topProdutos,
+            dataAbertura: caixa?.dataAbertura || hoje,
+            abertoPor: caixa?.abertoPor || '-'
+        });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
