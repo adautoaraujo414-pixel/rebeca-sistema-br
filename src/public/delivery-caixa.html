@@ -231,6 +231,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
         <button class="tab-btn" onclick="mudarTab('pedidos',this)">📋 Ativos <span class="badge" id="badge-pedidos">0</span></button>
         <button class="tab-btn" onclick="mudarTab('mesas',this)">🍽️ Mesas <span class="badge" id="badge-mesas">0</span></button>
         <button class="tab-btn" onclick="mudarTab('todos',this)">📊 Todos do Dia</button>
+        <button class="tab-btn" onclick="mudarTab('fechamento',this)">🔒 Fechar Caixa</button>
       </div>
       <div class="tab-content">
 
@@ -255,7 +256,83 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
         </div>
 
         <!-- Todos do Dia -->
-        <div id="tab-todos" style="display:none">
+        <div <!-- tab: fechamento -->
+<div id="tab-fechamento" class="tab-content" style="display:none;padding:16px;max-width:900px;margin:0 auto">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+    <h3 style="margin:0">🔒 Fechamento de Caixa</h3>
+    <button onclick="carregarResumoCaixaCaixa()" style="background:#f97316;color:#fff;border:none;border-radius:8px;padding:8px 16px;cursor:pointer;font-weight:700;font-size:.82em">🔄 Atualizar</button>
+  </div>
+  <div id="fc-status-badge" style="display:inline-block;padding:6px 16px;border-radius:20px;font-size:.82em;font-weight:700;background:#dcfce7;color:#16a34a;margin-bottom:16px">● Carregando...</div>
+  <div id="fc-info-abertura" style="background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:12px 16px;margin-bottom:16px;font-size:.85em;display:flex;gap:20px;flex-wrap:wrap"></div>
+
+  <!-- Cards por forma de pagamento -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:16px">
+    <div style="background:#fff;border:1px solid #e0e0e0;border-top:3px solid #f97316;border-radius:12px;padding:14px;text-align:center">
+      <div id="fc-total" style="font-size:1.2em;font-weight:800;color:#f97316">R$ 0,00</div>
+      <div style="font-size:.72em;color:#888;margin-top:4px">💰 Total Geral</div>
+    </div>
+    <div style="background:#fff;border:1px solid #e0e0e0;border-top:3px solid #22c55e;border-radius:12px;padding:14px;text-align:center">
+      <div id="fc-dinheiro" style="font-size:1.1em;font-weight:800;color:#22c55e">R$ 0,00</div>
+      <div style="font-size:.72em;color:#888;margin-top:4px">💵 Dinheiro</div>
+    </div>
+    <div style="background:#fff;border:1px solid #e0e0e0;border-top:3px solid #3b82f6;border-radius:12px;padding:14px;text-align:center">
+      <div id="fc-debito" style="font-size:1.1em;font-weight:800;color:#3b82f6">R$ 0,00</div>
+      <div style="font-size:.72em;color:#888;margin-top:4px">💳 Débito</div>
+    </div>
+    <div style="background:#fff;border:1px solid #e0e0e0;border-top:3px solid #6366f1;border-radius:12px;padding:14px;text-align:center">
+      <div id="fc-credito" style="font-size:1.1em;font-weight:800;color:#6366f1">R$ 0,00</div>
+      <div style="font-size:.72em;color:#888;margin-top:4px">💳 Crédito</div>
+    </div>
+    <div style="background:#fff;border:1px solid #e0e0e0;border-top:3px solid #8b5cf6;border-radius:12px;padding:14px;text-align:center">
+      <div id="fc-pix" style="font-size:1.1em;font-weight:800;color:#8b5cf6">R$ 0,00</div>
+      <div style="font-size:.72em;color:#888;margin-top:4px">🟪 Pix</div>
+    </div>
+    <div style="background:#fff;border:1px solid #e0e0e0;border-top:3px solid #f59e0b;border-radius:12px;padding:14px;text-align:center">
+      <div id="fc-outros" style="font-size:1.1em;font-weight:800;color:#f59e0b">R$ 0,00</div>
+      <div style="font-size:.72em;color:#888;margin-top:4px">🔄 Outros</div>
+    </div>
+    <div style="background:#fff;border:1px solid #e0e0e0;border-top:3px solid #ef4444;border-radius:12px;padding:14px;text-align:center">
+      <div id="fc-sangrias" style="font-size:1.1em;font-weight:800;color:#ef4444">R$ 0,00</div>
+      <div style="font-size:.72em;color:#888;margin-top:4px">📤 Sangrias</div>
+    </div>
+    <div style="background:#fff;border:1px solid #e0e0e0;border-top:3px solid #888;border-radius:12px;padding:14px;text-align:center">
+      <div id="fc-pedidos" style="font-size:1.1em;font-weight:800;color:#333">0/0</div>
+      <div style="font-size:.72em;color:#888;margin-top:4px">📦 Pedidos</div>
+    </div>
+  </div>
+
+  <!-- Top produtos -->
+  <div style="background:#fff;border:1px solid #e0e0e0;border-radius:12px;padding:16px;margin-bottom:16px">
+    <h4 style="margin-bottom:12px;font-size:.9em">🏆 Mais Vendidos</h4>
+    <div id="fc-top-produtos" style="font-size:.82em"></div>
+  </div>
+
+  <!-- Ações -->
+  <div style="display:flex;gap:10px;flex-wrap:wrap">
+    <button onclick="abrirModalFecharCaixaCaixa()" style="flex:1;padding:13px;background:#ef4444;color:#fff;border:none;border-radius:10px;font-weight:800;cursor:pointer;font-size:.9em;min-width:160px">🔒 Fechar Caixa</button>
+    <button onclick="imprimirRelatorioCaixaCaixa()" style="flex:1;padding:13px;background:#1a1a2e;color:#fff;border:none;border-radius:10px;font-weight:800;cursor:pointer;font-size:.9em;min-width:160px">🖨️ Imprimir Relatório</button>
+    <button onclick="abrirCaixaCaixa()" style="flex:1;padding:13px;background:#22c55e;color:#fff;border:none;border-radius:10px;font-weight:800;cursor:pointer;font-size:.9em;min-width:160px">🟢 Abrir Novo Caixa</button>
+  </div>
+
+  <!-- Modal fechar caixa -->
+  <div id="modal-fc-caixa" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center">
+    <div style="background:#fff;border-radius:16px;padding:24px;width:95%;max-width:440px">
+      <h3 style="margin-bottom:16px">🔒 Confirmar Fechamento</h3>
+      <div id="modal-fc-resumo-caixa" style="margin-bottom:16px"></div>
+      <label style="font-size:.82em;font-weight:700;color:#555;display:block;margin-bottom:6px">💵 Dinheiro contado no caixa</label>
+      <input type="number" id="fc-dinheiro-contado" placeholder="0,00" step="0.01"
+        style="width:100%;padding:10px;border-radius:8px;border:1px solid #ddd;font-size:1em;margin-bottom:12px">
+      <label style="font-size:.82em;font-weight:700;color:#555;display:block;margin-bottom:6px">📝 Observações</label>
+      <textarea id="fc-obs-caixa" rows="2" style="width:100%;padding:10px;border-radius:8px;border:1px solid #ddd;font-size:.9em;margin-bottom:16px"></textarea>
+      <div style="display:flex;gap:8px">
+        <button onclick="confirmarFecharCaixaCaixa()" style="flex:1;padding:12px;background:#ef4444;color:#fff;border:none;border-radius:8px;font-weight:800;cursor:pointer">✅ Confirmar</button>
+        <button onclick="document.getElementById('modal-fc-caixa').style.display='none'" style="flex:1;padding:12px;background:#eee;border:none;border-radius:8px;font-weight:700;cursor:pointer">Cancelar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+id="tab-todos" style="display:none">
           <div id="todos-lista"><div class="empty">Carregando...</div></div>
         </div>
 
@@ -800,7 +877,9 @@ async function carregarMesasCaixa() {
     const r = await fetch('/api/delivery/caixa/mesas-painel', {
       headers: { 'Authorization': 'Bearer ' + token }
     });
-    const mesas = await r.json();
+    const d = await r.json();
+    // A rota retorna { sucesso, mesas: [...] }
+    const mesas = d.mesas || d || [];
     renderMesasCaixa(mesas);
     const ocupadas = mesas.filter(m => m.ocupada).length;
     const badge = document.getElementById('badge-mesas');
@@ -927,6 +1006,8 @@ function abrirMesaNoCaixa(num) {
 const _mudarTabOrig = mudarTab;
 mudarTab = function(tab, btn) {
   _mudarTabOrig(tab, btn);
+  if (tab === 'fechamento') carregarResumoCaixaCaixa();
+  if (tab === 'mesas') carregarMesasCaixa();
   if (tab === 'mesas') carregarMesasCaixa();
 };
 
@@ -935,6 +1016,175 @@ setInterval(() => {
   const tabMesas = document.getElementById('tab-mesas');
   if (tabMesas && tabMesas.style.display !== 'none') carregarMesasCaixa();
 }, 30000);
+
+
+// ===== FECHAMENTO DE CAIXA =====
+function fmtM(v) { return 'R$ ' + (v||0).toFixed(2).replace('.',','); }
+
+async function carregarResumoCaixaCaixa() {
+  try {
+    const r = await fetch('/api/delivery/caixa/resumo-tempo-real', {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    const d = await r.json();
+    window._fcDados = d;
+
+    const el = id => document.getElementById(id);
+    const badge = el('fc-status-badge');
+    if (badge) {
+      badge.textContent = d.caixaAberto ? '● Caixa Aberto' : '● Caixa Fechado';
+      badge.style.background = d.caixaAberto ? '#dcfce7' : '#fee2e2';
+      badge.style.color = d.caixaAberto ? '#16a34a' : '#dc2626';
+    }
+
+    const info = el('fc-info-abertura');
+    if (info) {
+      if (d.caixa) {
+        const abertura = new Date(d.dataAbertura).toLocaleString('pt-BR');
+        const mins = Math.floor((Date.now() - new Date(d.dataAbertura)) / 60000);
+        info.innerHTML = `<span>👤 <b>Operador:</b> ${d.abertoPor||'-'}</span>
+          <span>🕐 <b>Abertura:</b> ${abertura}</span>
+          <span>⏱️ <b>Aberto há:</b> ${Math.floor(mins/60)}h ${mins%60}min</span>
+          <span>💰 <b>Fundo:</b> ${fmtM(d.fundoCaixa)}</span>`;
+      } else {
+        info.innerHTML = '<span style="color:#888">Nenhum caixa aberto</span>';
+      }
+    }
+
+    if (el('fc-total')) el('fc-total').textContent = fmtM(d.totalGeral);
+    if (el('fc-dinheiro')) el('fc-dinheiro').textContent = fmtM(d.totalDinheiro);
+    if (el('fc-debito')) el('fc-debito').textContent = fmtM(d.totalDebito);
+    if (el('fc-credito')) el('fc-credito').textContent = fmtM(d.totalCredito);
+    if (el('fc-pix')) el('fc-pix').textContent = fmtM(d.totalPix);
+    if (el('fc-outros')) el('fc-outros').textContent = fmtM(d.totalOutros);
+    if (el('fc-sangrias')) el('fc-sangrias').textContent = fmtM(d.totalSangrias);
+    if (el('fc-pedidos')) el('fc-pedidos').textContent = (d.totalPagos||0) + '/' + (d.totalPedidos||0);
+
+    const tp = el('fc-top-produtos');
+    if (tp) {
+      if (!d.topProdutos || !d.topProdutos.length) {
+        tp.innerHTML = '<div style="color:#888;text-align:center;padding:16px">Nenhum produto vendido ainda</div>';
+      } else {
+        const max = d.topProdutos[0].quantidade;
+        tp.innerHTML = d.topProdutos.slice(0,8).map((p,i) => `
+          <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #f0f0f0">
+            <div style="width:20px;height:20px;border-radius:50%;background:${i===0?'#f97316':i===1?'#6366f1':'#888'};color:#fff;display:flex;align-items:center;justify-content:center;font-size:.65em;font-weight:800;flex-shrink:0">${i+1}</div>
+            <div style="flex:1;min-width:0">
+              <div style="font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.nome}</div>
+              <div style="background:#f0f0f0;border-radius:4px;height:4px;margin-top:3px">
+                <div style="background:#f97316;height:4px;border-radius:4px;width:${Math.round(p.quantidade/max*100)}%"></div>
+              </div>
+            </div>
+            <div style="text-align:right;flex-shrink:0;font-size:.8em">
+              <div style="font-weight:800;color:#f97316">${p.quantidade}x</div>
+              <div style="color:#888">${fmtM(p.total)}</div>
+            </div>
+          </div>`).join('');
+      }
+    }
+  } catch(e) { console.error('Erro resumo caixa:', e); }
+}
+
+function abrirModalFecharCaixaCaixa() {
+  const d = window._fcDados;
+  if (!d || !d.caixaAberto) { alert('Nenhum caixa aberto no momento.'); return; }
+  const resumo = document.getElementById('modal-fc-resumo-caixa');
+  if (resumo) {
+    resumo.innerHTML = `<div style="background:#f8f9fa;border-radius:10px;padding:12px;font-size:.85em">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px">
+        <div>💵 Dinheiro: <b>${fmtM(d.totalDinheiro)}</b></div>
+        <div>💳 Débito: <b>${fmtM(d.totalDebito)}</b></div>
+        <div>💳 Crédito: <b>${fmtM(d.totalCredito)}</b></div>
+        <div>🟪 Pix: <b>${fmtM(d.totalPix)}</b></div>
+        <div>🔄 Outros: <b>${fmtM(d.totalOutros)}</b></div>
+        <div style="color:#ef4444">📤 Sangrias: <b>${fmtM(d.totalSangrias)}</b></div>
+      </div>
+      <div style="border-top:2px solid #e0e0e0;padding-top:8px;display:flex;justify-content:space-between;font-weight:900">
+        <span>TOTAL</span><span style="color:#f97316">${fmtM(d.totalGeral)}</span>
+      </div>
+    </div>`;
+  }
+  document.getElementById('modal-fc-caixa').style.display = 'flex';
+}
+
+async function confirmarFecharCaixaCaixa() {
+  if (!confirm('Confirmar fechamento do caixa?')) return;
+  try {
+    const valorDinheiro = parseFloat(document.getElementById('fc-dinheiro-contado').value || 0);
+    const obs = document.getElementById('fc-obs-caixa').value || '';
+    const r = await fetch('/api/delivery/caixa/fechar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ valorFechamento: valorDinheiro, observacoes: obs })
+    });
+    const d = await r.json();
+    if (d.sucesso || d.caixa) {
+      document.getElementById('modal-fc-caixa').style.display = 'none';
+      alert('✅ Caixa fechado com sucesso!');
+      carregarResumoCaixaCaixa();
+    } else {
+      alert('Erro: ' + (d.erro || 'Não foi possível fechar o caixa'));
+    }
+  } catch(e) { alert('Erro de conexão'); }
+}
+
+async function abrirCaixaCaixa() {
+  const fundo = prompt('💰 Valor do fundo de caixa (troco inicial):', '0');
+  if (fundo === null) return;
+  try {
+    const r = await fetch('/api/delivery/caixa/abrir', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ fundoCaixa: parseFloat(fundo) || 0, operador: 'Caixa' })
+    });
+    const d = await r.json();
+    if (d.sucesso || d.caixa) {
+      alert('✅ Caixa aberto!');
+      carregarResumoCaixaCaixa();
+    } else {
+      alert('Erro: ' + (d.erro || 'Não foi possível abrir o caixa'));
+    }
+  } catch(e) { alert('Erro de conexão'); }
+}
+
+function imprimirRelatorioCaixaCaixa() {
+  const d = window._fcDados;
+  if (!d) { alert('Carregue o resumo primeiro'); return; }
+  const top = (d.topProdutos||[]).slice(0,10).map((p,i) => i+1+'. '+p.nome+' — '+p.quantidade+'x — '+fmtM(p.total)).join('\n');
+  const abertura = d.dataAbertura ? new Date(d.dataAbertura).toLocaleString('pt-BR') : '-';
+  const agora = new Date().toLocaleString('pt-BR');
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <style>body{font-family:monospace;font-size:12px;margin:0;padding:10px;max-width:300px}
+  h2{text-align:center;font-size:14px;margin:4px 0}.line{border-top:1px dashed #000;margin:6px 0}
+  .row{display:flex;justify-content:space-between}.bold{font-weight:bold}.center{text-align:center}</style></head>
+  <body>
+  <h2>RELATÓRIO DE CAIXA</h2>
+  <div class="center">${agora}</div>
+  <div class="line"></div>
+  <div class="row"><span>Operador:</span><span>${d.abertoPor||'-'}</span></div>
+  <div class="row"><span>Abertura:</span><span>${abertura}</span></div>
+  <div class="row"><span>Pedidos pagos:</span><span>${d.totalPagos}/${d.totalPedidos}</span></div>
+  <div class="row"><span>Cancelados:</span><span>${d.totalCancelados}</span></div>
+  <div class="line"></div>
+  <div class="row bold"><span>💵 Dinheiro</span><span>${fmtM(d.totalDinheiro)}</span></div>
+  <div class="row bold"><span>💳 Débito</span><span>${fmtM(d.totalDebito)}</span></div>
+  <div class="row bold"><span>💳 Crédito</span><span>${fmtM(d.totalCredito)}</span></div>
+  <div class="row bold"><span>🟪 Pix</span><span>${fmtM(d.totalPix)}</span></div>
+  <div class="row bold"><span>🔄 Outros</span><span>${fmtM(d.totalOutros)}</span></div>
+  <div class="row" style="color:red"><span>📤 Sangrias</span><span>- ${fmtM(d.totalSangrias)}</span></div>
+  <div class="line"></div>
+  <div class="row bold" style="font-size:14px"><span>TOTAL GERAL</span><span>${fmtM(d.totalGeral)}</span></div>
+  <div class="line"></div>
+  <div class="bold">🏆 TOP PRODUTOS:</div>
+  <pre style="font-size:11px;margin:4px 0">${top||'Nenhum'}</pre>
+  <div class="line"></div>
+  <div class="center" style="margin-top:8px">Sistema Rebeca</div>
+  </body></html>`;
+  const w = window.open('','_blank','width=400,height=600');
+  w.document.write(html);
+  w.document.close();
+  setTimeout(() => w.print(), 300);
+}
 
 </script>
 </body>
