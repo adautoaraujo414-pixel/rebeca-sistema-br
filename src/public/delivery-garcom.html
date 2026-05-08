@@ -594,6 +594,13 @@ function conectarSSEGarcom(token) {
     carregarMesas();
   });
   _garcomSse.onerror = function() { setTimeout(function(){ if(_garcomToken) conectarSSEGarcom(_garcomToken); }, 5000); };
+  
+  // Atualizar mapa de mesas em tempo real via SSE
+  ['novo_pedido','pedido_atualizado','mesa_atendida'].forEach(function(evt) {
+    _garcomSse.addEventListener(evt, function() {
+      carregarMesas();
+    });
+  });
 }
 function mostrarAlertaGarcom(msg, tipo) {
   var el = document.createElement('div');
@@ -710,45 +717,98 @@ async function iniciarNovaComanda() {
 // MAPA DE MESAS
 async function carregarMesas() {
   try {
-    const r = await fetch(API+'/garcons/mesas-ativas', {
+    // Usar mesas-painel que retorna todas as mesas (livres + ocupadas) baseado em qtdMesas do admin
+    const r = await fetch(API+'/caixa/mesas-painel', {
       headers: { Authorization: 'Bearer '+token }
     });
     const d = await r.json();
-    const pedidos = d.pedidos || [];
+    const todasMesas = d.mesas || [];
+    // Manter compatibilidade com mesasOcupadas
     mesasOcupadas = {};
-    pedidos.forEach(p => {
-        const m = String(p.numeroMesa || p.mesa || '');
-        if (m) {
-          if (!mesasOcupadas[m]) mesasOcupadas[m] = [];
-          mesasOcupadas[m].push(p);
-        }
-      });
+    todasMesas.filter(m => m.ocupada).forEach(m => {
+      mesasOcupadas[String(m.numero)] = m.pedidos || [];
+    });
+    // Salvar todas as mesas para o mapa completo
+    window._todasMesas = todasMesas;
     renderMesas();
   } catch(e) { console.error(e); }
 }
 
 function renderMesas() {
   const grid = document.getElementById('mesasGrid');
-  const mesas = Object.keys(mesasOcupadas).sort((a,b)=>Number(a)-Number(b));
-  let html = `<div class="mesa-card livre" onclick="iniciarNovaComanda()" style="border-style:dashed;border-color:var(--accent)">
-    <div class="mesa-num" style="font-size:2em">+</div>
-    <div class="mesa-status" style="color:var(--accent)">Nova Mesa</div>
-  </div>`;
-  if (mesas.length === 0) {
-    html += `<div style="grid-column:1/-1;text-align:center;color:var(--text3);padding:40px;font-size:.88em">Nenhuma mesa ocupada no momento</div>`;
-  }
-  mesas.forEach(m => {
-    const total = mesasOcupadas[m].reduce((s,p)=>s+(p.total||0),0);
-    const nPedidos = mesasOcupadas[m].length;
-    html += `<div class="mesa-card ocupada" onclick="abrirMesa('${m}')">
-      <div class="mesa-dot"></div>
-      <div class="mesa-num">${m}</div>
-      <div class="mesa-status">🔴 Ocupada</div>
-      <div class="mesa-total">R$ ${total.toFixed(2)}</div>
-      <div style="font-size:.68em;color:var(--text3);margin-top:2px">${nPedidos} pedido(s)</div>
+  const todas = window._todasMesas || [];
+  
+  // Fallback: se ainda não tem _todasMesas, usar só as ocupadas
+  if (!todas.length) {
+    const mesas = Object.keys(mesasOcupadas).sort((a,b)=>Number(a)-Number(b));
+    let html = `<div class="mesa-card livre" onclick="iniciarNovaComanda()" style="border-style:dashed;border-color:var(--accent)">
+      <div class="mesa-num" style="font-size:2em">+</div>
+      <div class="mesa-status" style="color:var(--accent)">Nova Mesa</div>
     </div>`;
+    mesas.forEach(m => {
+      const total = mesasOcupadas[m].reduce((s,p)=>s+(p.total||0),0);
+      const nPedidos = mesasOcupadas[m].length;
+      html += `<div class="mesa-card ocupada" onclick="abrirMesa('${m}')">
+        <div class="mesa-dot"></div><div class="mesa-num">${m}</div>
+        <div class="mesa-status">🔴 Ocupada</div>
+        <div class="mesa-total">R$ ${total.toFixed(2)}</div>
+        <div style="font-size:.68em;color:var(--text3);margin-top:2px">${nPedidos} pedido(s)</div>
+      </div>`;
+    });
+    grid.innerHTML = html;
+    return;
+  }
+
+  // Mapa completo com todas as mesas
+  const ocupadas = todas.filter(m => m.ocupada).length;
+  const livres = todas.filter(m => !m.ocupada).length;
+
+  let html = `<div style="grid-column:1/-1;display:flex;gap:10px;margin-bottom:8px;flex-wrap:wrap;align-items:center">
+    <span style="font-size:.8em;font-weight:700;color:#22c55e">🟢 ${livres} livres</span>
+    <span style="font-size:.8em;font-weight:700;color:#f97316">🔴 ${ocupadas} ocupadas</span>
+    <span style="font-size:.75em;color:var(--text3)">${todas.length} mesas total</span>
+  </div>`;
+
+  todas.forEach(m => {
+    const cls = m.ocupada ? 'ocupada' : 'livre';
+    const total = m.total || 0;
+    const nomes = (m.pedidos||[]).map(p => p.clienteNome||'Cliente').filter(Boolean).join(', ');
+    const nPedidos = (m.pedidos||[]).length;
+    if (m.ocupada) {
+      html += `<div class="mesa-card ocupada" onclick="abrirMesa('${m.numero}')">
+        <div class="mesa-dot"></div>
+        <div class="mesa-num">${m.numero}</div>
+        <div class="mesa-status">🔴 Ocupada</div>
+        <div class="mesa-total">R$ ${total.toFixed(2).replace('.',',')}</div>
+        ${nomes ? `<div style="font-size:.65em;color:var(--text3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">👤 ${nomes}</div>` : ''}
+        <div style="font-size:.68em;color:var(--text3);margin-top:2px">${nPedidos} pedido(s)</div>
+        <button onclick="event.stopPropagation();adicionarItemMesa('${m.numero}')" 
+          style="margin-top:6px;width:100%;padding:5px;background:#f97316;color:#fff;border:none;border-radius:6px;font-size:.72em;cursor:pointer;font-weight:700">
+          ➕ Add Item
+        </button>
+      </div>`;
+    } else {
+      html += `<div class="mesa-card livre" onclick="selecionarMesaLivre('${m.numero}')">
+        <div class="mesa-num">${m.numero}</div>
+        <div class="mesa-status" style="color:#22c55e">🟢 Livre</div>
+        <button onclick="event.stopPropagation();selecionarMesaLivre('${m.numero}')"
+          style="margin-top:8px;width:100%;padding:5px;background:#22c55e;color:#fff;border:none;border-radius:6px;font-size:.72em;cursor:pointer;font-weight:700">
+          + Abrir Comanda
+        </button>
+      </div>`;
+    }
   });
+
   grid.innerHTML = html;
+}
+
+function adicionarItemMesa(num) {
+  // Ir para cardápio com mesa pré-selecionada
+  mesaAtual = String(num);
+  document.getElementById('numMesa').value = num;
+  document.getElementById('numMesa').readOnly = true;
+  document.getElementById('cardapio-titulo').textContent = 'Adicionar Item — Mesa ' + num;
+  mostrarTela('cardapio');
 }
 
 function selecionarMesaLivre(num) {
