@@ -207,7 +207,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
     </div>
     <div class="header-right">
       <span class="clock" id="hora-atual">--:--</span>
-      <button class="btn-sair" onclick="sair()">Sair</button>
+      <button onclick="abrirPainelFechamento()" style="padding:7px 16px;border-radius:8px;border:none;background:#ef4444;color:#fff;font-size:.82em;font-weight:700;cursor:pointer;font-family:inherit;margin-right:6px">🔒 Fechar Caixa</button><button class="btn-sair" onclick="sair()">Sair</button>
     </div>
   </header>
 
@@ -231,7 +231,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
         <button class="tab-btn" onclick="mudarTab('pedidos',this)">📋 Ativos <span class="badge" id="badge-pedidos">0</span></button>
         <button class="tab-btn" onclick="mudarTab('mesas',this)">🍽️ Mesas <span class="badge" id="badge-mesas">0</span></button>
         <button class="tab-btn" onclick="mudarTab('todos',this)">📊 Todos do Dia</button>
-        <button class="tab-btn" onclick="mudarTab('fechamento',this)">🔒 Fechar Caixa</button>
+
       </div>
       <div class="tab-content">
 
@@ -332,7 +332,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
   </div>
 </div>
 
-id="tab-todos" style="display:none">
+<div id="tab-todos" style="display:none">
           <div id="todos-lista"><div class="empty">Carregando...</div></div>
         </div>
 
@@ -459,31 +459,15 @@ async function iniciarApp(admin) {
 
 function conectarSseCaixa() {
   if (window._sseCaixa) { try { window._sseCaixa.close(); } catch(e){} }
-  // Tentar SSE — se Render fechar, polling cobre
-  try {
-    const sse = new EventSource('/api/delivery/sse?token=' + encodeURIComponent(token));
-    window._sseCaixa = sse;
-    sse.onopen = function() { console.log('[SSE Caixa] conectado'); };
-    ['novo_pedido','pedido_atualizado','mesa_atualizada','mesa_atendida'].forEach(function(evt) {
-      sse.addEventListener(evt, function() {
-        carregarMesasCaixa();
-        carregarStats();
-      });
-    });
-    sse.addEventListener('novo_pedido', function() { carregarPedidos(); });
-    sse.onerror = function() {
-      console.log('[SSE Caixa] erro — reconectando em 8s');
-      try { sse.close(); } catch(e){}
-      setTimeout(function() { if(token) conectarSseCaixa(); }, 8000);
-    };
-    registrarSseMesas(sse);
-  } catch(e) { console.error('[SSE Caixa] falha:', e); }
-  // Polling fallback a cada 20s independente do SSE
+  // Render não suporta SSE estável — usar polling puro
   if (!window._caixaPolling) {
     window._caixaPolling = setInterval(function() {
       carregarPedidos();
       carregarStats();
-    }, 20000);
+      // Atualizar mesas se aba estiver ativa
+      const tabMesas = document.getElementById('tab-mesas');
+      if (tabMesas && tabMesas.style.display !== 'none') carregarMesasCaixa();
+    }, 15000);
   }
 }
 
@@ -793,11 +777,14 @@ async function carregarStats() {
 // TABS
 function mudarTab(tab, el) {
   document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
-  el.classList.add('active');
-  ['cardapio','pedidos','todos'].forEach(t => {
-    document.getElementById('tab-'+t).style.display = t===tab ? 'block' : 'none';
+  if (el) el.classList.add('active');
+  ['cardapio','pedidos','mesas','todos','fechamento'].forEach(t => {
+    const el2 = document.getElementById('tab-'+t);
+    if (el2) el2.style.display = t===tab ? 'block' : 'none';
   });
-  if(tab==='todos') carregarTodos();
+  if (tab==='todos') carregarTodos();
+  if (tab==='mesas') carregarMesasCaixa();
+  if (tab==='fechamento') carregarResumoCaixaCaixa();
 }
 
 // PAGAMENTO
@@ -1197,6 +1184,14 @@ function imprimirRelatorioCaixaCaixa() {
   w.document.write(html);
   w.document.close();
   setTimeout(() => w.print(), 300);
+}
+
+
+function abrirPainelFechamento() {
+  // Mostrar modal direto sem trocar de aba
+  carregarResumoCaixaCaixa().then(() => {
+    abrirModalFecharCaixaCaixa();
+  });
 }
 
 </script>
