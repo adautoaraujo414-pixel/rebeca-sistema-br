@@ -585,17 +585,22 @@ function conectarSSEGarcom(token) {
   });
   _garcomSse.addEventListener('garcom_chamado', function(e) {
     var d = JSON.parse(e.data);
-    var msg = '🔔 Mesa ' + d.mesa + ' está chamando!' + (d.motivo && d.motivo !== 'Chamado pelo cliente' ? ' — ' + d.motivo : '') + (d.nomeCliente && d.nomeCliente !== 'Cliente' ? '\n👤 ' + d.nomeCliente : '');
-    mostrarAlertaGarcom(msg, 'chamada');
-    if (navigator.vibrate) navigator.vibrate([200,100,200,100,200,100,400]);
+    var ehSegunda = d.segundaChamada;
+    var msg = (ehSegunda ? '🚨 2ª CHAMADA — ' : '🔔 ') + 'Mesa ' + d.mesa + ' está chamando!' + (d.motivo && d.motivo !== 'Chamado pelo cliente' ? ' — ' + d.motivo : '') + (d.nomeCliente && d.nomeCliente !== 'Cliente' ? '\n👤 ' + d.nomeCliente : '');
+    mostrarAlertaGarcom(msg, ehSegunda ? 'urgente' : 'chamada');
+    // Mostrar botão confirmar atendimento
+    mostrarBtnConfirmarAtendimento(d.mesa);
+    if (navigator.vibrate) navigator.vibrate(ehSegunda ? [400,100,400,100,400,100,800] : [200,100,200,100,200,100,400]);
     carregarMesas();
   });
   _garcomSse.onerror = function() { setTimeout(function(){ if(_garcomToken) conectarSSEGarcom(_garcomToken); }, 5000); };
 }
 function mostrarAlertaGarcom(msg, tipo) {
   var el = document.createElement('div');
-  var cor = tipo === 'conta' ? '#f59e0b' : tipo === 'chamada' ? '#f97316' : '#22c55e';
-  el.style.cssText = 'position:fixed;top:70px;left:50%;transform:translateX(-50%);background:'+cor+';color:#000;padding:14px 24px;border-radius:12px;font-weight:800;z-index:9999;font-size:.95em;box-shadow:0 8px 32px rgba(0,0,0,.3);max-width:90vw;text-align:center;';
+  var cor = tipo === 'conta' ? '#f59e0b' : tipo === 'chamada' ? '#f97316' : tipo === 'urgente' ? '#dc2626' : '#22c55e';
+  var extra = tipo === 'urgente' ? 'border:3px solid #fca5a5;font-size:1.05em;animation:none;' : '';
+  el.style.cssText = 'position:fixed;top:70px;left:50%;transform:translateX(-50%);background:'+cor+';color:#fff;padding:14px 24px;border-radius:12px;font-weight:800;z-index:9999;font-size:.95em;box-shadow:0 8px 32px rgba(0,0,0,.4);max-width:90vw;text-align:center;'+extra;
+  if (tipo === 'urgente') { el.style.animation = 'none'; var t=0; var iv=setInterval(function(){ el.style.opacity = t%2===0?'1':'0.6'; t++; },300); setTimeout(function(){ clearInterval(iv); },5000); }
   el.textContent = msg;
   document.body.appendChild(el);
   setTimeout(function(){ el.style.opacity='0'; el.style.transition='opacity .5s'; setTimeout(function(){ el.remove(); },500); }, 5000);
@@ -1218,6 +1223,39 @@ async function solicitarFechamentoMesa() {
       }
     }, true);
   });
-  </script>
+  
+function mostrarBtnConfirmarAtendimento(mesa) {
+    // Remove botão anterior se existir
+    var existing = document.getElementById('btn-confirmar-atend-' + mesa);
+    if (existing) existing.remove();
+    
+    var btn = document.createElement('div');
+    btn.id = 'btn-confirmar-atend-' + mesa;
+    btn.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:9999;background:#f97316;color:#fff;padding:14px 28px;border-radius:50px;font-weight:800;font-size:1em;cursor:pointer;box-shadow:0 4px 20px rgba(249,115,22,.5);display:flex;align-items:center;gap:8px;white-space:nowrap';
+    btn.innerHTML = '✋ Confirmar Atendimento — Mesa ' + mesa;
+    btn.onclick = function() {
+        confirmarAtendimentoMesa(mesa);
+        btn.remove();
+    };
+    document.body.appendChild(btn);
+    // Remove automaticamente após 2 minutos
+    setTimeout(function() { if (btn.parentNode) btn.remove(); }, 120000);
+}
+
+async function confirmarAtendimentoMesa(mesa) {
+    try {
+        var tk = localStorage.getItem('garcom_token') || '';
+        // Buscar adminId do garçom logado
+        var adminId = localStorage.getItem('garcom_adminId') || '';
+        await fetch('/api/delivery/garcons/confirmar-atendimento', {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({ adminId: adminId, mesa: mesa })
+        });
+        mostrarAlertaGarcom('✅ Atendimento confirmado — Mesa ' + mesa, 'sucesso');
+    } catch(e) { console.error('Erro confirmar:', e); }
+}
+
+</script>
 </body>
 </html>
