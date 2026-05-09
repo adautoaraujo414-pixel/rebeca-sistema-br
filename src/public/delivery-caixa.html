@@ -116,7 +116,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 .pedido-btns{display:flex;gap:6px;flex-wrap:wrap}
 
 /* PAINEL DIREITO */
-.right{background:var(--surface);border-left:1px solid var(--border);display:flex!important;flex-direction:column;overflow:hidden;min-width:280px;max-width:380px}
+.right{background:var(--surface);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;width:380px;min-width:280px;min-height:0}
 .comanda-header{padding:14px 16px;border-bottom:1px solid var(--border);flex-shrink:0}
 .comanda-title{font-size:.88em;font-weight:800;color:var(--text);margin-bottom:10px;display:flex;align-items:center;gap:6px}
 .tipo-btns{display:flex;gap:4px;margin-bottom:12px}
@@ -176,8 +176,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
 
 @media(max-width:768px){
-  .main-layout{grid-template-columns:1fr 260px}
-  .right{display:flex}
+  .main-layout{grid-template-columns:1fr 300px}
 }
 </style>
 </head>
