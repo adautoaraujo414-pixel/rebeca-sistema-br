@@ -116,7 +116,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 .pedido-btns{display:flex;gap:6px;flex-wrap:wrap}
 
 /* PAINEL DIREITO */
-.right{background:var(--surface);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;width:380px;min-width:280px;min-height:0}
+.right{background:var(--surface);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
 .comanda-header{padding:14px 16px;border-bottom:1px solid var(--border);flex-shrink:0}
 .comanda-title{font-size:.88em;font-weight:800;color:var(--text);margin-bottom:10px;display:flex;align-items:center;gap:6px}
 .tipo-btns{display:flex;gap:4px;margin-bottom:12px}
@@ -175,8 +175,9 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
 
-@media(max-width:768px){
-  .main-layout{grid-template-columns:1fr 300px}
+@media(max-width:900px){
+  .main-layout{grid-template-columns:1fr}
+  .right{display:none}
 }
 </style>
 </head>
@@ -206,7 +207,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
     </div>
     <div class="header-right">
       <span class="clock" id="hora-atual">--:--</span>
-      <button onclick="abrirPainelFechamento()" style="padding:7px 16px;border-radius:8px;border:none;background:#ef4444;color:#fff;font-size:.82em;font-weight:700;cursor:pointer;font-family:inherit;margin-right:6px">🔒 Fechar Caixa</button><button class="btn-sair" onclick="sair()">Sair</button>
+      <button class="btn-sair" onclick="sair()">Sair</button>
     </div>
   </header>
 
@@ -230,7 +231,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
         <button class="tab-btn" onclick="mudarTab('pedidos',this)">📋 Ativos <span class="badge" id="badge-pedidos">0</span></button>
         <button class="tab-btn" onclick="mudarTab('mesas',this)">🍽️ Mesas <span class="badge" id="badge-mesas">0</span></button>
         <button class="tab-btn" onclick="mudarTab('todos',this)">📊 Todos do Dia</button>
-
+        <button class="tab-btn" onclick="mudarTab('fechamento',this)">🔒 Fechar Caixa</button>
       </div>
       <div class="tab-content">
 
@@ -255,16 +256,8 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
         </div>
 
         <!-- Todos do Dia -->
-        <div id="tab-todos" style="display:none">
-          <div id="todos-lista"><div class="empty">Carregando...</div></div>
-        </div>
-</div>
-
-      </div>
-    </div>
-
-
-<div id="tab-fechamento" class="tab-content" style="display:none;position:fixed;inset:52px 0 0 0;z-index:500;background:var(--bg);overflow-y:auto;padding:20px"><div style="margin-bottom:12px"><button onclick="mudarTab('cardapio',document.querySelector('.tab-btn'))" style="padding:8px 20px;background:#6b7280;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-size:.85em">← Voltar ao Caixa</button></div>
+        <div <!-- tab: fechamento -->
+<div id="tab-fechamento" class="tab-content" style="display:none;padding:16px;max-width:900px;margin:0 auto">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px">
     <h3 style="margin:0">🔒 Fechamento de Caixa</h3>
     <button onclick="carregarResumoCaixaCaixa()" style="background:#f97316;color:#fff;border:none;border-radius:8px;padding:8px 16px;cursor:pointer;font-weight:700;font-size:.82em">🔄 Atualizar</button>
@@ -334,6 +327,15 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
       <div style="display:flex;gap:8px">
         <button onclick="confirmarFecharCaixaCaixa()" style="flex:1;padding:12px;background:#ef4444;color:#fff;border:none;border-radius:8px;font-weight:800;cursor:pointer">✅ Confirmar</button>
         <button onclick="document.getElementById('modal-fc-caixa').style.display='none'" style="flex:1;padding:12px;background:#eee;border:none;border-radius:8px;font-weight:700;cursor:pointer">Cancelar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+id="tab-todos" style="display:none">
+          <div id="todos-lista"><div class="empty">Carregando...</div></div>
+        </div>
+
       </div>
     </div>
 
@@ -457,16 +459,19 @@ async function iniciarApp(admin) {
 
 function conectarSseCaixa() {
   if (window._sseCaixa) { try { window._sseCaixa.close(); } catch(e){} }
-  // Render não suporta SSE estável — usar polling puro
-  if (!window._caixaPolling) {
-    window._caixaPolling = setInterval(function() {
-      carregarPedidos();
+  const sse = new EventSource('/api/delivery/sse?token=' + encodeURIComponent(token));
+  window._sseCaixa = sse;
+  ['novo_pedido','pedido_atualizado','mesa_atualizada','mesa_atendida'].forEach(function(evt) {
+    sse.addEventListener(evt, function() {
+      carregarMesasCaixa();
       carregarStats();
-      // Atualizar mesas se aba estiver ativa
-      const tabMesas = document.getElementById('tab-mesas');
-      if (tabMesas && tabMesas.style.display !== 'none') carregarMesasCaixa();
-    }, 15000);
-  }
+    });
+  });
+  sse.addEventListener('novo_pedido', function() { carregarPedidos(); });
+  sse.onerror = function() {
+    setTimeout(function() { if(token) conectarSseCaixa(); }, 5000);
+  };
+  registrarSseMesas(sse);
 }
 
 // CARDÁPIO
@@ -775,18 +780,11 @@ async function carregarStats() {
 // TABS
 function mudarTab(tab, el) {
   document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
-  if (el) el.classList.add('active');
-  // Esconder todas as tabs normais
-  ['cardapio','pedidos','mesas','todos'].forEach(t => {
-    const el2 = document.getElementById('tab-'+t);
-    if (el2) el2.style.display = t===tab ? 'block' : 'none';
+  el.classList.add('active');
+  ['cardapio','pedidos','todos'].forEach(t => {
+    document.getElementById('tab-'+t).style.display = t===tab ? 'block' : 'none';
   });
-  // tab-fechamento: mostrar/esconder como overlay
-  const tabFech = document.getElementById('tab-fechamento');
-  if (tabFech) tabFech.style.display = tab==='fechamento' ? 'block' : 'none';
-  if (tab==='todos') carregarTodos();
-  if (tab==='mesas') carregarMesasCaixa();
-  if (tab==='fechamento') carregarResumoCaixaCaixa();
+  if(tab==='todos') carregarTodos();
 }
 
 // PAGAMENTO
@@ -1186,11 +1184,6 @@ function imprimirRelatorioCaixaCaixa() {
   w.document.write(html);
   w.document.close();
   setTimeout(() => w.print(), 300);
-}
-
-
-function abrirPainelFechamento() {
-  mudarTab('fechamento', null);
 }
 
 </script>
