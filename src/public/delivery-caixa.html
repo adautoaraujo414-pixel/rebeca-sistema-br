@@ -176,6 +176,10 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
 
 @media(max-width:900px){
+  .main-layout{grid-template-columns:1fr 300px}
+  .right{display:flex}
+}
+@media(max-width:640px){
   .main-layout{grid-template-columns:1fr}
   .right{display:none}
 }
