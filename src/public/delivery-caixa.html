@@ -269,7 +269,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
     </div>
 
 
-<div id="tab-fechamento" class="tab-content" style="display:none;padding:16px;max-width:900px;margin:0 auto">
+<div id="tab-fechamento" class="tab-content" style="display:none;padding:16px;overflow-y:auto;flex:1">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px">
     <h3 style="margin:0">🔒 Fechamento de Caixa</h3>
     <button onclick="carregarResumoCaixaCaixa()" style="background:#f97316;color:#fff;border:none;border-radius:8px;padding:8px 16px;cursor:pointer;font-weight:700;font-size:.82em">🔄 Atualizar</button>
@@ -782,10 +782,29 @@ async function carregarStats() {
 function mudarTab(tab, el) {
   document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
   if (el) el.classList.add('active');
-  ['cardapio','pedidos','mesas','todos','fechamento'].forEach(t => {
-    const el2 = document.getElementById('tab-'+t);
-    if (el2) el2.style.display = t===tab ? 'block' : 'none';
-  });
+  // Esconder/mostrar coluna direita (comanda) quando na aba fechamento
+  const rightCol = document.querySelector('.right');
+  const leftCol = document.querySelector('.left');
+  if (tab === 'fechamento') {
+    if (rightCol) rightCol.style.display = 'none';
+    if (leftCol) leftCol.style.display = 'none';
+    const tabFech = document.getElementById('tab-fechamento');
+    if (tabFech) { tabFech.style.display = 'flex'; tabFech.style.flexDirection = 'column'; tabFech.style.flex = '1'; tabFech.style.overflow = 'auto'; }
+    // Esconder outras tabs
+    ['cardapio','pedidos','mesas','todos'].forEach(t => {
+      const el2 = document.getElementById('tab-'+t);
+      if (el2) el2.style.display = 'none';
+    });
+  } else {
+    if (rightCol) rightCol.style.display = '';
+    if (leftCol) leftCol.style.display = '';
+    const tabFech = document.getElementById('tab-fechamento');
+    if (tabFech) tabFech.style.display = 'none';
+    ['cardapio','pedidos','mesas','todos'].forEach(t => {
+      const el2 = document.getElementById('tab-'+t);
+      if (el2) el2.style.display = t===tab ? 'block' : 'none';
+    });
+  }
   if (tab==='todos') carregarTodos();
   if (tab==='mesas') carregarMesasCaixa();
   if (tab==='fechamento') carregarResumoCaixaCaixa();
@@ -1192,26 +1211,7 @@ function imprimirRelatorioCaixaCaixa() {
 
 
 function abrirPainelFechamento() {
-  // Mostrar painel de fechamento como overlay full screen
-  let painel = document.getElementById('painel-fechamento-overlay');
-  if (!painel) {
-    const src = document.getElementById('tab-fechamento');
-    painel = document.createElement('div');
-    painel.id = 'painel-fechamento-overlay';
-    painel.style.cssText = 'position:fixed;inset:0;background:#f8f9fa;z-index:8000;overflow-y:auto;padding:20px';
-    painel.innerHTML = '<div style="max-width:900px;margin:0 auto">' +
-      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">' +
-      '<h2 style="margin:0">🔒 Fechamento de Caixa</h2>' +
-      '<button onclick="document.getElementById(&quot;painel-fechamento-overlay&quot;).remove()" ' +
-      'style="padding:8px 20px;background:#666;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:700">✕ Fechar</button>' +
-      '</div>' +
-      (src ? src.innerHTML : '') +
-      '</div>';
-    document.body.appendChild(painel);
-  } else {
-    painel.style.display = painel.style.display === 'none' ? 'block' : 'none';
-  }
-  carregarResumoCaixaCaixa();
+  mudarTab('fechamento', null);
 }
 
 </script>
