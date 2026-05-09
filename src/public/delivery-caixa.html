@@ -116,7 +116,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 .pedido-btns{display:flex;gap:6px;flex-wrap:wrap}
 
 /* PAINEL DIREITO */
-.right{background:var(--surface);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;width:380px;flex-shrink:0}
+.right{background:var(--surface);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
 .comanda-header{padding:14px 16px;border-bottom:1px solid var(--border);flex-shrink:0}
 .comanda-title{font-size:.88em;font-weight:800;color:var(--text);margin-bottom:10px;display:flex;align-items:center;gap:6px}
 .tipo-btns{display:flex;gap:4px;margin-bottom:12px}
@@ -175,9 +175,9 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
 
-@media(max-width:600px){
+@media(max-width:500px){
   .main-layout{grid-template-columns:1fr 280px}
-  .right{display:flex;width:280px}
+  .right{display:flex}
 }
 </style>
 </head>
@@ -207,7 +207,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
     </div>
     <div class="header-right">
       <span class="clock" id="hora-atual">--:--</span>
-      <button onclick="mudarTab('fechamento',this)" style="background:#ef4444;color:#fff;border:none;border-radius:8px;padding:8px 18px;font-weight:700;cursor:pointer;font-size:.9em">🔒 Fechar Caixa</button> <button class="btn-sair" onclick="sair()">Sair</button>
+      <button class="btn-sair" onclick="sair()">Sair</button>
     </div>
   </header>
 
@@ -222,7 +222,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
   </div>
 
   <!-- Main -->
-  <div class="main-layout" style="display:grid;grid-template-columns:1fr 380px;flex:1;overflow:hidden;min-height:0;width:100%">
+  <div class="main-layout" style="flex:1;overflow:hidden;min-height:0">
 
     <!-- Esquerda -->
     <div class="left">
@@ -256,12 +256,8 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
         </div>
 
         <!-- Todos do Dia -->
-        <div id="tab-todos" style="display:none">
-          <div id="todos-lista"><div class="empty">Carregando...</div></div>
-        </div>
-
-        <!-- Fechamento -->
-        <div id="tab-fechamento" class="tab-content" style="display:none;padding:16px;overflow-y:auto;flex:1;min-height:0">
+        <div <!-- tab: fechamento -->
+<div id="tab-fechamento" class="tab-content" style="display:none;padding:16px;max-width:900px;margin:0 auto">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px">
     <h3 style="margin:0">🔒 Fechamento de Caixa</h3>
     <button onclick="carregarResumoCaixaCaixa()" style="background:#f97316;color:#fff;border:none;border-radius:8px;padding:8px 16px;cursor:pointer;font-weight:700;font-size:.82em">🔄 Atualizar</button>
@@ -334,7 +330,14 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
       </div>
     </div>
   </div>
-</div></div>
+</div>
+
+id="tab-todos" style="display:none">
+          <div id="todos-lista"><div class="empty">Carregando...</div></div>
+        </div>
+
+      </div>
+    </div>
 
     <!-- Direita: Comanda -->
     <div class="right">
@@ -777,17 +780,11 @@ async function carregarStats() {
 // TABS
 function mudarTab(tab, el) {
   document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
-  if (el) el.classList.add('active');
-  ['cardapio','pedidos','todos','mesas'].forEach(t => {
-    const el2 = document.getElementById('tab-'+t);
-    if (el2) el2.style.display = t===tab ? 'block' : 'none';
+  el.classList.add('active');
+  ['cardapio','pedidos','todos'].forEach(t => {
+    document.getElementById('tab-'+t).style.display = t===tab ? 'block' : 'none';
   });
-  // tab-fechamento é overlay position:fixed
-  const tabFech = document.getElementById('tab-fechamento');
-  if (tabFech) tabFech.style.display = tab==='fechamento' ? 'block' : 'none';
-  if (tab==='todos') carregarTodos();
-  if (tab==='mesas') carregarMesasCaixa();
-  if (tab==='fechamento') carregarResumoCaixaCaixa();
+  if(tab==='todos') carregarTodos();
 }
 
 // PAGAMENTO
