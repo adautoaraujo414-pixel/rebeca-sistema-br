@@ -3402,7 +3402,8 @@ router.get('/caixa/mesas-painel', async (req, res) => {
         const token = req.headers.authorization?.replace('Bearer ','') || '';
         const admin = await AdminDelivery.findOne({ token });
         if (!admin) return res.status(401).json({ erro: 'Token invalido' });
-        const qtdMesas = admin.qtdMesas || 10;
+        const cfg = await ConfigDelivery.findOne({ adminId: req.adminId }).select('qtdMesas').lean();
+        const qtdMesas = cfg?.qtdMesas || 20;
         const pedidosAtivos = await PedidoDelivery.find({
             adminId: admin._id,
             tipoLocal: 'mesa',

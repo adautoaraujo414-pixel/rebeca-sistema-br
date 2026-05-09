@@ -188,6 +188,7 @@ PedidoDeliverySchema.pre('save', async function() {
 // ========== CONFIG DELIVERY ==========
 const ConfigDeliverySchema = new mongoose.Schema({
     adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin', required: true, unique: true },
+    qtdMesas: { type: Number, default: 20 },
     nomeRestaurante: String,
     endereco: String,
     horarioFuncionamento: { type: String, default: null },
