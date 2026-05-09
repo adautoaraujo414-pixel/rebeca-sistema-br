@@ -780,11 +780,17 @@ async function carregarStats() {
 // TABS
 function mudarTab(tab, el) {
   document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
-  el.classList.add('active');
-  ['cardapio','pedidos','todos'].forEach(t => {
-    document.getElementById('tab-'+t).style.display = t===tab ? 'block' : 'none';
+  if (el) el.classList.add('active');
+  ['cardapio','pedidos','todos','mesas'].forEach(t => {
+    const el2 = document.getElementById('tab-'+t);
+    if (el2) el2.style.display = t===tab ? 'block' : 'none';
   });
-  if(tab==='todos') carregarTodos();
+  // tab-fechamento é overlay position:fixed
+  const tabFech = document.getElementById('tab-fechamento');
+  if (tabFech) tabFech.style.display = tab==='fechamento' ? 'block' : 'none';
+  if (tab==='todos') carregarTodos();
+  if (tab==='mesas') carregarMesasCaixa();
+  if (tab==='fechamento') carregarResumoCaixaCaixa();
 }
 
 // PAGAMENTO
