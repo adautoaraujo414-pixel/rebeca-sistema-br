@@ -116,7 +116,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 .pedido-btns{display:flex;gap:6px;flex-wrap:wrap}
 
 /* PAINEL DIREITO */
-.right{background:var(--surface);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.right{background:var(--surface);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;width:380px;flex-shrink:0}
 .comanda-header{padding:14px 16px;border-bottom:1px solid var(--border);flex-shrink:0}
 .comanda-title{font-size:.88em;font-weight:800;color:var(--text);margin-bottom:10px;display:flex;align-items:center;gap:6px}
 .tipo-btns{display:flex;gap:4px;margin-bottom:12px}
@@ -175,9 +175,9 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
 
-@media(max-width:900px){
-  .main-layout{grid-template-columns:1fr 300px}
-  .right{display:flex}
+@media(max-width:600px){
+  .main-layout{grid-template-columns:1fr 280px}
+  .right{display:flex;width:280px}
 }
 </style>
 </head>
@@ -222,7 +222,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
   </div>
 
   <!-- Main -->
-  <div class="main-layout" style="flex:1;overflow:hidden;min-height:0">
+  <div class="main-layout" style="display:grid;grid-template-columns:1fr 380px;flex:1;overflow:hidden;min-height:0;width:100%">
 
     <!-- Esquerda -->
     <div class="left">
