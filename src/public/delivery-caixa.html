@@ -235,7 +235,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
       <div class="tab-content">
 
         <!-- Cardápio -->
-        <div id="tab-cardapio">
+        <div id="tab-cardapio" class="tab-content">
           <div class="search-bar">
             <span class="icon">🔍</span>
             <input type="text" id="busca-item" placeholder="Buscar item..." oninput="buscarItem(this.value)">
@@ -245,12 +245,12 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
         </div>
 
         <!-- Pedidos Ativos -->
-        <div id="tab-pedidos" style="display:none">
+        <div id="tab-pedidos" class="tab-content" style="display:none">
           <div id="pedidos-lista"><div class="empty">Nenhum pedido ativo</div></div>
         </div>
 
         <!-- Mesas -->
-        <div id="tab-mesas" class="tab-pane" style="display:none">
+        <div id="tab-mesas" class="tab-content" class="tab-pane" style="display:none">
           <div id="mapa-mesas-caixa" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;padding:4px"></div>
         </div>
 
@@ -331,7 +331,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
   </div>
 </div>
 
-      <div id="tab-todos" style="display:none">
+      <div id="tab-todos" class="tab-content" style="display:none">
           <div id="todos-lista"><div class="empty">Carregando...</div></div>
         </div>
 
