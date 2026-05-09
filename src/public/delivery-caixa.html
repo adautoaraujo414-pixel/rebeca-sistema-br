@@ -207,7 +207,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
     </div>
     <div class="header-right">
       <span class="clock" id="hora-atual">--:--</span>
-      <button class="btn-sair" onclick="sair()">Sair</button>
+      <button class="btn-sair btn-fechar-caixa" onclick="mudarTab('fechamento',this)" style="background:#ef4444;color:#fff;border:none;margin-right:8px">🔒 Fechar Caixa</button><button class="btn-sair" onclick="sair()">Sair</button>
     </div>
   </header>
 
@@ -231,7 +231,6 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
         <button class="tab-btn" onclick="mudarTab('pedidos',this)">📋 Ativos <span class="badge" id="badge-pedidos">0</span></button>
         <button class="tab-btn" onclick="mudarTab('mesas',this)">🍽️ Mesas <span class="badge" id="badge-mesas">0</span></button>
         <button class="tab-btn" onclick="mudarTab('todos',this)">📊 Todos do Dia</button>
-        <button class="tab-btn" onclick="mudarTab('fechamento',this)">🔒 Fechar Caixa</button>
       </div>
       <div class="tab-content">
 
@@ -332,7 +331,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
   </div>
 </div>
 
-id="tab-todos" style="display:none">
+<div id="tab-todos" style="display:none">
           <div id="todos-lista"><div class="empty">Carregando...</div></div>
         </div>
 
