@@ -642,7 +642,7 @@ function mudarAba(aba, el) {
   if (aba === 'historico') { carregarHistorico(); carregarFechamentos(); }
 }
 
-async async function carregarPedidos() {
+async function carregarPedidos() {
   try {
     const r = await fetch('/api/delivery/caixa/pedidos', {headers:{'Authorization':'Bearer '+token}});
     const d = await r.json();
@@ -749,7 +749,7 @@ async function enviarCozinha() {
   } catch(e) { alert('Erro de conexão'); }
 }
 
-function function sair() { if(confirm('Sair?')) location.href='/'; }
+function sair() { if(confirm('Sair?')) location.href='/'; }
 
 // PAGAR PEDIDO
 async function abrirPagamento() {
