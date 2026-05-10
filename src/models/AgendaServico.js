@@ -56,6 +56,18 @@ const profissionalAgendaSchema = new mongoose.Schema({
   nome: { type: String, required: true },
   foto: { type: String },
   especialidades: [String],
+  atribuicoes: [String],
+  cargo: { type: String },
+  telefone: { type: String },
+  bio: { type: String },
+  token: { type: String },
+  diasAtendimento: { type: [Number], default: [1,2,3,4,5] },
+  horario: {
+    inicio: { type: String, default: '08:00' },
+    fim: { type: String, default: '18:00' },
+    almocoInicio: { type: String, default: '12:00' },
+    almocoFim: { type: String, default: '13:00' }
+  },
   ativo: { type: Boolean, default: true },
   ordem: { type: Number, default: 0 },
   createdAt: { type: Date, default: Date.now }

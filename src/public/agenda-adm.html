@@ -716,7 +716,10 @@ async function carregarProfissionais() {
           (diasStr ? '<div class="prof-dias">📅 ' + diasStr + '</div>' : '') +
           atribsHtml +
         '</div>' +
+        '<div style="display:flex;gap:6px">' +
+        '<button class="btn-icon" style="background:#eff6ff;color:#3b82f6" onclick="copiarLinkProf(\'' + (p.token||'') + '\')">🔗</button>' +
         '<button class="btn-icon btn-del" onclick="excluirProfissional(\'' + p._id + '\')">🗑️</button>' +
+        '</div>' +
       '</div>';
     }).join('');
   } catch(e) {
@@ -791,6 +794,16 @@ function abrirNovoAgendamento() {
 
 
 // PROFISSIONAL
+function copiarLinkProf(token) {
+  if (!token) { toast('Token não disponível'); return; }
+  var link = window.location.origin + '/agenda-profissional?token=' + token;
+  navigator.clipboard.writeText(link).then(function() {
+    toast('Link do profissional copiado! ✅');
+  }).catch(function() {
+    prompt('Copie o link:', link);
+  });
+}
+
 function abrirModalProfissional() {
   // Reset
   document.getElementById('prof-nome').value = '';
@@ -907,9 +920,25 @@ async function salvarProfissional() {
     }).then(function(r) { return r.json(); });
 
     if (d.sucesso || d._id || d.profissional) {
-      toast('Colaborador salvo ✅');
       fecharModal('modal-profissional');
       carregarProfissionais();
+      var prof = d.profissional || d;
+      var token = prof.token || '';
+      if (token) {
+        var link = window.location.origin + '/agenda-profissional?token=' + token;
+        // Mostrar modal com o link
+        setTimeout(function() {
+          if (confirm('✅ Colaborador salvo!\n\nLink de acesso gerado:\n' + link + '\n\nCopiar link?')) {
+            navigator.clipboard.writeText(link).then(function() {
+              toast('Link copiado! ✅');
+            }).catch(function() {
+              toast('Link: ' + link);
+            });
+          }
+        }, 300);
+      } else {
+        toast('Colaborador salvo ✅');
+      }
     } else {
       toast('Erro: ' + (d.erro || 'Tente novamente'));
     }

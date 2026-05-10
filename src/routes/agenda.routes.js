@@ -118,9 +118,22 @@ router.get('/profissionais', authAgenda, async (req, res) => {
 
 router.post('/profissionais', authAgenda, async (req, res) => {
   try {
-    const { nome, foto, especialidades, ordem } = req.body;
+    const { nome, foto, especialidades, atribuicoes, cargo, telefone, bio, diasAtendimento, horario, ordem } = req.body;
     if (!nome) return res.status(400).json({ erro: 'Nome obrigatório' });
-    const p = await ProfissionalAgenda.create({ adminId: req.adminAgendaId, nome, foto, especialidades: especialidades || [], ordem: ordem || 0 });
+    const crypto = require('crypto');
+    const token = crypto.randomBytes(24).toString('hex');
+    const p = await ProfissionalAgenda.create({
+      adminId: req.adminAgendaId,
+      nome, foto, especialidades: especialidades || [],
+      atribuicoes: atribuicoes || [],
+      cargo: cargo || '',
+      telefone: telefone || '',
+      bio: bio || '',
+      token,
+      diasAtendimento: diasAtendimento || [1,2,3,4,5],
+      horario: horario || { inicio: '08:00', fim: '18:00', almocoInicio: '12:00', almocoFim: '13:00' },
+      ordem: ordem || 0
+    });
     res.json({ sucesso: true, profissional: p });
   } catch(e) { res.status(500).json({ erro: e.message }); }
 });
@@ -363,6 +376,32 @@ router.get('/espaco/:adminId', async (req, res) => {
       FotoAgenda.find({ adminId: req.params.adminId, ativo: true }).sort({ ordem: 1 }).limit(20)
     ]);
     res.json({ sucesso: true, admin, servicos, profissionais, fotos });
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+
+// Rota pública: profissional ver seus agendamentos pelo token
+router.get('/profissional-app/:token', async (req, res) => {
+  try {
+    const { AgendamentoAgenda, AdminAgenda } = require('../models/AgendaServico');
+    const prof = await ProfissionalAgenda.findOne({ token: req.params.token, ativo: true });
+    if (!prof) return res.status(404).json({ erro: 'Profissional não encontrado' });
+    const admin = await AdminAgenda.findById(prof.adminId);
+    const hoje = new Date();
+    hoje.setHours(0,0,0,0);
+    const fim = new Date(hoje);
+    fim.setDate(fim.getDate() + 30);
+    const agendamentos = await AgendamentoAgenda.find({
+      profissionalId: prof._id,
+      dataHora: { $gte: hoje, $lte: fim },
+      status: { $nin: ['cancelado'] }
+    }).sort({ dataHora: 1 });
+    res.json({
+      sucesso: true,
+      profissional: { nome: prof.nome, foto: prof.foto, cargo: prof.cargo, horario: prof.horario, diasAtendimento: prof.diasAtendimento, atribuicoes: prof.atribuicoes },
+      negocio: { nome: admin ? admin.nomeNegocio : '', segmento: admin ? admin.segmento : '', logo: admin ? admin.logo : '' },
+      agendamentos
+    });
   } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 

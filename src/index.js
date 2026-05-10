@@ -287,6 +287,7 @@ require('./services/agenda-recuperacao.service');
 app.use('/api/agenda-ia-servico', require('./routes/agenda-ia-servico.routes'));
 console.log('🔄 Agenda: recuperação de clientes ativa');
 app.get('/agenda', (req, res) => res.sendFile(path.join(__dirname, 'public', 'agenda-landing.html')));
+app.get('/agenda-profissional', (req, res) => res.sendFile(path.join(__dirname, 'public/agenda-profissional.html')));
 app.get('/agenda-adm', (req, res) => res.sendFile(path.join(__dirname, 'public', 'agenda-adm.html')));
 app.get('/espaco-digital', (req, res) => res.sendFile(path.join(__dirname, 'public', 'espaco-digital.html')));
 app.get('/agenda-cadastro', (req, res) => res.sendFile(path.join(__dirname, 'public', 'agenda-cadastro.html')));
