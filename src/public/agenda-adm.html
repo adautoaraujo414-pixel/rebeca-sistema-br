@@ -796,6 +796,57 @@ function abrirNovoAgendamento() {
 
 
 
+
+// UPLOAD LOGO DO NEGÓCIO
+async function uploadLogo(input) {
+  var file = input.files[0];
+  if (!file) return;
+  // Preview imediato
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var preview = document.getElementById('logo-preview');
+    preview.src = e.target.result;
+    preview.style.display = 'block';
+    document.getElementById('logo-placeholder').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+  // Upload real
+  try {
+    var formData = new FormData();
+    formData.append('foto', file);
+    var r = await fetch('/api/agenda-upload/logo', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + TOKEN },
+      body: formData
+    });
+    var d = await r.json();
+    if (d.sucesso) {
+      toast('Logo salva ✅');
+      // Atualizar logo no header se existir
+      var logoEl = document.getElementById('logo-negocio');
+      if (logoEl) logoEl.src = d.url;
+    } else {
+      toast('Erro ao salvar logo');
+    }
+  } catch(e) { toast('Erro: ' + e.message); }
+}
+
+// UPLOAD FOTO PROFISSIONAL (corrigida - após salvar profissional atualiza com ID)
+async function uploadFotoProfissionalPorId(profId, file) {
+  if (!profId || !file) return null;
+  try {
+    var formData = new FormData();
+    formData.append('foto', file);
+    var r = await fetch('/api/agenda-upload/profissional/' + profId + '/foto', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + TOKEN },
+      body: formData
+    });
+    var d = await r.json();
+    return d.sucesso ? d.url : null;
+  } catch(e) { return null; }
+}
+
 // PROFISSIONAL
 function copiarLinkProf(token) {
   if (!token) { toast('Token não disponível'); return; }
@@ -855,23 +906,12 @@ function previewFotoProf(input) {
   reader.readAsDataURL(file);
 }
 
+var _profFotoFile = null;
 async function uploadFotoProf(file) {
-  try {
-    var formData = new FormData();
-    formData.append('foto', file);
-    var r = await fetch('/api/agenda-upload/foto', {
-      method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + TOKEN },
-      body: formData
-    });
-    var d = await r.json();
-    if (d.url || d.imageUrl) {
-      document.getElementById('prof-foto-url').value = d.url || d.imageUrl;
-    }
-  } catch(e) {
-    // Usar base64 como fallback
-    document.getElementById('prof-foto-url').value = document.getElementById('foto-preview-prof').src;
-  }
+  // Guardar arquivo para upload após salvar e ter o ID
+  _profFotoFile = file;
+  // Usar base64 como preview/fallback temporário
+  document.getElementById('prof-foto-url').value = document.getElementById('foto-preview-prof').src;
 }
 
 function toggleAtrib(el) {
@@ -934,8 +974,14 @@ async function salvarProfissional() {
 
     if (d.sucesso || d._id || d.profissional) {
       fecharModal('modal-profissional');
-      carregarProfissionais();
       var prof = d.profissional || d;
+      // Upload foto real se tiver arquivo selecionado
+      if (_profFotoFile && (prof._id || prof.id)) {
+        var profId = prof._id || prof.id;
+        await uploadFotoProfissionalPorId(profId, _profFotoFile);
+        _profFotoFile = null;
+      }
+      carregarProfissionais();
       var token = prof.token || '';
       if (token) {
         var link = window.location.origin + '/agenda-profissional?token=' + token;
@@ -956,6 +1002,28 @@ async function salvarProfissional() {
       toast('Erro: ' + (d.erro || 'Tente novamente'));
     }
   } catch(e) { toast('Erro: ' + e.message); }
+}
+
+
+async function carregarLogoAtual() {
+  try {
+    var d = await api('/perfil');
+    var perfil = d.admin || d;
+    if (perfil && perfil.logo) {
+      var preview = document.getElementById('logo-preview');
+      if (preview) {
+        preview.src = perfil.logo;
+        preview.style.display = 'block';
+        var ph = document.getElementById('logo-placeholder');
+        if (ph) ph.style.display = 'none';
+      }
+      var logoHeader = document.getElementById('logo-negocio');
+      if (logoHeader) {
+        logoHeader.src = perfil.logo;
+        logoHeader.style.display = 'block';
+      }
+    }
+  } catch(e) {}
 }
 
 // TIPO SERVIÇO
