@@ -17,7 +17,7 @@ const SseService = {
         res.flushHeaders();
         const hb = setInterval(() => {
             try { res.write(': ping\n\n'); } catch(e) { clearInterval(hb); }
-        }, 15000);
+        }, 45000);
         if (!_clientes.has(adminId)) _clientes.set(adminId, new Set());
         _clientes.get(adminId).add(res);
         res.on('close', () => {
@@ -35,7 +35,7 @@ const SseService = {
         res.flushHeaders();
         const hb = setInterval(() => {
             try { res.write(': ping\n\n'); } catch(e) { clearInterval(hb); }
-        }, 15000);
+        }, 45000);
         _entregadores.set(token, res);
         res.on('close', () => {
             clearInterval(hb);

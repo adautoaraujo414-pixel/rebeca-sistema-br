@@ -5607,8 +5607,8 @@ function iniciarSSE() {
     _sseConn.onerror = function() {
         _sseConn.close(); _sseConn = null;
         // Reconectar só se online, com delay crescente (máx 30s)
-        if (!window._sseRetryDelay) window._sseRetryDelay = 5000;
-        else window._sseRetryDelay = Math.min(window._sseRetryDelay * 2, 30000);
+        if (!window._sseRetryDelay) window._sseRetryDelay = 15000;
+        else window._sseRetryDelay = Math.min(window._sseRetryDelay * 2, 60000);
         clearTimeout(window._sseRetryTimer);
         window._sseRetryTimer = setTimeout(function() {
             if (navigator.onLine) { window._sseRetryDelay = 5000; iniciarSSE(); }
