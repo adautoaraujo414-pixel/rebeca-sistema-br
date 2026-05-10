@@ -293,6 +293,10 @@ app.get('/delivery-entregador', (req, res) => res.sendFile(path.join(__dirname, 
 app.get('/delivery-cozinha', (req, res) => res.sendFile(path.join(__dirname, 'public', 'delivery-cozinha.html')));
 app.get('/delivery-garcom', (req, res) => res.sendFile(path.join(__dirname, 'public', 'delivery-garcom.html')));
 app.get('/garcom', (req, res) => res.sendFile(path.join(__dirname, 'public', 'delivery-garcom.html')));
+app.get('/delivery-caixa-v2', (req, res) => {
+  res.sendFile(require('path').join(__dirname, 'public', 'delivery-caixa-v2.html'));
+});
+
 app.get('/delivery-caixa', (req, res) => {
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
   res.setHeader('Pragma', 'no-cache');
