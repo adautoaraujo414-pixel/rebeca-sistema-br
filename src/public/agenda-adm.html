@@ -1286,13 +1286,11 @@ async function ativarPush() {
     var perm = await Notification.requestPermission();
     if (perm !== 'granted') { toast('Permissão negada para notificações'); return; }
     var reg = await navigator.serviceWorker.ready;
-    var r = VAPID_OK ? await fetch('/api/agenda-push/vapid-public') : null;
     var d = await r.json();
     var sub = await reg.pushManager.subscribe({
       userVisibleOnly: true,
       applicationServerKey: urlBase64ToUint8Array(d.publicKey)
     });
-    await fetch('/api/agenda-push/subscribe/admin', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + TOKEN },
       body: JSON.stringify(sub)
@@ -1315,7 +1313,6 @@ function urlBase64ToUint8Array(base64String) {
 
 async function verificarStatusPush() {
   try {
-    var r = await api('/agenda-push/status'.replace('/agenda-push','/agenda-push'));
     // usar fetch direto pois o prefixo é diferente
     var resp = await fetch('/api/agenda/perfil', {
       headers: { 'Authorization': 'Bearer ' + TOKEN }
