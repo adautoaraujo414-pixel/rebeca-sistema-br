@@ -261,10 +261,15 @@ router.post('/espaco/:adminId/agendar', async (req, res) => {
 // ===== AGENDAMENTOS (admin) =====
 router.get('/agendamentos', authAgenda, async (req, res) => {
   try {
-    const { data, status } = req.query;
+    const { data, dataInicio, status } = req.query;
     const filtro = { adminId: req.adminAgendaId };
     if (data) {
       filtro.dataHora = { $gte: new Date(data + 'T00:00:00'), $lte: new Date(data + 'T23:59:59') };
+    } else if (dataInicio) {
+      const inicio = new Date(dataInicio + 'T00:00:00');
+      const fim = new Date(dataInicio + 'T00:00:00');
+      fim.setDate(fim.getDate() + 7);
+      filtro.dataHora = { $gte: inicio, $lte: fim };
     }
     if (status) filtro.status = status;
     const ags = await AgendamentoAgenda.find(filtro).sort({ dataHora: 1 });

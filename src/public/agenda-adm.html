@@ -605,9 +605,19 @@ async function carregarAgendamentos() {
   var el = document.getElementById('lista-agendamentos');
   el.innerHTML = '<div class="spinner-wrap"><span class="spinner">⟳</span></div>';
   try {
-    var filtroData = document.getElementById('filtro-data').value;
+    var filtroDataVal = document.getElementById('filtro-data').value;
     var filtroStatus = document.getElementById('filtro-status').value;
-    var params = '?data=' + filtroData + (filtroStatus ? '&status=' + filtroStatus : '');
+    var hoje = new Date();
+    var dataStr = hoje.getFullYear() + '-' + String(hoje.getMonth()+1).padStart(2,'0') + '-' + String(hoje.getDate()).padStart(2,'0');
+    var params = '';
+    if (filtroDataVal === 'hoje') {
+      params = '?data=' + dataStr;
+    } else if (filtroDataVal === 'semana') {
+      params = '?dataInicio=' + dataStr;
+    } else {
+      params = '?';
+    }
+    if (filtroStatus) params += (params.endsWith('?') ? '' : '&') + 'status=' + filtroStatus;
     var d = await api('/agendamentos' + params);
     var lista = Array.isArray(d) ? d : (d.agendamentos || []);
     if (!lista.length) {
