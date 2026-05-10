@@ -144,6 +144,8 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Segoe UI',sans-ser
 <div class="topo">
   <div class="topo-logo" id="nome-restaurante">🍔 Rebeca Delivery — Caixa</div>
   <div class="topo-right">
+    <span id="status-caixa" style="font-size:.8em;padding:4px 10px;border-radius:12px;background:#f0fdf4;color:#22c55e;font-weight:700">🟢 Aberto</span>
+    <span id="nome-operador" style="font-size:.82em;color:#6b7280">—</span>
     <span id="hora-atual">--:--</span>
     <button class="btn-fechar" id="btn-fechar-caixa">🔒 Fechar Caixa</button>
     <button class="btn-sair" onclick="sair()">Sair</button>
@@ -177,6 +179,8 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Segoe UI',sans-ser
       <button class="tab-btn" onclick="mudarAba('ativos',this)">📋 Ativos <span id="badge-pedidos">0</span></button>
       <button class="tab-btn" onclick="mudarAba('mesas',this)">🍽️ Mesas <span id="badge-mesas">0</span></button>
       <button class="tab-btn" onclick="mudarAba('todos',this)">📊 Todos do Dia</button>
+      <button class="tab-btn" onclick="mudarAba('entregadores',this)">🛵 Em Rota <span id="badge-entregadores" style="background:#ef4444;color:#fff;border-radius:10px;padding:1px 6px;font-size:.75em"></span></button>
+      <button class="tab-btn" onclick="mudarAba('historico',this)">🗂️ Histórico</button>
     </div>
 
     <!-- ABA CARDÁPIO -->
@@ -575,7 +579,7 @@ function mudarAba(aba, el) {
   if (aba === 'historico') carregarHistorico();
 }
 
-async function carregarPedidos() {
+async async function carregarPedidos() {
   try {
     const r = await fetch('/api/delivery/caixa/pedidos', {headers:{'Authorization':'Bearer '+token}});
     const d = await r.json();
@@ -583,11 +587,21 @@ async function carregarPedidos() {
     document.getElementById('badge-pedidos').textContent = pedidos.length || '';
     const lista = document.getElementById('lista-ativos');
     if (!pedidos.length) { lista.innerHTML = '<div style="text-align:center;padding:32px;color:#9ca3af">Nenhum pedido ativo</div>'; return; }
+    const statusCor = {pendente:'#f59e0b',confirmado:'#3b82f6',preparo:'#8b5cf6',pronto:'#22c55e',saiu_entrega:'#f97316',entregue:'#6b7280',cancelado:'#ef4444'};
     lista.innerHTML = pedidos.map(p => `
       <div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:14px;margin-bottom:10px">
-        <div style="font-weight:800;color:#f97316">#${p.numero||p._id?.slice(-4)}</div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div style="font-weight:800;color:#f97316">#${p.numero||p._id?.slice(-4)} — ${p.clienteNome||'Cliente'}</div>
+          <span style="font-size:.75em;padding:2px 8px;border-radius:10px;background:${statusCor[p.status]||'#6b7280'}22;color:${statusCor[p.status]||'#6b7280'};font-weight:700">${p.status||'—'}</span>
+        </div>
+        <div style="font-size:.82em;color:#6b7280;margin:4px 0">${p.tipoLocal||''} ${p.numeroMesa?'· Mesa '+p.numeroMesa:''}</div>
         <div style="font-size:.82em;color:#6b7280">${p.itens?.map(i=>i.nome).join(', ')||''}</div>
-        <div style="font-weight:700;color:#22c55e">R$ ${(p.total||0).toFixed(2).replace('.',',')}</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+          <div style="font-weight:700;color:#22c55e">R$ ${(p.total||0).toFixed(2).replace('.',',')}</div>
+          <div style="display:flex;gap:6px">
+            <button onclick="imprimirPedido('${p._id}')" style="padding:4px 10px;background:#6b7280;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:.78em">🖨️</button>
+          </div>
+        </div>
       </div>
     `).join('');
   } catch(e) {}
