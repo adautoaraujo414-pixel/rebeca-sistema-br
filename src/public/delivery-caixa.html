@@ -31,7 +31,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 #login-erro{color:var(--red);font-size:.82em;text-align:center;margin-top:10px;min-height:18px}
 
 /* APP */
-#app{display:none;height:100vh;flex-direction:column;overflow:hidden;width:100%}
+#app{display:none;height:100vh;width:100%;flex-direction:column;overflow:hidden}
 header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 20px;height:52px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
 .header-left{display:flex;align-items:center;gap:12px}
 .header-logo{font-size:1.3em;font-weight:800;color:var(--text)}
@@ -53,7 +53,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 .stat-pill.purple{border-color:rgba(167,139,250,.3);color:#c4b5fd}
 
 /* LAYOUT */
-.main-layout{display:flex;width:100%;flex:1;overflow:hidden;min-height:0}
+.main-layout{display:flex;flex-direction:row;width:100%;flex:1;overflow:hidden;min-height:0}
 
 /* PAINEL ESQUERDO */
 .left{flex:1;overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column;min-height:0}
@@ -196,7 +196,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 </div>
 
 <!-- APP -->
-<div id="app" style="display:none;flex-direction:column;height:100vh;width:100%">
+<div id="app" style="display:none;flex-direction:column;height:100vh;width:100%;overflow:hidden">
 
   <!-- Header -->
   <header>
