@@ -257,6 +257,160 @@ setInterval(() => {
 }, 1000);
 
 // Auth
+// ========== ABRIR CAIXA ==========
+async function abrirCaixa() {
+  const operadorNome = prompt('Nome do operador:');
+  if (!operadorNome) return;
+  const fundo = parseFloat(prompt('Fundo de caixa (R$):') || '0');
+  try {
+    const r = await fetch('/api/delivery/caixa/abrir', {
+      method:'POST', headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},
+      body: JSON.stringify({ operador: operadorNome, numeroCaixa, fundoCaixa: fundo })
+    });
+    const d = await r.json();
+    if (r.ok) {
+      operador = operadorNome;
+      document.getElementById('nome-operador').textContent = operadorNome;
+      alert('Caixa aberto! ✅');
+      await carregarStats();
+    } else alert('Erro: '+(d.erro||d.error||'Falha ao abrir'));
+  } catch(e) { alert('Erro de conexão'); }
+}
+
+// ========== STATUS DO CAIXA ==========
+async function verificarStatusCaixa() {
+  try {
+    const r = await fetch('/api/delivery/caixa/status', {headers:{'Authorization':'Bearer '+token}});
+    const d = await r.json();
+    const el = document.getElementById('status-caixa');
+    if (el) {
+      el.textContent = d.aberto ? '🟢 Aberto' : '🔴 Fechado';
+      el.style.color = d.aberto ? '#22c55e' : '#ef4444';
+    }
+    if (!d.aberto) {
+      const abrir = confirm('Caixa fechado. Deseja abrir agora?');
+      if (abrir) abrirCaixa();
+    }
+  } catch(e) {}
+}
+
+// ========== TIPO DE NEGÓCIO ==========
+async function carregarTipoNegocio() {
+  try {
+    const r = await fetch('/api/delivery/caixa/tipo-negocio', {headers:{'Authorization':'Bearer '+token}});
+    const d = await r.json();
+    if (d.tipoNegocio) {
+      // Ajustar abas conforme tipo
+      const isSalon = d.tipoNegocio === 'salon' || d.tipoNegocio === 'restaurante';
+      const abasMesa = document.querySelectorAll('[data-aba-mesa]');
+      abasMesa.forEach(el => el.style.display = isSalon ? '' : 'none');
+    }
+  } catch(e) {}
+}
+
+// ========== ENTREGADORES ATIVOS ==========
+async function carregarEntregadores() {
+  try {
+    const r = await fetch('/api/delivery/caixa/entregadores-ativos', {headers:{'Authorization':'Bearer '+token}});
+    const d = await r.json();
+    const el = document.getElementById('lista-entregadores');
+    if (!el) return;
+    document.getElementById('badge-entregadores').textContent = d.length || '';
+    if (!d.length) { el.innerHTML = '<div style="text-align:center;padding:32px;color:#9ca3af">Nenhum entregador em rota</div>'; return; }
+    el.innerHTML = d.map(p => `
+      <div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:14px;margin-bottom:10px">
+        <div style="font-weight:800;color:#f97316">#${p.numero} — ${p.clienteNome||'Cliente'}</div>
+        <div style="font-size:.82em;color:#6b7280">🛵 ${p.entregadorNome||'Entregador'}</div>
+        <div style="font-size:.82em;color:#6b7280">📍 ${p.enderecoEntrega||'—'}</div>
+        <div style="font-weight:700;color:#22c55e">R$ ${(p.total||0).toFixed(2).replace('.',',')}</div>
+      </div>
+    `).join('');
+  } catch(e) { console.error('entregadores',e); }
+}
+
+// ========== HISTÓRICO DE FECHAMENTOS ==========
+async function carregarHistorico() {
+  try {
+    const r = await fetch('/api/delivery/caixa/historico?limite=20', {headers:{'Authorization':'Bearer '+token}});
+    const d = await r.json();
+    const lista = Array.isArray(d) ? d : (d.historico || []);
+    const el = document.getElementById('lista-historico');
+    if (!el) return;
+    if (!lista.length) { el.innerHTML = '<div style="text-align:center;padding:32px;color:#9ca3af">Sem histórico</div>'; return; }
+    el.innerHTML = lista.map(c => `
+      <div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:14px;margin-bottom:10px">
+        <div style="font-weight:800;color:#1f2937">Caixa #${c.numeroCaixa||1} — ${c.operador||'—'}</div>
+        <div style="font-size:.82em;color:#6b7280">Abertura: ${c.dataAbertura ? new Date(c.dataAbertura).toLocaleString('pt-BR') : '—'}</div>
+        <div style="font-size:.82em;color:#6b7280">Fechamento: ${c.dataFechamento ? new Date(c.dataFechamento).toLocaleString('pt-BR') : '—'}</div>
+        <div style="font-weight:700;color:#22c55e">Total: R$ ${(c.totalVendas||c.total||0).toFixed(2).replace('.',',')}</div>
+      </div>
+    `).join('');
+  } catch(e) { console.error('historico',e); }
+}
+
+// ========== MESAS DO SALÃO ==========
+async function carregarSalonMesas() {
+  try {
+    const r = await fetch('/api/delivery/salon/mesas', {headers:{'Authorization':'Bearer '+token}});
+    const d = await r.json();
+    const mesas = Array.isArray(d) ? d : [];
+    const el = document.getElementById('lista-mesas');
+    if (!el) return;
+    document.getElementById('badge-mesas').textContent = mesas.length || '';
+    if (!mesas.length) { el.innerHTML = '<div style="text-align:center;padding:32px;color:#9ca3af">Nenhuma mesa ativa</div>'; return; }
+    el.innerHTML = mesas.map(m => `
+      <div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:14px;margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div style="font-weight:800;color:#f97316;font-size:1.1em">🪑 Mesa ${m.mesa}</div>
+          <div style="font-weight:700;color:#22c55e">R$ ${(m.total||0).toFixed(2).replace('.',',')}</div>
+        </div>
+        <div style="font-size:.82em;color:#6b7280;margin:4px 0">${m.pedidos?.length||0} pedido(s)</div>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button onclick="verPedidosMesa('${m.mesa}')" style="flex:1;padding:6px;background:#f97316;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:.8em">Ver Pedidos</button>
+          <button onclick="fecharMesa('${m.mesa}')" style="flex:1;padding:6px;background:#ef4444;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:.8em">Fechar Mesa</button>
+        </div>
+      </div>
+    `).join('');
+  } catch(e) { console.error('salon mesas',e); }
+}
+
+async function verPedidosMesa(mesa) {
+  try {
+    const r = await fetch(`/api/delivery/salon/pedidos-mesa/${mesa}`, {headers:{'Authorization':'Bearer '+token}});
+    const d = await r.json();
+    const pedidos = Array.isArray(d) ? d : (d.pedidos || []);
+    const info = pedidos.map(p => `#${p.numero} — R$ ${(p.total||0).toFixed(2).replace('.',',')} — ${p.status}`).join('
+');
+    alert(`Mesa ${mesa}:
+${info || 'Sem pedidos'}`);
+  } catch(e) { alert('Erro ao buscar pedidos da mesa'); }
+}
+
+async function fecharMesa(mesa) {
+  if (!confirm(`Fechar mesa ${mesa}?`)) return;
+  try {
+    const r = await fetch(`/api/delivery/salon/mesa/${mesa}/fechar`, {
+      method:'PUT', headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},
+      body: JSON.stringify({ operador })
+    });
+    if (r.ok) { await carregarSalonMesas(); alert('Mesa fechada! ✅'); }
+    else alert('Erro ao fechar mesa');
+  } catch(e) { alert('Erro de conexão'); }
+}
+
+// ========== IMPRIMIR PEDIDO ==========
+async function imprimirPedido(id) {
+  try {
+    const r = await fetch(`/api/delivery/caixa/pedido/${id}/imprimir`, {headers:{'Authorization':'Bearer '+token}});
+    const d = await r.json();
+    if (d.html) {
+      const w = window.open('','_blank');
+      w.document.write(d.html);
+      w.print();
+    } else alert('Impressão não disponível');
+  } catch(e) { alert('Erro ao imprimir'); }
+}
+
 async function init() {
   if (!token) { alert('Token inválido'); return; }
   try {
@@ -265,12 +419,15 @@ async function init() {
     const d = await r.json();
     document.getElementById('nome-restaurante').textContent = (d.nomeRestaurante || 'Rebeca') + ' — Caixa';
   } catch(e) {}
+  await verificarStatusCaixa();
+  await carregarTipoNegocio();
   await carregarCardapio();
   await carregarPedidos();
   await carregarStats();
   setInterval(carregarPedidos, 10000);
   setInterval(carregarStats, 15000);
   setInterval(carregarResumoTempoReal, 8000);
+  setInterval(carregarEntregadores, 20000);
   carregarResumoTempoReal();
 }
 
@@ -397,7 +554,7 @@ function mudarAba(aba, el) {
     if (el2) el2.style.display = a === aba ? (a==='cardapio'?'flex':'block') : 'none';
   });
   if (aba === 'todos') carregarTodos();
-  if (aba === 'mesas') carregarMesas();
+  if (aba === 'mesas') { carregarMesas(); carregarSalonMesas(); }
 }
 
 async function carregarPedidos() {
