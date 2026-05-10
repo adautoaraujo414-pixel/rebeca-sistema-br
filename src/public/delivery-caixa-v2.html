@@ -690,27 +690,37 @@ async function carregarMesas() {
       return Math.floor(mins/60) + 'h' + (mins%60 ? (mins%60)+'min' : '');
     }
 
-    el.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px">' +
-      mesas.map(m => {
-        const cor = m.ocupada ? '#f97316' : '#e5e7eb';
-        const bg  = m.ocupada ? '#fff7ed' : '#f9fafb';
-        const txt = m.ocupada ? '#f97316' : '#9ca3af';
-        const oldest = m.pedidos?.length ? m.pedidos.reduce((a,b) => new Date(a.createdAt) < new Date(b.createdAt) ? a : b) : null;
-        const tempo = oldest ? tempoStr(oldest.createdAt) : '';
-        const statusLabel = m.ocupada
-          ? (m.pedidos?.some(p => p.status === 'pronto') ? '🟢 Pronto' :
-             m.pedidos?.some(p => p.status === 'preparo') ? '🟡 Preparo' :
-             m.pedidos?.some(p => p.status === 'confirmado') ? '🔵 Confirmado' : '🟠 Pendente')
-          : '⚪ Livre';
-        return \`<div onclick="\${m.ocupada ? 'abrirModalMesa('+m.numero+',\''+((m.total||0).toFixed(2).replace('.',','))+'\')' : 'abrirModalMesaVazia('+m.numero+')'}"
-          style="background:\${bg};border:2px solid \${cor};border-radius:12px;padding:12px;cursor:pointer;text-align:center;transition:all .2s">
-          <div style="font-size:1.4em;font-weight:800;color:\${txt}">M\${m.numero}</div>
-          <div style="font-size:.7em;font-weight:700;color:\${txt};margin:2px 0">\${statusLabel}</div>
-          \${m.ocupada ? \`<div style="font-size:.72em;color:#6b7280">\${m.pedidos?.length||0} pedido(s)</div>
-          <div style="font-weight:700;color:#22c55e;font-size:.82em">R$ \${(m.total||0).toFixed(2).replace('.',',')}</div>
-          \${tempo ? \`<div style="font-size:.68em;color:#9ca3af;margin-top:2px">⏱ \${tempo}</div>\` : ''}\` : ''}
-        </div>\`;
-      }).join('') + '</div>';
+    let html = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px">';
+    mesas.forEach(function(m) {
+      var cor  = m.ocupada ? '#f97316' : '#e5e7eb';
+      var bg   = m.ocupada ? '#fff7ed' : '#f9fafb';
+      var txt  = m.ocupada ? '#f97316' : '#9ca3af';
+      var oldest = null;
+      if (m.pedidos && m.pedidos.length) {
+        oldest = m.pedidos.reduce(function(a,b){ return new Date(a.createdAt) < new Date(b.createdAt) ? a : b; });
+      }
+      var tempo = oldest ? tempoStr(oldest.createdAt) : '';
+      var statusLabel = m.ocupada
+        ? (m.pedidos && m.pedidos.some(function(p){return p.status==='pronto';}) ? '&#x1F7E2; Pronto' :
+           m.pedidos && m.pedidos.some(function(p){return p.status==='preparo';}) ? '&#x1F7E1; Preparo' :
+           m.pedidos && m.pedidos.some(function(p){return p.status==='confirmado';}) ? '&#x1F535; Confirmado' : '&#x1F7E0; Pendente')
+        : '&#x26AA; Livre';
+      var totalFmt = (m.total||0).toFixed(2).replace('.',',');
+      var onclick = m.ocupada
+        ? 'abrirModalMesa(' + m.numero + ','' + totalFmt + '')'
+        : 'abrirModalMesaVazia(' + m.numero + ')';
+      html += '<div onclick="' + onclick + '" style="background:' + bg + ';border:2px solid ' + cor + ';border-radius:12px;padding:12px;cursor:pointer;text-align:center">';
+      html += '<div style="font-size:1.4em;font-weight:800;color:' + txt + '">M' + m.numero + '</div>';
+      html += '<div style="font-size:.7em;font-weight:700;color:' + txt + ';margin:2px 0">' + statusLabel + '</div>';
+      if (m.ocupada) {
+        html += '<div style="font-size:.72em;color:#6b7280">' + (m.pedidos ? m.pedidos.length : 0) + ' pedido(s)</div>';
+        html += '<div style="font-weight:700;color:#22c55e;font-size:.82em">R$ ' + totalFmt + '</div>';
+        if (tempo) html += '<div style="font-size:.68em;color:#9ca3af;margin-top:2px">&#x23F1; ' + tempo + '</div>';
+      }
+      html += '</div>';
+    });
+    html += '</div>';
+    el.innerHTML = html;
   } catch(e) { console.error('mesas',e); }
 }
 
