@@ -716,7 +716,7 @@ async function carregarProfissionais() {
           (diasStr ? '<div class="prof-dias">📅 ' + diasStr + '</div>' : '') +
           atribsHtml +
         '</div>' +
-        '<button class="btn-icon btn-del" onclick="excluirProfissional('' + p._id + '')">🗑️</button>' +
+        '<button class="btn-icon btn-del" onclick="excluirProfissional(\'' + p._id + '\')">🗑️</button>' +
       '</div>';
     }).join('');
   } catch(e) {
