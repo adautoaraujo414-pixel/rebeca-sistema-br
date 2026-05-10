@@ -395,6 +395,7 @@ function mudarAba(aba, el) {
     if (el2) el2.style.display = a === aba ? (a==='cardapio'?'flex':'block') : 'none';
   });
   if (aba === 'todos') carregarTodos();
+  if (aba === 'mesas') carregarMesas();
 }
 
 async function carregarPedidos() {
@@ -413,6 +414,24 @@ async function carregarPedidos() {
       </div>
     `).join('');
   } catch(e) {}
+}
+
+async function carregarMesas() {
+  try {
+    const r = await fetch('/api/delivery/caixa/mesas-painel', {headers:{'Authorization':'Bearer '+token}});
+    const d = await r.json();
+    const mesas = Array.isArray(d) ? d : (d.mesas || []);
+    const el = document.getElementById('lista-mesas');
+    document.getElementById('badge-mesas').textContent = mesas.length || '';
+    if (!mesas.length) { el.innerHTML = '<div style="text-align:center;padding:32px;color:#9ca3af">Nenhuma mesa ativa</div>'; return; }
+    el.innerHTML = mesas.map(m => `
+      <div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:14px;margin-bottom:10px;cursor:pointer">
+        <div style="font-weight:800;color:#f97316">Mesa ${m.numero||m.mesa||m._id}</div>
+        <div style="font-size:.82em;color:#6b7280">${m.itens?.map(i=>i.nome).join(', ')||''}</div>
+        <div style="font-weight:700;color:#22c55e">R$ ${(m.total||0).toFixed(2).replace('.',',')}</div>
+      </div>
+    `).join('');
+  } catch(e) { console.error('mesas',e); }
 }
 
 async function carregarStats() {
