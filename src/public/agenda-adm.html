@@ -693,12 +693,27 @@ function api(path, opts) {
 
 // ===== INIT =====
 async function init() {
-  if (!TOKEN) return;
+  var telaLogin = document.getElementById('tela-login');
+  var telaPainel = document.getElementById('tela-painel');
+  if (!TOKEN) {
+    if (telaLogin) telaLogin.style.display = '';
+    if (telaPainel) telaPainel.style.display = 'none';
+    return;
+  }
   try {
     var d = await api('/perfil');
-    if (!d.sucesso) { localStorage.removeItem('agenda_token'); return; }
+    if (!d.sucesso || !d.admin) {
+      localStorage.removeItem('agenda_token');
+      TOKEN = '';
+      if (telaLogin) telaLogin.style.display = '';
+      if (telaPainel) telaPainel.style.display = 'none';
+      return;
+    }
     iniciarPainel(d.admin);
-  } catch(e) {}
+  } catch(e) {
+    if (telaLogin) telaLogin.style.display = '';
+    if (telaPainel) telaPainel.style.display = 'none';
+  }
 }
 
 function iniciarPainel(dados) {

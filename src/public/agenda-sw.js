@@ -1,4 +1,4 @@
-const CACHE = 'agenda-v1';
+const CACHE = 'agenda-v2';
 const ASSETS = [
   '/espaco-digital',
   '/agenda-manifest.json'
