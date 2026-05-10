@@ -180,11 +180,11 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#f5f5f7;color:#1c1c1
 .foto-del{position:absolute;top:4px;right:4px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:.7em;cursor:pointer;display:flex;align-items:center;justify-content:center}
 
 /* ===== NAV BOTTOM ===== */
-.nav-bottom{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #f3f4f6;display:flex;z-index:100;box-shadow:0 -2px 16px rgba(0,0,0,.08)}
-.nav-item{flex:1;padding:10px 4px 12px;text-align:center;cursor:pointer;border:none;background:transparent;color:#9ca3af;font-size:.6em;font-weight:600;transition:.2s;position:relative}
-.nav-item.ativo{color:var(--cor)}
-.nav-item.ativo .nav-icon{transform:scale(1.1)}
-.nav-icon{font-size:1.35em;display:block;margin-bottom:3px;transition:.2s}
+..nav-bottom{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #f3f4f6;display:flex;z-index:100;box-shadow:0 -2px 16px rgba(0,0,0,.08);padding-bottom:env(safe-area-inset-bottom)}
+.nav-item{flex:1;padding:12px 4px 14px;text-align:center;cursor:pointer;border:none;background:transparent;color:#9ca3af;font-size:.68em;font-weight:600;transition:.2s;position:relative;display:flex;flex-direction:column;align-items:center;gap:3px}
+.nav-item.ativo{color:var(--cor);background:rgba(249,115,22,.06);border-radius:12px}
+.nav-item.ativo .nav-icon{transform:scale(1.15)}
+.nav-icon{font-size:1.5em;display:block;transition:.2s}
 .nav-badge{position:absolute;top:6px;right:50%;transform:translateX(8px);background:var(--cor);color:#fff;font-size:.65em;font-weight:800;padding:1px 5px;border-radius:10px;min-width:16px;line-height:16px}
 
 /* ===== MODAL ===== */
@@ -624,18 +624,26 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#f5f5f7;color:#1c1c1
   <!-- NAV BOTTOM -->
   <nav class="nav-bottom">
     <button class="nav-item ativo" onclick="navegar('inicio')" id="nav-inicio">
-      <span class="nav-icon">🏠</span>Início
+      <span class="nav-icon">🏠</span>
+      <span>Início</span>
+      <span class="nav-sub">Visão geral</span>
     </button>
     <button class="nav-item" onclick="navegar('agenda')" id="nav-agenda">
-      <span class="nav-icon">📅</span>Agenda
+      <span class="nav-icon">📅</span>
+      <span>Agenda</span>
+      <span class="nav-sub">Agendamentos</span>
       <span class="nav-badge" id="badge-agenda" style="display:none">0</span>
     </button>
     <button class="nav-item" onclick="navegar('servicos')" id="nav-servicos">
-      <span class="nav-icon">✂️</span>Serviços
+      <span class="nav-icon">✂️</span>
+      <span>Serviços</span>
+      <span class="nav-sub">Catálogo</span>
       <span class="nav-badge" id="badge-servicos" style="display:none">0</span>
     </button>
     <button class="nav-item" onclick="navegar('profissionais')" id="nav-profissionais">
-      <span class="nav-icon">👥</span>Equipe
+      <span class="nav-icon">👥</span>
+      <span>Equipe</span>
+      <span class="nav-sub">Profissionais</span>
       <span class="nav-badge" id="badge-profissionais" style="display:none">0</span>
     </button>
     <button class="nav-item" onclick="navegar('clientes')" id="nav-clientes">
