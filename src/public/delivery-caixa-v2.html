@@ -463,10 +463,8 @@ async function verPedidosMesa(mesa) {
     const r = await fetch(`/api/delivery/salon/pedidos-mesa/${mesa}`, {headers:{'Authorization':'Bearer '+token}});
     const d = await r.json();
     const pedidos = Array.isArray(d) ? d : (d.pedidos || []);
-    const info = pedidos.map(p => `#${p.numero} — R$ ${(p.total||0).toFixed(2).replace('.',',')} — ${p.status}`).join('
-');
-    alert(`Mesa ${mesa}:
-${info || 'Sem pedidos'}`);
+    const info = pedidos.map(p => `#${p.numero} - R$ ${(p.total||0).toFixed(2).replace('.',',')} - ${p.status}`).join(' | ');
+    alert(`Mesa ${mesa}: ${info || 'Sem pedidos'}`);
   } catch(e) { alert('Erro ao buscar pedidos da mesa'); }
 }
 
