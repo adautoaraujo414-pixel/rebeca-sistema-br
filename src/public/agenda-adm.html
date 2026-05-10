@@ -765,7 +765,7 @@ async function carregarClientes() {
           (cl.totalAtendimentos ? '<div class="cliente-stats">&#x2702;&#xFE0F; ' + cl.totalAtendimentos + ' atendimento(s)</div>' : '') +
           (cl.observacoes ? '<div class="cliente-obs">' + cl.observacoes + '</div>' : '') +
         '</div>' +
-        '<button class="btn-icon" style="background:#f0fdf4;color:#059669;font-size:.8em;padding:6px 10px" onclick="abrirWpp('' + wppNum + '')">&#x1F4AC;</button>' +
+        '<button class="btn-icon" style="background:#f0fdf4;color:#059669;font-size:.8em;padding:6px 10px" onclick="abrirWpp(\'' + wppNum + '\')">&#x1F4AC;</button>' +
       '</div>';
     }
     el.innerHTML = html;
