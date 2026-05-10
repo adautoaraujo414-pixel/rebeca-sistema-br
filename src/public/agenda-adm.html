@@ -693,6 +693,30 @@ function api(path, opts) {
 }
 
 // ===== INIT =====
+function navegar(pag) {
+  // Esconder todas as telas
+  var telas = ['inicio','agenda','servicos','profissionais','clientes','fotos','perfil','whatsapp'];
+  telas.forEach(function(t) {
+    var el = document.getElementById('tela-' + t);
+    if (el) el.style.display = 'none';
+    var nav = document.getElementById('nav-' + t);
+    if (nav) nav.classList.remove('ativo');
+  });
+  // Mostrar tela atual
+  var telaSel = document.getElementById('tela-' + pag);
+  if (telaSel) telaSel.style.display = '';
+  var navSel = document.getElementById('nav-' + pag);
+  if (navSel) navSel.classList.add('ativo');
+  // Carregar dados da tela
+  if (pag === 'inicio') carregarInicio();
+  if (pag === 'agenda') gerarCalAdm();
+  if (pag === 'servicos') carregarServicos();
+  if (pag === 'profissionais') carregarProfissionais();
+  if (pag === 'clientes') carregarClientes();
+  if (pag === 'fotos') carregarFotos();
+  if (pag === 'whatsapp') { if(typeof carregarPaginaWhatsapp==='function') carregarPaginaWhatsapp(); }
+}
+
 async function init() {
   var telaLogin = document.getElementById('tela-login');
   var telaPainel = document.getElementById('tela-painel');
@@ -1254,7 +1278,7 @@ async function ativarPush() {
     var perm = await Notification.requestPermission();
     if (perm !== 'granted') { toast('Permissão negada para notificações'); return; }
     var reg = await navigator.serviceWorker.ready;
-    var r = await fetch('/api/agenda-push/vapid-public');
+    var r = VAPID_OK ? await fetch('/api/agenda-push/vapid-public') : null;
     var d = await r.json();
     var sub = await reg.pushManager.subscribe({
       userVisibleOnly: true,
@@ -1285,7 +1309,7 @@ async function verificarStatusPush() {
   try {
     var r = await api('/agenda-push/status'.replace('/agenda-push','/agenda-push'));
     // usar fetch direto pois o prefixo é diferente
-    var resp = await fetch('/api/agenda-push/status', {
+    var resp = await fetch('/api/agenda/perfil', {
       headers: { 'Authorization': 'Bearer ' + TOKEN }
     });
     var d = await resp.json();
