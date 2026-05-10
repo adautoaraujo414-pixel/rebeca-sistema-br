@@ -311,6 +311,21 @@ router.delete('/bloqueios/:id', authAgenda, async (req, res) => {
 });
 
 // ===== CLIENTES =====
+
+router.post('/clientes', authAgenda, async (req, res) => {
+  try {
+    const { nome, telefone, email, observacoes, restricoes } = req.body;
+    if (!nome || !telefone) return res.status(400).json({ erro: 'Nome e telefone obrigatorios' });
+    const existente = await ClienteAgenda.findOne({ adminId: req.adminAgendaId, telefone });
+    if (existente) {
+      await ClienteAgenda.findByIdAndUpdate(existente._id, { nome, email, observacoes, restricoes });
+      return res.json({ sucesso: true, cliente: existente, atualizado: true });
+    }
+    const c = await ClienteAgenda.create({ adminId: req.adminAgendaId, nome, telefone, email: email||'', observacoes: observacoes||'', restricoes: restricoes||'' });
+    res.json({ sucesso: true, cliente: c });
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
 router.get('/clientes', authAgenda, async (req, res) => {
   try {
     const clientes = await ClienteAgenda.find({ adminId: req.adminAgendaId }).sort({ nome: 1 });
@@ -379,6 +394,23 @@ router.get('/espaco/:adminId', async (req, res) => {
   } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
+
+
+// Rota pública: auto-cadastrar cliente ao agendar
+router.post('/espaco/:adminId/cliente', async (req, res) => {
+  try {
+    const { nome, telefone } = req.body;
+    if (!nome || !telefone) return res.json({ sucesso: false });
+    // Upsert por telefone
+    const existente = await ClienteAgenda.findOne({ adminId: req.params.adminId, telefone });
+    if (existente) {
+      await ClienteAgenda.findByIdAndUpdate(existente._id, { nome, ultimoAtendimento: new Date(), $inc: { totalAtendimentos: 1 } });
+    } else {
+      await ClienteAgenda.create({ adminId: req.params.adminId, nome, telefone, totalAtendimentos: 1, ultimoAtendimento: new Date() });
+    }
+    res.json({ sucesso: true });
+  } catch(e) { res.json({ sucesso: false }); }
+});
 
 // Rota pública: profissional ver seus agendamentos pelo token
 router.get('/profissional-app/:token', async (req, res) => {

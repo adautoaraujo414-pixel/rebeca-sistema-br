@@ -236,8 +236,8 @@ body{font-family:'Segoe UI',sans-serif;background:#f9fafb;color:#1f2937;min-heig
         <input class="form-input" id="ag-nome" placeholder="Seu nome" type="text">
       </div>
       <div class="form-group">
-        <label class="form-label">WhatsApp *</label>
-        <input class="form-input" id="ag-tel" placeholder="(11) 99999-9999" type="tel">
+        <label class="form-label">WhatsApp * <span style="font-size:.75em;color:#f97316;font-weight:600">(será usado para confirmar)</span></label>
+        <input class="form-input" id="ag-tel" placeholder="(11) 99999-9999" type="tel" oninput="mascaraTel(this)" maxlength="15" oninput="mascaraTel(this)" maxlength="15">
       </div>
       <div class="form-group">
         <label class="form-label">Observações (opcional)</label>
@@ -528,6 +528,9 @@ async function confirmarAgendamento() {
     });
     var d = await r.json();
     if (!d.sucesso) { toast('Erro: ' + d.erro); return; }
+    // Auto-cadastrar cliente
+    cadastrarClienteAgenda(adminId, nome, tel);
+    cadastrarClienteAgenda(adminId, nome, tel);
     mostrarConfirmacao(d.mensagem);
   } catch(e) { toast('Erro ao confirmar agendamento'); }
 }
