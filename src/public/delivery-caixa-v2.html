@@ -226,6 +226,17 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Segoe UI',sans-ser
         <button onclick="carregarHistorico()" style="padding:6px 12px;background:#f97316;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:.82em">🔄 Atualizar</button>
       </div>
       <div id="lista-historico"><div style="text-align:center;padding:32px;color:#9ca3af">Clique em Atualizar</div></div>
+      <!-- Stats garçons -->
+      <div style="margin-top:16px">
+        <div style="font-weight:700;color:#1f2937;margin-bottom:8px;font-size:.9em">📊 Stats do Dia por Garçom</div>
+        <div id="salon-stats-container"><div style="color:#9ca3af;text-align:center;padding:16px;font-size:.85em">Carregando...</div></div>
+      </div>
+      <!-- PIX -->
+      <div style="margin-top:16px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:14px">
+        <div style="font-weight:700;color:#15803d;margin-bottom:6px;font-size:.9em">📱 Chave PIX</div>
+        <div id="pix-key-display" style="display:none;font-weight:800;color:#166534;font-size:1.1em;word-break:break-all"></div>
+        <div style="font-size:.8em;color:#6b7280;margin-top:4px">Configurada no seu perfil de administrador</div>
+      </div>
     </div>
 
   </div>
@@ -643,7 +654,7 @@ function mudarAba(aba, el) {
   if (aba === 'todos') carregarTodos();
   if (aba === 'mesas') { carregarMesas(); carregarSalonMesas(); }
   if (aba === 'entregadores') carregarEntregadores();
-  if (aba === 'historico') { carregarHistorico(); carregarFechamentos(); }
+  if (aba === 'historico') { carregarHistorico(); carregarFechamentos(); carregarSalonStats(); carregarPixKey(); }
 }
 
 async function carregarPedidos() {
