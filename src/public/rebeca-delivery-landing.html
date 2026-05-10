@@ -10,7 +10,9 @@
 body{font-family:'Inter',sans-serif;background:#0a0a1a;color:#e0e0e0;overflow-x:hidden}
 .nav{position:fixed;top:0;left:0;right:0;padding:15px 30px;display:flex;justify-content:space-between;align-items:center;z-index:50;background:rgba(10,10,26,0.95);backdrop-filter:blur(10px);border-bottom:1px solid #1a1a3e}
 .nav-logo{font-size:22px;font-weight:800;background:linear-gradient(135deg,#ff6b35,#ff9a56);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.nav-btns{display:flex;gap:10px}
+.nav-btns{display:flex;gap:10px;align-items:center}
+.nav-btn-agenda{padding:9px 18px;border-radius:25px;font-size:13px;font-weight:700;cursor:pointer;border:2px solid #f97316;color:#f97316;background:transparent;transition:all .3s;font-family:Inter,sans-serif;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.nav-btn-agenda:hover{background:#f97316;color:#fff}
 .nav-btn{padding:9px 22px;border-radius:25px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .3s;font-family:Inter,sans-serif}
 .nav-btn.login{background:transparent;color:#ff6b35;border:1px solid #ff6b35}
 .nav-btn.cadastro{background:linear-gradient(135deg,#ff6b35,#ff9a56);color:#fff}
@@ -134,6 +136,7 @@ footer a{color:#ff6b35;text-decoration:none}
 <nav class="nav">
   <div class="nav-logo">🍽️ Rebeca Delivery</div>
   <div class="nav-btns">
+    <a class="nav-btn-agenda" href="/agenda">📅 Rebeca Agenda</a>
     <button class="nav-btn login" onclick="abrirModal('login')">Entrar</button>
     <button class="nav-btn cadastro" onclick="abrirModal('cadastro')">30 Dias Grátis</button>
   </div>
