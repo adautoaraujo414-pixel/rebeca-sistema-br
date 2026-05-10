@@ -717,18 +717,32 @@ async function init() {
 }
 
 function iniciarPainel(dados) {
+  // Aceita tanto o objeto direto do login quanto o d.admin do perfil
+  var info = (dados && dados.nomeNegocio) ? dados : (dados && dados.admin ? dados.admin : dados);
   document.getElementById('tela-login').style.display = 'none';
   document.getElementById('tela-painel').style.display = '';
-  var nome = dados.nomeNegocio || dados.nome || 'Meu Negócio';
+  var nome = info.nomeNegocio || info.nome || 'Meu Negócio';
   document.getElementById('adm-titulo').textContent = nome;
-  document.getElementById('adm-sub').textContent = dados.segmento || 'Painel';
-  ADM_ID = dados._id || dados.adminId || '';
+  document.getElementById('adm-sub').textContent = info.segmento || 'Painel';
+  ADM_ID = info._id || info.adminId || '';
   // Preencher avatar
   var av = document.getElementById('adm-avatar');
   if (av) av.textContent = nome.charAt(0).toUpperCase();
-  // Preencher link do espaço
+  // Preencher link do espaço — buscar _id via perfil se não tiver
   var linkEl = document.getElementById('link-espaco-txt');
-  if (linkEl && ADM_ID) linkEl.textContent = location.origin + '/espaco-digital?id=' + ADM_ID;
+  if (linkEl) {
+    if (ADM_ID) {
+      linkEl.textContent = location.origin + '/espaco-digital?id=' + ADM_ID;
+    } else {
+      // Buscar perfil para pegar o _id
+      api('/perfil').then(function(p) {
+        if (p && p.admin && p.admin._id) {
+          ADM_ID = p.admin._id;
+          linkEl.textContent = location.origin + '/espaco-digital?id=' + ADM_ID;
+        }
+      }).catch(function(){});
+    }
+  }
   carregarInicio();
   carregarServicos();
   carregarProfissionais();
