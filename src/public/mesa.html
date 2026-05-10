@@ -241,36 +241,37 @@ function renderItens(cats){
       const preco = 'R$ '+Number(i.preco||0).toFixed(2).replace('.',',');
       const tempo = i.tempoPreparoMin||20;
       const estoque = i.estoqueAtivo && i.estoqueAtual >= 0 ? i.estoqueAtual : null;
-      const d = JSON.stringify({_id:i._id,nome:i.nome,preco:i.preco||0,imagem:foto,descricao:i.descricao||'',tempoPreparoMin:tempo});
+      const d = encodeURIComponent(JSON.stringify({_id:i._id,nome:i.nome,preco:i.preco||0,imagem:foto,descricao:i.descricao||'',tempoPreparoMin:tempo}));
+      const imgHtml = foto ? '<div class="item-img-wrap"><img src="'+foto+'" loading="lazy" onerror="this.style.display=\'none\'"></div>' : '';
       if (esgotado) {
-        return '<div class="item-card" style="opacity:.45;pointer-events:none;filter:grayscale(1)">'+
-          '<div class="item-body">'+
-            '<div>'+
-              '<div class="item-name" style="text-decoration:line-through">'+i.nome+'</div>'+
-              (i.descricao?'<div class="item-desc">'+i.descricao+'</div>':'')+
-            '</div>'+
-            '<div class="item-footer">'+
-              '<div class="item-price" style="color:#888">'+preco+'</div>'+
-              '<span style="background:#fee2e2;color:#ef4444;border-radius:20px;padding:3px 10px;font-size:.72em;font-weight:700">Esgotado</span>'+
-            '</div>'+
-          '</div>'+
-          (foto?'<div class="item-img-wrap"><img src="'+foto+'" loading="lazy"></div>':'')+
-        '</div>';
+        return '<div class="item-card" style="opacity:.45;pointer-events:none;filter:grayscale(1)">'
+          + '<div class="item-body">'
+          + '<div>'
+          + '<div class="item-name" style="text-decoration:line-through">'+i.nome+'</div>'
+          + (i.descricao?'<div class="item-desc">'+i.descricao+'</div>':'')
+          + '</div>'
+          + '<div class="item-footer">'
+          + '<div class="item-price" style="color:#888">'+preco+'</div>'
+          + '<span style="background:#fee2e2;color:#ef4444;border-radius:20px;padding:3px 10px;font-size:.72em;font-weight:700">Esgotado</span>'
+          + '</div>'
+          + '</div>'
+          + imgHtml
+          + '</div>';
       }
-      return '<div class="item-card" onclick='abrirItem('+d.replace(/'/g,"&#39;")+')'>'+
-        '<div class="item-body">'+
-          '<div>'+
-            '<div class="item-name">'+i.nome+'</div>'+
-            (i.descricao?'<div class="item-desc">'+i.descricao+'</div>':'')+
-            '<div class="item-tempo">⏱️ ~'+tempo+' min'+(estoque!==null&&estoque<=10?'&nbsp;·&nbsp;<span style="color:#f59e0b;font-weight:700">⚠️ Últimas '+estoque+' unid.</span>':'')+'</div>'+
-          '</div>'+
-          '<div class="item-footer">'+
-            '<div class="item-price">'+preco+'</div>'+
-            '<button class="btn-add" onclick='event.stopPropagation();addCarrinho('+d.replace(/'/g,"&#39;")+')'>+</button>'+
-          '</div>'+
-        '</div>'+
-        (foto?'<div class="item-img-wrap"><img src="'+foto+'" loading="lazy" onerror="this.parentElement.innerHTML='🍽️'"></div>':'')+
-      '</div>';
+      return '<div class="item-card" data-item="'+d+'" onclick="abrirItemEl(this)">'
+        + '<div class="item-body">'
+        + '<div>'
+        + '<div class="item-name">'+i.nome+'</div>'
+        + (i.descricao?'<div class="item-desc">'+i.descricao+'</div>':'')
+        + '<div class="item-tempo">&#x23F1;&#xFE0F; ~'+tempo+' min'+(estoque!==null&&estoque<=10?'&nbsp;&middot;&nbsp;<span style="color:#f59e0b;font-weight:700">&#x26A0;&#xFE0F; &Uacute;ltimas '+estoque+' unid.</span>':'')+'</div>'
+        + '</div>'
+        + '<div class="item-footer">'
+        + '<div class="item-price">'+preco+'</div>'
+        + '<button class="btn-add" data-item="'+d+'" onclick="event.stopPropagation();addCarrinhoEl(this)">+</button>'
+        + '</div>'
+        + '</div>'
+        + imgHtml
+        + '</div>';
     };
     return '<div class="cat-title">'+cat+'</div>'+
       disponiveis.map(i=>renderItem(i,false)).join('')+
@@ -278,6 +279,13 @@ function renderItens(cats){
   }).join('');
 }
 
+
+function abrirItemEl(el){
+  try{abrirItem(JSON.parse(decodeURIComponent(el.dataset.item)));}catch(e){console.error(e);}
+}
+function addCarrinhoEl(el){
+  try{addCarrinho(JSON.parse(decodeURIComponent(el.dataset.item)));}catch(e){console.error(e);}
+}
 function abrirItem(item){
   const foto=item.imagem||item.foto||'';
   const modal=document.createElement('div');
