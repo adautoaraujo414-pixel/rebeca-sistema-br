@@ -53,10 +53,10 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 .stat-pill.purple{border-color:rgba(167,139,250,.3);color:#c4b5fd}
 
 /* LAYOUT */
-.main-layout{display:grid;grid-template-columns:1fr 380px;flex:1;overflow:hidden;min-height:0}
+.main-layout{display:flex;width:100%;overflow:hidden;flex:1;min-height:0}
 
 /* PAINEL ESQUERDO */
-.left{display:flex;flex-direction:column;overflow:hidden;min-height:0;width:calc(100% - 380px)}
+.left{display:flex;flex-direction:column;overflow:hidden;min-height:0;flex:1;width:100%}
 .tabs-nav{display:flex;gap:4px;padding:12px 16px 0;flex-shrink:0}
 .tab-btn{padding:8px 16px;border-radius:8px 8px 0 0;border:1px solid transparent;background:transparent;color:var(--text3);font-size:.82em;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s;display:flex;align-items:center;gap:6px}
 .mesa-card{border-radius:12px;padding:14px;cursor:pointer;border:2px solid var(--border);background:var(--surface);transition:all .2s;position:relative}
@@ -71,7 +71,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 .mesa-nomes{font-size:.72em;color:var(--text3);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tab-btn.active{background:var(--surface);border-color:var(--border);border-bottom-color:var(--surface);color:var(--text);margin-bottom:-1px;z-index:1}
 .badge{background:var(--accent);color:#fff;border-radius:10px;padding:1px 7px;font-size:.75em;font-weight:700}
-.tab-content{background:var(--surface);border:1px solid var(--border);border-radius:0 0 0 0;flex:1;overflow-y:auto;min-height:0;padding:16px;width:100%}
+.tab-content{background:var(--surface);flex:1;overflow-y:auto;min-height:0;padding:16px;width:100%}
 
 /* CARDÁPIO */
 .search-bar{position:relative;margin-bottom:14px}
@@ -116,7 +116,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 .pedido-btns{display:flex;gap:6px;flex-wrap:wrap}
 
 /* PAINEL DIREITO */
-.right{background:var(--surface);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;position:fixed;top:100px;right:0;width:380px;bottom:0;z-index:10}
+.right{background:var(--surface);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;width:420px;flex-shrink:0}
 .comanda-header{padding:14px 16px;border-bottom:1px solid var(--border);flex-shrink:0}
 .comanda-title{font-size:.88em;font-weight:800;color:var(--text);margin-bottom:10px;display:flex;align-items:center;gap:6px}
 .tipo-btns{display:flex;gap:4px;margin-bottom:12px}
@@ -176,7 +176,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
 
 @media(max-width:500px){
-  .right{display:flex;width:380px}
+  .right{display:flex;width:420px}
 }
 </style>
 </head>
