@@ -327,7 +327,7 @@ function renderProdutos(lista) {
     <div class="produtos-grid">
       ${g.itens.map(item => `
         <div class="prod-card" onclick="addCarrinho('${item._id}')">
-          ${(() => { const r=item.foto||item.imagem||item.thumbnail||item.img; if(!r) return `<div class="prod-img-placeholder">${g.emoji}</div>`; const s=r.startsWith('http')||r.startsWith('/')?r:'data:image/jpeg;base64,'+r; return `<img class="prod-img" src="${s}" onerror="this.outerHTML='<div class=\'prod-img-placeholder\'>${g.emoji}</div>'">`; })()}
+          ${(() => { const r=item.imagem||item.foto||item.thumbnail||item.img; if(!r) return `<div class="prod-img-placeholder">${g.emoji}</div>`; const s=r; return `<img class="prod-img" src="${s}" onerror="this.outerHTML='<div class=\'prod-img-placeholder\'>${g.emoji}</div>'">`; })()}
           <div class="prod-info">
             <div class="prod-nome">${item.nome}</div>
             <div class="prod-desc">${item.descricao||''}</div>
