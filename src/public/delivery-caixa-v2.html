@@ -707,8 +707,8 @@ async function carregarMesas() {
         : '&#x26AA; Livre';
       var totalFmt = (m.total||0).toFixed(2).replace('.',',');
       var onclick = m.ocupada
-        ? 'abrirModalMesa(' + m.numero + ','' + totalFmt + '')'
-        : 'abrirModalMesaVazia(' + m.numero + ')';
+        ? "abrirModalMesa(" + m.numero + ",'" + totalFmt + "')" 
+        : "abrirModalMesaVazia(" + m.numero + ")";
       html += '<div onclick="' + onclick + '" style="background:' + bg + ';border:2px solid ' + cor + ';border-radius:12px;padding:12px;cursor:pointer;text-align:center">';
       html += '<div style="font-size:1.4em;font-weight:800;color:' + txt + '">M' + m.numero + '</div>';
       html += '<div style="font-size:.7em;font-weight:700;color:' + txt + ';margin:2px 0">' + statusLabel + '</div>';
