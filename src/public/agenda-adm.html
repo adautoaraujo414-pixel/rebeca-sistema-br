@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rebeca Agenda - Painel</title>
+<meta name="theme-color" content="#f97316">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',sans-serif;background:#f3f4f6;color:#1f2937;min-height:100vh;padding-bottom:80px}
+:root{--cor:#f97316;--cor2:#1f2937}
+
+/* HEADER */
+.header{background:var(--cor2);color:#fff;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.3)}
+.header-titulo{font-weight:800;font-size:1em}
+.header-sub{font-size:.72em;color:#9ca3af}
+.btn-sair{background:rgba(255,255,255,.12);border:none;color:#fff;padding:7px 12px;border-radius:8px;font-size:.78em;cursor:pointer}
+
+/* NAV BOTTOM */
+.nav-bottom{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #e5e7eb;display:flex;z-index:100;box-shadow:0 -2px 12px rgba(0,0,0,.08)}
+.nav-item{flex:1;padding:10px 4px;text-align:center;cursor:pointer;border:none;background:transparent;color:#9ca3af;font-size:.65em;font-weight:600;transition:.2s}
+.nav-item.ativo{color:var(--cor)}
+.nav-item .nav-icon{font-size:1.4em;display:block;margin-bottom:2px}
+
+/* CARDS STATS */
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:16px;padding-bottom:0}
+.stat-card{background:#fff;border-radius:14px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.stat-val{font-size:1.6em;font-weight:900;color:var(--cor)}
+.stat-label{font-size:.72em;color:#6b7280;margin-top:2px}
+
+/* SEÇÃO */
+.section{padding:16px}
+.section-titulo{font-weight:800;font-size:.95em;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between}
+.btn-add{background:var(--cor);color:#fff;border:none;border-radius:8px;padding:7px 14px;font-size:.8em;font-weight:700;cursor:pointer}
+
+/* CARDS AGENDAMENTO */
+.ag-card{background:#fff;border-radius:12px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,.06);margin-bottom:10px;border-left:4px solid #e5e7eb;position:relative}
+.ag-card.pendente{border-left-color:#f59e0b}
+.ag-card.confirmado{border-left-color:#22c55e}
+.ag-card.concluido{border-left-color:#6b7280}
+.ag-card.cancelado{border-left-color:#ef4444;opacity:.6}
+.ag-card.faltou{border-left-color:#8b5cf6;opacity:.7}
+.ag-hora{font-size:1em;font-weight:900;color:var(--cor2)}
+.ag-nome{font-weight:700;font-size:.9em;margin:2px 0}
+.ag-info{font-size:.78em;color:#6b7280}
+.ag-status{position:absolute;top:12px;right:12px;font-size:.7em;font-weight:700;padding:3px 10px;border-radius:10px}
+.ag-status.pendente{background:#fef3c7;color:#d97706}
+.ag-status.confirmado{background:#d1fae5;color:#059669}
+.ag-status.concluido{background:#f3f4f6;color:#6b7280}
+.ag-status.cancelado{background:#fee2e2;color:#dc2626}
+.ag-status.faltou{background:#ede9fe;color:#7c3aed}
+.ag-acoes{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.ag-btn{padding:6px 12px;border-radius:8px;border:none;font-size:.75em;font-weight:700;cursor:pointer}
+.ag-btn.verde{background:#d1fae5;color:#059669}
+.ag-btn.cinza{background:#f3f4f6;color:#374151}
+.ag-btn.vermelho{background:#fee2e2;color:#dc2626}
+.ag-btn.roxo{background:#ede9fe;color:#7c3aed}
+
+/* SERVIÇOS */
+.serv-card{background:#fff;border-radius:12px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,.06);margin-bottom:10px;display:flex;align-items:center;gap:12px}
+.serv-icon{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--cor),#fb923c);display:flex;align-items:center;justify-content:center;font-size:1.3em;flex-shrink:0}
+.serv-info{flex:1;min-width:0}
+.serv-nome{font-weight:700;font-size:.9em}
+.serv-meta{font-size:.75em;color:#6b7280;margin-top:2px}
+.serv-acoes{display:flex;gap:6px}
+
+/* PROFISSIONAIS */
+.prof-card{background:#fff;border-radius:12px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,.06);margin-bottom:10px;display:flex;align-items:center;gap:12px}
+.prof-foto-ph{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:1.3em;color:#fff;flex-shrink:0}
+.prof-foto-img{width:44px;height:44px;border-radius:50%;object-fit:cover;flex-shrink:0}
+
+/* CLIENTES */
+.cli-card{background:#fff;border-radius:12px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,.06);margin-bottom:10px}
+.cli-nome{font-weight:700;font-size:.9em}
+.cli-info{font-size:.75em;color:#6b7280;margin-top:2px}
+.cli-badge{display:inline-block;background:#fff7ed;color:#f97316;font-size:.7em;font-weight:700;padding:2px 8px;border-radius:8px;margin-top:4px}
+
+/* CALENDÁRIO */
+.cal-strip{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;margin-bottom:16px}
+.cal-strip::-webkit-scrollbar{display:none}
+.cal-dia{flex-shrink:0;text-align:center;padding:8px 12px;border-radius:10px;background:#fff;border:2px solid #e5e7eb;cursor:pointer;min-width:52px;transition:.2s}
+.cal-dia.sel{background:var(--cor);border-color:var(--cor);color:#fff}
+.cal-dia.hoje{border-color:var(--cor);color:var(--cor)}
+.cal-ds{font-size:.65em;font-weight:700;text-transform:uppercase}
+.cal-dn{font-size:1.1em;font-weight:900}
+
+/* MODAL */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:300;align-items:flex-end}
+.modal-bg.show{display:flex}
+.modal-box{background:#fff;border-radius:20px 20px 0 0;padding:20px;width:100%;max-height:88vh;overflow-y:auto}
+.modal-titulo{font-weight:800;font-size:1.05em;margin-bottom:16px;text-align:center}
+.form-group{margin-bottom:14px}
+.form-label{font-size:.82em;font-weight:700;color:#374151;margin-bottom:4px;display:block}
+.form-input{width:100%;padding:11px 14px;border:2px solid #e5e7eb;border-radius:10px;font-size:.95em;outline:none;transition:.2s}
+.form-input:focus{border-color:var(--cor)}
+.form-select{width:100%;padding:11px 14px;border:2px solid #e5e7eb;border-radius:10px;font-size:.95em;outline:none;background:#fff}
+.btn-pri{width:100%;padding:14px;background:var(--cor);color:#fff;border:none;border-radius:12px;font-size:1em;font-weight:800;cursor:pointer;margin-top:8px}
+.btn-sec{width:100%;padding:12px;background:#f3f4f6;color:#374151;border:none;border-radius:12px;font-size:.95em;font-weight:700;cursor:pointer;margin-top:8px}
+
+/* FORM PERFIL */
+.perfil-secao{background:#fff;border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.perfil-secao-titulo{font-weight:800;font-size:.85em;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* TOGGLE */
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f3f4f6}
+.toggle-label{font-size:.88em;font-weight:600}
+.toggle{width:44px;height:24px;background:#e5e7eb;border-radius:12px;position:relative;cursor:pointer;border:none;transition:.3s;flex-shrink:0}
+.toggle.on{background:var(--cor)}
+.toggle::after{content:'';position:absolute;width:18px;height:18px;background:#fff;border-radius:50%;top:3px;left:3px;transition:.3s;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+.toggle.on::after{left:23px}
+
+/* LINK */
+.link-espaco{background:#fff7ed;border:2px solid #fed7aa;border-radius:12px;padding:14px;margin-bottom:12px;word-break:break-all;font-size:.82em;color:#92400e;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.link-espaco button{background:var(--cor);color:#fff;border:none;border-radius:8px;padding:6px 12px;font-size:.8em;font-weight:700;cursor:pointer;white-space:nowrap}
+
+/* TOAST */
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#1f2937;color:#fff;padding:12px 20px;border-radius:12px;font-size:.88em;z-index:999;opacity:0;transition:.3s;pointer-events:none;white-space:nowrap;max-width:90vw}
+.toast.show{opacity:1}
+
+/* LOADING */
+.loading{text-align:center;padding:32px;color:#9ca3af}
+.spinner{width:28px;height:28px;border:3px solid #f3f4f6;border-top-color:var(--cor);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 10px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty{text-align:center;padding:28px;color:#9ca3af;font-size:.88em}
+
+/* PAGE */
+.page{display:none}
+.page.ativo{display:block}
+
+/* LOGIN */
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px;background:linear-gradient(135deg,#1f2937,#374151)}
+.login-card{background:#fff;border-radius:20px;padding:28px 24px;width:100%;max-width:380px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.login-logo{text-align:center;margin-bottom:24px}
+.login-logo-txt{font-size:1.5em;font-weight:900;color:#1f2937}
+.login-logo-txt span{color:#f97316}
+</style>
+</head>
+<body>
+
+<div class="toast" id="toast"></div>
+
+<!-- LOGIN -->
+<div id="tela-login" class="login-wrap">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="login-logo-txt">Rebeca <span>Agenda</span></div>
+      <div style="font-size:.82em;color:#6b7280;margin-top:4px">Painel Administrativo</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">E-mail</label>
+      <input class="form-input" id="l-email" type="email" placeholder="seu@email.com">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Senha</label>
+      <input class="form-input" id="l-senha" type="password" placeholder="Sua senha">
+    </div>
+    <button class="btn-pri" onclick="login()">Entrar</button>
+    <div style="text-align:center;margin-top:14px;font-size:.85em;color:#6b7280">
+      Não tem conta? <a href="/agenda-cadastro" style="color:#f97316;font-weight:700">Criar grátis</a>
+    </div>
+  </div>
+</div>
+
+<!-- PAINEL -->
+<div id="tela-painel" style="display:none">
+  <div class="header">
+    <div>
+      <div class="header-titulo" id="adm-titulo">Rebeca Agenda</div>
+      <div class="header-sub" id="adm-sub">Painel</div>
+    </div>
+    <button class="btn-sair" onclick="sair()">Sair</button>
+  </div>
+
+  <!-- INÍCIO -->
+  <div class="page ativo" id="page-inicio">
+    <div class="stats-grid" id="stats-grid">
+      <div class="stat-card"><div class="stat-val" id="st-hoje">-</div><div class="stat-label">Hoje</div></div>
+      <div class="stat-card"><div class="stat-val" id="st-pend">-</div><div class="stat-label">Pendentes</div></div>
+      <div class="stat-card"><div class="stat-val" id="st-cli">-</div><div class="stat-label">Clientes</div></div>
+      <div class="stat-card"><div class="stat-val" id="st-receita">-</div><div class="stat-label">Receita mês</div></div>
+    </div>
+    <div class="section" style="margin-top:12px">
+      <div class="link-espaco">
+        <span style="flex:1" id="link-espaco-txt">Carregando link...</span>
+        <button onclick="copiarLink()">Copiar</button>
+        <button onclick="abrirEspaco()">Abrir</button>
+      </div>
+      <div class="section-titulo">📅 Próximos Agendamentos</div>
+      <div id="proximos-hoje"><div class="loading"><div class="spinner"></div></div></div>
+    </div>
+  </div>
+
+  <!-- AGENDA -->
+  <div class="page" id="page-agenda">
+    <div class="section">
+      <div class="cal-strip" id="adm-cal"></div>
+      <div class="section-titulo">
+        <span id="agenda-data-titulo">Hoje</span>
+        <button class="btn-add" onclick="abrirModalNovoAg()">+ Novo</button>
+      </div>
+      <div id="lista-agenda"><div class="loading"><div class="spinner"></div></div></div>
+    </div>
+  </div>
+
+  <!-- SERVIÇOS -->
+  <div class="page" id="page-servicos">
+    <div class="section">
+      <div class="section-titulo">✂️ Serviços <button class="btn-add" onclick="abrirModalServico()">+ Novo</button></div>
+      <div id="lista-servicos"><div class="loading"><div class="spinner"></div></div></div>
+    </div>
+  </div>
+
+  <!-- PROFISSIONAIS -->
+  <div class="page" id="page-profissionais">
+    <div class="section">
+      <div class="section-titulo">👥 Profissionais <button class="btn-add" onclick="abrirModalProf()">+ Novo</button></div>
+      <div id="lista-profissionais"><div class="loading"><div class="spinner"></div></div></div>
+    </div>
+  </div>
+
+  <!-- CLIENTES -->
+  <div class="page" id="page-clientes">
+    <div class="section">
+      <div class="section-titulo">👤 Clientes</div>
+      <div id="lista-clientes"><div class="loading"><div class="spinner"></div></div></div>
+    </div>
+  </div>
+
+  <!-- PERFIL -->
+  <div class="page" id="page-perfil">
+    <div class="section">
+      <div class="perfil-secao">
+        <div class="perfil-secao-titulo">Dados do Negócio</div>
+        <div class="form-group"><label class="form-label">Nome do negócio</label><input class="form-input" id="p-negocio" type="text"></div>
+        <div class="form-group"><label class="form-label">Segmento</label><input class="form-input" id="p-seg" type="text"></div>
+        <div class="form-group"><label class="form-label">Descrição</label><input class="form-input" id="p-desc" type="text" placeholder="Descrição para clientes"></div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Cidade</label><input class="form-input" id="p-cidade" type="text"></div>
+          <div class="form-group"><label class="form-label">Instagram</label><input class="form-input" id="p-ig" type="text" placeholder="@seu_ig"></div>
+        </div>
+        <div class="form-group"><label class="form-label">Endereço</label><input class="form-input" id="p-end" type="text"></div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Telefone</label><input class="form-input" id="p-tel" type="tel"></div>
+          <div class="form-group"><label class="form-label">WhatsApp</label><input class="form-input" id="p-wpp" type="tel"></div>
+        </div>
+      </div>
+      <div class="perfil-secao">
+        <div class="perfil-secao-titulo">Configurações de Agenda</div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Abertura</label><input class="form-input" id="p-ab" type="time" value="08:00"></div>
+          <div class="form-group"><label class="form-label">Fechamento</label><input class="form-input" id="p-fe" type="time" value="18:00"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Intervalo (min)</label><input class="form-input" id="p-int" type="number" value="30" min="15" max="120"></div>
+          <div class="form-group"><label class="form-label">Antecedência mín (min)</label><input class="form-input" id="p-ant" type="number" value="60" min="0"></div>
+        </div>
+        <div class="form-group"><label class="form-label">Cor principal</label><input class="form-input" id="p-cor" type="color" value="#f97316" style="height:44px;padding:4px 10px"></div>
+      </div>
+      <button class="btn-pri" onclick="salvarPerfil()">💾 Salvar</button>
+    </div>
+  </div>
+
+  <!-- NAV BOTTOM -->
+  <div class="nav-bottom">
+    <button class="nav-item ativo" onclick="mudarPag('inicio',this)"><span class="nav-icon">🏠</span>Início</button>
+    <button class="nav-item" onclick="mudarPag('agenda',this)"><span class="nav-icon">📅</span>Agenda</button>
+    <button class="nav-item" onclick="mudarPag('servicos',this)"><span class="nav-icon">✂️</span>Serviços</button>
+    <button class="nav-item" onclick="mudarPag('profissionais',this)"><span class="nav-icon">👥</span>Equipe</button>
+    <button class="nav-item" onclick="mudarPag('clientes',this)"><span class="nav-icon">👤</span>Clientes</button>
+    <button class="nav-item" onclick="mudarPag('perfil',this)"><span class="nav-icon">⚙️</span>Perfil</button>
+  </div>
+</div>
+
+<!-- MODAL NOVO AGENDAMENTO -->
+<div class="modal-bg" id="modal-ag">
+  <div class="modal-box">
+    <div class="modal-titulo">📅 Novo Agendamento</div>
+    <div class="form-group"><label class="form-label">Nome do cliente *</label><input class="form-input" id="mag-nome" type="text"></div>
+    <div class="form-group"><label class="form-label">WhatsApp *</label><input class="form-input" id="mag-tel" type="tel"></div>
+    <div class="form-group"><label class="form-label">Serviço</label><select class="form-select" id="mag-serv"><option value="">Selecionar...</option></select></div>
+    <div class="form-group"><label class="form-label">Profissional</label><select class="form-select" id="mag-prof"><option value="">Qualquer</option></select></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Data *</label><input class="form-input" id="mag-data" type="date"></div>
+      <div class="form-group"><label class="form-label">Hora *</label><input class="form-input" id="mag-hora" type="time"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Observações</label><input class="form-input" id="mag-obs" type="text"></div>
+    <button class="btn-pri" onclick="salvarAgendamento()">Salvar</button>
+    <button class="btn-sec" onclick="fecharModal('modal-ag')">Cancelar</button>
+  </div>
+</div>
+
+<!-- MODAL SERVIÇO -->
+<div class="modal-bg" id="modal-serv">
+  <div class="modal-box">
+    <div class="modal-titulo" id="modal-serv-titulo">✂️ Novo Serviço</div>
+    <div class="form-group"><label class="form-label">Nome *</label><input class="form-input" id="ms-nome" type="text"></div>
+    <div class="form-group"><label class="form-label">Descrição</label><input class="form-input" id="ms-desc" type="text"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Duração (min) *</label><input class="form-input" id="ms-dur" type="number" value="60" min="5"></div>
+      <div class="form-group"><label class="form-label">Preço (R$) *</label><input class="form-input" id="ms-preco" type="number" value="0" min="0" step="0.01"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Categoria</label><input class="form-input" id="ms-cat" type="text" placeholder="Ex: Cabelo, Barba..."></div>
+    <div class="form-group"><label class="form-label">URL da foto</label><input class="form-input" id="ms-foto" type="url" placeholder="https://..."></div>
+    <button class="btn-pri" onclick="salvarServico()">Salvar</button>
+    <button class="btn-sec" onclick="fecharModal('modal-serv')">Cancelar</button>
+  </div>
+</div>
+
+<!-- MODAL PROFISSIONAL -->
+<div class="modal-bg" id="modal-prof">
+  <div class="modal-box">
+    <div class="modal-titulo" id="modal-prof-titulo">👤 Novo Profissional</div>
+    <div class="form-group"><label class="form-label">Nome *</label><input class="form-input" id="mp-nome" type="text"></div>
+    <div class="form-group"><label class="form-label">URL da foto</label><input class="form-input" id="mp-foto" type="url" placeholder="https://..."></div>
+    <div class="form-group"><label class="form-label">Especialidades</label><input class="form-input" id="mp-esp" type="text" placeholder="Ex: Corte, Coloração (separar por vírgula)"></div>
+    <button class="btn-pri" onclick="salvarProf()">Salvar</button>
+    <button class="btn-sec" onclick="fecharModal('modal-prof')">Cancelar</button>
+  </div>
+</div>
+
+<script>
+var TOKEN = localStorage.getItem('agenda_token') || '';
+var ADM_ID = '';
+var servicos = [];
+var profissionais = [];
+var editServId = null;
+var editProfId = null;
+var dataSel = new Date().toISOString().split('T')[0];
+
+// ===== AUTH =====
+async function login() {
+  var email = document.getElementById('l-email').value.trim();
+  var senha = document.getElementById('l-senha').value.trim();
+  if (!email || !senha) { toast('Preencha email e senha'); return; }
+  try {
+    var r = await fetch('/api/agenda/login', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ email, senha })
+    });
+    var d = await r.json();
+    if (!d.sucesso) { toast('Erro: ' + d.erro); return; }
+    TOKEN = d.token;
+    localStorage.setItem('agenda_token', TOKEN);
+    iniciarPainel(d);
+  } catch(e) { toast('Erro de conexão'); }
+}
+
+function sair() {
+  localStorage.removeItem('agenda_token');
+  location.reload();
+}
+
+function api(path, opts) {
+  var options = opts || {};
+  options.headers = Object.assign({ 'Authorization': 'Bearer ' + TOKEN, 'Content-Type': 'application/json' }, options.headers || {});
+  return fetch('/api/agenda' + path, options).then(function(r){ return r.json(); });
+}
+
+// ===== INIT =====
+async function init() {
+  if (!TOKEN) return;
+  try {
+    var d = await api('/perfil');
+    if (!d.sucesso) { localStorage.removeItem('agenda_token'); return; }
+    iniciarPainel(d.admin);
+  } catch(e) {}
+}
+
+function iniciarPainel(dados) {
+  document.getElementById('tela-login').style.display = 'none';
+  document.getElementById('tela-painel').style.display = '';
+  var nome = dados.nomeNegocio || dados.nome || 'Meu Negócio';
+  document.getElementById('adm-titulo').textContent = nome;
+  document.getElementById('adm-sub').textContent = dados.segmento || 'Painel';
+  carregarDashboard();
+  carregarServicos();
+  carregarProfissionais();
+  gerarCalAdm();
+}
+
+// ===== DASHBOARD =====
+async function carregarDashboard() {
+  try {
+    var d = await api('/dashboard');
+    if (!d.sucesso) return;
+    document.getElementById('st-hoje').textContent = d.agHoje;
+    document.getElementById('st-pend').textContent = d.agPendentes;
+    document.getElementById('st-cli').textContent = d.totalClientes;
+    document.getElementById('st-receita').textContent = 'R$' + Number(d.receitaMes).toFixed(0);
+    var el = document.getElementById('proximos-hoje');
+    if (!d.proximosHoje.length) { el.innerHTML = '<div class="empty">Nenhum agendamento hoje</div>'; return; }
+    el.innerHTML = d.proximosHoje.map(function(a){ return agCard(a, true); }).join('');
+
+    var perfil = await api('/perfil');
+    if (perfil.sucesso) {
+      var a = perfil.admin;
+      document.getElementById('link-espaco-txt').textContent = location.origin + '/espaco-digital?id=' + (a._id || '');
+      ADM_ID = a._id || '';
+      preencherPerfil(a);
+    }
+  } catch(e) {}
+}
+
+function agCard(a, mini) {
+  var hora = new Date(a.dataHora).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  var botoes = '';
+  if (!mini) {
+    if (a.status === 'pendente') botoes = '<button class="ag-btn verde" onclick="mudarStatus(\''+a._id+'\',\'confirmado\')">Confirmar</button>';
+    if (a.status !== 'concluido' && a.status !== 'cancelado') {
+      botoes += '<button class="ag-btn cinza" onclick="mudarStatus(\''+a._id+'\',\'concluido\')">Concluído</button>';
+      botoes += '<button class="ag-btn roxo" onclick="mudarStatus(\''+a._id+'\',\'faltou\')">Faltou</button>';
+      botoes += '<button class="ag-btn vermelho" onclick="mudarStatus(\''+a._id+'\',\'cancelado\')">Cancelar</button>';
+    }
+  }
+  return '<div class="ag-card '+a.status+'">'
+    + '<span class="ag-status '+a.status+'">'+a.status+'</span>'
+    + '<div class="ag-hora">'+hora+'</div>'
+    + '<div class="ag-nome">'+a.nomeCliente+'</div>'
+    + '<div class="ag-info">'+(a.nomeServico||'Sem serviço')+(a.nomeProfissional?' · '+a.nomeProfissional:'')+'</div>'
+    + '<div class="ag-info">📱 '+a.telefoneCliente+'</div>'
+    + (botoes ? '<div class="ag-acoes">'+botoes+'</div>' : '')
+    + '</div>';
+}
+
+// ===== CALENDÁRIO ADM =====
+function gerarCalAdm() {
+  var el = document.getElementById('adm-cal');
+  var hoje = new Date();
+  var html = '';
+  var dias = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+  for (var i = 0; i < 14; i++) {
+    var d = new Date(hoje); d.setDate(hoje.getDate() + i);
+    var ds = d.toISOString().split('T')[0];
+    html += '<div class="cal-dia'+(i===0?' sel hoje':'')+(i===0?' ':'')+ '" data-data="'+ds+'" onclick="selecionarDiaAdm(this)">'
+      + '<div class="cal-ds">'+dias[d.getDay()]+'</div>'
+      + '<div class="cal-dn">'+d.getDate()+'</div>'
+      + '</div>';
+  }
+  el.innerHTML = html;
+  carregarAgenda(dataSel);
+}
+
+function selecionarDiaAdm(el) {
+  document.querySelectorAll('.cal-dia').forEach(function(b){ b.classList.remove('sel'); });
+  el.classList.add('sel');
+  dataSel = el.dataset.data;
+  var dataFmt = new Date(dataSel+'T12:00:00').toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
+  document.getElementById('agenda-data-titulo').textContent = dataFmt;
+  carregarAgenda(dataSel);
+}
+
+async function carregarAgenda(data) {
+  var el = document.getElementById('lista-agenda');
+  el.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+  try {
+    var d = await api('/agendamentos?data=' + data);
+    if (!d.agendamentos.length) { el.innerHTML = '<div class="empty">Sem agendamentos neste dia</div>'; return; }
+    el.innerHTML = d.agendamentos.map(function(a){ return agCard(a, false); }).join('');
+  } catch(e) { el.innerHTML = '<div class="empty" style="color:#ef4444">Erro ao carregar</div>'; }
+}
+
+async function mudarStatus(id, status) {
+  await api('/agendamentos/'+id+'/status', { method:'PUT', body: JSON.stringify({ status }) });
+  carregarAgenda(dataSel);
+  carregarDashboard();
+  toast('Status atualizado ✅');
+}
+
+// ===== SERVIÇOS =====
+async function carregarServicos() {
+  var el = document.getElementById('lista-servicos');
+  try {
+    var d = await api('/servicos');
+    servicos = d.servicos || [];
+    if (!servicos.length) { el.innerHTML = '<div class="empty">Nenhum serviço. Clique em + Novo</div>'; return; }
+    el.innerHTML = servicos.map(function(s){
+      return '<div class="serv-card">'
+        + '<div class="serv-icon">'+(s.foto?'<img src="'+s.foto+'" style="width:100%;height:100%;object-fit:cover;border-radius:10px">':'✂️')+'</div>'
+        + '<div class="serv-info"><div class="serv-nome">'+s.nome+'</div>'
+        + '<div class="serv-meta">R$ '+Number(s.preco).toFixed(2).replace('.',',')+'  ·  '+s.duracao+' min'+(s.categoria?' · '+s.categoria:'')+'</div></div>'
+        + '<div class="serv-acoes">'
+        + '<button class="ag-btn cinza" onclick="editarServico(\''+s._id+'\')">✏️</button>'
+        + '<button class="ag-btn vermelho" onclick="excluirServico(\''+s._id+'\')">🗑</button>'
+        + '</div></div>';
+    }).join('');
+    populaSelects();
+  } catch(e) {}
+}
+
+function abrirModalServico(id) {
+  editServId = null;
+  document.getElementById('modal-serv-titulo').textContent = '✂️ Novo Serviço';
+  ['ms-nome','ms-desc','ms-cat','ms-foto'].forEach(function(i){ document.getElementById(i).value=''; });
+  document.getElementById('ms-dur').value = '60';
+  document.getElementById('ms-preco').value = '0';
+  document.getElementById('modal-serv').classList.add('show');
+}
+
+function editarServico(id) {
+  var s = servicos.find(function(x){ return x._id === id; });
+  if (!s) return;
+  editServId = id;
+  document.getElementById('modal-serv-titulo').textContent = '✏️ Editar Serviço';
+  document.getElementById('ms-nome').value = s.nome || '';
+  document.getElementById('ms-desc').value = s.descricao || '';
+  document.getElementById('ms-dur').value = s.duracao || 60;
+  document.getElementById('ms-preco').value = s.preco || 0;
+  document.getElementById('ms-cat').value = s.categoria || '';
+  document.getElementById('ms-foto').value = s.foto || '';
+  document.getElementById('modal-serv').classList.add('show');
+}
+
+async function salvarServico() {
+  var nome = document.getElementById('ms-nome').value.trim();
+  var dur = parseInt(document.getElementById('ms-dur').value);
+  var preco = parseFloat(document.getElementById('ms-preco').value);
+  if (!nome || !dur) { toast('Preencha nome e duração'); return; }
+  var body = { nome, descricao: document.getElementById('ms-desc').value.trim(), duracao: dur, preco: preco||0, categoria: document.getElementById('ms-cat').value.trim(), foto: document.getElementById('ms-foto').value.trim() };
+  try {
+    if (editServId) {
+      await api('/servicos/'+editServId, { method:'PUT', body: JSON.stringify(body) });
+    } else {
+      await api('/servicos', { method:'POST', body: JSON.stringify(body) });
+    }
+    fecharModal('modal-serv');
+    carregarServicos();
+    toast('Serviço salvo ✅');
+  } catch(e) { toast('Erro ao salvar'); }
+}
+
+async function excluirServico(id) {
+  if (!confirm('Excluir serviço?')) return;
+  await api('/servicos/'+id, { method:'DELETE' });
+  carregarServicos();
+  toast('Serviço removido');
+}
+
+// ===== PROFISSIONAIS =====
+async function carregarProfissionais() {
+  var el = document.getElementById('lista-profissionais');
+  try {
+    var d = await api('/profissionais');
+    profissionais = d.profissionais || [];
+    if (!profissionais.length) { el.innerHTML = '<div class="empty">Nenhum profissional. Clique em + Novo</div>'; return; }
+    el.innerHTML = profissionais.map(function(p){
+      return '<div class="prof-card">'
+        + (p.foto ? '<img class="prof-foto-img" src="'+p.foto+'">' : '<div class="prof-foto-ph">👤</div>')
+        + '<div class="serv-info"><div class="serv-nome">'+p.nome+'</div>'
+        + (p.especialidades&&p.especialidades.length?'<div class="serv-meta">'+p.especialidades.join(', ')+'</div>':'')+'</div>'
+        + '<div class="serv-acoes">'
+        + '<button class="ag-btn cinza" onclick="editarProf(\''+p._id+'\')">✏️</button>'
+        + '<button class="ag-btn vermelho" onclick="excluirProf(\''+p._id+'\')">🗑</button>'
+        + '</div></div>';
+    }).join('');
+    populaSelects();
+  } catch(e) {}
+}
+
+function abrirModalProf() {
+  editProfId = null;
+  document.getElementById('modal-prof-titulo').textContent = '👤 Novo Profissional';
+  ['mp-nome','mp-foto','mp-esp'].forEach(function(i){ document.getElementById(i).value=''; });
+  document.getElementById('modal-prof').classList.add('show');
+}
+
+function editarProf(id) {
+  var p = profissionais.find(function(x){ return x._id === id; });
+  if (!p) return;
+  editProfId = id;
+  document.getElementById('modal-prof-titulo').textContent = '✏️ Editar Profissional';
+  document.getElementById('mp-nome').value = p.nome || '';
+  document.getElementById('mp-foto').value = p.foto || '';
+  document.getElementById('mp-esp').value = (p.especialidades||[]).join(', ');
+  document.getElementById('modal-prof').classList.add('show');
+}
+
+async function salvarProf() {
+  var nome = document.getElementById('mp-nome').value.trim();
+  if (!nome) { toast('Informe o nome'); return; }
+  var esp = document.getElementById('mp-esp').value.split(',').map(function(s){ return s.trim(); }).filter(Boolean);
+  var body = { nome, foto: document.getElementById('mp-foto').value.trim(), especialidades: esp };
+  try {
+    if (editProfId) {
+      await api('/profissionais/'+editProfId, { method:'PUT', body: JSON.stringify(body) });
+    } else {
+      await api('/profissionais', { method:'POST', body: JSON.stringify(body) });
+    }
+    fecharModal('modal-prof');
+    carregarProfissionais();
+    toast('Profissional salvo ✅');
+  } catch(e) { toast('Erro ao salvar'); }
+}
+
+async function excluirProf(id) {
+  if (!confirm('Remover profissional?')) return;
+  await api('/profissionais/'+id, { method:'DELETE' });
+  carregarProfissionais();
+  toast('Profissional removido');
+}
+
+// ===== NOVO AGENDAMENTO =====
+function populaSelects() {
+  var ss = document.getElementById('mag-serv');
+  var sp = document.getElementById('mag-prof');
+  ss.innerHTML = '<option value="">Selecionar...</option>' + servicos.map(function(s){ return '<option value="'+s._id+'">'+s.nome+'</option>'; }).join('');
+  sp.innerHTML = '<option value="">Qualquer</option>' + profissionais.map(function(p){ return '<option value="'+p._id+'">'+p.nome+'</option>'; }).join('');
+}
+
+function abrirModalNovoAg() {
+  document.getElementById('mag-nome').value = '';
+  document.getElementById('mag-tel').value = '';
+  document.getElementById('mag-obs').value = '';
+  document.getElementById('mag-data').value = dataSel;
+  document.getElementById('mag-hora').value = '';
+  document.getElementById('modal-ag').classList.add('show');
+}
+
+async function salvarAgendamento() {
+  var nome = document.getElementById('mag-nome').value.trim();
+  var tel = document.getElementById('mag-tel').value.trim();
+  var data = document.getElementById('mag-data').value;
+  var hora = document.getElementById('mag-hora').value;
+  if (!nome || !tel || !data || !hora) { toast('Preencha os campos obrigatórios'); return; }
+  var body = {
+    nomeCliente: nome, telefoneCliente: tel,
+    servicoId: document.getElementById('mag-serv').value || undefined,
+    profissionalId: document.getElementById('mag-prof').value || undefined,
+    dataHora: data + 'T' + hora + ':00',
+    observacoes: document.getElementById('mag-obs').value.trim(),
+    origem: 'admin'
+  };
+  try {
+    var d = await api('/espaco/'+ADM_ID+'/agendar', { method:'POST', body: JSON.stringify(body) });
+    if (!d.sucesso) { toast('Erro: ' + (d.erro||'desconhecido')); return; }
+    fecharModal('modal-ag');
+    carregarAgenda(dataSel);
+    carregarDashboard();
+    toast('Agendamento criado ✅');
+  } catch(e) { toast('Erro ao salvar'); }
+}
+
+// ===== CLIENTES =====
+async function carregarClientes() {
+  var el = document.getElementById('lista-clientes');
+  el.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+  try {
+    var d = await api('/clientes');
+    var clientes = d.clientes || [];
+    if (!clientes.length) { el.innerHTML = '<div class="empty">Nenhum cliente ainda</div>'; return; }
+    el.innerHTML = clientes.map(function(c){
+      return '<div class="cli-card">'
+        + '<div class="cli-nome">'+c.nome+'</div>'
+        + '<div class="cli-info">📱 '+c.telefone+(c.email?' · '+c.email:'')+'</div>'
+        + '<span class="cli-badge">'+c.totalAtendimentos+' atend.</span>'
+        + (c.ultimoAtendimento ? '<span class="cli-badge" style="margin-left:4px">Último: '+new Date(c.ultimoAtendimento).toLocaleDateString('pt-BR')+'</span>' : '')
+        + '</div>';
+    }).join('');
+  } catch(e) {}
+}
+
+// ===== PERFIL =====
+function preencherPerfil(a) {
+  document.getElementById('p-negocio').value = a.nomeNegocio || '';
+  document.getElementById('p-seg').value = a.segmento || '';
+  document.getElementById('p-desc').value = a.descricao || '';
+  document.getElementById('p-cidade').value = a.cidade || '';
+  document.getElementById('p-ig').value = a.instagram || '';
+  document.getElementById('p-end').value = a.endereco || '';
+  document.getElementById('p-tel').value = a.telefone || '';
+  document.getElementById('p-wpp').value = a.whatsapp || '';
+  if (a.config) {
+    document.getElementById('p-ab').value = a.config.horarioAbertura || '08:00';
+    document.getElementById('p-fe').value = a.config.horarioFechamento || '18:00';
+    document.getElementById('p-int').value = a.config.intervaloAgendamento || 30;
+    document.getElementById('p-ant').value = a.config.antecedenciaMinima || 60;
+    document.getElementById('p-cor').value = a.config.corPrimaria || '#f97316';
+  }
+}
+
+async function salvarPerfil() {
+  var body = {
+    nomeNegocio: document.getElementById('p-negocio').value.trim(),
+    segmento: document.getElementById('p-seg').value.trim(),
+    descricao: document.getElementById('p-desc').value.trim(),
+    cidade: document.getElementById('p-cidade').value.trim(),
+    instagram: document.getElementById('p-ig').value.trim(),
+    endereco: document.getElementById('p-end').value.trim(),
+    telefone: document.getElementById('p-tel').value.trim(),
+    whatsapp: document.getElementById('p-wpp').value.trim(),
+    config: {
+      horarioAbertura: document.getElementById('p-ab').value,
+      horarioFechamento: document.getElementById('p-fe').value,
+      intervaloAgendamento: parseInt(document.getElementById('p-int').value)||30,
+      antecedenciaMinima: parseInt(document.getElementById('p-ant').value)||60,
+      corPrimaria: document.getElementById('p-cor').value
+    }
+  };
+  try {
+    var d = await api('/perfil', { method:'PUT', body: JSON.stringify(body) });
+    if (d.sucesso) toast('Perfil salvo ✅');
+    else toast('Erro ao salvar');
+  } catch(e) { toast('Erro'); }
+}
+
+// ===== NAV =====
+function mudarPag(pag, btn) {
+  document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('ativo'); });
+  document.querySelectorAll('.nav-item').forEach(function(b){ b.classList.remove('ativo'); });
+  document.getElementById('page-'+pag).classList.add('ativo');
+  if (btn) btn.classList.add('ativo');
+  if (pag === 'agenda') carregarAgenda(dataSel);
+  if (pag === 'clientes') carregarClientes();
+}
+
+// ===== UTILS =====
+function fecharModal(id) {
+  document.getElementById(id).classList.remove('show');
+}
+
+function copiarLink() {
+  var link = location.origin + '/espaco-digital?id=' + ADM_ID;
+  navigator.clipboard.writeText(link).then(function(){ toast('Link copiado! ✅'); });
+}
+
+function abrirEspaco() {
+  window.open('/espaco-digital?id=' + ADM_ID, '_blank');
+}
+
+function toast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(function(){ t.classList.remove('show'); }, 2800);
+}
+
+// Fechar modal clicando fora
+document.querySelectorAll('.modal-bg').forEach(function(m){
+  m.addEventListener('click', function(e){ if(e.target === m) m.classList.remove('show'); });
+});
+
+init();
+</script>
+</body>
+</html>

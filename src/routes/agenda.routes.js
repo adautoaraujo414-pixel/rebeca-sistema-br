@@ -1,0 +1,369 @@
+const express = require('express');
+const router = express.Router();
+const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
+const {
+  AdminAgenda, ServicoAgenda, ProfissionalAgenda,
+  ClienteAgenda, AgendamentoAgenda, BloqueioAgenda,
+  FotoAgenda, PreCadastroAgenda
+} = require('../models/AgendaServico');
+
+// ===== AUTH MIDDLEWARE =====
+async function authAgenda(req, res, next) {
+  try {
+    const token = req.headers.authorization?.replace('Bearer ','') || '';
+    const admin = await AdminAgenda.findOne({ token, ativo: true });
+    if (!admin) return res.status(401).json({ erro: 'Token inválido' });
+    req.adminAgenda = admin;
+    req.adminAgendaId = admin._id.toString();
+    next();
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+}
+
+// ===== PRÉ-CADASTRO =====
+router.post('/pre-cadastro', async (req, res) => {
+  try {
+    const { nome, whatsapp, email, nomeNegocio, segmento, cidade, planoInteresse } = req.body;
+    if (!nome || !whatsapp) return res.status(400).json({ erro: 'Nome e WhatsApp obrigatórios' });
+    const pc = await PreCadastroAgenda.create({ nome, whatsapp, email, nomeNegocio, segmento, cidade, planoInteresse });
+    res.json({ sucesso: true, id: pc._id });
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// ===== CADASTRO ADMIN =====
+router.post('/cadastro', async (req, res) => {
+  try {
+    const { nome, email, senha, nomeNegocio, segmento, telefone, whatsapp, plano } = req.body;
+    if (!nome || !email || !senha) return res.status(400).json({ erro: 'Campos obrigatórios faltando' });
+    const existe = await AdminAgenda.findOne({ email });
+    if (existe) return res.status(400).json({ erro: 'Email já cadastrado' });
+    const hash = await bcrypt.hash(senha, 10);
+    const token = crypto.randomBytes(32).toString('hex');
+    const trialExpira = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    const admin = await AdminAgenda.create({ nome, email, senha: hash, token, nomeNegocio, segmento, telefone, whatsapp, plano: plano || 'espaco_digital', trialExpira });
+    res.json({ sucesso: true, token, adminId: admin._id });
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// ===== LOGIN =====
+router.post('/login', async (req, res) => {
+  try {
+    const { email, senha } = req.body;
+    const admin = await AdminAgenda.findOne({ email });
+    if (!admin) return res.status(401).json({ erro: 'Credenciais inválidas' });
+    const ok = await bcrypt.compare(senha, admin.senha);
+    if (!ok) return res.status(401).json({ erro: 'Credenciais inválidas' });
+    const token = crypto.randomBytes(32).toString('hex');
+    await AdminAgenda.findByIdAndUpdate(admin._id, { token });
+    res.json({ sucesso: true, token, nome: admin.nome, nomeNegocio: admin.nomeNegocio, segmento: admin.segmento, plano: admin.plano });
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// ===== PERFIL =====
+router.get('/perfil', authAgenda, async (req, res) => {
+  try {
+    const a = req.adminAgenda;
+    res.json({ sucesso: true, admin: { nome: a.nome, email: a.email, nomeNegocio: a.nomeNegocio, segmento: a.segmento, telefone: a.telefone, whatsapp: a.whatsapp, logo: a.logo, descricao: a.descricao, endereco: a.endereco, cidade: a.cidade, instagram: a.instagram, plano: a.plano, config: a.config } });
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+router.put('/perfil', authAgenda, async (req, res) => {
+  try {
+    const campos = ['nome','nomeNegocio','segmento','telefone','whatsapp','logo','descricao','endereco','cidade','instagram','config'];
+    const upd = {};
+    campos.forEach(c => { if (req.body[c] !== undefined) upd[c] = req.body[c]; });
+    await AdminAgenda.findByIdAndUpdate(req.adminAgendaId, upd);
+    res.json({ sucesso: true });
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// ===== SERVIÇOS =====
+router.get('/servicos', authAgenda, async (req, res) => {
+  try {
+    const servicos = await ServicoAgenda.find({ adminId: req.adminAgendaId }).sort({ ordem: 1, nome: 1 });
+    res.json({ sucesso: true, servicos });
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+router.post('/servicos', authAgenda, async (req, res) => {
+  try {
+    const { nome, descricao, duracao, preco, categoria, foto, ordem } = req.body;
+    if (!nome || !duracao || preco === undefined) return res.status(400).json({ erro: 'nome, duracao e preco obrigatórios' });
+    const s = await ServicoAgenda.create({ adminId: req.adminAgendaId, nome, descricao, duracao, preco, categoria, foto, ordem: ordem || 0 });
+    res.json({ sucesso: true, servico: s });
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+router.put('/servicos/:id', authAgenda, async (req, res) => {
+  try {
+    const s = await ServicoAgenda.findOneAndUpdate({ _id: req.params.id, adminId: req.adminAgendaId }, req.body, { new: true });
+    res.json({ sucesso: true, servico: s });
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+router.delete('/servicos/:id', authAgenda, async (req, res) => {
+  try {
+    await ServicoAgenda.findOneAndDelete({ _id: req.params.id, adminId: req.adminAgendaId });
+    res.json({ sucesso: true });
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// ===== PROFISSIONAIS =====
+router.get('/profissionais', authAgenda, async (req, res) => {
+  try {
+    const prof = await ProfissionalAgenda.find({ adminId: req.adminAgendaId, ativo: true }).sort({ ordem: 1 });
+    res.json({ sucesso: true, profissionais: prof });
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+router.post('/profissionais', authAgenda, async (req, res) => {
+  try {
+    const { nome, foto, especialidades, ordem } = req.body;
+    if (!nome) return res.status(400).json({ erro: 'Nome obrigatório' });
+    const p = await ProfissionalAgenda.create({ adminId: req.adminAgendaId, nome, foto, especialidades: especialidades || [], ordem: ordem || 0 });
+    res.json({ sucesso: true, profissional: p });
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+router.put('/profissionais/:id', authAgenda, async (req, res) => {
+  try {
+    const p = await ProfissionalAgenda.findOneAndUpdate({ _id: req.params.id, adminId: req.adminAgendaId }, req.body, { new: true });
+    res.json({ sucesso: true, profissional: p });
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+router.delete('/profissionais/:id', authAgenda, async (req, res) => {
+  try {
+    await ProfissionalAgenda.findOneAndUpdate({ _id: req.params.id, adminId: req.adminAgendaId }, { ativo: false });
+    res.json({ sucesso: true });
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// ===== HORÁRIOS DISPONÍVEIS (público) =====
+router.get('/espaco/:adminId/horarios', async (req, res) => {
+  try {
+    const admin = await AdminAgenda.findById(req.params.adminId);
+    if (!admin) return res.status(404).json({ erro: 'Espaço não encontrado' });
+    const { data, servicoId } = req.query;
+    if (!data) return res.status(400).json({ erro: 'data obrigatória (YYYY-MM-DD)' });
+
+    const servico = servicoId ? await ServicoAgenda.findById(servicoId) : null;
+    const duracao = servico?.duracao || admin.config?.intervaloAgendamento || 30;
+
+    const cfg = admin.config || {};
+    const abertura = cfg.horarioAbertura || '08:00';
+    const fechamento = cfg.horarioFechamento || '18:00';
+    const intervalo = cfg.intervaloAgendamento || 30;
+    const diasFunc = cfg.diasFuncionamento || [1,2,3,4,5,6];
+
+    const dataObj = new Date(data + 'T00:00:00');
+    const diaSemana = dataObj.getDay();
+    if (!diasFunc.includes(diaSemana)) return res.json({ sucesso: true, horarios: [], mensagem: 'Fechado neste dia' });
+
+    const [hAb, mAb] = abertura.split(':').map(Number);
+    const [hFe, mFe] = fechamento.split(':').map(Number);
+    const inicioMin = hAb * 60 + mAb;
+    const fimMin = hFe * 60 + mFe;
+
+    // Buscar agendamentos do dia
+    const inicioDia = new Date(data + 'T00:00:00');
+    const fimDia = new Date(data + 'T23:59:59');
+    const agendados = await AgendamentoAgenda.find({
+      adminId: req.params.adminId,
+      dataHora: { $gte: inicioDia, $lte: fimDia },
+      status: { $nin: ['cancelado'] }
+    });
+    const bloqueios = await BloqueioAgenda.find({
+      adminId: req.params.adminId,
+      dataHoraInicio: { $lte: fimDia },
+      dataHoraFim: { $gte: inicioDia }
+    });
+
+    const horarios = [];
+    const agora = new Date();
+
+    for (let min = inicioMin; min + duracao <= fimMin; min += intervalo) {
+      const h = Math.floor(min / 60).toString().padStart(2,'0');
+      const m = (min % 60).toString().padStart(2,'0');
+      const slotInicio = new Date(`${data}T${h}:${m}:00`);
+      const slotFim = new Date(slotInicio.getTime() + duracao * 60000);
+
+      // Verificar antecedência mínima
+      const antecMin = (cfg.antecedenciaMinima || 60) * 60000;
+      if (slotInicio.getTime() - agora.getTime() < antecMin) continue;
+
+      // Verificar conflito com agendamentos
+      const ocupado = agendados.some(ag => {
+        const agFim = new Date(ag.dataHora.getTime() + (ag.duracao || intervalo) * 60000);
+        return slotInicio < agFim && slotFim > ag.dataHora;
+      });
+
+      // Verificar bloqueios
+      const bloqueado = bloqueios.some(b => slotInicio < b.dataHoraFim && slotFim > b.dataHoraInicio);
+
+      horarios.push({ hora: `${h}:${m}`, disponivel: !ocupado && !bloqueado });
+    }
+
+    res.json({ sucesso: true, horarios, nomeNegocio: admin.nomeNegocio, segmento: admin.segmento });
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// ===== AGENDAR (público) =====
+router.post('/espaco/:adminId/agendar', async (req, res) => {
+  try {
+    const { nomeCliente, telefoneCliente, servicoId, profissionalId, dataHora, observacoes, origem } = req.body;
+    if (!nomeCliente || !telefoneCliente || !dataHora) return res.status(400).json({ erro: 'Dados obrigatórios faltando' });
+    const admin = await AdminAgenda.findById(req.params.adminId);
+    if (!admin) return res.status(404).json({ erro: 'Espaço não encontrado' });
+    const servico = servicoId ? await ServicoAgenda.findById(servicoId) : null;
+    const prof = profissionalId ? await ProfissionalAgenda.findById(profissionalId) : null;
+
+    // Criar/atualizar cliente
+    let cliente = await ClienteAgenda.findOne({ adminId: req.params.adminId, telefone: telefoneCliente });
+    if (!cliente) {
+      cliente = await ClienteAgenda.create({ adminId: req.params.adminId, nome: nomeCliente, telefone: telefoneCliente });
+    }
+
+    const ag = await AgendamentoAgenda.create({
+      adminId: req.params.adminId,
+      clienteId: cliente._id,
+      servicoId: servicoId || null,
+      profissionalId: profissionalId || null,
+      nomeCliente, telefoneCliente,
+      nomeServico: servico?.nome || '',
+      nomeProfissional: prof?.nome || '',
+      dataHora: new Date(dataHora),
+      duracao: servico?.duracao || 30,
+      preco: servico?.preco || 0,
+      observacoes,
+      origem: origem || 'site'
+    });
+
+    await ClienteAgenda.findByIdAndUpdate(cliente._id, { ultimoAtendimento: new Date(), $inc: { totalAtendimentos: 1 } });
+
+    res.json({ sucesso: true, agendamento: ag, mensagem: admin.config?.mensagemConfirmacao || 'Agendamento confirmado! 💛' });
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// ===== AGENDAMENTOS (admin) =====
+router.get('/agendamentos', authAgenda, async (req, res) => {
+  try {
+    const { data, status } = req.query;
+    const filtro = { adminId: req.adminAgendaId };
+    if (data) {
+      filtro.dataHora = { $gte: new Date(data + 'T00:00:00'), $lte: new Date(data + 'T23:59:59') };
+    }
+    if (status) filtro.status = status;
+    const ags = await AgendamentoAgenda.find(filtro).sort({ dataHora: 1 });
+    res.json({ sucesso: true, agendamentos: ags });
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+router.put('/agendamentos/:id/status', authAgenda, async (req, res) => {
+  try {
+    const { status } = req.body;
+    const ag = await AgendamentoAgenda.findOneAndUpdate({ _id: req.params.id, adminId: req.adminAgendaId }, { status }, { new: true });
+    res.json({ sucesso: true, agendamento: ag });
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+router.delete('/agendamentos/:id', authAgenda, async (req, res) => {
+  try {
+    await AgendamentoAgenda.findOneAndUpdate({ _id: req.params.id, adminId: req.adminAgendaId }, { status: 'cancelado' });
+    res.json({ sucesso: true });
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// ===== BLOQUEIOS =====
+router.get('/bloqueios', authAgenda, async (req, res) => {
+  try {
+    const b = await BloqueioAgenda.find({ adminId: req.adminAgendaId, dataHoraFim: { $gte: new Date() } }).sort({ dataHoraInicio: 1 });
+    res.json({ sucesso: true, bloqueios: b });
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+router.post('/bloqueios', authAgenda, async (req, res) => {
+  try {
+    const { dataHoraInicio, dataHoraFim, motivo, profissionalId } = req.body;
+    const b = await BloqueioAgenda.create({ adminId: req.adminAgendaId, dataHoraInicio, dataHoraFim, motivo, profissionalId });
+    res.json({ sucesso: true, bloqueio: b });
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+router.delete('/bloqueios/:id', authAgenda, async (req, res) => {
+  try {
+    await BloqueioAgenda.findOneAndDelete({ _id: req.params.id, adminId: req.adminAgendaId });
+    res.json({ sucesso: true });
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// ===== CLIENTES =====
+router.get('/clientes', authAgenda, async (req, res) => {
+  try {
+    const clientes = await ClienteAgenda.find({ adminId: req.adminAgendaId }).sort({ nome: 1 });
+    res.json({ sucesso: true, clientes });
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+router.put('/clientes/:id', authAgenda, async (req, res) => {
+  try {
+    const c = await ClienteAgenda.findOneAndUpdate({ _id: req.params.id, adminId: req.adminAgendaId }, req.body, { new: true });
+    res.json({ sucesso: true, cliente: c });
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// ===== FOTOS =====
+router.get('/fotos', authAgenda, async (req, res) => {
+  try {
+    const fotos = await FotoAgenda.find({ adminId: req.adminAgendaId, ativo: true }).sort({ ordem: 1 });
+    res.json({ sucesso: true, fotos });
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+router.post('/fotos', authAgenda, async (req, res) => {
+  try {
+    const { url, tipo, legenda, ordem } = req.body;
+    const f = await FotoAgenda.create({ adminId: req.adminAgendaId, url, tipo: tipo || 'resultado', legenda, ordem: ordem || 0 });
+    res.json({ sucesso: true, foto: f });
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+router.delete('/fotos/:id', authAgenda, async (req, res) => {
+  try {
+    await FotoAgenda.findOneAndUpdate({ _id: req.params.id, adminId: req.adminAgendaId }, { ativo: false });
+    res.json({ sucesso: true });
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// ===== DASHBOARD =====
+router.get('/dashboard', authAgenda, async (req, res) => {
+  try {
+    const hoje = new Date(); hoje.setHours(0,0,0,0);
+    const amanha = new Date(hoje); amanha.setDate(amanha.getDate()+1);
+    const [agHoje, agPendentes, totalClientes, agMes] = await Promise.all([
+      AgendamentoAgenda.countDocuments({ adminId: req.adminAgendaId, dataHora: { $gte: hoje, $lt: amanha }, status: { $nin: ['cancelado'] } }),
+      AgendamentoAgenda.countDocuments({ adminId: req.adminAgendaId, status: 'pendente', dataHora: { $gte: new Date() } }),
+      ClienteAgenda.countDocuments({ adminId: req.adminAgendaId }),
+      AgendamentoAgenda.find({ adminId: req.adminAgendaId, dataHora: { $gte: new Date(hoje.getFullYear(), hoje.getMonth(), 1) }, status: 'concluido' }).select('preco')
+    ]);
+    const receitaMes = agMes.reduce((s, a) => s + (a.preco || 0), 0);
+    const proximosHoje = await AgendamentoAgenda.find({ adminId: req.adminAgendaId, dataHora: { $gte: new Date(), $lt: amanha }, status: { $nin: ['cancelado','concluido'] } }).sort({ dataHora: 1 }).limit(10);
+    res.json({ sucesso: true, agHoje, agPendentes, totalClientes, receitaMes, proximosHoje });
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// ===== ESPAÇO DIGITAL PÚBLICO =====
+router.get('/espaco/:adminId', async (req, res) => {
+  try {
+    const admin = await AdminAgenda.findById(req.params.adminId).select('-senha -token');
+    if (!admin) return res.status(404).json({ erro: 'Espaço não encontrado' });
+    const [servicos, profissionais, fotos] = await Promise.all([
+      ServicoAgenda.find({ adminId: req.params.adminId, ativo: true }).sort({ ordem: 1 }),
+      ProfissionalAgenda.find({ adminId: req.params.adminId, ativo: true }).sort({ ordem: 1 }),
+      FotoAgenda.find({ adminId: req.params.adminId, ativo: true }).sort({ ordem: 1 }).limit(20)
+    ]);
+    res.json({ sucesso: true, admin, servicos, profissionais, fotos });
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+module.exports = router;

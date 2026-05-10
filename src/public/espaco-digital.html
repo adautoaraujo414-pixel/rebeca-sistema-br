@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Espaço Digital</title>
+<meta name="theme-color" content="#f97316">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',sans-serif;background:#f9fafb;color:#1f2937;min-height:100vh}
+:root{--cor:#f97316;--cor2:#1f2937}
+
+/* HEADER */
+.header{background:var(--cor2);color:#fff;padding:0;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.3)}
+.header-inner{display:flex;align-items:center;gap:12px;padding:12px 16px}
+.header-logo{width:40px;height:40px;border-radius:50%;object-fit:cover;border:2px solid var(--cor)}
+.header-logo-placeholder{width:40px;height:40px;border-radius:50%;background:var(--cor);display:flex;align-items:center;justify-content:center;font-size:1.2em;color:#fff;font-weight:800;flex-shrink:0}
+.header-info{flex:1;min-width:0}
+.header-nome{font-weight:800;font-size:1em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.header-seg{font-size:.75em;color:#9ca3af}
+.header-wpp{background:#25d366;color:#fff;border:none;border-radius:20px;padding:7px 14px;font-size:.8em;font-weight:700;cursor:pointer;white-space:nowrap}
+
+/* NAV */
+.nav{display:flex;gap:0;overflow-x:auto;background:var(--cor2);border-top:1px solid rgba(255,255,255,.1);scrollbar-width:none}
+.nav::-webkit-scrollbar{display:none}
+.nav-btn{flex-shrink:0;padding:10px 16px;color:#9ca3af;font-size:.8em;font-weight:600;cursor:pointer;border:none;background:transparent;border-bottom:2px solid transparent;transition:.2s;white-space:nowrap}
+.nav-btn.ativo{color:#fff;border-bottom-color:var(--cor)}
+
+/* HERO */
+.hero{background:linear-gradient(135deg,var(--cor2) 0%,#374151 100%);color:#fff;padding:32px 16px;text-align:center}
+.hero-nome{font-size:1.6em;font-weight:900;margin-bottom:4px}
+.hero-desc{font-size:.9em;color:#d1d5db;margin-bottom:20px;line-height:1.5}
+.btn-agendar-hero{background:var(--cor);color:#fff;border:none;border-radius:30px;padding:14px 32px;font-size:1em;font-weight:800;cursor:pointer;box-shadow:0 4px 16px rgba(249,115,22,.4)}
+
+/* SEÇÕES */
+.section{padding:20px 16px}
+.section-title{font-size:1em;font-weight:800;color:var(--cor2);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+
+/* SERVIÇOS */
+.servicos-grid{display:grid;gap:12px}
+.servico-card{background:#fff;border-radius:14px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,.06);display:flex;align-items:center;gap:14px;cursor:pointer;border:2px solid transparent;transition:.2s}
+.servico-card:hover,.servico-card.sel{border-color:var(--cor);background:#fff7ed}
+.servico-img{width:56px;height:56px;border-radius:10px;object-fit:cover;flex-shrink:0}
+.servico-img-ph{width:56px;height:56px;border-radius:10px;background:linear-gradient(135deg,var(--cor),#fb923c);display:flex;align-items:center;justify-content:center;font-size:1.6em;flex-shrink:0}
+.servico-info{flex:1;min-width:0}
+.servico-nome{font-weight:700;font-size:.95em}
+.servico-desc{font-size:.78em;color:#6b7280;margin:2px 0}
+.servico-meta{display:flex;gap:10px;align-items:center;margin-top:4px}
+.servico-preco{font-weight:800;color:var(--cor);font-size:.95em}
+.servico-dur{font-size:.75em;color:#9ca3af;background:#f3f4f6;padding:2px 8px;border-radius:10px}
+
+/* PROFISSIONAIS */
+.prof-grid{display:flex;gap:12px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.prof-grid::-webkit-scrollbar{display:none}
+.prof-card{flex-shrink:0;text-align:center;cursor:pointer;border:2px solid transparent;border-radius:14px;padding:12px;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.06);min-width:90px;transition:.2s}
+.prof-card.sel{border-color:var(--cor)}
+.prof-foto{width:60px;height:60px;border-radius:50%;object-fit:cover;margin:0 auto 6px}
+.prof-foto-ph{width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:1.4em;color:#fff;margin:0 auto 6px}
+.prof-nome{font-size:.78em;font-weight:700}
+
+/* CALENDÁRIO */
+.cal-dias{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.cal-dias::-webkit-scrollbar{display:none}
+.dia-btn{flex-shrink:0;text-align:center;padding:10px 14px;border-radius:12px;background:#fff;border:2px solid #e5e7eb;cursor:pointer;transition:.2s;min-width:58px}
+.dia-btn.sel{background:var(--cor);border-color:var(--cor);color:#fff}
+.dia-btn.hoje{border-color:var(--cor);color:var(--cor)}
+.dia-semana{font-size:.68em;font-weight:600;text-transform:uppercase}
+.dia-num{font-size:1.2em;font-weight:800}
+.dia-mes{font-size:.65em;color:inherit;opacity:.7}
+
+/* HORÁRIOS */
+.horarios-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:8px;margin-top:12px}
+.hora-btn{padding:10px 4px;border-radius:10px;border:2px solid #e5e7eb;background:#fff;font-weight:700;font-size:.85em;cursor:pointer;transition:.2s;text-align:center}
+.hora-btn.sel{background:var(--cor);border-color:var(--cor);color:#fff}
+.hora-btn.ocupado{background:#f3f4f6;color:#9ca3af;cursor:not-allowed;border-color:#e5e7eb;font-weight:400}
+
+/* GALERIA */
+.galeria-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.galeria-img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px;cursor:pointer}
+
+/* FORM */
+.form-group{margin-bottom:14px}
+.form-label{font-size:.82em;font-weight:700;color:#374151;margin-bottom:4px;display:block}
+.form-input{width:100%;padding:12px 14px;border:2px solid #e5e7eb;border-radius:10px;font-size:.95em;outline:none;transition:.2s;background:#fff}
+.form-input:focus{border-color:var(--cor)}
+.form-textarea{width:100%;padding:12px 14px;border:2px solid #e5e7eb;border-radius:10px;font-size:.9em;outline:none;resize:vertical;min-height:80px;transition:.2s}
+.form-textarea:focus{border-color:var(--cor)}
+
+/* RESUMO */
+.resumo-card{background:linear-gradient(135deg,var(--cor2),#374151);color:#fff;border-radius:16px;padding:20px;margin-bottom:16px}
+.resumo-linha{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.1);font-size:.88em}
+.resumo-linha:last-child{border-bottom:none;font-weight:800;font-size:1em}
+
+/* BOTÕES */
+.btn-pri{width:100%;padding:15px;background:var(--cor);color:#fff;border:none;border-radius:12px;font-size:1em;font-weight:800;cursor:pointer;margin-top:8px}
+.btn-sec{width:100%;padding:13px;background:#f3f4f6;color:var(--cor2);border:none;border-radius:12px;font-size:.95em;font-weight:700;cursor:pointer;margin-top:8px}
+
+/* STEPS */
+.steps{display:flex;align-items:center;justify-content:center;gap:0;margin-bottom:20px;overflow:hidden}
+.step{display:flex;align-items:center;gap:6px;padding:8px 14px;font-size:.8em;font-weight:700;color:#9ca3af;position:relative}
+.step.ativo{color:var(--cor)}
+.step.done{color:#22c55e}
+.step-num{width:24px;height:24px;border-radius:50%;border:2px solid currentColor;display:flex;align-items:center;justify-content:center;font-size:.75em;flex-shrink:0}
+.step-sep{width:20px;height:2px;background:#e5e7eb;flex-shrink:0}
+
+/* TOAST */
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1f2937;color:#fff;padding:12px 20px;border-radius:12px;font-size:.88em;z-index:999;opacity:0;transition:.3s;pointer-events:none;white-space:nowrap;max-width:90vw}
+.toast.show{opacity:1}
+
+/* LOADING */
+.loading{text-align:center;padding:32px;color:#9ca3af;font-size:.9em}
+.spinner{width:32px;height:32px;border:3px solid #f3f4f6;border-top-color:var(--cor);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* MODAL */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;align-items:flex-end}
+.modal-bg.show{display:flex}
+.modal-box{background:#fff;border-radius:20px 20px 0 0;padding:20px;width:100%;max-height:90vh;overflow-y:auto}
+.modal-titulo{font-weight:800;font-size:1.1em;margin-bottom:16px;text-align:center}
+.modal-fechar{position:absolute;top:16px;right:16px;background:none;border:none;font-size:1.4em;cursor:pointer;color:#6b7280}
+
+/* CONFIRMAÇÃO */
+.confirmacao{text-align:center;padding:20px}
+.confirmacao-icon{font-size:3em;margin-bottom:12px}
+.confirmacao-titulo{font-size:1.3em;font-weight:800;color:#22c55e;margin-bottom:8px}
+.confirmacao-msg{color:#6b7280;font-size:.9em;line-height:1.6}
+
+/* PAGE */
+.page{display:none}
+.page.ativo{display:block}
+
+/* FAB AGENDAR */
+.fab-agendar{position:fixed;bottom:20px;right:20px;z-index:150;background:var(--cor);color:#fff;border:none;border-radius:30px;padding:14px 20px;font-weight:800;font-size:.95em;cursor:pointer;box-shadow:0 4px 20px rgba(249,115,22,.5);display:flex;align-items:center;gap:8px}
+
+.empty{text-align:center;padding:32px;color:#9ca3af;font-size:.9em}
+</style>
+</head>
+<body>
+
+<div class="toast" id="toast"></div>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-inner">
+    <div class="header-logo-placeholder" id="header-logo-ph">E</div>
+    <div class="header-info">
+      <div class="header-nome" id="header-nome">Carregando...</div>
+      <div class="header-seg" id="header-seg"></div>
+    </div>
+    <button class="header-wpp" id="btn-wpp" style="display:none" onclick="abrirWhatsApp()">WhatsApp</button>
+  </div>
+  <div class="nav">
+    <button class="nav-btn ativo" onclick="mudarPagina('inicio',this)">🏠 Início</button>
+    <button class="nav-btn" onclick="mudarPagina('servicos',this)">✂️ Serviços</button>
+    <button class="nav-btn" onclick="mudarPagina('agendar',this)">📅 Agendar</button>
+    <button class="nav-btn" onclick="mudarPagina('galeria',this)">📸 Galeria</button>
+    <button class="nav-btn" onclick="mudarPagina('sobre',this)">📍 Sobre</button>
+  </div>
+</div>
+
+<!-- PÁGINA: INÍCIO -->
+<div class="page ativo" id="page-inicio">
+  <div class="hero">
+    <div class="hero-nome" id="hero-nome">Espaço Digital</div>
+    <div class="hero-desc" id="hero-desc">Agende seu horário online com facilidade</div>
+    <button class="btn-agendar-hero" onclick="mudarPaginaBtn('agendar')">📅 Agendar Agora</button>
+  </div>
+
+  <div class="section">
+    <div class="section-title">✂️ Serviços em Destaque</div>
+    <div id="servicos-inicio"></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">👥 Profissionais</div>
+    <div class="prof-grid" id="prof-inicio"></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">📸 Galeria</div>
+    <div class="galeria-grid" id="galeria-inicio"></div>
+  </div>
+</div>
+
+<!-- PÁGINA: SERVIÇOS -->
+<div class="page" id="page-servicos">
+  <div class="section">
+    <div class="section-title">✂️ Nossos Serviços</div>
+    <div id="lista-servicos"></div>
+  </div>
+</div>
+
+<!-- PÁGINA: AGENDAR -->
+<div class="page" id="page-agendar">
+  <div class="section">
+    <div class="steps">
+      <div class="step ativo" id="step1"><div class="step-num">1</div><span>Serviço</span></div>
+      <div class="step-sep"></div>
+      <div class="step" id="step2"><div class="step-num">2</div><span>Horário</span></div>
+      <div class="step-sep"></div>
+      <div class="step" id="step3"><div class="step-num">3</div><span>Dados</span></div>
+      <div class="step-sep"></div>
+      <div class="step" id="step4"><div class="step-num">4</div><span>Confirmar</span></div>
+    </div>
+
+    <!-- STEP 1: Serviço -->
+    <div id="agendar-step1">
+      <div class="section-title">1️⃣ Escolha o Serviço</div>
+      <div id="servicos-agendar"></div>
+      <div class="section-title" style="margin-top:20px">👥 Profissional (opcional)</div>
+      <div class="prof-grid" id="prof-agendar"></div>
+      <button class="btn-pri" onclick="irStep(2)" id="btn-step1">Próximo →</button>
+    </div>
+
+    <!-- STEP 2: Data/Hora -->
+    <div id="agendar-step2" style="display:none">
+      <div class="section-title">2️⃣ Escolha a Data</div>
+      <div class="cal-dias" id="cal-dias"></div>
+      <div id="horarios-container">
+        <div class="empty">Selecione uma data para ver os horários</div>
+      </div>
+      <button class="btn-sec" onclick="irStep(1)">← Voltar</button>
+      <button class="btn-pri" onclick="irStep(3)" id="btn-step2">Próximo →</button>
+    </div>
+
+    <!-- STEP 3: Dados -->
+    <div id="agendar-step3" style="display:none">
+      <div class="section-title">3️⃣ Seus Dados</div>
+      <div class="form-group">
+        <label class="form-label">Nome completo *</label>
+        <input class="form-input" id="ag-nome" placeholder="Seu nome" type="text">
+      </div>
+      <div class="form-group">
+        <label class="form-label">WhatsApp *</label>
+        <input class="form-input" id="ag-tel" placeholder="(11) 99999-9999" type="tel">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Observações (opcional)</label>
+        <textarea class="form-textarea" id="ag-obs" placeholder="Ex: referência de corte, preferências..."></textarea>
+      </div>
+      <button class="btn-sec" onclick="irStep(2)">← Voltar</button>
+      <button class="btn-pri" onclick="irStep(4)">Próximo →</button>
+    </div>
+
+    <!-- STEP 4: Confirmar -->
+    <div id="agendar-step4" style="display:none">
+      <div class="section-title">4️⃣ Confirmar Agendamento</div>
+      <div class="resumo-card" id="resumo-agendamento"></div>
+      <button class="btn-sec" onclick="irStep(3)">← Voltar</button>
+      <button class="btn-pri" onclick="confirmarAgendamento()">✅ Confirmar Agendamento</button>
+    </div>
+  </div>
+</div>
+
+<!-- PÁGINA: GALERIA -->
+<div class="page" id="page-galeria">
+  <div class="section">
+    <div class="section-title">📸 Galeria</div>
+    <div class="galeria-grid" id="lista-galeria"></div>
+  </div>
+</div>
+
+<!-- PÁGINA: SOBRE -->
+<div class="page" id="page-sobre">
+  <div class="section">
+    <div class="section-title">📍 Sobre Nós</div>
+    <div id="info-sobre"></div>
+  </div>
+</div>
+
+<!-- FAB -->
+<button class="fab-agendar" onclick="mudarPaginaBtn('agendar')" id="fab-ag">📅 Agendar</button>
+
+<script>
+// ===== ESTADO =====
+const adminId = new URLSearchParams(location.search).get('id') || location.pathname.split('/').pop();
+let dadosEspaco = null;
+let selServico = null;
+let selProfissional = null;
+let selData = null;
+let selHora = null;
+let stepAtual = 1;
+
+// ===== INIT =====
+async function init() {
+  try {
+    const r = await fetch('/api/agenda/espaco/' + adminId);
+    const d = await r.json();
+    if (!d.sucesso) { document.body.innerHTML = '<div style="text-align:center;padding:40px;color:#ef4444">Espaço não encontrado</div>'; return; }
+    dadosEspaco = d;
+    const a = d.admin;
+
+    // Aplicar cor
+    if (a.config && a.config.corPrimaria) {
+      document.documentElement.style.setProperty('--cor', a.config.corPrimaria);
+    }
+
+    // Header
+    document.getElementById('header-nome').textContent = 'Espaço Digital ' + (a.nomeNegocio || '');
+    document.getElementById('header-seg').textContent = a.segmento || '';
+    document.getElementById('hero-nome').textContent = 'Espaço Digital ' + (a.nomeNegocio || '');
+    document.getElementById('hero-desc').textContent = a.descricao || 'Agende seu horário online com facilidade';
+    document.title = 'Espaço Digital ' + (a.nomeNegocio || '');
+
+    const ph = document.getElementById('header-logo-ph');
+    if (a.logo) {
+      ph.innerHTML = '<img src="'+a.logo+'" style="width:40px;height:40px;border-radius:50%;object-fit:cover">';
+    } else {
+      ph.textContent = (a.nomeNegocio || 'E')[0].toUpperCase();
+    }
+
+    if (a.whatsapp) document.getElementById('btn-wpp').style.display = '';
+
+    renderServicosInicio(d.servicos);
+    renderProfInicio(d.profissionais);
+    renderGaleriaInicio(d.fotos);
+    renderServicosAgendar(d.servicos);
+    renderProfAgendar(d.profissionais);
+    renderServicosPagina(d.servicos);
+    renderGaleriaPagina(d.fotos);
+    renderSobre(a);
+    gerarCalendario();
+  } catch(e) { console.error(e); }
+}
+
+// ===== RENDER =====
+function renderServicosInicio(servicos) {
+  const el = document.getElementById('servicos-inicio');
+  if (!servicos.length) { el.innerHTML = '<div class="empty">Nenhum serviço cadastrado</div>'; return; }
+  el.innerHTML = '<div class="servicos-grid">' + servicos.slice(0,3).map(s => servicoCard(s, false)).join('') + '</div>';
+}
+
+function renderServicosPagina(servicos) {
+  const el = document.getElementById('lista-servicos');
+  if (!servicos.length) { el.innerHTML = '<div class="empty">Nenhum serviço cadastrado</div>'; return; }
+  el.innerHTML = '<div class="servicos-grid">' + servicos.map(s => servicoCard(s, false)).join('') + '</div>';
+}
+
+function servicoCard(s, selecionavel) {
+  var img = s.foto
+    ? '<img class="servico-img" src="'+s.foto+'" onerror="this.style.display=\'none\'">'
+    : '<div class="servico-img-ph">✂️</div>';
+  return '<div class="servico-card" data-id="'+s._id+'" onclick="'+(selecionavel?'selecionarServico(this)':'mudarPaginaBtn(\'agendar\')')+'">'
+    + img
+    + '<div class="servico-info">'
+    + '<div class="servico-nome">'+s.nome+'</div>'
+    + (s.descricao?'<div class="servico-desc">'+s.descricao+'</div>':'')
+    + '<div class="servico-meta">'
+    + '<span class="servico-preco">R$ '+Number(s.preco).toFixed(2).replace('.',',')+'</span>'
+    + '<span class="servico-dur">⏱ '+s.duracao+'min</span>'
+    + '</div></div></div>';
+}
+
+function renderServicosAgendar(servicos) {
+  var el = document.getElementById('servicos-agendar');
+  if (!servicos.length) { el.innerHTML = '<div class="empty">Nenhum serviço</div>'; return; }
+  el.innerHTML = '<div class="servicos-grid">' + servicos.map(s => {
+    var img = s.foto ? '<img class="servico-img" src="'+s.foto+'">' : '<div class="servico-img-ph">✂️</div>';
+    return '<div class="servico-card" data-id="'+s._id+'" data-nome="'+encodeURIComponent(s.nome)+'" data-preco="'+s.preco+'" data-dur="'+s.duracao+'" onclick="selecionarServico(this)">'
+      + img + '<div class="servico-info"><div class="servico-nome">'+s.nome+'</div>'
+      + '<div class="servico-meta"><span class="servico-preco">R$ '+Number(s.preco).toFixed(2).replace('.',',')+'</span>'
+      + '<span class="servico-dur">⏱ '+s.duracao+'min</span></div></div></div>';
+  }).join('') + '</div>';
+}
+
+function selecionarServico(el) {
+  document.querySelectorAll('#servicos-agendar .servico-card').forEach(c => c.classList.remove('sel'));
+  el.classList.add('sel');
+  selServico = { _id: el.dataset.id, nome: decodeURIComponent(el.dataset.nome), preco: parseFloat(el.dataset.preco), duracao: parseInt(el.dataset.dur) };
+}
+
+function renderProfInicio(profs) {
+  var el = document.getElementById('prof-inicio');
+  if (!profs.length) { el.innerHTML = '<div class="empty">Nenhum profissional</div>'; return; }
+  el.innerHTML = profs.map(p => {
+    var foto = p.foto ? '<img class="prof-foto" src="'+p.foto+'">' : '<div class="prof-foto-ph">👤</div>';
+    return '<div class="prof-card">'+foto+'<div class="prof-nome">'+p.nome+'</div></div>';
+  }).join('');
+}
+
+function renderProfAgendar(profs) {
+  var el = document.getElementById('prof-agendar');
+  if (!profs.length) { el.innerHTML = '<div class="empty" style="font-size:.8em">Sem profissionais cadastrados</div>'; return; }
+  var html = profs.map(p => {
+    var foto = p.foto ? '<img class="prof-foto" src="'+p.foto+'">' : '<div class="prof-foto-ph">👤</div>';
+    return '<div class="prof-card" data-id="'+p._id+'" data-nome="'+encodeURIComponent(p.nome)+'" onclick="selecionarProf(this)">'+foto+'<div class="prof-nome">'+p.nome+'</div></div>';
+  }).join('');
+  el.innerHTML = html;
+}
+
+function selecionarProf(el) {
+  document.querySelectorAll('#prof-agendar .prof-card').forEach(c => c.classList.remove('sel'));
+  if (selProfissional && selProfissional._id === el.dataset.id) {
+    selProfissional = null;
+    return;
+  }
+  el.classList.add('sel');
+  selProfissional = { _id: el.dataset.id, nome: decodeURIComponent(el.dataset.nome) };
+}
+
+function renderGaleriaInicio(fotos) {
+  var el = document.getElementById('galeria-inicio');
+  if (!fotos.length) { el.style.display='none'; return; }
+  el.innerHTML = fotos.slice(0,6).map(f => '<img class="galeria-img" src="'+f.url+'" loading="lazy">').join('');
+}
+
+function renderGaleriaPagina(fotos) {
+  var el = document.getElementById('lista-galeria');
+  if (!fotos.length) { el.innerHTML = '<div class="empty">Nenhuma foto na galeria</div>'; return; }
+  el.innerHTML = fotos.map(f => '<img class="galeria-img" src="'+f.url+'" loading="lazy">').join('');
+}
+
+function renderSobre(a) {
+  var el = document.getElementById('info-sobre');
+  el.innerHTML = '<div style="background:#fff;border-radius:14px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,.06)">'
+    + (a.nomeNegocio ? '<div style="font-weight:800;font-size:1.1em;margin-bottom:8px">'+a.nomeNegocio+'</div>' : '')
+    + (a.segmento ? '<div style="font-size:.85em;color:#f97316;margin-bottom:8px">'+a.segmento+'</div>' : '')
+    + (a.descricao ? '<div style="font-size:.9em;color:#6b7280;margin-bottom:12px;line-height:1.6">'+a.descricao+'</div>' : '')
+    + (a.endereco ? '<div style="font-size:.88em;margin-bottom:6px">📍 '+a.endereco+(a.cidade?', '+a.cidade:'')+'</div>' : '')
+    + (a.telefone ? '<div style="font-size:.88em;margin-bottom:6px">📞 '+a.telefone+'</div>' : '')
+    + (a.whatsapp ? '<div style="font-size:.88em;margin-bottom:6px">💬 '+a.whatsapp+'</div>' : '')
+    + (a.instagram ? '<div style="font-size:.88em">📸 @'+a.instagram+'</div>' : '')
+    + '</div>';
+}
+
+// ===== CALENDÁRIO =====
+function gerarCalendario() {
+  var el = document.getElementById('cal-dias');
+  var hoje = new Date();
+  var html = '';
+  for (var i = 0; i < 14; i++) {
+    var d = new Date(hoje); d.setDate(hoje.getDate() + i);
+    var dias = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+    var meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+    var dataStr = d.toISOString().split('T')[0];
+    html += '<div class="dia-btn'+(i===0?' hoje':'')+'" data-data="'+dataStr+'" onclick="selecionarDia(this)">'
+      + '<div class="dia-semana">'+dias[d.getDay()]+'</div>'
+      + '<div class="dia-num">'+d.getDate()+'</div>'
+      + '<div class="dia-mes">'+meses[d.getMonth()]+'</div>'
+      + '</div>';
+  }
+  el.innerHTML = html;
+}
+
+async function selecionarDia(el) {
+  document.querySelectorAll('.dia-btn').forEach(b => b.classList.remove('sel'));
+  el.classList.add('sel');
+  selData = el.dataset.data;
+  selHora = null;
+  var cont = document.getElementById('horarios-container');
+  cont.innerHTML = '<div class="loading"><div class="spinner"></div>Buscando horários...</div>';
+  try {
+    var url = '/api/agenda/espaco/'+adminId+'/horarios?data='+selData;
+    if (selServico) url += '&servicoId='+selServico._id;
+    var r = await fetch(url);
+    var d = await r.json();
+    if (!d.horarios.length) { cont.innerHTML = '<div class="empty">Sem horários disponíveis neste dia</div>'; return; }
+    var html = '<div class="horarios-grid">';
+    d.horarios.forEach(function(h) {
+      html += '<button class="hora-btn'+(h.disponivel?'':' ocupado')+'" '+(h.disponivel?'onclick="selecionarHora(this)"':'')+' data-hora="'+h.hora+'">'+(h.disponivel?h.hora:'<s>'+h.hora+'</s>')+'</button>';
+    });
+    html += '</div>';
+    cont.innerHTML = html;
+  } catch(e) { cont.innerHTML = '<div class="empty" style="color:#ef4444">Erro ao buscar horários</div>'; }
+}
+
+function selecionarHora(el) {
+  document.querySelectorAll('.hora-btn').forEach(b => b.classList.remove('sel'));
+  el.classList.add('sel');
+  selHora = el.dataset.hora;
+}
+
+// ===== STEPS =====
+function irStep(n) {
+  if (n === 2 && !selServico) { toast('Selecione um serviço'); return; }
+  if (n === 3 && (!selData || !selHora)) { toast('Selecione data e horário'); return; }
+  if (n === 4) {
+    var nome = document.getElementById('ag-nome').value.trim();
+    var tel = document.getElementById('ag-tel').value.trim();
+    if (!nome || !tel) { toast('Preencha nome e WhatsApp'); return; }
+    renderResumo();
+  }
+
+  for (var i = 1; i <= 4; i++) {
+    var el = document.getElementById('agendar-step'+i);
+    if (el) el.style.display = i === n ? '' : 'none';
+    var st = document.getElementById('step'+i);
+    if (st) {
+      st.classList.remove('ativo','done');
+      if (i < n) st.classList.add('done');
+      else if (i === n) st.classList.add('ativo');
+    }
+  }
+  stepAtual = n;
+}
+
+function renderResumo() {
+  var dataFmt = selData ? new Date(selData+'T12:00:00').toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'}) : '';
+  document.getElementById('resumo-agendamento').innerHTML =
+    '<div class="resumo-linha"><span>Serviço</span><span>'+(selServico?selServico.nome:'-')+'</span></div>'
+    + '<div class="resumo-linha"><span>Profissional</span><span>'+(selProfissional?selProfissional.nome:'Qualquer')+'</span></div>'
+    + '<div class="resumo-linha"><span>Data</span><span>'+dataFmt+'</span></div>'
+    + '<div class="resumo-linha"><span>Horário</span><span>'+(selHora||'-')+'</span></div>'
+    + '<div class="resumo-linha"><span>Valor</span><span>R$ '+(selServico?Number(selServico.preco).toFixed(2).replace('.',','):'0,00')+'</span></div>';
+}
+
+async function confirmarAgendamento() {
+  var nome = document.getElementById('ag-nome').value.trim();
+  var tel = document.getElementById('ag-tel').value.trim();
+  var obs = document.getElementById('ag-obs').value.trim();
+  if (!nome || !tel) { toast('Preencha nome e WhatsApp'); return; }
+
+  var dataHora = selData + 'T' + selHora + ':00';
+  try {
+    var r = await fetch('/api/agenda/espaco/'+adminId+'/agendar', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        nomeCliente: nome, telefoneCliente: tel,
+        servicoId: selServico?._id, profissionalId: selProfissional?._id,
+        dataHora, observacoes: obs, origem: 'site'
+      })
+    });
+    var d = await r.json();
+    if (!d.sucesso) { toast('Erro: ' + d.erro); return; }
+    mostrarConfirmacao(d.mensagem);
+  } catch(e) { toast('Erro ao confirmar agendamento'); }
+}
+
+function mostrarConfirmacao(msg) {
+  document.getElementById('page-agendar').innerHTML =
+    '<div class="section"><div class="confirmacao">'
+    + '<div class="confirmacao-icon">🎉</div>'
+    + '<div class="confirmacao-titulo">Agendamento Confirmado!</div>'
+    + '<div class="confirmacao-msg">'+msg+'<br><br>Aguardamos você 😊</div>'
+    + '<button class="btn-pri" style="margin-top:20px" onclick="location.reload()">Fazer novo agendamento</button>'
+    + '</div></div>';
+}
+
+// ===== NAVEGAÇÃO =====
+function mudarPagina(pag, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('ativo'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('ativo'));
+  document.getElementById('page-'+pag).classList.add('ativo');
+  if (btn) btn.classList.add('ativo');
+  var fabAg = document.getElementById('fab-ag');
+  if (fabAg) fabAg.style.display = pag === 'agendar' ? 'none' : '';
+  window.scrollTo(0,0);
+}
+
+function mudarPaginaBtn(pag) {
+  var btns = document.querySelectorAll('.nav-btn');
+  var mapa = {inicio:0,servicos:1,agendar:2,galeria:3,sobre:4};
+  mudarPagina(pag, btns[mapa[pag]]);
+}
+
+function abrirWhatsApp() {
+  if (dadosEspaco && dadosEspaco.admin.whatsapp) {
+    var tel = dadosEspaco.admin.whatsapp.replace(/\D/g,'');
+    window.open('https://wa.me/55'+tel, '_blank');
+  }
+}
+
+function toast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(function(){ t.classList.remove('show'); }, 2800);
+}
+
+init();
+</script>
+</body>
+</html>

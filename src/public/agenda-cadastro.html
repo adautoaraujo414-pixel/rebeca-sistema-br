@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rebeca Agenda - Cadastro</title>
+<meta name="theme-color" content="#f97316">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',sans-serif;background:linear-gradient(135deg,#1f2937 0%,#374151 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px}
+.card{background:#fff;border-radius:20px;padding:28px 24px;width:100%;max-width:440px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.logo{text-align:center;margin-bottom:24px}
+.logo-txt{font-size:1.5em;font-weight:900;color:#1f2937}
+.logo-txt span{color:#f97316}
+.logo-sub{font-size:.82em;color:#6b7280;margin-top:4px}
+.steps{display:flex;justify-content:center;gap:4px;margin-bottom:24px}
+.step-dot{width:28px;height:4px;border-radius:4px;background:#e5e7eb;transition:.3s}
+.step-dot.ativo{background:#f97316}
+.step-dot.done{background:#22c55e}
+.step-titulo{font-size:1em;font-weight:800;color:#1f2937;margin-bottom:16px;text-align:center}
+.form-group{margin-bottom:14px}
+.form-label{font-size:.82em;font-weight:700;color:#374151;margin-bottom:4px;display:block}
+.form-input{width:100%;padding:11px 14px;border:2px solid #e5e7eb;border-radius:10px;font-size:.95em;outline:none;transition:.2s}
+.form-input:focus{border-color:#f97316}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn-pri{width:100%;padding:14px;background:#f97316;color:#fff;border:none;border-radius:12px;font-size:1em;font-weight:800;cursor:pointer;margin-top:8px;transition:.2s}
+.btn-pri:hover{background:#ea6c0a}
+.btn-sec{width:100%;padding:12px;background:#f3f4f6;color:#374151;border:none;border-radius:12px;font-size:.95em;font-weight:700;cursor:pointer;margin-top:8px}
+.planos{display:grid;gap:12px;margin-bottom:8px}
+.plano-card{border:2px solid #e5e7eb;border-radius:14px;padding:16px;cursor:pointer;transition:.2s;position:relative}
+.plano-card.sel{border-color:#f97316;background:#fff7ed}
+.plano-badge{position:absolute;top:-8px;right:12px;background:#f97316;color:#fff;font-size:.68em;font-weight:800;padding:2px 10px;border-radius:10px}
+.plano-nome{font-weight:800;font-size:.95em;margin-bottom:4px}
+.plano-preco{font-size:1.3em;font-weight:900;color:#f97316;margin-bottom:8px}
+.plano-items{font-size:.75em;color:#6b7280;line-height:1.8}
+.plano-items span{display:block}
+.plano-items span::before{content:"✓ ";color:#22c55e;font-weight:700}
+.erro{color:#ef4444;font-size:.82em;margin-top:6px;display:none}
+.sucesso-box{text-align:center;padding:12px}
+.sucesso-icon{font-size:3em;margin-bottom:12px}
+.sucesso-titulo{font-size:1.2em;font-weight:800;color:#22c55e;margin-bottom:8px}
+.sucesso-msg{color:#6b7280;font-size:.88em;line-height:1.6}
+.link{color:#f97316;text-decoration:none;font-weight:700;font-size:.88em}
+.login-link{text-align:center;margin-top:16px;font-size:.85em;color:#6b7280}
+.segmentos{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px}
+.seg-btn{padding:10px 6px;border:2px solid #e5e7eb;border-radius:10px;font-size:.75em;font-weight:700;cursor:pointer;text-align:center;background:#fff;transition:.2s}
+.seg-btn.sel{border-color:#f97316;background:#fff7ed;color:#f97316}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1f2937;color:#fff;padding:12px 20px;border-radius:12px;font-size:.88em;z-index:999;opacity:0;transition:.3s;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+<div class="toast" id="toast"></div>
+<div class="card">
+  <div class="logo">
+    <div class="logo-txt">Rebeca <span>Agenda</span></div>
+    <div class="logo-sub">Crie sua conta gratuitamente</div>
+  </div>
+  <div class="steps">
+    <div class="step-dot ativo" id="sd1"></div>
+    <div class="step-dot" id="sd2"></div>
+    <div class="step-dot" id="sd3"></div>
+  </div>
+
+  <!-- STEP 1: Dados pessoais -->
+  <div id="cad-step1">
+    <div class="step-titulo">👤 Seus dados</div>
+    <div class="form-group">
+      <label class="form-label">Nome completo *</label>
+      <input class="form-input" id="c-nome" placeholder="Seu nome" type="text">
+    </div>
+    <div class="form-group">
+      <label class="form-label">E-mail *</label>
+      <input class="form-input" id="c-email" placeholder="seu@email.com" type="email">
+    </div>
+    <div class="form-group">
+      <label class="form-label">WhatsApp *</label>
+      <input class="form-input" id="c-wpp" placeholder="(11) 99999-9999" type="tel">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Senha *</label>
+      <input class="form-input" id="c-senha" placeholder="Mínimo 6 caracteres" type="password">
+    </div>
+    <button class="btn-pri" onclick="irStep2()">Próximo →</button>
+    <div class="login-link">Já tem conta? <a class="link" href="/agenda-adm">Entrar</a></div>
+  </div>
+
+  <!-- STEP 2: Negócio -->
+  <div id="cad-step2" style="display:none">
+    <div class="step-titulo">🏪 Seu negócio</div>
+    <div class="form-group">
+      <label class="form-label">Nome do negócio *</label>
+      <input class="form-input" id="c-negocio" placeholder="Ex: Studio Rebeca" type="text">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Segmento</label>
+      <div class="segmentos">
+        <div class="seg-btn" onclick="selSeg(this,'Salão de Beleza')">💇 Salão</div>
+        <div class="seg-btn" onclick="selSeg(this,'Barbearia')">✂️ Barbearia</div>
+        <div class="seg-btn" onclick="selSeg(this,'Estética')">💆 Estética</div>
+        <div class="seg-btn" onclick="selSeg(this,'Manicure')">💅 Manicure</div>
+        <div class="seg-btn" onclick="selSeg(this,'Tatuagem')">🎨 Tatuagem</div>
+        <div class="seg-btn" onclick="selSeg(this,'Outro')">⭐ Outro</div>
+      </div>
+      <input class="form-input" id="c-seg" placeholder="Ou digite o segmento" type="text" style="margin-top:6px">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Cidade</label>
+      <input class="form-input" id="c-cidade" placeholder="Sua cidade" type="text">
+    </div>
+    <button class="btn-sec" onclick="irStepN(1)">← Voltar</button>
+    <button class="btn-pri" onclick="irStep3()">Próximo →</button>
+  </div>
+
+  <!-- STEP 3: Plano -->
+  <div id="cad-step3" style="display:none">
+    <div class="step-titulo">💎 Escolha seu plano</div>
+    <div class="planos">
+      <div class="plano-card sel" id="plano-ed" onclick="selPlano('espaco_digital',this)">
+        <div class="plano-nome">🏠 Espaço Digital</div>
+        <div class="plano-preco">R$ 97,90<span style="font-size:.5em;font-weight:400;color:#6b7280">/mês</span></div>
+        <div class="plano-items">
+          <span>Site profissional</span>
+          <span>Agenda online</span>
+          <span>Painel ADM mobile</span>
+          <span>Upload de fotos</span>
+          <span>Agendamento online</span>
+          <span>Notificações</span>
+        </div>
+      </div>
+      <div class="plano-card" id="plano-ia" onclick="selPlano('espaco_digital_ia',this)">
+        <div class="plano-badge">MAIS VENDIDO</div>
+        <div class="plano-nome">🤖 Espaço Digital + IA WhatsApp</div>
+        <div class="plano-preco">R$ 147,90<span style="font-size:.5em;font-weight:400;color:#6b7280">/mês</span></div>
+        <div class="plano-items">
+          <span>Tudo do plano anterior</span>
+          <span>Atendimento automático WhatsApp</span>
+          <span>IA humanizada</span>
+          <span>Confirmação automática</span>
+          <span>Lembretes automáticos</span>
+          <span>Recuperação de clientes</span>
+        </div>
+      </div>
+    </div>
+    <p style="font-size:.75em;color:#9ca3af;text-align:center;margin-bottom:8px">7 dias grátis · Sem cartão de crédito</p>
+    <button class="btn-sec" onclick="irStepN(2)">← Voltar</button>
+    <button class="btn-pri" onclick="cadastrar()">🚀 Criar minha conta grátis</button>
+  </div>
+
+  <!-- SUCESSO -->
+  <div id="cad-sucesso" style="display:none">
+    <div class="sucesso-box">
+      <div class="sucesso-icon">🎉</div>
+      <div class="sucesso-titulo">Conta criada!</div>
+      <div class="sucesso-msg">Seu espaço digital está pronto.<br>Acesse o painel para configurar tudo.</div>
+      <button class="btn-pri" style="margin-top:20px" onclick="location.href='/agenda-adm'">Ir para o Painel →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+var planoSel = 'espaco_digital';
+var segSel = '';
+
+function selSeg(el, val) {
+  document.querySelectorAll('.seg-btn').forEach(b => b.classList.remove('sel'));
+  el.classList.add('sel');
+  segSel = val;
+  document.getElementById('c-seg').value = val;
+}
+
+function selPlano(plano, el) {
+  planoSel = plano;
+  document.querySelectorAll('.plano-card').forEach(c => c.classList.remove('sel'));
+  el.classList.add('sel');
+}
+
+function irStep2() {
+  var nome = document.getElementById('c-nome').value.trim();
+  var email = document.getElementById('c-email').value.trim();
+  var wpp = document.getElementById('c-wpp').value.trim();
+  var senha = document.getElementById('c-senha').value.trim();
+  if (!nome || !email || !wpp || !senha) { toast('Preencha todos os campos'); return; }
+  if (senha.length < 6) { toast('Senha mínimo 6 caracteres'); return; }
+  irStepN(2);
+}
+
+function irStep3() {
+  var neg = document.getElementById('c-negocio').value.trim();
+  if (!neg) { toast('Informe o nome do negócio'); return; }
+  irStepN(3);
+}
+
+function irStepN(n) {
+  for (var i = 1; i <= 3; i++) {
+    document.getElementById('cad-step'+i).style.display = i === n ? '' : 'none';
+    var sd = document.getElementById('sd'+i);
+    sd.className = 'step-dot' + (i < n ? ' done' : i === n ? ' ativo' : '');
+  }
+}
+
+async function cadastrar() {
+  var nome = document.getElementById('c-nome').value.trim();
+  var email = document.getElementById('c-email').value.trim();
+  var wpp = document.getElementById('c-wpp').value.trim();
+  var senha = document.getElementById('c-senha').value.trim();
+  var negocio = document.getElementById('c-negocio').value.trim();
+  var seg = document.getElementById('c-seg').value.trim() || segSel;
+  var cidade = document.getElementById('c-cidade').value.trim();
+  try {
+    var r = await fetch('/api/agenda/cadastro', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ nome, email, senha, whatsapp: wpp, nomeNegocio: negocio, segmento: seg, cidade, plano: planoSel })
+    });
+    var d = await r.json();
+    if (!d.sucesso) { toast('Erro: ' + d.erro); return; }
+    localStorage.setItem('agenda_token', d.token);
+    localStorage.setItem('agenda_nome', nome);
+    document.getElementById('cad-step3').style.display = 'none';
+    document.getElementById('cad-sucesso').style.display = '';
+  } catch(e) { toast('Erro ao criar conta'); }
+}
+
+function toast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(function(){ t.classList.remove('show'); }, 2800);
+}
+</script>
+</body>
+</html>

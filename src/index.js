@@ -277,6 +277,13 @@ app.use('/api/delivery-auth', deliveryAuthRoutes);
 app.use('/api/delivery-master', deliveryMasterRoutes);
 app.use('/api/delivery', require('./routes/delivery-precadastro.routes'));
 app.use('/api/delivery', require('./routes/delivery-assinantes.routes'));
+
+// ===== REBECA AGENDA =====
+app.use('/api/agenda', require('./routes/agenda.routes'));
+app.get('/agenda', (req, res) => res.sendFile(path.join(__dirname, 'public', 'agenda-landing.html')));
+app.get('/agenda-adm', (req, res) => res.sendFile(path.join(__dirname, 'public', 'agenda-adm.html')));
+app.get('/espaco-digital', (req, res) => res.sendFile(path.join(__dirname, 'public', 'espaco-digital.html')));
+app.get('/agenda-cadastro', (req, res) => res.sendFile(path.join(__dirname, 'public', 'agenda-cadastro.html')));
 app.get('/delivery-migracao', (req, res) => res.sendFile(path.join(__dirname, 'public', 'delivery-migracao.html')));
 app.get('/delivery-admin', (req, res) => {
   const ua = req.headers['user-agent'] || '';

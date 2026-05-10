@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rebeca Agenda - Seu Espaço Digital</title>
+<meta name="theme-color" content="#f97316">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',sans-serif;background:#fff;color:#1f2937}
+:root{--cor:#f97316;--cor2:#1f2937}
+
+/* NAV */
+.nav{background:#1f2937;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.nav-logo{font-size:1.1em;font-weight:900;color:#fff}
+.nav-logo span{color:#f97316}
+.nav-links{display:flex;gap:12px;align-items:center}
+.nav-link{color:#9ca3af;font-size:.85em;text-decoration:none;font-weight:600}
+.btn-entrar{background:rgba(249,115,22,.15);color:#f97316;border:2px solid #f97316;padding:8px 16px;border-radius:20px;font-size:.82em;font-weight:700;cursor:pointer;text-decoration:none}
+.btn-comecar{background:#f97316;color:#fff;border:none;padding:10px 20px;border-radius:20px;font-size:.85em;font-weight:800;cursor:pointer;text-decoration:none}
+
+/* HERO */
+.hero{background:linear-gradient(135deg,#1f2937 0%,#374151 60%,#1f2937 100%);color:#fff;padding:60px 20px;text-align:center}
+.hero-badge{display:inline-block;background:rgba(249,115,22,.2);color:#fb923c;border:1px solid rgba(249,115,22,.3);padding:6px 16px;border-radius:20px;font-size:.78em;font-weight:700;margin-bottom:20px}
+.hero-titulo{font-size:2em;font-weight:900;line-height:1.2;margin-bottom:16px}
+.hero-titulo span{color:#f97316}
+.hero-desc{font-size:.95em;color:#9ca3af;max-width:500px;margin:0 auto 28px;line-height:1.7}
+.hero-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.btn-hero-pri{background:#f97316;color:#fff;border:none;padding:16px 28px;border-radius:14px;font-size:1em;font-weight:800;cursor:pointer;text-decoration:none;display:inline-block}
+.btn-hero-sec{background:rgba(255,255,255,.1);color:#fff;border:2px solid rgba(255,255,255,.2);padding:14px 24px;border-radius:14px;font-size:.95em;font-weight:700;cursor:pointer;text-decoration:none;display:inline-block}
+.hero-trial{font-size:.75em;color:#6b7280;margin-top:14px}
+
+/* COMO FUNCIONA */
+.section{padding:48px 20px;max-width:600px;margin:0 auto}
+.section-badge{display:inline-block;background:#fff7ed;color:#f97316;font-size:.75em;font-weight:800;padding:4px 12px;border-radius:20px;margin-bottom:12px}
+.section-titulo{font-size:1.5em;font-weight:900;color:#1f2937;margin-bottom:8px}
+.section-desc{color:#6b7280;font-size:.9em;line-height:1.7;margin-bottom:28px}
+
+.steps-lista{display:grid;gap:16px}
+.step-item{display:flex;gap:14px;align-items:flex-start}
+.step-num{width:36px;height:36px;border-radius:50%;background:#f97316;color:#fff;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:.9em}
+.step-content{}
+.step-titulo{font-weight:800;font-size:.95em;margin-bottom:4px}
+.step-desc{font-size:.82em;color:#6b7280;line-height:1.6}
+
+/* PLANOS */
+.planos-section{background:#f9fafb;padding:48px 20px}
+.planos-inner{max-width:600px;margin:0 auto}
+.planos-grid{display:grid;gap:16px;margin-top:24px}
+.plano-card{background:#fff;border-radius:18px;padding:24px;border:2px solid #e5e7eb;position:relative;box-shadow:0 4px 16px rgba(0,0,0,.06)}
+.plano-card.destaque{border-color:#f97316;box-shadow:0 8px 32px rgba(249,115,22,.2)}
+.plano-badge{position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:#f97316;color:#fff;font-size:.7em;font-weight:800;padding:4px 14px;border-radius:20px;white-space:nowrap}
+.plano-icon{font-size:2em;margin-bottom:8px}
+.plano-nome{font-size:1em;font-weight:800;margin-bottom:4px}
+.plano-preco{font-size:1.8em;font-weight:900;color:#f97316;margin-bottom:4px}
+.plano-preco span{font-size:.4em;font-weight:400;color:#9ca3af}
+.plano-desc{font-size:.8em;color:#6b7280;margin-bottom:16px}
+.plano-items{margin-bottom:20px}
+.plano-item{display:flex;gap:8px;align-items:flex-start;font-size:.82em;color:#374151;margin-bottom:8px;line-height:1.4}
+.plano-item::before{content:"✓";color:#22c55e;font-weight:900;flex-shrink:0;margin-top:1px}
+.btn-plano{display:block;width:100%;padding:14px;text-align:center;border-radius:12px;font-weight:800;font-size:.95em;cursor:pointer;text-decoration:none;border:none}
+.btn-plano.pri{background:#f97316;color:#fff}
+.btn-plano.sec{background:#f3f4f6;color:#1f2937}
+
+/* RECURSOS */
+.recursos-section{padding:48px 20px;max-width:600px;margin:0 auto}
+.recursos-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px}
+.recurso-card{background:#f9fafb;border-radius:14px;padding:16px;border:1px solid #f3f4f6}
+.recurso-icon{font-size:1.6em;margin-bottom:8px}
+.recurso-titulo{font-weight:800;font-size:.85em;margin-bottom:4px}
+.recurso-desc{font-size:.75em;color:#6b7280;line-height:1.5}
+
+/* SEGMENTOS */
+.segs-section{background:#1f2937;padding:40px 20px;text-align:center}
+.segs-titulo{color:#fff;font-size:1.2em;font-weight:800;margin-bottom:6px}
+.segs-desc{color:#9ca3af;font-size:.85em;margin-bottom:20px}
+.segs-grid{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+.seg-pill{background:rgba(255,255,255,.08);color:#d1d5db;padding:8px 16px;border-radius:20px;font-size:.82em;font-weight:600}
+
+/* PRÉ-CADASTRO */
+.precad-section{padding:48px 20px;max-width:500px;margin:0 auto;text-align:center}
+.precad-card{background:#fff;border-radius:20px;padding:28px 24px;box-shadow:0 8px 32px rgba(0,0,0,.08);border:2px solid #fed7aa;text-align:left}
+.precad-titulo{font-size:1.1em;font-weight:800;margin-bottom:4px;text-align:center}
+.precad-desc{font-size:.82em;color:#6b7280;text-align:center;margin-bottom:20px}
+.form-group{margin-bottom:12px}
+.form-label{font-size:.8em;font-weight:700;color:#374151;margin-bottom:4px;display:block}
+.form-input{width:100%;padding:11px 14px;border:2px solid #e5e7eb;border-radius:10px;font-size:.9em;outline:none;transition:.2s}
+.form-input:focus{border-color:#f97316}
+
+/* FOOTER */
+.footer{background:#1f2937;padding:28px 20px;text-align:center;color:#6b7280;font-size:.8em}
+.footer-logo{font-size:1.1em;font-weight:900;color:#fff;margin-bottom:8px}
+.footer-logo span{color:#f97316}
+
+/* TOAST */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1f2937;color:#fff;padding:12px 20px;border-radius:12px;font-size:.88em;z-index:999;opacity:0;transition:.3s;pointer-events:none}
+.toast.show{opacity:1}
+
+/* SUCESSO PRÉ-CADASTRO */
+.precad-sucesso{text-align:center;padding:12px}
+.precad-sucesso-icon{font-size:2.5em;margin-bottom:8px}
+.precad-sucesso-titulo{font-weight:800;color:#22c55e;margin-bottom:6px}
+.precad-sucesso-desc{font-size:.85em;color:#6b7280}
+</style>
+</head>
+<body>
+
+<div class="toast" id="toast"></div>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-logo">Rebeca <span>Agenda</span></div>
+  <div class="nav-links">
+    <a class="nav-link" href="#planos">Planos</a>
+    <a class="btn-entrar" href="/agenda-adm">Entrar</a>
+    <a class="btn-comecar" href="/agenda-cadastro">Começar grátis</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-badge">🚀 7 dias grátis · Sem cartão de crédito</div>
+  <h1 class="hero-titulo">Seu <span>Espaço Digital</span><br>para agendamentos</h1>
+  <p class="hero-desc">Site profissional + agenda online + painel completo. Seus clientes agendam pelo celular, você gerencia tudo em um só lugar.</p>
+  <div class="hero-btns">
+    <a class="btn-hero-pri" href="/agenda-cadastro">📅 Criar meu espaço grátis</a>
+    <a class="btn-hero-sec" href="#como-funciona">Como funciona</a>
+  </div>
+  <div class="hero-trial">Sem cartão · Cancela quando quiser · Suporte via WhatsApp</div>
+</section>
+
+<!-- COMO FUNCIONA -->
+<section class="section" id="como-funciona">
+  <div class="section-badge">SIMPLES ASSIM</div>
+  <h2 class="section-titulo">3 passos para estar online</h2>
+  <p class="section-desc">Em menos de 5 minutos seu espaço digital está pronto para receber agendamentos.</p>
+  <div class="steps-lista">
+    <div class="step-item">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <div class="step-titulo">Crie sua conta grátis</div>
+        <div class="step-desc">Cadastre seu negócio, serviços e profissionais em minutos. Nenhum conhecimento técnico necessário.</div>
+      </div>
+    </div>
+    <div class="step-item">
+      <div class="step-num">2</div>
+      <div class="step-content">
+        <div class="step-titulo">Compartilhe seu link</div>
+        <div class="step-desc">Você recebe um link único do seu Espaço Digital. Coloca no Instagram, WhatsApp, onde quiser.</div>
+      </div>
+    </div>
+    <div class="step-item">
+      <div class="step-num">3</div>
+      <div class="step-content">
+        <div class="step-titulo">Receba agendamentos</div>
+        <div class="step-desc">Seus clientes escolhem serviço, profissional, data e horário — tudo online, sem precisar te chamar.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- RECURSOS -->
+<section class="recursos-section">
+  <div class="section-badge">RECURSOS</div>
+  <h2 class="section-titulo">Tudo que você precisa</h2>
+  <div class="recursos-grid">
+    <div class="recurso-card"><div class="recurso-icon">📅</div><div class="recurso-titulo">Agenda online</div><div class="recurso-desc">Clientes agendam 24h por dia, 7 dias por semana</div></div>
+    <div class="recurso-card"><div class="recurso-icon">📱</div><div class="recurso-titulo">Painel mobile</div><div class="recurso-desc">Gerencie tudo pelo celular com facilidade</div></div>
+    <div class="recurso-card"><div class="recurso-icon">📸</div><div class="recurso-titulo">Galeria de fotos</div><div class="recurso-desc">Mostre seu trabalho e atraia mais clientes</div></div>
+    <div class="recurso-card"><div class="recurso-icon">👥</div><div class="recurso-titulo">Multi profissional</div><div class="recurso-desc">Gerencie toda a equipe em um painel</div></div>
+    <div class="recurso-card"><div class="recurso-icon">🔔</div><div class="recurso-titulo">Notificações</div><div class="recurso-desc">Lembretes automáticos para reduzir faltas</div></div>
+    <div class="recurso-card"><div class="recurso-icon">📊</div><div class="recurso-titulo">Dashboard</div><div class="recurso-desc">Receita, clientes e métricas em tempo real</div></div>
+    <div class="recurso-card"><div class="recurso-icon">🤖</div><div class="recurso-titulo">IA WhatsApp</div><div class="recurso-desc">Atendimento automático 24h no WhatsApp</div></div>
+    <div class="recurso-card"><div class="recurso-icon">⚙️</div><div class="recurso-titulo">Personalizável</div><div class="recurso-desc">Cores, horários e configurações do seu jeito</div></div>
+  </div>
+</section>
+
+<!-- PLANOS -->
+<section class="planos-section" id="planos">
+  <div class="planos-inner">
+    <div class="section-badge">PLANOS</div>
+    <h2 class="section-titulo">Escolha o seu plano</h2>
+    <p class="section-desc">Comece com 7 dias grátis. Sem cartão de crédito.</p>
+    <div class="planos-grid">
+      <div class="plano-card">
+        <div class="plano-icon">🏠</div>
+        <div class="plano-nome">Espaço Digital</div>
+        <div class="plano-preco">R$ 97,90<span>/mês</span></div>
+        <div class="plano-desc">Tudo que você precisa para estar online e receber agendamentos.</div>
+        <div class="plano-items">
+          <div class="plano-item">Site profissional completo</div>
+          <div class="plano-item">Agenda online 24h</div>
+          <div class="plano-item">Painel ADM mobile</div>
+          <div class="plano-item">Upload de fotos e galeria</div>
+          <div class="plano-item">Multi profissional</div>
+          <div class="plano-item">Dashboard de métricas</div>
+          <div class="plano-item">Notificações automáticas</div>
+          <div class="plano-item">Suporte via WhatsApp</div>
+        </div>
+        <a class="btn-plano sec" href="/agenda-cadastro?plano=espaco_digital">Começar grátis →</a>
+      </div>
+      <div class="plano-card destaque">
+        <div class="plano-badge">⭐ MAIS VENDIDO</div>
+        <div class="plano-icon">🤖</div>
+        <div class="plano-nome">Espaço Digital + IA WhatsApp</div>
+        <div class="plano-preco">R$ 147,90<span>/mês</span></div>
+        <div class="plano-desc">Tudo do plano anterior + atendimento automático pelo WhatsApp com IA humanizada.</div>
+        <div class="plano-items">
+          <div class="plano-item">Tudo do Espaço Digital</div>
+          <div class="plano-item">Atendimento automático WhatsApp</div>
+          <div class="plano-item">IA humanizada e inteligente</div>
+          <div class="plano-item">Confirmação automática de agendamentos</div>
+          <div class="plano-item">Lembretes automáticos</div>
+          <div class="plano-item">Recuperação de clientes inativos</div>
+          <div class="plano-item">Integração total WhatsApp + site</div>
+        </div>
+        <a class="btn-plano pri" href="/agenda-cadastro?plano=espaco_digital_ia">Começar grátis →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SEGMENTOS -->
+<section class="segs-section">
+  <div class="segs-titulo">Para qualquer tipo de negócio</div>
+  <div class="segs-desc">Já usado por profissionais de todo o Brasil</div>
+  <div class="segs-grid">
+    <div class="seg-pill">💇 Salão de Beleza</div>
+    <div class="seg-pill">✂️ Barbearia</div>
+    <div class="seg-pill">💆 Estética</div>
+    <div class="seg-pill">💅 Manicure</div>
+    <div class="seg-pill">🎨 Tatuagem</div>
+    <div class="seg-pill">🧘 Pilates</div>
+    <div class="seg-pill">🦷 Odontologia</div>
+    <div class="seg-pill">🏋️ Personal</div>
+    <div class="seg-pill">📸 Fotografia</div>
+    <div class="seg-pill">🐾 Pet Shop</div>
+  </div>
+</section>
+
+<!-- PRÉ-CADASTRO -->
+<section class="precad-section">
+  <div class="precad-card" id="precad-form-area">
+    <div class="precad-titulo">Quero ser avisado primeiro 🔔</div>
+    <div class="precad-desc">Deixe seu contato e entraremos em breve com condições especiais de lançamento.</div>
+    <div class="form-group"><label class="form-label">Seu nome *</label><input class="form-input" id="pc-nome" type="text" placeholder="Nome completo"></div>
+    <div class="form-group"><label class="form-label">WhatsApp *</label><input class="form-input" id="pc-wpp" type="tel" placeholder="(11) 99999-9999"></div>
+    <div class="form-group"><label class="form-label">Nome do negócio</label><input class="form-input" id="pc-neg" type="text" placeholder="Ex: Studio Rebeca"></div>
+    <div class="form-group"><label class="form-label">Cidade</label><input class="form-input" id="pc-cid" type="text" placeholder="Sua cidade"></div>
+    <button class="btn-plano pri" style="margin-top:4px" onclick="enviarPreCad()">Quero meu espaço digital 🚀</button>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="footer-logo">Rebeca <span>Agenda</span></div>
+  <p>Seu espaço digital para agendamentos online</p>
+  <p style="margin-top:8px">© 2025 Rebeca Agenda · Todos os direitos reservados</p>
+</footer>
+
+<script>
+async function enviarPreCad() {
+  var nome = document.getElementById('pc-nome').value.trim();
+  var wpp = document.getElementById('pc-wpp').value.trim();
+  if (!nome || !wpp) { toast('Preencha nome e WhatsApp'); return; }
+  try {
+    var r = await fetch('/api/agenda/pre-cadastro', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        nome, whatsapp: wpp,
+        nomeNegocio: document.getElementById('pc-neg').value.trim(),
+        cidade: document.getElementById('pc-cid').value.trim()
+      })
+    });
+    var d = await r.json();
+    if (d.sucesso) {
+      document.getElementById('precad-form-area').innerHTML =
+        '<div class="precad-sucesso">'
+        + '<div class="precad-sucesso-icon">🎉</div>'
+        + '<div class="precad-sucesso-titulo">Recebemos seu contato!</div>'
+        + '<div class="precad-sucesso-desc">Em breve entraremos em contato via WhatsApp com as condições especiais 💛</div>'
+        + '</div>';
+    } else { toast('Erro: ' + d.erro); }
+  } catch(e) { toast('Erro ao enviar'); }
+}
+
+function toast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(function(){ t.classList.remove('show'); }, 2800);
+}
+
+// Verificar plano na URL e redirecionar
+var params = new URLSearchParams(location.search);
+if (params.get('plano')) {
+  location.href = '/agenda-cadastro?plano=' + params.get('plano');
+}
+</script>
+</body>
+</html>
