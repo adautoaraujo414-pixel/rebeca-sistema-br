@@ -512,6 +512,7 @@ async function init() {
   setInterval(carregarPedidos, 10000);
   setInterval(carregarStats, 15000);
   setInterval(carregarResumoTempoReal, 8000);
+  setInterval(carregarMesas, 15000);
   setInterval(carregarEntregadores, 20000);
   carregarResumoTempoReal();
 }
@@ -679,16 +680,37 @@ async function carregarMesas() {
     const d = await r.json();
     const mesas = Array.isArray(d) ? d : (d.mesas || []);
     const el = document.getElementById('lista-mesas');
-    document.getElementById('badge-mesas').textContent = mesas.length || '';
-    if (!mesas.length) { el.innerHTML = '<div style="text-align:center;padding:32px;color:#9ca3af">Nenhuma mesa ativa</div>'; return; }
-    el.innerHTML = mesas.map(m => `
-      <div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:14px;margin-bottom:10px;cursor:pointer">
-        <div style="font-weight:800;color:#f97316">Mesa ${m.numero||m.mesa||m._id}</div>
-        <div style="font-size:.82em;color:#6b7280">${m.itens?.map(i=>i.nome).join(', ')||''}</div>
-        <div style="font-weight:700;color:#22c55e">R$ ${(m.total||0).toFixed(2).replace('.',',')}</div>
-        <button onclick="liberarMesa('${m.numero||m.mesa}')" style="margin-top:8px;padding:6px 14px;background:#ef4444;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:.8em">Liberar Mesa</button>
-      </div>
-    `).join('');
+    const ocupadas = mesas.filter(m => m.ocupada).length;
+    document.getElementById('badge-mesas').textContent = ocupadas || '';
+
+    function tempoStr(createdAt) {
+      if (!createdAt) return '';
+      const mins = Math.floor((Date.now() - new Date(createdAt)) / 60000);
+      if (mins < 60) return mins + 'min';
+      return Math.floor(mins/60) + 'h' + (mins%60 ? (mins%60)+'min' : '');
+    }
+
+    el.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px">' +
+      mesas.map(m => {
+        const cor = m.ocupada ? '#f97316' : '#e5e7eb';
+        const bg  = m.ocupada ? '#fff7ed' : '#f9fafb';
+        const txt = m.ocupada ? '#f97316' : '#9ca3af';
+        const oldest = m.pedidos?.length ? m.pedidos.reduce((a,b) => new Date(a.createdAt) < new Date(b.createdAt) ? a : b) : null;
+        const tempo = oldest ? tempoStr(oldest.createdAt) : '';
+        const statusLabel = m.ocupada
+          ? (m.pedidos?.some(p => p.status === 'pronto') ? '🟢 Pronto' :
+             m.pedidos?.some(p => p.status === 'preparo') ? '🟡 Preparo' :
+             m.pedidos?.some(p => p.status === 'confirmado') ? '🔵 Confirmado' : '🟠 Pendente')
+          : '⚪ Livre';
+        return \`<div onclick="\${m.ocupada ? 'abrirModalMesa('+m.numero+',\''+((m.total||0).toFixed(2).replace('.',','))+'\')' : 'abrirModalMesaVazia('+m.numero+')'}"
+          style="background:\${bg};border:2px solid \${cor};border-radius:12px;padding:12px;cursor:pointer;text-align:center;transition:all .2s">
+          <div style="font-size:1.4em;font-weight:800;color:\${txt}">M\${m.numero}</div>
+          <div style="font-size:.7em;font-weight:700;color:\${txt};margin:2px 0">\${statusLabel}</div>
+          \${m.ocupada ? \`<div style="font-size:.72em;color:#6b7280">\${m.pedidos?.length||0} pedido(s)</div>
+          <div style="font-weight:700;color:#22c55e;font-size:.82em">R$ \${(m.total||0).toFixed(2).replace('.',',')}</div>
+          \${tempo ? \`<div style="font-size:.68em;color:#9ca3af;margin-top:2px">⏱ \${tempo}</div>\` : ''}\` : ''}
+        </div>\`;
+      }).join('') + '</div>';
   } catch(e) { console.error('mesas',e); }
 }
 
@@ -860,6 +882,20 @@ function abrirModalMesa(mesa, total) {
   document.getElementById('modal-mesa').style.display = 'block';
   modalAba('pedidos', document.querySelector('.modal-tab'));
   carregarPedidosMesa(mesa);
+  modalRenderCardapio();
+}
+
+function abrirModalMesaVazia(numero) {
+  mesaAtual = String(numero);
+  carrinhoMesa = [];
+  document.getElementById('modal-mesa-titulo').textContent = 'Mesa ' + numero;
+  document.getElementById('modal-mesa-status').textContent = 'Livre — adicione o primeiro pedido';
+  document.getElementById('modal-total-mesa').textContent = 'R$ 0,00';
+  document.getElementById('modal-total-fechar').textContent = 'R$ 0,00';
+  document.getElementById('modal-lista-pedidos').innerHTML = '<div style="text-align:center;padding:24px;color:#9ca3af">Mesa livre — nenhum pedido ainda</div>';
+  document.getElementById('modal-mesa').style.display = 'block';
+  const tabs = document.querySelectorAll('.modal-tab');
+  modalAba('adicionar', tabs[1]);
   modalRenderCardapio();
 }
 
