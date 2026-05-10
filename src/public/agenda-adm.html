@@ -1297,6 +1297,48 @@ document.addEventListener('keydown', function(e) {
 });
 
 init();
+
+// MODAL CLIENTE
+function abrirModalCliente() {
+  document.getElementById('cli-nome').value = '';
+  document.getElementById('cli-tel').value = '';
+  document.getElementById('cli-email').value = '';
+  document.getElementById('cli-obs').value = '';
+  document.getElementById('cli-restricoes').value = '';
+  document.getElementById('modal-cliente').className = 'modal-overlay aberto';
+}
+
+async function salvarCliente() {
+  var nome = document.getElementById('cli-nome').value.trim();
+  var tel = document.getElementById('cli-tel').value.trim();
+  if (!nome || !tel) { toast('Preencha nome e WhatsApp'); return; }
+  try {
+    var d = await fetch('/api/agenda/clientes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + TOKEN },
+      body: JSON.stringify({
+        nome: nome,
+        telefone: tel,
+        email: document.getElementById('cli-email').value.trim(),
+        observacoes: document.getElementById('cli-obs').value.trim(),
+        restricoes: document.getElementById('cli-restricoes').value.trim()
+      })
+    }).then(function(r) { return r.json(); });
+    if (d.sucesso || d._id || d.cliente) {
+      toast('Cliente salvo ✅');
+      fecharModal('modal-cliente');
+      carregarClientes();
+    } else {
+      toast('Erro: ' + (d.erro || 'Tente novamente'));
+    }
+  } catch(e) { toast('Erro: ' + e.message); }
+}
+
+function abrirWpp(num) {
+  if (!num) return;
+  window.open('https://wa.me/55' + num, '_blank');
+}
+
 </script>
 
 
