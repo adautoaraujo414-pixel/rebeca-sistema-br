@@ -174,6 +174,35 @@ cron.schedule('0 9 * * *', async () => {
   await verificarAniversarios();
 });
 
+
+// ===== ANTI-BLOQUEIO: enviar mensagem vazia/invisível periodicamente =====
+const MSGS_ANTI_BLOQUEIO = [
+  '.',
+  '​', // zero-width space
+];
+
+async function executarAntiBloqueio() {
+  try {
+    const admins = await AdminAgenda.find({ ativo: true, 'config.antiBloqueioAtivo': true }).lean();
+    for (const admin of admins) {
+      try {
+        const inst = await buscarInstanciaAdmin(admin._id);
+        if (!inst) continue;
+        // Enviar mensagem para o próprio número (eco) para manter sessão ativa
+        const tel = inst.telefoneConectado;
+        if (!tel) continue;
+        await EvolutionMultiService.enviarMensagem(inst._id, tel, '​');
+        console.log('[ANTI-BLOQUEIO] Ping enviado para instância', inst.nomeInstancia);
+      } catch(e) { /* silencioso */ }
+    }
+  } catch(e) { console.error('[ANTI-BLOQUEIO] Erro:', e.message); }
+}
+
+// Anti-bloqueio: a cada 6 horas
+cron.schedule('0 */6 * * *', async () => {
+  await executarAntiBloqueio();
+});
+
 module.exports = {
   executarRecuperacao,
   enviarPosServico: enviarPosSevico,

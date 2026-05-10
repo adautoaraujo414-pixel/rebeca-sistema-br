@@ -791,6 +791,7 @@ function mudarPag(pag, btn) {
   if (pag === 'agenda') carregarAgenda(dataSel);
   if (pag === 'clientes') carregarClientes();
   if (pag === 'fotos') carregarFotos();
+  if (pag === 'whatsapp') carregarPaginaWhatsapp();
 }
 
 // ===== UTILS =====
@@ -979,8 +980,373 @@ async function verificarStatusPush() {
   } catch(e) {}
 }
 
+
+// ===== WHATSAPP IA =====
+var _wppConectado = false;
+
+async function carregarPaginaWhatsapp() {
+  await verificarStatusWpp();
+  await carregarServicosIA();
+}
+
+async function verificarStatusWpp() {
+  try {
+    var r = await fetch('/api/agenda-ia-servico/whatsapp/status', { headers: { 'Authorization': 'Bearer ' + TOKEN } });
+    var d = await r.json();
+    var dot = document.getElementById('wpp-status-dot');
+    var txt = document.getElementById('wpp-status-txt');
+    var telTxt = document.getElementById('wpp-tel-txt');
+    var btnConectar = document.getElementById('btn-conectar-wpp');
+    var btnDesconectar = document.getElementById('btn-desconectar-wpp');
+    _wppConectado = d.conectado;
+    if (d.conectado) {
+      dot.style.background = '#22c55e';
+      txt.textContent = '✅ WhatsApp conectado';
+      telTxt.textContent = d.telefone ? 'Número: ' + d.telefone : '';
+      btnConectar.style.display = 'none';
+      btnDesconectar.style.display = 'flex';
+      document.getElementById('wpp-qr-box').style.display = 'none';
+    } else {
+      dot.style.background = '#ef4444';
+      txt.textContent = '⚠️ WhatsApp desconectado';
+      telTxt.textContent = '';
+      btnConectar.style.display = 'flex';
+      btnDesconectar.style.display = 'none';
+    }
+  } catch(e) { console.log('Erro status wpp:', e.message); }
+}
+
+async function conectarWpp() {
+  try {
+    toast('⏳ Iniciando conexão...');
+    var r = await fetch('/api/agenda-ia-servico/whatsapp/conectar', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + TOKEN, 'Content-Type': 'application/json' }
+    });
+    var d = await r.json();
+    if (!d.sucesso) {
+      if (d.upgrade) toast('⚠️ Recurso disponível no plano IA WhatsApp');
+      else toast('Erro: ' + (d.erro || 'Falha ao conectar'));
+      return;
+    }
+    toast('✅ Instância criada! Gerando QR Code...');
+    await gerarQRWpp();
+  } catch(e) { toast('Erro: ' + e.message); }
+}
+
+async function gerarQRWpp() {
+  try {
+    var r = await fetch('/api/agenda-ia-servico/whatsapp/qrcode', { headers: { 'Authorization': 'Bearer ' + TOKEN } });
+    var d = await r.json();
+    var box = document.getElementById('wpp-qr-box');
+    var imgBox = document.getElementById('wpp-qr-img');
+    if (d.qrcode || d.base64 || d.qr) {
+      var qrData = d.qrcode || d.base64 || d.qr;
+      box.style.display = 'block';
+      imgBox.innerHTML = '<img src="' + (qrData.startsWith('data:') ? qrData : 'data:image/png;base64,' + qrData) + '" style="max-width:220px;border-radius:8px">';
+      // Polling de status a cada 5s por 60s
+      var tentativas = 0;
+      var poll = setInterval(async function() {
+        tentativas++;
+        await verificarStatusWpp();
+        if (_wppConectado || tentativas >= 12) {
+          clearInterval(poll);
+          if (_wppConectado) toast('✅ WhatsApp conectado com sucesso!');
+        }
+      }, 5000);
+    } else {
+      toast(d.erro || 'Erro ao gerar QR Code');
+    }
+  } catch(e) { toast('Erro QR: ' + e.message); }
+}
+
+async function desconectarWpp() {
+  if (!confirm('Desconectar o WhatsApp? A Rebeca parará de responder.')) return;
+  try {
+    await fetch('/api/agenda-ia-servico/whatsapp/desconectar', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + TOKEN }
+    });
+    toast('WhatsApp desconectado');
+    await verificarStatusWpp();
+  } catch(e) { toast('Erro: ' + e.message); }
+}
+
+async function toggleAntiBloqueio() {
+  var btn = document.getElementById('tog-anti');
+  btn.classList.toggle('on');
+  var ativo = btn.classList.contains('on');
+  try {
+    await fetch('/api/agenda-ia-servico/whatsapp/anti-bloqueio', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + TOKEN, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ativo })
+    });
+    toast(ativo ? '🛡️ Anti-bloqueio ativado' : 'Anti-bloqueio desativado');
+  } catch(e) {}
+}
+
+async function carregarServicosIA() {
+  try {
+    var r = await fetch('/api/agenda/servicos', { headers: { 'Authorization': 'Bearer ' + TOKEN } });
+    var d = await r.json();
+    var lista = document.getElementById('lista-servicos-ia');
+    if (!d.length) {
+      lista.innerHTML = '<div style="text-align:center;color:#9ca3af;font-size:.85em;padding:20px">Nenhum serviço cadastrado.<br>Clique em "+ Novo" para adicionar.</div>';
+      return;
+    }
+    lista.innerHTML = d.map(function(s) {
+      return '<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #f3f4f6">' +
+        (s.foto ? '<img src="' + s.foto + '" style="width:48px;height:48px;border-radius:8px;object-fit:cover">' : '<div style="width:48px;height:48px;border-radius:8px;background:#f3f4f6;display:flex;align-items:center;justify-content:center;font-size:1.4em">💇</div>') +
+        '<div style="flex:1;min-width:0">' +
+          '<div style="font-weight:600;font-size:.88em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + s.nome + '</div>' +
+          '<div style="font-size:.78em;color:#6b7280">' + (s.categoria||'') + ' · ' + s.duracao + 'min · R$ ' + Number(s.preco).toFixed(2) + '</div>' +
+          (s.descricao ? '<div style="font-size:.75em;color:#9ca3af;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + s.descricao + '</div>' : '') +
+        '</div>' +
+        '<button onclick="deletarServicoIA(\'' + s._id + '\')" style="background:none;border:none;color:#ef4444;font-size:1.1em;cursor:pointer;flex-shrink:0">🗑</button>' +
+      '</div>';
+    }).join('');
+  } catch(e) { console.log('Erro servicos:', e.message); }
+}
+
+function abrirModalNovoServico() {
+  document.getElementById('modal-novo-servico').style.display = 'flex';
+  document.getElementById('ns-nome').value = '';
+  document.getElementById('ns-desc').value = '';
+  document.getElementById('ns-preco').value = '';
+  document.getElementById('ns-duracao').value = '60';
+  document.getElementById('ns-categoria').value = '';
+  document.getElementById('preview-foto-servico').style.display = 'none';
+  document.getElementById('txt-zona-foto').style.display = 'block';
+  document.getElementById('btn-analisar-foto').style.display = 'none';
+  document.getElementById('ns-ia-status').style.display = 'none';
+  document.getElementById('input-foto-servico').value = '';
+}
+
+function fecharModalServico() {
+  document.getElementById('modal-novo-servico').style.display = 'none';
+}
+
+function previewFotoServico(input) {
+  var file = input.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    document.getElementById('img-preview-servico').src = e.target.result;
+    document.getElementById('preview-foto-servico').style.display = 'block';
+    document.getElementById('txt-zona-foto').style.display = 'none';
+    document.getElementById('btn-analisar-foto').style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+
+async function analisarFotoServico() {
+  var file = document.getElementById('input-foto-servico').files[0];
+  if (!file) return;
+  document.getElementById('ns-ia-status').style.display = 'block';
+  document.getElementById('ns-ia-status').textContent = '🤖 IA analisando a foto...';
+  try {
+    var fd = new FormData();
+    fd.append('foto', file);
+    fd.append('nome', document.getElementById('ns-nome').value || '');
+    fd.append('categoria', document.getElementById('ns-categoria').value || '');
+    var r = await fetch('/api/agenda-ia-servico/analisar-foto-servico', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + TOKEN },
+      body: fd
+    });
+    var d = await r.json();
+    if (d.sucesso) {
+      if (d.descricao) document.getElementById('ns-desc').value = d.descricao;
+      if (d.nome_sugerido && !document.getElementById('ns-nome').value) document.getElementById('ns-nome').value = d.nome_sugerido;
+      if (d.categoria) document.getElementById('ns-categoria').value = d.categoria;
+      document.getElementById('ns-ia-status').textContent = '✅ IA preencheu os campos!';
+      setTimeout(function(){ document.getElementById('ns-ia-status').style.display='none'; }, 2000);
+    }
+  } catch(e) {
+    document.getElementById('ns-ia-status').textContent = '❌ Erro na análise';
+    setTimeout(function(){ document.getElementById('ns-ia-status').style.display='none'; }, 2000);
+  }
+}
+
+async function gerarDescricaoIA() {
+  var nome = document.getElementById('ns-nome').value;
+  if (!nome) { toast('Digite o nome do serviço primeiro'); return; }
+  document.getElementById('ns-ia-status').style.display = 'block';
+  document.getElementById('ns-ia-status').textContent = '✨ Gerando descrição...';
+  try {
+    var r = await fetch('/api/agenda-ia-servico/gerar-descricao', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + TOKEN, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        nome,
+        categoria: document.getElementById('ns-categoria').value,
+        duracao: document.getElementById('ns-duracao').value,
+        preco: document.getElementById('ns-preco').value
+      })
+    });
+    var d = await r.json();
+    if (d.sucesso) {
+      document.getElementById('ns-desc').value = d.descricao;
+      document.getElementById('ns-ia-status').textContent = '✅ Descrição gerada!';
+      setTimeout(function(){ document.getElementById('ns-ia-status').style.display='none'; }, 2000);
+    }
+  } catch(e) {
+    document.getElementById('ns-ia-status').style.display = 'none';
+    toast('Erro ao gerar descrição');
+  }
+}
+
+async function salvarNovoServico() {
+  var nome = document.getElementById('ns-nome').value;
+  var preco = document.getElementById('ns-preco').value;
+  var duracao = document.getElementById('ns-duracao').value;
+  if (!nome || !preco || !duracao) { toast('Preencha nome, preço e duração'); return; }
+
+  try {
+    var fd = new FormData();
+    fd.append('nome', nome);
+    fd.append('descricao', document.getElementById('ns-desc').value);
+    fd.append('preco', preco);
+    fd.append('duracao', duracao);
+    fd.append('categoria', document.getElementById('ns-categoria').value);
+
+    var file = document.getElementById('input-foto-servico').files[0];
+    if (file) fd.append('foto', file);
+
+    var r = await fetch('/api/agenda/servicos', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + TOKEN },
+      body: fd
+    });
+    var d = await r.json();
+    if (d._id || d.sucesso) {
+      toast('✅ Serviço salvo!');
+      fecharModalServico();
+      await carregarServicosIA();
+    } else {
+      toast(d.erro || 'Erro ao salvar');
+    }
+  } catch(e) { toast('Erro: ' + e.message); }
+}
+
+async function deletarServicoIA(id) {
+  if (!confirm('Remover este serviço?')) return;
+  try {
+    await fetch('/api/agenda/servicos/' + id, {
+      method: 'DELETE',
+      headers: { 'Authorization': 'Bearer ' + TOKEN }
+    });
+    toast('Serviço removido');
+    await carregarServicosIA();
+  } catch(e) { toast('Erro: ' + e.message); }
+}
+
 init();
 verificarStatusPush();
 </script>
+
+  <!-- PAGE WHATSAPP -->
+  <div id="page-whatsapp" class="page" style="display:none;padding:16px">
+    <h2 style="font-size:1.1em;margin-bottom:16px;color:#1c1c1e">📱 WhatsApp IA</h2>
+
+    <!-- STATUS CONEXÃO -->
+    <div class="ag-card" style="margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+        <div id="wpp-status-dot" style="width:14px;height:14px;border-radius:50%;background:#d1d5db;flex-shrink:0"></div>
+        <div>
+          <div style="font-weight:600;font-size:.95em" id="wpp-status-txt">Verificando...</div>
+          <div style="font-size:.78em;color:#6b7280" id="wpp-tel-txt"></div>
+        </div>
+        <button class="ag-btn cinza" style="margin-left:auto;font-size:.78em;padding:6px 12px" onclick="verificarStatusWpp()">↺ Atualizar</button>
+      </div>
+      <div id="wpp-qr-box" style="display:none;text-align:center;padding:16px">
+        <p style="font-size:.85em;color:#6b7280;margin-bottom:12px">Escaneie o QR Code com o WhatsApp do negócio:</p>
+        <div id="wpp-qr-img" style="background:#fff;display:inline-block;padding:12px;border-radius:12px;border:2px solid #f3f4f6"></div>
+        <p style="font-size:.75em;color:#9ca3af;margin-top:8px">O QR expira em 60 segundos. Clique em "Atualizar" se expirar.</p>
+        <button class="ag-btn cinza" style="margin-top:10px;font-size:.82em" onclick="gerarQRWpp()">🔄 Novo QR Code</button>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="ag-btn" id="btn-conectar-wpp" onclick="conectarWpp()" style="background:#25d366;color:#fff;flex:1">📱 Conectar WhatsApp</button>
+        <button class="ag-btn cinza" id="btn-desconectar-wpp" onclick="desconectarWpp()" style="display:none;flex:1">⛔ Desconectar</button>
+      </div>
+    </div>
+
+    <!-- ANTI-BLOQUEIO -->
+    <div class="ag-card" style="margin-bottom:16px">
+      <div style="font-weight:600;font-size:.9em;margin-bottom:10px">🛡️ Anti-bloqueio</div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <button class="toggle" id="tog-anti" onclick="toggleAntiBloqueio()"></button>
+        <span style="font-size:.85em;color:#374151">Manter WhatsApp ativo automaticamente (ping a cada 6h)</span>
+      </div>
+      <p style="font-size:.75em;color:#9ca3af;margin-top:8px">Evita que a sessão do WhatsApp expire por inatividade.</p>
+    </div>
+
+    <!-- SERVIÇOS COM IA -->
+    <div class="ag-card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <div style="font-weight:600;font-size:.9em">✨ Serviços com IA</div>
+        <button class="ag-btn" style="font-size:.78em;padding:6px 14px" onclick="abrirModalNovoServico()">+ Novo</button>
+      </div>
+      <div id="lista-servicos-ia">
+        <div style="text-align:center;color:#9ca3af;font-size:.85em;padding:20px">Carregando serviços...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL NOVO SERVIÇO COM IA -->
+  <div id="modal-novo-servico" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:flex-end">
+    <div style="background:#fff;border-radius:20px 20px 0 0;padding:20px;width:100%;max-height:90vh;overflow-y:auto">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <div style="font-weight:700;font-size:1em">✨ Novo Serviço</div>
+        <button onclick="fecharModalServico()" style="background:none;border:none;font-size:1.3em;cursor:pointer">✕</button>
+      </div>
+
+      <!-- Upload foto para IA analisar -->
+      <div style="border:2px dashed #e5e7eb;border-radius:12px;padding:16px;text-align:center;margin-bottom:14px;cursor:pointer" onclick="document.getElementById('input-foto-servico').click()" id="zona-foto-servico">
+        <div id="preview-foto-servico" style="display:none;margin-bottom:8px">
+          <img id="img-preview-servico" style="max-height:120px;border-radius:8px;max-width:100%">
+        </div>
+        <div id="txt-zona-foto">📸 Clique para adicionar foto do resultado<br><small style="color:#9ca3af">A IA analisa e melhora a descrição automaticamente</small></div>
+        <input type="file" id="input-foto-servico" accept="image/*" style="display:none" onchange="previewFotoServico(this)">
+      </div>
+      <button class="ag-btn" id="btn-analisar-foto" style="width:100%;margin-bottom:14px;display:none;background:#7c3aed;color:#fff" onclick="analisarFotoServico()">🤖 Analisar foto com IA</button>
+
+      <div class="form-group" style="margin-bottom:10px">
+        <label class="form-label">Nome do serviço *</label>
+        <div style="display:flex;gap:8px">
+          <input class="form-input" id="ns-nome" placeholder="Ex: Corte feminino, Hidratação...">
+          <button class="ag-btn cinza" style="white-space:nowrap;font-size:.78em" onclick="gerarDescricaoIA()">✨ IA</button>
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:10px">
+        <label class="form-label">Descrição</label>
+        <textarea class="form-input" id="ns-desc" rows="3" placeholder="Descrição atrativa do serviço..." style="resize:none"></textarea>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+        <div class="form-group">
+          <label class="form-label">Preço (R$) *</label>
+          <input class="form-input" id="ns-preco" type="number" placeholder="0,00">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Duração (min) *</label>
+          <input class="form-input" id="ns-duracao" type="number" placeholder="60">
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:10px">
+        <label class="form-label">Categoria</label>
+        <select class="form-input" id="ns-categoria">
+          <option value="">Selecione...</option>
+          <option>Cabelo</option><option>Barba</option><option>Unhas</option>
+          <option>Pele</option><option>Sobrancelha</option><option>Maquiagem</option>
+          <option>Massagem</option><option>Depilação</option><option>Estética</option>
+          <option>Coloração</option><option>Tratamento</option><option>Outro</option>
+        </select>
+      </div>
+      <div id="ns-ia-status" style="display:none;font-size:.8em;color:#7c3aed;margin-bottom:10px;text-align:center">⏳ IA processando...</div>
+      <button class="ag-btn" style="width:100%;margin-top:6px" onclick="salvarNovoServico()">💾 Salvar Serviço</button>
+    </div>
+  </div>
+
 </body>
 </html>
