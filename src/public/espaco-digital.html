@@ -5,6 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Espaço Digital</title>
 <meta name="theme-color" content="#f97316">
+<link rel="manifest" href="/agenda-manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Espaço Digital">
+<link rel="apple-touch-icon" href="/agenda-icon.svg">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Segoe UI',sans-serif;background:#f9fafb;color:#1f2937;min-height:100vh}
@@ -568,6 +573,16 @@ function toast(msg) {
 }
 
 init();
+</script>
+
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('/agenda-sw.js')
+      .then(function(r){ console.log('SW registrado'); })
+      .catch(function(e){ console.log('SW erro:', e); });
+  });
+}
 </script>
 </body>
 </html>

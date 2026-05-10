@@ -123,6 +123,15 @@ body{font-family:'Segoe UI',sans-serif;background:#f3f4f6;color:#1f2937;min-heig
 .spinner{width:28px;height:28px;border:3px solid #f3f4f6;border-top-color:var(--cor);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 10px}
 @keyframes spin{to{transform:rotate(360deg)}}
 .empty{text-align:center;padding:28px;color:#9ca3af;font-size:.88em}
+.upload-area{border:2px dashed #e5e7eb;border-radius:12px;padding:20px;text-align:center;cursor:pointer;transition:.2s;background:#fafafa}
+.upload-area:hover{border-color:#f97316;background:#fff7ed}
+.upload-area input{display:none}
+.upload-preview{width:80px;height:80px;border-radius:10px;object-fit:cover;margin:8px auto;display:block}
+.upload-progress{height:4px;background:#f97316;border-radius:4px;width:0;transition:.3s}
+.foto-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.foto-item{position:relative;aspect-ratio:1}
+.foto-item img{width:100%;height:100%;object-fit:cover;border-radius:10px}
+.foto-del{position:absolute;top:4px;right:4px;background:rgba(239,68,68,.9);color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:.7em;cursor:pointer;display:flex;align-items:center;justify-content:center}
 
 /* PAGE */
 .page{display:none}
@@ -261,13 +270,46 @@ body{font-family:'Segoe UI',sans-serif;background:#f3f4f6;color:#1f2937;min-heig
     </div>
   </div>
 
-  <!-- NAV BOTTOM -->
+  <!-- FOTOS -->
+<div class="page" id="page-fotos">
+  <div class="section">
+    <div class="section-titulo">📸 Galeria <button class="btn-add" onclick="document.getElementById('input-foto-galeria').click()">+ Foto</button></div>
+    <input type="file" id="input-foto-galeria" accept="image/*" style="display:none" onchange="uploadFotoGaleria(this)">
+    <div style="margin-bottom:12px">
+      <select class="form-select" id="tipo-foto-sel" style="width:auto;display:inline-block;padding:8px 12px">
+        <option value="resultado">Resultado</option>
+        <option value="ambiente">Ambiente</option>
+        <option value="servico">Serviço</option>
+      </select>
+    </div>
+    <div id="progress-galeria" style="display:none;margin-bottom:12px">
+      <div style="font-size:.8em;color:#6b7280;margin-bottom:4px">Enviando foto...</div>
+      <div style="background:#f3f4f6;border-radius:4px;overflow:hidden">
+        <div class="upload-progress" id="bar-galeria"></div>
+      </div>
+    </div>
+    <div class="foto-grid" id="grid-fotos"></div>
+
+    <div class="section-titulo" style="margin-top:20px">🖼️ Logo do Negócio</div>
+    <div class="upload-area" onclick="document.getElementById('input-logo').click()">
+      <input type="file" id="input-logo" accept="image/*" onchange="uploadLogo(this)">
+      <div id="logo-preview-area">
+        <div style="font-size:2em">🏪</div>
+        <div style="font-size:.82em;color:#6b7280;margin-top:6px">Clique para enviar logo</div>
+        <div style="font-size:.72em;color:#9ca3af">JPG, PNG, WEBP até 5MB</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- NAV BOTTOM -->
   <div class="nav-bottom">
     <button class="nav-item ativo" onclick="mudarPag('inicio',this)"><span class="nav-icon">🏠</span>Início</button>
     <button class="nav-item" onclick="mudarPag('agenda',this)"><span class="nav-icon">📅</span>Agenda</button>
     <button class="nav-item" onclick="mudarPag('servicos',this)"><span class="nav-icon">✂️</span>Serviços</button>
     <button class="nav-item" onclick="mudarPag('profissionais',this)"><span class="nav-icon">👥</span>Equipe</button>
     <button class="nav-item" onclick="mudarPag('clientes',this)"><span class="nav-icon">👤</span>Clientes</button>
+    <button class="nav-item" onclick="mudarPag('fotos',this)"><span class="nav-icon">📸</span>Fotos</button>
     <button class="nav-item" onclick="mudarPag('perfil',this)"><span class="nav-icon">⚙️</span>Perfil</button>
   </div>
 </div>
@@ -711,6 +753,7 @@ function mudarPag(pag, btn) {
   if (btn) btn.classList.add('ativo');
   if (pag === 'agenda') carregarAgenda(dataSel);
   if (pag === 'clientes') carregarClientes();
+  if (pag === 'fotos') carregarFotos();
 }
 
 // ===== UTILS =====
@@ -737,6 +780,111 @@ function toast(msg) {
 document.querySelectorAll('.modal-bg').forEach(function(m){
   m.addEventListener('click', function(e){ if(e.target === m) m.classList.remove('show'); });
 });
+
+// ===== UPLOAD FOTOS =====
+async function uploadFotoGaleria(input) {
+  if (!input.files[0]) return;
+  var tipo = document.getElementById('tipo-foto-sel').value;
+  var prog = document.getElementById('progress-galeria');
+  var bar = document.getElementById('bar-galeria');
+  prog.style.display = '';
+  bar.style.width = '30%';
+  var fd = new FormData();
+  fd.append('foto', input.files[0]);
+  fd.append('tipo', tipo);
+  try {
+    bar.style.width = '60%';
+    var r = await fetch('/api/agenda-upload/fotos', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + TOKEN },
+      body: fd
+    });
+    bar.style.width = '100%';
+    var d = await r.json();
+    if (d.sucesso) { toast('Foto enviada ✅'); carregarFotos(); }
+    else toast('Erro: ' + d.erro);
+  } catch(e) { toast('Erro ao enviar foto'); }
+  setTimeout(function(){ prog.style.display = 'none'; bar.style.width = '0'; }, 800);
+  input.value = '';
+}
+
+async function uploadLogo(input) {
+  if (!input.files[0]) return;
+  var fd = new FormData();
+  fd.append('foto', input.files[0]);
+  try {
+    var r = await fetch('/api/agenda-upload/logo', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + TOKEN },
+      body: fd
+    });
+    var d = await r.json();
+    if (d.sucesso) {
+      document.getElementById('logo-preview-area').innerHTML = '<img src="'+d.url+'" style="width:80px;height:80px;border-radius:50%;object-fit:cover;margin:0 auto;display:block"><div style="font-size:.78em;color:#22c55e;margin-top:6px">Logo atualizado ✅</div>';
+      toast('Logo atualizado ✅');
+    } else toast('Erro: ' + d.erro);
+  } catch(e) { toast('Erro ao enviar logo'); }
+}
+
+async function carregarFotos() {
+  var el = document.getElementById('grid-fotos');
+  if (!el) return;
+  try {
+    var d = await api('/fotos');
+    var fotos = d.fotos || [];
+    if (!fotos.length) { el.innerHTML = '<div class="empty" style="grid-column:span 3">Nenhuma foto. Clique em + Foto</div>'; return; }
+    el.innerHTML = fotos.map(function(f){
+      return '<div class="foto-item">'
+        + '<img src="'+f.url+'" loading="lazy">'
+        + '<button class="foto-del" onclick="deletarFoto(\'' + f._id + '\')">✕</button>'
+        + '</div>';
+    }).join('');
+  } catch(e) {}
+}
+
+async function deletarFoto(id) {
+  if (!confirm('Remover foto?')) return;
+  try {
+    await fetch('/api/agenda-upload/fotos/'+id, {
+      method: 'DELETE',
+      headers: { 'Authorization': 'Bearer ' + TOKEN }
+    });
+    carregarFotos();
+    toast('Foto removida');
+  } catch(e) {}
+}
+
+async function uploadFotoServico(id, input) {
+  if (!input.files[0]) return;
+  var fd = new FormData();
+  fd.append('foto', input.files[0]);
+  try {
+    var r = await fetch('/api/agenda-upload/servico/'+id+'/foto', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + TOKEN },
+      body: fd
+    });
+    var d = await r.json();
+    if (d.sucesso) { toast('Foto do serviço atualizada ✅'); carregarServicos(); }
+    else toast('Erro: ' + d.erro);
+  } catch(e) { toast('Erro ao enviar'); }
+}
+
+async function uploadFotoProf(id, input) {
+  if (!input.files[0]) return;
+  var fd = new FormData();
+  fd.append('foto', input.files[0]);
+  try {
+    var r = await fetch('/api/agenda-upload/profissional/'+id+'/foto', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + TOKEN },
+      body: fd
+    });
+    var d = await r.json();
+    if (d.sucesso) { toast('Foto atualizada ✅'); carregarProfissionais(); }
+    else toast('Erro ao enviar');
+  } catch(e) { toast('Erro ao enviar'); }
+}
 
 init();
 </script>
