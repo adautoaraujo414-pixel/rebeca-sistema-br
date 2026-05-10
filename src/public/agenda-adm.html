@@ -2,45 +2,108 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Rebeca Agenda - Painel</title>
 <meta name="theme-color" content="#f97316">
+<link rel="manifest" href="/agenda-manifest.json">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Segoe UI',sans-serif;background:#f3f4f6;color:#1f2937;min-height:100vh;padding-bottom:80px}
-:root{--cor:#f97316;--cor2:#1f2937}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#f5f5f7;color:#1c1c1e;min-height:100vh;padding-bottom:80px}
+:root{--cor:#f97316;--cor2:#1c1c1e;--cor-light:#fff7ed;--cor-border:#fed7aa}
 
-/* HEADER */
-.header{background:var(--cor2);color:#fff;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.3)}
-.header-titulo{font-weight:800;font-size:1em}
-.header-sub{font-size:.72em;color:#9ca3af}
-.btn-sair{background:rgba(255,255,255,.12);border:none;color:#fff;padding:7px 12px;border-radius:8px;font-size:.78em;cursor:pointer}
+/* ===== HEADER ===== */
+.header{background:var(--cor);color:#fff;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;box-shadow:0 2px 12px rgba(249,115,22,.3)}
+.header-left{display:flex;align-items:center;gap:12px}
+.header-logo{width:38px;height:38px;background:rgba(255,255,255,.2);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.3em}
+.header-titulo{font-weight:800;font-size:1.05em;line-height:1.2}
+.header-sub{font-size:.75em;color:rgba(255,255,255,.8);margin-top:1px}
+.header-right{display:flex;align-items:center;gap:10px}
+.header-notif{background:rgba(255,255,255,.2);border:none;color:#fff;width:36px;height:36px;border-radius:10px;font-size:1em;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.header-user{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.15);border:none;color:#fff;padding:6px 12px;border-radius:10px;cursor:pointer}
+.header-user-avatar{width:28px;height:28px;background:rgba(255,255,255,.3);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8em;font-weight:700}
+.header-user-info{text-align:left}
+.header-user-role{font-size:.7em;color:rgba(255,255,255,.8)}
+.header-user-name{font-size:.82em;font-weight:700}
 
-/* NAV BOTTOM */
-.nav-bottom{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #e5e7eb;display:flex;z-index:100;box-shadow:0 -2px 12px rgba(0,0,0,.08)}
-.nav-item{flex:1;padding:10px 4px;text-align:center;cursor:pointer;border:none;background:transparent;color:#9ca3af;font-size:.65em;font-weight:600;transition:.2s}
-.nav-item.ativo{color:var(--cor)}
-.nav-item .nav-icon{font-size:1.4em;display:block;margin-bottom:2px}
+/* ===== LOGIN ===== */
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#fff7ed 0%,#f5f5f7 60%,#fff 100%);padding:20px}
+.login-card{background:#fff;padding:40px 32px;border-radius:24px;width:100%;max-width:400px;box-shadow:0 12px 48px rgba(249,115,22,.12),0 2px 12px rgba(0,0,0,.06);border:1px solid #f0d9c8}
+.login-logo-txt{font-size:1.8em;font-weight:900;color:var(--cor);text-align:center}
+.login-logo-txt span{color:var(--cor2)}
+.login-sub{text-align:center;color:#6b7280;font-size:.88em;margin:6px 0 28px}
 
-/* CARDS STATS */
-.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:16px;padding-bottom:0}
-.stat-card{background:#fff;border-radius:14px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
-.stat-val{font-size:1.6em;font-weight:900;color:var(--cor)}
-.stat-label{font-size:.72em;color:#6b7280;margin-top:2px}
+/* ===== PAGES ===== */
+.page{display:none}
+.page.ativo{display:block}
 
-/* SEÇÃO */
-.section{padding:16px}
-.section-titulo{font-weight:800;font-size:.95em;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between}
-.btn-add{background:var(--cor);color:#fff;border:none;border-radius:8px;padding:7px 14px;font-size:.8em;font-weight:700;cursor:pointer}
+/* ===== STATS GRID ===== */
+.stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;padding:20px;padding-bottom:0}
+@media(min-width:768px){.stats-grid{grid-template-columns:repeat(4,1fr)}}
+.stat-card{background:#fff;border-radius:16px;padding:18px 16px;box-shadow:0 2px 8px rgba(0,0,0,.06);display:flex;align-items:center;gap:14px;border:1px solid #f3f4f6}
+.stat-icon{width:48px;height:48px;border-radius:12px;background:var(--cor-light);display:flex;align-items:center;justify-content:center;font-size:1.4em;flex-shrink:0}
+.stat-val{font-size:1.7em;font-weight:900;color:var(--cor2);line-height:1}
+.stat-label{font-size:.75em;color:#6b7280;margin-top:3px}
+.stat-sub{font-size:.7em;color:#9ca3af;margin-top:1px}
 
-/* CARDS AGENDAMENTO */
-.ag-card{background:#fff;border-radius:12px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,.06);margin-bottom:10px;border-left:4px solid #e5e7eb;position:relative}
+/* ===== LINK ESPACO ===== */
+.link-espaco-card{background:#fff;border-radius:16px;padding:16px 20px;margin:16px 20px 0;box-shadow:0 2px 8px rgba(0,0,0,.06);display:flex;align-items:center;gap:14px;border:1px solid #f3f4f6}
+.link-espaco-icon{width:42px;height:42px;background:var(--cor-light);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.2em;flex-shrink:0}
+.link-espaco-info{flex:1;min-width:0}
+.link-espaco-titulo{font-weight:700;font-size:.9em;color:#1c1c1e}
+.link-espaco-url{font-size:.75em;color:#9ca3af;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.link-espaco-btns{display:flex;gap:8px;flex-shrink:0}
+.btn-link{background:none;border:1.5px solid #e5e7eb;color:#374151;padding:7px 14px;border-radius:10px;font-size:.78em;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px;white-space:nowrap}
+.btn-link-pri{background:var(--cor);border:none;color:#fff;padding:7px 16px;border-radius:10px;font-size:.78em;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px;white-space:nowrap}
+
+/* ===== SEÇÃO ===== */
+.section{padding:20px}
+.section-card{background:#fff;border-radius:16px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,.06);border:1px solid #f3f4f6}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.section-titulo{font-weight:800;font-size:1em;color:#1c1c1e;display:flex;align-items:center;gap:8px}
+.section-sub{font-size:.78em;color:#9ca3af;margin-bottom:16px}
+.btn-add{background:var(--cor);color:#fff;border:none;border-radius:10px;padding:8px 16px;font-size:.82em;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px}
+.btn-add-outline{background:#fff;color:var(--cor);border:1.5px solid var(--cor);border-radius:10px;padding:8px 16px;font-size:.82em;font-weight:700;cursor:pointer}
+
+/* ===== FILTROS ===== */
+.filtros-row{display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.filtro-btn{background:#f3f4f6;border:none;color:#6b7280;padding:7px 14px;border-radius:20px;font-size:.78em;font-weight:600;cursor:pointer;white-space:nowrap}
+.filtro-btn.ativo{background:var(--cor-light);color:var(--cor);border:1.5px solid var(--cor-border)}
+.filtro-select{background:#f3f4f6;border:none;color:#374151;padding:7px 12px;border-radius:20px;font-size:.78em;font-weight:600;cursor:pointer;outline:none}
+
+/* ===== TABELA AGENDAMENTOS ===== */
+.ag-table{width:100%;border-collapse:collapse}
+.ag-table th{font-size:.75em;color:#9ca3af;font-weight:600;padding:8px 12px;text-align:left;border-bottom:1px solid #f3f4f6}
+.ag-table td{padding:14px 12px;border-bottom:1px solid #f9fafb;vertical-align:middle}
+.ag-table tr:last-child td{border-bottom:none}
+.ag-table tr:hover td{background:#fafafa}
+.ag-hora-cell{display:flex;align-items:center;gap:6px;color:#6b7280;font-size:.85em}
+.ag-hora-icon{font-size:.9em}
+.ag-cliente-avatar{width:34px;height:34px;border-radius:50%;background:var(--cor-light);color:var(--cor);font-weight:800;font-size:.82em;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ag-cliente-cell{display:flex;align-items:center;gap:10px}
+.ag-cliente-nome{font-weight:700;font-size:.88em;color:#1c1c1e}
+.ag-cliente-tel{font-size:.75em;color:#9ca3af;margin-top:1px}
+.ag-servico-nome{font-weight:600;font-size:.85em;color:#374151}
+.ag-servico-tipo{font-size:.75em;color:#9ca3af;margin-top:1px}
+.badge{display:inline-block;padding:4px 12px;border-radius:20px;font-size:.72em;font-weight:700}
+.badge-confirmado{background:#d1fae5;color:#059669}
+.badge-pendente{background:#fef3c7;color:#d97706}
+.badge-concluido{background:#f3f4f6;color:#6b7280}
+.badge-cancelado{background:#fee2e2;color:#dc2626}
+.badge-faltou{background:#ede9fe;color:#7c3aed}
+.ag-acoes-cell{display:flex;align-items:center;gap:8px}
+.btn-wpp-sm{display:flex;align-items:center;gap:5px;background:none;border:none;color:#25d366;font-size:.82em;font-weight:700;cursor:pointer;padding:6px 8px;border-radius:8px}
+.btn-wpp-sm:hover{background:#f0fdf4}
+.btn-more{background:none;border:none;color:#9ca3af;font-size:1.2em;cursor:pointer;padding:4px 6px;border-radius:6px}
+.btn-more:hover{background:#f3f4f6;color:#374151}
+
+/* ===== CARD AG (mobile) ===== */
+.ag-card{background:#fff;border-radius:14px;padding:14px 16px;box-shadow:0 2px 8px rgba(0,0,0,.06);margin-bottom:10px;border-left:4px solid #e5e7eb;position:relative;border:1px solid #f3f4f6;border-left:4px solid #e5e7eb}
 .ag-card.pendente{border-left-color:#f59e0b}
 .ag-card.confirmado{border-left-color:#22c55e}
 .ag-card.concluido{border-left-color:#6b7280}
 .ag-card.cancelado{border-left-color:#ef4444;opacity:.6}
 .ag-card.faltou{border-left-color:#8b5cf6;opacity:.7}
-.ag-hora{font-size:1em;font-weight:900;color:var(--cor2)}
+.ag-hora{font-size:.95em;font-weight:900;color:#374151}
 .ag-nome{font-weight:700;font-size:.9em;margin:2px 0}
 .ag-info{font-size:.78em;color:#6b7280}
 .ag-status{position:absolute;top:12px;right:12px;font-size:.7em;font-weight:700;padding:3px 10px;border-radius:10px}
@@ -50,99 +113,106 @@ body{font-family:'Segoe UI',sans-serif;background:#f3f4f6;color:#1f2937;min-heig
 .ag-status.cancelado{background:#fee2e2;color:#dc2626}
 .ag-status.faltou{background:#ede9fe;color:#7c3aed}
 .ag-acoes{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
-.ag-btn{padding:6px 12px;border-radius:8px;border:none;font-size:.75em;font-weight:700;cursor:pointer}
+.ag-btn{padding:6px 12px;border-radius:8px;border:none;font-size:.78em;font-weight:700;cursor:pointer}
 .ag-btn.verde{background:#d1fae5;color:#059669}
-.ag-btn.cinza{background:#f3f4f6;color:#374151}
 .ag-btn.vermelho{background:#fee2e2;color:#dc2626}
+.ag-btn.cinza{background:#f3f4f6;color:#374151}
+.ag-btn.laranja{background:#fff7ed;color:#ea580c}
 .ag-btn.roxo{background:#ede9fe;color:#7c3aed}
+.ag-btn.wpp{background:#d1fae5;color:#059669}
 
-/* SERVIÇOS */
-.serv-card{background:#fff;border-radius:12px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,.06);margin-bottom:10px;display:flex;align-items:center;gap:12px}
-.serv-icon{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--cor),#fb923c);display:flex;align-items:center;justify-content:center;font-size:1.3em;flex-shrink:0}
-.serv-info{flex:1;min-width:0}
-.serv-nome{font-weight:700;font-size:.9em}
-.serv-meta{font-size:.75em;color:#6b7280;margin-top:2px}
-.serv-acoes{display:flex;gap:6px}
-
-/* PROFISSIONAIS */
-.prof-card{background:#fff;border-radius:12px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,.06);margin-bottom:10px;display:flex;align-items:center;gap:12px}
-.prof-foto-ph{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:1.3em;color:#fff;flex-shrink:0}
-.prof-foto-img{width:44px;height:44px;border-radius:50%;object-fit:cover;flex-shrink:0}
-
-/* CLIENTES */
-.cli-card{background:#fff;border-radius:12px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,.06);margin-bottom:10px}
-.cli-nome{font-weight:700;font-size:.9em}
-.cli-info{font-size:.75em;color:#6b7280;margin-top:2px}
-.cli-badge{display:inline-block;background:#fff7ed;color:#f97316;font-size:.7em;font-weight:700;padding:2px 8px;border-radius:8px;margin-top:4px}
-
-/* CALENDÁRIO */
-.cal-strip{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;margin-bottom:16px}
+/* ===== CAL STRIP ===== */
+.cal-strip{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;scrollbar-width:none;margin-bottom:16px}
 .cal-strip::-webkit-scrollbar{display:none}
-.cal-dia{flex-shrink:0;text-align:center;padding:8px 12px;border-radius:10px;background:#fff;border:2px solid #e5e7eb;cursor:pointer;min-width:52px;transition:.2s}
-.cal-dia.sel{background:var(--cor);border-color:var(--cor);color:#fff}
-.cal-dia.hoje{border-color:var(--cor);color:var(--cor)}
-.cal-ds{font-size:.65em;font-weight:700;text-transform:uppercase}
-.cal-dn{font-size:1.1em;font-weight:900}
+.cal-dia{min-width:52px;padding:10px 6px;border-radius:12px;text-align:center;cursor:pointer;border:1.5px solid #e5e7eb;background:#fff;transition:.2s}
+.cal-dia.hoje{border-color:var(--cor);background:var(--cor-light)}
+.cal-dia.selecionado{background:var(--cor);color:#fff;border-color:var(--cor)}
+.cal-dia .cal-num{font-size:1.1em;font-weight:800}
+.cal-dia .cal-dow{font-size:.65em;color:inherit;opacity:.7;text-transform:uppercase}
+.cal-dia .cal-dot{width:5px;height:5px;border-radius:50%;background:var(--cor);margin:3px auto 0}
+.cal-dia.selecionado .cal-dot{background:#fff}
 
-/* MODAL */
-.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:300;align-items:flex-end}
-.modal-bg.show{display:flex}
-.modal-box{background:#fff;border-radius:20px 20px 0 0;padding:20px;width:100%;max-height:88vh;overflow-y:auto}
-.modal-titulo{font-weight:800;font-size:1.05em;margin-bottom:16px;text-align:center}
+/* ===== SERVICOS / PROFS ===== */
+.item-card{background:#fff;border-radius:14px;padding:14px 16px;box-shadow:0 2px 8px rgba(0,0,0,.06);margin-bottom:10px;display:flex;align-items:center;gap:14px;border:1px solid #f3f4f6}
+.item-foto{width:52px;height:52px;border-radius:12px;object-fit:cover;background:#f3f4f6;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:1.5em}
+.item-info{flex:1;min-width:0}
+.item-nome{font-weight:700;font-size:.92em;color:#1c1c1e}
+.item-sub{font-size:.78em;color:#6b7280;margin-top:2px}
+.item-acoes{display:flex;gap:6px}
+.item-badge{font-size:.72em;font-weight:700;padding:3px 10px;border-radius:20px;background:var(--cor-light);color:var(--cor)}
+
+/* ===== CLIENTES ===== */
+.cli-card{background:#fff;border-radius:14px;padding:14px 16px;box-shadow:0 2px 8px rgba(0,0,0,.06);margin-bottom:8px;display:flex;align-items:center;gap:12px;border:1px solid #f3f4f6}
+.cli-avatar{width:42px;height:42px;border-radius:50%;background:var(--cor-light);color:var(--cor);font-weight:800;font-size:.95em;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.cli-info{flex:1;min-width:0}
+.cli-nome{font-weight:700;font-size:.9em}
+.cli-tel{font-size:.78em;color:#6b7280;margin-top:2px}
+.cli-stats{font-size:.75em;color:#9ca3af;margin-top:2px}
+
+/* ===== FORMULÁRIOS ===== */
 .form-group{margin-bottom:14px}
-.form-label{font-size:.82em;font-weight:700;color:#374151;margin-bottom:4px;display:block}
-.form-input{width:100%;padding:11px 14px;border:2px solid #e5e7eb;border-radius:10px;font-size:.95em;outline:none;transition:.2s}
-.form-input:focus{border-color:var(--cor)}
-.form-select{width:100%;padding:11px 14px;border:2px solid #e5e7eb;border-radius:10px;font-size:.95em;outline:none;background:#fff}
-.btn-pri{width:100%;padding:14px;background:var(--cor);color:#fff;border:none;border-radius:12px;font-size:1em;font-weight:800;cursor:pointer;margin-top:8px}
-.btn-sec{width:100%;padding:12px;background:#f3f4f6;color:#374151;border:none;border-radius:12px;font-size:.95em;font-weight:700;cursor:pointer;margin-top:8px}
+.form-label{font-size:.82em;font-weight:600;color:#374151;display:block;margin-bottom:5px}
+.form-input{width:100%;padding:11px 14px;border:1.5px solid #e5e7eb;border-radius:12px;font-size:.9em;color:#1c1c1e;outline:none;background:#fff;transition:.2s}
+.form-input:focus{border-color:var(--cor);box-shadow:0 0 0 3px rgba(249,115,22,.1)}
+.form-select{width:100%;padding:11px 14px;border:1.5px solid #e5e7eb;border-radius:12px;font-size:.9em;color:#1c1c1e;outline:none;background:#fff}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.btn-pri{width:100%;padding:14px;background:var(--cor);color:#fff;border:none;border-radius:14px;font-size:.95em;font-weight:800;cursor:pointer;margin-top:4px;transition:.2s}
+.btn-pri:hover{filter:brightness(1.05)}
+.btn-sec{width:100%;padding:12px;background:#f3f4f6;color:#374151;border:none;border-radius:14px;font-size:.9em;font-weight:700;cursor:pointer;margin-top:6px}
 
-/* FORM PERFIL */
-.perfil-secao{background:#fff;border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
-.perfil-secao-titulo{font-weight:800;font-size:.85em;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px}
-.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-
-/* TOGGLE */
-.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f3f4f6}
-.toggle-label{font-size:.88em;font-weight:600}
-.toggle{width:44px;height:24px;background:#e5e7eb;border-radius:12px;position:relative;cursor:pointer;border:none;transition:.3s;flex-shrink:0}
+/* ===== PERFIL ===== */
+.perfil-secao{background:#fff;border-radius:16px;padding:18px;box-shadow:0 2px 8px rgba(0,0,0,.06);margin-bottom:14px;border:1px solid #f3f4f6}
+.perfil-secao-titulo{font-weight:800;font-size:.9em;color:#1c1c1e;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #f3f4f6}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f9fafb}
+.toggle-row:last-child{border-bottom:none}
+.toggle-label{font-size:.85em;color:#374151}
+.toggle{width:44px;height:24px;border-radius:12px;background:#e5e7eb;border:none;cursor:pointer;position:relative;transition:.3s;flex-shrink:0}
 .toggle.on{background:var(--cor)}
-.toggle::after{content:'';position:absolute;width:18px;height:18px;background:#fff;border-radius:50%;top:3px;left:3px;transition:.3s;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+.toggle::after{content:'';position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:.3s;box-shadow:0 1px 4px rgba(0,0,0,.2)}
 .toggle.on::after{left:23px}
 
-/* LINK */
-.link-espaco{background:#fff7ed;border:2px solid #fed7aa;border-radius:12px;padding:14px;margin-bottom:12px;word-break:break-all;font-size:.82em;color:#92400e;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.link-espaco button{background:var(--cor);color:#fff;border:none;border-radius:8px;padding:6px 12px;font-size:.8em;font-weight:700;cursor:pointer;white-space:nowrap}
+/* ===== FOTOS ===== */
+.foto-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.foto-item{position:relative;border-radius:10px;overflow:hidden;aspect-ratio:1}
+.foto-item img{width:100%;height:100%;object-fit:cover}
+.foto-del{position:absolute;top:4px;right:4px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:.7em;cursor:pointer;display:flex;align-items:center;justify-content:center}
 
-/* TOAST */
-.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#1f2937;color:#fff;padding:12px 20px;border-radius:12px;font-size:.88em;z-index:999;opacity:0;transition:.3s;pointer-events:none;white-space:nowrap;max-width:90vw}
-.toast.show{opacity:1}
+/* ===== NAV BOTTOM ===== */
+.nav-bottom{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #f3f4f6;display:flex;z-index:100;box-shadow:0 -2px 16px rgba(0,0,0,.08)}
+.nav-item{flex:1;padding:10px 4px 12px;text-align:center;cursor:pointer;border:none;background:transparent;color:#9ca3af;font-size:.6em;font-weight:600;transition:.2s;position:relative}
+.nav-item.ativo{color:var(--cor)}
+.nav-item.ativo .nav-icon{transform:scale(1.1)}
+.nav-icon{font-size:1.35em;display:block;margin-bottom:3px;transition:.2s}
+.nav-badge{position:absolute;top:6px;right:50%;transform:translateX(8px);background:var(--cor);color:#fff;font-size:.65em;font-weight:800;padding:1px 5px;border-radius:10px;min-width:16px;line-height:16px}
 
-/* LOADING */
-.loading{text-align:center;padding:32px;color:#9ca3af}
-.spinner{width:28px;height:28px;border:3px solid #f3f4f6;border-top-color:var(--cor);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 10px}
+/* ===== MODAL ===== */
+.modal-over{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;align-items:flex-end;justify-content:center}
+.modal-over.open{display:flex}
+.modal-box{background:#fff;border-radius:24px 24px 0 0;padding:24px 20px;width:100%;max-height:90vh;overflow-y:auto;animation:slideUp .25s ease}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.modal-titulo{font-weight:800;font-size:1.05em;color:#1c1c1e}
+.modal-close{background:#f3f4f6;border:none;width:32px;height:32px;border-radius:50%;font-size:1em;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#6b7280}
+
+/* ===== TOAST ===== */
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:#1f2937;color:#fff;padding:12px 22px;border-radius:14px;font-size:.88em;z-index:999;opacity:0;transition:.3s;pointer-events:none;white-space:nowrap;max-width:90vw;font-weight:600}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ===== LOADING ===== */
+.loading{text-align:center;padding:32px;color:#9ca3af;font-size:.9em}
+.spinner{width:28px;height:28px;border:3px solid #f3f4f6;border-top-color:var(--cor);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 10px}
 @keyframes spin{to{transform:rotate(360deg)}}
-.empty{text-align:center;padding:28px;color:#9ca3af;font-size:.88em}
-.upload-area{border:2px dashed #e5e7eb;border-radius:12px;padding:20px;text-align:center;cursor:pointer;transition:.2s;background:#fafafa}
-.upload-area:hover{border-color:#f97316;background:#fff7ed}
-.upload-area input{display:none}
-.upload-preview{width:80px;height:80px;border-radius:10px;object-fit:cover;margin:8px auto;display:block}
-.upload-progress{height:4px;background:#f97316;border-radius:4px;width:0;transition:.3s}
-.foto-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
-.foto-item{position:relative;aspect-ratio:1}
-.foto-item img{width:100%;height:100%;object-fit:cover;border-radius:10px}
-.foto-del{position:absolute;top:4px;right:4px;background:rgba(239,68,68,.9);color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:.7em;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.empty{text-align:center;padding:32px;color:#9ca3af;font-size:.9em}
+.empty-icon{font-size:2.5em;margin-bottom:8px}
 
-/* PAGE */
-.page{display:none}
-.page.ativo{display:block}
-
-/* LOGIN */
-.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px;background:linear-gradient(135deg,#1f2937,#374151)}
-.login-card{background:#fff;border-radius:20px;padding:28px 24px;width:100%;max-width:380px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
-.login-logo{text-align:center;margin-bottom:24px}
-.login-logo-txt{font-size:1.5em;font-weight:900;color:#1f2937}
-.login-logo-txt span{color:#f97316}
+/* ===== DESKTOP ===== */
+@media(min-width:768px){
+  body{max-width:1200px;margin:0 auto}
+  .nav-bottom{max-width:1200px;left:50%;transform:translateX(-50%)}
+  .ag-table-wrap{overflow-x:auto}
+  .show-desktop{display:table-cell!important}
+  .hide-mobile{display:none}
+}
 </style>
 </head>
 <body>
@@ -152,96 +222,251 @@ body{font-family:'Segoe UI',sans-serif;background:#f3f4f6;color:#1f2937;min-heig
 <!-- LOGIN -->
 <div id="tela-login" class="login-wrap">
   <div class="login-card">
-    <div class="login-logo">
-      <div class="login-logo-txt">Rebeca <span>Agenda</span></div>
-      <div style="font-size:.82em;color:#6b7280;margin-top:4px">Painel Administrativo</div>
-    </div>
+    <div class="login-logo-txt">Rebeca <span>Agenda</span></div>
+    <div class="login-sub">Painel Administrativo</div>
     <div class="form-group">
       <label class="form-label">E-mail</label>
-      <input class="form-input" id="l-email" type="email" placeholder="seu@email.com">
+      <input class="form-input" id="l-email" type="email" placeholder="seu@email.com" autocomplete="email">
     </div>
     <div class="form-group">
       <label class="form-label">Senha</label>
-      <input class="form-input" id="l-senha" type="password" placeholder="Sua senha">
+      <input class="form-input" id="l-senha" type="password" placeholder="Sua senha" autocomplete="current-password">
     </div>
     <button class="btn-pri" onclick="login()">Entrar</button>
-    <div style="text-align:center;margin-top:14px;font-size:.85em;color:#6b7280">
-      Não tem conta? <a href="/agenda-cadastro" style="color:#f97316;font-weight:700">Criar grátis</a>
+    <div style="text-align:center;margin-top:16px;font-size:.85em;color:#6b7280">
+      Não tem conta? <a href="/agenda-cadastro" style="color:var(--cor);font-weight:700">Criar grátis</a>
     </div>
   </div>
 </div>
 
 <!-- PAINEL -->
 <div id="tela-painel" style="display:none">
+
+  <!-- HEADER -->
   <div class="header">
-    <div>
-      <div class="header-titulo" id="adm-titulo">Rebeca Agenda</div>
-      <div class="header-sub" id="adm-sub">Painel</div>
+    <div class="header-left">
+      <div class="header-logo">📅</div>
+      <div>
+        <div class="header-titulo" id="adm-titulo">Rebeca Agenda</div>
+        <div class="header-sub">Painel Administrativo</div>
+      </div>
     </div>
-    <button class="btn-sair" onclick="sair()">Sair</button>
+    <div class="header-right">
+      <button class="header-notif" title="Notificações">🔔</button>
+      <button class="header-user" onclick="navegar('perfil')">
+        <div class="header-user-avatar" id="adm-avatar">A</div>
+        <div class="header-user-info">
+          <div class="header-user-role">Administrador</div>
+          <div class="header-user-name" id="adm-sub">Carregando...</div>
+        </div>
+        <span style="font-size:.7em;opacity:.7">▾</span>
+      </button>
+    </div>
   </div>
 
-  <!-- INÍCIO -->
+  <!-- PAGE INÍCIO -->
   <div class="page ativo" id="page-inicio">
-    <div class="stats-grid" id="stats-grid">
-      <div class="stat-card"><div class="stat-val" id="st-hoje">-</div><div class="stat-label">Hoje</div></div>
-      <div class="stat-card"><div class="stat-val" id="st-pend">-</div><div class="stat-label">Pendentes</div></div>
-      <div class="stat-card"><div class="stat-val" id="st-cli">-</div><div class="stat-label">Clientes</div></div>
-      <div class="stat-card"><div class="stat-val" id="st-receita">-</div><div class="stat-label">Receita mês</div></div>
+    <!-- STATS -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">📅</div>
+        <div>
+          <div class="stat-val" id="st-hoje">0</div>
+          <div class="stat-label">Hoje</div>
+          <div class="stat-sub">agendamentos</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">⏰</div>
+        <div>
+          <div class="stat-val" id="st-pend">0</div>
+          <div class="stat-label">Pendentes</div>
+          <div class="stat-sub">aguardando confirmação</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">👥</div>
+        <div>
+          <div class="stat-val" id="st-cli">0</div>
+          <div class="stat-label">Clientes</div>
+          <div class="stat-sub">cadastrados</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">💰</div>
+        <div>
+          <div class="stat-val" id="st-receita">R$0</div>
+          <div class="stat-label">Receita do mês</div>
+          <div class="stat-sub">faturamento total</div>
+        </div>
+      </div>
     </div>
-    <div class="section" style="margin-top:12px">
-      <div class="link-espaco">
-        <span style="flex:1" id="link-espaco-txt">Carregando link...</span>
-        <button onclick="copiarLink()">Copiar</button>
-        <button onclick="abrirEspaco()">Abrir</button>
+
+    <!-- LINK ESPACO -->
+    <div class="link-espaco-card">
+      <div class="link-espaco-icon">🔗</div>
+      <div class="link-espaco-info">
+        <div class="link-espaco-titulo">Link da Agenda</div>
+        <div class="link-espaco-url" id="link-espaco-txt">Carregando link...</div>
       </div>
-      <div style="margin-bottom:12px">
-        <button id="btn-ativar-push" class="ag-btn cinza" style="width:100%;padding:10px;border-radius:10px;font-size:.85em" onclick="ativarPush()">🔔 Ativar notificações push</button>
+      <div class="link-espaco-btns">
+        <button class="btn-link" onclick="copiarLink()">📋 Copiar link</button>
+        <button class="btn-link-pri" onclick="abrirEspaco()">↗ Abrir link</button>
       </div>
-      <div style="display:none">
+    </div>
+
+    <!-- PRÓXIMOS AGENDAMENTOS -->
+    <div class="section">
+      <div class="section-card">
+        <div class="section-header">
+          <div>
+            <div class="section-titulo">📅 Próximos Agendamentos</div>
+            <div class="section-sub">Veja os próximos compromissos da sua agenda</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <select class="filtro-select" id="filtro-data-inicio" onchange="carregarInicio()">
+              <option value="hoje">Hoje</option>
+              <option value="amanha">Amanhã</option>
+              <option value="semana">Esta semana</option>
+            </select>
+            <select class="filtro-select" id="filtro-status-inicio" onchange="carregarInicio()">
+              <option value="">Todos os status</option>
+              <option value="pendente">Pendentes</option>
+              <option value="confirmado">Confirmados</option>
+              <option value="concluido">Concluídos</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- TABELA DESKTOP -->
+        <div class="ag-table-wrap" style="display:none" id="tabela-wrap">
+          <table class="ag-table">
+            <thead>
+              <tr>
+                <th>Horário</th>
+                <th>Cliente</th>
+                <th>Serviço</th>
+                <th>Status</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-inicio"></tbody>
+          </table>
+        </div>
+
+        <!-- CARDS MOBILE -->
+        <div id="proximos-hoje"><div class="loading"><div class="spinner"></div></div></div>
+
+        <div style="text-align:center;margin-top:16px">
+          <button class="btn-add-outline" onclick="navegar('agenda')">Ver todos os agendamentos ▾</button>
+        </div>
       </div>
-      <div class="section-titulo">📅 Próximos Agendamentos</div>
-      <div id="proximos-hoje"><div class="loading"><div class="spinner"></div></div></div>
+    </div>
+
+    <!-- PUSH NOTIF -->
+    <div class="section" style="padding-top:0">
+      <button id="btn-ativar-push" style="width:100%;padding:12px;background:#fff;border:1.5px solid #e5e7eb;border-radius:14px;font-size:.85em;font-weight:600;color:#374151;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px" onclick="ativarPush()">
+        🔔 Ativar notificações push
+      </button>
     </div>
   </div>
 
-  <!-- AGENDA -->
+  <!-- PAGE AGENDA -->
   <div class="page" id="page-agenda">
     <div class="section">
-      <div class="cal-strip" id="adm-cal"></div>
-      <div class="section-titulo">
-        <span id="agenda-data-titulo">Hoje</span>
-        <button class="btn-add" onclick="abrirModalNovoAg()">+ Novo</button>
+      <div class="section-card">
+        <div class="section-header" style="margin-bottom:16px">
+          <div class="section-titulo">📅 Agenda</div>
+          <button class="btn-add" onclick="abrirModalNovoAg()">+ Novo agendamento</button>
+        </div>
+        <div class="cal-strip" id="adm-cal"></div>
+        <div class="filtros-row">
+          <button class="filtro-btn ativo" onclick="filtrarStatus('',this)">Todos</button>
+          <button class="filtro-btn" onclick="filtrarStatus('pendente',this)">⏳ Pendentes</button>
+          <button class="filtro-btn" onclick="filtrarStatus('confirmado',this)">✅ Confirmados</button>
+          <button class="filtro-btn" onclick="filtrarStatus('concluido',this)">🏁 Concluídos</button>
+        </div>
+        <div style="font-weight:700;font-size:.9em;color:#374151;margin-bottom:12px" id="agenda-data-titulo">Hoje</div>
+        <div id="lista-agenda"><div class="loading"><div class="spinner"></div></div></div>
       </div>
-      <div id="lista-agenda"><div class="loading"><div class="spinner"></div></div></div>
     </div>
   </div>
 
-  <!-- SERVIÇOS -->
+  <!-- PAGE SERVIÇOS -->
   <div class="page" id="page-servicos">
     <div class="section">
-      <div class="section-titulo">✂️ Serviços <button class="btn-add" onclick="abrirModalServico()">+ Novo</button></div>
-      <div id="lista-servicos"><div class="loading"><div class="spinner"></div></div></div>
+      <div class="section-card">
+        <div class="section-header" style="margin-bottom:16px">
+          <div>
+            <div class="section-titulo">✂️ Serviços</div>
+            <div class="section-sub">Catálogo de serviços oferecidos</div>
+          </div>
+          <button class="btn-add" onclick="abrirModalServico()">+ Novo</button>
+        </div>
+        <div id="lista-servicos"><div class="loading"><div class="spinner"></div></div></div>
+      </div>
     </div>
   </div>
 
-  <!-- PROFISSIONAIS -->
+  <!-- PAGE PROFISSIONAIS -->
   <div class="page" id="page-profissionais">
     <div class="section">
-      <div class="section-titulo">👥 Profissionais <button class="btn-add" onclick="abrirModalProf()">+ Novo</button></div>
-      <div id="lista-profissionais"><div class="loading"><div class="spinner"></div></div></div>
+      <div class="section-card">
+        <div class="section-header" style="margin-bottom:16px">
+          <div>
+            <div class="section-titulo">👥 Equipe</div>
+            <div class="section-sub">Profissionais cadastrados</div>
+          </div>
+          <button class="btn-add" onclick="abrirModalProf()">+ Novo</button>
+        </div>
+        <div id="lista-profissionais"><div class="loading"><div class="spinner"></div></div></div>
+      </div>
     </div>
   </div>
 
-  <!-- CLIENTES -->
+  <!-- PAGE CLIENTES -->
   <div class="page" id="page-clientes">
     <div class="section">
-      <div class="section-titulo">👤 Clientes</div>
-      <div id="lista-clientes"><div class="loading"><div class="spinner"></div></div></div>
+      <div class="section-card">
+        <div class="section-header" style="margin-bottom:16px">
+          <div>
+            <div class="section-titulo">👤 Clientes</div>
+            <div class="section-sub">Cadastro de clientes</div>
+          </div>
+        </div>
+        <div class="filtros-row" style="margin-bottom:12px">
+          <input class="form-input" id="busca-cliente" placeholder="🔍 Buscar cliente..." style="flex:1;padding:9px 14px" oninput="filtrarClientes(this.value)">
+        </div>
+        <div id="lista-clientes"><div class="loading"><div class="spinner"></div></div></div>
+      </div>
     </div>
   </div>
 
-  <!-- PERFIL -->
+  <!-- PAGE FOTOS -->
+  <div class="page" id="page-fotos">
+    <div class="section">
+      <div class="section-card">
+        <div class="section-header" style="margin-bottom:16px">
+          <div>
+            <div class="section-titulo">📸 Galeria</div>
+            <div class="section-sub">Fotos do seu trabalho</div>
+          </div>
+          <button class="btn-add" onclick="document.getElementById('input-foto-galeria').click()">+ Foto</button>
+        </div>
+        <input type="file" id="input-foto-galeria" accept="image/*" style="display:none" onchange="uploadFotoGaleria(this)">
+        <div class="filtros-row">
+          <select class="filtro-select" id="tipo-foto-sel" onchange="carregarFotos()">
+            <option value="resultado">Resultados</option>
+            <option value="ambiente">Ambiente</option>
+            <option value="servico">Serviços</option>
+          </select>
+        </div>
+        <div id="lista-fotos"><div class="loading"><div class="spinner"></div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAGE PERFIL -->
   <div class="page" id="page-perfil">
     <div class="section">
       <div class="perfil-secao">
@@ -290,102 +515,143 @@ body{font-family:'Segoe UI',sans-serif;background:#f3f4f6;color:#1f2937;min-heig
           <button class="toggle" id="tog-aniv" onclick="toggleConfig('aniversarioAtivo','tog-aniv')"></button>
         </div>
       </div>
-      <button class="btn-pri" onclick="salvarPerfil()">💾 Salvar</button>
+      <div class="perfil-secao">
+        <div class="perfil-secao-titulo">🔐 Segurança</div>
+        <button class="btn-sec" onclick="sair()">Sair da conta</button>
+      </div>
+      <button class="btn-pri" onclick="salvarPerfil()">💾 Salvar alterações</button>
     </div>
   </div>
 
-  <!-- FOTOS -->
-<div class="page" id="page-fotos">
-  <div class="section">
-    <div class="section-titulo">📸 Galeria <button class="btn-add" onclick="document.getElementById('input-foto-galeria').click()">+ Foto</button></div>
-    <input type="file" id="input-foto-galeria" accept="image/*" style="display:none" onchange="uploadFotoGaleria(this)">
-    <div style="margin-bottom:12px">
-      <select class="form-select" id="tipo-foto-sel" style="width:auto;display:inline-block;padding:8px 12px">
-        <option value="resultado">Resultado</option>
-        <option value="ambiente">Ambiente</option>
-        <option value="servico">Serviço</option>
-      </select>
-    </div>
-    <div id="progress-galeria" style="display:none;margin-bottom:12px">
-      <div style="font-size:.8em;color:#6b7280;margin-bottom:4px">Enviando foto...</div>
-      <div style="background:#f3f4f6;border-radius:4px;overflow:hidden">
-        <div class="upload-progress" id="bar-galeria"></div>
+  <!-- PAGE WHATSAPP -->
+  <div id="page-whatsapp" class="page">
+    <div class="section">
+      <div class="section-card" style="margin-bottom:14px">
+        <div class="section-header" style="margin-bottom:12px">
+          <div class="section-titulo">📱 WhatsApp IA</div>
+          <button class="ag-btn cinza" style="font-size:.78em;padding:6px 12px" onclick="verificarStatusWpp()">↺ Atualizar</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+          <div id="wpp-status-dot" style="width:14px;height:14px;border-radius:50%;background:#d1d5db;flex-shrink:0"></div>
+          <div style="flex:1">
+            <div style="font-weight:600;font-size:.92em" id="wpp-status-txt">Verificando...</div>
+            <div style="font-size:.78em;color:#6b7280" id="wpp-tel-txt"></div>
+          </div>
+        </div>
+        <div id="wpp-qr-box" style="display:none;text-align:center;padding:16px;background:#f9fafb;border-radius:12px;margin-bottom:14px">
+          <p style="font-size:.85em;color:#6b7280;margin-bottom:12px">Escaneie com o WhatsApp do negócio:</p>
+          <div id="wpp-qr-img" style="background:#fff;display:inline-block;padding:12px;border-radius:12px"></div>
+          <p style="font-size:.75em;color:#9ca3af;margin-top:8px">QR expira em 60s. Clique em atualizar se expirar.</p>
+          <button class="ag-btn cinza" style="margin-top:10px;font-size:.82em" onclick="gerarQRWpp()">🔄 Novo QR Code</button>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn-pri" id="btn-conectar-wpp" onclick="conectarWpp()" style="background:#25d366;flex:1">📱 Conectar WhatsApp</button>
+          <button class="btn-sec" id="btn-desconectar-wpp" onclick="desconectarWpp()" style="display:none;flex:1">⛔ Desconectar</button>
+        </div>
+      </div>
+      <div class="section-card" style="margin-bottom:14px">
+        <div class="perfil-secao-titulo" style="margin-bottom:10px">🛡️ Anti-bloqueio</div>
+        <div class="toggle-row">
+          <span class="toggle-label">Manter WhatsApp ativo automaticamente</span>
+          <button class="toggle" id="tog-anti" onclick="toggleAntiBloqueio()"></button>
+        </div>
+        <p style="font-size:.75em;color:#9ca3af;margin-top:8px">Evita que a sessão expire por inatividade (ping a cada 6h).</p>
+      </div>
+      <div class="section-card">
+        <div class="section-header" style="margin-bottom:16px">
+          <div class="section-titulo">✨ Serviços com IA</div>
+          <button class="btn-add" onclick="abrirModalNovoServico()">+ Novo</button>
+        </div>
+        <div id="lista-servicos-ia"><div class="loading"><div class="spinner"></div></div></div>
       </div>
     </div>
-    <div class="foto-grid" id="grid-fotos"></div>
+  </div>
 
-    <div class="section-titulo" style="margin-top:20px">🖼️ Logo do Negócio</div>
-    <div class="upload-area" onclick="document.getElementById('input-logo').click()">
-      <input type="file" id="input-logo" accept="image/*" onchange="uploadLogo(this)">
-      <div id="logo-preview-area">
-        <div style="font-size:2em">🏪</div>
-        <div style="font-size:.82em;color:#6b7280;margin-top:6px">Clique para enviar logo</div>
-        <div style="font-size:.72em;color:#9ca3af">JPG, PNG, WEBP até 5MB</div>
+  <!-- MODAL NOVO SERVIÇO IA -->
+  <div id="modal-novo-servico" class="modal-over">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div class="modal-titulo">✨ Novo Serviço</div>
+        <button class="modal-close" onclick="fecharModalServico()">✕</button>
       </div>
+      <div style="border:2px dashed #e5e7eb;border-radius:12px;padding:16px;text-align:center;margin-bottom:14px;cursor:pointer" onclick="document.getElementById('input-foto-servico').click()" id="zona-foto-servico">
+        <div id="preview-foto-servico" style="display:none;margin-bottom:8px">
+          <img id="img-preview-servico" style="max-height:120px;border-radius:8px;max-width:100%">
+        </div>
+        <div id="txt-zona-foto">📸 Adicionar foto do resultado<br><small style="color:#9ca3af">A IA analisa e melhora a descrição</small></div>
+        <input type="file" id="input-foto-servico" accept="image/*" style="display:none" onchange="previewFotoServico(this)">
+      </div>
+      <button class="btn-pri" id="btn-analisar-foto" style="display:none;background:#7c3aed;margin-bottom:14px" onclick="analisarFotoServico()">🤖 Analisar com IA</button>
+      <div class="form-group">
+        <label class="form-label">Nome do serviço *</label>
+        <div style="display:flex;gap:8px">
+          <input class="form-input" id="ns-nome" placeholder="Ex: Corte feminino...">
+          <button class="ag-btn cinza" style="white-space:nowrap;padding:8px 12px" onclick="gerarDescricaoIA()">✨ IA</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Descrição</label>
+        <textarea class="form-input" id="ns-desc" rows="3" style="resize:none" placeholder="Descrição atrativa..."></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Preço (R$) *</label>
+          <input class="form-input" id="ns-preco" type="number" placeholder="0,00">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Duração (min) *</label>
+          <input class="form-input" id="ns-duracao" type="number" placeholder="60">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Categoria</label>
+        <select class="form-select" id="ns-categoria">
+          <option value="">Selecione...</option>
+          <option>Cabelo</option><option>Barba</option><option>Unhas</option>
+          <option>Pele</option><option>Sobrancelha</option><option>Maquiagem</option>
+          <option>Massagem</option><option>Depilação</option><option>Estética</option>
+          <option>Coloração</option><option>Tratamento</option><option>Outro</option>
+        </select>
+      </div>
+      <div id="ns-ia-status" style="display:none;font-size:.8em;color:#7c3aed;margin-bottom:10px;text-align:center">⏳ IA processando...</div>
+      <button class="btn-pri" onclick="salvarNovoServico()">💾 Salvar Serviço</button>
     </div>
   </div>
-</div>
 
-<!-- NAV BOTTOM -->
-  <div class="nav-bottom">
-    <button class="nav-item ativo" onclick="mudarPag('inicio',this)"><span class="nav-icon">🏠</span>Início</button>
-    <button class="nav-item" onclick="mudarPag('agenda',this)"><span class="nav-icon">📅</span>Agenda</button>
-    <button class="nav-item" onclick="mudarPag('servicos',this)"><span class="nav-icon">✂️</span>Serviços</button>
-    <button class="nav-item" onclick="mudarPag('profissionais',this)"><span class="nav-icon">👥</span>Equipe</button>
-    <button class="nav-item" onclick="mudarPag('clientes',this)"><span class="nav-icon">👤</span>Clientes</button>
-    <button class="nav-item" onclick="mudarPag('fotos',this)"><span class="nav-icon">📸</span>Fotos</button>
-    <button class="nav-item" onclick="mudarPag('perfil',this)"><span class="nav-icon">⚙️</span>Perfil</button>
-  </div>
-</div>
+  <!-- NAV BOTTOM -->
+  <nav class="nav-bottom">
+    <button class="nav-item ativo" onclick="navegar('inicio')" id="nav-inicio">
+      <span class="nav-icon">🏠</span>Início
+    </button>
+    <button class="nav-item" onclick="navegar('agenda')" id="nav-agenda">
+      <span class="nav-icon">📅</span>Agenda
+      <span class="nav-badge" id="badge-agenda" style="display:none">0</span>
+    </button>
+    <button class="nav-item" onclick="navegar('servicos')" id="nav-servicos">
+      <span class="nav-icon">✂️</span>Serviços
+      <span class="nav-badge" id="badge-servicos" style="display:none">0</span>
+    </button>
+    <button class="nav-item" onclick="navegar('profissionais')" id="nav-profissionais">
+      <span class="nav-icon">👥</span>Equipe
+      <span class="nav-badge" id="badge-profissionais" style="display:none">0</span>
+    </button>
+    <button class="nav-item" onclick="navegar('clientes')" id="nav-clientes">
+      <span class="nav-icon">👤</span>Clientes
+      <span class="nav-badge" id="badge-clientes" style="display:none">0</span>
+    </button>
+    <button class="nav-item" onclick="navegar('fotos')" id="nav-fotos">
+      <span class="nav-icon">📸</span>Fotos
+      <span class="nav-badge" id="badge-fotos" style="display:none">0</span>
+    </button>
+    <button class="nav-item" onclick="navegar('perfil')" id="nav-perfil">
+      <span class="nav-icon">⚙️</span>Perfil
+    </button>
+  </nav>
 
-<!-- MODAL NOVO AGENDAMENTO -->
-<div class="modal-bg" id="modal-ag">
-  <div class="modal-box">
-    <div class="modal-titulo">📅 Novo Agendamento</div>
-    <div class="form-group"><label class="form-label">Nome do cliente *</label><input class="form-input" id="mag-nome" type="text"></div>
-    <div class="form-group"><label class="form-label">WhatsApp *</label><input class="form-input" id="mag-tel" type="tel"></div>
-    <div class="form-group"><label class="form-label">Serviço</label><select class="form-select" id="mag-serv"><option value="">Selecionar...</option></select></div>
-    <div class="form-group"><label class="form-label">Profissional</label><select class="form-select" id="mag-prof"><option value="">Qualquer</option></select></div>
-    <div class="form-row">
-      <div class="form-group"><label class="form-label">Data *</label><input class="form-input" id="mag-data" type="date"></div>
-      <div class="form-group"><label class="form-label">Hora *</label><input class="form-input" id="mag-hora" type="time"></div>
-    </div>
-    <div class="form-group"><label class="form-label">Observações</label><input class="form-input" id="mag-obs" type="text"></div>
-    <button class="btn-pri" onclick="salvarAgendamento()">Salvar</button>
-    <button class="btn-sec" onclick="fecharModal('modal-ag')">Cancelar</button>
-  </div>
-</div>
-
-<!-- MODAL SERVIÇO -->
-<div class="modal-bg" id="modal-serv">
-  <div class="modal-box">
-    <div class="modal-titulo" id="modal-serv-titulo">✂️ Novo Serviço</div>
-    <div class="form-group"><label class="form-label">Nome *</label><input class="form-input" id="ms-nome" type="text"></div>
-    <div class="form-group"><label class="form-label">Descrição</label><input class="form-input" id="ms-desc" type="text"></div>
-    <div class="form-row">
-      <div class="form-group"><label class="form-label">Duração (min) *</label><input class="form-input" id="ms-dur" type="number" value="60" min="5"></div>
-      <div class="form-group"><label class="form-label">Preço (R$) *</label><input class="form-input" id="ms-preco" type="number" value="0" min="0" step="0.01"></div>
-    </div>
-    <div class="form-group"><label class="form-label">Categoria</label><input class="form-input" id="ms-cat" type="text" placeholder="Ex: Cabelo, Barba..."></div>
-    <div class="form-group"><label class="form-label">URL da foto</label><input class="form-input" id="ms-foto" type="url" placeholder="https://..."></div>
-    <button class="btn-pri" onclick="salvarServico()">Salvar</button>
-    <button class="btn-sec" onclick="fecharModal('modal-serv')">Cancelar</button>
-  </div>
-</div>
-
-<!-- MODAL PROFISSIONAL -->
-<div class="modal-bg" id="modal-prof">
-  <div class="modal-box">
-    <div class="modal-titulo" id="modal-prof-titulo">👤 Novo Profissional</div>
-    <div class="form-group"><label class="form-label">Nome *</label><input class="form-input" id="mp-nome" type="text"></div>
-    <div class="form-group"><label class="form-label">URL da foto</label><input class="form-input" id="mp-foto" type="url" placeholder="https://..."></div>
-    <div class="form-group"><label class="form-label">Especialidades</label><input class="form-input" id="mp-esp" type="text" placeholder="Ex: Corte, Coloração (separar por vírgula)"></div>
-    <button class="btn-pri" onclick="salvarProf()">Salvar</button>
-    <button class="btn-sec" onclick="fecharModal('modal-prof')">Cancelar</button>
-  </div>
-</div>
+</div><!-- fim tela-painel -->
 
 <script>
+
 var TOKEN = localStorage.getItem('agenda_token') || '';
 var ADM_ID = '';
 var servicos = [];
@@ -446,6 +712,11 @@ function iniciarPainel(dados) {
 }
 
 // ===== DASHBOARD =====
+async function atualizarBadges(pendentes) {
+  var b = document.getElementById('badge-agenda');
+  if (b) { b.textContent = pendentes; b.style.display = pendentes > 0 ? 'block' : 'none'; }
+}
+
 async function carregarDashboard() {
   try {
     var d = await api('/dashboard');
@@ -709,6 +980,13 @@ async function salvarAgendamento() {
 }
 
 // ===== CLIENTES =====
+function filtrarClientes(termo) {
+  var cards = document.querySelectorAll('.cli-card');
+  cards.forEach(function(el) {
+    el.style.display = el.textContent.toLowerCase().includes(termo.toLowerCase()) ? '' : 'none';
+  });
+}
+
 async function carregarClientes() {
   var el = document.getElementById('lista-clientes');
   el.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
@@ -1246,109 +1524,7 @@ async function deletarServicoIA(id) {
 
 init();
 verificarStatusPush();
+
 </script>
-
-  <!-- PAGE WHATSAPP -->
-  <div id="page-whatsapp" class="page" style="display:none;padding:16px">
-    <h2 style="font-size:1.1em;margin-bottom:16px;color:#1c1c1e">📱 WhatsApp IA</h2>
-
-    <!-- STATUS CONEXÃO -->
-    <div class="ag-card" style="margin-bottom:16px">
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
-        <div id="wpp-status-dot" style="width:14px;height:14px;border-radius:50%;background:#d1d5db;flex-shrink:0"></div>
-        <div>
-          <div style="font-weight:600;font-size:.95em" id="wpp-status-txt">Verificando...</div>
-          <div style="font-size:.78em;color:#6b7280" id="wpp-tel-txt"></div>
-        </div>
-        <button class="ag-btn cinza" style="margin-left:auto;font-size:.78em;padding:6px 12px" onclick="verificarStatusWpp()">↺ Atualizar</button>
-      </div>
-      <div id="wpp-qr-box" style="display:none;text-align:center;padding:16px">
-        <p style="font-size:.85em;color:#6b7280;margin-bottom:12px">Escaneie o QR Code com o WhatsApp do negócio:</p>
-        <div id="wpp-qr-img" style="background:#fff;display:inline-block;padding:12px;border-radius:12px;border:2px solid #f3f4f6"></div>
-        <p style="font-size:.75em;color:#9ca3af;margin-top:8px">O QR expira em 60 segundos. Clique em "Atualizar" se expirar.</p>
-        <button class="ag-btn cinza" style="margin-top:10px;font-size:.82em" onclick="gerarQRWpp()">🔄 Novo QR Code</button>
-      </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="ag-btn" id="btn-conectar-wpp" onclick="conectarWpp()" style="background:#25d366;color:#fff;flex:1">📱 Conectar WhatsApp</button>
-        <button class="ag-btn cinza" id="btn-desconectar-wpp" onclick="desconectarWpp()" style="display:none;flex:1">⛔ Desconectar</button>
-      </div>
-    </div>
-
-    <!-- ANTI-BLOQUEIO -->
-    <div class="ag-card" style="margin-bottom:16px">
-      <div style="font-weight:600;font-size:.9em;margin-bottom:10px">🛡️ Anti-bloqueio</div>
-      <div style="display:flex;align-items:center;gap:10px">
-        <button class="toggle" id="tog-anti" onclick="toggleAntiBloqueio()"></button>
-        <span style="font-size:.85em;color:#374151">Manter WhatsApp ativo automaticamente (ping a cada 6h)</span>
-      </div>
-      <p style="font-size:.75em;color:#9ca3af;margin-top:8px">Evita que a sessão do WhatsApp expire por inatividade.</p>
-    </div>
-
-    <!-- SERVIÇOS COM IA -->
-    <div class="ag-card">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-        <div style="font-weight:600;font-size:.9em">✨ Serviços com IA</div>
-        <button class="ag-btn" style="font-size:.78em;padding:6px 14px" onclick="abrirModalNovoServico()">+ Novo</button>
-      </div>
-      <div id="lista-servicos-ia">
-        <div style="text-align:center;color:#9ca3af;font-size:.85em;padding:20px">Carregando serviços...</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL NOVO SERVIÇO COM IA -->
-  <div id="modal-novo-servico" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:flex-end">
-    <div style="background:#fff;border-radius:20px 20px 0 0;padding:20px;width:100%;max-height:90vh;overflow-y:auto">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-        <div style="font-weight:700;font-size:1em">✨ Novo Serviço</div>
-        <button onclick="fecharModalServico()" style="background:none;border:none;font-size:1.3em;cursor:pointer">✕</button>
-      </div>
-
-      <!-- Upload foto para IA analisar -->
-      <div style="border:2px dashed #e5e7eb;border-radius:12px;padding:16px;text-align:center;margin-bottom:14px;cursor:pointer" onclick="document.getElementById('input-foto-servico').click()" id="zona-foto-servico">
-        <div id="preview-foto-servico" style="display:none;margin-bottom:8px">
-          <img id="img-preview-servico" style="max-height:120px;border-radius:8px;max-width:100%">
-        </div>
-        <div id="txt-zona-foto">📸 Clique para adicionar foto do resultado<br><small style="color:#9ca3af">A IA analisa e melhora a descrição automaticamente</small></div>
-        <input type="file" id="input-foto-servico" accept="image/*" style="display:none" onchange="previewFotoServico(this)">
-      </div>
-      <button class="ag-btn" id="btn-analisar-foto" style="width:100%;margin-bottom:14px;display:none;background:#7c3aed;color:#fff" onclick="analisarFotoServico()">🤖 Analisar foto com IA</button>
-
-      <div class="form-group" style="margin-bottom:10px">
-        <label class="form-label">Nome do serviço *</label>
-        <div style="display:flex;gap:8px">
-          <input class="form-input" id="ns-nome" placeholder="Ex: Corte feminino, Hidratação...">
-          <button class="ag-btn cinza" style="white-space:nowrap;font-size:.78em" onclick="gerarDescricaoIA()">✨ IA</button>
-        </div>
-      </div>
-      <div class="form-group" style="margin-bottom:10px">
-        <label class="form-label">Descrição</label>
-        <textarea class="form-input" id="ns-desc" rows="3" placeholder="Descrição atrativa do serviço..." style="resize:none"></textarea>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
-        <div class="form-group">
-          <label class="form-label">Preço (R$) *</label>
-          <input class="form-input" id="ns-preco" type="number" placeholder="0,00">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Duração (min) *</label>
-          <input class="form-input" id="ns-duracao" type="number" placeholder="60">
-        </div>
-      </div>
-      <div class="form-group" style="margin-bottom:10px">
-        <label class="form-label">Categoria</label>
-        <select class="form-input" id="ns-categoria">
-          <option value="">Selecione...</option>
-          <option>Cabelo</option><option>Barba</option><option>Unhas</option>
-          <option>Pele</option><option>Sobrancelha</option><option>Maquiagem</option>
-          <option>Massagem</option><option>Depilação</option><option>Estética</option>
-          <option>Coloração</option><option>Tratamento</option><option>Outro</option>
-        </select>
-      </div>
-      <div id="ns-ia-status" style="display:none;font-size:.8em;color:#7c3aed;margin-bottom:10px;text-align:center">⏳ IA processando...</div>
-      <button class="ag-btn" style="width:100%;margin-top:6px" onclick="salvarNovoServico()">💾 Salvar Serviço</button>
-    </div>
-  </div>
-
 </body>
 </html>
