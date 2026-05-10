@@ -299,7 +299,7 @@ function filtrarCat(catId, el) {
   document.querySelectorAll('.cat-item').forEach(e => e.classList.remove('active'));
   el.classList.add('active');
   catAtiva = catId;
-  const filtrados = catId === 'todos' ? itens : itens.filter(i => i.categoriaId === catId || i.categoria === catId);
+  const filtrados = catId === 'todos' ? itens : itens.filter(i => (i.categoriaId?._id || i.categoriaId) === catId);
   renderProdutos(filtrados);
 }
 
@@ -316,7 +316,8 @@ function renderProdutos(lista) {
   }
   const grupos = {};
   lista.forEach(item => {
-    const cat = categorias.find(c => c._id === item.categoriaId) || {nome: 'Produtos', emoji: '📦'};
+    const catObj = item.categoriaId && typeof item.categoriaId === 'object' ? item.categoriaId : categorias.find(c => c._id === item.categoriaId);
+    const cat = catObj || {nome: 'Produtos', emoji: '📦'};
     const key = cat.nome;
     if (!grupos[key]) grupos[key] = {emoji: cat.emoji, itens: []};
     grupos[key].itens.push(item);
