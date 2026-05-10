@@ -707,9 +707,17 @@ function iniciarPainel(dados) {
   var nome = dados.nomeNegocio || dados.nome || 'Meu Negócio';
   document.getElementById('adm-titulo').textContent = nome;
   document.getElementById('adm-sub').textContent = dados.segmento || 'Painel';
-  carregarDashboard();
+  ADM_ID = dados._id || dados.adminId || '';
+  // Preencher avatar
+  var av = document.getElementById('adm-avatar');
+  if (av) av.textContent = nome.charAt(0).toUpperCase();
+  // Preencher link do espaço
+  var linkEl = document.getElementById('link-espaco-txt');
+  if (linkEl && ADM_ID) linkEl.textContent = location.origin + '/espaco-digital?id=' + ADM_ID;
+  carregarInicio();
   carregarServicos();
   carregarProfissionais();
+  carregarClientes();
   gerarCalAdm();
 }
 
