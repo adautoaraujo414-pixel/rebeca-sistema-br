@@ -703,9 +703,9 @@ async function carregarMesas() {
 
     let html = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px">';
     mesas.forEach(function(m) {
-      var cor  = m.ocupada ? '#f97316' : '#e5e7eb';
-      var bg   = m.ocupada ? '#fff7ed' : '#f9fafb';
-      var txt  = m.ocupada ? '#f97316' : '#9ca3af';
+      var cor  = m.ocupada ? '#ef4444' : '#22c55e';
+      var bg   = m.ocupada ? '#fef2f2' : '#f0fdf4';
+      var txt  = m.ocupada ? '#ef4444' : '#16a34a';
       var oldest = null;
       if (m.pedidos && m.pedidos.length) {
         oldest = m.pedidos.reduce(function(a,b){ return new Date(a.createdAt) < new Date(b.createdAt) ? a : b; });
@@ -976,29 +976,37 @@ async function carregarPedidosMesa(mesa) {
 function modalRenderCardapio() {
   const el = document.getElementById('modal-lista-cardapio');
   if (!el || !itens.length) return;
-  el.innerHTML = itens.map(item => `
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;border-bottom:1px solid #f3f4f6;cursor:pointer" onclick="modalAddItem('${item._id}','${item.nome}',${item.preco||0})">
-      <div>
-        <div style="font-weight:600;font-size:.9em">${item.nome}</div>
-        <div style="font-size:.78em;color:#6b7280">${item.descricao||''}</div>
-      </div>
-      <div style="font-weight:700;color:#f97316;white-space:nowrap">R$ ${(item.preco||0).toFixed(2).replace('.',',')}</div>
-    </div>
-  `).join('');
+  el.innerHTML = itens.map(item => {
+    var imgHtml = item.foto
+      ? '<img src="'+item.foto+'" style="width:48px;height:48px;border-radius:8px;object-fit:cover;flex-shrink:0">'
+      : '<div style="width:48px;height:48px;border-radius:8px;background:#f3f4f6;display:flex;align-items:center;justify-content:center;font-size:1.4em;flex-shrink:0">'+(item.emoji||'🍽️')+'</div>';
+    return '<div style="display:flex;align-items:center;gap:10px;padding:10px;border-bottom:1px solid #f3f4f6;cursor:pointer" onclick="modalAddItem(''+item._id+'',''+item.nome.replace(/'/g,"\'")+'',' +(item.preco||0)+')">'
+      + imgHtml
+      + '<div style="flex:1;min-width:0">'
+      + '<div style="font-weight:600;font-size:.9em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+item.nome+'</div>'
+      + '<div style="font-size:.75em;color:#6b7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(item.descricao||'')+'</div>'
+      + '</div>'
+      + '<div style="font-weight:700;color:#f97316;white-space:nowrap">R$ '+(item.preco||0).toFixed(2).replace('.',',')+'</div>'
+      + '</div>';
+  }).join('');
 }
 
 function modalBuscar(q) {
   const filtrados = q ? itens.filter(i => i.nome.toLowerCase().includes(q.toLowerCase())) : itens;
   const el = document.getElementById('modal-lista-cardapio');
-  el.innerHTML = filtrados.map(item => `
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;border-bottom:1px solid #f3f4f6;cursor:pointer" onclick="modalAddItem('${item._id}','${item.nome}',${item.preco||0})">
-      <div>
-        <div style="font-weight:600;font-size:.9em">${item.nome}</div>
-        <div style="font-size:.78em;color:#6b7280">${item.descricao||''}</div>
-      </div>
-      <div style="font-weight:700;color:#f97316">R$ ${(item.preco||0).toFixed(2).replace('.',',')}</div>
-    </div>
-  `).join('');
+  el.innerHTML = filtrados.map(item => {
+    var imgHtml = item.foto
+      ? '<img src="'+item.foto+'" style="width:48px;height:48px;border-radius:8px;object-fit:cover;flex-shrink:0">'
+      : '<div style="width:48px;height:48px;border-radius:8px;background:#f3f4f6;display:flex;align-items:center;justify-content:center;font-size:1.4em;flex-shrink:0">'+(item.emoji||'🍽️')+'</div>';
+    return '<div style="display:flex;align-items:center;gap:10px;padding:10px;border-bottom:1px solid #f3f4f6;cursor:pointer" onclick="modalAddItem(''+item._id+'',''+item.nome.replace(/'/g,"\'")+'',' +(item.preco||0)+')">'
+      + imgHtml
+      + '<div style="flex:1;min-width:0">'
+      + '<div style="font-weight:600;font-size:.9em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+item.nome+'</div>'
+      + '<div style="font-size:.75em;color:#6b7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(item.descricao||'')+'</div>'
+      + '</div>'
+      + '<div style="font-weight:700;color:#f97316;white-space:nowrap">R$ '+(item.preco||0).toFixed(2).replace('.',',')+'</div>'
+      + '</div>';
+  }).join('');
 }
 
 function modalAddItem(id, nome, preco) {
