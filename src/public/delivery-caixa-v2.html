@@ -443,7 +443,10 @@ async function carregarStats() {
     const d = await r.json();
     if (d.ativos !== undefined) document.getElementById('s-ativos').textContent = d.ativos;
     if (d.entregues !== undefined) document.getElementById('s-entregues').textContent = d.entregues;
+    if (d.whatsapp !== undefined) document.getElementById('s-whats').textContent = d.whatsapp;
+    if (d.caixa !== undefined) document.getElementById('s-caixa').textContent = d.caixa;
     if (d.totalDia !== undefined) document.getElementById('s-total').textContent = 'R$ '+(d.totalDia||0).toFixed(2).replace('.',',');
+    if (d.previsao !== undefined) document.getElementById('s-prev').textContent = d.previsao||'—';
   } catch(e) {}
 }
 
@@ -466,48 +469,16 @@ async function carregarTodos() {
 
 async function enviarCozinha() {
   if (!carrinho.length) { alert('Adicione itens'); return; }
+  const total = carrinho.reduce((s,c) => s + c.preco*c.qty, 0);
   const payload = {
-    tipo: tipoAtual,
-    cliente: document.getElementById('campo-cliente').value,
-    telefone: document.getElementById('campo-telefone').value,
-    obs: document.getElementById('obs-geral').value,
-    itens: carrinho.map(c => ({id:c.id, nome:c.nome, qty:c.qty, preco:c.preco})),
+    clienteNome: document.getElementById('campo-cliente').value,
+    clienteTelefone: document.getElementById('campo-telefone').value,
+    observacao: document.getElementById('obs-geral').value,
+    tipoLocal: tipoAtual,
+    itens: carrinho.map(c => ({itemId:c.id, nome:c.nome, quantidade:c.qty, preco:c.preco})),
+    subtotal: total,
+    total: total,
     operador, numeroCaixa
-  };
-  try {
-    const r = await fetch('/api/delivery/caixa/pedido', {
-      method:'POST', headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},
-      body: JSON.stringify(payload)
-    });
-    if (r.ok) { carrinho=[]; renderCarrinho(); alert('Pedido enviado!'); }
-    else alert('Erro ao enviar');
-  } catch(e) { alert('Erro de conexão'); }
-}
-
-function abrirPagamento() { alert('Pagamento: R$ '+document.getElementById('total').textContent); }
-function sair() { if(confirm('Sair?')) location.href='/'; }
-
-// PAGAR PEDIDO
-async function abrirPagamento() {
-  const total = document.getElementById('total').textContent;
-  if (!carrinho.length) { alert('Adicione itens primeiro'); return; }
-  const forma = prompt(`Total: ${total}\nForma de pagamento:\n1 - Dinheiro\n2 - Cartão Débito\n3 - Cartão Crédito\n4 - PIX\n\nDigite o número:`);
-  const formas = {'1':'dinheiro','2':'debito','3':'credito','4':'pix'};
-  if (!forma || !formas[forma]) return;
-  await enviarCozinha(formas[forma]);
-}
-
-// ENVIAR COZINHA COM PAGAMENTO
-async function enviarCozinha(formaPagamento) {
-  if (!carrinho.length) { alert('Adicione itens'); return; }
-  const payload = {
-    tipo: tipoAtual,
-    cliente: document.getElementById('campo-cliente').value,
-    telefone: document.getElementById('campo-telefone').value,
-    obs: document.getElementById('obs-geral').value,
-    itens: carrinho.map(c => ({id:c.id, nome:c.nome, qty:c.qty, preco:c.preco})),
-    operador, numeroCaixa,
-    formaPagamento: formaPagamento || null
   };
   try {
     const r = await fetch('/api/delivery/caixa/pedido', {
@@ -525,6 +496,58 @@ async function enviarCozinha(formaPagamento) {
     } else { alert('Erro: '+(d.erro||d.error||'Falha ao enviar')); }
   } catch(e) { alert('Erro de conexão'); }
 }
+
+function abrirPagamento() { alert('Pagamento: R$ '+document.getElementById('total').textContent); }
+function sair() { if(confirm('Sair?')) location.href='/'; }
+
+// PAGAR PEDIDO
+async function abrirPagamento() {
+  if (!carrinho.length) { alert('Adicione itens primeiro'); return; }
+  const totalVal = carrinho.reduce((s,c) => s + c.preco*c.qty, 0);
+  const forma = prompt('Total: R$ '+totalVal.toFixed(2).replace('.',',')+'\nForma de pagamento:\n1 - Dinheiro\n2 - Débito\n3 - Crédito\n4 - PIX\n\nDigite o número:');
+  const formasMap = {'1':'dinheiro','2':'debito','3':'credito','4':'pix'};
+  if (!forma || !formasMap[forma]) return;
+  const formaNome = formasMap[forma];
+
+  // 1. Criar pedido
+  const payload = {
+    clienteNome: document.getElementById('campo-cliente').value,
+    clienteTelefone: document.getElementById('campo-telefone').value,
+    observacao: document.getElementById('obs-geral').value,
+    tipoLocal: tipoAtual,
+    itens: carrinho.map(c => ({itemId:c.id, nome:c.nome, quantidade:c.qty, preco:c.preco})),
+    subtotal: totalVal, total: totalVal,
+    formaPagamento: formaNome,
+    operador, numeroCaixa
+  };
+  try {
+    const r = await fetch('/api/delivery/caixa/pedido', {
+      method:'POST', headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+    const d = await r.json();
+    if (!r.ok) { alert('Erro ao criar pedido: '+(d.erro||d.error||'')); return; }
+
+    // 2. Registrar pagamento
+    const pedidoId = d._id || d.pedido?._id || d.id;
+    if (pedidoId) {
+      await fetch(`/api/delivery/caixa/pedido/${pedidoId}/pagar`, {
+        method:'POST', headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},
+        body: JSON.stringify({ formas:[{forma:formaNome, valor:totalVal}], total:totalVal })
+      });
+    }
+
+    carrinho=[]; renderCarrinho();
+    document.getElementById('campo-cliente').value='';
+    document.getElementById('campo-telefone').value='';
+    document.getElementById('obs-geral').value='';
+    await carregarPedidos();
+    await carregarStats();
+    alert('Pedido registrado e pago! ✅');
+  } catch(e) { alert('Erro de conexão'); }
+}
+
+
 
 // FECHAR CAIXA
 async function fecharCaixa() {
