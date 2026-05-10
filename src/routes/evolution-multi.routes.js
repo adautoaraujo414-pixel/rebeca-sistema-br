@@ -8,6 +8,7 @@ const RebecaService = require('../services/rebeca.service');
 const MotoristaWhatsappService = require('../services/motorista-whatsapp.service');
 const NLPService = require('../services/nlp.service');
 const RebecaDeliveryService = require('../services/rebeca-delivery.service');
+const AgendaIAService = require('../services/agenda-ia.service');
 
 // ── CACHE DE ADMIN TYPE — evita query ao banco a cada mensagem ──
 const _adminTypeCache = new Map(); // adminId -> { tipo, plano, ts }
@@ -45,6 +46,14 @@ async function _getAdminTipo(adminId, AdminModel, AdminDeliveryModel) {
         const adDel = await _AdCheck.findById(adminId).select('_id plano').lean();
         if (adDel) { tipo = 'delivery'; plano = adDel.plano || null; }
     } catch(_) {}
+    // Verificar se é admin da Agenda
+    if (tipo === 'corrida') {
+        try {
+            const { AdminAgenda: _AdAgenda } = require('../models/AgendaServico');
+            const adAg = await _AdAgenda.findById(adminId).select('_id plano').lean();
+            if (adAg) { tipo = 'agenda'; plano = adAg.plano || null; }
+        } catch(_) {}
+    }
     _adminTypeCache.set(key, { tipo, plano, ts: Date.now() });
     return tipo;
 }
@@ -355,6 +364,9 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                                         const _etapa = _convDel.etapa || '';
                                         conversaCtx = { etapa: _etapa, itensPedido: _itens, tipo: 'delivery' };
                                     }
+                                }
+                                if (_tipoAdminAudio === 'agenda') {
+                                    conversaCtx = { tipo: 'agenda' };
                                 }
                             } catch(_) {}
 
@@ -729,6 +741,8 @@ Responda apenas com a mensagem para o cliente, sem explicações.`;
                         }
                         if (adminDoc && adminDoc.tipoAdmin === 'delivery') {
                             resposta = await RebecaDeliveryService.processarMensagem(telefone, conteudo, nome, contexto);
+                        } else if (adminDoc && adminDoc.tipoAdmin === 'agenda') {
+                            resposta = await AgendaIAService.responder(telefone, conteudo, adminId);
                         } else {
                             resposta = await RebecaService.processarMensagem(telefone, conteudo, nome, contexto);
                         }
