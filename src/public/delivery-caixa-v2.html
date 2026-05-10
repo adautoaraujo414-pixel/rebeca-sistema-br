@@ -270,6 +270,8 @@ async function init() {
   await carregarStats();
   setInterval(carregarPedidos, 10000);
   setInterval(carregarStats, 15000);
+  setInterval(carregarResumoTempoReal, 8000);
+  carregarResumoTempoReal();
 }
 
 async function carregarCardapio() {
@@ -429,6 +431,7 @@ async function carregarMesas() {
         <div style="font-weight:800;color:#f97316">Mesa ${m.numero||m.mesa||m._id}</div>
         <div style="font-size:.82em;color:#6b7280">${m.itens?.map(i=>i.nome).join(', ')||''}</div>
         <div style="font-weight:700;color:#22c55e">R$ ${(m.total||0).toFixed(2).replace('.',',')}</div>
+        <button onclick="liberarMesa('${m.numero||m.mesa}')" style="margin-top:8px;padding:6px 14px;background:#ef4444;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:.8em">Liberar Mesa</button>
       </div>
     `).join('');
   } catch(e) { console.error('mesas',e); }
@@ -484,7 +487,87 @@ async function enviarCozinha() {
 function abrirPagamento() { alert('Pagamento: R$ '+document.getElementById('total').textContent); }
 function sair() { if(confirm('Sair?')) location.href='/'; }
 
-document.getElementById('btn-fechar-caixa').onclick = () => alert('Fechar caixa em breve');
+// PAGAR PEDIDO
+async function abrirPagamento() {
+  const total = document.getElementById('total').textContent;
+  if (!carrinho.length) { alert('Adicione itens primeiro'); return; }
+  const forma = prompt(`Total: ${total}\nForma de pagamento:\n1 - Dinheiro\n2 - Cartão Débito\n3 - Cartão Crédito\n4 - PIX\n\nDigite o número:`);
+  const formas = {'1':'dinheiro','2':'debito','3':'credito','4':'pix'};
+  if (!forma || !formas[forma]) return;
+  await enviarCozinha(formas[forma]);
+}
+
+// ENVIAR COZINHA COM PAGAMENTO
+async function enviarCozinha(formaPagamento) {
+  if (!carrinho.length) { alert('Adicione itens'); return; }
+  const payload = {
+    tipo: tipoAtual,
+    cliente: document.getElementById('campo-cliente').value,
+    telefone: document.getElementById('campo-telefone').value,
+    obs: document.getElementById('obs-geral').value,
+    itens: carrinho.map(c => ({id:c.id, nome:c.nome, qty:c.qty, preco:c.preco})),
+    operador, numeroCaixa,
+    formaPagamento: formaPagamento || null
+  };
+  try {
+    const r = await fetch('/api/delivery/caixa/pedido', {
+      method:'POST', headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+    const d = await r.json();
+    if (r.ok) {
+      carrinho=[]; renderCarrinho();
+      document.getElementById('campo-cliente').value='';
+      document.getElementById('campo-telefone').value='';
+      document.getElementById('obs-geral').value='';
+      await carregarPedidos();
+      await carregarStats();
+    } else { alert('Erro: '+(d.erro||d.error||'Falha ao enviar')); }
+  } catch(e) { alert('Erro de conexão'); }
+}
+
+// FECHAR CAIXA
+async function fecharCaixa() {
+  if (!confirm('Deseja fechar o caixa agora?')) return;
+  const obs = prompt('Observação (opcional):') || '';
+  try {
+    const r = await fetch('/api/delivery/caixa/fechar', {
+      method:'POST', headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},
+      body: JSON.stringify({operador, numeroCaixa, obs})
+    });
+    const d = await r.json();
+    if (r.ok) { alert('Caixa fechado!'); location.href='/'; }
+    else alert('Erro: '+(d.erro||d.error||'Falha'));
+  } catch(e) { alert('Erro de conexão'); }
+}
+
+// LIBERAR MESA
+async function liberarMesa(numero) {
+  if (!confirm(`Liberar mesa ${numero}?`)) return;
+  try {
+    const r = await fetch(`/api/delivery/caixa/mesa/${numero}/liberar`, {
+      method:'POST', headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},
+      body: JSON.stringify({operador})
+    });
+    if (r.ok) { await carregarMesas(); }
+    else alert('Erro ao liberar mesa');
+  } catch(e) { alert('Erro de conexão'); }
+}
+
+// RESUMO TEMPO REAL
+async function carregarResumoTempoReal() {
+  try {
+    const r = await fetch('/api/delivery/caixa/resumo-tempo-real', {headers:{'Authorization':'Bearer '+token}});
+    const d = await r.json();
+    if (d.ativos !== undefined) document.getElementById('s-ativos').textContent = d.ativos;
+    if (d.entregues !== undefined) document.getElementById('s-entregues').textContent = d.entregues;
+    if (d.whatsapp !== undefined) document.getElementById('s-whats').textContent = d.whatsapp;
+    if (d.totalDia !== undefined) document.getElementById('s-total').textContent = 'R$ '+(d.totalDia||0).toFixed(2).replace('.',',');
+    if (d.previsao !== undefined) document.getElementById('s-prev').textContent = d.previsao || '—';
+  } catch(e) {}
+}
+
+document.getElementById('btn-fechar-caixa').onclick = fecharCaixa;
 
 init();
 </script>
