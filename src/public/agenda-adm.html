@@ -195,6 +195,11 @@ body{font-family:'Segoe UI',sans-serif;background:#f3f4f6;color:#1f2937;min-heig
         <button onclick="copiarLink()">Copiar</button>
         <button onclick="abrirEspaco()">Abrir</button>
       </div>
+      <div style="margin-bottom:12px">
+        <button id="btn-ativar-push" class="ag-btn cinza" style="width:100%;padding:10px;border-radius:10px;font-size:.85em" onclick="ativarPush()">🔔 Ativar notificações push</button>
+      </div>
+      <div style="display:none">
+      </div>
       <div class="section-titulo">📅 Próximos Agendamentos</div>
       <div id="proximos-hoje"><div class="loading"><div class="spinner"></div></div></div>
     </div>
@@ -886,7 +891,64 @@ async function uploadFotoProf(id, input) {
   } catch(e) { toast('Erro ao enviar'); }
 }
 
+
+// ===== PUSH NOTIFICATIONS =====
+async function ativarPush() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+    toast('Notificações não suportadas neste navegador'); return;
+  }
+  try {
+    var perm = await Notification.requestPermission();
+    if (perm !== 'granted') { toast('Permissão negada para notificações'); return; }
+    var reg = await navigator.serviceWorker.ready;
+    var r = await fetch('/api/agenda-push/vapid-public');
+    var d = await r.json();
+    var sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(d.publicKey)
+    });
+    await fetch('/api/agenda-push/subscribe/admin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + TOKEN },
+      body: JSON.stringify(sub)
+    });
+    toast('🔔 Notificações ativadas ✅');
+    document.getElementById('btn-ativar-push').textContent = '🔔 Push ativo';
+    document.getElementById('btn-ativar-push').style.background = '#d1fae5';
+    document.getElementById('btn-ativar-push').style.color = '#059669';
+  } catch(e) { toast('Erro ao ativar push: ' + e.message); }
+}
+
+function urlBase64ToUint8Array(base64String) {
+  var padding = '='.repeat((4 - base64String.length % 4) % 4);
+  var base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  var rawData = window.atob(base64);
+  var outputArray = new Uint8Array(rawData.length);
+  for (var i = 0; i < rawData.length; ++i) { outputArray[i] = rawData.charCodeAt(i); }
+  return outputArray;
+}
+
+async function verificarStatusPush() {
+  try {
+    var r = await api('/agenda-push/status'.replace('/agenda-push','/agenda-push'));
+    // usar fetch direto pois o prefixo é diferente
+    var resp = await fetch('/api/agenda-push/status', {
+      headers: { 'Authorization': 'Bearer ' + TOKEN }
+    });
+    var d = await resp.json();
+    if (d.sucesso && d.admins > 0) {
+      var btn = document.getElementById('btn-ativar-push');
+      if (btn) {
+        btn.textContent = '🔔 Push ativo (' + d.admins + ')';
+        btn.style.background = '#d1fae5';
+        btn.style.color = '#059669';
+      }
+    }
+  } catch(e) {}
+}
+
 init();
+verificarStatusPush();
 </script>
 </body>
 </html>

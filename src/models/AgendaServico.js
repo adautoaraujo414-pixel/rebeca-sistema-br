@@ -130,6 +130,20 @@ const preCadastroAgendaSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 });
 
+
+
+// ===== PUSH SUBSCRIPTION =====
+const PushSubscriptionAgenda = mongoose.model('PushSubscriptionAgenda', new mongoose.Schema({
+  adminId:  { type: mongoose.Schema.Types.ObjectId, ref: 'AdminAgenda' },
+  clienteTelefone: { type: String },
+  endpoint:  { type: String, required: true, unique: true },
+  keys:      { p256dh: String, auth: String },
+  tipo:      { type: String, enum: ['admin','cliente'], default: 'admin' },
+  ativo:     { type: Boolean, default: true },
+  criadoEm: { type: Date, default: Date.now }
+}));
+
+// Exportar tudo
 module.exports = {
   AdminAgenda: mongoose.model('AdminAgenda', adminAgendaSchema),
   ServicoAgenda: mongoose.model('ServicoAgenda', servicoAgendaSchema),

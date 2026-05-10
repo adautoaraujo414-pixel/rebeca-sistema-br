@@ -281,6 +281,7 @@ app.use('/api/delivery', require('./routes/delivery-assinantes.routes'));
 // ===== REBECA AGENDA =====
 app.use('/api/agenda', require('./routes/agenda.routes'));
 app.use('/api/agenda-upload', require('./routes/agenda-upload.routes'));
+app.use('/api/agenda-push', require('./routes/agenda-push.routes').router);
 app.get('/agenda', (req, res) => res.sendFile(path.join(__dirname, 'public', 'agenda-landing.html')));
 app.get('/agenda-adm', (req, res) => res.sendFile(path.join(__dirname, 'public', 'agenda-adm.html')));
 app.get('/espaco-digital', (req, res) => res.sendFile(path.join(__dirname, 'public', 'espaco-digital.html')));
