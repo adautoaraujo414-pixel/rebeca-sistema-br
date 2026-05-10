@@ -215,6 +215,9 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#f5f5f7;color:#1c1c1
   .show-desktop{display:table-cell!important}
   .hide-mobile{display:none}
 }
+
+.nav-bottom{display:none}
+.painel-ativo .nav-bottom{display:flex!important}
 </style>
 <!-- build:1778450209 -->
 </head>
@@ -710,7 +713,7 @@ function navegar(pag) {
   });
   // Mostrar tela atual
   var telaSel = document.getElementById('tela-' + pag);
-  if (telaSel) telaSel.style.display = '';
+  if (telaSel) telaSel.style.display = 'block';
   var navSel = document.getElementById('nav-' + pag);
   if (navSel) navSel.classList.add('ativo');
   // Carregar dados da tela
@@ -751,7 +754,8 @@ function iniciarPainel(dados) {
   // Aceita tanto o objeto direto do login quanto o d.admin do perfil
   var info = (dados && dados.nomeNegocio) ? dados : (dados && dados.admin ? dados.admin : dados);
   document.getElementById('tela-login').style.display = 'none';
-  document.getElementById('tela-painel').style.display = '';
+  document.getElementById('tela-painel').style.display = 'block';
+  document.body.classList.add('painel-ativo');
   var nome = info.nomeNegocio || info.nome || 'Meu Negócio';
   document.getElementById('adm-titulo').textContent = nome;
   document.getElementById('adm-sub').textContent = info.segmento || 'Painel';
