@@ -200,6 +200,10 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Segoe UI',sans-ser
 
     <!-- ABA MESAS -->
     <div id="aba-mesas" style="display:none;flex:1;overflow-y:auto;padding:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <span style="font-weight:700;color:#1f2937">Mesas ativas</span>
+        <button onclick="configurarMesas()" style="padding:5px 12px;background:#6b7280;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:.78em">⚙️ Configurar</button>
+      </div>
       <div id="lista-mesas"><div style="text-align:center;padding:32px;color:#9ca3af">Nenhuma mesa</div></div>
     </div>
 
@@ -348,6 +352,67 @@ async function carregarEntregadores() {
 }
 
 // ========== HISTÓRICO DE FECHAMENTOS ==========
+async function carregarFechamentos() {
+  const hoje = new Date().toISOString().split('T')[0];
+  try {
+    const r = await fetch(`/api/delivery/caixa/fechamentos?dataIni=${hoje}&dataFim=${hoje}`, {headers:{'Authorization':'Bearer '+token}});
+    const d = await r.json();
+    const lista = Array.isArray(d) ? d : (d.fechamentos || []);
+    const el = document.getElementById('lista-historico');
+    if (!el) return;
+    if (!lista.length) { el.innerHTML = '<div style="text-align:center;padding:32px;color:#9ca3af">Nenhum fechamento hoje</div>'; return; }
+    el.innerHTML = lista.map(c => `
+      <div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:14px;margin-bottom:10px">
+        <div style="font-weight:800;color:#1f2937">Caixa #${c.numeroCaixa||1} — ${c.operador||'—'}</div>
+        <div style="font-size:.82em;color:#6b7280">Abertura: ${c.dataAbertura?new Date(c.dataAbertura).toLocaleString('pt-BR'):'—'}</div>
+        <div style="font-size:.82em;color:#6b7280">Fechamento: ${c.dataFechamento?new Date(c.dataFechamento).toLocaleString('pt-BR'):'—'}</div>
+        <div style="font-weight:700;color:#22c55e">Total: R$ ${(c.totalVendas||c.total||0).toFixed(2).replace('.',',')}</div>
+      </div>
+    `).join('');
+  } catch(e) { console.error('fechamentos',e); }
+}
+
+async function carregarSalonStats() {
+  try {
+    const r = await fetch('/api/delivery/salon/stats', {headers:{'Authorization':'Bearer '+token}});
+    const d = await r.json();
+    const stats = Array.isArray(d) ? d : (d.stats || []);
+    const el = document.getElementById('salon-stats-container');
+    if (!el) return;
+    el.innerHTML = stats.map(g => `
+      <div style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:10px;margin-bottom:8px">
+        <div style="font-weight:700">${g.nome||g.id}</div>
+        <div style="font-size:.82em;color:#6b7280">Pedidos: ${g.total||0} · R$ ${(g.totalValor||0).toFixed(2).replace('.',',')}</div>
+      </div>
+    `).join('') || '<div style="color:#9ca3af;text-align:center;padding:20px">Sem dados</div>';
+  } catch(e) {}
+}
+
+async function carregarPixKey() {
+  try {
+    const r = await fetch('/api/delivery/salon/pix-key', {headers:{'Authorization':'Bearer '+token}});
+    const d = await r.json();
+    const el = document.getElementById('pix-key-display');
+    if (el && d.pixKey) {
+      el.textContent = d.pixKey;
+      el.style.display = 'block';
+    }
+  } catch(e) {}
+}
+
+async function configurarMesas() {
+  const qtd = prompt('Quantidade de mesas:');
+  if (!qtd || isNaN(qtd)) return;
+  try {
+    const r = await fetch('/api/delivery/caixa/config/mesas', {
+      method:'POST', headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},
+      body: JSON.stringify({qtdMesas: parseInt(qtd)})
+    });
+    if (r.ok) alert(`${qtd} mesas configuradas! ✅`);
+    else alert('Erro ao configurar mesas');
+  } catch(e) { alert('Erro de conexão'); }
+}
+
 async function carregarHistorico() {
   try {
     const r = await fetch('/api/delivery/caixa/historico?limite=20', {headers:{'Authorization':'Bearer '+token}});
@@ -576,7 +641,7 @@ function mudarAba(aba, el) {
   if (aba === 'todos') carregarTodos();
   if (aba === 'mesas') { carregarMesas(); carregarSalonMesas(); }
   if (aba === 'entregadores') carregarEntregadores();
-  if (aba === 'historico') carregarHistorico();
+  if (aba === 'historico') { carregarHistorico(); carregarFechamentos(); }
 }
 
 async async function carregarPedidos() {
@@ -760,8 +825,9 @@ async function liberarMesa(numero) {
       method:'POST', headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},
       body: JSON.stringify({operador})
     });
-    if (r.ok) { await carregarMesas(); }
-    else alert('Erro ao liberar mesa');
+    const d = await r.json();
+    if (r.ok) { await carregarMesas(); await carregarSalonMesas(); alert('Mesa liberada! ✅'); }
+    else alert('Erro ao liberar mesa: '+(d.erro||d.error||''));
   } catch(e) { alert('Erro de conexão'); }
 }
 
