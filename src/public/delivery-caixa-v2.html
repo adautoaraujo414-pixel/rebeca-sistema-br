@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Caixa PDV</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;font-family:'Segoe UI',sans-serif}
+
+/* TOPO */
+.topo{
+  height:52px;width:100%;background:#1a1a2e;color:#fff;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 20px;flex-shrink:0;
+}
+.topo-logo{font-size:1.1em;font-weight:800;color:#f97316}
+.topo-right{display:flex;align-items:center;gap:12px;font-size:.85em}
+.btn-fechar{background:#ef4444;color:#fff;border:none;border-radius:6px;padding:6px 16px;font-weight:700;cursor:pointer}
+.btn-sair{background:transparent;color:#ccc;border:1px solid #444;border-radius:6px;padding:6px 14px;cursor:pointer}
+
+/* STATS */
+.stats{
+  height:40px;background:#16213e;display:flex;align-items:center;
+  gap:8px;padding:0 16px;flex-shrink:0;overflow-x:auto;
+}
+.stat{background:#0f3460;color:#94a3b8;border-radius:20px;padding:3px 12px;font-size:.75em;white-space:nowrap}
+.stat span{color:#fff;font-weight:700}
+
+/* CORPO */
+.corpo{
+  display:flex;flex-direction:row;
+  height:calc(100vh - 92px);
+  width:100%;overflow:hidden;
+}
+
+/* SIDEBAR CATEGORIAS */
+.sidebar{
+  width:120px;flex-shrink:0;background:#f8f9fa;
+  border-right:1px solid #e5e7eb;overflow-y:auto;
+  display:flex;flex-direction:column;gap:4px;padding:8px;
+}
+.cat-item{
+  display:flex;flex-direction:column;align-items:center;
+  padding:10px 6px;border-radius:8px;cursor:pointer;
+  font-size:.72em;font-weight:600;color:#6b7280;text-align:center;
+  border:1px solid transparent;transition:all .2s;
+}
+.cat-item:hover,.cat-item.active{background:#fff7ed;border-color:#f97316;color:#f97316}
+.cat-emoji{font-size:1.5em;margin-bottom:4px}
+
+/* ÁREA PRODUTOS */
+.produtos-area{
+  flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden;
+}
+.tabs-nav{
+  display:flex;gap:2px;padding:8px 12px 0;flex-shrink:0;
+  background:#fff;border-bottom:1px solid #e5e7eb;
+}
+.tab-btn{
+  padding:8px 16px;border-radius:8px 8px 0 0;border:none;
+  background:transparent;color:#9ca3af;font-size:.82em;font-weight:600;
+  cursor:pointer;transition:all .2s;
+}
+.tab-btn.active{background:#f97316;color:#fff}
+.busca-wrap{padding:10px 12px;flex-shrink:0;background:#fff}
+.busca-input{
+  width:100%;padding:9px 14px;border-radius:8px;
+  border:1px solid #e5e7eb;font-size:.88em;outline:none;
+}
+.busca-input:focus{border-color:#f97316}
+.produtos-scroll{flex:1;overflow-y:auto;padding:12px}
+.cat-titulo{
+  font-size:.72em;font-weight:700;color:#9ca3af;
+  text-transform:uppercase;letter-spacing:1px;
+  margin-bottom:10px;margin-top:16px;display:flex;align-items:center;gap:8px;
+}
+.cat-titulo:first-child{margin-top:0}
+.cat-titulo::after{content:'';flex:1;height:1px;background:#e5e7eb}
+.produtos-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;
+  margin-bottom:8px;
+}
+.prod-card{
+  background:#fff;border:1px solid #e5e7eb;border-radius:10px;
+  cursor:pointer;overflow:hidden;transition:all .2s;
+}
+.prod-card:hover{border-color:#f97316;box-shadow:0 4px 12px rgba(249,115,22,.15);transform:translateY(-2px)}
+.prod-img{width:100%;height:90px;object-fit:cover;background:#f3f4f6}
+.prod-img-placeholder{width:100%;height:90px;background:#f3f4f6;display:flex;align-items:center;justify-content:center;font-size:2em}
+.prod-info{padding:8px}
+.prod-nome{font-size:.82em;font-weight:700;color:#1f2937;margin-bottom:2px}
+.prod-desc{font-size:.72em;color:#9ca3af;margin-bottom:6px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.prod-preco{font-size:.9em;font-weight:800;color:#f97316}
+
+/* COMANDA */
+.comanda{
+  width:420px;min-width:420px;max-width:420px;flex-shrink:0;
+  background:#fff;border-left:1px solid #e5e7eb;
+  display:flex;flex-direction:column;overflow:hidden;
+}
+.comanda-topo{padding:12px 16px;border-bottom:1px solid #e5e7eb;flex-shrink:0}
+.comanda-titulo{font-size:.9em;font-weight:800;color:#1f2937;margin-bottom:10px}
+.tipo-btns{display:flex;gap:6px;margin-bottom:10px}
+.tipo-btn{
+  flex:1;padding:7px;border-radius:6px;border:1px solid #e5e7eb;
+  background:transparent;color:#9ca3af;font-size:.75em;font-weight:600;
+  cursor:pointer;transition:all .2s;
+}
+.tipo-btn.active{background:#f97316;border-color:#f97316;color:#fff}
+.form-row{display:flex;gap:8px}
+.form-row input{
+  flex:1;padding:8px 12px;border-radius:6px;border:1px solid #e5e7eb;
+  font-size:.82em;outline:none;
+}
+.form-row input:focus{border-color:#f97316}
+.comanda-itens{flex:1;overflow-y:auto;padding:12px 16px}
+.comanda-vazia{text-align:center;padding:40px 20px;color:#9ca3af}
+.comanda-vazia-icon{font-size:2.5em;margin-bottom:8px}
+.item-comanda{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #f3f4f6}
+.item-nome{flex:1;font-size:.82em;font-weight:600;color:#1f2937}
+.item-qty{display:flex;align-items:center;gap:6px}
+.qty-btn{width:24px;height:24px;border-radius:50%;border:1px solid #e5e7eb;background:#f9fafb;cursor:pointer;font-size:.9em;display:flex;align-items:center;justify-content:center}
+.item-preco{font-size:.82em;font-weight:700;color:#f97316;min-width:60px;text-align:right}
+.comanda-footer{padding:14px 16px;border-top:1px solid #e5e7eb;flex-shrink:0;background:#fff}
+.subtotal-row{display:flex;justify-content:space-between;font-size:.82em;color:#9ca3af;margin-bottom:4px}
+.total-row{display:flex;justify-content:space-between;font-size:1.1em;font-weight:800;color:#1f2937;margin-bottom:14px}
+.total-row span:last-child{color:#22c55e}
+.btns-acao{display:flex;gap:8px;margin-bottom:8px}
+.btn-cozinha{flex:1;padding:11px;background:#f97316;color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:.88em}
+.btn-pagar{padding:11px 18px;background:#22c55e;color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:.88em}
+.obs-input{width:100%;padding:8px;border-radius:6px;border:1px solid #e5e7eb;font-size:.8em;resize:none;height:40px;outline:none}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#e5e7eb;border-radius:4px}
+</style>
+</head>
+<body>
+
+<!-- TOPO -->
+<div class="topo">
+  <div class="topo-logo" id="nome-restaurante">🍔 Rebeca Delivery — Caixa</div>
+  <div class="topo-right">
+    <span id="hora-atual">--:--</span>
+    <button class="btn-fechar" id="btn-fechar-caixa">🔒 Fechar Caixa</button>
+    <button class="btn-sair" onclick="sair()">Sair</button>
+  </div>
+</div>
+
+<!-- STATS -->
+<div class="stats">
+  <div class="stat">📦 Ativos <span id="s-ativos">0</span></div>
+  <div class="stat">✅ Entregues <span id="s-entregues">0</span></div>
+  <div class="stat">📱 WhatsApp <span id="s-whats">0</span></div>
+  <div class="stat">🧾 Caixa <span id="s-caixa">0</span></div>
+  <div class="stat">⏱️ Prev. <span id="s-prev">—</span></div>
+  <div class="stat">💰 Total dia <span id="s-total">R$ 0,00</span></div>
+</div>
+
+<!-- CORPO -->
+<div class="corpo">
+
+  <!-- SIDEBAR CATEGORIAS -->
+  <div class="sidebar" id="sidebar-cats">
+    <div class="cat-item active" onclick="filtrarCat('todos',this)">
+      <span class="cat-emoji">🏷️</span>Todos
+    </div>
+  </div>
+
+  <!-- ÁREA PRODUTOS -->
+  <div class="produtos-area">
+    <div class="tabs-nav">
+      <button class="tab-btn active" onclick="mudarAba('cardapio',this)">🛒 Novo Pedido</button>
+      <button class="tab-btn" onclick="mudarAba('ativos',this)">📋 Ativos <span id="badge-pedidos">0</span></button>
+      <button class="tab-btn" onclick="mudarAba('mesas',this)">🍽️ Mesas <span id="badge-mesas">0</span></button>
+      <button class="tab-btn" onclick="mudarAba('todos',this)">📊 Todos do Dia</button>
+    </div>
+
+    <!-- ABA CARDÁPIO -->
+    <div id="aba-cardapio" style="display:flex;flex-direction:column;flex:1;overflow:hidden">
+      <div class="busca-wrap">
+        <input class="busca-input" type="text" placeholder="🔍 Buscar item..." oninput="buscarItem(this.value)">
+      </div>
+      <div class="produtos-scroll" id="produtos-scroll">
+        <div style="text-align:center;padding:40px;color:#9ca3af">Carregando produtos...</div>
+      </div>
+    </div>
+
+    <!-- ABA ATIVOS -->
+    <div id="aba-ativos" style="display:none;flex:1;overflow-y:auto;padding:16px">
+      <div id="lista-ativos"><div style="text-align:center;padding:32px;color:#9ca3af">Nenhum pedido ativo</div></div>
+    </div>
+
+    <!-- ABA MESAS -->
+    <div id="aba-mesas" style="display:none;flex:1;overflow-y:auto;padding:16px">
+      <div id="lista-mesas"><div style="text-align:center;padding:32px;color:#9ca3af">Nenhuma mesa</div></div>
+    </div>
+
+    <!-- ABA TODOS -->
+    <div id="aba-todos" style="display:none;flex:1;overflow-y:auto;padding:16px">
+      <div id="lista-todos"><div style="text-align:center;padding:32px;color:#9ca3af">Carregando...</div></div>
+    </div>
+  </div>
+
+  <!-- COMANDA -->
+  <div class="comanda">
+    <div class="comanda-topo">
+      <div class="comanda-titulo">🧾 Comanda</div>
+      <div class="tipo-btns">
+        <button class="tipo-btn active" onclick="setTipo('balcao',this)">🏪 Balcão</button>
+        <button class="tipo-btn" onclick="setTipo('mesa',this)">🍽️ Mesa</button>
+        <button class="tipo-btn" onclick="setTipo('delivery',this)">🛵 Delivery</button>
+      </div>
+      <div class="form-row">
+        <input type="text" id="campo-cliente" placeholder="Nome do cliente">
+        <input type="text" id="campo-telefone" placeholder="Telefone">
+      </div>
+    </div>
+    <div class="comanda-itens" id="comanda-itens">
+      <div class="comanda-vazia">
+        <div class="comanda-vazia-icon">🛒</div>
+        Selecione itens do cardápio
+      </div>
+    </div>
+    <div class="comanda-footer">
+      <div class="subtotal-row"><span>Subtotal</span><span id="subtotal">R$ 0,00</span></div>
+      <div class="total-row"><span>TOTAL</span><span id="total">R$ 0,00</span></div>
+      <div class="btns-acao">
+        <button class="btn-cozinha" onclick="enviarCozinha()">👨‍🍳 Enviar Cozinha</button>
+        <button class="btn-pagar" onclick="abrirPagamento()">💰 Pagar</button>
+      </div>
+      <textarea class="obs-input" id="obs-geral" placeholder="Observação geral do pedido..."></textarea>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// === INIT ===
+const params = new URLSearchParams(location.search);
+const token = params.get('token');
+const operador = params.get('operador') || 'Operador';
+const numeroCaixa = params.get('numeroCaixa') || '1';
+
+let carrinho = [];
+let tipoAtual = 'balcao';
+let categorias = [];
+let itens = [];
+let catAtiva = 'todos';
+
+// Relógio
+setInterval(() => {
+  document.getElementById('hora-atual').textContent = new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+}, 1000);
+
+// Auth
+async function init() {
+  if (!token) { alert('Token inválido'); return; }
+  try {
+    const r = await fetch('/api/delivery-auth/me', {headers:{'Authorization':'Bearer '+token}});
+    if (!r.ok) { alert('Sessão inválida'); return; }
+    const d = await r.json();
+    document.getElementById('nome-restaurante').textContent = (d.nomeRestaurante || 'Rebeca') + ' — Caixa';
+  } catch(e) {}
+  await carregarCardapio();
+  await carregarPedidos();
+  await carregarStats();
+  setInterval(carregarPedidos, 10000);
+  setInterval(carregarStats, 15000);
+}
+
+async function carregarCardapio() {
+  try {
+    const [rCats, rItens] = await Promise.all([
+      fetch('/api/delivery/categorias', {headers:{'Authorization':'Bearer '+token}}),
+      fetch('/api/delivery/cardapio', {headers:{'Authorization':'Bearer '+token}})
+    ]);
+    const catsRaw = await rCats.json();
+    const itensRaw = await rItens.json();
+    categorias = Array.isArray(catsRaw) ? catsRaw : [];
+    itens = Array.isArray(itensRaw) ? itensRaw : (itensRaw.itens || []);
+    renderSidebar();
+    renderProdutos(itens);
+  } catch(e) { console.error(e); }
+}
+
+function renderSidebar() {
+  const sb = document.getElementById('sidebar-cats');
+  sb.innerHTML = '<div class="cat-item active" onclick="filtrarCat(\'todos\',this)"><span class="cat-emoji">🏷️</span>Todos</div>';
+  categorias.forEach(c => {
+    sb.innerHTML += `<div class="cat-item" onclick="filtrarCat('${c._id}',this)"><span class="cat-emoji">${c.emoji||'📦'}</span>${c.nome}</div>`;
+  });
+}
+
+function filtrarCat(catId, el) {
+  document.querySelectorAll('.cat-item').forEach(e => e.classList.remove('active'));
+  el.classList.add('active');
+  catAtiva = catId;
+  const filtrados = catId === 'todos' ? itens : itens.filter(i => i.categoriaId === catId || i.categoria === catId);
+  renderProdutos(filtrados);
+}
+
+function buscarItem(q) {
+  const filtrados = q ? itens.filter(i => i.nome.toLowerCase().includes(q.toLowerCase())) : itens;
+  renderProdutos(filtrados);
+}
+
+function renderProdutos(lista) {
+  const container = document.getElementById('produtos-scroll');
+  if (!lista.length) {
+    container.innerHTML = '<div style="text-align:center;padding:40px;color:#9ca3af">Nenhum produto encontrado</div>';
+    return;
+  }
+  const grupos = {};
+  lista.forEach(item => {
+    const cat = categorias.find(c => c._id === item.categoriaId) || {nome: 'Produtos', emoji: '📦'};
+    const key = cat.nome;
+    if (!grupos[key]) grupos[key] = {emoji: cat.emoji, itens: []};
+    grupos[key].itens.push(item);
+  });
+  container.innerHTML = Object.entries(grupos).map(([nome, g]) => `
+    <div class="cat-titulo">${g.emoji} ${nome.toUpperCase()}</div>
+    <div class="produtos-grid">
+      ${g.itens.map(item => `
+        <div class="prod-card" onclick="addCarrinho('${item._id}')">
+          ${item.foto ? `<img class="prod-img" src="${item.foto}" onerror="this.style.display='none'">` : `<div class="prod-img-placeholder">${g.emoji}</div>`}
+          <div class="prod-info">
+            <div class="prod-nome">${item.nome}</div>
+            <div class="prod-desc">${item.descricao||''}</div>
+            <div class="prod-preco">R$ ${(item.preco||0).toFixed(2).replace('.',',')}</div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `).join('');
+}
+
+function addCarrinho(id) {
+  const item = itens.find(i => i._id === id);
+  if (!item) return;
+  const ex = carrinho.find(c => c.id === id);
+  if (ex) ex.qty++;
+  else carrinho.push({id, nome: item.nome, preco: item.preco||0, qty: 1});
+  renderCarrinho();
+}
+
+function renderCarrinho() {
+  const el = document.getElementById('comanda-itens');
+  if (!carrinho.length) {
+    el.innerHTML = '<div class="comanda-vazia"><div class="comanda-vazia-icon">🛒</div>Selecione itens do cardápio</div>';
+    document.getElementById('subtotal').textContent = 'R$ 0,00';
+    document.getElementById('total').textContent = 'R$ 0,00';
+    return;
+  }
+  const total = carrinho.reduce((s,c) => s + c.preco*c.qty, 0);
+  el.innerHTML = carrinho.map(c => `
+    <div class="item-comanda">
+      <div class="item-nome">${c.nome}</div>
+      <div class="item-qty">
+        <button class="qty-btn" onclick="altQty('${c.id}',-1)">−</button>
+        <span>${c.qty}</span>
+        <button class="qty-btn" onclick="altQty('${c.id}',1)">+</button>
+      </div>
+      <div class="item-preco">R$ ${(c.preco*c.qty).toFixed(2).replace('.',',')}</div>
+    </div>
+  `).join('');
+  const fmt = v => 'R$ '+v.toFixed(2).replace('.',',');
+  document.getElementById('subtotal').textContent = fmt(total);
+  document.getElementById('total').textContent = fmt(total);
+}
+
+function altQty(id, delta) {
+  const idx = carrinho.findIndex(c => c.id === id);
+  if (idx === -1) return;
+  carrinho[idx].qty += delta;
+  if (carrinho[idx].qty <= 0) carrinho.splice(idx, 1);
+  renderCarrinho();
+}
+
+function setTipo(tipo, el) {
+  tipoAtual = tipo;
+  document.querySelectorAll('.tipo-btn').forEach(e => e.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function mudarAba(aba, el) {
+  document.querySelectorAll('.tab-btn').forEach(e => e.classList.remove('active'));
+  el.classList.add('active');
+  ['cardapio','ativos','mesas','todos'].forEach(a => {
+    const el2 = document.getElementById('aba-'+a);
+    if (el2) el2.style.display = a === aba ? (a==='cardapio'?'flex':'block') : 'none';
+  });
+  if (aba === 'todos') carregarTodos();
+}
+
+async function carregarPedidos() {
+  try {
+    const r = await fetch('/api/delivery/caixa/pedidos', {headers:{'Authorization':'Bearer '+token}});
+    const d = await r.json();
+    const pedidos = Array.isArray(d) ? d : (d.pedidos || []);
+    document.getElementById('badge-pedidos').textContent = pedidos.length || '';
+    const lista = document.getElementById('lista-ativos');
+    if (!pedidos.length) { lista.innerHTML = '<div style="text-align:center;padding:32px;color:#9ca3af">Nenhum pedido ativo</div>'; return; }
+    lista.innerHTML = pedidos.map(p => `
+      <div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:14px;margin-bottom:10px">
+        <div style="font-weight:800;color:#f97316">#${p.numero||p._id?.slice(-4)}</div>
+        <div style="font-size:.82em;color:#6b7280">${p.itens?.map(i=>i.nome).join(', ')||''}</div>
+        <div style="font-weight:700;color:#22c55e">R$ ${(p.total||0).toFixed(2).replace('.',',')}</div>
+      </div>
+    `).join('');
+  } catch(e) {}
+}
+
+async function carregarStats() {
+  try {
+    const r = await fetch('/api/delivery/caixa/stats', {headers:{'Authorization':'Bearer '+token}});
+    const d = await r.json();
+    if (d.ativos !== undefined) document.getElementById('s-ativos').textContent = d.ativos;
+    if (d.entregues !== undefined) document.getElementById('s-entregues').textContent = d.entregues;
+    if (d.totalDia !== undefined) document.getElementById('s-total').textContent = 'R$ '+(d.totalDia||0).toFixed(2).replace('.',',');
+  } catch(e) {}
+}
+
+async function carregarTodos() {
+  try {
+    const r = await fetch('/api/delivery/caixa/todos', {headers:{'Authorization':'Bearer '+token}});
+    const d = await r.json();
+    const lista = Array.isArray(d) ? d : (d.pedidos || []);
+    const el = document.getElementById('lista-todos');
+    if (!lista.length) { el.innerHTML = '<div style="text-align:center;padding:32px;color:#9ca3af">Nenhum pedido hoje</div>'; return; }
+    el.innerHTML = lista.map(p => `
+      <div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:14px;margin-bottom:10px">
+        <div style="font-weight:800;color:#f97316">#${p.numero||p._id?.slice(-4)}</div>
+        <div style="font-size:.82em;color:#6b7280">${p.itens?.map(i=>i.nome).join(', ')||''}</div>
+        <div style="font-weight:700;color:#22c55e">R$ ${(p.total||0).toFixed(2).replace('.',',')}</div>
+      </div>
+    `).join('');
+  } catch(e) {}
+}
+
+async function enviarCozinha() {
+  if (!carrinho.length) { alert('Adicione itens'); return; }
+  const payload = {
+    tipo: tipoAtual,
+    cliente: document.getElementById('campo-cliente').value,
+    telefone: document.getElementById('campo-telefone').value,
+    obs: document.getElementById('obs-geral').value,
+    itens: carrinho.map(c => ({id:c.id, nome:c.nome, qty:c.qty, preco:c.preco})),
+    operador, numeroCaixa
+  };
+  try {
+    const r = await fetch('/api/delivery/caixa/pedido', {
+      method:'POST', headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+    if (r.ok) { carrinho=[]; renderCarrinho(); alert('Pedido enviado!'); }
+    else alert('Erro ao enviar');
+  } catch(e) { alert('Erro de conexão'); }
+}
+
+function abrirPagamento() { alert('Pagamento: R$ '+document.getElementById('total').textContent); }
+function sair() { if(confirm('Sair?')) location.href='/'; }
+
+document.getElementById('btn-fechar-caixa').onclick = () => alert('Fechar caixa em breve');
+
+init();
+</script>
+</body>
+</html>
