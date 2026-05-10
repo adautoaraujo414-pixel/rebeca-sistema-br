@@ -690,7 +690,7 @@ function api(path, opts) {
 }
 
 // ===== INIT =====
-async async function init() {
+async function init() {
   if (!TOKEN) return;
   try {
     var d = await api('/perfil');
