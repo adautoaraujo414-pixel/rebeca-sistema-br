@@ -185,6 +185,31 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .tipo-tab { flex: 1; padding: 10px; border: 2px solid #e5e7eb; border-radius: 10px; font-size: .82em; font-weight: 600; cursor: pointer; background: #fff; color: #6b7280; text-align: center; transition: .2s; }
 .tipo-tab.ativo { border-color: var(--cor); color: var(--cor); background: #fff7ed; }
 .badge-avaliacao { background: #d1fae5; color: #059669; font-size: .7em; font-weight: 700; padding: 2px 8px; border-radius: 20px; margin-left: 6px; }
+
+/* FOTO UPLOAD */
+.foto-upload-area { border: 2px dashed #e5e7eb; border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; transition: .2s; margin-bottom: 12px; }
+.foto-upload-area:hover { border-color: var(--cor); background: #fff7ed; }
+.foto-upload-preview { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; margin: 0 auto 8px; display: block; border: 3px solid var(--cor); }
+.foto-upload-placeholder { font-size: 2em; margin-bottom: 4px; }
+.dias-semana-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 6px; margin-top: 8px; }
+.dia-btn { padding: 8px 4px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: .72em; font-weight: 700; cursor: pointer; background: #fff; color: #6b7280; text-align: center; transition: .2s; }
+.dia-btn.ativo { border-color: var(--cor); background: #fff7ed; color: var(--cor); }
+.horario-row { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
+.horario-row label { font-size: .8em; color: #6b7280; white-space: nowrap; }
+.horario-row input { flex: 1; padding: 8px 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: .85em; outline: none; }
+.horario-row input:focus { border-color: var(--cor); }
+.atribuicoes-lista { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.atrib-tag { padding: 5px 12px; border: 2px solid #e5e7eb; border-radius: 20px; font-size: .78em; font-weight: 600; cursor: pointer; background: #fff; color: #6b7280; transition: .2s; }
+.atrib-tag.ativo { border-color: var(--cor); background: #fff7ed; color: var(--cor); }
+.prof-card { background: #fff; border-radius: 16px; padding: 16px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,.06); display: flex; align-items: center; gap: 14px; }
+.prof-foto { width: 52px; height: 52px; border-radius: 50%; object-fit: cover; border: 3px solid var(--cor); flex-shrink: 0; }
+.prof-foto-placeholder { width: 52px; height: 52px; border-radius: 50%; background: var(--cor); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 1.2em; flex-shrink: 0; }
+.prof-info { flex: 1; }
+.prof-nome { font-weight: 700; font-size: .95em; }
+.prof-cargo { font-size: .78em; color: #6b7280; margin-top: 2px; }
+.prof-dias { font-size: .72em; color: var(--cor); font-weight: 600; margin-top: 4px; }
+.prof-atribs { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+.prof-atrib-tag { background: #f3f4f6; color: #374151; font-size: .68em; font-weight: 600; padding: 2px 8px; border-radius: 10px; }
 </style>
 </head>
 <body>
@@ -339,7 +364,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
   <!-- TELA EQUIPE -->
   <div class="tela" id="tela-profissionais">
     <div class="card">
-      <div class="card-title">👥 Equipe</div>
+      <div class="card-title" style="justify-content:space-between">👥 Equipe <button class="btn-sm btn-primary" onclick="abrirModalProfissional()">+ Novo</button></div>
       <div class="card-sub">Profissionais cadastrados</div>
       <div id="lista-profissionais">
         <div class="spinner-wrap"><span class="spinner">⟳</span></div>
@@ -660,7 +685,7 @@ async function excluirServico(id) {
   } catch(e) { toast('Erro: ' + e.message); }
 }
 
-// PROFISSIONAIS
+
 async function carregarProfissionais() {
   var el = document.getElementById('lista-profissionais');
   el.innerHTML = '<div class="spinner-wrap"><span class="spinner">⟳</span></div>';
@@ -671,15 +696,27 @@ async function carregarProfissionais() {
       el.innerHTML = '<div class="empty"><div class="empty-icon">👥</div>Nenhum profissional cadastrado</div>';
       return;
     }
+    var diasNome = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
     el.innerHTML = lista.map(function(p) {
-      return '<div class="item-lista">' +
-        '<div class="item-lista-info">' +
-          '<div class="item-lista-nome">' + p.nome + '</div>' +
-          '<div class="item-lista-det">' + (p.especialidade || p.cargo || '') + '</div>' +
+      var fotoHtml = p.foto
+        ? '<img src="' + p.foto + '" class="prof-foto" onerror="this.style.display=\'none\'">'
+        : '<div class="prof-foto-placeholder">' + (p.nome||'P').charAt(0).toUpperCase() + '</div>';
+      var diasStr = p.diasAtendimento && p.diasAtendimento.length
+        ? p.diasAtendimento.map(function(d){return diasNome[d];}).join(' · ')
+        : '';
+      var atribsHtml = p.atribuicoes && p.atribuicoes.length
+        ? '<div class="prof-atribs">' + p.atribuicoes.map(function(a){ return '<span class="prof-atrib-tag">' + a + '</span>'; }).join('') + '</div>'
+        : '';
+      var horario = p.horario ? (p.horario.inicio + ' - ' + p.horario.fim) : '';
+      return '<div class="prof-card">' +
+        fotoHtml +
+        '<div class="prof-info">' +
+          '<div class="prof-nome">' + p.nome + '</div>' +
+          '<div class="prof-cargo">' + (p.cargo||p.especialidade||'') + (horario ? ' · ' + horario : '') + '</div>' +
+          (diasStr ? '<div class="prof-dias">📅 ' + diasStr + '</div>' : '') +
+          atribsHtml +
         '</div>' +
-        '<div class="item-lista-acoes">' +
-          '<button class="btn-icon btn-del" onclick="excluirProfissional(\'' + p._id + '\')">🗑️</button>' +
-        '</div>' +
+        '<button class="btn-icon btn-del" onclick="excluirProfissional('' + p._id + '')">🗑️</button>' +
       '</div>';
     }).join('');
   } catch(e) {
@@ -687,15 +724,7 @@ async function carregarProfissionais() {
   }
 }
 
-async function excluirProfissional(id) {
-  if (!confirm('Excluir este profissional?')) return;
-  try {
-    await api('/profissionais/' + id, { method: 'DELETE' });
-    toast('Profissional removido ✅');
-    carregarProfissionais();
-  } catch(e) { toast('Erro: ' + e.message); }
-}
-
+// CLIENTES
 // CLIENTES
 async function carregarClientes() {
   var el = document.getElementById('lista-clientes');
@@ -759,6 +788,133 @@ function abrirNovoAgendamento() {
   toast('Em breve: novo agendamento');
 }
 
+
+
+// PROFISSIONAL
+function abrirModalProfissional() {
+  // Reset
+  document.getElementById('prof-nome').value = '';
+  document.getElementById('prof-cargo').value = '';
+  document.getElementById('prof-tel').value = '';
+  document.getElementById('prof-bio').value = '';
+  document.getElementById('prof-hora-inicio').value = '08:00';
+  document.getElementById('prof-hora-fim').value = '18:00';
+  document.getElementById('prof-almoco-inicio').value = '12:00';
+  document.getElementById('prof-almoco-fim').value = '13:00';
+  document.getElementById('prof-foto-url').value = '';
+  document.getElementById('foto-preview-prof').style.display = 'none';
+  document.getElementById('foto-placeholder').style.display = 'block';
+  // Reset atribuições
+  document.querySelectorAll('.atrib-tag').forEach(function(t) { t.classList.remove('ativo'); });
+  // Reset dias (Seg-Sex ativos por padrão)
+  document.querySelectorAll('.dia-btn').forEach(function(d) {
+    var dia = parseInt(d.dataset.dia);
+    d.classList.toggle('ativo', dia >= 1 && dia <= 5);
+  });
+  document.getElementById('modal-profissional').className = 'modal-overlay aberto';
+}
+
+function previewFotoProf(input) {
+  var file = input.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var preview = document.getElementById('foto-preview-prof');
+    preview.src = e.target.result;
+    preview.style.display = 'block';
+    document.getElementById('foto-placeholder').style.display = 'none';
+    // Upload para o servidor
+    uploadFotoProf(file);
+  };
+  reader.readAsDataURL(file);
+}
+
+async function uploadFotoProf(file) {
+  try {
+    var formData = new FormData();
+    formData.append('foto', file);
+    var r = await fetch('/api/agenda-upload/foto', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + TOKEN },
+      body: formData
+    });
+    var d = await r.json();
+    if (d.url || d.imageUrl) {
+      document.getElementById('prof-foto-url').value = d.url || d.imageUrl;
+    }
+  } catch(e) {
+    // Usar base64 como fallback
+    document.getElementById('prof-foto-url').value = document.getElementById('foto-preview-prof').src;
+  }
+}
+
+function toggleAtrib(el) {
+  el.classList.toggle('ativo');
+}
+
+function adicionarAtribCustom() {
+  var val = document.getElementById('atrib-custom').value.trim();
+  if (!val) return;
+  var tag = document.createElement('span');
+  tag.className = 'atrib-tag ativo';
+  tag.textContent = val;
+  tag.onclick = function() { toggleAtrib(tag); };
+  document.getElementById('atrib-lista').appendChild(tag);
+  document.getElementById('atrib-custom').value = '';
+}
+
+function toggleDia(el) {
+  el.classList.toggle('ativo');
+}
+
+async function salvarProfissional() {
+  var nome = document.getElementById('prof-nome').value.trim();
+  var cargo = document.getElementById('prof-cargo').value.trim();
+  if (!nome || !cargo) { toast('Preencha nome e cargo'); return; }
+
+  var atribuicoes = [];
+  document.querySelectorAll('.atrib-tag.ativo').forEach(function(t) {
+    atribuicoes.push(t.textContent.trim());
+  });
+
+  var dias = [];
+  document.querySelectorAll('.dia-btn.ativo').forEach(function(d) {
+    dias.push(parseInt(d.dataset.dia));
+  });
+
+  var payload = {
+    nome: nome,
+    cargo: cargo,
+    especialidade: cargo,
+    telefone: document.getElementById('prof-tel').value.trim(),
+    bio: document.getElementById('prof-bio').value.trim(),
+    foto: document.getElementById('prof-foto-url').value,
+    atribuicoes: atribuicoes,
+    diasAtendimento: dias,
+    horario: {
+      inicio: document.getElementById('prof-hora-inicio').value,
+      fim: document.getElementById('prof-hora-fim').value,
+      almocoInicio: document.getElementById('prof-almoco-inicio').value,
+      almocoFim: document.getElementById('prof-almoco-fim').value
+    }
+  };
+
+  try {
+    var d = await fetch('/api/agenda/profissionais', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + TOKEN },
+      body: JSON.stringify(payload)
+    }).then(function(r) { return r.json(); });
+
+    if (d.sucesso || d._id || d.profissional) {
+      toast('Colaborador salvo ✅');
+      fecharModal('modal-profissional');
+      carregarProfissionais();
+    } else {
+      toast('Erro: ' + (d.erro || 'Tente novamente'));
+    }
+  } catch(e) { toast('Erro: ' + e.message); }
+}
 
 // TIPO SERVIÇO
 var tipoServico = 'servico';
@@ -1013,6 +1169,108 @@ document.addEventListener('keydown', function(e) {
 
 init();
 </script>
+
+
+<!-- MODAL CRIAR PROFISSIONAL -->
+<div class="modal-overlay" id="modal-profissional">
+  <div class="modal">
+    <div class="modal-titulo">
+      👥 Novo Colaborador
+      <button class="modal-fechar" onclick="fecharModal('modal-profissional')">✕</button>
+    </div>
+
+    <!-- FOTO -->
+    <div class="form-group">
+      <label>Foto do colaborador</label>
+      <div class="foto-upload-area" onclick="document.getElementById('input-foto-prof').click()" id="foto-area">
+        <div id="foto-placeholder">
+          <div class="foto-upload-placeholder">📷</div>
+          <div style="font-size:.82em;color:#6b7280">Toque para adicionar foto</div>
+        </div>
+        <img id="foto-preview-prof" class="foto-upload-preview" src="" style="display:none">
+      </div>
+      <input type="file" id="input-foto-prof" accept="image/*" style="display:none" onchange="previewFotoProf(this)">
+      <input type="hidden" id="prof-foto-url" value="">
+    </div>
+
+    <div class="form-group">
+      <label>Nome completo *</label>
+      <input type="text" id="prof-nome" placeholder="Ex: Maria Silva">
+    </div>
+
+    <div class="form-group">
+      <label>Cargo / Especialidade *</label>
+      <input type="text" id="prof-cargo" placeholder="Ex: Cabeleireira, Barbeiro, Esteticista...">
+    </div>
+
+    <div class="form-group">
+      <label>Telefone / WhatsApp</label>
+      <input type="tel" id="prof-tel" placeholder="(00) 00000-0000">
+    </div>
+
+    <div class="form-group">
+      <label>Atribuições / Serviços que realiza</label>
+      <div class="atribuicoes-lista" id="atrib-lista">
+        <span class="atrib-tag" onclick="toggleAtrib(this)">Corte</span>
+        <span class="atrib-tag" onclick="toggleAtrib(this)">Barba</span>
+        <span class="atrib-tag" onclick="toggleAtrib(this)">Coloração</span>
+        <span class="atrib-tag" onclick="toggleAtrib(this)">Escova</span>
+        <span class="atrib-tag" onclick="toggleAtrib(this)">Manicure</span>
+        <span class="atrib-tag" onclick="toggleAtrib(this)">Pedicure</span>
+        <span class="atrib-tag" onclick="toggleAtrib(this)">Maquiagem</span>
+        <span class="atrib-tag" onclick="toggleAtrib(this)">Depilação</span>
+        <span class="atrib-tag" onclick="toggleAtrib(this)">Massagem</span>
+        <span class="atrib-tag" onclick="toggleAtrib(this)">Sobrancelha</span>
+        <span class="atrib-tag" onclick="toggleAtrib(this)">Limpeza de Pele</span>
+        <span class="atrib-tag" onclick="toggleAtrib(this)">Design Unhas</span>
+      </div>
+      <div style="margin-top:8px;display:flex;gap:8px">
+        <input type="text" id="atrib-custom" placeholder="Outra atribuição..." style="flex:1;padding:8px 12px;border:2px solid #e5e7eb;border-radius:8px;font-size:.85em;outline:none">
+        <button onclick="adicionarAtribCustom()" style="padding:8px 14px;background:var(--cor);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:.85em">+</button>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Dias de atendimento</label>
+      <div class="dias-semana-grid" id="dias-grid">
+        <div class="dia-btn" onclick="toggleDia(this)" data-dia="0">Dom</div>
+        <div class="dia-btn ativo" onclick="toggleDia(this)" data-dia="1">Seg</div>
+        <div class="dia-btn ativo" onclick="toggleDia(this)" data-dia="2">Ter</div>
+        <div class="dia-btn ativo" onclick="toggleDia(this)" data-dia="3">Qua</div>
+        <div class="dia-btn ativo" onclick="toggleDia(this)" data-dia="4">Qui</div>
+        <div class="dia-btn ativo" onclick="toggleDia(this)" data-dia="5">Sex</div>
+        <div class="dia-btn" onclick="toggleDia(this)" data-dia="6">Sáb</div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Horário de atendimento</label>
+      <div class="horario-row">
+        <label>Das</label>
+        <input type="time" id="prof-hora-inicio" value="08:00">
+        <label>às</label>
+        <input type="time" id="prof-hora-fim" value="18:00">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Intervalo / Almoço</label>
+      <div class="horario-row">
+        <label>Das</label>
+        <input type="time" id="prof-almoco-inicio" value="12:00">
+        <label>às</label>
+        <input type="time" id="prof-almoco-fim" value="13:00">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Descrição / Bio</label>
+      <textarea id="prof-bio" rows="2" placeholder="Breve descrição sobre o profissional..."></textarea>
+    </div>
+
+    <button class="btn-salvar" onclick="salvarProfissional()">💾 Salvar colaborador</button>
+  </div>
+</div>
 
 <!-- MODAL CRIAR SERVIÇO -->
 <div class="modal-overlay" id="modal-servico">
