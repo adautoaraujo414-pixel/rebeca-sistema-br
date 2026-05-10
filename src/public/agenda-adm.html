@@ -154,6 +154,37 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .perfil-item-titulo { font-weight: 600; font-size: .9em; }
 .perfil-item-det { font-size: .78em; color: #6b7280; margin-top: 2px; }
 .btn-sair { width: 100%; padding: 14px; background: #fee2e2; color: #dc2626; border: none; border-radius: 12px; font-size: 1em; font-weight: 700; cursor: pointer; margin-top: 8px; }
+
+/* TOGGLE */
+.toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f3f4f6; }
+.toggle-row:last-child { border-bottom: none; }
+.toggle-label { font-size: .9em; font-weight: 600; color: #1f2937; }
+.toggle-sub { font-size: .78em; color: #9ca3af; margin-top: 2px; }
+.toggle { position: relative; width: 46px; height: 26px; flex-shrink: 0; }
+.toggle input { opacity: 0; width: 0; height: 0; }
+.toggle-slider { position: absolute; inset: 0; background: #e5e7eb; border-radius: 26px; cursor: pointer; transition: .3s; }
+.toggle-slider:before { content: ''; position: absolute; width: 20px; height: 20px; left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: .3s; }
+.toggle input:checked + .toggle-slider { background: var(--cor); }
+.toggle input:checked + .toggle-slider:before { transform: translateX(20px); }
+
+/* IA LOADING */
+.ia-loading { display: none; text-align: center; padding: 16px; color: var(--cor); }
+.ia-loading.ativo { display: block; }
+.ia-dots { display: inline-flex; gap: 4px; }
+.ia-dot { width: 8px; height: 8px; background: var(--cor); border-radius: 50%; animation: bounce .8s infinite; }
+.ia-dot:nth-child(2) { animation-delay: .15s; }
+.ia-dot:nth-child(3) { animation-delay: .3s; }
+@keyframes bounce { 0%,80%,100%{transform:scale(0)} 40%{transform:scale(1)} }
+
+/* IMAGEM PREVIEW */
+.img-preview { width: 100%; height: 160px; border-radius: 12px; object-fit: cover; margin-top: 10px; border: 2px solid #e5e7eb; display: none; }
+.img-preview.visivel { display: block; }
+.btn-ia { width: 100%; padding: 12px; background: linear-gradient(135deg, #7c3aed, #4f46e5); color: #fff; border: none; border-radius: 12px; font-size: .9em; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 8px; }
+.btn-ia:hover { opacity: .9; }
+.tipo-servico-tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+.tipo-tab { flex: 1; padding: 10px; border: 2px solid #e5e7eb; border-radius: 10px; font-size: .82em; font-weight: 600; cursor: pointer; background: #fff; color: #6b7280; text-align: center; transition: .2s; }
+.tipo-tab.ativo { border-color: var(--cor); color: var(--cor); background: #fff7ed; }
+.badge-avaliacao { background: #d1fae5; color: #059669; font-size: .7em; font-weight: 700; padding: 2px 8px; border-radius: 20px; margin-left: 6px; }
 </style>
 </head>
 <body>
@@ -297,7 +328,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
   <!-- TELA SERVIÇOS -->
   <div class="tela" id="tela-servicos">
     <div class="card">
-      <div class="card-title">✂️ Serviços</div>
+      <div class="card-title" style="justify-content:space-between">✂️ Serviços <button class="btn-sm btn-primary" onclick="abrirModalServico()">+ Novo</button></div>
       <div class="card-sub">Catálogo de serviços oferecidos</div>
       <div id="lista-servicos">
         <div class="spinner-wrap"><span class="spinner">⟳</span></div>
@@ -340,6 +371,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 
   <!-- TELA PERFIL -->
   <div class="tela" id="tela-perfil">
+    <div style="text-align:right;padding:8px 0"><button class="btn-sm btn-outline" onclick="abrirConfig()">⚙️ Configurações</button></div>
     <div class="perfil-header">
       <div class="perfil-avatar" id="perfil-avatar">A</div>
       <div class="perfil-nome" id="perfil-nome">-</div>
@@ -727,6 +759,219 @@ function abrirNovoAgendamento() {
   toast('Em breve: novo agendamento');
 }
 
+
+// TIPO SERVIÇO
+var tipoServico = 'servico';
+function setTipoServico(tipo) {
+  tipoServico = tipo;
+  document.getElementById('tab-servico').className = 'tipo-tab' + (tipo === 'servico' ? ' ativo' : '');
+  document.getElementById('tab-avaliacao').className = 'tipo-tab' + (tipo === 'avaliacao' ? ' ativo' : '');
+  var labelPreco = document.getElementById('label-preco');
+  var grupoOpc = document.getElementById('grupo-preco-opcional');
+  if (tipo === 'avaliacao') {
+    labelPreco.textContent = 'Preço (deixe 0 para avaliação gratuita)';
+    if (grupoOpc) grupoOpc.style.display = 'block';
+    document.getElementById('srv-preco').value = '0';
+    document.getElementById('srv-duracao').value = '30';
+  } else {
+    labelPreco.textContent = 'Preço (R$)';
+    if (grupoOpc) grupoOpc.style.display = 'none';
+  }
+}
+
+function togglePrecoLivre() {
+  var cb = document.getElementById('srv-preco-livre');
+  var inp = document.getElementById('srv-preco');
+  inp.disabled = cb.checked;
+  if (cb.checked) inp.value = '0';
+}
+
+function limparIAServico() {
+  document.getElementById('srv-imagem-url').value = '';
+  var prev = document.getElementById('srv-img-preview');
+  prev.className = 'img-preview';
+  prev.src = '';
+}
+
+// ABRIR MODAL SERVIÇO
+function abrirModalServico() {
+  document.getElementById('srv-nome').value = '';
+  document.getElementById('srv-descricao').value = '';
+  document.getElementById('srv-preco').value = '';
+  document.getElementById('srv-duracao').value = '30';
+  document.getElementById('srv-categoria').value = '';
+  document.getElementById('srv-imagem-url').value = '';
+  document.getElementById('srv-img-preview').className = 'img-preview';
+  document.getElementById('srv-img-preview').src = '';
+  setTipoServico('servico');
+  document.getElementById('modal-servico').className = 'modal-overlay aberto';
+}
+
+function fecharModal(id) {
+  document.getElementById(id).className = 'modal-overlay';
+}
+
+// GERAR DESCRIÇÃO IA
+async function gerarDescricaoIA() {
+  var nome = document.getElementById('srv-nome').value.trim();
+  if (!nome) { toast('Digite o nome do serviço primeiro'); return; }
+  document.getElementById('ia-loading-desc').className = 'ia-loading ativo';
+  try {
+    var d = await fetch('/api/agenda-ia-servico/gerar-descricao', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + TOKEN },
+      body: JSON.stringify({
+        nome: nome,
+        categoria: document.getElementById('srv-categoria').value,
+        duracao: document.getElementById('srv-duracao').value,
+        preco: document.getElementById('srv-preco').value
+      })
+    }).then(function(r) { return r.json(); });
+    if (d.descricao) {
+      document.getElementById('srv-descricao').value = d.descricao;
+      toast('Descrição gerada ✨');
+    } else {
+      toast('Erro ao gerar descrição');
+    }
+  } catch(e) { toast('Erro: ' + e.message); }
+  document.getElementById('ia-loading-desc').className = 'ia-loading';
+}
+
+// GERAR IMAGEM IA
+async function gerarImagemIA() {
+  var nome = document.getElementById('srv-nome').value.trim();
+  var desc = document.getElementById('srv-descricao').value.trim();
+  if (!nome) { toast('Digite o nome do serviço primeiro'); return; }
+  if (!desc) {
+    toast('Gere a descrição primeiro para melhor resultado');
+  }
+  document.getElementById('ia-loading-img').className = 'ia-loading ativo';
+  document.getElementById('btn-gerar-img').disabled = true;
+  try {
+    // Usar a rota de analisar-foto-servico para gerar URL de imagem via prompt
+    var prompt = nome + (desc ? '. ' + desc : '');
+    var d = await fetch('/api/agenda-ia-servico/gerar-imagem-servico', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + TOKEN },
+      body: JSON.stringify({ nome: nome, descricao: desc, prompt: prompt })
+    }).then(function(r) { return r.json(); });
+
+    if (d.url || d.imageUrl || d.imagem) {
+      var url = d.url || d.imageUrl || d.imagem;
+      document.getElementById('srv-imagem-url').value = url;
+      document.getElementById('srv-img-preview').src = url;
+      document.getElementById('srv-img-preview').className = 'img-preview visivel';
+      toast('Imagem gerada ✨');
+    } else {
+      // Fallback: usar Unsplash com termo do serviço
+      var termo = encodeURIComponent(nome + ' salon beauty');
+      var url = 'https://source.unsplash.com/400x300/?' + termo;
+      document.getElementById('srv-imagem-url').value = url;
+      document.getElementById('srv-img-preview').src = url;
+      document.getElementById('srv-img-preview').className = 'img-preview visivel';
+      toast('Imagem selecionada ✅');
+    }
+  } catch(e) {
+    // Fallback Unsplash
+    var termo = encodeURIComponent(nome + ' beauty');
+    var url = 'https://source.unsplash.com/400x300/?' + termo;
+    document.getElementById('srv-imagem-url').value = url;
+    document.getElementById('srv-img-preview').src = url;
+    document.getElementById('srv-img-preview').className = 'img-preview visivel';
+    toast('Imagem selecionada ✅');
+  }
+  document.getElementById('ia-loading-img').className = 'ia-loading';
+  document.getElementById('btn-gerar-img').disabled = false;
+}
+
+// SALVAR SERVIÇO
+async function salvarServico() {
+  var nome = document.getElementById('srv-nome').value.trim();
+  if (!nome) { toast('Digite o nome do serviço'); return; }
+  var preco = parseFloat(document.getElementById('srv-preco').value) || 0;
+  var duracao = parseInt(document.getElementById('srv-duracao').value) || 30;
+  var descricao = document.getElementById('srv-descricao').value.trim();
+  var categoria = document.getElementById('srv-categoria').value;
+  var imagem = document.getElementById('srv-imagem-url').value;
+  var isAvaliacao = tipoServico === 'avaliacao';
+
+  try {
+    var d = await fetch('/api/agenda/servicos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + TOKEN },
+      body: JSON.stringify({
+        nome: nome,
+        descricao: descricao,
+        preco: preco,
+        duracao: duracao,
+        categoria: categoria,
+        imagem: imagem,
+        tipo: isAvaliacao ? 'avaliacao' : 'servico',
+        precoLivre: document.getElementById('srv-preco-livre') ? document.getElementById('srv-preco-livre').checked : false
+      })
+    }).then(function(r) { return r.json(); });
+
+    if (d.sucesso || d._id || d.servico) {
+      toast('Serviço criado ✅');
+      fecharModal('modal-servico');
+      carregarServicos();
+    } else {
+      toast('Erro: ' + (d.erro || 'Tente novamente'));
+    }
+  } catch(e) { toast('Erro: ' + e.message); }
+}
+
+// CONFIGURAÇÕES AGENDA
+function abrirConfig() {
+  carregarConfigAgenda();
+  document.getElementById('modal-config').className = 'modal-overlay aberto';
+}
+
+async function carregarConfigAgenda() {
+  try {
+    var d = await api('/perfil');
+    if (d.sucesso && d.admin) {
+      var cfg = d.admin.configAgenda || {};
+      var el = document.getElementById('cfg-agenda-aberta');
+      if (el) el.checked = cfg.aberta !== false;
+      var el2 = document.getElementById('cfg-avaliacoes');
+      if (el2) el2.checked = cfg.aceitaAvaliacoes !== false;
+      var el3 = document.getElementById('cfg-auto-confirm');
+      if (el3) el3.checked = cfg.autoConfirmar || false;
+      if (cfg.horarioInicio) document.getElementById('cfg-hora-inicio').value = cfg.horarioInicio;
+      if (cfg.horarioFim) document.getElementById('cfg-hora-fim').value = cfg.horarioFim;
+      if (cfg.diasFuncionamento) {
+        var inputs = document.querySelectorAll('#cfg-dias input');
+        inputs.forEach(function(inp) {
+          inp.checked = cfg.diasFuncionamento.includes(parseInt(inp.value));
+        });
+      }
+    }
+  } catch(e) {}
+}
+
+async function salvarConfigAgenda() {
+  var dias = [];
+  document.querySelectorAll('#cfg-dias input:checked').forEach(function(inp) {
+    dias.push(parseInt(inp.value));
+  });
+  var config = {
+    aberta: document.getElementById('cfg-agenda-aberta').checked,
+    aceitaAvaliacoes: document.getElementById('cfg-avaliacoes').checked,
+    autoConfirmar: document.getElementById('cfg-auto-confirm').checked,
+    horarioInicio: document.getElementById('cfg-hora-inicio').value,
+    horarioFim: document.getElementById('cfg-hora-fim').value,
+    diasFuncionamento: dias
+  };
+  try {
+    await fetch('/api/agenda/perfil', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + TOKEN },
+      body: JSON.stringify({ configAgenda: config })
+    });
+  } catch(e) {}
+}
+
 // INIT
 async function init() {
   var telaLogin = document.getElementById('tela-login');
@@ -768,5 +1013,158 @@ document.addEventListener('keydown', function(e) {
 
 init();
 </script>
+
+<!-- MODAL CRIAR SERVIÇO -->
+<div class="modal-overlay" id="modal-servico">
+  <div class="modal">
+    <div class="modal-titulo">
+      ✂️ Novo Serviço
+      <button class="modal-fechar" onclick="fecharModal('modal-servico')">✕</button>
+    </div>
+
+    <div class="tipo-servico-tabs">
+      <button class="tipo-tab ativo" onclick="setTipoServico('servico')" id="tab-servico">✂️ Serviço</button>
+      <button class="tipo-tab" onclick="setTipoServico('avaliacao')" id="tab-avaliacao">📋 Avaliação/Orçamento</button>
+    </div>
+
+    <div class="form-group">
+      <label>Nome do serviço *</label>
+      <input type="text" id="srv-nome" placeholder="Ex: Corte masculino, Coloração..." oninput="limparIAServico()">
+    </div>
+
+    <div class="form-group">
+      <label>Descrição <span style="color:var(--cor);font-size:.8em">✨ IA gera automaticamente</span></label>
+      <textarea id="srv-descricao" rows="3" placeholder="Clique em 'Gerar com IA' após digitar o nome..."></textarea>
+      <button class="btn-ia" onclick="gerarDescricaoIA()">
+        ✨ Gerar descrição com IA
+      </button>
+    </div>
+
+    <div class="ia-loading" id="ia-loading-desc">
+      <div class="ia-dots"><div class="ia-dot"></div><div class="ia-dot"></div><div class="ia-dot"></div></div>
+      <p style="margin-top:8px;font-size:.85em;color:#6b7280">IA gerando descrição...</p>
+    </div>
+
+    <div class="form-group">
+      <label>🎨 Imagem do serviço <span style="color:var(--cor);font-size:.8em">✨ IA gera pela descrição</span></label>
+      <button class="btn-ia" onclick="gerarImagemIA()" id="btn-gerar-img">
+        🎨 Gerar imagem com IA
+      </button>
+      <div class="ia-loading" id="ia-loading-img">
+        <div class="ia-dots"><div class="ia-dot"></div><div class="ia-dot"></div><div class="ia-dot"></div></div>
+        <p style="margin-top:8px;font-size:.85em;color:#6b7280">IA gerando imagem...</p>
+      </div>
+      <img id="srv-img-preview" class="img-preview" src="" alt="Preview">
+      <input type="hidden" id="srv-imagem-url" value="">
+    </div>
+
+    <div class="form-group" id="grupo-preco">
+      <label id="label-preco">Preço (R$)</label>
+      <input type="number" id="srv-preco" placeholder="0,00" min="0" step="0.01">
+      <div style="margin-top:8px" id="grupo-preco-opcional" style="display:none">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:400">
+          <input type="checkbox" id="srv-preco-livre" onchange="togglePrecoLivre()">
+          Preço a combinar (cliente agenda sem pagar)
+        </label>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Duração (minutos)</label>
+      <select id="srv-duracao">
+        <option value="15">15 min</option>
+        <option value="30" selected>30 min</option>
+        <option value="45">45 min</option>
+        <option value="60">1 hora</option>
+        <option value="90">1h30</option>
+        <option value="120">2 horas</option>
+        <option value="180">3 horas</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>Categoria</label>
+      <select id="srv-categoria">
+        <option value="">Selecione...</option>
+        <option value="cabelo">Cabelo</option>
+        <option value="barba">Barba</option>
+        <option value="unhas">Unhas</option>
+        <option value="estetica">Estética</option>
+        <option value="maquiagem">Maquiagem</option>
+        <option value="massagem">Massagem</option>
+        <option value="depilacao">Depilação</option>
+        <option value="outro">Outro</option>
+      </select>
+    </div>
+
+    <button class="btn-salvar" onclick="salvarServico()">💾 Salvar serviço</button>
+  </div>
+</div>
+
+<!-- MODAL CONFIGURAÇÕES DA AGENDA -->
+<div class="modal-overlay" id="modal-config">
+  <div class="modal">
+    <div class="modal-titulo">
+      ⚙️ Configurações da Agenda
+      <button class="modal-fechar" onclick="fecharModal('modal-config')">✕</button>
+    </div>
+
+    <div class="toggle-row">
+      <div>
+        <div class="toggle-label">📅 Agenda Online</div>
+        <div class="toggle-sub">Clientes podem fazer agendamentos</div>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" id="cfg-agenda-aberta" onchange="salvarConfigAgenda()">
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+
+    <div class="toggle-row">
+      <div>
+        <div class="toggle-label">📋 Aceitar Avaliações</div>
+        <div class="toggle-sub">Clientes podem agendar avaliação gratuita</div>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" id="cfg-avaliacoes" onchange="salvarConfigAgenda()">
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+
+    <div class="toggle-row">
+      <div>
+        <div class="toggle-label">✅ Confirmação automática</div>
+        <div class="toggle-sub">Agendamentos confirmam sem aprovação manual</div>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" id="cfg-auto-confirm" onchange="salvarConfigAgenda()">
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+
+    <div class="form-group" style="margin-top:16px">
+      <label>Horário de abertura</label>
+      <input type="time" id="cfg-hora-inicio" value="08:00" onchange="salvarConfigAgenda()">
+    </div>
+    <div class="form-group">
+      <label>Horário de fechamento</label>
+      <input type="time" id="cfg-hora-fim" value="18:00" onchange="salvarConfigAgenda()">
+    </div>
+    <div class="form-group">
+      <label>Dias de funcionamento</label>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px" id="cfg-dias">
+        <label style="display:flex;align-items:center;gap:4px;font-size:.85em;cursor:pointer"><input type="checkbox" value="0" onchange="salvarConfigAgenda()"> Dom</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:.85em;cursor:pointer"><input type="checkbox" value="1" checked onchange="salvarConfigAgenda()"> Seg</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:.85em;cursor:pointer"><input type="checkbox" value="2" checked onchange="salvarConfigAgenda()"> Ter</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:.85em;cursor:pointer"><input type="checkbox" value="3" checked onchange="salvarConfigAgenda()"> Qua</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:.85em;cursor:pointer"><input type="checkbox" value="4" checked onchange="salvarConfigAgenda()"> Qui</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:.85em;cursor:pointer"><input type="checkbox" value="5" checked onchange="salvarConfigAgenda()"> Sex</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:.85em;cursor:pointer"><input type="checkbox" value="6" onchange="salvarConfigAgenda()"> Sáb</label>
+      </div>
+    </div>
+    <button class="btn-salvar" onclick="fecharModal('modal-config')">✅ Salvar configurações</button>
+  </div>
+</div>
+
 </body>
 </html>
