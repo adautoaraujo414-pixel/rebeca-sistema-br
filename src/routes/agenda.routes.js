@@ -39,7 +39,7 @@ router.post('/cadastro', async (req, res) => {
     if (existe) return res.status(400).json({ erro: 'Email já cadastrado' });
     const hash = await bcrypt.hash(senha, 10);
     const token = crypto.randomBytes(32).toString('hex');
-    const trialExpira = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    const trialExpira = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
     const admin = await AdminAgenda.create({ nome, email, senha: hash, token, nomeNegocio, segmento, telefone, whatsapp, plano: plano || 'espaco_digital', trialExpira });
     res.json({ sucesso: true, token, adminId: admin._id });
   } catch(e) { res.status(500).json({ erro: e.message }); }
