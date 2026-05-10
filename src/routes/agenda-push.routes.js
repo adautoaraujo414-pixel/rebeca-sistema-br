@@ -5,11 +5,17 @@ const cron = require('node-cron');
 const { AdminAgenda, AgendamentoAgenda, PushSubscriptionAgenda } = require('../models/AgendaServico');
 
 // Configurar VAPID
-webpush.setVapidDetails(
-  process.env.VAPID_EMAIL || 'mailto:contato@rebecaagenda.com.br',
-  process.env.VAPID_PUBLIC,
-  process.env.VAPID_PRIVATE
-);
+// Configurar VAPID apenas se as chaves existirem
+const VAPID_OK = process.env.VAPID_PUBLIC && process.env.VAPID_PRIVATE;
+if (VAPID_OK) {
+  webpush.setVapidDetails(
+    process.env.VAPID_EMAIL || 'mailto:contato@rebecaagenda.com.br',
+    process.env.VAPID_PUBLIC,
+    process.env.VAPID_PRIVATE
+  );
+} else {
+  console.warn('[PUSH] VAPID keys não configuradas - notificações push desativadas');
+}
 
 // Auth middleware
 async function authAgenda(req, res, next) {
@@ -63,7 +69,7 @@ router.post('/enviar', authAgenda, async (req, res) => {
     const payload = JSON.stringify({ titulo, corpo, url: url || '/espaco-digital', icon: '/agenda-icon.svg' });
     for (const sub of subs) {
       try {
-        await webpush.sendNotification({ endpoint: sub.endpoint, keys: sub.keys }, payload);
+        if (!VAPID_OK) return; await webpush.sendNotification({ endpoint: sub.endpoint, keys: sub.keys }, payload);
         enviados++;
       } catch(e) {
         erros++;
@@ -83,7 +89,7 @@ async function notificarAdmin(adminId, titulo, corpo, url) {
     const payload = JSON.stringify({ titulo, corpo, url: url || '/agenda-adm', icon: '/agenda-icon.svg' });
     for (const sub of subs) {
       try {
-        await webpush.sendNotification({ endpoint: sub.endpoint, keys: sub.keys }, payload);
+        if (!VAPID_OK) return; await webpush.sendNotification({ endpoint: sub.endpoint, keys: sub.keys }, payload);
       } catch(e) {
         if (e.statusCode === 410 || e.statusCode === 404) {
           await PushSubscriptionAgenda.findByIdAndUpdate(sub._id, { ativo: false });
@@ -100,7 +106,7 @@ async function notificarCliente(telefone, adminId, titulo, corpo, url) {
     const payload = JSON.stringify({ titulo, corpo, url: url || '/espaco-digital', icon: '/agenda-icon.svg' });
     for (const sub of subs) {
       try {
-        await webpush.sendNotification({ endpoint: sub.endpoint, keys: sub.keys }, payload);
+        if (!VAPID_OK) return; await webpush.sendNotification({ endpoint: sub.endpoint, keys: sub.keys }, payload);
       } catch(e) {
         if (e.statusCode === 410 || e.statusCode === 404) {
           await PushSubscriptionAgenda.findByIdAndUpdate(sub._id, { ativo: false });
