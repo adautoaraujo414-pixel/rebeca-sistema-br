@@ -271,6 +271,25 @@ body{font-family:'Segoe UI',sans-serif;background:#f3f4f6;color:#1f2937;min-heig
         </div>
         <div class="form-group"><label class="form-label">Cor principal</label><input class="form-input" id="p-cor" type="color" value="#f97316" style="height:44px;padding:4px 10px"></div>
       </div>
+      <div class="perfil-secao">
+        <div class="perfil-secao-titulo">🤖 Automações WhatsApp</div>
+        <div class="toggle-row">
+          <span class="toggle-label">Recuperação de clientes inativos</span>
+          <button class="toggle" id="tog-recup" onclick="toggleConfig('recuperacaoAtiva','tog-recup')"></button>
+        </div>
+        <div class="form-group" style="margin-top:8px">
+          <label class="form-label">Dias para considerar inativo</label>
+          <input class="form-input" id="p-dias-inativo" type="number" value="30" min="7" max="365">
+        </div>
+        <div class="toggle-row">
+          <span class="toggle-label">Mensagem pós-serviço (2h após)</span>
+          <button class="toggle" id="tog-pos" onclick="toggleConfig('posServicoAtivo','tog-pos')"></button>
+        </div>
+        <div class="toggle-row">
+          <span class="toggle-label">Parabéns de aniversário</span>
+          <button class="toggle" id="tog-aniv" onclick="toggleConfig('aniversarioAtivo','tog-aniv')"></button>
+        </div>
+      </div>
       <button class="btn-pri" onclick="salvarPerfil()">💾 Salvar</button>
     </div>
   </div>
@@ -722,7 +741,16 @@ function preencherPerfil(a) {
     document.getElementById('p-int').value = a.config.intervaloAgendamento || 30;
     document.getElementById('p-ant').value = a.config.antecedenciaMinima || 60;
     document.getElementById('p-cor').value = a.config.corPrimaria || '#f97316';
+    if (a.config.recuperacaoAtiva) document.getElementById('tog-recup')?.classList.add('on');
+    if (a.config.posServicoAtivo) document.getElementById('tog-pos')?.classList.add('on');
+    if (a.config.aniversarioAtivo) document.getElementById('tog-aniv')?.classList.add('on');
+    if (a.config.diasInativo) document.getElementById('p-dias-inativo').value = a.config.diasInativo;
   }
+}
+
+function toggleConfig(campo, btnId) {
+  var btn = document.getElementById(btnId);
+  if (btn) btn.classList.toggle('on');
 }
 
 async function salvarPerfil() {
@@ -740,7 +768,11 @@ async function salvarPerfil() {
       horarioFechamento: document.getElementById('p-fe').value,
       intervaloAgendamento: parseInt(document.getElementById('p-int').value)||30,
       antecedenciaMinima: parseInt(document.getElementById('p-ant').value)||60,
-      corPrimaria: document.getElementById('p-cor').value
+      corPrimaria: document.getElementById('p-cor').value,
+      recuperacaoAtiva: document.getElementById('tog-recup')?.classList.contains('on') || false,
+      diasInativo: parseInt(document.getElementById('p-dias-inativo')?.value)||30,
+      posServicoAtivo: document.getElementById('tog-pos')?.classList.contains('on') || false,
+      aniversarioAtivo: document.getElementById('tog-aniv')?.classList.contains('on') || false
     }
   };
   try {

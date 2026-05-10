@@ -18,6 +18,7 @@ const adminAgendaSchema = new mongoose.Schema({
   plano: { type: String, enum: ['espaco_digital', 'espaco_digital_ia'], default: 'espaco_digital' },
   ativo: { type: Boolean, default: true },
   trialExpira: { type: Date },
+  instanciaWhatsappId: { type: mongoose.Schema.Types.ObjectId, ref: 'InstanciaWhatsapp' },
   config: {
     horarioAbertura: { type: String, default: '08:00' },
     horarioFechamento: { type: String, default: '18:00' },
