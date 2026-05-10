@@ -64,6 +64,8 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Segoe UI',sans-ser
   cursor:pointer;transition:all .2s;
 }
 .tab-btn.active{background:#f97316;color:#fff}
+.modal-tab.active{color:#f97316!important;border-bottom:2px solid #f97316!important}
+.modal-tab:hover{background:#f3f4f6}
 .busca-wrap{padding:10px 12px;flex-shrink:0;background:#fff}
 .busca-input{
   width:100%;padding:9px 14px;border-radius:8px;
@@ -273,6 +275,8 @@ let tipoAtual = 'balcao';
 let categorias = [];
 let itens = [];
 let catAtiva = 'todos';
+let mesaAtual = null;
+let carrinhoMesa = [];
 
 // Relógio
 setInterval(() => {
@@ -450,8 +454,7 @@ async function carregarSalonMesas() {
         </div>
         <div style="font-size:.82em;color:#6b7280;margin:4px 0">${m.pedidos?.length||0} pedido(s)</div>
         <div style="display:flex;gap:8px;margin-top:8px">
-          <button onclick="verPedidosMesa('${m.mesa}')" style="flex:1;padding:6px;background:#f97316;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:.8em">Ver Pedidos</button>
-          <button onclick="fecharMesa('${m.mesa}')" style="flex:1;padding:6px;background:#ef4444;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:.8em">Fechar Mesa</button>
+          <button onclick="abrirModalMesa('${m.mesa}','${(m.total||0).toFixed(2).replace('.',',')}')" style="flex:1;padding:6px;background:#f97316;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:.8em">📋 Abrir Mesa</button>
         </div>
       </div>
     `).join('');
@@ -845,6 +848,259 @@ async function carregarResumoTempoReal() {
 document.getElementById('btn-fechar-caixa').onclick = fecharCaixa;
 
 init();
+
+// ========== MODAL MESA ==========
+function abrirModalMesa(mesa, total) {
+  mesaAtual = mesa;
+  carrinhoMesa = [];
+  document.getElementById('modal-mesa-titulo').textContent = 'Mesa ' + mesa;
+  document.getElementById('modal-mesa-status').textContent = 'Total: R$ ' + (total||'0,00');
+  document.getElementById('modal-total-mesa').textContent = 'R$ ' + (total||'0,00');
+  document.getElementById('modal-total-fechar').textContent = 'R$ ' + (total||'0,00');
+  document.getElementById('modal-mesa').style.display = 'block';
+  modalAba('pedidos', document.querySelector('.modal-tab'));
+  carregarPedidosMesa(mesa);
+  modalRenderCardapio();
+}
+
+function fecharModal() {
+  document.getElementById('modal-mesa').style.display = 'none';
+  mesaAtual = null;
+  carrinhoMesa = [];
+}
+
+function modalAba(aba, el) {
+  document.querySelectorAll('.modal-tab').forEach(b => {
+    b.classList.remove('active');
+    b.style.color = '#6b7280';
+    b.style.borderBottom = 'none';
+  });
+  el.classList.add('active');
+  el.style.color = '#f97316';
+  el.style.borderBottom = '2px solid #f97316';
+  ['pedidos','adicionar','fechar'].forEach(a => {
+    const el2 = document.getElementById('modal-aba-'+a);
+    if (el2) el2.style.display = a === aba ? 'block' : 'none';
+  });
+}
+
+async function carregarPedidosMesa(mesa) {
+  try {
+    const r = await fetch(`/api/delivery/salon/pedidos-mesa/${mesa}`, {headers:{'Authorization':'Bearer '+token}});
+    const pedidos = await r.json();
+    const lista = Array.isArray(pedidos) ? pedidos : [];
+    const el = document.getElementById('modal-lista-pedidos');
+    const statusCor = {pendente:'#f59e0b',confirmado:'#3b82f6',preparo:'#8b5cf6',pronto:'#22c55e',entregue:'#6b7280',cancelado:'#ef4444'};
+    if (!lista.length) {
+      el.innerHTML = '<div style="text-align:center;padding:24px;color:#9ca3af">Nenhum pedido nesta mesa</div>';
+      return;
+    }
+    let totalMesa = 0;
+    el.innerHTML = lista.map(p => {
+      totalMesa += p.total || 0;
+      return `
+        <div style="border:1px solid #e5e7eb;border-radius:10px;padding:12px;margin-bottom:8px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+            <span style="font-weight:700;color:#f97316">#${p.numero||p._id?.slice(-4)}</span>
+            <span style="font-size:.75em;padding:2px 8px;border-radius:10px;background:${statusCor[p.status]||'#6b7280'}22;color:${statusCor[p.status]||'#6b7280'};font-weight:700">${p.status||'—'}</span>
+          </div>
+          <div style="font-size:.85em;color:#374151">${p.itens?.map(i=>`${i.quantidade||i.qty||1}x ${i.nome}`).join(', ')||'—'}</div>
+          <div style="font-size:.82em;color:#6b7280;margin-top:2px">${p.observacao||''}</div>
+          <div style="font-weight:700;color:#22c55e;margin-top:4px">R$ ${(p.total||0).toFixed(2).replace('.',',')}</div>
+        </div>`;
+    }).join('');
+    const totalFmt = totalMesa.toFixed(2).replace('.',',');
+    document.getElementById('modal-total-mesa').textContent = 'R$ ' + totalFmt;
+    document.getElementById('modal-total-fechar').textContent = 'R$ ' + totalFmt;
+    document.getElementById('modal-mesa-status').textContent = lista.length + ' pedido(s) · Total: R$ ' + totalFmt;
+  } catch(e) { console.error('pedidos mesa',e); }
+}
+
+function modalRenderCardapio() {
+  const el = document.getElementById('modal-lista-cardapio');
+  if (!el || !itens.length) return;
+  el.innerHTML = itens.map(item => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;border-bottom:1px solid #f3f4f6;cursor:pointer" onclick="modalAddItem('${item._id}','${item.nome}',${item.preco||0})">
+      <div>
+        <div style="font-weight:600;font-size:.9em">${item.nome}</div>
+        <div style="font-size:.78em;color:#6b7280">${item.descricao||''}</div>
+      </div>
+      <div style="font-weight:700;color:#f97316;white-space:nowrap">R$ ${(item.preco||0).toFixed(2).replace('.',',')}</div>
+    </div>
+  `).join('');
+}
+
+function modalBuscar(q) {
+  const filtrados = q ? itens.filter(i => i.nome.toLowerCase().includes(q.toLowerCase())) : itens;
+  const el = document.getElementById('modal-lista-cardapio');
+  el.innerHTML = filtrados.map(item => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;border-bottom:1px solid #f3f4f6;cursor:pointer" onclick="modalAddItem('${item._id}','${item.nome}',${item.preco||0})">
+      <div>
+        <div style="font-weight:600;font-size:.9em">${item.nome}</div>
+        <div style="font-size:.78em;color:#6b7280">${item.descricao||''}</div>
+      </div>
+      <div style="font-weight:700;color:#f97316">R$ ${(item.preco||0).toFixed(2).replace('.',',')}</div>
+    </div>
+  `).join('');
+}
+
+function modalAddItem(id, nome, preco) {
+  const ex = carrinhoMesa.find(c => c.id === id);
+  if (ex) ex.qty++;
+  else carrinhoMesa.push({id, nome, preco, qty:1});
+  modalRenderCarrinho();
+}
+
+function modalAltQty(id, delta) {
+  const idx = carrinhoMesa.findIndex(c => c.id === id);
+  if (idx === -1) return;
+  carrinhoMesa[idx].qty += delta;
+  if (carrinhoMesa[idx].qty <= 0) carrinhoMesa.splice(idx, 1);
+  modalRenderCarrinho();
+}
+
+function modalRenderCarrinho() {
+  const el = document.getElementById('modal-carrinho-mesa');
+  if (!carrinhoMesa.length) { el.innerHTML = ''; return; }
+  const total = carrinhoMesa.reduce((s,c) => s+c.preco*c.qty, 0);
+  el.innerHTML = `
+    <div style="font-weight:700;margin-bottom:8px;color:#1f2937">Itens a adicionar:</div>
+    ${carrinhoMesa.map(c => `
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <span style="font-size:.88em">${c.nome}</span>
+        <div style="display:flex;align-items:center;gap:6px">
+          <button onclick="modalAltQty('${c.id}',-1)" style="padding:2px 8px;border:1px solid #e5e7eb;border-radius:4px;cursor:pointer">−</button>
+          <span style="font-weight:700">${c.qty}</span>
+          <button onclick="modalAltQty('${c.id}',1)" style="padding:2px 8px;border:1px solid #e5e7eb;border-radius:4px;cursor:pointer">+</button>
+          <span style="color:#f97316;font-size:.85em">R$ ${(c.preco*c.qty).toFixed(2).replace('.',',')}</span>
+        </div>
+      </div>
+    `).join('')}
+    <div style="font-weight:800;color:#22c55e;text-align:right;margin-top:8px">Total: R$ ${total.toFixed(2).replace('.',',')}</div>
+  `;
+}
+
+async function enviarItensMesa() {
+  if (!carrinhoMesa.length) { alert('Adicione itens'); return; }
+  if (!mesaAtual) { alert('Mesa não selecionada'); return; }
+  const total = carrinhoMesa.reduce((s,c) => s+c.preco*c.qty, 0);
+  try {
+    const r = await fetch('/api/delivery/salon/pedido', {
+      method:'POST',
+      headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},
+      body: JSON.stringify({
+        numeroMesa: mesaAtual,
+        clienteNome: 'Mesa ' + mesaAtual,
+        itens: carrinhoMesa.map(c => ({itemId:c.id, nome:c.nome, quantidade:c.qty, preco:c.preco, subtotal:c.preco*c.qty})),
+        subtotal: total, total,
+        operador, tipoLocal: 'mesa'
+      })
+    });
+    const d = await r.json();
+    if (r.ok) {
+      carrinhoMesa = [];
+      modalRenderCarrinho();
+      document.getElementById('modal-busca').value = '';
+      modalRenderCardapio();
+      await carregarPedidosMesa(mesaAtual);
+      modalAba('pedidos', document.querySelector('.modal-tab'));
+      await carregarSalonMesas();
+      alert('Pedido enviado! ✅');
+    } else alert('Erro: '+(d.erro||d.error||'Falha'));
+  } catch(e) { alert('Erro de conexão'); }
+}
+
+async function pagarMesa(forma) {
+  if (!mesaAtual) return;
+  if (!confirm(`Pagar mesa ${mesaAtual} com ${forma}?`)) return;
+  try {
+    const r = await fetch(`/api/delivery/salon/mesa/${mesaAtual}/fechar`, {
+      method:'PUT',
+      headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},
+      body: JSON.stringify({formaPagamento: forma, operador})
+    });
+    const d = await r.json();
+    if (r.ok) {
+      alert(`Mesa ${mesaAtual} fechada! ✅`);
+      fecharModal();
+      await carregarSalonMesas();
+      await carregarMesas();
+    } else alert('Erro: '+(d.erro||d.error||'Falha'));
+  } catch(e) { alert('Erro de conexão'); }
+}
+
+async function fecharMesaComanda() {
+  if (!mesaAtual) return;
+  if (!confirm(`Fechar mesa ${mesaAtual} sem registrar pagamento?`)) return;
+  try {
+    const r = await fetch(`/api/delivery/salon/mesa/${mesaAtual}/fechar`, {
+      method:'PUT',
+      headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},
+      body: JSON.stringify({operador})
+    });
+    if (r.ok) { alert('Mesa fechada!'); fecharModal(); await carregarSalonMesas(); await carregarMesas(); }
+    else alert('Erro ao fechar mesa');
+  } catch(e) { alert('Erro de conexão'); }
+}
+
 </script>
+
+<!-- MODAL MESA -->
+<div id="modal-mesa" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:999;overflow-y:auto">
+  <div style="background:#fff;max-width:600px;margin:20px auto;border-radius:16px;overflow:hidden">
+    <!-- Header -->
+    <div style="background:#f97316;color:#fff;padding:16px 20px;display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <div style="font-size:1.2em;font-weight:800" id="modal-mesa-titulo">Mesa 1</div>
+        <div style="font-size:.82em;opacity:.9" id="modal-mesa-status">—</div>
+      </div>
+      <button onclick="fecharModal()" style="background:rgba(255,255,255,.2);border:none;color:#fff;padding:6px 14px;border-radius:8px;cursor:pointer;font-size:1em">✕</button>
+    </div>
+
+    <!-- Abas do modal -->
+    <div style="display:flex;border-bottom:1px solid #e5e7eb;background:#f9fafb">
+      <button class="modal-tab active" onclick="modalAba('pedidos',this)" style="flex:1;padding:10px;border:none;background:transparent;cursor:pointer;font-weight:600;color:#f97316;border-bottom:2px solid #f97316">📋 Pedidos</button>
+      <button class="modal-tab" onclick="modalAba('adicionar',this)" style="flex:1;padding:10px;border:none;background:transparent;cursor:pointer;font-weight:600;color:#6b7280">➕ Adicionar</button>
+      <button class="modal-tab" onclick="modalAba('fechar',this)" style="flex:1;padding:10px;border:none;background:transparent;cursor:pointer;font-weight:600;color:#6b7280">💰 Fechar</button>
+    </div>
+
+    <!-- ABA PEDIDOS -->
+    <div id="modal-aba-pedidos" style="padding:16px">
+      <div id="modal-lista-pedidos"><div style="text-align:center;padding:32px;color:#9ca3af">Carregando...</div></div>
+      <div style="margin-top:12px;padding-top:12px;border-top:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:.9em;color:#6b7280">Total da mesa:</span>
+        <span style="font-weight:800;font-size:1.1em;color:#22c55e" id="modal-total-mesa">R$ 0,00</span>
+      </div>
+    </div>
+
+    <!-- ABA ADICIONAR ITENS -->
+    <div id="modal-aba-adicionar" style="display:none;padding:16px">
+      <input type="text" id="modal-busca" placeholder="🔍 Buscar item..." oninput="modalBuscar(this.value)"
+        style="width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:12px;font-size:.9em;box-sizing:border-box">
+      <div id="modal-lista-cardapio" style="max-height:320px;overflow-y:auto"></div>
+      <div id="modal-carrinho-mesa" style="margin-top:12px;border-top:1px solid #e5e7eb;padding-top:12px"></div>
+      <button onclick="enviarItensMesa()" style="width:100%;padding:12px;background:#f97316;color:#fff;border:none;border-radius:10px;font-weight:800;font-size:1em;cursor:pointer;margin-top:8px">
+        👨‍🍳 Enviar para Cozinha
+      </button>
+    </div>
+
+    <!-- ABA FECHAR CONTA -->
+    <div id="modal-aba-fechar" style="display:none;padding:16px">
+      <div style="background:#f9fafb;border-radius:10px;padding:16px;margin-bottom:16px">
+        <div style="font-size:.9em;color:#6b7280;margin-bottom:4px">Total a pagar:</div>
+        <div style="font-size:2em;font-weight:800;color:#22c55e" id="modal-total-fechar">R$ 0,00</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
+        <button onclick="pagarMesa('dinheiro')" style="padding:14px;background:#22c55e;color:#fff;border:none;border-radius:10px;font-weight:700;cursor:pointer">💵 Dinheiro</button>
+        <button onclick="pagarMesa('pix')" style="padding:14px;background:#8b5cf6;color:#fff;border:none;border-radius:10px;font-weight:700;cursor:pointer">📱 PIX</button>
+        <button onclick="pagarMesa('debito')" style="padding:14px;background:#3b82f6;color:#fff;border:none;border-radius:10px;font-weight:700;cursor:pointer">💳 Débito</button>
+        <button onclick="pagarMesa('credito')" style="padding:14px;background:#f59e0b;color:#fff;border:none;border-radius:10px;font-weight:700;cursor:pointer">💳 Crédito</button>
+      </div>
+      <button onclick="fecharMesaComanda()" style="width:100%;padding:12px;background:#ef4444;color:#fff;border:none;border-radius:10px;font-weight:800;cursor:pointer">
+        🔒 Fechar Mesa sem Pagamento
+      </button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
