@@ -1291,6 +1291,7 @@ async function ativarPush() {
       userVisibleOnly: true,
       applicationServerKey: urlBase64ToUint8Array(d.publicKey)
     });
+    await fetch('/api/agenda-push/subscribe', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + TOKEN },
       body: JSON.stringify(sub)
