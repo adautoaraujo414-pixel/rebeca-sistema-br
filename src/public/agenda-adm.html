@@ -718,7 +718,10 @@ async function carregarProfissionais() {
         '</div>' +
         '<div style="display:flex;gap:6px">' +
         '<button class="btn-icon" style="background:#eff6ff;color:#3b82f6" onclick="copiarLinkProf(\'' + (p.token||'') + '\')">🔗</button>' +
+        '<div style="display:flex;gap:6px">' +
+        '<button class="btn-icon" style="background:#eff6ff;color:#3b82f6" onclick="copiarLinkProf(\'' + (p.token||'') + '\')">🔗</button>' +
         '<button class="btn-icon btn-del" onclick="excluirProfissional(\'' + p._id + '\')">🗑️</button>' +
+        '</div>' +
         '</div>' +
       '</div>';
     }).join('');
@@ -794,6 +797,16 @@ function abrirNovoAgendamento() {
 
 
 // PROFISSIONAL
+function copiarLinkProf(token) {
+  if (!token) { toast('Token não disponível'); return; }
+  var link = window.location.origin + '/agenda-profissional?token=' + token;
+  navigator.clipboard.writeText(link).then(function() {
+    toast('Link do profissional copiado! ✅');
+  }).catch(function() {
+    prompt('Copie o link:', link);
+  });
+}
+
 function copiarLinkProf(token) {
   if (!token) { toast('Token não disponível'); return; }
   var link = window.location.origin + '/agenda-profissional?token=' + token;
