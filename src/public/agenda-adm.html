@@ -463,6 +463,8 @@ async function carregarDashboard() {
       var a = perfil.admin;
       document.getElementById('link-espaco-txt').textContent = location.origin + '/espaco-digital?id=' + (a._id || '');
       ADM_ID = a._id || '';
+      var linkEl = document.getElementById('link-espaco-txt');
+      if (linkEl) linkEl.textContent = location.origin + '/espaco-digital?id=' + ADM_ID;
       preencherPerfil(a);
     }
   } catch(e) {}
