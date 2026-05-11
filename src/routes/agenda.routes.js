@@ -217,7 +217,7 @@ router.get('/espaco/:adminId/horarios', async (req, res) => {
       // Verificar bloqueios
       const bloqueado = bloqueios.some(b => slotInicio < b.dataHoraFim && slotFim > b.dataHoraInicio);
 
-      horarios.push({ hora: `${h}:${m}`, disponivel: !ocupado && !bloqueado });
+      if (!ocupado && !bloqueado) horarios.push(`${h}:${m}`);
     }
 
     res.json({ sucesso: true, horarios, nomeNegocio: admin.nomeNegocio, segmento: admin.segmento });
