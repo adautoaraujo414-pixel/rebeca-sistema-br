@@ -64,6 +64,37 @@ Responda APENAS com a descrição, sem explicações.`
 });
 
 // ===== IA: ANALISAR FOTO E MELHORAR SERVIÇO =====
+
+router.post('/gerar-imagem-servico', authAgenda, async (req, res) => {
+  try {
+    const { nome, descricao, prompt } = req.body;
+    const p = prompt || (nome + (descricao ? '. ' + descricao : ''));
+    const msg = await anthropic.messages.create({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1024,
+      messages: [{
+        role: 'user',
+        content: 'Gere uma URL de imagem placeholder profissional para um serviço de barbearia/salão chamado: ' + p + '. Retorne APENAS uma URL de imagem do unsplash ou similar que represente bem este serviço. Formato: {"url": "https://..."}'
+      }]
+    });
+    const text = msg.content[0].text;
+    try {
+      const json = JSON.parse(text.replace(/```json|```/g,'').trim());
+      return res.json({ sucesso: true, url: json.url });
+    } catch(e) {
+      // Fallback: imagem genérica de barbearia
+      const urls = [
+        'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=400',
+        'https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?w=400',
+        'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=400',
+        'https://images.unsplash.com/photo-1599351431202-1e0f0137899a?w=400'
+      ];
+      const url = urls[Math.floor(Math.random() * urls.length)];
+      return res.json({ sucesso: true, url });
+    }
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
 router.post('/analisar-foto-servico', authAgenda, uploadTemp.single('foto'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ erro: 'Foto obrigatória' });
