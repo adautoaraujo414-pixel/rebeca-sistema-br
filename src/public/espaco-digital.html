@@ -180,7 +180,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
   <div id="servicos-todos"></div>
   <div class="section-header" style="margin-top:8px">
     <div class="section-title">📅 Próximos horários livres</div>
-    <div class="ver-todos" onclick="mudarTabNome('horarios')">Ver agenda completa ›</div>
+    <div class="ver-todos" onclick=\"mudarTabNome(&apos;horarios&apos;)\">Ver agenda completa ›</div>
   </div>
   <div id="cal-mini"></div>
 </div>
@@ -467,7 +467,7 @@ function renderCalMini() {
   var nomes = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
   var el = document.getElementById('cal-mini');
   el.innerHTML = '<div class="cal-days">'+dias.map(function(d,i){
-    return '<div class="cal-day'+(i===0?' ativo':'')+'" onclick="mudarTabNome('horarios')">'+
+    return '<div class="cal-day'+(i===0?' ativo':'')+'" onclick=\"mudarTabNome(&apos;horarios&apos;)\">'+
       '<div class="dow">'+nomes[d.getDay()]+'</div><div class="num">'+d.getDate()+'</div></div>';
   }).join('')+'</div>';
   // Carregar horários do dia
