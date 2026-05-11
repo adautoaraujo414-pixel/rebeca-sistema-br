@@ -9,7 +9,7 @@ const {
 } = require('../models/AgendaServico');
 
 // ===== AUTH MIDDLEWARE =====
-async function authAgenda(req, res, next) {
+async function async authAgenda(req, res, next) {
   try {
     const token = req.headers.authorization?.replace('Bearer ','') || '';
     const admin = await AdminAgenda.findOne({ token, ativo: true });
