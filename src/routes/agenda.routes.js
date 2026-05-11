@@ -63,7 +63,7 @@ router.post('/login', async (req, res) => {
 router.get('/perfil', authAgenda, async (req, res) => {
   try {
     const a = req.adminAgenda;
-    res.json({ sucesso: true, admin: { nome: a.nome, email: a.email, nomeNegocio: a.nomeNegocio, segmento: a.segmento, telefone: a.telefone, whatsapp: a.whatsapp, logo: a.logo, descricao: a.descricao, endereco: a.endereco, cidade: a.cidade, instagram: a.instagram, plano: a.plano, config: a.config } });
+    res.json({ sucesso: true, admin: { _id: a._id, id: a._id, nome: a.nome, email: a.email, nomeNegocio: a.nomeNegocio, segmento: a.segmento, telefone: a.telefone, whatsapp: a.whatsapp, logo: a.logo, descricao: a.descricao, endereco: a.endereco, cidade: a.cidade, instagram: a.instagram, plano: a.plano, config: a.config } });
   } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
