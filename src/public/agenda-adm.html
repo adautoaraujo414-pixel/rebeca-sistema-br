@@ -1,4 +1,22 @@
-<!DOCTYPE html>
+python3 - << 'PYEOF'
+import subprocess
+
+# Tocar no arquivo para forçar novo commit
+with open('/workspaces/rebeca-sistema-br/src/public/agenda-adm.html', encoding='utf-8', errors='ignore') as f:
+    a = f.read()
+
+# Confirmar que o link está certo
+idx = a.find("'/espaco-digital?id='")
+print("Link correto no arquivo:", idx > 0)
+print(a[idx-20:idx+50])
+
+subprocess.run(['git','add','-A'], cwd='/workspaces/rebeca-sistema-br')
+r2 = subprocess.run(['git','commit','--allow-empty','-m','fix: force redeploy espaco-digital link'], cwd='/workspaces/rebeca-sistema-br', capture_output=True, text=True)
+print(r2.stdout.strip())
+r3 = subprocess.run(['git','push','origin','main'], cwd='/workspaces/rebeca-sistema-br', capture_output=True, text=True)
+print(r3.stderr.strip())
+print("DEPLOY OK ✅")
+PYEOF<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
