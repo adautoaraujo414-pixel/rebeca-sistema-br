@@ -202,7 +202,7 @@ router.get('/espaco/:adminId/horarios', async (req, res) => {
       const slotFim = new Date(slotInicio.getTime() + duracao * 60000);
 
       // Verificar antecedência mínima
-      const antecMin = (cfg.antecedenciaMinima || 60) * 60000;
+      const antecMin = (cfg.antecedenciaMinima || 0) * 60000;
       if (slotInicio.getTime() - agora.getTime() < antecMin) continue;
 
       // Verificar conflito com agendamentos
