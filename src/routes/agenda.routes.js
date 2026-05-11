@@ -10,6 +10,7 @@ const {
 } = require('../models/AgendaServico');
 
 // ===== AUTH MIDDLEWARE =====
+// auth middleware v2
 async function authAgenda(req, res, next) {
   try {
     const token = req.headers.authorization?.replace('Bearer ','') || '';
