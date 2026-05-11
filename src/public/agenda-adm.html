@@ -573,7 +573,7 @@ function iniciarPainel(dados) {
   document.getElementById('perfil-nome').textContent = nome;
   document.getElementById('perfil-seg').textContent = info.segmento || '';
 
-  LINK_AGENDA = window.location.origin + '/agenda/' + ADM_ID;
+  LINK_AGENDA = window.location.origin + '/espaco-digital?id=' + ADM_ID;
   document.getElementById('link-agenda-url').textContent = LINK_AGENDA;
 
   carregarDashboard();
