@@ -157,7 +157,63 @@ const PushSubscriptionAgenda = mongoose.model('PushSubscriptionAgenda', new mong
 }));
 
 // Exportar tudo
+
+
+// Financeiro — receitas registradas automaticamente
+const financeiroAgendaSchema = new mongoose.Schema({
+  adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'AdminAgenda', required: true },
+  agendamentoId: { type: mongoose.Schema.Types.ObjectId, ref: 'AgendamentoAgenda' },
+  tipo: { type: String, enum: ['receita', 'despesa'], required: true },
+  descricao: { type: String, required: true },
+  valor: { type: Number, required: true },
+  categoria: { type: String, default: 'servico' },
+  data: { type: Date, default: Date.now },
+  pago: { type: Boolean, default: false },
+  formaPagamento: { type: String, enum: ['dinheiro','pix','cartao_debito','cartao_credito','outro'], default: 'pix' },
+  observacao: { type: String },
+  createdAt: { type: Date, default: Date.now }
+});
+
+// Contas a pagar (aluguel, agua, luz, etc)
+const contaPagarAgendaSchema = new mongoose.Schema({
+  adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'AdminAgenda', required: true },
+  descricao: { type: String, required: true },
+  valor: { type: Number, required: true },
+  vencimento: { type: Date, required: true },
+  categoria: { type: String, enum: ['aluguel','agua','luz','internet','telefone','salario','imposto','fornecedor','outro'], default: 'outro' },
+  recorrente: { type: Boolean, default: false },
+  recorrenciaMeses: { type: Number, default: 1 },
+  pago: { type: Boolean, default: false },
+  dataPagamento: { type: Date },
+  comprovante: { type: String },
+  observacao: { type: String },
+  createdAt: { type: Date, default: Date.now }
+});
+
+// Fila de encaixe — clientes esperando horário
+const filaEncaixeAgendaSchema = new mongoose.Schema({
+  adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'AdminAgenda', required: true },
+  clienteId: { type: mongoose.Schema.Types.ObjectId, ref: 'ClienteAgenda' },
+  nomeCliente: { type: String, required: true },
+  telefoneCliente: { type: String, required: true },
+  servicoId: { type: mongoose.Schema.Types.ObjectId, ref: 'ServicoAgenda' },
+  profissionalId: { type: mongoose.Schema.Types.ObjectId, ref: 'ProfissionalAgenda' },
+  dataPreferida: { type: Date },
+  horarioPreferido: { type: String },
+  status: { type: String, enum: ['aguardando','notificado','confirmado','expirado'], default: 'aguardando' },
+  notificadoEm: { type: Date },
+  expiradoEm: { type: Date },
+  createdAt: { type: Date, default: Date.now }
+});
+
+const FinanceiroAgenda = mongoose.model('FinanceiroAgenda', financeiroAgendaSchema);
+const ContaPagarAgenda = mongoose.model('ContaPagarAgenda', contaPagarAgendaSchema);
+const FilaEncaixeAgenda = mongoose.model('FilaEncaixeAgenda', filaEncaixeAgendaSchema);
+
 module.exports = {
+  FinanceiroAgenda,
+  ContaPagarAgenda,
+  FilaEncaixeAgenda,
   AdminAgenda: mongoose.model('AdminAgenda', adminAgendaSchema),
   ServicoAgenda: mongoose.model('ServicoAgenda', servicoAgendaSchema),
   ProfissionalAgenda: mongoose.model('ProfissionalAgenda', profissionalAgendaSchema),
