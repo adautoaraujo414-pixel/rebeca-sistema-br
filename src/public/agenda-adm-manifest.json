@@ -1,0 +1,23 @@
+{
+  "name": "Rebeca Agenda",
+  "short_name": "Agenda ADM",
+  "description": "Painel de gestao de agendamentos da Rebeca Agenda",
+  "start_url": "/agenda-adm",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#111111",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/agenda-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/agenda-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
