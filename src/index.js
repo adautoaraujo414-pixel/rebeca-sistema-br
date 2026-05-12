@@ -284,6 +284,7 @@ app.use('/api/agenda-upload', require('./routes/agenda-upload.routes'));
 app.use('/api/agenda-push', require('./routes/agenda-push.routes').router);
 // Iniciar serviço de recuperação de clientes Agenda
 require('./services/agenda-recuperacao.service');
+app.use('/api/agenda', require('./routes/agenda-financeiro.routes'));
 app.use('/api/agenda-ia-servico', require('./routes/agenda-ia-servico.routes'));
 console.log('🔄 Agenda: recuperação de clientes ativa');
 app.get('/agenda', (req, res) => res.sendFile(path.join(__dirname, 'public', 'agenda-landing.html')));
