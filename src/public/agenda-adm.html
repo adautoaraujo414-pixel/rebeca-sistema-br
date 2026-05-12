@@ -369,6 +369,9 @@ input,select,textarea{font-family:'Inter',sans-serif}
   .form-row.cols-2,.form-row.cols-3{grid-template-columns:1fr}
 }
 </style>
+<link rel="manifest" href="/agenda-adm-manifest.json">
+<script src="/js/agenda-notif-helper.js"></script>
+<script src="/js/agenda-wpp-templates.js"></script>
 </head>
 <body>
 
@@ -477,10 +480,23 @@ input,select,textarea{font-family:'Inter',sans-serif}
         <span class="header-search-kbd">Ctrl + K</span>
       </div>
       <div class="header-spacer"></div>
-      <button class="header-btn" title="Notificações">
-        <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0" stroke-width="2"/></svg>
-        <span class="header-notif-badge">3</span>
-      </button>
+      <div style="position:relative" id="notif-wrap">
+        <button class="header-btn" title="Notificações" onclick="toggleNotifPanel()" id="btn-sino">
+          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0" stroke-width="2"/></svg>
+          <span class="header-notif-badge" id="notif-badge" style="display:none">0</span>
+        </button>
+        <!-- PAINEL DE NOTIFICAÇÕES -->
+        <div id="notif-panel" style="display:none;position:absolute;top:48px;right:0;width:340px;background:#fff;border:1.5px solid #e5e7eb;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.14);z-index:999;overflow:hidden">
+          <div style="padding:14px 16px;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between">
+            <div style="font-weight:800;font-size:.9em">Notificações</div>
+            <button onclick="marcarTodasLidas()" style="font-size:.73em;color:#6b7280;background:none;border:none;cursor:pointer;font-weight:600">Marcar todas como lidas</button>
+          </div>
+          <div id="notif-lista" style="max-height:380px;overflow-y:auto"></div>
+          <div style="padding:12px 16px;border-top:1px solid #e5e7eb">
+            <button onclick="abrirConfigNotif()" style="width:100%;padding:9px;background:#f9fafb;border:1.5px solid #e5e7eb;border-radius:8px;font-size:.8em;font-weight:600;cursor:pointer">Configurar notificações</button>
+          </div>
+        </div>
+      </div>
       <button class="header-ajuda">
         <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="10" stroke-width="2"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3M12 17h.01" stroke-width="2"/></svg>
         Ajuda
@@ -1619,6 +1635,216 @@ function abrirWpp(tel, msg){
   window.open(url,'_blank');
 }
 
+
+// ═══════════════════════════════════════════════════════
+// NOTIFICAÇÕES + PWA — Rebeca Agenda
+// ═══════════════════════════════════════════════════════
+var _deferredInstall = null;
+var _notificacoes = [];
+var _notifNaoLidas = 0;
+
+window.addEventListener('beforeinstallprompt', function(e) {
+  e.preventDefault();
+  _deferredInstall = e;
+  var jaRecusou = localStorage.getItem('pwa-recusado');
+  var jaInstalou = window.matchMedia('(display-mode: standalone)').matches;
+  if(!jaRecusou && !jaInstalou) {
+    setTimeout(function(){ document.getElementById('pwa-banner').style.display='block'; }, 3000);
+  }
+});
+
+async function instalarPWA() {
+  if(!_deferredInstall) {
+    mostrarToast('Este navegador não suporta instalação automática. Acesse as configurações do browser e selecione "Adicionar à tela inicial".', 'info');
+    return;
+  }
+  _deferredInstall.prompt();
+  var r = await _deferredInstall.userChoice;
+  if(r.outcome === 'accepted') {
+    document.getElementById('pwa-banner').style.display='none';
+    localStorage.setItem('pwa-instalado','1');
+    mostrarToast('App instalado! 🎉', 'ok');
+  }
+  _deferredInstall = null;
+}
+
+async function ativarNotifAdmin() {
+  if(!AgendaNotif.suportado()) {
+    mostrarToast('Seu navegador não suporta notificações push. Use Chrome ou Edge.', 'erro');
+    return;
+  }
+  var token = localStorage.getItem('agenda_token') || '';
+  mostrarToast('Ativando notificações...', 'info');
+  var r = await AgendaNotif.ativarAdmin(token);
+  if(r.ok) {
+    localStorage.setItem('agenda_notif_ativo','1');
+    mostrarToast('Notificações ativadas! ✅', 'ok');
+    atualizarStatusNotif();
+  } else if(r.motivo === 'denied') {
+    mostrarToast('Permissão negada. Ative nas configurações do navegador.', 'erro');
+  } else if(r.motivo === 'sub_falhou') {
+    mostrarToast('Configure VAPID keys no servidor para push real. Notificações in-app ativas.', 'info');
+    localStorage.setItem('agenda_notif_ativo','1');
+    atualizarStatusNotif();
+  } else {
+    mostrarToast('Erro ao ativar notificações.', 'erro');
+  }
+}
+
+function atualizarStatusNotif() {
+  var el = document.getElementById('notif-status-txt');
+  if(!el) return;
+  var perm = AgendaNotif.permissaoAtual();
+  if(perm === 'granted') {
+    el.textContent = 'Ativo ✅';
+    el.style.color = 'var(--verde, #16a34a)';
+  } else if(perm === 'denied') {
+    el.textContent = 'Bloqueado ❌';
+    el.style.color = 'var(--vermelho, #dc2626)';
+  } else if(perm === 'unsupported') {
+    el.textContent = 'Não suportado';
+    el.style.color = '#6b7280';
+  } else {
+    el.textContent = 'Não ativado';
+    el.style.color = '#d97706';
+  }
+}
+
+function abrirConfigNotif() {
+  document.getElementById('notif-panel').style.display = 'none';
+  document.getElementById('modal-notif-config').style.display = 'flex';
+  atualizarStatusNotif();
+  // Atualizar card WhatsApp conforme plano
+  var plano = window._adminPlano || 'espaco_digital';
+  var isIA = plano === 'espaco_digital_ia';
+  var badge = document.getElementById('wpp-plano-badge');
+  var desc = document.getElementById('wpp-plano-desc');
+  if(isIA) {
+    badge.textContent = 'Plano R$149 ✅';
+    badge.style.background = 'var(--verde-bg, #dcfce7)';
+    badge.style.color = 'var(--verde, #16a34a)';
+    desc.textContent = 'Encaminhe clientes pelo WhatsApp com mensagem pré-preenchida.';
+  }
+}
+
+function testarNotif() {
+  AgendaNotif.notifLocal('🔔 Rebeca Agenda', 'Notificação de teste funcionando!', '/agenda-adm');
+  mostrarToast('Notificação de teste enviada!', 'ok');
+}
+
+// ── SINO: toggle painel ──
+function toggleNotifPanel() {
+  var panel = document.getElementById('notif-panel');
+  var aberto = panel.style.display !== 'none';
+  panel.style.display = aberto ? 'none' : 'block';
+  if(!aberto) renderNotifLista();
+}
+document.addEventListener('click', function(e) {
+  var wrap = document.getElementById('notif-wrap');
+  if(wrap && !wrap.contains(e.target)) {
+    var panel = document.getElementById('notif-panel');
+    if(panel) panel.style.display = 'none';
+  }
+});
+
+// ── ADICIONAR NOTIFICAÇÃO IN-APP ──
+function adicionarNotif(titulo, corpo, url, tipo) {
+  tipo = tipo || 'geral';
+  _notificacoes.unshift({ id: Date.now(), titulo: titulo, corpo: corpo, url: url||'/agenda-adm', tipo: tipo, lida: false, ts: new Date() });
+  if(_notificacoes.length > 50) _notificacoes.pop();
+  _notifNaoLidas++;
+  atualizarBadge();
+  // Notificação local se app aberto
+  AgendaNotif.notifLocal(titulo, corpo, url);
+}
+
+function atualizarBadge() {
+  var badge = document.getElementById('notif-badge');
+  if(!badge) return;
+  if(_notifNaoLidas > 0) {
+    badge.style.display = 'flex';
+    badge.textContent = _notifNaoLidas > 9 ? '9+' : _notifNaoLidas;
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+function renderNotifLista() {
+  var el = document.getElementById('notif-lista');
+  if(!el) return;
+  if(!_notificacoes.length) {
+    el.innerHTML = '<div style="padding:32px 20px;text-align:center;color:#6b7280;font-size:.85em">Nenhuma notificação</div>';
+    return;
+  }
+  var icons = { novo_agendamento:'📅', confirmado:'✅', cancelado:'❌', remarcado:'🔄', avaliacao:'⭐', lembrete:'⏰', geral:'🔔' };
+  el.innerHTML = _notificacoes.map(function(n) {
+    var ts = n.ts ? new Date(n.ts).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}) : '';
+    return '<div onclick="clicarNotif('+n.id+')" style="padding:14px 16px;border-bottom:1px solid #f3f4f6;cursor:pointer;background:'+(n.lida?'#fff':'#fff7ed')+';display:flex;gap:10px;align-items:flex-start;transition:.15s" onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background=''+(n.lida?'#fff':'#fff7ed')+''">' +
+      '<div style="font-size:1.2em;flex-shrink:0;margin-top:2px">'+(icons[n.tipo]||'🔔')+'</div>'+
+      '<div style="flex:1">'+
+        '<div style="font-weight:'+(n.lida?'600':'800')+';font-size:.83em;margin-bottom:2px">'+n.titulo+'</div>'+
+        '<div style="font-size:.77em;color:#6b7280">'+n.corpo+'</div>'+
+      '</div>'+
+      '<div style="font-size:.7em;color:#9ca3af;white-space:nowrap;margin-top:2px">'+ts+'</div>'+
+    '</div>';
+  }).join('');
+}
+
+function clicarNotif(id) {
+  var n = _notificacoes.find(function(x){ return x.id===id; });
+  if(!n) return;
+  if(!n.lida){ n.lida=true; _notifNaoLidas=Math.max(0,_notifNaoLidas-1); atualizarBadge(); }
+  document.getElementById('notif-panel').style.display='none';
+  if(n.url && n.url !== '/agenda-adm') window.open(n.url,'_self');
+}
+
+function marcarTodasLidas() {
+  _notificacoes.forEach(function(n){ n.lida=true; });
+  _notifNaoLidas=0;
+  atualizarBadge();
+  renderNotifLista();
+}
+
+// ── HOOK: interceptar criação de agendamento para notif in-app ──
+var _origSalvarAgendamento = typeof salvarAgendamento !== 'undefined' ? salvarAgendamento : null;
+// A notif é disparada pela função criarAgendamento existente via evento
+// Usamos MutationObserver para detectar novos cards na lista
+(function observarAgendamentos(){
+  var lista = document.getElementById('lista-agendamentos');
+  if(!lista) return;
+  var obs = new MutationObserver(function(mutations){
+    mutations.forEach(function(m){
+      if(m.addedNodes.length > 0 && m.addedNodes[0].classList && m.addedNodes[0].classList.contains('ag-card')){
+        // Novo card adicionado
+        var nome = (m.addedNodes[0].querySelector('.ag-nome')||{}).textContent || 'Cliente';
+        adicionarNotif('📅 Novo agendamento', nome+' acabou de agendar.', '/agenda-adm', 'novo_agendamento');
+      }
+    });
+  });
+  obs.observe(lista, { childList: true });
+})();
+
+// ── INIT NOTIFICAÇÕES ──
+(function initNotif(){
+  // Registrar SW silenciosamente
+  AgendaNotif.registrarSW();
+  atualizarBadge();
+  // Se já tinha ativado antes, resubscrever silenciosamente
+  if(localStorage.getItem('agenda_notif_ativo') === '1') {
+    var token = localStorage.getItem('agenda_token') || '';
+    setTimeout(function(){ AgendaNotif.ativarAdmin(token); }, 2000);
+  }
+  // Prompt de notificação amigável (1x por sessão, 10s após login)
+  var jaViu = sessionStorage.getItem('notif-prompt-visto');
+  if(!jaViu && AgendaNotif.suportado() && AgendaNotif.permissaoAtual() === 'default') {
+    setTimeout(function(){
+      sessionStorage.setItem('notif-prompt-visto','1');
+      var ok = confirm('Ative as notificações para receber avisos de novos agendamentos e horários próximos. Deseja ativar agora?');
+      if(ok) ativarNotifAdmin();
+    }, 10000);
+  }
+})();
+
 // ─── INIT ───
 (async function(){
   const ok = await verificarAuth();
@@ -1626,5 +1852,63 @@ function abrirWpp(tel, msg){
   else { document.getElementById('login-wrap').style.display='flex'; }
 })();
 </script>
+
+<!-- PWA INSTALL BANNER -->
+<div id="pwa-banner" style="display:none;position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#111;color:#fff;border-radius:12px;padding:14px 20px;max-width:380px;width:90%;z-index:888;box-shadow:0 8px 32px rgba(0,0,0,.25);display:none">
+  <div style="display:flex;align-items:center;gap:12px">
+    <div style="width:42px;height:42px;background:#f97316;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.2em;flex-shrink:0">📅</div>
+    <div style="flex:1">
+      <div style="font-weight:800;font-size:.9em;margin-bottom:2px">Instale o app da Rebeca Agenda</div>
+      <div style="font-size:.75em;color:rgba(255,255,255,.7)">Receba avisos de novos agendamentos direto no seu dispositivo.</div>
+    </div>
+    <button onclick="document.getElementById('pwa-banner').style.display='none';localStorage.setItem('pwa-recusado','1')" style="background:none;border:none;color:rgba(255,255,255,.5);font-size:1.3em;cursor:pointer;padding:0 4px">×</button>
+  </div>
+  <div style="display:flex;gap:8px;margin-top:12px">
+    <button id="btn-instalar-pwa" onclick="instalarPWA()" style="flex:1;padding:10px;background:#f97316;color:#fff;border:none;border-radius:8px;font-size:.85em;font-weight:800;cursor:pointer">Instalar app</button>
+    <button onclick="ativarNotifAdmin()" style="flex:1;padding:10px;background:rgba(255,255,255,.1);color:#fff;border:1.5px solid rgba(255,255,255,.2);border-radius:8px;font-size:.85em;font-weight:700;cursor:pointer">Ativar notificações</button>
+  </div>
+</div>
+
+<!-- MODAL CONFIG NOTIFICAÇÕES -->
+<div id="modal-notif-config" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:900;align-items:center;justify-content:center;padding:20px">
+  <div style="background:#fff;border-radius:16px;width:100%;max-width:440px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.2)">
+    <div style="padding:20px 22px;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between">
+      <div style="font-weight:800;font-size:1em">Canais de aviso</div>
+      <button onclick="document.getElementById('modal-notif-config').style.display='none'" style="background:none;border:none;font-size:1.4em;color:#6b7280;cursor:pointer">×</button>
+    </div>
+    <div style="padding:20px 22px;display:flex;flex-direction:column;gap:14px">
+      <!-- PWA Card -->
+      <div style="background:#f9fafb;border:1.5px solid #e5e7eb;border-radius:12px;padding:16px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+          <div style="font-size:1.2em">📱</div>
+          <div>
+            <div style="font-weight:700;font-size:.88em">Notificações pelo app</div>
+            <div style="font-size:.75em;color:#6b7280">Instale a Rebeca Agenda e receba avisos de novos agendamentos e horários próximos.</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button id="btn-instalar-pwa2" onclick="instalarPWA()" style="padding:8px 16px;background:#111;color:#fff;border:none;border-radius:8px;font-size:.8em;font-weight:700;cursor:pointer">Instalar app</button>
+          <button onclick="ativarNotifAdmin()" style="padding:8px 16px;background:#fff;color:#111;border:1.5px solid #e5e7eb;border-radius:8px;font-size:.8em;font-weight:700;cursor:pointer">Ativar notificações</button>
+        </div>
+        <div style="margin-top:10px;font-size:.73em;color:#6b7280">Status: <span id="notif-status-txt" style="font-weight:700">verificando...</span></div>
+      </div>
+      <!-- WhatsApp Card -->
+      <div style="background:#f9fafb;border:1.5px solid #e5e7eb;border-radius:12px;padding:16px" id="card-wpp-plano">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+          <div style="font-size:1.2em">💬</div>
+          <div>
+            <div style="font-weight:700;font-size:.88em">WhatsApp automático</div>
+            <div style="font-size:.75em;color:#6b7280" id="wpp-plano-desc">Disponível no plano R$149</div>
+          </div>
+          <span id="wpp-plano-badge" style="margin-left:auto;font-size:.68em;padding:3px 8px;border-radius:20px;font-weight:700;background:#fee2e2;color:#dc2626">Plano R$149</span>
+        </div>
+      </div>
+    </div>
+    <div style="padding:14px 22px;border-top:1px solid #e5e7eb">
+      <button onclick="testarNotif()" style="width:100%;padding:11px;background:#f9fafb;border:1.5px solid #e5e7eb;border-radius:8px;font-size:.85em;font-weight:700;cursor:pointer">🔔 Testar notificação</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
