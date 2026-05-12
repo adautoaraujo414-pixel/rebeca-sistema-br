@@ -343,6 +343,8 @@ img{display:block}
   .wpp-fab{bottom:80px}
 }
 </style>
+<script src="/js/agenda-notif-helper.js"></script>
+<script src="/js/agenda-wpp-templates.js"></script>
 </head>
 <body>
 
@@ -371,6 +373,16 @@ img{display:block}
         Enviar confirmação pelo WhatsApp
       </button>
       <button class="btn-novo-ag" onclick="novoAgendamento()">Fazer novo agendamento</button>
+      <!-- PROMPT NOTIFICAÇÃO CLIENTE -->
+      <div id="notif-prompt-cliente" style="display:none;margin-top:14px;background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:10px;padding:14px">
+        <div style="font-weight:700;font-size:.88em;margin-bottom:4px">🔔 Lembrete automático</div>
+        <div style="font-size:.8em;color:#374151;margin-bottom:10px">Podemos te avisar quando seu horário estiver próximo. Ative as notificações para receber um lembrete no seu celular ou navegador antes do atendimento.</div>
+        <div style="display:flex;gap:8px">
+          <button onclick="clienteAtivarNotif()" style="flex:1;padding:9px;background:#16a34a;color:#fff;border:none;border-radius:8px;font-size:.82em;font-weight:800;cursor:pointer">Ativar lembrete</button>
+          <button onclick="clienteRecusarNotif()" style="flex:1;padding:9px;background:#fff;color:#374151;border:1.5px solid #e5e7eb;border-radius:8px;font-size:.82em;font-weight:600;cursor:pointer">Agora não</button>
+        </div>
+        <div id="notif-cliente-resultado" style="display:none;margin-top:10px;font-size:.8em;font-weight:600;text-align:center"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -1390,11 +1402,17 @@ async function confirmarAgendamento(isMobile){
       document.getElementById('suc-hora').textContent=sel.hora;
       document.getElementById('suc-total').textContent=sel.servicoPreco?fmt(sel.servicoPreco):'A confirmar';
       var telClean=limparTel(tel);
-      var wppMsg=encodeURIComponent('Olá! Acabei de agendar '+sel.servicoNome+' para '+fmtData(sel.data)+' às '+sel.hora+'. Pode confirmar?');
+      _clienteTelNotif=telClean;
+      var _wppDados={nomeCliente:nome,nomeNegocio:(DADOS&&DADOS.admin&&DADOS.admin.nomeNegocio)||'a empresa',servico:sel.servicoNome,data:sel.data,hora:sel.hora,profissional:sel.profissionalNome||'',endereco:(DADOS&&DADOS.admin&&DADOS.admin.endereco)||''};
+      var wppMsg=encodeURIComponent(typeof buildWhatsappMessage!=='undefined'?buildWhatsappMessage('appointment_created',_wppDados):'Olá! Agendei '+sel.servicoNome+' para '+fmtData(sel.data)+' às '+sel.hora+'. Pode confirmar?');
       var wppAdmin=DADOS&&DADOS.admin?limparTel(DADOS.admin.whatsapp||DADOS.admin.telefone||''):'';
       document.getElementById('btn-suc-wpp').onclick=function(){ window.open('https://wa.me/55'+wppAdmin+'?text='+wppMsg,'_blank'); };
       abrirModal('modal-sucesso');
       toast('Agendamento confirmado!','ok');
+      // Mostrar prompt de notificação se suportado e não respondido antes
+      if(typeof AgendaNotif!=='undefined' && AgendaNotif.suportado() && AgendaNotif.permissaoAtual()==='default' && !sessionStorage.getItem('notif-cliente-visto')) {
+        setTimeout(function(){ document.getElementById('notif-prompt-cliente').style.display='block'; }, 800);
+      }
       // Recarregar horários
       if(sel.data) carregarHorarios(sel.data);
     } else {
