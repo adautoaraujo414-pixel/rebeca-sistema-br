@@ -2,633 +2,1437 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Agenda Digital v4</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title id="pg-title">Agenda Digital</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-:root{--cor:#f97316;--cor2:#ea580c;--bg:#0a0a0a;--card:#141414;--card2:#1a1a1a;--text:#fff;--muted:#9ca3af;--border:#2a2a2a}
-body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;min-height:100vh;max-width:430px;margin:0 auto}
-.header{display:flex;align-items:center;gap:12px;padding:16px;position:sticky;top:0;z-index:100;background:rgba(10,10,10,0.95);backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
-.logo-box{width:44px;height:44px;background:var(--cor);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+:root{
+  --preto:#111111;--preto2:#1a1a1a;--grafite:#374151;
+  --cinza:#6b7280;--cinza2:#9ca3af;--cinza3:#d1d5db;
+  --bg:#f9fafb;--branco:#fff;--borda:#e5e7eb;
+  --verde:#16a34a;--verde-bg:#dcfce7;--wpp:#25d366;
+  --amarelo:#d97706;--amarelo-bg:#fef3c7;
+  --vermelho:#dc2626;--vermelho-bg:#fee2e2;
+  --shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.05);
+  --shadow-md:0 4px 16px rgba(0,0,0,.10);
+  --shadow-lg:0 8px 32px rgba(0,0,0,.14);
+  --radius:12px;--radius-sm:8px;--radius-lg:18px;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--preto);overflow-x:hidden}
+a{text-decoration:none;color:inherit}
+button{cursor:pointer;font-family:inherit}
+input,select,textarea{font-family:inherit}
+img{display:block}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-thumb{background:var(--cinza3);border-radius:3px}
+
+/* ── TOAST ── */
+.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:var(--preto);color:#fff;padding:10px 22px;border-radius:var(--radius-sm);font-size:.84em;font-weight:600;z-index:9999;display:none;box-shadow:var(--shadow-md);white-space:nowrap}
+.toast.ok{background:var(--verde)}
+.toast.erro{background:var(--vermelho)}
+
+/* ── HEADER DESKTOP ── */
+.header{background:var(--branco);border-bottom:1px solid var(--borda);position:sticky;top:0;z-index:100;box-shadow:var(--shadow)}
+.header-inner{max-width:1200px;margin:0 auto;padding:0 24px;height:68px;display:flex;align-items:center;gap:16px}
+.header-logo{width:46px;height:46px;background:var(--preto);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;font-size:1.3em;flex-shrink:0;color:#fff}
 .header-info{flex:1}
-.header-nome{font-weight:700;font-size:1.05em}
-.header-sub{font-size:.78em;color:var(--muted)}
-.badge-aberto{background:#052e16;color:#4ade80;border:1px solid #166534;padding:4px 10px;border-radius:20px;font-size:.75em;font-weight:700}
-.search-wrap{padding:12px 16px}
-.search{width:100%;background:var(--card2);border:1px solid var(--border);border-radius:14px;padding:11px 16px 11px 40px;color:var(--text);font-size:.9em;outline:none}
-.search-wrap{position:relative}
-.search-icon{position:absolute;left:28px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:1em}
-.hero{margin:0 16px 16px;border-radius:20px;overflow:hidden;position:relative;height:180px}
-.hero-img{width:100%;height:100%;object-fit:cover;background:linear-gradient(135deg,#1a0a00,#3d1a00)}
-.hero-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.85) 0%,rgba(0,0,0,.2) 60%,transparent 100%)}
-.hero-content{position:absolute;bottom:0;left:0;right:0;padding:16px}
-.hero-title{font-size:1.5em;font-weight:800;line-height:1.2}
-.hero-title span{color:var(--cor)}
-.hero-desc{font-size:.8em;color:rgba(255,255,255,.75);margin-top:4px}
-.hero-btns{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
-.hero-btn{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);color:#fff;padding:6px 12px;border-radius:20px;font-size:.75em;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px}
-.hero-btn.wpp{background:rgba(37,211,102,.15);border-color:rgba(37,211,102,.3);color:#25d366}
-.stats-bar{display:flex;gap:0;margin:0 16px 16px;background:var(--card);border-radius:16px;overflow:hidden;border:1px solid var(--border)}
-.stat{flex:1;padding:12px 8px;text-align:center;border-right:1px solid var(--border)}
-.stat:last-child{border-right:none}
-.stat-val{font-weight:700;font-size:.95em}
-.stat-val.cor{color:var(--cor)}
-.stat-label{font-size:.68em;color:var(--muted);margin-top:2px}
-.tabs{display:flex;gap:8px;padding:0 16px 12px;overflow-x:auto;scrollbar-width:none}
-.tabs::-webkit-scrollbar{display:none}
-.tab{flex-shrink:0;padding:8px 14px;border-radius:20px;font-size:.8em;font-weight:600;cursor:pointer;border:1px solid var(--border);color:var(--muted);background:var(--card);white-space:nowrap;transition:.2s}
-.tab.ativo{background:var(--cor);color:#fff;border-color:var(--cor)}
-.section{padding:0 16px 16px;display:none}
-.section.ativo{display:block}
-.section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
-.section-title{font-weight:700;font-size:1em;display:flex;align-items:center;gap:6px}
-.ver-todos{color:var(--cor);font-size:.82em;font-weight:600;cursor:pointer}
-.servico-card{display:flex;gap:12px;background:var(--card);border:1px solid var(--border);border-radius:16px;padding:12px;margin-bottom:10px;align-items:center}
-.servico-img{width:72px;height:72px;border-radius:12px;object-fit:cover;background:var(--card2);flex-shrink:0}
-.servico-info{flex:1}
-.servico-nome{font-weight:700;font-size:.95em}
-.servico-dur{font-size:.78em;color:var(--muted);margin-top:2px;display:flex;align-items:center;gap:4px}
-.servico-preco{font-weight:700;color:var(--cor);font-size:.95em}
-.btn-agendar{background:var(--cor);color:#fff;border:none;padding:8px 14px;border-radius:10px;font-weight:700;font-size:.8em;cursor:pointer;white-space:nowrap;transition:.15s}
-.btn-agendar:hover{background:var(--cor2)}
-.prof-card{display:flex;gap:12px;background:var(--card);border:1px solid var(--border);border-radius:16px;padding:14px;margin-bottom:10px;align-items:center}
-.prof-avatar{width:52px;height:52px;border-radius:50%;background:var(--cor);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.3em;flex-shrink:0;overflow:hidden}
-.prof-avatar img{width:100%;height:100%;object-fit:cover}
-.prof-nome{font-weight:700}
-.prof-cargo{font-size:.78em;color:var(--muted);margin-top:2px}
-.prof-specs{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
-.spec-tag{background:var(--card2);border:1px solid var(--border);color:var(--muted);font-size:.7em;padding:3px 8px;border-radius:8px}
-.cal-wrap{margin-bottom:16px}
-.cal-days{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:4px}
-.cal-days::-webkit-scrollbar{display:none}
-.cal-day{flex-shrink:0;width:58px;padding:10px 6px;border-radius:14px;text-align:center;cursor:pointer;border:1px solid var(--border);background:var(--card);transition:.2s}
-.cal-day.ativo{background:var(--cor);border-color:var(--cor)}
-.cal-day .dow{font-size:.68em;color:var(--muted);font-weight:600;text-transform:uppercase}
-.cal-day.ativo .dow{color:rgba(255,255,255,.7)}
-.cal-day .num{font-size:1.2em;font-weight:800;margin-top:2px}
-.horas-wrap{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
-.hora-btn{padding:10px 14px;background:var(--card);border:1px solid var(--border);border-radius:12px;font-size:.85em;font-weight:600;cursor:pointer;transition:.2s;color:var(--text)}
-.hora-btn:hover,.hora-btn.sel{background:var(--cor);border-color:var(--cor);color:#fff}
-.end-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:10px}
-.end-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
-.end-icon{font-size:1.3em}
-.end-info{}
-.end-label{font-size:.75em;color:var(--muted)}
-.end-val{font-weight:600;font-size:.9em}
-.btn-mapa{width:100%;padding:14px;background:#052e16;border:1px solid #166534;color:#4ade80;border-radius:14px;font-weight:700;font-size:.9em;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:4px}
+.header-nome{font-weight:800;font-size:1.05em;line-height:1.2}
+.header-sub{font-size:.75em;color:var(--cinza);font-weight:500}
+.badge-status{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:.72em;font-weight:700;margin-left:8px}
+.badge-aberto{background:var(--verde-bg);color:var(--verde)}
+.badge-fechado{background:var(--vermelho-bg);color:var(--vermelho)}
+.badge-status-dot{width:7px;height:7px;border-radius:50%;background:currentColor}
+.header-nota{display:flex;align-items:center;gap:4px;font-size:.83em;font-weight:700;color:var(--preto);margin-left:6px}
+.header-nota svg{color:#f59e0b}
+.header-spacer{flex:1}
+.header-wpp{display:flex;align-items:center;gap:7px;padding:9px 18px;background:var(--wpp);color:#fff;border-radius:var(--radius-sm);font-size:.85em;font-weight:700;border:none;transition:.15s}
+.header-wpp:hover{background:#1da851}
+.header-entrar{display:flex;align-items:center;gap:6px;padding:9px 16px;background:var(--branco);color:var(--preto);border:1.5px solid var(--borda);border-radius:var(--radius-sm);font-size:.85em;font-weight:600;border:none;transition:.15s}
+.header-entrar:hover{background:var(--bg)}
+
+/* ── BUSCA ── */
+.busca-wrap{background:var(--branco);border-bottom:1px solid var(--borda);padding:12px 0}
+.busca-inner{max-width:1200px;margin:0 auto;padding:0 24px;position:relative}
+.busca-icon{position:absolute;left:38px;top:50%;transform:translateY(-50%);color:var(--cinza)}
+.busca-input{width:100%;padding:12px 16px 12px 44px;border:1.5px solid var(--borda);border-radius:var(--radius);font-size:.92em;outline:none;background:var(--bg);color:var(--preto);transition:.2s}
+.busca-input:focus{border-color:var(--preto);background:var(--branco);box-shadow:0 0 0 3px rgba(17,17,17,.06)}
+
+/* ── HERO ── */
+.hero{position:relative;overflow:hidden;min-height:400px;background:var(--preto2)}
+.hero-bg{position:absolute;inset:0;background:linear-gradient(135deg,#1a1a1a 0%,#2d2d2d 50%,#1a1a1a 100%);opacity:.97}
+.hero-overlay{position:absolute;inset:0;background:linear-gradient(to right,rgba(0,0,0,.85) 0%,rgba(0,0,0,.5) 50%,rgba(0,0,0,.2) 100%)}
+.hero-inner{max-width:1200px;margin:0 auto;padding:60px 24px;display:grid;grid-template-columns:1fr 380px;gap:48px;align-items:center;position:relative;z-index:2}
+.hero-left{}
+.hero-tag{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.85);padding:5px 12px;border-radius:20px;font-size:.75em;font-weight:600;margin-bottom:20px}
+.hero-title{font-size:2.6em;font-weight:900;color:#fff;line-height:1.15;margin-bottom:14px;letter-spacing:-.02em}
+.hero-desc{font-size:1em;color:rgba(255,255,255,.7);line-height:1.6;margin-bottom:24px;max-width:480px}
+.hero-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:28px}
+.hero-chip{display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:20px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.85);font-size:.78em;font-weight:600}
+.hero-btns{display:flex;gap:10px;flex-wrap:wrap}
+.btn-hero-primary{padding:13px 28px;background:#fff;color:var(--preto);border-radius:var(--radius-sm);font-size:.92em;font-weight:800;border:none;transition:.15s}
+.btn-hero-primary:hover{background:var(--cinza3)}
+.btn-hero-sec{padding:13px 24px;background:transparent;color:#fff;border:2px solid rgba(255,255,255,.3);border-radius:var(--radius-sm);font-size:.92em;font-weight:700;transition:.15s}
+.btn-hero-sec:hover{border-color:rgba(255,255,255,.6)}
+
+/* CARD DE AGENDAMENTO HERO */
+.hero-card{background:var(--branco);border-radius:var(--radius-lg);padding:28px;box-shadow:var(--shadow-lg)}
+.hero-card-titulo{font-size:1.15em;font-weight:800;text-align:center;margin-bottom:4px}
+.hero-card-sub{font-size:.8em;color:var(--cinza);text-align:center;margin-bottom:24px}
+.hero-card-field{margin-bottom:14px}
+.hero-card-label{display:flex;align-items:center;gap:6px;font-size:.78em;font-weight:700;color:var(--grafite);margin-bottom:7px}
+.hero-card-select{width:100%;padding:11px 14px;border:1.5px solid var(--borda);border-radius:var(--radius-sm);font-size:.88em;outline:none;appearance:none;background:var(--bg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath d='M6 9l6 6 6-6' stroke-width='2'/%3E%3C/svg%3E") no-repeat right 12px center;cursor:pointer;transition:.2s;color:var(--preto)}
+.hero-card-select:focus{border-color:var(--preto);box-shadow:0 0 0 3px rgba(17,17,17,.06);background-color:var(--branco)}
+.btn-hero-card{width:100%;padding:14px;background:var(--preto);color:#fff;border:none;border-radius:var(--radius-sm);font-size:.95em;font-weight:800;transition:.15s;margin-top:4px}
+.btn-hero-card:hover{background:var(--preto2)}
+.hero-card-safe{display:flex;align-items:center;justify-content:center;gap:6px;font-size:.73em;color:var(--cinza);margin-top:12px}
+
+/* ── FAIXA STATS ── */
+.stats-faixa{background:var(--branco);border-top:1px solid var(--borda);border-bottom:1px solid var(--borda)}
+.stats-inner{max-width:1200px;margin:0 auto;padding:0 24px;display:grid;grid-template-columns:repeat(4,1fr)}
+.stat-item{padding:20px 16px;border-right:1px solid var(--borda);display:flex;align-items:center;gap:12px}
+.stat-item:last-child{border-right:none}
+.stat-icon{width:40px;height:40px;border-radius:var(--radius-sm);background:var(--bg);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.stat-txt{}
+.stat-val{font-weight:800;font-size:.95em}
+.stat-label{font-size:.72em;color:var(--cinza);margin-top:2px}
+
+/* ── MAIN LAYOUT ── */
+.main-wrap{max-width:1200px;margin:0 auto;padding:40px 24px;display:grid;grid-template-columns:1fr 320px;gap:32px;align-items:start}
+.main-left{display:flex;flex-direction:column;gap:40px}
+.main-right{position:sticky;top:90px}
+
+/* ── SEÇÕES ── */
+.sec-titulo{font-size:1.25em;font-weight:800;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.sec-sub{font-size:.85em;color:var(--cinza);margin-bottom:20px}
+
+/* FILTROS */
+.filtros{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+.filtro-btn{padding:7px 16px;border-radius:20px;border:1.5px solid var(--borda);background:var(--branco);color:var(--grafite);font-size:.8em;font-weight:600;transition:.15s}
+.filtro-btn:hover{border-color:var(--preto);color:var(--preto)}
+.filtro-btn.ativo{background:var(--preto);color:#fff;border-color:var(--preto)}
+
+/* CARDS SERVIÇOS */
+.servicos-grid{display:grid;gap:14px}
+.srv-card{background:var(--branco);border:1.5px solid var(--borda);border-radius:var(--radius-lg);padding:18px;display:flex;gap:16px;align-items:center;transition:.2s;cursor:pointer}
+.srv-card:hover{border-color:var(--preto);box-shadow:var(--shadow-md)}
+.srv-card.selecionado{border-color:var(--preto);background:#f8f8f8;box-shadow:var(--shadow-md)}
+.srv-foto{width:80px;height:80px;border-radius:var(--radius-sm);object-fit:cover;background:var(--bg);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:2em}
+.srv-info{flex:1}
+.srv-nome{font-weight:800;font-size:.95em;margin-bottom:4px}
+.srv-desc{font-size:.78em;color:var(--cinza);margin-bottom:8px;line-height:1.4}
+.srv-meta{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.srv-dur{display:flex;align-items:center;gap:4px;font-size:.78em;color:var(--cinza);font-weight:500}
+.srv-preco{font-weight:800;font-size:.95em;color:var(--preto)}
+.srv-badge{background:var(--bg);border:1px solid var(--borda);color:var(--cinza);font-size:.68em;padding:3px 8px;border-radius:6px;font-weight:600}
+.btn-srv{padding:9px 20px;background:var(--preto);color:#fff;border-radius:var(--radius-sm);font-size:.82em;font-weight:700;border:none;transition:.15s;flex-shrink:0}
+.btn-srv:hover{background:var(--preto2)}
+.btn-srv.selecionado{background:var(--verde);color:#fff}
+
+/* PROFISSIONAIS */
+.profs-grid{display:grid;gap:12px}
+.prof-card{background:var(--branco);border:1.5px solid var(--borda);border-radius:var(--radius-lg);padding:16px;display:flex;gap:14px;align-items:center;transition:.2s;cursor:pointer}
+.prof-card:hover{border-color:var(--preto);box-shadow:var(--shadow-md)}
+.prof-card.selecionado{border-color:var(--preto);background:#f8f8f8}
+.prof-av{width:52px;height:52px;border-radius:50%;background:var(--preto);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1em;flex-shrink:0;overflow:hidden}
+.prof-av img{width:100%;height:100%;object-fit:cover}
+.prof-info{flex:1}
+.prof-nome{font-weight:800;font-size:.9em}
+.prof-cargo{font-size:.75em;color:var(--cinza);margin-top:2px}
+.prof-nota{display:flex;align-items:center;gap:4px;font-size:.75em;font-weight:700;color:var(--preto);margin-top:4px}
+.btn-prof{padding:8px 18px;background:var(--branco);color:var(--preto);border:1.5px solid var(--borda);border-radius:var(--radius-sm);font-size:.8em;font-weight:700;transition:.15s}
+.btn-prof:hover,.prof-card.selecionado .btn-prof{background:var(--preto);color:#fff;border-color:var(--preto)}
+
+/* DATA E HORÁRIOS */
+.cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.cal-nav{display:flex;align-items:center;gap:10px}
+.cal-nav-btn{width:34px;height:34px;border:1.5px solid var(--borda);background:var(--branco);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.15s}
+.cal-nav-btn:hover{border-color:var(--preto)}
+.cal-mes-ano{font-weight:700;font-size:.9em}
+.cal-dias-sem{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:8px}
+.cal-dia-sem{text-align:center;font-size:.7em;font-weight:700;color:var(--cinza);padding:4px}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal-dia{aspect-ratio:1;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;font-size:.85em;font-weight:600;cursor:pointer;border:1.5px solid transparent;transition:.15s}
+.cal-dia:hover:not(.vazio):not(.passado){border-color:var(--preto);background:var(--bg)}
+.cal-dia.hoje{font-weight:800;color:var(--preto)}
+.cal-dia.selecionado{background:var(--preto);color:#fff;border-color:var(--preto)}
+.cal-dia.passado{color:var(--cinza3);cursor:not-allowed}
+.cal-dia.vazio{cursor:default}
+.horarios-titulo{font-size:.85em;font-weight:700;margin:20px 0 10px}
+.horarios-grid{display:flex;flex-wrap:wrap;gap:8px}
+.hora-chip{padding:9px 16px;border:1.5px solid var(--borda);border-radius:var(--radius-sm);font-size:.83em;font-weight:600;background:var(--branco);cursor:pointer;transition:.15s}
+.hora-chip:hover{border-color:var(--preto);background:var(--bg)}
+.hora-chip.selecionado{background:var(--preto);color:#fff;border-color:var(--preto)}
+.hora-chip.ocupado{background:var(--bg);color:var(--cinza3);cursor:not-allowed;border-color:var(--borda)}
+
+/* FORMULÁRIO CLIENTE */
+.form-label{display:block;font-size:.8em;font-weight:700;color:var(--grafite);margin-bottom:6px}
+.form-input{width:100%;padding:11px 14px;border:1.5px solid var(--borda);border-radius:var(--radius-sm);font-size:.9em;outline:none;transition:.2s;background:var(--branco);color:var(--preto)}
+.form-input:focus{border-color:var(--preto);box-shadow:0 0 0 3px rgba(17,17,17,.06)}
+.form-group{margin-bottom:16px}
+.btn-confirmar{width:100%;padding:14px;background:var(--preto);color:#fff;border:none;border-radius:var(--radius-sm);font-size:.95em;font-weight:800;transition:.15s}
+.btn-confirmar:hover{background:var(--preto2)}
+.btn-confirmar:disabled{background:var(--cinza3);cursor:not-allowed}
+
+/* PAINEL LATERAL */
+.painel-resumo{background:var(--branco);border:1.5px solid var(--borda);border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow)}
+.painel-header{background:var(--preto);padding:20px;color:#fff}
+.painel-header-titulo{font-weight:800;font-size:1em;margin-bottom:4px}
+.painel-header-sub{font-size:.75em;color:rgba(255,255,255,.6)}
+.painel-steps{padding:20px;border-bottom:1px solid var(--borda)}
+.painel-step{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.painel-step:last-child{margin-bottom:0}
+.painel-step-num{width:24px;height:24px;border-radius:50%;border:2px solid var(--borda);display:flex;align-items:center;justify-content:center;font-size:.7em;font-weight:800;flex-shrink:0;color:var(--cinza);transition:.2s}
+.painel-step-num.ok{background:var(--preto);color:#fff;border-color:var(--preto)}
+.painel-step-txt{font-size:.82em;color:var(--cinza)}
+.painel-step-val{font-size:.82em;font-weight:700;color:var(--preto)}
+.painel-body{padding:20px}
+.painel-linha{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-size:.83em}
+.painel-linha-label{color:var(--cinza)}
+.painel-linha-val{font-weight:700}
+.painel-total{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-top:1.5px solid var(--borda);margin-top:8px}
+.painel-total-label{font-weight:800}
+.painel-total-val{font-size:1.2em;font-weight:900}
+.btn-continuar{width:100%;padding:14px;background:var(--preto);color:#fff;border:none;border-radius:var(--radius-sm);font-size:.92em;font-weight:800;margin-top:16px;transition:.15s}
+.btn-continuar:hover{background:var(--preto2)}
+.painel-selo{display:flex;align-items:center;justify-content:center;gap:6px;font-size:.72em;color:var(--cinza);margin-top:12px}
+
+/* AVALIAÇÕES */
+.aval-header{display:flex;align-items:center;gap:20px;background:var(--branco);border:1.5px solid var(--borda);border-radius:var(--radius-lg);padding:20px;margin-bottom:16px}
+.aval-nota-big{font-size:3em;font-weight:900;line-height:1}
+.aval-estrelas{display:flex;gap:3px;margin:6px 0}
+.aval-total{font-size:.8em;color:var(--cinza)}
+.aval-card{background:var(--branco);border:1px solid var(--borda);border-radius:var(--radius);padding:16px;margin-bottom:10px}
+.aval-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.aval-nome{font-weight:700;font-size:.88em}
+.aval-data{font-size:.72em;color:var(--cinza)}
+.aval-estrelas-sm{display:flex;gap:2px;margin-bottom:6px}
+.aval-texto{font-size:.82em;color:var(--grafite);line-height:1.5}
+.btn-avaliar{display:flex;align-items:center;gap:8px;padding:11px 20px;background:var(--branco);border:1.5px solid var(--borda);border-radius:var(--radius-sm);font-size:.85em;font-weight:700;transition:.15s;margin-top:16px}
+.btn-avaliar:hover{border-color:var(--preto)}
+
+/* ENDEREÇO */
+.end-card{background:var(--branco);border:1.5px solid var(--borda);border-radius:var(--radius-lg);padding:22px}
+.end-linha{display:flex;align-items:flex-start;gap:12px;margin-bottom:16px}
+.end-linha:last-child{margin-bottom:0}
+.end-icon{width:36px;height:36px;background:var(--bg);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.end-info-label{font-size:.73em;color:var(--cinza);font-weight:600;margin-bottom:2px}
+.end-info-val{font-size:.88em;font-weight:600}
+.btn-mapa{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:12px;background:var(--preto);color:#fff;border-radius:var(--radius-sm);font-size:.85em;font-weight:700;border:none;margin-top:16px;transition:.15s}
+.btn-mapa:hover{background:var(--preto2)}
+
+/* POLÍTICA */
+.politica-card{background:var(--bg);border:1px solid var(--borda);border-radius:var(--radius);padding:18px}
+.politica-item{display:flex;gap:10px;margin-bottom:12px;font-size:.83em;line-height:1.5}
+.politica-item:last-child{margin-bottom:0}
+.politica-icon{flex-shrink:0;margin-top:2px}
+
 /* MODAL */
-.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;align-items:flex-end}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;align-items:center;justify-content:center;padding:20px}
 .modal-bg.open{display:flex}
-.modal{background:var(--card);border-radius:24px 24px 0 0;padding:24px 20px 40px;width:100%;max-height:90vh;overflow-y:auto}
-.modal-handle{width:40px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 20px}
-.modal-title{font-weight:800;font-size:1.1em;margin-bottom:20px}
-.steps{display:flex;gap:6px;margin-bottom:20px}
-.step-dot{flex:1;height:4px;border-radius:2px;background:var(--border)}
-.step-dot.ativo{background:var(--cor)}
-.step-dot.feito{background:var(--cor2)}
-.step{display:none}
-.step.ativo{display:block}
-.form-label{font-size:.82em;color:var(--muted);margin-bottom:6px;display:block}
-.form-input{width:100%;background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:12px 14px;color:var(--text);font-size:.9em;outline:none;margin-bottom:14px}
-.form-input:focus{border-color:var(--cor)}
-.btn-primary{width:100%;background:var(--cor);color:#fff;border:none;padding:15px;border-radius:14px;font-weight:700;font-size:1em;cursor:pointer;margin-top:8px}
-.btn-secondary{width:100%;background:var(--card2);color:var(--text);border:1px solid var(--border);padding:13px;border-radius:14px;font-weight:600;font-size:.9em;cursor:pointer;margin-top:8px}
-.sel-card{background:var(--card2);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px;cursor:pointer;transition:.2s}
-.sel-card.ativo{border-color:var(--cor);background:rgba(249,115,22,.08)}
-.sel-card-nome{font-weight:700}
-.sel-card-sub{font-size:.8em;color:var(--muted);margin-top:3px}
-.confirm-box{background:rgba(249,115,22,.08);border:1px solid rgba(249,115,22,.3);border-radius:16px;padding:16px;margin-bottom:16px}
-.confirm-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:.88em}
-.confirm-row:last-child{border-bottom:none}
-.confirm-label{color:var(--muted)}
-.confirm-val{font-weight:600}
-.success-box{text-align:center;padding:20px 0}
-.success-icon{font-size:3em;margin-bottom:12px}
-.success-title{font-size:1.2em;font-weight:800;margin-bottom:8px}
-.success-sub{color:var(--muted);font-size:.9em}
-.empty{text-align:center;padding:40px 20px;color:var(--muted)}
-.empty-icon{font-size:2.5em;margin-bottom:10px}
-.loading{text-align:center;padding:30px;color:var(--muted);font-size:.9em}
+.modal{background:var(--branco);border-radius:var(--radius-lg);width:100%;max-width:500px;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow-lg)}
+.modal-header{padding:22px 24px;border-bottom:1px solid var(--borda);display:flex;align-items:center;justify-content:space-between}
+.modal-titulo{font-weight:800;font-size:1.05em}
+.modal-close{background:none;border:none;font-size:1.4em;color:var(--cinza);cursor:pointer;padding:2px 6px;border-radius:6px;line-height:1}
+.modal-close:hover{background:var(--bg)}
+.modal-body{padding:24px}
+.modal-footer{padding:16px 24px;border-top:1px solid var(--borda);display:flex;gap:10px;justify-content:flex-end}
+
+/* SUCESSO MODAL */
+.sucesso-icon{width:64px;height:64px;background:var(--verde-bg);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:2em;margin:0 auto 16px}
+.sucesso-titulo{font-size:1.2em;font-weight:800;text-align:center;margin-bottom:8px}
+.sucesso-sub{font-size:.85em;color:var(--cinza);text-align:center;margin-bottom:20px}
+.sucesso-resumo{background:var(--bg);border-radius:var(--radius-sm);padding:16px;margin-bottom:16px}
+.sucesso-linha{display:flex;justify-content:space-between;font-size:.83em;margin-bottom:8px}
+.sucesso-linha:last-child{margin-bottom:0}
+.sucesso-linha-label{color:var(--cinza)}
+.sucesso-linha-val{font-weight:700}
+.btn-wpp-sucesso{width:100%;padding:13px;background:var(--wpp);color:#fff;border:none;border-radius:var(--radius-sm);font-size:.92em;font-weight:800;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:10px;transition:.15s}
+.btn-wpp-sucesso:hover{background:#1da851}
+.btn-novo-ag{width:100%;padding:11px;background:var(--branco);color:var(--preto);border:1.5px solid var(--borda);border-radius:var(--radius-sm);font-size:.88em;font-weight:700;transition:.15s}
+.btn-novo-ag:hover{border-color:var(--preto)}
+
+/* EMPTY STATE */
+.empty{text-align:center;padding:32px 20px;color:var(--cinza)}
+.empty-icon{font-size:2.5em;margin-bottom:10px;opacity:.4}
+.empty-txt{font-size:.85em}
+
+/* LOADING */
+.skeleton{background:linear-gradient(90deg,#f3f4f6 25%,#e9eaeb 50%,#f3f4f6 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:var(--radius-sm);height:80px;margin-bottom:10px}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+/* RODAPÉ */
+.footer{background:var(--preto);color:rgba(255,255,255,.6);padding:32px 0}
+.footer-inner{max-width:1200px;margin:0 auto;padding:0 24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px}
+.footer-logo{display:flex;align-items:center;gap:10px}
+.footer-logo-box{width:36px;height:36px;background:rgba(255,255,255,.1);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.95em}
+.footer-logo-txt{font-weight:700;font-size:.9em;color:#fff}
+.footer-links{display:flex;gap:20px;flex-wrap:wrap}
+.footer-link{font-size:.8em;color:rgba(255,255,255,.5);cursor:pointer;transition:.15s}
+.footer-link:hover{color:#fff}
+.footer-copy{font-size:.75em;color:rgba(255,255,255,.3);width:100%;margin-top:16px}
+
+/* WPP FLUTUANTE */
+.wpp-fab{position:fixed;bottom:24px;right:24px;width:54px;height:54px;background:var(--wpp);border:none;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(37,211,102,.4);z-index:200;cursor:pointer;transition:.2s}
+.wpp-fab:hover{transform:scale(1.08)}
+
+/* MOBILE HEADER */
+.mob-header{display:none;background:var(--branco);border-bottom:1px solid var(--borda);padding:14px 16px;position:sticky;top:0;z-index:100;box-shadow:var(--shadow)}
+.mob-header-row{display:flex;align-items:center;gap:10px}
+.mob-logo{width:42px;height:42px;background:var(--preto);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.1em;color:#fff;flex-shrink:0}
+.mob-info{flex:1}
+.mob-nome{font-weight:800;font-size:.95em}
+.mob-sub{font-size:.7em;color:var(--cinza)}
+.mob-wpp-btn{width:40px;height:40px;background:var(--verde-bg);border:none;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.mob-busca{margin-top:10px;position:relative}
+.mob-busca-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--cinza)}
+.mob-busca-input{width:100%;padding:10px 14px 10px 38px;border:1.5px solid var(--borda);border-radius:var(--radius-sm);font-size:.88em;outline:none;background:var(--bg)}
+.mob-busca-input:focus{border-color:var(--preto);background:var(--branco)}
+
+/* MOBILE HERO */
+.mob-hero{display:none;position:relative;overflow:hidden;min-height:220px;background:var(--preto2)}
+.mob-hero-inner{padding:28px 16px;position:relative;z-index:2}
+.mob-hero-titulo{font-size:1.7em;font-weight:900;color:#fff;line-height:1.15;margin-bottom:8px}
+.mob-hero-desc{font-size:.85em;color:rgba(255,255,255,.7);margin-bottom:20px}
+.mob-hero-btns{display:flex;flex-direction:column;gap:8px}
+.mob-btn-primary{padding:13px;background:#fff;color:var(--preto);border-radius:var(--radius-sm);font-weight:800;border:none;font-size:.92em}
+.mob-btn-sec{padding:12px;background:transparent;color:#fff;border:2px solid rgba(255,255,255,.3);border-radius:var(--radius-sm);font-weight:700;font-size:.9em}
+.mob-chips{display:flex;gap:10px;overflow-x:auto;padding:12px 16px;scrollbar-width:none;background:var(--branco);border-bottom:1px solid var(--borda)}
+.mob-chips::-webkit-scrollbar{display:none}
+.mob-chip{flex-shrink:0;display:flex;align-items:center;gap:6px;padding:7px 14px;border:1px solid var(--borda);border-radius:20px;font-size:.75em;font-weight:600;color:var(--grafite);background:var(--branco);white-space:nowrap}
+
+/* MOBILE STATS GRID */
+.mob-stats{display:none;grid-template-columns:1fr 1fr;gap:10px;padding:16px;background:var(--bg)}
+.mob-stat{background:var(--branco);border:1px solid var(--borda);border-radius:var(--radius);padding:14px}
+.mob-stat-icon{font-size:1.1em;margin-bottom:6px}
+.mob-stat-val{font-weight:800;font-size:.95em}
+.mob-stat-label{font-size:.72em;color:var(--cinza);margin-top:2px}
+
+/* MOBILE CONTENT */
+.mob-content{display:none;padding:16px;padding-bottom:100px}
+
+/* BOTTOM NAV */
+.bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--branco);border-top:1px solid var(--borda);z-index:100;padding:8px 0 env(safe-area-inset-bottom)}
+.bottom-nav-items{display:flex}
+.bn-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:5px;border:none;background:none;color:var(--cinza);font-size:.62em;font-weight:600;cursor:pointer;transition:.15s}
+.bn-item.ativo{color:var(--preto)}
+.bn-item svg{width:22px;height:22px}
+
+/* MOBILE RESUMO FIXO */
+.mob-resumo-fixo{display:none;position:fixed;bottom:60px;left:0;right:0;background:var(--branco);border-top:1.5px solid var(--borda);padding:12px 16px;z-index:90;box-shadow:0 -4px 16px rgba(0,0,0,.08)}
+.mob-resumo-fixo-inner{display:flex;align-items:center;justify-content:space-between}
+.mob-resumo-info{flex:1}
+.mob-resumo-srv{font-weight:700;font-size:.85em}
+.mob-resumo-det{font-size:.72em;color:var(--cinza);margin-top:2px}
+.mob-resumo-preco{font-weight:800;font-size:1em;margin-right:12px}
+.btn-mob-continuar{padding:11px 20px;background:var(--preto);color:#fff;border:none;border-radius:var(--radius-sm);font-size:.85em;font-weight:800;white-space:nowrap}
+
+/* RESPONSIVO */
+@media(max-width:900px){
+  .hero-inner{grid-template-columns:1fr;gap:24px}
+  .hero-card{max-width:480px}
+  .main-wrap{grid-template-columns:1fr;gap:24px}
+  .main-right{position:static}
+  .stats-inner{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:768px){
+  .header,.busca-wrap,.hero,.stats-faixa,.main-wrap,.footer{display:none}
+  .mob-header,.mob-hero,.mob-chips,.mob-stats,.mob-content,.bottom-nav{display:block}
+  .mob-stats{display:grid}
+  .wpp-fab{bottom:80px}
+}
 </style>
 </head>
 <body>
 
-<!-- HEADER -->
-<div class="header">
-  <div class="logo-box" id="hdr-logo">✂️</div>
-  <div class="header-info">
-    <div class="header-nome" id="hdr-nome">Carregando...</div>
-    <div class="header-sub">Agenda Digital</div>
+<div class="toast" id="toast"></div>
+
+<!-- ═══ MODAL SUCESSO ═══ -->
+<div class="modal-bg" id="modal-sucesso">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-titulo">Agendamento confirmado</div>
+      <button class="modal-close" onclick="fecharModal('modal-sucesso')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="sucesso-icon">✅</div>
+      <div class="sucesso-titulo">Agendamento solicitado!</div>
+      <div class="sucesso-sub" id="suc-msg">Seu horário foi reservado com sucesso.</div>
+      <div class="sucesso-resumo">
+        <div class="sucesso-linha"><span class="sucesso-linha-label">Serviço</span><span class="sucesso-linha-val" id="suc-srv">—</span></div>
+        <div class="sucesso-linha"><span class="sucesso-linha-label">Profissional</span><span class="sucesso-linha-val" id="suc-prof">—</span></div>
+        <div class="sucesso-linha"><span class="sucesso-linha-label">Data</span><span class="sucesso-linha-val" id="suc-data">—</span></div>
+        <div class="sucesso-linha"><span class="sucesso-linha-label">Horário</span><span class="sucesso-linha-val" id="suc-hora">—</span></div>
+        <div class="sucesso-linha"><span class="sucesso-linha-label">Total</span><span class="sucesso-linha-val" id="suc-total">—</span></div>
+      </div>
+      <button class="btn-wpp-sucesso" id="btn-suc-wpp">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="#fff"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zM12 0C5.373 0 0 5.373 0 12c0 2.124.549 4.122 1.515 5.858L0 24l6.335-1.492A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0z"/></svg>
+        Enviar confirmação pelo WhatsApp
+      </button>
+      <button class="btn-novo-ag" onclick="novoAgendamento()">Fazer novo agendamento</button>
+    </div>
   </div>
-  <div class="badge-aberto" id="hdr-badge">● Aberto</div>
 </div>
+
+<!-- ═══ MODAL AVALIAÇÃO ═══ -->
+<div class="modal-bg" id="modal-aval">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-titulo">Dar avaliação</div>
+      <button class="modal-close" onclick="fecharModal('modal-aval')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">Seu nome</label><input class="form-input" id="av-nome" placeholder="Nome completo"></div>
+      <div class="form-group">
+        <label class="form-label">Nota</label>
+        <div style="display:flex;gap:8px;margin-top:4px" id="av-estrelas-sel">
+          <button class="estrela-btn" data-n="1" onclick="selEstrela(1)">☆</button>
+          <button class="estrela-btn" data-n="2" onclick="selEstrela(2)">☆</button>
+          <button class="estrela-btn" data-n="3" onclick="selEstrela(3)">☆</button>
+          <button class="estrela-btn" data-n="4" onclick="selEstrela(4)">☆</button>
+          <button class="estrela-btn" data-n="5" onclick="selEstrela(5)">☆</button>
+        </div>
+        <style>.estrela-btn{font-size:1.8em;background:none;border:none;cursor:pointer;transition:.1s;color:#d1d5db}.estrela-btn.on{color:#f59e0b}</style>
+      </div>
+      <div class="form-group"><label class="form-label">Comentário (opcional)</label><textarea class="form-input" id="av-texto" rows="3" placeholder="Conte sua experiência..." style="resize:vertical"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-novo-ag" style="width:auto;padding:10px 20px" onclick="fecharModal('modal-aval')">Cancelar</button>
+      <button class="btn-confirmar" style="width:auto;padding:10px 24px" onclick="enviarAvaliacao()">Enviar avaliação</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ DESKTOP ═══════════════════ -->
+
+<!-- HEADER -->
+<header class="header">
+  <div class="header-inner">
+    <div class="header-logo" id="h-logo">📅</div>
+    <div class="header-info">
+      <div style="display:flex;align-items:center;gap:4px">
+        <div class="header-nome" id="h-nome">Carregando...</div>
+        <span class="badge-status badge-aberto" id="h-status-badge">
+          <span class="badge-status-dot"></span>
+          <span id="h-status-txt">Aberto</span>
+        </span>
+      </div>
+      <div class="header-sub">Agenda Digital</div>
+    </div>
+    <div class="header-nota" id="h-nota" style="display:none">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      <span id="h-nota-val">4.9</span>
+    </div>
+    <div class="header-spacer"></div>
+    <button class="header-wpp" id="h-wpp-btn">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zM12 0C5.373 0 0 5.373 0 12c0 2.124.549 4.122 1.515 5.858L0 24l6.335-1.492A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0z"/></svg>
+      WhatsApp
+    </button>
+    <button class="header-entrar" onclick="location.href='/agenda-adm.html'">
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z" stroke-width="2"/></svg>
+      Entrar
+    </button>
+  </div>
+</header>
 
 <!-- BUSCA -->
-<div class="search-wrap">
-  <span class="search-icon">🔍</span>
-  <input class="search" type="text" placeholder="Buscar serviços..." id="busca" oninput="filtrarServicos()">
+<div class="busca-wrap">
+  <div class="busca-inner">
+    <svg class="busca-icon" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="11" cy="11" r="8" stroke-width="2"/><path d="M21 21l-4.35-4.35" stroke-width="2"/></svg>
+    <input class="busca-input" type="text" id="busca" placeholder="Buscar serviços, profissionais ou horários..." oninput="filtrarBusca(this.value)">
+  </div>
 </div>
 
-<!-- HERO -->
-<div class="hero">
-  <img class="hero-img" id="hero-img" src="" onerror="this.style.display='none'">
+<!-- HERO DESKTOP -->
+<section class="hero">
+  <div class="hero-bg"></div>
   <div class="hero-overlay"></div>
-  <div class="hero-content">
-    <div class="hero-title">Agende seu horário<br><span>com facilidade</span></div>
-    <div class="hero-desc">Escolha o serviço e melhor horário em poucos cliques.</div>
-    <div class="hero-btns">
-      <div class="hero-btn">⚡ Atendimento rápido</div>
-      <div class="hero-btn" id="hero-profs-btn" style="display:none">👤 Profissionais</div>
-      <div class="hero-btn wpp" id="hero-wpp-btn" style="display:none" onclick="abrirWpp()">
-        <span>📱</span> WhatsApp
+  <div class="hero-inner">
+    <div class="hero-left">
+      <div class="hero-tag">📅 Agenda Digital</div>
+      <h1 class="hero-title">Agende seu horário<br>em poucos cliques.</h1>
+      <p class="hero-desc">Escolha o serviço, profissional e melhor horário disponível sem precisar esperar atendimento.</p>
+      <div class="hero-chips">
+        <div class="hero-chip">✅ Confirmação via WhatsApp</div>
+        <div class="hero-chip">📅 Atendimento com horário marcado</div>
+        <div class="hero-chip">🔄 Remarcação fácil</div>
+      </div>
+      <div class="hero-btns">
+        <button class="btn-hero-primary" onclick="scrollToServicos()">Agendar agora</button>
+        <button class="btn-hero-sec" onclick="scrollToServicos()">Ver serviços</button>
+      </div>
+    </div>
+    <div class="hero-card">
+      <div class="hero-card-titulo">Agende seu horário</div>
+      <div class="hero-card-sub">É rápido, fácil e seguro.</div>
+      <div class="hero-card-field">
+        <div class="hero-card-label">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M14.7 6.3a1 1 0 010 1.4L7.4 15l-3 1 1-3 7.3-7.3a1 1 0 011.4 0z" stroke-width="2"/></svg>
+          Selecione o serviço
+        </div>
+        <select class="hero-card-select" id="hero-srv-sel" onchange="heroSelecionarServico()">
+          <option value="">Escolha um serviço...</option>
+        </select>
+      </div>
+      <div class="hero-card-field">
+        <div class="hero-card-label">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect x="3" y="4" width="18" height="18" rx="2" stroke-width="2"/><path d="M16 2v4M8 2v4M3 10h18" stroke-width="2"/></svg>
+          Escolha a data
+        </div>
+        <input type="date" class="hero-card-select" id="hero-data-sel" onchange="heroSelecionarData()">
+      </div>
+      <div class="hero-card-field">
+        <div class="hero-card-label">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="10" stroke-width="2"/><polyline points="12 6 12 12 16 14" stroke-width="2"/></svg>
+          Escolha o horário
+        </div>
+        <select class="hero-card-select" id="hero-hora-sel">
+          <option value="">Selecione a data primeiro...</option>
+        </select>
+      </div>
+      <button class="btn-hero-card" onclick="heroAgendar()">Ver horários disponíveis</button>
+      <div class="hero-card-safe">
+        <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke-width="2"/></svg>
+        Seus dados estão protegidos.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STATS FAIXA -->
+<div class="stats-faixa">
+  <div class="stats-inner">
+    <div class="stat-item">
+      <div class="stat-icon">📅</div>
+      <div class="stat-txt">
+        <div class="stat-val" id="st-aberto">Aberto hoje</div>
+        <div class="stat-label" id="st-horario">Carregando...</div>
+      </div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-icon">⏱</div>
+      <div class="stat-txt">
+        <div class="stat-val" id="st-tempo">— min</div>
+        <div class="stat-label">Tempo médio</div>
+      </div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-icon">💰</div>
+      <div class="stat-txt">
+        <div class="stat-val" id="st-partir">A partir de —</div>
+        <div class="stat-label">Preços acessíveis</div>
+      </div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-icon">⭐</div>
+      <div class="stat-txt">
+        <div class="stat-val" id="st-aval">— avaliações</div>
+        <div class="stat-label" id="st-nota">Nota —</div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- STATS -->
-<div class="stats-bar">
-  <div class="stat">
-    <div class="stat-val" id="stat-tempo">—</div>
-    <div class="stat-label">Tempo médio</div>
-  </div>
-  <div class="stat">
-    <div class="stat-val" style="color:#4ade80" id="stat-status">Aberto</div>
-    <div class="stat-label">Agora</div>
-  </div>
-  <div class="stat">
-    <div class="stat-val cor" id="stat-preco">—</div>
-    <div class="stat-label">A partir de</div>
-  </div>
-</div>
+<!-- MAIN CONTENT -->
+<div class="main-wrap">
+  <div class="main-left">
 
-<!-- TABS -->
-<div class="tabs">
-  <div class="tab ativo" onclick="mudarTab('todos',this)">🔥 Todos</div>
-  <div class="tab" onclick="mudarTab('servicos',this)">✂️ Serviços</div>
-  <div class="tab" onclick="mudarTab('horarios',this)">📅 Horários</div>
-  <div class="tab" onclick="mudarTab('profissionais',this)">👤 Profissionais</div>
-  <div class="tab" onclick="mudarTab('endereco',this)">📍 Endereço</div>
-</div>
-
-<!-- TODOS -->
-<div class="section ativo" id="sec-todos">
-  <div class="section-header">
-    <div class="section-title">🔥 Serviços mais agendados</div>
-    <div class="ver-todos" onclick="mudarTabNome('servicos')">Ver todos ›</div>
-  </div>
-  <div id="servicos-todos"></div>
-  <div class="section-header" style="margin-top:8px">
-    <div class="section-title">📅 Próximos horários livres</div>
-    <div class="ver-todos" onclick=\"mudarTabNome(&apos;horarios&apos;)\">Ver agenda completa ›</div>
-  </div>
-  <div id="cal-mini"></div>
-</div>
-
-<!-- SERVIÇOS -->
-<div class="section" id="sec-servicos">
-  <div class="section-header">
-    <div class="section-title">✂️ Serviços</div>
-  </div>
-  <div id="servicos-lista"></div>
-</div>
-
-<!-- HORÁRIOS -->
-<div class="section" id="sec-horarios">
-  <div class="cal-wrap">
-    <div class="cal-days" id="cal-days"></div>
-    <div class="horas-wrap" id="horas-lista"><div class="loading">Selecione um dia</div></div>
-  </div>
-</div>
-
-<!-- PROFISSIONAIS -->
-<div class="section" id="sec-profissionais">
-  <div id="profs-lista"></div>
-</div>
-
-<!-- ENDEREÇO -->
-<div class="section" id="sec-endereco">
-  <div class="end-card">
-    <div class="end-row"><span class="end-icon">📍</span><div class="end-info"><div class="end-label">Endereço</div><div class="end-val" id="end-end">—</div></div></div>
-    <div class="end-row"><span class="end-icon">🏙️</span><div class="end-info"><div class="end-label">Cidade</div><div class="end-val" id="end-cidade">—</div></div></div>
-    <div class="end-row"><span class="end-icon">📱</span><div class="end-info"><div class="end-label">WhatsApp</div><div class="end-val" id="end-wpp">—</div></div></div>
-    <div class="end-row"><span class="end-icon">📸</span><div class="end-info"><div class="end-label">Instagram</div><div class="end-val" id="end-insta">—</div></div></div>
-    <button class="btn-mapa" id="btn-mapa" style="display:none" onclick="abrirMapa()">📍 Abrir no Google Maps</button>
-  </div>
-</div>
-
-<!-- MODAL AGENDAMENTO -->
-<div class="modal-bg" id="modal">
-  <div class="modal">
-    <div class="modal-handle"></div>
-    <div class="modal-title" id="modal-titulo">Agendar serviço</div>
-    <div class="steps">
-      <div class="step-dot ativo" id="dot-0"></div>
-      <div class="step-dot" id="dot-1"></div>
-      <div class="step-dot" id="dot-2"></div>
-      <div class="step-dot" id="dot-3"></div>
-      <div class="step-dot" id="dot-4"></div>
-    </div>
-
-    <!-- Step 0: Serviço -->
-    <div class="step ativo" id="step-0">
-      <div class="form-label">Escolha o serviço</div>
-      <div id="modal-servicos"></div>
-      <button class="btn-secondary" onclick="fecharModal()">Cancelar</button>
-    </div>
-
-    <!-- Step 1: Profissional -->
-    <div class="step" id="step-1">
-      <div class="form-label">Escolha o profissional</div>
-      <div id="modal-profs"></div>
-      <button class="btn-secondary" onclick="irStep(0)">← Voltar</button>
-    </div>
-
-    <!-- Step 2: Data/Hora -->
-    <div class="step" id="step-2">
-      <div class="form-label">Escolha data e horário</div>
-      <div class="cal-days" id="modal-days" style="margin-bottom:14px"></div>
-      <div class="horas-wrap" id="modal-horas"></div>
-      <button class="btn-secondary" onclick="irStep(1)" style="margin-top:16px">← Voltar</button>
-    </div>
-
-    <!-- Step 3: Dados -->
-    <div class="step" id="step-3">
-      <label class="form-label">Seu nome</label>
-      <input class="form-input" id="inp-nome" placeholder="Nome completo">
-      <label class="form-label">WhatsApp</label>
-      <input class="form-input" id="inp-tel" placeholder="(00) 00000-0000" oninput="mascaraTel(this)">
-      <button class="btn-primary" onclick="irStep(4)">Continuar →</button>
-      <button class="btn-secondary" onclick="irStep(2)">← Voltar</button>
-    </div>
-
-    <!-- Step 4: Confirmação -->
-    <div class="step" id="step-4">
-      <div class="confirm-box" id="confirm-box"></div>
-      <button class="btn-primary" onclick="confirmar()">✅ Confirmar agendamento</button>
-      <button class="btn-secondary" onclick="irStep(3)">← Voltar</button>
-    </div>
-
-    <!-- Step 5: Sucesso -->
-    <div class="step" id="step-5">
-      <div class="success-box">
-        <div class="success-icon">🎉</div>
-        <div class="success-title">Agendamento confirmado!</div>
-        <div class="success-sub" id="success-msg">Seu horário foi reservado.</div>
+    <!-- SERVIÇOS -->
+    <section id="sec-servicos">
+      <div class="sec-titulo">✂️ Escolha um serviço</div>
+      <div class="sec-sub">Selecione o serviço que deseja agendar</div>
+      <div class="filtros" id="filtros-srv">
+        <button class="filtro-btn ativo" onclick="filtrarSrv('todos',this)">Todos</button>
+        <button class="filtro-btn" onclick="filtrarSrv('rapido',this)">Atendimento rápido</button>
       </div>
-      <button class="btn-primary" onclick="fecharModal()">Fechar</button>
+      <div class="servicos-grid" id="lista-servicos">
+        <div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>
+      </div>
+    </section>
+
+    <!-- PROFISSIONAIS -->
+    <section id="sec-profissionais">
+      <div class="sec-titulo">👤 Escolha um profissional</div>
+      <div class="sec-sub">Ou deixe em branco para qualquer disponível</div>
+      <div class="profs-grid" id="lista-profissionais">
+        <div class="skeleton"></div><div class="skeleton"></div>
+      </div>
+    </section>
+
+    <!-- DATA E HORÁRIOS -->
+    <section id="sec-data">
+      <div class="sec-titulo">📅 Escolha data e horário</div>
+      <div class="sec-sub">Veja os horários disponíveis em tempo real</div>
+      <div class="cal-header">
+        <div class="cal-nav">
+          <button class="cal-nav-btn" onclick="navMes(-1)">
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M15 18l-6-6 6-6" stroke-width="2"/></svg>
+          </button>
+          <div class="cal-mes-ano" id="cal-mes-ano">—</div>
+          <button class="cal-nav-btn" onclick="navMes(1)">
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M9 18l6-6-6-6" stroke-width="2"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="cal-dias-sem">
+        <div class="cal-dia-sem">Dom</div><div class="cal-dia-sem">Seg</div><div class="cal-dia-sem">Ter</div>
+        <div class="cal-dia-sem">Qua</div><div class="cal-dia-sem">Qui</div><div class="cal-dia-sem">Sex</div>
+        <div class="cal-dia-sem">Sab</div>
+      </div>
+      <div class="cal-grid" id="cal-grid"></div>
+      <div class="horarios-titulo" id="horarios-titulo">Selecione uma data para ver os horários</div>
+      <div class="horarios-grid" id="horarios-grid"></div>
+    </section>
+
+    <!-- DADOS CLIENTE -->
+    <section id="sec-cliente">
+      <div class="sec-titulo">👤 Seus dados</div>
+      <div class="sec-sub">Para confirmar o agendamento</div>
+      <div style="background:var(--branco);border:1.5px solid var(--borda);border-radius:var(--radius-lg);padding:24px">
+        <div class="form-group"><label class="form-label">Nome completo *</label><input class="form-input" id="cli-nome" placeholder="Seu nome"></div>
+        <div class="form-group"><label class="form-label">WhatsApp *</label><input class="form-input" id="cli-tel" placeholder="(00) 00000-0000" oninput="mascaraTel(this)"></div>
+        <div class="form-group"><label class="form-label">Observações (opcional)</label><textarea class="form-input" id="cli-obs" rows="2" placeholder="Ex: Prefiro o lado esquerdo..." style="resize:vertical"></textarea></div>
+        <button class="btn-confirmar" id="btn-confirmar" onclick="confirmarAgendamento()">Confirmar agendamento</button>
+      </div>
+    </section>
+
+    <!-- AVALIAÇÕES -->
+    <section id="sec-avaliacoes">
+      <div class="sec-titulo">⭐ Avaliações</div>
+      <div class="sec-sub">O que nossos clientes dizem</div>
+      <div class="aval-header" id="aval-header">
+        <div>
+          <div class="aval-nota-big" id="aval-nota-big">—</div>
+          <div class="aval-estrelas" id="aval-estrelas-header"></div>
+          <div class="aval-total" id="aval-total">Carregando...</div>
+        </div>
+        <div style="flex:1;padding-left:20px">
+          <div style="font-size:.85em;color:var(--cinza)">Baseado em avaliações verificadas de clientes reais.</div>
+        </div>
+      </div>
+      <div id="lista-avaliacoes">
+        <div class="empty"><div class="empty-txt">Carregando avaliações...</div></div>
+      </div>
+      <button class="btn-avaliar" onclick="abrirModalAval()">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" stroke-width="2"/></svg>
+        Dar avaliação
+      </button>
+    </section>
+
+    <!-- ENDEREÇO -->
+    <section id="sec-endereco">
+      <div class="sec-titulo">📍 Localização e contato</div>
+      <div class="sec-sub">Como nos encontrar</div>
+      <div class="end-card">
+        <div class="end-linha">
+          <div class="end-icon">📍</div>
+          <div>
+            <div class="end-info-label">Endereço</div>
+            <div class="end-info-val" id="end-endereco">Carregando...</div>
+          </div>
+        </div>
+        <div class="end-linha">
+          <div class="end-icon">🕐</div>
+          <div>
+            <div class="end-info-label">Horário de funcionamento</div>
+            <div class="end-info-val" id="end-horario">Carregando...</div>
+          </div>
+        </div>
+        <div class="end-linha">
+          <div class="end-icon">📱</div>
+          <div>
+            <div class="end-info-label">WhatsApp / Telefone</div>
+            <div class="end-info-val" id="end-tel">Carregando...</div>
+          </div>
+        </div>
+        <button class="btn-mapa" id="btn-mapa">
+          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" stroke-width="2"/><circle cx="12" cy="10" r="3" stroke-width="2"/></svg>
+          Como chegar
+        </button>
+      </div>
+    </section>
+
+    <!-- POLÍTICA -->
+    <section>
+      <div class="sec-titulo">📋 Política de cancelamento</div>
+      <div class="politica-card">
+        <div class="politica-item"><div class="politica-icon">⏰</div><div>Tolerância de até 10 minutos de atraso. Após esse período, o horário pode ser realocado.</div></div>
+        <div class="politica-item"><div class="politica-icon">🔄</div><div>Cancelamentos ou reagendamentos devem ser feitos com pelo menos 2 horas de antecedência.</div></div>
+        <div class="politica-item"><div class="politica-icon">📱</div><div>Entre em contato pelo WhatsApp para reagendar com facilidade.</div></div>
+      </div>
+    </section>
+
+  </div><!-- /main-left -->
+
+  <!-- PAINEL LATERAL -->
+  <aside class="main-right">
+    <div class="painel-resumo">
+      <div class="painel-header">
+        <div class="painel-header-titulo">Seu agendamento</div>
+        <div class="painel-header-sub">Preencha as etapas ao lado</div>
+      </div>
+      <div class="painel-steps">
+        <div class="painel-step">
+          <div class="painel-step-num" id="ps-1">1</div>
+          <div>
+            <div class="painel-step-txt">Serviço</div>
+            <div class="painel-step-val" id="ps-1-val">Não selecionado</div>
+          </div>
+        </div>
+        <div class="painel-step">
+          <div class="painel-step-num" id="ps-2">2</div>
+          <div>
+            <div class="painel-step-txt">Profissional</div>
+            <div class="painel-step-val" id="ps-2-val">Qualquer disponível</div>
+          </div>
+        </div>
+        <div class="painel-step">
+          <div class="painel-step-num" id="ps-3">3</div>
+          <div>
+            <div class="painel-step-txt">Data e horário</div>
+            <div class="painel-step-val" id="ps-3-val">Não selecionado</div>
+          </div>
+        </div>
+        <div class="painel-step">
+          <div class="painel-step-num" id="ps-4">4</div>
+          <div>
+            <div class="painel-step-txt">Seus dados</div>
+            <div class="painel-step-val" id="ps-4-val">Nome e WhatsApp</div>
+          </div>
+        </div>
+      </div>
+      <div class="painel-body">
+        <div id="painel-detalhes">
+          <div class="painel-linha"><span class="painel-linha-label">Serviço</span><span class="painel-linha-val" id="pd-srv">—</span></div>
+          <div class="painel-linha"><span class="painel-linha-label">Profissional</span><span class="painel-linha-val" id="pd-prof">—</span></div>
+          <div class="painel-linha"><span class="painel-linha-label">Data</span><span class="painel-linha-val" id="pd-data">—</span></div>
+          <div class="painel-linha"><span class="painel-linha-label">Horário</span><span class="painel-linha-val" id="pd-hora">—</span></div>
+          <div class="painel-linha"><span class="painel-linha-label">Duração</span><span class="painel-linha-val" id="pd-dur">—</span></div>
+          <div class="painel-total">
+            <span class="painel-total-label">Total</span>
+            <span class="painel-total-val" id="pd-total">—</span>
+          </div>
+        </div>
+        <button class="btn-continuar" onclick="scrollToCliente()">Continuar agendamento</button>
+        <div class="painel-selo">
+          <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke-width="2"/></svg>
+          Seguro e confirmado pelo WhatsApp
+        </div>
+      </div>
     </div>
+  </aside>
+
+</div><!-- /main-wrap -->
+
+<!-- RODAPÉ -->
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="footer-logo">
+      <div class="footer-logo-box">📅</div>
+      <div class="footer-logo-txt" id="f-nome">Agenda Digital</div>
+    </div>
+    <div class="footer-links">
+      <span class="footer-link" onclick="scrollTo('sec-servicos')">Serviços</span>
+      <span class="footer-link" onclick="scrollTo('sec-endereco')">Endereço</span>
+      <span class="footer-link" onclick="scrollTo('sec-avaliacoes')">Avaliações</span>
+      <span class="footer-link" id="f-wpp">WhatsApp</span>
+    </div>
+    <div class="footer-copy">© 2025 Rebeca Agenda · Todos os direitos reservados</div>
+  </div>
+</footer>
+
+<!-- WPP FLUTUANTE -->
+<button class="wpp-fab" id="wpp-fab" title="WhatsApp">
+  <svg width="26" height="26" viewBox="0 0 24 24" fill="#fff"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zM12 0C5.373 0 0 5.373 0 12c0 2.124.549 4.122 1.515 5.858L0 24l6.335-1.492A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0z"/></svg>
+</button>
+
+<!-- ═══════════════════ MOBILE ═══════════════════ -->
+
+<!-- MOBILE HEADER -->
+<header class="mob-header">
+  <div class="mob-header-row">
+    <div class="mob-logo" id="mh-logo">📅</div>
+    <div class="mob-info">
+      <div class="mob-nome" id="mh-nome">Carregando...</div>
+      <div class="mob-sub">Agenda Digital · <span id="mh-status" style="color:var(--verde)">Aberto</span></div>
+    </div>
+    <button class="mob-wpp-btn" id="mob-wpp-btn">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="#16a34a"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zM12 0C5.373 0 0 5.373 0 12c0 2.124.549 4.122 1.515 5.858L0 24l6.335-1.492A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0z"/></svg>
+    </button>
+  </div>
+  <div class="mob-busca">
+    <svg class="mob-busca-icon" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="11" cy="11" r="8" stroke-width="2"/><path d="M21 21l-4.35-4.35" stroke-width="2"/></svg>
+    <input class="mob-busca-input" type="text" placeholder="Buscar serviços ou horários..." oninput="filtrarBusca(this.value)">
+  </div>
+</header>
+
+<!-- MOBILE HERO -->
+<div class="mob-hero">
+  <div style="position:absolute;inset:0;background:linear-gradient(135deg,#1a1a1a,#2d2d2d)"></div>
+  <div style="position:absolute;inset:0;background:linear-gradient(to right,rgba(0,0,0,.8),rgba(0,0,0,.3))"></div>
+  <div class="mob-hero-inner">
+    <div class="mob-hero-titulo">Agende seu horário<br>em poucos cliques.</div>
+    <div class="mob-hero-desc">É rápido, fácil e seguro.</div>
+    <div class="mob-hero-btns">
+      <button class="mob-btn-primary" onclick="mobScrollServicos()">Agendar agora</button>
+      <button class="mob-btn-sec" onclick="mobScrollServicos()">Ver serviços</button>
+    </div>
+  </div>
+</div>
+
+<!-- MOBILE CHIPS -->
+<div class="mob-chips">
+  <div class="mob-chip">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="#16a34a"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zM12 0C5.373 0 0 5.373 0 12c0 2.124.549 4.122 1.515 5.858L0 24l6.335-1.492A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0z"/></svg>
+    WhatsApp
+  </div>
+  <div class="mob-chip">📅 Horário marcado</div>
+  <div class="mob-chip">🔄 Remarcação fácil</div>
+  <div class="mob-chip">✅ Confirmação imediata</div>
+</div>
+
+<!-- MOBILE STATS -->
+<div class="mob-stats">
+  <div class="mob-stat">
+    <div class="mob-stat-icon">📅</div>
+    <div class="mob-stat-val" id="mob-st-ab">Aberto hoje</div>
+    <div class="mob-stat-label" id="mob-st-hor">Atendimento normal</div>
+  </div>
+  <div class="mob-stat">
+    <div class="mob-stat-icon">⏱</div>
+    <div class="mob-stat-val" id="mob-st-tempo">— min</div>
+    <div class="mob-stat-label">Duração média</div>
+  </div>
+  <div class="mob-stat">
+    <div class="mob-stat-icon">💰</div>
+    <div class="mob-stat-val" id="mob-st-preco">A partir de —</div>
+    <div class="mob-stat-label">Preços acessíveis</div>
+  </div>
+  <div class="mob-stat">
+    <div class="mob-stat-icon">⭐</div>
+    <div class="mob-stat-val" id="mob-st-aval">— avaliações</div>
+    <div class="mob-stat-label" id="mob-st-nota">Nota —</div>
+  </div>
+</div>
+
+<!-- MOBILE CONTENT -->
+<div class="mob-content">
+
+  <!-- SERVIÇOS MOBILE -->
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+    <div style="font-weight:800;font-size:1em">Escolha um serviço</div>
+  </div>
+  <!-- Filtros mobile -->
+  <div style="display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin-bottom:16px;padding-bottom:4px" id="mob-filtros">
+    <button class="filtro-btn ativo" style="white-space:nowrap" onclick="filtrarSrv('todos',this)">Todos</button>
+    <button class="filtro-btn" style="white-space:nowrap" onclick="filtrarSrv('rapido',this)">Rápido</button>
+  </div>
+  <div id="mob-lista-servicos">
+    <div class="skeleton"></div><div class="skeleton"></div>
+  </div>
+
+  <!-- PROFISSIONAIS MOBILE -->
+  <div style="font-weight:800;font-size:1em;margin:24px 0 14px">Escolha um profissional</div>
+  <div id="mob-lista-profs">
+    <div class="skeleton"></div>
+  </div>
+
+  <!-- DATA HORÁRIOS MOBILE -->
+  <div style="font-weight:800;font-size:1em;margin:24px 0 14px">Data e horário</div>
+  <div>
+    <input type="date" class="form-input" id="mob-data-sel" onchange="selecionarData(this.value)" style="margin-bottom:12px">
+    <div id="mob-horarios-grid" class="horarios-grid"></div>
+  </div>
+
+  <!-- FORMULÁRIO MOBILE -->
+  <div style="font-weight:800;font-size:1em;margin:24px 0 14px">Seus dados</div>
+  <div class="form-group"><label class="form-label">Nome completo *</label><input class="form-input" id="mob-cli-nome" placeholder="Seu nome"></div>
+  <div class="form-group"><label class="form-label">WhatsApp *</label><input class="form-input" id="mob-cli-tel" placeholder="(00) 00000-0000" oninput="mascaraTel(this)"></div>
+  <div class="form-group"><label class="form-label">Observações</label><textarea class="form-input" id="mob-cli-obs" rows="2" style="resize:vertical" placeholder="Preferências..."></textarea></div>
+  <button class="btn-confirmar" onclick="confirmarAgendamento(true)" style="margin-bottom:16px">Confirmar agendamento</button>
+
+  <!-- AVALIAÇÕES MOBILE -->
+  <div style="font-weight:800;font-size:1em;margin:24px 0 14px">Avaliações</div>
+  <div id="mob-lista-aval">
+    <div class="empty"><div class="empty-txt">Carregando...</div></div>
+  </div>
+  <button class="btn-avaliar" onclick="abrirModalAval()" style="margin-bottom:24px">
+    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" stroke-width="2"/></svg>
+    Dar avaliação
+  </button>
+
+  <!-- ENDEREÇO MOBILE -->
+  <div style="font-weight:800;font-size:1em;margin:0 0 14px">Localização</div>
+  <div class="end-card" style="margin-bottom:24px">
+    <div class="end-linha">
+      <div class="end-icon">📍</div>
+      <div><div class="end-info-label">Endereço</div><div class="end-info-val" id="mob-end">Carregando...</div></div>
+    </div>
+    <div class="end-linha">
+      <div class="end-icon">🕐</div>
+      <div><div class="end-info-label">Funcionamento</div><div class="end-info-val" id="mob-hor">—</div></div>
+    </div>
+    <button class="btn-mapa" id="mob-btn-mapa">Como chegar</button>
+  </div>
+
+</div><!-- /mob-content -->
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+  <div class="bottom-nav-items">
+    <button class="bn-item ativo" onclick="mobScrollTop()">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" stroke-width="2"/></svg>
+      Início
+    </button>
+    <button class="bn-item" onclick="mobScrollServicos()">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M14.7 6.3a1 1 0 010 1.4L7.4 15l-3 1 1-3 7.3-7.3a1 1 0 011.4 0z" stroke-width="2"/></svg>
+      Serviços
+    </button>
+    <button class="bn-item" onclick="mobScrollAgenda()">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect x="3" y="4" width="18" height="18" rx="2" stroke-width="2"/><path d="M16 2v4M8 2v4M3 10h18" stroke-width="2"/></svg>
+      Agenda
+    </button>
+    <button class="bn-item" onclick="mobScrollAval()">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" stroke-width="2"/></svg>
+      Avaliações
+    </button>
+    <button class="bn-item" id="mob-bn-wpp">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" stroke-width="2"/></svg>
+      Contato
+    </button>
+  </div>
+</nav>
+
+<!-- MOBILE RESUMO FIXO -->
+<div class="mob-resumo-fixo" id="mob-resumo-fixo" style="display:none">
+  <div class="mob-resumo-fixo-inner">
+    <div class="mob-resumo-info">
+      <div class="mob-resumo-srv" id="mob-rsm-srv">Nenhum serviço</div>
+      <div class="mob-resumo-det" id="mob-rsm-det">Selecione data e horário</div>
+    </div>
+    <div class="mob-resumo-preco" id="mob-rsm-preco"></div>
+    <button class="btn-mob-continuar" onclick="mobScrollForm()">Continuar</button>
   </div>
 </div>
 
 <script>
-var ADM_ID = new URLSearchParams(location.search).get('id') || '';
-var adminData = null;
-var servicos = [];
-var profissionais = [];
-var selServico = null, selProf = null, selData = null, selHora = null;
-var stepAtual = 0;
+// ── ESTADO GLOBAL ────────────────────────────────────────────────────────────
+var ADMIN_ID = new URLSearchParams(location.search).get('id') || '';
+var BASE = '/api/agenda';
+var DADOS = null;
+var SERVICOS = [];
+var PROFISSIONAIS = [];
+var AVALIACOES = [];
 
-// Iniciar
-carregarEspaco();
+var sel = {
+  servicoId: null, servicoNome: '', servicoPreco: 0, servicoDur: 0,
+  profissionalId: null, profissionalNome: '',
+  data: '', hora: ''
+};
 
-async function carregarEspaco() {
-  if (!ADM_ID) { document.body.innerHTML = '<div style="text-align:center;padding:40px;color:#9ca3af">ID inválido</div>'; return; }
-  try {
-    var d = await fetch('/api/agenda/espaco/' + ADM_ID).then(r => r.json());
-    if (!d.sucesso) return;
-    adminData = d.admin;
-    servicos = d.servicos || [];
-    profissionais = d.profissionais || [];
-    renderHeader();
-    renderStats();
-    renderServicos();
-    renderProfissionais();
-    renderEndereco();
-    renderCalMini();
-    renderCalDays('cal-days', selecionarDia);
-    renderCalDays('modal-days', selecionarDiaModal);
-  } catch(e) { console.error(e); }
-}
+var calAno = new Date().getFullYear();
+var calMes = new Date().getMonth();
+var notaAval = 5;
 
-function renderHeader() {
-  var a = adminData;
-  document.getElementById('hdr-nome').textContent = a.nomeNegocio || a.nome || 'Meu Espaço';
-  document.title = a.nomeNegocio || 'Agenda Digital';
-  if (a.logo) document.getElementById('hdr-logo').innerHTML = '<img src="'+a.logo+'" style="width:100%;height:100%;object-fit:cover;border-radius:12px">';
-  // Hero imagem
-  if (d && d.fotos && d.fotos.length) document.getElementById('hero-img').src = d.fotos[0].url;
-  // Status aberto/fechado
-  var cfg = a.config || {};
-  var ab = cfg.horarioAbertura || '08:00';
-  var fe = cfg.horarioFechamento || '18:00';
-  var agora = new Date();
-  var h = agora.getHours(), m = agora.getMinutes();
-  var cur = h*60+m;
-  var [ha,ma] = ab.split(':').map(Number);
-  var [hf,mf] = fe.split(':').map(Number);
-  var aberto = cur >= ha*60+ma && cur < hf*60+mf;
-  document.getElementById('hdr-badge').textContent = aberto ? '● Aberto' : '○ Fechado';
-  document.getElementById('hdr-badge').style.background = aberto ? '#052e16' : '#1f1f1f';
-  document.getElementById('hdr-badge').style.color = aberto ? '#4ade80' : '#9ca3af';
-  document.getElementById('stat-status').textContent = aberto ? 'Aberto' : 'Fechado';
-  document.getElementById('stat-status').style.color = aberto ? '#4ade80' : '#ef4444';
-  if (a.whatsapp) { document.getElementById('hero-wpp-btn').style.display='flex'; }
-  if (profissionais.length) document.getElementById('hero-profs-btn').style.display='flex';
-}
+// ── UTILITÁRIOS ──────────────────────────────────────────────────────────────
+function fmt(v){ return 'R$\u00a0'+(parseFloat(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function fmtData(d){ try{ var dt=new Date(d+'T12:00:00'); return dt.toLocaleDateString('pt-BR'); }catch(e){ return d||'—'; } }
+function iniciais(n){ return (n||'?').split(' ').slice(0,2).map(function(x){ return x[0]; }).join('').toUpperCase(); }
+function escHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function limparTel(t){ return (t||'').replace(/\D/g,''); }
 
-function renderStats() {
-  var tempos = servicos.map(s=>s.duracao).filter(Boolean);
-  var tempoMed = tempos.length ? Math.round(tempos.reduce((a,b)=>a+b,0)/tempos.length) : null;
-  document.getElementById('stat-tempo').textContent = tempoMed ? tempoMed+' min' : '—';
-  var precos = servicos.map(s=>s.preco).filter(Boolean);
-  var minPreco = precos.length ? Math.min(...precos) : null;
-  document.getElementById('stat-preco').textContent = minPreco ? 'R$ '+minPreco.toFixed(0) : '—';
-}
-
-function renderServicos() {
-  ['servicos-todos','servicos-lista'].forEach(function(id) {
-    var el = document.getElementById(id);
-    if (!servicos.length) { el.innerHTML = '<div class="empty"><div class="empty-icon">✂️</div>Nenhum serviço cadastrado</div>'; return; }
-    el.innerHTML = servicos.map(function(s) {
-      return '<div class="servico-card">' +
-        '<img class="servico-img" src="'+(s.foto||s.imagem||'')+'" onerror="this.src=\'\'">' +
-        '<div class="servico-info">' +
-          '<div class="servico-nome">'+s.nome+'</div>' +
-          '<div class="servico-dur">⏱ '+(s.duracao||30)+' min</div>' +
-        '</div>' +
-        '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">' +
-          '<div class="servico-preco">'+(s.preco?'R$ '+parseFloat(s.preco).toFixed(2):'')+'</div>' +
-          '<button class="btn-agendar" onclick="abrirModal(\'' + s._id + '\')">Agendar</button>' +
-        '</div>' +
-      '</div>';
-    }).join('');
-  });
-}
-
-function filtrarServicos() {
-  var q = document.getElementById('busca').value.toLowerCase();
-  var filtrados = servicos.filter(s => s.nome.toLowerCase().includes(q) || (s.descricao||'').toLowerCase().includes(q));
-  var el = document.getElementById('servicos-todos');
-  if (!filtrados.length) { el.innerHTML = '<div class="empty"><div class="empty-icon">🔍</div>Nenhum resultado</div>'; return; }
-  el.innerHTML = filtrados.map(function(s) {
-    return '<div class="servico-card">' +
-      '<img class="servico-img" src="'+(s.foto||s.imagem||'')+'" onerror="this.src=\'\'">' +
-      '<div class="servico-info"><div class="servico-nome">'+s.nome+'</div><div class="servico-dur">⏱ '+(s.duracao||30)+' min</div></div>' +
-      '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">' +
-        '<div class="servico-preco">'+(s.preco?'R$ '+parseFloat(s.preco).toFixed(2):'')+'</div>' +
-        '<button class="btn-agendar" onclick="abrirModal(\'' + s._id + '\')">Agendar</button>' +
-      '</div></div>';
-  }).join('');
-}
-
-function renderProfissionais() {
-  var el = document.getElementById('profs-lista');
-  if (!profissionais.length) { el.innerHTML = '<div class="empty"><div class="empty-icon">👤</div>Nenhum profissional cadastrado</div>'; return; }
-  el.innerHTML = profissionais.map(function(p) {
-    var av = (p.nome||'?').charAt(0).toUpperCase();
-    return '<div class="prof-card">' +
-      '<div class="prof-avatar">'+(p.foto?'<img src="'+p.foto+'">':av)+'</div>' +
-      '<div><div class="prof-nome">'+p.nome+'</div>' +
-      '<div class="prof-cargo">'+(p.cargo||p.especialidade||'Profissional')+'</div>' +
-      (p.especialidades && p.especialidades.length ? '<div class="prof-specs">'+p.especialidades.map(e=>'<span class="spec-tag">'+e+'</span>').join('')+'</div>' : '') +
-      '</div></div>';
-  }).join('');
-}
-
-function renderEndereco() {
-  var a = adminData;
-  document.getElementById('end-end').textContent = a.endereco || '—';
-  document.getElementById('end-cidade').textContent = a.cidade || '—';
-  document.getElementById('end-wpp').textContent = a.whatsapp || '—';
-  document.getElementById('end-insta').textContent = a.instagram ? '@'+a.instagram.replace('@','') : '—';
-  if (a.endereco || a.cidade) document.getElementById('btn-mapa').style.display = 'flex';
-}
-
-function abrirMapa() {
-  var a = adminData;
-  var q = encodeURIComponent((a.endereco||'') + ' ' + (a.cidade||''));
-  window.open('https://www.google.com/maps/search/?api=1&query='+q,'_blank');
-}
-
-function abrirWpp() {
-  if (!adminData || !adminData.whatsapp) return;
-  var num = adminData.whatsapp.replace(/\D/g,'');
-  window.open('https://wa.me/55'+num,'_blank');
-}
-
-// CALENDÁRIO
-function diasSemana7() {
-  var dias = [];
-  var hoje = new Date();
-  for (var i=0;i<7;i++) {
-    var d = new Date(hoje);
-    d.setDate(hoje.getDate()+i);
-    dias.push(d);
-  }
-  return dias;
-}
-
-function fmt(d) {
-  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-}
-
-function renderCalDays(elId, onClik) {
-  var dias = diasSemana7();
-  var nomes = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
-  var el = document.getElementById(elId);
-  el.innerHTML = dias.map(function(d,i) {
-    return '<div class="cal-day'+(i===0?' ativo':'')+'" onclick="'+onClik.name+'(this,\'' + fmt(d) + '\')">'+
-      '<div class="dow">'+nomes[d.getDay()]+'</div>'+
-      '<div class="num">'+d.getDate()+'</div>'+
-    '</div>';
-  }).join('');
-  if (onClik === selecionarDia) selecionarDia(el.firstChild, fmt(dias[0]));
-  if (onClik === selecionarDiaModal) selecionarDiaModal(el.firstChild, fmt(dias[0]));
-}
-
-var diaAtual = null;
-async function selecionarDia(el, data) {
-  diaAtual = data;
-  document.querySelectorAll('#cal-days .cal-day').forEach(d=>d.classList.remove('ativo'));
-  el.classList.add('ativo');
-  var wrap = document.getElementById('horas-lista');
-  wrap.innerHTML = '<div class="loading">Carregando...</div>';
-  try {
-    var d = await fetch('/api/agenda/espaco/'+ADM_ID+'/horarios?data='+data).then(r=>r.json());
-    var hs = d.horarios || [];
-    if (!hs.length) { wrap.innerHTML='<div class="empty"><div class="empty-icon">📅</div>Sem horários disponíveis</div>'; return; }
-    wrap.innerHTML = hs.map(h=>'<div class="hora-btn" onclick="abrirModalHora(\'' + h + '\',\'' + data + '\')">'+h+'</div>').join('');
-  } catch(e) { wrap.innerHTML='<div class="empty">Erro ao carregar</div>'; }
-}
-
-function renderCalMini() {
-  var dias = diasSemana7();
-  var nomes = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
-  var el = document.getElementById('cal-mini');
-  el.innerHTML = '<div class="cal-days">'+dias.map(function(d,i){
-    return '<div class="cal-day'+(i===0?' ativo':'')+'" onclick=\"mudarTabNome(&apos;horarios&apos;)\">'+
-      '<div class="dow">'+nomes[d.getDay()]+'</div><div class="num">'+d.getDate()+'</div></div>';
-  }).join('')+'</div>';
-  // Carregar horários do dia
-  carregarHorasMini(fmt(dias[0]));
-}
-
-async function carregarHorasMini(data) {
-  try {
-    var d = await fetch('/api/agenda/espaco/'+ADM_ID+'/horarios?data='+data).then(r=>r.json());
-    var hs = (d.horarios||[]).slice(0,8);
-    var mini = document.getElementById('cal-mini');
-    var horasHtml = hs.length
-      ? '<div class="horas-wrap">'+hs.map(h=>'<div class="hora-btn" onclick="abrirModalHora(\'' + h + '\',\'' + data + '\')">'+h+'</div>').join('')+'</div>'
-      : '<div class="empty" style="padding:16px"><div class="empty-icon">📅</div>Sem horários hoje</div>';
-    mini.innerHTML += horasHtml;
-  } catch(e) {}
-}
-
-// MODAL
-function abrirModal(servicoId) {
-  selServico = servicos.find(s=>s._id===servicoId) || null;
-  selProf = null; selData = null; selHora = null;
-  preencherModalServicos();
-  preencherModalProfs();
-  irStep(selServico ? 1 : 0);
-  document.getElementById('modal').classList.add('open');
-}
-
-function abrirModalHora(hora, data) {
-  selHora = hora; selData = data; selServico = null; selProf = null;
-  preencherModalServicos();
-  preencherModalProfs();
-  irStep(0);
-  document.getElementById('modal').classList.add('open');
-}
-
-function fecharModal() { document.getElementById('modal').classList.remove('open'); }
-
-function preencherModalServicos() {
-  var el = document.getElementById('modal-servicos');
-  el.innerHTML = servicos.map(function(s) {
-    var ativo = selServico && selServico._id===s._id ? ' ativo' : '';
-    return '<div class="sel-card'+ativo+'" onclick="escolherServico(this,\'' + s._id + '\')">'+
-      '<div class="sel-card-nome">'+s.nome+'</div>'+
-      '<div class="sel-card-sub">'+(s.duracao||30)+' min'+(s.preco?' · R$ '+parseFloat(s.preco).toFixed(2):'')+'</div>'+
-    '</div>';
-  }).join('') || '<div class="empty">Nenhum serviço</div>';
-}
-
-function escolherServico(el, id) {
-  document.querySelectorAll('#modal-servicos .sel-card').forEach(c=>c.classList.remove('ativo'));
-  el.classList.add('ativo');
-  selServico = servicos.find(s=>s._id===id);
-  setTimeout(()=>irStep(1), 300);
-}
-
-function preencherModalProfs() {
-  var el = document.getElementById('modal-profs');
-  var lista = profissionais;
-  if (!lista.length) { selProf = null; irStep(2); return; }
-  el.innerHTML = '<div class="sel-card ativo" onclick="escolherProf(this,null)"><div class="sel-card-nome">Qualquer profissional</div><div class="sel-card-sub">Disponível</div></div>' +
-    lista.map(function(p) {
-      return '<div class="sel-card" onclick="escolherProf(this,\'' + p._id + '\')">'+
-        '<div class="sel-card-nome">'+p.nome+'</div>'+
-        '<div class="sel-card-sub">'+(p.cargo||'Profissional')+'</div>'+
-      '</div>';
-    }).join('');
-}
-
-function escolherProf(el, id) {
-  document.querySelectorAll('#modal-profs .sel-card').forEach(c=>c.classList.remove('ativo'));
-  el.classList.add('ativo');
-  selProf = id ? profissionais.find(p=>p._id===id) : null;
-  setTimeout(()=>irStep(2), 300);
-}
-
-var diaModalAtual = null;
-async function selecionarDiaModal(el, data) {
-  diaModalAtual = data;
-  document.querySelectorAll('#modal-days .cal-day').forEach(d=>d.classList.remove('ativo'));
-  el.classList.add('ativo');
-  var wrap = document.getElementById('modal-horas');
-  wrap.innerHTML = '<div class="loading">Carregando...</div>';
-  var url = '/api/agenda/espaco/'+ADM_ID+'/horarios?data='+data+(selServico?'&servicoId='+selServico._id:'');
-  try {
-    var d = await fetch(url).then(r=>r.json());
-    var hs = d.horarios || [];
-    if (!hs.length) { wrap.innerHTML='<div class="empty"><div class="empty-icon">📅</div>Sem horários disponíveis</div>'; return; }
-    wrap.innerHTML = hs.map(h=>{
-      var ativo = h===selHora && data===selData ? ' sel' : '';
-      return '<div class="hora-btn'+ativo+'" onclick="escolherHoraModal(this,\'' + h + '\',\'' + data + '\')">'+h+'</div>';
-    }).join('');
-  } catch(e) { wrap.innerHTML='<div class="empty">Erro</div>'; }
-}
-
-function escolherHoraModal(el, hora, data) {
-  document.querySelectorAll('#modal-horas .hora-btn').forEach(b=>b.classList.remove('sel'));
-  el.classList.add('sel');
-  selHora = hora; selData = data;
-  setTimeout(()=>irStep(3), 300);
-}
-
-function irStep(n) {
-  stepAtual = n;
-  document.querySelectorAll('.step').forEach((s,i)=>s.classList.toggle('ativo',i===n));
-  document.querySelectorAll('.step-dot').forEach((d,i)=>{
-    d.classList.toggle('ativo',i===n);
-    d.classList.toggle('feito',i<n);
-  });
-  if (n===4) preencherConfirmacao();
-}
-
-function preencherConfirmacao() {
-  var box = document.getElementById('confirm-box');
-  box.innerHTML =
-    '<div class="confirm-row"><span class="confirm-label">Serviço</span><span class="confirm-val">'+(selServico?selServico.nome:'—')+'</span></div>'+
-    '<div class="confirm-row"><span class="confirm-label">Profissional</span><span class="confirm-val">'+(selProf?selProf.nome:'Qualquer')+'</span></div>'+
-    '<div class="confirm-row"><span class="confirm-label">Data</span><span class="confirm-val">'+(selData?new Date(selData+'T12:00:00').toLocaleDateString('pt-BR'):'—')+'</span></div>'+
-    '<div class="confirm-row"><span class="confirm-label">Horário</span><span class="confirm-val">'+(selHora||'—')+'</span></div>'+
-    '<div class="confirm-row"><span class="confirm-label">Nome</span><span class="confirm-val">'+(document.getElementById('inp-nome').value||'—')+'</span></div>'+
-    '<div class="confirm-row"><span class="confirm-label">WhatsApp</span><span class="confirm-val">'+(document.getElementById('inp-tel').value||'—')+'</span></div>';
-}
-
-async function confirmar() {
-  var nome = document.getElementById('inp-nome').value.trim();
-  var tel = document.getElementById('inp-tel').value.trim();
-  if (!nome || !tel) { alert('Preencha nome e WhatsApp'); return; }
-  if (!selServico || !selData || !selHora) { alert('Selecione serviço, data e horário'); return; }
-  try {
-    var dataHora = selData + 'T' + selHora + ':00';
-    var body = { nomeCliente:nome, telefoneCliente:tel, servicoId:selServico._id, dataHora, profissionalId: selProf?selProf._id:null };
-    var r = await fetch('/api/agenda/espaco/'+ADM_ID+'/agendar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(r=>r.json());
-    if (r.sucesso || r._id || r.agendamento) {
-      document.getElementById('success-msg').textContent = 'Agendamento para '+selHora+' em '+(new Date(selData+'T12:00:00').toLocaleDateString('pt-BR'))+' confirmado!';
-      irStep(5);
-    } else { alert(r.erro || 'Erro ao agendar'); }
-  } catch(e) { alert('Erro de conexão'); }
-}
-
-function mudarTab(nome, el) {
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('ativo'));
-  el.classList.add('ativo');
-  document.querySelectorAll('.section').forEach(s=>s.classList.remove('ativo'));
-  document.getElementById('sec-'+nome).classList.add('ativo');
-  if (nome==='horarios' && !diaAtual) { var d=diasSemana7(); selecionarDia(document.querySelector('#cal-days .cal-day'),fmt(d[0])); }
-}
-
-function mudarTabNome(nome) {
-  var tabs = document.querySelectorAll('.tab');
-  var map = {todos:0,servicos:1,horarios:2,profissionais:3,endereco:4};
-  mudarTab(nome, tabs[map[nome]||0]);
-}
-
-function mascaraTel(el) {
-  var v = el.value.replace(/\D/g,'');
-  if (v.length<=10) v=v.replace(/(\d{2})(\d{4})(\d{0,4})/,'($1) $2-$3');
-  else v=v.replace(/(\d{2})(\d{5})(\d{0,4})/,'($1) $2-$3');
+function mascaraTel(el){
+  var v = el.value.replace(/\D/g,'').slice(0,11);
+  if(v.length<=2) v='('+v;
+  else if(v.length<=7) v='('+v.slice(0,2)+') '+v.slice(2);
+  else v='('+v.slice(0,2)+') '+v.slice(2,7)+'-'+v.slice(7);
   el.value=v;
 }
 
-document.getElementById('modal').addEventListener('click', function(e) { if (e.target===this) fecharModal(); });
+function estrelas(nota, total){
+  var html='';
+  for(var i=1;i<=5;i++) html+='<svg width="16" height="16" viewBox="0 0 24 24" fill="'+(i<=Math.round(nota)?'#f59e0b':'#e5e7eb')+'"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
+  return html;
+}
+
+function toast(msg, tipo){
+  tipo=tipo||'ok';
+  var el=document.getElementById('toast');
+  el.textContent=msg; el.className='toast '+tipo; el.style.display='block';
+  setTimeout(function(){ el.style.display='none'; }, 2800);
+}
+
+function abrirModal(id){ document.getElementById(id).classList.add('open'); }
+function fecharModal(id){ document.getElementById(id).classList.remove('open'); }
+
+document.querySelectorAll('.modal-bg').forEach(function(m){
+  m.addEventListener('click',function(e){ if(e.target===m) m.classList.remove('open'); });
+});
+
+// ── CARREGAR DADOS ────────────────────────────────────────────────────────────
+async function carregarDados(){
+  if(!ADMIN_ID){ mostrarErro(); return; }
+  try {
+    var r = await fetch(BASE+'/espaco/'+ADMIN_ID);
+    var d = await r.json();
+    if(!d.sucesso){ mostrarErro(); return; }
+    DADOS = d;
+    SERVICOS = d.servicos || [];
+    PROFISSIONAIS = d.profissionais || [];
+    aplicarDados(d.admin);
+    renderServicos(SERVICOS);
+    renderProfissionais(PROFISSIONAIS);
+    renderCalendario();
+    carregarAvaliacoes();
+  } catch(e){ mostrarErro(); }
+}
+
+function mostrarErro(){
+  document.getElementById('h-nome').textContent='Negócio não encontrado';
+  document.getElementById('mh-nome').textContent='Não encontrado';
+}
+
+function aplicarDados(admin){
+  var nome = admin.nomeNegocio || admin.nome || 'Agenda Digital';
+  document.title = nome+' — Agenda Digital';
+  document.getElementById('pg-title').textContent = nome+' — Agenda Digital';
+  document.getElementById('h-nome').textContent = nome;
+  document.getElementById('mh-nome').textContent = nome;
+  document.getElementById('f-nome').textContent = nome;
+  // Status aberto/fechado
+  var cfg = admin.config || {};
+  var ab = cfg.horarioAbertura||'08:00';
+  var fe = cfg.horarioFechamento||'18:00';
+  var agora = new Date();
+  var hAtual = agora.getHours()*60+agora.getMinutes();
+  var hAb = parseInt(ab.split(':')[0])*60+parseInt(ab.split(':')[1]);
+  var hFe = parseInt(fe.split(':')[0])*60+parseInt(fe.split(':')[1]);
+  var aberto = hAtual>=hAb && hAtual<hFe;
+  var badge = document.getElementById('h-status-badge');
+  var txt = document.getElementById('h-status-txt');
+  var mobStatus = document.getElementById('mh-status');
+  if(aberto){
+    badge.className='badge-status badge-aberto';
+    txt.textContent='Aberto agora';
+    mobStatus.textContent='Aberto'; mobStatus.style.color='var(--verde)';
+    document.getElementById('st-aberto').textContent='Aberto hoje';
+    document.getElementById('mob-st-ab').textContent='Aberto hoje';
+  } else {
+    badge.className='badge-status badge-fechado';
+    txt.textContent='Fechado';
+    mobStatus.textContent='Fechado'; mobStatus.style.color='var(--vermelho)';
+    document.getElementById('st-aberto').textContent='Fechado agora';
+    document.getElementById('mob-st-ab').textContent='Fechado';
+  }
+  var horStr = ab+' às '+fe;
+  document.getElementById('st-horario').textContent=horStr;
+  document.getElementById('mob-st-hor').textContent=horStr;
+  // Endereço
+  var end = admin.endereco||'Endereço não informado';
+  document.getElementById('end-endereco').textContent=end;
+  document.getElementById('mob-end').textContent=end;
+  var mapsUrl='https://maps.google.com/?q='+encodeURIComponent(end);
+  document.getElementById('btn-mapa').onclick=function(){ window.open(mapsUrl,'_blank'); };
+  document.getElementById('mob-btn-mapa').onclick=function(){ window.open(mapsUrl,'_blank'); };
+  // Horário
+  document.getElementById('end-horario').textContent=horStr;
+  document.getElementById('mob-hor').textContent=horStr;
+  // Tel
+  var tel = admin.whatsapp||admin.telefone||'';
+  var telClean = limparTel(tel);
+  document.getElementById('end-tel').textContent=tel||'Não informado';
+  // WhatsApp
+  var wppUrl = telClean ? 'https://wa.me/55'+telClean : '#';
+  document.getElementById('h-wpp-btn').onclick=function(){ window.open(wppUrl,'_blank'); };
+  document.getElementById('mob-wpp-btn').onclick=function(){ window.open(wppUrl,'_blank'); };
+  document.getElementById('wpp-fab').onclick=function(){ window.open(wppUrl,'_blank'); };
+  document.getElementById('mob-bn-wpp').onclick=function(){ window.open(wppUrl,'_blank'); };
+  document.getElementById('f-wpp').onclick=function(){ window.open(wppUrl,'_blank'); };
+  // Hero select serviços
+  var heroSel = document.getElementById('hero-srv-sel');
+  heroSel.innerHTML='<option value="">Escolha um serviço...</option>'+SERVICOS.map(function(s){
+    return '<option value="'+s._id+'">'+escHtml(s.nome)+'</option>';
+  }).join('');
+  // Stats
+  if(SERVICOS.length){
+    var precos = SERVICOS.map(function(s){ return s.preco||0; }).filter(function(p){ return p>0; });
+    var durs = SERVICOS.map(function(s){ return s.duracao||0; }).filter(function(d){ return d>0; });
+    if(precos.length){
+      var minPreco=Math.min.apply(null,precos);
+      document.getElementById('st-partir').textContent='A partir de '+fmt(minPreco);
+      document.getElementById('mob-st-preco').textContent='A partir de '+fmt(minPreco);
+    }
+    if(durs.length){
+      var mediaDur=Math.round(durs.reduce(function(a,b){return a+b;},0)/durs.length);
+      document.getElementById('st-tempo').textContent=mediaDur+' min';
+      document.getElementById('mob-st-tempo').textContent=mediaDur+' min';
+    }
+  }
+  // Data mínima hoje
+  var hoje = new Date().toISOString().split('T')[0];
+  document.getElementById('hero-data-sel').min=hoje;
+  document.getElementById('mob-data-sel').min=hoje;
+}
+
+// ── SERVIÇOS ─────────────────────────────────────────────────────────────────
+function renderServicos(lista){
+  var html = lista.length ? lista.map(function(s,i){
+    var selecionado = sel.servicoId===s._id;
+    return '<div class="srv-card'+(selecionado?' selecionado':'')+'" id="srv-'+s._id+'" onclick="selecionarServico(\''+s._id+'\')">'+
+      '<div class="srv-foto">✂️</div>'+
+      '<div class="srv-info">'+
+        '<div class="srv-nome">'+escHtml(s.nome)+'</div>'+
+        (s.descricao?'<div class="srv-desc">'+escHtml(s.descricao)+'</div>':'')+
+        '<div class="srv-meta">'+
+          '<div class="srv-dur"><svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="10" stroke-width="2"/><polyline points="12 6 12 12 16 14" stroke-width="2"/></svg>'+(s.duracao||30)+' min</div>'+
+          '<div class="srv-preco">'+fmt(s.preco)+'</div>'+
+          (i===0?'<span class="srv-badge">Mais pedido</span>':'')+
+        '</div>'+
+      '</div>'+
+      '<button class="btn-srv'+(selecionado?' selecionado':'')+'" onclick="selecionarServico(\''+s._id+'\')">'+
+        (selecionado?'✓ Selecionado':'Selecionar')+
+      '</button>'+
+    '</div>';
+  }).join('') : '<div class="empty"><div class="empty-icon">✂️</div><div class="empty-txt">Nenhum serviço disponível</div></div>';
+  document.getElementById('lista-servicos').innerHTML=html;
+  // Mobile
+  var mobHtml = lista.length ? lista.map(function(s){
+    var selecionado = sel.servicoId===s._id;
+    return '<div class="srv-card'+(selecionado?' selecionado':'')+'" style="margin-bottom:10px" onclick="selecionarServico(\''+s._id+'\')">'+
+      '<div class="srv-foto">✂️</div>'+
+      '<div class="srv-info">'+
+        '<div class="srv-nome">'+escHtml(s.nome)+'</div>'+
+        '<div class="srv-meta"><div class="srv-dur">⏱ '+(s.duracao||30)+' min</div><div class="srv-preco">'+fmt(s.preco)+'</div></div>'+
+      '</div>'+
+      '<button class="btn-srv'+(selecionado?' selecionado':'')+'" onclick="selecionarServico(\''+s._id+'\')">'+
+        (selecionado?'✓':'Agendar')+
+      '</button>'+
+    '</div>';
+  }).join('') : '<div class="empty"><div class="empty-txt">Nenhum serviço disponível</div></div>';
+  document.getElementById('mob-lista-servicos').innerHTML=mobHtml;
+}
+
+function selecionarServico(id){
+  var srv = SERVICOS.find(function(s){ return s._id===id; });
+  if(!srv) return;
+  sel.servicoId=srv._id; sel.servicoNome=srv.nome; sel.servicoPreco=srv.preco||0; sel.servicoDur=srv.duracao||30;
+  renderServicos(SERVICOS);
+  atualizarPainel();
+  // Mostrar resumo mobile
+  document.getElementById('mob-resumo-fixo').style.display='block';
+  document.getElementById('mob-rsm-srv').textContent=srv.nome;
+  document.getElementById('mob-rsm-preco').textContent=fmt(srv.preco);
+  // Limpar hora ao trocar serviço
+  sel.hora=''; atualizarPainel();
+  if(sel.data) carregarHorarios(sel.data);
+}
+
+function filtrarSrv(tipo,btn){
+  document.querySelectorAll('.filtro-btn').forEach(function(b){ b.classList.remove('ativo'); });
+  if(btn) btn.classList.add('ativo');
+  var filtrados = tipo==='rapido' ? SERVICOS.filter(function(s){ return (s.duracao||30)<=30; }) : SERVICOS;
+  renderServicos(filtrados);
+}
+
+function filtrarBusca(q){
+  q=q.toLowerCase().trim();
+  var filtrados=q ? SERVICOS.filter(function(s){ return s.nome.toLowerCase().includes(q)||(s.descricao||'').toLowerCase().includes(q); }) : SERVICOS;
+  renderServicos(filtrados);
+}
+
+// ── PROFISSIONAIS ─────────────────────────────────────────────────────────────
+function renderProfissionais(lista){
+  var itens = [{_id:'', nome:'Qualquer profissional disponível', cargo:''}].concat(lista);
+  var html = itens.map(function(p){
+    var selecionado = sel.profissionalId===(p._id||null);
+    return '<div class="prof-card'+(selecionado?' selecionado':'')+'" onclick="selecionarProfissional(\''+p._id+'\')">'+ 
+      '<div class="prof-av">'+(p.foto?'<img src="'+escHtml(p.foto)+'" alt="">':iniciais(p.nome))+'</div>'+
+      '<div class="prof-info">'+
+        '<div class="prof-nome">'+escHtml(p.nome)+'</div>'+
+        (p.cargo?'<div class="prof-cargo">'+escHtml(p.cargo)+'</div>':'')+
+        (p.nota?'<div class="prof-nota">'+estrelas(p.nota,0)+' '+p.nota+'</div>':'')+
+      '</div>'+
+      '<button class="btn-prof">'+( selecionado?'✓ Escolhido':'Escolher')+'</button>'+
+    '</div>';
+  }).join('');
+  document.getElementById('lista-profissionais').innerHTML=html;
+  document.getElementById('mob-lista-profs').innerHTML=html;
+}
+
+function selecionarProfissional(id){
+  sel.profissionalId=id||null;
+  sel.profissionalNome=id ? (PROFISSIONAIS.find(function(p){ return p._id===id; })||{}).nome||'' : 'Qualquer disponível';
+  renderProfissionais(PROFISSIONAIS);
+  atualizarPainel();
+  sel.hora='';
+  if(sel.data) carregarHorarios(sel.data);
+}
+
+// ── CALENDÁRIO ────────────────────────────────────────────────────────────────
+function renderCalendario(){
+  var meses=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  document.getElementById('cal-mes-ano').textContent=meses[calMes]+' '+calAno;
+  var hoje=new Date(); hoje.setHours(0,0,0,0);
+  var primeiro=new Date(calAno,calMes,1);
+  var ultimo=new Date(calAno,calMes+1,0);
+  var html='';
+  for(var i=0;i<primeiro.getDay();i++) html+='<div class="cal-dia vazio"></div>';
+  for(var d=1;d<=ultimo.getDate();d++){
+    var dt=new Date(calAno,calMes,d);
+    var passado=dt<hoje;
+    var dStr=calAno+'-'+(calMes+1<10?'0':'')+(calMes+1)+'-'+(d<10?'0':'')+d;
+    var hojeFlag=dt.toDateString()===hoje.toDateString();
+    var selecionado=sel.data===dStr;
+    var cls='cal-dia'+(passado?' passado':'')+(hojeFlag?' hoje':'')+(selecionado?' selecionado':'');
+    if(!passado) html+='<div class="'+cls+'" onclick="selecionarData(\''+dStr+'\')">'+d+'</div>';
+    else html+='<div class="'+cls+'">'+d+'</div>';
+  }
+  document.getElementById('cal-grid').innerHTML=html;
+}
+
+function navMes(delta){
+  calMes+=delta;
+  if(calMes>11){ calMes=0; calAno++; }
+  if(calMes<0){ calMes=11; calAno--; }
+  renderCalendario();
+}
+
+async function selecionarData(data){
+  sel.data=data; sel.hora='';
+  renderCalendario();
+  var dataMob=document.getElementById('mob-data-sel');
+  if(dataMob) dataMob.value=data;
+  document.getElementById('horarios-titulo').textContent='Horários disponíveis para '+fmtData(data);
+  document.getElementById('mob-rsm-det').textContent=fmtData(data)+' — Escolha o horário';
+  atualizarPainel();
+  await carregarHorarios(data);
+}
+
+async function carregarHorarios(data){
+  document.getElementById('horarios-grid').innerHTML='<div style="color:var(--cinza);font-size:.85em">Carregando horários...</div>';
+  document.getElementById('mob-horarios-grid').innerHTML='<div style="color:var(--cinza);font-size:.85em">Carregando...</div>';
+  var url=BASE+'/espaco/'+ADMIN_ID+'/horarios?data='+data;
+  if(sel.profissionalId) url+='&profissionalId='+sel.profissionalId;
+  if(sel.servicoId) url+='&servicoId='+sel.servicoId;
+  try {
+    var r=await fetch(url);
+    var d=await r.json();
+    var horarios=d.horarios||[];
+    if(!horarios.length){
+      var msg='<div class="empty"><div class="empty-icon">📅</div><div class="empty-txt">Nenhum horário disponível para esta data</div></div>';
+      document.getElementById('horarios-grid').innerHTML=msg;
+      document.getElementById('mob-horarios-grid').innerHTML=msg;
+      return;
+    }
+    var html=horarios.map(function(h){
+      var hora=typeof h==='string'?h:h.hora;
+      var ocupado=typeof h==='object'?h.ocupado:false;
+      var selecionado=sel.hora===hora;
+      return '<button class="hora-chip'+(ocupado?' ocupado':selecionado?' selecionado':'')+'"'+(ocupado?' disabled':' onclick="selecionarHora(\''+hora+'\')"')+'>'+hora+'</button>';
+    }).join('');
+    document.getElementById('horarios-grid').innerHTML=html;
+    document.getElementById('mob-horarios-grid').innerHTML=html;
+  } catch(e){
+    var errMsg='<div class="empty"><div class="empty-txt">Erro ao carregar horários</div></div>';
+    document.getElementById('horarios-grid').innerHTML=errMsg;
+    document.getElementById('mob-horarios-grid').innerHTML=errMsg;
+  }
+}
+
+function selecionarHora(hora){
+  sel.hora=hora;
+  // Re-render chips
+  document.querySelectorAll('.hora-chip:not(.ocupado)').forEach(function(el){
+    el.classList.toggle('selecionado', el.textContent===hora);
+  });
+  document.getElementById('mob-rsm-det').textContent=(sel.data?fmtData(sel.data)+' ':'')+hora;
+  atualizarPainel();
+}
+
+// ── PAINEL LATERAL ─────────────────────────────────────────────────────────────
+function atualizarPainel(){
+  var p1=document.getElementById('ps-1'),p2=document.getElementById('ps-2'),p3=document.getElementById('ps-3');
+  var v1=document.getElementById('ps-1-val'),v2=document.getElementById('ps-2-val'),v3=document.getElementById('ps-3-val');
+  if(sel.servicoId){ p1.classList.add('ok'); v1.textContent=sel.servicoNome; } else { p1.classList.remove('ok'); v1.textContent='Não selecionado'; }
+  v2.textContent=sel.profissionalNome||'Qualquer disponível'; p2.classList.add('ok');
+  if(sel.data&&sel.hora){ p3.classList.add('ok'); v3.textContent=fmtData(sel.data)+' às '+sel.hora; } else { p3.classList.remove('ok'); v3.textContent='Não selecionado'; }
+  document.getElementById('pd-srv').textContent=sel.servicoNome||'—';
+  document.getElementById('pd-prof').textContent=sel.profissionalNome||'Qualquer disponível';
+  document.getElementById('pd-data').textContent=sel.data?fmtData(sel.data):'—';
+  document.getElementById('pd-hora').textContent=sel.hora||'—';
+  document.getElementById('pd-dur').textContent=sel.servicoDur?sel.servicoDur+' min':'—';
+  document.getElementById('pd-total').textContent=sel.servicoPreco?fmt(sel.servicoPreco):'—';
+}
+
+// ── AVALIAÇÕES ────────────────────────────────────────────────────────────────
+async function carregarAvaliacoes(){
+  // Usa avaliações do admin se existirem
+  var avs = (DADOS&&DADOS.admin&&DADOS.admin.avaliacoes)||[];
+  AVALIACOES=avs;
+  var total=avs.length;
+  var media=total?avs.reduce(function(s,a){return s+(a.nota||5);},0)/total:0;
+  // Stats
+  document.getElementById('st-aval').textContent=total+' avaliação'+(total!==1?'ões':'');
+  document.getElementById('st-nota').textContent=total?'Nota '+media.toFixed(1):'Sem avaliações';
+  document.getElementById('mob-st-aval').textContent=total+' avaliações';
+  document.getElementById('mob-st-nota').textContent=total?'Nota '+media.toFixed(1):'';
+  // Header avaliações
+  document.getElementById('aval-nota-big').textContent=total?media.toFixed(1):'—';
+  document.getElementById('aval-estrelas-header').innerHTML=total?estrelas(media,0):'';
+  document.getElementById('aval-total').textContent=total?total+' avaliações':'Nenhuma avaliação ainda';
+  // Header
+  if(total){
+    document.getElementById('h-nota').style.display='flex';
+    document.getElementById('h-nota-val').textContent=media.toFixed(1);
+  }
+  var renderAvs=function(lista,elId){
+    if(!lista.length){
+      document.getElementById(elId).innerHTML='<div class="empty"><div class="empty-icon">⭐</div><div class="empty-txt">Nenhuma avaliação ainda. Seja o primeiro!</div></div>';
+      return;
+    }
+    document.getElementById(elId).innerHTML=lista.slice(0,5).map(function(a){
+      return '<div class="aval-card">'+
+        '<div class="aval-card-header"><div class="aval-nome">'+escHtml(a.nome||'Cliente')+'</div><div class="aval-data">'+fmtData(a.data||a.createdAt)+'</div></div>'+
+        '<div class="aval-estrelas-sm">'+estrelas(a.nota||5,0)+'</div>'+
+        (a.texto||a.comentario?'<div class="aval-texto">'+escHtml(a.texto||a.comentario)+'</div>':'')+
+      '</div>';
+    }).join('');
+  };
+  renderAvs(avs,'lista-avaliacoes');
+  renderAvs(avs,'mob-lista-aval');
+}
+
+function selEstrela(n){
+  notaAval=n;
+  document.querySelectorAll('.estrela-btn').forEach(function(b){
+    b.classList.toggle('on', parseInt(b.dataset.n)<=n);
+    b.textContent=parseInt(b.dataset.n)<=n?'★':'☆';
+  });
+}
+
+function abrirModalAval(){ abrirModal('modal-aval'); }
+
+async function enviarAvaliacao(){
+  var nome=document.getElementById('av-nome').value.trim();
+  if(!nome) return toast('Informe seu nome','erro');
+  var av={ nome:nome, nota:notaAval, texto:document.getElementById('av-texto').value.trim(), data:new Date().toISOString() };
+  // Salvar em avaliacoes do admin via PUT /perfil (temporário) ou API específica se existir
+  AVALIACOES.push(av);
+  fecharModal('modal-aval');
+  toast('Avaliação enviada! Obrigado ✅','ok');
+  carregarAvaliacoes();
+  document.getElementById('av-nome').value='';
+  document.getElementById('av-texto').value='';
+}
+
+// ── HERO CARD ─────────────────────────────────────────────────────────────────
+async function heroSelecionarData(){
+  var data=document.getElementById('hero-data-sel').value;
+  if(!data) return;
+  var url=BASE+'/espaco/'+ADMIN_ID+'/horarios?data='+data;
+  var sel_hero=document.getElementById('hero-hora-sel');
+  sel_hero.innerHTML='<option value="">Carregando...</option>';
+  try {
+    var r=await fetch(url); var d=await r.json();
+    var horarios=(d.horarios||[]).filter(function(h){ return typeof h==='string'?true:!h.ocupado; });
+    if(!horarios.length){ sel_hero.innerHTML='<option value="">Nenhum horário disponível</option>'; return; }
+    sel_hero.innerHTML='<option value="">Selecione o horário...</option>'+horarios.map(function(h){
+      var hora=typeof h==='string'?h:h.hora;
+      return '<option value="'+hora+'">'+hora+'</option>';
+    }).join('');
+  } catch(e){ sel_hero.innerHTML='<option value="">Erro ao carregar</option>'; }
+}
+
+function heroSelecionarServico(){
+  var id=document.getElementById('hero-srv-sel').value;
+  if(id){ selecionarServico(id); }
+}
+
+function heroAgendar(){
+  var srvId=document.getElementById('hero-srv-sel').value;
+  var data=document.getElementById('hero-data-sel').value;
+  var hora=document.getElementById('hero-hora-sel').value;
+  if(srvId) selecionarServico(srvId);
+  if(data){ sel.data=data; }
+  if(hora){ sel.hora=hora; }
+  atualizarPainel();
+  scrollToCliente();
+}
+
+// ── CONFIRMAR AGENDAMENTO ─────────────────────────────────────────────────────
+async function confirmarAgendamento(isMobile){
+  var nome=isMobile?document.getElementById('mob-cli-nome').value.trim():document.getElementById('cli-nome').value.trim();
+  var tel=isMobile?document.getElementById('mob-cli-tel').value.trim():document.getElementById('cli-tel').value.trim();
+  var obs=isMobile?document.getElementById('mob-cli-obs').value.trim():document.getElementById('cli-obs').value.trim();
+  if(!nome) return toast('Informe seu nome','erro');
+  if(!tel||limparTel(tel).length<10) return toast('Informe um WhatsApp válido','erro');
+  if(!sel.servicoId) return toast('Selecione um serviço','erro');
+  if(!sel.data) return toast('Selecione uma data','erro');
+  if(!sel.hora) return toast('Selecione um horário','erro');
+  var btn=document.getElementById(isMobile?'btn-confirmar':'btn-confirmar');
+  if(btn){ btn.disabled=true; btn.textContent='Confirmando...'; }
+  var dataHora=sel.data+'T'+sel.hora+':00';
+  var payload={
+    nomeCliente:nome, telefoneCliente:limparTel(tel),
+    servicoId:sel.servicoId, profissionalId:sel.profissionalId||undefined,
+    dataHora:dataHora, observacoes:obs, origem:'site'
+  };
+  try {
+    var r=await fetch(BASE+'/espaco/'+ADMIN_ID+'/agendar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    var d=await r.json();
+    if(d.sucesso){
+      // Sucesso
+      document.getElementById('suc-msg').textContent=d.mensagem||'Seu horário foi reservado!';
+      document.getElementById('suc-srv').textContent=sel.servicoNome;
+      document.getElementById('suc-prof').textContent=sel.profissionalNome||'A confirmar';
+      document.getElementById('suc-data').textContent=fmtData(sel.data);
+      document.getElementById('suc-hora').textContent=sel.hora;
+      document.getElementById('suc-total').textContent=sel.servicoPreco?fmt(sel.servicoPreco):'A confirmar';
+      var telClean=limparTel(tel);
+      var wppMsg=encodeURIComponent('Olá! Acabei de agendar '+sel.servicoNome+' para '+fmtData(sel.data)+' às '+sel.hora+'. Pode confirmar?');
+      var wppAdmin=DADOS&&DADOS.admin?limparTel(DADOS.admin.whatsapp||DADOS.admin.telefone||''):'';
+      document.getElementById('btn-suc-wpp').onclick=function(){ window.open('https://wa.me/55'+wppAdmin+'?text='+wppMsg,'_blank'); };
+      abrirModal('modal-sucesso');
+      toast('Agendamento confirmado!','ok');
+      // Recarregar horários
+      if(sel.data) carregarHorarios(sel.data);
+    } else {
+      toast(d.erro||'Erro ao confirmar agendamento','erro');
+    }
+  } catch(e){ toast('Erro de conexão','erro'); }
+  if(btn){ btn.disabled=false; btn.textContent='Confirmar agendamento'; }
+}
+
+function novoAgendamento(){
+  fecharModal('modal-sucesso');
+  sel={servicoId:null,servicoNome:'',servicoPreco:0,servicoDur:0,profissionalId:null,profissionalNome:'',data:'',hora:''};
+  renderServicos(SERVICOS);
+  renderProfissionais(PROFISSIONAIS);
+  renderCalendario();
+  document.getElementById('horarios-grid').innerHTML='';
+  document.getElementById('mob-horarios-grid').innerHTML='';
+  document.getElementById('cli-nome').value='';
+  document.getElementById('cli-tel').value='';
+  document.getElementById('cli-obs').value='';
+  document.getElementById('mob-cli-nome').value='';
+  document.getElementById('mob-cli-tel').value='';
+  atualizarPainel();
+  window.scrollTo(0,0);
+}
+
+// ── SCROLL HELPERS ────────────────────────────────────────────────────────────
+function scrollToServicos(){ document.getElementById('sec-servicos').scrollIntoView({behavior:'smooth'}); }
+function scrollToCliente(){ document.getElementById('sec-cliente').scrollIntoView({behavior:'smooth'}); }
+function mobScrollServicos(){ document.getElementById('mob-lista-servicos').scrollIntoView({behavior:'smooth'}); }
+function mobScrollAgenda(){ document.getElementById('mob-data-sel').scrollIntoView({behavior:'smooth'}); }
+function mobScrollAval(){ document.getElementById('mob-lista-aval').scrollIntoView({behavior:'smooth'}); }
+function mobScrollForm(){ document.getElementById('mob-cli-nome').scrollIntoView({behavior:'smooth'}); }
+function mobScrollTop(){ window.scrollTo({top:0,behavior:'smooth'}); }
+function scrollTo(id){ var el=document.getElementById(id); if(el) el.scrollIntoView({behavior:'smooth'}); }
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+carregarDados();
 </script>
 </body>
 </html>
