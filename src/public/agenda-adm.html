@@ -1959,27 +1959,22 @@ function wppIniciar() {
 
 async function wppCarregarStatus() {
   try {
-    var r = await fetch('/api/evolution/instancias/admin/'+window._adminId, { headers: { 'Authorization': 'Bearer '+(localStorage.getItem('agenda_token')||'') } });
+    var r = await fetch('/api/agenda-ia-servico/whatsapp/status-completo', { headers: { 'Authorization': 'Bearer '+(localStorage.getItem('agenda_token')||'') } });
     var d = await r.json();
-    var instancias = d.instancias || [];
-    var inst = instancias[0] || null;
-    if(inst) {
-      _wppInstanciaId = inst._id;
-      var conectado = inst.status === 'conectado';
-      var dot = document.getElementById('wpp-status-dot');
-      var label = document.getElementById('wpp-status-label');
-      var numLabel = document.getElementById('wpp-numero-label');
-      dot.style.background = conectado ? '#16a34a' : '#dc2626';
-      label.textContent = conectado ? 'Conectado' : 'Desconectado';
-      numLabel.textContent = inst.telefoneConectado ? 'Número: '+inst.telefoneConectado : 'Nenhum número conectado';
-      document.getElementById('wpp-status-txt').textContent = conectado ? '🟢 Conectado' : '🔴 Desconectado';
-      document.getElementById('wpp-numero-txt').textContent = inst.telefoneConectado || '—';
-      document.getElementById('btn-wpp-conectar').style.display = conectado ? 'none' : 'inline-block';
-      document.getElementById('btn-wpp-desconectar').style.display = conectado ? 'inline-block' : 'none';
-    } else {
-      document.getElementById('wpp-status-txt').textContent = '⚫ Sem instância';
-      document.getElementById('wpp-status-label').textContent = 'Sem instância configurada';
-    }
+    if(d.instanciaId) _wppInstanciaId = d.instanciaId;
+    var conectado = d.conectado || false;
+    var dot = document.getElementById('wpp-status-dot');
+    var label = document.getElementById('wpp-status-label');
+    var numLabel = document.getElementById('wpp-numero-label');
+    if(dot) dot.style.background = conectado ? '#16a34a' : (d.status==='sem_instancia'?'#9ca3af':'#dc2626');
+    if(label) label.textContent = conectado ? 'Conectado' : (d.status==='sem_instancia'?'Não configurado':'Desconectado');
+    if(numLabel) numLabel.textContent = d.telefone ? 'Número: '+d.telefone : 'Nenhum número conectado';
+    document.getElementById('wpp-status-txt').textContent = conectado ? '🟢 Conectado' : (d.status==='sem_instancia'?'⚫ Não configurado':'🔴 Desconectado');
+    document.getElementById('wpp-numero-txt').textContent = d.telefone || '—';
+    var btnCon = document.getElementById('btn-wpp-conectar');
+    var btnDes = document.getElementById('btn-wpp-desconectar');
+    if(btnCon) btnCon.style.display = conectado ? 'none' : 'inline-block';
+    if(btnDes) btnDes.style.display = conectado ? 'inline-block' : 'none';
   } catch(e) { console.error('[WPP] Status erro:', e); }
 }
 
@@ -2051,6 +2046,7 @@ async function wppCarregarConversas() {
       '</div>';
     }).join('');
     var handoffs = lista.filter(function(c){ return c.humanHandoff; }).length;
+    document.getElementById('wpp-conv-hoje').textContent = lista.length;
     document.getElementById('wpp-handoff').textContent = handoffs;
     if(handoffs > 0) document.getElementById('wpp-nav-badge').style.display = 'inline-block';
   } catch(e) { console.error('[WPP] Conversas erro:', e); }
@@ -2080,7 +2076,7 @@ async function wppCarregarLogs() {
 
 async function wppCarregarStats() {
   try {
-    var r = await fetch('/api/agenda/agendamentos?origem=whatsapp_ia', { headers: { 'Authorization':'Bearer '+(localStorage.getItem('agenda_token')||'') } });
+    var r = await fetch('/api/agenda-ia-servico/agendamentos-wpp', { headers: { 'Authorization':'Bearer '+(localStorage.getItem('agenda_token')||'') } });
     var d = await r.json();
     var ags = d.agendamentos || [];
     document.getElementById('wpp-ag-wpp').textContent = ags.length;

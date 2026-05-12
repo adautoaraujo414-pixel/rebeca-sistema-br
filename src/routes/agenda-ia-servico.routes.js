@@ -218,4 +218,57 @@ router.post('/whatsapp/anti-bloqueio', authAgenda, async (req, res) => {
   } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
+
+// ===== BOT: LOGS DE ATIVIDADE =====
+router.get('/logs', authAgenda, async (req, res) => {
+  try {
+    const AgendaIAService = require('../services/agenda-ia.service');
+    const logs = AgendaIAService.getLogs(req.adminAgendaId);
+    res.json({ sucesso: true, logs });
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// ===== BOT: CONVERSAS ATIVAS =====
+router.get('/conversas', authAgenda, async (req, res) => {
+  try {
+    const AgendaIAService = require('../services/agenda-ia.service');
+    const conversas = AgendaIAService.getConversas(req.adminAgendaId);
+    res.json({ sucesso: true, conversas });
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// ===== BOT: RESET HANDOFF (ADM assume e devolve pro bot) =====
+router.post('/reset-handoff', authAgenda, async (req, res) => {
+  try {
+    const { telefone } = req.body;
+    if (!telefone) return res.status(400).json({ erro: 'Telefone obrigatorio' });
+    const AgendaIAService = require('../services/agenda-ia.service');
+    AgendaIAService.resetHandoff(req.adminAgendaId, telefone);
+    res.json({ sucesso: true });
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// ===== WHATSAPP STATUS SIMPLIFICADO (para aba WPP no ADM) =====
+router.get('/whatsapp/status-completo', authAgenda, async (req, res) => {
+  try {
+    const { InstanciaWhatsapp } = require('../models/AgendaServico');
+    const inst = await InstanciaWhatsapp.findOne({ adminId: req.adminAgendaId }).lean();
+    if (!inst) return res.json({ sucesso: true, conectado: false, status: 'sem_instancia', instancia: null });
+    const conectado = ['conectado','open','connected'].includes(inst.status);
+    res.json({ sucesso: true, conectado, status: inst.status, telefone: inst.telefoneConectado || null, instanciaId: inst._id });
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// ===== AGENDAMENTOS VIA WHATSAPP =====
+router.get('/agendamentos-wpp', authAgenda, async (req, res) => {
+  try {
+    const { AgendamentoAgenda } = require('../models/AgendaServico');
+    const ags = await AgendamentoAgenda.find({
+      adminId: req.adminAgendaId,
+      origem: 'whatsapp_ia'
+    }).sort({ createdAt: -1 }).limit(50).lean();
+    res.json({ sucesso: true, agendamentos: ags, total: ags.length });
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
 module.exports = router;
