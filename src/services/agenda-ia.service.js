@@ -63,221 +63,87 @@ const MSG = {
   bemVindo(nomeNegocio, linkAgenda) {
     const hora = new Date().getHours();
     const saud = hora < 12 ? 'Bom dia' : hora < 18 ? 'Boa tarde' : 'Boa noite';
-    return saud + '! Que bom te ver por aqui.
-
-Posso te ajudar com:
-
-1. Marcar horario
-2. Ver servicos
-3. Consultar horarios livres
-4. Ver endereco
-5. Falar com a equipe
-
-Se preferir, acesse a agenda:
-' + linkAgenda;
+    return saud + '! Que bom te ver por aqui.\n\nPosso te ajudar com:\n\n1. Marcar horario\n2. Ver servicos\n3. Consultar horarios livres\n4. Ver endereco\n5. Falar com a equipe\n\nSe preferir, acesse a agenda:\n' + linkAgenda;
   },
   pedirServico() {
-    return _pick(_v.abertura) + '
-
-' + _pick(_v.pedirSrv);
+    return _pick(_v.abertura) + '\n\n' + _pick(_v.pedirSrv);
   },
   listaServicos(servicos, linkAgenda) {
-    if (!servicos.length) return _pick(_v.naoAchou) + '
-
-Nao apareceu servico cadastrado.
-
-Quer que eu chame a equipe?';
+    if (!servicos.length) return _pick(_v.naoAchou) + '\n\nNao apareceu servico cadastrado.\n\nQuer que eu chame a equipe?';
     const lista = servicos.map((s, i) => {
       let linha = (i+1) + '. ' + s.nome;
       if (s.duracao) linha += ' — ' + s.duracao + 'min';
       if (s.preco) linha += ' — R$ ' + Number(s.preco).toFixed(2);
       return linha;
-    }).join('
-');
-    return _pick(_v.abertura) + '
-
-Servicos disponiveis:
-
-' + lista + '
-
-Qual deles voce prefere?';
+    }).join('\n');
+    return _pick(_v.abertura) + '\n\nServicos disponiveis:\n\n' + lista + '\n\nQual deles voce prefere?';
   },
   preco(servico) {
-    if (!servico.preco) return 'Olhei aqui.
-
-Esse servico esta cadastrado,
-mas o valor nao apareceu.
-
-Quer que eu veja os horarios?';
-    const dur = servico.duracao ? '
-Duracao: ' + servico.duracao + ' minutos.' : '';
-    return 'Conferi aqui.
-
-' + servico.nome + ' esta como R$ ' + Number(servico.preco).toFixed(2) + '.' + dur + '
-
-Quer ver horarios?';
+    if (!servico.preco) return 'Olhei aqui.\n\nEsse servico esta cadastrado,\nmas o valor nao apareceu.\n\nQuer que eu veja os horarios?';
+    const dur = servico.duracao ? '\nDuracao: ' + servico.duracao + ' minutos.' : '';
+    return 'Conferi aqui.\n\n' + servico.nome + ' esta como R$ ' + Number(servico.preco).toFixed(2) + '.' + dur + '\n\nQuer ver horarios?';
   },
   listaProfissionais(profs) {
-    if (!profs.length) return 'Conferi aqui.
-
-Nao apareceu profissional cadastrado.
-
-Posso buscar pelo proximo horario livre?';
-    const lista = profs.map((p, i) => (i+1) + '. ' + p.nome).join('
-');
-    return 'Claro.
-
-Temos esses profissionais:
-
-' + lista + '
-
-Tem preferencia por algum deles?';
+    if (!profs.length) return 'Conferi aqui.\n\nNao apareceu profissional cadastrado.\n\nPosso buscar pelo proximo horario livre?';
+    const lista = profs.map((p, i) => (i+1) + '. ' + p.nome).join('\n');
+    return 'Claro.\n\nTemos esses profissionais:\n\n' + lista + '\n\nTem preferencia por algum deles?';
   },
   pedirData() {
-    return _pick(_v.consulta) + '
-
-' + _pick(_v.pedirData);
+    return _pick(_v.consulta) + '\n\n' + _pick(_v.pedirData);
   },
   listaHorarios(data, slots, fmtData) {
-    if (!slots.length) return 'Conferi aqui.
-
-Pra ' + fmtData + ' nao apareceu horario livre.
-
-Quer tentar outro dia?';
-    return 'Achei esses horarios em ' + fmtData + ':
-
-' + slots.slice(0, 8).join('  |  ') + '
-
-Qual fica melhor?';
+    if (!slots.length) return 'Conferi aqui.\n\nPra ' + fmtData + ' nao apareceu horario livre.\n\nQuer tentar outro dia?';
+    return 'Achei esses horarios em ' + fmtData + ':\n\n' + slots.slice(0, 8).join('  |  ') + '\n\nQual fica melhor?';
   },
   pedirNome() {
-    return 'Boa escolha.
-
-' + _pick(_v.pedirNome);
+    return 'Boa escolha.\n\n' + _pick(_v.pedirNome);
   },
   resumo(d, fmtData) {
-    const prof = d.profissional ? '
-Profissional: ' + d.profissional : '';
-    return 'Perfeito, ' + d.nomeCliente + '.
-
-Ficou assim:
-
-Servico: ' + d.servico + prof + '
-Dia: ' + fmtData + '
-Hora: ' + d.hora + '
-
-Posso confirmar?';
+    const prof = d.profissional ? '\nProfissional: ' + d.profissional : '';
+    return 'Perfeito, ' + d.nomeCliente + '.\n\nFicou assim:\n\nServico: ' + d.servico + prof + '\nDia: ' + fmtData + '\nHora: ' + d.hora + '\n\nPosso confirmar?';
   },
   sucesso(d, fmtData, endereco) {
-    const end = endereco ? '
-
-Endereco:
-' + endereco : '';
-    return _pick(_v.confirmacao) + ' ' + d.nomeCliente + '.
-
-Seu horario ficou marcado.' + '
-
-Servico: ' + d.servico + '
-Dia: ' + fmtData + '
-Hora: ' + d.hora + end + '
-
-Te esperamos 😊';
+    const end = endereco ? '\n\nEndereco:\n' + endereco : '';
+    return _pick(_v.confirmacao) + ' ' + d.nomeCliente + '.\n\nSeu horario ficou marcado.' + '\n\nServico: ' + d.servico + '\nDia: ' + fmtData + '\nHora: ' + d.hora + end + '\n\nTe esperamos 😊';
   },
   erroSalvar(linkAgenda) {
-    return 'Conferi de novo aqui.
-
-Esse horario nao ficou disponivel.
-
-Quer que eu veja outro?
-
-Ou acesse a agenda:
-' + linkAgenda;
+    return 'Conferi de novo aqui.\n\nEsse horario nao ficou disponivel.\n\nQuer que eu veja outro?\n\nOu acesse a agenda:\n' + linkAgenda;
   },
   humanHandoff(linkAgenda) {
-    return 'Combinado.
-
-Vou chamar a equipe pra te ajudar ✅
-
-Se quiser, acesse a agenda:
-' + linkAgenda;
+    return 'Combinado.\n\nVou chamar a equipe pra te ajudar ✅\n\nSe quiser, acesse a agenda:\n' + linkAgenda;
   },
   humanHandoffSemRegistro() {
-    return 'Combinado.
-
-Vou te orientar por aqui
-da melhor forma.';
+    return 'Combinado.\n\nVou te orientar por aqui\nda melhor forma.';
   },
   endereco(end) {
-    if (!end) return 'Conferi aqui.
-
-O endereco nao apareceu no cadastro.
-
-Quer que eu chame a equipe?';
-    return 'Claro.
-
-O endereco cadastrado e:
-
-' + end;
+    if (!end) return 'Conferi aqui.\n\nO endereco nao apareceu no cadastro.\n\nQuer que eu chame a equipe?';
+    return 'Claro.\n\nO endereco cadastrado e:\n\n' + end;
   },
   linkAgenda(link) {
-    return 'Voce tambem pode escolher
-direto pela agenda:
-
-' + link;
+    return 'Voce tambem pode escolher\ndireto pela agenda:\n\n' + link;
   },
   cancelamento(ag, fmtDataFn) {
-    return 'Combinado, encontrei esse agendamento:
-
-' + fmtDataFn(new Date(ag.dataHora).toISOString().split('T')[0]) + '
-' + new Date(ag.dataHora).toTimeString().slice(0,5) + '
-' + ag.nomeServico + '
-
-Voce confirma o cancelamento?';
+    return 'Combinado, encontrei esse agendamento:\n\n' + fmtDataFn(new Date(ag.dataHora).toISOString().split('T')[0]) + '\n' + new Date(ag.dataHora).toTimeString().slice(0,5) + '\n' + ag.nomeServico + '\n\nVoce confirma o cancelamento?';
   },
   cancelado(linkAgenda) {
-    return 'Combinado, seu agendamento foi cancelado.
-
-Se quiser marcar outro horario:
-' + linkAgenda;
+    return 'Combinado, seu agendamento foi cancelado.\n\nSe quiser marcar outro horario:\n' + linkAgenda;
   },
   fallbackConduzido() {
     const ops = [
-      'Vamos por partes.
-
-Voce quer marcar horario
-ou ver os servicos?',
-      'Consigo te ajudar.
-
-Voce quer ver horarios,
-servicos ou falar com a equipe?',
-      'Me fala so uma coisinha.
-
-Qual servico voce procura?',
+      'Vamos por partes.\n\nVoce quer marcar horario\nou ver os servicos?',
+      'Consigo te ajudar.\n\nVoce quer ver horarios,\nservicos ou falar com a equipe?',
+      'Me fala so uma coisinha.\n\nQual servico voce procura?',
     ];
     return _pick(ops);
   },
   erroTecnico(linkAgenda) {
-    return 'Deu uma instabilidade aqui.
-
-Pra nao te passar nada errado,
-melhor confirmar pela agenda.
-
-' + linkAgenda;
+    return 'Deu uma instabilidade aqui.\n\nPra nao te passar nada errado,\nmelhor confirmar pela agenda.\n\n' + linkAgenda;
   },
   planoBasico(nomeNegocio, linkAgenda) {
-    return 'Oi! Para marcar seu horario na ' + nomeNegocio + ',
-acesse nossa agenda:
-
-' + linkAgenda + '
-
-Qualquer duvida, e so chamar!';
+    return 'Oi! Para marcar seu horario na ' + nomeNegocio + ',\nacesse nossa agenda:\n\n' + linkAgenda + '\n\nQualquer duvida, e so chamar!';
   },
   agradecimento() {
-    return 'Imagina.
-
-Fico feliz em ajudar 😊
-
-Qualquer coisa, e so chamar.';
+    return 'Imagina.\n\nFico feliz em ajudar 😊\n\nQualquer coisa, e so chamar.';
   },
 };
 
@@ -471,11 +337,7 @@ const AgendaIAService = {
         } catch(_) { return MSG.erroTecnico(linkAgenda); }
       } else {
         conv.etapa = 'idle';
-        return 'Tudo bem.
-
-Seu horario foi mantido.
-
-Qualquer coisa, e so chamar.';
+        return 'Tudo bem.\n\nSeu horario foi mantido.\n\nQualquer coisa, e so chamar.';
       }
     }
 
@@ -494,14 +356,7 @@ Qualquer coisa, e so chamar.';
         _log(adminId, 'servico_escolhido', { telefone, servico: srv.nome });
         if (profissionais.length > 0) {
           conv.etapa = 'awaiting_professional';
-          return _pick(_v.abertura) + '
-
-' + _pick(_v.pedirProf) + '
-
-' + profissionais.map((p,i) => (i+1)+'. '+p.nome).join('
-') + '
-
-Ou me diz "qualquer um".';
+          return _pick(_v.abertura) + '\n\n' + _pick(_v.pedirProf) + '\n\n' + profissionais.map((p,i) => (i+1)+'. '+p.nome).join('\n') + '\n\nOu me diz "qualquer um".';
         }
         conv.etapa = 'awaiting_date';
         return MSG.pedirData();
@@ -509,12 +364,9 @@ Ou me diz "qualquer um".';
       conv.tentativas++;
       if (conv.tentativas >= 3) {
         conv.tentativas = 0;
-        return 'Deixa eu te mandar a lista novamente.
-
-' + MSG.listaServicos(servicos, linkAgenda);
+        return 'Deixa eu te mandar a lista novamente.\n\n' + MSG.listaServicos(servicos, linkAgenda);
       }
-      return 'Me manda o numero ou o nome
-do servico da lista. 😊';
+      return 'Me manda o numero ou o nome\ndo servico da lista. 😊';
     }
 
     // ── ETAPA: aguardando profissional
@@ -532,10 +384,7 @@ do servico da lista. 😊';
     // ── ETAPA: aguardando data
     if (conv.etapa === 'awaiting_date') {
       const data = _parseData(mensagem);
-      if (!data) return 'Qual dia voce prefere?
-
-Pode ser *hoje*, *amanha*,
-um dia da semana ou uma data. 😊';
+      if (!data) return 'Qual dia voce prefere?\n\nPode ser *hoje*, *amanha*,\num dia da semana ou uma data. 😊';
       const srv = servicos.find(s => String(s._id) === conv.dados.servicoId);
       const slots = await _horariosLivres(adminId, data, srv && srv.duracao);
       _log(adminId, 'horarios_consultados', { telefone, data });
@@ -554,18 +403,11 @@ um dia da semana ou uma data. 😊';
         const slots = await _horariosLivres(adminId, conv.dados.data, srv && srv.duracao);
         hora = slots.find(s => mensagem.includes(s));
       }
-      if (!hora) return 'Me manda o horario que voce prefere.
-
-Exemplo: *14:00* ou *14h*';
+      if (!hora) return 'Me manda o horario que voce prefere.\n\nExemplo: *14:00* ou *14h*';
       const srv2 = servicos.find(s => String(s._id) === conv.dados.servicoId);
       const slots2 = await _horariosLivres(adminId, conv.dados.data, srv2 && srv2.duracao);
       if (!slots2.includes(hora)) {
-        return 'Puxa, esse horario nao esta disponivel.
-
-Horarios livres:
-' + slots2.slice(0,6).join('  |  ') + '
-
-Qual voce prefere?';
+        return 'Puxa, esse horario nao esta disponivel.\n\nHorarios livres:\n' + slots2.slice(0,6).join('  |  ') + '\n\nQual voce prefere?';
       }
       conv.dados.hora = hora;
       conv.etapa = 'awaiting_name';
@@ -585,23 +427,14 @@ Qual voce prefere?';
     if (conv.etapa === 'awaiting_confirmation') {
       if (intencao === 'nao') {
         conv.etapa = 'awaiting_service';
-        return 'Sem problema.
-
-' + MSG.pedirServico();
+        return 'Sem problema.\n\n' + MSG.pedirServico();
       }
       if (intencao === 'confirm') {
         const srv = servicos.find(s => String(s._id) === conv.dados.servicoId);
         const slots = await _horariosLivres(adminId, conv.dados.data, srv && srv.duracao);
         if (!slots.includes(conv.dados.hora)) {
           conv.etapa = 'awaiting_time';
-          return 'Conferi aqui.
-
-Esse horario foi preenchido agora.
-
-Horarios livres em ' + _fmtData(conv.dados.data) + ':
-' + slots.slice(0,6).join('  |  ') + '
-
-Qual voce prefere?';
+          return 'Conferi aqui.\n\nEsse horario foi preenchido agora.\n\nHorarios livres em ' + _fmtData(conv.dados.data) + ':\n' + slots.slice(0,6).join('  |  ') + '\n\nQual voce prefere?';
         }
         const ag = await _criarAgendamento(adminId, { ...conv.dados, telefone });
         if (!ag) return MSG.erroTecnico(linkAgenda);
@@ -661,9 +494,7 @@ Qual voce prefere?';
       if (!dataParsed) {
         if (!conv.dados.servicoId) {
           conv.etapa = 'awaiting_service';
-          return 'Consigo olhar sim.
-
-' + _pick(_v.pedirSrv);
+          return 'Consigo olhar sim.\n\n' + _pick(_v.pedirSrv);
         }
         conv.etapa = 'awaiting_date';
         return MSG.pedirData();
@@ -679,10 +510,7 @@ Qual voce prefere?';
         adminId, telefoneCliente: { $regex: telefone.replace(/\D/g,'').slice(-9) },
         status: { $in: ['pendente','confirmado'] }, dataHora: { $gte: new Date() }
       }).sort({ dataHora: 1 }).limit(1).lean();
-      if (!ags.length) return 'Nao encontrei agendamento futuro
-para esse numero.
-
-Quer marcar um horario?';
+      if (!ags.length) return 'Nao encontrei agendamento futuro\npara esse numero.\n\nQuer marcar um horario?';
       conv.etapa = 'awaiting_cancel_confirm'; conv.dados._cancelarId = String(ags[0]._id);
       return MSG.cancelamento(ags[0], _fmtData);
     }
@@ -702,10 +530,7 @@ Quer marcar um horario?';
       try {
         await _notificarADM(adminId, 'Sistema precisa de atencao', telefone + ' nao encontrou a informacao que procurava.');
       } catch(_) {}
-      return 'Vou chamar a equipe pra te ajudar melhor.
-
-Enquanto isso, acesse a agenda:
-' + linkAgenda;
+      return 'Vou chamar a equipe pra te ajudar melhor.\n\nEnquanto isso, acesse a agenda:\n' + linkAgenda;
     }
 
     // Fallback com Claude — contexto real, sem inventar
