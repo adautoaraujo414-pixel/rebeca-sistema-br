@@ -8,21 +8,19 @@ const { AdminAgenda } = require('../models/AgendaServico');
 const { getAgendaPlanFeatures } = require('../utils/agenda-plan-features');
 
 // ── AUTH MIDDLEWARE ──────────────────────────────────────────────────────────
-const jwt = require('jsonwebtoken');
-const JWT_SECRET = process.env.JWT_SECRET || 'rebeca-agenda-secret';
-
+// Mesmo padrao de authAgenda em agenda.routes.js:
+// token de sessao hex salvo no campo AdminAgenda.token (nao JWT)
 async function authAgendaWpp(req, res, next) {
   try {
     const token = (req.headers.authorization || '').replace('Bearer ', '').trim();
     if (!token) return res.status(401).json({ erro: 'Token obrigatorio' });
-    const decoded = jwt.verify(token, JWT_SECRET);
-    const admin = await AdminAgenda.findById(decoded.id || decoded._id).lean();
-    if (!admin) return res.status(401).json({ erro: 'Admin nao encontrado' });
+    const admin = await AdminAgenda.findOne({ token, ativo: true });
+    if (!admin) return res.status(401).json({ erro: 'Token invalido' });
     req.adminAgendaId = String(admin._id);
     req.adminAgenda = admin;
     next();
   } catch(e) {
-    return res.status(401).json({ erro: 'Token invalido' });
+    return res.status(500).json({ erro: e.message });
   }
 }
 
