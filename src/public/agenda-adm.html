@@ -454,6 +454,11 @@ input,select,textarea{font-family:'Inter',sans-serif}
         WhatsApp
         <span id="wpp-nav-badge" style="display:none;margin-left:auto;background:#dc2626;color:#fff;font-size:.65em;padding:2px 6px;border-radius:10px;font-weight:700">!</span>
       </button>
+      <button class="nav-item" onclick="irPara('crm')">
+        <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a4 4 0 00-5-4M9 20H4v-2a4 4 0 015-4m0 0a4 4 0 110-8 4 4 0 010 8zm8-8a3 3 0 110-6 3 3 0 010 6z"/></svg>
+        CRM
+        <span id="crm-nav-badge" style="display:none;margin-left:auto;background:#dc2626;color:#fff;font-size:.65em;padding:2px 6px;border-radius:10px;font-weight:700">0</span>
+      </button>
       <button class="nav-item" onclick="irPara('configuracoes')">
         <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="3" stroke-width="2"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" stroke-width="2"/></svg>
         Configurações
@@ -840,6 +845,67 @@ input,select,textarea{font-family:'Inter',sans-serif}
       </div>
 
       <!-- ═══ CONFIGURAÇÕES ═══ -->
+
+      <!-- ═══════════════════════════════════════ TELA CRM ══════════════════════════════════════ -->
+      <div class="tela" id="tela-crm">
+        <div class="tela-header">
+          <div>
+            <div class="tela-titulo">CRM — Retornos e Reativação</div>
+            <div class="tela-sub">Clientes inativos, retornos e acompanhamento de contatos</div>
+          </div>
+          <button class="btn-primario" onclick="crmNovoRetorno()">+ Novo retorno</button>
+        </div>
+
+        <!-- Cards resumo -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px" id="crm-cards">
+          <div class="card" style="text-align:center;padding:16px">
+            <div style="font-size:1.8em;font-weight:700;color:var(--cor)" id="crm-card-pendentes">—</div>
+            <div style="font-size:.78em;color:var(--texto2)">Pendentes</div>
+          </div>
+          <div class="card" style="text-align:center;padding:16px">
+            <div style="font-size:1.8em;font-weight:700;color:#f59e0b" id="crm-card-hoje">—</div>
+            <div style="font-size:.78em;color:var(--texto2)">Para hoje</div>
+          </div>
+          <div class="card" style="text-align:center;padding:16px">
+            <div style="font-size:1.8em;font-weight:700;color:#ef4444" id="crm-card-inativos">—</div>
+            <div style="font-size:.78em;color:var(--texto2)">Inativos 30d</div>
+          </div>
+          <div class="card" style="text-align:center;padding:16px">
+            <div style="font-size:1.8em;font-weight:700;color:#10b981" id="crm-card-contatados">—</div>
+            <div style="font-size:.78em;color:var(--texto2)">Contatados hoje</div>
+          </div>
+          <div class="card" style="text-align:center;padding:16px">
+            <div style="font-size:1.8em;font-weight:700;color:#6366f1" id="crm-card-recuperados">—</div>
+            <div style="font-size:.78em;color:var(--texto2)">Recuperados 30d</div>
+          </div>
+        </div>
+
+        <!-- Abas internas -->
+        <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+          <button class="btn-sec crm-aba-btn ativo" id="crm-aba-retornos" onclick="crmAba('retornos')">Retornos</button>
+          <button class="btn-sec crm-aba-btn" id="crm-aba-inativos" onclick="crmAba('inativos')">Inativos</button>
+        </div>
+
+        <!-- Lista retornos -->
+        <div id="crm-lista-retornos">
+          <div id="crm-retornos-loading" style="text-align:center;padding:32px;color:var(--texto2)">Carregando...</div>
+          <div id="crm-retornos-lista"></div>
+        </div>
+
+        <!-- Lista inativos -->
+        <div id="crm-lista-inativos" style="display:none">
+          <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center;flex-wrap:wrap">
+            <select id="crm-inativos-dias" onchange="crmCarregarInativos()" style="padding:6px 10px;border-radius:var(--radius-sm);border:1px solid var(--borda);background:var(--card);color:var(--texto)">
+              <option value="30">Inativos há 30+ dias</option>
+              <option value="60">Inativos há 60+ dias</option>
+              <option value="90">Inativos há 90+ dias</option>
+              <option value="14">Inativos há 14+ dias</option>
+            </select>
+            <button class="btn-sec" onclick="crmCarregarInativos()">🔄 Atualizar</button>
+          </div>
+          <div id="crm-inativos-lista"></div>
+        </div>
+      </div>
       <div class="tela" id="tela-configuracoes">
         <div class="tela-header">
           <div>
@@ -908,7 +974,8 @@ input,select,textarea{font-family:'Inter',sans-serif}
     <button class="nav-item" onclick="irParaMob('financeiro')">💰 Financeiro</button>
     <button class="nav-item" onclick="irParaMob('avaliacoes')">⭐ Avaliações</button>
     <button class="nav-item" id="nav-wpp-mob" onclick="irParaMob('whatsapp')" style="display:none">💬 WhatsApp</button>
-    <button class="nav-item" onclick="irParaMob('configuracoes')">⚙️ Configurações</button>
+    <button class="nav-item" onclick="irParaMob('crm')">📊 CRM</button>
+<button class="nav-item" onclick="irParaMob('configuracoes')">⚙️ Configurações</button>
     <button class="nav-item" style="color:var(--vermelho)" onclick="logout()">🚪 Sair</button>
   </nav>
 </div>
@@ -2138,6 +2205,174 @@ function salvarCfgBot() {
   if(ok){ await iniciarApp(); setTimeout(wppIniciar, 500); }
   else { document.getElementById('login-wrap').style.display='flex'; }
 })();
+
+// ═══════════════════ CRM JS ═══════════════════
+let crmAbaAtual = 'retornos';
+let crmRetornosCache = [];
+let crmInativosCache = [];
+
+async function crmCarregarDashboard() {
+  try {
+    const r = await fetch('/api/agenda/crm/dashboard', { headers: { Authorization: 'Bearer ' + token } });
+    const d = await r.json();
+    if (!d.sucesso) return;
+    const c = d.cards;
+    document.getElementById('crm-card-pendentes').textContent = c.retornosPendentes ?? '—';
+    document.getElementById('crm-card-hoje').textContent = c.retornosHoje ?? '—';
+    document.getElementById('crm-card-inativos').textContent = c.clientesInativos30 ?? '—';
+    document.getElementById('crm-card-contatados').textContent = c.contatosHoje ?? '—';
+    document.getElementById('crm-card-recuperados').textContent = c.agendamentosRecuperados ?? '—';
+    const badge = document.getElementById('crm-nav-badge');
+    if (badge && c.retornosPendentes > 0) {
+      badge.textContent = c.retornosPendentes;
+      badge.style.display = '';
+    }
+  } catch(e) { console.error('CRM dashboard erro:', e); }
+}
+
+async function crmCarregarRetornos() {
+  const el = document.getElementById('crm-retornos-lista');
+  const load = document.getElementById('crm-retornos-loading');
+  if (load) load.style.display = '';
+  try {
+    const r = await fetch('/api/agenda/crm/retornos?status=pendente', { headers: { Authorization: 'Bearer ' + token } });
+    const d = await r.json();
+    if (load) load.style.display = 'none';
+    if (!d.sucesso || !d.retornos.length) {
+      el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--texto2)">Nenhum retorno pendente 🎉</div>';
+      return;
+    }
+    crmRetornosCache = d.retornos;
+    el.innerHTML = d.retornos.map(ret => `
+      <div class="card" style="margin-bottom:10px;padding:14px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap">
+          <div>
+            <strong>${ret.nome}</strong>
+            <span style="margin-left:8px;font-size:.78em;padding:2px 8px;border-radius:10px;background:${crmTipoCor(ret.tipoRetorno)};color:#fff">${ret.tipoRetorno}</span>
+            ${ret.diasSemVir ? `<span style="margin-left:6px;font-size:.78em;color:var(--texto2)">${ret.diasSemVir}d sem vir</span>` : ''}
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <a href="https://wa.me/${ret.telefone.replace(/\D/g,'')}?text=${encodeURIComponent(ret.msgSugerida)}" target="_blank" class="btn-sec" style="font-size:.8em;padding:4px 10px">💬 WhatsApp</a>
+            <button class="btn-sec" style="font-size:.8em;padding:4px 10px" onclick="crmStatus('${ret._id}','contatado')">✓ Contatado</button>
+            <button class="btn-sec" style="font-size:.8em;padding:4px 10px" onclick="crmStatus('${ret._id}','agendado')">📅 Agendou</button>
+            <button class="btn-sec" style="font-size:.8em;padding:4px 10px;color:var(--texto2)" onclick="crmStatus('${ret._id}','dispensado')">✕</button>
+          </div>
+        </div>
+        ${ret.ultimoServico ? `<div style="font-size:.8em;color:var(--texto2);margin-top:4px">Último serviço: ${ret.ultimoServico}</div>` : ''}
+        ${ret.observacaoRetorno ? `<div style="font-size:.8em;color:var(--texto2);margin-top:2px">${ret.observacaoRetorno}</div>` : ''}
+        <div style="font-size:.78em;color:var(--texto2);margin-top:6px;background:var(--bg);padding:8px;border-radius:6px;font-style:italic">"${ret.msgSugerida}"</div>
+      </div>`).join('');
+  } catch(e) { if (load) load.style.display='none'; el.innerHTML='<div style="color:red;padding:20px">Erro ao carregar</div>'; }
+}
+
+async function crmCarregarInativos() {
+  const dias = document.getElementById('crm-inativos-dias')?.value || 30;
+  const el = document.getElementById('crm-inativos-lista');
+  el.innerHTML = '<div style="text-align:center;padding:32px;color:var(--texto2)">Carregando...</div>';
+  try {
+    const r = await fetch(`/api/agenda/crm/clientes-inativos?dias=${dias}`, { headers: { Authorization: 'Bearer ' + token } });
+    const d = await r.json();
+    if (!d.sucesso || !d.clientes.length) {
+      el.innerHTML = `<div style="text-align:center;padding:40px;color:var(--texto2)">Nenhum cliente inativo há ${dias} dias 🎉</div>`;
+      return;
+    }
+    crmInativosCache = d.clientes;
+    el.innerHTML = `<div style="font-size:.85em;color:var(--texto2);margin-bottom:10px">${d.total} cliente(s) encontrado(s)</div>` +
+      d.clientes.map(c => `
+      <div class="card" style="margin-bottom:10px;padding:14px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap">
+          <div>
+            <strong>${c.nome}</strong>
+            <span style="margin-left:8px;font-size:.78em;color:var(--texto2)">${c.diasSemVir}d sem vir</span>
+            ${c.ultimoServico ? `<span style="margin-left:6px;font-size:.78em;color:var(--texto2)">• ${c.ultimoServico}</span>` : ''}
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <a href="https://wa.me/${c.telefone.replace(/\D/g,'')}?text=${encodeURIComponent(c.msgSugerida)}" target="_blank" class="btn-sec" style="font-size:.8em;padding:4px 10px">💬 WhatsApp</a>
+            <button class="btn-sec" style="font-size:.8em;padding:4px 10px" onclick="crmCriarRetornoDeInativo(${JSON.stringify(c).replace(/"/g,'&quot;')})">+ Retorno</button>
+          </div>
+        </div>
+        <div style="font-size:.78em;color:var(--texto2);margin-top:6px;background:var(--bg);padding:8px;border-radius:6px;font-style:italic">"${c.msgSugerida}"</div>
+      </div>`).join('');
+  } catch(e) { el.innerHTML='<div style="color:red;padding:20px">Erro ao carregar</div>'; }
+}
+
+function crmTipoCor(tipo) {
+  const cores = { retorno:'#6366f1', manutencao:'#f59e0b', inativo:'#ef4444', recadastramento:'#8b5cf6', acompanhamento:'#10b981' };
+  return cores[tipo] || '#6b7280';
+}
+
+function crmAba(aba) {
+  crmAbaAtual = aba;
+  document.querySelectorAll('.crm-aba-btn').forEach(b => b.classList.remove('ativo'));
+  document.getElementById('crm-aba-'+aba)?.classList.add('ativo');
+  document.getElementById('crm-lista-retornos').style.display = aba==='retornos' ? '' : 'none';
+  document.getElementById('crm-lista-inativos').style.display = aba==='inativos' ? '' : 'none';
+  if (aba==='retornos') crmCarregarRetornos();
+  if (aba==='inativos') crmCarregarInativos();
+}
+
+async function crmStatus(id, status) {
+  try {
+    await fetch(`/api/agenda/crm/retornos/${id}/status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type':'application/json', Authorization: 'Bearer '+token },
+      body: JSON.stringify({ status })
+    });
+    crmCarregarRetornos();
+    crmCarregarDashboard();
+  } catch(e) { alert('Erro ao atualizar status'); }
+}
+
+async function crmCriarRetornoDeInativo(cliente) {
+  try {
+    const r = await fetch('/api/agenda/crm/retornos', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json', Authorization: 'Bearer '+token },
+      body: JSON.stringify({
+        clienteId: cliente._id,
+        nome: cliente.nome,
+        telefone: cliente.telefone,
+        tipoRetorno: cliente.acaoRecomendada || 'retorno',
+        ultimoServico: cliente.ultimoServico,
+        ultimoAtendimentoEm: cliente.ultimoAtendimento
+      })
+    });
+    const d = await r.json();
+    if (d.sucesso) { mostrarToast('Retorno criado!'); crmAba('retornos'); }
+    else alert(d.erro || 'Erro ao criar retorno');
+  } catch(e) { alert('Erro'); }
+}
+
+async function crmNovoRetorno() {
+  const nome = prompt('Nome do cliente:');
+  if (!nome) return;
+  const tel = prompt('Telefone (com DDD):');
+  if (!tel) return;
+  const tipo = prompt('Tipo (retorno/manutencao/inativo/acompanhamento):', 'retorno');
+  try {
+    const r = await fetch('/api/agenda/crm/retornos', {
+      method:'POST',
+      headers:{'Content-Type':'application/json', Authorization:'Bearer '+token},
+      body: JSON.stringify({ nome, telefone: tel, tipoRetorno: tipo || 'retorno' })
+    });
+    const d = await r.json();
+    if (d.sucesso) { mostrarToast('Retorno criado!'); crmCarregarRetornos(); crmCarregarDashboard(); }
+    else alert(d.erro || 'Erro');
+  } catch(e) { alert('Erro'); }
+}
+
+// Carregar CRM quando a tela abrir
+const _origIrPara = irPara;
+function irPara(tela) {
+  _origIrPara(tela);
+  if (tela === 'crm') {
+    crmCarregarDashboard();
+    if (crmAbaAtual === 'retornos') crmCarregarRetornos();
+    else crmCarregarInativos();
+  }
+}
+// ═══════════════════ /CRM JS ═══════════════════
+
 </script>
 
 <!-- PWA INSTALL BANNER -->
