@@ -704,6 +704,7 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                     let resposta;
                     try {
                         // Roteamento via cache — evita queries ao banco por mensagem de texto
+
                         const _tipoRota = await _getAdminTipo(adminId, null, null, instancia.adminTipo);
                         let adminDoc = { tipoAdmin: _tipoRota };
                         // Fallback inteligente de áudio por tipo
