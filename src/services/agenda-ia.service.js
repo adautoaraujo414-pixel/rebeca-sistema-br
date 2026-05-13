@@ -265,7 +265,7 @@ async function _criarAgendamento(adminId, dados) {
       nomeProfissional: profissionalNome || '',
       dataHora: new Date(data+'T'+hora+':00'),
       status: 'pendente',
-      origem: 'whatsapp_ia'
+      origem: 'whatsapp'
     });
     await ClienteAgenda.findOneAndUpdate(
       { adminId, telefone },
