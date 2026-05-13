@@ -940,7 +940,7 @@ input,select,textarea{font-family:'Inter',sans-serif}
 </nav>
 
 <!-- ─── FAB + NOVO AGENDAMENTO ─── -->
-<button class="fab" onclick="abrirModalAgendamento()" title="Novo agendamento">
+<button class="fab" id="btn-fab" onclick="abrirModalAgendamento()" title="Novo agendamento" style="display:none">
   <div class="fab-label">Novo agendamento</div>
   +
 </button>
@@ -1111,6 +1111,8 @@ async function verificarAuth(){
 // ─── INICIAR APP ───
 async function iniciarApp(){
   document.getElementById('login-wrap').style.display = 'none';
+  var fabEl = document.getElementById('btn-fab');
+  if(fabEl) fabEl.style.display = 'flex';
   document.getElementById('app').classList.add('show');
   if(ADMIN){
     const nome = ADMIN.nomeNegocio || ADMIN.nome || 'Negócio';
@@ -1667,8 +1669,8 @@ function toggleWppMenu(btn, tel, nome, servico, data, hora) {
 // ─── WHATSAPP ───
 function abrirWpp(tel, msg){
   tel = limparTel(tel);
-  if(!tel){ mostrarToast('Número de WhatsApp não informado','erro'); return; }
-  if(tel.length < 10){ mostrarToast('Número inválido. Verifique o cadastro do cliente.','erro'); return; }
+  if(!tel){ toast('Número de WhatsApp não informado','erro'); return; }
+  if(tel.length < 10){ toast('Número inválido. Verifique o cadastro do cliente.','erro'); return; }
   var num = tel.startsWith('55') ? tel : '55'+tel;
   var url = 'https://wa.me/'+num+(msg?'?text='+encodeURIComponent(msg):'');
   window.open(url,'_blank');
@@ -1740,7 +1742,7 @@ window.addEventListener('beforeinstallprompt', function(e) {
 
 async function instalarPWA() {
   if(!_deferredInstall) {
-    mostrarToast('Este navegador não suporta instalação automática. Acesse as configurações do browser e selecione "Adicionar à tela inicial".', 'info');
+    toast('Este navegador não suporta instalação automática. Acesse as configurações do browser e selecione "Adicionar à tela inicial".', 'info');
     return;
   }
   _deferredInstall.prompt();
@@ -1748,31 +1750,31 @@ async function instalarPWA() {
   if(r.outcome === 'accepted') {
     document.getElementById('pwa-banner').style.display='none';
     localStorage.setItem('pwa-instalado','1');
-    mostrarToast('App instalado! 🎉', 'ok');
+    toast('App instalado! 🎉', 'ok');
   }
   _deferredInstall = null;
 }
 
 async function ativarNotifAdmin() {
   if(!AgendaNotif.suportado()) {
-    mostrarToast('Seu navegador não suporta notificações push. Use Chrome ou Edge.', 'erro');
+    toast('Seu navegador não suporta notificações push. Use Chrome ou Edge.', 'erro');
     return;
   }
   var token = localStorage.getItem('agenda_token') || '';
-  mostrarToast('Ativando notificações...', 'info');
+  toast('Ativando notificações...', 'info');
   var r = await AgendaNotif.ativarAdmin(token);
   if(r.ok) {
     localStorage.setItem('agenda_notif_ativo','1');
-    mostrarToast('Notificações ativadas! ✅', 'ok');
+    toast('Notificações ativadas! ✅', 'ok');
     atualizarStatusNotif();
   } else if(r.motivo === 'denied') {
-    mostrarToast('Permissão negada. Ative nas configurações do navegador.', 'erro');
+    toast('Permissão negada. Ative nas configurações do navegador.', 'erro');
   } else if(r.motivo === 'sub_falhou') {
-    mostrarToast('Configure VAPID keys no servidor para push real. Notificações in-app ativas.', 'info');
+    toast('Configure VAPID keys no servidor para push real. Notificações in-app ativas.', 'info');
     localStorage.setItem('agenda_notif_ativo','1');
     atualizarStatusNotif();
   } else {
-    mostrarToast('Erro ao ativar notificações.', 'erro');
+    toast('Erro ao ativar notificações.', 'erro');
   }
 }
 
@@ -1814,7 +1816,7 @@ function abrirConfigNotif() {
 
 function testarNotif() {
   AgendaNotif.notifLocal('🔔 Rebeca Agenda', 'Notificação de teste funcionando!', '/agenda-adm');
-  mostrarToast('Notificação de teste enviada!', 'ok');
+  toast('Notificação de teste enviada!', 'ok');
 }
 
 // ── SINO: toggle painel ──
@@ -1979,7 +1981,7 @@ async function wppCarregarStatus() {
 }
 
 async function wppConectar() {
-  mostrarToast('Aguarde...', 'info');
+  toast('Aguarde...', 'info');
   try {
     var r = await fetch('/api/evolution/instancia', {
       method: 'POST',
@@ -1989,12 +1991,12 @@ async function wppConectar() {
     var d = await r.json();
     if(d._id || d.instancia) {
       _wppInstanciaId = d._id || d.instancia?._id;
-      mostrarToast('Instância criada! Escaneie o QR Code.', 'ok');
+      toast('Instância criada! Escaneie o QR Code.', 'ok');
       setTimeout(wppCarregarQR, 1500);
     } else {
-      mostrarToast('Erro ao criar instância', 'erro');
+      toast('Erro ao criar instância', 'erro');
     }
-  } catch(e) { mostrarToast('Erro de conexão', 'erro'); }
+  } catch(e) { toast('Erro de conexão', 'erro'); }
 }
 
 async function wppCarregarQR() {
@@ -2009,7 +2011,7 @@ async function wppCarregarQR() {
       qrImg.innerHTML = '<img src="'+(d.qrcode||d.base64)+'" style="width:180px;height:180px;border-radius:8px">';
     } else if(d.status === 'open') {
       qrWrap.style.display = 'none';
-      mostrarToast('WhatsApp conectado!', 'ok');
+      toast('WhatsApp conectado!', 'ok');
       wppCarregarStatus();
     }
   } catch(e) {}
@@ -2019,9 +2021,9 @@ async function wppDesconectar() {
   if(!_wppInstanciaId || !confirm('Desconectar o WhatsApp?')) return;
   try {
     await fetch('/api/evolution/instancia/'+_wppInstanciaId+'/desconectar', { method:'POST', headers: { 'Authorization':'Bearer '+(localStorage.getItem('agenda_token')||'') } });
-    mostrarToast('Desconectado', 'ok');
+    toast('Desconectado', 'ok');
     wppCarregarStatus();
-  } catch(e) { mostrarToast('Erro ao desconectar', 'erro'); }
+  } catch(e) { toast('Erro ao desconectar', 'erro'); }
 }
 
 async function wppCarregarConversas() {
@@ -2090,13 +2092,13 @@ async function wppAssumirConversa(telefone) {
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('agenda_token')||'')},
       body: JSON.stringify({ telefone })
     });
-    mostrarToast('Bot reativado para '+telefone, 'ok');
+    toast('Bot reativado para '+telefone, 'ok');
     wppCarregarConversas();
-  } catch(e) { mostrarToast('Erro', 'erro'); }
+  } catch(e) { toast('Erro', 'erro'); }
 }
 
 async function wppTestarBot() {
-  mostrarToast('Bot testado! Verifique o WhatsApp conectado.', 'ok');
+  toast('Bot testado! Verifique o WhatsApp conectado.', 'ok');
 }
 
 function wppRecarregar() {
@@ -2111,7 +2113,7 @@ function salvarCfgBot() {
   var fora = document.getElementById('cfg-bot-fora-horario').checked;
   var link = document.getElementById('cfg-bot-link').checked;
   localStorage.setItem('agenda_bot_cfg', JSON.stringify({ ativo, fora, link }));
-  mostrarToast('Configuração salva', 'ok');
+  toast('Configuração salva', 'ok');
 }
 
 (function carregarCfgBot(){
