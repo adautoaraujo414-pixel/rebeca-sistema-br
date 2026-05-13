@@ -1,3 +1,4 @@
+const DEPLOY_VERSION = '6293911-1778648968';
 const mongoose = require('mongoose');
 
 const MotoristaSchema = new mongoose.Schema({
