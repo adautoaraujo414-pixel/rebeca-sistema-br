@@ -236,7 +236,18 @@ router.get('/logs', authAgendaWpp, async (req, res) => {
 router.get('/conversas', authAgendaWpp, async (req, res) => {
   try {
     const AgendaIAService = require('../services/agenda-ia.service');
-    const conversas = AgendaIAService.getConversas(req.adminAgendaId);
+    const raw = AgendaIAService.getConversas(req.adminAgendaId);
+    const conversas = raw.map(c => ({
+      telefone: c.telefone,
+      etapa: c.etapa,
+      handoff: !!c.humanHandoff,
+      humanHandoff: !!c.humanHandoff,
+      handoffAt: c.handoffAt || null,
+      ultimaMensagem: c.ultimaMensagem || '',
+      dados: c.dados || {},
+      tentativas: c.tentativas || 0,
+      ultimaMsg: c.ultimaMsg || null,
+    }));
     res.json({ sucesso: true, conversas });
   } catch(e) {
     res.status(500).json({ erro: e.message });
