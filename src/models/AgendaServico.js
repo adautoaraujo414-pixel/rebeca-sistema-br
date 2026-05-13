@@ -33,6 +33,11 @@ const adminAgendaSchema = new mongoose.Schema({
     corPrimaria: { type: String, default: '#f97316' },
     corSecundaria: { type: String, default: '#1f2937' },
   },
+  modoWhatsappDono: {
+    ativo: { type: Boolean, default: false },
+    telefonesAutorizados: { type: [String], default: [] },
+    boasVindasEnviado: { type: Boolean, default: false }
+  },
   createdAt: { type: Date, default: Date.now }
 });
 

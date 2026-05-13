@@ -5,6 +5,7 @@
 const Anthropic = require('@anthropic-ai/sdk');
 const { AdminAgenda, ServicoAgenda, ProfissionalAgenda, AgendamentoAgenda, ClienteAgenda } = require('../models/AgendaServico');
 const { getAgendaPlanFeatures } = require('../utils/agenda-plan-features');
+const ModoDono = require('./agenda-modo-dono.service');
 
 const _claude = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -281,6 +282,14 @@ async function _criarAgendamento(adminId, dados) { // v2-fixed
       await notificarAdmin(adminId, 'Agendamento criado', nomeCliente + ' — ' + servicoNome + ' as ' + hora, '/agenda-adm');
     } catch(_) {}
     _log(adminId, 'agendamento_criado', { nomeCliente, servicoNome, data, hora, telefone });
+    // Notificar dono via WhatsApp pelo número conectado
+    try {
+      await ModoDono.notificarDonoNovoAgendamento(adminId, {
+        nomeCliente, nomeServico: servicoNome,
+        dataHora: new Date(data+'T'+hora+':00'),
+        nomeProfissional: profissionalNome || ''
+      });
+    } catch(_) {}
     return ag;
   } catch(e) {
     console.error('[_criarAgendamento] ERRO:', e.message, e.stack);
@@ -324,6 +333,19 @@ const AgendaIAService = {
     const features = getAgendaPlanFeatures(admin.plano);
     const nomeNegocio = admin.nomeNegocio || 'nossa agenda';
     const linkAgenda = (process.env.APP_URL || '') + '/espaco-digital?id=' + adminId;
+
+    // ── MODO DONO: interceptar comandos do admin/dono ──────────────────────
+    if (features.canUseWhatsappAutomation && ModoDono.isDono(telefone, admin)) {
+      try {
+        const tratado = await ModoDono.processarComandoDono(telefone, mensagem, adminId);
+        if (tratado) {
+          _log(adminId, 'modo_dono_comando', { telefone, mensagem: mensagem.substring(0,60) });
+          return null;
+        }
+      } catch(e) {
+        console.error('[ModoDono] Erro ao processar comando:', e.message);
+      }
+    }
 
     // Plano R$97 — sem automacao completa
     if (!features.canUseWhatsappAutomation) {

@@ -288,4 +288,61 @@ router.post('/testar', authAgendaWpp, async (req, res) => {
   }
 });
 
+
+// ── MODO DONO: gerenciar telefones autorizados ───────────────────────────────
+const ModoDono = require('../services/agenda-modo-dono.service');
+
+// GET /modo-dono — ver config atual
+router.get('/modo-dono', authAgendaWpp, async (req, res) => {
+  const admin = req.adminAgenda;
+  res.json({
+    sucesso: true,
+    modoAtivo: admin.modoWhatsappDono?.ativo || false,
+    telefonesAutorizados: admin.modoWhatsappDono?.telefonesAutorizados || [],
+    boasVindasEnviado: admin.modoWhatsappDono?.boasVindasEnviado || false,
+    telefonePrincipal: admin.telefone || '',
+    whatsappPrincipal: admin.whatsapp || '',
+    dica: 'A Rebeca responde pelo WhatsApp conectado. Para comandar a Rebeca, envie mensagens para esse numero usando um telefone autorizado.'
+  });
+});
+
+// POST /modo-dono/telefones — adicionar telefone autorizado
+router.post('/modo-dono/telefones', authAgendaWpp, async (req, res) => {
+  try {
+    const { telefone } = req.body;
+    if (!telefone) return res.status(400).json({ erro: 'Telefone obrigatorio' });
+    const tel = telefone.replace(/\D/g,'');
+    const { AdminAgenda } = require('../models/AgendaServico');
+    await AdminAgenda.findByIdAndUpdate(req.adminAgendaId, {
+      $addToSet: { 'modoWhatsappDono.telefonesAutorizados': tel },
+      'modoWhatsappDono.ativo': true
+    });
+    res.json({ sucesso: true, mensagem: 'Telefone autorizado adicionado' });
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// DELETE /modo-dono/telefones/:tel — remover telefone
+router.delete('/modo-dono/telefones/:tel', authAgendaWpp, async (req, res) => {
+  try {
+    const { AdminAgenda } = require('../models/AgendaServico');
+    await AdminAgenda.findByIdAndUpdate(req.adminAgendaId, {
+      $pull: { 'modoWhatsappDono.telefonesAutorizados': req.params.tel }
+    });
+    res.json({ sucesso: true });
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// POST /modo-dono/boas-vindas — disparar boas-vindas manualmente
+router.post('/modo-dono/boas-vindas', authAgendaWpp, async (req, res) => {
+  try {
+    const { AdminAgenda } = require('../models/AgendaServico');
+    // Resetar flag para permitir reenvio manual
+    await AdminAgenda.findByIdAndUpdate(req.adminAgendaId, {
+      'modoWhatsappDono.boasVindasEnviado': false
+    });
+    await ModoDono.enviarBoasVindas(req.adminAgendaId);
+    res.json({ sucesso: true, mensagem: 'Boas-vindas enviadas' });
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
 module.exports = router;
