@@ -269,7 +269,11 @@ async function _criarAgendamento(adminId, dados) { // v2-fixed
     });
     await ClienteAgenda.findOneAndUpdate(
       { adminId, telefone },
-      { $set: { nome: nomeCliente, telefone }, $setOnInsert: { totalAtendimentos: 0 } },
+      {
+        $set: { nome: nomeCliente, telefone, ultimoAtendimento: new Date(data+'T'+hora+':00'), ultimoServico: servicoNome },
+        $inc: { totalAtendimentos: 1 },
+        $setOnInsert: { createdAt: new Date() }
+      },
       { upsert: true }
     );
     try {
