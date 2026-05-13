@@ -79,13 +79,35 @@ const clienteAgendaSchema = new mongoose.Schema({
   nome: { type: String, required: true },
   telefone: { type: String, required: true },
   email: { type: String },
+  dataNascimento: { type: Date },
   observacoes: { type: String },
   preferencias: { type: String },
   restricoes: { type: String },
   historico: { type: String },
   ultimoAtendimento: { type: Date },
+  ultimoServico: { type: String },
   totalAtendimentos: { type: Number, default: 0 },
+  canalPreferido: { type: String, enum: ['whatsapp','telefone','presencial'], default: 'whatsapp' },
+  consentimentoContato: { type: Boolean, default: true },
   createdAt: { type: Date, default: Date.now }
+});
+
+// CRM — Retornos e Manutenções
+const retornoAgendaSchema = new mongoose.Schema({
+  adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'AdminAgenda', required: true },
+  clienteId: { type: mongoose.Schema.Types.ObjectId, ref: 'ClienteAgenda' },
+  nome: { type: String, required: true },
+  telefone: { type: String, required: true },
+  tipoRetorno: { type: String, enum: ['retorno','manutencao','acompanhamento','recadastramento','inativo'], default: 'retorno' },
+  dataRetornoSugerida: { type: Date },
+  proximoContatoEm: { type: Date },
+  observacaoRetorno: { type: String },
+  ultimoAtendimentoEm: { type: Date },
+  ultimoServico: { type: String },
+  statusContato: { type: String, enum: ['pendente','contatado','agendado','sem_resposta','dispensado'], default: 'pendente' },
+  historicoContatos: [{ data: Date, status: String, obs: String }],
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
 });
 
 // Agendamentos
@@ -210,6 +232,8 @@ const FinanceiroAgenda = mongoose.model('FinanceiroAgenda', financeiroAgendaSche
 const ContaPagarAgenda = mongoose.model('ContaPagarAgenda', contaPagarAgendaSchema);
 const FilaEncaixeAgenda = mongoose.model('FilaEncaixeAgenda', filaEncaixeAgendaSchema);
 
+const RetornoAgenda = mongoose.model('RetornoAgenda', retornoAgendaSchema);
+
 module.exports = {
   FinanceiroAgenda,
   ContaPagarAgenda,
@@ -222,4 +246,5 @@ module.exports = {
   BloqueioAgenda: mongoose.model('BloqueioAgenda', bloqueioAgendaSchema),
   FotoAgenda: mongoose.model('FotoAgenda', fotoAgendaSchema),
   PreCadastroAgenda: mongoose.model('PreCadastroAgenda', preCadastroAgendaSchema),
+  RetornoAgenda,
 };
