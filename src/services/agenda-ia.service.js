@@ -395,20 +395,39 @@ const AgendaIAService = {
 
     // ── ETAPA: aguardando horario
     if (conv.etapa === 'awaiting_time') {
-      const m = mensagem.match(/(\d{1,2})[h:](\d{0,2})/);
+      const srv = servicos.find(s => String(s._id) === conv.dados.servicoId);
+      const slots = await _horariosLivres(adminId, conv.dados.data, srv && srv.duracao);
       let hora = null;
-      if (m) hora = String(m[1]).padStart(2,'0') + ':' + String(m[2]||'00').padStart(2,'0');
-      else {
-        const srv = servicos.find(s => String(s._id) === conv.dados.servicoId);
-        const slots = await _horariosLivres(adminId, conv.dados.data, srv && srv.duracao);
-        hora = slots.find(s => mensagem.includes(s));
+
+      // 1. Selecao por numero ("1", "2", "3"...)
+      const numIdx = parseInt(mensagem.trim()) - 1;
+      if (!isNaN(numIdx) && numIdx >= 0 && slots[numIdx]) {
+        hora = slots[numIdx];
       }
-      if (!hora) return 'Me manda o horario que voce prefere.\n\nExemplo: *14:00* ou *14h*';
-      const srv2 = servicos.find(s => String(s._id) === conv.dados.servicoId);
-      const slots2 = await _horariosLivres(adminId, conv.dados.data, srv2 && srv2.duracao);
-      if (!slots2.includes(hora)) {
-        return 'Puxa, esse horario nao esta disponivel.\n\nHorarios livres:\n' + slots2.slice(0,6).join('  |  ') + '\n\nQual voce prefere?';
+
+      // 2. Selecao por horario explicito ("14:00", "14h", "14h30")
+      if (!hora) {
+        const m = mensagem.match(/(\d{1,2})[h:](\d{0,2})/);
+        if (m) {
+          const tentativa = String(m[1]).padStart(2,'0') + ':' + String(m[2]||'00').padStart(2,'0');
+          if (slots.includes(tentativa)) hora = tentativa;
+        }
       }
+
+      // 3. Texto contendo horario
+      if (!hora) hora = slots.find(s => mensagem.includes(s)) || null;
+
+      if (!hora) {
+        if (!slots.length) return 'Nao tem horario livre nesse dia.\n\nQuer tentar outra data?';
+        return 'Me fala qual horario voce prefere.\n\nPode ser o numero da lista:\n\n' + slots.slice(0,8).map((s,i)=>(i+1)+'. '+s).join('\n');
+      }
+
+      // Validar disponibilidade antes de confirmar
+      const slotsOk = await _horariosLivres(adminId, conv.dados.data, srv && srv.duracao);
+      if (!slotsOk.includes(hora)) {
+        return 'Puxa, esse horario foi preenchido agora.\n\nHorarios livres:\n\n' + slotsOk.slice(0,8).map((s,i)=>(i+1)+'. '+s).join('\n') + '\n\nQual voce prefere?';
+      }
+
       conv.dados.hora = hora;
       conv.etapa = 'awaiting_name';
       return MSG.pedirNome();
