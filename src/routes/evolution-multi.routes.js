@@ -673,6 +673,9 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                             let respostaDb;
                             if (_tipoDebounce === 'delivery') {
                                 respostaDb = await RebecaDeliveryService.processarMensagem(telefone, _msgFinal, _entry.nome, contextoDb);
+                            } else if (_tipoDebounce === 'agenda') {
+                                const _AgendaSvc = require('../services/agenda-ia.service');
+                                respostaDb = await _AgendaSvc.responder(telefone, _msgFinal, _entry.adminId);
                             } else {
                                 respostaDb = await RebecaService.processarMensagem(telefone, _msgFinal, _entry.nome, contextoDb);
                             }
