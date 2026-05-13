@@ -237,9 +237,24 @@ async function _horariosLivres(adminId, data, duracao) {
   } catch(e) { return []; }
 }
 
-async function _criarAgendamento(adminId, dados) {
+async function async _criarAgendamento(adminId, dados) {
   try {
-    const { nomeCliente, telefone, servicoNome, servicoId, profissionalNome, profissionalId, data, hora } = dados;
+    // Compatibilidade: estado salva servico/profissional, nao servicoNome/profissionalNome
+    const nomeCliente = dados.nomeCliente || dados.nome || '';
+    const telefone = dados.telefone || '';
+    const servicoNome = dados.servicoNome || dados.servico || '';
+    const servicoId = dados.servicoId || null;
+    const profissionalNome = dados.profissionalNome || dados.profissional || '';
+    const profissionalId = dados.profissionalId || null;
+    const data = dados.data || '';
+    const hora = dados.hora || '';
+
+    // Validar campos obrigatorios
+    if (!servicoNome) { _log(adminId, 'erro_criar_agendamento', { erro: 'servico ausente' }); return null; }
+    if (!data) { _log(adminId, 'erro_criar_agendamento', { erro: 'data ausente' }); return null; }
+    if (!hora) { _log(adminId, 'erro_criar_agendamento', { erro: 'hora ausente' }); return null; }
+    if (!nomeCliente) { _log(adminId, 'erro_criar_agendamento', { erro: 'nomeCliente ausente' }); return null; }
+
     const ag = await AgendamentoAgenda.create({
       adminId,
       nomeCliente,
@@ -450,15 +465,27 @@ const AgendaIAService = {
         return 'Sem problema.\n\n' + MSG.pedirServico();
       }
       if (intencao === 'confirm') {
+        // Validar campos obrigatorios antes de criar
+        if (!conv.dados.hora) {
+          conv.etapa = 'awaiting_time';
+          const srvT = servicos.find(s => String(s._id) === conv.dados.servicoId);
+          const slotsT = await _horariosLivres(adminId, conv.dados.data, srvT && srvT.duracao);
+          return 'Ainda falta escolher o horario.\n\n' + MSG.listaHorarios(conv.dados.data, slotsT, _fmtData(conv.dados.data));
+        }
+        if (!conv.dados.data) {
+          conv.etapa = 'awaiting_date';
+          return MSG.pedirData();
+        }
         const srv = servicos.find(s => String(s._id) === conv.dados.servicoId);
         const slots = await _horariosLivres(adminId, conv.dados.data, srv && srv.duracao);
         if (!slots.includes(conv.dados.hora)) {
           conv.etapa = 'awaiting_time';
-          return 'Conferi aqui.\n\nEsse horario foi preenchido agora.\n\nHorarios livres em ' + _fmtData(conv.dados.data) + ':\n' + slots.slice(0,6).join('  |  ') + '\n\nQual voce prefere?';
+          return 'Conferi aqui.\n\nEsse horario foi preenchido agora.\n\nHorarios livres em ' + _fmtData(conv.dados.data) + ':\n\n' + slots.slice(0,8).map((s,i)=>(i+1)+'. '+s).join('\n') + '\n\nQual voce prefere?';
         }
         const ag = await _criarAgendamento(adminId, { ...conv.dados, telefone });
         if (!ag) return MSG.erroTecnico(linkAgenda);
         conv.etapa = 'booked';
+        _log(adminId, 'agendamento_criado_confirmado', { telefone, servico: conv.dados.servico, hora: conv.dados.hora });
         await _notificarADM(adminId, 'Agendamento criado', conv.dados.nomeCliente + ' — ' + conv.dados.servico + ' as ' + conv.dados.hora);
         return MSG.sucesso(conv.dados, _fmtData(conv.dados.data), admin.endereco);
       }
