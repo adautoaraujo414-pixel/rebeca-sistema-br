@@ -1,5 +1,7 @@
 // agenda-ia.service.js — Rebeca Agenda Bot WhatsApp
-// SOMENTE Rebeca Agenda — não afeta Delivery nem Corrida
+// SOMENTE Rebeca Agenda — nao afeta Delivery nem Corrida
+// Plano R$97: redireciona para agenda online
+// Plano R$147: atendimento automatico completo
 const Anthropic = require('@anthropic-ai/sdk');
 const { AdminAgenda, ServicoAgenda, ProfissionalAgenda, AgendamentoAgenda, ClienteAgenda } = require('../models/AgendaServico');
 const { getAgendaPlanFeatures } = require('../utils/agenda-plan-features');
@@ -8,7 +10,7 @@ const _claude = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 // ── ESTADO DE CONVERSAS (global com TTL 30min) ───────────────────────────────
 if (!global._agendaConversas) global._agendaConversas = new Map();
-if (!global._agendaLogs)      global._agendaLogs      = new Map(); // adminId -> [logs]
+if (!global._agendaLogs)      global._agendaLogs      = new Map();
 
 function _limparAntigas() {
   const agora = Date.now();
@@ -23,9 +25,9 @@ function _getConversa(adminId, telefone) {
     global._agendaConversas.set(chave, {
       historico: [], ultimaMsg: Date.now(),
       etapa: 'idle',
-      dados: { nomeCliente:'', servico:'', servicoId:null, profissional:'', profissionalId:null, data:'', hora:'' },
+      dados: { nomeCliente:'', servico:'', servicoId:null, profissional:'', profissionalId:null, data:'', hora:'', _cancelarId:null },
       humanHandoff: false, handoffAt: null,
-      telefone, adminId: String(adminId)
+      telefone, adminId: String(adminId), tentativas: 0
     });
   }
   const c = global._agendaConversas.get(chave);
@@ -33,13 +35,251 @@ function _getConversa(adminId, telefone) {
   return c;
 }
 
-function _salvarLog(adminId, tipo, dados) {
+function _log(adminId, tipo, dados) {
   const key = String(adminId);
   if (!global._agendaLogs.has(key)) global._agendaLogs.set(key, []);
   const logs = global._agendaLogs.get(key);
   logs.unshift({ tipo, dados, ts: new Date().toISOString() });
   if (logs.length > 200) logs.pop();
 }
+
+// ── VARIAÇÕES DE TOM ─────────────────────────────────────────────────────────
+const _v = {
+  abertura:    ['Maravilha.', 'Perfeito.', 'Combinado.', 'Boa.', 'Deixa comigo.', 'Vou olhar aqui.'],
+  consulta:    ['Vou conferir.', 'Ja vejo pra voce.', 'Vou buscar aqui.', 'Deixa eu ver na agenda.', 'Vou checar os horarios.'],
+  pedirSrv:    ['Qual servico voce quer marcar?', 'Me fala o servico que voce procura.', 'Qual atendimento voce quer fazer?'],
+  pedirData:   ['Qual dia fica melhor?', 'Pra qual dia voce quer?', 'Me fala o dia que voce prefere.'],
+  pedirProf:   ['Tem preferencia por profissional?', 'Pode ser qualquer profissional?', 'Quer escolher alguem da equipe?'],
+  pedirNome:   ['Me passa seu nome?', 'Qual e o seu nome?', 'Como posso te chamar?'],
+  naoAchou:    ['Conferi aqui.', 'Olhei aqui.', 'Nao apareceu pra mim.'],
+  fechamento:  ['Te esperamos.', 'Qualquer coisa, e so chamar.', 'Fico feliz em ajudar.'],
+  confirmacao: ['Prontinho.', 'Ficou marcado.', 'Ficou certinho.', 'Esta tudo certo.'],
+};
+
+function _pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+// ── MSGS CENTRALIZADAS ────────────────────────────────────────────────────────
+const MSG = {
+  bemVindo(nomeNegocio, linkAgenda) {
+    const hora = new Date().getHours();
+    const saud = hora < 12 ? 'Bom dia' : hora < 18 ? 'Boa tarde' : 'Boa noite';
+    return saud + '! Que bom te ver por aqui.
+
+Posso te ajudar com:
+
+1. Marcar horario
+2. Ver servicos
+3. Consultar horarios livres
+4. Ver endereco
+5. Falar com a equipe
+
+Se preferir, acesse a agenda:
+' + linkAgenda;
+  },
+  pedirServico() {
+    return _pick(_v.abertura) + '
+
+' + _pick(_v.pedirSrv);
+  },
+  listaServicos(servicos, linkAgenda) {
+    if (!servicos.length) return _pick(_v.naoAchou) + '
+
+Nao apareceu servico cadastrado.
+
+Quer que eu chame a equipe?';
+    const lista = servicos.map((s, i) => {
+      let linha = (i+1) + '. ' + s.nome;
+      if (s.duracao) linha += ' — ' + s.duracao + 'min';
+      if (s.preco) linha += ' — R$ ' + Number(s.preco).toFixed(2);
+      return linha;
+    }).join('
+');
+    return _pick(_v.abertura) + '
+
+Servicos disponiveis:
+
+' + lista + '
+
+Qual deles voce prefere?';
+  },
+  preco(servico) {
+    if (!servico.preco) return 'Olhei aqui.
+
+Esse servico esta cadastrado,
+mas o valor nao apareceu.
+
+Quer que eu veja os horarios?';
+    const dur = servico.duracao ? '
+Duracao: ' + servico.duracao + ' minutos.' : '';
+    return 'Conferi aqui.
+
+' + servico.nome + ' esta como R$ ' + Number(servico.preco).toFixed(2) + '.' + dur + '
+
+Quer ver horarios?';
+  },
+  listaProfissionais(profs) {
+    if (!profs.length) return 'Conferi aqui.
+
+Nao apareceu profissional cadastrado.
+
+Posso buscar pelo proximo horario livre?';
+    const lista = profs.map((p, i) => (i+1) + '. ' + p.nome).join('
+');
+    return 'Claro.
+
+Temos esses profissionais:
+
+' + lista + '
+
+Tem preferencia por algum deles?';
+  },
+  pedirData() {
+    return _pick(_v.consulta) + '
+
+' + _pick(_v.pedirData);
+  },
+  listaHorarios(data, slots, fmtData) {
+    if (!slots.length) return 'Conferi aqui.
+
+Pra ' + fmtData + ' nao apareceu horario livre.
+
+Quer tentar outro dia?';
+    return 'Achei esses horarios em ' + fmtData + ':
+
+' + slots.slice(0, 8).join('  |  ') + '
+
+Qual fica melhor?';
+  },
+  pedirNome() {
+    return 'Boa escolha.
+
+' + _pick(_v.pedirNome);
+  },
+  resumo(d, fmtData) {
+    const prof = d.profissional ? '
+Profissional: ' + d.profissional : '';
+    return 'Perfeito, ' + d.nomeCliente + '.
+
+Ficou assim:
+
+Servico: ' + d.servico + prof + '
+Dia: ' + fmtData + '
+Hora: ' + d.hora + '
+
+Posso confirmar?';
+  },
+  sucesso(d, fmtData, endereco) {
+    const end = endereco ? '
+
+Endereco:
+' + endereco : '';
+    return _pick(_v.confirmacao) + ' ' + d.nomeCliente + '.
+
+Seu horario ficou marcado.' + '
+
+Servico: ' + d.servico + '
+Dia: ' + fmtData + '
+Hora: ' + d.hora + end + '
+
+Te esperamos 😊';
+  },
+  erroSalvar(linkAgenda) {
+    return 'Conferi de novo aqui.
+
+Esse horario nao ficou disponivel.
+
+Quer que eu veja outro?
+
+Ou acesse a agenda:
+' + linkAgenda;
+  },
+  humanHandoff(linkAgenda) {
+    return 'Combinado.
+
+Vou chamar a equipe pra te ajudar ✅
+
+Se quiser, acesse a agenda:
+' + linkAgenda;
+  },
+  humanHandoffSemRegistro() {
+    return 'Combinado.
+
+Vou te orientar por aqui
+da melhor forma.';
+  },
+  endereco(end) {
+    if (!end) return 'Conferi aqui.
+
+O endereco nao apareceu no cadastro.
+
+Quer que eu chame a equipe?';
+    return 'Claro.
+
+O endereco cadastrado e:
+
+' + end;
+  },
+  linkAgenda(link) {
+    return 'Voce tambem pode escolher
+direto pela agenda:
+
+' + link;
+  },
+  cancelamento(ag, fmtDataFn) {
+    return 'Combinado, encontrei esse agendamento:
+
+' + fmtDataFn(new Date(ag.dataHora).toISOString().split('T')[0]) + '
+' + new Date(ag.dataHora).toTimeString().slice(0,5) + '
+' + ag.nomeServico + '
+
+Voce confirma o cancelamento?';
+  },
+  cancelado(linkAgenda) {
+    return 'Combinado, seu agendamento foi cancelado.
+
+Se quiser marcar outro horario:
+' + linkAgenda;
+  },
+  fallbackConduzido() {
+    const ops = [
+      'Vamos por partes.
+
+Voce quer marcar horario
+ou ver os servicos?',
+      'Consigo te ajudar.
+
+Voce quer ver horarios,
+servicos ou falar com a equipe?',
+      'Me fala so uma coisinha.
+
+Qual servico voce procura?',
+    ];
+    return _pick(ops);
+  },
+  erroTecnico(linkAgenda) {
+    return 'Deu uma instabilidade aqui.
+
+Pra nao te passar nada errado,
+melhor confirmar pela agenda.
+
+' + linkAgenda;
+  },
+  planoBasico(nomeNegocio, linkAgenda) {
+    return 'Oi! Para marcar seu horario na ' + nomeNegocio + ',
+acesse nossa agenda:
+
+' + linkAgenda + '
+
+Qualquer duvida, e so chamar!';
+  },
+  agradecimento() {
+    return 'Imagina.
+
+Fico feliz em ajudar 😊
+
+Qualquer coisa, e so chamar.';
+  },
+};
 
 // ── HELPERS ───────────────────────────────────────────────────────────────────
 function _fmtData(d) {
@@ -51,53 +291,46 @@ function _parseData(texto) {
   const t = (texto || '').toLowerCase().trim();
   const hoje = new Date();
   const pad = n => String(n).padStart(2,'0');
-  const iso = d => d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
-
+  const iso = d => d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate());
   if (t.match(/\bhoje\b/)) return iso(hoje);
-  if (t.match(/\bamanh[ãa]\b/)) { const d=new Date(hoje); d.setDate(d.getDate()+1); return iso(d); }
-  if (t.match(/\bsegunda\b/)) return iso(_proxDia(hoje,1));
-  if (t.match(/\bterca|terça\b/)) return iso(_proxDia(hoje,2));
-  if (t.match(/\bquarta\b/)) return iso(_proxDia(hoje,3));
-  if (t.match(/\bquinta\b/)) return iso(_proxDia(hoje,4));
-  if (t.match(/\bsexta\b/)) return iso(_proxDia(hoje,5));
-  if (t.match(/\bsabado|sábado\b/)) return iso(_proxDia(hoje,6));
-  if (t.match(/\bdomingo\b/)) return iso(_proxDia(hoje,0));
-  const m = t.match(/(\d{1,2})[\/\-](\d{1,2})/);
-  if (m) {
-    const ano = hoje.getFullYear();
-    return `${ano}-${pad(m[2])}-${pad(m[1])}`;
+  if (t.match(/\bamanh[aa]\b/)) { const d=new Date(hoje); d.setDate(d.getDate()+1); return iso(d); }
+  const dias = { segunda:1, terca:2, 'terca-feira':2, quarta:3, quinta:4, sexta:5, sabado:6, domingo:0 };
+  for (const [nome, num] of Object.entries(dias)) {
+    if (t.includes(nome)) return iso(_proxDia(hoje, num));
   }
+  const m = t.match(/(\d{1,2})[/\-](\d{1,2})/);
+  if (m) return hoje.getFullYear() + '-' + pad(m[2]) + '-' + pad(m[1]);
   return null;
 }
 
 function _proxDia(base, diaSemana) {
   const d = new Date(base);
-  const atual = d.getDay();
-  let diff = diaSemana - atual;
+  let diff = diaSemana - d.getDay();
   if (diff <= 0) diff += 7;
   d.setDate(d.getDate() + diff);
   return d;
 }
 
-function _detectarIntencao(texto) {
+function _detectarIntencao(texto, etapaAtual) {
   const t = (texto || '').toLowerCase();
-  if (t.match(/\b(oi|ol[aá]|bom dia|boa tarde|boa noite|ei|al[oô])\b/)) return 'greeting';
-  if (t.match(/\b(humano|atendente|pessoa|algu[eé]m|ajuda|n[aã]o entend)\b/)) return 'talk_to_human';
-  if (t.match(/\b(cancelar|cancela|desmarcar|desmarco)\b/)) return 'cancel_booking';
-  if (t.match(/\b(remarcar|remarca|mudar horario|trocar horario|outro dia)\b/)) return 'reschedule_booking';
-  if (t.match(/\b(endere[cç]o|fica onde|como chego|onde [eé]|localiza[cç])\b/)) return 'ask_address';
-  if (t.match(/\b(avalia[cç][aã]o|estrela|nota|depoimento)\b/)) return 'ask_reviews';
-  if (t.match(/\b(link|site|agenda|p[aá]gina)\b/)) return 'ask_agenda_link';
-  if (t.match(/\b(obrigad|valeu|brigad|muito bom|excelente)\b/)) return 'thanks';
-  if (t.match(/\b(servi[cç]o|o que faz|o que tem|menu|op[cç][õo]es)\b/)) return 'show_services';
-  if (t.match(/\b(quanto (custa|[eé]|tem)|pre[cç]o|valor|cobr)\b/)) return 'ask_price';
-  if (t.match(/\b(profissional|quem atende|com quem|hor[aá]rio|disponivel|vaga|livre)\b/)) return 'ask_available_times';
-  if (t.match(/\b(marcar|agendar|quero marcar|quero agendar|marcarum|reservar)\b/)) return 'start_booking';
-  if (t.match(/\b(confirmar|confirmo|sim|isso mesmo|pode marcar|ok|certo|exato|tudo certo)\b/)) return 'confirm_booking';
+  if (t.match(/\b(oi|ola|boa|bom dia|boa tarde|boa noite|ei|alo)\b/)) return 'greeting';
+  if (t.match(/\b(humano|atendente|pessoa|alguem|ajuda real|falar com)\b/)) return 'talk_to_human';
+  if (t.match(/\b(cancelar|cancela|desmarcar|desmarco|nao quero mais)\b/)) return 'cancel_booking';
+  if (t.match(/\b(remarcar|remarca|mudar|trocar horario|outro dia)\b/)) return 'reschedule_booking';
+  if (t.match(/\b(endereco|fica onde|como chego|onde e|localizacao|mapa)\b/)) return 'ask_address';
+  if (t.match(/\b(link|site|pagina|agenda online)\b/)) return 'ask_link';
+  if (t.match(/\b(obrigad|valeu|brigad|muito bom|otimo|excelente|perfeito)\b/)) return 'thanks';
+  if (t.match(/\b(servico|atendimento|o que tem|menu|opcoes|o que faz)\b/)) return 'show_services';
+  if (t.match(/\b(quanto custa|preco|valor|cobr|quanto e|quanto tem)\b/)) return 'ask_price';
+  if (t.match(/\b(profissional|quem atende|com quem|equipe)\b/)) return 'show_professionals';
+  if (t.match(/\b(horario|disponivel|vaga|livre|tem hora|tem vaga|quando)\b/)) return 'ask_times';
+  if (t.match(/\b(marcar|agendar|quero marcar|quero agendar|reservar|marca)\b/)) return 'start_booking';
+  if (t.match(/\b(confirmar|confirmo|sim|isso mesmo|pode marcar|ok|certo|exato|tudo certo|pode|isso|quero)\b/)) return 'confirm';
+  if (t.match(/\b(nao|nope|cancela|errado|mudei|outro)\b/)) return 'nao';
   return 'fallback';
 }
 
-// ── BUSCAR CONTEXTO ───────────────────────────────────────────────────────────
+// ── DADOS ─────────────────────────────────────────────────────────────────────
 async function _buscarCtx(adminId) {
   try {
     const admin = await AdminAgenda.findById(adminId).lean();
@@ -108,21 +341,19 @@ async function _buscarCtx(adminId) {
   } catch(e) { return null; }
 }
 
-async function _horariosLivres(adminId, data, servicoDuracao) {
+async function _horariosLivres(adminId, data, duracao) {
   try {
     const admin = await AdminAgenda.findById(adminId).lean();
     if (!admin) return [];
     const cfg = admin.config || {};
     const ab = cfg.horarioAbertura || '08:00';
     const fe = cfg.horarioFechamento || '18:00';
-    const intervalo = servicoDuracao || cfg.intervaloAgendamento || 60;
-
+    const intervalo = Number(duracao) || Number(cfg.intervaloAgendamento) || 60;
     const ags = await AgendamentoAgenda.find({
       adminId,
       dataHora: { $gte: new Date(data+'T00:00:00'), $lte: new Date(data+'T23:59:59') },
       status: { $in: ['pendente','confirmado'] }
     }).lean();
-
     const ocupados = ags.map(a => new Date(a.dataHora).toTimeString().slice(0,5));
     const slots = [];
     const [hAb,mAb] = ab.split(':').map(Number);
@@ -134,17 +365,15 @@ async function _horariosLivres(adminId, data, servicoDuracao) {
       const m = String(min%60).padStart(2,'0');
       const slot = h+':'+m;
       if (!ocupados.includes(slot)) slots.push(slot);
-      min += Number(intervalo);
+      min += intervalo;
     }
     return slots;
   } catch(e) { return []; }
 }
 
-async function _criarAgendamento(adminId, conv, dados) {
+async function _criarAgendamento(adminId, dados) {
   try {
     const { nomeCliente, telefone, servicoNome, servicoId, profissionalNome, profissionalId, data, hora } = dados;
-    const dataHora = new Date(data+'T'+hora+':00');
-
     const ag = await AgendamentoAgenda.create({
       adminId,
       nomeCliente,
@@ -153,43 +382,38 @@ async function _criarAgendamento(adminId, conv, dados) {
       nomeServico: servicoNome,
       profissionalId: profissionalId || null,
       nomeProfissional: profissionalNome || '',
-      dataHora,
+      dataHora: new Date(data+'T'+hora+':00'),
       status: 'pendente',
       origem: 'whatsapp_ia'
     });
-
     await ClienteAgenda.findOneAndUpdate(
       { adminId, telefone },
       { $set: { nome: nomeCliente, telefone }, $setOnInsert: { totalAtendimentos: 0 } },
       { upsert: true }
     );
-
-    // Notificar admin push
     try {
       const { notificarAdmin } = require('../routes/agenda-push.routes');
-      await notificarAdmin(
-        adminId,
-        '📅 Agendamento via WhatsApp',
-        nomeCliente + ' - ' + servicoNome + ' às ' + hora,
-        '/agenda-adm'
-      );
+      await notificarAdmin(adminId, 'Agendamento criado', nomeCliente + ' — ' + servicoNome + ' as ' + hora, '/agenda-adm');
     } catch(_) {}
-
-    _salvarLog(adminId, 'agendamento_criado', { ag: ag._id, nomeCliente, servicoNome, data, hora, telefone });
+    _log(adminId, 'agendamento_criado', { nomeCliente, servicoNome, data, hora, telefone });
     return ag;
   } catch(e) {
-    console.error('[AGENDA-IA] Erro criar:', e.message);
-    _salvarLog(adminId, 'erro_criar_agendamento', { erro: e.message });
+    _log(adminId, 'erro_criar_agendamento', { erro: e.message });
     return null;
   }
 }
 
-// ── RESPONDER ─────────────────────────────────────────────────────────────────
+async function _notificarADM(adminId, titulo, corpo) {
+  try {
+    const { notificarAdmin } = require('../routes/agenda-push.routes');
+    await notificarAdmin(adminId, titulo, corpo, '/agenda-adm');
+  } catch(_) {}
+}
+
+// ── SERVICO PRINCIPAL ─────────────────────────────────────────────────────────
 const AgendaIAService = {
 
-  getLogs(adminId) {
-    return global._agendaLogs.get(String(adminId)) || [];
-  },
+  getLogs(adminId) { return global._agendaLogs.get(String(adminId)) || []; },
 
   getConversas(adminId) {
     const result = [];
@@ -201,265 +425,302 @@ const AgendaIAService = {
 
   resetHandoff(adminId, telefone) {
     const c = _getConversa(adminId, telefone);
-    c.humanHandoff = false; c.handoffAt = null; c.etapa = 'idle';
+    c.humanHandoff = false; c.handoffAt = null; c.etapa = 'idle'; c.tentativas = 0;
   },
 
   async responder(telefone, mensagem, adminId) {
     _limparAntigas();
 
-    // Verificar plano
     const ctx = await _buscarCtx(adminId);
     if (!ctx) return null;
 
     const { admin, servicos, profissionais } = ctx;
     const features = getAgendaPlanFeatures(admin.plano);
     const nomeNegocio = admin.nomeNegocio || 'nossa agenda';
-    const linkAgenda = process.env.APP_URL
-      ? `${process.env.APP_URL}/espaco-digital?id=${adminId}`
-      : `/espaco-digital?id=${adminId}`;
+    const linkAgenda = (process.env.APP_URL || '') + '/espaco-digital?id=' + adminId;
 
-    // Plano R$97: sem automação completa
+    // Plano R$97 — sem automacao completa
     if (!features.canUseWhatsappAutomation) {
-      return `Oi! Tudo bem? 😊\n\nPara agendar seu horário na *${nomeNegocio}*, acesse nossa agenda online:\n${linkAgenda}\n\nQualquer dúvida, é só chamar!`;
+      return MSG.planoBasico(nomeNegocio, linkAgenda);
     }
 
     const conv = _getConversa(adminId, telefone);
 
-    // Human handoff ativo — pausar bot por 30min
+    // Human handoff ativo
     if (conv.humanHandoff) {
       const elapsed = Date.now() - (conv.handoffAt || 0);
-      if (elapsed < 30 * 60 * 1000) {
-        _salvarLog(adminId, 'handoff_ativo', { telefone, mensagem });
-        return null; // silêncio — humano está atendendo
+      if (elapsed < 30 * 60 * 1000) { _log(adminId, 'handoff_ativo', { telefone }); return null; }
+      conv.humanHandoff = false;
+    }
+
+    // Ignorar mensagem propria do bot
+    const msgLower = (mensagem || '').toLowerCase().trim();
+    if (!msgLower || msgLower.length < 1) return null;
+
+    const intencao = _detectarIntencao(mensagem, conv.etapa);
+    _log(adminId, 'mensagem_recebida', { telefone, mensagem: mensagem.substring(0,80), intencao, etapa: conv.etapa });
+
+    // ── ETAPA: aguardando cancelamento
+    if (conv.etapa === 'awaiting_cancel_confirm') {
+      if (intencao === 'confirm') {
+        try {
+          await AgendamentoAgenda.findByIdAndUpdate(conv.dados._cancelarId, { status: 'cancelado' });
+          conv.etapa = 'idle'; conv.dados._cancelarId = null;
+          _log(adminId, 'agendamento_cancelado', { telefone });
+          return MSG.cancelado(linkAgenda);
+        } catch(_) { return MSG.erroTecnico(linkAgenda); }
+      } else {
+        conv.etapa = 'idle';
+        return 'Tudo bem.
+
+Seu horario foi mantido.
+
+Qualquer coisa, e so chamar.';
       }
-      conv.humanHandoff = false; // expirou, bot volta
     }
 
-    // Detectar intenção
-    const intencao = _detectarIntencao(mensagem);
-    _salvarLog(adminId, 'mensagem_recebida', { telefone, mensagem, intencao, etapa: conv.etapa });
+    // ── ETAPA: aguardando servico
+    if (conv.etapa === 'awaiting_service') {
+      const num = parseInt(mensagem.trim()) - 1;
+      let srv = null;
+      if (!isNaN(num) && servicos[num]) {
+        srv = servicos[num];
+      } else {
+        srv = servicos.find(s => mensagem.toLowerCase().split(/\s+/).some(t => t.length > 3 && s.nome.toLowerCase().includes(t)));
+      }
+      if (srv) {
+        conv.dados.servico = srv.nome;
+        conv.dados.servicoId = String(srv._id);
+        _log(adminId, 'servico_escolhido', { telefone, servico: srv.nome });
+        if (profissionais.length > 0) {
+          conv.etapa = 'awaiting_professional';
+          return _pick(_v.abertura) + '
 
-    const cfg = admin.config || {};
-    const horario = `${cfg.horarioAbertura||'08:00'} às ${cfg.horarioFechamento||'18:00'}`;
+' + _pick(_v.pedirProf) + '
 
-    // ── INTENÇÕES DIRETAS ─────────────────────────────────────────────────────
+' + profissionais.map((p,i) => (i+1)+'. '+p.nome).join('
+') + '
 
-    if (intencao === 'talk_to_human') {
-      conv.humanHandoff = true;
-      conv.handoffAt = Date.now();
-      conv.etapa = 'human_handoff';
-      try {
-        const { notificarAdmin } = require('../routes/agenda-push.routes');
-        await notificarAdmin(adminId, '🚨 Atenção necessária', `${telefone} pediu atendimento humano.`, '/agenda-adm');
-      } catch(_) {}
-      _salvarLog(adminId, 'human_handoff', { telefone });
-      return `Claro, vou chamar alguém da equipe pra te ajudar 💬\n\nEnquanto isso, se quiser adiantar, você pode ver serviços e horários por aqui:\n${linkAgenda}`;
+Ou me diz "qualquer um".';
+        }
+        conv.etapa = 'awaiting_date';
+        return MSG.pedirData();
+      }
+      conv.tentativas++;
+      if (conv.tentativas >= 3) {
+        conv.tentativas = 0;
+        return 'Deixa eu te mandar a lista novamente.
+
+' + MSG.listaServicos(servicos, linkAgenda);
+      }
+      return 'Me manda o numero ou o nome
+do servico da lista. 😊';
     }
 
-    if (intencao === 'ask_address') {
-      const end = admin.endereco || null;
-      if (!end) return `Acabei de consultar aqui, mas não encontrei o endereço cadastrado no sistema.\n\nPra evitar te passar algo errado, acesse:\n${linkAgenda}`;
-      return `📍 *Endereço:*\n${end}\n\nQualquer dúvida, é só chamar 😊`;
+    // ── ETAPA: aguardando profissional
+    if (conv.etapa === 'awaiting_professional') {
+      const qualquer = mensagem.toLowerCase().match(/(qualquer|tanto faz|qualquer um|nao importa|pode ser qualquer)/);
+      if (!qualquer) {
+        const num = parseInt(mensagem.trim()) - 1;
+        let prof = !isNaN(num) && profissionais[num] ? profissionais[num] : profissionais.find(p => mensagem.toLowerCase().includes(p.nome.toLowerCase().split(' ')[0]));
+        if (prof) { conv.dados.profissional = prof.nome; conv.dados.profissionalId = String(prof._id); }
+      }
+      conv.etapa = 'awaiting_date';
+      return MSG.pedirData();
     }
 
-    if (intencao === 'ask_agenda_link') {
-      return `Aqui está o link da nossa agenda 😊\n${linkAgenda}`;
+    // ── ETAPA: aguardando data
+    if (conv.etapa === 'awaiting_date') {
+      const data = _parseData(mensagem);
+      if (!data) return 'Qual dia voce prefere?
+
+Pode ser *hoje*, *amanha*,
+um dia da semana ou uma data. 😊';
+      const srv = servicos.find(s => String(s._id) === conv.dados.servicoId);
+      const slots = await _horariosLivres(adminId, data, srv && srv.duracao);
+      _log(adminId, 'horarios_consultados', { telefone, data });
+      conv.dados.data = data;
+      conv.etapa = 'awaiting_time';
+      return MSG.listaHorarios(data, slots, _fmtData(data));
+    }
+
+    // ── ETAPA: aguardando horario
+    if (conv.etapa === 'awaiting_time') {
+      const m = mensagem.match(/(\d{1,2})[h:](\d{0,2})/);
+      let hora = null;
+      if (m) hora = String(m[1]).padStart(2,'0') + ':' + String(m[2]||'00').padStart(2,'0');
+      else {
+        const srv = servicos.find(s => String(s._id) === conv.dados.servicoId);
+        const slots = await _horariosLivres(adminId, conv.dados.data, srv && srv.duracao);
+        hora = slots.find(s => mensagem.includes(s));
+      }
+      if (!hora) return 'Me manda o horario que voce prefere.
+
+Exemplo: *14:00* ou *14h*';
+      const srv2 = servicos.find(s => String(s._id) === conv.dados.servicoId);
+      const slots2 = await _horariosLivres(adminId, conv.dados.data, srv2 && srv2.duracao);
+      if (!slots2.includes(hora)) {
+        return 'Puxa, esse horario nao esta disponivel.
+
+Horarios livres:
+' + slots2.slice(0,6).join('  |  ') + '
+
+Qual voce prefere?';
+      }
+      conv.dados.hora = hora;
+      conv.etapa = 'awaiting_name';
+      return MSG.pedirNome();
+    }
+
+    // ── ETAPA: aguardando nome
+    if (conv.etapa === 'awaiting_name') {
+      const nome = mensagem.trim();
+      if (nome.length < 2 || nome.match(/^\d+$/)) return 'Me passa seu nome completo, por favor.';
+      conv.dados.nomeCliente = nome;
+      conv.etapa = 'awaiting_confirmation';
+      return MSG.resumo(conv.dados, _fmtData(conv.dados.data));
+    }
+
+    // ── ETAPA: aguardando confirmacao
+    if (conv.etapa === 'awaiting_confirmation') {
+      if (intencao === 'nao') {
+        conv.etapa = 'awaiting_service';
+        return 'Sem problema.
+
+' + MSG.pedirServico();
+      }
+      if (intencao === 'confirm') {
+        const srv = servicos.find(s => String(s._id) === conv.dados.servicoId);
+        const slots = await _horariosLivres(adminId, conv.dados.data, srv && srv.duracao);
+        if (!slots.includes(conv.dados.hora)) {
+          conv.etapa = 'awaiting_time';
+          return 'Conferi aqui.
+
+Esse horario foi preenchido agora.
+
+Horarios livres em ' + _fmtData(conv.dados.data) + ':
+' + slots.slice(0,6).join('  |  ') + '
+
+Qual voce prefere?';
+        }
+        const ag = await _criarAgendamento(adminId, { ...conv.dados, telefone });
+        if (!ag) return MSG.erroTecnico(linkAgenda);
+        conv.etapa = 'booked';
+        await _notificarADM(adminId, 'Agendamento criado', conv.dados.nomeCliente + ' — ' + conv.dados.servico + ' as ' + conv.dados.hora);
+        return MSG.sucesso(conv.dados, _fmtData(conv.dados.data), admin.endereco);
+      }
+      return MSG.resumo(conv.dados, _fmtData(conv.dados.data));
+    }
+
+    // ── INTENCOES DIRETAS ─────────────────────────────────────────────────────
+
+    if (intencao === 'greeting') {
+      conv.etapa = 'idle'; conv.tentativas = 0;
+      await _notificarADM(adminId, 'Novo atendimento no WhatsApp', telefone + ' iniciou uma conversa.');
+      return MSG.bemVindo(nomeNegocio, linkAgenda);
     }
 
     if (intencao === 'thanks') {
-      return `De nada! Foi um prazer 😊\n\nSempre que precisar, é só chamar! Até logo 👋`;
+      return MSG.agradecimento();
+    }
+
+    if (intencao === 'talk_to_human') {
+      conv.humanHandoff = true; conv.handoffAt = Date.now(); conv.etapa = 'human_handoff';
+      await _notificarADM(adminId, 'Cliente pediu ajuda humana', telefone + ' quer atendimento humano.');
+      _log(adminId, 'human_handoff', { telefone });
+      return MSG.humanHandoff(linkAgenda);
+    }
+
+    if (intencao === 'ask_address') {
+      return MSG.endereco(admin.endereco);
+    }
+
+    if (intencao === 'ask_link') {
+      return MSG.linkAgenda(linkAgenda);
     }
 
     if (intencao === 'show_services') {
-      if (!servicos.length) return `Não encontrei serviços cadastrados no momento.\n\nAcesse a agenda para ver as opções:\n${linkAgenda}`;
-      const lista = servicos.map(s => {
-        let linha = `• *${s.nome}*`;
-        if (s.duracao) linha += ` — ${s.duracao}min`;
-        if (s.preco) linha += ` — R$ ${Number(s.preco).toFixed(2)}`;
-        return linha;
-      }).join('\n');
-      _salvarLog(adminId, 'servicos_consultados', { telefone });
-      return `Maravilha, acabei de conferir os serviços disponíveis pra você 😊\n\n${lista}\n\nQuer marcar algum? É só me falar!`;
+      _log(adminId, 'servicos_consultados', { telefone });
+      return MSG.listaServicos(servicos, linkAgenda);
     }
 
     if (intencao === 'ask_price') {
-      if (!servicos.length) return `Não encontrei valores cadastrados.\n\nAcesse: ${linkAgenda}`;
-      // Tentar achar serviço mencionado
-      const termos = mensagem.toLowerCase().split(/\s+/);
-      const encontrado = servicos.find(s => termos.some(t => s.nome.toLowerCase().includes(t) && t.length > 3));
-      if (encontrado) {
-        const dur = encontrado.duracao ? `\nDuração média: ${encontrado.duracao} minutos.` : '';
-        const preco = encontrado.preco ? `R$ ${Number(encontrado.preco).toFixed(2)}` : 'a consultar';
-        return `Boa pergunta! Acabei de conferir aqui ✅\n\nO *${encontrado.nome}* está cadastrado como *${preco}*.${dur}\n\nQuer que eu veja os horários livres pra ele?`;
-      }
-      const lista = servicos.map(s => `• *${s.nome}*${s.preco?' — R$ '+Number(s.preco).toFixed(2):''}`).join('\n');
-      return `Claro! Aqui estão nossos serviços e valores 😊\n\n${lista}\n\nSobre qual você quer saber mais?`;
+      const termos = mensagem.toLowerCase().split(/\s+/).filter(t => t.length > 3);
+      const encontrado = servicos.find(s => termos.some(t => s.nome.toLowerCase().includes(t)));
+      if (encontrado) { _log(adminId, 'preco_consultado', { telefone, servico: encontrado.nome }); return MSG.preco(encontrado); }
+      return MSG.listaServicos(servicos, linkAgenda);
     }
 
-    if (intencao === 'ask_available_times') {
+    if (intencao === 'show_professionals') {
+      _log(adminId, 'profissionais_consultados', { telefone });
+      return MSG.listaProfissionais(profissionais);
+    }
+
+    if (intencao === 'ask_times') {
       const dataParsed = _parseData(mensagem);
       if (!dataParsed) {
-        return `Qual dia você prefere? Pode me mandar tipo *hoje*, *amanhã* ou uma data certinha 😊`;
+        if (!conv.dados.servicoId) {
+          conv.etapa = 'awaiting_service';
+          return 'Consigo olhar sim.
+
+' + _pick(_v.pedirSrv);
+        }
+        conv.etapa = 'awaiting_date';
+        return MSG.pedirData();
       }
-      const dur = conv.dados.servicoId ? (servicos.find(s=>String(s._id)===conv.dados.servicoId)?.duracao||60) : 60;
-      const slots = await _horariosLivres(adminId, dataParsed, dur);
-      if (!slots.length) return `Puts, não encontrei horários livres em *${_fmtData(dataParsed)}* 😕\n\nTenta outro dia ou acesse:\n${linkAgenda}`;
-      _salvarLog(adminId, 'horarios_consultados', { telefone, data: dataParsed });
-      return `Esses são os horários livres em *${_fmtData(dataParsed)}* 😊\n\n${slots.slice(0,8).join('  ·  ')}\n\nQuer marcar algum?`;
+      const srv = servicos.find(s => String(s._id) === conv.dados.servicoId);
+      const slots = await _horariosLivres(adminId, dataParsed, srv && srv.duracao);
+      _log(adminId, 'horarios_consultados', { telefone, data: dataParsed });
+      return MSG.listaHorarios(dataParsed, slots, _fmtData(dataParsed));
     }
 
     if (intencao === 'cancel_booking') {
       const ags = await AgendamentoAgenda.find({
         adminId, telefoneCliente: { $regex: telefone.replace(/\D/g,'').slice(-9) },
-        status: { $in: ['pendente','confirmado'] },
-        dataHora: { $gte: new Date() }
-      }).sort({ dataHora: 1 }).limit(3).lean();
+        status: { $in: ['pendente','confirmado'] }, dataHora: { $gte: new Date() }
+      }).sort({ dataHora: 1 }).limit(1).lean();
+      if (!ags.length) return 'Nao encontrei agendamento futuro
+para esse numero.
 
-      if (!ags.length) return `Não encontrei agendamentos futuros para esse número.\n\nSe precisar marcar, é só falar 😊`;
-
-      conv.etapa = 'awaiting_cancel_confirm';
-      conv.dados._cancelarId = String(ags[0]._id);
-      const ag = ags[0];
-      const hora = new Date(ag.dataHora).toTimeString().slice(0,5);
-      const data = new Date(ag.dataHora).toLocaleDateString('pt-BR');
-      return `Combinado, encontrei esse agendamento:\n\n📅 ${data}\n⏰ ${hora}\n💼 ${ag.nomeServico}\n\nVocê confirma que quer cancelar? (sim/não)`;
+Quer marcar um horario?';
+      conv.etapa = 'awaiting_cancel_confirm'; conv.dados._cancelarId = String(ags[0]._id);
+      return MSG.cancelamento(ags[0], _fmtData);
     }
 
-    // Confirmar cancelamento
-    if (conv.etapa === 'awaiting_cancel_confirm') {
-      if (mensagem.toLowerCase().match(/\b(sim|s|confirmo|pode|isso)\b/)) {
-        try {
-          await AgendamentoAgenda.findByIdAndUpdate(conv.dados._cancelarId, { status: 'cancelado' });
-          conv.etapa = 'idle'; conv.dados._cancelarId = null;
-          _salvarLog(adminId, 'agendamento_cancelado', { id: conv.dados._cancelarId, telefone });
-          return `Combinado, seu agendamento foi cancelado ✅\n\nSe quiser marcar outro horário:\n${linkAgenda}`;
-        } catch(_) {
-          return `Não consegui cancelar agora. Tente pela agenda:\n${linkAgenda}`;
-        }
-      } else {
-        conv.etapa = 'idle';
-        return `Tudo bem, o agendamento foi mantido 😊 Qualquer coisa, é só chamar!`;
-      }
-    }
-
-    // ── FLUXO DE AGENDAMENTO ──────────────────────────────────────────────────
-
-    if (intencao === 'start_booking' || conv.etapa === 'awaiting_service') {
-      if (!servicos.length) return `Não há serviços cadastrados no momento.\n\nAcesse: ${linkAgenda}`;
+    if (intencao === 'start_booking') {
       conv.etapa = 'awaiting_service';
-      const lista = servicos.map((s,i) => `${i+1}. *${s.nome}*${s.preco?' — R$ '+Number(s.preco).toFixed(2):''}`).join('\n');
-      _salvarLog(adminId, 'inicio_agendamento', { telefone });
-      return `Maravilha! Vamos marcar seu horário 😊\n\nQual serviço você prefere?\n\n${lista}`;
+      _log(adminId, 'inicio_agendamento', { telefone });
+      return MSG.listaServicos(servicos, linkAgenda);
     }
 
-    // Escolha de serviço (etapa awaiting_service + mensagem com número ou nome)
-    if (conv.etapa === 'awaiting_service') {
-      const num = parseInt(mensagem.trim()) - 1;
-      let srv = isNaN(num) ? servicos.find(s => mensagem.toLowerCase().includes(s.nome.toLowerCase().split(' ')[0])) : servicos[num];
-      if (!srv) return `Não entendi qual serviço 😅\n\nMe manda o número ou o nome do serviço da lista acima.`;
-      conv.dados.servico = srv.nome;
-      conv.dados.servicoId = String(srv._id);
-      conv.etapa = 'awaiting_date';
-      if (profissionais.length > 0) {
-        const lista = profissionais.map((p,i) => `${i+1}. ${p.nome}`).join('\n');
-        conv.etapa = 'awaiting_professional';
-        return `Ótima escolha! *${srv.nome}* ✅\n\nCom qual profissional você prefere?\n\n${lista}\n\nOu me manda "qualquer um" pra eu escolher o disponível.`;
-      }
-      return `Ótima escolha! *${srv.nome}* ✅\n\nQual dia você prefere? Pode mandar *hoje*, *amanhã*, dia da semana ou a data 😊`;
+    // ── FALLBACK CONDUZIDO (nunca diz "nao entendi") ──────────────────────────
+    conv.tentativas = (conv.tentativas || 0) + 1;
+
+    // Apos 3 tentativas sem entender, oferecer humano
+    if (conv.tentativas >= 3) {
+      conv.tentativas = 0;
+      try {
+        await _notificarADM(adminId, 'Sistema precisa de atencao', telefone + ' nao encontrou a informacao que procurava.');
+      } catch(_) {}
+      return 'Vou chamar a equipe pra te ajudar melhor.
+
+Enquanto isso, acesse a agenda:
+' + linkAgenda;
     }
 
-    // Escolha de profissional
-    if (conv.etapa === 'awaiting_professional') {
-      if (!mensagem.toLowerCase().match(/\b(qualquer|tanto faz|qualquer um|nao importa|não importa)\b/)) {
-        const num = parseInt(mensagem.trim()) - 1;
-        let prof = isNaN(num) ? profissionais.find(p => mensagem.toLowerCase().includes(p.nome.toLowerCase().split(' ')[0])) : profissionais[num];
-        if (prof) { conv.dados.profissional = prof.nome; conv.dados.profissionalId = String(prof._id); }
-      }
-      conv.etapa = 'awaiting_date';
-      return `Combinado 😊\n\nQual dia você prefere? Pode mandar *hoje*, *amanhã*, dia da semana ou a data.`;
-    }
-
-    // Escolha de data
-    if (conv.etapa === 'awaiting_date') {
-      const data = _parseData(mensagem);
-      if (!data) return `Qual dia você prefere? Pode ser *hoje*, *amanhã*, *sexta*, ou uma data como *15/06* 😊`;
-      const srv = servicos.find(s => String(s._id) === conv.dados.servicoId);
-      const slots = await _horariosLivres(adminId, data, srv?.duracao||60);
-      if (!slots.length) return `Puts, não encontrei horários livres em *${_fmtData(data)}* 😕\n\nQuer tentar outro dia?`;
-      conv.dados.data = data;
-      conv.etapa = 'awaiting_time';
-      return `Esses são os horários livres em *${_fmtData(data)}* 😊\n\n${slots.slice(0,8).join('  ·  ')}\n\nQual você prefere?`;
-    }
-
-    // Escolha de horário
-    if (conv.etapa === 'awaiting_time') {
-      const m = mensagem.match(/\b(\d{1,2})[h:](\d{0,2})\b/);
-      let hora = null;
-      if (m) hora = String(m[1]).padStart(2,'0')+':'+String(m[2]||'00').padStart(2,'0');
-      else {
-        const slots = await _horariosLivres(adminId, conv.dados.data, 60);
-        hora = slots.find(s => mensagem.includes(s));
-      }
-      if (!hora) return `Qual horário você prefere? Me manda no formato *14:00* ou *14h* 😊`;
-      // Validar disponibilidade
-      const srv = servicos.find(s => String(s._id) === conv.dados.servicoId);
-      const slots = await _horariosLivres(adminId, conv.dados.data, srv?.duracao||60);
-      if (!slots.includes(hora)) return `Puxa, o horário *${hora}* não está disponível 😕\n\nHorários livres: ${slots.slice(0,6).join('  ·  ')}\n\nQual você prefere?`;
-      conv.dados.hora = hora;
-      conv.etapa = 'awaiting_name';
-      return `Perfeito! *${hora}* anotado ✅\n\nPra confirmar, qual é o seu nome completo?`;
-    }
-
-    // Nome do cliente
-    if (conv.etapa === 'awaiting_name') {
-      const nome = mensagem.trim();
-      if (nome.length < 2) return `Pode me passar seu nome completo? 😊`;
-      conv.dados.nomeCliente = nome;
-      conv.etapa = 'awaiting_confirmation';
-      const d = conv.dados;
-      return `Perfeito, só pra eu não marcar nada errado 😊\n\nConfirma esses dados pra mim?\n\n💼 *Serviço:* ${d.servico}\n${d.profissional?'👤 *Profissional:* '+d.profissional+'\n':''}📅 *Data:* ${_fmtData(d.data)}\n⏰ *Horário:* ${d.hora}\n👤 *Nome:* ${nome}\n\nResponda *confirmar* para finalizar.`;
-    }
-
-    // Confirmação
-    if (conv.etapa === 'awaiting_confirmation' && intencao === 'confirm_booking') {
-      const d = conv.dados;
-      // Validar disponibilidade novamente
-      const srv = servicos.find(s => String(s._id) === d.servicoId);
-      const slots = await _horariosLivres(adminId, d.data, srv?.duracao||60);
-      if (!slots.includes(d.hora)) {
-        conv.etapa = 'awaiting_time';
-        return `Puxa, o horário *${d.hora}* foi preenchido agora 😕\n\nHorários livres em ${_fmtData(d.data)}: ${slots.slice(0,6).join('  ·  ')}\n\nQual você prefere?`;
-      }
-      const ag = await _criarAgendamento(adminId, conv, { ...d, telefone });
-      if (!ag) {
-        return `Poxa, não consegui salvar o agendamento agora 😕\n\nTenta pela agenda:\n${linkAgenda}`;
-      }
-      conv.etapa = 'booked';
-      const end = admin.endereco ? `\n📍 *Endereço:* ${admin.endereco}` : '';
-      return `Maravilha! Acabei de marcar seu horário ✅\n\n📅 *Data:* ${_fmtData(d.data)}\n⏰ *Horário:* ${d.hora}\n💼 *Serviço:* ${d.servico}${d.profissional?'\n👤 *Profissional:* '+d.profissional:''}${end}\n\nTe esperamos por aqui! Qualquer coisa, é só chamar 😊`;
-    }
-
-    // Greeting
-    if (intencao === 'greeting') {
-      conv.etapa = 'idle';
-      const hora = new Date().getHours();
-      const saud = hora < 12 ? 'Bom dia' : hora < 18 ? 'Boa tarde' : 'Boa noite';
-      return `${saud}! Tudo bem? Que bom te ver por aqui 😊\n\nSou a assistente da *${nomeNegocio}*. Posso te ajudar com:\n\n1️⃣ Marcar um horário\n2️⃣ Ver serviços e valores\n3️⃣ Consultar horários livres\n4️⃣ Ver endereço\n5️⃣ Falar com a equipe\n\nSe preferir, agende direto por aqui:\n${linkAgenda}`;
-    }
-
-    // Fallback — usar Claude para resposta livre dentro do contexto
+    // Fallback com Claude — contexto real, sem inventar
     try {
-      const listaServicos = servicos.map(s => `- ${s.nome}: R$ ${Number(s.preco||0).toFixed(2)} (${s.duracao||60}min)`).join('\n') || 'Consulte pelo site';
-      const system = `Você é a Rebeca, assistente virtual de agendamento da ${nomeNegocio}. Tom: brasileiro, alegre, educado, leve jeito mineiro. Máx 3 linhas. Nunca invente serviços, preços ou horários. Se não souber, mande o link: ${linkAgenda}\n\nSERVIÇOS:\n${listaServicos}\nHORÁRIO: ${horario}`;
+      const listaServicos = servicos.map(s => s.nome + (s.preco ? ' R$'+Number(s.preco).toFixed(2) : '') + (s.duracao ? ' '+s.duracao+'min' : '')).join(', ') || 'Consulte pela agenda';
+      const system = 'Voce e a assistente de agendamento da ' + nomeNegocio + '. Tom: brasileiro, educado, mensagens curtas (max 4 linhas). Nunca invente servico, preco ou horario. Se nao souber, mande: ' + linkAgenda + '. SERVICOS REAIS: ' + listaServicos + '. Nunca diga "nao entendi" — sempre conduza para uma acao.';
       conv.historico.push({ role: 'user', content: mensagem });
-      if (conv.historico.length > 8) conv.historico = conv.historico.slice(-8);
-      const r = await _claude.messages.create({ model:'claude-haiku-4-5', max_tokens:250, system, messages: conv.historico });
+      if (conv.historico.length > 6) conv.historico = conv.historico.slice(-6);
+      const r = await _claude.messages.create({ model:'claude-haiku-4-5', max_tokens:200, system, messages: conv.historico });
       const resp = r.content[0].text;
       conv.historico.push({ role: 'assistant', content: resp });
-      _salvarLog(adminId, 'fallback_claude', { telefone, mensagem });
+      _log(adminId, 'fallback_claude', { telefone });
       return resp;
     } catch(e) {
-      return `Uai, acho que não consegui entender direitinho 😅\n\nPosso te ajudar com:\n📅 Agendar horário\n💼 Ver serviços\n⏰ Consultar horários\n💬 Falar com a equipe\n\n${linkAgenda}`;
+      return MSG.fallbackConduzido();
     }
   }
 };
