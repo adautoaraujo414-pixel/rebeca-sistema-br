@@ -228,6 +228,39 @@ const filaEncaixeAgendaSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 });
 
+// CRM — Modelos de mensagem humanizada
+const mensagemModeloAgendaSchema = new mongoose.Schema({
+  adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'AdminAgenda' }, // null = modelo padrão global
+  categoria: { type: String, enum: ['agradecimento','pos_atendimento','cuidado','avaliacao','retorno','manutencao','cliente_inativo','recadastramento','recuperacao','aniversario','promocao'], required: true },
+  titulo: { type: String, required: true },
+  texto: { type: String, required: true }, // suporta {nome},{servico},{profissional},{diasSemVir},{nomeEmpresa},{linkAgenda}
+  ativo: { type: Boolean, default: true },
+  editavel: { type: Boolean, default: true },
+  diasAposAtendimento: { type: Number }, // sugestão de quando enviar
+  canal: { type: String, default: 'whatsapp' },
+  createdAt: { type: Date, default: Date.now }
+});
+
+// CRM — Registro de conexão/contato com cliente
+const conexaoClienteAgendaSchema = new mongoose.Schema({
+  adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'AdminAgenda', required: true },
+  clienteId: { type: mongoose.Schema.Types.ObjectId, ref: 'ClienteAgenda' },
+  agendamentoId: { type: mongoose.Schema.Types.ObjectId, ref: 'AgendamentoAgenda' },
+  nome: { type: String, required: true },
+  telefone: { type: String, required: true },
+  ultimoServico: { type: String },
+  ultimoAtendimento: { type: Date },
+  profissional: { type: String },
+  categoria: { type: String, enum: ['agradecimento','pos_atendimento','cuidado','avaliacao','retorno','manutencao','cliente_inativo','recadastramento','recuperacao','aniversario','promocao'], required: true },
+  mensagemEnviada: { type: String },
+  statusContato: { type: String, enum: ['sugerido','enviado','contatado','sem_resposta','satisfeito','insatisfeito','quer_retorno','quer_reclamar','precisa_humano'], default: 'sugerido' },
+  observacao: { type: String },
+  enviadoEm: { type: Date },
+  respondidoEm: { type: Date },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+});
+
 const FinanceiroAgenda = mongoose.model('FinanceiroAgenda', financeiroAgendaSchema);
 const ContaPagarAgenda = mongoose.model('ContaPagarAgenda', contaPagarAgendaSchema);
 const FilaEncaixeAgenda = mongoose.model('FilaEncaixeAgenda', filaEncaixeAgendaSchema);
@@ -247,4 +280,6 @@ module.exports = {
   FotoAgenda: mongoose.model('FotoAgenda', fotoAgendaSchema),
   PreCadastroAgenda: mongoose.model('PreCadastroAgenda', preCadastroAgendaSchema),
   RetornoAgenda,
+  MensagemModeloAgenda: mongoose.model('MensagemModeloAgenda', mensagemModeloAgendaSchema),
+  ConexaoClienteAgenda: mongoose.model('ConexaoClienteAgenda', conexaoClienteAgendaSchema),
 };
