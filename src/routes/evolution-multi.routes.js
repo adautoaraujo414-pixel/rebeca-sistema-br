@@ -33,12 +33,16 @@ async function _getAssinante(telefone, adminId) {
         return ass || null;
     } catch(_) { return null; }
 }
-async function _getAdminTipo(adminId, AdminModel, AdminDeliveryModel) {
+async function _getAdminTipo(adminId, AdminModel, AdminDeliveryModel, instanciaAdminTipo) {
     const key = adminId?.toString();
     if (!key) return 'corrida';
     const cached = _adminTypeCache.get(key);
     if (cached && (Date.now() - cached.ts) < _CACHE_TTL) return cached.tipo;
-    // Query ao banco apenas se cache expirou
+    // Se instancia ja tem adminTipo definido, usar diretamente (mais rapido e preciso)
+    if (instanciaAdminTipo && instanciaAdminTipo !== 'corrida') {
+        _adminTypeCache.set(key, { tipo: instanciaAdminTipo, plano: null, ts: Date.now() });
+        return instanciaAdminTipo;
+    }
     let tipo = 'corrida';
     let plano = null;
     try {
@@ -46,7 +50,6 @@ async function _getAdminTipo(adminId, AdminModel, AdminDeliveryModel) {
         const adDel = await _AdCheck.findById(adminId).select('_id plano').lean();
         if (adDel) { tipo = 'delivery'; plano = adDel.plano || null; }
     } catch(_) {}
-    // Verificar se é admin da Agenda
     if (tipo === 'corrida') {
         try {
             const { AdminAgenda: _AdAgenda } = require('../models/AgendaServico');
@@ -701,7 +704,7 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                     let resposta;
                     try {
                         // Roteamento via cache — evita queries ao banco por mensagem de texto
-                        const _tipoRota = await _getAdminTipo(adminId);
+                        const _tipoRota = await _getAdminTipo(adminId, null, null, instancia.adminTipo);
                         let adminDoc = { tipoAdmin: _tipoRota };
                         // Fallback inteligente de áudio por tipo
                         if (conteudo === '__AUDIO_SEM_TRANSCRICAO__') {

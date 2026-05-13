@@ -1961,10 +1961,17 @@ function wppIniciar() {
 
 async function wppCarregarStatus() {
   try {
-    var r = await fetch('/api/agenda-ia-servico/whatsapp/status-completo', { headers: { 'Authorization': 'Bearer '+(localStorage.getItem('agenda_token')||'') } });
+    var r = await fetch('/api/agenda/whatsapp/status', { headers: { 'Authorization': 'Bearer '+(localStorage.getItem('agenda_token')||'') } });
     var d = await r.json();
     if(d.instanciaId) _wppInstanciaId = d.instanciaId;
     var conectado = d.conectado || false;
+    // Plano insuficiente
+    if(d.status === 'plano_insuficiente') {
+      if(document.getElementById('wpp-upgrade-card')) document.getElementById('wpp-upgrade-card').style.display='block';
+      if(document.getElementById('wpp-conteudo-147')) document.getElementById('wpp-conteudo-147').style.display='none';
+      if(document.getElementById('wpp-plano-info')) document.getElementById('wpp-plano-info').textContent = 'Plano R$97 — WhatsApp manual disponivel';
+      return;
+    }
     var dot = document.getElementById('wpp-status-dot');
     var label = document.getElementById('wpp-status-label');
     var numLabel = document.getElementById('wpp-numero-label');
@@ -1983,10 +1990,10 @@ async function wppCarregarStatus() {
 async function wppConectar() {
   toast('Aguarde...', 'info');
   try {
-    var r = await fetch('/api/evolution/instancia', {
+    var r = await fetch('/api/agenda/whatsapp/instancia', {
       method: 'POST',
       headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+(localStorage.getItem('agenda_token')||'') },
-      body: JSON.stringify({ adminId: window._adminId, nomeInstancia: 'agenda-'+window._adminId })
+      body: JSON.stringify({ nomeInstancia: 'agenda-'+(window._adminId||'').slice(-8) })
     });
     var d = await r.json();
     if(d._id || d.instancia) {
@@ -2002,7 +2009,7 @@ async function wppConectar() {
 async function wppCarregarQR() {
   if(!_wppInstanciaId) return;
   try {
-    var r = await fetch('/api/evolution/instancia/'+_wppInstanciaId+'/qrcode', { headers: { 'Authorization':'Bearer '+(localStorage.getItem('agenda_token')||'') } });
+    var r = await fetch('/api/agenda/whatsapp/qrcode', { headers: { 'Authorization':'Bearer '+(localStorage.getItem('agenda_token')||'') } });
     var d = await r.json();
     var qrWrap = document.getElementById('wpp-qr-wrap');
     var qrImg = document.getElementById('wpp-qr-img');
@@ -2020,7 +2027,7 @@ async function wppCarregarQR() {
 async function wppDesconectar() {
   if(!_wppInstanciaId || !confirm('Desconectar o WhatsApp?')) return;
   try {
-    await fetch('/api/evolution/instancia/'+_wppInstanciaId+'/desconectar', { method:'POST', headers: { 'Authorization':'Bearer '+(localStorage.getItem('agenda_token')||'') } });
+    await fetch('/api/agenda/whatsapp/desconectar', { method:'POST', headers: { 'Authorization':'Bearer '+(localStorage.getItem('agenda_token')||'') } });
     toast('Desconectado', 'ok');
     wppCarregarStatus();
   } catch(e) { toast('Erro ao desconectar', 'erro'); }
@@ -2028,7 +2035,7 @@ async function wppDesconectar() {
 
 async function wppCarregarConversas() {
   try {
-    var r = await fetch('/api/agenda-ia-servico/conversas', { headers: { 'Authorization':'Bearer '+(localStorage.getItem('agenda_token')||'') } });
+    var r = await fetch('/api/agenda/whatsapp/conversas', { headers: { 'Authorization':'Bearer '+(localStorage.getItem('agenda_token')||'') } });
     var d = await r.json();
     var lista = d.conversas || [];
     var el = document.getElementById('wpp-conversas-lista');
@@ -2056,7 +2063,7 @@ async function wppCarregarConversas() {
 
 async function wppCarregarLogs() {
   try {
-    var r = await fetch('/api/agenda-ia-servico/logs', { headers: { 'Authorization':'Bearer '+(localStorage.getItem('agenda_token')||'') } });
+    var r = await fetch('/api/agenda/whatsapp/logs', { headers: { 'Authorization':'Bearer '+(localStorage.getItem('agenda_token')||'') } });
     var d = await r.json();
     var logs = d.logs || [];
     var el = document.getElementById('wpp-logs-lista');
@@ -2078,7 +2085,7 @@ async function wppCarregarLogs() {
 
 async function wppCarregarStats() {
   try {
-    var r = await fetch('/api/agenda-ia-servico/agendamentos-wpp', { headers: { 'Authorization':'Bearer '+(localStorage.getItem('agenda_token')||'') } });
+    var r = await fetch('/api/agenda/agendamentos?origem=whatsapp_ia', { headers: { 'Authorization':'Bearer '+(localStorage.getItem('agenda_token')||'') } });
     var d = await r.json();
     var ags = d.agendamentos || [];
     document.getElementById('wpp-ag-wpp').textContent = ags.length;
@@ -2087,7 +2094,7 @@ async function wppCarregarStats() {
 
 async function wppAssumirConversa(telefone) {
   try {
-    await fetch('/api/agenda-ia-servico/reset-handoff', {
+    await fetch('/api/agenda/whatsapp/handoff/reset', {
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('agenda_token')||'')},
       body: JSON.stringify({ telefone })

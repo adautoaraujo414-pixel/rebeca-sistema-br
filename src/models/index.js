@@ -406,6 +406,7 @@ module.exports.ConfigMaster = ConfigMaster;
 // ==================== INSTÂNCIA WHATSAPP (MULTI-TENANT) ====================
 const InstanciaWhatsappSchema = new mongoose.Schema({
     adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin', required: true },
+    adminTipo: { type: String, enum: ['corrida','delivery','agenda'], default: 'corrida' },
     nomeInstancia: { type: String, required: true, unique: true },
     apiUrl: { type: String, default: 'https://evolution-api.com' },
     apiKey: String,

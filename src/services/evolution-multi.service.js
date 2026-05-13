@@ -2,7 +2,10 @@ const axios = require('axios');
 const { InstanciaWhatsapp, Admin } = require('../models');
 
 const EVOLUTION_BASE_URL = process.env.EVOLUTION_API_URL || 'https://evolution-api-production-19af.up.railway.app';
-const EVOLUTION_GLOBAL_KEY = process.env.EVOLUTION_API_KEY || '31f8c35a2ed99385b1e2de3855ad43eba929292a8cb22bd42d2522f5567e7bae';
+const EVOLUTION_GLOBAL_KEY = process.env.EVOLUTION_API_KEY || null;
+if (!EVOLUTION_GLOBAL_KEY) {
+  console.warn('[Agenda WhatsApp] EVOLUTION_API_KEY nao configurada — integracao WhatsApp inativa');
+}
 
 
 // ============================================================
