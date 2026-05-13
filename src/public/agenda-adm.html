@@ -959,6 +959,51 @@ input,select,textarea{font-family:'Inter',sans-serif}
             <button class="btn-secondary" onclick="logout()">Sair da conta</button>
           </div>
         </div>
+
+        <!-- ─── MODO REBECA PELO WHATSAPP ─── -->
+        <div class="form-card" id="card-modo-dono" style="margin-top:20px">
+          <div class="form-section-title" style="display:flex;align-items:center;gap:10px">
+            💬 Modo Rebeca pelo WhatsApp
+            <span id="modo-dono-badge" style="font-size:.72rem;padding:3px 10px;border-radius:50px;background:var(--cinza2);color:var(--texto2);font-weight:600">Carregando...</span>
+          </div>
+          <p style="font-size:.88rem;color:var(--texto2);margin-bottom:16px;line-height:1.6">
+            A Rebeca responde pelo WhatsApp conectado ao seu negócio.<br>
+            Para comandar a Rebeca, envie mensagens para esse número usando um telefone autorizado.
+          </p>
+
+          <div style="background:var(--bg);border-radius:10px;padding:14px;margin-bottom:16px;font-size:.83rem;color:var(--texto2);line-height:1.7">
+            <strong style="color:var(--texto);display:block;margin-bottom:6px">Comandos disponíveis:</strong>
+            • Rebeca, mostra minha agenda de hoje<br>
+            • Rebeca, bloqueia amanhã das 12h às 14h<br>
+            • Rebeca, hoje vou trabalhar das 8h às 18h<br>
+            • Rebeca, registra uma entrada de R$120 no Pix<br>
+            • Rebeca, registra um gasto de R$50 em produtos<br>
+            • Rebeca, quanto faturei hoje?<br>
+            • Rebeca, confirma o agendamento das 14h<br>
+            • Rebeca, ajuda
+          </div>
+
+          <div class="form-section-title" style="font-size:.85rem;margin-bottom:10px">Telefones autorizados</div>
+          <p style="font-size:.82rem;color:var(--texto2);margin-bottom:12px">
+            Números que podem enviar comandos para a Rebeca. Seu telefone e WhatsApp cadastrado já são reconhecidos automaticamente.
+          </p>
+
+          <div id="modo-dono-lista-tels" style="margin-bottom:14px;display:flex;flex-wrap:wrap;gap:8px">
+            <span style="color:var(--texto2);font-size:.82rem">Carregando...</span>
+          </div>
+
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <input class="form-input" id="modo-dono-novo-tel" placeholder="Ex: 5511999990000" style="max-width:220px;flex:1">
+            <button class="btn-primary" onclick="modoDonoAdicionarTel()" style="padding:9px 18px;font-size:.85rem">+ Adicionar</button>
+          </div>
+
+          <div class="form-btns" style="margin-top:16px">
+            <button class="btn-secondary" onclick="modoDonoEnviarBoasVindas()" style="font-size:.85rem">
+              💬 Enviar boas-vindas agora
+            </button>
+          </div>
+          <div id="modo-dono-msg" style="margin-top:10px;font-size:.82rem"></div>
+        </div>
       </div>
 
     </div><!-- /content -->
@@ -2507,6 +2552,83 @@ function irPara(tela) {
   }
 }
 // ═══════════════════ /CRM JS ═══════════════════
+
+
+// ═══════════════ MODO DONO JS ═══════════════
+async function modoDonoCarregar() {
+  try {
+    const r = await fetch('/api/agenda/whatsapp/modo-dono', {
+      headers: { Authorization: 'Bearer ' + token }
+    });
+    const d = await r.json();
+    if (!d.sucesso) return;
+    const badge = document.getElementById('modo-dono-badge');
+    if (badge) {
+      badge.textContent = d.modoAtivo ? 'Ativo' : 'Inativo';
+      badge.style.background = d.modoAtivo ? 'var(--verde)' : 'var(--cinza2)';
+      badge.style.color = d.modoAtivo ? '#fff' : 'var(--texto2)';
+    }
+    const lista = document.getElementById('modo-dono-lista-tels');
+    if (!lista) return;
+    const tels = d.telefonesAutorizados || [];
+    const fixos = [];
+    if (d.telefonePrincipal) fixos.push({ tel: d.telefonePrincipal, label: 'principal' });
+    if (d.whatsappPrincipal && d.whatsappPrincipal !== d.telefonePrincipal)
+      fixos.push({ tel: d.whatsappPrincipal, label: 'WhatsApp' });
+    let html = fixos.map(f =>
+      '<span style="display:inline-flex;align-items:center;gap:6px;background:var(--bg);border:1px solid var(--borda);border-radius:50px;padding:4px 12px;font-size:.8rem;color:var(--texto2)">📱 ' + f.tel + ' <em style="font-size:.7rem">(' + f.label + ')</em></span>'
+    ).join('');
+    html += tels.map(tel =>
+      '<span style="display:inline-flex;align-items:center;gap:6px;background:var(--bg);border:1px solid var(--borda);border-radius:50px;padding:4px 12px;font-size:.8rem">📱 ' + tel +
+      ' <button onclick="modoDonoRemoverTel('' + tel + '')" style="background:none;border:none;cursor:pointer;color:var(--vermelho);font-size:1rem;padding:0 2px">×</button></span>'
+    ).join('');
+    lista.innerHTML = html || '<span style="color:var(--texto2);font-size:.82rem">Nenhum telefone adicional</span>';
+  } catch(e) { console.error('modoDono:', e); }
+}
+
+async function modoDonoAdicionarTel() {
+  const inp = document.getElementById('modo-dono-novo-tel');
+  const tel = (inp?.value||'').replace(/\D/g,'');
+  if (!tel||tel.length<10) { mostrarToast('Informe um número válido com DDD'); return; }
+  try {
+    const r = await fetch('/api/agenda/whatsapp/modo-dono/telefones', {
+      method:'POST', headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},
+      body: JSON.stringify({ telefone: tel })
+    });
+    const d = await r.json();
+    if (d.sucesso) { inp.value=''; mostrarToast('Telefone autorizado!'); modoDonoCarregar(); }
+    else mostrarToast(d.erro||'Erro');
+  } catch(e) { mostrarToast('Erro ao adicionar'); }
+}
+
+async function modoDonoRemoverTel(tel) {
+  try {
+    const r = await fetch('/api/agenda/whatsapp/modo-dono/telefones/'+tel, {
+      method:'DELETE', headers:{Authorization:'Bearer '+token}
+    });
+    const d = await r.json();
+    if (d.sucesso) { mostrarToast('Removido'); modoDonoCarregar(); }
+  } catch(e) { mostrarToast('Erro ao remover'); }
+}
+
+async function modoDonoEnviarBoasVindas() {
+  const msg = document.getElementById('modo-dono-msg');
+  if (msg) msg.textContent = 'Enviando...';
+  try {
+    const r = await fetch('/api/agenda/whatsapp/modo-dono/boas-vindas', {
+      method:'POST', headers:{Authorization:'Bearer '+token}
+    });
+    const d = await r.json();
+    if (msg) msg.textContent = d.sucesso ? '✅ Boas-vindas enviadas!' : '❌ '+(d.erro||'Erro');
+  } catch(e) { if (msg) msg.textContent='❌ Erro ao enviar'; }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const tc = document.getElementById('tela-configuracoes');
+  if (tc) new MutationObserver(() => { if (tc.classList.contains('ativa')) modoDonoCarregar(); })
+    .observe(tc, { attributes:true, attributeFilter:['class'] });
+});
+// ═══════════════ /MODO DONO JS ═══════════════
 
 </script>
 
