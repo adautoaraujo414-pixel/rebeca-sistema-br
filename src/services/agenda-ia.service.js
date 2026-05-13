@@ -237,7 +237,7 @@ async function _horariosLivres(adminId, data, duracao) {
   } catch(e) { return []; }
 }
 
-async _criarAgendamento(adminId, dados) {
+async function _criarAgendamento(adminId, dados) {
   try {
     // Compatibilidade: estado salva servico/profissional, nao servicoNome/profissionalNome
     const nomeCliente = dados.nomeCliente || dados.nome || '';
