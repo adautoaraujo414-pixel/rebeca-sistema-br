@@ -884,12 +884,25 @@ input,select,textarea{font-family:'Inter',sans-serif}
         <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
           <button class="btn-sec crm-aba-btn ativo" id="crm-aba-retornos" onclick="crmAba('retornos')">Retornos</button>
           <button class="btn-sec crm-aba-btn" id="crm-aba-inativos" onclick="crmAba('inativos')">Inativos</button>
+          <button class="btn-sec crm-aba-btn" id="crm-aba-conexao" onclick="crmAba('conexao')">💬 Conexão com Clientes</button>
         </div>
 
         <!-- Lista retornos -->
         <div id="crm-lista-retornos">
           <div id="crm-retornos-loading" style="text-align:center;padding:32px;color:var(--texto2)">Carregando...</div>
           <div id="crm-retornos-lista"></div>
+        </div>
+
+        <!-- Lista Conexao com Clientes -->
+        <div id="crm-lista-conexao" style="display:none">
+          <div style="display:flex;gap:8px;margin-bottom:14px;align-items:center;flex-wrap:wrap">
+            <span style="font-size:.9em;color:var(--texto2)">Sugestões de contato humanizado com seus clientes</span>
+            <button class="btn-sec" onclick="conexaoCarregarSugestoes()" style="margin-left:auto">🔄 Atualizar</button>
+            <button class="btn-sec" onclick="conexaoVerModelos()">📋 Modelos</button>
+          </div>
+          <!-- Cards resumo conexao -->
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:16px" id="conexao-cards-wrap"></div>
+          <div id="conexao-sugestoes-lista"></div>
         </div>
 
         <!-- Lista inativos -->
@@ -2206,6 +2219,129 @@ function salvarCfgBot() {
   else { document.getElementById('login-wrap').style.display='flex'; }
 })();
 
+
+// ═══════════════════ CONEXAO COM CLIENTES JS ═══════════════════
+const CONEXAO_STATUS_LABELS = {
+  sugerido:'Sugerido', enviado:'Enviado', contatado:'Contatado',
+  sem_resposta:'Sem resposta', satisfeito:'✅ Satisfeito',
+  insatisfeito:'❌ Insatisfeito', quer_retorno:'📅 Quer retorno',
+  quer_reclamar:'⚠️ Quer reclamar', precisa_humano:'🧑 Precisa de humano'
+};
+const CONEXAO_CAT_LABELS = {
+  agradecimento:'Agradecimento', pos_atendimento:'Pós-atendimento',
+  cuidado:'Cuidado', avaliacao:'Avaliação', retorno:'Retorno',
+  manutencao:'Manutenção', cliente_inativo:'Cliente inativo',
+  recadastramento:'Recadastramento', recuperacao:'Recuperação'
+};
+
+async function conexaoCarregarDashboard() {
+  try {
+    const r = await fetch('/api/agenda/conexao/dashboard-conexao', { headers:{Authorization:'Bearer '+token} });
+    const d = await r.json();
+    if (!d.sucesso) return;
+    const c = d.cards;
+    document.getElementById('conexao-cards-wrap').innerHTML = [
+      {label:'Atendidos hoje', val:c.posAtendimentosHoje, cor:'#6366f1'},
+      {label:'Agradec. pendentes', val:c.agradecimentosPendentes, cor:'#f59e0b'},
+      {label:'Aval. pendentes', val:c.avaliacoesPendentes, cor:'#3b82f6'},
+      {label:'Sem resposta', val:c.semResposta, cor:'#6b7280'},
+      {label:'Insatisfeitos', val:c.insatisfeitos, cor:'#ef4444'},
+      {label:'Inativos 30d', val:c.inativos30, cor:'#f97316'},
+    ].map(it=>`<div class="card" style="text-align:center;padding:12px">
+      <div style="font-size:1.6em;font-weight:700;color:${it.cor}">${it.val}</div>
+      <div style="font-size:.72em;color:var(--texto2)">${it.label}</div>
+    </div>`).join('');
+  } catch(e) {}
+}
+
+async function conexaoCarregarSugestoes() {
+  const el = document.getElementById('conexao-sugestoes-lista');
+  el.innerHTML = '<div style="text-align:center;padding:32px;color:var(--texto2)">Carregando sugestões...</div>';
+  await conexaoCarregarDashboard();
+  try {
+    const r = await fetch('/api/agenda/conexao/sugestoes', { headers:{Authorization:'Bearer '+token} });
+    const d = await r.json();
+    if (!d.sucesso || !d.sugestoes.length) {
+      el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--texto2)">Nenhuma sugestão pendente por agora 🎉</div>';
+      return;
+    }
+    el.innerHTML = d.sugestoes.map((s,i) => `
+      <div class="card" style="margin-bottom:12px;padding:14px;border-left:3px solid ${s.prioridade==='alta'?'#ef4444':'#f59e0b'}">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px">
+          <div>
+            <strong>${s.nome}</strong>
+            <span style="margin-left:8px;font-size:.75em;background:#e0e7ff;color:#4338ca;padding:2px 8px;border-radius:10px">${CONEXAO_CAT_LABELS[s.categoria]||s.categoria}</span>
+            ${s.diasAtras > 0 ? `<span style="margin-left:6px;font-size:.75em;color:var(--texto2)">${s.diasAtras}d atrás</span>` : ''}
+          </div>
+          <div style="display:flex;gap:5px;flex-wrap:wrap">
+            <button class="btn-sec" style="font-size:.78em;padding:3px 9px" onclick="conexaoCopiar(${i})">📋 Copiar</button>
+            ${s.telefone ? `<a href="https://wa.me/${s.telefone.replace(/\D/g,'')}?text=${encodeURIComponent(s.mensagem)}" target="_blank" class="btn-sec" style="font-size:.78em;padding:3px 9px">💬 WhatsApp</a>` : ''}
+            <button class="btn-sec" style="font-size:.78em;padding:3px 9px" onclick="conexaoRegistrar(${i})">✓ Registrar envio</button>
+          </div>
+        </div>
+        ${s.ultimoServico ? `<div style="font-size:.78em;color:var(--texto2);margin-top:4px">Serviço: ${s.ultimoServico}${s.profissional?' • Prof: '+s.profissional:''}</div>` : ''}
+        <div style="margin-top:8px;background:var(--bg);padding:10px;border-radius:8px;font-size:.85em;line-height:1.5;position:relative" id="conexao-msg-${i}">
+          ${s.mensagem}
+          <button onclick="conexaoEditar(${i})" style="position:absolute;top:6px;right:6px;background:none;border:none;cursor:pointer;font-size:.8em;color:var(--texto2)">✏️</button>
+        </div>
+      </div>`).join('');
+    window._conexaoSugestoes = d.sugestoes;
+  } catch(e) { el.innerHTML='<div style="color:red;padding:20px">Erro ao carregar sugestões</div>'; }
+}
+
+function conexaoCopiar(idx) {
+  const s = window._conexaoSugestoes[idx];
+  navigator.clipboard?.writeText(s.mensagem).then(()=>mostrarToast('Mensagem copiada!')).catch(()=>{
+    const ta = document.createElement('textarea');
+    ta.value = s.mensagem; document.body.appendChild(ta); ta.select(); document.execCommand('copy');
+    document.body.removeChild(ta); mostrarToast('Mensagem copiada!');
+  });
+}
+
+function conexaoEditar(idx) {
+  const s = window._conexaoSugestoes[idx];
+  const el = document.getElementById('conexao-msg-'+idx);
+  const nova = prompt('Editar mensagem:', s.mensagem);
+  if (nova !== null) {
+    s.mensagem = nova;
+    el.innerHTML = nova + `<button onclick="conexaoEditar(${idx})" style="position:absolute;top:6px;right:6px;background:none;border:none;cursor:pointer;font-size:.8em;color:var(--texto2)">✏️</button>`;
+  }
+}
+
+async function conexaoRegistrar(idx) {
+  const s = window._conexaoSugestoes[idx];
+  try {
+    const r = await fetch('/api/agenda/conexao/conexoes', {
+      method:'POST',
+      headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},
+      body: JSON.stringify({
+        clienteId: s.clienteId, agendamentoId: s.agendamentoId,
+        nome: s.nome, telefone: s.telefone,
+        ultimoServico: s.ultimoServico, ultimoAtendimento: s.ultimoAtendimento,
+        profissional: s.profissional, categoria: s.categoria,
+        mensagemEnviada: s.mensagem
+      })
+    });
+    const d = await r.json();
+    if (d.sucesso) { mostrarToast('Contato registrado!'); conexaoCarregarSugestoes(); }
+    else alert(d.erro||'Erro');
+  } catch(e) { alert('Erro ao registrar'); }
+}
+
+async function conexaoVerModelos() {
+  try {
+    const r = await fetch('/api/agenda/conexao/modelos', { headers:{Authorization:'Bearer '+token} });
+    const d = await r.json();
+    if (!d.sucesso) return alert('Erro ao carregar modelos');
+    const lista = d.modelos.map(m=>`• [${CONEXAO_CAT_LABELS[m.categoria]||m.categoria}] ${m.titulo}`).join('
+');
+    alert(`Modelos disponíveis (${d.total}):
+
+${lista}`);
+  } catch(e) { alert('Erro'); }
+}
+// ═══════════════════ /CONEXAO COM CLIENTES JS ═══════════════════
+
 // ═══════════════════ CRM JS ═══════════════════
 let crmAbaAtual = 'retornos';
 let crmRetornosCache = [];
@@ -2307,8 +2443,10 @@ function crmAba(aba) {
   document.getElementById('crm-aba-'+aba)?.classList.add('ativo');
   document.getElementById('crm-lista-retornos').style.display = aba==='retornos' ? '' : 'none';
   document.getElementById('crm-lista-inativos').style.display = aba==='inativos' ? '' : 'none';
+  document.getElementById('crm-lista-conexao').style.display = aba==='conexao' ? '' : 'none';
   if (aba==='retornos') crmCarregarRetornos();
   if (aba==='inativos') crmCarregarInativos();
+  if (aba==='conexao') conexaoCarregarSugestoes();
 }
 
 async function crmStatus(id, status) {
