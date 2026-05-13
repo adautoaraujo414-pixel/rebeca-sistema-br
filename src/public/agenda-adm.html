@@ -2333,11 +2333,8 @@ async function conexaoVerModelos() {
     const r = await fetch('/api/agenda/conexao/modelos', { headers:{Authorization:'Bearer '+token} });
     const d = await r.json();
     if (!d.sucesso) return alert('Erro ao carregar modelos');
-    const lista = d.modelos.map(m=>`• [${CONEXAO_CAT_LABELS[m.categoria]||m.categoria}] ${m.titulo}`).join('
-');
-    alert(`Modelos disponíveis (${d.total}):
-
-${lista}`);
+    const lista = d.modelos.map(m=>'• [' + (CONEXAO_CAT_LABELS[m.categoria]||m.categoria) + '] ' + m.titulo).join('\n');
+    alert('Modelos disponíveis (' + d.total + '):\n\n' + lista);
   } catch(e) { alert('Erro'); }
 }
 // ═══════════════════ /CONEXAO COM CLIENTES JS ═══════════════════
