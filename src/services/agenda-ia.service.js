@@ -395,6 +395,7 @@ const AgendaIAService = {
 
     // ── ETAPA: aguardando horario
     if (conv.etapa === 'awaiting_time') {
+      console.log('[AgendaIA] VERSION awaiting_time_fix_34157c2 telefone='+telefone);
       const srv = servicos.find(s => String(s._id) === conv.dados.servicoId);
       const slots = await _horariosLivres(adminId, conv.dados.data, srv && srv.duracao);
       let hora = null;
