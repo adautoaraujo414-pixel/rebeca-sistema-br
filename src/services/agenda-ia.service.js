@@ -279,6 +279,7 @@ async function _criarAgendamento(adminId, dados) {
     _log(adminId, 'agendamento_criado', { nomeCliente, servicoNome, data, hora, telefone });
     return ag;
   } catch(e) {
+    console.error('[_criarAgendamento] ERRO:', e.message, e.stack);
     _log(adminId, 'erro_criar_agendamento', { erro: e.message });
     return null;
   }
@@ -482,7 +483,9 @@ const AgendaIAService = {
           conv.etapa = 'awaiting_time';
           return 'Conferi aqui.\n\nEsse horario foi preenchido agora.\n\nHorarios livres em ' + _fmtData(conv.dados.data) + ':\n\n' + slots.slice(0,8).map((s,i)=>(i+1)+'. '+s).join('\n') + '\n\nQual voce prefere?';
         }
+        console.log('[confirm] chamando _criarAgendamento dados='+JSON.stringify({...conv.dados,telefone}));
         const ag = await _criarAgendamento(adminId, { ...conv.dados, telefone });
+        console.log('[confirm] ag=',ag ? ag._id : null);
         if (!ag) return MSG.erroTecnico(linkAgenda);
         conv.etapa = 'booked';
         _log(adminId, 'agendamento_criado_confirmado', { telefone, servico: conv.dados.servico, hora: conv.dados.hora });
