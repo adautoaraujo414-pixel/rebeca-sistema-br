@@ -12,6 +12,13 @@ const axios = require('axios');
 const { AdminAgenda } = require('../models/AgendaServico');
 const { InstanciaWhatsapp } = require('../models');
 const { getAgendaPlanFeatures } = require('../utils/agenda-plan-features');
+const {
+  normalizarTelefone,
+  mascararTelefone,
+  telefonesIguais,
+  atualizarTelefonePrincipal
+} = require('../utils/normalizar-telefone');
+const { AgendaWhatsappCommandLog } = require('../models/AgendaServico');
 
 // Fallback env
 const ENV_INSTANCE = (process.env.REBECA_OFICIAL_EVOLUTION_INSTANCE || '').trim();
@@ -22,15 +29,9 @@ const EVOLUTION_URL = (process.env.EVOLUTION_API_URL || 'https://evolution-api-p
 const _apresentados = new Set();
 
 // ─── Helpers ──────────────────────────────────────────────────────
-function _norm(tel) {
-  if (!tel) return '';
-  return String(tel).replace(/\D/g, '').replace(/^0/, '');
-}
-
-function _mask(tel) {
-  if (!tel || tel.length < 4) return '****';
-  return '*'.repeat(Math.max(0, tel.length - 4)) + tel.slice(-4);
-}
+// Normalização centralizada — importada de utils/normalizar-telefone.js
+const _norm = normalizarTelefone;
+const _mask = mascararTelefone;
 
 function _extrairTexto(msg, data) {
   return (
@@ -144,9 +145,7 @@ async function _buscarAdminsPorTelefone(telNorm) {
       ...((a.modoWhatsappDono?.telefonesAutorizados) || [])
     ].filter(Boolean).map(_norm);
 
-    return candidatos.some(c =>
-      c && (telNorm === c || telNorm.endsWith(c) || c.endsWith(telNorm))
-    );
+    return candidatos.some(c => c && telefonesIguais(telNorm, c));
   });
 }
 
@@ -265,6 +264,20 @@ async function processarMensagemOficial(payload) {
     const admin   = encontrados[0];
     const adminId = String(admin._id);
     console.log(`[Oficial] ✅ Admin: "${admin.nomeNegocio || admin.nome}" | plano: ${admin.plano}`);
+
+    // Atualizar telefonePrincipalNormalizado se necessário
+    await atualizarTelefonePrincipal(AdminAgenda, adminId, telNorm);
+
+    // Log do comando recebido (base para suporte offline futuro)
+    const _tipoMsg = midia || 'text';
+    AgendaWhatsappCommandLog.create({
+      adminId,
+      telefoneAdminNormalizado: telNorm,
+      origem      : 'rebeca_oficial',
+      textoOriginal: texto.substring(0, 500),
+      tipoMensagem : ['audio','image','video','document'].includes(_tipoMsg) ? _tipoMsg : 'text',
+      status      : 'recebido'
+    }).catch(e => console.warn('[Oficial] Log falhou (não crítico):', e.message));
 
     if (!_planoPermite(admin.plano)) {
       console.log(`[Oficial] 🔒 Plano sem permissão: ${admin.plano}`);

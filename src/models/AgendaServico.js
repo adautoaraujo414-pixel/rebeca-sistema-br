@@ -36,11 +36,14 @@ const adminAgendaSchema = new mongoose.Schema({
   modoWhatsappDono: {
     ativo: { type: Boolean, default: false },
     telefonesAutorizados: { type: [String], default: [] },
-    boasVindasEnviado: { type: Boolean, default: false }
+    telefonePrincipalNormalizado: { type: String, default: '' },
+    usarTelefoneComoIdentidadeOperacional: { type: Boolean, default: true },
+    offlinePreparado: { type: Boolean, default: false },
+    ultimoSyncOfflineEm: { type: Date },
+    boasVindasEnviado: { type: Boolean, default: false },
+      boasVindasOficialEnviadaEm: { type: Date }
   },
   isRebecaOficial: { type: Boolean, default: false },
-  boasVindasOficialEnviada: { type: Boolean, default: false },
-  boasVindasOficialEnviadaEm: { type: Date },
   createdAt: { type: Date, default: Date.now }
 });
 
@@ -275,6 +278,32 @@ const FilaEncaixeAgenda = mongoose.model('FilaEncaixeAgenda', filaEncaixeAgendaS
 
 const RetornoAgenda = mongoose.model('RetornoAgenda', retornoAgendaSchema);
 
+
+// ══════════════════════════════════════════════════════════════════
+// Log de comandos WhatsApp — base para suporte offline futuro
+// Registra comandos recebidos pelo WhatsApp Oficial e pelo número
+// do cliente. adminId é sempre a chave de gravação.
+// ══════════════════════════════════════════════════════════════════
+const agendaWhatsappCommandLogSchema = new mongoose.Schema({
+  adminId                 : { type: mongoose.Schema.Types.ObjectId, ref: 'AdminAgenda', required: true },
+  telefoneAdminNormalizado: { type: String, required: true },
+  origem                  : { type: String, enum: ['rebeca_oficial', 'numero_cliente'], default: 'numero_cliente' },
+  textoOriginal           : { type: String, default: '' },
+  tipoMensagem            : { type: String, enum: ['text', 'audio', 'image', 'video', 'document', 'unknown'], default: 'text' },
+  intencao                : { type: String, default: '' },
+  status                  : { type: String, enum: ['recebido', 'processado', 'pendente', 'erro'], default: 'recebido' },
+  resultado               : { type: String, default: '' },
+  erro                    : { type: String, default: '' },
+  processadoEm            : { type: Date },
+  createdAt               : { type: Date, default: Date.now }
+  // payloadOriginalSeguro omitido intencionalmente — não guardar tokens/keys
+});
+
+agendaWhatsappCommandLogSchema.index({ adminId: 1, createdAt: -1 });
+agendaWhatsappCommandLogSchema.index({ telefoneAdminNormalizado: 1, createdAt: -1 });
+
+const AgendaWhatsappCommandLog = mongoose.model('AgendaWhatsappCommandLog', agendaWhatsappCommandLogSchema);
+
 module.exports = {
   FinanceiroAgenda,
   ContaPagarAgenda,
@@ -290,4 +319,5 @@ module.exports = {
   RetornoAgenda,
   MensagemModeloAgenda: mongoose.model('MensagemModeloAgenda', mensagemModeloAgendaSchema),
   ConexaoClienteAgenda: mongoose.model('ConexaoClienteAgenda', conexaoClienteAgendaSchema),
+  AgendaWhatsappCommandLog,
 };
