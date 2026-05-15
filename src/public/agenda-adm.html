@@ -2580,7 +2580,7 @@ async function modoDonoCarregar() {
     ).join('');
     html += tels.map(tel =>
       '<span style="display:inline-flex;align-items:center;gap:6px;background:var(--bg);border:1px solid var(--borda);border-radius:50px;padding:4px 12px;font-size:.8rem">📱 ' + tel +
-      ' <button onclick="modoDonoRemoverTel('' + tel + '')" style="background:none;border:none;cursor:pointer;color:var(--vermelho);font-size:1rem;padding:0 2px">×</button></span>'
+      ' <button onclick="modoDonoRemoverTel(\'' + tel + '\')" style="background:none;border:none;cursor:pointer;color:var(--vermelho);font-size:1rem;padding:0 2px">×</button></span>'
     ).join('');
     lista.innerHTML = html || '<span style="color:var(--texto2);font-size:.82rem">Nenhum telefone adicional</span>';
   } catch(e) { console.error('modoDono:', e); }
