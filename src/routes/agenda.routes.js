@@ -58,7 +58,7 @@ router.post('/login', async (req, res) => {
     if (!ok) return res.status(401).json({ erro: 'Credenciais inválidas' });
     const token = crypto.randomBytes(32).toString('hex');
     await AdminAgenda.findByIdAndUpdate(admin._id, { token });
-    res.json({ sucesso: true, token, nome: admin.nome, nomeNegocio: admin.nomeNegocio, segmento: admin.segmento, plano: admin.plano });
+    res.json({ sucesso: true, token, nome: admin.nome, nomeNegocio: admin.nomeNegocio, segmento: admin.segmento, plano: admin.plano, admin: { _id: admin._id, nome: admin.nome, nomeNegocio: admin.nomeNegocio, segmento: admin.segmento, plano: admin.plano, email: admin.email } });
   } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
