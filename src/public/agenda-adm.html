@@ -1265,6 +1265,7 @@ async function iniciarApp(){
     document.getElementById('link-publico-url').textContent = link;
     window._linkPublico = link;
     window._adminId = ADMIN_ID;
+    window._adminPlano = ADMIN?.plano || '';
     // Plano
     const plano = ADMIN.plano === 'espaco_digital_ia' ? 'Plano IA 🤖' : 'Plano Profissional';
     document.getElementById('sb-plano-nome').textContent = plano;
