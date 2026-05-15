@@ -1,19 +1,27 @@
 // agenda-rebeca-oficial.service.js
 // WhatsApp Oficial da Rebeca — canal exclusivo para admins/donos
 // NÃO atende clientes finais. NÃO substitui WhatsApp do negócio.
+//
+// Prioridade da instância oficial:
+//   1. AdminAgenda com isRebecaOficial=true + InstanciaWhatsapp conectada
+//   2. Fallback: REBECA_OFICIAL_EVOLUTION_INSTANCE/KEY do .env
 
 'use strict';
 
 const axios = require('axios');
 const { AdminAgenda } = require('../models/AgendaServico');
+const { InstanciaWhatsapp } = require('../models');
 const { getAgendaPlanFeatures } = require('../utils/agenda-plan-features');
 
-const OFICIAL_INSTANCE = (process.env.REBECA_OFICIAL_EVOLUTION_INSTANCE || '').trim();
-const OFICIAL_KEY      = (process.env.REBECA_OFICIAL_EVOLUTION_KEY || process.env.EVOLUTION_API_KEY || '').trim();
-const EVOLUTION_URL    = (process.env.EVOLUTION_API_URL || 'https://evolution-api-production-794f.up.railway.app').replace(/\/$/, '');
+// Fallback env
+const ENV_INSTANCE = (process.env.REBECA_OFICIAL_EVOLUTION_INSTANCE || '').trim();
+const ENV_KEY      = (process.env.REBECA_OFICIAL_EVOLUTION_KEY || process.env.EVOLUTION_API_KEY || '').trim();
+const EVOLUTION_URL = (process.env.EVOLUTION_API_URL || 'https://evolution-api-production-794f.up.railway.app').replace(/\/$/, '');
 
+// Cache de apresentação
 const _apresentados = new Set();
 
+// ─── Helpers ──────────────────────────────────────────────────────
 function _norm(tel) {
   if (!tel) return '';
   return String(tel).replace(/\D/g, '').replace(/^0/, '');
@@ -43,16 +51,72 @@ function _extrairMidia(msg, data) {
   return null;
 }
 
+// ─── Busca instância oficial no banco ─────────────────────────────
+// Retorna { nomeInstancia, apiKey, apiUrl } ou null
+let _cacheInstanciaOficial = null;
+let _cacheInstanciaTs = 0;
+const CACHE_TTL = 5 * 60 * 1000; // 5 min
+
+async function _getInstanciaOficial() {
+  const agora = Date.now();
+  if (_cacheInstanciaOficial && (agora - _cacheInstanciaTs) < CACHE_TTL) {
+    return _cacheInstanciaOficial;
+  }
+
+  try {
+    const adminOficial = await AdminAgenda.findOne({ isRebecaOficial: true, ativo: true })
+      .select('_id instanciaWhatsappId')
+      .lean();
+
+    if (adminOficial?.instanciaWhatsappId) {
+      const inst = await InstanciaWhatsapp.findOne({
+        _id: adminOficial.instanciaWhatsappId,
+        status: { $in: ['conectado', 'open', 'connected'] }
+      }).select('nomeInstancia apiKey apiUrl').lean();
+
+      if (inst?.nomeInstancia) {
+        _cacheInstanciaOficial = {
+          nomeInstancia: inst.nomeInstancia,
+          apiKey: inst.apiKey || ENV_KEY,
+          apiUrl: (inst.apiUrl || EVOLUTION_URL).replace(/\/$/, '')
+        };
+        _cacheInstanciaTs = agora;
+        console.log(`[Oficial] 🔌 Instância oficial carregada do banco: ${inst.nomeInstancia}`);
+        return _cacheInstanciaOficial;
+      }
+    }
+  } catch (e) {
+    console.error('[Oficial] Erro ao buscar instância oficial no banco:', e.message);
+  }
+
+  // Fallback .env
+  if (ENV_INSTANCE) {
+    console.log(`[Oficial] 🔌 Usando instância oficial do .env: ${ENV_INSTANCE}`);
+    return { nomeInstancia: ENV_INSTANCE, apiKey: ENV_KEY, apiUrl: EVOLUTION_URL };
+  }
+
+  console.warn('[Oficial] ⚠️  Nenhuma instância oficial configurada (banco ou .env)');
+  return null;
+}
+
+// Invalida cache quando instância muda
+function invalidarCacheInstancia() {
+  _cacheInstanciaOficial = null;
+  _cacheInstanciaTs = 0;
+}
+
+// ─── Envio pelo WhatsApp Oficial ──────────────────────────────────
 async function _responderOficial(numero, texto) {
-  if (!OFICIAL_INSTANCE || !OFICIAL_KEY) {
-    console.warn('[Oficial] ⚠️  Defina REBECA_OFICIAL_EVOLUTION_INSTANCE e REBECA_OFICIAL_EVOLUTION_KEY');
+  const inst = await _getInstanciaOficial();
+  if (!inst) {
+    console.warn('[Oficial] ⚠️  Sem instância oficial configurada — mensagem não enviada');
     return;
   }
   try {
     await axios.post(
-      `${EVOLUTION_URL}/message/sendText/${OFICIAL_INSTANCE}`,
+      `${inst.apiUrl}/message/sendText/${inst.nomeInstancia}`,
       { number: numero, text: texto },
-      { headers: { apikey: OFICIAL_KEY, 'Content-Type': 'application/json' }, timeout: 12000 }
+      { headers: { apikey: inst.apiKey, 'Content-Type': 'application/json' }, timeout: 12000 }
     );
     console.log(`[Oficial] ✅ Enviado → ${_mask(_norm(numero.replace('@s.whatsapp.net', '')))}`);
   } catch (e) {
@@ -60,8 +124,17 @@ async function _responderOficial(numero, texto) {
   }
 }
 
+// ─── Validar se payload é da instância oficial ────────────────────
+async function _isPayloadOficial(nomeInstanciaRecebida) {
+  if (!nomeInstanciaRecebida) return true; // sem info, deixa passar
+  const inst = await _getInstanciaOficial();
+  if (!inst) return false;
+  return nomeInstanciaRecebida === inst.nomeInstancia;
+}
+
+// ─── Busca admin pelo telefone ────────────────────────────────────
 async function _buscarAdminsPorTelefone(telNorm) {
-  const admins = await AdminAgenda.find({ ativo: true })
+  const admins = await AdminAgenda.find({ ativo: true, isRebecaOficial: { $ne: true } })
     .select('_id nome nomeNegocio telefone whatsapp celular plano modoWhatsappDono')
     .lean();
 
@@ -77,11 +150,13 @@ async function _buscarAdminsPorTelefone(telNorm) {
   });
 }
 
+// ─── Plano ────────────────────────────────────────────────────────
 function _planoPermite(plano) {
   const f = getAgendaPlanFeatures(plano);
   return !!(f?.canUseWhatsappAutomation);
 }
 
+// ─── Apresentação ─────────────────────────────────────────────────
 async function _apresentarSeNecessario(admin, telBruto) {
   const adminId = String(admin._id);
   if (_apresentados.has(adminId) || admin.modoWhatsappDono?.boasVindasOficialEnviada) return false;
@@ -111,6 +186,7 @@ async function _apresentarSeNecessario(admin, telBruto) {
   return true;
 }
 
+// ─── Mídias ───────────────────────────────────────────────────────
 async function _tratarMidia(tipo, telBruto) {
   const r = {
     audio    : 'Recebi seu áudio, mas transcrição ainda não está disponível. Me envie por texto. 😊',
@@ -121,19 +197,22 @@ async function _tratarMidia(tipo, telBruto) {
   await _responderOficial(telBruto, r[tipo] || 'Só processo texto por aqui. 😊');
 }
 
+// ─── Delegação ao ModoDono ────────────────────────────────────────
 async function _delegarAoModoDono(telBruto, texto, adminId) {
   try {
     const ModoDono = require('./agenda-modo-dono.service');
     if (typeof ModoDono.processarComandoAdmin === 'function') {
+      const inst = await _getInstanciaOficial();
       return await ModoDono.processarComandoAdmin(texto, adminId, {
-        canal    : 'rebeca_oficial',
-        instance : OFICIAL_INSTANCE,
-        apiKey   : OFICIAL_KEY,
-        apiUrl   : EVOLUTION_URL,
-        numero   : telBruto
+        canal        : 'rebeca_oficial',
+        instance     : inst?.nomeInstancia,
+        nomeInstancia: inst?.nomeInstancia,
+        apiKey       : inst?.apiKey,
+        apiUrl       : inst?.apiUrl,
+        numero       : telBruto
       });
     }
-    console.warn('[Oficial] ⚠️  agenda-modo-dono.service.js ainda não exporta processarComandoAdmin');
+    console.warn('[Oficial] ⚠️  ModoDono não exporta processarComandoAdmin');
     return false;
   } catch (e) {
     console.error('[Oficial] Erro ao delegar ao ModoDono:', e.message);
@@ -141,6 +220,7 @@ async function _delegarAoModoDono(telBruto, texto, adminId) {
   }
 }
 
+// ─── Entry point ──────────────────────────────────────────────────
 async function processarMensagemOficial(payload) {
   try {
     const data  = payload.data || payload;
@@ -151,7 +231,6 @@ async function processarMensagemOficial(payload) {
 
     const telBruto = key.remoteJid || data.sender || '';
     const telNorm  = _norm(telBruto.replace('@s.whatsapp.net', ''));
-
     if (!telNorm) { console.warn('[Oficial] Telefone não extraído'); return; }
 
     const texto = _extrairTexto(msg, data);
@@ -203,7 +282,6 @@ async function processarMensagemOficial(payload) {
     if (!texto.trim()) return;
 
     const tratado = await _delegarAoModoDono(telBruto, texto, adminId);
-
     if (!tratado) {
       console.log(`[Oficial] ❔ Não reconhecido: "${texto.substring(0, 60)}"`);
       await _responderOficial(telBruto,
@@ -216,8 +294,16 @@ async function processarMensagemOficial(payload) {
   }
 }
 
-function isInstanciaOficial(nomeInstancia) {
-  return !!(OFICIAL_INSTANCE && nomeInstancia && nomeInstancia === OFICIAL_INSTANCE);
+// ─── Helper para webhook dinâmico ─────────────────────────────────
+async function isInstanciaOficial(nomeInstancia) {
+  const inst = await _getInstanciaOficial();
+  if (!inst) return false;
+  return nomeInstancia === inst.nomeInstancia;
 }
 
-module.exports = { processarMensagemOficial, isInstanciaOficial, OFICIAL_INSTANCE };
+module.exports = {
+  processarMensagemOficial,
+  isInstanciaOficial,
+  invalidarCacheInstancia,
+  _getInstanciaOficial
+};

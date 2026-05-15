@@ -38,6 +38,9 @@ const adminAgendaSchema = new mongoose.Schema({
     telefonesAutorizados: { type: [String], default: [] },
     boasVindasEnviado: { type: Boolean, default: false }
   },
+  isRebecaOficial: { type: Boolean, default: false },
+  boasVindasOficialEnviada: { type: Boolean, default: false },
+  boasVindasOficialEnviadaEm: { type: Date },
   createdAt: { type: Date, default: Date.now }
 });
 
