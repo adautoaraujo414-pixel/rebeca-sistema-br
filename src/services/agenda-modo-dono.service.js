@@ -30,7 +30,7 @@ function isDono(telefoneRemetente, admin) {
 }
 
 // ── Enviar mensagem pela instância conectada do admin ────────────────────────
-async function _enviarMsg(instancia, numero, texto) {
+async function _enviarMsg(instancia, numero, texto, instanciaResposta = null) {
   try {
     const apiKey = instancia.apiKey || EVOLUTION_GLOBAL_KEY;
     const baseUrl = instancia.apiUrl || EVOLUTION_BASE_URL;
@@ -125,7 +125,7 @@ function _fmtHora(d) {
 }
 
 // ── Processar comando do dono ────────────────────────────────────────────────
-async function processarComandoDono(telefone, mensagem, adminId) {
+async function processarComandoDono(telefone, mensagem, adminId, instanciaResposta = null) {
   const msg = (mensagem || '').trim();
   const msgL = msg.toLowerCase();
   const adminObjId = adminId;
@@ -137,7 +137,9 @@ async function processarComandoDono(telefone, mensagem, adminId) {
   if (!instancia) return null;
 
   async function responder(texto) {
-    await _enviarMsg(instancia, telefone, texto);
+    const _inst = instanciaResposta || instancia;
+    const _num  = instanciaResposta?.numero || telefone;
+    await _enviarMsg(_inst, _num, texto);
   }
 
   // ── AGENDA DE HOJE ─────────────────────────────────────────────────────────
@@ -385,4 +387,4 @@ async function notificarDonoNovoAgendamento(adminId, dadosAg) {
   }
 }
 
-module.exports = { isDono, enviarBoasVindas, processarComandoDono, notificarDonoNovoAgendamento };
+module.exports = { isDono, enviarBoasVindas, processarComandoDono, notificarDonoNovoAgendamento, processarComandoAdmin: (texto, adminId, instOfc) => processarComandoDono(instOfc?.numero || '', texto, adminId, instOfc) };

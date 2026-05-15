@@ -159,6 +159,7 @@ app.use('/api/admin-master', adminMasterRoutes);
 app.use('/api/cerebro', cerebroRoutes);
 app.use('/api/clientes', _authAdmin, clienteRoutes);
 app.use('/api/gps', gpsRoutes);
+app.use("/api/rebeca-oficial", require("./routes/rebeca-oficial-whatsapp.routes"));
 app.use('/api/gps-integrado', gpsIntegradoRoutes);
 app.use('/api/status', statusRoutes);
 app.use('/api/localidades', localidadeRoutes);
