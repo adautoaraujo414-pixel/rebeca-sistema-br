@@ -1504,6 +1504,8 @@ function irPara(tela){
   if(tela==='profissionais') carregarGridProfissionais();
   if(tela==='servicos') carregarTabelaServicos();
   if(tela==='financeiro') carregarFinanceiro();
+  if(tela==='crm'){ if(typeof crmCarregarDashboard==='function') crmCarregarDashboard(); }
+  if(tela==='configuracoes'){ if(typeof modoDonoCarregar==='function') modoDonoCarregar(); }
 }
 
 function irParaMob(tela){
@@ -2546,16 +2548,7 @@ async function crmNovoRetorno() {
   } catch(e) { alert('Erro'); }
 }
 
-// Carregar CRM quando a tela abrir
-const _origIrPara = irPara;
-function irPara(tela) {
-  _origIrPara(tela);
-  if (tela === 'crm') {
-    crmCarregarDashboard();
-    if (crmAbaAtual === 'retornos') crmCarregarRetornos();
-    else crmCarregarInativos();
-  }
-}
+// CRM integrado na irPara principal
 // ═══════════════════ /CRM JS ═══════════════════
 
 
