@@ -21,6 +21,7 @@ router.use('/fornecedores', require('./soft-fornecedores.routes'));
 router.use('/compras',      require('./soft-compras.routes'));
 router.use('/clientes',     require('./soft-clientes.routes'));
 router.use('/despesas',     require('./soft-despesas.routes'));
+router.use('/financeiro',   require('./soft-financeiro.routes'));
 
 // Rota de status/health do módulo (sem auth — útil para monitoramento)
 router.get('/status', (req, res) => {
