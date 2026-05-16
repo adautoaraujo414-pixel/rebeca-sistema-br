@@ -291,6 +291,7 @@ app.use('/api/agenda/whatsapp', require('./routes/agenda-whatsapp.routes'));
 app.use('/api/agenda/crm', require('./routes/agenda-crm.routes'));
 app.use('/api/agenda/conexao', require('./routes/agenda-conexao.routes'));
 app.use('/api/soft', require('./soft/routes/_index.routes'));
+app.use('/api/catalogo', require('./soft/routes/soft-catalogo-public.routes'));
 console.log('🔄 Agenda: recuperação de clientes ativa');
 app.get('/agenda', (req, res) => res.sendFile(path.join(__dirname, 'public', 'agenda-landing.html')));
 app.get('/agenda-profissional', (req, res) => res.sendFile(path.join(__dirname, 'public/agenda-profissional.html')));
