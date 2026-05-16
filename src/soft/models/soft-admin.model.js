@@ -36,11 +36,11 @@ SoftAdminSchema.index({ slug: 1 },   { unique: true });
 SoftAdminSchema.index({ ativo: 1 });
 
 // Limitar array de refreshTokens a 5 entradas
-SoftAdminSchema.pre('save', function(next) {
+SoftAdminSchema.pre('save', async function() {
   if (this.refreshTokens.length > 5) {
     this.refreshTokens = this.refreshTokens.slice(-5);
   }
-  next();
+
 });
 
 // Método de verificação de senha
