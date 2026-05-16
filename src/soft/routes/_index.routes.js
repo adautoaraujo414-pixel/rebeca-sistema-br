@@ -11,7 +11,8 @@ const router = require('express').Router();
 require('../models/_index');
 
 // --- Rotas do módulo Soft ---
-router.use('/auth', require('./soft-auth.routes'));
+router.use('/auth',       require('./soft-auth.routes'));
+router.use('/categorias', require('./soft-categorias.routes'));
 
 // Rota de status/health do módulo (sem auth — útil para monitoramento)
 router.get('/status', (req, res) => {
