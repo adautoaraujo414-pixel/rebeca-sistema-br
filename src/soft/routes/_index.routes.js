@@ -15,6 +15,7 @@ router.use('/auth',       require('./soft-auth.routes'));
 router.use('/categorias', require('./soft-categorias.routes'));
 router.use('/produtos',   require('./soft-produtos.routes'));
 router.use('/estoque',    require('./soft-estoque.routes'));
+router.use('/caixa',      require('./soft-caixa.routes'));
 
 // Rota de status/health do módulo (sem auth — útil para monitoramento)
 router.get('/status', (req, res) => {
