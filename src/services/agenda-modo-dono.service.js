@@ -509,16 +509,8 @@ A semana tá zerada por enquanto. Bora divulgar pra encher a agenda! 🚀`);
         if (!porDia[d]) porDia[d] = [];
         porDia[d].push(`  • ${_fmtHora(new Date(a.dataHora))} — ${a.nomeCliente}`);
       });
-      const lista = Object.entries(porDia).map(([d,v]) => '📅 *' + d + '*
-' + v.join('
-')).join('
-
-');
-      await responder('Olha a semana aí, ' + _chefe() + '! 🗓️
-
-' + lista + '
-
-' + ags.length + ' agendamento(s) no total. Tá cheio! 💪');
+      const lista = Object.entries(porDia).map(([d,v]) => '📅 *' + d + '*\n' + v.join('\n')).join('\n\n');
+      await responder('Olha a semana aí, ' + _chefe() + '! 🗓️\n\n' + lista + '\n\n' + ags.length + ' agendamento(s) no total. Tá cheio! 💪');
     }
     return true;
   }
@@ -594,8 +586,7 @@ Removi ${res.deletedCount} bloqueio(s) de ${_fmtData(dia)}. Agenda aberta e pron
       if (!ags.length) {
         await responder(`Hmm, não achei histórico pra *${nome}* não, ${_chefe()}. Será que o nome tá diferente? 🤔`);
       } else {
-        const lista = ags.map(a => `• ${_fmtData(new Date(a.dataHora))} — ${a.nomeServico || 'Serviço'}`).join('
-');
+        const lista = ags.map(a => `• ${_fmtData(new Date(a.dataHora))} — ${a.nomeServico || 'Serviço'}`).join(' + ');
         await responder(`Achei aqui, ${_chefe()}! 🔍
 
 👤 *${ags[0].nomeCliente}*
@@ -637,8 +628,7 @@ Nenhum aniversariante nos próximos 7 dias não. Mas fique de olho! 👀`);
       const lista = aniv.map(c => {
         const d = new Date(c.dataNascimento);
         return `• ${c.nome} — ${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`;
-      }).join('
-');
+      }).join(' + ');
       await responder(`🎂 Ó os aniversariantes, ${_chefe()}!
 
 ${lista}
@@ -700,8 +690,7 @@ ${atend>10?'Esse mês tá voando! 🚀':'Ainda dá tempo de bombar! 💪'}`);
 
 Nenhum confirmado ainda hoje não. Quer que eu mande lembrete pra galera? Me fala! 💙`);
     } else {
-      const lista = ags.map(a => `✅ ${_fmtHora(new Date(a.dataHora))} — ${a.nomeCliente}`).join('
-');
+      const lista = ags.map(a => `✅ ${_fmtHora(new Date(a.dataHora))} — ${a.nomeCliente}`).join(' + ');
       await responder(`${_saudacao()}, ${_chefe()}! Olha quem confirmou hoje! 🎉
 
 ${lista}
@@ -722,8 +711,7 @@ ${ags.length} confirmado(s)! Tá cheio! 💪`);
       await responder(`Ainda não tem dados suficientes não, ${_chefe()}. Mês que vem já vai ter um ranking lindo! 📊`);
     } else {
       const emojis = ['🥇','🥈','🥉','4️⃣','5️⃣'];
-      const lista = sorted.map(([s,n],i) => `${emojis[i]} ${s} — ${n}x`).join('
-');
+      const lista = sorted.map(([s,n],i) => `${emojis[i]} ${s} — ${n}x`).join(' + ');
       await responder(`Olha o ranking desse mês, ${_chefe()}! 🏆
 
 ${lista}
