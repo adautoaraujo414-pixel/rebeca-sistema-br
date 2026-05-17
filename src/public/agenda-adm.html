@@ -2695,7 +2695,7 @@ const CONEXAO_CAT_LABELS = {
 
 async function conexaoCarregarDashboard() {
   try {
-    const r = await fetch('/api/agenda/conexao/dashboard-conexao', { headers:{Authorization:'Bearer '+token} });
+    const r = await fetch('/api/agenda/conexao/dashboard-conexao', { headers:{Authorization:'Bearer '+TOKEN} });
     const d = await r.json();
     if (!d.sucesso) return;
     const c = d.cards;
@@ -2718,7 +2718,7 @@ async function conexaoCarregarSugestoes() {
   el.innerHTML = '<div style="text-align:center;padding:32px;color:var(--texto2)">Carregando sugestões...</div>';
   await conexaoCarregarDashboard();
   try {
-    const r = await fetch('/api/agenda/conexao/sugestoes', { headers:{Authorization:'Bearer '+token} });
+    const r = await fetch('/api/agenda/conexao/sugestoes', { headers:{Authorization:'Bearer '+TOKEN} });
     const d = await r.json();
     if (!d.sucesso || !d.sugestoes.length) {
       el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--texto2)">Nenhuma sugestão pendente por agora 🎉</div>';
@@ -2772,7 +2772,7 @@ async function conexaoRegistrar(idx) {
   try {
     const r = await fetch('/api/agenda/conexao/conexoes', {
       method:'POST',
-      headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},
+      headers:{'Content-Type':'application/json',Authorization:'Bearer '+TOKEN},
       body: JSON.stringify({
         clienteId: s.clienteId, agendamentoId: s.agendamentoId,
         nome: s.nome, telefone: s.telefone,
@@ -2789,7 +2789,7 @@ async function conexaoRegistrar(idx) {
 
 async function conexaoVerModelos() {
   try {
-    const r = await fetch('/api/agenda/conexao/modelos', { headers:{Authorization:'Bearer '+token} });
+    const r = await fetch('/api/agenda/conexao/modelos', { headers:{Authorization:'Bearer '+TOKEN} });
     const d = await r.json();
     if (!d.sucesso) return alert('Erro ao carregar modelos');
     const lista = d.modelos.map(m=>'• [' + (CONEXAO_CAT_LABELS[m.categoria]||m.categoria) + '] ' + m.titulo).join('\n');
@@ -2909,7 +2909,7 @@ async function crmStatus(id, status) {
   try {
     await fetch(`/api/agenda/crm/retornos/${id}/status`, {
       method: 'PATCH',
-      headers: { 'Content-Type':'application/json', Authorization: 'Bearer '+token },
+      headers: { 'Content-Type':'application/json', Authorization: 'Bearer '+TOKEN },
       body: JSON.stringify({ status })
     });
     crmCarregarRetornos();
@@ -2921,7 +2921,7 @@ async function crmCriarRetornoDeInativo(cliente) {
   try {
     const r = await fetch('/api/agenda/crm/retornos', {
       method: 'POST',
-      headers: { 'Content-Type':'application/json', Authorization: 'Bearer '+token },
+      headers: { 'Content-Type':'application/json', Authorization: 'Bearer '+TOKEN },
       body: JSON.stringify({
         clienteId: cliente._id,
         nome: cliente.nome,
@@ -2946,7 +2946,7 @@ async function crmNovoRetorno() {
   try {
     const r = await fetch('/api/agenda/crm/retornos', {
       method:'POST',
-      headers:{'Content-Type':'application/json', Authorization:'Bearer '+token},
+      headers:{'Content-Type':'application/json', Authorization:'Bearer '+TOKEN},
       body: JSON.stringify({ nome, telefone: tel, tipoRetorno: tipo || 'retorno' })
     });
     const d = await r.json();
@@ -2997,7 +2997,7 @@ async function modoDonoAdicionarTel() {
   if (!tel||tel.length<10) { mostrarToast('Informe um número válido com DDD'); return; }
   try {
     const r = await fetch('/api/agenda/whatsapp/modo-dono/telefones', {
-      method:'POST', headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},
+      method:'POST', headers:{'Content-Type':'application/json',Authorization:'Bearer '+TOKEN},
       body: JSON.stringify({ telefone: tel })
     });
     const d = await r.json();
@@ -3009,7 +3009,7 @@ async function modoDonoAdicionarTel() {
 async function modoDonoRemoverTel(tel) {
   try {
     const r = await fetch('/api/agenda/whatsapp/modo-dono/telefones/'+tel, {
-      method:'DELETE', headers:{Authorization:'Bearer '+token}
+      method:'DELETE', headers:{Authorization:'Bearer '+TOKEN}
     });
     const d = await r.json();
     if (d.sucesso) { mostrarToast('Removido'); modoDonoCarregar(); }
@@ -3021,7 +3021,7 @@ async function modoDonoEnviarBoasVindas() {
   if (msg) msg.textContent = 'Enviando...';
   try {
     const r = await fetch('/api/agenda/whatsapp/modo-dono/boas-vindas', {
-      method:'POST', headers:{Authorization:'Bearer '+token}
+      method:'POST', headers:{Authorization:'Bearer '+TOKEN}
     });
     const d = await r.json();
     if (msg) msg.textContent = d.sucesso ? '✅ Boas-vindas enviadas!' : '❌ '+(d.erro||'Erro');
