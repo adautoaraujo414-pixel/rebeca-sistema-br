@@ -228,7 +228,7 @@ function renderPedido(p){
 }
 
 carregar();
-_intervalo=setInterval(carregar,5000);
+_intervalo=RebecaRealtime.register("rastrear-delivery", carregar, 5000, "critica", false);
 </script>
 </body>
 </html>
