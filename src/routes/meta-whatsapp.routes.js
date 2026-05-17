@@ -94,3 +94,76 @@ router.post('/enviar-teste', async (req, res) => {
 });
 
 module.exports = router;
+
+// ── AUTO RENOVAÇÃO DE TOKEN ──────────────────────────────────────
+router.get('/renovar-token', async (req, res) => {
+  try {
+    const axios = require('axios');
+    const token     = process.env.META_WA_TOKEN;
+    const appId     = process.env.META_WA_APP_ID || '1277260361061515';
+    const appSecret = process.env.META_WA_APP_SECRET;
+
+    const r = await axios.get('https://graph.facebook.com/v20.0/oauth/access_token', {
+      params: {
+        grant_type:        'fb_exchange_token',
+        client_id:         appId,
+        client_secret:     appSecret,
+        fb_exchange_token: token
+      }
+    });
+
+    const novoToken  = r.data.access_token;
+    const expiresEm  = r.data.expires_in;
+
+    // Loga para copiar manualmente se precisar
+    console.log('[MetaWA] Token renovado. Expira em:', expiresEm, 'segundos');
+    console.log('[MetaWA] Novo token:', novoToken.substring(0, 40) + '...');
+
+    res.json({
+      sucesso:   true,
+      expiresEm,
+      tokenInicio: novoToken.substring(0, 40) + '...',
+      aviso: 'Atualize META_WA_TOKEN no Render com o token completo abaixo',
+      tokenCompleto: novoToken
+    });
+
+  } catch(e) {
+    console.error('[MetaWA] renovar-token erro:', e.response?.data || e.message);
+    res.status(500).json({ sucesso: false, erro: e.response?.data || e.message });
+  }
+});
+
+// ── VERIFICAR EXPIRAÇÃO ──────────────────────────────────────────
+router.get('/token-info', async (req, res) => {
+  try {
+    const axios  = require('axios');
+    const token  = process.env.META_WA_TOKEN;
+    const appId  = process.env.META_WA_APP_ID || '1277260361061515';
+    const secret = process.env.META_WA_APP_SECRET;
+
+    const r = await axios.get('https://graph.facebook.com/debug_token', {
+      params: {
+        input_token:  token,
+        access_token: `${appId}|${secret}`
+      }
+    });
+
+    const d          = r.data.data;
+    const expiresAt  = d.expires_at ? new Date(d.expires_at * 1000) : null;
+    const diasRestantes = expiresAt
+      ? Math.floor((expiresAt - Date.now()) / 86400000)
+      : null;
+
+    res.json({
+      valido:        d.is_valid,
+      expiraEm:      expiresAt,
+      diasRestantes,
+      app:           d.application,
+      scopes:        d.scopes,
+      aviso:         diasRestantes < 10 ? '⚠️ RENOVAR TOKEN URGENTE' : '✅ Token OK'
+    });
+
+  } catch(e) {
+    res.status(500).json({ sucesso: false, erro: e.response?.data || e.message });
+  }
+});
