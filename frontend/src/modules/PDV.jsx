@@ -13,29 +13,31 @@ import { CaixaModal }     from './pdv/CaixaModal';
 export default function PDV() {
   const qc = useQueryClient();
   const { toast, mostrar, fechar } = useToast();
+  const { adicionarItem, limpar, setCaixa } = usePDVStore();
 
-  const { adicionarItem, limpar, setCaixa, caixa } = usePDVStore();
-
-  const [busca,         setBusca]         = useState('');
-  const [resultados,    setResultados]    = useState([]);
-  const [buscando,      setBuscando]      = useState(false);
-  const [paymentOpen,   setPaymentOpen]   = useState(false);
-  const [caixaModal,    setCaixaModal]    = useState(null); // 'abrir' | 'fechar'
-  const [finalizando,   setFinalizando]   = useState(false);
+  const [busca,       setBusca]       = useState('');
+  const [resultados,  setResultados]  = useState([]);
+  const [buscando,    setBuscando]    = useState(false);
+  const [paymentOpen, setPaymentOpen] = useState(false);
+  const [caixaModal,  setCaixaModal]  = useState(null);
+  const [finalizando, setFinalizando] = useState(false);
   const debounceRef = useRef(null);
 
-  // Carregar caixa atual
+  // ✅ Padrão v5 — sem onSuccess/onError no useQuery
   const { data: caixaData, refetch: refetchCaixa } = useQuery({
     queryKey: ['caixa', 'atual'],
-    queryFn:  caixaApi.atual,
+    queryFn:  () => caixaApi.atual().catch(() => null),
     retry: false,
-    onSuccess: (d) => setCaixa(d),
-    onError:   ()  => setCaixa(null),
+    staleTime: 1000 * 30,
   });
+
+  // ✅ Migrado: useEffect observa caixaData
+  useEffect(() => {
+    setCaixa(caixaData ?? null);
+  }, [caixaData, setCaixa]);
 
   const caixaAberto = caixaData?.aberto ?? false;
 
-  // Busca com debounce
   const handleBusca = useCallback((v) => {
     setBusca(v);
     clearTimeout(debounceRef.current);
@@ -61,7 +63,6 @@ export default function PDV() {
     document.getElementById('pdv-busca')?.focus();
   }
 
-  // Abrir/fechar caixa
   const abrirCaixaMut = useMutation({
     mutationFn: (v) => caixaApi.abrir({ saldoInicial: v }),
     onSuccess: () => { refetchCaixa(); setCaixaModal(null); mostrar('Caixa aberto!'); },
@@ -74,7 +75,6 @@ export default function PDV() {
     onError:   () => mostrar('Erro ao fechar caixa.', 'error'),
   });
 
-  // Finalizar venda
   async function finalizarVenda({ formaPagamento, valorRecebido, troco }) {
     const itens = usePDVStore.getState().itens;
     if (!itens.length) return;
@@ -82,14 +82,13 @@ export default function PDV() {
     try {
       await vendaApi.criar({
         itens: itens.map(i => ({ produtoId: i._id, quantidade: i.qty, precoUnitario: i.preco })),
-        formaPagamento,
-        valorRecebido,
-        troco,
+        formaPagamento, valorRecebido, troco,
       });
       limpar();
       setPaymentOpen(false);
       mostrar('Venda finalizada! ✅');
       qc.invalidateQueries({ queryKey: ['dashboard'] });
+      qc.invalidateQueries({ queryKey: ['caixa'] });
     } catch (err) {
       mostrar(err.response?.data?.mensagem || 'Erro ao finalizar venda.', 'error');
     } finally {
@@ -97,7 +96,6 @@ export default function PDV() {
     }
   }
 
-  // Atalhos de teclado globais
   useEffect(() => {
     function onKey(e) {
       if (paymentOpen || caixaModal) return;
@@ -115,8 +113,6 @@ export default function PDV() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
-
-      {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 'var(--space-3)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
           <Store size={22} color="var(--color-primary)" />
@@ -125,45 +121,30 @@ export default function PDV() {
             <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-3)' }}>F2 busca · Enter adiciona · F9 finaliza · F4 caixa</p>
           </div>
         </div>
-        <button
-          onClick={() => setCaixaModal(caixaAberto ? 'fechar' : 'abrir')}
-          style={{
-            display: 'flex', alignItems: 'center', gap: 'var(--space-2)',
-            padding: 'var(--space-2) var(--space-4)',
-            background: caixaAberto ? 'var(--color-success-bg)' : 'var(--color-error-bg)',
-            border: `1px solid ${caixaAberto ? 'var(--color-success)' : 'var(--color-error)'}`,
-            borderRadius: 'var(--radius-md)',
-            color: caixaAberto ? 'var(--color-success)' : 'var(--color-error)',
-            cursor: 'pointer', fontSize: 'var(--text-sm)',
-            fontFamily: 'var(--font-sans)', fontWeight: 'var(--weight-medium)',
-          }}
-        >
+        <button onClick={() => setCaixaModal(caixaAberto ? 'fechar' : 'abrir')} style={{
+          display: 'flex', alignItems: 'center', gap: 'var(--space-2)',
+          padding: 'var(--space-2) var(--space-4)',
+          background: caixaAberto ? 'var(--color-success-bg)' : 'var(--color-error-bg)',
+          border: `1px solid ${caixaAberto ? 'var(--color-success)' : 'var(--color-error)'}`,
+          borderRadius: 'var(--radius-md)',
+          color: caixaAberto ? 'var(--color-success)' : 'var(--color-error)',
+          cursor: 'pointer', fontSize: 'var(--text-sm)',
+          fontFamily: 'var(--font-sans)', fontWeight: 'var(--weight-medium)',
+        }}>
           {caixaAberto ? <Unlock size={15} /> : <Lock size={15} />}
           {caixaAberto ? 'Caixa aberto  F4' : 'Abrir caixa  F4'}
         </button>
       </div>
 
-      {/* Alerta caixa fechado */}
       {!caixaAberto && (
         <div style={{ background: 'var(--color-warning-bg)', border: '1px solid var(--color-warning)', borderRadius: 'var(--radius-md)', padding: 'var(--space-3) var(--space-4)', color: 'var(--color-warning)', fontSize: 'var(--text-sm)' }}>
-          Abra o caixa para registrar vendas.  Pressione F4 ou clique no botão acima.
+          Abra o caixa para registrar vendas. Pressione F4 ou clique no botão acima.
         </div>
       )}
 
-      {/* Layout principal */}
       <div style={{ display: 'flex', gap: 'var(--space-5)', alignItems: 'flex-start' }}>
-
-        {/* Coluna esquerda */}
         <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
-          <PDVSearchBar
-            value={busca}
-            onChange={handleBusca}
-            resultados={resultados}
-            onSelect={selecionarProduto}
-            loading={buscando}
-          />
-
-          {/* Dica vazia */}
+          <PDVSearchBar value={busca} onChange={handleBusca} resultados={resultados} onSelect={selecionarProduto} loading={buscando} />
           {!busca && (
             <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-lg)', padding: 'var(--space-10)', textAlign: 'center', color: 'var(--color-text-3)' }}>
               <Store size={40} strokeWidth={1} style={{ marginBottom: 'var(--space-4)', opacity: 0.4 }} />
@@ -172,15 +153,9 @@ export default function PDV() {
             </div>
           )}
         </div>
-
-        {/* Carrinho */}
-        <CartSidebar
-          onFinalizar={() => setPaymentOpen(true)}
-          caixaAberto={caixaAberto}
-        />
+        <CartSidebar onFinalizar={() => setPaymentOpen(true)} caixaAberto={caixaAberto} />
       </div>
 
-      {/* Modal pagamento */}
       {paymentOpen && (
         <PaymentModal
           total={usePDVStore.getState().total()}
@@ -190,14 +165,10 @@ export default function PDV() {
         />
       )}
 
-      {/* Modal caixa */}
       {caixaModal && (
         <CaixaModal
           modo={caixaModal}
-          onConfirmar={(v) => caixaModal === 'abrir'
-            ? abrirCaixaMut.mutate(v)
-            : fecharCaixaMut.mutate(v)
-          }
+          onConfirmar={(v) => caixaModal === 'abrir' ? abrirCaixaMut.mutate(v) : fecharCaixaMut.mutate(v)}
           onCancelar={() => setCaixaModal(null)}
           loading={abrirCaixaMut.isPending || fecharCaixaMut.isPending}
         />
