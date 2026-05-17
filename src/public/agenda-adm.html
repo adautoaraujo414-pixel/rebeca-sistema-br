@@ -66,8 +66,8 @@ input,select,textarea{font-family:'Inter',sans-serif}
 .login-link a{color:var(--cor);font-weight:600}
 
 /* ─── LAYOUT PRINCIPAL ─── */
-.app{display:none;min-height:100vh}
-.app.show{display:flex}
+.app{display:none}
+.app.show{display:block}
 
 /* ─── SIDEBAR ─── */
 .sidebar{width:var(--sidebar);background:#fafafa;border-right:1px solid var(--borda2);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100;transition:var(--transition-md)}
@@ -95,7 +95,7 @@ input,select,textarea{font-family:'Inter',sans-serif}
 .sidebar-plano-btn:hover{background:var(--cor2);box-shadow:0 2px 8px rgba(249,115,22,.3)}
 
 /* ─── MAIN ─── */
-.main{margin-left:var(--sidebar);flex:1;display:flex;flex-direction:column;min-height:100vh}
+.main{margin-left:var(--sidebar);min-height:100vh;display:flex;flex-direction:column}
 
 /* ─── HEADER DESKTOP ─── */
 .header{height:56px;background:rgba(255,255,255,.95);backdrop-filter:blur(8px);border-bottom:1px solid var(--borda2);display:flex;align-items:center;padding:0 20px;gap:12px;position:sticky;top:0;z-index:90}
@@ -121,8 +121,40 @@ input,select,textarea{font-family:'Inter',sans-serif}
 .header-perfil-cargo{font-size:.7em;color:var(--texto3)}
 
 /* ─── CONTENT ─── */
-.content{flex:1;padding:28px 24px;margin-left:var(--sidebar);min-height:100vh;overflow-y:auto;box-sizing:border-box;width:calc(100% - var(--sidebar))}
+.content{flex:1;padding:28px 24px;margin-left:var(--sidebar);box-sizing:border-box;width:calc(100% - var(--sidebar));min-height:calc(100vh - 56px)}
 
+
+/* ─── MOBILE DRAWER ─── */
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:99;backdrop-filter:blur(2px);opacity:0;transition:opacity .25s ease}
+.sidebar-overlay.show{opacity:1}
+.mobile-menu-btn{display:none;width:36px;height:36px;background:transparent;border:1px solid var(--borda);border-radius:var(--radius-sm);align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
+
+/* ─── RESPONSIVIDADE ─── */
+@media(max-width:1024px){
+  :root{--sidebar:220px}
+}
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%);z-index:200;background:#fff;box-shadow:var(--shadow-xl)}
+  .sidebar.open{transform:translateX(0)}
+  .sidebar-overlay{display:block}
+  .main{margin-left:0!important}
+  .content{margin-left:0!important;width:100%!important;padding:20px 16px}
+  .mobile-menu-btn{display:flex}
+  .header{padding:0 16px;gap:10px}
+  .header-search{max-width:none;flex:1}
+  .header-search-kbd{display:none}
+  .header-ajuda span{display:none}
+  .metrics{grid-template-columns:1fr 1fr!important}
+  .main-grid{grid-template-columns:1fr!important}
+  .page-grid-4{grid-template-columns:1fr 1fr!important}
+  .page-grid-3{grid-template-columns:1fr!important}
+  .page-grid-2{grid-template-columns:1fr!important}
+}
+@media(max-width:480px){
+  .metrics{grid-template-columns:1fr!important}
+  .page-grid-4{grid-template-columns:1fr!important}
+  .content{padding:16px 12px}
+}
 /* ─── LAYOUT GLOBAL PADRÃO ─── */
 .page-container{max-width:1200px;width:100%;margin:0 auto}
 .page-section{background:#fff;border:1px solid var(--borda);border-radius:var(--radius-lg);padding:24px;margin-bottom:20px;box-shadow:var(--shadow)}
@@ -401,7 +433,29 @@ input,select,textarea{font-family:'Inter',sans-serif}
 .fin-filtro.ativo{background:var(--cor);border-color:var(--cor);color:#fff}
 </style>
 <link rel="manifest" href="/agenda-adm-manifest.json">
-<script src="/js/agenda-notif-helper.js"></script>
+<script src="/js/agenda-notif-helper.js">
+// ── SIDEBAR MOBILE DRAWER ──────────────────────────────────────────────────
+function toggleSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebar-overlay');
+  const isOpen = sidebar.classList.contains('open');
+  if (isOpen) {
+    sidebar.classList.remove('open');
+    overlay.classList.remove('show');
+    document.body.style.overflow = '';
+  } else {
+    sidebar.classList.add('open');
+    overlay.classList.add('show');
+    document.body.style.overflow = 'hidden';
+  }
+}
+// Fechar sidebar ao navegar no mobile
+document.querySelectorAll('.nav-item').forEach(item => {
+  item.addEventListener('click', () => {
+    if (window.innerWidth <= 768) toggleSidebar();
+  });
+});
+</script>
 <script src="/js/agenda-wpp-templates.js"></script>
 </head>
 <body>
