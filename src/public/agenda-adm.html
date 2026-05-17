@@ -461,153 +461,74 @@ input,select,textarea{font-family:'Inter',sans-serif}
   gap: 16px;
 }
 
-/* ═══════════════════════════════════════════════════════════════════
-   TELA WHATSAPP — CSS isolado, prefixado .wpp-
-   Não afeta dashboard nem outras telas.
-   ═══════════════════════════════════════════════════════════════════ */
 
-/* Stats grid */
-.wpp-stats {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-  margin-bottom: 20px;
+/* ═══ WPP CSS — único, isolado, sem duplicatas ═══════════════════════════ */
+.wpp-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px;box-sizing:border-box}
+.wpp-stat-card{padding:16px!important}
+.wpp-stat-label{font-size:.7em;font-weight:600;color:var(--texto4);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+.wpp-stat-value{font-weight:700;font-size:1em}
+.wpp-stat-num{font-size:1.4em;letter-spacing:-.02em}
+.wpp-stat-alerta{color:var(--vermelho)}
+.wpp-stat-sub{font-size:.72em;color:var(--texto3);margin-top:4px}
+.wpp-upgrade-card{background:linear-gradient(135deg,#fff7ed,#ffedd5);border:1.5px solid #fdba74;border-radius:var(--radius-lg);padding:32px;text-align:center;margin-bottom:20px;box-sizing:border-box}
+.wpp-upgrade-icon{font-size:1.4em;margin-bottom:10px}
+.wpp-upgrade-title{font-weight:800;font-size:1em;margin-bottom:6px}
+.wpp-upgrade-desc{font-size:.83em;color:var(--texto2);margin-bottom:16px;max-width:400px;margin-inline:auto}
+.wpp-upgrade-features{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.wpp-feature-tag{background:var(--branco);border-radius:8px;padding:8px 14px;font-size:.8em;font-weight:700}
+.wpp-conteudo{display:flex;flex-direction:column;gap:16px;box-sizing:border-box}
+.wpp-bloco-title{font-weight:700;font-size:.9em;margin-bottom:4px}
+.wpp-bloco-sub{font-size:.78em;color:var(--texto3);margin-bottom:16px}
+.wpp-status-row{display:flex;align-items:center;gap:8px;margin-bottom:16px}
+.wpp-dot{width:10px;height:10px;border-radius:50%;display:inline-block;flex-shrink:0}
+.wpp-dot-off{background:#9ca3af}
+.wpp-dot-on{background:#22c55e}
+.wpp-status-txt-bold{font-weight:700;font-size:.9em}
+.wpp-status-num{font-size:.78em;color:var(--texto3)}
+.wpp-rebeca-card{display:flex;align-items:flex-start;gap:14px;background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1.5px solid #86efac;border-radius:12px;padding:16px;margin-bottom:16px;box-sizing:border-box}
+.wpp-rebeca-icon{width:48px;height:48px;background:#25d366;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.3em;flex-shrink:0}
+.wpp-rebeca-info{flex:1;min-width:0}
+.wpp-rebeca-nome{font-weight:800;font-size:.88em;margin-bottom:2px}
+.wpp-rebeca-num{font-size:.82em;color:#16a34a;font-weight:700;margin-bottom:4px}
+.wpp-rebeca-desc{font-size:.75em;color:var(--texto3)}
+.wpp-rebeca-btns{display:flex;flex-direction:column;gap:6px;flex-shrink:0}
+.btn-wpp-green{padding:8px 14px;background:#25d366;color:#fff;border-radius:8px;font-size:.78em;font-weight:700;text-decoration:none;text-align:center;white-space:nowrap;display:block}
+.btn-wpp-outline{padding:8px 14px;background:var(--branco);border:1.5px solid #86efac;color:#16a34a;border-radius:8px;font-size:.78em;font-weight:700;text-decoration:none;text-align:center;white-space:nowrap;display:block}
+.wpp-input-block{background:#f8fafc;border:1px solid var(--borda);border-radius:10px;padding:16px;margin-bottom:12px;box-sizing:border-box}
+.wpp-input-title{font-size:.82em;font-weight:700;margin-bottom:6px}
+.wpp-input-desc{font-size:.75em;color:var(--texto3);margin-bottom:10px}
+.wpp-input-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.wpp-input{flex:1;min-width:160px;padding:9px 12px;border:1.5px solid var(--borda);border-radius:8px;font-size:.85em}
+.wpp-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+.wpp-step{background:#f8fafc;border-radius:8px;padding:12px;text-align:center}
+.wpp-step-icon{font-size:1.3em;margin-bottom:4px}
+.wpp-step-title{font-size:.72em;font-weight:700;margin-bottom:2px}
+.wpp-step-desc{font-size:.68em;color:var(--texto3)}
+.wpp-section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.wpp-section-title{font-weight:700;font-size:.9em}
+.wpp-section-sub{font-size:.75em;color:var(--texto3);font-weight:500}
+.wpp-empty{text-align:center;padding:24px;color:var(--texto3);font-size:.85em}
+.wpp-logs-scroll{max-height:300px;overflow-y:auto}
+.wpp-cfg-grid{display:grid;gap:14px}
+.wpp-cfg-row{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.wpp-cfg-info{flex:1;min-width:0}
+.wpp-cfg-nome{font-size:.85em;font-weight:600}
+.wpp-cfg-desc{font-size:.75em;color:var(--texto3)}
+.wpp-toggle{position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0;cursor:pointer}
+.wpp-toggle input{opacity:0;width:0;height:0}
+.wpp-toggle-track{position:absolute;inset:0;background:#d1d5db;border-radius:12px;transition:background .2s}
+.wpp-toggle input:checked + .wpp-toggle-track{background:var(--cor)}
+.wpp-toggle-track::after{content:'';position:absolute;width:18px;height:18px;background:#fff;border-radius:50%;top:3px;left:3px;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.wpp-toggle input:checked + .wpp-toggle-track::after{transform:translateX(20px)}
+@media(max-width:900px){
+  .wpp-stats{grid-template-columns:repeat(2,1fr)}
+  .wpp-rebeca-card{flex-wrap:wrap}
+  .wpp-rebeca-btns{flex-direction:row;width:100%}
 }
-.wpp-stat-card { padding: 16px !important; }
-.wpp-stat-label { font-size:.7em; font-weight:600; color:var(--texto4); text-transform:uppercase; letter-spacing:.06em; margin-bottom:6px; }
-.wpp-stat-value { font-weight:700; font-size:1em; }
-.wpp-stat-num   { font-size:1.4em; letter-spacing:-.02em; }
-.wpp-stat-alerta{ color:var(--vermelho); }
-.wpp-stat-sub   { font-size:.72em; color:var(--texto3); margin-top:4px; }
-
-/* Upgrade card */
-.wpp-upgrade-card {
-  background: linear-gradient(135deg,#fff7ed,#ffedd5);
-  border: 1.5px solid #fdba74;
-  border-radius: var(--radius-lg);
-  padding: 32px;
-  text-align: center;
-  margin-bottom: 20px;
-}
-.wpp-upgrade-icon  { font-size:1.4em; margin-bottom:10px; }
-.wpp-upgrade-title { font-weight:800; font-size:1em; margin-bottom:6px; }
-.wpp-upgrade-desc  { font-size:.83em; color:var(--texto2); margin-bottom:16px; max-width:400px; margin-inline:auto; }
-.wpp-upgrade-features { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; }
-.wpp-feature-tag { background:var(--branco); border-radius:8px; padding:8px 14px; font-size:.8em; font-weight:700; }
-
-/* Conteúdo principal */
-.wpp-conteudo {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-/* Blocos internos */
-.wpp-bloco-title { font-weight:700; font-size:.9em; margin-bottom:4px; display:flex; align-items:center; gap:8px; }
-.wpp-bloco-sub   { font-size:.78em; color:var(--texto3); margin-bottom:16px; }
-
-/* Status row */
-.wpp-status-row { display:flex; align-items:center; gap:8px; margin-bottom:16px; }
-.wpp-dot { width:10px; height:10px; border-radius:50%; display:inline-block; flex-shrink:0; }
-.wpp-dot-off  { background:#9ca3af; }
-.wpp-dot-on   { background:#22c55e; }
-.wpp-status-txt-bold { font-weight:700; font-size:.9em; }
-.wpp-status-num      { font-size:.78em; color:var(--texto3); }
-
-/* Card Rebeca Oficial */
-.wpp-rebeca-card {
-  display: flex;
-  align-items: flex-start;
-  gap: 14px;
-  background: linear-gradient(135deg,#f0fdf4,#dcfce7);
-  border: 1.5px solid #86efac;
-  border-radius: 12px;
-  padding: 16px;
-  margin-bottom: 16px;
-}
-.wpp-rebeca-icon { width:48px; height:48px; background:#25d366; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.3em; flex-shrink:0; }
-.wpp-rebeca-info { flex:1; min-width:0; }
-.wpp-rebeca-nome { font-weight:800; font-size:.88em; margin-bottom:2px; }
-.wpp-rebeca-num  { font-size:.82em; color:#16a34a; font-weight:700; margin-bottom:4px; }
-.wpp-rebeca-desc { font-size:.75em; color:var(--texto3); }
-.wpp-rebeca-btns { display:flex; flex-direction:column; gap:6px; flex-shrink:0; }
-.btn-wpp-green  { padding:8px 14px; background:#25d366; color:#fff; border-radius:8px; font-size:.78em; font-weight:700; text-decoration:none; text-align:center; white-space:nowrap; }
-.btn-wpp-outline{ padding:8px 14px; background:var(--branco); border:1.5px solid #86efac; color:#16a34a; border-radius:8px; font-size:.78em; font-weight:700; text-decoration:none; text-align:center; white-space:nowrap; }
-
-/* Input número */
-.wpp-input-block { background:#f8fafc; border:1px solid var(--borda); border-radius:10px; padding:16px; margin-bottom:12px; }
-.wpp-input-title { font-size:.82em; font-weight:700; margin-bottom:6px; }
-.wpp-input-desc  { font-size:.75em; color:var(--texto3); margin-bottom:10px; }
-.wpp-input-row   { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
-.wpp-input       { flex:1; min-width:160px; padding:9px 12px; border:1.5px solid var(--borda); border-radius:8px; font-size:.85em; }
-
-/* Passos como funciona */
-.wpp-steps { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
-.wpp-step  { background:#f8fafc; border-radius:8px; padding:12px; text-align:center; }
-.wpp-step-icon  { font-size:1.3em; margin-bottom:4px; }
-.wpp-step-title { font-size:.72em; font-weight:700; margin-bottom:2px; }
-.wpp-step-desc  { font-size:.68em; color:var(--texto3); }
-
-/* Seção header */
-.wpp-section-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
-.wpp-section-title  { font-weight:700; font-size:.9em; }
-.wpp-section-sub    { font-size:.75em; color:var(--texto3); font-weight:500; }
-.wpp-empty          { text-align:center; padding:24px; color:var(--texto3); font-size:.85em; }
-.wpp-logs-scroll    { max-height:300px; overflow-y:auto; }
-
-/* Configurações toggle */
-.wpp-cfg-grid { display:grid; gap:14px; }
-.wpp-cfg-row  { display:flex; align-items:center; justify-content:space-between; gap:16px; }
-.wpp-cfg-info { flex:1; min-width:0; }
-.wpp-cfg-nome { font-size:.85em; font-weight:600; }
-.wpp-cfg-desc { font-size:.75em; color:var(--texto3); }
-
-/* Toggle switch limpo */
-.wpp-toggle { position:relative; display:inline-block; width:44px; height:24px; flex-shrink:0; cursor:pointer; }
-.wpp-toggle input { opacity:0; width:0; height:0; }
-.wpp-toggle-track {
-  position:absolute; inset:0;
-  background:#d1d5db; border-radius:12px;
-  transition:background .2s;
-}
-.wpp-toggle input:checked + .wpp-toggle-track { background:var(--cor); }
-.wpp-toggle-track::after {
-  content:''; position:absolute;
-  width:18px; height:18px;
-  background:#fff; border-radius:50%;
-  top:3px; left:3px;
-  transition:transform .2s;
-  box-shadow:0 1px 3px rgba(0,0,0,.15);
-}
-.wpp-toggle input:checked + .wpp-toggle-track::after { transform:translateX(20px); }
-
-/* Responsivo */
-@media(max-width:900px) {
-  .wpp-stats { grid-template-columns:repeat(2,1fr); }
-  .wpp-rebeca-card { flex-wrap:wrap; }
-  .wpp-rebeca-btns { flex-direction:row; width:100%; }
-}
-@media(max-width:520px) {
-  .wpp-stats { grid-template-columns:1fr 1fr; gap:10px; }
-  .wpp-steps { grid-template-columns:1fr; }
-  .wpp-rebeca-btns { flex-direction:column; }
-}
-
-/* ── tela-whatsapp layout fix ───────────────────────────────────────────── */
-#tela-whatsapp.ativa {
-  display: flex !important;
-  flex-direction: column;
-  gap: 0;
-  width: 100%;
-  box-sizing: border-box;
-  overflow-x: hidden;
-}
-#tela-whatsapp .wpp-stats,
-#tela-whatsapp .wpp-upgrade-card,
-#tela-whatsapp .wpp-conteudo {
-  width: 100%;
-  box-sizing: border-box;
-  max-width: 100%;
+@media(max-width:520px){
+  .wpp-stats{grid-template-columns:1fr 1fr;gap:10px}
+  .wpp-steps{grid-template-columns:1fr}
+  .wpp-rebeca-btns{flex-direction:column}
 }
 </style>
 <link rel="manifest" href="/agenda-adm-manifest.json">
@@ -1294,9 +1215,7 @@ document.querySelectorAll('.nav-item').forEach(item => {
         </div>
       </div>
 
-    </div><!-- /content -->
-  </div><!-- /main -->
-</div><!-- /app -->
+
 
 <!-- ─── MENU FLUTUANTE MOBILE ─── -->
 <button class="mob-menu-fab" id="mob-fab" onclick="abrirDrawer()">☰</button>
@@ -3556,6 +3475,10 @@ carregarFinanceiro = async function() {
 
   </div><!-- /wpp-conteudo-147 -->
 </div><!-- /tela-whatsapp -->
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /app -->
 
 
   <script>
