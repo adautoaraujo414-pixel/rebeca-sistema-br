@@ -166,6 +166,7 @@ app.use('/api/localidades', localidadeRoutes);
 app.use('/api/pontos-referencia', pontosReferenciaRoutes);
 app.use('/api/preco-dinamico', precoDinamicoRoutes);
 app.use('/api/whatsapp', whatsappRoutes);
+app.use('/api/meta-whatsapp', require('./routes/meta-whatsapp.routes'));
 app.use('/api/rebeca', rebecaRoutes);
 
 // Rota IA config (stub)
