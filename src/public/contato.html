@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contato — Rebeca Plataforma</title>
+<meta name="description" content="Fale com a equipe da Rebeca Plataforma. Suporte, vendas e parcerias.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0a0a0f;--bg2:#111118;--bg3:#1a1a24;--cor:#7c6af7;--cor2:#a78bfa;--verde:#34d399;--amarelo:#fbbf24;--texto:#f1f0ff;--texto2:#a09ec0;--borda:#2a2840;--radius:12px}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);color:var(--texto);font-family:'Sora',sans-serif;line-height:1.7}
+  nav{position:sticky;top:0;z-index:100;background:rgba(10,10,15,.85);backdrop-filter:blur(20px);border-bottom:1px solid var(--borda);padding:0 40px;height:64px;display:flex;align-items:center;justify-content:space-between}
+  .logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+  .logo-icon{width:32px;height:32px;background:linear-gradient(135deg,#7c6af7,#a78bfa);border-radius:8px;display:flex;align-items:center;justify-content:center}
+  .logo-text{font-weight:700;font-size:.95em;color:var(--texto)}
+  .logo-text span{color:var(--cor2)}
+  .nav-links{display:flex;gap:28px}
+  .nav-links a{color:var(--texto2);text-decoration:none;font-size:.85em;font-weight:500;transition:color .2s}
+  .nav-links a:hover,.nav-links a.ativo{color:var(--cor2)}
+  .hero{padding:80px 40px 60px;max-width:900px;margin:0 auto;text-align:center;border-bottom:1px solid var(--borda)}
+  .badge{display:inline-flex;align-items:center;gap:6px;background:rgba(124,106,247,.12);border:1px solid rgba(124,106,247,.3);color:var(--cor2);font-size:.75em;font-weight:600;padding:5px 12px;border-radius:20px;margin-bottom:20px;font-family:'JetBrains Mono',monospace;letter-spacing:.05em}
+  .hero h1{font-size:2.6em;font-weight:700;line-height:1.2;margin-bottom:16px}
+  .hero h1 span{background:linear-gradient(135deg,#7c6af7,#c4b5fd);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+  .hero p{color:var(--texto2);font-size:1em;max-width:500px;margin:0 auto}
+  .cards-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;max-width:900px;margin:60px auto;padding:0 40px}
+  .card{background:var(--bg2);border:1px solid var(--borda);border-radius:var(--radius);padding:28px 24px;transition:border-color .2s,transform .2s;text-decoration:none;display:block}
+  .card:hover{border-color:var(--cor);transform:translateY(-2px)}
+  .card-icon{font-size:1.8em;margin-bottom:12px}
+  .card-label{font-size:.7em;font-weight:600;color:var(--cor2);letter-spacing:.1em;text-transform:uppercase;font-family:'JetBrains Mono',monospace;margin-bottom:6px}
+  .card h3{font-size:1em;font-weight:700;margin-bottom:8px;color:var(--texto)}
+  .card p{font-size:.83em;color:var(--texto2);line-height:1.5}
+  .card-link{display:inline-flex;align-items:center;gap:4px;font-size:.78em;color:var(--cor2);font-weight:600;margin-top:14px}
+  .main{max-width:900px;margin:0 auto;padding:20px 40px 80px;display:grid;grid-template-columns:1fr 1fr;gap:40px}
+  .form-section h2{font-size:1.3em;font-weight:700;margin-bottom:6px}
+  .form-section p{color:var(--texto2);font-size:.88em;margin-bottom:24px}
+  .form-group{margin-bottom:16px}
+  .form-group label{display:block;font-size:.78em;font-weight:600;color:var(--cor2);margin-bottom:6px;letter-spacing:.04em;text-transform:uppercase;font-family:'JetBrains Mono',monospace}
+  .form-group input,.form-group select,.form-group textarea{width:100%;background:var(--bg2);border:1.5px solid var(--borda);border-radius:8px;padding:10px 14px;color:var(--texto);font-family:'Sora',sans-serif;font-size:.88em;transition:border-color .2s;outline:none}
+  .form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--cor)}
+  .form-group textarea{resize:vertical;min-height:100px}
+  .form-group select option{background:var(--bg2)}
+  .btn-enviar{width:100%;background:linear-gradient(135deg,#7c6af7,#a78bfa);color:#fff;border:none;border-radius:8px;padding:12px;font-family:'Sora',sans-serif;font-size:.9em;font-weight:700;cursor:pointer;transition:opacity .2s;margin-top:8px}
+  .btn-enviar:hover{opacity:.9}
+  .info-section h2{font-size:1.3em;font-weight:700;margin-bottom:6px}
+  .info-section p{color:var(--texto2);font-size:.88em;margin-bottom:24px}
+  .info-item{display:flex;gap:14px;align-items:flex-start;margin-bottom:20px;padding:16px;background:var(--bg2);border:1px solid var(--borda);border-radius:var(--radius)}
+  .info-icon{font-size:1.3em;flex-shrink:0;margin-top:2px}
+  .info-item h4{font-size:.88em;font-weight:700;margin-bottom:3px}
+  .info-item p{font-size:.8em;color:var(--texto2);margin:0}
+  .info-item a{color:var(--cor2);text-decoration:none}
+  .horarios{background:var(--bg3);border:1px solid var(--borda);border-radius:var(--radius);padding:16px 20px;margin-top:24px}
+  .horarios h4{font-size:.78em;font-weight:600;color:var(--cor2);letter-spacing:.08em;text-transform:uppercase;font-family:'JetBrains Mono',monospace;margin-bottom:12px}
+  .horario-row{display:flex;justify-content:space-between;font-size:.82em;padding:4px 0;border-bottom:1px solid var(--borda)}
+  .horario-row:last-child{border:none}
+  .horario-row span:first-child{color:var(--texto2)}
+  .horario-row span:last-child{color:var(--verde);font-weight:600}
+  .toast{position:fixed;bottom:24px;right:24px;background:var(--verde);color:#0a0a0f;padding:12px 20px;border-radius:8px;font-weight:700;font-size:.85em;display:none;z-index:999}
+  footer{background:var(--bg2);border-top:1px solid var(--borda);padding:48px 40px 32px}
+  .footer-inner{max-width:1100px;margin:0 auto}
+  .footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:40px;margin-bottom:40px}
+  .footer-brand p{color:var(--texto2);font-size:.83em;margin-top:12px;max-width:260px;line-height:1.6}
+  .footer-col h4{font-size:.75em;font-weight:600;color:var(--cor2);letter-spacing:.08em;text-transform:uppercase;margin-bottom:14px}
+  .footer-col a{display:block;color:var(--texto2);text-decoration:none;font-size:.83em;margin-bottom:8px;transition:color .2s}
+  .footer-col a:hover{color:var(--cor2)}
+  .footer-bottom{display:flex;justify-content:space-between;align-items:center;padding-top:24px;border-top:1px solid var(--borda);flex-wrap:wrap;gap:12px}
+  .footer-bottom p{color:var(--texto2);font-size:.78em}
+  .footer-badges{display:flex;gap:10px}
+  .footer-badge{background:var(--bg3);border:1px solid var(--borda);color:var(--texto2);font-size:.7em;padding:4px 10px;border-radius:6px;font-family:'JetBrains Mono',monospace}
+  @media(max-width:768px){nav{padding:0 20px}.nav-links{display:none}.hero{padding:48px 20px 40px}.hero h1{font-size:1.8em}.cards-grid{grid-template-columns:1fr;padding:0 20px;margin:40px auto}.main{grid-template-columns:1fr;padding:20px 20px 60px}.footer-grid{grid-template-columns:1fr 1fr}footer{padding:40px 20px 24px}}
+</style>
+</head>
+<body>
+<nav>
+  <a class="logo" href="/"><div class="logo-icon">💜</div><div class="logo-text">Rebeca <span>Plataforma</span></div></a>
+  <div class="nav-links">
+    <a href="/">Início</a><a href="/privacidade">Privacidade</a><a href="/termos">Termos</a><a href="/contato" class="ativo">Contato</a>
+  </div>
+</nav>
+
+<div class="hero">
+  <div class="badge">💬 Estamos aqui para ajudar</div>
+  <h1>Fale com a <span>Rebeca</span></h1>
+  <p>Suporte, vendas, parcerias ou dúvidas técnicas — escolha o melhor canal para você.</p>
+</div>
+
+<div class="cards-grid">
+  <a class="card" href="https://wa.me/5534984039955" target="_blank">
+    <div class="card-icon">💬</div>
+    <div class="card-label">Mais rápido</div>
+    <h3>WhatsApp</h3>
+    <p>Atendimento direto com nossa equipe. Resposta em minutos no horário comercial.</p>
+    <div class="card-link">Abrir conversa →</div>
+  </a>
+  <a class="card" href="mailto:adautoaraujo415@gmail.com">
+    <div class="card-icon">📧</div>
+    <div class="card-label">Formal</div>
+    <h3>E-mail</h3>
+    <p>Para contratos, parcerias, solicitações LGPD ou assuntos que precisam de registro.</p>
+    <div class="card-link">Enviar e-mail →</div>
+  </a>
+  <div class="card">
+    <div class="card-icon">📍</div>
+    <div class="card-label">Localização</div>
+    <h3>Região</h3>
+    <p>Baseados em Frutal, Minas Gerais. Atendemos todo o Brasil de forma 100% remota.</p>
+    <div class="card-link" style="color:var(--texto2)">Frutal — MG, Brasil</div>
+  </div>
+</div>
+
+<div class="main">
+  <div class="form-section">
+    <h2>Envie uma mensagem</h2>
+    <p>Preencha o formulário e retornamos em até 1 dia útil.</p>
+    <div class="form-group">
+      <label>Seu nome</label>
+      <input type="text" id="f-nome" placeholder="Como posso te chamar?">
+    </div>
+    <div class="form-group">
+      <label>E-mail ou WhatsApp</label>
+      <input type="text" id="f-contato" placeholder="Para onde respondemos">
+    </div>
+    <div class="form-group">
+      <label>Assunto</label>
+      <select id="f-assunto">
+        <option value="">Selecione...</option>
+        <option>Quero conhecer a Rebeca Agenda</option>
+        <option>Quero conhecer o Rebeca Soft (PDV)</option>
+        <option>Quero conhecer o Rebeca Delivery</option>
+        <option>Suporte técnico</option>
+        <option>Parceria ou revenda</option>
+        <option>Privacidade / LGPD</option>
+        <option>Outro assunto</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Mensagem</label>
+      <textarea id="f-msg" placeholder="Conte mais sobre sua necessidade..."></textarea>
+    </div>
+    <button class="btn-enviar" onclick="enviarWpp()">💬 Enviar pelo WhatsApp</button>
+  </div>
+
+  <div class="info-section">
+    <h2>Informações de contato</h2>
+    <p>Nossa equipe está pronta para atender você.</p>
+    <div class="info-item">
+      <div class="info-icon">💬</div>
+      <div>
+        <h4>WhatsApp Comercial</h4>
+        <p><a href="https://wa.me/5534984039955" target="_blank">(34) 98403-9955</a></p>
+      </div>
+    </div>
+    <div class="info-item">
+      <div class="info-icon">📧</div>
+      <div>
+        <h4>E-mail</h4>
+        <p><a href="mailto:adautoaraujo415@gmail.com">adautoaraujo415@gmail.com</a></p>
+      </div>
+    </div>
+    <div class="info-item">
+      <div class="info-icon">📋</div>
+      <div>
+        <h4>Privacidade e LGPD</h4>
+        <p><a href="/privacidade">Ver Política de Privacidade</a></p>
+      </div>
+    </div>
+    <div class="horarios">
+      <h4>Horário de atendimento</h4>
+      <div class="horario-row"><span>Segunda a Sexta</span><span>08h — 18h</span></div>
+      <div class="horario-row"><span>Sábado</span><span>08h — 12h</span></div>
+      <div class="horario-row"><span>Domingo e feriados</span><span>Fechado</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">✅ Redirecionando para o WhatsApp!</div>
+
+<footer>
+  <div class="footer-inner">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a class="logo" href="/" style="text-decoration:none"><div class="logo-icon">💜</div><div class="logo-text">Rebeca <span>Plataforma</span></div></a>
+        <p>Sistema SaaS brasileiro para gestão inteligente de negócios — agenda, PDV, delivery e automação via WhatsApp.</p>
+      </div>
+      <div class="footer-col"><h4>Módulos</h4><a href="#">Rebeca Agenda</a><a href="#">Rebeca Soft</a><a href="#">Rebeca Delivery</a><a href="#">WhatsApp IA</a></div>
+      <div class="footer-col"><h4>Legal</h4><a href="/privacidade">Privacidade</a><a href="/termos">Termos de Uso</a><a href="/contato" style="color:var(--cor2)">Contato</a></div>
+      <div class="footer-col"><h4>Suporte</h4><a href="https://wa.me/5534984039955" target="_blank">WhatsApp</a><a href="mailto:adautoaraujo415@gmail.com">E-mail</a></div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2026 Rebeca Plataforma. Todos os direitos reservados.</p>
+      <div class="footer-badges"><span class="footer-badge">LGPD</span><span class="footer-badge">Meta Business</span><span class="footer-badge">TLS 1.3</span></div>
+    </div>
+  </div>
+</footer>
+
+<script>
+function enviarWpp() {
+  const nome = document.getElementById('f-nome').value.trim();
+  const contato = document.getElementById('f-contato').value.trim();
+  const assunto = document.getElementById('f-assunto').value;
+  const msg = document.getElementById('f-msg').value.trim();
+  if (!nome || !assunto) { alert('Preencha seu nome e o assunto!'); return; }
+  const texto = encodeURIComponent(
+    'Olá! Vim pelo site da Rebeca Plataforma.\n\n' +
+    'Nome: ' + nome + '\n' +
+    'Contato: ' + (contato || 'não informado') + '\n' +
+    'Assunto: ' + assunto + '\n' +
+    (msg ? 'Mensagem: ' + msg : '')
+  );
+  const t = document.getElementById('toast');
+  t.style.display = 'block';
+  setTimeout(() => { t.style.display = 'none'; window.open('https://wa.me/5534984039955?text=' + texto, '_blank'); }, 800);
+}
+</script>
+</body>
+</html>

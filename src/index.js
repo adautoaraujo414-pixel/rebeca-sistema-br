@@ -386,6 +386,9 @@ setInterval(async () => {
 }, 60 * 60 * 1000); // 1 hora
 
 app.get('/politica-privacidade.html', (req, res) => res.sendFile(require('path').join(__dirname, 'public', 'politica-privacidade.html')));
+app.get('/privacidade', (req, res) => res.sendFile(require('path').join(__dirname, 'public', 'privacidade.html')));
+app.get('/termos', (req, res) => res.sendFile(require('path').join(__dirname, 'public', 'termos.html')));
+app.get('/contato', (req, res) => res.sendFile(require('path').join(__dirname, 'public', 'contato.html')));
 app.use((req, res) => res.status(404).json({ error: 'Rota não encontrada' }));
 
 app.listen(PORT, () => {
