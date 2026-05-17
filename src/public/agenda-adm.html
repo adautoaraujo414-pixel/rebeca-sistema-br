@@ -2161,6 +2161,27 @@ async function wppCarregarQR() {
   } catch(e) {}
 }
 
+async function wppConectarNumero() {
+  const input = document.getElementById('wpp-numero-input');
+  const numero = (input?.value || '').replace(/[^0-9]/g, '');
+  if (numero.length < 10) { toast('Digite um numero valido com DDD', 'erro'); return; }
+  const tel = numero.startsWith('55') ? numero : '55' + numero;
+  try {
+    const r = await fetch('/api/agenda/whatsapp/conectar-numero', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('agenda_token') || ''), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ telefone: tel })
+    });
+    const d = await r.json();
+    if (d.sucesso) {
+      toast('Numero conectado! A Rebeca ja pode atender seus clientes.', 'sucesso');
+      setTimeout(wppRecarregar, 1500);
+    } else {
+      toast(d.mensagem || 'Erro ao conectar numero', 'erro');
+    }
+  } catch(e) { toast('Erro de conexao', 'erro'); }
+}
+
 async function wppDesconectar() {
   if(!_wppInstanciaId || !confirm('Desconectar o WhatsApp?')) return;
   try {
@@ -2878,26 +2899,76 @@ carregarFinanceiro = async function() {
     <!-- PLANO R$147: conteúdo completo -->
     <div id="wpp-conteudo-147" style="display:none">
 
-      <!-- CONEXÃO -->
+      <!-- CONEXÃO NOVA — Meta API Oficial sem QR code -->
       <div style="background:var(--branco);border:1px solid var(--borda);border-radius:var(--radius);padding:20px;margin-bottom:16px;box-shadow:var(--shadow)">
-        <div style="font-weight:700;font-size:.9em;margin-bottom:14px;display:flex;align-items:center;gap:8px">
-          <span>📱</span> Conexão WhatsApp
+        <div style="font-weight:700;font-size:.9em;margin-bottom:4px;display:flex;align-items:center;gap:8px">
+          <span>📱</span> Conexão WhatsApp Oficial
         </div>
-        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
-          <div id="wpp-qr-wrap" style="display:none;background:#f9fafb;border:1px solid var(--borda);border-radius:8px;padding:16px;text-align:center">
-            <div style="font-size:.78em;color:var(--texto3);margin-bottom:8px">Escaneie com o WhatsApp</div>
-            <div id="wpp-qr-img" style="font-size:3em">📱</div>
-          </div>
+        <div style="font-size:.78em;color:var(--texto3);margin-bottom:16px">Conecte o número do seu negócio — sem QR code, sem celular na frente.</div>
+
+        <!-- STATUS -->
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px">
+          <span id="wpp-status-dot" style="width:10px;height:10px;border-radius:50%;background:#9ca3af;display:inline-block"></span>
+          <span style="font-weight:700;font-size:.9em" id="wpp-status-label">Verificando...</span>
+          <span style="font-size:.78em;color:var(--texto3)" id="wpp-numero-label"></span>
+        </div>
+
+        <!-- CARD REBECA OFICIAL -->
+        <div style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1.5px solid #86efac;border-radius:12px;padding:16px;margin-bottom:16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+          <div style="width:48px;height:48px;background:#25d366;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.4em;flex-shrink:0">💬</div>
           <div style="flex:1">
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-              <span id="wpp-status-dot" style="width:10px;height:10px;border-radius:50%;background:#9ca3af;display:inline-block"></span>
-              <span style="font-weight:700;font-size:.9em" id="wpp-status-label">Verificando...</span>
-            </div>
-            <div style="font-size:.8em;color:var(--texto3);margin-bottom:12px" id="wpp-numero-label">—</div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <button onclick="wppConectar()" id="btn-wpp-conectar" style="padding:9px 18px;background:var(--cor);color:#fff;border:none;border-radius:8px;font-size:.82em;font-weight:700;cursor:pointer">Conectar número</button>
-              <button onclick="wppDesconectar()" id="btn-wpp-desconectar" style="display:none;padding:9px 18px;background:var(--branco);color:var(--vermelho);border:1.5px solid var(--vermelho-bg);border-radius:8px;font-size:.82em;font-weight:700;cursor:pointer">Desconectar</button>
-            </div>
+            <div style="font-weight:800;font-size:.88em;margin-bottom:2px">Rebeca Oficial</div>
+            <div style="font-size:.82em;color:#16a34a;font-weight:700;margin-bottom:4px">+55 34 97400-4372</div>
+            <div style="font-size:.75em;color:var(--texto3)">Salve esse número e mande uma mensagem — a Rebeca já responde e gerencia sua agenda por aqui.</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <a href="https://wa.me/5534974004372?text=Oi+Rebeca%2C+quero+conectar+minha+agenda" target="_blank"
+              style="padding:8px 14px;background:#25d366;color:#fff;border-radius:8px;font-size:.78em;font-weight:700;text-decoration:none;text-align:center;white-space:nowrap">
+              💬 Falar com a Rebeca
+            </a>
+            <a href="https://wa.me/5534974004372" target="_blank"
+              style="padding:8px 14px;background:var(--branco);border:1.5px solid #86efac;color:#16a34a;border-radius:8px;font-size:.78em;font-weight:700;text-decoration:none;text-align:center;white-space:nowrap">
+              ➕ Salvar contato
+            </a>
+          </div>
+        </div>
+
+        <!-- CAMPO NÚMERO DO NEGÓCIO -->
+        <div style="background:#f8fafc;border:1px solid var(--borda);border-radius:10px;padding:16px;margin-bottom:12px">
+          <div style="font-size:.82em;font-weight:700;margin-bottom:8px">📲 Número do seu WhatsApp comercial</div>
+          <div style="font-size:.75em;color:var(--texto3);margin-bottom:10px">Digite o número que seus clientes usam para falar com você. A Rebeca vai atender por ele automaticamente.</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <input type="tel" id="wpp-numero-input" placeholder="(34) 99999-9999"
+              style="flex:1;padding:9px 12px;border:1.5px solid var(--borda);border-radius:8px;font-size:.85em;min-width:160px"
+              oninput="this.value=this.value.replace(/\D/g,'').replace(/^(\d{2})(\d)/,'($1) $2').replace(/(\d{5})(\d)/,'$1-$2').substring(0,15)">
+            <button onclick="wppConectarNumero()" id="btn-wpp-conectar"
+              style="padding:9px 18px;background:var(--cor);color:#fff;border:none;border-radius:8px;font-size:.82em;font-weight:700;cursor:pointer;white-space:nowrap">
+              ✅ Conectar
+            </button>
+            <button onclick="wppDesconectar()" id="btn-wpp-desconectar"
+              style="display:none;padding:9px 18px;background:var(--branco);color:var(--vermelho);border:1.5px solid var(--vermelho-bg);border-radius:8px;font-size:.82em;font-weight:700;cursor:pointer">
+              Desconectar
+            </button>
+          </div>
+          <div id="wpp-numero-label" style="display:none"></div>
+        </div>
+
+        <!-- COMO FUNCIONA -->
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+          <div style="background:#f8fafc;border-radius:8px;padding:12px;text-align:center">
+            <div style="font-size:1.3em;margin-bottom:4px">1️⃣</div>
+            <div style="font-size:.72em;font-weight:700;margin-bottom:2px">Salve o contato</div>
+            <div style="font-size:.68em;color:var(--texto3)">Adicione a Rebeca no celular</div>
+          </div>
+          <div style="background:#f8fafc;border-radius:8px;padding:12px;text-align:center">
+            <div style="font-size:1.3em;margin-bottom:4px">2️⃣</div>
+            <div style="font-size:.72em;font-weight:700;margin-bottom:2px">Digite seu número</div>
+            <div style="font-size:.68em;color:var(--texto3)">O número do seu comércio</div>
+          </div>
+          <div style="background:#f8fafc;border-radius:8px;padding:12px;text-align:center">
+            <div style="font-size:1.3em;margin-bottom:4px">3️⃣</div>
+            <div style="font-size:.72em;font-weight:700;margin-bottom:2px">Pronto!</div>
+            <div style="font-size:.68em;color:var(--texto3)">Rebeca já atende seus clientes</div>
           </div>
         </div>
       </div>
