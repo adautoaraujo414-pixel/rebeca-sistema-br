@@ -8,6 +8,7 @@ const Dashboard = lazy(() => import('../modules/Dashboard'));
 const Produtos    = lazy(() => import('../modules/Produtos'));
 const Categorias  = lazy(() => import('../modules/Categorias'));
 const PDV         = lazy(() => import('../modules/PDV'));
+const Financeiro  = lazy(() => import('../modules/Financeiro'));
 
 function Loading() {
   return (
@@ -38,6 +39,7 @@ export function Router() {
           <Route path="produtos" element={<Produtos />} />
           <Route path="categorias" element={<Categorias />} />
           <Route path="pdv" element={<PDV />} />
+          <Route path="financeiro" element={<Financeiro />} />
         </Route>
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
