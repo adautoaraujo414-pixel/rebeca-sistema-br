@@ -460,6 +460,138 @@ input,select,textarea{font-family:'Inter',sans-serif}
   flex-direction: column;
   gap: 16px;
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   TELA WHATSAPP — CSS isolado, prefixado .wpp-
+   Não afeta dashboard nem outras telas.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Stats grid */
+.wpp-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.wpp-stat-card { padding: 16px !important; }
+.wpp-stat-label { font-size:.7em; font-weight:600; color:var(--texto4); text-transform:uppercase; letter-spacing:.06em; margin-bottom:6px; }
+.wpp-stat-value { font-weight:700; font-size:1em; }
+.wpp-stat-num   { font-size:1.4em; letter-spacing:-.02em; }
+.wpp-stat-alerta{ color:var(--vermelho); }
+.wpp-stat-sub   { font-size:.72em; color:var(--texto3); margin-top:4px; }
+
+/* Upgrade card */
+.wpp-upgrade-card {
+  background: linear-gradient(135deg,#fff7ed,#ffedd5);
+  border: 1.5px solid #fdba74;
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  text-align: center;
+  margin-bottom: 20px;
+}
+.wpp-upgrade-icon  { font-size:1.4em; margin-bottom:10px; }
+.wpp-upgrade-title { font-weight:800; font-size:1em; margin-bottom:6px; }
+.wpp-upgrade-desc  { font-size:.83em; color:var(--texto2); margin-bottom:16px; max-width:400px; margin-inline:auto; }
+.wpp-upgrade-features { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; }
+.wpp-feature-tag { background:var(--branco); border-radius:8px; padding:8px 14px; font-size:.8em; font-weight:700; }
+
+/* Conteúdo principal */
+.wpp-conteudo {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Blocos internos */
+.wpp-bloco-title { font-weight:700; font-size:.9em; margin-bottom:4px; display:flex; align-items:center; gap:8px; }
+.wpp-bloco-sub   { font-size:.78em; color:var(--texto3); margin-bottom:16px; }
+
+/* Status row */
+.wpp-status-row { display:flex; align-items:center; gap:8px; margin-bottom:16px; }
+.wpp-dot { width:10px; height:10px; border-radius:50%; display:inline-block; flex-shrink:0; }
+.wpp-dot-off  { background:#9ca3af; }
+.wpp-dot-on   { background:#22c55e; }
+.wpp-status-txt-bold { font-weight:700; font-size:.9em; }
+.wpp-status-num      { font-size:.78em; color:var(--texto3); }
+
+/* Card Rebeca Oficial */
+.wpp-rebeca-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  background: linear-gradient(135deg,#f0fdf4,#dcfce7);
+  border: 1.5px solid #86efac;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+.wpp-rebeca-icon { width:48px; height:48px; background:#25d366; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.3em; flex-shrink:0; }
+.wpp-rebeca-info { flex:1; min-width:0; }
+.wpp-rebeca-nome { font-weight:800; font-size:.88em; margin-bottom:2px; }
+.wpp-rebeca-num  { font-size:.82em; color:#16a34a; font-weight:700; margin-bottom:4px; }
+.wpp-rebeca-desc { font-size:.75em; color:var(--texto3); }
+.wpp-rebeca-btns { display:flex; flex-direction:column; gap:6px; flex-shrink:0; }
+.btn-wpp-green  { padding:8px 14px; background:#25d366; color:#fff; border-radius:8px; font-size:.78em; font-weight:700; text-decoration:none; text-align:center; white-space:nowrap; }
+.btn-wpp-outline{ padding:8px 14px; background:var(--branco); border:1.5px solid #86efac; color:#16a34a; border-radius:8px; font-size:.78em; font-weight:700; text-decoration:none; text-align:center; white-space:nowrap; }
+
+/* Input número */
+.wpp-input-block { background:#f8fafc; border:1px solid var(--borda); border-radius:10px; padding:16px; margin-bottom:12px; }
+.wpp-input-title { font-size:.82em; font-weight:700; margin-bottom:6px; }
+.wpp-input-desc  { font-size:.75em; color:var(--texto3); margin-bottom:10px; }
+.wpp-input-row   { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+.wpp-input       { flex:1; min-width:160px; padding:9px 12px; border:1.5px solid var(--borda); border-radius:8px; font-size:.85em; }
+
+/* Passos como funciona */
+.wpp-steps { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+.wpp-step  { background:#f8fafc; border-radius:8px; padding:12px; text-align:center; }
+.wpp-step-icon  { font-size:1.3em; margin-bottom:4px; }
+.wpp-step-title { font-size:.72em; font-weight:700; margin-bottom:2px; }
+.wpp-step-desc  { font-size:.68em; color:var(--texto3); }
+
+/* Seção header */
+.wpp-section-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+.wpp-section-title  { font-weight:700; font-size:.9em; }
+.wpp-section-sub    { font-size:.75em; color:var(--texto3); font-weight:500; }
+.wpp-empty          { text-align:center; padding:24px; color:var(--texto3); font-size:.85em; }
+.wpp-logs-scroll    { max-height:300px; overflow-y:auto; }
+
+/* Configurações toggle */
+.wpp-cfg-grid { display:grid; gap:14px; }
+.wpp-cfg-row  { display:flex; align-items:center; justify-content:space-between; gap:16px; }
+.wpp-cfg-info { flex:1; min-width:0; }
+.wpp-cfg-nome { font-size:.85em; font-weight:600; }
+.wpp-cfg-desc { font-size:.75em; color:var(--texto3); }
+
+/* Toggle switch limpo */
+.wpp-toggle { position:relative; display:inline-block; width:44px; height:24px; flex-shrink:0; cursor:pointer; }
+.wpp-toggle input { opacity:0; width:0; height:0; }
+.wpp-toggle-track {
+  position:absolute; inset:0;
+  background:#d1d5db; border-radius:12px;
+  transition:background .2s;
+}
+.wpp-toggle input:checked + .wpp-toggle-track { background:var(--cor); }
+.wpp-toggle-track::after {
+  content:''; position:absolute;
+  width:18px; height:18px;
+  background:#fff; border-radius:50%;
+  top:3px; left:3px;
+  transition:transform .2s;
+  box-shadow:0 1px 3px rgba(0,0,0,.15);
+}
+.wpp-toggle input:checked + .wpp-toggle-track::after { transform:translateX(20px); }
+
+/* Responsivo */
+@media(max-width:900px) {
+  .wpp-stats { grid-template-columns:repeat(2,1fr); }
+  .wpp-rebeca-card { flex-wrap:wrap; }
+  .wpp-rebeca-btns { flex-direction:row; width:100%; }
+}
+@media(max-width:520px) {
+  .wpp-stats { grid-template-columns:1fr 1fr; gap:10px; }
+  .wpp-steps { grid-template-columns:1fr; }
+  .wpp-rebeca-btns { flex-direction:column; }
+}
 </style>
 <link rel="manifest" href="/agenda-adm-manifest.json">
 <script src="/js/agenda-notif-helper.js">
@@ -3233,187 +3365,179 @@ carregarFinanceiro = async function() {
 </div>
 
 <div id="tela-whatsapp" class="tela">
-    <div class="tela-header">
-      <div>
-        <div class="tela-titulo">💬 Atendimento WhatsApp</div>
-        <div class="tela-sub" id="wpp-plano-info">Verificando plano...</div>
+  <div class="tela-header">
+    <div>
+      <div class="tela-titulo">💬 Atendimento WhatsApp</div>
+      <div class="tela-sub" id="wpp-plano-info">Verificando...</div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button onclick="wppRecarregar()" class="btn-secondary">🔄 Atualizar</button>
+      <button onclick="wppTestarBot()" id="btn-testar-bot" class="btn-primary" style="display:none">🤖 Testar bot</button>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="wpp-stats">
+    <div class="page-section wpp-stat-card">
+      <div class="wpp-stat-label">Status</div>
+      <div class="wpp-stat-value" id="wpp-status-txt">—</div>
+      <div class="wpp-stat-sub" id="wpp-numero-txt">—</div>
+    </div>
+    <div class="page-section wpp-stat-card">
+      <div class="wpp-stat-label">Conversas hoje</div>
+      <div class="wpp-stat-value wpp-stat-num" id="wpp-conv-hoje">0</div>
+    </div>
+    <div class="page-section wpp-stat-card">
+      <div class="wpp-stat-label">Agendados via WPP</div>
+      <div class="wpp-stat-value wpp-stat-num" id="wpp-ag-wpp">0</div>
+    </div>
+    <div class="page-section wpp-stat-card">
+      <div class="wpp-stat-label">Aguardando humano</div>
+      <div class="wpp-stat-value wpp-stat-num wpp-stat-alerta" id="wpp-handoff">0</div>
+    </div>
+  </div>
+
+  <!-- UPGRADE CARD (plano básico) -->
+  <div id="wpp-upgrade-card" class="wpp-upgrade-card" style="display:none">
+    <div class="wpp-upgrade-icon">💬</div>
+    <div class="wpp-upgrade-title">Atendimento automático pelo WhatsApp</div>
+    <div class="wpp-upgrade-desc">Conecte seu número e deixe a Rebeca responder seus clientes 24h</div>
+    <div class="wpp-upgrade-features">
+      <span class="wpp-feature-tag">✅ Bot qualificado</span>
+      <span class="wpp-feature-tag">✅ Dados salvos</span>
+      <span class="wpp-feature-tag">✅ Notificações</span>
+    </div>
+  </div>
+
+  <!-- CONTEÚDO COMPLETO -->
+  <div id="wpp-conteudo-147" class="wpp-conteudo" style="display:none">
+
+    <!-- BLOCO CONEXÃO -->
+    <div class="page-section">
+      <div class="wpp-bloco-title">📱 Conexão WhatsApp Oficial</div>
+      <div class="wpp-bloco-sub">Conecte o número do seu negócio — sem QR code, sem celular na frente.</div>
+
+      <!-- STATUS LINHA -->
+      <div class="wpp-status-row">
+        <span id="wpp-status-dot" class="wpp-dot wpp-dot-off"></span>
+        <span class="wpp-status-txt-bold" id="wpp-status-label">Verificando...</span>
+        <span class="wpp-status-num" id="wpp-numero-label"></span>
       </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button onclick="wppRecarregar()" class="btn-secondary">🔄 Atualizar</button>
-        <button onclick="wppTestarBot()" id="btn-testar-bot" class="btn-primary" style="display:none">🤖 Testar bot</button>
+
+      <!-- CARD REBECA OFICIAL -->
+      <div class="wpp-rebeca-card">
+        <div class="wpp-rebeca-icon">💬</div>
+        <div class="wpp-rebeca-info">
+          <div class="wpp-rebeca-nome">Rebeca Oficial</div>
+          <div class="wpp-rebeca-num">+55 34 97400-4372</div>
+          <div class="wpp-rebeca-desc">Salve esse número e mande uma mensagem — a Rebeca já responde e gerencia sua agenda por aqui.</div>
+        </div>
+        <div class="wpp-rebeca-btns">
+          <a href="https://wa.me/5534974004372?text=Oi+Rebeca%2C+quero+conectar+minha+agenda" target="_blank" class="btn-wpp-green">
+            💬 Falar com a Rebeca
+          </a>
+          <a href="https://wa.me/5534974004372" target="_blank" class="btn-wpp-outline">
+            ➕ Salvar contato
+          </a>
+        </div>
+      </div>
+
+      <!-- INPUT NÚMERO -->
+      <div class="wpp-input-block">
+        <div class="wpp-input-title">📲 Número do seu WhatsApp comercial</div>
+        <div class="wpp-input-desc">Digite o número que seus clientes usam para falar com você. A Rebeca vai atender por ele automaticamente.</div>
+        <div class="wpp-input-row">
+          <input type="tel" id="wpp-numero-input" placeholder="(34) 99999-9999" class="wpp-input"
+            oninput="this.value=this.value.replace(/\D/g,'').replace(/^(\d{2})(\d)/,'($1) $2').replace(/(\d{5})(\d)/,'$1-$2').substring(0,15)">
+          <button onclick="wppConectarNumero()" id="btn-wpp-conectar" class="btn-primary">✅ Conectar</button>
+          <button onclick="wppDesconectar()" id="btn-wpp-desconectar" class="btn-danger" style="display:none">Desconectar</button>
+        </div>
+      </div>
+
+      <!-- COMO FUNCIONA -->
+      <div class="wpp-steps">
+        <div class="wpp-step">
+          <div class="wpp-step-icon">1️⃣</div>
+          <div class="wpp-step-title">Salve o contato</div>
+          <div class="wpp-step-desc">Adicione a Rebeca no celular</div>
+        </div>
+        <div class="wpp-step">
+          <div class="wpp-step-icon">2️⃣</div>
+          <div class="wpp-step-title">Digite seu número</div>
+          <div class="wpp-step-desc">O número do seu comércio</div>
+        </div>
+        <div class="wpp-step">
+          <div class="wpp-step-icon">3️⃣</div>
+          <div class="wpp-step-title">Pronto!</div>
+          <div class="wpp-step-desc">Rebeca já atende seus clientes</div>
+        </div>
       </div>
     </div>
 
-    <!-- CARDS STATS -->
-    <div class="page-grid-4" style="margin-bottom:20px">
-      <div class="page-section" style="padding:16px">
-        <div style="font-size:.7em;font-weight:600;color:var(--texto4);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Status</div>
-        <div style="font-weight:700;font-size:1em;letter-spacing:-.01em" id="wpp-status-txt">—</div>
-        <div style="font-size:.72em;color:var(--texto3);margin-top:4px" id="wpp-numero-txt">—</div>
+    <!-- CONVERSAS RECENTES -->
+    <div class="page-section">
+      <div class="wpp-section-header">
+        <span class="wpp-section-title">💬 Conversas recentes</span>
+        <span class="wpp-section-sub">Últimas 30min</span>
       </div>
-      <div class="page-section" style="padding:16px">
-        <div style="font-size:.7em;font-weight:600;color:var(--texto4);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Conversas hoje</div>
-        <div style="font-weight:700;font-size:1.4em;letter-spacing:-.02em" id="wpp-conv-hoje">0</div>
-      </div>
-      <div class="page-section" style="padding:16px">
-        <div style="font-size:.7em;font-weight:600;color:var(--texto4);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Agendados via WPP</div>
-        <div style="font-weight:700;font-size:1.4em;letter-spacing:-.02em" id="wpp-ag-wpp">0</div>
-      </div>
-      <div class="page-section" style="padding:16px">
-        <div style="font-size:.7em;font-weight:600;color:var(--texto4);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Aguardando humano</div>
-        <div style="font-weight:700;font-size:1.4em;letter-spacing:-.02em;color:var(--vermelho)" id="wpp-handoff">0</div>
+      <div id="wpp-conversas-lista">
+        <div class="wpp-empty">Nenhuma conversa recente</div>
       </div>
     </div>
 
-    <!-- PLANO BÁSICO: upgrade card -->
-    <div id="wpp-upgrade-card" style="display:none;background:linear-gradient(135deg,#fff7ed,#ffedd5);border:1.5px solid rgba(249,115,22,.3);border-radius:var(--radius);padding:24px;margin-bottom:20px;text-align:center">
-      <div style="font-size:1.4em;margin-bottom:10px">💬</div>
-      <div style="font-weight:800;font-size:1em;margin-bottom:6px">Atendimento automático pelo WhatsApp</div>
-      <div style="font-size:.83em;color:var(--texto2);margin-bottom:16px;max-width:400px;margin-left:auto;margin-right:auto">No combo Agenda + Delivery, a Rebeca Agenda atende sozinha pelo WhatsApp — marca horários, consulta serviços, responde preços e notifica você de tudo.</div>
-      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
-        <div style="background:var(--branco);border-radius:8px;padding:10px 16px;font-size:.8em;font-weight:700">✅ Bot que agenda</div>
-        <div style="background:var(--branco);border-radius:8px;padding:10px 16px;font-size:.8em;font-weight:700">✅ Dados reais</div>
-        <div style="background:var(--branco);border-radius:8px;padding:10px 16px;font-size:.8em;font-weight:700">✅ Notifica você</div>
+    <!-- LOGS -->
+    <div class="page-section">
+      <div class="wpp-section-header">
+        <span class="wpp-section-title">📋 Logs de atividade</span>
+        <button onclick="wppCarregarLogs()" class="btn-link">Atualizar</button>
+      </div>
+      <div id="wpp-logs-lista" class="wpp-logs-scroll">
+        <div class="wpp-empty">Nenhum log disponível</div>
       </div>
     </div>
 
-    <!-- PLANO COM WHATSAPP: conteúdo completo -->
-    <div id="wpp-conteudo-147" style="display:none">
+    <!-- CONFIGURAÇÕES BOT -->
+    <div class="page-section">
+      <div class="wpp-section-title" style="margin-bottom:14px">⚙️ Configurações do bot</div>
+      <div class="wpp-cfg-grid">
 
-      <!-- CONEXÃO NOVA — Meta API Oficial sem QR code -->
-      <div style="background:var(--branco);border:1px solid var(--borda);border-radius:var(--radius);padding:20px;margin-bottom:16px;box-shadow:var(--shadow)">
-        <div style="font-weight:700;font-size:.9em;margin-bottom:4px;display:flex;align-items:center;gap:8px">
-          <span>📱</span> Conexão WhatsApp Oficial
-        </div>
-        <div style="font-size:.78em;color:var(--texto3);margin-bottom:16px">Conecte o número do seu negócio — sem QR code, sem celular na frente.</div>
-
-        <!-- STATUS -->
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px">
-          <span id="wpp-status-dot" style="width:10px;height:10px;border-radius:50%;background:#9ca3af;display:inline-block"></span>
-          <span style="font-weight:700;font-size:.9em" id="wpp-status-label">Verificando...</span>
-          <span style="font-size:.78em;color:var(--texto3)" id="wpp-numero-label"></span>
-        </div>
-
-        <!-- CARD REBECA OFICIAL -->
-        <div style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1.5px solid #86efac;border-radius:12px;padding:16px;margin-bottom:16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
-          <div style="width:48px;height:48px;background:#25d366;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.4em;flex-shrink:0">💬</div>
-          <div style="flex:1">
-            <div style="font-weight:800;font-size:.88em;margin-bottom:2px">Rebeca Oficial</div>
-            <div style="font-size:.82em;color:#16a34a;font-weight:700;margin-bottom:4px">+55 34 97400-4372</div>
-            <div style="font-size:.75em;color:var(--texto3)">Salve esse número e mande uma mensagem — a Rebeca já responde e gerencia sua agenda por aqui.</div>
+        <div class="wpp-cfg-row">
+          <div class="wpp-cfg-info">
+            <div class="wpp-cfg-nome">Bot ativo</div>
+            <div class="wpp-cfg-desc">Responder clientes automaticamente</div>
           </div>
-          <div style="display:flex;flex-direction:column;gap:6px">
-            <a href="https://wa.me/5534974004372?text=Oi+Rebeca%2C+quero+conectar+minha+agenda" target="_blank"
-              style="padding:8px 14px;background:#25d366;color:#fff;border-radius:8px;font-size:.78em;font-weight:700;text-decoration:none;text-align:center;white-space:nowrap">
-              💬 Falar com a Rebeca
-            </a>
-            <a href="https://wa.me/5534974004372" target="_blank"
-              style="padding:8px 14px;background:var(--branco);border:1.5px solid #86efac;color:#16a34a;border-radius:8px;font-size:.78em;font-weight:700;text-decoration:none;text-align:center;white-space:nowrap">
-              ➕ Salvar contato
-            </a>
-          </div>
+          <label class="wpp-toggle">
+            <input type="checkbox" id="cfg-bot-ativo" onchange="salvarCfgBot()">
+            <span class="wpp-toggle-track"></span>
+          </label>
         </div>
 
-        <!-- CAMPO NÚMERO DO NEGÓCIO -->
-        <div style="background:#f8fafc;border:1px solid var(--borda);border-radius:10px;padding:16px;margin-bottom:12px">
-          <div style="font-size:.82em;font-weight:700;margin-bottom:8px">📲 Número do seu WhatsApp comercial</div>
-          <div style="font-size:.75em;color:var(--texto3);margin-bottom:10px">Digite o número que seus clientes usam para falar com você. A Rebeca vai atender por ele automaticamente.</div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <input type="tel" id="wpp-numero-input" placeholder="(34) 99999-9999"
-              style="flex:1;padding:9px 12px;border:1.5px solid var(--borda);border-radius:8px;font-size:.85em;min-width:160px"
-              oninput="this.value=this.value.replace(/\D/g,'').replace(/^(\d{2})(\d)/,'($1) $2').replace(/(\d{5})(\d)/,'$1-$2').substring(0,15)">
-            <button onclick="wppConectarNumero()" id="btn-wpp-conectar"
-              style="padding:9px 18px;background:var(--cor);color:#fff;border:none;border-radius:8px;font-size:.82em;font-weight:700;cursor:pointer;white-space:nowrap">
-              ✅ Conectar
-            </button>
-            <button onclick="wppDesconectar()" id="btn-wpp-desconectar"
-              style="display:none;padding:9px 18px;background:var(--branco);color:var(--vermelho);border:1.5px solid var(--vermelho-bg);border-radius:8px;font-size:.82em;font-weight:700;cursor:pointer">
-              Desconectar
-            </button>
+        <div class="wpp-cfg-row">
+          <div class="wpp-cfg-info">
+            <div class="wpp-cfg-nome">Responder fora do horário</div>
+            <div class="wpp-cfg-desc">Bot responde mesmo quando fechado</div>
           </div>
-          <div id="wpp-numero-label" style="display:none"></div>
+          <label class="wpp-toggle">
+            <input type="checkbox" id="cfg-bot-fora-horario" onchange="salvarCfgBot()">
+            <span class="wpp-toggle-track"></span>
+          </label>
         </div>
 
-        <!-- COMO FUNCIONA -->
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-top:4px">
-          <div style="background:#f8fafc;border-radius:8px;padding:12px;text-align:center">
-            <div style="font-size:1.3em;margin-bottom:4px">1️⃣</div>
-            <div style="font-size:.72em;font-weight:700;margin-bottom:2px">Salve o contato</div>
-            <div style="font-size:.68em;color:var(--texto3)">Adicione a Rebeca no celular</div>
+        <div class="wpp-cfg-row">
+          <div class="wpp-cfg-info">
+            <div class="wpp-cfg-nome">Sempre enviar link da agenda</div>
+            <div class="wpp-cfg-desc">Incluir link em todas as respostas</div>
           </div>
-          <div style="background:#f8fafc;border-radius:8px;padding:12px;text-align:center">
-            <div style="font-size:1.3em;margin-bottom:4px">2️⃣</div>
-            <div style="font-size:.72em;font-weight:700;margin-bottom:2px">Digite seu número</div>
-            <div style="font-size:.68em;color:var(--texto3)">O número do seu comércio</div>
-          </div>
-          <div style="background:#f8fafc;border-radius:8px;padding:12px;text-align:center">
-            <div style="font-size:1.3em;margin-bottom:4px">3️⃣</div>
-            <div style="font-size:.72em;font-weight:700;margin-bottom:2px">Pronto!</div>
-            <div style="font-size:.68em;color:var(--texto3)">Rebeca já atende seus clientes</div>
-          </div>
+          <label class="wpp-toggle">
+            <input type="checkbox" id="cfg-bot-link" onchange="salvarCfgBot()">
+            <span class="wpp-toggle-track"></span>
+          </label>
         </div>
+
       </div>
+    </div>
 
-      <!-- CONVERSAS RECENTES -->
-      <div style="background:var(--branco);border:1px solid var(--borda);border-radius:var(--radius);padding:20px;margin-bottom:16px;box-shadow:var(--shadow)">
-        <div style="font-weight:700;font-size:.9em;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between">
-          <span>💬 Conversas recentes</span>
-          <span style="font-size:.75em;color:var(--texto3);font-weight:500">Últimas 30min</span>
-        </div>
-        <div id="wpp-conversas-lista">
-          <div style="text-align:center;padding:24px;color:var(--texto3);font-size:.85em">Nenhuma conversa recente</div>
-        </div>
-      </div>
-
-      <!-- LOGS -->
-      <div style="background:var(--branco);border:1px solid var(--borda);border-radius:var(--radius);padding:20px;margin-bottom:16px;box-shadow:var(--shadow)">
-        <div style="font-weight:700;font-size:.9em;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between">
-          <span>📋 Logs de atividade</span>
-          <button onclick="wppCarregarLogs()" style="font-size:.75em;color:var(--cor);background:none;border:none;cursor:pointer;font-weight:600">Atualizar</button>
-        </div>
-        <div id="wpp-logs-lista" style="max-height:300px;overflow-y:auto">
-          <div style="text-align:center;padding:24px;color:var(--texto3);font-size:.85em">Nenhum log disponível</div>
-        </div>
-      </div>
-
-      <!-- CONFIGURAÇÕES BOT -->
-      <div style="background:var(--branco);border:1px solid var(--borda);border-radius:var(--radius);padding:20px;margin-bottom:0;box-shadow:var(--shadow)">
-        <div style="font-weight:700;font-size:.9em;margin-bottom:14px">⚙️ Configurações do bot</div>
-        <div style="display:grid;gap:14px">
-          <div style="display:flex;align-items:center;justify-content:space-between">
-            <div>
-              <div style="font-size:.85em;font-weight:600">Bot ativo</div>
-              <div style="font-size:.75em;color:var(--texto3)">Responder clientes automaticamente</div>
-            </div>
-            <label style="position:relative;display:inline-block;width:44px;height:24px">
-              <input type="checkbox" id="cfg-bot-ativo" onchange="salvarCfgBot()" style="opacity:0;width:0;height:0">
-              <span onclick="document.getElementById('cfg-bot-ativo').click()" style="position:absolute;cursor:pointer;inset:0;background:#ccc;border-radius:24px;transition:.3s" id="toggle-bot"></span>
-            </label>
-          </div>
-          <div style="display:flex;align-items:center;justify-content:space-between">
-            <div>
-              <div style="font-size:.85em;font-weight:600">Responder fora do horário</div>
-              <div style="font-size:.75em;color:var(--texto3)">Bot responde mesmo quando fechado</div>
-            </div>
-            <label style="position:relative;display:inline-block;width:44px;height:24px">
-              <input type="checkbox" id="cfg-bot-fora-horario" onchange="salvarCfgBot()" style="opacity:0;width:0;height:0">
-              <span onclick="document.getElementById('cfg-bot-fora-horario').click()" style="position:absolute;cursor:pointer;inset:0;background:#ccc;border-radius:24px;transition:.3s" id="toggle-fora"></span>
-            </label>
-          </div>
-          <div style="display:flex;align-items:center;justify-content:space-between">
-            <div>
-              <div style="font-size:.85em;font-weight:600">Sempre enviar link da agenda</div>
-              <div style="font-size:.75em;color:var(--texto3)">Incluir link em todas as respostas</div>
-            </div>
-            <label style="position:relative;display:inline-block;width:44px;height:24px">
-              <input type="checkbox" id="cfg-bot-link" onchange="salvarCfgBot()" style="opacity:0;width:0;height:0">
-              <span onclick="document.getElementById('cfg-bot-link').click()" style="position:absolute;cursor:pointer;inset:0;background:#ccc;border-radius:24px;transition:.3s" id="toggle-link"></span>
-            </label>
-          </div>
-        </div>
-      </div>
-
-    </div><!-- /wpp-conteudo-147 -->
+  </div><!-- /wpp-conteudo-147 -->
 </div><!-- /tela-whatsapp -->
 
 
