@@ -1503,7 +1503,7 @@ async function iniciarApp(){
     document.getElementById('mh-avatar').textContent = av;
     // Link público
     const slug = ADMIN.nomeNegocio ? ADMIN.nomeNegocio.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'') : ADMIN_ID;
-    const link = window.location.origin+'/agenda?id='+ADMIN_ID;
+    const link = window.location.origin+'/espaco-digital?id='+ADMIN_ID;
     document.getElementById('link-publico-url').textContent = link;
     window._linkPublico = link;
     window._adminId = ADMIN_ID;
@@ -2138,7 +2138,7 @@ function wppCancelar(tel, nomeCliente, servico, data, hora) {
     nomeCliente: nomeCliente,
     nomeNegocio: (ADMIN&&ADMIN.nomeNegocio)||'nossa empresa',
     servico: servico, data: data, hora: hora,
-    linkAgenda: window.location.origin+'/agenda?id='+(window._adminId||'')
+    linkAgenda: window.location.origin+'/espaco-digital?id='+(window._adminId||'')
   });
   abrirWpp(tel, msg);
 }
@@ -2149,7 +2149,7 @@ function wppAvaliar(tel, nomeCliente) {
   var msg = buildWhatsappMessage('review_request', {
     nomeCliente: nomeCliente,
     nomeNegocio: (ADMIN&&ADMIN.nomeNegocio)||'nossa empresa',
-    linkAvaliacao: window.location.origin+'/agenda?id='+(window._adminId||'')+'#avaliacoes'
+    linkAvaliacao: window.location.origin+'/espaco-digital?id='+(window._adminId||'')+'#avaliacoes'
   });
   abrirWpp(tel, msg);
 }

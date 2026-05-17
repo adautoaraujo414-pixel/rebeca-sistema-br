@@ -300,7 +300,9 @@ function toast(msg) {
 
 // Verificar plano na URL e redirecionar
 var params = new URLSearchParams(location.search);
-if (params.get('plano')) {
+if (params.get('id')) {
+  location.href = '/espaco-digital?id=' + params.get('id');
+} else if (params.get('plano')) {
   location.href = '/agenda-cadastro?plano=' + params.get('plano');
 }
 </script>
