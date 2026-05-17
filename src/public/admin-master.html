@@ -428,7 +428,7 @@
                 <option value="">Todos os módulos</option>
                 <option value="delivery">Delivery</option>
                 <option value="agenda">Agenda</option>
-                <option value="soft">Soft</option>
+                <option value="corrida">Corrida</option>
               </select>
               <button class="btn btn-primary btn-sm" onclick="carregarTenants()">↺ Atualizar</button>
             </div>
@@ -445,7 +445,7 @@
                     <th>Plano</th>
                     <th>Trial</th>
                     <th>Pedidos/mês</th>
-                    <th>IA Calls</th>
+                    <th>Corridas/mês</th>
                     <th>Último Acesso</th>
                     <th>Status</th>
                     <th>Ações</th>
@@ -470,9 +470,19 @@
               <div class="form-group">
                 <label>Plano</label>
                 <select id="modalTenantNovoPlano" class="form-control">
-                  <option value="starter">Starter — até 500 pedidos/mês</option>
-                  <option value="pro">Pro — até 5.000 pedidos/mês + IA</option>
-                  <option value="enterprise">Enterprise — ilimitado + white-label</option>
+                  <optgroup label="Módulo único">
+                    <option value="agenda_solo">📅 Agenda</option>
+                    <option value="delivery_solo">🛵 Delivery</option>
+                    <option value="corrida_solo">🚗 Corrida</option>
+                  </optgroup>
+                  <optgroup label="Combos">
+                    <option value="combo_agd_del">📅🛵 Agenda + Delivery</option>
+                    <option value="combo_del_cor">🛵🚗 Delivery + Corrida</option>
+                    <option value="combo_completo">📅🛵🚗 Agenda + Delivery + Corrida</option>
+                  </optgroup>
+                  <optgroup label="Enterprise">
+                    <option value="enterprise">⭐ Enterprise — ilimitado</option>
+                  </optgroup>
                 </select>
               </div>
               <div class="form-group">
@@ -485,12 +495,11 @@
               <div class="form-group">
                 <label>Módulos ativos</label>
                 <div style="display:flex;gap:15px;flex-wrap:wrap;margin-top:8px;">
-                  <label style="cursor:pointer;"><input type="checkbox" id="mod-delivery"> Delivery</label>
-                  <label style="cursor:pointer;"><input type="checkbox" id="mod-agenda"> Agenda</label>
-                  <label style="cursor:pointer;"><input type="checkbox" id="mod-soft"> Soft</label>
-                  <label style="cursor:pointer;"><input type="checkbox" id="mod-whatsapp"> WhatsApp</label>
-                  <label style="cursor:pointer;"><input type="checkbox" id="mod-ia"> IA</label>
-                  <label style="cursor:pointer;"><input type="checkbox" id="mod-relatorio"> Relatórios</label>
+                  <label style="cursor:pointer;"><input type="checkbox" id="mod-agenda"> 📅 Agenda</label>
+                  <label style="cursor:pointer;"><input type="checkbox" id="mod-delivery"> 🛵 Delivery</label>
+                  <label style="cursor:pointer;"><input type="checkbox" id="mod-corrida"> 🚗 Corrida</label>
+                  <label style="cursor:pointer;"><input type="checkbox" id="mod-whatsapp"> 💬 WhatsApp</label>
+                  <label style="cursor:pointer;"><input type="checkbox" id="mod-relatorio"> 📊 Relatórios</label>
                 </div>
               </div>
               <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px;">
@@ -965,7 +974,7 @@ function fazerLogout() { location.reload(); }
                 const acesso  = t.ultimoAcessoEm
                     ? new Date(t.ultimoAcessoEm).toLocaleDateString('pt-BR') : '—';
                 const pedidos = (t.uso && t.uso.pedidosMes || 0) + ' / ' + (t.limites && t.limites.pedidosMes || 500);
-                const iaCalls = (t.uso && t.uso.iaCalls || 0) + ' / ' + (t.limites && t.limites.iaCallsMes || 50);
+                const corridas = (t.uso && t.uso.corridasMes || 0) + ' / ' + (t.limites && t.limites.corridasMes || 0);
                 const nome    = (t.empresa && t.empresa.nome) || t.adminId.slice(0,8) || '—';
                 const cor     = corPlano[plano] || '#888';
                 const mods    = JSON.stringify(t.modulos || {}).replace(/"/g, "&quot;");
@@ -980,7 +989,7 @@ function fazerLogout() { location.reload(); }
                     '<td><span style="color:' + cor + ';font-weight:bold;">' + plano.toUpperCase() + '</span></td>' +
                     '<td>' + trial + '</td>' +
                     '<td>' + pedidos + '</td>' +
-                    '<td>' + iaCalls + '</td>' +
+                    '<td>' + corridas + '</td>' +
                     '<td style="font-size:12px;color:#888;">' + acesso + '</td>' +
                     '<td>' + status + '</td>' +
                     '<td>' +
@@ -1012,7 +1021,7 @@ function fazerLogout() { location.reload(); }
             document.getElementById('modalTenantTrial').value = emTrial ? 'true' : 'false';
             var mods = {};
             try { mods = JSON.parse(modulosStr.replace(/&quot;/g, '"')); } catch(e) {}
-            ['delivery','agenda','soft','whatsapp','ia','relatorio'].forEach(function(m) {
+            ['agenda','delivery','corrida','whatsapp','relatorio'].forEach(function(m) {
                 var el = document.getElementById('mod-' + m);
                 if (el) el.checked = !!mods[m];
             });
@@ -1024,7 +1033,7 @@ function fazerLogout() { location.reload(); }
             var plano   = document.getElementById('modalTenantNovoPlano').value;
             var trial   = document.getElementById('modalTenantTrial').value === 'true';
             var modulos = {};
-            ['delivery','agenda','soft','whatsapp','ia','relatorio'].forEach(function(m) {
+            ['agenda','delivery','corrida','whatsapp','relatorio'].forEach(function(m) {
                 var el = document.getElementById('mod-' + m);
                 modulos[m] = el ? el.checked : false;
             });

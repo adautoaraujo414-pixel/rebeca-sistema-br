@@ -21,7 +21,7 @@ const TenantSchema = new mongoose.Schema({
   },
   modulo: {
     type: String,
-    enum: ['delivery', 'agenda', 'soft', 'multi'],
+    enum: ['agenda', 'delivery', 'corrida', 'combo', 'enterprise'],
     default: 'delivery',
   },
   ativo: { type: Boolean, default: true },
@@ -50,8 +50,8 @@ const TenantSchema = new mongoose.Schema({
   plano: {
     tipo: {
       type: String,
-      enum: ['starter', 'pro', 'enterprise'],
-      default: 'starter',
+      enum: ['agenda_solo','delivery_solo','corrida_solo','combo_agd_del','combo_del_cor','combo_completo','enterprise'],
+      default: 'delivery_solo',
     },
     // Datas para billing futuro
     inicioEm:    { type: Date, default: null },
@@ -64,14 +64,14 @@ const TenantSchema = new mongoose.Schema({
   },
 
   // ── MÓDULOS ATIVOS ────────────────────────────────────────────────────────
+  // Módulos reais ativos: agenda | delivery | corrida
   modulos: {
-    delivery:  { type: Boolean, default: false },
     agenda:    { type: Boolean, default: false },
-    soft:      { type: Boolean, default: false },
-    whatsapp:  { type: Boolean, default: false },
-    ia:        { type: Boolean, default: false },
-    relatorio: { type: Boolean, default: false },
-    multiuser: { type: Boolean, default: false },
+    delivery:  { type: Boolean, default: false },
+    corrida:   { type: Boolean, default: false },
+    whatsapp:  { type: Boolean, default: false }, // add-on futuro
+    relatorio: { type: Boolean, default: false }, // add-on futuro
+    multiuser: { type: Boolean, default: false }, // add-on futuro
   },
 
   // ── LIMITES POR PLANO ─────────────────────────────────────────────────────
@@ -80,14 +80,14 @@ const TenantSchema = new mongoose.Schema({
     agendamentosMes: { type: Number, default: 200 },
     usuariosMax:     { type: Number, default: 1 },
     storageGb:       { type: Number, default: 1 },
-    iaCallsMes:      { type: Number, default: 50 },
+    corridasMes:     { type: Number, default: 0 },
   },
 
   // ── COUNTERS (incrementados via hooks) ────────────────────────────────────
   uso: {
     pedidosMes:      { type: Number, default: 0 },
     agendamentosMes: { type: Number, default: 0 },
-    iaCalls:         { type: Number, default: 0 },
+    corridasMes:     { type: Number, default: 0 },
     resetEm:         { type: Date, default: () => {
       const d = new Date();
       d.setMonth(d.getMonth() + 1, 1);
@@ -139,18 +139,45 @@ TenantSchema.methods.dentroDoLimite = function(tipo) {
 };
 
 // ── PLANOS PADRÃO ────────────────────────────────────────────────────────
+// ── PLANOS baseados nos 3 módulos reais: agenda | delivery | corrida ────────
 TenantSchema.statics.PLANOS = {
-  starter: {
-    limites: { pedidosMes: 500, agendamentosMes: 200, usuariosMax: 1, storageGb: 1, iaCallsMes: 50 },
-    modulos: { delivery: true, agenda: false, soft: false, whatsapp: false, ia: false, relatorio: false, multiuser: false },
+  // Módulo único
+  agenda_solo: {
+    label: 'Agenda',
+    limites: { pedidosMes: 0, agendamentosMes: 500, corridasMes: 0, usuariosMax: 1, storageGb: 2 },
+    modulos: { agenda: true,  delivery: false, corrida: false, whatsapp: false, relatorio: false, multiuser: false },
   },
-  pro: {
-    limites: { pedidosMes: 5000, agendamentosMes: 2000, usuariosMax: 5, storageGb: 10, iaCallsMes: 500 },
-    modulos: { delivery: true, agenda: true, soft: true, whatsapp: true, ia: true, relatorio: true, multiuser: false },
+  delivery_solo: {
+    label: 'Delivery',
+    limites: { pedidosMes: 1000, agendamentosMes: 0, corridasMes: 0, usuariosMax: 2, storageGb: 2 },
+    modulos: { agenda: false, delivery: true,  corrida: false, whatsapp: false, relatorio: false, multiuser: false },
   },
+  corrida_solo: {
+    label: 'Corrida',
+    limites: { pedidosMes: 0, agendamentosMes: 0, corridasMes: 2000, usuariosMax: 1, storageGb: 2 },
+    modulos: { agenda: false, delivery: false, corrida: true,  whatsapp: false, relatorio: false, multiuser: false },
+  },
+  // Combos
+  combo_agd_del: {
+    label: 'Agenda + Delivery',
+    limites: { pedidosMes: 1000, agendamentosMes: 500, corridasMes: 0, usuariosMax: 3, storageGb: 5 },
+    modulos: { agenda: true,  delivery: true,  corrida: false, whatsapp: false, relatorio: false, multiuser: false },
+  },
+  combo_del_cor: {
+    label: 'Delivery + Corrida',
+    limites: { pedidosMes: 1000, agendamentosMes: 0, corridasMes: 2000, usuariosMax: 3, storageGb: 5 },
+    modulos: { agenda: false, delivery: true,  corrida: true,  whatsapp: false, relatorio: false, multiuser: false },
+  },
+  combo_completo: {
+    label: 'Agenda + Delivery + Corrida',
+    limites: { pedidosMes: 2000, agendamentosMes: 1000, corridasMes: 5000, usuariosMax: 5, storageGb: 10 },
+    modulos: { agenda: true,  delivery: true,  corrida: true,  whatsapp: false, relatorio: true,  multiuser: false },
+  },
+  // Enterprise
   enterprise: {
-    limites: { pedidosMes: 999999, agendamentosMes: 999999, usuariosMax: 999, storageGb: 100, iaCallsMes: 9999 },
-    modulos: { delivery: true, agenda: true, soft: true, whatsapp: true, ia: true, relatorio: true, multiuser: true },
+    label: 'Enterprise',
+    limites: { pedidosMes: 999999, agendamentosMes: 999999, corridasMes: 999999, usuariosMax: 999, storageGb: 100 },
+    modulos: { agenda: true,  delivery: true,  corrida: true,  whatsapp: true,  relatorio: true,  multiuser: true  },
   },
 };
 
@@ -158,7 +185,7 @@ TenantSchema.statics.PLANOS = {
 TenantSchema.statics.garantir = async function(adminId, modulo = 'delivery') {
   let tenant = await this.findOne({ adminId });
   if (!tenant) {
-    const planoDefault = this.PLANOS.starter;
+    const planoDefault = this.PLANOS[modulo + '_solo'] || this.PLANOS.delivery_solo;
     tenant = await this.create({
       adminId,
       modulo,

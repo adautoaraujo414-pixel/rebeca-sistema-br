@@ -56,7 +56,7 @@ router.get('/plano', tenantMiddleware, async (req, res) => {
   try {
     if (!req.tenantId) return res.status(401).json({ sucesso: false });
     const tenant = await Tenant.findOne({ adminId: req.tenantId });
-    if (!tenant) return res.json({ sucesso: true, plano: 'starter', emTrial: true });
+    if (!tenant) return res.json({ sucesso: true, plano: 'delivery_solo', emTrial: true });
 
     res.json({
       sucesso: true,
@@ -138,11 +138,8 @@ router.put('/master/plano', _masterAuth, async (req, res) => {
 
     // Aplicar limites do plano automaticamente
     if (plano) {
-      const PLANOS = {
-        starter:    { pedidosMes: 500,    agendamentosMes: 200,  usuariosMax: 1,   storageGb: 1,   iaCallsMes: 50   },
-        pro:        { pedidosMes: 5000,   agendamentosMes: 2000, usuariosMax: 5,   storageGb: 10,  iaCallsMes: 500  },
-        enterprise: { pedidosMes: 999999, agendamentosMes: 999999, usuariosMax: 999, storageGb: 100, iaCallsMes: 9999 },
-      };
+      const Tenant = require('../models/tenant.model');
+      const PLANOS = Tenant.PLANOS || {};
       const lim = PLANOS[plano];
       if (lim) Object.keys(lim).forEach(k => { update['limites.' + k] = lim[k]; });
     }

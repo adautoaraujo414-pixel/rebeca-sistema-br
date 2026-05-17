@@ -12,7 +12,7 @@
  *
  * USO:
  *   RebecaTenant.id()              — tenantId atual
- *   RebecaTenant.modulo()          — 'delivery' | 'agenda' | 'soft'
+ *   RebecaTenant.modulo()          — 'delivery' | 'agenda' | 'corrida'
  *   RebecaTenant.storage.get(k)    — localStorage isolado por tenant
  *   RebecaTenant.cache.get(k)      — cache em memória isolado por tenant
  *   RebecaTenant.branding()        — { nome, cor, logo, plano }
@@ -27,10 +27,10 @@ window.RebecaTenant = (() => {
     const title = document.title.toLowerCase();
     const host  = window.location.hostname.toLowerCase();
 
-    if (path.includes('/soft') || title.includes('soft') || host.includes('soft')) return 'soft';
+    if (path.includes('/corrida') || path.includes('/motorista') || path.includes('/rebeca') || title.includes('corrida') || title.includes('motorista')) return 'corrida';
     if (path.includes('/agenda') || title.includes('agenda') || host.includes('agenda')) return 'agenda';
     if (path.includes('/delivery') || path.includes('/admin') || title.includes('delivery')) return 'delivery';
-    return 'delivery'; // default
+    return 'delivery'; // default (agenda e delivery são os outros módulos)
   }
 
   // ── DETECTAR TENANT ID ─────────────────────────────────────────────────────
@@ -154,7 +154,7 @@ window.RebecaTenant = (() => {
     const defaults = {
       delivery: { nome: 'Rebeca Delivery', cor: '#f97316', logo: '/icon-rebeca-192.png', plano: 'starter' },
       agenda:   { nome: 'Rebeca Agenda',   cor: '#3b82f6', logo: '/agenda-icon-192.png', plano: 'starter' },
-      soft:     { nome: 'Rebeca Soft',     cor: '#8b5cf6', logo: '/icon-rebeca-192.png', plano: 'starter' },
+      corrida:  { nome: 'Rebeca Corrida',  cor: '#10b981', logo: '/icon-rebeca-192.png', plano: 'corrida_solo' },
     };
 
     return { ...defaults[modulo], ...saved };
@@ -176,9 +176,13 @@ window.RebecaTenant = (() => {
 
   // ── PLANO E PERMISSÕES ────────────────────────────────────────────────────
   const PLANOS = {
-    starter:    { relatorio: false, ia: false,  multiusuario: false, whitelabel: false, exportar: false },
-    pro:        { relatorio: true,  ia: true,   multiusuario: false, whitelabel: false, exportar: true  },
-    enterprise: { relatorio: true,  ia: true,   multiusuario: true,  whitelabel: true,  exportar: true  },
+    agenda_solo:    { relatorio: false, multiusuario: false, whitelabel: false, exportar: false },
+    delivery_solo:  { relatorio: false, multiusuario: false, whitelabel: false, exportar: false },
+    corrida_solo:   { relatorio: false, multiusuario: false, whitelabel: false, exportar: false },
+    combo_agd_del:  { relatorio: false, multiusuario: false, whitelabel: false, exportar: true  },
+    combo_del_cor:  { relatorio: false, multiusuario: false, whitelabel: false, exportar: true  },
+    combo_completo: { relatorio: true,  multiusuario: false, whitelabel: false, exportar: true  },
+    enterprise:     { relatorio: true,  multiusuario: true,  whitelabel: true,  exportar: true  },
   };
 
   function _pode(permissao) {
@@ -188,7 +192,7 @@ window.RebecaTenant = (() => {
 
   // ── MÓDULOS ATIVOS ────────────────────────────────────────────────────────
   function _modulosAtivos() {
-    return storage.get('modulos', ['delivery']); // default: só delivery
+    return storage.get('modulos', ['delivery']); // default: delivery
   }
 
   // ── SALVAR CONTEXTO (chamado no login) ────────────────────────────────────
