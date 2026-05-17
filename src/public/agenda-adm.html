@@ -522,6 +522,14 @@ input,select,textarea{font-family:'Inter',sans-serif}
 .wpp-toggle input:checked + .wpp-toggle-track::after{transform:translateX(20px)}
 @media(max-width:900px){.wpp-stats{grid-template-columns:repeat(2,1fr)}.wpp-rebeca-card{flex-wrap:wrap}.wpp-rebeca-btns{flex-direction:row;width:100%}}
 @media(max-width:520px){.wpp-stats{grid-template-columns:1fr 1fr;gap:10px}.wpp-steps{grid-template-columns:1fr}.wpp-rebeca-btns{flex-direction:column}}
+
+/* ── mob-menu-fab: garantir oculto no desktop ───────────────────────────── */
+@media(min-width:769px){
+  .mob-menu-fab{display:none!important}
+  .drawer{display:none!important}
+  .drawer-bg{display:none!important}
+  #drawer-bg{display:none!important}
+}
 </style>
 <link rel="manifest" href="/agenda-adm-manifest.json">
 <script src="/js/agenda-notif-helper.js">
