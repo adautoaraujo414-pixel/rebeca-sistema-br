@@ -592,6 +592,23 @@ input,select,textarea{font-family:'Inter',sans-serif}
   .wpp-steps { grid-template-columns:1fr; }
   .wpp-rebeca-btns { flex-direction:column; }
 }
+
+/* ── tela-whatsapp layout fix ───────────────────────────────────────────── */
+#tela-whatsapp.ativa {
+  display: flex !important;
+  flex-direction: column;
+  gap: 0;
+  width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+#tela-whatsapp .wpp-stats,
+#tela-whatsapp .wpp-upgrade-card,
+#tela-whatsapp .wpp-conteudo {
+  width: 100%;
+  box-sizing: border-box;
+  max-width: 100%;
+}
 </style>
 <link rel="manifest" href="/agenda-adm-manifest.json">
 <script src="/js/agenda-notif-helper.js">
