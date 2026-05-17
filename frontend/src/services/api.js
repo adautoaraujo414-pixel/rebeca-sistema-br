@@ -1,39 +1,35 @@
 import axios from 'axios';
-import { useAuthStore } from '../stores/auth.store';
 
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/soft';
 
 export const api = axios.create({
-  baseURL: `${BASE_URL}/api/soft`,
+  baseURL: BASE,
   timeout: 15000,
   headers: { 'Content-Type': 'application/json' },
 });
 
-// Request: injeta token
-api.interceptors.request.use((config) => {
-  const token = useAuthStore.getState().getToken();
-  if (token) config.headers.Authorization = `Bearer ${token}`;
-  return config;
+// Request — injeta token
+api.interceptors.request.use(cfg => {
+  const token = localStorage.getItem('rebeca_token');
+  if (token) cfg.headers.Authorization = `Bearer ${token}`;
+  return cfg;
 });
 
-// Response: trata 401 → logout
+// Response — trata 401
 api.interceptors.response.use(
-  (res) => res,
-  (err) => {
+  res => res,
+  err => {
     if (err.response?.status === 401) {
-      useAuthStore.getState().clearAuth();
+      localStorage.removeItem('rebeca_token');
+      localStorage.removeItem('rebeca_user');
       window.location.href = '/login';
     }
     return Promise.reject(err);
   }
 );
 
-// Auth endpoints
+// Auth API
 export const authApi = {
-  login:  (email, senha) =>
-    api.post('/auth/login', { email, senha }).then(r => r.data.dados),
-  perfil: () =>
-    api.get('/auth/perfil').then(r => r.data.dados),
-  logout: () =>
-    api.post('/auth/logout').catch(() => {}),
+  login:  (dados) => api.post('/auth/login',  dados).then(r => r.data),
+  logout: ()      => api.post('/auth/logout').then(r => r.data),
 };
