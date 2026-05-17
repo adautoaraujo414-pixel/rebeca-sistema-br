@@ -4,7 +4,7 @@ let clienteAnthropic = null;
 
 const configIA = {
     apiKey: process.env.ANTHROPIC_API_KEY || '',
-    modelo: 'claude-3-haiku-20240307',
+    modelo: 'claude-haiku-4-5-20251001',
     ativo: true // lógica local, sempre ativo
 };
 
