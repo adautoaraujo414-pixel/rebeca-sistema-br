@@ -95,7 +95,7 @@ input,select,textarea{font-family:'Inter',sans-serif}
 .sidebar-plano-btn:hover{background:var(--cor2);box-shadow:0 2px 8px rgba(249,115,22,.3)}
 
 /* ─── MAIN ─── */
-.main{margin-left:var(--sidebar);min-height:100vh;display:flex;flex-direction:column;width:calc(100% - var(--sidebar))}
+.main{margin-left:var(--sidebar);min-height:100svh;display:flex;flex-direction:column;width:calc(100% - var(--sidebar))}
 
 /* ─── HEADER DESKTOP ─── */
 .header{height:56px;background:rgba(255,255,255,.95);backdrop-filter:blur(8px);border-bottom:1px solid var(--borda2);display:flex;align-items:center;padding:0 20px;gap:12px;position:sticky;top:0;z-index:90}
@@ -121,7 +121,7 @@ input,select,textarea{font-family:'Inter',sans-serif}
 .header-perfil-cargo{font-size:.7em;color:var(--texto3)}
 
 /* ─── CONTENT ─── */
-.content{flex:1;padding:28px 24px;box-sizing:border-box;width:100%;min-height:calc(100vh - 56px)}
+.content{flex:1;padding:28px 24px;box-sizing:border-box;width:100%;min-height:calc(100svh - 56px)}
 
 
 /* ─── MOBILE DRAWER ─── */
@@ -134,6 +134,7 @@ input,select,textarea{font-family:'Inter',sans-serif}
   :root{--sidebar:220px}
 }
 @media(max-width:768px){
+  input,select,textarea{font-size:16px!important}
   .sidebar{transform:translateX(-100%);z-index:200;background:#fff;box-shadow:var(--shadow-xl)}
   .sidebar.open{transform:translateX(0)}
   .sidebar-overlay{display:block}
@@ -146,6 +147,9 @@ input,select,textarea{font-family:'Inter',sans-serif}
   .header-ajuda span{display:none}
   .metrics{grid-template-columns:1fr 1fr!important}
   .main-grid{grid-template-columns:1fr!important}
+  table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  [style*="grid-template-columns:repeat(4"]{grid-template-columns:1fr 1fr!important}
+  [style*="grid-template-columns:repeat(3"]{grid-template-columns:1fr!important}
   .page-grid-4{grid-template-columns:1fr 1fr!important}
   .page-grid-3{grid-template-columns:1fr!important}
   .page-grid-2{grid-template-columns:1fr!important}
@@ -154,6 +158,8 @@ input,select,textarea{font-family:'Inter',sans-serif}
   .metrics{grid-template-columns:1fr!important}
   .page-grid-4{grid-template-columns:1fr!important}
   .content{padding:16px 12px}
+  [style*="grid-template-columns:repeat(4"]{grid-template-columns:1fr 1fr!important}
+  [style*="grid-template-columns:repeat(3"]{grid-template-columns:1fr!important}
 }
 /* ─── LAYOUT GLOBAL PADRÃO ─── */
 .page-container{max-width:100%;width:100%}
