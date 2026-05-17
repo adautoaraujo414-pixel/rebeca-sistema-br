@@ -1882,7 +1882,9 @@ async function confirmarAg(id){
 
 async function cancelarAg(id){
   if(!confirm('Cancelar este agendamento?')) return;
+  try {
   await api('/agendamentos/'+id+'/status', {method:'PUT', body:JSON.stringify({status:'cancelado'})});
+  } catch(e) { console.error('Erro:', e); alert('Erro ao executar ação'); }
   toast('Agendamento cancelado');
   carregarTabelaAgendamentos();
   carregarProximosAgendamentos();
@@ -1890,7 +1892,9 @@ async function cancelarAg(id){
 
 async function deletarCliente(id){
   if(!confirm('Remover este cliente?')) return;
+  try {
   await api('/clientes/'+id, {method:'DELETE'});
+  } catch(e) { console.error('Erro:', e); alert('Erro ao executar ação'); }
   toast('Cliente removido');
   carregarTabelaClientes();
 }
@@ -1904,7 +1908,9 @@ async function deletarServico(id){
 
 async function deletarProfissional(id){
   if(!confirm('Remover este profissional?')) return;
+  try {
   await api('/profissionais/'+id, {method:'DELETE'});
+  } catch(e) { console.error('Erro:', e); alert('Erro ao executar ação'); }
   toast('Profissional removido');
   carregarGridProfissionais();
 }
@@ -1920,7 +1926,9 @@ async function salvarAgendamento(){
     status: 'confirmado'
   };
   if(!payload.clienteNome || !payload.dataHora.includes('T')) return toast('Preencha os campos obrigatórios', 'erro');
+  try {
   const r = await api('/'+ADMIN_ID+'/agendar', {method:'POST', body:JSON.stringify(payload)});
+  } catch(e) { console.error('Erro:', e); alert('Erro ao executar ação'); }
   if(r && r.sucesso){ toast('Agendamento criado ✅'); fecharModal('modal-ag'); carregarDashboard(); }
   else toast('Erro ao criar agendamento', 'erro');
 }
@@ -1928,7 +1936,9 @@ async function salvarAgendamento(){
 async function salvarCliente(){
   const payload = {nome: document.getElementById('cli-nome').value.trim(), telefone: document.getElementById('cli-tel').value.trim(), email: document.getElementById('cli-email').value.trim()};
   if(!payload.nome) return toast('Informe o nome', 'erro');
+  try {
   const r = await api('/clientes', {method:'POST', body:JSON.stringify(payload)});
+  } catch(e) { console.error('Erro:', e); alert('Erro ao executar ação'); }
   if(r && r.sucesso){ toast('Cliente salvo ✅'); fecharModal('modal-cli'); carregarTabelaClientes(); }
   else toast('Erro ao salvar cliente', 'erro');
 }
@@ -1936,7 +1946,9 @@ async function salvarCliente(){
 async function salvarServico(){
   const payload = {nome: document.getElementById('srv-nome').value.trim(), preco: parseFloat(document.getElementById('srv-preco').value)||0, duracao: parseInt(document.getElementById('srv-dur').value)||30, descricao: document.getElementById('srv-desc').value};
   if(!payload.nome) return toast('Informe o nome do serviço', 'erro');
+  try {
   const r = await api('/servicos', {method:'POST', body:JSON.stringify(payload)});
+  } catch(e) { console.error('Erro:', e); alert('Erro ao executar ação'); }
   if(r && r.sucesso){ toast('Serviço salvo ✅'); fecharModal('modal-srv'); carregarTabelaServicos(); }
   else toast('Erro ao salvar serviço', 'erro');
 }
@@ -1944,7 +1956,9 @@ async function salvarServico(){
 async function salvarProfissional(){
   const payload = {nome: document.getElementById('prf-nome').value.trim(), cargo: document.getElementById('prf-cargo').value.trim(), telefone: document.getElementById('prf-tel').value.trim()};
   if(!payload.nome) return toast('Informe o nome', 'erro');
+  try {
   const r = await api('/profissionais', {method:'POST', body:JSON.stringify(payload)});
+  } catch(e) { console.error('Erro:', e); alert('Erro ao executar ação'); }
   if(r && r.sucesso){ toast('Profissional salvo ✅'); fecharModal('modal-prf'); carregarGridProfissionais(); }
   else toast('Erro ao salvar profissional', 'erro');
 }
@@ -1961,7 +1975,9 @@ async function salvarConfig(){
       antecedenciaMinima: parseInt(document.getElementById('cfg-ant').value)||60,
     }
   };
+  try {
   const r = await api('/perfil', {method:'PUT', body:JSON.stringify(payload)});
+  } catch(e) { console.error('Erro:', e); alert('Erro ao executar ação'); }
   if(r && r.sucesso){ toast('Configurações salvas ✅'); }
   else toast('Erro ao salvar', 'erro');
 }
@@ -3140,7 +3156,9 @@ async function salvarLancamento() {
     formaPagamento: document.getElementById('fin-pagamento').value,
     observacao: document.getElementById('fin-obs').value
   };
+  try {
   const r = await api('/financeiro/lancamento', { method: 'POST', body: JSON.stringify(payload) });
+  } catch(e) { console.error('Erro:', e); alert('Erro ao executar ação'); }
   if (r && (r.sucesso || r._id)) {
     toast('Lançamento salvo ✅');
     fecharModalFinanceiro();
@@ -3153,7 +3171,9 @@ async function salvarLancamento() {
 
 async function deletarLancamento(id) {
   if (!confirm('Remover este lançamento?')) return;
+  try {
   const r = await api('/financeiro/lancamento/' + id, { method: 'DELETE' });
+  } catch(e) { console.error('Erro:', e); alert('Erro ao executar ação'); }
   if (r && r.sucesso) { toast('Removido ✅'); carregarLancamentos(); }
   else toast('Erro ao remover', 'erro');
 }
