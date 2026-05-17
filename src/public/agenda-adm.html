@@ -502,9 +502,9 @@ document.querySelectorAll('.nav-item').forEach(item => {
     </div>
     <div class="form-group">
       <label>Senha</label>
-      <input type="password" id="login-senha" placeholder="••••••••" onkeydown="if(event.key==='Enter')fazerLogin()">
+      <input type="password" id="login-senha" placeholder="••••••••" onkeydown="if(event.key==='Enter')(typeof fazerLogin==='function'?fazerLogin():setTimeout(fazerLogin,100))">
     </div>
-    <button class="btn-login" onclick="fazerLogin()">Entrar no painel</button>
+    <button class="btn-login" onclick="typeof fazerLogin==='function'?fazerLogin():setTimeout(fazerLogin,100)">Entrar no painel</button>
     <div class="login-erro" id="login-erro">E-mail ou senha incorretos</div>
     <p class="login-link">Novo por aqui? <a href="/agenda-cadastro.html">Criar conta grátis</a></p>
   </div>
@@ -1288,7 +1288,6 @@ document.querySelectorAll('.nav-item').forEach(item => {
 <script src="/js/rebeca-notify.js"></script>
 <script src="/js/rebeca-pwa.js"></script>
 <script src="/js/rebeca-ai.js"></script>
-<script src="/js/rebeca-onboarding.js"></script>
 <script>
 
   // ── RebecaNotify — Hook de novos agendamentos ────────────────────────────
@@ -1377,6 +1376,13 @@ function logout(){
   localStorage.removeItem('agenda_token');
   localStorage.removeItem('agenda_admin_id');
   TOKEN=''; ADMIN_ID=''; ADMIN=null;
+  // Esconder onboarding ao fazer logout
+  var ck = document.getElementById('rob-checklist');
+  var ob = document.getElementById('rob-overlay');
+  var fab = document.querySelector('.ck-toggle');
+  if(ck) ck.style.display='none';
+  if(ob) ob.style.display='none';
+  if(fab) fab.style.display='none';
   document.getElementById('app').classList.remove('show');
   document.getElementById('login-wrap').style.display='flex';
 }
@@ -3083,6 +3089,7 @@ carregarFinanceiro = async function() {
 // irPara('whatsapp') já mostra tela-whatsapp, wppIniciar carrega dados
 
 </script>
+<script src="/js/rebeca-onboarding.js"></script>
 
 <!-- PWA INSTALL BANNER -->
 <div id="pwa-banner" style="display:none;position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#111;color:#fff;border-radius:12px;padding:14px 20px;max-width:380px;width:90%;z-index:888;box-shadow:0 8px 32px rgba(0,0,0,.25);display:none">
