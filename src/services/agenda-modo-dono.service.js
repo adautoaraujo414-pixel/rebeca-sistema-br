@@ -939,7 +939,8 @@ async function rodarLembretesPessoais() {
     const agora = new Date();
 
     // Busca lembretes cujo aviso já chegou (dataEvento - antecedencia <= agora) e não enviados
-    const pendentes = await LembreteAgenda.find({ enviado: false }).lean();
+    // [TENANT-OK] Job global de lembretes — processa todos os tenants intencionalmente
+        const pendentes = await LembreteAgenda.find({ enviado: false }).lean();
 
     for (const lmb of pendentes) {
       const dataAviso = new Date(lmb.dataEvento.getTime() - lmb.antecedencia * 60000);

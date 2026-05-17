@@ -269,6 +269,12 @@ self.addEventListener('notificationclick', e => {
 // ── MESSAGE (comunicação com páginas) ──────────────────────────────────────
 self.addEventListener('message', e => {
   if (e.data?.type === 'SKIP_WAITING') self.skipWaiting();
+  if (e.data?.type === 'TENANT_CONTEXT') {
+    // Armazenar contexto tenant para uso futuro em cache isolation
+    self._tenantId = e.data.tenantId || 'unknown';
+    self._modulo   = e.data.modulo   || 'default';
+    console.log(`[SW] Tenant context: ${self._tenantId}:${self._modulo}`);
+  }
   if (e.data?.type === 'CACHE_URLS') {
     const urls = e.data.urls || [];
     caches.open(SHELL_KEY).then(cache => cache.addAll(urls));

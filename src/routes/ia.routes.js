@@ -1,12 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const IAService = require('../services/ia.service');
+const { tenantMiddleware } = require('../middlewares/tenant.middleware');
 
 router.get('/status', (req, res) => {
   res.json({ ativo: !!process.env.ANTHROPIC_API_KEY });
 });
 
-router.post('/chat', async (req, res) => {
+router.post('/chat', tenantMiddleware, async (req, res) => {
   try {
     const { mensagem, contexto } = req.body;
     const resposta = await IAService.processarMensagem(mensagem, contexto);
@@ -17,7 +18,7 @@ router.post('/chat', async (req, res) => {
 });
 
 
-router.post('/resumo-operacional', async (req, res) => {
+router.post('/resumo-operacional', tenantMiddleware, async (req, res) => {
   try {
     const { contexto, metricas, alertas, produto } = req.body;
     const hora = new Date().getHours();
@@ -37,7 +38,9 @@ Tom: profissional mas humano. Sem bullet points. Sem listas. Só texto corrido.
 Se houver alertas críticos, mencione brevemente. Se estiver tudo bem, seja positivo.
 Responda APENAS o resumo, sem explicações adicionais.`;
 
-    const resposta = await IAService.processarMensagem(prompt, { contexto: 'resumo-operacional' });
+    const tid = req.tenantId || 'anonimo';
+    console.log(`[IA] resumo-operacional tenant:${tid}`);
+    const resposta = await IAService.processarMensagem(prompt, { contexto: 'resumo-operacional', tenantId: tid });
     res.json({ sucesso: true, resposta });
   } catch (error) {
     res.status(500).json({ sucesso: false, erro: error.message });

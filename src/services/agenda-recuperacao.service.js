@@ -135,7 +135,8 @@ async function verificarAniversarios() {
     const dia = hoje.getDate();
     const mes = hoje.getMonth() + 1;
 
-    const admins = await AdminAgenda.find({ ativo: true, 'config.aniversarioAtivo': true }).lean();
+    // [TENANT-OK] Cron global — itera todos os tenants ativos intencionalmente
+        const admins = await AdminAgenda.find({ ativo: true, 'config.aniversarioAtivo': true }).lean();
 
     for (const admin of admins) {
       const instancia = await buscarInstanciaAdmin(admin._id);
@@ -183,7 +184,8 @@ const MSGS_ANTI_BLOQUEIO = [
 
 async function executarAntiBloqueio() {
   try {
-    const admins = await AdminAgenda.find({ ativo: true, 'config.antiBloqueioAtivo': true }).lean();
+    // [TENANT-OK] Cron global — itera todos os tenants ativos intencionalmente
+        const admins = await AdminAgenda.find({ ativo: true, 'config.antiBloqueioAtivo': true }).lean();
     for (const admin of admins) {
       try {
         const inst = await buscarInstanciaAdmin(admin._id);

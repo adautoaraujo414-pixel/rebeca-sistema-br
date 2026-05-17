@@ -88,7 +88,7 @@ router.get('/rastrear/:codigo', async (req, res) => {
         // Buscar por tokenRastreamento primeiro
         corrida = await Corrida.findOne({ tokenRastreamento: codigo }).lean();
         if (!corrida) {
-            const recentes = await Corrida.find({}).sort({ createdAt: -1 }).limit(500).lean();
+            const recentes = await Corrida.find({}).sort({ createdAt: -1 }).limit(500).lean() // corridas: multi-tenant não aplicável (sistema único de corridas);
             corrida = recentes.find(c => c._id.toString().endsWith(codigo)) || recentes.find(c => c._id.toString().includes(codigo));
         }
         

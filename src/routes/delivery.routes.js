@@ -874,7 +874,8 @@ router.get('/cardapio-publico/:adminId', async (req, res) => {
 router.get('/pedidos/rastrear/:codigo', async (req, res) => {
     try {
         const codigo = req.params.codigo;
-        const recentes = await PedidoDelivery.find({}).sort({ createdAt: -1 }).limit(200).lean();
+        const _tid = req.adminId || req.tenantId || req.query.adminId;
+    const recentes = await PedidoDelivery.find(_tid ? { adminId: _tid } : {}).sort({ createdAt: -1 }).limit(200).lean();
         const pedido = recentes.find(p => p._id.toString().endsWith(codigo));
         if (!pedido) return res.status(404).json({ erro: 'Pedido não encontrado' });
         res.json(pedido);
