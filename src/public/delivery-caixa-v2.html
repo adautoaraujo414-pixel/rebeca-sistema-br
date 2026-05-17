@@ -520,11 +520,31 @@ async function init() {
   await carregarCardapio();
   await carregarPedidos();
   await carregarStats();
-  setInterval(carregarPedidos, 10000);
-  setInterval(carregarStats, 15000);
-  setInterval(carregarResumoTempoReal, 8000);
-  setInterval(carregarMesas, 15000);
-  setInterval(carregarEntregadores, 20000);
+  // Intervalos com IDs para cleanup
+  window._ivPedidos    = setInterval(carregarPedidos, 15000);
+  window._ivStats      = setInterval(carregarStats, 30000);
+  window._ivResumo     = setInterval(carregarResumoTempoReal, 20000);
+  window._ivMesas      = setInterval(carregarMesas, 30000);
+  window._ivEntregadores = setInterval(carregarEntregadores, 30000);
+
+  // Pausar polling quando aba não está visível
+  document.addEventListener('visibilitychange', function() {
+    if (document.hidden) {
+      clearInterval(window._ivPedidos);
+      clearInterval(window._ivStats);
+      clearInterval(window._ivResumo);
+      clearInterval(window._ivMesas);
+      clearInterval(window._ivEntregadores);
+    } else {
+      // Recarregar imediatamente ao voltar
+      carregarPedidos(); carregarStats(); carregarResumoTempoReal();
+      window._ivPedidos    = setInterval(carregarPedidos, 15000);
+      window._ivStats      = setInterval(carregarStats, 30000);
+      window._ivResumo     = setInterval(carregarResumoTempoReal, 20000);
+      window._ivMesas      = setInterval(carregarMesas, 30000);
+      window._ivEntregadores = setInterval(carregarEntregadores, 30000);
+    }
+  });
   carregarResumoTempoReal();
 }
 

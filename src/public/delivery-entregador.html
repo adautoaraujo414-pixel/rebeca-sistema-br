@@ -619,7 +619,11 @@ function mostrarBanner(msg){
 
 if('Notification' in window&&Notification.permission==='default')Notification.requestPermission();
 carregar();
-setInterval(carregar,8000);
+window._ivEntregador = setInterval(carregar, 20000);
+document.addEventListener('visibilitychange', function() {
+  if (document.hidden) { clearInterval(window._ivEntregador); }
+  else { carregar(); window._ivEntregador = setInterval(carregar, 20000); }
+});
 </script>
 </div>
 <!-- /app-ent -->

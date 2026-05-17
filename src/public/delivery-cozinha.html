@@ -254,8 +254,19 @@ if(!TK){
 } else {
   localStorage.setItem('cozinha_token', TK);
   carregar();
-  setInterval(carregar, 5000);
-  setInterval(atualizarCronometros, 1000);
+  // Polling saudável com cleanup
+  window._ivCozinha = setInterval(carregar, 12000);
+  window._ivCronos  = setInterval(atualizarCronometros, 1000);
+
+  // Pausar quando aba não está visível
+  document.addEventListener('visibilitychange', function() {
+    if (document.hidden) {
+      clearInterval(window._ivCozinha);
+    } else {
+      carregar();
+      window._ivCozinha = setInterval(carregar, 12000);
+    }
+  });
 }
 
 function toggleSom(){
