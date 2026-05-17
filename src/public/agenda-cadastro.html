@@ -116,31 +116,67 @@ body{font-family:'Segoe UI',sans-serif;background:linear-gradient(135deg,#1f2937
   <div id="cad-step3" style="display:none">
     <div class="step-titulo">💎 Escolha seu plano</div>
     <div class="planos">
-      <div class="plano-card sel" id="plano-ed" onclick="selPlano('espaco_digital',this)">
-        <div class="plano-nome">🏠 Espaço Digital</div>
-        <div class="plano-preco">R$ 97,90<span style="font-size:.5em;font-weight:400;color:#6b7280">/mês</span></div>
+
+      <div class="plano-card sel" id="plano-agenda" onclick="selPlano('agenda_solo',this)">
+        <div class="plano-nome">📅 Agenda</div>
+        <div class="plano-preco">R$ 79,90<span style="font-size:.5em;font-weight:400;color:#6b7280">/mês</span></div>
         <div class="plano-items">
-          <span>Site profissional</span>
-          <span>Agenda online</span>
+          <span>Agendamentos ilimitados</span>
           <span>Painel ADM mobile</span>
-          <span>Upload de fotos</span>
-          <span>Agendamento online</span>
-          <span>Notificações</span>
-        </div>
-      </div>
-      <div class="plano-card" id="plano-ia" onclick="selPlano('espaco_digital_ia',this)">
-        <div class="plano-badge">MAIS VENDIDO</div>
-        <div class="plano-nome">🤖 Espaço Digital + IA WhatsApp</div>
-        <div class="plano-preco">R$ 147,90<span style="font-size:.5em;font-weight:400;color:#6b7280">/mês</span></div>
-        <div class="plano-items">
-          <span>Tudo do plano anterior</span>
-          <span>Atendimento automático WhatsApp</span>
-          <span>IA humanizada</span>
-          <span>Confirmação automática</span>
           <span>Lembretes automáticos</span>
-          <span>Recuperação de clientes</span>
+          <span>CRM de clientes</span>
+          <span>Link de agendamento</span>
         </div>
       </div>
+
+      <div class="plano-card" id="plano-delivery" onclick="selPlano('delivery_solo',this)">
+        <div class="plano-badge">POPULAR</div>
+        <div class="plano-nome">🛵 Delivery</div>
+        <div class="plano-preco">R$ 89,90<span style="font-size:.5em;font-weight:400;color:#6b7280">/mês</span></div>
+        <div class="plano-items">
+          <span>Cardápio digital</span>
+          <span>Gestão de pedidos</span>
+          <span>Caixa e relatórios</span>
+          <span>Tela cozinha (KDS)</span>
+          <span>Controle de entregadores</span>
+        </div>
+      </div>
+
+      <div class="plano-card" id="plano-corrida" onclick="selPlano('corrida_solo',this)">
+        <div class="plano-nome">🚗 Corrida</div>
+        <div class="plano-preco">R$ 89,90<span style="font-size:.5em;font-weight:400;color:#6b7280">/mês</span></div>
+        <div class="plano-items">
+          <span>Despacho de corridas</span>
+          <span>Painel do motorista</span>
+          <span>Acompanhamento GPS</span>
+          <span>Histórico e relatórios</span>
+          <span>App do passageiro</span>
+        </div>
+      </div>
+
+      <div class="plano-card" id="plano-combo-agd-del" onclick="selPlano('combo_agd_del',this)">
+        <div class="plano-badge">MAIS VENDIDO</div>
+        <div class="plano-nome">📅🛵 Agenda + Delivery</div>
+        <div class="plano-preco">R$ 149,90<span style="font-size:.5em;font-weight:400;color:#6b7280">/mês</span></div>
+        <div class="plano-items">
+          <span>Tudo do plano Agenda</span>
+          <span>Tudo do plano Delivery</span>
+          <span>Economia de R$ 29,90/mês</span>
+        </div>
+      </div>
+
+      <div class="plano-card" id="plano-combo-completo" onclick="selPlano('combo_completo',this)">
+        <div class="plano-badge">COMPLETO</div>
+        <div class="plano-nome">📅🛵🚗 Plataforma Completa</div>
+        <div class="plano-preco">R$ 219,90<span style="font-size:.5em;font-weight:400;color:#6b7280">/mês</span></div>
+        <div class="plano-items">
+          <span>Agenda + Delivery + Corrida</span>
+          <span>Relatórios avançados</span>
+          <span>Suporte prioritário</span>
+          <span>Economia de R$ 39,80/mês</span>
+        </div>
+      </div>
+
     </div>
     <p style="font-size:.75em;color:#9ca3af;text-align:center;margin-bottom:8px">3 dias grátis · Sem cartão de crédito</p>
     <button class="btn-sec" onclick="irStepN(2)">← Voltar</button>
@@ -157,10 +193,8 @@ body{font-family:'Segoe UI',sans-serif;background:linear-gradient(135deg,#1f2937
     </div>
   </div>
 </div>
-
-<script src="/js/rebeca-monitor.js"></script>
 <script>
-var planoSel = 'espaco_digital';
+var planoSel = 'agenda_solo';
 var segSel = '';
 
 function selSeg(el, val) {
@@ -229,5 +263,13 @@ function toast(msg) {
   setTimeout(function(){ t.classList.remove('show'); }, 2800);
 }
 </script>
+
+<script src="/js/rebeca-tenant.js"></script>
+<script src="/js/rebeca-security.js"></script>
+<script src="/js/rebeca-realtime.js"></script>
+<script src="/js/rebeca-monitor.js"></script>
+<script src="/js/rebeca-notify.js"></script>
+<script src="/js/rebeca-pwa.js"></script>
+<script src="/js/rebeca-ai.js"></script>
 </body>
 </html>

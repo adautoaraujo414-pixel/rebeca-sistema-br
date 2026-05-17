@@ -1,190 +1,213 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Conectar WhatsApp - Rebeca Sistemas</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, #1a1a2e 0%, #0a0a1a 100%); color: #fff; min-height: 100vh; display: flex; justify-content: center; align-items: center; }
-        .container { background: #1a1a2e; padding: 40px; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,212,255,0.2); max-width: 500px; width: 90%; text-align: center; }
-        h1 { color: #00d4ff; margin-bottom: 10px; }
-        h1 span { color: #25D366; }
-        p { color: #888; margin-bottom: 20px; }
-        .qr-container { background: #fff; padding: 20px; border-radius: 15px; margin: 20px 0; min-height: 280px; display: flex; justify-content: center; align-items: center; flex-direction: column; }
-        .qr-container img { max-width: 250px; }
-        .status { padding: 15px; border-radius: 10px; margin: 20px 0; font-weight: bold; }
-        .status.conectado { background: #00ff8820; color: #00ff88; }
-        .status.desconectado { background: #ff444420; color: #ff4444; }
-        .status.conectando { background: #ffaa0020; color: #ffaa00; }
-        .btn { padding: 15px 30px; border: none; border-radius: 10px; cursor: pointer; font-size: 16px; font-weight: bold; margin: 5px; }
-        .btn-primary { background: #25D366; color: #fff; }
-        .btn-danger { background: #ff4444; color: #fff; }
-        .btn:disabled { opacity: 0.5; }
-        .info { background: #252542; padding: 15px; border-radius: 10px; margin-top: 20px; text-align: left; }
-        .info p { color: #aaa; margin: 5px 0; font-size: 14px; }
-        .info strong { color: #00d4ff; }
-        .loader { border: 4px solid #333; border-top: 4px solid #25D366; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Conectar WhatsApp — Rebeca</title>
+  <meta name="theme-color" content="#f97316">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    :root{--cor:#f97316;--cor2:#ea580c;--verde:#25D366;--texto:#111827;--texto2:#374151;--texto3:#6b7280;--borda:#e5e7eb;--bg:#f9fafb;--branco:#fff;--radius:16px}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--texto);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px}
+    .card{background:var(--branco);border-radius:24px;padding:32px 28px;width:100%;max-width:460px;box-shadow:0 4px 24px rgba(0,0,0,.08);border:1px solid var(--borda)}
+    .logo{display:flex;align-items:center;gap:10px;margin-bottom:28px}
+    .logo-mark{width:38px;height:38px;background:var(--cor);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.2em}
+    .logo-txt{font-size:1.1em;font-weight:800;color:var(--texto)}
+    .logo-txt span{color:var(--cor)}
+    h1{font-size:1.3em;font-weight:800;color:var(--texto);margin-bottom:6px}
+    .subtitulo{font-size:.88em;color:var(--texto3);margin-bottom:24px;line-height:1.5}
+    /* Status badge */
+    .status-badge{display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:100px;font-size:.82em;font-weight:600;margin-bottom:24px;border:1.5px solid}
+    .status-badge.conectado{background:#f0fdf4;color:#16a34a;border-color:#bbf7d0}
+    .status-badge.desconectado{background:#fef2f2;color:#dc2626;border-color:#fecaca}
+    .status-badge.conectando{background:#fffbeb;color:#d97706;border-color:#fde68a}
+    .status-dot{width:8px;height:8px;border-radius:50%;background:currentColor}
+    .status-dot.pulse{animation:pulse 1.5s infinite}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+    /* QR Area */
+    .qr-area{background:#f9fafb;border:2px dashed var(--borda);border-radius:var(--radius);padding:32px;text-align:center;margin-bottom:20px;min-height:220px;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:.3s}
+    .qr-area.loading{border-color:var(--cor);background:#fff7ed}
+    .qr-placeholder{font-size:3em;margin-bottom:10px;opacity:.3}
+    .qr-placeholder-txt{font-size:.83em;color:var(--texto3)}
+    .qr-area img{max-width:200px;border-radius:8px}
+    .loader{width:36px;height:36px;border:3px solid var(--borda);border-top-color:var(--verde);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 12px}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    /* Botões */
+    .btn-stack{display:flex;flex-direction:column;gap:10px;margin-bottom:20px}
+    .btn{width:100%;padding:13px 20px;border:none;border-radius:12px;font-size:.93em;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:.2s}
+    .btn:disabled{opacity:.45;cursor:not-allowed}
+    .btn-verde{background:var(--verde);color:#fff}
+    .btn-verde:hover:not(:disabled){background:#22c55e}
+    .btn-outline{background:var(--branco);color:var(--texto2);border:1.5px solid var(--borda)}
+    .btn-outline:hover:not(:disabled){border-color:var(--cor);color:var(--cor)}
+    .btn-danger{background:#fef2f2;color:#dc2626;border:1.5px solid #fecaca}
+    .btn-danger:hover:not(:disabled){background:#fee2e2}
+    /* Info */
+    .info-box{background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:12px;padding:14px 16px;margin-bottom:20px;display:none}
+    .info-row{display:flex;justify-content:space-between;align-items:center;font-size:.82em;padding:3px 0}
+    .info-label{color:var(--texto3);font-weight:600}
+    .info-val{color:var(--texto);font-weight:700;font-family:monospace}
+    /* Steps */
+    .steps-box{background:#f9fafb;border-radius:12px;padding:16px;border:1px solid var(--borda)}
+    .steps-title{font-size:.78em;font-weight:700;color:var(--texto3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px}
+    .step-item{display:flex;align-items:flex-start;gap:10px;padding:5px 0;font-size:.83em;color:var(--texto2)}
+    .step-num{width:20px;height:20px;border-radius:50%;background:var(--verde);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.7em;font-weight:800;flex-shrink:0;margin-top:1px}
+    /* Toast */
+    .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(16px);background:#1f2937;color:#fff;padding:10px 20px;border-radius:100px;font-size:.85em;font-weight:600;opacity:0;transition:.3s;pointer-events:none;white-space:nowrap;z-index:999}
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+    @media(max-width:480px){.card{padding:24px 18px;border-radius:20px}}
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1>📱 <span>WhatsApp</span></h1>
-        <p>Conecte seu WhatsApp Business</p>
-        <div id="statusBox" class="status desconectado">🔴 Desconectado</div>
-        <div class="qr-container" id="qrContainer"><p style="color:#333">Clique em Gerar QR Code</p></div>
-        <div id="actions">
-            <button class="btn btn-primary" onclick="gerarQR()" id="btnGerar">📷 Gerar QR Code</button>
-            <button class="btn btn-danger" onclick="desconectar()" id="btnDesconectar" style="display:none;">🔌 Desconectar</button>
-        </div>
-        <div class="info" id="infoBox" style="display:none;">
-            <p><strong>Instancia:</strong> <span id="infoInstancia">-</span></p>
-            <p><strong>Ultima conexao:</strong> <span id="infoUltima">-</span></p>
-        </div>
-        <div class="info">
-            <p><strong>Como conectar:</strong></p>
-            <p>1. Abra WhatsApp no celular</p>
-            <p>2. Configuracoes - Aparelhos conectados</p>
-            <p>3. Conectar aparelho - Escanear QR</p>
-        </div>
+<div class="toast" id="toast"></div>
+<div class="card">
+  <div class="logo">
+    <div class="logo-mark">💬</div>
+    <div class="logo-txt">Rebeca <span>WhatsApp</span></div>
+  </div>
+
+  <h1>Conectar WhatsApp</h1>
+  <p class="subtitulo">Escaneie o QR Code com o WhatsApp Business para ativar os lembretes automáticos.</p>
+
+  <div id="statusBadge" class="status-badge desconectado">
+    <div class="status-dot"></div>
+    <span id="statusTxt">Desconectado</span>
+  </div>
+
+  <div class="qr-area" id="qrArea">
+    <div class="qr-placeholder">📱</div>
+    <div class="qr-placeholder-txt">Clique em "Gerar QR Code" para começar</div>
+  </div>
+
+  <div class="btn-stack">
+    <button class="btn btn-verde" onclick="gerarQR()" id="btnGerar">
+      📷 Gerar QR Code
+    </button>
+    <button class="btn btn-danger" onclick="desconectar()" id="btnDesconectar" style="display:none">
+      🔌 Desconectar
+    </button>
+  </div>
+
+  <div class="info-box" id="infoBox">
+    <div class="info-row">
+      <span class="info-label">Instância</span>
+      <span class="info-val" id="infoInstancia">—</span>
     </div>
-    <script src="/js/rebeca-realtime.js"></script>
+    <div class="info-row">
+      <span class="info-label">Última conexão</span>
+      <span class="info-val" id="infoUltima">—</span>
+    </div>
+  </div>
+
+  <div class="steps-box">
+    <div class="steps-title">Como conectar</div>
+    <div class="step-item"><div class="step-num">1</div><span>Abra o WhatsApp no celular</span></div>
+    <div class="step-item"><div class="step-num">2</div><span>Vá em Configurações → Aparelhos conectados</span></div>
+    <div class="step-item"><div class="step-num">3</div><span>Toque em "Conectar aparelho" e escaneie o QR</span></div>
+  </div>
+</div>
+
+<script src="/js/rebeca-tenant.js"></script>
+<script src="/js/rebeca-security.js"></script>
+<script src="/js/rebeca-realtime.js"></script>
 <script src="/js/rebeca-monitor.js"></script>
+<script src="/js/rebeca-notify.js"></script>
+<script src="/js/rebeca-pwa.js"></script>
+<script src="/js/rebeca-ai.js"></script>
 <script>
-        const urlParams = new URLSearchParams(window.location.search);
-        let instanciaId = urlParams.get('id');
-        const adminId = urlParams.get('admin');
-        let verificarInterval = null;
+  const urlParams = new URLSearchParams(window.location.search);
+  const adminId   = urlParams.get('adminId') || localStorage.getItem('agenda_admin_id') || '';
+  const API       = '/api/whatsapp';
 
-        async function criarInstancia() {
-            document.getElementById('qrContainer').innerHTML = '<div class="loader"></div><p style="color:#333;margin-top:10px">Criando...</p>';
-            try {
-                const res = await fetch('/api/evolution/instancia', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ adminId: adminId, nomeEmpresa: 'empresa_' + adminId }) });
-                const data = await res.json();
-                if (data.sucesso) { instanciaId = data.instancia._id; gerarQR(); }
-                else { document.getElementById('qrContainer').innerHTML = '<p style="color:red">Erro: ' + (data.erro || 'Falha') + '</p>'; }
-            } catch (e) { document.getElementById('qrContainer').innerHTML = '<p style="color:red">Erro de conexao</p>'; }
-        }
+  function toast(msg, dur = 3000) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), dur);
+  }
 
-        async function gerarQR() {
-            if (!instanciaId && adminId) { await criarInstancia(); return; }
-            if (!instanciaId) { alert('ID nao encontrado'); return; }
-            document.getElementById('qrContainer').innerHTML = '<div class="loader"></div>';
-            document.getElementById('btnGerar').disabled = true;
-            try {
-                const res = await fetch('/api/evolution/instancia/' + instanciaId + '/qrcode');
-                const data = await res.json();
-                if (data.sucesso && data.qrCode) {
-                    if (data.qrCode.startsWith('data:image')) { document.getElementById('qrContainer').innerHTML = '<img src="' + data.qrCode + '">'; }
-                    else { document.getElementById('qrContainer').innerHTML = '<p style="color:#333;font-size:12px">QR: ' + data.qrCode.substring(0,30) + '...</p>'; }
-                    atualizarStatus('conectando');
-                    iniciarVerificacao();
-                } else { document.getElementById('qrContainer').innerHTML = '<p style="color:red">Erro: ' + (data.erro || 'Falha') + '</p>'; }
-            } catch (e) { document.getElementById('qrContainer').innerHTML = '<p style="color:red">Erro</p>'; }
-            document.getElementById('btnGerar').disabled = false;
-        }
+  function setStatus(tipo, txt) {
+    const b = document.getElementById('statusBadge');
+    const d = b.querySelector('.status-dot');
+    b.className = 'status-badge ' + tipo;
+    document.getElementById('statusTxt').textContent = txt;
+    d.className = 'status-dot' + (tipo === 'conectando' ? ' pulse' : '');
+  }
 
-        async function verificarStatus() {
-            if (!instanciaId) return;
-            try {
-                const res = await fetch('/api/evolution/instancia/' + instanciaId + '/status');
-                const data = await res.json();
-                if (data.sucesso) {
-                    atualizarStatus(data.status);
-                    if (data.status === 'conectado') {
-                        clearInterval(verificarInterval);
-                        document.getElementById('qrContainer').innerHTML = '<p style="color:#00ff88;font-size:24px">✅ Conectado!</p>';
-                        document.getElementById('btnGerar').style.display = 'none';
-                        document.getElementById('btnDesconectar').style.display = 'inline-block';
-                        document.getElementById('infoBox').style.display = 'block';
-                        document.getElementById('infoInstancia').textContent = data.instancia?.nomeInstancia || '-';
-                        document.getElementById('infoUltima').textContent = data.instancia?.ultimaConexao ? new Date(data.instancia.ultimaConexao).toLocaleString() : '-';
-                    }
-                }
-            } catch (e) {}
-        }
+  async function gerarQR() {
+    const btn = document.getElementById('btnGerar');
+    const area = document.getElementById('qrArea');
+    btn.disabled = true;
+    setStatus('conectando', 'Gerando QR...');
+    area.classList.add('loading');
+    area.innerHTML = '<div class="loader"></div><div style="font-size:.83em;color:#d97706;">Aguarde...</div>';
 
-        function atualizarStatus(status) {
-            const box = document.getElementById('statusBox');
-            box.className = 'status ' + status;
-            const t = { 'conectado': '🟢 Conectado', 'desconectado': '🔴 Desconectado', 'conectando': '🟡 Aguardando...' };
-            box.textContent = t[status] || status;
-        }
-
-        function iniciarVerificacao() { if (verificarInterval) clearInterval(verificarInterval); verificarInterval = RebecaRealtime.register("wpp-status", verificarStatus, 3000, "alta", false); }
-
-        async function desconectar() {
-            if (!confirm('Desconectar WhatsApp?')) return;
-            await fetch('/api/evolution/instancia/' + instanciaId + '/desconectar', { method: 'POST' });
-            location.reload();
-        }
-
-        if (instanciaId) verificarStatus();
-        if (!instanciaId && !adminId) document.querySelector('.container').innerHTML = '<h1>Erro</h1><p>Use: ?admin=ID ou ?id=INSTANCIA</p>';
-    </script>
-
-<style id="mobile-responsive">
-/* ===== RESPONSIVO GLOBAL MOBILE ===== */
-* { box-sizing: border-box; }
-img { max-width: 100%; }
-.menu-toggle-global { display: none; background: none; border: none; color: white; font-size: 1.6em; cursor: pointer; padding: 5px 10px; }
-
-@media (max-width: 768px) {
-    .menu-toggle-global { display: block !important; }
-    .sidebar, .nav-lateral { width: 100% !important; max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
-    .sidebar.aberto, .nav-lateral.aberto { max-height: 700px !important; }
-    .container, .layout, .main-wrap { flex-direction: column !important; }
-    .main-content, .content, .page-content { padding: 10px !important; width: 100% !important; }
-    .cards, .grid, .stats-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 10px !important; }
-    .panel-grid { grid-template-columns: 1fr !important; }
-    .card { padding: 12px !important; }
-    .card .value { font-size: 1.3em !important; }
-    table { font-size: 0.78em !important; display: block; overflow-x: auto; white-space: nowrap; }
-    .btn { padding: 6px 10px !important; font-size: 0.8em !important; }
-    .header, .top-bar { padding: 10px 12px !important; flex-wrap: wrap; gap: 8px; }
-    .header h1, .top-bar h1 { font-size: 1.1em !important; }
-    input, select, textarea { width: 100% !important; font-size: 16px !important; }
-    .modal, .overlay-box { width: 95vw !important; max-width: 95vw !important; margin: 10px auto !important; }
-    .form-row, .form-grid { flex-direction: column !important; }
-    .col-2, .col-3, .col-4 { width: 100% !important; }
-}
-
-@media (max-width: 480px) {
-    .cards, .grid, .stats-grid { grid-template-columns: 1fr 1fr !important; }
-    .card-icon { font-size: 1.3em !important; }
-    h1 { font-size: 1.2em !important; }
-    h2 { font-size: 1em !important; }
-}
-</style>
-<script>
-// Toggle menu mobile global
-function toggleMenuGlobal() {
-    document.querySelectorAll('.sidebar, .nav-lateral').forEach(el => el.classList.toggle('aberto'));
-}
-// Auto-detectar mobile
-(function() {
-    function ajustar() {
-        const isMobile = window.innerWidth <= 768;
-        document.body.classList.toggle('is-mobile', isMobile);
-        if (!isMobile) {
-            document.querySelectorAll('.sidebar, .nav-lateral').forEach(el => el.classList.remove('aberto'));
-        }
+    try {
+      const res  = await fetch(`${API}/gerar-qr?adminId=${adminId}`);
+      const data = await res.json();
+      if (data.qrCode || data.qr) {
+        const src = data.qrCode || data.qr;
+        area.innerHTML = `<img src="${src.startsWith('data:') ? src : 'data:image/png;base64,' + src}" alt="QR Code">`;
+        area.classList.remove('loading');
+        setStatus('conectando', 'Aguardando escaneamento...');
+        toast('QR gerado! Escaneie com o WhatsApp');
+        setTimeout(verificarStatus, 5000);
+      } else {
+        throw new Error(data.erro || data.message || 'QR não gerado');
+      }
+    } catch(e) {
+      area.classList.remove('loading');
+      area.innerHTML = '<div class="qr-placeholder">⚠️</div><div class="qr-placeholder-txt">' + e.message + '</div>';
+      setStatus('desconectado', 'Erro ao gerar QR');
+      toast('Erro: ' + e.message);
     }
-    window.addEventListener('resize', ajustar);
-    document.addEventListener('DOMContentLoaded', ajustar);
-})();
-// Fechar menu ao clicar em item
-document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.menu-item, .nav-item').forEach(item => {
-        item.addEventListener('click', () => {
-            if (window.innerWidth <= 768) {
-                document.querySelectorAll('.sidebar, .nav-lateral').forEach(el => el.classList.remove('aberto'));
-            }
-        });
-    });
-});
-</script>
+    btn.disabled = false;
+  }
 
+  async function verificarStatus() {
+    try {
+      const res  = await fetch(`${API}/status?adminId=${adminId}`);
+      const data = await res.json();
+      const conectado = data.conectado || data.status === 'open' || data.status === 'connected';
+      if (conectado) {
+        setStatus('conectado', 'Conectado ✓');
+        document.getElementById('btnGerar').style.display    = 'none';
+        document.getElementById('btnDesconectar').style.display = '';
+        const ib = document.getElementById('infoBox');
+        ib.style.display = 'block';
+        if (data.instancia || data.instance)
+          document.getElementById('infoInstancia').textContent = data.instancia || data.instance;
+        document.getElementById('infoUltima').textContent = new Date().toLocaleTimeString('pt-BR');
+        toast('✅ WhatsApp conectado com sucesso!');
+        document.getElementById('qrArea').innerHTML =
+          '<div style="font-size:2.5em;margin-bottom:8px">✅</div><div style="font-size:.88em;color:#16a34a;font-weight:700">Conectado!</div>';
+      } else if (data.status === 'connecting' || data.status === 'qr') {
+        setStatus('conectando', 'Aguardando...');
+        setTimeout(verificarStatus, 4000);
+      }
+    } catch(e) { /* silencioso */ }
+  }
+
+  async function desconectar() {
+    if (!confirm('Desconectar o WhatsApp?')) return;
+    try {
+      await fetch(`${API}/desconectar`, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ adminId })
+      });
+      setStatus('desconectado', 'Desconectado');
+      document.getElementById('btnGerar').style.display     = '';
+      document.getElementById('btnDesconectar').style.display = 'none';
+      document.getElementById('infoBox').style.display      = 'none';
+      document.getElementById('qrArea').innerHTML =
+        '<div class="qr-placeholder">📱</div><div class="qr-placeholder-txt">Clique em "Gerar QR Code" para começar</div>';
+      toast('WhatsApp desconectado');
+    } catch(e) { toast('Erro ao desconectar'); }
+  }
+
+  // Verificar status ao carregar
+  verificarStatus();
+</script>
 </body>
 </html>
