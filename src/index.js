@@ -130,6 +130,7 @@ const antifraudeRoutes = require('./routes/antifraude.routes');
 const mapsRoutes = require('./routes/maps.routes');
 const despachoRoutes = require('./routes/despacho.routes');
 const iaRoutes = require('./routes/ia.routes');
+const tenantRoutes = require('./routes/tenant.routes');
 const mensalidadeRoutes = require('./routes/mensalidade.routes');
 const evolutionMultiRoutes = require('./routes/evolution-multi.routes');
 const precoAdminRoutes = require('./routes/preco-admin.routes');
@@ -253,6 +254,7 @@ app.use('/api/antifraude', antifraudeRoutes);
 app.use('/api/maps', mapsRoutes);
 app.use('/api/despacho', despachoRoutes);
 app.use('/api/ia', iaRoutes);
+app.use('/api/tenant', tenantRoutes);
 app.use('/api/mensalidades', mensalidadeRoutes);
 app.use('/api/evolution', evolutionMultiRoutes);
 // CAIXA + COMANDA
