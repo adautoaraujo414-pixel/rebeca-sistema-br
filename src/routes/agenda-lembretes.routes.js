@@ -1,7 +1,18 @@
 const express = require('express');
 const router  = express.Router();
 const LembreteAgenda = require('../models/LembreteAgenda');
-const { authAgendaMiddleware } = require('../middleware/authAgenda');
+const jwt = require('jsonwebtoken');
+const JWT_SECRET = process.env.JWT_SECRET || 'rebeca-secret-2024';
+
+async function authAgendaMiddleware(req, res, next) {
+  try {
+    const token = req.headers.authorization?.replace('Bearer ', '') || req.query.token;
+    if (!token) return res.status(401).json({ erro: 'Token obrigatorio' });
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.adminAgendaId = decoded.id;
+    next();
+  } catch(e) { res.status(401).json({ erro: 'Token invalido' }); }
+}
 
 // GET — listar lembretes do admin
 router.get('/', authAgendaMiddleware, async (req, res) => {
