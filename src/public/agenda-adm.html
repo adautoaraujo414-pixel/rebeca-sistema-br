@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="/css/mobile-hardening.css">
 <title>Rebeca Agenda — Painel Gerencial</title>
 <link rel="manifest" href="/agenda-manifest.json">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -481,6 +482,14 @@ document.querySelectorAll('.nav-item').forEach(item => {
 </script>
 <script src="/js/agenda-wpp-templates.js"></script>
   <meta name="theme-color" content="#111111">
+<script>
+(function(){
+  function setAppHeight(){ document.documentElement.style.setProperty('--app-height', window.innerHeight+'px'); }
+  window.addEventListener('resize', setAppHeight);
+  window.addEventListener('orientationchange', function(){ setTimeout(setAppHeight, 100); });
+  setAppHeight();
+})();
+</script>
 </head>
 <body>
 
@@ -1372,6 +1381,31 @@ async function fazerLogin(){
     iniciarApp();
   } catch(e){ document.getElementById('login-erro').style.display='block'; }
 }
+
+
+// ── SIDEBAR DRAWER MOBILE ────────────────────────────────────────────────
+function abrirSidebar() {
+  var sb = document.querySelector('.sidebar');
+  var ov = document.getElementById('sidebar-overlay');
+  if(sb) sb.classList.add('aberta');
+  if(ov) ov.classList.add('ativo');
+  document.body.style.overflow = 'hidden';
+}
+function fecharSidebar() {
+  var sb = document.querySelector('.sidebar');
+  var ov = document.getElementById('sidebar-overlay');
+  if(sb) sb.classList.remove('aberta');
+  if(ov) ov.classList.remove('ativo');
+  document.body.style.overflow = '';
+}
+// Fechar sidebar ao clicar em item de menu no mobile
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.nav-item').forEach(function(el) {
+    el.addEventListener('click', function() {
+      if(window.innerWidth <= 768) fecharSidebar();
+    });
+  });
+});
 
 function logout(){
   localStorage.removeItem('agenda_token');

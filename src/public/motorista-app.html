@@ -6,6 +6,7 @@
     <link rel="apple-touch-icon" href="/icons/icon-192.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<link rel="stylesheet" href="/css/mobile-hardening.css">
     <title>Motorista</title>
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#1a1a2e">
@@ -337,6 +338,14 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 // ===== FIM SUPORTE =====
+</script>
+<script>
+(function(){
+  function setAppHeight(){ document.documentElement.style.setProperty('--app-height', window.innerHeight+'px'); }
+  window.addEventListener('resize', setAppHeight);
+  window.addEventListener('orientationchange', function(){ setTimeout(setAppHeight, 100); });
+  setAppHeight();
+})();
 </script>
 </head>
 <body>

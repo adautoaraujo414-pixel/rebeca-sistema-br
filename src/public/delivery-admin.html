@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="/css/mobile-hardening.css">
     <title>Rebeca Delivery - Painel Admin</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -390,6 +391,14 @@ async function carregarConfigNF() {
     }
   }
   </style>
+<script>
+(function(){
+  function setAppHeight(){ document.documentElement.style.setProperty('--app-height', window.innerHeight+'px'); }
+  window.addEventListener('resize', setAppHeight);
+  window.addEventListener('orientationchange', function(){ setTimeout(setAppHeight, 100); });
+  setAppHeight();
+})();
+</script>
 </head>
 <body>
     <!-- LOGIN -->

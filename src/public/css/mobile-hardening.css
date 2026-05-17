@@ -1,0 +1,110 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   REBECA MOBILE HARDENING v1.0 — aplicar em TODOS os painéis
+   ═══════════════════════════════════════════════════════════════════════ */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { overflow-x: hidden; max-width: 100%; -webkit-text-size-adjust: 100%; }
+body { overflow-x: hidden; max-width: 100%; min-height: 100vh; min-height: var(--app-height,100vh); }
+
+:root {
+  --app-height: 100vh;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+}
+
+img, video, canvas, svg, iframe { max-width: 100%; height: auto; }
+
+.table-wrap, .tabela-wrap { width:100%; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+
+input, select, textarea { font-size: max(16px, 1em); max-width: 100%; }
+
+button, .btn, .nav-item, .menu-item, [role="button"] {
+  min-height: 44px; touch-action: manipulation;
+}
+
+/* ── SIDEBAR DRAWER MOBILE ────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed !important;
+    top: 0 !important; left: 0 !important;
+    height: 100vh !important; height: var(--app-height) !important;
+    width: 260px !important;
+    z-index: 1000 !important;
+    transform: translateX(-100%) !important;
+    transition: transform 0.28s cubic-bezier(0.4,0,0.2,1) !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    padding-top: var(--safe-top) !important;
+    padding-bottom: var(--safe-bottom) !important;
+  }
+  .sidebar.aberta, .sidebar.open {
+    transform: translateX(0) !important;
+    box-shadow: 4px 0 24px rgba(0,0,0,0.18) !important;
+  }
+  .main { margin-left: 0 !important; width: 100% !important; }
+
+  .sidebar-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.45); z-index: 999;
+    backdrop-filter: blur(2px);
+  }
+  .sidebar-overlay.ativo { display: block; }
+
+  .btn-menu-mobile {
+    display: flex !important; align-items: center; justify-content: center;
+    width: 44px; height: 44px; background: none; border: none;
+    cursor: pointer; font-size: 1.4em; padding: 0; flex-shrink: 0;
+  }
+}
+@media (min-width: 769px) {
+  .btn-menu-mobile { display: none !important; }
+  .sidebar-overlay { display: none !important; }
+}
+
+/* ── LAYOUT PRINCIPAL MOBILE ─────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .content, .main-content, .page-content {
+    padding: 14px !important; width: 100% !important;
+    max-width: 100% !important; overflow-x: hidden !important;
+  }
+  .tela {
+    width: 100% !important; max-width: 100% !important;
+    padding: 14px !important; overflow-x: hidden !important;
+  }
+  .cards-grid, .grid, .kpi-grid, .stats-grid {
+    grid-template-columns: 1fr !important; gap: 10px !important;
+  }
+  .card, .kpi-card, .stat-card { width: 100% !important; max-width: 100% !important; }
+  .topbar { padding: 0 12px !important; padding-top: var(--safe-top) !important; }
+  .fab, .btn-fab, #btn-fab {
+    bottom: calc(16px + var(--safe-bottom)) !important;
+    right: calc(16px + var(--safe-right)) !important;
+  }
+  #rob-checklist {
+    width: calc(100vw - 32px) !important; max-width: 320px !important;
+    right: 16px !important; left: auto !important;
+    max-height: 60vh !important; overflow-y: auto !important;
+  }
+  .ck-toggle {
+    bottom: calc(72px + var(--safe-bottom)) !important;
+    right: calc(16px + var(--safe-right)) !important;
+  }
+  .modal, .modal-box, .modal-content {
+    width: calc(100vw - 32px) !important; max-width: 100% !important;
+    max-height: 85vh !important; overflow-y: auto !important;
+    margin: 16px auto !important; border-radius: 16px !important;
+  }
+  #alerts-area {
+    width: calc(100vw - 32px) !important; right: 16px !important;
+    top: calc(8px + var(--safe-top)) !important;
+  }
+  .form-row, .form-cols { flex-direction: column !important; gap: 12px !important; }
+  .form-group { width: 100% !important; }
+}
+
+.topbar, header, .nav-top { padding-top: max(var(--safe-top), 0px); }
+.bottom-bar, .tab-bar, footer { padding-bottom: max(var(--safe-bottom), 0px); }
+.badge, .status-badge, .plano-badge { white-space: nowrap; }
