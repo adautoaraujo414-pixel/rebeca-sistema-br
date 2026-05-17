@@ -151,9 +151,9 @@ input,select,textarea{font-family:'Inter',sans-serif}
   table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch}
   [style*="grid-template-columns:repeat(4"]{grid-template-columns:1fr 1fr!important}
   [style*="grid-template-columns:repeat(3"]{grid-template-columns:1fr!important}
-  .page-grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
-  .page-grid-3{grid-template-columns:1fr!important}
+    .page-grid-3{grid-template-columns:1fr!important}
   .page-grid-2{grid-template-columns:1fr!important}
+  .page-grid-4{grid-template-columns:repeat(2,1fr)!important}
 }
 @media(max-width:480px){
   .metrics{grid-template-columns:1fr!important}
@@ -320,8 +320,7 @@ input,select,textarea{font-family:'Inter',sans-serif}
 .toast{position:fixed;top:24px;left:50%;transform:translateX(-50%);background:var(--texto);color:#fff;padding:10px 20px;border-radius:var(--radius-sm);font-size:.85em;z-index:9999;display:none;box-shadow:var(--shadow-lg)}
 
 /* ─── TELAS SECUNDÁRIAS ─── */
-.tela{display:none}
-.tela.ativa{display:block}
+
 .tela-header{padding:0 0 20px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .tela-titulo{font-size:1.35em;font-weight:700;letter-spacing:-.02em;color:var(--texto);line-height:1.2}
 .tela-sub{font-size:.82em;color:var(--texto3);margin-top:2px;font-weight:400}
@@ -456,19 +455,11 @@ input,select,textarea{font-family:'Inter',sans-serif}
 #sw-update-banner .close-banner{position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;color:#fff;font-size:1.1em;cursor:pointer;opacity:.7}
 #sw-update-banner .close-banner:hover{opacity:1}
 
-/* ── TELA WHATSAPP — layout limpo ──────────────────────────────────────── */
-#tela-whatsapp { display:flex; flex-direction:column; gap:0; }
-#wpp-conteudo-147 { display:none; flex-direction:column; gap:16px; }
-.page-grid-4 { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:20px; }
-@media(max-width:900px){ .page-grid-4{ grid-template-columns:repeat(2,1fr); } }
-@media(max-width:520px){ .page-grid-4{ grid-template-columns:1fr; } }
-
-/* ── TELA WHATSAPP — layout limpo ──────────────────────────────────────── */
-#tela-whatsapp { display:flex; flex-direction:column; gap:0; }
-#wpp-conteudo-147 { display:none; flex-direction:column; gap:16px; }
-.page-grid-4 { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:20px; }
-@media(max-width:900px){ .page-grid-4{ grid-template-columns:repeat(2,1fr); } }
-@media(max-width:520px){ .page-grid-4{ grid-template-columns:1fr; } }
+/* ── WPP conteudo — isolado ─────────────────────────────────────────────── */
+#wpp-conteudo-147[style*="flex"], #wpp-conteudo-147[style*="block"] {
+  flex-direction: column;
+  gap: 16px;
+}
 </style>
 <link rel="manifest" href="/agenda-adm-manifest.json">
 <script src="/js/agenda-notif-helper.js">
@@ -3310,7 +3301,7 @@ carregarFinanceiro = async function() {
     </div>
 
     <!-- PLANO COM WHATSAPP: conteúdo completo -->
-    <div id="wpp-conteudo-147" style="display:none;flex-direction:column;gap:16px">
+    <div id="wpp-conteudo-147" style="display:none">
 
       <!-- CONEXÃO NOVA — Meta API Oficial sem QR code -->
       <div style="background:var(--branco);border:1px solid var(--borda);border-radius:var(--radius);padding:20px;margin-bottom:16px;box-shadow:var(--shadow)">
