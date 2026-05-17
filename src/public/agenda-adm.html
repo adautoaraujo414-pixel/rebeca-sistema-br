@@ -3112,23 +3112,23 @@ carregarFinanceiro = async function() {
     </div>
 
     <!-- CARDS STATS -->
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px">
-      <div style="background:var(--branco);border:1px solid var(--borda);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)">
-        <div style="font-size:.72em;font-weight:700;color:var(--texto3);text-transform:uppercase;margin-bottom:8px">Status</div>
-        <div style="font-weight:800;font-size:1em" id="wpp-status-txt">—</div>
-        <div style="font-size:.73em;color:var(--texto3);margin-top:4px" id="wpp-numero-txt">—</div>
+    <div class="page-grid-4" style="margin-bottom:20px">
+      <div class="page-section" style="padding:16px">
+        <div style="font-size:.7em;font-weight:600;color:var(--texto4);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Status</div>
+        <div style="font-weight:700;font-size:1em;letter-spacing:-.01em" id="wpp-status-txt">—</div>
+        <div style="font-size:.72em;color:var(--texto3);margin-top:4px" id="wpp-numero-txt">—</div>
       </div>
-      <div style="background:var(--branco);border:1px solid var(--borda);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)">
-        <div style="font-size:.72em;font-weight:700;color:var(--texto3);text-transform:uppercase;margin-bottom:8px">Conversas hoje</div>
-        <div style="font-weight:800;font-size:1.4em" id="wpp-conv-hoje">0</div>
+      <div class="page-section" style="padding:16px">
+        <div style="font-size:.7em;font-weight:600;color:var(--texto4);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Conversas hoje</div>
+        <div style="font-weight:700;font-size:1.4em;letter-spacing:-.02em" id="wpp-conv-hoje">0</div>
       </div>
-      <div style="background:var(--branco);border:1px solid var(--borda);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)">
-        <div style="font-size:.72em;font-weight:700;color:var(--texto3);text-transform:uppercase;margin-bottom:8px">Agendados via WPP</div>
-        <div style="font-weight:800;font-size:1.4em" id="wpp-ag-wpp">0</div>
+      <div class="page-section" style="padding:16px">
+        <div style="font-size:.7em;font-weight:600;color:var(--texto4);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Agendados via WPP</div>
+        <div style="font-weight:700;font-size:1.4em;letter-spacing:-.02em" id="wpp-ag-wpp">0</div>
       </div>
-      <div style="background:var(--branco);border:1px solid var(--borda);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)">
-        <div style="font-size:.72em;font-weight:700;color:var(--texto3);text-transform:uppercase;margin-bottom:8px">Aguardando humano</div>
-        <div style="font-weight:800;font-size:1.4em;color:var(--vermelho)" id="wpp-handoff">0</div>
+      <div class="page-section" style="padding:16px">
+        <div style="font-size:.7em;font-weight:600;color:var(--texto4);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Aguardando humano</div>
+        <div style="font-weight:700;font-size:1.4em;letter-spacing:-.02em;color:var(--vermelho)" id="wpp-handoff">0</div>
       </div>
     </div>
 
