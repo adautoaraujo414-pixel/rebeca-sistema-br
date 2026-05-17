@@ -95,7 +95,7 @@ input,select,textarea{font-family:'Inter',sans-serif}
 .sidebar-plano-btn:hover{background:var(--cor2);box-shadow:0 2px 8px rgba(249,115,22,.3)}
 
 /* ─── MAIN ─── */
-.main{margin-left:var(--sidebar);min-height:100vh;display:flex;flex-direction:column}
+.main{margin-left:var(--sidebar);min-height:100vh;display:flex;flex-direction:column;width:calc(100% - var(--sidebar))}
 
 /* ─── HEADER DESKTOP ─── */
 .header{height:56px;background:rgba(255,255,255,.95);backdrop-filter:blur(8px);border-bottom:1px solid var(--borda2);display:flex;align-items:center;padding:0 20px;gap:12px;position:sticky;top:0;z-index:90}
@@ -121,7 +121,7 @@ input,select,textarea{font-family:'Inter',sans-serif}
 .header-perfil-cargo{font-size:.7em;color:var(--texto3)}
 
 /* ─── CONTENT ─── */
-.content{flex:1;padding:28px 24px;margin-left:var(--sidebar);box-sizing:border-box;width:calc(100% - var(--sidebar));min-height:calc(100vh - 56px)}
+.content{flex:1;padding:28px 24px;box-sizing:border-box;width:100%;min-height:calc(100vh - 56px)}
 
 
 /* ─── MOBILE DRAWER ─── */
@@ -138,7 +138,7 @@ input,select,textarea{font-family:'Inter',sans-serif}
   .sidebar.open{transform:translateX(0)}
   .sidebar-overlay{display:block}
   .main{margin-left:0!important}
-  .content{margin-left:0!important;width:100%!important;padding:20px 16px}
+  .content{width:100%!important;padding:20px 16px}
   .mobile-menu-btn{display:flex}
   .header{padding:0 16px;gap:10px}
   .header-search{max-width:none;flex:1}
@@ -156,7 +156,7 @@ input,select,textarea{font-family:'Inter',sans-serif}
   .content{padding:16px 12px}
 }
 /* ─── LAYOUT GLOBAL PADRÃO ─── */
-.page-container{max-width:1200px;width:100%;margin:0 auto}
+.page-container{max-width:100%;width:100%}
 .page-section{background:#fff;border:1px solid var(--borda);border-radius:var(--radius-lg);padding:24px;margin-bottom:20px;box-shadow:var(--shadow)}
 .page-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
 .page-grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
@@ -3027,7 +3027,7 @@ carregarFinanceiro = async function() {
 
 <!-- ═══ SEÇÃO WHATSAPP ADM ═══ -->
 <div id="tela-lembretes" class="tela">
-  <div style="max-width:700px;margin:0 auto;padding:0 4px">
+  <div style="max-width:900px;margin:0;padding:0">
 
     <!-- HEADER -->
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px">
@@ -3101,7 +3101,7 @@ carregarFinanceiro = async function() {
 </div>
 
 <div id="tela-whatsapp" class="tela">
-  <div style="max-width:900px;margin:0 auto;padding:24px 16px 40px">
+  <div style="max-width:100%;margin:0;padding:0">
 
     <!-- HEADER -->
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px">
