@@ -81,3 +81,14 @@ body {
   background: var(--color-surface-2);
   color: var(--color-text);
 }
+
+/* ── Shimmer animation ──────────────────────────────────── */
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
