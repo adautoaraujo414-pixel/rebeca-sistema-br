@@ -346,3 +346,57 @@ router.post('/modo-dono/boas-vindas', authAgendaWpp, async (req, res) => {
 });
 
 module.exports = router;
+
+// ── POST /conectar-numero — conecta número via Meta API (sem QR code) ─────────
+router.post('/conectar-numero', authAgendaWpp, async (req, res) => {
+  try {
+    const features = getAgendaPlanFeatures(req.adminAgenda.plano);
+    if (!features.canUseWhatsappAutomation) {
+      return res.status(403).json({ sucesso: false, mensagem: 'Disponível no plano R$147.' });
+    }
+
+    const { telefone } = req.body;
+    if (!telefone || telefone.replace(/\D/g,'').length < 12) {
+      return res.status(400).json({ sucesso: false, mensagem: 'Número inválido.' });
+    }
+
+    const telLimpo = telefone.replace(/\D/g,'');
+
+    // Salvar número na instância (cria ou atualiza)
+    let inst = await InstanciaWhatsapp.findOne({ adminId: req.adminAgendaId, adminTipo: 'agenda' });
+    if (!inst) {
+      inst = new InstanciaWhatsapp({
+        adminId:       req.adminAgendaId,
+        adminTipo:     'agenda',
+        nomeInstancia: 'agenda_' + req.adminAgendaId,
+        status:        'conectado',
+        canal:         'meta',
+        telefoneConectado: telLimpo
+      });
+    } else {
+      inst.telefoneConectado = telLimpo;
+      inst.status = 'conectado';
+      inst.canal  = 'meta';
+    }
+    await inst.save();
+
+    // Salvar também no AdminAgenda
+    await require('../models/AgendaServico').AdminAgenda.findByIdAndUpdate(
+      req.adminAgendaId,
+      { whatsapp: telLimpo, whatsappOficial: telLimpo }
+    );
+
+    // Enviar boas-vindas pelo número oficial da Rebeca
+    const MetaWA = require('../services/meta-whatsapp.service');
+    const admin  = req.adminAgenda;
+    await MetaWA.enviarTexto(telLimpo,
+      `Olá! Sou a Rebeca, sua assistente digital. 💙\n\nSeu número foi conectado com sucesso ao painel *${admin.nomeNegocio || 'Rebeca Agenda'}*.\n\nAgora seus clientes podem agendar por aqui, e você pode me enviar comandos como:\n- *Rebeca, minha agenda de hoje*\n- *Rebeca, fecha amanhã*\n- *Rebeca, quanto faturei hoje?*\n\nEstou pronta para trabalhar! 🚀`
+    );
+
+    res.json({ sucesso: true, mensagem: 'Número conectado! A Rebeca enviou uma mensagem de boas-vindas.' });
+
+  } catch(e) {
+    console.error('[AgendaWPP] conectar-numero erro:', e.message);
+    res.status(500).json({ sucesso: false, mensagem: e.message });
+  }
+});
