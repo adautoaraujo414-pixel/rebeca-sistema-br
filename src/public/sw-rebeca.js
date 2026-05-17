@@ -1,3 +1,4 @@
+// cache-bust: 1779042567
 /**
  * sw-rebeca.js — Service Worker Unificado
  * Versão 4.0

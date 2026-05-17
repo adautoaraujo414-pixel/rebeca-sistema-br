@@ -30,7 +30,7 @@ window.RebecaSecurity = (() => {
     if (_auditLog.length > MAX_LOG) _auditLog.pop();
 
     // Alertas críticos
-    if (tipo.startsWith('CROSS_TENANT') || tipo.startsWith('SECURITY_')) {
+    if ((tipo.startsWith('CROSS_TENANT') || tipo.startsWith('SECURITY_')) && tipo !== 'SECURITY_INIT') {
       console.error('[RebecaSecurity] ⚠️ ALERTA:', entry);
       // Notificar via RebecaNotify se disponível
       if (window.RebecaNotify) {
@@ -234,7 +234,7 @@ window.RebecaSecurity = (() => {
     // 5. Checar periodicamente (a cada 10min)
     setInterval(_validarToken, 10 * 60 * 1000);
 
-    _log('SECURITY_INIT', { tenantId: window.RebecaTenant?.id() });
+    console.log('[RebecaSecurity] ✅ SECURITY_INIT', { tenantId: window.RebecaTenant?.id() });
     console.log('[RebecaSecurity] ✅ Inicializado');
   }
 
