@@ -2528,7 +2528,7 @@ async function carregarConfigNF() {
         async function iniciarPollingPedidos() {
             if (_pollingAtivo) return;
             _pollingAtivo = true;
-            setInterval(async function() {
+            async function _checkNovoPedido() {
                 try {
                     const res = await api('/pedidos?status=novo&limit=1');
                     const pedidos = await res.json();
@@ -2545,7 +2545,8 @@ async function carregarConfigNF() {
                         }
                     }
                 } catch(e) {}
-            }, 15000);
+            }
+            RebecaRealtime.register('admin-novos-pedidos', _checkNovoPedido, 15000, 'alta', false);
         }
 
         function tocarSomNovoPedido() {
