@@ -7,6 +7,7 @@ const Login     = lazy(() => import('../modules/Login'));
 const Dashboard = lazy(() => import('../modules/Dashboard'));
 const Produtos    = lazy(() => import('../modules/Produtos'));
 const Categorias  = lazy(() => import('../modules/Categorias'));
+const PDV         = lazy(() => import('../modules/PDV'));
 
 function Loading() {
   return (
@@ -36,6 +37,7 @@ export function Router() {
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="produtos" element={<Produtos />} />
           <Route path="categorias" element={<Categorias />} />
+          <Route path="pdv" element={<PDV />} />
         </Route>
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
