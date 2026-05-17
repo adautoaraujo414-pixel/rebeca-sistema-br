@@ -3027,13 +3027,11 @@ carregarFinanceiro = async function() {
 
 <!-- ═══ SEÇÃO WHATSAPP ADM ═══ -->
 <div id="tela-lembretes" class="tela">
-  <div style="max-width:900px;margin:0;padding:0">
-
-    <!-- HEADER -->
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px">
+  <div style="max-width:100%;margin:0;padding:0">
+    <div class="tela-header">
       <div>
-        <div style="font-size:1.2em;font-weight:800;margin-bottom:4px">🔔 Meus Lembretes</div>
-        <div style="font-size:.82em;color:var(--texto3)">A Rebeca te avisa antes — nunca mais esquece nada! 💙</div>
+        <div class="tela-titulo">🔔 Meus Lembretes</div>
+        <div class="tela-sub">A Rebeca te avisa antes — nunca mais esquece nada! 💙</div>
       </div>
       <button onclick="abrirNovoLembrete()" style="padding:9px 18px;background:var(--cor);color:#fff;border:none;border-radius:8px;font-size:.82em;font-weight:700;cursor:pointer">
         ➕ Novo lembrete
@@ -3102,12 +3100,10 @@ carregarFinanceiro = async function() {
 
 <div id="tela-whatsapp" class="tela">
   <div style="max-width:100%;margin:0;padding:0">
-
-    <!-- HEADER -->
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px">
+    <div class="tela-header">
       <div>
-        <div style="font-size:1.2em;font-weight:800;margin-bottom:4px">💬 Atendimento WhatsApp</div>
-        <div style="font-size:.82em;color:var(--texto3)" id="wpp-plano-info">Verificando plano...</div>
+        <div class="tela-titulo">💬 Atendimento WhatsApp</div>
+        <div class="tela-sub" id="wpp-plano-info">Verificando plano...</div>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <button onclick="wppRecarregar()" style="padding:8px 16px;background:var(--branco);border:1.5px solid var(--borda);border-radius:var(--radius-sm);font-size:.82em;font-weight:600;cursor:pointer">🔄 Atualizar</button>
