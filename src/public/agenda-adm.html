@@ -1625,7 +1625,7 @@ async function carregarProximosAgendamentos(){
 
 async function carregarHorariosLivres(){
   try {
-    const d = await api('/agenda/'+ADMIN_ID+'/horarios?data='+new Date().toISOString().split('T')[0]);
+    const d = await api('/'+ADMIN_ID+'/horarios?data='+new Date().toISOString().split('T')[0]);
     const wrap = document.getElementById('horarios-livres');
     const horarios = d?.horarios || d || [];
     if(!horarios.length){
@@ -1920,7 +1920,7 @@ async function salvarAgendamento(){
     status: 'confirmado'
   };
   if(!payload.clienteNome || !payload.dataHora.includes('T')) return toast('Preencha os campos obrigatórios', 'erro');
-  const r = await api('/agenda/'+ADMIN_ID+'/agendar', {method:'POST', body:JSON.stringify(payload)});
+  const r = await api('/'+ADMIN_ID+'/agendar', {method:'POST', body:JSON.stringify(payload)});
   if(r && r.sucesso){ toast('Agendamento criado ✅'); fecharModal('modal-ag'); carregarDashboard(); }
   else toast('Erro ao criar agendamento', 'erro');
 }
