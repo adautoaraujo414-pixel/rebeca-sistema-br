@@ -40,7 +40,7 @@ button, .btn, .nav-item, .menu-item, [role="button"] {
     padding-top: var(--safe-top) !important;
     padding-bottom: var(--safe-bottom) !important;
   }
-  .sidebar.aberta, .sidebar.open {
+  .sidebar.open {
     transform: translateX(0) !important;
     box-shadow: 4px 0 24px rgba(0,0,0,0.18) !important;
   }
@@ -51,7 +51,7 @@ button, .btn, .nav-item, .menu-item, [role="button"] {
     background: rgba(0,0,0,0.45); z-index: 999;
     backdrop-filter: blur(2px);
   }
-  .sidebar-overlay.ativo { display: block; }
+  .sidebar-overlay.show { display: block; }
 
   .btn-menu-mobile {
     display: flex !important; align-items: center; justify-content: center;

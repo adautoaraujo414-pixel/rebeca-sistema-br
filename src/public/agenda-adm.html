@@ -536,6 +536,7 @@ document.querySelectorAll('.nav-item').forEach(item => {
 <!-- Área de alerts dismissíveis -->
 <div id="alerts-area" style="position:fixed;top:12px;right:16px;z-index:8888;width:320px;max-width:calc(100vw - 32px)"></div>
 <div class="app" id="app">
+  <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
 
   <!-- SIDEBAR DESKTOP -->
   <aside class="sidebar" id="sidebar">
@@ -1387,30 +1388,6 @@ async function fazerLogin(){
   } catch(e){ document.getElementById('login-erro').style.display='block'; }
 }
 
-
-// ── SIDEBAR DRAWER MOBILE ────────────────────────────────────────────────
-function abrirSidebar() {
-  var sb = document.querySelector('.sidebar');
-  var ov = document.getElementById('sidebar-overlay');
-  if(sb) sb.classList.add('aberta');
-  if(ov) ov.classList.add('ativo');
-  document.body.style.overflow = 'hidden';
-}
-function fecharSidebar() {
-  var sb = document.querySelector('.sidebar');
-  var ov = document.getElementById('sidebar-overlay');
-  if(sb) sb.classList.remove('aberta');
-  if(ov) ov.classList.remove('ativo');
-  document.body.style.overflow = '';
-}
-// Fechar sidebar ao clicar em item de menu no mobile
-document.addEventListener('DOMContentLoaded', function() {
-  document.querySelectorAll('.nav-item').forEach(function(el) {
-    el.addEventListener('click', function() {
-      if(window.innerWidth <= 768) fecharSidebar();
-    });
-  });
-});
 
 function logout(){
   localStorage.removeItem('agenda_token');
