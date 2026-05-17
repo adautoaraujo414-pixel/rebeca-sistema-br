@@ -169,7 +169,7 @@ input,select,textarea{font-family:'Inter',sans-serif}
 .page-grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
 
 /* ─── TELA PADRÃO ─── */
-.tela{display:none}
+.tela{display:none;padding:20px;max-width:780px;margin:0 auto}
 .tela.ativa{display:block}
 .tela > .page-container,
 .tela > div[style*="max-width"]{animation:fadeIn .18s ease}
@@ -321,9 +321,10 @@ input,select,textarea{font-family:'Inter',sans-serif}
 /* ─── TELAS SECUNDÁRIAS ─── */
 .tela{display:none}
 .tela.ativa{display:block}
-.tela-header{padding:0 0 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.tela-header{padding:0 0 20px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .tela-titulo{font-size:1.35em;font-weight:700;letter-spacing:-.02em;color:var(--texto);line-height:1.2}
 .tela-sub{font-size:.82em;color:var(--texto3);margin-top:2px;font-weight:400}
+@media(max-width:480px){.tela{padding:14px}.tela-titulo{font-size:1.1em}.tela-header{padding:0 0 14px}}
 
 /* ─── TABELA ─── */
 .tabela-wrap{background:#fff;border:1px solid var(--borda);border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow)}
@@ -1384,7 +1385,7 @@ async function iniciarApp(){
     document.getElementById('mh-avatar').textContent = av;
     // Link público
     const slug = ADMIN.nomeNegocio ? ADMIN.nomeNegocio.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'') : ADMIN_ID;
-    const link = window.location.origin+'/espaco-digital?id='+ADMIN_ID;
+    const link = window.location.origin+'/agenda?id='+ADMIN_ID;
     document.getElementById('link-publico-url').textContent = link;
     window._linkPublico = link;
     window._adminId = ADMIN_ID;
@@ -1892,7 +1893,7 @@ function copiarLink(){
   navigator.clipboard.writeText(url).then(()=>toast('Link copiado! 🔗'));
 }
 function abrirEspaco(){
-  window.open('/espaco-digital?id='+window._adminId,'_blank');
+  window.open('/agenda?id='+window._adminId,'_blank');
 }
 
 
@@ -1966,7 +1967,7 @@ function wppCancelar(tel, nomeCliente, servico, data, hora) {
     nomeCliente: nomeCliente,
     nomeNegocio: (ADMIN&&ADMIN.nomeNegocio)||'nossa empresa',
     servico: servico, data: data, hora: hora,
-    linkAgenda: window.location.origin+'/espaco-digital?id='+(window._adminId||'')
+    linkAgenda: window.location.origin+'/agenda?id='+(window._adminId||'')
   });
   abrirWpp(tel, msg);
 }
@@ -1977,7 +1978,7 @@ function wppAvaliar(tel, nomeCliente) {
   var msg = buildWhatsappMessage('review_request', {
     nomeCliente: nomeCliente,
     nomeNegocio: (ADMIN&&ADMIN.nomeNegocio)||'nossa empresa',
-    linkAvaliacao: window.location.origin+'/espaco-digital?id='+(window._adminId||'')+'#avaliacoes'
+    linkAvaliacao: window.location.origin+'/agenda?id='+(window._adminId||'')+'#avaliacoes'
   });
   abrirWpp(tel, msg);
 }
@@ -3073,7 +3074,7 @@ carregarFinanceiro = async function() {
     </div>
 
     <!-- FORM NOVO LEMBRETE -->
-    <div id="form-lembrete" style="display:none;background:linear-gradient(135deg,#f0f9ff,#e0f2fe);border:1.5px solid #7dd3fc;border-radius:12px;padding:20px;margin-bottom:20px">
+    <div id="form-lembrete" style="display:none;background:linear-gradient(135deg,#f0f9ff,#e0f2fe);border:1.5px solid #7dd3fc;border-radius:12px;padding:16px;margin-bottom:16px">
       <div style="font-weight:700;font-size:.9em;margin-bottom:14px">✨ Criar novo lembrete</div>
       <div style="display:grid;gap:10px">
         <input id="lmb-texto" placeholder="O que você precisa lembrar? Ex: Ir à clínica do Dr. João" 
@@ -3112,7 +3113,7 @@ carregarFinanceiro = async function() {
     </div>
 
     <!-- DICA WHATSAPP -->
-    <div style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1.5px solid #86efac;border-radius:12px;padding:14px 16px;margin-bottom:16px;display:flex;align-items:center;gap:12px">
+    <div style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1.5px solid #86efac;border-radius:12px;padding:12px 14px;margin-bottom:16px;display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap">
       <div style="font-size:1.5em">💬</div>
       <div>
         <div style="font-weight:700;font-size:.83em;margin-bottom:2px">Pode criar pelo WhatsApp também!</div>
