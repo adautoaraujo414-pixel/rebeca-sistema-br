@@ -27,7 +27,7 @@ document.querySelectorAll('.menu-item').forEach(item => {
         carregarPagina(page);
         // Inicia polling tempo real ao entrar em Centrais
         if (page === 'pontos') {
-            _pontosPollingInterval = setInterval(() => { if (_getAdminId()) carregarPontos(); }, 5000);
+            _pontosPollingInterval = RebecaRealtime.register("app-pontos", () => { if (_getAdminId()) carregarPontos(); }, 5000, "media", false);
         }
     });
 });
@@ -820,10 +820,10 @@ function fecharModal(id) { document.getElementById(id).classList.remove('active'
 document.querySelectorAll('.modal').forEach(m=>m.addEventListener('click',(e)=>{if(e.target===m)fecharModal(m.id);}));
 
 carregarDashboard();
-window._dashInterval = setInterval(carregarDashboard, 30000);
+window._dashInterval = RebecaRealtime.register("app-dashboard", carregarDashboard, 30000, "baixa", false);
 // Pré-carregar preços em background para não perder dados ao navegar
 carregarPrecosSimples();
-window._mapaInterval = setInterval(atualizarMapa, 10000); // Atualizar mapa a cada 10s
+window._mapaInterval = RebecaRealtime.register("app-mapa", atualizarMapa, 10000, "alta", false); // Atualizar mapa a cada 10s
 
 // ==================== INTERMUNICIPAIS ====================
 async function carregarIntermunicipais() { const p=await api('/api/precos-intermunicipais'); document.getElementById('intermunicipaisTable').innerHTML=p.length?p.map(x=>`<tr><td>${x.cidadeOrigem}</td><td>${x.cidadeDestino}</td><td>${x.distanciaKm||'-'} km</td><td>R$ ${(x.precoFixo||0).toFixed(2)}</td><td><button class="btn btn-danger btn-sm" onclick="excluirIntermunicipal('${x._id}')">🗑️</button></td></tr>`).join(''):'<tr><td colspan="5" style="text-align:center;color:#999">Nenhuma rota cadastrada</td></tr>'; }

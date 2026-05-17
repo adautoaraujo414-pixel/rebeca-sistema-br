@@ -240,6 +240,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 </div>
 <div class="gps-bar" id="gpsBar">GPS aguardando...</div>
 
+<script src="/js/rebeca-realtime.js"></script>
 <script>
 // ===== LOGIN =====
 var TK=localStorage.getItem('delivery_token')||new URLSearchParams(location.search).get('token')||'';
@@ -619,10 +620,10 @@ function mostrarBanner(msg){
 
 if('Notification' in window&&Notification.permission==='default')Notification.requestPermission();
 carregar();
-window._ivEntregador = setInterval(carregar, 20000);
+window._ivEntregador = RebecaRealtime.register("entregador-status", carregar, 20000, "alta", false);
 document.addEventListener('visibilitychange', function() {
   if (document.hidden) { clearInterval(window._ivEntregador); }
-  else { carregar(); window._ivEntregador = setInterval(carregar, 20000); }
+  else { carregar(); window._ivEntregador = // [removido duplicata]; }
 });
 </script>
 </div>

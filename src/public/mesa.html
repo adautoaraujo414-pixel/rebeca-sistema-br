@@ -145,6 +145,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   <button onclick="fecharOverlay()" style="margin-top:24px;padding:14px 32px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius-sm);font-size:1em;font-weight:700;cursor:pointer;font-family:var(--font)">Ver minha conta</button>
 </div>
 <div id="toast"></div>
+<script src="/js/rebeca-realtime.js"></script>
 <script>
 const API='/api/delivery';
 let adminSlug=new URLSearchParams(location.search).get('r')||'';
@@ -674,7 +675,7 @@ function conectarSSECardapio() {
 }
 
 // Polling a cada 2 minutos como fallback
-setInterval(recarregarCardapio, 120000);
+RebecaRealtime.register("mesa-cardapio", recarregarCardapio, 120000, "minima", false);
 
 setInterval(()=>{if(mesa)carregarConta();},15000);
 </script>

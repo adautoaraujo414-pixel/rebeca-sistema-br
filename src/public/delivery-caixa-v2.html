@@ -274,6 +274,7 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Segoe UI',sans-ser
 
 </div>
 
+<script src="/js/rebeca-realtime.js"></script>
 <script>
 // === INIT ===
 const params = new URLSearchParams(location.search);
@@ -521,11 +522,11 @@ async function init() {
   await carregarPedidos();
   await carregarStats();
   // Intervalos com IDs para cleanup
-  window._ivPedidos    = setInterval(carregarPedidos, 15000);
-  window._ivStats      = setInterval(carregarStats, 30000);
-  window._ivResumo     = setInterval(carregarResumoTempoReal, 20000);
-  window._ivMesas      = setInterval(carregarMesas, 30000);
-  window._ivEntregadores = setInterval(carregarEntregadores, 30000);
+  window._ivPedidos    = RebecaRealtime.register("caixa-pedidos", carregarPedidos, 15000, "alta", false);
+  window._ivStats      = RebecaRealtime.register("caixa-stats", carregarStats, 30000, "media", false);
+  window._ivResumo     = RebecaRealtime.register("caixa-resumo", carregarResumoTempoReal, 20000, "media", false);
+  window._ivMesas      = RebecaRealtime.register("caixa-mesas", carregarMesas, 30000, "media", false);
+  window._ivEntregadores = RebecaRealtime.register("caixa-entregadores", carregarEntregadores, 30000, "baixa", false);
 
   // Pausar polling quando aba não está visível
   document.addEventListener('visibilitychange', function() {
@@ -538,11 +539,11 @@ async function init() {
     } else {
       // Recarregar imediatamente ao voltar
       carregarPedidos(); carregarStats(); carregarResumoTempoReal();
-      window._ivPedidos    = setInterval(carregarPedidos, 15000);
-      window._ivStats      = setInterval(carregarStats, 30000);
-      window._ivResumo     = setInterval(carregarResumoTempoReal, 20000);
-      window._ivMesas      = setInterval(carregarMesas, 30000);
-      window._ivEntregadores = setInterval(carregarEntregadores, 30000);
+      window._ivPedidos    = // [removido duplicata];
+      window._ivStats      = // [removido duplicata];
+      window._ivResumo     = // [removido duplicata];
+      window._ivMesas      = // [removido duplicata];
+      window._ivEntregadores = // [removido duplicata];
     }
   });
   carregarResumoTempoReal();

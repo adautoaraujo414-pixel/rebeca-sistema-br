@@ -463,6 +463,7 @@ body{
   </div>
 </div>
 
+<script src="/js/rebeca-realtime.js"></script>
 <script>
 let token = localStorage.getItem('caixa_token') || new URLSearchParams(location.search).get('token') || '';
 if(token) localStorage.setItem('caixa_token', token);
@@ -516,8 +517,8 @@ async function iniciarApp(admin) {
   await carregarCardapio();
   await carregarPedidos();
   await carregarStats();
-  setInterval(carregarPedidos, 15000);
-  setInterval(carregarStats, 30000);
+  RebecaRealtime.register("caixa-pedidos", carregarPedidos, 15000, "alta", false);
+  RebecaRealtime.register("caixa-stats", carregarStats, 30000, "media", false);
   // Conectar SSE para atualizações em tempo real
   conectarSseCaixa();
 }

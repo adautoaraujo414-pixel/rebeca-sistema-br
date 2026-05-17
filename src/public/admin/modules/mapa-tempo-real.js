@@ -6,7 +6,7 @@ const MapaTempoReal = {
     inicializar: function(elementId) {
         console.log('Mapa inicializado no elemento:', elementId);
         this.atualizarMarcadores();
-        setInterval(() => this.atualizarMarcadores(), 10000);
+        RebecaRealtime.register('mapa-real-marcadores', () => this.atualizarMarcadores(), 10000, 'critica', false);
     },
     
     atualizarMarcadores: async function() {
