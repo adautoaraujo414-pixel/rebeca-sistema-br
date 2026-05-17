@@ -463,6 +463,7 @@ document.querySelectorAll('.nav-item').forEach(item => {
 });
 </script>
 <script src="/js/agenda-wpp-templates.js"></script>
+  <meta name="theme-color" content="#111111">
 </head>
 <body>
 
@@ -1256,6 +1257,7 @@ document.querySelectorAll('.nav-item').forEach(item => {
 <script src="/js/rebeca-realtime.js"></script>
 <script src="/js/rebeca-monitor.js"></script>
 <script src="/js/rebeca-notify.js"></script>
+<script src="/js/rebeca-pwa.js"></script>
 <script src="/js/rebeca-onboarding.js"></script>
 <script>
 
@@ -3310,6 +3312,26 @@ carregarFinanceiro = async function() {
 
     </div><!-- /wpp-conteudo-147 -->
 </div><!-- /tela-whatsapp -->
+
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw-rebeca.js')
+        .then(r => {
+          console.log('[SW] Agenda registrado:', r.scope);
+          // Escutar mensagens do SW (notif click, sync)
+          navigator.serviceWorker.addEventListener('message', e => {
+            if (e.data?.type === 'NOTIF_CLICK') {
+              if (window.mostrarTela) window.mostrarTela(e.data.url.includes('agenda') ? 'agenda' : 'inicio');
+            }
+            if (e.data?.type === 'SYNC_AGENDAMENTOS') {
+              if (window.carregarAgendamentos) window.carregarAgendamentos();
+            }
+          });
+        })
+        .catch(e => console.warn('[SW] Falha:', e));
+    }
+  </script>
 
 </body>
 </html>

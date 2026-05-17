@@ -131,6 +131,7 @@
 <script src="/js/rebeca-realtime.js"></script>
 <script src="/js/rebeca-monitor.js"></script>
 <script src="/js/rebeca-notify.js"></script>
+<script src="/js/rebeca-pwa.js"></script>
 <script src="/js/rebeca-onboarding.js"></script>
 <script>
 
@@ -3245,7 +3246,7 @@ const _irParaOriginal = typeof irPara === 'function' ? irPara : null;
   if('serviceWorker' in navigator){
     navigator.serviceWorker.getRegistrations().then(function(regs){
       regs.forEach(function(r){ r.unregister(); });
-      navigator.serviceWorker.register('/sw-rebeca.js').catch(function(){});
+      // [movido para rebeca-pwa.js] navigator.serviceWorker.register('/sw-rebeca.js').catch(function(){});
     });
   }
   </script>

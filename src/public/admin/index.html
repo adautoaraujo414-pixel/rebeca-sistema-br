@@ -218,6 +218,7 @@ document.addEventListener('DOMContentLoaded', () => {
 <script src="/js/rebeca-realtime.js"></script>
 <script src="/js/rebeca-monitor.js"></script>
 <script src="/js/rebeca-notify.js"></script>
+<script src="/js/rebeca-pwa.js"></script>
 <script src="/js/rebeca-onboarding.js"></script>
 <script>
     // Verificar login obrigatório
@@ -1528,7 +1529,7 @@ document.addEventListener('DOMContentLoaded', () => {
   } else if(isIOS){
     setTimeout(()=>{document.getElementById('pwa-banner').style.display='block';document.getElementById('pwa-btn-instalar').style.display='none';document.getElementById('pwa-ios-tip').style.display='block';},2000);
   }
-  if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js').catch(()=>{});
+  if('serviceWorker' in navigator)// [movido para rebeca-pwa.js] navigator.serviceWorker.register('/sw-rebeca.js').catch(()=>{});
 })();
 function fecharPWABanner(){document.getElementById('pwa-banner').style.display='none';sessionStorage.setItem('pwa-fechado','1');}
 </script>

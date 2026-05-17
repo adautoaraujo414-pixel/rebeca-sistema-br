@@ -242,6 +242,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 <script src="/js/rebeca-realtime.js"></script>
 <script src="/js/rebeca-monitor.js"></script>
+<script src="/js/rebeca-pwa.js"></script>
 <script>
 // ===== LOGIN =====
 var TK=localStorage.getItem('delivery_token')||new URLSearchParams(location.search).get('token')||'';
@@ -634,7 +635,7 @@ document.addEventListener('visibilitychange', function() {
   (function(){
     // Registrar SW
     if('serviceWorker' in navigator){
-      navigator.serviceWorker.register('/sw-rebeca.js').catch(function(){});
+      // [movido para rebeca-pwa.js] navigator.serviceWorker.register('/sw-rebeca.js').catch(function(){});
     }
 
     // Navegação entre apps no FAB drawer
