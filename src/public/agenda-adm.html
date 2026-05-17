@@ -2700,7 +2700,7 @@ async function carregarLancamentos() {
           '<td style="padding:10px 16px;color:var(--texto3)">' + (l.categoria || '—') + '</td>' +
           '<td style="padding:10px 16px"><span style="background:' + cor + '20;color:' + cor + ';padding:2px 8px;border-radius:20px;font-weight:700;font-size:.78em">' + (labelTipo[tipo] || tipo) + '</span></td>' +
           '<td style="padding:10px 16px;text-align:right;font-weight:700;color:' + cor + '">' + fmt(l.valor || 0) + '</td>' +
-          '<td style="padding:10px 16px;text-align:center"><button onclick="deletarLancamento('' + l._id + '')" style="background:none;border:none;cursor:pointer;color:var(--texto3);font-size:1em" title="Remover">🗑️</button></td>' +
+          '<td style="padding:10px 16px;text-align:center"><button onclick="deletarLancamento(\'' + l._id + '\')" style="background:none;border:none;cursor:pointer;color:var(--texto3);font-size:1em" title="Remover">🗑️</button></td>' +
           '</tr>';
       }).join('') + '</tbody></table>';
   } catch(e) {
