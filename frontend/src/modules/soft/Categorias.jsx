@@ -3,11 +3,11 @@ import { Plus, Search, Edit2, Trash2, Tag, RefreshCw } from 'lucide-react';
 import {
   useCategoriasAdmin, useCriarCategoria,
   useAtualizarCategoria, useRemoverCategoria,
-} from '../shared/hooks/useCategoriasCrud';
-import { useToast }    from '../shared/hooks/useToast';
-import { EmptyState }  from '../shared/components/EmptyState';
-import { Drawer }      from '../shared/components/Drawer';
-import { Toast }       from '../shared/components/Toast';
+} from '../../shared/hooks/useCategoriasCrud';
+import { useToast }    from '../../shared/hooks/useToast';
+import { EmptyState }  from '../../shared/components/EmptyState';
+import { Drawer }      from '../../shared/components/Drawer';
+import { Toast }       from '../../shared/components/Toast';
 import { CategoryForm } from './categorias/CategoryForm';
 
 export default function Categorias() {

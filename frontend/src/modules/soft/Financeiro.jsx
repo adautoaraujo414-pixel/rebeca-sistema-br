@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { RefreshCw, BarChart2 } from 'lucide-react';
-import { useOperacional, useFluxo, useFormasPagamento } from '../shared/hooks/useFinanceiro';
-import { useFormato } from '../shared/hooks/useFormat';
+import { useOperacional, useFluxo, useFormasPagamento } from '../../shared/hooks/useFinanceiro';
+import { useFormato } from '../../shared/hooks/useFormat';
 import { FinancialFilters }      from './financeiro/FinancialFilters';
 import { FinancialSummary }      from './financeiro/FinancialSummary';
 import { RevenueChart }          from './financeiro/RevenueChart';

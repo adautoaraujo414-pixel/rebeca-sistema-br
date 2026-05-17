@@ -3,13 +3,13 @@ import { Plus, Search, Edit2, Trash2, Package, RefreshCw } from 'lucide-react';
 import {
   useProdutos, useCategorias,
   useCriarProduto, useAtualizarProduto, useRemoverProduto,
-} from '../shared/hooks/useProdutos';
-import { useFormato }   from '../shared/hooks/useFormat';
-import { useToast }     from '../shared/hooks/useToast';
-import { StockBadge }  from '../shared/components/StockBadge';
-import { EmptyState }  from '../shared/components/EmptyState';
-import { Drawer }      from '../shared/components/Drawer';
-import { Toast }       from '../shared/components/Toast';
+} from '../../shared/hooks/useProdutos';
+import { useFormato }   from '../../shared/hooks/useFormat';
+import { useToast }     from '../../shared/hooks/useToast';
+import { StockBadge }  from '../../shared/components/StockBadge';
+import { EmptyState }  from '../../shared/components/EmptyState';
+import { Drawer }      from '../../shared/components/Drawer';
+import { Toast }       from '../../shared/components/Toast';
 import { ProductForm } from './produtos/ProductForm';
 
 const LIMITE = 20;

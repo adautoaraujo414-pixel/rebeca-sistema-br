@@ -3,13 +3,13 @@ import {
   AlertTriangle, TrendingUp, Clock,
   Store, RefreshCw,
 } from 'lucide-react';
-import { useDashboard } from '../shared/hooks/useDashboard';
-import { useFormato } from '../shared/hooks/useFormat';
-import { SummaryCard }  from '../shared/components/SummaryCard';
-import { SkeletonCard } from '../shared/components/SkeletonCard';
-import { AlertCard }    from '../shared/components/AlertCard';
-import { EmptyState }   from '../shared/components/EmptyState';
-import { useAuth }      from '../shared/hooks/useAuth';
+import { useDashboard } from '../../shared/hooks/useDashboard';
+import { useFormato } from '../../shared/hooks/useFormat';
+import { SummaryCard }  from '../../shared/components/SummaryCard';
+import { SkeletonCard } from '../../shared/components/SkeletonCard';
+import { AlertCard }    from '../../shared/components/AlertCard';
+import { EmptyState }   from '../../shared/components/EmptyState';
+import { useAuth }      from '../../shared/hooks/useAuth';
 
 // Grid responsivo
 const gridStyle = {

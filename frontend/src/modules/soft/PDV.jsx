@@ -1,10 +1,10 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { Store, Lock, Unlock } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { usePDVStore }    from '../stores/pdv.store';
-import { caixaApi, vendaApi, produtoPDVApi } from '../services/pdv.api';
-import { useToast }       from '../shared/hooks/useToast';
-import { Toast }          from '../shared/components/Toast';
+import { usePDVStore }    from '../../stores/pdv.store';
+import { caixaApi, vendaApi, produtoPDVApi } from '../../services/pdv.api';
+import { useToast }       from '../../shared/hooks/useToast';
+import { Toast }          from '../../shared/components/Toast';
 import { PDVSearchBar }   from './pdv/PDVSearchBar';
 import { CartSidebar }    from './pdv/CartSidebar';
 import { PaymentModal }   from './pdv/PaymentModal';

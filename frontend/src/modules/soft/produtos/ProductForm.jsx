@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useCategorias } from '../../shared/hooks/useProdutos';
+import { useCategorias } from '../../../shared/hooks/useProdutos';
 
 const EMPTY = {
   nome: '', descricao: '', preco: '', precoCusto: '',

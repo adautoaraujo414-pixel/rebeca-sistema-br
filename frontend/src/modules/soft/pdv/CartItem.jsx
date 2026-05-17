@@ -1,6 +1,6 @@
 import { memo } from 'react';
 import { Minus, Plus, X } from 'lucide-react';
-import { usePDVStore } from '../../stores/pdv.store';
+import { usePDVStore } from '../../../stores/pdv.store';
 
 export const CartItem = memo(function CartItem({ item }) {
   const { setQty, removerItem } = usePDVStore();

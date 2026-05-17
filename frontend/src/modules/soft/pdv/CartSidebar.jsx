@@ -1,5 +1,5 @@
 import { ShoppingCart } from 'lucide-react';
-import { usePDVStore } from '../../stores/pdv.store';
+import { usePDVStore } from '../../../stores/pdv.store';
 import { CartItem } from './CartItem';
 
 export function CartSidebar({ onFinalizar, caixaAberto }) {

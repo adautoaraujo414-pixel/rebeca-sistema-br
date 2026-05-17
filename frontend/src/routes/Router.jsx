@@ -4,11 +4,11 @@ import { PrivateRoute } from './PrivateRoute';
 import { AppLayout } from '../layouts/AppLayout';
 
 const Login     = lazy(() => import('../modules/Login'));
-const Dashboard = lazy(() => import('../modules/Dashboard'));
-const Produtos    = lazy(() => import('../modules/Produtos'));
-const Categorias  = lazy(() => import('../modules/Categorias'));
-const PDV         = lazy(() => import('../modules/PDV'));
-const Financeiro  = lazy(() => import('../modules/Financeiro'));
+const Dashboard = lazy(() => import('../modules/soft/Dashboard'));
+const Produtos    = lazy(() => import('../modules/soft/Produtos'));
+const Categorias  = lazy(() => import('../modules/soft/Categorias'));
+const PDV         = lazy(() => import('../modules/soft/PDV'));
+const Financeiro  = lazy(() => import('../modules/soft/Financeiro'));
 
 function Loading() {
   return (
