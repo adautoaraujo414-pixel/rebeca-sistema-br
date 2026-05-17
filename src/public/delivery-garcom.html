@@ -688,7 +688,11 @@ async function fazerLogin() {
     document.getElementById('app').style.display = 'flex';
     await carregarCardapio();
     await carregarMesas();
-    setInterval(carregarMesas, 10000);
+    window._ivMesasGarcom = setInterval(carregarMesas, 15000);
+    document.addEventListener('visibilitychange', function() {
+      if (document.hidden) { clearInterval(window._ivMesasGarcom); }
+      else { carregarMesas(); window._ivMesasGarcom = setInterval(carregarMesas, 15000); }
+    });
   } catch(e) { err.textContent = 'Erro de conexão'; }
 }
 

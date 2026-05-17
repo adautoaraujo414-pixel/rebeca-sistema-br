@@ -125,7 +125,11 @@ async function atualizarMapa() {
 }
 
 atualizarMapa();
-setInterval(atualizarMapa, 2000);
+window._ivMapa = setInterval(atualizarMapa, 5000);
+document.addEventListener('visibilitychange', function() {
+  if (document.hidden) { clearInterval(window._ivMapa); }
+  else { atualizarMapa(); window._ivMapa = setInterval(atualizarMapa, 5000); }
+});
 </script>
 </body>
 </html>
