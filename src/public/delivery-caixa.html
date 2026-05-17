@@ -246,6 +246,10 @@ body{
 }
 </style>
 
+  <link rel="manifest" href="/manifest-caixa.json">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 </head>
 <body>
 
@@ -1316,7 +1320,9 @@ body{
   <pre style="font-size:11px;margin:4px 0">${top||'Nenhum'}</pre>
   <div class="line"></div>
   <div class="center" style="margin-top:8px">Sistema Rebeca</div>
-  </body></html>`;
+  
+<script>if("serviceWorker"in navigator)navigator.serviceWorker.register("/sw-rebeca.js");</script>
+</body></html>`;
   const w = window.open('','_blank','width=400,height=600');
   w.document.write(html);
   w.document.close();
