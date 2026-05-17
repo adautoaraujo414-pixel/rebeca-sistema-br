@@ -452,6 +452,10 @@ input,select,textarea{font-family:'Inter',sans-serif}
         <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" stroke-width="2"/></svg>
         Avaliações
       </button>
+      <button class="nav-item" onclick="irPara('lembretes')" id="nav-lembretes">
+        <span class="nav-icon">🔔</span> Lembretes
+        <span class="nav-badge" id="badge-lembretes" style="display:none;background:var(--cor);color:#fff;border-radius:20px;font-size:.68em;padding:1px 7px;margin-left:auto;font-weight:700"></span>
+      </button>
       <button class="nav-item" id="nav-whatsapp" onclick="irPara('whatsapp')" style="display:none">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="#25d366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zM12 0C5.373 0 0 5.373 0 12c0 2.124.549 4.122 1.515 5.858L0 24l6.335-1.492A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0z"/></svg>
         WhatsApp
@@ -2161,6 +2165,97 @@ async function wppCarregarQR() {
   } catch(e) {}
 }
 
+// ═══ LEMBRETES ═══════════════════════════════════════════════════════════════
+
+function abrirNovoLembrete() {
+  const form = document.getElementById('form-lembrete');
+  form.style.display = form.style.display === 'none' ? 'block' : 'none';
+  // preencher data de hoje por padrão
+  const hoje = new Date().toISOString().split('T')[0];
+  document.getElementById('lmb-data').value = hoje;
+}
+
+async function salvarLembrete() {
+  const texto       = document.getElementById('lmb-texto').value.trim();
+  const data        = document.getElementById('lmb-data').value;
+  const hora        = document.getElementById('lmb-hora').value;
+  const antecedencia = parseInt(document.getElementById('lmb-antecedencia').value);
+
+  if (!texto) { toast('Escreve o que você quer lembrar!', 'erro'); return; }
+  if (!data)  { toast('Coloca a data do lembrete!', 'erro'); return; }
+  if (!hora)  { toast('Coloca o horário do evento!', 'erro'); return; }
+
+  try {
+    const r = await fetch('/api/agenda/lembretes', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('agenda_token') || ''), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ texto, data, hora, antecedencia })
+    });
+    const d = await r.json();
+    if (d.sucesso) {
+      toast('Lembrete criado! A Rebeca vai te avisar no WhatsApp 💙', 'sucesso');
+      document.getElementById('form-lembrete').style.display = 'none';
+      document.getElementById('lmb-texto').value = '';
+      document.getElementById('lmb-hora').value = '';
+      carregarLembretes();
+    } else {
+      toast(d.mensagem || 'Erro ao salvar', 'erro');
+    }
+  } catch(e) { toast('Erro de conexão', 'erro'); }
+}
+
+async function carregarLembretes() {
+  try {
+    const r = await fetch('/api/agenda/lembretes', {
+      headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('agenda_token') || '') }
+    });
+    const d = await r.json();
+    const lista = document.getElementById('lembretes-lista');
+    if (!d.lembretes?.length) {
+      lista.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--texto3)"><div style="font-size:2em;margin-bottom:10px">🔔</div><div style="font-weight:600;margin-bottom:6px">Nenhum lembrete ainda</div><div style="font-size:.82em">Cria seu primeiro lembrete e a Rebeca te avisa no WhatsApp! 💙</div></div>';
+      document.getElementById('badge-lembretes').style.display = 'none';
+      return;
+    }
+    const ativos = d.lembretes.filter(l => !l.enviado);
+    const badge = document.getElementById('badge-lembretes');
+    if (ativos.length) { badge.style.display = 'inline'; badge.textContent = ativos.length; }
+    else badge.style.display = 'none';
+
+    lista.innerHTML = d.lembretes.map(l => {
+      const dt = new Date(l.dataEvento);
+      const passado = dt < new Date();
+      return `
+      <div style="background:var(--branco);border:1px solid var(--borda);border-radius:12px;padding:16px;margin-bottom:12px;box-shadow:var(--shadow);display:flex;align-items:flex-start;gap:12px;opacity:${passado||l.enviado?'.6':'1'}">
+        <div style="font-size:1.6em;flex-shrink:0">${l.enviado?'✅':'🔔'}</div>
+        <div style="flex:1">
+          <div style="font-weight:700;font-size:.9em;margin-bottom:4px">${l.texto}</div>
+          <div style="font-size:.75em;color:var(--texto3)">
+            📅 ${dt.toLocaleDateString('pt-BR')} às ${dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}
+            &nbsp;·&nbsp; ⏱️ Aviso ${l.antecedencia} min antes
+            ${l.enviado ? '&nbsp;·&nbsp; <span style="color:#16a34a;font-weight:700">Rebeca já avisou! ✅</span>' : ''}
+            ${passado && !l.enviado ? '&nbsp;·&nbsp; <span style="color:var(--vermelho)">Passou a data</span>' : ''}
+          </div>
+        </div>
+        <button onclick="deletarLembrete('${l._id}')" style="background:none;border:none;cursor:pointer;color:var(--texto3);font-size:.9em" title="Remover">🗑️</button>
+      </div>`;
+    }).join('');
+  } catch(e) { console.error('Erro lembretes:', e); }
+}
+
+async function deletarLembrete(id) {
+  if (!confirm('Remover esse lembrete?')) return;
+  try {
+    await fetch('/api/agenda/lembretes/' + id, {
+      method: 'DELETE',
+      headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('agenda_token') || '') }
+    });
+    carregarLembretes();
+  } catch(e) { toast('Erro ao remover', 'erro'); }
+}
+
+// carregar lembretes ao entrar na tela
+const _irParaOriginal = typeof irPara === 'function' ? irPara : null;
+
 async function wppConectarNumero() {
   const input = document.getElementById('wpp-numero-input');
   const numero = (input?.value || '').replace(/[^0-9]/g, '');
@@ -2848,6 +2943,80 @@ carregarFinanceiro = async function() {
 
 
 <!-- ═══ SEÇÃO WHATSAPP ADM ═══ -->
+<div id="tela-lembretes" class="tela">
+  <div style="max-width:700px;margin:0 auto;padding:0 4px">
+
+    <!-- HEADER -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px">
+      <div>
+        <div style="font-size:1.2em;font-weight:800;margin-bottom:4px">🔔 Meus Lembretes</div>
+        <div style="font-size:.82em;color:var(--texto3)">A Rebeca te avisa antes — nunca mais esquece nada! 💙</div>
+      </div>
+      <button onclick="abrirNovoLembrete()" style="padding:9px 18px;background:var(--cor);color:#fff;border:none;border-radius:8px;font-size:.82em;font-weight:700;cursor:pointer">
+        ➕ Novo lembrete
+      </button>
+    </div>
+
+    <!-- FORM NOVO LEMBRETE -->
+    <div id="form-lembrete" style="display:none;background:linear-gradient(135deg,#f0f9ff,#e0f2fe);border:1.5px solid #7dd3fc;border-radius:12px;padding:20px;margin-bottom:20px">
+      <div style="font-weight:700;font-size:.9em;margin-bottom:14px">✨ Criar novo lembrete</div>
+      <div style="display:grid;gap:10px">
+        <input id="lmb-texto" placeholder="O que você precisa lembrar? Ex: Ir à clínica do Dr. João" 
+          style="padding:10px 12px;border:1.5px solid var(--borda);border-radius:8px;font-size:.85em;width:100%;box-sizing:border-box">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div>
+            <div style="font-size:.75em;color:var(--texto3);margin-bottom:4px">📅 Data</div>
+            <input type="date" id="lmb-data" style="padding:9px 12px;border:1.5px solid var(--borda);border-radius:8px;font-size:.85em;width:100%;box-sizing:border-box">
+          </div>
+          <div>
+            <div style="font-size:.75em;color:var(--texto3);margin-bottom:4px">⏰ Hora do evento</div>
+            <input type="time" id="lmb-hora" style="padding:9px 12px;border:1.5px solid var(--borda);border-radius:8px;font-size:.85em;width:100%;box-sizing:border-box">
+          </div>
+        </div>
+        <div>
+          <div style="font-size:.75em;color:var(--texto3);margin-bottom:4px">⏱️ Avisar com quanto tempo de antecedência?</div>
+          <select id="lmb-antecedencia" style="padding:9px 12px;border:1.5px solid var(--borda);border-radius:8px;font-size:.85em;width:100%;box-sizing:border-box">
+            <option value="15">15 minutos antes</option>
+            <option value="30" selected>30 minutos antes</option>
+            <option value="60">1 hora antes</option>
+            <option value="120">2 horas antes</option>
+            <option value="1440">1 dia antes</option>
+          </select>
+        </div>
+        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:4px">
+          <button onclick="document.getElementById('form-lembrete').style.display='none'" 
+            style="padding:8px 16px;background:var(--branco);border:1.5px solid var(--borda);border-radius:8px;font-size:.82em;cursor:pointer">
+            Cancelar
+          </button>
+          <button onclick="salvarLembrete()" 
+            style="padding:8px 18px;background:var(--cor);color:#fff;border:none;border-radius:8px;font-size:.82em;font-weight:700;cursor:pointer">
+            💙 Salvar lembrete
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- DICA WHATSAPP -->
+    <div style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1.5px solid #86efac;border-radius:12px;padding:14px 16px;margin-bottom:16px;display:flex;align-items:center;gap:12px">
+      <div style="font-size:1.5em">💬</div>
+      <div>
+        <div style="font-weight:700;font-size:.83em;margin-bottom:2px">Pode criar pelo WhatsApp também!</div>
+        <div style="font-size:.75em;color:var(--texto3)">Manda pra Rebeca: <b>"Rebeca, amanhã às 10h tenho consulta me lembra"</b> — ela já anota na hora! 😊</div>
+      </div>
+    </div>
+
+    <!-- LISTA DE LEMBRETES -->
+    <div id="lembretes-lista">
+      <div style="text-align:center;padding:40px 20px;color:var(--texto3)">
+        <div style="font-size:2em;margin-bottom:10px">🔔</div>
+        <div style="font-weight:600;margin-bottom:6px">Nenhum lembrete ainda</div>
+        <div style="font-size:.82em">Cria seu primeiro lembrete e a Rebeca te avisa no WhatsApp! 💙</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
 <div id="tela-whatsapp" class="tela">
   <div style="max-width:900px;margin:0 auto;padding:0 4px">
 

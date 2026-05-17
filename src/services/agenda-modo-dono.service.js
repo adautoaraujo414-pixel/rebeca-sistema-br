@@ -390,8 +390,438 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
     return true;
   }
 
+  // ── LEMBRETE PESSOAL ─────────────────────────────────────────────────────────
+  if (/me\s*lembr[ae]|lembrete|n[aã]o\s*me\s*deixa?\s*esquecer|anota\s*(a[ií])?/i.test(msgL)) {
+    const hora  = _parseHora(msgL);
+    const dia   = _parseDia(msgL) || new Date();
+
+    // Extrair o que é o lembrete
+    const textoM = msg.match(/(?:me lembr[ae]|lembrete[:\s]+|anota[:\s]+|esquecer[:\s]+)\s*(?:de\s+|que\s+)?(.+?)(?:\s+(?:amanhã|hoje|às?|as)\s+\d|$)/i)
+                || msg.match(/(?:tenho\s+que|preciso|vou)\s+(.+?)(?:\s+(?:amanhã|hoje|às?|as)\s+\d|$)/i);
+    const textoLembrete = textoM ? textoM[1].trim() : msg.replace(/rebeca[,\s]*/i,'').trim();
+
+    if (hora) {
+      const dataLembrete = new Date(dia);
+      dataLembrete.setHours(hora.h, hora.min - 15, 0, 0); // 15min antes
+
+      // Salvar como bloqueio com motivo de lembrete
+      await BloqueioAgenda.create({
+        adminId: adminObjId,
+        inicio: dataLembrete,
+        fim: new Date(dataLembrete.getTime() + 15*60000),
+        motivo: `🔔 LEMBRETE: ${textoLembrete}`,
+        tipo: 'lembrete'
+      });
+
+      await responder(
+        `Anotado, ${_chefe()}! 📝✨
+
+` +
+        `🔔 *Lembrete criado:*
+${textoLembrete}
+
+` +
+        `📅 ${_fmtData(dia)} às ${_fmtHora(new Date(dia.setHours(hora.h, hora.min, 0, 0)))}
+
+` +
+        `Vou te avisar 15 minutinhos antes pra você não esquecer! 💙`
+      );
+    } else {
+      // Sem hora definida — salva como lembrete geral
+      await BloqueioAgenda.create({
+        adminId: adminObjId,
+        inicio: dia,
+        fim: new Date(dia.getTime() + 60*60000),
+        motivo: `🔔 LEMBRETE: ${textoLembrete}`,
+        tipo: 'lembrete'
+      });
+      await responder(
+        `Anotei aqui, ${_chefe()}! 📝
+
+` +
+        `🔔 *${textoLembrete}*
+
+` +
+        `Me fala o horário também pra eu te avisar antes! Ex:
+` +
+        `*Rebeca, amanhã às 10h tenho reunião me lembra* 😊`
+      );
+    }
+    return true;
+  }
+
+  // ── ÁUDIO — transcrito pelo webhook como texto ────────────────────────────
+  if (msg.startsWith('[AUDIO]')) {
+    await responder(
+      `${_saudacao()}, ${_chefe()}! 🎤
+
+` +
+      `Recebi seu áudio! Por enquanto ainda não consigo ouvir, mas tô aprendendo! 😅
+
+` +
+      `Me manda em texto que resolvo na hora! 💙`
+    );
+    return true;
+  }
+
+  // ── PRÓXIMO CLIENTE ──────────────────────────────────────────────────────────
+  if (/pr[oó]ximo\s*cliente|quem\s*(é\s*)?o\s*pr[oó]ximo|próximo\s*da\s*fila/i.test(msgL)) {
+    const agora = new Date();
+    const fim = new Date(); fim.setHours(23,59,59,999);
+    const ag = await AgendamentoAgenda.findOne({
+      adminId: adminObjId, dataHora: { $gte: agora, $lte: fim },
+      status: { $in: ['pendente','confirmado'] }
+    }).sort({ dataHora: 1 }).lean();
+    if (!ag) {
+      await responder(`${_saudacao()}, ${_chefe()}! 😊
+
+Não tem mais ninguém agendado hoje não! Tá livre o resto do dia. 🎉`);
+    } else {
+      const mins = Math.round((new Date(ag.dataHora) - agora) / 60000);
+      const tempo = mins <= 0 ? 'já deveria ter chegado!' : mins < 60 ? `em ${mins} minutinhos` : `em ${Math.round(mins/60)}h`;
+      await responder(`${_saudacao()}! O próximo é ${_chefe()}! 😄
+
+👤 *${ag.nomeCliente}*
+✂️ ${ag.nomeServico || '—'}
+⏰ ${_fmtHora(new Date(ag.dataHora))} (${tempo})
+
+Bora se preparar! 💪`);
+    }
+    return true;
+  }
+
+  // ── AGENDA DA SEMANA ──────────────────────────────────────────────────────
+  if (/agenda\s*d[ao]\s*semana|semana\s*toda|essa\s*semana/i.test(msgL)) {
+    const ini = new Date(); ini.setHours(0,0,0,0);
+    const fim = new Date(ini); fim.setDate(fim.getDate() + 7); fim.setHours(23,59,59,999);
+    const ags = await AgendamentoAgenda.find({
+      adminId: adminObjId, dataHora: { $gte: ini, $lte: fim },
+      status: { $in: ['pendente','confirmado'] }
+    }).sort({ dataHora: 1 }).lean();
+    if (!ags.length) {
+      await responder(`${_saudacao()}, ${_chefe()}! 😊
+
+A semana tá zerada por enquanto. Bora divulgar pra encher a agenda! 🚀`);
+    } else {
+      const porDia = {};
+      ags.forEach(a => {
+        const d = _fmtData(new Date(a.dataHora));
+        if (!porDia[d]) porDia[d] = [];
+        porDia[d].push(`  • ${_fmtHora(new Date(a.dataHora))} — ${a.nomeCliente}`);
+      });
+      const lista = Object.entries(porDia).map(([d,v]) => `📅 *${d}*
+${v.join('
+')}`).join('
+
+');
+      await responder(`Olha a semana aí, ${_chefe()}! 🗓️
+
+${lista}
+
+${ags.length} agendamento(s) no total. Tá cheio! 💪`);
+    }
+    return true;
+  }
+
+  // ── ENCAIXAR CLIENTE ──────────────────────────────────────────────────────
+  if (/encaixa|marca\s*(um\s*)?hor[aá]rio|adiciona\s*(um\s*)?cliente/i.test(msgL)) {
+    const hora = _parseHora(msgL);
+    const dia  = _parseDia(msgL) || new Date();
+    const nomeM = msg.match(/encaixa\s+([A-Za-zÀ-ú\s]+?)\s+(?:às?|as|para|pra)\s+\d/i) ||
+                  msg.match(/marca\s+(?:pra\s+|para\s+)?([A-Za-zÀ-ú\s]+?)\s+(?:às?|as)\s+\d/i);
+    const nome = nomeM ? nomeM[1].trim() : null;
+    if (hora && nome) {
+      const dataHora = new Date(dia); dataHora.setHours(hora.h, hora.min, 0, 0);
+      await AgendamentoAgenda.create({
+        adminId: adminObjId, nomeCliente: nome,
+        nomeServico: 'A definir', dataHora,
+        status: 'confirmado', origem: 'whatsapp_dono'
+      });
+      await responder(`Maravilha, ${_chefe()}! 🎉
+
+✅ *${nome}* encaixado às *${_fmtHora(dataHora)}* de ${_fmtData(dia)}!
+
+Já tá na agenda. Pode mandar o cliente! 💙`);
+    } else {
+      await responder(`Quase lá, ${_chefe()}! Me fala assim:
+
+*Rebeca, encaixa João às 14h* ou
+*Rebeca, encaixa Maria amanhã às 10h* 😊`);
+    }
+    return true;
+  }
+
+  // ── FECHAR AGENDA DO DIA INTEIRO ──────────────────────────────────────────
+  if (/fecha\s*(minha\s*)?agenda\s*(o\s*dia\s*todo|inteira|completa|toda)?|tira\s*(o\s*dia|hoje|amanhã)/i.test(msgL)) {
+    const dia = _parseDia(msgL) || new Date();
+    const ini = new Date(dia); ini.setHours(6,0,0,0);
+    const fim = new Date(dia); fim.setHours(22,0,0,0);
+    await BloqueioAgenda.create({
+      adminId: adminObjId, inicio: ini, fim,
+      motivo: 'Dia fechado via WhatsApp'
+    });
+    await responder(`Feito, ${_chefe()}! 🔒
+
+${_fmtData(dia)} tá bloqueado o dia todo. Ninguém consegue agendar não!
+
+Descansa bem! 😊💙`);
+    return true;
+  }
+
+  // ── LIBERAR AGENDA ────────────────────────────────────────────────────────
+  if (/libera\s*(minha\s*)?agenda|remove\s*(os\s*)?bloqueios?|abre\s*(minha\s*)?agenda/i.test(msgL)) {
+    const dia = _parseDia(msgL) || new Date();
+    const ini = new Date(dia); ini.setHours(0,0,0,0);
+    const fim = new Date(dia); fim.setHours(23,59,59,999);
+    const res = await BloqueioAgenda.deleteMany({ adminId: adminObjId, inicio: { $gte: ini, $lte: fim } });
+    await responder(`Prontinho, ${_chefe()}! 🔓
+
+Removi ${res.deletedCount} bloqueio(s) de ${_fmtData(dia)}. Agenda aberta e pronta pra receber cliente! 🚀`);
+    return true;
+  }
+
+  // ── HISTÓRICO DO CLIENTE ──────────────────────────────────────────────────
+  if (/hist[oó]rico\s*(do|da|de)\s+|[uú]ltimas?\s*visitas?\s*(do|da|de)\s+/i.test(msgL)) {
+    const nomeM = msg.match(/hist[oó]rico\s*d[oa]?\s+([A-Za-zÀ-ú\s]+?)(?:\s*$)/i) ||
+                  msg.match(/visitas?\s*d[oa]?\s+([A-Za-zÀ-ú\s]+?)(?:\s*$)/i);
+    const nome = nomeM ? nomeM[1].trim() : null;
+    if (nome) {
+      const ags = await AgendamentoAgenda.find({
+        adminId: adminObjId,
+        nomeCliente: { $regex: nome, $options: 'i' },
+        status: { $in: ['confirmado','concluido'] }
+      }).sort({ dataHora: -1 }).limit(5).lean();
+      if (!ags.length) {
+        await responder(`Hmm, não achei histórico pra *${nome}* não, ${_chefe()}. Será que o nome tá diferente? 🤔`);
+      } else {
+        const lista = ags.map(a => `• ${_fmtData(new Date(a.dataHora))} — ${a.nomeServico || 'Serviço'}`).join('
+');
+        await responder(`Achei aqui, ${_chefe()}! 🔍
+
+👤 *${ags[0].nomeCliente}*
+
+${lista}
+
+${ags.length} visita(s) registrada(s)! 💙`);
+      }
+    } else {
+      await responder(`Me fala o nome, ${_chefe()}! Assim:
+
+*Rebeca, histórico da Ana* 😊`);
+    }
+    return true;
+  }
+
+  // ── ANIVERSARIANTES ───────────────────────────────────────────────────────
+  if (/anivers[aá]riantes?|faz\s*anivers[aá]rio/i.test(msgL)) {
+    const hoje = new Date();
+    const dia7 = new Date(hoje); dia7.setDate(dia7.getDate() + 7);
+    const clientes = await ClienteAgenda.find({
+      adminId: adminObjId,
+      dataNascimento: { $exists: true, $ne: null }
+    }).lean();
+    const aniv = clientes.filter(c => {
+      if (!c.dataNascimento) return false;
+      const d = new Date(c.dataNascimento);
+      const mesAtual = hoje.getMonth(); const diaAtual = hoje.getDate();
+      const mes7 = dia7.getMonth(); const dia7d = dia7.getDate();
+      const cm = d.getMonth(); const cd = d.getDate();
+      if (mesAtual === mes7) return cm === mesAtual && cd >= diaAtual && cd <= dia7d;
+      return (cm === mesAtual && cd >= diaAtual) || (cm === mes7 && cd <= dia7d);
+    });
+    if (!aniv.length) {
+      await responder(`${_saudacao()}, ${_chefe()}! 🎂
+
+Nenhum aniversariante nos próximos 7 dias não. Mas fique de olho! 👀`);
+    } else {
+      const lista = aniv.map(c => {
+        const d = new Date(c.dataNascimento);
+        return `• ${c.nome} — ${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`;
+      }).join('
+');
+      await responder(`🎂 Ó os aniversariantes, ${_chefe()}!
+
+${lista}
+
+Que tal mandar uma mensagem especial pra eles? 💙`);
+    }
+    return true;
+  }
+
+  // ── RESUMO SEMANAL ────────────────────────────────────────────────────────
+  if (/resumo\s*d[ao]\s*semana|faturamento\s*d[ao]\s*semana|quanto\s*(fiz|faturei)\s*(essa|na)\s*semana/i.test(msgL)) {
+    const ini = new Date(); ini.setDate(ini.getDate() - 7); ini.setHours(0,0,0,0);
+    const fim = new Date(); fim.setHours(23,59,59,999);
+    const lanc = await FinanceiroAgenda.find({ adminId: adminObjId, data: { $gte: ini, $lte: fim } }).lean();
+    const entradas = lanc.filter(l=>l.tipo==='entrada').reduce((s,l)=>s+l.valor,0);
+    const saidas   = lanc.filter(l=>l.tipo==='saida').reduce((s,l)=>s+l.valor,0);
+    const atend    = await AgendamentoAgenda.countDocuments({ adminId: adminObjId, dataHora: { $gte: ini, $lte: fim }, status: { $in: ['confirmado','concluido'] } });
+    await responder(`${_saudacao()}, ${_chefe()}! Olha a semana! 📊
+
+✅ Atendimentos: *${atend}*
+💰 Entradas: *R$ ${entradas.toFixed(2)}*
+💸 Gastos: *R$ ${saidas.toFixed(2)}*
+📈 Resultado: *R$ ${(entradas-saidas).toFixed(2)}*
+
+${(entradas-saidas)>=0?'Semana boa demais! 🚀':'Semana de aprendizado! Próxima vai bombar! 💪'}`);
+    return true;
+  }
+
+  // ── RESUMO MENSAL ─────────────────────────────────────────────────────────
+  if (/resumo\s*d[ao]\s*m[eê]s|faturamento\s*d[ao]\s*m[eê]s|quanto\s*(fiz|faturei)\s*(esse|no|este)\s*m[eê]s/i.test(msgL)) {
+    const ini = new Date(); ini.setDate(1); ini.setHours(0,0,0,0);
+    const fim = new Date(); fim.setHours(23,59,59,999);
+    const lanc = await FinanceiroAgenda.find({ adminId: adminObjId, data: { $gte: ini, $lte: fim } }).lean();
+    const entradas = lanc.filter(l=>l.tipo==='entrada').reduce((s,l)=>s+l.valor,0);
+    const saidas   = lanc.filter(l=>l.tipo==='saida').reduce((s,l)=>s+l.valor,0);
+    const atend    = await AgendamentoAgenda.countDocuments({ adminId: adminObjId, dataHora: { $gte: ini, $lte: fim }, status: { $in: ['confirmado','concluido'] } });
+    const ticket   = atend > 0 ? (entradas/atend).toFixed(2) : '0.00';
+    await responder(`${_saudacao()}, ${_chefe()}! Resumo do mês! 📊
+
+✅ Atendimentos: *${atend}*
+💰 Entradas: *R$ ${entradas.toFixed(2)}*
+💸 Gastos: *R$ ${saidas.toFixed(2)}*
+📈 Resultado: *R$ ${(entradas-saidas).toFixed(2)}*
+🎯 Ticket médio: *R$ ${ticket}*
+
+${atend>10?'Esse mês tá voando! 🚀':'Ainda dá tempo de bombar! 💪'}`);
+    return true;
+  }
+
+  // ── CLIENTES CONFIRMADOS HOJE ─────────────────────────────────────────────
+  if (/clientes?\s*(de\s*hoje\s*)?confirmados?|confirmados?\s*hoje/i.test(msgL)) {
+    const ini = new Date(); ini.setHours(0,0,0,0);
+    const fim = new Date(); fim.setHours(23,59,59,999);
+    const ags = await AgendamentoAgenda.find({
+      adminId: adminObjId, dataHora: { $gte: ini, $lte: fim }, status: 'confirmado'
+    }).sort({ dataHora: 1 }).lean();
+    if (!ags.length) {
+      await responder(`${_saudacao()}, ${_chefe()}! 😊
+
+Nenhum confirmado ainda hoje não. Quer que eu mande lembrete pra galera? Me fala! 💙`);
+    } else {
+      const lista = ags.map(a => `✅ ${_fmtHora(new Date(a.dataHora))} — ${a.nomeCliente}`).join('
+');
+      await responder(`${_saudacao()}, ${_chefe()}! Olha quem confirmou hoje! 🎉
+
+${lista}
+
+${ags.length} confirmado(s)! Tá cheio! 💪`);
+    }
+    return true;
+  }
+
+  // ── SERVIÇOS MAIS PEDIDOS ─────────────────────────────────────────────────
+  if (/servi[çc]os?\s*mais\s*(pedidos?|populares?|requisitados?)|o\s*que\s*mais\s*pedem/i.test(msgL)) {
+    const ini = new Date(); ini.setDate(1); ini.setHours(0,0,0,0);
+    const ags = await AgendamentoAgenda.find({ adminId: adminObjId, dataHora: { $gte: ini } }).lean();
+    const rank = {};
+    ags.forEach(a => { if(a.nomeServico) rank[a.nomeServico] = (rank[a.nomeServico]||0)+1; });
+    const sorted = Object.entries(rank).sort((a,b)=>b[1]-a[1]).slice(0,5);
+    if (!sorted.length) {
+      await responder(`Ainda não tem dados suficientes não, ${_chefe()}. Mês que vem já vai ter um ranking lindo! 📊`);
+    } else {
+      const emojis = ['🥇','🥈','🥉','4️⃣','5️⃣'];
+      const lista = sorted.map(([s,n],i) => `${emojis[i]} ${s} — ${n}x`).join('
+');
+      await responder(`Olha o ranking desse mês, ${_chefe()}! 🏆
+
+${lista}
+
+Esses são os queridinhos! 💙`);
+    }
+    return true;
+  }
+
+  // ── CLIENTES NOVOS ────────────────────────────────────────────────────────
+  if (/clientes?\s*novos?|quantos\s*clientes?\s*novos?/i.test(msgL)) {
+    const ini = new Date(); ini.setDate(1); ini.setHours(0,0,0,0);
+    const total = await ClienteAgenda.countDocuments({ adminId: adminObjId, createdAt: { $gte: ini } });
+    await responder(`${_saudacao()}, ${_chefe()}! 🎉
+
+Esse mês você ganhou *${total} cliente(s) novo(s)*!
+
+${total>5?'Tá crescendo muito! Continua assim! 🚀':'Todo cliente novo é uma vitória! 💪'}`);
+    return true;
+  }
+
+  // ── MANUAL DE COMANDOS ────────────────────────────────────────────────────
+  if (/ajuda|comandos?|o\s*que\s*(vc|você)\s*(faz|pode|sabe)|menu|help/i.test(msgL)) {
+    await responder(
+      `${_saudacao()}, ${_chefe()}! Aqui tô eu! 💙
+
+` +
+      `📅 *AGENDA*
+` +
+      `• Rebeca, minha agenda de hoje
+` +
+      `• Rebeca, minha agenda de amanhã
+` +
+      `• Rebeca, agenda da semana
+` +
+      `• Rebeca, próximo cliente
+` +
+      `• Rebeca, encaixa [nome] às 14h
+` +
+      `• Rebeca, fecha agenda amanhã
+` +
+      `• Rebeca, libera minha agenda amanhã
+` +
+      `• Rebeca, bloqueia amanhã das 12h às 14h
+
+` +
+      `✅ *AGENDAMENTOS*
+` +
+      `• Rebeca, confirma o agendamento das 14h
+` +
+      `• Rebeca, cancela o agendamento das 14h
+` +
+      `• Rebeca, clientes confirmados hoje
+
+` +
+      `💰 *FINANCEIRO*
+` +
+      `• Rebeca, quanto faturei hoje?
+` +
+      `• Rebeca, resumo da semana
+` +
+      `• Rebeca, resumo do mês
+` +
+      `• Rebeca, registra entrada de R$150 no Pix
+` +
+      `• Rebeca, registra gasto de R$80 em produtos
+
+` +
+      `👥 *CLIENTES*
+` +
+      `• Rebeca, histórico da [nome]
+` +
+      `• Rebeca, aniversariantes
+` +
+      `• Rebeca, clientes inativos
+` +
+      `• Rebeca, clientes novos
+
+` +
+      `📊 *RELATÓRIOS*
+` +
+      `• Rebeca, serviços mais pedidos
+
+` +
+      `⏰ *HORÁRIOS*
+` +
+      `• Rebeca, hoje vou trabalhar das 8h às 18h
+
+` +
+      `Pode mandar qualquer coisa, tô aqui! 😊💙`
+    );
+    return true;
+  }
+
   // ── NÃO RECONHECIDO ────────────────────────────────────────────────────────
-  await responder(`${_erro()}\n\nDigita *ajuda* pra ver tudo que eu sei fazer por você, ${_chefe()}! 💙`);
+  await responder(`${_saudacao()}, ${_chefe()}! 😊
+
+Não tive certeza do que você quis dizer, mas tô aqui! Tenta me falar de outro jeito ou digita *ajuda* pra ver tudo que sei fazer por você! 💙`);
   return false;
 }
 
@@ -513,3 +943,57 @@ async function rodarRelatorioDiario() {
 
 module.exports.rodarLembretes        = rodarLembretes;
 module.exports.rodarRelatorioDiario  = rodarRelatorioDiario;
+
+// ── CRON: DISPARAR LEMBRETES PESSOAIS ────────────────────────────────────────
+async function rodarLembretesPessoais() {
+  try {
+    const LembreteAgenda = require('../models/LembreteAgenda');
+    const agora = new Date();
+
+    // Busca lembretes cujo aviso já chegou (dataEvento - antecedencia <= agora) e não enviados
+    const pendentes = await LembreteAgenda.find({ enviado: false }).lean();
+
+    for (const lmb of pendentes) {
+      const dataAviso = new Date(lmb.dataEvento.getTime() - lmb.antecedencia * 60000);
+      if (dataAviso > agora) continue; // ainda não chegou a hora de avisar
+
+      try {
+        const admin = await AdminAgenda.findById(lmb.adminId).lean();
+        if (!admin) continue;
+
+        const telDono = _normalizarTel(admin.whatsapp || admin.telefone);
+        if (!telDono) continue;
+
+        const inst = await InstanciaWhatsapp.findOne({
+          adminId: String(lmb.adminId), adminTipo: 'agenda', status: 'conectado'
+        }).lean();
+        if (!inst) continue;
+
+        const horaEvento = _fmtHora(new Date(lmb.dataEvento));
+        const dataEvento = _fmtData(new Date(lmb.dataEvento));
+        const mins       = lmb.antecedencia;
+
+        // Mensagens humanizadas — sorteia uma
+        const saudacao = _saudacao();
+        const chefe    = _chefe();
+        const msgs = [
+          `${saudacao}, ${chefe}! 💙\n\nEi, não esquece não — daqui a ${mins} minutinhos você tem:\n\n📌 *${lmb.texto}*\n📅 Hoje às ${horaEvento}\n\nBora se preparar! Você consegue! 🚀`,
+          `Oi, ${chefe}! Sou a Rebeca e vim te lembrar de algo importante! 😊\n\n🔔 *${lmb.texto}*\n⏰ ${horaEvento} — em ${mins} minutos!\n\nNão deixa escapar não! 💪`,
+          `${saudacao}! 🌟\n\nPassando aqui rapidinho pra te avisar, ${chefe}:\n\n📌 *${lmb.texto}*\n📅 ${dataEvento} às ${horaEvento}\n\nAinda dá tempo de se organizar! 😉💙`,
+          `Alerta da Rebeca! 🔔\n\n${chefe}, em ${mins} minutinhos você tem compromisso:\n\n✨ *${lmb.texto}*\n⏰ ${horaEvento}\n\nFui te lembrar porque é isso que eu faço! 💙😄`
+        ];
+        const msg = msgs[Math.floor(Math.random() * msgs.length)];
+
+        await _enviarMsg(inst, telDono, msg);
+        await LembreteAgenda.findByIdAndUpdate(lmb._id, { enviado: true, dataEnvio: new Date() });
+        console.log('[Lembretes] Aviso enviado para', telDono, lmb.texto);
+      } catch(e) {
+        console.error('[Lembretes] Erro individual:', e.message);
+      }
+    }
+  } catch(e) {
+    console.error('[Lembretes] Erro geral:', e.message);
+  }
+}
+
+module.exports.rodarLembretesPessoais = rodarLembretesPessoais;

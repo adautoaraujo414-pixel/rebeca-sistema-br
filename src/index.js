@@ -289,6 +289,7 @@ require('./services/agenda-recuperacao.service');
 app.use('/api/agenda', require('./routes/agenda-financeiro.routes'));
 app.use('/api/agenda-ia-servico', require('./routes/agenda-ia-servico.routes'));
 app.use('/api/agenda/whatsapp', require('./routes/agenda-whatsapp.routes'));
+app.use('/api/agenda/lembretes', require('./routes/agenda-lembretes.routes'));
 app.use('/api/agenda/crm', require('./routes/agenda-crm.routes'));
 app.use('/api/agenda/conexao', require('./routes/agenda-conexao.routes'));
 app.use('/api/soft', require('./soft/routes/_index.routes'));
@@ -473,6 +474,7 @@ console.log('✅ Cron delivery trial ativo');
 // Cron Rebeca — lembretes 30min antes (a cada 5min) e relatório diário 8h
 const ModoDono = require('./services/agenda-modo-dono.service');
 cron.schedule('*/5 * * * *', () => ModoDono.rodarLembretes());
+cron.schedule('*/5 * * * *', () => ModoDono.rodarLembretesPessoais());
 cron.schedule('0 8 * * *', () => ModoDono.rodarRelatorioDiario());
 console.log('✅ Cron lembretes e relatório diário Rebeca ativos');
 
