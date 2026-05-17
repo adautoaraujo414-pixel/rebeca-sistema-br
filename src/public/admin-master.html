@@ -242,6 +242,7 @@
                 <div class="menu-item" data-page="precadastros-delivery">🍔 Pré-cadastros Delivery</div>
                 <div class="menu-item" data-page="admins-delivery">🛵 Admins Delivery</div>
                 <div class="menu-section">Sistema</div>
+                <div class="menu-item" data-page="tenants">🏢 Tenants SaaS</div>
                 <div class="menu-item" data-page="logs">📋 Logs</div>
                 <div class="menu-item" data-page="suporte">🎧 Suporte</div>
                 <div class="menu-item" data-page="config">⚙️ Configurações</div>
@@ -402,6 +403,139 @@
             <button class="btn btn-success" style="width:100%" onclick="salvarPlano()">Salvar Plano</button>
         </div>
     </div>
+
+        <!-- ═══════════════ PÁGINA: TENANTS SAAS ═══════════════ -->
+        <div class="page" id="page-tenants">
+          <h2 style="color:#00d4ff;margin-bottom:20px;">🏢 Tenants SaaS</h2>
+
+          <div class="stats-grid" id="tenant-kpis">
+            <div class="stat-card"><div class="icon">🏢</div><div class="value" id="t-total">—</div><div class="label">Total Empresas</div></div>
+            <div class="stat-card success"><div class="icon">✅</div><div class="value" id="t-ativos">—</div><div class="label">Ativos</div></div>
+            <div class="stat-card warning"><div class="icon">🧪</div><div class="value" id="t-trial">—</div><div class="label">Em Trial</div></div>
+            <div class="stat-card"><div class="icon">💎</div><div class="value" id="t-pro">—</div><div class="label">Pro / Enterprise</div></div>
+          </div>
+
+          <div class="panel" style="padding:15px 20px;margin-bottom:15px;">
+            <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+              <input id="t-busca" class="form-control" style="max-width:240px;" placeholder="🔍 Buscar empresa / adminId…" oninput="filtrarTenants()">
+              <select id="t-filtro-plano" class="form-control" style="max-width:160px;" onchange="filtrarTenants()">
+                <option value="">Todos os planos</option>
+                <option value="starter">Starter</option>
+                <option value="pro">Pro</option>
+                <option value="enterprise">Enterprise</option>
+              </select>
+              <select id="t-filtro-modulo" class="form-control" style="max-width:160px;" onchange="filtrarTenants()">
+                <option value="">Todos os módulos</option>
+                <option value="delivery">Delivery</option>
+                <option value="agenda">Agenda</option>
+                <option value="soft">Soft</option>
+              </select>
+              <button class="btn btn-primary btn-sm" onclick="carregarTenants()">↺ Atualizar</button>
+            </div>
+          </div>
+
+          <div class="panel" style="padding:0;overflow:hidden;">
+            <div style="overflow-x:auto;">
+              <table id="tabela-tenants">
+                <thead>
+                  <tr>
+                    <th>Empresa</th>
+                    <th>AdminId</th>
+                    <th>Módulo</th>
+                    <th>Plano</th>
+                    <th>Trial</th>
+                    <th>Pedidos/mês</th>
+                    <th>IA Calls</th>
+                    <th>Último Acesso</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="tbody-tenants">
+                  <tr><td colspan="10" style="text-align:center;color:#888;padding:30px;">Carregando…</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Modal Plano -->
+          <div class="modal" id="modalTenantPlano">
+            <div class="modal-content" style="max-width:440px;">
+              <div class="modal-header">
+                <h3 style="color:#00d4ff;">💎 Alterar Plano</h3>
+                <button class="modal-close" onclick="fecharModal('modalTenantPlano')">✕</button>
+              </div>
+              <p id="modalTenantNome" style="color:#888;margin-bottom:20px;"></p>
+              <input type="hidden" id="modalTenantAdminId">
+              <div class="form-group">
+                <label>Plano</label>
+                <select id="modalTenantNovoPlano" class="form-control">
+                  <option value="starter">Starter — até 500 pedidos/mês</option>
+                  <option value="pro">Pro — até 5.000 pedidos/mês + IA</option>
+                  <option value="enterprise">Enterprise — ilimitado + white-label</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Trial</label>
+                <select id="modalTenantTrial" class="form-control">
+                  <option value="true">Em trial (sem cobrança)</option>
+                  <option value="false">Plano ativo</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Módulos ativos</label>
+                <div style="display:flex;gap:15px;flex-wrap:wrap;margin-top:8px;">
+                  <label style="cursor:pointer;"><input type="checkbox" id="mod-delivery"> Delivery</label>
+                  <label style="cursor:pointer;"><input type="checkbox" id="mod-agenda"> Agenda</label>
+                  <label style="cursor:pointer;"><input type="checkbox" id="mod-soft"> Soft</label>
+                  <label style="cursor:pointer;"><input type="checkbox" id="mod-whatsapp"> WhatsApp</label>
+                  <label style="cursor:pointer;"><input type="checkbox" id="mod-ia"> IA</label>
+                  <label style="cursor:pointer;"><input type="checkbox" id="mod-relatorio"> Relatórios</label>
+                </div>
+              </div>
+              <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px;">
+                <button class="btn btn-primary" onclick="salvarPlanoTenant()">💾 Salvar</button>
+                <button class="btn" style="background:#333;" onclick="fecharModal('modalTenantPlano')">Cancelar</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Modal Branding -->
+          <div class="modal" id="modalTenantBranding">
+            <div class="modal-content" style="max-width:420px;">
+              <div class="modal-header">
+                <h3 style="color:#00d4ff;">🎨 Branding White-Label</h3>
+                <button class="modal-close" onclick="fecharModal('modalTenantBranding')">✕</button>
+              </div>
+              <input type="hidden" id="brandingAdminId">
+              <div class="form-group">
+                <label>Nome exibido no app</label>
+                <input type="text" id="brandingNome" class="form-control" placeholder="Ex: Pizzaria do João">
+              </div>
+              <div class="form-group">
+                <label>Cor primária</label>
+                <div style="display:flex;gap:10px;align-items:center;">
+                  <input type="color" id="brandingCor" value="#f97316" style="width:50px;height:40px;border:none;cursor:pointer;" oninput="document.getElementById('brandingCorHex').value=this.value">
+                  <input type="text" id="brandingCorHex" class="form-control" placeholder="#f97316" style="max-width:120px;" oninput="document.getElementById('brandingCor').value=this.value">
+                </div>
+              </div>
+              <div class="form-group">
+                <label>URL do Logo</label>
+                <input type="text" id="brandingLogo" class="form-control" placeholder="https://…/logo.png">
+              </div>
+              <div class="form-group">
+                <label>Domínio customizado (futuro)</label>
+                <input type="text" id="brandingDominio" class="form-control" placeholder="app.minhaempresa.com.br">
+              </div>
+              <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px;">
+                <button class="btn btn-primary" onclick="salvarBrandingTenant()">💾 Salvar</button>
+                <button class="btn" style="background:#333;" onclick="fecharModal('modalTenantBranding')">Cancelar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- ═══════════════ FIM TENANTS SAAS ═══════════════ -->
+
     <script src="/js/rebeca-monitor.js"></script>
 <script>
         let masterLogado = null;
@@ -500,7 +634,7 @@
 async function carregarPendentes() {
     try {
         const r = await fetch('/api/delivery-master/solicitacoes-pendentes', {
-            headers: { 'Authorization': 'Bearer ' + localStorage.getItem('masterToken') }
+            headers: { 'Authorization': 'Bearer ' + localStorage.getItem('master_token') || localStorage.getItem('rebeca_master_token') || '' }
         });
         const d = await r.json();
         const tbody = document.getElementById('tabelaPendentes');
@@ -534,7 +668,7 @@ async function aprovarPendente(id, btn) {
     try {
         const r = await fetch('/api/delivery-master/aprovar/' + id, {
             method: 'POST',
-            headers: { 'Authorization': 'Bearer ' + localStorage.getItem('masterToken') }
+            headers: { 'Authorization': 'Bearer ' + localStorage.getItem('master_token') || localStorage.getItem('rebeca_master_token') || '' }
         });
         const d = await r.json();
         if (d.sucesso) {
@@ -553,7 +687,7 @@ async function rejeitarPendente(id, btn) {
     try {
         const r = await fetch('/api/delivery-master/rejeitar/' + id, {
             method: 'DELETE',
-            headers: { 'Authorization': 'Bearer ' + localStorage.getItem('masterToken') }
+            headers: { 'Authorization': 'Bearer ' + localStorage.getItem('master_token') || localStorage.getItem('rebeca_master_token') || '' }
         });
         const d = await r.json();
         if (d.sucesso) { carregarPendentes(); }
@@ -782,6 +916,178 @@ function fazerLogout() { location.reload(); }
         }
         async function excluirPlano(id) { if (!confirm('Excluir plano?')) return; try { await fetch(`${API}/planos/${id}`, { method: 'DELETE' }); carregarPlanos(); } catch(e) { alert('Erro ao excluir plano'); console.error(e); } }
         async function confirmarPagamento(id) { if (!confirm('Confirmar pagamento?')) return; try { await fetch(`${API}/mensalidades/${id}/confirmar`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ formaPagamento: 'pix' }) }); carregarMensalidades(); } catch(e) { alert('Erro ao confirmar pagamento'); console.error(e); } }
+
+        // ══════════════════════════════════════════════════════════════
+        // TENANTS SAAS
+        // ══════════════════════════════════════════════════════════════
+        let _todosTenantsCache = [];
+
+        async function carregarTenants() {
+            document.getElementById('tbody-tenants').innerHTML =
+                '<tr><td colspan="10" style="text-align:center;color:#888;padding:30px;">Carregando…</td></tr>';
+            try {
+                const res = await fetch('/api/tenant/lista', {
+                    headers: { 'x-master-key': localStorage.getItem('master_token') || localStorage.getItem('rebeca_master_token') || '' || '' }
+                });
+                const data = await res.json();
+                if (!data.sucesso) throw new Error(data.erro || 'Erro ao carregar');
+                _todosTenantsCache = data.tenants || [];
+                _renderTenants(_todosTenantsCache);
+                _atualizarKpisTenant(_todosTenantsCache);
+            } catch(e) {
+                document.getElementById('tbody-tenants').innerHTML =
+                    `<tr><td colspan="10" style="text-align:center;color:#ff4444;padding:20px;">Erro: ${e.message}</td></tr>`;
+            }
+        }
+
+        function _atualizarKpisTenant(lista) {
+            document.getElementById('t-total').textContent  = lista.length;
+            document.getElementById('t-ativos').textContent = lista.filter(t => t.ativo !== false).length;
+            document.getElementById('t-trial').textContent  = lista.filter(t => t.plano && t.plano.emTrial).length;
+            document.getElementById('t-pro').textContent    = lista.filter(t => t.plano && (t.plano.tipo === 'pro' || t.plano.tipo === 'enterprise')).length;
+        }
+
+        function _renderTenants(lista) {
+            if (!lista.length) {
+                document.getElementById('tbody-tenants').innerHTML =
+                    '<tr><td colspan="10" style="text-align:center;color:#888;padding:30px;">Nenhum tenant encontrado</td></tr>';
+                return;
+            }
+            const corPlano = { starter: '#888', pro: '#00d4ff', enterprise: '#ffd700' };
+            const rows = lista.map(t => {
+                const plano   = (t.plano && t.plano.tipo) || 'starter';
+                const trial   = (t.plano && t.plano.emTrial)
+                    ? '<span class="badge yellow">Trial</span>'
+                    : '<span class="badge green">Ativo</span>';
+                const status  = t.ativo !== false
+                    ? '<span class="badge green">On</span>'
+                    : '<span class="badge red">Off</span>';
+                const acesso  = t.ultimoAcessoEm
+                    ? new Date(t.ultimoAcessoEm).toLocaleDateString('pt-BR') : '—';
+                const pedidos = (t.uso && t.uso.pedidosMes || 0) + ' / ' + (t.limites && t.limites.pedidosMes || 500);
+                const iaCalls = (t.uso && t.uso.iaCalls || 0) + ' / ' + (t.limites && t.limites.iaCallsMes || 50);
+                const nome    = (t.empresa && t.empresa.nome) || t.adminId.slice(0,8) || '—';
+                const cor     = corPlano[plano] || '#888';
+                const mods    = JSON.stringify(t.modulos || {}).replace(/"/g, "&quot;");
+                const bloqBtn = t.ativo !== false
+                    ? 'style="background:#ff4444;color:#fff;" onclick="toggleTenantAtivo('' + t.adminId + '',true)"'
+                    : 'style="background:#00ff88;color:#000;" onclick="toggleTenantAtivo('' + t.adminId + '',false)"';
+                const bloqTxt = t.ativo !== false ? '🔒' : '🔓';
+                return '<tr>' +
+                    '<td><strong>' + nome + '</strong></td>' +
+                    '<td style="font-family:monospace;font-size:12px;color:#888;">' + t.adminId + '</td>' +
+                    '<td>' + (t.modulo || '—') + '</td>' +
+                    '<td><span style="color:' + cor + ';font-weight:bold;">' + plano.toUpperCase() + '</span></td>' +
+                    '<td>' + trial + '</td>' +
+                    '<td>' + pedidos + '</td>' +
+                    '<td>' + iaCalls + '</td>' +
+                    '<td style="font-size:12px;color:#888;">' + acesso + '</td>' +
+                    '<td>' + status + '</td>' +
+                    '<td>' +
+                        '<button class="btn btn-primary btn-sm" onclick="abrirModalPlanoTenant('' + t.adminId + '','' + nome.replace(/'/g,"\'") + '','' + plano + '',' + !!(t.plano && t.plano.emTrial) + ','' + mods + '')">💎</button> ' +
+                        '<button class="btn btn-warning btn-sm" onclick="abrirModalBrandingTenant('' + t.adminId + '')">🎨</button> ' +
+                        '<button class="btn btn-sm" ' + bloqBtn + '>' + bloqTxt + '</button>' +
+                    '</td>' +
+                '</tr>';
+            });
+            document.getElementById('tbody-tenants').innerHTML = rows.join('');
+        }
+
+        function filtrarTenants() {
+            const busca  = (document.getElementById('t-busca') ? document.getElementById('t-busca').value : '').toLowerCase();
+            const plano  = document.getElementById('t-filtro-plano') ? document.getElementById('t-filtro-plano').value : '';
+            const modulo = document.getElementById('t-filtro-modulo') ? document.getElementById('t-filtro-modulo').value : '';
+            let lista = _todosTenantsCache;
+            if (busca)  lista = lista.filter(t => t.adminId.toLowerCase().includes(busca) || ((t.empresa && t.empresa.nome) || '').toLowerCase().includes(busca));
+            if (plano)  lista = lista.filter(t => t.plano && t.plano.tipo === plano);
+            if (modulo) lista = lista.filter(t => t.modulo === modulo || (t.modulos && t.modulos[modulo]));
+            _renderTenants(lista);
+            _atualizarKpisTenant(lista);
+        }
+
+        function abrirModalPlanoTenant(adminId, nome, planoAtual, emTrial, modulosStr) {
+            document.getElementById('modalTenantAdminId').value = adminId;
+            document.getElementById('modalTenantNome').textContent = nome + ' — ' + adminId;
+            document.getElementById('modalTenantNovoPlano').value = planoAtual || 'starter';
+            document.getElementById('modalTenantTrial').value = emTrial ? 'true' : 'false';
+            var mods = {};
+            try { mods = JSON.parse(modulosStr.replace(/&quot;/g, '"')); } catch(e) {}
+            ['delivery','agenda','soft','whatsapp','ia','relatorio'].forEach(function(m) {
+                var el = document.getElementById('mod-' + m);
+                if (el) el.checked = !!mods[m];
+            });
+            document.getElementById('modalTenantPlano').classList.add('active');
+        }
+
+        async function salvarPlanoTenant() {
+            var adminId = document.getElementById('modalTenantAdminId').value;
+            var plano   = document.getElementById('modalTenantNovoPlano').value;
+            var trial   = document.getElementById('modalTenantTrial').value === 'true';
+            var modulos = {};
+            ['delivery','agenda','soft','whatsapp','ia','relatorio'].forEach(function(m) {
+                var el = document.getElementById('mod-' + m);
+                modulos[m] = el ? el.checked : false;
+            });
+            try {
+                var res = await fetch('/api/tenant/master/plano', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'x-master-key': localStorage.getItem('master_token') || localStorage.getItem('rebeca_master_token') || '' || '' },
+                    body: JSON.stringify({ adminId: adminId, plano: plano, emTrial: trial, modulos: modulos })
+                });
+                var data = await res.json();
+                if (!data.sucesso) throw new Error(data.erro);
+                fecharModal('modalTenantPlano');
+                await carregarTenants();
+                alert('Plano atualizado!');
+            } catch(e) { alert('Erro: ' + e.message); }
+        }
+
+        function abrirModalBrandingTenant(adminId) {
+            document.getElementById('brandingAdminId').value    = adminId;
+            document.getElementById('brandingNome').value       = '';
+            document.getElementById('brandingCorHex').value     = '#f97316';
+            document.getElementById('brandingCor').value        = '#f97316';
+            document.getElementById('brandingLogo').value       = '';
+            document.getElementById('brandingDominio').value    = '';
+            document.getElementById('modalTenantBranding').classList.add('active');
+        }
+
+        async function salvarBrandingTenant() {
+            var adminId = document.getElementById('brandingAdminId').value;
+            var body = {
+                adminId:     adminId,
+                nome:        document.getElementById('brandingNome').value,
+                corPrimaria: document.getElementById('brandingCorHex').value || document.getElementById('brandingCor').value,
+                logo:        document.getElementById('brandingLogo').value,
+                dominio:     document.getElementById('brandingDominio').value,
+            };
+            try {
+                var res = await fetch('/api/tenant/master/branding', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'x-master-key': localStorage.getItem('master_token') || localStorage.getItem('rebeca_master_token') || '' || '' },
+                    body: JSON.stringify(body)
+                });
+                var data = await res.json();
+                if (!data.sucesso) throw new Error(data.erro);
+                fecharModal('modalTenantBranding');
+                alert('Branding salvo!');
+            } catch(e) { alert('Erro: ' + e.message); }
+        }
+
+        async function toggleTenantAtivo(adminId, ativoAtual) {
+            if (!confirm((ativoAtual ? 'Bloquear' : 'Ativar') + ' tenant ' + adminId + '?')) return;
+            try {
+                var res = await fetch('/api/tenant/master/status', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'x-master-key': localStorage.getItem('master_token') || localStorage.getItem('rebeca_master_token') || '' || '' },
+                    body: JSON.stringify({ adminId: adminId, ativo: !ativoAtual })
+                });
+                var data = await res.json();
+                if (!data.sucesso) throw new Error(data.erro);
+                await carregarTenants();
+            } catch(e) { alert('Erro: ' + e.message); }
+        }
+
         function copiarCredenciais() {
             const texto = `Email: ${document.getElementById('credEmail').textContent}\nSenha: ${document.getElementById('credSenha').textContent}\nToken: ${document.getElementById('credToken').textContent}`;
             navigator.clipboard.writeText(texto).then(() => alert('Credenciais copiadas!'));
