@@ -1391,7 +1391,7 @@ async function iniciarApp(){
     window._adminId = ADMIN_ID;
     window._adminPlano = ADMIN?.plano || '';
     // Plano
-    const plano = ADMIN.plano === 'espaco_digital_ia' ? 'Plano IA 🤖' : 'Plano Profissional';
+    const plano = ADMIN.plano ? ADMIN.plano.replace(/_/g,' ') : 'Plano Ativo';
     document.getElementById('sb-plano-nome').textContent = plano;
     if(ADMIN.trialExpira){
       const dias = Math.ceil((new Date(ADMIN.trialExpira)-new Date())/86400000);
@@ -1507,7 +1507,7 @@ async function carregarProximosAgendamentos(){
 
 async function carregarHorariosLivres(){
   try {
-    const d = await api('/espaco/'+ADMIN_ID+'/horarios?data='+new Date().toISOString().split('T')[0]);
+    const d = await api('/agenda/'+ADMIN_ID+'/horarios?data='+new Date().toISOString().split('T')[0]);
     const wrap = document.getElementById('horarios-livres');
     const horarios = d?.horarios || d || [];
     if(!horarios.length){
@@ -1802,7 +1802,7 @@ async function salvarAgendamento(){
     status: 'confirmado'
   };
   if(!payload.clienteNome || !payload.dataHora.includes('T')) return toast('Preencha os campos obrigatórios', 'erro');
-  const r = await api('/espaco/'+ADMIN_ID+'/agendar', {method:'POST', body:JSON.stringify(payload)});
+  const r = await api('/agenda/'+ADMIN_ID+'/agendar', {method:'POST', body:JSON.stringify(payload)});
   if(r && r.sucesso){ toast('Agendamento criado ✅'); fecharModal('modal-ag'); carregarDashboard(); }
   else toast('Erro ao criar agendamento', 'erro');
 }
@@ -2063,8 +2063,8 @@ function abrirConfigNotif() {
   document.getElementById('modal-notif-config').style.display = 'flex';
   atualizarStatusNotif();
   // Atualizar card WhatsApp conforme plano
-  var plano = window._adminPlano || 'espaco_digital';
-  var isIA = plano === 'espaco_digital_ia';
+  var plano = window._adminPlano || 'agenda_solo';
+  var isIA = false;
   var badge = document.getElementById('wpp-plano-badge');
   var desc = document.getElementById('wpp-plano-desc');
   if(isIA) {
@@ -2198,8 +2198,8 @@ var _origSalvarAgendamento = typeof salvarAgendamento !== 'undefined' ? salvarAg
 var _wppInstanciaId = null;
 
 function wppIniciar() {
-  var plano = window._adminPlano || 'espaco_digital';
-  var isIA = plano === 'espaco_digital_ia';
+  var plano = window._adminPlano || 'agenda_solo';
+  var isIA = false;
   // Mostrar/ocultar nav item conforme plano
   // Mostrar sempre para ADM ver o painel (upgrade card para plano básico)
   document.getElementById('nav-whatsapp').style.display = 'flex';
