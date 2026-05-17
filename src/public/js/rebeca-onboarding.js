@@ -516,6 +516,7 @@ window.RebecaOnboarding = (() => {
       _checklistPanel = document.createElement('div');
       _checklistPanel.id = 'rob-checklist';
       document.body.appendChild(_checklistPanel);
+      _checklistPanel.style.display = 'none'; // inicia fechado
 
       // FAB toggle
       const fab = document.createElement('button');
@@ -684,10 +685,13 @@ window.RebecaOnboarding = (() => {
       }
       // Primeiro acesso — aguardar DOM estabilizar
       setTimeout(() => {
+        // Checar novamente se usuário está logado antes de abrir
+        const app = document.getElementById('app');
+        if (app && getComputedStyle(app).display === 'none') return;
         _injectCSS();
         const steps = STEPS[_produto] || STEPS.agenda;
         _renderStep(steps[_state.stepAtual]);
-      }, 800);
+      }, 1500);
     },
   };
 })();
@@ -695,17 +699,34 @@ window.RebecaOnboarding = (() => {
 // Auto-init apenas em páginas de painel (não em landing/login)
 (function() {
   const path = location.pathname;
+  // Só em páginas de painel explícitas — nunca em raiz / ou index genérico
   const isPanel = path.includes('agenda-adm') || path.includes('delivery-admin') ||
-                  path.includes('index') || path === '/';
-  const hasToken = !!(localStorage.getItem('agenda_token') || localStorage.getItem('token'));
+                  path.includes('corrida-admin') || path.includes('master-admin');
+  if (!isPanel) return;
 
-  if (isPanel && hasToken) {
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', () => RebecaOnboarding._autoInit());
-    } else {
-      RebecaOnboarding._autoInit();
-    }
+  const hasToken = !!(localStorage.getItem('agenda_token') || localStorage.getItem('token') ||
+                      localStorage.getItem('prof_token'));
+  if (!hasToken) return;
+
+  // Aguardar o #app estar visível (usuário logado de fato)
+  function _tryInit() {
+    const app = document.getElementById('app');
+    const loginTela = document.getElementById('tela-login') || document.getElementById('login');
+    // Se a tela de login ainda está visível, não inicializar
+    if (loginTela && loginTela.style.display !== 'none' && 
+        getComputedStyle(loginTela).display !== 'none') return;
+    if (app && (app.style.display === 'none' || getComputedStyle(app).display === 'none')) return;
+    RebecaOnboarding._autoInit();
   }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => setTimeout(_tryInit, 1200));
+  } else {
+    setTimeout(_tryInit, 1200);
+  }
+
+  // Escutar evento customizado de login bem-sucedido
+  document.addEventListener('rebeca:login', () => setTimeout(() => RebecaOnboarding._autoInit(), 600));
 })();
 
 console.log('✅ RebecaOnboarding carregado');

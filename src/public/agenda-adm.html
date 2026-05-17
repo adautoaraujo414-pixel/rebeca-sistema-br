@@ -1397,6 +1397,7 @@ async function iniciarApp(){
   var fabEl = document.getElementById('btn-fab');
   if(fabEl) fabEl.style.display = 'flex';
   document.getElementById('app').classList.add('show');
+  setTimeout(function(){ document.dispatchEvent(new CustomEvent('rebeca:login')); }, 300);
   if(ADMIN){
     const nome = ADMIN.nomeNegocio || ADMIN.nome || 'Negócio';
     const primeiroNome = (ADMIN.nome||'').split(' ')[0] || 'Olá';
