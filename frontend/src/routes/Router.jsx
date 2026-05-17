@@ -5,6 +5,7 @@ import { AppLayout } from '../layouts/AppLayout';
 
 const Login     = lazy(() => import('../modules/Login'));
 const Dashboard = lazy(() => import('../modules/Dashboard'));
+const Produtos  = lazy(() => import('../modules/Produtos'));
 
 function Loading() {
   return (
@@ -32,6 +33,7 @@ export function Router() {
         }>
           <Route index element={<Navigate to="/dashboard" replace />} />
           <Route path="dashboard" element={<Dashboard />} />
+          <Route path="produtos" element={<Produtos />} />
         </Route>
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
