@@ -470,6 +470,12 @@ console.log('✅ Cron cardápio do dia ativo (7h)');
 DeliveryTrialService.verificarTrialsVencidos();
 console.log('✅ Cron delivery trial ativo');
 
+// Cron Rebeca — lembretes 30min antes (a cada 5min) e relatório diário 8h
+const ModoDono = require('./services/agenda-modo-dono.service');
+cron.schedule('*/5 * * * *', () => ModoDono.rodarLembretes());
+cron.schedule('0 8 * * *', () => ModoDono.rodarRelatorioDiario());
+console.log('✅ Cron lembretes e relatório diário Rebeca ativos');
+
 
 // redeploy Mon Apr 27 18:18:58 UTC 2026
 

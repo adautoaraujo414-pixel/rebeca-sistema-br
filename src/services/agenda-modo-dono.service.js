@@ -9,6 +9,39 @@ const { InstanciaWhatsapp } = require('../models');
 const EVOLUTION_BASE_URL = process.env.EVOLUTION_API_URL || 'https://evolution-api-production-794f.up.railway.app';
 const EVOLUTION_GLOBAL_KEY = process.env.EVOLUTION_API_KEY || null;
 
+// ── Personalidade Rebeca ─────────────────────────────────────────────────────
+function _saudacao() {
+  const h = new Date().getHours();
+  if (h >= 5  && h < 12) return 'Bom dia';
+  if (h >= 12 && h < 18) return 'Boa tarde';
+  return 'Boa noite';
+}
+
+function _chefe() {
+  const opcoes = ['chefe', 'chefa', 'patrão', 'patroa', 'chefão'];
+  return opcoes[Math.floor(Math.random() * opcoes.length)];
+}
+
+function _confirmacao() {
+  const opcoes = [
+    'Maravilha! Já anotei aqui. ✅',
+    'Feito, ' + _chefe() + '! Tá registrado. 💙',
+    'Prontinho! Já tá no sistema. 🎉',
+    'Pode deixar, ' + _chefe() + '! Já tá anotado. ✅',
+    'Ótimo! Já resolvi aqui. 💪'
+  ];
+  return opcoes[Math.floor(Math.random() * opcoes.length)];
+}
+
+function _erro() {
+  const opcoes = [
+    'Eita, não entendi direito não. 😅',
+    'Hmm, me explica melhor, ' + _chefe() + '?',
+    'Não consegui pegar essa, pode repetir de outro jeito?'
+  ];
+  return opcoes[Math.floor(Math.random() * opcoes.length)];
+}
+
 // ── Normalizar telefone (remover +, espaços, traços) ─────────────────────────
 function _normalizarTel(tel) {
   if (!tel) return '';
@@ -154,14 +187,14 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
     }).sort({ dataHora: 1 }).lean();
 
     if (!ags.length) {
-      await responder(`📅 Nenhum agendamento ${/amanhã|amanha/i.test(msgL)?'para amanhã':'para hoje'}.`);
+      await responder(`${_saudacao()}, ${_chefe()}! 😊\n\nNão tem nenhum agendamento ${/amanhã|amanha/i.test(msgL)?'para amanhã':'pra hoje' } não. Tá livre! 🎉`);
       return true;
     }
 
     const lista = ags.map(a =>
       `• ${_fmtHora(new Date(a.dataHora))} — ${a.nomeCliente} (${a.nomeServico})`
     ).join('\n');
-    await responder(`📅 *Agenda ${/amanhã|amanha/i.test(msgL)?'de amanhã':'de hoje'}:*\n\n${lista}\n\n${ags.length} agendamento(s)`);
+    await responder(`${_saudacao()}! Olha a agenda ${/amanhã|amanha/i.test(msgL)?'de amanhã':'de hoje'} pra você, ${_chefe()}! 📅\n\n${lista}\n\n${ags.length} agendamento(s) no total. Bora lá! 💪`);
     return true;
   }
 
@@ -181,11 +214,11 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
           inicio: ini, fim,
           motivo: 'Bloqueio via WhatsApp'
         });
-        await responder(`🔒 Bloqueio registrado:\n${_fmtData(dia)}, das ${_fmtHora(ini)} às ${_fmtHora(fim)}.`);
+        await responder(`🔒 ${_confirmacao()}\n\nBloqueio feito em ${_fmtData(dia)}, das ${_fmtHora(ini)} às ${_fmtHora(fim)}. Ninguém agenda nesse horário não! 😉`);
         return true;
       }
     }
-    await responder('Não entendi o horário do bloqueio. Tente: *Rebeca, bloqueia amanhã das 12h às 14h*');
+    await responder(`${_erro()} Tente assim: *Rebeca, bloqueia amanhã das 12h às 14h* 😊`);
     return true;
   }
 
@@ -202,11 +235,11 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
           'config.horarioAbertura': abertura,
           'config.horarioFechamento': fechamento
         });
-        await responder(`✅ Horário de hoje atualizado: das ${abertura} às ${fechamento}.`);
+        await responder(`Anotei aqui, ${_chefe()}! ✅\n\nHoje você trabalha das *${abertura}* às *${fechamento}*. Pode vir cliente! 🚀`);
         return true;
       }
     }
-    await responder('Não entendi o horário. Tente: *Rebeca, hoje vou trabalhar das 8h às 18h*');
+    await responder(`${_erro()} Me fala assim: *Rebeca, hoje vou trabalhar das 8h às 18h* 😊`);
     return true;
   }
 
@@ -225,10 +258,10 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
         data: new Date(),
         origem: 'whatsapp_dono'
       });
-      await responder(`✅ Entrada registrada: *R$ ${val.toFixed(2)}* — ${desc}`);
+      await responder(`${_confirmacao()}\n\n💰 Entrada de *R$ ${val.toFixed(2)}* registrada — ${desc}. Dinheiro entrando é sempre bom! 🤑`);
       return true;
     }
-    await responder('Não encontrei o valor. Tente: *Rebeca, registra uma entrada de R$120 no Pix*');
+    await responder(`${_erro()} Me fala assim: *Rebeca, registra uma entrada de R$120 no Pix* 💰`);
     return true;
   }
 
@@ -247,10 +280,10 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
         data: new Date(),
         origem: 'whatsapp_dono'
       });
-      await responder(`✅ Gasto registrado: *R$ ${val.toFixed(2)}* — ${desc}`);
+      await responder(`${_confirmacao()}\n\n💸 Gasto de *R$ ${val.toFixed(2)}* anotado — ${desc}. Registrado direitinho! 📝`);
       return true;
     }
-    await responder('Não encontrei o valor. Tente: *Rebeca, registra um gasto de R$50 em produtos*');
+    await responder(`${_erro()} Me fala assim: *Rebeca, registra um gasto de R$50 em produtos* 💸`);
     return true;
   }
 
@@ -272,11 +305,13 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
     });
 
     await responder(
-      `💰 *Resumo ${_fmtData(dia)}:*\n\n` +
-      `Entradas: R$ ${entradas.toFixed(2)}\n` +
-      `Gastos: R$ ${saidas.toFixed(2)}\n` +
-      `Resultado: R$ ${(entradas-saidas).toFixed(2)}\n` +
-      `Agendamentos confirmados: ${agendamentos}`
+      `${_saudacao()}, ${_chefe()}! Olha o resumo aí 👇\n\n` +
+      `📅 *${_fmtData(dia)}*\n\n` +
+      `💰 Entradas: *R$ ${entradas.toFixed(2)}*\n` +
+      `💸 Gastos: *R$ ${saidas.toFixed(2)}*\n` +
+      `📈 Resultado: *R$ ${(entradas-saidas).toFixed(2)}*\n` +
+      `✅ Atendimentos: *${agendamentos}*\n\n` +
+      `${(entradas-saidas) >= 0 ? 'Tá indo bem! Continue assim! 🚀' : 'Fica tranquilo(a), amanhã compensa! 💪'}`
     );
     return true;
   }
@@ -293,11 +328,11 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
       }).lean();
       if (ag) {
         await AgendamentoAgenda.findByIdAndUpdate(ag._id, { status: 'cancelado' });
-        await responder(`✅ Agendamento de *${ag.nomeCliente}* às ${_fmtHora(new Date(ag.dataHora))} cancelado.`);
+        await responder(`Feito, ${_chefe()}! 😊\n\nCancelei o agendamento de *${ag.nomeCliente}* às ${_fmtHora(new Date(ag.dataHora))}. Horário liberado! 🔓`);
         return true;
       }
     }
-    await responder('Não encontrei o agendamento. Tente: *Rebeca, cancela o agendamento das 14h*');
+    await responder(`${_erro()} Tente assim: *Rebeca, cancela o agendamento das 14h* 😊`);
     return true;
   }
 
@@ -313,11 +348,11 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
       }).lean();
       if (ag) {
         await AgendamentoAgenda.findByIdAndUpdate(ag._id, { status: 'confirmado' });
-        await responder(`✅ Agendamento de *${ag.nomeCliente}* às ${_fmtHora(new Date(ag.dataHora))} confirmado.`);
+        await responder(`Maravilha, ${_chefe()}! 🎉\n\nConfirmei o horário de *${ag.nomeCliente}* às ${_fmtHora(new Date(ag.dataHora))}. Pode esperar o cliente! 💙`);
         return true;
       }
     }
-    await responder('Não encontrei o agendamento pendente. Tente: *Rebeca, confirma o agendamento das 14h*');
+    await responder(`${_erro()} Tente assim: *Rebeca, confirma o agendamento das 14h* 😊`);
     return true;
   }
 
@@ -330,7 +365,7 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
       ultimoAtendimento: { $lt: corte, $exists: true }
     }).sort({ ultimoAtendimento: 1 }).limit(5).lean();
     if (!inativos.length) {
-      await responder('Nenhum cliente inativo nos últimos 30 dias. 🎉');
+      await responder(`${_saudacao()}, ${_chefe()}! 🎉\n\nNenhum cliente inativo nos últimos 30 dias não! Todo mundo voltando direitinho! 💪`);
       return true;
     }
     const lista = inativos.map(c => {
@@ -356,6 +391,7 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
   }
 
   // ── NÃO RECONHECIDO ────────────────────────────────────────────────────────
+  await responder(`${_erro()}\n\nDigita *ajuda* pra ver tudo que eu sei fazer por você, ${_chefe()}! 💙`);
   return false;
 }
 
@@ -388,3 +424,92 @@ async function notificarDonoNovoAgendamento(adminId, dadosAg) {
 }
 
 module.exports = { isDono, enviarBoasVindas, processarComandoDono, notificarDonoNovoAgendamento, processarComandoAdmin: (texto, adminId, instOfc) => processarComandoDono(instOfc?.numero || '', texto, adminId, instOfc) };
+
+// ── LEMBRETE AUTOMÁTICO 30min antes ─────────────────────────────────────────
+async function rodarLembretes() {
+  try {
+    const agora = new Date();
+    const em30  = new Date(agora.getTime() + 30 * 60000);
+    const em35  = new Date(agora.getTime() + 35 * 60000);
+
+    const proximos = await AgendamentoAgenda.find({
+      dataHora: { $gte: em30, $lte: em35 },
+      status: { $in: ['pendente', 'confirmado'] },
+      lembreteDonoEnviado: { $ne: true }
+    }).lean();
+
+    for (const ag of proximos) {
+      try {
+        const admin    = await AdminAgenda.findById(ag.adminId).lean();
+        if (!admin) continue;
+        const telDono  = _normalizarTel(admin.whatsapp || admin.telefone);
+        if (!telDono) continue;
+
+        const inst = await InstanciaWhatsapp.findOne({ adminId: String(ag.adminId), adminTipo: 'agenda', status: 'conectado' }).lean();
+        if (!inst) continue;
+
+        const hora = _fmtHora(new Date(ag.dataHora));
+        await _enviarMsg(inst, telDono,
+          `⏰ *Atenção, ${_chefe()}!*\n\n` +
+          `*${ag.nomeCliente}* tá chegando em uns 30 minutinhos! 😊\n` +
+          `🕐 Horário: ${hora}\n` +
+          `✂️ Serviço: ${ag.nomeServico || '—'}\n\n` +
+          `Se quiser confirmar: *Rebeca, confirma o agendamento das ${hora}* 💙`
+        );
+
+        await AgendamentoAgenda.findByIdAndUpdate(ag._id, { lembreteDonoEnviado: true });
+        console.log('[ModoDono] Lembrete enviado para', telDono, ag.nomeCliente);
+      } catch(e) {
+        console.error('[ModoDono] Erro lembrete individual:', e.message);
+      }
+    }
+  } catch(e) {
+    console.error('[ModoDono] Erro rodarLembretes:', e.message);
+  }
+}
+
+// ── RELATÓRIO DIÁRIO AUTOMÁTICO ──────────────────────────────────────────────
+async function rodarRelatorioDiario() {
+  try {
+    const admins = await require('../models/AgendaServico').AdminAgenda.find({
+      ativo: true,
+      'config.relatorioDiario': { $ne: false }
+    }).lean();
+
+    const ontem     = new Date();
+    ontem.setDate(ontem.getDate() - 1);
+    const ini = new Date(ontem); ini.setHours(0,0,0,0);
+    const fim = new Date(ontem); fim.setHours(23,59,59,999);
+
+    for (const admin of admins) {
+      try {
+        const telDono = _normalizarTel(admin.whatsapp || admin.telefone);
+        if (!telDono) continue;
+
+        const inst = await InstanciaWhatsapp.findOne({ adminId: String(admin._id), adminTipo: 'agenda', status: 'conectado' }).lean();
+        if (!inst) continue;
+
+        const lancamentos = await FinanceiroAgenda.find({ adminId: String(admin._id), data: { $gte: ini, $lte: fim } }).lean();
+        const entradas    = lancamentos.filter(l => l.tipo === 'entrada').reduce((s, l) => s + l.valor, 0);
+        const saidas      = lancamentos.filter(l => l.tipo === 'saida').reduce((s, l) => s + l.valor, 0);
+        const atendidos   = await AgendamentoAgenda.countDocuments({ adminId: String(admin._id), dataHora: { $gte: ini, $lte: fim }, status: { $in: ['confirmado','concluido'] } });
+
+        await _enviarMsg(inst, telDono,
+          `🌅 *Bom dia, ${_chefe()}!* Olha o resumo de ontem (${_fmtData(ontem)}) pra você:\n\n` +
+          `✅ Atendimentos: *${atendidos}*\n` +
+          `💰 Entradas: *R$ ${entradas.toFixed(2)}*\n` +
+          `💸 Gastos: *R$ ${saidas.toFixed(2)}*\n` +
+          `📈 Resultado: *R$ ${(entradas - saidas).toFixed(2)}*\n\n` +
+          `${atendidos > 0 ? 'Arrasou ontem! Hoje vai ser ainda melhor. 🚀💙' : 'Hoje vai bombar, pode apostar! 💪💙'}`
+        );
+      } catch(e) {
+        console.error('[ModoDono] Erro relatório admin:', admin._id, e.message);
+      }
+    }
+  } catch(e) {
+    console.error('[ModoDono] Erro rodarRelatorioDiario:', e.message);
+  }
+}
+
+module.exports.rodarLembretes        = rodarLembretes;
+module.exports.rodarRelatorioDiario  = rodarRelatorioDiario;

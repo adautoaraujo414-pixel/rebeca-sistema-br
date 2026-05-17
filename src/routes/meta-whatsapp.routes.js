@@ -66,13 +66,24 @@ async function processarComando(telefone, texto, msgId) {
 
     // Passa para IA da Agenda
     const AgendaModo = require('../services/agenda-modo-dono.service');
-    await AgendaModo.processarMensagemDono({
-      adminId:  String(admin._id),
-      telefone,
-      texto,
-      msgId,
-      canal:    'meta'
-    });
+    const MetaWA     = require('../services/meta-whatsapp.service');
+
+    // Instância fake para o modo dono usar o MetaWA para responder
+    const instMeta = {
+      nomeInstancia: 'meta_oficial',
+      apiKey:        process.env.META_WA_TOKEN,
+      apiUrl:        'meta',
+      numero:        telefone,
+      _enviarVia:    'meta'
+    };
+
+    const tratado = await AgendaModo.processarComandoDono(telefone, texto, String(admin._id), instMeta);
+
+    if (!tratado) {
+      await MetaWA.enviarTexto(telefone,
+        'Oi! Sou a Rebeca. Digite *ajuda* para ver o que posso fazer por você. 💙'
+      );
+    }
 
   } catch(e) {
     console.error('[MetaWA] processarComando erro:', e.message);
