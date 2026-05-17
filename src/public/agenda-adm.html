@@ -2869,7 +2869,7 @@ let crmInativosCache = [];
 
 async function crmCarregarDashboard() {
   try {
-    const r = await fetch('/api/agenda/crm/dashboard', { headers: { Authorization: 'Bearer ' + token } });
+    const r = await fetch('/api/agenda/crm/dashboard', { headers: { Authorization: 'Bearer ' + TOKEN } });
     const d = await r.json();
     if (!d.sucesso) return;
     const c = d.cards;
@@ -2891,7 +2891,7 @@ async function crmCarregarRetornos() {
   const load = document.getElementById('crm-retornos-loading');
   if (load) load.style.display = '';
   try {
-    const r = await fetch('/api/agenda/crm/retornos?status=pendente', { headers: { Authorization: 'Bearer ' + token } });
+    const r = await fetch('/api/agenda/crm/retornos?status=pendente', { headers: { Authorization: 'Bearer ' + TOKEN } });
     const d = await r.json();
     if (load) load.style.display = 'none';
     if (!d.sucesso || !d.retornos.length) {
@@ -2926,7 +2926,7 @@ async function crmCarregarInativos() {
   const el = document.getElementById('crm-inativos-lista');
   el.innerHTML = '<div style="text-align:center;padding:32px;color:var(--texto2)">Carregando...</div>';
   try {
-    const r = await fetch(`/api/agenda/crm/clientes-inativos?dias=${dias}`, { headers: { Authorization: 'Bearer ' + token } });
+    const r = await fetch(`/api/agenda/crm/clientes-inativos?dias=${dias}`, { headers: { Authorization: 'Bearer ' + TOKEN } });
     const d = await r.json();
     if (!d.sucesso || !d.clientes.length) {
       el.innerHTML = `<div style="text-align:center;padding:40px;color:var(--texto2)">Nenhum cliente inativo há ${dias} dias 🎉</div>`;
@@ -3027,7 +3027,7 @@ async function crmNovoRetorno() {
 async function modoDonoCarregar() {
   try {
     const r = await fetch('/api/agenda/whatsapp/modo-dono', {
-      headers: { Authorization: 'Bearer ' + token }
+      headers: { Authorization: 'Bearer ' + TOKEN }
     });
     const d = await r.json();
     if (!d.sucesso) return;
