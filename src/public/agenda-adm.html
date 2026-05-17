@@ -107,7 +107,21 @@ input,select,textarea{font-family:'Inter',sans-serif}
 .header-perfil-cargo{font-size:.7em;color:var(--texto3)}
 
 /* ─── CONTENT ─── */
-.content{flex:1;padding:28px 24px;max-width:1400px;margin-left:var(--sidebar);min-height:100vh;overflow-y:auto;box-sizing:border-box}
+.content{flex:1;padding:28px 24px;margin-left:var(--sidebar);min-height:100vh;overflow-y:auto;box-sizing:border-box;width:calc(100% - var(--sidebar))}
+
+/* ─── LAYOUT GLOBAL PADRÃO ─── */
+.page-container{max-width:1200px;width:100%;margin:0 auto}
+.page-section{background:#fff;border:1px solid var(--borda);border-radius:var(--radius-lg);padding:24px;margin-bottom:20px;box-shadow:var(--shadow)}
+.page-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.page-grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.page-grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+
+/* ─── TELA PADRÃO ─── */
+.tela{display:none}
+.tela.ativa{display:block}
+.tela > .page-container,
+.tela > div[style*="max-width"]{animation:fadeIn .18s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
 .page-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:28px}
 .page-title{font-size:1.6em;font-weight:800;color:var(--texto)}
 .page-subtitle{font-size:.88em;color:var(--texto3);margin-top:4px}
