@@ -385,6 +385,7 @@ setInterval(async () => {
     }
 }, 60 * 60 * 1000); // 1 hora
 
+app.get('/politica-privacidade.html', (req, res) => res.sendFile(require('path').join(__dirname, 'public', 'politica-privacidade.html')));
 app.use((req, res) => res.status(404).json({ error: 'Rota não encontrada' }));
 
 app.listen(PORT, () => {
