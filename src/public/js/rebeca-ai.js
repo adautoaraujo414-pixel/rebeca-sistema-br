@@ -345,9 +345,9 @@ Dados: ${JSON.stringify(ctx)}
 Responda APENAS o resumo, sem explicações.`;
 
     try {
-      const res = await _api('/api/ia/chat', {
+      const res = await _api('/api/ia/resumo-operacional', {
         method: 'POST',
-        body: JSON.stringify({ mensagem: prompt, contexto: 'resumo-operacional' }),
+        body: JSON.stringify({ metricas, alertas: analise.alertas, produto, contexto: 'resumo-operacional' }),
       });
 
       const resumo = res.resposta || res.texto || res.content || '';

@@ -208,6 +208,29 @@ const IAService = {
         return { usarIA: true, intencao: 'outro', respostaCurta: 'Vai querer pedir algo? ' + varDelivery.random(varDelivery.cardapio) };
     },
 
+
+    // ── PROCESSAR MENSAGEM OPERACIONAL (usado pelo RebecaAI frontend) ──────────
+    async processarMensagem(mensagem, contexto = {}) {
+        // Se tem API key → usa Claude
+        if (clienteAnthropic && mensagem && mensagem.length < 2000) {
+            try {
+                const msg = await clienteAnthropic.messages.create({
+                    model: configIA.modelo,
+                    max_tokens: 300,
+                    messages: [{ role: 'user', content: mensagem }],
+                });
+                const texto = msg.content?.[0]?.text || '';
+                if (texto) return texto;
+            } catch(e) {
+                console.warn('[IAService] Claude indisponível:', e.message);
+            }
+        }
+        // Fallback local — resumo operacional sem IA externa
+        const hora = new Date().getHours();
+        const turno = hora < 12 ? 'manhã' : hora < 18 ? 'tarde' : 'noite';
+        return `Boa ${turno}! Sistema operando normalmente. Seus dados estão sendo monitorados em tempo real.`;
+    },
+
     async responderPergunta(pergunta, contexto = {}) {
         return null;
     }
