@@ -4,8 +4,9 @@ let clienteAnthropic = null;
 
 const configIA = {
     apiKey: process.env.ANTHROPIC_API_KEY || '',
-    modelo: 'claude-haiku-4-5-20251001',
-    ativo: true // lógica local, sempre ativo
+    modelo: process.env.CLAUDE_MODEL || 'claude-haiku-4-5-20251001',
+    ativo: true,
+    fallbackModelo: process.env.CLAUDE_FALLBACK_MODEL || 'claude-haiku-4-5-20251001'
 };
 
 if (configIA.apiKey) {
