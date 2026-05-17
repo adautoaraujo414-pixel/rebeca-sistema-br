@@ -130,8 +130,29 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <script src="/js/rebeca-realtime.js"></script>
 <script src="/js/rebeca-monitor.js"></script>
+<script src="/js/rebeca-notify.js"></script>
 <script src="/js/rebeca-onboarding.js"></script>
 <script>
+
+  // ── RebecaNotify — Hook de novos pedidos ─────────────────────────────────
+  let _ultimosPedidosIds = new Set();
+  function _notifyNovoPedido(pedidos) {
+    if (!window.RebecaNotify) return;
+    pedidos.forEach(p => {
+      if (!_ultimosPedidosIds.has(p.id || p._id)) {
+        if (_ultimosPedidosIds.size > 0) { // Não notificar no primeiro load
+          RebecaNotify.pedido({
+            numero: p.numero || p.id || '?',
+            cliente: p.nome_cliente || p.cliente || 'Cliente',
+            total: p.total || p.valor_total || 0,
+            tipo: p.tipo || 'delivery',
+          });
+        }
+        _ultimosPedidosIds.add(p.id || p._id);
+      }
+    });
+  }
+  // ─────────────────────────────────────────────────────────────────────────
 function adicionarFornProd() {
   var c = document.getElementById('fi_prods');
   if (!c) return;
@@ -2533,7 +2554,8 @@ async function carregarConfigNF() {
             async function _checkNovoPedido() {
                 try {
                     const res = await api('/pedidos?status=novo&limit=1');
-                    const pedidos = await res.json();
+                    const pedidos = await res.json()
+        _notifyNovoPedido(Array.isArray(pedidos) ? pedidos : pedidos.pedidos || pedidos.data || []);;
                     if (pedidos && pedidos.length > 0) {
                         const ultimo = pedidos[0];
                         const idAtual = ultimo._id;

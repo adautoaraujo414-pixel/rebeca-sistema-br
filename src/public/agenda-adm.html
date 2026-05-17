@@ -1255,8 +1255,30 @@ document.querySelectorAll('.nav-item').forEach(item => {
 
 <script src="/js/rebeca-realtime.js"></script>
 <script src="/js/rebeca-monitor.js"></script>
+<script src="/js/rebeca-notify.js"></script>
 <script src="/js/rebeca-onboarding.js"></script>
 <script>
+
+  // ── RebecaNotify — Hook de novos agendamentos ────────────────────────────
+  let _ultimosAgendIds = new Set();
+  function _notifyNovoAgend(agendamentos) {
+    if (!window.RebecaNotify) return;
+    agendamentos.forEach(a => {
+      const key = a.id || a._id || (a.cliente + a.horario);
+      if (!_ultimosAgendIds.has(key)) {
+        if (_ultimosAgendIds.size > 0) {
+          RebecaNotify.agendamento({
+            cliente: a.nome || a.cliente || 'Cliente',
+            servico: a.servico || a.procedimento || 'Agendamento',
+            horario: a.horario || a.hora || '',
+            profissional: a.profissional || '',
+          });
+        }
+        _ultimosAgendIds.add(key);
+      }
+    });
+  }
+  // ─────────────────────────────────────────────────────────────────────────
 const BASE = '/api/agenda';
 let TOKEN = localStorage.getItem('agenda_token') || '';
 let ADMIN_ID = localStorage.getItem('agenda_admin_id') || '';
