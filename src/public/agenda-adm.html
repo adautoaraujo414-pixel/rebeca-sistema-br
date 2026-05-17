@@ -2285,26 +2285,21 @@ var _origSalvarAgendamento = typeof salvarAgendamento !== 'undefined' ? salvarAg
 var _wppInstanciaId = null;
 
 function wppIniciar() {
-  var plano = window._adminPlano || 'agenda_solo';
-  var isIA = false;
-  // Mostrar/ocultar nav item conforme plano
-  // Mostrar sempre para ADM ver o painel (upgrade card para plano básico)
+  // Mostrar nav WhatsApp sempre
   document.getElementById('nav-whatsapp').style.display = 'flex';
   if(document.getElementById('nav-wpp-mob')) document.getElementById('nav-wpp-mob').style.display = 'block';
-  if(isIA) {
-    document.getElementById('btn-testar-bot').style.display = 'inline-flex';
-    document.getElementById('wpp-plano-info').textContent = 'WhatsApp automático — Bot ativo';
-    document.getElementById('wpp-conteudo-147').style.display = 'block';
-    document.getElementById('wpp-upgrade-card').style.display = 'none';
-        wppCarregarStatus();
-    wppCarregarConversas();
-    wppCarregarLogs();
-    wppCarregarStats();
-  } else {
-    document.getElementById('wpp-plano-info').textContent = 'WhatsApp manual disponível';
-    document.getElementById('wpp-upgrade-card').style.display = 'block';
-    document.getElementById('wpp-conteudo-147').style.display = 'none';
-  }
+
+  // Mostrar sempre o conteúdo completo — status da API decide se conectado ou não
+  document.getElementById('wpp-upgrade-card').style.display = 'none';
+  document.getElementById('wpp-conteudo-147').style.display = 'block';
+  document.getElementById('wpp-plano-info').textContent = 'Conecte o número do seu negócio';
+  document.getElementById('btn-testar-bot').style.display = 'none';
+
+  // Carregar status real da API
+  wppCarregarStatus();
+  wppCarregarConversas();
+  wppCarregarLogs();
+  wppCarregarStats();
 }
 
 async function wppCarregarStatus() {
