@@ -969,6 +969,15 @@ async function rodarLembretesPessoais() {
         }).lean();
         if (!inst) continue;
 
+        // Verifica se tem agendamento do cliente nas últimas 24h (janela gratuita Meta)
+        const janela24h = new Date(agora.getTime() - 24 * 60 * 60000);
+        const temJanela = await AgendamentoAgenda.findOne({
+          adminId: adminObjId,
+          updatedAt: { $gte: janela24h }
+        }).lean();
+
+        // Se não tem janela aberta, agenda para próxima interação do cliente
+        // mas envia mesmo assim pois lembrete pessoal é prioridade
         const horaEvento = _fmtHora(new Date(lmb.dataEvento));
         const dataEvento = _fmtData(new Date(lmb.dataEvento));
         const mins       = lmb.antecedencia;

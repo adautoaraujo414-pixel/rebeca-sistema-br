@@ -475,7 +475,7 @@ console.log('✅ Cron delivery trial ativo');
 const ModoDono = require('./services/agenda-modo-dono.service');
 cron.schedule('*/5 * * * *', () => ModoDono.rodarLembretes());
 cron.schedule('*/5 * * * *', () => ModoDono.rodarLembretesPessoais());
-cron.schedule('0 8 * * *', () => ModoDono.rodarRelatorioDiario());
+// cron.schedule('0 8 * * *', () => ModoDono.rodarRelatorioDiario()); // desativado — dono pede quando quiser
 console.log('✅ Cron lembretes e relatório diário Rebeca ativos');
 
 
