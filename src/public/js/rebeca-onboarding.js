@@ -578,6 +578,14 @@ window.RebecaOnboarding = (() => {
         _close();
         if (window.mostrarTela) window.mostrarTela('agenda');
       },
+      irParaCardapio: () => {
+        _close();
+        if (window.mostrarTela) window.mostrarTela('cardapio');
+        else {
+          const btn = document.querySelector('[onclick*="cardapio"], [onclick*="Cardapio"]');
+          if (btn) btn.click();
+        }
+      },
     };
     (actions[name] || _close)();
     _marcarConcluido();
