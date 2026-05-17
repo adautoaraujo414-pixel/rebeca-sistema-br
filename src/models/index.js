@@ -56,9 +56,6 @@ const CorridaSchema = new mongoose.Schema({
         avaliacaoEnviada: { type: Boolean, default: false }
     }
 }, { timestamps: true });
-CorridaSchema.index({ adminId: 1, createdAt: -1 });
-CorridaSchema.index({ adminId: 1, status: 1 });
-CorridaSchema.index({ adminId: 1, status: 1, createdAt: -1 });
 
 const ConfigSchema = new mongoose.Schema({
     chave: { type: String, unique: true }, valor: mongoose.Schema.Types.Mixed
@@ -543,7 +540,6 @@ const ZonaPrecoSchema = new mongoose.Schema({
     descricao: { type: String, default: '' },
     criadoEm: { type: Date, default: Date.now }
 }, { timestamps: true });
-ZonaPrecoSchema.index({ adminId: 1, ativo: 1 });
 
 const ZonaPreco = mongoose.model('ZonaPreco', ZonaPrecoSchema);
 module.exports.ZonaPreco = ZonaPreco;
@@ -560,7 +556,6 @@ const PontoReferenciaSchema = new mongoose.Schema({
     longitude: { type: Number },
     ativo: { type: Boolean, default: true }
 }, { timestamps: true });
-PontoReferenciaSchema.index({ adminId: 1, ativo: 1 });
 
 const PontoReferencia = mongoose.model('PontoReferencia', PontoReferenciaSchema);
 module.exports.PontoReferencia = PontoReferencia;

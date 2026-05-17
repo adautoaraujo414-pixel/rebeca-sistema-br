@@ -328,7 +328,6 @@ const MensalidadeClienteDeliverySchema = new mongoose.Schema({
     ultimoPagamento: { type: Date },
     proximoVencimento: { type: Date },
 }, { timestamps: true });
-MensalidadeClienteDeliverySchema.index({ adminId: 1, telefone: 1 });
 const MensalidadeClienteDelivery = mongoose.models.MensalidadeClienteDelivery || mongoose.model('MensalidadeClienteDelivery', MensalidadeClienteDeliverySchema);
 module.exports.MensalidadeClienteDelivery = MensalidadeClienteDelivery;
 
@@ -355,8 +354,6 @@ const CardapioSemanalSchema = new mongoose.Schema({
     ativo: { type: Boolean, default: true },
     imagemGerada: { type: String, default: '' }, // URL ou base64 da imagem gerada
 }, { timestamps: true });
-
-CardapioSemanalSchema.index({ adminId: 1, diaSemana: 1 });
 const CardapioSemanal = mongoose.models.CardapioSemanal || mongoose.model('CardapioSemanal', CardapioSemanalSchema);
 module.exports.CardapioSemanal = CardapioSemanal;
 
