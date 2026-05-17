@@ -241,6 +241,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 <div class="lista" id="lista"><div class="vazio">🍳 Nenhum pedido</div></div>
 
+<script src="/js/rebeca-realtime.js"></script>
 <script>
 var TK = new URLSearchParams(location.search).get('token') || localStorage.getItem('cozinha_token');
 var B = '/api/delivery';
@@ -255,7 +256,7 @@ if(!TK){
   localStorage.setItem('cozinha_token', TK);
   carregar();
   // Polling saudável com cleanup
-  window._ivCozinha = setInterval(carregar, 12000);
+  RebecaRealtime.register("cozinha-pedidos", carregar, 12000, "alta", false);
   window._ivCronos  = setInterval(atualizarCronometros, 1000);
 
   // Pausar quando aba não está visível
@@ -264,7 +265,7 @@ if(!TK){
       clearInterval(window._ivCozinha);
     } else {
       carregar();
-      window._ivCozinha = setInterval(carregar, 12000);
+      RebecaRealtime.register("cozinha-pedidos", carregar, 12000, "alta", false);
     }
   });
 }

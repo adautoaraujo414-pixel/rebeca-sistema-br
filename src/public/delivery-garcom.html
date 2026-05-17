@@ -511,6 +511,7 @@ header{background:linear-gradient(135deg,#f97316 0%,#ea580c 100%);padding:0 20px
 
 <div class="toast" id="toast"></div>
 
+<script src="/js/rebeca-realtime.js"></script>
 <script>
 const API = '/api/delivery';
 let token = '';
@@ -688,10 +689,10 @@ async function fazerLogin() {
     document.getElementById('app').style.display = 'flex';
     await carregarCardapio();
     await carregarMesas();
-    window._ivMesasGarcom = setInterval(carregarMesas, 15000);
+    window._ivMesasGarcom = RebecaRealtime.register("garcom-mesas", carregarMesas, 15000, "alta", false);
     document.addEventListener('visibilitychange', function() {
       if (document.hidden) { clearInterval(window._ivMesasGarcom); }
-      else { carregarMesas(); window._ivMesasGarcom = setInterval(carregarMesas, 15000); }
+      else { carregarMesas(); window._ivMesasGarcom = }
     });
   } catch(e) { err.textContent = 'Erro de conexão'; }
 }
