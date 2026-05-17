@@ -151,7 +151,7 @@ input,select,textarea{font-family:'Inter',sans-serif}
   table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch}
   [style*="grid-template-columns:repeat(4"]{grid-template-columns:1fr 1fr!important}
   [style*="grid-template-columns:repeat(3"]{grid-template-columns:1fr!important}
-  .page-grid-4{grid-template-columns:1fr 1fr!important}
+  .page-grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
   .page-grid-3{grid-template-columns:1fr!important}
   .page-grid-2{grid-template-columns:1fr!important}
 }
@@ -455,6 +455,20 @@ input,select,textarea{font-family:'Inter',sans-serif}
 #sw-update-banner button.reload-btn{background:#f97316;color:#fff;border:none;border-radius:6px;padding:5px 14px;font-size:.82em;font-weight:700;cursor:pointer;margin-left:8px}
 #sw-update-banner .close-banner{position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;color:#fff;font-size:1.1em;cursor:pointer;opacity:.7}
 #sw-update-banner .close-banner:hover{opacity:1}
+
+/* ── TELA WHATSAPP — layout limpo ──────────────────────────────────────── */
+#tela-whatsapp { display:flex; flex-direction:column; gap:0; }
+#wpp-conteudo-147 { display:none; flex-direction:column; gap:16px; }
+.page-grid-4 { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:20px; }
+@media(max-width:900px){ .page-grid-4{ grid-template-columns:repeat(2,1fr); } }
+@media(max-width:520px){ .page-grid-4{ grid-template-columns:1fr; } }
+
+/* ── TELA WHATSAPP — layout limpo ──────────────────────────────────────── */
+#tela-whatsapp { display:flex; flex-direction:column; gap:0; }
+#wpp-conteudo-147 { display:none; flex-direction:column; gap:16px; }
+.page-grid-4 { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:20px; }
+@media(max-width:900px){ .page-grid-4{ grid-template-columns:repeat(2,1fr); } }
+@media(max-width:520px){ .page-grid-4{ grid-template-columns:1fr; } }
 </style>
 <link rel="manifest" href="/agenda-adm-manifest.json">
 <script src="/js/agenda-notif-helper.js">
@@ -2325,7 +2339,7 @@ function wppIniciar() {
 
   // Mostrar sempre o conteúdo completo — status da API decide se conectado ou não
   document.getElementById('wpp-upgrade-card').style.display = 'none';
-  document.getElementById('wpp-conteudo-147').style.display = 'block';
+  document.getElementById('wpp-conteudo-147').style.display = 'flex';
   document.getElementById('wpp-plano-info').textContent = 'Conecte o número do seu negócio';
   document.getElementById('btn-testar-bot').style.display = 'none';
 
@@ -3296,7 +3310,7 @@ carregarFinanceiro = async function() {
     </div>
 
     <!-- PLANO COM WHATSAPP: conteúdo completo -->
-    <div id="wpp-conteudo-147" style="display:none">
+    <div id="wpp-conteudo-147" style="display:none;flex-direction:column;gap:16px">
 
       <!-- CONEXÃO NOVA — Meta API Oficial sem QR code -->
       <div style="background:var(--branco);border:1px solid var(--borda);border-radius:var(--radius);padding:20px;margin-bottom:16px;box-shadow:var(--shadow)">
@@ -3353,7 +3367,7 @@ carregarFinanceiro = async function() {
         </div>
 
         <!-- COMO FUNCIONA -->
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-top:4px">
           <div style="background:#f8fafc;border-radius:8px;padding:12px;text-align:center">
             <div style="font-size:1.3em;margin-bottom:4px">1️⃣</div>
             <div style="font-size:.72em;font-weight:700;margin-bottom:2px">Salve o contato</div>
@@ -3395,7 +3409,7 @@ carregarFinanceiro = async function() {
       </div>
 
       <!-- CONFIGURAÇÕES BOT -->
-      <div style="background:var(--branco);border:1px solid var(--borda);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow)">
+      <div style="background:var(--branco);border:1px solid var(--borda);border-radius:var(--radius);padding:20px;margin-bottom:0;box-shadow:var(--shadow)">
         <div style="font-weight:700;font-size:.9em;margin-bottom:14px">⚙️ Configurações do bot</div>
         <div style="display:grid;gap:14px">
           <div style="display:flex;align-items:center;justify-content:space-between">
