@@ -1942,7 +1942,7 @@ function mostrarAlert(id, tipo, icone, msg, persistir) {
   div.className = 'alert-dismissible alert-' + tipo;
   div.id = 'alert-' + id;
   div.innerHTML = '<span>' + icone + '</span><span>' + msg + '</span>' +
-    '<button class="alert-close" onclick="fecharAlert('' + id + '')">✕</button>';
+    '<button class="alert-close" onclick="fecharAlert(\'' + id + '\')">✕</button>';
   area.appendChild(div);
 }
 
