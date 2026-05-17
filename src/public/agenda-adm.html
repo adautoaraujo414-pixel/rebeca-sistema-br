@@ -2200,20 +2200,20 @@ function wppIniciar() {
   var plano = window._adminPlano || 'espaco_digital';
   var isIA = plano === 'espaco_digital_ia';
   // Mostrar/ocultar nav item conforme plano
-  // Mostrar sempre para ADM ver o painel (upgrade card para R$97)
+  // Mostrar sempre para ADM ver o painel (upgrade card para plano básico)
   document.getElementById('nav-whatsapp').style.display = 'flex';
   if(document.getElementById('nav-wpp-mob')) document.getElementById('nav-wpp-mob').style.display = 'block';
   if(isIA) {
     document.getElementById('btn-testar-bot').style.display = 'inline-flex';
-    document.getElementById('wpp-plano-info').textContent = 'Plano R$147 — Bot ativo';
+    document.getElementById('wpp-plano-info').textContent = 'WhatsApp automático — Bot ativo';
     document.getElementById('wpp-conteudo-147').style.display = 'block';
     document.getElementById('wpp-upgrade-card').style.display = 'none';
-    wppCarregarStatus();
+        wppCarregarStatus();
     wppCarregarConversas();
     wppCarregarLogs();
     wppCarregarStats();
   } else {
-    document.getElementById('wpp-plano-info').textContent = 'Plano R$97 — WhatsApp manual disponível';
+    document.getElementById('wpp-plano-info').textContent = 'WhatsApp manual disponível';
     document.getElementById('wpp-upgrade-card').style.display = 'block';
     document.getElementById('wpp-conteudo-147').style.display = 'none';
   }
@@ -2229,7 +2229,7 @@ async function wppCarregarStatus() {
     if(d.status === 'plano_insuficiente') {
       if(document.getElementById('wpp-upgrade-card')) document.getElementById('wpp-upgrade-card').style.display='block';
       if(document.getElementById('wpp-conteudo-147')) document.getElementById('wpp-conteudo-147').style.display='none';
-      if(document.getElementById('wpp-plano-info')) document.getElementById('wpp-plano-info').textContent = 'Plano R$97 — WhatsApp manual disponivel';
+      if(document.getElementById('wpp-plano-info')) document.getElementById('wpp-plano-info').textContent = 'WhatsApp conectado';
       return;
     }
     var dot = document.getElementById('wpp-status-dot');
@@ -3048,7 +3048,7 @@ carregarFinanceiro = async function() {
           <div style="font-size:1.2em">💬</div>
           <div>
             <div style="font-weight:700;font-size:.88em">WhatsApp automático</div>
-            <div style="font-size:.75em;color:#6b7280" id="wpp-plano-desc">Disponível no plano R$149</div>
+            <div style="font-size:.75em;color:#6b7280" id="wpp-plano-desc">Disponível no combo Agenda + Delivery</div>
           </div>
           <span id="wpp-plano-badge" style="margin-left:auto;font-size:.68em;padding:3px 8px;border-radius:20px;font-weight:700;background:#fee2e2;color:#dc2626">Plano R$149</span>
         </div>
@@ -3165,11 +3165,11 @@ carregarFinanceiro = async function() {
       </div>
     </div>
 
-    <!-- PLANO R$97: upgrade card -->
+    <!-- PLANO BÁSICO: upgrade card -->
     <div id="wpp-upgrade-card" style="display:none;background:linear-gradient(135deg,#fff7ed,#ffedd5);border:1.5px solid rgba(249,115,22,.3);border-radius:var(--radius);padding:24px;margin-bottom:20px;text-align:center">
       <div style="font-size:1.4em;margin-bottom:10px">💬</div>
       <div style="font-weight:800;font-size:1em;margin-bottom:6px">Atendimento automático pelo WhatsApp</div>
-      <div style="font-size:.83em;color:var(--texto2);margin-bottom:16px;max-width:400px;margin-left:auto;margin-right:auto">No plano R$147, a Rebeca Agenda atende sozinha pelo WhatsApp — marca horários, consulta serviços, responde preços e notifica você de tudo.</div>
+      <div style="font-size:.83em;color:var(--texto2);margin-bottom:16px;max-width:400px;margin-left:auto;margin-right:auto">No combo Agenda + Delivery, a Rebeca Agenda atende sozinha pelo WhatsApp — marca horários, consulta serviços, responde preços e notifica você de tudo.</div>
       <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
         <div style="background:var(--branco);border-radius:8px;padding:10px 16px;font-size:.8em;font-weight:700">✅ Bot que agenda</div>
         <div style="background:var(--branco);border-radius:8px;padding:10px 16px;font-size:.8em;font-weight:700">✅ Dados reais</div>
@@ -3177,7 +3177,7 @@ carregarFinanceiro = async function() {
       </div>
     </div>
 
-    <!-- PLANO R$147: conteúdo completo -->
+    <!-- PLANO COM WHATSAPP: conteúdo completo -->
     <div id="wpp-conteudo-147" style="display:none">
 
       <!-- CONEXÃO NOVA — Meta API Oficial sem QR code -->
