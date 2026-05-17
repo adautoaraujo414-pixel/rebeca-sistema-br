@@ -509,16 +509,16 @@ A semana tá zerada por enquanto. Bora divulgar pra encher a agenda! 🚀`);
         if (!porDia[d]) porDia[d] = [];
         porDia[d].push(`  • ${_fmtHora(new Date(a.dataHora))} — ${a.nomeCliente}`);
       });
-      const lista = Object.entries(porDia).map(([d,v]) => `📅 *${d}*
-${v.join('
-')}`).join('
+      const lista = Object.entries(porDia).map(([d,v]) => '📅 *' + d + '*
+' + v.join('
+')).join('
 
 ');
-      await responder(`Olha a semana aí, ${_chefe()}! 🗓️
+      await responder('Olha a semana aí, ' + _chefe() + '! 🗓️
 
-${lista}
+' + lista + '
 
-${ags.length} agendamento(s) no total. Tá cheio! 💪`);
+' + ags.length + ' agendamento(s) no total. Tá cheio! 💪');
     }
     return true;
   }
