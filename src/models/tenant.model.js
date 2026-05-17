@@ -129,7 +129,7 @@ TenantSchema.methods.dentroDoLimite = function(tipo) {
   const mapa = {
     pedidos:      ['uso.pedidosMes',      'limites.pedidosMes'],
     agendamentos: ['uso.agendamentosMes', 'limites.agendamentosMes'],
-    ia:           ['uso.iaCalls',         'limites.iaCallsMes'],
+    corrida:      ['uso.corridasMes',      'limites.corridasMes'],
   };
   const [usoKey, limKey] = mapa[tipo] || [];
   if (!usoKey) return true;
