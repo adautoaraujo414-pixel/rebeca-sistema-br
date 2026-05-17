@@ -216,6 +216,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 
 </div><!-- fim painel -->
 
+<script src="/js/rebeca-realtime.js"></script>
 <script>
 var TOKEN_PROF = localStorage.getItem('prof_token') || '';
 var DADOS = null;
@@ -392,7 +393,7 @@ function renderizarPainel() {
 
   // Auto-refresh a cada 3 min
   if (timerAvisos) clearInterval(timerAvisos);
-  timerAvisos = setInterval(carregarDados, 180000);
+  timerAvisos = RebecaRealtime.register("agenda-prof-dados", carregarDados, 180000, "minima", false);
 }
 
 function renderizarLista(elId, lista, mostrarAviso) {

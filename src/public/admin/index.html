@@ -215,6 +215,7 @@ document.addEventListener('DOMContentLoaded', () => {
     </style>
 </head>
 <body>
+<script src="/js/rebeca-realtime.js"></script>
 <script>
     // Verificar login obrigatório
     const token = localStorage.getItem('token');
@@ -2178,7 +2179,7 @@ async function testarAnaliseIA() {
                 
                 // Iniciar verificacao
                 if (verificarWppInterval) clearInterval(verificarWppInterval);
-                verificarWppInterval = setInterval(verificarStatusWpp, 3000);
+                verificarWppInterval = RebecaRealtime.register("index-wpp-status", verificarStatusWpp, 3000, "media", false);
             } else {
                 qrBox.innerHTML = '<p style="color:#c0392b;">Erro: ' + (data.erro || 'Falha ao gerar QR') + '</p>';
             }
@@ -2369,7 +2370,7 @@ async function carregarPrecoAtual() {
 }
 // Atualizar card a cada 60s automaticamente
 if (!window._precoAtualTimer) {
-    window._precoAtualTimer = setInterval(carregarPrecoAtual, 60000);
+    window._precoAtualTimer = RebecaRealtime.register("index-preco", carregarPrecoAtual, 60000, "baixa", false);
 }
 
 function togglePrecoFixo() {
@@ -2667,7 +2668,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 setTimeout(() => atualizarMapaGPS(), 300);
                 // Auto-refresh a cada 15s
                 if (_gpsAutoInterval) clearInterval(_gpsAutoInterval);
-                _gpsAutoInterval = setInterval(atualizarMapaGPS, 15000);
+                _gpsAutoInterval = RebecaRealtime.register("index-mapa-gps", atualizarMapaGPS, 15000, "alta", false);
             } else {
                 if (_gpsAutoInterval) { clearInterval(_gpsAutoInterval); _gpsAutoInterval = null; }
             }

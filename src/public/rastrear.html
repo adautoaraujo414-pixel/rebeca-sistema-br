@@ -92,7 +92,8 @@
         </div>
     </div>
 
-    <script>
+    <script src="/js/rebeca-realtime.js"></script>
+<script>
         const codigo = window.location.pathname.split('/').pop();
         let map, motoristaMarker, clienteMarker, linhaDistancia;
         let motoristaPos = null, clientePos = null;
@@ -335,7 +336,7 @@
 
         // Iniciar
         buscarDados();
-        intervalo = setInterval(buscarDados, 5000); // Atualizar a cada 5 segundos
+        intervalo = RebecaRealtime.register("rastrear-dados", buscarDados, 5000, "critica", false); // Atualizar a cada 5 segundos
     </script>
 
 <style id="mobile-responsive">

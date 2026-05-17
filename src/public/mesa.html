@@ -677,7 +677,7 @@ function conectarSSECardapio() {
 // Polling a cada 2 minutos como fallback
 RebecaRealtime.register("mesa-cardapio", recarregarCardapio, 120000, "minima", false);
 
-setInterval(()=>{if(mesa)carregarConta();},15000);
+RebecaRealtime.register("mesa-conta", ()=>{if(mesa)carregarConta();}, 15000, "media", false);
 </script>
 
 <!-- Modal histórico individual da pessoa -->
