@@ -1,1 +1,575 @@
-✅ beca-estuda completocat
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Beca Estuda</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0f172a;--bg2:#1e293b;--bg3:#334155;--accent:#6366f1;--accent2:#818cf8;--green:#22c55e;--yellow:#f59e0b;--red:#ef4444;--txt1:#f1f5f9;--txt2:#94a3b8;--txt3:#475569;--radius:14px}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt1);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--bg3);border-radius:2px}
+.screen{display:none;min-height:100dvh;flex-direction:column}
+.screen.ativo{display:flex}
+.btn-p{width:100%;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);font-size:.95rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-p:hover{background:var(--accent2);transform:translateY(-1px)}
+.btn-p:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn-o{width:100%;padding:13px;background:transparent;color:var(--txt1);border:1.5px solid var(--bg3);border-radius:var(--radius);font-size:.9rem;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s}
+.btn-o:hover{border-color:var(--accent);color:var(--accent2)}
+.card{background:var(--bg2);border:1px solid rgba(255,255,255,.06);border-radius:16px;padding:20px}
+.input{width:100%;padding:13px 16px;background:var(--bg2);border:1.5px solid var(--bg3);border-radius:12px;color:var(--txt1);font-size:.9rem;outline:none;font-family:'Inter',sans-serif;transition:border-color .2s}
+.input:focus{border-color:var(--accent)}
+.input::placeholder{color:var(--txt3)}
+.nav-bar{position:fixed;bottom:0;left:0;right:0;background:rgba(15,23,42,.96);backdrop-filter:blur(16px);border-top:1px solid var(--bg3);padding:10px 0 20px;display:flex;justify-content:space-around;z-index:100}
+.nav-btn{background:none;border:none;color:var(--txt3);display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;font-size:.62rem;font-weight:600;font-family:'Inter',sans-serif;transition:color .2s;padding:4px 10px;min-width:52px}
+.nav-btn.ativo{color:var(--accent2)}
+.nav-btn .ic{font-size:20px}
+.header{padding:52px 24px 20px;background:linear-gradient(180deg,#1e1b4b 0%,var(--bg) 100%)}
+.back-btn{background:var(--bg2);border:1px solid var(--bg3);border-radius:10px;width:36px;height:36px;cursor:pointer;font-size:16px;color:var(--txt1);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:'Inter',sans-serif}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(6px);z-index:200;display:flex;align-items:flex-end;justify-content:center}
+.modal-box{background:var(--bg2);border:1px solid var(--bg3);border-radius:20px 20px 0 0;width:100%;max-width:500px;padding:24px;max-height:90vh;overflow-y:auto}
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--bg2);border:1px solid var(--bg3);border-radius:12px;padding:12px 20px;font-size:.85rem;opacity:0;transition:all .3s;z-index:500;white-space:nowrap;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.ok{border-color:rgba(34,197,94,.4);color:var(--green)}
+.toast.err{border-color:rgba(239,68,68,.4);color:var(--red)}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulseRec{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.7;transform:scale(1.04)}}
+.fu{animation:fadeUp .4s ease both}
+.nivel-bar{height:6px;background:var(--bg3);border-radius:3px;overflow:hidden;margin-top:6px}
+.nivel-fill{height:100%;border-radius:3px;background:var(--accent);transition:width .6s ease}
+</style>
+</head>
+<body>
+<div class="toast" id="toast"></div>
+
+<!-- LOGIN -->
+<div class="screen ativo" id="s-login" style="align-items:center;justify-content:center;padding:32px 24px;background:linear-gradient(135deg,#0f172a 0%,#1e1b4b 100%)">
+  <div style="width:100%;max-width:380px">
+    <div style="text-align:center;margin-bottom:36px">
+      <div style="width:64px;height:64px;background:var(--accent);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 14px">🎓</div>
+      <h1 style="font-size:1.8rem;font-weight:900;margin-bottom:6px">Beca Estuda</h1>
+      <p style="color:var(--txt2);font-size:.9rem">Plataforma universitaria com IA</p>
+    </div>
+    <div style="display:flex;background:var(--bg2);border-radius:12px;padding:4px;margin-bottom:20px">
+      <button onclick="loginTab('entrar')" id="tab-entrar" style="flex:1;padding:10px;border:none;border-radius:9px;font-family:'Inter',sans-serif;font-weight:600;font-size:.88rem;cursor:pointer;background:var(--accent);color:#fff;transition:all .2s">Entrar</button>
+      <button onclick="loginTab('criar')" id="tab-criar" style="flex:1;padding:10px;border:none;border-radius:9px;font-family:'Inter',sans-serif;font-weight:600;font-size:.88rem;cursor:pointer;background:transparent;color:var(--txt3);transition:all .2s">Criar conta</button>
+    </div>
+    <div id="form-entrar">
+      <div style="margin-bottom:12px"><input class="input" id="l-email" type="email" placeholder="Seu e-mail"></div>
+      <div style="margin-bottom:18px"><input class="input" id="l-senha" type="password" placeholder="Sua senha"></div>
+      <button class="btn-p" onclick="fazerLogin()">Entrar</button>
+      <button onclick="entrarSemLogin()" style="width:100%;margin-top:10px;background:none;border:none;color:var(--txt3);font-size:.82rem;cursor:pointer;font-family:'Inter',sans-serif;padding:8px">Continuar sem login</button>
+    </div>
+    <div id="form-criar" style="display:none">
+      <div style="margin-bottom:12px"><input class="input" id="c-nome" type="text" placeholder="Seu nome completo"></div>
+      <div style="margin-bottom:12px"><input class="input" id="c-email" type="email" placeholder="Seu e-mail"></div>
+      <div style="margin-bottom:12px"><input class="input" id="c-senha" type="password" placeholder="Senha (min. 6 caracteres)"></div>
+      <div style="margin-bottom:18px"><select class="input" id="c-curso" style="appearance:none"><option value="">Selecione seu curso...</option><option>Administracao</option><option>Direito</option><option>Engenharia Civil</option><option>Engenharia de Computacao</option><option>Medicina</option><option>Psicologia</option><option>Sistemas de Informacao</option><option>Calculo</option><option>Fisica</option><option>Outro</option></select></div>
+      <button class="btn-p" onclick="criarConta()">Criar conta gratis</button>
+      <button onclick="entrarSemLogin()" style="width:100%;margin-top:10px;background:none;border:none;color:var(--txt3);font-size:.82rem;cursor:pointer;font-family:'Inter',sans-serif;padding:8px">Continuar sem login</button>
+    </div>
+  </div>
+</div>
+
+<!-- ONBOARDING -->
+<div class="screen" id="s-onboard" style="align-items:center;justify-content:center;padding:32px 24px;background:linear-gradient(135deg,#0f172a 0%,#1e1b4b 100%)">
+  <div style="display:flex;gap:8px;margin-bottom:48px" id="ob-dots"></div>
+  <div class="fu" style="text-align:center;max-width:360px" id="ob-content"></div>
+</div>
+
+<!-- HOME -->
+<div class="screen" id="s-home" style="padding:0 0 90px">
+  <div class="header">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+      <p style="color:var(--txt2);font-size:.9rem" id="home-saudacao">Ola</p>
+      <button onclick="ir('s-perfil')" style="background:var(--bg2);border:1px solid var(--bg3);border-radius:50%;width:36px;height:36px;cursor:pointer;font-size:16px">👤</button>
+    </div>
+    <h1 style="font-size:1.6rem;font-weight:800;margin-bottom:2px">Beca Estuda</h1>
+    <p style="color:var(--txt2);font-size:.82rem" id="home-curso">O que vamos estudar hoje?</p>
+  </div>
+  <div style="padding:0 24px">
+    <button class="btn-p" onclick="ir('s-gravacao')" style="margin-bottom:16px;padding:18px;font-size:1.05rem;border-radius:18px">🎙️ Comecar a Gravar Aula</button>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+      <button onclick="ir('s-gravacao')" class="card" style="cursor:pointer;text-align:left;border:none;padding:16px"><div style="width:40px;height:40px;border-radius:10px;background:#6366f122;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:8px">🎙️</div><div style="font-weight:700;font-size:.88rem;margin-bottom:1px">Gravar Aula</div><div style="color:var(--txt3);font-size:.72rem">Transcrever com IA</div></button>
+      <button onclick="ir('s-cadernos')" class="card" style="cursor:pointer;text-align:left;border:none;padding:16px"><div style="width:40px;height:40px;border-radius:10px;background:#0ea5e922;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:8px">📚</div><div style="font-weight:700;font-size:.88rem;margin-bottom:1px">Cadernos</div><div style="color:var(--txt3);font-size:.72rem">Minhas anotacoes</div></button>
+      <button onclick="ir('s-treinar')" class="card" style="cursor:pointer;text-align:left;border:none;padding:16px"><div style="width:40px;height:40px;border-radius:10px;background:#22c55e22;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:8px">🧠</div><div style="font-weight:700;font-size:.88rem;margin-bottom:1px">Treinar</div><div style="color:var(--txt3);font-size:.72rem">Exercicios e flashcards</div></button>
+      <button onclick="ir('s-simulado')" class="card" style="cursor:pointer;text-align:left;border:none;padding:16px"><div style="width:40px;height:40px;border-radius:10px;background:#f59e0b22;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:8px">📝</div><div style="font-weight:700;font-size:.88rem;margin-bottom:1px">Simulado</div><div style="color:var(--txt3);font-size:.72rem">Testar conhecimento</div></button>
+      <button onclick="ir('s-flashcards')" class="card" style="cursor:pointer;text-align:left;border:none;padding:16px"><div style="width:40px;height:40px;border-radius:10px;background:#a855f722;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:8px">🃏</div><div style="font-weight:700;font-size:.88rem;margin-bottom:1px">Flashcards</div><div style="color:var(--txt3);font-size:.72rem">Memorizacao rapida</div></button>
+      <button onclick="ir('s-calendario')" class="card" style="cursor:pointer;text-align:left;border:none;padding:16px"><div style="width:40px;height:40px;border-radius:10px;background:#ec489922;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:8px">📅</div><div style="font-weight:700;font-size:.88rem;margin-bottom:1px">Calendario</div><div style="color:var(--txt3);font-size:.72rem">Provas e tarefas</div></button>
+    </div>
+    <div style="background:linear-gradient(135deg,#1e1b4b,#1e293b);border:1px solid #4338ca44;border-radius:16px;padding:18px">
+      <div style="font-size:.68rem;color:var(--accent2);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">💡 Dica do dia</div>
+      <p style="font-size:.85rem;color:var(--txt2);line-height:1.6">Revisar em ate 24h aumenta em <strong style="color:var(--txt1)">80%</strong> a retencao do conteudo.</p>
+    </div>
+  </div>
+  <nav class="nav-bar">
+    <button class="nav-btn ativo" onclick="irNav('s-home',this)"><span class="ic">🏠</span>Home</button>
+    <button class="nav-btn" onclick="irNav('s-cadernos',this)"><span class="ic">📚</span>Cadernos</button>
+    <button class="nav-btn" onclick="irNav('s-treinar',this)"><span class="ic">🧠</span>Treinar</button>
+    <button class="nav-btn" onclick="irNav('s-calendario',this)"><span class="ic">📅</span>Agenda</button>
+    <button class="nav-btn" onclick="irNav('s-perfil',this)"><span class="ic">👤</span>Perfil</button>
+  </nav>
+</div>
+
+<!-- LOGIN -->
+<div class="screen ativo" id="s-login" style="align-items:center;justify-content:center;padding:32px 24px;background:linear-gradient(135deg,#0f172a 0%,#1e1b4b 100%)">
+  <div style="width:100%;max-width:380px">
+    <div style="text-align:center;margin-bottom:36px">
+      <div style="width:64px;height:64px;background:var(--accent);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 14px">🎓</div>
+      <h1 style="font-size:1.8rem;font-weight:900;margin-bottom:6px">Beca Estuda</h1>
+      <p style="color:var(--txt2);font-size:.9rem">Plataforma universitaria com IA</p>
+    </div>
+    <div style="display:flex;background:var(--bg2);border-radius:12px;padding:4px;margin-bottom:20px">
+      <button onclick="loginTab('entrar')" id="tab-entrar" style="flex:1;padding:10px;border:none;border-radius:9px;font-family:'Inter',sans-serif;font-weight:600;font-size:.88rem;cursor:pointer;background:var(--accent);color:#fff;transition:all .2s">Entrar</button>
+      <button onclick="loginTab('criar')" id="tab-criar" style="flex:1;padding:10px;border:none;border-radius:9px;font-family:'Inter',sans-serif;font-weight:600;font-size:.88rem;cursor:pointer;background:transparent;color:var(--txt3);transition:all .2s">Criar conta</button>
+    </div>
+    <div id="form-entrar">
+      <div style="margin-bottom:12px"><input class="input" id="l-email" type="email" placeholder="Seu e-mail"></div>
+      <div style="margin-bottom:18px"><input class="input" id="l-senha" type="password" placeholder="Sua senha"></div>
+      <button class="btn-p" onclick="fazerLogin()">Entrar</button>
+      <button onclick="entrarSemLogin()" style="width:100%;margin-top:10px;background:none;border:none;color:var(--txt3);font-size:.82rem;cursor:pointer;font-family:'Inter',sans-serif;padding:8px">Continuar sem login</button>
+    </div>
+    <div id="form-criar" style="display:none">
+      <div style="margin-bottom:12px"><input class="input" id="c-nome" type="text" placeholder="Seu nome completo"></div>
+      <div style="margin-bottom:12px"><input class="input" id="c-email" type="email" placeholder="Seu e-mail"></div>
+      <div style="margin-bottom:12px"><input class="input" id="c-senha" type="password" placeholder="Senha (min. 6 caracteres)"></div>
+      <div style="margin-bottom:18px"><select class="input" id="c-curso" style="appearance:none"><option value="">Selecione seu curso...</option><option>Administracao</option><option>Direito</option><option>Engenharia Civil</option><option>Engenharia de Computacao</option><option>Medicina</option><option>Psicologia</option><option>Sistemas de Informacao</option><option>Calculo</option><option>Fisica</option><option>Outro</option></select></div>
+      <button class="btn-p" onclick="criarConta()">Criar conta gratis</button>
+      <button onclick="entrarSemLogin()" style="width:100%;margin-top:10px;background:none;border:none;color:var(--txt3);font-size:.82rem;cursor:pointer;font-family:'Inter',sans-serif;padding:8px">Continuar sem login</button>
+    </div>
+  </div>
+</div>
+
+<!-- ONBOARDING -->
+<div class="screen" id="s-onboard" style="align-items:center;justify-content:center;padding:32px 24px;background:linear-gradient(135deg,#0f172a 0%,#1e1b4b 100%)">
+  <div style="display:flex;gap:8px;margin-bottom:48px" id="ob-dots"></div>
+  <div class="fu" style="text-align:center;max-width:360px" id="ob-content"></div>
+</div>
+
+<!-- HOME -->
+<div class="screen" id="s-home" style="padding:0 0 90px">
+  <div class="header">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+      <p style="color:var(--txt2);font-size:.9rem" id="home-saudacao">Ola</p>
+      <button onclick="ir('s-perfil')" style="background:var(--bg2);border:1px solid var(--bg3);border-radius:50%;width:36px;height:36px;cursor:pointer;font-size:16px">👤</button>
+    </div>
+    <h1 style="font-size:1.6rem;font-weight:800;margin-bottom:2px">Beca Estuda</h1>
+    <p style="color:var(--txt2);font-size:.82rem" id="home-curso">O que vamos estudar hoje?</p>
+  </div>
+  <div style="padding:0 24px">
+    <button class="btn-p" onclick="ir('s-gravacao')" style="margin-bottom:16px;padding:18px;font-size:1.05rem;border-radius:18px">🎙️ Comecar a Gravar Aula</button>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+      <button onclick="ir('s-gravacao')" class="card" style="cursor:pointer;text-align:left;border:none;padding:16px"><div style="width:40px;height:40px;border-radius:10px;background:#6366f122;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:8px">🎙️</div><div style="font-weight:700;font-size:.88rem;margin-bottom:1px">Gravar Aula</div><div style="color:var(--txt3);font-size:.72rem">Transcrever com IA</div></button>
+      <button onclick="ir('s-cadernos')" class="card" style="cursor:pointer;text-align:left;border:none;padding:16px"><div style="width:40px;height:40px;border-radius:10px;background:#0ea5e922;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:8px">📚</div><div style="font-weight:700;font-size:.88rem;margin-bottom:1px">Cadernos</div><div style="color:var(--txt3);font-size:.72rem">Minhas anotacoes</div></button>
+      <button onclick="ir('s-treinar')" class="card" style="cursor:pointer;text-align:left;border:none;padding:16px"><div style="width:40px;height:40px;border-radius:10px;background:#22c55e22;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:8px">🧠</div><div style="font-weight:700;font-size:.88rem;margin-bottom:1px">Treinar</div><div style="color:var(--txt3);font-size:.72rem">Exercicios e flashcards</div></button>
+      <button onclick="ir('s-simulado')" class="card" style="cursor:pointer;text-align:left;border:none;padding:16px"><div style="width:40px;height:40px;border-radius:10px;background:#f59e0b22;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:8px">📝</div><div style="font-weight:700;font-size:.88rem;margin-bottom:1px">Simulado</div><div style="color:var(--txt3);font-size:.72rem">Testar conhecimento</div></button>
+      <button onclick="ir('s-flashcards')" class="card" style="cursor:pointer;text-align:left;border:none;padding:16px"><div style="width:40px;height:40px;border-radius:10px;background:#a855f722;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:8px">🃏</div><div style="font-weight:700;font-size:.88rem;margin-bottom:1px">Flashcards</div><div style="color:var(--txt3);font-size:.72rem">Memorizacao rapida</div></button>
+      <button onclick="ir('s-calendario')" class="card" style="cursor:pointer;text-align:left;border:none;padding:16px"><div style="width:40px;height:40px;border-radius:10px;background:#ec489922;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:8px">📅</div><div style="font-weight:700;font-size:.88rem;margin-bottom:1px">Calendario</div><div style="color:var(--txt3);font-size:.72rem">Provas e tarefas</div></button>
+    </div>
+    <div style="background:linear-gradient(135deg,#1e1b4b,#1e293b);border:1px solid #4338ca44;border-radius:16px;padding:18px">
+      <div style="font-size:.68rem;color:var(--accent2);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">💡 Dica do dia</div>
+      <p style="font-size:.85rem;color:var(--txt2);line-height:1.6">Revisar em ate 24h aumenta em <strong style="color:var(--txt1)">80%</strong> a retencao do conteudo.</p>
+    </div>
+  </div>
+  <nav class="nav-bar">
+    <button class="nav-btn ativo" onclick="irNav('s-home',this)"><span class="ic">🏠</span>Home</button>
+    <button class="nav-btn" onclick="irNav('s-cadernos',this)"><span class="ic">📚</span>Cadernos</button>
+    <button class="nav-btn" onclick="irNav('s-treinar',this)"><span class="ic">🧠</span>Treinar</button>
+    <button class="nav-btn" onclick="irNav('s-calendario',this)"><span class="ic">📅</span>Agenda</button>
+    <button class="nav-btn" onclick="irNav('s-perfil',this)"><span class="ic">👤</span>Perfil</button>
+  </nav>
+</div>
+
+<!-- GRAVACAO -->
+<div class="screen" id="s-gravacao" style="padding:0 0 40px">
+  <div class="header" style="display:flex;align-items:center;gap:12px">
+    <button class="back-btn" onclick="ir('s-home')">←</button>
+    <div><h1 style="font-size:1.1rem;font-weight:800">Gravar Aula</h1><p style="color:var(--txt2);font-size:.78rem">IA transcreve e resume automaticamente</p></div>
+  </div>
+  <div style="padding:0 24px" id="grav-area">
+    <div style="text-align:center;padding:32px 0">
+      <div id="grav-circ" style="width:150px;height:150px;border-radius:50%;margin:0 auto 24px;background:var(--bg2);border:3px solid var(--bg3);display:flex;align-items:center;justify-content:center;font-size:52px;transition:all .3s">🎙️</div>
+      <div id="grav-tempo" style="font-size:2.8rem;font-weight:800;font-variant-numeric:tabular-nums;margin-bottom:6px">00:00</div>
+      <p id="grav-status" style="color:var(--txt3);font-size:.82rem;margin-bottom:24px">Pronto para gravar</p>
+      <div id="grav-erro" style="display:none;background:#ef444422;border:1px solid #ef4444;border-radius:12px;padding:12px;margin-bottom:14px;color:#ef4444;font-size:.82rem"></div>
+      <div style="margin-bottom:18px"><select class="input" id="grav-materia" style="appearance:none"><option value="">Detectar automaticamente</option><option>Calculo</option><option>Fisica</option><option>Quimica</option><option>Programacao</option><option>Direito</option><option>Medicina</option><option>Outra</option></select></div>
+      <div id="grav-btns" style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap"></div>
+    </div>
+  </div>
+  <div id="grav-result" style="padding:0 24px;display:none"></div>
+</div>
+
+<!-- CADERNOS -->
+<div class="screen" id="s-cadernos" style="padding:0 0 90px">
+  <div class="header">
+    <h1 style="font-size:1.4rem;font-weight:800;margin-bottom:4px">📚 Cadernos</h1>
+    <p style="color:var(--txt2);font-size:.82rem;margin-bottom:14px">Suas aulas organizadas</p>
+    <input class="input" id="busca-cad" oninput="filtrarCad()" placeholder="🔍 Buscar materia...">
+  </div>
+  <div style="padding:0 24px">
+    <button class="btn-p" style="margin-bottom:16px" onclick="abrirNovoCad()">+ Novo Caderno</button>
+    <div id="cad-lista" style="display:flex;flex-direction:column;gap:10px"></div>
+  </div>
+  <nav class="nav-bar">
+    <button class="nav-btn" onclick="irNav('s-home',this)"><span class="ic">🏠</span>Home</button>
+    <button class="nav-btn ativo" onclick="irNav('s-cadernos',this)"><span class="ic">📚</span>Cadernos</button>
+    <button class="nav-btn" onclick="irNav('s-treinar',this)"><span class="ic">🧠</span>Treinar</button>
+    <button class="nav-btn" onclick="irNav('s-calendario',this)"><span class="ic">📅</span>Agenda</button>
+    <button class="nav-btn" onclick="irNav('s-perfil',this)"><span class="ic">👤</span>Perfil</button>
+  </nav>
+</div>
+
+<!-- TREINAR -->
+<div class="screen" id="s-treinar" style="padding:0 0 40px">
+  <div class="header" style="display:flex;align-items:center;gap:12px">
+    <button class="back-btn" onclick="ir('s-home')">←</button>
+    <div><h1 style="font-size:1.1rem;font-weight:800">Treinar</h1><p id="tr-sub" style="color:var(--txt2);font-size:.78rem">Exercicios com IA</p></div>
+  </div>
+  <div style="padding:0 24px" id="tr-area"></div>
+</div>
+
+<!-- SIMULADO -->
+<div class="screen" id="s-simulado"><div id="sim-area" style="min-height:100dvh"></div></div>
+
+<!-- FLASHCARDS -->
+<div class="screen" id="s-flashcards" style="padding:0 0 40px">
+  <div class="header" style="display:flex;align-items:center;gap:12px">
+    <button class="back-btn" onclick="ir('s-home')">←</button>
+    <div><h1 style="font-size:1.1rem;font-weight:800">Flashcards</h1><p style="color:var(--txt2);font-size:.78rem">Memorizacao rapida</p></div>
+  </div>
+  <div style="padding:0 24px" id="fc-area"></div>
+</div>
+
+<!-- CALENDARIO -->
+<div class="screen" id="s-calendario" style="padding:0 0 90px">
+  <div class="header">
+    <h1 style="font-size:1.4rem;font-weight:800;margin-bottom:4px">📅 Calendario Academico</h1>
+    <p style="color:var(--txt2);font-size:.82rem">Provas, tarefas e compromissos</p>
+  </div>
+  <div style="padding:0 24px">
+    <button class="btn-p" style="margin-bottom:16px" onclick="abrirNovoEvento()">+ Adicionar evento</button>
+    <div id="cal-lista" style="display:flex;flex-direction:column;gap:10px"></div>
+  </div>
+  <nav class="nav-bar">
+    <button class="nav-btn" onclick="irNav('s-home',this)"><span class="ic">🏠</span>Home</button>
+    <button class="nav-btn" onclick="irNav('s-cadernos',this)"><span class="ic">📚</span>Cadernos</button>
+    <button class="nav-btn" onclick="irNav('s-treinar',this)"><span class="ic">🧠</span>Treinar</button>
+    <button class="nav-btn ativo" onclick="irNav('s-calendario',this)"><span class="ic">📅</span>Agenda</button>
+    <button class="nav-btn" onclick="irNav('s-perfil',this)"><span class="ic">👤</span>Perfil</button>
+  </nav>
+</div>
+
+<!-- PERFIL -->
+<div class="screen" id="s-perfil" style="padding:0 0 90px">
+  <div class="header">
+    <h1 style="font-size:1.4rem;font-weight:800;margin-bottom:4px">👤 Perfil</h1>
+    <p style="color:var(--txt2);font-size:.82rem">Sua evolucao academica</p>
+  </div>
+  <div style="padding:0 24px" id="perfil-area"></div>
+  <nav class="nav-bar">
+    <button class="nav-btn" onclick="irNav('s-home',this)"><span class="ic">🏠</span>Home</button>
+    <button class="nav-btn" onclick="irNav('s-cadernos',this)"><span class="ic">📚</span>Cadernos</button>
+    <button class="nav-btn" onclick="irNav('s-treinar',this)"><span class="ic">🧠</span>Treinar</button>
+    <button class="nav-btn" onclick="irNav('s-calendario',this)"><span class="ic">📅</span>Agenda</button>
+    <button class="nav-btn ativo" onclick="irNav('s-perfil',this)"><span class="ic">👤</span>Perfil</button>
+  </nav>
+</div>
+
+<!-- MODAL -->
+<div class="modal-bg" id="modal" style="display:none" onclick="fecharModal(event)">
+  <div class="modal-box" id="modal-box"></div>
+</div>
+
+<script>
+var TELA='s-login',USER=null;
+function ir(t){document.getElementById(TELA).classList.remove('ativo');document.getElementById(t).classList.add('ativo');TELA=t;window.scrollTo(0,0);}
+function irNav(t,btn){document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('ativo')});if(btn)btn.classList.add('ativo');ir(t);}
+function toast(msg,tipo){var el=document.getElementById('toast');el.textContent=msg;el.className='toast show '+(tipo||'');setTimeout(function(){el.className='toast';},2800);}
+function abrirModal(html){document.getElementById('modal-box').innerHTML=html;document.getElementById('modal').style.display='flex';}
+function fecharModal(e){if(!e||e.target===document.getElementById('modal'))document.getElementById('modal').style.display='none';}
+function salvarDB(){localStorage.setItem('beca_db',JSON.stringify(DB));}
+function fmt(s){return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');}
+
+var DB=JSON.parse(localStorage.getItem('beca_db')||'{}');
+DB.usuarios=DB.usuarios||{};
+DB.cadernos=DB.cadernos||[
+  {id:'1',nome:'Calculo I',professor:'Prof. Silva',cor:'#6366f1',emoji:'📐',aulas:[]},
+  {id:'2',nome:'Fisica II',professor:'Prof. Costa',cor:'#0ea5e9',emoji:'⚡',aulas:[]},
+  {id:'3',nome:'Programacao',professor:'Prof. Lima',cor:'#22c55e',emoji:'💻',aulas:[]},
+];
+DB.eventos=DB.eventos||[
+  {id:'1',titulo:'Prova de Calculo',data:'2026-06-10',tipo:'prova',materia:'Calculo I'},
+  {id:'2',titulo:'Entrega de Trabalho',data:'2026-05-28',tipo:'tarefa',materia:'Programacao'},
+  {id:'3',titulo:'Seminario de Fisica',data:'2026-06-20',tipo:'evento',materia:'Fisica II'},
+];
+DB.flashcards=DB.flashcards||[
+  {id:'1',frente:'O que e uma derivada?',verso:'A taxa de variacao de uma funcao em um ponto. Como medir a velocidade de mudanca.',materia:'Calculo'},
+  {id:'2',frente:'O que e integral?',verso:'A operacao inversa da derivada. Calcula a area sob uma curva.',materia:'Calculo'},
+  {id:'3',frente:'Primeira lei de Newton',verso:'Um objeto em repouso tende a ficar em repouso a menos que uma forca atue sobre ele.',materia:'Fisica'},
+  {id:'4',frente:'O que e POO?',verso:'Programacao Orientada a Objetos: organiza o codigo em objetos com atributos e metodos.',materia:'Programacao'},
+];
+DB.exercicios=DB.exercicios||[
+  {p:'O que e uma derivada?',r:'A derivada mostra a taxa de variacao — como a velocidade de mudanca em um ponto.',ops:['Taxa de variacao de uma funcao','Soma de dois numeros','Tipo de integral','Operacao de adicao'],c:0},
+  {p:'Qual e a regra da cadeia?',r:'Deriva de fora para dentro. Como descascar uma cebola: uma camada por vez.',ops:["f'(x)+g'(x)","f'(g(x))*g'(x)",'f(x)*g(x)',"f'(x)*g(x)"],c:1},
+  {p:'Integral e a operacao inversa de:',r:'A integral e a derivada sao operacoes inversas. Juntas formam o Teorema Fundamental do Calculo.',ops:['Adicao','Multiplicacao','Derivada','Subtracao'],c:2},
+];
+DB.evolucao=DB.evolucao||{acertos:0,erros:0,aulasGravadas:0,nivel:'iniciante'};
+salvarDB();
+
+function loginTab(t){
+  var eE=document.getElementById('form-entrar'),eC=document.getElementById('form-criar');
+  var tE=document.getElementById('tab-entrar'),tC=document.getElementById('tab-criar');
+  if(t==='entrar'){eE.style.display='block';eC.style.display='none';tE.style.background='var(--accent)';tE.style.color='#fff';tC.style.background='transparent';tC.style.color='var(--txt3)';}
+  else{eC.style.display='block';eE.style.display='none';tC.style.background='var(--accent)';tC.style.color='#fff';tE.style.background='transparent';tE.style.color='var(--txt3)';}
+}
+function fazerLogin(){
+  var email=document.getElementById('l-email').value.trim();
+  var senha=document.getElementById('l-senha').value;
+  if(!email||!senha){toast('Preencha e-mail e senha','err');return;}
+  var u=DB.usuarios[email];
+  if(!u||u.senha!==senha){toast('E-mail ou senha incorretos','err');return;}
+  USER=u;entrarApp();
+}
+function criarConta(){
+  var nome=document.getElementById('c-nome').value.trim();
+  var email=document.getElementById('c-email').value.trim();
+  var senha=document.getElementById('c-senha').value;
+  var curso=document.getElementById('c-curso').value;
+  if(!nome||!email||!senha){toast('Preencha todos os campos','err');return;}
+  if(senha.length<6){toast('Senha deve ter minimo 6 caracteres','err');return;}
+  if(DB.usuarios[email]){toast('E-mail ja cadastrado','err');return;}
+  var u={nome:nome,email:email,senha:senha,curso:curso,criado:new Date().toISOString()};
+  DB.usuarios[email]=u;salvarDB();USER=u;
+  toast('Conta criada!','ok');
+  setTimeout(function(){iniciarOnboarding();},800);
+}
+function entrarSemLogin(){
+  USER={nome:'Estudante',email:'',curso:'',semLogin:true};
+  if(localStorage.getItem('beca_ob')){entrarApp();}else{iniciarOnboarding();}
+}
+function entrarApp(){initHome();initCadernos();initCalendario();initPerfil();ir('s-home');initTreinar();initSimulado();initFlashcards();}
+
+var OB=[
+  {emoji:'🎓',title:'Bem-vindo ao Beca Estuda',sub:'Sua plataforma universitaria com IA. Grave aulas, gere resumos e estude de forma inteligente.',btn:'Comecar'},
+  {emoji:'🎙️',title:'Grave suas aulas',sub:'Aperte um botao e grave. A IA transcreve tudo, detecta a materia e marca o que cai na prova.',btn:'Continuar',mic:true},
+  {emoji:'🧠',title:'A IA estuda com voce',sub:'Exercicios, simulados e flashcards criados com base no que seu professor ensinou.',btn:'Continuar'},
+  {emoji:'📅',title:'Nunca perca uma prova',sub:'Cadastre suas provas e tarefas. O sistema avisa com antecedencia.',btn:'Entrar no App'},
+];
+var obAt=0;
+function iniciarOnboarding(){obAt=0;renderOb();ir('s-onboard');}
+function renderOb(){
+  var s=OB[obAt];
+  var dots='';
+  for(var i=0;i<OB.length;i++)dots+='<div style="width:'+(i===obAt?28:8)+'px;height:8px;border-radius:4px;background:'+(i===obAt?'var(--accent)':'var(--bg3)')+';transition:all .3s"></div>';
+  document.getElementById('ob-dots').innerHTML=dots;
+  document.getElementById('ob-content').innerHTML='<div style="font-size:72px;margin-bottom:24px;line-height:1">'+s.emoji+'</div><h1 style="font-size:1.7rem;font-weight:800;margin-bottom:12px;line-height:1.2">'+s.title+'</h1><p style="color:var(--txt2);font-size:.95rem;line-height:1.7;margin-bottom:36px">'+s.sub+'</p><button class="btn-p" onclick="obNext()" style="max-width:340px">'+s.btn+'</button>'+(obAt>0?'<br><button onclick="obFim()" style="margin-top:12px;background:none;border:none;color:var(--txt3);font-size:.82rem;cursor:pointer;font-family:Inter,sans-serif">Pular</button>':'');
+}
+async function obNext(){
+  if(OB[obAt].mic){try{await navigator.mediaDevices.getUserMedia({audio:true});}catch(e){}}
+  if(obAt>=OB.length-1){obFim();return;}
+  obAt++;renderOb();
+}
+function obFim(){localStorage.setItem('beca_ob','1');entrarApp();}
+function initHome(){
+  var h=new Date().getHours();
+  var nome=USER&&USER.nome?USER.nome.split(' ')[0]:'Estudante';
+  document.getElementById('home-saudacao').textContent=(h<12?'Bom dia':h<18?'Boa tarde':'Boa noite')+', '+nome+' 👋';
+  document.getElementById('home-curso').textContent=USER&&USER.curso?'Curso: '+USER.curso:'O que vamos estudar hoje?';
+}
+</script>
+
+<script>
+var GV={estado:'idle',seg:0,timer:null,chunks:[],mr:null};
+function gravRender(){
+  var c=document.getElementById('grav-circ'),t=document.getElementById('grav-tempo'),s=document.getElementById('grav-status'),b=document.getElementById('grav-btns');
+  t.textContent=fmt(GV.seg);
+  t.style.color=GV.estado==='gravando'?'var(--accent2)':'var(--txt1)';
+  c.style.background=GV.estado==='gravando'?'rgba(99,102,241,.15)':'var(--bg2)';
+  c.style.borderColor=GV.estado==='gravando'?'var(--accent)':'var(--bg3)';
+  c.style.animation=GV.estado==='gravando'?'pulseRec 1.8s infinite':'none';
+  c.textContent={idle:'🎙️',gravando:'🔴',pausado:'⏸️',processando:'⚙️'}[GV.estado]||'🎙️';
+  s.textContent={idle:'Pronto para gravar',gravando:'🔴 Gravando ao vivo...',pausado:'⏸ Pausado',processando:'⚙️ IA processando...'}[GV.estado]||'';
+  if(GV.estado==='idle')b.innerHTML='<button class="btn-p" onclick="gravIniciar()" style="width:auto;padding:14px 36px">🎙️ Iniciar Gravacao</button>';
+  else if(GV.estado==='gravando')b.innerHTML='<button class="btn-o" onclick="gravPausar()" style="width:auto;padding:12px 24px">⏸ Pausar</button><button class="btn-p" onclick="gravFinalizar()" style="background:#ef4444;width:auto;padding:12px 24px">⏹ Finalizar</button>';
+  else if(GV.estado==='pausado')b.innerHTML='<button class="btn-p" onclick="gravContinuar()" style="width:auto;padding:12px 24px">▶ Continuar</button><button class="btn-o" onclick="gravFinalizar()" style="width:auto;padding:12px 24px;border-color:#ef4444;color:#ef4444">⏹ Finalizar</button>';
+  else b.innerHTML='<p style="color:var(--txt2);font-size:.88rem">A IA esta analisando sua aula...</p>';
+}
+async function gravIniciar(){
+  document.getElementById('grav-erro').style.display='none';
+  try{
+    var stream=await navigator.mediaDevices.getUserMedia({audio:true});
+    GV.mr=new MediaRecorder(stream);GV.chunks=[];
+    GV.mr.ondataavailable=function(e){if(e.data.size>0)GV.chunks.push(e.data);};
+    GV.mr.start(1000);GV.estado='gravando';GV.seg=0;
+    GV.timer=setInterval(function(){GV.seg++;document.getElementById('grav-tempo').textContent=fmt(GV.seg);},1000);
+    gravRender();
+  }catch(e){var el=document.getElementById('grav-erro');el.style.display='block';el.textContent='Permissao de microfone negada.';}
+}
+function gravPausar(){GV.mr.pause();clearInterval(GV.timer);GV.estado='pausado';gravRender();}
+function gravContinuar(){GV.mr.resume();GV.timer=setInterval(function(){GV.seg++;document.getElementById('grav-tempo').textContent=fmt(GV.seg);},1000);GV.estado='gravando';gravRender();}
+async function gravFinalizar(){
+  clearInterval(GV.timer);GV.mr.stop();GV.mr.stream.getTracks().forEach(function(t){t.stop();});
+  GV.estado='processando';gravRender();
+  await new Promise(function(r){setTimeout(r,600);});
+  await gravProcessar();
+}
+async function gravProcessar(){
+  var mat=document.getElementById('grav-materia').value||'auto';
+  var trans='Aula de '+(mat==='auto'?'Calculo':mat)+' — Derivadas\n\nHoje vamos estudar derivadas. A derivada representa a taxa de variacao. ISSO CAI NA PROVA! A regra da cadeia: d/dx[f(g(x))]=f\'(g(x))*g\'(x). Atencao: nunca esqueca da regra do produto. Importantissimo: a integral e a operacao inversa da derivada.';
+  try{
+    var res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:'Analise a transcricao e responda APENAS em JSON valido sem markdown: {"materia":"nome","resumo":"resumo simples em 3 paragrafos","pontos_prova":["p1","p2","p3"],"nivel":"iniciante|basico|intermediario|avancado"}\n\nTranscricao: '+trans}]})});
+    var data=await res.json();
+    var txt=data.content&&data.content[0]&&data.content[0].text||'{}';
+    var json=JSON.parse(txt.replace(/```json|```/g,'').trim());
+    gravMostrar(json.materia||'Aula',json.resumo||'',json.pontos_prova||[],trans,json.nivel||'basico');
+  }catch(e){
+    gravMostrar(mat==='auto'?'Aula gravada':mat,'Aula salva! Revise a transcricao no seu caderno.',[],trans,'basico');
+  }
+}
+function gravMostrar(mat,resumo,pontos,trans,nivel){
+  GV.estado='idle';GV.seg=0;
+  DB.evolucao.aulasGravadas++;salvarDB();
+  document.getElementById('grav-area').style.display='none';
+  var r=document.getElementById('grav-result');r.style.display='block';
+  var pts=pontos.map(function(p){return '<div style="display:flex;gap:8px;margin-bottom:6px"><span style="color:#f59e0b">⚠️</span><span style="color:var(--txt2);font-size:.83rem">'+p+'</span></div>';}).join('');
+  r.innerHTML='<div class="fu"><div style="background:#22c55e22;border:1px solid #22c55e44;border-radius:14px;padding:14px;margin-bottom:14px;display:flex;align-items:center;gap:10px"><span style="font-size:24px">✅</span><div><div style="font-weight:700;font-size:.95rem">Aula processada!</div><div style="color:var(--txt2);font-size:.78rem">'+mat+' · Nivel: '+nivel+'</div></div></div><div class="card" style="margin-bottom:10px"><div style="font-size:.68rem;color:var(--accent2);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">📝 Resumo da IA</div><p style="color:var(--txt2);font-size:.87rem;line-height:1.7">'+resumo+'</p></div>'+(pts?'<div class="card" style="margin-bottom:10px"><div style="font-size:.68rem;color:#f59e0b;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">⚠️ Pode cair na prova</div>'+pts+'</div>':'')+'<div class="card" style="margin-bottom:16px"><div style="font-size:.68rem;color:var(--txt3);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">📋 Transcricao</div><p style="color:var(--txt3);font-size:.8rem;line-height:1.6;white-space:pre-wrap">'+trans+'</p></div><div style="display:flex;gap:10px"><button class="btn-p" onclick="ir(\'s-treinar\')" style="flex:1">🧠 Treinar</button><button class="btn-o" onclick="gravReset()" style="flex:1">+ Nova</button></div></div>';
+}
+function gravReset(){document.getElementById('grav-area').style.display='block';document.getElementById('grav-result').style.display='none';gravRender();}
+gravRender();
+
+function initCadernos(){renderCad(DB.cadernos);}
+function filtrarCad(){var b=document.getElementById('busca-cad').value.toLowerCase();renderCad(DB.cadernos.filter(function(c){return c.nome.toLowerCase().includes(b);}));}
+function renderCad(lista){
+  var el=document.getElementById('cad-lista');
+  if(!lista.length){el.innerHTML='<div style="text-align:center;padding:48px 0;color:var(--txt3)"><div style="font-size:40px;margin-bottom:10px">📭</div><div style="font-weight:600;margin-bottom:4px">Nenhum caderno</div><div style="font-size:.82rem">Grave uma aula para criar</div></div>';return;}
+  el.innerHTML=lista.map(function(c){return '<div class="card" style="display:flex;align-items:center;gap:14px;cursor:pointer" onclick="verCaderno(\''+c.id+'\')"><div style="width:52px;height:52px;border-radius:13px;background:'+c.cor+'22;border:2px solid '+c.cor+'44;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">'+c.emoji+'</div><div style="flex:1"><div style="font-weight:700;font-size:.95rem;margin-bottom:2px">'+c.nome+'</div><div style="color:var(--txt3);font-size:.75rem;margin-bottom:6px">'+c.professor+'</div><div style="display:flex;gap:8px"><span style="font-size:.7rem;background:var(--bg3);border-radius:6px;padding:2px 8px;color:var(--txt2)">🎙️ '+c.aulas.length+' aulas</span></div></div><div style="color:var(--txt3);font-size:18px">›</div></div>';}).join('');
+}
+function abrirNovoCad(){
+  abrirModal('<h2 style="font-weight:800;margin-bottom:16px">Novo Caderno</h2><div style="margin-bottom:12px"><label style="font-size:.75rem;color:var(--txt3);font-weight:600;display:block;margin-bottom:4px">Nome da materia</label><input class="input" id="nc-nome" placeholder="Ex: Calculo II"></div><div style="margin-bottom:12px"><label style="font-size:.75rem;color:var(--txt3);font-weight:600;display:block;margin-bottom:4px">Professor</label><input class="input" id="nc-prof" placeholder="Ex: Prof. Silva"></div><div style="margin-bottom:20px"><label style="font-size:.75rem;color:var(--txt3);font-weight:600;display:block;margin-bottom:6px">Emoji</label><div id="nc-emojis" style="display:flex;gap:8px;flex-wrap:wrap"></div></div><button class="btn-p" onclick="criarCaderno()">Criar Caderno</button>');
+  var emojis=['📐','📚','⚡','💻','⚗️','🧬','📊','📖','🔬','🎯'];
+  window._selEmoji='📚';
+  document.getElementById('nc-emojis').innerHTML=emojis.map(function(e){return '<button onclick="selEmoji(\''+e+'\')" id="em'+e+'" style="width:40px;height:40px;border-radius:8px;border:2px solid var(--bg3);background:var(--bg2);cursor:pointer;font-size:20px">'+e+'</button>';}).join('');
+}
+function selEmoji(e){window._selEmoji=e;document.querySelectorAll('[id^="em"]').forEach(function(b){b.style.borderColor='var(--bg3)';b.style.background='var(--bg2)';});var el=document.getElementById('em'+e);if(el){el.style.borderColor='var(--accent)';el.style.background='rgba(99,102,241,.15)';}}
+function criarCaderno(){
+  var nome=document.getElementById('nc-nome').value.trim();
+  var prof=document.getElementById('nc-prof').value.trim();
+  if(!nome){toast('Digite o nome da materia','err');return;}
+  var cores=['#6366f1','#0ea5e9','#22c55e','#f59e0b','#ec4899','#a855f7'];
+  var cor=cores[DB.cadernos.length%cores.length];
+  DB.cadernos.push({id:Date.now().toString(),nome:nome,professor:prof||'Professor',cor:cor,emoji:window._selEmoji||'📚',aulas:[]});
+  salvarDB();renderCad(DB.cadernos);fecharModal();toast('Caderno criado!','ok');
+}
+function verCaderno(id){
+  var c=DB.cadernos.find(function(x){return x.id===id;});
+  if(!c)return;
+  abrirModal('<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px"><div style="width:48px;height:48px;border-radius:12px;background:'+c.cor+'22;display:flex;align-items:center;justify-content:center;font-size:24px">'+c.emoji+'</div><div><div style="font-weight:800;font-size:1.1rem">'+c.nome+'</div><div style="color:var(--txt3);font-size:.8rem">'+c.professor+'</div></div></div>'+(c.aulas.length?c.aulas.map(function(a){return '<div class="card" style="margin-bottom:10px"><div style="font-weight:700;font-size:.88rem;margin-bottom:4px">'+a.titulo+'</div><div style="color:var(--txt2);font-size:.8rem;line-height:1.5">'+a.resumo+'</div></div>';}).join(''):'<div style="text-align:center;padding:32px 0;color:var(--txt3)"><div style="font-size:36px;margin-bottom:8px">📭</div><div>Nenhuma aula ainda</div></div>')+'<button class="btn-p" style="margin-top:16px" onclick="fecharModal()">Fechar</button>');
+}
+</script>
+
+<script>
+var TR={at:0,sel:null,acertos:0,fim:false};
+function initTreinar(){TR={at:0,sel:null,acertos:0,fim:false};renderTr();}
+function renderTr(){
+  var el=document.getElementById('tr-area');
+  document.getElementById('tr-sub').textContent='Exercicio '+(TR.at+1)+' de '+DB.exercicios.length;
+  if(TR.fim){
+    var pct=Math.round(TR.acertos/DB.exercicios.length*100);
+    DB.evolucao.acertos+=TR.acertos;DB.evolucao.erros+=(DB.exercicios.length-TR.acertos);atualizarNivel();salvarDB();
+    el.innerHTML='<div style="text-align:center;padding:40px 0"><div style="font-size:60px;margin-bottom:16px">'+(pct===100?'🏆':pct>=60?'🎯':'📚')+'</div><h2 style="font-size:1.6rem;font-weight:800;margin-bottom:8px">Treino concluido!</h2><p style="color:var(--txt2);margin-bottom:24px">'+TR.acertos+' de '+DB.exercicios.length+' acertos</p><div class="card" style="max-width:320px;margin:0 auto 20px"><div style="display:flex;justify-content:space-between;margin-bottom:8px"><span style="color:var(--txt2);font-size:.85rem">Desempenho</span><span style="font-weight:700;color:'+(pct>=60?'var(--green)':'#f59e0b')+'">'+pct+'%</span></div><div class="nivel-bar"><div class="nivel-fill" style="width:'+pct+'%;background:'+(pct>=60?'var(--green)':'#f59e0b')+'"></div></div></div><button class="btn-p" onclick="initTreinar()" style="max-width:320px;margin-bottom:10px">Treinar novamente</button><button class="btn-o" onclick="ir(\'s-home\')" style="max-width:320px">Voltar</button></div>';
+    return;
+  }
+  var ex=DB.exercicios[TR.at];
+  var prog=Math.round((TR.at/DB.exercicios.length)*100);
+  var ops=ex.ops.map(function(op,i){
+    var bg='var(--bg2)',brd='var(--bg3)',col='var(--txt1)';
+    if(TR.sel!==null){if(i===ex.c){bg='#22c55e22';brd='#22c55e';col='#22c55e';}else if(i===TR.sel){bg='#ef444422';brd='#ef4444';col='#ef4444';}}
+    return '<button onclick="trResp('+i+')" style="width:100%;background:'+bg+';border:1.5px solid '+brd+';border-radius:12px;padding:13px 16px;text-align:left;cursor:'+(TR.sel!==null?'default':'pointer')+';color:'+col+';font-size:.88rem;font-family:Inter,sans-serif;margin-bottom:8px;transition:all .2s"><span style="color:var(--txt3);margin-right:8px;font-size:.78rem">'+String.fromCharCode(65+i)+')</span>'+op+'</button>';
+  }).join('');
+  el.innerHTML='<div style="height:5px;background:var(--bg3);border-radius:3px;margin-bottom:20px;overflow:hidden"><div style="height:100%;width:'+prog+'%;background:var(--accent);border-radius:3px;transition:width .4s"></div></div><div class="card" style="margin-bottom:14px"><div style="font-size:.68rem;color:var(--accent2);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">🧠 Pergunta</div><p style="font-size:1rem;font-weight:600;line-height:1.5">'+ex.p+'</p></div>'+ops+(TR.sel!==null?'<div class="fu" style="background:#6366f122;border:1px solid #6366f144;border-radius:14px;padding:14px;margin-bottom:14px"><div style="font-size:.68rem;color:var(--accent2);font-weight:700;margin-bottom:6px">💡 Entenda</div><p style="color:var(--txt2);font-size:.85rem;line-height:1.6">'+ex.r+'</p></div><button class="btn-p" onclick="trProx()">'+(TR.at+1>=DB.exercicios.length?'🏆 Ver resultado':'Proxima →')+'</button>':'');
+}
+function trResp(i){if(TR.sel!==null)return;TR.sel=i;if(i===DB.exercicios[TR.at].c)TR.acertos++;renderTr();}
+function trProx(){if(TR.at+1>=DB.exercicios.length){TR.fim=true;}else{TR.at++;TR.sel=null;}renderTr();}
+
+var SIM={at:0,sel:null,resp:[],fase:'intro',tempo:0,timer:null};
+function initSimulado(){SIM={at:0,sel:null,resp:[],fase:'intro',tempo:0,timer:null};renderSim();}
+function simIniciar(){SIM.fase='quiz';SIM.at=0;SIM.sel=null;SIM.resp=[];SIM.tempo=0;clearInterval(SIM.timer);SIM.timer=setInterval(function(){SIM.tempo++;},1000);renderSim();}
+function simResp(i){
+  if(SIM.sel!==null)return;SIM.sel=i;SIM.resp.push(i===DB.exercicios[SIM.at].c);renderSim();
+  setTimeout(function(){if(SIM.at+1>=DB.exercicios.length){clearInterval(SIM.timer);SIM.fase='fim';}else{SIM.at++;SIM.sel=null;}renderSim();},1400);
+}
+function renderSim(){
+  var el=document.getElementById('sim-area');
+  if(SIM.fase==='intro'){el.innerHTML='<div style="min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center"><div style="font-size:64px;margin-bottom:20px">📝</div><h1 style="font-size:1.7rem;font-weight:800;margin-bottom:10px">Simulado</h1><p style="color:var(--txt2);margin-bottom:28px;max-width:300px;line-height:1.7">'+DB.exercicios.length+' questoes com explicacao da IA apos cada resposta.</p><button class="btn-p" onclick="simIniciar()" style="max-width:320px;padding:14px;margin-bottom:10px">🚀 Iniciar</button><button onclick="ir(\'s-home\')" style="background:none;border:none;color:var(--txt3);cursor:pointer;font-family:Inter,sans-serif;font-size:.82rem">Voltar</button></div>';return;}
+  if(SIM.fase==='fim'){
+    var ac=SIM.resp.filter(Boolean).length,pct=Math.round(ac/DB.exercicios.length*100);
+    DB.evolucao.acertos+=ac;salvarDB();
+    el.innerHTML='<div style="min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center"><div style="font-size:64px;margin-bottom:16px">'+(pct>=70?'🏆':pct>=50?'📈':'💪')+'</div><h1 style="font-size:1.8rem;font-weight:800;margin-bottom:8px">'+(pct>=70?'Excelente!':pct>=50?'Bom trabalho!':'Continue!')+'</h1><p style="color:var(--txt2);margin-bottom:20px">'+ac+' de '+DB.exercicios.length+' acertos</p><div style="font-size:3rem;font-weight:800;color:'+(pct>=70?'var(--green)':pct>=50?'#f59e0b':'#ef4444')+';margin-bottom:24px">'+pct+'%</div><div style="display:flex;gap:10px;width:100%;max-width:320px"><button class="btn-o" onclick="SIM.fase=\'intro\';renderSim()" style="flex:1">Refazer</button><button class="btn-p" onclick="ir(\'s-home\')" style="flex:1">Inicio</button></div></div>';return;
+  }
+  var q=DB.exercicios[SIM.at],prog=Math.round((SIM.at/DB.exercicios.length)*100);
+  var ms=String(Math.floor(SIM.tempo/60)).padStart(2,'0'),ss=String(SIM.tempo%60).padStart(2,'0');
+  var ops=q.ops.map(function(op,i){
+    var bg='var(--bg2)',brd='var(--bg3)',col='var(--txt1)';
+    if(SIM.sel!==null){if(i===q.c){bg='#22c55e22';brd='#22c55e';col='#22c55e';}else if(i===SIM.sel){bg='#ef444422';brd='#ef4444';col='#ef4444';}}
+    return '<button onclick="simResp('+i+')" style="width:100%;background:'+bg+';border:1.5px solid '+brd+';border-radius:12px;padding:13px 16px;text-align:left;cursor:'+(SIM.sel!==null?'default':'pointer')+';color:'+col+';font-size:.88rem;font-family:Inter,sans-serif;margin-bottom:8px;transition:all .25s"><span style="color:var(--txt3);margin-right:8px;font-size:.78rem">'+String.fromCharCode(65+i)+')</span>'+op+'</button>';
+  }).join('');
+  el.innerHTML='<div style="padding:52px 24px 40px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px"><div><h1 style="font-size:1.05rem;font-weight:800">Simulado</h1><p style="color:var(--txt2);font-size:.75rem">Questao '+(SIM.at+1)+' de '+DB.exercicios.length+'</p></div><div class="card" style="padding:5px 12px;font-size:.82rem;color:var(--txt2)">⏱ '+ms+':'+ss+'</div></div><div style="height:5px;background:var(--bg3);border-radius:3px;margin-bottom:18px;overflow:hidden"><div style="height:100%;width:'+prog+'%;background:var(--accent);border-radius:3px;transition:width .4s"></div></div><div class="card" style="margin-bottom:14px"><div style="font-size:.68rem;color:#f59e0b;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">📝 Questao '+(SIM.at+1)+'</div><p style="font-size:1rem;font-weight:600;line-height:1.5">'+q.p+'</p></div>'+ops+(SIM.sel!==null?'<div class="fu" style="background:#6366f122;border:1px solid #6366f144;border-radius:14px;padding:14px;margin-top:4px"><div style="font-size:.68rem;color:var(--accent2);font-weight:700;margin-bottom:6px">💡 Entenda</div><p style="color:var(--txt2);font-size:.85rem;line-height:1.6">'+q.r+'</p></div>':'')+'</div>';
+}
+
+var FC={at:0,virado:false,acertos:0,erros:0};
+function initFlashcards(){FC={at:0,virado:false,acertos:0,erros:0};renderFC();}
+function renderFC(){
+  var el=document.getElementById('fc-area');
+  if(FC.at>=DB.flashcards.length){
+    var tot=FC.acertos+FC.erros,pct=tot>0?Math.round(FC.acertos/tot*100):0;
+    el.innerHTML='<div style="text-align:center;padding:40px 0"><div style="font-size:60px;margin-bottom:16px">'+(pct>=70?'🏆':'📚')+'</div><h2 style="font-size:1.6rem;font-weight:800;margin-bottom:8px">Concluido!</h2><p style="color:var(--txt2);margin-bottom:24px">'+FC.acertos+' de '+tot+' acertos ('+pct+'%)</p><button class="btn-p" onclick="initFlashcards()" style="max-width:320px;margin-bottom:10px">Repetir</button><button class="btn-o" onclick="ir(\'s-home\')" style="max-width:320px">Inicio</button></div>';return;
+  }
+  var fc=DB.flashcards[FC.at],prog=Math.round((FC.at/DB.flashcards.length)*100);
+  el.innerHTML='<div style="height:5px;background:var(--bg3);border-radius:3px;margin-bottom:16px;overflow:hidden"><div style="height:100%;width:'+prog+'%;background:var(--accent);border-radius:3px"></div></div><p style="text-align:center;color:var(--txt3);font-size:.8rem;margin-bottom:14px">Card '+(FC.at+1)+' de '+DB.flashcards.length+' · '+fc.materia+'</p><div onclick="fcVirar()" style="background:var(--bg2);border:2px solid '+(FC.virado?'var(--accent)':'var(--bg3)')+';border-radius:20px;padding:40px 24px;text-align:center;min-height:200px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all .3s;margin-bottom:18px"><div style="font-size:.7rem;color:'+(FC.virado?'var(--accent2)':'var(--txt3)')+';font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px">'+(FC.virado?'✅ RESPOSTA':'❓ PERGUNTA — toque para revelar')+'</div><p style="font-size:1.1rem;font-weight:'+(FC.virado?'500':'700')+';line-height:1.6;color:'+(FC.virado?'var(--txt2)':'var(--txt1)')+'">'+( FC.virado?fc.verso:fc.frente)+'</p></div>'+(FC.virado?'<div style="display:flex;gap:10px"><button onclick="fcResp(false)" style="flex:1;padding:14px;background:#ef444422;border:1.5px solid #ef444466;border-radius:12px;color:#ef4444;font-family:Inter,sans-serif;font-weight:700;cursor:pointer;font-size:.88rem">😕 Nao sabia</button><button onclick="fcResp(true)" style="flex:1;padding:14px;background:#22c55e22;border:1.5px solid #22c55e66;border-radius:12px;color:#22c55e;font-family:Inter,sans-serif;font-weight:700;cursor:pointer;font-size:.88rem">✅ Sabia!</button></div>':'<p style="text-align:center;color:var(--txt3);font-size:.8rem">Toque no card para ver a resposta</p>');
+}
+function fcVirar(){FC.virado=!FC.virado;renderFC();}
+function fcResp(ok){if(ok)FC.acertos++;else FC.erros++;FC.at++;FC.virado=false;renderFC();}
+
+function initCalendario(){renderCal();}
+function renderCal(){
+  var el=document.getElementById('cal-lista');
+  var hoje=new Date().toISOString().split('T')[0];
+  var sorted=DB.eventos.slice().sort(function(a,b){return a.data.localeCompare(b.data);});
+  if(!sorted.length){el.innerHTML='<div style="text-align:center;padding:48px 0;color:var(--txt3)"><div style="font-size:40px;margin-bottom:10px">📅</div><div>Nenhum evento</div></div>';return;}
+  var cores={prova:'#ef4444',tarefa:'#f59e0b',evento:'#6366f1'};
+  el.innerHTML=sorted.map(function(e){
+    var past=e.data<hoje,cor=cores[e.tipo]||'#6366f1';
+    var d=new Date(e.data+'T12:00:00');
+    var ds=d.toLocaleDateString('pt-BR',{day:'2-digit',month:'short'});
+    return '<div class="card" style="display:flex;align-items:center;gap:14px;opacity:'+(past?.5:1)+'"><div style="width:48px;height:48px;border-radius:12px;background:'+cor+'22;border:2px solid '+cor+'44;display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0"><div style="font-size:.58rem;color:'+cor+';font-weight:700;text-transform:uppercase">'+d.toLocaleDateString('pt-BR',{month:'short'}).replace('.','')+'</div><div style="font-size:1.1rem;font-weight:800;color:'+cor+'">'+d.getDate()+'</div></div><div style="flex:1"><div style="font-weight:700;font-size:.92rem;margin-bottom:2px">'+e.titulo+'</div><div style="color:var(--txt3);font-size:.75rem">'+e.materia+' · '+{prova:'📝 Prova',tarefa:'✅ Tarefa',evento:'📌 Evento'}[e.tipo]+'</div></div>'+(past?'<span style="font-size:.7rem;color:var(--txt3)">Passou</span>':'<span style="font-size:.7rem;color:'+cor+';font-weight:600">'+ds+'</span>')+'</div>';
+  }).join('');
+}
+function abrirNovoEvento(){
+  var hoje=new Date().toISOString().split('T')[0];
+  abrirModal('<h2 style="font-weight:800;margin-bottom:16px">Novo Evento</h2><div style="margin-bottom:12px"><label style="font-size:.75rem;color:var(--txt3);font-weight:600;display:block;margin-bottom:4px">Titulo</label><input class="input" id="ne-titulo" placeholder="Ex: Prova de Calculo II"></div><div style="margin-bottom:12px"><label style="font-size:.75rem;color:var(--txt3);font-weight:600;display:block;margin-bottom:4px">Data</label><input class="input" id="ne-data" type="date" value="'+hoje+'"></div><div style="margin-bottom:12px"><label style="font-size:.75rem;color:var(--txt3);font-weight:600;display:block;margin-bottom:4px">Tipo</label><select class="input" id="ne-tipo" style="appearance:none"><option value="prova">📝 Prova</option><option value="tarefa">✅ Tarefa</option><option value="evento">📌 Evento</option></select></div><div style="margin-bottom:20px"><label style="font-size:.75rem;color:var(--txt3);font-weight:600;display:block;margin-bottom:4px">Materia</label><input class="input" id="ne-mat" placeholder="Ex: Calculo I"></div><button class="btn-p" onclick="criarEvento()">Adicionar</button>');
+}
+function criarEvento(){
+  var titulo=document.getElementById('ne-titulo').value.trim();
+  var data=document.getElementById('ne-data').value;
+  var tipo=document.getElementById('ne-tipo').value;
+  var mat=document.getElementById('ne-mat').value.trim();
+  if(!titulo||!data){toast('Preencha titulo e data','err');return;}
+  DB.eventos.push({id:Date.now().toString(),titulo:titulo,data:data,tipo:tipo,materia:mat||'Geral'});
+  salvarDB();renderCal();fecharModal();toast('Evento adicionado!','ok');
+}
+
+var NIVEIS=['iniciante','basico','intermediario','avancado','especialista'];
+function atualizarNivel(){var tot=DB.evolucao.acertos+DB.evolucao.erros,pct=tot>0?DB.evolucao.acertos/tot:0;var idx=pct>=.9?4:pct>=.75?3:pct>=.6?2:pct>=.4?1:0;DB.evolucao.nivel=NIVEIS[idx];}
+function initPerfil(){
+  var el=document.getElementById('perfil-area');
+  var u=USER||{};
+  var tot=DB.evolucao.acertos+DB.evolucao.erros,pct=tot>0?Math.round(DB.evolucao.acertos/tot*100):0;
+  var nIdx=NIVEIS.indexOf(DB.evolucao.nivel);if(nIdx<0)nIdx=0;
+  var nPct=Math.round((nIdx/4)*100);
+  el.innerHTML='<div class="card" style="margin-bottom:14px;text-align:center"><div style="width:72px;height:72px;background:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 12px">🎓</div><div style="font-weight:800;font-size:1.1rem;margin-bottom:2px">'+(u.nome||'Estudante')+'</div><div style="color:var(--txt3);font-size:.8rem;margin-bottom:8px">'+(u.email||'Sem login')+(u.curso?' · '+u.curso:'')+'</div><div style="display:inline-flex;align-items:center;gap:6px;background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.25);color:var(--accent2);font-size:.75rem;font-weight:700;padding:4px 12px;border-radius:100px">⭐ Nivel: '+DB.evolucao.nivel+'</div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px"><div class="card" style="text-align:center"><div style="font-size:1.6rem;font-weight:800;color:var(--green)">'+DB.evolucao.acertos+'</div><div style="color:var(--txt3);font-size:.75rem">Acertos</div></div><div class="card" style="text-align:center"><div style="font-size:1.6rem;font-weight:800;color:#ef4444">'+DB.evolucao.erros+'</div><div style="color:var(--txt3);font-size:.75rem">Erros</div></div><div class="card" style="text-align:center"><div style="font-size:1.6rem;font-weight:800;color:var(--accent2)">'+DB.evolucao.aulasGravadas+'</div><div style="color:var(--txt3);font-size:.75rem">Aulas gravadas</div></div><div class="card" style="text-align:center"><div style="font-size:1.6rem;font-weight:800;color:var(--yellow)">'+pct+'%</div><div style="color:var(--txt3);font-size:.75rem">Aproveitamento</div></div></div><div class="card" style="margin-bottom:14px"><div style="display:flex;justify-content:space-between;margin-bottom:8px"><span style="font-size:.82rem;font-weight:600">Evolucao de nivel</span><span style="font-size:.82rem;color:var(--accent2)">'+DB.evolucao.nivel+'</span></div><div class="nivel-bar"><div class="nivel-fill" style="width:'+nPct+'%"></div></div></div>'+(u.semLogin?'<button class="btn-p" onclick="ir(\'s-login\')" style="margin-bottom:10px">Criar conta / Entrar</button>':'<button class="btn-o" onclick="logout()">Sair da conta</button>');
+}
+function logout(){USER=null;localStorage.removeItem('beca_ob');ir('s-login');}
+</script>
+</body>
+</html>
