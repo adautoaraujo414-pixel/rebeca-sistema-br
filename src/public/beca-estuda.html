@@ -364,7 +364,7 @@ function fazerLogin(){
   if(!email||!senha){toast('Preencha e-mail e senha','err');return;}
   var u=DB.usuarios[email];
   if(!u||u.senha!==senha){toast('E-mail ou senha incorretos','err');return;}
-  USER=u;entrarApp();
+  USER=u;salvarSessao(u);entrarApp();
 }
 function criarConta(){
   var nome=document.getElementById('c-nome').value.trim();
@@ -375,7 +375,7 @@ function criarConta(){
   if(senha.length<6){toast('Senha deve ter minimo 6 caracteres','err');return;}
   if(DB.usuarios[email]){toast('E-mail ja cadastrado','err');return;}
   var u={nome:nome,email:email,senha:senha,curso:curso,criado:new Date().toISOString()};
-  DB.usuarios[email]=u;salvarDB();USER=u;
+  DB.usuarios[email]=u;salvarDB();USER=u;salvarSessao(u);
   toast('Conta criada!','ok');
   setTimeout(function(){iniciarOnboarding();},800);
 }
@@ -604,7 +604,7 @@ function initPerfil(){
   var nPct=Math.round((nIdx/4)*100);
   el.innerHTML='<div class="card" style="margin-bottom:14px;text-align:center"><div style="width:72px;height:72px;background:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 12px">🎓</div><div style="font-weight:800;font-size:1.1rem;margin-bottom:2px">'+(u.nome||'Estudante')+'</div><div style="color:var(--txt3);font-size:.8rem;margin-bottom:8px">'+(u.email||'Sem login')+(u.curso?' · '+u.curso:'')+'</div><div style="display:inline-flex;align-items:center;gap:6px;background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.25);color:var(--accent2);font-size:.75rem;font-weight:700;padding:4px 12px;border-radius:100px">⭐ Nivel: '+DB.evolucao.nivel+'</div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px"><div class="card" style="text-align:center"><div style="font-size:1.6rem;font-weight:800;color:var(--green)">'+DB.evolucao.acertos+'</div><div style="color:var(--txt3);font-size:.75rem">Acertos</div></div><div class="card" style="text-align:center"><div style="font-size:1.6rem;font-weight:800;color:#ef4444">'+DB.evolucao.erros+'</div><div style="color:var(--txt3);font-size:.75rem">Erros</div></div><div class="card" style="text-align:center"><div style="font-size:1.6rem;font-weight:800;color:var(--accent2)">'+DB.evolucao.aulasGravadas+'</div><div style="color:var(--txt3);font-size:.75rem">Aulas gravadas</div></div><div class="card" style="text-align:center"><div style="font-size:1.6rem;font-weight:800;color:var(--yellow)">'+pct+'%</div><div style="color:var(--txt3);font-size:.75rem">Aproveitamento</div></div></div><div class="card" style="margin-bottom:14px"><div style="display:flex;justify-content:space-between;margin-bottom:8px"><span style="font-size:.82rem;font-weight:600">Evolucao de nivel</span><span style="font-size:.82rem;color:var(--accent2)">'+DB.evolucao.nivel+'</span></div><div class="nivel-bar"><div class="nivel-fill" style="width:'+nPct+'%"></div></div></div>'+(u.semLogin?'<button class="btn-p" onclick="ir(\'s-login\')" style="margin-bottom:10px">Criar conta / Entrar</button>':'<button class="btn-o" onclick="logout()">Sair da conta</button>');
 }
-function logout(){USER=null;localStorage.removeItem('beca_ob');ir('s-login');}
+function logout(){USER=null;limparSessao();localStorage.removeItem('beca_ob');ir('s-login');}
 </script>
 
 <div id="install-bar" style="display:none;position:fixed;top:0;left:0;right:0;z-index:999;background:linear-gradient(90deg,#4338ca,#6366f1);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px">
@@ -624,7 +624,7 @@ function logout(){USER=null;localStorage.removeItem('beca_ob');ir('s-login');}
 // SERVICE WORKER
 if('serviceWorker' in navigator) {
   window.addEventListener('load', function() {
-    navigator.serviceWorker.register('/beca-sw.js', {scope: '/'})
+    navigator.serviceWorker.register('/beca-sw.js')
       .then(function(r){ console.log('SW ok', r.scope); })
       .catch(function(e){ console.log('SW erro', e); });
   });
@@ -832,16 +832,26 @@ async function processarOCR(base64) {
 }
 
 function salvarFotoNoCaderno() {
+  // Mostrar seletor de caderno
+  var opts = DB.cadernos.map(function(c,i){
+    return '<button onclick="confirmarFotoCaderno('+i+')" style="width:100%;background:var(--bg2);border:1.5px solid var(--bg3);border-radius:10px;padding:11px 14px;text-align:left;color:var(--txt1);font-family:Inter,sans-serif;cursor:pointer;margin-bottom:8px;display:flex;align-items:center;gap:10px"><span style=\'font-size:18px\'>'+c.emoji+'</span><div><div style=\'font-weight:700;font-size:.88rem\'>'+c.nome+'</div><div style=\'color:var(--txt3);font-size:.72rem\'>'+c.professor+'</div></div></button>';
+  }).join('');
+  abrirModal('<h2 style="font-weight:800;margin-bottom:14px">Salvar em qual caderno?</h2>'+opts+'<button class="btn-o" onclick="fecharModal()" style="margin-top:4px">Cancelar</button>');
+  return;
+}
+function confirmarFotoCaderno(idx) {
+  fecharModal();
   var texto = CAM.textoOCR || 'Foto do quadro';
   var id = 'foto_' + Date.now();
   if(CAM.fotoBlob) {
     salvarAudioIDB(id, CAM.fotoBlob, {tipo:'foto', texto:texto, data:new Date().toISOString()})
-      .then(function(){ toast('Foto salva no caderno!', 'ok'); })
+      .then(function(){ toast('Foto salva!', 'ok'); })
       .catch(function(){ toast('Foto salva localmente!', 'ok'); });
   }
-  DB.cadernos[0].aulas.push({id:id, titulo:'Foto do quadro - '+new Date().toLocaleDateString('pt-BR'), resumo:texto.substring(0,200)});
+  if(!DB.cadernos[idx]) idx = 0;
+  DB.cadernos[idx].aulas.push({id:id, titulo:'Foto do quadro - '+new Date().toLocaleDateString('pt-BR'), resumo:texto.substring(0,200)});
   salvarDB();
-  toast('Salvo no caderno!', 'ok');
+  toast('Salvo em: '+DB.cadernos[idx].nome, 'ok');
   setTimeout(function(){ pararCamera(); ir('s-cadernos'); initCadernos(); }, 800);
 }
 
@@ -890,6 +900,34 @@ function atualizarStatusOnline() {
 }
 window.addEventListener('online', atualizarStatusOnline);
 window.addEventListener('offline', atualizarStatusOnline);
+
+// SESSAO PERSISTENTE
+function salvarSessao(user) {
+  try { localStorage.setItem('beca_user', JSON.stringify(user)); } catch(e){}
+  salvarDadosIDB('sessao_user', user).catch(function(){});
+}
+function limparSessao() {
+  localStorage.removeItem('beca_user');
+  salvarDadosIDB('sessao_user', null).catch(function(){});
+}
+async function restaurarSessao() {
+  try {
+    var local = localStorage.getItem('beca_user');
+    if(local) { USER = JSON.parse(local); return true; }
+    var idb = await carregarDadosIDB('sessao_user');
+    if(idb) { USER = idb; return true; }
+  } catch(e){}
+  return false;
+}
+
+// AUTO-LOGIN ao abrir
+(async function() {
+  await abrirIDB().catch(function(){});
+  var ok = await restaurarSessao();
+  if(ok && USER) {
+    entrarApp();
+  }
+})();
 </script>
 </body>
 </html>
