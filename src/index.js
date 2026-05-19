@@ -303,6 +303,7 @@ app.get('/agenda-adm', (req, res) => res.sendFile(path.join(__dirname, 'public',
 app.get('/espaco-digital', (req, res) => res.sendFile(path.join(__dirname, 'public', 'espaco-digital.html')));
 app.get('/agenda-cadastro', (req, res) => res.sendFile(path.join(__dirname, 'public', 'agenda-cadastro.html')));
 app.get('/delivery-migracao', (req, res) => res.sendFile(path.join(__dirname, 'public', 'delivery-migracao.html')));
+app.get('/beca-estuda', (req, res) => res.sendFile(path.join(__dirname, 'public', 'beca-estuda.html')));
 app.get('/delivery-admin', (req, res) => {
   const ua = req.headers['user-agent'] || '';
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|mobile|CriOS/i.test(ua);
