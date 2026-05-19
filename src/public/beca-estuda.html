@@ -103,6 +103,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt1);-webk
       <button onclick="ir('s-simulado')" class="card" style="cursor:pointer;text-align:left;border:none;padding:16px"><div style="width:40px;height:40px;border-radius:10px;background:#f59e0b22;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:8px">📝</div><div style="font-weight:700;font-size:.88rem;margin-bottom:1px">Simulado</div><div style="color:var(--txt3);font-size:.72rem">Testar conhecimento</div></button>
       <button onclick="ir('s-flashcards')" class="card" style="cursor:pointer;text-align:left;border:none;padding:16px"><div style="width:40px;height:40px;border-radius:10px;background:#a855f722;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:8px">🃏</div><div style="font-weight:700;font-size:.88rem;margin-bottom:1px">Flashcards</div><div style="color:var(--txt3);font-size:.72rem">Memorizacao rapida</div></button>
       <button onclick="ir('s-calendario')" class="card" style="cursor:pointer;text-align:left;border:none;padding:16px"><div style="width:40px;height:40px;border-radius:10px;background:#ec489922;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:8px">📅</div><div style="font-weight:700;font-size:.88rem;margin-bottom:1px">Calendario</div><div style="color:var(--txt3);font-size:.72rem">Provas e tarefas</div></button>
+      <button onclick="abrirCamera()" class="card" style="cursor:pointer;text-align:left;border:none;padding:16px"><div style="width:40px;height:40px;border-radius:10px;background:#06b6d422;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:8px">📸</div><div style="font-weight:700;font-size:.88rem;margin-bottom:1px">Foto do Quadro</div><div style="color:var(--txt3);font-size:.72rem">OCR com IA</div></button>
     </div>
     <div style="background:linear-gradient(135deg,#1e1b4b,#1e293b);border:1px solid #4338ca44;border-radius:16px;padding:18px">
       <div style="font-size:.68rem;color:var(--accent2);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">💡 Dica do dia</div>
@@ -172,6 +173,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt1);-webk
       <button onclick="ir('s-simulado')" class="card" style="cursor:pointer;text-align:left;border:none;padding:16px"><div style="width:40px;height:40px;border-radius:10px;background:#f59e0b22;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:8px">📝</div><div style="font-weight:700;font-size:.88rem;margin-bottom:1px">Simulado</div><div style="color:var(--txt3);font-size:.72rem">Testar conhecimento</div></button>
       <button onclick="ir('s-flashcards')" class="card" style="cursor:pointer;text-align:left;border:none;padding:16px"><div style="width:40px;height:40px;border-radius:10px;background:#a855f722;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:8px">🃏</div><div style="font-weight:700;font-size:.88rem;margin-bottom:1px">Flashcards</div><div style="color:var(--txt3);font-size:.72rem">Memorizacao rapida</div></button>
       <button onclick="ir('s-calendario')" class="card" style="cursor:pointer;text-align:left;border:none;padding:16px"><div style="width:40px;height:40px;border-radius:10px;background:#ec489922;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:8px">📅</div><div style="font-weight:700;font-size:.88rem;margin-bottom:1px">Calendario</div><div style="color:var(--txt3);font-size:.72rem">Provas e tarefas</div></button>
+      <button onclick="abrirCamera()" class="card" style="cursor:pointer;text-align:left;border:none;padding:16px"><div style="width:40px;height:40px;border-radius:10px;background:#06b6d422;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:8px">📸</div><div style="font-weight:700;font-size:.88rem;margin-bottom:1px">Foto do Quadro</div><div style="color:var(--txt3);font-size:.72rem">OCR com IA</div></button>
     </div>
     <div style="background:linear-gradient(135deg,#1e1b4b,#1e293b);border:1px solid #4338ca44;border-radius:16px;padding:18px">
       <div style="font-size:.68rem;color:var(--accent2);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">💡 Dica do dia</div>
@@ -282,6 +284,33 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt1);-webk
   </nav>
 </div>
 
+
+<!-- CAMERA -->
+<div class="screen" id="s-camera" style="padding:0;background:#000;position:relative">
+  <video id="cam-video" autoplay playsinline style="width:100%;height:100dvh;object-fit:cover"></video>
+  <div style="position:absolute;top:0;left:0;right:0;padding:52px 20px 16px;background:linear-gradient(180deg,rgba(0,0,0,.7) 0%,transparent 100%);display:flex;align-items:center;gap:12px">
+    <button onclick="pararCamera();ir('s-home')" style="background:rgba(255,255,255,.15);border:none;border-radius:10px;width:36px;height:36px;color:#fff;cursor:pointer;font-size:16px">←</button>
+    <div><div style="color:#fff;font-weight:700;font-size:1rem">Foto do Quadro</div><div style="color:rgba(255,255,255,.6);font-size:.75rem">IA extrai o texto automaticamente</div></div>
+  </div>
+  <canvas id="cam-canvas" style="display:none"></canvas>
+  <div style="position:absolute;bottom:0;left:0;right:0;padding:24px 24px 48px;background:linear-gradient(0deg,rgba(0,0,0,.8) 0%,transparent 100%)">
+    <div id="cam-preview" style="display:none;margin-bottom:16px">
+      <img id="cam-foto" style="width:100%;border-radius:12px;max-height:200px;object-fit:cover">
+      <div id="cam-ocr-result" style="background:rgba(15,23,42,.9);border:1px solid rgba(99,102,241,.3);border-radius:12px;padding:14px;margin-top:10px;display:none">
+        <div style="font-size:.68rem;color:#818cf8;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">📝 Texto extraido pela IA</div>
+        <p id="cam-texto" style="color:#94a3b8;font-size:.82rem;line-height:1.6"></p>
+        <button onclick="salvarFotoNoCaderno()" class="btn-p" style="margin-top:10px">💾 Salvar no Caderno</button>
+      </div>
+    </div>
+    <div style="display:flex;gap:12px;justify-content:center;align-items:center">
+      <button onclick="trocarCamera()" style="width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,.15);border:none;color:#fff;cursor:pointer;font-size:20px">🔄</button>
+      <button onclick="tirarFoto()" id="btn-foto" style="width:72px;height:72px;border-radius:50%;background:#fff;border:4px solid rgba(255,255,255,.3);cursor:pointer;font-size:28px;display:flex;align-items:center;justify-content:center">📸</button>
+      <button onclick="abrirGaleria()" style="width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,.15);border:none;color:#fff;cursor:pointer;font-size:20px">🖼️</button>
+    </div>
+    <input type="file" id="galeria-input" accept="image/*" style="display:none" onchange="processarImagemGaleria(event)">
+  </div>
+</div>
+<div id="status-online" style="display:none;position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#1e293b;border:1px solid #f59e0b44;border-radius:10px;padding:8px 16px;font-size:.78rem;color:#f59e0b;z-index:98;align-items:center;gap:6px;white-space:nowrap">📵 Modo offline — dados salvos no celular</div>
 <!-- MODAL -->
 <div class="modal-bg" id="modal" style="display:none" onclick="fecharModal(event)">
   <div class="modal-box" id="modal-box"></div>
@@ -710,6 +739,157 @@ gravMostrar = function(mat, resumo, pontos, trans, nivel) {
   }
   _gravMostrarOrig(mat, resumo, pontos, trans, nivel);
 };
+</script>
+
+<script>
+// ══ CAMERA + OCR ══
+var CAM = {stream:null, facingMode:'environment', fotoBlob:null, fotoBase64:null};
+
+async function abrirCamera() {
+  try {
+    CAM.stream = await navigator.mediaDevices.getUserMedia({
+      video: {facingMode: CAM.facingMode, width:{ideal:1920}, height:{ideal:1080}},
+      audio: false
+    });
+    var v = document.getElementById('cam-video');
+    v.srcObject = CAM.stream;
+    document.getElementById('cam-preview').style.display = 'none';
+    document.getElementById('cam-ocr-result').style.display = 'none';
+    ir('s-camera');
+  } catch(e) {
+    toast('Permissao de camera negada', 'err');
+  }
+}
+
+function pararCamera() {
+  if(CAM.stream) { CAM.stream.getTracks().forEach(function(t){t.stop();}); CAM.stream = null; }
+}
+
+function trocarCamera() {
+  CAM.facingMode = CAM.facingMode === 'environment' ? 'user' : 'environment';
+  pararCamera();
+  setTimeout(abrirCamera, 200);
+}
+
+function tirarFoto() {
+  var v = document.getElementById('cam-video');
+  var c = document.getElementById('cam-canvas');
+  c.width = v.videoWidth; c.height = v.videoHeight;
+  c.getContext('2d').drawImage(v, 0, 0);
+  CAM.fotoBase64 = c.toDataURL('image/jpeg', 0.85);
+  c.toBlob(function(blob) {
+    CAM.fotoBlob = blob;
+    var img = document.getElementById('cam-foto');
+    img.src = CAM.fotoBase64;
+    document.getElementById('cam-preview').style.display = 'block';
+    processarOCR(CAM.fotoBase64);
+  }, 'image/jpeg', 0.85);
+}
+
+function abrirGaleria() { document.getElementById('galeria-input').click(); }
+
+function processarImagemGaleria(e) {
+  var file = e.target.files[0]; if(!file) return;
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    CAM.fotoBase64 = ev.target.result;
+    document.getElementById('cam-foto').src = CAM.fotoBase64;
+    document.getElementById('cam-preview').style.display = 'block';
+    processarOCR(CAM.fotoBase64);
+  };
+  reader.readAsDataURL(file);
+}
+
+async function processarOCR(base64) {
+  var ocrEl = document.getElementById('cam-ocr-result');
+  var textoEl = document.getElementById('cam-texto');
+  ocrEl.style.display = 'block';
+  textoEl.textContent = '⚙️ IA analisando a imagem...';
+  try {
+    var imgData = base64.split(',')[1];
+    var res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{
+          role: 'user',
+          content: [
+            {type:'image', source:{type:'base64', media_type:'image/jpeg', data:imgData}},
+            {type:'text', text:'Extraia TODO o texto visivel nesta imagem de quadro escolar/lousa. Organize em topicos claros. Se houver formulas matematicas, escreva em texto legivel. Seja completo e preciso.'}
+          ]
+        }]
+      })
+    });
+    var data = await res.json();
+    var texto = data.content && data.content[0] && data.content[0].text || 'Nenhum texto encontrado.';
+    textoEl.textContent = texto;
+    CAM.textoOCR = texto;
+  } catch(e) {
+    textoEl.textContent = 'Erro ao processar imagem. Verifique sua conexao.';
+  }
+}
+
+function salvarFotoNoCaderno() {
+  var texto = CAM.textoOCR || 'Foto do quadro';
+  var id = 'foto_' + Date.now();
+  if(CAM.fotoBlob) {
+    salvarAudioIDB(id, CAM.fotoBlob, {tipo:'foto', texto:texto, data:new Date().toISOString()})
+      .then(function(){ toast('Foto salva no caderno!', 'ok'); })
+      .catch(function(){ toast('Foto salva localmente!', 'ok'); });
+  }
+  DB.cadernos[0].aulas.push({id:id, titulo:'Foto do quadro - '+new Date().toLocaleDateString('pt-BR'), resumo:texto.substring(0,200)});
+  salvarDB();
+  toast('Salvo no caderno!', 'ok');
+  setTimeout(function(){ pararCamera(); ir('s-cadernos'); initCadernos(); }, 800);
+}
+
+// ══ GRAVACAO OFFLINE MELHORADA ══
+var OFFLINE_QUEUE = JSON.parse(localStorage.getItem('beca_offline_queue') || '[]');
+
+function salvarGravacaoOffline(mat, trans, resumo, pontos, nivel) {
+  OFFLINE_QUEUE.push({id:Date.now(), mat:mat, trans:trans, resumo:resumo, pontos:pontos, nivel:nivel, data:new Date().toISOString(), sincronizado:false});
+  localStorage.setItem('beca_offline_queue', JSON.stringify(OFFLINE_QUEUE));
+  console.log('Gravacao salva offline, total na fila:', OFFLINE_QUEUE.length);
+}
+
+async function sincronizarOffline() {
+  var pendentes = OFFLINE_QUEUE.filter(function(g){ return !g.sincronizado; });
+  if(!pendentes.length) return;
+  if(!navigator.onLine) return;
+  for(var i=0; i<pendentes.length; i++) {
+    try {
+      var g = pendentes[i];
+      var res = await fetch('https://api.anthropic.com/v1/messages', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:500,
+          messages:[{role:'user',content:'Melhore este resumo em 2 paragrafos simples: '+g.resumo}]})
+      });
+      var data = await res.json();
+      g.resumo_melhorado = data.content&&data.content[0]&&data.content[0].text||g.resumo;
+      g.sincronizado = true;
+    } catch(e) { break; }
+  }
+  localStorage.setItem('beca_offline_queue', JSON.stringify(OFFLINE_QUEUE));
+}
+
+window.addEventListener('online', function() {
+  toast('Conexao restaurada — sincronizando...', 'ok');
+  setTimeout(sincronizarOffline, 1000);
+});
+window.addEventListener('offline', function() {
+  toast('Sem internet — modo offline ativo', '');
+});
+
+// ══ INDICADOR OFFLINE ══
+function atualizarStatusOnline() {
+  var online = navigator.onLine;
+  var el = document.getElementById('status-online');
+  if(el) { el.style.display = online ? 'none' : 'flex'; }
+}
+window.addEventListener('online', atualizarStatusOnline);
+window.addEventListener('offline', atualizarStatusOnline);
 </script>
 </body>
 </html>
