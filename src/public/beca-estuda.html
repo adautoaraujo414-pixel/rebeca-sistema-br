@@ -1537,5 +1537,176 @@ window.addEventListener('load', function() {
 });
 </script>
 
+
+<script>
+// ══ EXPORTAR PDF DO CADERNO ══
+
+function exportarCadernoPDF(id) {
+  var c = DB.cadernos.find(function(x){ return x.id===id; });
+  if(!c) return;
+
+  var conteudo = c.aulas.map(function(a, i) {
+    return '<div style="margin-bottom:32px;padding-bottom:24px;border-bottom:1px solid #e2e8f0">' +
+      '<h2 style="font-size:16px;font-weight:700;color:#1e293b;margin-bottom:8px">' + (i+1) + '. ' + a.titulo + '</h2>' +
+      '<p style="font-size:13px;color:#475569;line-height:1.8;white-space:pre-wrap">' + a.resumo + '</p>' +
+      '</div>';
+  }).join('');
+
+  if(!conteudo) {
+    toast('Caderno vazio — sem aulas para exportar', 'err');
+    return;
+  }
+
+  var dataExport = new Date().toLocaleDateString('pt-BR', {day:'2-digit',month:'long',year:'numeric'});
+
+  var htmlPDF = '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">' +
+    '<title>' + c.nome + ' — Beca Estuda</title>' +
+    '<style>' +
+      'body{font-family:Georgia,serif;max-width:700px;margin:40px auto;padding:0 24px;color:#1e293b}' +
+      'h1{font-size:24px;font-weight:700;margin-bottom:4px}' +
+      '.meta{color:#64748b;font-size:13px;margin-bottom:32px;padding-bottom:16px;border-bottom:2px solid #6366f1}' +
+      'h2{font-size:16px}p{font-size:13px;line-height:1.8;color:#475569}' +
+      '.rodape{margin-top:40px;padding-top:16px;border-top:1px solid #e2e8f0;font-size:11px;color:#94a3b8;text-align:center}' +
+      '@media print{body{margin:20px}}' +
+    '</style></head><body>' +
+    '<h1>' + c.emoji + ' ' + c.nome + '</h1>' +
+    '<div class="meta">Professor: ' + c.professor + ' &nbsp;·&nbsp; ' + c.aulas.length + ' aulas &nbsp;·&nbsp; Exportado em ' + dataExport + ' &nbsp;·&nbsp; Beca Estuda</div>' +
+    conteudo +
+    '<div class="rodape">Gerado pelo Beca Estuda — plataforma universitaria com IA</div>' +
+    '</body></html>';
+
+  var blob = new Blob([htmlPDF], {type:'text/html;charset=utf-8'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = c.nome.replace(/\s+/g,'_') + '_BecaEstuda.html';
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('Arquivo salvo! Abra e imprima como PDF.', 'ok');
+}
+
+function compartilharCaderno(id) {
+  var c = DB.cadernos.find(function(x){ return x.id===id; });
+  if(!c) return;
+
+  var texto = c.emoji + ' ' + c.nome + ' — ' + c.professor + '
+
+';
+  c.aulas.forEach(function(a, i) {
+    texto += (i+1) + '. ' + a.titulo + '
+' + a.resumo.substring(0,300) + '
+
+';
+  });
+  texto += '
+— Exportado pelo Beca Estuda';
+
+  if(navigator.share) {
+    navigator.share({
+      title: c.nome + ' — Beca Estuda',
+      text: texto
+    }).then(function(){
+      toast('Compartilhado!', 'ok');
+    }).catch(function(){});
+  } else {
+    navigator.clipboard.writeText(texto).then(function(){
+      toast('Copiado para area de transferencia!', 'ok');
+    }).catch(function(){
+      toast('Copie o texto do caderno manualmente', '');
+    });
+  }
+}
+
+// Adicionar botoes exportar/compartilhar no modal do caderno
+var _verCadernoOrig = verCaderno;
+verCaderno = function(id) {
+  _verCadernoOrig(id);
+  // Injetar botoes de exportar no modal apos renderizar
+  setTimeout(function() {
+    var box = document.getElementById('modal-box');
+    if(!box) return;
+    var btnFechar = box.querySelector('button.btn-p:last-child');
+    if(!btnFechar) return;
+    var divExport = document.createElement('div');
+    divExport.style.cssText = 'display:flex;gap:10px;margin-bottom:10px';
+    divExport.innerHTML =
+      '<button onclick="exportarCadernoPDF(''+id+'')" style="flex:1;padding:11px;background:#6366f122;border:1.5px solid #6366f144;border-radius:12px;color:var(--accent2);font-family:Inter,sans-serif;font-weight:700;cursor:pointer;font-size:.82rem">📄 Exportar PDF</button>' +
+      '<button onclick="compartilharCaderno(''+id+'')" style="flex:1;padding:11px;background:#22c55e22;border:1.5px solid #22c55e44;border-radius:12px;color:#22c55e;font-family:Inter,sans-serif;font-weight:700;cursor:pointer;font-size:.82rem">📤 Compartilhar</button>';
+    box.insertBefore(divExport, btnFechar);
+  }, 50);
+};
+
+// ══ EXPORTAR TODOS OS DADOS (BACKUP) ══
+function exportarBackup() {
+  var backup = {
+    versao: '1.0',
+    data: new Date().toISOString(),
+    usuario: USER ? {nome:USER.nome, email:USER.email, curso:USER.curso} : null,
+    cadernos: DB.cadernos,
+    eventos: DB.eventos,
+    flashcards: DB.flashcards,
+    exercicios: DB.exercicios,
+    evolucao: DB.evolucao
+  };
+  var blob = new Blob([JSON.stringify(backup, null, 2)], {type:'application/json'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = 'beca_backup_' + new Date().toISOString().split('T')[0] + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('Backup salvo!', 'ok');
+}
+
+function importarBackup() {
+  var inp = document.createElement('input');
+  inp.type = 'file';
+  inp.accept = '.json';
+  inp.onchange = function(e) {
+    var file = e.target.files[0];
+    if(!file) return;
+    var reader = new FileReader();
+    reader.onload = function(ev) {
+      try {
+        var backup = JSON.parse(ev.target.result);
+        if(!backup.versao) throw new Error('Arquivo invalido');
+        if(backup.cadernos) DB.cadernos = backup.cadernos;
+        if(backup.eventos) DB.eventos = backup.eventos;
+        if(backup.flashcards) DB.flashcards = backup.flashcards;
+        if(backup.exercicios) DB.exercicios = backup.exercicios;
+        if(backup.evolucao) DB.evolucao = backup.evolucao;
+        salvarDB();
+        renderCad(DB.cadernos);
+        renderCal();
+        initPerfil();
+        toast('Backup restaurado com sucesso!', 'ok');
+        fecharModal();
+      } catch(err) {
+        toast('Arquivo de backup invalido', 'err');
+      }
+    };
+    reader.readAsText(file);
+  };
+  inp.click();
+}
+
+// Adicionar backup no perfil
+var _initPerfilOrig = initPerfil;
+initPerfil = function() {
+  _initPerfilOrig();
+  var el = document.getElementById('perfil-area');
+  if(!el) return;
+  var divBackup = document.createElement('div');
+  divBackup.style.cssText = 'margin-top:14px';
+  divBackup.innerHTML =
+    '<div style="font-size:.68rem;color:var(--txt3);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">💾 Seus dados</div>' +
+    '<div style="display:flex;gap:10px">' +
+      '<button onclick="exportarBackup()" style="flex:1;padding:12px;background:var(--bg2);border:1.5px solid var(--bg3);border-radius:12px;color:var(--txt2);font-family:Inter,sans-serif;font-size:.82rem;cursor:pointer;font-weight:600">📦 Exportar backup</button>' +
+      '<button onclick="importarBackup()" style="flex:1;padding:12px;background:var(--bg2);border:1.5px solid var(--bg3);border-radius:12px;color:var(--txt2);font-family:Inter,sans-serif;font-size:.82rem;cursor:pointer;font-weight:600">📥 Restaurar backup</button>' +
+    '</div>';
+  el.appendChild(divBackup);
+};
+</script>
+
 </body>
 </html>
