@@ -201,6 +201,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt1);-webk
       <div id="grav-tempo" style="font-size:2.8rem;font-weight:800;font-variant-numeric:tabular-nums;margin-bottom:6px">00:00</div>
       <p id="grav-status" style="color:var(--txt3);font-size:.82rem;margin-bottom:24px">Pronto para gravar</p>
       <div id="grav-erro" style="display:none;background:#ef444422;border:1px solid #ef4444;border-radius:12px;padding:12px;margin-bottom:14px;color:#ef4444;font-size:.82rem"></div>
+      <button onclick="uploadAudio()" style="width:100%;margin-bottom:12px;background:var(--bg2);border:1.5px solid var(--bg3);border-radius:12px;padding:12px;color:var(--txt2);font-family:Inter,sans-serif;font-size:.85rem;cursor:pointer">🎵 Importar audio do telefone</button>
       <div style="margin-bottom:18px"><select class="input" id="grav-materia" style="appearance:none"><option value="">Detectar automaticamente</option><option>Calculo</option><option>Fisica</option><option>Quimica</option><option>Programacao</option><option>Direito</option><option>Medicina</option><option>Outra</option></select></div>
       <div id="grav-btns" style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap"></div>
     </div>
@@ -929,5 +930,159 @@ async function restaurarSessao() {
   }
 })();
 </script>
+
+<script>
+// ══ TRANSCRICAO REAL COM WEB SPEECH API ══
+var SR = {rec:null, ativo:false, texto:'', parcial:''};
+
+function iniciarSpeechRecognition() {
+  var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SpeechRecognition) return false;
+
+  SR.rec = new SpeechRecognition();
+  SR.rec.continuous = true;
+  SR.rec.interimResults = true;
+  SR.rec.lang = 'pt-BR';
+  SR.rec.maxAlternatives = 1;
+
+  SR.rec.onresult = function(e) {
+    var final = '';
+    var interim = '';
+    for(var i = e.resultIndex; i < e.results.length; i++) {
+      var t = e.results[i][0].transcript;
+      if(e.results[i].isFinal) { final += t + ' '; }
+      else { interim += t; }
+    }
+    if(final) SR.texto += final;
+    SR.parcial = interim;
+    atualizarTranscricaoAoVivo();
+  };
+
+  SR.rec.onerror = function(e) {
+    if(e.error === 'no-speech') return;
+    console.log('SR erro:', e.error);
+  };
+
+  SR.rec.onend = function() {
+    if(SR.ativo) {
+      try { SR.rec.start(); } catch(e2){}
+    }
+  };
+
+  return true;
+}
+
+function atualizarTranscricaoAoVivo() {
+  var el = document.getElementById('trans-ao-vivo');
+  if(!el) return;
+  var txt = SR.texto + (SR.parcial ? '<span style="color:var(--txt3)">' + SR.parcial + '</span>' : '');
+  el.innerHTML = txt || '<span style="color:var(--txt3)">Aguardando fala...</span>';
+  el.scrollTop = el.scrollHeight;
+}
+
+// Substituir gravIniciar para ligar SR junto
+var _gravIniciarOrig = gravIniciar;
+gravIniciar = async function() {
+  SR.texto = '';
+  SR.parcial = '';
+  SR.ativo = true;
+
+  var temSR = iniciarSpeechRecognition();
+  if(temSR) {
+    try { SR.rec.start(); } catch(e){}
+  }
+
+  // Mostrar caixa de transcricao ao vivo
+  var area = document.getElementById('grav-area');
+  var caixa = document.getElementById('trans-box');
+  if(!caixa) {
+    var div = document.createElement('div');
+    div.id = 'trans-box';
+    div.style.cssText = 'margin-top:16px';
+    div.innerHTML = '<div style="font-size:.68rem;color:var(--accent2);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">📝 Transcricao ao vivo</div><div id="trans-ao-vivo" style="background:var(--bg2);border:1px solid var(--bg3);border-radius:12px;padding:14px;min-height:80px;max-height:180px;overflow-y:auto;font-size:.82rem;color:var(--txt2);line-height:1.7"><span style="color:var(--txt3)">Aguardando fala...</span></div>';
+    area.appendChild(div);
+  } else {
+    caixa.style.display = 'block';
+    atualizarTranscricaoAoVivo();
+  }
+
+  await _gravIniciarOrig();
+};
+
+// Substituir gravFinalizar para parar SR
+var _gravFinalizarOrig = gravFinalizar;
+gravFinalizar = async function() {
+  SR.ativo = false;
+  if(SR.rec) { try { SR.rec.stop(); } catch(e){} }
+  var caixa = document.getElementById('trans-box');
+  if(caixa) caixa.style.display = 'none';
+  await _gravFinalizarOrig();
+};
+
+var _gravPausarOrig = gravPausar;
+gravPausar = function() {
+  if(SR.rec) { try { SR.rec.stop(); } catch(e){} }
+  _gravPausarOrig();
+};
+
+var _gravContinuarOrig = gravContinuar;
+gravContinuar = function() {
+  SR.ativo = true;
+  if(SR.rec) { try { SR.rec.start(); } catch(e){} }
+  _gravContinuarOrig();
+};
+
+// Substituir gravProcessar para usar transcricao real
+var _gravProcessarOrig = gravProcessar;
+gravProcessar = async function() {
+  var mat = document.getElementById('grav-materia').value || 'auto';
+  var trans = SR.texto.trim();
+
+  if(!trans || trans.length < 20) {
+    // Sem transcricao real — usar fallback descritivo
+    trans = 'Aula de ' + (mat === 'auto' ? 'Calculo' : mat) + ' — ' + new Date().toLocaleDateString('pt-BR') + '. Duracao: ' + fmt(GV.seg) + '. [Transcricao nao disponivel neste dispositivo — use Chrome para transcricao automatica]';
+  }
+
+  try {
+    var res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1000,
+        messages:[{role:'user',content:'Analise a transcricao e responda APENAS em JSON valido sem markdown: {"materia":"nome da materia detectada","resumo":"resumo claro em 2-3 paragrafos","pontos_prova":["ponto1","ponto2","ponto3"],"nivel":"iniciante|basico|intermediario|avancado"}
+
+Transcricao: ' + trans}]
+      })
+    });
+    var data = await res.json();
+    var txt = data.content && data.content[0] && data.content[0].text || '{}';
+    var clean = txt.replace(/```json|```/g,'').trim();
+    var json = JSON.parse(clean);
+    gravMostrar(json.materia||mat, json.resumo||'Aula salva.', json.pontos_prova||[], trans, json.nivel||'basico');
+  } catch(e) {
+    gravMostrar(mat==='auto'?'Aula':mat, 'Aula salva! Confira a transcricao abaixo.', [], trans, 'basico');
+  }
+};
+
+// Upload de audio (mp3/m4a) da galeria
+function uploadAudio() {
+  var inp = document.createElement('input');
+  inp.type = 'file';
+  inp.accept = 'audio/*';
+  inp.onchange = async function(e) {
+    var file = e.target.files[0];
+    if(!file) return;
+    toast('Processando audio...', '');
+    var id = 'upload_' + Date.now();
+    await salvarAudioIDB(id, file, {nome:file.name, tipo:'upload', data:new Date().toISOString()});
+    SR.texto = 'Audio enviado: ' + file.name + '. Duracao desconhecida. [Arquivo salvo no caderno para referencia]';
+    GV.seg = 0;
+    await gravProcessar();
+  };
+  inp.click();
+}
+</script>
+
 </body>
 </html>
