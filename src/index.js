@@ -304,6 +304,7 @@ app.get('/espaco-digital', (req, res) => res.sendFile(path.join(__dirname, 'publ
 app.get('/agenda-cadastro', (req, res) => res.sendFile(path.join(__dirname, 'public', 'agenda-cadastro.html')));
 app.get('/delivery-migracao', (req, res) => res.sendFile(path.join(__dirname, 'public', 'delivery-migracao.html')));
 app.get('/beca-estuda', (req, res) => res.sendFile(path.join(__dirname, 'public', 'beca-estuda.html')));
+app.get('/beca-estuda-landing', (req, res) => res.sendFile(path.join(__dirname, 'public', 'beca-estuda-landing.html')));
 app.get('/delivery-admin', (req, res) => {
   const ua = req.headers['user-agent'] || '';
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|mobile|CriOS/i.test(ua);
