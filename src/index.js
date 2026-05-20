@@ -157,6 +157,7 @@ app.use('/api/motorista-app', motoristaAppRoutes);
 app.use('/api/comunicacao', comunicacaoRoutes);
 app.use('/api/corridas', _authAdmin, corridaRoutes);
 app.use('/api/admin-master', adminMasterRoutes);
+app.use('/api/beca-estuda/assinantes', require('./routes/beca-estuda.routes'));
 app.use('/api/cerebro', cerebroRoutes);
 app.use('/api/clientes', _authAdmin, clienteRoutes);
 app.use('/api/gps', gpsRoutes);

@@ -234,6 +234,7 @@
                 <div class="menu-item" data-page="admins">👥 Administradores</div>
                 <div class="menu-item" data-page="pendentes">⏳ Pendentes</div>
                 <div class="menu-item" data-page="contabilidade">📈 Contabilidade</div>
+                <div class="menu-item" data-page="beca-estuda">🎓 Beca Estuda</div>
                 <div class="menu-section">Financeiro</div>
                 <div class="menu-item" data-page="planos">💎 Planos</div>
                 <div class="menu-item" data-page="mensalidades">💰 Mensalidades</div>
@@ -276,6 +277,61 @@
                     <h2 style="margin-bottom:20px;">⏳ Admins Pendentes de Aprovação</h2>
                     <div class="panel"><table><thead><tr><th>Nome</th><th>Email</th><th>Empresa</th><th>Telefone</th><th>Data Cadastro</th><th>Ações</th></tr></thead><tbody id="tabelaPendentes"></tbody></table></div>
                 </div>
+                
+                <div class="page" id="page-beca-estuda">
+                    <h2 style="margin-bottom:8px">🎓 Beca Estuda — Assinantes</h2>
+                    <p style="color:#888;font-size:.85rem;margin-bottom:20px">Plano R$ 59,90/mês · Assinantes ativos e histórico</p>
+
+                    <!-- Cards resumo -->
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:24px">
+                        <div class="panel" style="text-align:center;padding:20px">
+                            <div style="font-size:2rem;font-weight:900;color:#6366f1" id="beca-total">—</div>
+                            <div style="font-size:.78rem;color:#888;margin-top:4px">Total assinantes</div>
+                        </div>
+                        <div class="panel" style="text-align:center;padding:20px">
+                            <div style="font-size:2rem;font-weight:900;color:#22c55e" id="beca-ativos">—</div>
+                            <div style="font-size:.78rem;color:#888;margin-top:4px">Ativos</div>
+                        </div>
+                        <div class="panel" style="text-align:center;padding:20px">
+                            <div style="font-size:2rem;font-weight:900;color:#f59e0b" id="beca-trial">—</div>
+                            <div style="font-size:.78rem;color:#888;margin-top:4px">Em teste</div>
+                        </div>
+                        <div class="panel" style="text-align:center;padding:20px">
+                            <div style="font-size:2rem;font-weight:900;color:#10b981" id="beca-mrr">—</div>
+                            <div style="font-size:.78rem;color:#888;margin-top:4px">MRR estimado</div>
+                        </div>
+                    </div>
+
+                    <!-- Botao novo assinante manual -->
+                    <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+                        <button onclick="carregarBecaAssinantes()" style="padding:9px 18px;background:#6366f1;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-size:.85rem">🔄 Atualizar</button>
+                        <button onclick="abrirNovoAssinanteBeca()" style="padding:9px 18px;background:#22c55e;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-size:.85rem">➕ Novo assinante</button>
+                        <button onclick="exportarBecaCSV()" style="padding:9px 18px;background:#374151;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-size:.85rem">📥 Exportar CSV</button>
+                    </div>
+
+                    <!-- Tabela -->
+                    <div class="panel" style="overflow-x:auto">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Nome</th>
+                                    <th>Email</th>
+                                    <th>WhatsApp</th>
+                                    <th>Curso</th>
+                                    <th>Plano</th>
+                                    <th>Status</th>
+                                    <th>Vencimento</th>
+                                    <th>Cadastro</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabelaBecaAssinantes">
+                                <tr><td colspan="9" style="text-align:center;color:#888;padding:32px">Carregando...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
                 <div class="page" id="page-contabilidade">
                     <h2 style="margin-bottom:20px;">📈 Contabilidade por Admin</h2>
                     <div class="panel"><table><thead><tr><th>Admin</th><th>Empresa</th><th>Motoristas</th><th>Corridas/Mês</th><th>Faturamento</th><th>Mensalidade</th><th>Status</th></tr></thead><tbody id="tabelaContabilidade"></tbody></table></div>
@@ -608,6 +664,7 @@
                 case 'admins': carregarAdmins(); break;
                 case 'pendentes': carregarPendentes(); break;
                 case 'contabilidade': carregarContabilidade(); break;
+                case 'beca-estuda': carregarBecaAssinantes(); break;
                 case 'planos': carregarPlanos(); break;
                 case 'mensalidades': carregarMensalidades(); break;
                 case 'logs': carregarLogs(); break;
@@ -1477,7 +1534,123 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }, true);
   });
-  </script>
+  
+        // ══ BECA ESTUDA ASSINANTES ══
+        async function carregarBecaAssinantes() {
+            try {
+                const res = await fetch('/api/beca-estuda/assinantes', {
+                    headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('master_token') || '') }
+                });
+                const data = await res.json();
+                const lista = Array.isArray(data) ? data : (data.assinantes || []);
+
+                // Atualizar cards
+                const ativos = lista.filter(a => a.status === 'ativo');
+                const trial = lista.filter(a => a.status === 'trial');
+                document.getElementById('beca-total').textContent = lista.length;
+                document.getElementById('beca-ativos').textContent = ativos.length;
+                document.getElementById('beca-trial').textContent = trial.length;
+                document.getElementById('beca-mrr').textContent = 'R$ ' + (ativos.length * 59.9).toFixed(2).replace('.',',');
+
+                const tbody = document.getElementById('tabelaBecaAssinantes');
+                if(!lista.length) {
+                    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#888;padding:32px">Nenhum assinante ainda</td></tr>';
+                    return;
+                }
+
+                const statusBadge = {
+                    ativo: '<span style="background:#22c55e22;color:#22c55e;padding:3px 10px;border-radius:6px;font-size:.72rem;font-weight:700">ATIVO</span>',
+                    trial: '<span style="background:#f59e0b22;color:#f59e0b;padding:3px 10px;border-radius:6px;font-size:.72rem;font-weight:700">TRIAL</span>',
+                    cancelado: '<span style="background:#ef444422;color:#ef4444;padding:3px 10px;border-radius:6px;font-size:.72rem;font-weight:700">CANCELADO</span>',
+                    bloqueado: '<span style="background:#6b728022;color:#9ca3af;padding:3px 10px;border-radius:6px;font-size:.72rem;font-weight:700">BLOQUEADO</span>',
+                };
+
+                tbody.innerHTML = lista.map(a => {
+                    const venc = a.dataVencimento ? new Date(a.dataVencimento).toLocaleDateString('pt-BR') : '—';
+                    const cad = a.criadoEm ? new Date(a.criadoEm).toLocaleDateString('pt-BR') : '—';
+                    const badge = statusBadge[a.status] || statusBadge.ativo;
+                    return `<tr>
+                        <td><strong>${a.nome||'—'}</strong></td>
+                        <td>${a.email||'—'}</td>
+                        <td>${a.whatsapp||'—'}</td>
+                        <td style="color:#888">${a.curso||'—'}</td>
+                        <td>R$ 59,90/mês</td>
+                        <td>${badge}</td>
+                        <td>${venc}</td>
+                        <td style="color:#888">${cad}</td>
+                        <td>
+                            <button onclick="editarBecaAssinante('${a._id}')" style="background:#374151;border:none;color:#fff;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:.75rem;margin-right:4px">✏️</button>
+                            <button onclick="toggleBecaAssinante('${a._id}','${a.status}')" style="background:${a.status==='ativo'?'#ef444422':'#22c55e22'};border:1px solid ${a.status==='ativo'?'#ef4444':'#22c55e'};color:${a.status==='ativo'?'#ef4444':'#22c55e'};padding:4px 10px;border-radius:6px;cursor:pointer;font-size:.75rem">${a.status==='ativo'?'Bloquear':'Ativar'}</button>
+                        </td>
+                    </tr>`;
+                }).join('');
+            } catch(e) {
+                document.getElementById('tabelaBecaAssinantes').innerHTML = '<tr><td colspan="9" style="text-align:center;color:#ef4444;padding:32px">Erro ao carregar: ' + e.message + '</td></tr>';
+            }
+        }
+
+        function abrirNovoAssinanteBeca() {
+            const nome = prompt('Nome do assinante:');
+            if(!nome) return;
+            const email = prompt('Email:');
+            const whatsapp = prompt('WhatsApp (com DDD):');
+            const curso = prompt('Curso (opcional):');
+            fetch('/api/beca-estuda/assinantes', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (localStorage.getItem('master_token') || '') },
+                body: JSON.stringify({ nome, email, whatsapp, curso, status: 'ativo', plano: 'mensal', valor: 59.90 })
+            }).then(r => r.json()).then(d => {
+                if(d.sucesso || d._id) { alert('✅ Assinante cadastrado!'); carregarBecaAssinantes(); }
+                else alert('Erro: ' + (d.erro || JSON.stringify(d)));
+            });
+        }
+
+        async function toggleBecaAssinante(id, statusAtual) {
+            const novoStatus = statusAtual === 'ativo' ? 'bloqueado' : 'ativo';
+            if(!confirm('Alterar status para ' + novoStatus + '?')) return;
+            const res = await fetch('/api/beca-estuda/assinantes/' + id, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (localStorage.getItem('master_token') || '') },
+                body: JSON.stringify({ status: novoStatus })
+            });
+            const d = await res.json();
+            if(d.sucesso) carregarBecaAssinantes();
+            else alert('Erro: ' + (d.erro || JSON.stringify(d)));
+        }
+
+        async function editarBecaAssinante(id) {
+            const novoNome = prompt('Novo nome (deixe vazio para manter):');
+            const novoEmail = prompt('Novo email (deixe vazio para manter):');
+            const novoWpp = prompt('Novo WhatsApp (deixe vazio para manter):');
+            const body = {};
+            if(novoNome) body.nome = novoNome;
+            if(novoEmail) body.email = novoEmail;
+            if(novoWpp) body.whatsapp = novoWpp;
+            if(!Object.keys(body).length) return;
+            const res = await fetch('/api/beca-estuda/assinantes/' + id, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (localStorage.getItem('master_token') || '') },
+                body: JSON.stringify(body)
+            });
+            const d = await res.json();
+            if(d.sucesso) { alert('✅ Atualizado!'); carregarBecaAssinantes(); }
+        }
+
+        function exportarBecaCSV() {
+            const rows = [['Nome','Email','WhatsApp','Curso','Status','Vencimento','Cadastro']];
+            document.querySelectorAll('#tabelaBecaAssinantes tr').forEach(tr => {
+                const tds = tr.querySelectorAll('td');
+                if(tds.length > 1) rows.push([tds[0].innerText, tds[1].innerText, tds[2].innerText, tds[3].innerText, tds[5].innerText, tds[6].innerText, tds[7].innerText]);
+            });
+            const csv = rows.map(r => r.map(c => '"'+c+'"').join(',')).join('\n');
+            const blob = new Blob([csv], {type:'text/csv'});
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'beca-assinantes-' + new Date().toISOString().split('T')[0] + '.csv';
+            a.click();
+        }
+
+        </script>
 
 <!-- fallback IDs master -->
 <div id="modalAlterarPlano" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9001"></div>
