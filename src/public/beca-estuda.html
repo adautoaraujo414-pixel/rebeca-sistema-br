@@ -1959,6 +1959,218 @@ window.fetch = function(url, opts) {
 };
 </script>
 
+
+<script>
+// ══ TREINO MELHORADO: TIMER + PONTUACAO + HISTORICO ══
+
+var TREINO = {
+  questoes: [], atual: 0, acertos: 0, erros: 0,
+  timer: null, segundos: 0, respondidas: [],
+  inicio: null
+};
+
+var _initTreinarOrig = initTreinar;
+initTreinar = function() {
+  TREINO.questoes = DB.exercicios || [];
+  TREINO.atual = 0; TREINO.acertos = 0; TREINO.erros = 0;
+  TREINO.respondidas = []; TREINO.segundos = 0;
+  TREINO.inicio = Date.now();
+  clearInterval(TREINO.timer);
+
+  if(!TREINO.questoes.length) {
+    var el = document.getElementById('treino-area');
+    if(el) el.innerHTML =
+      '<div style="text-align:center;padding:48px 0">' +
+        '<div style="font-size:48px;margin-bottom:14px">🧠</div>' +
+        '<div style="font-weight:700;font-size:1rem;margin-bottom:8px">Nenhum exercicio ainda</div>' +
+        '<div style="color:var(--txt2);font-size:.85rem;margin-bottom:24px">Grave uma aula para a IA gerar exercicios automaticamente</div>' +
+        '<button class="btn-p" onclick="ir('s-gravar')">🎙️ Gravar aula</button>' +
+      '</div>';
+    return;
+  }
+
+  renderTreino();
+};
+
+function renderTreino() {
+  var el = document.getElementById('treino-area');
+  if(!el) return;
+
+  if(TREINO.atual >= TREINO.questoes.length) {
+    mostrarResultadoTreino();
+    return;
+  }
+
+  var q = TREINO.questoes[TREINO.atual];
+  var total = TREINO.questoes.length;
+  var pct = Math.round((TREINO.atual / total) * 100);
+
+  // Timer por questao (30s)
+  TREINO.segundos = 30;
+  clearInterval(TREINO.timer);
+  TREINO.timer = setInterval(function() {
+    TREINO.segundos--;
+    var tel = document.getElementById('treino-timer');
+    if(tel) {
+      tel.textContent = TREINO.segundos + 's';
+      tel.style.color = TREINO.segundos <= 10 ? '#ef4444' : 'var(--txt2)';
+    }
+    if(TREINO.segundos <= 0) {
+      clearInterval(TREINO.timer);
+      responderTreino(-1); // timeout = erro
+    }
+  }, 1000);
+
+  var opcoesHtml = (q.ops || []).map(function(op, i) {
+    return '<button id="op-'+i+'" onclick="responderTreino('+i+')" style="width:100%;text-align:left;padding:14px 16px;margin-bottom:8px;background:var(--bg2);border:1.5px solid var(--bg3);border-radius:12px;color:var(--txt1);font-family:Inter,sans-serif;font-size:.88rem;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:12px">' +
+      '<span style="width:26px;height:26px;border-radius:8px;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;flex-shrink:0">'+'ABCD'[i]+'</span>' +
+      '<span>'+op+'</span>' +
+    '</button>';
+  }).join('');
+
+  el.innerHTML =
+    // Header com progresso e timer
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">' +
+      '<div style="font-size:.75rem;color:var(--txt3);font-weight:600">'+( TREINO.atual+1)+' / '+total+'</div>' +
+      '<div style="display:flex;align-items:center;gap:6px"><span style="font-size:.75rem;color:var(--txt3)">⏱</span><span id="treino-timer" style="font-size:.85rem;font-weight:700;color:var(--txt2);min-width:28px">30s</span></div>' +
+      '<div style="font-size:.75rem;color:var(--txt3)">✅'+TREINO.acertos+' ❌'+TREINO.erros+'</div>' +
+    '</div>' +
+    // Barra de progresso
+    '<div style="height:4px;background:var(--bg3);border-radius:2px;margin-bottom:20px;overflow:hidden">' +
+      '<div style="height:100%;width:'+pct+'%;background:var(--accent);border-radius:2px;transition:width .4s ease"></div>' +
+    '</div>' +
+    // Pergunta
+    '<div style="background:var(--bg2);border:1.5px solid var(--bg3);border-radius:16px;padding:20px;margin-bottom:16px">' +
+      '<div style="font-size:.68rem;color:var(--accent2);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Questão '+(TREINO.atual+1)+'</div>' +
+      '<div style="font-size:.95rem;font-weight:600;line-height:1.6;color:var(--txt1)">'+q.p+'</div>' +
+    '</div>' +
+    // Opcoes
+    opcoesHtml +
+    // Botao pular
+    '<button onclick="responderTreino(-1)" style="width:100%;padding:11px;background:transparent;border:1px solid var(--bg3);border-radius:12px;color:var(--txt3);font-family:Inter,sans-serif;font-size:.8rem;cursor:pointer;margin-top:4px">Pular questão →</button>';
+}
+
+function responderTreino(idx) {
+  clearInterval(TREINO.timer);
+  var q = TREINO.questoes[TREINO.atual];
+  var correta = q.c;
+  var acertou = idx === correta;
+
+  TREINO.respondidas.push({
+    questao: q.p,
+    escolhida: idx,
+    correta: correta,
+    acertou: acertou,
+    tempo: 30 - TREINO.segundos
+  });
+
+  if(acertou) TREINO.acertos++;
+  else TREINO.erros++;
+
+  // Registrar no evolucao
+  if(!DB.evolucao) DB.evolucao = {};
+  if(!DB.evolucao.historico) DB.evolucao.historico = {};
+  DB.evolucao.historico[new Date().toISOString().split('T')[0]] = true;
+  salvarDB();
+
+  // Highlight visual da resposta
+  var ops = document.querySelectorAll('[id^="op-"]');
+  ops.forEach(function(btn) { btn.style.pointerEvents = 'none'; });
+
+  if(idx >= 0) {
+    var escolhida = document.getElementById('op-'+idx);
+    if(escolhida) {
+      escolhida.style.background = acertou ? '#22c55e22' : '#ef444422';
+      escolhida.style.borderColor = acertou ? '#22c55e' : '#ef4444';
+    }
+  }
+
+  var corretaBtn = document.getElementById('op-'+correta);
+  if(corretaBtn && !acertou) {
+    corretaBtn.style.background = '#22c55e22';
+    corretaBtn.style.borderColor = '#22c55e';
+  }
+
+  // Mostrar explicacao
+  var el = document.getElementById('treino-area');
+  if(el && q.r) {
+    var exp = document.createElement('div');
+    exp.style.cssText = 'background:'+(acertou?'#22c55e':'#ef4444')+'11;border:1px solid '+(acertou?'#22c55e':'#ef4444')+'44;border-radius:12px;padding:14px;margin-top:10px;font-size:.83rem;color:var(--txt2);line-height:1.6';
+    exp.innerHTML = '<strong style="color:'+(acertou?'#22c55e':'#ef4444')+'">'+(acertou?'✅ Correto!':'❌ Incorreto')+'</strong><br>'+q.r;
+    el.appendChild(exp);
+
+    var prox = document.createElement('button');
+    prox.className = 'btn-p';
+    prox.style.marginTop = '12px';
+    prox.textContent = TREINO.atual + 1 < TREINO.questoes.length ? 'Próxima →' : 'Ver resultado';
+    prox.onclick = function() { TREINO.atual++; renderTreino(); };
+    el.appendChild(prox);
+  } else {
+    setTimeout(function() { TREINO.atual++; renderTreino(); }, 800);
+  }
+}
+
+function mostrarResultadoTreino() {
+  var el = document.getElementById('treino-area');
+  if(!el) return;
+
+  var total = TREINO.questoes.length;
+  var pct = Math.round((TREINO.acertos / total) * 100);
+  var tempo = Math.round((Date.now() - TREINO.inicio) / 1000);
+  var mins = Math.floor(tempo/60), segs = tempo%60;
+  var tempoStr = mins > 0 ? mins+'min '+segs+'s' : segs+'s';
+
+  var emoji = pct >= 80 ? '🏆' : pct >= 60 ? '👍' : pct >= 40 ? '📚' : '💪';
+  var msg = pct >= 80 ? 'Excelente!' : pct >= 60 ? 'Bom trabalho!' : pct >= 40 ? 'Continue estudando!' : 'Não desista!';
+
+  // Salvar no historico de treinos
+  if(!DB.evolucao) DB.evolucao = {};
+  if(!DB.evolucao.treinos) DB.evolucao.treinos = [];
+  DB.evolucao.treinos.push({
+    data: new Date().toISOString(),
+    acertos: TREINO.acertos,
+    erros: TREINO.erros,
+    total: total,
+    pct: pct,
+    tempo: tempo
+  });
+  salvarDB();
+
+  // Historico dos ultimos 5 treinos
+  var hist = DB.evolucao.treinos.slice(-5).reverse();
+  var histHtml = hist.length > 1
+    ? '<div style="margin-top:20px"><div style="font-size:.68rem;color:var(--txt3);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">Histórico recente</div>' +
+      hist.slice(1).map(function(t) {
+        var d = new Date(t.data).toLocaleDateString('pt-BR',{day:'2-digit',month:'short'});
+        return '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--bg3)">' +
+          '<span style="font-size:.8rem;color:var(--txt2)">'+d+'</span>' +
+          '<div style="display:flex;align-items:center;gap:8px">' +
+            '<span style="font-size:.75rem;color:var(--txt3)">'+t.acertos+'/'+t.total+'</span>' +
+            '<span style="font-size:.8rem;font-weight:700;color:'+(t.pct>=60?'#22c55e':'#f59e0b')+'">'+t.pct+'%</span>' +
+          '</div>' +
+        '</div>';
+      }).join('') + '</div>'
+    : '';
+
+  el.innerHTML =
+    '<div style="text-align:center;padding:24px 0">' +
+      '<div style="font-size:56px;margin-bottom:8px">'+emoji+'</div>' +
+      '<div style="font-size:1.4rem;font-weight:800;margin-bottom:4px">'+msg+'</div>' +
+      '<div style="font-size:.85rem;color:var(--txt3);margin-bottom:24px">'+pct+'% de acerto · '+tempoStr+'</div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:20px">' +
+        '<div style="background:#22c55e22;border:1px solid #22c55e44;border-radius:12px;padding:14px;text-align:center"><div style="font-size:1.4rem;font-weight:800;color:#22c55e">'+TREINO.acertos+'</div><div style="font-size:.7rem;color:var(--txt3)">Acertos</div></div>' +
+        '<div style="background:#ef444422;border:1px solid #ef444444;border-radius:12px;padding:14px;text-align:center"><div style="font-size:1.4rem;font-weight:800;color:#ef4444">'+TREINO.erros+'</div><div style="font-size:.7rem;color:var(--txt3)">Erros</div></div>' +
+        '<div style="background:var(--bg2);border:1px solid var(--bg3);border-radius:12px;padding:14px;text-align:center"><div style="font-size:1.4rem;font-weight:800">'+tempoStr+'</div><div style="font-size:.7rem;color:var(--txt3)">Tempo</div></div>' +
+      '</div>' +
+      histHtml +
+      '<div style="display:flex;gap:10px;margin-top:20px">' +
+        '<button class="btn-o" onclick="initTreinar()" style="flex:1">🔄 Refazer</button>' +
+        '<button class="btn-p" onclick="ir('s-home')" style="flex:1">🏠 Home</button>' +
+      '</div>' +
+    '</div>';
+}
+</script>
+
 </body></html>';
 
   var blob = new Blob([htmlPDF], {type:'text/html;charset=utf-8'});
@@ -2456,6 +2668,218 @@ window.fetch = function(url, opts) {
   }
   return _fetchOrig.apply(this, arguments);
 };
+</script>
+
+
+<script>
+// ══ TREINO MELHORADO: TIMER + PONTUACAO + HISTORICO ══
+
+var TREINO = {
+  questoes: [], atual: 0, acertos: 0, erros: 0,
+  timer: null, segundos: 0, respondidas: [],
+  inicio: null
+};
+
+var _initTreinarOrig = initTreinar;
+initTreinar = function() {
+  TREINO.questoes = DB.exercicios || [];
+  TREINO.atual = 0; TREINO.acertos = 0; TREINO.erros = 0;
+  TREINO.respondidas = []; TREINO.segundos = 0;
+  TREINO.inicio = Date.now();
+  clearInterval(TREINO.timer);
+
+  if(!TREINO.questoes.length) {
+    var el = document.getElementById('treino-area');
+    if(el) el.innerHTML =
+      '<div style="text-align:center;padding:48px 0">' +
+        '<div style="font-size:48px;margin-bottom:14px">🧠</div>' +
+        '<div style="font-weight:700;font-size:1rem;margin-bottom:8px">Nenhum exercicio ainda</div>' +
+        '<div style="color:var(--txt2);font-size:.85rem;margin-bottom:24px">Grave uma aula para a IA gerar exercicios automaticamente</div>' +
+        '<button class="btn-p" onclick="ir('s-gravar')">🎙️ Gravar aula</button>' +
+      '</div>';
+    return;
+  }
+
+  renderTreino();
+};
+
+function renderTreino() {
+  var el = document.getElementById('treino-area');
+  if(!el) return;
+
+  if(TREINO.atual >= TREINO.questoes.length) {
+    mostrarResultadoTreino();
+    return;
+  }
+
+  var q = TREINO.questoes[TREINO.atual];
+  var total = TREINO.questoes.length;
+  var pct = Math.round((TREINO.atual / total) * 100);
+
+  // Timer por questao (30s)
+  TREINO.segundos = 30;
+  clearInterval(TREINO.timer);
+  TREINO.timer = setInterval(function() {
+    TREINO.segundos--;
+    var tel = document.getElementById('treino-timer');
+    if(tel) {
+      tel.textContent = TREINO.segundos + 's';
+      tel.style.color = TREINO.segundos <= 10 ? '#ef4444' : 'var(--txt2)';
+    }
+    if(TREINO.segundos <= 0) {
+      clearInterval(TREINO.timer);
+      responderTreino(-1); // timeout = erro
+    }
+  }, 1000);
+
+  var opcoesHtml = (q.ops || []).map(function(op, i) {
+    return '<button id="op-'+i+'" onclick="responderTreino('+i+')" style="width:100%;text-align:left;padding:14px 16px;margin-bottom:8px;background:var(--bg2);border:1.5px solid var(--bg3);border-radius:12px;color:var(--txt1);font-family:Inter,sans-serif;font-size:.88rem;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:12px">' +
+      '<span style="width:26px;height:26px;border-radius:8px;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;flex-shrink:0">'+'ABCD'[i]+'</span>' +
+      '<span>'+op+'</span>' +
+    '</button>';
+  }).join('');
+
+  el.innerHTML =
+    // Header com progresso e timer
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">' +
+      '<div style="font-size:.75rem;color:var(--txt3);font-weight:600">'+( TREINO.atual+1)+' / '+total+'</div>' +
+      '<div style="display:flex;align-items:center;gap:6px"><span style="font-size:.75rem;color:var(--txt3)">⏱</span><span id="treino-timer" style="font-size:.85rem;font-weight:700;color:var(--txt2);min-width:28px">30s</span></div>' +
+      '<div style="font-size:.75rem;color:var(--txt3)">✅'+TREINO.acertos+' ❌'+TREINO.erros+'</div>' +
+    '</div>' +
+    // Barra de progresso
+    '<div style="height:4px;background:var(--bg3);border-radius:2px;margin-bottom:20px;overflow:hidden">' +
+      '<div style="height:100%;width:'+pct+'%;background:var(--accent);border-radius:2px;transition:width .4s ease"></div>' +
+    '</div>' +
+    // Pergunta
+    '<div style="background:var(--bg2);border:1.5px solid var(--bg3);border-radius:16px;padding:20px;margin-bottom:16px">' +
+      '<div style="font-size:.68rem;color:var(--accent2);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Questão '+(TREINO.atual+1)+'</div>' +
+      '<div style="font-size:.95rem;font-weight:600;line-height:1.6;color:var(--txt1)">'+q.p+'</div>' +
+    '</div>' +
+    // Opcoes
+    opcoesHtml +
+    // Botao pular
+    '<button onclick="responderTreino(-1)" style="width:100%;padding:11px;background:transparent;border:1px solid var(--bg3);border-radius:12px;color:var(--txt3);font-family:Inter,sans-serif;font-size:.8rem;cursor:pointer;margin-top:4px">Pular questão →</button>';
+}
+
+function responderTreino(idx) {
+  clearInterval(TREINO.timer);
+  var q = TREINO.questoes[TREINO.atual];
+  var correta = q.c;
+  var acertou = idx === correta;
+
+  TREINO.respondidas.push({
+    questao: q.p,
+    escolhida: idx,
+    correta: correta,
+    acertou: acertou,
+    tempo: 30 - TREINO.segundos
+  });
+
+  if(acertou) TREINO.acertos++;
+  else TREINO.erros++;
+
+  // Registrar no evolucao
+  if(!DB.evolucao) DB.evolucao = {};
+  if(!DB.evolucao.historico) DB.evolucao.historico = {};
+  DB.evolucao.historico[new Date().toISOString().split('T')[0]] = true;
+  salvarDB();
+
+  // Highlight visual da resposta
+  var ops = document.querySelectorAll('[id^="op-"]');
+  ops.forEach(function(btn) { btn.style.pointerEvents = 'none'; });
+
+  if(idx >= 0) {
+    var escolhida = document.getElementById('op-'+idx);
+    if(escolhida) {
+      escolhida.style.background = acertou ? '#22c55e22' : '#ef444422';
+      escolhida.style.borderColor = acertou ? '#22c55e' : '#ef4444';
+    }
+  }
+
+  var corretaBtn = document.getElementById('op-'+correta);
+  if(corretaBtn && !acertou) {
+    corretaBtn.style.background = '#22c55e22';
+    corretaBtn.style.borderColor = '#22c55e';
+  }
+
+  // Mostrar explicacao
+  var el = document.getElementById('treino-area');
+  if(el && q.r) {
+    var exp = document.createElement('div');
+    exp.style.cssText = 'background:'+(acertou?'#22c55e':'#ef4444')+'11;border:1px solid '+(acertou?'#22c55e':'#ef4444')+'44;border-radius:12px;padding:14px;margin-top:10px;font-size:.83rem;color:var(--txt2);line-height:1.6';
+    exp.innerHTML = '<strong style="color:'+(acertou?'#22c55e':'#ef4444')+'">'+(acertou?'✅ Correto!':'❌ Incorreto')+'</strong><br>'+q.r;
+    el.appendChild(exp);
+
+    var prox = document.createElement('button');
+    prox.className = 'btn-p';
+    prox.style.marginTop = '12px';
+    prox.textContent = TREINO.atual + 1 < TREINO.questoes.length ? 'Próxima →' : 'Ver resultado';
+    prox.onclick = function() { TREINO.atual++; renderTreino(); };
+    el.appendChild(prox);
+  } else {
+    setTimeout(function() { TREINO.atual++; renderTreino(); }, 800);
+  }
+}
+
+function mostrarResultadoTreino() {
+  var el = document.getElementById('treino-area');
+  if(!el) return;
+
+  var total = TREINO.questoes.length;
+  var pct = Math.round((TREINO.acertos / total) * 100);
+  var tempo = Math.round((Date.now() - TREINO.inicio) / 1000);
+  var mins = Math.floor(tempo/60), segs = tempo%60;
+  var tempoStr = mins > 0 ? mins+'min '+segs+'s' : segs+'s';
+
+  var emoji = pct >= 80 ? '🏆' : pct >= 60 ? '👍' : pct >= 40 ? '📚' : '💪';
+  var msg = pct >= 80 ? 'Excelente!' : pct >= 60 ? 'Bom trabalho!' : pct >= 40 ? 'Continue estudando!' : 'Não desista!';
+
+  // Salvar no historico de treinos
+  if(!DB.evolucao) DB.evolucao = {};
+  if(!DB.evolucao.treinos) DB.evolucao.treinos = [];
+  DB.evolucao.treinos.push({
+    data: new Date().toISOString(),
+    acertos: TREINO.acertos,
+    erros: TREINO.erros,
+    total: total,
+    pct: pct,
+    tempo: tempo
+  });
+  salvarDB();
+
+  // Historico dos ultimos 5 treinos
+  var hist = DB.evolucao.treinos.slice(-5).reverse();
+  var histHtml = hist.length > 1
+    ? '<div style="margin-top:20px"><div style="font-size:.68rem;color:var(--txt3);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">Histórico recente</div>' +
+      hist.slice(1).map(function(t) {
+        var d = new Date(t.data).toLocaleDateString('pt-BR',{day:'2-digit',month:'short'});
+        return '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--bg3)">' +
+          '<span style="font-size:.8rem;color:var(--txt2)">'+d+'</span>' +
+          '<div style="display:flex;align-items:center;gap:8px">' +
+            '<span style="font-size:.75rem;color:var(--txt3)">'+t.acertos+'/'+t.total+'</span>' +
+            '<span style="font-size:.8rem;font-weight:700;color:'+(t.pct>=60?'#22c55e':'#f59e0b')+'">'+t.pct+'%</span>' +
+          '</div>' +
+        '</div>';
+      }).join('') + '</div>'
+    : '';
+
+  el.innerHTML =
+    '<div style="text-align:center;padding:24px 0">' +
+      '<div style="font-size:56px;margin-bottom:8px">'+emoji+'</div>' +
+      '<div style="font-size:1.4rem;font-weight:800;margin-bottom:4px">'+msg+'</div>' +
+      '<div style="font-size:.85rem;color:var(--txt3);margin-bottom:24px">'+pct+'% de acerto · '+tempoStr+'</div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:20px">' +
+        '<div style="background:#22c55e22;border:1px solid #22c55e44;border-radius:12px;padding:14px;text-align:center"><div style="font-size:1.4rem;font-weight:800;color:#22c55e">'+TREINO.acertos+'</div><div style="font-size:.7rem;color:var(--txt3)">Acertos</div></div>' +
+        '<div style="background:#ef444422;border:1px solid #ef444444;border-radius:12px;padding:14px;text-align:center"><div style="font-size:1.4rem;font-weight:800;color:#ef4444">'+TREINO.erros+'</div><div style="font-size:.7rem;color:var(--txt3)">Erros</div></div>' +
+        '<div style="background:var(--bg2);border:1px solid var(--bg3);border-radius:12px;padding:14px;text-align:center"><div style="font-size:1.4rem;font-weight:800">'+tempoStr+'</div><div style="font-size:.7rem;color:var(--txt3)">Tempo</div></div>' +
+      '</div>' +
+      histHtml +
+      '<div style="display:flex;gap:10px;margin-top:20px">' +
+        '<button class="btn-o" onclick="initTreinar()" style="flex:1">🔄 Refazer</button>' +
+        '<button class="btn-p" onclick="ir('s-home')" style="flex:1">🏠 Home</button>' +
+      '</div>' +
+    '</div>';
+}
 </script>
 
 </body>
