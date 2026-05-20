@@ -1786,6 +1786,179 @@ function aplicarTema(tema) {
 })();
 </script>
 
+
+<script>
+// ══ BUSCA GLOBAL ══
+
+function abrirBusca() {
+  abrirModal(
+    '<div style="margin-bottom:16px">' +
+      '<div style="font-size:.68rem;color:var(--accent2);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">🔍 Busca global</div>' +
+      '<input class="input" id="busca-input" placeholder="Buscar aulas, eventos, flashcards..." oninput="executarBusca(this.value)" style="font-size:.95rem" autofocus>' +
+    '</div>' +
+    '<div id="busca-resultados" style="max-height:55vh;overflow-y:auto"></div>'
+  );
+  setTimeout(function(){ var el=document.getElementById('busca-input'); if(el) el.focus(); }, 100);
+}
+
+function executarBusca(q) {
+  var el = document.getElementById('busca-resultados');
+  if(!el) return;
+  q = q.trim().toLowerCase();
+  if(q.length < 2) {
+    el.innerHTML = '<div style="text-align:center;padding:24px;color:var(--txt3);font-size:.85rem">Digite ao menos 2 caracteres</div>';
+    return;
+  }
+
+  var results = [];
+
+  // Buscar em aulas dos cadernos
+  DB.cadernos.forEach(function(c) {
+    c.aulas.forEach(function(a) {
+      if((a.titulo+a.resumo).toLowerCase().includes(q)) {
+        results.push({tipo:'aula', emoji:c.emoji, titulo:a.titulo, sub:c.nome, acao:"fecharModal();verCaderno('"+c.id+"')"});
+      }
+    });
+  });
+
+  // Buscar em eventos
+  DB.eventos.forEach(function(e) {
+    if((e.titulo+e.materia).toLowerCase().includes(q)) {
+      var icons = {prova:'📝',tarefa:'✅',evento:'📌'};
+      results.push({tipo:'evento', emoji:icons[e.tipo]||'📅', titulo:e.titulo, sub:e.materia+' · '+e.data, acao:"fecharModal();ir('s-calendario')"});
+    }
+  });
+
+  // Buscar em flashcards
+  DB.flashcards.forEach(function(f) {
+    if((f.frente+f.verso).toLowerCase().includes(q)) {
+      results.push({tipo:'flashcard', emoji:'🃏', titulo:f.frente, sub:f.verso.substring(0,60)+'...', acao:"fecharModal();renderFCComHeader();ir('s-flashcards')"});
+    }
+  });
+
+  if(!results.length) {
+    el.innerHTML = '<div style="text-align:center;padding:32px;color:var(--txt3)"><div style="font-size:32px;margin-bottom:8px">🔍</div><div>Nada encontrado para "'+q+'"</div></div>';
+    return;
+  }
+
+  var badges = {aula:'var(--accent)', evento:'#f59e0b', flashcard:'#22c55e'};
+  el.innerHTML = results.map(function(r) {
+    return '<div onclick="'+r.acao+'" style="display:flex;align-items:center;gap:12px;padding:12px;border-radius:12px;margin-bottom:6px;background:var(--bg2);border:1px solid var(--bg3);cursor:pointer" onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background='var(--bg2)'">' +
+      '<div style="width:36px;height:36px;border-radius:10px;background:'+(badges[r.tipo]||'var(--accent)')+'22;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">'+r.emoji+'</div>' +
+      '<div style="flex:1;min-width:0"><div style="font-weight:700;font-size:.88rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+r.titulo+'</div>' +
+      '<div style="color:var(--txt3);font-size:.72rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+r.sub+'</div></div>' +
+    '</div>';
+  }).join('');
+}
+
+// Adicionar botao de busca na nav-bar ou header
+window.addEventListener('load', function() {
+  setTimeout(function() {
+    // Injetar icone de busca no header da home
+    var headers = document.querySelectorAll('.header');
+    headers.forEach(function(h) {
+      if(h.querySelector('.busca-btn')) return;
+      var btn = document.createElement('button');
+      btn.className = 'busca-btn';
+      btn.innerHTML = '🔍';
+      btn.title = 'Buscar';
+      btn.style.cssText = 'background:var(--bg2);border:1.5px solid var(--bg3);border-radius:10px;width:36px;height:36px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0';
+      btn.onclick = abrirBusca;
+      h.appendChild(btn);
+    });
+  }, 800);
+});
+
+// Atalho: segurar botao home por 1s abre busca
+var _homeHold = null;
+document.addEventListener('touchstart', function(e) {
+  var nav = e.target.closest('.nav-item');
+  if(nav && nav.getAttribute('onclick') && nav.getAttribute('onclick').includes('s-home')) {
+    _homeHold = setTimeout(abrirBusca, 700);
+  }
+});
+document.addEventListener('touchend', function() {
+  clearTimeout(_homeHold);
+});
+
+// ══ MELHORIAS VISUAIS FINAIS ══
+
+// 1) Animacao de entrada nas telas
+var _irOrig = ir;
+ir = function(tela) {
+  _irOrig(tela);
+  var el = document.getElementById(tela);
+  if(el) {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(10px)';
+    requestAnimationFrame(function() {
+      el.style.transition = 'opacity .22s ease, transform .22s ease';
+      el.style.opacity = '1';
+      el.style.transform = 'translateY(0)';
+    });
+  }
+};
+
+// 2) Toast melhorado com icone
+var _toastOrig = toast;
+toast = function(msg, tipo) {
+  var icons = {ok:'✅', err:'❌', '':'ℹ️'};
+  _toastOrig((icons[tipo]||'ℹ️') + ' ' + msg, tipo);
+};
+
+// 3) Confirmar antes de sair sem login
+var _logoutOrig = logout;
+logout = function() {
+  abrirModal(
+    '<div style="text-align:center;padding:8px 0">' +
+    '<div style="font-size:40px;margin-bottom:12px">👋</div>' +
+    '<h2 style="font-weight:800;margin-bottom:8px">Sair da conta?</h2>' +
+    '<p style="color:var(--txt2);font-size:.88rem;margin-bottom:24px">Seus dados ficam salvos no dispositivo.</p>' +
+    '<div style="display:flex;gap:10px">' +
+      '<button class="btn-o" onclick="fecharModal()" style="flex:1">Cancelar</button>' +
+      '<button onclick="fecharModal();_logoutOrig()" style="flex:1;padding:13px;background:#ef4444;color:#fff;border:none;border-radius:var(--radius);font-weight:700;cursor:pointer;font-family:Inter,sans-serif">Sair</button>' +
+    '</div></div>'
+  );
+};
+
+// 4) Swipe para voltar (mobile)
+var _swipeX = null;
+document.addEventListener('touchstart', function(e) {
+  _swipeX = e.touches[0].clientX;
+}, {passive:true});
+document.addEventListener('touchend', function(e) {
+  if(_swipeX === null) return;
+  var dx = e.changedTouches[0].clientX - _swipeX;
+  _swipeX = null;
+  // Swipe direita >= 80px na borda esquerda = voltar
+  if(dx >= 80 && e.changedTouches[0].clientX - dx < 40) {
+    history.back();
+  }
+}, {passive:true});
+
+// 5) Indicador de carregamento na API
+var _fetchOrig = window.fetch;
+window.fetch = function(url, opts) {
+  if(url && url.includes('anthropic.com')) {
+    var ind = document.getElementById('api-loading');
+    if(!ind) {
+      ind = document.createElement('div');
+      ind.id = 'api-loading';
+      ind.style.cssText = 'position:fixed;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--accent2));z-index:9999;animation:apiload 1.2s ease infinite';
+      document.body.appendChild(ind);
+      var st = document.createElement('style');
+      st.textContent = '@keyframes apiload{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}';
+      document.head.appendChild(st);
+    }
+    ind.style.display = 'block';
+    return _fetchOrig.apply(this, arguments).finally(function() {
+      if(ind) ind.style.display = 'none';
+    });
+  }
+  return _fetchOrig.apply(this, arguments);
+};
+</script>
+
 </body></html>';
 
   var blob = new Blob([htmlPDF], {type:'text/html;charset=utf-8'});
@@ -2110,6 +2283,179 @@ function aplicarTema(tema) {
   DB.evolucao.historico[hoje] = true;
   salvarDB();
 })();
+</script>
+
+
+<script>
+// ══ BUSCA GLOBAL ══
+
+function abrirBusca() {
+  abrirModal(
+    '<div style="margin-bottom:16px">' +
+      '<div style="font-size:.68rem;color:var(--accent2);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">🔍 Busca global</div>' +
+      '<input class="input" id="busca-input" placeholder="Buscar aulas, eventos, flashcards..." oninput="executarBusca(this.value)" style="font-size:.95rem" autofocus>' +
+    '</div>' +
+    '<div id="busca-resultados" style="max-height:55vh;overflow-y:auto"></div>'
+  );
+  setTimeout(function(){ var el=document.getElementById('busca-input'); if(el) el.focus(); }, 100);
+}
+
+function executarBusca(q) {
+  var el = document.getElementById('busca-resultados');
+  if(!el) return;
+  q = q.trim().toLowerCase();
+  if(q.length < 2) {
+    el.innerHTML = '<div style="text-align:center;padding:24px;color:var(--txt3);font-size:.85rem">Digite ao menos 2 caracteres</div>';
+    return;
+  }
+
+  var results = [];
+
+  // Buscar em aulas dos cadernos
+  DB.cadernos.forEach(function(c) {
+    c.aulas.forEach(function(a) {
+      if((a.titulo+a.resumo).toLowerCase().includes(q)) {
+        results.push({tipo:'aula', emoji:c.emoji, titulo:a.titulo, sub:c.nome, acao:"fecharModal();verCaderno('"+c.id+"')"});
+      }
+    });
+  });
+
+  // Buscar em eventos
+  DB.eventos.forEach(function(e) {
+    if((e.titulo+e.materia).toLowerCase().includes(q)) {
+      var icons = {prova:'📝',tarefa:'✅',evento:'📌'};
+      results.push({tipo:'evento', emoji:icons[e.tipo]||'📅', titulo:e.titulo, sub:e.materia+' · '+e.data, acao:"fecharModal();ir('s-calendario')"});
+    }
+  });
+
+  // Buscar em flashcards
+  DB.flashcards.forEach(function(f) {
+    if((f.frente+f.verso).toLowerCase().includes(q)) {
+      results.push({tipo:'flashcard', emoji:'🃏', titulo:f.frente, sub:f.verso.substring(0,60)+'...', acao:"fecharModal();renderFCComHeader();ir('s-flashcards')"});
+    }
+  });
+
+  if(!results.length) {
+    el.innerHTML = '<div style="text-align:center;padding:32px;color:var(--txt3)"><div style="font-size:32px;margin-bottom:8px">🔍</div><div>Nada encontrado para "'+q+'"</div></div>';
+    return;
+  }
+
+  var badges = {aula:'var(--accent)', evento:'#f59e0b', flashcard:'#22c55e'};
+  el.innerHTML = results.map(function(r) {
+    return '<div onclick="'+r.acao+'" style="display:flex;align-items:center;gap:12px;padding:12px;border-radius:12px;margin-bottom:6px;background:var(--bg2);border:1px solid var(--bg3);cursor:pointer" onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background='var(--bg2)'">' +
+      '<div style="width:36px;height:36px;border-radius:10px;background:'+(badges[r.tipo]||'var(--accent)')+'22;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">'+r.emoji+'</div>' +
+      '<div style="flex:1;min-width:0"><div style="font-weight:700;font-size:.88rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+r.titulo+'</div>' +
+      '<div style="color:var(--txt3);font-size:.72rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+r.sub+'</div></div>' +
+    '</div>';
+  }).join('');
+}
+
+// Adicionar botao de busca na nav-bar ou header
+window.addEventListener('load', function() {
+  setTimeout(function() {
+    // Injetar icone de busca no header da home
+    var headers = document.querySelectorAll('.header');
+    headers.forEach(function(h) {
+      if(h.querySelector('.busca-btn')) return;
+      var btn = document.createElement('button');
+      btn.className = 'busca-btn';
+      btn.innerHTML = '🔍';
+      btn.title = 'Buscar';
+      btn.style.cssText = 'background:var(--bg2);border:1.5px solid var(--bg3);border-radius:10px;width:36px;height:36px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0';
+      btn.onclick = abrirBusca;
+      h.appendChild(btn);
+    });
+  }, 800);
+});
+
+// Atalho: segurar botao home por 1s abre busca
+var _homeHold = null;
+document.addEventListener('touchstart', function(e) {
+  var nav = e.target.closest('.nav-item');
+  if(nav && nav.getAttribute('onclick') && nav.getAttribute('onclick').includes('s-home')) {
+    _homeHold = setTimeout(abrirBusca, 700);
+  }
+});
+document.addEventListener('touchend', function() {
+  clearTimeout(_homeHold);
+});
+
+// ══ MELHORIAS VISUAIS FINAIS ══
+
+// 1) Animacao de entrada nas telas
+var _irOrig = ir;
+ir = function(tela) {
+  _irOrig(tela);
+  var el = document.getElementById(tela);
+  if(el) {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(10px)';
+    requestAnimationFrame(function() {
+      el.style.transition = 'opacity .22s ease, transform .22s ease';
+      el.style.opacity = '1';
+      el.style.transform = 'translateY(0)';
+    });
+  }
+};
+
+// 2) Toast melhorado com icone
+var _toastOrig = toast;
+toast = function(msg, tipo) {
+  var icons = {ok:'✅', err:'❌', '':'ℹ️'};
+  _toastOrig((icons[tipo]||'ℹ️') + ' ' + msg, tipo);
+};
+
+// 3) Confirmar antes de sair sem login
+var _logoutOrig = logout;
+logout = function() {
+  abrirModal(
+    '<div style="text-align:center;padding:8px 0">' +
+    '<div style="font-size:40px;margin-bottom:12px">👋</div>' +
+    '<h2 style="font-weight:800;margin-bottom:8px">Sair da conta?</h2>' +
+    '<p style="color:var(--txt2);font-size:.88rem;margin-bottom:24px">Seus dados ficam salvos no dispositivo.</p>' +
+    '<div style="display:flex;gap:10px">' +
+      '<button class="btn-o" onclick="fecharModal()" style="flex:1">Cancelar</button>' +
+      '<button onclick="fecharModal();_logoutOrig()" style="flex:1;padding:13px;background:#ef4444;color:#fff;border:none;border-radius:var(--radius);font-weight:700;cursor:pointer;font-family:Inter,sans-serif">Sair</button>' +
+    '</div></div>'
+  );
+};
+
+// 4) Swipe para voltar (mobile)
+var _swipeX = null;
+document.addEventListener('touchstart', function(e) {
+  _swipeX = e.touches[0].clientX;
+}, {passive:true});
+document.addEventListener('touchend', function(e) {
+  if(_swipeX === null) return;
+  var dx = e.changedTouches[0].clientX - _swipeX;
+  _swipeX = null;
+  // Swipe direita >= 80px na borda esquerda = voltar
+  if(dx >= 80 && e.changedTouches[0].clientX - dx < 40) {
+    history.back();
+  }
+}, {passive:true});
+
+// 5) Indicador de carregamento na API
+var _fetchOrig = window.fetch;
+window.fetch = function(url, opts) {
+  if(url && url.includes('anthropic.com')) {
+    var ind = document.getElementById('api-loading');
+    if(!ind) {
+      ind = document.createElement('div');
+      ind.id = 'api-loading';
+      ind.style.cssText = 'position:fixed;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--accent2));z-index:9999;animation:apiload 1.2s ease infinite';
+      document.body.appendChild(ind);
+      var st = document.createElement('style');
+      st.textContent = '@keyframes apiload{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}';
+      document.head.appendChild(st);
+    }
+    ind.style.display = 'block';
+    return _fetchOrig.apply(this, arguments).finally(function() {
+      if(ind) ind.style.display = 'none';
+    });
+  }
+  return _fetchOrig.apply(this, arguments);
+};
 </script>
 
 </body>
