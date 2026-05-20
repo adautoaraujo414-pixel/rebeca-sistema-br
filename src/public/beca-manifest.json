@@ -1,0 +1,35 @@
+{
+  "name": "Beca Estuda",
+  "short_name": "Beca Estuda",
+  "description": "App universitario com IA para gravar aulas, flashcards e exercicios",
+  "start_url": "/beca-estuda",
+  "display": "standalone",
+  "background_color": "#0f0f13",
+  "theme_color": "#6366f1",
+  "orientation": "portrait",
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "/beca-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/beca-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [],
+  "categories": ["education", "productivity"],
+  "shortcuts": [
+    {
+      "name": "Gravar aula",
+      "short_name": "Gravar",
+      "url": "/beca-estuda",
+      "icons": [{"src": "/beca-icon-192.png", "sizes": "192x192"}]
+    }
+  ]
+}
