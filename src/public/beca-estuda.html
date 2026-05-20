@@ -1595,7 +1595,198 @@ function exportarCadernoPDF(id) {
     '<div class="meta">Professor: ' + c.professor + ' &nbsp;·&nbsp; ' + c.aulas.length + ' aulas &nbsp;·&nbsp; Exportado em ' + dataExport + ' &nbsp;·&nbsp; Beca Estuda</div>' +
     conteudo +
     '<div class="rodape">Gerado pelo Beca Estuda — plataforma universitaria com IA</div>' +
-    '</body></html>';
+    '
+<script>
+// ══ PERFIL COMPLETO COM ESTATISTICAS REAIS ══
+
+var _initPerfilBase = initPerfil;
+initPerfil = function() {
+  _initPerfilBase();
+
+  var el = document.getElementById('perfil-area');
+  if(!el) return;
+
+  // Calcular estatisticas reais
+  var totalAulas = DB.cadernos.reduce(function(a,c){ return a + c.aulas.length; }, 0);
+  var totalFlash = DB.flashcards.length;
+  var totalEventos = DB.eventos.length;
+  var provasFeitas = DB.eventos.filter(function(e){
+    return e.tipo==='prova' && e.data < new Date().toISOString().split('T')[0];
+  }).length;
+  var aulasGrav = DB.evolucao ? DB.evolucao.aulasGravadas || 0 : 0;
+  var streak = calcularStreak();
+
+  // Cards de estatisticas
+  var statsHtml =
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">' +
+      statCard('📚', 'Aulas salvas', totalAulas) +
+      statCard('🃏', 'Flashcards', totalFlash) +
+      statCard('🎙️', 'Gravações', aulasGrav) +
+      statCard('📅', 'Eventos', totalEventos) +
+      statCard('✅', 'Provas feitas', provasFeitas) +
+      statCard('🔥', 'Dias seguidos', streak) +
+    '</div>';
+
+  // Progresso por caderno
+  var cadernosHtml = '';
+  if(DB.cadernos.length) {
+    cadernosHtml = '<div style="margin-bottom:16px">' +
+      '<div style="font-size:.68rem;color:var(--txt3);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">📐 Cadernos</div>';
+    DB.cadernos.forEach(function(c) {
+      var pct = Math.min(100, Math.round((c.aulas.length / 20) * 100));
+      cadernosHtml +=
+        '<div style="margin-bottom:10px">' +
+          '<div style="display:flex;justify-content:space-between;margin-bottom:4px">' +
+            '<span style="font-size:.82rem;font-weight:600">'+c.emoji+' '+c.nome+'</span>' +
+            '<span style="font-size:.75rem;color:var(--txt3)">'+c.aulas.length+' aulas</span>' +
+          '</div>' +
+          '<div style="height:6px;background:var(--bg3);border-radius:3px;overflow:hidden">' +
+            '<div style="height:100%;width:'+pct+'%;background:'+c.cor+';border-radius:3px;transition:width .6s ease"></div>' +
+          '</div>' +
+        '</div>';
+    });
+    cadernosHtml += '</div>';
+  }
+
+  // Toggle tema claro/escuro
+  var temaAtual = localStorage.getItem('beca_tema') || 'escuro';
+  var temaHtml =
+    '<div style="margin-bottom:16px">' +
+      '<div style="font-size:.68rem;color:var(--txt3);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">🎨 Aparencia</div>' +
+      '<div style="display:flex;background:var(--bg2);border:1.5px solid var(--bg3);border-radius:12px;padding:4px;gap:4px">' +
+        '<button id="btn-tema-escuro" onclick="setTema('escuro')" style="flex:1;padding:10px;border-radius:9px;border:none;font-family:Inter,sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;transition:all .2s;background:'+(temaAtual==='escuro'?'var(--accent)':'transparent')+';color:'+(temaAtual==='escuro'?'#fff':'var(--txt2)')+'">🌙 Escuro</button>' +
+        '<button id="btn-tema-claro" onclick="setTema('claro')" style="flex:1;padding:10px;border-radius:9px;border:none;font-family:Inter,sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;transition:all .2s;background:'+(temaAtual==='claro'?'var(--accent)':'transparent')+';color:'+(temaAtual==='claro'?'#fff':'var(--txt2)')+'">☀️ Claro</button>' +
+        '<button id="btn-tema-auto" onclick="setTema('auto')" style="flex:1;padding:10px;border-radius:9px;border:none;font-family:Inter,sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;transition:all .2s;background:'+(temaAtual==='auto'?'var(--accent)':'transparent')+';color:'+(temaAtual==='auto'?'#fff':'var(--txt2)')+'">⚡ Auto</button>' +
+      '</div>' +
+    '</div>';
+
+  // Nome/curso editavel
+  var editarPerfilHtml =
+    '<div style="margin-bottom:16px">' +
+      '<div style="font-size:.68rem;color:var(--txt3);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">👤 Meu perfil</div>' +
+      '<div style="display:flex;flex-direction:column;gap:8px">' +
+        '<input class="input" id="perf-nome" value="'+(USER&&USER.nome?USER.nome:'')+'" placeholder="Seu nome">' +
+        '<input class="input" id="perf-curso" value="'+(USER&&USER.curso?USER.curso:'')+'" placeholder="Seu curso">' +
+        '<button class="btn-p" onclick="salvarEditarPerfil()" style="padding:11px">Salvar alterações</button>' +
+      '</div>' +
+    '</div>';
+
+  // Inserir antes do bloco de backup
+  var divBackup = el.querySelector('div[style*="margin-top:14px"]');
+  var novoConteudo = document.createElement('div');
+  novoConteudo.innerHTML = statsHtml + cadernosHtml + temaHtml + editarPerfilHtml;
+
+  if(divBackup) {
+    el.insertBefore(novoConteudo, divBackup);
+  } else {
+    el.appendChild(novoConteudo);
+  }
+};
+
+function statCard(emoji, label, valor) {
+  return '<div style="background:var(--bg2);border:1.5px solid var(--bg3);border-radius:14px;padding:14px;text-align:center">' +
+    '<div style="font-size:24px;margin-bottom:4px">'+emoji+'</div>' +
+    '<div style="font-size:1.3rem;font-weight:800;color:var(--txt1)">'+valor+'</div>' +
+    '<div style="font-size:.7rem;color:var(--txt3);margin-top:2px">'+label+'</div>' +
+  '</div>';
+}
+
+function calcularStreak() {
+  if(!DB.evolucao || !DB.evolucao.historico) return 0;
+  var hoje = new Date().toISOString().split('T')[0];
+  var streak = 0;
+  var d = new Date();
+  while(true) {
+    var key = d.toISOString().split('T')[0];
+    if(DB.evolucao.historico[key]) {
+      streak++;
+      d.setDate(d.getDate() - 1);
+    } else {
+      break;
+    }
+  }
+  return streak;
+}
+
+function salvarEditarPerfil() {
+  if(!USER) return;
+  var nome = document.getElementById('perf-nome').value.trim();
+  var curso = document.getElementById('perf-curso').value.trim();
+  if(!nome) { toast('Digite seu nome', 'err'); return; }
+  USER.nome = nome;
+  USER.curso = curso;
+  if(USER.email && DB.usuarios && DB.usuarios[USER.email]) {
+    DB.usuarios[USER.email].nome = nome;
+    DB.usuarios[USER.email].curso = curso;
+  }
+  salvarSessao(USER);
+  salvarDB();
+  toast('Perfil atualizado!', 'ok');
+}
+
+// ══ TEMA CLARO / ESCURO ══
+function setTema(tema) {
+  localStorage.setItem('beca_tema', tema);
+  aplicarTema(tema);
+  // Atualizar botoes
+  ['escuro','claro','auto'].forEach(function(t) {
+    var btn = document.getElementById('btn-tema-'+t);
+    if(!btn) return;
+    btn.style.background = t===tema ? 'var(--accent)' : 'transparent';
+    btn.style.color = t===tema ? '#fff' : 'var(--txt2)';
+  });
+}
+
+function aplicarTema(tema) {
+  var isDark;
+  if(tema === 'auto') {
+    isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  } else {
+    isDark = tema === 'escuro';
+  }
+
+  var root = document.documentElement.style;
+  if(isDark) {
+    root.setProperty('--bg1', '#0f0f13');
+    root.setProperty('--bg2', '#1a1a24');
+    root.setProperty('--bg3', '#252535');
+    root.setProperty('--txt1', '#f0f0ff');
+    root.setProperty('--txt2', '#a0a0c0');
+    root.setProperty('--txt3', '#606080');
+    root.setProperty('--card', '#1a1a24');
+  } else {
+    root.setProperty('--bg1', '#f0f2ff');
+    root.setProperty('--bg2', '#ffffff');
+    root.setProperty('--bg3', '#e2e4f0');
+    root.setProperty('--txt1', '#1a1a2e');
+    root.setProperty('--txt2', '#4a4a6a');
+    root.setProperty('--txt3', '#8a8aaa');
+    root.setProperty('--card', '#ffffff');
+  }
+}
+
+// Aplicar tema salvo ao carregar
+(function() {
+  var t = localStorage.getItem('beca_tema') || 'escuro';
+  aplicarTema(t);
+  if(t === 'auto' && window.matchMedia) {
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function() {
+      aplicarTema('auto');
+    });
+  }
+})();
+
+// Registrar atividade diaria para streak
+(function() {
+  if(!DB || !DB.evolucao) return;
+  if(!DB.evolucao.historico) DB.evolucao.historico = {};
+  var hoje = new Date().toISOString().split('T')[0];
+  DB.evolucao.historico[hoje] = true;
+  salvarDB();
+})();
+</script>
+
+</body></html>';
 
   var blob = new Blob([htmlPDF], {type:'text/html;charset=utf-8'});
   var url = URL.createObjectURL(blob);
@@ -1728,6 +1919,197 @@ initPerfil = function() {
     '</div>';
   el.appendChild(divBackup);
 };
+</script>
+
+
+<script>
+// ══ PERFIL COMPLETO COM ESTATISTICAS REAIS ══
+
+var _initPerfilBase = initPerfil;
+initPerfil = function() {
+  _initPerfilBase();
+
+  var el = document.getElementById('perfil-area');
+  if(!el) return;
+
+  // Calcular estatisticas reais
+  var totalAulas = DB.cadernos.reduce(function(a,c){ return a + c.aulas.length; }, 0);
+  var totalFlash = DB.flashcards.length;
+  var totalEventos = DB.eventos.length;
+  var provasFeitas = DB.eventos.filter(function(e){
+    return e.tipo==='prova' && e.data < new Date().toISOString().split('T')[0];
+  }).length;
+  var aulasGrav = DB.evolucao ? DB.evolucao.aulasGravadas || 0 : 0;
+  var streak = calcularStreak();
+
+  // Cards de estatisticas
+  var statsHtml =
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">' +
+      statCard('📚', 'Aulas salvas', totalAulas) +
+      statCard('🃏', 'Flashcards', totalFlash) +
+      statCard('🎙️', 'Gravações', aulasGrav) +
+      statCard('📅', 'Eventos', totalEventos) +
+      statCard('✅', 'Provas feitas', provasFeitas) +
+      statCard('🔥', 'Dias seguidos', streak) +
+    '</div>';
+
+  // Progresso por caderno
+  var cadernosHtml = '';
+  if(DB.cadernos.length) {
+    cadernosHtml = '<div style="margin-bottom:16px">' +
+      '<div style="font-size:.68rem;color:var(--txt3);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">📐 Cadernos</div>';
+    DB.cadernos.forEach(function(c) {
+      var pct = Math.min(100, Math.round((c.aulas.length / 20) * 100));
+      cadernosHtml +=
+        '<div style="margin-bottom:10px">' +
+          '<div style="display:flex;justify-content:space-between;margin-bottom:4px">' +
+            '<span style="font-size:.82rem;font-weight:600">'+c.emoji+' '+c.nome+'</span>' +
+            '<span style="font-size:.75rem;color:var(--txt3)">'+c.aulas.length+' aulas</span>' +
+          '</div>' +
+          '<div style="height:6px;background:var(--bg3);border-radius:3px;overflow:hidden">' +
+            '<div style="height:100%;width:'+pct+'%;background:'+c.cor+';border-radius:3px;transition:width .6s ease"></div>' +
+          '</div>' +
+        '</div>';
+    });
+    cadernosHtml += '</div>';
+  }
+
+  // Toggle tema claro/escuro
+  var temaAtual = localStorage.getItem('beca_tema') || 'escuro';
+  var temaHtml =
+    '<div style="margin-bottom:16px">' +
+      '<div style="font-size:.68rem;color:var(--txt3);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">🎨 Aparencia</div>' +
+      '<div style="display:flex;background:var(--bg2);border:1.5px solid var(--bg3);border-radius:12px;padding:4px;gap:4px">' +
+        '<button id="btn-tema-escuro" onclick="setTema('escuro')" style="flex:1;padding:10px;border-radius:9px;border:none;font-family:Inter,sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;transition:all .2s;background:'+(temaAtual==='escuro'?'var(--accent)':'transparent')+';color:'+(temaAtual==='escuro'?'#fff':'var(--txt2)')+'">🌙 Escuro</button>' +
+        '<button id="btn-tema-claro" onclick="setTema('claro')" style="flex:1;padding:10px;border-radius:9px;border:none;font-family:Inter,sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;transition:all .2s;background:'+(temaAtual==='claro'?'var(--accent)':'transparent')+';color:'+(temaAtual==='claro'?'#fff':'var(--txt2)')+'">☀️ Claro</button>' +
+        '<button id="btn-tema-auto" onclick="setTema('auto')" style="flex:1;padding:10px;border-radius:9px;border:none;font-family:Inter,sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;transition:all .2s;background:'+(temaAtual==='auto'?'var(--accent)':'transparent')+';color:'+(temaAtual==='auto'?'#fff':'var(--txt2)')+'">⚡ Auto</button>' +
+      '</div>' +
+    '</div>';
+
+  // Nome/curso editavel
+  var editarPerfilHtml =
+    '<div style="margin-bottom:16px">' +
+      '<div style="font-size:.68rem;color:var(--txt3);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">👤 Meu perfil</div>' +
+      '<div style="display:flex;flex-direction:column;gap:8px">' +
+        '<input class="input" id="perf-nome" value="'+(USER&&USER.nome?USER.nome:'')+'" placeholder="Seu nome">' +
+        '<input class="input" id="perf-curso" value="'+(USER&&USER.curso?USER.curso:'')+'" placeholder="Seu curso">' +
+        '<button class="btn-p" onclick="salvarEditarPerfil()" style="padding:11px">Salvar alterações</button>' +
+      '</div>' +
+    '</div>';
+
+  // Inserir antes do bloco de backup
+  var divBackup = el.querySelector('div[style*="margin-top:14px"]');
+  var novoConteudo = document.createElement('div');
+  novoConteudo.innerHTML = statsHtml + cadernosHtml + temaHtml + editarPerfilHtml;
+
+  if(divBackup) {
+    el.insertBefore(novoConteudo, divBackup);
+  } else {
+    el.appendChild(novoConteudo);
+  }
+};
+
+function statCard(emoji, label, valor) {
+  return '<div style="background:var(--bg2);border:1.5px solid var(--bg3);border-radius:14px;padding:14px;text-align:center">' +
+    '<div style="font-size:24px;margin-bottom:4px">'+emoji+'</div>' +
+    '<div style="font-size:1.3rem;font-weight:800;color:var(--txt1)">'+valor+'</div>' +
+    '<div style="font-size:.7rem;color:var(--txt3);margin-top:2px">'+label+'</div>' +
+  '</div>';
+}
+
+function calcularStreak() {
+  if(!DB.evolucao || !DB.evolucao.historico) return 0;
+  var hoje = new Date().toISOString().split('T')[0];
+  var streak = 0;
+  var d = new Date();
+  while(true) {
+    var key = d.toISOString().split('T')[0];
+    if(DB.evolucao.historico[key]) {
+      streak++;
+      d.setDate(d.getDate() - 1);
+    } else {
+      break;
+    }
+  }
+  return streak;
+}
+
+function salvarEditarPerfil() {
+  if(!USER) return;
+  var nome = document.getElementById('perf-nome').value.trim();
+  var curso = document.getElementById('perf-curso').value.trim();
+  if(!nome) { toast('Digite seu nome', 'err'); return; }
+  USER.nome = nome;
+  USER.curso = curso;
+  if(USER.email && DB.usuarios && DB.usuarios[USER.email]) {
+    DB.usuarios[USER.email].nome = nome;
+    DB.usuarios[USER.email].curso = curso;
+  }
+  salvarSessao(USER);
+  salvarDB();
+  toast('Perfil atualizado!', 'ok');
+}
+
+// ══ TEMA CLARO / ESCURO ══
+function setTema(tema) {
+  localStorage.setItem('beca_tema', tema);
+  aplicarTema(tema);
+  // Atualizar botoes
+  ['escuro','claro','auto'].forEach(function(t) {
+    var btn = document.getElementById('btn-tema-'+t);
+    if(!btn) return;
+    btn.style.background = t===tema ? 'var(--accent)' : 'transparent';
+    btn.style.color = t===tema ? '#fff' : 'var(--txt2)';
+  });
+}
+
+function aplicarTema(tema) {
+  var isDark;
+  if(tema === 'auto') {
+    isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  } else {
+    isDark = tema === 'escuro';
+  }
+
+  var root = document.documentElement.style;
+  if(isDark) {
+    root.setProperty('--bg1', '#0f0f13');
+    root.setProperty('--bg2', '#1a1a24');
+    root.setProperty('--bg3', '#252535');
+    root.setProperty('--txt1', '#f0f0ff');
+    root.setProperty('--txt2', '#a0a0c0');
+    root.setProperty('--txt3', '#606080');
+    root.setProperty('--card', '#1a1a24');
+  } else {
+    root.setProperty('--bg1', '#f0f2ff');
+    root.setProperty('--bg2', '#ffffff');
+    root.setProperty('--bg3', '#e2e4f0');
+    root.setProperty('--txt1', '#1a1a2e');
+    root.setProperty('--txt2', '#4a4a6a');
+    root.setProperty('--txt3', '#8a8aaa');
+    root.setProperty('--card', '#ffffff');
+  }
+}
+
+// Aplicar tema salvo ao carregar
+(function() {
+  var t = localStorage.getItem('beca_tema') || 'escuro';
+  aplicarTema(t);
+  if(t === 'auto' && window.matchMedia) {
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function() {
+      aplicarTema('auto');
+    });
+  }
+})();
+
+// Registrar atividade diaria para streak
+(function() {
+  if(!DB || !DB.evolucao) return;
+  if(!DB.evolucao.historico) DB.evolucao.historico = {};
+  var hoje = new Date().toISOString().split('T')[0];
+  DB.evolucao.historico[hoje] = true;
+  salvarDB();
+})();
 </script>
 
 </body>
