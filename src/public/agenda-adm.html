@@ -1509,8 +1509,7 @@ async function verificarAuth(){
 // ─── INICIAR APP ───
 async function iniciarApp(){
   document.getElementById('login-wrap').style.display = 'none';
-  var fabEl = document.getElementById('btn-fab');
-  if(fabEl) fabEl.style.display = 'flex';
+  // btn-fab agora está no bottom-nav (sempre visível no mobile)
   document.getElementById('app').classList.add('show');
   setTimeout(function(){ document.dispatchEvent(new CustomEvent('rebeca:login')); }, 300);
   if(ADMIN){
