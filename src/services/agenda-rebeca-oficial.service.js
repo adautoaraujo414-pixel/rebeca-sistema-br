@@ -433,6 +433,39 @@ async function processarMensagemOficial(payload) {
     }
 
     const foiApresentado = await _apresentarSeNecessario(admin, telBruto);
+    // ── Verificar configBot.ativo ─────────────────────────────────────────────
+    const cfgBot = admin.configBot || {};
+    if (cfgBot.ativo === false) {
+      console.log('[Oficial] 🔕 Bot desativado pelo admin — ignorando mensagem');
+      return;
+    }
+
+    // ── Verificar horario de funcionamento ────────────────────────────────────
+    if (!cfgBot.foraHorario) {
+      const cfg  = admin.config || {};
+      const agora = new Date();
+      const hAtual = agora.getHours() * 60 + agora.getMinutes();
+      const [hAb, mAb] = (cfg.horarioAbertura  || '08:00').split(':').map(Number);
+      const [hFe, mFe] = (cfg.horarioFechamento || '18:00').split(':').map(Number);
+      const abertura   = hAb * 60 + mAb;
+      const fechamento = hFe * 60 + mFe;
+      const diaSemana  = agora.getDay();
+      const diasFunc   = cfg.diasFuncionamento || [1,2,3,4,5,6];
+      if (!diasFunc.includes(diaSemana) || hAtual < abertura || hAtual > fechamento) {
+        console.log('[Oficial] 🕐 Fora do horario — nao respondendo');
+        await _responderOficial(telBruto,
+          `Olá! 😊 No momento estamos fora do horário de atendimento.
+
+` +
+          `⏰ Funcionamos de *${cfg.horarioAbertura || '08:00'}* às *${cfg.horarioFechamento || '18:00'}*.
+
+` +
+          `Assim que abrirmos é só mandar mensagem! 💙`
+        );
+        return;
+      }
+    }
+
     if (foiApresentado && (!texto || texto.trim().length < 5)) return;
 
     if (midia) { await _tratarMidia(midia, telBruto, msg, data, adminId); return; }
