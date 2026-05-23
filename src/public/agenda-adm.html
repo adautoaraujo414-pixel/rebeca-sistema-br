@@ -498,11 +498,11 @@ input,select,textarea{font-family:'Inter',sans-serif}
 /* ─── DRAWER MOBILE ─── */
 .drawer-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:400}
 .drawer-bg.open{display:block}
-.drawer{position:fixed;left:0;top:0;width:var(--sidebar);height:100vh;background:#fff;z-index:401;display:flex;flex-direction:column;transform:translateX(-110%);transition:transform .25s ease}
-.drawer.open{transform:translateX(0)}
+.drawer{position:fixed;left:0;top:0;width:var(--sidebar);height:100vh;background:#fff;z-index:401;display:none;flex-direction:column;transform:translateX(-110%);transition:transform .25s ease}
+.drawer.open{display:flex!important;transform:translateX(0)}
 
 /* ─── BOTTOM NAV MOBILE ─── */
-.bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--borda);padding:8px 0 env(safe-area-inset-bottom);z-index:100;box-shadow:0 -2px 8px rgba(0,0,0,.06)}
+.bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--borda);padding:8px 0 env(safe-area-inset-bottom);z-index:500;box-shadow:0 -2px 8px rgba(0,0,0,.06)}
 .bottom-nav-items{display:flex}
 .bottom-nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:4px;border:none;background:none;color:var(--texto3);font-size:.65em;font-weight:500;transition:.15s}
 .bottom-nav-item.ativo{color:var(--cor)}
@@ -3640,71 +3640,6 @@ function fecharMenuMobile() {
 
 
 
-<!-- DIAG -->
-<script>
-window.addEventListener('load', function() {
-  setTimeout(function() {
-    if (window.innerWidth > 900) return;
-    var vw = window.innerWidth;
-    var bsw = document.body.scrollWidth;
-    var hsw = document.documentElement.scrollWidth;
-    var lines = [];
-    lines.push('VW=' + vw + ' body.sw=' + bsw + ' html.sw=' + hsw);
-    lines.push('OVERFLOW=' + (bsw > vw ? 'SIM +' + (bsw-vw) + 'px' : 'NAO'));
-    lines.push('---VAZANDO---');
-    document.querySelectorAll('*').forEach(function(el) {
-      try {
-        var r = el.getBoundingClientRect();
-        if (r.right > vw + 2 || r.left < -2) {
-          var cs = window.getComputedStyle(el);
-          lines.push(
-            el.tagName +
-            (el.id ? '#'+el.id : '') +
-            (el.className && typeof el.className === 'string' ? '.'+el.className.trim().split(' ')[0] : '') +
-            ' L=' + Math.round(r.left) +
-            ' R=' + Math.round(r.right) +
-            ' W=' + Math.round(r.width) +
-            ' pos=' + cs.position +
-            ' ml=' + cs.marginLeft +
-            ' tr=' + (cs.transform !== 'none' ? cs.transform.substring(0,30) : 'none') +
-            ' mw=' + cs.minWidth
-          );
-        }
-      } catch(e) {}
-    });
-    lines.push('---PRINCIPAIS---');
-    [
-      ['html', document.documentElement],
-      ['body', document.body],
-      ['#app', document.getElementById('app')],
-      ['.main', document.querySelector('.main')],
-      ['.content', document.querySelector('.content')],
-      ['.sidebar', document.getElementById('sidebar')],
-      ['.bottom-nav', document.querySelector('.bottom-nav')],
-      ['.mobile-header', document.querySelector('.mobile-header')],
-      ['.drawer', document.querySelector('.drawer')],
-    ].forEach(function(pair) {
-      var el = pair[1];
-      if (!el) { lines.push(pair[0] + ': NULL'); return; }
-      var cs = window.getComputedStyle(el);
-      lines.push(pair[0] + ': ow=' + el.offsetWidth + ' sw=' + el.scrollWidth +
-        ' ml=' + cs.marginLeft + ' w=' + cs.width + ' pos=' + cs.position +
-        ' tr=' + (cs.transform !== 'none' ? cs.transform.substring(0,20) : 'none') +
-        ' disp=' + cs.display);
-    });
-    var d = document.createElement('div');
-    d.id = 'DIAG';
-    d.style.cssText = 'position:fixed;inset:0;bottom:56px;background:#000;color:#0f0;font:10px/1.4 monospace;padding:6px;overflow-y:auto;z-index:99999;white-space:pre;word-break:break-all';
-    d.textContent = lines.join('\n');
-    var btn = document.createElement('button');
-    btn.textContent = 'X FECHAR';
-    btn.style.cssText = 'position:fixed;bottom:56px;left:0;right:0;z-index:999999;background:red;color:#fff;border:none;padding:10px;font-weight:bold;font-size:14px';
-    btn.onclick = function() { d.remove(); btn.remove(); };
-    document.body.appendChild(d);
-    document.body.appendChild(btn);
-  }, 3000);
-});
-</script>
-<!-- /DIAG -->
+
 </body>
 </html>
