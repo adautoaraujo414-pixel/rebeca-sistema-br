@@ -2,13 +2,13 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover.0">
 <title>Beca Estuda</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{--bg:#0f172a;--bg2:#1e293b;--bg3:#334155;--accent:#6366f1;--accent2:#818cf8;--green:#22c55e;--yellow:#f59e0b;--red:#ef4444;--txt1:#f1f5f9;--txt2:#94a3b8;--txt3:#475569;--radius:14px}
-body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt1);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt1);-webkit-font-smoothing:antialiased;overflow-x:hidden;padding-bottom:env(safe-area-inset-bottom,0px)}
 ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--bg3);border-radius:2px}
 .screen{display:none;min-height:100dvh;flex-direction:column}
 .screen.ativo{display:flex}
@@ -21,7 +21,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt1);-webk
 .input{width:100%;padding:13px 16px;background:var(--bg2);border:1.5px solid var(--bg3);border-radius:12px;color:var(--txt1);font-size:.9rem;outline:none;font-family:'Inter',sans-serif;transition:border-color .2s}
 .input:focus{border-color:var(--accent)}
 .input::placeholder{color:var(--txt3)}
-.nav-bar{position:fixed;bottom:0;left:0;right:0;background:rgba(15,23,42,.96);backdrop-filter:blur(16px);border-top:1px solid var(--bg3);padding:10px 0 20px;display:flex;justify-content:space-around;z-index:100}
+.nav-bar{position:fixed;bottom:0;left:0;right:0;background:rgba(15,23,42,.96);backdrop-filter:blur(16px);border-top:1px solid var(--bg3);padding:10px 0 20px;display:flex;justify-content:space-around;z-index:100;padding-bottom:env(safe-area-inset-bottom,8px)}
 .nav-btn{background:none;border:none;color:var(--txt3);display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;font-size:.62rem;font-weight:600;font-family:'Inter',sans-serif;transition:color .2s;padding:4px 10px;min-width:52px}
 .nav-btn.ativo{color:var(--accent2)}
 .nav-btn .ic{font-size:20px}
@@ -1624,74 +1624,6 @@ function exportarCadernoPDF(id) {
 </script>
 
 
-<script>
-// ══ GUIA DE INSTALACAO iOS ══
-(function() {
-  var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent.toLowerCase());
-  var isStandalone = window.navigator.standalone === true;
-  var jaInstalou = localStorage.getItem('beca_instalado');
-  if(!isIOS || isStandalone || jaInstalou) return;
-
-  function mostrarGuiaIOS() {
-    var overlay = document.createElement('div');
-    overlay.id = 'ios-guide';
-    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:999999;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding:0 0 0 0;backdrop-filter:blur(6px)';
-
-    overlay.innerHTML =
-      '<div style="background:#1a1a24;border-radius:24px 24px 0 0;width:100%;max-width:480px;padding:28px 24px 44px;border-top:2px solid #6366f1">' +
-
-        // Header
-        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">' +
-          '<div style="display:flex;align-items:center;gap:12px">' +
-            '<div style="width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:26px">🎓</div>' +
-            '<div>' +
-              '<div style="font-weight:800;font-size:1.05rem;color:#f0f0ff">Beca Estuda</div>' +
-              '<div style="font-size:.75rem;color:#6366f1;font-weight:600">Instalar no iPhone</div>' +
-            '</div>' +
-          '</div>' +
-          '<button onclick="document.getElementById(&quot;ios-guide&quot;).remove();localStorage.setItem(&quot;beca_instalado&quot;,&quot;1&quot;)" style="background:#252535;border:none;border-radius:10px;width:32px;height:32px;color:#a0a0c0;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center">×</button>' +
-        '</div>' +
-
-        // Passos
-        '<div style="font-size:.8rem;color:#a0a0c0;margin-bottom:20px;line-height:1.5">Siga os 3 passos abaixo para instalar o app na tela inicial do seu iPhone — gratuito, sem App Store:</div>' +
-
-        passo('1', '⎋', 'Toque em Compartilhar', 'O botão fica na barra de baixo do Safari — é um quadrado com uma seta para cima') +
-        passo('2', '➕', 'Adicionar à Tela de Início', 'Role a lista de opções para baixo e toque em <strong style="color:#f0f0ff">"Adicionar à Tela de Início"</strong>') +
-        passo('3', '✅', 'Toque em Adicionar', 'O ícone do Beca Estuda vai aparecer na sua tela como um app normal') +
-
-        // Aviso Safari
-        '<div style="background:#f59e0b11;border:1px solid #f59e0b44;border-radius:12px;padding:12px 14px;margin-top:4px;display:flex;gap:10px;align-items:flex-start">' +
-          '<span style="font-size:16px;flex-shrink:0">⚠️</span>' +
-          '<div style="font-size:.75rem;color:#f59e0b;line-height:1.5">Use o <strong>Safari</strong> para instalar. O Chrome no iPhone não tem essa função.</div>' +
-        '</div>' +
-
-        // Botao fechar
-        '<button onclick="document.getElementById(&quot;ios-guide&quot;).remove();localStorage.setItem(&quot;beca_instalado&quot;,&quot;1&quot;)" style="width:100%;margin-top:20px;padding:15px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border:none;border-radius:14px;color:#fff;font-family:Inter,sans-serif;font-size:.95rem;font-weight:700;cursor:pointer">Entendi, vou instalar agora!</button>' +
-
-      '</div>';
-
-    document.body.appendChild(overlay);
-  }
-
-  function passo(num, icone, titulo, desc) {
-    return '<div style="display:flex;gap:14px;margin-bottom:16px;align-items:flex-start">' +
-      '<div style="width:36px;height:36px;border-radius:10px;background:#6366f122;border:1.5px solid #6366f144;display:flex;align-items:center;justify-content:center;flex-shrink:0">' +
-        '<span style="font-size:18px">'+icone+'</span>' +
-      '</div>' +
-      '<div style="flex:1">' +
-        '<div style="font-weight:700;font-size:.88rem;color:#f0f0ff;margin-bottom:3px">'+titulo+'</div>' +
-        '<div style="font-size:.76rem;color:#a0a0c0;line-height:1.5">'+desc+'</div>' +
-      '</div>' +
-    '</div>';
-  }
-
-  // Mostrar 2s apos carregar (dar tempo do app iniciar)
-  window.addEventListener('load', function() {
-    setTimeout(mostrarGuiaIOS, 2000);
-  });
-})();
-</script>
-
 </head><body>' +
     '<h1>' + c.emoji + ' ' + c.nome + '</h1>' +
     '<div class="meta">Professor: ' + c.professor + ' &nbsp;·&nbsp; ' + c.aulas.length + ' aulas &nbsp;·&nbsp; Exportado em ' + dataExport + ' &nbsp;·&nbsp; Beca Estuda</div>' +
@@ -2643,17 +2575,6 @@ function aplicarTema(tema) {
   }
 }
 
-// Aplicar tema salvo ao carregar
-(function() {
-  var t = localStorage.getItem('beca_tema') || 'escuro';
-  aplicarTema(t);
-  if(t === 'auto' && window.matchMedia) {
-    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function() {
-      aplicarTema('auto');
-    });
-  }
-})();
-
 // Registrar atividade diaria para streak
 (function() {
   if(!DB || !DB.evolucao) return;
@@ -2747,17 +2668,6 @@ window.addEventListener('load', function() {
   }, 800);
 });
 
-// Atalho: segurar botao home por 1s abre busca
-var _homeHold = null;
-document.addEventListener('touchstart', function(e) {
-  var nav = e.target.closest('.nav-item');
-  if(nav && nav.getAttribute('onclick') && nav.getAttribute('onclick').includes('s-home')) {
-    _homeHold = setTimeout(abrirBusca, 700);
-  }
-});
-document.addEventListener('touchend', function() {
-  clearTimeout(_homeHold);
-});
 
 // ══ MELHORIAS VISUAIS FINAIS ══
 
