@@ -369,6 +369,10 @@ function toast(msg,tipo){var el=document.getElementById('toast');el.textContent=
 function abrirModal(html){document.getElementById('modal-box').innerHTML=html;document.getElementById('modal').style.display='flex';}
 function fecharModal(e){if(!e||e.target===document.getElementById('modal'))document.getElementById('modal').style.display='none';}
 function salvarDB(){localStorage.setItem('beca_db',JSON.stringify(DB));}
+function carregarSessao(){try{var u=localStorage.getItem('beca_user');if(u){USER=JSON.parse(u);return true;}}catch(e){}return false;}
+document.addEventListener('DOMContentLoaded',function(){
+  if(carregarSessao()){if(localStorage.getItem('beca_ob')){entrarApp();}else{iniciarOnboarding();}}
+});
 function fmt(s){return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');}
 
 var DB=JSON.parse(localStorage.getItem('beca_db')||'{}');
@@ -2018,7 +2022,7 @@ initTreinar = function() {
         '<div style="font-size:48px;margin-bottom:14px">🧠</div>' +
         '<div style="font-weight:700;font-size:1rem;margin-bottom:8px">Nenhum exercicio ainda</div>' +
         '<div style="color:var(--txt2);font-size:.85rem;margin-bottom:24px">Grave uma aula para a IA gerar exercicios automaticamente</div>' +
-        '<button class="btn-p" onclick="ir('s-gravar')">🎙️ Gravar aula</button>' +
+        '<button class="btn-p" onclick="ir(\'s-gravacao\')">🎙️ Gravar aula</button>' +
       '</div>';
     return;
   }
@@ -2199,7 +2203,7 @@ function mostrarResultadoTreino() {
       histHtml +
       '<div style="display:flex;gap:10px;margin-top:20px">' +
         '<button class="btn-o" onclick="initTreinar()" style="flex:1">🔄 Refazer</button>' +
-        '<button class="btn-p" onclick="ir('s-home')" style="flex:1">🏠 Home</button>' +
+        '<button class="btn-p" onclick="ir(\'s-home\')" style="flex:1">🏠 Home</button>' +
       '</div>' +
     '</div>';
 }
@@ -2760,7 +2764,7 @@ initTreinar = function() {
         '<div style="font-size:48px;margin-bottom:14px">🧠</div>' +
         '<div style="font-weight:700;font-size:1rem;margin-bottom:8px">Nenhum exercicio ainda</div>' +
         '<div style="color:var(--txt2);font-size:.85rem;margin-bottom:24px">Grave uma aula para a IA gerar exercicios automaticamente</div>' +
-        '<button class="btn-p" onclick="ir('s-gravar')">🎙️ Gravar aula</button>' +
+        '<button class="btn-p" onclick="ir(\'s-gravacao\')">🎙️ Gravar aula</button>' +
       '</div>';
     return;
   }
@@ -2941,7 +2945,7 @@ function mostrarResultadoTreino() {
       histHtml +
       '<div style="display:flex;gap:10px;margin-top:20px">' +
         '<button class="btn-o" onclick="initTreinar()" style="flex:1">🔄 Refazer</button>' +
-        '<button class="btn-p" onclick="ir('s-home')" style="flex:1">🏠 Home</button>' +
+        '<button class="btn-p" onclick="ir(\'s-home\')" style="flex:1">🏠 Home</button>' +
       '</div>' +
     '</div>';
 }
