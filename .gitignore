@@ -4,3 +4,6 @@ node_modules/
 .DS_Store
 main
 node_modules/
+
+# Backups internos — nunca expor
+backups-internos/

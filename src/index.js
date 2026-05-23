@@ -339,6 +339,14 @@ app.get('/delivery-cardapio/:adminId', (req, res) => res.sendFile(path.join(__di
 app.get('/mesa', (req, res) => res.sendFile(path.join(__dirname, 'public', 'mesa.html')));
 
 app.get('/rastrear/:codigo', (req, res) => res.sendFile(path.join(__dirname, 'public', 'rastrear.html')));
+
+// ══ REBECA SOFT (PDV) — Serve o frontend React ══
+const frontendDist = path.join(__dirname, '..', 'frontend', 'dist');
+app.use('/soft', require('express').static(frontendDist));
+app.get('/soft', (req, res) => res.sendFile(path.join(frontendDist, 'index.html')));
+app.get('/soft/*', (req, res) => res.sendFile(path.join(frontendDist, 'index.html')));
+app.get('/login', (req, res) => res.sendFile(path.join(frontendDist, 'index.html')));
+
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'index.html')));
 app.get('/admin/login', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'login.html')));
 app.get('/motorista', (req, res) => res.sendFile(path.join(__dirname, 'public', 'motorista-app.html')));

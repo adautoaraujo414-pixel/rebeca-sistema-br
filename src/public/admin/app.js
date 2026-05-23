@@ -1725,138 +1725,9 @@ function atualizarPrecoAtualVigente() {
 
 // ==================== MÓDULO FINANCEIRO ====================
 
-async function carregarFinCaixas() {
-  try {
-    const caixas = await api('/api/delivery/caixa/historico?limite=50') || [];
-    const hoje = new Date().toDateString();
-    const diaAtual = caixas.filter(c => new Date(c.dataFechamento||c.dataAbertura).toDateString() === hoje);
-    const tdDia = diaAtual.reduce((s,c) => s+(c.totalFaturamento||0), 0);
-    const tdDin = diaAtual.reduce((s,c) => s+(c.totalDinheiro||0), 0);
-    const tdCart = diaAtual.reduce((s,c) => s+(c.totalCartao||0), 0);
-    const tdPix = diaAtual.reduce((s,c) => s+(c.totalPix||0), 0);
-    const el = id => document.getElementById(id);
-    if (el('fin-total-dia')) el('fin-total-dia').textContent = 'R$ '+tdDia.toFixed(2);
-    if (el('fin-dinheiro-dia')) el('fin-dinheiro-dia').textContent = 'R$ '+tdDin.toFixed(2);
-    if (el('fin-cartao-dia')) el('fin-cartao-dia').textContent = 'R$ '+tdCart.toFixed(2);
-    if (el('fin-pix-dia')) el('fin-pix-dia').textContent = 'R$ '+tdPix.toFixed(2);
-    const lista = el('fin-lista-caixas');
-    if (!lista) return;
-    if (!caixas.length) { lista.innerHTML = '<div style="color:#888;text-align:center;padding:40px">Nenhum fechamento ainda</div>'; return; }
-    lista.innerHTML = caixas.map(c => {
-      const diff = c.diferencaDinheiro || 0;
-      const diffHtml = diff===0 ? '<span style="color:#22c55e">✅ Confere</span>' : (diff>0 ? '<span style="color:#f59e0b">💰 Sobra R$ '+Math.abs(diff).toFixed(2)+'</span>' : '<span style="color:#ef4444">⚠️ Falta R$ '+Math.abs(diff).toFixed(2)+'</span>');
-      const ops = (c.vendasPorOperador||[]).map(o => `<span style="background:#f5f5f7;padding:2px 8px;border-radius:20px;font-size:.75em;margin-right:4px">${o.operador}: R$ ${(o.totalVendas||0).toFixed(2)}</span>`).join('');
-      return `<div style="background:#fff;border:1px solid #e8e8ed;border-radius:12px;padding:16px;margin-bottom:12px">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px">
-          <div>
-            <div style="font-weight:700">${new Date(c.dataFechamento||c.dataAbertura).toLocaleString('pt-BR')} — <span style="color:#e94560">Caixa ${c.numeroCaixa||1}</span></div>
-            <div style="font-size:.8em;color:#888;margin-top:2px">Operador: ${c.fechadoPor||c.abertoPor||'—'} · ${c.totalPedidos||0} pedidos · ${c.totalCancelados||0} cancelados</div>
-            <div style="margin-top:6px">${ops}</div>
-          </div>
-          <div style="text-align:right">
-            <div style="font-size:1.3em;font-weight:900;color:#e94560">R$ ${(c.totalFaturamento||0).toFixed(2)}</div>
-            <div style="font-size:.75em;color:#888;margin-top:2px">💵 R$ ${(c.totalDinheiro||0).toFixed(2)} · 💳 R$ ${(c.totalCartao||0).toFixed(2)} · 📱 R$ ${(c.totalPix||0).toFixed(2)}</div>
-            <div style="font-size:.8em;margin-top:4px">${diffHtml}</div>
-            ${c.totalSangrias ? '<div style="font-size:.75em;color:#888">🩸 Sangria: R$ '+(c.totalSangrias||0).toFixed(2)+'</div>' : ''}
-            ${c.observacoes ? '<div style="font-size:.75em;color:#888;font-style:italic">📝 '+c.observacoes+'</div>' : ''}
-          </div>
-        </div>
-      </div>`;
-    }).join('');
-  } catch(e) { console.error('fin-caixas:', e); }
-}
 
-async function carregarFinLucro() {
-  try {
-    const periodo = document.getElementById('fin-lucro-periodo')?.value || 'mes';
-    let dataIni = new Date(), dataFim = new Date();
-    if (periodo==='hoje') { dataIni.setHours(0,0,0,0); }
-    else if (periodo==='semana') { dataIni = new Date(Date.now()-7*24*60*60*1000); }
-    else if (periodo==='mes') { dataIni = new Date(); dataIni.setDate(1); dataIni.setHours(0,0,0,0); }
-    else {
-      dataIni = new Date(document.getElementById('fin-lucro-ini')?.value||Date.now());
-      dataFim = new Date(document.getElementById('fin-lucro-fim')?.value||Date.now());
-    }
-    const [pedidos, cardapio] = await Promise.all([
-      api('/api/delivery/caixa/todos?dataIni='+dataIni.toISOString()+'&dataFim='+dataFim.toISOString()),
-      api('/api/delivery/cardapio')
-    ]);
-    const custoMap = {};
-    ((cardapio?.itens)||cardapio||[]).forEach(i => { custoMap[i.nome] = i.custoProducao||i.custo||0; });
-    const produtos = {};
-    (pedidos||[]).forEach(p => {
-      (p.itens||[]).forEach(it => {
-        const nome = it.nome||'Item';
-        if (!produtos[nome]) produtos[nome] = { nome, qtd:0, receitaTotal:0, custoTotal:0 };
-        const qtd = it.qtd||it.quantidade||1;
-        const preco = it.preco||it.precoUnitario||0;
-        const custo = custoMap[nome]||0;
-        produtos[nome].qtd += qtd;
-        produtos[nome].receitaTotal += preco*qtd;
-        produtos[nome].custoTotal += custo*qtd;
-      });
-    });
-    const lista = Object.values(produtos).sort((a,b)=>(b.receitaTotal-b.custoTotal)-(a.receitaTotal-a.custoTotal));
-    const totalVendas = lista.reduce((s,p)=>s+p.receitaTotal,0);
-    const totalCusto = lista.reduce((s,p)=>s+p.custoTotal,0);
-    const totalLucro = totalVendas-totalCusto;
-    const margem = totalVendas ? ((totalLucro/totalVendas)*100).toFixed(1) : 0;
-    const el = id => document.getElementById(id);
-    if (el('fin-lucro-vendas')) el('fin-lucro-vendas').textContent = 'R$ '+totalVendas.toFixed(2);
-    if (el('fin-lucro-custo')) el('fin-lucro-custo').textContent = 'R$ '+totalCusto.toFixed(2);
-    if (el('fin-lucro-lucro')) el('fin-lucro-lucro').textContent = 'R$ '+totalLucro.toFixed(2);
-    if (el('fin-lucro-margem')) el('fin-lucro-margem').textContent = margem+'%';
-    const tbody = el('fin-lucro-tbody');
-    if (tbody) tbody.innerHTML = lista.length ? lista.map(p => {
-      const lucroUnit = (p.receitaTotal-p.custoTotal)/(p.qtd||1);
-      const mg = p.receitaTotal ? (((p.receitaTotal-p.custoTotal)/p.receitaTotal)*100).toFixed(1) : 0;
-      const cor = lucroUnit>=0 ? '#22c55e' : '#ef4444';
-      return `<tr style="border-bottom:1px solid #f0f0f0">
-        <td style="padding:10px;font-weight:600">${p.nome}</td>
-        <td style="padding:10px;text-align:right">${p.qtd}</td>
-        <td style="padding:10px;text-align:right">R$ ${(p.receitaTotal/p.qtd).toFixed(2)}</td>
-        <td style="padding:10px;text-align:right;color:#ef4444">R$ ${(p.custoTotal/p.qtd).toFixed(2)}</td>
-        <td style="padding:10px;text-align:right;color:${cor}">R$ ${lucroUnit.toFixed(2)}</td>
-        <td style="padding:10px;text-align:right;color:${cor};font-weight:700">R$ ${(p.receitaTotal-p.custoTotal).toFixed(2)}</td>
-        <td style="padding:10px;text-align:right"><span style="background:${lucroUnit>=0?'#dcfce7':'#fee2e2'};color:${cor};padding:3px 10px;border-radius:20px;font-size:.8em;font-weight:700">${mg}%</span></td>
-      </tr>`;
-    }).join('') : '<tr><td colspan="7" style="text-align:center;padding:40px;color:#888">Nenhum dado</td></tr>';
-  } catch(e) { console.error('fin-lucro:', e); }
-}
 
 let _contasPagar = JSON.parse(localStorage.getItem('fin_contas')||'[]');
-function carregarFinContas() {
-  const agora = new Date(), em7 = new Date(Date.now()+7*24*60*60*1000), mesAtual = agora.getMonth();
-  let pendente=0, vencendo=0, pagoMes=0;
-  _contasPagar.forEach(c => {
-    const venc = new Date(c.vencimento);
-    if (c.pago && new Date(c.dataPagamento).getMonth()===mesAtual) pagoMes+=c.valor||0;
-    else if (!c.pago) { pendente+=c.valor||0; if (venc<=em7) vencendo+=c.valor||0; }
-  });
-  const el = id => document.getElementById(id);
-  if (el('fin-contas-pendente')) el('fin-contas-pendente').textContent = 'R$ '+pendente.toFixed(2);
-  if (el('fin-contas-vencendo')) el('fin-contas-vencendo').textContent = 'R$ '+vencendo.toFixed(2);
-  if (el('fin-contas-pago')) el('fin-contas-pago').textContent = 'R$ '+pagoMes.toFixed(2);
-  const lista = el('fin-contas-lista');
-  if (!lista) return;
-  if (!_contasPagar.length) { lista.innerHTML = '<div style="color:#888;text-align:center;padding:40px">Nenhuma conta cadastrada</div>'; return; }
-  lista.innerHTML = _contasPagar.map((c,i) => {
-    const venc = new Date(c.vencimento), atrasada = !c.pago && venc<agora;
-    const cor = c.pago ? '#22c55e' : (atrasada ? '#ef4444' : '#f59e0b');
-    return `<div style="background:#fff;border:1px solid #e8e8ed;border-radius:10px;padding:14px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
-      <div>
-        <div style="font-weight:700">${c.descricao}</div>
-        <div style="font-size:.8em;color:#888">${c.categoria||'Geral'} · Venc: ${venc.toLocaleDateString('pt-BR')} · ${c.fornecedor||''}</div>
-      </div>
-      <div style="display:flex;align-items:center;gap:8px">
-        <span style="font-size:1.1em;font-weight:900;color:${cor}">R$ ${(c.valor||0).toFixed(2)}</span>
-        <span style="background:${c.pago?'#dcfce7':atrasada?'#fee2e2':'#fef9c3'};color:${cor};padding:3px 10px;border-radius:20px;font-size:.75em;font-weight:700">${c.pago?'✅ Pago':atrasada?'❌ Atrasada':'⏳ Pendente'}</span>
-        ${!c.pago ? `<button onclick="finPagarConta(${i})" style="background:#22c55e;color:#fff;border:none;border-radius:8px;padding:5px 12px;cursor:pointer;font-size:.8em">Pagar</button>` : ''}
-        <button onclick="finRemoverConta(${i})" style="background:#ef4444;color:#fff;border:none;border-radius:8px;padding:5px 10px;cursor:pointer;font-size:.8em">✕</button>
-      </div>
-    </div>`;
-  }).join('');
-}
 function finNovaConta() {
   const desc = prompt('Descrição:'); if (!desc) return;
   const valor = parseFloat(prompt('Valor (R$):')||0); if (!valor) return;
@@ -1872,26 +1743,6 @@ function finNovaConta() {
 function finPagarConta(i) { _contasPagar[i].pago=true; _contasPagar[i].dataPagamento=new Date().toISOString(); localStorage.setItem('fin_contas', JSON.stringify(_contasPagar)); carregarFinContas(); }
 function finRemoverConta(i) { if (!confirm('Remover?')) return; _contasPagar.splice(i,1); localStorage.setItem('fin_contas', JSON.stringify(_contasPagar)); carregarFinContas(); }
 
-function carregarFinFornecedores() {
-  const lista = document.getElementById('fin-forn-lista');
-  if (!lista) return;
-  const forns = JSON.parse(localStorage.getItem('fin_fornecedores')||'[]');
-  if (!forns.length) { lista.innerHTML = '<div style="color:#888;text-align:center;padding:40px">Nenhum fornecedor</div>'; return; }
-  lista.innerHTML = forns.map((f,i) => `
-    <div style="background:#fff;border:1px solid #e8e8ed;border-radius:10px;padding:16px;margin-bottom:10px">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px">
-        <div>
-          <div style="font-weight:700">${f.nome} <span style="color:#888;font-weight:400;font-size:.85em">· ${f.empresa||''}</span></div>
-          <div style="font-size:.8em;color:#888;margin-top:4px">📱 ${f.whatsapp||'—'} · 📍 ${f.cidade||'—'}</div>
-          ${f.obs ? '<div style="font-size:.78em;color:#aaa;margin-top:3px;font-style:italic">'+f.obs+'</div>' : ''}
-        </div>
-        <div style="display:flex;gap:8px">
-          <button onclick="finWhatsappForn(${i})" style="background:#25d366;color:#fff;border:none;border-radius:8px;padding:6px 12px;cursor:pointer;font-size:.8em">📱 WhatsApp</button>
-          <button onclick="finRemoverForn(${i})" style="background:#ef4444;color:#fff;border:none;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:.8em">✕</button>
-        </div>
-      </div>
-    </div>`).join('');
-}
 function finNovoFornecedor() {
   const nome = prompt('Nome do vendedor/contato:'); if (!nome) return;
   const empresa = prompt('Empresa/Distribuidora:') || '';
@@ -1913,3 +1764,24 @@ function finWhatsappForn(i) {
   const f = forns[i]; if (!f?.whatsapp) return alert('WhatsApp não cadastrado');
   window.open('https://wa.me/55'+f.whatsapp.replace(/\D/g,'')+'?text=Olá+'+encodeURIComponent(f.nome)+'!','_blank');
 }
+
+// ══ MODULO FINANCEIRO REMOVIDO ══
+// Financeiro era do Delivery — não pertence ao admin de Corridas
+// Use o painel do Delivery para acessar Financeiro
+function carregarFinCaixas() {
+  const el = document.getElementById('page-fin-caixas');
+  if (el) el.innerHTML = '<div style="text-align:center;padding:60px;color:#888"><div style="font-size:48px;margin-bottom:16px">🚫</div><h3>Módulo não disponível</h3><p style="margin-top:8px">O financeiro pertence ao sistema Rebeca Delivery.<br>Acesse o painel do Delivery para ver esses dados.</p></div>';
+}
+function carregarFinLucro() {
+  const el = document.getElementById('page-fin-lucro');
+  if (el) el.innerHTML = '<div style="text-align:center;padding:60px;color:#888"><div style="font-size:48px;margin-bottom:16px">🚫</div><h3>Módulo não disponível</h3><p style="margin-top:8px">O financeiro pertence ao sistema Rebeca Delivery.</p></div>';
+}
+function carregarFinContas() {
+  const el = document.getElementById('page-fin-contas');
+  if (el) el.innerHTML = '<div style="text-align:center;padding:60px;color:#888"><div style="font-size:48px;margin-bottom:16px">🚫</div><h3>Módulo não disponível</h3><p style="margin-top:8px">O financeiro pertence ao sistema Rebeca Delivery.</p></div>';
+}
+function carregarFinFornecedores() {
+  const el = document.getElementById('page-fin-fornecedores');
+  if (el) el.innerHTML = '<div style="text-align:center;padding:60px;color:#888"><div style="font-size:48px;margin-bottom:16px">🚫</div><h3>Módulo não disponível</h3><p style="margin-top:8px">O financeiro pertence ao sistema Rebeca Delivery.</p></div>';
+}
+
