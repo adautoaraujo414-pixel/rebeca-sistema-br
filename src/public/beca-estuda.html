@@ -1619,43 +1619,8 @@ function exportarCadernoPDF(id) {
       'h2{font-size:16px}p{font-size:13px;line-height:1.8;color:#475569}' +
       '.rodape{margin-top:40px;padding-top:16px;border-top:1px solid #e2e8f0;font-size:11px;color:#94a3b8;text-align:center}' +
       '@media print{body{margin:20px}}' +
-    '</style>
-<script>
-// ══ BANNER INSTALAR NO iOS ══
-(function() {
-  var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent.toLowerCase());
-  var isStandalone = window.navigator.standalone === true;
-  var jaViu = localStorage.getItem('beca_ios_banner');
-  if(!isIOS || isStandalone || jaViu) return;
-
-  window.addEventListener('load', function() {
-    setTimeout(function() {
-      var banner = document.createElement('div');
-      banner.id = 'ios-install-banner';
-      banner.style.cssText = [
-        'position:fixed','bottom:0','left:0','right:0',
-        'background:#1a1a24','border-top:1px solid #6366f1',
-        'padding:16px 20px 28px','z-index:99999',
-        'font-family:Inter,sans-serif',
-        'box-shadow:0 -4px 24px rgba(0,0,0,.4)',
-        'animation:slideUp .3s ease'
-      ].join(';');
-
-      banner.innerHTML =
-        '<style>@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}</style>' +
-        '<div style="display:flex;align-items:flex-start;gap:12px">' +
-          '<div style="width:48px;height:48px;border-radius:12px;background:#6366f1;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">🎓</div>' +
-          '<div style="flex:1">' +
-            '<div style="font-weight:800;font-size:.95rem;color:#f0f0ff;margin-bottom:3px">Instalar Beca Estuda</div>' +
-            '<div style="color:#a0a0c0;font-size:.78rem;line-height:1.5">Toque em <strong style="color:#f0f0ff">compartilhar</strong> <span style="font-size:14px">⎋</span> e depois <strong style="color:#f0f0ff">"Adicionar à Tela de Início"</strong></div>' +
-          '</div>' +
-          '<button onclick="document.getElementById(\'ios-install-banner\').remove();localStorage.setItem(\'beca_ios_banner\',\'1\')" style="background:none;border:none;color:#606080;font-size:22px;cursor:pointer;padding:0;line-height:1;flex-shrink:0">×</button>' +
-        '</div>';
-
-      document.body.appendChild(banner);
-    }, 3000);
-  });
-})();
+    '</style>' +
+    '<scr' + 'ipt></' + 'script>' +
 </script>
 
 
@@ -2371,7 +2336,7 @@ initPerfil = function() {
     }, 500);
   });
 })();
-</script>
+    '</' + 'script>' +
 
 </body></html>';
 
