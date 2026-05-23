@@ -1,4 +1,6 @@
-4// Helper token
+4
+
+// Helper token
 function _getHeaders(json = false) {
     const token = localStorage.getItem('token') || localStorage.getItem('adminToken') || '';
     const h = { 'Authorization': token };

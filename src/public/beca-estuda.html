@@ -2707,46 +2707,6 @@ window.addEventListener('load', function() {
 });
 
 
-// ══ MELHORIAS VISUAIS FINAIS ══
-
-// 1) Animacao de entrada nas telas
-var _irOrig = ir;
-ir = function(tela) {
-  _irOrig(tela);
-  var el = document.getElementById(tela);
-  if(el) {
-    el.style.opacity = '0';
-    el.style.transform = 'translateY(10px)';
-    requestAnimationFrame(function() {
-      el.style.transition = 'opacity .22s ease, transform .22s ease';
-      el.style.opacity = '1';
-      el.style.transform = 'translateY(0)';
-    });
-  }
-};
-
-// 2) Toast melhorado com icone
-var _toastOrig = toast;
-toast = function(msg, tipo) {
-  var icons = {ok:'✅', err:'❌', '':'ℹ️'};
-  _toastOrig((icons[tipo]||'ℹ️') + ' ' + msg, tipo);
-};
-
-// 3) Confirmar antes de sair sem login
-var _logoutOrig = logout;
-logout = function() {
-  abrirModal(
-    '<div style="text-align:center;padding:8px 0">' +
-    '<div style="font-size:40px;margin-bottom:12px">👋</div>' +
-    '<h2 style="font-weight:800;margin-bottom:8px">Sair da conta?</h2>' +
-    '<p style="color:var(--txt2);font-size:.88rem;margin-bottom:24px">Seus dados ficam salvos no dispositivo.</p>' +
-    '<div style="display:flex;gap:10px">' +
-      '<button class="btn-o" onclick="fecharModal()" style="flex:1">Cancelar</button>' +
-      '<button onclick="fecharModal();_logoutOrig()" style="flex:1;padding:13px;background:#ef4444;color:#fff;border:none;border-radius:var(--radius);font-weight:700;cursor:pointer;font-family:Inter,sans-serif">Sair</button>' +
-    '</div></div>'
-  );
-};
-
 // 4) Swipe para voltar (mobile)
 
 
