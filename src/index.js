@@ -400,18 +400,18 @@ app.get('/health', (req, res) => {
 app.use((req, res) => res.status(404).json({ error: 'Rota não encontrada' }));
 
 // ─────────────────────────────────────────────
-// 24. LEMBRETES AUTOMÁTICOS
-// ─────────────────────────────────────────────
-try {
-  const lembretesJob = require('./jobs/lembretes-clientes.job');
-  lembretesJob.iniciar();
-} catch(e) {
-  console.error('[LembretesJob] Erro ao iniciar:', e.message);
-}
-
-// 25. START SERVER
+// 24. START SERVER
 // ─────────────────────────────────────────────
 app.listen(PORT, () => {
+    // Iniciar job de lembretes APÓS servidor subir
+    setTimeout(() => {
+      try {
+        const lembretesJob = require('./jobs/lembretes-clientes.job');
+        lembretesJob.iniciar();
+      } catch(e) {
+        console.error('[LembretesJob] Erro ao iniciar:', e.message);
+      }
+    }, 5000); // aguarda 5s para DB conectar
     console.log('🚀 REBECA CORRIDAS v3.4.1 - Sistema Completo');
     console.log('📡 Porta:', PORT);
     console.log('🚗 App Motorista: /motorista');
