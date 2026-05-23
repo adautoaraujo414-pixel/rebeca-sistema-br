@@ -1627,7 +1627,45 @@ function exportarCadernoPDF(id) {
     '<div class="meta">Professor: ' + c.professor + ' &nbsp;·&nbsp; ' + c.aulas.length + ' aulas &nbsp;·&nbsp; Exportado em ' + dataExport + ' &nbsp;·&nbsp; Beca Estuda</div>' +
     conteudo +
     '<div class="rodape">Gerado pelo Beca Estuda — plataforma universitaria com IA</div>' +
-    '</body></html>';
+    '
+<script>
+// ══ INICIALIZAÇÃO DO APP ══
+(function() {
+  // Carregar DB do localStorage
+  try {
+    var dbRaw = localStorage.getItem('beca_db');
+    if (dbRaw) {
+      var dbParsed = JSON.parse(dbRaw);
+      if (dbParsed && typeof dbParsed === 'object') {
+        Object.assign(DB, dbParsed);
+      }
+    }
+  } catch(e) { console.error('Erro ao carregar DB:', e); }
+
+  // Verificar sessao salva
+  try {
+    var sessRaw = localStorage.getItem('beca_user');
+    if (sessRaw) {
+      var sessUser = JSON.parse(sessRaw);
+      if (sessUser && sessUser.email && DB.usuarios[sessUser.email]) {
+        USER = DB.usuarios[sessUser.email];
+        if (localStorage.getItem('beca_ob')) {
+          entrarApp();
+          return;
+        } else {
+          iniciarOnboarding();
+          return;
+        }
+      }
+    }
+  } catch(e) { console.error('Erro ao carregar sessao:', e); }
+
+  // Sem sessao — mostrar login
+  ir('s-login');
+})();
+</script>
+
+</body></html>';
 
 <script>
 // ══ PERFIL COMPLETO COM ESTATISTICAS REAIS ══
