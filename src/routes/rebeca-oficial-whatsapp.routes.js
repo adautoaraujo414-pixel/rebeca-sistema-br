@@ -62,4 +62,22 @@ router.get('/whatsapp/status', async (req, res) => {
   });
 });
 
+
+// GET /api/rebeca-oficial/whatsapp/webhook — verificacao Meta
+router.get('/whatsapp/webhook', (req, res) => {
+  const mode      = req.query['hub.mode'];
+  const token     = req.query['hub.verify_token'];
+  const challenge = req.query['hub.challenge'];
+  const expected  = process.env.META_WA_VERIFY_TOKEN || 'rebeca-webhook-2026';
+
+  console.log('[Oficial/Webhook] GET verify:', { mode, token, challenge });
+
+  if (mode === 'subscribe' && token === expected) {
+    console.log('[Oficial/Webhook] ✅ Webhook verificado!');
+    return res.status(200).send(challenge);
+  }
+  console.warn('[Oficial/Webhook] ❌ Token invalido:', token);
+  res.status(403).json({ erro: 'Token invalido' });
+});
+
 module.exports = router;
