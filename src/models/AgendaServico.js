@@ -44,6 +44,11 @@ const adminAgendaSchema = new mongoose.Schema({
       boasVindasOficialEnviadaEm: { type: Date }
   },
   isRebecaOficial: { type: Boolean, default: false },
+  configBot: {
+    ativo:          { type: Boolean, default: false },
+    foraHorario:    { type: Boolean, default: false },
+    linkAgenda:     { type: Boolean, default: true  }
+  },
   createdAt: { type: Date, default: Date.now }
 });
 

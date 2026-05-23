@@ -2691,24 +2691,40 @@ function wppRecarregar() {
   wppCarregarConversas();
   wppCarregarLogs();
   wppCarregarStats();
+  carregarCfgBot();
 }
 
-function salvarCfgBot() {
+async function salvarCfgBot() {
   var ativo = document.getElementById('cfg-bot-ativo').checked;
-  var fora = document.getElementById('cfg-bot-fora-horario').checked;
-  var link = document.getElementById('cfg-bot-link').checked;
-  localStorage.setItem('agenda_bot_cfg', JSON.stringify({ ativo, fora, link }));
-  toast('Configuração salva', 'ok');
+  var fora  = document.getElementById('cfg-bot-fora-horario').checked;
+  var link  = document.getElementById('cfg-bot-link').checked;
+  try {
+    const r = await fetch('/api/agenda/config-bot', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + TOKEN },
+      body: JSON.stringify({ ativo, foraHorario: fora, linkAgenda: link })
+    });
+    const d = await r.json();
+    if (d.sucesso) toast('✅ Configuração salva!', 'ok');
+    else toast('Erro ao salvar: ' + d.erro, 'erro');
+  } catch(e) {
+    toast('Erro de conexão', 'erro');
+  }
 }
 
-(function carregarCfgBot(){
+async function carregarCfgBot() {
   try {
-    var cfg = JSON.parse(localStorage.getItem('agenda_bot_cfg')||'{}');
-    if(cfg.ativo !== undefined) document.getElementById('cfg-bot-ativo').checked = cfg.ativo;
-    if(cfg.fora !== undefined) document.getElementById('cfg-bot-fora-horario').checked = cfg.fora;
-    if(cfg.link !== undefined) document.getElementById('cfg-bot-link').checked = cfg.link;
-  } catch(_) {}
-})();
+    const r = await fetch('/api/agenda/config-bot', {
+      headers: { 'Authorization': 'Bearer ' + TOKEN }
+    });
+    const d = await r.json();
+    if (d.sucesso && d.configBot) {
+      document.getElementById('cfg-bot-ativo').checked        = !!d.configBot.ativo;
+      document.getElementById('cfg-bot-fora-horario').checked = !!d.configBot.foraHorario;
+      document.getElementById('cfg-bot-link').checked         = !!d.configBot.linkAgenda;
+    }
+  } catch(e) { console.warn('configBot:', e.message); }
+}
 
 // ─── INIT ───
 (async function(){
