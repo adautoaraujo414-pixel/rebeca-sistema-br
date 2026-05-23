@@ -1392,10 +1392,10 @@ router.post('/pedido-cardapio-digital', async (req, res) => {
 router.post('/login', async (req, res) => {
     try {
         const { email, senha } = req.body;
-        const admin = await Admin.findOne({ email, senha, tipoAdmin: { $in: ['delivery', 'multi'] } });
+        const admin = await AdminDelivery.findOne({ email, senha });
         if (!admin) return res.status(401).json({ erro: 'Email ou senha incorretos' });
-        if (!admin.ativo) return res.status(401).json({ erro: 'Conta inativa' });
-        res.json({ sucesso: true, admin: { id: admin._id, nome: admin.nome, email: admin.email, token: admin.token } });
+        if (admin.status === 'bloqueado') return res.status(401).json({ erro: 'Conta bloqueada' });
+        res.json({ sucesso: true, admin: { id: admin._id, nome: admin.nomeComercio || admin.nome, email: admin.email, token: admin.token } });
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
