@@ -2316,49 +2316,20 @@ initPerfil = function() {
   });
 })();
 </script>
-    '</' + 'script>' +
 
-</body></html>';
-
-  var blob = new Blob([htmlPDF], {type:'text/html;charset=utf-8'});
-  var url = URL.createObjectURL(blob);
-  var a = document.createElement('a');
-  a.href = url;
-  a.download = c.nome.replace(/\s+/g,'_') + '_BecaEstuda.html';
-  a.click();
-  URL.revokeObjectURL(url);
-  toast('Arquivo salvo! Abra e imprima como PDF.', 'ok');
-}
-
+<script>
 function compartilharCaderno(id) {
   var c = DB.cadernos.find(function(x){ return x.id===id; });
   if(!c) return;
-
-  var texto = c.emoji + ' ' + c.nome + ' — ' + c.professor + '
-
-';
+  var texto = c.emoji + ' ' + c.nome + ' \u2014 ' + c.professor + '\n';
   c.aulas.forEach(function(a, i) {
-    texto += (i+1) + '. ' + a.titulo + '
-' + a.resumo.substring(0,300) + '
-
-';
+    texto += (i+1) + '. ' + a.titulo + '\n' + a.resumo.substring(0,300) + '\n\n';
   });
-  texto += '
-— Exportado pelo Beca Estuda';
-
+  texto += '\u2014 Exportado pelo Beca Estuda';
   if(navigator.share) {
-    navigator.share({
-      title: c.nome + ' — Beca Estuda',
-      text: texto
-    }).then(function(){
-      toast('Compartilhado!', 'ok');
-    }).catch(function(){});
+    navigator.share({ title: c.nome + ' \u2014 Beca Estuda', text: texto }).then(function(){ toast('Compartilhado!', 'ok'); }).catch(function(){});
   } else {
-    navigator.clipboard.writeText(texto).then(function(){
-      toast('Copiado para area de transferencia!', 'ok');
-    }).catch(function(){
-      toast('Copie o texto do caderno manualmente', '');
-    });
+    navigator.clipboard.writeText(texto).then(function(){ toast('Copiado para area de transferencia!', 'ok'); }).catch(function(){ toast('Copie o texto do caderno manualmente', ''); });
   }
 }
 
