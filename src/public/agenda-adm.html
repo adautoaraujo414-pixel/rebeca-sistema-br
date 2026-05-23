@@ -3639,5 +3639,72 @@ function fecharMenuMobile() {
 
 
 
+
+<!-- DIAG -->
+<script>
+window.addEventListener('load', function() {
+  setTimeout(function() {
+    if (window.innerWidth > 900) return;
+    var vw = window.innerWidth;
+    var bsw = document.body.scrollWidth;
+    var hsw = document.documentElement.scrollWidth;
+    var lines = [];
+    lines.push('VW=' + vw + ' body.sw=' + bsw + ' html.sw=' + hsw);
+    lines.push('OVERFLOW=' + (bsw > vw ? 'SIM +' + (bsw-vw) + 'px' : 'NAO'));
+    lines.push('---VAZANDO---');
+    document.querySelectorAll('*').forEach(function(el) {
+      try {
+        var r = el.getBoundingClientRect();
+        if (r.right > vw + 2 || r.left < -2) {
+          var cs = window.getComputedStyle(el);
+          lines.push(
+            el.tagName +
+            (el.id ? '#'+el.id : '') +
+            (el.className && typeof el.className === 'string' ? '.'+el.className.trim().split(' ')[0] : '') +
+            ' L=' + Math.round(r.left) +
+            ' R=' + Math.round(r.right) +
+            ' W=' + Math.round(r.width) +
+            ' pos=' + cs.position +
+            ' ml=' + cs.marginLeft +
+            ' tr=' + (cs.transform !== 'none' ? cs.transform.substring(0,30) : 'none') +
+            ' mw=' + cs.minWidth
+          );
+        }
+      } catch(e) {}
+    });
+    lines.push('---PRINCIPAIS---');
+    [
+      ['html', document.documentElement],
+      ['body', document.body],
+      ['#app', document.getElementById('app')],
+      ['.main', document.querySelector('.main')],
+      ['.content', document.querySelector('.content')],
+      ['.sidebar', document.getElementById('sidebar')],
+      ['.bottom-nav', document.querySelector('.bottom-nav')],
+      ['.mobile-header', document.querySelector('.mobile-header')],
+      ['.drawer', document.querySelector('.drawer')],
+    ].forEach(function(pair) {
+      var el = pair[1];
+      if (!el) { lines.push(pair[0] + ': NULL'); return; }
+      var cs = window.getComputedStyle(el);
+      lines.push(pair[0] + ': ow=' + el.offsetWidth + ' sw=' + el.scrollWidth +
+        ' ml=' + cs.marginLeft + ' w=' + cs.width + ' pos=' + cs.position +
+        ' tr=' + (cs.transform !== 'none' ? cs.transform.substring(0,20) : 'none') +
+        ' disp=' + cs.display);
+    });
+    var d = document.createElement('div');
+    d.id = 'DIAG';
+    d.style.cssText = 'position:fixed;inset:0;bottom:56px;background:#000;color:#0f0;font:10px/1.4 monospace;padding:6px;overflow-y:auto;z-index:99999;white-space:pre;word-break:break-all';
+    d.textContent = lines.join('\n');
+    var btn = document.createElement('button');
+    btn.textContent = 'X FECHAR';
+    btn.style.cssText = 'position:fixed;bottom:56px;left:0;right:0;z-index:999999;background:red;color:#fff;border:none;padding:10px;font-weight:bold;font-size:14px';
+    btn.onclick = function() { d.remove(); btn.remove(); };
+    document.body.appendChild(d);
+    document.body.appendChild(btn);
+  }, 3000);
+});
+</script>
+<!-- /DIAG -->
 </body>
 </html>
