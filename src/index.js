@@ -353,7 +353,7 @@ app.get('/espaco-digital',     (req, res) => res.sendFile(path.join(__dirname, '
 // ─────────────────────────────────────────────
 // 19. PÁGINAS — Beca Estuda
 // ─────────────────────────────────────────────
-app.get('/beca-estuda',         (req, res) => res.sendFile(path.join(__dirname, 'public', 'beca-estuda.html')));
+app.get('/beca-estuda', (req, res) => { res.set('Cache-Control','no-store'); res.sendFile(path.join(__dirname, 'public', 'beca-estuda.html')); });
 app.get('/beca-estuda-landing', (req, res) => res.sendFile(path.join(__dirname, 'public', 'beca-estuda-landing.html')));
 app.get('/beca-manifest.json',  (req, res) => res.sendFile(path.join(__dirname, 'public', 'beca-manifest.json')));
 app.get('/beca-sw.js', (req, res) => {
