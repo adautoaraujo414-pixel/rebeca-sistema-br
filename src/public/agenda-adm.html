@@ -3636,5 +3636,104 @@ function fecharMenuMobile() {
 }
 </script>
 
+
+<!-- ═══ DIAGNOSTICO MOBILE — remover depois ═══ -->
+<script>
+(function diagnosticoMobile() {
+  if (window.innerWidth > 768) return; // só mobile
+
+  setTimeout(function() {
+    var log = [];
+    var vw = window.innerWidth;
+    var bodyW = document.body.scrollWidth;
+    var htmlW = document.documentElement.scrollWidth;
+
+    log.push('=== DIAGNOSTICO MOBILE ===');
+    log.push('window.innerWidth: ' + vw);
+    log.push('body.scrollWidth: ' + bodyW);
+    log.push('html.scrollWidth: ' + htmlW);
+    log.push('overflow horizontal: ' + (bodyW > vw ? 'SIM ❌ ' + (bodyW-vw) + 'px extra' : 'NAO ✅'));
+    log.push('');
+
+    // Checar todos os elementos que passam do viewport
+    var offenders = [];
+    document.querySelectorAll('*').forEach(function(el) {
+      try {
+        var r = el.getBoundingClientRect();
+        var cs = window.getComputedStyle(el);
+        if (r.right > vw + 2) {
+          offenders.push({
+            tag: el.tagName,
+            id: el.id || '-',
+            cls: (el.className || '').toString().substring(0,40),
+            right: Math.round(r.right),
+            width: Math.round(r.width),
+            display: cs.display,
+            position: cs.position,
+            overflow: cs.overflow,
+            marginLeft: cs.marginLeft,
+            transform: cs.transform
+          });
+        }
+      } catch(e) {}
+    });
+
+    log.push('=== ELEMENTOS VAZANDO VIEWPORT ===');
+    if (offenders.length === 0) {
+      log.push('Nenhum elemento passa de ' + vw + 'px ✅');
+    } else {
+      offenders.forEach(function(o) {
+        log.push('[' + o.tag + '] id=' + o.id + ' cls=' + o.cls);
+        log.push('  right=' + o.right + 'px | width=' + o.width + 'px | pos=' + o.position);
+        log.push('  display=' + o.display + ' | marginLeft=' + o.marginLeft + ' | transform=' + o.transform);
+      });
+    }
+
+    // Checar elementos principais
+    log.push('');
+    log.push('=== ELEMENTOS PRINCIPAIS ===');
+    var els = {
+      'html':       document.documentElement,
+      'body':       document.body,
+      '#app':       document.getElementById('app'),
+      '.main':      document.querySelector('.main'),
+      '.content':   document.querySelector('.content'),
+      '.sidebar':   document.querySelector('.sidebar'),
+      '.bottom-nav':document.querySelector('.bottom-nav'),
+      '.mobile-header': document.querySelector('.mobile-header'),
+    };
+    Object.keys(els).forEach(function(nome) {
+      var el = els[nome];
+      if (!el) { log.push(nome + ': NAO EXISTE'); return; }
+      var r = el.getBoundingClientRect();
+      var cs = window.getComputedStyle(el);
+      log.push(nome + ':');
+      log.push('  offsetWidth=' + el.offsetWidth + ' scrollWidth=' + el.scrollWidth);
+      log.push('  getBCR: left=' + Math.round(r.left) + ' right=' + Math.round(r.right) + ' width=' + Math.round(r.width));
+      log.push('  computed: width=' + cs.width + ' marginLeft=' + cs.marginLeft + ' display=' + cs.display);
+      log.push('  transform=' + cs.transform + ' position=' + cs.position);
+    });
+
+    // Mostrar resultado numa div flutuante
+    var div = document.createElement('div');
+    div.id = 'mobile-diag';
+    div.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:60px;background:rgba(0,0,0,.92);color:#0f0;font:11px monospace;padding:8px;overflow-y:auto;z-index:99999;white-space:pre;font-size:10px;';
+    div.textContent = log.join('\n');
+
+    // Botao fechar
+    var btn = document.createElement('button');
+    btn.textContent = '✕ FECHAR DIAGNOSTICO';
+    btn.style.cssText = 'position:fixed;bottom:60px;left:0;right:0;z-index:999999;background:#f97316;color:#fff;border:none;padding:12px;font-size:14px;font-weight:bold;cursor:pointer;';
+    btn.onclick = function() { div.remove(); btn.remove(); };
+
+    document.body.appendChild(div);
+    document.body.appendChild(btn);
+
+    console.log(log.join('\n'));
+  }, 2000); // aguarda 2s para app carregar
+})();
+</script>
+<!-- ═══ FIM DIAGNOSTICO ═══ -->
+
 </body>
 </html>
