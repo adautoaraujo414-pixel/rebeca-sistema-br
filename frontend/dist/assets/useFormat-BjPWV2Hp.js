@@ -1,0 +1,1 @@
+function e(){return{moeda:e=>e==null?`—`:new Intl.NumberFormat(`pt-BR`,{style:`currency`,currency:`BRL`}).format(e),numero:e=>e==null?`—`:new Intl.NumberFormat(`pt-BR`).format(e),hora:e=>e?new Date(e).toLocaleTimeString(`pt-BR`,{hour:`2-digit`,minute:`2-digit`}):`—`}}export{e as t};
