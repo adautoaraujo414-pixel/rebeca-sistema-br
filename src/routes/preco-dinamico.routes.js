@@ -211,7 +211,7 @@ router.get('/faixa-atual', async (req, res) => {
             const faixa = await PrecoAdminService.getFaixaAtual(adminId);
             return res.json(faixa);
         }
-    } catch(e) {}
+    } catch(e){ console.error("[preco-dinamico.routes.js]", e.message); }
     res.json(PrecoDinamicoService.obterFaixaAtual());
 });
 

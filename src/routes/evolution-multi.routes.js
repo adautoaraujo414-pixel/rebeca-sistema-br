@@ -49,13 +49,13 @@ async function _getAdminTipo(adminId, AdminModel, AdminDeliveryModel, instanciaA
         const { AdminDelivery: _AdCheck } = require('../models/delivery.models');
         const adDel = await _AdCheck.findById(adminId).select('_id plano').lean();
         if (adDel) { tipo = 'delivery'; plano = adDel.plano || null; }
-    } catch(_) {}
+    } catch(_){ console.error("[evolution-multi.routes.js]", _.message); }
     if (tipo === 'corrida') {
         try {
             const { AdminAgenda: _AdAgenda } = require('../models/AgendaServico');
             const adAg = await _AdAgenda.findById(adminId).select('_id plano').lean();
             if (adAg) { tipo = 'agenda'; plano = adAg.plano || null; }
-        } catch(_) {}
+        } catch(_){ console.error("[evolution-multi.routes.js]", _.message); }
     }
     _adminTypeCache.set(key, { tipo, plano, ts: Date.now() });
     return tipo;
@@ -371,7 +371,7 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                                 if (_tipoAdminAudio === 'agenda') {
                                     conversaCtx = { tipo: 'agenda' };
                                 }
-                            } catch(_) {}
+                            } catch(_){ console.error("[evolution-multi.routes.js]", _.message); }
 
 
                             // ── MELHORIA: Detectar urgência/nervosismo pelo áudio ANTES de transcrever ──
@@ -648,7 +648,7 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                                 console.log('[RELAY] Msg cliente salva no chat da corrida:', _corridaAtiva._id);
                             }
                         }
-                    } catch(_re) {}
+                    } catch(_re){ console.error("[evolution-multi.routes.js]", _re.message); }
                 }
 
                 // DEBOUNCE: acumula até 4 mensagens ou 3s, depois processa como uma só
@@ -743,7 +743,7 @@ Responda apenas com a mensagem para o cliente, sem explicações.`;
                                 await EvolutionMultiService.enviarMensagem(instancia._id, telefone,
                                     'Não consegui ouvir direito seu áudio 🎤' + '\n\n' + 'Pode repetir por texto ou mandar outro áudio?'
                                 );
-                            } catch(_efb) {}
+                            } catch(_efb){ console.error("[evolution-multi.routes.js]", _efb.message); }
                             continue;
                         }
                         if (adminDoc && adminDoc.tipoAdmin === 'delivery') {

@@ -41,7 +41,7 @@ async function _buscarInstancia(corrida) {
                     if (inst) { console.log('[INST] via conversa cliente:', inst.nomeInstancia); break; }
                 }
             }
-        } catch(_e) {}
+        } catch(_e){ console.error("[motorista-app.routes.js]", _e.message); }
     }
     // 3. adminId da corrida — busca todas instâncias do admin e loga
     if (!inst && corrida?.adminId) {
@@ -119,7 +119,7 @@ router.post('/aceitar', auth, async (req, res) => {
     const { corridaId } = req.body;
     try {
         // PROTEÇÃO: Verificar blacklist do cliente
-        try { const { Corrida: _CB } = require('../models'); const _cB = await _CB.findById(corridaId).select('clienteTelefone'); if (_cB?.clienteTelefone) { const AF = require('../services/antifraude.service'); const _bl = AF.verificarBlacklist('telefone', _cB.clienteTelefone); if (_bl) return res.json({ sucesso: false, erro: 'Corrida bloqueada — cliente na blacklist.' }); } } catch(_baf) {}
+        try { const { Corrida: _CB } = require('../models'); const _cB = await _CB.findById(corridaId).select('clienteTelefone'); if (_cB?.clienteTelefone) { const AF = require('../services/antifraude.service'); const _bl = AF.verificarBlacklist('telefone', _cB.clienteTelefone); if (_bl) return res.json({ sucesso: false, erro: 'Corrida bloqueada — cliente na blacklist.' }); } } catch(_baf){ console.error("[motorista-app.routes.js]", _baf.message); }
         // PROTEÇÃO: Verificar inadimplência
         if (req.motorista.bloqueadoPorMensalidade || req.motorista.ativo === false) {
             return res.json({ sucesso: false, erro: 'Sua conta está bloqueada por mensalidade em atraso. Entre em contato com o administrador.' });
@@ -160,7 +160,7 @@ router.post('/aceitar', auth, async (req, res) => {
             if (DespachoService.corridasPendentes) {
                 DespachoService.corridasPendentes.delete(corridaId.toString());
             }
-        } catch(_dp) {}
+        } catch(_dp){ console.error("[motorista-app.routes.js]", _dp.message); }
         
         // ========== NOTIFICAR CLIENTE - SOLUÇÃO ROBUSTA ==========
         if (corrida && corrida.clienteTelefone) {
@@ -249,7 +249,7 @@ router.post('/aceitar', auth, async (req, res) => {
                 DespachoService.corridasPendentes.delete(corridaId.toString());
                 console.log('[ACEITAR] Corrida removida do DespachoService');
             }
-        } catch(_dp) {}
+        } catch(_dp){ console.error("[motorista-app.routes.js]", _dp.message); }
 
         res.json({ sucesso: true, corrida });
     } catch (e) {
@@ -324,7 +324,7 @@ router.post('/cheguei', auth, async (req, res) => {
                             if (instCheg) break;
                         }
                     }
-                } catch(_e) {}
+                } catch(_e){ console.error("[motorista-app.routes.js]", _e.message); }
             }
             if (!instCheg) instCheg = await _buscarInstancia(corrida);
             if (instCheg) {
@@ -378,7 +378,7 @@ router.post('/iniciar', auth, async (req, res) => {
                 conv._ultimaAtividade = Date.now();
                 conversas.set(corrida.clienteTelefone, conv);
             }
-        } catch(_rs) {}
+        } catch(_rs){ console.error("[motorista-app.routes.js]", _rs.message); }
         res.json({ sucesso: true, corrida });
     } catch (e) { res.json({ sucesso: false, erro: e.message }); }
 });

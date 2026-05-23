@@ -94,7 +94,7 @@ router.get('/rastrear/:codigo', async (req, res) => {
         
         // Fallback: tentar como ID completo
         if (!corrida && codigo.length >= 20) {
-            try { corrida = await Corrida.findById(codigo).lean(); } catch(e) {}
+            try { corrida = await Corrida.findById(codigo).lean(); } catch(e){ console.error("[rebeca.routes.js]", e.message); }
         }
         
         if (!corrida) {
@@ -123,7 +123,7 @@ router.get('/rastrear/:codigo', async (req, res) => {
         let motoristaGPS = null;
         
         if (corrida.motoristaId) {
-            try { motorista = await Motorista.findById(corrida.motoristaId); } catch(e) {}
+            try { motorista = await Motorista.findById(corrida.motoristaId); } catch(e){ console.error("[rebeca.routes.js]", e.message); }
             // Buscar GPS: primeiro no serviço em memória (mais atualizado), depois no banco
             try {
                 // Tentar gps.service em memória (mais atualizado)
@@ -131,7 +131,7 @@ router.get('/rastrear/:codigo', async (req, res) => {
                     const gpsService = require('../services/gps.service');
                     const gpsMemoria = gpsService.obterLocalizacao(corrida.motoristaId.toString());
                     if (gpsMemoria && gpsMemoria.latitude) motoristaGPS = gpsMemoria;
-                } catch(_e) {}
+                } catch(_e){ console.error("[rebeca.routes.js]", _e.message); }
                 // Fallback: usar lat/lng do banco do motorista
                 if (!motoristaGPS && motorista && motorista.latitude) {
                     motoristaGPS = { latitude: motorista.latitude, longitude: motorista.longitude, atualizadoEm: motorista.updatedAt };

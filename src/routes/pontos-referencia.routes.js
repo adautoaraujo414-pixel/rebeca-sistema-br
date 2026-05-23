@@ -8,7 +8,7 @@ const getAdminId = (req) => req.query.adminId || req.headers['x-admin-id'] || re
 let PontoReferencia;
 try {
     PontoReferencia = require('../models').PontoReferencia;
-} catch(e) {}
+} catch(e){ console.error("[pontos-referencia.routes.js]", e.message); }
 if (!PontoReferencia) {
     const schema = new mongoose.Schema({
         adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin' },

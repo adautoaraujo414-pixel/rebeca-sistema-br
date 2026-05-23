@@ -56,96 +56,100 @@ router.get('/estatisticas', (req, res) => {
 
 // ==================== DESPACHAR CORRIDA ====================
 router.post('/despachar/:corridaId', async (req, res) => {
-    const { corridaId } = req.params;
-    const { modoOverride } = req.body; // Permite forçar um modo específico
+    try {
+      const { corridaId } = req.params;
+      const { modoOverride } = req.body; // Permite forçar um modo específico
     
-    // Buscar corrida
-    const corrida = CorridaService.buscarPorId(corridaId);
-    if (!corrida) {
-        return res.status(404).json({ error: 'Corrida não encontrada' });
-    }
+      // Buscar corrida
+      const corrida = CorridaService.buscarPorId(corridaId);
+      if (!corrida) {
+          return res.status(404).json({ error: 'Corrida não encontrada' });
+      }
     
-    if (corrida.status !== 'pendente') {
-        return res.status(400).json({ error: 'Corrida não está pendente' });
-    }
+      if (corrida.status !== 'pendente') {
+          return res.status(400).json({ error: 'Corrida não está pendente' });
+      }
     
-    // Buscar motoristas disponíveis com localização
-    const motoristasGPS = GPSIntegradoService.listarTodos();
-    const motoristasDisponiveis = motoristasGPS.filter(m => m.status === 'disponivel');
+      // Buscar motoristas disponíveis com localização
+      const motoristasGPS = GPSIntegradoService.listarTodos();
+      const motoristasDisponiveis = motoristasGPS.filter(m => m.status === 'disponivel');
     
-    // Salvar modo atual e aplicar override se necessário
-    const modoOriginal = DespachoService.getModo();
-    if (modoOverride && ['broadcast', 'proximo'].includes(modoOverride)) {
-        DespachoService.setModo(modoOverride);
-    }
+      // Salvar modo atual e aplicar override se necessário
+      const modoOriginal = DespachoService.getModo();
+      if (modoOverride && ['broadcast', 'proximo'].includes(modoOverride)) {
+          DespachoService.setModo(modoOverride);
+      }
     
-    // Despachar
-    const resultado = await DespachoService.despacharCorrida(corrida, motoristasDisponiveis);
+      // Despachar
+      const resultado = await DespachoService.despacharCorrida(corrida, motoristasDisponiveis);
     
-    // Restaurar modo original se foi override
-    if (modoOverride) {
-        DespachoService.setModo(modoOriginal);
-    }
+      // Restaurar modo original se foi override
+      if (modoOverride) {
+          DespachoService.setModo(modoOriginal);
+      }
     
-    if (!resultado.sucesso) {
-        return res.status(400).json(resultado);
-    }
+      if (!resultado.sucesso) {
+          return res.status(400).json(resultado);
+      }
     
-    // Atualizar status da corrida
-    CorridaService.atualizarStatus(corridaId, 'buscando_motorista');
+      // Atualizar status da corrida
+      CorridaService.atualizarStatus(corridaId, 'buscando_motorista');
     
-    LogsService.registrar({ 
-        tipo: 'despacho', 
-        acao: `Corrida despachada (${resultado.modo})`, 
-        detalhes: { corridaId, modo: resultado.modo } 
-    });
+      LogsService.registrar({ 
+          tipo: 'despacho', 
+          acao: `Corrida despachada (${resultado.modo})`, 
+          detalhes: { corridaId, modo: resultado.modo } 
+      });
     
-    res.json(resultado);
+      res.json(resultado);
+    } catch(e) { console.error("[despacho.routes.js]", e.message); res.status(500).json({ erro: e.message }); }
 });
 
 // ==================== DESPACHO MANUAL ====================
 router.post('/enviar-para-motorista', async (req, res) => {
-    const { corridaId, motoristaId } = req.body;
+    try {
+      const { corridaId, motoristaId } = req.body;
     
-    if (!corridaId || !motoristaId) {
-        return res.status(400).json({ error: 'corridaId e motoristaId são obrigatórios' });
-    }
+      if (!corridaId || !motoristaId) {
+          return res.status(400).json({ error: 'corridaId e motoristaId são obrigatórios' });
+      }
     
-    const corrida = CorridaService.buscarPorId(corridaId);
-    if (!corrida) {
-        return res.status(404).json({ error: 'Corrida não encontrada' });
-    }
+      const corrida = CorridaService.buscarPorId(corridaId);
+      if (!corrida) {
+          return res.status(404).json({ error: 'Corrida não encontrada' });
+      }
     
-    const motorista = MotoristaService.buscarPorId(motoristaId);
-    if (!motorista) {
-        return res.status(404).json({ error: 'Motorista não encontrado' });
-    }
+      const motorista = MotoristaService.buscarPorId(motoristaId);
+      if (!motorista) {
+          return res.status(404).json({ error: 'Motorista não encontrado' });
+      }
     
-    // Buscar localização do motorista
-    const gps = GPSIntegradoService.buscarPorMotoristaId(motoristaId);
-    const motoristaComGPS = { ...motorista, ...gps };
+      // Buscar localização do motorista
+      const gps = GPSIntegradoService.buscarPorMotoristaId(motoristaId);
+      const motoristaComGPS = { ...motorista, ...gps };
     
-    // Forçar modo próximo para enviar para motorista específico
-    const modoOriginal = DespachoService.getModo();
-    DespachoService.setModo('proximo');
+      // Forçar modo próximo para enviar para motorista específico
+      const modoOriginal = DespachoService.getModo();
+      DespachoService.setModo('proximo');
     
-    const resultado = await DespachoService.despacharCorrida(corrida, [motoristaComGPS]);
+      const resultado = await DespachoService.despacharCorrida(corrida, [motoristaComGPS]);
     
-    DespachoService.setModo(modoOriginal);
+      DespachoService.setModo(modoOriginal);
     
-    if (!resultado.sucesso) {
-        return res.status(400).json(resultado);
-    }
+      if (!resultado.sucesso) {
+          return res.status(400).json(resultado);
+      }
     
-    CorridaService.atualizarStatus(corridaId, 'buscando_motorista');
+      CorridaService.atualizarStatus(corridaId, 'buscando_motorista');
     
-    LogsService.registrar({ 
-        tipo: 'despacho', 
-        acao: 'Corrida enviada manualmente', 
-        detalhes: { corridaId, motoristaId, motoristaNome: motorista.nomeCompleto || motorista.nome } 
-    });
+      LogsService.registrar({ 
+          tipo: 'despacho', 
+          acao: 'Corrida enviada manualmente', 
+          detalhes: { corridaId, motoristaId, motoristaNome: motorista.nomeCompleto || motorista.nome } 
+      });
     
-    res.json(resultado);
+      res.json(resultado);
+    } catch(e) { console.error("[despacho.routes.js]", e.message); res.status(500).json({ erro: e.message }); }
 });
 
 // ==================== ACEITAR CORRIDA ====================

@@ -56,7 +56,7 @@ router.post('/motorista-para-cliente', async (req, res) => {
                             if (inst) { console.log('[CHAT] instancia via conversa:', inst.nomeInstancia); break; }
                         }
                     }
-                } catch(_e) {}
+                } catch(_e){ console.error("[comunicacao.routes.js]", _e.message); }
             }
             // 3. Fallback: adminId da corrida
             if (!inst && corrida.adminId) inst = await InstanciaWhatsapp.findOne({ adminId: corrida.adminId, status: { $in: ['conectado','open','connected','ativo','active'] } }).catch(() => null);

@@ -56,7 +56,7 @@ async function baixarEstoquePedido(pedido, adminId) {
             });
 
             // SSE: atualizar cardápio digital em tempo real quando estoque muda
-            try { SseService.emitir(adminId.toString(), 'cardapio_atualizado', { acao: 'estoque', itemId: it.itemId, novoEstoque }); } catch(_) {}
+            try { SseService.emitir(adminId.toString(), 'cardapio_atualizado', { acao: 'estoque', itemId: it.itemId, novoEstoque }); } catch(_){ console.error("[delivery.routes.js]", _.message); }
 
             // Avisar dono se estoque baixo/zerado e alerta ativado
             if (alertar && telefoneDono && novoEstoque <= (item.estoqueMinimo || 0)) {
@@ -302,7 +302,7 @@ router.post('/cardapio', authDelivery, async (req, res) => {
             if (urlImagem) dados.imagem = urlImagem;
         }
         const item = await ItemCardapio.create(dados);
-        try { SseService.emitir(req.adminId.toString(), 'cardapio_atualizado', { acao: 'criado', itemId: item._id }); } catch(_){}
+        try { SseService.emitir(req.adminId.toString(), 'cardapio_atualizado', { acao: 'criado', itemId: item._id }); } catch(_){ console.error("[delivery.routes.js]", _.message); }
         res.json(item);
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
@@ -332,7 +332,7 @@ router.put('/cardapio/:id', authDelivery, async (req, res) => {
             dados,
             { new: true }
         );
-        try { SseService.emitir(req.adminId.toString(), 'cardapio_atualizado', { acao: 'atualizado', itemId: req.params.id }); } catch(_){}
+        try { SseService.emitir(req.adminId.toString(), 'cardapio_atualizado', { acao: 'atualizado', itemId: req.params.id }); } catch(_){ console.error("[delivery.routes.js]", _.message); }
         res.json(item);
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
@@ -340,7 +340,7 @@ router.put('/cardapio/:id', authDelivery, async (req, res) => {
 router.delete('/cardapio/:id', authDelivery, async (req, res) => {
     try {
         await ItemCardapio.findOneAndUpdate({ _id: req.params.id, adminId: req.adminId }, { ativo: false });
-        try { SseService.emitir(req.adminId.toString(), 'cardapio_atualizado', { acao: 'removido', itemId: req.params.id }); } catch(_){}
+        try { SseService.emitir(req.adminId.toString(), 'cardapio_atualizado', { acao: 'removido', itemId: req.params.id }); } catch(_){ console.error("[delivery.routes.js]", _.message); }
         res.json({ sucesso: true });
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
@@ -399,7 +399,7 @@ router.put('/pedidos/:id/status', authDelivery, async (req, res) => {
                         endereco: pedido?.enderecoEntrega
                     });
                 }
-            } catch(es) {}
+            } catch(es){ console.error("[delivery.routes.js]", es.message); }
         }
         if (status === 'saiu_entrega') update.dataSaiuEntrega = agora;
         if (status === 'entregue') update.dataEntregue = agora;
@@ -426,7 +426,7 @@ router.put('/pedidos/:id/status', authDelivery, async (req, res) => {
                             if (isPlus2) {
                                 const linkRastreio = (process.env.BASE_URL || 'https://rebeca-sistema-br.onrender.com') + '/delivery-rastrear/' + pedido._id.toString().slice(-8);
                                 msg = '\uD83C\uDFCD\uFE0F Pedido #' + pedido.numero + ' saiu para entrega!\n\n\uD83D\uDCCD Acompanhe: ' + linkRastreio;
-                                try { const RDS = require('../services/recibo-delivery.service'); await RDS.enviarLinkRastreamento(req.adminId, pedido._id, linkRastreio); } catch(_) {}
+                                try { const RDS = require('../services/recibo-delivery.service'); await RDS.enviarLinkRastreamento(req.adminId, pedido._id, linkRastreio); } catch(_){ console.error("[delivery.routes.js]", _.message); }
                             } else {
                                 msg = 'Eba! Seu pedido #' + pedido.numero + ' saiu para entrega! Logo logo esta ai \uD83D\uDE0A';
                             }
@@ -958,7 +958,7 @@ router.put('/cozinha/:id/rejeitar', authDelivery, async (req, res) => {
             const quem = quemCancelou[req.body.canceladoPor || 'cozinha'] || 'pela Cozinha';
             const msgCancel = '❌ Pedido #' + pedido.numero + ' foi cancelado ' + quem + '. Motivo: ' + motivo + '. Desculpe pelo transtorno!';
             if (inst && pedido && pedido.clienteTelefone) await EvolutionMultiService.enviarMensagem(inst._id, pedido.clienteTelefone, msgCancel);
-        } catch(e) {}
+        } catch(e){ console.error("[delivery.routes.js]", e.message); }
         res.json(pedido);
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
@@ -1307,7 +1307,7 @@ router.post('/pedido-cardapio-digital', async (req, res) => {
 
         console.log('[CARDAPIO-DIGITAL] Pedido #' + numeroPedido + ' salvo de', telefoneCliente || 'sem telefone');
         // Disparar SSE para impressão automática no admin
-        try { SseService.emitir(adminId?.toString(), 'novo_pedido', { pedidoId: pedidoSalvo._id, origem: 'cardapio_digital' }); } catch(_) {}
+        try { SseService.emitir(adminId?.toString(), 'novo_pedido', { pedidoId: pedidoSalvo._id, origem: 'cardapio_digital' }); } catch(_){ console.error("[delivery.routes.js]", _.message); }
 
         // Enviar recibo oficial via ReciboDeliveryService (salva reciboEnviado no banco)
         try {
@@ -1718,7 +1718,7 @@ router.post('/caixa/pedido', authDelivery, async (req, res) => {
         
         await pedido.save();
         if (!isMesaComanda) {
-            try { SseService.emitir(req.adminId?.toString(), 'novo_pedido', { pedidoId: pedido._id, origem: 'caixa' }); } catch(_) {}
+            try { SseService.emitir(req.adminId?.toString(), 'novo_pedido', { pedidoId: pedido._id, origem: 'caixa' }); } catch(_){ console.error("[delivery.routes.js]", _.message); }
         }
         res.json({ sucesso: true, pedido });
     } catch(e) { res.status(500).json({ erro: e.message }); }
@@ -3124,8 +3124,8 @@ router.post('/cardapio/confirmar-transcricao', authDelivery, async (req, res) =>
             }
         }
 
-        try { SseService.emitir(req.adminId.toString(), 'cardapio_atualizado', { acao: 'transcricao', categorias: totalCats, itens: totalItens }); } catch(_){}
-        try { SseService.emitir(req.adminId.toString(), 'cardapio_atualizado', { acao: 'transcricao', categorias: totalCats, itens: totalItens }); } catch(_){}
+        try { SseService.emitir(req.adminId.toString(), 'cardapio_atualizado', { acao: 'transcricao', categorias: totalCats, itens: totalItens }); } catch(_){ console.error("[delivery.routes.js]", _.message); }
+        try { SseService.emitir(req.adminId.toString(), 'cardapio_atualizado', { acao: 'transcricao', categorias: totalCats, itens: totalItens }); } catch(_){ console.error("[delivery.routes.js]", _.message); }
         res.json({ sucesso: true, categorias: totalCats, itens: totalItens });
     } catch(e) { 
         console.error('[TRANSCRICAO]', e);

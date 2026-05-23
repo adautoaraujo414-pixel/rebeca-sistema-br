@@ -27,7 +27,7 @@ router.post('/', authAdmin, async (req, res) => {
         try {
             const geo = await MapsService.geocodificar(endereco);
             lat = geo?.latitude; lng = geo?.longitude;
-        } catch(e) {}
+        } catch(e){ console.error("[pontos.routes.js]", e.message); }
         // Se for principal, desmarcar as outras
         if (principal) {
             await PontoEmbarque.updateMany({ adminId: req.adminId }, { principal: false });

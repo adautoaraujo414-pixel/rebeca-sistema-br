@@ -32,7 +32,7 @@ router.post('/', authAdmin, async (req, res) => {
                 const MapsService = require('../services/maps.service');
                 const geo = await MapsService.geocodificar(enderecoReferencia);
                 if (geo?.sucesso) { lat = geo.latitude; lng = geo.longitude; }
-            } catch(e) {}
+            } catch(e){ console.error("[zona-preco.routes.js]", e.message); }
         }
         if (!lat || !lng) return res.status(400).json({ erro: 'Não foi possível localizar o endereço. Informe um endereço válido.' });
 
