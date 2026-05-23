@@ -6,18 +6,18 @@ const express = require('express');
 const router = express.Router();
 const { AdminAgenda, AgendamentoAgenda, ServicoAgenda, ClienteAgenda } = require('../models/AgendaServico');
 const { FinanceiroAgenda, ContaPagarAgenda, FilaEncaixeAgenda } = require('../models/AgendaServico');
-const jwt = require('jsonwebtoken');
-const JWT_SECRET = process.env.JWT_SECRET || 'rebeca-secret-2024';
-
-// Middleware auth
+// Middleware auth — token simples (compatível com agenda.routes.js)
 async function authAgenda(req, res, next) {
   try {
-    const token = req.headers.authorization?.replace('Bearer ', '') || req.query.token;
-    if (!token) return res.status(401).json({ erro: 'Token obrigatorio' });
-    const decoded = jwt.verify(token, JWT_SECRET);
-    req.adminId = decoded.id;
+    const token = (req.headers.authorization || '').replace('Bearer ', '').trim() || req.query.token || '';
+    if (!token) return res.status(401).json({ erro: 'Token obrigatório' });
+    const { AdminAgenda: AdminAgendaAuth } = require('../models/AgendaServico');
+    const admin = await AdminAgendaAuth.findOne({ token, ativo: true });
+    if (!admin) return res.status(401).json({ erro: 'Token inválido' });
+    req.adminId = admin._id;
+    req.admin   = admin;
     next();
-  } catch(e) { res.status(401).json({ erro: 'Token invalido' }); }
+  } catch(e) { res.status(401).json({ erro: e.message }); }
 }
 
 // =================== FINANCEIRO ===================
