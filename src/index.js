@@ -357,6 +357,7 @@ app.get('/beca-estuda', (req, res) => { res.set('Cache-Control','no-store'); res
 app.get('/beca-estuda-landing', (req, res) => res.sendFile(path.join(__dirname, 'public', 'beca-estuda-landing.html')));
 app.get('/beca-manifest.json',  (req, res) => res.sendFile(path.join(__dirname, 'public', 'beca-manifest.json')));
 app.get('/beca-sw.js', (req, res) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
     res.setHeader('Content-Type', 'application/javascript');
     res.setHeader('Service-Worker-Allowed', '/');
     res.sendFile(path.join(__dirname, 'public', 'beca-sw.js'));

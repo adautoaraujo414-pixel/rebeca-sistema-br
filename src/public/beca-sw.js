@@ -1,4 +1,4 @@
-var CACHE = 'beca-v5';
+var CACHE = 'beca-v6';
 var ASSETS = [
   '/beca-estuda',
   '/beca-estuda.html',
