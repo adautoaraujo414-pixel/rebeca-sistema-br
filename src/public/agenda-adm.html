@@ -126,8 +126,8 @@ input,select,textarea{font-family:'Inter',sans-serif}
 
 
 /* ─── MOBILE DRAWER ─── */
-.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:99;backdrop-filter:blur(2px);opacity:0;transition:opacity .25s ease}
-.sidebar-overlay.show{opacity:1}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:99;pointer-events:none;opacity:0;transition:opacity .25s}
+.sidebar-overlay.show{opacity:1;pointer-events:auto;display:block}
 .mobile-menu-btn{display:none;width:36px;height:36px;background:transparent;border:1px solid var(--borda);border-radius:var(--radius-sm);align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
 
 /* ─── RESPONSIVIDADE ─── */
@@ -498,7 +498,7 @@ input,select,textarea{font-family:'Inter',sans-serif}
 /* ─── DRAWER MOBILE ─── */
 .drawer-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:400}
 .drawer-bg.open{display:block}
-.drawer{position:fixed;left:-var(--sidebar);top:0;width:var(--sidebar);height:100vh;background:#fff;z-index:401;display:flex;flex-direction:column;box-shadow:4px 0 20px rgba(0,0,0,.15);transition:.3s;transform:translateX(-100%)}
+.drawer{position:fixed;left:0;top:0;width:var(--sidebar);height:100vh;background:#fff;z-index:401;display:flex;flex-direction:column;transform:translateX(-110%);transition:transform .25s ease}
 .drawer.open{transform:translateX(0)}
 
 /* ─── BOTTOM NAV MOBILE ─── */
