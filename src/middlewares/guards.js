@@ -118,7 +118,7 @@ async function guardAgenda(req, res, next) {
     const token = extractToken(req);
     if (!token) return bloqueado(res, 'agenda', 'Token obrigatório');
 
-    const { AdminAgenda } = require('../models/agenda.models');
+    const { AdminAgenda } = require('../models/AgendaServico');
     const admin = await AdminAgenda.findOne({ token, ativo: true }).lean();
 
     if (!admin) return bloqueado(res, 'agenda');
