@@ -46,7 +46,7 @@ input,select,textarea{font-family:'Inter',sans-serif}
 ::-webkit-scrollbar-thumb:hover{background:#94a3b8}
 
 /* ─── LOGIN ─── */
-.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#fff7ed,#ffedd5);padding:20px}
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#fff7ed,#ffedd5);padding:20px;width:100%;overflow-x:hidden}
 .login-card{background:#fff;border-radius:20px;padding:44px 36px;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(249,115,22,.15)}
 .login-logo{text-align:center;margin-bottom:32px}
 .login-logo-icon{width:64px;height:64px;background:var(--cor);border-radius:16px;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-size:1.8em}
@@ -67,7 +67,7 @@ input,select,textarea{font-family:'Inter',sans-serif}
 .login-link a{color:var(--cor);font-weight:600}
 
 /* ─── LAYOUT PRINCIPAL ─── */
-.app{display:none}
+.app{display:none;width:100%;max-width:100vw;overflow-x:hidden}
 .app.show{display:block}
 
 /* ─── SIDEBAR ─── */
@@ -292,7 +292,7 @@ input,select,textarea{font-family:'Inter',sans-serif}
 .btn-sm.primary:hover{background:var(--cor2);border-color:var(--cor2)}
 
 /* ─── GRID MAIN ─── */
-.main-grid{display:grid;grid-template-columns:1fr 380px;gap:20px;margin-bottom:24px}
+.main-grid{display:grid;grid-template-columns:1fr minmax(0,380px);gap:20px;margin-bottom:24px}
 .main-grid .left{display:flex;flex-direction:column;gap:20px}
 .main-grid .right{display:flex;flex-direction:column;gap:20px}
 
@@ -573,7 +573,7 @@ input,select,textarea{font-family:'Inter',sans-serif}
 .wpp-rebeca-nome{font-weight:800;font-size:.88em;margin-bottom:2px}
 .wpp-rebeca-num{font-size:.82em;color:#16a34a;font-weight:700;margin-bottom:4px}
 .wpp-rebeca-desc{font-size:.75em;color:var(--texto3)}
-.wpp-rebeca-btns{display:flex;flex-direction:column;gap:6px;flex-shrink:0}
+.wpp-rebeca-btns{display:flex;flex-direction:column;gap:6px;flex-shrink:1;min-width:0}
 .btn-wpp-green{padding:8px 14px;background:#25d366;color:#fff;border-radius:8px;font-size:.78em;font-weight:700;text-decoration:none;text-align:center;white-space:nowrap;display:block}
 .btn-wpp-outline{padding:8px 14px;background:var(--branco);border:1.5px solid #86efac;color:#16a34a;border-radius:8px;font-size:.78em;font-weight:700;text-decoration:none;text-align:center;white-space:nowrap;display:block}
 .wpp-input-block{background:#f8fafc;border:1px solid var(--borda);border-radius:10px;padding:16px;margin-bottom:12px}
