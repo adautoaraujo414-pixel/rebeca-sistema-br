@@ -1273,22 +1273,33 @@ document.querySelectorAll('.nav-item').forEach(item => {
       <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect x="3" y="4" width="18" height="18" rx="2" stroke-width="2"/><path d="M16 2v4M8 2v4M3 10h18" stroke-width="2"/></svg>
       Agenda
     </button>
-    <button class="bottom-nav-item" id="bn-servicos" onclick="irPara('servicos')">
-      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M14.7 6.3a1 1 0 010 1.4L7.4 15l-3 1 1-3 7.3-7.3a1 1 0 011.4 0z" stroke-width="2"/></svg>
-      Serviços
+    <button class="bottom-nav-item bn-fab-center" id="btn-fab" onclick="abrirModalAgendamento()">
+      <div class="bn-fab-circle"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" width="28" height="28"><path d="M12 5v14M5 12h14" stroke-width="2.5" stroke-linecap="round"/></svg></div>
+      <span>Novo</span>
     </button>
     <button class="bottom-nav-item" id="bn-clientes" onclick="irPara('clientes')">
       <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8z" stroke-width="2"/></svg>
       Clientes
     </button>
-    <button class="bottom-nav-item" id="bn-perfil" onclick="irPara('configuracoes')">
-      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z" stroke-width="2"/></svg>
-      Perfil
+    <button class="bottom-nav-item" id="bn-menu" onclick="abrirMenuMobile()">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M4 6h16M4 12h16M4 18h16" stroke-width="2" stroke-linecap="round"/></svg>
+      Menu
     </button>
   </div>
 </nav>
 
-<!-- FAB movido para bottom-nav -->
+<!-- ─── MENU MOBILE GAVETA ─── -->
+<div class="menu-mobile-bg" id="menu-mobile-bg" onclick="fecharMenuMobile()" style="display:none"></div>
+<div class="menu-mobile-drawer" id="menu-mobile-drawer">
+  <div class="menu-mobile-header"><span>Menu</span><button onclick="fecharMenuMobile()">✕</button></div>
+  <button class="menu-mobile-item" onclick="irPara('dashboard');fecharMenuMobile()">🏠 Início</button>
+  <button class="menu-mobile-item" onclick="irPara('agendamentos');fecharMenuMobile()">📅 Agenda</button>
+  <button class="menu-mobile-item" onclick="irPara('servicos');fecharMenuMobile()">✂️ Serviços</button>
+  <button class="menu-mobile-item" onclick="irPara('clientes');fecharMenuMobile()">👤 Clientes</button>
+  <button class="menu-mobile-item" onclick="irPara('financeiro');fecharMenuMobile()">💰 Financeiro</button>
+  <button class="menu-mobile-item" onclick="irPara('whatsapp');fecharMenuMobile()">💬 WhatsApp</button>
+  <button class="menu-mobile-item" onclick="irPara('configuracoes');fecharMenuMobile()">⚙️ Configurações</button>
+</div>
 
 <!-- ─── MODAIS ─── -->
 <div class="modal-bg" id="modal-ag">
