@@ -250,7 +250,7 @@ app.use('/api/zona-preco',       guards.corrida, require('./routes/zona-preco.ro
 app.use('/api/precos-intermunicipais', guards.corrida, require('./routes/preco-intermunicipal.routes'));
 app.use('/api/despacho',         guards.corrida, despachoRoutes);
 app.use('/api/antifraude',       guards.corrida, antifraudeRoutes);
-app.use('/api/estatisticas',     guards.corrida, estatisticasRoutes);
+app.use('/api/estatisticas', estatisticasRoutes); // publico-adminId
 app.use('/api/reclamacoes',      guards.corrida, reclamacoesRoutes);
 app.use('/api/maps',             mapsRoutes);                  // Google Maps público
 app.use('/api/cerebro',          guards.corrida, cerebroRoutes);
@@ -366,9 +366,9 @@ app.get('/beca-sw.js', (req, res) => {
 // 20. PÁGINAS — Rebeca Soft (PDV React)
 // ─────────────────────────────────────────────
 const frontendDist = path.join(__dirname, '..', 'frontend', 'dist');
-app.use('/soft',   require('express').static(frontendDist));
 app.get('/soft',   (req, res) => res.sendFile(path.join(frontendDist, 'index.html')));
 app.get('/soft/*', (req, res) => res.sendFile(path.join(frontendDist, 'index.html')));
+app.use('/soft',   require('express').static(frontendDist));
 app.get('/login',  (req, res) => res.sendFile(path.join(frontendDist, 'index.html')));
 
 // ─────────────────────────────────────────────
