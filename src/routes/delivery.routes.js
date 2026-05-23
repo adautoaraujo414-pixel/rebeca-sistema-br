@@ -3918,3 +3918,4 @@ router.get('/caixa/resumo-tempo-real', authDelivery, async (req, res) => {
         });
     } catch(e) { res.status(500).json({ erro: e.message }); }
 });
+// force-redeploy-1779548891
