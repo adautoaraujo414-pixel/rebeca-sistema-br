@@ -995,3 +995,279 @@ async function rodarLembretesPessoais() {
 }
 
 module.exports.rodarLembretesPessoais = rodarLembretesPessoais;
+
+
+// ══════════════════════════════════════════════════════════════════════════════
+// NOTIFICAÇÕES AUTOMÁTICAS PARA CLIENTES (zero IA — texto fixo carismático)
+// ══════════════════════════════════════════════════════════════════════════════
+
+async function notificarCliente(instancia, telefoneCliente, tipo, dados) {
+  if (!telefoneCliente || !instancia) return;
+
+  const _pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+  const nome  = dados.nome ? dados.nome.split(' ')[0] : 'amor';
+  const dh    = dados.dataHora ? new Date(dados.dataHora) : null;
+  const data  = dh ? dh.toLocaleDateString('pt-BR', { weekday:'long', day:'2-digit', month:'long' }) : '';
+  const hora  = dh ? dh.toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' }) : '';
+  const serv  = dados.servico || 'Serviço';
+
+  const msgs = {
+    confirmacao: () => _pick([
+      `Oi *${nome}*! 🥳
+
+Tá na agenda, pode deixar!
+
+📅 *${data}* às *${hora}*
+✂️ *${serv}*
+
+Qualquer coisa é só chamar, tá bom? 💙`,
+      `Oi *${nome}*! 💙
+
+Confirmado certinho aqui!
+
+📅 *${data}*
+⏰ *${hora}*
+✂️ *${serv}*
+
+Te esperamos! 🥰`,
+      `*${nome}*, tudo certo! ✅
+
+Seu horário tá marcado:
+
+📅 *${data}* às *${hora}*
+✂️ *${serv}*
+
+Qualquer dúvida pode mandar mensagem! 😊`
+    ]),
+
+    lembrete_1dia: () => _pick([
+      `Oi *${nome}*! 🌟
+
+Tô passando pra te lembrar que amanhã você tem horário marcado!
+
+⏰ *${hora}*
+✂️ *${serv}*
+
+Tá esquecendo não né? 😄 Te esperamos! 💙`,
+      `*${nome}*, oi! 😊
+
+Só passando pra te avisar que amanhã é dia de se cuidar! 💅
+
+⏰ *${hora}*
+✂️ *${serv}*
+
+Qualquer coisa é só falar! 🥰`,
+      `Oi *${nome}*! 👋
+
+Amanhã tem horário com a gente, lembrou?
+
+⏰ *${hora}*
+✂️ *${serv}*
+
+Se precisar remarcar é só chamar 😉💙`,
+      `*${nome}*, amanhã é dia! 🎉
+
+⏰ *${hora}*
+✂️ *${serv}*
+
+Já deixa a roupa separada! 😂 Brincadeira... mas o horário tá confirmado! 💙`
+    ]),
+
+    lembrete_2h: () => _pick([
+      `*${nome}*! 🏃 Daqui a pouquinho é hora!
+
+⏰ *${hora}*
+✂️ *${serv}*
+
+Vem chegando que tô te esperando! 💙`,
+      `Oi *${nome}*! ⏰
+
+Só lembrando que em *2 horas* é seu horário:
+
+✂️ *${serv}* às *${hora}*
+
+Nem precisa correr, mas pode vir chegando! 😄💙`,
+      `*${nome}*, chegou a hora! 🥳
+
+Seu horário é daqui a pouco:
+
+⏰ *${hora}*
+✂️ *${serv}*
+
+Qualquer imprevisto fala comigo 😊`,
+      `Oi *${nome}*! 💅
+
+Preparada(o) pra arrasar?
+
+⏰ *${hora}* — já chegando!
+✂️ *${serv}*
+
+Te vejo logo mais! 💙🥰`
+    ]),
+
+    cancelamento: () => _pick([
+      `Oi *${nome}*, tudo bem? 😔
+
+Precisamos cancelar seu horário de *${data}* às *${hora}*.
+
+Sinto muito pelo inconveniente! Quando quiser reagendar é só chamar, tá? 💙`,
+      `*${nome}*, oi! Infelizmente seu horário de *${hora}* no dia *${data}* foi cancelado. 😔
+
+Mas não some não! Quando quiser marcar de novo é só falar aqui 😊💙`,
+      `Oi *${nome}*! 💙
+
+Chateada de falar, mas seu horário de *${data}* precisou ser cancelado.
+
+Qualquer coisa pra reagendar é só mandar mensagem! 🥰`
+    ]),
+
+    reagendamento: () => _pick([
+      `Oi *${nome}*! 🔄
+
+Seu horário foi reagendado, fica tranquila(o)!
+
+📅 *${data}* às *${hora}*
+✂️ *${serv}*
+
+Qualquer dúvida pode chamar! 💙`,
+      `*${nome}*, tudo resolvido! ✅
+
+Novo horário marcado pra você:
+
+📅 *${data}*
+⏰ *${hora}*
+✂️ *${serv}*
+
+Te espero! 😊💙`
+    ]),
+
+    aniversario: () => _pick([
+      `*${nome}*, FELIZ ANIVERSÁRIO! 🎂🎉🥳
+
+Que dia especial! Que esse ano seja cheio de saúde, alegria e muito sucesso!
+
+Tem uma surpresinha especial esperando por você hoje 🎁 Passa por aqui! 💙`,
+      `Oi *${nome}*! Hoje é SEU DIA! 🎂✨
+
+Feliz aniversário! Que você seja muito feliz!
+
+Temos um mimo especial pra você hoje 🥰 Vem comemorar com a gente! 💙🎉`,
+      `🎉🎂 FELIZ ANIVERSÁRIO, *${nome}*! 🎂🎉
+
+Saudades de você por aqui! Hoje tem desconto especial esperando pra te ver mais linda(o) ainda! 💅
+
+Felicidades! 💙`
+    ]),
+
+    inativo: () => _pick([
+      `Oi *${nome}*! 😊
+
+Saudades de você por aqui!
+
+Faz um tempinho que não aparece... tudo bem? 🥺
+
+Quer marcar um horário? Tô aqui! 💙`,
+      `*${nome}*, sumiu! 😄
+
+A gente tá com saudades! Que tal dar uma passadinha? 💅
+
+É só chamar pra marcar! 💙🥰`,
+      `Oi *${nome}*! 👋
+
+Passando pra dar oi e ver se tá tudo bem!
+
+Faz um tempo que não aparece... temos novidades esperando! Quer marcar um horário? 😊💙`
+    ])
+  };
+
+  const texto = msgs[tipo] ? msgs[tipo]() : null;
+  if (!texto) return;
+
+  try {
+    const axios   = require('axios');
+    const apiUrl  = instancia.apiUrl  || process.env.EVOLUTION_API_URL;
+    const apiKey  = instancia.apiKey  || process.env.EVOLUTION_API_KEY;
+    const instNm  = instancia.nomeInstancia;
+    const telFmt  = telefoneCliente.replace(/\D/g,'') + '@s.whatsapp.net';
+
+    await axios.post(`${apiUrl}/message/sendText/${instNm}`, {
+      number: telFmt, text: texto
+    }, {
+      headers: { apikey: apiKey },
+      timeout: 10000
+    });
+    console.log('[NotifCliente] ✅', tipo, '->', telefoneCliente.slice(-4));
+  } catch(e) {
+    console.error('[NotifCliente] ❌ Erro:', e.message);
+  }
+}
+
+// ── Rodar lembretes automáticos para CLIENTES ────────────────────────────────
+async function rodarLembretesClientes() {
+  try {
+    const agora = new Date();
+    const AdminAgenda        = require('../models/AgendaAdmin').AdminAgenda       || require('../models/AgendaAdmin');
+    const InstanciaWhatsapp  = require('../models/InstanciaWhatsapp');
+    const AgendamentoAgenda  = require('../models/AgendaAgendamento').AgendamentoAgenda || require('../models/AgendaAgendamento');
+
+    const admins = await AdminAgenda.find({ ativo: true }).select('_id').lean();
+
+    for (const admin of admins) {
+      try {
+        const adminId = String(admin._id);
+        const inst = await InstanciaWhatsapp.findOne({
+          adminId, status: { $in: ['conectado','open','connected'] }
+        }).lean();
+        if (!inst) continue;
+
+        // ── Lembrete 1 dia antes ─────────────────────────────────────────
+        const amanha_ini = new Date(agora); amanha_ini.setDate(agora.getDate()+1); amanha_ini.setHours(0,0,0,0);
+        const amanha_fim = new Date(amanha_ini); amanha_fim.setHours(23,59,59,999);
+
+        const ags1dia = await AgendamentoAgenda.find({
+          adminId,
+          dataHora: { $gte: amanha_ini, $lte: amanha_fim },
+          status: { $in: ['pendente','confirmado'] },
+          lembrete1diaEnviado: { $ne: true }
+        }).lean();
+
+        for (const ag of ags1dia) {
+          if (!ag.telefoneCliente) continue;
+          await notificarCliente(inst, ag.telefoneCliente, 'lembrete_1dia', {
+            nome: ag.nomeCliente, dataHora: ag.dataHora, servico: ag.nomeServico
+          });
+          await AgendamentoAgenda.findByIdAndUpdate(ag._id, { lembrete1diaEnviado: true });
+          await new Promise(r => setTimeout(r, 1500)); // evitar spam
+        }
+
+        // ── Lembrete 2 horas antes ───────────────────────────────────────
+        const daqui2h_ini = new Date(agora.getTime() + 1.5*60*60*1000);
+        const daqui2h_fim = new Date(agora.getTime() + 2.5*60*60*1000);
+
+        const ags2h = await AgendamentoAgenda.find({
+          adminId,
+          dataHora: { $gte: daqui2h_ini, $lte: daqui2h_fim },
+          status: { $in: ['pendente','confirmado'] },
+          lembrete2hEnviado: { $ne: true }
+        }).lean();
+
+        for (const ag of ags2h) {
+          if (!ag.telefoneCliente) continue;
+          await notificarCliente(inst, ag.telefoneCliente, 'lembrete_2h', {
+            nome: ag.nomeCliente, dataHora: ag.dataHora, servico: ag.nomeServico
+          });
+          await AgendamentoAgenda.findByIdAndUpdate(ag._id, { lembrete2hEnviado: true });
+          await new Promise(r => setTimeout(r, 1500));
+        }
+
+      } catch(eAdmin) {
+        console.error('[LembretesClientes] Erro admin:', eAdmin.message);
+      }
+    }
+  } catch(e) {
+    console.error('[LembretesClientes] Erro geral:', e.message);
+  }
+}
+
+module.exports.notificarCliente       = notificarCliente;
+module.exports.rodarLembretesClientes = rodarLembretesClientes;
