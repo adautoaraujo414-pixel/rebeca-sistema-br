@@ -1145,17 +1145,20 @@ function uploadAudio() {
 
 async function gerarExerciciosIA(transcricao, materia) {
   try {
+    var prompt = 'Voce e um professor especialista em ' + materia + '. Analise esta transcricao de aula e crie 5 questoes de multipla escolha desafiadoras baseadas EXATAMENTE no que o professor ensinou.\n\nTRANSCRICAO:\n' + transcricao.substring(0, 3000) + '\n\nRegras:\n- Questoes devem testar compreensao profunda, nao apenas memorizar\n- Use os termos e exemplos que o professor usou\n- Inclua 1 questao de aplicacao pratica\n- Gabarito variado (A, B, C ou D)\n- Campo "e" explica por que a resposta esta correta\n\nRetorne APENAS JSON valido, sem markdown:\n[{"p":"pergunta completa","a":["opcao A","opcao B","opcao C","opcao D"],"r":0,"e":"explicacao curta da resposta correta"}]';
     var res = await fetch('https://api.anthropic.com/v1/messages', {
-      method:'POST', headers:{'Content-Type':'application/json'},
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({
-        model:'claude-sonnet-4-20250514', max_tokens:1000,
-        messages:[{role:'user', content:'Com base nesta transcricao de aula, crie 3 questoes de multipla escolha em JSON valido sem markdown: [{"p":"pergunta","ops":["A","B","C","D"],"c":0,"r":"explicacao simples"}] onde c=indice da resposta correta (0-3). Materia: '+materia+' Transcricao: '+transcricao.substring(0,2000)}]
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 2000,
+        messages: [{role: 'user', content: prompt}]
       })
     });
     var data = await res.json();
-    var txt = (data.content&&data.content[0]&&data.content[0].text)||'[]';
-    var json = JSON.parse(txt.replace(/```json|```/g,'').trim());
-    if(Array.isArray(json) && json.length) {
+    var txt = (data.content && data.content[0] && data.content[0].text) || '[]';
+    var json = JSON.parse(txt.replace(/```json|```/g, '').trim());
+    if (Array.isArray(json) && json.length) {
       DB.exercicios = json;
       salvarDB();
       return json.length;
@@ -1166,18 +1169,21 @@ async function gerarExerciciosIA(transcricao, materia) {
 
 async function gerarFlashcardsIA(transcricao, materia) {
   try {
+    var prompt = 'Com base nesta transcricao de aula de ' + materia + ', crie 8 flashcards para revisao eficiente. Foque nos conceitos-chave, definicoes, formulas e exemplos que o professor destacou.\n\nTRANSCRICAO:\n' + transcricao.substring(0, 2500) + '\n\nRetorne APENAS JSON valido, sem markdown:\n[{"frente":"conceito ou pergunta curta","verso":"resposta clara e objetiva","materia":"' + materia + '"}]';
     var res = await fetch('https://api.anthropic.com/v1/messages', {
-      method:'POST', headers:{'Content-Type':'application/json'},
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({
-        model:'claude-sonnet-4-20250514', max_tokens:1000,
-        messages:[{role:'user', content:'Com base nesta transcricao, crie 5 flashcards em JSON valido sem markdown: [{"frente":"pergunta curta","verso":"resposta clara e direta","materia":"'+materia+'"}] Transcricao: '+transcricao.substring(0,2000)}]
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 2000,
+        messages: [{role: 'user', content: prompt}]
       })
     });
     var data = await res.json();
-    var txt = (data.content&&data.content[0]&&data.content[0].text)||'[]';
-    var json = JSON.parse(txt.replace(/```json|```/g,'').trim());
-    if(Array.isArray(json) && json.length) {
-      json.forEach(function(fc,i){ fc.id = 'ai_' + Date.now() + '_' + i; });
+    var txt = (data.content && data.content[0] && data.content[0].text) || '[]';
+    var json = JSON.parse(txt.replace(/```json|```/g, '').trim());
+    if (Array.isArray(json) && json.length) {
+      json.forEach(function(fc, i) { fc.id = 'ai_' + Date.now() + '_' + i; });
       DB.flashcards = json;
       salvarDB();
       return json.length;
@@ -1187,19 +1193,18 @@ async function gerarFlashcardsIA(transcricao, materia) {
 }
 
 // Chamar geracao automatica ao finalizar aula
-var _gravMostrarBase = gravMostrar; var _gravMostrarBase = _gravMostrarBase;
+var _gravMostrarBase = gravMostrar;
 gravMostrar = async function(mat, resumo, pontos, trans, nivel) {
   _gravMostrarBase(mat, resumo, pontos, trans, nivel);
-  if(trans && trans.length > 50 && !trans.includes('[Transcricao nao disponivel')) {
-    toast('Gerando exercicios e flashcards...', '');
+  if (trans && trans.length > 50 && !trans.includes('[Transcricao nao disponivel')) {
+    toast('\u23F3 IA analisando aula e criando exercicios...', '');
     var nEx = await gerarExerciciosIA(trans, mat);
     var nFc = await gerarFlashcardsIA(trans, mat);
-    if(nEx || nFc) {
-      toast('IA criou ' + nEx + ' exercicios e ' + nFc + ' flashcards!', 'ok');
-      // Atualizar botoes no resultado
+    if (nEx || nFc) {
+      toast('\u2728 ' + nEx + ' exercicios e ' + nFc + ' flashcards criados!', 'ok');
       var btnArea = document.querySelector('#grav-result .fu > div:last-child');
-      if(btnArea) {
-        btnArea.innerHTML = '<button class="btn-p" onclick="initTreinar();ir(\'s-treinar\')" style="flex:1">🧠 Treinar ('+nEx+')</button><button class="btn-o" onclick="renderFCComHeader();ir(\'s-flashcards\')" style="flex:1">🃏 Flashcards ('+nFc+')</button>';
+      if (btnArea) {
+        btnArea.innerHTML = '<button class="btn-p" onclick="initTreinar();ir(\'s-treinar\')" style="flex:1">\ud83e\udde0 Treinar (' + nEx + ')</button><button class="btn-o" onclick="renderFCComHeader();ir(\'s-flashcards\')" style="flex:1">\ud83c\udccf Flashcards (' + nFc + ')</button>';
       }
     }
   }
@@ -1207,15 +1212,15 @@ gravMostrar = async function(mat, resumo, pontos, trans, nivel) {
 
 // ══ ADICIONAR FLASHCARD MANUAL ══
 function abrirNovoFlashcard() {
-  abrirModal('<h2 style="font-weight:800;margin-bottom:16px">Novo Flashcard</h2><div style="margin-bottom:12px"><label style="font-size:.75rem;color:var(--txt3);font-weight:600;display:block;margin-bottom:4px">Pergunta (frente)</label><textarea class="input" id="nfc-frente" rows="3" placeholder="O que voce quer memorizar?" style="resize:none;line-height:1.5"></textarea></div><div style="margin-bottom:12px"><label style="font-size:.75rem;color:var(--txt3);font-weight:600;display:block;margin-bottom:4px">Resposta (verso)</label><textarea class="input" id="nfc-verso" rows="3" placeholder="A resposta completa..." style="resize:none;line-height:1.5"></textarea></div><div style="margin-bottom:20px"><label style="font-size:.75rem;color:var(--txt3);font-weight:600;display:block;margin-bottom:4px">Materia</label><input class="input" id="nfc-mat" placeholder="Ex: Calculo, Fisica..."></div><button class="btn-p" onclick="salvarNovoFlashcard()">Criar Flashcard</button>');
+  abrirModal('<h2 style="font-weight:800;margin-bottom:16px">Novo Flashcard</h2><div style="margin-bottom:12px"><label style="font-size:.75rem;color:var(--txt3);font-weight:700">PERGUNTA</label><textarea id="nfc-frente" rows="3" style="width:100%;margin-top:6px;padding:10px;border-radius:10px;border:1.5px solid var(--bg3);background:var(--bg2);color:var(--txt1);font-size:.9rem;resize:none" placeholder="Ex: O que e fotossintese?"></textarea></div><div style="margin-bottom:12px"><label style="font-size:.75rem;color:var(--txt3);font-weight:700">RESPOSTA</label><textarea id="nfc-verso" rows="3" style="width:100%;margin-top:6px;padding:10px;border-radius:10px;border:1.5px solid var(--bg3);background:var(--bg2);color:var(--txt1);font-size:.9rem;resize:none" placeholder="Ex: Processo pelo qual plantas produzem energia..."></textarea></div><div style="margin-bottom:16px"><label style="font-size:.75rem;color:var(--txt3);font-weight:700">MATERIA</label><input id="nfc-mat" style="width:100%;margin-top:6px;padding:10px;border-radius:10px;border:1.5px solid var(--bg3);background:var(--bg2);color:var(--txt1);font-size:.9rem" placeholder="Ex: Biologia"></div><button class="btn-p" onclick="salvarNovoFlashcard()">Salvar Flashcard</button>');
 }
 
 function salvarNovoFlashcard() {
   var frente = document.getElementById('nfc-frente').value.trim();
   var verso = document.getElementById('nfc-verso').value.trim();
   var mat = document.getElementById('nfc-mat').value.trim() || 'Geral';
-  if(!frente || !verso) { toast('Preencha pergunta e resposta', 'err'); return; }
-  DB.flashcards.push({id:'manual_'+Date.now(), frente:frente, verso:verso, materia:mat});
+  if (!frente || !verso) { toast('Preencha pergunta e resposta', 'err'); return; }
+  DB.flashcards.push({id: 'manual_' + Date.now(), frente: frente, verso: verso, materia: mat});
   salvarDB();
   fecharModal();
   toast('Flashcard criado!', 'ok');
@@ -1226,51 +1231,49 @@ function salvarNovoFlashcard() {
 // ══ FILTRAR FLASHCARDS POR MATERIA ══
 var FC_FILTRO = '';
 var _renderFCOrig = renderFC;
-function getFCContainer(){
-  return document.getElementById('fc-cards')||document.getElementById('fc-area');
+function getFCContainer() {
+  return document.getElementById('fc-cards') || document.getElementById('fc-area');
 }
 renderFC = function() {
   var lista = FC_FILTRO
-    ? DB.flashcards.filter(function(f){ return f.materia && f.materia.toLowerCase().includes(FC_FILTRO.toLowerCase()); })
+    ? DB.flashcards.filter(function(f) { return f.materia && f.materia.toLowerCase().includes(FC_FILTRO.toLowerCase()); })
     : DB.flashcards;
-  if(!lista.length && FC_FILTRO) {
-    getFCContainer().innerHTML = '<div style="text-align:center;padding:40px 0;color:var(--txt3)"><div style="font-size:36px;margin-bottom:10px">🔍</div><div>Nenhum flashcard para "'+FC_FILTRO+'"</div><button class="btn-o" onclick="FC_FILTRO=\'\';' + 'FC.at=0;renderFC()" style="margin-top:14px;width:auto;padding:10px 20px">Ver todos</button></div>';
+  if (!lista.length && FC_FILTRO) {
+    getFCContainer().innerHTML = '<div style="text-align:center;padding:40px 0;color:var(--txt3)"><div style="font-size:36px;margin-bottom:10px">\ud83d\udd0d</div><div>Nenhum flashcard em "' + FC_FILTRO + '"</div></div>';
     return;
   }
   var _bkp = DB.flashcards;
-  if(FC_FILTRO) DB.flashcards = lista;
+  if (FC_FILTRO) DB.flashcards = lista;
   _renderFCOrig();
   DB.flashcards = _bkp;
 };
 
 // Substituir initFlashcards para adicionar filtro + botao novo
 initFlashcards = function() {
-  FC = {at:0, virado:false, acertos:0, erros:0};
+  FC = {at: 0, virado: false, acertos: 0, erros: 0};
   FC_FILTRO = '';
   renderFCComHeader();
 };
 
-
 function renderFCComHeader() {
   var el = document.getElementById('fc-area');
-  if(!el) return;
+  if (!el) return;
   var materias = [];
-  DB.flashcards.forEach(function(f){
-    var m = f.materia||'Geral';
-    if(materias.indexOf(m)===-1) materias.push(m);
+  DB.flashcards.forEach(function(f) {
+    var m = f.materia || 'Geral';
+    if (materias.indexOf(m) === -1) materias.push(m);
   });
   var filtros = '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">';
-  filtros += '<button onclick="FC_FILTRO=\'\';FC.at=0;renderFC()" style="padding:6px 14px;border-radius:20px;border:1.5px solid var(--accent);background:var(--accent);color:#fff;font-family:Inter,sans-serif;font-size:.78rem;cursor:pointer">Todos ('+DB.flashcards.length+')</button>';
-  materias.forEach(function(m){
-    var n = DB.flashcards.filter(function(f){ return (f.materia||'Geral')===m; }).length;
-    filtros += '<button onclick="FC_FILTRO=\''+m+'\';FC.at=0;renderFC()" style="padding:6px 14px;border-radius:20px;border:1.5px solid var(--bg3);background:var(--bg2);color:var(--txt2);font-family:Inter,sans-serif;font-size:.78rem;cursor:pointer">'+m+' ('+n+')</button>';
+  filtros += '<button onclick="FC_FILTRO=\'\';FC.at=0;renderFC()" style="padding:6px 14px;border-radius:20px;border:1.5px solid var(--accent);background:var(--accent);color:#fff;font-size:.78rem;font-weight:700;cursor:pointer">Todos (' + DB.flashcards.length + ')</button>';
+  materias.forEach(function(m) {
+    var n = DB.flashcards.filter(function(f) { return (f.materia || 'Geral') === m; }).length;
+    filtros += '<button onclick="FC_FILTRO=\'' + m + '\';FC.at=0;renderFC()" style="padding:6px 14px;border-radius:20px;border:1.5px solid var(--bg3);background:transparent;color:var(--txt2);font-size:.78rem;cursor:pointer">' + m + ' (' + n + ')</button>';
   });
-  filtros += '<button onclick="abrirNovoFlashcard()" style="padding:6px 14px;border-radius:20px;border:1.5px solid var(--accent2);background:transparent;color:var(--accent2);font-family:Inter,sans-serif;font-size:.78rem;cursor:pointer">+ Novo</button></div>';
-  filtros += '<div id="fc-cards"></div>';
+  filtros += '<button onclick="abrirNovoFlashcard()" style="padding:6px 14px;border-radius:20px;border:1.5px solid var(--accent2);background:transparent;color:var(--accent2);font-size:.78rem;cursor:pointer">+ Novo</button>';
+  filtros += '</div><div id="fc-cards"></div>';
   el.innerHTML = filtros;
   renderFC();
-}
-</script>
+}</script>
 
 
 <script>
