@@ -4,196 +4,234 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Rebeca Solutions — A funcionária digital do seu negócio</title>
-<meta name="description" content="Atendimento, agenda, delivery, corridas, financeiro e comissões para pequenos negócios brasileiros.">
+<meta name="description" content="Agenda, Delivery, Corrida e Educação — um ecossistema completo para pequenos negócios brasileiros.">
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Sans:wght@300;400;500;600&display=swap');
-:root {
-  --noite:#080d14; --petroleo:#0d1f2d; --azul:#102a3f;
-  --ciano:#1eb8d0; --ciano-soft:rgba(30,184,208,0.12); --ciano-glow:rgba(30,184,208,0.25);
-  --dourado:#c9a96e; --branco:#f4f6f8; --cinza:#8a9ab0;
-  --cinza-card:rgba(255,255,255,0.045); --cinza-borda:rgba(255,255,255,0.08);
-  --verde:#22c27a; --texto:#dce6ef; --texto2:#8a9ab0;
-  --radius:18px; --radius-sm:10px;
-  --sombra:0 8px 40px rgba(0,0,0,0.45); --sombra-card:0 4px 24px rgba(0,0,0,0.3);
+:root{
+  --noite:#080d14;--petroleo:#0d1f2d;--azul:#102a3f;
+  --ciano:#1eb8d0;--ciano-soft:rgba(30,184,208,0.12);--ciano-glow:rgba(30,184,208,0.28);
+  --dourado:#c9a96e;--dourado-soft:rgba(201,169,110,0.12);
+  --verde:#22c27a;--verde-soft:rgba(34,194,122,0.12);
+  --roxo:#6366f1;--roxo-soft:rgba(99,102,241,0.12);
+  --laranja:#f59e0b;--laranja-soft:rgba(245,158,11,0.12);
+  --branco:#f4f6f8;--cinza:#8a9ab0;
+  --cinza-card:rgba(255,255,255,0.042);--cinza-borda:rgba(255,255,255,0.08);
+  --texto:#dce6ef;--texto2:#8a9ab0;
+  --radius:20px;--radius-sm:12px;
+  --sombra:0 8px 40px rgba(0,0,0,0.5);--sombra-card:0 4px 28px rgba(0,0,0,0.35);
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
 body{font-family:'DM Sans',sans-serif;background:var(--noite);color:var(--texto);overflow-x:hidden;line-height:1.65}
-body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 50% at 20% 10%,rgba(30,184,208,0.07) 0%,transparent 60%),radial-gradient(ellipse 60% 40% at 80% 80%,rgba(201,169,110,0.05) 0%,transparent 55%);pointer-events:none;z-index:0}
+body::before{content:'';position:fixed;inset:0;background:
+  radial-gradient(ellipse 90% 55% at 15% 5%,rgba(30,184,208,0.08) 0%,transparent 60%),
+  radial-gradient(ellipse 70% 45% at 85% 85%,rgba(201,169,110,0.06) 0%,transparent 55%),
+  radial-gradient(ellipse 50% 40% at 50% 50%,rgba(99,102,241,0.04) 0%,transparent 60%);
+  pointer-events:none;z-index:0}
 h1,h2,h3{font-family:'Playfair Display',Georgia,serif;font-weight:700;line-height:1.15}
-header{position:fixed;top:0;left:0;right:0;z-index:100;padding:0 5vw;height:68px;display:flex;align-items:center;justify-content:space-between;background:rgba(8,13,20,0.88);backdrop-filter:blur(18px);border-bottom:1px solid var(--cinza-borda)}
-.logo{font-family:'Playfair Display',serif;font-size:1.55rem;font-weight:900;font-style:italic;color:var(--branco);text-decoration:none;letter-spacing:-0.5px}
+section{position:relative;z-index:1}
+.container{max-width:1160px;margin:0 auto;padding:0 5vw}
+
+/* ── HEADER ── */
+header{position:fixed;top:0;left:0;right:0;z-index:100;padding:0 5vw;height:68px;display:flex;align-items:center;justify-content:space-between;background:rgba(8,13,20,0.88);backdrop-filter:blur(20px);border-bottom:1px solid var(--cinza-borda);transition:background .3s}
+.logo{font-family:'Playfair Display',serif;font-size:1.55rem;font-weight:900;font-style:italic;color:var(--branco);text-decoration:none;letter-spacing:-.5px}
 .logo span{color:var(--ciano)}
-nav{display:flex;align-items:center;gap:8px}
+nav{display:flex;align-items:center;gap:6px}
 nav a{color:var(--cinza);text-decoration:none;font-size:.875rem;font-weight:500;padding:6px 14px;border-radius:8px;transition:color .2s,background .2s}
 nav a:hover{color:var(--branco);background:var(--cinza-card)}
-.btn-entrar{background:var(--ciano)!important;color:var(--noite)!important;font-weight:700!important;padding:7px 20px!important;border-radius:50px!important}
-.btn-entrar:hover{opacity:.88;background:var(--ciano)!important}
+.btn-entrar{background:var(--ciano)!important;color:var(--noite)!important;font-weight:700!important;padding:7px 22px!important;border-radius:50px!important}
+.btn-entrar:hover{opacity:.88!important}
 .burger{display:none;flex-direction:column;gap:5px;cursor:pointer;padding:6px;background:none;border:none}
 .burger span{display:block;width:24px;height:2px;background:var(--branco);border-radius:2px;transition:all .3s}
-.mobile-nav{display:none;position:fixed;top:68px;left:0;right:0;background:rgba(8,13,20,0.97);backdrop-filter:blur(20px);padding:20px 5vw 30px;z-index:99;border-bottom:1px solid var(--cinza-borda);flex-direction:column;gap:4px}
+.mobile-nav{display:none;position:fixed;top:68px;left:0;right:0;background:rgba(8,13,20,0.98);backdrop-filter:blur(20px);padding:20px 5vw 32px;z-index:99;border-bottom:1px solid var(--cinza-borda);flex-direction:column;gap:4px}
 .mobile-nav.open{display:flex}
-.mobile-nav a{color:var(--cinza);text-decoration:none;font-size:1rem;font-weight:500;padding:12px 0;border-bottom:1px solid var(--cinza-borda);transition:color .2s}
+.mobile-nav a{color:var(--cinza);text-decoration:none;font-size:1rem;font-weight:500;padding:13px 0;border-bottom:1px solid var(--cinza-borda);transition:color .2s}
 .mobile-nav a:hover{color:var(--branco)}
-.mobile-nav .btn-mob{margin-top:12px;background:var(--ciano);color:var(--noite);text-align:center;border-radius:50px;font-weight:700;padding:12px;display:block;text-decoration:none}
-section{position:relative;z-index:1}
-.container{max-width:1140px;margin:0 auto;padding:0 5vw}
+.mobile-nav .btn-mob{margin-top:14px;background:var(--ciano);color:var(--noite);text-align:center;border-radius:50px;font-weight:700;padding:13px;display:block;text-decoration:none}
+
+/* ── HERO ── */
 #hero{min-height:100vh;display:flex;align-items:center;padding-top:68px;overflow:hidden}
-.hero-inner{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center;padding:80px 0}
-.hero-badge{display:inline-flex;align-items:center;gap:8px;background:var(--ciano-soft);border:1px solid var(--ciano-glow);color:var(--ciano);font-size:.78rem;font-weight:600;padding:6px 14px;border-radius:50px;letter-spacing:.04em;text-transform:uppercase;margin-bottom:24px}
-.hero-badge::before{content:'';width:6px;height:6px;background:var(--ciano);border-radius:50%;animation:pulse 2s infinite}
-@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(1.4)}}
-.hero-titulo{font-size:clamp(2.2rem,4.5vw,3.6rem);color:var(--branco);line-height:1.1;margin-bottom:20px}
+.hero-inner{display:grid;grid-template-columns:1fr 1fr;gap:70px;align-items:center;padding:80px 0}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:var(--ciano-soft);border:1px solid var(--ciano-glow);color:var(--ciano);font-size:.75rem;font-weight:700;padding:6px 16px;border-radius:50px;letter-spacing:.06em;text-transform:uppercase;margin-bottom:26px}
+.hero-badge::before{content:'';width:7px;height:7px;background:var(--ciano);border-radius:50%;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(1.5)}}
+.hero-titulo{font-size:clamp(2.4rem,4.8vw,3.8rem);color:var(--branco);line-height:1.08;margin-bottom:22px}
 .hero-titulo em{font-style:italic;color:var(--ciano)}
-.hero-sub{font-size:1.05rem;color:var(--texto2);margin-bottom:18px;max-width:520px;font-weight:400}
-.hero-frase{font-size:.92rem;color:var(--dourado);font-style:italic;margin-bottom:36px;padding-left:14px;border-left:2px solid var(--dourado)}
+.hero-sub{font-size:1.05rem;color:var(--texto2);margin-bottom:16px;max-width:520px}
+.hero-frase{font-size:.92rem;color:var(--dourado);font-style:italic;margin-bottom:38px;padding-left:14px;border-left:2px solid var(--dourado)}
 .hero-btns{display:flex;gap:14px;flex-wrap:wrap}
-.btn-primario{background:var(--ciano);color:var(--noite);font-weight:700;font-size:.95rem;padding:14px 30px;border-radius:50px;text-decoration:none;transition:transform .2s,opacity .2s;display:inline-block}
+.btn-primario{background:var(--ciano);color:var(--noite);font-weight:700;font-size:.95rem;padding:14px 32px;border-radius:50px;text-decoration:none;transition:transform .2s,opacity .2s;display:inline-block}
 .btn-primario:hover{transform:translateY(-2px);opacity:.9}
-.btn-ghost{background:transparent;color:var(--branco);font-weight:600;font-size:.95rem;padding:14px 30px;border-radius:50px;text-decoration:none;border:1px solid var(--cinza-borda);transition:border-color .2s,background .2s;display:inline-block}
+.btn-ghost{background:transparent;color:var(--branco);font-weight:600;font-size:.95rem;padding:14px 32px;border-radius:50px;text-decoration:none;border:1px solid var(--cinza-borda);transition:border-color .2s,background .2s;display:inline-block}
 .btn-ghost:hover{border-color:var(--ciano);background:var(--ciano-soft)}
-.hero-cards{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-.float-card{background:var(--cinza-card);border:1px solid var(--cinza-borda);border-radius:var(--radius);padding:18px 20px;backdrop-filter:blur(12px);animation:float 4s ease-in-out infinite;transition:transform .3s}
-.float-card:nth-child(2){animation-delay:.8s}
-.float-card:nth-child(3){animation-delay:1.6s}
-.float-card:nth-child(4){animation-delay:2.4s}
-.float-card:nth-child(5){animation-delay:1.2s;grid-column:span 2}
-@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
-.float-card:hover{transform:translateY(-8px) scale(1.02);animation-play-state:paused}
-.fc-icon{font-size:1.3rem;margin-bottom:8px;display:block}
-.fc-label{font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:var(--ciano);font-weight:600;margin-bottom:3px}
-.fc-text{font-size:.88rem;color:var(--branco);font-weight:500}
-.fc-sub{font-size:.75rem;color:var(--texto2);margin-top:2px}
+.hero-cards{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+.float-card{background:var(--cinza-card);border:1px solid var(--cinza-borda);border-radius:var(--radius);padding:18px 20px;backdrop-filter:blur(14px);animation:float 4s ease-in-out infinite;transition:transform .3s;cursor:default}
+.float-card:nth-child(2){animation-delay:.7s}
+.float-card:nth-child(3){animation-delay:1.4s}
+.float-card:nth-child(4){animation-delay:2.1s}
+.float-card:nth-child(5){animation-delay:2.8s}
+.float-card:nth-child(6){animation-delay:1s;grid-column:span 2}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+.float-card:hover{transform:translateY(-10px) scale(1.02);animation-play-state:paused}
+.fc-icon{font-size:1.4rem;margin-bottom:9px;display:block}
+.fc-label{font-size:.68rem;text-transform:uppercase;letter-spacing:.07em;color:var(--ciano);font-weight:700;margin-bottom:3px}
+.fc-text{font-size:.88rem;color:var(--branco);font-weight:600}
+.fc-sub{font-size:.74rem;color:var(--texto2);margin-top:3px}
 .fc-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px;vertical-align:middle}
-#dores{padding:100px 0;background:linear-gradient(180deg,transparent 0%,rgba(13,31,45,0.5) 50%,transparent 100%)}
-.secao-label{font-size:.75rem;text-transform:uppercase;letter-spacing:.12em;color:var(--ciano);font-weight:600;margin-bottom:14px;display:block}
-.secao-titulo{font-size:clamp(1.8rem,3.5vw,2.8rem);color:var(--branco);margin-bottom:18px}
-.secao-texto{font-size:1.05rem;color:var(--texto2);max-width:640px;margin-bottom:50px;font-weight:400}
-.divisor{width:48px;height:2px;background:linear-gradient(90deg,var(--ciano),var(--dourado));margin:16px 0 30px;border-radius:2px}
-.dores-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px}
-.dor-card{background:var(--cinza-card);border:1px solid var(--cinza-borda);border-radius:var(--radius);padding:24px;transition:border-color .3s,transform .3s}
-.dor-card:hover{border-color:rgba(30,184,208,0.3);transform:translateY(-4px)}
-.dor-icon{font-size:1.5rem;margin-bottom:12px;display:block}
-.dor-nome{font-size:.95rem;font-weight:600;color:var(--branco);margin-bottom:6px}
-.dor-desc{font-size:.82rem;color:var(--texto2)}
-#solucoes{padding:100px 0}
-.solucoes-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:24px}
-.sol-card{background:var(--cinza-card);border:1px solid var(--cinza-borda);border-radius:var(--radius);padding:32px;display:flex;flex-direction:column;transition:border-color .3s,transform .3s,box-shadow .3s;position:relative;overflow:hidden}
-.sol-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--ciano);transform:scaleX(0);transform-origin:left;transition:transform .4s}
+
+/* ── SEÇÃO GENÉRICA ── */
+.secao-label{font-size:.73rem;text-transform:uppercase;letter-spacing:.13em;color:var(--ciano);font-weight:700;margin-bottom:14px;display:block}
+.secao-titulo{font-size:clamp(1.8rem,3.5vw,2.9rem);color:var(--branco);margin-bottom:18px}
+.secao-texto{font-size:1.05rem;color:var(--texto2);max-width:660px;margin-bottom:52px}
+.divisor{width:48px;height:3px;background:linear-gradient(90deg,var(--ciano),var(--dourado));margin:16px 0 30px;border-radius:2px}
+
+/* ── DORES ── */
+#dores{padding:110px 0;background:linear-gradient(180deg,transparent 0%,rgba(13,31,45,0.45) 50%,transparent 100%)}
+.dores-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
+.dor-card{background:var(--cinza-card);border:1px solid var(--cinza-borda);border-radius:var(--radius);padding:26px;transition:border-color .3s,transform .3s}
+.dor-card:hover{border-color:rgba(30,184,208,0.3);transform:translateY(-5px)}
+.dor-icon{font-size:1.6rem;margin-bottom:12px;display:block}
+.dor-nome{font-size:.95rem;font-weight:700;color:var(--branco);margin-bottom:6px}
+.dor-desc{font-size:.82rem;color:var(--texto2);line-height:1.55}
+
+/* ── SOLUÇÕES ── */
+#solucoes{padding:110px 0}
+.solucoes-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:26px}
+.sol-card{background:var(--cinza-card);border:1px solid var(--cinza-borda);border-radius:var(--radius);padding:34px;display:flex;flex-direction:column;gap:0;transition:border-color .3s,transform .3s,box-shadow .3s;position:relative;overflow:hidden}
+.sol-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--accent, var(--ciano));transform:scaleX(0);transform-origin:left;transition:transform .4s}
 .sol-card:hover::before{transform:scaleX(1)}
-.sol-card:hover{border-color:rgba(30,184,208,0.25);transform:translateY(-4px);box-shadow:var(--sombra-card)}
-.sol-emoji{font-size:2rem;margin-bottom:18px;display:block}
-.sol-nome{font-size:1.25rem;font-weight:700;color:var(--branco);margin-bottom:6px;font-family:'Playfair Display',serif}
-.sol-tag{font-size:.72rem;background:var(--ciano-soft);color:var(--ciano);padding:3px 10px;border-radius:50px;display:inline-block;margin-bottom:14px;font-weight:600;text-transform:uppercase;letter-spacing:.05em}
-.sol-tag.gold{background:rgba(201,169,110,0.1);color:var(--dourado)}
-.sol-desc{font-size:.9rem;color:var(--texto2);margin-bottom:18px;line-height:1.6}
-.sol-beneficios{list-style:none;margin-bottom:28px;flex:1}
-.sol-beneficios li{font-size:.85rem;color:var(--texto2);padding:5px 0;display:flex;align-items:flex-start;gap:8px}
-.sol-beneficios li::before{content:'→';color:var(--ciano);font-weight:700;flex-shrink:0;margin-top:1px}
-.sol-obs{font-size:.75rem;color:var(--dourado);font-style:italic;margin-bottom:14px}
-.btn-sol{display:inline-block;background:transparent;border:1px solid var(--ciano);color:var(--ciano);font-size:.88rem;font-weight:600;padding:11px 24px;border-radius:50px;text-decoration:none;text-align:center;transition:background .2s,color .2s}
-.btn-sol:hover{background:var(--ciano);color:var(--noite)}
-.btn-sol.off{border-color:var(--cinza-borda);color:var(--texto2);pointer-events:none}
-#como-funciona{padding:100px 0;background:linear-gradient(180deg,transparent,rgba(13,31,45,0.6),transparent)}
-.fluxo-wrap{display:flex;gap:0;margin-top:60px;position:relative}
-.fluxo-wrap::before{content:'';position:absolute;top:36px;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--ciano),var(--dourado),var(--ciano),transparent);opacity:.3}
-.fluxo-step{flex:1;text-align:center;padding:0 16px;position:relative}
-.step-num{width:52px;height:52px;border-radius:50%;background:var(--noite);border:2px solid var(--ciano);color:var(--ciano);font-size:1.1rem;font-weight:700;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;position:relative;z-index:1;font-family:'Playfair Display',serif;font-style:italic}
-.step-titulo{font-size:.9rem;font-weight:600;color:var(--branco);margin-bottom:6px}
-.step-desc{font-size:.8rem;color:var(--texto2);line-height:1.5}
-#diferenciais{padding:100px 0}
-.dif-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px;margin-top:50px}
-.dif-card{background:var(--cinza-card);border:1px solid var(--cinza-borda);border-radius:var(--radius);padding:36px 30px;transition:border-color .3s}
+.sol-card:hover{border-color:rgba(255,255,255,0.13);transform:translateY(-5px);box-shadow:var(--sombra-card)}
+.sol-emoji{font-size:2.4rem;margin-bottom:14px;display:block;line-height:1}
+.sol-nome{font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:700;color:var(--branco);margin-bottom:10px}
+.sol-tag{display:inline-block;font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;padding:4px 12px;border-radius:50px;margin-bottom:16px;background:var(--verde-soft);color:var(--verde);border:1px solid rgba(34,194,122,0.25)}
+.sol-tag.gold{background:var(--dourado-soft);color:var(--dourado);border-color:rgba(201,169,110,0.25)}
+.sol-tag.roxo{background:var(--roxo-soft);color:#a5b4fc;border-color:rgba(99,102,241,0.25)}
+.sol-desc{font-size:.93rem;color:var(--texto2);margin-bottom:20px;line-height:1.65;flex:1}
+.sol-beneficios{list-style:none;display:flex;flex-direction:column;gap:9px;margin-bottom:24px}
+.sol-beneficios li{font-size:.84rem;color:var(--texto);display:flex;align-items:flex-start;gap:9px;line-height:1.4}
+.sol-beneficios li::before{content:'✓';color:var(--ciano);font-weight:800;font-size:.8rem;flex-shrink:0;margin-top:1px}
+.sol-publico{font-size:.78rem;color:var(--texto2);margin-bottom:18px;padding:10px 14px;background:rgba(255,255,255,0.03);border-radius:var(--radius-sm);border:1px solid var(--cinza-borda);line-height:1.5}
+.sol-publico strong{color:var(--branco)}
+.sol-obs{font-size:.78rem;color:var(--texto2);font-style:italic;margin-bottom:14px}
+.btn-sol{display:inline-block;background:var(--ciano);color:var(--noite);font-weight:700;font-size:.875rem;padding:12px 24px;border-radius:50px;text-decoration:none;transition:opacity .2s,transform .2s;text-align:center;margin-top:auto}
+.btn-sol:hover{opacity:.88;transform:translateY(-1px)}
+.btn-sol.off{background:var(--cinza-card);color:var(--cinza);border:1px solid var(--cinza-borda);cursor:default;pointer-events:none}
+.btn-sol.dourado{background:linear-gradient(135deg,var(--dourado),#e8c179)}
+.btn-sol.roxo{background:linear-gradient(135deg,#6366f1,#818cf8)}
+
+/* ── COMO FUNCIONA ── */
+#como-funciona{padding:110px 0;background:linear-gradient(180deg,transparent 0%,rgba(13,31,45,0.4) 50%,transparent 100%)}
+.fluxo-wrap{display:flex;flex-direction:column;gap:0;counter-reset:step;margin-top:20px}
+.fluxo-step{display:grid;grid-template-columns:56px 1fr;gap:24px;align-items:flex-start;padding:28px 0;border-bottom:1px solid var(--cinza-borda);position:relative}
+.fluxo-step:last-child{border-bottom:none}
+.step-num{width:48px;height:48px;border-radius:50%;background:var(--ciano-soft);border:1px solid var(--ciano-glow);color:var(--ciano);font-weight:800;font-size:1.1rem;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.step-titulo{font-size:1.05rem;font-weight:700;color:var(--branco);margin-bottom:5px}
+.step-desc{font-size:.88rem;color:var(--texto2);line-height:1.6}
+
+/* ── DIFERENCIAIS ── */
+#diferenciais{padding:110px 0}
+.dif-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:22px}
+.dif-card{background:var(--cinza-card);border:1px solid var(--cinza-borda);border-radius:var(--radius);padding:38px 32px;transition:border-color .3s}
 .dif-card:hover{border-color:rgba(30,184,208,0.3)}
-.dif-num{font-family:'Playfair Display',serif;font-size:3rem;font-weight:900;font-style:italic;color:rgba(30,184,208,.18);display:block;line-height:1;margin-bottom:12px}
-.dif-titulo{font-size:1.15rem;color:var(--branco);margin-bottom:10px}
+.dif-num{font-family:'Playfair Display',serif;font-size:2.4rem;font-weight:900;color:var(--ciano-soft);display:block;margin-bottom:14px;line-height:1}
+.dif-titulo{font-size:1.1rem;font-weight:700;color:var(--branco);margin-bottom:10px}
 .dif-texto{font-size:.88rem;color:var(--texto2);line-height:1.65}
-#acesso{padding:100px 0;background:linear-gradient(180deg,transparent,rgba(13,31,45,0.5),transparent)}
-.acesso-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:16px;margin-top:50px}
-.acesso-card{background:var(--cinza-card);border:1px solid var(--cinza-borda);border-radius:var(--radius);padding:26px;text-align:center;transition:border-color .3s,transform .3s;display:flex;flex-direction:column;align-items:center;gap:12px}
-.acesso-card:hover{border-color:rgba(30,184,208,0.35);transform:translateY(-4px)}
-.acesso-icon{font-size:2rem}
-.acesso-nome{font-size:1rem;font-weight:700;color:var(--branco);font-family:'Playfair Display',serif}
-.acesso-desc{font-size:.8rem;color:var(--texto2);line-height:1.5}
-.btn-acesso{display:block;width:100%;background:transparent;border:1px solid var(--ciano);color:var(--ciano);font-size:.83rem;font-weight:700;padding:10px 18px;border-radius:50px;text-decoration:none;transition:background .2s,color .2s;text-align:center;margin-top:4px}
+
+/* ── ACESSO ── */
+#acesso{padding:110px 0;background:linear-gradient(180deg,transparent 0%,rgba(13,31,45,0.5) 50%,transparent 100%)}
+.acesso-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:20px}
+.acesso-card{background:var(--cinza-card);border:1px solid var(--cinza-borda);border-radius:var(--radius);padding:30px 24px;text-align:center;transition:border-color .3s,transform .3s;display:flex;flex-direction:column;align-items:center;gap:12px}
+.acesso-card:hover{border-color:rgba(30,184,208,0.35);transform:translateY(-5px)}
+.acesso-icon{font-size:2rem;line-height:1}
+.acesso-nome{font-size:1rem;font-weight:700;color:var(--branco)}
+.acesso-desc{font-size:.8rem;color:var(--texto2);line-height:1.55}
+.btn-acesso{display:inline-block;background:var(--ciano-soft);color:var(--ciano);border:1px solid var(--ciano-glow);font-weight:700;font-size:.82rem;padding:10px 22px;border-radius:50px;text-decoration:none;transition:background .2s,color .2s}
 .btn-acesso:hover{background:var(--ciano);color:var(--noite)}
+.btn-acesso.dourado-btn{background:var(--dourado-soft);color:var(--dourado);border-color:rgba(201,169,110,0.3)}
+.btn-acesso.dourado-btn:hover{background:var(--dourado);color:var(--noite)}
+
+/* ── ROADMAP ── */
 #roadmap{padding:80px 0}
-.roadmap-chips{display:flex;flex-wrap:wrap;gap:12px;margin-top:40px}
+.roadmap-chips{display:flex;flex-wrap:wrap;gap:12px;margin-top:10px}
 .chip{background:var(--cinza-card);border:1px solid var(--cinza-borda);color:var(--texto2);font-size:.85rem;padding:10px 20px;border-radius:50px;display:flex;align-items:center;gap:8px;transition:border-color .2s,color .2s;cursor:default}
-.chip:hover{border-color:rgba(201,169,110,.4);color:var(--dourado)}
-#cta-final{padding:120px 0;text-align:center;position:relative}
-#cta-final::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 70% 60% at 50% 50%,rgba(30,184,208,0.07) 0%,transparent 70%);pointer-events:none}
-.cta-titulo{font-size:clamp(2rem,4vw,3.2rem);color:var(--branco);max-width:700px;margin:0 auto 18px}
-.cta-titulo em{color:var(--ciano)}
-.cta-texto{font-size:1.05rem;color:var(--texto2);max-width:560px;margin:0 auto 44px}
-.cta-btns{display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
-footer{border-top:1px solid var(--cinza-borda);padding:48px 0 32px;position:relative;z-index:1}
-.footer-inner{display:flex;justify-content:space-between;align-items:flex-start;gap:40px;flex-wrap:wrap}
-.footer-logo{font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:900;font-style:italic;color:var(--branco);text-decoration:none;letter-spacing:-0.5px}
+.chip:hover{border-color:var(--ciano-glow);color:var(--branco)}
+
+/* ── CTA FINAL ── */
+#cta-final{padding:120px 0;text-align:center}
+.cta-titulo{font-size:clamp(2rem,4vw,3.2rem);color:var(--branco);margin-bottom:20px}
+.cta-titulo em{font-style:italic;color:var(--ciano)}
+.cta-texto{font-size:1.05rem;color:var(--texto2);max-width:600px;margin:0 auto 40px}
+.cta-btns{display:flex;justify-content:center;gap:14px;flex-wrap:wrap}
+
+/* ── FOOTER ── */
+footer{padding:60px 0 30px;border-top:1px solid var(--cinza-borda)}
+.footer-inner{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:40px;margin-bottom:40px}
+.footer-logo{font-family:'Playfair Display',serif;font-size:1.35rem;font-weight:900;font-style:italic;color:var(--branco);text-decoration:none}
 .footer-logo span{color:var(--ciano)}
-.footer-slogan{font-size:.82rem;color:var(--texto2);margin-top:6px;max-width:200px}
+.footer-slogan{font-size:.82rem;color:var(--texto2);margin-top:8px;line-height:1.6;max-width:240px}
 .footer-links{display:flex;flex-direction:column;gap:8px}
-.footer-links a{color:var(--texto2);text-decoration:none;font-size:.85rem;transition:color .2s}
+.footer-links a{color:var(--texto2);text-decoration:none;font-size:.84rem;transition:color .2s}
 .footer-links a:hover{color:var(--ciano)}
-.footer-bottom{margin-top:40px;padding-top:24px;border-top:1px solid var(--cinza-borda);text-align:center;font-size:.78rem;color:var(--texto2)}
-.reveal{opacity:0;transform:translateY(28px);transition:opacity .7s ease,transform .7s ease}
+.footer-bottom{font-size:.78rem;color:var(--texto2);padding-top:24px;border-top:1px solid var(--cinza-borda);text-align:center}
+
+/* ── REVEAL ── */
+.reveal{opacity:0;transform:translateY(28px);transition:opacity .65s ease,transform .65s ease}
 .reveal.visible{opacity:1;transform:none}
+
+/* ── MOBILE ── */
 @media(max-width:900px){
-  nav .nl{display:none}
+  .hero-inner{grid-template-columns:1fr;gap:50px;padding:60px 0}
+  .hero-cards{grid-template-columns:1fr 1fr}
+  .float-card:nth-child(6){grid-column:span 2}
+  .footer-inner{grid-template-columns:1fr 1fr;gap:32px}
+  nav .nl,.nav-desktop{display:none}
   .burger{display:flex}
-  .hero-inner{grid-template-columns:1fr;gap:40px;padding:60px 0}
-  .fluxo-wrap{flex-direction:column;gap:28px}
-  .fluxo-wrap::before{display:none}
-  .fluxo-step{text-align:left;display:flex;gap:16px;align-items:flex-start}
-  .step-num{margin:0;flex-shrink:0}
 }
 @media(max-width:600px){
   .hero-cards{grid-template-columns:1fr}
-  .float-card:nth-child(5){grid-column:span 1}
-  .acesso-grid{grid-template-columns:1fr 1fr}
+  .float-card:nth-child(6){grid-column:span 1}
   .solucoes-grid{grid-template-columns:1fr}
-  .footer-inner{flex-direction:column;gap:28px}
+  .acesso-grid{grid-template-columns:1fr}
+  .dores-grid{grid-template-columns:1fr 1fr}
+  .footer-inner{grid-template-columns:1fr}
+  .cta-btns{flex-direction:column;align-items:center}
 }
 </style>
 </head>
 <body>
+
 <header id="header">
   <a href="#" class="logo">Rebeca <span>Solutions</span></a>
   <nav>
-    <a href="#" class="nl">Início</a>
-    <a href="#solucoes" class="nl">Soluções</a>
-    <a href="#como-funciona" class="nl">Como funciona</a>
+    <a href="#solucoes" class="nl nav-desktop">Soluções</a>
+    <a href="#como-funciona" class="nl nav-desktop">Como funciona</a>
     <a href="#acesso" class="btn-entrar">Entrar</a>
+    <button class="burger" id="burger" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
   </nav>
-  <button class="burger" id="burger" aria-label="Menu">
-    <span></span><span></span><span></span>
-  </button>
 </header>
 
 <div class="mobile-nav" id="mobileNav">
-  <a href="#">Início</a>
   <a href="#solucoes">Soluções</a>
   <a href="#como-funciona">Como funciona</a>
-  <a href="/privacidade">Privacidade</a>
-  <a href="/termos">Termos</a>
   <a href="#acesso">Acessar painel</a>
-  <a href="#acesso" class="btn-mob">Entrar</a>
+  <a href="#solucoes" class="btn-mob">Conhecer as Rebecas</a>
 </div>
 
+<!-- ══ HERO ══ -->
 <section id="hero">
   <div class="container">
     <div class="hero-inner">
       <div>
-        <span class="hero-badge">Rebeca Solutions — Tudo em um só sistema</span>
+        <span class="hero-badge">Rebeca Solutions — Tudo em um só ecossistema</span>
         <h1 class="hero-titulo">
           Conheça a <em>Rebeca</em>, a funcionária digital que entende a dor do seu negócio.
         </h1>
         <p class="hero-sub">
-          Um ecossistema inteligente para atendimento, agenda, delivery, corridas, financeiro e comissões — criado para pequenos negócios brasileiros que precisam de organização, vendas e clareza todos os dias.
+          Agenda, delivery, corridas e educação — quatro sistemas poderosos criados para pequenos negócios brasileiros que precisam de organização, atendimento e clareza para crescer.
         </p>
-        <p class="hero-frase">
-          "Não somos vendedores de sistema. Lidamos com pessoas e resolvemos problemas."
-        </p>
+        <p class="hero-frase">"Sua empresa não precisa trabalhar mais pesado. Precisa trabalhar melhor."</p>
         <div class="hero-btns">
           <a href="#solucoes" class="btn-primario">Conhecer as Rebecas</a>
           <a href="#acesso" class="btn-ghost">Acessar meu painel</a>
@@ -201,13 +239,7 @@ footer{border-top:1px solid var(--cinza-borda);padding:48px 0 32px;position:rela
       </div>
       <div class="hero-cards">
         <div class="float-card">
-          <span class="fc-icon">💬</span>
-          <div class="fc-label">Atendimento</div>
-          <div class="fc-text">Cliente respondido</div>
-          <div class="fc-sub"><span class="fc-dot" style="background:#22c27a"></span>Agora mesmo</div>
-        </div>
-        <div class="float-card">
-          <span class="fc-icon">📅</span>
+          <span class="fc-icon">🗓️</span>
           <div class="fc-label">Agenda</div>
           <div class="fc-text">Horário confirmado</div>
           <div class="fc-sub"><span class="fc-dot" style="background:#1eb8d0"></span>14h30 — Ana Lima</div>
@@ -219,17 +251,29 @@ footer{border-top:1px solid var(--cinza-borda);padding:48px 0 32px;position:rela
           <div class="fc-sub"><span class="fc-dot" style="background:#f59e0b"></span>3 pedidos na fila</div>
         </div>
         <div class="float-card">
+          <span class="fc-icon">🚗</span>
+          <div class="fc-label">Corrida</div>
+          <div class="fc-text">Motorista despachado</div>
+          <div class="fc-sub"><span class="fc-dot" style="background:#22c27a"></span>2 km do destino</div>
+        </div>
+        <div class="float-card">
+          <span class="fc-icon">🎓</span>
+          <div class="fc-label">Beca Estuda</div>
+          <div class="fc-text">Aluno no módulo 3</div>
+          <div class="fc-sub"><span class="fc-dot" style="background:#a78bfa"></span>Prova em 2 dias</div>
+        </div>
+        <div class="float-card">
           <span class="fc-icon">💰</span>
           <div class="fc-label">Financeiro</div>
           <div class="fc-text">Faturamento do dia</div>
-          <div class="fc-sub"><span class="fc-dot" style="background:#6366f1"></span>R$ 2.840 registrados</div>
+          <div class="fc-sub"><span class="fc-dot" style="background:#6366f1"></span>R$ 4.380 registrados</div>
         </div>
         <div class="float-card" style="padding:14px 20px">
           <div style="display:flex;align-items:center;gap:14px">
-            <span style="font-size:1.6rem">🏆</span>
+            <span style="font-size:1.7rem">🏆</span>
             <div>
               <div class="fc-label">Comissão calculada</div>
-              <div class="fc-text" style="font-size:.95rem">Equipe em dia, sem planilha</div>
+              <div class="fc-text" style="font-size:.92rem">Equipe em dia, sem planilha</div>
             </div>
           </div>
         </div>
@@ -237,143 +281,183 @@ footer{border-top:1px solid var(--cinza-borda);padding:48px 0 32px;position:rela
     </div>
   </div>
 </section>
+
+<!-- ══ DORES ══ -->
 <section id="dores">
   <div class="container">
     <div class="reveal">
       <span class="secao-label">O problema que ninguém fala</span>
       <h2 class="secao-titulo">Toda empresa tem uma dor escondida na rotina.</h2>
       <div class="divisor"></div>
-      <p class="secao-texto">Cliente sem resposta, pedido perdido, agenda bagunçada, motorista sem controle, comissão confusa, faturamento sem clareza e WhatsApp virando bagunça. A Rebeca nasceu para entrar exatamente nesses pontos: onde sua empresa perde tempo, dinheiro e atendimento.</p>
+      <p class="secao-texto">Cliente sem resposta, pedido perdido, agenda bagunçada, motorista sem controle, aluno sem suporte, comissão confusa. A Rebeca nasceu exatamente nesses pontos — onde sua empresa perde tempo, dinheiro e oportunidade.</p>
     </div>
     <div class="dores-grid">
-      <div class="dor-card reveal"><span class="dor-icon">📵</span><div class="dor-nome">Clientes sem resposta</div><div class="dor-desc">Mensagem que entra, ninguém vê, cliente some.</div></div>
-      <div class="dor-card reveal"><span class="dor-icon">📦</span><div class="dor-nome">Pedidos desorganizados</div><div class="dor-desc">Anotação no papel, pedido errado, cliente insatisfeito.</div></div>
-      <div class="dor-card reveal"><span class="dor-icon">🗓️</span><div class="dor-nome">Agenda bagunçada</div><div class="dor-desc">Dois clientes no mesmo horário, remarcação sem controle.</div></div>
-      <div class="dor-card reveal"><span class="dor-icon">🚗</span><div class="dor-nome">Corridas sem controle</div><div class="dor-desc">Motorista sumido, despacho confuso, cliente esperando.</div></div>
-      <div class="dor-card reveal"><span class="dor-icon">🧮</span><div class="dor-nome">Comissão difícil de calcular</div><div class="dor-desc">Planilha toda semana, confusão no fechamento, desgaste.</div></div>
-      <div class="dor-card reveal"><span class="dor-icon">📊</span><div class="dor-nome">Faturamento sem clareza</div><div class="dor-desc">Sabe que vendeu, mas não sabe quanto entrou de verdade.</div></div>
-      <div class="dor-card reveal"><span class="dor-icon">🔥</span><div class="dor-nome">Equipe sobrecarregada</div><div class="dor-desc">Todo mundo fazendo tudo, ninguém fazendo bem nada.</div></div>
-      <div class="dor-card reveal"><span class="dor-icon">🌙</span><div class="dor-nome">Oportunidades fora do horário</div><div class="dor-desc">Cliente chamou meia-noite, empresa dormia, venda perdida.</div></div>
+      <div class="dor-card reveal"><span class="dor-icon">📵</span><div class="dor-nome">Clientes sem resposta</div><div class="dor-desc">Mensagem que entra, ninguém vê. Cliente some e vai para o concorrente.</div></div>
+      <div class="dor-card reveal"><span class="dor-icon">📦</span><div class="dor-nome">Pedidos desorganizados</div><div class="dor-desc">Anotação no papel, pedido errado, cliente insatisfeito toda semana.</div></div>
+      <div class="dor-card reveal"><span class="dor-icon">🗓️</span><div class="dor-nome">Agenda bagunçada</div><div class="dor-desc">Dois clientes no mesmo horário, remarcação sem controle, horário perdido.</div></div>
+      <div class="dor-card reveal"><span class="dor-icon">🚗</span><div class="dor-nome">Corridas sem controle</div><div class="dor-desc">Motorista sumido, despacho confuso, cliente esperando sem saber nada.</div></div>
+      <div class="dor-card reveal"><span class="dor-icon">🎓</span><div class="dor-nome">Alunos sem organização</div><div class="dor-desc">Material espalhado, sem cronograma, sem histórico de provas ou progresso.</div></div>
+      <div class="dor-card reveal"><span class="dor-icon">🧮</span><div class="dor-nome">Comissão difícil de calcular</div><div class="dor-desc">Planilha toda semana, confusão no fechamento, desgaste entre equipe e dono.</div></div>
+      <div class="dor-card reveal"><span class="dor-icon">📊</span><div class="dor-nome">Faturamento sem clareza</div><div class="dor-desc">Sabe que vendeu, mas não sabe quanto entrou, saiu ou sobrou de verdade.</div></div>
+      <div class="dor-card reveal"><span class="dor-icon">🌙</span><div class="dor-nome">Oportunidades fora do horário</div><div class="dor-desc">Cliente chamou à meia-noite, empresa dormia. Venda perdida, concorrente ganhou.</div></div>
     </div>
   </div>
 </section>
 
+<!-- ══ SOLUÇÕES ══ -->
 <section id="solucoes">
   <div class="container">
-    <div class="reveal" style="margin-bottom:60px">
+    <div class="reveal" style="margin-bottom:64px">
       <span class="secao-label">Nossos produtos</span>
       <h2 class="secao-titulo">Existe uma Rebeca para cada parte do seu negócio.</h2>
       <div class="divisor"></div>
-      <p class="secao-texto">Cada Rebeca foi pensada para resolver uma dor específica da operação, sem transformar sua empresa em algo frio ou automático.</p>
+      <p class="secao-texto">Cada sistema foi construído para resolver uma dor real da operação, sem transformar sua empresa em algo frio, complicado ou distante do cliente.</p>
     </div>
     <div class="solucoes-grid">
 
-      <div class="sol-card reveal">
-        <span class="sol-emoji">📅</span>
+      <!-- AGENDA -->
+      <div class="sol-card reveal" style="--accent:#1eb8d0">
+        <span class="sol-emoji">🗓️</span>
         <div class="sol-nome">Rebeca Agenda</div>
-        <span class="sol-tag">Disponível agora</span>
-        <p class="sol-desc">Para salões, clínicas, estúdios, profissionais liberais e empresas que trabalham com horário marcado.</p>
+        <span class="sol-tag">✦ Disponível agora</span>
+        <p class="sol-desc">Para salões de beleza, barbearias, clínicas, estúdios, consultórios, personal trainers e qualquer negócio que trabalha com horário marcado e precisa de organização.</p>
+        <div class="sol-publico"><strong>Para quem é:</strong> Profissionais liberais, prestadores de serviço, clínicas e estúdios que atendem por agendamento.</div>
         <ul class="sol-beneficios">
-          <li>Agenda atendimentos pelo WhatsApp</li>
-          <li>Confirma horários automaticamente</li>
-          <li>Organiza sua carteira de clientes</li>
-          <li>CRM humanizado para reconquistar clientes</li>
-          <li>Integra com WhatsApp direto</li>
+          <li>Agenda e confirma atendimentos pelo WhatsApp automaticamente</li>
+          <li>Envia lembretes para o cliente no dia anterior</li>
+          <li>CRM humanizado para reconquistar clientes inativos</li>
+          <li>Painel completo de profissionais, serviços e horários</li>
+          <li>Financeiro integrado — veja quanto entrou hoje</li>
+          <li>Avaliações de clientes com nota e histórico</li>
         </ul>
-        <a href="agenda-landing.html" class="btn-sol">Conhecer Rebeca Agenda</a>
+        <a href="agenda-landing.html" class="btn-sol">Conhecer Rebeca Agenda →</a>
       </div>
 
-      <div class="sol-card reveal">
+      <!-- DELIVERY -->
+      <div class="sol-card reveal" style="--accent:#f59e0b">
         <span class="sol-emoji">🛵</span>
         <div class="sol-nome">Rebeca Delivery</div>
-        <span class="sol-tag">Disponível agora</span>
-        <p class="sol-desc">Para restaurantes, lanchonetes, mercados e negócios que recebem pedidos todos os dias.</p>
+        <span class="sol-tag">✦ Disponível agora</span>
+        <p class="sol-desc">Para restaurantes, lanchonetes, pizzarias, mercadinhos, açaiterias e todo negócio que recebe pedidos todos os dias e precisa de controle total da operação.</p>
+        <div class="sol-publico"><strong>Para quem é:</strong> Donos de restaurante, delivery próprio, dark kitchen e qualquer negócio com cardápio e entrega.</div>
         <ul class="sol-beneficios">
-          <li>Organiza pedidos em tempo real</li>
-          <li>Apoia cardápio, caixa e cozinha</li>
-          <li>Controla entregas e entregadores</li>
-          <li>Reduz erros no atendimento</li>
-          <li>Centraliza toda a operação</li>
+          <li>Recebe e organiza pedidos em tempo real no painel</li>
+          <li>Cardápio digital com categorias, fotos e preços</li>
+          <li>Tela de cozinha para preparo organizado sem confusão</li>
+          <li>Controle de entregadores com status por corrida</li>
+          <li>Caixa do dia com histórico de recebimentos</li>
+          <li>Financeiro completo — entradas, saídas e resultado</li>
         </ul>
-        <a href="rebeca-delivery-landing.html" class="btn-sol">Conhecer Rebeca Delivery</a>
+        <a href="rebeca-delivery-landing.html" class="btn-sol">Conhecer Rebeca Delivery →</a>
       </div>
 
-      <div class="sol-card reveal">
+      <!-- CORRIDA -->
+      <div class="sol-card reveal" style="--accent:#22c27a">
         <span class="sol-emoji">🚗</span>
         <div class="sol-nome">Rebeca Corrida</div>
-        <span class="sol-tag">Disponível agora</span>
-        <p class="sol-desc">Para negócios com motoristas, entregas rápidas, transporte local e corridas por WhatsApp.</p>
+        <span class="sol-tag">✦ Disponível agora</span>
+        <p class="sol-desc">Para empresas de transporte, aplicativos regionais, executivos, escolas e qualquer negócio que opera motoristas e precisa de despacho com rastreamento real.</p>
+        <div class="sol-publico"><strong>Para quem é:</strong> Empresas de transporte local, táxi corporativo, aplicativos regionais e serviços com frota de motoristas.</div>
         <ul class="sol-beneficios">
-          <li>Organiza solicitações de corrida</li>
-          <li>Apoia despacho e acompanhamento</li>
-          <li>Acompanha motoristas em tempo real</li>
-          <li>Melhora o controle das corridas</li>
-          <li>Atendimento via WhatsApp</li>
+          <li>App do motorista com GPS em tempo real</li>
+          <li>Despacho de corridas com mapa ao vivo</li>
+          <li>Cliente acompanha a corrida pelo WhatsApp</li>
+          <li>Histórico completo de corridas por motorista</li>
+          <li>Estatísticas de desempenho e faturamento</li>
+          <li>Controle de antifraude e pontos de referência</li>
         </ul>
-        <p class="sol-obs">Landing comercial em preparação</p>
-        <a href="admin/login.html" class="btn-sol">Acessar painel Corrida</a>
+        <a href="admin/login.html" class="btn-sol" style="background:var(--verde)">Acessar painel Corrida →</a>
       </div>
 
-      <div class="sol-card reveal">
+      <!-- BECA ESTUDA -->
+      <div class="sol-card reveal" style="--accent:#a78bfa">
+        <span class="sol-emoji">🎓</span>
+        <div class="sol-nome">Beca Estuda</div>
+        <span class="sol-tag roxo">✦ Disponível agora</span>
+        <p class="sol-desc">Para estudantes que precisam de organização real nos estudos — concursos, vestibulares, OAB, ENEM e certificações. Estude com método, cronograma e controle de progresso.</p>
+        <div class="sol-publico"><strong>Para quem é:</strong> Estudantes de concurso, vestibulando, pós-graduandos e profissionais em preparação para provas e certificações.</div>
+        <ul class="sol-beneficios">
+          <li>Cronograma de estudos inteligente por matéria</li>
+          <li>Controle de provas, simulados e gabaritos</li>
+          <li>Histórico de desempenho e progresso ao longo do tempo</li>
+          <li>Notificações de revisão para fixar o conteúdo</li>
+          <li>Acesso em qualquer dispositivo — estude onde quiser</li>
+          <li>Plano a partir de R$ 59,90/mês</li>
+        </ul>
+        <a href="beca-estuda-landing.html" class="btn-sol roxo">Conhecer Beca Estuda →</a>
+      </div>
+
+      <!-- FINANCEIRO -->
+      <div class="sol-card reveal" style="--accent:#6366f1;opacity:.82">
         <span class="sol-emoji">💰</span>
         <div class="sol-nome">Rebeca Financeiro</div>
-        <span class="sol-tag gold">Em breve</span>
-        <p class="sol-desc">Para empresas que precisam enxergar entradas, saídas, contas, caixa e resultado real sem depender de planilhas.</p>
+        <span class="sol-tag gold">⏳ Em breve</span>
+        <p class="sol-desc">Para empresas que precisam enxergar com clareza entradas, saídas, contas a pagar, caixa e resultado real — sem depender de planilhas ou suposições.</p>
+        <div class="sol-publico"><strong>Para quem é:</strong> Donos de negócio que querem tomar decisão com dados, não com achismo.</div>
         <ul class="sol-beneficios">
-          <li>Organiza entradas e saídas</li>
-          <li>Apoia fechamento de caixa</li>
-          <li>Mostra visão financeira clara</li>
-          <li>Reduz esquecimentos e perdas</li>
-          <li>Decisão com clareza e dados</li>
+          <li>Visão completa de entradas e saídas por período</li>
+          <li>Contas a pagar e receber com alertas de vencimento</li>
+          <li>Fechamento de caixa diário automatizado</li>
+          <li>Comissões da equipe calculadas sem planilha</li>
+          <li>Relatórios inteligentes de resultado real</li>
         </ul>
         <a href="#" class="btn-sol off">Em breve</a>
       </div>
 
-
-
-
-
     </div>
   </div>
 </section>
+
+<!-- ══ COMO FUNCIONA ══ -->
 <section id="como-funciona">
   <div class="container">
     <div class="reveal">
       <span class="secao-label">Por dentro da operação</span>
       <h2 class="secao-titulo">A Rebeca não substitui sua equipe. Ela tira o peso da operação.</h2>
       <div class="divisor"></div>
-      <p class="secao-texto">Ela conversa, organiza, registra, lembra, calcula e encaminha. Sua equipe continua no controle, mas agora com mais clareza, processo e tempo para cuidar do que realmente importa.</p>
+      <p class="secao-texto">Ela conversa, organiza, registra, lembra, calcula e encaminha — para que sua equipe fique no controle, mas agora com clareza, processo e tempo para cuidar do que realmente importa.</p>
     </div>
     <div class="fluxo-wrap reveal">
       <div class="fluxo-step">
         <div class="step-num">1</div>
-        <div class="step-titulo">Cliente chama no WhatsApp</div>
-        <div class="step-desc">A qualquer hora, a Rebeca está disponível para receber.</div>
+        <div>
+          <div class="step-titulo">📲 Cliente chama no WhatsApp</div>
+          <div class="step-desc">A qualquer hora, a Rebeca está disponível para receber a mensagem e entender o que o cliente precisa.</div>
+        </div>
       </div>
       <div class="fluxo-step">
         <div class="step-num">2</div>
-        <div class="step-titulo">Rebeca entende a intenção</div>
-        <div class="step-desc">Identifica se é pedido, agendamento, corrida ou dúvida.</div>
+        <div>
+          <div class="step-titulo">🧠 Rebeca identifica a intenção</div>
+          <div class="step-desc">Entende se é pedido de delivery, agendamento, solicitação de corrida, dúvida ou reclamação — sem confundir.</div>
+        </div>
       </div>
       <div class="fluxo-step">
         <div class="step-num">3</div>
-        <div class="step-titulo">Organiza a solicitação</div>
-        <div class="step-desc">Coleta dados, confirma horário ou registra o pedido.</div>
+        <div>
+          <div class="step-titulo">📋 Coleta e organiza a solicitação</div>
+          <div class="step-desc">Coleta os dados necessários, confirma horário, registra o pedido ou despacha a corrida — automaticamente.</div>
+        </div>
       </div>
       <div class="fluxo-step">
         <div class="step-num">4</div>
-        <div class="step-titulo">Registra no painel certo</div>
-        <div class="step-desc">Agenda, Delivery ou Corrida — tudo no lugar certo.</div>
+        <div>
+          <div class="step-titulo">🎯 Envia para o painel certo</div>
+          <div class="step-desc">Agenda, Delivery, Corrida ou Estuda — cada coisa no lugar certo, sem precisar de mais uma pessoa na operação.</div>
+        </div>
       </div>
       <div class="fluxo-step">
         <div class="step-num">5</div>
-        <div class="step-titulo">Equipe acompanha com clareza</div>
-        <div class="step-desc">Nada se perde. Tudo visível, organizado e acessível.</div>
+        <div>
+          <div class="step-titulo">✅ Equipe acompanha com clareza</div>
+          <div class="step-desc">Nada se perde. Tudo visível, organizado e acessível pelo celular ou computador, a qualquer hora.</div>
+        </div>
       </div>
     </div>
   </div>
 </section>
 
+<!-- ══ DIFERENCIAIS ══ -->
 <section id="diferenciais">
   <div class="container">
     <div class="reveal">
@@ -386,22 +470,23 @@ footer{border-top:1px solid var(--cinza-borda);padding:48px 0 32px;position:rela
       <div class="dif-card reveal">
         <span class="dif-num">01</span>
         <h3 class="dif-titulo">Atendimento com contexto</h3>
-        <p class="dif-texto">A Rebeca não responde de forma genérica. Ela entende o momento do cliente, o histórico e o que ele realmente precisa, sem parecer um robô.</p>
+        <p class="dif-texto">A Rebeca não responde de forma genérica. Ela entende o momento do cliente, o histórico e o que ele realmente precisa — sem parecer um robô frio e sem personalidade.</p>
       </div>
       <div class="dif-card reveal">
         <span class="dif-num">02</span>
         <h3 class="dif-titulo">Organização da rotina</h3>
-        <p class="dif-texto">Da agenda ao pedido, da corrida ao financeiro — cada coisa no lugar certo. Sua empresa para de depender de memória, papel e improviso.</p>
+        <p class="dif-texto">Da agenda ao pedido, da corrida ao estudo — cada coisa no lugar certo. Sua empresa para de depender de memória, papel, improviso e planilha.</p>
       </div>
       <div class="dif-card reveal">
         <span class="dif-num">03</span>
         <h3 class="dif-titulo">Decisão com clareza</h3>
-        <p class="dif-texto">Faturamento, comissões, desempenho da equipe — tudo visível e organizado para que você tome decisões com dados, não com achismo.</p>
+        <p class="dif-texto">Faturamento, comissões, desempenho, progresso de alunos — tudo visível e organizado para que você tome decisões com dados reais, não com achismo.</p>
       </div>
     </div>
   </div>
 </section>
 
+<!-- ══ ACESSO ══ -->
 <section id="acesso">
   <div class="container">
     <div class="reveal">
@@ -412,28 +497,34 @@ footer{border-top:1px solid var(--cinza-borda);padding:48px 0 32px;position:rela
     </div>
     <div class="acesso-grid">
       <div class="acesso-card reveal">
-        <div class="acesso-icon">📅</div>
+        <div class="acesso-icon">🗓️</div>
         <div class="acesso-nome">Painel Agenda</div>
-        <div class="acesso-desc">Acesse agenda, clientes, profissionais, CRM, financeiro e WhatsApp.</div>
+        <div class="acesso-desc">Agenda, clientes, profissionais, CRM, financeiro e WhatsApp integrado.</div>
         <a href="agenda-adm.html" class="btn-acesso">Entrar na Agenda</a>
       </div>
       <div class="acesso-card reveal">
         <div class="acesso-icon">🛵</div>
         <div class="acesso-nome">Painel Delivery</div>
-        <div class="acesso-desc">Acesse pedidos, cardápio, caixa, cozinha, estoque e entregas.</div>
+        <div class="acesso-desc">Pedidos, cardápio, caixa, cozinha, entregadores e financeiro.</div>
         <a href="delivery-admin.html" class="btn-acesso">Entrar no Delivery</a>
       </div>
       <div class="acesso-card reveal">
         <div class="acesso-icon">🚗</div>
         <div class="acesso-nome">Painel Corrida</div>
-        <div class="acesso-desc">Acesse motoristas, corridas, mapa, despacho e estatísticas.</div>
+        <div class="acesso-desc">Motoristas, corridas, mapa ao vivo, despacho e estatísticas.</div>
         <a href="admin/login.html" class="btn-acesso">Entrar na Corrida</a>
       </div>
-
-
+      <div class="acesso-card reveal">
+        <div class="acesso-icon">🎓</div>
+        <div class="acesso-nome">Beca Estuda</div>
+        <div class="acesso-desc">Cronograma, provas, simulados, progresso e revisão de conteúdo.</div>
+        <a href="beca-estuda.html" class="btn-acesso dourado-btn">Entrar no Beca Estuda</a>
+      </div>
     </div>
   </div>
 </section>
+
+<!-- ══ ROADMAP ══ -->
 <section id="roadmap">
   <div class="container">
     <div class="reveal">
@@ -442,25 +533,28 @@ footer{border-top:1px solid var(--cinza-borda);padding:48px 0 32px;position:rela
       <div class="divisor"></div>
     </div>
     <div class="roadmap-chips reveal">
-      <div class="chip"><span>🏆</span> Comissão e Desempenho</div>
-      <div class="chip"><span>📈</span> Faturamento detalhado</div>
-      <div class="chip"><span>📋</span> Relatórios inteligentes</div>
-      <div class="chip"><span>🔁</span> Recuperação de clientes</div>
-      <div class="chip"><span>👥</span> Indicadores por equipe</div>
+      <div class="chip"><span>💰</span> Rebeca Financeiro completo</div>
+      <div class="chip"><span>🏆</span> Comissão e desempenho da equipe</div>
+      <div class="chip"><span>📈</span> Relatórios inteligentes</div>
+      <div class="chip"><span>🔁</span> Recuperação de clientes inativos</div>
+      <div class="chip"><span>👥</span> Indicadores por colaborador</div>
       <div class="chip"><span>💬</span> Mais integrações WhatsApp</div>
       <div class="chip"><span>📦</span> Gestão de estoque</div>
-      <div class="chip"><span>🎂</span> Aniversário de clientes</div>
+      <div class="chip"><span>🎂</span> Aniversário e fidelização de clientes</div>
+      <div class="chip"><span>🤖</span> IA para análise de desempenho</div>
+      <div class="chip"><span>📚</span> Mais cursos no Beca Estuda</div>
     </div>
   </div>
 </section>
 
+<!-- ══ CTA FINAL ══ -->
 <section id="cta-final">
   <div class="container">
     <h2 class="cta-titulo reveal">
       Sua empresa não precisa trabalhar mais pesado.<br><em>Precisa trabalhar melhor.</em>
     </h2>
     <p class="cta-texto reveal">
-      A Rebeca foi criada para pequenos negócios que precisam de organização, atendimento e clareza para crescer com mais controle.
+      A Rebeca foi criada para pequenos negócios que precisam de organização, atendimento e clareza para crescer com mais controle e menos improviso todos os dias.
     </p>
     <div class="cta-btns reveal">
       <a href="#solucoes" class="btn-primario">Encontrar a Rebeca ideal</a>
@@ -469,34 +563,38 @@ footer{border-top:1px solid var(--cinza-borda);padding:48px 0 32px;position:rela
   </div>
 </section>
 
+<!-- ══ FOOTER ══ -->
 <footer>
   <div class="container">
     <div class="footer-inner">
       <div>
         <a href="#" class="footer-logo">Rebeca <span>Solutions</span></a>
-        <p class="footer-slogan">Funcionária digital para pequenos negócios brasileiros.</p>
+        <p class="footer-slogan">Funcionária digital para pequenos negócios brasileiros. Agenda, delivery, corridas e educação em um só ecossistema.</p>
       </div>
       <div class="footer-links">
-        <strong style="color:var(--branco);font-size:.8rem;margin-bottom:4px">Produtos</strong>
-
+        <strong style="color:var(--branco);font-size:.8rem;margin-bottom:4px;display:block">Produtos</strong>
+        <a href="agenda-landing.html">Rebeca Agenda</a>
         <a href="rebeca-delivery-landing.html">Rebeca Delivery</a>
         <a href="admin/login.html">Rebeca Corrida</a>
+        <a href="beca-estuda-landing.html">Beca Estuda</a>
       </div>
       <div class="footer-links">
-        <strong style="color:var(--branco);font-size:.8rem;margin-bottom:4px">Acesso</strong>
+        <strong style="color:var(--branco);font-size:.8rem;margin-bottom:4px;display:block">Acesso</strong>
         <a href="agenda-adm.html">Painel Agenda</a>
         <a href="delivery-admin.html">Painel Delivery</a>
+        <a href="admin/login.html">Painel Corrida</a>
+        <a href="beca-estuda.html">Painel Estuda</a>
         <a href="conectar-whatsapp.html">Conectar WhatsApp</a>
       </div>
       <div class="footer-links">
-        <strong style="color:var(--branco);font-size:.8rem;margin-bottom:4px">Legal</strong>
+        <strong style="color:var(--branco);font-size:.8rem;margin-bottom:4px;display:block">Legal</strong>
         <a href="/privacidade">Política de Privacidade</a>
         <a href="/termos">Termos de Uso</a>
         <a href="/contato">Contato</a>
       </div>
     </div>
     <div class="footer-bottom">
-      &copy; 2026 Rebeca Plataforma &mdash; Todos os direitos reservados &nbsp;·&nbsp;
+      &copy; 2026 Rebeca Solutions &mdash; Todos os direitos reservados &nbsp;·&nbsp;
       <a href="/privacidade" style="color:inherit;text-decoration:none">Privacidade</a> &nbsp;·&nbsp;
       <a href="/termos" style="color:inherit;text-decoration:none">Termos</a>
     </div>
@@ -505,17 +603,11 @@ footer{border-top:1px solid var(--cinza-borda);padding:48px 0 32px;position:rela
 
 <script src="/js/rebeca-monitor.js"></script>
 <script>
-// Menu mobile
 const burger = document.getElementById('burger');
 const mobileNav = document.getElementById('mobileNav');
-burger.addEventListener('click', () => {
-  mobileNav.classList.toggle('open');
-});
-mobileNav.querySelectorAll('a').forEach(a => {
-  a.addEventListener('click', () => mobileNav.classList.remove('open'));
-});
+burger.addEventListener('click', () => mobileNav.classList.toggle('open'));
+mobileNav.querySelectorAll('a').forEach(a => a.addEventListener('click', () => mobileNav.classList.remove('open')));
 
-// Reveal on scroll
 const revealEls = document.querySelectorAll('.reveal');
 const observer = new IntersectionObserver((entries) => {
   entries.forEach((entry, i) => {
@@ -524,15 +616,12 @@ const observer = new IntersectionObserver((entries) => {
       observer.unobserve(entry.target);
     }
   });
-}, { threshold: 0.1 });
+}, { threshold: 0.08 });
 revealEls.forEach(el => observer.observe(el));
 
-// Header scroll
 const header = document.getElementById('header');
 window.addEventListener('scroll', () => {
-  header.style.background = window.scrollY > 40
-    ? 'rgba(8,13,20,0.97)'
-    : 'rgba(8,13,20,0.88)';
+  header.style.background = window.scrollY > 40 ? 'rgba(8,13,20,0.97)' : 'rgba(8,13,20,0.88)';
 });
 </script>
 </body>
