@@ -340,6 +340,12 @@ app.get('/mesa', (req, res) => res.sendFile(path.join(__dirname, 'public', 'mesa
 
 app.get('/rastrear/:codigo', (req, res) => res.sendFile(path.join(__dirname, 'public', 'rastrear.html')));
 
+
+// Rotas corrigidas — auditoria
+app.get('/motorista-app', (req, res) => res.sendFile(path.join(__dirname, 'public', 'motorista-app.html')));
+app.get('/agenda-financeiro', (req, res) => res.sendFile(path.join(__dirname, 'public', 'agenda-financeiro.html')));
+app.get('/mapa-motoristas', (req, res) => res.sendFile(path.join(__dirname, 'public', 'mapa-motoristas.html')));
+
 // ══ REBECA SOFT (PDV) — Serve o frontend React ══
 const frontendDist = path.join(__dirname, '..', 'frontend', 'dist');
 app.use('/soft', require('express').static(frontendDist));
