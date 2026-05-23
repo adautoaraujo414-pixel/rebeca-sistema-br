@@ -451,16 +451,16 @@ ${textoLembrete}
   }
 
   // ── ÁUDIO — transcrito pelo webhook como texto ────────────────────────────
-  if (msg.startsWith('[AUDIO]')) {
-    await responder(
-      `${_saudacao()}, ${_chefe()}! 🎤
+  // Audio com transcricao nativa do WhatsApp — processa como texto normal
+  if (msg.startsWith('[AUDIO_TEXTO]')) {
+    const textoTranscrito = msg.replace('[AUDIO_TEXTO]', '').trim();
+    console.log('[ModoDono] 🎤 Audio transcrito:', textoTranscrito);
+    return await processarComandoDono(numero, textoTranscrito, adminId, instanciaResposta);
+  }
 
-` +
-      `Recebi seu áudio! Por enquanto ainda não consigo ouvir, mas tô aprendendo! 😅
-
-` +
-      `Me manda em texto que resolvo na hora! 💙`
-    );
+  // Audio sem transcricao
+  if (msg.startsWith('[AUDIO_SEM_TEXTO]') || msg.startsWith('[AUDIO]')) {
+    await responder(`🎤 Recebi seu áudio, ${_chefe()}! Mas não consegui transcrever. Me manda em texto que resolvo na hora! 💙`);
     return true;
   }
 
