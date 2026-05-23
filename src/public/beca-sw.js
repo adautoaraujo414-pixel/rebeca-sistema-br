@@ -3,7 +3,7 @@
 // Se offline, usa cache como fallback
 // Atualiza automaticamente em background sem precisar baixar de novo
 
-var CACHE = 'beca-v13';
+var CACHE = 'beca-v14';
 var ASSETS = [
   '/beca-estuda',
   '/beca-estuda.html',
