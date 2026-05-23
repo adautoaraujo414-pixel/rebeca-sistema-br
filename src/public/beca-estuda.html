@@ -2430,8 +2430,8 @@ verCaderno = function(id) {
     var divExport = document.createElement('div');
     divExport.style.cssText = 'display:flex;gap:10px;margin-bottom:10px';
     divExport.innerHTML =
-      '<button onclick="exportarCadernoPDF(''+id+'')" style="flex:1;padding:11px;background:#6366f122;border:1.5px solid #6366f144;border-radius:12px;color:var(--accent2);font-family:Inter,sans-serif;font-weight:700;cursor:pointer;font-size:.82rem">📄 Exportar PDF</button>' +
-      '<button onclick="compartilharCaderno(''+id+'')" style="flex:1;padding:11px;background:#22c55e22;border:1.5px solid #22c55e44;border-radius:12px;color:#22c55e;font-family:Inter,sans-serif;font-weight:700;cursor:pointer;font-size:.82rem">📤 Compartilhar</button>';
+      '<button onclick="exportarCadernoPDF(\'' + id + '\')" style="flex:1;padding:11px;background:#6366f122;border:1.5px solid #6366f144;border-radius:12px;color:var(--accent2);font-family:Inter,sans-serif;font-weight:700;cursor:pointer;font-size:.82rem">📄 Exportar PDF</button>' +
+      '<button onclick="compartilharCaderno(\'' + id + '\')" style="flex:1;padding:11px;background:#22c55e22;border:1.5px solid #22c55e44;border-radius:12px;color:#22c55e;font-family:Inter,sans-serif;font-weight:700;cursor:pointer;font-size:.82rem">📤 Compartilhar</button>';
     box.insertBefore(divExport, btnFechar);
   }, 50);
 };
