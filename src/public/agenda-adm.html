@@ -310,6 +310,23 @@ input,select,textarea{font-family:'Inter',sans-serif}
 .acao-icon{width:44px;height:44px;background:var(--cor3);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;font-size:1.2em;transition:.2s}
 .acao-btn:hover .acao-icon{background:var(--cor);filter:brightness(10)}
 
+/* ─── FAB no bottom-nav ─── */
+.bn-fab-center{position:relative;top:-18px;flex-direction:column;align-items:center}
+.bn-fab-circle{width:52px;height:52px;background:var(--cor);border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(0,0,0,.18);color:#fff;margin-bottom:2px}
+.bn-fab-center span{font-size:.65em;color:var(--cor);font-weight:700}
+.bn-fab-center:hover .bn-fab-circle{background:var(--cor2);transform:scale(1.08)}
+
+/* ─── Menu Mobile Gaveta ─── */
+.menu-mobile-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200}
+.menu-mobile-drawer{position:fixed;bottom:0;left:0;right:0;background:#fff;border-radius:20px 20px 0 0;z-index:201;padding:0 0 24px;transform:translateY(100%);transition:transform .3s ease;max-height:80vh;overflow-y:auto}
+.menu-mobile-drawer.aberto{transform:translateY(0)}
+.menu-mobile-header{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;font-weight:700;font-size:1em;border-bottom:1px solid var(--borda)}
+.menu-mobile-header button{background:none;border:none;font-size:1.3em;cursor:pointer;color:var(--texto3)}
+.menu-mobile-item{display:block;width:100%;text-align:left;padding:14px 20px;background:none;border:none;font-size:.95em;color:var(--texto);cursor:pointer;border-bottom:1px solid #f3f4f6}
+.menu-mobile-item:hover{background:#f9fafb}
+
+/* ─── FAB antigo (ocultar) ─── */
+.fab{display:none!important}
 /* ─── FAB ─── */
 .fab{position:fixed;bottom:28px;right:28px;width:56px;height:56px;background:var(--cor);border:none;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(249,115,22,.4);cursor:pointer;z-index:200;transition:.2s;color:#fff;font-size:1.4em}
 .fab:hover{background:var(--cor2);transform:scale(1.08)}
@@ -1271,11 +1288,7 @@ document.querySelectorAll('.nav-item').forEach(item => {
   </div>
 </nav>
 
-<!-- ─── FAB + NOVO AGENDAMENTO ─── -->
-<button class="fab" id="btn-fab" onclick="abrirModalAgendamento()" title="Novo agendamento" style="display:none">
-  <div class="fab-label">Novo agendamento</div>
-  +
-</button>
+<!-- FAB movido para bottom-nav -->
 
 <!-- ─── MODAIS ─── -->
 <div class="modal-bg" id="modal-ag">
@@ -3521,7 +3534,16 @@ carregarFinanceiro = async function() {
         })
         .catch(e => console.warn('[SW] Falha:', e));
     }
-  </script>
+  
+function abrirMenuMobile() {
+  document.getElementById('menu-mobile-bg').style.display = 'block';
+  document.getElementById('menu-mobile-drawer').classList.add('aberto');
+}
+function fecharMenuMobile() {
+  document.getElementById('menu-mobile-bg').style.display = 'none';
+  document.getElementById('menu-mobile-drawer').classList.remove('aberto');
+}
+</script>
 
 </body>
 </html>
