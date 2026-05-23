@@ -185,7 +185,7 @@ input,select,textarea{font-family:'Inter',sans-serif}
   .header-ajuda span{display:none}
 
   /* ── Bottom nav ── */
-  .bottom-nav{display:block}
+  .bottom-nav{display:flex!important}
   .mob-menu-fab{display:none!important}
   .fab{display:none!important}
 
@@ -392,15 +392,15 @@ input,select,textarea{font-family:'Inter',sans-serif}
 .acao-btn:hover .acao-icon{background:var(--cor);filter:brightness(10)}
 
 /* ─── Ocultar botao IA flutuante (rai-fab) ─── */
-#rai-fab { display: none !important; }
+#rai-fab { display: none !important; } #rai-widget { display: none !important; } [class*="rai-"] { display: none !important; }
 
 /* ─── Correcoes layout mobile ─── */
 
 /* ─── FAB no bottom-nav ─── */
-.bn-fab-center{position:relative;top:-18px;flex-direction:column;align-items:center}
-.bn-fab-circle{width:52px;height:52px;background:var(--cor);border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(0,0,0,.18);color:#fff;margin-bottom:2px}
-.bn-fab-center span{font-size:.65em;color:var(--cor);font-weight:700}
-.bn-fab-center:hover .bn-fab-circle{background:var(--cor2);transform:scale(1.08)}
+
+
+
+
 
 /* ─── Menu Mobile Gaveta ─── */
 .menu-mobile-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200}
@@ -502,9 +502,9 @@ input,select,textarea{font-family:'Inter',sans-serif}
 .drawer.open{display:flex!important;transform:translateX(0)}
 
 /* ─── BOTTOM NAV MOBILE ─── */
-.bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--borda);padding:8px 0 env(safe-area-inset-bottom);z-index:500;box-shadow:0 -2px 8px rgba(0,0,0,.06)}
-.bottom-nav-items{display:flex}
-.bottom-nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:4px;border:none;background:none;color:var(--texto3);font-size:.65em;font-weight:500;transition:.15s}
+.bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--borda);padding:8px 0 env(safe-area-inset-bottom,16px);z-index:500;box-shadow:0 -2px 8px rgba(0,0,0,.06)}
+.bottom-nav-items{display:flex;width:100%;justify-content:space-around}
+.bottom-nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;padding:6px 4px;border:none;background:none;color:var(--texto3);font-size:.7em;font-weight:500;transition:color .2s;min-width:0}
 .bottom-nav-item.ativo{color:var(--cor)}
 .bottom-nav-item svg{width:22px;height:22px}
 
@@ -612,6 +612,8 @@ input,select,textarea{font-family:'Inter',sans-serif}
   .drawer-bg{display:none!important}
   #drawer-bg{display:none!important}
 }
+
+@media(min-width:769px){.bottom-nav{display:none!important}}
 </style>
 <link rel="manifest" href="/agenda-adm-manifest.json">
 <script src="/js/agenda-notif-helper.js">
