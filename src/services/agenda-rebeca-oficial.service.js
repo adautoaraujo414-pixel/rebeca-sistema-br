@@ -215,24 +215,96 @@ async function async _tratarMidia(tipo, telBruto, msg, data, adminId) {
           messages: [{
             role: 'user',
             content: [
-              { type: 'text', text: `Você é um especialista em transcrição de áudio brasileiro.
-Transcreva o áudio enviado seguindo estas regras:
+              { type: 'text', text: `Você é o melhor especialista em transcrição de áudio do Brasil, treinado para entender qualquer sotaque, gíria e situação do dia a dia brasileiro.
 
-1. PORTUGUÊS BRASILEIRO — gírias, expressões regionais, linguagem informal são bem-vindos
-2. ÁUDIO COM RUÍDO — ignore barulhos de fundo, vento, eco, chiado e foque na voz
-3. ÁUDIO BAIXO — mesmo que o volume esteja baixo, tente captar as palavras
-4. FALA RÁPIDA — transcreva mesmo que a pessoa fale muito rápido
-5. PALAVRAS INCOMPLETAS — complete palavras cortadas pelo contexto
-6. GÍRIAS COMUNS — "manda ver", "pode falar", "bora", "tá bom", "véi", "mano" etc
-7. COMANDOS DE NEGÓCIO — preste atenção em nomes, valores em reais, horários, datas
-8. SE NÃO ENTENDER — escreva [inaudível] apenas para trechos impossíveis de entender
+═══ REGRAS DE TRANSCRIÇÃO ═══
 
-Exemplos de como transcrever:
-- Áudio: "Rebêca... fecha... minha agend... amanhã" → "Rebeca fecha minha agenda amanhã"
-- Áudio: "ô Rebeca, registra duzentos reais no pix" → "Rebeca registra 200 reais no pix"
-- Áudio: "Rebeca, quem é o próximo da fila?" → "Rebeca quem é o próximo cliente"
+🎙️ QUALIDADE DO ÁUDIO:
+- Áudio com chiado, eco, vento, barulho de rua, salão, buzina → ignore tudo e foque na voz
+- Áudio muito baixo ou distante → amplifique mentalmente e transcreva o que dá pra captar
+- Microfone tampado ou abafado → interprete pelos sons captados
+- Áudio cortado no início ou fim → complete pelo contexto da frase
+- Múltiplas vozes ao fundo → foque apenas na voz principal (quem está falando pro celular)
 
-Retorne APENAS o texto transcrito, sem explicações, sem aspas, sem comentários.` },
+🗣️ SOTAQUES E REGIÕES DO BRASIL:
+- Nordeste: "oxe", "eita", "visse", "arretado", "massa", "num tô entendendo"
+- Minas Gerais: "uai", "trem", "sô", "ocê", "misericórdia"
+- São Paulo: "mano", "véi", "cara", "brother", "firmeza"
+- Rio de Janeiro: "cara", "tipo assim", "saca", "véi", "maluco"
+- Sul: "bah", "tchê", "tri", "guri", "piá"
+- Interior geral: "uai", "fia", "fio", "homi", "muié"
+
+💬 GÍRIAS E EXPRESSÕES INFORMAIS:
+- "manda ver" = pode fazer
+- "bora" = vamos
+- "tá bom" / "tá" = ok / está
+- "né" = não é
+- "ó" = olha
+- "aí" = então / portanto
+- "daí" = depois / então
+- "num" = não
+- "pra" = para
+- "pro" = para o
+- "tô" = estou
+- "tá" = está
+- "vai lá" = pode fazer
+- "deixa quieto" = cancela / ignora
+- "para tudo" = cancela tudo
+- "quanto que deu" = qual o total
+- "faz o seguinte" = execute o seguinte comando
+
+💰 VALORES E NÚMEROS (MUITO IMPORTANTE):
+- "duzentos" → 200
+- "trezentos e cinquenta" → 350
+- "um conto" → 1000
+- "dois conto" → 2000
+- "uma nota" → 100
+- "cinquenta pila" → 50
+- "vinte e cinco reais" → 25
+- "três pau" → 300
+- "cinco pila" → 5
+- Sempre converta valores por extenso para números
+
+📅 DATAS E HORÁRIOS:
+- "amanhã cedo" → amanhã de manhã
+- "de tarde" → à tarde
+- "à tardezinha" → fim da tarde
+- "hoje à noite" → hoje à noite
+- "semana que vem" → semana que vem
+- "essa semana" → essa semana
+- "no fim de semana" → no fim de semana
+- "umas dez" → às 10h
+- "meio dia" → 12h
+- "de manhã cedo" → pela manhã
+
+✂️ PALAVRAS INCOMPLETAS — complete pelo contexto:
+- "agend..." → agenda
+- "clien..." → cliente
+- "regis..." → registra
+- "fatur..." → faturamento
+- "amanhã..." → amanhã
+- "horár..." → horário
+- "cancel..." → cancelar
+
+🏢 CONTEXTO DE NEGÓCIO (sistema de agenda/salão/barbearia):
+Preste atenção especial em:
+- Nomes de clientes (nomes próprios brasileiros)
+- Serviços: corte, escova, hidratação, barba, manicure, pedicure, etc
+- Formas de pagamento: pix, dinheiro, cartão, débito, crédito, transferência
+- Ações: agendar, cancelar, reagendar, registrar, fechar, abrir, bloquear, liberar
+- Períodos: manhã, tarde, noite, hoje, amanhã, essa semana
+
+═══ EXEMPLOS REAIS ═══
+- "Ô Rebeca... registra aí... duzentos real no pix da Maria" → "Rebeca registra 200 reais no pix da Maria"
+- "Rebeca fecha minha agend amanhã tô cansada" → "Rebeca fecha minha agenda amanhã"
+- "Rebeca, uai, quem é o próximo?" → "Rebeca quem é o próximo cliente"
+- "Mano, Rebeca encaixa o João lá pras duas da tarde" → "Rebeca encaixa João às 14h"
+- "Rebeca quanto que eu fiz hoje?" → "Rebeca quanto faturei hoje"
+- "Rebeca para tudo, cancela o dia" → "Rebeca fecha minha agenda hoje"
+- "Bora Rebeca, me fala a agenda da semana" → "Rebeca mostra agenda da semana"
+- "Rebeca, registra um gasto de cinquenta pila em produto" → "Rebeca registra gasto de 50 reais em produto"
+
+Retorne APENAS o texto transcrito e normalizado, sem explicações, sem aspas, sem comentários.` },
               { type: 'document', source: { type: 'base64', media_type: 'audio/ogg', data: base64 } }
             ]
           }]
