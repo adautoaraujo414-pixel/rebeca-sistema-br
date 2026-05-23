@@ -720,8 +720,8 @@ async function carregarPendentes() {
                 + '<td><a href="https://wa.me/55' + p.telefone.replace(/\D/g,'') + '" target="_blank" style="color:#25d366;">' + p.telefone + '</a></td>'
                 + '<td>' + data + ' ' + hora + '</td>'
                 + '<td>'
-                + '<button class="btn btn-success btn-sm" onclick="aprovarPendente('' + p._id + '', this)" style="margin-right:6px;">✅ Aprovar</button>'
-                + '<button class="btn btn-danger btn-sm" onclick="rejeitarPendente('' + p._id + '', this)">❌ Rejeitar</button>'
+                + '<button class="btn btn-success btn-sm" onclick="aprovarPendente('"+p._id+"', this)" style="margin-right:6px;">✅ Aprovar</button>'
+                + '<button class="btn btn-danger btn-sm" onclick="rejeitarPendente('"+p._id+"', this)">❌ Rejeitar</button>'
                 + '</td>'
                 + '</tr>';
         }).join('');
@@ -993,7 +993,7 @@ function fazerLogout() { location.reload(); }
                 '<tr><td colspan="10" style="text-align:center;color:#888;padding:30px;">Carregando…</td></tr>';
             try {
                 const res = await fetch('/api/tenant/lista', {
-                    headers: { 'x-master-key': localStorage.getItem('master_token') || localStorage.getItem('rebeca_master_token') || '' || '' }
+                    headers: { 'x-master-key': localStorage.getItem('master_token') || localStorage.getItem('rebeca_master_token') || '' }
                 });
                 const data = await res.json();
                 if (!data.sucesso) throw new Error(data.erro || 'Erro ao carregar');
@@ -1097,7 +1097,7 @@ function fazerLogout() { location.reload(); }
             try {
                 var res = await fetch('/api/tenant/master/plano', {
                     method: 'PUT',
-                    headers: { 'Content-Type': 'application/json', 'x-master-key': localStorage.getItem('master_token') || localStorage.getItem('rebeca_master_token') || '' || '' },
+                    headers: { 'Content-Type': 'application/json', 'x-master-key': localStorage.getItem('master_token') || localStorage.getItem('rebeca_master_token') || '' },
                     body: JSON.stringify({ adminId: adminId, plano: plano, emTrial: trial, modulos: modulos })
                 });
                 var data = await res.json();
@@ -1130,7 +1130,7 @@ function fazerLogout() { location.reload(); }
             try {
                 var res = await fetch('/api/tenant/master/branding', {
                     method: 'PUT',
-                    headers: { 'Content-Type': 'application/json', 'x-master-key': localStorage.getItem('master_token') || localStorage.getItem('rebeca_master_token') || '' || '' },
+                    headers: { 'Content-Type': 'application/json', 'x-master-key': localStorage.getItem('master_token') || localStorage.getItem('rebeca_master_token') || '' },
                     body: JSON.stringify(body)
                 });
                 var data = await res.json();
@@ -1145,7 +1145,7 @@ function fazerLogout() { location.reload(); }
             try {
                 var res = await fetch('/api/tenant/master/status', {
                     method: 'PUT',
-                    headers: { 'Content-Type': 'application/json', 'x-master-key': localStorage.getItem('master_token') || localStorage.getItem('rebeca_master_token') || '' || '' },
+                    headers: { 'Content-Type': 'application/json', 'x-master-key': localStorage.getItem('master_token') || localStorage.getItem('rebeca_master_token') || '' },
                     body: JSON.stringify({ adminId: adminId, ativo: !ativoAtual })
                 });
                 var data = await res.json();
