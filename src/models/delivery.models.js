@@ -358,7 +358,7 @@ const CardapioSemanal = mongoose.models.CardapioSemanal || mongoose.model('Carda
 module.exports.CardapioSemanal = CardapioSemanal;
 
 const CardapioDiaSchema = new mongoose.Schema({
-    adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin', required: true, index: true },
+    adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin', required: true },
     data: { type: String, required: true }, // formato YYYY-MM-DD
     descricao: { type: String, default: '' }, // texto livre do cardápio do dia
     horarioEnvio: { type: String, default: '08:00' }, // hora que Rebeca manda para assinantes
