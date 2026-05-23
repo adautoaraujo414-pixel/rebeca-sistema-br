@@ -259,13 +259,48 @@ function guardAntiCross(sistemaPermitido) {
 // ══════════════════════════════════════════════════════════════
 // EXPORTAÇÕES
 // ══════════════════════════════════════════════════════════════
+
+// ══════════════════════════════════════════════════════════════
+// 📊  DASHBOARD TENANT AUTH — semi-público
+// Valida apenas adminId (query, header ou body).
+// NÃO exige JWT. Usado por rotas de dashboard realtime.
+// Bloqueia apenas requisições sem nenhum adminId.
+// ══════════════════════════════════════════════════════════════
+function dashboardTenantAuth(req, res, next) {
+  const adminId =
+    req.query.adminId ||
+    req.headers['x-admin-id'] ||
+    req.body?.adminId ||
+    null;
+
+  if (!adminId) {
+    return res.status(401).json({
+      erro: 'adminId obrigatório para acessar o dashboard',
+      acesso: false,
+    });
+  }
+
+  // Validação básica de formato ObjectId (24 hex chars)
+  if (!/^[a-f\d]{24}$/i.test(adminId)) {
+    return res.status(400).json({
+      erro: 'adminId inválido',
+      acesso: false,
+    });
+  }
+
+  req.adminId = adminId;
+  next();
+}
+
 module.exports = {
-  corrida:    guardCorrida,
-  delivery:   guardDelivery,
-  agenda:     guardAgenda,
-  soft:       guardSoft,
-  estuda:     guardEstuda,
-  master:     guardMaster,
-  auditoria:  guardAuditoria,
-  antiCross:  guardAntiCross,
+  corrida:             guardCorrida,
+  delivery:            guardDelivery,
+  agenda:              guardAgenda,
+  soft:                guardSoft,
+  estuda:              guardEstuda,
+  master:              guardMaster,
+  auditoria:           guardAuditoria,
+  antiCross:           guardAntiCross,
+  dashboardTenantAuth: dashboardTenantAuth,
 };
+
