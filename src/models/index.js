@@ -8,7 +8,7 @@ const MotoristaSchema = new mongoose.Schema({
     prefereMotristaMulher: { type: Boolean, default: false },
     status: { type: String, default: 'disponivel' }, latitude: Number, longitude: Number,
     avaliacao: { type: Number, default: 5 }, corridasRealizadas: { type: Number, default: 0 },
-    ativo: { type: Boolean, default: true }, bloqueado: { type: Boolean, default: false }, token: String, senha: String, pushSubscription: String, cidadeAtuacao: String, cnhValidade: Date, observacao: String, plano: { type: String, enum: ['semanal', 'mensal'], default: 'mensal' }, valorMensalidade: { type: Number, default: 100 }, adminId: { type: mongoose.Schema.Types.ObjectId, required: true, index: true }, genero: { type: String, enum: ['masculino','feminino','outro'], default: null },
+    ativo: { type: Boolean, default: true }, bloqueado: { type: Boolean, default: false }, token: String, senha: String, pushSubscription: String, cidadeAtuacao: String, cnhValidade: Date, observacao: String, plano: { type: String, enum: ['semanal', 'mensal'], default: 'mensal' }, valorMensalidade: { type: Number, default: 100 }, adminId: { type: mongoose.Schema.Types.ObjectId, required: true }, genero: { type: String, enum: ['masculino','feminino','outro'], default: null },
     caixaDia: [{ tipo: String, valor: Number, descricao: String, data: Date }]
 }, { timestamps: true });
 
@@ -19,7 +19,7 @@ const ClienteSchema = new mongoose.Schema({
     bloqueado: { type: Boolean, default: false }, motivoBloqueio: String,
     motoristaFavorito: { type: mongoose.Schema.Types.ObjectId, ref: 'Motorista' },
     ultimoMotorista: { type: mongoose.Schema.Types.ObjectId, ref: 'Motorista' },
-    adminId: { type: mongoose.Schema.Types.ObjectId, index: true },
+    adminId: { type: mongoose.Schema.Types.ObjectId },
     // Histórico de destinos recentes (últimos 5)
     ultimosDestinos: [{
         endereco: String,
@@ -139,7 +139,7 @@ const ContatoEmergenciaSchema = new mongoose.Schema({
     descricao: String,
     disponivel24h: { type: Boolean, default: false },
     ativo: { type: Boolean, default: true },
-    adminId: { type: mongoose.Schema.Types.ObjectId, index: true }
+    adminId: { type: mongoose.Schema.Types.ObjectId }
 }, { timestamps: true });
 
 const ContatoEmergencia = mongoose.model('ContatoEmergencia', ContatoEmergenciaSchema);
@@ -476,7 +476,7 @@ module.exports.FilaEspera = FilaEspera;
 
 // ==================== PONTOS DE EMBARQUE ====================
 const PontoEmbarqueSchema = new mongoose.Schema({
-    adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin', required: true, index: true },
+    adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin', required: true },
     nome: { type: String, required: true },
     endereco: { type: String, required: true },
     lat: Number,
@@ -494,7 +494,7 @@ const PontoEmbarqueSchema = new mongoose.Schema({
 });
 
 const FilaPontoSchema = new mongoose.Schema({
-    adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin', required: true, index: true },
+    adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin', required: true },
     pontoId: { type: mongoose.Schema.Types.ObjectId, ref: 'PontoEmbarque', required: true },
     motoristaId: { type: mongoose.Schema.Types.ObjectId, ref: 'Motorista', required: true },
     motoristaNome: String,
@@ -521,7 +521,7 @@ module.exports.MsgDedup = MsgDedup;
 
 // ===== ZONA DE PREÇO (raio no mapa com preço fixo) =====
 const ZonaPrecoSchema = new mongoose.Schema({
-    adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin', required: true, index: true },
+    adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin', required: true },
     nome: { type: String, required: true },
     ativo: { type: Boolean, default: true },
     // Centro do raio
@@ -547,7 +547,7 @@ module.exports.ZonaPreco = ZonaPreco;
 
 // ===== PONTO DE REFERÊNCIA (cadastrado pelo admin, usado pela Rebeca) =====
 const PontoReferenciaSchema = new mongoose.Schema({
-    adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin', required: true, index: true },
+    adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin', required: true },
     nome: { type: String, required: true },
     apelidos: [{ type: String }], // nomes alternativos ex: ["UPA", "posto de saude"]
     tipo: { type: String, default: 'outro' }, // hospital, shopping, escola, etc
