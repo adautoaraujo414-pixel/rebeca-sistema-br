@@ -1249,21 +1249,6 @@ initFlashcards = function() {
   renderFCComHeader();
 };
 
-function renderFCComHeader() {
-  var el = document.getElementById('fc-area');
-  if(!el) return;
-  var materias = [];
-  DB.flashcards.forEach(function(f){ var m = f.materia||'Geral'; if(materias.indexOf(m)===-1) materias.push(m); });
-  var filtros = '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">';
-  filtros += '<button onclick="FC_FILTRO=\'\';FC.at=0;renderFC()" style="padding:6px 14px;border-radius:20px;border:1.5px solid var(--accent);background:var(--accent);color:#fff;font-family:Inter,sans-serif;font-size:.78rem;cursor:pointer">Todos ('+DB.flashcards.length+')</button>';
-  materias.forEach(function(m){ var n = DB.flashcards.filter(function(f){ return (f.materia||'Geral')===m; }).length;
-    filtros += '<button onclick="FC_FILTRO=\''+m+'\';FC.at=0;renderFC()" style="padding:6px 14px;border-radius:20px;border:1.5px solid var(--bg3);background:var(--bg2);color:var(--txt2);font-family:Inter,sans-serif;font-size:.78rem;cursor:pointer">'+m+' ('+n+')</button>';
-  });
-  filtros += '<button onclick="abrirNovoFlashcard()" style="padding:6px 14px;border-radius:20px;border:1.5px solid var(--accent2);background:transparent;color:var(--accent2);font-family:Inter,sans-serif;font-size:.78rem;cursor:pointer">+ Novo</button></div>';
-  filtros += '<div id="fc-cards"></div>';
-  el.innerHTML = filtros;
-  renderFCComHeader();
-};
 
 function renderFCComHeader() {
   var el = document.getElementById('fc-area');
