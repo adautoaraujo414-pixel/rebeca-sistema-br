@@ -186,7 +186,7 @@ async function _apresentarSeNecessario(admin, telBruto) {
 }
 
 // ─── Mídias ───────────────────────────────────────────────────────
-async function async _tratarMidia(tipo, telBruto, msg, data, adminId) {
+async function _tratarMidia(tipo, telBruto, msg, data, adminId) {
   if (tipo === 'audio') {
     try {
       await _responderOficial(telBruto, '🎤 Recebi seu áudio! Deixa eu ouvir... 🔊');
