@@ -362,6 +362,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt1);-webk
 </div>
 
 <script>
+var ANTHROPIC_KEY = localStorage.getItem('beca_apikey') || '';
 var TELA='s-login',USER=null;
 function ir(t){document.getElementById(TELA).classList.remove('ativo');document.getElementById(t).classList.add('ativo');TELA=t;window.scrollTo(0,0);}
 function irNav(t,btn){document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('ativo')});if(btn)btn.classList.add('ativo');ir(t);}
@@ -507,7 +508,7 @@ async function gravProcessar(){
   var mat=document.getElementById('grav-materia').value||'auto';
   var trans='Aula de '+(mat==='auto'?'Calculo':mat)+' — Derivadas\n\nHoje vamos estudar derivadas. A derivada representa a taxa de variacao. ISSO CAI NA PROVA! A regra da cadeia: d/dx[f(g(x))]=f\'(g(x))*g\'(x). Atencao: nunca esqueca da regra do produto. Importantissimo: a integral e a operacao inversa da derivada.';
   try{
-    var res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:'Analise a transcricao e responda APENAS em JSON valido sem markdown: {"materia":"nome","resumo":"resumo simples em 3 paragrafos","pontos_prova":["p1","p2","p3"],"nivel":"iniciante|basico|intermediario|avancado"}\n\nTranscricao: '+trans}]})});
+    var res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':ANTHROPIC_KEY,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:'Analise a transcricao e responda APENAS em JSON valido sem markdown: {"materia":"nome","resumo":"resumo simples em 3 paragrafos","pontos_prova":["p1","p2","p3"],"nivel":"iniciante|basico|intermediario|avancado"}\n\nTranscricao: '+trans}]})});
     var data=await res.json();
     var txt=data.content&&data.content[0]&&data.content[0].text||'{}';
     var json=JSON.parse(txt.replace(/```json|```/g,'').trim());
@@ -861,7 +862,7 @@ async function processarOCR(base64) {
     var imgData = base64.split(',')[1];
     var res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: {'Content-Type': 'application/json'},
+      headers: {'Content-Type': 'application/json', 'x-api-key': ANTHROPIC_KEY, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true'},
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 1000,
@@ -924,7 +925,7 @@ async function sincronizarOffline() {
     try {
       var g = pendentes[i];
       var res = await fetch('https://api.anthropic.com/v1/messages', {
-        method:'POST', headers:{'Content-Type':'application/json'},
+        method:'POST', headers:{'Content-Type':'application/json','x-api-key':ANTHROPIC_KEY,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
         body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:500,
           messages:[{role:'user',content:'Melhore este resumo em 2 paragrafos simples: '+g.resumo}]})
       });
@@ -1103,7 +1104,7 @@ gravProcessar = async function() {
   try {
     var res = await fetch('https://api.anthropic.com/v1/messages', {
       method:'POST',
-      headers:{'Content-Type':'application/json'},
+      headers:{'Content-Type':'application/json','x-api-key':ANTHROPIC_KEY,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
       body:JSON.stringify({
         model:'claude-sonnet-4-20250514',
         max_tokens:1000,
@@ -1148,7 +1149,7 @@ async function gerarExerciciosIA(transcricao, materia) {
     var prompt = 'Voce e um professor especialista em ' + materia + '. Analise esta transcricao de aula e crie 5 questoes de multipla escolha desafiadoras baseadas EXATAMENTE no que o professor ensinou.\n\nTRANSCRICAO:\n' + transcricao.substring(0, 3000) + '\n\nRegras:\n- Questoes devem testar compreensao profunda, nao apenas memorizar\n- Use os termos e exemplos que o professor usou\n- Inclua 1 questao de aplicacao pratica\n- Gabarito variado (A, B, C ou D)\n- Campo "e" explica por que a resposta esta correta\n\nRetorne APENAS JSON valido, sem markdown:\n[{"p":"pergunta completa","a":["opcao A","opcao B","opcao C","opcao D"],"r":0,"e":"explicacao curta da resposta correta"}]';
     var res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: {'Content-Type': 'application/json'},
+      headers: {'Content-Type': 'application/json', 'x-api-key': ANTHROPIC_KEY, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true'},
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 2000,
@@ -1172,7 +1173,7 @@ async function gerarFlashcardsIA(transcricao, materia) {
     var prompt = 'Com base nesta transcricao de aula de ' + materia + ', crie 8 flashcards para revisao eficiente. Foque nos conceitos-chave, definicoes, formulas e exemplos que o professor destacou.\n\nTRANSCRICAO:\n' + transcricao.substring(0, 2500) + '\n\nRetorne APENAS JSON valido, sem markdown:\n[{"frente":"conceito ou pergunta curta","verso":"resposta clara e objetiva","materia":"' + materia + '"}]';
     var res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: {'Content-Type': 'application/json'},
+      headers: {'Content-Type': 'application/json', 'x-api-key': ANTHROPIC_KEY, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true'},
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 2000,
