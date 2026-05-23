@@ -21,6 +21,7 @@ const cron     = require('node-cron');
 // 3. CONFIG / DATABASE
 // ─────────────────────────────────────────────
 require('./config/database');
+const guards = require('./middlewares/guards');
 
 // ─────────────────────────────────────────────
 // 4. APP + MIDDLEWARES
@@ -222,7 +223,7 @@ app.get('/contato-rebeca.vcf', (req, res) => {
 // ─────────────────────────────────────────────
 app.use('/api/auth',         authRoutes);
 app.use('/api/usuarios',     usuariosRoutes);
-app.use('/api/admin-master', adminMasterRoutes);
+app.use('/api/admin-master', adminMasterRoutes);          // auth interna — senha env
 app.use('/api/admin',        adminRoutes);
 app.use('/api/tenant',       tenantRoutes);
 app.use('/api/config',       configRoutes);
@@ -233,52 +234,52 @@ app.use('/api/mensalidades', mensalidadeRoutes);
 // ─────────────────────────────────────────────
 // 10. API ROUTES — Rebeca Corrida
 // ─────────────────────────────────────────────
-app.use('/api/motoristas',       _authAdmin, motoristaRoutes);
-app.use('/api/motorista-app',    motoristaAppRoutes);
-app.use('/api/corridas',         _authAdmin, corridaRoutes);
-app.use('/api/clientes',         _authAdmin, clienteRoutes);
-app.use('/api/comunicacao',      comunicacaoRoutes);
-app.use('/api/gps',              gpsRoutes);
+app.use('/api/motoristas',       guards.corrida, motoristaRoutes);
+app.use('/api/motorista-app',    motoristaAppRoutes);          // público — motorista se autentica internamente
+app.use('/api/corridas',         guards.corrida, corridaRoutes);
+app.use('/api/clientes',         guards.corrida, clienteRoutes);
+app.use('/api/comunicacao',      comunicacaoRoutes);           // webhook público
+app.use('/api/gps',              gpsRoutes);                   // GPS público (motorista posta posição)
 app.use('/api/gps-integrado',    gpsIntegradoRoutes);
-app.use('/api/localidades',      localidadeRoutes);
-app.use('/api/pontos-referencia', pontosReferenciaRoutes);
-app.use('/api/pontos',           require('./routes/pontos.routes'));
-app.use('/api/preco-dinamico',   precoDinamicoRoutes);
-app.use('/api/precos',           precoAdminRoutes);
-app.use('/api/zona-preco',       require('./routes/zona-preco.routes'));
-app.use('/api/precos-intermunicipais', require('./routes/preco-intermunicipal.routes'));
-app.use('/api/despacho',         despachoRoutes);
-app.use('/api/antifraude',       antifraudeRoutes);
-app.use('/api/estatisticas',     estatisticasRoutes);
-app.use('/api/reclamacoes',      reclamacoesRoutes);
-app.use('/api/maps',             mapsRoutes);
-app.use('/api/cerebro',          cerebroRoutes);
-app.use('/api/evolution',        evolutionMultiRoutes);
-app.use('/api/emergencia',       require('./routes/emergencia.routes'));
+app.use('/api/localidades',      localidadeRoutes);            // leitura pública de cidades
+app.use('/api/pontos-referencia', guards.corrida, pontosReferenciaRoutes);
+app.use('/api/pontos',           guards.corrida, require('./routes/pontos.routes'));
+app.use('/api/preco-dinamico',   guards.corrida, precoDinamicoRoutes);
+app.use('/api/precos',           guards.corrida, precoAdminRoutes);
+app.use('/api/zona-preco',       guards.corrida, require('./routes/zona-preco.routes'));
+app.use('/api/precos-intermunicipais', guards.corrida, require('./routes/preco-intermunicipal.routes'));
+app.use('/api/despacho',         guards.corrida, despachoRoutes);
+app.use('/api/antifraude',       guards.corrida, antifraudeRoutes);
+app.use('/api/estatisticas',     guards.corrida, estatisticasRoutes);
+app.use('/api/reclamacoes',      guards.corrida, reclamacoesRoutes);
+app.use('/api/maps',             mapsRoutes);                  // Google Maps público
+app.use('/api/cerebro',          guards.corrida, cerebroRoutes);
+app.use('/api/evolution',        evolutionMultiRoutes);        // webhook Evolution público
+app.use('/api/emergencia',       guards.corrida, require('./routes/emergencia.routes'));
 
 // ─────────────────────────────────────────────
 // 11. API ROUTES — Rebeca Delivery
 // ─────────────────────────────────────────────
-app.use('/api/delivery',         deliveryRoutes);
-app.use('/api/delivery-auth',    deliveryAuthRoutes);
-app.use('/api/delivery-master',  deliveryMasterRoutes);
-app.use('/api/delivery',         require('./routes/delivery-precadastro.routes'));
-app.use('/api/delivery',         require('./routes/delivery-assinantes.routes'));
-app.use('/api/caixa',            caixaRoutes);
-app.use('/api/comanda',          comandaRoutes);
+app.use('/api/delivery',         deliveryRoutes);              // auth interna por rota
+app.use('/api/delivery-auth',    deliveryAuthRoutes);          // login/cadastro — público
+app.use('/api/delivery-master',  guards.master, deliveryMasterRoutes);
+app.use('/api/delivery',         require('./routes/delivery-precadastro.routes')); // pré-cadastro público
+app.use('/api/delivery',         require('./routes/delivery-assinantes.routes'));  // assinantes público
+app.use('/api/caixa',            guards.delivery, caixaRoutes);
+app.use('/api/comanda',          guards.delivery, comandaRoutes);
 
 // ─────────────────────────────────────────────
 // 12. API ROUTES — Rebeca Agenda
 // ─────────────────────────────────────────────
-app.use('/api/agenda',              agendaRoutes);
-app.use('/api/agenda',              agendaFinanceiroRoutes);
-app.use('/api/agenda-upload',       require('./routes/agenda-upload.routes'));
-app.use('/api/agenda-push',         require('./routes/agenda-push.routes').router);
-app.use('/api/agenda-ia-servico',   require('./routes/agenda-ia-servico.routes'));
-app.use('/api/agenda/whatsapp',     require('./routes/agenda-whatsapp.routes'));
-app.use('/api/agenda/lembretes',    require('./routes/agenda-lembretes.routes'));
-app.use('/api/agenda/crm',          require('./routes/agenda-crm.routes'));
-app.use('/api/agenda/conexao',      require('./routes/agenda-conexao.routes'));
+app.use('/api/agenda',              agendaRoutes);             // auth interna por rota
+app.use('/api/agenda',              agendaFinanceiroRoutes);   // auth interna por rota
+app.use('/api/agenda-upload',       guards.agenda, require('./routes/agenda-upload.routes'));
+app.use('/api/agenda-push',         require('./routes/agenda-push.routes').router); // push público
+app.use('/api/agenda-ia-servico',   guards.agenda, require('./routes/agenda-ia-servico.routes'));
+app.use('/api/agenda/whatsapp',     require('./routes/agenda-whatsapp.routes'));    // webhook público
+app.use('/api/agenda/lembretes',    require('./routes/agenda-lembretes.routes'));   // cron interno
+app.use('/api/agenda/crm',          guards.agenda, require('./routes/agenda-crm.routes'));
+app.use('/api/agenda/conexao',      guards.agenda, require('./routes/agenda-conexao.routes'));
 
 // ─────────────────────────────────────────────
 // 13. API ROUTES — Rebeca Soft (PDV)
