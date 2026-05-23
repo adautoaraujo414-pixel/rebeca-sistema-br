@@ -705,9 +705,43 @@ function logout(){USER=null;limparSessao();localStorage.removeItem('beca_ob');ir
 // SERVICE WORKER
 if('serviceWorker' in navigator) {
   window.addEventListener('load', function() {
-    navigator.serviceWorker.register('/beca-sw.js')
-      .then(function(r){ console.log('SW ok', r.scope); })
-      .catch(function(e){ console.log('SW erro', e); });
+    navigator.serviceWorker.register('/beca-sw.js').then(function(reg) {
+      console.log('[SW] registrado', reg.scope);
+
+      // Verificar atualizacao a cada 60 segundos
+      setInterval(function() { reg.update(); }, 60000);
+
+      // Novo SW esperando — perguntar se quer atualizar
+      reg.addEventListener('updatefound', function() {
+        var novo = reg.installing;
+        if (!novo) return;
+        novo.addEventListener('statechange', function() {
+          if (novo.state === 'installed' && navigator.serviceWorker.controller) {
+            // Ha uma nova versao disponivel
+            toast('✨ Nova versao disponivel! Atualizando...', 'ok');
+            setTimeout(function() {
+              novo.postMessage({ type: 'SKIP_WAITING' });
+            }, 1500);
+          }
+        });
+      });
+    }).catch(function(e) { console.log('[SW] erro', e); });
+
+    // Quando SW assumir controle, recarregar pagina automaticamente
+    var refreshing = false;
+    navigator.serviceWorker.addEventListener('controllerchange', function() {
+      if (!refreshing) {
+        refreshing = true;
+        window.location.reload();
+      }
+    });
+
+    // Ouvir mensagens do SW (ex: SW_UPDATED)
+    navigator.serviceWorker.addEventListener('message', function(e) {
+      if (e.data && e.data.type === 'SW_UPDATED') {
+        console.log('[SW] atualizado para', e.data.version);
+      }
+    });
   });
 }
 
