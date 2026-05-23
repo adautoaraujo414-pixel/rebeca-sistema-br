@@ -1614,20 +1614,30 @@ function exportarCadernoPDF(id) {
   var htmlPDF = '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">' +
     '<title>' + c.nome + ' — Beca Estuda</title>' +
     '<style>' +
-      'body{font-family:Georgia,serif;max-width:700px;margin:40px auto;padding:0 24px;color:#1e293b}' +
-      'h1{font-size:24px;font-weight:700;margin-bottom:4px}' +
-      '.meta{color:#64748b;font-size:13px;margin-bottom:32px;padding-bottom:16px;border-bottom:2px solid #6366f1}' +
-      'h2{font-size:16px}p{font-size:13px;line-height:1.8;color:#475569}' +
-      '.rodape{margin-top:40px;padding-top:16px;border-top:1px solid #e2e8f0;font-size:11px;color:#94a3b8;text-align:center}' +
-      '@media print{body{margin:20px}}' +
+    'body{font-family:Georgia,serif;max-width:700px;margin:40px auto;padding:0 24px;color:#1e293b}' +
+    'h1{font-size:24px;font-weight:700;margin-bottom:4px}' +
+    '.meta{color:#64748b;font-size:13px;margin-bottom:32px;padding-bottom:16px;border-bottom:2px solid #6366f1}' +
+    'h2{font-size:16px}p{font-size:13px;line-height:1.8;color:#475569}' +
+    '.rodape{margin-top:40px;padding-top:16px;border-top:1px solid #e2e8f0;font-size:11px;color:#94a3b8;text-align:center}' +
+    '@media print{body{margin:20px}}' +
     '</style>' +
-    '<scr' + 'ipt></' + 'script>' +
     '</head><body>' +
     '<h1>' + c.emoji + ' ' + c.nome + '</h1>' +
-    '<div class="meta">Professor: ' + c.professor + ' &nbsp;·&nbsp; ' + c.aulas.length + ' aulas &nbsp;·&nbsp; Exportado em ' + dataExport + ' &nbsp;·&nbsp; Beca Estuda</div>' +
+    '<div class="meta">Professor: ' + c.professor + ' &nbsp;&middot;&nbsp; ' + c.aulas.length + ' aulas &nbsp;&middot;&nbsp; Exportado em ' + dataExport + ' &nbsp;&middot;&nbsp; Beca Estuda</div>' +
     conteudo +
     '<div class="rodape">Gerado pelo Beca Estuda — plataforma universitaria com IA</div>' +
     '</body></html>';
+
+  var blob = new Blob([htmlPDF], {type:'text/html;charset=utf-8'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = c.nome.replace(/\s+/g,'_') + '_BecaEstuda.html';
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('Arquivo salvo! Abra e imprima como PDF.', 'ok');
+}
+</script>
 <script>
 // ══ INICIALIZAÇÃO DO APP ══
 (function() {
