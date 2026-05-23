@@ -234,22 +234,22 @@ app.use('/api/mensalidades', mensalidadeRoutes);
 // ─────────────────────────────────────────────
 // 10. API ROUTES — Rebeca Corrida
 // ─────────────────────────────────────────────
-app.use('/api/motoristas',       guards.corrida, motoristaRoutes);
+app.use('/api/motoristas',       motoristaRoutes);                                  // semi-público: auth interna por adminId
 app.use('/api/motorista-app',    motoristaAppRoutes);          // público — motorista se autentica internamente
-app.use('/api/corridas',         guards.corrida, corridaRoutes);
+app.use('/api/corridas',         corridaRoutes);                                    // semi-público: rotas críticas têm auth interna
 app.use('/api/clientes',         guards.corrida, clienteRoutes);
 app.use('/api/comunicacao',      comunicacaoRoutes);           // webhook público
 app.use('/api/gps',              gpsRoutes);                   // GPS público (motorista posta posição)
 app.use('/api/gps-integrado',    gpsIntegradoRoutes);
 app.use('/api/localidades',      localidadeRoutes);            // leitura pública de cidades
-app.use('/api/pontos-referencia', guards.corrida, pontosReferenciaRoutes);
-app.use('/api/pontos',           guards.corrida, require('./routes/pontos.routes'));
+app.use('/api/pontos-referencia', pontosReferenciaRoutes);                          // semi-público: auth interna por adminId
+app.use('/api/pontos',           require('./routes/pontos.routes'));                 // semi-público: auth interna por adminId
 app.use('/api/preco-dinamico',   guards.corrida, precoDinamicoRoutes);
 app.use('/api/precos',           guards.corrida, precoAdminRoutes);
 app.use('/api/zona-preco',       guards.corrida, require('./routes/zona-preco.routes'));
 app.use('/api/precos-intermunicipais', guards.corrida, require('./routes/preco-intermunicipal.routes'));
-app.use('/api/despacho',         guards.corrida, despachoRoutes);
-app.use('/api/antifraude',       guards.corrida, antifraudeRoutes);
+app.use('/api/despacho',         despachoRoutes);                                   // semi-público: leitura realtime
+app.use('/api/antifraude',       antifraudeRoutes);                                 // semi-público: /estatisticas sem JWT
 app.use('/api/estatisticas', estatisticasRoutes); // publico-adminId
 app.use('/api/reclamacoes',      guards.corrida, reclamacoesRoutes);
 app.use('/api/maps',             mapsRoutes);                  // Google Maps público
