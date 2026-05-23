@@ -369,10 +369,6 @@ function toast(msg,tipo){var el=document.getElementById('toast');el.textContent=
 function abrirModal(html){document.getElementById('modal-box').innerHTML=html;document.getElementById('modal').style.display='flex';}
 function fecharModal(e){if(!e||e.target===document.getElementById('modal'))document.getElementById('modal').style.display='none';}
 function salvarDB(){localStorage.setItem('beca_db',JSON.stringify(DB));}
-function carregarSessao(){try{var u=localStorage.getItem('beca_user');if(u){USER=JSON.parse(u);return true;}}catch(e){}return false;}
-document.addEventListener('DOMContentLoaded',function(){
-  if(carregarSessao()){if(localStorage.getItem('beca_ob')){entrarApp();}else{iniciarOnboarding();}}
-});
 function fmt(s){return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');}
 
 var DB=JSON.parse(localStorage.getItem('beca_db')||'{}');
