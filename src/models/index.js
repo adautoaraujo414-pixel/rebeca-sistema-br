@@ -89,9 +89,9 @@ async function corrigirIndexes() {
 }
 corrigirIndexes();
 
-Motorista.schema.add({ adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin', index: true } });
-Cliente.schema.add({ adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin', index: true } });
-Corrida.schema.add({ adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin', index: true } });
+Motorista.schema.add({ adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin' } });
+Cliente.schema.add({ adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin' } });
+Corrida.schema.add({ adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin' } });
 
 console.log('✅ Schemas atualizados com adminId para multi-tenant');
 
