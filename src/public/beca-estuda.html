@@ -209,13 +209,13 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt1);-webk
     <p style="color:var(--txt2);font-size:.82rem" id="home-curso">O que vamos estudar hoje?</p>
   </div>
   <div style="padding:0 24px">
-    <button class="btn-p" onclick="ir('s-gravacao')" style="margin-bottom:16px;padding:18px;font-size:1.05rem;border-radius:18px">🎙️ Comecar a Gravar Aula</button>
+    <button class="btn-p" onclick="ir(\"s-gravacao\")" style="margin-bottom:16px;padding:18px;font-size:1.05rem;border-radius:18px">🎙️ Comecar a Gravar Aula</button>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
-      <button onclick="ir('s-gravacao')" class="card" style="cursor:pointer;text-align:left;border:none;padding:16px"><div style="width:40px;height:40px;border-radius:10px;background:#6366f122;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:8px">🎙️</div><div style="font-weight:700;font-size:.88rem;margin-bottom:1px">Gravar Aula</div><div style="color:var(--txt3);font-size:.72rem">Transcrever com IA</div></button>
+      <button onclick="ir(\"s-gravacao\")" class="card" style="cursor:pointer;text-align:left;border:none;padding:16px"><div style="width:40px;height:40px;border-radius:10px;background:#6366f122;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:8px">🎙️</div><div style="font-weight:700;font-size:.88rem;margin-bottom:1px">Gravar Aula</div><div style="color:var(--txt3);font-size:.72rem">Transcrever com IA</div></button>
       <button onclick="ir('s-cadernos')" class="card" style="cursor:pointer;text-align:left;border:none;padding:16px"><div style="width:40px;height:40px;border-radius:10px;background:#0ea5e922;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:8px">📚</div><div style="font-weight:700;font-size:.88rem;margin-bottom:1px">Cadernos</div><div style="color:var(--txt3);font-size:.72rem">Minhas anotacoes</div></button>
-      <button onclick="ir('s-treinar')" class="card" style="cursor:pointer;text-align:left;border:none;padding:16px"><div style="width:40px;height:40px;border-radius:10px;background:#22c55e22;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:8px">🧠</div><div style="font-weight:700;font-size:.88rem;margin-bottom:1px">Treinar</div><div style="color:var(--txt3);font-size:.72rem">Exercicios e flashcards</div></button>
+      <button onclick="ir(\"s-treinar\")" class="card" style="cursor:pointer;text-align:left;border:none;padding:16px"><div style="width:40px;height:40px;border-radius:10px;background:#22c55e22;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:8px">🧠</div><div style="font-weight:700;font-size:.88rem;margin-bottom:1px">Treinar</div><div style="color:var(--txt3);font-size:.72rem">Exercicios e flashcards</div></button>
       <button onclick="ir('s-simulado')" class="card" style="cursor:pointer;text-align:left;border:none;padding:16px"><div style="width:40px;height:40px;border-radius:10px;background:#f59e0b22;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:8px">📝</div><div style="font-weight:700;font-size:.88rem;margin-bottom:1px">Simulado</div><div style="color:var(--txt3);font-size:.72rem">Testar conhecimento</div></button>
-      <button onclick="ir('s-flashcards')" class="card" style="cursor:pointer;text-align:left;border:none;padding:16px"><div style="width:40px;height:40px;border-radius:10px;background:#a855f722;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:8px">🃏</div><div style="font-weight:700;font-size:.88rem;margin-bottom:1px">Flashcards</div><div style="color:var(--txt3);font-size:.72rem">Memorizacao rapida</div></button>
+      <button onclick="ir(\"s-flashcards\")" class="card" style="cursor:pointer;text-align:left;border:none;padding:16px"><div style="width:40px;height:40px;border-radius:10px;background:#a855f722;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:8px">🃏</div><div style="font-weight:700;font-size:.88rem;margin-bottom:1px">Flashcards</div><div style="color:var(--txt3);font-size:.72rem">Memorizacao rapida</div></button>
       <button onclick="ir('s-calendario')" class="card" style="cursor:pointer;text-align:left;border:none;padding:16px"><div style="width:40px;height:40px;border-radius:10px;background:#ec489922;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:8px">📅</div><div style="font-weight:700;font-size:.88rem;margin-bottom:1px">Calendario</div><div style="color:var(--txt3);font-size:.72rem">Provas e tarefas</div></button>
       <button onclick="abrirCamera()" class="card" style="cursor:pointer;text-align:left;border:none;padding:16px"><div style="width:40px;height:40px;border-radius:10px;background:#06b6d422;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:8px">📸</div><div style="font-weight:700;font-size:.88rem;margin-bottom:1px">Foto do Quadro</div><div style="color:var(--txt3);font-size:.72rem">OCR com IA</div></button>
     </div>
@@ -236,7 +236,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt1);-webk
 <!-- LOGIN -->
 <div class="screen" id="s-gravacao" style="padding:0 0 40px">
   <div class="header" style="display:flex;align-items:center;gap:12px">
-    <button class="back-btn" onclick="ir('s-home')">←</button>
+    <button class="back-btn" onclick="ir(\"s-home\")">←</button>
     <div><h1 style="font-size:1.1rem;font-weight:800">Gravar Aula</h1><p style="color:var(--txt2);font-size:.78rem">IA transcreve e resume automaticamente</p></div>
   </div>
   <div style="padding:0 24px" id="grav-area">
@@ -276,7 +276,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt1);-webk
 <!-- TREINAR -->
 <div class="screen" id="s-treinar" style="padding:0 0 40px">
   <div class="header" style="display:flex;align-items:center;gap:12px">
-    <button class="back-btn" onclick="ir('s-home')">←</button>
+    <button class="back-btn" onclick="ir(\"s-home\")">←</button>
     <div><h1 style="font-size:1.1rem;font-weight:800">Treinar</h1><p id="tr-sub" style="color:var(--txt2);font-size:.78rem">Exercicios com IA</p></div>
   </div>
   <div style="padding:0 24px" id="tr-area"></div>
@@ -288,7 +288,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt1);-webk
 <!-- FLASHCARDS -->
 <div class="screen" id="s-flashcards" style="padding:0 0 40px">
   <div class="header" style="display:flex;align-items:center;gap:12px">
-    <button class="back-btn" onclick="ir('s-home')">←</button>
+    <button class="back-btn" onclick="ir(\"s-home\")">←</button>
     <div><h1 style="font-size:1.1rem;font-weight:800">Flashcards</h1><p style="color:var(--txt2);font-size:.78rem">Memorizacao rapida</p></div>
   </div>
   <div style="padding:0 24px" id="fc-area"></div>
@@ -531,7 +531,7 @@ function gravMostrar(mat,resumo,pontos,trans,nivel){
   document.getElementById('grav-area').style.display='none';
   var r=document.getElementById('grav-result');r.style.display='block';
   var pts=pontos.map(function(p){return '<div style="display:flex;gap:8px;margin-bottom:6px"><span style="color:#f59e0b">⚠️</span><span style="color:var(--txt2);font-size:.83rem">'+p+'</span></div>';}).join('');
-  r.innerHTML='<div class="fu"><div style="background:#22c55e22;border:1px solid #22c55e44;border-radius:14px;padding:14px;margin-bottom:14px;display:flex;align-items:center;gap:10px"><span style="font-size:24px">✅</span><div><div style="font-weight:700;font-size:.95rem">Aula processada!</div><div style="color:var(--txt2);font-size:.78rem">'+mat+' · Nivel: '+nivel+'</div></div></div><div class="card" style="margin-bottom:10px"><div style="font-size:.68rem;color:var(--accent2);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">📝 Resumo da IA</div><p style="color:var(--txt2);font-size:.87rem;line-height:1.7">'+resumo+'</p></div>'+(pts?'<div class="card" style="margin-bottom:10px"><div style="font-size:.68rem;color:#f59e0b;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">⚠️ Pode cair na prova</div>'+pts+'</div>':'')+'<div class="card" style="margin-bottom:16px"><div style="font-size:.68rem;color:var(--txt3);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">📋 Transcricao</div><p style="color:var(--txt3);font-size:.8rem;line-height:1.6;white-space:pre-wrap">'+trans+'</p></div><div style="display:flex;gap:10px"><button class="btn-p" onclick="ir(\'s-treinar\')" style="flex:1">🧠 Treinar</button><button class="btn-o" onclick="gravReset()" style="flex:1">+ Nova</button></div></div>';
+  r.innerHTML='<div class="fu"><div style="background:#22c55e22;border:1px solid #22c55e44;border-radius:14px;padding:14px;margin-bottom:14px;display:flex;align-items:center;gap:10px"><span style="font-size:24px">✅</span><div><div style="font-weight:700;font-size:.95rem">Aula processada!</div><div style="color:var(--txt2);font-size:.78rem">'+mat+' · Nivel: '+nivel+'</div></div></div><div class="card" style="margin-bottom:10px"><div style="font-size:.68rem;color:var(--accent2);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">📝 Resumo da IA</div><p style="color:var(--txt2);font-size:.87rem;line-height:1.7">'+resumo+'</p></div>'+(pts?'<div class="card" style="margin-bottom:10px"><div style="font-size:.68rem;color:#f59e0b;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">⚠️ Pode cair na prova</div>'+pts+'</div>':'')+'<div class="card" style="margin-bottom:16px"><div style="font-size:.68rem;color:var(--txt3);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">📋 Transcricao</div><p style="color:var(--txt3);font-size:.8rem;line-height:1.6;white-space:pre-wrap">'+trans+'</p></div><div style="display:flex;gap:10px"><button class="btn-p" onclick="ir(\"s-treinar\")" style="flex:1">🧠 Treinar</button><button class="btn-o" onclick="gravReset()" style="flex:1">+ Nova</button></div></div>';
 }
 function gravReset(){document.getElementById('grav-area').style.display='block';document.getElementById('grav-result').style.display='none';gravRender();}
 gravRender();
@@ -575,7 +575,7 @@ function renderTr(){
   if(TR.fim){
     var pct=Math.round(TR.acertos/DB.exercicios.length*100);
     DB.evolucao.acertos+=TR.acertos;DB.evolucao.erros+=(DB.exercicios.length-TR.acertos);atualizarNivel();salvarDB();
-    el.innerHTML='<div style="text-align:center;padding:40px 0"><div style="font-size:60px;margin-bottom:16px">'+(pct===100?'🏆':pct>=60?'🎯':'📚')+'</div><h2 style="font-size:1.6rem;font-weight:800;margin-bottom:8px">Treino concluido!</h2><p style="color:var(--txt2);margin-bottom:24px">'+TR.acertos+' de '+DB.exercicios.length+' acertos</p><div class="card" style="max-width:320px;margin:0 auto 20px"><div style="display:flex;justify-content:space-between;margin-bottom:8px"><span style="color:var(--txt2);font-size:.85rem">Desempenho</span><span style="font-weight:700;color:'+(pct>=60?'var(--green)':'#f59e0b')+'">'+pct+'%</span></div><div class="nivel-bar"><div class="nivel-fill" style="width:'+pct+'%;background:'+(pct>=60?'var(--green)':'#f59e0b')+'"></div></div></div><button class="btn-p" onclick="initTreinar()" style="max-width:320px;margin-bottom:10px">Treinar novamente</button><button class="btn-o" onclick="ir(\'s-home\')" style="max-width:320px">Voltar</button></div>';
+    el.innerHTML='<div style="text-align:center;padding:40px 0"><div style="font-size:60px;margin-bottom:16px">'+(pct===100?'🏆':pct>=60?'🎯':'📚')+'</div><h2 style="font-size:1.6rem;font-weight:800;margin-bottom:8px">Treino concluido!</h2><p style="color:var(--txt2);margin-bottom:24px">'+TR.acertos+' de '+DB.exercicios.length+' acertos</p><div class="card" style="max-width:320px;margin:0 auto 20px"><div style="display:flex;justify-content:space-between;margin-bottom:8px"><span style="color:var(--txt2);font-size:.85rem">Desempenho</span><span style="font-weight:700;color:'+(pct>=60?'var(--green)':'#f59e0b')+'">'+pct+'%</span></div><div class="nivel-bar"><div class="nivel-fill" style="width:'+pct+'%;background:'+(pct>=60?'var(--green)':'#f59e0b')+'"></div></div></div><button class="btn-p" onclick="initTreinar()" style="max-width:320px;margin-bottom:10px">Treinar novamente</button><button class="btn-o" onclick="ir(\"s-home\")" style="max-width:320px">Voltar</button></div>';
     return;
   }
   var ex=DB.exercicios[TR.at];
@@ -599,11 +599,11 @@ function simResp(i){
 }
 function renderSim(){
   var el=document.getElementById('sim-area');
-  if(SIM.fase==='intro'){el.innerHTML='<div style="min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center"><div style="font-size:64px;margin-bottom:20px">📝</div><h1 style="font-size:1.7rem;font-weight:800;margin-bottom:10px">Simulado</h1><p style="color:var(--txt2);margin-bottom:28px;max-width:300px;line-height:1.7">'+DB.exercicios.length+' questoes com explicacao da IA apos cada resposta.</p><button class="btn-p" onclick="simIniciar()" style="max-width:320px;padding:14px;margin-bottom:10px">🚀 Iniciar</button><button onclick="ir(\'s-home\')" style="background:none;border:none;color:var(--txt3);cursor:pointer;font-family:Inter,sans-serif;font-size:.82rem">Voltar</button></div>';return;}
+  if(SIM.fase==='intro'){el.innerHTML='<div style="min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center"><div style="font-size:64px;margin-bottom:20px">📝</div><h1 style="font-size:1.7rem;font-weight:800;margin-bottom:10px">Simulado</h1><p style="color:var(--txt2);margin-bottom:28px;max-width:300px;line-height:1.7">'+DB.exercicios.length+' questoes com explicacao da IA apos cada resposta.</p><button class="btn-p" onclick="simIniciar()" style="max-width:320px;padding:14px;margin-bottom:10px">🚀 Iniciar</button><button onclick="ir(\"s-home\")" style="background:none;border:none;color:var(--txt3);cursor:pointer;font-family:Inter,sans-serif;font-size:.82rem">Voltar</button></div>';return;}
   if(SIM.fase==='fim'){
     var ac=SIM.resp.filter(Boolean).length,pct=Math.round(ac/DB.exercicios.length*100);
     DB.evolucao.acertos+=ac;salvarDB();
-    el.innerHTML='<div style="min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center"><div style="font-size:64px;margin-bottom:16px">'+(pct>=70?'🏆':pct>=50?'📈':'💪')+'</div><h1 style="font-size:1.8rem;font-weight:800;margin-bottom:8px">'+(pct>=70?'Excelente!':pct>=50?'Bom trabalho!':'Continue!')+'</h1><p style="color:var(--txt2);margin-bottom:20px">'+ac+' de '+DB.exercicios.length+' acertos</p><div style="font-size:3rem;font-weight:800;color:'+(pct>=70?'var(--green)':pct>=50?'#f59e0b':'#ef4444')+';margin-bottom:24px">'+pct+'%</div><div style="display:flex;gap:10px;width:100%;max-width:320px"><button class="btn-o" onclick="SIM.fase=\'intro\';renderSim()" style="flex:1">Refazer</button><button class="btn-p" onclick="ir(\'s-home\')" style="flex:1">Inicio</button></div></div>';return;
+    el.innerHTML='<div style="min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center"><div style="font-size:64px;margin-bottom:16px">'+(pct>=70?'🏆':pct>=50?'📈':'💪')+'</div><h1 style="font-size:1.8rem;font-weight:800;margin-bottom:8px">'+(pct>=70?'Excelente!':pct>=50?'Bom trabalho!':'Continue!')+'</h1><p style="color:var(--txt2);margin-bottom:20px">'+ac+' de '+DB.exercicios.length+' acertos</p><div style="font-size:3rem;font-weight:800;color:'+(pct>=70?'var(--green)':pct>=50?'#f59e0b':'#ef4444')+';margin-bottom:24px">'+pct+'%</div><div style="display:flex;gap:10px;width:100%;max-width:320px"><button class="btn-o" onclick="SIM.fase=\'intro\';renderSim()" style="flex:1">Refazer</button><button class="btn-p" onclick="ir(\"s-home\")" style="flex:1">Inicio</button></div></div>';return;
   }
   var q=DB.exercicios[SIM.at],prog=Math.round((SIM.at/DB.exercicios.length)*100);
   var ms=String(Math.floor(SIM.tempo/60)).padStart(2,'0'),ss=String(SIM.tempo%60).padStart(2,'0');
@@ -621,7 +621,7 @@ function renderFC(){
   var el=document.getElementById('fc-area');
   if(FC.at>=DB.flashcards.length){
     var tot=FC.acertos+FC.erros,pct=tot>0?Math.round(FC.acertos/tot*100):0;
-    el.innerHTML='<div style="text-align:center;padding:40px 0"><div style="font-size:60px;margin-bottom:16px">'+(pct>=70?'🏆':'📚')+'</div><h2 style="font-size:1.6rem;font-weight:800;margin-bottom:8px">Concluido!</h2><p style="color:var(--txt2);margin-bottom:24px">'+FC.acertos+' de '+tot+' acertos ('+pct+'%)</p><button class="btn-p" onclick="initFlashcards()" style="max-width:320px;margin-bottom:10px">Repetir</button><button class="btn-o" onclick="ir(\'s-home\')" style="max-width:320px">Inicio</button></div>';return;
+    el.innerHTML='<div style="text-align:center;padding:40px 0"><div style="font-size:60px;margin-bottom:16px">'+(pct>=70?'🏆':'📚')+'</div><h2 style="font-size:1.6rem;font-weight:800;margin-bottom:8px">Concluido!</h2><p style="color:var(--txt2);margin-bottom:24px">'+FC.acertos+' de '+tot+' acertos ('+pct+'%)</p><button class="btn-p" onclick="initFlashcards()" style="max-width:320px;margin-bottom:10px">Repetir</button><button class="btn-o" onclick="ir(\"s-home\")" style="max-width:320px">Inicio</button></div>';return;
   }
   var fc=DB.flashcards[FC.at],prog=Math.round((FC.at/DB.flashcards.length)*100);
   el.innerHTML='<div style="height:5px;background:var(--bg3);border-radius:3px;margin-bottom:16px;overflow:hidden"><div style="height:100%;width:'+prog+'%;background:var(--accent);border-radius:3px"></div></div><p style="text-align:center;color:var(--txt3);font-size:.8rem;margin-bottom:14px">Card '+(FC.at+1)+' de '+DB.flashcards.length+' · '+fc.materia+'</p><div onclick="fcVirar()" style="background:var(--bg2);border:2px solid '+(FC.virado?'var(--accent)':'var(--bg3)')+';border-radius:20px;padding:40px 24px;text-align:center;min-height:200px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all .3s;margin-bottom:18px"><div style="font-size:.7rem;color:'+(FC.virado?'var(--accent2)':'var(--txt3)')+';font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px">'+(FC.virado?'✅ RESPOSTA':'❓ PERGUNTA — toque para revelar')+'</div><p style="font-size:1.1rem;font-weight:'+(FC.virado?'500':'700')+';line-height:1.6;color:'+(FC.virado?'var(--txt2)':'var(--txt1)')+'">'+( FC.virado?fc.verso:fc.frente)+'</p></div>'+(FC.virado?'<div style="display:flex;gap:10px"><button onclick="fcResp(false)" style="flex:1;padding:14px;background:#ef444422;border:1.5px solid #ef444466;border-radius:12px;color:#ef4444;font-family:Inter,sans-serif;font-weight:700;cursor:pointer;font-size:.88rem">😕 Nao sabia</button><button onclick="fcResp(true)" style="flex:1;padding:14px;background:#22c55e22;border:1.5px solid #22c55e66;border-radius:12px;color:#22c55e;font-family:Inter,sans-serif;font-weight:700;cursor:pointer;font-size:.88rem">✅ Sabia!</button></div>':'<p style="text-align:center;color:var(--txt3);font-size:.8rem">Toque no card para ver a resposta</p>');
@@ -665,7 +665,7 @@ function initPerfil(){
   var tot=DB.evolucao.acertos+DB.evolucao.erros,pct=tot>0?Math.round(DB.evolucao.acertos/tot*100):0;
   var nIdx=NIVEIS.indexOf(DB.evolucao.nivel);if(nIdx<0)nIdx=0;
   var nPct=Math.round((nIdx/4)*100);
-  el.innerHTML='<div class="card" style="margin-bottom:14px;text-align:center"><div style="width:72px;height:72px;background:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 12px">🎓</div><div style="font-weight:800;font-size:1.1rem;margin-bottom:2px">'+(u.nome||'Estudante')+'</div><div style="color:var(--txt3);font-size:.8rem;margin-bottom:8px">'+(u.email||'Sem login')+(u.curso?' · '+u.curso:'')+'</div><div style="display:inline-flex;align-items:center;gap:6px;background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.25);color:var(--accent2);font-size:.75rem;font-weight:700;padding:4px 12px;border-radius:100px">⭐ Nivel: '+DB.evolucao.nivel+'</div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px"><div class="card" style="text-align:center"><div style="font-size:1.6rem;font-weight:800;color:var(--green)">'+DB.evolucao.acertos+'</div><div style="color:var(--txt3);font-size:.75rem">Acertos</div></div><div class="card" style="text-align:center"><div style="font-size:1.6rem;font-weight:800;color:#ef4444">'+DB.evolucao.erros+'</div><div style="color:var(--txt3);font-size:.75rem">Erros</div></div><div class="card" style="text-align:center"><div style="font-size:1.6rem;font-weight:800;color:var(--accent2)">'+DB.evolucao.aulasGravadas+'</div><div style="color:var(--txt3);font-size:.75rem">Aulas gravadas</div></div><div class="card" style="text-align:center"><div style="font-size:1.6rem;font-weight:800;color:var(--yellow)">'+pct+'%</div><div style="color:var(--txt3);font-size:.75rem">Aproveitamento</div></div></div><div class="card" style="margin-bottom:14px"><div style="display:flex;justify-content:space-between;margin-bottom:8px"><span style="font-size:.82rem;font-weight:600">Evolucao de nivel</span><span style="font-size:.82rem;color:var(--accent2)">'+DB.evolucao.nivel+'</span></div><div class="nivel-bar"><div class="nivel-fill" style="width:'+nPct+'%"></div></div></div>'+(u.semLogin?'<button class="btn-p" onclick="ir(\'s-login\')" style="margin-bottom:10px">Criar conta / Entrar</button>':'<button class="btn-o" onclick="logout()">Sair da conta</button>');
+  el.innerHTML='<div class="card" style="margin-bottom:14px;text-align:center"><div style="width:72px;height:72px;background:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 12px">🎓</div><div style="font-weight:800;font-size:1.1rem;margin-bottom:2px">'+(u.nome||'Estudante')+'</div><div style="color:var(--txt3);font-size:.8rem;margin-bottom:8px">'+(u.email||'Sem login')+(u.curso?' · '+u.curso:'')+'</div><div style="display:inline-flex;align-items:center;gap:6px;background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.25);color:var(--accent2);font-size:.75rem;font-weight:700;padding:4px 12px;border-radius:100px">⭐ Nivel: '+DB.evolucao.nivel+'</div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px"><div class="card" style="text-align:center"><div style="font-size:1.6rem;font-weight:800;color:var(--green)">'+DB.evolucao.acertos+'</div><div style="color:var(--txt3);font-size:.75rem">Acertos</div></div><div class="card" style="text-align:center"><div style="font-size:1.6rem;font-weight:800;color:#ef4444">'+DB.evolucao.erros+'</div><div style="color:var(--txt3);font-size:.75rem">Erros</div></div><div class="card" style="text-align:center"><div style="font-size:1.6rem;font-weight:800;color:var(--accent2)">'+DB.evolucao.aulasGravadas+'</div><div style="color:var(--txt3);font-size:.75rem">Aulas gravadas</div></div><div class="card" style="text-align:center"><div style="font-size:1.6rem;font-weight:800;color:var(--yellow)">'+pct+'%</div><div style="color:var(--txt3);font-size:.75rem">Aproveitamento</div></div></div><div class="card" style="margin-bottom:14px"><div style="display:flex;justify-content:space-between;margin-bottom:8px"><span style="font-size:.82rem;font-weight:600">Evolucao de nivel</span><span style="font-size:.82rem;color:var(--accent2)">'+DB.evolucao.nivel+'</span></div><div class="nivel-bar"><div class="nivel-fill" style="width:'+nPct+'%"></div></div></div>'+(u.semLogin?'<button class="btn-p" onclick="ir(\"s-login\")" style="margin-bottom:10px">Criar conta / Entrar</button>':'<button class="btn-o" onclick="logout()">Sair da conta</button>');
 }
 function logout(){USER=null;limparSessao();localStorage.removeItem('beca_ob');ir('s-login');}
 </script>
@@ -1107,9 +1107,7 @@ gravProcessar = async function() {
       body:JSON.stringify({
         model:'claude-sonnet-4-20250514',
         max_tokens:1000,
-        messages:[{role:'user',content:'Analise a transcricao e responda APENAS em JSON valido sem markdown: {"materia":"nome da materia detectada","resumo":"resumo claro em 2-3 paragrafos","pontos_prova":["ponto1","ponto2","ponto3"],"nivel":"iniciante|basico|intermediario|avancado"}
-
-Transcricao: ' + trans}]
+        messages:[{role:'user',content:'Analise a transcricao e responda APENAS em JSON valido sem markdown: {"materia":"nome da materia detectada","resumo":"resumo claro em 2-3 paragrafos","pontos_prova":["ponto1","ponto2","ponto3"],"nivel":"iniciante|basico|intermediario|avancado"} Transcricao: ' + trans}]
       })
     });
     var data = await res.json();
@@ -1151,11 +1149,7 @@ async function gerarExerciciosIA(transcricao, materia) {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
         model:'claude-sonnet-4-20250514', max_tokens:1000,
-        messages:[{role:'user', content:'Com base nesta transcricao de aula, crie 3 questoes de multipla escolha em JSON valido sem markdown:
-[{"p":"pergunta","ops":["A","B","C","D"],"c":0,"r":"explicacao simples"}]
-onde c=indice da resposta correta (0-3).
-Materia: '+materia+'
-Transcricao: '+transcricao.substring(0,2000)}]
+        messages:[{role:'user', content:'Com base nesta transcricao de aula, crie 3 questoes de multipla escolha em JSON valido sem markdown: [{"p":"pergunta","ops":["A","B","C","D"],"c":0,"r":"explicacao simples"}] onde c=indice da resposta correta (0-3). Materia: '+materia+' Transcricao: '+transcricao.substring(0,2000)}]
       })
     });
     var data = await res.json();
@@ -1176,9 +1170,7 @@ async function gerarFlashcardsIA(transcricao, materia) {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
         model:'claude-sonnet-4-20250514', max_tokens:1000,
-        messages:[{role:'user', content:'Com base nesta transcricao, crie 5 flashcards em JSON valido sem markdown:
-[{"frente":"pergunta curta","verso":"resposta clara e direta","materia":"'+materia+'"}]
-Transcricao: '+transcricao.substring(0,2000)}]
+        messages:[{role:'user', content:'Com base nesta transcricao, crie 5 flashcards em JSON valido sem markdown: [{"frente":"pergunta curta","verso":"resposta clara e direta","materia":"'+materia+'"}] Transcricao: '+transcricao.substring(0,2000)}]
       })
     });
     var data = await res.json();
@@ -1207,7 +1199,7 @@ gravMostrar = async function(mat, resumo, pontos, trans, nivel) {
       // Atualizar botoes no resultado
       var btnArea = document.querySelector('#grav-result .fu > div:last-child');
       if(btnArea) {
-        btnArea.innerHTML = '<button class="btn-p" onclick="initTreinar();ir('s-treinar')" style="flex:1">🧠 Treinar ('+nEx+')</button><button class="btn-o" onclick="renderFCComHeader();ir('s-flashcards')" style="flex:1">🃏 Flashcards ('+nFc+')</button>';
+        btnArea.innerHTML = '<button class="btn-p" onclick="initTreinar();ir(\"s-treinar\")" style="flex:1">🧠 Treinar ('+nEx+')</button><button class="btn-o" onclick="renderFCComHeader();ir(\"s-flashcards\")" style="flex:1">🃏 Flashcards ('+nFc+')</button>';
       }
     }
   }
@@ -1242,7 +1234,7 @@ renderFC = function() {
     ? DB.flashcards.filter(function(f){ return f.materia && f.materia.toLowerCase().includes(FC_FILTRO.toLowerCase()); })
     : DB.flashcards;
   if(!lista.length && FC_FILTRO) {
-    getFCContainer().innerHTML = '<div style="text-align:center;padding:40px 0;color:var(--txt3)"><div style="font-size:36px;margin-bottom:10px">🔍</div><div>Nenhum flashcard para "'+FC_FILTRO+'"</div><button class="btn-o" onclick="FC_FILTRO='';FC.at=0;renderFC()" style="margin-top:14px;width:auto;padding:10px 20px">Ver todos</button></div>';
+    getFCContainer().innerHTML = '<div style="text-align:center;padding:40px 0;color:var(--txt3)"><div style="font-size:36px;margin-bottom:10px">🔍</div><div>Nenhum flashcard para "'+FC_FILTRO+'"</div><button class="btn-o" onclick="FC_FILTRO=\"\";' + 'FC.at=0;renderFC()" style="margin-top:14px;width:auto;padding:10px 20px">Ver todos</button></div>';
     return;
   }
   var _bkp = DB.flashcards;
@@ -1268,7 +1260,7 @@ function renderFCComHeader() {
     if(materias.indexOf(m)===-1) materias.push(m);
   });
   var filtros = '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">';
-  filtros += '<button onclick="FC_FILTRO=\'\';FC.at=0;renderFC()" style="padding:6px 14px;border-radius:20px;border:1.5px solid var(--accent);background:var(--accent);color:#fff;font-family:Inter,sans-serif;font-size:.78rem;cursor:pointer">Todos ('+DB.flashcards.length+')</button>';
+  filtros += '<button onclick="FC_FILTRO=\"\";FC.at=0;renderFC()" style="padding:6px 14px;border-radius:20px;border:1.5px solid var(--accent);background:var(--accent);color:#fff;font-family:Inter,sans-serif;font-size:.78rem;cursor:pointer">Todos ('+DB.flashcards.length+')</button>';
   materias.forEach(function(m){
     var n = DB.flashcards.filter(function(f){ return (f.materia||'Geral')===m; }).length;
     filtros += '<button onclick="FC_FILTRO=\''+m+'\';FC.at=0;renderFC()" style="padding:6px 14px;border-radius:20px;border:1.5px solid var(--bg3);background:var(--bg2);color:var(--txt2);font-family:Inter,sans-serif;font-size:.78rem;cursor:pointer">'+m+' ('+n+')</button>';
@@ -1289,7 +1281,7 @@ function verCaderno(id) {
   if(!c) return;
   var aulasHtml = c.aulas.length
     ? c.aulas.map(function(a,i){
-        return '<div class="card" style="margin-bottom:10px;position:relative"><div style="display:flex;justify-content:space-between;align-items:flex-start"><div style="flex:1"><div style="font-weight:700;font-size:.88rem;margin-bottom:4px">'+a.titulo+'</div><div style="color:var(--txt2);font-size:.8rem;line-height:1.5">'+a.resumo+'</div></div><button onclick="excluirAula(''+id+'','+i+')" style="background:none;border:none;color:var(--txt3);cursor:pointer;font-size:16px;padding:0 0 0 10px;flex-shrink:0">🗑</button></div></div>';
+        return '<div class="card" style="margin-bottom:10px;position:relative"><div style="display:flex;justify-content:space-between;align-items:flex-start"><div style="flex:1"><div style="font-weight:700;font-size:.88rem;margin-bottom:4px">'+a.titulo+'</div><div style="color:var(--txt2);font-size:.8rem;line-height:1.5">'+a.resumo+'</div></div><button onclick="excluirAula(\''+id+'\','+i+')" style="background:none;border:none;color:var(--txt3);cursor:pointer;font-size:16px;padding:0 0 0 10px;flex-shrink:0">🗑</button></div></div>';
       }).join('')
     : '<div style="text-align:center;padding:32px 0;color:var(--txt3)"><div style="font-size:36px;margin-bottom:8px">📭</div><div>Nenhuma aula ainda</div></div>';
 
@@ -1300,11 +1292,11 @@ function verCaderno(id) {
         '<div><div style="font-weight:800;font-size:1.1rem">'+c.nome+'</div><div style="color:var(--txt3);font-size:.8rem">'+c.professor+'</div></div>'+
       '</div>'+
       '<div style="display:flex;gap:8px">'+
-        '<button onclick="editarCaderno(''+id+'')" style="background:var(--bg3);border:none;border-radius:8px;padding:7px 12px;color:var(--txt1);cursor:pointer;font-size:13px;font-family:Inter,sans-serif">✏️ Editar</button>'+
-        '<button onclick="excluirCaderno(''+id+'')" style="background:#ef444422;border:1px solid #ef444444;border-radius:8px;padding:7px 12px;color:#ef4444;cursor:pointer;font-size:13px;font-family:Inter,sans-serif">🗑 Excluir</button>'+
+        '<button onclick="editarCaderno(\''+id+'\')" style="background:var(--bg3);border:none;border-radius:8px;padding:7px 12px;color:var(--txt1);cursor:pointer;font-size:13px;font-family:Inter,sans-serif">✏️ Editar</button>'+
+        '<button onclick="excluirCaderno(\''+id+'\')" style="background:#ef444422;border:1px solid #ef444444;border-radius:8px;padding:7px 12px;color:#ef4444;cursor:pointer;font-size:13px;font-family:Inter,sans-serif">🗑 Excluir</button>'+
       '</div>'+
     '</div>'+
-    '<button onclick="abrirNotaManual(''+id+'')" class="btn-o" style="margin-bottom:14px">✍️ Adicionar nota manual</button>'+
+    '<button onclick="abrirNotaManual(\''+id+'\')" class="btn-o" style="margin-bottom:14px">✍️ Adicionar nota manual</button>'+
     aulasHtml+
     '<button class="btn-p" style="margin-top:16px" onclick="fecharModal()">Fechar</button>'
   );
@@ -1327,7 +1319,7 @@ function excluirCaderno(id) {
     '<p style="color:var(--txt2);font-size:.88rem;margin-bottom:24px">Todas as aulas dentro dele serao apagadas. Essa acao nao pode ser desfeita.</p>'+
     '<div style="display:flex;gap:10px">'+
       '<button class="btn-o" onclick="fecharModal()" style="flex:1">Cancelar</button>'+
-      '<button onclick="confirmarExcluirCaderno(''+id+'')" style="flex:1;padding:13px;background:#ef4444;color:#fff;border:none;border-radius:var(--radius);font-weight:700;cursor:pointer;font-family:Inter,sans-serif">Excluir</button>'+
+      '<button onclick="confirmarExcluirCaderno(\''+id+'\')" style="flex:1;padding:13px;background:#ef4444;color:#fff;border:none;border-radius:var(--radius);font-weight:700;cursor:pointer;font-family:Inter,sans-serif">Excluir</button>'+
     '</div></div>'
   );
 }
@@ -1352,10 +1344,10 @@ function editarCaderno(id) {
     '<div style="margin-bottom:20px"><label style="font-size:.75rem;color:var(--txt3);font-weight:600;display:block;margin-bottom:6px">Emoji</label>'+
     '<div style="display:flex;gap:8px;flex-wrap:wrap">'+
       emojis.map(function(e){
-        return '<button onclick="selEmoji(''+e+'')" id="em'+e+'" style="width:40px;height:40px;border-radius:8px;border:2px solid '+(e===c.emoji?'var(--accent)':'var(--bg3)')+';background:'+(e===c.emoji?'rgba(99,102,241,.15)':'var(--bg2)')+';cursor:pointer;font-size:20px">'+e+'</button>';
+        return '<button onclick="selEmoji(\''+e+'\')" id="em'+e+'" style="width:40px;height:40px;border-radius:8px;border:2px solid '+(e===c.emoji?'var(--accent)':'var(--bg3)')+';background:'+(e===c.emoji?'rgba(99,102,241,.15)':'var(--bg2)')+';cursor:pointer;font-size:20px">'+e+'</button>';
       }).join('')+
     '</div></div>'+
-    '<button class="btn-p" onclick="salvarEdicaoCaderno(''+id+'')">Salvar</button>'
+    '<button class="btn-p" onclick="salvarEdicaoCaderno(\''+id+'\')">Salvar</button>'
   );
 }
 
@@ -1380,7 +1372,7 @@ function abrirNotaManual(cadId) {
     '<h2 style="font-weight:800;margin-bottom:16px">✍️ Nova Nota</h2>'+
     '<div style="margin-bottom:12px"><label style="font-size:.75rem;color:var(--txt3);font-weight:600;display:block;margin-bottom:4px">Titulo</label><input class="input" id="nota-titulo" placeholder="Ex: Resumo aula 3"></div>'+
     '<div style="margin-bottom:20px"><label style="font-size:.75rem;color:var(--txt3);font-weight:600;display:block;margin-bottom:4px">Conteudo</label><textarea class="input" id="nota-texto" rows="6" placeholder="Escreva suas anotacoes aqui..." style="resize:none;line-height:1.6"></textarea></div>'+
-    '<button class="btn-p" onclick="salvarNota(''+cadId+'')">Salvar Nota</button>'
+    '<button class="btn-p" onclick="salvarNota(\''+cadId+'\')">Salvar Nota</button>'
   );
 }
 
@@ -1422,8 +1414,8 @@ renderCal = function() {
         '<div style="color:var(--txt3);font-size:.75rem">'+e.materia+' · '+{prova:'📝 Prova',tarefa:'✅ Tarefa',evento:'📌 Evento'}[e.tipo]+'</div>'+
       '</div>'+
       '<div style="display:flex;gap:6px;flex-shrink:0">'+
-        '<button onclick="editarEvento(''+e.id+'')" style="background:var(--bg3);border:none;border-radius:8px;width:32px;height:32px;cursor:pointer;color:var(--txt2);font-size:14px">✏️</button>'+
-        '<button onclick="excluirEvento(''+e.id+'')" style="background:#ef444422;border:1px solid #ef444444;border-radius:8px;width:32px;height:32px;cursor:pointer;color:#ef4444;font-size:14px">🗑</button>'+
+        '<button onclick="editarEvento(\''+e.id+'\')" style="background:var(--bg3);border:none;border-radius:8px;width:32px;height:32px;cursor:pointer;color:var(--txt2);font-size:14px">✏️</button>'+
+        '<button onclick="excluirEvento(\''+e.id+'\')" style="background:#ef444422;border:1px solid #ef444444;border-radius:8px;width:32px;height:32px;cursor:pointer;color:#ef4444;font-size:14px">🗑</button>'+
       '</div>'+
     '</div>';
   }).join('');
@@ -1452,7 +1444,7 @@ function editarEvento(id) {
     '<div style="margin-bottom:20px"><label style="font-size:.75rem;color:var(--txt3);font-weight:600;display:block;margin-bottom:4px">Materia</label><input class="input" id="ee-mat" value="'+e.materia+'"></div>'+
     '<div style="display:flex;gap:10px">'+
       '<button class="btn-o" onclick="fecharModal()" style="flex:1">Cancelar</button>'+
-      '<button class="btn-p" onclick="salvarEdicaoEvento(''+id+'')" style="flex:1">Salvar</button>'+
+      '<button class="btn-p" onclick="salvarEdicaoEvento(\''+id+'\')" style="flex:1">Salvar</button>'+
     '</div>'
   );
 }
@@ -1636,7 +1628,6 @@ function exportarCadernoPDF(id) {
     conteudo +
     '<div class="rodape">Gerado pelo Beca Estuda — plataforma universitaria com IA</div>' +
     '
-</script>
 
 <script>
 // ══ PERFIL COMPLETO COM ESTATISTICAS REAIS ══
@@ -1696,9 +1687,9 @@ initPerfil = function() {
     '<div style="margin-bottom:16px">' +
       '<div style="font-size:.68rem;color:var(--txt3);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">🎨 Aparencia</div>' +
       '<div style="display:flex;background:var(--bg2);border:1.5px solid var(--bg3);border-radius:12px;padding:4px;gap:4px">' +
-        '<button id="btn-tema-escuro" onclick="setTema('escuro')" style="flex:1;padding:10px;border-radius:9px;border:none;font-family:Inter,sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;transition:all .2s;background:'+(temaAtual==='escuro'?'var(--accent)':'transparent')+';color:'+(temaAtual==='escuro'?'#fff':'var(--txt2)')+'">🌙 Escuro</button>' +
-        '<button id="btn-tema-claro" onclick="setTema('claro')" style="flex:1;padding:10px;border-radius:9px;border:none;font-family:Inter,sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;transition:all .2s;background:'+(temaAtual==='claro'?'var(--accent)':'transparent')+';color:'+(temaAtual==='claro'?'#fff':'var(--txt2)')+'">☀️ Claro</button>' +
-        '<button id="btn-tema-auto" onclick="setTema('auto')" style="flex:1;padding:10px;border-radius:9px;border:none;font-family:Inter,sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;transition:all .2s;background:'+(temaAtual==='auto'?'var(--accent)':'transparent')+';color:'+(temaAtual==='auto'?'#fff':'var(--txt2)')+'">⚡ Auto</button>' +
+        '<button id="btn-tema-escuro" onclick="setTema(\'escuro\')" style="flex:1;padding:10px;border-radius:9px;border:none;font-family:Inter,sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;transition:all .2s;background:'+(temaAtual==='escuro'?'var(--accent)':'transparent')+';color:'+(temaAtual==='escuro'?'#fff':'var(--txt2)')+'">🌙 Escuro</button>' +
+        '<button id="btn-tema-claro" onclick="setTema(\'claro\')" style="flex:1;padding:10px;border-radius:9px;border:none;font-family:Inter,sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;transition:all .2s;background:'+(temaAtual==='claro'?'var(--accent)':'transparent')+';color:'+(temaAtual==='claro'?'#fff':'var(--txt2)')+'">☀️ Claro</button>' +
+        '<button id="btn-tema-auto" onclick="setTema(\'auto\')" style="flex:1;padding:10px;border-radius:9px;border:none;font-family:Inter,sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;transition:all .2s;background:'+(temaAtual==='auto'?'var(--accent)':'transparent')+';color:'+(temaAtual==='auto'?'#fff':'var(--txt2)')+'">⚡ Auto</button>' +
       '</div>' +
     '</div>';
 
@@ -1885,7 +1876,7 @@ function executarBusca(q) {
 
   var badges = {aula:'var(--accent)', evento:'#f59e0b', flashcard:'#22c55e'};
   el.innerHTML = results.map(function(r) {
-    return '<div onclick="'+r.acao+'" style="display:flex;align-items:center;gap:12px;padding:12px;border-radius:12px;margin-bottom:6px;background:var(--bg2);border:1px solid var(--bg3);cursor:pointer" onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background='var(--bg2)'">' +
+    return '<div onclick="'+r.acao+'" style="display:flex;align-items:center;gap:12px;padding:12px;border-radius:12px;margin-bottom:6px;background:var(--bg2);border:1px solid var(--bg3);cursor:pointer" onmouseover="this.style.background=\'var(--bg3)\'" onmouseout="this.style.background=\'var(--bg2)\'">' +
       '<div style="width:36px;height:36px;border-radius:10px;background:'+(badges[r.tipo]||'var(--accent)')+'22;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">'+r.emoji+'</div>' +
       '<div style="flex:1;min-width:0"><div style="font-weight:700;font-size:.88rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+r.titulo+'</div>' +
       '<div style="color:var(--txt3);font-size:.72rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+r.sub+'</div></div>' +
@@ -2026,7 +2017,7 @@ initTreinar = function() {
         '<div style="font-size:48px;margin-bottom:14px">🧠</div>' +
         '<div style="font-weight:700;font-size:1rem;margin-bottom:8px">Nenhum exercicio ainda</div>' +
         '<div style="color:var(--txt2);font-size:.85rem;margin-bottom:24px">Grave uma aula para a IA gerar exercicios automaticamente</div>' +
-        '<button class="btn-p" onclick="ir(\'s-gravacao\')">🎙️ Gravar aula</button>' +
+        '<button class="btn-p" onclick="ir(\"s-gravacao\")">🎙️ Gravar aula</button>' +
       '</div>';
     return;
   }
@@ -2207,7 +2198,7 @@ function mostrarResultadoTreino() {
       histHtml +
       '<div style="display:flex;gap:10px;margin-top:20px">' +
         '<button class="btn-o" onclick="initTreinar()" style="flex:1">🔄 Refazer</button>' +
-        '<button class="btn-p" onclick="ir(\'s-home\')" style="flex:1">🏠 Home</button>' +
+        '<button class="btn-p" onclick="ir(\"s-home\")" style="flex:1">🏠 Home</button>' +
       '</div>' +
     '</div>';
 }
@@ -2276,6 +2267,7 @@ initPerfil = function() {
     }, 500);
   });
 })();
+</script>
     '</' + 'script>' +
 
 </body></html>';
@@ -2472,9 +2464,9 @@ initPerfil = function() {
     '<div style="margin-bottom:16px">' +
       '<div style="font-size:.68rem;color:var(--txt3);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">🎨 Aparencia</div>' +
       '<div style="display:flex;background:var(--bg2);border:1.5px solid var(--bg3);border-radius:12px;padding:4px;gap:4px">' +
-        '<button id="btn-tema-escuro" onclick="setTema('escuro')" style="flex:1;padding:10px;border-radius:9px;border:none;font-family:Inter,sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;transition:all .2s;background:'+(temaAtual==='escuro'?'var(--accent)':'transparent')+';color:'+(temaAtual==='escuro'?'#fff':'var(--txt2)')+'">🌙 Escuro</button>' +
-        '<button id="btn-tema-claro" onclick="setTema('claro')" style="flex:1;padding:10px;border-radius:9px;border:none;font-family:Inter,sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;transition:all .2s;background:'+(temaAtual==='claro'?'var(--accent)':'transparent')+';color:'+(temaAtual==='claro'?'#fff':'var(--txt2)')+'">☀️ Claro</button>' +
-        '<button id="btn-tema-auto" onclick="setTema('auto')" style="flex:1;padding:10px;border-radius:9px;border:none;font-family:Inter,sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;transition:all .2s;background:'+(temaAtual==='auto'?'var(--accent)':'transparent')+';color:'+(temaAtual==='auto'?'#fff':'var(--txt2)')+'">⚡ Auto</button>' +
+        '<button id="btn-tema-escuro" onclick="setTema(\'escuro\')" style="flex:1;padding:10px;border-radius:9px;border:none;font-family:Inter,sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;transition:all .2s;background:'+(temaAtual==='escuro'?'var(--accent)':'transparent')+';color:'+(temaAtual==='escuro'?'#fff':'var(--txt2)')+'">🌙 Escuro</button>' +
+        '<button id="btn-tema-claro" onclick="setTema(\'claro\')" style="flex:1;padding:10px;border-radius:9px;border:none;font-family:Inter,sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;transition:all .2s;background:'+(temaAtual==='claro'?'var(--accent)':'transparent')+';color:'+(temaAtual==='claro'?'#fff':'var(--txt2)')+'">☀️ Claro</button>' +
+        '<button id="btn-tema-auto" onclick="setTema(\'auto\')" style="flex:1;padding:10px;border-radius:9px;border:none;font-family:Inter,sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;transition:all .2s;background:'+(temaAtual==='auto'?'var(--accent)':'transparent')+';color:'+(temaAtual==='auto'?'#fff':'var(--txt2)')+'">⚡ Auto</button>' +
       '</div>' +
     '</div>';
 
@@ -2650,7 +2642,7 @@ function executarBusca(q) {
 
   var badges = {aula:'var(--accent)', evento:'#f59e0b', flashcard:'#22c55e'};
   el.innerHTML = results.map(function(r) {
-    return '<div onclick="'+r.acao+'" style="display:flex;align-items:center;gap:12px;padding:12px;border-radius:12px;margin-bottom:6px;background:var(--bg2);border:1px solid var(--bg3);cursor:pointer" onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background='var(--bg2)'">' +
+    return '<div onclick="'+r.acao+'" style="display:flex;align-items:center;gap:12px;padding:12px;border-radius:12px;margin-bottom:6px;background:var(--bg2);border:1px solid var(--bg3);cursor:pointer" onmouseover="this.style.background=\'var(--bg3)\'" onmouseout="this.style.background=\'var(--bg2)\'">' +
       '<div style="width:36px;height:36px;border-radius:10px;background:'+(badges[r.tipo]||'var(--accent)')+'22;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">'+r.emoji+'</div>' +
       '<div style="flex:1;min-width:0"><div style="font-weight:700;font-size:.88rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+r.titulo+'</div>' +
       '<div style="color:var(--txt3);font-size:.72rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+r.sub+'</div></div>' +
@@ -2768,7 +2760,7 @@ initTreinar = function() {
         '<div style="font-size:48px;margin-bottom:14px">🧠</div>' +
         '<div style="font-weight:700;font-size:1rem;margin-bottom:8px">Nenhum exercicio ainda</div>' +
         '<div style="color:var(--txt2);font-size:.85rem;margin-bottom:24px">Grave uma aula para a IA gerar exercicios automaticamente</div>' +
-        '<button class="btn-p" onclick="ir(\'s-gravacao\')">🎙️ Gravar aula</button>' +
+        '<button class="btn-p" onclick="ir(\"s-gravacao\")">🎙️ Gravar aula</button>' +
       '</div>';
     return;
   }
@@ -2949,7 +2941,7 @@ function mostrarResultadoTreino() {
       histHtml +
       '<div style="display:flex;gap:10px;margin-top:20px">' +
         '<button class="btn-o" onclick="initTreinar()" style="flex:1">🔄 Refazer</button>' +
-        '<button class="btn-p" onclick="ir(\'s-home\')" style="flex:1">🏠 Home</button>' +
+        '<button class="btn-p" onclick="ir(\"s-home\")" style="flex:1">🏠 Home</button>' +
       '</div>' +
     '</div>';
 }
