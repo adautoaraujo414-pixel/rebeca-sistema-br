@@ -215,7 +215,24 @@ async function async _tratarMidia(tipo, telBruto, msg, data, adminId) {
           messages: [{
             role: 'user',
             content: [
-              { type: 'text', text: 'Transcreva exatamente o que foi dito neste áudio em português brasileiro. Retorne APENAS o texto transcrito, sem comentários adicionais.' },
+              { type: 'text', text: `Você é um especialista em transcrição de áudio brasileiro.
+Transcreva o áudio enviado seguindo estas regras:
+
+1. PORTUGUÊS BRASILEIRO — gírias, expressões regionais, linguagem informal são bem-vindos
+2. ÁUDIO COM RUÍDO — ignore barulhos de fundo, vento, eco, chiado e foque na voz
+3. ÁUDIO BAIXO — mesmo que o volume esteja baixo, tente captar as palavras
+4. FALA RÁPIDA — transcreva mesmo que a pessoa fale muito rápido
+5. PALAVRAS INCOMPLETAS — complete palavras cortadas pelo contexto
+6. GÍRIAS COMUNS — "manda ver", "pode falar", "bora", "tá bom", "véi", "mano" etc
+7. COMANDOS DE NEGÓCIO — preste atenção em nomes, valores em reais, horários, datas
+8. SE NÃO ENTENDER — escreva [inaudível] apenas para trechos impossíveis de entender
+
+Exemplos de como transcrever:
+- Áudio: "Rebêca... fecha... minha agend... amanhã" → "Rebeca fecha minha agenda amanhã"
+- Áudio: "ô Rebeca, registra duzentos reais no pix" → "Rebeca registra 200 reais no pix"
+- Áudio: "Rebeca, quem é o próximo da fila?" → "Rebeca quem é o próximo cliente"
+
+Retorne APENAS o texto transcrito, sem explicações, sem aspas, sem comentários.` },
               { type: 'document', source: { type: 'base64', media_type: 'audio/ogg', data: base64 } }
             ]
           }]
