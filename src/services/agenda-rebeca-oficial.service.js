@@ -186,9 +186,64 @@ async function _apresentarSeNecessario(admin, telBruto) {
 }
 
 // ─── Mídias ───────────────────────────────────────────────────────
-async function _tratarMidia(tipo, telBruto) {
+async function async _tratarMidia(tipo, telBruto, msg, data, adminId) {
+  if (tipo === 'audio') {
+    try {
+      await _responderOficial(telBruto, '🎤 Recebi seu áudio! Deixa eu ouvir... 🔊');
+
+      // Pegar URL do audio no payload
+      const m = msg?.message || data?.message || {};
+      const audioMsg = m?.audioMessage || {};
+      const mediaUrl = audioMsg?.url || audioMsg?.directPath || null;
+
+      if (mediaUrl) {
+        const axios = require('axios');
+        const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY || '';
+
+        // Baixar audio
+        const audioResp = await axios.get(mediaUrl, {
+          responseType: 'arraybuffer',
+          timeout: 15000,
+          headers: { 'User-Agent': 'Mozilla/5.0' }
+        });
+        const base64 = Buffer.from(audioResp.data).toString('base64');
+
+        // Transcrever via Claude Haiku
+        const transcResp = await axios.post('https://api.anthropic.com/v1/messages', {
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 300,
+          messages: [{
+            role: 'user',
+            content: [
+              { type: 'text', text: 'Transcreva exatamente o que foi dito neste áudio em português brasileiro. Retorne APENAS o texto transcrito, sem comentários adicionais.' },
+              { type: 'document', source: { type: 'base64', media_type: 'audio/ogg', data: base64 } }
+            ]
+          }]
+        }, {
+          headers: {
+            'x-api-key': ANTHROPIC_KEY,
+            'anthropic-version': '2023-06-01',
+            'Content-Type': 'application/json'
+          },
+          timeout: 30000
+        });
+
+        const transcricao = transcResp.data?.content?.[0]?.text?.trim();
+        if (transcricao) {
+          console.log('[Oficial] 🎤 Audio transcrito:', transcricao.substring(0,80));
+          // Processar como texto normal
+          await _delegarAoModoDono(telBruto, transcricao, adminId);
+          return;
+        }
+      }
+    } catch(e) {
+      console.error('[Oficial] Erro ao transcrever audio:', e.message);
+    }
+    await _responderOficial(telBruto, '🎤 Recebi seu áudio, mas não consegui transcrever. Me manda em texto! 💙');
+    return;
+  }
+
   const r = {
-    audio    : 'Recebi seu áudio, mas transcrição ainda não está disponível. Me envie por texto. 😊',
     imagem   : 'Recebi a imagem. Se quiser registrar um gasto, manda valor e categoria por texto. 😊',
     video    : 'Recebi o vídeo. Por enquanto só processo comandos de texto. 😊',
     documento: 'Recebi o documento. Me manda o que precisa em texto. 😊'
@@ -291,7 +346,7 @@ async function processarMensagemOficial(payload) {
     const foiApresentado = await _apresentarSeNecessario(admin, telBruto);
     if (foiApresentado && (!texto || texto.trim().length < 5)) return;
 
-    if (midia) { await _tratarMidia(midia, telBruto); return; }
+    if (midia) { await _tratarMidia(midia, telBruto, msg, data, adminId); return; }
     if (!texto.trim()) return;
 
     const tratado = await _delegarAoModoDono(telBruto, texto, adminId);
