@@ -409,7 +409,7 @@ function fazerLogin(){
   if(!email||!senha){toast('Preencha e-mail e senha','err');return;}
   var u=DB.usuarios[email];
   if(!u||u.senha!==senha){toast('E-mail ou senha incorretos','err');return;}
-  USER=u;salvarSessao(u);entrarApp();
+  USER=u;salvarSessao(u);if(localStorage.getItem('beca_ob')){entrarApp();}else{iniciarOnboarding();}
 }
 function criarConta(){
   var nome=document.getElementById('c-nome').value.trim();
@@ -428,7 +428,16 @@ function entrarSemLogin(){
   USER={nome:'Estudante',email:'',curso:'',semLogin:true};
   if(localStorage.getItem('beca_ob')){entrarApp();}else{iniciarOnboarding();}
 }
-function entrarApp(){initHome();initCadernos();initCalendario();initPerfil();ir('s-home');initTreinar();initSimulado();initFlashcards();}
+function entrarApp(){
+  try{initHome();}catch(e){console.error('initHome',e);}
+  try{initCadernos();}catch(e){console.error('initCadernos',e);}
+  try{initCalendario();}catch(e){console.error('initCalendario',e);}
+  try{initPerfil();}catch(e){console.error('initPerfil',e);}
+  ir('s-home');
+  try{initTreinar();}catch(e){console.error('initTreinar',e);}
+  try{initSimulado();}catch(e){console.error('initSimulado',e);}
+  try{initFlashcards();}catch(e){console.error('initFlashcards',e);}
+}
 
 var OB=[
   {emoji:'🎓',title:'Bem-vindo ao Beca Estuda',sub:'Sua plataforma universitaria com IA. Grave aulas, gere resumos e estude de forma inteligente.',btn:'Comecar'},
