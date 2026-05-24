@@ -982,26 +982,51 @@ ${total>5?'Tá crescendo muito! Continua assim! 🚀':'Todo cliente novo é uma 
     return true;
   }
 
-  // ── NÃO RECONHECIDO — FALLBACK COM CLAUDE ───────────────────────────────────
+  // ── NÃO RECONHECIDO — FALLBACK COM CLAUDE (contexto rico) ──────────────────
   try {
     const Anthropic = require('@anthropic-ai/sdk');
     const _claude = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+    const LembreteAgenda = require('../models/LembreteAgenda');
+    const { ClienteAgenda, RetornoAgenda } = require('../models/AgendaServico');
+
     const hoje = new Date();
-    const ini = new Date(hoje); ini.setHours(0,0,0,0);
-    const fim = new Date(hoje); fim.setHours(23,59,59,999);
-    const agsHoje = await AgendamentoAgenda.find({
-      adminId: adminObjId, dataHora: { $gte: ini, $lte: fim },
-      status: { $in: ['pendente','confirmado'] }
-    }).sort({ dataHora: 1 }).lean();
-    const resumoAgenda = agsHoje.length
-      ? agsHoje.map(a => `${_fmtHora(new Date(a.dataHora))} - ${a.nomeCliente} (${a.nomeServico})`).join(', ')
-      : 'nenhum agendamento hoje';
-    // Buscar contexto financeiro do dia
-    const iniF = new Date(hoje); iniF.setHours(0,0,0,0);
-    const fimF = new Date(hoje); fimF.setHours(23,59,59,999);
-    const lancHoje = await FinanceiroAgenda.find({ adminId: adminObjId, data: { $gte: iniF, $lte: fimF } }).lean();
-    const entradasHoje = lancHoje.filter(l=>l.tipo==='receita').reduce((s,l)=>s+l.valor,0);
-    const saidasHoje   = lancHoje.filter(l=>l.tipo==='despesa').reduce((s,l)=>s+l.valor,0);
+    const ini  = new Date(hoje); ini.setHours(0,0,0,0);
+    const fim  = new Date(hoje); fim.setHours(23,59,59,999);
+    const iniAmanha = new Date(hoje); iniAmanha.setDate(iniAmanha.getDate()+1); iniAmanha.setHours(0,0,0,0);
+    const fimAmanha = new Date(hoje); fimAmanha.setDate(fimAmanha.getDate()+1); fimAmanha.setHours(23,59,59,999);
+    const iniSem = new Date(hoje); iniSem.setDate(iniSem.getDate()-6); iniSem.setHours(0,0,0,0);
+
+    const [agsHoje, agsAmanha, lancHoje, lancSemana, lembretes, totalClientes, retornosPend] = await Promise.all([
+      AgendamentoAgenda.find({ adminId: adminObjId, dataHora: { $gte: ini, $lte: fim }, status: { $in: ['pendente','confirmado'] } }).sort({ dataHora: 1 }).lean(),
+      AgendamentoAgenda.find({ adminId: adminObjId, dataHora: { $gte: iniAmanha, $lte: fimAmanha }, status: { $in: ['pendente','confirmado'] } }).sort({ dataHora: 1 }).lean(),
+      FinanceiroAgenda.find({ adminId: adminObjId, data: { $gte: ini, $lte: fim } }).lean(),
+      FinanceiroAgenda.find({ adminId: adminObjId, data: { $gte: iniSem, $lte: fim }, tipo: 'receita' }).lean(),
+      LembreteAgenda.find({ adminId: String(adminObjId), enviado: false, dataEvento: { $gte: ini } }).sort({ dataEvento: 1 }).limit(5).lean(),
+      ClienteAgenda.countDocuments({ adminId: adminObjId }).catch(()=>0),
+      RetornoAgenda ? RetornoAgenda.countDocuments({ adminId: adminObjId, statusContato: 'pendente' }).catch(()=>0) : Promise.resolve(0)
+    ]);
+
+    const faltaramHoje  = await AgendamentoAgenda.find({ adminId: adminObjId, dataHora: { $gte: ini, $lte: fim }, status: 'faltou' }).lean();
+    const entradasHoje  = lancHoje.filter(l=>l.tipo==='receita').reduce((s,l)=>s+l.valor,0);
+    const saidasHoje    = lancHoje.filter(l=>l.tipo==='despesa').reduce((s,l)=>s+l.valor,0);
+    const receitaSemana = lancSemana.reduce((s,l)=>s+l.valor,0);
+    const admin2        = await AdminAgenda.findById(adminObjId).select('nomeNegocio config').lean();
+    const nomeNegocio   = admin2?.nomeNegocio || 'seu negócio';
+    const hrAbre        = admin2?.config?.horarioAbertura  || '08:00';
+    const hrFecha       = admin2?.config?.horarioFechamento || '18:00';
+
+    const resumoHoje = agsHoje.length
+      ? agsHoje.map(a=>`  ${_fmtHora(new Date(a.dataHora))} - ${a.nomeCliente} (${a.nomeServico||'serviço'})`).join('\n')
+      : '  nenhum agendamento hoje';
+    const resumoAmanha = agsAmanha.length
+      ? agsAmanha.map(a=>`  ${_fmtHora(new Date(a.dataHora))} - ${a.nomeCliente} (${a.nomeServico||'serviço'})`).join('\n')
+      : '  nenhum agendamento amanhã';
+    const resumoLembretes = lembretes.length
+      ? lembretes.map(l=>`  ⏰ ${_fmtHora(new Date(l.dataEvento))} - ${l.texto}`).join('\n')
+      : '  nenhum';
+    const resumoFaltaram = faltaramHoje.length
+      ? faltaramHoje.map(f=>`  ${f.nomeCliente} (${f.nomeServico||'serviço'})`).join('\n')
+      : '  nenhum';
     const totalAgsHoje = agsHoje.length;
 
     const r = await _claude.messages.create({
@@ -1009,34 +1034,51 @@ ${total>5?'Tá crescendo muito! Continua assim! 🚀':'Todo cliente novo é uma 
       max_tokens: 400,
       messages: [{
         role: 'user',
-        content: `Você é a Rebeca, assistente digital inteligente de um salão/barbearia/negócio de beleza ou serviços.
-
+        content: `Você é a Rebeca, assistente digital de ${nomeNegocio}.
 PERSONALIDADE:
 - Fala em português brasileiro informal, caloroso, animado
 - Chama o dono de "chefe", "chefão", "chefa", "patrão" — alterna sempre
 - Usa emojis com moderação (1-2 por mensagem)
 - NUNCA se apresenta (o dono já te conhece)
-- NUNCA diz "Oi! Sou a Rebeca" — isso é proibido
 - Respostas curtas e diretas — máximo 4 linhas
-- Quando não souber algo, orienta como pedir do jeito certo
 
-CONTEXTO DE AGORA (${new Date().toLocaleString('pt-BR')}):
-- Agendamentos hoje: ${totalAgsHoje === 0 ? 'nenhum' : resumoAgenda}
-- Entradas hoje: R$ ${entradasHoje.toFixed(2)}${entradasHoje === 0 ? ' (nenhuma entrada registrada ainda)' : ''}
-- Saídas hoje: R$ ${saidasHoje.toFixed(2)}${saidasHoje === 0 ? ' (nenhuma saída registrada)' : ''}
-- Resultado do dia: R$ ${(entradasHoje - saidasHoje).toFixed(2)}
+CONTEXTO COMPLETO (${new Date().toLocaleString('pt-BR')}):
+NEGÓCIO: ${nomeNegocio} | Horário: ${hrAbre} às ${hrFecha}
+
+HOJE — Agendamentos (${totalAgsHoje}):
+${resumoHoje}
+
+HOJE — Financeiro:
+  Entradas: R$ ${entradasHoje.toFixed(2)}${entradasHoje===0?' (nenhuma registrada ainda)':''}
+  Saídas: R$ ${saidasHoje.toFixed(2)}${saidasHoje===0?' (nenhuma)':''}
+  Resultado: R$ ${(entradasHoje-saidasHoje).toFixed(2)}
+
+SEMANA (últimos 7 dias):
+  Receita acumulada: R$ ${receitaSemana.toFixed(2)}${receitaSemana===0?' (nenhuma ainda)':''}
+
+AMANHÃ — Agendamentos (${agsAmanha.length}):
+${resumoAmanha}
+
+LEMBRETES PENDENTES:
+${resumoLembretes}
+
+CLIENTES QUE FALTARAM HOJE:
+${resumoFaltaram}
+
+RETORNOS PENDENTES: ${retornosPend} cliente(s) aguardando contato
+TOTAL CLIENTES CADASTRADOS: ${totalClientes}
 
 O DONO DISSE: "${msg}"
 
 INSTRUÇÕES:
-- Se perguntou sobre agenda/clientes: use o contexto acima para responder
-- Se quer registrar entrada/saída sem valor claro: peça só o valor de forma natural
-- Se quer agendar cliente sem hora/nome: peça só o que falta
-- Se é uma pergunta geral de negócio: responda com dica prática
-- Se é conversa informal: responda naturalmente como uma funcionária próxima
-- NUNCA invente dados que não estão no contexto — se entradas/saídas são R$ 0,00, diga que não há lançamentos, NUNCA crie valores fictícios
-- Use APENAS os números exatos do contexto acima, sem arredondar, estimar ou criar
-- Responda APENAS o necessário, sem floreios desnecessários`
+- Responda usando APENAS os dados do contexto acima
+- NUNCA invente valores, nomes ou informações — se não está no contexto, diz que não tem como saber
+- Use APENAS os números exatos acima, jamais estime ou crie valores
+- Se é conversa informal (oi, bom dia, tudo bem): responda naturalmente SEM mencionar dados financeiros a menos que o dono pergunte
+- Se perguntou sobre agenda: use os dados de hoje/amanhã
+- Se perguntou sobre financeiro: use entradas/saídas/semana exatos
+- Se quer registrar algo: peça só o que falta
+- Máximo 4 linhas, sem floreios`
       }]
     });
     const respClaude = r.content?.[0]?.text?.trim();
