@@ -224,7 +224,7 @@ function _fmtHora(d) {
 async function processarComandoDono(telefone, mensagem, adminId, instanciaResposta = null) {
   const msg = (mensagem || '').trim();
   const msgL = msg.toLowerCase();
-  const adminObjId = adminId;
+  const adminObjId = require('mongoose').Types.ObjectId.isValid(adminId) ? new (require('mongoose').Types.ObjectId)(adminId) : adminId;
 
   const admin = await AdminAgenda.findById(adminObjId).lean();
   if (!admin) return null;
