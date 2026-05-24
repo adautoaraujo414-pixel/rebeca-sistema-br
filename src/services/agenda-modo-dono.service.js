@@ -44,6 +44,37 @@ function _erro() {
   return opcoes[Math.floor(Math.random() * opcoes.length)];
 }
 
+
+// ── Extrair categoria financeira do texto ────────────────────────────────────
+function _extrairCategoria(txt) {
+  const t = txt.toLowerCase();
+  if (/combustível|combustivel|gasolina|diesel|álcool|alcool|posto/.test(t)) return 'combustível';
+  if (/mercado|supermercado|feira|hortifruti|grocery/.test(t)) return 'mercado';
+  if (/aluguel|aluel/.test(t)) return 'aluguel';
+  if (/luz|energia|energisa|cemig|cpfl|coelba/.test(t)) return 'energia';
+  if (/água|agua|saneamento|sabesp|copasa/.test(t)) return 'água';
+  if (/internet|wifi|net|vivo|claro|tim|oi|fibra/.test(t)) return 'internet';
+  if (/telefone|celular|plano/.test(t)) return 'telefone';
+  if (/salário|salario|funcionário|funcionario|pagamentos+func/.test(t)) return 'salário';
+  if (/imposto|taxa|tributo|contador|contabilidade|das|mei/.test(t)) return 'impostos';
+  if (/fornecedor|produto|estoque|material|insumo/.test(t)) return 'produtos';
+  if (/ifood|delivery|ubers*eat|rappi/.test(t)) return 'ifood';
+  if (/farmácia|farmacia|remédio|remedio|médico|medico|consulta|exame/.test(t)) return 'saúde';
+  if (/limpeza|higiene|sabão|detergente/.test(t)) return 'limpeza';
+  if (/alimentação|alimentacao|refeição|refeicao|restaurante|lanche|comida/.test(t)) return 'alimentação';
+  if (/pix|transferência|transferencia|ted|doc/.test(t)) return 'transferência';
+  if (/dinheiro|espécie|especie|cash/.test(t)) return 'dinheiro';
+  return 'outros';
+}
+
+function _extrairDescricao(txt, tipo) {
+  // Tenta pegar o que vem depois de palavras-chave
+  const m = txt.match(/(?:de|em|no|na|com|para|pro|pra)s+([A-Za-zÀ-ú][A-Za-zÀ-ús]{1,30}?)(?:s*(?:pra|para|R\$|reais|,|\.|$))/i)
+           || txt.match(/(?:registra|anota|marca|coloca)s+(?:uma?|o)?s*(?:entrada|saida|saída|gasto|despesa|receita)?s*(?:de|no|em)?s*R?\$?\s*[\d.,]+\s+([A-Za-zÀ-ú][A-Za-zÀ-ús]{1,30})/i);
+  if (m && m[1]) return m[1].trim();
+  return tipo === 'receita' ? 'Entrada via WhatsApp' : 'Gasto via WhatsApp';
+}
+
 // ── Normalizar telefone (remover +, espaços, traços) ─────────────────────────
 function _normalizarTel(tel) {
   if (!tel) return '';
@@ -279,18 +310,19 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
   if (/\bregistra\b.*\bentrada\b|\bmarca\b.*\bentrada\b|\banota\b.*\bentrada\b|\bcoloca\b.*\bentrada\b|\breceb[ei]\b.*\bR?\$|\bentrada\b.*\bR?\$|\bganhei\b.*\bR?\$|\bcaiu\b.*\bR?\$|\bentr[oô]u\b.*\bR?\$|\breceit[ao]\b.*\bR?\$|\bpix\b.*\bR?\$|\bR?\$.*\bpix\b|\btransfer[eê]ncia\b.*\bR?\$|\bdinheiro\b.*\bentrou\b|\bfiz\b.*\bR?\$|\bvendi\b.*\bR?\$/i.test(msgL)) {
     const valM = msg.match(/R?\$\s*(\d+(?:[.,]\d{1,2})?)/i);
     const val = valM ? parseFloat(valM[1].replace(',','.')) : null;
-    const descM = msg.match(/(?:no|em|de|via)\s+([A-Za-zÀ-ú\s]+?)(?:\s*$|\s*R?\$)/i);
-    const desc = descM ? descM[1].trim() : 'Entrada via WhatsApp';
+    const descEntrada = _extrairDescricao(msg, 'receita');
+    const catEntrada  = _extrairCategoria(msg);
     if (val) {
       await FinanceiroAgenda.create({
         adminId: adminObjId,
         tipo: 'receita',
         valor: val,
-        descricao: desc,
+        descricao: descEntrada,
+        categoria: catEntrada,
         data: new Date(),
         origem: 'whatsapp_dono'
       });
-      await responder(`${_confirmacao()}\n\n💰 Entrada de *R$ ${val.toFixed(2)}* registrada — ${desc}. Dinheiro entrando é sempre bom! 🤑`);
+      await responder(`Feito! Entrada de R$ ${val.toFixed(2)} registrada em "${catEntrada}"${descEntrada !== 'Entrada via WhatsApp' ? ' — '+descEntrada : ''}. 💰`);
       return true;
     }
     await responder(`${_erro()} Me fala assim: *Rebeca, registra uma entrada de R$120 no Pix* 💰`);
@@ -301,18 +333,19 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
   if (/\bregistra\b.*\bgasto\b|\bmarca\b.*\bgasto\b|\banota\b.*\bgasto\b|\bmarca\b.*\bdespesa\b|\bregistra\b.*\bdespesa\b|\bpaguei\b|\bcomprei\b|\bsaída\b|\bsaida\b|\bdespesa\b.*\bR?\$|\bgastei\b|\bpaguei\b|\btive\s*gasto\b|\bsaiu\b.*\bR?\$|\bfoi\b.*\bR?\$|\bdebita\b|\bdescontou\b|\bcompra\b.*\bR?\$|\bfornecedor\b.*\bR?\$|\bproduto\b.*\bR?\$|\baluguel\b|\bluz\b.*\bR?\$|\bagua\b.*\bR?\$/i.test(msgL)) {
     const valM = msg.match(/R?\$\s*(\d+(?:[.,]\d{1,2})?)/i);
     const val = valM ? parseFloat(valM[1].replace(',','.')) : null;
-    const descM = msg.match(/(?:em|de|no|com)\s+([A-Za-zÀ-ú\s]+?)(?:\s*$|\s*R?\$)/i);
-    const desc = descM ? descM[1].trim() : 'Gasto via WhatsApp';
+    const descSaida = _extrairDescricao(msg, 'despesa');
+    const catSaida  = _extrairCategoria(msg);
     if (val) {
       await FinanceiroAgenda.create({
         adminId: adminObjId,
         tipo: 'despesa',
         valor: val,
-        descricao: desc,
+        descricao: descSaida,
+        categoria: catSaida,
         data: new Date(),
         origem: 'whatsapp_dono'
       });
-      await responder(`${_confirmacao()}\n\n💸 Gasto de *R$ ${val.toFixed(2)}* anotado — ${desc}. Registrado direitinho! 📝`);
+      await responder(`Anotado! Saída de R$ ${val.toFixed(2)} em "${catSaida}"${descSaida !== 'Gasto via WhatsApp' ? ' — '+descSaida : ''}. 📝`);
       return true;
     }
     await responder(`${_erro()} Me fala assim: *Rebeca, registra um gasto de R$50 em produtos* 💸`);
@@ -361,22 +394,20 @@ ${totalAgs > 0 ? 'Tá saindo bem! 💪' : 'Ainda sem registros esse mês.'}`);
       adminId: adminObjId,
       data: { $gte: ini, $lte: fim }
     }).lean();
-
     const entradas = lancamentos.filter(l=>l.tipo==='receita').reduce((s,l)=>s+l.valor,0);
     const saidas = lancamentos.filter(l=>l.tipo==='despesa').reduce((s,l)=>s+l.valor,0);
     const agendamentos = await AgendamentoAgenda.countDocuments({
       adminId: adminObjId, dataHora: { $gte: ini, $lte: fim }, status: { $in: ['confirmado','concluido'] }
     });
-
-    await responder(
-      `${_saudacao()}, ${_chefe()}! Olha o resumo aí 👇\n\n` +
-      `📅 *${_fmtData(dia)}*\n\n` +
-      `💰 Entradas: *R$ ${entradas.toFixed(2)}*\n` +
-      `💸 Gastos: *R$ ${saidas.toFixed(2)}*\n` +
-      `📈 Resultado: *R$ ${(entradas-saidas).toFixed(2)}*\n` +
-      `✅ Atendimentos: *${agendamentos}*\n\n` +
-      `${(entradas-saidas) >= 0 ? 'Tá indo bem! Continue assim! 🚀' : 'Fica tranquilo(a), amanhã compensa! 💪'}`
-    );
+    const catE = {}; lancamentos.filter(l=>l.tipo==='receita').forEach(l=>{ const c=l.categoria||'outros'; catE[c]=(catE[c]||0)+l.valor; });
+    const catS = {}; lancamentos.filter(l=>l.tipo==='despesa').forEach(l=>{ const c=l.categoria||'outros'; catS[c]=(catS[c]||0)+l.valor; });
+    const leE = Object.entries(catE).map(([k,v])=>`  ${k}: R$ ${v.toFixed(2)}`).join('\n');
+    const leS = Object.entries(catS).map(([k,v])=>`  ${k}: R$ ${v.toFixed(2)}`).join('\n');
+    let rel = `Resumo de ${_fmtData(dia)}:\n`;
+    rel += `\nEntradas: R$ ${entradas.toFixed(2)}${leE ? '\n'+leE : ''}`;
+    rel += `\nSaídas: R$ ${saidas.toFixed(2)}${leS ? '\n'+leS : ''}`;
+    rel += `\nResultado: R$ ${(entradas-saidas).toFixed(2)} | Atendimentos: ${agendamentos}`;
+    await responder(rel);
     return true;
   }
 
