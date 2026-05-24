@@ -996,6 +996,33 @@ ${total>5?'Tá crescendo muito! Continua assim! 🚀':'Todo cliente novo é uma 
     return true;
   }
 
+  // ── SAUDAÇÃO INFORMAL ────────────────────────────────────────────────────────
+  const _isSaudacao = (t) =>
+    /^(oi+|ol[aá]|hey+|ei|e\s*a[íi]|eai+|opa+|salve+|fala+|beleza|tudo\s*(bem|bom|certo)|como\s*(vai|t[aá])|tchau|at[eé]\s*(logo|mais)|valeu|obrigad|tks|thx|ok|certo|entendi|perfeito|show|[oó]timo|maravilha|legal|massa|bom\s*dia|boa\s*(tarde|noite))/i.test(t.trim())
+    || /^(fala\s*(rebeca|a[ií]|comigo|logo)?|e\s*a[ií])\b/i.test(t.trim())
+    || (t.trim().length <= 15 && /^(ok|certo|show|legal|massa|[oó]timo|perfeito|maravilha|valeu|obrigad|tks|thx)/i.test(t.trim()));
+
+  if (_isSaudacao(msgL)) {
+    const _h = new Date().getHours();
+    const _p = _h < 12 ? 'Bom dia' : _h < 18 ? 'Boa tarde' : 'Boa noite';
+    let _resp;
+    if (/tchau|at[eé]\s*(logo|mais)/i.test(msgL))         _resp = `Até mais! Qualquer coisa é só chamar 💙`;
+    else if (/obrigad|valeu|thx|tks/i.test(msgL))           _resp = `De nada! Tô aqui sempre que precisar 😊`;
+    else if (/ok|certo|entendi|perfeito|show|legal|massa|[oó]timo|maravilha/i.test(msgL)) _resp = `Ótimo! Se precisar de mais alguma coisa é só falar 💙`;
+    else if (/bom\s*dia/i.test(msgL))                       _resp = `Bom dia! 🌅 Tô aqui prontinha. O que precisa hoje?`;
+    else if (/boa\s*tarde/i.test(msgL))                     _resp = `Boa tarde! ☀️ Pode mandar o que precisar!`;
+    else if (/boa\s*noite/i.test(msgL))                     _resp = `Boa noite! 🌙 Ainda aqui! O que precisa?`;
+    else if (/fala|e\s*a[íi]|eai/i.test(msgL))             _resp = `Fala! 👋 Tô aqui, pode mandar!`;
+    else if (/beleza|tudo\s*(bem|bom|certo)|como\s*(vai|t[aá])/i.test(msgL)) _resp = `Tudo certo por aqui! 😊 E aí, o que precisa?`;
+    else {
+      const _opts = [`${_p}! 😊 Tô aqui, pode mandar!`,`Fala! 👋 Tô de olho, pode falar!`,`Oi! Tô aqui prontinha. O que precisa? 💙`,`${_p}, ${_chefe()}! Me fala o que precisa 😊`];
+      _resp = _opts[Math.floor(Math.random() * _opts.length)];
+    }
+    await responder(_resp);
+    return true;
+  }
+
+
   // ── NÃO RECONHECIDO — FALLBACK COM CLAUDE (contexto rico) ──────────────────
   try {
     const Anthropic = require('@anthropic-ai/sdk');
