@@ -143,6 +143,7 @@ input,select,textarea{font-family:'Inter',sans-serif}
     overflow-x:hidden!important;
     -webkit-overflow-scrolling:touch;
   }
+  body{padding-bottom:70px!important}
   input,select,textarea{font-size:16px!important}
 
   /* ── Sidebar — oculta, desliza quando .open ── */
@@ -503,7 +504,7 @@ input,select,textarea{font-family:'Inter',sans-serif}
 .drawer.open{display:flex!important;transform:translateX(0)}
 
 /* ─── BOTTOM NAV MOBILE ─── */
-.bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--borda);padding:8px 0 env(safe-area-inset-bottom,16px);z-index:500;box-shadow:0 -2px 8px rgba(0,0,0,.06)}
+.bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--borda);padding:8px 0 env(safe-area-inset-bottom,16px);z-index:999;box-shadow:0 -2px 8px rgba(0,0,0,.06)}
 .bottom-nav-items{display:flex;width:100%;justify-content:space-around}
 .bottom-nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;padding:6px 4px;border:none;background:none;color:var(--texto3);font-size:.7em;font-weight:500;transition:color .2s;min-width:0}
 .bottom-nav-item.ativo{color:var(--cor)}
@@ -615,6 +616,40 @@ input,select,textarea{font-family:'Inter',sans-serif}
 }
 
 @media(min-width:769px){.bottom-nav{display:none!important}}
+
+  /* ── MATAR TODOS ELEMENTOS rai-* e AI launcher ── */
+  #rai-fab, #rai-widget, #rai-panel, #rai-bubble,
+  [id*="rai-"], [class*="rai-"],
+  .rebeca-ai, .ai-launcher, .assistant-launcher,
+  .rebeca-fab, .floating-btn, .chat-launcher,
+  .support-launcher, [id*="launcher"],
+  [class*="launcher"] {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    opacity: 0 !important;
+  }
+
+@media(max-width:768px){
+  /* Dashboard grid — 1 coluna */
+  .main-grid{
+    grid-template-columns:1fr!important;
+    display:flex!important;
+    flex-direction:column!important;
+  }
+  .main-grid .left,.main-grid .right{
+    width:100%!important;
+    min-width:0!important;
+  }
+  /* Gráfico não vaza */
+  canvas{max-width:100%!important;height:auto!important}
+  /* Cards performance — 1 coluna */
+  #perf-grid{grid-template-columns:1fr!important}
+  /* Link público — empilhar botões */
+  .link-publico-card{flex-wrap:wrap;gap:10px}
+  .link-publico-btns{width:100%;justify-content:stretch}
+  .link-publico-btns .btn-sec,.link-publico-btns .btn-primario{flex:1;text-align:center}
+}
 </style>
 <link rel="manifest" href="/agenda-adm-manifest.json">
 <script src="/js/agenda-notif-helper.js">
@@ -893,15 +928,9 @@ document.querySelectorAll('.nav-item').forEach(item => {
             <div class="link-publico-url" id="link-publico-url">Carregando...</div>
           </div>
           <div class="link-publico-btns">
-            <button class="btn-sm outline" onclick="copiarLink()">
-              <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect x="9" y="9" width="13" height="13" rx="2" stroke-width="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" stroke-width="2"/></svg>
-              Copiar
-            </button>
-            <button class="btn-sm primary" onclick="abrirEspaco()">
-              <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3" stroke-width="2"/></svg>
-              Abrir
-            </button>
-          </div>
+          <button class="btn-sec" onclick="copiarLink()" style="flex:1">📋 Copiar</button>
+          <a id="link-publico-abrir" href="#" target="_blank" class="btn-primario" style="flex:1;text-align:center;text-decoration:none">🔗 Abrir</a>
+        </div>
         </div>
 
         <!-- GRID PRINCIPAL -->
@@ -1596,6 +1625,8 @@ async function iniciarApp(){
     const slug = ADMIN.nomeNegocio ? ADMIN.nomeNegocio.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'') : ADMIN_ID;
     const link = window.location.origin+'/espaco-digital?id='+ADMIN_ID;
     document.getElementById('link-publico-url').textContent = link;
+    const btnAbrir = document.getElementById('link-publico-abrir');
+    if (btnAbrir) btnAbrir.href = link;
     window._linkPublico = link;
     window._adminId = ADMIN_ID;
     window._adminPlano = ADMIN?.plano || '';
@@ -1807,8 +1838,8 @@ async function carregarDesempenho(){
     if(!fin) return;
     if(fin.receitas) document.getElementById('perf-fat').textContent = fmt(fin.receitas.total);
     if(fin.agendamentos) document.getElementById('perf-ag').textContent = fin.agendamentos.total;
-    document.getElementById('perf-fat-sub').textContent = '+18% vs mês anterior';
-    document.getElementById('perf-ag-sub').textContent = '+15% vs mês anterior';
+    document.getElementById('perf-fat-sub').textContent = '';
+    document.getElementById('perf-ag-sub').textContent = '';
     // Gráfico simples CSS
     const meses = ['01','05','10','08','12','15','09','14','11','13','16','18','20','18','22','24','26','28','26','30','28','24','20','22','24','26','28','26','24','22'];
     const bars = document.getElementById('chart-bars');
