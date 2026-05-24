@@ -3,7 +3,7 @@ const router = express.Router();
 const { AdminAgenda, ClienteAgenda, AgendamentoAgenda, RetornoAgenda } = require('../models/AgendaServico');
 
 // ── AUTH (mesmo padrão da Agenda) ──────────────────────────────────────────
-async function authAgenda(req, res, next) {
+sed -n '11,25p' /workspaces/rebeca-sistema-br/src/routes/agenda-financeiro.routes.jsasync function authAgenda(req, res, next) {
   try {
     const token = req.headers.authorization?.replace('Bearer ','') || '';
     const admin = await AdminAgenda.findOne({ token, ativo: true });

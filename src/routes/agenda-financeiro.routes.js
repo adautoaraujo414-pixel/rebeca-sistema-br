@@ -36,6 +36,7 @@ router.get('/financeiro/resumo', authAgenda, async (req, res) => {
     const _sid = String(req.adminId);
     const _oid = mongoose.Types.ObjectId.isValid(_sid) ? new mongoose.Types.ObjectId(_sid) : null;
     const _filtroAdmin = _oid ? { $or: [{ adminId: _oid }, { adminId: _sid }] } : { adminId: req.adminId };
+    console.log('[RESUMO DEBUG] adminId:', req.adminId, 'tipo:', typeof req.adminId, 'filtro:', JSON.stringify(_filtroAdmin));
     const [receitas, despesas, contas, agendamentos] = await Promise.all([
       FinanceiroAgenda.find({ ..._filtroAdmin, tipo: 'receita', data: { $gte: inicio, $lte: fim } }),
       FinanceiroAgenda.find({ ..._filtroAdmin, tipo: 'despesa', data: { $gte: inicio, $lte: fim } }),
