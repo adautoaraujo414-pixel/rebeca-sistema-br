@@ -1496,7 +1496,7 @@ async function rodarLembretesClientes() {
     const agora = new Date();
     const AdminAgenda        = require('../models/AgendaServico').AdminAgenda       || require('../models/AgendaServico');
     const InstanciaWhatsapp  = require('../models/InstanciaWhatsapp');
-    const AgendamentoAgenda  = require('../models/AgendaAgendamento').AgendamentoAgenda || require('../models/AgendaAgendamento');
+    const AgendamentoAgenda  = require('../models/AgendaServico').AgendamentoAgenda;
 
     const admins = await AdminAgenda.find({ ativo: true }).select('_id').lean();
 
