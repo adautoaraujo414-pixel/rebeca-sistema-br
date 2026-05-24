@@ -65,6 +65,14 @@ function isDono(telefoneRemetente, admin) {
 // ── Enviar mensagem pela instância conectada do admin ────────────────────────
 async function _enviarMsg(instancia, numero, texto, instanciaResposta = null) {
   try {
+    // Se veio do Meta WhatsApp API, usar MetaWA para responder
+    if (instancia._enviarVia === 'meta' || instancia.apiUrl === 'meta') {
+      const MetaWA = require('./meta-whatsapp.service');
+      await MetaWA.enviarTexto(numero, texto);
+      console.log('[ModoDono] Mensagem enviada via Meta para', numero);
+      return;
+    }
+    // Evolution API (padrão)
     const apiKey = instancia.apiKey || EVOLUTION_GLOBAL_KEY;
     const baseUrl = instancia.apiUrl || EVOLUTION_BASE_URL;
     await axios.post(
