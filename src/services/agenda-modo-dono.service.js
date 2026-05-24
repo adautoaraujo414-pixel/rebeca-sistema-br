@@ -6,6 +6,7 @@
 
 const axios = require('axios');
 const SM = require('./agenda-session-manager');
+const IntentParser = require('./agenda-intent-parser');
 const { AdminAgenda, AgendamentoAgenda, FinanceiroAgenda, BloqueioAgenda, ClienteAgenda } = require('../models/AgendaServico');
 const { InstanciaWhatsapp } = require('../models');
 
