@@ -1,4 +1,5 @@
 python3 << 'PYEOF'
+import subprocess
 
 path = '/workspaces/rebeca-sistema-br/src/services/agenda-modo-dono.service.js'
 with open(path) as f:
