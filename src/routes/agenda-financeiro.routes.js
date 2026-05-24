@@ -31,11 +31,13 @@ router.get('/financeiro/resumo', authAgenda, async (req, res) => {
     const inicio = new Date(a, m - 1, 1);
     const fim = new Date(a, m, 0, 23, 59, 59);
 
+    // Aceita adminId como ObjectId ou String (compatibilidade)
+    const adminIds = [req.adminId, String(req.adminId)];
     const [receitas, despesas, contas, agendamentos] = await Promise.all([
-      FinanceiroAgenda.find({ adminId: req.adminId, tipo: 'receita', data: { $gte: inicio, $lte: fim } }),
-      FinanceiroAgenda.find({ adminId: req.adminId, tipo: 'despesa', data: { $gte: inicio, $lte: fim } }),
-      ContaPagarAgenda.find({ adminId: req.adminId, vencimento: { $gte: inicio, $lte: fim } }),
-      AgendamentoAgenda.find({ adminId: req.adminId, dataHora: { $gte: inicio, $lte: fim }, status: { $ne: 'cancelado' } })
+      FinanceiroAgenda.find({ adminId: { $in: adminIds }, tipo: 'receita', data: { $gte: inicio, $lte: fim } }),
+      FinanceiroAgenda.find({ adminId: { $in: adminIds }, tipo: 'despesa', data: { $gte: inicio, $lte: fim } }),
+      ContaPagarAgenda.find({ adminId: { $in: adminIds }, vencimento: { $gte: inicio, $lte: fim } }),
+      AgendamentoAgenda.find({ adminId: { $in: adminIds }, dataHora: { $gte: inicio, $lte: fim }, status: { $ne: 'cancelado' } })
     ]);
 
     const totalReceitas = receitas.reduce((s, r) => s + r.valor, 0);
@@ -87,7 +89,7 @@ router.get('/financeiro', authAgenda, async (req, res) => {
     const a = parseInt(ano) || new Date().getFullYear();
     const inicio = new Date(a, m - 1, 1);
     const fim = new Date(a, m, 0, 23, 59, 59);
-    const query = { adminId: req.adminId, data: { $gte: inicio, $lte: fim } };
+    const query = { adminId: { $in: [req.adminId, String(req.adminId)] }, data: { $gte: inicio, $lte: fim } };
     if (tipo) query.tipo = tipo;
     const itens = await FinanceiroAgenda.find(query).sort({ data: -1 });
     res.json({ sucesso: true, itens });
