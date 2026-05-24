@@ -6,7 +6,8 @@
 
 const axios = require('axios');
 const SM = require('./agenda-session-manager');
-const IntentParser = require('./agenda-intent-parser');
+const IntentParser  = require('./agenda-intent-parser');
+const ActionRouter  = require('./agenda-action-router');
 const { AdminAgenda, AgendamentoAgenda, FinanceiroAgenda, BloqueioAgenda, ClienteAgenda } = require('../models/AgendaServico');
 const { InstanciaWhatsapp } = require('../models');
 
@@ -639,10 +640,11 @@ ${totalAgs > 0 ? 'Tá saindo bem! 💪' : 'Ainda sem registros esse mês.'}`);
       .replace(/(?:[àa]s?)\s*\d{1,2}(:\d{2})?(h|hs)?\b/gi, '')
       .replace(/\b\d{1,2}(:\d{2})?(h|hs)\b/gi, '')
       .replace(/^[:\s]+/, '')
-      .replace(/(^|\s)(de|do|da)(\s|$)/gi, ' ')
+      .replace(/(?<=[^a-záàâãéêíóôõúç]|^)(de|do|da)(?=[^a-záàâãéêíóôõúç]|$)/gi, ' ')
       .replace(/\s{2,}/g, ' ')
       .replace(/[.!?,;]+$/, '')
-      .replace(/^(que\s+)?(eu\s+)?(tenho\s+que\s+)?/i, '')
+      .replace(/^\s+/, '')
+      .replace(/^(que\s+)?(eu\s+)?(tenho\s+que\s+)?(preciso\s+)?/i, '')
       .replace(/[.!?,;]+$/, '')
       .trim();
     const textoLembrete = (_limpo && _limpo.length > 1) ? _limpo : null;
