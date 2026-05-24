@@ -43,7 +43,7 @@ router.post('/cadastro', async (req, res) => {
     const hash = await bcrypt.hash(senha, 10);
     const token = crypto.randomBytes(32).toString('hex');
     const trialExpira = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
-    const admin = await AdminAgenda.create({ nome, email, senha: hash, token, nomeNegocio, segmento, telefone, whatsapp, plano: plano || 'espaco_digital', trialExpira });
+    const admin = await AdminAgenda.create({ nome, email, senha: hash, token, nomeNegocio, segmento, telefone, whatsapp, plano: plano || 'espaco_digital_ia', trialExpira });
     res.json({ sucesso: true, token, adminId: admin._id });
   } catch(e) { res.status(500).json({ erro: e.message }); }
 });

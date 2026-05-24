@@ -1,19 +1,17 @@
 // agenda-plan-features.js
-// Helper central de features — SOMENTE Rebeca Agenda
-// espaco_digital = R$97 | espaco_digital_ia = R$147
+// Plano único: espaco_digital_ia — WhatsApp + IA incluídos
 function getAgendaPlanFeatures(plano) {
-  const p = plano || 'espaco_digital';
-  const isIA = p === 'espaco_digital_ia' || p === 'trial_ia' || p === 'master' || p === 'admin';
+  const p = plano || 'espaco_digital_ia';
   return {
     plano: p,
-    planoNome: isIA ? 'R$147' : 'R$97',
+    planoNome: 'R$147',
     canUseWhatsappRedirect: true,
-    canUseWhatsappAutomation: isIA,
+    canUseWhatsappAutomation: true,
     canInstallPWA: true,
     canUseBrowserPush: true,
     canReceiveAdminNotifications: true,
     canReceiveClientNotifications: true,
-    canUseIA: isIA,
+    canUseIA: true,
   };
 }
 module.exports = { getAgendaPlanFeatures };
