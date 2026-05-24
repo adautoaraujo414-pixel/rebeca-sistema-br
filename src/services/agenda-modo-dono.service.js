@@ -73,14 +73,16 @@ function _extrairCategoria(txt) {
 function _extrairDescricao(txt, tipo) {
   // Palavras que NÃO são nomes de pessoas/descrições úteis
   const _stopWords = /^(reais?|pix|dinheiro|especie|espécie|entrada|saida|saída|gasto|despesa|receita|transfer|transferência|gasolina|combustivel|aluguel|internet|luz|agua|lanche|comida|mercado|farmacia|uber|ifood|taxa|imposto)$/i;
-  // 1. Nome próprio após "pra/para/pro/com" — palavra isolada, letra maiúscula
-  const mPra = txt.match(/(?:^|\s)(?:pra|para|pro|com)\s+([A-ZÁÀÂÃÉÊÍÓÔÕÚÇ][a-záàâãéêíóôõúç]{1,30})(?:\s|$)/);
-  if (mPra && mPra[1] && !_stopWords.test(mPra[1])) return mPra[1].trim();
-  // 2. Nome próprio após "na/no" — só se precedido por espaço/início (não "da", "na" dentro de palavra)
-  const mNa = txt.match(/(?:^|\s)(?:na|no)\s+([A-ZÁÀÂÃÉÊÍÓÔÕÚÇ][a-záàâãéêíóôõúç]{1,30})(?:\s|$)/);
+  // helper: captura nome próprio (1 ou 2 palavras com maiúscula inicial)
+  const _nomeComposto = /([A-ZÁÀÂÃÉÊÍÓÔÕÚÇ][a-záàâãéêíóôõúç]{1,30}(?:\s+[A-ZÁÀÂÃÉÊÍÓÔÕÚÇ][a-záàâãéêíóôõúç]{1,30})?)/;
+  // 1. Nome próprio após "pra/para/pro/com"
+  const mPra = txt.match(new RegExp('(?:^|\\s)(?:pra|para|pro|com)\\s+' + _nomeComposto.source + '(?:\\s|$)'));
+  if (mPra && mPra[1] && !_stopWords.test(mPra[1].split(' ')[0])) return mPra[1].trim();
+  // 2. Nome próprio após "na/no/da/do"
+  const mNa = txt.match(new RegExp('(?:^|\\s)(?:na|no|da|do)\\s+' + _nomeComposto.source + '(?:\\s|$)'));
   if (mNa && mNa[1] && !_stopWords.test(mNa[1])) return mNa[1].trim();
   // 3. Nome próprio (maiúscula) após valor numérico
-  const mApos = txt.match(/R?\$?\s*[\d.,]+\s*(?:reais?)?\s+([A-ZÁÀÂÃÉÊÍÓÔÕÚÇ][a-záàâãéêíóôõúç]{2,30})(?:\s|$)/);
+  const mApos = txt.match(/R?\$?\s*[\d.,]+\s*(?:reais?)?\s+([A-ZÁÀÂÃÉÊÍÓÔÕÚÇ][a-záàâãéêíóôõúç]{2,30}(?:\s+[A-ZÁÀÂÃÉÊÍÓÔÕÚÇ][a-záàâãéêíóôõúç]{1,30})?)(?:\s|$)/);
   if (mApos && mApos[1] && !_stopWords.test(mApos[1])) return mApos[1].trim();
   // 4. Fallback
   return tipo === 'receita' ? 'Entrada via WhatsApp' : 'Gasto via WhatsApp';
