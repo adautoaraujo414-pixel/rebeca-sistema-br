@@ -1370,6 +1370,33 @@ document.querySelectorAll('.nav-item').forEach(item => {
           </div>
         </div>
 
+        <!-- ─── ALTERAR SENHA ─── -->
+        <div class="form-card" style="margin-top:20px">
+          <div class="form-section-title">🔑 Alterar senha</div>
+          <div class="form-row cols-2">
+            <div><label class="form-label">Senha atual</label><input class="form-input" type="password" id="cfg-senha-atual" placeholder="••••••••"></div>
+            <div><label class="form-label">Nova senha</label><input class="form-input" type="password" id="cfg-senha-nova" placeholder="Mínimo 6 caracteres"></div>
+          </div>
+          <div class="form-row">
+            <div><label class="form-label">Confirmar nova senha</label><input class="form-input" type="password" id="cfg-senha-conf" placeholder="Repita a nova senha"></div>
+          </div>
+          <div class="form-btns">
+            <button class="btn-primary" onclick="alterarSenha()">Salvar nova senha</button>
+          </div>
+        </div>
+
+        <!-- ─── EXCLUIR CONTA ─── -->
+        <div class="form-card" style="margin-top:20px;border:1.5px solid var(--vermelho-light,#fecaca)">
+          <div class="form-section-title" style="color:var(--vermelho)">⚠️ Zona de perigo</div>
+          <p style="font-size:.85em;color:var(--texto2);margin-bottom:16px">A exclusão da conta é permanente e irreversível. Todos os seus dados, agendamentos e configurações serão apagados.</p>
+          <div class="form-row">
+            <div><label class="form-label">Confirme sua senha para excluir</label><input class="form-input" type="password" id="cfg-senha-excluir" placeholder="••••••••"></div>
+          </div>
+          <div class="form-btns">
+            <button style="background:var(--vermelho);color:#fff;padding:10px 20px;border:none;border-radius:var(--radius-sm);font-weight:700;cursor:pointer;font-size:.9em" onclick="excluirConta()">Excluir minha conta permanentemente</button>
+          </div>
+        </div>
+
         <!-- ─── MODO REBECA PELO WHATSAPP ─── -->
         <div class="form-card" id="card-modo-dono" style="margin-top:20px">
           <div class="form-section-title" style="display:flex;align-items:center;gap:10px">
@@ -2090,6 +2117,36 @@ async function carregarFinanceiro(){
 }
 
 // ─── AÇÕES ───
+async function alterarSenha(){
+  const atual = document.getElementById('cfg-senha-atual').value;
+  const nova = document.getElementById('cfg-senha-nova').value;
+  const conf = document.getElementById('cfg-senha-conf').value;
+  if (!atual || !nova || !conf) return toast('Preencha todos os campos de senha', 'erro');
+  if (nova.length < 6) return toast('Nova senha deve ter mínimo 6 caracteres', 'erro');
+  if (nova !== conf) return toast('Nova senha e confirmação não coincidem', 'erro');
+  try {
+    const r = await api('/alterar-senha', {method:'PUT', body:JSON.stringify({senhaAtual:atual, novaSenha:nova})});
+    if (r && r.sucesso) {
+      toast('Senha alterada com sucesso! ✅');
+      document.getElementById('cfg-senha-atual').value = '';
+      document.getElementById('cfg-senha-nova').value = '';
+      document.getElementById('cfg-senha-conf').value = '';
+    } else { toast(r?.erro || 'Erro ao alterar senha', 'erro'); }
+  } catch(e) { toast('Erro ao alterar senha', 'erro'); }
+}
+async function excluirConta(){
+  const senha = document.getElementById('cfg-senha-excluir').value;
+  if (!senha) return toast('Confirme sua senha para excluir', 'erro');
+  if (!confirm('Tem certeza? Esta ação é PERMANENTE e irá apagar toda sua conta e dados.')) return;
+  if (!confirm('Última confirmação: deseja realmente excluir sua conta?')) return;
+  try {
+    const r = await api('/excluir-conta', {method:'DELETE', body:JSON.stringify({senha})});
+    if (r && r.sucesso) {
+      toast('Conta excluída. Até logo! 👋');
+      setTimeout(() => { localStorage.clear(); location.href = '/agenda-landing'; }, 2000);
+    } else { toast(r?.erro || 'Erro ao excluir conta', 'erro'); }
+  } catch(e) { toast('Erro ao excluir conta', 'erro'); }
+}
 async function confirmarAg(id){
   await api('/agendamentos/'+id+'/status', {method:'PUT', body:JSON.stringify({status:'confirmado'})});
   toast('Agendamento confirmado ✅');

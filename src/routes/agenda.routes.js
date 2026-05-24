@@ -503,4 +503,34 @@ router.put('/config-bot', authAgenda, async (req, res) => {
   }
 });
 
+// ── ALTERAR SENHA ──
+router.put('/alterar-senha', authAgenda, async (req, res) => {
+  try {
+    const { senhaAtual, novaSenha } = req.body;
+    if (!senhaAtual || !novaSenha) return res.status(400).json({ erro: 'Preencha todos os campos' });
+    if (novaSenha.length < 6) return res.status(400).json({ erro: 'Nova senha deve ter mínimo 6 caracteres' });
+    const bcrypt = require('bcryptjs');
+    const admin = await AdminAgenda.findById(req.adminAgendaId);
+    const ok = await bcrypt.compare(senhaAtual, admin.senha);
+    if (!ok) return res.status(401).json({ erro: 'Senha atual incorreta' });
+    const hash = await bcrypt.hash(novaSenha, 10);
+    await AdminAgenda.findByIdAndUpdate(req.adminAgendaId, { senha: hash });
+    res.json({ sucesso: true, mensagem: 'Senha alterada com sucesso!' });
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// ── EXCLUIR CONTA ──
+router.delete('/excluir-conta', authAgenda, async (req, res) => {
+  try {
+    const { senha } = req.body;
+    if (!senha) return res.status(400).json({ erro: 'Confirme sua senha para excluir' });
+    const bcrypt = require('bcryptjs');
+    const admin = await AdminAgenda.findById(req.adminAgendaId);
+    const ok = await bcrypt.compare(senha, admin.senha);
+    if (!ok) return res.status(401).json({ erro: 'Senha incorreta' });
+    await AdminAgenda.findByIdAndDelete(req.adminAgendaId);
+    res.json({ sucesso: true, mensagem: 'Conta excluída com sucesso' });
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
 module.exports = router;
