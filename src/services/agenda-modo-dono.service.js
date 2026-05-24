@@ -190,13 +190,33 @@ function _parseDia(txt) {
 }
 
 function _parseHora(txt) {
+  // 0. "daqui X minutos/horas" — hora relativa ao momento atual
+  const mDaqui = txt.match(/daqui\s+(?:a\s+)?(\d+|uma?|dois|duas|tr[eê]s|quatro|cinco|dez|quinze|vinte|trinta)\s*(minuto|hora|min|h)s?/i);
+  if (mDaqui) {
+    const numMap = {'um':1,'uma':1,'dois':2,'duas':2,'três':3,'tres':3,'quatro':4,'cinco':5,'dez':10,'quinze':15,'vinte':20,'trinta':30};
+    const qtd = parseInt(mDaqui[1]) || numMap[mDaqui[1].toLowerCase()] || 1;
+    const unidade = mDaqui[2].toLowerCase();
+    const agora = new Date();
+    const brMs = agora.getTime() - (3*60*60*1000);
+    const brNow = new Date(brMs);
+    let totalMin = brNow.getUTCHours()*60 + brNow.getUTCMinutes();
+    if (/hora|^h$/i.test(unidade)) totalMin += qtd * 60;
+    else totalMin += qtd;
+    return { h: Math.floor(totalMin/60) % 24, min: totalMin % 60, relativo: true, msOffset: (/hora|^h$/i.test(unidade) ? qtd*60 : qtd)*60*1000 };
+  }
   // 1. Formato original: 10h, 10h30, 10:30
   const m = txt.match(/(\d{1,2})h(?:(\d{2})?)?/i) || txt.match(/(\d{1,2}):(\d{2})/);
   if (m) return { h: parseInt(m[1]), min: parseInt(m[2]||'0') };
   // 2. "às 22", "as 8", "à 15" — número após preposição
   const mNum = txt.match(/(?:às?|as?|à)\s+(\d{1,2})(?::(\d{2}))?\b/i);
   if (mNum) return { h: parseInt(mNum[1]), min: parseInt(mNum[2]||'0') };
-  // 3. Palavras por extenso: "oito da manhã", "duas da tarde"
+  // 3. "meia noite", "meio dia"
+  if (/meia\s*noite/i.test(txt)) return { h: 0, min: 0 };
+  if (/meio\s*dia/i.test(txt)) return { h: 12, min: 0 };
+  // 4. "e meia" após hora: "às 3 e meia"
+  const mMeia = txt.match(/(\d{1,2})\s*e\s*meia/i);
+  if (mMeia) return { h: parseInt(mMeia[1]), min: 30 };
+  // 5. "nove e meia", "três e um quarto" por extenso
   const palavras = {
     'uma':1,'duas':2,'três':3,'tres':3,'quatro':4,'cinco':5,'seis':6,
     'sete':7,'oito':8,'nove':9,'dez':10,'onze':11,'doze':12,
@@ -207,7 +227,8 @@ function _parseHora(txt) {
   if (mP) {
     let h = palavras[mP[1].toLowerCase()];
     if (/tarde|noite/i.test(txt) && h < 12) h += 12;
-    return { h, min: 0 };
+    const min = /e\s*meia/i.test(txt) ? 30 : /e\s*um\s*quarto/i.test(txt) ? 15 : 0;
+    return { h, min };
   }
   return null;
 }
@@ -539,16 +560,21 @@ ${totalAgs > 0 ? 'Tá saindo bem! 💪' : 'Ainda sem registros esse mês.'}`);
     const textoLembrete = textoM ? textoM[1].trim() : msg.replace(/rebeca[,\s]*/i,'').trim();
 
     if (hora) {
-      // Montar data no fuso Brasil (UTC-3): pega ano/mes/dia do Brasil e converte hora para UTC
-      const _brMs   = dia.getTime() - (3 * 60 * 60 * 1000);
-      const _brDate = new Date(_brMs);
-      const dataLembrete = new Date(Date.UTC(
-        _brDate.getUTCFullYear(), _brDate.getUTCMonth(), _brDate.getUTCDate(),
-        hora.h + 3, hora.min, 0
-      ));
-      const dataAviso = new Date(dataLembrete.getTime() - 15*60000);
-
-      // Salvar em campo do admin — não polui agenda
+      // Montar dataLembrete — relativo (daqui X min) ou absoluto
+      let dataLembrete;
+      if (hora.relativo && hora.msOffset) {
+        dataLembrete = new Date(Date.now() + hora.msOffset);
+      } else {
+        const _brMs   = dia.getTime() - (3 * 60 * 60 * 1000);
+        const _brDate = new Date(_brMs);
+        dataLembrete = new Date(Date.UTC(
+          _brDate.getUTCFullYear(), _brDate.getUTCMonth(), _brDate.getUTCDate(),
+          hora.h + 3, hora.min, 0
+        ));
+      }
+      const dataAviso = hora.relativo
+        ? new Date(dataLembrete.getTime() - 1*60000)
+        : new Date(dataLembrete.getTime() - 15*60000);
       await AdminAgenda.findByIdAndUpdate(adminObjId, {
         $push: {
           'config.lembretes': {
@@ -560,13 +586,10 @@ ${totalAgs > 0 ? 'Tá saindo bem! 💪' : 'Ainda sem registros esse mês.'}`);
           }
         }
       });
-
-      await responder(`Anotado, ${_chefe()}! 📝
-
-🔔 *${textoLembrete}*
-📅 ${_fmtData(dia)} às ${_fmtHora(dataLembrete)}
-
-Vou te avisar 15 min antes! 💙`);
+      const _confirmLemb = hora.relativo
+        ? `Anotado! Te aviso em ${Math.round(hora.msOffset/60000)} minuto(s): "${textoLembrete}" 🔔`
+        : `Anotado! Lembro você sobre "${textoLembrete}" em ${_fmtData(dia)} às ${_fmtHora(dataLembrete)} 🔔`;
+      await responder(_confirmLemb);
     } else {
       // Sem hora — salva sem data de aviso
       await AdminAgenda.findByIdAndUpdate(adminObjId, {
