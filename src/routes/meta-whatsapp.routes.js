@@ -52,9 +52,8 @@ router.post('/webhook', express.json(), async (req, res) => {
           console.log(`[MetaWA] Processando áudio transcrito: "${transcricao}"`);
           await processarComando(telefone, transcricao, msgId);
         } else {
-          await MetaWA.enviarTexto(telefone,
-            'Não consegui entender o áudio. Pode me escrever o que precisa? 😊'
-          );
+          // Tenta processar via Claude mesmo sem transcrição
+          await processarComando(telefone, 'não entendi o áudio enviado', msgId);
         }
       }
     } else if (tipo === 'image') {
