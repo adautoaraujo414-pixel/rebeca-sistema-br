@@ -619,15 +619,18 @@ ${totalAgs > 0 ? 'Tá saindo bem! 💪' : 'Ainda sem registros esse mês.'}`);
 
     // ── Extrair texto: remover gatilho + tudo temporal, pegar o que sobra ────
     const _semGatilho = msg
-      .replace(/^.*?(?:me\s*lembr[ae]|lembrete|avisa?|anota)\s*(?:de\s+|que\s+)?/i, '')
+      .replace(/^.*?(?:lembrete\s*:?|me\s*lembr[ae]|lembr[ae]|avisa?|anota)\s*(?:de\s+|que\s+)?/i, '')
       .trim();
     const _limpo = _semGatilho
-      .replace(/\b(amanha|amanhã|hoje|segunda|terca|quarta|quinta|sexta|sabado|domingo)(\s*-\s*feira)?\b/gi, '')
+      .replace(/(?:^|\s)amanh[aã](?:\s|$)/gi, ' ')
+      .replace(/(?:^|\s)hoje(?:\s|$)/gi, ' ')
+      .replace(/(?:^|\s)(segunda|ter[cç]a|quarta|quinta|sexta|s[aá]bado|domingo)(-feira)?(?:\s|$)/gi, ' ')
       .replace(/\bdia\s+\d{1,2}\b/gi, '')
       .replace(/\bdaqui\s+\S+\s+\S+/gi, '')
-      .replace(/\b(às?|as?)\s*\d{1,2}(:\d{2})?(h|hs)?\b/gi, '')
+      .replace(/(?:[àa]s?)\s*\d{1,2}(:\d{2})?(h|hs)?\b/gi, '')
       .replace(/\b\d{1,2}(:\d{2})?(h|hs)\b/gi, '')
-      .replace(/\b(de|do|da|o|a)\b/gi, ' ')
+      .replace(/^[:\s]+/, '')
+      .replace(/(^|\s)(de|do|da)(\s|$)/gi, ' ')
       .replace(/\s{2,}/g, ' ')
       .trim();
     const textoLembrete = (_limpo && _limpo.length > 1) ? _limpo : null;
