@@ -1,3 +1,5 @@
+
+
 // agenda-modo-dono.service.js
 // Modo Rebeca pelo WhatsApp — comandos do dono/admin pelo número conectado
 // NÃO afeta Delivery nem Corrida. NÃO cria nova instância.
