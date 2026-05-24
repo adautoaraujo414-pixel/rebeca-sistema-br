@@ -475,17 +475,17 @@ function err(){hide('page-loader');show('page-error')}
 async function init(){
   if(!ADMIN_ID){err();return}
   try{
-    var res=await Promise.all([
-      fetch(BASE+'/espaco/'+ADMIN_ID+'/perfil').then(function(r){return r.ok?r.json():null}),
-      fetch(BASE+'/espaco/'+ADMIN_ID+'/servicos').then(function(r){return r.ok?r.json():null}),
-      fetch(BASE+'/espaco/'+ADMIN_ID+'/profissionais').then(function(r){return r.ok?r.json():[]}),
-      fetch(BASE+'/espaco/'+ADMIN_ID+'/avaliacoes').then(function(r){return r.ok?r.json():[]}),
-    ]);
-    var perfil=res[0],svcs=res[1],profs=res[2],avals=res[3];
-    if(!perfil){err();return}
-    SERVICOS=Array.isArray(svcs)?svcs:(svcs&&svcs.servicos||[]);
-    var profList=Array.isArray(profs)?profs:(profs&&profs.profissionais||[]);
-    var avalList=Array.isArray(avals)?avals:(avals&&avals.avaliacoes||[]);
+    var r=await fetch(BASE+'/espaco/'+ADMIN_ID);
+    if(!r.ok){err();return}
+    var dados=await r.json();
+    if(!dados.sucesso||!dados.admin){err();return}
+    var perfil=dados.admin;
+    var svcs=dados.servicos||[];
+    var profs=dados.profissionais||[];
+    var avals=[];
+    SERVICOS=Array.isArray(svcs)?svcs:[];
+    var profList=Array.isArray(profs)?profs:[];
+    var avalList=[];
     renderHeader(perfil);
     renderHero(perfil,avalList);
     renderSvcs(SERVICOS);
