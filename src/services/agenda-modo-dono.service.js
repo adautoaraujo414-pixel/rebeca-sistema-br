@@ -134,10 +134,14 @@ Sempre que precisar, é só me chamar por aqui. 😊`;
 
 // ── Parser de data/hora simples ───────────────────────────────────────────────
 function _parseDia(txt) {
-  const hoje = new Date();
-  if (/\bhoje\b/i.test(txt)) return new Date(hoje);
+  // Usa data atual no fuso Brasil (UTC-3)
+  const agora = new Date();
+  const brOffset = -3 * 60;
+  const hoje = new Date(agora.getTime() + (brOffset - agora.getTimezoneOffset()) * 60000);
+  hoje.setUTCHours(0, 0, 0, 0); // zera hora em UTC para representar meia-noite Brasil
+  if (/\bhoje\b/i.test(txt)) return new Date(agora);
   if (/\bamanhã\b|\bamanha\b/i.test(txt)) {
-    const d = new Date(hoje); d.setDate(d.getDate()+1); return d;
+    const d = new Date(hoje); d.setUTCDate(d.getUTCDate()+1); return d;
   }
   if (/\bsegunda\b/i.test(txt)) { const d = new Date(hoje); d.setDate(d.getDate()+(1+(7-d.getDay())%7||7)); return d; }
   if (/\bterca\b|\bterça\b/i.test(txt)) { const d = new Date(hoje); d.setDate(d.getDate()+(2+(7-d.getDay())%7||7)); return d; }
@@ -503,8 +507,13 @@ ${totalAgs > 0 ? 'Tá saindo bem! 💪' : 'Ainda sem registros esse mês.'}`);
     const textoLembrete = textoM ? textoM[1].trim() : msg.replace(/rebeca[,\s]*/i,'').trim();
 
     if (hora) {
-      const dataLembrete = new Date(dia);
-      dataLembrete.setHours(hora.h, hora.min, 0, 0);
+      // Montar data no fuso Brasil (UTC-3): hora local → UTC
+      const _brOffset = -3 * 60;
+      const _localDia = new Date(dia.getTime() + (_brOffset - dia.getTimezoneOffset()) * 60000);
+      const dataLembrete = new Date(Date.UTC(
+        _localDia.getUTCFullYear(), _localDia.getUTCMonth(), _localDia.getUTCDate(),
+        hora.h + 3, hora.min, 0
+      ));
       const dataAviso = new Date(dataLembrete.getTime() - 15*60000);
 
       // Salvar em campo do admin — não polui agenda
