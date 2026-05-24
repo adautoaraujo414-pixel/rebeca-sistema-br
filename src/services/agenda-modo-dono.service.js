@@ -176,7 +176,7 @@ function _parseDia(txt) {
   const dow = brDate.getUTCDay();
   const mkData = (a, m, d) => new Date(Date.UTC(a, m, d, 3, 0, 0));
   if (/\bhoje\b/i.test(txt))               return new Date(agora);
-  if (/\bamanhã\b|\bamanha\b/i.test(txt)) return mkData(ano, mes, dia + 1);
+  if (/(?:^|\s)amanh[aã](?:\s|$)/i.test(txt)) return mkData(ano, mes, dia + 1);
   const diasMap = { domingo:0, segunda:1, 'segunda-feira':1, terca:2, 'terça':2, 'terça-feira':2, quarta:3, 'quarta-feira':3, quinta:4, 'quinta-feira':4, sexta:5, 'sexta-feira':5, sabado:6, 'sábado':6 };
   const quevem = /que\s*vem|próxim[oa]|proxim[oa]/i.test(txt);
   for (const [nome, alvo] of Object.entries(diasMap)) {
