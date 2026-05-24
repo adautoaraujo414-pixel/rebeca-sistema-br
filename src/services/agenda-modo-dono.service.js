@@ -527,8 +527,8 @@ A semana tá zerada por enquanto. Bora divulgar pra encher a agenda! 🚀`);
   if (/encaixa|marca\s*(um\s*)?hor[aá]rio|adiciona\s*(um\s*)?cliente|\bagenda\b.*\b(cliente|para|pra|amanhã|amanha|hoje|às|as)\b|\bagendar\b/i.test(msgL)) {
     const hora = _parseHora(msgL);
     const dia  = _parseDia(msgL) || new Date();
-    const nomeM = msg.match(/encaixa\s+([A-Za-zÀ-ú\s]+?)\s+(?:às?|as|para|pra)\s+\d/i) ||
-                  msg.match(/marca\s+(?:pra\s+|para\s+)?([A-Za-zÀ-ú\s]+?)\s+(?:às?|as)\s+\d/i);
+    // Extrai nome independente do verbo: encaixa/agenda/marca + [a/o] + Nome + amanhã/às/pra
+    const nomeM = msg.match(/(?:encaixa|agenda|agendar|adiciona|marca)\s+(?:a\s+|o\s+)?([A-Za-zÀ-ú]+(?:\s+[A-Za-zÀ-ú]+)?)\s+(?:amanhã|amanha|hoje|às?|as|pra|para|no dia|\d)/i);
     const nome = nomeM ? nomeM[1].trim() : null;
     if (hora && nome) {
       const dataHora = new Date(dia); dataHora.setHours(hora.h, hora.min, 0, 0);
