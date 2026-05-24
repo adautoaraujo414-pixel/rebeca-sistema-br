@@ -306,8 +306,8 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
       data: { $gte: ini, $lte: fim }
     }).lean();
 
-    const entradas = lancamentos.filter(l=>l.tipo==='entrada').reduce((s,l)=>s+l.valor,0);
-    const saidas = lancamentos.filter(l=>l.tipo==='saida').reduce((s,l)=>s+l.valor,0);
+    const entradas = lancamentos.filter(l=>l.tipo==='receita').reduce((s,l)=>s+l.valor,0);
+    const saidas = lancamentos.filter(l=>l.tipo==='despesa').reduce((s,l)=>s+l.valor,0);
     const agendamentos = await AgendamentoAgenda.countDocuments({
       adminId: adminObjId, dataHora: { $gte: ini, $lte: fim }, status: { $in: ['confirmado','concluido'] }
     });
@@ -656,8 +656,8 @@ Que tal mandar uma mensagem especial pra eles? 💙`);
     const ini = new Date(); ini.setDate(ini.getDate() - 7); ini.setHours(0,0,0,0);
     const fim = new Date(); fim.setHours(23,59,59,999);
     const lanc = await FinanceiroAgenda.find({ adminId: adminObjId, data: { $gte: ini, $lte: fim } }).lean();
-    const entradas = lanc.filter(l=>l.tipo==='entrada').reduce((s,l)=>s+l.valor,0);
-    const saidas   = lanc.filter(l=>l.tipo==='saida').reduce((s,l)=>s+l.valor,0);
+    const entradas = lanc.filter(l=>l.tipo==='receita').reduce((s,l)=>s+l.valor,0);
+    const saidas   = lanc.filter(l=>l.tipo==='despesa').reduce((s,l)=>s+l.valor,0);
     const atend    = await AgendamentoAgenda.countDocuments({ adminId: adminObjId, dataHora: { $gte: ini, $lte: fim }, status: { $in: ['confirmado','concluido'] } });
     await responder(`${_saudacao()}, ${_chefe()}! Olha a semana! 📊
 
@@ -675,8 +675,8 @@ ${(entradas-saidas)>=0?'Semana boa demais! 🚀':'Semana de aprendizado! Próxim
     const ini = new Date(); ini.setDate(1); ini.setHours(0,0,0,0);
     const fim = new Date(); fim.setHours(23,59,59,999);
     const lanc = await FinanceiroAgenda.find({ adminId: adminObjId, data: { $gte: ini, $lte: fim } }).lean();
-    const entradas = lanc.filter(l=>l.tipo==='entrada').reduce((s,l)=>s+l.valor,0);
-    const saidas   = lanc.filter(l=>l.tipo==='saida').reduce((s,l)=>s+l.valor,0);
+    const entradas = lanc.filter(l=>l.tipo==='receita').reduce((s,l)=>s+l.valor,0);
+    const saidas   = lanc.filter(l=>l.tipo==='despesa').reduce((s,l)=>s+l.valor,0);
     const atend    = await AgendamentoAgenda.countDocuments({ adminId: adminObjId, dataHora: { $gte: ini, $lte: fim }, status: { $in: ['confirmado','concluido'] } });
     const ticket   = atend > 0 ? (entradas/atend).toFixed(2) : '0.00';
     await responder(`${_saudacao()}, ${_chefe()}! Resumo do mês! 📊
@@ -981,8 +981,8 @@ async function rodarRelatorioDiario() {
         if (!inst) continue;
 
         const lancamentos = await FinanceiroAgenda.find({ adminId: String(admin._id), data: { $gte: ini, $lte: fim } }).lean();
-        const entradas    = lancamentos.filter(l => l.tipo === 'entrada').reduce((s, l) => s + l.valor, 0);
-        const saidas      = lancamentos.filter(l => l.tipo === 'saida').reduce((s, l) => s + l.valor, 0);
+        const entradas    = lancamentos.filter(l => l.tipo === 'receita').reduce((s, l) => s + l.valor, 0);
+        const saidas      = lancamentos.filter(l => l.tipo === 'despesa').reduce((s, l) => s + l.valor, 0);
         const atendidos   = await AgendamentoAgenda.countDocuments({ adminId: String(admin._id), dataHora: { $gte: ini, $lte: fim }, status: { $in: ['confirmado','concluido'] } });
 
         await _enviarMsg(inst, telDono,
