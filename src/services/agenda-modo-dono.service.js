@@ -187,6 +187,8 @@ function _parseDia(txt) {
   }
   const dm = txt.match(/(\d{1,2})\/(\d{1,2})/);
   if (dm) return mkData(ano, parseInt(dm[2])-1, parseInt(dm[1]));
+  const diaNum = txt.match(/\bdia\s+(\d{1,2})\b/i);
+  if (diaNum) return mkData(ano, mes, parseInt(diaNum[1]));
   return null;
 }
 
@@ -205,8 +207,9 @@ function _parseHora(txt) {
     else totalMin += qtd;
     return { h: Math.floor(totalMin/60) % 24, min: totalMin % 60, relativo: true, msOffset: (/hora|^h$/i.test(unidade) ? qtd*60 : qtd)*60*1000 };
   }
-  // 1. Formato original: 10h, 10h30, 10:30
-  const m = txt.match(/(\d{1,2})h(?:(\d{2})?)?/i) || txt.match(/(\d{1,2}):(\d{2})/);
+  // 1. Formato original: 10h, 10h30, 10:30 — ignorar 'dia N' antes
+  const _txtSemDia = txt.replace(/\bdia\s+\d{1,2}\b/gi, '');
+  const m = _txtSemDia.match(/(\d{1,2})h(?:(\d{2})?)?/i) || _txtSemDia.match(/(\d{1,2}):(\d{2})/);
   if (m) return { h: parseInt(m[1]), min: parseInt(m[2]||'0') };
   // 2. "às 22", "as 8", "à 15" — número após preposição
   const mNum = txt.match(/(?:às?|as?|à)\s+(\d{1,2})(?::(\d{2}))?\b/i);
@@ -587,6 +590,8 @@ ${totalAgs > 0 ? 'Tá saindo bem! 💪' : 'Ainda sem registros esse mês.'}`);
     // Extrair texto ignorando palavras temporais no inicio
     const _msgSemTempo = msg
       .replace(/\b(amanha|amanhã|hoje|segunda|terca|quarta|quinta|sexta|sabado|domingo)(\s*-\s*feira)?\b/gi, '')
+      .replace(/\bdia\s+\d{1,2}\b/gi, '')
+      .replace(/\bdaqui\s+\S+\s+\S+/gi, '')
       .replace(/\b(às?|as?)\s*\d{1,2}(:\d{2})?(h|hs)?\b/gi, '')
       .replace(/\b\d{1,2}(:\d{2})?(h|hs)\b/gi, '')
       .replace(/\s{2,}/g, ' ')
