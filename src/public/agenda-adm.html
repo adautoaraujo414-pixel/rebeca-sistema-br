@@ -2862,14 +2862,15 @@ function wppRecarregar() {
 }
 
 async function salvarCfgBot() {
-  var ativo = document.getElementById('cfg-bot-ativo').checked;
-  var fora  = document.getElementById('cfg-bot-fora-horario').checked;
-  var link  = document.getElementById('cfg-bot-link').checked;
+  var ativo     = document.getElementById('cfg-bot-ativo').checked;
+  var fora      = document.getElementById('cfg-bot-fora-horario').checked;
+  var link      = document.getElementById('cfg-bot-link').checked;
+  var atClientes = document.getElementById('cfg-bot-atender-clientes')?.checked || false;
   try {
     const r = await fetch('/api/agenda/config-bot', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + TOKEN },
-      body: JSON.stringify({ ativo, foraHorario: fora, linkAgenda: link })
+      body: JSON.stringify({ ativo, foraHorario: fora, linkAgenda: link, atenderClientes: atClientes })
     });
     const d = await r.json();
     if (d.sucesso) toast('✅ Configuração salva!', 'ok');
@@ -2889,6 +2890,8 @@ async function carregarCfgBot() {
       document.getElementById('cfg-bot-ativo').checked        = !!d.configBot.ativo;
       document.getElementById('cfg-bot-fora-horario').checked = !!d.configBot.foraHorario;
       document.getElementById('cfg-bot-link').checked         = !!d.configBot.linkAgenda;
+      const elAt = document.getElementById('cfg-bot-atender-clientes');
+      if (elAt) elAt.checked = !!d.configBot.atenderClientes;
     }
   } catch(e) { console.warn('configBot:', e.message); }
 }
