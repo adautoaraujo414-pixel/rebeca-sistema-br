@@ -563,33 +563,11 @@ ${totalAgs > 0 ? 'Tá saindo bem! 💪' : 'Ainda sem registros esse mês.'}`);
 
   // ── LEMBRETE PESSOAL ─────────────────────────────────────────────────────────
   if (/me\s*lembr[ae]|lembrete|n[aã]o\s*me\s*deixa?\s*esquecer|anota\s*(a[ií])?/i.test(msgL)) {
-    const hora  = _parseHora(msgL);
-    const dia   = _parseDia(msgL); // null se não informou dia
+    const hora = _parseHora(msgL);
+    const dia  = _parseDia(msgL);
 
-    // ── Validação: hora sem dia → perguntar o dia ────────────────────────────
-    if (hora && !dia) {
-      const _brNow = new Date(Date.now() - 3*60*60*1000);
-      const _semana = ['domingo','segunda-feira','terca-feira','quarta-feira','quinta-feira','sexta-feira','sabado'];
-      const _dow = _brNow.getUTCDay();
-      const _dowAm = (_dow + 1) % 7;
-      const _dd = String(_brNow.getUTCDate()).padStart(2,'0');
-      const _mm = String(_brNow.getUTCMonth()+1).padStart(2,'0');
-      const _brAm = new Date(_brNow.getTime() + 24*60*60*1000);
-      const _ddAm = String(_brAm.getUTCDate()).padStart(2,'0');
-      const _mmAm = String(_brAm.getUTCMonth()+1).padStart(2,'0');
-      const _respDia = 'Claro! Qual dia voce quer esse lembrete?\n\n' +
-        'Hoje e ' + _semana[_dow] + ', ' + _dd + '/' + _mm + '\n' +
-        'Amanha e ' + _semana[_dowAm] + ', ' + _ddAm + '/' + _mmAm + '\n\n' +
-        'Me fala o dia e confirmo!';
-      await responder(_respDia);
-      return true;
-    }
-
-    const diaFinal = dia || new Date(); // só cai aqui se não tem hora
-
-    // Extrair o que é o lembrete
-    // Extrair texto ignorando palavras temporais no inicio
-    const _msgSemTempo = msg
+    // ── Extrair texto do lembrete (sem palavras temporais e gatilhos) ─────────
+    const _limpo = msg
       .replace(/\b(amanha|amanhã|hoje|segunda|terca|quarta|quinta|sexta|sabado|domingo)(\s*-\s*feira)?\b/gi, '')
       .replace(/\bdia\s+\d{1,2}\b/gi, '')
       .replace(/\bdaqui\s+\S+\s+\S+/gi, '')
@@ -597,67 +575,80 @@ ${totalAgs > 0 ? 'Tá saindo bem! 💪' : 'Ainda sem registros esse mês.'}`);
       .replace(/\b\d{1,2}(:\d{2})?(h|hs)\b/gi, '')
       .replace(/\s{2,}/g, ' ')
       .trim();
-    const textoM = _msgSemTempo.match(/(?:me lembr[ae]|lembrete[:\s]+|anota[:\s]+|esquecer[:\s]+)\s*(?:de\s+|que\s+)?(.+)/i)
-                || msg.match(/(?:tenho\s+que|preciso|vou)\s+(.+?)(?:\s+(?:amanhã|hoje|às?|as)\s+\d|$)/i);
-    const textoLembrete = textoM ? textoM[1].trim() : msg.replace(/rebeca[,\s]*/i,'').trim();
+    const _textoM = _limpo.match(/(?:me\s*lembr[ae]|lembrete|avisa?|anota)[:\s]*(?:de\s+|que\s+)?(.+)/i);
+    const textoLembrete = (_textoM && _textoM[1] && _textoM[1].trim().length > 1)
+      ? _textoM[1].trim()
+      : null;
 
-    if (hora) {
-      // Montar dataLembrete — relativo (daqui X min) ou absoluto
-      let dataLembrete;
-      if (hora.relativo && hora.msOffset) {
-        dataLembrete = new Date(Date.now() + hora.msOffset);
-      } else {
-        // Converter hora BR para UTC: hora BR + 3h = UTC
-        // Exemplo: usuário diz 15:00 BRT → salvar como 18:00 UTC
-        const _brMs   = diaFinal.getTime() - (3 * 60 * 60 * 1000);
-        const _brDate = new Date(_brMs);
-        dataLembrete = new Date(Date.UTC(
-          _brDate.getUTCFullYear(), _brDate.getUTCMonth(), _brDate.getUTCDate(),
-          hora.h + 3, hora.min, 0
-        ));
-        // Log para auditoria
-        console.log(`[LEMBRETE NLP] texto="${textoLembrete}" hora_usuario=${hora.h}:${String(hora.min).padStart(2,'0')} BRT => UTC ${hora.h+3}:${String(hora.min).padStart(2,'0')} dataISO=${dataLembrete.toISOString()}`);
-      }
-      const dataAviso = hora.relativo
-        ? new Date(dataLembrete.getTime() - 1*60000)
-        : new Date(dataLembrete.getTime() - 15*60000);
-      await AdminAgenda.findByIdAndUpdate(adminObjId, {
-        $push: {
-          'config.lembretes': {
-            texto: textoLembrete,
-            dataEvento: dataLembrete,
-            dataAviso,
-            enviado: false,
-            criadoEm: new Date()
-          }
-        }
-      });
-      const _confirmLemb = hora.relativo
-        ? `Anotado! Te aviso em ${Math.round(hora.msOffset/60000)} minuto(s): "${textoLembrete}" 🔔`
-        : `Anotado! Lembro você sobre "${textoLembrete}" em ${_fmtData(diaFinal)} às ${_fmtHora(dataLembrete)} 🔔`;
-      await responder(_confirmLemb);
-    } else {
-      // Sem hora — salva sem data de aviso
-      await AdminAgenda.findByIdAndUpdate(adminObjId, {
-        $push: {
-          'config.lembretes': {
-            texto: textoLembrete,
-            dataEvento: diaFinal,
-            dataAviso: null,
-            enviado: false,
-            criadoEm: new Date()
-          }
-        }
-      });
-      await responder(`Anotei, ${_chefe()}! 📝
-
-🔔 *${textoLembrete}*
-
-Me fala o horário também pra eu te avisar antes! 😊`);
+    // ── CASO A: hora sem dia → perguntar o dia ───────────────────────────────
+    if (hora && !hora.relativo && !dia) {
+      const _brNow = new Date(Date.now() - 3*60*60*1000);
+      const _sem = ['domingo','segunda-feira','terca-feira','quarta-feira','quinta-feira','sexta-feira','sabado'];
+      const _dow = _brNow.getUTCDay();
+      const _dowAm = (_dow + 1) % 7;
+      const _dd  = String(_brNow.getUTCDate()).padStart(2,'0') + '/' + String(_brNow.getUTCMonth()+1).padStart(2,'0');
+      const _brAm = new Date(_brNow.getTime() + 24*60*60*1000);
+      const _ddAm = String(_brAm.getUTCDate()).padStart(2,'0') + '/' + String(_brAm.getUTCMonth()+1).padStart(2,'0');
+      await responder(
+        'Claro! Qual dia voce quer esse lembrete?\n\n' +
+        'Hoje e ' + _sem[_dow] + ', ' + _dd + '\n' +
+        'Amanha e ' + _sem[_dowAm] + ', ' + _ddAm + '\n\n' +
+        'Me fala o dia e confirmo!'
+      );
+      return true;
     }
+
+    // ── CASO B: dia sem hora → perguntar o horario ──────────────────────────
+    if (dia && !hora) {
+      const _diaStr = dia.toLocaleDateString('pt-BR', { weekday:'long', day:'2-digit', month:'2-digit', timeZone:'America/Sao_Paulo' });
+      await responder('Anotei o dia! Que horario voce quer o lembrete em ' + _diaStr + '?');
+      return true;
+    }
+
+    // ── CASO C: hora + dia → criar lembrete completo ────────────────────────
+    if (hora && dia) {
+      const _brMs  = dia.getTime() - (3 * 60 * 60 * 1000);
+      const _brD   = new Date(_brMs);
+      const dataLembrete = new Date(Date.UTC(
+        _brD.getUTCFullYear(), _brD.getUTCMonth(), _brD.getUTCDate(),
+        hora.h + 3, hora.min, 0
+      ));
+      const dataAviso = new Date(dataLembrete.getTime() - 15*60000);
+      console.log('[LEMBRETE NLP] texto="' + (textoLembrete||'(sem texto)') + '" hora_br=' + hora.h + ':' + String(hora.min).padStart(2,'0') + ' utc=' + dataLembrete.toISOString());
+      await AdminAgenda.findByIdAndUpdate(adminObjId, {
+        $push: { 'config.lembretes': { texto: textoLembrete||'Lembrete', dataEvento: dataLembrete, dataAviso, enviado: false, criadoEm: new Date() } }
+      });
+      const _conf = textoLembrete
+        ? ('Anotado! Lembro voce de "' + textoLembrete + '" em ' + _fmtData(dia) + ' as ' + _fmtHora(dataLembrete))
+        : ('Anotado! Lembrete salvo para ' + _fmtData(dia) + ' as ' + _fmtHora(dataLembrete));
+      await responder(_conf);
+      return true;
+    }
+
+    // ── CASO D: relativo (daqui X min/horas) → criar direto ─────────────────
+    if (hora && hora.relativo) {
+      const dataLembrete = new Date(Date.now() + hora.msOffset);
+      const dataAviso    = new Date(dataLembrete.getTime() - 1*60000);
+      await AdminAgenda.findByIdAndUpdate(adminObjId, {
+        $push: { 'config.lembretes': { texto: textoLembrete||'Lembrete', dataEvento: dataLembrete, dataAviso, enviado: false, criadoEm: new Date() } }
+      });
+      const _minutos = Math.round(hora.msOffset / 60000);
+      const _conf = textoLembrete
+        ? ('Anotado! Te aviso em ' + _minutos + ' minuto(s): "' + textoLembrete + '"')
+        : ('Anotado! Te aviso em ' + _minutos + ' minuto(s)');
+      await responder(_conf);
+      return true;
+    }
+
+    // ── CASO E: sem hora e sem dia → salvar anotacao simples ────────────────
+    const _textoFinal = textoLembrete || msg.replace(/rebeca[,\s]*/i,'').replace(/me\s*lembr[ae]\s*(de\s*)?/i,'').trim();
+    await AdminAgenda.findByIdAndUpdate(adminObjId, {
+      $push: { 'config.lembretes': { texto: _textoFinal, dataEvento: null, dataAviso: null, enviado: false, criadoEm: new Date() } }
+    });
+    await responder('Anotei, ' + _chefe() + '! Me fala o dia e horario tambem pra eu te avisar antes.');
     return true;
 
-  // ── VER / EXCLUIR LEMBRETES ─────────────────────────────────────────────
+    // ── VER / EXCLUIR LEMBRETES ─────────────────────────────────────────────
   if (/ver.*lembrete|meus.*lembrete|quais.*lembrete|lista.*lembrete/i.test(msgL)) {
     const admin2 = await AdminAgenda.findById(adminObjId).lean();
     const lembs = (admin2?.config?.lembretes || []).filter(l => !l.enviado).sort((a,b) => new Date(a.dataEvento)-new Date(b.dataEvento));
