@@ -140,18 +140,28 @@ async function transcreverAudio(audioId) {
 async function processarComando(telefone, texto, msgId) {
   try {
     const { AdminAgenda } = require('../models/AgendaServico');
-    // Normalizar telefone para busca — remove 55 do início e busca variações
-    const telLimpo = telefone.replace(/^55/, '');           // 34984039955
-    const telDDD   = telLimpo.replace(/^(\d{2})9(\d{8})$/, '$1$2'); // sem o 9
+    // Normalizar telefone — Meta manda 553484039955, banco tem 5534984039955
+    const telLimpo  = telefone.replace(/^55/, '');          // 3484039955
+    const telCom9   = telLimpo.replace(/^(\d{2})(\d{8})$/, '$19$2'); // 34984039955
+    const telSem9   = telLimpo.replace(/^(\d{2})9(\d{8})$/, '$1$2'); // sem o 9
+    const variantes = [
+      telefone,           // 553484039955
+      telLimpo,           // 3484039955
+      '55'+telLimpo,      // 553484039955
+      telCom9,            // 34984039955
+      '55'+telCom9,       // 5534984039955
+      telSem9,            // 3484039955
+      '55'+telSem9,       // 553484039955
+    ];
+    console.log('[MetaWA] Buscando admin, variantes:', variantes.join(', '));
     const admin = await AdminAgenda.findOne({
       $or: [
-        { whatsapp:        { $in: [telefone, telLimpo, '55'+telLimpo, telDDD] } },
-        { whatsappOficial: { $in: [telefone, telLimpo, '55'+telLimpo, telDDD] } },
-        { telefone:        { $in: [telefone, telLimpo, '55'+telLimpo, telDDD] } },
+        { whatsapp:        { $in: variantes } },
+        { whatsappOficial: { $in: variantes } },
+        { telefone:        { $in: variantes } },
       ],
       ativo: true
     });
-    console.log('[MetaWA] Buscando admin por tel:', telefone, '| limpo:', telLimpo);
     if (admin) console.log('[MetaWA] Admin encontrado:', admin.email);
 
     if (!admin) {
