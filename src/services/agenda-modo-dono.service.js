@@ -177,7 +177,7 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
   if (!admin) return null;
 
   const instancia = await InstanciaWhatsapp.findOne({ adminId: adminObjId, adminTipo: 'agenda' }).lean();
-  if (!instancia) return null;
+  if (!instancia && !instanciaResposta) return null; // Meta API nao precisa de instancia Evolution
 
   async function responder(texto) {
     const _inst = instanciaResposta || instancia;
