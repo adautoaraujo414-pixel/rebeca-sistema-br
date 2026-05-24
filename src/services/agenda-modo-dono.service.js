@@ -1201,15 +1201,18 @@ async function rodarLembretes() {
 // ── RELATÓRIO DIÁRIO AUTOMÁTICO ──────────────────────────────────────────────
 async function rodarRelatorioDiario() {
   try {
+    const LembreteAgenda = require('../models/LembreteAgenda');
     const admins = await require('../models/AgendaServico').AdminAgenda.find({
       ativo: true,
       'config.relatorioDiario': { $ne: false }
     }).lean();
 
-    const ontem     = new Date();
-    ontem.setDate(ontem.getDate() - 1);
-    const ini = new Date(ontem); ini.setHours(0,0,0,0);
-    const fim = new Date(ontem); fim.setHours(23,59,59,999);
+    const ontem = new Date(); ontem.setDate(ontem.getDate() - 1);
+    const hoje  = new Date();
+    const iniOn = new Date(ontem); iniOn.setHours(0,0,0,0);
+    const fimOn = new Date(ontem); fimOn.setHours(23,59,59,999);
+    const iniHj = new Date(hoje);  iniHj.setHours(0,0,0,0);
+    const fimHj = new Date(hoje);  fimHj.setHours(23,59,59,999);
 
     for (const admin of admins) {
       try {
@@ -1217,33 +1220,51 @@ async function rodarRelatorioDiario() {
         if (!telDono) continue;
 
         const inst = await InstanciaWhatsapp.findOne({ adminId: String(admin._id), adminTipo: 'agenda', status: 'conectado' }).lean();
-
-        // Fallback Meta API se não tiver Evolution conectado
-        const instParaEnvio = inst || {
-          _enviarVia: 'meta',
-          apiUrl: 'meta',
-          nomeInstancia: 'meta_oficial'
-        };
+        const instParaEnvio = inst || { _enviarVia: 'meta', apiUrl: 'meta', nomeInstancia: 'meta_oficial' };
         if (!inst && !process.env.META_WA_TOKEN) continue;
 
-        const lancamentos = await FinanceiroAgenda.find({ adminId: String(admin._id), data: { $gte: ini, $lte: fim } }).lean();
+        // Dados de ontem
+        const lancamentos = await FinanceiroAgenda.find({ adminId: String(admin._id), data: { $gte: iniOn, $lte: fimOn } }).lean();
         const entradas    = lancamentos.filter(l => l.tipo === 'receita').reduce((s, l) => s + l.valor, 0);
         const saidas      = lancamentos.filter(l => l.tipo === 'despesa').reduce((s, l) => s + l.valor, 0);
-        const atendidos   = await AgendamentoAgenda.countDocuments({ adminId: String(admin._id), dataHora: { $gte: ini, $lte: fim }, status: { $in: ['confirmado','concluido'] } });
+        const atendidos   = await AgendamentoAgenda.countDocuments({ adminId: String(admin._id), dataHora: { $gte: iniOn, $lte: fimOn }, status: { $in: ['confirmado','concluido'] } });
+
+        // Agenda de hoje
+        const agsHoje = await AgendamentoAgenda.find({ adminId: String(admin._id), dataHora: { $gte: iniHj, $lte: fimHj }, status: { $in: ['pendente','confirmado'] } }).sort({ dataHora: 1 }).lean();
+
+        // Lembretes do dia
+        const lembretesDia = await LembreteAgenda.find({ adminId: String(admin._id), enviado: false, dataEvento: { $gte: iniHj, $lte: fimHj } }).sort({ dataEvento: 1 }).lean();
+
+        // Montar mensagem
+        const resultado   = entradas - saidas;
+        const sinalRes    = resultado >= 0 ? '📈' : '📉';
+        const resumoOntem = atendidos > 0
+          ? `✅ Atendimentos: *${atendidos}*\n💰 Entradas: *R$ ${entradas.toFixed(2)}*\n💸 Gastos: *R$ ${saidas.toFixed(2)}*\n${sinalRes} Resultado: *R$ ${resultado.toFixed(2)}*`
+          : `📭 Nenhum atendimento registrado`;
+
+        const resumoHoje = agsHoje.length > 0
+          ? agsHoje.map(a => `  ${_fmtHora(new Date(a.dataHora))} - ${a.nomeCliente} (${a.nomeServico||'serviço'})`).join('\n')
+          : '  Agenda livre hoje! 🎉';
+
+        const resumoLembretes = lembretesDia.length > 0
+          ? '\n\n⏰ *Lembretes de hoje:*\n' + lembretesDia.map(l => `  ${_fmtHora(new Date(l.dataEvento))} - ${l.texto}`).join('\n')
+          : '';
+
+        const motivacao = atendidos > 0 ? 'Arrasou ontem! 🚀' : 'Hoje vai bombar! 💪';
 
         await _enviarMsg(instParaEnvio, telDono,
-          `🌅 *Bom dia, ${_chefe()}!* Olha o resumo de ontem (${_fmtData(ontem)}) pra você:\n\n` +
-          `✅ Atendimentos: *${atendidos}*\n` +
-          `💰 Entradas: *R$ ${entradas.toFixed(2)}*\n` +
-          `💸 Gastos: *R$ ${saidas.toFixed(2)}*\n` +
-          `📈 Resultado: *R$ ${(entradas - saidas).toFixed(2)}*\n\n` +
-          `${atendidos > 0 ? 'Arrasou ontem! Hoje vai ser ainda melhor. 🚀💙' : 'Hoje vai bombar, pode apostar! 💪💙'}`
+          `🌅 *Bom dia, ${_chefe()}!*\n\n` +
+          `📊 *Ontem (${_fmtData(ontem)}):*\n${resumoOntem}\n\n` +
+          `📅 *Agenda de hoje (${_fmtData(hoje)}):*\n${resumoHoje}` +
+          resumoLembretes +
+          `\n\n${motivacao} 💙`
         );
       } catch(e) {
         console.error('[ModoDono] Erro relatório admin:', admin._id, e.message);
       }
     }
   } catch(e) {
+    console.error('[ModoDono] Erro rodarRelatorioDiario:', e.message);
     console.error('[ModoDono] Erro rodarRelatorioDiario:', e.message);
   }
 }
