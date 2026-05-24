@@ -1170,177 +1170,61 @@ ${total>5?'Tá crescendo muito! Continua assim! 🚀':'Todo cliente novo é uma 
       ultimoValorFinanceiro: { entradas: entradasHoje, saidas: saidasHoje, resultado: entradasHoje - saidasHoje, novaConsulta: true }
     });
 
-    // ── Construir contexto mínimo para o Intent Parser ──
+    // ── Recuperar sessão ──
     const _sesAtual = SM.getSession(adminId, telefone);
-    const _historico = SM.getHistoricoParaAPI(adminId, telefone, 4);
-
-    // ── Contexto de confirmação ──
     const _pendingAction = _sesAtual.ultimaAcaoPendente;
-    const _confirmacaoCtx = _isConfirm && _pendingAction
-      ? `AÇÃO PENDENTE: ${JSON.stringify(_pendingAction)} — dono confirmou.`
-      : _isNeg && _pendingAction
-      ? `AÇÃO PENDENTE: ${JSON.stringify(_pendingAction)} — dono cancelou.`
-      : '';
 
-    // ── STEP 1: Intent Parser — Claude retorna APENAS JSON ──
-    const _intentPrompt = `Você é um parser de intenções para um sistema de agenda de salão/barbearia.
-Analise a mensagem e retorne SOMENTE um JSON, sem texto adicional, sem markdown.
-
-CONTEXTO DA SESSÃO:
-- Assunto atual: ${_sesAtual.assuntoAtual || 'nenhum'}
-- ${_confirmacaoCtx || 'Sem ação pendente'}
-- Histórico recente: ${_historico.map(h=>`[${h.role}]: ${h.content.substring(0,80)}`).join(' | ')}
-
-INTENÇÕES DISPONÍVEIS:
-financeiro_hoje, financeiro_semana, financeiro_mes, registrar_receita, registrar_despesa,
-agenda_hoje, agenda_amanha, agenda_semana, proximo_cliente, clientes_inativos,
-encaixar_cliente, cancelar_agendamento, confirmar_agendamento, historico_cliente,
-bloquear_horario, fechar_dia, liberar_agenda, criar_lembrete, listar_lembretes,
-aniversariantes, clientes_novos, clientes_confirmados, servicos_mais_pedidos,
-resumo_semanal, resumo_mensal, mandar_mensagem, ajuda, saudacao, fora_escopo,
-confirmar_pendente, cancelar_pendente
-
-ENTIDADES (extraia se presentes):
-nome_cliente, horario, data, valor, descricao, servico, telefone
-
-MENSAGEM: "${msg}"
-
-Retorne APENAS este JSON:
-{"intencao":"...", "entidades":{}, "confianca":0.0-1.0, "resposta_direta":null_ou_texto_curto_se_nao_precisar_de_dados}`;
-
-    const _intentResp = await _claude.messages.create({
-      model: 'claude-haiku-4-5',
-      max_tokens: 150,
-      messages: [{ role: 'user', content: _intentPrompt }]
-    });
-
-    let _intent = { intencao: 'fora_escopo', entidades: {}, confianca: 0, resposta_direta: null };
-    try {
-      const _raw = _intentResp.content?.[0]?.text?.trim().replace(/```json|```/g, '').trim();
-      _intent = JSON.parse(_raw);
-    } catch(e) { console.warn('[ActionEngine] parse intent falhou:', e.message); }
-
-    // Salvar intent na sessão
-    SM.updateSession(adminId, telefone, {
-      assuntoAtual: _intent.intencao,
-      entidadesExtraidas: _intent.entidades,
-      lastConfirmedIntent: _isConfirm ? _pendingAction?.tipo : _sesAtual.lastConfirmedIntent
-    });
-
-    // ── STEP 2: Action Router — executa handler real ──
-    const _ent = _intent.entidades || {};
-
-    // Confirmação/cancelamento de ação pendente
+    // ── Confirmação/Cancelamento ANTES do parser ──
     if (_isConfirm && _pendingAction) {
       SM.updateSession(adminId, telefone, { ultimaAcaoPendente: null, aguardandoConfirmacao: false });
-      await responder(_confirmacao() + ' Feito, ' + _chefe() + '! ✅');
-      SM.addAssistantMsg(adminId, telefone, 'Ação confirmada e executada.');
+      const rConf = `${_confirmacao()} Feito, ${_chefe()}! ✅`;
+      await responder(rConf);
+      SM.addAssistantMsg(adminId, telefone, rConf);
       return true;
     }
     if (_isNeg && _pendingAction) {
       SM.updateSession(adminId, telefone, { ultimaAcaoPendente: null, aguardandoConfirmacao: false });
-      await responder('Ok, ' + _chefe() + '! Cancelei. 👍');
-      SM.addAssistantMsg(adminId, telefone, 'Ação cancelada.');
+      const rNeg = `Ok, ${_chefe()}! Cancelei. 👍`;
+      await responder(rNeg);
+      SM.addAssistantMsg(adminId, telefone, rNeg);
       return true;
     }
 
-    // Resposta direta sem necessidade de dados (saudação, fora do escopo etc)
-    if (_intent.resposta_direta && _intent.confianca >= 0.8) {
-      await responder(_intent.resposta_direta);
-      SM.addAssistantMsg(adminId, telefone, _intent.resposta_direta);
-      return true;
-    }
-
-    // ── STEP 3: Executar handler baseado em intenção ──
-    // (usa dados reais do banco — financeiro já carregado acima)
-    const _intencao = _intent.intencao;
-
-    if (_intencao === 'financeiro_hoje' || (_intencao === 'confirmar_pendente' && _sesAtual.assuntoAtual === 'financeiro')) {
-      const resp = `💰 Financeiro de hoje, ${_chefe()}:
-
-Entradas: R$ ${entradasHoje.toFixed(2)}${entradasHoje===0?' (nenhuma ainda)':''}
-Saídas: R$ ${saidasHoje.toFixed(2)}
-Resultado: R$ ${(entradasHoje-saidasHoje).toFixed(2)}`;
-      await responder(resp); SM.addAssistantMsg(adminId, telefone, resp); return true;
-    }
-
-    if (_intencao === 'financeiro_semana') {
-      const resp = `📊 Semana (últimos 7 dias), ${_chefe()}:
-
-Receita: R$ ${receitaSemana.toFixed(2)}${receitaSemana===0?' (nenhuma registrada ainda)':''}`;
-      await responder(resp); SM.addAssistantMsg(adminId, telefone, resp); return true;
-    }
-
-    if (_intencao === 'agenda_hoje') {
-      const resp = totalAgsHoje > 0
-        ? `📅 Agenda de hoje (${totalAgsHoje}):
-${resumoHoje}`
-        : `📅 Agenda livre hoje, ${_chefe()}! Quer encaixar alguém?`;
-      await responder(resp); SM.addAssistantMsg(adminId, telefone, resp); return true;
-    }
-
-    if (_intencao === 'agenda_amanha') {
-      const resp = agsAmanha.length > 0
-        ? `📅 Amanhã (${agsAmanha.length}):
-${resumoAmanha}`
-        : `📅 Amanhã tá livre, ${_chefe()}!`;
-      await responder(resp); SM.addAssistantMsg(adminId, telefone, resp); return true;
-    }
-
-    if (_intencao === 'proximo_cliente') {
-      const prox = agsHoje.find(a => new Date(a.dataHora) > new Date());
-      const resp = prox
-        ? `⏭️ Próximo: ${prox.nomeCliente} às ${_fmtHora(new Date(prox.dataHora))} — ${prox.nomeServico||'serviço'}`
-        : `Sem mais clientes hoje, ${_chefe()}! 🎉`;
-      await responder(resp); SM.addAssistantMsg(adminId, telefone, resp); return true;
-    }
-
-    if (_intencao === 'saudacao') {
-      const resp = `${_saudacao()}, ${_chefe()}! 😊 Tô por aqui. Como posso ajudar?`;
-      await responder(resp); SM.addAssistantMsg(adminId, telefone, resp); return true;
-    }
-
-    if (_intencao === 'ajuda') {
-      const resp = `Oi ${_chefe()}! Posso te ajudar com:
-📅 Agenda (hoje, amanhã, semana)
-💰 Financeiro (entradas, saídas, semana)
-👤 Clientes (histórico, inativos, encaixe)
-⏰ Lembretes
-🔒 Bloquear horários
-
-Digita o que precisa!`;
-      await responder(resp); SM.addAssistantMsg(adminId, telefone, resp); return true;
-    }
-
-    // Para intenções que precisam de mais dados ou são complexas,
-    // usar Claude com prompt FOCADO e contexto mínimo
-    const _ctxMinimo = `Você é a Rebeca, assistente de ${nomeNegocio}. Informal, direto, máximo 4 linhas, sem markdown.
-INTENÇÃO IDENTIFICADA: ${_intencao}
-ENTIDADES: ${JSON.stringify(_ent)}
-DADOS DO BANCO:
-- Agenda hoje: ${resumoHoje}
-- Agenda amanhã: ${resumoAmanha}
-- Financeiro: entradas R${entradasHoje.toFixed(2)}, saídas R${saidasHoje.toFixed(2)}
-- Lembretes: ${resumoLembretes}
-- Faltaram: ${resumoFaltaram}
-REGRA: use APENAS os dados acima. Se não tiver o dado: "não tenho essa informação".
-Chame o dono de ${_chefe()}.
-MENSAGEM: "${msg}"`;
-
-    const _r2 = await _claude.messages.create({
-      model: 'claude-haiku-4-5',
-      max_tokens: 250,
-      messages: [{ role: 'user', content: _ctxMinimo }]
+    // ── STEP 1: Intent Parser ──
+    const _intent = await IntentParser.parseIntent(msg, {
+      assuntoAtual: _sesAtual.assuntoAtual,
+      ultimaAcaoPendente: _pendingAction,
+      historico: SM.getHistoricoParaAPI(adminId, telefone, 4)
     });
-    const respClaude = _r2.content?.[0]?.text?.trim();
-    if (respClaude) {
-      await responder(respClaude);
-      SM.addAssistantMsg(adminId, telefone, respClaude);
-      if (_isConfirm || _isNeg) {
-        SM.updateSession(adminId, telefone, { ultimaAcaoPendente: null, aguardandoConfirmacao: false });
-      }
+
+    SM.updateSession(adminId, telefone, {
+      assuntoAtual: _intent.intencao,
+      entidadesExtraidas: _intent.entidades || {}
+    });
+
+    // ── STEP 2: Action Router — registry declarativo ──
+    const _dadosCtx = {
+      dados: { entradasHoje, saidasHoje, receitaSemana, agsHoje, agsAmanha,
+               resumoHoje, resumoAmanha, resumoLembretes, resumoFaltaram,
+               totalAgsHoje, totalClientes, retornosPend, nomeNegocio, hrAbre, hrFecha },
+      intent: _intent,
+      session: _sesAtual,
+      adminId, telefone
+    };
+
+    const _resultado = ActionRouter.rotear(_intent, _dadosCtx);
+
+    if (_resultado !== null) {
+      await responder(_resultado);
+      SM.addAssistantMsg(adminId, telefone, _resultado);
       return true;
     }
+
+    // ── STEP 3: Fallback SEGURO — sem IA livre ──
+    const _seguro = ActionRouter.respostaSegura();
+    await responder(_seguro);
+    SM.addAssistantMsg(adminId, telefone, _seguro);
+    return true;
   } catch(e) {
     console.error('[ModoDono] Claude fallback erro:', e.message);
   }
