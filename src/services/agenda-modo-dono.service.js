@@ -508,11 +508,11 @@ ${totalAgs > 0 ? 'Tá saindo bem! 💪' : 'Ainda sem registros esse mês.'}`);
     const textoLembrete = textoM ? textoM[1].trim() : msg.replace(/rebeca[,\s]*/i,'').trim();
 
     if (hora) {
-      // Montar data no fuso Brasil (UTC-3): hora local → UTC
-      const _brOffset = -3 * 60;
-      const _localDia = new Date(dia.getTime() + (_brOffset - dia.getTimezoneOffset()) * 60000);
+      // Montar data no fuso Brasil (UTC-3): pega ano/mes/dia do Brasil e converte hora para UTC
+      const _brMs   = dia.getTime() - (3 * 60 * 60 * 1000);
+      const _brDate = new Date(_brMs);
       const dataLembrete = new Date(Date.UTC(
-        _localDia.getUTCFullYear(), _localDia.getUTCMonth(), _localDia.getUTCDate(),
+        _brDate.getUTCFullYear(), _brDate.getUTCMonth(), _brDate.getUTCDate(),
         hora.h + 3, hora.min, 0
       ));
       const dataAviso = new Date(dataLembrete.getTime() - 15*60000);
