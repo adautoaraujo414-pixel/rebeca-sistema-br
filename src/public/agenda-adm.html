@@ -1869,7 +1869,7 @@ async function carregarProximosAgendamentos(){
 
 async function carregarHorariosLivres(){
   try {
-    const d = await api('/'+ADMIN_ID+'/horarios?data='+new Date().toISOString().split('T')[0]);
+    const d = await api('/espaco/'+ADMIN_ID+'/horarios?data='+new Date().toISOString().split('T')[0]);
     const wrap = document.getElementById('horarios-livres');
     const horarios = d?.horarios || d || [];
     if(!horarios.length){
