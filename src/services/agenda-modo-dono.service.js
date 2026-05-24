@@ -627,6 +627,7 @@ ${totalAgs > 0 ? 'Tá saindo bem! 💪' : 'Ainda sem registros esse mês.'}`);
       .replace(/(?:^|\s)(segunda|ter[cç]a|quarta|quinta|sexta|s[aá]bado|domingo)(-feira)?(?:\s|$)/gi, ' ')
       .replace(/\bdia\s+\d{1,2}\b/gi, '')
       .replace(/\bdaqui\s+\S+\s+\S+/gi, '')
+      .replace(/(?:[àa]s?\s*)?\d{1,2}\s+hora[s]?\b/gi, '')
       .replace(/(?:[àa]s?)\s*\d{1,2}(:\d{2})?(h|hs)?\b/gi, '')
       .replace(/\b\d{1,2}(:\d{2})?(h|hs)\b/gi, '')
       .replace(/^[:\s]+/, '')
