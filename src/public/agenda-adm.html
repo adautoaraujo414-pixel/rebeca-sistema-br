@@ -1528,6 +1528,19 @@ document.querySelectorAll('.nav-item').forEach(item => {
         <div class="form-group"><label class="form-label">Duração (min)</label><input class="form-input" id="srv-dur" type="number" placeholder="30"></div>
       </div>
       <div class="form-group"><label class="form-label">Descrição</label><textarea class="form-textarea" id="srv-desc" placeholder="Opcional..."></textarea></div>
+      <div class="form-group">
+        <label class="form-label">Foto do serviço</label>
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+          <label style="cursor:pointer;display:flex;align-items:center;gap:8px;padding:8px 14px;border:1.5px dashed var(--borda);border-radius:var(--radius-sm);font-size:.85em;color:var(--texto2);background:var(--bg);transition:.2s" onmouseover="this.style.borderColor='var(--cor)'" onmouseout="this.style.borderColor='var(--borda)'">
+            📷 Escolher foto
+            <input type="file" accept="image/*" id="srv-foto-input" style="display:none" onchange="srvPreviewFoto(this)">
+          </label>
+          <div id="srv-foto-preview" style="display:none;position:relative">
+            <img id="srv-foto-img" src="" alt="preview" style="width:64px;height:64px;object-fit:cover;border-radius:8px;border:1.5px solid var(--borda)">
+            <button onclick="srvRemoverFoto()" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:var(--vermelho);color:#fff;border:none;cursor:pointer;font-size:.75em;display:flex;align-items:center;justify-content:center;padding:0">×</button>
+          </div>
+        </div>
+      </div>
     </div>
     <div class="modal-footer">
       <button class="btn-secondary" onclick="fecharModal('modal-srv')">Cancelar</button>
@@ -2044,7 +2057,7 @@ async function carregarTabelaServicos(){
     const svcs = d?.servicos||d||[];
     if(!svcs.length){ tbody.innerHTML='<tr><td colspan="6" style="text-align:center;padding:32px">Nenhum serviço cadastrado</td></tr>'; return; }
     tbody.innerHTML = svcs.map(s=>'<tr>'+
-      '<td><b>'+s.nome+'</b></td>'+
+      '<td><div style="display:flex;align-items:center;gap:10px">'+(s.foto?'<img src="'+s.foto+'" style="width:40px;height:40px;object-fit:cover;border-radius:8px;border:1px solid var(--borda);flex-shrink:0">':'<div style="width:40px;height:40px;border-radius:8px;background:var(--cor3);display:flex;align-items:center;justify-content:center;font-size:1.1em;flex-shrink:0">✂️</div>')+'<b>'+s.nome+'</b></div></td>'+
       '<td>'+(s.duracao||30)+' min</td>'+
       '<td>'+fmt(s.preco)+'</td>'+
       '<td>'+(s.categoria||'—')+'</td>'+
@@ -2143,13 +2156,33 @@ async function salvarCliente(){
 }
 
 async function salvarServico(){
-  const payload = {nome: document.getElementById('srv-nome').value.trim(), preco: parseFloat(document.getElementById('srv-preco').value)||0, duracao: parseInt(document.getElementById('srv-dur').value)||30, descricao: document.getElementById('srv-desc').value};
+  const fotoImg = document.getElementById('srv-foto-img');
+  const foto = (fotoImg && fotoImg.src && fotoImg.src.startsWith('data:')) ? fotoImg.src : null;
+  const payload = {nome: document.getElementById('srv-nome').value.trim(), preco: parseFloat(document.getElementById('srv-preco').value)||0, duracao: parseInt(document.getElementById('srv-dur').value)||30, descricao: document.getElementById('srv-desc').value, foto};
   if(!payload.nome) return toast('Informe o nome do serviço', 'erro');
   try {
   const r = await api('/servicos', {method:'POST', body:JSON.stringify(payload)});
-  } catch(e) { console.error('Erro:', e); alert('Erro ao executar ação'); }
-  if(r && r.sucesso){ toast('Serviço salvo ✅'); fecharModal('modal-srv'); carregarTabelaServicos(); }
+  if(r && r.sucesso){ toast('Serviço salvo ✅'); fecharModal('modal-srv'); srvRemoverFoto(); carregarTabelaServicos(); }
   else toast('Erro ao salvar serviço', 'erro');
+  } catch(e) { console.error('Erro:', e); toast('Erro ao salvar serviço', 'erro'); }
+}
+function srvPreviewFoto(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    document.getElementById('srv-foto-img').src = e.target.result;
+    document.getElementById('srv-foto-preview').style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+function srvRemoverFoto() {
+  const inp = document.getElementById('srv-foto-input');
+  const img = document.getElementById('srv-foto-img');
+  const prev = document.getElementById('srv-foto-preview');
+  if(inp) inp.value = '';
+  if(img) img.src = '';
+  if(prev) prev.style.display = 'none';
 }
 
 async function salvarProfissional(){
