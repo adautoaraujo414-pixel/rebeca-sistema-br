@@ -585,11 +585,25 @@ A semana tá zerada por enquanto. Bora divulgar pra encher a agenda! 🚀`);
         })(), dataHora,
         status: 'confirmado', origem: 'whatsapp_dono'
       });
+      // Verificar se tem telefone na mensagem
+      const telM = msg.match(/(?:telefone|fone|cel|celular|número|numero|whatsapp)[:\s]*(\(?\d{2}\)?\s*9?\d{4}[-\s]?\d{4})/i)
+                || msg.match(/(\(?\d{2}\)?\s*9\d{4}[-\s]?\d{4})/);
+      const telCliente = telM ? telM[1].replace(/\D/g,'') : null;
+
+      if (telCliente) {
+        await AgendamentoAgenda.findOneAndUpdate(
+          { adminId: adminObjId, nomeCliente: nome, dataHora },
+          { telefoneCliente: '55' + telCliente }
+        );
+      }
+
       await responder(`Maravilha, ${_chefe()}! 🎉
 
 ✅ *${nome}* encaixado às *${_fmtHora(dataHora)}* de ${_fmtData(dia)}!
 
-Já tá na agenda. Pode mandar o cliente! 💙`);
+Já tá na agenda. Pode mandar o cliente! 💙${telCliente ? '' : '
+
+📱 Se tiver o número dele me passa pra eu poder enviar lembretes!'}`);
     } else if (nome && !hora) {
       await responder(`Certo, ${_chefe()}! *${nome}* — que horas? 😊`);
     } else if (hora && !nome) {
