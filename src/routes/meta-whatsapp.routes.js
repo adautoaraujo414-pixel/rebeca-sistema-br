@@ -160,9 +160,15 @@ async function processarComando(telefone, texto, msgId) {
     if (admin) console.log('[MetaWA] Admin encontrado:', admin.email);
 
     if (!admin) {
-      await MetaWA.enviarTexto(telefone,
-        'Olá! Não encontrei sua conta na Rebeca. Acesse rebeca-sistema-br.onrender.com para se cadastrar.'
-      );
+      // Prospect desconhecido — acionar modo vendedora
+      try {
+        const Vendas = require('../services/rebeca-vendas.service');
+        const resposta = await Vendas.responderProspect(telefone, texto);
+        if (resposta) await MetaWA.enviarTexto(telefone, resposta);
+      } catch(e) {
+        console.error('[MetaWA] Erro vendas:', e.message);
+        await MetaWA.enviarTexto(telefone, 'Olá! Sou a Rebeca. Como posso te ajudar?');
+      }
       return;
     }
 
