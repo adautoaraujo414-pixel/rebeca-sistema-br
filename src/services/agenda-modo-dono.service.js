@@ -154,9 +154,26 @@ function _parseDia(txt) {
 }
 
 function _parseHora(txt) {
+  // 1. Formato original: 10h, 10h30, 10:30
   const m = txt.match(/(\d{1,2})h(?:(\d{2})?)?/i) || txt.match(/(\d{1,2}):(\d{2})/);
-  if (!m) return null;
-  return { h: parseInt(m[1]), min: parseInt(m[2]||'0') };
+  if (m) return { h: parseInt(m[1]), min: parseInt(m[2]||'0') };
+  // 2. "às 22", "as 8", "à 15" — número após preposição
+  const mNum = txt.match(/(?:às?|as?|à)\s+(\d{1,2})(?::(\d{2}))?\b/i);
+  if (mNum) return { h: parseInt(mNum[1]), min: parseInt(mNum[2]||'0') };
+  // 3. Palavras por extenso: "oito da manhã", "duas da tarde"
+  const palavras = {
+    'uma':1,'duas':2,'três':3,'tres':3,'quatro':4,'cinco':5,'seis':6,
+    'sete':7,'oito':8,'nove':9,'dez':10,'onze':11,'doze':12,
+    'treze':13,'quatorze':14,'quinze':15,'dezesseis':16,'dezessete':17,
+    'dezoito':18,'dezenove':19,'vinte':20
+  };
+  const mP = txt.match(/\b(uma|duas|tr[eê]s|quatro|cinco|seis|sete|oito|nove|dez|onze|doze|treze|quatorze|quinze|dezesseis|dezessete|dezoito|dezenove|vinte)\b/i);
+  if (mP) {
+    let h = palavras[mP[1].toLowerCase()];
+    if (/tarde|noite/i.test(txt) && h < 12) h += 12;
+    return { h, min: 0 };
+  }
+  return null;
 }
 
 function _fmtData(d) {
@@ -1005,8 +1022,8 @@ PERSONALIDADE:
 
 CONTEXTO DE AGORA (${new Date().toLocaleString('pt-BR')}):
 - Agendamentos hoje: ${totalAgsHoje === 0 ? 'nenhum' : resumoAgenda}
-- Entradas hoje: R$ ${entradasHoje.toFixed(2)}
-- Saídas hoje: R$ ${saidasHoje.toFixed(2)}
+- Entradas hoje: R$ ${entradasHoje.toFixed(2)}${entradasHoje === 0 ? ' (nenhuma entrada registrada ainda)' : ''}
+- Saídas hoje: R$ ${saidasHoje.toFixed(2)}${saidasHoje === 0 ? ' (nenhuma saída registrada)' : ''}
 - Resultado do dia: R$ ${(entradasHoje - saidasHoje).toFixed(2)}
 
 O DONO DISSE: "${msg}"
@@ -1017,7 +1034,8 @@ INSTRUÇÕES:
 - Se quer agendar cliente sem hora/nome: peça só o que falta
 - Se é uma pergunta geral de negócio: responda com dica prática
 - Se é conversa informal: responda naturalmente como uma funcionária próxima
-- NUNCA invente dados que não estão no contexto
+- NUNCA invente dados que não estão no contexto — se entradas/saídas são R$ 0,00, diga que não há lançamentos, NUNCA crie valores fictícios
+- Use APENAS os números exatos do contexto acima, sem arredondar, estimar ou criar
 - Responda APENAS o necessário, sem floreios desnecessários`
       }]
     });
