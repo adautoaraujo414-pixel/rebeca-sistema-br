@@ -1268,11 +1268,7 @@ async function rodarLembretesPessoais() {
         await _enviarMsg(
           inst || { _enviarVia: 'meta', nomeInstancia: 'meta_oficial' },
           telDono,
-          `🔔 *Lembrete!*
-
-${l.texto}${horaEvento ? '
-
-📅 ' + horaEvento : ''}`
+          `🔔 *Lembrete!*\n\n${l.texto}${horaEvento ? '\n\n📅 ' + horaEvento : ''}`,
         );
         await AdminAgenda.updateOne(
           { _id: adm._id, 'config.lembretes._id': l._id },
