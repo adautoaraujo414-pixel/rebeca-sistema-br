@@ -5,6 +5,7 @@
 // NÃO afeta Delivery nem Corrida. NÃO cria nova instância.
 
 const axios = require('axios');
+const SM = require('./agenda-session-manager');
 const { AdminAgenda, AgendamentoAgenda, FinanceiroAgenda, BloqueioAgenda, ClienteAgenda } = require('../models/AgendaServico');
 const { InstanciaWhatsapp } = require('../models');
 
