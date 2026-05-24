@@ -245,6 +245,12 @@ function _fmtHora(d) {
 async function processarComandoDono(telefone, mensagem, adminId, instanciaResposta = null) {
   const msg = (mensagem || '').trim();
   const msgL = msg.toLowerCase();
+  // ── SESSION: registrar mensagem e recuperar estado ──
+  const _session = SM.addUserMsg(adminId, telefone, msg);
+  const _isConfirm = SM.isConfirmacao(msg);
+  const _isNeg = SM.isNegacao(msg);
+  const _assuntoDetectado = SM.detectarAssunto(msg) || _session.assuntoAtual;
+  SM.updateSession(adminId, telefone, { assuntoAtual: _assuntoDetectado });
   const adminObjId = require('mongoose').Types.ObjectId.isValid(adminId) ? new (require('mongoose').Types.ObjectId)(adminId) : adminId;
 
   const admin = await AdminAgenda.findById(adminObjId).lean();
@@ -1157,85 +1163,93 @@ ${total>5?'Tá crescendo muito! Continua assim! 🚀':'Todo cliente novo é uma 
       : '  nenhum';
     const totalAgsHoje = agsHoje.length;
 
+    // ── Trava financeira: salvar valores atuais na sessão ──
+    SM.updateSession(adminId, telefone, {
+      ultimoValorFinanceiro: { entradas: entradasHoje, saidas: saidasHoje, resultado: entradasHoje - saidasHoje, novaConsulta: true }
+    });
+
+    // ── Construir histórico para API (últimas 6 trocas) ──
+    const _historico = SM.getHistoricoParaAPI(adminId, telefone, 6);
+    const _sesAtual = SM.getSession(adminId, telefone);
+
+    // ── Sistema de contexto persistente ──
+    const _contextoSessao = _sesAtual.assuntoAtual
+      ? `ASSUNTO ATUAL DA CONVERSA: ${_sesAtual.assuntoAtual}`
+      : '';
+    const _acaoPendente = _sesAtual.ultimaAcaoPendente
+      ? `AÇÃO PENDENTE AGUARDANDO CONFIRMAÇÃO: ${JSON.stringify(_sesAtual.ultimaAcaoPendente)}`
+      : '';
+    const _confirmacaoCtx = _isConfirm && _sesAtual.ultimaAcaoPendente
+      ? `O DONO CONFIRMOU com "${msg}" — execute a ação pendente acima.`
+      : _isNeg && _sesAtual.ultimaAcaoPendente
+      ? `O DONO CANCELOU com "${msg}" — cancele a ação pendente e confirme.`
+      : '';
+
+    // Remover última mensagem do histórico pois ela vai no último role:user
+    const _historicoSemUltima = _historico.slice(0, -1);
+
+    const _systemPrompt = `Você é a Rebeca, assistente operacional de ${nomeNegocio}.
+
+PERSONALIDADE:
+- Português brasileiro informal, caloroso, direto
+- Chama o dono de "chefe", "chefão", "chefa", "patrão" — alterna
+- Emojis com moderação (1-2 por mensagem)
+- NUNCA se apresenta
+- Respostas curtas — máximo 4 linhas
+- SEM markdown: sem *, #, _, negrito
+
+REGRAS CRÍTICAS ANTI-ALUCINAÇÃO:
+- NUNCA invente dados financeiros. Se não está no contexto abaixo: diga "não tenho esse dado"
+- NUNCA mude valores já informados sem recalcular do contexto
+- Se o dono disser "sim/ok/pode": vincule à última ação pendente, não trate como nova conversa
+- Mantenha coerência com o histórico da conversa
+
+CONTEXTO OPERACIONAL (${new Date().toLocaleString('pt-BR')}):
+NEGÓCIO: ${nomeNegocio} | Horário: ${hrAbre} às ${hrFecha}
+
+FINANCEIRO HOJE (valores EXATOS do banco — não altere):
+  Entradas: R$ ${entradasHoje.toFixed(2)}${entradasHoje===0?' (nenhuma registrada)':''}
+  Saídas: R$ ${saidasHoje.toFixed(2)}${saidasHoje===0?' (nenhuma)':''}
+  Resultado: R$ ${(entradasHoje-saidasHoje).toFixed(2)}
+  Receita semana: R$ ${receitaSemana.toFixed(2)}${receitaSemana===0?' (nenhuma ainda)':''}
+
+AGENDA HOJE (${totalAgsHoje} agendamentos):
+${resumoHoje}
+
+AGENDA AMANHÃ (${agsAmanha.length}):
+${resumoAmanha}
+
+LEMBRETES: ${resumoLembretes}
+FALTARAM HOJE: ${resumoFaltaram}
+RETORNOS PENDENTES: ${retornosPend} | CLIENTES: ${totalClientes}
+
+${_contextoSessao}
+${_acaoPendente}
+${_confirmacaoCtx}`;
+
+    // Montar messages com histórico real
+    const _messages = [
+      ..._historicoSemUltima,
+      { role: 'user', content: `${_systemPrompt}
+
+MENSAGEM ATUAL DO DONO: "${msg}"` }
+    ];
+
     const r = await _claude.messages.create({
       model: 'claude-haiku-4-5',
       max_tokens: 400,
-      messages: [{
-        role: 'user',
-        content: `Você é a Rebeca, assistente digital de ${nomeNegocio}.
-PERSONALIDADE:
-- Fala em português brasileiro informal, caloroso, animado
-- Chama o dono de "chefe", "chefão", "chefa", "patrão" — alterna sempre
-- Usa emojis com moderação (1-2 por mensagem)
-- NUNCA se apresenta (o dono já te conhece)
-- Respostas curtas e diretas — máximo 4 linhas
-
-CONTEXTO COMPLETO (${new Date().toLocaleString('pt-BR')}):
-NEGÓCIO: ${nomeNegocio} | Horário: ${hrAbre} às ${hrFecha}
-
-HOJE — Agendamentos (${totalAgsHoje}):
-${resumoHoje}
-
-HOJE — Financeiro:
-  Entradas: R$ ${entradasHoje.toFixed(2)}${entradasHoje===0?' (nenhuma registrada ainda)':''}
-  Saídas: R$ ${saidasHoje.toFixed(2)}${saidasHoje===0?' (nenhuma)':''}
-  Resultado: R$ ${(entradasHoje-saidasHoje).toFixed(2)}
-
-SEMANA (últimos 7 dias):
-  Receita acumulada: R$ ${receitaSemana.toFixed(2)}${receitaSemana===0?' (nenhuma ainda)':''}
-
-AMANHÃ — Agendamentos (${agsAmanha.length}):
-${resumoAmanha}
-
-LEMBRETES PENDENTES:
-${resumoLembretes}
-
-CLIENTES QUE FALTARAM HOJE:
-${resumoFaltaram}
-
-RETORNOS PENDENTES: ${retornosPend} cliente(s) aguardando contato
-TOTAL CLIENTES CADASTRADOS: ${totalClientes}
-
-O DONO DISSE: "${msg}"
-
-RACIOCÍNIO — como responder cada tipo de mensagem:
-
-1. AGENDA
-   Hoje/amanhã → lista do contexto com horário e nome.
-   Vazia: "Agenda livre! Quer encaixar alguém?"
-   Semana que vem ou outro período → diz que só tem dados de hoje e amanhã, sugere o painel.
-   NUNCA liste agendamentos que não estão no contexto.
-
-2. FINANCEIRO
-   Use os números EXATOS do contexto.
-   Entradas = R$ 0.00 → "Nenhuma entrada registrada ainda hoje."
-   NUNCA invente ou estime valores.
-
-3. NOME/PRONOME SOLTO
-   Procura no contexto → responde com horário/serviço.
-   Não achou → "Não vi esse nome na agenda de hoje nem amanhã."
-
-4. PERGUNTA GERAL DE NEGÓCIO
-   Dica prática curta (1-2 frases).
-
-5. PEDIDO QUE NÃO FAZ
-   Áudio, foto, ligar → explica que não consegue, oferece texto.
-
-6. DESABAFO
-   Empatia primeiro, depois anima com dado do contexto.
-
-7. FORA DO ESCOPO
-   Leveza e redireciona pro negócio.
-
-INSTRUÇÕES FINAIS:
-- Use APENAS os dados do contexto acima
-- Se não está no contexto: diga que não tem esse dado
-- Sem markdown: sem #, *, _, negrito
-- Máximo 3 linhas por resposta`
-      }]
+      messages: _messages
     });
     const respClaude = r.content?.[0]?.text?.trim();
-    if (respClaude) { await responder(respClaude); return true; }
+    if (respClaude) {
+      await responder(respClaude);
+      SM.addAssistantMsg(adminId, telefone, respClaude);
+      // Limpar ação pendente após confirmação/negação
+      if (_isConfirm || _isNeg) {
+        SM.updateSession(adminId, telefone, { ultimaAcaoPendente: null, aguardandoConfirmacao: false });
+      }
+      return true;
+    }
   } catch(e) {
     console.error('[ModoDono] Claude fallback erro:', e.message);
   }
