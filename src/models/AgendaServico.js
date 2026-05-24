@@ -47,7 +47,8 @@ const adminAgendaSchema = new mongoose.Schema({
   configBot: {
     ativo:          { type: Boolean, default: false },
     foraHorario:    { type: Boolean, default: false },
-    linkAgenda:     { type: Boolean, default: true  }
+    linkAgenda:     { type: Boolean, default: true  },
+    atenderClientes: { type: Boolean, default: false }, // Rebeca atende clientes pelo WhatsApp
   },
   createdAt: { type: Date, default: Date.now }
 });

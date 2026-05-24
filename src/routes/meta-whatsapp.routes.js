@@ -243,8 +243,11 @@ async function processarComando(telefone, texto, msgId) {
     if (admin) console.log('[MetaWA] Admin encontrado:', admin.email);
 
     if (!admin) {
-      // Numero nao e o dono — atender como cliente
-      await processarModoCliente(telefone, texto, tipo, msg);
+      // Numero nao e o dono — verificar se atendimento de clientes está ativo
+      const { AdminAgenda: AA } = require('../models/AgendaServico');
+      const adminDono = await AA.findOne({ ativo: true, 'configBot.atenderClientes': true }).lean();
+      if (!adminDono) return; // Dono nao ativou atendimento de clientes
+      await processarModoCliente(telefone, texto, tipo, msg, String(adminDono._id));
       return;
     }
 
@@ -288,17 +291,23 @@ module.exports = router;
 
 // ── MODO CLIENTE ─────────────────────────────────────────────────────────────
 // Qualquer numero que nao seja o dono é atendido como cliente
-async function processarModoCliente(telefone, texto, tipo, msgObj) {
+async function processarModoCliente(telefone, texto, tipo, msgObj, adminIdParam) {
   try {
-    const { AdminAgenda, AgendamentoAgenda, ClienteAgenda } = require('../models/AgendaServico');
+    const { AdminAgenda, AgendamentoAgenda, ClienteAgenda, ServicoAgenda } = require('../models/AgendaServico');
     const mongoose = require('mongoose');
 
-    // Pegar o primeiro admin ativo (ajustar para multi-tenant futuramente)
-    const admin = await AdminAgenda.findOne({ ativo: true }).lean();
+    const adminObjId = new mongoose.Types.ObjectId(adminIdParam);
+    const admin = await AdminAgenda.findById(adminObjId).lean();
     if (!admin) return;
 
-    const adminId    = String(admin._id);
-    const adminObjId = new mongoose.Types.ObjectId(adminId);
+    const adminId = String(admin._id);
+
+    // Buscar servicos reais cadastrados pelo ADM
+    const servicos = await ServicoAgenda.find({ adminId: adminObjId, ativo: true }).sort({ ordem: 1 }).lean();
+    const listaServicos = servicos.map(s =>
+      `${s.nome} — R$ ${Number(s.preco).toFixed(2)} (${s.duracao}min)`
+    ).join('\n');
+    const nomesServicos = servicos.map(s => s.nome.toLowerCase());
     const msgL       = (texto || '').toLowerCase().trim();
 
     // Buscar cliente pelo telefone
@@ -389,7 +398,8 @@ PERSONALIDADE:
 
 CONTEXTO:
 - Horários já ocupados (hoje/amanhã): ${ocupados || 'nenhum ainda — agenda livre!'}
-- Serviços disponíveis: corte, escova, barba, manicure, pedicure, sobrancelha, cílios, massagem, tintura, hidratação
+- Serviços disponíveis:
+${listaServicos || 'consultar disponibilidade'}
 
 CLIENTE DISSE: "${texto}"
 
@@ -408,8 +418,14 @@ INSTRUÇÕES:
     // Tentar extrair agendamento da mensagem do cliente
     const horaM    = texto.match(/(\d{1,2})[h:](\d{0,2})|(\d{1,2})\s*horas?/i);
     const nomeCliM = texto.match(/(?:sou\s+a?\s*|me\s+chamo\s+|meu\s+nome\s+[eé]\s+)([A-Za-zÀ-ú]+(?:\s+[A-Za-zÀ-ú]+)?)/i);
-    const servicoList = ['corte','escova','barba','sobrancelha','cílios','cilios','manicure','pedicure','massagem','tintura','hidratação','progressiva','botox','penteado','maquiagem','design'];
-    const servicoAchado = servicoList.find(s => msgL.includes(s));
+    // Usar servicos reais do ADM + lista fallback
+    const servicoListReal = nomesServicos.length > 0 ? nomesServicos :
+      ['corte','escova','barba','sobrancelha','cilios','manicure','pedicure','massagem','tintura','hidratação','progressiva','botox','penteado','maquiagem','design'];
+    const servicoAchado = servicoListReal.find(s => msgL.includes(s));
+    // Nome formatado do servico (pegar do cadastro se existir)
+    const servicoCadastrado = servicos.find(s => s.nome.toLowerCase() === servicoAchado);
+    const nomeServicoFinal = servicoCadastrado ? servicoCadastrado.nome : (servicoAchado ? servicoAchado.charAt(0).toUpperCase() + servicoAchado.slice(1) : 'A definir');
+    const valorServico = servicoCadastrado ? servicoCadastrado.preco : null;
     const diaM = texto.match(/amanhã|amanha/i);
 
     if (horaM && servicoAchado) {
@@ -425,7 +441,8 @@ INSTRUÇÕES:
       await AgendamentoAgenda.create({
         adminId:         adminObjId,
         nomeCliente,
-        nomeServico:     servicoAchado.charAt(0).toUpperCase() + servicoAchado.slice(1),
+        nomeServico:     nomeServicoFinal,
+        valor:           valorServico,
         dataHora,
         telefoneCliente: telefone,
         status:          'pendente',
@@ -439,7 +456,7 @@ INSTRUÇÕES:
         await MetaWA.enviarTexto(telDono,
           `📅 *Novo agendamento!* ${frase}\n\n` +
           `👤 *${nomeCliente}*\n` +
-          `✂️ ${servicoAchado.charAt(0).toUpperCase() + servicoAchado.slice(1)}\n` +
+          `✂️ ${nomeServicoFinal}${valorServico ? ' — R$ '+Number(valorServico).toFixed(2) : ''}\n` +
           `📆 ${dataHora.toLocaleDateString('pt-BR')} às ${String(h).padStart(2,'0')}:${String(min).padStart(2,'0')}\n` +
           `📱 ${telefone}`
         );
