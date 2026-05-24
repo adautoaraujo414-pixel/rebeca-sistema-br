@@ -134,26 +134,27 @@ Sempre que precisar, é só me chamar por aqui. 😊`;
 
 // ── Parser de data/hora simples ───────────────────────────────────────────────
 function _parseDia(txt) {
-  // Usa data atual no fuso Brasil (UTC-3)
   const agora = new Date();
-  const brOffset = -3 * 60;
-  const hoje = new Date(agora.getTime() + (brOffset - agora.getTimezoneOffset()) * 60000);
-  hoje.setUTCHours(0, 0, 0, 0); // zera hora em UTC para representar meia-noite Brasil
-  if (/\bhoje\b/i.test(txt)) return new Date(agora);
-  if (/\bamanhã\b|\bamanha\b/i.test(txt)) {
-    const d = new Date(hoje); d.setUTCDate(d.getUTCDate()+1); return d;
+  const brMs   = agora.getTime() - (3 * 60 * 60 * 1000);
+  const brDate = new Date(brMs);
+  const ano = brDate.getUTCFullYear();
+  const mes = brDate.getUTCMonth();
+  const dia = brDate.getUTCDate();
+  const dow = brDate.getUTCDay();
+  const mkData = (a, m, d) => new Date(Date.UTC(a, m, d, 3, 0, 0));
+  if (/\bhoje\b/i.test(txt))               return new Date(agora);
+  if (/\bamanhã\b|\bamanha\b/i.test(txt)) return mkData(ano, mes, dia + 1);
+  const diasMap = { domingo:0, segunda:1, 'segunda-feira':1, terca:2, 'terça':2, 'terça-feira':2, quarta:3, 'quarta-feira':3, quinta:4, 'quinta-feira':4, sexta:5, 'sexta-feira':5, sabado:6, 'sábado':6 };
+  const quevem = /que\s*vem|próxim[oa]|proxim[oa]/i.test(txt);
+  for (const [nome, alvo] of Object.entries(diasMap)) {
+    if (new RegExp('\\b' + nome + '\\b', 'i').test(txt)) {
+      let diff = (alvo - dow + 7) % 7;
+      if (diff === 0 || quevem) diff += 7;
+      return mkData(ano, mes, dia + diff);
+    }
   }
-  if (/\bsegunda\b/i.test(txt)) { const d = new Date(hoje); d.setDate(d.getDate()+(1+(7-d.getDay())%7||7)); return d; }
-  if (/\bterca\b|\bterça\b/i.test(txt)) { const d = new Date(hoje); d.setDate(d.getDate()+(2+(7-d.getDay())%7||7)); return d; }
-  if (/\bquarta\b/i.test(txt)) { const d = new Date(hoje); d.setDate(d.getDate()+(3+(7-d.getDay())%7||7)); return d; }
-  if (/\bquinta\b/i.test(txt)) { const d = new Date(hoje); d.setDate(d.getDate()+(4+(7-d.getDay())%7||7)); return d; }
-  if (/\bsexta\b/i.test(txt)) { const d = new Date(hoje); d.setDate(d.getDate()+(5+(7-d.getDay())%7||7)); return d; }
-  // dd/mm
   const dm = txt.match(/(\d{1,2})\/(\d{1,2})/);
-  if (dm) {
-    const d = new Date(hoje.getFullYear(), parseInt(dm[2])-1, parseInt(dm[1]));
-    return d;
-  }
+  if (dm) return mkData(ano, parseInt(dm[2])-1, parseInt(dm[1]));
   return null;
 }
 
