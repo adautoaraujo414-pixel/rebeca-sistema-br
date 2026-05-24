@@ -1,3 +1,86 @@
+python3 << 'PYEOF'
+import subprocess
+
+path = '/workspaces/rebeca-sistema-br/src/services/agenda-modo-dono.service.js'
+with open(path) as f:
+    content = f.read()
+
+# ══════════════════════════════════════════════════════
+# 3. LEMBRETE 30min — usar Meta API quando não tem Evolution
+# ══════════════════════════════════════════════════════
+old_lembrete = """        const inst = await InstanciaWhatsapp.findOne({ adminId: String(ag.adminId), adminTipo: 'agenda', status: 'conectado' }).lean();
+        if (!inst) continue;
+
+        const hora = _fmtHora(new Date(ag.dataHora));
+        await _enviarMsg(inst, telDono,"""
+
+new_lembrete = """        const inst = await InstanciaWhatsapp.findOne({ adminId: String(ag.adminId), adminTipo: 'agenda', status: 'conectado' }).lean();
+
+        // Fallback Meta API se não tiver Evolution conectado
+        const instParaEnvio = inst || {
+          _enviarVia: 'meta',
+          apiUrl: 'meta',
+          nomeInstancia: 'meta_oficial'
+        };
+
+        const hora = _fmtHora(new Date(ag.dataHora));
+        await _enviarMsg(instParaEnvio, telDono,"""
+
+if old_lembrete in content:
+    content = content.replace(old_lembrete, new_lembrete)
+    print('✅ Lembrete 30min — fallback Meta API adicionado')
+else:
+    print('⚠️ Lembrete 30min não encontrado exato')
+
+# ══════════════════════════════════════════════════════
+# 4. RELATÓRIO DIÁRIO — usar Meta API quando não tem Evolution
+# ══════════════════════════════════════════════════════
+old_relatorio = """        const inst = await InstanciaWhatsapp.findOne({ adminId: String(admin._id), adminTipo: 'agenda', status: 'conectado' }).lean();
+        if (!inst) continue;
+
+        const lancamentos = await FinanceiroAgenda.find"""
+
+new_relatorio = """        const inst = await InstanciaWhatsapp.findOne({ adminId: String(admin._id), adminTipo: 'agenda', status: 'conectado' }).lean();
+
+        // Fallback Meta API se não tiver Evolution conectado
+        const instParaEnvio = inst || {
+          _enviarVia: 'meta',
+          apiUrl: 'meta',
+          nomeInstancia: 'meta_oficial'
+        };
+        if (!inst && !process.env.META_WA_TOKEN) continue;
+
+        const lancamentos = await FinanceiroAgenda.find"""
+
+if old_relatorio in content:
+    content = content.replace(old_relatorio, new_relatorio)
+    print('✅ Relatório diário — fallback Meta API adicionado')
+else:
+    print('⚠️ Relatório diário não encontrado exato — verificando...')
+    idx = content.find('rodarRelatorioDiario')
+    print(repr(content[idx:idx+400]))
+
+# Corrigir também o _enviarMsg no relatório para usar instParaEnvio
+old_envio_rel = """        await _enviarMsg(inst, telDono,
+          `🌅 *Bom dia, ${_chefe()}!*"""
+new_envio_rel = """        await _enviarMsg(instParaEnvio, telDono,
+          `🌅 *Bom dia, ${_chefe()}!*"""
+if old_envio_rel in content:
+    content = content.replace(old_envio_rel, new_envio_rel)
+    print('✅ _enviarMsg relatório usa instParaEnvio')
+
+with open(path, 'w') as f:
+    f.write(content)
+
+subprocess.run(['git','-C','/workspaces/rebeca-sistema-br','add','-A'])
+r = subprocess.run(['git','-C','/workspaces/rebeca-sistema-br','commit','-m',
+    'fix: lembretes e relatorio diario com fallback Meta API — dispara mesmo sem Evolution'],
+    capture_output=True, text=True)
+print(r.stdout.strip())
+r2 = subprocess.run(['git','-C','/workspaces/rebeca-sistema-br','push','origin','main'],
+    capture_output=True, text=True)
+print(r2.stdout or r2.stderr)
+PYEOF
 'use strict';
 
 const express   = require('express');

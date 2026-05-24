@@ -937,10 +937,16 @@ async function rodarLembretes() {
         if (!telDono) continue;
 
         const inst = await InstanciaWhatsapp.findOne({ adminId: String(ag.adminId), adminTipo: 'agenda', status: 'conectado' }).lean();
-        if (!inst) continue;
+
+        // Fallback Meta API se não tiver Evolution conectado
+        const instParaEnvio = inst || {
+          _enviarVia: 'meta',
+          apiUrl: 'meta',
+          nomeInstancia: 'meta_oficial'
+        };
 
         const hora = _fmtHora(new Date(ag.dataHora));
-        await _enviarMsg(inst, telDono,
+        await _enviarMsg(instParaEnvio, telDono,
           `⏰ *Atenção, ${_chefe()}!*\n\n` +
           `*${ag.nomeCliente}* tá chegando em uns 30 minutinhos! 😊\n` +
           `🕐 Horário: ${hora}\n` +
@@ -978,14 +984,21 @@ async function rodarRelatorioDiario() {
         if (!telDono) continue;
 
         const inst = await InstanciaWhatsapp.findOne({ adminId: String(admin._id), adminTipo: 'agenda', status: 'conectado' }).lean();
-        if (!inst) continue;
+
+        // Fallback Meta API se não tiver Evolution conectado
+        const instParaEnvio = inst || {
+          _enviarVia: 'meta',
+          apiUrl: 'meta',
+          nomeInstancia: 'meta_oficial'
+        };
+        if (!inst && !process.env.META_WA_TOKEN) continue;
 
         const lancamentos = await FinanceiroAgenda.find({ adminId: String(admin._id), data: { $gte: ini, $lte: fim } }).lean();
         const entradas    = lancamentos.filter(l => l.tipo === 'receita').reduce((s, l) => s + l.valor, 0);
         const saidas      = lancamentos.filter(l => l.tipo === 'despesa').reduce((s, l) => s + l.valor, 0);
         const atendidos   = await AgendamentoAgenda.countDocuments({ adminId: String(admin._id), dataHora: { $gte: ini, $lte: fim }, status: { $in: ['confirmado','concluido'] } });
 
-        await _enviarMsg(inst, telDono,
+        await _enviarMsg(instParaEnvio, telDono,
           `🌅 *Bom dia, ${_chefe()}!* Olha o resumo de ontem (${_fmtData(ontem)}) pra você:\n\n` +
           `✅ Atendimentos: *${atendidos}*\n` +
           `💰 Entradas: *R$ ${entradas.toFixed(2)}*\n` +
