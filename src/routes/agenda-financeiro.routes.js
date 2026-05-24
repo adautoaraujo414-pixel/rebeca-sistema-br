@@ -2,6 +2,7 @@
 // ROTAS FINANCEIRO + CONTAS A PAGAR + FILA DE ENCAIXE
 // Rebeca Agenda
 // ============================================
+const mongoose = require('mongoose');
 const express = require('express');
 const router = express.Router();
 const { AdminAgenda, AgendamentoAgenda, ServicoAgenda, ClienteAgenda } = require('../models/AgendaServico');
@@ -30,14 +31,16 @@ router.get('/financeiro/resumo', authAgenda, async (req, res) => {
     const a = parseInt(ano) || new Date().getFullYear();
     const inicio = new Date(a, m - 1, 1);
     const fim = new Date(a, m, 0, 23, 59, 59);
-
-    // Aceita adminId como ObjectId ou String (compatibilidade)
-    const adminIds = [req.adminId, String(req.adminId)];
+    // Query compatível com adminId salvo como ObjectId ou String
+    const mongoose = require('mongoose');
+    const _sid = String(req.adminId);
+    const _oid = mongoose.Types.ObjectId.isValid(_sid) ? new mongoose.Types.ObjectId(_sid) : null;
+    const _filtroAdmin = _oid ? { $or: [{ adminId: _oid }, { adminId: _sid }] } : { adminId: req.adminId };
     const [receitas, despesas, contas, agendamentos] = await Promise.all([
-      FinanceiroAgenda.find({ adminId: { $in: adminIds }, tipo: 'receita', data: { $gte: inicio, $lte: fim } }),
-      FinanceiroAgenda.find({ adminId: { $in: adminIds }, tipo: 'despesa', data: { $gte: inicio, $lte: fim } }),
-      ContaPagarAgenda.find({ adminId: { $in: adminIds }, vencimento: { $gte: inicio, $lte: fim } }),
-      AgendamentoAgenda.find({ adminId: { $in: adminIds }, dataHora: { $gte: inicio, $lte: fim }, status: { $ne: 'cancelado' } })
+      FinanceiroAgenda.find({ ..._filtroAdmin, tipo: 'receita', data: { $gte: inicio, $lte: fim } }),
+      FinanceiroAgenda.find({ ..._filtroAdmin, tipo: 'despesa', data: { $gte: inicio, $lte: fim } }),
+      ContaPagarAgenda.find({ ..._filtroAdmin, vencimento: { $gte: inicio, $lte: fim } }),
+      AgendamentoAgenda.find({ ..._filtroAdmin, dataHora: { $gte: inicio, $lte: fim }, status: { $ne: 'cancelado' } })
     ]);
 
     const totalReceitas = receitas.reduce((s, r) => s + r.valor, 0);
@@ -89,7 +92,11 @@ router.get('/financeiro', authAgenda, async (req, res) => {
     const a = parseInt(ano) || new Date().getFullYear();
     const inicio = new Date(a, m - 1, 1);
     const fim = new Date(a, m, 0, 23, 59, 59);
-    const query = { adminId: { $in: [req.adminId, String(req.adminId)] }, data: { $gte: inicio, $lte: fim } };
+    const mongoose2 = require('mongoose');
+    const _sid2 = String(req.adminId);
+    const _oid2 = mongoose2.Types.ObjectId.isValid(_sid2) ? new mongoose2.Types.ObjectId(_sid2) : null;
+    const _fa2 = _oid2 ? { $or: [{ adminId: _oid2 }, { adminId: _sid2 }] } : { adminId: req.adminId };
+    const query = { ..._fa2, data: { $gte: inicio, $lte: fim } };
     if (tipo) query.tipo = tipo;
     const itens = await FinanceiroAgenda.find(query).sort({ data: -1 });
     res.json({ sucesso: true, itens });
