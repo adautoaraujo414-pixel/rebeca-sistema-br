@@ -325,42 +325,85 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
   }
 
   // ── CANCELAR AGENDAMENTO ─────────────────────────────────────────────────
-  if (/cancela\s*(o\s*)?(agendamento|hor[aá]rio|cliente|atendimento)|cancelado|cancela\s+\d|n[aã]o\s+vem|desistiu|desmarca|remove\s+(o\s*)?agendamento|tira\s+(o\s*)?hor[aá]rio|cliente\s+(cancelou|desistiu|n[aã]o\s+vem)/i.test(msgL)) {
+  if (/\bcancela\b|\bcancelado\b|\bn[aã]o\s+vem\b|\bdesistiu\b|\bdesmarca\b|\bn[aã]o\s+vai\s+vir\b|\bcliente\s+cancelou\b/i.test(msgL)) {
     const hora = _parseHora(msgL);
-    const dia = _parseDia(msgL) || new Date();
+    const dia  = _parseDia(msgL) || new Date();
     if (hora) {
-      const ini = new Date(dia); ini.setHours(hora.h, hora.min-5, 0, 0);
-      const fim = new Date(dia); fim.setHours(hora.h, hora.min+5, 0, 0);
+      const ini = new Date(dia); ini.setHours(hora.h, hora.min - 5, 0, 0);
+      const fim = new Date(dia); fim.setHours(hora.h, hora.min + 5, 0, 0);
       const ag = await AgendamentoAgenda.findOne({
-        adminId: adminObjId, dataHora: { $gte: ini, $lte: fim }, status: { $ne: 'cancelado' }
+        adminId: adminObjId, dataHora: { $gte: ini, $lte: fim },
+        status: { $ne: 'cancelado' }
       }).lean();
       if (ag) {
         await AgendamentoAgenda.findByIdAndUpdate(ag._id, { status: 'cancelado' });
-        await responder(`Feito, ${_chefe()}! 😊\n\nCancelei o agendamento de *${ag.nomeCliente}* às ${_fmtHora(new Date(ag.dataHora))}. Horário liberado! 🔓`);
+        await responder(`Feito, ${_chefe()}! 🔓\n\n*${ag.nomeCliente}* às ${_fmtHora(new Date(ag.dataHora))} cancelado. Horário livre! 😊`);
         return true;
       }
     }
-    await responder(`${_erro()} Tente assim: *Rebeca, cancela o agendamento das 14h* 😊`);
+    const nomeM2 = msg.match(/cancela\s+(?:a\s+|o\s+)?([A-Za-zÀ-ú]+(?:\s+[A-Za-zÀ-ú]+)?)/i)
+                || msg.match(/desmarca\s+(?:a\s+|o\s+)?([A-Za-zÀ-ú]+(?:\s+[A-Za-zÀ-ú]+)?)/i)
+                || msg.match(/([A-Za-zÀ-ú]+(?:\s+[A-Za-zÀ-ú]+)?)\s+(?:n[aã]o\s+vem|cancelou|desistiu|n[aã]o\s+vai\s+vir)/i);
+    const nomeCli2 = nomeM2 ? nomeM2[1].trim() : null;
+    if (nomeCli2) {
+      const ini = new Date(dia); ini.setHours(0,0,0,0);
+      const fim = new Date(dia); fim.setHours(23,59,59,999);
+      const ag = await AgendamentoAgenda.findOne({
+        adminId: adminObjId,
+        nomeCliente: { $regex: nomeCli2, $options: 'i' },
+        dataHora: { $gte: ini, $lte: fim },
+        status: { $ne: 'cancelado' }
+      }).lean();
+      if (ag) {
+        await AgendamentoAgenda.findByIdAndUpdate(ag._id, { status: 'cancelado' });
+        await responder(`Cancelado, ${_chefe()}! 🔓\n\n*${ag.nomeCliente}* às ${_fmtHora(new Date(ag.dataHora))} removido. Horário livre! 😊`);
+        return true;
+      }
+      await responder(`Não achei agendamento de *${nomeCli2}* hoje não, ${_chefe()}. Confere o nome? 🤔`);
+      return true;
+    }
+    await responder(`Me fala o horário ou o nome, ${_chefe()}!\nTipo: *cancela as 14h* ou *a Maria não vem* 😊`);
     return true;
   }
 
   // ── CONFIRMAR AGENDAMENTO ────────────────────────────────────────────────
-  if (/confirma\s*(o\s*)?(agendamento|hor[aá]rio|cliente|atendimento)|confirmado|confirma\s+\d|pode\s+vir|vai\s+vir|client[eo]\s+confirmou|confirma\s+(a\s+)?(visita|ida)/i.test(msgL)) {1,2}h\b/i.test(msgL)) {
+  if (/\bconfirma\b|\bconfirmado\b|\bpode\s+vir\b|\bvai\s+vir\b|\bcliente\s+confirmou\b/i.test(msgL)) {
     const hora = _parseHora(msgL);
-    const dia = _parseDia(msgL) || new Date();
+    const dia  = _parseDia(msgL) || new Date();
     if (hora) {
-      const ini = new Date(dia); ini.setHours(hora.h, hora.min-5, 0, 0);
-      const fim = new Date(dia); fim.setHours(hora.h, hora.min+5, 0, 0);
+      const ini = new Date(dia); ini.setHours(hora.h, hora.min - 5, 0, 0);
+      const fim = new Date(dia); fim.setHours(hora.h, hora.min + 5, 0, 0);
       const ag = await AgendamentoAgenda.findOne({
-        adminId: adminObjId, dataHora: { $gte: ini, $lte: fim }, status: 'pendente'
+        adminId: adminObjId, dataHora: { $gte: ini, $lte: fim },
+        status: { $in: ['pendente','confirmado'] }
       }).lean();
       if (ag) {
         await AgendamentoAgenda.findByIdAndUpdate(ag._id, { status: 'confirmado' });
-        await responder(`Maravilha, ${_chefe()}! 🎉\n\nConfirmei o horário de *${ag.nomeCliente}* às ${_fmtHora(new Date(ag.dataHora))}. Pode esperar o cliente! 💙`);
+        await responder(`Maravilha, ${_chefe()}! 🎉\n\n✅ *${ag.nomeCliente}* confirmado às ${_fmtHora(new Date(ag.dataHora))}. Pode esperar! 💙`);
         return true;
       }
     }
-    await responder(`${_erro()} Tente assim: *Rebeca, confirma o agendamento das 14h* 😊`);
+    const nomeM = msg.match(/confirma\s+(?:a\s+|o\s+)?([A-Za-zÀ-ú]+(?:\s+[A-Za-zÀ-ú]+)?)/i)
+               || msg.match(/([A-Za-zÀ-ú]+(?:\s+[A-Za-zÀ-ú]+)?)\s+(?:confirmou|vai\s+vir|pode\s+vir)/i);
+    const nomeCli = nomeM ? nomeM[1].trim() : null;
+    if (nomeCli) {
+      const ini = new Date(dia); ini.setHours(0,0,0,0);
+      const fim = new Date(dia); fim.setHours(23,59,59,999);
+      const ag = await AgendamentoAgenda.findOne({
+        adminId: adminObjId,
+        nomeCliente: { $regex: nomeCli, $options: 'i' },
+        dataHora: { $gte: ini, $lte: fim },
+        status: { $in: ['pendente','confirmado'] }
+      }).lean();
+      if (ag) {
+        await AgendamentoAgenda.findByIdAndUpdate(ag._id, { status: 'confirmado' });
+        await responder(`Confirmado, ${_chefe()}! ✅\n\n*${ag.nomeCliente}* às ${_fmtHora(new Date(ag.dataHora))} — anotado! 💙`);
+        return true;
+      }
+      await responder(`Não achei agendamento pra *${nomeCli}* hoje não, ${_chefe()}. Confere o nome? 🤔`);
+      return true;
+    }
+    await responder(`Me fala o horário ou o nome, ${_chefe()}!\nTipo: *confirma as 14h* ou *a Maria confirmou* 😊`);
     return true;
   }
 
