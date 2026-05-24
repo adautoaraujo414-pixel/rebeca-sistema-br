@@ -50,7 +50,7 @@ input,select,textarea{font-family:'Inter',sans-serif}
 
 /* ─── LOGIN ─── */
 .login-wrap{min-height:100vh;display:flex;align-items:stretch;width:100%;overflow:hidden;background:#0d0d0d}
-.login-left{flex:1;display:flex;flex-direction:column;justify-content:center;padding:60px 56px;background:linear-gradient(135deg,#0d0d0d 0%,#1a1a2e 100%);position:relative;overflow:hidden}
+.login-left{flex:1;display:flex;flex-direction:column;justify-content:flex-start;padding:48px 48px 48px 56px;background:linear-gradient(135deg,#0d0d0d 0%,#1a1a2e 100%);position:relative;overflow-y:auto;overflow-x:hidden}
 .login-left::before{content:'';position:absolute;top:-200px;right:-100px;width:500px;height:500px;background:radial-gradient(circle,rgba(255,107,0,.12) 0%,transparent 70%);pointer-events:none}
 .login-left::after{content:'';position:absolute;bottom:-150px;left:-50px;width:400px;height:400px;background:radial-gradient(circle,rgba(255,107,0,.06) 0%,transparent 70%);pointer-events:none}
 .login-brand{display:flex;align-items:center;gap:12px;margin-bottom:56px}
@@ -64,6 +64,13 @@ input,select,textarea{font-family:'Inter',sans-serif}
 .login-features{display:flex;flex-direction:column;gap:14px}
 .login-feat{display:flex;align-items:center;gap:12px;font-size:.88rem;color:rgba(255,255,255,.7)}
 .login-feat-icon{width:32px;height:32px;border-radius:9px;background:rgba(255,107,0,.15);display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0}
+.login-chats{display:flex;flex-direction:column;gap:16px;margin-top:8px}
+.lc-label{font-size:.72rem;font-weight:700;color:rgba(255,107,0,.9);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px}
+.lc-card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:7px;backdrop-filter:blur(8px)}
+.lc-row{display:flex}.lc-row.r{justify-content:flex-end}
+.lc-bubble{display:inline-block;border-radius:12px;padding:8px 12px;font-size:.75rem;line-height:1.5;max-width:82%}
+.lc-bubble.c{background:rgba(255,255,255,.1);color:rgba(255,255,255,.9);border-bottom-left-radius:3px}
+.lc-bubble.r{background:#ff6b00;color:#fff;border-bottom-right-radius:3px}
 .login-right{width:480px;display:flex;flex-direction:column;justify-content:center;padding:60px 48px;background:#fff}
 .login-card{background:transparent;border-radius:0;padding:0;width:100%;max-width:100%;box-shadow:none}
 .login-logo{text-align:left;margin-bottom:36px}
@@ -800,11 +807,30 @@ document.querySelectorAll('.nav-item').forEach(item => {
     </div>
     <div class="login-headline">A agenda que<br>trabalha por <span>você.</span></div>
     <p class="login-sub">IA integrada ao WhatsApp que agenda, confirma e gerencia seu financeiro automaticamente — sem esforço.</p>
-    <div class="login-features">
-      <div class="login-feat"><div class="login-feat-icon">🤖</div>IA responde clientes 24h no WhatsApp</div>
-      <div class="login-feat"><div class="login-feat-icon">📅</div>Agenda inteligente sem conflitos</div>
-      <div class="login-feat"><div class="login-feat-icon">💰</div>Financeiro registrado por voz natural</div>
-      <div class="login-feat"><div class="login-feat-icon">📊</div>Dashboard completo em tempo real</div>
+    <div class="login-chats">
+
+      <div class="lc-label">💬 Cliente agendando sozinho</div>
+      <div class="lc-card">
+        <div class="lc-row"><div class="lc-bubble c">Oi! Tem horário amanhã pra corte?</div></div>
+        <div class="lc-row r"><div class="lc-bubble r">Oi! 😊 Tenho às 14h e 16h30. Qual prefere?</div></div>
+        <div class="lc-row"><div class="lc-bubble c">16h30 perfeito!</div></div>
+        <div class="lc-row r"><div class="lc-bubble r">✅ Agendado! Amanhã às 16h30. Te mando lembrete 1h antes 👋</div></div>
+      </div>
+
+      <div class="lc-label">💰 Você registrando financeiro</div>
+      <div class="lc-card">
+        <div class="lc-row"><div class="lc-bubble c">marca saída de 80 gasolina</div></div>
+        <div class="lc-row r"><div class="lc-bubble r">✅ Saída registrada!<br>⛽ R$80,00 — Gasolina<br>📅 Hoje · saldo do dia: R$920</div></div>
+        <div class="lc-row"><div class="lc-bubble c">recebi 350 pix corte escova</div></div>
+        <div class="lc-row r"><div class="lc-bubble r">✅ Entrada: R$350,00 — Pix<br>💰 Total hoje: R$1.270</div></div>
+      </div>
+
+      <div class="lc-label">📊 Relatório no WhatsApp</div>
+      <div class="lc-card">
+        <div class="lc-row"><div class="lc-bubble c">resumo de hoje</div></div>
+        <div class="lc-row r"><div class="lc-bubble r">📊 <b>Hoje</b><br>✅ 8 agendamentos<br>💰 Entradas: R$1.270<br>🔴 Saídas: R$80<br>💚 Saldo: R$1.190</div></div>
+      </div>
+
     </div>
   </div>
   <div class="login-right">
