@@ -140,13 +140,19 @@ async function transcreverAudio(audioId) {
 async function processarComando(telefone, texto, msgId) {
   try {
     const { AdminAgenda } = require('../models/AgendaServico');
+    // Normalizar telefone para busca — remove 55 do início e busca variações
+    const telLimpo = telefone.replace(/^55/, '');           // 34984039955
+    const telDDD   = telLimpo.replace(/^(\d{2})9(\d{8})$/, '$1$2'); // sem o 9
     const admin = await AdminAgenda.findOne({
       $or: [
-        { telefone: { $regex: telefone.replace('55',''), $options:'i' } },
-        { whatsappOficial: telefone }
+        { whatsapp:        { $in: [telefone, telLimpo, '55'+telLimpo, telDDD] } },
+        { whatsappOficial: { $in: [telefone, telLimpo, '55'+telLimpo, telDDD] } },
+        { telefone:        { $in: [telefone, telLimpo, '55'+telLimpo, telDDD] } },
       ],
       ativo: true
     });
+    console.log('[MetaWA] Buscando admin por tel:', telefone, '| limpo:', telLimpo);
+    if (admin) console.log('[MetaWA] Admin encontrado:', admin.email);
 
     if (!admin) {
       await MetaWA.enviarTexto(telefone,
