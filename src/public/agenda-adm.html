@@ -1641,22 +1641,33 @@ async function api(path, opts={}){
 async function fazerLogin(){
   const email = document.getElementById('login-email').value.trim();
   const senha = document.getElementById('login-senha').value;
-  document.getElementById('login-erro').style.display = 'none';
+  const erroEl = document.getElementById('login-erro');
+  erroEl.style.display = 'none';
+  erroEl.innerHTML = '';
   try {
     const r = await fetch(BASE+'/login', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,senha})});
     const d = await r.json();
-    if(!d.sucesso){ document.getElementById('login-erro').style.display='block'; return; }
+    if(r.status === 403 && d.pendentePagamento) {
+      erroEl.innerHTML = '⏳ Pagamento pendente. <a href="/agenda-cadastro" style="color:var(--cor);font-weight:700">Envie o comprovante aqui →</a>';
+      erroEl.style.display = 'block';
+      return;
+    }
+    if(r.status === 403 && d.expirado) {
+      erroEl.innerHTML = '⚠️ Plano expirado. <a href="/agenda-cadastro" style="color:var(--cor);font-weight:700">Renove seu acesso →</a>';
+      erroEl.style.display = 'block';
+      return;
+    }
+    if(!d.sucesso){ erroEl.textContent = d.erro || 'E-mail ou senha incorretos'; erroEl.style.display='block'; return; }
     TOKEN = d.token; ADMIN_ID = d.admin._id; ADMIN = d.admin;
     localStorage.setItem('agenda_token', TOKEN);
     localStorage.setItem('agenda_admin_id', ADMIN_ID);
-    // Pedir armazenamento persistente — evita browser apagar dados automaticamente
     if (navigator.storage && navigator.storage.persist) {
       navigator.storage.persist().then(granted => {
         console.log('[Storage] Persistente:', granted ? 'concedido' : 'negado');
       });
     }
     iniciarApp();
-  } catch(e){ document.getElementById('login-erro').style.display='block'; }
+  } catch(e){ erroEl.textContent = 'Erro ao conectar. Tente novamente.'; erroEl.style.display='block'; }
 }
 
 

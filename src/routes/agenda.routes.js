@@ -42,8 +42,7 @@ router.post('/cadastro', async (req, res) => {
     if (existe) return res.status(400).json({ erro: 'Email já cadastrado' });
     const hash = await bcrypt.hash(senha, 10);
     const token = crypto.randomBytes(32).toString('hex');
-    const trialExpira = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
-    const admin = await AdminAgenda.create({ nome, email, senha: hash, token, nomeNegocio, segmento, telefone, whatsapp, plano: plano || 'espaco_digital_ia', trialExpira });
+    const admin = await AdminAgenda.create({ nome, email, senha: hash, token, nomeNegocio, segmento, telefone, whatsapp, plano: plano || 'espaco_digital_ia', ativo: false, statusPagamento: 'aguardando_comprovante' });
     res.json({ sucesso: true, token, adminId: admin._id });
   } catch(e) { res.status(500).json({ erro: e.message }); }
 });
@@ -56,6 +55,8 @@ router.post('/login', async (req, res) => {
     if (!admin) return res.status(401).json({ erro: 'Credenciais inválidas' });
     const ok = await bcrypt.compare(senha, admin.senha);
     if (!ok) return res.status(401).json({ erro: 'Credenciais inválidas' });
+    if (!admin.ativo || admin.statusPagamento === 'aguardando_comprovante') return res.status(403).json({ erro: 'Acesso pendente. Envie o comprovante do PIX para liberar sua conta.', pendentePagamento: true });
+    if (admin.statusPagamento === 'expirado') return res.status(403).json({ erro: 'Plano expirado. Renove seu acesso enviando o comprovante.', expirado: true });
     const token = crypto.randomBytes(32).toString('hex');
     await AdminAgenda.findByIdAndUpdate(admin._id, { token });
     res.json({ sucesso: true, token, nome: admin.nome, nomeNegocio: admin.nomeNegocio, segmento: admin.segmento, plano: admin.plano, admin: { _id: admin._id, nome: admin.nome, nomeNegocio: admin.nomeNegocio, segmento: admin.segmento, plano: admin.plano, email: admin.email } });
