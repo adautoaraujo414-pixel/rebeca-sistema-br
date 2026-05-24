@@ -814,7 +814,33 @@ ${total>5?'Tá crescendo muito! Continua assim! 🚀':'Todo cliente novo é uma 
     return true;
   }
 
-  // ── NÃO RECONHECIDO ────────────────────────────────────────────────────────
+  // ── NÃO RECONHECIDO — FALLBACK COM CLAUDE ───────────────────────────────────
+  try {
+    const Anthropic = require('@anthropic-ai/sdk');
+    const _claude = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+    const hoje = new Date();
+    const ini = new Date(hoje); ini.setHours(0,0,0,0);
+    const fim = new Date(hoje); fim.setHours(23,59,59,999);
+    const agsHoje = await AgendamentoAgenda.find({
+      adminId: adminObjId, dataHora: { $gte: ini, $lte: fim },
+      status: { $in: ['pendente','confirmado'] }
+    }).sort({ dataHora: 1 }).lean();
+    const resumoAgenda = agsHoje.length
+      ? agsHoje.map(a => `${_fmtHora(new Date(a.dataHora))} - ${a.nomeCliente} (${a.nomeServico})`).join(', ')
+      : 'nenhum agendamento hoje';
+    const r = await _claude.messages.create({
+      model: 'claude-haiku-4-5',
+      max_tokens: 300,
+      messages: [{
+        role: 'user',
+        content: `Você é a Rebeca, assistente digital de um salão/negócio. Responda de forma curta, natural e amigável em português brasileiro informal. Contexto de hoje: ${resumoAgenda}. O dono disse: "${msg}". Responda de forma útil e natural, máximo 3 linhas.`
+      }]
+    });
+    const respClaude = r.content?.[0]?.text?.trim();
+    if (respClaude) { await responder(respClaude); return true; }
+  } catch(e) {
+    console.error('[ModoDono] Claude fallback erro:', e.message);
+  }
   await responder(`${_saudacao()}, ${_chefe()}! 😊
 
 Não tive certeza do que você quis dizer, mas tô aqui! Tenta me falar de outro jeito ou digita *ajuda* pra ver tudo que sei fazer por você! 💙`);
