@@ -929,6 +929,20 @@ ${total>5?'Tá crescendo muito! Continua assim! 🚀':'Todo cliente novo é uma 
       `• Rebeca, serviços mais pedidos
 
 ` +
+      `⏰ *LEMBRETES*
+` +
+      `• Rebeca, me lembra de ligar pro fornecedor às 14h
+` +
+      `• Rebeca, lembrete amanhã às 9h reunião
+
+` +
+      `💬 *MENSAGENS*
+` +
+      `• Rebeca, manda mensagem pra [nome]: texto aqui
+` +
+      `• Rebeca, avisa o [nome] que confirmou
+
+` +
       `⏰ *HORÁRIOS*
 ` +
       `• Rebeca, hoje vou trabalhar das 8h às 18h
