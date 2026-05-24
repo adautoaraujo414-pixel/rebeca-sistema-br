@@ -2622,6 +2622,13 @@ async function wppCarregarStatus() {
     if(numLabel) numLabel.textContent = d.telefone ? 'Número: '+d.telefone : 'Nenhum número conectado';
     document.getElementById('wpp-status-txt').textContent = conectado ? '🟢 Conectado' : (d.status==='sem_instancia'?'⚫ Não configurado':'🔴 Desconectado');
     document.getElementById('wpp-numero-txt').textContent = d.telefone || '—';
+    // Preencher input com número já conectado
+    var inputNum = document.getElementById('wpp-numero-input');
+    if (inputNum && d.telefone && !inputNum.value) {
+      var tel = d.telefone.replace(/^55/, '').replace(/^(d{2})(d{5})(d{4})$/, '($1) $2-$3');
+      inputNum.value = tel;
+      inputNum.placeholder = tel;
+    }
     var btnCon = document.getElementById('btn-wpp-conectar');
     var btnDes = document.getElementById('btn-wpp-desconectar');
     if(btnCon) btnCon.style.display = conectado ? 'none' : 'inline-block';
