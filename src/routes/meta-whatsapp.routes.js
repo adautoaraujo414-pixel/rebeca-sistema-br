@@ -243,9 +243,8 @@ async function processarComando(telefone, texto, msgId) {
     if (admin) console.log('[MetaWA] Admin encontrado:', admin.email);
 
     if (!admin) {
-      await MetaWA.enviarTexto(telefone,
-        'Olá! Não encontrei sua conta na Rebeca. Acesse rebeca-sistema-br.onrender.com para se cadastrar.'
-      );
+      // Numero nao e o dono — atender como cliente
+      await processarModoCliente(telefone, texto, tipo, msg);
       return;
     }
 
@@ -286,6 +285,178 @@ router.post('/enviar-teste', async (req, res) => {
 });
 
 module.exports = router;
+
+// ── MODO CLIENTE ─────────────────────────────────────────────────────────────
+// Qualquer numero que nao seja o dono é atendido como cliente
+async function processarModoCliente(telefone, texto, tipo, msgObj) {
+  try {
+    const { AdminAgenda, AgendamentoAgenda, ClienteAgenda } = require('../models/AgendaServico');
+    const mongoose = require('mongoose');
+
+    // Pegar o primeiro admin ativo (ajustar para multi-tenant futuramente)
+    const admin = await AdminAgenda.findOne({ ativo: true }).lean();
+    if (!admin) return;
+
+    const adminId    = String(admin._id);
+    const adminObjId = new mongoose.Types.ObjectId(adminId);
+    const msgL       = (texto || '').toLowerCase().trim();
+
+    // Buscar cliente pelo telefone
+    const telVariantes = [telefone, telefone.replace(/^55/,''), '55'+telefone.replace(/^55/,'')];
+    let cliente = await ClienteAgenda.findOne({
+      adminId: adminObjId,
+      telefone: { $in: telVariantes }
+    }).lean();
+    const primeiroNome = cliente?.nome?.split(' ')[0] || null;
+    const saudacao     = primeiroNome ? `Oi, ${primeiroNome}!` : 'Oi!';
+
+    const telDono = _normalizarTel(admin.whatsappOficial || admin.whatsapp || admin.telefone);
+
+    // ── CLIENTE QUER CANCELAR ─────────────────────────────────────────────────
+    if (/\bcancela\b|\bdesmarca\b|\bn[aã]o\s+(?:vou|consigo|posso)\b|\bdesistir\b/i.test(msgL)) {
+      const ag = await AgendamentoAgenda.findOne({
+        adminId: adminObjId,
+        telefoneCliente: { $in: telVariantes },
+        status: { $ne: 'cancelado' },
+        dataHora: { $gte: new Date() }
+      }).lean();
+      if (ag) {
+        await AgendamentoAgenda.findByIdAndUpdate(ag._id, { status: 'cancelado' });
+        const d = new Date(ag.dataHora);
+        const hStr = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+        await MetaWA.enviarTexto(telefone,
+          `${saudacao} Cancelei seu horário de ${d.toLocaleDateString('pt-BR')} às ${hStr}. Quando quiser reagendar é só falar! 😊`
+        );
+        // Avisar dono
+        if (telDono) await MetaWA.enviarTexto(telDono,
+          `⚠️ *Cancelamento!*\n\n👤 ${ag.nomeCliente}\n✂️ ${ag.nomeServico}\n📆 ${d.toLocaleDateString('pt-BR')} às ${hStr}\n📱 ${telefone}`
+        );
+      } else {
+        await MetaWA.enviarTexto(telefone,
+          `${saudacao} Não encontrei agendamento ativo pra você. Já foi cancelado ou o horário já passou. 😊`
+        );
+      }
+      return;
+    }
+
+    // ── CLIENTE CONFIRMA ──────────────────────────────────────────────────────
+    if (/\bconfirmo\b|\bvou\s+sim\b|\bestarei\b|\bpode\s+confirmar\b|\bconfirmado\b|\bconfirmar\b/i.test(msgL)) {
+      const ag = await AgendamentoAgenda.findOneAndUpdate(
+        { adminId: adminObjId, telefoneCliente: { $in: telVariantes }, status: 'pendente', dataHora: { $gte: new Date() } },
+        { status: 'confirmado' },
+        { new: true }
+      ).lean();
+      if (ag) {
+        const d   = new Date(ag.dataHora);
+        const hStr = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+        await MetaWA.enviarTexto(telefone,
+          `Confirmado, ${primeiroNome || 'tudo certo'}! ✅\n\nTe esperamos em ${d.toLocaleDateString('pt-BR')} às ${hStr}. 💙`
+        );
+        if (telDono) await MetaWA.enviarTexto(telDono,
+          `✅ *Confirmação!*\n\n👤 ${ag.nomeCliente} confirmou o horário\n📆 ${d.toLocaleDateString('pt-BR')} às ${hStr}\n✂️ ${ag.nomeServico}`
+        );
+      }
+      return;
+    }
+
+    // ── RESPOSTA GERAL + AGENDAMENTO VIA CLAUDE ───────────────────────────────
+    // Buscar proximos horarios disponiveis do dia/amanha para contexto
+    const hoje   = new Date(); hoje.setHours(0,0,0,0);
+    const fimAmanha = new Date(); fimAmanha.setDate(fimAmanha.getDate()+2); fimAmanha.setHours(0,0,0,0);
+    const agsProximos = await AgendamentoAgenda.find({
+      adminId: adminObjId,
+      dataHora: { $gte: hoje, $lt: fimAmanha },
+      status: { $ne: 'cancelado' }
+    }).lean();
+    const ocupados = agsProximos.map(a => {
+      const d = new Date(a.dataHora);
+      return `${d.toLocaleDateString('pt-BR')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    }).join(', ');
+
+    const r = await _claude.messages.create({
+      model: 'claude-haiku-4-5',
+      max_tokens: 400,
+      messages: [{
+        role: 'user',
+        content: `Você é a Rebeca, assistente de agendamento do negócio "${admin.nomeNegocio || admin.nome || 'salão'}".
+
+PERSONALIDADE:
+- Português brasileiro informal e caloroso
+- NUNCA diga que é IA ou robô
+- Respostas curtas, máximo 4 linhas
+- 1-2 emojis por mensagem
+- Se souber o nome do cliente, use: ${primeiroNome || 'não sei ainda'}
+
+CONTEXTO:
+- Horários já ocupados (hoje/amanhã): ${ocupados || 'nenhum ainda — agenda livre!'}
+- Serviços disponíveis: corte, escova, barba, manicure, pedicure, sobrancelha, cílios, massagem, tintura, hidratação
+
+CLIENTE DISSE: "${texto}"
+
+INSTRUÇÕES:
+- Se quer agendar: pergunte data, hora e serviço de forma natural (se já disser tudo, confirme)
+- Se pergunta sobre horários: informe que a agenda está aberta e peça preferência
+- Se já informou data+hora+serviço na mensagem: confirme o agendamento diretamente
+- Se for saudação/conversa: responda naturalmente e ofereça ajuda para agendar
+- NUNCA invente valores ou informações que não estão aqui`
+      }]
+    });
+
+    const resposta = r.content.map(c => c.text || '').join('');
+    await MetaWA.enviarTexto(telefone, resposta);
+
+    // Tentar extrair agendamento da mensagem do cliente
+    const horaM    = texto.match(/(\d{1,2})[h:](\d{0,2})|(\d{1,2})\s*horas?/i);
+    const nomeCliM = texto.match(/(?:sou\s+a?\s*|me\s+chamo\s+|meu\s+nome\s+[eé]\s+)([A-Za-zÀ-ú]+(?:\s+[A-Za-zÀ-ú]+)?)/i);
+    const servicoList = ['corte','escova','barba','sobrancelha','cílios','cilios','manicure','pedicure','massagem','tintura','hidratação','progressiva','botox','penteado','maquiagem','design'];
+    const servicoAchado = servicoList.find(s => msgL.includes(s));
+    const diaM = texto.match(/amanhã|amanha/i);
+
+    if (horaM && servicoAchado) {
+      const h   = parseInt(horaM[1] || horaM[3]);
+      const min = parseInt(horaM[2] || '0') || 0;
+      const dataHora = new Date();
+      if (diaM) dataHora.setDate(dataHora.getDate() + 1);
+      dataHora.setHours(h, min, 0, 0);
+      if (dataHora < new Date()) dataHora.setDate(dataHora.getDate() + 1);
+
+      const nomeCliente = nomeCliM ? nomeCliM[1] : (cliente?.nome || primeiroNome || 'Cliente');
+
+      await AgendamentoAgenda.create({
+        adminId:         adminObjId,
+        nomeCliente,
+        nomeServico:     servicoAchado.charAt(0).toUpperCase() + servicoAchado.slice(1),
+        dataHora,
+        telefoneCliente: telefone,
+        status:          'pendente',
+        origem:          'whatsapp_cliente'
+      });
+
+      // Notificar DONO com estilo animado
+      if (telDono) {
+        const frases = ['Mais um chegando! 🎉', 'Agenda enchendo! 💪', 'Tá bombando! 🚀', 'Novo na fila! 💙'];
+        const frase  = frases[Math.floor(Math.random() * frases.length)];
+        await MetaWA.enviarTexto(telDono,
+          `📅 *Novo agendamento!* ${frase}\n\n` +
+          `👤 *${nomeCliente}*\n` +
+          `✂️ ${servicoAchado.charAt(0).toUpperCase() + servicoAchado.slice(1)}\n` +
+          `📆 ${dataHora.toLocaleDateString('pt-BR')} às ${String(h).padStart(2,'0')}:${String(min).padStart(2,'0')}\n` +
+          `📱 ${telefone}`
+        );
+      }
+    }
+
+  } catch(e) {
+    console.error('[ModoCliente] erro:', e.message);
+    await MetaWA.enviarTexto(telefone, 'Oi! Tive um probleminha aqui. Tenta de novo em instantes! 😊').catch(()=>{});
+  }
+}
+
+// Normalizar telefone (helper local)
+function _normalizarTel(tel) {
+  if (!tel) return null;
+  return tel.replace(/\D/g,'');
+}
 
 // ── AUTO RENOVAÇÃO DE TOKEN ──────────────────────────────────────
 router.get('/renovar-token', async (req, res) => {
