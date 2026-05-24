@@ -15,7 +15,9 @@ const {
 async function authAgenda(req, res, next) {
   try {
     const token = req.headers.authorization?.replace('Bearer ','') || '';
-    const admin = await AdminAgenda.findOne({ token, ativo: true });
+    if (!token) return res.status(401).json({ erro: 'Token ausente' });
+    // Busca sem filtro ativo — permite gerenciar conta mesmo com status pendente
+    const admin = await AdminAgenda.findOne({ token });
     if (!admin) return res.status(401).json({ erro: 'Token inválido' });
     req.adminAgenda = admin;
     req.adminAgendaId = admin._id.toString();
