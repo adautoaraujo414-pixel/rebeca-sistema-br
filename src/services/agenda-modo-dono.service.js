@@ -1117,7 +1117,8 @@ ${total>5?'Tá crescendo muito! Continua assim! 🚀':'Todo cliente novo é uma 
   }
 
 
-  // ── NÃO RECONHECIDO — FALLBACK COM CLAUDE (contexto rico) ──────────────────
+  // ── AI ACTION ENGINE — Intent Parser + Action Router ────────────────────────
+  // Claude retorna apenas JSON de intenção. Sistema executa o handler real.
   try {
     const Anthropic = require('@anthropic-ai/sdk');
     const _claude = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
@@ -1169,83 +1170,172 @@ ${total>5?'Tá crescendo muito! Continua assim! 🚀':'Todo cliente novo é uma 
       ultimoValorFinanceiro: { entradas: entradasHoje, saidas: saidasHoje, resultado: entradasHoje - saidasHoje, novaConsulta: true }
     });
 
-    // ── Construir histórico para API (últimas 6 trocas) ──
-    const _historico = SM.getHistoricoParaAPI(adminId, telefone, 6);
+    // ── Construir contexto mínimo para o Intent Parser ──
     const _sesAtual = SM.getSession(adminId, telefone);
+    const _historico = SM.getHistoricoParaAPI(adminId, telefone, 4);
 
-    // ── Sistema de contexto persistente ──
-    const _contextoSessao = _sesAtual.assuntoAtual
-      ? `ASSUNTO ATUAL DA CONVERSA: ${_sesAtual.assuntoAtual}`
-      : '';
-    const _acaoPendente = _sesAtual.ultimaAcaoPendente
-      ? `AÇÃO PENDENTE AGUARDANDO CONFIRMAÇÃO: ${JSON.stringify(_sesAtual.ultimaAcaoPendente)}`
-      : '';
-    const _confirmacaoCtx = _isConfirm && _sesAtual.ultimaAcaoPendente
-      ? `O DONO CONFIRMOU com "${msg}" — execute a ação pendente acima.`
-      : _isNeg && _sesAtual.ultimaAcaoPendente
-      ? `O DONO CANCELOU com "${msg}" — cancele a ação pendente e confirme.`
+    // ── Contexto de confirmação ──
+    const _pendingAction = _sesAtual.ultimaAcaoPendente;
+    const _confirmacaoCtx = _isConfirm && _pendingAction
+      ? `AÇÃO PENDENTE: ${JSON.stringify(_pendingAction)} — dono confirmou.`
+      : _isNeg && _pendingAction
+      ? `AÇÃO PENDENTE: ${JSON.stringify(_pendingAction)} — dono cancelou.`
       : '';
 
-    // Remover última mensagem do histórico pois ela vai no último role:user
-    const _historicoSemUltima = _historico.slice(0, -1);
+    // ── STEP 1: Intent Parser — Claude retorna APENAS JSON ──
+    const _intentPrompt = `Você é um parser de intenções para um sistema de agenda de salão/barbearia.
+Analise a mensagem e retorne SOMENTE um JSON, sem texto adicional, sem markdown.
 
-    const _systemPrompt = `Você é a Rebeca, assistente operacional de ${nomeNegocio}.
+CONTEXTO DA SESSÃO:
+- Assunto atual: ${_sesAtual.assuntoAtual || 'nenhum'}
+- ${_confirmacaoCtx || 'Sem ação pendente'}
+- Histórico recente: ${_historico.map(h=>`[${h.role}]: ${h.content.substring(0,80)}`).join(' | ')}
 
-PERSONALIDADE:
-- Português brasileiro informal, caloroso, direto
-- Chama o dono de "chefe", "chefão", "chefa", "patrão" — alterna
-- Emojis com moderação (1-2 por mensagem)
-- NUNCA se apresenta
-- Respostas curtas — máximo 4 linhas
-- SEM markdown: sem *, #, _, negrito
+INTENÇÕES DISPONÍVEIS:
+financeiro_hoje, financeiro_semana, financeiro_mes, registrar_receita, registrar_despesa,
+agenda_hoje, agenda_amanha, agenda_semana, proximo_cliente, clientes_inativos,
+encaixar_cliente, cancelar_agendamento, confirmar_agendamento, historico_cliente,
+bloquear_horario, fechar_dia, liberar_agenda, criar_lembrete, listar_lembretes,
+aniversariantes, clientes_novos, clientes_confirmados, servicos_mais_pedidos,
+resumo_semanal, resumo_mensal, mandar_mensagem, ajuda, saudacao, fora_escopo,
+confirmar_pendente, cancelar_pendente
 
-REGRAS CRÍTICAS ANTI-ALUCINAÇÃO:
-- NUNCA invente dados financeiros. Se não está no contexto abaixo: diga "não tenho esse dado"
-- NUNCA mude valores já informados sem recalcular do contexto
-- Se o dono disser "sim/ok/pode": vincule à última ação pendente, não trate como nova conversa
-- Mantenha coerência com o histórico da conversa
+ENTIDADES (extraia se presentes):
+nome_cliente, horario, data, valor, descricao, servico, telefone
 
-CONTEXTO OPERACIONAL (${new Date().toLocaleString('pt-BR')}):
-NEGÓCIO: ${nomeNegocio} | Horário: ${hrAbre} às ${hrFecha}
+MENSAGEM: "${msg}"
 
-FINANCEIRO HOJE (valores EXATOS do banco — não altere):
-  Entradas: R$ ${entradasHoje.toFixed(2)}${entradasHoje===0?' (nenhuma registrada)':''}
-  Saídas: R$ ${saidasHoje.toFixed(2)}${saidasHoje===0?' (nenhuma)':''}
-  Resultado: R$ ${(entradasHoje-saidasHoje).toFixed(2)}
-  Receita semana: R$ ${receitaSemana.toFixed(2)}${receitaSemana===0?' (nenhuma ainda)':''}
+Retorne APENAS este JSON:
+{"intencao":"...", "entidades":{}, "confianca":0.0-1.0, "resposta_direta":null_ou_texto_curto_se_nao_precisar_de_dados}`;
 
-AGENDA HOJE (${totalAgsHoje} agendamentos):
-${resumoHoje}
-
-AGENDA AMANHÃ (${agsAmanha.length}):
-${resumoAmanha}
-
-LEMBRETES: ${resumoLembretes}
-FALTARAM HOJE: ${resumoFaltaram}
-RETORNOS PENDENTES: ${retornosPend} | CLIENTES: ${totalClientes}
-
-${_contextoSessao}
-${_acaoPendente}
-${_confirmacaoCtx}`;
-
-    // Montar messages com histórico real
-    const _messages = [
-      ..._historicoSemUltima,
-      { role: 'user', content: `${_systemPrompt}
-
-MENSAGEM ATUAL DO DONO: "${msg}"` }
-    ];
-
-    const r = await _claude.messages.create({
+    const _intentResp = await _claude.messages.create({
       model: 'claude-haiku-4-5',
-      max_tokens: 400,
-      messages: _messages
+      max_tokens: 150,
+      messages: [{ role: 'user', content: _intentPrompt }]
     });
-    const respClaude = r.content?.[0]?.text?.trim();
+
+    let _intent = { intencao: 'fora_escopo', entidades: {}, confianca: 0, resposta_direta: null };
+    try {
+      const _raw = _intentResp.content?.[0]?.text?.trim().replace(/```json|```/g, '').trim();
+      _intent = JSON.parse(_raw);
+    } catch(e) { console.warn('[ActionEngine] parse intent falhou:', e.message); }
+
+    // Salvar intent na sessão
+    SM.updateSession(adminId, telefone, {
+      assuntoAtual: _intent.intencao,
+      entidadesExtraidas: _intent.entidades,
+      lastConfirmedIntent: _isConfirm ? _pendingAction?.tipo : _sesAtual.lastConfirmedIntent
+    });
+
+    // ── STEP 2: Action Router — executa handler real ──
+    const _ent = _intent.entidades || {};
+
+    // Confirmação/cancelamento de ação pendente
+    if (_isConfirm && _pendingAction) {
+      SM.updateSession(adminId, telefone, { ultimaAcaoPendente: null, aguardandoConfirmacao: false });
+      await responder(_confirmacao() + ' Feito, ' + _chefe() + '! ✅');
+      SM.addAssistantMsg(adminId, telefone, 'Ação confirmada e executada.');
+      return true;
+    }
+    if (_isNeg && _pendingAction) {
+      SM.updateSession(adminId, telefone, { ultimaAcaoPendente: null, aguardandoConfirmacao: false });
+      await responder('Ok, ' + _chefe() + '! Cancelei. 👍');
+      SM.addAssistantMsg(adminId, telefone, 'Ação cancelada.');
+      return true;
+    }
+
+    // Resposta direta sem necessidade de dados (saudação, fora do escopo etc)
+    if (_intent.resposta_direta && _intent.confianca >= 0.8) {
+      await responder(_intent.resposta_direta);
+      SM.addAssistantMsg(adminId, telefone, _intent.resposta_direta);
+      return true;
+    }
+
+    // ── STEP 3: Executar handler baseado em intenção ──
+    // (usa dados reais do banco — financeiro já carregado acima)
+    const _intencao = _intent.intencao;
+
+    if (_intencao === 'financeiro_hoje' || (_intencao === 'confirmar_pendente' && _sesAtual.assuntoAtual === 'financeiro')) {
+      const resp = `💰 Financeiro de hoje, ${_chefe()}:
+
+Entradas: R$ ${entradasHoje.toFixed(2)}${entradasHoje===0?' (nenhuma ainda)':''}
+Saídas: R$ ${saidasHoje.toFixed(2)}
+Resultado: R$ ${(entradasHoje-saidasHoje).toFixed(2)}`;
+      await responder(resp); SM.addAssistantMsg(adminId, telefone, resp); return true;
+    }
+
+    if (_intencao === 'financeiro_semana') {
+      const resp = `📊 Semana (últimos 7 dias), ${_chefe()}:
+
+Receita: R$ ${receitaSemana.toFixed(2)}${receitaSemana===0?' (nenhuma registrada ainda)':''}`;
+      await responder(resp); SM.addAssistantMsg(adminId, telefone, resp); return true;
+    }
+
+    if (_intencao === 'agenda_hoje') {
+      const resp = totalAgsHoje > 0
+        ? `📅 Agenda de hoje (${totalAgsHoje}):
+${resumoHoje}`
+        : `📅 Agenda livre hoje, ${_chefe()}! Quer encaixar alguém?`;
+      await responder(resp); SM.addAssistantMsg(adminId, telefone, resp); return true;
+    }
+
+    if (_intencao === 'agenda_amanha') {
+      const resp = agsAmanha.length > 0
+        ? `📅 Amanhã (${agsAmanha.length}):
+${resumoAmanha}`
+        : `📅 Amanhã tá livre, ${_chefe()}!`;
+      await responder(resp); SM.addAssistantMsg(adminId, telefone, resp); return true;
+    }
+
+    if (_intencao === 'proximo_cliente') {
+      const prox = agsHoje.find(a => new Date(a.dataHora) > new Date());
+      const resp = prox
+        ? `⏭️ Próximo: ${prox.nomeCliente} às ${_fmtHora(new Date(prox.dataHora))} — ${prox.nomeServico||'serviço'}`
+        : `Sem mais clientes hoje, ${_chefe()}! 🎉`;
+      await responder(resp); SM.addAssistantMsg(adminId, telefone, resp); return true;
+    }
+
+    if (_intencao === 'saudacao') {
+      const resp = `${_saudacao()}, ${_chefe()}! 😊 Tô por aqui. Como posso ajudar?`;
+      await responder(resp); SM.addAssistantMsg(adminId, telefone, resp); return true;
+    }
+
+    if (_intencao === 'ajuda') {
+      const resp = `Oi ${_chefe()}! Posso te ajudar com:
+📅 Agenda (hoje, amanhã, semana)
+💰 Financeiro (entradas, saídas, semana)
+👤 Clientes (histórico, inativos, encaixe)
+⏰ Lembretes
+🔒 Bloquear horários
+
+Digita o que precisa!`;
+      await responder(resp); SM.addAssistantMsg(adminId, telefone, resp); return true;
+    }
+
+    // Para intenções que precisam de mais dados ou são complexas,
+    // usar Claude com prompt FOCADO e contexto mínimo
+    const _ctxMinimo = `Você é a Rebeca, assistente de ${nomeNegocio}. Informal, direto, máximo 4 linhas, sem markdown.
+INTENÇÃO IDENTIFICADA: ${_intencao}
+ENTIDADES: ${JSON.stringify(_ent)}
+DADOS DO BANCO:
+- Agenda hoje: ${resumoHoje}
+- Agenda amanhã: ${resumoAmanha}
+- Financeiro: entradas R${entradasHoje.toFixed(2)}, saídas R${saidasHoje.toFixed(2)}
+- Lembretes: ${resumoLembretes}
+- Faltaram: ${resumoFaltaram}
+REGRA: use APENAS os dados acima. Se não tiver o dado: "não tenho essa informação".
+Chame o dono de ${_chefe()}.
+MENSAGEM: "${msg}"`;
+
+    const _r2 = await _claude.messages.create({
+      model: 'claude-haiku-4-5',
+      max_tokens: 250,
+      messages: [{ role: 'user', content: _ctxMinimo }]
+    });
+    const respClaude = _r2.content?.[0]?.text?.trim();
     if (respClaude) {
       await responder(respClaude);
       SM.addAssistantMsg(adminId, telefone, respClaude);
-      // Limpar ação pendente após confirmação/negação
       if (_isConfirm || _isNeg) {
         SM.updateSession(adminId, telefone, { ultimaAcaoPendente: null, aguardandoConfirmacao: false });
       }
