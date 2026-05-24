@@ -735,12 +735,8 @@ Responda APENAS o resumo, sem explicações.`;
     _drawer = document.getElementById('rai-drawer');
 
     // FAB
-    const fab = document.createElement('button');
-    fab.id = 'rai-fab';
-    fab.title = 'Rebeca IA';
-    fab.innerHTML = `✦<span class="rai-fab-badge" id="rai-fab-badge"></span>`;
-    fab.onclick = () => RebecaAI.showPanel();
-    document.body.appendChild(fab);
+    // rai-fab desativado — botão flutuante removido
+    // Para acessar a IA: RebecaAI.showPanel()
   }
 
   function _renderBody(analise, sugestoes) {
