@@ -561,7 +561,32 @@ ${totalAgs > 0 ? 'Tá saindo bem! 💪' : 'Ainda sem registros esse mês.'}`);
   // ── LEMBRETE PESSOAL ─────────────────────────────────────────────────────────
   if (/me\s*lembr[ae]|lembrete|n[aã]o\s*me\s*deixa?\s*esquecer|anota\s*(a[ií])?/i.test(msgL)) {
     const hora  = _parseHora(msgL);
-    const dia   = _parseDia(msgL) || new Date();
+    const dia   = _parseDia(msgL); // null se não informou dia
+
+    // ── Validação: hora sem dia → perguntar o dia ────────────────────────────
+    if (hora && !dia) {
+      const _brNow = new Date(Date.now() - 3*60*60*1000);
+      const _semana = ['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'];
+      const _dow = _brNow.getUTCDay();
+      const _dowAm = (_dow + 1) % 7;
+      const _hoje  = String(_brNow.getUTCDate()).padStart(2,'0') + '/' + String(_brNow.getUTCMonth()+1).padStart(2,'0');
+      const _brAm  = new Date(_brNow.getTime() + 24*60*60*1000);
+      const _amanha = String(_brAm.getUTCDate()).padStart(2,'0') + '/' + String(_brAm.getUTCMonth()+1).padStart(2,'0');
+      await responder(
+        'Claro 😊 Qual dia você quer esse lembrete?
+
+' +
+        '• Hoje é *' + _semana[_dow] + ', ' + _hoje + '*
+' +
+        '• Amanhã é *' + _semana[_dowAm] + ', ' + _amanha + '*
+
+' +
+        'Me fala o dia e confirmo! 📅'
+      );
+      return true;
+    }
+
+    const diaFinal = dia || new Date(); // só cai aqui se não tem hora
 
     // Extrair o que é o lembrete
     const textoM = msg.match(/(?:me lembr[ae]|lembrete[:\s]+|anota[:\s]+|esquecer[:\s]+)\s*(?:de\s+|que\s+)?(.+?)(?:\s+(?:amanhã|hoje|às?|as)\s+\d|$)/i)
@@ -576,7 +601,7 @@ ${totalAgs > 0 ? 'Tá saindo bem! 💪' : 'Ainda sem registros esse mês.'}`);
       } else {
         // Converter hora BR para UTC: hora BR + 3h = UTC
         // Exemplo: usuário diz 15:00 BRT → salvar como 18:00 UTC
-        const _brMs   = dia.getTime() - (3 * 60 * 60 * 1000);
+        const _brMs   = diaFinal.getTime() - (3 * 60 * 60 * 1000);
         const _brDate = new Date(_brMs);
         dataLembrete = new Date(Date.UTC(
           _brDate.getUTCFullYear(), _brDate.getUTCMonth(), _brDate.getUTCDate(),
@@ -601,7 +626,7 @@ ${totalAgs > 0 ? 'Tá saindo bem! 💪' : 'Ainda sem registros esse mês.'}`);
       });
       const _confirmLemb = hora.relativo
         ? `Anotado! Te aviso em ${Math.round(hora.msOffset/60000)} minuto(s): "${textoLembrete}" 🔔`
-        : `Anotado! Lembro você sobre "${textoLembrete}" em ${_fmtData(dia)} às ${_fmtHora(dataLembrete)} 🔔`;
+        : `Anotado! Lembro você sobre "${textoLembrete}" em ${_fmtData(diaFinal)} às ${_fmtHora(dataLembrete)} 🔔`;
       await responder(_confirmLemb);
     } else {
       // Sem hora — salva sem data de aviso
@@ -609,7 +634,7 @@ ${totalAgs > 0 ? 'Tá saindo bem! 💪' : 'Ainda sem registros esse mês.'}`);
         $push: {
           'config.lembretes': {
             texto: textoLembrete,
-            dataEvento: dia,
+            dataEvento: diaFinal,
             dataAviso: null,
             enviado: false,
             criadoEm: new Date()
@@ -758,7 +783,7 @@ A semana tá zerada por enquanto. Bora divulgar pra encher a agenda! 🚀`);
 ` +
         `✂️ Serviço: ${servicoEncaixe.charAt(0).toUpperCase() + servicoEncaixe.slice(1)}
 ` +
-        `📆 ${_fmtData(dia)} às ${_fmtHora(dataHora)}
+        `📆 ${_fmtData(diaFinal)} às ${_fmtHora(dataHora)}
 ` +
         (telCliente ? `📱 ${telCliente}
 ` : '') +
