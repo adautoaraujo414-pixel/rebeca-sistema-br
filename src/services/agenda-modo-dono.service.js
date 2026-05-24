@@ -566,22 +566,17 @@ ${totalAgs > 0 ? 'Tá saindo bem! 💪' : 'Ainda sem registros esse mês.'}`);
     // ── Validação: hora sem dia → perguntar o dia ────────────────────────────
     if (hora && !dia) {
       const _brNow = new Date(Date.now() - 3*60*60*1000);
-      const _semana = ['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'];
+      const _semana = ['domingo','segunda-feira','terca-feira','quarta-feira','quinta-feira','sexta-feira','sabado'];
       const _dow = _brNow.getUTCDay();
       const _dowAm = (_dow + 1) % 7;
       const _hoje  = String(_brNow.getUTCDate()).padStart(2,'0') + '/' + String(_brNow.getUTCMonth()+1).padStart(2,'0');
       const _brAm  = new Date(_brNow.getTime() + 24*60*60*1000);
       const _amanha = String(_brAm.getUTCDate()).padStart(2,'0') + '/' + String(_brAm.getUTCMonth()+1).padStart(2,'0');
       await responder(
-        'Claro 😊 Qual dia você quer esse lembrete?
-
-' +
-        '• Hoje é *' + _semana[_dow] + ', ' + _hoje + '*
-' +
-        '• Amanhã é *' + _semana[_dowAm] + ', ' + _amanha + '*
-
-' +
-        'Me fala o dia e confirmo! 📅'
+        'Claro! Qual dia voce quer esse lembrete?\n\n' +
+        'Hoje e ' + _semana[_dow] + ', ' + _hoje + '\n' +
+        'Amanha e ' + _semana[_dowAm] + ', ' + _amanha + '\n\n' +
+        'Me fala o dia e confirmo!'
       );
       return true;
     }
@@ -589,7 +584,14 @@ ${totalAgs > 0 ? 'Tá saindo bem! 💪' : 'Ainda sem registros esse mês.'}`);
     const diaFinal = dia || new Date(); // só cai aqui se não tem hora
 
     // Extrair o que é o lembrete
-    const textoM = msg.match(/(?:me lembr[ae]|lembrete[:\s]+|anota[:\s]+|esquecer[:\s]+)\s*(?:de\s+|que\s+)?(.+?)(?:\s+(?:amanhã|hoje|às?|as)\s+\d|$)/i)
+    // Extrair texto ignorando palavras temporais no inicio
+    const _msgSemTempo = msg
+      .replace(/\b(amanha|amanhã|hoje|segunda|terca|quarta|quinta|sexta|sabado|domingo)(\s*-\s*feira)?\b/gi, '')
+      .replace(/\b(às?|as?)\s*\d{1,2}(:\d{2})?(h|hs)?\b/gi, '')
+      .replace(/\b\d{1,2}(:\d{2})?(h|hs)\b/gi, '')
+      .replace(/\s{2,}/g, ' ')
+      .trim();
+    const textoM = _msgSemTempo.match(/(?:me lembr[ae]|lembrete[:\s]+|anota[:\s]+|esquecer[:\s]+)\s*(?:de\s+|que\s+)?(.+)/i)
                 || msg.match(/(?:tenho\s+que|preciso|vou)\s+(.+?)(?:\s+(?:amanhã|hoje|às?|as)\s+\d|$)/i);
     const textoLembrete = textoM ? textoM[1].trim() : msg.replace(/rebeca[,\s]*/i,'').trim();
 
