@@ -642,6 +642,8 @@ ${totalAgs > 0 ? 'Tá saindo bem! 💪' : 'Ainda sem registros esse mês.'}`);
       .replace(/(^|\s)(de|do|da)(\s|$)/gi, ' ')
       .replace(/\s{2,}/g, ' ')
       .replace(/[.!?,;]+$/, '')
+      .replace(/^(que\s+)?(eu\s+)?(tenho\s+que\s+)?/i, '')
+      .replace(/[.!?,;]+$/, '')
       .trim();
     const textoLembrete = (_limpo && _limpo.length > 1) ? _limpo : null;
 
