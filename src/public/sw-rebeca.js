@@ -11,7 +11,7 @@
  *   - Background Sync:     Pedidos offline enfileirados
  */
 
-const VERSION    = 'rebeca-v1779050549';
+const VERSION    = 'rebeca-v1779638145732';
 const SHELL_KEY  = `${VERSION}-shell`;
 const API_KEY    = `${VERSION}-api`;
 const IMG_KEY    = `${VERSION}-img`;
