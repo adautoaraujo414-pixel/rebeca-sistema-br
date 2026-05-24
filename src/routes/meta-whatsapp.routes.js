@@ -78,50 +78,61 @@ router.post('/webhook', express.json(), async (req, res) => {
 // ── TRANSCREVER ÁUDIO VIA CLAUDE ─────────────────────────────────────────────
 async function transcreverAudio(audioId) {
   try {
-    // Baixar áudio da Meta API
+    // 1 — Pegar URL do áudio na Meta
     const infoR = await axios.get(
       `https://graph.facebook.com/v20.0/${audioId}`,
       { headers: { Authorization: `Bearer ${process.env.META_WA_TOKEN}` } }
     );
     const audioUrl = infoR.data?.url;
-    if (!audioUrl) return null;
+    if (!audioUrl) { console.error('[MetaWA] URL do áudio não encontrada'); return null; }
 
-    // Baixar o arquivo de áudio como buffer
+    // 2 — Baixar o áudio como buffer
     const audioR = await axios.get(audioUrl, {
       headers: { Authorization: `Bearer ${process.env.META_WA_TOKEN}` },
-      responseType: 'arraybuffer'
+      responseType: 'arraybuffer',
+      timeout: 15000
     });
+    const audioBuffer = Buffer.from(audioR.data);
+    console.log(`[MetaWA] Áudio baixado: ${audioBuffer.length} bytes`);
 
-    const audioBase64 = Buffer.from(audioR.data).toString('base64');
+    // 3 — Transcrever via Claude usando texto do áudio como prompt
+    // Como Claude não processa áudio, vamos usar uma abordagem híbrida:
+    // Converter para texto usando a API de Speech Recognition da Web Speech
+    // Por enquanto, retornar null e pedir para o usuário digitar
+    // TODO: integrar Whisper quando OPENAI_API_KEY estiver disponível
 
-    // Usar Claude para transcrever
-    const r = await _claude.messages.create({
-      model: 'claude-haiku-4-5',
-      max_tokens: 300,
-      messages: [{
-        role: 'user',
-        content: [
-          {
-            type: 'text',
-            text: 'Transcreva exatamente o que está sendo dito neste áudio em português. Retorne apenas o texto transcrito, sem explicações.'
-          },
-          {
-            type: 'document',
-            source: {
-              type: 'base64',
-              media_type: 'audio/ogg',
-              data: audioBase64
-            }
-          }
-        ]
-      }]
-    });
+    // Verificar se tem OPENAI_API_KEY
+    const openaiKey = process.env.OPENAI_API_KEY;
+    if (!openaiKey) {
+      console.log('[MetaWA] OPENAI_API_KEY não configurada — não é possível transcrever áudio');
+      return null;
+    }
 
-    const transcricao = r.content?.[0]?.text?.trim();
-    console.log(`[MetaWA] Áudio transcrito: "${transcricao}"`);
-    return transcricao;
+    // 4 — Enviar para Whisper (OpenAI)
+    const FormData = require('form-data');
+    const form = new FormData();
+    form.append('file', audioBuffer, { filename: 'audio.ogg', contentType: 'audio/ogg' });
+    form.append('model', 'whisper-1');
+    form.append('language', 'pt');
+
+    const whisperR = await axios.post(
+      'https://api.openai.com/v1/audio/transcriptions',
+      form,
+      {
+        headers: {
+          ...form.getHeaders(),
+          Authorization: `Bearer ${openaiKey}`
+        },
+        timeout: 30000
+      }
+    );
+
+    const transcricao = whisperR.data?.text?.trim();
+    console.log(`[MetaWA] Whisper transcreveu: "${transcricao}"`);
+    return transcricao || null;
+
   } catch(e) {
-    console.error('[MetaWA] Erro transcrever áudio:', e.message);
+    console.error('[MetaWA] Erro transcrever áudio:', e.response?.data || e.message);
     return null;
   }
 }
