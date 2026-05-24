@@ -231,7 +231,7 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
   }
 
   // ── DEFINIR HORÁRIO DE TRABALHO ────────────────────────────────────────────
-  if (/\bvou\s*trabalhar\b/i.test(msgL) || /\bhor[aá]rio\s*(de\s*)?(hoje|trabalho|funcionamento)\b/i.test(msgL)) {
+  if (/\bvou\s*trabalhar\b|\btrabalho\s*hoje\b|\babre?\s*hoje\b|\bfecho\s*hoje\b|\bexpediente\b|\bjornada\b|\bvou\s*abrir\b|\bvou\s*fechar\b/i.test(msgL) || /\bhor[aá]rio\s*(de\s*)?(hoje|trabalho|funcionamento|atendimento)\b/i.test(msgL)) {
     const rangeM = msg.match(/das?\s*(\d{1,2}h?\d{0,2})\s*(?:às?|as)\s*(\d{1,2}h?\d{0,2})/i);
     if (rangeM) {
       const h1 = _parseHora(rangeM[1]);
@@ -293,6 +293,38 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
     }
     await responder(`${_erro()} Me fala assim: *Rebeca, registra um gasto de R$50 em produtos* 💸`);
     return true;
+  }
+
+  // ── FATURAMENTO POR SERVIÇO ──────────────────────────────────────────────────
+  if (/quanto\s*(fiz|faturei|ganhei)\s*(de|com|no)\s+([A-Za-zÀ-ú]+)/i.test(msgL)) {
+    const servicoM = msg.match(/quanto\s*(?:fiz|faturei|ganhei)\s*(?:de|com|no)\s+([A-Za-zÀ-ú\s]+?)(?:\s*(?:esse|este|no|nesse)\s*m[eê]s|\s*hoje|\s*essa\s*semana|$)/i);
+    const servicoBusca = servicoM ? servicoM[1].trim() : null;
+    if (servicoBusca) {
+      const ini = new Date(); ini.setDate(1); ini.setHours(0,0,0,0);
+      const fim = new Date(); fim.setHours(23,59,59,999);
+      const ags = await AgendamentoAgenda.find({
+        adminId: adminObjId,
+        nomeServico: { $regex: servicoBusca, $options: 'i' },
+        dataHora: { $gte: ini, $lte: fim },
+        status: { $in: ['confirmado','concluido'] }
+      }).lean();
+      const lanc = await FinanceiroAgenda.find({
+        adminId: adminObjId,
+        descricao: { $regex: servicoBusca, $options: 'i' },
+        data: { $gte: ini, $lte: fim },
+        tipo: 'receita'
+      }).lean();
+      const totalAgs  = ags.length;
+      const totalLanc = lanc.reduce((s,l) => s+l.valor, 0);
+      await responder(`${_saudacao()}, ${_chefe()}! 📊
+
+✂️ *${servicoBusca}* esse mês:
+• ${totalAgs} atendimento(s)
+• R$ ${totalLanc.toFixed(2)} registrado(s)
+
+${totalAgs > 0 ? 'Tá saindo bem! 💪' : 'Ainda sem registros esse mês.'}`);
+      return true;
+    }
   }
 
   // ── FATURAMENTO ────────────────────────────────────────────────────────────
