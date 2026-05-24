@@ -252,7 +252,7 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
   }
 
   // ── REGISTRAR ENTRADA FINANCEIRA ───────────────────────────────────────────
-  if (/\bregistra\b.*\bentrada\b|\bmarca\b.*\bentrada\b|\banota\b.*\bentrada\b|\bcoloca\b.*\bentrada\b|\breceb[ei]\b.*\bR?\$|\bentrada\b.*\bR?\$/i.test(msgL)) {
+  if (/\bregistra\b.*\bentrada\b|\bmarca\b.*\bentrada\b|\banota\b.*\bentrada\b|\bcoloca\b.*\bentrada\b|\breceb[ei]\b.*\bR?\$|\bentrada\b.*\bR?\$|\bganhei\b.*\bR?\$|\bcaiu\b.*\bR?\$|\bentr[oô]u\b.*\bR?\$|\breceit[ao]\b.*\bR?\$|\bpix\b.*\bR?\$|\bR?\$.*\bpix\b|\btransfer[eê]ncia\b.*\bR?\$|\bdinheiro\b.*\bentrou\b|\bfiz\b.*\bR?\$|\bvendi\b.*\bR?\$/i.test(msgL)) {
     const valM = msg.match(/R?\$\s*(\d+(?:[.,]\d{1,2})?)/i);
     const val = valM ? parseFloat(valM[1].replace(',','.')) : null;
     const descM = msg.match(/(?:no|em|de|via)\s+([A-Za-zÀ-ú\s]+?)(?:\s*$|\s*R?\$)/i);
@@ -274,7 +274,7 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
   }
 
   // ── REGISTRAR GASTO ────────────────────────────────────────────────────────
-  if (/\bregistra\b.*\bgasto\b|\bmarca\b.*\bgasto\b|\banota\b.*\bgasto\b|\bmarca\b.*\bdespesa\b|\bregistra\b.*\bdespesa\b|\bpaguei\b|\bcomprei\b|\bsaída\b|\bsaida\b|\bdespesa\b.*\bR?\$/i.test(msgL)) {
+  if (/\bregistra\b.*\bgasto\b|\bmarca\b.*\bgasto\b|\banota\b.*\bgasto\b|\bmarca\b.*\bdespesa\b|\bregistra\b.*\bdespesa\b|\bpaguei\b|\bcomprei\b|\bsaída\b|\bsaida\b|\bdespesa\b.*\bR?\$|\bgastei\b|\bpaguei\b|\btive\s*gasto\b|\bsaiu\b.*\bR?\$|\bfoi\b.*\bR?\$|\bdebita\b|\bdescontou\b|\bcompra\b.*\bR?\$|\bfornecedor\b.*\bR?\$|\bproduto\b.*\bR?\$|\baluguel\b|\bluz\b.*\bR?\$|\bagua\b.*\bR?\$/i.test(msgL)) {
     const valM = msg.match(/R?\$\s*(\d+(?:[.,]\d{1,2})?)/i);
     const val = valM ? parseFloat(valM[1].replace(',','.')) : null;
     const descM = msg.match(/(?:em|de|no|com)\s+([A-Za-zÀ-ú\s]+?)(?:\s*$|\s*R?\$)/i);
@@ -828,12 +828,46 @@ ${total>5?'Tá crescendo muito! Continua assim! 🚀':'Todo cliente novo é uma 
     const resumoAgenda = agsHoje.length
       ? agsHoje.map(a => `${_fmtHora(new Date(a.dataHora))} - ${a.nomeCliente} (${a.nomeServico})`).join(', ')
       : 'nenhum agendamento hoje';
+    // Buscar contexto financeiro do dia
+    const iniF = new Date(hoje); iniF.setHours(0,0,0,0);
+    const fimF = new Date(hoje); fimF.setHours(23,59,59,999);
+    const lancHoje = await FinanceiroAgenda.find({ adminId: adminObjId, data: { $gte: iniF, $lte: fimF } }).lean();
+    const entradasHoje = lancHoje.filter(l=>l.tipo==='receita').reduce((s,l)=>s+l.valor,0);
+    const saidasHoje   = lancHoje.filter(l=>l.tipo==='despesa').reduce((s,l)=>s+l.valor,0);
+    const totalAgsHoje = agsHoje.length;
+
     const r = await _claude.messages.create({
       model: 'claude-haiku-4-5',
-      max_tokens: 300,
+      max_tokens: 400,
       messages: [{
         role: 'user',
-        content: `Você é a Rebeca, assistente digital de um salão/negócio. Responda de forma curta, natural e amigável em português brasileiro informal. Contexto de hoje: ${resumoAgenda}. O dono disse: "${msg}". Responda de forma útil e natural, máximo 3 linhas.`
+        content: `Você é a Rebeca, assistente digital inteligente de um salão/barbearia/negócio de beleza ou serviços.
+
+PERSONALIDADE:
+- Fala em português brasileiro informal, caloroso, animado
+- Chama o dono de "chefe", "chefão", "chefa", "patrão" — alterna sempre
+- Usa emojis com moderação (1-2 por mensagem)
+- NUNCA se apresenta (o dono já te conhece)
+- NUNCA diz "Oi! Sou a Rebeca" — isso é proibido
+- Respostas curtas e diretas — máximo 4 linhas
+- Quando não souber algo, orienta como pedir do jeito certo
+
+CONTEXTO DE AGORA (${new Date().toLocaleString('pt-BR')}):
+- Agendamentos hoje: ${totalAgsHoje === 0 ? 'nenhum' : resumoAgenda}
+- Entradas hoje: R$ ${entradasHoje.toFixed(2)}
+- Saídas hoje: R$ ${saidasHoje.toFixed(2)}
+- Resultado do dia: R$ ${(entradasHoje - saidasHoje).toFixed(2)}
+
+O DONO DISSE: "${msg}"
+
+INSTRUÇÕES:
+- Se perguntou sobre agenda/clientes: use o contexto acima para responder
+- Se quer registrar entrada/saída sem valor claro: peça só o valor de forma natural
+- Se quer agendar cliente sem hora/nome: peça só o que falta
+- Se é uma pergunta geral de negócio: responda com dica prática
+- Se é conversa informal: responda naturalmente como uma funcionária próxima
+- NUNCA invente dados que não estão no contexto
+- Responda APENAS o necessário, sem floreios desnecessários`
       }]
     });
     const respClaude = r.content?.[0]?.text?.trim();

@@ -58,9 +58,7 @@ router.post('/webhook', express.json(), async (req, res) => {
         }
       }
     } else if (tipo === 'image') {
-      await MetaWA.enviarTexto(telefone,
-        'Recebi sua imagem! 📷 Me escreva o que precisa e te ajudo! 😊'
-      );
+      await processarComando(telefone, '[imagem enviada pelo dono]', msgId);
     } else if (tipo === 'interactive') {
       const resposta = msg?.interactive?.button_reply?.title
         || msg?.interactive?.list_reply?.title || '';
@@ -183,11 +181,8 @@ async function processarComando(telefone, texto, msgId) {
 
     const tratado = await AgendaModo.processarComandoDono(telefone, texto, String(admin._id), instMeta);
 
-    if (!tratado) {
-      await MetaWA.enviarTexto(telefone,
-        'Oi! Sou a Rebeca. Digite *ajuda* para ver o que posso fazer por você. 💙'
-      );
-    }
+    // Se não tratado, o Claude Haiku já respondeu no fallback do service
+    // Não enviar mensagem genérica robótica aqui
 
   } catch(e) {
     console.error('[MetaWA] processarComando erro:', e.message);
