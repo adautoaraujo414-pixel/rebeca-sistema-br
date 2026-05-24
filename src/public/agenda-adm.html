@@ -1940,7 +1940,7 @@ async function carregarGridProfissionais(){
   try {
     const d = await api('/profissionais');
     const profs = d?.profissionais||d||[];
-    if(!profs.length){ el.innerHTML='<div class="empty-state"><div class="empty-state-icon">👤</div><div class="empty-state-titulo">Nenhum profissional</div><div class="empty-state-sub">Adicione a equipe do seu negócio</div><button class="btn-primary" onclick="abrirModalProfissional()">+ Novo profissional</button></div>'; return; }
+    if(!profs.length){ el.innerHTML='<div class="empty-state"><div class="empty-state-icon">👤</div><div class="empty-state-titulo">Nenhum profissional</div><div class="empty-state-sub">Adicione a equipe do seu negócio</div></div>'; return; }
     el.innerHTML = profs.map(p=>{
       const fotoHtml = p.foto ? '<img src="'+p.foto+'" alt="">' : '<span style="font-size:1.2em">'+iniciais(p.nome)+'</span>';
       return '<div class="form-card" style="display:flex;align-items:center;gap:16px">'+
