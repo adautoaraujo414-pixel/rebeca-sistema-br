@@ -70,10 +70,18 @@ function _extrairCategoria(txt) {
 }
 
 function _extrairDescricao(txt, tipo) {
-  // Tenta pegar o que vem depois de palavras-chave
-  const m = txt.match(/(?:de|em|no|na|com|para|pro|pra)s+([A-Za-zÀ-ú][A-Za-zÀ-ús]{1,30}?)(?:s*(?:pra|para|R\$|reais|,|\.|$))/i)
-           || txt.match(/(?:registra|anota|marca|coloca)s+(?:uma?|o)?s*(?:entrada|saida|saída|gasto|despesa|receita)?s*(?:de|no|em)?s*R?\$?\s*[\d.,]+\s+([A-Za-zÀ-ú][A-Za-zÀ-ús]{1,30})/i);
-  if (m && m[1]) return m[1].trim();
+  // Palavras que NÃO são nomes de pessoas/descrições úteis
+  const _stopWords = /^(reais?|pix|dinheiro|especie|espécie|entrada|saida|saída|gasto|despesa|receita|transfer|transferência|gasolina|combustivel|aluguel|internet|luz|agua|lanche|comida|mercado|farmacia|uber|ifood|taxa|imposto)$/i;
+  // 1. Nome próprio após "pra/para/pro/com" — palavra isolada, letra maiúscula
+  const mPra = txt.match(/(?:^|\s)(?:pra|para|pro|com)\s+([A-ZÁÀÂÃÉÊÍÓÔÕÚÇ][a-záàâãéêíóôõúç]{1,30})(?:\s|$)/);
+  if (mPra && mPra[1] && !_stopWords.test(mPra[1])) return mPra[1].trim();
+  // 2. Nome próprio após "na/no" — só se precedido por espaço/início (não "da", "na" dentro de palavra)
+  const mNa = txt.match(/(?:^|\s)(?:na|no)\s+([A-ZÁÀÂÃÉÊÍÓÔÕÚÇ][a-záàâãéêíóôõúç]{1,30})(?:\s|$)/);
+  if (mNa && mNa[1] && !_stopWords.test(mNa[1])) return mNa[1].trim();
+  // 3. Nome próprio (maiúscula) após valor numérico
+  const mApos = txt.match(/R?\$?\s*[\d.,]+\s*(?:reais?)?\s+([A-ZÁÀÂÃÉÊÍÓÔÕÚÇ][a-záàâãéêíóôõúç]{2,30})(?:\s|$)/);
+  if (mApos && mApos[1] && !_stopWords.test(mApos[1])) return mApos[1].trim();
+  // 4. Fallback
   return tipo === 'receita' ? 'Entrada via WhatsApp' : 'Gasto via WhatsApp';
 }
 
@@ -633,6 +641,7 @@ ${totalAgs > 0 ? 'Tá saindo bem! 💪' : 'Ainda sem registros esse mês.'}`);
       .replace(/^[:\s]+/, '')
       .replace(/(^|\s)(de|do|da)(\s|$)/gi, ' ')
       .replace(/\s{2,}/g, ' ')
+      .replace(/[.!?,;]+$/, '')
       .trim();
     const textoLembrete = (_limpo && _limpo.length > 1) ? _limpo : null;
 
