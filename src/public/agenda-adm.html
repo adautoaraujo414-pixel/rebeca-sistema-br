@@ -188,6 +188,7 @@ input,select,textarea{font-family:'Inter',sans-serif}
 
   /* ── Bottom nav ── */
   .bottom-nav{display:flex!important}
+  .bottom-nav.nav-hidden{display:none!important}
   .mob-menu-fab{display:none!important}
   .fab{display:none!important}
 
@@ -1665,6 +1666,7 @@ function logout(){
   if(fab) fab.style.display='none';
   document.getElementById('app').classList.remove('show');
   document.getElementById('login-wrap').style.display='flex';
+  var bn = document.querySelector('.bottom-nav'); if(bn) bn.classList.add('nav-hidden');
 }
 
 async function verificarAuth(){
@@ -1681,6 +1683,7 @@ async function verificarAuth(){
 async function iniciarApp(){
   document.getElementById('login-wrap').style.display = 'none';
   // btn-fab agora está no bottom-nav (sempre visível no mobile)
+  var bn = document.querySelector('.bottom-nav'); if(bn) bn.classList.remove('nav-hidden');
   document.getElementById('app').classList.add('show');
   setTimeout(function(){ document.dispatchEvent(new CustomEvent('rebeca:login')); }, 300);
   if(ADMIN){
@@ -3602,14 +3605,14 @@ carregarFinanceiro = async function() {
         <div class="wpp-rebeca-icon">💬</div>
         <div class="wpp-rebeca-info">
           <div class="wpp-rebeca-nome">Rebeca Oficial</div>
-          <div class="wpp-rebeca-num">+55 34 97400-4372</div>
+          <div class="wpp-rebeca-num">+55 34 99953-5060</div>
           <div class="wpp-rebeca-desc">Salve esse número e mande uma mensagem — a Rebeca já responde e gerencia sua agenda por aqui.</div>
         </div>
         <div class="wpp-rebeca-btns">
-          <a href="https://wa.me/5534974004372?text=Oi+Rebeca%2C+quero+conectar+minha+agenda" target="_blank" class="btn-wpp-green">
+          <a href="https://wa.me/5534999535060?text=Oi+Rebeca%2C+quero+conectar+minha+agenda" target="_blank" class="btn-wpp-green">
             💬 Falar com a Rebeca
           </a>
-          <a href="https://wa.me/5534974004372" target="_blank" class="btn-wpp-outline">
+          <a href="https://wa.me/5534999535060" target="_blank" class="btn-wpp-outline">
             ➕ Salvar contato
           </a>
         </div>
@@ -3782,7 +3785,7 @@ function _cacheClear(prefix) {
 
 <!-- ─── BOTTOM NAV FIXO — FORA DO .main ─── -->
 <!-- ─── BOTTOM NAV ─── -->
-<nav class="bottom-nav">
+<nav class="bottom-nav nav-hidden">
   <div class="bottom-nav-items">
     <button class="bottom-nav-item ativo" id="bn-inicio" onclick="irPara('dashboard')">
       <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" stroke-width="2"/></svg>
