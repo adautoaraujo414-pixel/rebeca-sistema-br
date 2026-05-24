@@ -1249,6 +1249,41 @@ async function rodarLembretesPessoais() {
   } catch(e) {
     console.error('[Lembretes] Erro geral:', e.message);
   }
+
+  // ── LEMBRETES PESSOAIS (config.lembretes) ──────────────────────────────────
+  try {
+    const agora2 = new Date();
+    const adminsL = await AdminAgenda.find({
+      'config.lembretes': { $elemMatch: { enviado: { $ne: true }, dataAviso: { $lte: agora2 } } }
+    }).lean();
+    for (const adm of adminsL) {
+      const pendentes = (adm.config?.lembretes || []).filter(
+        l => !l.enviado && l.dataAviso && new Date(l.dataAviso) <= agora2
+      );
+      for (const l of pendentes) {
+        const telDono = _normalizarTel(adm.whatsappOficial || adm.whatsapp || adm.telefone);
+        if (!telDono) continue;
+        const inst = await InstanciaWhatsapp.findOne({ adminId: String(adm._id), status: 'conectado' }).lean();
+        const horaEvento = l.dataEvento ? _fmtHora(new Date(l.dataEvento)) : '';
+        await _enviarMsg(
+          inst || { _enviarVia: 'meta', nomeInstancia: 'meta_oficial' },
+          telDono,
+          `🔔 *Lembrete!*
+
+${l.texto}${horaEvento ? '
+
+📅 ' + horaEvento : ''}`
+        );
+        await AdminAgenda.updateOne(
+          { _id: adm._id, 'config.lembretes._id': l._id },
+          { $set: { 'config.lembretes.$.enviado': true } }
+        );
+        console.log('[LembretesConfig] Enviado para', telDono, ':', l.texto?.slice(0,40));
+      }
+    }
+  } catch(e) {
+    console.error('[LembretesConfig] Erro:', e.message);
+  }
 }
 
 module.exports.rodarLembretesPessoais = rodarLembretesPessoais;
