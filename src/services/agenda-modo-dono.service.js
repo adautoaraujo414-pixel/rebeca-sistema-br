@@ -453,50 +453,46 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
 
     if (hora) {
       const dataLembrete = new Date(dia);
-      dataLembrete.setHours(hora.h, hora.min - 15, 0, 0); // 15min antes
+      dataLembrete.setHours(hora.h, hora.min, 0, 0);
+      const dataAviso = new Date(dataLembrete.getTime() - 15*60000);
 
-      // Salvar como bloqueio com motivo de lembrete
-      await BloqueioAgenda.create({
-        adminId: adminObjId,
-        inicio: dataLembrete,
-        fim: new Date(dataLembrete.getTime() + 15*60000),
-        motivo: `🔔 LEMBRETE: ${textoLembrete}`,
-        tipo: 'lembrete'
+      // Salvar em campo do admin — não polui agenda
+      await AdminAgenda.findByIdAndUpdate(adminObjId, {
+        $push: {
+          'config.lembretes': {
+            texto: textoLembrete,
+            dataEvento: dataLembrete,
+            dataAviso,
+            enviado: false,
+            criadoEm: new Date()
+          }
+        }
       });
 
-      await responder(
-        `Anotado, ${_chefe()}! 📝✨
+      await responder(`Anotado, ${_chefe()}! 📝
 
-` +
-        `🔔 *Lembrete criado:*
-${textoLembrete}
+🔔 *${textoLembrete}*
+📅 ${_fmtData(dia)} às ${_fmtHora(dataLembrete)}
 
-` +
-        `📅 ${_fmtData(dia)} às ${_fmtHora(new Date(dia.setHours(hora.h, hora.min, 0, 0)))}
-
-` +
-        `Vou te avisar 15 minutinhos antes pra você não esquecer! 💙`
-      );
+Vou te avisar 15 min antes! 💙`);
     } else {
-      // Sem hora definida — salva como lembrete geral
-      await BloqueioAgenda.create({
-        adminId: adminObjId,
-        inicio: dia,
-        fim: new Date(dia.getTime() + 60*60000),
-        motivo: `🔔 LEMBRETE: ${textoLembrete}`,
-        tipo: 'lembrete'
+      // Sem hora — salva sem data de aviso
+      await AdminAgenda.findByIdAndUpdate(adminObjId, {
+        $push: {
+          'config.lembretes': {
+            texto: textoLembrete,
+            dataEvento: dia,
+            dataAviso: null,
+            enviado: false,
+            criadoEm: new Date()
+          }
+        }
       });
-      await responder(
-        `Anotei aqui, ${_chefe()}! 📝
+      await responder(`Anotei, ${_chefe()}! 📝
 
-` +
-        `🔔 *${textoLembrete}*
+🔔 *${textoLembrete}*
 
-` +
-        `Me fala o horário também pra eu te avisar antes! Ex:
-` +
-        `*Rebeca, amanhã às 10h tenho reunião me lembra* 😊`
-      );
+Me fala o horário também pra eu te avisar antes! 😊`);
     }
     return true;
   }
@@ -905,9 +901,11 @@ ${total>5?'Tá crescendo muito! Continua assim! 🚀':'Todo cliente novo é uma 
     }
 
     // Montar mensagem natural
-    const textoFinal = textoMsg
-      ? textoMsg
-      : `Oi ${nomeCliente.split(' ')[0]}! Tudo bem? 😊 O estabelecimento entrou em contato pra falar com você. Qualquer dúvida é só responder aqui! 💙`;
+    if (!textoMsg) {
+      await responder(`Certo, ${_chefe()}! O que quer que eu fale pra *${nomeCliente.split(' ')[0]}*? 😊`);
+      return true;
+    }
+    const textoFinal = textoMsg;
 
     // Buscar instância para envio
     const inst = await InstanciaWhatsapp.findOne({ adminId: String(adminObjId), status: 'conectado' }).lean()
