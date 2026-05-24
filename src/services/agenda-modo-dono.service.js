@@ -572,15 +572,16 @@ ${totalAgs > 0 ? 'Tá saindo bem! 💪' : 'Ainda sem registros esse mês.'}`);
       const _semana = ['domingo','segunda-feira','terca-feira','quarta-feira','quinta-feira','sexta-feira','sabado'];
       const _dow = _brNow.getUTCDay();
       const _dowAm = (_dow + 1) % 7;
-      const _hoje  = String(_brNow.getUTCDate()).padStart(2,'0') + '/' + String(_brNow.getUTCMonth()+1).padStart(2,'0');
-      const _brAm  = new Date(_brNow.getTime() + 24*60*60*1000);
-      const _amanha = String(_brAm.getUTCDate()).padStart(2,'0') + '/' + String(_brAm.getUTCMonth()+1).padStart(2,'0');
-      await responder(
-        'Claro! Qual dia voce quer esse lembrete?\n\n' +
-        'Hoje e ' + _semana[_dow] + ', ' + _hoje + '\n' +
-        'Amanha e ' + _semana[_dowAm] + ', ' + _amanha + '\n\n' +
-        'Me fala o dia e confirmo!'
-      );
+      const _dd = String(_brNow.getUTCDate()).padStart(2,'0');
+      const _mm = String(_brNow.getUTCMonth()+1).padStart(2,'0');
+      const _brAm = new Date(_brNow.getTime() + 24*60*60*1000);
+      const _ddAm = String(_brAm.getUTCDate()).padStart(2,'0');
+      const _mmAm = String(_brAm.getUTCMonth()+1).padStart(2,'0');
+      const _respDia = 'Claro! Qual dia voce quer esse lembrete?\n\n' +
+        'Hoje e ' + _semana[_dow] + ', ' + _dd + '/' + _mm + '\n' +
+        'Amanha e ' + _semana[_dowAm] + ', ' + _ddAm + '/' + _mmAm + '\n\n' +
+        'Me fala o dia e confirmo!';
+      await responder(_respDia);
       return true;
     }
 
