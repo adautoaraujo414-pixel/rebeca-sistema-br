@@ -480,7 +480,7 @@ router.get('/config-bot', authAgenda, async (req, res) => {
   try {
     const { AdminAgenda } = require('../models/AgendaServico');
     const admin = await AdminAgenda.findById(req.adminId).select('configBot').lean();
-    res.json({ sucesso: true, configBot: admin?.configBot || { ativo: false, foraHorario: false, linkAgenda: true } });
+    res.json({ sucesso: true, configBot: admin?.configBot || { ativo: false, foraHorario: false, linkAgenda: true, atenderClientes: false } });
   } catch(e) {
     res.status(500).json({ sucesso: false, erro: e.message });
   }
@@ -489,11 +489,12 @@ router.get('/config-bot', authAgenda, async (req, res) => {
 router.put('/config-bot', authAgenda, async (req, res) => {
   try {
     const { AdminAgenda } = require('../models/AgendaServico');
-    const { ativo, foraHorario, linkAgenda } = req.body;
+    const { ativo, foraHorario, linkAgenda, atenderClientes } = req.body;
     await AdminAgenda.findByIdAndUpdate(req.adminId, {
-      'configBot.ativo':       !!ativo,
-      'configBot.foraHorario': !!foraHorario,
-      'configBot.linkAgenda':  !!linkAgenda
+      'configBot.ativo':           !!ativo,
+      'configBot.foraHorario':     !!foraHorario,
+      'configBot.linkAgenda':      !!linkAgenda,
+      'configBot.atenderClientes': !!atenderClientes
     });
     res.json({ sucesso: true, mensagem: 'Configurações do bot salvas!' });
   } catch(e) {
