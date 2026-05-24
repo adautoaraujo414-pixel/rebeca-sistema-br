@@ -1469,7 +1469,7 @@ Faz um tempo que não aparece... temos novidades esperando! Quer marcar um horá
 async function rodarLembretesClientes() {
   try {
     const agora = new Date();
-    const AdminAgenda        = require('../models/AgendaAdmin').AdminAgenda       || require('../models/AgendaAdmin');
+    const AdminAgenda        = require('../models/AgendaServico').AdminAgenda       || require('../models/AgendaServico');
     const InstanciaWhatsapp  = require('../models/InstanciaWhatsapp');
     const AgendamentoAgenda  = require('../models/AgendaAgendamento').AgendamentoAgenda || require('../models/AgendaAgendamento');
 
