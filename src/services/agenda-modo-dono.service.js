@@ -184,7 +184,7 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
   }
 
   // ── AGENDA DE HOJE ─────────────────────────────────────────────────────────
-  if (/\bagenda\s*(de\s*)?(hoje|amanhã|amanha)\b/i.test(msgL) || /\bmostra\s*(minha\s*)?agenda\b/i.test(msgL)) {
+  if (/\bagenda\s*(de\s*)?(hoje|amanhã|amanha)\b|\bmostra\s*(minha\s*)?agenda|\bquem\s*(tenho|tem)\s*(hoje|amanhã|amanha)\b|\bhor[aá]rios?\s*(de\s*)?(hoje|amanhã|amanha)\b|\btem\s*algu[eé]m\s*(hoje|amanhã|amanha)\b|\bcomo\s*t[áa]\s*(hoje|amanhã|amanha)\b|\bvou\s*atender\s*quem\b|\bquem\s*[eé]\s*(hoje|amanhã)\b|\bminha\s*agenda\b|\bquantos\s*(clientes\s*)?(tenho|tem)\s*(hoje|amanhã)\b/i.test(msgL)) {
     const dia = /amanhã|amanha/i.test(msgL) ? (() => { const d = new Date(); d.setDate(d.getDate()+1); return d; })() : new Date();
     const ini = new Date(dia); ini.setHours(0,0,0,0);
     const fim = new Date(dia); fim.setHours(23,59,59,999);
@@ -206,8 +206,8 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
     return true;
   }
 
-  // ── BLOQUEAR HORÁRIO ───────────────────────────────────────────────────────
-  if (/\bbloquei?a?\b/i.test(msgL)) {
+  // ── BLOQUEAR HORÁRIO ─────────────────────────────────────────────────────
+  if (/bloquei[ao]\s*(hor[aá]rio|agenda|tempo|per[ií]odo)|bloqueia.*(das?|de)|tira\s*(hor[aá]rio|tempo|per[ií]odo)|reserva\s*(hor[aá]rio|tempo)|sai.*\d+h|almo[çc]o|paus[ao]|intervalo.*hor[aá]rio/i.test(msgL)) {
     const dia = _parseDia(msgL);
     // Pegar horas "das Xh às Yh"
     const rangeM = msg.match(/das?\s*(\d{1,2}h?\d{0,2})\s*(?:às?|as)\s*(\d{1,2}h?\d{0,2})/i);
@@ -296,7 +296,7 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
   }
 
   // ── FATURAMENTO ────────────────────────────────────────────────────────────
-  if (/\bfaturei\b|\bfaturamento\b|\bquanto\s*(entrou|fiz|ganhei)\b/i.test(msgL)) {
+  if (/\bfaturei\b|\bfaturamento\b|\bquanto\s*(entrou|fiz|ganhei|recebi|caiu)\b|\bquanto\s*(fiz|ganhei|recebi)\s*hoje\b|\bcaixa\s*de\s*hoje\b|\bresultado\s*de\s*hoje\b|\bsaldo\s*de\s*hoje\b|\bquanto\s*t[eê]m?\s*hoje\b|\bcomo\s*t[áa]\s*o\s*caixa\b|\bfiz\s*quanto\b|\bganhei\s*quanto\b/i.test(msgL)) {
     const dia = _parseDia(msgL) || new Date();
     const ini = new Date(dia); ini.setHours(0,0,0,0);
     const fim = new Date(dia); fim.setHours(23,59,59,999);
@@ -324,8 +324,8 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
     return true;
   }
 
-  // ── CANCELAR AGENDAMENTO ───────────────────────────────────────────────────
-  if (/\bcancela\b.*\bagendamento\b|\bcancela\b.*\bhor[aá]rio\b/i.test(msgL)) {
+  // ── CANCELAR AGENDAMENTO ─────────────────────────────────────────────────
+  if (/cancela\s*(o\s*)?(agendamento|hor[aá]rio|cliente|atendimento)|cancelado|cancela\s+\d|n[aã]o\s+vem|desistiu|desmarca|remove\s+(o\s*)?agendamento|tira\s+(o\s*)?hor[aá]rio|cliente\s+(cancelou|desistiu|n[aã]o\s+vem)/i.test(msgL)) {
     const hora = _parseHora(msgL);
     const dia = _parseDia(msgL) || new Date();
     if (hora) {
@@ -344,8 +344,8 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
     return true;
   }
 
-  // ── CONFIRMAR AGENDAMENTO ──────────────────────────────────────────────────
-  if (/\bconfirma\b.*\bhor[aá]rio\b|\bconfirma\b.*\bagendamento\b|\bconfirma\b.*\b\d{1,2}h\b/i.test(msgL)) {
+  // ── CONFIRMAR AGENDAMENTO ────────────────────────────────────────────────
+  if (/confirma\s*(o\s*)?(agendamento|hor[aá]rio|cliente|atendimento)|confirmado|confirma\s+\d|pode\s+vir|vai\s+vir|client[eo]\s+confirmou|confirma\s+(a\s+)?(visita|ida)/i.test(msgL)) {1,2}h\b/i.test(msgL)) {
     const hora = _parseHora(msgL);
     const dia = _parseDia(msgL) || new Date();
     if (hora) {
@@ -365,7 +365,7 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
   }
 
   // ── CLIENTES INATIVOS ──────────────────────────────────────────────────────
-  if (/\bclientes?\s*inativo\b|\binativos?\b/i.test(msgL)) {
+  if (/\bclientes?\s*inativo\b|\binativos?\b|\bquem\s*(n[aã]o\s*vem|sumiu|desapareceu)\b|\bclientes?\s*(que\s*)?(n[aã]o\s*voltaram|n[aã]o\s*aparecem)\b|\bsumiram\b|\bperdidos?\b/i.test(msgL)) {
     const dias = 30;
     const corte = new Date(Date.now() - dias*24*60*60*1000);
     const inativos = await ClienteAgenda.find({
@@ -473,7 +473,7 @@ ${textoLembrete}
   }
 
   // ── PRÓXIMO CLIENTE ──────────────────────────────────────────────────────────
-  if (/pr[oó]ximo\s*cliente|quem\s*(é\s*)?o\s*pr[oó]ximo|próximo\s*da\s*fila/i.test(msgL)) {
+  if (/pr[oó]ximo\s*cliente|quem\s*(é\s*)?o\s*pr[oó]ximo|pr[oó]ximo\s*da\s*fila|\bquem\s*[eé]\s*agora\b|\bquem\s*[eé]\s*o\s*seguinte\b|\bagora\s*quem\s*[eé]\b|\btem\s*algu[eé]m\s*agora\b|\bpr[oó]ximo\s*hor[aá]rio\b/i.test(msgL)) {
     const agora = new Date();
     const fim = new Date(); fim.setHours(23,59,59,999);
     const ag = await AgendamentoAgenda.findOne({
@@ -534,7 +534,12 @@ A semana tá zerada por enquanto. Bora divulgar pra encher a agenda! 🚀`);
       const dataHora = new Date(dia); dataHora.setHours(hora.h, hora.min, 0, 0);
       await AgendamentoAgenda.create({
         adminId: adminObjId, nomeCliente: nome,
-        nomeServico: 'A definir', dataHora,
+        nomeServico: (() => {
+          const srvM = msg.match(/(?:pra|para|de|corte|tintura|escova|manicure|pedicure|barba|sobrancelha|massagem|limpeza|hidrata[çc][aã]o)\s+([A-Za-zÀ-ú\s]+?)(?:\s*$)/i);
+          const servicos = ['corte','tintura','escova','manicure','pedicure','barba','sobrancelha','massagem','limpeza','hidratação','progressiva','botox','penteado','maquiagem'];
+          const encontrado = servicos.find(s => msgL.includes(s));
+          return encontrado ? encontrado.charAt(0).toUpperCase()+encontrado.slice(1) : 'A definir';
+        })(), dataHora,
         status: 'confirmado', origem: 'whatsapp_dono'
       });
       await responder(`Maravilha, ${_chefe()}! 🎉
@@ -581,7 +586,7 @@ Removi ${res.deletedCount} bloqueio(s) de ${_fmtData(dia)}. Agenda aberta e pron
   }
 
   // ── HISTÓRICO DO CLIENTE ──────────────────────────────────────────────────
-  if (/hist[oó]rico\s*(do|da|de)\s+|[uú]ltimas?\s*visitas?\s*(do|da|de)\s+/i.test(msgL)) {
+  if (/hist[oó]rico\s*(do|da|de)\s+|[uú]ltimas?\s*visitas?\s*(do|da|de)\s+|\bquando\s*(veio|foi|atendi)\s+(a\s+|o\s+)?[A-Z]|\bficha\s+(do|da|de)\s+|\bcliente\s+(foi|veio)\s+quando\b/i.test(msgL)) {
     const nomeM = msg.match(/hist[oó]rico\s*d[oa]?\s+([A-Za-zÀ-ú\s]+?)(?:\s*$)/i) ||
                   msg.match(/visitas?\s*d[oa]?\s+([A-Za-zÀ-ú\s]+?)(?:\s*$)/i);
     const nome = nomeM ? nomeM[1].trim() : null;
@@ -647,7 +652,7 @@ Que tal mandar uma mensagem especial pra eles? 💙`);
   }
 
   // ── RESUMO SEMANAL ────────────────────────────────────────────────────────
-  if (/resumo\s*d[ao]\s*semana|faturamento\s*d[ao]\s*semana|quanto\s*(fiz|faturei)\s*(essa|na)\s*semana/i.test(msgL)) {
+  if (/resumo\s*d[ao]\s*semana|faturamento\s*d[ao]\s*semana|quanto\s*(fiz|faturei|ganhei|recebi)\s*(essa|na|esta)\s*semana|\bsemana\s*toda\b|\bcomo\s*foi\s*(a\s*)?semana\b|\bbalanço\s*d[ao]\s*semana\b/i.test(msgL)) {
     const ini = new Date(); ini.setDate(ini.getDate() - 7); ini.setHours(0,0,0,0);
     const fim = new Date(); fim.setHours(23,59,59,999);
     const lanc = await FinanceiroAgenda.find({ adminId: adminObjId, data: { $gte: ini, $lte: fim } }).lean();
@@ -666,7 +671,7 @@ ${(entradas-saidas)>=0?'Semana boa demais! 🚀':'Semana de aprendizado! Próxim
   }
 
   // ── RESUMO MENSAL ─────────────────────────────────────────────────────────
-  if (/resumo\s*d[ao]\s*m[eê]s|faturamento\s*d[ao]\s*m[eê]s|quanto\s*(fiz|faturei)\s*(esse|no|este)\s*m[eê]s/i.test(msgL)) {
+  if (/resumo\s*d[ao]\s*m[eê]s|faturamento\s*d[ao]\s*m[eê]s|quanto\s*(fiz|faturei|ganhei|recebi)\s*(esse|no|este|do)\s*m[eê]s|\bcomo\s*foi\s*(o\s*)?m[eê]s\b|\bbalanço\s*d[ao]\s*m[eê]s\b|\bfechamento\s*d[ao]\s*m[eê]s\b|\bm[eê]s\s*todo\b/i.test(msgL)) {
     const ini = new Date(); ini.setDate(1); ini.setHours(0,0,0,0);
     const fim = new Date(); fim.setHours(23,59,59,999);
     const lanc = await FinanceiroAgenda.find({ adminId: adminObjId, data: { $gte: ini, $lte: fim } }).lean();
@@ -742,7 +747,7 @@ ${total>5?'Tá crescendo muito! Continua assim! 🚀':'Todo cliente novo é uma 
   }
 
   // ── MANUAL DE COMANDOS ────────────────────────────────────────────────────
-  if (/ajuda|comandos?|o\s*que\s*(vc|você)\s*(faz|pode|sabe)|menu|help/i.test(msgL)) {
+  if (/\bajuda\b|\bcomandos?\b|\bo\s*que\s*(vc|você)\s*(faz|pode|sabe|consegue)\b|\bmenu\b|\bhelp\b|\bo\s*que\s*d[áa]\b|\boque\s*voc[eê]\b|\bfun[çc][õo]es?\b|\bcomo\s*us[ao]\b|\bcomo\s*funciona\b|\bpra\s*que\s*serve\b/i.test(msgL)) {
     await responder(
       `${_saudacao()}, ${_chefe()}! Aqui tô eu! 💙
 
