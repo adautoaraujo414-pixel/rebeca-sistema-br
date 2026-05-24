@@ -45,8 +45,6 @@ router.post('/webhook', express.json(), async (req, res) => {
     } else if (tipo === 'audio') {
       console.log(`[MetaWA] Áudio recebido de ${telefone} — transcrevendo...`);
       await MetaWA.marcarLido(msgId);
-      // Notificar que está processando
-      await MetaWA.enviarTexto(telefone, '🎵 Recebi seu áudio! Deixa eu ouvir...');
       const audioId = msg?.audio?.id;
       if (audioId) {
         const transcricao = await transcreverAudio(audioId);
