@@ -650,10 +650,99 @@ input,select,textarea{font-family:'Inter',sans-serif}
   .link-publico-btns{width:100%;justify-content:stretch}
   .link-publico-btns .btn-sec,.link-publico-btns .btn-primario{flex:1;text-align:center}
 }
+
+@media(max-width:768px){
+  /* Dashboard — 1 coluna definitiva */
+  .main-grid{
+    display:flex!important;
+    flex-direction:column!important;
+    gap:12px!important;
+  }
+  .main-grid .left,
+  .main-grid .right{
+    width:100%!important;
+    min-width:0!important;
+    display:flex!important;
+    flex-direction:column!important;
+    gap:12px!important;
+  }
+
+  /* Card desempenho — compactar */
+  .desempenho-nums{
+    grid-template-columns:1fr 1fr!important;
+  }
+  .desempenho-num{
+    padding:12px 14px!important;
+  }
+  .desempenho-num-val{
+    font-size:1.3em!important;
+  }
+
+  /* Gráfico — altura menor no mobile */
+  .chart-wrap{
+    height:130px!important;
+    padding:12px!important;
+  }
+  .chart-bars{
+    height:90px!important;
+  }
+
+  /* Ocultar gráfico por padrão, mostrar ao clicar "Ver mais" */
+  .chart-wrap.mobile-oculto{
+    display:none!important;
+  }
+  .chart-legend.mobile-oculto{
+    display:none!important;
+  }
+
+  /* Botão Ver mais */
+  .btn-ver-mais-mobile{
+    display:block!important;
+    width:100%;
+    text-align:center;
+    padding:8px;
+    font-size:.8em;
+    color:var(--cor);
+    font-weight:600;
+    background:none;
+    border:none;
+    cursor:pointer;
+    border-top:1px solid var(--borda);
+    margin-top:4px;
+  }
+
+  /* Cards do main-grid sem altura fixa */
+  .main-grid .card{
+    min-height:0!important;
+    overflow:visible!important;
+  }
+
+  /* Horários livres — menor no mobile */
+  .horarios-wrap{
+    max-height:120px;
+    overflow-y:auto;
+  }
+}
+@media(min-width:769px){
+  .btn-ver-mais-mobile{display:none!important}
+}
+
 </style>
 <link rel="manifest" href="/agenda-adm-manifest.json">
 <script src="/js/agenda-notif-helper.js">
 // ── SIDEBAR MOBILE DRAWER ──────────────────────────────────────────────────
+
+// Toggle gráfico mobile
+function toggleGraficoMobile() {
+  const wrap = document.getElementById('chart-wrap');
+  const legend = document.getElementById('chart-legend');
+  const btn = document.getElementById('btn-ver-grafico');
+  if (!wrap) return;
+  const oculto = wrap.classList.toggle('mobile-oculto');
+  if (legend) legend.classList.toggle('mobile-oculto');
+  btn.textContent = oculto ? '📊 Ver gráfico completo ▼' : '📊 Ocultar gráfico ▲';
+}
+
 function toggleSidebar() {
   const sidebar = document.getElementById('sidebar');
   const overlay = document.getElementById('sidebar-overlay');
@@ -1011,10 +1100,13 @@ document.querySelectorAll('.nav-item').forEach(item => {
                   <div class="desempenho-num-sub up" id="perf-ag-sub">—</div>
                 </div>
               </div>
-              <div class="chart-wrap" id="chart-wrap">
+              <button class="btn-ver-mais-mobile" id="btn-ver-grafico" onclick="toggleGraficoMobile()">
+                📊 Ver gráfico completo ▼
+              </button>
+              <div class="chart-wrap mobile-oculto" id="chart-wrap">
                 <div class="chart-bars" id="chart-bars"></div>
               </div>
-              <div class="chart-legend">
+              <div class="chart-legend mobile-oculto" id="chart-legend">
                 <div class="chart-legend-item"><div class="chart-legend-dot" style="background:var(--cor)"></div>Faturamento (R$)</div>
                 <div class="chart-legend-item"><div class="chart-legend-dot" style="background:#e5e7eb"></div>Agendamentos</div>
               </div>
