@@ -1,11 +1,11 @@
 'use strict';
 
-const express  = require('express');
-const router   = express.Router();
-const MetaWA   = require('../services/meta-whatsapp.service');
-const axios    = require('axios');
+const express   = require('express');
+const router    = express.Router();
+const axios     = require('axios');
+const MetaWA    = require('../services/meta-whatsapp.service');
 const Anthropic = require('@anthropic-ai/sdk');
-const _claude  = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+const _claude   = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 const VERIFY_TOKEN = process.env.META_WA_VERIFY_TOKEN || 'rebeca-webhook-2026';
 
