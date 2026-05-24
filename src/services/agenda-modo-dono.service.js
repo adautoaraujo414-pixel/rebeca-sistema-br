@@ -353,7 +353,8 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
   // ── REGISTRAR ENTRADA FINANCEIRA ───────────────────────────────────────────
   if (/\bregistra\b.*\bentrada\b|\bmarca\b.*\bentrada\b|\banota\b.*\bentrada\b|\bcoloca\b.*\bentrada\b|\breceb[ei]\b|\bentrada\b|\bganhei\b|\bcaiu\b|\bentr[ou]\b|\breceit[ao]\b|\bpix\b.*\d|\bR?\$.*\bpix\b|\btransfer[eê]ncia\b|\bdinheiro\b.*\bentrou\b|\bfiz\b.*\d|\bvendi\b|\brecebi\b/i.test(msgL) &&
       !/\bpaguei\b|\bgastei\b|\bsaida\b|\bsa[ií]da\b|\bdespesa\b|\bcombust[ií]vel\b|\bgasolina\b|\baluguel\b|\binternet\b|\bluz\b|\bagua\b|\buber\b/i.test(msgL)) {
-    const _vm = msg.match(/R?\$\s*(\d+(?:[.,]\d{1,2})?)|(\d+(?:[.,]\d{1,2})?)\s*(?:reais?|conto|reai)?/i);
+    const _msgLimpa = msg.replace(/[?!]+$/, '').trim();
+    const _vm = _msgLimpa.match(/R?\$\s*(\d+(?:[.,]\d{1,2})?)|(\d+(?:[.,]\d{1,2})?)\s*(?:reais?|conto|reai)?/i);
     const val = _vm ? parseFloat((_vm[1]||_vm[2]).replace(',','.')) : null;
     const descEntrada = _extrairDescricao(msg, 'receita');
     const catEntrada  = _extrairCategoria(msg);
