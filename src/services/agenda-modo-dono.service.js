@@ -377,7 +377,8 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
 
   // ── REGISTRAR GASTO ────────────────────────────────────────────────────────
   if (/\bregistra\b.*\bgasto\b|\bmarca\b.*\bgasto\b|\banota\b.*\bgasto\b|\bmarca\b.*\bdespesa\b|\bregistra\b.*\bdespesa\b|\bpaguei\b|\bcomprei\b|\bsaída\b|\bsaida\b|\bdespesa\b|\bgastei\b|\btive\s*gasto\b|\bsaiu\b|\bdebita\b|\bdescontou\b|\baluguel\b|\bluz\b|\bagua\b|\bcombust[ií]vel\b|\bgasolina\b|\buber\b|\binternet\b|\baliment[ao]\b|\blanche\b|\bcaf[eé]\b|\bmaterial\b|\bequipamento\b/i.test(msgL)) {
-    const _vms = msg.match(/R?\$\s*(\d+(?:[.,]\d{1,2})?)|(\d+(?:[.,]\d{1,2})?)\s*(?:reais?|conto|reai)?/i);
+    const _msgLimpaS = msg.replace(/[?!]+$/, '').trim();
+    const _vms = _msgLimpaS.match(/R?\$\s*(\d+(?:[.,]\d{1,2})?)|(\d+(?:[.,]\d{1,2})?)\s*(?:reais?|conto|reai)?/i);
     const val = _vms ? parseFloat((_vms[1]||_vms[2]).replace(',','.')) : null;
     const descSaida = _extrairDescricao(msg, 'despesa');
     const catSaida  = _extrairCategoria(msg);
