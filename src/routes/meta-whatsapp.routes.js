@@ -178,13 +178,19 @@ async function processarComando(telefone, texto, msgId) {
       _enviarVia:    'meta'
     };
 
-    const tratado = await AgendaModo.processarComandoDono(telefone, texto, String(admin._id), instMeta);
-
-    // Se não tratado, o Claude Haiku já respondeu no fallback do service
-    // Não enviar mensagem genérica robótica aqui
+    console.log('[STEP 5] chamando processarComandoDono, adminId:', String(admin._id));
+    let tratado;
+    try {
+      tratado = await AgendaModo.processarComandoDono(telefone, texto, String(admin._id), instMeta);
+    } catch(innerErr) {
+      console.error('[STEP 5 ERRO]', { message: innerErr.message, stack: innerErr.stack });
+      await MetaWA.enviarTexto(telefone, 'Ocorreu um erro interno. Tente novamente.');
+      return;
+    }
+    console.log('[STEP 6] processarComandoDono retornou:', tratado);
 
   } catch(e) {
-    console.error('[MetaWA] processarComando erro:', e.message);
+    console.error('[MetaWA] processarComando erro:', { message: e.message, stack: e.stack, data: e.response?.data });
     await MetaWA.enviarTexto(telefone, 'Ocorreu um erro. Tente novamente em instantes.');
   }
 }
