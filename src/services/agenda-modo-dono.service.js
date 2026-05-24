@@ -260,7 +260,7 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
     if (val) {
       await FinanceiroAgenda.create({
         adminId: adminObjId,
-        tipo: 'entrada',
+        tipo: 'receita',
         valor: val,
         descricao: desc,
         data: new Date(),
@@ -282,7 +282,7 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
     if (val) {
       await FinanceiroAgenda.create({
         adminId: adminObjId,
-        tipo: 'saida',
+        tipo: 'despesa',
         valor: val,
         descricao: desc,
         data: new Date(),
