@@ -625,13 +625,34 @@ A semana tá zerada por enquanto. Bora divulgar pra encher a agenda! 🚀`);
         );
       }
 
+      // Montar mensagem de notificação para o ADM — estilo natural
+      const servicoEncaixe = (() => {
+        const servicos = ['corte','tintura','escova','manicure','pedicure','barba','sobrancelha','massagem','limpeza','hidratação','progressiva','botox','penteado','maquiagem','cílios','cilios','design'];
+        return servicos.find(s => msgL.includes(s)) || 'a definir';
+      })();
+
+      const msgAdm =
+        `📅 *Novo agendamento!*
+
+` +
+        `👤 *${nome}*
+` +
+        `✂️ Serviço: ${servicoEncaixe.charAt(0).toUpperCase() + servicoEncaixe.slice(1)}
+` +
+        `📆 ${_fmtData(dia)} às ${_fmtHora(dataHora)}
+` +
+        (telCliente ? `📱 ${telCliente}
+` : '') +
+        `
+Agendado via WhatsApp. 💙`;
+
       await responder(`Maravilha, ${_chefe()}! 🎉
 
 ✅ *${nome}* encaixado às *${_fmtHora(dataHora)}* de ${_fmtData(dia)}!
 
-Já tá na agenda. Pode mandar o cliente! 💙${telCliente ? '' : '
+Já tá na agenda! 💙${telCliente ? '' : '
 
-📱 Se tiver o número dele me passa pra eu poder enviar lembretes!'}`);
+📱 Se tiver o número dele me passa pra eu enviar lembretes!'}`);
     } else if (nome && !hora) {
       await responder(`Certo, ${_chefe()}! *${nome}* — que horas? 😊`);
     } else if (hora && !nome) {
@@ -1028,14 +1049,41 @@ async function notificarDonoNovoAgendamento(adminId, dadosAg) {
     if (!instancia || instancia.status !== 'conectado') return;
 
     const dataHora = new Date(dadosAg.dataHora);
+    // Buscar total da semana para contexto
+    const iniSem = new Date(); iniSem.setDate(iniSem.getDate() - iniSem.getDay()); iniSem.setHours(0,0,0,0);
+    const fimSem = new Date(); fimSem.setHours(23,59,59,999);
+    const totalSemana = await AgendamentoAgenda.countDocuments({
+      adminId, dataHora: { $gte: iniSem, $lte: fimSem },
+      status: { $in: ['pendente','confirmado','concluido'] }
+    });
+    const receitaSemana = await FinanceiroAgenda.find({
+      adminId, data: { $gte: iniSem, $lte: fimSem }, tipo: 'receita'
+    }).lean().then(l => l.reduce((s,x) => s+x.valor, 0));
+
+    const frases = [
+      `Mais um chegando! 🎉`,
+      `Agenda enchendo! 💪`,
+      `Tá bombando! 🚀`,
+      `Cliente novo na fila! 💙`,
+    ];
+    const frase = frases[Math.floor(Math.random() * frases.length)];
+
     const msg =
-      `📅 *Novo agendamento!*\n\n` +
-      `👤 Cliente: ${dadosAg.nomeCliente}\n` +
-      `✂️ Serviço: ${dadosAg.nomeServico}\n` +
-      `📆 Data: ${_fmtData(dataHora)}\n` +
-      `⏰ Hora: ${_fmtHora(dataHora)}\n` +
-      (dadosAg.nomeProfissional ? `👩 Profissional: ${dadosAg.nomeProfissional}\n` : '') +
-      `\nPara ver todos os agendamentos, acesse seu painel.`;
+      `📅 *Novo agendamento!* ${frase}
+
+` +
+      `👤 *${dadosAg.nomeCliente}*
+` +
+      `✂️ ${dadosAg.nomeServico || 'Serviço'}
+` +
+      `📆 ${_fmtData(dataHora)} às ${_fmtHora(dataHora)}
+` +
+      (dadosAg.valor ? `💰 R$ ${Number(dadosAg.valor).toFixed(2)}
+` : '') +
+      (dadosAg.nomeProfissional ? `👩 ${dadosAg.nomeProfissional}
+` : '') +
+      `
+📊 Essa semana: ${totalSemana} agendamento(s) | R$ ${receitaSemana.toFixed(2)}`;
 
     await _enviarMsg(instancia, telDono, msg);
   } catch(e) {
