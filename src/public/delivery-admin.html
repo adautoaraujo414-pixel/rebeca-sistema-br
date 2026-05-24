@@ -3493,7 +3493,6 @@ async function carregarHistoricoBalanca() {
                 toast('Status atualizado!');
                 carregarDashboard();
                 carregarPedidos();
-                iniciarPollingPedidos();
             } catch(e) { toast('Erro', 'error'); }
         }
 
@@ -3951,10 +3950,11 @@ async function _salvarItemReal() {
             });
         }
 
-        // Auto-refresh pedidos a cada 10s
-        setInterval(() => {
-            if (document.querySelector('.page.active')?.id === 'page-dashboard') carregarDashboard();
-        }, 10000);
+        // Auto-refresh dashboard via RebecaRealtime (singleton seguro)
+        RebecaRealtime.register('admin-dashboard-refresh', () => {
+            if (document.querySelector('.page.active')?.id === 'page-dashboard') return carregarDashboard();
+            return Promise.resolve();
+        }, 10000, 'baixa', false);
 
         // Enter login
         document.addEventListener('keypress', e => { if (e.key === 'Enter' && !token) fazerLogin(); });
@@ -7727,13 +7727,12 @@ async function iniciarPainelCaixaTempoReal() {
   await carregarResumoCaixaTempoReal();
   await carregarEstoqueCritico();
   // Atualizar a cada 30s
-  if (_ctvInterval) clearInterval(_ctvInterval);
-  _ctvInterval = setInterval(async () => {
+  RebecaRealtime.register('admin-caixa-tempo-real', async () => {
     const page = document.getElementById('page-caixa-tempo-real');
     if (page && page.classList.contains('active')) {
       await carregarResumoCaixaTempoReal();
     }
-  }, 30000);
+  }, 30000, 'baixa', false);
 }
 
 function fmtR(v) { return 'R$ ' + (v||0).toFixed(2).replace('.',','); }

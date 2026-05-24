@@ -38,7 +38,7 @@
     pauseAll() {
       this._paused = true;
       Object.keys(this._tasks).forEach(k => {
-        clearInterval(this._tasks[key].interval);
+        clearInterval(this._tasks[k].interval);
       });
     },
 

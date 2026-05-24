@@ -38,7 +38,11 @@ Tom: profissional mas humano. Sem bullet points. Sem listas. Só texto corrido.
 Se houver alertas críticos, mencione brevemente. Se estiver tudo bem, seja positivo.
 Responda APENAS o resumo, sem explicações adicionais.`;
 
-    const tid = req.tenantId || 'anonimo';
+    const tid = req.tenantId;
+    if (!tid) {
+      console.warn('[IA] resumo-operacional bloqueado — tenant ausente');
+      return res.status(401).json({ sucesso: false, erro: 'Tenant não identificado' });
+    }
     console.log(`[IA] resumo-operacional tenant:${tid}`);
     const resposta = await IAService.processarMensagem(prompt, { contexto: 'resumo-operacional', tenantId: tid });
     res.json({ sucesso: true, resposta });
