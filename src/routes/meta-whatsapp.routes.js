@@ -1,8 +1,11 @@
 'use strict';
 
-const express = require('express');
-const router  = express.Router();
-const MetaWA  = require('../services/meta-whatsapp.service');
+const express  = require('express');
+const router   = express.Router();
+const MetaWA   = require('../services/meta-whatsapp.service');
+const axios    = require('axios');
+const Anthropic = require('@anthropic-ai/sdk');
+const _claude  = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 const VERIFY_TOKEN = process.env.META_WA_VERIFY_TOKEN || 'rebeca-webhook-2026';
 
@@ -37,8 +40,33 @@ router.post('/webhook', express.json(), async (req, res) => {
     await MetaWA.marcarLido(msgId);
 
     // Roteamento por módulo
-    if (tipo === 'text') {
+    if (tipo === 'text' && texto) {
       await processarComando(telefone, texto, msgId);
+    } else if (tipo === 'audio') {
+      console.log(`[MetaWA] Áudio recebido de ${telefone} — transcrevendo...`);
+      await MetaWA.marcarLido(msgId);
+      // Notificar que está processando
+      await MetaWA.enviarTexto(telefone, '🎵 Recebi seu áudio! Deixa eu ouvir...');
+      const audioId = msg?.audio?.id;
+      if (audioId) {
+        const transcricao = await transcreverAudio(audioId);
+        if (transcricao) {
+          console.log(`[MetaWA] Processando áudio transcrito: "${transcricao}"`);
+          await processarComando(telefone, transcricao, msgId);
+        } else {
+          await MetaWA.enviarTexto(telefone,
+            'Não consegui entender o áudio. Pode me escrever o que precisa? 😊'
+          );
+        }
+      }
+    } else if (tipo === 'image') {
+      await MetaWA.enviarTexto(telefone,
+        'Recebi sua imagem! 📷 Me escreva o que precisa e te ajudo! 😊'
+      );
+    } else if (tipo === 'interactive') {
+      const resposta = msg?.interactive?.button_reply?.title
+        || msg?.interactive?.list_reply?.title || '';
+      if (resposta) await processarComando(telefone, resposta, msgId);
     }
   } catch(e) {
     console.error('[MetaWA] webhook erro:', e.message);
@@ -46,6 +74,58 @@ router.post('/webhook', express.json(), async (req, res) => {
 });
 
 // ── PROCESSAR COMANDO ────────────────────────────────────────────
+
+// ── TRANSCREVER ÁUDIO VIA CLAUDE ─────────────────────────────────────────────
+async function transcreverAudio(audioId) {
+  try {
+    // Baixar áudio da Meta API
+    const infoR = await axios.get(
+      `https://graph.facebook.com/v20.0/${audioId}`,
+      { headers: { Authorization: `Bearer ${process.env.META_WA_TOKEN}` } }
+    );
+    const audioUrl = infoR.data?.url;
+    if (!audioUrl) return null;
+
+    // Baixar o arquivo de áudio como buffer
+    const audioR = await axios.get(audioUrl, {
+      headers: { Authorization: `Bearer ${process.env.META_WA_TOKEN}` },
+      responseType: 'arraybuffer'
+    });
+
+    const audioBase64 = Buffer.from(audioR.data).toString('base64');
+
+    // Usar Claude para transcrever
+    const r = await _claude.messages.create({
+      model: 'claude-haiku-4-5',
+      max_tokens: 300,
+      messages: [{
+        role: 'user',
+        content: [
+          {
+            type: 'text',
+            text: 'Transcreva exatamente o que está sendo dito neste áudio em português. Retorne apenas o texto transcrito, sem explicações.'
+          },
+          {
+            type: 'document',
+            source: {
+              type: 'base64',
+              media_type: 'audio/ogg',
+              data: audioBase64
+            }
+          }
+        ]
+      }]
+    });
+
+    const transcricao = r.content?.[0]?.text?.trim();
+    console.log(`[MetaWA] Áudio transcrito: "${transcricao}"`);
+    return transcricao;
+  } catch(e) {
+    console.error('[MetaWA] Erro transcrever áudio:', e.message);
+    return null;
+  }
+}
+
 async function processarComando(telefone, texto, msgId) {
   try {
     const { AdminAgenda } = require('../models/AgendaServico');
