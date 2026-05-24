@@ -646,13 +646,7 @@ A semana tá zerada por enquanto. Bora divulgar pra encher a agenda! 🚀`);
         `
 Agendado via WhatsApp. 💙`;
 
-      await responder(`Maravilha, ${_chefe()}! 🎉
-
-✅ *${nome}* encaixado às *${_fmtHora(dataHora)}* de ${_fmtData(dia)}!
-
-Já tá na agenda! 💙${telCliente ? '' : '
-
-📱 Se tiver o número dele me passa pra eu enviar lembretes!'}`);
+      await responder(`Maravilha, ${_chefe()}! 🎉\n\n✅ *${nome}* encaixado às *${_fmtHora(dataHora)}* de ${_fmtData(dia)}!\n\nJá tá na agenda! 💙${telCliente ? '' : '\n\n📱 Se tiver o número dele me passa pra eu enviar lembretes!'}`); 
     } else if (nome && !hora) {
       await responder(`Certo, ${_chefe()}! *${nome}* — que horas? 😊`);
     } else if (hora && !nome) {
