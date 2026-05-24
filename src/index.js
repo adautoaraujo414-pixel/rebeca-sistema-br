@@ -278,6 +278,19 @@ app.use('/api/agenda-push',         require('./routes/agenda-push.routes').route
 app.use('/api/agenda-ia-servico',   guards.agenda, require('./routes/agenda-ia-servico.routes'));
 app.use('/api/agenda/whatsapp',     require('./routes/agenda-whatsapp.routes'));    // webhook público
 app.use('/api/agenda/lembretes',    require('./routes/agenda-lembretes.routes'));   // cron interno
+app.use('/api/agenda',              require('./routes/agenda-pagamento.routes'));  // pagamento pix
+
+// ── Cron: verificar vencimentos diariamente às 9h
+setInterval(async () => {
+  const agora = new Date();
+  if (agora.getHours() === 9 && agora.getMinutes() < 5) {
+    try {
+      const res = await fetch('http://localhost:' + (process.env.PORT || 3000) + '/api/agenda/verificar-vencimentos');
+      const d = await res.json();
+      console.log('[cron-vencimento] avisados:', d.avisados);
+    } catch(e) { console.warn('[cron-vencimento]', e.message); }
+  }
+}, 5 * 60 * 1000); // verifica a cada 5 min
 app.use('/api/agenda/crm',          guards.agenda, require('./routes/agenda-crm.routes'));
 app.use('/api/agenda/conexao',      guards.agenda, require('./routes/agenda-conexao.routes'));
 

@@ -5,6 +5,7 @@ const crypto = require('crypto');
 const { AdminDelivery } = require('../models/delivery.models');
 
 // POST /api/delivery-auth/cadastro
+
 router.post('/cadastro', async (req, res) => {
     try {
         const { nome, email, senha, telefone, nomeComercio, tipoNegocio, cidade, origem } = req.body;

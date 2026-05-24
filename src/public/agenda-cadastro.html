@@ -60,6 +60,7 @@ body{font-family:'Segoe UI',sans-serif;background:linear-gradient(135deg,#1f2937
     <div class="step-dot ativo" id="sd1"></div>
     <div class="step-dot" id="sd2"></div>
     <div class="step-dot" id="sd3"></div>
+    <div class="step-dot" id="sd4"></div>
   </div>
 
   <!-- STEP 1: Dados pessoais -->
@@ -114,100 +115,68 @@ body{font-family:'Segoe UI',sans-serif;background:linear-gradient(135deg,#1f2937
 
   <!-- STEP 3: Plano -->
   <div id="cad-step3" style="display:none">
-    <div class="step-titulo">💎 Escolha seu plano</div>
-    <div class="planos">
-
-      <div class="plano-card sel" id="plano-agenda" onclick="selPlano('agenda_solo',this)">
-        <div class="plano-nome">📅 Agenda</div>
-        <div class="plano-preco">R$ 79,90<span style="font-size:.5em;font-weight:400;color:#6b7280">/mês</span></div>
-        <div class="plano-items">
-          <span>Agendamentos ilimitados</span>
-          <span>Painel ADM mobile</span>
-          <span>Lembretes automáticos</span>
-          <span>CRM de clientes</span>
-          <span>Link de agendamento</span>
-        </div>
-      </div>
-
-      <div class="plano-card" id="plano-delivery" onclick="selPlano('delivery_solo',this)">
-        <div class="plano-badge">POPULAR</div>
-        <div class="plano-nome">🛵 Delivery</div>
-        <div class="plano-preco">R$ 89,90<span style="font-size:.5em;font-weight:400;color:#6b7280">/mês</span></div>
-        <div class="plano-items">
-          <span>Cardápio digital</span>
-          <span>Gestão de pedidos</span>
-          <span>Caixa e relatórios</span>
-          <span>Tela cozinha (KDS)</span>
-          <span>Controle de entregadores</span>
-        </div>
-      </div>
-
-      <div class="plano-card" id="plano-corrida" onclick="selPlano('corrida_solo',this)">
-        <div class="plano-nome">🚗 Corrida</div>
-        <div class="plano-preco">R$ 89,90<span style="font-size:.5em;font-weight:400;color:#6b7280">/mês</span></div>
-        <div class="plano-items">
-          <span>Despacho de corridas</span>
-          <span>Painel do motorista</span>
-          <span>Acompanhamento GPS</span>
-          <span>Histórico e relatórios</span>
-          <span>App do passageiro</span>
-        </div>
-      </div>
-
-      <div class="plano-card" id="plano-combo-agd-del" onclick="selPlano('combo_agd_del',this)">
-        <div class="plano-badge">MAIS VENDIDO</div>
-        <div class="plano-nome">📅🛵 Agenda + Delivery</div>
-        <div class="plano-preco">R$ 149,90<span style="font-size:.5em;font-weight:400;color:#6b7280">/mês</span></div>
-        <div class="plano-items">
-          <span>Tudo do plano Agenda</span>
-          <span>Tudo do plano Delivery</span>
-          <span>Economia de R$ 29,90/mês</span>
-        </div>
-      </div>
-
-      <div class="plano-card" id="plano-combo-completo" onclick="selPlano('combo_completo',this)">
-        <div class="plano-badge">COMPLETO</div>
-        <div class="plano-nome">📅🛵🚗 Plataforma Completa</div>
-        <div class="plano-preco">R$ 219,90<span style="font-size:.5em;font-weight:400;color:#6b7280">/mês</span></div>
-        <div class="plano-items">
-          <span>Agenda + Delivery + Corrida</span>
-          <span>Relatórios avançados</span>
-          <span>Suporte prioritário</span>
-          <span>Economia de R$ 39,80/mês</span>
-        </div>
-      </div>
-
+    <div class="step-titulo">💳 Pagamento via PIX</div>
+    <div style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:12px;padding:16px;margin-bottom:16px;text-align:center">
+      <div style="font-size:1.5em;font-weight:900;color:#f97316">R$ 147,00<span style="font-size:.4em;font-weight:400;color:#6b7280">/mês</span></div>
+      <div style="font-size:.8em;color:#6b7280;margin-top:2px">30 dias de acesso completo</div>
     </div>
-    <p style="font-size:.75em;color:#9ca3af;text-align:center;margin-bottom:8px">3 dias grátis · Sem cartão de crédito</p>
+    <div style="margin-bottom:12px">
+      <div style="font-size:.8em;font-weight:700;color:#374151;margin-bottom:6px">📋 PIX Copia e Cola:</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input id="pix-copia-cola" readonly style="flex:1;padding:10px;border:2px solid #e5e7eb;border-radius:8px;font-size:.7em;color:#374151;background:#f9fafb;font-family:monospace" value="Carregando...">
+        <button onclick="copiarPix()" style="padding:10px 14px;background:#f97316;color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:.85em;white-space:nowrap">📋 Copiar</button>
+      </div>
+      <div id="pix-copiado" style="display:none;color:#22c55e;font-size:.78em;font-weight:700;margin-top:4px;text-align:center">✅ PIX copiado!</div>
+    </div>
+    <div style="background:#fff7ed;border:1.5px solid #fed7aa;border-radius:10px;padding:12px;font-size:.78em;color:#92400e;margin-bottom:16px">
+      ⚠️ <strong>Importante:</strong> Realize o pagamento agora e guarde o comprovante. Na próxima etapa você vai enviá-lo para liberar seu acesso.
+    </div>
     <button class="btn-sec" onclick="irStepN(2)">← Voltar</button>
-    <button class="btn-pri" onclick="cadastrar()">🚀 Criar minha conta grátis</button>
+    <button class="btn-pri" onclick="irStep4()">Já paguei, enviar comprovante →</button>
+  </div>
+
+  <div id="cad-step4" style="display:none">
+    <div class="step-titulo">📸 Enviar comprovante</div>
+    <div style="background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:10px;padding:12px;font-size:.8em;color:#1e40af;margin-bottom:16px">
+      📎 Envie a foto ou print do comprovante do PIX. Nossa IA vai verificar e liberar seu acesso automaticamente!
+    </div>
+    <div style="margin-bottom:16px">
+      <label style="display:block;font-size:.8em;font-weight:700;color:#374151;margin-bottom:8px">Comprovante de pagamento *</label>
+      <label id="upload-label" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:24px;border:2px dashed #d1d5db;border-radius:12px;cursor:pointer;background:#f9fafb;transition:.2s" onmouseover="this.style.borderColor='#f97316'" onmouseout="this.style.borderColor='#d1d5db'">
+        <span style="font-size:2em">📷</span>
+        <span style="font-size:.85em;color:#6b7280;font-weight:600">Toque para escolher a imagem</span>
+        <span style="font-size:.75em;color:#9ca3af">JPG, PNG ou PDF</span>
+        <input type="file" id="comp-file" accept="image/*" style="display:none" onchange="previewComprovante(this)">
+      </label>
+      <div id="comp-preview" style="display:none;margin-top:10px;text-align:center">
+        <img id="comp-img" src="" style="max-width:100%;max-height:200px;border-radius:10px;border:2px solid #e5e7eb">
+        <div style="font-size:.78em;color:#22c55e;font-weight:700;margin-top:6px">✅ Imagem selecionada</div>
+      </div>
+    </div>
+    <div id="comp-erro" style="display:none;background:#fef2f2;border:1.5px solid #fecaca;border-radius:8px;padding:10px;font-size:.8em;color:#dc2626;margin-bottom:12px"></div>
+    <button class="btn-sec" onclick="irStepN(3)">← Voltar</button>
+    <button class="btn-pri" id="btn-enviar-comp" onclick="enviarComprovante()">🔍 Verificar e liberar acesso</button>
   </div>
 
   <!-- SUCESSO -->
   <div id="cad-sucesso" style="display:none">
     <div class="sucesso-box">
       <div class="sucesso-icon">🎉</div>
-      <div class="sucesso-titulo">Conta criada!</div>
-      <div class="sucesso-msg">Seu espaço digital está pronto.<br>Acesse o painel para configurar tudo.</div>
+      <div class="sucesso-titulo">Pagamento confirmado!</div>
+      <div class="sucesso-msg">Sua conta foi liberada com sucesso!<br><br>📱 <strong>Verifique seu WhatsApp</strong> — enviamos seus dados de acesso agora mesmo.<br><br>Você tem <strong>30 dias</strong> de acesso completo à Rebeca Agenda.</div>
       <button class="btn-pri" style="margin-top:20px" onclick="location.href='/agenda-adm'">Ir para o Painel →</button>
     </div>
   </div>
 </div>
 <script>
-var planoSel = 'agenda_solo';
 var segSel = '';
+var adminIdCriado = '';
 
 function selSeg(el, val) {
   document.querySelectorAll('.seg-btn').forEach(b => b.classList.remove('sel'));
   el.classList.add('sel');
   segSel = val;
   document.getElementById('c-seg').value = val;
-}
-
-function selPlano(plano, el) {
-  planoSel = plano;
-  document.querySelectorAll('.plano-card').forEach(c => c.classList.remove('sel'));
-  el.classList.add('sel');
 }
 
 function irStep2() {
@@ -223,14 +192,19 @@ function irStep2() {
 function irStep3() {
   var neg = document.getElementById('c-negocio').value.trim();
   if (!neg) { toast('Informe o nome do negócio'); return; }
-  irStepN(3);
+  cadastrar();
+}
+
+async function irStep4() {
+  irStepN(4);
 }
 
 function irStepN(n) {
-  for (var i = 1; i <= 3; i++) {
-    document.getElementById('cad-step'+i).style.display = i === n ? '' : 'none';
+  for (var i = 1; i <= 4; i++) {
+    var el = document.getElementById('cad-step'+i);
+    if (el) el.style.display = i === n ? '' : 'none';
     var sd = document.getElementById('sd'+i);
-    sd.className = 'step-dot' + (i < n ? ' done' : i === n ? ' ativo' : '');
+    if (sd) sd.className = 'step-dot' + (i < n ? ' done' : i === n ? ' ativo' : '');
   }
 }
 
@@ -246,15 +220,94 @@ async function cadastrar() {
     var r = await fetch('/api/agenda/cadastro', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ nome, email, senha, whatsapp: wpp, nomeNegocio: negocio, segmento: seg, cidade, plano: planoSel })
+      body: JSON.stringify({ nome, email, senha, whatsapp: wpp, nomeNegocio: negocio, segmento: seg, cidade, plano: 'espaco_digital_ia' })
     });
     var d = await r.json();
     if (!d.sucesso) { toast('Erro: ' + d.erro); return; }
+    adminIdCriado = d.adminId;
     localStorage.setItem('agenda_token', d.token);
     localStorage.setItem('agenda_nome', nome);
-    document.getElementById('cad-step3').style.display = 'none';
-    document.getElementById('cad-sucesso').style.display = '';
+    // Carregar PIX e ir para step 3
+    carregarPix();
+    irStepN(3);
   } catch(e) { toast('Erro ao criar conta'); }
+}
+
+async function carregarPix() {
+  try {
+    var r = await fetch('/api/agenda/pix-info');
+    var d = await r.json();
+    if (d.pixCopiaECola) {
+      document.getElementById('pix-copia-cola').value = d.pixCopiaECola;
+    }
+  } catch(e) { console.warn('Erro ao carregar PIX'); }
+}
+
+function copiarPix() {
+  var inp = document.getElementById('pix-copia-cola');
+  inp.select();
+  inp.setSelectionRange(0, 99999);
+  navigator.clipboard.writeText(inp.value).then(function() {
+    document.getElementById('pix-copiado').style.display = 'block';
+    setTimeout(function(){ document.getElementById('pix-copiado').style.display = 'none'; }, 2500);
+  }).catch(function() {
+    document.execCommand('copy');
+    document.getElementById('pix-copiado').style.display = 'block';
+    setTimeout(function(){ document.getElementById('pix-copiado').style.display = 'none'; }, 2500);
+  });
+}
+
+function previewComprovante(input) {
+  var file = input.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    document.getElementById('comp-img').src = e.target.result;
+    document.getElementById('comp-preview').style.display = 'block';
+    document.getElementById('upload-label').style.borderColor = '#22c55e';
+  };
+  reader.readAsDataURL(file);
+}
+
+async function enviarComprovante() {
+  var file = document.getElementById('comp-file').files[0];
+  if (!file) { toast('Selecione o comprovante'); return; }
+  if (!adminIdCriado) { toast('Erro: conta não identificada. Recarregue a página.'); return; }
+
+  var btn = document.getElementById('btn-enviar-comp');
+  btn.disabled = true;
+  btn.textContent = '🔍 Verificando...';
+  document.getElementById('comp-erro').style.display = 'none';
+
+  var reader = new FileReader();
+  reader.onload = async function(e) {
+    var dataUrl = e.target.result;
+    var base64 = dataUrl.split(',')[1];
+    var mediaType = file.type || 'image/jpeg';
+    try {
+      var r = await fetch('/api/agenda/comprovante', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ adminId: adminIdCriado, imagemBase64: base64, mediaType })
+      });
+      var d = await r.json();
+      if (d.sucesso) {
+        document.getElementById('cad-step4').style.display = 'none';
+        document.getElementById('cad-sucesso').style.display = '';
+      } else {
+        var errEl = document.getElementById('comp-erro');
+        errEl.textContent = '❌ ' + (d.msg || d.erro || 'Comprovante não reconhecido');
+        errEl.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = '🔍 Verificar e liberar acesso';
+      }
+    } catch(e) {
+      toast('Erro ao enviar comprovante');
+      btn.disabled = false;
+      btn.textContent = '🔍 Verificar e liberar acesso';
+    }
+  };
+  reader.readAsDataURL(file);
 }
 
 function toast(msg) {
