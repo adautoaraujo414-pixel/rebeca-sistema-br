@@ -157,7 +157,6 @@ async function processarComando(telefone, texto, msgId) {
 
     // Passa para IA da Agenda
     const AgendaModo = require('../services/agenda-modo-dono.service');
-    const MetaWA     = require('../services/meta-whatsapp.service');
 
     // Instância fake para o modo dono usar o MetaWA para responder
     const instMeta = {
