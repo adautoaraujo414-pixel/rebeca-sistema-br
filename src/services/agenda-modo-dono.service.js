@@ -239,7 +239,8 @@ function _fmtData(d) {
 }
 
 function _fmtHora(d) {
-  return d.toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
+  // Render roda em UTC — forçar timezone Brasil (GMT-3)
+  return d.toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit', timeZone:'America/Sao_Paulo' });
 }
 
 // ── Processar comando do dono ────────────────────────────────────────────────
@@ -573,12 +574,16 @@ ${totalAgs > 0 ? 'Tá saindo bem! 💪' : 'Ainda sem registros esse mês.'}`);
       if (hora.relativo && hora.msOffset) {
         dataLembrete = new Date(Date.now() + hora.msOffset);
       } else {
+        // Converter hora BR para UTC: hora BR + 3h = UTC
+        // Exemplo: usuário diz 15:00 BRT → salvar como 18:00 UTC
         const _brMs   = dia.getTime() - (3 * 60 * 60 * 1000);
         const _brDate = new Date(_brMs);
         dataLembrete = new Date(Date.UTC(
           _brDate.getUTCFullYear(), _brDate.getUTCMonth(), _brDate.getUTCDate(),
           hora.h + 3, hora.min, 0
         ));
+        // Log para auditoria
+        console.log(`[LEMBRETE NLP] texto="${textoLembrete}" hora_usuario=${hora.h}:${String(hora.min).padStart(2,'0')} BRT => UTC ${hora.h+3}:${String(hora.min).padStart(2,'0')} dataISO=${dataLembrete.toISOString()}`);
       }
       const dataAviso = hora.relativo
         ? new Date(dataLembrete.getTime() - 1*60000)
