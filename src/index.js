@@ -402,6 +402,23 @@ app.use((req, res) => res.status(404).json({ error: 'Rota não encontrada' }));
 // ─────────────────────────────────────────────
 // 24. START SERVER
 // ─────────────────────────────────────────────
+
+// ── ROTA TEMPORÁRIA: upgrade plano para espaco_digital_ia ──
+app.post('/api/admin-upgrade-plano', async (req, res) => {
+  try {
+    if (req.body.secret !== 'rebeca-upgrade-2026') {
+      return res.status(403).json({ erro: 'Proibido' });
+    }
+    const { AdminAgenda } = require('./models/AgendaServico');
+    const r = await AdminAgenda.updateMany(
+      { plano: { $in: ['espaco_digital', null, ''] } },
+      { $set: { plano: 'espaco_digital_ia' } }
+    );
+    const todos = await AdminAgenda.find({}, 'nome email plano').lean();
+    res.json({ sucesso: true, atualizados: r.modifiedCount, admins: todos.map(a=>({email:a.email,plano:a.plano})) });
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
 app.listen(PORT, () => {
     // Iniciar job de lembretes APÓS servidor subir
     setTimeout(() => {
