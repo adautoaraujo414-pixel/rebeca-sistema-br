@@ -1641,6 +1641,12 @@ async function fazerLogin(){
     TOKEN = d.token; ADMIN_ID = d.admin._id; ADMIN = d.admin;
     localStorage.setItem('agenda_token', TOKEN);
     localStorage.setItem('agenda_admin_id', ADMIN_ID);
+    // Pedir armazenamento persistente — evita browser apagar dados automaticamente
+    if (navigator.storage && navigator.storage.persist) {
+      navigator.storage.persist().then(granted => {
+        console.log('[Storage] Persistente:', granted ? 'concedido' : 'negado');
+      });
+    }
     iniciarApp();
   } catch(e){ document.getElementById('login-erro').style.display='block'; }
 }
@@ -3739,6 +3745,33 @@ function fecharMenuMobile() {
   document.getElementById('menu-mobile-bg').style.display = 'none';
   document.getElementById('menu-mobile-drawer').classList.remove('aberto');
 }
+
+// ── CACHE LOCAL DA AGENDA ────────────────────────────────────────────────────
+function _cacheSet(key, data, ttlMinutos = 5) {
+  try {
+    localStorage.setItem('rebeca_cache_' + key, JSON.stringify({
+      data,
+      exp: Date.now() + ttlMinutos * 60000
+    }));
+  } catch(e) { /* quota excedida — ignora */ }
+}
+
+function _cacheGet(key) {
+  try {
+    const raw = localStorage.getItem('rebeca_cache_' + key);
+    if (!raw) return null;
+    const obj = JSON.parse(raw);
+    if (obj.exp < Date.now()) { localStorage.removeItem('rebeca_cache_' + key); return null; }
+    return obj.data;
+  } catch(e) { return null; }
+}
+
+function _cacheClear(prefix) {
+  Object.keys(localStorage)
+    .filter(k => k.startsWith('rebeca_cache_' + (prefix || '')))
+    .forEach(k => localStorage.removeItem(k));
+}
+
 </script>
 
 
