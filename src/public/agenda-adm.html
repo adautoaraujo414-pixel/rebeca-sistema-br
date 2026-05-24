@@ -49,15 +49,31 @@ input,select,textarea{font-family:'Inter',sans-serif}
 ::-webkit-scrollbar-thumb:hover{background:#94a3b8}
 
 /* ─── LOGIN ─── */
-.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#fff7ed,#ffedd5);padding:20px;width:100%;overflow-x:hidden}
-.login-card{background:#fff;border-radius:20px;padding:44px 36px;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(249,115,22,.15)}
-.login-logo{text-align:center;margin-bottom:32px}
-.login-logo-icon{width:64px;height:64px;background:var(--cor);border-radius:16px;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-size:1.8em}
-.login-logo-txt{font-size:1.6em;font-weight:800;color:var(--texto)}
-.login-logo-txt span{color:var(--cor)}
-.login-logo p{color:var(--texto3);font-size:.9em;margin-top:4px}
-.login-card h2{font-size:1.25em;font-weight:700;margin-bottom:6px}
-.login-card p{color:var(--texto3);font-size:.9em;margin-bottom:28px}
+.login-wrap{min-height:100vh;display:flex;align-items:stretch;width:100%;overflow:hidden;background:#0d0d0d}
+.login-left{flex:1;display:flex;flex-direction:column;justify-content:center;padding:60px 56px;background:linear-gradient(135deg,#0d0d0d 0%,#1a1a2e 100%);position:relative;overflow:hidden}
+.login-left::before{content:'';position:absolute;top:-200px;right:-100px;width:500px;height:500px;background:radial-gradient(circle,rgba(255,107,0,.12) 0%,transparent 70%);pointer-events:none}
+.login-left::after{content:'';position:absolute;bottom:-150px;left:-50px;width:400px;height:400px;background:radial-gradient(circle,rgba(255,107,0,.06) 0%,transparent 70%);pointer-events:none}
+.login-brand{display:flex;align-items:center;gap:12px;margin-bottom:56px}
+.login-brand-icon{width:40px;height:40px;background:#ff6b00;border-radius:11px;display:flex;align-items:center;justify-content:center}
+.login-brand-icon svg{width:22px;height:22px;fill:#fff}
+.login-brand-txt{font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:800;color:#fff}
+.login-brand-txt span{color:#ff6b00}
+.login-headline{font-family:'Syne',sans-serif;font-size:clamp(1.8rem,2.5vw,2.6rem);font-weight:800;color:#fff;line-height:1.15;letter-spacing:-1px;margin-bottom:20px}
+.login-headline span{color:#ff6b00}
+.login-sub{font-size:.95rem;color:rgba(255,255,255,.5);line-height:1.7;margin-bottom:40px;max-width:380px}
+.login-features{display:flex;flex-direction:column;gap:14px}
+.login-feat{display:flex;align-items:center;gap:12px;font-size:.88rem;color:rgba(255,255,255,.7)}
+.login-feat-icon{width:32px;height:32px;border-radius:9px;background:rgba(255,107,0,.15);display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0}
+.login-right{width:480px;display:flex;flex-direction:column;justify-content:center;padding:60px 48px;background:#fff}
+.login-card{background:transparent;border-radius:0;padding:0;width:100%;max-width:100%;box-shadow:none}
+.login-logo{text-align:left;margin-bottom:36px}
+.login-logo-icon{display:none}
+.login-logo-txt{font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;color:#0d0d0d;margin-bottom:6px}
+.login-logo-txt span{color:#ff6b00}
+.login-logo p{color:#6b7280;font-size:.88rem;margin-top:0}
+.login-card h2{font-size:1.6rem;font-weight:800;font-family:'Syne',sans-serif;color:#0d0d0d;margin-bottom:6px}
+.login-card>p{color:#6b7280;font-size:.9rem;margin-bottom:32px}
+@media(max-width:820px){.login-left{display:none}.login-right{width:100%;padding:40px 24px}}
 .form-group{margin-bottom:16px}
 .form-group label{display:block;font-size:.82em;font-weight:600;color:var(--texto2);margin-bottom:6px}
 .form-group input{width:100%;padding:10px 14px;border:1.5px solid var(--borda);border-radius:var(--radius-sm);font-size:.9em;outline:none;transition:var(--transition);background:#fff;color:var(--texto);letter-spacing:-.01em}
@@ -777,6 +793,21 @@ document.querySelectorAll('.nav-item').forEach(item => {
 
 <!-- ═══ LOGIN ═══ -->
 <div class="login-wrap" id="login-wrap">
+  <div class="login-left">
+    <div class="login-brand">
+      <div class="login-brand-icon"><svg viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11zM7 11h5v5H7z"/></svg></div>
+      <span class="login-brand-txt">Rebeca<span>Agenda</span></span>
+    </div>
+    <div class="login-headline">A agenda que<br>trabalha por <span>você.</span></div>
+    <p class="login-sub">IA integrada ao WhatsApp que agenda, confirma e gerencia seu financeiro automaticamente — sem esforço.</p>
+    <div class="login-features">
+      <div class="login-feat"><div class="login-feat-icon">🤖</div>IA responde clientes 24h no WhatsApp</div>
+      <div class="login-feat"><div class="login-feat-icon">📅</div>Agenda inteligente sem conflitos</div>
+      <div class="login-feat"><div class="login-feat-icon">💰</div>Financeiro registrado por voz natural</div>
+      <div class="login-feat"><div class="login-feat-icon">📊</div>Dashboard completo em tempo real</div>
+    </div>
+  </div>
+  <div class="login-right">
   <div class="login-card">
     <div class="login-logo">
       <div class="login-logo-icon">📅</div>
@@ -796,6 +827,7 @@ document.querySelectorAll('.nav-item').forEach(item => {
     <button class="btn-login" onclick="typeof fazerLogin==='function'?fazerLogin():setTimeout(fazerLogin,100)">Entrar no painel</button>
     <div class="login-erro" id="login-erro">E-mail ou senha incorretos</div>
     <p class="login-link">Novo por aqui? <a href="/agenda-cadastro.html">Criar conta grátis</a></p>
+  </div>
   </div>
 </div>
 
