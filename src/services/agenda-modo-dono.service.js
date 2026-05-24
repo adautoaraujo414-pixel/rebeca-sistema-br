@@ -556,6 +556,29 @@ Vou te avisar 15 min antes! 💙`);
 Me fala o horário também pra eu te avisar antes! 😊`);
     }
     return true;
+
+  // ── VER / EXCLUIR LEMBRETES ─────────────────────────────────────────────
+  if (/ver.*lembrete|meus.*lembrete|quais.*lembrete|lista.*lembrete/i.test(msgL)) {
+    const admin2 = await AdminAgenda.findById(adminObjId).lean();
+    const lembs = (admin2?.config?.lembretes || []).filter(l => !l.enviado).sort((a,b) => new Date(a.dataEvento)-new Date(b.dataEvento));
+    if (!lembs.length) { await responder("Nenhum lembrete pendente."); return true; }
+    const lista = lembs.map((l,i) => `${i+1}. ${l.texto} — ${_fmtData(new Date(l.dataEvento))} ${l.dataEvento ? "às "+_fmtHora(new Date(l.dataEvento)) : ""}`).join("\n");
+    await responder(`Seus lembretes pendentes:\n${lista}\n\nPara excluir: "cancela lembrete 1"`);
+    return true;
+  }
+
+  if (/cancela.*lembrete|apaga.*lembrete|exclu.*lembrete|deleta.*lembrete|remove.*lembrete/i.test(msgL)) {
+    const numM = msgL.match(/(\d+)/);
+    const admin2 = await AdminAgenda.findById(adminObjId).lean();
+    const lembs = (admin2?.config?.lembretes || []).filter(l => !l.enviado).sort((a,b) => new Date(a.dataEvento)-new Date(b.dataEvento));
+    if (!numM) { await responder("Qual número do lembrete quer cancelar? Manda \"ver lembretes\" pra ver a lista."); return true; }
+    const idx = parseInt(numM[1]) - 1;
+    if (idx < 0 || idx >= lembs.length) { await responder(`Não achei o lembrete ${numM[1]}. Manda "ver lembretes" pra ver a lista.`); return true; }
+    const lembId = lembs[idx]._id;
+    await AdminAgenda.findByIdAndUpdate(adminObjId, { $pull: { "config.lembretes": { _id: lembId } } });
+    await responder(`Lembrete cancelado: "${lembs[idx].texto}".`);
+    return true;
+  }
   }
 
   // ── ÁUDIO — transcrito pelo webhook como texto ────────────────────────────
