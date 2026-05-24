@@ -547,11 +547,12 @@ A semana tá zerada por enquanto. Bora divulgar pra encher a agenda! 🚀`);
 ✅ *${nome}* encaixado às *${_fmtHora(dataHora)}* de ${_fmtData(dia)}!
 
 Já tá na agenda. Pode mandar o cliente! 💙`);
+    } else if (nome && !hora) {
+      await responder(`Certo, ${_chefe()}! *${nome}* — que horas? 😊`);
+    } else if (hora && !nome) {
+      await responder(`Combinado, ${_chefe()}! Às *${_fmtHora((() => { const d = new Date(); d.setHours(hora.h, hora.min, 0, 0); return d; })())}* — qual o nome do cliente?`);
     } else {
-      await responder(`Quase lá, ${_chefe()}! Me fala assim:
-
-*Rebeca, encaixa João às 14h* ou
-*Rebeca, encaixa Maria amanhã às 10h* 😊`);
+      await responder(`Me fala o nome e o horário, ${_chefe()}! Tipo: *Rebeca, agenda a Maria amanhã às 10h* 😊`);
     }
     return true;
   }
@@ -816,6 +817,47 @@ ${total>5?'Tá crescendo muito! Continua assim! 🚀':'Todo cliente novo é uma 
 ` +
       `Pode mandar qualquer coisa, tô aqui! 😊💙`
     );
+    return true;
+  }
+
+  // ── MANDAR MENSAGEM PARA CLIENTE ────────────────────────────────────────────
+  if (/manda\s*(uma\s*)?mensagem|fala\s+(pra|para|com)|avisa\s+(a\s+|o\s+)?|escreve\s+(pra|para)|contata|mandou\s+mensagem/i.test(msgL)) {
+    // Extrair nome do cliente
+    const nomeM = msg.match(/(?:manda\s+(?:uma\s+)?mensagem\s+(?:pra|para)|fala\s+(?:pra|para|com)|avisa\s+(?:a\s+|o\s+)?|escreve\s+(?:pra|para)|contata)\s+([A-Za-zÀ-ú]+(?:\s+[A-Za-zÀ-ú]+)?)/i);
+    const nomeCliente = nomeM ? nomeM[1].trim() : null;
+
+    // Extrair texto da mensagem (após "falando que", "dizendo que", "que", ":")
+    const textoM = msg.match(/(?:falando\s+que|dizendo\s+que|que\s+(?:ela|ele|você)|:\s*|mensagem[:\s]+)(.+?)$/i)
+                || msg.match(/(?:pra|para)\s+[A-Za-zÀ-ú]+\s+(.+?)$/i);
+    const textoMsg = textoM ? textoM[1].trim() : null;
+
+    if (!nomeCliente) {
+      await responder(`Claro, ${_chefe()}! Me fala pra quem: *Rebeca, manda mensagem pra Maria que o horário foi confirmado* 😊`);
+      return true;
+    }
+
+    // Buscar cliente no banco
+    const cliente = await ClienteAgenda.findOne({
+      adminId: adminObjId,
+      nome: { $regex: nomeCliente, $options: 'i' }
+    }).lean();
+
+    if (!cliente || !cliente.telefone) {
+      await responder(`Hmm, não achei o contato de *${nomeCliente}* aqui não, ${_chefe()}. Tem o número salvo no cadastro? 🤔`);
+      return true;
+    }
+
+    // Montar mensagem natural
+    const textoFinal = textoMsg
+      ? textoMsg
+      : `Oi ${nomeCliente.split(' ')[0]}! Tudo bem? 😊 O estabelecimento entrou em contato pra falar com você. Qualquer dúvida é só responder aqui! 💙`;
+
+    // Buscar instância para envio
+    const inst = await InstanciaWhatsapp.findOne({ adminId: String(adminObjId), status: 'conectado' }).lean()
+              || { _enviarVia: 'meta', apiUrl: 'meta', nomeInstancia: 'meta_oficial' };
+
+    await _enviarMsg(inst, _normalizarTel(cliente.telefone), textoFinal);
+    await responder(`Mandei pra *${nomeCliente}*, ${_chefe()}! ✅`);
     return true;
   }
 
