@@ -524,7 +524,7 @@ A semana tá zerada por enquanto. Bora divulgar pra encher a agenda! 🚀`);
   }
 
   // ── ENCAIXAR CLIENTE ──────────────────────────────────────────────────────
-  if (/encaixa|marca\s*(um\s*)?hor[aá]rio|adiciona\s*(um\s*)?cliente/i.test(msgL)) {
+  if (/encaixa|marca\s*(um\s*)?hor[aá]rio|adiciona\s*(um\s*)?cliente|\bagenda\b.*\b(cliente|para|pra|amanhã|amanha|hoje|às|as)\b|\bagendar\b/i.test(msgL)) {
     const hora = _parseHora(msgL);
     const dia  = _parseDia(msgL) || new Date();
     const nomeM = msg.match(/encaixa\s+([A-Za-zÀ-ú\s]+?)\s+(?:às?|as|para|pra)\s+\d/i) ||
