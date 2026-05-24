@@ -244,7 +244,7 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
   }
 
   // ── REGISTRAR ENTRADA FINANCEIRA ───────────────────────────────────────────
-  if (/\bregistra\b.*\bentrada\b|\breceb[ei]\b.*\bR?\$|\bentrada\b.*\bR?\$/i.test(msgL)) {
+  if (/\bregistra\b.*\bentrada\b|\bmarca\b.*\bentrada\b|\banota\b.*\bentrada\b|\bcoloca\b.*\bentrada\b|\breceb[ei]\b.*\bR?\$|\bentrada\b.*\bR?\$/i.test(msgL)) {
     const valM = msg.match(/R?\$\s*(\d+(?:[.,]\d{1,2})?)/i);
     const val = valM ? parseFloat(valM[1].replace(',','.')) : null;
     const descM = msg.match(/(?:no|em|de|via)\s+([A-Za-zÀ-ú\s]+?)(?:\s*$|\s*R?\$)/i);
@@ -266,7 +266,7 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
   }
 
   // ── REGISTRAR GASTO ────────────────────────────────────────────────────────
-  if (/\bregistra\b.*\bgasto\b|\bpaguei\b|\bcomprei\b|\bsaída\b|\bsaida\b/i.test(msgL)) {
+  if (/\bregistra\b.*\bgasto\b|\bmarca\b.*\bgasto\b|\banota\b.*\bgasto\b|\bpaguei\b|\bcomprei\b|\bsaída\b|\bsaida\b/i.test(msgL)) {
     const valM = msg.match(/R?\$\s*(\d+(?:[.,]\d{1,2})?)/i);
     const val = valM ? parseFloat(valM[1].replace(',','.')) : null;
     const descM = msg.match(/(?:em|de|no|com)\s+([A-Za-zÀ-ú\s]+?)(?:\s*$|\s*R?\$)/i);
