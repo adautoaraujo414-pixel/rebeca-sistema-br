@@ -205,6 +205,30 @@ function _parseDia(txt) {
   return null;
 }
 
+
+function _parsarValor(txt) {
+  // 1. Mil / k
+  const mMil = txt.match(/([\d.,]+)\s*(?:mil|k)\b/i);
+  if (mMil) return parseFloat(mMil[1].replace(/\./g,'').replace(',','.')) * 1000;
+  // 2. Milhão
+  const mMilhao = txt.match(/([\d.,]+)\s*(?:milh[aã]o|milh[oõ]es|M)\b/i);
+  if (mMilhao) {
+    const base = parseFloat(mMilhao[1].replace(/\./g,'').replace(',','.'));
+    return base * 1000000;
+  }
+  // 3. Formato numérico normal
+  const mNum = txt.match(/R?\$\s*([\d.,]+)|([\d.,]+)\s*(?:reais?|conto|reai)?/i);
+  const raw = mNum ? (mNum[1]||mNum[2]) : null;
+  if (!raw) return null;
+  const parts = raw.split(',');
+  if (parts.length >= 2) {
+    const cents = parts[parts.length - 1];
+    const whole = parts.slice(0, parts.length - 1).join('').replace(/\./g, '');
+    if (cents.length <= 2) return parseFloat(whole + '.' + cents);
+    return parseFloat(raw.replace(/[.,]/g, ''));
+  }
+  return parseFloat(raw.replace(/\./g, ''));
+}
 function _parseHora(txt) {
   // 0. "daqui X minutos/horas" — hora relativa ao momento atual
   const mDaqui = txt.match(/daqui\s+(?:a\s+)?(\d+|uma?|dois|duas|tr[eê]s|quatro|cinco|dez|quinze|vinte|trinta)\s*(minuto|hora|min|h)s?/i);
@@ -378,31 +402,6 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
       !/apag[ae]u?|exclu[ii]|delet|remov|cancela|desfaz|tira|zera|limpa|[uú]ltim|errei|errou/i.test(msgL)) {
     const _msgLimpa = msg.replace(/[?!]+$/, '').trim();
     // ── Parse de valor: suporta "4 mil", "4k", "4.000,00", "4,000,00" ──
-    const _parsarValor = (txt) => {
-      // 1. Tentar "X mil" ou "X k" (ex: "4 mil", "4k", "4,5 mil")
-      const mMil = txt.match(/([\d.,]+)\s*(?:mil|k)\b/i);
-      if (mMil) {
-        const base = parseFloat(mMil[1].replace(/\./g,'').replace(',','.'));
-        return base * 1000;
-      }
-      // 2. Tentar "X milhão/milhões"
-      const mMilhao = txt.match(/([\d.,]+)\s*milh[aã]o(?:es)?/i);
-      if (mMilhao) {
-        const base = parseFloat(mMilhao[1].replace(/\./g,'').replace(',','.'));
-        return base * 1000000;
-      }
-      // 3. Formato numérico normal (R$4.000,00 | 4,000,00 | 4000)
-      const mNum = txt.match(/R?\$\s*([\d.,]+)|([\d.,]+)\s*(?:reais?|conto|reai)?/i);
-      const raw = mNum ? (mNum[1]||mNum[2]) : null;
-      if (!raw) return null;
-      const parts = raw.split(',');
-      if (parts.length >= 2) {
-        const cents = parts[parts.length - 1];
-        const whole = parts.slice(0, parts.length - 1).join('').replace(/\./g, '');
-        if (cents.length <= 2) return parseFloat(whole + '.' + cents);
-        return parseFloat(raw.replace(/[.,]/g, ''));
-      }
-      return parseFloat(raw.replace(/\./g, ''));
     };
     const val = _parsarValor(_msgLimpa);
     const descEntrada = _extrairDescricao(msg, 'receita');
@@ -427,7 +426,7 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
   // ── REGISTRAR GASTO ────────────────────────────────────────────────────────
   if (/\bregistra\b.*\bgasto\b|\bmarca\b.*\bgasto\b|\banota\b.*\bgasto\b|\bmarca\b.*\bdespesa\b|\bregistra\b.*\bdespesa\b|\bpaguei\b|\bcomprei\b|\bsaída\b|\bsaida\b|\bdespesa\b|\bgastei\b|\btive\s*gasto\b|\bsaiu\b|\bdebita\b|\bdescontou\b|\baluguel\b|\bluz\b|\bagua\b|\bcombust[ií]vel\b|\bgasolina\b|\buber\b|\binternet\b|\baliment[ao]\b|\blanche\b|\bcaf[eé]\b|\bmaterial\b|\bequipamento\b/i.test(msgL) && !/\bquanto\b/i.test(msgL)) {
     const _msgLimpaS = msg.replace(/[?!]+$/, '').trim();
-    const val = _parsarValor ? _parsarValor(_msgLimpaS) : (() => {
+    const val = (() => {
       const mMil = _msgLimpaS.match(/([\d.,]+)\s*(?:mil|k)\b/i);
       if (mMil) return parseFloat(mMil[1].replace(/\./g,'').replace(',','.')) * 1000;
       const mNum = _msgLimpaS.match(/R?\$\s*([\d.,]+)|([\d.,]+)\s*(?:reais?|conto|reai)?/i);
