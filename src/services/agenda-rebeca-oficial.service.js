@@ -203,7 +203,7 @@ async function _tratarMidia(tipo, telBruto, msg, data, adminId) {
         // Baixar audio
         const audioResp = await axios.get(mediaUrl, {
           responseType: 'arraybuffer',
-          timeout: 15000,
+          timeout: 45000,
           headers: { 'User-Agent': 'Mozilla/5.0' }
         });
         const base64 = Buffer.from(audioResp.data).toString('base64');
@@ -211,7 +211,7 @@ async function _tratarMidia(tipo, telBruto, msg, data, adminId) {
         // Transcrever via Claude Haiku
         const transcResp = await axios.post('https://api.anthropic.com/v1/messages', {
           model: 'claude-haiku-4-5-20251001',
-          max_tokens: 300,
+          max_tokens: 1024,
           messages: [{
             role: 'user',
             content: [
@@ -314,7 +314,7 @@ Retorne APENAS o texto transcrito e normalizado, sem explicações, sem aspas, s
             'anthropic-version': '2023-06-01',
             'Content-Type': 'application/json'
           },
-          timeout: 30000
+          timeout: 60000
         });
 
         const transcricao = transcResp.data?.content?.[0]?.text?.trim();
