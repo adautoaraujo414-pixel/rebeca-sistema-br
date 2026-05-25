@@ -307,7 +307,7 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
   }
 
   // ── BLOQUEAR HORÁRIO ─────────────────────────────────────────────────────
-  if (/bloquei[ao]\s*(hor[aá]rio|agenda|tempo|per[ií]odo)|bloqueia.*(das?|de)|tira\s*(hor[aá]rio|tempo|per[ií]odo)|reserva\s*(hor[aá]rio|tempo)|sai.*\d+h|almo[çc]o|paus[ao]|intervalo.*hor[aá]rio/i.test(msgL)) {
+  if (/bloquei[ao]|bloquear|bloqueia|tira\s*(hor[aá]rio|tempo|per[ií]odo)|reserva\s*(hor[aá]rio|tempo)|almo[çc]o|paus[ao]|intervalo/i.test(msgL) && /hor[aá]rio|agenda|tempo|per[ií]odo|das?\s*\d|\d+h/i.test(msgL)) {
     const dia = _parseDia(msgL);
     // Pegar horas "das Xh às Yh"
     const rangeM = msg.match(/das?\s*(\d{1,2}h?\d{0,2})\s*(?:às?|as)\s*(\d{1,2}h?\d{0,2})/i);
