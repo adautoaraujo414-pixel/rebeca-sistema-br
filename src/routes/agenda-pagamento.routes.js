@@ -41,7 +41,7 @@ router.post('/comprovante', async (req, res) => {
           role: 'user',
           content: [
             { type: 'image', source: { type: 'base64', media_type: tipo, data: imagemBase64 } },
-            { type: 'text', text: `Analise esta imagem. Responda APENAS com JSON: {"aprovado": true/false, "valor": número_ou_null, "motivo": "texto curto"}. Seja MUITO permissivo: aprove se a imagem mostrar QUALQUER comprovante de pagamento PIX, transferência, ou transação financeira, independente do valor exato ou se parece agendado. Só rejeite se a imagem for completamente ilegível, em branco, ou claramente não for nenhum documento financeiro.` }
+            { type: 'text', text: `Analise esta imagem de comprovante de pagamento. Responda APENAS com JSON: {"aprovado": true/false, "valor": número_ou_null, "motivo": "texto curto"}. Regras: 1) REJEITE imediatamente se encontrar qualquer palavra como "agendado", "agendamento", "será debitado", "débito agendado" ou similar — isso indica pagamento futuro, não realizado. 2) VERIFIQUE o valor: aprove se o valor estiver entre R$130 e R$165 (tolerância em torno de R$${VALOR_PLANO}). Rejeite se o valor for muito diferente. 3) Se não houver palavra "agendado" e o valor estiver correto, APROVE. 4) Rejeite se a imagem for ilegível ou não for um comprovante financeiro.` }
           ]
         }]
       })
