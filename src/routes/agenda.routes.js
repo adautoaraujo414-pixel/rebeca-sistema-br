@@ -59,8 +59,8 @@ router.post('/login', async (req, res) => {
     if (!ok) return res.status(401).json({ erro: 'Credenciais inválidas' });
     if (!admin.ativo || admin.statusPagamento === 'aguardando_comprovante') return res.status(403).json({ erro: 'Acesso pendente. Envie o comprovante do PIX para liberar sua conta.', pendentePagamento: true });
     if (admin.statusPagamento === 'expirado') return res.status(403).json({ erro: 'Plano expirado. Renove seu acesso enviando o comprovante.', expirado: true });
-    const token = crypto.randomBytes(32).toString('hex');
-    await AdminAgenda.findByIdAndUpdate(admin._id, { token });
+    const token = admin.token || crypto.randomBytes(32).toString('hex');
+    if (!admin.token) await AdminAgenda.findByIdAndUpdate(admin._id, { token });
     res.json({ sucesso: true, token, nome: admin.nome, nomeNegocio: admin.nomeNegocio, segmento: admin.segmento, plano: admin.plano, admin: { _id: admin._id, nome: admin.nome, nomeNegocio: admin.nomeNegocio, segmento: admin.segmento, plano: admin.plano, email: admin.email } });
   } catch(e) { res.status(500).json({ erro: e.message }); }
 });
