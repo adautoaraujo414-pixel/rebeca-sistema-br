@@ -534,8 +534,16 @@ const AgendaIAService = {
         }
         console.log('[confirm] chamando _criarAgendamento dados='+JSON.stringify({...conv.dados,telefone}));
         const ag = await _criarAgendamento(adminId, { ...conv.dados, telefone });
-        console.log('[confirm] ag=',ag ? ag._id : null);
+        console.log('[confirm] ag=',ag ? (ag._id || ag.erro) : null);
         if (!ag) return MSG.erroTecnico(linkAgenda);
+        if (ag.erro === 'horario_ocupado') {
+          const slots = await _horariosLivres(adminId, conv.dados.data, conv.dados.duracao);
+          return 'Ops! Esse horário acabou de ser ocupado. 😅\n\nHorários livres em ' + _fmtData(conv.dados.data) + ':\n\n' + slots.slice(0,8).map((s,i)=>(i+1)+'. '+s).join('\n') + '\n\nQual você prefere?';
+        }
+        if (ag.erro === 'horario_bloqueado') {
+          const slots = await _horariosLivres(adminId, conv.dados.data, conv.dados.duracao);
+          return 'Esse horário está bloqueado. 🔒\n\nHorários disponíveis em ' + _fmtData(conv.dados.data) + ':\n\n' + slots.slice(0,8).map((s,i)=>(i+1)+'. '+s).join('\n') + '\n\nQual você prefere?';
+        }
         conv.etapa = 'booked';
         _log(adminId, 'agendamento_criado_confirmado', { telefone, servico: conv.dados.servico, hora: conv.dados.hora });
         await _notificarADM(adminId, 'Agendamento criado', conv.dados.nomeCliente + ' — ' + conv.dados.servico + ' as ' + conv.dados.hora);
