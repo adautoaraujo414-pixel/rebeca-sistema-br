@@ -456,6 +456,7 @@ ${totalAgs > 0 ? 'Tá saindo bem! 💪' : 'Ainda sem registros esse mês.'}`);
       fimUTC = new Date(Date.UTC(_y, _m, _d+1, 2, 59, 59, 999)); // 23:59 BR = 02:59 UTC+1
     }
 
+    console.log('[RESUMO] agoraBR:', _agoraBR.toISOString(), 'iniUTC:', iniUTC.toISOString(), 'fimUTC:', fimUTC.toISOString());
     const lancamentos = await FinanceiroAgenda.find({
       adminId: adminObjId,
       data: { $gte: iniUTC, $lte: fimUTC }
