@@ -1712,7 +1712,7 @@ function badge(status){
 async function api(path, opts={}){
   const r = await fetch(BASE+path, {
     ...opts,
-    headers:{'Authorization':'Bearer '+TOKEN,'Content-Type':'application/json',...(opts.headers||{})}
+    headers:{'Authorization':'Bearer '+(localStorage.getItem('agenda_token')||TOKEN),'Content-Type':'application/json',...(opts.headers||{})}
   });
   if(r.status===401){
     const d = await r.json().catch(()=>({}));
@@ -1753,6 +1753,8 @@ async function fazerLogin(){
       });
     }
     iniciarApp();
+  // Polling financeiro — atualiza cards a cada 30s
+  setInterval(function(){ if(typeof carregarFinanceiro==='function') carregarFinanceiro(); }, 30000);
   } catch(e){ erroEl.textContent = 'Erro ao conectar. Tente novamente.'; erroEl.style.display='block'; }
 }
 
