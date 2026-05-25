@@ -351,6 +351,24 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
     return true;
   }
 
+  // ── APAGAR ÚLTIMO LANÇAMENTO ──────────────────────────────────────────────
+  if (/apag[ae]|exclu[ii]|delet|remov|cancela|desfaz|tira|zera|limpa/i.test(msgL) &&
+      /entrada|receit|receb|gasto|despesa|lan[cç]amento|registro|[uú]ltim[ao]|minha|meu|nossa|essa|esse|isso|aquela|aquele|aqui|anterior|de agora|acabei|acabou|que fiz|que coloquei|que registrei|que mandei/i.test(msgL)) {
+    const tipoApagar = /entrada|receita|receb/i.test(msgL) ? 'receita'
+                     : /gasto|despesa|saida|sa[ií]da/i.test(msgL) ? 'despesa'
+                     : null;
+    const filtro = { adminId: adminObjId };
+    if (tipoApagar) filtro.tipo = tipoApagar;
+    const ultimo = await FinanceiroAgenda.findOne(filtro).sort({ data: -1 }).lean();
+    if (!ultimo) {
+      await responder('Não encontrei nenhum lançamento pra apagar. 🤔');
+      return true;
+    }
+    await FinanceiroAgenda.findByIdAndDelete(ultimo._id);
+    const tipoLabel = ultimo.tipo === 'receita' ? 'Entrada' : 'Saída';
+    await responder(`✅ ${tipoLabel} de R$ ${ultimo.valor.toFixed(2)} em "${ultimo.categoria || 'outros'}" apagada! Se precisar registrar de novo é só falar. 💙`);
+    return true;
+  }
   // ── REGISTRAR ENTRADA FINANCEIRA ───────────────────────────────────────────
   if (/\bregistra\b.*\bentrada\b|\bmarca\b.*\bentrada\b|\banota\b.*\bentrada\b|\bcoloca\b.*\bentrada\b|\breceb[ei]\b|\bentrada\b|\bganhei\b|\bcaiu\b|\bentr[ou]\b|\breceit[ao]\b|\bpix\b.*\d|\bR?\$.*\bpix\b|\btransfer[eê]ncia\b|\bdinheiro\b.*\bentrou\b|\bfiz\b.*\d|\bvendi\b|\brecebi\b|\bbateu\b|\bcadastrou\b|\bveio\b.*\bdinheiro\b|\bdinheiro\b.*\bveio\b|\bcorreu\b.*\bbem\b|\bfechei\b.*\bvenda\b|\bvenda\b.*\bfechada\b/i.test(msgL) && !/\bquanto\b/i.test(msgL) &&
       !/\bpaguei\b|\bgastei\b|\bsaida\b|\bsa[ií]da\b|\bdespesa\b|\bcombust[ií]vel\b|\bgasolina\b|\baluguel\b|\binternet\b|\bluz\b|\bagua\b|\buber\b/i.test(msgL) &&
@@ -440,24 +458,6 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
     return true;
   }
 
-  // ── APAGAR ÚLTIMO LANÇAMENTO ──────────────────────────────────────────────
-  if (/apag[ae]|exclu[ii]|delet|remov|cancela|desfaz|tira|zera|limpa/i.test(msgL) &&
-      /entrada|receit|receb|gasto|despesa|lan[cç]amento|registro|[uú]ltim[ao]|minha|meu|nossa|essa|esse|isso|aquela|aquele|aqui|anterior|de agora|acabei|acabou|que fiz|que coloquei|que registrei|que mandei/i.test(msgL)) {
-    const tipoApagar = /entrada|receita|receb/i.test(msgL) ? 'receita'
-                     : /gasto|despesa|saida|sa[ií]da/i.test(msgL) ? 'despesa'
-                     : null;
-    const filtro = { adminId: adminObjId };
-    if (tipoApagar) filtro.tipo = tipoApagar;
-    const ultimo = await FinanceiroAgenda.findOne(filtro).sort({ data: -1 }).lean();
-    if (!ultimo) {
-      await responder('Não encontrei nenhum lançamento pra apagar. 🤔');
-      return true;
-    }
-    await FinanceiroAgenda.findByIdAndDelete(ultimo._id);
-    const tipoLabel = ultimo.tipo === 'receita' ? 'Entrada' : 'Saída';
-    await responder(`✅ ${tipoLabel} de R$ ${ultimo.valor.toFixed(2)} em "${ultimo.categoria || 'outros'}" apagada! Se precisar registrar de novo é só falar. 💙`);
-    return true;
-  }
 
   // ── FATURAMENTO POR SERVIÇO ──────────────────────────────────────────────────
   if (/quanto\s*(fiz|faturei|ganhei)\s*(de|com|no)\s+([A-Za-zÀ-ú]+)/i.test(msgL)) {
