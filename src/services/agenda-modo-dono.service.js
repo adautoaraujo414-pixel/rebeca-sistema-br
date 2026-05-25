@@ -351,7 +351,7 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
   }
 
   // ── REGISTRAR ENTRADA FINANCEIRA ───────────────────────────────────────────
-  if (/\bregistra\b.*\bentrada\b|\bmarca\b.*\bentrada\b|\banota\b.*\bentrada\b|\bcoloca\b.*\bentrada\b|\breceb[ei]\b|\bentrada\b|\bganhei\b|\bcaiu\b|\bentr[ou]\b|\breceit[ao]\b|\bpix\b.*\d|\bR?\$.*\bpix\b|\btransfer[eê]ncia\b|\bdinheiro\b.*\bentrou\b|\bfiz\b.*\d|\bvendi\b|\brecebi\b/i.test(msgL) &&
+  if (/\bregistra\b.*\bentrada\b|\bmarca\b.*\bentrada\b|\banota\b.*\bentrada\b|\bcoloca\b.*\bentrada\b|\breceb[ei]\b|\bentrada\b|\bganhei\b|\bcaiu\b|\bentr[ou]\b|\breceit[ao]\b|\bpix\b.*\d|\bR?\$.*\bpix\b|\btransfer[eê]ncia\b|\bdinheiro\b.*\bentrou\b|\bfiz\b.*\d|\bvendi\b|\brecebi\b/i.test(msgL) && !/\bquanto\b/i.test(msgL) &&
       !/\bpaguei\b|\bgastei\b|\bsaida\b|\bsa[ií]da\b|\bdespesa\b|\bcombust[ií]vel\b|\bgasolina\b|\baluguel\b|\binternet\b|\bluz\b|\bagua\b|\buber\b/i.test(msgL)) {
     const _msgLimpa = msg.replace(/[?!]+$/, '').trim();
     const _vm = _msgLimpa.match(/R?\$\s*(\d+(?:[.,]\d{1,2})?)|(\d+(?:[.,]\d{1,2})?)\s*(?:reais?|conto|reai)?/i);
@@ -376,7 +376,7 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
   }
 
   // ── REGISTRAR GASTO ────────────────────────────────────────────────────────
-  if (/\bregistra\b.*\bgasto\b|\bmarca\b.*\bgasto\b|\banota\b.*\bgasto\b|\bmarca\b.*\bdespesa\b|\bregistra\b.*\bdespesa\b|\bpaguei\b|\bcomprei\b|\bsaída\b|\bsaida\b|\bdespesa\b|\bgastei\b|\btive\s*gasto\b|\bsaiu\b|\bdebita\b|\bdescontou\b|\baluguel\b|\bluz\b|\bagua\b|\bcombust[ií]vel\b|\bgasolina\b|\buber\b|\binternet\b|\baliment[ao]\b|\blanche\b|\bcaf[eé]\b|\bmaterial\b|\bequipamento\b/i.test(msgL)) {
+  if (/\bregistra\b.*\bgasto\b|\bmarca\b.*\bgasto\b|\banota\b.*\bgasto\b|\bmarca\b.*\bdespesa\b|\bregistra\b.*\bdespesa\b|\bpaguei\b|\bcomprei\b|\bsaída\b|\bsaida\b|\bdespesa\b|\bgastei\b|\btive\s*gasto\b|\bsaiu\b|\bdebita\b|\bdescontou\b|\baluguel\b|\bluz\b|\bagua\b|\bcombust[ií]vel\b|\bgasolina\b|\buber\b|\binternet\b|\baliment[ao]\b|\blanche\b|\bcaf[eé]\b|\bmaterial\b|\bequipamento\b/i.test(msgL) && !/\bquanto\b/i.test(msgL)) {
     const _msgLimpaS = msg.replace(/[?!]+$/, '').trim();
     const _vms = _msgLimpaS.match(/R?\$\s*(\d+(?:[.,]\d{1,2})?)|(\d+(?:[.,]\d{1,2})?)\s*(?:reais?|conto|reai)?/i);
     const val = _vms ? parseFloat((_vms[1]||_vms[2]).replace(',','.')) : null;
