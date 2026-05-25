@@ -263,6 +263,8 @@ function _fmtHora(d) {
 async function processarComandoDono(telefone, mensagem, adminId, instanciaResposta = null) {
   const msg = (mensagem || '').trim();
   const msgL = msg.toLowerCase();
+  console.log('[DEBUG-INICIO] msgL:', msgL);
+  console.log('[DEBUG-INICIO] msgL:', msgL);
   // ── SESSION: registrar mensagem e recuperar estado ──
   const _session = SM.addUserMsg(adminId, telefone, msg);
   const _isConfirm = SM.isConfirmacao(msg);
