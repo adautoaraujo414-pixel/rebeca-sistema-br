@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <link rel="apple-touch-icon" href="/agenda-icon-180.png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<link rel="stylesheet" href="/css/mobile-hardening.css?v=1779638145732">
+
 <title>Rebeca Agenda — Painel Gerencial</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -152,7 +152,7 @@ input,select,textarea{font-family:'Inter',sans-serif}
 
 
 /* ─── MOBILE DRAWER ─── */
-.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:99;pointer-events:none;opacity:0;transition:opacity .25s}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:999;pointer-events:none;opacity:0;transition:opacity .25s}
 .sidebar-overlay.show{opacity:1;pointer-events:auto;display:block}
 .mobile-menu-btn{display:none;width:36px;height:36px;background:transparent;border:1px solid var(--borda);border-radius:var(--radius-sm);align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
 
@@ -193,7 +193,7 @@ input,select,textarea{font-family:'Inter',sans-serif}
   }
   .sidebar-header{flex-shrink:0!important;padding-top:max(20px,env(safe-area-inset-top,20px))!important}
   .sidebar-footer{flex-shrink:0!important;padding-bottom:max(16px,env(safe-area-inset-bottom,16px))!important}
-  .sidebar.open{transform:translateX(0)!important}
+  .sidebar.open{transform:translateX(0)!important;height:100%!important;height:100dvh!important;overflow:hidden!important}
   .sidebar-overlay{display:block}
 
   /* ── Main — largura total, sem margin-left ── */
@@ -804,6 +804,7 @@ document.querySelectorAll('.nav-item').forEach(item => {
   setAppHeight();
 })();
 </script>
+  <link rel="stylesheet" href="/css/mobile-hardening.css?v=1779638145732">
 </head>
 <body>
 
