@@ -763,7 +763,7 @@ input,select,textarea{font-family:'Inter',sans-serif}
 }
 
 </style>
-<link rel="stylesheet" href="/css/mobile-hardening.css?v=1779684618">
+<link rel="stylesheet" href="/css/mobile-hardening.css?v=1779684667">
 <link rel="manifest" href="/agenda-adm-manifest.json">
 <script src="/js/agenda-notif-helper.js">
 // ── SIDEBAR MOBILE DRAWER ──────────────────────────────────────────────────
@@ -2381,7 +2381,7 @@ function abrirModalAgendamento(){
   });
   document.getElementById('ag-data').value = new Date().toISOString().split('T')[0];
   document.getElementById('modal-ag').classList.add('open');
-  document.body.style.overflow = 'hidden';
+  var sy=window.scrollY;document.body.style.position='fixed';document.body.style.top='-'+sy+'px';document.body.style.left='0';document.body.style.right='0';document.body.dataset.scrollY=sy;
 }
 
 function abrirModalCliente(){ document.getElementById('modal-cli').classList.add('open'); var sy=window.scrollY;document.body.style.position='fixed';document.body.style.top='-'+sy+'px';document.body.style.left='0';document.body.style.right='0';document.body.dataset.scrollY=sy; }
