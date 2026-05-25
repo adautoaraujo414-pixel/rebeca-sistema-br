@@ -354,8 +354,9 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
   if (/\bregistra\b.*\bentrada\b|\bmarca\b.*\bentrada\b|\banota\b.*\bentrada\b|\bcoloca\b.*\bentrada\b|\breceb[ei]\b|\bentrada\b|\bganhei\b|\bcaiu\b|\bentr[ou]\b|\breceit[ao]\b|\bpix\b.*\d|\bR?\$.*\bpix\b|\btransfer[eê]ncia\b|\bdinheiro\b.*\bentrou\b|\bfiz\b.*\d|\bvendi\b|\brecebi\b/i.test(msgL) && !/\bquanto\b/i.test(msgL) &&
       !/\bpaguei\b|\bgastei\b|\bsaida\b|\bsa[ií]da\b|\bdespesa\b|\bcombust[ií]vel\b|\bgasolina\b|\baluguel\b|\binternet\b|\bluz\b|\bagua\b|\buber\b/i.test(msgL)) {
     const _msgLimpa = msg.replace(/[?!]+$/, '').trim();
-    const _vm = _msgLimpa.match(/R?\$\s*(\d+(?:[.,]\d{1,2})?)|(\d+(?:[.,]\d{1,2})?)\s*(?:reais?|conto|reai)?/i);
-    const val = _vm ? parseFloat((_vm[1]||_vm[2]).replace(',','.')) : null;
+    const _vm = _msgLimpa.match(/R?\$\s*([\d.,]+)|([\d.,]+)\s*(?:reais?|conto|reai)?/i);
+    const _rawV = _vm ? (_vm[1]||_vm[2]) : null;
+    const val = _rawV ? parseFloat(_rawV.replace(/\./g,'').replace(',','.')) : null;
     const descEntrada = _extrairDescricao(msg, 'receita');
     const catEntrada  = _extrairCategoria(msg);
     if (val) {
@@ -378,8 +379,9 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
   // ── REGISTRAR GASTO ────────────────────────────────────────────────────────
   if (/\bregistra\b.*\bgasto\b|\bmarca\b.*\bgasto\b|\banota\b.*\bgasto\b|\bmarca\b.*\bdespesa\b|\bregistra\b.*\bdespesa\b|\bpaguei\b|\bcomprei\b|\bsaída\b|\bsaida\b|\bdespesa\b|\bgastei\b|\btive\s*gasto\b|\bsaiu\b|\bdebita\b|\bdescontou\b|\baluguel\b|\bluz\b|\bagua\b|\bcombust[ií]vel\b|\bgasolina\b|\buber\b|\binternet\b|\baliment[ao]\b|\blanche\b|\bcaf[eé]\b|\bmaterial\b|\bequipamento\b/i.test(msgL) && !/\bquanto\b/i.test(msgL)) {
     const _msgLimpaS = msg.replace(/[?!]+$/, '').trim();
-    const _vms = _msgLimpaS.match(/R?\$\s*(\d+(?:[.,]\d{1,2})?)|(\d+(?:[.,]\d{1,2})?)\s*(?:reais?|conto|reai)?/i);
-    const val = _vms ? parseFloat((_vms[1]||_vms[2]).replace(',','.')) : null;
+    const _vms = _msgLimpaS.match(/R?\$\s*([\d.,]+)|([\d.,]+)\s*(?:reais?|conto|reai)?/i);
+    const _rawVs = _vms ? (_vms[1]||_vms[2]) : null;
+    const val = _rawVs ? parseFloat(_rawVs.replace(/\./g,'').replace(',','.')) : null;
     const descSaida = _extrairDescricao(msg, 'despesa');
     const catSaida  = _extrairCategoria(msg);
     if (val) {
@@ -396,6 +398,25 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
       return true;
     }
     await responder(`${_erro()} Me fala assim: *Rebeca, registra um gasto de R$50 em produtos* 💸`);
+    return true;
+  }
+
+  // ── APAGAR ÚLTIMO LANÇAMENTO ──────────────────────────────────────────────
+  if (/apag[ae]|exclu|delet|remov|cancela|desfaz/i.test(msgL) &&
+      /entrada|gasto|despesa|lan[cç]amento|registro|[uú]ltim[ao]/i.test(msgL)) {
+    const tipoApagar = /entrada|receita|receb/i.test(msgL) ? 'receita'
+                     : /gasto|despesa|saida|sa[ií]da/i.test(msgL) ? 'despesa'
+                     : null;
+    const filtro = { adminId: adminObjId };
+    if (tipoApagar) filtro.tipo = tipoApagar;
+    const ultimo = await FinanceiroAgenda.findOne(filtro).sort({ data: -1 }).lean();
+    if (!ultimo) {
+      await responder('Não encontrei nenhum lançamento pra apagar. 🤔');
+      return true;
+    }
+    await FinanceiroAgenda.findByIdAndDelete(ultimo._id);
+    const tipoLabel = ultimo.tipo === 'receita' ? 'Entrada' : 'Saída';
+    await responder(`✅ ${tipoLabel} de R$ ${ultimo.valor.toFixed(2)} em "${ultimo.categoria || 'outros'}" apagada! Se precisar registrar de novo é só falar. 💙`);
     return true;
   }
 
