@@ -1010,25 +1010,13 @@ Descansa bem! 😊💙`);
       }
     }
 
-    // Sem pausa → apenas remove bloqueios existentes
-    // Bug fix: usar dataHoraInicio (campo correto do model)
+    // Sem pausa → remove bloqueios e atualiza horário se veio range (já feito acima via hAb/hFe)
     const res = await BloqueioAgenda.deleteMany({ adminId: adminObjId, dataHoraInicio: { $gte: ini, $lte: fim } });
-
-    // Bug fix: se veio range de horário (das 8 às 18), atualizar config do admin
-    const rangeHorario = msg.match(/das?\s*(\d{1,2}h?\d{0,2})\s*(?:às?|as)\s*(\d{1,2}h?\d{0,2})/i);
-    if (rangeHorario) {
-      const h1 = _parseHora(rangeHorario[1]);
-      const h2 = _parseHora(rangeHorario[2]);
-      if (h1 && h2) {
-        const abertura  = String(h1.h).padStart(2,'0') + ':' + String(h1.min).padStart(2,'0');
-        const fechamento = String(h2.h).padStart(2,'0') + ':' + String(h2.min).padStart(2,'0');
-        await AdminAgenda.findByIdAndUpdate(adminObjId, {
-          'config.horarioAbertura': abertura,
-          'config.horarioFechamento': fechamento
-        });
-        await responder(`Feito, ${_chefe()}! 🔓✅\n\nAgenda de ${_fmtData(dia)} aberta das *${abertura}* às *${fechamento}*!\nRemovi ${res.deletedCount} bloqueio(s). Pode vir cliente! 🚀`);
-        return true;
-      }
+    if (hAb && hFe) {
+      const abertura   = String(hAb.h).padStart(2,'0') + ':' + String(hAb.min).padStart(2,'0');
+      const fechamento = String(hFe.h).padStart(2,'0') + ':' + String(hFe.min).padStart(2,'0');
+      await responder(`Feito, ${_chefe()}! 🔓✅\n\nAgenda de ${_fmtData(dia)} aberta das *${abertura}* às *${fechamento}*!\nRemovi ${res.deletedCount} bloqueio(s). Pode vir cliente! 🚀`);
+      return true;
     }
     await responder(`Prontinho, ${_chefe()}! 🔓\nRemovi ${res.deletedCount} bloqueio(s) de ${_fmtData(dia)}. Agenda aberta e pronta pra receber cliente! 🚀`);
     return true;
