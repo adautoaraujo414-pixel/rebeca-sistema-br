@@ -962,15 +962,41 @@ Descansa bem! 😊💙`);
     return true;
   }
 
-  // ── LIBERAR AGENDA ────────────────────────────────────────────────────────
+  // ── LIBERAR AGENDA (com suporte a pausa/almoço embutida) ─────────────────
   if (/libera\s*(minha\s*)?agenda|remove\s*(os\s*)?bloqueios?|abre\s*(minha\s*)?agenda/i.test(msgL)) {
     const dia = _parseDia(msgL) || new Date();
     const ini = new Date(dia); ini.setHours(0,0,0,0);
     const fim = new Date(dia); fim.setHours(23,59,59,999);
-    const res = await BloqueioAgenda.deleteMany({ adminId: adminObjId, inicio: { $gte: ini, $lte: fim } });
-    await responder(`Prontinho, ${_chefe()}! 🔓
 
-Removi ${res.deletedCount} bloqueio(s) de ${_fmtData(dia)}. Agenda aberta e pronta pra receber cliente! 🚀`);
+    // Se tem pausa/almoço/intervalo no mesmo comando → criar bloqueio da pausa
+    if (/pausa|almo[çc]o|intervalo/i.test(msgL)) {
+      const rangePausa = msg.match(/(?:pausa|almo[çc]o|intervalo)\s*das?\s*(\d{1,2}h?\d{0,2})\s*(?:às?|as)\s*(\d{1,2}h?\d{0,2})/i);
+      const horaPausa  = !rangePausa && msg.match(/(?:pausa|almo[çc]o|intervalo)\s*(?:às?|as|para\s*o)?\s*(\d{1,2}[h:]\d{0,2})/i);
+      if (rangePausa) {
+        const h1 = _parseHora(rangePausa[1]);
+        const h2 = _parseHora(rangePausa[2]);
+        if (h1 && h2) {
+          const iniP = new Date(dia); iniP.setHours(h1.h, h1.min, 0, 0);
+          const fimP = new Date(dia); fimP.setHours(h2.h, h2.min, 0, 0);
+          await BloqueioAgenda.create({ adminId: adminObjId, inicio: iniP, fim: fimP, motivo: 'Pausa/Almoço via WhatsApp' });
+          await responder(`Feito, ${_chefe()}! 🔓✅\n\nAgenda de ${_fmtData(dia)} liberada!\n🍽️ Pausa bloqueada das ${_fmtHora(iniP)} às ${_fmtHora(fimP)}.\nNinguém agenda nesse intervalo! 😉`);
+          return true;
+        }
+      } else if (horaPausa) {
+        const h1 = _parseHora(horaPausa[1]);
+        if (h1) {
+          const iniP = new Date(dia); iniP.setHours(h1.h, h1.min, 0, 0);
+          const fimP = new Date(dia); fimP.setHours(h1.h + 1, h1.min, 0, 0);
+          await BloqueioAgenda.create({ adminId: adminObjId, inicio: iniP, fim: fimP, motivo: 'Pausa/Almoço via WhatsApp' });
+          await responder(`Feito, ${_chefe()}! 🔓✅\n\nAgenda de ${_fmtData(dia)} liberada!\n🍽️ Pausa bloqueada das ${_fmtHora(iniP)} às ${_fmtHora(fimP)} (1h).\nNinguém agenda nesse horário! 😉`);
+          return true;
+        }
+      }
+    }
+
+    // Sem pausa → apenas remove bloqueios existentes
+    const res = await BloqueioAgenda.deleteMany({ adminId: adminObjId, inicio: { $gte: ini, $lte: fim } });
+    await responder(`Prontinho, ${_chefe()}! 🔓\nRemovi ${res.deletedCount} bloqueio(s) de ${_fmtData(dia)}. Agenda aberta e pronta pra receber cliente! 🚀`);
     return true;
   }
 
