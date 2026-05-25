@@ -296,7 +296,8 @@ async function enviarComprovante() {
         document.getElementById('cad-sucesso').style.display = '';
       } else {
         var errEl = document.getElementById('comp-erro');
-        errEl.textContent = '❌ ' + (d.msg || d.erro || 'Comprovante não reconhecido');
+        errEl.innerHTML = '❌ ' + (d.msg || d.erro || 'Comprovante não reconhecido') +
+          '<br><br>Precisa de ajuda? <a href="https://wa.me/5534984039955?text=Ol%C3%A1%2C+preciso+de+suporte+para+liberar+meu+acesso+na+Rebeca+Agenda" target="_blank" style="color:#16a34a;font-weight:700;text-decoration:none">👉 Falar com suporte no WhatsApp</a>';
         errEl.style.display = 'block';
         btn.disabled = false;
         btn.textContent = '🔍 Verificar e liberar acesso';
