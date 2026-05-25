@@ -1623,10 +1623,19 @@ async function rodarLembretesPessoais() {
           telDono,
           `🔔 *Lembrete!*\n\n${l.texto}${horaEvento ? '\n\n📅 ' + horaEvento : ''}`,
         );
-        await AdminAgenda.updateOne(
-          { _id: adm._id, 'config.lembretes._id': l._id },
-          { $set: { 'config.lembretes.$.enviado': true } }
-        );
+        // Marcar enviado por criadoEm (subdocs sem _id gerado pelo schema antigo)
+        if (l._id) {
+          await AdminAgenda.updateOne(
+            { _id: adm._id, 'config.lembretes._id': l._id },
+            { $set: { 'config.lembretes.$.enviado': true } }
+          );
+        } else {
+          // Fallback: marcar pelo criadoEm
+          await AdminAgenda.updateOne(
+            { _id: adm._id, 'config.lembretes.criadoEm': l.criadoEm },
+            { $set: { 'config.lembretes.$.enviado': true } }
+          );
+        }
         console.log('[LembretesConfig] Enviado para', telDono, ':', l.texto?.slice(0,40));
       }
     }
