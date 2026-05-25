@@ -196,21 +196,26 @@ input,select,textarea{font-family:'Inter',sans-serif}
   .sidebar.open{transform:translateX(0)!important;height:100%!important;height:100dvh!important;overflow:hidden!important}
   .sidebar-overlay{display:block}
 
+  /* ── Overscroll bounce iOS — sem cortina branca ── */
+  html, body {
+    background: var(--bg, #f8fafc) !important;
+    overscroll-behavior-y: none !important;
+  }
   /* ── Main — largura total, sem margin-left ── */
   .main{
     margin-left:0!important;
     width:100%!important;
     max-width:100vw!important;
     overflow-x:hidden!important;
-    min-height:100svh;
+    min-height:100svh!important;
+    background:var(--bg,#f8fafc)!important;
   }
 
   /* ── Content — padding seguro + espaco bottom-nav ── */
   .content{
-    padding-bottom:calc(80px + env(safe-area-inset-bottom,0px))!important;
     width:100%!important;
     max-width:100vw!important;
-    padding:16px 16px 90px!important;
+    padding:16px 16px calc(84px + env(safe-area-inset-bottom,0px))!important;
     box-sizing:border-box!important;
     overflow-x:hidden!important;
   }
@@ -804,7 +809,7 @@ document.querySelectorAll('.nav-item').forEach(item => {
   setAppHeight();
 })();
 </script>
-  <link rel="stylesheet" href="/css/mobile-hardening.css?v=1779680663">
+  <link rel="stylesheet" href="/css/mobile-hardening.css?v=1779680746">
 </head>
 <body>
 
