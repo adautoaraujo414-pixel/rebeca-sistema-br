@@ -303,20 +303,23 @@ router.delete('/agendamentos/:id', authAgenda, async (req, res) => {
 router.get('/financeiro/resumo', authAgenda, async (req, res) => {
   try {
     const { mes, ano } = req.query;
-    const adminId = req.adminAgendaId;
+    const adminId = req.adminId || req.adminAgendaId;
     const { FinanceiroAgenda, ContaPagarAgenda } = require('../models/AgendaServico');
     const m = parseInt(mes) || new Date().getMonth()+1;
     const a = parseInt(ano) || new Date().getFullYear();
     const inicio = new Date(a, m-1, 1);
     const fim    = new Date(a, m, 1);
 
+    const mongoose = require('mongoose');
+    const _oid = mongoose.Types.ObjectId.isValid(adminId) ? new mongoose.Types.ObjectId(adminId) : null;
+    const _filtro = _oid ? { $or: [{ adminId: _oid }, { adminId: String(adminId) }] } : { adminId: adminId };
     const [entradas, saidas] = await Promise.all([
       FinanceiroAgenda ? FinanceiroAgenda.aggregate([
-        { $match: { adminId: require('mongoose').Types.ObjectId.createFromHexString(adminId), tipo:'entrada', data:{ $gte:inicio, $lt:fim } } },
+        { $match: { ..._filtro, tipo:'receita', data:{ $gte:inicio, $lt:fim } } },
         { $group: { _id:null, total:{ $sum:'$valor' } } }
       ]) : [],
-      ContaPagarAgenda ? ContaPagarAgenda.aggregate([
-        { $match: { adminId: require('mongoose').Types.ObjectId.createFromHexString(adminId), dataPagamento:{ $gte:inicio, $lt:fim } } },
+      FinanceiroAgenda ? FinanceiroAgenda.aggregate([
+        { $match: { ..._filtro, tipo:'despesa', data:{ $gte:inicio, $lt:fim } } },
         { $group: { _id:null, total:{ $sum:'$valor' } } }
       ]) : []
     ]);
