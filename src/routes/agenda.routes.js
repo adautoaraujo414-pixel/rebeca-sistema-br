@@ -230,17 +230,23 @@ router.get('/espaco/:adminId/horarios', async (req, res) => {
 // ===== AGENDAR (público) =====
 router.post('/espaco/:adminId/agendar', async (req, res) => {
   try {
-    const { nomeCliente, telefoneCliente, servicoId, profissionalId, dataHora, observacoes, origem } = req.body;
-    if (!nomeCliente || !telefoneCliente || !dataHora) return res.status(400).json({ erro: 'Dados obrigatórios faltando' });
+    const { nomeCliente, telefoneCliente: telCliente, telefone, servicoId, profissionalId, observacoes, origem } = req.body;
+    // Aceita dataHora completo OU data+hora separados (frontend espaco-digital.html)
+    let dataHora = req.body.dataHora;
+    if (!dataHora && req.body.data && req.body.hora) {
+      dataHora = `${req.body.data}T${req.body.hora}:00-03:00`; // fuso Brasil
+    }
+    const telCliente = telefoneCliente || telefone;
+    if (!nomeCliente || !telCliente || !dataHora) return res.status(400).json({ erro: 'Dados obrigatórios faltando' });
     const admin = await AdminAgenda.findById(req.params.adminId);
     if (!admin) return res.status(404).json({ erro: 'Espaço não encontrado' });
     const servico = servicoId ? await ServicoAgenda.findById(servicoId) : null;
     const prof = profissionalId ? await ProfissionalAgenda.findById(profissionalId) : null;
 
     // Criar/atualizar cliente
-    let cliente = await ClienteAgenda.findOne({ adminId: req.params.adminId, telefone: telefoneCliente });
+    let cliente = await ClienteAgenda.findOne({ adminId: req.params.adminId, telefone: telCliente });
     if (!cliente) {
-      cliente = await ClienteAgenda.create({ adminId: req.params.adminId, nome: nomeCliente, telefone: telefoneCliente });
+      cliente = await ClienteAgenda.create({ adminId: req.params.adminId, nome: nomeCliente, telefone: telCliente });
     }
 
     const ag = await AgendamentoAgenda.create({
@@ -248,7 +254,7 @@ router.post('/espaco/:adminId/agendar', async (req, res) => {
       clienteId: cliente._id,
       servicoId: servicoId || null,
       profissionalId: profissionalId || null,
-      nomeCliente, telefoneCliente,
+      nomeCliente, telefoneCliente: telCliente,
       nomeServico: servico?.nome || '',
       nomeProfissional: prof?.nome || '',
       dataHora: new Date(dataHora),
