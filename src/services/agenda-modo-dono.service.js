@@ -1312,7 +1312,14 @@ ${total>5?'Tá crescendo muito! Continua assim! 🚀':'Todo cliente novo é uma 
       AgendamentoAgenda.find({ adminId: adminObjId, dataHora: { $gte: iniAmanha, $lte: fimAmanha }, status: { $in: ['pendente','confirmado'] } }).sort({ dataHora: 1 }).lean(),
       FinanceiroAgenda.find({ adminId: adminObjId, data: { $gte: ini, $lte: fim } }).lean(),
       FinanceiroAgenda.find({ adminId: adminObjId, data: { $gte: iniSem, $lte: fim }, tipo: 'receita' }).lean(),
-      LembreteAgenda.find({ adminId: String(adminObjId), enviado: false, dataEvento: { $gte: ini } }).sort({ dataEvento: 1 }).limit(5).lean(),
+      AdminAgenda.findById(adminObjId).select('config.lembretes').lean().then(a => {
+        const todos = (a?.config?.lembretes || []);
+        return todos.filter(l => {
+          if (!l.dataEvento) return false;
+          const d = new Date(l.dataEvento);
+          return d >= ini && d <= fim; // todos do dia, passados e futuros
+        }).sort((a,b) => new Date(a.dataEvento)-new Date(b.dataEvento)).slice(0,10);
+      }),
       ClienteAgenda.countDocuments({ adminId: adminObjId }).catch(()=>0),
       RetornoAgenda ? RetornoAgenda.countDocuments({ adminId: adminObjId, statusContato: 'pendente' }).catch(()=>0) : Promise.resolve(0)
     ]);
