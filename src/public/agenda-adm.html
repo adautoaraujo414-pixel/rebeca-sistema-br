@@ -763,7 +763,7 @@ input,select,textarea{font-family:'Inter',sans-serif}
 }
 
 </style>
-<link rel="stylesheet" href="/css/mobile-hardening.css?v=1779684347">
+<link rel="stylesheet" href="/css/mobile-hardening.css?v=1779684421">
 <link rel="manifest" href="/agenda-adm-manifest.json">
 <script src="/js/agenda-notif-helper.js">
 // ── SIDEBAR MOBILE DRAWER ──────────────────────────────────────────────────
@@ -3953,12 +3953,22 @@ carregarFinanceiro = async function() {
     }
   
 function abrirMenuMobile() {
-  document.body.style.overflow = 'hidden';
+  var scrollY = window.scrollY;
+  document.body.style.position = 'fixed';
+  document.body.style.top = '-' + scrollY + 'px';
+  document.body.style.left = '0';
+  document.body.style.right = '0';
+  document.body.dataset.scrollY = scrollY;
   document.getElementById('menu-mobile-bg').style.display = 'block';
   document.getElementById('menu-mobile-drawer').classList.add('aberto');
 }
 function fecharMenuMobile() {
-  document.body.style.overflow = '';
+  var scrollY = parseInt(document.body.dataset.scrollY || '0');
+  document.body.style.position = '';
+  document.body.style.top = '';
+  document.body.style.left = '';
+  document.body.style.right = '';
+  window.scrollTo(0, scrollY);
   document.getElementById('menu-mobile-bg').style.display = 'none';
   document.getElementById('menu-mobile-drawer').classList.remove('aberto');
 }
