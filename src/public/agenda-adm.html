@@ -1546,7 +1546,15 @@ document.querySelectorAll('.nav-item').forEach(item => {
             • Rebeca, ajuda
           </div>
 
-          <div class="form-section-title" style="font-size:.85rem;margin-bottom:10px">Telefones autorizados</div>
+          <div style="position:relative;margin-top:4px">
+            <!-- OVERLAY CADEADO -->
+            <div style="position:absolute;inset:0;background:rgba(255,255,255,0.82);border-radius:10px;z-index:10;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;backdrop-filter:blur(2px)">
+              <span style="font-size:2rem">🔒</span>
+              <span style="font-size:.82rem;font-weight:700;color:#374151">Funcionalidade em breve</span>
+            </div>
+            <!-- CONTEUDO BLOQUEADO -->
+            <div style="pointer-events:none;opacity:0.4">
+<div class="form-section-title" style="font-size:.85rem;margin-bottom:10px">Telefones autorizados</div>
           <p style="font-size:.82rem;color:var(--texto2);margin-bottom:12px">
             Números que podem enviar comandos para a Rebeca. Seu telefone e WhatsApp cadastrado já são reconhecidos automaticamente.
           </p>
@@ -1564,6 +1572,8 @@ document.querySelectorAll('.nav-item').forEach(item => {
             <button class="btn-secondary" onclick="modoDonoEnviarBoasVindas()" style="font-size:.85rem">
               💬 Enviar boas-vindas agora
             </button>
+          </div>
+          </div>
           </div>
           <div id="modo-dono-msg" style="margin-top:10px;font-size:.82rem"></div>
         </div>
