@@ -266,6 +266,29 @@ router.post('/espaco/:adminId/agendar', async (req, res) => {
 
     await ClienteAgenda.findByIdAndUpdate(cliente._id, { ultimoAtendimento: new Date(), $inc: { totalAtendimentos: 1 } });
 
+    // Notificar dono via WhatsApp
+    ModoDono.notificarDonoNovoAgendamento(req.params.adminId, {
+      nomeCliente: ag.nomeCliente,
+      nomeServico: ag.nomeServico,
+      nomeProfissional: ag.nomeProfissional,
+      dataHora: ag.dataHora,
+      valor: ag.preco
+    }).catch(e => console.error('[Agenda] Erro notif dono:', e.message));
+
+    // Notificar cliente via WhatsApp
+    if (telCliente) {
+      const { InstanciaWhatsapp } = require('../models/AgendaServico');
+      InstanciaWhatsapp.findOne({ adminId: req.params.adminId, adminTipo: 'agenda' }).lean()
+        .then(inst => {
+          if (!inst || inst.status !== 'conectado') return;
+          return ModoDono.notificarCliente(inst, telCliente, 'confirmacao', {
+            nome: ag.nomeCliente,
+            dataHora: ag.dataHora,
+            servico: ag.nomeServico
+          });
+        }).catch(e => console.error('[Agenda] Erro notif cliente:', e.message));
+    }
+
     res.json({ sucesso: true, agendamento: ag, mensagem: admin.config?.mensagemConfirmacao || 'Agendamento confirmado! 💛' });
   } catch(e) { res.status(500).json({ erro: e.message }); }
 });
