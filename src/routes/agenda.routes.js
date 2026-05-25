@@ -230,7 +230,7 @@ router.get('/espaco/:adminId/horarios', async (req, res) => {
 // ===== AGENDAR (público) =====
 router.post('/espaco/:adminId/agendar', async (req, res) => {
   try {
-    const { nomeCliente, telefoneCliente: telCliente, telefone, servicoId, profissionalId, observacoes, origem } = req.body;
+    const { nomeCliente, telefoneCliente, telefone, servicoId, profissionalId, observacoes, origem } = req.body;
     // Aceita dataHora completo OU data+hora separados (frontend espaco-digital.html)
     let dataHora = req.body.dataHora;
     if (!dataHora && req.body.data && req.body.hora) {
