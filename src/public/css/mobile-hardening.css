@@ -60,14 +60,18 @@ button, .btn, .nav-item, .menu-item, [role="button"] {
     transform: translateX(0) !important;
     box-shadow: 4px 0 24px rgba(0,0,0,0.18) !important;
   }
-  .main { margin-left: 0 !important; width: 100% !important; }
+  .main { margin-left: 0 !important; width: 100% !important; background: var(--bg, #f8fafc) !important; min-height: 100svh !important; }
 
   .sidebar-overlay {
     display: none; position: fixed; inset: 0;
-    background: rgba(0,0,0,0.45); z-index: 999;
+    background: rgba(0,0,0,0.45); z-index: 998 !important;
     backdrop-filter: blur(2px);
+    pointer-events: none; opacity: 0; transition: opacity .25s;
   }
-  .sidebar-overlay.show { display: block; }
+  .sidebar-overlay.show {
+    display: block !important; opacity: 1 !important;
+    pointer-events: auto !important;
+  }
 
   .btn-menu-mobile {
     display: flex !important; align-items: center; justify-content: center;
