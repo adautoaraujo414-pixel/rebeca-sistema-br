@@ -74,10 +74,11 @@ function _extrairDescricao(txt, tipo) {
   // Palavras que NÃO são nomes de pessoas/descrições úteis
   const _stopWords = /^(reais?|pix|dinheiro|especie|espécie|entrada|saida|saída|gasto|despesa|receita|transfer|transferência|gasolina|combustivel|aluguel|internet|luz|agua|lanche|comida|mercado|farmacia|uber|ifood|taxa|imposto)$/i;
   // helper: captura nome próprio (1 ou 2 palavras com maiúscula inicial)
-  const _nomeComposto = /([A-ZÁÀÂÃÉÊÍÓÔÕÚÇ][a-záàâãéêíóôõúç]{1,30}(?:\s+[A-ZÁÀÂÃÉÊÍÓÔÕÚÇ][a-záàâãéêíóôõúç]{1,30})?)/;
-  // 1. Nome próprio após "pra/para/pro/com"
-  const mPra = txt.match(new RegExp('(?:^|\\s)(?:pra|para|pro|com)\\s+' + _nomeComposto.source + '(?:\\s|$)'));
-  if (mPra && mPra[1] && !_stopWords.test(mPra[1].split(' ')[0])) return mPra[1].trim();
+  const _nomeComposto = /([A-ZÁÀÂÃÉÊÍÓÔÕÚÇ][a-záàâãéêíóôõúç]{1,30}(?:\s+[A-ZÁÀÂÃÉÊÍÓÔÕÚÇ][a-záàâãéêíóôõúç]{1,30}){0,2})/;
+  // 1. Nome próprio após "pra/para/pro/com" — ignora "mim/me/nós"
+  const _ignorarPronom = /^(mim|me|nos|nós|você|voce|ele|ela|eles|elas)$/i;
+  const mPra = txt.match(new RegExp('(?:^|\\s)(?:pra|para|pro|com)\\s+(?:(?:mim|me|nos|nós|você|voce)\\s+)?(' + _nomeComposto.source.slice(1,-1) + ')(?:\\s|$)'));
+  if (mPra && mPra[1] && !_stopWords.test(mPra[1].split(' ')[0]) && !_ignorarPronom.test(mPra[1])) return mPra[1].trim();
   // 2. Nome próprio após "na/no/da/do"
   const mNa = txt.match(new RegExp('(?:^|\\s)(?:na|no|da|do)\\s+' + _nomeComposto.source + '(?:\\s|$)'));
   if (mNa && mNa[1] && !_stopWords.test(mNa[1])) return mNa[1].trim();
