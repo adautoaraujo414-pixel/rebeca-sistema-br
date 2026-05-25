@@ -402,7 +402,6 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
       !/apag[ae]u?|exclu[ii]|delet|remov|cancela|desfaz|tira|zera|limpa|[uú]ltim|errei|errou/i.test(msgL)) {
     const _msgLimpa = msg.replace(/[?!]+$/, '').trim();
     // ── Parse de valor: suporta "4 mil", "4k", "4.000,00", "4,000,00" ──
-    const val = _parsarValor(_msgLimpa);
     const descEntrada = _extrairDescricao(msg, 'receita');
     const catEntrada  = _extrairCategoria(msg);
     if (val) {
