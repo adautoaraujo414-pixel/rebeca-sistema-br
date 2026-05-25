@@ -508,9 +508,9 @@ input,select,textarea{font-family:'Inter',sans-serif}
 @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
 
 /* ─── MODAL ─── */
-.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;align-items:flex-end;justify-content:flex-end;overflow:hidden}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1010;align-items:flex-end;justify-content:flex-end;overflow:hidden;touch-action:none}
 .modal-bg.open{display:flex}
-.modal{background:#fff;border-radius:var(--radius-lg);width:100%;max-width:520px;max-height:85dvh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.modal{background:#fff;border-radius:var(--radius-lg);width:100%;max-width:520px;max-height:85dvh;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y;box-shadow:0 20px 60px rgba(0,0,0,.2)}
 .modal-header{padding:20px 24px;border-bottom:1px solid var(--borda);display:flex;align-items:center;justify-content:space-between}
 .modal-titulo{font-weight:800;font-size:1.05em}
 .modal-close{background:none;border:none;font-size:1.3em;color:var(--texto3);cursor:pointer;line-height:1}
@@ -809,7 +809,7 @@ document.querySelectorAll('.nav-item').forEach(item => {
   setAppHeight();
 })();
 </script>
-  <link rel="stylesheet" href="/css/mobile-hardening.css?v=1779681308">
+  <link rel="stylesheet" href="/css/mobile-hardening.css?v=1779681506">
 </head>
 <body>
 
@@ -2372,18 +2372,29 @@ function abrirModalAgendamento(){
   });
   document.getElementById('ag-data').value = new Date().toISOString().split('T')[0];
   document.getElementById('modal-ag').classList.add('open');
+  document.body.style.overflow = 'hidden';
 }
 
-function abrirModalCliente(){ document.getElementById('modal-cli').classList.add('open'); }
-function abrirModalServico(){ document.getElementById('modal-srv').classList.add('open'); }
-function abrirModalProfissional(){ document.getElementById('modal-prf').classList.add('open'); }
+function abrirModalCliente(){ document.getElementById('modal-cli').classList.add('open'); document.body.style.overflow='hidden'; }
+function abrirModalServico(){ document.getElementById('modal-srv').classList.add('open'); document.body.style.overflow='hidden'; }
+function abrirModalProfissional(){ document.getElementById('modal-prf').classList.add('open'); document.body.style.overflow='hidden'; }
 
 function fecharModal(id){
   document.getElementById(id).classList.remove('open');
+  document.body.style.overflow = '';
 }
 
+// Lock body scroll ao abrir modal (iOS fix)
+function _modalOpen(id) {
+  const m = document.getElementById(id);
+  if (m) { m.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+}
+function _modalClose(id) {
+  const m = document.getElementById(id);
+  if (m) { m.style.display = 'none'; document.body.style.overflow = ''; }
+}
 document.querySelectorAll('.modal-bg').forEach(m => {
-  m.addEventListener('click', e => { if(e.target===m) m.classList.remove('open'); });
+  m.addEventListener('click', e => { if(e.target===m) { m.classList.remove('open'); document.body.style.overflow=''; } });
 });
 
 // ─── DRAWER ───
