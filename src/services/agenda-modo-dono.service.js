@@ -357,6 +357,7 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
     const tipoApagar = /entrada|receita|receb/i.test(msgL) ? 'receita'
                      : /gasto|despesa|saida|sa[ií]da/i.test(msgL) ? 'despesa'
                      : null;
+    console.log('[DEBUG-APAGAR] msgL:', msgL, 'adminObjId:', adminObjId);
     const filtro = { adminId: adminObjId };
     if (tipoApagar) filtro.tipo = tipoApagar;
     const ultimo = await FinanceiroAgenda.findOne(filtro).sort({ data: -1 }).lean();
