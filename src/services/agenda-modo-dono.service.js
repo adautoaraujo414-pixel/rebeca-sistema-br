@@ -310,7 +310,7 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
   }
 
   // ── AGENDA DE HOJE ─────────────────────────────────────────────────────────
-  if (/\bagenda\s*(de\s*)?(hoje|amanhã|amanha)\b|\bmostra\s*(minha\s*)?agenda|\bquem\s*(tenho|tem)\s*(hoje|amanhã|amanha)\b|\bhor[aá]rios?\s*(de\s*)?(hoje|amanhã|amanha)\b|\btem\s*algu[eé]m\s*(hoje|amanhã|amanha)\b|\bcomo\s*t[áa]\s*(hoje|amanhã|amanha)\b|\bvou\s*atender\s*quem\b|\bquem\s*[eé]\s*(hoje|amanhã)\b|\bminha\s*agenda\b|\bquantos\s*(clientes\s*)?(tenho|tem)\s*(hoje|amanhã)\b/i.test(msgL)) {
+  if (/\bagenda\s*(de\s*)?(hoje|amanhã|amanha)\b|\bmostra\s*(minha\s*)?agenda|\bquem\s*(tenho|tem)\s*(hoje|amanhã|amanha)\b|\bhor[aá]rios?\s*(de\s*)?(hoje|amanhã|amanha)\b|\btem\s*algu[eé]m\s*(hoje|amanhã|amanha)\b|\bcomo\s*t[áa]\s*(hoje|amanhã|amanha)\b|\bvou\s*atender\s*quem\b|\bquem\s*[eé]\s*(hoje|amanhã)\b|\bminha\s*agenda\s*(de\s*)?(hoje|amanhã|amanha)\b|\bquantos\s*(clientes\s*)?(tenho|tem)\s*(hoje|amanhã)\b/i.test(msgL)) {
     const dia = /amanhã|amanha/i.test(msgL) ? (() => { const d = new Date(); d.setDate(d.getDate()+1); return d; })() : new Date();
     const ini = new Date(dia); ini.setHours(0,0,0,0);
     const fim = new Date(dia); fim.setHours(23,59,59,999);
