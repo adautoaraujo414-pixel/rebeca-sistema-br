@@ -442,7 +442,7 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
 
   // ── APAGAR ÚLTIMO LANÇAMENTO ──────────────────────────────────────────────
   if (/apag[ae]|exclu[ii]|delet|remov|cancela|desfaz|tira|zera|limpa/i.test(msgL) &&
-      /entrada|receit|receb|gasto|despesa|lan[cç]amento|registro|[uú]ltim[ao]|essa|esse|isso|aquela|aquele|aqui|anterior|de agora|acabei|acabou|que fiz|que coloquei|que registrei|que mandei/i.test(msgL)) {
+      /entrada|receit|receb|gasto|despesa|lan[cç]amento|registro|[uú]ltim[ao]|minha|meu|nossa|essa|esse|isso|aquela|aquele|aqui|anterior|de agora|acabei|acabou|que fiz|que coloquei|que registrei|que mandei/i.test(msgL)) {
     const tipoApagar = /entrada|receita|receb/i.test(msgL) ? 'receita'
                      : /gasto|despesa|saida|sa[ií]da/i.test(msgL) ? 'despesa'
                      : null;
