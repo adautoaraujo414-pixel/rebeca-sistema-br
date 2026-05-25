@@ -123,8 +123,9 @@ button, .btn, .nav-item, .menu-item, [role="button"] {
     justify-content: flex-end !important;
     padding: 0 !important;
     height: 100dvh !important;
-    overflow: hidden !important;
-    touch-action: none !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    touch-action: pan-y !important;
   }
   .modal, .modal-box, .modal-content {
     width: 100vw !important;
@@ -149,7 +150,7 @@ button, .btn, .nav-item, .menu-item, [role="button"] {
     -webkit-overflow-scrolling: touch !important;
     overscroll-behavior-y: contain !important;
     touch-action: pan-y !important;
-    padding: 16px 20px calc(24px + env(safe-area-inset-bottom,0px)) !important;
+    padding: 16px 20px calc(24px + env(safe-area-inset-bottom,0px)) 20px !important;
   }
   .modal-footer {
     flex-shrink: 0 !important;
