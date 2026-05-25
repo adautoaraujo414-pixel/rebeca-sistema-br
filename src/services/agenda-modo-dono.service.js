@@ -425,21 +425,7 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
   // ── REGISTRAR GASTO ────────────────────────────────────────────────────────
   if (/\bregistra\b.*\bgasto\b|\bmarca\b.*\bgasto\b|\banota\b.*\bgasto\b|\bmarca\b.*\bdespesa\b|\bregistra\b.*\bdespesa\b|\bpaguei\b|\bcomprei\b|\bsaída\b|\bsaida\b|\bdespesa\b|\bgastei\b|\btive\s*gasto\b|\bsaiu\b|\bdebita\b|\bdescontou\b|\baluguel\b|\bluz\b|\bagua\b|\bcombust[ií]vel\b|\bgasolina\b|\buber\b|\binternet\b|\baliment[ao]\b|\blanche\b|\bcaf[eé]\b|\bmaterial\b|\bequipamento\b/i.test(msgL) && !/\bquanto\b/i.test(msgL)) {
     const _msgLimpaS = msg.replace(/[?!]+$/, '').trim();
-    const val = (() => {
-      const mMil = _msgLimpaS.match(/([\d.,]+)\s*(?:mil|k)\b/i);
-      if (mMil) return parseFloat(mMil[1].replace(/\./g,'').replace(',','.')) * 1000;
-      const mNum = _msgLimpaS.match(/R?\$\s*([\d.,]+)|([\d.,]+)\s*(?:reais?|conto|reai)?/i);
-      const raw = mNum ? (mNum[1]||mNum[2]) : null;
-      if (!raw) return null;
-      const parts = raw.split(',');
-      if (parts.length >= 2) {
-        const cents = parts[parts.length - 1];
-        const whole = parts.slice(0, parts.length - 1).join('').replace(/\./g, '');
-        if (cents.length <= 2) return parseFloat(whole + '.' + cents);
-        return parseFloat(raw.replace(/[.,]/g, ''));
-      }
-      return parseFloat(raw.replace(/\./g, ''));
-    })();
+    const val = _parsarValor(_msgLimpaS);
     const descSaida = _extrairDescricao(msg, 'despesa');
     const catSaida  = _extrairCategoria(msg);
     if (val) {
