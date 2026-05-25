@@ -304,30 +304,71 @@ router.get('/financeiro/resumo', authAgenda, async (req, res) => {
   try {
     const { mes, ano } = req.query;
     const adminId = req.adminId || req.adminAgendaId;
-    const { FinanceiroAgenda, ContaPagarAgenda } = require('../models/AgendaServico');
+    const { FinanceiroAgenda, ContaPagarAgenda, AgendamentoAgenda } = require('../models/AgendaServico');
     const m = parseInt(mes) || new Date().getMonth()+1;
     const a = parseInt(ano) || new Date().getFullYear();
-    const inicio = new Date(a, m-1, 1);
-    const fim    = new Date(a, m, 1);
+    // Usar UTC+0 para início/fim do mês — lançamentos salvos em UTC
+    const inicio = new Date(Date.UTC(a, m-1, 1, 0, 0, 0));
+    const fim    = new Date(Date.UTC(a, m,   1, 0, 0, 0));
 
     const mongoose = require('mongoose');
-    const _oid = mongoose.Types.ObjectId.isValid(adminId) ? new mongoose.Types.ObjectId(adminId) : null;
-    const _filtro = _oid ? { $or: [{ adminId: _oid }, { adminId: String(adminId) }] } : { adminId: adminId };
-    const [entradas, saidas] = await Promise.all([
-      FinanceiroAgenda ? FinanceiroAgenda.aggregate([
-        { $match: { ..._filtro, tipo:'receita', data:{ $gte:inicio, $lt:fim } } },
-        { $group: { _id:null, total:{ $sum:'$valor' } } }
-      ]) : [],
-      FinanceiroAgenda ? FinanceiroAgenda.aggregate([
-        { $match: { ..._filtro, tipo:'despesa', data:{ $gte:inicio, $lt:fim } } },
-        { $group: { _id:null, total:{ $sum:'$valor' } } }
-      ]) : []
-    ]);
+    const _oid = mongoose.Types.ObjectId.isValid(String(adminId)) ? new mongoose.Types.ObjectId(String(adminId)) : null;
+    const _filtroFin = _oid
+      ? { $or: [{ adminId: _oid }, { adminId: String(adminId) }], data: { $gte: inicio, $lt: fim } }
+      : { adminId: adminId, data: { $gte: inicio, $lt: fim } };
 
-    const totalEntradas = entradas[0]?.total || 0;
-    const totalSaidas   = saidas[0]?.total   || 0;
-    res.json({ sucesso:true, mes:m, ano:a, totalEntradas, totalSaidas, saldo: totalEntradas - totalSaidas });
-  } catch(e) { res.status(500).json({ erro: e.message }); }
+    console.log('[DASHBOARD] adminId:', String(adminId), 'periodo:', inicio.toISOString(), '->', fim.toISOString());
+
+    const lancamentos = await FinanceiroAgenda.find(_filtroFin).lean();
+    console.log('[DASHBOARD] lançamentos encontrados:', lancamentos.length);
+
+    const receitasLista = lancamentos.filter(l => l.tipo === 'receita');
+    const despesasLista = lancamentos.filter(l => l.tipo === 'despesa');
+    const totalReceitas = receitasLista.reduce((s, l) => s + (l.valor || 0), 0);
+    const totalDespesas = despesasLista.reduce((s, l) => s + (l.valor || 0), 0);
+
+    // Categorias
+    const catReceitas = {};
+    receitasLista.forEach(l => { const k = l.categoria||'outros'; catReceitas[k]=(catReceitas[k]||0)+l.valor; });
+    const catDespesas = {};
+    despesasLista.forEach(l => { const k = l.categoria||'outros'; catDespesas[k]=(catDespesas[k]||0)+l.valor; });
+
+    // Agendamentos do mês
+    const _filtroAg = _oid
+      ? { $or: [{ adminId: _oid }, { adminId: String(adminId) }], dataHora: { $gte: inicio, $lt: fim } }
+      : { adminId: adminId, dataHora: { $gte: inicio, $lt: fim } };
+    const agMes = await AgendamentoAgenda.countDocuments({ ..._filtroAg, status: { $in: ['confirmado','concluido','pendente'] } });
+
+    // Contas a pagar pendentes
+    let contasPendente = 0;
+    try {
+      const contas = await ContaPagarAgenda.find({
+        ...(_oid ? { $or: [{ adminId: _oid }, { adminId: String(adminId) }] } : { adminId: adminId }),
+        pago: { $ne: true },
+        vencimento: { $gte: inicio, $lt: fim }
+      }).lean();
+      contasPendente = contas.reduce((s, c) => s + (c.valor || 0), 0);
+    } catch(e) { /* ContaPagar pode não existir */ }
+
+    const lucro = totalReceitas - totalDespesas;
+
+    console.log('[DASHBOARD] receitas:', totalReceitas, 'despesas:', totalDespesas, 'lucro:', lucro);
+
+    res.json({
+      sucesso: true, mes: m, ano: a,
+      // Formato compatível com frontend (carregarMetricas + carregarFinanceiro)
+      receitas:     { total: totalReceitas, quantidade: receitasLista.length, categorias: catReceitas },
+      despesas:     { total: totalDespesas, quantidade: despesasLista.length, categorias: catDespesas },
+      contas:       { total: 0, pendente: contasPendente },
+      lucro,
+      agendamentos: { total: agMes, prejuizoPotencial: 0, slotsVazios: 0 },
+      // Alias para retrocompatibilidade
+      totalEntradas: totalReceitas, totalSaidas: totalDespesas, saldo: lucro
+    });
+  } catch(e) {
+    console.error('[DASHBOARD] erro:', e.message);
+    res.status(500).json({ erro: e.message });
+  }
 });
 
 // ===== BLOQUEIOS =====
