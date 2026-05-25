@@ -441,7 +441,7 @@ input,select,textarea{font-family:'Inter',sans-serif}
 
 /* ─── Menu Mobile Gaveta ─── */
 .menu-mobile-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:1001}
-.menu-mobile-drawer{position:fixed;bottom:0;left:0;right:0;background:#fff;border-radius:20px 20px 0 0;z-index:1002;padding:0 0 env(safe-area-inset-bottom,24px);transform:translateY(100%);transition:transform .3s ease;max-height:92dvh;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y}
+.menu-mobile-drawer{position:fixed;bottom:0;left:0;right:0;background:#fff;border-radius:20px 20px 0 0;z-index:1002;padding:0 0 env(safe-area-inset-bottom,24px);transform:translateY(100%);transition:transform .3s ease;max-height:80dvh;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y}
 .menu-mobile-drawer.aberto{transform:translateY(0)}
 .menu-mobile-header{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;font-weight:700;font-size:1em;border-bottom:1px solid var(--borda)}
 .menu-mobile-header button{background:none;border:none;font-size:1.3em;cursor:pointer;color:var(--texto3)}
@@ -763,7 +763,7 @@ input,select,textarea{font-family:'Inter',sans-serif}
 }
 
 </style>
-<link rel="stylesheet" href="/css/mobile-hardening.css?v=1779685161">
+<link rel="stylesheet" href="/css/mobile-hardening.css?v=1779685475">
 <link rel="manifest" href="/agenda-adm-manifest.json">
 <script src="/js/agenda-notif-helper.js">
 // ── SIDEBAR MOBILE DRAWER ──────────────────────────────────────────────────
@@ -4035,60 +4035,5 @@ function _cacheClear(prefix) {
 </nav>
 
 
-<script>
-(function(){
-  var log = [];
-  
-  // Botão fixo visível
-  var btn = document.createElement('button');
-  btn.textContent = '🔍 DEBUG';
-  btn.style.cssText = 'position:fixed;bottom:90px;right:8px;z-index:99999;background:#ff0;color:#000;border:none;padding:8px 10px;border-radius:8px;font-size:12px;font-weight:bold;box-shadow:0 2px 8px rgba(0,0,0,.4)';
-  document.body.appendChild(btn);
-  
-  var box = document.createElement('div');
-  box.style.cssText = 'position:fixed;bottom:140px;right:8px;background:rgba(0,0,0,.9);color:#0f0;font:9px monospace;padding:8px;border-radius:6px;z-index:99999;max-width:240px;max-height:200px;overflow-y:auto;display:none;word-break:break-all';
-  document.body.appendChild(box);
-  
-  btn.addEventListener('click', function(){ box.style.display = box.style.display==='none'?'block':'none'; });
-  
-  function dbg(msg){ log.unshift((new Date).toISOString().substr(11,8)+' '+msg); if(log.length>20) log.pop(); box.innerHTML = log.join('<br>'); }
-  
-  dbg('INIT ok');
-  
-  // body overflow
-  var lastOvf = '?';
-  setInterval(function(){
-    var o = getComputedStyle(document.body).overflow + '/' + document.body.style.overflow;
-    var oh = getComputedStyle(document.documentElement).overflow;
-    var cur = 'body:'+o+' html:'+oh;
-    if(cur !== lastOvf){ dbg(cur); lastOvf=cur; }
-  }, 500);
-  
-  // touchmove — captura se está sendo bloqueado
-  document.addEventListener('touchmove', function(e){
-    dbg('tmove tgt='+e.target.tagName+'.'+e.target.className.split(' ').join('.').substr(0,25));
-  }, {passive:true});
-  
-  // scroll no modal-body
-  document.addEventListener('scroll', function(e){
-    var t = e.target;
-    if(t && t.classList){
-      dbg('scroll '+t.tagName+'.'+t.className.substr(0,20)+' top='+t.scrollTop);
-    }
-  }, true);
-  
-  // qual elemento tem overflow:hidden ou overflow:auto
-  document.addEventListener('touchstart', function(e){
-    var el = e.target;
-    var chain = [];
-    while(el && el !== document.body && chain.length < 5){
-      var s = getComputedStyle(el);
-      chain.push(el.tagName+(el.className?'.'+el.className.split(' ')[0]:'')+':ovf='+s.overflow+',pos='+s.position);
-      el = el.parentElement;
-    }
-    dbg('TS: '+chain[0]);
-  }, {passive:true});
-  
-})();
-</script></body>
+</body>
 </html>
