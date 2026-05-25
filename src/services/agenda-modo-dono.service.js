@@ -968,6 +968,20 @@ Descansa bem! 😊💙`);
     const ini = new Date(dia); ini.setHours(0,0,0,0);
     const fim = new Date(dia); fim.setHours(23,59,59,999);
 
+    // Extrair range principal de horário (ex: "das 8 às 18") — ignora range da pausa
+    const rangePrincipalM = msg.match(/(?<!(?:pausa|almo[çc]o|intervalo)\s{0,10})das?\s*(\d{1,2}h?\d{0,2})\s*(?:às?|as)\s*(\d{1,2}h?\d{0,2})(?!.*(?:pausa|almo[çc]o))/i)
+      || msg.match(/^[^\n]*?das?\s*(\d{1,2}h?\d{0,2})\s*(?:às?|as)\s*(\d{1,2}h?\d{0,2})/i);
+    const hAb = rangePrincipalM ? _parseHora(rangePrincipalM[1]) : null;
+    const hFe = rangePrincipalM ? _parseHora(rangePrincipalM[2]) : null;
+    // Atualizar horário de abertura/fechamento se veio range principal
+    if (hAb && hFe) {
+      const abertura   = String(hAb.h).padStart(2,'0') + ':' + String(hAb.min).padStart(2,'0');
+      const fechamento = String(hFe.h).padStart(2,'0') + ':' + String(hFe.min).padStart(2,'0');
+      await AdminAgenda.findByIdAndUpdate(adminObjId, {
+        'config.horarioAbertura': abertura,
+        'config.horarioFechamento': fechamento
+      });
+    }
     // Se tem pausa/almoço/intervalo no mesmo comando → criar bloqueio da pausa
     if (/pausa|almo[çc]o|intervalo/i.test(msgL)) {
       const rangePausa = msg.match(/(?:pausa|almo[çc]o|intervalo)\s*das?\s*(\d{1,2}h?\d{0,2})\s*(?:às?|as)\s*(\d{1,2}h?\d{0,2})/i);
@@ -979,7 +993,8 @@ Descansa bem! 😊💙`);
           const iniP = new Date(dia); iniP.setHours(h1.h, h1.min, 0, 0);
           const fimP = new Date(dia); fimP.setHours(h2.h, h2.min, 0, 0);
           await BloqueioAgenda.create({ adminId: adminObjId, dataHoraInicio: iniP, dataHoraFim: fimP, motivo: 'Pausa/Almoço via WhatsApp' });
-          await responder(`Feito, ${_chefe()}! 🔓✅\n\nAgenda de ${_fmtData(dia)} liberada!\n🍽️ Pausa bloqueada das ${_fmtHora(iniP)} às ${_fmtHora(fimP)}.\nNinguém agenda nesse intervalo! 😉`);
+          const abMsg = hAb ? ` das *${String(hAb.h).padStart(2,'0')}:${String(hAb.min).padStart(2,'0')}* às *${String(hFe.h).padStart(2,'0')}:${String(hFe.min).padStart(2,'0')}*` : '';
+          await responder(`Feito, ${_chefe()}! 🔓✅\n\nAgenda de ${_fmtData(dia)} aberta${abMsg}!\n🍽️ Pausa bloqueada das ${_fmtHora(iniP)} às ${_fmtHora(fimP)}.\nNinguém agenda nesse intervalo! 😉`);
           return true;
         }
       } else if (horaPausa) {
@@ -988,7 +1003,8 @@ Descansa bem! 😊💙`);
           const iniP = new Date(dia); iniP.setHours(h1.h, h1.min, 0, 0);
           const fimP = new Date(dia); fimP.setHours(h1.h + 1, h1.min, 0, 0);
           await BloqueioAgenda.create({ adminId: adminObjId, dataHoraInicio: iniP, dataHoraFim: fimP, motivo: 'Pausa/Almoço via WhatsApp' });
-          await responder(`Feito, ${_chefe()}! 🔓✅\n\nAgenda de ${_fmtData(dia)} liberada!\n🍽️ Pausa bloqueada das ${_fmtHora(iniP)} às ${_fmtHora(fimP)} (1h).\nNinguém agenda nesse horário! 😉`);
+          const abMsg = hAb ? ` das *${String(hAb.h).padStart(2,'0')}:${String(hAb.min).padStart(2,'0')}* às *${String(hFe.h).padStart(2,'0')}:${String(hFe.min).padStart(2,'0')}*` : '';
+          await responder(`Feito, ${_chefe()}! 🔓✅\n\nAgenda de ${_fmtData(dia)} aberta${abMsg}!\n🍽️ Pausa bloqueada das ${_fmtHora(iniP)} às ${_fmtHora(fimP)} (1h).\nNinguém agenda nesse horário! 😉`);
           return true;
         }
       }
