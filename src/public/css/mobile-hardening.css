@@ -103,10 +103,8 @@ button, .btn, .nav-item, .menu-item, [role="button"] {
     max-width: 100% !important;
     min-height: 0 !important;
     height: auto !important;
-    padding: 14px 14px calc(120px + env(safe-area-inset-bottom, 0px)) !important;
-    overflow-x: hidden !important;
-    overflow-y: visible !important;
-    -webkit-overflow-scrolling: touch !important;
+    overflow: visible !important;
+    padding: 14px 14px calc(140px + env(safe-area-inset-bottom, 0px)) !important;
   }
   .cards-grid, .grid, .kpi-grid, .stats-grid {
     grid-template-columns: 1fr !important; gap: 10px !important;
