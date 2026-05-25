@@ -86,7 +86,7 @@ confirmar_pendente, cancelar_pendente, fora_escopo
 ENTIDADES (extraia apenas as presentes):
 nome_cliente, horario, data, valor, descricao, servico, telefone, hora_inicio, hora_fim
 
-MENSAGEM: "${msg.substring(0, 200)}"
+MENSAGEM: "${msg.substring(0, 600)}"
 
 Retorne APENAS:
 {"intencao":"...","entidades":{},"confianca":0.0,"resposta_direta":null}
@@ -94,8 +94,8 @@ Retorne APENAS:
 resposta_direta: preencha APENAS para saudacao/ajuda/fora_escopo com texto curto (máx 3 linhas). Para todo o resto: null.`;
 
     const r = await _claude.messages.create({
-      model: 'claude-haiku-4-5',
-      max_tokens: 120,
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 300,
       messages: [{ role: 'user', content: prompt }]
     });
 
