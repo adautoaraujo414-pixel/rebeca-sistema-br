@@ -90,15 +90,23 @@ button, .btn, .nav-item, .menu-item, [role="button"] {
     padding-bottom: 0 !important;
   }
   .content, .main-content, .page-content {
-    padding: 14px 14px calc(84px + env(safe-area-inset-bottom, 0px)) !important;
+    padding: 14px 14px calc(120px + env(safe-area-inset-bottom, 0px)) !important;
     width: 100% !important;
     max-width: 100% !important;
+    min-height: 0 !important;
+    height: auto !important;
     overflow-x: hidden !important;
+    overflow-y: visible !important;
   }
   .tela {
-    width: 100% !important; max-width: 100% !important;
-    padding: 14px 14px calc(84px + env(safe-area-inset-bottom, 0px)) !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 0 !important;
+    height: auto !important;
+    padding: 14px 14px calc(120px + env(safe-area-inset-bottom, 0px)) !important;
     overflow-x: hidden !important;
+    overflow-y: visible !important;
+    -webkit-overflow-scrolling: touch !important;
   }
   .cards-grid, .grid, .kpi-grid, .stats-grid {
     grid-template-columns: 1fr !important; gap: 10px !important;
