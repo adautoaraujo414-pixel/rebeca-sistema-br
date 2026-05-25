@@ -89,8 +89,15 @@ router.delete('/:id', authAgendaMiddleware, async (req, res) => {
 
     // Se for lembrete do WhatsApp (id começa com 'wpp_' ou não é ObjectId)
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      // Remover do array config.lembretes — por índice não é seguro, então remove por texto+data
-      return res.json({ sucesso: true, aviso: 'Para cancelar lembretes do WhatsApp, manda "cancela lembrete N" no WhatsApp.' });
+      const admin = await AdminAgenda.findById(adminId).select('config').lean();
+      const lembretes = admin?.config?.lembretes || [];
+      // wpp_N — remover pelo índice
+      const idx = parseInt((id + '').replace('wpp_', ''), 10);
+      if (!isNaN(idx) && lembretes[idx]) {
+        lembretes.splice(idx, 1);
+      }
+      await AdminAgenda.findByIdAndUpdate(adminId, { 'config.lembretes': lembretes });
+      return res.json({ sucesso: true });
     }
 
     await LembreteAgenda.findOneAndDelete({ _id: id, adminId: adminId });
