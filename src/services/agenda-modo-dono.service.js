@@ -85,7 +85,10 @@ function _extrairDescricao(txt, tipo) {
   // 3. Nome próprio (maiúscula) após valor numérico
   const mApos = txt.match(/R?\$?\s*[\d.,]+\s*(?:mil|k|reais?)?\s+([A-ZÁÀÂÃÉÊÍÓÔÕÚÇ][a-záàâãéêíóôõúç]{2,30}(?:\s+[A-ZÁÀÂÃÉÊÍÓÔÕÚÇ][a-záàâãéêíóôõúç]{1,30})?)(?:\s|$)/);
   if (mApos && mApos[1] && !_stopWords.test(mApos[1])) return mApos[1].trim();
-  // 4. Fallback
+  // 4. Nome próprio após saída/entrada/gasto/despesa (ex: "200 reais saída Júnior")
+  const mAposTipo = txt.match(/(?:saída|saida|entrada|gasto|despesa|paguei|comprei)\s+([A-ZÁÀÂÃÉÊÍÓÔÕÚÇ][a-záàâãéêíóôõúç]{2,30}(?:\s+[A-ZÁÀÂÃÉÊÍÓÔÕÚÇ][a-záàâãéêíóôõúç]{1,30})?)(?:\s|$)/i);
+  if (mAposTipo && mAposTipo[1] && !_stopWords.test(mAposTipo[1])) return mAposTipo[1].trim();
+  // 5. Fallback
   return tipo === 'receita' ? 'Entrada via WhatsApp' : 'Gasto via WhatsApp';
 }
 
