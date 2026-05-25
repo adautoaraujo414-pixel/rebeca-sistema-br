@@ -432,25 +432,45 @@ ${totalAgs > 0 ? 'Tá saindo bem! 💪' : 'Ainda sem registros esse mês.'}`);
   }
 
   // ── FATURAMENTO ────────────────────────────────────────────────────────────
-  if (/\bfaturei\b|\bfaturamento\b|\bquanto\s*(entrou|fiz|ganhei|recebi|caiu)\b|\bquanto\s*(fiz|ganhei|recebi)\s*hoje\b|\bcaixa\s*de\s*hoje\b|\bresultado\s*de\s*hoje\b|\bsaldo\s*de\s*hoje\b|\bquanto\s*t[eê]m?\s*hoje\b|\bcomo\s*t[áa]\s*o\s*caixa\b|\bfiz\s*quanto\b|\bganhei\s*quanto\b/i.test(msgL)) {
-    const dia = _parseDia(msgL) || new Date();
-    const ini = new Date(dia); ini.setHours(0,0,0,0);
-    const fim = new Date(dia); fim.setHours(23,59,59,999);
+  if (/\bfaturei\b|\bfaturamento\b|\bquanto\s*(entrou|fiz|ganhei|recebi|caiu)\b|\bquanto\s*(fiz|ganhei|recebi)\s*hoje\b|\bquanto\s*(?:eu\s*)?(gastei|saiu|foram|ganhei|recebi|faturei)\b|\bquanto\s*entrou\s*(hoje|de|essa|esta)\b|\bquanto\s*(eu\s*)?(gastei|saiu)\s*(hoje|essa|esta|semana)?\b|\bcaixa\s*de\s*hoje\b|\bresultado\s*de\s*hoje\b|\bsaldo\s*de\s*hoje\b|\bquanto\s*t[eê]m?\s*hoje\b|\bcomo\s*t[áa]\s*o\s*caixa\b|\bfiz\s*quanto\b|\bganhei\s*quanto\b|\bessa\s*semana\b.*\b(entrou|gastei|saiu|faturei)\b|\b(entrou|gastei|saiu|faturei)\b.*\bessa\s*semana\b/i.test(msgL)) {
+    // Período: semana ou dia — fuso Brasil (UTC-3)
+    const _agoraBR = new Date(Date.now() - 3*60*60*1000);
+    const _isSemana = /essa\s*semana|esta\s*semana|semana\s*(toda|inteira)?/i.test(msgL);
+    const dia = _parseDia(msgL) || _agoraBR;
+    // ini/fim em UTC: dia BR 00:00 = UTC 03:00, dia BR 23:59 = UTC+1 02:59:59
+    const _diaStr = dia.toISOString().slice(0,10); // YYYY-MM-DD no fuso do _parseDia
+    // Para hoje: usar data BR real
+    const _usarBR = !msgL.match(/amanhã|amanha|segunda|terça|quarta|quinta|sexta|sábado|sabado|domingo|\d{1,2}\/\d/i);
+    const _base = _usarBR ? _agoraBR : dia;
+    const _y = _base.getUTCFullYear(), _m = _base.getUTCMonth(), _d = _base.getUTCDate();
+    let iniUTC, fimUTC;
+    if (_isSemana) {
+      // Semana BR: segunda até hoje
+      const _dow = _base.getUTCDay(); // 0=dom,1=seg,...
+      const _diasDesdeSegunda = (_dow === 0) ? 6 : _dow - 1;
+      const _seg = new Date(Date.UTC(_y, _m, _d - _diasDesdeSegunda, 3, 0, 0));
+      iniUTC = _seg;
+      fimUTC = new Date(Date.UTC(_y, _m, _d+1, 2, 59, 59, 999));
+    } else {
+      iniUTC = new Date(Date.UTC(_y, _m, _d, 3, 0, 0));        // 00:00 BR = 03:00 UTC
+      fimUTC = new Date(Date.UTC(_y, _m, _d+1, 2, 59, 59, 999)); // 23:59 BR = 02:59 UTC+1
+    }
 
     const lancamentos = await FinanceiroAgenda.find({
       adminId: adminObjId,
-      data: { $gte: ini, $lte: fim }
+      data: { $gte: iniUTC, $lte: fimUTC }
     }).lean();
     const entradas = lancamentos.filter(l=>l.tipo==='receita').reduce((s,l)=>s+l.valor,0);
     const saidas = lancamentos.filter(l=>l.tipo==='despesa').reduce((s,l)=>s+l.valor,0);
     const agendamentos = await AgendamentoAgenda.countDocuments({
-      adminId: adminObjId, dataHora: { $gte: ini, $lte: fim }, status: { $in: ['confirmado','concluido'] }
+      adminId: adminObjId, dataHora: { $gte: iniUTC, $lte: fimUTC }, status: { $in: ['confirmado','concluido'] }
     });
     const catE = {}; lancamentos.filter(l=>l.tipo==='receita').forEach(l=>{ const c=l.categoria||'outros'; catE[c]=(catE[c]||0)+l.valor; });
     const catS = {}; lancamentos.filter(l=>l.tipo==='despesa').forEach(l=>{ const c=l.categoria||'outros'; catS[c]=(catS[c]||0)+l.valor; });
     const leE = Object.entries(catE).map(([k,v])=>`  ${k}: R$ ${v.toFixed(2)}`).join('\n');
     const leS = Object.entries(catS).map(([k,v])=>`  ${k}: R$ ${v.toFixed(2)}`).join('\n');
-    let rel = `Resumo de ${_fmtData(dia)}:\n`;
+    const _labelPeriodo = _isSemana ? `semana de ${_fmtData(iniUTC)} a ${_fmtData(_agoraBR)}` : _fmtData(_agoraBR);
+    let rel = `Resumo de ${_labelPeriodo}:\n`;
     rel += `\nEntradas: R$ ${entradas.toFixed(2)}${leE ? '\n'+leE : ''}`;
     rel += `\nSaídas: R$ ${saidas.toFixed(2)}${leS ? '\n'+leS : ''}`;
     rel += `\nResultado: R$ ${(entradas-saidas).toFixed(2)} | Atendimentos: ${agendamentos}`;
