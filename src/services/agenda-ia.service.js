@@ -221,6 +221,11 @@ async function _horariosLivres(adminId, data, duracao) {
       dataHora: { $gte: new Date(data+'T00:00:00-03:00'), $lte: new Date(data+'T23:59:59-03:00') },
       status: { $in: ['pendente','confirmado'] }
     }).lean();
+    const bloqueios = await BloqueioAgenda.find({
+      adminId,
+      dataHoraInicio: { $lte: new Date(data+'T23:59:59-03:00') },
+      dataHoraFim: { $gte: new Date(data+'T00:00:00-03:00') }
+    }).lean();
     const ocupados = ags.map(a => new Date(a.dataHora).toTimeString().slice(0,5));
     const slots = [];
     const [hAb,mAb] = ab.split(':').map(Number);
@@ -231,7 +236,10 @@ async function _horariosLivres(adminId, data, duracao) {
       const h = String(Math.floor(min/60)).padStart(2,'0');
       const m = String(min%60).padStart(2,'0');
       const slot = h+':'+m;
-      if (!ocupados.includes(slot)) slots.push(slot);
+      const slotMs = new Date(data+'T'+slot+':00-03:00').getTime();
+      const slotFimMs = slotMs + intervalo * 60000;
+      const bloqueado = bloqueios.some(b => slotMs < new Date(b.dataHoraFim).getTime() && slotFimMs > new Date(b.dataHoraInicio).getTime());
+      if (!ocupados.includes(slot) && !bloqueado) slots.push(slot);
       min += intervalo;
     }
     return slots;
