@@ -261,7 +261,7 @@ input,select,textarea{font-family:'Inter',sans-serif}
   .tabela td,.tabela th{font-size:0.78em!important}
 
   /* ── Modais ── */
-  .modal-bg{overflow-y:auto!important;-webkit-overflow-scrolling:touch!important;touch-action:pan-y!important}
+  .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1010;align-items:flex-end;justify-content:center;overflow-y:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y}
   .modal-body{flex:1 1 auto!important;min-height:0!important;overflow-y:scroll!important;-webkit-overflow-scrolling:touch!important;overscroll-behavior-y:contain!important;touch-action:pan-y!important;padding:16px 20px calc(24px + env(safe-area-inset-bottom,0px)) 20px!important}
   .modal-header{flex-shrink:0!important}
   .modal-footer{flex-shrink:0!important}
@@ -513,7 +513,7 @@ input,select,textarea{font-family:'Inter',sans-serif}
 /* ─── MODAL ─── */
 .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1010;align-items:flex-end;justify-content:flex-end;overflow-y:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y}
 .modal-bg.open{display:flex}
-.modal{background:#fff;border-radius:var(--radius-lg);width:100%;max-width:520px;max-height:85dvh;display:flex;flex-direction:column;overflow:hidden;touch-action:pan-y;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.modal{background:#fff;border-radius:var(--radius-lg);width:100%;max-width:520px;max-height:85dvh;display:flex;flex-direction:column;overflow:hidden;touch-action:pan-y;box-shadow:0 20px 60px rgba(0,0,0,.2);margin-top:auto}
 .modal-header{padding:20px 24px;border-bottom:1px solid var(--borda);display:flex;align-items:center;justify-content:space-between}
 .modal-titulo{font-weight:800;font-size:1.05em}
 .modal-close{background:none;border:none;font-size:1.3em;color:var(--texto3);cursor:pointer;line-height:1}
@@ -766,7 +766,7 @@ input,select,textarea{font-family:'Inter',sans-serif}
 }
 
 </style>
-<link rel="stylesheet" href="/css/mobile-hardening.css?v=1779685901">
+<link rel="stylesheet" href="/css/mobile-hardening.css?v=1779686029">
 <link rel="manifest" href="/agenda-adm-manifest.json">
 <script src="/js/agenda-notif-helper.js">
 // ── SIDEBAR MOBILE DRAWER ──────────────────────────────────────────────────
