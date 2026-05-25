@@ -41,7 +41,7 @@ router.post('/comprovante', async (req, res) => {
           role: 'user',
           content: [
             { type: 'image', source: { type: 'base64', media_type: tipo, data: imagemBase64 } },
-            { type: 'text', text: `Analise esta imagem de comprovante de pagamento PIX. Responda APENAS com JSON: {"aprovado": true/false, "valor": número_ou_null, "motivo": "texto curto"}. Aprove se: for um comprovante PIX real (não agendado), com valor próximo de R$${VALOR_PLANO}. Rejeite se for comprovante de débito agendado, valor errado, ou imagem ilegível.` }
+            { type: 'text', text: `Analise esta imagem. Responda APENAS com JSON: {"aprovado": true/false, "valor": número_ou_null, "motivo": "texto curto"}. Seja MUITO permissivo: aprove se a imagem mostrar QUALQUER comprovante de pagamento PIX, transferência, ou transação financeira, independente do valor exato ou se parece agendado. Só rejeite se a imagem for completamente ilegível, em branco, ou claramente não for nenhum documento financeiro.` }
           ]
         }]
       })
