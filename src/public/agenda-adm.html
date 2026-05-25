@@ -276,7 +276,7 @@ input,select,textarea{font-family:'Inter',sans-serif}
 @media(max-width:480px){
   .metrics{grid-template-columns:1fr!important}
   .page-grid-4{grid-template-columns:1fr!important}
-  .content{padding:12px 12px 90px!important}
+  .content{padding:12px 12px calc(84px + env(safe-area-inset-bottom,0px))!important}
   .acoes-grid{grid-template-columns:1fr 1fr!important}
 }
 
@@ -809,7 +809,7 @@ document.querySelectorAll('.nav-item').forEach(item => {
   setAppHeight();
 })();
 </script>
-  <link rel="stylesheet" href="/css/mobile-hardening.css?v=1779680948">
+  <link rel="stylesheet" href="/css/mobile-hardening.css?v=1779681077">
 </head>
 <body>
 
