@@ -356,7 +356,18 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
     const _msgLimpa = msg.replace(/[?!]+$/, '').trim();
     const _vm = _msgLimpa.match(/R?\$\s*([\d.,]+)|([\d.,]+)\s*(?:reais?|conto|reai)?/i);
     const _rawV = _vm ? (_vm[1]||_vm[2]) : null;
-    const val = _rawV ? parseFloat(_rawV.replace(/\./g,'').replace(',','.')) : null;
+    const val = (() => {
+      if (!_rawV) return null;
+      // Normaliza: 4.000,00 → 4000.00 | 4,000,00 → 4000.00 | 4000 → 4000
+      const parts = _rawV.split(',');
+      if (parts.length >= 2) {
+        const cents = parts[parts.length - 1];
+        const whole = parts.slice(0, parts.length - 1).join('').replace(/\./g, '');
+        if (cents.length <= 2) return parseFloat(whole + '.' + cents);
+        return parseFloat(_rawV.replace(/[.,]/g, ''));
+      }
+      return parseFloat(_rawV.replace(/\./g, ''));
+    })();
     const descEntrada = _extrairDescricao(msg, 'receita');
     const catEntrada  = _extrairCategoria(msg);
     if (val) {
@@ -381,7 +392,17 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
     const _msgLimpaS = msg.replace(/[?!]+$/, '').trim();
     const _vms = _msgLimpaS.match(/R?\$\s*([\d.,]+)|([\d.,]+)\s*(?:reais?|conto|reai)?/i);
     const _rawVs = _vms ? (_vms[1]||_vms[2]) : null;
-    const val = _rawVs ? parseFloat(_rawVs.replace(/\./g,'').replace(',','.')) : null;
+    const val = (() => {
+      if (!_rawVs) return null;
+      const parts = _rawVs.split(',');
+      if (parts.length >= 2) {
+        const cents = parts[parts.length - 1];
+        const whole = parts.slice(0, parts.length - 1).join('').replace(/\./g, '');
+        if (cents.length <= 2) return parseFloat(whole + '.' + cents);
+        return parseFloat(_rawVs.replace(/[.,]/g, ''));
+      }
+      return parseFloat(_rawVs.replace(/\./g, ''));
+    })();
     const descSaida = _extrairDescricao(msg, 'despesa');
     const catSaida  = _extrairCategoria(msg);
     if (val) {
@@ -403,7 +424,7 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
 
   // ── APAGAR ÚLTIMO LANÇAMENTO ──────────────────────────────────────────────
   if (/apag[ae]|exclu|delet|remov|cancela|desfaz/i.test(msgL) &&
-      /entrada|gasto|despesa|lan[cç]amento|registro|[uú]ltim[ao]/i.test(msgL)) {
+      /entrada|gasto|despesa|lan[cç]amento|registro|[uú]ltim[ao]|essa|esse|isso|aquela|aquele/i.test(msgL)) {
     const tipoApagar = /entrada|receita|receb/i.test(msgL) ? 'receita'
                      : /gasto|despesa|saida|sa[ií]da/i.test(msgL) ? 'despesa'
                      : null;
