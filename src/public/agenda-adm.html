@@ -122,7 +122,7 @@ input,select,textarea{font-family:'Inter',sans-serif}
 .sidebar-plano-btn:hover{background:var(--cor2);box-shadow:0 2px 8px rgba(249,115,22,.3)}
 
 /* ─── MAIN ─── */
-.main{margin-left:var(--sidebar);min-height:100svh;display:flex;flex-direction:column;width:calc(100% - var(--sidebar));overflow-x:clip;min-width:0}
+.main{margin-left:var(--sidebar);min-height:100svh;display:flex;flex-direction:column;width:calc(100% - var(--sidebar));overflow-x:hidden;min-width:0}
 
 /* ─── HEADER DESKTOP ─── */
 .header{height:56px;background:rgba(255,255,255,.95);backdrop-filter:blur(8px);border-bottom:1px solid var(--borda2);display:flex;align-items:center;padding:0 20px;gap:12px;position:sticky;top:0;z-index:90}
@@ -817,7 +817,7 @@ document.querySelectorAll('.nav-item').forEach(item => {
   setAppHeight();
 })();
 </script>
-  <link rel="stylesheet" href="/css/mobile-hardening.css?v=1779681781">
+  <link rel="stylesheet" href="/css/mobile-hardening.css?v=1779681871">
 </head>
 <body>
 
@@ -2070,6 +2070,7 @@ async function carregarDesempenho(){
 let telaAtual = 'dashboard';
 function irPara(tela){
   telaAtual = tela;
+  document.body.style.overflow = '';
   document.querySelectorAll('.tela').forEach(t=>t.classList.remove('ativa'));
   const el = document.getElementById('tela-'+tela);
   if(el) el.classList.add('ativa');
