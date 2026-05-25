@@ -701,7 +701,7 @@ ${totalAgs > 0 ? 'Tá saindo bem! 💪' : 'Ainda sem registros esse mês.'}`);
 
     // ── CASO C: hora + dia → criar direto ───────────────────────────────────
     if (hora && !hora.relativo && dia) {
-      const _brMs  = dia.getTime() - (3*60*60*1000);
+      const _brMs  = dia.getTime();
       const _brD   = new Date(_brMs);
       const dataLembrete = new Date(Date.UTC(_brD.getUTCFullYear(), _brD.getUTCMonth(), _brD.getUTCDate(), hora.h+3, hora.min, 0));
       const dataAviso = new Date(dataLembrete.getTime() - 15*60000);
