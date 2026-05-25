@@ -352,8 +352,8 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
   }
 
   // ── APAGAR ÚLTIMO LANÇAMENTO ──────────────────────────────────────────────
-  if (/apag[ae]|exclu[ii]|delet|remov|cancela|desfaz|tira|zera|limpa/i.test(msgL) &&
-      /entrada|receit|receb|gasto|despesa|lan[cç]amento|registro|[uú]ltim[ao]|minha|meu|nossa|essa|esse|isso|aquela|aquele|aqui|anterior|de agora|acabei|acabou|que fiz|que coloquei|que registrei|que mandei/i.test(msgL)) {
+  if (/apag[ae]|exclu[ii]|delet|remov|cancela|desfaz|tira|zera|limpa|volta|desfaz|n[aã]o era|errei|errou|foi erro|coloquei errado|lancei errado|botei errado|coloca errado|mandei errado/i.test(msgL) &&
+      /entrada|receit|receb|gasto|despesa|lan[cç]amento|registro|[uú]ltim[ao]|minha|meu|nossa|essa|esse|isso|aquela|aquele|aqui|anterior|de agora|acabei|acabou|que fiz|que coloquei|que registrei|que mandei|que botei|que lancei|que anotei|que marquei/i.test(msgL)) {
     const tipoApagar = /entrada|receita|receb/i.test(msgL) ? 'receita'
                      : /gasto|despesa|saida|sa[ií]da/i.test(msgL) ? 'despesa'
                      : null;
