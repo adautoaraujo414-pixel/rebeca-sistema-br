@@ -261,7 +261,10 @@ input,select,textarea{font-family:'Inter',sans-serif}
   .tabela td,.tabela th{font-size:0.78em!important}
 
   /* ── Modais ── */
-  .modal-/* body-modal-fix removido — era CSS de modal-body aplicado no body */
+  .modal-bg{overflow-y:auto!important;-webkit-overflow-scrolling:touch!important;touch-action:pan-y!important}
+  .modal-body{flex:1 1 auto!important;min-height:0!important;overflow-y:scroll!important;-webkit-overflow-scrolling:touch!important;overscroll-behavior-y:contain!important;touch-action:pan-y!important;padding:16px 20px calc(24px + env(safe-area-inset-bottom,0px)) 20px!important}
+  .modal-header{flex-shrink:0!important}
+  .modal-footer{flex-shrink:0!important}
 
   /* ── Safe area iOS ── */
   .bottom-nav{
@@ -763,7 +766,7 @@ input,select,textarea{font-family:'Inter',sans-serif}
 }
 
 </style>
-<link rel="stylesheet" href="/css/mobile-hardening.css?v=1779685549">
+<link rel="stylesheet" href="/css/mobile-hardening.css?v=1779685700">
 <link rel="manifest" href="/agenda-adm-manifest.json">
 <script src="/js/agenda-notif-helper.js">
 // ── SIDEBAR MOBILE DRAWER ──────────────────────────────────────────────────
