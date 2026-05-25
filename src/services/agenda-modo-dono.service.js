@@ -250,7 +250,7 @@ function _parseHora(txt) {
 }
 
 function _fmtData(d) {
-  return d.toLocaleDateString('pt-BR', { weekday:'long', day:'2-digit', month:'2-digit' });
+  return d.toLocaleDateString('pt-BR', { weekday:'long', day:'2-digit', month:'2-digit', timeZone:'America/Sao_Paulo' });
 }
 
 function _fmtHora(d) {
