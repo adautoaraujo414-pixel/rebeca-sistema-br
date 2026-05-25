@@ -763,7 +763,7 @@ input,select,textarea{font-family:'Inter',sans-serif}
 }
 
 </style>
-<link rel="stylesheet" href="/css/mobile-hardening.css?v=1779684974">
+<link rel="stylesheet" href="/css/mobile-hardening.css?v=1779685161">
 <link rel="manifest" href="/agenda-adm-manifest.json">
 <script src="/js/agenda-notif-helper.js">
 // ── SIDEBAR MOBILE DRAWER ──────────────────────────────────────────────────
@@ -4090,34 +4090,5 @@ function _cacheClear(prefix) {
   }, {passive:true});
   
 })();
-</script>
-<script>
-// FIX SCROLL MODAL iOS Safari
-(function(){
-  document.addEventListener('touchstart', function(e){
-    var bg = e.target.closest('.modal-bg.open');
-    if(!bg) return;
-    var mb = bg.querySelector('.modal-body');
-    if(!mb) return;
-    bg._ty = e.touches[0].clientY;
-    bg._mb = mb;
-  }, {passive:true});
-
-  document.addEventListener('touchmove', function(e){
-    var bg = e.target.closest('.modal-bg.open');
-    if(!bg || !bg._mb) return;
-    var mb = bg._mb;
-    var dy = bg._ty - e.touches[0].clientY;
-    bg._ty = e.touches[0].clientY;
-    var atTop = mb.scrollTop <= 0;
-    var atBot = mb.scrollTop + mb.clientHeight >= mb.scrollHeight - 1;
-    if((dy < 0 && atTop) || (dy > 0 && atBot)){
-      e.preventDefault(); return;
-    }
-    mb.scrollTop += dy;
-    e.preventDefault();
-  }, {passive:false});
-})();
-</script>
-</body>
+</script></body>
 </html>
