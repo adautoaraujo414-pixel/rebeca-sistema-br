@@ -1,4 +1,4 @@
-const CACHE = "agenda-v1779687846";
+const CACHE = "agenda-v1779715659";
 self.addEventListener("install", function(e) {
   self.skipWaiting();
 });
@@ -18,4 +18,8 @@ self.addEventListener("fetch", function(e) {
   }).catch(function() {
     return caches.match(e.request);
   }));
+});
+
+self.addEventListener('message', function(e) {
+  if (e.data && e.data.type === 'SKIP_WAITING') self.skipWaiting();
 });

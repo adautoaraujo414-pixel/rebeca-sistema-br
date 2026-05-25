@@ -706,6 +706,17 @@ function logout(){USER=null;limparSessao();localStorage.removeItem('beca_ob');ir
 if('serviceWorker' in navigator) {
   window.addEventListener('load', function() {
     navigator.serviceWorker.register('/beca-sw.js').then(function(reg) {
+      reg.addEventListener('updatefound', function() {
+        var novo = reg.installing;
+        novo.addEventListener('statechange', function() {
+          if (novo.state === 'installed' && navigator.serviceWorker.controller) {
+            novo.postMessage({ type: 'SKIP_WAITING' });
+          }
+        });
+      });
+      navigator.serviceWorker.addEventListener('controllerchange', function() {
+        window.location.reload();
+      });
       console.log('[SW] registrado', reg.scope);
 
       // Verificar atualizacao a cada 60 segundos
