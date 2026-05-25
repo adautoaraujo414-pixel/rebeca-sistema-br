@@ -1867,7 +1867,12 @@ async function rodarLembretesClientes() {
         const inst = await InstanciaWhatsapp.findOne({
           adminId, status: { $in: ['conectado','open','connected'] }
         }).lean();
-        if (!inst) continue;
+        // Fallback Meta API se não tiver Evolution conectado
+        const instParaEnvio = inst || {
+          _enviarVia: 'meta',
+          apiUrl: 'meta',
+          nomeInstancia: 'meta_oficial'
+        };
 
         // ── Lembrete 1 dia antes ─────────────────────────────────────────
         const amanha_ini = new Date(agora); amanha_ini.setDate(agora.getDate()+1); amanha_ini.setHours(0,0,0,0);
@@ -1882,7 +1887,7 @@ async function rodarLembretesClientes() {
 
         for (const ag of ags1dia) {
           if (!ag.telefoneCliente) continue;
-          await notificarCliente(inst, ag.telefoneCliente, 'lembrete_1dia', {
+          await notificarCliente(instParaEnvio, ag.telefoneCliente, 'lembrete_1dia', {
             nome: ag.nomeCliente, dataHora: ag.dataHora, servico: ag.nomeServico
           });
           await AgendamentoAgenda.findByIdAndUpdate(ag._id, { lembrete1diaEnviado: true });
@@ -1902,7 +1907,7 @@ async function rodarLembretesClientes() {
 
         for (const ag of ags2h) {
           if (!ag.telefoneCliente) continue;
-          await notificarCliente(inst, ag.telefoneCliente, 'lembrete_2h', {
+          await notificarCliente(instParaEnvio, ag.telefoneCliente, 'lembrete_2h', {
             nome: ag.nomeCliente, dataHora: ag.dataHora, servico: ag.nomeServico
           });
           await AgendamentoAgenda.findByIdAndUpdate(ag._id, { lembrete2hEnviado: true });
