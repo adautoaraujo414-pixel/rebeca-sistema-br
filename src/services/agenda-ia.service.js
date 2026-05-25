@@ -403,9 +403,15 @@ const AgendaIAService = {
     if (conv.etapa === 'awaiting_cancel_confirm') {
       if (intencao === 'confirm') {
         try {
-          await AgendamentoAgenda.findByIdAndUpdate(conv.dados._cancelarId, { status: 'cancelado' });
+          const agCancelado = await AgendamentoAgenda.findByIdAndUpdate(conv.dados._cancelarId, { status: 'cancelado' }, { new: true });
           conv.etapa = 'idle'; conv.dados._cancelarId = null;
           _log(adminId, 'agendamento_cancelado', { telefone });
+          // Notificar dono do cancelamento
+          if (agCancelado) {
+            const hora = new Date(agCancelado.dataHora).toTimeString().slice(0,5);
+            const dataFmt = new Date(agCancelado.dataHora).toLocaleDateString('pt-BR');
+            await _notificarADM(adminId, 'Agendamento cancelado', agCancelado.nomeCliente + ' cancelou ' + agCancelado.nomeServico + ' em ' + dataFmt + ' às ' + hora);
+          }
           return MSG.cancelado(linkAgenda);
         } catch(_) { return MSG.erroTecnico(linkAgenda); }
       } else {
