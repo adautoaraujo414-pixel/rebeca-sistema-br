@@ -31,7 +31,7 @@ router.get('/', authAgendaMiddleware, async (req, res) => {
     // 2. Lembretes criados pelo WhatsApp (admin.config.lembretes)
     const admin = await AdminAgenda.findById(adminId).select('config').lean();
     const doWhatsApp = (admin?.config?.lembretes || [])
-      .filter(l => !l.enviado && l.dataEvento)
+      .filter(l => !l.enviado)
       .map((l, i) => ({
         _id: l._id || ('wpp_' + i),
         adminId: adminId,
