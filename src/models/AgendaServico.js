@@ -32,6 +32,13 @@ const adminAgendaSchema = new mongoose.Schema({
     diasRetornoInativo: { type: Number, default: 30 },
     corPrimaria: { type: String, default: '#f97316' },
     corSecundaria: { type: String, default: '#1f2937' },
+    lembretes: { type: [{
+      texto:      { type: String },
+      dataEvento: { type: Date },
+      dataAviso:  { type: Date },
+      enviado:    { type: Boolean, default: false },
+      criadoEm:  { type: Date, default: Date.now }
+    }], default: [] },
   },
   modoWhatsappDono: {
     ativo: { type: Boolean, default: false },
