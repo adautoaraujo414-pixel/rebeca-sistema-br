@@ -303,10 +303,12 @@ input,select,textarea{font-family:'Inter',sans-serif}
   .modal-body{
     flex:1 1 auto!important;
     min-height:0!important;
+    max-height:none!important;
     overflow-y:auto!important;
     -webkit-overflow-scrolling:touch!important;
     overscroll-behavior:contain!important;
-    padding:16px 20px calc(env(safe-area-inset-bottom,0px) + 90px) 20px!important;
+    touch-action:pan-y!important;
+    padding:16px 20px calc(120px + env(safe-area-inset-bottom,0px)) 20px!important;
   }
   .modal-footer{flex-shrink:0!important;padding:12px 20px!important}
     /* ── Safe area iOS ── */
@@ -810,7 +812,7 @@ input,select,textarea{font-family:'Inter',sans-serif}
 }
 
 </style>
-<link rel="stylesheet" href="/css/mobile-hardening.css?v=1779687518">
+<link rel="stylesheet" href="/css/mobile-hardening.css?v=1779687550">
 <link rel="manifest" href="/agenda-adm-manifest.json">
 <script src="/js/agenda-notif-helper.js">
 // ── SIDEBAR MOBILE DRAWER ──────────────────────────────────────────────────
