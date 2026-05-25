@@ -279,13 +279,10 @@ input,select,textarea{font-family:'Inter',sans-serif}
     display:none;
     align-items:flex-start!important;
     justify-content:center!important;
-    padding-top:max(24px,env(safe-area-inset-top,24px))!important;
-    padding-bottom:calc(120px + env(safe-area-inset-bottom,0px))!important;
-    padding-left:12px!important;
-    padding-right:12px!important;
-    background:rgba(0,0,0,.5)!important;
     overflow-y:auto!important;
     -webkit-overflow-scrolling:touch!important;
+    padding:max(24px,env(safe-area-inset-top,24px)) 12px calc(120px + env(safe-area-inset-bottom,0px)) 12px!important;
+    background:rgba(0,0,0,.5)!important;
   }
   .modal-bg.open{display:flex!important}
   .modal,.modal-box,.modal-content{
@@ -297,18 +294,15 @@ input,select,textarea{font-family:'Inter',sans-serif}
     flex-direction:column!important;
     overflow:visible!important;
     border-radius:20px!important;
-    margin:0 0 auto 0!important;
+    margin:0 auto!important;
+    flex-shrink:0!important;
+    box-shadow:0 20px 60px rgba(0,0,0,.2)!important;
   }
   .modal-header{flex-shrink:0!important}
   .modal-body{
-    flex:1 1 auto!important;
-    min-height:0!important;
+    overflow:visible!important;
     max-height:none!important;
-    overflow-y:auto!important;
-    -webkit-overflow-scrolling:touch!important;
-    overscroll-behavior:contain!important;
-    touch-action:pan-y!important;
-    padding:16px 20px calc(120px + env(safe-area-inset-bottom,0px)) 20px!important;
+    padding-bottom:calc(140px + env(safe-area-inset-bottom,0px))!important;
   }
   .modal-footer{flex-shrink:0!important;padding:12px 20px!important}
     /* ── Safe area iOS ── */
@@ -556,10 +550,9 @@ input,select,textarea{font-family:'Inter',sans-serif}
 @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
 
 /* ─── MODAL ─── */
-.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1010;align-items:flex-start;justify-content:center;overflow-y:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y;padding:24px 12px 120px}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1010;align-items:flex-start;justify-content:center;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:max(24px,env(safe-area-inset-top,24px)) 12px calc(120px + env(safe-area-inset-bottom,0px)) 12px}
 .modal-bg.open{display:flex}
-.modal-bg.open{display:flex}
-.modal{background:#fff;border-radius:var(--radius-lg);width:100%;max-width:520px;max-height:calc(100% - 32px);display:flex;flex-direction:column;overflow:hidden;touch-action:pan-y;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.modal{background:#fff;border-radius:var(--radius-lg);width:100%;max-width:520px;height:auto;max-height:none;display:flex;flex-direction:column;overflow:visible;touch-action:pan-y;box-shadow:0 20px 60px rgba(0,0,0,.2)}
 .modal-header{padding:20px 24px;border-bottom:1px solid var(--borda);display:flex;align-items:center;justify-content:space-between}
 .modal-titulo{font-weight:800;font-size:1.05em}
 .modal-close{background:none;border:none;font-size:1.3em;color:var(--texto3);cursor:pointer;line-height:1}
@@ -812,7 +805,7 @@ input,select,textarea{font-family:'Inter',sans-serif}
 }
 
 </style>
-<link rel="stylesheet" href="/css/mobile-hardening.css?v=1779687550">
+<link rel="stylesheet" href="/css/mobile-hardening.css?v=1779687846">
 <link rel="manifest" href="/agenda-adm-manifest.json">
 <script src="/js/agenda-notif-helper.js">
 // ── SIDEBAR MOBILE DRAWER ──────────────────────────────────────────────────
