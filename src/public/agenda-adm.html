@@ -763,7 +763,7 @@ input,select,textarea{font-family:'Inter',sans-serif}
 }
 
 </style>
-<link rel="stylesheet" href="/css/mobile-hardening.css?v=1779683511">
+<link rel="stylesheet" href="/css/mobile-hardening.css?v=1779683823">
 <link rel="manifest" href="/agenda-adm-manifest.json">
 <script src="/js/agenda-notif-helper.js">
 // ── SIDEBAR MOBILE DRAWER ──────────────────────────────────────────────────
@@ -4024,49 +4024,61 @@ function _cacheClear(prefix) {
   </div>
 </nav>
 
+
 <script>
-// DEBUG MOBILE SCROLL
 (function(){
   var log = [];
+  
+  // Botão fixo visível
+  var btn = document.createElement('button');
+  btn.textContent = '🔍 DEBUG';
+  btn.style.cssText = 'position:fixed;bottom:90px;right:8px;z-index:99999;background:#ff0;color:#000;border:none;padding:8px 10px;border-radius:8px;font-size:12px;font-weight:bold;box-shadow:0 2px 8px rgba(0,0,0,.4)';
+  document.body.appendChild(btn);
+  
   var box = document.createElement('div');
-  box.id = 'scroll-debug';
-  box.style.cssText = 'position:fixed;bottom:80px;right:8px;background:rgba(0,0,0,.85);color:#0f0;font:10px monospace;padding:6px;border-radius:6px;z-index:9999;max-width:220px;max-height:160px;overflow-y:auto;font-size:9px;display:none';
+  box.style.cssText = 'position:fixed;bottom:140px;right:8px;background:rgba(0,0,0,.9);color:#0f0;font:9px monospace;padding:8px;border-radius:6px;z-index:99999;max-width:240px;max-height:200px;overflow-y:auto;display:none;word-break:break-all';
   document.body.appendChild(box);
-
-  // Mostrar debug com triplo toque
-  var taps = 0;
-  document.addEventListener('touchend', function(){ taps++; setTimeout(function(){ taps=0; },500); if(taps>=3){ box.style.display = box.style.display==='none'?'block':'none'; } });
-
-  function dbg(msg){ log.unshift(msg); if(log.length>15) log.pop(); box.innerHTML = log.join('<br>'); }
-
+  
+  btn.addEventListener('click', function(){ box.style.display = box.style.display==='none'?'block':'none'; });
+  
+  function dbg(msg){ log.unshift((new Date).toISOString().substr(11,8)+' '+msg); if(log.length>20) log.pop(); box.innerHTML = log.join('<br>'); }
+  
+  dbg('INIT ok');
+  
   // body overflow
-  var lastOvf = '';
+  var lastOvf = '?';
   setInterval(function(){
-    var o = document.body.style.overflow;
-    if(o !== lastOvf){ dbg('body.overflow: "'+o+'"'); lastOvf=o; }
-  }, 300);
-
-  // modal aberto
-  document.addEventListener('click', function(e){
-    var m = e.target.closest('.modal-bg');
-    if(m) dbg('modal click: '+m.id+' open='+m.classList.contains('open'));
-  });
-
-  // scroll events
-  document.addEventListener('scroll', function(){ dbg('doc scroll: '+window.scrollY); }, {passive:true});
+    var o = getComputedStyle(document.body).overflow + '/' + document.body.style.overflow;
+    var oh = getComputedStyle(document.documentElement).overflow;
+    var cur = 'body:'+o+' html:'+oh;
+    if(cur !== lastOvf){ dbg(cur); lastOvf=cur; }
+  }, 500);
+  
+  // touchmove — captura se está sendo bloqueado
   document.addEventListener('touchmove', function(e){
-    dbg('touchmove target='+e.target.className.substring(0,20)+' cancelled='+e.defaultPrevented);
+    dbg('tmove tgt='+e.target.tagName+'.'+e.target.className.split(' ').join('.').substr(0,25));
   }, {passive:true});
-
-  // modal-body scroll
+  
+  // scroll no modal-body
   document.addEventListener('scroll', function(e){
-    if(e.target && e.target.classList && e.target.classList.contains('modal-body')){
-      dbg('modal-body scroll: '+e.target.scrollTop);
+    var t = e.target;
+    if(t && t.classList){
+      dbg('scroll '+t.tagName+'.'+t.className.substr(0,20)+' top='+t.scrollTop);
     }
   }, true);
-
-  dbg('debug ativo — 3 toques para mostrar/ocultar');
-  console.log('[DEBUG] scroll debug ativo');
+  
+  // qual elemento tem overflow:hidden ou overflow:auto
+  document.addEventListener('touchstart', function(e){
+    var el = e.target;
+    var chain = [];
+    while(el && el !== document.body && chain.length < 5){
+      var s = getComputedStyle(el);
+      chain.push(el.tagName+(el.className?'.'+el.className.split(' ')[0]:'')+':ovf='+s.overflow+',pos='+s.position);
+      el = el.parentElement;
+    }
+    dbg('TS: '+chain[0]);
+  }, {passive:true});
+  
 })();
 </script>
 </body>
