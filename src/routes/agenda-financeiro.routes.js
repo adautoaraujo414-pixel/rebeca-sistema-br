@@ -13,7 +13,7 @@ async function authAgenda(req, res, next) {
     const token = (req.headers.authorization || '').replace('Bearer ', '').trim() || req.query.token || '';
     if (!token) return res.status(401).json({ erro: 'Token obrigatório' });
     const { AdminAgenda: AdminAgendaAuth } = require('../models/AgendaServico');
-    const admin = await AdminAgendaAuth.findOne({ token, ativo: true });
+    const admin = await AdminAgendaAuth.findOne({ token });
     if (!admin) return res.status(401).json({ erro: 'Token inválido' });
     req.adminId = admin._id;
     req.admin   = admin;
