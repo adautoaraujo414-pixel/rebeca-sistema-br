@@ -1,4 +1,4 @@
-const CACHE = "agenda-v1779683027";
+const CACHE = "agenda-v1779683312";
 self.addEventListener("install", function(e) {
   self.skipWaiting();
 });
