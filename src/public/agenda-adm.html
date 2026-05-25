@@ -535,7 +535,7 @@ input,select,textarea{font-family:'Inter',sans-serif}
 /* ─── DRAWER MOBILE ─── */
 .drawer-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:400}
 .drawer-bg.open{display:block}
-.drawer{position:fixed;left:0;top:0;width:var(--sidebar);height:100vh;background:#fff;z-index:401;display:none;flex-direction:column;transform:translateX(-110%);transition:transform .25s ease}
+.drawer{position:fixed;left:0;top:0;width:var(--sidebar);height:100vh;background:#fff;z-index:401;display:none;flex-direction:column;transform:translateX(-110%);transition:transform .25s ease;overflow-y:auto;-webkit-overflow-scrolling:touch}
 .drawer.open{display:flex!important;transform:translateX(0)}
 
 /* ─── BOTTOM NAV MOBILE ─── */
@@ -763,7 +763,7 @@ input,select,textarea{font-family:'Inter',sans-serif}
 }
 
 </style>
-<link rel="stylesheet" href="/css/mobile-hardening.css?v=1779684117">
+<link rel="stylesheet" href="/css/mobile-hardening.css?v=1779684347">
 <link rel="manifest" href="/agenda-adm-manifest.json">
 <script src="/js/agenda-notif-helper.js">
 // ── SIDEBAR MOBILE DRAWER ──────────────────────────────────────────────────
