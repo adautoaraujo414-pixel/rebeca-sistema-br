@@ -373,7 +373,7 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
   // ── REGISTRAR ENTRADA FINANCEIRA ───────────────────────────────────────────
   if (/\bregistra\b.*\bentrada\b|\bmarca\b.*\bentrada\b|\banota\b.*\bentrada\b|\bcoloca\b.*\bentrada\b|\breceb[ei]\b|\bentrada\b|\bganhei\b|\bcaiu\b|\bentr[ou]\b|\breceit[ao]\b|\bpix\b.*\d|\bR?\$.*\bpix\b|\btransfer[eê]ncia\b|\bdinheiro\b.*\bentrou\b|\bfiz\b.*\d|\bvendi\b|\brecebi\b|\bbateu\b|\bcadastrou\b|\bveio\b.*\bdinheiro\b|\bdinheiro\b.*\bveio\b|\bcorreu\b.*\bbem\b|\bfechei\b.*\bvenda\b|\bvenda\b.*\bfechada\b/i.test(msgL) && !/\bquanto\b/i.test(msgL) &&
       !/\bpaguei\b|\bgastei\b|\bsaida\b|\bsa[ií]da\b|\bdespesa\b|\bcombust[ií]vel\b|\bgasolina\b|\baluguel\b|\binternet\b|\bluz\b|\bagua\b|\buber\b/i.test(msgL) &&
-      !/apag[ae]|exclu[ii]|delet|remov|cancela|desfaz|tira|zera|limpa/i.test(msgL)) {
+      !/apag[ae]u?|exclu[ii]|delet|remov|cancela|desfaz|tira|zera|limpa|[uú]ltim|errei|errou/i.test(msgL)) {
     const _msgLimpa = msg.replace(/[?!]+$/, '').trim();
     // ── Parse de valor: suporta "4 mil", "4k", "4.000,00", "4,000,00" ──
     const _parsarValor = (txt) => {
