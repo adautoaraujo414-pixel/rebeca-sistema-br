@@ -83,7 +83,7 @@ function _extrairDescricao(txt, tipo) {
   const mNa = txt.match(new RegExp('(?:^|\\s)(?:na|no|da|do)\\s+' + _nomeComposto.source + '(?:\\s|$)'));
   if (mNa && mNa[1] && !_stopWords.test(mNa[1])) return mNa[1].trim();
   // 3. Nome próprio (maiúscula) após valor numérico
-  const mApos = txt.match(/R?\$?\s*[\d.,]+\s*(?:reais?)?\s+([A-ZÁÀÂÃÉÊÍÓÔÕÚÇ][a-záàâãéêíóôõúç]{2,30}(?:\s+[A-ZÁÀÂÃÉÊÍÓÔÕÚÇ][a-záàâãéêíóôõúç]{1,30})?)(?:\s|$)/);
+  const mApos = txt.match(/R?\$?\s*[\d.,]+\s*(?:mil|k|reais?)?\s+([A-ZÁÀÂÃÉÊÍÓÔÕÚÇ][a-záàâãéêíóôõúç]{2,30}(?:\s+[A-ZÁÀÂÃÉÊÍÓÔÕÚÇ][a-záàâãéêíóôõúç]{1,30})?)(?:\s|$)/);
   if (mApos && mApos[1] && !_stopWords.test(mApos[1])) return mApos[1].trim();
   // 4. Fallback
   return tipo === 'receita' ? 'Entrada via WhatsApp' : 'Gasto via WhatsApp';
