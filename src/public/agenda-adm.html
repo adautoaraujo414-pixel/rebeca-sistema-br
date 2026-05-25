@@ -435,8 +435,8 @@ input,select,textarea{font-family:'Inter',sans-serif}
 
 
 /* ─── Menu Mobile Gaveta ─── */
-.menu-mobile-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200}
-.menu-mobile-drawer{position:fixed;bottom:0;left:0;right:0;background:#fff;border-radius:20px 20px 0 0;z-index:201;padding:0 0 24px;transform:translateY(100%);transition:transform .3s ease;max-height:80vh;overflow-y:auto}
+.menu-mobile-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:1001}
+.menu-mobile-drawer{position:fixed;bottom:0;left:0;right:0;background:#fff;border-radius:20px 20px 0 0;z-index:1002;padding:0 0 env(safe-area-inset-bottom,24px);transform:translateY(100%);transition:transform .3s ease;max-height:92dvh;overflow-y:auto}
 .menu-mobile-drawer.aberto{transform:translateY(0)}
 .menu-mobile-header{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;font-weight:700;font-size:1em;border-bottom:1px solid var(--borda)}
 .menu-mobile-header button{background:none;border:none;font-size:1.3em;cursor:pointer;color:var(--texto3)}
@@ -804,7 +804,7 @@ document.querySelectorAll('.nav-item').forEach(item => {
   setAppHeight();
 })();
 </script>
-  <link rel="stylesheet" href="/css/mobile-hardening.css?v=1779680376">
+  <link rel="stylesheet" href="/css/mobile-hardening.css?v=1779680663">
 </head>
 <body>
 
@@ -1556,6 +1556,9 @@ document.querySelectorAll('.nav-item').forEach(item => {
   <button class="menu-mobile-item" onclick="irPara('clientes');fecharMenuMobile()">👤 Clientes</button>
   <button class="menu-mobile-item" onclick="irPara('financeiro');fecharMenuMobile()">💰 Financeiro</button>
   <button class="menu-mobile-item" onclick="irPara('whatsapp');fecharMenuMobile()">💬 WhatsApp</button>
+  <button class="menu-mobile-item" onclick="irPara('lembretes');fecharMenuMobile()">🔔 Lembretes</button>
+  <button class="menu-mobile-item" onclick="irPara('crm');fecharMenuMobile()">📋 CRM</button>
+  <button class="menu-mobile-item" onclick="irPara('relatorios');fecharMenuMobile()">📊 Relatórios</button>
   <button class="menu-mobile-item" onclick="irPara('configuracoes');fecharMenuMobile()">⚙️ Configurações</button>
 </div>
 
