@@ -2919,6 +2919,15 @@ async function deletarLembrete(id) {
 
 // carregar lembretes ao entrar na tela
 const _irParaOriginal = typeof irPara === 'function' ? irPara : null;
+(function() {
+  const _irParaBase = irPara;
+  irPara = function(tela) {
+    _irParaBase(tela);
+    if (tela === 'lembretes') {
+      setTimeout(carregarLembretes, 100);
+    }
+  };
+})();
 
 async function wppConectarNumero() {
   const input = document.getElementById('wpp-numero-input');
