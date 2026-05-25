@@ -48,12 +48,22 @@ router.post('/comprovante', async (req, res) => {
     });
 
     const iaData = await respIA.json();
-    const iaText = iaData?.content?.[0]?.text || '{}';
+
+    // Verificar erro da API
+    if (iaData.error || !iaData.content || !iaData.content[0]) {
+      console.error('[comprovante] Erro API Claude:', JSON.stringify(iaData));
+      return res.json({ sucesso: false, msg: 'Erro técnico ao analisar o comprovante. Tente novamente em alguns instantes ou entre em contato com o suporte.' });
+    }
+
+    const iaText = iaData.content[0].text || '{}';
     let analise = { aprovado: false, motivo: 'Não foi possível analisar' };
-    try { analise = JSON.parse(iaText.replace(/```json|```/g, '').trim()); } catch(e) {}
+    try { analise = JSON.parse(iaText.replace(/```json|```/g, '').trim()); } catch(e) {
+      console.error('[comprovante] JSON inválido da IA:', iaText);
+      return res.json({ sucesso: false, msg: 'Erro técnico ao processar resposta da IA. Tente novamente.' });
+    }
 
     if (!analise.aprovado) {
-      return res.json({ sucesso: false, msg: analise.motivo || 'Comprovante não reconhecido. Certifique-se de enviar o comprovante do PIX já pago (não agendado).' });
+      return res.json({ sucesso: false, msg: analise.motivo || 'Comprovante não reconhecido. Certifique-se de enviar o comprovante do PIX já pago (não agendado) com valor de R$147,00.' });
     }
 
     // Gerar senha aleatória e liberar acesso por 30 dias
