@@ -3991,7 +3991,7 @@ carregarFinanceiro = async function() {
       navigator.serviceWorker.register('/sw-rebeca.js')
         .then(r => {
           console.log('[SW] Agenda registrado:', r.scope);
-          // ── AUTO-UPDATE: recarrega quando nova versão disponível ──
+          // ── AUTO-UPDATE: recarrega UMA VEZ quando nova versão disponível ──
           r.addEventListener('updatefound', function() {
             var novo = r.installing;
             novo.addEventListener('statechange', function() {
@@ -4001,7 +4001,10 @@ carregarFinanceiro = async function() {
             });
           });
           navigator.serviceWorker.addEventListener('controllerchange', function() {
-            window.location.reload();
+            if (!sessionStorage.getItem('sw_reloaded')) {
+              sessionStorage.setItem('sw_reloaded', '1');
+              window.location.reload();
+            }
           });
           // Escutar mensagens do SW (notif click, sync)
           navigator.serviceWorker.addEventListener('message', e => {
