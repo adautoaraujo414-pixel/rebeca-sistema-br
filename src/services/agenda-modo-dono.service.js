@@ -345,7 +345,7 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
         const fim = new Date(dia); fim.setHours(h2.h, h2.min, 0, 0);
         await BloqueioAgenda.create({
           adminId: adminObjId,
-          inicio: ini, fim,
+          dataHoraInicio: ini, dataHoraFim: fim,
           motivo: 'Bloqueio via WhatsApp'
         });
         await responder(`🔒 ${_confirmacao()}\n\nBloqueio feito em ${_fmtData(dia)}, das ${_fmtHora(ini)} às ${_fmtHora(fim)}. Ninguém agenda nesse horário não! 😉`);
@@ -951,7 +951,7 @@ Agendado via WhatsApp. 💙`;
     const ini = new Date(dia); ini.setHours(6,0,0,0);
     const fim = new Date(dia); fim.setHours(22,0,0,0);
     await BloqueioAgenda.create({
-      adminId: adminObjId, inicio: ini, fim,
+      adminId: adminObjId, dataHoraInicio: ini, dataHoraFim: fim,
       motivo: 'Dia fechado via WhatsApp'
     });
     await responder(`Feito, ${_chefe()}! 🔒
@@ -978,7 +978,7 @@ Descansa bem! 😊💙`);
         if (h1 && h2) {
           const iniP = new Date(dia); iniP.setHours(h1.h, h1.min, 0, 0);
           const fimP = new Date(dia); fimP.setHours(h2.h, h2.min, 0, 0);
-          await BloqueioAgenda.create({ adminId: adminObjId, inicio: iniP, fim: fimP, motivo: 'Pausa/Almoço via WhatsApp' });
+          await BloqueioAgenda.create({ adminId: adminObjId, dataHoraInicio: iniP, dataHoraFim: fimP, motivo: 'Pausa/Almoço via WhatsApp' });
           await responder(`Feito, ${_chefe()}! 🔓✅\n\nAgenda de ${_fmtData(dia)} liberada!\n🍽️ Pausa bloqueada das ${_fmtHora(iniP)} às ${_fmtHora(fimP)}.\nNinguém agenda nesse intervalo! 😉`);
           return true;
         }
@@ -987,7 +987,7 @@ Descansa bem! 😊💙`);
         if (h1) {
           const iniP = new Date(dia); iniP.setHours(h1.h, h1.min, 0, 0);
           const fimP = new Date(dia); fimP.setHours(h1.h + 1, h1.min, 0, 0);
-          await BloqueioAgenda.create({ adminId: adminObjId, inicio: iniP, fim: fimP, motivo: 'Pausa/Almoço via WhatsApp' });
+          await BloqueioAgenda.create({ adminId: adminObjId, dataHoraInicio: iniP, dataHoraFim: fimP, motivo: 'Pausa/Almoço via WhatsApp' });
           await responder(`Feito, ${_chefe()}! 🔓✅\n\nAgenda de ${_fmtData(dia)} liberada!\n🍽️ Pausa bloqueada das ${_fmtHora(iniP)} às ${_fmtHora(fimP)} (1h).\nNinguém agenda nesse horário! 😉`);
           return true;
         }
