@@ -218,7 +218,7 @@ async function _horariosLivres(adminId, data, duracao) {
     const intervalo = Number(duracao) || Number(cfg.intervaloAgendamento) || 60;
     const ags = await AgendamentoAgenda.find({
       adminId,
-      dataHora: { $gte: new Date(data+'T00:00:00'), $lte: new Date(data+'T23:59:59') },
+      dataHora: { $gte: new Date(data+'T00:00:00-03:00'), $lte: new Date(data+'T23:59:59-03:00') },
       status: { $in: ['pendente','confirmado'] }
     }).lean();
     const ocupados = ags.map(a => new Date(a.dataHora).toTimeString().slice(0,5));

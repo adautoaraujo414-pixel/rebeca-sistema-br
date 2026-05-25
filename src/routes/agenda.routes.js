@@ -249,6 +249,26 @@ router.post('/espaco/:adminId/agendar', async (req, res) => {
       cliente = await ClienteAgenda.create({ adminId: req.params.adminId, nome: nomeCliente, telefone: telCliente });
     }
 
+    // Verificar double-booking
+    const dataHoraObj = new Date(dataHora);
+    const durMin = servico?.duracao || admin.config?.intervaloAgendamento || 30;
+    const dataHoraFim = new Date(dataHoraObj.getTime() + durMin * 60000);
+    const conflito = await AgendamentoAgenda.findOne({
+      adminId: req.params.adminId,
+      status: { $nin: ['cancelado'] },
+      dataHora: { $lt: dataHoraFim },
+      $expr: { $gt: [{ $add: ['$dataHora', { $multiply: [{ $ifNull: ['$duracao', durMin] }, 60000] }] }, dataHoraObj] }
+    });
+    if (conflito) return res.status(409).json({ erro: 'Horário já ocupado. Escolha outro horário.' });
+
+    // Verificar se está bloqueado
+    const bloqueado = await BloqueioAgenda.findOne({
+      adminId: req.params.adminId,
+      dataHoraInicio: { $lt: dataHoraFim },
+      dataHoraFim: { $gt: dataHoraObj }
+    });
+    if (bloqueado) return res.status(409).json({ erro: 'Horário bloqueado. Escolha outro horário.' });
+
     const ag = await AgendamentoAgenda.create({
       adminId: req.params.adminId,
       clienteId: cliente._id,
