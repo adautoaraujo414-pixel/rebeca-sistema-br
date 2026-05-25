@@ -1955,8 +1955,10 @@ async function rodarLembretesClientes() {
         };
 
         // ── Lembrete 1 dia antes ─────────────────────────────────────────
-        const amanha_ini = new Date(agora); amanha_ini.setDate(agora.getDate()+1); amanha_ini.setHours(0,0,0,0);
-        const amanha_fim = new Date(amanha_ini); amanha_fim.setHours(23,59,59,999);
+        // Ajuste fuso Brasil -03:00
+        const _br = (d, h, min=0) => { const x = new Date(d); x.setUTCHours(h+3, min, 0, 0); return x; };
+        const amanha_ini = _br(new Date(agora.getTime() + 24*60*60*1000), 0);
+        const amanha_fim = _br(new Date(agora.getTime() + 24*60*60*1000), 23, 59);
 
         const ags1dia = await AgendamentoAgenda.find({
           adminId,
