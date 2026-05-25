@@ -416,8 +416,9 @@ function toast(msg, tipo){
 
 function api(path, opts){
   opts = opts || {};
+  const _tk = localStorage.getItem('agenda_token') || TOKEN;
   return fetch(BASE+path, Object.assign({}, opts, {
-    headers: Object.assign({'Authorization':'Bearer '+TOKEN,'Content-Type':'application/json'}, opts.headers||{})
+    headers: Object.assign({'Authorization':'Bearer '+_tk,'Content-Type':'application/json'}, opts.headers||{})
   })).then(function(r){
     if(r.status===401){ toast('Sessao expirada. Faca login novamente.','erro'); setTimeout(function(){ location.href='/agenda-adm.html'; },1500); return null; }
     return r.json();

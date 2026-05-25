@@ -347,7 +347,7 @@ Responda APENAS o resumo, sem explicações.`;
     try {
       const res = await _api('/api/ia/resumo-operacional', {
         method: 'POST',
-        body: JSON.stringify({ metricas, alertas: analise.alertas, produto, contexto: 'resumo-operacional' }),
+        body: JSON.stringify({ metricas, alertas: analise.alertas, produto, contexto: 'resumo-operacional', adminId: _adminId() }),
       });
 
       const resumo = res.resposta || res.texto || res.content || '';
