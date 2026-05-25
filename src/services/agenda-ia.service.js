@@ -3,7 +3,7 @@
 // Plano R$97: redireciona para agenda online
 // Plano R$147: atendimento automatico completo
 const Anthropic = require('@anthropic-ai/sdk');
-const { AdminAgenda, ServicoAgenda, ProfissionalAgenda, AgendamentoAgenda, ClienteAgenda } = require('../models/AgendaServico');
+const { AdminAgenda, ServicoAgenda, ProfissionalAgenda, AgendamentoAgenda, ClienteAgenda, BloqueioAgenda } = require('../models/AgendaServico');
 const { getAgendaPlanFeatures } = require('../utils/agenda-plan-features');
 const ModoDono = require('./agenda-modo-dono.service');
 
@@ -256,6 +256,29 @@ async function _criarAgendamento(adminId, dados) { // v2-fixed
     if (!hora) { _log(adminId, 'erro_criar_agendamento', { erro: 'hora ausente' }); return null; }
     if (!nomeCliente) { _log(adminId, 'erro_criar_agendamento', { erro: 'nomeCliente ausente' }); return null; }
 
+    // Verificar double-booking e bloqueios antes de criar
+    const dataHoraObj = new Date(data+'T'+hora+':00-03:00');
+    const durMin = 30;
+    const dataHoraFim = new Date(dataHoraObj.getTime() + durMin * 60000);
+    const conflito = await AgendamentoAgenda.findOne({
+      adminId,
+      status: { $nin: ['cancelado'] },
+      dataHora: { $lt: dataHoraFim },
+      $expr: { $gt: [{ $add: ['$dataHora', { $multiply: [{ $ifNull: ['$duracao', durMin] }, 60000] }] }, dataHoraObj] }
+    });
+    if (conflito) {
+      _log(adminId, 'erro_criar_agendamento', { erro: 'double-booking', data, hora });
+      return { erro: 'horario_ocupado' };
+    }
+    const bloqueado = await BloqueioAgenda.findOne({
+      adminId,
+      dataHoraInicio: { $lt: dataHoraFim },
+      dataHoraFim: { $gt: dataHoraObj }
+    });
+    if (bloqueado) {
+      _log(adminId, 'erro_criar_agendamento', { erro: 'horario bloqueado', data, hora });
+      return { erro: 'horario_bloqueado' };
+    }
     const ag = await AgendamentoAgenda.create({
       adminId,
       nomeCliente,
@@ -264,7 +287,7 @@ async function _criarAgendamento(adminId, dados) { // v2-fixed
       nomeServico: servicoNome,
       profissionalId: profissionalId || null,
       nomeProfissional: profissionalNome || '',
-      dataHora: new Date(data+'T'+hora+':00'),
+      dataHora: dataHoraObj,
       status: 'pendente',
       origem: 'whatsapp'
     });
