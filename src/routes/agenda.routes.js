@@ -175,7 +175,7 @@ router.get('/espaco/:adminId/horarios', async (req, res) => {
     const intervalo = cfg.intervaloAgendamento || 30;
     const diasFunc = cfg.diasFuncionamento || [1,2,3,4,5,6];
 
-    const dataObj = new Date(data + 'T00:00:00');
+    const dataObj = new Date(data + 'T00:00:00-03:00');
     const diaSemana = dataObj.getDay();
     if (!diasFunc.includes(diaSemana)) return res.json({ sucesso: true, horarios: [], mensagem: 'Fechado neste dia' });
 
@@ -185,8 +185,8 @@ router.get('/espaco/:adminId/horarios', async (req, res) => {
     const fimMin = hFe * 60 + mFe;
 
     // Buscar agendamentos do dia
-    const inicioDia = new Date(data + 'T00:00:00');
-    const fimDia = new Date(data + 'T23:59:59');
+    const inicioDia = new Date(data + 'T00:00:00-03:00');
+    const fimDia = new Date(data + 'T23:59:59-03:00');
     const agendados = await AgendamentoAgenda.find({
       adminId: req.params.adminId,
       dataHora: { $gte: inicioDia, $lte: fimDia },
@@ -204,7 +204,7 @@ router.get('/espaco/:adminId/horarios', async (req, res) => {
     for (let min = inicioMin; min + duracao <= fimMin; min += intervalo) {
       const h = Math.floor(min / 60).toString().padStart(2,'0');
       const m = (min % 60).toString().padStart(2,'0');
-      const slotInicio = new Date(`${data}T${h}:${m}:00`);
+      const slotInicio = new Date(`${data}T${h}:${m}:00-03:00`);
       const slotFim = new Date(slotInicio.getTime() + duracao * 60000);
 
       // Verificar antecedência mínima
@@ -277,7 +277,7 @@ router.post('/espaco/:adminId/agendar', async (req, res) => {
 
     // Notificar cliente via WhatsApp
     if (telCliente) {
-      const { InstanciaWhatsapp } = require('../models/AgendaServico');
+      const { InstanciaWhatsapp } = require('../models/index');
       InstanciaWhatsapp.findOne({ adminId: req.params.adminId, adminTipo: 'agenda' }).lean()
         .then(inst => {
           if (!inst || inst.status !== 'conectado') return;
@@ -299,10 +299,10 @@ router.get('/agendamentos', authAgenda, async (req, res) => {
     const { data, dataInicio, status } = req.query;
     const filtro = { adminId: req.adminAgendaId };
     if (data) {
-      filtro.dataHora = { $gte: new Date(data + 'T00:00:00'), $lte: new Date(data + 'T23:59:59') };
+      filtro.dataHora = { $gte: new Date(data + 'T00:00:00-03:00'), $lte: new Date(data + 'T23:59:59-03:00') };
     } else if (dataInicio) {
-      const inicio = new Date(dataInicio + 'T00:00:00');
-      const fim = new Date(dataInicio + 'T00:00:00');
+      const inicio = new Date(dataInicio + 'T00:00:00-03:00');
+      const fim = new Date(dataInicio + 'T23:59:59-03:00');
       fim.setDate(fim.getDate() + 7);
       filtro.dataHora = { $gte: inicio, $lte: fim };
     }
