@@ -159,6 +159,42 @@ async function processarComando(telefone, texto, msgId) {
     });
     if (admin) console.log('[MetaWA] Admin encontrado:', admin.email);
 
+    // ── INTERCEPTAR PEDIDOS COZINHA ──────────────────────────────
+    if (admin) {
+      try {
+        const { ClienteCozinha, ImpressoraCozinha } = require('../models/cozinha.model');
+        const { imprimirPedido } = require('../services/cozinha-impressora.service');
+        const telNorm = telefone.replace(/\D/g, '');
+        const cliente = await ClienteCozinha.findOne({
+          adminId: String(admin._id),
+          ativo: true,
+          $or: [
+            { telefone: telNorm },
+            { telefone: telefone },
+            { telefone: '55'+telNorm },
+          ]
+        });
+        if (cliente) {
+          console.log('[Cozinha] Pedido de', cliente.nome, '→ impressora');
+          const imp = await ImpressoraCozinha.findOne({ adminId: String(admin._id), ativo: true });
+          if (imp) {
+            await imprimirPedido({
+              ip: imp.ip, porta: imp.porta,
+              texto, mesa: cliente.mesa,
+              telefone: cliente.nome || telefone
+            });
+            console.log('[Cozinha] Impresso com sucesso!');
+          } else {
+            console.warn('[Cozinha] Impressora não configurada para', admin.email);
+          }
+          return; // NÃO responde ao cliente
+        }
+      } catch(eCoz) {
+        console.error('[Cozinha] Erro ao imprimir:', eCoz.message);
+      }
+    }
+    // ────────────────────────────────────────────────────────────
+
     if (!admin) {
       // Prospect desconhecido — acionar modo vendedora
       try {

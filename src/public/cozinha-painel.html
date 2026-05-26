@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rebeca Cozinha — Painel</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',sans-serif;background:#0f0f0f;color:#eee;min-height:100vh;padding:20px}
+  h1{color:#25d366;font-size:1.4rem;margin-bottom:4px}
+  .sub{color:#888;font-size:.85rem;margin-bottom:24px}
+  .card{background:#1a1a1a;border-radius:12px;padding:20px;margin-bottom:20px;border:1px solid #2a2a2a}
+  .card h2{font-size:1rem;color:#aaa;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+  label{display:block;font-size:.8rem;color:#888;margin-bottom:4px;margin-top:12px}
+  input,select{width:100%;padding:10px;background:#111;border:1px solid #333;border-radius:8px;color:#eee;font-size:.9rem}
+  input:focus,select:focus{outline:none;border-color:#25d366}
+  .btn{display:inline-block;padding:10px 20px;border:none;border-radius:8px;cursor:pointer;font-size:.9rem;font-weight:600;transition:.2s}
+  .btn-green{background:#25d366;color:#000}
+  .btn-green:hover{background:#1ebe57}
+  .btn-red{background:#e74c3c;color:#fff;margin-left:8px}
+  .btn-red:hover{background:#c0392b}
+  .btn-gray{background:#333;color:#eee}
+  .btn-gray:hover{background:#444}
+  .btn-sm{padding:6px 12px;font-size:.8rem}
+  .status{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.75rem;font-weight:600}
+  .ok{background:#1a3a1a;color:#25d366}
+  .err{background:#3a1a1a;color:#e74c3c}
+  table{width:100%;border-collapse:collapse;font-size:.85rem}
+  th{text-align:left;padding:8px;border-bottom:1px solid #2a2a2a;color:#888}
+  td{padding:8px;border-bottom:1px solid #1a1a1a}
+  .toast{position:fixed;bottom:20px;right:20px;background:#25d366;color:#000;padding:12px 20px;border-radius:8px;font-weight:600;display:none;z-index:999}
+  .row{display:flex;gap:10px;flex-wrap:wrap}
+  .row input{flex:1;min-width:120px}
+  #statusImp{margin-top:10px;font-size:.85rem}
+</style>
+</head>
+<body>
+<h1>🍽️ Rebeca Cozinha</h1>
+<p class="sub">Painel de configuração — pedidos via WhatsApp → impressora térmica</p>
+
+<div class="card">
+  <h2>⚙️ Configuração</h2>
+  <label>Admin (restaurante)</label>
+  <select id="selAdmin"><option value="">Carregando...</option></select>
+  <label>Token de acesso</label>
+  <input id="token" type="password" value="cozinha-rebeca-2026" placeholder="Token">
+</div>
+
+<div class="card">
+  <h2>🖨️ Impressora Térmica</h2>
+  <div class="row">
+    <div style="flex:2">
+      <label>IP da Impressora (rede local)</label>
+      <input id="impIp" placeholder="ex: 192.168.1.100">
+    </div>
+    <div style="flex:1">
+      <label>Porta</label>
+      <input id="impPorta" placeholder="9100" value="9100">
+    </div>
+    <div style="flex:2">
+      <label>Nome</label>
+      <input id="impNome" placeholder="Cozinha Principal">
+    </div>
+  </div>
+  <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
+    <button class="btn btn-green" onclick="salvarImpressora()">💾 Salvar Impressora</button>
+    <button class="btn btn-gray" onclick="testarImpressora()">🖨️ Testar Impressão</button>
+  </div>
+  <div id="statusImp"></div>
+</div>
+
+<div class="card">
+  <h2>📱 Clientes Cadastrados</h2>
+  <div class="row" style="margin-bottom:14px">
+    <input id="novoTel" placeholder="Telefone (ex: 5534984039955)">
+    <input id="novoNome" placeholder="Nome do cliente">
+    <input id="novoMesa" placeholder="Mesa (opcional)">
+    <button class="btn btn-green btn-sm" onclick="addCliente()">+ Adicionar</button>
+  </div>
+  <table>
+    <thead><tr><th>Telefone</th><th>Nome</th><th>Mesa</th><th>Ação</th></tr></thead>
+    <tbody id="tbClientes"><tr><td colspan="4" style="color:#555">Carregando...</td></tr></tbody>
+  </table>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const BASE = '/api/cozinha';
+let adminId = '';
+
+function tok() { return document.getElementById('token').value.trim(); }
+function headers() { return { 'Content-Type':'application/json', 'x-cozinha-token': tok() }; }
+
+function toast(msg, ok=true) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.background = ok ? '#25d366' : '#e74c3c';
+  t.style.color = ok ? '#000' : '#fff';
+  t.style.display = 'block';
+  setTimeout(() => t.style.display='none', 3000);
+}
+
+async function carregarAdmins() {
+  try {
+    const r = await fetch(BASE+'/admins?token='+tok());
+    const d = await r.json();
+    const sel = document.getElementById('selAdmin');
+    sel.innerHTML = d.admins.map(a => `<option value="${a._id}">${a.nomeNegocio || a.email}</option>`).join('');
+    adminId = sel.value;
+    sel.onchange = () => { adminId = sel.value; carregarImpressora(); carregarClientes(); };
+    carregarImpressora();
+    carregarClientes();
+  } catch(e) { toast('Erro ao carregar admins', false); }
+}
+
+async function carregarImpressora() {
+  if (!adminId) return;
+  try {
+    const r = await fetch(BASE+'/impressora/'+adminId+'?token='+tok());
+    const d = await r.json();
+    if (d.impressora) {
+      document.getElementById('impIp').value    = d.impressora.ip || '';
+      document.getElementById('impPorta').value = d.impressora.porta || 9100;
+      document.getElementById('impNome').value  = d.impressora.nome || '';
+      document.getElementById('statusImp').innerHTML = '<span class="status ok">✓ Configurada</span>';
+    } else {
+      document.getElementById('statusImp').innerHTML = '<span class="status err">Não configurada</span>';
+    }
+  } catch(e) {}
+}
+
+async function salvarImpressora() {
+  if (!adminId) return toast('Selecione um admin', false);
+  const ip    = document.getElementById('impIp').value.trim();
+  const porta = document.getElementById('impPorta').value || 9100;
+  const nome  = document.getElementById('impNome').value.trim() || 'Cozinha';
+  if (!ip) return toast('IP obrigatório', false);
+  try {
+    const r = await fetch(BASE+'/impressora/'+adminId, { method:'POST', headers:headers(), body:JSON.stringify({ip,porta:Number(porta),nome}) });
+    const d = await r.json();
+    if (d.sucesso) { toast('Impressora salva!'); carregarImpressora(); }
+    else toast(d.erro||'Erro', false);
+  } catch(e) { toast('Erro de conexão', false); }
+}
+
+async function testarImpressora() {
+  if (!adminId) return toast('Selecione um admin', false);
+  try {
+    document.getElementById('statusImp').innerHTML = '<span class="status">🖨️ Imprimindo teste...</span>';
+    const r = await fetch(BASE+'/impressora/'+adminId+'/testar', { method:'POST', headers:headers() });
+    const d = await r.json();
+    if (d.sucesso) toast('✅ Teste impresso com sucesso!');
+    else toast('❌ '+d.erro, false);
+    carregarImpressora();
+  } catch(e) { toast('Erro de conexão', false); }
+}
+
+async function carregarClientes() {
+  if (!adminId) return;
+  try {
+    const r = await fetch(BASE+'/clientes/'+adminId+'?token='+tok());
+    const d = await r.json();
+    const tb = document.getElementById('tbClientes');
+    if (!d.clientes?.length) {
+      tb.innerHTML = '<tr><td colspan="4" style="color:#555;padding:16px">Nenhum cliente cadastrado ainda.</td></tr>';
+      return;
+    }
+    tb.innerHTML = d.clientes.map(c => `
+      <tr>
+        <td>${c.telefone}</td>
+        <td>${c.nome||'-'}</td>
+        <td>${c.mesa||'-'}</td>
+        <td><button class="btn btn-red btn-sm" onclick="removerCliente('${c._id}')">🗑️</button></td>
+      </tr>`).join('');
+  } catch(e) {}
+}
+
+async function addCliente() {
+  const tel  = document.getElementById('novoTel').value.trim();
+  const nome = document.getElementById('novoNome').value.trim();
+  const mesa = document.getElementById('novoMesa').value.trim();
+  if (!tel) return toast('Telefone obrigatório', false);
+  if (!adminId) return toast('Selecione um admin', false);
+  try {
+    const r = await fetch(BASE+'/clientes/'+adminId, { method:'POST', headers:headers(), body:JSON.stringify({telefone:tel,nome,mesa}) });
+    const d = await r.json();
+    if (d.sucesso) {
+      toast('Cliente adicionado!');
+      document.getElementById('novoTel').value = '';
+      document.getElementById('novoNome').value = '';
+      document.getElementById('novoMesa').value = '';
+      carregarClientes();
+    } else toast(d.erro||'Erro', false);
+  } catch(e) { toast('Erro de conexão', false); }
+}
+
+async function removerCliente(id) {
+  if (!confirm('Remover cliente?')) return;
+  try {
+    await fetch(BASE+'/clientes/'+adminId+'/'+id, { method:'DELETE', headers:headers() });
+    toast('Removido!');
+    carregarClientes();
+  } catch(e) { toast('Erro', false); }
+}
+
+carregarAdmins();
+</script>
+</body>
+</html>

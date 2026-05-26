@@ -313,6 +313,7 @@ app.use('/api/whatsapp',     whatsappRoutes);
 app.use('/api/rebeca',       rebecaRoutes);
 app.use('/api/rebeca-oficial', require('./routes/rebeca-oficial-whatsapp.routes'));
 app.use('/api/meta-whatsapp',  require('./routes/meta-whatsapp.routes'));
+app.use('/api/cozinha',        require('./routes/cozinha.routes'));
 
 // ─────────────────────────────────────────────
 // 16. PÁGINAS — Rebeca Corrida
