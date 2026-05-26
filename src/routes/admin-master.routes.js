@@ -474,4 +474,40 @@ router.put('/clientes-landing/:id/bloquear-cliente', async (req, res) => {
 });
 
 
+
+// ── AGENDA: clientes pendentes de pagamento ──────────────────────
+const { AdminAgenda } = require('../models/AgendaServico');
+
+router.get('/agenda/pendentes', async (req, res) => {
+  try {
+    const pendentes = await AdminAgenda.find({
+      $or: [
+        { statusPagamento: { $in: ['pendente', 'aguardando_comprovante'] } },
+        { ativo: false }
+      ]
+    }).sort({ createdAt: -1 }).select('nome email telefone whatsapp plano statusPagamento ativo createdAt trialExpira');
+    res.json(pendentes);
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+router.put('/agenda/pendentes/:id/liberar', async (req, res) => {
+  try {
+    await AdminAgenda.findByIdAndUpdate(req.params.id, {
+      statusPagamento: 'pago',
+      ativo: true
+    });
+    res.json({ sucesso: true });
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+router.put('/agenda/pendentes/:id/bloquear', async (req, res) => {
+  try {
+    await AdminAgenda.findByIdAndUpdate(req.params.id, {
+      statusPagamento: 'expirado',
+      ativo: false
+    });
+    res.json({ sucesso: true });
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
 module.exports = router;

@@ -276,6 +276,22 @@
                 <div class="page" id="page-pendentes">
                     <h2 style="margin-bottom:20px;">⏳ Admins Pendentes de Aprovação</h2>
                     <div class="panel"><table><thead><tr><th>Nome</th><th>Email</th><th>Empresa</th><th>Telefone</th><th>Data Cadastro</th><th>Ações</th></tr></thead><tbody id="tabelaPendentes"></tbody></table></div>
+                    <h2 style="margin-top:40px;margin-bottom:16px;">💳 Clientes Agenda — Pendentes de Pagamento</h2>
+                    <div style="display:flex;gap:10px;margin-bottom:14px">
+                        <button onclick="carregarAgendaPendentes()" style="padding:8px 16px;background:#f59e0b;color:#000;border:none;border-radius:8px;cursor:pointer;font-weight:700">🔄 Atualizar</button>
+                        <span id="statAgendaPendentes" style="display:flex;align-items:center;font-size:.85rem;color:#888"></span>
+                    </div>
+                    <div class="panel" style="overflow-x:auto">
+                        <table>
+                            <thead><tr>
+                                <th>Nome</th><th>Email</th><th>WhatsApp</th><th>Plano</th>
+                                <th>Status</th><th>Cadastro</th><th>Ações</th>
+                            </tr></thead>
+                            <tbody id="tabelaAgendaPendentes">
+                                <tr><td colspan="7" style="text-align:center;color:#888;padding:30px">Clique em Atualizar</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
                 
                 <div class="page" id="page-beca-estuda">
@@ -807,6 +823,44 @@ function fazerLogout() { location.reload(); }
                 </tr>`).join('');
                 document.getElementById('tabelaPendentes').innerHTML = html || '<tr><td colspan="6" style="text-align:center;color:#888">Nenhum admin pendente</td></tr>';
             } catch (e) { console.error(e); }
+        }
+
+        async function carregarAgendaPendentes() {
+            try {
+                const res = await fetch(`${API}/agenda/pendentes`);
+                const lista = await res.json();
+                document.getElementById('statAgendaPendentes').textContent = lista.length + ' pendente(s)';
+                const cores = { pendente: '#f59e0b', aguardando_comprovante: '#f97316', expirado: '#ef4444', pago: '#22c55e' };
+                const html = lista.map(a => `<tr>
+                    <td>${a.nome || '-'}</td>
+                    <td>${a.email}</td>
+                    <td>${a.whatsapp || a.telefone || '-'}</td>
+                    <td>${a.plano || '-'}</td>
+                    <td><span style="background:${cores[a.statusPagamento]||'#888'};color:#000;padding:2px 8px;border-radius:12px;font-size:.75rem;font-weight:700">${a.statusPagamento || 'indefinido'}</span></td>
+                    <td>${new Date(a.createdAt).toLocaleDateString('pt-BR')}</td>
+                    <td style="display:flex;gap:6px;flex-wrap:wrap">
+                        <button onclick="liberarAgendaCliente('${a._id}')" style="padding:5px 10px;background:#22c55e;border:none;border-radius:6px;color:#000;font-weight:700;cursor:pointer;font-size:.75rem">✅ Liberar</button>
+                        <button onclick="bloquearAgendaCliente('${a._id}')" style="padding:5px 10px;background:#ef4444;border:none;border-radius:6px;color:#fff;font-weight:700;cursor:pointer;font-size:.75rem">🚫 Bloquear</button>
+                    </td>
+                </tr>`).join('');
+                document.getElementById('tabelaAgendaPendentes').innerHTML = html || '<tr><td colspan="7" style="text-align:center;color:#888;padding:30px">Nenhum pendente</td></tr>';
+            } catch(e) { console.error('Erro agenda pendentes:', e); }
+        }
+
+        async function liberarAgendaCliente(id) {
+            if (!confirm('Liberar acesso deste cliente?')) return;
+            const r = await fetch(`${API}/agenda/pendentes/${id}/liberar`, { method: 'PUT' });
+            const d = await r.json();
+            if (d.sucesso) { alert('✅ Cliente liberado!'); carregarAgendaPendentes(); }
+            else alert('Erro: ' + d.erro);
+        }
+
+        async function bloquearAgendaCliente(id) {
+            if (!confirm('Bloquear este cliente?')) return;
+            const r = await fetch(`${API}/agenda/pendentes/${id}/bloquear`, { method: 'PUT' });
+            const d = await r.json();
+            if (d.sucesso) { alert('🚫 Cliente bloqueado!'); carregarAgendaPendentes(); }
+            else alert('Erro: ' + d.erro);
         }
         async function carregarContabilidade() {
             try {
