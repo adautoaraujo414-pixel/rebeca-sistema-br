@@ -1090,8 +1090,8 @@ function fazerLogout() { location.reload(); }
                 const cor     = corPlano[plano] || '#888';
                 const mods    = JSON.stringify(t.modulos || {}).replace(/"/g, "&quot;");
                 const bloqBtn = t.ativo !== false
-                    ? 'style="background:#ff4444;color:#fff;" onclick="toggleTenantAtivo('' + t.adminId + '',true)"'
-                    : 'style="background:#00ff88;color:#000;" onclick="toggleTenantAtivo('' + t.adminId + '',false)"';
+                    ? 'style="background:#ff4444;color:#fff;" onclick="toggleTenantAtivo(&apos;' + t.adminId + '&apos;,true)"'
+                    : 'style="background:#00ff88;color:#000;" onclick="toggleTenantAtivo(&apos;' + t.adminId + '&apos;,false)"';
                 const bloqTxt = t.ativo !== false ? '🔒' : '🔓';
                 return '<tr>' +
                     '<td><strong>' + nome + '</strong></td>' +
