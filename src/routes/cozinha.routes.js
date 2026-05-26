@@ -57,6 +57,16 @@ router.post('/clientes/:adminId', auth, async (req, res) => {
   const existe = await ClienteCozinha.findOne({ adminId: req.params.adminId, telefone: tel });
   if (existe) return res.status(409).json({ erro: 'Telefone já cadastrado' });
   const c = await ClienteCozinha.create({ adminId: req.params.adminId, telefone: tel, nome, mesa });
+
+  // Enviar boas-vindas via WhatsApp oficial da Rebeca
+  try {
+    const MetaWA = require('../services/meta-whatsapp.service');
+    const nomeCliente = nome || 'cliente';
+    await MetaWA.enviarTexto(tel, `Olá, ${nomeCliente}! 👋\n\nSou a Rebeca, assistente do restaurante. 🍽️\n\nSeu número foi cadastrado com sucesso! A partir de agora, tudo que você enviar aqui vai direto para a nossa cozinha.\n\nPode mandar seu pedido! 😊`);
+  } catch(e) {
+    console.error('[Cozinha] Erro ao enviar boas-vindas:', e.message);
+  }
+
   res.json({ sucesso: true, cliente: c });
 });
 
