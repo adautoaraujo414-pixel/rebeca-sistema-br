@@ -806,7 +806,17 @@ ${totalAgs > 0 ? 'Tá saindo bem! 💪' : 'Ainda sem registros esse mês.'}`);
       .replace(/^(que\s+)?(eu\s+)?(tenho\s+que\s+)?(preciso\s+)?/i, '')
       .replace(/[.!?,;]+$/, '')
       .trim();
-    const textoLembrete = (_limpo && _limpo.length > 1) ? _limpo : null;
+    // Se usuário disse "esse mesmo lembrete" / "o mesmo" / "igual" → buscar último lembrete
+    let textoLembrete = (_limpo && _limpo.length > 1) ? _limpo : null;
+    const _refMesmo = /esse mesmo|o mesmo|igual ao|mesmo lembrete|repetir|repete/i.test(msg);
+    if (_refMesmo || (textoLembrete && /^esse mesmo|^o mesmo/i.test(textoLembrete))) {
+      const _adm = await AdminAgenda.findById(adminObjId).lean();
+      const _lembs = (_adm?.config?.lembretes || []).filter(l => l.texto && !/^esse mesmo|^o mesmo/i.test(l.texto));
+      if (_lembs.length) {
+        const _ultimo = _lembs[_lembs.length - 1];
+        textoLembrete = _ultimo.texto;
+      }
+    }
 
     // ── CASO A: hora sem dia → perguntar dia, salvar estado ─────────────────
     if (hora && !hora.relativo && !dia) {
