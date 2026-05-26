@@ -550,4 +550,5 @@ console.log('✅ Cron cardápio do dia ativo (7h)');
 const ModoDono = require('./services/agenda-modo-dono.service');
 cron.schedule('*/5 * * * *', () => ModoDono.rodarLembretes());
 cron.schedule('*/5 * * * *', () => ModoDono.rodarLembretesPessoais());
-console.log('✅ Cron lembretes e relatório diário Rebeca ativos');
+cron.schedule('*/5 * * * *', () => ModoDono.rodarLembretesClientes());
+console.log('✅ Cron lembretes (dono + pessoais + clientes) ativos — a cada 5min');

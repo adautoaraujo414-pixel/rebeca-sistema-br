@@ -1673,12 +1673,15 @@ async function rodarLembretesPessoais() {
         const inst = await InstanciaWhatsapp.findOne({
           adminId: String(lmb.adminId), adminTipo: 'agenda', status: 'conectado'
         }).lean();
-        if (!inst) continue;
+        // Fallback Meta API se não tiver Evolution conectado
+        const instLmb = inst || { _enviarVia: 'meta', apiUrl: 'meta', nomeInstancia: 'meta_oficial' };
 
         // Verifica se tem agendamento do cliente nas últimas 24h (janela gratuita Meta)
         const janela24h = new Date(agora.getTime() - 24 * 60 * 60000);
+        const _lmbOid = require('mongoose').Types.ObjectId.isValid(String(lmb.adminId))
+          ? new (require('mongoose').Types.ObjectId)(String(lmb.adminId)) : lmb.adminId;
         const temJanela = await AgendamentoAgenda.findOne({
-          adminId: adminObjId,
+          $or: [{ adminId: _lmbOid }, { adminId: String(lmb.adminId) }],
           updatedAt: { $gte: janela24h }
         }).lean();
 
@@ -1699,7 +1702,7 @@ async function rodarLembretesPessoais() {
         ];
         const msg = msgs[Math.floor(Math.random() * msgs.length)];
 
-        await _enviarMsg(inst, telDono, msg);
+        await _enviarMsg(instLmb, telDono, msg);
         await LembreteAgenda.findByIdAndUpdate(lmb._id, { enviado: true, dataEnvio: new Date() });
         console.log('[Lembretes] Aviso enviado para', telDono, lmb.texto);
       } catch(e) {
@@ -1983,9 +1986,11 @@ async function rodarLembretesClientes() {
 
         // ── Lembrete 1 dia antes ─────────────────────────────────────────
         // Ajuste fuso Brasil -03:00
-        const _br = (d, h, min=0) => { const x = new Date(d); x.setUTCHours(h+3, min, 0, 0); return x; };
-        const amanha_ini = _br(new Date(agora.getTime() + 24*60*60*1000), 0);
-        const amanha_fim = _br(new Date(agora.getTime() + 24*60*60*1000), 23, 59);
+        // Fuso Brasil -03:00: meia-noite BR = 03:00 UTC, 23:59 BR = 02:59 UTC do dia seguinte
+        const amanha_ini = new Date(agora.getTime() + 24*60*60*1000);
+        amanha_ini.setUTCHours(3, 0, 0, 0); // 00:00 BRT
+        const amanha_fim = new Date(agora.getTime() + 48*60*60*1000);
+        amanha_fim.setUTCHours(2, 59, 59, 999); // 23:59 BRT do dia seguinte
 
         const ags1dia = await AgendamentoAgenda.find({
           adminId,
