@@ -35,6 +35,37 @@ router.post('/webhook', express.json(), async (req, res) => {
       const msgId    = msg.id;
       console.log(`[MetaWA] msg de ${telefone}: "${texto}"`);
       await MetaWA.marcarLido(msgId);
+
+      // ── INTERCEPTAR COZINHA ANTES DO ROTEAMENTO ───────────────
+      try {
+        const { ClienteCozinha, ImpressoraCozinha } = require('../models/cozinha.model');
+        const { imprimirPedido } = require('../services/cozinha-impressora.service');
+        const telNorm = telefone.replace(/\D/g, '');
+        const clienteCoz = await ClienteCozinha.findOne({
+          ativo: true,
+          $or: [{ telefone: telNorm }, { telefone: telefone }, { telefone: '55'+telNorm }]
+        });
+        if (clienteCoz && tipo === 'text' && texto) {
+          const imp = await ImpressoraCozinha.findOne({ adminId: clienteCoz.adminId, ativo: true });
+          if (imp) {
+            const hora = new Date().toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit', timeZone:'America/Sao_Paulo' });
+            await imprimirPedido({
+              adminId: String(clienteCoz.adminId),
+              ip: imp.ip, porta: imp.porta,
+              texto,
+              mesa: clienteCoz.mesa || '',
+              telefone: clienteCoz.nome || telefone,
+              hora
+            });
+            console.log('[Cozinha] Impresso:', clienteCoz.nome, '->', texto.substring(0,40));
+          }
+          continue; // não responde ao cliente
+        }
+      } catch(eCoz) {
+        console.error('[Cozinha] Erro interceptor:', eCoz.message);
+      }
+      // ──────────────────────────────────────────────────────────
+
       // Roteamento por módulo
       if (tipo === 'text' && texto) {
         await processarComando(telefone, texto, msgId);
