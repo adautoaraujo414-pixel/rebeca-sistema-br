@@ -736,8 +736,8 @@ async function carregarPendentes() {
                 + '<td><a href="https://wa.me/55' + p.telefone.replace(/\D/g,'') + '" target="_blank" style="color:#25d366;">' + p.telefone + '</a></td>'
                 + '<td>' + data + ' ' + hora + '</td>'
                 + '<td>'
-                + '<button class="btn btn-success btn-sm" onclick="aprovarPendente('"+p._id+"', this)" style="margin-right:6px;">✅ Aprovar</button>'
-                + '<button class="btn btn-danger btn-sm" onclick="rejeitarPendente('"+p._id+"', this)">❌ Rejeitar</button>'
+                + '<button class="btn btn-success btn-sm" onclick="aprovarPendente(&apos;'+p._id+'&apos;, this)" style="margin-right:6px;">✅ Aprovar</button>'
+                + '<button class="btn btn-danger btn-sm" onclick="rejeitarPendente(&apos;'+p._id+'&apos;, this)">❌ Rejeitar</button>'
                 + '</td>'
                 + '</tr>';
         }).join('');
