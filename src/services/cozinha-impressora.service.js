@@ -14,9 +14,19 @@ async function imprimirPedido({ ip, porta = 9100, texto, mesa = '', telefone = '
   const isServidorLocal = String(porta) === '3333' || ip.startsWith('http');
   if (isServidorLocal) {
     const url = ip.startsWith('http') ? ip : `http://${ip}:3333`;
+    // Buscar config da impressora do banco para passar ao servidor local
+    let ipImp = '127.0.0.1', portaImp = 9100;
+    try {
+      const { ImpressoraCozinha } = require('../models/cozinha.model');
+      // Encontrar impressora pelo IP do servidor local (adminId vem em _adminId)
+      if (_adminId) {
+        const imp = await ImpressoraCozinha.findOne({ adminId: _adminId });
+        if (imp) { ipImp = imp._ipImpressora || imp.ip; portaImp = imp._portaImpressora || imp.porta || 9100; }
+      }
+    } catch(_) {}
     const res = await axios.post(url + '/imprimir', {
-      ip: process.env.IMPRESSORA_IP || '127.0.0.1',
-      porta: Number(process.env.IMPRESSORA_PORTA || 9100),
+      ipImpressora: ipImp,
+      portaImpressora: portaImp,
       texto, mesa, nomeCliente: telefone
     }, {
       headers: { 'x-cozinha-token': TOKEN },

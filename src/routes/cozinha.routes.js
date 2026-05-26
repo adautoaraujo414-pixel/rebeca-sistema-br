@@ -20,11 +20,13 @@ router.get('/impressora/:adminId', auth, async (req, res) => {
 });
 
 router.post('/impressora/:adminId', auth, async (req, res) => {
-  const { ip, porta, nome } = req.body;
+  const { ip, porta, nome, ipImpressora, portaImpressora, modoLocal } = req.body;
   if (!ip) return res.status(400).json({ erro: 'IP obrigatório' });
   const imp = await ImpressoraCozinha.findOneAndUpdate(
     { adminId: req.params.adminId },
-    { ip, porta: porta || 9100, nome: nome || 'Cozinha', ativo: true },
+    { ip, porta: porta || 9100, nome: nome || 'Cozinha', ativo: true,
+      ipImpressora: ipImpressora || '', portaImpressora: portaImpressora || 9100,
+      modoLocal: !!modoLocal },
     { upsert: true, new: true }
   );
   res.json({ sucesso: true, impressora: imp });

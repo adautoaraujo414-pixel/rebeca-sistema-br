@@ -110,12 +110,58 @@ td{padding:9px 8px;border-bottom:1px solid #1a1a1a}
     <select id="selAdmin"><option value="">Carregando...</option></select>
   </div>
 
+  <!-- Card download servidor local -->
+  <div class="card" style="border-color:#25d36640;background:linear-gradient(135deg,#0d1f0d,#1a1a1a)">
+    <h2>💻 Modo PC Local (recomendado)</h2>
+    <p style="color:#888;font-size:.82rem;line-height:1.6;margin-bottom:14px">
+      Instale o <strong style="color:#25d366">servidor local</strong> no computador da cozinha.
+      Ele fica na mesma rede da impressora e imprime direto — sem túnel, sem complicação.
+    </p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+      <a href="/api/cozinha/download-local" class="btn btn-green" style="text-decoration:none">
+        ⬇️ Baixar Servidor Local (.zip)
+      </a>
+      <a href="/api/cozinha/tunnel-guide" target="_blank" class="btn btn-gray" style="text-decoration:none">
+        🔗 Guia de instalação
+      </a>
+    </div>
+    <div style="margin-top:12px;background:#111;border-radius:8px;padding:12px;font-size:.78rem;color:#666;font-family:monospace;line-height:1.8">
+      1. Baixe e extraia o ZIP no PC da cozinha<br>
+      2. Instale Node.js em nodejs.org (se não tiver)<br>
+      3. Dê duplo clique em <strong style="color:#ccc">INICIAR-WINDOWS.bat</strong><br>
+      4. Anote o IP exibido (ex: 192.168.1.50)<br>
+      5. No campo abaixo: IP = <strong style="color:#ccc">192.168.1.50</strong> · Porta = <strong style="color:#ccc">3333</strong>
+    </div>
+  </div>
+
   <div class="card">
     <h2>🖨️ Impressora Térmica</h2>
-    <div class="row">
-      <div style="flex:2"><label>IP da Impressora</label><input id="impIp" placeholder="192.168.1.100"></div>
-      <div style="flex:1"><label>Porta</label><input id="impPorta" value="9100" placeholder="9100"></div>
-      <div style="flex:2"><label>Nome</label><input id="impNome" placeholder="Cozinha Principal"></div>
+    <div style="margin-bottom:12px">
+      <label style="margin-top:0">Modo de conexão</label>
+      <select id="impModo" onchange="alternarModo()">
+        <option value="local">💻 Servidor Local no PC da Cozinha (recomendado)</option>
+        <option value="direto">🔌 TCP Direto (impressora na mesma rede do servidor)</option>
+      </select>
+    </div>
+    <!-- Modo Local -->
+    <div id="modoLocal">
+      <div class="row">
+        <div style="flex:2"><label>IP do PC da Cozinha</label><input id="impIpLocal" placeholder="192.168.1.50"></div>
+        <div style="flex:1"><label>Porta servidor</label><input id="impPortaLocal" value="3333" placeholder="3333"></div>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <div style="flex:2"><label>IP da Impressora (na rede local)</label><input id="impIpImpressora" placeholder="192.168.1.100"></div>
+        <div style="flex:1"><label>Porta impressora</label><input id="impPortaImpressora" value="9100" placeholder="9100"></div>
+        <div style="flex:2"><label>Nome</label><input id="impNome" placeholder="Cozinha Principal"></div>
+      </div>
+    </div>
+    <!-- Modo Direto -->
+    <div id="modoDireto" style="display:none">
+      <div class="row">
+        <div style="flex:2"><label>IP da Impressora</label><input id="impIpDireto" placeholder="192.168.1.100"></div>
+        <div style="flex:1"><label>Porta</label><input id="impPortaDireto" value="9100" placeholder="9100"></div>
+        <div style="flex:2"><label>Nome</label><input id="impNomeDireto" placeholder="Cozinha Principal"></div>
+      </div>
     </div>
     <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
       <button class="btn btn-green" onclick="salvarImpressora()">💾 Salvar</button>
@@ -221,15 +267,33 @@ async function carregarAdmins() {
 }
 
 // ── IMPRESSORA ───────────────────────────────────────────────────
+function alternarModo() {
+  const modo = document.getElementById('impModo').value;
+  document.getElementById('modoLocal').style.display  = modo === 'local'  ? 'block' : 'none';
+  document.getElementById('modoDireto').style.display = modo === 'direto' ? 'block' : 'none';
+}
+
 async function carregarImpressora() {
   if (!adminId) return;
   try {
     const r = await fetch(BASE+'/impressora/'+adminId+'?token='+TOKEN);
     const d = await r.json();
     if (d.impressora) {
-      document.getElementById('impIp').value    = d.impressora.ip || '';
-      document.getElementById('impPorta').value = d.impressora.porta || 9100;
-      document.getElementById('impNome').value  = d.impressora.nome || '';
+      const imp = d.impressora;
+      const modo = imp.modoLocal ? 'local' : 'direto';
+      document.getElementById('impModo').value = modo;
+      alternarModo();
+      if (modo === 'local') {
+        document.getElementById('impIpLocal').value          = imp.ip || '';
+        document.getElementById('impPortaLocal').value       = imp.porta || 3333;
+        document.getElementById('impIpImpressora').value     = imp.ipImpressora || '';
+        document.getElementById('impPortaImpressora').value  = imp.portaImpressora || 9100;
+        document.getElementById('impNome').value             = imp.nome || '';
+      } else {
+        document.getElementById('impIpDireto').value    = imp.ip || '';
+        document.getElementById('impPortaDireto').value = imp.porta || 9100;
+        document.getElementById('impNomeDireto').value  = imp.nome || '';
+      }
       document.getElementById('statusImp').innerHTML = '<span class="status ok">✓ Impressora configurada</span>';
     } else {
       document.getElementById('statusImp').innerHTML = '<span class="status err">⚠ Não configurada</span>';
@@ -238,11 +302,25 @@ async function carregarImpressora() {
 }
 async function salvarImpressora() {
   if (!adminId) return toast('Selecione um restaurante', false);
-  const ip   = document.getElementById('impIp').value.trim();
-  const porta = Number(document.getElementById('impPorta').value) || 9100;
-  const nome  = document.getElementById('impNome').value.trim() || 'Cozinha';
-  if (!ip) return toast('IP obrigatório', false);
-  const r = await fetch(BASE+'/impressora/'+adminId, { method:'POST', headers:headers(), body:JSON.stringify({ip,porta,nome}) });
+  const modo = document.getElementById('impModo').value;
+  let payload;
+  if (modo === 'local') {
+    const ipLocal  = document.getElementById('impIpLocal').value.trim();
+    const portaLocal = Number(document.getElementById('impPortaLocal').value) || 3333;
+    const ipImp    = document.getElementById('impIpImpressora').value.trim();
+    const portaImp = Number(document.getElementById('impPortaImpressora').value) || 9100;
+    const nome     = document.getElementById('impNome').value.trim() || 'Cozinha';
+    if (!ipLocal) return toast('IP do PC obrigatório', false);
+    if (!ipImp)   return toast('IP da impressora obrigatório', false);
+    payload = { ip: ipLocal, porta: portaLocal, ipImpressora: ipImp, portaImpressora: portaImp, nome, modoLocal: true };
+  } else {
+    const ip    = document.getElementById('impIpDireto').value.trim();
+    const porta = Number(document.getElementById('impPortaDireto').value) || 9100;
+    const nome  = document.getElementById('impNomeDireto').value.trim() || 'Cozinha';
+    if (!ip) return toast('IP obrigatório', false);
+    payload = { ip, porta, nome, modoLocal: false };
+  }
+  const r = await fetch(BASE+'/impressora/'+adminId, { method:'POST', headers:headers(), body:JSON.stringify(payload) });
   const d = await r.json();
   d.sucesso ? (toast('💾 Impressora salva!'), carregarImpressora()) : toast(d.erro||'Erro', false);
 }

@@ -13,12 +13,17 @@ const clienteCozinhaSchema = new mongoose.Schema({
 
 // Config da impressora por admin
 const impressoraCozinhaSchema = new mongoose.Schema({
-  adminId:     { type: String, required: true, unique: true },
-  ip:          { type: String, required: true }, // ex: 192.168.1.100
-  porta:       { type: Number, default: 9100 },  // porta padrão térmica
-  nome:        { type: String, default: 'Cozinha' },
-  ativo:       { type: Boolean, default: true },
-  criadoEm:   { type: Date, default: Date.now }
+  adminId:          { type: String, required: true, unique: true },
+  // Endereço de entrada (servidor local PC da cozinha ou IP direto da impressora)
+  ip:               { type: String, required: true }, // IP do PC local (porta 3333) ou IP da impressora
+  porta:            { type: Number, default: 9100 },  // 3333 = servidor local, 9100 = direto
+  // Se for modo servidor local, IP real da impressora fica aqui
+  ipImpressora:     { type: String, default: '' },
+  portaImpressora:  { type: Number, default: 9100 },
+  modoLocal:        { type: Boolean, default: false }, // true = usa servidor local
+  nome:             { type: String, default: 'Cozinha' },
+  ativo:            { type: Boolean, default: true },
+  criadoEm:        { type: Date, default: Date.now }
 });
 
 module.exports = {

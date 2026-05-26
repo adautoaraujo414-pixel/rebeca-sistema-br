@@ -71,7 +71,11 @@ const server = http.createServer(async (req, res) => {
     req.on('data', d => body += d);
     req.on('end', async () => {
       try {
-        const { ip, porta, texto, mesa, nomeCliente } = JSON.parse(body);
+        const parsed = JSON.parse(body);
+        // ip/porta da impressora pode vir no body OU usar os campos diretos
+        const { texto, mesa, nomeCliente } = parsed;
+        const ip    = parsed.ipImpressora || parsed.ip || '127.0.0.1';
+        const porta = parsed.portaImpressora || parsed.porta || 9100;
         if (!ip || !texto) {
           res.writeHead(400, {'Content-Type':'application/json'});
           res.end(JSON.stringify({ erro: 'ip e texto obrigatórios' }));
