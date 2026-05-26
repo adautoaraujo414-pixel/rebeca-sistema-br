@@ -11,6 +11,7 @@ const ActionRouter  = require('./agenda-action-router');
 const { AdminAgenda, AgendamentoAgenda, FinanceiroAgenda, BloqueioAgenda, ClienteAgenda } = require('../models/AgendaServico');
 const { InstanciaWhatsapp } = require('../models');
 
+const NLP = require('./agenda-nlp.service');
 const EVOLUTION_BASE_URL = process.env.EVOLUTION_API_URL || 'https://evolution-api-production-794f.up.railway.app';
 const EVOLUTION_GLOBAL_KEY = process.env.EVOLUTION_API_KEY || null;
 
@@ -410,6 +411,38 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
     }
     await responder(`${_erro()} Me fala assim: *Rebeca, registra uma entrada de R$120 no Pix* 💰`);
     return true;
+  }
+
+  // ── CAMADA NLP SEMÂNTICA — entende intenção mesmo com erros/áudio distorcido ──
+  {
+    const nlp = NLP.parsear(msg);
+    const _nlpVal = nlp.valor;
+    const _nlpCat = nlp.categoria;
+    const _nlpInt = nlp.intencao;
+
+    if (_nlpVal && (_nlpInt === 'saida' || _nlpInt === 'saida_ambigua')) {
+      const _descNlp = _extrairDescricao(msg, 'despesa');
+      const _catFinal = _nlpCat !== 'outros' ? _nlpCat : _extrairCategoria(msg);
+      await FinanceiroAgenda.create({
+        adminId: adminObjId, tipo: 'despesa', valor: _nlpVal,
+        descricao: _descNlp, categoria: _catFinal,
+        data: new Date(), origem: 'whatsapp_dono'
+      });
+      await responder(`Anotado! Saída de R$ ${_nlpVal.toFixed(2)} em "${_catFinal}"${_descNlp !== 'Gasto via WhatsApp' ? ' — ' + _descNlp : ''}. 📝`);
+      return true;
+    }
+
+    if (_nlpVal && _nlpInt === 'entrada') {
+      const _descNlpE = _extrairDescricao(msg, 'receita');
+      const _catFinalE = _nlpCat !== 'outros' ? _nlpCat : _extrairCategoria(msg);
+      await FinanceiroAgenda.create({
+        adminId: adminObjId, tipo: 'receita', valor: _nlpVal,
+        descricao: _descNlpE, categoria: _catFinalE,
+        data: new Date(), origem: 'whatsapp_dono'
+      });
+      await responder(`Feito! Entrada de R$ ${_nlpVal.toFixed(2)} registrada em "${_catFinalE}"${_descNlpE !== 'Entrada via WhatsApp' ? ' — ' + _descNlpE : ''}. 💰`);
+      return true;
+    }
   }
 
   // Padrao informal: "50 reais cabeleireiro" ou "cabeleireiro 50" (valor + origem sem palavra-chave)
