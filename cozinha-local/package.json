@@ -1,0 +1,9 @@
+{
+  "name": "rebeca-cozinha-local",
+  "version": "1.0.0",
+  "description": "Servidor local Rebeca Cozinha - imprime na térmica",
+  "main": "servidor.js",
+  "scripts": {
+    "start": "node servidor.js"
+  }
+}

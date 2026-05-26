@@ -1,60 +1,62 @@
 'use strict';
-const net = require('net');
+const net  = require('net');
+const axios = require('axios');
+
+const TOKEN = process.env.COZINHA_TOKEN || 'cozinha-rebeca-2026';
 
 /**
- * Envia texto para impressora térmica via TCP/IP (porta 9100)
+ * Envia pedido para impressora.
+ * Se o IP contiver ":" com porta 3333 ou começar com http → servidor local Node
+ * Caso contrário → conexão TCP direta (impressora na mesma rede do servidor)
  */
 async function imprimirPedido({ ip, porta = 9100, texto, mesa = '', telefone = '', hora = '' }) {
+  // Modo servidor local (PC da cozinha)
+  const isServidorLocal = String(porta) === '3333' || ip.startsWith('http');
+  if (isServidorLocal) {
+    const url = ip.startsWith('http') ? ip : `http://${ip}:3333`;
+    const res = await axios.post(url + '/imprimir', {
+      ip: process.env.IMPRESSORA_IP || '127.0.0.1',
+      porta: Number(process.env.IMPRESSORA_PORTA || 9100),
+      texto, mesa, nomeCliente: telefone
+    }, {
+      headers: { 'x-cozinha-token': TOKEN },
+      timeout: 8000
+    });
+    return res.data?.sucesso;
+  }
+
+  // Modo TCP direto
   return new Promise((resolve, reject) => {
     const client = new net.Socket();
-    const timeout = 5000;
+    const ESC = '\x1B', GS = '\x1D';
+    const INIT     = ESC + '@';
+    const BOLD_ON  = ESC + 'E\x01';
+    const BOLD_OFF = ESC + 'E\x00';
+    const CENTER   = ESC + 'a\x01';
+    const LEFT     = ESC + 'a\x00';
+    const FONT_GDE = GS  + '!\x11';
+    const FONT_NOR = GS  + '!\x00';
+    const FEED     = '\n';
+    const CUT      = GS  + 'V\x41\x03';
 
-    // Comandos ESC/POS básicos
-    const ESC = '\x1B';
-    const GS  = '\x1D';
-    const INIT        = ESC + '@';           // inicializar
-    const BOLD_ON     = ESC + 'E\x01';
-    const BOLD_OFF    = ESC + 'E\x00';
-    const CENTER      = ESC + 'a\x01';
-    const LEFT        = ESC + 'a\x00';
-    const FONT_LARGE  = GS  + '!\x11';      // dobro altura+largura
-    const FONT_NORMAL = GS  + '!\x00';
-    const FEED        = '\n';
-    const CUT         = GS  + 'V\x41\x03'; // corte parcial
-
-    const agora = hora || new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    const agora = hora || new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
     const data  = new Date().toLocaleDateString('pt-BR');
 
-    let cmd = '';
-    cmd += INIT;
-    cmd += CENTER + BOLD_ON + FONT_LARGE;
-    cmd += '*** PEDIDO ***' + FEED;
-    cmd += FONT_NORMAL + BOLD_OFF;
+    let cmd = INIT;
+    cmd += CENTER + BOLD_ON + FONT_GDE + '*** PEDIDO ***' + FEED + FONT_NOR + BOLD_OFF;
     cmd += '========================' + FEED;
-    if (mesa)     cmd += LEFT + BOLD_ON + 'Mesa: ' + BOLD_OFF + mesa + FEED;
-    if (telefone) cmd += LEFT + BOLD_ON + 'Tel:  ' + BOLD_OFF + telefone + FEED;
-    cmd += LEFT + BOLD_ON + 'Hora: ' + BOLD_OFF + agora + ' ' + data + FEED;
-    cmd += '========================' + FEED;
-    cmd += LEFT + FEED;
-    cmd += texto + FEED;
-    cmd += FEED + FEED + FEED;
-    cmd += CUT;
+    if (mesa)     cmd += LEFT + BOLD_ON + 'Mesa:   ' + BOLD_OFF + mesa + FEED;
+    if (telefone) cmd += LEFT + BOLD_ON + 'Cliente:' + BOLD_OFF + ' ' + telefone + FEED;
+    cmd += LEFT + BOLD_ON + 'Hora:   ' + BOLD_OFF + agora + ' ' + data + FEED;
+    cmd += '========================' + FEED + LEFT + FEED;
+    cmd += texto + FEED + FEED + FEED + CUT;
 
-    client.setTimeout(timeout);
+    client.setTimeout(5000);
     client.connect(porta, ip, () => {
-      client.write(cmd, 'binary', () => {
-        client.destroy();
-        resolve(true);
-      });
+      client.write(cmd, 'binary', () => { client.destroy(); resolve(true); });
     });
-    client.on('error', (err) => {
-      console.error('[Impressora] Erro TCP:', err.message);
-      reject(err);
-    });
-    client.on('timeout', () => {
-      client.destroy();
-      reject(new Error('Timeout ao conectar na impressora'));
-    });
+    client.on('error', (e) => { console.error('[Impressora] TCP erro:', e.message); reject(e); });
+    client.on('timeout', () => { client.destroy(); reject(new Error('Timeout')); });
   });
 }
 
