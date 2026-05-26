@@ -4,7 +4,6 @@ const router  = express.Router();
 const { ClienteCozinha, ImpressoraCozinha } = require('../models/cozinha.model');
 const { imprimirPedido } = require('../services/cozinha-impressora.service');
 const { AdminAgenda } = require('../models/AgendaServico');
-const { AdminCozinha, ImpressoraCozinha, ClienteCozinha } = require('../models/cozinha.model');
 
 // ── AUTH simples por token ────────────────────────────────────────
 const COZINHA_TOKEN = process.env.COZINHA_TOKEN || 'cozinha-rebeca-2026';
