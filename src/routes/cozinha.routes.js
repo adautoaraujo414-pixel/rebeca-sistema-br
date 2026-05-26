@@ -62,7 +62,7 @@ router.post('/clientes/:adminId', auth, async (req, res) => {
   try {
     const MetaWA = require('../services/meta-whatsapp.service');
     const nomeCliente = nome || 'cliente';
-    await MetaWA.enviarTexto(tel, `Olá, ${nomeCliente}! 👋\n\nSou a Rebeca, assistente do restaurante. 🍽️\n\nSeu número foi cadastrado com sucesso! A partir de agora, tudo que você enviar aqui vai direto para a nossa cozinha.\n\nPode mandar seu pedido! 😊`);
+    await MetaWA.enviarTexto(tel, `Olá, ${nomeCliente}! 👋 Sou sua assistente Rebeca. 🍽️\n\nA partir de agora, tudo que você me mandar vai direto para a sua cozinha! 🚀`);
   } catch(e) {
     console.error('[Cozinha] Erro ao enviar boas-vindas:', e.message);
   }
