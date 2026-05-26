@@ -27,10 +27,12 @@ async function authAgenda(req, res, next) {
 router.get('/financeiro/resumo', authAgenda, async (req, res) => {
   try {
     const { mes, ano } = req.query;
-    const m = parseInt(mes) || new Date().getMonth() + 1;
-    const a = parseInt(ano) || new Date().getFullYear();
-    const inicio = new Date(a, m - 1, 1);
-    const fim = new Date(a, m, 0, 23, 59, 59);
+    const _agora = new Date(Date.now() - 3*60*60*1000); // hora Brasil
+    const m = parseInt(mes) || (_agora.getUTCMonth() + 1);
+    const a = parseInt(ano) || _agora.getUTCFullYear();
+    // Início e fim em UTC compensando GMT-3: dia 1 às 03:00 UTC = 00:00 BRT
+    const inicio = new Date(Date.UTC(a, m - 1, 1, 3, 0, 0));
+    const fim    = new Date(Date.UTC(a, m,     0, 26, 59, 59)); // último dia às 23:59:59 BRT = 02:59:59 UTC do dia seguinte
     // Query compatível com adminId salvo como ObjectId ou String
     const mongoose = require('mongoose');
     const _sid = String(req.adminId);
@@ -88,10 +90,12 @@ router.get('/financeiro/resumo', authAgenda, async (req, res) => {
 router.get('/financeiro', authAgenda, async (req, res) => {
   try {
     const { mes, ano, tipo } = req.query;
-    const m = parseInt(mes) || new Date().getMonth() + 1;
-    const a = parseInt(ano) || new Date().getFullYear();
-    const inicio = new Date(a, m - 1, 1);
-    const fim = new Date(a, m, 0, 23, 59, 59);
+    const _agora = new Date(Date.now() - 3*60*60*1000); // hora Brasil
+    const m = parseInt(mes) || (_agora.getUTCMonth() + 1);
+    const a = parseInt(ano) || _agora.getUTCFullYear();
+    // Início e fim em UTC compensando GMT-3: dia 1 às 03:00 UTC = 00:00 BRT
+    const inicio = new Date(Date.UTC(a, m - 1, 1, 3, 0, 0));
+    const fim    = new Date(Date.UTC(a, m,     0, 26, 59, 59)); // último dia às 23:59:59 BRT = 02:59:59 UTC do dia seguinte
     const mongoose2 = require('mongoose');
     const _sid2 = String(req.adminId);
     const _oid2 = mongoose2.Types.ObjectId.isValid(_sid2) ? new mongoose2.Types.ObjectId(_sid2) : null;
@@ -212,10 +216,12 @@ router.delete('/fila-encaixe/:id', authAgenda, async (req, res) => {
 router.get('/financeiro/exportar-pdf', authAgenda, async (req, res) => {
   try {
     const { mes, ano } = req.query;
-    const m = parseInt(mes) || new Date().getMonth() + 1;
-    const a = parseInt(ano) || new Date().getFullYear();
-    const inicio = new Date(a, m - 1, 1);
-    const fim = new Date(a, m, 0, 23, 59, 59);
+    const _agora = new Date(Date.now() - 3*60*60*1000); // hora Brasil
+    const m = parseInt(mes) || (_agora.getUTCMonth() + 1);
+    const a = parseInt(ano) || _agora.getUTCFullYear();
+    // Início e fim em UTC compensando GMT-3: dia 1 às 03:00 UTC = 00:00 BRT
+    const inicio = new Date(Date.UTC(a, m - 1, 1, 3, 0, 0));
+    const fim    = new Date(Date.UTC(a, m,     0, 26, 59, 59)); // último dia às 23:59:59 BRT = 02:59:59 UTC do dia seguinte
     const mongoose = require('mongoose');
     const _sid = String(req.adminId);
     const _oid = mongoose.Types.ObjectId.isValid(_sid) ? new mongoose.Types.ObjectId(_sid) : null;

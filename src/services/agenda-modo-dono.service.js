@@ -77,12 +77,15 @@ function _extrairCategoria(txt, categoriaIntent) {
 }
 // ── Extrair descrição do texto da mensagem ───────────────────────────────────
 function _extrairDescricao(txt, tipo) {
-  const _stopWords = /^(rebeca|oi|ola|por favor|pfv|pf|ai|la|registra|anota|coloca|marca|manda|faz|me|um|uma|de|do|da|em|no|na|pra|para|pro|que|e|com|sem|mais|menos|so|ja|agora|hoje|ontem|amanha|reais|real|rs)$/i;
-  // Tenta pegar texto após verbo/tipo
-  const mAposTipo = txt.match(/(?:recebi|entrou|caiu|ganhei|vendi|fiz|paguei|gastei|saiu|comprei|registra|anota|coloca|entrada|saida|despesa|receita)\s+(?:de\s+)?(?:r\$\s*)?\d*[.,]?\d*\s*(?:reais?)?\s*(.+)/i);
-  if (mAposTipo && mAposTipo[1] && !_stopWords.test(mAposTipo[1].trim())) return mAposTipo[1].trim();
-  // Tenta pegar palavras que não são números nem stopwords
-  const palavras = txt.split(/\s+/).filter(p => !_stopWords.test(p) && !/^\d+([.,]\d+)?$/.test(p) && p.length > 2);
+  const _stopWords = /^(rebeca|oi|ola|por favor|pfv|pf|ai|la|registra|anota|coloca|marca|manda|faz|me|um|uma|de|do|da|em|no|na|pra|para|pro|que|e|com|sem|mais|menos|so|ja|agora|hoje|ontem|amanha|reais|real|rs|gastei|paguei|saiu|recebi|entrou|caiu|ganhei|vendi|comprei|cobrei|saida|entrada)$/i;
+  // Tenta pegar texto após verbo + valor
+  const mAposTipo = txt.match(/(?:recebi|entrou|caiu|ganhei|vendi|fiz|paguei|gastei|saiu|comprei|cobrei|registra|anota|coloca|entrada|saida|despesa|receita)\s+(?:de\s+)?(?:r\$\s*)?[\d.,]+\s*(?:reais?)?\s*(.+)/i);
+  if (mAposTipo && mAposTipo[1] && mAposTipo[1].trim().length > 1 && !_stopWords.test(mAposTipo[1].trim())) return mAposTipo[1].trim();
+  // Tenta pegar texto após valor
+  const mAposValor = txt.match(/(?:r\$\s*)?[\d.,]+\s*(?:reais?)?\s+(.+)/i);
+  if (mAposValor && mAposValor[1] && mAposValor[1].trim().length > 1 && !_stopWords.test(mAposValor[1].trim())) return mAposValor[1].trim();
+  // Tenta pegar palavras significativas (exceto números e stopwords)
+  const palavras = txt.split(/\s+/).filter(p => !_stopWords.test(p) && !/^[\d.,]+$/.test(p) && p.length > 2);
   if (palavras.length) return palavras.join(' ');
   // Fallback
   return tipo === 'receita' ? 'Entrada via WhatsApp' : 'Gasto via WhatsApp';
