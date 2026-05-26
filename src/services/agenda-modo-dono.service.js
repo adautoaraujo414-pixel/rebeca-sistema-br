@@ -450,6 +450,34 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
         return true;
       }
     }
+    // ── RECORRENTE: "todo dia 10 aluguel", "toda segunda academia" ──────────
+    if (nlp.intencao === 'recorrente' && nlp.recorrente) {
+      const _rec = nlp.recorrente;
+      const _catRec = nlp.categoria !== 'outros' ? nlp.categoria : null;
+      const _textoRec = nlp.textoLembrete || msg.trim();
+      // Salvar como lembrete recorrente no config do admin
+      await AdminAgenda.findByIdAndUpdate(adminObjId, {
+        $push: {
+          'config.lembretes': {
+            texto: _textoRec,
+            dataEvento: null,
+            dataAviso: null,
+            enviado: false,
+            criadoEm: new Date(),
+            recorrente: _rec,
+            categoria: _catRec
+          }
+        }
+      });
+      let _descRec = '';
+      if (_rec.tipo === 'mensal' && _rec.dia) _descRec = `todo dia ${_rec.dia} do mês`;
+      else if (_rec.tipo === 'mensal') _descRec = 'todo mês';
+      else if (_rec.tipo === 'diario') _descRec = 'todo dia';
+      else if (_rec.tipo === 'semanal') _descRec = `toda ${_rec.diaSemana}`;
+      await responder(`Anotei! 🔔 Vou te lembrar de *${_textoRec}* ${_descRec}. Pode deixar comigo! 💙`);
+      return true;
+    }
+
     const _nlpVal = nlp.valor;
     const _nlpCat = nlp.categoria;
     const _nlpInt = nlp.intencao;
