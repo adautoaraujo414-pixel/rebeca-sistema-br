@@ -500,7 +500,7 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
       await responder(_resp);
       return true;
     }
-    if (_nlpVal && (_nlpInt === 'saida' || _nlpInt === 'saida_ambigua')) {
+    if (_nlpVal && _nlpInt === 'saida') {
       const _descNlp = _extrairDescricao(msg, 'despesa');
       const _catFinal = _nlpCat !== 'outros' ? _nlpCat : _extrairCategoria(msg);
       await FinanceiroAgenda.create({
@@ -510,6 +510,34 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
       });
       const _labelSaida = _catFinal !== 'outros' ? _catFinal : (_descNlp !== 'Gasto via WhatsApp' ? _descNlp : 'outros');
       await responder(`Anotado! Saída de R$ ${_nlpVal.toFixed(2)} em "${_labelSaida}". 📝`);
+      return true;
+    }
+    // saida_ambigua: só registra se tiver categoria conhecida E verbo financeiro implícito
+    // Evita registrar "27/05 09hrs", "com salgado agora", frases de contexto como lançamento
+    if (_nlpVal && _nlpInt === 'saida_ambigua') {
+      const _temVerbExplicito = /gastei|paguei|saiu|debitou|descontou|tirei|comprei|saida|gasto/.test(nlp.normalizado);
+      const _catAmb = _nlpCat !== 'outros' ? _nlpCat : _extrairCategoria(msg);
+      const _temCatConhecida = _catAmb !== 'outros';
+      // Rejeita se: só número sem categoria nem verbo, ou parece data/hora, ou frase longa de contexto
+      const _pareceData = /\d{1,2}\/\d{1,2}|\d{1,2}h|\d{1,2}:\d{2}/.test(msg);
+      const _fraseContexto = msg.split(' ').length > 6 && !_temVerbExplicito && !_temCatConhecida;
+      if (_pareceData || _fraseContexto) {
+        // Não registra — ignora silenciosamente ou pede confirmação
+        return false;
+      }
+      if (_temVerbExplicito || _temCatConhecida) {
+        const _descAmb = _extrairDescricao(msg, 'despesa');
+        await FinanceiroAgenda.create({
+          adminId: adminObjId, tipo: 'despesa', valor: _nlpVal,
+          descricao: _descAmb, categoria: _catAmb,
+          data: _dataAgora(), origem: 'whatsapp_dono'
+        });
+        const _labelAmb = _catAmb !== 'outros' ? _catAmb : (_descAmb !== 'Gasto via WhatsApp' ? _descAmb : 'outros');
+        await responder(`Anotado! Saída de R$ ${_nlpVal.toFixed(2)} em "${_labelAmb}". 📝`);
+        return true;
+      }
+      // Número solto sem contexto — pede confirmação
+      await responder(`${_chefe()}, vi o valor R$ ${_nlpVal.toFixed(2)} — foi uma saída? Me confirma "sim gasto" ou me fala o que foi 😊`);
       return true;
     }
 
