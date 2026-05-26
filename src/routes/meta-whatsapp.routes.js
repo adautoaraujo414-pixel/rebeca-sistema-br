@@ -28,41 +28,35 @@ router.post('/webhook', express.json(), async (req, res) => {
     const entry   = req.body?.entry?.[0];
     const changes = entry?.changes?.[0]?.value;
     if (!changes?.messages?.length) return;
-
-    const msg      = changes.messages[0];
-    const telefone = msg.from;
-    const tipo     = msg.type;
-    const texto    = msg?.text?.body || '';
-    const msgId    = msg.id;
-
-    console.log(`[MetaWA] msg de ${telefone}: "${texto}"`);
-
-    await MetaWA.marcarLido(msgId);
-
-    // Roteamento por módulo
-    if (tipo === 'text' && texto) {
-      await processarComando(telefone, texto, msgId);
-    } else if (tipo === 'audio') {
-      console.log(`[MetaWA] Áudio recebido de ${telefone} — transcrevendo...`);
+    for (const msg of changes.messages) {
+      const telefone = msg.from;
+      const tipo     = msg.type;
+      const texto    = msg?.text?.body || '';
+      const msgId    = msg.id;
+      console.log(`[MetaWA] msg de ${telefone}: "${texto}"`);
       await MetaWA.marcarLido(msgId);
-      const audioId = msg?.audio?.id;
-      if (audioId) {
-        const transcricao = await transcreverAudio(audioId);
-        if (transcricao) {
-          console.log(`[MetaWA] Processando áudio transcrito: "${transcricao}"`);
-          await processarComando(telefone, transcricao, msgId);
-        } else {
-          // Tenta processar via Claude mesmo sem transcrição
-          await processarComando(telefone, 'não entendi o áudio enviado', msgId);
+      // Roteamento por módulo
+      if (tipo === 'text' && texto) {
+        await processarComando(telefone, texto, msgId);
+      } else if (tipo === 'audio') {
+        console.log(`[MetaWA] Áudio recebido de ${telefone} — transcrevendo...`);
+        const audioId = msg?.audio?.id;
+        if (audioId) {
+          const transcricao = await transcreverAudio(audioId);
+          if (transcricao) {
+            await processarComando(telefone, transcricao, msgId);
+          } else {
+            await processarComando(telefone, 'não entendi o áudio enviado', msgId);
+          }
         }
+      } else if (tipo === 'image') {
+        await processarComando(telefone, '[imagem enviada pelo dono]', msgId);
+      } else if (tipo === 'interactive') {
+        const resposta = msg?.interactive?.button_reply?.title
+          || msg?.interactive?.list_reply?.title || '';
+        if (resposta) await processarComando(telefone, resposta, msgId);
       }
-    } else if (tipo === 'image') {
-      await processarComando(telefone, '[imagem enviada pelo dono]', msgId);
-    } else if (tipo === 'interactive') {
-      const resposta = msg?.interactive?.button_reply?.title
-        || msg?.interactive?.list_reply?.title || '';
-      if (resposta) await processarComando(telefone, resposta, msgId);
-    }
+    } // fim for messages
   } catch(e) {
     console.error('[MetaWA] webhook erro:', e.message);
   }
