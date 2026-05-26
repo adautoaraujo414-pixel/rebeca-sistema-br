@@ -454,7 +454,8 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
         descricao: _descNlp, categoria: _catFinal,
         data: new Date(), origem: 'whatsapp_dono'
       });
-      await responder(`Anotado! Saída de R$ ${_nlpVal.toFixed(2)} em "${_catFinal}"${_descNlp !== 'Gasto via WhatsApp' ? ' — ' + _descNlp : ''}. 📝`);
+      const _labelSaida = _catFinal !== 'outros' ? _catFinal : (_descNlp !== 'Gasto via WhatsApp' ? _descNlp : 'outros');
+      await responder(`Anotado! Saída de R$ ${_nlpVal.toFixed(2)} em "${_labelSaida}". 📝`);
       return true;
     }
 
@@ -466,7 +467,8 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
         descricao: _descNlpE, categoria: _catFinalE,
         data: new Date(), origem: 'whatsapp_dono'
       });
-      await responder(`Feito! Entrada de R$ ${_nlpVal.toFixed(2)} registrada em "${_catFinalE}"${_descNlpE !== 'Entrada via WhatsApp' ? ' — ' + _descNlpE : ''}. 💰`);
+      const _labelEntrada = _catFinalE !== 'outros' ? _catFinalE : (_descNlpE !== 'Entrada via WhatsApp' ? _descNlpE : 'outros');
+      await responder(`Feito! Entrada de R$ ${_nlpVal.toFixed(2)} registrada em "${_labelEntrada}". 💰`);
       return true;
     }
   }
