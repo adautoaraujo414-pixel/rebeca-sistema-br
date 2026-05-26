@@ -65,7 +65,8 @@ router.post('/', authAgendaMiddleware, async (req, res) => {
 
     const [ano, mes, dia] = data.split('-').map(Number);
     const [h, min]        = hora.split(':').map(Number);
-    const dataEvento      = new Date(ano, mes - 1, dia, h, min, 0);
+    // UTC+3h para compensar GMT-3 do Brasil no servidor Render (UTC)
+    const dataEvento      = new Date(Date.UTC(ano, mes - 1, dia, h + 3, min, 0));
     const dataAviso       = new Date(dataEvento.getTime() - (antecedencia || 30) * 60000);
 
     const lembrete = await LembreteAgenda.create({

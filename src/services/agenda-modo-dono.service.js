@@ -414,7 +414,7 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
         valor: val,
         descricao: descEntrada,
         categoria: catEntrada,
-        data: new Date(),
+        data: _dataAgora(),
         origem: 'whatsapp_dono'
       });
       await responder(`Feito! Entrada de R$ ${val.toFixed(2)} registrada em "${catEntrada}"${descEntrada !== 'Entrada via WhatsApp' ? ' — '+descEntrada : ''}. 💰`);
@@ -506,7 +506,7 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
       await FinanceiroAgenda.create({
         adminId: adminObjId, tipo: 'despesa', valor: _nlpVal,
         descricao: _descNlp, categoria: _catFinal,
-        data: new Date(), origem: 'whatsapp_dono'
+        data: _dataAgora(), origem: 'whatsapp_dono'
       });
       const _labelSaida = _catFinal !== 'outros' ? _catFinal : (_descNlp !== 'Gasto via WhatsApp' ? _descNlp : 'outros');
       await responder(`Anotado! Saída de R$ ${_nlpVal.toFixed(2)} em "${_labelSaida}". 📝`);
@@ -519,7 +519,7 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
       await FinanceiroAgenda.create({
         adminId: adminObjId, tipo: 'receita', valor: _nlpVal,
         descricao: _descNlpE, categoria: _catFinalE,
-        data: new Date(), origem: 'whatsapp_dono'
+        data: _dataAgora(), origem: 'whatsapp_dono'
       });
       const _labelEntrada = _catFinalE !== 'outros' ? _catFinalE : (_descNlpE !== 'Entrada via WhatsApp' ? _descNlpE : 'outros');
       await responder(`Feito! Entrada de R$ ${_nlpVal.toFixed(2)} registrada em "${_labelEntrada}". 💰`);
@@ -536,7 +536,7 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
       await FinanceiroAgenda.create({
         adminId: adminObjId, tipo: 'despesa', valor: val,
         descricao: descSaidaI, categoria: catSaidaI,
-        data: new Date(), origem: 'whatsapp_dono'
+        data: _dataAgora(), origem: 'whatsapp_dono'
       });
       await responder(`Anotado! Saída de R$ ${val.toFixed(2)} em "${catSaidaI}"${descSaidaI !== 'Gasto via WhatsApp' ? ' — '+descSaidaI : ''}. 📝`);
       return true;
@@ -554,7 +554,7 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
         valor: val,
         descricao: descSaida,
         categoria: catSaida,
-        data: new Date(),
+        data: _dataAgora(),
         origem: 'whatsapp_dono'
       });
       await responder(`Anotado! Saída de R$ ${val.toFixed(2)} em "${catSaida}"${descSaida !== 'Gasto via WhatsApp' ? ' — '+descSaida : ''}. 📝`);

@@ -60,8 +60,8 @@ function softFiltroPeriodo(query = {}) {
   }
 
   // Fallback: mês/ano
-  const inicio = new Date(ano, mes - 1, 1);
-  const fim    = new Date(ano, mes, 0, 23, 59, 59, 999);
+  const inicio = new Date(Date.UTC(ano, mes - 1, 1, 3, 0, 0));
+  const fim    = new Date(Date.UTC(ano, mes, 0, 26, 59, 59, 999));
   return { inicio, fim, mes, ano };
 }
 
