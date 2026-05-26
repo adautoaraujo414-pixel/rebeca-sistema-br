@@ -1,7 +1,7 @@
 'use strict';
 const express = require('express');
 const router  = express.Router();
-const { ClienteCozinha, ImpressoraCozinha } = require('../models/cozinha.model');
+const { ClienteCozinha, ImpressoraCozinha, AdminCozinha, ContadorPedido } = require('../models/cozinha.model');
 const { imprimirPedido } = require('../services/cozinha-impressora.service');
 const { AdminAgenda } = require('../models/AgendaServico');
 
