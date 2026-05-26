@@ -53,7 +53,6 @@ router.post('/webhook', express.json(), async (req, res) => {
               adminId: String(clienteCoz.adminId),
               ip: imp.ip, porta: imp.porta,
               texto,
-              mesa: clienteCoz.mesa || '',
               telefone: clienteCoz.nome || telefone,
               hora
             });
