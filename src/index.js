@@ -314,6 +314,9 @@ app.use('/api/rebeca',       rebecaRoutes);
 app.use('/api/rebeca-oficial', require('./routes/rebeca-oficial-whatsapp.routes'));
 app.use('/api/meta-whatsapp',  require('./routes/meta-whatsapp.routes'));
 app.use('/api/cozinha',        require('./routes/cozinha.routes'));
+// PWA Cozinha
+app.get('/cozinha-manifest.json', (req,res) => res.sendFile(require('path').join(__dirname,'public/cozinha-manifest.json')));
+app.get('/cozinha-sw.js',         (req,res) => res.sendFile(require('path').join(__dirname,'public/cozinha-sw.js')));
 
 // ─────────────────────────────────────────────
 // 16. PÁGINAS — Rebeca Corrida

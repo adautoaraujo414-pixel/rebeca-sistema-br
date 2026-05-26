@@ -69,7 +69,7 @@ router.get('/admins', auth, async (req, res) => {
   res.json({ sucesso: true, admins });
 });
 
-// Servir página HTML do painel
+// Servir arquivos do painel
 const path = require('path');
 router.get('/painel', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/cozinha-painel.html'));

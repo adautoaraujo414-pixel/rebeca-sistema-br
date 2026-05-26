@@ -3,208 +3,298 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Rebeca Cozinha — Painel</title>
+<meta name="theme-color" content="#25d366">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Rebeca Cozinha">
+<link rel="manifest" href="/cozinha-manifest.json">
+<title>Rebeca Cozinha</title>
 <style>
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:'Segoe UI',sans-serif;background:#0f0f0f;color:#eee;min-height:100vh;padding:20px}
-  h1{color:#25d366;font-size:1.4rem;margin-bottom:4px}
-  .sub{color:#888;font-size:.85rem;margin-bottom:24px}
-  .card{background:#1a1a1a;border-radius:12px;padding:20px;margin-bottom:20px;border:1px solid #2a2a2a}
-  .card h2{font-size:1rem;color:#aaa;margin-bottom:14px;display:flex;align-items:center;gap:8px}
-  label{display:block;font-size:.8rem;color:#888;margin-bottom:4px;margin-top:12px}
-  input,select{width:100%;padding:10px;background:#111;border:1px solid #333;border-radius:8px;color:#eee;font-size:.9rem}
-  input:focus,select:focus{outline:none;border-color:#25d366}
-  .btn{display:inline-block;padding:10px 20px;border:none;border-radius:8px;cursor:pointer;font-size:.9rem;font-weight:600;transition:.2s}
-  .btn-green{background:#25d366;color:#000}
-  .btn-green:hover{background:#1ebe57}
-  .btn-red{background:#e74c3c;color:#fff;margin-left:8px}
-  .btn-red:hover{background:#c0392b}
-  .btn-gray{background:#333;color:#eee}
-  .btn-gray:hover{background:#444}
-  .btn-sm{padding:6px 12px;font-size:.8rem}
-  .status{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.75rem;font-weight:600}
-  .ok{background:#1a3a1a;color:#25d366}
-  .err{background:#3a1a1a;color:#e74c3c}
-  table{width:100%;border-collapse:collapse;font-size:.85rem}
-  th{text-align:left;padding:8px;border-bottom:1px solid #2a2a2a;color:#888}
-  td{padding:8px;border-bottom:1px solid #1a1a1a}
-  .toast{position:fixed;bottom:20px;right:20px;background:#25d366;color:#000;padding:12px 20px;border-radius:8px;font-weight:600;display:none;z-index:999}
-  .row{display:flex;gap:10px;flex-wrap:wrap}
-  .row input{flex:1;min-width:120px}
-  #statusImp{margin-top:10px;font-size:.85rem}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:#0f0f0f;color:#eee;min-height:100vh}
+
+/* ── LOGIN ── */
+#telaLogin{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
+.login-box{background:#1a1a1a;border-radius:16px;padding:36px 32px;width:100%;max-width:380px;border:1px solid #2a2a2a;text-align:center}
+.login-logo{font-size:2.8rem;margin-bottom:8px}
+.login-title{font-size:1.3rem;font-weight:700;color:#25d366;margin-bottom:4px}
+.login-sub{font-size:.82rem;color:#666;margin-bottom:28px}
+.login-box label{text-align:left;display:block;font-size:.78rem;color:#888;margin-bottom:4px;margin-top:14px}
+.login-box input{width:100%;padding:12px;background:#111;border:1px solid #333;border-radius:8px;color:#eee;font-size:.95rem}
+.login-box input:focus{outline:none;border-color:#25d366}
+.btn-login{width:100%;margin-top:20px;padding:13px;background:#25d366;color:#000;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;transition:.2s}
+.btn-login:hover{background:#1ebe57}
+.login-err{color:#e74c3c;font-size:.82rem;margin-top:10px;display:none}
+
+/* ── APP ── */
+#telaApp{display:none;padding:20px;max-width:860px;margin:0 auto}
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid #222}
+.topbar-left h1{color:#25d366;font-size:1.2rem;font-weight:700}
+.topbar-left p{color:#666;font-size:.78rem;margin-top:2px}
+.topbar-right{display:flex;gap:8px;align-items:center}
+
+/* ── PWA BANNER ── */
+#pwaBanner{background:linear-gradient(135deg,#1a2e1a,#0f1f0f);border:1px solid #25d36640;border-radius:12px;padding:16px 18px;margin-bottom:20px;display:none;align-items:center;gap:14px}
+#pwaBanner .pwa-icon{font-size:2rem}
+#pwaBanner .pwa-text{flex:1}
+#pwaBanner .pwa-text strong{display:block;color:#25d366;font-size:.95rem}
+#pwaBanner .pwa-text span{color:#888;font-size:.78rem}
+.btn-pwa{background:#25d366;color:#000;border:none;border-radius:8px;padding:9px 16px;font-size:.85rem;font-weight:700;cursor:pointer;white-space:nowrap}
+
+.card{background:#1a1a1a;border-radius:12px;padding:20px;margin-bottom:16px;border:1px solid #2a2a2a}
+.card h2{font-size:.95rem;color:#aaa;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+label{display:block;font-size:.78rem;color:#777;margin-bottom:4px;margin-top:12px}
+input,select{width:100%;padding:10px;background:#111;border:1px solid #2a2a2a;border-radius:8px;color:#eee;font-size:.88rem}
+input:focus,select:focus{outline:none;border-color:#25d366}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border:none;border-radius:8px;cursor:pointer;font-size:.85rem;font-weight:600;transition:.2s}
+.btn-green{background:#25d366;color:#000}.btn-green:hover{background:#1ebe57}
+.btn-red{background:#e74c3c;color:#fff}.btn-red:hover{background:#c0392b}
+.btn-gray{background:#2a2a2a;color:#ccc}.btn-gray:hover{background:#333}
+.btn-sm{padding:5px 11px;font-size:.78rem}
+.status{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.73rem;font-weight:600}
+.ok{background:#1a3a1a;color:#25d366}.err{background:#3a1a1a;color:#e74c3c}
+table{width:100%;border-collapse:collapse;font-size:.82rem}
+th{text-align:left;padding:9px 8px;border-bottom:1px solid #222;color:#666;font-weight:600}
+td{padding:9px 8px;border-bottom:1px solid #1a1a1a}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.row input,.row select{flex:1;min-width:120px}
+.toast{position:fixed;bottom:24px;right:24px;padding:12px 20px;border-radius:10px;font-weight:600;font-size:.88rem;display:none;z-index:9999;box-shadow:0 4px 20px #0008}
+#statusImp{margin-top:10px;font-size:.82rem}
+.badge-online{display:inline-block;width:8px;height:8px;background:#25d366;border-radius:50%;margin-right:5px;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 </style>
 </head>
 <body>
-<h1>🍽️ Rebeca Cozinha</h1>
-<p class="sub">Painel de configuração — pedidos via WhatsApp → impressora térmica</p>
 
-<div class="card">
-  <h2>⚙️ Configuração</h2>
-  <label>Admin (restaurante)</label>
-  <select id="selAdmin"><option value="">Carregando...</option></select>
-  <label>Token de acesso</label>
-  <input id="token" type="password" value="cozinha-rebeca-2026" placeholder="Token">
+<!-- ── TELA DE LOGIN ── -->
+<div id="telaLogin">
+  <div class="login-box">
+    <div class="login-logo">🍽️</div>
+    <div class="login-title">Rebeca Cozinha</div>
+    <div class="login-sub">Painel de impressão via WhatsApp</div>
+    <label>Usuário</label>
+    <input id="loginUser" type="text" placeholder="admin" autocomplete="username">
+    <label>Senha</label>
+    <input id="loginPass" type="password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')fazerLogin()">
+    <button class="btn-login" onclick="fazerLogin()">Entrar</button>
+    <div class="login-err" id="loginErr">Usuário ou senha incorretos</div>
+  </div>
 </div>
 
-<div class="card">
-  <h2>🖨️ Impressora Térmica</h2>
-  <div class="row">
-    <div style="flex:2">
-      <label>IP da Impressora (rede local)</label>
-      <input id="impIp" placeholder="ex: 192.168.1.100">
-    </div>
-    <div style="flex:1">
-      <label>Porta</label>
-      <input id="impPorta" placeholder="9100" value="9100">
-    </div>
-    <div style="flex:2">
-      <label>Nome</label>
-      <input id="impNome" placeholder="Cozinha Principal">
-    </div>
-  </div>
-  <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
-    <button class="btn btn-green" onclick="salvarImpressora()">💾 Salvar Impressora</button>
-    <button class="btn btn-gray" onclick="testarImpressora()">🖨️ Testar Impressão</button>
-  </div>
-  <div id="statusImp"></div>
-</div>
+<!-- ── TELA DO APP ── -->
+<div id="telaApp">
 
-<div class="card">
-  <h2>📱 Clientes Cadastrados</h2>
-  <div class="row" style="margin-bottom:14px">
-    <input id="novoTel" placeholder="Telefone (ex: 5534984039955)">
-    <input id="novoNome" placeholder="Nome do cliente">
-    <input id="novoMesa" placeholder="Mesa (opcional)">
-    <button class="btn btn-green btn-sm" onclick="addCliente()">+ Adicionar</button>
+  <!-- PWA Banner -->
+  <div id="pwaBanner">
+    <div class="pwa-icon">📲</div>
+    <div class="pwa-text">
+      <strong>Instalar como aplicativo</strong>
+      <span>Fique sempre conectado à impressora, mesmo sem abrir o navegador</span>
+    </div>
+    <button class="btn-pwa" onclick="instalarPWA()">⬇️ Instalar App</button>
   </div>
-  <table>
-    <thead><tr><th>Telefone</th><th>Nome</th><th>Mesa</th><th>Ação</th></tr></thead>
-    <tbody id="tbClientes"><tr><td colspan="4" style="color:#555">Carregando...</td></tr></tbody>
-  </table>
+
+  <div class="topbar">
+    <div class="topbar-left">
+      <h1>🍽️ Rebeca Cozinha</h1>
+      <p><span class="badge-online"></span>Pedidos via WhatsApp → Impressora</p>
+    </div>
+    <div class="topbar-right">
+      <button class="btn btn-gray btn-sm" onclick="logout()">Sair</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>⚙️ Restaurante</h2>
+    <label>Selecionar admin</label>
+    <select id="selAdmin"><option value="">Carregando...</option></select>
+  </div>
+
+  <div class="card">
+    <h2>🖨️ Impressora Térmica</h2>
+    <div class="row">
+      <div style="flex:2"><label>IP da Impressora</label><input id="impIp" placeholder="192.168.1.100"></div>
+      <div style="flex:1"><label>Porta</label><input id="impPorta" value="9100" placeholder="9100"></div>
+      <div style="flex:2"><label>Nome</label><input id="impNome" placeholder="Cozinha Principal"></div>
+    </div>
+    <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn btn-green" onclick="salvarImpressora()">💾 Salvar</button>
+      <button class="btn btn-gray" onclick="testarImpressora()">🖨️ Testar Impressão</button>
+    </div>
+    <div id="statusImp"></div>
+  </div>
+
+  <div class="card">
+    <h2>📱 Clientes que enviam pedidos</h2>
+    <div class="row" style="margin-bottom:14px">
+      <input id="novoTel" placeholder="Telefone (5534984039955)">
+      <input id="novoNome" placeholder="Nome">
+      <input id="novoMesa" placeholder="Mesa (opcional)">
+      <button class="btn btn-green btn-sm" onclick="addCliente()">+ Adicionar</button>
+    </div>
+    <table>
+      <thead><tr><th>Telefone</th><th>Nome</th><th>Mesa</th><th></th></tr></thead>
+      <tbody id="tbClientes"><tr><td colspan="4" style="color:#444;padding:16px">Selecione um restaurante</td></tr></tbody>
+    </table>
+  </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
+// ── CREDENCIAIS (simples, client-side — para produção usar JWT) ──
+const USUARIOS = { 'admin': 'cozinha2026', 'rebeca': 'rebeca@cozinha' };
 const BASE = '/api/cozinha';
+const TOKEN = 'cozinha-rebeca-2026';
 let adminId = '';
+let deferredPrompt = null;
 
-function tok() { return document.getElementById('token').value.trim(); }
-function headers() { return { 'Content-Type':'application/json', 'x-cozinha-token': tok() }; }
+// ── PWA ──────────────────────────────────────────────────────────
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('pwaBanner').style.display = 'flex';
+});
+window.addEventListener('appinstalled', () => {
+  document.getElementById('pwaBanner').style.display = 'none';
+  toast('✅ App instalado com sucesso!');
+});
+async function instalarPWA() {
+  if (!deferredPrompt) { toast('Use Chrome/Edge para instalar', false); return; }
+  deferredPrompt.prompt();
+  const { outcome } = await deferredPrompt.userChoice;
+  if (outcome === 'accepted') toast('App instalando...');
+  deferredPrompt = null;
+}
 
+// ── LOGIN ─────────────────────────────────────────────────────────
+function fazerLogin() {
+  const user = document.getElementById('loginUser').value.trim();
+  const pass = document.getElementById('loginPass').value;
+  const err  = document.getElementById('loginErr');
+  if (USUARIOS[user] && USUARIOS[user] === pass) {
+    sessionStorage.setItem('cozinha_auth', '1');
+    sessionStorage.setItem('cozinha_user', user);
+    err.style.display = 'none';
+    mostrarApp();
+  } else {
+    err.style.display = 'block';
+    document.getElementById('loginPass').value = '';
+  }
+}
+function logout() {
+  sessionStorage.removeItem('cozinha_auth');
+  document.getElementById('telaLogin').style.display = 'flex';
+  document.getElementById('telaApp').style.display = 'none';
+}
+function mostrarApp() {
+  document.getElementById('telaLogin').style.display = 'none';
+  document.getElementById('telaApp').style.display = 'block';
+  carregarAdmins();
+}
+// Auto-login se já autenticado
+if (sessionStorage.getItem('cozinha_auth') === '1') mostrarApp();
+
+// ── HELPERS ──────────────────────────────────────────────────────
+function headers() { return { 'Content-Type':'application/json', 'x-cozinha-token': TOKEN }; }
 function toast(msg, ok=true) {
   const t = document.getElementById('toast');
   t.textContent = msg;
   t.style.background = ok ? '#25d366' : '#e74c3c';
   t.style.color = ok ? '#000' : '#fff';
   t.style.display = 'block';
-  setTimeout(() => t.style.display='none', 3000);
+  clearTimeout(t._t);
+  t._t = setTimeout(() => t.style.display='none', 3000);
 }
 
+// ── ADMINS ───────────────────────────────────────────────────────
 async function carregarAdmins() {
   try {
-    const r = await fetch(BASE+'/admins?token='+tok());
+    const r = await fetch(BASE+'/admins?token='+TOKEN);
     const d = await r.json();
     const sel = document.getElementById('selAdmin');
-    sel.innerHTML = d.admins.map(a => `<option value="${a._id}">${a.nomeNegocio || a.email}</option>`).join('');
-    adminId = sel.value;
+    sel.innerHTML = '<option value="">Selecione...</option>' +
+      d.admins.map(a => `<option value="${a._id}">${a.nomeNegocio||a.email}</option>`).join('');
     sel.onchange = () => { adminId = sel.value; carregarImpressora(); carregarClientes(); };
-    carregarImpressora();
-    carregarClientes();
-  } catch(e) { toast('Erro ao carregar admins', false); }
+    if (d.admins.length === 1) { sel.value = d.admins[0]._id; sel.onchange(); }
+  } catch(e) { toast('Erro ao carregar', false); }
 }
 
+// ── IMPRESSORA ───────────────────────────────────────────────────
 async function carregarImpressora() {
   if (!adminId) return;
   try {
-    const r = await fetch(BASE+'/impressora/'+adminId+'?token='+tok());
+    const r = await fetch(BASE+'/impressora/'+adminId+'?token='+TOKEN);
     const d = await r.json();
     if (d.impressora) {
       document.getElementById('impIp').value    = d.impressora.ip || '';
       document.getElementById('impPorta').value = d.impressora.porta || 9100;
       document.getElementById('impNome').value  = d.impressora.nome || '';
-      document.getElementById('statusImp').innerHTML = '<span class="status ok">✓ Configurada</span>';
+      document.getElementById('statusImp').innerHTML = '<span class="status ok">✓ Impressora configurada</span>';
     } else {
-      document.getElementById('statusImp').innerHTML = '<span class="status err">Não configurada</span>';
+      document.getElementById('statusImp').innerHTML = '<span class="status err">⚠ Não configurada</span>';
     }
   } catch(e) {}
 }
-
 async function salvarImpressora() {
-  if (!adminId) return toast('Selecione um admin', false);
-  const ip    = document.getElementById('impIp').value.trim();
-  const porta = document.getElementById('impPorta').value || 9100;
+  if (!adminId) return toast('Selecione um restaurante', false);
+  const ip   = document.getElementById('impIp').value.trim();
+  const porta = Number(document.getElementById('impPorta').value) || 9100;
   const nome  = document.getElementById('impNome').value.trim() || 'Cozinha';
   if (!ip) return toast('IP obrigatório', false);
-  try {
-    const r = await fetch(BASE+'/impressora/'+adminId, { method:'POST', headers:headers(), body:JSON.stringify({ip,porta:Number(porta),nome}) });
-    const d = await r.json();
-    if (d.sucesso) { toast('Impressora salva!'); carregarImpressora(); }
-    else toast(d.erro||'Erro', false);
-  } catch(e) { toast('Erro de conexão', false); }
+  const r = await fetch(BASE+'/impressora/'+adminId, { method:'POST', headers:headers(), body:JSON.stringify({ip,porta,nome}) });
+  const d = await r.json();
+  d.sucesso ? (toast('💾 Impressora salva!'), carregarImpressora()) : toast(d.erro||'Erro', false);
 }
-
 async function testarImpressora() {
-  if (!adminId) return toast('Selecione um admin', false);
+  if (!adminId) return toast('Selecione um restaurante', false);
+  document.getElementById('statusImp').innerHTML = '<span class="status">🖨️ Imprimindo...</span>';
   try {
-    document.getElementById('statusImp').innerHTML = '<span class="status">🖨️ Imprimindo teste...</span>';
     const r = await fetch(BASE+'/impressora/'+adminId+'/testar', { method:'POST', headers:headers() });
     const d = await r.json();
-    if (d.sucesso) toast('✅ Teste impresso com sucesso!');
-    else toast('❌ '+d.erro, false);
-    carregarImpressora();
+    d.sucesso ? toast('✅ Teste impresso!') : toast('❌ '+d.erro, false);
   } catch(e) { toast('Erro de conexão', false); }
+  carregarImpressora();
 }
 
+// ── CLIENTES ─────────────────────────────────────────────────────
 async function carregarClientes() {
   if (!adminId) return;
-  try {
-    const r = await fetch(BASE+'/clientes/'+adminId+'?token='+tok());
-    const d = await r.json();
-    const tb = document.getElementById('tbClientes');
-    if (!d.clientes?.length) {
-      tb.innerHTML = '<tr><td colspan="4" style="color:#555;padding:16px">Nenhum cliente cadastrado ainda.</td></tr>';
-      return;
-    }
-    tb.innerHTML = d.clientes.map(c => `
-      <tr>
-        <td>${c.telefone}</td>
-        <td>${c.nome||'-'}</td>
-        <td>${c.mesa||'-'}</td>
-        <td><button class="btn btn-red btn-sm" onclick="removerCliente('${c._id}')">🗑️</button></td>
-      </tr>`).join('');
-  } catch(e) {}
+  const r = await fetch(BASE+'/clientes/'+adminId+'?token='+TOKEN);
+  const d = await r.json();
+  const tb = document.getElementById('tbClientes');
+  if (!d.clientes?.length) {
+    tb.innerHTML = '<tr><td colspan="4" style="color:#444;padding:16px">Nenhum cliente ainda.</td></tr>'; return;
+  }
+  tb.innerHTML = d.clientes.map(c => `<tr>
+    <td>${c.telefone}</td><td>${c.nome||'-'}</td><td>${c.mesa||'-'}</td>
+    <td><button class="btn btn-red btn-sm" onclick="remover('${c._id}')">🗑️</button></td>
+  </tr>`).join('');
 }
-
 async function addCliente() {
   const tel  = document.getElementById('novoTel').value.trim();
   const nome = document.getElementById('novoNome').value.trim();
   const mesa = document.getElementById('novoMesa').value.trim();
-  if (!tel) return toast('Telefone obrigatório', false);
-  if (!adminId) return toast('Selecione um admin', false);
-  try {
-    const r = await fetch(BASE+'/clientes/'+adminId, { method:'POST', headers:headers(), body:JSON.stringify({telefone:tel,nome,mesa}) });
-    const d = await r.json();
-    if (d.sucesso) {
-      toast('Cliente adicionado!');
-      document.getElementById('novoTel').value = '';
-      document.getElementById('novoNome').value = '';
-      document.getElementById('novoMesa').value = '';
-      carregarClientes();
-    } else toast(d.erro||'Erro', false);
-  } catch(e) { toast('Erro de conexão', false); }
-}
-
-async function removerCliente(id) {
-  if (!confirm('Remover cliente?')) return;
-  try {
-    await fetch(BASE+'/clientes/'+adminId+'/'+id, { method:'DELETE', headers:headers() });
-    toast('Removido!');
+  if (!tel)     return toast('Telefone obrigatório', false);
+  if (!adminId) return toast('Selecione um restaurante', false);
+  const r = await fetch(BASE+'/clientes/'+adminId, { method:'POST', headers:headers(), body:JSON.stringify({telefone:tel,nome,mesa}) });
+  const d = await r.json();
+  if (d.sucesso) {
+    toast('✅ Cliente adicionado!');
+    ['novoTel','novoNome','novoMesa'].forEach(id => document.getElementById(id).value='');
     carregarClientes();
-  } catch(e) { toast('Erro', false); }
+  } else toast(d.erro||'Erro', false);
+}
+async function remover(id) {
+  if (!confirm('Remover este cliente?')) return;
+  await fetch(BASE+'/clientes/'+adminId+'/'+id, { method:'DELETE', headers:headers() });
+  toast('Removido!'); carregarClientes();
 }
 
-carregarAdmins();
+// ── SERVICE WORKER (PWA offline) ─────────────────────────────────
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/cozinha-sw.js').catch(()=>{});
+}
 </script>
 </body>
 </html>
