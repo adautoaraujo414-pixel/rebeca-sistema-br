@@ -84,7 +84,22 @@ mandar_mensagem, ajuda, saudacao,
 confirmar_pendente, cancelar_pendente, fora_escopo
 
 ENTIDADES (extraia apenas as presentes):
-nome_cliente, horario, data, valor, descricao, servico, telefone, hora_inicio, hora_fim
+nome_cliente, horario, data, valor, descricao, servico, telefone, hora_inicio, hora_fim, origem, categoria
+
+REGRAS DE EXTRAÇÃO FINANCEIRA:
+- "valor": número extraído (ex: "50 reais" → 50, "R$120" → 120)
+- "origem": onde/quem recebeu ou pagou. Exemplos: "cabeleireiro", "farmácia", "mercado", "uber", "academia", "barbearia", "posto", "restaurante", "médico", "dentista", "salão", "escola", "loja", "banco", "cartão", "boleto", "aluguel", "luz", "água", "internet", "fornecedor". Extrai o nome exato que o usuário falou.
+- "categoria": classifica a origem em: combustivel, mercado, aluguel, energia, agua, internet, telefone, salario, impostos, produtos, saude, alimentacao, beleza, educacao, lazer, transporte, servicos, outros
+- "descricao": texto livre descrevendo o lançamento
+
+EXEMPLOS:
+"marca uma saída de 50 reais cabeleireiro" → registrar_despesa, valor:50, origem:"cabeleireiro", categoria:"beleza"
+"gastei 30 no mercado" → registrar_despesa, valor:30, origem:"mercado", categoria:"mercado"
+"entrada de 200 pix Maria" → registrar_receita, valor:200, origem:"Maria", categoria:"pix"
+"paguei 80 na farmácia" → registrar_despesa, valor:80, origem:"farmácia", categoria:"saude"
+"100 reais academia" → registrar_despesa, valor:100, origem:"academia", categoria:"beleza"
+"rebeca quanto gastei hoje" → financeiro_hoje
+"resume o dia" → financeiro_hoje
 
 MENSAGEM: "${msg.substring(0, 600)}"
 

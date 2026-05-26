@@ -49,44 +49,31 @@ function _erro() {
 
 
 // ── Extrair categoria financeira do texto ────────────────────────────────────
-function _extrairCategoria(txt) {
+function _extrairCategoria(txt, categoriaIntent) {
+  if (categoriaIntent && categoriaIntent !== 'outros') return categoriaIntent;
   const t = txt.toLowerCase();
-  if (/combustível|combustivel|gasolina|diesel|álcool|alcool|posto/.test(t)) return 'combustível';
-  if (/mercado|supermercado|feira|hortifruti|grocery/.test(t)) return 'mercado';
-  if (/aluguel|aluel/.test(t)) return 'aluguel';
-  if (/luz|energia|energisa|cemig|cpfl|coelba/.test(t)) return 'energia';
-  if (/água|agua|saneamento|sabesp|copasa/.test(t)) return 'água';
-  if (/internet|wifi|net|vivo|claro|tim|oi|fibra/.test(t)) return 'internet';
-  if (/telefone|celular|plano/.test(t)) return 'telefone';
-  if (/salário|salario|funcionário|funcionario|pagamentos+func/.test(t)) return 'salário';
-  if (/imposto|taxa|tributo|contador|contabilidade|das|mei/.test(t)) return 'impostos';
+  if (/cabeleirei|barbearia|barbeiro|sal[ao]o|manicure|pedicure|estetica|depila|sobrancelha|unhas|escova/.test(t)) return 'beleza';
+  if (/farmacia|remedio|medico|consulta|exame|hospital|clinica|dentista|fisio|psicologo/.test(t)) return 'saude';
+  if (/combustivel|gasolina|diesel|alcool|posto|abastec/.test(t)) return 'combustivel';
+  if (/mercado|supermercado|feira|hortifruti|acougue|padaria|mercearia/.test(t)) return 'mercado';
+  if (/aluguel|aluel|condominio/.test(t)) return 'aluguel';
+  if (/luz|energia|energisa|cemig|cpfl|coelba|enel/.test(t)) return 'energia';
+  if (/agua|saneamento|sabesp|copasa/.test(t)) return 'agua';
+  if (/internet|wifi|banda.larga|fibra/.test(t)) return 'internet';
+  if (/telefone|celular|plano.movel|vivo|claro|tim|oib/.test(t)) return 'telefone';
+  if (/salario|funcionario|folha|pagar.func/.test(t)) return 'salario';
+  if (/imposto|taxa|tributo|contador|contabilidade/.test(t)) return 'impostos';
   if (/fornecedor|produto|estoque|material|insumo/.test(t)) return 'produtos';
-  if (/ifood|delivery|ubers*eat|rappi/.test(t)) return 'ifood';
-  if (/farmácia|farmacia|remédio|remedio|médico|medico|consulta|exame/.test(t)) return 'saúde';
-  if (/limpeza|higiene|sabão|detergente/.test(t)) return 'limpeza';
-  if (/alimentação|alimentacao|refeição|refeicao|restaurante|lanche|comida/.test(t)) return 'alimentação';
-  if (/pix|transferência|transferencia|ted|doc/.test(t)) return 'transferência';
-  if (/dinheiro|espécie|especie|cash/.test(t)) return 'dinheiro';
+  if (/ifood|rappi|delivery|restaurante|lanche|comida|almoco|janta/.test(t)) return 'alimentacao';
+  if (/buberb|taxi|onibus|metro|passagem/.test(t)) return 'transporte';
+  if (/academia|gym|cinema|teatro|show|festa|viagem|hotel/.test(t)) return 'lazer';
+  if (/escola|faculdade|curso|colegio|educacao|livro/.test(t)) return 'educacao';
+  if (/limpeza|higiene|sabao|detergente/.test(t)) return 'limpeza';
+  if (/pix|transferencia|tedb|docb/.test(t)) return 'transferencia';
+  if (/dinheiro|especie|cash/.test(t)) return 'dinheiro';
+  if (/servico|manutencao|conserto|reparo|instalacao/.test(t)) return 'servicos';
   return 'outros';
 }
-
-function _extrairDescricao(txt, tipo) {
-  // Palavras que NÃO são nomes de pessoas/descrições úteis
-  const _stopWords = /^(reais?|pix|dinheiro|especie|espécie|entrada|saida|saída|gasto|despesa|receita|transfer|transferência|gasolina|combustivel|aluguel|internet|luz|agua|lanche|comida|mercado|farmacia|uber|ifood|taxa|imposto)$/i;
-  // helper: captura nome próprio (1 ou 2 palavras com maiúscula inicial)
-  const _nomeComposto = /([A-ZÁÀÂÃÉÊÍÓÔÕÚÇ][a-záàâãéêíóôõúç]{1,30}(?:\s+[A-ZÁÀÂÃÉÊÍÓÔÕÚÇ][a-záàâãéêíóôõúç]{1,30}){0,2})/;
-  // 1. Nome próprio após "pra/para/pro/com" — ignora "mim/me/nós"
-  const _ignorarPronom = /^(mim|me|nos|nós|você|voce|ele|ela|eles|elas)$/i;
-  const mPra = txt.match(new RegExp('(?:^|\\s)(?:pra|para|pro|com)\\s+(?:(?:mim|me|nos|nós|você|voce)\\s+)?(' + _nomeComposto.source.slice(1,-1) + ')(?:\\s|$)'));
-  if (mPra && mPra[1] && !_stopWords.test(mPra[1].split(' ')[0]) && !_ignorarPronom.test(mPra[1])) return mPra[1].trim();
-  // 2. Nome próprio após "na/no/da/do"
-  const mNa = txt.match(new RegExp('(?:^|\\s)(?:na|no|da|do)\\s+' + _nomeComposto.source + '(?:\\s|$)'));
-  if (mNa && mNa[1] && !_stopWords.test(mNa[1])) return mNa[1].trim();
-  // 3. Nome próprio (maiúscula) após valor numérico
-  const mApos = txt.match(/R?\$?\s*[\d.,]+\s*(?:mil|k|reais?)?\s+([A-ZÁÀÂÃÉÊÍÓÔÕÚÇ][a-záàâãéêíóôõúç]{2,30}(?:\s+[A-ZÁÀÂÃÉÊÍÓÔÕÚÇ][a-záàâãéêíóôõúç]{1,30})?)(?:\s|$)/);
-  if (mApos && mApos[1] && !_stopWords.test(mApos[1])) return mApos[1].trim();
-  // 4. Nome próprio após saída/entrada/gasto/despesa (ex: "200 reais saída Júnior")
-  const mAposTipo = txt.match(/(?:saída|saida|entrada|gasto|despesa|paguei|comprei)\s+([A-ZÁÀÂÃÉÊÍÓÔÕÚÇ][a-záàâãéêíóôõúç]{2,30}(?:\s+[A-ZÁÀÂÃÉÊÍÓÔÕÚÇ][a-záàâãéêíóôõúç]{1,30})?)(?:\s|$)/i);
   if (mAposTipo && mAposTipo[1] && !_stopWords.test(mAposTipo[1])) return mAposTipo[1].trim();
   // 5. Fallback
   return tipo === 'receita' ? 'Entrada via WhatsApp' : 'Gasto via WhatsApp';
@@ -407,7 +394,7 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
     // ── Parse de valor: suporta "4 mil", "4k", "4.000,00", "4,000,00" ──
     const val = _parsarValor(_msgLimpa);
     const descEntrada = _extrairDescricao(msg, 'receita');
-    const catEntrada  = _extrairCategoria(msg);
+    const catEntrada  = _extrairCategoria(msg, _extrairCategoria(descEntrada));
     if (val) {
       await FinanceiroAgenda.create({
         adminId: adminObjId,
@@ -425,12 +412,12 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
     return true;
   }
 
-  // ── REGISTRAR GASTO ────────────────────────────────────────────────────────
+  if (/\bregistra\b.*\bgasto\b|\bmarca\b.*\bgasto\b|\banota\b.*\bgasto\b|\bmarca\b.*\bdespesa\b|\bregistra\b.*\bdespesa\b|\bpaguei\b|\bcomprei\b|\bsa\xc3\xadda\b|\bsaida\b|\bdespesa\b|\bgastei\b|\btive\s\*gasto\b|\bsaiu\b|\bdebita\b|\bdescontou\b|\baluguel\b|\bluz\b|\bagua\b|\bcombust[\xc3\xad\xed]vel\b|\bgasolina\b|\buber\b|\binternet\b|\baliment[ao]\b|\blanche\b|\bcaf[\xc3\xa9\xe9]\b|\bmaterial\b|\bequipamento\b|\bcabeleirei\b|\bbarbearia\b|\bfarm\xc3\xa1cia\b|\bfarmacias\b|\bacademia\b|\bm\xc3\xa9dico\b|\bdentista\b|\bescola\b|\bcurso\b|\bcinema\b|\brestaurante\b|\btaxi\b|\bt\xc3\xa1xi\b|\bposto\b|\bpadaria\b|\bmercado\b|\bsupermercado\b|\bcondom\xc3\xadnio\b|\bfornecedor\b|\bsalario\b|\bimposto\b/i.test(msgL) && !/\bquanto\b/i.test(msgL)) {
   if (/\bregistra\b.*\bgasto\b|\bmarca\b.*\bgasto\b|\banota\b.*\bgasto\b|\bmarca\b.*\bdespesa\b|\bregistra\b.*\bdespesa\b|\bpaguei\b|\bcomprei\b|\bsaída\b|\bsaida\b|\bdespesa\b|\bgastei\b|\btive\s*gasto\b|\bsaiu\b|\bdebita\b|\bdescontou\b|\baluguel\b|\bluz\b|\bagua\b|\bcombust[ií]vel\b|\bgasolina\b|\buber\b|\binternet\b|\baliment[ao]\b|\blanche\b|\bcaf[eé]\b|\bmaterial\b|\bequipamento\b/i.test(msgL) && !/\bquanto\b/i.test(msgL)) {
     const _msgLimpaS = msg.replace(/[?!]+$/, '').trim();
     const val = _parsarValor(_msgLimpaS);
     const descSaida = _extrairDescricao(msg, 'despesa');
-    const catSaida  = _extrairCategoria(msg);
+    const catSaida  = _extrairCategoria(msg, _extrairCategoria(descSaida));
     if (val) {
       await FinanceiroAgenda.create({
         adminId: adminObjId,
