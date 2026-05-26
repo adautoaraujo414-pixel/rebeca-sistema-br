@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { RefreshCw, BarChart2 } from 'lucide-react';
+import { RefreshCw, BarChart2, Download } from 'lucide-react';
 import { useOperacional, useFluxo, useFormasPagamento } from '../../shared/hooks/useFinanceiro';
 import { useFormato } from '../../shared/hooks/useFormat';
 import { FinancialFilters }      from './financeiro/FinancialFilters';
@@ -40,6 +40,30 @@ export default function Financeiro() {
             <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-2)' }}>Visão operacional do negócio</p>
           </div>
         </div>
+
+        <button onClick={() => {
+          const m = new Date().getMonth() + 1;
+          const a = new Date().getFullYear();
+          const base = window.location.origin.includes('localhost') ? 'http://localhost:3000' : window.location.origin;
+          const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+          fetch(`${base}/api/agenda/financeiro/exportar-pdf?mes=${m}&ano=${a}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          }).then(r => r.blob()).then(blob => {
+            const url = URL.createObjectURL(blob);
+            const a2 = document.createElement('a');
+            a2.href = url; a2.target = '_blank'; a2.click();
+          });
+        }} style={{
+          display: 'flex', alignItems: 'center', gap: 'var(--space-2)',
+          padding: 'var(--space-2) var(--space-3)',
+          background: 'var(--color-primary)', border: 'none',
+          borderRadius: 'var(--radius-md)', color: '#fff',
+          cursor: 'pointer', fontSize: 'var(--text-sm)',
+          fontFamily: 'var(--font-sans)', fontWeight: '600',
+        }}>
+          <Download size={14} />
+          Exportar PDF
+        </button>
         <button onClick={refetchAll} disabled={fetching} style={{
           display: 'flex', alignItems: 'center', gap: 'var(--space-2)',
           padding: 'var(--space-2) var(--space-3)',

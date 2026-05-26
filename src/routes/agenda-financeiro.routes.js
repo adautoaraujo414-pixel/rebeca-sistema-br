@@ -208,3 +208,108 @@ router.delete('/fila-encaixe/:id', authAgenda, async (req, res) => {
 });
 
 module.exports = router;
+
+// ── EXPORT PDF FINANCEIRO ─────────────────────────────────────────
+router.get('/financeiro/exportar-pdf', authAgenda, async (req, res) => {
+  try {
+    const { mes, ano } = req.query;
+    const m = parseInt(mes) || new Date().getMonth() + 1;
+    const a = parseInt(ano) || new Date().getFullYear();
+    const inicio = new Date(a, m - 1, 1);
+    const fim = new Date(a, m, 0, 23, 59, 59);
+    const mongoose = require('mongoose');
+    const _sid = String(req.adminId);
+    const _oid = mongoose.Types.ObjectId.isValid(_sid) ? new mongoose.Types.ObjectId(_sid) : null;
+    const _f = _oid ? { $or: [{ adminId: _oid }, { adminId: _sid }] } : { adminId: req.adminId };
+
+    const [receitas, despesas, admin] = await Promise.all([
+      FinanceiroAgenda.find({ ..._f, tipo: 'receita', data: { $gte: inicio, $lte: fim } }).sort({ data: 1 }),
+      FinanceiroAgenda.find({ ..._f, tipo: 'despesa', data: { $gte: inicio, $lte: fim } }).sort({ data: 1 }),
+      AdminAgenda.findById(req.adminId).select('nome nomeNegocio email')
+    ]);
+
+    const totalR = receitas.reduce((s, r) => s + r.valor, 0);
+    const totalD = despesas.reduce((s, d) => s + d.valor, 0);
+    const lucro  = totalR - totalD;
+    const meses  = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+    // Agrupar despesas por categoria
+    const porCat = {};
+    despesas.forEach(d => {
+      const c = d.categoria || 'outros';
+      if (!porCat[c]) porCat[c] = { total: 0, itens: [] };
+      porCat[c].total += d.valor;
+      porCat[c].itens.push(d);
+    });
+
+    const fmt = v => `R$ ${v.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.')}`;
+    const fmtData = d => new Date(d).toLocaleDateString('pt-BR');
+
+    const catRows = Object.entries(porCat).sort((a,b) => b[1].total - a[1].total).map(([cat, dados]) => `
+      <tr class="cat-header">
+        <td colspan="3"><strong>📂 ${cat.toUpperCase()}</strong></td>
+        <td><strong>${fmt(dados.total)}</strong></td>
+      </tr>
+      ${dados.itens.map(i => `<tr class="item-row">
+        <td style="padding-left:20px">${fmtData(i.data)}</td>
+        <td colspan="2">${i.descricao || '-'}</td>
+        <td>${fmt(i.valor)}</td>
+      </tr>`).join('')}
+    `).join('');
+
+    const receitaRows = receitas.map(r => `<tr class="item-row">
+      <td>${fmtData(r.data)}</td>
+      <td>${r.descricao || '-'}</td>
+      <td>${r.categoria || '-'}</td>
+      <td>${fmt(r.valor)}</td>
+    </tr>`).join('');
+
+    const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+<title>Relatório Financeiro — ${meses[m-1]} ${a}</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: Arial, sans-serif; font-size: 13px; color: #1a1a1a; padding: 30px; }
+  h1 { font-size: 22px; color: #6c47ff; margin-bottom: 4px; }
+  .sub { color: #666; font-size: 13px; margin-bottom: 24px; }
+  .cards { display: flex; gap: 16px; margin-bottom: 28px; }
+  .card { flex: 1; border-radius: 10px; padding: 16px 20px; }
+  .card.rec { background: #e8faf0; border-left: 4px solid #22c55e; }
+  .card.des { background: #fef2f2; border-left: 4px solid #ef4444; }
+  .card.luc { background: #f0f4ff; border-left: 4px solid #6c47ff; }
+  .card-label { font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: .5px; }
+  .card-val { font-size: 22px; font-weight: bold; margin-top: 4px; }
+  .card.rec .card-val { color: #16a34a; }
+  .card.des .card-val { color: #dc2626; }
+  .card.luc .card-val { color: #6c47ff; }
+  h2 { font-size: 15px; color: #333; margin: 24px 0 10px; border-bottom: 2px solid #eee; padding-bottom: 6px; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
+  th { background: #f5f5f5; text-align: left; padding: 8px 10px; font-size: 12px; color: #555; }
+  td { padding: 7px 10px; border-bottom: 1px solid #f0f0f0; }
+  .cat-header td { background: #f8f6ff; color: #6c47ff; padding: 8px 10px; }
+  .item-row td { font-size: 12px; color: #444; }
+  .footer { margin-top: 30px; text-align: center; font-size: 11px; color: #aaa; }
+  @media print { body { padding: 10px; } }
+</style></head><body>
+<h1>📊 Relatório Financeiro</h1>
+<div class="sub">${admin?.nomeNegocio || admin?.nome || ''} — ${meses[m-1]} de ${a}</div>
+
+<div class="cards">
+  <div class="card rec"><div class="card-label">Total Receitas</div><div class="card-val">${fmt(totalR)}</div><div style="font-size:11px;color:#666;margin-top:4px">${receitas.length} lançamento(s)</div></div>
+  <div class="card des"><div class="card-label">Total Despesas</div><div class="card-val">${fmt(totalD)}</div><div style="font-size:11px;color:#666;margin-top:4px">${despesas.length} lançamento(s)</div></div>
+  <div class="card luc"><div class="card-label">Lucro Líquido</div><div class="card-val">${fmt(lucro)}</div><div style="font-size:11px;color:#666;margin-top:4px">${lucro >= 0 ? '✅ Positivo' : '⚠️ Negativo'}</div></div>
+</div>
+
+<h2>💸 Despesas por Categoria</h2>
+<table><thead><tr><th>Data</th><th>Descrição</th><th></th><th>Valor</th></tr></thead><tbody>${catRows || '<tr><td colspan="4" style="text-align:center;color:#999;padding:20px">Nenhuma despesa</td></tr>'}</tbody></table>
+
+<h2>💰 Receitas</h2>
+<table><thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Valor</th></tr></thead><tbody>${receitaRows || '<tr><td colspan="4" style="text-align:center;color:#999;padding:20px">Nenhuma receita</td></tr>'}</tbody></table>
+
+<div class="footer">Gerado em ${new Date().toLocaleString('pt-BR')} — Sistema Rebeca</div>
+</body></html>`;
+
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('Content-Disposition', `inline; filename="financeiro-${a}-${String(m).padStart(2,'0')}.html"`);
+    res.send(html);
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
