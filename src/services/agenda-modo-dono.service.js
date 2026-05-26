@@ -77,12 +77,12 @@ function _extrairCategoria(txt, categoriaIntent) {
 }
 // ── Extrair descrição do texto da mensagem ───────────────────────────────────
 function _extrairDescricao(txt, tipo) {
-  const _stopWords = /^(rebeca|oi|ola|por favor|pfv|pf|ai|la|registra|anota|coloca|marca|manda|faz|me|um|uma|de|do|da|em|no|na|pra|para|pro|que|e|com|sem|mais|menos|so|ja|agora|hoje|ontem|amanha|reais|real|rs|r$|d+)$/i;
+  const _stopWords = /^(rebeca|oi|ola|por favor|pfv|pf|ai|la|registra|anota|coloca|marca|manda|faz|me|um|uma|de|do|da|em|no|na|pra|para|pro|que|e|com|sem|mais|menos|so|ja|agora|hoje|ontem|amanha|reais|real|rs)$/i;
   // Tenta pegar texto após verbo/tipo
-  const mAposTipo = txt.match(/(?:recebi|entrou|caiu|ganhei|vendi|fiz|paguei|gastei|saiu|comprei|registra|anota|coloca|entrada|saida|despesa|receita)s+(?:des+)?(?:r$s*)?d*[.,]?d*s*(?:reais?)?s*(.+)/i);
+  const mAposTipo = txt.match(/(?:recebi|entrou|caiu|ganhei|vendi|fiz|paguei|gastei|saiu|comprei|registra|anota|coloca|entrada|saida|despesa|receita)\s+(?:de\s+)?(?:r\$\s*)?\d*[.,]?\d*\s*(?:reais?)?\s*(.+)/i);
   if (mAposTipo && mAposTipo[1] && !_stopWords.test(mAposTipo[1].trim())) return mAposTipo[1].trim();
   // Tenta pegar palavras que não são números nem stopwords
-  const palavras = txt.split(/s+/).filter(p => !_stopWords.test(p) && !/^d+([.,]d+)?$/.test(p) && p.length > 2);
+  const palavras = txt.split(/\s+/).filter(p => !_stopWords.test(p) && !/^\d+([.,]\d+)?$/.test(p) && p.length > 2);
   if (palavras.length) return palavras.join(' ');
   // Fallback
   return tipo === 'receita' ? 'Entrada via WhatsApp' : 'Gasto via WhatsApp';
