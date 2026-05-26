@@ -130,8 +130,8 @@ router.get('/contas-pagar', authAgenda, async (req, res) => {
     const { mes, ano, pago } = req.query;
     const query = { adminId: req.adminId };
     if (mes && ano) {
-      const inicio = new Date(parseInt(ano), parseInt(mes) - 1, 1);
-      const fim = new Date(parseInt(ano), parseInt(mes), 0, 23, 59, 59);
+      const inicio = new Date(Date.UTC(parseInt(ano), parseInt(mes) - 1, 1, 3, 0, 0));
+      const fim    = new Date(Date.UTC(parseInt(ano), parseInt(mes), 0, 26, 59, 59));
       query.vencimento = { $gte: inicio, $lte: fim };
     }
     if (pago !== undefined) query.pago = pago === 'true';
