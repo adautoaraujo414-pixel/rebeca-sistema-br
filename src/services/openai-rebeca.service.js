@@ -168,8 +168,11 @@ const OpenAIRebecaService = {
                 formData.append('temperature', '0');
                 // Prompt adaptado por contexto (delivery vs corridas)
                 const _isDelivery = contextoConversa && contextoConversa.tipo === 'delivery';
+                const _isAgenda = contextoConversa && contextoConversa.tipo === 'agenda';
                 const _promptWhisper = _isDelivery
                     ? 'Transcrição fiel em português brasileiro. Contexto: delivery e pedidos de comida. ALIMENTOS: arroz, feijão, frango, carne, peixe, salada, macarrão, sopa, marmita, prato feito, PF. PERSONALIZAÇÕES: sem cebola, sem alho, sem pimenta, mais arroz, menos sal, bem passado, mal passado, sem molho, à parte. REGRAS: transcreva exatamente o que foi dito.'
+                    : _isAgenda
+                    ? 'Transcrição fiel em português brasileiro. Contexto: assistente financeira e de agenda para salão/barbearia. FINANCEIRO: registra, anota, saída, entrada, gastei, paguei, recebi, ganhei, reais, combustível, gasolina, aluguel, luz, água, internet, mercado, farmácia, manicure, pedicure, escova, tintura, botox, progressiva, sobrancelha. AGENDA: agenda, encaixa, marca horário, cliente, amanhã, hoje, às, horas. LEMBRETES: me lembra, lembrete, não me deixa esquecer, daqui, minutos. REGRAS: transcreva exatamente o que foi dito, preserve números e valores monetários.'
                     : 'Transcrição fiel em português brasileiro. Contexto: corridas e transporte urbano. LOGRADOUROS: Rua, Avenida, Av, Travessa, Alameda, Estrada, Rodovia, Beco, Praça, Vila, Quadra, Setor, Conjunto. REGRAS: (1) Transcreva EXATAMENTE. (2) Siglas letra por letra. (3) Não invente palavras.';
                 formData.append('prompt', _promptWhisper);
                                 const resp = await axios.post('https://api.openai.com/v1/audio/transcriptions', formData, {
