@@ -75,8 +75,16 @@ function _extrairCategoria(txt, categoriaIntent) {
   if (/servico|manutencao|conserto|reparo|instalacao/.test(t)) return 'servicos';
   return 'outros';
 }
-  if (mAposTipo && mAposTipo[1] && !_stopWords.test(mAposTipo[1])) return mAposTipo[1].trim();
-  // 5. Fallback
+// ── Extrair descrição do texto da mensagem ───────────────────────────────────
+function _extrairDescricao(txt, tipo) {
+  const _stopWords = /^(rebeca|oi|ola|por favor|pfv|pf|ai|la|registra|anota|coloca|marca|manda|faz|me|um|uma|de|do|da|em|no|na|pra|para|pro|que|e|com|sem|mais|menos|so|ja|agora|hoje|ontem|amanha|reais|real|rs|r$|d+)$/i;
+  // Tenta pegar texto após verbo/tipo
+  const mAposTipo = txt.match(/(?:recebi|entrou|caiu|ganhei|vendi|fiz|paguei|gastei|saiu|comprei|registra|anota|coloca|entrada|saida|despesa|receita)s+(?:des+)?(?:r$s*)?d*[.,]?d*s*(?:reais?)?s*(.+)/i);
+  if (mAposTipo && mAposTipo[1] && !_stopWords.test(mAposTipo[1].trim())) return mAposTipo[1].trim();
+  // Tenta pegar palavras que não são números nem stopwords
+  const palavras = txt.split(/s+/).filter(p => !_stopWords.test(p) && !/^d+([.,]d+)?$/.test(p) && p.length > 2);
+  if (palavras.length) return palavras.join(' ');
+  // Fallback
   return tipo === 'receita' ? 'Entrada via WhatsApp' : 'Gasto via WhatsApp';
 }
 
@@ -446,6 +454,21 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
     const _nlpCat = nlp.categoria;
     const _nlpInt = nlp.intencao;
 
+    // Anti-conflito: servico de beleza + valor sem verbo financeiro = ambiguo (ex: "cabelo 50")
+    const _SVCS = ['cabelo','corte','escova','tintura','manicure','pedicure','sobrancelha','depilacao','progressiva','botox','hidratacao','massagem','maquiagem','cilios','barba','barbearia','penteado'];
+    const _temSvcBeleza = _SVCS.some(s => nlp.normalizado.includes(s));
+    const _temVerbFin = /gastei|paguei|saiu|debitou|saida|recebi|entrou/.test(nlp.normalizado);
+    const _temHoraNlp = /\d{1,2}\s*h\b|\d{1,2}:\d{2}/.test(nlp.normalizado);
+    const _nomeM2 = msg.match(/\b[A-Z][a-z]{2,}/);
+    const _skip = ['Rebeca','Segunda','Terca','Quarta','Quinta','Sexta','Sabado','Domingo','Hoje','Amanha','Ontem'];
+    const _temNome2 = _nomeM2 && !_skip.includes(_nomeM2[0]);
+    if (_nlpVal && _temSvcBeleza && !_temVerbFin && !_temHoraNlp) {
+      const _resp = _temNome2
+        ? _chefe() + ', e pra agendar ' + _nomeM2[0] + ' ou registrar um gasto de R$ ' + _nlpVal.toFixed(2) + '? Me fala "agenda" ou "gasto" 😊'
+        : _chefe() + ', voce quis registrar um gasto de R$ ' + _nlpVal.toFixed(2) + ' em ' + _nlpCat + '? Confirma "sim" ou diz "agenda [nome] [horario]" 😊';
+      await responder(_resp);
+      return true;
+    }
     if (_nlpVal && (_nlpInt === 'saida' || _nlpInt === 'saida_ambigua')) {
       const _descNlp = _extrairDescricao(msg, 'despesa');
       const _catFinal = _nlpCat !== 'outros' ? _nlpCat : _extrairCategoria(msg);
@@ -488,7 +511,6 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
       return true;
     }
   }
-  if (/\bregistra\b.*\bgasto\b|\bmarca\b.*\bgasto\b|\banota\b.*\bgasto\b|\bmarca\b.*\bdespesa\b|\bregistra\b.*\bdespesa\b|\bpaguei\b|\bcomprei\b|\bsa\xc3\xadda\b|\bsaida\b|\bdespesa\b|\bgastei\b|\btive\s\*gasto\b|\bsaiu\b|\bdebita\b|\bdescontou\b|\baluguel\b|\bluz\b|\bagua\b|\bcombust[\xc3\xad\xed]vel\b|\bgasolina\b|\buber\b|\binternet\b|\baliment[ao]\b|\blanche\b|\bcaf[\xc3\xa9\xe9]\b|\bmaterial\b|\bequipamento\b|\bcabeleirei\b|\bbarbearia\b|\bfarm\xc3\xa1cia\b|\bfarmacias\b|\bacademia\b|\bm\xc3\xa9dico\b|\bdentista\b|\bescola\b|\bcurso\b|\bcinema\b|\brestaurante\b|\btaxi\b|\bt\xc3\xa1xi\b|\bposto\b|\bpadaria\b|\bmercado\b|\bsupermercado\b|\bcondom\xc3\xadnio\b|\bfornecedor\b|\bsalario\b|\bimposto\b/i.test(msgL) && !/\bquanto\b/i.test(msgL)) {
   if (/\bregistra\b.*\bgasto\b|\bmarca\b.*\bgasto\b|\banota\b.*\bgasto\b|\bmarca\b.*\bdespesa\b|\bregistra\b.*\bdespesa\b|\bpaguei\b|\bcomprei\b|\bsaída\b|\bsaida\b|\bdespesa\b|\bgastei\b|\btive\s*gasto\b|\bsaiu\b|\bdebita\b|\bdescontou\b|\baluguel\b|\bluz\b|\bagua\b|\bcombust[ií]vel\b|\bgasolina\b|\buber\b|\binternet\b|\baliment[ao]\b|\blanche\b|\bcaf[eé]\b|\bmaterial\b|\bequipamento\b/i.test(msgL) && !/\bquanto\b/i.test(msgL)) {
     const _msgLimpaS = msg.replace(/[?!]+$/, '').trim();
     const val = _parsarValor(_msgLimpaS);
