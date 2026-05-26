@@ -207,7 +207,6 @@ router.delete('/fila-encaixe/:id', authAgenda, async (req, res) => {
   } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
-module.exports = router;
 
 // ── EXPORT PDF FINANCEIRO ─────────────────────────────────────────
 router.get('/financeiro/exportar-pdf', authAgenda, async (req, res) => {
@@ -313,3 +312,5 @@ router.get('/financeiro/exportar-pdf', authAgenda, async (req, res) => {
     res.send(html);
   } catch(e) { res.status(500).json({ erro: e.message }); }
 });
+
+module.exports = router;
