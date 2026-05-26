@@ -132,6 +132,7 @@ async function transcreverAudio(audioId) {
     form.append('file', audioBuffer, { filename: 'audio.ogg', contentType: 'audio/ogg' });
     form.append('model', 'whisper-1');
     form.append('language', 'pt');
+    form.append('prompt', 'Rebeca, agenda, agendamento, cliente, horário, serviço, entrada, saída, pix, real, reais, cabeleireiro, farmácia, mercado, academia, gastei, recebi, cancela, confirma, bloqueia, quanto fiz hoje, resumo do dia');
 
     const whisperR = await axios.post(
       'https://api.openai.com/v1/audio/transcriptions',
