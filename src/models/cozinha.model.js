@@ -26,7 +26,28 @@ const impressoraCozinhaSchema = new mongoose.Schema({
   criadoEm:        { type: Date, default: Date.now }
 });
 
+
+
+// ── CONTADOR GLOBAL DE PEDIDOS ────────────────────────────────────
+const contadorPedidoSchema = new mongoose.Schema({
+  adminId:  { type: String, required: true, unique: true },
+  ultimo:   { type: Number, default: 0 }
+});
+const ContadorPedido = mongoose.models.ContadorPedido || mongoose.model('ContadorPedido', contadorPedidoSchema);
+
+// ── ADMIN COZINHA (independente do AdminAgenda) ──────────────────
+const adminCozinhaSchema = new mongoose.Schema({
+  nomeNegocio: { type: String, required: true },
+  usuario:     { type: String, required: true, unique: true },
+  senha:       { type: String, required: true },
+  ativo:       { type: Boolean, default: true },
+  criadoEm:   { type: Date, default: Date.now }
+});
+const AdminCozinha = mongoose.models.AdminCozinha || mongoose.model('AdminCozinha', adminCozinhaSchema);
+
 module.exports = {
+  AdminCozinha,
+  ContadorPedido,
   ClienteCozinha:    mongoose.model('ClienteCozinha', clienteCozinhaSchema),
   ImpressoraCozinha: mongoose.model('ImpressoraCozinha', impressoraCozinhaSchema)
 };

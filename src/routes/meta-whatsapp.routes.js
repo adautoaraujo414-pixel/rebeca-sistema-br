@@ -172,7 +172,7 @@ async function processarComando(telefone, texto, msgId) {
           console.log('[Cozinha] Pedido de', cliente.nome, '→ impressora');
           const imp = await ImpressoraCozinha.findOne({ adminId: String(admin._id), ativo: true });
           if (imp) {
-            await imprimirPedido({
+            await imprimirPedido({ adminId: String(admin._id),
               ip: imp.ip, porta: imp.porta,
               texto, mesa: cliente.mesa,
               telefone: cliente.nome || telefone

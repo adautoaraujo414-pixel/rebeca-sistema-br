@@ -104,10 +104,24 @@ td{padding:9px 8px;border-bottom:1px solid #1a1a1a}
     </div>
   </div>
 
+  <!-- Card criar admin -->
+  <div class="card" id="cardCriarAdmin" style="display:none;border-color:#f59e0b40">
+    <h2>➕ Cadastrar Restaurante</h2>
+    <div class="row">
+      <div style="flex:2"><label>Nome do Restaurante</label><input id="newNome" placeholder="Ex: Churrascaria do João"></div>
+      <div style="flex:1"><label>Usuário</label><input id="newUsuario" placeholder="joao123"></div>
+      <div style="flex:1"><label>Senha</label><input id="newSenha" type="password" placeholder="senha123"></div>
+    </div>
+    <button class="btn btn-green" onclick="cadastrarAdmin()" style="margin-top:10px">✅ Criar Restaurante</button>
+  </div>
+
   <div class="card">
     <h2>⚙️ Restaurante</h2>
     <label>Selecionar admin</label>
-    <select id="selAdmin"><option value="">Carregando...</option></select>
+    <div style="display:flex;gap:8px;align-items:center">
+      <select id="selAdmin" onchange="selecionarAdmin(this.value)" style="flex:1"><option value="">Carregando...</option></select>
+      <button class="btn btn-gray" onclick="toggleCriarAdmin()" title="Novo restaurante" style="white-space:nowrap">➕ Novo</button>
+    </div>
   </div>
 
   <!-- Card download servidor local -->
@@ -254,6 +268,38 @@ function toast(msg, ok=true) {
 }
 
 // ── ADMINS ───────────────────────────────────────────────────────
+function toggleCriarAdmin() {
+  const card = document.getElementById('cardCriarAdmin');
+  card.style.display = card.style.display === 'none' ? 'block' : 'none';
+}
+
+async function cadastrarAdmin() {
+  const nomeNegocio = document.getElementById('newNome').value.trim();
+  const usuario     = document.getElementById('newUsuario').value.trim();
+  const senha       = document.getElementById('newSenha').value.trim();
+  if (!nomeNegocio || !usuario || !senha) return toast('Preencha todos os campos', false);
+  const r = await fetch(BASE+'/admins', { method:'POST', headers: headers(), body: JSON.stringify({nomeNegocio, usuario, senha}) });
+  const d = await r.json();
+  if (d.sucesso) {
+    toast('✅ Restaurante criado!');
+    document.getElementById('cardCriarAdmin').style.display = 'none';
+    document.getElementById('newNome').value = '';
+    document.getElementById('newUsuario').value = '';
+    document.getElementById('newSenha').value = '';
+    await carregarAdmins();
+  } else {
+    toast(d.erro || 'Erro', false);
+  }
+}
+
+function selecionarAdmin(val) {
+  adminId = val;
+  if (adminId) {
+    carregarImpressora();
+    carregarClientes();
+  }
+}
+
 async function carregarAdmins() {
   try {
     const r = await fetch(BASE+'/admins?token='+TOKEN);

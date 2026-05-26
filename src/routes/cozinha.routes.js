@@ -4,6 +4,7 @@ const router  = express.Router();
 const { ClienteCozinha, ImpressoraCozinha } = require('../models/cozinha.model');
 const { imprimirPedido } = require('../services/cozinha-impressora.service');
 const { AdminAgenda } = require('../models/AgendaServico');
+const { AdminCozinha, ImpressoraCozinha, ClienteCozinha } = require('../models/cozinha.model');
 
 // ── AUTH simples por token ────────────────────────────────────────
 const COZINHA_TOKEN = process.env.COZINHA_TOKEN || 'cozinha-rebeca-2026';
@@ -77,8 +78,22 @@ router.delete('/clientes/:adminId/:id', auth, async (req, res) => {
 
 // ── LISTAR ADMINS (para o painel saber o adminId) ────────────────
 router.get('/admins', auth, async (req, res) => {
-  const admins = await AdminAgenda.find({ ativo: true }).select('_id nomeNegocio whatsapp email').lean();
+  const admins = await AdminCozinha.find({ ativo: true }).select('_id nomeNegocio usuario').lean();
   res.json({ sucesso: true, admins });
+});
+
+// Cadastrar novo admin da cozinha
+router.post('/admins', auth, async (req, res) => {
+  try {
+    const { nomeNegocio, usuario, senha } = req.body;
+    if (!nomeNegocio || !usuario || !senha) return res.status(400).json({ erro: 'Preencha todos os campos' });
+    const existe = await AdminCozinha.findOne({ usuario });
+    if (existe) return res.status(409).json({ erro: 'Usuário já existe' });
+    const admin = await AdminCozinha.create({ nomeNegocio, usuario, senha });
+    res.json({ sucesso: true, admin: { _id: admin._id, nomeNegocio: admin.nomeNegocio, usuario: admin.usuario } });
+  } catch(e) {
+    res.status(500).json({ erro: e.message });
+  }
 });
 
 // Servir arquivos do painel

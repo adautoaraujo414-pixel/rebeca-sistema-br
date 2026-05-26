@@ -9,7 +9,25 @@ const TOKEN = process.env.COZINHA_TOKEN || 'cozinha-rebeca-2026';
  * Se o IP contiver ":" com porta 3333 ou começar com http → servidor local Node
  * Caso contrário → conexão TCP direta (impressora na mesma rede do servidor)
  */
-async function imprimirPedido({ ip, porta = 9100, texto, mesa = '', telefone = '', hora = '' }) {
+async function proximoNumeroPedido(adminId) {
+  try {
+    const doc = await ContadorPedido.findOneAndUpdate(
+      { adminId },
+      { $inc: { ultimo: 1 } },
+      { upsert: true, new: true }
+    );
+    return doc.ultimo;
+  } catch(e) {
+    return 0;
+  }
+}
+
+async function imprimirPedido({ ip, porta = 9100, texto, mesa = '', telefone = '', hora = '', adminId = '' }) {
+  // Numerar o pedido
+  let numPedido = 0;
+  if (adminId) numPedido = await proximoNumeroPedido(adminId);
+  const cabecalho = numPedido > 0 ? `*** PEDIDO #${numPedido} ***\n` : '';
+  texto = cabecalho + texto;
   // Modo servidor local (PC da cozinha)
   const isServidorLocal = String(porta) === '3333' || ip.startsWith('http');
   if (isServidorLocal) {
