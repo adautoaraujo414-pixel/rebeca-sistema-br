@@ -16,6 +16,20 @@ function normalizar(txt) {
     .trim();
 }
 
+// ── 1b. SERVIÇOS / COMPROMISSOS — palavras que indicam lembrete, NÃO financeiro ──
+const SERVICOS_AGENDA = new Set([
+  'dentista','medico','medica','consulta','exame','fisio','psicologo','psicóloga',
+  'cabelo','cabelereiro','cabeleireiro','cabeleireira','corte','escova','hidratacao',
+  'manicure','pedicure','depilacao','sobrancelha','unhas',
+  'reuniao','reunião','meeting','entrevista','apresentacao','palestra',
+  'academia','treino','aula','curso','escola','faculdade',
+  'aniversario','aniversário','festa','casamento','formatura',
+  'banco','cartorio','cartório','prefeitura','consulado',
+  'viagem','voo','vôo','embarque','hotel',
+  'compras','mercado','feira',
+  'veterinario','veterinária','pet',
+]);
+
 // ── 2. DICIONÁRIO DE SINÔNIMOS / ALIASES ────────────────────────────────────
 const SINONIMOS = {
   // verbos de saída
@@ -118,10 +132,30 @@ function detectarIntencao(txt) {
     return 'consulta';
   }
 
-  // Lembrete / agenda
-  if (/lembra|lembrete|agenda|marca.*horario|horario.*marca|amanha|segunda|terca|quarta|quinta|sexta|sabado|domingo/.test(n) &&
-      !/gastei|saiu|paguei|recebi|entrou|saida|entrada/.test(n)) {
+  // Lembrete explícito
+  if (/lembra|lembrete|nao me deixa esquecer|anota ai/.test(n) &&
+      !/gastei|saiu|paguei|recebi|entrou/.test(n)) {
     return 'lembrete';
+  }
+
+  // Lembrete IMPLÍCITO: dia/horário + serviço/compromisso conhecido
+  // ex: "amanha dentista 10", "sexta cabelo joao", "segunda 9 medico"
+  const temDia = /amanha|amanhã|hoje|segunda|terca|terça|quarta|quinta|sexta|sabado|sábado|domingo|\d{1,2}h|\d{1,2}:\d{2}/.test(n);
+  const temServico = n.split(/\s+/).some(p => SERVICOS_AGENDA.has(p));
+  if (temDia && temServico && !/gastei|saiu|paguei|recebi|entrou|saida|entrada/.test(n)) {
+    return 'lembrete';
+  }
+
+  // Lembrete implícito: dia + hora (sem verbo financeiro) — ex: "amanha 10h", "segunda 14h"
+  // Lembrete implícito: serviço + qualquer coisa — já coberto acima
+  const temHora = /\d{1,2}\s*h\b|\d{1,2}:\d{2}/.test(n);
+  if (temDia && temHora && !/gastei|saiu|paguei|recebi|entrou|saida|entrada|reais/.test(n)) {
+    return "lembrete";
+  }
+
+  // Serviço conhecido + valor sem verbo financeiro = lembrete (ex: "dentista 200" = horário 200? não, mas evita registrar como saída)
+  if (temServico && !/gastei|saiu|paguei|recebi|entrou|saida|entrada/.test(n)) {
+    return "lembrete";
   }
 
   // Detectar intenção financeira por verbos de saída
@@ -163,7 +197,19 @@ function parsear(txt) {
   const categoria = extrairCategoria(txt);
   const normalizado = normalizar(txt);
 
-  return { intencao, valor, categoria, normalizado, original: txt };
+  // Extrair texto do compromisso para lembrete
+  let textoLembrete = null;
+  if (intencao === 'lembrete') {
+    textoLembrete = normalizado
+      .replace(/\b(amanha|hoje|segunda|terca|quarta|quinta|sexta|sabado|domingo)([-]feira)?\b/g, '')
+      .replace(/\b\d{1,2}h(\d{2})?\b/g, '')
+      .replace(/\b\d{1,2}:\d{2}\b/g, '')
+      .replace(/\b\d+\b/g, '')
+      .replace(/\b(reais|me lembra|lembrete|agenda|marca|de|pra|para|pro|com|as|no|na|um|uma)\b/g, '')
+      .replace(/\s+/g, ' ').trim() || null;
+  }
+
+  return { intencao, valor, categoria, normalizado, original: txt, textoLembrete };
 }
 
 // ── 7. TESTES INTERNOS ───────────────────────────────────────────────────────

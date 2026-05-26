@@ -416,6 +416,32 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
   // ── CAMADA NLP SEMÂNTICA — entende intenção mesmo com erros/áudio distorcido ──
   {
     const nlp = NLP.parsear(msg);
+
+    // Lembrete implícito: "amanha dentista 10", "segunda 14h joao", "amanha 10h"
+    if (nlp.intencao === 'lembrete') {
+      const _hora = _parseHora(msg) || _parseHora(nlp.normalizado);
+      const _dia  = _parseDia(msg)  || _parseDia(nlp.normalizado);
+      const _txt  = nlp.textoLembrete || msg.trim();
+
+      if (_hora && _dia) {
+        const dataEvento = new Date(_dia);
+        dataEvento.setHours(_hora.h, _hora.min, 0, 0);
+        const dataAviso  = new Date(dataEvento.getTime() - 30 * 60000);
+        await AdminAgenda.findByIdAndUpdate(adminObjId, {
+          $push: { 'config.lembretes': { texto: _txt, dataEvento, dataAviso, enviado: false, criadoEm: new Date() } }
+        });
+        const _diaStr = dataEvento.toLocaleDateString('pt-BR', { weekday:'long', day:'numeric', month:'long' });
+        await responder(`Anotei, ${_chefe()}! 🔔\n\n*${_txt}* — ${_diaStr} às ${_fmtHora(dataEvento)}\n\nTe aviso 30 minutos antes! 💙`);
+        return true;
+      }
+      if (_dia && !_hora) {
+        await AdminAgenda.findByIdAndUpdate(adminObjId, {
+          $push: { 'config.lembretes': { texto: _txt, dataEvento: null, dataAviso: null, enviado: false, criadoEm: new Date() } }
+        });
+        await responder(`Anotei o compromisso: *${_txt}*! \n\nQue horário você quer que eu te lembre? ⏰`);
+        return true;
+      }
+    }
     const _nlpVal = nlp.valor;
     const _nlpCat = nlp.categoria;
     const _nlpInt = nlp.intencao;
