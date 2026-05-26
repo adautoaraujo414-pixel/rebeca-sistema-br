@@ -412,6 +412,21 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
     return true;
   }
 
+  // Padrao informal: "50 reais cabeleireiro" ou "cabeleireiro 50" (valor + origem sem palavra-chave)
+  if (/(?:\d[\d.,]*\s*(?:reais?|R\$)?\s*(?:cabeleirei\w*|barbearia|barbeiro|farm[aá]cia|academia|m[eé]dico|dentista|escola|curso|cinema|restaurante|taxi|t[aá]xi|posto|padaria|mercado|supermercado|ifood|rappi|uber|salao|manicure|pedicure|est[eé]tica|depila|sobrancelha|lanche|comida|almoco|janta|caf[eé]|condominio|fornecedor|material|equipamento|limpeza|higiene|servi[cç]o|manutencao|conserto)|(?:cabeleirei\w*|barbearia|barbeiro|farm[aá]cia|academia|m[eé]dico|dentista|escola|curso|cinema|restaurante|taxi|t[aá]xi|posto|padaria|mercado|supermercado|ifood|rappi|uber|salao|manicure|pedicure|lanche|comida|almoco|janta|condominio|fornecedor|material|equipamento|limpeza|servi[cç]o)\s*\d[\d.,]*)/i.test(msgL) && !/\bquanto\b/i.test(msgL)) {
+    const val = _parsarValor(msg);
+    if (val) {
+      const descSaidaI = _extrairDescricao(msg, 'despesa');
+      const catSaidaI  = _extrairCategoria(msg);
+      await FinanceiroAgenda.create({
+        adminId: adminObjId, tipo: 'despesa', valor: val,
+        descricao: descSaidaI, categoria: catSaidaI,
+        data: new Date(), origem: 'whatsapp_dono'
+      });
+      await responder(`Anotado! Saída de R$ ${val.toFixed(2)} em "${catSaidaI}"${descSaidaI !== 'Gasto via WhatsApp' ? ' — '+descSaidaI : ''}. 📝`);
+      return true;
+    }
+  }
   if (/\bregistra\b.*\bgasto\b|\bmarca\b.*\bgasto\b|\banota\b.*\bgasto\b|\bmarca\b.*\bdespesa\b|\bregistra\b.*\bdespesa\b|\bpaguei\b|\bcomprei\b|\bsa\xc3\xadda\b|\bsaida\b|\bdespesa\b|\bgastei\b|\btive\s\*gasto\b|\bsaiu\b|\bdebita\b|\bdescontou\b|\baluguel\b|\bluz\b|\bagua\b|\bcombust[\xc3\xad\xed]vel\b|\bgasolina\b|\buber\b|\binternet\b|\baliment[ao]\b|\blanche\b|\bcaf[\xc3\xa9\xe9]\b|\bmaterial\b|\bequipamento\b|\bcabeleirei\b|\bbarbearia\b|\bfarm\xc3\xa1cia\b|\bfarmacias\b|\bacademia\b|\bm\xc3\xa9dico\b|\bdentista\b|\bescola\b|\bcurso\b|\bcinema\b|\brestaurante\b|\btaxi\b|\bt\xc3\xa1xi\b|\bposto\b|\bpadaria\b|\bmercado\b|\bsupermercado\b|\bcondom\xc3\xadnio\b|\bfornecedor\b|\bsalario\b|\bimposto\b/i.test(msgL) && !/\bquanto\b/i.test(msgL)) {
   if (/\bregistra\b.*\bgasto\b|\bmarca\b.*\bgasto\b|\banota\b.*\bgasto\b|\bmarca\b.*\bdespesa\b|\bregistra\b.*\bdespesa\b|\bpaguei\b|\bcomprei\b|\bsaída\b|\bsaida\b|\bdespesa\b|\bgastei\b|\btive\s*gasto\b|\bsaiu\b|\bdebita\b|\bdescontou\b|\baluguel\b|\bluz\b|\bagua\b|\bcombust[ií]vel\b|\bgasolina\b|\buber\b|\binternet\b|\baliment[ao]\b|\blanche\b|\bcaf[eé]\b|\bmaterial\b|\bequipamento\b/i.test(msgL) && !/\bquanto\b/i.test(msgL)) {
     const _msgLimpaS = msg.replace(/[?!]+$/, '').trim();
