@@ -1,4 +1,8 @@
 const express = require('express');
+
+// Helper UTC-3 Brasil
+function _iniDia(d) { const b = d ? new Date(d) : new Date(); return new Date(Date.UTC(b.getUTCFullYear(), b.getUTCMonth(), b.getUTCDate(), 3, 0, 0, 0)); }
+function _fimDia(d) { const b = d ? new Date(d) : new Date(); return new Date(Date.UTC(b.getUTCFullYear(), b.getUTCMonth(), b.getUTCDate()+1, 2, 59, 59, 999)); }
 const router = express.Router();
 const { AdminAgenda, ClienteAgenda, AgendamentoAgenda, MensagemModeloAgenda, ConexaoClienteAgenda } = require('../models/AgendaServico');
 
@@ -113,7 +117,7 @@ router.get('/sugestoes', authAgenda, async (req, res) => {
   try {
     const adminId = req.adminAgendaId;
     const admin = req.adminAgenda;
-    const hoje = new Date(); hoje.setHours(23,59,59,999);
+    const hoje = _fimDia();
     const corte1 = new Date(Date.now() - 1*24*60*60*1000);
     const corte2 = new Date(Date.now() - 2*24*60*60*1000);
     const corte3 = new Date(Date.now() - 3*24*60*60*1000);
@@ -264,7 +268,7 @@ router.patch('/conexoes/:id/resposta', authAgenda, async (req, res) => {
 router.get('/dashboard-conexao', authAgenda, async (req, res) => {
   try {
     const adminId = req.adminAgendaId;
-    const hoje = new Date(); hoje.setHours(0,0,0,0);
+    const hoje = _iniDia();
     const amanha = new Date(hoje); amanha.setDate(amanha.getDate()+1);
     const corte2 = new Date(Date.now() - 2*24*60*60*1000);
     const corte30 = new Date(Date.now() - 30*24*60*60*1000);

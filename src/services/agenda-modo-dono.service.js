@@ -656,8 +656,8 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
     const servicoM = msg.match(/quanto\s*(?:fiz|faturei|ganhei)\s*(?:de|com|no)\s+([A-Za-zÀ-ú\s]+?)(?:\s*(?:esse|este|no|nesse)\s*m[eê]s|\s*hoje|\s*essa\s*semana|$)/i);
     const servicoBusca = servicoM ? servicoM[1].trim() : null;
     if (servicoBusca) {
-      const ini = new Date(); ini.setDate(1); ini.setHours(0,0,0,0);
-      const fim = new Date(); fim.setHours(23,59,59,999);
+      const _hj659 = new Date(); const ini = new Date(Date.UTC(_hj659.getUTCFullYear(), _hj659.getUTCMonth(), 1, 3, 0, 0));
+      const fim = _fimDia();
       const ags = await AgendamentoAgenda.find({
         adminId: adminObjId,
         nomeServico: { $regex: servicoBusca, $options: 'i' },
@@ -1049,7 +1049,7 @@ ${totalAgs > 0 ? 'Tá saindo bem! 💪' : 'Ainda sem registros esse mês.'}`);
   // ── PRÓXIMO CLIENTE ──────────────────────────────────────────────────────────
   if (/pr[oó]ximo\s*cliente|quem\s*(é\s*)?o\s*pr[oó]ximo|pr[oó]ximo\s*da\s*fila|\bquem\s*[eé]\s*agora\b|\bquem\s*[eé]\s*o\s*seguinte\b|\bagora\s*quem\s*[eé]\b|\btem\s*algu[eé]m\s*agora\b|\bpr[oó]ximo\s*hor[aá]rio\b/i.test(msgL)) {
     const agora = new Date();
-    const fim = new Date(); fim.setHours(23,59,59,999);
+    const fim = _fimDia();
     const ag = await AgendamentoAgenda.findOne({
       adminId: adminObjId, dataHora: { $gte: agora, $lte: fim },
       status: { $in: ['pendente','confirmado'] }
@@ -1074,8 +1074,8 @@ Bora se preparar! 💪`);
 
   // ── AGENDA DA SEMANA ──────────────────────────────────────────────────────
   if (/agenda\s*d[ao]\s*semana|semana\s*toda|essa\s*semana/i.test(msgL)) {
-    const ini = new Date(); ini.setHours(0,0,0,0);
-    const fim = new Date(ini); fim.setDate(fim.getDate() + 7); fim.setHours(23,59,59,999);
+    const ini = _inicioDia();
+    const _fim7 = new Date(ini); _fim7.setUTCDate(_fim7.getUTCDate() + 7); const fim = _fimDia(_fim7);
     const ags = await AgendamentoAgenda.find({
       adminId: adminObjId, dataHora: { $gte: ini, $lte: fim },
       status: { $in: ['pendente','confirmado'] }
@@ -1305,8 +1305,8 @@ Que tal mandar uma mensagem especial pra eles? 💙`);
 
   // ── RESUMO SEMANAL ────────────────────────────────────────────────────────
   if (/resumo\s*d[ao]\s*semana|faturamento\s*d[ao]\s*semana|quanto\s*(fiz|faturei|ganhei|recebi)\s*(essa|na|esta)\s*semana|\bsemana\s*toda\b|\bcomo\s*foi\s*(a\s*)?semana\b|\bbalanço\s*d[ao]\s*semana\b/i.test(msgL)) {
-    const ini = new Date(); ini.setDate(ini.getDate() - 7); ini.setHours(0,0,0,0);
-    const fim = new Date(); fim.setHours(23,59,59,999);
+    const _ini7 = new Date(); _ini7.setUTCDate(_ini7.getUTCDate() - 7); const ini = _inicioDia(_ini7);
+    const fim = _fimDia();
     const lanc = await FinanceiroAgenda.find({ adminId: adminObjId, data: { $gte: ini, $lte: fim } }).lean();
     const entradas = lanc.filter(l=>l.tipo==='receita').reduce((s,l)=>s+l.valor,0);
     const saidas   = lanc.filter(l=>l.tipo==='despesa').reduce((s,l)=>s+l.valor,0);
@@ -1324,8 +1324,8 @@ ${(entradas-saidas)>=0?'Semana boa demais! 🚀':'Semana de aprendizado! Próxim
 
   // ── RESUMO MENSAL ─────────────────────────────────────────────────────────
   if (/resumo\s*d[ao]\s*m[eê]s|faturamento\s*d[ao]\s*m[eê]s|quanto\s*(fiz|faturei|ganhei|recebi)\s*(esse|no|este|do)\s*m[eê]s|\bcomo\s*foi\s*(o\s*)?m[eê]s\b|\bbalanço\s*d[ao]\s*m[eê]s\b|\bfechamento\s*d[ao]\s*m[eê]s\b|\bm[eê]s\s*todo\b/i.test(msgL)) {
-    const ini = new Date(); ini.setDate(1); ini.setHours(0,0,0,0);
-    const fim = new Date(); fim.setHours(23,59,59,999);
+    const _hjM = new Date(); const ini = new Date(Date.UTC(_hjM.getUTCFullYear(), _hjM.getUTCMonth(), 1, 3, 0, 0));
+    const fim = _fimDia();
     const lanc = await FinanceiroAgenda.find({ adminId: adminObjId, data: { $gte: ini, $lte: fim } }).lean();
     const entradas = lanc.filter(l=>l.tipo==='receita').reduce((s,l)=>s+l.valor,0);
     const saidas   = lanc.filter(l=>l.tipo==='despesa').reduce((s,l)=>s+l.valor,0);
@@ -1345,8 +1345,8 @@ ${atend>10?'Esse mês tá voando! 🚀':'Ainda dá tempo de bombar! 💪'}`);
 
   // ── CLIENTES CONFIRMADOS HOJE ─────────────────────────────────────────────
   if (/clientes?\s*(de\s*hoje\s*)?confirmados?|confirmados?\s*hoje/i.test(msgL)) {
-    const ini = new Date(); ini.setHours(0,0,0,0);
-    const fim = new Date(); fim.setHours(23,59,59,999);
+    const ini = _inicioDia();
+    const fim = _fimDia();
     const ags = await AgendamentoAgenda.find({
       adminId: adminObjId, dataHora: { $gte: ini, $lte: fim }, status: 'confirmado'
     }).sort({ dataHora: 1 }).lean();
@@ -1564,11 +1564,12 @@ ${total>5?'Tá crescendo muito! Continua assim! 🚀':'Todo cliente novo é uma 
     const { ClienteAgenda, RetornoAgenda } = require('../models/AgendaServico');
 
     const hoje = new Date();
-    const ini  = new Date(hoje); ini.setHours(0,0,0,0);
-    const fim  = new Date(hoje); fim.setHours(23,59,59,999);
-    const iniAmanha = new Date(hoje); iniAmanha.setDate(iniAmanha.getDate()+1); iniAmanha.setHours(0,0,0,0);
-    const fimAmanha = new Date(hoje); fimAmanha.setDate(fimAmanha.getDate()+1); fimAmanha.setHours(23,59,59,999);
-    const iniSem = new Date(hoje); iniSem.setDate(iniSem.getDate()-6); iniSem.setHours(0,0,0,0);
+    const ini  = _inicioDia(hoje);
+    const fim  = _fimDia(hoje);
+    const _am = new Date(hoje); _am.setUTCDate(_am.getUTCDate()+1);
+    const iniAmanha = _inicioDia(_am); const fimAmanha = _fimDia(_am);
+    const _s6 = new Date(hoje); _s6.setUTCDate(_s6.getUTCDate()-6);
+    const iniSem = _inicioDia(_s6);
 
     const [agsHoje, agsAmanha, lancHoje, lancSemana, lembretes, totalClientes, retornosPend] = await Promise.all([
       AgendamentoAgenda.find({ adminId: adminObjId, dataHora: { $gte: ini, $lte: fim }, status: { $in: ['pendente','confirmado'] } }).sort({ dataHora: 1 }).lean(),
@@ -1693,8 +1694,8 @@ async function notificarDonoNovoAgendamento(adminId, dadosAg) {
 
     const dataHora = new Date(dadosAg.dataHora);
     // Buscar total da semana para contexto
-    const iniSem = new Date(); iniSem.setDate(iniSem.getDate() - iniSem.getDay()); iniSem.setHours(0,0,0,0);
-    const fimSem = new Date(); fimSem.setHours(23,59,59,999);
+    const _dom = new Date(); _dom.setUTCDate(_dom.getUTCDate() - _dom.getUTCDay()); const iniSem = _inicioDia(_dom);
+    const fimSem = _fimDia();
     const totalSemana = await AgendamentoAgenda.countDocuments({
       adminId, dataHora: { $gte: iniSem, $lte: fimSem },
       status: { $in: ['pendente','confirmado','concluido'] }

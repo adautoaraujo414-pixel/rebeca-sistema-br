@@ -1,4 +1,8 @@
 const express = require('express');
+
+// Helper UTC-3 Brasil
+function _iniDia(d) { const b = d ? new Date(d) : new Date(); return new Date(Date.UTC(b.getUTCFullYear(), b.getUTCMonth(), b.getUTCDate(), 3, 0, 0, 0)); }
+function _fimDia(d) { const b = d ? new Date(d) : new Date(); return new Date(Date.UTC(b.getUTCFullYear(), b.getUTCMonth(), b.getUTCDate()+1, 2, 59, 59, 999)); }
 const router = express.Router();
 const webpush = require('web-push');
 const cron = require('node-cron');
@@ -123,8 +127,8 @@ cron.schedule('0 8 * * *', async () => {
     const agora = new Date();
     const amanha = new Date(agora);
     amanha.setDate(agora.getDate() + 1);
-    const inicio = new Date(amanha); inicio.setHours(0,0,0,0);
-    const fim = new Date(amanha); fim.setHours(23,59,59,999);
+    const inicio = _iniDia(amanha);
+    const fim = _fimDia(amanha);
 
     const ags = await AgendamentoAgenda.find({
       dataHora: { $gte: inicio, $lte: fim },

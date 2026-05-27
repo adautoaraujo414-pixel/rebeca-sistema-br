@@ -1,6 +1,10 @@
 // deploy 1778470865
 
 const express = require('express');
+
+// Helper UTC-3 Brasil
+function _iniDia(d) { const b = d ? new Date(d) : new Date(); return new Date(Date.UTC(b.getUTCFullYear(), b.getUTCMonth(), b.getUTCDate(), 3, 0, 0, 0)); }
+function _fimDia(d) { const b = d ? new Date(d) : new Date(); return new Date(Date.UTC(b.getUTCFullYear(), b.getUTCMonth(), b.getUTCDate()+1, 2, 59, 59, 999)); }
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
@@ -429,7 +433,7 @@ router.delete('/fotos/:id', authAgenda, async (req, res) => {
 // ===== DASHBOARD =====
 router.get('/dashboard', authAgenda, async (req, res) => {
   try {
-    const hoje = new Date(); hoje.setHours(0,0,0,0);
+    const hoje = _iniDia();
     const amanha = new Date(hoje); amanha.setDate(amanha.getDate()+1);
     const [agHoje, agPendentes, totalClientes, agMes] = await Promise.all([
       AgendamentoAgenda.countDocuments({ adminId: req.adminAgendaId, dataHora: { $gte: hoje, $lt: amanha }, status: { $nin: ['cancelado'] } }),
@@ -482,8 +486,7 @@ router.get('/profissional-app/:token', async (req, res) => {
     const prof = await ProfissionalAgenda.findOne({ token: req.params.token, ativo: true });
     if (!prof) return res.status(404).json({ erro: 'Profissional não encontrado' });
     const admin = await AdminAgenda.findById(prof.adminId);
-    const hoje = new Date();
-    hoje.setHours(0,0,0,0);
+    const hoje = _iniDia();
     const fim = new Date(hoje);
     fim.setDate(fim.getDate() + 30);
     const agendamentos = await AgendamentoAgenda.find({
