@@ -54,6 +54,9 @@ function handlerProximoCliente({ dados }) {
 
 function handlerLembretes({ dados }) {
   const { resumoLembretes } = dados;
+  if (!resumoLembretes || resumoLembretes.trim() === '' || resumoLembretes === 'nenhum') {
+    return `Sem lembretes pendentes, ${chefe()}! ✅ Tudo em dia.`;
+  }
   return `⏰ Lembretes pendentes:\n\n${resumoLembretes}`;
 }
 
@@ -95,6 +98,12 @@ const REGISTRY = {
   agenda_amanha:      handlerAgendaAmanha,
   proximo_cliente:    handlerProximoCliente,
   listar_lembretes:   handlerLembretes,
+  faltaram:           handlerFaltaram,
+  relatorio_financeiro: ({ dados }) => {
+    const { entradasHoje, saidasHoje, receitaSemana } = dados;
+    const resultado = (entradasHoje||0) - (saidasHoje||0);
+    return `📊 Resumo do dia:\n\nEntradas: R$ ${Number(entradasHoje||0).toFixed(2)}\nSaídas: R$ ${Number(saidasHoje||0).toFixed(2)}\nResultado: R$ ${resultado.toFixed(2)}${resultado > 0?' 🟢':resultado < 0?' 🔴':' ⚪'}\n\nSemana: R$ ${Number(receitaSemana||0).toFixed(2)}`;
+  },
   saudacao:           handlerSaudacao,
   ajuda:              handlerAjuda,
 };
