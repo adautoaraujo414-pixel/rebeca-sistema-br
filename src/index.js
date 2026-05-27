@@ -555,4 +555,6 @@ cron.schedule('0 10 * * *', () => ModoDono.rodarRelatorioDiario());
 // Bom dia inteligente — horário aleatório entre 7h e 8h30 (cron às 7h, delay interno)
 const BomDia = require('./services/bomdia-inteligente.service');
 cron.schedule('0 10 * * *', () => BomDia.rodarBomDia());
+// Boas-vindas pendentes — todo dia às 10h05 BRT (10h05 UTC = sem conflito com bom dia)
+cron.schedule('5 10 * * *', () => ModoDono.rodarBoasVindasPendentes());
 console.log('✅ Cron lembretes dono (5min) + relatório diário (7h) + bom dia inteligente (7h) ativos');

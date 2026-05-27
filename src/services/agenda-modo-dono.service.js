@@ -170,7 +170,7 @@ Eu atualizo sua agenda, organizo seus horários, registro entradas e gastos, avi
 
 Sempre que precisar, é só me chamar por aqui. 😊`;
 
-    await _enviarMsg(instancia, telDono, msg);
+    await _enviarMsg(instParaEnvio, telDono, msg);
 
     await AdminAgenda.findByIdAndUpdate(adminId, {
       'modoWhatsappDono.ativo': true,
@@ -1955,8 +1955,71 @@ async function rodarRelatorioDiario() {
   }
 }
 
-module.exports.rodarLembretes        = rodarLembretes;
-module.exports.rodarRelatorioDiario  = rodarRelatorioDiario;
+// ── BOAS-VINDAS PARA TODOS PENDENTES — rodar 1x ao dia ─────────────────────
+async function rodarBoasVindasPendentes() {
+  try {
+    const admins = await AdminAgenda.find({
+      ativo: true,
+      $or: [
+        { 'modoWhatsappDono.boasVindasEnviado': false },
+        { 'modoWhatsappDono.boasVindasEnviado': { $exists: false } }
+      ]
+    }).lean();
+
+    console.log('[BoasVindas] Pendentes:', admins.length);
+
+    for (const admin of admins) {
+      try {
+        const telDono = _normalizarTel(admin.whatsapp || admin.telefone);
+        if (!telDono) continue;
+
+        const inst = await InstanciaWhatsapp.findOne({
+          adminId: String(admin._id), adminTipo: 'agenda', status: 'conectado'
+        }).lean();
+
+        const instParaEnvio = inst || (process.env.META_WA_TOKEN
+          ? { _enviarVia: 'meta', apiUrl: 'meta', nomeInstancia: 'meta_oficial' }
+          : null);
+        if (!instParaEnvio) continue;
+
+        const genero = admin.modoWhatsappDono?.genero || '';
+        const ap = genero === 'M' ? 'chefe' : genero === 'F' ? 'chefa' : 'chefe';
+        const msg = `Olá, ${ap}! Eu sou a Rebeca, sua funcionária digital. 💙
+
+A partir de agora, você pode falar comigo por aqui sempre que precisar organizar sua rotina.
+
+Você pode me pedir, por exemplo:
+- *Rebeca, mostra minha agenda de hoje*
+- *Rebeca, bloqueia amanhã das 12h às 14h*
+- *Rebeca, registra uma entrada de R$120 no Pix*
+- *Rebeca, quanto faturei hoje?*
+- *Rebeca, me lembra amanhã 9h comprar produto*
+
+Eu cuido da sua agenda, registro entradas e gastos, aviso novos agendamentos e mantenho tudo organizado.
+
+Sempre que precisar, é só me chamar! 😊`;
+
+        await _enviarMsg(instParaEnvio, telDono, msg);
+        await AdminAgenda.findByIdAndUpdate(admin._id, {
+          'modoWhatsappDono.boasVindasEnviado': true,
+          'modoWhatsappDono.boasVindasOficialEnviadaEm': new Date()
+        });
+        console.log('[BoasVindas] ✅ Enviado para', admin.email, telDono);
+
+        // Delay entre envios para não bater tudo junto
+        await new Promise(r => setTimeout(r, 3000));
+      } catch(e) {
+        console.error('[BoasVindas] ❌ Erro para', admin.email, e.message);
+      }
+    }
+  } catch(e) {
+    console.error('[BoasVindas] Erro geral:', e.message);
+  }
+}
+
+module.exports.rodarLembretes           = rodarLembretes;
+module.exports.rodarRelatorioDiario     = rodarRelatorioDiario;
+module.exports.rodarBoasVindasPendentes = rodarBoasVindasPendentes;
 
 // ── CRON: DISPARAR LEMBRETES PESSOAIS ────────────────────────────────────────
 async function rodarLembretesPessoais() {

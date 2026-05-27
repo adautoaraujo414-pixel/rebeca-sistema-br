@@ -158,11 +158,23 @@ function _jaEnviouHoje(admin) {
 // ── Verificar se admin é elegível ───────────────────────────────────────────
 function _elegivel(admin) {
   if (!admin.ativo) return false;
-  if (!admin.modoWhatsappDono?.ativo) return false;
-  if (!admin.modoWhatsappDono?.telefonePrincipalNormalizado) return false;
+  // Aceita quem tem modoWhatsappDono ativo OU quem tem whatsapp/telefone cadastrado com Meta token global
+  const temInstanciaAtiva = admin.modoWhatsappDono?.ativo && admin.modoWhatsappDono?.telefonePrincipalNormalizado;
+  const temTelefoneEMeta  = (admin.whatsapp || admin.telefone) && process.env.META_WA_TOKEN;
+  if (!temInstanciaAtiva && !temTelefoneEMeta) return false;
   if (admin.statusPagamento === 'expirado') return false;
   if (admin.trialExpira && new Date(admin.trialExpira) < new Date()) return false;
   return true;
+}
+
+function _getTelefone(admin) {
+  return admin.modoWhatsappDono?.telefonePrincipalNormalizado
+    || _normalizarTel(admin.whatsapp || admin.telefone || '');
+}
+
+function _normalizarTel(tel) {
+  if (!tel) return '';
+  return tel.replace(/\D/g, '').replace(/^0/, '');
 }
 
 // ── Buscar contexto real do banco ────────────────────────────────────────────
@@ -208,7 +220,12 @@ async function _enviarParaAdmin(admin) {
     const contexto  = await _buscarContexto(admin._id);
     const usadas    = admin.modoWhatsappDono?.frasesBomDiaUsadas || [];
     const mensagem  = _montarMensagem(admin, contexto, usadas);
-    const telefone  = admin.modoWhatsappDono?.telefonePrincipalNormalizado;
+    const telefone  = admin.modoWhatsappDono?.telefonePrincipalNormalizado
+      || (admin.whatsapp || admin.telefone || '').replace(/\D/g, '').replace(/^0/, '');
+    if (!telefone) {
+      console.log('[BomDia] sem telefone para', admin.email);
+      return { ok: false, erro: 'sem telefone' };
+    }
 
     // Enviar via Meta API ou Evolution
     const { InstanciaWhatsapp } = require('../models');
@@ -230,8 +247,13 @@ async function _enviarParaAdmin(admin) {
         }
       };
 
-    // Tentar Evolution primeiro, fallback Meta
-    const instParaEnvio = inst || { _enviarVia: 'meta', apiUrl: 'meta', nomeInstancia: 'meta_oficial' };
+    // Tentar Evolution primeiro, fallback Meta API global
+    const instParaEnvio = inst
+      || (process.env.META_WA_TOKEN ? { _enviarVia: 'meta', apiUrl: 'meta', nomeInstancia: 'meta_oficial' } : null);
+    if (!instParaEnvio) {
+      console.log('[BomDia] sem canal de envio para', admin.email);
+      return { ok: false, erro: 'sem canal' };
+    }
     await _enviarMsg(instParaEnvio, telefone, mensagem);
 
     // Salvar histórico — manter últimas 30 frases usadas
