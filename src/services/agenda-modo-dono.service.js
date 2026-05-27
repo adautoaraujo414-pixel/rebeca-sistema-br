@@ -1935,10 +1935,11 @@ async function rodarRelatorioDiario() {
           ? '\n\n⏰ *Lembretes de hoje:*\n' + lembretesDia.map(l => `  ${_fmtHora(new Date(l.dataEvento))} - ${l.texto}`).join('\n')
           : '';
 
-        const motivacao = atendidos > 0 ? 'Arrasou ontem! 🚀' : 'Hoje vai bombar! 💪';
+        const _genAdmin = admin.modoWhatsappDono?.genero || '';
+        const motivacao = atendidos > 0 ? 'Arrasou ontem! 🚀' : agsHoje.length > 0 ? `Hoje tem ${agsHoje.length} cliente(s) te esperando! 💪` : 'Bora fazer um ótimo dia! 💙';
 
         await _enviarMsg(instParaEnvio, telDono,
-          `🌅 *Bom dia, ${_chefe()}!*\n\n` +
+          `🌅 *Bom dia, ${_chefe(_genAdmin)}!*\n\n` +
           `📊 *Ontem (${_fmtData(ontem)}):*\n${resumoOntem}\n\n` +
           `📅 *Agenda de hoje (${_fmtData(hoje)}):*\n${resumoHoje}` +
           resumoLembretes +
