@@ -105,9 +105,38 @@ function fuzzyCategoria(palavra) {
   return melhor;
 }
 
+
+// ── 2c. NÚMEROS POR EXTENSO → dígitos ────────────────────────────────────────
+function converterExtenso(txt) {
+  const _map = {
+    'zero':0,'um':1,'uma':1,'dois':2,'duas':2,'tres':3,'quatro':4,'cinco':5,
+    'seis':6,'sete':7,'oito':8,'nove':9,'dez':10,'onze':11,'doze':12,
+    'treze':13,'quatorze':14,'catorze':14,'quinze':15,'dezesseis':16,
+    'dezessete':17,'dezoito':18,'dezenove':19,'vinte':20,'trinta':30,
+    'quarenta':40,'cinquenta':50,'sessenta':60,'setenta':70,'oitenta':80,
+    'noventa':90,'cem':100,'cento':100,'duzentos':200,'trezentos':300,
+    'quatrocentos':400,'quinhentos':500,'seiscentos':600,'setecentos':700,
+    'oitocentos':800,'novecentos':900,'mil':1000
+  };
+  // "cento e cinquenta" → 150, "quarenta e cinco" → 45
+  let s = txt.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+  // Padrão: X e Y (dezena + unidade ou centena + dezena)
+  s = s.replace(/(\w+)\s+e\s+(\w+)/g, (_, a, b) => {
+    const va = _map[a], vb = _map[b];
+    if (va !== undefined && vb !== undefined) return String(va + vb);
+    return _ ;
+  });
+  // Padrão: X mil Y → X*1000+Y
+  s = s.replace(/(\d+)\s+mil(?:\s+(\d+))?/g, (_, m, r) => String(parseInt(m)*1000 + parseInt(r||0)));
+  // Palavras isoladas
+  s = s.replace(/(zero|um|uma|dois|duas|tres|quatro|cinco|seis|sete|oito|nove|dez|onze|doze|treze|quatorze|catorze|quinze|dezesseis|dezessete|dezoito|dezenove|vinte|trinta|quarenta|cinquenta|sessenta|setenta|oitenta|noventa|cem|cento|duzentos|trezentos|quatrocentos|quinhentos|seiscentos|setecentos|oitocentos|novecentos)/g,
+    w => { const n = _map[w.normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase()]; return n !== undefined ? String(n) : w; });
+  return s;
+}
+
 // ── 3. EXTRAIR VALOR MONETÁRIO ────────────────────────────────────────────────
 function extrairValor(txt) {
-  const n = normalizar(txt);
+  const n = converterExtenso(normalizar(txt));
 
   // Detectar recorrente para NÃO confundir "dia 10" com valor
   const isRecorrente = /todo\s*(dia|mes|mes)\s*\d|toda\s*(semana|segunda|terca|quarta|quinta|sexta|sabado|domingo)/.test(n);
@@ -193,7 +222,7 @@ function detectarRecorrente(txt) {
 
 // ── 6. DETECTAR INTENÇÃO ─────────────────────────────────────────────────────
 function detectarIntencao(txt) {
-  const n = normalizar(txt);
+  const n = converterExtenso(normalizar(txt));
   const palavras = new Set(n.split(/\s+/));
 
   // Consulta

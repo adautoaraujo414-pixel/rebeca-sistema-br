@@ -436,7 +436,8 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
 
       if (_hora && _dia) {
         const dataEvento = new Date(_dia);
-        dataEvento.setHours(_hora.h, _hora.min, 0, 0);
+        // Servidor UTC: hora do usuário (BRT=UTC-3) → armazenar em UTC (+3h)
+        dataEvento.setUTCHours(_hora.h + 3, _hora.min, 0, 0);
         const dataAviso  = new Date(dataEvento.getTime() - 30 * 60000);
         await AdminAgenda.findByIdAndUpdate(adminObjId, {
           $push: { 'config.lembretes': { texto: _txt, dataEvento, dataAviso, enviado: false, criadoEm: new Date() } }
