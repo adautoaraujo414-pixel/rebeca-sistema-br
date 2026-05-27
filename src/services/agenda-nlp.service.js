@@ -129,7 +129,7 @@ function converterExtenso(txt) {
   // Padrão: X mil Y → X*1000+Y
   s = s.replace(/(\d+)\s+mil(?:\s+(\d+))?/g, (_, m, r) => String(parseInt(m)*1000 + parseInt(r||0)));
   // Palavras isoladas
-  s = s.replace(/(zero|um|uma|dois|duas|tres|quatro|cinco|seis|sete|oito|nove|dez|onze|doze|treze|quatorze|catorze|quinze|dezesseis|dezessete|dezoito|dezenove|vinte|trinta|quarenta|cinquenta|sessenta|setenta|oitenta|noventa|cem|cento|duzentos|trezentos|quatrocentos|quinhentos|seiscentos|setecentos|oitocentos|novecentos)/g,
+  s = s.replace(/\b(zero|um|uma|dois|duas|tres|quatro|cinco|seis|sete|oito|nove|dez|onze|doze|treze|quatorze|catorze|quinze|dezesseis|dezessete|dezoito|dezenove|vinte|trinta|quarenta|cinquenta|sessenta|setenta|oitenta|noventa|cem|cento|duzentos|trezentos|quatrocentos|quinhentos|seiscentos|setecentos|oitocentos|novecentos)\b/g,
     w => { const n = _map[w.normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase()]; return n !== undefined ? String(n) : w; });
   return s;
 }
