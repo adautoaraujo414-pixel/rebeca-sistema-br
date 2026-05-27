@@ -179,6 +179,9 @@ Sempre que precisar, é só me chamar por aqui. 😊`;
   }
 }
 
+// Data atual — MongoDB salva UTC; filtros já compensam GMT-3
+function _dataAgora() { return new Date(); }
+
 // ── Parser de data/hora simples ───────────────────────────────────────────────
 function _parseDia(txt) {
   const agora = new Date();
