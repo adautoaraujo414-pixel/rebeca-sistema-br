@@ -145,9 +145,6 @@ async function enviarBoasVindas(adminId) {
     if (!admin) return;
     if (admin.modoWhatsappDono && admin.modoWhatsappDono.boasVindasEnviado) return;
 
-    const instancia = await InstanciaWhatsapp.findOne({ adminId, adminTipo: 'agenda', status: 'conectado' }).lean();
-    if (!instancia) return;
-
     const telDono = _normalizarTel(admin.whatsapp || admin.telefone);
     if (!telDono) {
       console.log('[ModoDono] Nenhum telefone do dono configurado para boas-vindas');
