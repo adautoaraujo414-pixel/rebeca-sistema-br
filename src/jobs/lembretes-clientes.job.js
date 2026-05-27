@@ -4,14 +4,18 @@
  */
 
 let _rodando = false;
+let _ultimaExecucao = 0;
+const _INTERVALO_MIN = 25 * 60 * 1000; // mínimo 25min entre execuções
 
 async function executar() {
   if (_rodando) return;
+  const agora = Date.now();
+  if (agora - _ultimaExecucao < _INTERVALO_MIN) return; // debounce
   _rodando = true;
+  _ultimaExecucao = agora;
   try {
     console.log('[LembretesJob] 🔔 Rodando lembretes...');
-    const { rodarLembretesClientes } = require('../services/agenda-modo-dono.service');
-    const { rodarLembretesPessoais  } = require('../services/agenda-modo-dono.service');
+    const { rodarLembretesClientes, rodarLembretesPessoais } = require('../services/agenda-modo-dono.service');
     await rodarLembretesClientes();
     await rodarLembretesPessoais();
     console.log('[LembretesJob] ✅ Concluído');

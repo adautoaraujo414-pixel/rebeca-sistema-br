@@ -549,6 +549,7 @@ console.log('✅ Cron cardápio do dia ativo (7h)');
 // Agenda — lembretes pessoais e modo dono
 const ModoDono = require('./services/agenda-modo-dono.service');
 cron.schedule('*/5 * * * *', () => ModoDono.rodarLembretes());
-cron.schedule('*/5 * * * *', () => ModoDono.rodarLembretesPessoais());
-cron.schedule('*/5 * * * *', () => ModoDono.rodarLembretesClientes());
-console.log('✅ Cron lembretes (dono + pessoais + clientes) ativos — a cada 5min');
+// rodarLembretesPessoais e rodarLembretesClientes já rodam via lembretes-clientes.job (a cada 30min)
+// Fix: evitar execução duplicada que causava envio duplo de lembretes
+cron.schedule('0 7 * * *', () => ModoDono.rodarRelatorioDiario());
+console.log('✅ Cron lembretes dono (5min) + relatório diário (7h) ativos');
