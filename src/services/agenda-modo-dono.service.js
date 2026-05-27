@@ -170,7 +170,8 @@ Eu atualizo sua agenda, organizo seus horários, registro entradas e gastos, avi
 
 Sempre que precisar, é só me chamar por aqui. 😊`;
 
-    await _enviarMsg(instParaEnvio, telDono, msg);
+    const MetaWA = require('./meta-whatsapp.service');
+    await MetaWA.enviarTexto(telDono, msg);
 
     await AdminAgenda.findByIdAndUpdate(adminId, {
       'modoWhatsappDono.ativo': true,
@@ -1999,7 +2000,8 @@ Eu cuido da sua agenda, registro entradas e gastos, aviso novos agendamentos e m
 
 Sempre que precisar, é só me chamar! 😊`;
 
-        await _enviarMsg(instParaEnvio, telDono, msg);
+        const MetaWA = require('./meta-whatsapp.service');
+        await MetaWA.enviarTexto(telDono, msg);
         await AdminAgenda.findByIdAndUpdate(admin._id, {
           'modoWhatsappDono.boasVindasEnviado': true,
           'modoWhatsappDono.boasVindasOficialEnviadaEm': new Date()
