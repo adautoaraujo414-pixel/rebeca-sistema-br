@@ -1570,15 +1570,10 @@ ${total>5?'Tá crescendo muito! Continua assim! 🚀':'Todo cliente novo é uma 
   }
 
 
-  // ── AI ACTION ENGINE — Intent Parser + Action Router ────────────────────────
-  // Claude retorna apenas JSON de intenção. Sistema executa o handler real.
+  // ── CÉREBRO REBECA AGENDA — raciocínio relacional e contextual ─────────────
   try {
-    console.log('[AI-ENGINE] iniciando, adminId:', adminId, 'msg:', msg.substring(0,50));
-    const Anthropic = require('@anthropic-ai/sdk');
-    const _claude = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-    console.log('[AI-ENGINE] Anthropic OK');
+    const CerebroAgenda = require('./cerebro-rebeca-agenda.service');
     const LembreteAgenda = require('../models/LembreteAgenda');
-    console.log('[AI-ENGINE] LembreteAgenda OK');
     const { ClienteAgenda, RetornoAgenda } = require('../models/AgendaServico');
 
     const hoje = new Date();
@@ -1634,11 +1629,12 @@ ${total>5?'Tá crescendo muito! Continua assim! 🚀':'Todo cliente novo é uma 
       ultimoValorFinanceiro: { entradas: entradasHoje, saidas: saidasHoje, resultado: entradasHoje - saidasHoje, novaConsulta: true }
     });
 
-    // ── Recuperar sessão ──
+    // ── Recuperar sessão e histórico ──
     const _sesAtual = SM.getSession(adminId, telefone);
     const _pendingAction = _sesAtual.ultimaAcaoPendente;
+    const _historico = SM.getHistoricoParaAPI(adminId, telefone, 8);
 
-    // ── Confirmação/Cancelamento ANTES do parser ──
+    // ── Confirmação/Cancelamento ANTES do cérebro ──
     if (_isConfirm && _pendingAction) {
       SM.updateSession(adminId, telefone, { ultimaAcaoPendente: null, aguardandoConfirmacao: false });
       const rConf = `${_confirmacao()} Feito, ${_chefe()}! ✅`;
@@ -1654,43 +1650,122 @@ ${total>5?'Tá crescendo muito! Continua assim! 🚀':'Todo cliente novo é uma 
       return true;
     }
 
-    // ── STEP 1: Intent Parser ──
-    const _intent = await IntentParser.parseIntent(msg, {
-      assuntoAtual: _sesAtual.assuntoAtual,
-      ultimaAcaoPendente: _pendingAction,
-      historico: SM.getHistoricoParaAPI(adminId, telefone, 4)
+    // ── CÉREBRO: raciocínio relacional com dados reais ──
+    const _dadosCtx = {
+      agsHoje, agsAmanha, resumoHoje, resumoAmanha,
+      entradasHoje, saidasHoje, receitaSemana,
+      resumoLembretes, resumoFaltaram,
+      totalClientes, retornosPend, nomeNegocio, hrAbre, hrFecha
+    };
+
+    const _cerebro = await CerebroAgenda.raciocinar(msg, _dadosCtx, _historico, {
+      nomeNegocio, nomeDono: admin?.nomeResponsavel || admin?.nome || '',
+      adminId: String(adminObjId)
     });
 
     SM.updateSession(adminId, telefone, {
-      assuntoAtual: _intent.intencao,
-      entidadesExtraidas: _intent.entidades || {}
+      assuntoAtual: _cerebro.intencao,
+      entidadesExtraidas: _cerebro.entidades || {}
     });
 
-    // ── STEP 2: Action Router — registry declarativo ──
-    const _dadosCtx = {
-      dados: { entradasHoje, saidasHoje, receitaSemana, agsHoje, agsAmanha,
-               resumoHoje, resumoAmanha, resumoLembretes, resumoFaltaram,
-               totalAgsHoje, totalClientes, retornosPend, nomeNegocio, hrAbre, hrFecha },
-      intent: _intent,
-      session: _sesAtual,
-      adminId, telefone
-    };
-
-    const _resultado = ActionRouter.rotear(_intent, _dadosCtx);
-
-    if (_resultado !== null) {
-      await responder(_resultado);
-      SM.addAssistantMsg(adminId, telefone, _resultado);
+    // ── Ação: confirmar — pede confirmação antes de executar ──
+    if (_cerebro.requer_confirmacao && _cerebro.mensagem_confirmacao) {
+      SM.updateSession(adminId, telefone, {
+        ultimaAcaoPendente: { intencao: _cerebro.intencao, entidades: _cerebro.entidades },
+        aguardandoConfirmacao: true
+      });
+      await responder(_cerebro.mensagem_confirmacao);
+      SM.addAssistantMsg(adminId, telefone, _cerebro.mensagem_confirmacao);
       return true;
     }
 
-    // ── STEP 3: Fallback SEGURO — sem IA livre ──
-    const _seguro = ActionRouter.respostaSegura();
-    await responder(_seguro);
-    SM.addAssistantMsg(adminId, telefone, _seguro);
+    // ── Ação: pedir_info — falta dado essencial ──
+    if (_cerebro.acao === 'pedir_info' && _cerebro.resposta) {
+      await responder(_cerebro.resposta);
+      SM.addAssistantMsg(adminId, telefone, _cerebro.resposta);
+      return true;
+    }
+
+    // ── Ação: responder — só consulta/informação ──
+    if (_cerebro.acao === 'responder' && _cerebro.resposta) {
+      // Prepend reação emocional se houver
+      const _r = _cerebro.reacao_emocional
+        ? _cerebro.reacao_emocional + '\n\n' + _cerebro.resposta
+        : _cerebro.resposta;
+      await responder(_r);
+      SM.addAssistantMsg(adminId, telefone, _r);
+      return true;
+    }
+
+    // ── Ação: executar — delegar para handlers existentes do service ──
+    // O cérebro identificou a intenção mas a execução fica nos handlers abaixo
+    // Salvar entidades na sessão para os handlers poderem usar
+    if (_cerebro.acao === 'executar') {
+      SM.updateSession(adminId, telefone, {
+        ultimaIntencaoCerebro: _cerebro.intencao,
+        ultimasEntidades: _cerebro.entidades
+      });
+      // Se tem reação emocional, envia primeiro
+      if (_cerebro.reacao_emocional) {
+        await responder(_cerebro.reacao_emocional);
+      }
+      // Handlers específicos por intenção
+      const ent = _cerebro.entidades || {};
+
+      if (_cerebro.intencao === 'registrar_receita' && ent.valor) {
+        const cat = ent.categoria || 'outros';
+        const desc = ent.descricao || ent.origem || 'Entrada via WhatsApp';
+        await FinanceiroAgenda.create({
+          adminId: adminObjId, tipo: 'receita',
+          valor: Number(ent.valor), descricao: desc, categoria: cat,
+          data: _dataAgora(), origem: 'whatsapp_dono'
+        });
+        const _r = `Feito! Entrada de R$ ${Number(ent.valor).toFixed(2)} em "${cat}"${desc !== 'Entrada via WhatsApp' ? ' — ' + desc : ''}. 💰`;
+        await responder(_r);
+        SM.addAssistantMsg(adminId, telefone, _r);
+        return true;
+      }
+
+      if (_cerebro.intencao === 'registrar_despesa' && ent.valor) {
+        const cat = ent.categoria || 'outros';
+        const desc = ent.descricao || ent.origem || 'Saída via WhatsApp';
+        await FinanceiroAgenda.create({
+          adminId: adminObjId, tipo: 'despesa',
+          valor: Number(ent.valor), descricao: desc, categoria: cat,
+          data: _dataAgora(), origem: 'whatsapp_dono'
+        });
+        const _r = `Anotei! Saída de R$ ${Number(ent.valor).toFixed(2)} em "${cat}"${desc !== 'Saída via WhatsApp' ? ' — ' + desc : ''}. 💸`;
+        await responder(_r);
+        SM.addAssistantMsg(adminId, telefone, _r);
+        return true;
+      }
+
+      if (_cerebro.intencao === 'criar_lembrete' && ent.texto_lembrete) {
+        const _dia = ent.data ? _parseDia(ent.data) : _parseDia(msg);
+        const _hora = ent.horario ? _parseHora(ent.horario) : _parseHora(msg);
+        const _txt = ent.texto_lembrete;
+        if (_dia && _hora) {
+          const dataEvento = new Date(_dia);
+          dataEvento.setUTCHours(_hora.h + 3, _hora.min, 0, 0);
+          const dataAviso = new Date(dataEvento.getTime() - 30 * 60000);
+          await AdminAgenda.findByIdAndUpdate(adminObjId, {
+            $push: { 'config.lembretes': { texto: _txt, dataEvento, dataAviso, enviado: false, criadoEm: new Date() } }
+          });
+          const _r = `Anotei! 🔔 *${_txt}* — ${_fmtData(dataEvento)} às ${_fmtHora(dataEvento)}\n\nTe aviso 30 minutos antes! 💙`;
+          await responder(_r);
+          SM.addAssistantMsg(adminId, telefone, _r);
+          return true;
+        }
+      }
+    }
+
+    // ── Fallback final — resposta amigável ──
+    const _fallback = `${_saudacao()}, ${_chefe()}! 😊\n\nNão tive certeza do que você quis dizer. Tenta de outro jeito ou digita *ajuda*! 💙`;
+    await responder(_fallback);
+    SM.addAssistantMsg(adminId, telefone, _fallback);
     return true;
   } catch(e) {
-    console.error('[ModoDono] Claude fallback erro:', e.message);
+    console.error('[ModoDono] Cérebro erro:', e.message, e.stack?.split('\n')[1]);
   }
   await responder(`${_saudacao()}, ${_chefe()}! 😊
 
