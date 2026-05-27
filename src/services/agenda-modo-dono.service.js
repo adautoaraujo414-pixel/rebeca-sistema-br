@@ -369,7 +369,7 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
   }
 
   // ── AGENDA DE HOJE ─────────────────────────────────────────────────────────
-  if (/\bagenda\s*(de\s*)?(hoje|amanhã|amanha)\b|\bmostra\s*(minha\s*)?agenda|\bquem\s*(tenho|tem)\s*(hoje|amanhã|amanha)\b|\bhor[aá]rios?\s*(de\s*)?(hoje|amanhã|amanha)\b|\btem\s*algu[eé]m\s*(hoje|amanhã|amanha)\b|\bcomo\s*t[áa]\s*(hoje|amanhã|amanha)\b|\bvou\s*atender\s*quem\b|\bquem\s*[eé]\s*(hoje|amanhã)\b|\bminha\s*agenda\s*(de\s*)?(hoje|amanhã|amanha)\b|\bquantos\s*(clientes\s*)?(tenho|tem)\s*(hoje|amanhã)\b|\bcomo\s*(est[aá]|t[aá]|fica|ficou)\s*(a\s*)?(minha\s*)?(agenda|dia|semana)\b|\btem\s*(algum|alguem|alguém|cliente|horario|horário)\s*(hoje|amanhã|amanha|amanha)\b|\b(ver|veja|checar|conferir|olhar)\s*(minha\s*)?(agenda|horario|horários)\b/i.test(msgL)) {
+  if (/\bagenda\s*(de\s*)?(hoje|amanhã|amanha)\b|\bmostra\s*(minha\s*)?agenda|\bquem\s*(tenho|tem)\s*(hoje|amanhã|amanha)\b|\bhor[aá]rios?\s*(de\s*)?(hoje|amanhã|amanha)\b|\btem\s*algu[eé]m\s*(hoje|amanhã|amanha)\b|\bcomo\s*t[áa]\s*(hoje|amanhã|amanha)\b|\bvou\s*atender\s*quem\b|\bquem\s*[eé]\s*(hoje|amanhã)\b|\bminha\s*agenda\s*(de\s*)?(hoje|amanhã|amanha)\b|\bquantos\s*(clientes\s*)?(tenho|tem)\s*(hoje|amanhã)\b|\bcomo\s*(est[aá]|t[aá]|fica|ficou)\s*(a\s*)?(minha\s*)?(agenda|dia)\b|\btem\s*(algum|alguem|alguém|cliente|horario|horário)\s*(hoje|amanhã|amanha|amanha)\b|\b(ver|veja|checar|conferir|olhar)\s*(minha\s*)?(agenda|horario|horários)\b/i.test(msgL)) {
     const dia = /amanhã|amanha/i.test(msgL) ? (() => { const d = new Date(); d.setDate(d.getDate()+1); return d; })() : new Date();
     const ini = _inicioDia(dia);
     const fim = _fimDia(dia);
@@ -1088,7 +1088,7 @@ Bora se preparar! 💪`);
   }
 
   // ── AGENDA DA SEMANA ──────────────────────────────────────────────────────
-  if (/agenda\s*d[ao]\s*semana|semana\s*toda|essa\s*semana/i.test(msgL)) {
+  if (/agenda\s*d[ao]\s*semana|semana\s*toda|essa\s*semana|como\s*(est[aá]|t[aá]|fica)\s*(a\s*)?(minha\s*)?(agenda|semana)\s*(essa|da|na|da|pra)?\s*semana|agenda\s*(essa|da|na|pra)?\s*semana/i.test(msgL)) {
     const ini = _inicioDia();
     const _fim7 = new Date(ini); _fim7.setUTCDate(_fim7.getUTCDate() + 7); const fim = _fimDia(_fim7);
     const ags = await AgendamentoAgenda.find({
