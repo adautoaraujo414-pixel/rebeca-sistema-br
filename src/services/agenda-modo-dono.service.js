@@ -1761,6 +1761,110 @@ ${total>5?'Tá crescendo muito! Continua assim! 🚀':'Todo cliente novo é uma 
       }
     }
 
+      // ── agenda_semana ──
+      if (_cerebro.intencao === 'agenda_semana') {
+        const _dom = new Date(); _dom.setUTCDate(_dom.getUTCDate() - _dom.getUTCDay());
+        const iniSem = _inicioDia(_dom); const fimSem = _fimDia(new Date(_dom.getTime() + 6*86400000));
+        const agsSem = await AgendamentoAgenda.find({
+          adminId: adminObjId, dataHora: { $gte: iniSem, $lte: fimSem },
+          status: { $in: ['pendente','confirmado'] }
+        }).sort({ dataHora: 1 }).lean();
+        if (!agsSem.length) {
+          const _r = `Semana tranquila, ${_chefe()}! 😊 Nenhum agendamento confirmado ainda.`;
+          await responder(_r); SM.addAssistantMsg(adminId, telefone, _r); return true;
+        }
+        const dias = {};
+        agsSem.forEach(a => {
+          const d = _fmtData(new Date(a.dataHora));
+          if (!dias[d]) dias[d] = [];
+          dias[d].push(`${_fmtHora(new Date(a.dataHora))} — ${a.nomeCliente}${a.servico ? ' ('+a.servico+')' : ''}`);
+        });
+        let txt = `📅 Agenda da semana — ${agsSem.length} agendamento(s):\n\n`;
+        Object.entries(dias).forEach(([d,ags]) => { txt += `*${d}*\n${ags.map(x=>'  • '+x).join('\n')}\n\n`; });
+        await responder(txt.trim()); SM.addAssistantMsg(adminId, telefone, txt.trim()); return true;
+      }
+
+      // ── clientes_inativos ──
+      if (_cerebro.intencao === 'clientes_inativos') {
+        const diasInativo = ent.dias || 30;
+        const limite = new Date(Date.now() - diasInativo * 86400000);
+        const inativos = await ClienteAgenda.find({
+          adminId: adminObjId, ultimaVisita: { $lt: limite }
+        }).sort({ ultimaVisita: 1 }).limit(10).lean();
+        if (!inativos.length) {
+          const _r = `Nenhum cliente inativo há mais de ${diasInativo} dias. Tudo em dia! ✅`;
+          await responder(_r); SM.addAssistantMsg(adminId, telefone, _r); return true;
+        }
+        const lista = inativos.map(c => {
+          const dias2 = Math.floor((Date.now() - new Date(c.ultimaVisita)) / 86400000);
+          return `• ${c.nome} — ${dias2} dias sem aparecer`;
+        }).join('\n');
+        const _r = `😴 Clientes sumidos (${inativos.length}):\n\n${lista}\n\nQuer que eu mande mensagem pra algum deles?`;
+        await responder(_r); SM.addAssistantMsg(adminId, telefone, _r); return true;
+      }
+
+      // ── clientes_novos ──
+      if (_cerebro.intencao === 'clientes_novos') {
+        const ini = _inicioDia(new Date(Date.now() - 30*86400000));
+        const novos = await ClienteAgenda.find({
+          adminId: adminObjId, criadoEm: { $gte: ini }
+        }).sort({ criadoEm: -1 }).limit(10).lean();
+        if (!novos.length) {
+          const _r = `Nenhum cliente novo nos últimos 30 dias ainda.`;
+          await responder(_r); SM.addAssistantMsg(adminId, telefone, _r); return true;
+        }
+        const lista = novos.map(c => `• ${c.nome}${c.telefone ? ' — '+c.telefone : ''}`).join('\n');
+        const _r = `🆕 Clientes novos (últimos 30 dias):\n\n${lista}`;
+        await responder(_r); SM.addAssistantMsg(adminId, telefone, _r); return true;
+      }
+
+      // ── servicos_mais_pedidos ──
+      if (_cerebro.intencao === 'servicos_mais_pedidos') {
+        const ini30 = _inicioDia(new Date(Date.now() - 30*86400000));
+        const ags30 = await AgendamentoAgenda.find({
+          adminId: adminObjId, dataHora: { $gte: ini30 },
+          status: { $in: ['confirmado','concluido'] }, servico: { $exists: true, $ne: '' }
+        }).lean();
+        if (!ags30.length) {
+          const _r = `Sem dados de serviços nos últimos 30 dias ainda.`;
+          await responder(_r); SM.addAssistantMsg(adminId, telefone, _r); return true;
+        }
+        const contagem = {};
+        ags30.forEach(a => { contagem[a.servico] = (contagem[a.servico]||0) + 1; });
+        const top = Object.entries(contagem).sort((a,b)=>b[1]-a[1]).slice(0,5);
+        const lista = top.map(([s,n],i) => `${i+1}. ${s} — ${n}x`).join('\n');
+        const _r = `🏆 Serviços mais pedidos (30 dias):\n\n${lista}`;
+        await responder(_r); SM.addAssistantMsg(adminId, telefone, _r); return true;
+      }
+
+      // ── resumo_semanal ──
+      if (_cerebro.intencao === 'resumo_semanal') {
+        const _dom = new Date(); _dom.setUTCDate(_dom.getUTCDate() - _dom.getUTCDay());
+        const iniSem = _inicioDia(_dom); const fimSem = _fimDia();
+        const [agsSem, finSem] = await Promise.all([
+          AgendamentoAgenda.countDocuments({ adminId: adminObjId, dataHora: { $gte: iniSem, $lte: fimSem }, status: { $in: ['confirmado','concluido'] } }),
+          FinanceiroAgenda.find({ adminId: adminObjId, data: { $gte: iniSem, $lte: fimSem } }).lean()
+        ]);
+        const recSem = finSem.filter(f=>f.tipo==='receita').reduce((s,x)=>s+x.valor,0);
+        const despSem = finSem.filter(f=>f.tipo==='despesa').reduce((s,x)=>s+x.valor,0);
+        const _r = `📊 Resumo da semana:\n\n👥 Atendimentos: ${agsSem}\n💰 Receitas: R$ ${recSem.toFixed(2)}\n💸 Despesas: R$ ${despSem.toFixed(2)}\n📈 Resultado: R$ ${(recSem-despSem).toFixed(2)}`;
+        await responder(_r); SM.addAssistantMsg(adminId, telefone, _r); return true;
+      }
+
+      // ── resumo_mensal ──
+      if (_cerebro.intencao === 'resumo_mensal') {
+        const hoje = new Date();
+        const iniMes = new Date(Date.UTC(hoje.getUTCFullYear(), hoje.getUTCMonth(), 1));
+        const [agsMes, finMes] = await Promise.all([
+          AgendamentoAgenda.countDocuments({ adminId: adminObjId, dataHora: { $gte: iniMes }, status: { $in: ['confirmado','concluido'] } }),
+          FinanceiroAgenda.find({ adminId: adminObjId, data: { $gte: iniMes } }).lean()
+        ]);
+        const recMes = finMes.filter(f=>f.tipo==='receita').reduce((s,x)=>s+x.valor,0);
+        const despMes = finMes.filter(f=>f.tipo==='despesa').reduce((s,x)=>s+x.valor,0);
+        const _r = `📊 Resumo do mês:\n\n👥 Atendimentos: ${agsMes}\n💰 Receitas: R$ ${recMes.toFixed(2)}\n💸 Despesas: R$ ${despMes.toFixed(2)}\n📈 Resultado: R$ ${(recMes-despMes).toFixed(2)}`;
+        await responder(_r); SM.addAssistantMsg(adminId, telefone, _r); return true;
+      }
+
     // ── Fallback final — resposta amigável ──
     const _fallback = `${_saudacao()}, ${_chefe()}! 😊\n\nNão tive certeza do que você quis dizer. Tenta de outro jeito ou digita *ajuda*! 💙`;
     await responder(_fallback);
