@@ -199,7 +199,7 @@ function _parseDia(txt) {
     'julho':6,'agosto':7,'setembro':8,'outubro':9,'novembro':10,'dezembro':11
   };
 
-  if (/\bhoje\b/i.test(txt)) return new Date(agora);
+  if (/\bhoje\b/i.test(txt)) return mkData(ano, mes, dia);
   if (/(?:^|\s)amanh[aã](?:\s|$)/i.test(txt)) return mkData(ano, mes, dia + 1);
 
   // "3 de junho", "dia 3 de junho", "03 de junho de 2026"
