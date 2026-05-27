@@ -189,8 +189,44 @@ function _parseDia(txt) {
   const dia = brDate.getUTCDate();
   const dow = brDate.getUTCDay();
   const mkData = (a, m, d) => new Date(Date.UTC(a, m, d, 3, 0, 0));
-  if (/\bhoje\b/i.test(txt))               return new Date(agora);
+
+  // Meses por extenso
+  const mesesMap = {
+    'janeiro':0,'fevereiro':1,'março':2,'marco':2,'abril':3,'maio':4,'junho':5,
+    'julho':6,'agosto':7,'setembro':8,'outubro':9,'novembro':10,'dezembro':11
+  };
+
+  if (/\bhoje\b/i.test(txt)) return new Date(agora);
   if (/(?:^|\s)amanh[aã](?:\s|$)/i.test(txt)) return mkData(ano, mes, dia + 1);
+
+  // "3 de junho", "dia 3 de junho", "03 de junho de 2026"
+  const mMesExtenso = txt.match(/(?:dia\s+)?(\d{1,2})\s+de\s+([a-záéíóúâêôãõç]+)(?:\s+de\s+(\d{4}))?/i);
+  if (mMesExtenso) {
+    const dNum = parseInt(mMesExtenso[1]);
+    const mNome = mMesExtenso[2].toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    const mNum2 = mesesMap[mNome];
+    if (mNum2 !== undefined) {
+      const aNum = mMesExtenso[3] ? parseInt(mMesExtenso[3]) : (mNum2 < mes || (mNum2 === mes && dNum < dia) ? ano + 1 : ano);
+      return mkData(aNum, mNum2, dNum);
+    }
+  }
+
+  // "03/06" ou "03/06/2026" — formato DD/MM
+  const dm = txt.match(/(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?/);
+  if (dm) {
+    const aNum = dm[3] ? parseInt(dm[3].length === 2 ? '20'+dm[3] : dm[3]) : ano;
+    return mkData(aNum, parseInt(dm[2])-1, parseInt(dm[1]));
+  }
+
+  // "dia 15" sem mês — usa mês atual (ou próximo se já passou)
+  const diaNum = txt.match(/\bdia\s+(\d{1,2})\b/i);
+  if (diaNum) {
+    const d2 = parseInt(diaNum[1]);
+    const mFinal = d2 < dia ? mes + 1 : mes;
+    return mkData(ano, mFinal, d2);
+  }
+
+  // Dias da semana
   const diasMap = { domingo:0, segunda:1, 'segunda-feira':1, terca:2, 'terça':2, 'terça-feira':2, quarta:3, 'quarta-feira':3, quinta:4, 'quinta-feira':4, sexta:5, 'sexta-feira':5, sabado:6, 'sábado':6 };
   const quevem = /que\s*vem|próxim[oa]|proxim[oa]/i.test(txt);
   for (const [nome, alvo] of Object.entries(diasMap)) {
@@ -200,10 +236,7 @@ function _parseDia(txt) {
       return mkData(ano, mes, dia + diff);
     }
   }
-  const dm = txt.match(/(\d{1,2})\/(\d{1,2})/);
-  if (dm) return mkData(ano, parseInt(dm[2])-1, parseInt(dm[1]));
-  const diaNum = txt.match(/\bdia\s+(\d{1,2})\b/i);
-  if (diaNum) return mkData(ano, mes, parseInt(diaNum[1]));
+
   return null;
 }
 
@@ -246,12 +279,16 @@ function _parseHora(txt) {
     else totalMin += qtd;
     return { h: Math.floor(totalMin/60) % 24, min: totalMin % 60, relativo: true, msOffset: (/hora|^h$/i.test(unidade) ? qtd*60 : qtd)*60*1000 };
   }
-  // 1. Formato original: 10h, 10h30, 10:30 — ignorar 'dia N' antes
-  const _txtSemDia = txt.replace(/\bdia\s+\d{1,2}\b/gi, '');
+  // 1. Remover data DD/MM para não confundir com hora
+  const _txtSemData = txt.replace(/(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?/g, '');
+  const _txtSemDia = _txtSemData.replace(/\bdia\s+\d{1,2}\b/gi, '');
+  // "16 horas", "às 16 horas", "16h", "16:00"
+  const mHoras = _txtSemDia.match(/(?:às?|as?|à)?\s*(\d{1,2})\s*horas?\b/i);
+  if (mHoras) return { h: parseInt(mHoras[1]), min: 0 };
   const m = _txtSemDia.match(/(\d{1,2})h(?:(\d{2})?)?/i) || _txtSemDia.match(/(\d{1,2}):(\d{2})/);
   if (m) return { h: parseInt(m[1]), min: parseInt(m[2]||'0') };
   // 2. "às 22", "as 8", "à 15" — número após preposição
-  const mNum = txt.match(/(?:às?|as?|à)\s+(\d{1,2})(?::(\d{2}))?\b/i);
+  const mNum = _txtSemDia.match(/(?:às?|as?|à)\s+(\d{1,2})(?::(\d{2}))?\b/i);
   if (mNum) return { h: parseInt(mNum[1]), min: parseInt(mNum[2]||'0') };
   // 3. "meia noite", "meio dia"
   if (/meia\s*noite/i.test(txt)) return { h: 0, min: 0 };
