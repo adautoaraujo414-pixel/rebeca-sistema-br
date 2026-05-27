@@ -588,7 +588,13 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                                 // NÃO faz continue — deixa cair no processamento normal do cerebro Claude
                                 if (!conteudo) continue;
                             } else if (transcricao) {
-                                conteudo = transcricao;
+                                // Para agenda: prefixar com [AUDIO_TEXTO] para ModoDono processar corretamente
+                                const _tipoAdminFinal = await _getAdminTipo(adminId);
+                                if (_tipoAdminFinal === 'agenda') {
+                                    conteudo = '[AUDIO_TEXTO]' + transcricao;
+                                } else {
+                                    conteudo = transcricao;
+                                }
                                 console.log('[WEBHOOK] Audio transcrito OK:', transcricao.substring(0, 80));
                             } else {
                                 conteudo = '__AUDIO_SEM_TRANSCRICAO__';
@@ -676,8 +682,8 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                             if (_tipoDebounce === 'delivery') {
                                 respostaDb = await RebecaDeliveryService.processarMensagem(telefone, _msgFinal, _entry.nome, contextoDb);
                             } else if (_tipoDebounce === 'agenda') {
-                                const _AgendaSvc = require('../services/agenda-ia.service');
-                                respostaDb = await _AgendaSvc.responder(telefone, _msgFinal, _entry.adminId);
+                                const _ModoDono = require('../services/agenda-modo-dono.service');
+                                respostaDb = await _ModoDono.processarComandoDono(telefone, _msgFinal, _entry.adminId, null);
                             } else {
                                 respostaDb = await RebecaService.processarMensagem(telefone, _msgFinal, _entry.nome, contextoDb);
                             }
@@ -751,7 +757,8 @@ Responda apenas com a mensagem para o cliente, sem explicações.`;
                         if (adminDoc && adminDoc.tipoAdmin === 'delivery') {
                             resposta = await RebecaDeliveryService.processarMensagem(telefone, conteudo, nome, contexto);
                         } else if (adminDoc && adminDoc.tipoAdmin === 'agenda') {
-                            resposta = await AgendaIAService.responder(telefone, conteudo, adminId);
+                            const _ModoDonoPrincipal = require('../services/agenda-modo-dono.service');
+                            resposta = await _ModoDonoPrincipal.processarComandoDono(telefone, typeof conteudo === 'string' ? conteudo : JSON.stringify(conteudo), adminId, null);
                         } else {
                             resposta = await RebecaService.processarMensagem(telefone, conteudo, nome, contexto);
                         }
