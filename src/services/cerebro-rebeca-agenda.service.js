@@ -6,7 +6,7 @@
  * Usa Claude (Anthropic) — independente do módulo Corridas
  */
 
-function _buildPromptMestre(nomeNegocio, nomeDono) {
+function _buildPromptMestre(nomeNegocio, nomeDono, genero) {
   const chefes = ['chefe', 'chefa', 'patrão', 'patroa'];
   return `Você é Rebeca, assistente pessoal de ${nomeDono || 'o dono'} do ${nomeNegocio || 'negócio'}, atendida via WhatsApp.
 
@@ -270,7 +270,7 @@ Retorne APENAS o JSON.`;
       const r = await claude.messages.create({
         model: 'claude-haiku-4-5-20251001',
         max_tokens: 500,
-        system: _buildPromptMestre(nomeNegocio, nomeDono),
+        system: _buildPromptMestre(nomeNegocio, nomeDono, opcoes.genero || ''),
         messages: [{ role: 'user', content: userPrompt }]
       });
 

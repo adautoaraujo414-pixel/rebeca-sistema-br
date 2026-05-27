@@ -23,8 +23,11 @@ function _saudacao() {
   return 'Boa noite';
 }
 
-function _chefe() {
-  const opcoes = ['chefe', 'chefa', 'patrão', 'patroa', 'chefão'];
+function _chefe(genero) {
+  const M = ['chefe', 'patrão', 'chefão', 'parceiro'];
+  const F = ['chefa', 'patroa', 'chefona', 'parceira'];
+  const N = ['chefe', 'chefa', 'patrão', 'patroa'];
+  const opcoes = genero === 'M' ? M : genero === 'F' ? F : N;
   return opcoes[Math.floor(Math.random() * opcoes.length)];
 }
 
@@ -1660,6 +1663,7 @@ ${total>5?'Tá crescendo muito! Continua assim! 🚀':'Todo cliente novo é uma 
 
     const _cerebro = await CerebroAgenda.raciocinar(msg, _dadosCtx, _historico, {
       nomeNegocio, nomeDono: admin?.nomeResponsavel || admin?.nome || '',
+      genero: admin?.modoWhatsappDono?.genero || '',
       adminId: String(adminObjId)
     });
 
