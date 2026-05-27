@@ -1853,7 +1853,10 @@ async function rodarLembretesPessoais() {
         const pendentes = await LembreteAgenda.find({ enviado: false }).lean();
 
     for (const lmb of pendentes) {
-      const dataAviso = new Date(lmb.dataEvento.getTime() - lmb.antecedencia * 60000);
+      // Pular lembretes sem data definida
+      if (!lmb.dataEvento) continue;
+      const _antec = lmb.antecedencia || 30;
+      const dataAviso = new Date(new Date(lmb.dataEvento).getTime() - _antec * 60000);
       if (dataAviso > agora) continue; // ainda não chegou a hora de avisar
 
       try {
@@ -1914,9 +1917,10 @@ async function rodarLembretesPessoais() {
     }).lean();
     for (const adm of adminsL) {
       const pendentes = (adm.config?.lembretes || []).filter(
-        l => !l.enviado && l.dataAviso && new Date(l.dataAviso) <= agora2
+        l => !l.enviado && l.dataAviso && new Date(l.dataAviso) <= agora2 && l.dataEvento
       );
       for (const l of pendentes) {
+        try {
         const telDono = _normalizarTel(adm.whatsappOficial || adm.whatsapp || adm.telefone);
         if (!telDono) continue;
         const inst = await InstanciaWhatsapp.findOne({ adminId: String(adm._id), status: 'conectado' }).lean();
@@ -1940,6 +1944,7 @@ async function rodarLembretesPessoais() {
           );
         }
         console.log('[LembretesConfig] Enviado para', telDono, ':', l.texto?.slice(0,40));
+        } catch(eLmb) { console.error('[LembretesConfig] Erro individual:', eLmb.message); }
       }
     }
   } catch(e) {
