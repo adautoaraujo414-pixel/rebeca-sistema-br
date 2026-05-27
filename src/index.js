@@ -552,4 +552,7 @@ cron.schedule('*/5 * * * *', () => ModoDono.rodarLembretes());
 // rodarLembretesPessoais e rodarLembretesClientes já rodam via lembretes-clientes.job (a cada 30min)
 // Fix: evitar execução duplicada que causava envio duplo de lembretes
 cron.schedule('0 7 * * *', () => ModoDono.rodarRelatorioDiario());
-console.log('✅ Cron lembretes dono (5min) + relatório diário (7h) ativos');
+// Bom dia inteligente — horário aleatório entre 7h e 8h30 (cron às 7h, delay interno)
+const BomDia = require('./services/bomdia-inteligente.service');
+cron.schedule('0 7 * * *', () => BomDia.rodarBomDia());
+console.log('✅ Cron lembretes dono (5min) + relatório diário (7h) + bom dia inteligente (7h) ativos');

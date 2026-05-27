@@ -48,7 +48,10 @@ const adminAgendaSchema = new mongoose.Schema({
     offlinePreparado: { type: Boolean, default: false },
     ultimoSyncOfflineEm: { type: Date },
     boasVindasEnviado: { type: Boolean, default: false },
-      boasVindasOficialEnviadaEm: { type: Date }
+    boasVindasOficialEnviadaEm: { type: Date },
+    ultimoBomDiaEm: { type: Date },
+    frasesBomDiaUsadas: { type: [String], default: [] },
+    genero: { type: String, enum: ['M','F',''], default: '' }
   },
   isRebecaOficial: { type: Boolean, default: false },
   planoExpira: { type: Date },
