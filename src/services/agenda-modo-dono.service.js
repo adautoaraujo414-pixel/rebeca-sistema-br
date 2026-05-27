@@ -2001,7 +2001,11 @@ Eu cuido da sua agenda, registro entradas e gastos, aviso novos agendamentos e m
 Sempre que precisar, é só me chamar! 😊`;
 
         const MetaWA = require('./meta-whatsapp.service');
-        await MetaWA.enviarTexto(telDono, msg);
+        const envioOk = await MetaWA.enviarTexto(telDono, msg).then(() => true).catch(e => {
+          console.error('[BoasVindas] ❌ Falha no envio para', admin.email, e.message);
+          return false;
+        });
+        if (!envioOk) continue;
         await AdminAgenda.findByIdAndUpdate(admin._id, {
           'modoWhatsappDono.boasVindasEnviado': true,
           'modoWhatsappDono.boasVindasOficialEnviadaEm': new Date()
