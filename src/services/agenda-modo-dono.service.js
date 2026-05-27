@@ -1573,9 +1573,12 @@ ${total>5?'Tá crescendo muito! Continua assim! 🚀':'Todo cliente novo é uma 
   // ── AI ACTION ENGINE — Intent Parser + Action Router ────────────────────────
   // Claude retorna apenas JSON de intenção. Sistema executa o handler real.
   try {
+    console.log('[AI-ENGINE] iniciando, adminId:', adminId, 'msg:', msg.substring(0,50));
     const Anthropic = require('@anthropic-ai/sdk');
     const _claude = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+    console.log('[AI-ENGINE] Anthropic OK');
     const LembreteAgenda = require('../models/LembreteAgenda');
+    console.log('[AI-ENGINE] LembreteAgenda OK');
     const { ClienteAgenda, RetornoAgenda } = require('../models/AgendaServico');
 
     const hoje = new Date();
