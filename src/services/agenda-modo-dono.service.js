@@ -369,7 +369,7 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
   }
 
   // ── AGENDA DE HOJE ─────────────────────────────────────────────────────────
-  if (/\bagenda\s*(de\s*)?(hoje|amanhã|amanha)\b|\bmostra\s*(minha\s*)?agenda|\bquem\s*(tenho|tem)\s*(hoje|amanhã|amanha)\b|\bhor[aá]rios?\s*(de\s*)?(hoje|amanhã|amanha)\b|\btem\s*algu[eé]m\s*(hoje|amanhã|amanha)\b|\bcomo\s*t[áa]\s*(hoje|amanhã|amanha)\b|\bvou\s*atender\s*quem\b|\bquem\s*[eé]\s*(hoje|amanhã)\b|\bminha\s*agenda\s*(de\s*)?(hoje|amanhã|amanha)\b|\bquantos\s*(clientes\s*)?(tenho|tem)\s*(hoje|amanhã)\b/i.test(msgL)) {
+  if (/\bagenda\s*(de\s*)?(hoje|amanhã|amanha)\b|\bmostra\s*(minha\s*)?agenda|\bquem\s*(tenho|tem)\s*(hoje|amanhã|amanha)\b|\bhor[aá]rios?\s*(de\s*)?(hoje|amanhã|amanha)\b|\btem\s*algu[eé]m\s*(hoje|amanhã|amanha)\b|\bcomo\s*t[áa]\s*(hoje|amanhã|amanha)\b|\bvou\s*atender\s*quem\b|\bquem\s*[eé]\s*(hoje|amanhã)\b|\bminha\s*agenda\s*(de\s*)?(hoje|amanhã|amanha)\b|\bquantos\s*(clientes\s*)?(tenho|tem)\s*(hoje|amanhã)\b|\bcomo\s*(est[aá]|t[aá]|fica|ficou)\s*(a\s*)?(minha\s*)?(agenda|dia|semana)\b|\btem\s*(algum|alguem|alguém|cliente|horario|horário)\s*(hoje|amanhã|amanha|amanha)\b|\b(ver|veja|checar|conferir|olhar)\s*(minha\s*)?(agenda|horario|horários)\b/i.test(msgL)) {
     const dia = /amanhã|amanha/i.test(msgL) ? (() => { const d = new Date(); d.setDate(d.getDate()+1); return d; })() : new Date();
     const ini = _inicioDia(dia);
     const fim = _fimDia(dia);
@@ -489,7 +489,22 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
     if (nlp.intencao === 'lembrete') {
       const _hora = _parseHora(msg) || _parseHora(nlp.normalizado);
       const _dia  = _parseDia(msg)  || _parseDia(nlp.normalizado);
-      const _txt  = nlp.textoLembrete || msg.trim();
+      // Extrair só o assunto — não usar msg inteiro como texto do lembrete
+      const _txtBruto = nlp.textoLembrete || '';
+      const _txt = _txtBruto.length > 2 ? _txtBruto : (() => {
+        // Remover palavras de gatilho, hora e dia do msg para extrair só o assunto
+        return msg.trim()
+          .replace(/rebeca[,.]?\s*/gi, '')
+          .replace(/(me lembra|me avisa|anota|lembrete|nao me deixa esquecer)[,.]?\s*/gi, '')
+          .replace(/(amanha|amanhã|hoje|segunda|terca|terça|quarta|quinta|sexta|sabado|domingo)[-\s]*(feira)?/gi, '')
+          .replace(/dia\s+\d{1,2}(\/\d{1,2})?/gi, '')
+          .replace(/(as|às|pras?|para)\s+\d{1,2}(:\d{2})?(h|hs|horas?)?/gi, '')
+          .replace(/\d{1,2}(:\d{2})?(h|hs)/gi, '')
+          .replace(/(de|do|da|pra|para|que|um|uma)/g, ' ')
+          .replace(/\s{2,}/g, ' ').trim()
+          .replace(/^[,.:;\s]+|[,.:;\s]+$/g, '').trim()
+          || 'Compromisso';
+      })();
 
       if (_hora && _dia) {
         const dataEvento = new Date(_dia);
