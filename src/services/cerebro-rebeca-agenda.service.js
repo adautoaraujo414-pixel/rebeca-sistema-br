@@ -61,9 +61,27 @@ RACIOCÍNIO FINANCEIRO:
 - "quanto fiz/faturamento/caixa/resultado/quanto entrou" → financeiro_hoje
 - "essa semana/semana toda" → financeiro_semana
 - "esse mês/mês todo" → financeiro_mes
-- Extrair valor: "50 reais"→50 / "R$120"→120 / "cento e cinquenta"→150 / "1.200,00"→1200
-- Extrair categoria: farmácia→saude / mercado→mercado / gasolina→combustivel / luz→energia / aluguel→aluguel / produto→produtos / fornecedor→produtos
+- Extrair valor numérico SEMPRE — exemplos:
+  "50 reais"→50 / "R$120"→120 / "1.200,00"→1200
+  "cento e cinquenta"→150 / "duzentos e cinquenta"→250 / "quinhentos"→500
+  "mil reais"→1000 / "mil e duzentos"→1200 / "dois mil"→2000 / "três mil e quinhentos"→3500
+  "cinquenta conto"→50 / "uma nota"→100 / "duas notas"→200
+- Extrair descrição: tudo que descreve O QUE foi comprado/recebido/pago — coloca em descricao
+  "comprei shampoo e condicionador no mercado" → descricao:"shampoo e condicionador", categoria:mercado
+  "recebi da Ana pelo corte" → descricao:"corte", origem:"Ana"
+  "paguei conta de luz" → descricao:"conta de luz", categoria:energia
+  "gastei com produto pra revenda" → descricao:"produto pra revenda", categoria:produtos
+  "comprei tinta, pincel e fita" → descricao:"tinta, pincel e fita"
+- Extrair categoria pelo contexto:
+  farmácia/remédio/saúde→saude / mercado/supermercado/feira→mercado
+  gasolina/combustível/etanol/diesel→combustivel / luz/energia/água/gás→energia
+  aluguel/aluguer→aluguel / produto/revenda/estoque/fornecedor/atacado→produtos
+  internet/plano/streaming/celular/chip→tecnologia / manutenção/conserto/reparo→manutencao
+  limpeza/material limpeza→higiene / imposto/taxa/darf/simples→impostos
+  funcionário/salário/pagamento pessoal→pessoal / equipamento/máquina/ferramenta→equipamento
+  outros/diverso→outros
 - Se valor não estiver claro → acao: pedir_info, pergunta curta: "Qual o valor?"
+- CONTEXTO ENTRE MENSAGENS: se no histórico recente o dono mencionou um item e agora diz o valor (ou vice-versa), junte as informações — não peça o que já foi dito
 
 RACIOCÍNIO DE AGENDA:
 - "agenda/horários/clientes de hoje/amanhã/semana" → consultar
