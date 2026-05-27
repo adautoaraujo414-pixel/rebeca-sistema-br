@@ -182,6 +182,23 @@ Sempre que precisar, é só me chamar por aqui. 😊`;
 // Data atual — MongoDB salva UTC; filtros já compensam GMT-3
 function _dataAgora() { return new Date(); }
 
+// Helpers de filtro de data — servidor UTC, Brasil UTC-3
+function _inicioDia(d) {
+  // Meia-noite BRT = 03:00 UTC
+  const base = d ? new Date(d) : new Date();
+  return new Date(Date.UTC(
+    base.getUTCFullYear(), base.getUTCMonth(), base.getUTCDate(), 3, 0, 0, 0
+  ));
+}
+function _fimDia(d) {
+  // 23:59:59 BRT = 02:59:59 UTC do dia seguinte
+  const base = d ? new Date(d) : new Date();
+  return new Date(Date.UTC(
+    base.getUTCFullYear(), base.getUTCMonth(), base.getUTCDate() + 1, 2, 59, 59, 999
+  ));
+}
+
+
 // ── Parser de data/hora simples ───────────────────────────────────────────────
 function _parseDia(txt) {
   const agora = new Date();
@@ -354,8 +371,8 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
   // ── AGENDA DE HOJE ─────────────────────────────────────────────────────────
   if (/\bagenda\s*(de\s*)?(hoje|amanhã|amanha)\b|\bmostra\s*(minha\s*)?agenda|\bquem\s*(tenho|tem)\s*(hoje|amanhã|amanha)\b|\bhor[aá]rios?\s*(de\s*)?(hoje|amanhã|amanha)\b|\btem\s*algu[eé]m\s*(hoje|amanhã|amanha)\b|\bcomo\s*t[áa]\s*(hoje|amanhã|amanha)\b|\bvou\s*atender\s*quem\b|\bquem\s*[eé]\s*(hoje|amanhã)\b|\bminha\s*agenda\s*(de\s*)?(hoje|amanhã|amanha)\b|\bquantos\s*(clientes\s*)?(tenho|tem)\s*(hoje|amanhã)\b/i.test(msgL)) {
     const dia = /amanhã|amanha/i.test(msgL) ? (() => { const d = new Date(); d.setDate(d.getDate()+1); return d; })() : new Date();
-    const ini = new Date(dia); ini.setHours(0,0,0,0);
-    const fim = new Date(dia); fim.setHours(23,59,59,999);
+    const ini = _inicioDia(dia);
+    const fim = _fimDia(dia);
     const ags = await AgendamentoAgenda.find({
       adminId: adminObjId,
       dataHora: { $gte: ini, $lte: fim },
@@ -735,8 +752,8 @@ ${totalAgs > 0 ? 'Tá saindo bem! 💪' : 'Ainda sem registros esse mês.'}`);
                 || msg.match(/([A-Za-zÀ-ú]+(?:\s+[A-Za-zÀ-ú]+)?)\s+(?:n[aã]o\s+vem|cancelou|desistiu|n[aã]o\s+vai\s+vir)/i);
     const nomeCli2 = nomeM2 ? nomeM2[1].trim() : null;
     if (nomeCli2) {
-      const ini = new Date(dia); ini.setHours(0,0,0,0);
-      const fim = new Date(dia); fim.setHours(23,59,59,999);
+      const ini = _inicioDia(dia);
+      const fim = _fimDia(dia);
       const ag = await AgendamentoAgenda.findOne({
         adminId: adminObjId,
         nomeCliente: { $regex: nomeCli2, $options: 'i' },
@@ -776,8 +793,8 @@ ${totalAgs > 0 ? 'Tá saindo bem! 💪' : 'Ainda sem registros esse mês.'}`);
                || msg.match(/([A-Za-zÀ-ú]+(?:\s+[A-Za-zÀ-ú]+)?)\s+(?:confirmou|vai\s+vir|pode\s+vir)/i);
     const nomeCli = nomeM ? nomeM[1].trim() : null;
     if (nomeCli) {
-      const ini = new Date(dia); ini.setHours(0,0,0,0);
-      const fim = new Date(dia); fim.setHours(23,59,59,999);
+      const ini = _inicioDia(dia);
+      const fim = _fimDia(dia);
       const ag = await AgendamentoAgenda.findOne({
         adminId: adminObjId,
         nomeCliente: { $regex: nomeCli, $options: 'i' },
@@ -1163,8 +1180,8 @@ Descansa bem! 😊💙`);
   // ── LIBERAR AGENDA (com suporte a pausa/almoço embutida) ─────────────────
   if (/libera\s*(minha\s*)?agenda|remove\s*(os\s*)?bloqueios?|abre\s*(minha\s*)?agenda/i.test(msgL)) {
     const dia = _parseDia(msgL) || new Date();
-    const ini = new Date(dia); ini.setHours(0,0,0,0);
-    const fim = new Date(dia); fim.setHours(23,59,59,999);
+    const ini = _inicioDia(dia);
+    const fim = _fimDia(dia);
 
     // Extrair range principal de horário (ex: "das 8 às 18") — ignora range da pausa
     const rangePrincipalM = msg.match(/(?<!(?:pausa|almo[çc]o|intervalo)\s{0,10})das?\s*(\d{1,2}h?\d{0,2})\s*(?:às?|as)\s*(\d{1,2}h?\d{0,2})(?!.*(?:pausa|almo[çc]o))/i)
@@ -1779,10 +1796,10 @@ async function rodarRelatorioDiario() {
 
     const ontem = new Date(); ontem.setDate(ontem.getDate() - 1);
     const hoje  = new Date();
-    const iniOn = new Date(ontem); iniOn.setHours(0,0,0,0);
-    const fimOn = new Date(ontem); fimOn.setHours(23,59,59,999);
-    const iniHj = new Date(hoje);  iniHj.setHours(0,0,0,0);
-    const fimHj = new Date(hoje);  fimHj.setHours(23,59,59,999);
+    const iniOn = _inicioDia(ontem);
+    const fimOn = _fimDia(ontem);
+    const iniHj = _inicioDia(hoje);
+    const fimHj = _fimDia(hoje);
 
     for (const admin of admins) {
       try {
