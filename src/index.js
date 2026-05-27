@@ -541,7 +541,7 @@ console.log('✅ Cron agendamentos ativo');
 const DeliveryTrialService = require('./services/delivery-trial.service');
 const CardapioDiaService   = require('./services/cardapio-dia.service');
 cron.schedule('0 6 * * *', () => DeliveryTrialService.verificarTrialsVencidos());
-cron.schedule('0 7 * * *', () => CardapioDiaService.perguntarCardapioAdms());
+cron.schedule('0 10 * * *', () => CardapioDiaService.perguntarCardapioAdms());
 DeliveryTrialService.verificarTrialsVencidos();
 console.log('✅ Cron delivery trial ativo');
 console.log('✅ Cron cardápio do dia ativo (7h)');
@@ -551,8 +551,8 @@ const ModoDono = require('./services/agenda-modo-dono.service');
 cron.schedule('*/5 * * * *', () => ModoDono.rodarLembretes());
 // rodarLembretesPessoais e rodarLembretesClientes já rodam via lembretes-clientes.job (a cada 30min)
 // Fix: evitar execução duplicada que causava envio duplo de lembretes
-cron.schedule('0 7 * * *', () => ModoDono.rodarRelatorioDiario());
+cron.schedule('0 10 * * *', () => ModoDono.rodarRelatorioDiario());
 // Bom dia inteligente — horário aleatório entre 7h e 8h30 (cron às 7h, delay interno)
 const BomDia = require('./services/bomdia-inteligente.service');
-cron.schedule('0 7 * * *', () => BomDia.rodarBomDia());
+cron.schedule('0 10 * * *', () => BomDia.rodarBomDia());
 console.log('✅ Cron lembretes dono (5min) + relatório diário (7h) + bom dia inteligente (7h) ativos');
