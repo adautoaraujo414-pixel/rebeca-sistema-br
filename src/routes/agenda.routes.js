@@ -77,6 +77,16 @@ router.get('/perfil', authAgenda, async (req, res) => {
   } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
+// Configurar gênero do admin (para apelidos corretos na Rebeca)
+router.patch('/perfil/genero', authAgenda, async (req, res) => {
+  try {
+    const { genero } = req.body;
+    if (!['M','F',''].includes(genero)) return res.status(400).json({ erro: 'genero deve ser M, F ou vazio' });
+    await AdminAgenda.findByIdAndUpdate(req.adminAgendaId, { 'modoWhatsappDono.genero': genero });
+    res.json({ sucesso: true, genero });
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
 router.put('/perfil', authAgenda, async (req, res) => {
   try {
     const campos = ['nome','nomeNegocio','segmento','telefone','whatsapp','logo','descricao','endereco','cidade','instagram','config'];
