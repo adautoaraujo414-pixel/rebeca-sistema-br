@@ -353,8 +353,76 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
   const _session = SM.addUserMsg(adminId, telefone, msg);
   const _isConfirm = SM.isConfirmacao(msg);
   const _isNeg = SM.isNegacao(msg);
+  // Salvar mensagem atual para uso no detector de correção
+  const _msgAnteriorSessao = _session.ultimaMensagemDono || null;
+  SM.updateSession(adminId, telefone, { ultimaMensagemDono: msg });
   const _assuntoDetectado = SM.detectarAssunto(msg) || _session.assuntoAtual;
   SM.updateSession(adminId, telefone, { assuntoAtual: _assuntoDetectado });
+  // ── DETECTOR DE CORREÇÃO AUTOMÁTICA ──────────────────────────────────────
+  // Se dono sinalizou que Rebeca errou → salvar aprendizado e perguntar o certo
+  const _sinaisErro = /n[aã]o era isso|n[aã]o [eé] isso|errou|erraste|errei nisso|n[aã]o foi isso|entendeu errado|errada|n[aã]o [eé] o que pedi|n[aã]o era o que pedi|entendeu tudo errado|fez errado|n[aã]o era pra/i;
+  const _sesAtualCorr = SM.getSession(adminId, telefone);
+  if (_sinaisErro.test(msgL) && _sesAtualCorr.ultimaIntencaoCerebro && _sesAtualCorr.ultimaMensagemDono) {
+    try {
+      const AprendizadoRebeca = require('../models/AprendizadoRebeca');
+      const _adminObjIdCorr = require('mongoose').Types.ObjectId.isValid(adminId) ? new (require('mongoose').Types.ObjectId)(adminId) : adminId;
+      // Verificar se já existe registro igual para não duplicar
+      const _jaExiste = await AprendizadoRebeca.findOne({
+        adminId: _adminObjIdCorr,
+        mensagem_original: _sesAtualCorr.ultimaMensagemDono,
+        intencao_errada: _sesAtualCorr.ultimaIntencaoCerebro
+      }).lean();
+      if (!_jaExiste) {
+        await AprendizadoRebeca.create({
+          adminId: _adminObjIdCorr,
+          mensagem_original: _sesAtualCorr.ultimaMensagemDono,
+          intencao_errada: _sesAtualCorr.ultimaIntencaoCerebro,
+          intencao_correta: 'desconhecida', // será atualizada quando dono explicar
+          descricao_erro: `Entendi como ${_sesAtualCorr.ultimaIntencaoCerebro} mas estava errado`,
+          confirmado: false,
+          vezes_visto: 1
+        });
+        console.log('[APRENDIZADO] Erro detectado e salvo:', _sesAtualCorr.ultimaIntencaoCerebro);
+      }
+      // Marcar sessão aguardando explicação do que era certo
+      SM.updateSession(adminId, telefone, { aguardandoCorrecao: true, intencaoErrada: _sesAtualCorr.ultimaIntencaoCerebro });
+    } catch(_eCorr) { console.log('[APRENDIZADO] Erro ao salvar:', _eCorr.message); }
+
+    const adminObjId = require('mongoose').Types.ObjectId.isValid(adminId) ? new (require('mongoose').Types.ObjectId)(adminId) : adminId;
+    const admin2 = await AdminAgenda.findById(adminObjId).lean();
+    const _chefe2 = admin2?.modoWhatsappDono?.genero === 'F' ? 'patroa' : 'chefe';
+    const _resp = `Poxa, me desculpa, ${_chefe2}! 😅 O que eu deveria ter feito?`;
+    const instancia2 = await InstanciaWhatsapp.findOne({ adminId: adminObjId, adminTipo: 'agenda' }).lean();
+    if (instancia2) await _enviarMsg(instancia2, telefone, _resp);
+    SM.addAssistantMsg(adminId, telefone, _resp);
+    return true;
+  }
+
+  // ── SE AGUARDANDO CORREÇÃO — dono está explicando o que era certo ──
+  const _sesCorr2 = SM.getSession(adminId, telefone);
+  if (_sesCorr2.aguardandoCorrecao && msg.length > 3) {
+    try {
+      const AprendizadoRebeca = require('../models/AprendizadoRebeca');
+      const _adminObjIdCorr2 = require('mongoose').Types.ObjectId.isValid(adminId) ? new (require('mongoose').Types.ObjectId)(adminId) : adminId;
+      await AprendizadoRebeca.findOneAndUpdate(
+        { adminId: _adminObjIdCorr2, intencao_errada: _sesCorr2.intencaoErrada, confirmado: false },
+        { intencao_correta: msg, confirmado: true, ultimoReforco: new Date() },
+        { sort: { criadoEm: -1 } }
+      );
+      console.log('[APRENDIZADO] Correcao confirmada:', msg);
+      SM.updateSession(adminId, telefone, { aguardandoCorrecao: false, intencaoErrada: null });
+    } catch(_eCorr2) { console.log('[APRENDIZADO] Erro confirmar:', _eCorr2.message); }
+
+    const adminObjId = require('mongoose').Types.ObjectId.isValid(adminId) ? new (require('mongoose').Types.ObjectId)(adminId) : adminId;
+    const admin3 = await AdminAgenda.findById(adminObjId).lean();
+    const _chefe3 = admin3?.modoWhatsappDono?.genero === 'F' ? 'patroa' : 'chefe';
+    const instancia3 = await InstanciaWhatsapp.findOne({ adminId: adminObjId, adminTipo: 'agenda' }).lean();
+    const _resp2 = `Anotei, ${_chefe3}! 📝 Vou lembrar disso da próxima vez! 💙`;
+    if (instancia3) await _enviarMsg(instancia3, telefone, _resp2);
+    SM.addAssistantMsg(adminId, telefone, _resp2);
+    return true;
+  }
+
   const adminObjId = require('mongoose').Types.ObjectId.isValid(adminId) ? new (require('mongoose').Types.ObjectId)(adminId) : adminId;
 
   const admin = await AdminAgenda.findById(adminObjId).lean();
