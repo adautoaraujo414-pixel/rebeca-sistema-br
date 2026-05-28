@@ -353,6 +353,41 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
   const msgL = msg.toLowerCase();
   console.log('[DEBUG-INICIO] msgL:', msgL);
   console.log('[DEBUG-INICIO] msgL:', msgL);
+
+  // ── APRENDIZADO: verificar se dono já corrigiu esta intenção antes ──────────
+  try {
+    const AprendizadoRebeca = require('../models/AprendizadoRebeca');
+    const _adminIdAp = require('mongoose').Types.ObjectId.isValid(adminId)
+      ? new (require('mongoose').Types.ObjectId)(adminId) : adminId;
+    const _aprendidos = await AprendizadoRebeca.find({
+      adminId: _adminIdAp, confirmado: true
+    }).sort({ vezes_visto: -1, ultimoReforco: -1 }).limit(20).lean();
+
+    if (_aprendidos.length > 0) {
+      const _msgNorm = msg.toLowerCase().trim();
+      for (const ap of _aprendidos) {
+        const _orig = (ap.mensagem_original || '').toLowerCase();
+        // Similaridade: 60%+ das palavras batem
+        const _palavrasOrig = _orig.split(/s+/).filter(p => p.length > 3);
+        const _palavrasMsg  = _msgNorm.split(/s+/).filter(p => p.length > 3);
+        if (_palavrasOrig.length === 0) continue;
+        const _bate = _palavrasOrig.filter(p => _msgNorm.includes(p)).length;
+        const _sim = _bate / _palavrasOrig.length;
+        if (_sim >= 0.6 && ap.intencao_correta && ap.intencao_correta !== 'desconhecida' && ap.intencao_correta !== 'fora_escopo') {
+          console.log('[APRENDIZADO] Redirecionando:', ap.intencao_errada, '->', ap.intencao_correta, '| sim:', _sim.toFixed(2));
+          // Reforçar o aprendizado
+          await AprendizadoRebeca.findByIdAndUpdate(ap._id, { $inc: { vezes_visto: 1 }, $set: { ultimoReforco: new Date() } });
+          // Substituir a mensagem por uma com hint da intenção correta para o NLP/Cerebro pegar
+          // Salvar na sessão para os handlers saberem
+          const SM2 = require('./agenda-session-manager');
+          SM2.updateSession(adminId, telefone, { intencaoForçada: ap.intencao_correta });
+          break;
+        }
+      }
+    }
+  } catch(_eAp) { /* silencioso */ }
+  // ─────────────────────────────────────────────────────────────────────────────
+
   // ── SESSION: registrar mensagem e recuperar estado ──
   const _session = SM.addUserMsg(adminId, telefone, msg);
   const _isConfirm = SM.isConfirmacao(msg);
