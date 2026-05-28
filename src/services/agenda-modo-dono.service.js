@@ -23,7 +23,8 @@ function _saudacao() {
   return 'Boa noite';
 }
 
-function _chefe(genero) {
+function _chefe(genero, apelido) {
+  if (apelido && apelido.trim()) return apelido.trim();
   const M = ['chefe', 'patrão', 'chefão', 'parceiro'];
   const F = ['chefa', 'patroa', 'chefona', 'parceira'];
   const N = ['chefe', 'chefa', 'patrão', 'patroa'];
@@ -34,9 +35,9 @@ function _chefe(genero) {
 function _confirmacao() {
   const opcoes = [
     'Maravilha! Já anotei aqui. ✅',
-    'Feito, ' + _chefe() + '! Tá registrado. 💙',
+    'Feito, ' + _chefe(_generoAdmin, _apelidoAdmin) + '! Tá registrado. 💙',
     'Prontinho! Já tá no sistema. 🎉',
-    'Pode deixar, ' + _chefe() + '! Já tá anotado. ✅',
+    'Pode deixar, ' + _chefe(_generoAdmin, _apelidoAdmin) + '! Já tá anotado. ✅',
     'Ótimo! Já resolvi aqui. 💪'
   ];
   return opcoes[Math.floor(Math.random() * opcoes.length)];
@@ -45,7 +46,7 @@ function _confirmacao() {
 function _erro() {
   const opcoes = [
     'Eita, não entendi direito não. 😅',
-    'Hmm, me explica melhor, ' + _chefe() + '?',
+    'Hmm, me explica melhor, ' + _chefe(_generoAdmin, _apelidoAdmin) + '?',
     'Não consegui pegar essa, pode repetir de outro jeito?'
   ];
   return opcoes[Math.floor(Math.random() * opcoes.length)];
@@ -165,7 +166,10 @@ Você pode me pedir, por exemplo:
 
 Eu atualizo sua agenda, organizo seus horários, registro entradas e gastos, aviso novos agendamentos e mantenho seu painel em dia.
 
-Sempre que precisar, é só me chamar por aqui. 😊`;
+Sempre que precisar, é só me chamar por aqui. 😊
+
+Antes de começar — como você prefere ser chamada? 😊
+_(ex: "Ju", "Dra. Ana", "pode me chamar de Mari")_`;
 
     const MetaWA = require('./meta-whatsapp.service');
     await MetaWA.enviarTexto(telDono, msg);
@@ -358,6 +362,33 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
   SM.updateSession(adminId, telefone, { ultimaMensagemDono: msg });
   const _assuntoDetectado = SM.detectarAssunto(msg) || _session.assuntoAtual;
   SM.updateSession(adminId, telefone, { assuntoAtual: _assuntoDetectado });
+  // ── SALVAR APELIDO SE AGUARDANDO RESPOSTA DO BOAS-VINDAS ───────────────
+  const _sesApelido = SM.getSession(adminId, telefone);
+  if (!admin.modoWhatsappDono?.apelido && admin.modoWhatsappDono?.boasVindasEnviado) {
+    const _apelidoRaw = msg.trim();
+    // Detectar se é resposta de apelido (curto, sem comando claro)
+    const _pareceChamado = _apelidoRaw.length <= 40 &&
+      !_apelidoRaw.match(/registra|agenda|bloqueia|cancela|mostra|quanto|lembra|entrada|saída|relatório/i);
+    if (_pareceChamado && !_sesApelido.apelidoRespondido) {
+      // Limpar prefixos comuns: "pode me chamar de X", "me chama de X", "sou X"
+      let _apelido = _apelidoRaw
+        .replace(/^(pode me chamar de|me chama de|me chame de|sou a?|meu nome é|é?)\s*/i, '')
+        .replace(/[.!?]$/, '')
+        .trim();
+      if (_apelido.length >= 2 && _apelido.length <= 30) {
+        await AdminAgenda.findByIdAndUpdate(adminObjId, {
+          'modoWhatsappDono.apelido': _apelido
+        });
+        SM.updateSession(adminId, telefone, { apelidoRespondido: true });
+        const instanciaApelido = await InstanciaWhatsapp.findOne({ adminId: adminObjId, adminTipo: 'agenda' }).lean();
+        const _respApelido = `Prazer, ${_apelido}! 😊 Pode me chamar quando precisar. Tô aqui pra te ajudar! 💙`;
+        if (instanciaApelido) await _enviarMsg(instanciaApelido, telefone, _respApelido);
+        SM.addAssistantMsg(adminId, telefone, _respApelido);
+        return true;
+      }
+    }
+  }
+
   // ── DETECTOR DE CORREÇÃO AUTOMÁTICA ──────────────────────────────────────
   // Se dono sinalizou que Rebeca errou → salvar aprendizado e perguntar o certo
   const _sinaisErro = /n[aã]o era isso|n[aã]o [eé] isso|errou|erraste|errei nisso|n[aã]o foi isso|entendeu errado|errada|n[aã]o [eé] o que pedi|n[aã]o era o que pedi|entendeu tudo errado|fez errado|n[aã]o era pra/i;
@@ -427,6 +458,8 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
 
   const admin = await AdminAgenda.findById(adminObjId).lean();
   if (!admin) return null;
+  const _apelidoAdmin = admin?.modoWhatsappDono?.apelido || null;
+  const _generoAdmin  = admin?.modoWhatsappDono?.genero || '';
 
   const instancia = await InstanciaWhatsapp.findOne({ adminId: adminObjId, adminTipo: 'agenda' }).lean();
   if (!instancia && !instanciaResposta) return null; // Meta API nao precisa de instancia Evolution
@@ -449,14 +482,14 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
     }).sort({ dataHora: 1 }).lean();
 
     if (!ags.length) {
-      await responder(`${_saudacao()}, ${_chefe()}! 😊\n\nNão tem nenhum agendamento ${/amanhã|amanha/i.test(msgL)?'para amanhã':'pra hoje' } não. Tá livre! 🎉`);
+      await responder(`${_saudacao()}, ${_chefe(_generoAdmin, _apelidoAdmin)}! 😊\n\nNão tem nenhum agendamento ${/amanhã|amanha/i.test(msgL)?'para amanhã':'pra hoje' } não. Tá livre! 🎉`);
       return true;
     }
 
     const lista = ags.map(a =>
       `• ${_fmtHora(new Date(a.dataHora))} — ${a.nomeCliente} (${a.nomeServico})`
     ).join('\n');
-    await responder(`${_saudacao()}! Olha a agenda ${/amanhã|amanha/i.test(msgL)?'de amanhã':'de hoje'} pra você, ${_chefe()}! 📅\n\n${lista}\n\n${ags.length} agendamento(s) no total. Bora lá! 💪`);
+    await responder(`${_saudacao()}! Olha a agenda ${/amanhã|amanha/i.test(msgL)?'de amanhã':'de hoje'} pra você, ${_chefe(_generoAdmin, _apelidoAdmin)}! 📅\n\n${lista}\n\n${ags.length} agendamento(s) no total. Bora lá! 💪`);
     return true;
   }
 
@@ -497,7 +530,7 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
           'config.horarioAbertura': abertura,
           'config.horarioFechamento': fechamento
         });
-        await responder(`Anotei aqui, ${_chefe()}! ✅\n\nHoje você trabalha das *${abertura}* às *${fechamento}*. Pode vir cliente! 🚀`);
+        await responder(`Anotei aqui, ${_chefe(_generoAdmin, _apelidoAdmin)}! ✅\n\nHoje você trabalha das *${abertura}* às *${fechamento}*. Pode vir cliente! 🚀`);
         return true;
       }
     }
@@ -584,7 +617,7 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
           $push: { 'config.lembretes': { texto: _txt, dataEvento, dataAviso, enviado: false, criadoEm: new Date() } }
         });
         const _diaStr = dataEvento.toLocaleDateString('pt-BR', { weekday:'long', day:'numeric', month:'long' });
-        await responder(`Anotei, ${_chefe()}! 🔔\n\n*${_txt}* — ${_diaStr} às ${_fmtHora(dataEvento)}\n\nTe aviso 30 minutos antes! 💙`);
+        await responder(`Anotei, ${_chefe(_generoAdmin, _apelidoAdmin)}! 🔔\n\n*${_txt}* — ${_diaStr} às ${_fmtHora(dataEvento)}\n\nTe aviso 30 minutos antes! 💙`);
         return true;
       }
       if (_dia && !_hora) {
@@ -737,8 +770,8 @@ Te aviso 30 minutos antes de cada um! 💙`;
     const _temNome2 = _nomeM2 && !_skip.includes(_nomeM2[0]);
     if (_nlpVal && _temSvcBeleza && !_temVerbFin && !_temHoraNlp) {
       const _resp = _temNome2
-        ? _chefe() + ', e pra agendar ' + _nomeM2[0] + ' ou registrar um gasto de R$ ' + _nlpVal.toFixed(2) + '? Me fala "agenda" ou "gasto" 😊'
-        : _chefe() + ', voce quis registrar um gasto de R$ ' + _nlpVal.toFixed(2) + ' em ' + _nlpCat + '? Confirma "sim" ou diz "agenda [nome] [horario]" 😊';
+        ? _chefe(_generoAdmin, _apelidoAdmin) + ', e pra agendar ' + _nomeM2[0] + ' ou registrar um gasto de R$ ' + _nlpVal.toFixed(2) + '? Me fala "agenda" ou "gasto" 😊'
+        : _chefe(_generoAdmin, _apelidoAdmin) + ', voce quis registrar um gasto de R$ ' + _nlpVal.toFixed(2) + ' em ' + _nlpCat + '? Confirma "sim" ou diz "agenda [nome] [horario]" 😊';
       await responder(_resp);
       return true;
     }
@@ -779,7 +812,7 @@ Te aviso 30 minutos antes de cada um! 💙`;
         return true;
       }
       // Número solto sem contexto — pede confirmação
-      await responder(`${_chefe()}, vi o valor R$ ${_nlpVal.toFixed(2)} — foi uma saída? Me confirma "sim gasto" ou me fala o que foi 😊`);
+      await responder(`${_chefe(_generoAdmin, _apelidoAdmin)}, vi o valor R$ ${_nlpVal.toFixed(2)} — foi uma saída? Me confirma "sim gasto" ou me fala o que foi 😊`);
       return true;
     }
 
@@ -856,7 +889,7 @@ Te aviso 30 minutos antes de cada um! 💙`;
       }).lean();
       const totalAgs  = ags.length;
       const totalLanc = lanc.reduce((s,l) => s+l.valor, 0);
-      await responder(`${_saudacao()}, ${_chefe()}! 📊
+      await responder(`${_saudacao()}, ${_chefe(_generoAdmin, _apelidoAdmin)}! 📊
 
 ✂️ *${servicoBusca}* esse mês:
 • ${totalAgs} atendimento(s)
@@ -927,7 +960,7 @@ ${totalAgs > 0 ? 'Tá saindo bem! 💪' : 'Ainda sem registros esse mês.'}`);
       }).lean();
       if (ag) {
         await AgendamentoAgenda.findByIdAndUpdate(ag._id, { status: 'cancelado' });
-        await responder(`Feito, ${_chefe()}! 🔓\n\n*${ag.nomeCliente}* às ${_fmtHora(new Date(ag.dataHora))} cancelado. Horário livre! 😊`);
+        await responder(`Feito, ${_chefe(_generoAdmin, _apelidoAdmin)}! 🔓\n\n*${ag.nomeCliente}* às ${_fmtHora(new Date(ag.dataHora))} cancelado. Horário livre! 😊`);
         return true;
       }
     }
@@ -946,13 +979,13 @@ ${totalAgs > 0 ? 'Tá saindo bem! 💪' : 'Ainda sem registros esse mês.'}`);
       }).lean();
       if (ag) {
         await AgendamentoAgenda.findByIdAndUpdate(ag._id, { status: 'cancelado' });
-        await responder(`Cancelado, ${_chefe()}! 🔓\n\n*${ag.nomeCliente}* às ${_fmtHora(new Date(ag.dataHora))} removido. Horário livre! 😊`);
+        await responder(`Cancelado, ${_chefe(_generoAdmin, _apelidoAdmin)}! 🔓\n\n*${ag.nomeCliente}* às ${_fmtHora(new Date(ag.dataHora))} removido. Horário livre! 😊`);
         return true;
       }
-      await responder(`Não achei agendamento de *${nomeCli2}* hoje não, ${_chefe()}. Confere o nome? 🤔`);
+      await responder(`Não achei agendamento de *${nomeCli2}* hoje não, ${_chefe(_generoAdmin, _apelidoAdmin)}. Confere o nome? 🤔`);
       return true;
     }
-    await responder(`Me fala o horário ou o nome, ${_chefe()}!\nTipo: *cancela as 14h* ou *a Maria não vem* 😊`);
+    await responder(`Me fala o horário ou o nome, ${_chefe(_generoAdmin, _apelidoAdmin)}!\nTipo: *cancela as 14h* ou *a Maria não vem* 😊`);
     return true;
   }
 
@@ -969,7 +1002,7 @@ ${totalAgs > 0 ? 'Tá saindo bem! 💪' : 'Ainda sem registros esse mês.'}`);
       }).lean();
       if (ag) {
         await AgendamentoAgenda.findByIdAndUpdate(ag._id, { status: 'confirmado' });
-        await responder(`Maravilha, ${_chefe()}! 🎉\n\n✅ *${ag.nomeCliente}* confirmado às ${_fmtHora(new Date(ag.dataHora))}. Pode esperar! 💙`);
+        await responder(`Maravilha, ${_chefe(_generoAdmin, _apelidoAdmin)}! 🎉\n\n✅ *${ag.nomeCliente}* confirmado às ${_fmtHora(new Date(ag.dataHora))}. Pode esperar! 💙`);
         return true;
       }
     }
@@ -987,13 +1020,13 @@ ${totalAgs > 0 ? 'Tá saindo bem! 💪' : 'Ainda sem registros esse mês.'}`);
       }).lean();
       if (ag) {
         await AgendamentoAgenda.findByIdAndUpdate(ag._id, { status: 'confirmado' });
-        await responder(`Confirmado, ${_chefe()}! ✅\n\n*${ag.nomeCliente}* às ${_fmtHora(new Date(ag.dataHora))} — anotado! 💙`);
+        await responder(`Confirmado, ${_chefe(_generoAdmin, _apelidoAdmin)}! ✅\n\n*${ag.nomeCliente}* às ${_fmtHora(new Date(ag.dataHora))} — anotado! 💙`);
         return true;
       }
-      await responder(`Não achei agendamento pra *${nomeCli}* hoje não, ${_chefe()}. Confere o nome? 🤔`);
+      await responder(`Não achei agendamento pra *${nomeCli}* hoje não, ${_chefe(_generoAdmin, _apelidoAdmin)}. Confere o nome? 🤔`);
       return true;
     }
-    await responder(`Me fala o horário ou o nome, ${_chefe()}!\nTipo: *confirma as 14h* ou *a Maria confirmou* 😊`);
+    await responder(`Me fala o horário ou o nome, ${_chefe(_generoAdmin, _apelidoAdmin)}!\nTipo: *confirma as 14h* ou *a Maria confirmou* 😊`);
     return true;
   }
 
@@ -1006,7 +1039,7 @@ ${totalAgs > 0 ? 'Tá saindo bem! 💪' : 'Ainda sem registros esse mês.'}`);
       ultimoAtendimento: { $lt: corte, $exists: true }
     }).sort({ ultimoAtendimento: 1 }).limit(5).lean();
     if (!inativos.length) {
-      await responder(`${_saudacao()}, ${_chefe()}! 🎉\n\nNenhum cliente inativo nos últimos 30 dias não! Todo mundo voltando direitinho! 💪`);
+      await responder(`${_saudacao()}, ${_chefe(_generoAdmin, _apelidoAdmin)}! 🎉\n\nNenhum cliente inativo nos últimos 30 dias não! Todo mundo voltando direitinho! 💪`);
       return true;
     }
     const lista = inativos.map(c => {
@@ -1187,7 +1220,7 @@ ${totalAgs > 0 ? 'Tá saindo bem! 💪' : 'Ainda sem registros esse mês.'}`);
     await AdminAgenda.findByIdAndUpdate(adminObjId, {
       $push: { 'config.lembretes': { texto: _textoFinal, dataEvento: null, dataAviso: null, enviado: false, criadoEm: new Date() } }
     });
-    const _rE = 'Anotei, ' + _chefe() + '! Me fala o dia e horario tambem pra eu te avisar antes.';
+    const _rE = 'Anotei, ' + _chefe(_generoAdmin, _apelidoAdmin) + '! Me fala o dia e horario tambem pra eu te avisar antes.';
     await responder(_rE);
     SM.addAssistantMsg(adminId, telefone, _rE);
     return true;
@@ -1226,7 +1259,7 @@ ${totalAgs > 0 ? 'Tá saindo bem! 💪' : 'Ainda sem registros esse mês.'}`);
 
   // Audio sem transcricao
   if (msg.startsWith('[AUDIO_SEM_TEXTO]') || msg.startsWith('[AUDIO]')) {
-    await responder(`🎤 Recebi seu áudio, ${_chefe()}! Mas não consegui transcrever. Me manda em texto que resolvo na hora! 💙`);
+    await responder(`🎤 Recebi seu áudio, ${_chefe(_generoAdmin, _apelidoAdmin)}! Mas não consegui transcrever. Me manda em texto que resolvo na hora! 💙`);
     return true;
   }
 
@@ -1239,13 +1272,13 @@ ${totalAgs > 0 ? 'Tá saindo bem! 💪' : 'Ainda sem registros esse mês.'}`);
       status: { $in: ['pendente','confirmado'] }
     }).sort({ dataHora: 1 }).lean();
     if (!ag) {
-      await responder(`${_saudacao()}, ${_chefe()}! 😊
+      await responder(`${_saudacao()}, ${_chefe(_generoAdmin, _apelidoAdmin)}! 😊
 
 Não tem mais ninguém agendado hoje não! Tá livre o resto do dia. 🎉`);
     } else {
       const mins = Math.round((new Date(ag.dataHora) - agora) / 60000);
       const tempo = mins <= 0 ? 'já deveria ter chegado!' : mins < 60 ? `em ${mins} minutinhos` : `em ${Math.round(mins/60)}h`;
-      await responder(`${_saudacao()}! O próximo é ${_chefe()}! 😄
+      await responder(`${_saudacao()}! O próximo é ${_chefe(_generoAdmin, _apelidoAdmin)}! 😄
 
 👤 *${ag.nomeCliente}*
 ✂️ ${ag.nomeServico || '—'}
@@ -1265,7 +1298,7 @@ Bora se preparar! 💪`);
       status: { $in: ['pendente','confirmado'] }
     }).sort({ dataHora: 1 }).lean();
     if (!ags.length) {
-      await responder(`${_saudacao()}, ${_chefe()}! 😊
+      await responder(`${_saudacao()}, ${_chefe(_generoAdmin, _apelidoAdmin)}! 😊
 
 A semana tá zerada por enquanto. Bora divulgar pra encher a agenda! 🚀`);
     } else {
@@ -1276,7 +1309,7 @@ A semana tá zerada por enquanto. Bora divulgar pra encher a agenda! 🚀`);
         porDia[d].push(`  • ${_fmtHora(new Date(a.dataHora))} — ${a.nomeCliente}`);
       });
       const lista = Object.entries(porDia).map(([d,v]) => '📅 *' + d + '*\n' + v.join('\n')).join('\n\n');
-      await responder('Olha a semana aí, ' + _chefe() + '! 🗓️\n\n' + lista + '\n\n' + ags.length + ' agendamento(s) no total. Tá cheio! 💪');
+      await responder('Olha a semana aí, ' + _chefe(_generoAdmin, _apelidoAdmin) + '! 🗓️\n\n' + lista + '\n\n' + ags.length + ' agendamento(s) no total. Tá cheio! 💪');
     }
     return true;
   }
@@ -1333,13 +1366,13 @@ A semana tá zerada por enquanto. Bora divulgar pra encher a agenda! 🚀`);
         `
 Agendado via WhatsApp. 💙`;
 
-      await responder(`Maravilha, ${_chefe()}! 🎉\n\n✅ *${nome}* encaixado às *${_fmtHora(dataHora)}* de ${_fmtData(dia)}!\n\nJá tá na agenda! 💙${telCliente ? '' : '\n\n📱 Se tiver o número dele me passa pra eu enviar lembretes!'}`); 
+      await responder(`Maravilha, ${_chefe(_generoAdmin, _apelidoAdmin)}! 🎉\n\n✅ *${nome}* encaixado às *${_fmtHora(dataHora)}* de ${_fmtData(dia)}!\n\nJá tá na agenda! 💙${telCliente ? '' : '\n\n📱 Se tiver o número dele me passa pra eu enviar lembretes!'}`); 
     } else if (nome && !hora) {
-      await responder(`Certo, ${_chefe()}! *${nome}* — que horas? 😊`);
+      await responder(`Certo, ${_chefe(_generoAdmin, _apelidoAdmin)}! *${nome}* — que horas? 😊`);
     } else if (hora && !nome) {
-      await responder(`Combinado, ${_chefe()}! Às *${_fmtHora((() => { const d = new Date(); d.setHours(hora.h, hora.min, 0, 0); return d; })())}* — qual o nome do cliente?`);
+      await responder(`Combinado, ${_chefe(_generoAdmin, _apelidoAdmin)}! Às *${_fmtHora((() => { const d = new Date(); d.setHours(hora.h, hora.min, 0, 0); return d; })())}* — qual o nome do cliente?`);
     } else {
-      await responder(`Me fala o nome e o horário, ${_chefe()}! Tipo: *Rebeca, agenda a Maria amanhã às 10h* 😊`);
+      await responder(`Me fala o nome e o horário, ${_chefe(_generoAdmin, _apelidoAdmin)}! Tipo: *Rebeca, agenda a Maria amanhã às 10h* 😊`);
     }
     return true;
   }
@@ -1353,7 +1386,7 @@ Agendado via WhatsApp. 💙`;
       adminId: adminObjId, dataHoraInicio: ini, dataHoraFim: fim,
       motivo: 'Dia fechado via WhatsApp'
     });
-    await responder(`Feito, ${_chefe()}! 🔒
+    await responder(`Feito, ${_chefe(_generoAdmin, _apelidoAdmin)}! 🔒
 
 ${_fmtData(dia)} tá bloqueado o dia todo. Ninguém consegue agendar não!
 
@@ -1393,7 +1426,7 @@ Descansa bem! 😊💙`);
           const fimP = new Date(dia); fimP.setHours(h2.h, h2.min, 0, 0);
           await BloqueioAgenda.create({ adminId: adminObjId, dataHoraInicio: iniP, dataHoraFim: fimP, motivo: 'Pausa/Almoço via WhatsApp' });
           const abMsg = hAb ? ` das *${String(hAb.h).padStart(2,'0')}:${String(hAb.min).padStart(2,'0')}* às *${String(hFe.h).padStart(2,'0')}:${String(hFe.min).padStart(2,'0')}*` : '';
-          await responder(`Feito, ${_chefe()}! 🔓✅\n\nAgenda de ${_fmtData(dia)} aberta${abMsg}!\n🍽️ Pausa bloqueada das ${_fmtHora(iniP)} às ${_fmtHora(fimP)}.\nNinguém agenda nesse intervalo! 😉`);
+          await responder(`Feito, ${_chefe(_generoAdmin, _apelidoAdmin)}! 🔓✅\n\nAgenda de ${_fmtData(dia)} aberta${abMsg}!\n🍽️ Pausa bloqueada das ${_fmtHora(iniP)} às ${_fmtHora(fimP)}.\nNinguém agenda nesse intervalo! 😉`);
           return true;
         }
       } else if (horaPausa) {
@@ -1403,7 +1436,7 @@ Descansa bem! 😊💙`);
           const fimP = new Date(dia); fimP.setHours(h1.h + 1, h1.min, 0, 0);
           await BloqueioAgenda.create({ adminId: adminObjId, dataHoraInicio: iniP, dataHoraFim: fimP, motivo: 'Pausa/Almoço via WhatsApp' });
           const abMsg = hAb ? ` das *${String(hAb.h).padStart(2,'0')}:${String(hAb.min).padStart(2,'0')}* às *${String(hFe.h).padStart(2,'0')}:${String(hFe.min).padStart(2,'0')}*` : '';
-          await responder(`Feito, ${_chefe()}! 🔓✅\n\nAgenda de ${_fmtData(dia)} aberta${abMsg}!\n🍽️ Pausa bloqueada das ${_fmtHora(iniP)} às ${_fmtHora(fimP)} (1h).\nNinguém agenda nesse horário! 😉`);
+          await responder(`Feito, ${_chefe(_generoAdmin, _apelidoAdmin)}! 🔓✅\n\nAgenda de ${_fmtData(dia)} aberta${abMsg}!\n🍽️ Pausa bloqueada das ${_fmtHora(iniP)} às ${_fmtHora(fimP)} (1h).\nNinguém agenda nesse horário! 😉`);
           return true;
         }
       }
@@ -1414,10 +1447,10 @@ Descansa bem! 😊💙`);
     if (hAb && hFe) {
       const abertura   = String(hAb.h).padStart(2,'0') + ':' + String(hAb.min).padStart(2,'0');
       const fechamento = String(hFe.h).padStart(2,'0') + ':' + String(hFe.min).padStart(2,'0');
-      await responder(`Feito, ${_chefe()}! 🔓✅\n\nAgenda de ${_fmtData(dia)} aberta das *${abertura}* às *${fechamento}*!\nRemovi ${res.deletedCount} bloqueio(s). Pode vir cliente! 🚀`);
+      await responder(`Feito, ${_chefe(_generoAdmin, _apelidoAdmin)}! 🔓✅\n\nAgenda de ${_fmtData(dia)} aberta das *${abertura}* às *${fechamento}*!\nRemovi ${res.deletedCount} bloqueio(s). Pode vir cliente! 🚀`);
       return true;
     }
-    await responder(`Prontinho, ${_chefe()}! 🔓\nRemovi ${res.deletedCount} bloqueio(s) de ${_fmtData(dia)}. Agenda aberta e pronta pra receber cliente! 🚀`);
+    await responder(`Prontinho, ${_chefe(_generoAdmin, _apelidoAdmin)}! 🔓\nRemovi ${res.deletedCount} bloqueio(s) de ${_fmtData(dia)}. Agenda aberta e pronta pra receber cliente! 🚀`);
     return true;
   }
 
@@ -1433,10 +1466,10 @@ Descansa bem! 😊💙`);
         status: { $in: ['confirmado','concluido'] }
       }).sort({ dataHora: -1 }).limit(5).lean();
       if (!ags.length) {
-        await responder(`Hmm, não achei histórico pra *${nome}* não, ${_chefe()}. Será que o nome tá diferente? 🤔`);
+        await responder(`Hmm, não achei histórico pra *${nome}* não, ${_chefe(_generoAdmin, _apelidoAdmin)}. Será que o nome tá diferente? 🤔`);
       } else {
         const lista = ags.map(a => `• ${_fmtData(new Date(a.dataHora))} — ${a.nomeServico || 'Serviço'}`).join(' + ');
-        await responder(`Achei aqui, ${_chefe()}! 🔍
+        await responder(`Achei aqui, ${_chefe(_generoAdmin, _apelidoAdmin)}! 🔍
 
 👤 *${ags[0].nomeCliente}*
 
@@ -1445,7 +1478,7 @@ ${lista}
 ${ags.length} visita(s) registrada(s)! 💙`);
       }
     } else {
-      await responder(`Me fala o nome, ${_chefe()}! Assim:
+      await responder(`Me fala o nome, ${_chefe(_generoAdmin, _apelidoAdmin)}! Assim:
 
 *Rebeca, histórico da Ana* 😊`);
     }
@@ -1470,7 +1503,7 @@ ${ags.length} visita(s) registrada(s)! 💙`);
       return (cm === mesAtual && cd >= diaAtual) || (cm === mes7 && cd <= dia7d);
     });
     if (!aniv.length) {
-      await responder(`${_saudacao()}, ${_chefe()}! 🎂
+      await responder(`${_saudacao()}, ${_chefe(_generoAdmin, _apelidoAdmin)}! 🎂
 
 Nenhum aniversariante nos próximos 7 dias não. Mas fique de olho! 👀`);
     } else {
@@ -1478,7 +1511,7 @@ Nenhum aniversariante nos próximos 7 dias não. Mas fique de olho! 👀`);
         const d = new Date(c.dataNascimento);
         return `• ${c.nome} — ${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`;
       }).join(' + ');
-      await responder(`🎂 Ó os aniversariantes, ${_chefe()}!
+      await responder(`🎂 Ó os aniversariantes, ${_chefe(_generoAdmin, _apelidoAdmin)}!
 
 ${lista}
 
@@ -1495,7 +1528,7 @@ Que tal mandar uma mensagem especial pra eles? 💙`);
     const entradas = lanc.filter(l=>l.tipo==='receita').reduce((s,l)=>s+l.valor,0);
     const saidas   = lanc.filter(l=>l.tipo==='despesa').reduce((s,l)=>s+l.valor,0);
     const atend    = await AgendamentoAgenda.countDocuments({ adminId: adminObjId, dataHora: { $gte: ini, $lte: fim }, status: { $in: ['confirmado','concluido'] } });
-    await responder(`${_saudacao()}, ${_chefe()}! Olha a semana! 📊
+    await responder(`${_saudacao()}, ${_chefe(_generoAdmin, _apelidoAdmin)}! Olha a semana! 📊
 
 ✅ Atendimentos: *${atend}*
 💰 Entradas: *R$ ${entradas.toFixed(2)}*
@@ -1515,7 +1548,7 @@ ${(entradas-saidas)>=0?'Semana boa demais! 🚀':'Semana de aprendizado! Próxim
     const saidas   = lanc.filter(l=>l.tipo==='despesa').reduce((s,l)=>s+l.valor,0);
     const atend    = await AgendamentoAgenda.countDocuments({ adminId: adminObjId, dataHora: { $gte: ini, $lte: fim }, status: { $in: ['confirmado','concluido'] } });
     const ticket   = atend > 0 ? (entradas/atend).toFixed(2) : '0.00';
-    await responder(`${_saudacao()}, ${_chefe()}! Resumo do mês! 📊
+    await responder(`${_saudacao()}, ${_chefe(_generoAdmin, _apelidoAdmin)}! Resumo do mês! 📊
 
 ✅ Atendimentos: *${atend}*
 💰 Entradas: *R$ ${entradas.toFixed(2)}*
@@ -1535,12 +1568,12 @@ ${atend>10?'Esse mês tá voando! 🚀':'Ainda dá tempo de bombar! 💪'}`);
       adminId: adminObjId, dataHora: { $gte: ini, $lte: fim }, status: 'confirmado'
     }).sort({ dataHora: 1 }).lean();
     if (!ags.length) {
-      await responder(`${_saudacao()}, ${_chefe()}! 😊
+      await responder(`${_saudacao()}, ${_chefe(_generoAdmin, _apelidoAdmin)}! 😊
 
 Nenhum confirmado ainda hoje não. Quer que eu mande lembrete pra galera? Me fala! 💙`);
     } else {
       const lista = ags.map(a => `✅ ${_fmtHora(new Date(a.dataHora))} — ${a.nomeCliente}`).join(' + ');
-      await responder(`${_saudacao()}, ${_chefe()}! Olha quem confirmou hoje! 🎉
+      await responder(`${_saudacao()}, ${_chefe(_generoAdmin, _apelidoAdmin)}! Olha quem confirmou hoje! 🎉
 
 ${lista}
 
@@ -1557,11 +1590,11 @@ ${ags.length} confirmado(s)! Tá cheio! 💪`);
     ags.forEach(a => { if(a.nomeServico) rank[a.nomeServico] = (rank[a.nomeServico]||0)+1; });
     const sorted = Object.entries(rank).sort((a,b)=>b[1]-a[1]).slice(0,5);
     if (!sorted.length) {
-      await responder(`Ainda não tem dados suficientes não, ${_chefe()}. Mês que vem já vai ter um ranking lindo! 📊`);
+      await responder(`Ainda não tem dados suficientes não, ${_chefe(_generoAdmin, _apelidoAdmin)}. Mês que vem já vai ter um ranking lindo! 📊`);
     } else {
       const emojis = ['🥇','🥈','🥉','4️⃣','5️⃣'];
       const lista = sorted.map(([s,n],i) => `${emojis[i]} ${s} — ${n}x`).join(' + ');
-      await responder(`Olha o ranking desse mês, ${_chefe()}! 🏆
+      await responder(`Olha o ranking desse mês, ${_chefe(_generoAdmin, _apelidoAdmin)}! 🏆
 
 ${lista}
 
@@ -1574,7 +1607,7 @@ Esses são os queridinhos! 💙`);
   if (/clientes?\s*novos?|quantos\s*clientes?\s*novos?/i.test(msgL)) {
     const ini = new Date(); ini.setDate(1); ini.setHours(0,0,0,0);
     const total = await ClienteAgenda.countDocuments({ adminId: adminObjId, createdAt: { $gte: ini } });
-    await responder(`${_saudacao()}, ${_chefe()}! 🎉
+    await responder(`${_saudacao()}, ${_chefe(_generoAdmin, _apelidoAdmin)}! 🎉
 
 Esse mês você ganhou *${total} cliente(s) novo(s)*!
 
@@ -1585,7 +1618,7 @@ ${total>5?'Tá crescendo muito! Continua assim! 🚀':'Todo cliente novo é uma 
   // ── MANUAL DE COMANDOS ────────────────────────────────────────────────────
   if (/\bajuda\b|\bcomandos?\b|\bo\s*que\s*(vc|você)\s*(faz|pode|sabe|consegue)\b|\bmenu\b|\bhelp\b|\bo\s*que\s*d[áa]\b|\boque\s*voc[eê]\b|\bfun[çc][õo]es?\b|\bcomo\s*us[ao]\b|\bcomo\s*funciona\b|\bpra\s*que\s*serve\b/i.test(msgL)) {
     await responder(
-      `${_saudacao()}, ${_chefe()}! Aqui tô eu! 💙
+      `${_saudacao()}, ${_chefe(_generoAdmin, _apelidoAdmin)}! Aqui tô eu! 💙
 
 ` +
       `📅 *AGENDA*
@@ -1681,7 +1714,7 @@ ${total>5?'Tá crescendo muito! Continua assim! 🚀':'Todo cliente novo é uma 
     const textoMsg = textoM ? textoM[1].trim() : null;
 
     if (!nomeCliente) {
-      await responder(`Claro, ${_chefe()}! Me fala pra quem: *Rebeca, manda mensagem pra Maria que o horário foi confirmado* 😊`);
+      await responder(`Claro, ${_chefe(_generoAdmin, _apelidoAdmin)}! Me fala pra quem: *Rebeca, manda mensagem pra Maria que o horário foi confirmado* 😊`);
       return true;
     }
 
@@ -1692,13 +1725,13 @@ ${total>5?'Tá crescendo muito! Continua assim! 🚀':'Todo cliente novo é uma 
     }).lean();
 
     if (!cliente || !cliente.telefone) {
-      await responder(`Hmm, não achei o contato de *${nomeCliente}* aqui não, ${_chefe()}. Tem o número salvo no cadastro? 🤔`);
+      await responder(`Hmm, não achei o contato de *${nomeCliente}* aqui não, ${_chefe(_generoAdmin, _apelidoAdmin)}. Tem o número salvo no cadastro? 🤔`);
       return true;
     }
 
     // Montar mensagem natural
     if (!textoMsg) {
-      await responder(`Certo, ${_chefe()}! O que quer que eu fale pra *${nomeCliente.split(' ')[0]}*? 😊`);
+      await responder(`Certo, ${_chefe(_generoAdmin, _apelidoAdmin)}! O que quer que eu fale pra *${nomeCliente.split(' ')[0]}*? 😊`);
       return true;
     }
     const textoFinal = textoMsg;
@@ -1708,7 +1741,7 @@ ${total>5?'Tá crescendo muito! Continua assim! 🚀':'Todo cliente novo é uma 
               || { _enviarVia: 'meta', apiUrl: 'meta', nomeInstancia: 'meta_oficial' };
 
     await _enviarMsg(inst, _normalizarTel(cliente.telefone), textoFinal);
-    await responder(`Mandei pra *${nomeCliente}*, ${_chefe()}! ✅`);
+    await responder(`Mandei pra *${nomeCliente}*, ${_chefe(_generoAdmin, _apelidoAdmin)}! ✅`);
     return true;
   }
 
@@ -1731,7 +1764,7 @@ ${total>5?'Tá crescendo muito! Continua assim! 🚀':'Todo cliente novo é uma 
     else if (/fala|e\s*a[íi]|eai/i.test(msgL))             _resp = `Fala! 👋 Tô aqui, pode mandar!`;
     else if (/beleza|tudo\s*(bem|bom|certo)|como\s*(vai|t[aá])/i.test(msgL)) _resp = `Tudo certo por aqui! 😊 E aí, o que precisa?`;
     else {
-      const _opts = [`${_p}! 😊 Tô aqui, pode mandar!`,`Fala! 👋 Tô de olho, pode falar!`,`Oi! Tô aqui prontinha. O que precisa? 💙`,`${_p}, ${_chefe()}! Me fala o que precisa 😊`];
+      const _opts = [`${_p}! 😊 Tô aqui, pode mandar!`,`Fala! 👋 Tô de olho, pode falar!`,`Oi! Tô aqui prontinha. O que precisa? 💙`,`${_p}, ${_chefe(_generoAdmin, _apelidoAdmin)}! Me fala o que precisa 😊`];
       _resp = _opts[Math.floor(Math.random() * _opts.length)];
     }
     await responder(_resp);
@@ -1806,14 +1839,14 @@ ${total>5?'Tá crescendo muito! Continua assim! 🚀':'Todo cliente novo é uma 
     // ── Confirmação/Cancelamento ANTES do cérebro ──
     if (_isConfirm && _pendingAction) {
       SM.updateSession(adminId, telefone, { ultimaAcaoPendente: null, aguardandoConfirmacao: false });
-      const rConf = `${_confirmacao()} Feito, ${_chefe()}! ✅`;
+      const rConf = `${_confirmacao()} Feito, ${_chefe(_generoAdmin, _apelidoAdmin)}! ✅`;
       await responder(rConf);
       SM.addAssistantMsg(adminId, telefone, rConf);
       return true;
     }
     if (_isNeg && _pendingAction) {
       SM.updateSession(adminId, telefone, { ultimaAcaoPendente: null, aguardandoConfirmacao: false });
-      const rNeg = `Ok, ${_chefe()}! Cancelei. 👍`;
+      const rNeg = `Ok, ${_chefe(_generoAdmin, _apelidoAdmin)}! Cancelei. 👍`;
       await responder(rNeg);
       SM.addAssistantMsg(adminId, telefone, rNeg);
       return true;
@@ -1997,7 +2030,7 @@ ${_avisosDesc}`;
           status: { $in: ['pendente','confirmado'] }
         }).sort({ dataHora: 1 }).lean();
         if (!agsSem.length) {
-          const _r = `Semana tranquila, ${_chefe()}! 😊 Nenhum agendamento confirmado ainda.`;
+          const _r = `Semana tranquila, ${_chefe(_generoAdmin, _apelidoAdmin)}! 😊 Nenhum agendamento confirmado ainda.`;
           await responder(_r); SM.addAssistantMsg(adminId, telefone, _r); return true;
         }
         const dias = {};
@@ -2093,14 +2126,14 @@ ${_avisosDesc}`;
       }
 
     // ── Fallback final — resposta amigável ──
-    const _fallback = `${_saudacao()}, ${_chefe()}! 😊\n\nNão tive certeza do que você quis dizer. Tenta de outro jeito ou digita *ajuda*! 💙`;
+    const _fallback = `${_saudacao()}, ${_chefe(_generoAdmin, _apelidoAdmin)}! 😊\n\nNão tive certeza do que você quis dizer. Tenta de outro jeito ou digita *ajuda*! 💙`;
     await responder(_fallback);
     SM.addAssistantMsg(adminId, telefone, _fallback);
     return true;
   } catch(e) {
     console.error('[ModoDono] Cérebro erro:', e.message, e.stack?.split('\n')[1]);
   }
-  await responder(`${_saudacao()}, ${_chefe()}! 😊
+  await responder(`${_saudacao()}, ${_chefe(_generoAdmin, _apelidoAdmin)}! 😊
 
 Não tive certeza do que você quis dizer, mas tô aqui! Tenta me falar de outro jeito ou digita *ajuda* pra ver tudo que sei fazer por você! 💙`);
   return false;
@@ -2194,7 +2227,7 @@ async function rodarLembretes() {
 
         const hora = _fmtHora(new Date(ag.dataHora));
         await _enviarMsg(instParaEnvio, telDono,
-          `⏰ *Atenção, ${_chefe()}!*\n\n` +
+          `⏰ *Atenção, ${_chefe(_generoAdmin, _apelidoAdmin)}!*\n\n` +
           `*${ag.nomeCliente}* tá chegando em uns 30 minutinhos! 😊\n` +
           `🕐 Horário: ${hora}\n` +
           `✂️ Serviço: ${ag.nomeServico || '—'}\n\n` +
@@ -2268,7 +2301,7 @@ async function rodarRelatorioDiario() {
         const motivacao = atendidos > 0 ? 'Arrasou ontem! 🚀' : agsHoje.length > 0 ? `Hoje tem ${agsHoje.length} cliente(s) te esperando! 💪` : 'Bora fazer um ótimo dia! 💙';
 
         await _enviarMsg(instParaEnvio, telDono,
-          `🌅 *Bom dia, ${_chefe(_genAdmin)}!*\n\n` +
+          `🌅 *Bom dia, ${_chefe(_generoAdmin, _apelidoAdmin)}!*\n\n` +
           `📊 *Ontem (${_fmtData(ontem)}):*\n${resumoOntem}\n\n` +
           `📅 *Agenda de hoje (${_fmtData(hoje)}):*\n${resumoHoje}` +
           resumoLembretes +
@@ -2408,7 +2441,7 @@ async function rodarLembretesPessoais() {
 
         // Mensagens humanizadas — sorteia uma
         const saudacao = _saudacao();
-        const chefe    = _chefe();
+        const chefe    = _chefe(_generoAdmin, _apelidoAdmin);
         const msgs = [
           `${saudacao}, ${chefe}! 💙\n\nEi, não esquece não — daqui a ${mins} minutinhos você tem:\n\n📌 *${lmb.texto}*\n📅 Hoje às ${horaEvento}\n\nBora se preparar! Você consegue! 🚀`,
           `Oi, ${chefe}! Sou a Rebeca e vim te lembrar de algo importante! 😊\n\n🔔 *${lmb.texto}*\n⏰ ${horaEvento} — em ${mins} minutos!\n\nNão deixa escapar não! 💪`,
