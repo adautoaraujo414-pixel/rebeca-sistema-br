@@ -410,12 +410,19 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
           adminId: _adminObjIdCorr,
           mensagem_original: _sesAtualCorr.ultimaMensagemDono,
           intencao_errada: _sesAtualCorr.ultimaIntencaoCerebro,
-          intencao_correta: 'desconhecida', // será atualizada quando dono explicar
+          intencao_correta: 'desconhecida',
           descricao_erro: `Entendi como ${_sesAtualCorr.ultimaIntencaoCerebro} mas estava errado`,
           confirmado: false,
           vezes_visto: 1
         });
         console.log('[APRENDIZADO] Erro detectado e salvo:', _sesAtualCorr.ultimaIntencaoCerebro);
+      } else {
+        // Reforço: incrementar vezes_visto para dar mais peso ao aprendizado
+        await AprendizadoRebeca.findByIdAndUpdate(_jaExiste._id, {
+          $inc: { vezes_visto: 1 },
+          $set: { ultimoReforco: new Date() }
+        });
+        console.log('[APRENDIZADO] Reforco:', _sesAtualCorr.ultimaIntencaoCerebro, 'vezes_visto:', (_jaExiste.vezes_visto||1)+1);
       }
       // Marcar sessão aguardando explicação do que era certo
       SM.updateSession(adminId, telefone, { aguardandoCorrecao: true, intencaoErrada: _sesAtualCorr.ultimaIntencaoCerebro });
@@ -437,12 +444,29 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
     try {
       const AprendizadoRebeca = require('../models/AprendizadoRebeca');
       const _adminObjIdCorr2 = require('mongoose').Types.ObjectId.isValid(adminId) ? new (require('mongoose').Types.ObjectId)(adminId) : adminId;
+      // Mapear texto livre do dono para código de intenção mais próximo
+      const _mapaIntencoes = {
+        'registrar saida':'registrar_despesa','saida':'registrar_despesa','despesa':'registrar_despesa','gastei':'registrar_despesa','paguei':'registrar_despesa',
+        'registrar entrada':'registrar_receita','entrada':'registrar_receita','receita':'registrar_receita','recebi':'registrar_receita','cobrei':'registrar_receita',
+        'lembrete':'criar_lembrete','criar lembrete':'criar_lembrete','me lembra':'criar_lembrete',
+        'agenda':'agenda_hoje','agendamento':'encaixar_cliente','encaixar':'encaixar_cliente',
+        'cancelar':'cancelar_agendamento','cancelamento':'cancelar_agendamento',
+        'confirmar':'confirmar_agendamento','relatorio':'relatorio_financeiro','resumo':'relatorio_financeiro',
+        'bloquear':'bloquear_horario','liberar':'liberar_horario'
+      };
+      const _msgLow = msg.toLowerCase();
+      let _intencaoMapeada = 'fora_escopo';
+      for (const [chave, intencao] of Object.entries(_mapaIntencoes)) {
+        if (_msgLow.includes(chave)) { _intencaoMapeada = intencao; break; }
+      }
+      // Se texto livre parece código de intenção direto, usa ele
+      if (msg.includes('_') && msg.length < 40) _intencaoMapeada = msg.trim();
       await AprendizadoRebeca.findOneAndUpdate(
         { adminId: _adminObjIdCorr2, intencao_errada: _sesCorr2.intencaoErrada, confirmado: false },
-        { intencao_correta: msg, confirmado: true, ultimoReforco: new Date() },
+        { intencao_correta: _intencaoMapeada, mensagem_original: _sesAtualCorr?.ultimaMensagemDono || msg, confirmado: true, ultimoReforco: new Date() },
         { sort: { criadoEm: -1 } }
       );
-      console.log('[APRENDIZADO] Correcao confirmada:', msg);
+      console.log('[APRENDIZADO] Correcao confirmada:', _sesCorr2.intencaoErrada, '->', _intencaoMapeada);
       SM.updateSession(adminId, telefone, { aguardandoCorrecao: false, intencaoErrada: null });
     } catch(_eCorr2) { console.log('[APRENDIZADO] Erro confirmar:', _eCorr2.message); }
 
