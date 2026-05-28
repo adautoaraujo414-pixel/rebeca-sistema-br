@@ -37,7 +37,7 @@ router.post('/impressora/:adminId/testar', auth, async (req, res) => {
   const imp = await ImpressoraCozinha.findOne({ adminId: req.params.adminId });
   if (!imp) return res.status(404).json({ erro: 'Impressora não configurada' });
   try {
-    await imprimirPedido({ ip: imp.ip, porta: imp.porta, texto: 'TESTE DE IMPRESSÃO\nRebeca Cozinha ✓', mesa: 'TESTE' });
+    await imprimirPedido({ ip: imp.ip, porta: imp.porta, texto: 'TESTE DE IMPRESSAO\nRebeca Cozinha OK', mesa: 'TESTE', adminId: req.params.adminId });
     res.json({ sucesso: true, mensagem: 'Impresso com sucesso!' });
   } catch(e) {
     res.status(500).json({ erro: 'Falha ao imprimir: ' + e.message });

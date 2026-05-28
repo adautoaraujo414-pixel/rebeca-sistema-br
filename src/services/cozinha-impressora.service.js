@@ -37,8 +37,8 @@ async function imprimirPedido({ ip, porta = 9100, texto, mesa = '', telefone = '
     try {
       const { ImpressoraCozinha } = require('../models/cozinha.model');
       // Encontrar impressora pelo IP do servidor local (adminId vem em _adminId)
-      if (_adminId) {
-        const imp = await ImpressoraCozinha.findOne({ adminId: _adminId });
+      if (adminId) {
+        const imp = await ImpressoraCozinha.findOne({ adminId: adminId });
         if (imp) { ipImp = imp._ipImpressora || imp.ip; portaImp = imp._portaImpressora || imp.porta || 9100; }
       }
     } catch(_) {}
@@ -70,14 +70,21 @@ async function imprimirPedido({ ip, porta = 9100, texto, mesa = '', telefone = '
     const agora = hora || new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
     const data  = new Date().toLocaleDateString('pt-BR');
 
-    let cmd = INIT;
-    cmd += CENTER + BOLD_ON + FONT_GDE + '*** PEDIDO ***' + FEED + FONT_NOR + BOLD_OFF;
-    cmd += '========================' + FEED;
-    if (mesa)     cmd += LEFT + BOLD_ON + 'Mesa:   ' + BOLD_OFF + mesa + FEED;
-    if (telefone) cmd += LEFT + BOLD_ON + 'Cliente:' + BOLD_OFF + ' ' + telefone + FEED;
-    cmd += LEFT + BOLD_ON + 'Hora:   ' + BOLD_OFF + agora + ' ' + data + FEED;
-    cmd += '========================' + FEED + LEFT + FEED;
-    cmd += texto + FEED + FEED + FEED + CUT;
+    let cmd = INIT + LEFT;
+    // Se texto já vem formatado (teste, pedido completo), usar direto
+    // Caso contrário montar cabeçalho padrão
+    const _textoSimples = texto && texto.includes('TESTE');
+    if (_textoSimples) {
+      cmd += CENTER + BOLD_ON + texto + BOLD_OFF + FEED + FEED + FEED + CUT;
+    } else {
+      cmd += CENTER + BOLD_ON + FONT_GDE + '*** PEDIDO ***' + FEED + FONT_NOR + BOLD_OFF;
+      cmd += '========================' + FEED;
+      if (mesa)     cmd += LEFT + BOLD_ON + 'Mesa:   ' + BOLD_OFF + mesa + FEED;
+      if (telefone) cmd += LEFT + BOLD_ON + 'Cliente:' + BOLD_OFF + ' ' + telefone + FEED;
+      cmd += LEFT + BOLD_ON + 'Hora:   ' + BOLD_OFF + agora + ' ' + data + FEED;
+      cmd += '========================' + FEED + LEFT + FEED;
+      cmd += texto + FEED + FEED + FEED + CUT;
+    }
 
     client.setTimeout(5000);
     client.connect(porta, ip, () => {
