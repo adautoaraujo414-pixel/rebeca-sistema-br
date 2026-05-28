@@ -39,7 +39,7 @@ async function imprimirPedido({ ip, porta = 9100, texto, mesa = '', telefone = '
       // Encontrar impressora pelo IP do servidor local (adminId vem em _adminId)
       if (adminId) {
         const imp = await ImpressoraCozinha.findOne({ adminId: adminId });
-        if (imp) { ipImp = imp._ipImpressora || imp.ip; portaImp = imp._portaImpressora || imp.porta || 9100; }
+        if (imp) { ipImp = imp.ipImpressora || imp.ip; portaImp = imp.portaImpressora || imp.porta || 9100; }
       }
     } catch(_) {}
     const res = await axios.post(url + '/imprimir', {
