@@ -126,6 +126,17 @@ router.delete('/clientes/:adminId/:id', auth, async (req, res) => {
 });
 
 // ── LISTAR ADMINS (para o painel saber o adminId) ────────────────
+// ── ADMINS — acesso por token do servidor local ──────────────────────────────
+router.get('/admins-local', async (req, res) => {
+  const token = req.query.token || req.headers['x-cozinha-token'];
+  if (token !== (process.env.COZINHA_TOKEN || 'cozinha-rebeca-2026'))
+    return res.status(401).json({ erro: 'Token inválido' });
+  try {
+    const admins = await ImpressoraCozinha.find({ ativo: true }).select('adminId ip porta ipImpressora portaImpressora nome').lean();
+    res.json({ sucesso: true, admins });
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
 router.get('/admins', auth, async (req, res) => {
   const admins = await AdminCozinha.find({ ativo: true }).select('_id nomeNegocio usuario').lean();
   res.json({ sucesso: true, admins });
