@@ -1659,10 +1659,20 @@ ${total>5?'Tá crescendo muito! Continua assim! 🚀':'Todo cliente novo é uma 
       totalClientes, retornosPend, nomeNegocio, hrAbre, hrFecha
     };
 
+    // ── Carregar exemplos aprendidos deste negócio ──
+    let _exemplosAprendidos = [];
+    try {
+      const AprendizadoRebeca = require('../models/AprendizadoRebeca');
+      _exemplosAprendidos = await AprendizadoRebeca.find({
+        adminId: adminObjId, confirmado: true
+      }).sort({ vezes_visto: -1, ultimoReforco: -1 }).limit(10).lean();
+    } catch(_eAp) { /* modelo pode nao existir ainda */ }
+
     const _cerebro = await CerebroAgenda.raciocinar(msg, _dadosCtx, _historico, {
       nomeNegocio, nomeDono: admin?.nomeResponsavel || admin?.nome || '',
       genero: admin?.modoWhatsappDono?.genero || '',
-      adminId: String(adminObjId)
+      adminId: String(adminObjId),
+      exemplosAprendidos: _exemplosAprendidos
     });
 
     SM.updateSession(adminId, telefone, {

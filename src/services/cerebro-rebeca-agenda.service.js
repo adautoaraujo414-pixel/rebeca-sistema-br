@@ -100,6 +100,13 @@ RACIOCÍNIO DE CLIENTES:
 - "aniversário/aniversariantes" → aniversariantes
 - "retorno/quem precisa voltar" → retorno_cliente
 
+RACIOCÍNIO FINANCEIRO — PRIORIDADE MÁXIMA SOBRE LEMBRETES:
+- "conta a pagar/registra despesa/registra saída/registra entrada/registra receita" → SEMPRE financeiro, NUNCA lembrete
+- "registra uma conta a pagar sexta 499,60 raphaela advogada" → registrar_despesa, valor:499.60, descricao:"raphaela advogada", data:sexta
+- "registra entrada de 200 da Maria" → registrar_receita, valor:200, origem:"Maria"
+- Se tiver VALOR NUMÉRICO + ação de registrar → é SEMPRE financeiro, nunca lembrete
+- "anota" sozinho sem valor → pode ser lembrete. "anota/registra" + valor → é financeiro
+
 RACIOCÍNIO DE LEMBRETES — CRÍTICO:
 - CRIAR: "me lembra/anota/lembra de/não me deixa esquecer/cria lembrete [assunto]" → criar_lembrete
 - LISTAR: "meus lembretes/o que tenho/lembretes de hoje/tem lembrete/oque mais tenho/quais são/ainda tem/mais algum lembrete/tem mais" → listar_lembretes
@@ -160,6 +167,9 @@ EXEMPLOS DE RACIOCÍNIO:
 - "oque mais tenho de lembrete/tem mais lembrete/quais lembretes" → listar_lembretes, responder
 - "relatório/como foi o dia/fechamento/balanço" → relatorio_financeiro, responder
 - "[áudio transcrito: entrada de 100 reais]" → registrar_receita, executar, valor:100
+- "registra uma conta a pagar sexta 499,60 raphaela advogada" → registrar_despesa, executar, valor:499.60, descricao:"raphaela advogada", data:sexta-feira
+- "anota que preciso pagar o aluguel na sexta" → criar_lembrete (sem valor numérico → lembrete)
+- "registra saída 150 mercado" → registrar_despesa, executar, valor:150, categoria:mercado
 - "oi/bom dia/boa tarde" → saudacao, responder, curto e caloroso com horário certo
 - "ajuda" → ajuda, responder, listar resumido o que sabe fazer
 - "que dia corrido, três cancelamentos!" → reaja + pergunte se precisa de algo
@@ -230,6 +240,14 @@ function _montarHistorico(historico) {
   ).join('\n');
 }
 
+function _montarExemplosAprendidos(exemplos) {
+  if (!exemplos || !exemplos.length) return '';
+  const linhas = exemplos.slice(0, 8).map(e =>
+    `- "${e.mensagem_original}" → ${e.intencao_correta}${e.descricao_erro ? ' ('+e.descricao_erro+')' : ''}`
+  ).join('\n');
+  return `\nEXEMPLOS APRENDIDOS COM ESTE NEGÓCIO (prioridade máxima):\n${linhas}`;
+}
+
 function _validar(parsed) {
   if (!parsed || typeof parsed !== 'object') return null;
   const intencoes = new Set([
@@ -286,8 +304,9 @@ const CerebroAgenda = {
       const hora = agora.getHours() + 'h' + String(agora.getMinutes()).padStart(2, '0');
       const dias = ['domingo','segunda','terça','quarta','quinta','sexta','sábado'];
 
+      const exemplosAprendidos = opcoes.exemplosAprendidos || [];
       const userPrompt = `CONTEXTO DO SISTEMA:
-${_montarContexto({ ...dadosCtx, nomeNegocio })}
+${_montarContexto({ ...dadosCtx, nomeNegocio })}${_montarExemplosAprendidos(exemplosAprendidos)}
 
 HISTÓRICO RECENTE:
 ${_montarHistorico(historico)}
