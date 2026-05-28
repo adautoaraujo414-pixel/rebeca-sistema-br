@@ -48,21 +48,26 @@ router.post('/webhook', express.json(), async (req, res) => {
         if (clienteCoz && tipo === 'text' && texto) {
           const imp = await ImpressoraCozinha.findOne({ adminId: clienteCoz.adminId, ativo: true });
           if (imp) {
-            const { JobImpressao } = require('../models/cozinha.model');
-            const { ContadorPedido } = require('../models/cozinha.model');
-            const agora = new Date();
-            const hoje = agora.toISOString().slice(0,10);
-            let contador = await ContadorPedido.findOne({ adminId: String(clienteCoz.adminId), data: hoje });
-            if (!contador) contador = await ContadorPedido.create({ adminId: String(clienteCoz.adminId), data: hoje, numero: 0 });
-            contador.numero += 1;
-            await contador.save();
-            await JobImpressao.create({
-              adminId: String(clienteCoz.adminId),
-              texto,
-              mesa: String(contador.numero),
-              status: 'pendente'
-            });
-            console.log('[Cozinha] Job criado para:', clienteCoz.nome, '->', texto.substring(0,40));
+            if (!global._bufCoz) global._bufCoz = {};
+            const key = String(clienteCoz.adminId);
+            if (!global._bufCoz[key]) global._bufCoz[key] = { linhas: [] };
+            global._bufCoz[key].linhas.push(texto);
+            clearTimeout(global._bufCoz[key].t);
+            global._bufCoz[key].t = setTimeout(async () => {
+              const buf = global._bufCoz[key];
+              delete global._bufCoz[key];
+              try {
+                const { JobImpressao, ContadorPedido } = require('../models/cozinha.model');
+                const hoje = new Date().toISOString().slice(0,10);
+                let cont = await ContadorPedido.findOne({ adminId: key, data: hoje });
+                if (!cont) cont = await ContadorPedido.create({ adminId: key, data: hoje, numero: 0 });
+                cont.numero += 1;
+                await cont.save();
+                const txtFinal = buf.linhas.join('\n');
+                await JobImpressao.create({ adminId: key, texto: txtFinal, mesa: String(cont.numero), status: 'pendente' });
+                console.log('[Cozinha] Job #' + cont.numero + ':', txtFinal.substring(0,60));
+              } catch(e) { console.error('[Cozinha] Erro buffer:', e.message); }
+            }, 3000);
           }
           continue; // não responde ao cliente
         }
