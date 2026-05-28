@@ -48,14 +48,14 @@ router.post('/webhook', express.json(), async (req, res) => {
         if (clienteCoz && tipo === 'text' && texto) {
           const imp = await ImpressoraCozinha.findOne({ adminId: clienteCoz.adminId, ativo: true });
           if (imp) {
-            const hora = new Date().toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit', timeZone:'America/Sao_Paulo' });
-            await imprimirPedido({
+            const { JobImpressao } = require('../models/cozinha.model');
+            await JobImpressao.create({
               adminId: String(clienteCoz.adminId),
-              ip: imp.ip, porta: imp.porta,
               texto,
-              hora
+              mesa: clienteCoz.nome,
+              status: 'pendente'
             });
-            console.log('[Cozinha] Impresso:', clienteCoz.nome, '->', texto.substring(0,40));
+            console.log('[Cozinha] Job criado para:', clienteCoz.nome, '->', texto.substring(0,40));
           }
           continue; // não responde ao cliente
         }
