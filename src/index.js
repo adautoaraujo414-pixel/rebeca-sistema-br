@@ -560,8 +560,7 @@ cron.schedule('5 10 * * *', () => ModoDono.rodarBoasVindasPendentes());
 console.log('✅ Cron lembretes dono (5min) + relatório diário (7h) + bom dia inteligente (7h) ativos');
 
 // ── RESET CONTADOR COZINHA ÀS 15H ────────────────────────────────
-const cron = require('node-cron');
-cron.schedule('0 15 * * *', async () => {
+require('node-cron').schedule('0 15 * * *', async () => {
   try {
     const { ContadorPedido } = require('./models/cozinha.model');
     await ContadorPedido.deleteMany({});
