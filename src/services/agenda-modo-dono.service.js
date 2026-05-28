@@ -364,7 +364,9 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
   SM.updateSession(adminId, telefone, { assuntoAtual: _assuntoDetectado });
   // ── SALVAR APELIDO SE AGUARDANDO RESPOSTA DO BOAS-VINDAS ───────────────
   const _sesApelido = SM.getSession(adminId, telefone);
-  if (!admin.modoWhatsappDono?.apelido && admin.modoWhatsappDono?.boasVindasEnviado) {
+  const _adminObjIdEarly = require('mongoose').Types.ObjectId.isValid(adminId) ? new (require('mongoose').Types.ObjectId)(adminId) : adminId;
+  const _adminEarly = await AdminAgenda.findById(_adminObjIdEarly).lean();
+  if (_adminEarly && !_adminEarly.modoWhatsappDono?.apelido && _adminEarly.modoWhatsappDono?.boasVindasEnviado) {
     const _apelidoRaw = msg.trim();
     // Detectar se é resposta de apelido (curto, sem comando claro)
     const _pareceChamado = _apelidoRaw.length <= 40 &&
@@ -376,11 +378,11 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
         .replace(/[.!?]$/, '')
         .trim();
       if (_apelido.length >= 2 && _apelido.length <= 30) {
-        await AdminAgenda.findByIdAndUpdate(adminObjId, {
+        await AdminAgenda.findByIdAndUpdate(_adminObjIdEarly, {
           'modoWhatsappDono.apelido': _apelido
         });
         SM.updateSession(adminId, telefone, { apelidoRespondido: true });
-        const instanciaApelido = await InstanciaWhatsapp.findOne({ adminId: adminObjId, adminTipo: 'agenda' }).lean();
+        const instanciaApelido = await InstanciaWhatsapp.findOne({ adminId: _adminObjIdEarly, adminTipo: 'agenda' }).lean();
         const _respApelido = `Prazer, ${_apelido}! 😊 Pode me chamar quando precisar. Tô aqui pra te ajudar! 💙`;
         if (instanciaApelido) await _enviarMsg(instanciaApelido, telefone, _respApelido);
         SM.addAssistantMsg(adminId, telefone, _respApelido);
