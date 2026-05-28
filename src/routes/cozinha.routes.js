@@ -18,13 +18,19 @@ function auth(req, res, next) {
 router.get('/download-local', async (req, res) => {
   const path2 = require('path');
   const fs = require('fs');
-  const zipPath = path2.join(__dirname, '../public/rebeca-cozinha-local.zip');
+  const zipPath = path2.resolve(__dirname, '../public/rebeca-cozinha-local.zip');
   if (!fs.existsSync(zipPath)) {
     return res.status(404).json({ erro: 'Arquivo não encontrado' });
   }
   res.setHeader('Content-Disposition', 'attachment; filename="rebeca-cozinha-local.zip"');
   res.setHeader('Content-Type', 'application/zip');
-  res.sendFile(zipPath);
+  res.setHeader('Content-Length', fs.statSync(zipPath).size);
+  const stream = fs.createReadStream(zipPath);
+  stream.pipe(res);
+  stream.on('error', (e) => {
+    console.error('[Download] Erro:', e.message);
+    res.status(500).end();
+  });
 });
 
 router.get('/impressora/:adminId', auth, async (req, res) => {
