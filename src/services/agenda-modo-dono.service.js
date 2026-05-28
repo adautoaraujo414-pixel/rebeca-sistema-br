@@ -2385,8 +2385,9 @@ async function rodarBoasVindasPendentes() {
         if (!instParaEnvio) continue;
 
         const genero = admin.modoWhatsappDono?.genero || '';
-        const ap = genero === 'M' ? 'chefe' : genero === 'F' ? 'chefa' : 'chefe';
-        const msg = `Olá, ${ap}! Eu sou a Rebeca, sua funcionária digital. 💙
+        const apSalvo2 = admin.modoWhatsappDono?.apelido || null;
+        const ap = apSalvo2 || (genero === 'M' ? 'chefe' : genero === 'F' ? 'chefa' : 'chefe');
+        const msg = `Olá! Eu sou a Rebeca, sua funcionária digital. 💙
 
 A partir de agora, você pode falar comigo por aqui sempre que precisar organizar sua rotina.
 
@@ -2396,10 +2397,14 @@ Você pode me pedir, por exemplo:
 - *Rebeca, registra uma entrada de R$120 no Pix*
 - *Rebeca, quanto faturei hoje?*
 - *Rebeca, me lembra amanhã 9h comprar produto*
+- *Rebeca, manda mensagem pra Ana: confirmado o horário de amanhã*
 
 Eu cuido da sua agenda, registro entradas e gastos, aviso novos agendamentos e mantenho tudo organizado.
 
-Sempre que precisar, é só me chamar! 😊`;
+Sempre que precisar, é só me chamar! 😊
+
+Antes de começar — como você prefere ser chamada? 😊
+_(ex: "Ju", "Dra. Ana", "pode me chamar de Mari")_`;
 
         const MetaWA = require('./meta-whatsapp.service');
         const envioOk = await MetaWA.enviarTexto(telDono, msg).then(() => true).catch(e => {
