@@ -60,6 +60,7 @@ const JobImpressao = mongoose.model('JobImpressao', JobImpressaoSchema);
 module.exports = {
   AdminCozinha,
   ContadorPedido,
+  JobImpressao,
   ClienteCozinha:    mongoose.model('ClienteCozinha', clienteCozinhaSchema),
   ImpressoraCozinha: mongoose.model('ImpressoraCozinha', impressoraCozinhaSchema)
 };
