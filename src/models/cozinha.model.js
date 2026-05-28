@@ -20,6 +20,7 @@ const impressoraCozinhaSchema = new mongoose.Schema({
   // Se for modo servidor local, IP real da impressora fica aqui
   ipImpressora:     { type: String, default: '' },
   portaImpressora:  { type: Number, default: 9100 },
+  nomeImpressora:   { type: String, default: '' },
   modoLocal:        { type: Boolean, default: false }, // true = usa servidor local
   nome:             { type: String, default: 'Cozinha' },
   ativo:            { type: Boolean, default: true },

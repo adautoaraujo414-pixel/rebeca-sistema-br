@@ -132,7 +132,7 @@ router.get('/admins-local', async (req, res) => {
   if (token !== (process.env.COZINHA_TOKEN || 'cozinha-rebeca-2026'))
     return res.status(401).json({ erro: 'Token inválido' });
   try {
-    const admins = await ImpressoraCozinha.find({ ativo: true }).select('adminId ip porta ipImpressora portaImpressora nome').lean();
+    const admins = await ImpressoraCozinha.find({ ativo: true }).select('adminId ip porta ipImpressora portaImpressora nomeImpressora nome').lean();
     res.json({ sucesso: true, admins });
   } catch(e) { res.status(500).json({ erro: e.message }); }
 });
