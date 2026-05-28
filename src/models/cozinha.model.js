@@ -31,8 +31,9 @@ const impressoraCozinhaSchema = new mongoose.Schema({
 
 // ── CONTADOR GLOBAL DE PEDIDOS ────────────────────────────────────
 const contadorPedidoSchema = new mongoose.Schema({
-  adminId:  { type: String, required: true, unique: true },
-  ultimo:   { type: Number, default: 0 }
+  adminId:  { type: String, required: true },
+  data:     { type: String, required: true },
+  numero:   { type: Number, default: 0 }
 });
 const ContadorPedido = mongoose.models.ContadorPedido || mongoose.model('ContadorPedido', contadorPedidoSchema);
 

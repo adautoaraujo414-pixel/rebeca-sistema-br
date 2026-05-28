@@ -49,10 +49,17 @@ router.post('/webhook', express.json(), async (req, res) => {
           const imp = await ImpressoraCozinha.findOne({ adminId: clienteCoz.adminId, ativo: true });
           if (imp) {
             const { JobImpressao } = require('../models/cozinha.model');
+            const { ContadorPedido } = require('../models/cozinha.model');
+            const agora = new Date();
+            const hoje = agora.toISOString().slice(0,10);
+            let contador = await ContadorPedido.findOne({ adminId: String(clienteCoz.adminId), data: hoje });
+            if (!contador) contador = await ContadorPedido.create({ adminId: String(clienteCoz.adminId), data: hoje, numero: 0 });
+            contador.numero += 1;
+            await contador.save();
             await JobImpressao.create({
               adminId: String(clienteCoz.adminId),
               texto,
-              mesa: clienteCoz.nome,
+              mesa: String(contador.numero),
               status: 'pendente'
             });
             console.log('[Cozinha] Job criado para:', clienteCoz.nome, '->', texto.substring(0,40));

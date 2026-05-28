@@ -558,3 +558,13 @@ cron.schedule('0 10 * * *', () => BomDia.rodarBomDia());
 // Boas-vindas pendentes — todo dia às 10h05 BRT (10h05 UTC = sem conflito com bom dia)
 cron.schedule('5 10 * * *', () => ModoDono.rodarBoasVindasPendentes());
 console.log('✅ Cron lembretes dono (5min) + relatório diário (7h) + bom dia inteligente (7h) ativos');
+
+// ── RESET CONTADOR COZINHA ÀS 15H ────────────────────────────────
+const cron = require('node-cron');
+cron.schedule('0 15 * * *', async () => {
+  try {
+    const { ContadorPedido } = require('./models/cozinha.model');
+    await ContadorPedido.deleteMany({});
+    console.log('[Cozinha] Contador resetado às 15h');
+  } catch(e) { console.error('[Cozinha] Erro reset contador:', e.message); }
+}, { timezone: 'America/Sao_Paulo' });
