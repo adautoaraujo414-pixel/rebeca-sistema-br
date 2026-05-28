@@ -51,15 +51,46 @@ router.post('/impressora/:adminId', auth, async (req, res) => {
   res.json({ sucesso: true, impressora: imp });
 });
 
+// ── JOBS DE IMPRESSÃO (polling do servidor local) ───────────────────────────
+router.get('/jobs/:adminId', async (req, res) => {
+  const token = req.query.token || req.headers['x-cozinha-token'];
+  if (token !== (process.env.COZINHA_TOKEN || 'cozinha-rebeca-2026'))
+    return res.status(401).json({ erro: 'Token inválido' });
+  try {
+    const { JobImpressao } = require('../models/cozinha.model');
+    const jobs = await JobImpressao.find({ adminId: req.params.adminId, status: 'pendente' })
+      .sort({ criadoEm: 1 }).limit(5).lean();
+    res.json({ sucesso: true, jobs });
+  } catch(e) { res.json({ sucesso: true, jobs: [] }); }
+});
+
+router.post('/jobs/:jobId/confirmar', async (req, res) => {
+  const token = req.query.token || req.headers['x-cozinha-token'];
+  if (token !== (process.env.COZINHA_TOKEN || 'cozinha-rebeca-2026'))
+    return res.status(401).json({ erro: 'Token inválido' });
+  try {
+    const { JobImpressao } = require('../models/cozinha.model');
+    await JobImpressao.findByIdAndUpdate(req.params.jobId, { status: 'impresso', impresso_em: new Date() });
+    res.json({ sucesso: true });
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
 // Testar impressora
 router.post('/impressora/:adminId/testar', auth, async (req, res) => {
   const imp = await ImpressoraCozinha.findOne({ adminId: req.params.adminId });
   if (!imp) return res.status(404).json({ erro: 'Impressora não configurada' });
   try {
-    await imprimirPedido({ ip: imp.ip, porta: imp.porta, texto: 'TESTE DE IMPRESSAO\nRebeca Cozinha OK', mesa: 'TESTE', adminId: req.params.adminId });
-    res.json({ sucesso: true, mensagem: 'Impresso com sucesso!' });
+    const { JobImpressao } = require('../models/cozinha.model');
+    await JobImpressao.create({
+      adminId: req.params.adminId,
+      texto: 'TESTE DE IMPRESSAO\nRebeca Cozinha OK\n' + new Date().toLocaleTimeString('pt-BR'),
+      mesa: 'TESTE',
+      status: 'pendente',
+      criadoEm: new Date()
+    });
+    res.json({ sucesso: true, mensagem: 'Job criado! O servidor local vai imprimir em instantes.' });
   } catch(e) {
-    res.status(500).json({ erro: 'Falha ao imprimir: ' + e.message });
+    res.status(500).json({ erro: 'Falha ao criar job: ' + e.message });
   }
 });
 

@@ -45,6 +45,18 @@ const adminCozinhaSchema = new mongoose.Schema({
 });
 const AdminCozinha = mongoose.models.AdminCozinha || mongoose.model('AdminCozinha', adminCozinhaSchema);
 
+const JobImpressaoSchema = new mongoose.Schema({
+  adminId:   { type: mongoose.Schema.Types.ObjectId, required: true },
+  texto:     { type: String, required: true },
+  mesa:      { type: String, default: '' },
+  telefone:  { type: String, default: '' },
+  status:    { type: String, default: 'pendente' }, // pendente | impresso | erro
+  criadoEm:  { type: Date, default: Date.now },
+  impresso_em: { type: Date }
+});
+JobImpressaoSchema.index({ adminId: 1, status: 1, criadoEm: 1 });
+const JobImpressao = mongoose.model('JobImpressao', JobImpressaoSchema);
+
 module.exports = {
   AdminCozinha,
   ContadorPedido,
