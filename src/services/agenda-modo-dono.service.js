@@ -595,31 +595,131 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
         return true;
       }
     }
-    // ── RECORRENTE: "todo dia 10 aluguel", "toda segunda academia" ──────────
+    // ── RECORRENTE: "toda sexta pagar raphaela 499", "todo dia 10 aluguel" ────
     if (nlp.intencao === 'recorrente' && nlp.recorrente) {
       const _rec = nlp.recorrente;
       const _catRec = nlp.categoria !== 'outros' ? nlp.categoria : null;
       const _textoRec = nlp.textoLembrete || msg.trim();
-      // Salvar como lembrete recorrente no config do admin
-      await AdminAgenda.findByIdAndUpdate(adminObjId, {
-        $push: {
-          'config.lembretes': {
-            texto: _textoRec,
-            dataEvento: null,
-            dataAviso: null,
+      const _valorRec = nlp.valor || null;
+
+      // Verificar se o dono disse quantas vezes repetir
+      const _vezesMatch = msg.match(/por\s+(\d+)\s*(semana|mes|mês|vez|vezes|semanas|meses)/i);
+      const _nVezes = _vezesMatch ? parseInt(_vezesMatch[1]) : null;
+
+      // Se não disse quantas vezes → perguntar
+      if (!_nVezes && _rec.tipo !== 'diario') {
+        SM.updateSession(adminId, telefone, {
+          aguardandoRecorrente: { rec: _rec, texto: _textoRec, valor: _valorRec, categoria: _catRec }
+        });
+        let _descRec = '';
+        if (_rec.tipo === 'semanal') _descRec = `toda ${_rec.diaSemana || 'semana'}`;
+        else if (_rec.tipo === 'mensal' && _rec.dia) _descRec = `todo dia ${_rec.dia}`;
+        else _descRec = 'recorrente';
+        const _pergRec = `Entendido! 🔔 Vou criar lembrete de *${_textoRec}* ${_descRec}${_valorRec ? ' (R$ '+_valorRec+')' : ''}.
+
+Quantas vezes vai repetir? (ex: "6 vezes", "3 meses", "sem prazo")`;
+        await responder(_pergRec);
+        SM.addAssistantMsg(adminId, telefone, _pergRec);
+        return true;
+      }
+
+      // Gerar as datas futuras reais
+      const _lembretes = [];
+      const _hoje = new Date();
+      const _diasSemana = { domingo:0, segunda:1,'segunda-feira':1, terca:2,'terça':2,'terça-feira':2, quarta:3,'quarta-feira':3, quinta:4,'quinta-feira':4, sexta:5,'sexta-feira':5, sabado:6,'sábado':6 };
+      const _maxOcorrencias = _nVezes || (_rec.tipo === 'diario' ? 30 : 12);
+
+      for (let i = 0; i < _maxOcorrencias; i++) {
+        let _dataEvento = null;
+        if (_rec.tipo === 'semanal' && _rec.diaSemana) {
+          const _diaSem = _diasSemana[_rec.diaSemana.toLowerCase()] ?? 5;
+          const _d = new Date(_hoje);
+          const _diff = (_diaSem - _d.getDay() + 7) % 7 || 7;
+          _d.setDate(_d.getDate() + _diff + (i * 7));
+          _dataEvento = new Date(Date.UTC(_d.getUTCFullYear(), _d.getUTCMonth(), _d.getUTCDate(), 9, 0, 0));
+        } else if (_rec.tipo === 'mensal') {
+          const _dia = _rec.dia || 1;
+          const _d = new Date(_hoje.getFullYear(), _hoje.getMonth() + i + (_hoje.getDate() >= _dia ? 1 : 0), _dia, 9, 0, 0);
+          _dataEvento = new Date(Date.UTC(_d.getUTCFullYear(), _d.getUTCMonth(), _d.getUTCDate(), 12, 0, 0));
+        } else if (_rec.tipo === 'diario') {
+          const _d = new Date(_hoje);
+          _d.setDate(_d.getDate() + i + 1);
+          _dataEvento = new Date(Date.UTC(_d.getUTCFullYear(), _d.getUTCMonth(), _d.getUTCDate(), 9, 0, 0));
+        }
+        if (_dataEvento) {
+          const _dataAviso = new Date(_dataEvento.getTime() - 30 * 60000);
+          _lembretes.push({
+            texto: _textoRec + (_valorRec ? ' — R$ ' + _valorRec : ''),
+            dataEvento: _dataEvento,
+            dataAviso: _dataAviso,
             enviado: false,
             criadoEm: new Date(),
             recorrente: _rec,
             categoria: _catRec
-          }
+          });
         }
-      });
-      let _descRec = '';
-      if (_rec.tipo === 'mensal' && _rec.dia) _descRec = `todo dia ${_rec.dia} do mês`;
-      else if (_rec.tipo === 'mensal') _descRec = 'todo mês';
-      else if (_rec.tipo === 'diario') _descRec = 'todo dia';
-      else if (_rec.tipo === 'semanal') _descRec = `toda ${_rec.diaSemana}`;
-      await responder(`Anotei! 🔔 Vou te lembrar de *${_textoRec}* ${_descRec}. Pode deixar comigo! 💙`);
+      }
+
+      if (_lembretes.length) {
+        await AdminAgenda.findByIdAndUpdate(adminObjId, { $push: { 'config.lembretes': { $each: _lembretes } } });
+      }
+
+      let _descRec2 = '';
+      if (_rec.tipo === 'semanal') _descRec2 = `toda ${_rec.diaSemana || 'semana'}`;
+      else if (_rec.tipo === 'mensal' && _rec.dia) _descRec2 = `todo dia ${_rec.dia} do mês`;
+      else if (_rec.tipo === 'diario') _descRec2 = 'todo dia';
+      const _respRec = `Feito! 🔔 Criei *${_lembretes.length} lembretes* de *${_textoRec}*${_valorRec ? ' (R$ '+_valorRec+')' : ''} ${_descRec2}.
+
+Te aviso 30 minutos antes de cada um! 💙`;
+      await responder(_respRec);
+      SM.addAssistantMsg(adminId, telefone, _respRec);
+      return true;
+    }
+
+    // ── RESPOSTA DE QUANTAS VEZES REPETIR (aguardandoRecorrente) ─────────────
+    const _sesRecorr = SM.getSession(adminId, telefone);
+    if (_sesRecorr.aguardandoRecorrente) {
+      const _pendRec = _sesRecorr.aguardandoRecorrente;
+      const _semPrazo = /sem prazo|indeterminado|sempre|indefinido/i.test(msg);
+      const _nMatch = msg.match(/(\d+)/);
+      const _nVezesResp = _semPrazo ? (_pendRec.rec.tipo === 'semanal' ? 52 : 12) : (_nMatch ? parseInt(_nMatch[1]) : 4);
+
+      SM.updateSession(adminId, telefone, { aguardandoRecorrente: null });
+      // Redirecionar para o handler acima com nlp simulado
+      const _recSim = _pendRec.rec;
+      const _diasSemana2 = { domingo:0, segunda:1,'segunda-feira':1, terca:2,'terça':2,'terça-feira':2, quarta:3,'quarta-feira':3, quinta:4,'quinta-feira':4, sexta:5,'sexta-feira':5, sabado:6,'sábado':6 };
+      const _lembretes2 = [];
+      const _hoje2 = new Date();
+      for (let i = 0; i < _nVezesResp; i++) {
+        let _dataEvento2 = null;
+        if (_recSim.tipo === 'semanal' && _recSim.diaSemana) {
+          const _diaSem2 = _diasSemana2[_recSim.diaSemana.toLowerCase()] ?? 5;
+          const _d2 = new Date(_hoje2);
+          const _diff2 = (_diaSem2 - _d2.getDay() + 7) % 7 || 7;
+          _d2.setDate(_d2.getDate() + _diff2 + (i * 7));
+          _dataEvento2 = new Date(Date.UTC(_d2.getUTCFullYear(), _d2.getUTCMonth(), _d2.getUTCDate(), 9, 0, 0));
+        } else if (_recSim.tipo === 'mensal') {
+          const _dia2 = _recSim.dia || 1;
+          const _d2 = new Date(_hoje2.getFullYear(), _hoje2.getMonth() + i + (_hoje2.getDate() >= _dia2 ? 1 : 0), _dia2, 9, 0, 0);
+          _dataEvento2 = new Date(Date.UTC(_d2.getUTCFullYear(), _d2.getUTCMonth(), _d2.getUTCDate(), 12, 0, 0));
+        }
+        if (_dataEvento2) {
+          _lembretes2.push({
+            texto: _pendRec.texto + (_pendRec.valor ? ' — R$ ' + _pendRec.valor : ''),
+            dataEvento: _dataEvento2,
+            dataAviso: new Date(_dataEvento2.getTime() - 30 * 60000),
+            enviado: false, criadoEm: new Date(),
+            recorrente: _recSim, categoria: _pendRec.categoria
+          });
+        }
+      }
+      if (_lembretes2.length) {
+        await AdminAgenda.findByIdAndUpdate(adminObjId, { $push: { 'config.lembretes': { $each: _lembretes2 } } });
+      }
+      let _descRec3 = _recSim.tipo === 'semanal' ? `toda ${_recSim.diaSemana}` : `todo dia ${_recSim.dia || 1} do mês`;
+      const _rResp = `Perfeito! 🔔 Criei *${_lembretes2.length} lembretes* de *${_pendRec.texto}*${_pendRec.valor ? ' (R$ '+_pendRec.valor+')' : ''} ${_descRec3}. Te aviso 30 min antes de cada um! 💙`;
+      await responder(_rResp);
+      SM.addAssistantMsg(adminId, telefone, _rResp);
       return true;
     }
 
@@ -1820,6 +1920,55 @@ ${total>5?'Tá crescendo muito! Continua assim! 🚀':'Todo cliente novo é uma 
         return true;
       }
 
+      // ── AVISO DUPLO: "me avisa um dia antes e 30 minutos antes" ─────────────
+      if (_cerebro.intencao === 'criar_lembrete' && ent.texto_lembrete) {
+        // Detectar pedido de aviso duplo na mensagem original
+        const _avisoDiaAntes = /um dia antes|dia antes|véspera|vespera|24h antes|24 horas antes/i.test(msg);
+        const _aviso30min = /30 min|trinta min|meia hora antes/i.test(msg);
+        const _aviso1h = /1h antes|uma hora antes|60 min antes/i.test(msg);
+
+        if (ent.horario && ent.data && (_avisoDiaAntes || (_aviso30min && _avisoDiaAntes))) {
+          // Criar lembrete principal
+          const _dia = _parseDia(ent.data) || new Date();
+          const _hora = _parseHora(ent.horario);
+          if (_hora) {
+            const _dataEvento = new Date(Date.UTC(_dia.getUTCFullYear(), _dia.getUTCMonth(), _dia.getUTCDate(), _hora.h + 3, _hora.min, 0));
+            const _avisos = [];
+
+            // Aviso 30 min antes (sempre)
+            _avisos.push(new Date(_dataEvento.getTime() - 30 * 60000));
+
+            // Aviso 1h antes se pedido
+            if (_aviso1h) _avisos.push(new Date(_dataEvento.getTime() - 60 * 60000));
+
+            // Aviso 1 dia antes se pedido
+            if (_avisoDiaAntes) _avisos.push(new Date(_dataEvento.getTime() - 24 * 60 * 60000));
+
+            // Criar um lembrete para cada aviso
+            const _lembretesAviso = _avisos.map((_av, _idx) => ({
+              texto: ent.texto_lembrete + (_idx > 0 ? ' (aviso antecipado)' : ''),
+              dataEvento: _dataEvento,
+              dataAviso: _av,
+              enviado: false,
+              criadoEm: new Date()
+            }));
+
+            await AdminAgenda.findByIdAndUpdate(adminObjId, {
+              $push: { 'config.lembretes': { $each: _lembretesAviso } }
+            });
+
+            const _avisosDesc = _avisos.length > 1
+              ? `Vou te avisar ${_avisoDiaAntes ? 'um dia antes e ' : ''}30 minutos antes! 💙`
+              : 'Te aviso 30 minutos antes! 💙';
+            const _rAvDuplo = `Anotei! 🔔 *${ent.texto_lembrete}* — ${_fmtData(_dia)} às ${_fmtHora(_dataEvento)}
+
+${_avisosDesc}`;
+            await responder(_rAvDuplo);
+            SM.addAssistantMsg(adminId, telefone, _rAvDuplo);
+            return true;
+          }
+        }
+      }
       if (_cerebro.intencao === 'criar_lembrete' && ent.texto_lembrete) {
         const _dia = ent.data ? _parseDia(ent.data) : _parseDia(msg);
         const _hora = ent.horario ? _parseHora(ent.horario) : _parseHora(msg);

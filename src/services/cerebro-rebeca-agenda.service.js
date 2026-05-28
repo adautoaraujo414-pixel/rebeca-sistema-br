@@ -164,6 +164,10 @@ EXEMPLOS DE RACIOCÍNIO:
 - "fecha amanhã" → fechar_dia, confirmar, mensagem_confirmacao:"Confirma fechar a agenda de amanhã?"
 - "clientes inativos" → clientes_inativos, responder
 - "me lembra amanhã 9h comprar tinta" → criar_lembrete, executar, texto:comprar tinta
+- "me lembra toda sexta de pagar 499 pra Raphaela" → criar_lembrete com recorrente:{tipo:semanal, diaSemana:sexta}, valor:499, texto:"pagar Raphaela"
+- "me avisa um dia antes e 30 minutos antes" → criar_lembrete com aviso duplo — extrair data, hora e texto normalmente
+- "toda segunda às 9h academia" → criar_lembrete com recorrente:{tipo:semanal, diaSemana:segunda}
+- "todo dia 10 aluguel 1500" → criar_lembrete com recorrente:{tipo:mensal, dia:10}, valor:1500
 - "oque mais tenho de lembrete/tem mais lembrete/quais lembretes" → listar_lembretes, responder
 - "relatório/como foi o dia/fechamento/balanço" → relatorio_financeiro, responder
 - "[áudio transcrito: entrada de 100 reais]" → registrar_receita, executar, valor:100
