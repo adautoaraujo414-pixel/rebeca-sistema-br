@@ -137,6 +137,7 @@ VARIAÇÃO — nunca repita a mesma frase:
 
 INTENÇÕES VÁLIDAS (use exatamente um):
 agenda_hoje, agenda_amanha, agenda_semana, proximo_cliente,
+mandar_mensagem,
 encaixar_cliente, cancelar_agendamento, confirmar_agendamento, reagendar_cliente,
 bloquear_horario, liberar_horario, fechar_dia,
 financeiro_hoje, financeiro_semana, financeiro_mes,
@@ -163,6 +164,9 @@ EXEMPLOS DE RACIOCÍNIO:
 - "quanto fiz hoje" → financeiro_hoje, responder, usar dados financeiros do contexto
 - "fecha amanhã" → fechar_dia, confirmar, mensagem_confirmacao:"Confirma fechar a agenda de amanhã?"
 - "clientes inativos" → clientes_inativos, responder
+- "manda mensagem pra Ana: confirmado o horário de amanhã" → mandar_mensagem, executar, nome_cliente:"Ana", texto_mensagem:"confirmado o horário de amanhã"
+- "fala pra João que o pedido tá pronto" → mandar_mensagem, executar, nome_cliente:"João", texto_mensagem:"o pedido tá pronto"
+- "avisa a Maria que cancelei o horário" → mandar_mensagem, executar, nome_cliente:"Maria", texto_mensagem:"cancelei o horário"
 - "me lembra amanhã 9h comprar tinta" → criar_lembrete, executar, texto:comprar tinta
 - "me lembra toda sexta de pagar 499 pra Raphaela" → criar_lembrete com recorrente:{tipo:semanal, diaSemana:sexta}, valor:499, texto:"pagar Raphaela"
 - "me avisa um dia antes e 30 minutos antes" → criar_lembrete com aviso duplo — extrair data, hora e texto normalmente
@@ -195,7 +199,8 @@ RETORNE APENAS JSON válido sem markdown:
     "origem": null,
     "hora_inicio": null,
     "hora_fim": null,
-    "texto_lembrete": null
+    "texto_lembrete": null,
+    "texto_mensagem": null
   },
   "requer_confirmacao": false,
   "mensagem_confirmacao": null,

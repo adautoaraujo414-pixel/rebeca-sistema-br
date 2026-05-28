@@ -2022,6 +2022,46 @@ ${_avisosDesc}`;
     }
 
       // ── agenda_semana ──
+      // ── MANDAR MENSAGEM PARA CLIENTE ────────────────────────────────────────
+      if (_cerebro.intencao === 'mandar_mensagem') {
+        const _nomeCli = ent.nome_cliente || ent.cliente || null;
+        const _textoMsg = ent.texto_mensagem || ent.mensagem || ent.texto_lembrete || null;
+        if (!_nomeCli || !_textoMsg) {
+          const _falta = !_nomeCli ? 'Para quem é a mensagem?' : 'Qual o texto da mensagem?';
+          await responder(`${_falta} 😊`);
+          return true;
+        }
+        try {
+          // Buscar cliente pelo nome
+          const _clienteMsg = await require('../models/AgendaServico').ClienteAgenda.findOne({
+            adminId: adminObjId,
+            $or: [
+              { nome: { $regex: _nomeCli, $options: 'i' } },
+              { apelido: { $regex: _nomeCli, $options: 'i' } }
+            ]
+          }).lean();
+          if (!_clienteMsg || !_clienteMsg.telefone) {
+            await responder(`Não achei nenhum cliente com esse nome, ${_chefe(_generoAdmin, _apelidoAdmin)}. Confirma o nome? 😊`);
+            return true;
+          }
+          const _telMsg = _normalizarTel(_clienteMsg.telefone);
+          const instMsg = await InstanciaWhatsapp.findOne({ adminId: adminObjId, adminTipo: 'agenda' }).lean();
+          if (!instMsg) {
+            await responder(`Não consegui encontrar a instância do WhatsApp pra enviar. 😕`);
+            return true;
+          }
+          await _enviarMsg(instMsg, _telMsg, _textoMsg);
+          console.log('[MANDAR_MSG] Mensagem enviada para', _clienteMsg.nome, _telMsg);
+          await responder(`Mensagem enviada pra *${_clienteMsg.nome}*! ✅
+
+_"${_textoMsg}"_`);
+        } catch(_eMsg) {
+          console.error('[MANDAR_MSG] Erro:', _eMsg.message);
+          await responder(`Poxa, tive um probleminha ao enviar. Tenta de novo, ${_chefe(_generoAdmin, _apelidoAdmin)}? 😕`);
+        }
+        return true;
+      }
+
       if (_cerebro.intencao === 'agenda_semana') {
         const _dom = new Date(); _dom.setUTCDate(_dom.getUTCDate() - _dom.getUTCDay());
         const iniSem = _inicioDia(_dom); const fimSem = _fimDia(new Date(_dom.getTime() + 6*86400000));
