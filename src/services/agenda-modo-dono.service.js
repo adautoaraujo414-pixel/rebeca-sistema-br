@@ -2245,11 +2245,16 @@ async function rodarLembretes() {
     const em30  = new Date(agora.getTime() + 30 * 60000);
     const em35  = new Date(agora.getTime() + 35 * 60000);
 
-    const proximos = await AgendamentoAgenda.find({
-      dataHora: { $gte: em30, $lte: em35 },
-      status: { $in: ['pendente', 'confirmado'] },
-      lembreteDonoEnviado: { $ne: true }
-    }).lean();
+    // Marcar atomicamente antes de processar — evita duplicado em deploys simultâneos
+    const proximos = [];
+    let agParaMarcar;
+    while ((agParaMarcar = await AgendamentoAgenda.findOneAndUpdate(
+      { dataHora: { $gte: em30, $lte: em35 }, status: { $in: ['pendente', 'confirmado'] }, lembreteDonoEnviado: { $ne: true } },
+      { $set: { lembreteDonoEnviado: true } },
+      { new: false }
+    ).lean())) {
+      proximos.push(agParaMarcar);
+    }
 
     for (const ag of proximos) {
       try {
@@ -2276,7 +2281,6 @@ async function rodarLembretes() {
           `Se quiser confirmar: *Rebeca, confirma o agendamento das ${hora}* 💙`
         );
 
-        await AgendamentoAgenda.findByIdAndUpdate(ag._id, { lembreteDonoEnviado: true });
         console.log('[ModoDono] Lembrete enviado para', telDono, ag.nomeCliente);
       } catch(e) {
         console.error('[ModoDono] Erro lembrete individual:', e.message);
