@@ -14,6 +14,19 @@ function auth(req, res, next) {
 }
 
 // ── CONFIG IMPRESSORA ────────────────────────────────────────────
+// ── DOWNLOAD SERVIDOR LOCAL ─────────────────────────────────────────────────
+router.get('/download-local', async (req, res) => {
+  const path2 = require('path');
+  const fs = require('fs');
+  const zipPath = path2.join(__dirname, '../public/rebeca-cozinha-local.zip');
+  if (!fs.existsSync(zipPath)) {
+    return res.status(404).json({ erro: 'Arquivo não encontrado' });
+  }
+  res.setHeader('Content-Disposition', 'attachment; filename="rebeca-cozinha-local.zip"');
+  res.setHeader('Content-Type', 'application/zip');
+  res.sendFile(zipPath);
+});
+
 router.get('/impressora/:adminId', auth, async (req, res) => {
   const imp = await ImpressoraCozinha.findOne({ adminId: req.params.adminId });
   res.json({ sucesso: true, impressora: imp || null });
