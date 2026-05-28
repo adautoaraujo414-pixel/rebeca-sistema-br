@@ -18,7 +18,7 @@ function auth(req, res, next) {
 router.get('/download-local', async (req, res) => {
   const path2 = require('path');
   const fs = require('fs');
-  const zipPath = path2.resolve(__dirname, '../public/rebeca-cozinha-local.zip');
+  const zipPath = path2.resolve(__dirname, '../downloads/rebeca-cozinha-local.zip');
   if (!fs.existsSync(zipPath)) {
     return res.status(404).json({ erro: 'Arquivo não encontrado' });
   }
