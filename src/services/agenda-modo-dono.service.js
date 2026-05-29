@@ -352,7 +352,6 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
   const msg = (mensagem || '').trim();
   const msgL = msg.toLowerCase();
   console.log('[DEBUG-INICIO] msgL:', msgL);
-  console.log('[DEBUG-INICIO] msgL:', msgL);
 
   // ── APRENDIZADO: verificar se dono já corrigiu esta intenção antes ──────────
   try {
@@ -380,7 +379,8 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
           // Substituir a mensagem por uma com hint da intenção correta para o NLP/Cerebro pegar
           // Salvar na sessão para os handlers saberem
           const SM2 = require('./agenda-session-manager');
-          SM2.updateSession(adminId, telefone, { intencaoForçada: ap.intencao_correta });
+          SM2.updateSession(adminId, telefone, { intencaoForcada: ap.intencao_correta });
+          console.log('[APRENDIZADO] intencaoForcada salva na sessão:', ap.intencao_correta);
           break;
         }
       }
@@ -390,6 +390,17 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
 
   // ── SESSION: registrar mensagem e recuperar estado ──
   const _session = SM.addUserMsg(adminId, telefone, msg);
+  // Persistir snapshot da sessão no banco (sobrevive restart do Render)
+  try {
+    const _snapshotKey = String(adminId) + '_' + telefone.replace(/D/g,'');
+    await AdminAgenda.findByIdAndUpdate(adminObjId, {
+      $set: { ['sessaoWhatsapp.' + _snapshotKey.slice(-20)]: {
+        ultimaMensagem: msg.substring(0,200),
+        ts: new Date(),
+        assunto: _session.assuntoAtual || null
+      }}
+    }, { strict: false }).catch(()=>{});
+  } catch(_eSess) { /* silencioso */ }
   const _isConfirm = SM.isConfirmacao(msg);
   const _isNeg = SM.isNegacao(msg);
   // Salvar mensagem atual para uso no detector de correção
@@ -428,7 +439,7 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
 
   // ── DETECTOR DE CORREÇÃO AUTOMÁTICA ──────────────────────────────────────
   // Se dono sinalizou que Rebeca errou → salvar aprendizado e perguntar o certo
-  const _sinaisErro = /n[aã]o era isso|n[aã]o [eé] isso|errou|erraste|errei nisso|n[aã]o foi isso|entendeu errado|errada|n[aã]o [eé] o que pedi|n[aã]o era o que pedi|entendeu tudo errado|fez errado|n[aã]o era pra/i;
+  const _sinaisErro = /n[aã]o era isso|n[aã]o [eé] isso|errou|erraste|errei nisso|n[aã]o foi isso|entendeu errado|errada|n[aã]o [eé] o que pedi|n[aã]o era o que pedi|entendeu tudo errado|fez errado|n[aã]o era pra|n[aã]o [eé] isso n[aã]o|errou tudo|errou de novo|errou outra vez|n[aã]o foi bem isso|foi diferente|n[aã]o [eé] bem isso|interpretou errado|confundiu|n[aã]o entendeu|entendeu diferente|outra coisa|queria outra coisa|n[aã]o queria isso|n[aã]o pedi isso|pedi outra coisa/i;
   const _sesAtualCorr = SM.getSession(adminId, telefone);
   if (_sinaisErro.test(msgL) && _sesAtualCorr.ultimaIntencaoCerebro && _sesAtualCorr.ultimaMensagemDono) {
     try {
@@ -524,6 +535,38 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
 
   const instancia = await InstanciaWhatsapp.findOne({ adminId: adminObjId, adminTipo: 'agenda' }).lean();
   if (!instancia && !instanciaResposta) return null; // Meta API nao precisa de instancia Evolution
+
+  // ── APRENDIZADO: verificar intencao forçada da sessão e redirecionar ─────
+  const _sesForc = SM.getSession(adminId, telefone);
+  const _intForc = _sesForc.intencaoForcada;
+  if (_intForc) {
+    SM.updateSession(adminId, telefone, { intencaoForcada: null }); // limpar após uso
+    console.log('[APRENDIZADO] Aplicando intencao forcada:', _intForc);
+    // Mapear intenção forçada para mensagem sintética que os handlers reconhecem
+    const _msgForcada = {
+      'registrar_despesa':     'gastei',
+      'registrar_receita':     'recebi',
+      'criar_lembrete':        'me lembra de',
+      'listar_lembretes':      'quais meus lembretes',
+      'agenda_hoje':           'minha agenda hoje',
+      'agenda_amanha':         'minha agenda amanhã',
+      'encaixar_cliente':      'encaixa',
+      'cancelar_agendamento':  'cancela agendamento',
+      'confirmar_agendamento': 'confirma agendamento',
+      'bloquear_horario':      'bloqueia horário',
+      'relatorio_financeiro':  'relatório financeiro',
+      'financeiro_hoje':       'quanto fiz hoje',
+      'proximo_cliente':       'próximo cliente',
+      'clientes_inativos':     'clientes inativos',
+    }[_intForc];
+    if (_msgForcada) {
+      // Re-processar com mensagem sintética + mensagem original concatenada
+      const _msgRedir = _msgForcada + ' ' + msg;
+      console.log('[APRENDIZADO] Redirecionando como:', _msgRedir);
+      return await processarComandoDono(telefone, _msgRedir, adminId, instanciaResposta);
+    }
+  }
+  // ───────────────────────────────────────────────────────────────────────────
 
   async function responder(texto) {
     const _inst = instanciaResposta || instancia;

@@ -263,10 +263,13 @@ function _montarHistorico(historico) {
 
 function _montarExemplosAprendidos(exemplos) {
   if (!exemplos || !exemplos.length) return '';
-  const linhas = exemplos.slice(0, 8).map(e =>
-    `- "${e.mensagem_original}" → ${e.intencao_correta}${e.descricao_erro ? ' ('+e.descricao_erro+')' : ''}`
-  ).join('\n');
-  return `\nEXEMPLOS APRENDIDOS COM ESTE NEGÓCIO (prioridade máxima):\n${linhas}`;
+  const linhas = exemplos.slice(0, 10).map(e => {
+    const peso = e.vezes_visto > 3 ? ' ⭐' : e.vezes_visto > 1 ? ' ✓' : '';
+    return `- "${e.mensagem_original}" → ${e.intencao_correta}${peso}${e.descricao_erro ? ' | antes: '+e.intencao_errada : ''}`;
+  }).join('\n');
+  return `\nREGRAS APRENDIDAS COM ESTE NEGÓCIO — APLIQUE SEMPRE (prioridade máxima sobre tudo):
+${linhas}
+ATENÇÃO: Se a mensagem atual tem 60%+ de similaridade com qualquer exemplo acima, use a intenção indicada.`;
 }
 
 function _validar(parsed) {
