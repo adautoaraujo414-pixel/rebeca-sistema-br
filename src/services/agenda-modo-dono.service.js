@@ -679,14 +679,22 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
           $push: { 'config.lembretes': { texto: _txt, dataEvento, dataAviso, enviado: false, criadoEm: new Date() } }
         });
         const _diaStr = dataEvento.toLocaleDateString('pt-BR', { weekday:'long', day:'numeric', month:'long' });
-        await responder(`Anotei, ${_chefe(_generoAdmin, _apelidoAdmin)}! 🔔\n\n*${_txt}* — ${_diaStr} às ${_fmtHora(dataEvento)}\n\nTe aviso 30 minutos antes! 💙`);
+        // Resposta amigável e contextual
+        const _ehHoje = new Date().toDateString() === dataEvento.toDateString();
+        const _ehAmanha = new Date(Date.now()+86400000).toDateString() === dataEvento.toDateString();
+        const _diaLabel = _ehHoje ? 'hoje' : _ehAmanha ? 'amanhã' : _diaStr;
+        const _reacoes = ['Anotei!', 'Feito!', 'Tá na agenda!', 'Deixa comigo!', 'Anotado!'];
+        const _reacao = _reacoes[Math.floor(Math.random()*_reacoes.length)];
+        await responder(`${_reacao} 🔔 *${_txt}* — ${_diaLabel} às ${_fmtHora(dataEvento)}\n\nTe aviso 30 minutos antes, ${_chefe(_generoAdmin, _apelidoAdmin)}! 💙`);
         return true;
       }
       if (_dia && !_hora) {
         await AdminAgenda.findByIdAndUpdate(adminObjId, {
           $push: { 'config.lembretes': { texto: _txt, dataEvento: null, dataAviso: null, enviado: false, criadoEm: new Date() } }
         });
-        await responder(`Anotei o compromisso: *${_txt}*! \n\nQue horário você quer que eu te lembre? ⏰`);
+        const _reacoes2 = ['Anotei!', 'Feito!', 'Tá na agenda!', 'Deixa comigo!'];
+        const _reacao2 = _reacoes2[Math.floor(Math.random()*_reacoes2.length)];
+        await responder(`${_reacao2} 📝 *${_txt}* anotado, ${_chefe(_generoAdmin, _apelidoAdmin)}!\n\nQue horas você quer ser avisado? ⏰`);
         return true;
       }
     }
