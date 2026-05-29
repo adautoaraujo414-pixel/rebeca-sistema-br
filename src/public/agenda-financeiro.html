@@ -270,6 +270,38 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   </div>
 </div>
 
+
+<!-- MODAL EXPORTAR RELATORIO -->
+<div class="modal-bg" id="modal-exportar">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-titulo">📊 Exportar Relatório</div>
+      <button class="modal-close" onclick="fecharModal('modal-exportar')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row cols-2">
+        <div><label class="form-label">Data inicial *</label><input class="form-input" type="date" id="exp-inicio"></div>
+        <div><label class="form-label">Data final *</label><input class="form-input" type="date" id="exp-fim"></div>
+      </div>
+      <div class="form-row" style="margin-top:8px">
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-secondary btn-xs" onclick="preencherPeriodo('mes')">Mês atual</button>
+          <button class="btn btn-secondary btn-xs" onclick="preencherPeriodo('semana')">Esta semana</button>
+          <button class="btn btn-secondary btn-xs" onclick="preencherPeriodo('mesant')">Mês anterior</button>
+          <button class="btn btn-secondary btn-xs" onclick="preencherPeriodo('ano')">Este ano</button>
+        </div>
+      </div>
+      <div style="margin-top:14px;padding:12px;background:#f8f6ff;border-radius:8px;font-size:.82em;color:#666">
+        💡 O relatório agrupa despesas por categoria — ex: todas as saídas de combustível aparecem somadas em uma linha por data.
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="fecharModal('modal-exportar')">Cancelar</button>
+      <button class="btn btn-primary" onclick="exportarRelatorio()">📥 Gerar Relatório</button>
+    </div>
+  </div>
+</div>
+
 <!-- NAV -->
 <nav class="nav">
   <a href="/agenda-adm.html" class="nav-back">
@@ -282,6 +314,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <span class="nav-mes-atual" id="nav-mes-atual">---</span>
     <button class="nav-mes-btn" onclick="mudarMes(1)">&#8250;</button>
   </div>
+  <button class="btn btn-secondary btn-xs" onclick="abrirModal('modal-exportar')" style="margin-left:8px;font-size:.78em">📊 Exportar</button>
 </nav>
 
 <div class="page">
@@ -754,5 +787,49 @@ function carregarTudo(){
 <script src="/js/rebeca-notify.js"></script>
 <script src="/js/rebeca-pwa.js"></script>
 <script src="/js/rebeca-ai.js?v=1779671658"></script>
+
+<script>
+function preencherPeriodo(tipo) {
+  const hoje = new Date();
+  let ini, fim;
+  if (tipo === 'mes') {
+    ini = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+    fim = new Date(hoje.getFullYear(), hoje.getMonth()+1, 0);
+  } else if (tipo === 'semana') {
+    const d = hoje.getDay();
+    ini = new Date(hoje); ini.setDate(hoje.getDate() - d);
+    fim = new Date(hoje); fim.setDate(hoje.getDate() + (6 - d));
+  } else if (tipo === 'mesant') {
+    ini = new Date(hoje.getFullYear(), hoje.getMonth()-1, 1);
+    fim = new Date(hoje.getFullYear(), hoje.getMonth(), 0);
+  } else if (tipo === 'ano') {
+    ini = new Date(hoje.getFullYear(), 0, 1);
+    fim = new Date(hoje.getFullYear(), 11, 31);
+  }
+  const fmt = d => d.toISOString().slice(0,10);
+  document.getElementById('exp-inicio').value = fmt(ini);
+  document.getElementById('exp-fim').value = fmt(fim);
+}
+function exportarRelatorio() {
+  const ini = document.getElementById('exp-inicio').value;
+  const fim = document.getElementById('exp-fim').value;
+  if (!ini || !fim) { showToast('Selecione o período', 'erro'); return; }
+  if (ini > fim) { showToast('Data inicial maior que final', 'erro'); return; }
+  const token = localStorage.getItem('agenda_token') || '';
+  window.open('/api/agenda/financeiro/exportar-pdf?dataInicio='+ini+'&dataFim='+fim+'&token='+token, '_blank');
+  fecharModal('modal-exportar');
+}
+// Preencher período padrão ao abrir modal
+document.getElementById('modal-exportar').addEventListener('click', function(e) {
+  if (e.target === this && !document.getElementById('exp-inicio').value) preencherPeriodo('mes');
+});
+// Inicializar com mês atual quando abrir
+const _origAbrirModal = window.abrirModal;
+window.abrirModal = function(id) {
+  if (id === 'modal-exportar' && !document.getElementById('exp-inicio').value) preencherPeriodo('mes');
+  if (_origAbrirModal) _origAbrirModal(id);
+  else document.getElementById(id)?.classList.add('open');
+};
+</script>
 </body>
 </html>

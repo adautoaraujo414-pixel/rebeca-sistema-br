@@ -215,13 +215,26 @@ router.delete('/fila-encaixe/:id', authAgenda, async (req, res) => {
 // ── EXPORT PDF FINANCEIRO ─────────────────────────────────────────
 router.get('/financeiro/exportar-pdf', authAgenda, async (req, res) => {
   try {
-    const { mes, ano } = req.query;
-    const _agora = new Date(Date.now() - 3*60*60*1000); // hora Brasil
-    const m = parseInt(mes) || (_agora.getUTCMonth() + 1);
-    const a = parseInt(ano) || _agora.getUTCFullYear();
-    // Início e fim em UTC compensando GMT-3: dia 1 às 03:00 UTC = 00:00 BRT
-    const inicio = new Date(Date.UTC(a, m - 1, 1, 3, 0, 0));
-    const fim    = new Date(Date.UTC(a, m,     0, 26, 59, 59)); // último dia às 23:59:59 BRT = 02:59:59 UTC do dia seguinte
+    const { mes, ano, dataInicio, dataFim } = req.query;
+    const _agora = new Date(Date.now() - 3*60*60*1000);
+    let inicio, fim, periodoLabel;
+    if (dataInicio && dataFim) {
+      // Período personalizado: converter datas locais para UTC
+      inicio = new Date(dataInicio + 'T03:00:00.000Z'); // meia-noite BRT = 03:00 UTC
+      fim    = new Date(dataFim   + 'T26:59:59.999Z');
+      // Ajustar fim para 23:59:59 BRT = próximo dia 02:59:59 UTC
+      fim = new Date(dataFim + 'T00:00:00.000-03:00');
+      fim.setHours(23, 59, 59, 999);
+      const fmtPt = d => new Date(d).toLocaleDateString('pt-BR');
+      periodoLabel = fmtPt(dataInicio + 'T12:00:00') + ' a ' + fmtPt(dataFim + 'T12:00:00');
+    } else {
+      const m = parseInt(mes) || (_agora.getUTCMonth() + 1);
+      const a = parseInt(ano) || _agora.getUTCFullYear();
+      inicio = new Date(Date.UTC(a, m - 1, 1, 3, 0, 0));
+      fim    = new Date(Date.UTC(a, m,     0, 26, 59, 59));
+      const meses2 = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+      periodoLabel = meses2[m-1] + ' de ' + a;
+    }
     const mongoose = require('mongoose');
     const _sid = String(req.adminId);
     const _oid = mongoose.Types.ObjectId.isValid(_sid) ? new mongoose.Types.ObjectId(_sid) : null;
@@ -238,29 +251,39 @@ router.get('/financeiro/exportar-pdf', authAgenda, async (req, res) => {
     const lucro  = totalR - totalD;
     const meses  = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 
-    // Agrupar despesas por categoria
-    const porCat = {};
-    despesas.forEach(d => {
-      const c = d.categoria || 'outros';
-      if (!porCat[c]) porCat[c] = { total: 0, itens: [] };
-      porCat[c].total += d.valor;
-      porCat[c].itens.push(d);
-    });
-
     const fmt = v => `R$ ${v.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.')}`;
     const fmtData = d => new Date(d).toLocaleDateString('pt-BR');
 
-    const catRows = Object.entries(porCat).sort((a,b) => b[1].total - a[1].total).map(([cat, dados]) => `
+    // Agrupar despesas por categoria, depois por data somando itens do mesmo dia
+    const porCat = {};
+    despesas.forEach(d => {
+      const cat = d.categoria || 'outros';
+      const dataKey = new Date(d.data).toISOString().slice(0,10); // YYYY-MM-DD
+      if (!porCat[cat]) porCat[cat] = { total: 0, porData: {} };
+      porCat[cat].total += d.valor;
+      if (!porCat[cat].porData[dataKey]) porCat[cat].porData[dataKey] = { valor: 0, descricoes: [] };
+      porCat[cat].porData[dataKey].valor += d.valor;
+      if (d.descricao) porCat[cat].porData[dataKey].descricoes.push(d.descricao);
+    });
+
+    const catRows = Object.entries(porCat).sort((a,b) => b[1].total - a[1].total).map(([cat, dados]) => {
+      const linhasDia = Object.entries(dados.porData).sort((a,b) => a[0].localeCompare(b[0])).map(([dataKey, info]) => {
+        const desc = info.descricoes.length > 0 ? info.descricoes.join(', ') : '-';
+        const dataFmt = new Date(dataKey + 'T12:00:00').toLocaleDateString('pt-BR');
+        return `<tr class="item-row">
+          <td style="padding-left:20px">${dataFmt}</td>
+          <td colspan="2" style="color:#555">${desc}</td>
+          <td>${fmt(info.valor)}</td>
+        </tr>`;
+      }).join('');
+      return `
       <tr class="cat-header">
         <td colspan="3"><strong>📂 ${cat.toUpperCase()}</strong></td>
         <td><strong>${fmt(dados.total)}</strong></td>
       </tr>
-      ${dados.itens.map(i => `<tr class="item-row">
-        <td style="padding-left:20px">${fmtData(i.data)}</td>
-        <td colspan="2">${i.descricao || '-'}</td>
-        <td>${fmt(i.valor)}</td>
-      </tr>`).join('')}
-    `).join('');
+      ${linhasDia}
+    `;
+    }).join('');
 
     const receitaRows = receitas.map(r => `<tr class="item-row">
       <td>${fmtData(r.data)}</td>
@@ -270,7 +293,7 @@ router.get('/financeiro/exportar-pdf', authAgenda, async (req, res) => {
     </tr>`).join('');
 
     const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
-<title>Relatório Financeiro — ${meses[m-1]} ${a}</title>
+<title>Relatório Financeiro — ${periodoLabel}</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
   body { font-family: Arial, sans-serif; font-size: 13px; color: #1a1a1a; padding: 30px; }
@@ -296,7 +319,7 @@ router.get('/financeiro/exportar-pdf', authAgenda, async (req, res) => {
   @media print { body { padding: 10px; } }
 </style></head><body>
 <h1>📊 Relatório Financeiro</h1>
-<div class="sub">${admin?.nomeNegocio || admin?.nome || ''} — ${meses[m-1]} de ${a}</div>
+<div class="sub">${admin?.nomeNegocio || admin?.nome || ''} — ${periodoLabel}</div>
 
 <div class="cards">
   <div class="card rec"><div class="card-label">Total Receitas</div><div class="card-val">${fmt(totalR)}</div><div style="font-size:11px;color:#666;margin-top:4px">${receitas.length} lançamento(s)</div></div>
@@ -314,7 +337,7 @@ router.get('/financeiro/exportar-pdf', authAgenda, async (req, res) => {
 </body></html>`;
 
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    res.setHeader('Content-Disposition', `inline; filename="financeiro-${a}-${String(m).padStart(2,'0')}.html"`);
+    res.setHeader('Content-Disposition', `inline; filename="financeiro-${(dataInicio||'').replace(/-/g,'') || a+String(m||'').padStart(2,'0')}-${(dataFim||'').replace(/-/g,'')}.html"`);
     res.send(html);
   } catch(e) { res.status(500).json({ erro: e.message }); }
 });
