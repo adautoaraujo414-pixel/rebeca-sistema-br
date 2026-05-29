@@ -2007,6 +2007,11 @@ ${total>5?'Tá crescendo muito! Continua assim! 🚀':'Todo cliente novo é uma 
 
     // ── Ação: pedir_info — falta dado essencial ──
     if (_cerebro.acao === 'pedir_info' && _cerebro.resposta) {
+      if (_cerebro.reacao_emocional) {
+        await responder(_cerebro.reacao_emocional);
+        SM.addAssistantMsg(adminId, telefone, _cerebro.reacao_emocional);
+        await new Promise(r => setTimeout(r, 800));
+      }
       await responder(_cerebro.resposta);
       SM.addAssistantMsg(adminId, telefone, _cerebro.resposta);
       return true;
@@ -2014,12 +2019,14 @@ ${total>5?'Tá crescendo muito! Continua assim! 🚀':'Todo cliente novo é uma 
 
     // ── Ação: responder — só consulta/informação ──
     if (_cerebro.acao === 'responder' && _cerebro.resposta) {
-      // Prepend reação emocional se houver
-      const _r = _cerebro.reacao_emocional
-        ? _cerebro.reacao_emocional + '\n\n' + _cerebro.resposta
-        : _cerebro.resposta;
-      await responder(_r);
-      SM.addAssistantMsg(adminId, telefone, _r);
+      // Reação emocional como mensagem SEPARADA — mais natural no WhatsApp
+      if (_cerebro.reacao_emocional) {
+        await responder(_cerebro.reacao_emocional);
+        SM.addAssistantMsg(adminId, telefone, _cerebro.reacao_emocional);
+        await new Promise(r => setTimeout(r, 800)); // pausa natural entre mensagens
+      }
+      await responder(_cerebro.resposta);
+      SM.addAssistantMsg(adminId, telefone, _cerebro.resposta);
       return true;
     }
 
