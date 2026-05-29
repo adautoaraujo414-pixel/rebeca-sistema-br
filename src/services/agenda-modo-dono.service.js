@@ -2143,6 +2143,68 @@ ${total>5?'Tá crescendo muito! Continua assim! 🚀':'Todo cliente novo é uma 
       // Handlers específicos por intenção
       const ent = _cerebro.entidades || {};
 
+      // ── FORA DO ESCOPO — conversa livre, empatia, bate-papo ─────────────
+      if (_cerebro.intencao === 'fora_escopo' || !_cerebro.intencao) {
+        try {
+          const Anthropic = require('@anthropic-ai/sdk');
+          const _cli = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+          const _histForaEscopo = SM.getHistoricoParaAPI(adminId, telefone, 8);
+          const _hAtual = new Date().getHours();
+          const _periodo = _hAtual < 12 ? 'manhã' : _hAtual < 18 ? 'tarde' : 'noite';
+          const _diaSem = ['domingo','segunda','terça','quarta','quinta','sexta','sábado'][new Date().getDay()];
+          const _apelido = _apelidoAdmin || 'chefe';
+          const _genero = _generoAdmin || '';
+
+          const _sysForaEscopo = `Você é a Rebeca, assistente pessoal e secretária de ${_apelido} — dona de um negócio de ${admin?.segmento || 'serviços'} chamado "${admin?.nomeNegocio || 'o negócio'}".
+
+Você é próxima, calorosa e brasileira. Está conversando no WhatsApp.
+
+CONTEXTO AGORA: ${_periodo} de ${_diaSem}.
+PESSOA: ${_apelido}${_genero === 'feminino' ? ' (ela)' : _genero === 'masculino' ? ' (ele)' : ''}.
+
+COMO RESPONDER:
+- Tom de amiga próxima que trabalha junto há anos
+- Respostas CURTAS — máximo 3 linhas
+- Emojis com moderação — máximo 2
+- Se for desabafo/emoção → acolha PRIMEIRO, depois pergunte se precisa de algo
+- Se for comentário do dia (sono, cansaço, tempo, humor) → reaja naturalmente como colega
+- Se for pergunta geral → responda com base no que sabe, sem inventar
+- Se for algo que você não sabe → diga com leveza: "Não sei não, haha! Mas..."
+- NUNCA diga que é IA, robô ou sistema
+- NUNCA fale de recursos do sistema (agenda, financeiro) a não ser que ela pergunte
+- Após acolher, pergunte UMA COISA só: se precisa de algo do trabalho
+
+EXEMPLOS:
+- "tive um sonho ruim" → "Ai, que susto hein! 😬 Mas já passou! Tá bem? Precisa de algo?"
+- "nossa dormi demais" → "Haha descansou bem pelo menos! 😄 O que precisa hoje?"
+- "tô cansada" → "Eita, foi pesado né! Segura firme 💙 Precisa de algo pra agilizar o dia?"
+- "que calor absurdo" → "Demais! ☀️ Tá sobrevivendo? Precisando de algo aqui?"
+- "hoje tá fraco" → "Poxa, que pena 😕 Quer que eu veja os clientes inativos pra mandar mensagem?"
+`;
+
+          const _rForaEscopo = await _cli.messages.create({
+            model: 'claude-haiku-4-5-20251001',
+            max_tokens: 200,
+            system: _sysForaEscopo,
+            messages: _histForaEscopo.length > 0 ? _histForaEscopo : [{ role: 'user', content: msg }]
+          });
+
+          const _respostaForaEscopo = _rForaEscopo.content?.[0]?.text?.trim();
+          if (_respostaForaEscopo) {
+            await responder(_respostaForaEscopo);
+            SM.addAssistantMsg(adminId, telefone, _respostaForaEscopo);
+            return true;
+          }
+        } catch (_eFE) {
+          console.error('[fora_escopo] erro Haiku:', _eFE.message);
+        }
+        const _fbFE = `Haha entendi! 😄 Precisando de algo aqui, ${_chefe(_generoAdmin, _apelidoAdmin)}?`;
+        await responder(_fbFE);
+        SM.addAssistantMsg(adminId, telefone, _fbFE);
+        return true;
+      }
+      // ─────────────────────────────────────────────────────────────────────
+
       if (_cerebro.intencao === 'registrar_receita' && ent.valor) {
         const cat = ent.categoria || 'outros';
         const desc = ent.descricao || ent.origem || 'Entrada via WhatsApp';
