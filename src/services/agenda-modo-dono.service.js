@@ -658,6 +658,7 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
     }
     await FinanceiroAgenda.findByIdAndDelete(ultimo._id);
     const tipoLabel = ultimo.tipo === 'receita' ? 'Entrada' : 'Saída';
+    // Log para histórico
     await responder(`✅ ${tipoLabel} de R$ ${ultimo.valor.toFixed(2)} em "${ultimo.categoria || 'outros'}" apagada! Se precisar registrar de novo é só falar. 💙`);
     return true;
   }
@@ -1095,10 +1096,16 @@ ${totalAgs > 0 ? 'Tá saindo bem! 💪' : 'Ainda sem registros esse mês.'}`);
         await responder(`Cancelado, ${_chefe(_generoAdmin, _apelidoAdmin)}! 🔓\n\n*${ag.nomeCliente}* às ${_fmtHora(new Date(ag.dataHora))} removido. Horário livre! 😊`);
         return true;
       }
-      await responder(`Não achei agendamento de *${nomeCli2}* hoje não, ${_chefe(_generoAdmin, _apelidoAdmin)}. Confere o nome? 🤔`);
+      await responder(`Hmm, não achei nenhum agendamento de *${nomeCli2}* hoje não, ${_chefe(_generoAdmin, _apelidoAdmin)}. 🤔\n\nConfere o nome ou me fala o horário: *cancela as 14h* 😊`);
       return true;
     }
-    await responder(`Me fala o horário ou o nome, ${_chefe(_generoAdmin, _apelidoAdmin)}!\nTipo: *cancela as 14h* ou *a Maria não vem* 😊`);
+    const _sugestHor = await AgendamentoAgenda.find({
+      adminId: adminObjId,
+      dataHora: { $gte: _inicioDia(), $lte: _fimDia() },
+      status: { $in: ['pendente','confirmado'] }
+    }).sort({ dataHora: 1 }).lean();
+    const _prox3 = _sugestHor.slice(0,3).map(a => _fmtHora(new Date(a.dataHora))).join(', ');
+    await responder(`Me fala o horário ou o nome, ${_chefe(_generoAdmin, _apelidoAdmin)}!\nTipo: *cancela as 14h* ou *a Maria não vem*\n${_prox3 ? '\nHorários com agendamento hoje: '+_prox3 : ''} 😊`);
     return true;
   }
 
@@ -1115,7 +1122,9 @@ ${totalAgs > 0 ? 'Tá saindo bem! 💪' : 'Ainda sem registros esse mês.'}`);
       }).lean();
       if (ag) {
         await AgendamentoAgenda.findByIdAndUpdate(ag._id, { status: 'confirmado' });
-        await responder(`Maravilha, ${_chefe(_generoAdmin, _apelidoAdmin)}! 🎉\n\n✅ *${ag.nomeCliente}* confirmado às ${_fmtHora(new Date(ag.dataHora))}. Pode esperar! 💙`);
+        const _minsFalt = Math.round((new Date(ag.dataHora) - new Date()) / 60000);
+        const _tempoLabel = _minsFalt > 0 ? (_minsFalt < 60 ? ` — chega em ${_minsFalt} min!` : ` — chega em ${Math.round(_minsFalt/60)}h`) : ' — já deve estar chegando!';
+        await responder(`✅ *${ag.nomeCliente}* confirmado${_tempoLabel} 💙`);
         return true;
       }
     }
@@ -1159,7 +1168,7 @@ ${totalAgs > 0 ? 'Tá saindo bem! 💪' : 'Ainda sem registros esse mês.'}`);
       const d = Math.floor((Date.now()-new Date(c.ultimoAtendimento))/(86400000));
       return `• ${c.nome} — ${d} dias sem vir`;
     }).join('\n');
-    await responder(`👥 *Clientes inativos (30d+):*\n\n${lista}`);
+    await responder(`👥 *Clientes inativos (30d+):*\n\n${lista}\n\nQuer que eu mande uma mensagem pra algum deles? É só falar! 💙`);
     return true;
   }
 
@@ -1391,13 +1400,17 @@ Não tem mais ninguém agendado hoje não! Tá livre o resto do dia. 🎉`);
     } else {
       const mins = Math.round((new Date(ag.dataHora) - agora) / 60000);
       const tempo = mins <= 0 ? 'já deveria ter chegado!' : mins < 60 ? `em ${mins} minutinhos` : `em ${Math.round(mins/60)}h`;
-      await responder(`${_saudacao()}! O próximo é ${_chefe(_generoAdmin, _apelidoAdmin)}! 😄
-
-👤 *${ag.nomeCliente}*
-✂️ ${ag.nomeServico || '—'}
-⏰ ${_fmtHora(new Date(ag.dataHora))} (${tempo})
-
-Bora se preparar! 💪`);
+      // Buscar histórico do cliente para contexto extra
+      const _clienteHist = await ClienteAgenda.findOne({
+        adminId: adminObjId,
+        telefone: { $exists: true },
+        nome: { $regex: ag.nomeCliente.split(' ')[0], $options: 'i' }
+      }).lean();
+      const _totalVisitas = _clienteHist?.totalAtendimentos || 0;
+      const _dicaCliente = _totalVisitas === 0 ? '\n\n✨ Primeira vez aqui!' 
+        : _totalVisitas === 1 ? '\n\n😊 Segunda visita!'
+        : `\n\n💙 ${_totalVisitas}ª visita — cliente fidelizada!`;
+      await responder(`O próximo é ${_chefe(_generoAdmin, _apelidoAdmin)}! 😄\n\n👤 *${ag.nomeCliente}*\n✂️ ${ag.nomeServico || '—'}\n⏰ ${_fmtHora(new Date(ag.dataHora))} (${tempo})${_dicaCliente}`);
     }
     return true;
   }
@@ -1411,9 +1424,8 @@ Bora se preparar! 💪`);
       status: { $in: ['pendente','confirmado'] }
     }).sort({ dataHora: 1 }).lean();
     if (!ags.length) {
-      await responder(`${_saudacao()}, ${_chefe(_generoAdmin, _apelidoAdmin)}! 😊
-
-A semana tá zerada por enquanto. Bora divulgar pra encher a agenda! 🚀`);
+      const _diasSem = ['domingo','segunda','terça','quarta','quinta','sexta','sábado'];
+      await responder(`A semana ainda tá livre, ${_chefe(_generoAdmin, _apelidoAdmin)}! 🗓️\n\nQuer que eu te ajude a organizar ou mandar mensagem pra clientes pra encher? 💙`);
     } else {
       const porDia = {};
       ags.forEach(a => {
@@ -1867,6 +1879,18 @@ ${total>5?'Tá crescendo muito! Continua assim! 🚀':'Todo cliente novo é uma 
   if (_isSaudacao(msgL)) {
     const _h = new Date().getHours();
     const _p = _h < 12 ? 'Bom dia' : _h < 18 ? 'Boa tarde' : 'Boa noite';
+    // Buscar contexto da agenda para saudação proativa
+    const _agsHojeSd = await AgendamentoAgenda.find({
+      adminId: adminObjId,
+      dataHora: { $gte: _inicioDia(), $lte: _fimDia() },
+      status: { $in: ['pendente','confirmado'] }
+    }).sort({ dataHora: 1 }).lean();
+    const _proxAgSd = _agsHojeSd.find(a => new Date(a.dataHora) > new Date());
+    const _ctxAgenda = _agsHojeSd.length === 0
+      ? '\n\nAgenda livre hoje! 🎉'
+      : _proxAgSd
+        ? `\n\nTem *${_agsHojeSd.length}* agendamento(s) hoje. O próximo é *${_proxAgSd.nomeCliente}* às *${_fmtHora(new Date(_proxAgSd.dataHora))}*.`
+        : `\n\n*${_agsHojeSd.length}* agendamento(s) hoje. Todos já passaram!`;
     let _resp;
     if (/tchau|at[eé]\s*(logo|mais)/i.test(msgL))         _resp = `Até mais! Qualquer coisa é só chamar 💙`;
     else if (/obrigad|valeu|thx|tks/i.test(msgL))           _resp = `De nada! Tô aqui sempre que precisar 😊`;
