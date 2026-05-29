@@ -652,22 +652,23 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
     if (nlp.intencao === 'lembrete') {
       const _hora = _parseHora(msg) || _parseHora(nlp.normalizado);
       const _dia  = _parseDia(msg)  || _parseDia(nlp.normalizado);
-      // Extrair só o assunto — não usar msg inteiro como texto do lembrete
+      // Extrair só o assunto — limpar lixo de áudio e gatilhos
+      const _limparTextoLembrete = (texto) => {
+        return texto
+          .replace(/\b(rebeca)[,.]?\s*/gi, '')
+          .replace(/\b(me lembra|me avisa|anota aqui|anota|lembrete|criar? lembrete|criar? horas?|nao me deixa esquecer)[,.]?\s*/gi, '')
+          .replace(/\b(amanha|amanhã|hoje|segunda|terca|terça|quarta|quinta|sexta|sabado|sábado|domingo)(-feira)?\b/gi, '')
+          .replace(/\bdia\s+\d{1,2}(\/\d{1,2})?\b/gi, '')
+          .replace(/\b(as|às|pras?|para)\s+\d{1,2}(:\d{2})?(h|hs|horas?)?\b/gi, '')
+          .replace(/\b\d{1,2}(:\d{2})?(h|hs|horas?)\b/gi, '')
+          .replace(/\b(de|do|da|pra|para|que|um|uma|o|a)\b/gi, ' ')
+          .replace(/\s{2,}/g, ' ')
+          .replace(/^[,.:;\-\s]+|[,.:;\-\s]+$/g, '')
+          .trim();
+      };
       const _txtBruto = nlp.textoLembrete || '';
-      const _txt = _txtBruto.length > 2 ? _txtBruto : (() => {
-        // Remover palavras de gatilho, hora e dia do msg para extrair só o assunto
-        return msg.trim()
-          .replace(/rebeca[,.]?\s*/gi, '')
-          .replace(/(me lembra|me avisa|anota|lembrete|nao me deixa esquecer)[,.]?\s*/gi, '')
-          .replace(/(amanha|amanhã|hoje|segunda|terca|terça|quarta|quinta|sexta|sabado|domingo)[-\s]*(feira)?/gi, '')
-          .replace(/dia\s+\d{1,2}(\/\d{1,2})?/gi, '')
-          .replace(/(as|às|pras?|para)\s+\d{1,2}(:\d{2})?(h|hs|horas?)?/gi, '')
-          .replace(/\d{1,2}(:\d{2})?(h|hs)/gi, '')
-          .replace(/(de|do|da|pra|para|que|um|uma)/g, ' ')
-          .replace(/\s{2,}/g, ' ').trim()
-          .replace(/^[,.:;\s]+|[,.:;\s]+$/g, '').trim()
-          || 'Compromisso';
-      })();
+      const _txtLimpo = _limparTextoLembrete(_txtBruto.length > 2 ? _txtBruto : msg);
+      const _txt = _txtLimpo.length > 2 ? _txtLimpo : 'Compromisso';
 
       if (_hora && _dia) {
         const dataEvento = new Date(_dia);
