@@ -653,13 +653,22 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
     if (tipoApagar) filtro.tipo = tipoApagar;
     const ultimo = await FinanceiroAgenda.findOne(filtro).sort({ data: -1 }).lean();
     if (!ultimo) {
-      await responder('Não encontrei nenhum lançamento pra apagar. 🤔');
+      await responder(`Não encontrei nenhum lançamento pra apagar, ${_chefe(_generoAdmin, _apelidoAdmin)}. 🤔`);
       return true;
     }
-    await FinanceiroAgenda.findByIdAndDelete(ultimo._id);
     const tipoLabel = ultimo.tipo === 'receita' ? 'Entrada' : 'Saída';
-    // Log para histórico
-    await responder(`✅ ${tipoLabel} de R$ ${ultimo.valor.toFixed(2)} em "${ultimo.categoria || 'outros'}" apagada! Se precisar registrar de novo é só falar. 💙`);
+    // Verificar se já está aguardando confirmação de apagar
+    const _sesApagar = SM.getSession(adminId, telefone);
+    if (_sesApagar.aguardandoConfirmacaoApagar) {
+      // Dono confirmou — apagar
+      SM.updateSession(adminId, telefone, { aguardandoConfirmacaoApagar: false, ultimoLancamentoId: null });
+      await FinanceiroAgenda.findByIdAndDelete(ultimo._id);
+      await responder(`Apagado, ${_chefe(_generoAdmin, _apelidoAdmin)}! ✅ ${tipoLabel} de R$ ${ultimo.valor.toFixed(2)} removida. Se precisar registrar de novo é só falar. 💙`);
+      return true;
+    }
+    // Primeiro pedido — pedir confirmação
+    SM.updateSession(adminId, telefone, { aguardandoConfirmacaoApagar: true, ultimoLancamentoId: String(ultimo._id) });
+    await responder(`Encontrei aqui, ${_chefe(_generoAdmin, _apelidoAdmin)}:\n\n${tipoLabel}: *R$ ${ultimo.valor.toFixed(2)}* em "${ultimo.categoria || 'outros'}"\nDescrição: ${ultimo.descricao || '—'}\n\nConfirma apagar? Responde *sim* ou *não* 😊`);
     return true;
   }
   // ── REGISTRAR ENTRADA FINANCEIRA ───────────────────────────────────────────
@@ -1448,6 +1457,23 @@ Não tem mais ninguém agendado hoje não! Tá livre o resto do dia. 🎉`);
     const nome = nomeM ? nomeM[1].trim() : null;
     if (hora && nome) {
       const dataHora = new Date(dia); dataHora.setHours(hora.h, hora.min, 0, 0);
+      // Verificar conflito de horário — janela de 30 min
+      const _iniConflito = new Date(dataHora.getTime() - 15 * 60000);
+      const _fimConflito = new Date(dataHora.getTime() + 15 * 60000);
+      const _conflito = await AgendamentoAgenda.findOne({
+        adminId: adminObjId,
+        dataHora: { $gte: _iniConflito, $lte: _fimConflito },
+        status: { $in: ['pendente','confirmado'] }
+      }).lean();
+      if (_conflito) {
+        const _hrConflito = _fmtHora(new Date(_conflito.dataHora));
+        const _nomConflito = _conflito.nomeCliente;
+        // Sugerir horários próximos livres
+        const _antesH = new Date(dataHora.getTime() - 60 * 60000);
+        const _depoisH = new Date(dataHora.getTime() + 60 * 60000);
+        await responder(`Eita, ${_chefe(_generoAdmin, _apelidoAdmin)}! ⚠️\n\nEsse horário já tem *${_nomConflito}* às *${_hrConflito}*.\n\nQuer encaixar ${nome} antes (às ${_fmtHora(_antesH)}) ou depois (às ${_fmtHora(_depoisH)})?\n\nOu me fala outro horário 😊`);
+        return true;
+      }
       await AgendamentoAgenda.create({
         adminId: adminObjId, nomeCliente: nome,
         nomeServico: (() => {
@@ -1636,11 +1662,12 @@ Nenhum aniversariante nos próximos 7 dias não. Mas fique de olho! 👀`);
         const d = new Date(c.dataNascimento);
         return `• ${c.nome} — ${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`;
       }).join(' + ');
-      await responder(`🎂 Ó os aniversariantes, ${_chefe(_generoAdmin, _apelidoAdmin)}!
-
-${lista}
-
-Que tal mandar uma mensagem especial pra eles? 💙`);
+      // Salvar lista na sessão para mandar mensagem se quiser
+      SM.updateSession(adminId, telefone, {
+        aniversariantesLista: aniv.map(c => ({ nome: c.nome, telefone: c.telefone || null }))
+      });
+      const _temTelefone = aniv.filter(c => c.telefone).length;
+      await responder(`🎂 Aniversariantes nos próximos 7 dias, ${_chefe(_generoAdmin, _apelidoAdmin)}:\n\n${lista}\n\n${_temTelefone > 0 ? `Quer que eu mande mensagem de parabéns pra ${_temTelefone === 1 ? 'ele' : 'eles'}? É só falar *"manda parabéns"*! 🎉` : 'Não tenho o número deles cadastrado — se quiser mandar é só adicionar no cadastro! 📱'}`);
     }
     return true;
   }
@@ -1867,6 +1894,50 @@ ${total>5?'Tá crescendo muito! Continua assim! 🚀':'Todo cliente novo é uma 
 
     await _enviarMsg(inst, _normalizarTel(cliente.telefone), textoFinal);
     await responder(`Mandei pra *${nomeCliente}*, ${_chefe(_generoAdmin, _apelidoAdmin)}! ✅`);
+    return true;
+  }
+
+  // ── CONFIRMAR APAGAR LANÇAMENTO ─────────────────────────────────────────────
+  const _sesApagarCheck = SM.getSession(adminId, telefone);
+  if (_sesApagarCheck.aguardandoConfirmacaoApagar) {
+    if (_isConfirm) {
+      const _idApagar = _sesApagarCheck.ultimoLancamentoId;
+      SM.updateSession(adminId, telefone, { aguardandoConfirmacaoApagar: false, ultimoLancamentoId: null });
+      if (_idApagar) {
+        const _lancApagar = await FinanceiroAgenda.findById(_idApagar).lean();
+        if (_lancApagar) {
+          await FinanceiroAgenda.findByIdAndDelete(_idApagar);
+          const _tpLabel = _lancApagar.tipo === 'receita' ? 'Entrada' : 'Saída';
+          await responder(`Apagado, ${_chefe(_generoAdmin, _apelidoAdmin)}! ✅\n\n${_tpLabel} de R$ ${_lancApagar.valor.toFixed(2)} removida. Se precisar registrar de novo é só falar. 💙`);
+          return true;
+        }
+      }
+    } else if (_isNeg) {
+      SM.updateSession(adminId, telefone, { aguardandoConfirmacaoApagar: false, ultimoLancamentoId: null });
+      await responder(`Ok, ${_chefe(_generoAdmin, _apelidoAdmin)}! Mantive o lançamento. 👍`);
+      return true;
+    }
+  }
+
+  // ── MANDAR PARABÉNS PARA ANIVERSARIANTES ──────────────────────────────────
+  if (/mandas*(parab[eé]ns|mensagems*des*parab[eé]ns|felizs*anivers[aá]rio)/i.test(msgL)) {
+    const _sesAniv = SM.getSession(adminId, telefone);
+    const _lista = _sesAniv.aniversariantesLista || [];
+    const _comTel = _lista.filter(c => c.telefone);
+    if (!_comTel.length) {
+      await responder(`Não tenho o número dos aniversariantes cadastrado, ${_chefe(_generoAdmin, _apelidoAdmin)}. Adiciona no cadastro e aí consigo mandar! 📱`);
+      return true;
+    }
+    const inst = await InstanciaWhatsapp.findOne({ adminId: String(adminObjId), status: 'conectado' }).lean()
+              || { _enviarVia: 'meta', apiUrl: 'meta', nomeInstancia: 'meta_oficial' };
+    let enviados = 0;
+    for (const cl of _comTel) {
+      const _nomePrimeiro = cl.nome.split(' ')[0];
+      const _msgAniv = `🎂 Feliz aniversário, *${_nomePrimeiro}*! \n\nA gente torce muito por você! Que seu dia seja especial! 🥳💙`;
+      await _enviarMsg(inst, _normalizarTel(cl.telefone), _msgAniv);
+      enviados++;
+    }
+    await responder(`Mandei parabéns pra ${enviados} aniversariante(s), ${_chefe(_generoAdmin, _apelidoAdmin)}! 🎉 Eles vão adorar! 💙`);
     return true;
   }
 
