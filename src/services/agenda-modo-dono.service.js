@@ -1904,6 +1904,9 @@ ${total>5?'Tá crescendo muito! Continua assim! 🚀':'Todo cliente novo é uma 
       const _opts = [`${_p}! 😊 Tô aqui, pode mandar!`,`Fala! 👋 Tô de olho, pode falar!`,`Oi! Tô aqui prontinha. O que precisa? 💙`,`${_p}, ${_chefe(_generoAdmin, _apelidoAdmin)}! Me fala o que precisa 😊`];
       _resp = _opts[Math.floor(Math.random() * _opts.length)];
     }
+    // Aplicar contexto da agenda na saudação (exceto tchau/obrigado/ok)
+    const _semCtx = /tchau|at[eé]|obrigad|valeu|thx|tks|ok|certo|entendi|perfeito|show|legal|massa|[oó]timo|maravilha/i.test(msgL);
+    if (!_semCtx && _ctxAgenda && _resp) _resp = _resp + _ctxAgenda;
     await responder(_resp);
     return true;
   }
