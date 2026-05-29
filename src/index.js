@@ -559,6 +559,132 @@ cron.schedule('0 10 * * *', () => BomDia.rodarBomDia());
 cron.schedule('5 10 * * *', () => ModoDono.rodarBoasVindasPendentes());
 console.log('✅ Cron lembretes dono (5min) + relatório diário (7h) + bom dia inteligente (7h) ativos');
 
+
+
+// ── CRON TRIAL AGENDA — roda todo dia às 9h BRT ──────────────────
+require('node-cron').schedule('0 12 * * *', async () => {
+  try {
+    const { AdminAgenda: _AA, InstanciaWhatsapp: _IW } = require('./models/AgendaServico');
+    const agora = new Date();
+
+    const PIX_CC = '00020101021226840014BR.GOV.BCB.PIX0136f09d7ae0-7754-4a98-94f5-134c007b56120222Pagamento francisca_da5204000053039865406147.005802BR5924FRANCISCA DAMACENA ROCHA6010COSTA RICA62290525QRCCTFj4aZBeZAHKCqLQQhBIc63044772';
+    const VALOR  = 'R$ 147,00';
+    const WPP_ADM = '5534999535060';
+    const LINK_PAG = 'https://rebecasistemas.com.br/agenda-cadastro';
+
+    const _instancia = async () => {
+      const i = await _IW.findOne({ isOficial: true, status: 'conectado' }).lean()
+             || await _IW.findOne({ adminTipo: 'agenda', status: 'conectado' }).lean();
+      return i;
+    };
+
+    const _enviarWpp = async (inst, numero, msg) => {
+      if (!inst || !numero) return;
+      const num = numero.replace(/\D/g,'').replace(/^(?!55)/, '55');
+      await fetch(`${process.env.EVOLUTION_API_URL}/message/sendText/${inst.instancia}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': process.env.EVOLUTION_API_KEY },
+        body: JSON.stringify({ number: num, text: msg })
+      }).catch(e => console.warn('[TRIAL] Erro wpp:', e.message));
+    };
+
+    // ── Avisar clientes com trial expirando HOJE (dia 7) ──
+    const inicioDia = new Date(agora); inicioDia.setHours(0,0,0,0);
+    const fimDia    = new Date(agora); fimDia.setHours(23,59,59,999);
+    const vencendoHoje = await _AA.find({
+      statusPagamento: 'trial',
+      trialExpira: { $gte: inicioDia, $lte: fimDia },
+      avisadoTrial: { $ne: true }
+    }).lean();
+
+    for (const adm of vencendoHoje) {
+      try {
+        const inst = await _instancia();
+        const wpp = adm.whatsapp || adm.telefone || '';
+        const nome = adm.nome || adm.nomeNegocio || '';
+
+        // Mensagem para o cliente
+        const msgCliente = `⏰ *Seu período de teste gratuito termina hoje!*
+
+Olá, ${nome}! 👋
+
+Você usou a *Rebeca Agenda* por 7 dias gratuitos. Esperamos que tenha gostado! 😊
+
+Para continuar usando *sem interrupção*, faça o pagamento agora:
+
+💰 *Valor: ${VALOR}*
+
+📋 *PIX Copia e Cola:*
+${PIX_CC}
+
+Após o pagamento, envie o comprovante em:
+🔗 ${LINK_PAG}
+
+Qualquer dúvida estou aqui! 💙`;
+
+        await _enviarWpp(inst, wpp, msgCliente);
+
+        // Notificar admin (você) com cópia e cola
+        const msgAdm = `🔔 *Cliente em período de teste vencendo*
+
+*Nome:* ${nome}
+*Email:* ${adm.email}
+*WhatsApp:* ${wpp}
+
+Já enviei a cobrança pra ele. Aqui está a chave PIX caso precise reenviar:
+
+📋 *PIX Copia e Cola:*
+${PIX_CC}
+
+💰 Valor: ${VALOR}`;
+
+        await _enviarWpp(inst, WPP_ADM, msgAdm);
+        await _AA.findByIdAndUpdate(adm._id, { statusPagamento: 'trial_expirado', avisadoTrial: true });
+        console.log('[TRIAL] Aviso enviado para', nome, wpp);
+      } catch(e) { console.error('[TRIAL] Erro aviso:', e.message); }
+    }
+
+    // ── Bloquear clientes com trial_expirado há 3+ dias sem pagar ──
+    const limite3dias = new Date(agora.getTime() - 3 * 24 * 60 * 60 * 1000);
+    const paraBloquear = await _AA.find({
+      statusPagamento: 'trial_expirado',
+      trialExpira: { $lt: limite3dias },
+      ativo: true
+    }).lean();
+
+    for (const adm of paraBloquear) {
+      try {
+        const inst = await _instancia();
+        const wpp = adm.whatsapp || adm.telefone || '';
+        const nome = adm.nome || adm.nomeNegocio || '';
+
+        const msgBloqueio = `🔒 *Acesso encerrado*
+
+Olá, ${nome}!
+
+Seu acesso à *Rebeca Agenda* foi encerrado por falta de pagamento após o período de teste.
+
+Para reativar, faça o pagamento:
+
+💰 *Valor: ${VALOR}*
+
+📋 *PIX Copia e Cola:*
+${PIX_CC}
+
+🔗 ${LINK_PAG}
+
+Assim que confirmarmos o pagamento, reativamos imediatamente! 💙`;
+
+        await _enviarWpp(inst, wpp, msgBloqueio);
+        await _AA.findByIdAndUpdate(adm._id, { ativo: false, statusPagamento: 'bloqueado' });
+        console.log('[TRIAL] Bloqueado:', nome, adm.email);
+      } catch(e) { console.error('[TRIAL] Erro bloqueio:', e.message); }
+    }
+
+    console.log('[TRIAL] Cron concluido — avisados:', vencendoHoje.length, '| bloqueados:', paraBloquear.length);
+  } catch(e) { console.error('[TRIAL] Erro cron:', e.message); }
+}, { timezone: 'America/Sao_Paulo' });
+// ─────────────────────────────────────────────────────────────────
 // ── RESET CONTADOR COZINHA ÀS 15H ────────────────────────────────
 require('node-cron').schedule('0 15 * * *', async () => {
   try {

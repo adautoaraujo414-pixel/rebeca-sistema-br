@@ -15,6 +15,14 @@ async function authAgenda(req, res, next) {
     const { AdminAgenda: AdminAgendaAuth } = require('../models/AgendaServico');
     const admin = await AdminAgendaAuth.findOne({ token });
     if (!admin) return res.status(401).json({ erro: 'Token inválido' });
+    // Verificar bloqueio por trial expirado sem pagamento
+    if (admin.statusPagamento === 'bloqueado') {
+      return res.status(403).json({ erro: 'acesso_bloqueado', msg: 'Acesso bloqueado por falta de pagamento. Entre em contato.' });
+    }
+    // Trial expirado → bloquear chamadas de API (front trata)
+    if (admin.statusPagamento === 'trial_expirado') {
+      return res.status(403).json({ erro: 'trial_expirado', msg: 'Período de teste encerrado. Efetue o pagamento para continuar.' });
+    }
     req.adminId = admin._id;
     req.admin   = admin;
     next();

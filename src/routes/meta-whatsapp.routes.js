@@ -222,6 +222,28 @@ async function processarComando(telefone, texto, msgId) {
       _enviarVia:    'meta'
     };
 
+    // Verificar se admin está com trial expirado ou bloqueado
+    if (admin.statusPagamento === 'trial_expirado' || admin.statusPagamento === 'bloqueado') {
+      const _PIX = '00020101021226840014BR.GOV.BCB.PIX0136f09d7ae0-7754-4a98-94f5-134c007b56120222Pagamento francisca_da5204000053039865406147.005802BR5924FRANCISCA DAMACENA ROCHA6010COSTA RICA62290525QRCCTFj4aZBeZAHKCqLQQhBIc63044772';
+      const _status = admin.statusPagamento === 'bloqueado' ? 'foi encerrado' : 'está em período de pagamento';
+      const _msg = `⚠️ *Atenção!*
+
+Olá! Seu acesso à *Rebeca Agenda* ${_status}.
+
+Para continuar usando, faça o pagamento:
+
+💰 *R$ 147,00*
+
+📋 *PIX Copia e Cola:*
+${_PIX}
+
+Após o pagamento, envie o comprovante em:
+🔗 https://rebecasistemas.com.br/agenda-cadastro
+
+Reativamos seu acesso imediatamente! 💙`;
+      await MetaWA.enviarTexto(telefone, _msg);
+      return;
+    }
     console.log('[STEP 5] chamando processarComandoDono, adminId:', String(admin._id));
     let tratado;
     try {
