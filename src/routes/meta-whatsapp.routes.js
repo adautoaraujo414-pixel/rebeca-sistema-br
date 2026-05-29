@@ -198,7 +198,10 @@ async function processarComando(telefone, texto, msgId) {
     // ── COZINHA: tratado pelo interceptor principal (linhas 38-76) ──
 
     if (!admin) {
-      // Prospect desconhecido — acionar modo vendedora
+      // Verificar se é cliente de algum admin com bot ativo
+      // O número Meta é único — todas as mensagens chegam aqui
+      // Precisamos identificar de qual admin este cliente é pelo histórico ou por ser número desconhecido
+      // Por enquanto: modo vendedora para prospects sem admin identificado
       try {
         const Vendas = require('../services/rebeca-vendas.service');
         const resposta = await Vendas.responderProspect(telefone, texto);
@@ -206,6 +209,32 @@ async function processarComando(telefone, texto, msgId) {
       } catch(e) {
         console.error('[MetaWA] Erro vendas:', e.message);
         await MetaWA.enviarTexto(telefone, 'Olá! Sou a Rebeca. Como posso te ajudar?');
+      }
+      return;
+    }
+
+    // ── Admin identificado — verificar configBot para atender clientes ──
+    // Se o telefone remetente NÃO é o admin mas sim um cliente dele
+    const AgendaModoCheck = require('../services/agenda-modo-dono.service');
+    const _eDonoCheck = AgendaModoCheck.isDono(telefone, admin);
+    if (!_eDonoCheck && admin?.configBot?.ativo && admin?.configBot?.atenderClientes) {
+      // É um cliente mandando mensagem no número do admin
+      try {
+        const AtendCliente = require('../services/agenda-atendimento-cliente.service');
+        const resultado = await AtendCliente.atenderCliente(telefone, texto, String(admin._id));
+        if (resultado?.resposta) {
+          await MetaWA.enviarTexto(telefone, resultado.resposta);
+          // Notificar admin se cliente pediu atendente humano
+          if (resultado.notificarAdmin) {
+            const _nomeC = resultado.nomeCliente || telefone;
+            await MetaWA.enviarTexto(admin.whatsapp || admin.telefone,
+              `🔔 *Atenção!* O cliente *${_nomeC}* está pedindo atendimento humano no WhatsApp. Mensagem: "${texto.substring(0,100)}"`
+            );
+          }
+        }
+      } catch(e) {
+        console.error('[MetaWA] Erro atendimento cliente:', e.message);
+        await MetaWA.enviarTexto(telefone, 'Olá! Um momento, estou verificando aqui para você 😊');
       }
       return;
     }
