@@ -31,7 +31,7 @@ router.post('/webhook', express.json(), async (req, res) => {
     for (const msg of changes.messages) {
       const telefone = msg.from;
       const tipo     = msg.type;
-      const texto    = msg?.text?.body || '';
+      const texto    = msg?.text?.body || msg?.forwarded?.text?.body || '';
       const msgId    = msg.id;
       console.log(`[MetaWA] msg de ${telefone}: "${texto}"`);
       await MetaWA.marcarLido(msgId);
@@ -43,7 +43,8 @@ router.post('/webhook', express.json(), async (req, res) => {
         const telNorm = telefone.replace(/\D/g, '');
         console.log('[Cozinha] Verificando telefone:', telefone, '| normalizado:', telNorm);
         const telSem55 = telNorm.replace(/^55/, '');
-        const clienteCoz = await ClienteCozinha.findOne({
+        // Busca pelo telefone do remetente OU pelo adminId do dono (quando dono encaminha)
+        let clienteCoz = await ClienteCozinha.findOne({
           $or: [
             { telefone: telNorm },
             { telefone: telefone },
@@ -52,6 +53,21 @@ router.post('/webhook', express.json(), async (req, res) => {
             { telefone: telSem55.replace(/^(\d{2})(\d)/, '$19$2') }
           ]
         });
+        // Se não achou pelo telefone, verifica se o remetente é o dono de algum admin com cozinha
+        if (!clienteCoz) {
+          const { Admin } = require('../models');
+          const _adminDono = await Admin.findOne({
+            $or: [
+              { telefone: telNorm }, { telefone: telefone },
+              { telefone: '55'+telSem55 }, { telefone: telSem55 },
+              { whatsappNumero: telNorm }, { whatsappNumero: telefone }
+            ]
+          }).lean();
+          if (_adminDono) {
+            clienteCoz = await ClienteCozinha.findOne({ adminId: String(_adminDono._id) });
+            if (clienteCoz) console.log('[Cozinha] ClienteCoz encontrado via adminId do dono:', String(_adminDono._id));
+          }
+        }
         console.log('[Cozinha] clienteCoz encontrado:', clienteCoz ? clienteCoz.adminId : 'NÃO ENCONTRADO');
         if (clienteCoz && tipo === 'text' && texto) {
           const imp = await ImpressoraCozinha.findOne({ adminId: String(clienteCoz.adminId), ativo: true });
