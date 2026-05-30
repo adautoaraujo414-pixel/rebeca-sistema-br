@@ -41,10 +41,11 @@ router.post('/webhook', express.json(), async (req, res) => {
         const { ClienteCozinha, ImpressoraCozinha } = require('../models/cozinha.model');
         const { imprimirPedido } = require('../services/cozinha-impressora.service');
         const telNorm = telefone.replace(/\D/g, '');
+        console.log('[Cozinha] Verificando telefone:', telefone, '| normalizado:', telNorm);
         const clienteCoz = await ClienteCozinha.findOne({
-          ativo: true,
           $or: [{ telefone: telNorm }, { telefone: telefone }, { telefone: '55'+telNorm }]
         });
+        console.log('[Cozinha] clienteCoz encontrado:', clienteCoz ? clienteCoz.adminId : 'NÃO ENCONTRADO');
         if (clienteCoz && tipo === 'text' && texto) {
           const imp = await ImpressoraCozinha.findOne({ adminId: clienteCoz.adminId, ativo: true });
           if (imp) {
