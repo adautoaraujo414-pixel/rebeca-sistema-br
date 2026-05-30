@@ -42,8 +42,15 @@ router.post('/webhook', express.json(), async (req, res) => {
         const { imprimirPedido } = require('../services/cozinha-impressora.service');
         const telNorm = telefone.replace(/\D/g, '');
         console.log('[Cozinha] Verificando telefone:', telefone, '| normalizado:', telNorm);
+        const telSem55 = telNorm.replace(/^55/, '');
         const clienteCoz = await ClienteCozinha.findOne({
-          $or: [{ telefone: telNorm }, { telefone: telefone }, { telefone: '55'+telNorm }]
+          $or: [
+            { telefone: telNorm },
+            { telefone: telefone },
+            { telefone: '55'+telSem55 },
+            { telefone: telSem55 },
+            { telefone: telSem55.replace(/^(d{2})(d)/, '$1 9$2') }
+          ]
         });
         console.log('[Cozinha] clienteCoz encontrado:', clienteCoz ? clienteCoz.adminId : 'NÃO ENCONTRADO');
         if (clienteCoz && tipo === 'text' && texto) {
