@@ -35,6 +35,7 @@ const contadorPedidoSchema = new mongoose.Schema({
   data:     { type: String, required: true },
   numero:   { type: Number, default: 0 }
 });
+contadorPedidoSchema.index({ adminId: 1, data: 1 }, { unique: true });
 const ContadorPedido = mongoose.models.ContadorPedido || mongoose.model('ContadorPedido', contadorPedidoSchema);
 
 // ── ADMIN COZINHA (independente do AdminAgenda) ──────────────────

@@ -67,6 +67,13 @@ router.post('/webhook', express.json(), async (req, res) => {
               delete global._bufCoz[key];
               try {
                 const { JobImpressao, ContadorPedido } = require('../models/cozinha.model');
+                // Dropar índice antigo adminId_1 se existir (migração única)
+                try {
+                  const _col = ContadorPedido.collection;
+                  const _idxs = await _col.indexes();
+                  const _old = _idxs.find(i => i.name === 'adminId_1' && !i.key?.data);
+                  if (_old) { await _col.dropIndex('adminId_1'); console.log('[Cozinha] Índice antigo adminId_1 dropado'); }
+                } catch(_ei) { /* silencioso */ }
                 const hoje = new Date().toISOString().slice(0,10);
                 let cont = await ContadorPedido.findOneAndUpdate(
                   { adminId: key, data: hoje },
