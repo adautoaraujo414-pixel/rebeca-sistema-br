@@ -84,12 +84,13 @@ router.post('/impressora/:adminId/testar', auth, async (req, res) => {
   try {
     const { JobImpressao } = require('../models/cozinha.model');
     await JobImpressao.create({
-      adminId: req.params.adminId,
+      adminId: String(req.params.adminId),
       texto: 'TESTE DE IMPRESSAO\nRebeca Cozinha OK\n' + new Date().toLocaleTimeString('pt-BR'),
       mesa: 'TESTE',
       status: 'pendente',
       criadoEm: new Date()
     });
+    console.log('[Cozinha] Job TESTE criado para adminId:', req.params.adminId);
     res.json({ sucesso: true, mensagem: 'Job criado! O servidor local vai imprimir em instantes.' });
   } catch(e) {
     res.status(500).json({ erro: 'Falha ao criar job: ' + e.message });
