@@ -33,7 +33,7 @@ router.post('/webhook', express.json(), async (req, res) => {
       const tipo     = msg.type;
       const texto    = msg?.text?.body || msg?.forwarded?.text?.body || '';
       const msgId    = msg.id;
-      console.log(`[MetaWA] msg de ${telefone}: "${texto}"`);
+      console.log(`[MetaWA] msg de ${telefone}: "${texto}" | tipo:${tipo} | msgRaw:${JSON.stringify(msg).substring(0,200)}`);
       await MetaWA.marcarLido(msgId);
 
       // ── INTERCEPTAR COZINHA ANTES DO ROTEAMENTO ───────────────
