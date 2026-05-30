@@ -2244,9 +2244,36 @@ LEMBRE: você é a pessoa em quem ela mais confia no dia a dia. Esse espaço é 
       }
       // ─────────────────────────────────────────────────────────────────────
 
+      // ── RELATÓRIO DETALHADO ─────────────────────────────────────
+      if (_cerebro.intencao === 'relatorio_detalhado') {
+        const _inicio = new Date(); _inicio.setHours(0,0,0,0);
+        const _lancamentos = await FinanceiroAgenda.find({
+          adminId: adminObjId,
+          data: { $gte: new Date(Date.now() - 30 * 86400000) }
+        }).sort({ data: -1 }).limit(30).lean();
+        if (!_lancamentos.length) {
+          await responder(`Não encontrei transações nos últimos 30 dias, ${_chefe(_generoAdmin, _apelidoAdmin)}. 🤷`);
+          return true;
+        }
+        const _entradas = _lancamentos.filter(l => l.tipo === 'receita');
+        const _saidas   = _lancamentos.filter(l => l.tipo === 'despesa');
+        const _totE = _entradas.reduce((s,l) => s + Number(l.valor), 0);
+        const _totS = _saidas.reduce((s,l) => s + Number(l.valor), 0);
+        const _linhas = _lancamentos.slice(0, 20).map(l => {
+          const _d = new Date(l.data).toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit' });
+          const _tipo = l.tipo === 'receita' ? '✅' : '❌';
+          const _desc = l.descricao && l.descricao !== 'Entrada via WhatsApp' && l.descricao !== 'Saída via WhatsApp' ? ` — ${l.descricao}` : '';
+          return `${_tipo} ${_d} R${Number(l.valor).toFixed(2)} [${l.categoria||'outros'}]${_desc}`;
+        }).join('\n');
+        await responder(`📊 *Extrato — últimos 30 dias*, ${_chefe(_generoAdmin, _apelidoAdmin)}:\n\n${_linhas}\n\n✅ Entradas: R${_totE.toFixed(2)}\n❌ Saídas: R${_totS.toFixed(2)}\n💰 Saldo: R${(_totE-_totS).toFixed(2)}`);
+        return true;
+      }
+
       if (_cerebro.intencao === 'registrar_receita' && ent.valor) {
         const cat = ent.categoria || 'outros';
-        const desc = ent.descricao || ent.origem || 'Entrada via WhatsApp';
+        const _descRawE = ent.descricao || ent.origem || '';
+        const _palavrasComandoE = /^(registra|lança|anota|saída de|entrada de|gastei|paguei|recebi|cobrei|me|uma|um)/i;
+        const desc = _descRawE && !_palavrasComandoE.test(_descRawE.trim()) ? _descRawE : 'Entrada via WhatsApp';
         await FinanceiroAgenda.create({
           adminId: adminObjId, tipo: 'receita',
           valor: Number(ent.valor), descricao: desc, categoria: cat,
@@ -2260,7 +2287,10 @@ LEMBRE: você é a pessoa em quem ela mais confia no dia a dia. Esse espaço é 
 
       if (_cerebro.intencao === 'registrar_despesa' && ent.valor) {
         const cat = ent.categoria || 'outros';
-        const desc = ent.descricao || ent.origem || 'Saída via WhatsApp';
+        // Limpar descrição — não salvar frase de comando como descrição
+        const _descRaw = ent.descricao || ent.origem || '';
+        const _palavrasComando = /^(registra|lança|anota|saída de|entrada de|gastei|paguei|recebi|cobrei|me|uma|um)/i;
+        const desc = _descRaw && !_palavrasComando.test(_descRaw.trim()) ? _descRaw : 'Saída via WhatsApp';
         await FinanceiroAgenda.create({
           adminId: adminObjId, tipo: 'despesa',
           valor: Number(ent.valor), descricao: desc, categoria: cat,
