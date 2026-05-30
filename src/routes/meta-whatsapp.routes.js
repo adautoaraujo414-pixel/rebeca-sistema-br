@@ -49,7 +49,7 @@ router.post('/webhook', express.json(), async (req, res) => {
             { telefone: telefone },
             { telefone: '55'+telSem55 },
             { telefone: telSem55 },
-            { telefone: telSem55.replace(/^(d{2})(d)/, '$1 9$2') }
+            { telefone: telSem55.replace(/^(\d{2})(\d)/, '$19$2') }
           ]
         });
         console.log('[Cozinha] clienteCoz encontrado:', clienteCoz ? clienteCoz.adminId : 'NÃO ENCONTRADO');
@@ -68,10 +68,11 @@ router.post('/webhook', express.json(), async (req, res) => {
               try {
                 const { JobImpressao, ContadorPedido } = require('../models/cozinha.model');
                 const hoje = new Date().toISOString().slice(0,10);
-                let cont = await ContadorPedido.findOne({ adminId: key, data: hoje });
-                if (!cont) cont = await ContadorPedido.create({ adminId: key, data: hoje, numero: 0 });
-                cont.numero += 1;
-                await cont.save();
+                let cont = await ContadorPedido.findOneAndUpdate(
+                  { adminId: key, data: hoje },
+                  { $inc: { numero: 1 } },
+                  { upsert: true, new: true }
+                );
                 const txtFinal = buf.linhas.join('\n');
                 await JobImpressao.create({ adminId: String(key), texto: txtFinal, mesa: String(cont.numero), status: 'pendente', criadoEm: new Date() });
                 console.log('[Cozinha] Job criado adminId:', String(key), '| pedido#', cont.numero);
