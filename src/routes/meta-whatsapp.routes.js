@@ -47,7 +47,8 @@ router.post('/webhook', express.json(), async (req, res) => {
         });
         console.log('[Cozinha] clienteCoz encontrado:', clienteCoz ? clienteCoz.adminId : 'NÃO ENCONTRADO');
         if (clienteCoz && tipo === 'text' && texto) {
-          const imp = await ImpressoraCozinha.findOne({ adminId: clienteCoz.adminId, ativo: true });
+          const imp = await ImpressoraCozinha.findOne({ adminId: String(clienteCoz.adminId), ativo: true });
+          console.log('[Cozinha] impressora:', imp ? 'ENCONTRADA ip:'+imp.ip : 'NÃO ENCONTRADA para adminId:'+String(clienteCoz.adminId));
           if (imp) {
             if (!global._bufCoz) global._bufCoz = {};
             const key = String(clienteCoz.adminId);
