@@ -1,14 +1,12 @@
 'use strict';
 const http = require('http');
+const net  = require('net');
 const https = require('https');
-const fs = require('fs');
-const os = require('os');
-const path = require('path');
-const { exec } = require('child_process');
 
 const ADMIN_ID  = '6a15ecb5e2ad56df1ad2a301';
 const TOKEN     = 'cozinha-rebeca-2026';
-const NOME_IMP  = 'ELGIN i9 COZINHA';
+const IP_IMP    = '192.168.100.223';
+const PORTA_IMP = 9100;
 const INTERVALO = 8000;
 
 function montarEscPos(texto, numPedido) {
@@ -30,18 +28,18 @@ function montarEscPos(texto, numPedido) {
 
 function imprimir(texto, numPedido) {
   return new Promise((resolve, reject) => {
-    const escpos = montarEscPos(texto, numPedido);
-    const tmpFile = path.join(os.tmpdir(), 'pedido_' + Date.now() + '.bin');
-    fs.writeFileSync(tmpFile, Buffer.from(escpos, 'binary'));
-    const ps = `$bytes = [System.IO.File]::ReadAllBytes('${tmpFile}'); $printer = New-Object System.Drawing.Printing.PrintDocument; $printer.PrinterSettings.PrinterName = '${NOME_IMP}'; Add-Type -AssemblyName System.Drawing; $stream = [System.IO.File]::OpenRead('${tmpFile}'); $raw = New-Object System.Collections.Generic.List[byte]; $buf = New-Object byte[] 4096; while(($n = $stream.Read($buf,0,4096)) -gt 0){ $raw.AddRange($buf[0..($n-1)]) }; $stream.Close(); [System.Runtime.InteropServices.Marshal]::AllocHGlobal(1) | Out-Null`;
-    const comando = `powershell -Command "& { $data = [System.IO.File]::ReadAllBytes('${tmpFile}'); $lp = New-Object System.IO.Ports.SerialPort; Add-Type -AssemblyName System.Drawing; $pd = New-Object System.Drawing.Printing.PrintDocument; $pd.PrinterSettings.PrinterName = '${NOME_IMP}'; }"`;
-    // Usar rawprint via .NET direto
-    const rawCmd = `powershell -Command "& {Add-Type -TypeDefinition 'using System;using System.Runtime.InteropServices;public class RawPrint{[DllImport(\"winspool.drv\",CharSet=CharSet.Ansi,ExactSpelling=false)][return:MarshalAs(UnmanagedType.Bool)]public static extern bool OpenPrinter(string pPrinterName,out IntPtr hPrinter,IntPtr pDefault);[DllImport(\"winspool.drv\",ExactSpelling=false)]public static extern bool StartDocPrinter(IntPtr hPrinter,Int32 level,ref DOCINFO di);[DllImport(\"winspool.drv\")]public static extern bool StartPagePrinter(IntPtr hPrinter);[DllImport(\"winspool.drv\")]public static extern bool WritePrinter(IntPtr hPrinter,byte[] pBytes,Int32 dwCount,out Int32 dwWritten);[DllImport(\"winspool.drv\")]public static extern bool EndPagePrinter(IntPtr hPrinter);[DllImport(\"winspool.drv\")]public static extern bool EndDocPrinter(IntPtr hPrinter);[DllImport(\"winspool.drv\")]public static extern bool ClosePrinter(IntPtr hPrinter);[StructLayout(LayoutKind.Sequential)]public struct DOCINFO{[MarshalAs(UnmanagedType.LPStr)]public string pDocName;[MarshalAs(UnmanagedType.LPStr)]public string pOutputFile;[MarshalAs(UnmanagedType.LPStr)]public string pDataType;}};$b=[System.IO.File]::ReadAllBytes('${tmpFile}');$h=IntPtr.Zero;[RawPrint]::OpenPrinter('${NOME_IMP}',[ref]$h,[IntPtr]::Zero);$di=New-Object RawPrint+DOCINFO;$di.pDocName='Pedido';$di.pDataType='RAW';[RawPrint]::StartDocPrinter($h,1,[ref]$di);[RawPrint]::StartPagePrinter($h);$w=0;[RawPrint]::WritePrinter($h,$b,$b.Length,[ref]$w);[RawPrint]::EndPagePrinter($h);[RawPrint]::EndDocPrinter($h);[RawPrint]::ClosePrinter($h)}"`
-    exec(rawCmd, { shell: 'cmd.exe', timeout: 15000 }, (err) => {
-      try { fs.unlinkSync(tmpFile); } catch(e) {}
-      if (err) { console.error('[ERRO] Impressora:', err.message); reject(err); }
-      else { console.log('[OK] Pedido #' + numPedido + ' impresso!'); resolve(true); }
+    const cmd = montarEscPos(texto, numPedido);
+    const client = new net.Socket();
+    client.setTimeout(6000);
+    client.connect(PORTA_IMP, IP_IMP, () => {
+      client.write(cmd, 'binary', () => {
+        client.destroy();
+        console.log('[OK] Pedido #' + numPedido + ' impresso!');
+        resolve(true);
+      });
     });
+    client.on('error', e => { console.error('[ERRO] Impressora:', e.message); reject(e); });
+    client.on('timeout', () => { client.destroy(); reject(new Error('Timeout')); });
   });
 }
 
@@ -93,16 +91,16 @@ tick();
 http.createServer((req, res) => {
   res.setHeader('Content-Type', 'application/json');
   if (req.url === '/testar') {
-    imprimir('TESTE REBECA COZINHA', 'TESTE')
+    imprimir('TESTE REBECA COZINHA\nImpressora OK!', 'TESTE')
       .then(() => res.end(JSON.stringify({ sucesso: true })))
       .catch(e => res.end(JSON.stringify({ erro: e.message })));
     return;
   }
-  res.end(JSON.stringify({ status: 'rodando', impressora: NOME_IMP }));
+  res.end(JSON.stringify({ status: 'rodando', impressora: IP_IMP, porta: PORTA_IMP }));
 }).listen(3333, () => {
   console.log('\n================================');
-  console.log('  REBECA COZINHA - Servidor Local v6');
-  console.log('  Impressora: ' + NOME_IMP + ' (USB)');
+  console.log('  REBECA COZINHA - Servidor Local v7');
+  console.log('  Impressora: ' + IP_IMP + ':' + PORTA_IMP);
   console.log('  Polling: a cada 8 segundos');
   console.log('================================\n');
 });
