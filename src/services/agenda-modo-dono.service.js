@@ -84,7 +84,15 @@ function _extrairDescricao(txt, tipo) {
   const _stopWords = /^(rebeca|oi|ola|por favor|pfv|pf|ai|la|registra|anota|coloca|marca|manda|faz|me|um|uma|de|do|da|em|no|na|pra|para|pro|que|e|com|sem|mais|menos|so|ja|agora|hoje|ontem|amanha|reais|real|rs|gastei|paguei|saiu|recebi|entrou|caiu|ganhei|vendi|comprei|cobrei|saida|entrada)$/i;
   // Tenta pegar texto após verbo + valor
   const mAposTipo = txt.match(/(?:recebi|entrou|caiu|ganhei|vendi|fiz|paguei|gastei|saiu|comprei|cobrei|registra|anota|coloca|entrada|saida|despesa|receita)\s+(?:de\s+)?(?:r\$\s*)?[\d.,]+\s*(?:reais?)?\s*(.+)/i);
-  if (mAposTipo && mAposTipo[1] && mAposTipo[1].trim().length > 1 && !_stopWords.test(mAposTipo[1].trim())) return mAposTipo[1].trim();
+  if (mAposTipo && mAposTipo[1]) {
+    // Remover palavras de comando que o áudio pode ter transcrito junto
+    const _semCmd = mAposTipo[1].trim()
+      .replace(/^(e\s+alimentos?|alimentos?|mercado|e\s+mercado|pra\s+(mercado|alimento|feira)|de\s+alimento)\b/i, (m) => {
+        return ''; // virou categoria, não descrição
+      })
+      .trim();
+    if (_semCmd.length > 1 && !_stopWords.test(_semCmd)) return _semCmd;
+  }
   // Tenta pegar texto após valor
   const mAposValor = txt.match(/(?:r\$\s*)?[\d.,]+\s*(?:reais?)?\s+(.+)/i);
   if (mAposValor && mAposValor[1] && mAposValor[1].trim().length > 1 && !_stopWords.test(mAposValor[1].trim())) return mAposValor[1].trim();
@@ -2144,6 +2152,30 @@ ${total>5?'Tá crescendo muito! Continua assim! 🚀':'Todo cliente novo é uma 
       const ent = _cerebro.entidades || {};
 
       // ── FORA DO ESCOPO — conversa livre, empatia, bate-papo ─────────────
+      // ── RELATÓRIO DETALHADO ─────────────────────────────────────
+      if (_cerebro.intencao === 'relatorio_detalhado') {
+        const _lancamentos = await FinanceiroAgenda.find({
+          adminId: adminObjId,
+          data: { $gte: new Date(Date.now() - 30 * 86400000) }
+        }).sort({ data: -1 }).limit(30).lean();
+        if (!_lancamentos.length) {
+          await responder(`Não encontrei transações nos últimos 30 dias, ${_chefe(_generoAdmin, _apelidoAdmin)}. 🤷`);
+          return true;
+        }
+        const _entradas = _lancamentos.filter(l => l.tipo === 'receita');
+        const _saidas   = _lancamentos.filter(l => l.tipo === 'despesa');
+        const _totE = _entradas.reduce((s,l) => s + Number(l.valor), 0);
+        const _totS = _saidas.reduce((s,l) => s + Number(l.valor), 0);
+        const _linhas = _lancamentos.slice(0, 20).map(l => {
+          const _d = new Date(l.data).toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit' });
+          const _tipo = l.tipo === 'receita' ? '✅' : '❌';
+          const _desc = l.descricao && l.descricao !== 'Entrada via WhatsApp' && l.descricao !== 'Saída via WhatsApp' ? ` — ${l.descricao}` : '';
+          return `${_tipo} ${_d} R${Number(l.valor).toFixed(2)} [${l.categoria||'outros'}]${_desc}`;
+        }).join('\n');
+        await responder(`📊 *Extrato — últimos 30 dias*, ${_chefe(_generoAdmin, _apelidoAdmin)}:\n\n${_linhas}\n\n✅ Entradas: R${_totE.toFixed(2)}\n❌ Saídas: R${_totS.toFixed(2)}\n💰 Saldo: R${(_totE-_totS).toFixed(2)}`);
+        return true;
+      }
+
       if (_cerebro.intencao === 'fora_escopo' || !_cerebro.intencao) {
         try {
           const Anthropic = require('@anthropic-ai/sdk');
@@ -2243,31 +2275,6 @@ LEMBRE: você é a pessoa em quem ela mais confia no dia a dia. Esse espaço é 
         return true;
       }
       // ─────────────────────────────────────────────────────────────────────
-
-      // ── RELATÓRIO DETALHADO ─────────────────────────────────────
-      if (_cerebro.intencao === 'relatorio_detalhado') {
-        const _inicio = new Date(); _inicio.setHours(0,0,0,0);
-        const _lancamentos = await FinanceiroAgenda.find({
-          adminId: adminObjId,
-          data: { $gte: new Date(Date.now() - 30 * 86400000) }
-        }).sort({ data: -1 }).limit(30).lean();
-        if (!_lancamentos.length) {
-          await responder(`Não encontrei transações nos últimos 30 dias, ${_chefe(_generoAdmin, _apelidoAdmin)}. 🤷`);
-          return true;
-        }
-        const _entradas = _lancamentos.filter(l => l.tipo === 'receita');
-        const _saidas   = _lancamentos.filter(l => l.tipo === 'despesa');
-        const _totE = _entradas.reduce((s,l) => s + Number(l.valor), 0);
-        const _totS = _saidas.reduce((s,l) => s + Number(l.valor), 0);
-        const _linhas = _lancamentos.slice(0, 20).map(l => {
-          const _d = new Date(l.data).toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit' });
-          const _tipo = l.tipo === 'receita' ? '✅' : '❌';
-          const _desc = l.descricao && l.descricao !== 'Entrada via WhatsApp' && l.descricao !== 'Saída via WhatsApp' ? ` — ${l.descricao}` : '';
-          return `${_tipo} ${_d} R${Number(l.valor).toFixed(2)} [${l.categoria||'outros'}]${_desc}`;
-        }).join('\n');
-        await responder(`📊 *Extrato — últimos 30 dias*, ${_chefe(_generoAdmin, _apelidoAdmin)}:\n\n${_linhas}\n\n✅ Entradas: R${_totE.toFixed(2)}\n❌ Saídas: R${_totS.toFixed(2)}\n💰 Saldo: R${(_totE-_totS).toFixed(2)}`);
-        return true;
-      }
 
       if (_cerebro.intencao === 'registrar_receita' && ent.valor) {
         const cat = ent.categoria || 'outros';
