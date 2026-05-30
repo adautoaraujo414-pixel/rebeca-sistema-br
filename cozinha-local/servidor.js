@@ -1,14 +1,16 @@
 'use strict';
 const http = require('http');
-const net  = require('net');
 const https = require('https');
+const fs   = require('fs');
+const os   = require('os');
+const path = require('path');
+const { exec } = require('child_process');
 
-const ADMIN_ID  = '6a15ecb5e2ad56df1ad2a301';
-const TOKEN     = 'cozinha-rebeca-2026';
-const API       = 'https://rebecasistemas.com.br';
-const IP_IMP    = '192.168.100.115';
-const PORTA_IMP = 9100;
-const INTERVALO = 8000;
+const ADMIN_ID    = '6a15ecb5e2ad56df1ad2a301';
+const TOKEN       = 'cozinha-rebeca-2026';
+const API         = 'https://rebecasistemas.com.br';
+const NOME_IMP    = 'ELGIN i9 COZINHA';
+const INTERVALO   = 8000;
 
 function montarEscPos(texto, numPedido) {
   const ESC = '\x1B', GS = '\x1D';
@@ -36,24 +38,30 @@ function montarEscPos(texto, numPedido) {
 function imprimir(texto, numPedido) {
   return new Promise((resolve, reject) => {
     const cmd = montarEscPos(texto, numPedido);
-    const client = new net.Socket();
-    client.setTimeout(6000);
-    client.connect(PORTA_IMP, IP_IMP, () => {
-      client.write(cmd, 'binary', () => {
-        client.destroy();
+    const tmpFile = path.join(os.tmpdir(), 'pedido_' + Date.now() + '.bin');
+    fs.writeFileSync(tmpFile, Buffer.from(cmd, 'binary'));
+    const comando = `copy /b "${tmpFile}" "\\\\localhost\\${NOME_IMP}"`;
+    exec(comando, (err) => {
+      fs.unlink(tmpFile, () => {});
+      if (err) {
+        // Tenta via print direto
+        const cmd2 = `print /D:"${NOME_IMP}" "${tmpFile}"`;
+        exec(cmd2, (err2) => {
+          if (err2) { console.error('[ERRO] Impressora:', err2.message); reject(err2); }
+          else { console.log('[OK] Pedido #' + numPedido + ' impresso!'); resolve(true); }
+        });
+      } else {
         console.log('[OK] Pedido #' + numPedido + ' impresso!');
         resolve(true);
-      });
+      }
     });
-    client.on('error', e => { console.error('[ERRO] Impressora:', e.message); reject(e); });
-    client.on('timeout', () => { client.destroy(); reject(new Error('Timeout')); });
   });
 }
 
-function apiPost(path) {
+function apiPost(path2) {
   return new Promise(resolve => {
     const req = https.request(
-      { hostname: 'rebecasistemas.com.br', path, method: 'POST', headers: { 'x-cozinha-token': TOKEN } },
+      { hostname: 'rebecasistemas.com.br', path: path2, method: 'POST', headers: { 'x-cozinha-token': TOKEN } },
       () => resolve()
     );
     req.on('error', () => resolve());
@@ -108,12 +116,12 @@ http.createServer((req, res) => {
       .catch(e => res.end(JSON.stringify({ erro: e.message })));
     return;
   }
-  res.end(JSON.stringify({ status: 'rodando', impressora: IP_IMP, porta: PORTA_IMP }));
+  res.end(JSON.stringify({ status: 'rodando', impressora: NOME_IMP }));
 }).listen(3333, () => {
   console.log('');
   console.log('================================');
   console.log('  REBECA COZINHA - ATIVO');
-  console.log('  Impressora: ' + IP_IMP + ':' + PORTA_IMP);
+  console.log('  Impressora: ' + NOME_IMP);
   console.log('  Polling: a cada 8 segundos');
   console.log('  Teste: http://localhost:3333/testar');
   console.log('================================');
