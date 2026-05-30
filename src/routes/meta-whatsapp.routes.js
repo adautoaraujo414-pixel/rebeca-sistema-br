@@ -58,7 +58,7 @@ router.post('/webhook', express.json(), async (req, res) => {
           console.log('[Cozinha] impressora:', imp ? 'ENCONTRADA ip:'+imp.ip : 'NÃO ENCONTRADA para adminId:'+String(clienteCoz.adminId));
           if (imp) {
             if (!global._bufCoz) global._bufCoz = {};
-            const key = String(clienteCoz.adminId);
+            const key = String(clienteCoz.adminId).replace(/^ObjectId(["']?|["']?)$/g, '').trim();
             if (!global._bufCoz[key]) global._bufCoz[key] = { linhas: [] };
             global._bufCoz[key].linhas.push(texto);
             clearTimeout(global._bufCoz[key].t);
