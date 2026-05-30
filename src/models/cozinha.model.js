@@ -48,7 +48,7 @@ const adminCozinhaSchema = new mongoose.Schema({
 const AdminCozinha = mongoose.models.AdminCozinha || mongoose.model('AdminCozinha', adminCozinhaSchema);
 
 const JobImpressaoSchema = new mongoose.Schema({
-  adminId:   { type: mongoose.Schema.Types.ObjectId, required: true },
+  adminId:   { type: String, required: true }, // String para compatibilidade com polling
   texto:     { type: String, required: true },
   mesa:      { type: String, default: '' },
   telefone:  { type: String, default: '' },

@@ -64,7 +64,8 @@ router.post('/webhook', express.json(), async (req, res) => {
                 cont.numero += 1;
                 await cont.save();
                 const txtFinal = buf.linhas.join('\n');
-                await JobImpressao.create({ adminId: key, texto: txtFinal, mesa: String(cont.numero), status: 'pendente' });
+                await JobImpressao.create({ adminId: String(key), texto: txtFinal, mesa: String(cont.numero), status: 'pendente', criadoEm: new Date() });
+                console.log('[Cozinha] Job criado adminId:', String(key), '| pedido#', cont.numero);
                 console.log('[Cozinha] Job #' + cont.numero + ':', txtFinal.substring(0,60));
               } catch(e) { console.error('[Cozinha] Erro buffer:', e.message); }
             }, 3000);

@@ -58,8 +58,10 @@ router.get('/jobs/:adminId', async (req, res) => {
     return res.status(401).json({ erro: 'Token inválido' });
   try {
     const { JobImpressao } = require('../models/cozinha.model');
-    const jobs = await JobImpressao.find({ adminId: req.params.adminId, status: 'pendente' })
+    const _adminIdStr = String(req.params.adminId);
+    const jobs = await JobImpressao.find({ adminId: _adminIdStr, status: 'pendente' })
       .sort({ criadoEm: 1 }).limit(5).lean();
+    console.log('[Cozinha] /jobs', _adminIdStr, '→', jobs.length, 'pendentes');
     res.json({ sucesso: true, jobs });
   } catch(e) { res.json({ sucesso: true, jobs: [] }); }
 });
