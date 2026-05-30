@@ -264,7 +264,49 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                 const telefone = remoteJid.replace('@s.whatsapp.net', '');
                 console.log('[REBECA] Mensagem de', telefone, ':', (msg.message?.conversation || msg.message?.extendedTextMessage?.text || msg.messageType || '').substring(0, 80));
                 const nome = msg.pushName || 'Cliente';
-                
+
+                // ── INTERCEPTOR COZINHA (Evolution) ──────────────────────────
+                const _textoCoz = msg.message?.conversation || msg.message?.extendedTextMessage?.text;
+                if (_textoCoz) {
+                    try {
+                        const { ClienteCozinha, ImpressoraCozinha, JobImpressao, ContadorPedido } = require('../models/cozinha.model');
+                        const telNorm = telefone.replace(/\D/g, '');
+                        console.log('[Cozinha-Evo] Verificando telefone:', telefone, '| norm:', telNorm);
+                        const clienteCoz = await ClienteCozinha.findOne({
+                            $or: [{ telefone: telNorm }, { telefone: telefone }, { telefone: '55'+telNorm }, { telefone: telNorm.replace(/^55/,'') }]
+                        });
+                        console.log('[Cozinha-Evo] cliente:', clienteCoz ? 'ENCONTRADO adminId:'+clienteCoz.adminId : 'NÃO ENCONTRADO');
+                        if (clienteCoz) {
+                            const imp = await ImpressoraCozinha.findOne({ adminId: String(clienteCoz.adminId), ativo: true });
+                            if (imp) {
+                                if (!global._bufCozEvo) global._bufCozEvo = {};
+                                const _keyCoz = String(clienteCoz.adminId);
+                                if (!global._bufCozEvo[_keyCoz]) global._bufCozEvo[_keyCoz] = { linhas: [] };
+                                global._bufCozEvo[_keyCoz].linhas.push(_textoCoz);
+                                clearTimeout(global._bufCozEvo[_keyCoz].t);
+                                global._bufCozEvo[_keyCoz].t = setTimeout(async () => {
+                                    const buf = global._bufCozEvo[_keyCoz];
+                                    delete global._bufCozEvo[_keyCoz];
+                                    try {
+                                        const hoje = new Date().toISOString().slice(0,10);
+                                        let cont = await ContadorPedido.findOne({ adminId: _keyCoz, data: hoje });
+                                        if (!cont) cont = await ContadorPedido.create({ adminId: _keyCoz, data: hoje, numero: 0 });
+                                        cont.numero += 1;
+                                        await cont.save();
+                                        const txtFinal = buf.linhas.join('\n');
+                                        await JobImpressao.create({ adminId: _keyCoz, texto: txtFinal, mesa: String(cont.numero), status: 'pendente', criadoEm: new Date() });
+                                        console.log('[Cozinha-Evo] Job #'+cont.numero+' criado para adminId:', _keyCoz, '| texto:', txtFinal.substring(0,60));
+                                    } catch(eCozBuf) { console.error('[Cozinha-Evo] Erro buffer:', eCozBuf.message); }
+                                }, 3000);
+                                continue; // não responder ao cliente
+                            } else {
+                                console.log('[Cozinha-Evo] impressora não encontrada para adminId:', String(clienteCoz.adminId));
+                            }
+                        }
+                    } catch(eCozEvo) { console.error('[Cozinha-Evo] Erro interceptor:', eCozEvo.message); }
+                }
+                // ─────────────────────────────────────────────────────────────
+
                 let conteudo = null;
                 if (msg.message?.conversation) {
                     conteudo = msg.message.conversation;
