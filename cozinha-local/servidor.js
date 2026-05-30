@@ -6,7 +6,7 @@ const https = require('https');
 const ADMIN_ID  = '6a15ecb5e2ad56df1ad2a301';
 const TOKEN     = 'cozinha-rebeca-2026';
 const API       = 'https://rebecasistemas.com.br';
-const IP_IMP    = '192.168.100.84';
+const IP_IMP    = '192.168.100.115';
 const PORTA_IMP = 9100;
 const INTERVALO = 8000;
 
