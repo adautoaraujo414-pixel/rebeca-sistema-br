@@ -23,6 +23,13 @@ async function proximoNumeroPedido(adminId) {
 }
 
 async function imprimirPedido({ ip, porta = 9100, texto, mesa = '', telefone = '', hora = '', adminId = '' }) {
+  // Log de rastreamento — detectar chamadas sem adminId
+  if (!adminId) {
+    console.error('[Impressora] CHAMADA SEM adminId! ip:', ip, 'porta:', porta);
+    console.trace('[Impressora] Stack da chamada sem adminId');
+  } else {
+    console.log('[Impressora] imprimirPedido chamado - adminId:', adminId, 'ip:', ip, 'porta:', porta);
+  }
   // Numerar o pedido
   let numPedido = 0;
   if (adminId) numPedido = await proximoNumeroPedido(adminId);
@@ -36,12 +43,21 @@ async function imprimirPedido({ ip, porta = 9100, texto, mesa = '', telefone = '
     let ipImp = '127.0.0.1', portaImp = 9100;
     try {
       const { ImpressoraCozinha } = require('../models/cozinha.model');
-      // Encontrar impressora pelo IP do servidor local (adminId vem em _adminId)
-      if (adminId) {
-        const imp = await ImpressoraCozinha.findOne({ adminId: adminId });
-        if (imp) { ipImp = imp.ipImpressora || imp.ip; portaImp = imp.portaImpressora || imp.porta || 9100; }
+      // CRÍTICO: só busca se adminId válido — evita pegar impressora de outro admin
+      if (adminId && String(adminId).length >= 10) {
+        const imp = await ImpressoraCozinha.findOne({ adminId: String(adminId) });
+        if (imp) {
+          ipImp = imp.ipImpressora || imp.ip || '127.0.0.1';
+          portaImp = imp.portaImpressora || imp.porta || 9100;
+          console.log('[Impressora] Usando config do admin', adminId, '- IP:', ipImp, 'Porta:', portaImp);
+        } else {
+          console.warn('[Impressora] AVISO: nenhuma impressora encontrada para adminId:', adminId);
+        }
+      } else {
+        console.error('[Impressora] ERRO: adminId inválido ou vazio:', adminId, '— impressão cancelada');
+        return false; // não imprime sem adminId válido
       }
-    } catch(_) {}
+    } catch(_impErr) { console.error('[Impressora] erro busca config:', _impErr.message); }
     const res = await axios.post(url + '/imprimir', {
       ipImpressora: ipImp,
       portaImpressora: portaImp,

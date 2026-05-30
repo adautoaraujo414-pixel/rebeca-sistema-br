@@ -132,8 +132,31 @@ router.get('/admins-local', async (req, res) => {
   if (token !== (process.env.COZINHA_TOKEN || 'cozinha-rebeca-2026'))
     return res.status(401).json({ erro: 'Token inválido' });
   try {
-    const admins = await ImpressoraCozinha.find({ ativo: true }).select('adminId ip porta ipImpressora portaImpressora nomeImpressora nome').lean();
+    // Se passou adminId específico, retorna só ele — evita confusão entre clientes
+    const adminIdFiltro = req.query.adminId || req.headers['x-admin-id'];
+    let admins;
+    if (adminIdFiltro) {
+      admins = await ImpressoraCozinha.find({ adminId: adminIdFiltro, ativo: true })
+        .select('adminId ip porta ipImpressora portaImpressora nomeImpressora nome').lean();
+      console.log('[Cozinha] admins-local filtrado por adminId:', adminIdFiltro, '→', admins.length, 'resultado(s)');
+    } else {
+      admins = await ImpressoraCozinha.find({ ativo: true })
+        .select('adminId ip porta ipImpressora portaImpressora nomeImpressora nome').lean();
+    }
     res.json({ sucesso: true, admins });
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// Rota específica para servidor local buscar só sua config — sem ambiguidade
+router.get('/admins-local/:adminId', async (req, res) => {
+  const token = req.query.token || req.headers['x-cozinha-token'];
+  if (token !== (process.env.COZINHA_TOKEN || 'cozinha-rebeca-2026'))
+    return res.status(401).json({ erro: 'Token inválido' });
+  try {
+    const imp = await ImpressoraCozinha.findOne({ adminId: req.params.adminId, ativo: true })
+      .select('adminId ip porta ipImpressora portaImpressora nomeImpressora nome').lean();
+    if (!imp) return res.status(404).json({ erro: 'Impressora não encontrada para este admin' });
+    res.json({ sucesso: true, admins: [imp] });
   } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
