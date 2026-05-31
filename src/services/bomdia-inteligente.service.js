@@ -215,7 +215,7 @@ async function _buscarContexto(adminId) {
     const iniOntem = new Date(ini.getTime() - 24 * 60 * 60 * 1000);
     const fimOntem = new Date(ini.getTime() - 1);
 
-    const AdminAgendaModel = require('../models/AdminAgenda');
+    const AdminAgendaModel = require('../models/AgendaServico').AdminAgenda;
     const adminDoc = await AdminAgendaModel.findById(adminId).select('config').lean();
     const hrAbre  = adminDoc?.config?.horarioAbertura  || '08:00';
     const hrFecha = adminDoc?.config?.horarioFechamento || '18:00';
@@ -293,7 +293,7 @@ async function _enviarParaAdmin(admin) {
     }
 
     // Enviar via Meta API ou Evolution
-    const { InstanciaWhatsapp } = require('../models');
+    const { InstanciaWhatsapp } = require('../models/index.js');
     const inst = await InstanciaWhatsapp.findOne({
       adminId: admin._id, adminTipo: 'agenda', status: 'conectado'
     }).lean();
