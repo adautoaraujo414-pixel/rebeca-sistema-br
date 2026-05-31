@@ -57,7 +57,7 @@ function apiPost(rota) {
 function buscarJobs() {
   return new Promise(resolve => {
     const req = https.get(
-      'https://rebecasistemas.com.br/api/cozinha/jobs/' + ADMIN_ID + '?token=' + TOKEN,
+      'https://rebecasistemas.com.br/api/cozinha/jobs/' + ADMIN_ID + '?token=' + TOKEN + '&instancia=cozinha',
       res => {
         let d = '';
         res.on('data', c => d += c);

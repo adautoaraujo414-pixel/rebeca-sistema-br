@@ -5,5 +5,8 @@
   "main": "servidor.js",
   "scripts": {
     "start": "node servidor.js"
+  },
+  "devDependencies": {
+    "pkg": "^5.8.1"
   }
 }
