@@ -11,7 +11,8 @@ const crypto = require('crypto');
 const {
   AdminAgenda, ServicoAgenda, ProfissionalAgenda,
   ClienteAgenda, AgendamentoAgenda, BloqueioAgenda,
-  FotoAgenda, PreCadastroAgenda
+  FotoAgenda, PreCadastroAgenda,
+  ProdutoAgenda, CatalogoAgenda
 } = require('../models/AgendaServico');
 
 // ===== AUTH MIDDLEWARE =====
