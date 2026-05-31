@@ -2127,7 +2127,9 @@ ${total>5?'Tá crescendo muito! Continua assim! 🚀':'Todo cliente novo é uma 
     // ── Recuperar sessão e histórico ──
     const _sesAtual = SM.getSession(adminId, telefone);
     const _pendingAction = _sesAtual.ultimaAcaoPendente;
-    const _historico = SM.getHistoricoParaAPI(adminId, telefone, 8);
+    const _modoCtx   = SM.getContextMode(adminId, telefone);
+    const _historico = SM.getHistoricoContextual(adminId, telefone, 8);
+    console.log('[CONTEXT-ENGINE] modo:', _modoCtx, '| msgs_historico:', _historico.length);
 
     // ── Confirmação/Cancelamento ANTES do cérebro ──
     if (_isConfirm && _pendingAction) {
@@ -2322,7 +2324,7 @@ ${total>5?'Tá crescendo muito! Continua assim! 🚀':'Todo cliente novo é uma 
         try {
           const Anthropic = require('@anthropic-ai/sdk');
           const _cli = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-          const _histForaEscopo = SM.getHistoricoParaAPI(adminId, telefone, 8);
+          const _histForaEscopo = SM.getHistoricoContextual(adminId, telefone, 8);
           const _hAtual = new Date().getHours();
           const _periodo = _hAtual < 12 ? 'manhã' : _hAtual < 18 ? 'tarde' : 'noite';
           const _diaSem = ['domingo','segunda','terça','quarta','quinta','sexta','sábado'][new Date().getDay()];

@@ -144,6 +144,68 @@ function validarCoerenciaFinanceira(adminId, telefone, novosDados) {
   return true;
 }
 
+/**
+ * ── CONTEXT ENGINE ────────────────────────────────────────────────────────
+ * Determina o modo de contexto com base no estado atual da sessão.
+ *
+ * DISCOVERY    → sem estado ativo → usa histórico completo
+ * FIELD_CAPTURE → estado aguardando* ativo → usa só mensagem atual
+ * CONFIRMATION  → aguardandoConfirmacao ativo → usa sessão estruturada
+ */
+const FIELD_CAPTURE_STATES = [
+  'aguardandoLembrete',
+  'aguardandoRecorrente',
+  'aguardandoConfirmacaoApagar',
+  'aguardandoCorrecao',
+];
+
+function getContextMode(adminId, telefone) {
+  const s = getSession(adminId, telefone);
+
+  // CONFIRMATION: aguarda sim/não explícito
+  if (s.aguardandoConfirmacao || s.ultimaAcaoPendente) {
+    return 'CONFIRMATION';
+  }
+
+  // FIELD_CAPTURE: aguarda campo específico (hora, dia, quantidade, valor)
+  for (const state of FIELD_CAPTURE_STATES) {
+    if (s[state]) return 'FIELD_CAPTURE';
+  }
+
+  // DISCOVERY: fluxo livre, usa histórico
+  return 'DISCOVERY';
+}
+
+/**
+ * Retorna histórico adequado ao modo de contexto.
+ *
+ * DISCOVERY    → últimas N mensagens (comportamento atual)
+ * FIELD_CAPTURE → [] vazio — sem histórico, só mensagem atual
+ * CONFIRMATION  → última pergunta da IA como contexto mínimo
+ */
+function getHistoricoContextual(adminId, telefone, ultimasN = 6) {
+  const modo = getContextMode(adminId, telefone);
+  const s = getSession(adminId, telefone);
+
+  if (modo === 'FIELD_CAPTURE') {
+    console.log('[CONTEXT-ENGINE] modo=FIELD_CAPTURE — historico bloqueado');
+    return [];
+  }
+
+  if (modo === 'CONFIRMATION') {
+    console.log('[CONTEXT-ENGINE] modo=CONFIRMATION — historico minimo');
+    // Só a última pergunta da IA para contexto de confirmação
+    if (s.ultimaPerguntaIA) {
+      return [{ role: 'assistant', content: s.ultimaPerguntaIA }];
+    }
+    return [];
+  }
+
+  // DISCOVERY — comportamento normal
+  console.log('[CONTEXT-ENGINE] modo=DISCOVERY — historico completo (' + Math.min(s.historico.length, ultimasN * 2) + ' msgs)');
+  return s.historico.slice(-(ultimasN * 2));
+}
+
 module.exports = {
   getSession,
   addUserMsg,
@@ -153,6 +215,8 @@ module.exports = {
   isNegacao,
   detectarAssunto,
   getHistoricoParaAPI,
+  getContextMode,
+  getHistoricoContextual,
   clearSession,
   validarCoerenciaFinanceira
 };
