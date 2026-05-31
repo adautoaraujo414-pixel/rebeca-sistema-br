@@ -100,6 +100,7 @@ const comandaRoutes           = require('./routes/comanda.routes');
 // — Rebeca Agenda
 const agendaRoutes            = require('./routes/agenda.routes');
 const agendaFinanceiroRoutes  = require('./routes/agenda-financeiro.routes');
+const agendaCatalogoRoutes   = require('./routes/agenda-catalogo.routes');
 
 // — Infra / IA / Outros
 const iaRoutes         = require('./routes/ia.routes');
@@ -293,6 +294,7 @@ setInterval(async () => {
 }, 5 * 60 * 1000); // verifica a cada 5 min
 app.use('/api/agenda/crm',          guards.agenda, require('./routes/agenda-crm.routes'));
 app.use('/api/agenda/conexao',      guards.agenda, require('./routes/agenda-conexao.routes'));
+app.use('/api/agenda',              agendaCatalogoRoutes);         // catálogo digital — exclusivo agenda
 
 // ─────────────────────────────────────────────
 // 13. API ROUTES — Rebeca Soft (PDV)

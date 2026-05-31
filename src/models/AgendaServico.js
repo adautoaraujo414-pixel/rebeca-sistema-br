@@ -324,6 +324,135 @@ agendaWhatsappCommandLogSchema.index({ telefoneAdminNormalizado: 1, createdAt: -
 
 const AgendaWhatsappCommandLog = mongoose.model('AgendaWhatsappCommandLog', agendaWhatsappCommandLogSchema);
 
+
+// ══════════════════════════════════════════════════════════════════
+// REBECA AGENDA — CATÁLOGO DIGITAL (exclusivo, isolado)
+// ══════════════════════════════════════════════════════════════════
+
+// ── ProdutoAgenda ─────────────────────────────────────────────────
+const produtoAgendaSchema = new mongoose.Schema({
+  adminId:          { type: mongoose.Schema.Types.ObjectId, ref: 'AdminAgenda', required: true },
+  nome:             { type: String, required: true },
+  descricao:        { type: String, default: '' },
+  descricaoLonga:   { type: String, default: '' },
+  categoria:        { type: String, default: 'geral' },
+  subcategoria:     { type: String, default: '' },
+  tags:             { type: [String], default: [] },
+  palavrasChave:    { type: [String], default: [] },
+  fotos:            { type: [String], default: [] },
+  fotoPrincipal:    { type: String, default: '' },
+  preco:            { type: Number, required: true },
+  precoPromocional: { type: Number, default: null },
+  estoque:          { type: Number, default: null },
+  sku:              { type: String, default: '' },
+  marca:            { type: String, default: '' },
+  observacoes:      { type: String, default: '' },
+  ativo:            { type: Boolean, default: true },
+  variacoes: [{
+    nome:   { type: String },
+    opcoes: [{
+      valor:   { type: String },
+      preco:   { type: Number, default: null },
+      estoque: { type: Number, default: null },
+      foto:    { type: String, default: '' }
+    }]
+  }],
+  atributos: {
+    peso:      { type: String, default: '' },
+    cores:     { type: [String], default: [] },
+    tamanhos:  { type: [String], default: [] },
+    materiais: { type: [String], default: [] }
+  },
+  catalogo_ids: [{ type: mongoose.Schema.Types.ObjectId, ref: 'CatalogoAgenda' }],
+  ordem:        { type: Number, default: 0 },
+  criadoEm:     { type: Date, default: Date.now }
+});
+produtoAgendaSchema.index({ adminId: 1, ativo: 1 });
+produtoAgendaSchema.index({ adminId: 1, categoria: 1 });
+produtoAgendaSchema.index({ adminId: 1, tags: 1 });
+
+// ── CatalogoAgenda ────────────────────────────────────────────────
+const catalogoAgendaSchema = new mongoose.Schema({
+  adminId:    { type: mongoose.Schema.Types.ObjectId, ref: 'AdminAgenda', required: true },
+  nome:       { type: String, required: true },
+  descricao:  { type: String, default: '' },
+  capa:       { type: String, default: '' },
+  cor:        { type: String, default: '#f97316' },
+  ativo:      { type: Boolean, default: true },
+  ordem:      { type: Number, default: 0 },
+  secoes: [{
+    nome:   { type: String },
+    ordem:  { type: Number, default: 0 },
+    subsecoes: [{
+      nome:         { type: String },
+      ordem:        { type: Number, default: 0 },
+      produtos_ids: [{ type: mongoose.Schema.Types.ObjectId, ref: 'ProdutoAgenda' }]
+    }],
+    produtos_ids: [{ type: mongoose.Schema.Types.ObjectId, ref: 'ProdutoAgenda' }]
+  }],
+  // Seções visuais especiais — configuradas pelo admin, IA nunca inventa
+  secoesVisuais: {
+    destaques:      { ativo: { type: Boolean, default: false }, produtos_ids: [{ type: mongoose.Schema.Types.ObjectId }] },
+    lancamentos:    { ativo: { type: Boolean, default: false }, produtos_ids: [{ type: mongoose.Schema.Types.ObjectId }] },
+    promocoes:      { ativo: { type: Boolean, default: false }, produtos_ids: [{ type: mongoose.Schema.Types.ObjectId }] },
+    maisProcurados: { ativo: { type: Boolean, default: false }, produtos_ids: [{ type: mongoose.Schema.Types.ObjectId }] }
+  },
+  produtos_ids: [{ type: mongoose.Schema.Types.ObjectId, ref: 'ProdutoAgenda' }],
+  criadoEm:    { type: Date, default: Date.now }
+});
+catalogoAgendaSchema.index({ adminId: 1, ativo: 1 });
+
+// ── CarrinhoAgenda ────────────────────────────────────────────────
+const carrinhoAgendaSchema = new mongoose.Schema({
+  adminId:         { type: mongoose.Schema.Types.ObjectId, ref: 'AdminAgenda', required: true },
+  sessionId:       { type: String, required: true },
+  clienteTelefone: { type: String, default: '' },
+  clienteNome:     { type: String, default: '' },
+  itens: [{
+    produtoId:           { type: mongoose.Schema.Types.ObjectId, ref: 'ProdutoAgenda' },
+    nome:                { type: String },
+    foto:                { type: String },
+    preco:               { type: Number },
+    quantidade:          { type: Number, default: 1 },
+    variacaoSelecionada: { type: String, default: '' },
+    subtotal:            { type: Number }
+  }],
+  total:         { type: Number, default: 0 },
+  status:        { type: String, enum: ['ativo','finalizado','abandonado'], default: 'ativo' },
+  pixPreparado:  { type: Boolean, default: false },
+  criadoEm:     { type: Date, default: Date.now },
+  atualizadoEm: { type: Date, default: Date.now }
+});
+carrinhoAgendaSchema.index({ adminId: 1, sessionId: 1 });
+carrinhoAgendaSchema.index({ adminId: 1, status: 1 });
+
+// ── ConhecimentoAgenda ────────────────────────────────────────────
+const conhecimentoAgendaSchema = new mongoose.Schema({
+  adminId:   { type: mongoose.Schema.Types.ObjectId, ref: 'AdminAgenda', required: true },
+  tipo:      { type: String, enum: ['faq','politica','pagamento','horario','garantia','outro'], default: 'faq' },
+  pergunta:  { type: String, required: true },
+  resposta:  { type: String, required: true },
+  tags:      { type: [String], default: [] },
+  ativo:     { type: Boolean, default: true },
+  ordem:     { type: Number, default: 0 },
+  criadoEm: { type: Date, default: Date.now }
+});
+conhecimentoAgendaSchema.index({ adminId: 1, ativo: 1 });
+conhecimentoAgendaSchema.index({ adminId: 1, tipo: 1 });
+
+// ── LeadProdutoAgenda ─────────────────────────────────────────────
+const leadProdutoAgendaSchema = new mongoose.Schema({
+  adminId:     { type: mongoose.Schema.Types.ObjectId, ref: 'AdminAgenda', required: true },
+  telefone:    { type: String, default: '' },
+  produtoId:   { type: mongoose.Schema.Types.ObjectId, ref: 'ProdutoAgenda', default: null },
+  produtoNome: { type: String, default: '' },
+  origem:      { type: String, default: 'whatsapp' },
+  acao:        { type: String, enum: ['consultou','recebeu_foto','adicionou_carrinho','solicitou_atendimento','finalizou_compra'], required: true },
+  data:        { type: Date, default: Date.now }
+});
+leadProdutoAgendaSchema.index({ adminId: 1, data: -1 });
+leadProdutoAgendaSchema.index({ adminId: 1, produtoId: 1 });
+
 module.exports = {
   FinanceiroAgenda,
   ContaPagarAgenda,
@@ -340,4 +469,9 @@ module.exports = {
   MensagemModeloAgenda: mongoose.model('MensagemModeloAgenda', mensagemModeloAgendaSchema),
   ConexaoClienteAgenda: mongoose.model('ConexaoClienteAgenda', conexaoClienteAgendaSchema),
   AgendaWhatsappCommandLog,
+  ProdutoAgenda: mongoose.model('ProdutoAgenda', produtoAgendaSchema),
+  CatalogoAgenda: mongoose.model('CatalogoAgenda', catalogoAgendaSchema),
+  CarrinhoAgenda: mongoose.model('CarrinhoAgenda', carrinhoAgendaSchema),
+  ConhecimentoAgenda: mongoose.model('ConhecimentoAgenda', conhecimentoAgendaSchema),
+  LeadProdutoAgenda: mongoose.model('LeadProdutoAgenda', leadProdutoAgendaSchema),
 };

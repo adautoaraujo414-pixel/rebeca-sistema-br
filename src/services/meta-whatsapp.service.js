@@ -32,6 +32,20 @@ async function enviarTexto(telefone, texto) {
   }
 }
 
+async function enviarImagem(telefone, imageUrl, legenda) {
+  try {
+    const r = await axios.post(`${BASE}/messages`, {
+      messaging_product: 'whatsapp',
+      to: _norm(telefone),
+      type: 'image',
+      image: { link: imageUrl, caption: legenda || '' }
+    }, { headers: _headers() });
+    return { sucesso: true, messageId: r.data?.messages?.[0]?.id };
+  } catch(e) {
+    console.error('[MetaWA] enviarImagem erro:', e.response?.data || e.message);
+    return { sucesso: false, erro: e.response?.data || e.message };
+  }
+}
 async function enviarTemplate(telefone, templateName, languageCode, components) {
   try {
     const body = {
@@ -77,4 +91,4 @@ async function testarConexao() {
   }
 }
 
-module.exports = { enviarTexto, enviarTemplate, marcarLido, testarConexao, _norm };
+module.exports = { enviarTexto, enviarImagem, enviarTemplate, marcarLido, testarConexao, _norm };

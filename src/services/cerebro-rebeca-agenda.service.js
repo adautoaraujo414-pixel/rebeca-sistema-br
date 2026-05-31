@@ -172,6 +172,11 @@ RACIOCÍNIO AVANÇADO — situações reais do dia a dia:
 - Dono: "entrada de 150 pix" → RACIOCÍNIO: valor + tipo → registrar_receita, valor:150, origem:pix
 - Dono: "cobrei 200 da Maria corte" → RACIOCÍNIO: receita de serviço → registrar_receita, valor:200, descricao:"corte", origem:"Maria"
 - Dono: "gastei 80 no mercado pra revenda" → registrar_despesa, valor:80, categoria:produtos
+- "tem shampoo?" → buscar_produto_catalogo, entidades:{busca:"shampoo"}
+- "qual o preço do vestido vermelho?" → buscar_produto_catalogo, entidades:{busca:"vestido vermelho"}
+- "vocês vendem calça jeans?" → buscar_produto_catalogo, entidades:{busca:"calça jeans"}
+- "tem alguma promoção?" → buscar_produto_catalogo, entidades:{busca:"promoção"}
+- "quais produtos vocês têm?" → buscar_produto_catalogo, entidades:{busca:""}
 - Dono: "me lembra amanhã 9h de ligar pro fornecedor" → criar_lembrete, texto:"ligar pro fornecedor", dia:amanhã, hora:9:00
 - Dono: "me lembra toda sexta de pagar 499 pra Raphaela" → criar_lembrete, recorrente:{tipo:semanal,diaSemana:sexta}, valor:499, texto:"pagar Raphaela"
 - Dono: "tem lembrete hoje?" → listar_lembretes (pergunta sobre existentes)
@@ -313,7 +318,7 @@ function _validar(parsed) {
     'aniversariantes','servicos_mais_pedidos',
     'criar_lembrete','listar_lembretes',
     'resumo_semanal','resumo_mensal',
-    'saudacao','ajuda','confirmar_pendente','cancelar_pendente','fora_escopo'
+    'buscar_produto_catalogo','saudacao','ajuda','confirmar_pendente','cancelar_pendente','fora_escopo'
   ]);
   const acoes = new Set(['executar','confirmar','pedir_info','responder','notificar_admin']);
   return {

@@ -1,7 +1,7 @@
 'use strict';
 
 const Anthropic = require('@anthropic-ai/sdk');
-const { AdminAgenda, AgendamentoAgenda, ClienteAgenda } = require('../models/AgendaServico');
+const { AdminAgenda, AgendamentoAgenda, ClienteAgenda, ProdutoAgenda, ConhecimentoAgenda, LeadProdutoAgenda } = require('../models/AgendaServico');
 
 // Sessões em memória por telefone cliente
 const _sessoes = new Map();
@@ -38,6 +38,29 @@ async function _buscarHorariosLivres(adminId, data) {
       }
     }
     return livres.slice(0, 10);
+  } catch(e) { return []; }
+}
+
+
+async function _buscarProdutos(adminId, busca) {
+  try {
+    const filtro = { adminId, ativo: true };
+    if (busca && busca.trim()) {
+      const regex = { $regex: busca.trim(), $options: 'i' };
+      filtro.$or = [{ nome: regex }, { tags: regex }, { palavrasChave: regex }, { descricao: regex }, { categoria: regex }];
+    }
+    return await ProdutoAgenda.find(filtro).sort({ ordem: 1 }).limit(8).lean();
+  } catch(e) { return []; }
+}
+
+async function _buscarConhecimento(adminId, busca) {
+  try {
+    const filtro = { adminId, ativo: true };
+    if (busca && busca.trim()) {
+      const regex = { $regex: busca.trim(), $options: 'i' };
+      filtro.$or = [{ pergunta: regex }, { resposta: regex }, { tags: regex }];
+    }
+    return await ConhecimentoAgenda.find(filtro).sort({ ordem: 1 }).limit(5).lean();
   } catch(e) { return []; }
 }
 
@@ -90,6 +113,27 @@ async function atenderCliente(telefoneCliente, mensagem, adminId) {
     const livresHoje   = await _buscarHorariosLivres(adminId, hoje);
     const livresAmanha = await _buscarHorariosLivres(adminId, amanha);
     const fmtData      = d => d.toLocaleDateString('pt-BR', { weekday:'long', day:'2-digit', month:'long' });
+
+
+    // Buscar produtos e conhecimento do admin
+    const _termoBusca = mensagem.replace(/\?|!|\./g,'').trim();
+    const produtos = await _buscarProdutos(adminId, _termoBusca);
+    const conhecimento = await _buscarConhecimento(adminId, _termoBusca);
+
+    const listaProdutos = produtos.length
+      ? produtos.map(p => {
+          const preco = p.precoPromocional ? `R$ ${p.precoPromocional.toFixed(2)} ~~R$ ${p.preco.toFixed(2)}~~` : `R$ ${p.preco.toFixed(2)}`;
+          const est = p.estoque === 0 ? ' [SEM ESTOQUE]' : p.estoque !== null ? ` [${p.estoque} em estoque]` : '';
+          return `• *${p.nome}* — ${preco}${est}${p.descricao ? ' — '+p.descricao : ''}${p._id ? ' [id:'+p._id+']' : ''}`;
+        }).join('\n')
+      : '';
+
+    const listaConhecimento = conhecimento.length
+      ? conhecimento.map(k => `Q: ${k.pergunta}\nR: ${k.resposta}`).join('\n---\n')
+      : '';
+
+    // Detectar produto perguntado para registrar lead e retornar foto
+    const _produtoMencionado = produtos.length === 1 ? produtos[0] : null;
 
     // Adicionar mensagem ao histórico
     ses.historico.push({ role: 'user', content: mensagem });
@@ -187,7 +231,7 @@ VARIAÇÃO DE RESPOSTAS — nunca repita a mesma frase:
 - Despedindo: "Até logo! 💙" / "Te esperamos!" / "Qualquer coisa é só chamar!"
 - Saudação: "Oi!" / "Boa tarde!" / "Olá, ${nomeCliente||'tudo bem'}!" — nunca "Olá!" frio
 ${linkAgenda ? '- Agendar online → "Você pode agendar direto pelo link: rebecasistemas.com.br/agendar 😊"' : ''}`;
-
+${listaProdutos ? `\nPRODUTOS DISPONÍVEIS (use APENAS estes dados reais, nunca invente preço ou estoque):\n${listaProdutos}\n\nREGRAS PARA PRODUTOS:\n- Produto com [SEM ESTOQUE] → informe indisponível, ofereça alternativa\n- Sempre mencione o preço exato\n- Se tiver foto, diga que pode enviar\n- NUNCA invente promoção sem precoPromocional real\n- NUNCA diga últimas unidades sem estoque real ≤ 3\n- Seja vendedora: destaque benefícios, sugira combinações` : ''}\n${listaConhecimento ? `\nINFORMAÇÕES DO NEGÓCIO (use para responder dúvidas):\n${listaConhecimento}` : ''}\n
         const claude = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
     const r = await claude.messages.create({
       model: 'claude-haiku-4-5-20251001',
@@ -205,7 +249,28 @@ ${linkAgenda ? '- Agendar online → "Você pode agendar direto pelo link: rebec
     const _notificarAdmin = /atendente|humano|falar com|reclamação|reclamacao|problema|urgente/i.test(mensagem);
 
     console.log('[AtendimentoCliente]', adminId, '|', telefoneCliente, '| notif:', _notificarAdmin);
-    return { resposta, notificarAdmin: _notificarAdmin, nomeCliente };
+    // Registrar lead se produto foi mencionado
+    let fotoUrl = null;
+    if (_produtoMencionado && _produtoMencionado.fotoPrincipal) {
+      fotoUrl = _produtoMencionado.fotoPrincipal;
+      try {
+        await LeadProdutoAgenda.create({
+          adminId, telefone: telefoneCliente,
+          produtoId: _produtoMencionado._id,
+          produtoNome: _produtoMencionado.nome,
+          origem: 'whatsapp', acao: 'consultou'
+        });
+        if (fotoUrl) {
+          await LeadProdutoAgenda.create({
+            adminId, telefone: telefoneCliente,
+            produtoId: _produtoMencionado._id,
+            produtoNome: _produtoMencionado.nome,
+            origem: 'whatsapp', acao: 'recebeu_foto'
+          });
+        }
+      } catch(e) {}
+    }
+    return { resposta, notificarAdmin: _notificarAdmin, nomeCliente, fotoUrl };
 
   } catch(e) {
     console.error('[AtendimentoCliente] erro:', e.message);

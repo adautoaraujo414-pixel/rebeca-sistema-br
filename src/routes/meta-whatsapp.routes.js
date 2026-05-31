@@ -258,6 +258,10 @@ async function processarComando(telefone, texto, msgId) {
         const resultado = await AtendCliente.atenderCliente(telefone, texto, String(admin._id));
         if (resultado?.resposta) {
           await MetaWA.enviarTexto(telefone, resultado.resposta);
+          // Enviar foto do produto se houver
+          if (resultado.fotoUrl) {
+            try { await MetaWA.enviarImagem(telefone, resultado.fotoUrl, ''); } catch(ef) {}
+          }
           // Notificar admin se cliente pediu atendente humano
           if (resultado.notificarAdmin) {
             const _nomeC = resultado.nomeCliente || telefone;
