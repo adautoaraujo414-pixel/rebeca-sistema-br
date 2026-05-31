@@ -776,8 +776,8 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
     if (_sesRecorr.aguardandoRecorrente) {
       const _pendRec = _sesRecorr.aguardandoRecorrente;
       const _semPrazo = /sem prazo|indeterminado|sempre|indefinido/i.test(msg);
-      const // _nMatch: captura quantidade de vezes, excluindo horas/valores
-      _nMatch = msg.match(/(\d+)\s*(?:vez(?:es)?|semana(?:s)?|mes(?:es)?|m[eê]s|repeti[cç])/i) || (!/(?:\d+\s*(?:hora[s]?|h\b|min(?:uto)?s?|reais?|R\$|\$))/i.test(msg) ? msg.match(/(\d+)/) : null);
+      // _nMatch: captura quantidade de vezes, excluindo horas/valores
+      const _nMatch = msg.match(/(\d+)\s*(?:vez(?:es)?|semana(?:s)?|mes(?:es)?|m[eê]s|repeti[cç])/i) || (!/(?:\d+\s*(?:hora[s]?|h\b|min(?:uto)?s?|reais?|R\$|\$))/i.test(msg) ? msg.match(/(\d+)/) : null);
       const _nVezesResp = _semPrazo ? (_pendRec.rec.tipo === 'semanal' ? 52 : _pendRec.rec.tipo === 'diario' ? 30 : 12) : (_nMatch ? parseInt(_nMatch[1]) : _pendRec.rec.tipo === 'diario' ? 30 : 4);
 
       SM.updateSession(adminId, telefone, { aguardandoRecorrente: null });
