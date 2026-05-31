@@ -159,9 +159,10 @@ async function atenderCliente(telefoneCliente, mensagem, adminId) {
     const fmtData      = d => d.toLocaleDateString('pt-BR', { weekday:'long', day:'2-digit', month:'long' });
 
 
-    // Buscar produtos e conhecimento do admin
+    // Buscar produtos só se mensagem sugere produto/compra/preço
+    const _ehPerguntaProduto = /tem |vend|preco|valor|quanto|produto|comprar|quero|catálogo|catalogo|coleção|colecao|loja|lanche|item|disponiv/i.test(mensagem);
     const _termoBusca = mensagem.replace(/\?|!|\./g,'').trim();
-    const produtos = await _buscarProdutos(adminId, _termoBusca);
+    const produtos = await _buscarProdutos(adminId, _ehPerguntaProduto ? _termoBusca : '');
     const conhecimento = await _buscarConhecimento(adminId, _termoBusca);
 
     const listaProdutos = produtos.length

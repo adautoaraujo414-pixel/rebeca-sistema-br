@@ -2344,6 +2344,35 @@ LEMBRE: você é a pessoa em quem ela mais confia no dia a dia. Esse espaço é 
       }
       // ─────────────────────────────────────────────────────────────────────
 
+      // ── BUSCAR PRODUTO/CATÁLOGO (dono consultando o próprio estoque) ──
+      if (_cerebro.intencao === 'buscar_produto_catalogo') {
+        try {
+          const { ProdutoAgenda } = require('../models/AgendaServico');
+          const busca = ent.busca || '';
+          const filtro = { adminId: adminObjId, ativo: true };
+          if (busca.trim()) {
+            const regex = { $regex: busca.trim(), $options: 'i' };
+            filtro.$or = [{ nome: regex }, { tags: regex }, { categoria: regex }, { descricao: regex }];
+          }
+          const prods = await ProdutoAgenda.find(filtro).sort({ ordem: 1 }).limit(10).lean();
+          if (!prods.length) {
+            const _r = busca
+              ? `Não achei produto com "${busca}" no catálogo, ${_chefe(_generoAdmin, _apelidoAdmin)}.`
+              : `Sem produtos cadastrados ainda.`;
+            await responder(_r); SM.addAssistantMsg(adminId, telefone, _r); return true;
+          }
+          const lista = prods.map(p => {
+            const est = p.estoque === 0 ? ' ❌ sem estoque' : p.estoque ? ` (${p.estoque} un)` : '';
+            const preco = p.precoPromocional ? `R$ ${p.precoPromocional.toFixed(2)} ~~R$ ${p.preco.toFixed(2)}~~` : `R$ ${p.preco.toFixed(2)}`;
+            return `• *${p.nome}* — ${preco}${est}`;
+          }).join('\n');
+          const _r = `🛍️ *Produtos encontrados (${prods.length}):*\n\n${lista}`;
+          await responder(_r); SM.addAssistantMsg(adminId, telefone, _r); return true;
+        } catch(e) {
+          console.error('[ModoDono] buscar_produto_catalogo erro:', e.message);
+        }
+      }
+
       if (_cerebro.intencao === 'registrar_receita' && ent.valor) {
         let _descRawE = (ent.descricao || ent.origem || '')
           .replace(/^(lança|registra|anota|coloca|marca|lanca)\s+[\d.,]+\s*(reais?|r\$)?\s*(de\s+)?(saída|entrada|saida)?\s*(de\s+)?/i, '')
