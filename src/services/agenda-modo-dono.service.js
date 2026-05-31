@@ -525,8 +525,9 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
         { sort: { criadoEm: -1 } }
       );
       console.log('[APRENDIZADO] Correcao confirmada:', _sesCorr2.intencaoErrada, '->', _intencaoMapeada);
-      SM.updateSession(adminId, telefone, { aguardandoCorrecao: false, intencaoErrada: null });
     } catch(_eCorr2) { console.log('[APRENDIZADO] Erro confirmar:', _eCorr2.message); }
+    // Limpar fora do try — garante que estado é limpo mesmo se DB falhar
+    SM.updateSession(adminId, telefone, { aguardandoCorrecao: false, intencaoErrada: null });
 
     const adminObjId = require('mongoose').Types.ObjectId.isValid(adminId) ? new (require('mongoose').Types.ObjectId)(adminId) : adminId;
     const admin3 = await AdminAgenda.findById(adminObjId).lean();
@@ -841,7 +842,14 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
         const _rErro = '⚠️ Não consegui gerar os lembretes. Tipo de recorrência não reconhecido. Tente: "todo dia 10", "toda sexta", "todo dia".';
         await responder(_rErro); SM.addAssistantMsg(adminId, telefone, _rErro); return true;
       }
-      let _descRec3 = _recSim.tipo === 'semanal' ? `toda ${_recSim.diaSemana}` : _recSim.tipo === 'diario' ? 'todo dia' : `todo dia ${_recSim.dia || 1} do mês`;
+      let _descRec3;
+      if (_recSim.tipo === 'semanal') _descRec3 = `toda ${_recSim.diaSemana || 'semana'}`;
+      else if (_recSim.tipo === 'diario') _descRec3 = 'todo dia';
+      else if (_recSim.tipo === 'mensal' && _recSim.dia) _descRec3 = `todo dia ${_recSim.dia} do mês`;
+      else if (_recSim.tipo === 'mensal') _descRec3 = 'todo mês';
+      else if (_recSim.tipo === 'quinzenal') _descRec3 = 'a cada 15 dias';
+      else if (_recSim.tipo === 'anual') _descRec3 = 'todo ano';
+      else _descRec3 = 'recorrente';
       const _rResp = `Perfeito! 🔔 Criei *${_lembretes2.length} lembretes* de *${_pendRec.texto}*${_pendRec.valor ? ' (R$ '+_pendRec.valor+')' : ''} ${_descRec3}. Te aviso 30 min antes de cada um! 💙`;
       await responder(_rResp);
       SM.addAssistantMsg(adminId, telefone, _rResp);
@@ -2132,18 +2140,28 @@ ${total>5?'Tá crescendo muito! Continua assim! 🚀':'Todo cliente novo é uma 
     console.log('[CONTEXT-ENGINE] modo:', _modoCtx, '| msgs_historico:', _historico.length);
 
     // ── Confirmação/Cancelamento ANTES do cérebro ──
-    if (_isConfirm && _pendingAction) {
+    // Limpar aguardandoConfirmacao sempre que chegar sim/nao — evita sessão travada
+    if (_sesAtual.aguardandoConfirmacao && (_isConfirm || _isNeg)) {
       SM.updateSession(adminId, telefone, { ultimaAcaoPendente: null, aguardandoConfirmacao: false });
+      console.log('[CONFIRMACAO] estado limpo | _isConfirm:', _isConfirm, '| _pendingAction:', !!_pendingAction);
+    }
+    if (_isConfirm && _pendingAction) {
       const rConf = `${_confirmacao()} Feito, ${_chefe(_generoAdmin, _apelidoAdmin)}! ✅`;
       await responder(rConf);
       SM.addAssistantMsg(adminId, telefone, rConf);
       return true;
     }
     if (_isNeg && _pendingAction) {
-      SM.updateSession(adminId, telefone, { ultimaAcaoPendente: null, aguardandoConfirmacao: false });
       const rNeg = `Ok, ${_chefe(_generoAdmin, _apelidoAdmin)}! Cancelei. 👍`;
       await responder(rNeg);
       SM.addAssistantMsg(adminId, telefone, rNeg);
+      return true;
+    }
+    // Se chegou sim/nao mas não havia ação pendente — responder naturalmente
+    if (_isConfirm && !_pendingAction && _sesAtual.aguardandoConfirmacao) {
+      const rOrfao = `Tudo certo, ${_chefe(_generoAdmin, _apelidoAdmin)}! 😊 Pode mandar o próximo!`;
+      await responder(rOrfao);
+      SM.addAssistantMsg(adminId, telefone, rOrfao);
       return true;
     }
 
