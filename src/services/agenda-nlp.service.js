@@ -207,17 +207,22 @@ function extrairCategoria(txt) {
 // ── 5. DETECTAR RECORRENTE ────────────────────────────────────────────────────
 function detectarRecorrente(txt) {
   const n = normalizar(txt);
-  // "todo dia 10", "todo mês dia 25"
-  const mDia = n.match(/todo\s*(?:mes\s*)?dia\s*(\d{1,2})/);
-  if (mDia) return { tipo: 'mensal', dia: parseInt(mDia[1]) };
-  // "todo mês"
-  if (/todo\s*mes/.test(n)) return { tipo: 'mensal', dia: null };
-  // "todo dia" (diário)
-  if (/todo\s*dia(?!\s*\d)/.test(n)) return { tipo: 'diario' };
-  // dia da semana
-  const dias = ['domingo','segunda','terca','quarta','quinta','sexta','sabado'];
-  const mSem = n.match(/toda\s*(segunda|terca|quarta|quinta|sexta|sabado|domingo)/);
+  // Mensal com dia: "todo dia 10", "todo mês dia 5", "dia 10 de cada mês", "mensalmente dia 5"
+  const mDia = n.match(/(?:todo\s*(?:mes\s*)?|cada\s*mes\s*|mensalmente\s*)?dia\s*(\d{1,2})(?:\s*(?:de\s*)?(?:cada\s*)?mes)?/);
+  if (mDia && /mes|mensal|cada/.test(n)) return { tipo: 'mensal', dia: parseInt(mDia[1]) };
+  const mDia2 = n.match(/todo\s*(?:mes\s*)?dia\s*(\d{1,2})/);
+  if (mDia2) return { tipo: 'mensal', dia: parseInt(mDia2[1]) };
+  // Mensal sem dia: "todo mês", "mensalmente", "todo mes"
+  if (/todo\s*mes|mensalmente|mensais|cada\s*mes/.test(n)) return { tipo: 'mensal', dia: null };
+  // Anual: "todo ano", "anualmente"
+  if (/todo\s*ano|anualmente/.test(n)) return { tipo: 'anual' };
+  // Diário: "todo dia", "todos os dias", "diariamente", "de segunda a sexta"
+  if (/todo\s*dia(?!\s*\d)|todos\s*os\s*dias|diariamente|segunda\s*a\s*sexta/.test(n)) return { tipo: 'diario' };
+  // Semanal: "toda segunda", "toda terça", etc
+  const mSem = n.match(/toda?\s*(segunda|terca|quarta|quinta|sexta|sabado|domingo)(-feira)?/);
   if (mSem) return { tipo: 'semanal', diaSemana: mSem[1] };
+  // "toda semana"
+  if (/toda\s*semana|semanalmente/.test(n)) return { tipo: 'semanal', diaSemana: null };
   return null;
 }
 
@@ -281,21 +286,36 @@ function parsear(txt) {
   let textoLembrete = null;
   if (intencao === 'lembrete' || intencao === 'recorrente') {
     textoLembrete = normalizado
-      // Remover gatilhos de comando
-      .replace(/\b(rebeca)[,.]?\s*/g, '')
-      .replace(/\b(eu quero que voce|quero que voce|pode|por favor|pfv|pf)\s*/g, '')
-      .replace(/\b(crie?|criar|fazer|faz|coloca|coloque|adiciona|adicione|registra|registre|anota|anote|me lembra?|me avisa?|lembrete|agenda|marca|marque)\b[,.]?\s*/g, '')
-      .replace(/\b(um|uma|o|a|novo|nova)\s+(lembrete|aviso|alerta)\s*/g, '')
-      .replace(/\b(recorrente|recorrencia|todo mes|todo dia|toda semana|mensalmente|mensais?)\b/g, '')
-      .replace(/\b(todo|toda|dia|mes|semana)\b/g, '')
-      .replace(/\b(amanha|hoje|segunda|terca|quarta|quinta|sexta|sabado|domingo)([-]feira)?\b/g, '')
-      .replace(/\b\d{1,2}h(\d{2})?\b/g, '')
-      .replace(/\b\d{1,2}:\d{2}\b/g, '')
-      .replace(/r\$\s*[\d.,]+/g, '')  // remover valor monetário
-      .replace(/\b\d+\b/g, '')
-      .replace(/\b(reais|de|pra|para|pro|com|as|no|na|um|uma|e|o|a)\b/g, '')
-      .replace(/\br\$?\s*/gi, '')   // remover resíduos de "r$", "r r"
-      .replace(/\b(lembrejo|lembrete|aviso|alerta)\b/gi, '')
+      // 1. Remover nome da assistente
+      .replace(/\brebeca\b[,.]?\s*/gi, '')
+      // 2. Remover frases de cortesia/comando
+      .replace(/\b(eu quero que voce|quero que voce|pode|por favor|pfv|pf|consegue|preciso que voce)\s*/gi, '')
+      .replace(/\b(crie?|criar|fazer|faz|coloca|coloque|adiciona|adicione|registra|registre|anota|anote)\b\s*/gi, '')
+      .replace(/\b(me lembr[ae]|me avis[ae]|me notific[ae]|lembrete|aviso|alerta|agenda|marca|marque)\b\s*/gi, '')
+      // 3. Remover "um/uma lembrete/aviso/alerta"
+      .replace(/\b(um|uma)\s+(lembrete|aviso|alerta|notificacao)\s*/gi, '')
+      // 4. Remover palavras de recorrência
+      .replace(/\b(recorrente|recorrencia|mensalmente|mensais?|diariamente|semanalmente|anualmente)\b\s*/gi, '')
+      .replace(/\b(todo\s*mes|toda\s*semana|todo\s*ano|todos\s*os\s*dias|todo\s*dia(?!\s*\w))\b\s*/gi, '')
+      .replace(/\btoda?\s*(segunda|terca|quarta|quinta|sexta|sabado|domingo)(-feira)?\b\s*/gi, '')
+      .replace(/\bde\s+segunda\s+a\s+sexta\b\s*/gi, '')
+      // 5. Remover dia/hora/data
+      .replace(/\btodo\s*(?:mes\s*)?dia\s*\d{1,2}\b\s*/gi, '')
+      .replace(/\bdia\s*\d{1,2}\b\s*/gi, '')
+      .replace(/\b\d{1,2}\s*h(\d{2})?\b\s*/gi, '')
+      .replace(/\b\d{1,2}:\d{2}\b\s*/gi, '')
+      .replace(/\b(as|às)\s*\d{1,2}(:\d{2})?\s*(h|horas?)?\b\s*/gi, '')
+      .replace(/\b\d+\s*(horas?|minutos?)\b\s*/gi, '')
+      // 6. Remover valor monetário completamente
+      .replace(/r\$\s*[\d.,]+/gi, '')
+      .replace(/\b[\d.,]+\s*(reais?|real|centavos?)\b/gi, '')
+      .replace(/\b(novecentos|oitocentos|setecentos|seiscentos|quinhentos|quatrocentos|trezentos|duzentos|cem|mil)\b\s*(reais?)?/gi, '')
+      .replace(/\br\b\s*/gi, '')  // resíduo de "r$"
+      // 7. Remover artigos/preposições soltas no início
+      .replace(/^(de|do|da|para|pro|pra|o|a|um|uma|e|com|no|na)\s+/gi, '')
+      // 8. Remover números soltos
+      .replace(/\b\d+\b\s*/g, '')
+      // 9. Remover pontuação e espaços extras
       .replace(/[,.:;!?]+/g, ' ')
       .replace(/\s{2,}/g, ' ').trim() || null;
   }
