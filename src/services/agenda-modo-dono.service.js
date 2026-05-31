@@ -768,6 +768,7 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
       const _nVezesResp = _semPrazo ? (_pendRec.rec.tipo === 'semanal' ? 52 : _pendRec.rec.tipo === 'diario' ? 30 : 12) : (_nMatch ? parseInt(_nMatch[1]) : _pendRec.rec.tipo === 'diario' ? 30 : 4);
 
       SM.updateSession(adminId, telefone, { aguardandoRecorrente: null });
+      console.log('[DEBUG-SEM-PRAZO] _recSim:', JSON.stringify(_recSim), '_nVezesResp:', _nVezesResp);
       // Redirecionar para o handler acima com nlp simulado
       const _recSim = _pendRec.rec;
       const _diasSemana2 = { domingo:0, segunda:1,'segunda-feira':1, terca:2,'terça':2,'terça-feira':2, quarta:3,'quarta-feira':3, quinta:4,'quinta-feira':4, sexta:5,'sexta-feira':5, sabado:6,'sábado':6 };
@@ -832,6 +833,7 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
         SM.updateSession(adminId, telefone, {
           aguardandoRecorrente: { rec: _rec, texto: _textoRec, valor: _valorRec, categoria: _catRec }
         });
+        console.log('[DEBUG-SESSAO-REC] salvo:', JSON.stringify({ rec: _rec, texto: _textoRec }));
         let _descRec = '';
         if (_rec.tipo === 'semanal') _descRec = `toda ${_rec.diaSemana || 'semana'}`;
         else if (_rec.tipo === 'mensal' && _rec.dia) _descRec = `todo dia ${_rec.dia}`;

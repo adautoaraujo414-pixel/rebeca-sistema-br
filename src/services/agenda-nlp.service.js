@@ -215,6 +215,9 @@ function detectarRecorrente(txt) {
   if (mDia && /mes|mensal|cada/.test(n)) return { tipo: 'mensal', dia: parseInt(mDia[1]) };
   const mDia2 = n.match(/todo\s*(?:mes\s*)?dia\s*(\d{1,2})/);
   if (mDia2) return { tipo: 'mensal', dia: parseInt(mDia2[1]) };
+  // "dia 10" isolado (sem todo) — inferir mensal quando contexto sugere recorrência
+  const mDia3 = n.match(/(?:^|\s)dia\s+(\d{1,2})(?:\s|$)/);
+  if (mDia3 && /lembrete|recorrente|pagar|todo|mes|mensal/.test(n)) return { tipo: 'mensal', dia: parseInt(mDia3[1]) };
   // Mensal sem dia: "todo mês", "mensalmente", "todo mes"
   if (/todo\s*mes|mensalmente|mensais|cada\s*mes/.test(n)) return { tipo: 'mensal', dia: null };
   // Anual: "todo ano", "anualmente"
