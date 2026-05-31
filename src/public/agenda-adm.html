@@ -4525,7 +4525,7 @@ async function carregarProdutos() {
   const g = document.getElementById('prod-grid');
   g.innerHTML = '<div class="cat-empty"><div class="cat-empty-icon">⏳</div><div class="cat-empty-txt">Carregando...</div></div>';
   try {
-    const r = await fetch(_API+'/catalogo/produtos', { headers: _h() });
+    const r = await fetch(_API+'/produtos', { headers: _h() });
     const d = await r.json();
     _todosProds = d.produtos || [];
     renderProdutos();
@@ -4628,7 +4628,7 @@ async function salvarProduto() {
     ativo: document.getElementById('prod-status').value === 'true'
   };
   try {
-    const url = id ? `${_API}/catalogo/produtos/${id}` : `${_API}/catalogo/produtos`;
+    const url = id ? `${_API}/produtos/${id}` : `${_API}/produtos`;
     const method = id ? 'PUT' : 'POST';
     const r = await fetch(url, { method, headers: _h(), body: JSON.stringify(body) });
     const d = await r.json();
@@ -4641,7 +4641,7 @@ async function excluirProduto() {
   const id = document.getElementById('prod-id').value;
   if (!id || !confirm('Excluir este produto?')) return;
   try {
-    const r = await fetch(`${_API}/catalogo/produtos/${id}`, { method:'DELETE', headers: _h() });
+    const r = await fetch(`${_API}/produtos/${id}`, { method:'DELETE', headers: _h() });
     const d = await r.json();
     if (d.sucesso) { fecharModal('modal-produto'); carregarProdutos(); }
     else alert(d.erro || 'Erro ao excluir');
@@ -4653,7 +4653,7 @@ async function carregarCatalogos() {
   const el = document.getElementById('cat-lista');
   el.innerHTML = '<div class="cat-empty"><div class="cat-empty-icon">⏳</div><div class="cat-empty-txt">Carregando...</div></div>';
   try {
-    const r = await fetch(_API+'/catalogo/catalogos', { headers: _h() });
+    const r = await fetch(_API+'/catalogos', { headers: _h() });
     const d = await r.json();
     const cats = d.catalogos || [];
     if (!cats.length) {
@@ -4691,7 +4691,7 @@ function abrirModalCatalogo() {
 
 async function editarCatalogo(id) {
   try {
-    const r = await fetch(_API+'/catalogo/catalogos', { headers: _h() });
+    const r = await fetch(_API+'/catalogos', { headers: _h() });
     const d = await r.json();
     const c = (d.catalogos||[]).find(x => x._id === id);
     if (!c) return;
@@ -4717,7 +4717,7 @@ async function salvarCatalogo() {
     ativo: document.getElementById('cat-status').value === 'true'
   };
   try {
-    const url = id ? `${_API}/catalogo/catalogos/${id}` : `${_API}/catalogo/catalogos`;
+    const url = id ? `${_API}/catalogos/${id}` : `${_API}/catalogos`;
     const method = id ? 'PUT' : 'POST';
     const r = await fetch(url, { method, headers: _h(), body: JSON.stringify(body) });
     const d = await r.json();
@@ -4730,7 +4730,7 @@ async function excluirCatalogo() {
   const id = document.getElementById('cat-id').value;
   if (!id || !confirm('Excluir este catálogo?')) return;
   try {
-    const r = await fetch(`${_API}/catalogo/catalogos/${id}`, { method:'DELETE', headers: _h() });
+    const r = await fetch(`${_API}/catalogos/${id}`, { method:'DELETE', headers: _h() });
     const d = await r.json();
     if (d.sucesso) { fecharModal('modal-catalogo'); carregarCatalogos(); }
     else alert(d.erro || 'Erro');
@@ -4742,7 +4742,7 @@ async function carregarConhecimento() {
   const el = document.getElementById('conh-lista');
   el.innerHTML = '<div class="cat-empty"><div class="cat-empty-icon">⏳</div></div>';
   try {
-    const r = await fetch(_API+'/catalogo/conhecimento', { headers: _h() });
+    const r = await fetch(_API+'/conhecimento', { headers: _h() });
     const d = await r.json();
     _todosConhs = d.itens || [];
     renderConhecimento();
@@ -4815,7 +4815,7 @@ async function salvarConhecimento() {
     tags: document.getElementById('conh-tags').value.split(',').map(t=>t.trim()).filter(Boolean)
   };
   try {
-    const url = id ? `${_API}/catalogo/conhecimento/${id}` : `${_API}/catalogo/conhecimento`;
+    const url = id ? `${_API}/conhecimento/${id}` : `${_API}/conhecimento`;
     const method = id ? 'PUT' : 'POST';
     const r = await fetch(url, { method, headers: _h(), body: JSON.stringify(body) });
     const d = await r.json();
@@ -4828,7 +4828,7 @@ async function excluirConhecimento() {
   const id = document.getElementById('conh-id').value;
   if (!id || !confirm('Excluir este item?')) return;
   try {
-    const r = await fetch(`${_API}/catalogo/conhecimento/${id}`, { method:'DELETE', headers: _h() });
+    const r = await fetch(`${_API}/conhecimento/${id}`, { method:'DELETE', headers: _h() });
     const d = await r.json();
     if (d.sucesso) { fecharModal('modal-conhecimento'); carregarConhecimento(); }
     else alert(d.erro || 'Erro');
@@ -4838,7 +4838,7 @@ async function excluirConhecimento() {
 // ══════════════════ LEADS ══════════════════
 async function carregarLeads() {
   try {
-    const r = await fetch(_API+'/catalogo/leads', { headers: _h() });
+    const r = await fetch(_API+'/leads', { headers: _h() });
     const d = await r.json();
     const leads = d.leads || [];
     // stats
@@ -4881,32 +4881,7 @@ async function carregarLeads() {
 // ══════════════════ CARRINHOS ══════════════════
 async function carregarCarrinhos() {
   const el = document.getElementById('carrinhos-lista');
-  el.innerHTML = '<div class="cat-empty"><div class="cat-empty-icon">⏳</div></div>';
-  try {
-    const r = await fetch(`${_API}/catalogo/carrinhos?status=${_tabCarrinho}`, { headers: _h() });
-    const d = await r.json();
-    const carrinhos = d.carrinhos || [];
-    if (!carrinhos.length) {
-      el.innerHTML = `<div class="cat-empty"><div class="cat-empty-icon">🛒</div><div class="cat-empty-txt">Nenhum carrinho ${_tabCarrinho}</div></div>`;
-      return;
-    }
-    el.innerHTML = carrinhos.map(c => {
-      const ini = c.telefone.substring(0,2);
-      const total = (c.itens||[]).reduce((s,i)=>s+(i.precoUnitario*(i.quantidade||1)),0);
-      const itensStr = (c.itens||[]).map(i=>i.nomeProduto).join(', ');
-      return `<div class="carrinho-card">
-        <div class="carrinho-avatar">${ini}</div>
-        <div class="carrinho-info">
-          <div class="carrinho-tel">${c.telefone}</div>
-          <div class="carrinho-itens">${itensStr || 'Sem itens'}</div>
-        </div>
-        <span class="carrinho-status ${c.status}">${c.status}</span>
-        <div class="carrinho-valor">R$ ${total.toFixed(2)}</div>
-      </div>`;
-    }).join('');
-  } catch(e) {
-    el.innerHTML = '<div class="cat-empty"><div class="cat-empty-icon">⚠️</div><div class="cat-empty-txt">Erro ao carregar</div></div>';
-  }
+  el.innerHTML = '<div class="cat-empty"><div class="cat-empty-icon">🛒</div><div class="cat-empty-txt">Em breve</div><div class="cat-empty-sub">O histórico de carrinhos estará disponível em uma próxima atualização.</div></div>';
 }
 
 function mudarTabCarrinho(status, btn) {
