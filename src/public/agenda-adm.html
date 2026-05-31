@@ -4226,11 +4226,11 @@ carregarFinanceiro = async function() {
       <div class="form-row">
         <div class="form-field">
           <label>Preço (R$) *</label>
-          <input type="number" id="prod-preco" placeholder="0,00" step="0.01" min="0">
+          <input type="text" id="prod-preco" placeholder="0,00" class="mask-money" inputmode="numeric">
         </div>
         <div class="form-field">
           <label>Preço promocional (R$)</label>
-          <input type="number" id="prod-preco-promo" placeholder="0,00" step="0.01" min="0">
+          <input type="text" id="prod-preco-promo" placeholder="0,00" class="mask-money" inputmode="numeric">
         </div>
       </div>
       <div class="form-row">
@@ -4295,7 +4295,7 @@ carregarFinanceiro = async function() {
       </div>
       <div id="combo-fields" style="display:none">
         <label>Preço do combo (R$)</label>
-        <input type="number" id="prod-preco-combo" placeholder="Ex: 89.90" step="0.01">
+        <input type="text" id="prod-preco-combo" placeholder="Ex: 89,90" class="mask-money" inputmode="numeric">
       </div>
       <div class="form-field" style="display:none"><!-- placeholder fechamento -->
         <xselect>
@@ -4640,8 +4640,12 @@ function editarProduto(id) {
   document.getElementById('prod-nome').value = p.nome || '';
   document.getElementById('prod-categoria').value = p.categoria || '';
   document.getElementById('prod-descricao').value = p.descricao || '';
-  document.getElementById('prod-preco').value = p.preco || '';
-  document.getElementById('prod-preco-promo').value = p.precoPromocional || '';
+  // Formatar valor existente no formato BR ao abrir modal
+  const _fmtV = v => v ? (v/1).toFixed(2).replace('.', ',').replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.') : '';
+  document.getElementById('prod-preco').value = _fmtV(p.preco);
+  // Reaplicar máscara nos campos do modal (podem ter sido recriados)
+  setTimeout(() => { document.querySelectorAll('.mask-money').forEach(_maskMoney); }, 50);
+  document.getElementById('prod-preco-promo').value = _fmtV(p.precoPromocional);
   document.getElementById('prod-estoque').value = p.estoque != null ? p.estoque : '';
   document.getElementById('prod-sku').value = p.sku || '';
   document.getElementById('prod-tags').value = (p.tags||[]).join(', ');
@@ -4660,18 +4664,49 @@ function toggleComboFields(val) {
   var el = document.getElementById('combo-fields');
   if (el) el.style.display = val === 'true' ? 'block' : 'none';
 }
+
+// ── Máscara de moeda BR (R$ 7.200,00) ───────────────────────────────────
+function _maskMoney(input) {
+  input.addEventListener('input', function() {
+    let v = this.value.replace(/\D/g, '');           // só dígitos
+    if (!v) { this.value = ''; return; }
+    v = (parseInt(v, 10) / 100).toFixed(2);           // centavos → reais
+    this.value = v.replace('.', ',')                  // 7200.50 → 7200,50
+                  .replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.'); // 7.200,50
+  });
+  input.addEventListener('focus', function() {
+    if (!this.value) this.value = '';
+  });
+}
+function _parseMoney(str) {
+  if (!str) return 0;
+  // aceita: "7.200,50" ou "7200.50" ou "7200,50"
+  const s = String(str).trim();
+  if (s.includes(',')) {
+    // formato BR: remover pontos de milhar, trocar vírgula por ponto
+    return parseFloat(s.replace(/\./g, '').replace(',', '.')) || 0;
+  }
+  return parseFloat(s) || 0;
+}
+// Aplicar máscara em todos os campos .mask-money ao carregar
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.mask-money').forEach(_maskMoney);
+});
+// Reaplicar quando modal de produto abrir (campos criados dinamicamente)
+const _origAbrirProd = window.abrirProduto;
+
 async function salvarProduto() {
   const id = document.getElementById('prod-id').value;
   const nome = document.getElementById('prod-nome').value.trim();
   if (!nome) { alert('Informe o nome do produto'); return; }
-  const preco = parseFloat(document.getElementById('prod-preco').value);
+  const preco = _parseMoney(document.getElementById('prod-preco').value);
   if (!preco || preco <= 0) { alert('Informe o preço'); return; }
   const body = {
     nome,
     categoria: document.getElementById('prod-categoria').value.trim(),
     descricao: document.getElementById('prod-descricao').value.trim(),
     preco,
-    precoPromocional: parseFloat(document.getElementById('prod-preco-promo').value) || null,
+    precoPromocional: _parseMoney(document.getElementById('prod-preco-promo').value) || null,
     estoque: document.getElementById('prod-estoque').value !== '' ? parseInt(document.getElementById('prod-estoque').value) : null,
     sku: document.getElementById('prod-sku').value.trim(),
     tags: document.getElementById('prod-tags').value.split(',').map(t=>t.trim()).filter(Boolean),
@@ -4680,7 +4715,7 @@ async function salvarProduto() {
     ativo: document.getElementById('prod-status').value === 'true',
     destaque: document.getElementById('prod-destaque')?.value === 'true',
     combo: document.getElementById('prod-combo')?.value === 'true',
-    precoCombo: parseFloat(document.getElementById('prod-preco-combo')?.value) || null
+    precoCombo: _parseMoney(document.getElementById('prod-preco-combo')?.value) || null
   };
   try {
     const url = id ? `${_API}/produtos/${id}` : `${_API}/produtos`;
