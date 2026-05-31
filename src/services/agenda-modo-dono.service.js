@@ -2594,20 +2594,51 @@ ${_avisosDesc}`;
           }
         }
       }
+      // ── criar_lembrete normal (sem aviso duplo) ──────────────────────────
       if (_cerebro.intencao === 'criar_lembrete' && ent.texto_lembrete) {
-        const _dia = ent.data ? _parseDia(ent.data) : _parseDia(msg);
-        const _hora = ent.horario ? _parseHora(ent.horario) : _parseHora(msg);
-        const _txt = ent.texto_lembrete;
+        // Usar APENAS entidades do cérebro — NÃO fazer fallback para msg completa
+        const _dia  = ent.data    ? _parseDia(ent.data)     : null;
+        const _hora = ent.horario ? _parseHora(ent.horario) : null;
+        const _txt  = ent.texto_lembrete;
+        console.log('[CEREBRO-LEMBRETE] txt:', _txt, '| dia:', ent.data, '| hora:', ent.horario, '| _dia:', _dia ? _dia.toISOString() : null, '| _hora:', JSON.stringify(_hora));
+
         if (_dia && _hora) {
+          // Tem dia e hora — salvar direto
           const dataEvento = new Date(_dia);
           dataEvento.setUTCHours(_hora.h + 3, _hora.min, 0, 0);
           const dataAviso = new Date(dataEvento.getTime() - 30 * 60000);
+          console.log('[SALVANDO-LEMBRETE] cerebro direto | texto:', _txt, '| dataEvento:', dataEvento.toISOString());
           await AdminAgenda.findByIdAndUpdate(adminObjId, {
             $push: { 'config.lembretes': { texto: _txt, dataEvento, dataAviso, enviado: false, criadoEm: new Date() } }
           });
-          const _r = `Anotei! 🔔 *${_txt}* — ${_fmtData(dataEvento)} às ${_fmtHora(dataEvento)}\n\nTe aviso 30 minutos antes! 💙`;
+          console.log('[JSON-FINAL] lembrete cerebro:', JSON.stringify({ texto: _txt, dataEvento, dataAviso }));
+          const _r = `Anotei! 🔔 *${_txt}* — ${_fmtData(dataEvento)} às ${_fmtHora(dataEvento)}
+
+Te aviso 30 minutos antes! 💙`;
           await responder(_r);
           SM.addAssistantMsg(adminId, telefone, _r);
+          return true;
+        } else if (_dia && !_hora) {
+          // Tem dia mas não tem hora — pedir hora via sessão dedicada
+          const _diaStr = _fmtData(_dia);
+          SM.updateSession(adminId, telefone, { aguardandoLembrete: { aguardando: 'hora', dia: _dia, texto: _txt } });
+          const _rH = `Anotei o dia! Que horário você quer o lembrete em ${_diaStr}?`;
+          await responder(_rH);
+          SM.addAssistantMsg(adminId, telefone, _rH);
+          return true;
+        } else if (!_dia && _hora) {
+          // Tem hora mas não tem dia — pedir dia via sessão dedicada
+          SM.updateSession(adminId, telefone, { aguardandoLembrete: { aguardando: 'dia', hora: _hora, texto: _txt } });
+          const _rD = `Anotei o horário! Qual dia você quer esse lembrete?`;
+          await responder(_rD);
+          SM.addAssistantMsg(adminId, telefone, _rD);
+          return true;
+        } else {
+          // Nem dia nem hora — pedir ambos
+          SM.updateSession(adminId, telefone, { aguardandoLembrete: { aguardando: 'dia', texto: _txt } });
+          const _rDH = `Certo! Para quando você quer o lembrete de *${_txt}*? Me fala o dia e horário 😊`;
+          await responder(_rDH);
+          SM.addAssistantMsg(adminId, telefone, _rDH);
           return true;
         }
       }
