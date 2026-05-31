@@ -333,7 +333,7 @@ input,select{font-family:var(--font-body)}
   <div class="container">
     <div class="hero-grid">
       <div class="fade-up">
-        <div class="hero-badge">🗓 Agenda Digital</div>
+        <div class="hero-badge" id="hero-badge">🗓 Espaço Digital</div>
         <h1 class="hero-headline">Agende seu horário<br>de forma <span>rápida e fácil.</span></h1>
         <p class="hero-sub" id="hero-desc">Escolha o serviço ideal, o profissional de sua confiança e agende seu horário em poucos cliques.</p>
         <div class="hero-benefits">
@@ -496,7 +496,7 @@ input,select{font-family:var(--font-body)}
           <div class="header-logo-icon">🗓</div>
           <div>
             <div class="header-logo-text" id="f-nome">Agenda Digital</div>
-            <div class="header-logo-sub">Agenda Digital</div>
+            <div class="header-logo-sub" id="f-sub">Espaço Digital</div>
           </div>
         </div>
         <p class="footer-desc">A plataforma completa para agendamentos profissionais. Simples, rápida e inteligente.</p>
@@ -602,11 +602,13 @@ async function init(){
   }catch(e){console.error(e);err()}
 }
 function renderHeader(p){
-  var nome=p.nomeNegocio||p.nome||'Agenda Digital';
+  var nome=p.nomeNegocio||p.nome||'Espaço Digital';
   document.title=nome;
   document.getElementById('h-nome').textContent=nome;
   document.getElementById('f-nome').textContent=nome;
-  document.getElementById('h-sub').textContent=p.segmento||'Agenda Digital';
+  document.getElementById('h-sub').textContent=p.segmento||'Espaço Digital';
+  var hb=document.getElementById('hero-badge');if(hb)hb.textContent='🗓 '+nome;
+  var fs=document.getElementById('f-sub');if(fs)fs.textContent=p.segmento||'Espaço Digital';
   if(p.whatsapp){
     wppNum=(p.whatsapp||'').replace(/\D/g,'');
     var w=wpp(p.whatsapp);
