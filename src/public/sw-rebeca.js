@@ -1,4 +1,4 @@
-// cache-bust: 1779715659
+// cache-bust: 1780194950
 /**
  * sw-rebeca.js — Service Worker Unificado
  * Versão 4.0
@@ -11,7 +11,7 @@
  *   - Background Sync:     Pedidos offline enfileirados
  */
 
-const VERSION    = 'rebeca-v1779715659';
+const VERSION    = 'rebeca-v1780194950';
 const SHELL_KEY  = `${VERSION}-shell`;
 const API_KEY    = `${VERSION}-api`;
 const IMG_KEY    = `${VERSION}-img`;
