@@ -1241,10 +1241,15 @@ ${totalAgs > 0 ? 'Tá saindo bem! 💪' : 'Ainda sem registros esse mês.'}`);
   const _sesLemb = SM.getSession(adminId, telefone);
   const _pendLemb = _sesLemb.aguardandoLembrete;
 
-  if (_pendLemb && !(/me\s*lembr[ae]|lembrete|n[aã]o\s*me\s*deixa?\s*esquecer|anota\s*(a[ií])?/i.test(msgL))) {
-    // Usuario respondeu uma pergunta de lembrete pendente
+  if (_pendLemb) {
+    // PRIORIDADE: se há lembrete pendente, tentar extrair hora/dia primeiro
     const _diaPend  = _parseDia(msgL);
     const _horaPend = _parseHora(msgL);
+    // Só ignora se não achou hora/dia E parece claramente um novo comando longo
+    if (!_diaPend && !_horaPend && msgL.length > 15 && /me\s*lembr[ae]|lembrete|n[aã]o\s*me\s*deixa?\s*esquecer|anota\s*(a[ií])?/i.test(msgL)) {
+      SM.updateSession(adminId, telefone, { aguardandoLembrete: null });
+      // cai para processar como novo lembrete abaixo
+    } else if (_diaPend || _horaPend) {
 
     if (_pendLemb.aguardando === 'dia' && _diaPend) {
       // Tinha hora, agora tem dia: criar lembrete
@@ -1285,6 +1290,7 @@ ${totalAgs > 0 ? 'Tá saindo bem! 💪' : 'Ainda sem registros esse mês.'}`);
       SM.addAssistantMsg(adminId, telefone, _conf);
       return true;
     }
+    } // fim else if
   }
 
   if (/me\s*lembr[ae]|lembrete|n[aã]o\s*me\s*deixa?\s*esquecer|anota\s*(a[ií])?/i.test(msgL)) {
