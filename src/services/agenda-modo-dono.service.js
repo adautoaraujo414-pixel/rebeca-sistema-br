@@ -792,13 +792,29 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
           _dataEvento2 = new Date(Date.UTC(_d2.getUTCFullYear(), _d2.getUTCMonth(), _d2.getUTCDate(), 9, 0, 0));
         }
         if (_dataEvento2) {
+          const _textoLem2 = _pendRec.texto + (_pendRec.valor ? ' — R$ ' + _pendRec.valor : '');
+          const _diasAte2 = Math.ceil((_dataEvento2 - _hoje2) / (1000 * 60 * 60 * 24));
           _lembretes2.push({
-            texto: _pendRec.texto + (_pendRec.valor ? ' — R$ ' + _pendRec.valor : ''),
+            texto: _textoLem2,
             dataEvento: _dataEvento2,
             dataAviso: new Date(_dataEvento2.getTime() - 30 * 60000),
             enviado: false, criadoEm: new Date(),
             recorrente: _recSim, categoria: _pendRec.categoria
           });
+          // Aviso D-1 para lembretes com mais de 5 dias à frente
+          if (_diasAte2 > 5) {
+            const _dataAvisoD1 = new Date(_dataEvento2);
+            _dataAvisoD1.setDate(_dataAvisoD1.getDate() - 1);
+            _dataAvisoD1.setUTCHours(9, 0, 0, 0);
+            _lembretes2.push({
+              texto: '⚠️ Amanhã vence: ' + _textoLem2,
+              dataEvento: _dataEvento2,
+              dataAviso: _dataAvisoD1,
+              enviado: false, criadoEm: new Date(),
+              recorrente: _recSim, categoria: _pendRec.categoria,
+              tipoAviso: 'D-1'
+            });
+          }
         }
       }
       if (_lembretes2.length) {
