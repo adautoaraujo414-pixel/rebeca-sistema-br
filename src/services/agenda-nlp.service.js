@@ -143,7 +143,7 @@ function extrairValor(txt) {
   // Detectar recorrente — para não confundir "dia 10" com valor
   const isRecorrente = /todo\s*(?:dia|mes)\s*\d|toda?\s*(?:semana|segunda|terca|quarta|quinta|sexta|sabado|domingo)|para\s*todo\s*dia\s*\d|recorrente|mensalmente|diariamente/.test(n);
   // Se recorrente, remover "dia X" do texto antes de qualquer match de valor
-  const nValor = isRecorrente ? n.replace(/\b(?:todo\s*)?dia\s*\d{1,2}\b/g, '').replace(/\bpara\b/g, '') : n;
+  const nValor = isRecorrente ? n.replace(/\b(?:todo\s*(?:mes\s*)?)?dia\s*\d{1,2}\b/g, '').replace(/\bpara\b/g, '').replace(/\b(\d{1,2})\s*(?:de\s*)?(?:cada\s*)?mes\b/g, '') : n;
 
   // "4 mil", "4k"
   const milM = nValor.match(/(\d+(?:[.,]\d+)?)\s*mil\b/);
