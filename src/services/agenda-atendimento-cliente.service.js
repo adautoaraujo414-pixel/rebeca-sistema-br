@@ -44,12 +44,56 @@ async function _buscarHorariosLivres(adminId, data) {
 
 async function _buscarProdutos(adminId, busca) {
   try {
-    const filtro = { adminId, ativo: true };
-    if (busca && busca.trim()) {
-      const regex = { $regex: busca.trim(), $options: 'i' };
-      filtro.$or = [{ nome: regex }, { tags: regex }, { palavrasChave: regex }, { descricao: regex }, { categoria: regex }];
-    }
-    return await ProdutoAgenda.find(filtro).sort({ ordem: 1 }).limit(8).lean();
+    // Sempre buscar TODOS os produtos ativos do negócio (a IA decide o mais relevante)
+    const todos = await ProdutoAgenda.find({ adminId, ativo: true }).sort({ ordem: 1 }).limit(30).lean();
+    if (!busca || !busca.trim() || todos.length === 0) return todos;
+
+    // Normalizar busca: remover acentos, plural simples, gírias comuns
+    const normalizar = s => s.toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/s$/,'')  // plural simples
+      .replace(/[^a-z0-9 ]/g, ' ')
+      .trim();
+
+    const termos = normalizar(busca).split(/\s+/).filter(t => t.length > 2);
+
+    // Sinonimos comuns para ajudar o match
+    const sinonimos = {
+      'camisa': ['camiseta','blusa','regata','polo'],
+      'camiseta': ['camisa','blusa','regata','camisas'],
+      'calcao': ['short','bermuda','calca'],
+      'calca': ['calcao','jeans','legging','short'],
+      'tenis': ['sapato','sapatilha','sandalia','chinelo'],
+      'bolsa': ['mochila','carteira','pochete','bag'],
+      'perfume': ['colonia','fragancia','desodorante'],
+      'creme': ['hidratante','loção','pomada','gel'],
+      'shampoo': ['condicionador','cabelo','lavagem'],
+    };
+
+    // Expandir termos com sinônimos
+    const termosExpandidos = [...termos];
+    termos.forEach(t => {
+      if (sinonimos[t]) termosExpandidos.push(...sinonimos[t]);
+      Object.entries(sinonimos).forEach(([k,v]) => {
+        if (v.includes(t)) termosExpandidos.push(k, ...v);
+      });
+    });
+    const termosUnicos = [...new Set(termosExpandidos)];
+
+    // Score de relevância para cada produto
+    const comScore = todos.map(p => {
+      const campos = normalizar([p.nome, p.categoria, p.descricao, ...(p.tags||[]), ...(p.palavrasChave||[])].join(' '));
+      let score = 0;
+      termosUnicos.forEach(t => {
+        if (campos.includes(t)) score += t.length > 4 ? 3 : 1;
+      });
+      return { ...p, _score: score };
+    });
+
+    // Ordenar por score — se nenhum bateu, retorna todos mesmo (IA decide)
+    comScore.sort((a,b) => b._score - a._score);
+    const comMatch = comScore.filter(p => p._score > 0);
+    return comMatch.length > 0 ? comMatch.slice(0,8) : todos.slice(0,8);
   } catch(e) { return []; }
 }
 
