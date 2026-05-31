@@ -177,9 +177,10 @@ async function atenderCliente(telefoneCliente, mensagem, adminId) {
 
     const listaProdutos = produtos.length
       ? produtos.map(p => {
-          const preco = p.precoPromocional ? `R$ ${p.precoPromocional.toFixed(2)} ~~R$ ${p.preco.toFixed(2)}~~` : `R$ ${p.preco.toFixed(2)}`;
-          const est = p.estoque === 0 ? ' [SEM ESTOQUE]' : p.estoque !== null ? ` [${p.estoque} em estoque]` : '';
-          return `• *${p.nome}* — ${preco}${est}${p.descricao ? ' — '+p.descricao : ''}${p._id ? ' [id:'+p._id+']' : ''}`;
+          const preco = p.precoPromocional ? `R$ ${p.precoPromocional.toFixed(2)} (PROMOÇÃO! era R$ ${p.preco.toFixed(2)})` : p.precoCombo ? `R$ ${p.precoCombo.toFixed(2)} (COMBO ESPECIAL)` : `R$ ${p.preco.toFixed(2)}`;
+          const est = p.estoque === 0 ? ' [SEM ESTOQUE]' : p.estoque > 0 && p.estoque <= 3 ? ` [ÚLTIMAS ${p.estoque} UNIDADES!]` : p.estoque !== null ? ` [${p.estoque} em estoque]` : '';
+          const flags = [p.destaque ? '⭐DESTAQUE' : '', p.combo ? '🎁COMBO' : '', (p.totalVendas||0) > 0 ? `🔥${p.totalVendas} vendas` : ''].filter(Boolean).join(' ');
+          return `• *${p.nome}*${flags ? ' ['+flags+']' : ''} — ${preco}${est}${p.descricao ? ' — '+p.descricao : ''}`;
         }).join('\n')
       : '';
 
