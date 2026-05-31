@@ -4514,7 +4514,7 @@ function _tok() {
 function _h() { return { 'Content-Type':'application/json', 'Authorization':'Bearer '+_tok() }; }
 
 // ── Estender irPara para novos módulos ──────────────────────────
-const _irParaOriginal = typeof irPara === 'function' ? irPara : null;
+if (typeof _irParaOriginal === 'undefined') { window._irParaOriginal = typeof irPara === 'function' ? irPara : null; }
 function irPara(tela) {
   const novas = ['produtos','catalogos','conhecimento','leads-produtos','carrinhos'];
   if (novas.includes(tela)) {
