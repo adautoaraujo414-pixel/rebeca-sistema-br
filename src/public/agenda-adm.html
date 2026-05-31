@@ -4277,6 +4277,29 @@ carregarFinanceiro = async function() {
           <option value="false">Inativo (oculto)</option>
         </select>
       </div>
+      <div class="form-field" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div>
+          <label>⭐ Destaque na vitrine</label>
+          <select id="prod-destaque">
+            <option value="false">Não</option>
+            <option value="true">Sim — aparecer em Destaques</option>
+          </select>
+        </div>
+        <div>
+          <label>🎁 É um combo?</label>
+          <select id="prod-combo" onchange="toggleComboFields(this.value)">
+            <option value="false">Não</option>
+            <option value="true">Sim — é um combo</option>
+          </select>
+        </div>
+      </div>
+      <div id="combo-fields" style="display:none">
+        <label>Preço do combo (R$)</label>
+        <input type="number" id="prod-preco-combo" placeholder="Ex: 89.90" step="0.01">
+      </div>
+      <div class="form-field" style="display:none"><!-- placeholder fechamento -->
+        <xselect>
+      </div>
     </div>
     <div class="modal-footer">
       <button class="btn-danger" id="btn-excluir-prod" onclick="excluirProduto()" style="display:none;margin-right:auto">Excluir</button>
@@ -4601,6 +4624,10 @@ function abrirModalProduto(prod) {
   document.getElementById('prod-foto').value = '';
   removerFotoProduto();
   document.getElementById('prod-status').value = 'true';
+  if(document.getElementById('prod-destaque')) document.getElementById('prod-destaque').value = 'false';
+  if(document.getElementById('prod-combo')) document.getElementById('prod-combo').value = 'false';
+  if(document.getElementById('prod-preco-combo')) document.getElementById('prod-preco-combo').value = '';
+  if(document.getElementById('combo-fields')) document.getElementById('combo-fields').style.display='none';
   document.getElementById('btn-excluir-prod').style.display = 'none';
   document.getElementById('modal-produto').classList.add('show');
 }
@@ -4622,10 +4649,17 @@ function editarProduto(id) {
   document.getElementById('prod-foto').value = p.fotoPrincipal || '';
   if (p.fotoPrincipal) { mostrarPreviewFoto(p.fotoPrincipal); } else { removerFotoProduto(); }
   document.getElementById('prod-status').value = p.ativo ? 'true' : 'false';
+  if(document.getElementById('prod-destaque')) document.getElementById('prod-destaque').value = p.destaque ? 'true' : 'false';
+  if(document.getElementById('prod-combo')) { document.getElementById('prod-combo').value = p.combo ? 'true' : 'false'; toggleComboFields(p.combo ? 'true' : 'false'); }
+  if(document.getElementById('prod-preco-combo')) document.getElementById('prod-preco-combo').value = p.precoCombo || '';
   document.getElementById('btn-excluir-prod').style.display = 'block';
   document.getElementById('modal-produto').classList.add('show');
 }
 
+function toggleComboFields(val) {
+  var el = document.getElementById('combo-fields');
+  if (el) el.style.display = val === 'true' ? 'block' : 'none';
+}
 async function salvarProduto() {
   const id = document.getElementById('prod-id').value;
   const nome = document.getElementById('prod-nome').value.trim();
@@ -4643,7 +4677,10 @@ async function salvarProduto() {
     tags: document.getElementById('prod-tags').value.split(',').map(t=>t.trim()).filter(Boolean),
     palavrasChave: document.getElementById('prod-palavras').value.split(',').map(t=>t.trim()).filter(Boolean),
     fotoPrincipal: document.getElementById('prod-foto').value.trim(),
-    ativo: document.getElementById('prod-status').value === 'true'
+    ativo: document.getElementById('prod-status').value === 'true',
+    destaque: document.getElementById('prod-destaque')?.value === 'true',
+    combo: document.getElementById('prod-combo')?.value === 'true',
+    precoCombo: parseFloat(document.getElementById('prod-preco-combo')?.value) || null
   };
   try {
     const url = id ? `${_API}/produtos/${id}` : `${_API}/produtos`;

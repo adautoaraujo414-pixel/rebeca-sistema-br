@@ -365,6 +365,11 @@ const produtoAgendaSchema = new mongoose.Schema({
   },
   catalogo_ids: [{ type: mongoose.Schema.Types.ObjectId, ref: 'CatalogoAgenda' }],
   ordem:        { type: Number, default: 0 },
+  destaque:     { type: Boolean, default: false },
+  combo:        { type: Boolean, default: false },
+  produtosCombo:[{ type: mongoose.Schema.Types.ObjectId, ref: 'ProdutoAgenda' }],
+  precoCombo:   { type: Number, default: null },
+  totalVendas:  { type: Number, default: 0 },
   criadoEm:     { type: Date, default: Date.now }
 });
 produtoAgendaSchema.index({ adminId: 1, ativo: 1 });

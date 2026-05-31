@@ -161,13 +161,26 @@ router.get('/espaco/:adminId/vitrine', async (req, res) => {
     const admin = await AdminAgenda.findById(adminId).lean();
     if (!admin) return res.status(404).json({ erro: 'Espaço não encontrado' });
 
-    const [servicos, produtos, catalogos] = await Promise.all([
+    const [servicos, todos, catalogos] = await Promise.all([
       ServicoAgenda.find({ adminId, ativo: true }).sort({ ordem: 1 }).lean(),
       ProdutoAgenda.find({ adminId, ativo: true }).sort({ ordem: 1 }).lean(),
       CatalogoAgenda.find({ adminId, ativo: true }).sort({ ordem: 1 }).lean()
     ]);
 
-    res.json({ sucesso: true, nomeNegocio: admin.nomeNegocio, servicos, produtos, catalogos });
+    // Separar em seções
+    const promocoes   = todos.filter(p => p.precoPromocional && p.precoPromocional < p.preco);
+    const destaques   = todos.filter(p => p.destaque);
+    const combos      = todos.filter(p => p.combo);
+    const maisPedidos = [...todos].sort((a,b) => (b.totalVendas||0) - (a.totalVendas||0)).filter(p => (p.totalVendas||0) > 0).slice(0, 8);
+
+    res.json({
+      sucesso: true,
+      nomeNegocio: admin.nomeNegocio,
+      servicos,
+      produtos: todos,
+      catalogos,
+      secoes: { promocoes, destaques, combos, maisPedidos }
+    });
   } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
