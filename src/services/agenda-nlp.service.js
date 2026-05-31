@@ -320,6 +320,7 @@ function parsear(txt) {
       // 7. Remover artigos/preposições soltas no início
       .replace(/^(para|pra|pro|de|do|da|o|a|um|uma|e|com|no|na)\s+/gi, '')
       .replace(/^(para|pra|pro|de|do|da|o|a|um|uma|e|com|no|na)\s+/gi, '')
+      .replace(/^(para|pra|pro|de|do|da|o|a|um|uma|e|com|no|na)\s+/gi, '')
       // 8. Remover números soltos
       .replace(/\b\d+\b\s*/g, '')
       // 9. Remover pontuação e espaços extras
