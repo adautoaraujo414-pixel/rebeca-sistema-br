@@ -785,6 +785,10 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
           const _dia2 = _recSim.dia || 1;
           const _d2 = new Date(_hoje2.getFullYear(), _hoje2.getMonth() + i + (_hoje2.getDate() >= _dia2 ? 1 : 0), _dia2, 9, 0, 0);
           _dataEvento2 = new Date(Date.UTC(_d2.getUTCFullYear(), _d2.getUTCMonth(), _d2.getUTCDate(), 12, 0, 0));
+        } else if (_recSim.tipo === 'diario') {
+          const _d2 = new Date(_hoje2);
+          _d2.setDate(_d2.getDate() + i + 1);
+          _dataEvento2 = new Date(Date.UTC(_d2.getUTCFullYear(), _d2.getUTCMonth(), _d2.getUTCDate(), 9, 0, 0));
         }
         if (_dataEvento2) {
           _lembretes2.push({
@@ -798,8 +802,11 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
       }
       if (_lembretes2.length) {
         await AdminAgenda.findByIdAndUpdate(adminObjId, { $push: { 'config.lembretes': { $each: _lembretes2 } } });
+      } else {
+        const _rErro = '⚠️ Não consegui gerar os lembretes. Tipo de recorrência não reconhecido. Tente: "todo dia 10", "toda sexta", "todo dia".';
+        await responder(_rErro); SM.addAssistantMsg(adminId, telefone, _rErro); return true;
       }
-      let _descRec3 = _recSim.tipo === 'semanal' ? `toda ${_recSim.diaSemana}` : `todo dia ${_recSim.dia || 1} do mês`;
+      let _descRec3 = _recSim.tipo === 'semanal' ? `toda ${_recSim.diaSemana}` : _recSim.tipo === 'diario' ? 'todo dia' : `todo dia ${_recSim.dia || 1} do mês`;
       const _rResp = `Perfeito! 🔔 Criei *${_lembretes2.length} lembretes* de *${_pendRec.texto}*${_pendRec.valor ? ' (R$ '+_pendRec.valor+')' : ''} ${_descRec3}. Te aviso 30 min antes de cada um! 💙`;
       await responder(_rResp);
       SM.addAssistantMsg(adminId, telefone, _rResp);
