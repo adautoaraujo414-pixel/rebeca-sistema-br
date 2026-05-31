@@ -2450,15 +2450,20 @@ LEMBRE: você é a pessoa em quem ela mais confia no dia a dia. Esse espaço é 
         const cat = ent.categoria || 'outros';
         // Limpar descrição — não salvar frase de comando como descrição
         let _descRaw = (ent.descricao || ent.origem || '')
-          .replace(/^(lança|registra|anota|coloca|marca|lanca)\s+[\d.,]+\s*(reais?|r\$)?\s*(de\s+)?(saída|entrada|saida)?\s*(de\s+)?/i, '')
+          // Remover frases de comando que vazaram para a descrição
+          .replace(/^(lança|registra|anota|coloca|marca|lanca|registra\s+saída|registra\s+uma\s+saída)\s+[\d.,]+\s*(reais?|r\$)?\s*(de\s+)?(saída|entrada|saida)?\s*(de\s+)?/i, '')
+          .replace(/^(r\$\s*)?[\d]+([.,][\d]+)?\s*(reais?)?\s*(de\s+)?(saída|entrada|saida)?\s*(de\s+)?/i, '')
+          .replace(/^(pra\s+mim\s+e\s+)/i, '') // "pra mim e Marmita" → "Marmita"
+          .replace(/^(pra\s+mim\s*)/i, '')       // "pra mim" → vazio
+          .replace(/^(para\s+mim\s+e\s+)/i, '')
           .replace(/^(e\s+)?(alimentos?|mercado|combustivel|farmacia|feira|padaria|restaurante|lanche|academia|posto)\s*$/i, '')
           .replace(/^(e\s+)/i, '').trim();
-        const desc = _descRaw && _descRaw.length > 1 ? _descRaw : 'Saída via WhatsApp';
+        const desc = _descRaw && _descRaw.length > 1 ? _descRaw : '';
         await LancamentoAgenda.create({
           valor: Number(ent.valor), descricao: desc, categoria: cat,
           data: _dataAgora(), origem: 'whatsapp_dono'
         });
-        const _r = `Anotei! Saída de R$ ${Number(ent.valor).toFixed(2)} em "${cat}"${desc !== 'Saída via WhatsApp' ? ' — ' + desc : ''}. 💸`;
+        const _r = `Anotei! Saída de R$ ${Number(ent.valor).toFixed(2)} em "${cat}"${desc ? ' — ' + desc : ''}. 💸`;
         await responder(_r);
         SM.addAssistantMsg(adminId, telefone, _r);
         return true;

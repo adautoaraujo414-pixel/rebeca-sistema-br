@@ -105,6 +105,11 @@ EXTRAIR VALOR — sempre:
   "registra saída de 150 Luiz Rio Preto" → valor:150, descricao:"Luiz - Rio Preto", categoria:outros
   "lança 50 reais de saída alimentos" → valor:50, categoria:mercado
   "registra saída de 100 reais para mim e para o Tarsas" → valor:100, descricao:"Tarsas"
+  "registra saída de 26 pra mim e Marmita" → valor:26, descricao:"Marmita", categoria:outros
+  "registra saída de 50 pra mim e almoço" → valor:50, descricao:"almoço", categoria:alimentacao
+  "saída de 30 pra mim" → valor:30, descricao:"", categoria:outros
+  REGRA: "pra mim e [X]" → descricao=X (ignorar "pra mim e")
+  REGRA: "pra mim" sozinho → descricao vazia
   "entrada de 200 do fornecedor João da Silva" → valor:200, descricao:"fornecedor João da Silva"
 
 EXTRAIR CATEGORIA pelo contexto:
