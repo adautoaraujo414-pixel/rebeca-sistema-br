@@ -2344,6 +2344,63 @@ LEMBRE: você é a pessoa em quem ela mais confia no dia a dia. Esse espaço é 
       }
       // ─────────────────────────────────────────────────────────────────────
 
+      // ── RESUMO DE VENDAS / LEADS DE PRODUTOS ──────────────────────────────
+      if (_cerebro.intencao === 'resumo_vendas' || _cerebro.intencao === 'leads_produtos') {
+        try {
+          const { LeadProdutoAgenda, ProdutoAgenda } = require('../models/AgendaServico');
+          const periodo = ent.periodo || 'hoje';
+          let dataIni;
+          const agora = new Date();
+          if (periodo === 'hoje') {
+            dataIni = new Date(agora); dataIni.setHours(0,0,0,0);
+          } else if (periodo === 'semana') {
+            dataIni = new Date(agora.getTime() - 7*86400000);
+          } else {
+            dataIni = new Date(agora.getTime() - 30*86400000);
+          }
+
+          const leads = await LeadProdutoAgenda.find({
+            adminId: adminObjId, data: { $gte: dataIni }
+          }).lean();
+
+          if (!leads.length) {
+            const _r = `Nenhuma consulta de produto registrada ${periodo === 'hoje' ? 'hoje' : periodo === 'semana' ? 'essa semana' : 'esse mês'}, ${_chefe(_generoAdmin, _apelidoAdmin)}.`;
+            await responder(_r); SM.addAssistantMsg(adminId, telefone, _r); return true;
+          }
+
+          // Agrupar por produto
+          const contagem = {};
+          const acoes = { consultou: 0, recebeu_foto: 0, adicionou_carrinho: 0, finalizou_compra: 0 };
+          leads.forEach(l => {
+            const nome = l.produtoNome || 'Produto';
+            if (!contagem[nome]) contagem[nome] = { total: 0, acoes: {} };
+            contagem[nome].total++;
+            contagem[nome].acoes[l.acao] = (contagem[nome].acoes[l.acao] || 0) + 1;
+            acoes[l.acao] = (acoes[l.acao] || 0) + 1;
+          });
+
+          const top = Object.entries(contagem)
+            .sort((a,b) => b[1].total - a[1].total)
+            .slice(0, 6);
+
+          const listaTop = top.map(([nome, d]) =>
+            `• *${nome}* — ${d.total} consulta(s)${d.acoes.finalizou_compra ? ' ✅ '+d.acoes.finalizou_compra+' compra(s)' : ''}`
+          ).join('
+');
+
+          const periodoTxt = periodo === 'hoje' ? 'hoje' : periodo === 'semana' ? 'essa semana' : 'esse mês';
+          const _r = `📦 *Produtos mais consultados ${periodoTxt}:*
+
+${listaTop}
+
+📊 Total: ${leads.length} interação(ões)
+👀 Consultas: ${acoes.consultou||0} | 🛒 Carrinhos: ${acoes.adicionou_carrinho||0} | ✅ Compras: ${acoes.finalizou_compra||0}`;
+          await responder(_r); SM.addAssistantMsg(adminId, telefone, _r); return true;
+        } catch(e) {
+          console.error('[ModoDono] resumo_vendas erro:', e.message);
+        }
+      }
+
       // ── BUSCAR PRODUTO/CATÁLOGO (dono consultando o próprio estoque) ──
       if (_cerebro.intencao === 'buscar_produto_catalogo') {
         try {

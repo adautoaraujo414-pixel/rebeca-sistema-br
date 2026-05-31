@@ -293,10 +293,10 @@ ${linkAgenda ? '- Agendar online → "Você pode agendar direto pelo link: rebec
     const _notificarAdmin = /atendente|humano|falar com|reclamação|reclamacao|problema|urgente/i.test(mensagem);
 
     console.log('[AtendimentoCliente]', adminId, '|', telefoneCliente, '| notif:', _notificarAdmin);
-    // Registrar lead se produto foi mencionado
+    // Registrar lead e notificar dono se produto foi mencionado
     let fotoUrl = null;
-    if (_produtoMencionado && _produtoMencionado.fotoPrincipal) {
-      fotoUrl = _produtoMencionado.fotoPrincipal;
+    if (_produtoMencionado) {
+      fotoUrl = _produtoMencionado.fotoPrincipal || null;
       try {
         await LeadProdutoAgenda.create({
           adminId, telefone: telefoneCliente,
@@ -312,6 +312,17 @@ ${linkAgenda ? '- Agendar online → "Você pode agendar direto pelo link: rebec
             origem: 'whatsapp', acao: 'recebeu_foto'
           });
         }
+        // Notificar dono via push sobre o lead
+        try {
+          const { notificarAdmin } = require('../routes/agenda-push.routes');
+          const nomeDisplay = nomeCliente || telefoneCliente.slice(-4);
+          await notificarAdmin(
+            adminId,
+            '🛍️ Cliente interessado em produto!',
+            `${nomeDisplay} perguntou sobre: ${_produtoMencionado.nome}`,
+            '/agenda-adm'
+          );
+        } catch(_) {}
       } catch(e) {}
     }
     return { resposta, notificarAdmin: _notificarAdmin, nomeCliente, fotoUrl };

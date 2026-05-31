@@ -173,6 +173,10 @@ RACIOCÍNIO AVANÇADO — situações reais do dia a dia:
 - Dono: "cobrei 200 da Maria corte" → RACIOCÍNIO: receita de serviço → registrar_receita, valor:200, descricao:"corte", origem:"Maria"
 - Dono: "gastei 80 no mercado pra revenda" → registrar_despesa, valor:80, categoria:produtos
 - "tem shampoo?" → buscar_produto_catalogo, entidades:{busca:"shampoo"}
+- "quanto vendi hoje?" → resumo_vendas, entidades:{periodo:"hoje"}
+- "quais produtos foram mais consultados essa semana?" → resumo_vendas, entidades:{periodo:"semana"}
+- "me mostra os leads de produtos do mês" → leads_produtos, entidades:{periodo:"mes"}
+- "quantos clientes perguntaram sobre produtos?" → resumo_vendas, entidades:{periodo:"hoje"}
 - "qual o preço do vestido vermelho?" → buscar_produto_catalogo, entidades:{busca:"vestido vermelho"}
 - "vocês vendem calça jeans?" → buscar_produto_catalogo, entidades:{busca:"calça jeans"}
 - "tem alguma promoção?" → buscar_produto_catalogo, entidades:{busca:"promoção"}
@@ -318,7 +322,7 @@ function _validar(parsed) {
     'aniversariantes','servicos_mais_pedidos',
     'criar_lembrete','listar_lembretes',
     'resumo_semanal','resumo_mensal',
-    'buscar_produto_catalogo','saudacao','ajuda','confirmar_pendente','cancelar_pendente','fora_escopo'
+    'buscar_produto_catalogo','resumo_vendas','leads_produtos','saudacao','ajuda','confirmar_pendente','cancelar_pendente','fora_escopo'
   ]);
   const acoes = new Set(['executar','confirmar','pedir_info','responder','notificar_admin']);
   return {

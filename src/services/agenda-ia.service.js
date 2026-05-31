@@ -399,6 +399,36 @@ const AgendaIAService = {
     const intencao = _detectarIntencao(mensagem, conv.etapa);
     _log(adminId, 'mensagem_recebida', { telefone, mensagem: mensagem.substring(0,80), intencao, etapa: conv.etapa });
 
+    // ── AGENDAMENTO COMPLETO EM MENSAGEM ÚNICA ────────────────────────────
+    // Ex: "quero corte sexta às 14h", "marcar hidratação amanhã 10h"
+    if (conv.etapa === 'idle' && intencao === 'start_booking') {
+      const _dataNaMsg = _parseData(mensagem);
+      const _horaNaMsg = (() => {
+        const m = mensagem.match(/(\d{1,2})[h:](\d{0,2})/);
+        if (!m) return null;
+        return String(m[1]).padStart(2,'0') + ':' + String(m[2]||'00').padStart(2,'0');
+      })();
+      const _servicoNaMsg = servicos.find(s =>
+        mensagem.toLowerCase().split(/\s+/).some(t => t.length > 3 && s.nome.toLowerCase().includes(t))
+      );
+      if (_dataNaMsg && _horaNaMsg && _servicoNaMsg) {
+        const slots = await _horariosLivres(adminId, _dataNaMsg, _servicoNaMsg.duracao);
+        if (slots.includes(_horaNaMsg)) {
+          conv.dados.servico = _servicoNaMsg.nome;
+          conv.dados.servicoId = String(_servicoNaMsg._id);
+          conv.dados.data = _dataNaMsg;
+          conv.dados.hora = _horaNaMsg;
+          conv.etapa = 'awaiting_name';
+          _log(adminId, 'agendamento_rapido_detectado', { telefone, servico: _servicoNaMsg.nome, data: _dataNaMsg, hora: _horaNaMsg });
+          return `Boa! Achei o horário. 😊
+
+${_servicoNaMsg.nome} — ${_fmtData(_dataNaMsg)} às ${_horaNaMsg}
+
+${_pick(_v.pedirNome)}`;
+        }
+      }
+    }
+
     // ── ETAPA: aguardando cancelamento
     if (conv.etapa === 'awaiting_cancel_confirm') {
       if (intencao === 'confirm') {
