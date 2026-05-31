@@ -54,6 +54,7 @@ const JobImpressaoSchema = new mongoose.Schema({
   mesa:      { type: String, default: '' },
   telefone:  { type: String, default: '' },
   status:    { type: String, default: 'pendente' }, // pendente | impresso | erro
+  instancia: { type: String, default: 'cozinha' }, // cozinha | caixa — separa filas por PC
   criadoEm:  { type: Date, default: Date.now },
   impresso_em: { type: Date }
 });

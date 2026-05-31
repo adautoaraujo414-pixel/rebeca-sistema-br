@@ -294,7 +294,7 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                                         cont.numero += 1;
                                         await cont.save();
                                         const txtFinal = buf.linhas.join('\n');
-                                        await JobImpressao.create({ adminId: _keyCoz, texto: txtFinal, mesa: String(cont.numero), status: 'pendente', criadoEm: new Date() });
+                                        await JobImpressao.create({ adminId: _keyCoz, texto: txtFinal, mesa: String(cont.numero), status: 'pendente', instancia: 'cozinha', criadoEm: new Date() });
                                         console.log('[Cozinha-Evo] Job #'+cont.numero+' criado para adminId:', _keyCoz, '| texto:', txtFinal.substring(0,60));
                                     } catch(eCozBuf) { console.error('[Cozinha-Evo] Erro buffer:', eCozBuf.message); }
                                 }, 3000);

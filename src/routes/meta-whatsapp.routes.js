@@ -97,7 +97,7 @@ router.post('/webhook', express.json(), async (req, res) => {
                   { upsert: true, new: true }
                 );
                 const txtFinal = buf.linhas.join('\n');
-                await JobImpressao.create({ adminId: String(key), texto: txtFinal, mesa: String(cont.numero), status: 'pendente', criadoEm: new Date() });
+                await JobImpressao.create({ adminId: String(key), texto: txtFinal, mesa: String(cont.numero), status: 'pendente', instancia: 'cozinha', criadoEm: new Date() });
                 console.log('[Cozinha] Job criado adminId:', String(key), '| pedido#', cont.numero);
                 console.log('[Cozinha] Job #' + cont.numero + ':', txtFinal.substring(0,60));
               } catch(e) { console.error('[Cozinha] Erro buffer:', e.message); }

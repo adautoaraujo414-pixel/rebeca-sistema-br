@@ -59,9 +59,11 @@ router.get('/jobs/:adminId', async (req, res) => {
   try {
     const { JobImpressao } = require('../models/cozinha.model');
     const _adminIdStr = String(req.params.adminId);
-    const jobs = await JobImpressao.find({ adminId: _adminIdStr, status: 'pendente' })
+    // instancia = 'cozinha' (default) ou 'caixa' — cada PC só pega seus jobs
+    const _instancia = req.query.instancia || 'cozinha';
+    const jobs = await JobImpressao.find({ adminId: _adminIdStr, status: 'pendente', instancia: _instancia })
       .sort({ criadoEm: 1 }).limit(5).lean();
-    console.log('[Cozinha] /jobs', _adminIdStr, '→', jobs.length, 'pendentes');
+    console.log('[Cozinha] /jobs', _adminIdStr, 'instancia:', _instancia, '→', jobs.length, 'pendentes');
     res.json({ sucesso: true, jobs });
   } catch(e) { res.json({ sucesso: true, jobs: [] }); }
 });
@@ -87,7 +89,7 @@ router.post('/impressora/:adminId/testar', auth, async (req, res) => {
       adminId: String(req.params.adminId),
       texto: 'TESTE DE IMPRESSAO\nRebeca Cozinha OK\n' + new Date().toLocaleTimeString('pt-BR'),
       mesa: 'TESTE',
-      status: 'pendente',
+      status: 'pendente', instancia: 'cozinha',
       criadoEm: new Date()
     });
     console.log('[Cozinha] Job TESTE criado para adminId:', req.params.adminId);
