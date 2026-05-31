@@ -140,39 +140,42 @@ function extrairValor(txt) {
   const n = converterExtenso(normalizar(txt));
 
   // Detectar recorrente para NÃO confundir "dia 10" com valor
-  const isRecorrente = /todo\s*(dia|mes|mes)\s*\d|toda\s*(semana|segunda|terca|quarta|quinta|sexta|sabado|domingo)/.test(n);
+  // Detectar recorrente — para não confundir "dia 10" com valor
+  const isRecorrente = /todo\s*(?:dia|mes)\s*\d|toda?\s*(?:semana|segunda|terca|quarta|quinta|sexta|sabado|domingo)|para\s*todo\s*dia\s*\d|recorrente|mensalmente|diariamente/.test(n);
+  // Se recorrente, remover "dia X" do texto antes de qualquer match de valor
+  const nValor = isRecorrente ? n.replace(/\b(?:todo\s*)?dia\s*\d{1,2}\b/g, '').replace(/\bpara\b/g, '') : n;
 
   // "4 mil", "4k"
-  const milM = n.match(/(\d+(?:[.,]\d+)?)\s*mil\b/);
+  const milM = nValor.match(/(\d+(?:[.,]\d+)?)\s*mil\b/);
   if (milM) return parseFloat(milM[1].replace(',','.')) * 1000;
-  const kM = n.match(/(\d+(?:[.,]\d+)?)\s*k\b/);
+  const kM = nValor.match(/(\d+(?:[.,]\d+)?)\s*k\b/);
   if (kM) return parseFloat(kM[1].replace(',','.')) * 1000;
 
   // Formato brasileiro com milhar: 1.200,00 ou 1.200
-  const milhar = n.match(/(\d{1,3}(?:\.\d{3})+(?:,\d{1,2})?)/);
+  const milhar = nValor.match(/(\d{1,3}(?:\.\d{3})+(?:,\d{1,2})?)/);
   if (milhar) return parseFloat(milhar[1].replace(/\./g,'').replace(',','.'));
 
   // R$ + valor
-  const rs = n.match(/r\$?\s*(\d+(?:[.,]\d{1,2})?)/);
+  const rs = nValor.match(/r\$?\s*(\d+(?:[.,]\d{1,2})?)/);
   if (rs) return parseFloat(rs[1].replace(',','.'));
 
   // valor + reais/conto
-  const reais = n.match(/(\d+(?:[.,]\d{1,2})?)\s*(?:reais|real|conto|pila)\b/);
+  const reais = nValor.match(/(\d+(?:[.,]\d{1,2})?)\s*(?:reais|real|conto|pila)\b/);
   if (reais) return parseFloat(reais[1].replace(',','.'));
 
   // vírgula decimal: 10,50
-  const virgula = n.match(/\b(\d+),(\d{2})\b/);
+  const virgula = nValor.match(/\b(\d+),(\d{2})\b/);
   if (virgula) return parseFloat(virgula[1] + '.' + virgula[2]);
 
   // número solto — mas se for recorrente, ignora o "dia X"
   if (isRecorrente) {
     // pega qualquer número que NÃO seja precedido de "dia"
-    const mSemDia = n.replace(/\btodo\s*dia\s*\d+/g,'').replace(/\bdia\s*\d+/g,'').match(/\b(\d+(?:[.,]\d+)?)\b/);
+    const mSemDia = nValor.replace(/\btodo\s*dia\s*\d+/g,'').replace(/\bdia\s*\d+/g,'').match(/\b(\d+(?:[.,]\d+)?)\b/);
     if (mSemDia) { const v = parseFloat(mSemDia[1].replace(',','.')); return v > 0 ? v : null; }
     return null;
   }
 
-  const solto = n.match(/\b(\d+(?:[.,]\d+)?)\b/);
+  const solto = nValor.match(/\b(\d+(?:[.,]\d+)?)\b/);
   if (solto) { const v = parseFloat(solto[1].replace(',','.')); return v > 0 ? v : null; }
   return null;
 }
@@ -312,7 +315,8 @@ function parsear(txt) {
       .replace(/\b(novecentos|oitocentos|setecentos|seiscentos|quinhentos|quatrocentos|trezentos|duzentos|cem|mil)\b\s*(reais?)?/gi, '')
       .replace(/\br\b\s*/gi, '')  // resíduo de "r$"
       // 7. Remover artigos/preposições soltas no início
-      .replace(/^(de|do|da|para|pro|pra|o|a|um|uma|e|com|no|na)\s+/gi, '')
+      .replace(/^(para|pra|pro|de|do|da|o|a|um|uma|e|com|no|na)\s+/gi, '')
+      .replace(/^(para|pra|pro|de|do|da|o|a|um|uma|e|com|no|na)\s+/gi, '')
       // 8. Remover números soltos
       .replace(/\b\d+\b\s*/g, '')
       // 9. Remover pontuação e espaços extras
