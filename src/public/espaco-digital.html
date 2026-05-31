@@ -765,24 +765,38 @@ function renderProdutos(prods) {
   document.getElementById('produtos').classList.remove('hidden');
   document.getElementById('nav-prod').style.display = '';
   grid.innerHTML = prods.map(function(p) {
-    var preco = p.precoPromocional ? '<span class="prod-card-pub-preco">R$ '+p.precoPromocional.toFixed(2)+'</span><span class="prod-card-pub-preco-old">R$ '+p.preco.toFixed(2)+'</span>' : '<span class="prod-card-pub-preco">R$ '+p.preco.toFixed(2)+'</span>';
-    var img = p.fotoPrincipal ? '<img src="'+p.fotoPrincipal+'" alt="'+p.nome+'" style="width:100%;height:100%;object-fit:cover">' : '🛍️';
-    var estoque = p.estoque > 0 ? '<div class="prod-card-pub-estoque">'+p.estoque+' em estoque</div>' : '<div class="prod-card-pub-estoque" style="color:var(--vermelho)">Esgotado</div>';
+    var precoFinal = p.precoPromocional || p.preco;
+    var precoHtml = p.precoPromocional
+      ? '<span class="prod-card-pub-preco">R$ '+precoFinal.toFixed(2)+'</span><span class="prod-card-pub-preco-old">R$ '+p.preco.toFixed(2)+'</span>'
+      : '<span class="prod-card-pub-preco">R$ '+p.preco.toFixed(2)+'</span>';
+    var imgHtml = p.fotoPrincipal
+      ? '<img src="'+p.fotoPrincipal+'" alt="" style="width:100%;height:100%;object-fit:cover">'
+      : '🛍️';
+    var estoqueHtml = p.estoque > 0
+      ? '<div class="prod-card-pub-estoque">'+p.estoque+' em estoque</div>'
+      : '<div class="prod-card-pub-estoque" style="color:var(--vermelho)">Esgotado</div>';
+    var btnComprar = p.estoque > 0
+      ? '<button class="btn btn-primary" data-id="'+p._id+'" data-nome="'+encodeURIComponent(p.nome)+'" data-preco="'+precoFinal+'" data-foto="'+encodeURIComponent(p.fotoPrincipal||'')+'" onclick="_comprar(this)">🛒 Comprar</button>'
+      : '';
+    var btnWpp = '<button class="btn btn-wpp" data-nome="'+encodeURIComponent(p.nome)+'" onclick="_wppProd(this)">💬 WhatsApp</button>';
     return '<div class="prod-card-pub">'+
-      '<div class="prod-card-pub-img">'+img+'</div>'+
+      '<div class="prod-card-pub-img">'+imgHtml+'</div>'+
       '<div class="prod-card-pub-body">'+
         '<div class="prod-card-pub-nome">'+p.nome+'</div>'+
-        '<div>'+preco+'</div>'+
+        '<div>'+precoHtml+'</div>'+
         (p.descricao ? '<div class="prod-card-pub-desc">'+p.descricao+'</div>' : '')+
-        estoque+
-        '<div class="prod-card-pub-actions">'+
-          (p.estoque > 0 ? '<button class="btn btn-primary" onclick="adicionarCarrinho(&quot;'+p._id+'&quot;,&quot;'+p.nome.replace(/&quot;/g,\'\')+'&quot;,'+(p.precoPromocional||p.preco)+')">🛒 Comprar</button>' : '')+
-          '<button class="btn btn-wpp" onclick="window.open(\'https://wa.me/'+wppNum+'?text=Ol%C3%A1!%20Interesse%20em:%20'+encodeURIComponent(p.nome)+'\',\'_blank\')">💬 WhatsApp</button>'+
-        '</div>'+
+        estoqueHtml+
+        '<div class="prod-card-pub-actions">'+btnComprar+btnWpp+'</div>'+
       '</div>'+
     '</div>';
   }).join('');
   document.getElementById('carrinho-fab').classList.remove('hidden');
+}
+function _comprar(btn) {
+  adicionarCarrinho(btn.dataset.id, decodeURIComponent(btn.dataset.nome), parseFloat(btn.dataset.preco), decodeURIComponent(btn.dataset.foto));
+}
+function _wppProd(btn) {
+  window.open('https://wa.me/'+wppNum+'?text='+encodeURIComponent('Olá! Tenho interesse no produto: '+decodeURIComponent(btn.dataset.nome)), '_blank');
 }
 
 // ══════════════════ CATÁLOGOS ══════════════════
