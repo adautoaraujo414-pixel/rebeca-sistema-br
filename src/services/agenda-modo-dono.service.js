@@ -845,6 +845,8 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
 
 
     const _nlpVal = nlp.valor;
+    const _nlpInt = nlp.intencao;
+    const _nlpCat = nlp.categoria || 'outros';
 
     // ── RECORRENTE: "toda sexta pagar raphaela 499", "todo dia 10 aluguel" ────
     if (nlp.intencao === 'recorrente' && nlp.recorrente) {
