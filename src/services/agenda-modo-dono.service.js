@@ -736,8 +736,16 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
         // Servidor UTC: hora do usuário (BRT=UTC-3) → armazenar em UTC (+3h)
         dataEvento.setUTCHours(_hora.h + 3, _hora.min, 0, 0);
         const dataAviso  = new Date(dataEvento.getTime() - 30 * 60000);
+        const _diasAteSimp = Math.ceil((dataEvento - new Date()) / (1000 * 60 * 60 * 24));
+        const _lembretesSimp = [{ texto: _txt, dataEvento, dataAviso, enviado: false, criadoEm: new Date() }];
+        if (_diasAteSimp > 5) {
+          const _avisoD1 = new Date(dataEvento);
+          _avisoD1.setDate(_avisoD1.getDate() - 1);
+          _avisoD1.setUTCHours(9, 0, 0, 0);
+          _lembretesSimp.push({ texto: '⚠️ Amanhã vence: ' + _txt, dataEvento, dataAviso: _avisoD1, tipoAviso: 'D-1', enviado: false, criadoEm: new Date() });
+        }
         await AdminAgenda.findByIdAndUpdate(adminObjId, {
-          $push: { 'config.lembretes': { texto: _txt, dataEvento, dataAviso, enviado: false, criadoEm: new Date() } }
+          $push: { 'config.lembretes': { $each: _lembretesSimp } }
         });
         const _diaStr = dataEvento.toLocaleDateString('pt-BR', { weekday:'long', day:'numeric', month:'long' });
         // Resposta amigável e contextual
