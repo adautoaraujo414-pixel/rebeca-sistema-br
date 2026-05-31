@@ -293,8 +293,10 @@ function parsear(txt) {
       .replace(/r\$\s*[\d.,]+/g, '')  // remover valor monetário
       .replace(/\b\d+\b/g, '')
       .replace(/\b(reais|de|pra|para|pro|com|as|no|na|um|uma|e|o|a)\b/g, '')
+      .replace(/\br\$?\s*/gi, '')   // remover resíduos de "r$", "r r"
+      .replace(/\b(lembrejo|lembrete|aviso|alerta)\b/gi, '')
       .replace(/[,.:;!?]+/g, ' ')
-      .replace(/\s+/g, ' ').trim() || null;
+      .replace(/\s{2,}/g, ' ').trim() || null;
   }
 
   return { intencao, valor, categoria, normalizado, original: txt, textoLembrete, recorrente };
