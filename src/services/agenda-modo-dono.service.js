@@ -43,10 +43,10 @@ function _confirmacao() {
   return opcoes[Math.floor(Math.random() * opcoes.length)];
 }
 
-function _erro() {
+function _erro(genero, apelido) {
   const opcoes = [
     'Eita, não entendi direito não. 😅',
-    'Hmm, me explica melhor, ' + _chefe(_generoAdmin, _apelidoAdmin) + '?',
+    'Hmm, me explica melhor, ' + _chefe(genero || '', apelido || null) + '?',
     'Não consegui pegar essa, pode repetir de outro jeito?'
   ];
   return opcoes[Math.floor(Math.random() * opcoes.length)];
@@ -629,7 +629,7 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
         return true;
       }
     }
-    await responder(`${_erro()} Tente assim: *Rebeca, bloqueia amanhã das 12h às 14h* 😊`);
+    await responder(`${_erro(_generoAdmin, _apelidoAdmin)} Tente assim: *Rebeca, bloqueia amanhã das 12h às 14h* 😊`);
     return true;
   }
 
@@ -650,7 +650,7 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
         return true;
       }
     }
-    await responder(`${_erro()} Me fala assim: *Rebeca, hoje vou trabalhar das 8h às 18h* 😊`);
+    await responder(`${_erro(_generoAdmin, _apelidoAdmin)} Me fala assim: *Rebeca, hoje vou trabalhar das 8h às 18h* 😊`);
     return true;
   }
 
@@ -705,7 +705,7 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
       await responder(`Feito! Entrada de R$ ${val.toFixed(2)} registrada em "${catEntrada}"${descEntrada !== 'Entrada via WhatsApp' ? ' — '+descEntrada : ''}. 💰`);
       return true;
     }
-    await responder(`${_erro()} Me fala assim: *Rebeca, registra uma entrada de R$120 no Pix* 💰`);
+    await responder(`${_erro(_generoAdmin, _apelidoAdmin)} Me fala assim: *Rebeca, registra uma entrada de R$120 no Pix* 💰`);
     return true;
   }
 
@@ -1040,7 +1040,7 @@ Te aviso 30 minutos antes de cada um! 💙`;
       await responder(`Anotado! Saída de R$ ${val.toFixed(2)} em "${catSaida}"${descSaida !== 'Gasto via WhatsApp' ? ' — '+descSaida : ''}. 📝`);
       return true;
     }
-    await responder(`${_erro()} Me fala assim: *Rebeca, registra um gasto de R$50 em produtos* 💸`);
+    await responder(`${_erro(_generoAdmin, _apelidoAdmin)} Me fala assim: *Rebeca, registra um gasto de R$50 em produtos* 💸`);
     return true;
   }
 
