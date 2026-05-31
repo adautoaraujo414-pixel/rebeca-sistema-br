@@ -792,6 +792,10 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
       const _diasSemana2 = { domingo:0, segunda:1,'segunda-feira':1, terca:2,'terça':2,'terça-feira':2, quarta:3,'quarta-feira':3, quinta:4,'quinta-feira':4, sexta:5,'sexta-feira':5, sabado:6,'sábado':6 };
       const _lembretes2 = [];
       const _hoje2 = new Date();
+      // Hora informada pelo dono na mensagem original (salva na sessão)
+      const _horaRec2 = _pendRec.hora || null;
+      const _hUTC2 = _horaRec2 ? _horaRec2.h + 3 : 12; // BRT+3=UTC; fallback 9h BRT = 12h UTC
+      const _mUTC2 = _horaRec2 ? _horaRec2.min : 0;
       for (let i = 0; i < _nVezesResp; i++) {
         let _dataEvento2 = null;
         if (_recSim.tipo === 'semanal' && _recSim.diaSemana) {
@@ -799,15 +803,15 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
           const _d2 = new Date(_hoje2);
           const _diff2 = (_diaSem2 - _d2.getDay() + 7) % 7 || 7;
           _d2.setDate(_d2.getDate() + _diff2 + (i * 7));
-          _dataEvento2 = new Date(Date.UTC(_d2.getUTCFullYear(), _d2.getUTCMonth(), _d2.getUTCDate(), 9, 0, 0));
+          _dataEvento2 = new Date(Date.UTC(_d2.getUTCFullYear(), _d2.getUTCMonth(), _d2.getUTCDate(), _hUTC2, _mUTC2, 0));
         } else if (_recSim.tipo === 'mensal') {
           const _dia2 = _recSim.dia || 1;
           const _d2 = new Date(_hoje2.getFullYear(), _hoje2.getMonth() + i + (_hoje2.getDate() >= _dia2 ? 1 : 0), _dia2, 9, 0, 0);
-          _dataEvento2 = new Date(Date.UTC(_d2.getUTCFullYear(), _d2.getUTCMonth(), _d2.getUTCDate(), 12, 0, 0));
+          _dataEvento2 = new Date(Date.UTC(_d2.getUTCFullYear(), _d2.getUTCMonth(), _d2.getUTCDate(), _hUTC2, _mUTC2, 0));
         } else if (_recSim.tipo === 'diario') {
           const _d2 = new Date(_hoje2);
           _d2.setDate(_d2.getDate() + i + 1);
-          _dataEvento2 = new Date(Date.UTC(_d2.getUTCFullYear(), _d2.getUTCMonth(), _d2.getUTCDate(), 9, 0, 0));
+          _dataEvento2 = new Date(Date.UTC(_d2.getUTCFullYear(), _d2.getUTCMonth(), _d2.getUTCDate(), _hUTC2, _mUTC2, 0));
         }
         if (_dataEvento2) {
           const _textoLem2 = _pendRec.texto + (_pendRec.valor ? ' — R$ ' + _pendRec.valor : '');
@@ -875,7 +879,7 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
       // Se não disse quantas vezes → perguntar
       if (!_nVezes) {
         SM.updateSession(adminId, telefone, {
-          aguardandoRecorrente: { rec: _rec, texto: _textoRec, valor: _valorRec, categoria: _catRec }
+          aguardandoRecorrente: { rec: _rec, texto: _textoRec, valor: _valorRec, categoria: _catRec, hora: _parseHora(msg) }
         });
         console.log('[DEBUG-SESSAO-REC] salvo:', JSON.stringify({ rec: _rec, texto: _textoRec }));
         let _descRec = '';
@@ -893,6 +897,10 @@ Quantas vezes vai repetir? (ex: "6 vezes", "3 meses", "sem prazo")`;
       // Gerar as datas futuras reais
       const _lembretes = [];
       const _hoje = new Date();
+      // Hora informada pelo dono na mensagem
+      const _horaRec1 = _parseHora(msg);
+      const _hUTC1 = _horaRec1 ? _horaRec1.h + 3 : 12; // BRT+3=UTC; fallback 9h BRT
+      const _mUTC1 = _horaRec1 ? _horaRec1.min : 0;
       const _diasSemana = { domingo:0, segunda:1,'segunda-feira':1, terca:2,'terça':2,'terça-feira':2, quarta:3,'quarta-feira':3, quinta:4,'quinta-feira':4, sexta:5,'sexta-feira':5, sabado:6,'sábado':6 };
       const _maxOcorrencias = _nVezes || (_rec.tipo === 'diario' ? 30 : 12);
 
@@ -903,15 +911,15 @@ Quantas vezes vai repetir? (ex: "6 vezes", "3 meses", "sem prazo")`;
           const _d = new Date(_hoje);
           const _diff = (_diaSem - _d.getDay() + 7) % 7 || 7;
           _d.setDate(_d.getDate() + _diff + (i * 7));
-          _dataEvento = new Date(Date.UTC(_d.getUTCFullYear(), _d.getUTCMonth(), _d.getUTCDate(), 9, 0, 0));
+          _dataEvento = new Date(Date.UTC(_d.getUTCFullYear(), _d.getUTCMonth(), _d.getUTCDate(), _hUTC1, _mUTC1, 0));
         } else if (_rec.tipo === 'mensal') {
           const _dia = _rec.dia || 1;
           const _d = new Date(_hoje.getFullYear(), _hoje.getMonth() + i + (_hoje.getDate() >= _dia ? 1 : 0), _dia, 9, 0, 0);
-          _dataEvento = new Date(Date.UTC(_d.getUTCFullYear(), _d.getUTCMonth(), _d.getUTCDate(), 12, 0, 0));
+          _dataEvento = new Date(Date.UTC(_d.getUTCFullYear(), _d.getUTCMonth(), _d.getUTCDate(), _hUTC1, _mUTC1, 0));
         } else if (_rec.tipo === 'diario') {
           const _d = new Date(_hoje);
           _d.setDate(_d.getDate() + i + 1);
-          _dataEvento = new Date(Date.UTC(_d.getUTCFullYear(), _d.getUTCMonth(), _d.getUTCDate(), 9, 0, 0));
+          _dataEvento = new Date(Date.UTC(_d.getUTCFullYear(), _d.getUTCMonth(), _d.getUTCDate(), _hUTC1, _mUTC1, 0));
         }
         if (_dataEvento) {
           const _dataAviso = new Date(_dataEvento.getTime() - 30 * 60000);
