@@ -759,6 +759,56 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
         return true;
       }
     }
+    // ── RESPOSTA DE QUANTAS VEZES REPETIR (aguardandoRecorrente) ─────────────
+    const _sesRecorr = SM.getSession(adminId, telefone);
+    if (_sesRecorr.aguardandoRecorrente) {
+      const _pendRec = _sesRecorr.aguardandoRecorrente;
+      const _semPrazo = /sem prazo|indeterminado|sempre|indefinido/i.test(msg);
+      const _nMatch = msg.match(/(\d+)/);
+      const _nVezesResp = _semPrazo ? (_pendRec.rec.tipo === 'semanal' ? 52 : 12) : (_nMatch ? parseInt(_nMatch[1]) : 4);
+
+      SM.updateSession(adminId, telefone, { aguardandoRecorrente: null });
+      // Redirecionar para o handler acima com nlp simulado
+      const _recSim = _pendRec.rec;
+      const _diasSemana2 = { domingo:0, segunda:1,'segunda-feira':1, terca:2,'terça':2,'terça-feira':2, quarta:3,'quarta-feira':3, quinta:4,'quinta-feira':4, sexta:5,'sexta-feira':5, sabado:6,'sábado':6 };
+      const _lembretes2 = [];
+      const _hoje2 = new Date();
+      for (let i = 0; i < _nVezesResp; i++) {
+        let _dataEvento2 = null;
+        if (_recSim.tipo === 'semanal' && _recSim.diaSemana) {
+          const _diaSem2 = _diasSemana2[_recSim.diaSemana.toLowerCase()] ?? 5;
+          const _d2 = new Date(_hoje2);
+          const _diff2 = (_diaSem2 - _d2.getDay() + 7) % 7 || 7;
+          _d2.setDate(_d2.getDate() + _diff2 + (i * 7));
+          _dataEvento2 = new Date(Date.UTC(_d2.getUTCFullYear(), _d2.getUTCMonth(), _d2.getUTCDate(), 9, 0, 0));
+        } else if (_recSim.tipo === 'mensal') {
+          const _dia2 = _recSim.dia || 1;
+          const _d2 = new Date(_hoje2.getFullYear(), _hoje2.getMonth() + i + (_hoje2.getDate() >= _dia2 ? 1 : 0), _dia2, 9, 0, 0);
+          _dataEvento2 = new Date(Date.UTC(_d2.getUTCFullYear(), _d2.getUTCMonth(), _d2.getUTCDate(), 12, 0, 0));
+        }
+        if (_dataEvento2) {
+          _lembretes2.push({
+            texto: _pendRec.texto + (_pendRec.valor ? ' — R$ ' + _pendRec.valor : ''),
+            dataEvento: _dataEvento2,
+            dataAviso: new Date(_dataEvento2.getTime() - 30 * 60000),
+            enviado: false, criadoEm: new Date(),
+            recorrente: _recSim, categoria: _pendRec.categoria
+          });
+        }
+      }
+      if (_lembretes2.length) {
+        await AdminAgenda.findByIdAndUpdate(adminObjId, { $push: { 'config.lembretes': { $each: _lembretes2 } } });
+      }
+      let _descRec3 = _recSim.tipo === 'semanal' ? `toda ${_recSim.diaSemana}` : `todo dia ${_recSim.dia || 1} do mês`;
+      const _rResp = `Perfeito! 🔔 Criei *${_lembretes2.length} lembretes* de *${_pendRec.texto}*${_pendRec.valor ? ' (R$ '+_pendRec.valor+')' : ''} ${_descRec3}. Te aviso 30 min antes de cada um! 💙`;
+      await responder(_rResp);
+      SM.addAssistantMsg(adminId, telefone, _rResp);
+      return true;
+    }
+
+
+    const _nlpVal = nlp.valor;
+
     // ── RECORRENTE: "toda sexta pagar raphaela 499", "todo dia 10 aluguel" ────
     if (nlp.intencao === 'recorrente' && nlp.recorrente) {
       const _rec = nlp.recorrente;
@@ -840,56 +890,6 @@ Te aviso 30 minutos antes de cada um! 💙`;
       return true;
     }
 
-    // ── RESPOSTA DE QUANTAS VEZES REPETIR (aguardandoRecorrente) ─────────────
-    const _sesRecorr = SM.getSession(adminId, telefone);
-    if (_sesRecorr.aguardandoRecorrente) {
-      const _pendRec = _sesRecorr.aguardandoRecorrente;
-      const _semPrazo = /sem prazo|indeterminado|sempre|indefinido/i.test(msg);
-      const _nMatch = msg.match(/(\d+)/);
-      const _nVezesResp = _semPrazo ? (_pendRec.rec.tipo === 'semanal' ? 52 : 12) : (_nMatch ? parseInt(_nMatch[1]) : 4);
-
-      SM.updateSession(adminId, telefone, { aguardandoRecorrente: null });
-      // Redirecionar para o handler acima com nlp simulado
-      const _recSim = _pendRec.rec;
-      const _diasSemana2 = { domingo:0, segunda:1,'segunda-feira':1, terca:2,'terça':2,'terça-feira':2, quarta:3,'quarta-feira':3, quinta:4,'quinta-feira':4, sexta:5,'sexta-feira':5, sabado:6,'sábado':6 };
-      const _lembretes2 = [];
-      const _hoje2 = new Date();
-      for (let i = 0; i < _nVezesResp; i++) {
-        let _dataEvento2 = null;
-        if (_recSim.tipo === 'semanal' && _recSim.diaSemana) {
-          const _diaSem2 = _diasSemana2[_recSim.diaSemana.toLowerCase()] ?? 5;
-          const _d2 = new Date(_hoje2);
-          const _diff2 = (_diaSem2 - _d2.getDay() + 7) % 7 || 7;
-          _d2.setDate(_d2.getDate() + _diff2 + (i * 7));
-          _dataEvento2 = new Date(Date.UTC(_d2.getUTCFullYear(), _d2.getUTCMonth(), _d2.getUTCDate(), 9, 0, 0));
-        } else if (_recSim.tipo === 'mensal') {
-          const _dia2 = _recSim.dia || 1;
-          const _d2 = new Date(_hoje2.getFullYear(), _hoje2.getMonth() + i + (_hoje2.getDate() >= _dia2 ? 1 : 0), _dia2, 9, 0, 0);
-          _dataEvento2 = new Date(Date.UTC(_d2.getUTCFullYear(), _d2.getUTCMonth(), _d2.getUTCDate(), 12, 0, 0));
-        }
-        if (_dataEvento2) {
-          _lembretes2.push({
-            texto: _pendRec.texto + (_pendRec.valor ? ' — R$ ' + _pendRec.valor : ''),
-            dataEvento: _dataEvento2,
-            dataAviso: new Date(_dataEvento2.getTime() - 30 * 60000),
-            enviado: false, criadoEm: new Date(),
-            recorrente: _recSim, categoria: _pendRec.categoria
-          });
-        }
-      }
-      if (_lembretes2.length) {
-        await AdminAgenda.findByIdAndUpdate(adminObjId, { $push: { 'config.lembretes': { $each: _lembretes2 } } });
-      }
-      let _descRec3 = _recSim.tipo === 'semanal' ? `toda ${_recSim.diaSemana}` : `todo dia ${_recSim.dia || 1} do mês`;
-      const _rResp = `Perfeito! 🔔 Criei *${_lembretes2.length} lembretes* de *${_pendRec.texto}*${_pendRec.valor ? ' (R$ '+_pendRec.valor+')' : ''} ${_descRec3}. Te aviso 30 min antes de cada um! 💙`;
-      await responder(_rResp);
-      SM.addAssistantMsg(adminId, telefone, _rResp);
-      return true;
-    }
-
-    const _nlpVal = nlp.valor;
-    const _nlpCat = nlp.categoria;
-    const _nlpInt = nlp.intencao;
 
     // Anti-conflito: servico de beleza + valor sem verbo financeiro = ambiguo (ex: "cabelo 50")
     const _SVCS = ['cabelo','corte','escova','tintura','manicure','pedicure','sobrancelha','depilacao','progressiva','botox','hidratacao','massagem','maquiagem','cilios','barba','barbearia','penteado'];
