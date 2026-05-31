@@ -2385,16 +2385,16 @@ LEMBRE: você é a pessoa em quem ela mais confia no dia a dia. Esse espaço é 
 
           const listaTop = top.map(([nome, d]) =>
             `• *${nome}* — ${d.total} consulta(s)${d.acoes.finalizou_compra ? ' ✅ '+d.acoes.finalizou_compra+' compra(s)' : ''}`
-          ).join('
-');
+          ).join('\n');
+
 
           const periodoTxt = periodo === 'hoje' ? 'hoje' : periodo === 'semana' ? 'essa semana' : 'esse mês';
-          const _r = `📦 *Produtos mais consultados ${periodoTxt}:*
+          const _r = `📦 *Produtos mais consultados ${periodoTxt}:*\n\n${listaTop}\n\n📊 Total: ${leads.length} interação(ões)\n👀 Consultas: ${acoes.consultou||0} | 🛒 Carrinhos: ${acoes.adicionou_carrinho||0} | ✅ Compras: ${acoes.finalizou_compra||0}`;
 
-${listaTop}
 
-📊 Total: ${leads.length} interação(ões)
-👀 Consultas: ${acoes.consultou||0} | 🛒 Carrinhos: ${acoes.adicionou_carrinho||0} | ✅ Compras: ${acoes.finalizou_compra||0}`;
+
+
+
           await responder(_r); SM.addAssistantMsg(adminId, telefone, _r); return true;
         } catch(e) {
           console.error('[ModoDono] resumo_vendas erro:', e.message);
