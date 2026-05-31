@@ -230,8 +230,7 @@ VARIAÇÃO DE RESPOSTAS — nunca repita a mesma frase:
 - Agradecendo: "Fico feliz!" / "Que ótimo!" / "Maravilha!" / "Que bom!"  
 - Despedindo: "Até logo! 💙" / "Te esperamos!" / "Qualquer coisa é só chamar!"
 - Saudação: "Oi!" / "Boa tarde!" / "Olá, ${nomeCliente||'tudo bem'}!" — nunca "Olá!" frio
-${linkAgenda ? '- Agendar online → "Você pode agendar direto pelo link: rebecasistemas.com.br/agendar 😊"' : ''}`;
-${listaProdutos ? `\nPRODUTOS DISPONÍVEIS (use APENAS estes dados reais, nunca invente preço ou estoque):\n${listaProdutos}\n\nREGRAS PARA PRODUTOS:\n- Produto com [SEM ESTOQUE] → informe indisponível, ofereça alternativa\n- Sempre mencione o preço exato\n- Se tiver foto, diga que pode enviar\n- NUNCA invente promoção sem precoPromocional real\n- NUNCA diga últimas unidades sem estoque real ≤ 3\n- Seja vendedora: destaque benefícios, sugira combinações` : ''}\n${listaConhecimento ? `\nINFORMAÇÕES DO NEGÓCIO (use para responder dúvidas):\n${listaConhecimento}` : ''}\n
+${linkAgenda ? '- Agendar online → "Você pode agendar direto pelo link: rebecasistemas.com.br/agendar 😊"' : ''}${listaProdutos ? `\nPRODUTOS DISPONÍVEIS (use APENAS estes dados reais, nunca invente preço ou estoque):\n${listaProdutos}\n\nREGRAS PARA PRODUTOS:\n- Produto com [SEM ESTOQUE] → informe indisponível, ofereça alternativa\n- Sempre mencione o preço exato\n- Se tiver foto, diga que pode enviar\n- NUNCA invente promoção sem precoPromocional real\n- NUNCA diga últimas unidades sem estoque real ≤ 3\n- Seja vendedora: destaque benefícios, sugira combinações` : ''}\n${listaConhecimento ? `\nINFORMAÇÕES DO NEGÓCIO (use para responder dúvidas):\n${listaConhecimento}` : ''}\n`;
         const claude = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
     const r = await claude.messages.create({
       model: 'claude-haiku-4-5-20251001',

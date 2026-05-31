@@ -463,12 +463,14 @@ router.get('/espaco/:adminId', async (req, res) => {
   try {
     const admin = await AdminAgenda.findById(req.params.adminId).select('-senha -token');
     if (!admin) return res.status(404).json({ erro: 'Espaço não encontrado' });
-    const [servicos, profissionais, fotos] = await Promise.all([
+    const [servicos, profissionais, fotos, produtos, catalogos] = await Promise.all([
       ServicoAgenda.find({ adminId: req.params.adminId, ativo: true }).sort({ ordem: 1 }),
       ProfissionalAgenda.find({ adminId: req.params.adminId, ativo: true }).sort({ ordem: 1 }),
-      FotoAgenda.find({ adminId: req.params.adminId, ativo: true }).sort({ ordem: 1 }).limit(20)
+      FotoAgenda.find({ adminId: req.params.adminId, ativo: true }).sort({ ordem: 1 }).limit(20),
+      ProdutoAgenda.find({ adminId: req.params.adminId, ativo: true }).sort({ ordem: 1 }).limit(50).lean(),
+      CatalogoAgenda.find({ adminId: req.params.adminId, ativo: true }).sort({ ordem: 1 }).lean()
     ]);
-    res.json({ sucesso: true, admin, servicos, profissionais, fotos });
+    res.json({ sucesso: true, admin, servicos, profissionais, fotos, produtos, catalogos });
   } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 

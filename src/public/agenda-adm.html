@@ -804,6 +804,104 @@ input,select,textarea{font-family:'Inter',sans-serif}
   .btn-ver-mais-mobile{display:none!important}
 }
 
+
+/* ─── CATÁLOGO / PRODUTOS ─── */
+.cat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;padding:20px}
+.prod-card{background:var(--white);border:1px solid var(--borda);border-radius:var(--radius-lg);overflow:hidden;transition:var(--transition-md);cursor:pointer}
+.prod-card:hover{box-shadow:var(--shadow-md);transform:translateY(-2px)}
+.prod-foto{width:100%;height:150px;object-fit:cover;background:var(--cinza-bg);display:flex;align-items:center;justify-content:center;font-size:2.5em;color:var(--texto4)}
+.prod-foto img{width:100%;height:100%;object-fit:cover}
+.prod-info{padding:12px}
+.prod-nome{font-weight:700;font-size:.88em;color:var(--texto);margin-bottom:2px}
+.prod-preco{font-size:.82em;color:var(--cor);font-weight:700}
+.prod-preco-old{font-size:.75em;color:var(--texto4);text-decoration:line-through;margin-left:4px}
+.prod-estoque{font-size:.72em;color:var(--texto3);margin-top:4px}
+.prod-tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.prod-tag{background:var(--borda2);color:var(--texto3);font-size:.68em;padding:2px 7px;border-radius:20px;font-weight:500}
+.prod-status-badge{display:inline-flex;align-items:center;gap:4px;font-size:.7em;padding:3px 8px;border-radius:20px;font-weight:600}
+.prod-status-badge.ativo{background:var(--verde-bg);color:var(--verde)}
+.prod-status-badge.inativo{background:var(--cinza-bg);color:var(--cinza)}
+.prod-status-badge.sem-estoque{background:var(--vermelho-bg);color:var(--vermelho)}
+.cat-filtros{display:flex;gap:8px;padding:16px 20px 0;flex-wrap:wrap;align-items:center}
+.cat-filtro-btn{padding:6px 14px;border:1.5px solid var(--borda);border-radius:20px;font-size:.78em;font-weight:600;background:#fff;color:var(--texto3);transition:var(--transition);cursor:pointer}
+.cat-filtro-btn.ativo{border-color:var(--cor);color:var(--cor);background:var(--cor3)}
+.cat-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;color:var(--texto4);gap:10px}
+.cat-empty-icon{font-size:2.5em}
+.cat-empty-txt{font-size:.9em;font-weight:500}
+.cat-empty-sub{font-size:.8em;color:var(--texto4);text-align:center;max-width:280px}
+
+/* ─── MODAL PRODUTO ─── */
+.modal-overlay{position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:500;display:flex;align-items:center;justify-content:center;padding:16px;opacity:0;pointer-events:none;transition:.2s}
+.modal-overlay.show{opacity:1;pointer-events:all}
+.modal-box{background:#fff;border-radius:var(--radius-xl);width:100%;max-width:560px;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow-xl);transform:translateY(12px);transition:.2s}
+.modal-overlay.show .modal-box{transform:translateY(0)}
+.modal-header{padding:20px 24px 16px;border-bottom:1px solid var(--borda);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:#fff;z-index:1;border-radius:var(--radius-xl) var(--radius-xl) 0 0}
+.modal-titulo{font-weight:700;font-size:1em;color:var(--texto)}
+.modal-fechar{width:32px;height:32px;border:1px solid var(--borda);border-radius:var(--radius-sm);background:none;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1.1em;color:var(--texto3)}
+.modal-body{padding:20px 24px}
+.modal-footer{padding:16px 24px;border-top:1px solid var(--borda);display:flex;gap:8px;justify-content:flex-end;position:sticky;bottom:0;background:#fff;border-radius:0 0 var(--radius-xl) var(--radius-xl)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-field{margin-bottom:14px}
+.form-field label{display:block;font-size:.78em;font-weight:600;color:var(--texto2);margin-bottom:5px}
+.form-field input,.form-field select,.form-field textarea{width:100%;padding:9px 12px;border:1.5px solid var(--borda);border-radius:var(--radius-sm);font-size:.85em;outline:none;transition:var(--transition);font-family:'Inter',sans-serif;color:var(--texto)}
+.form-field input:focus,.form-field select:focus,.form-field textarea:focus{border-color:var(--cor);box-shadow:0 0 0 3px rgba(249,115,22,.1)}
+.form-field textarea{resize:vertical;min-height:70px}
+.fotos-preview{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.foto-thumb{width:64px;height:64px;border-radius:var(--radius-sm);object-fit:cover;border:1px solid var(--borda);cursor:pointer;position:relative}
+.foto-add-btn{width:64px;height:64px;border:2px dashed var(--borda);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;font-size:1.4em;color:var(--texto4);cursor:pointer;background:var(--cinza-bg);transition:var(--transition)}
+.foto-add-btn:hover{border-color:var(--cor);color:var(--cor)}
+
+/* ─── CONHECIMENTO ─── */
+.conh-list{display:flex;flex-direction:column;gap:10px;padding:20px}
+.conh-card{background:#fff;border:1px solid var(--borda);border-radius:var(--radius-lg);padding:16px;display:flex;gap:12px;align-items:flex-start;transition:var(--transition-md)}
+.conh-card:hover{box-shadow:var(--shadow)}
+.conh-tipo-badge{padding:4px 10px;border-radius:20px;font-size:.7em;font-weight:700;white-space:nowrap;flex-shrink:0}
+.conh-tipo-faq{background:#eff6ff;color:#2563eb}
+.conh-tipo-pagamento{background:#f0fdf4;color:#16a34a}
+.conh-tipo-garantia{background:#fff7ed;color:#ea580c}
+.conh-tipo-politica{background:#fdf4ff;color:#9333ea}
+.conh-tipo-horario{background:#fffbeb;color:#d97706}
+.conh-pergunta{font-weight:600;font-size:.87em;color:var(--texto);margin-bottom:4px}
+.conh-resposta{font-size:.82em;color:var(--texto3);line-height:1.55}
+.conh-acoes{margin-left:auto;display:flex;gap:6px;flex-shrink:0}
+
+/* ─── LEADS ─── */
+.leads-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;padding:20px}
+.leads-stat-card{background:#fff;border:1px solid var(--borda);border-radius:var(--radius-lg);padding:16px;text-align:center}
+.leads-stat-num{font-size:1.8em;font-weight:800;color:var(--cor)}
+.leads-stat-lbl{font-size:.75em;color:var(--texto3);margin-top:2px}
+.leads-table{width:100%;border-collapse:collapse;font-size:.83em}
+.leads-table th{text-align:left;padding:10px 16px;color:var(--texto3);font-weight:600;font-size:.78em;border-bottom:1px solid var(--borda);background:var(--bg)}
+.leads-table td{padding:10px 16px;border-bottom:1px solid var(--borda2);color:var(--texto2)}
+.leads-table tr:hover td{background:var(--bg)}
+.conv-bar{height:6px;border-radius:3px;background:var(--borda);overflow:hidden;min-width:60px}
+.conv-fill{height:100%;background:var(--cor);border-radius:3px}
+
+/* ─── CARRINHOS ─── */
+.carrinhos-tabs{display:flex;gap:0;border-bottom:1px solid var(--borda);padding:0 20px}
+.carrinhos-tab{padding:10px 16px;font-size:.83em;font-weight:600;color:var(--texto3);border-bottom:2px solid transparent;cursor:pointer;transition:var(--transition)}
+.carrinhos-tab.ativo{color:var(--cor);border-bottom-color:var(--cor)}
+.carrinhos-list{padding:16px 20px;display:flex;flex-direction:column;gap:10px}
+.carrinho-card{background:#fff;border:1px solid var(--borda);border-radius:var(--radius-lg);padding:16px;display:flex;align-items:center;gap:14px}
+.carrinho-avatar{width:38px;height:38px;border-radius:50%;background:var(--cor3);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.85em;color:var(--cor);flex-shrink:0}
+.carrinho-info{flex:1;min-width:0}
+.carrinho-tel{font-weight:600;font-size:.87em;color:var(--texto)}
+.carrinho-itens{font-size:.78em;color:var(--texto3);margin-top:2px}
+.carrinho-valor{font-weight:700;font-size:.9em;color:var(--cor);flex-shrink:0}
+.carrinho-status{font-size:.72em;padding:3px 8px;border-radius:20px;font-weight:600}
+.carrinho-status.ativo{background:var(--verde-bg);color:var(--verde)}
+.carrinho-status.abandonado{background:var(--amarelo-bg);color:var(--amarelo)}
+.carrinho-status.finalizado{background:var(--azul-bg);color:var(--azul)}
+
+/* ─── BTN PADRÃO ─── */
+.btn-prim{padding:8px 18px;background:var(--cor);color:#fff;border:none;border-radius:var(--radius-sm);font-size:.83em;font-weight:600;cursor:pointer;transition:var(--transition);letter-spacing:-.01em}
+.btn-prim:hover{background:var(--cor2);box-shadow:0 2px 8px rgba(249,115,22,.3)}
+.btn-sec{padding:8px 18px;background:#fff;color:var(--texto2);border:1.5px solid var(--borda);border-radius:var(--radius-sm);font-size:.83em;font-weight:600;cursor:pointer;transition:var(--transition)}
+.btn-sec:hover{border-color:var(--texto3)}
+.btn-icon{width:32px;height:32px;border:1px solid var(--borda);border-radius:var(--radius-sm);background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:var(--transition);color:var(--texto3);font-size:.85em}
+.btn-icon:hover{border-color:var(--cor);color:var(--cor)}
+.btn-danger{padding:8px 18px;background:#fff;color:var(--vermelho);border:1.5px solid var(--vermelho);border-radius:var(--radius-sm);font-size:.83em;font-weight:600;cursor:pointer;transition:var(--transition)}
+.btn-danger:hover{background:var(--vermelho-bg)}
 </style>
 <link rel="stylesheet" href="/css/mobile-hardening.css?v=1779687846">
 <link rel="manifest" href="/agenda-adm-manifest.json">
@@ -996,6 +1094,28 @@ document.querySelectorAll('.nav-item').forEach(item => {
         <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a4 4 0 00-5-4M9 20H4v-2a4 4 0 015-4m0 0a4 4 0 110-8 4 4 0 010 8zm8-8a3 3 0 110-6 3 3 0 010 6z"/></svg>
         CRM
         <span id="crm-nav-badge" style="display:none;margin-left:auto;background:#dc2626;color:#fff;font-size:.65em;padding:2px 6px;border-radius:10px;font-weight:700">0</span>
+      </button>
+      <div class="nav-group-label">Catálogo Digital</div>
+      <button class="nav-item" onclick="irPara('produtos')">
+        <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M20 7H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2zM16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16" stroke-width="2"/></svg>
+        Produtos
+      </button>
+      <button class="nav-item" onclick="irPara('catalogos')">
+        <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" stroke-width="2"/></svg>
+        Catálogos
+      </button>
+      <button class="nav-item" onclick="irPara('conhecimento')">
+        <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" stroke-width="2"/></svg>
+        Conhecimento IA
+      </button>
+      <button class="nav-item" onclick="irPara('leads-produtos')">
+        <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" stroke-width="2"/></svg>
+        Leads Produtos
+        <span class="nav-badge" id="nb-leads" style="display:none">0</span>
+      </button>
+      <button class="nav-item" onclick="irPara('carrinhos')">
+        <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" stroke-width="2"/></svg>
+        Carrinhos
       </button>
       <button class="nav-item" onclick="irPara('configuracoes')">
         <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="3" stroke-width="2"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" stroke-width="2"/></svg>
@@ -3979,6 +4099,262 @@ carregarFinanceiro = async function() {
 
   </div><!-- /wpp-conteudo-147 -->
 </div><!-- /tela-whatsapp -->
+<!-- ─── TELA PRODUTOS ─── -->
+<div class="tela" id="tela-produtos">
+  <div class="tela-header">
+    <div>
+      <div class="tela-titulo">Produtos</div>
+      <div class="tela-sub">Gerencie seu catálogo de produtos</div>
+    </div>
+    <button class="btn-prim" onclick="abrirModalProduto()">+ Novo produto</button>
+  </div>
+  <div class="cat-filtros" id="prod-filtros">
+    <button class="cat-filtro-btn ativo" onclick="filtrarProd('todos',this)">Todos</button>
+    <button class="cat-filtro-btn" onclick="filtrarProd('ativo',this)">Ativos</button>
+    <button class="cat-filtro-btn" onclick="filtrarProd('inativo',this)">Inativos</button>
+    <button class="cat-filtro-btn" onclick="filtrarProd('sem_estoque',this)">Sem estoque</button>
+  </div>
+  <div class="cat-grid" id="prod-grid">
+    <div class="cat-empty"><div class="cat-empty-icon">📦</div><div class="cat-empty-txt">Carregando produtos...</div></div>
+  </div>
+</div>
+
+<!-- ─── TELA CATÁLOGOS ─── -->
+<div class="tela" id="tela-catalogos">
+  <div class="tela-header">
+    <div>
+      <div class="tela-titulo">Catálogos</div>
+      <div class="tela-sub">Organize produtos em coleções e seções</div>
+    </div>
+    <button class="btn-prim" onclick="abrirModalCatalogo()">+ Novo catálogo</button>
+  </div>
+  <div style="padding:20px;display:flex;flex-direction:column;gap:12px" id="cat-lista">
+    <div class="cat-empty"><div class="cat-empty-icon">🗂️</div><div class="cat-empty-txt">Carregando catálogos...</div></div>
+  </div>
+</div>
+
+<!-- ─── TELA CONHECIMENTO ─── -->
+<div class="tela" id="tela-conhecimento">
+  <div class="tela-header">
+    <div>
+      <div class="tela-titulo">Conhecimento IA</div>
+      <div class="tela-sub">FAQ, pagamentos, garantias e políticas usados pela Rebeca</div>
+    </div>
+    <button class="btn-prim" onclick="abrirModalConhecimento()">+ Novo item</button>
+  </div>
+  <div style="display:flex;gap:8px;padding:16px 20px 0;flex-wrap:wrap">
+    <button class="cat-filtro-btn ativo" onclick="filtrarConh('todos',this)">Todos</button>
+    <button class="cat-filtro-btn" onclick="filtrarConh('faq',this)">FAQ</button>
+    <button class="cat-filtro-btn" onclick="filtrarConh('pagamento',this)">Pagamento</button>
+    <button class="cat-filtro-btn" onclick="filtrarConh('garantia',this)">Garantia</button>
+    <button class="cat-filtro-btn" onclick="filtrarConh('politica',this)">Política</button>
+    <button class="cat-filtro-btn" onclick="filtrarConh('horario',this)">Horário</button>
+  </div>
+  <div class="conh-list" id="conh-lista">
+    <div class="cat-empty"><div class="cat-empty-icon">📚</div><div class="cat-empty-txt">Carregando...</div></div>
+  </div>
+</div>
+
+<!-- ─── TELA LEADS PRODUTOS ─── -->
+<div class="tela" id="tela-leads-produtos">
+  <div class="tela-header">
+    <div>
+      <div class="tela-titulo">Leads Produtos</div>
+      <div class="tela-sub">Produtos consultados pelos clientes via WhatsApp</div>
+    </div>
+    <button class="btn-sec" onclick="carregarLeads()">↻ Atualizar</button>
+  </div>
+  <div class="leads-grid" id="leads-stats">
+    <div class="leads-stat-card"><div class="leads-stat-num" id="ls-consultou">—</div><div class="leads-stat-lbl">Consultas</div></div>
+    <div class="leads-stat-card"><div class="leads-stat-num" id="ls-foto">—</div><div class="leads-stat-lbl">Fotos enviadas</div></div>
+    <div class="leads-stat-card"><div class="leads-stat-num" id="ls-carrinho">—</div><div class="leads-stat-lbl">Carrinhos</div></div>
+    <div class="leads-stat-card"><div class="leads-stat-num" id="ls-finalizado">—</div><div class="leads-stat-lbl">Finalizados</div></div>
+  </div>
+  <div style="padding:0 20px 20px;overflow-x:auto">
+    <table class="leads-table" id="leads-tabela">
+      <thead><tr>
+        <th>Produto</th><th>Consultas</th><th>Fotos</th><th>Carrinhos</th><th>Conversão</th>
+      </tr></thead>
+      <tbody id="leads-tbody"><tr><td colspan="5" style="text-align:center;color:var(--texto4);padding:30px">Carregando...</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ─── TELA CARRINHOS ─── -->
+<div class="tela" id="tela-carrinhos">
+  <div class="tela-header">
+    <div>
+      <div class="tela-titulo">Carrinhos</div>
+      <div class="tela-sub">Acompanhe pedidos e carrinhos abandonados</div>
+    </div>
+    <button class="btn-sec" onclick="carregarCarrinhos()">↻ Atualizar</button>
+  </div>
+  <div class="carrinhos-tabs">
+    <div class="carrinhos-tab ativo" onclick="mudarTabCarrinho('ativo',this)">Ativos</div>
+    <div class="carrinhos-tab" onclick="mudarTabCarrinho('abandonado',this)">Abandonados</div>
+    <div class="carrinhos-tab" onclick="mudarTabCarrinho('finalizado',this)">Finalizados</div>
+  </div>
+  <div class="carrinhos-list" id="carrinhos-lista">
+    <div class="cat-empty"><div class="cat-empty-icon">🛒</div><div class="cat-empty-txt">Carregando carrinhos...</div></div>
+  </div>
+</div>
+
+<!-- ─── MODAL PRODUTO ─── -->
+<div class="modal-overlay" id="modal-produto" onclick="fecharModalSePano(event,'modal-produto')">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-titulo" id="modal-prod-titulo">Novo Produto</div>
+      <button class="modal-fechar" onclick="fecharModal('modal-produto')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="prod-id">
+      <div class="form-row">
+        <div class="form-field">
+          <label>Nome do produto *</label>
+          <input type="text" id="prod-nome" placeholder="Ex: Shampoo Hidratante">
+        </div>
+        <div class="form-field">
+          <label>Categoria</label>
+          <input type="text" id="prod-categoria" placeholder="Ex: Cabelos, Roupas...">
+        </div>
+      </div>
+      <div class="form-field">
+        <label>Descrição</label>
+        <textarea id="prod-descricao" placeholder="Descreva o produto brevemente..."></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-field">
+          <label>Preço (R$) *</label>
+          <input type="number" id="prod-preco" placeholder="0,00" step="0.01" min="0">
+        </div>
+        <div class="form-field">
+          <label>Preço promocional (R$)</label>
+          <input type="number" id="prod-preco-promo" placeholder="0,00" step="0.01" min="0">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-field">
+          <label>Estoque (deixe vazio = ilimitado)</label>
+          <input type="number" id="prod-estoque" placeholder="Ex: 10" min="0">
+        </div>
+        <div class="form-field">
+          <label>SKU / Código</label>
+          <input type="text" id="prod-sku" placeholder="Ex: SH-001">
+        </div>
+      </div>
+      <div class="form-field">
+        <label>Tags (separe por vírgula)</label>
+        <input type="text" id="prod-tags" placeholder="Ex: promoção, hidratante, lançamento">
+      </div>
+      <div class="form-field">
+        <label>Palavras-chave para a IA (separe por vírgula)</label>
+        <input type="text" id="prod-palavras" placeholder="Ex: shampoo, cabelo seco, hidratação">
+      </div>
+      <div class="form-field">
+        <label>URL da foto principal</label>
+        <input type="url" id="prod-foto" placeholder="https://...">
+      </div>
+      <div class="form-field">
+        <label>Status</label>
+        <select id="prod-status">
+          <option value="true">Ativo (visível no catálogo)</option>
+          <option value="false">Inativo (oculto)</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-danger" id="btn-excluir-prod" onclick="excluirProduto()" style="display:none;margin-right:auto">Excluir</button>
+      <button class="btn-sec" onclick="fecharModal('modal-produto')">Cancelar</button>
+      <button class="btn-prim" onclick="salvarProduto()">Salvar produto</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── MODAL CATÁLOGO ─── -->
+<div class="modal-overlay" id="modal-catalogo" onclick="fecharModalSePano(event,'modal-catalogo')">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-titulo" id="modal-cat-titulo">Novo Catálogo</div>
+      <button class="modal-fechar" onclick="fecharModal('modal-catalogo')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="cat-id">
+      <div class="form-field">
+        <label>Nome do catálogo *</label>
+        <input type="text" id="cat-nome" placeholder="Ex: Verão 2025, Linha Premium...">
+      </div>
+      <div class="form-field">
+        <label>Descrição</label>
+        <textarea id="cat-desc" placeholder="Descrição opcional do catálogo"></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-field">
+          <label>Seção especial</label>
+          <select id="cat-secao">
+            <option value="">Nenhuma</option>
+            <option value="destaques">⭐ Destaques</option>
+            <option value="lancamentos">🆕 Lançamentos</option>
+            <option value="promocoes">🏷️ Promoções</option>
+            <option value="mais_procurados">🔥 Mais procurados</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label>Status</label>
+          <select id="cat-status">
+            <option value="true">Ativo</option>
+            <option value="false">Inativo</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-danger" id="btn-excluir-cat" onclick="excluirCatalogo()" style="display:none;margin-right:auto">Excluir</button>
+      <button class="btn-sec" onclick="fecharModal('modal-catalogo')">Cancelar</button>
+      <button class="btn-prim" onclick="salvarCatalogo()">Salvar catálogo</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── MODAL CONHECIMENTO ─── -->
+<div class="modal-overlay" id="modal-conhecimento" onclick="fecharModalSePano(event,'modal-conhecimento')">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-titulo" id="modal-conh-titulo">Novo item de Conhecimento</div>
+      <button class="modal-fechar" onclick="fecharModal('modal-conhecimento')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="conh-id">
+      <div class="form-field">
+        <label>Tipo</label>
+        <select id="conh-tipo">
+          <option value="faq">FAQ — Pergunta frequente</option>
+          <option value="pagamento">Pagamento</option>
+          <option value="garantia">Garantia</option>
+          <option value="politica">Política</option>
+          <option value="horario">Horário</option>
+        </select>
+      </div>
+      <div class="form-field">
+        <label>Pergunta / Título *</label>
+        <input type="text" id="conh-pergunta" placeholder="Ex: Qual o prazo de entrega?">
+      </div>
+      <div class="form-field">
+        <label>Resposta *</label>
+        <textarea id="conh-resposta" placeholder="Resposta completa que a Rebeca usará..." style="min-height:100px"></textarea>
+      </div>
+      <div class="form-field">
+        <label>Tags (separe por vírgula)</label>
+        <input type="text" id="conh-tags" placeholder="Ex: entrega, frete, prazo">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-danger" id="btn-excluir-conh" onclick="excluirConhecimento()" style="display:none;margin-right:auto">Excluir</button>
+      <button class="btn-sec" onclick="fecharModal('modal-conhecimento')">Cancelar</button>
+      <button class="btn-prim" onclick="salvarConhecimento()">Salvar</button>
+    </div>
+  </div>
+</div>
+
 
 </div>
     </div><!-- /content -->
@@ -4102,5 +4478,451 @@ function _cacheClear(prefix) {
 </nav>
 
 
+<script>
+// ═══════════════════════════════════════════════════════════════
+// CATÁLOGO DIGITAL — PRODUTOS, CATÁLOGOS, CONHECIMENTO, LEADS, CARRINHOS
+// ═══════════════════════════════════════════════════════════════
+const _API = '/api/agenda';
+let _TOKEN = '';
+let _produtosFiltro = 'todos';
+let _conhFiltro = 'todos';
+let _tabCarrinho = 'ativo';
+let _todosProds = [];
+let _todosConhs = [];
+
+function _tok() {
+  if (_TOKEN) return _TOKEN;
+  _TOKEN = localStorage.getItem('agenda_token') || '';
+  return _TOKEN;
+}
+function _h() { return { 'Content-Type':'application/json', 'Authorization':'Bearer '+_tok() }; }
+
+// ── Estender irPara para novos módulos ──────────────────────────
+const _irParaOriginal = typeof irPara === 'function' ? irPara : null;
+function irPara(tela) {
+  const novas = ['produtos','catalogos','conhecimento','leads-produtos','carrinhos'];
+  if (novas.includes(tela)) {
+    document.querySelectorAll('.tela').forEach(t => t.classList.remove('ativa'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('ativo'));
+    const el = document.getElementById('tela-'+tela);
+    if (el) el.classList.add('ativa');
+    document.querySelectorAll('.nav-item').forEach(n => {
+      if (n.onclick && n.onclick.toString().includes("'"+tela+"'")) n.classList.add('ativo');
+    });
+    if (tela === 'produtos') carregarProdutos();
+    if (tela === 'catalogos') carregarCatalogos();
+    if (tela === 'conhecimento') carregarConhecimento();
+    if (tela === 'leads-produtos') carregarLeads();
+    if (tela === 'carrinhos') carregarCarrinhos();
+    window.scrollTo(0,0);
+    return;
+  }
+  if (_irParaOriginal) _irParaOriginal(tela);
+}
+
+// ══════════════════ PRODUTOS ══════════════════
+async function carregarProdutos() {
+  const g = document.getElementById('prod-grid');
+  g.innerHTML = '<div class="cat-empty"><div class="cat-empty-icon">⏳</div><div class="cat-empty-txt">Carregando...</div></div>';
+  try {
+    const r = await fetch(_API+'/catalogo/produtos', { headers: _h() });
+    const d = await r.json();
+    _todosProds = d.produtos || [];
+    renderProdutos();
+  } catch(e) {
+    g.innerHTML = '<div class="cat-empty"><div class="cat-empty-icon">⚠️</div><div class="cat-empty-txt">Erro ao carregar produtos</div></div>';
+  }
+}
+
+function renderProdutos() {
+  const g = document.getElementById('prod-grid');
+  let lista = _todosProds;
+  if (_produtosFiltro === 'ativo') lista = lista.filter(p => p.ativo);
+  else if (_produtosFiltro === 'inativo') lista = lista.filter(p => !p.ativo);
+  else if (_produtosFiltro === 'sem_estoque') lista = lista.filter(p => p.estoque === 0);
+  if (!lista.length) {
+    g.innerHTML = '<div class="cat-empty"><div class="cat-empty-icon">📦</div><div class="cat-empty-txt">Nenhum produto encontrado</div><div class="cat-empty-sub">Clique em "+ Novo produto" para começar</div></div>';
+    return;
+  }
+  g.innerHTML = lista.map(p => {
+    const preco = p.precoPromocional ? `<span class="prod-preco">R$ ${p.precoPromocional.toFixed(2)}</span><span class="prod-preco-old">R$ ${p.preco.toFixed(2)}</span>` : `<span class="prod-preco">R$ ${p.preco.toFixed(2)}</span>`;
+    const est = p.estoque === 0 ? '<div class="prod-estoque" style="color:var(--vermelho)">Sem estoque</div>' : p.estoque != null ? `<div class="prod-estoque">${p.estoque} em estoque</div>` : '';
+    const foto = p.fotoPrincipal ? `<img src="${p.fotoPrincipal}" alt="${p.nome}" loading="lazy">` : '📦';
+    const tags = (p.tags||[]).slice(0,3).map(t=>`<span class="prod-tag">${t}</span>`).join('');
+    const badge = !p.ativo ? '<span class="prod-status-badge inativo">Inativo</span>' : p.estoque===0 ? '<span class="prod-status-badge sem-estoque">Sem estoque</span>' : '<span class="prod-status-badge ativo">Ativo</span>';
+    return `<div class="prod-card" onclick="editarProduto('${p._id}')">
+      <div class="prod-foto">${foto}</div>
+      <div class="prod-info">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:6px;margin-bottom:4px">
+          <div class="prod-nome">${p.nome}</div>${badge}
+        </div>
+        <div>${preco}</div>${est}
+        <div class="prod-tags">${tags}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function filtrarProd(tipo, btn) {
+  _produtosFiltro = tipo;
+  document.querySelectorAll('#prod-filtros .cat-filtro-btn').forEach(b => b.classList.remove('ativo'));
+  btn.classList.add('ativo');
+  renderProdutos();
+}
+
+function abrirModalProduto(prod) {
+  document.getElementById('modal-prod-titulo').textContent = 'Novo Produto';
+  document.getElementById('prod-id').value = '';
+  document.getElementById('prod-nome').value = '';
+  document.getElementById('prod-categoria').value = '';
+  document.getElementById('prod-descricao').value = '';
+  document.getElementById('prod-preco').value = '';
+  document.getElementById('prod-preco-promo').value = '';
+  document.getElementById('prod-estoque').value = '';
+  document.getElementById('prod-sku').value = '';
+  document.getElementById('prod-tags').value = '';
+  document.getElementById('prod-palavras').value = '';
+  document.getElementById('prod-foto').value = '';
+  document.getElementById('prod-status').value = 'true';
+  document.getElementById('btn-excluir-prod').style.display = 'none';
+  document.getElementById('modal-produto').classList.add('show');
+}
+
+function editarProduto(id) {
+  const p = _todosProds.find(x => x._id === id);
+  if (!p) return;
+  document.getElementById('modal-prod-titulo').textContent = 'Editar Produto';
+  document.getElementById('prod-id').value = p._id;
+  document.getElementById('prod-nome').value = p.nome || '';
+  document.getElementById('prod-categoria').value = p.categoria || '';
+  document.getElementById('prod-descricao').value = p.descricao || '';
+  document.getElementById('prod-preco').value = p.preco || '';
+  document.getElementById('prod-preco-promo').value = p.precoPromocional || '';
+  document.getElementById('prod-estoque').value = p.estoque != null ? p.estoque : '';
+  document.getElementById('prod-sku').value = p.sku || '';
+  document.getElementById('prod-tags').value = (p.tags||[]).join(', ');
+  document.getElementById('prod-palavras').value = (p.palavrasChave||[]).join(', ');
+  document.getElementById('prod-foto').value = p.fotoPrincipal || '';
+  document.getElementById('prod-status').value = p.ativo ? 'true' : 'false';
+  document.getElementById('btn-excluir-prod').style.display = 'block';
+  document.getElementById('modal-produto').classList.add('show');
+}
+
+async function salvarProduto() {
+  const id = document.getElementById('prod-id').value;
+  const nome = document.getElementById('prod-nome').value.trim();
+  if (!nome) { alert('Informe o nome do produto'); return; }
+  const preco = parseFloat(document.getElementById('prod-preco').value);
+  if (!preco || preco <= 0) { alert('Informe o preço'); return; }
+  const body = {
+    nome,
+    categoria: document.getElementById('prod-categoria').value.trim(),
+    descricao: document.getElementById('prod-descricao').value.trim(),
+    preco,
+    precoPromocional: parseFloat(document.getElementById('prod-preco-promo').value) || null,
+    estoque: document.getElementById('prod-estoque').value !== '' ? parseInt(document.getElementById('prod-estoque').value) : null,
+    sku: document.getElementById('prod-sku').value.trim(),
+    tags: document.getElementById('prod-tags').value.split(',').map(t=>t.trim()).filter(Boolean),
+    palavrasChave: document.getElementById('prod-palavras').value.split(',').map(t=>t.trim()).filter(Boolean),
+    fotoPrincipal: document.getElementById('prod-foto').value.trim(),
+    ativo: document.getElementById('prod-status').value === 'true'
+  };
+  try {
+    const url = id ? `${_API}/catalogo/produtos/${id}` : `${_API}/catalogo/produtos`;
+    const method = id ? 'PUT' : 'POST';
+    const r = await fetch(url, { method, headers: _h(), body: JSON.stringify(body) });
+    const d = await r.json();
+    if (d.sucesso) { fecharModal('modal-produto'); carregarProdutos(); } 
+    else alert(d.erro || 'Erro ao salvar produto');
+  } catch(e) { alert('Erro de conexão'); }
+}
+
+async function excluirProduto() {
+  const id = document.getElementById('prod-id').value;
+  if (!id || !confirm('Excluir este produto?')) return;
+  try {
+    const r = await fetch(`${_API}/catalogo/produtos/${id}`, { method:'DELETE', headers: _h() });
+    const d = await r.json();
+    if (d.sucesso) { fecharModal('modal-produto'); carregarProdutos(); }
+    else alert(d.erro || 'Erro ao excluir');
+  } catch(e) { alert('Erro de conexão'); }
+}
+
+// ══════════════════ CATÁLOGOS ══════════════════
+async function carregarCatalogos() {
+  const el = document.getElementById('cat-lista');
+  el.innerHTML = '<div class="cat-empty"><div class="cat-empty-icon">⏳</div><div class="cat-empty-txt">Carregando...</div></div>';
+  try {
+    const r = await fetch(_API+'/catalogo/catalogos', { headers: _h() });
+    const d = await r.json();
+    const cats = d.catalogos || [];
+    if (!cats.length) {
+      el.innerHTML = '<div class="cat-empty"><div class="cat-empty-icon">🗂️</div><div class="cat-empty-txt">Nenhum catálogo criado</div><div class="cat-empty-sub">Organize seus produtos em coleções</div></div>';
+      return;
+    }
+    const secoes = {'destaques':'⭐ Destaques','lancamentos':'🆕 Lançamentos','promocoes':'🏷️ Promoções','mais_procurados':'🔥 Mais procurados',''defeat:''};
+    el.innerHTML = cats.map(c => `
+      <div style="background:#fff;border:1px solid var(--borda);border-radius:var(--radius-lg);padding:16px;display:flex;align-items:center;gap:14px">
+        <div style="font-size:1.8em">${c.secaoEspecial === 'destaques' ? '⭐' : c.secaoEspecial === 'lancamentos' ? '🆕' : c.secaoEspecial === 'promocoes' ? '🏷️' : c.secaoEspecial === 'mais_procurados' ? '🔥' : '🗂️'}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:700;font-size:.9em;color:var(--texto)">${c.nome}</div>
+          <div style="font-size:.78em;color:var(--texto3);margin-top:2px">${c.descricao || 'Sem descrição'}</div>
+          <div style="font-size:.72em;color:var(--texto4);margin-top:4px">${c.ativo ? '✅ Ativo' : '⚫ Inativo'}</div>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button class="btn-icon" onclick="editarCatalogo('${c._id}')">✏️</button>
+        </div>
+      </div>`).join('');
+  } catch(e) {
+    el.innerHTML = '<div class="cat-empty"><div class="cat-empty-icon">⚠️</div><div class="cat-empty-txt">Erro ao carregar</div></div>';
+  }
+}
+
+function abrirModalCatalogo() {
+  document.getElementById('modal-cat-titulo').textContent = 'Novo Catálogo';
+  document.getElementById('cat-id').value = '';
+  document.getElementById('cat-nome').value = '';
+  document.getElementById('cat-desc').value = '';
+  document.getElementById('cat-secao').value = '';
+  document.getElementById('cat-status').value = 'true';
+  document.getElementById('btn-excluir-cat').style.display = 'none';
+  document.getElementById('modal-catalogo').classList.add('show');
+}
+
+async function editarCatalogo(id) {
+  try {
+    const r = await fetch(_API+'/catalogo/catalogos', { headers: _h() });
+    const d = await r.json();
+    const c = (d.catalogos||[]).find(x => x._id === id);
+    if (!c) return;
+    document.getElementById('modal-cat-titulo').textContent = 'Editar Catálogo';
+    document.getElementById('cat-id').value = c._id;
+    document.getElementById('cat-nome').value = c.nome || '';
+    document.getElementById('cat-desc').value = c.descricao || '';
+    document.getElementById('cat-secao').value = c.secaoEspecial || '';
+    document.getElementById('cat-status').value = c.ativo ? 'true' : 'false';
+    document.getElementById('btn-excluir-cat').style.display = 'block';
+    document.getElementById('modal-catalogo').classList.add('show');
+  } catch(e) {}
+}
+
+async function salvarCatalogo() {
+  const id = document.getElementById('cat-id').value;
+  const nome = document.getElementById('cat-nome').value.trim();
+  if (!nome) { alert('Informe o nome do catálogo'); return; }
+  const body = {
+    nome,
+    descricao: document.getElementById('cat-desc').value.trim(),
+    secaoEspecial: document.getElementById('cat-secao').value,
+    ativo: document.getElementById('cat-status').value === 'true'
+  };
+  try {
+    const url = id ? `${_API}/catalogo/catalogos/${id}` : `${_API}/catalogo/catalogos`;
+    const method = id ? 'PUT' : 'POST';
+    const r = await fetch(url, { method, headers: _h(), body: JSON.stringify(body) });
+    const d = await r.json();
+    if (d.sucesso) { fecharModal('modal-catalogo'); carregarCatalogos(); }
+    else alert(d.erro || 'Erro ao salvar');
+  } catch(e) { alert('Erro de conexão'); }
+}
+
+async function excluirCatalogo() {
+  const id = document.getElementById('cat-id').value;
+  if (!id || !confirm('Excluir este catálogo?')) return;
+  try {
+    const r = await fetch(`${_API}/catalogo/catalogos/${id}`, { method:'DELETE', headers: _h() });
+    const d = await r.json();
+    if (d.sucesso) { fecharModal('modal-catalogo'); carregarCatalogos(); }
+    else alert(d.erro || 'Erro');
+  } catch(e) { alert('Erro de conexão'); }
+}
+
+// ══════════════════ CONHECIMENTO ══════════════════
+async function carregarConhecimento() {
+  const el = document.getElementById('conh-lista');
+  el.innerHTML = '<div class="cat-empty"><div class="cat-empty-icon">⏳</div></div>';
+  try {
+    const r = await fetch(_API+'/catalogo/conhecimento', { headers: _h() });
+    const d = await r.json();
+    _todosConhs = d.itens || [];
+    renderConhecimento();
+  } catch(e) {
+    el.innerHTML = '<div class="cat-empty"><div class="cat-empty-icon">⚠️</div><div class="cat-empty-txt">Erro ao carregar</div></div>';
+  }
+}
+
+function renderConhecimento() {
+  const el = document.getElementById('conh-lista');
+  let lista = _todosConhs;
+  if (_conhFiltro !== 'todos') lista = lista.filter(k => k.tipo === _conhFiltro);
+  if (!lista.length) {
+    el.innerHTML = '<div class="cat-empty"><div class="cat-empty-icon">📚</div><div class="cat-empty-txt">Nenhum item encontrado</div><div class="cat-empty-sub">Adicione perguntas frequentes, políticas e mais</div></div>';
+    return;
+  }
+  const tipoClass = {faq:'faq',pagamento:'pagamento',garantia:'garantia',politica:'politica',horario:'horario'};
+  el.innerHTML = lista.map(k => `
+    <div class="conh-card">
+      <span class="conh-tipo-badge conh-tipo-${tipoClass[k.tipo]||'faq'}">${k.tipo||'faq'}</span>
+      <div style="flex:1;min-width:0">
+        <div class="conh-pergunta">${k.pergunta}</div>
+        <div class="conh-resposta">${k.resposta}</div>
+      </div>
+      <div class="conh-acoes">
+        <button class="btn-icon" onclick="editarConhecimento('${k._id}')">✏️</button>
+      </div>
+    </div>`).join('');
+}
+
+function filtrarConh(tipo, btn) {
+  _conhFiltro = tipo;
+  document.querySelectorAll('#tela-conhecimento .cat-filtro-btn').forEach(b => b.classList.remove('ativo'));
+  btn.classList.add('ativo');
+  renderConhecimento();
+}
+
+function abrirModalConhecimento() {
+  document.getElementById('modal-conh-titulo').textContent = 'Novo item de Conhecimento';
+  document.getElementById('conh-id').value = '';
+  document.getElementById('conh-tipo').value = 'faq';
+  document.getElementById('conh-pergunta').value = '';
+  document.getElementById('conh-resposta').value = '';
+  document.getElementById('conh-tags').value = '';
+  document.getElementById('btn-excluir-conh').style.display = 'none';
+  document.getElementById('modal-conhecimento').classList.add('show');
+}
+
+function editarConhecimento(id) {
+  const k = _todosConhs.find(x => x._id === id);
+  if (!k) return;
+  document.getElementById('modal-conh-titulo').textContent = 'Editar Conhecimento';
+  document.getElementById('conh-id').value = k._id;
+  document.getElementById('conh-tipo').value = k.tipo || 'faq';
+  document.getElementById('conh-pergunta').value = k.pergunta || '';
+  document.getElementById('conh-resposta').value = k.resposta || '';
+  document.getElementById('conh-tags').value = (k.tags||[]).join(', ');
+  document.getElementById('btn-excluir-conh').style.display = 'block';
+  document.getElementById('modal-conhecimento').classList.add('show');
+}
+
+async function salvarConhecimento() {
+  const id = document.getElementById('conh-id').value;
+  const pergunta = document.getElementById('conh-pergunta').value.trim();
+  const resposta = document.getElementById('conh-resposta').value.trim();
+  if (!pergunta || !resposta) { alert('Preencha pergunta e resposta'); return; }
+  const body = {
+    tipo: document.getElementById('conh-tipo').value,
+    pergunta, resposta,
+    tags: document.getElementById('conh-tags').value.split(',').map(t=>t.trim()).filter(Boolean)
+  };
+  try {
+    const url = id ? `${_API}/catalogo/conhecimento/${id}` : `${_API}/catalogo/conhecimento`;
+    const method = id ? 'PUT' : 'POST';
+    const r = await fetch(url, { method, headers: _h(), body: JSON.stringify(body) });
+    const d = await r.json();
+    if (d.sucesso) { fecharModal('modal-conhecimento'); carregarConhecimento(); }
+    else alert(d.erro || 'Erro ao salvar');
+  } catch(e) { alert('Erro de conexão'); }
+}
+
+async function excluirConhecimento() {
+  const id = document.getElementById('conh-id').value;
+  if (!id || !confirm('Excluir este item?')) return;
+  try {
+    const r = await fetch(`${_API}/catalogo/conhecimento/${id}`, { method:'DELETE', headers: _h() });
+    const d = await r.json();
+    if (d.sucesso) { fecharModal('modal-conhecimento'); carregarConhecimento(); }
+    else alert(d.erro || 'Erro');
+  } catch(e) { alert('Erro de conexão'); }
+}
+
+// ══════════════════ LEADS ══════════════════
+async function carregarLeads() {
+  try {
+    const r = await fetch(_API+'/catalogo/leads', { headers: _h() });
+    const d = await r.json();
+    const leads = d.leads || [];
+    // stats
+    const contagem = {consultou:0, recebeu_foto:0, adicionou_carrinho:0, finalizou_compra:0};
+    leads.forEach(l => { if (contagem[l.acao] !== undefined) contagem[l.acao]++; });
+    document.getElementById('ls-consultou').textContent = contagem.consultou;
+    document.getElementById('ls-foto').textContent = contagem.recebeu_foto;
+    document.getElementById('ls-carrinho').textContent = contagem.adicionou_carrinho;
+    document.getElementById('ls-finalizado').textContent = contagem.finalizou_compra;
+    // agrupar por produto
+    const mapa = {};
+    leads.forEach(l => {
+      if (!mapa[l.produtoNome]) mapa[l.produtoNome] = {consultou:0,foto:0,carrinho:0,final:0};
+      if (l.acao==='consultou') mapa[l.produtoNome].consultou++;
+      if (l.acao==='recebeu_foto') mapa[l.produtoNome].foto++;
+      if (l.acao==='adicionou_carrinho') mapa[l.produtoNome].carrinho++;
+      if (l.acao==='finalizou_compra') mapa[l.produtoNome].final++;
+    });
+    const tbody = document.getElementById('leads-tbody');
+    const prods = Object.entries(mapa).sort((a,b) => b[1].consultou - a[1].consultou);
+    if (!prods.length) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--texto4);padding:30px">Nenhum lead ainda — os dados aparecem quando clientes perguntarem produtos no WhatsApp</td></tr>';
+      return;
+    }
+    tbody.innerHTML = prods.map(([nome, v]) => {
+      const conv = v.consultou > 0 ? Math.round(v.carrinho/v.consultou*100) : 0;
+      return `<tr>
+        <td style="font-weight:600">${nome}</td>
+        <td>${v.consultou}</td>
+        <td>${v.foto}</td>
+        <td>${v.carrinho}</td>
+        <td><div style="display:flex;align-items:center;gap:8px"><div class="conv-bar"><div class="conv-fill" style="width:${conv}%"></div></div><span style="font-size:.78em;color:var(--texto3)">${conv}%</span></div></td>
+      </tr>`;
+    }).join('');
+  } catch(e) {
+    document.getElementById('leads-tbody').innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--vermelho);padding:30px">Erro ao carregar leads</td></tr>';
+  }
+}
+
+// ══════════════════ CARRINHOS ══════════════════
+async function carregarCarrinhos() {
+  const el = document.getElementById('carrinhos-lista');
+  el.innerHTML = '<div class="cat-empty"><div class="cat-empty-icon">⏳</div></div>';
+  try {
+    const r = await fetch(`${_API}/catalogo/carrinhos?status=${_tabCarrinho}`, { headers: _h() });
+    const d = await r.json();
+    const carrinhos = d.carrinhos || [];
+    if (!carrinhos.length) {
+      el.innerHTML = `<div class="cat-empty"><div class="cat-empty-icon">🛒</div><div class="cat-empty-txt">Nenhum carrinho ${_tabCarrinho}</div></div>`;
+      return;
+    }
+    el.innerHTML = carrinhos.map(c => {
+      const ini = c.telefone.substring(0,2);
+      const total = (c.itens||[]).reduce((s,i)=>s+(i.precoUnitario*(i.quantidade||1)),0);
+      const itensStr = (c.itens||[]).map(i=>i.nomeProduto).join(', ');
+      return `<div class="carrinho-card">
+        <div class="carrinho-avatar">${ini}</div>
+        <div class="carrinho-info">
+          <div class="carrinho-tel">${c.telefone}</div>
+          <div class="carrinho-itens">${itensStr || 'Sem itens'}</div>
+        </div>
+        <span class="carrinho-status ${c.status}">${c.status}</span>
+        <div class="carrinho-valor">R$ ${total.toFixed(2)}</div>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    el.innerHTML = '<div class="cat-empty"><div class="cat-empty-icon">⚠️</div><div class="cat-empty-txt">Erro ao carregar</div></div>';
+  }
+}
+
+function mudarTabCarrinho(status, btn) {
+  _tabCarrinho = status;
+  document.querySelectorAll('.carrinhos-tab').forEach(t => t.classList.remove('ativo'));
+  btn.classList.add('ativo');
+  carregarCarrinhos();
+}
+
+// ══════════════════ MODAL UTILS ══════════════════
+function fecharModal(id) {
+  document.getElementById(id).classList.remove('show');
+}
+function fecharModalSePano(e, id) {
+  if (e.target === document.getElementById(id)) fecharModal(id);
+}
+<\/script>
 </body>
 </html>
