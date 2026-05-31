@@ -795,6 +795,8 @@ function renderProdutos(prods) {
 function _comprar(btn) {
   adicionarCarrinho(btn.dataset.id, decodeURIComponent(btn.dataset.nome), parseFloat(btn.dataset.preco), decodeURIComponent(btn.dataset.foto));
 }
+function _ajustar(btn, delta) { ajustarQty(btn.dataset.id, delta); }
+function _remover(btn) { removerItem(btn.dataset.id); }
 function _wppProd(btn) {
   window.open('https://wa.me/'+wppNum+'?text='+encodeURIComponent('Olá! Tenho interesse no produto: '+decodeURIComponent(btn.dataset.nome)), '_blank');
 }
@@ -847,10 +849,10 @@ function renderCarrinho() {
         '<div class="carrinho-item-nome">'+item.nome+'</div>'+
         '<div class="carrinho-item-preco">R$ '+item.preco.toFixed(2)+'</div>'+
         '<div class="carrinho-item-qty">'+
-          '<button onclick="ajustarQty(''+item.id+'',-1)">−</button>'+
+          '<button data-id="'+item.id+'" onclick="_ajustar(this,-1)">−</button>'+
           '<span>'+item.qty+'</span>'+
-          '<button onclick="ajustarQty(''+item.id+'',1)">+</button>'+
-          '<button onclick="removerItem(''+item.id+'')" style="margin-left:8px;color:var(--vermelho)">🗑</button>'+
+          '<button data-id="'+item.id+'" onclick="_ajustar(this,1)">+</button>'+
+          '<button data-id="'+item.id+'" onclick="_remover(this)" style="margin-left:8px;color:var(--vermelho)">🗑</button>'+
         '</div>'+
       '</div>'+
       '<div style="font-weight:700;font-size:.9em">R$ '+(item.preco*item.qty).toFixed(2)+'</div>'+
