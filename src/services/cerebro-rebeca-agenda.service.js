@@ -181,6 +181,10 @@ RACIOCÍNIO AVANÇADO — situações reais do dia a dia:
 - "vocês vendem calça jeans?" → buscar_produto_catalogo, entidades:{busca:"calça jeans"}
 - "tem alguma promoção?" → buscar_produto_catalogo, entidades:{busca:"promoção"}
 - "quais produtos vocês têm?" → buscar_produto_catalogo, entidades:{busca:""}
+- "tem alguma promoção?" → buscar_produto_catalogo, entidades:{busca:"promocao"}
+- "tem combo?" → buscar_produto_catalogo, entidades:{busca:"combo"}
+- "o que está em destaque?" → buscar_produto_catalogo, entidades:{busca:"destaque"}
+- "o mais vendido de vocês?" → buscar_produto_catalogo, entidades:{busca:"mais vendido"}
 - Dono: "me lembra amanhã 9h de ligar pro fornecedor" → criar_lembrete, texto:"ligar pro fornecedor", dia:amanhã, hora:9:00
 - Dono: "me lembra toda sexta de pagar 499 pra Raphaela" → criar_lembrete, recorrente:{tipo:semanal,diaSemana:sexta}, valor:499, texto:"pagar Raphaela"
 - Dono: "tem lembrete hoje?" → listar_lembretes (pergunta sobre existentes)

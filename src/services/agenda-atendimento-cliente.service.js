@@ -160,9 +160,19 @@ async function atenderCliente(telefoneCliente, mensagem, adminId) {
 
 
     // Buscar produtos só se mensagem sugere produto/compra/preço
-    const _ehPerguntaProduto = /tem |vend|preco|valor|quanto|produto|comprar|quero|catálogo|catalogo|coleção|colecao|loja|lanche|item|disponiv/i.test(mensagem);
+    const _ehPerguntaProduto = /tem |vend|preco|valor|quanto|produto|comprar|quero|catálogo|catalogo|coleção|colecao|loja|lanche|item|disponiv|promo|desconto|combo|destaque|mais vendido|barato/i.test(mensagem);
     const _termoBusca = mensagem.replace(/\?|!|\./g,'').trim();
-    const produtos = await _buscarProdutos(adminId, _ehPerguntaProduto ? _termoBusca : '');
+    // Busca especial: promoção → filtrar só produtos com precoPromocional
+    const _querPromo = /promo|desconto|oferta|barato|mais barato/i.test(mensagem);
+    const _querCombo = /combo|pacote|kit/i.test(mensagem);
+    const _querDestaque = /destaque|recomenda|indica|popular|famoso/i.test(mensagem);
+    const _querMaisVendido = /mais vendido|mais pedido|sucesso|campeão/i.test(mensagem);
+    let produtos = await _buscarProdutos(adminId, _ehPerguntaProduto ? _termoBusca : '');
+    // Filtrar por tipo se cliente pediu especificamente
+    if (_querPromo && produtos.length) produtos = produtos.filter(p => p.precoPromocional).length ? produtos.filter(p => p.precoPromocional) : produtos;
+    if (_querCombo && produtos.length) produtos = produtos.filter(p => p.combo).length ? produtos.filter(p => p.combo) : produtos;
+    if (_querDestaque && produtos.length) produtos = produtos.filter(p => p.destaque).length ? produtos.filter(p => p.destaque) : produtos;
+    if (_querMaisVendido && produtos.length) produtos = [...produtos].sort((a,b)=>(b.totalVendas||0)-(a.totalVendas||0)).slice(0,4);
     const conhecimento = await _buscarConhecimento(adminId, _termoBusca);
 
     const listaProdutos = produtos.length
@@ -275,7 +285,12 @@ VARIAÇÃO DE RESPOSTAS — nunca repita a mesma frase:
 - Agradecendo: "Fico feliz!" / "Que ótimo!" / "Maravilha!" / "Que bom!"  
 - Despedindo: "Até logo! 💙" / "Te esperamos!" / "Qualquer coisa é só chamar!"
 - Saudação: "Oi!" / "Boa tarde!" / "Olá, ${nomeCliente||'tudo bem'}!" — nunca "Olá!" frio
-${linkAgenda ? '- Agendar online → "Você pode agendar direto pelo link: rebecasistemas.com.br/agendar 😊"' : ''}${listaProdutos ? `\nPRODUTOS DISPONÍVEIS (use APENAS estes dados reais, nunca invente preço ou estoque):\n${listaProdutos}\n\nREGRAS PARA PRODUTOS:\n- Cliente pediu algo → encontre o mais parecido MESMO que o nome não bata exato\n- "tem camisa?" com produto "Camiseta Polo" → responda que tem, informe nome e preço corretos\n- Pedido informal ("alguma coisa barata", "o mais vendido") → sugira 1-2 opções da lista\n- Produto com [SEM ESTOQUE] → "Esse está esgotado, mas temos [similar] por R$ X 😊"\n- Sempre mencione o preço exato — NUNCA invente preço\n- Se só 1 produto encontrado e tem foto → diga "posso te mandar uma foto!"\n- NUNCA invente promoção sem precoPromocional real\n- NUNCA diga últimas unidades sem estoque real ≤ 3\n- Seja vendedora: destaque benefícios, sugira combinações\n- Se cliente hesitar → "O mais pedido aqui é o [nome], você ia amar!"\n- Pedido vago ("o que vocês têm?") → liste 3-4 destaques com preço` : ''}\n${listaConhecimento ? `\nINFORMAÇÕES DO NEGÓCIO (use para responder dúvidas):\n${listaConhecimento}` : ''}\n`;
+${linkAgenda ? '- Agendar online → "Você pode agendar direto pelo link: rebecasistemas.com.br/agendar 😊"' : ''}${listaProdutos ? `\nPRODUTOS DISPONÍVEIS (use APENAS estes dados reais, nunca invente preço ou estoque):\n${listaProdutos}\n\nREGRAS PARA PRODUTOS:\n- Cliente pediu algo → encontre o mais parecido MESMO que o nome não bata exato\n- "tem camisa?" com produto "Camiseta Polo" → responda que tem, informe nome e preço corretos\n- Pedido informal ("alguma coisa barata", "o mais vendido") → sugira 1-2 opções da lista\n- Produto com [SEM ESTOQUE] → "Esse está esgotado, mas temos [similar] por R$ X 😊"\n- Sempre mencione o preço exato — NUNCA invente preço\n- Se só 1 produto encontrado e tem foto → diga "posso te mandar uma foto!"\n- NUNCA invente promoção sem precoPromocional real\n- NUNCA diga últimas unidades sem estoque real ≤ 3\n- Seja vendedora: destaque benefícios, sugira combinações\n- Se cliente hesitar → "O mais pedido aqui é o [nome], você ia amar!"\n- Pedido vago ("o que vocês têm?") → liste 3-4 destaques com preço
+- Produtos com [⭐DESTAQUE] → mencione como recomendação especial
+- Produtos com PROMOÇÃO → sempre destaque o desconto: "tá em promoção por R$ X!"
+- Produtos com [🎁COMBO] → apresente como oportunidade: "temos um combo especial de X por R$ Y"
+- Produtos com [ÚLTIMAS X UNIDADES] → crie urgência: "tá acabando, só restam X unidades!"
+- Produtos com 🔥 vendas → mencione como "o mais pedido aqui é..."` : ''}\n${listaConhecimento ? `\nINFORMAÇÕES DO NEGÓCIO (use para responder dúvidas):\n${listaConhecimento}` : ''}\n`;
         const claude = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
     const r = await claude.messages.create({
       model: 'claude-haiku-4-5-20251001',
