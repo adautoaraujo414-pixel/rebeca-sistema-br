@@ -776,8 +776,8 @@ function renderProdutos(prods) {
         (p.descricao ? '<div class="prod-card-pub-desc">'+p.descricao+'</div>' : '')+
         estoque+
         '<div class="prod-card-pub-actions">'+
-          (p.estoque > 0 ? '<button class="btn btn-primary" onclick="adicionarCarrinho(''+p._id+'',''+p.nome+'','+(p.precoPromocional||p.preco)+',''+p.fotoPrincipal+'')">🛒 Comprar</button>' : '')+
-          '<button class="btn btn-wpp" onclick="window.open('https://wa.me/'+wppNum+'?text=Olá! Tenho interesse no produto: '+encodeURIComponent(p.nome)+'','_blank')">💬 WhatsApp</button>'+
+          (p.estoque > 0 ? '<button class="btn btn-primary" onclick="adicionarCarrinho(&quot;'+p._id+'&quot;,&quot;'+p.nome.replace(/&quot;/g,\'\')+'&quot;,'+(p.precoPromocional||p.preco)+')">🛒 Comprar</button>' : '')+
+          '<button class="btn btn-wpp" onclick="window.open(\'https://wa.me/'+wppNum+'?text=Ol%C3%A1!%20Interesse%20em:%20'+encodeURIComponent(p.nome)+'\',\'_blank\')">💬 WhatsApp</button>'+
         '</div>'+
       '</div>'+
     '</div>';
