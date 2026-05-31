@@ -2176,6 +2176,76 @@ ${total>5?'Tá crescendo muito! Continua assim! 🚀':'Todo cliente novo é uma 
         return true;
       }
 
+
+      // ── CONSULTA FINANCEIRA POR CATEGORIA ─────────────────────────────────
+      if (_cerebro.intencao === 'financeiro_categoria') {
+        const _agoraBR = new Date(Date.now() - 3*60*60*1000);
+        const _y = _agoraBR.getUTCFullYear(), _m = _agoraBR.getUTCMonth(), _d = _agoraBR.getUTCDate();
+        const _periodo = (ent.periodo || 'mes').toLowerCase();
+        let _iniUTC, _fimUTC;
+        if (_periodo === 'semana') {
+          const _dow = _agoraBR.getUTCDay();
+          const _dias = (_dow === 0) ? 6 : _dow - 1;
+          _iniUTC = new Date(Date.UTC(_y, _m, _d - _dias, 3, 0, 0));
+        } else if (_periodo === 'hoje') {
+          _iniUTC = new Date(Date.UTC(_y, _m, _d, 3, 0, 0));
+        } else {
+          _iniUTC = new Date(Date.UTC(_y, _m, 1, 3, 0, 0));
+        }
+        _fimUTC = new Date(Date.UTC(_y, _m, _d+1, 2, 59, 59, 999));
+
+        const _todos = await FinanceiroAgenda.find({
+          adminId: adminObjId,
+          data: { $gte: _iniUTC, $lte: _fimUTC }
+        }).sort({ data: -1 }).lean();
+
+        const _cats = ent.categoria ? ent.categoria.split(',').map(c => c.trim().toLowerCase()) : [];
+        const _labelPer = _periodo === 'semana' ? 'essa semana' : _periodo === 'hoje' ? 'hoje' : 'esse mês';
+
+        if (_cats.length === 0) {
+          // Sem categoria: mostra resumo por categoria
+          const _catS = {}, _catE = {};
+          _todos.filter(l=>l.tipo==='despesa').forEach(l=>{ const c=l.categoria||'outros'; _catS[c]=(_catS[c]||0)+l.valor; });
+          _todos.filter(l=>l.tipo==='receita').forEach(l=>{ const c=l.categoria||'outros'; _catE[c]=(_catE[c]||0)+l.valor; });
+          const _totS = Object.values(_catS).reduce((a,b)=>a+b,0);
+          const _totE = Object.values(_catE).reduce((a,b)=>a+b,0);
+          const _linhasS = Object.entries(_catS).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`  ${k}: R$ ${v.toFixed(2)}`).join('
+');
+          const _linhasE = Object.entries(_catE).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`  ${k}: R$ ${v.toFixed(2)}`).join('
+');
+          if (!_todos.length) {
+            await responder(\`Não encontrei lançamentos ${_labelPer}, \${_chefe(_generoAdmin, _apelidoAdmin)}. 🤷\`);
+          } else {
+            let _r = \`📊 *Gastos por categoria — \${_labelPer}*\n\n\`;
+            if (_linhasS) _r += \`❌ *Saídas: R$ \${_totS.toFixed(2)}*\n\${_linhasS}\n\n\`;
+            if (_linhasE) _r += \`✅ *Entradas: R$ \${_totE.toFixed(2)}*\n\${_linhasE}\n\`;
+            _r += \`\n💰 Saldo: R$ \${(_totE-_totS).toFixed(2)}\`;
+            await responder(_r);
+          }
+          return true;
+        }
+
+        // Com categoria específica
+        let _resp = \`📊 *\${_labelPer.charAt(0).toUpperCase()+_labelPer.slice(1)}* — gastos por categoria, \${_chefe(_generoAdmin, _apelidoAdmin)}:\n\`;
+        for (const _cat of _cats) {
+          const _lanc = _todos.filter(l => (l.categoria||'outros').toLowerCase() === _cat || (l.descricao||'').toLowerCase().includes(_cat));
+          const _tot = _lanc.reduce((s,l)=>s+(l.tipo==='despesa'?l.valor:-l.valor),0);
+          const _totAbs = _lanc.filter(l=>l.tipo==='despesa').reduce((s,l)=>s+l.valor,0);
+          if (!_lanc.length) {
+            _resp += \`\n*\${_cat}*: nenhum lançamento encontrado\`;
+          } else {
+            _resp += \`\n*\${_cat}*: R$ \${_totAbs.toFixed(2)} (\${_lanc.filter(l=>l.tipo==='despesa').length} lançamentos)\`;
+            const _detalhe = _lanc.slice(0,5).map(l => {
+              const _dt = new Date(l.data).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
+              return \`  \${_dt} R$ \${l.valor.toFixed(2)}\${l.descricao ? ' — '+l.descricao : ''}\`;
+            }).join('\n');
+            if (_detalhe) _resp += \`\n\${_detalhe}\`;
+          }
+        }
+        await responder(_resp);
+        return true;
+      }
+
       if (_cerebro.intencao === 'fora_escopo' || !_cerebro.intencao) {
         try {
           const Anthropic = require('@anthropic-ai/sdk');

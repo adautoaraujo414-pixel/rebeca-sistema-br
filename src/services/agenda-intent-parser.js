@@ -7,7 +7,7 @@
  */
 
 const INTENCOES_VALIDAS = new Set([
-  'financeiro_hoje','financeiro_semana','financeiro_mes',
+  'financeiro_hoje','financeiro_semana','financeiro_mes','financeiro_categoria','financeiro_periodo',
   'registrar_receita','registrar_despesa',
   'agenda_hoje','agenda_amanha','agenda_semana',
   'proximo_cliente','clientes_inativos','clientes_novos','clientes_confirmados',
@@ -100,6 +100,15 @@ EXEMPLOS:
 "100 reais academia" → registrar_despesa, valor:100, origem:"academia", categoria:"beleza"
 "rebeca quanto gastei hoje" → financeiro_hoje
 "resume o dia" → financeiro_hoje
+"quanto gastei em mercado" → financeiro_categoria, entidades:{categoria:"mercado", periodo:"mes"}
+"quanto gastei em combustivel essa semana" → financeiro_categoria, entidades:{categoria:"combustivel", periodo:"semana"}
+"quanto gastei em mercado e combustivel" → financeiro_categoria, entidades:{categoria:"mercado,combustivel", periodo:"mes"}
+"que dia gastei no mercado" → financeiro_categoria, entidades:{categoria:"mercado", periodo:"mes"}
+"quanto saiu em alimentacao esse mes" → financeiro_categoria, entidades:{categoria:"alimentacao", periodo:"mes"}
+"quanto gastei na farmacia" → financeiro_categoria, entidades:{categoria:"saude", periodo:"mes"}
+"quanto fiz essa semana" → financeiro_semana
+"quanto entrou esse mes" → financeiro_mes
+"mostra meus gastos por categoria" → financeiro_categoria, entidades:{periodo:"mes"}
 
 MENSAGEM: "${msg.substring(0, 600)}"
 
