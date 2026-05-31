@@ -810,39 +810,101 @@ init();
 
 // ══════════════════ PRODUTOS ══════════════════
 var _carrinho = [];
-function renderProdutos(prods) {
-  var grid = document.getElementById('pub-prod-grid');
-  if (!grid) return;
+var _todosProdsVitrine = [];
+function _cardProd(p, badge) {
+  var precoFinal = p.precoCombo || p.precoPromocional || p.preco;
+  var descPct = p.precoPromocional && p.preco ? Math.round((1 - p.precoPromocional/p.preco)*100) : 0;
+  var precoHtml = (p.precoPromocional || p.precoCombo)
+    ? '<span class="prod-card-pub-preco">R$ '+precoFinal.toFixed(2)+'</span><span class="prod-card-pub-preco-old">R$ '+p.preco.toFixed(2)+'</span>'
+    : '<span class="prod-card-pub-preco">R$ '+p.preco.toFixed(2)+'</span>';
+  var imgHtml = p.fotoPrincipal
+    ? '<img src="'+p.fotoPrincipal+'" alt="" style="width:100%;height:100%;object-fit:cover">'
+    : '🛍️';
+  var estoqueHtml = p.estoque === 0
+    ? '<div class="prod-card-pub-estoque" style="color:var(--vermelho)">Esgotado</div>'
+    : p.estoque > 0 && p.estoque <= 3
+      ? '<div class="prod-card-pub-estoque" style="color:#f59e0b">⚡ Últimas '+p.estoque+' unidades!</div>'
+      : '';
+  var badgeHtml = badge ? '<div class="pub-badge">'+badge+'</div>'
+    : descPct >= 5 ? '<div class="pub-badge pub-badge-promo">-'+descPct+'%</div>'
+    : p.destaque ? '<div class="pub-badge pub-badge-dest">⭐ Destaque</div>'
+    : p.combo ? '<div class="pub-badge pub-badge-combo">🎁 Combo</div>'
+    : '';
+  var btnComprar = p.estoque !== 0
+    ? '<button class="btn btn-primary" data-id="'+p._id+'" data-nome="'+encodeURIComponent(p.nome)+'" data-preco="'+precoFinal+'" data-foto="'+encodeURIComponent(p.fotoPrincipal||'')+'" onclick="_comprar(this)">🛒 Comprar</button>'
+    : '<button class="btn" style="opacity:.5;cursor:not-allowed" disabled>Esgotado</button>';
+  var btnWpp = '<button class="btn btn-wpp" data-nome="'+encodeURIComponent(p.nome)+'" onclick="_wppProd(this)">💬 WhatsApp</button>';
+  return '<div class="prod-card-pub">'+badgeHtml+
+    '<div class="prod-card-pub-img">'+imgHtml+'</div>'+
+    '<div class="prod-card-pub-body">'+
+      '<div class="prod-card-pub-nome">'+p.nome+'</div>'+
+      '<div>'+precoHtml+'</div>'+
+      (p.descricao ? '<div class="prod-card-pub-desc">'+p.descricao+'</div>' : '')+
+      estoqueHtml+
+      '<div class="prod-card-pub-actions">'+btnComprar+btnWpp+'</div>'+
+    '</div></div>';
+}
+function _renderGrid(elId, lista, badge) {
+  var el = document.getElementById(elId);
+  if (!el) return;
+  el.innerHTML = lista.map(function(p){ return _cardProd(p, badge||''); }).join('');
+}
+function renderProdutos(prods, secoes) {
+  _todosProdsVitrine = prods;
   if (!prods.length) { document.getElementById('produtos').classList.add('hidden'); return; }
   document.getElementById('produtos').classList.remove('hidden');
   document.getElementById('nav-prod').style.display = '';
-  grid.innerHTML = prods.map(function(p) {
-    var precoFinal = p.precoPromocional || p.preco;
-    var precoHtml = p.precoPromocional
-      ? '<span class="prod-card-pub-preco">R$ '+precoFinal.toFixed(2)+'</span><span class="prod-card-pub-preco-old">R$ '+p.preco.toFixed(2)+'</span>'
-      : '<span class="prod-card-pub-preco">R$ '+p.preco.toFixed(2)+'</span>';
-    var imgHtml = p.fotoPrincipal
-      ? '<img src="'+p.fotoPrincipal+'" alt="" style="width:100%;height:100%;object-fit:cover">'
-      : '🛍️';
-    var estoqueHtml = p.estoque > 0
-      ? '<div class="prod-card-pub-estoque">'+p.estoque+' em estoque</div>'
-      : '<div class="prod-card-pub-estoque" style="color:var(--vermelho)">Esgotado</div>';
-    var btnComprar = p.estoque > 0
-      ? '<button class="btn btn-primary" data-id="'+p._id+'" data-nome="'+encodeURIComponent(p.nome)+'" data-preco="'+precoFinal+'" data-foto="'+encodeURIComponent(p.fotoPrincipal||'')+'" onclick="_comprar(this)">🛒 Comprar</button>'
-      : '';
-    var btnWpp = '<button class="btn btn-wpp" data-nome="'+encodeURIComponent(p.nome)+'" onclick="_wppProd(this)">💬 WhatsApp</button>';
-    return '<div class="prod-card-pub">'+
-      '<div class="prod-card-pub-img">'+imgHtml+'</div>'+
-      '<div class="prod-card-pub-body">'+
-        '<div class="prod-card-pub-nome">'+p.nome+'</div>'+
-        '<div>'+precoHtml+'</div>'+
-        (p.descricao ? '<div class="prod-card-pub-desc">'+p.descricao+'</div>' : '')+
-        estoqueHtml+
-        '<div class="prod-card-pub-actions">'+btnComprar+btnWpp+'</div>'+
-      '</div>'+
-    '</div>';
-  }).join('');
+  secoes = secoes || {};
+  if (secoes.promocoes && secoes.promocoes.length) {
+    document.getElementById('sec-promo').style.display = '';
+    _renderGrid('pub-prod-promo', secoes.promocoes, '🏷️ Promo');
+  }
+  if (secoes.maisPedidos && secoes.maisPedidos.length) {
+    document.getElementById('sec-mais-vendidos').style.display = '';
+    _renderGrid('pub-prod-mais', secoes.maisPedidos, '🔥');
+  }
+  if (secoes.destaques && secoes.destaques.length) {
+    document.getElementById('sec-destaques').style.display = '';
+    _renderGrid('pub-prod-dest', secoes.destaques, '⭐');
+  }
+  if (secoes.combos && secoes.combos.length) {
+    document.getElementById('sec-combos').style.display = '';
+    _renderGrid('pub-prod-combo', secoes.combos, '🎁 Combo');
+  }
+  var temSecoes = (secoes.promocoes||[]).length || (secoes.destaques||[]).length || (secoes.combos||[]).length;
+  if (temSecoes) document.getElementById('sec-todos-titulo').style.display = '';
+  _renderGrid('pub-prod-grid', prods);
+  var cats = [...new Set(prods.map(function(p){ return p.categoria; }).filter(Boolean))];
+  var filtrosEl = document.getElementById('pub-filtros');
+  if (filtrosEl && cats.length > 1) {
+    filtrosEl.innerHTML = '<button class="pub-filtro pub-filtro-ativo" onclick="filtrarCategoria(this,\'\')">Todos</button>'
+      + cats.map(function(c){ return '<button class="pub-filtro" onclick="filtrarCategoria(this,\''+c+'\')">'+c+'</button>'; }).join('');
+  }
   document.getElementById('carrinho-fab').classList.remove('hidden');
+}
+function filtrarProdutos(termo) {
+  var t = (termo||'').toLowerCase().trim();
+  var filtrado = t ? _todosProdsVitrine.filter(function(p){
+    return (p.nome+' '+(p.descricao||'')+' '+(p.categoria||'')+' '+(p.tags||[]).join(' ')).toLowerCase().includes(t);
+  }) : _todosProdsVitrine;
+  var semRes = document.getElementById('pub-sem-resultado');
+  ['sec-promo','sec-mais-vendidos','sec-destaques','sec-combos'].forEach(function(id){
+    var el = document.getElementById(id); if (el) el.style.display = t ? 'none' : '';
+  });
+  if (filtrado.length) {
+    if(semRes) semRes.style.display = 'none';
+    document.getElementById('sec-todos').style.display = '';
+    _renderGrid('pub-prod-grid', filtrado);
+  } else {
+    if(semRes) semRes.style.display = '';
+    document.getElementById('sec-todos').style.display = 'none';
+  }
+}
+function filtrarCategoria(btn, cat) {
+  document.querySelectorAll('.pub-filtro').forEach(function(b){ b.classList.remove('pub-filtro-ativo'); });
+  btn.classList.add('pub-filtro-ativo');
+  var filtrado = cat ? _todosProdsVitrine.filter(function(p){ return p.categoria === cat; }) : _todosProdsVitrine;
+  _renderGrid('pub-prod-grid', filtrado);
 }
 function _comprar(btn) {
   adicionarCarrinho(btn.dataset.id, decodeURIComponent(btn.dataset.nome), parseFloat(btn.dataset.preco), decodeURIComponent(btn.dataset.foto));
