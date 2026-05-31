@@ -3,7 +3,7 @@ const router = express.Router();
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const { AdminAgenda, FotoAgenda, ServicoAgenda, ProfissionalAgenda } = require('../models/AgendaServico');
+const { AdminAgenda, FotoAgenda, ServicoAgenda, ProfissionalAgenda, ProdutoAgenda, CatalogoAgenda } = require('../models/AgendaServico');
 
 // Auth middleware
 async function authAgenda(req, res, next) {
@@ -109,6 +109,44 @@ router.delete('/fotos/:id', authAgenda, async (req, res) => {
     }
     await FotoAgenda.findByIdAndDelete(req.params.id);
     res.json({ sucesso: true });
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+
+// ===== UPLOAD FOTO PRODUTO =====
+router.post('/produto/:id/foto', authAgenda, upload.single('foto'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ erro: 'Nenhuma foto enviada' });
+    const url = '/uploads/agenda/' + req.file.filename;
+    const p = await ProdutoAgenda.findOneAndUpdate(
+      { _id: req.params.id, adminId: req.adminAgendaId },
+      { fotoPrincipal: url }, { new: true }
+    );
+    if (!p) return res.status(404).json({ erro: 'Produto não encontrado' });
+    res.json({ sucesso: true, url });
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// ===== UPLOAD FOTO CATÁLOGO =====
+router.post('/catalogo/:id/foto', authAgenda, upload.single('foto'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ erro: 'Nenhuma foto enviada' });
+    const url = '/uploads/agenda/' + req.file.filename;
+    const c = await CatalogoAgenda.findOneAndUpdate(
+      { _id: req.params.id, adminId: req.adminAgendaId },
+      { fotoCapa: url }, { new: true }
+    );
+    if (!c) return res.status(404).json({ erro: 'Catálogo não encontrado' });
+    res.json({ sucesso: true, url });
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// ===== UPLOAD FOTO AVULSA (retorna URL sem salvar em model) =====
+router.post('/foto-avulsa', authAgenda, upload.single('foto'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ erro: 'Nenhuma foto enviada' });
+    const url = '/uploads/agenda/' + req.file.filename;
+    res.json({ sucesso: true, url });
   } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 

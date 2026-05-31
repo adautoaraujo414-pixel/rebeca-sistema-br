@@ -4251,8 +4251,23 @@ carregarFinanceiro = async function() {
         <input type="text" id="prod-palavras" placeholder="Ex: shampoo, cabelo seco, hidratação">
       </div>
       <div class="form-field">
-        <label>URL da foto principal</label>
-        <input type="url" id="prod-foto" placeholder="https://...">
+        <label>Foto do produto</label>
+        <div id="prod-foto-preview" style="display:none;margin-bottom:8px;position:relative;width:120px">
+          <img id="prod-foto-img" src="" alt="Preview" style="width:120px;height:120px;object-fit:cover;border-radius:8px;border:1px solid var(--borda)">
+          <button onclick="removerFotoProduto()" style="position:absolute;top:-8px;right:-8px;width:24px;height:24px;border-radius:50%;background:var(--vermelho);color:#fff;border:none;cursor:pointer;font-size:.75em;display:flex;align-items:center;justify-content:center">✕</button>
+        </div>
+        <input type="hidden" id="prod-foto">
+        <input type="file" id="prod-foto-file" accept="image/*" style="display:none" onchange="uploadFotoProduto(this)">
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button type="button" class="btn-sec" onclick="document.getElementById('prod-foto-file').click()" style="font-size:.8em;padding:7px 14px">
+            📷 Tirar foto / Galeria
+          </button>
+          <button type="button" class="btn-sec" onclick="document.getElementById('prod-foto-file').click()" style="font-size:.8em;padding:7px 14px">
+            📁 Selecionar arquivo
+          </button>
+        </div>
+        <div id="prod-foto-loading" style="display:none;font-size:.78em;color:var(--texto3);margin-top:6px">⏳ Enviando foto...</div>
+        <div id="prod-foto-erro" style="display:none;font-size:.78em;color:var(--vermelho);margin-top:6px"></div>
       </div>
       <div class="form-field">
         <label>Status</label>
@@ -4583,6 +4598,7 @@ function abrirModalProduto(prod) {
   document.getElementById('prod-tags').value = '';
   document.getElementById('prod-palavras').value = '';
   document.getElementById('prod-foto').value = '';
+  removerFotoProduto();
   document.getElementById('prod-status').value = 'true';
   document.getElementById('btn-excluir-prod').style.display = 'none';
   document.getElementById('modal-produto').classList.add('show');
@@ -4603,6 +4619,7 @@ function editarProduto(id) {
   document.getElementById('prod-tags').value = (p.tags||[]).join(', ');
   document.getElementById('prod-palavras').value = (p.palavrasChave||[]).join(', ');
   document.getElementById('prod-foto').value = p.fotoPrincipal || '';
+  if (p.fotoPrincipal) { mostrarPreviewFoto(p.fotoPrincipal); } else { removerFotoProduto(); }
   document.getElementById('prod-status').value = p.ativo ? 'true' : 'false';
   document.getElementById('btn-excluir-prod').style.display = 'block';
   document.getElementById('modal-produto').classList.add('show');
@@ -4890,6 +4907,28 @@ function mudarTabCarrinho(status, btn) {
   btn.classList.add('ativo');
   carregarCarrinhos();
 }
+
+
+// ══════════════════ UPLOAD FOTO PRODUTO ══════════════════
+async function uploadFotoProduto(input) {
+  const file = input.files[0];
+  if (!file) return;
+  document.getElementById('prod-foto-loading').style.display = 'block';
+  document.getElementById('prod-foto-erro').style.display = 'none';
+  try {
+    const id = document.getElementById('prod-id').value;
+    const endpoint = id ? `/api/agenda-upload/produto/${id}/foto` : '/api/agenda-upload/foto-avulsa';
+    const fd = new FormData();
+    fd.append('foto', file);
+    const r = await fetch(endpoint, { method: 'POST', headers: { 'Authorization': 'Bearer ' + _tok() }, body: fd });
+    const d = await r.json();
+    if (d.sucesso) { document.getElementById('prod-foto').value = d.url; mostrarPreviewFoto(d.url); }
+    else { document.getElementById('prod-foto-erro').textContent = d.erro || 'Erro'; document.getElementById('prod-foto-erro').style.display = 'block'; }
+  } catch(e) { document.getElementById('prod-foto-erro').textContent = 'Erro de conexão'; document.getElementById('prod-foto-erro').style.display = 'block'; }
+  finally { document.getElementById('prod-foto-loading').style.display = 'none'; }
+}
+function mostrarPreviewFoto(url) { document.getElementById('prod-foto-img').src = url; document.getElementById('prod-foto-preview').style.display = 'block'; }
+function removerFotoProduto() { document.getElementById('prod-foto').value = ''; document.getElementById('prod-foto-img').src = ''; document.getElementById('prod-foto-preview').style.display = 'none'; document.getElementById('prod-foto-file').value = ''; }
 
 // ══════════════════ MODAL UTILS ══════════════════
 function fecharModal(id) {
