@@ -778,7 +778,10 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
       const _semPrazo = /sem prazo|indeterminado|sempre|indefinido/i.test(msg);
       // _nMatch: captura quantidade de vezes, excluindo horas/valores
       const _nMatch = msg.match(/(\d+)\s*(?:vez(?:es)?|semana(?:s)?|mes(?:es)?|m[eê]s|repeti[cç])/i) || (!/(?:\d+\s*(?:hora[s]?|h\b|min(?:uto)?s?|reais?|R\$|\$))/i.test(msg) ? msg.match(/(\d+)/) : null);
-      const _nVezesResp = _semPrazo ? (_pendRec.rec.tipo === 'semanal' ? 52 : _pendRec.rec.tipo === 'diario' ? 30 : 12) : (_nMatch ? parseInt(_nMatch[1]) : _pendRec.rec.tipo === 'diario' ? 30 : 4);
+      const _tipoRec2 = _pendRec.rec.tipo;
+      const _nVezesResp = _semPrazo
+        ? (_tipoRec2 === 'semanal' ? 52 : _tipoRec2 === 'diario' ? 30 : _tipoRec2 === 'quinzenal' ? 26 : _tipoRec2 === 'anual' ? 5 : 12)
+        : (_nMatch ? parseInt(_nMatch[1]) : _tipoRec2 === 'diario' ? 30 : _tipoRec2 === 'quinzenal' ? 26 : 4);
 
       SM.updateSession(adminId, telefone, { aguardandoRecorrente: null });
       // Redirecionar para o handler acima com nlp simulado
@@ -921,7 +924,10 @@ Quantas vezes vai repetir? (ex: "6 vezes", "3 meses", "sem prazo")`;
       let _descRec2 = '';
       if (_rec.tipo === 'semanal') _descRec2 = `toda ${_rec.diaSemana || 'semana'}`;
       else if (_rec.tipo === 'mensal' && _rec.dia) _descRec2 = `todo dia ${_rec.dia} do mês`;
+      else if (_rec.tipo === 'mensal') _descRec2 = 'todo mês';
       else if (_rec.tipo === 'diario') _descRec2 = 'todo dia';
+      else if (_rec.tipo === 'quinzenal') _descRec2 = 'a cada 15 dias';
+      else if (_rec.tipo === 'anual') _descRec2 = 'todo ano';
       const _respRec = `Feito! 🔔 Criei *${_lembretes.length} lembretes* de *${_textoRec}*${_valorRec ? ' (R$ '+_valorRec+')' : ''} ${_descRec2}.
 
 Te aviso 30 minutos antes de cada um! 💙`;
