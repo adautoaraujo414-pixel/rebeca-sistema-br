@@ -280,12 +280,20 @@ function parsear(txt) {
   let textoLembrete = null;
   if (intencao === 'lembrete' || intencao === 'recorrente') {
     textoLembrete = normalizado
+      // Remover gatilhos de comando
+      .replace(/\b(rebeca)[,.]?\s*/g, '')
+      .replace(/\b(eu quero que voce|quero que voce|pode|por favor|pfv|pf)\s*/g, '')
+      .replace(/\b(crie?|criar|fazer|faz|coloca|coloque|adiciona|adicione|registra|registre|anota|anote|me lembra?|me avisa?|lembrete|agenda|marca|marque)\b[,.]?\s*/g, '')
+      .replace(/\b(um|uma|o|a|novo|nova)\s+(lembrete|aviso|alerta)\s*/g, '')
+      .replace(/\b(recorrente|recorrencia|todo mes|todo dia|toda semana|mensalmente|mensais?)\b/g, '')
       .replace(/\b(todo|toda|dia|mes|semana)\b/g, '')
       .replace(/\b(amanha|hoje|segunda|terca|quarta|quinta|sexta|sabado|domingo)([-]feira)?\b/g, '')
       .replace(/\b\d{1,2}h(\d{2})?\b/g, '')
       .replace(/\b\d{1,2}:\d{2}\b/g, '')
+      .replace(/r\$\s*[\d.,]+/g, '')  // remover valor monetário
       .replace(/\b\d+\b/g, '')
-      .replace(/\b(reais|me lembra|lembrete|agenda|marca|de|pra|para|pro|com|as|no|na|um|uma)\b/g, '')
+      .replace(/\b(reais|de|pra|para|pro|com|as|no|na|um|uma|e|o|a)\b/g, '')
+      .replace(/[,.:;!?]+/g, ' ')
       .replace(/\s+/g, ' ').trim() || null;
   }
 
