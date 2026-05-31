@@ -2347,10 +2347,10 @@ LEMBRE: você é a pessoa em quem ela mais confia no dia a dia. Esse espaço é 
       // ─────────────────────────────────────────────────────────────────────
 
       if (_cerebro.intencao === 'registrar_receita' && ent.valor) {
-        const cat = ent.categoria || 'outros';
-        const _descRawE = ent.descricao || ent.origem || '';
-        const _palavrasComandoE = /^(registra|lança|anota|saída de|entrada de|gastei|paguei|recebi|cobrei|me|uma|um)/i;
-        const desc = _descRawE && !_palavrasComandoE.test(_descRawE.trim()) ? _descRawE : 'Entrada via WhatsApp';
+        let _descRawE = (ent.descricao || ent.origem || '')
+          .replace(/^(lança|registra|anota|coloca|marca|lanca)\s+[\d.,]+\s*(reais?|r\$)?\s*(de\s+)?(saída|entrada|saida)?\s*(de\s+)?/i, '')
+          .replace(/^(e\s+)/i, '').trim();
+        const desc = _descRawE && _descRawE.length > 1 ? _descRawE : 'Entrada via WhatsApp';
         await FinanceiroAgenda.create({
           adminId: adminObjId, tipo: 'receita',
           valor: Number(ent.valor), descricao: desc, categoria: cat,
@@ -2365,11 +2365,11 @@ LEMBRE: você é a pessoa em quem ela mais confia no dia a dia. Esse espaço é 
       if (_cerebro.intencao === 'registrar_despesa' && ent.valor) {
         const cat = ent.categoria || 'outros';
         // Limpar descrição — não salvar frase de comando como descrição
-        const _descRaw = ent.descricao || ent.origem || '';
-        const _palavrasComando = /^(registra|lança|anota|saída de|entrada de|gastei|paguei|recebi|cobrei|me|uma|um)/i;
-        const desc = _descRaw && !_palavrasComando.test(_descRaw.trim()) ? _descRaw : 'Saída via WhatsApp';
-        await FinanceiroAgenda.create({
-          adminId: adminObjId, tipo: 'despesa',
+        let _descRaw = (ent.descricao || ent.origem || '')
+          .replace(/^(lança|registra|anota|coloca|marca|lanca)\s+[\d.,]+\s*(reais?|r\$)?\s*(de\s+)?(saída|entrada|saida)?\s*(de\s+)?/i, '')
+          .replace(/^(e\s+)?(alimentos?|mercado|combustivel|farmacia|feira|padaria|restaurante|lanche|academia|posto)\s*$/i, '')
+          .replace(/^(e\s+)/i, '').trim();
+        const desc = _descRaw && _descRaw.length > 1 ? _descRaw : 'Saída via WhatsApp';
           valor: Number(ent.valor), descricao: desc, categoria: cat,
           data: _dataAgora(), origem: 'whatsapp_dono'
         });
