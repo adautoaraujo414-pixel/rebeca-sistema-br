@@ -1,3 +1,4 @@
+
 /**
  * agenda-nlp.service.js
  * Camada semântica flexível — entende intenção humana mesmo com:

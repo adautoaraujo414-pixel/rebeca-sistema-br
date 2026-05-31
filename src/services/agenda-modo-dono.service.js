@@ -765,7 +765,7 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
       const _pendRec = _sesRecorr.aguardandoRecorrente;
       const _semPrazo = /sem prazo|indeterminado|sempre|indefinido/i.test(msg);
       const _nMatch = msg.match(/(\d+)/);
-      const _nVezesResp = _semPrazo ? (_pendRec.rec.tipo === 'semanal' ? 52 : 12) : (_nMatch ? parseInt(_nMatch[1]) : 4);
+      const _nVezesResp = _semPrazo ? (_pendRec.rec.tipo === 'semanal' ? 52 : _pendRec.rec.tipo === 'diario' ? 30 : 12) : (_nMatch ? parseInt(_nMatch[1]) : _pendRec.rec.tipo === 'diario' ? 30 : 4);
 
       SM.updateSession(adminId, telefone, { aguardandoRecorrente: null });
       // Redirecionar para o handler acima com nlp simulado
@@ -821,7 +821,7 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
       const _nVezes = _vezesMatch ? parseInt(_vezesMatch[1]) : null;
 
       // Se não disse quantas vezes → perguntar
-      if (!_nVezes && _rec.tipo !== 'diario') {
+      if (!_nVezes) {
         SM.updateSession(adminId, telefone, {
           aguardandoRecorrente: { rec: _rec, texto: _textoRec, valor: _valorRec, categoria: _catRec }
         });
