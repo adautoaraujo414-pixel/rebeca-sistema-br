@@ -4660,7 +4660,7 @@ async function carregarCatalogos() {
       el.innerHTML = '<div class="cat-empty"><div class="cat-empty-icon">🗂️</div><div class="cat-empty-txt">Nenhum catálogo criado</div><div class="cat-empty-sub">Organize seus produtos em coleções</div></div>';
       return;
     }
-    const secoes = {'destaques':'⭐ Destaques','lancamentos':'🆕 Lançamentos','promocoes':'🏷️ Promoções','mais_procurados':'🔥 Mais procurados',''defeat:''};
+    const secoes = {'destaques':'⭐ Destaques','lancamentos':'🆕 Lançamentos','promocoes':'🏷️ Promoções','mais_procurados':'🔥 Mais procurados'};
     el.innerHTML = cats.map(c => `
       <div style="background:#fff;border:1px solid var(--borda);border-radius:var(--radius-lg);padding:16px;display:flex;align-items:center;gap:14px">
         <div style="font-size:1.8em">${c.secaoEspecial === 'destaques' ? '⭐' : c.secaoEspecial === 'lancamentos' ? '🆕' : c.secaoEspecial === 'promocoes' ? '🏷️' : c.secaoEspecial === 'mais_procurados' ? '🔥' : '🗂️'}</div>
