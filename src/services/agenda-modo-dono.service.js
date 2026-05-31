@@ -284,8 +284,12 @@ function _parsarValor(txt) {
     const base = parseFloat(mMilhao[1].replace(/\./g,'').replace(',','.'));
     return base * 1000000;
   }
-  // 3. Formato numérico normal
-  const mNum = txt.match(/R?\$\s*([\d.,]+)|([\d.,]+)\s*(?:reais?|conto|reai)?/i);
+  // 3. Formato numérico normal — remover horas antes de buscar valor
+  const _txtSemHora = txt
+    .replace(/\b\d{1,2}\s*(?:horas?|h\b)/gi, '')
+    .replace(/[àa]s?\s*\d{1,2}[h:]\d{0,2}/gi, '')
+    .replace(/\b(?:daqui|em)\s+\d+\s*(?:dias?|semanas?|meses?|anos?)/gi, '');
+  const mNum = _txtSemHora.match(/R?\$\s*([\d.,]+)|([\d.,]+)\s*(?:reais?|conto|reai)\b/i);
   const raw = mNum ? (mNum[1]||mNum[2]) : null;
   if (!raw) return null;
   const parts = raw.split(',');
