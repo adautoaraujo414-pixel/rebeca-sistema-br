@@ -107,41 +107,70 @@ function _pick(arr, usadas = []) {
 }
 
 // ── Montar mensagem final ────────────────────────────────────────────────────
+function _fmtH(date) {
+  const d = new Date(date);
+  const h = d.getUTCHours() - 3; // UTC -> BRT
+  const hBRT = ((h % 24) + 24) % 24;
+  const m = d.getUTCMinutes();
+  return `${String(hBRT).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+}
+
 function _montarMensagem(admin, contexto, frasesBomDiaUsadas = []) {
   const genero = admin.modoWhatsappDono?.genero || '';
   const ap = _apelido(genero);
   const sau = _saudacao();
-  const fech = _fechamento();
-  const { temAgendaHoje, totalAgendamentos, teveMovimentacao, totalClientes } = contexto;
+  const {
+    temAgendaHoje, totalAgendamentos, agsHojeDetalhadas = [],
+    teveMovimentacao, faturamentoOntem, totalClientes,
+    lembretesDodia = [], slotsVagos = [], hrAbre, hrFecha
+  } = contexto;
 
-  // Linha 1 — saudação + apelido
-  const linha1 = `${sau} ${ap}! ☀️`;
+  const partes = [];
 
-  // Linha 2 — contexto real (agenda ou dia da semana)
-  let linha2;
-  if (temAgendaHoje && totalAgendamentos > 0) {
-    const base = _pick(FRASES_AGENDA_CHEIA, frasesBomDiaUsadas);
-    linha2 = totalAgendamentos > 1
-      ? base.replace('cliente marcado', `${totalAgendamentos} clientes marcados`)
-      : base;
+  // ── Saudação ──────────────────────────────────────────────────────────
+  partes.push(`${sau} ${ap}! ☀️`);
+
+  // ── Cronograma do dia ─────────────────────────────────────────────────
+  if (agsHojeDetalhadas.length > 0 || lembretesDodia.length > 0) {
+    const linhasCron = [];
+
+    // Misturar agendamentos e lembretes, ordenar por hora
+    const eventos = [
+      ...agsHojeDetalhadas.map(a => ({
+        hora: new Date(a.dataHora),
+        texto: `👤 ${_fmtH(a.dataHora)} — ${a.nomeCliente}${a.nomeServico ? ' (' + a.nomeServico + ')' : ''}`
+      })),
+      ...lembretesDodia.map(l => ({
+        hora: new Date(l.dataAviso || l.dataEvento),
+        texto: `⏰ ${_fmtH(l.dataAviso || l.dataEvento)} — ${l.texto}`
+      }))
+    ].sort((a, b) => a.hora - b.hora);
+
+    linhasCron.push('*📅 Cronograma de hoje:*');
+    eventos.forEach(e => linhasCron.push(e.texto));
+    partes.push(linhasCron.join('\n'));
   } else {
-    linha2 = _pick(FRASES_AGENDA_VAZIA, frasesBomDiaUsadas);
+    partes.push(_pick(FRASES_AGENDA_VAZIA, frasesBomDiaUsadas));
   }
 
-  // Linha 3 — financeiro ou clientes (opcional, só se relevante)
-  let linha3 = '';
-  if (teveMovimentacao) {
-    linha3 = _pick(FRASES_FIN_POSITIVO, frasesBomDiaUsadas);
-  } else if (totalClientes > 20) {
-    linha3 = _pick(FRASES_MUITOS_CLIENTES, frasesBomDiaUsadas);
+  // ── Horários vagos (até 3 slots) ─────────────────────────────────────
+  if (slotsVagos.length > 0) {
+    const mostrar = slotsVagos.slice(0, 3);
+    const resto = slotsVagos.length - mostrar.length;
+    let linhaVago = `*🕐 Horários livres:* ${mostrar.join(', ')}`;
+    if (resto > 0) linhaVago += ` (+${resto} mais)`;
+    partes.push(linhaVago);
   }
 
-  // Montar
-  const partes = [linha1, linha2];
-  if (linha3) partes.push(linha3);
-  partes.push(fech);
+  // ── Financeiro ontem (só se relevante) ───────────────────────────────
+  if (teveMovimentacao && faturamentoOntem > 0) {
+    partes.push(`*💰 Ontem:* R$ ${faturamentoOntem.toFixed(2)} em entradas`);
+  }
 
-  return partes.join('\n');
+  // ── Fechamento ────────────────────────────────────────────────────────
+  partes.push(_fechamento());
+
+  return partes.join('\n\n');
 }
 
 // ── Verificar se já enviou hoje ──────────────────────────────────────────────
@@ -186,27 +215,63 @@ async function _buscarContexto(adminId) {
     const iniOntem = new Date(ini.getTime() - 24 * 60 * 60 * 1000);
     const fimOntem = new Date(ini.getTime() - 1);
 
-    const [agsHoje, lancOntem, totalClientes] = await Promise.all([
-      AgendamentoAgenda.countDocuments({
+    const AdminAgendaModel = require('../models/AdminAgenda');
+    const adminDoc = await AdminAgendaModel.findById(adminId).select('config').lean();
+    const hrAbre  = adminDoc?.config?.horarioAbertura  || '08:00';
+    const hrFecha = adminDoc?.config?.horarioFechamento || '18:00';
+
+    const [agsHojeDetalhadas, lancOntem, totalClientesArr, lembretesHoje] = await Promise.all([
+      AgendamentoAgenda.find({
         adminId, dataHora: { $gte: ini, $lte: fim },
         status: { $in: ['pendente', 'confirmado'] }
-      }),
+      }).sort({ dataHora: 1 }).lean(),
       FinanceiroAgenda.find({
         adminId, data: { $gte: iniOntem, $lte: fimOntem }, tipo: 'receita'
       }).lean(),
       require('../models/AgendaServico').ClienteAgenda
         ? require('../models/AgendaServico').ClienteAgenda.countDocuments({ adminId }).catch(() => 0)
-        : Promise.resolve(0)
+        : Promise.resolve(0),
+      AdminAgendaModel.findById(adminId).select('config.lembretes').lean()
     ]);
 
     const faturamentoOntem = lancOntem.reduce((s, l) => s + l.valor, 0);
+    const agsHoje = agsHojeDetalhadas.length;
+    const totalClientes = totalClientesArr;
+
+    // Lembretes pessoais do dia (dataAviso entre agora e fim do dia)
+    const agora = new Date();
+    const todosLembretes = lembretesHoje?.config?.lembretes || [];
+    const lembretesDodia = todosLembretes.filter(l => {
+      if (l.enviado) return false;
+      const dav = new Date(l.dataAviso || l.dataEvento);
+      return dav >= ini && dav <= fim;
+    }).sort((a, b) => new Date(a.dataAviso || a.dataEvento) - new Date(b.dataAviso || b.dataEvento));
+
+    // Calcular horários vagos (slots de 1h entre abertura e fechamento sem agendamento)
+    const [hA, mA] = hrAbre.split(':').map(Number);
+    const [hF, mF] = hrFecha.split(':').map(Number);
+    const slotsVagos = [];
+    for (let h = hA; h < hF; h++) {
+      const slotIni = new Date(Date.UTC(ini.getUTCFullYear(), ini.getUTCMonth(), ini.getUTCDate(), h + 3, 0, 0));
+      const slotFim = new Date(slotIni.getTime() + 60 * 60000);
+      const ocupado = agsHojeDetalhadas.some(ag => {
+        const t = new Date(ag.dataHora);
+        return t >= slotIni && t < slotFim;
+      });
+      if (!ocupado) slotsVagos.push(`${String(h).padStart(2,'0')}:00`);
+    }
 
     return {
-      temAgendaHoje:     agsHoje > 0,
-      totalAgendamentos: agsHoje,
-      teveMovimentacao:  faturamentoOntem > 0,
+      temAgendaHoje:      agsHoje > 0,
+      totalAgendamentos:  agsHoje,
+      agsHojeDetalhadas,
+      teveMovimentacao:   faturamentoOntem > 0,
       faturamentoOntem,
-      totalClientes
+      totalClientes,
+      lembretesDodia,
+      slotsVagos,
+      hrAbre,
+      hrFecha
     };
   } catch(e) {
     console.error('[BomDia] erro buscarContexto:', e.message);
