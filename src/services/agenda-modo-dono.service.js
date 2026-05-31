@@ -787,6 +787,7 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
       // Redirecionar para o handler acima com nlp simulado
       const _recSim = _pendRec.rec;
       console.log('[DEBUG-SEM-PRAZO] _recSim:', JSON.stringify(_recSim), '_nVezesResp:', _nVezesResp);
+      console.log('[RECORRENCIA-DETECTADA] tipo:', _recSim.tipo, '| dia:', _recSim.dia, '| diaSemana:', _recSim.diaSemana, '| nVezes:', _nVezesResp);
       const _diasSemana2 = { domingo:0, segunda:1,'segunda-feira':1, terca:2,'terça':2,'terça-feira':2, quarta:3,'quarta-feira':3, quinta:4,'quinta-feira':4, sexta:5,'sexta-feira':5, sabado:6,'sábado':6 };
       const _lembretes2 = [];
       const _hoje2 = new Date();
@@ -810,6 +811,7 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
         if (_dataEvento2) {
           const _textoLem2 = _pendRec.texto + (_pendRec.valor ? ' — R$ ' + _pendRec.valor : '');
           const _diasAte2 = Math.ceil((_dataEvento2 - _hoje2) / (1000 * 60 * 60 * 24));
+          console.log('[SALVANDO-LEMBRETE] rec i=' + i, 'dataEvento:', _dataEvento2.toISOString(), 'texto:', _textoLem2);
           _lembretes2.push({
             texto: _textoLem2,
             dataEvento: _dataEvento2,
@@ -1255,23 +1257,32 @@ ${totalAgs > 0 ? 'Tá saindo bem! 💪' : 'Ainda sem registros esse mês.'}`);
   const _pendLemb = _sesLemb.aguardandoLembrete;
 
   if (_pendLemb) {
-    // PRIORIDADE: se há lembrete pendente, tentar extrair hora/dia primeiro
-    const _diaPend  = _parseDia(msgL);
-    const _horaPend = _parseHora(msgL);
-    // Só ignora se não achou hora/dia E parece claramente um novo comando longo
-    if (!_diaPend && !_horaPend && msgL.length > 15 && /me\s*lembr[ae]|lembrete|n[aã]o\s*me\s*deixa?\s*esquecer|anota\s*(a[ií])?/i.test(msgL)) {
-      SM.updateSession(adminId, telefone, { aguardandoLembrete: null });
-      // cai para processar como novo lembrete abaixo
-    } else if (_diaPend || _horaPend) {
+    // ── BLOCO DEDICADO aguardandoLembrete ────────────────────────────────────
+    // Processa APENAS a mensagem atual — sem histórico, sem NLP geral
+    console.log('[HORARIO-TRANSCRICAO] msg_atual:', JSON.stringify(msg), '| aguardando:', _pendLemb.aguardando);
 
-    if (_pendLemb.aguardando === 'dia' && _diaPend) {
-      // Tinha hora, agora tem dia: criar lembrete
+    // Extrair hora e dia APENAS da mensagem atual (não do histórico)
+    const _msgApenasAtual = msg; // transcrição limpa do áudio atual
+    const _diaPend  = _parseDia(_msgApenasAtual);
+    const _horaPend = _parseHora(_msgApenasAtual);
+
+    console.log('[HORARIO-DETECTADO] hora:', JSON.stringify(_horaPend), '| dia:', _diaPend ? _diaPend.toISOString() : null);
+
+    // Se parece claramente um novo comando de lembrete, cancelar pendência
+    if (!_diaPend && !_horaPend && _msgApenasAtual.length > 15 && /me\s*lembr[ae]|lembrete|n[aã]o\s*me\s*deixa?\s*esquecer|anota\s*(a[ií])?/i.test(_msgApenasAtual)) {
+      SM.updateSession(adminId, telefone, { aguardandoLembrete: null });
+      console.log('[HORARIO-DETECTADO] novo comando detectado — cancelando pendencia');
+      // cai para processar como novo lembrete abaixo
+
+    } else if (_pendLemb.aguardando === 'dia' && _diaPend) {
+      // Tinha hora salva na sessão, agora chegou o dia
       const _h = _pendLemb.hora;
       const _brMs = _diaPend.getTime() - (3*60*60*1000);
       const _brD  = new Date(_brMs);
       const _dt   = new Date(Date.UTC(_brD.getUTCFullYear(), _brD.getUTCMonth(), _brD.getUTCDate(), _h.h+3, _h.min, 0));
       const _dav  = new Date(_dt.getTime() - 15*60000);
       const _txt  = _pendLemb.texto || 'Lembrete';
+      console.log('[SALVANDO-LEMBRETE] texto:', _txt, '| dataEvento:', _dt.toISOString(), '| dataAviso:', _dav.toISOString());
       await AdminAgenda.findByIdAndUpdate(adminObjId, {
         $push: { 'config.lembretes': { texto: _txt, dataEvento: _dt, dataAviso: _dav, enviado: false, criadoEm: new Date() } }
       });
@@ -1279,19 +1290,20 @@ ${totalAgs > 0 ? 'Tá saindo bem! 💪' : 'Ainda sem registros esse mês.'}`);
       const _conf = _pendLemb.texto
         ? ('Anotado! Lembro voce de "' + _txt + '" em ' + _fmtData(_diaPend) + ' as ' + _fmtHora(_dt))
         : ('Anotado! Lembrete salvo para ' + _fmtData(_diaPend) + ' as ' + _fmtHora(_dt));
+      console.log('[JSON-FINAL] lembrete salvo:', JSON.stringify({ texto: _txt, dataEvento: _dt, dataAviso: _dav }));
       await responder(_conf);
       SM.addAssistantMsg(adminId, telefone, _conf);
       return true;
-    }
 
-    if (_pendLemb.aguardando === 'hora' && _horaPend && !_horaPend.relativo) {
-      // Tinha dia, agora tem hora: criar lembrete
+    } else if (_pendLemb.aguardando === 'hora' && _horaPend && !_horaPend.relativo) {
+      // Tinha dia salvo na sessão, agora chegou a hora
       const _d = _pendLemb.dia;
       const _brMs = _d.getTime() - (3*60*60*1000);
       const _brD  = new Date(_brMs);
       const _dt   = new Date(Date.UTC(_brD.getUTCFullYear(), _brD.getUTCMonth(), _brD.getUTCDate(), _horaPend.h+3, _horaPend.min, 0));
       const _dav  = new Date(_dt.getTime() - 15*60000);
       const _txt  = _pendLemb.texto || 'Lembrete';
+      console.log('[SALVANDO-LEMBRETE] texto:', _txt, '| dataEvento:', _dt.toISOString(), '| dataAviso:', _dav.toISOString());
       await AdminAgenda.findByIdAndUpdate(adminObjId, {
         $push: { 'config.lembretes': { texto: _txt, dataEvento: _dt, dataAviso: _dav, enviado: false, criadoEm: new Date() } }
       });
@@ -1299,11 +1311,21 @@ ${totalAgs > 0 ? 'Tá saindo bem! 💪' : 'Ainda sem registros esse mês.'}`);
       const _conf = _pendLemb.texto
         ? ('Anotado! Lembro voce de "' + _txt + '" em ' + _fmtData(_d) + ' as ' + _fmtHora(_dt))
         : ('Anotado! Lembrete salvo para ' + _fmtData(_d) + ' as ' + _fmtHora(_dt));
+      console.log('[JSON-FINAL] lembrete salvo:', JSON.stringify({ texto: _txt, dataEvento: _dt, dataAviso: _dav }));
       await responder(_conf);
       SM.addAssistantMsg(adminId, telefone, _conf);
       return true;
+
+    } else if (!_diaPend && !_horaPend) {
+      // Não reconheceu hora nem dia — pedir de novo de forma clara
+      console.log('[HORARIO-DETECTADO] nao reconheceu hora — pedindo novamente');
+      const _reask = _pendLemb.aguardando === 'hora'
+        ? 'Não entendi o horário. 😅 Me fala assim: *oito horas*, *14h30*, *às 9 da manhã*...'
+        : 'Não entendi o dia. 😅 Me fala assim: *hoje*, *amanhã*, *dia 15*...';
+      await responder(_reask);
+      SM.addAssistantMsg(adminId, telefone, _reask);
+      return true;
     }
-    } // fim else if
   }
 
   if (/me\s*lembr[ae]|lembrete|n[aã]o\s*me\s*deixa?\s*esquecer|anota\s*(a[ií])?/i.test(msgL)) {
