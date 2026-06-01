@@ -5,7 +5,7 @@ const EvolutionMultiService = require('./evolution-multi.service');
 // Mensagens de recuperação variadas e humanizadas
 const MENSAGENS_RECUPERACAO = [
   (nome, negocio, dias) => `Oi ${nome}! 😊 Tudo bem?\n\nFaz ${dias} dias que não te vemos aqui no ${negocio}. Sentimos sua falta!\n\nQuer agendar um horário? É só me responder aqui 💛`,
-  (nome, negocio, dias) => `Olá ${nome}! 👋\n\n${negocio} aqui. Notamos que faz um tempinho (${dias} dias) desde sua última visita.\n\nQuer marcar um horário? Temos disponibilidade essa semana! 📅`,
+  (nome, negocio, dias) => `Oi ${nome}! 👋\n\n${negocio} aqui. Faz ${dias} dias desde sua última visita e a gente tá com saudade!\n\nQuer marcar um horário? Temos disponibilidade essa semana! 📅`,
   (nome, negocio, dias) => `${nome}, oi! 💇\n\nA gente tá com saudade de você aqui no ${negocio}! Já faz ${dias} dias...\n\nQue tal agendar um horário? Me manda uma mensagem e a gente resolve! 😄`,
 ];
 
@@ -66,11 +66,9 @@ async function executarRecuperacao() {
         console.log(`[RECUPERACAO] Admin ${admin.nomeNegocio}: ${clientesInativos.length} clientes inativos`);
 
         for (const cliente of clientesInativos) {
-          // Verificar se já enviamos nos últimos 15 dias
-          const chaveRecup = `recup_${admin._id}_${cliente._id}`;
-          if (!global._recuperacaoEnviada) global._recuperacaoEnviada = new Map();
-          const ultimoEnvio = global._recuperacaoEnviada.get(chaveRecup);
-          if (ultimoEnvio && (Date.now() - ultimoEnvio) < 15 * 24 * 60 * 60 * 1000) continue;
+          // Verificar se já enviamos nos últimos 15 dias (persistido no banco)
+          const _15diasAtras = new Date(Date.now() - 15 * 24 * 60 * 60 * 1000);
+          if (cliente.recuperacaoEnviadaEm && new Date(cliente.recuperacaoEnviadaEm) > _15diasAtras) continue;
 
           // Verificar se já tem agendamento futuro
           const agFuturo = await AgendamentoAgenda.findOne({
@@ -91,7 +89,7 @@ async function executarRecuperacao() {
 
           const enviado = await enviarMensagemRecuperacao(instancia._id, cliente.telefone, msg);
           if (enviado) {
-            global._recuperacaoEnviada.set(chaveRecup, Date.now());
+            await ClienteAgenda.findByIdAndUpdate(cliente._id, { recuperacaoEnviadaEm: new Date() });
             console.log(`[RECUPERACAO] Mensagem enviada para ${cliente.nome} (${cliente.telefone})`);
             // Delay entre mensagens para não parecer spam
             await new Promise(r => setTimeout(r, 3000 + Math.random() * 2000));
@@ -164,13 +162,13 @@ async function verificarAniversarios() {
 
 // ===== CRONS =====
 // Recuperação: toda terça e quinta às 10h
-cron.schedule('0 10 * * 2,4', async () => {
+cron.schedule('0 13 * * 2,4', async () => { // 10h BR (UTC-3)
   console.log('[CRON] Recuperação de clientes inativos');
   await executarRecuperacao();
 });
 
 // Aniversários: todo dia às 9h
-cron.schedule('0 9 * * *', async () => {
+cron.schedule('0 12 * * *', async () => { // 9h BR (UTC-3)
   console.log('[CRON] Verificando aniversários');
   await verificarAniversarios();
 });
