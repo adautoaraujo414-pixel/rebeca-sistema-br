@@ -3482,6 +3482,76 @@ async function rodarLembretesClientes() {
           await new Promise(r => setTimeout(r, 1500));
         }
 
+        // ── Aniversário do dia ────────────────────────────────────────────
+        // Roda 1x por dia — só dispara entre 08:00 e 11:00 BR
+        const _horaBR = new Date(agora.getTime() - 3*60*60*1000).getUTCHours();
+        if (_horaBR >= 8 && _horaBR < 11) {
+          const ClienteAgenda = require('../models/AgendaServico').ClienteAgenda
+            || require('../models/ClienteAgenda').ClienteAgenda
+            || null;
+          if (ClienteAgenda) {
+            const _hoje = new Date(agora.getTime() - 3*60*60*1000);
+            const _diaHoje  = _hoje.getUTCDate();
+            const _mesHoje  = _hoje.getUTCMonth() + 1;
+            const aniversariantes = await ClienteAgenda.find({
+              adminId,
+              $expr: {
+                $and: [
+                  { $eq: [{ $dayOfMonth: '$dataNascimento' }, _diaHoje] },
+                  { $eq: [{ $month: '$dataNascimento' }, _mesHoje] }
+                ]
+              },
+              aniversarioAvisado: { $ne: String(new Date().getFullYear()) }
+            }).lean();
+
+            for (const cli of aniversariantes) {
+              if (!cli.telefone) continue;
+              await notificarCliente(instParaEnvio, cli.telefone, 'aniversario', {
+                nome: cli.nome
+              });
+              await ClienteAgenda.findByIdAndUpdate(cli._id, {
+                aniversarioAvisado: String(new Date().getFullYear())
+              });
+              await new Promise(r => setTimeout(r, 2000));
+            }
+          }
+        }
+
+        // ── Reativação de inativo (1x por cliente a cada 60 dias) ─────────
+        // Só roda 1x por dia entre 09:00 e 10:00 BR para não spammar
+        const _horaBR2 = new Date(agora.getTime() - 3*60*60*1000).getUTCHours();
+        if (_horaBR2 >= 9 && _horaBR2 < 10) {
+          const ClienteAgenda2 = require('../models/AgendaServico').ClienteAgenda
+            || require('../models/ClienteAgenda').ClienteAgenda
+            || null;
+          if (ClienteAgenda2) {
+            const _60diasAtras = new Date(agora.getTime() - 60*24*60*60*1000);
+            const _avisoLimite = new Date(agora.getTime() - 60*24*60*60*1000);
+            const inativos = await ClienteAgenda2.find({
+              adminId,
+              $or: [
+                { ultimoAgendamento: { $lt: _60diasAtras } },
+                { ultimoAgendamento: { $exists: false } }
+              ],
+              $or: [
+                { inativoAvisoEnviado: { $lt: _avisoLimite } },
+                { inativoAvisoEnviado: { $exists: false } }
+              ]
+            }).limit(5).lean(); // máx 5 por vez para não spammar
+
+            for (const cli of inativos) {
+              if (!cli.telefone) continue;
+              await notificarCliente(instParaEnvio, cli.telefone, 'inativo', {
+                nome: cli.nome
+              });
+              await ClienteAgenda2.findByIdAndUpdate(cli._id, {
+                inativoAvisoEnviado: agora
+              });
+              await new Promise(r => setTimeout(r, 2500));
+            }
+          }
+        }
+
       } catch(eAdmin) {
         console.error('[LembretesClientes] Erro admin:', eAdmin.message);
       }
