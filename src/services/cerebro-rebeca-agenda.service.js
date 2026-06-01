@@ -280,7 +280,8 @@ function _montarContexto(dadosCtx) {
   } = dadosCtx || {};
 
   const agora = new Date();
-  const hora = agora.getHours() + 'h' + String(agora.getMinutes()).padStart(2, '0');
+  const _agoraBR2 = new Date(agora.getTime() - 3*60*60*1000);
+  const hora = _agoraBR2.getUTCHours() + 'h' + String(_agoraBR2.getUTCMinutes()).padStart(2, '0');
   const dias = ['domingo','segunda','terça','quarta','quinta','sexta','sábado'];
   const diaSemana = dias[agora.getDay()];
 
@@ -293,8 +294,8 @@ ${resumoHoje || '  nenhum'}
 AGENDA AMANHÃ (${agsAmanha.length}):
 ${resumoAmanha || '  nenhum'}
 
-FINANCEIRO HOJE: Entradas R$${Number(entradasHoje).toFixed(2)} | Saídas R$${Number(saidasHoje).toFixed(2)} | Resultado R$${(Number(entradasHoje)-Number(saidasHoje)).toFixed(2)}
-RECEITA SEMANA: R$${Number(receitaSemana).toFixed(2)}
+FINANCEIRO HOJE: Entradas R$ ${Number(entradasHoje).toFixed(2).replace('.',',')} | Saídas R$ ${Number(saidasHoje).toFixed(2).replace('.',',')} | Resultado R$ ${(Number(entradasHoje)-Number(saidasHoje)).toFixed(2).replace('.',',')}
+RECEITA SEMANA: R$ ${Number(receitaSemana).toFixed(2).replace('.',',')}
 CLIENTES CADASTRADOS: ${totalClientes}
 
 LEMBRETES HOJE:
@@ -372,7 +373,8 @@ const CerebroAgenda = {
       const claude = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
       const agora = new Date();
-      const hora = agora.getHours() + 'h' + String(agora.getMinutes()).padStart(2, '0');
+      const _agoraBR2 = new Date(agora.getTime() - 3*60*60*1000);
+      const hora = _agoraBR2.getUTCHours() + 'h' + String(_agoraBR2.getUTCMinutes()).padStart(2, '0');
       const dias = ['domingo','segunda','terça','quarta','quinta','sexta','sábado'];
 
       const exemplosAprendidos = opcoes.exemplosAprendidos || [];
@@ -395,7 +397,7 @@ MENSAGEM DO DONO AGORA: "${msg.substring(0, 600)}"
 INSTRUÇÃO: Leia o histórico completo, detecte emoção/humor, responda de forma natural e contextual. Retorne APENAS o JSON.`;
 
       const r = await claude.messages.create({
-        model: 'claude-haiku-4-5-20251001',
+        model: 'claude-haiku-4-5',
         max_tokens: 500,
         system: _buildPromptMestre(nomeNegocio, nomeDono, opcoes.genero || ''),
         messages: [{ role: 'user', content: userPrompt }]
