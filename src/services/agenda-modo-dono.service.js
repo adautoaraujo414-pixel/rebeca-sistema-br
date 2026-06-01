@@ -6,6 +6,7 @@
 
 const axios = require('axios');
 const SM = require('./agenda-session-manager');
+const ModoDecisao = require('./agenda-modo-decisao.service');
 const IntentParser  = require('./agenda-intent-parser');
 const ActionRouter  = require('./agenda-action-router');
 const { AdminAgenda, AgendamentoAgenda, FinanceiroAgenda, BloqueioAgenda, ClienteAgenda } = require('../models/AgendaServico');
@@ -2334,6 +2335,23 @@ ${total>5?'Tá crescendo muito! Continua assim! 🚀':'Todo cliente novo é uma 
         }
         await responder(_resp);
         return true;
+      }
+
+      // ── MODO DE DECISAO — analisa historico do cliente e aconselha o dono ──
+      const _precisaDecisao = ModoDecisao.precisaDecisao(msg, _cerebro.intencao);
+      if (_precisaDecisao || (_cerebro.intencao === 'fora_escopo' && ModoDecisao._extrairNomeCliente(msg))) {
+        try {
+          const _analise = await ModoDecisao.analisar(msg, adminId, {
+            nomeNegocio, nomeDono: admin?.nomeResponsavel || admin?.nome || '',
+            genero: _generoAdmin, apelidoAdmin: _apelidoAdmin
+          });
+          if (_analise && _analise.resposta) {
+            console.log('[ModoDecisao] ativado | msg:', msg.substring(0,50));
+            await responder(_analise.resposta);
+            SM.addAssistantMsg(adminId, telefone, _analise.resposta);
+            return true;
+          }
+        } catch(_eMD) { console.error('[ModoDecisao] erro:', _eMD.message); }
       }
 
       if (_cerebro.intencao === 'fora_escopo' || !_cerebro.intencao) {
