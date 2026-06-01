@@ -1,17 +1,26 @@
 'use strict';
 
 /**
- * SessionManager — Memória contextual por conversa WhatsApp
- * Isolado por adminId + telefone (multi-tenant seguro)
- * TTL: 30 minutos de inatividade limpa a sessão
+ * SessionManager — Memória contextual híbrida
+ * Camada 1: Map em memória (rápido, TTL 30min)
+ * Camada 2: MongoDB (persistente, sobrevive a restarts)
+ * TTL banco: 2h (índice TTL no MongoDB)
  */
 
-const TTL_MS = 30 * 60 * 1000; // 30 minutos
-const MAX_HISTORICO = 10; // máximo de trocas no histórico
-
-// Map principal: chave = `${adminId}:${telefone}`
+const TTL_MS = 30 * 60 * 1000;
+const MAX_HISTORICO = 10;
 const _sessions = new Map();
-const MAX_SESSIONS = 500; // limite de segurança contra crescimento descontrolado
+const MAX_SESSIONS = 500;
+
+// Campos críticos que persistem no banco
+const CAMPOS_CRITICOS = [
+  'ultimoLancamentoId','ultimoLancamentoTipo','ultimoLancamentoValor',
+  'ultimoLancamentoDesc','ultimoLancamentoCat',
+  '_lancamentoApagadoTipo','_lancamentoApagadoValor',
+  '_lancamentoApagadoDesc','_lancamentoApagadoCat',
+  'aguardandoConfirmacaoApagar','aguardandoConfirmacao',
+  'ultimaAcaoPendente','ultimaPerguntaIA','ultimoClienteCitado'
+];
 
 // Limpeza automática a cada 10 minutos
 setInterval(() => {
@@ -29,17 +38,25 @@ function _chave(adminId, telefone) {
 
 function _sessionVazia() {
   return {
-    historico: [],               // [{role:'user'|'assistant', content:'...'}]
-    assuntoAtual: null,          // 'financeiro'|'agenda'|'lembrete'|'cliente'|null
+    historico: [],
+    assuntoAtual: null,
     aguardandoConfirmacao: false,
     ultimaPerguntaIA: null,
-    ultimaAcaoPendente: null,    // {tipo, dados} — ação que aguarda "sim/ok"
-    ultimoValorFinanceiro: null, // {entradas, saidas, resultado} — trava anti-alucinação
+    ultimaAcaoPendente: null,
+    ultimoValorFinanceiro: null,
     ultimoClienteCitado: null,
     ultimoAgendamento: null,
     ultimoTopicoFinanceiro: null,
     aguardandoConfirmacaoApagar: false,
     ultimoLancamentoId: null,
+    ultimoLancamentoTipo: null,
+    ultimoLancamentoValor: null,
+    ultimoLancamentoDesc: null,
+    ultimoLancamentoCat: null,
+    _lancamentoApagadoTipo: null,
+    _lancamentoApagadoValor: null,
+    _lancamentoApagadoDesc: null,
+    _lancamentoApagadoCat: null,
     aguardandoLembrete: false,
     aguardandoCorrecao: false,
     aguardandoRecorrente: false,
@@ -47,26 +64,78 @@ function _sessionVazia() {
   };
 }
 
-/**
- * Retorna sessão atual ou cria nova
- */
+// ── Persistência assíncrona no banco ────────────────────────────────
+function _salvarNoBanco(adminId, telefone, session) {
+  try {
+    const { AgendaSessao } = require('../models/AgendaServico');
+    const telNorm = String(telefone).replace(/\D/g, '');
+    const dados = { updatedAt: new Date() };
+    for (const campo of CAMPOS_CRITICOS) {
+      dados[campo] = session[campo] ?? null;
+    }
+    AgendaSessao.findOneAndUpdate(
+      { adminId, telefone: telNorm },
+      { $set: dados },
+      { upsert: true, new: true }
+    ).catch(e => console.error('[SM] erro ao salvar banco:', e.message));
+  } catch(e) {
+    console.error('[SM] _salvarNoBanco erro:', e.message);
+  }
+}
+
+// ── Recuperar do banco após restart ─────────────────────────────────
+async function _recuperarDoBanco(adminId, telefone) {
+  try {
+    const { AgendaSessao } = require('../models/AgendaServico');
+    const telNorm = String(telefone).replace(/\D/g, '');
+    const doc = await AgendaSessao.findOne({ adminId, telefone: telNorm }).lean();
+    if (!doc) return null;
+    // Só recupera se foi atualizado nas últimas 2h
+    const idade = Date.now() - new Date(doc.updatedAt).getTime();
+    if (idade > 2 * 60 * 60 * 1000) return null;
+    const s = {};
+    for (const campo of CAMPOS_CRITICOS) {
+      s[campo] = doc[campo] ?? null;
+    }
+    console.log('[SM] sessao recuperada do banco para', telNorm);
+    return s;
+  } catch(e) {
+    console.error('[SM] _recuperarDoBanco erro:', e.message);
+    return null;
+  }
+}
+
+// ── getSession com fallback para banco ──────────────────────────────
 function getSession(adminId, telefone) {
   const key = _chave(adminId, telefone);
   if (!_sessions.has(key)) {
-    // Segurança: se ultrapassar limite, limpar as mais antigas
     if (_sessions.size >= MAX_SESSIONS) {
       const [oldest] = _sessions.keys();
       _sessions.delete(oldest);
-      console.warn('[SessionManager] Limite de sessões atingido, limpando mais antiga');
+      console.warn('[SM] Limite sessoes, limpando mais antiga');
     }
     _sessions.set(key, _sessionVazia());
   }
   return _sessions.get(key);
 }
 
-/**
- * Adiciona mensagem do usuário ao histórico
- */
+// ── getSession assíncrono — recupera banco se sessão nova ───────────
+async function getSessionAsync(adminId, telefone) {
+  const key = _chave(adminId, telefone);
+  if (!_sessions.has(key)) {
+    if (_sessions.size >= MAX_SESSIONS) {
+      const [oldest] = _sessions.keys();
+      _sessions.delete(oldest);
+    }
+    const base = _sessionVazia();
+    // Tenta recuperar campos críticos do banco
+    const salvo = await _recuperarDoBanco(adminId, telefone);
+    if (salvo) Object.assign(base, salvo);
+    _sessions.set(key, base);
+  }
+  return _sessions.get(key);
+}
+
 function addUserMsg(adminId, telefone, texto) {
   const s = getSession(adminId, telefone);
   s.historico.push({ role: 'user', content: texto });
@@ -77,9 +146,6 @@ function addUserMsg(adminId, telefone, texto) {
   return s;
 }
 
-/**
- * Adiciona resposta da IA ao histórico
- */
 function addAssistantMsg(adminId, telefone, texto) {
   const s = getSession(adminId, telefone);
   s.historico.push({ role: 'assistant', content: texto });
@@ -88,33 +154,26 @@ function addAssistantMsg(adminId, telefone, texto) {
   return s;
 }
 
-/**
- * Atualiza estado da sessão
- */
 function updateSession(adminId, telefone, updates) {
   const s = getSession(adminId, telefone);
   Object.assign(s, updates, { timestampUltimaMsg: Date.now() });
+  // Verificar se algum campo crítico foi alterado
+  const temCritico = CAMPOS_CRITICOS.some(c => c in updates);
+  if (temCritico) {
+    _salvarNoBanco(adminId, telefone, s);
+  }
   return s;
 }
 
-/**
- * Detecta se mensagem é confirmação de ação pendente
- */
 function isConfirmacao(texto) {
   return /^\s*(sim|s|ok|pode|faz|confirm[ao]|vai|bora|isso|exato|certo|claro|perfeito|ótimo|otimo|manda|envia|salva|registra)\s*[!.]?\s*$/i.test(texto.trim());
 }
 
-/**
- * Detecta se mensagem é negação
- */
 function isNegacao(texto) {
   return /^\s*(n[aã]o|nao|nel|cancel[ao]|esquece|deixa|para|nope|nem|jamais)\s*[!.]?\s*$/i.test(texto.trim())
     || /\b(n[aã]o\s+quero|cancela\s+isso|esquece\s+isso|deixa\s+pra\s+l[aá]|n[aã]o\s+precisa|n[aã]o\s+manda)\b/i.test(texto.trim());
 }
 
-/**
- * Detecta assunto principal da mensagem
- */
 function detectarAssunto(texto) {
   const t = texto.toLowerCase();
   if (/financeiro|faturei|entrada|saída|saida|receita|despesa|gasto|lucro|dinheiro|caixa|pix|pagou/.test(t)) return 'financeiro';
@@ -125,103 +184,66 @@ function detectarAssunto(texto) {
   return null;
 }
 
-/**
- * Retorna histórico formatado para a API Claude (últimas N trocas)
- */
 function getHistoricoParaAPI(adminId, telefone, ultimasN = 6) {
   const s = getSession(adminId, telefone);
-  // Pega as últimas N*2 mensagens (N trocas user+assistant)
   return s.historico.slice(-(ultimasN * 2));
 }
 
-/**
- * Limpa sessão manualmente (ex: após logout)
- */
 function clearSession(adminId, telefone) {
   _sessions.delete(_chave(adminId, telefone));
+  // Limpar banco também
+  try {
+    const { AgendaSessao } = require('../models/AgendaServico');
+    const telNorm = String(telefone).replace(/\D/g, '');
+    AgendaSessao.deleteOne({ adminId, telefone: telNorm }).catch(() => {});
+  } catch(e) {}
 }
 
-/**
- * Trava financeira: valida se valor mudou sem recálculo
- * Retorna true se valores são consistentes
- */
 function validarCoerenciaFinanceira(adminId, telefone, novosDados) {
   const s = getSession(adminId, telefone);
-  if (!s.ultimoValorFinanceiro) return true; // primeira vez
+  if (!s.ultimoValorFinanceiro) return true;
   const ant = s.ultimoValorFinanceiro;
   const delta = Math.abs((novosDados.entradas || 0) - (ant.entradas || 0));
-  // Se entradas mudaram mais de R$1 sem ser nova consulta, flag inconsistência
   if (delta > 1 && !novosDados.novaConsulta) {
-    console.warn('[SessionManager] INCONSISTÊNCIA FINANCEIRA detectada:', ant, '->', novosDados);
+    console.warn('[SM] INCONSISTENCIA FINANCEIRA:', ant, '->', novosDados);
     return false;
   }
   return true;
 }
 
-/**
- * ── CONTEXT ENGINE ────────────────────────────────────────────────────────
- * Determina o modo de contexto com base no estado atual da sessão.
- *
- * DISCOVERY    → sem estado ativo → usa histórico completo
- * FIELD_CAPTURE → estado aguardando* ativo → usa só mensagem atual
- * CONFIRMATION  → aguardandoConfirmacao ativo → usa sessão estruturada
- */
 const FIELD_CAPTURE_STATES = [
-  'aguardandoLembrete',
-  'aguardandoRecorrente',
-  'aguardandoConfirmacaoApagar',
-  'aguardandoCorrecao',
+  'aguardandoLembrete','aguardandoRecorrente',
+  'aguardandoConfirmacaoApagar','aguardandoCorrecao',
 ];
 
 function getContextMode(adminId, telefone) {
   const s = getSession(adminId, telefone);
-
-  // CONFIRMATION: aguarda sim/não explícito
-  if (s.aguardandoConfirmacao || s.ultimaAcaoPendente) {
-    return 'CONFIRMATION';
-  }
-
-  // FIELD_CAPTURE: aguarda campo específico (hora, dia, quantidade, valor)
+  if (s.aguardandoConfirmacao || s.ultimaAcaoPendente) return 'CONFIRMATION';
   for (const state of FIELD_CAPTURE_STATES) {
     if (s[state]) return 'FIELD_CAPTURE';
   }
-
-  // DISCOVERY: fluxo livre, usa histórico
   return 'DISCOVERY';
 }
 
-/**
- * Retorna histórico adequado ao modo de contexto.
- *
- * DISCOVERY    → últimas N mensagens (comportamento atual)
- * FIELD_CAPTURE → [] vazio — sem histórico, só mensagem atual
- * CONFIRMATION  → última pergunta da IA como contexto mínimo
- */
 function getHistoricoContextual(adminId, telefone, ultimasN = 6) {
   const modo = getContextMode(adminId, telefone);
   const s = getSession(adminId, telefone);
-
   if (modo === 'FIELD_CAPTURE') {
-    console.log('[CONTEXT-ENGINE] modo=FIELD_CAPTURE — historico bloqueado');
+    console.log('[CONTEXT-ENGINE] FIELD_CAPTURE — historico bloqueado');
     return [];
   }
-
   if (modo === 'CONFIRMATION') {
-    console.log('[CONTEXT-ENGINE] modo=CONFIRMATION — historico minimo');
-    // Só a última pergunta da IA para contexto de confirmação
-    if (s.ultimaPerguntaIA) {
-      return [{ role: 'assistant', content: s.ultimaPerguntaIA }];
-    }
+    console.log('[CONTEXT-ENGINE] CONFIRMATION — historico minimo');
+    if (s.ultimaPerguntaIA) return [{ role: 'assistant', content: s.ultimaPerguntaIA }];
     return [];
   }
-
-  // DISCOVERY — comportamento normal
-  console.log('[CONTEXT-ENGINE] modo=DISCOVERY — historico completo (' + Math.min(s.historico.length, ultimasN * 2) + ' msgs)');
+  console.log('[CONTEXT-ENGINE] DISCOVERY — ' + Math.min(s.historico.length, ultimasN * 2) + ' msgs');
   return s.historico.slice(-(ultimasN * 2));
 }
 
 module.exports = {
   getSession,
+  getSessionAsync,
   addUserMsg,
   addAssistantMsg,
   updateSession,

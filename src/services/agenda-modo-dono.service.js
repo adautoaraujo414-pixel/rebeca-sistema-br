@@ -1996,7 +1996,7 @@ ${total>5?'Tá crescendo muito! Continua assim! 🚀':'Todo cliente novo é uma 
   }
 
   // ── CONFIRMAR APAGAR LANÇAMENTO ─────────────────────────────────────────────
-  const _sesApagarCheck = SM.getSession(adminId, telefone);
+  const _sesApagarCheck = await SM.getSessionAsync(adminId, telefone);
   if (_sesApagarCheck.aguardandoConfirmacaoApagar) {
     if (_isConfirm) {
       const _idApagar = _sesApagarCheck.ultimoLancamentoId;
