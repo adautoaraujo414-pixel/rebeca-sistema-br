@@ -191,7 +191,7 @@ _(ex: "Ju", "Dra. Ana", "pode me chamar de Mari")_`;
 }
 
 // Data atual — MongoDB salva UTC; filtros já compensam GMT-3
-function _dataAgora() { return new Date(); }
+function _dataAgora() { return new Date(Date.now() - 3*60*60*1000); }
 
 // Helpers de filtro de data — servidor UTC, Brasil UTC-3
 function _inicioDia(d) {
@@ -287,8 +287,9 @@ function _parsarValor(txt) {
     .replace(/\b\d{1,2}\s*(?:horas?|h\b)/gi, '')
     .replace(/[àa]s?\s*\d{1,2}[h:]\d{0,2}/gi, '')
     .replace(/\b(?:daqui|em)\s+\d+\s*(?:dias?|semanas?|meses?|anos?)/gi, '');
-  const mNum = _txtSemHora.match(/R?\$\s*([\d.,]+)|([\d.,]+)\s*(?:reais?|conto|reai)\b/i);
-  const raw = mNum ? (mNum[1]||mNum[2]) : null;
+  const mNum = _txtSemHora.match(/R?\$\s*([\d.,]+)|([\d.,]+)\s*(?:reais?|conto|reai)\b|^\s*([\d.,]+)\b/i);
+  const raw = mNum ? (mNum[1]||mNum[2]||mNum[3]) : null;
+
   if (!raw) return null;
   const parts = raw.split(',');
   if (parts.length >= 2) {
@@ -1136,7 +1137,7 @@ ${totalAgs > 0 ? 'Tá saindo bem! 💪' : 'Ainda sem registros esse mês.'}`);
     const hora = _parseHora(msgL);
     const dia  = _parseDia(msgL) || new Date();
     if (hora) {
-      const ini = new Date(dia); ini.setHours(hora.h, hora.min - 5, 0, 0);
+      const ini = new Date(dia); ini.setUTCHours(hora.h + 3, hora.min - 5, 0, 0);
       const fim = new Date(dia); fim.setHours(hora.h, hora.min + 5, 0, 0);
       const ag = await AgendamentoAgenda.findOne({
         adminId: adminObjId, dataHora: { $gte: ini, $lte: fim },
@@ -2340,9 +2341,10 @@ ${total>5?'Tá crescendo muito! Continua assim! 🚀':'Todo cliente novo é uma 
           const Anthropic = require('@anthropic-ai/sdk');
           const _cli = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
           const _histForaEscopo = SM.getHistoricoContextual(adminId, telefone, 8);
-          const _hAtual = new Date().getHours();
+          const _brFE = new Date(Date.now() - 3*60*60*1000);
+          const _hAtual = _brFE.getUTCHours();
           const _periodo = _hAtual < 12 ? 'manhã' : _hAtual < 18 ? 'tarde' : 'noite';
-          const _diaSem = ['domingo','segunda','terça','quarta','quinta','sexta','sábado'][new Date().getDay()];
+          const _diaSem = ['domingo','segunda','terça','quarta','quinta','sexta','sábado'][_brFE.getUTCDay()];
           const _apelido = _apelidoAdmin || 'chefe';
           const _genero = _generoAdmin || '';
 
@@ -2935,8 +2937,10 @@ async function rodarRelatorioDiario() {
       'config.relatorioDiario': { $ne: false }
     }).lean();
 
-    const ontem = new Date(); ontem.setDate(ontem.getDate() - 1);
-    const hoje  = new Date();
+    const _agoraBRRel = new Date(Date.now() - 3*60*60*1000);
+    const ontem = new Date(_agoraBRRel.getTime() - 86400000);
+    const hoje  = _agoraBRRel;
+
     const iniOn = _inicioDia(ontem);
     const fimOn = _fimDia(ontem);
     const iniHj = _inicioDia(hoje);
