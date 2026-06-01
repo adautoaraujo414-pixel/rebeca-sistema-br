@@ -36,6 +36,22 @@ router.post('/webhook', express.json(), async (req, res) => {
       console.log(`[MetaWA] msg de ${telefone}: "${texto}" | tipo:${tipo} | msgRaw:${JSON.stringify(msg).substring(0,200)}`);
       await MetaWA.marcarLido(msgId);
 
+      // ── DEDUPLICAÇÃO: ignorar mensagem já processada ──────────────
+      if (!global._metaMsgDedup) global._metaMsgDedup = new Map();
+      if (global._metaMsgDedup.has(msgId)) {
+        console.log('[MetaWA-DEDUP] Mensagem duplicada ignorada:', msgId);
+        continue;
+      }
+      global._metaMsgDedup.set(msgId, Date.now());
+      // Limpar entradas antigas a cada 500 msgs
+      if (global._metaMsgDedup.size > 500) {
+        const limit = Date.now() - 60000;
+        for (const [k, v] of global._metaMsgDedup) {
+          if (v < limit) global._metaMsgDedup.delete(k);
+        }
+      }
+      // ──────────────────────────────────────────────────────────────
+
       // ── INTERCEPTAR COZINHA ANTES DO ROTEAMENTO ───────────────
       try {
         const { ClienteCozinha, ImpressoraCozinha } = require('../models/cozinha.model');
