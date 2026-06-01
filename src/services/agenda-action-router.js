@@ -24,12 +24,12 @@ function respostaSegura(motivo = '') {
 function handlerFinanceiroHoje({ dados }) {
   const { entradasHoje, saidasHoje, nomeNegocio } = dados;
   const resultado = entradasHoje - saidasHoje;
-  return `💰 Financeiro de hoje:\n\nEntradas: R$ ${entradasHoje.toFixed(2)}${entradasHoje===0?' (nenhuma ainda)':''}\nSaídas: R$ ${saidasHoje.toFixed(2)}\nResultado: R$ ${resultado.toFixed(2)}${resultado > 0?' 🟢':resultado < 0?' 🔴':' ⚪'}`;
+  return `💰 Financeiro de hoje:\n\nEntradas: R$ ${entradasHoje.toFixed(2).replace('.',',')}${entradasHoje===0?' (nenhuma ainda)':''}\nSaídas: R$ ${saidasHoje.toFixed(2).replace('.',',')}\nResultado: R$ ${resultado.toFixed(2).replace('.',',')}${resultado > 0?' 🟢':resultado < 0?' 🔴':' ⚪'}`;
 }
 
 function handlerFinanceiroSemana({ dados }) {
   const { receitaSemana } = dados;
-  return `📊 Semana (últimos 7 dias):\n\nReceita: R$ ${receitaSemana.toFixed(2)}${receitaSemana===0?' (nenhuma registrada ainda)':''}`;
+  return `📊 Semana (últimos 7 dias):\n\nReceita: R$ ${receitaSemana.toFixed(2).replace('.',',')}${receitaSemana===0?' (nenhuma registrada ainda)':''}`;
 }
 
 function handlerAgendaHoje({ dados }) {
@@ -46,8 +46,8 @@ function handlerAgendaAmanha({ dados }) {
 
 function handlerProximoCliente({ dados }) {
   const { agsHoje } = dados;
-  const agora = new Date();
-  const prox = agsHoje.find(a => new Date(a.dataHora) > agora);
+  const agora = new Date(Date.now() - 3*60*60*1000); // fuso BR
+  const prox = agsHoje.find(a => new Date(new Date(a.dataHora).getTime() - 3*60*60*1000) > agora);
   if (!prox) return `Sem mais clientes hoje, ${chefe()}! 🎉 Missão cumprida!`;
   return `⏭️ Próximo: *${prox.nomeCliente}* às ${fmtHora(new Date(prox.dataHora))} — ${prox.nomeServico || 'serviço'}`;
 }
@@ -66,7 +66,7 @@ function handlerFaltaram({ dados }) {
 }
 
 function handlerSaudacao() {
-  const saudacoes = ['Oi','Olá','Ei','Opa'];
+  const saudacoes = ['Oi','Ei','Opa','E aí'];
   const s = saudacoes[Math.floor(Math.random()*saudacoes.length)];
   return `${s}, ${chefe()}! 😊 Tô por aqui, pode mandar!`;
 }
@@ -93,7 +93,11 @@ function handlerConfiancaBaixa({ intent }) {
 const REGISTRY = {
   financeiro_hoje:    handlerFinanceiroHoje,
   financeiro_semana:  handlerFinanceiroSemana,
-  financeiro_mes:     handlerFinanceiroSemana, // reutiliza semana como fallback
+  financeiro_mes: ({ dados }) => {
+    const { receitaSemana } = dados;
+    // receitaSemana aqui já vem como receita do mês quando intenção é financeiro_mes
+    return `📊 Mês atual:\n\nReceita: R$ \${Number(receitaSemana||0).toFixed(2).replace('.',',')}\n\nPara mais detalhes diga: *resumo do mês*`;
+  },
   agenda_hoje:        handlerAgendaHoje,
   agenda_amanha:      handlerAgendaAmanha,
   proximo_cliente:    handlerProximoCliente,
@@ -102,7 +106,7 @@ const REGISTRY = {
   relatorio_financeiro: ({ dados }) => {
     const { entradasHoje, saidasHoje, receitaSemana } = dados;
     const resultado = (entradasHoje||0) - (saidasHoje||0);
-    return `📊 Resumo do dia:\n\nEntradas: R$ ${Number(entradasHoje||0).toFixed(2)}\nSaídas: R$ ${Number(saidasHoje||0).toFixed(2)}\nResultado: R$ ${resultado.toFixed(2)}${resultado > 0?' 🟢':resultado < 0?' 🔴':' ⚪'}\n\nSemana: R$ ${Number(receitaSemana||0).toFixed(2)}`;
+    return `📊 Resumo do dia:\n\nEntradas: R$ ${Number(entradasHoje||0).toFixed(2)}\nSaídas: R$ ${Number(saidasHoje||0).toFixed(2)}\nResultado: R$ ${resultado.toFixed(2).replace('.',',')}${resultado > 0?' 🟢':resultado < 0?' 🔴':' ⚪'}\n\nSemana: R$ ${Number(receitaSemana||0).toFixed(2)}`;
   },
   saudacao:           handlerSaudacao,
   ajuda:              handlerAjuda,
@@ -118,6 +122,7 @@ const DELEGAR_AO_SERVICE = new Set([
   'bloquear_horario','fechar_dia','liberar_agenda',
   'criar_lembrete','aniversariantes','servicos_mais_pedidos',
   'resumo_semanal','resumo_mensal','mandar_mensagem',
+  'relatorio_detalhado','reagendar_cliente','retorno_cliente','liberar_horario',
 ]);
 
 /**
