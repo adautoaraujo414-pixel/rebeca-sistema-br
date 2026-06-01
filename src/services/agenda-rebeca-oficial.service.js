@@ -243,10 +243,53 @@ async function _tratarMidia(tipo, telBruto, msg, data, adminId) {
         return;
       }
       await _responderOficial(telBruto, '🎤 Recebi seu áudio! Deixa eu ouvir... 🔊');
-      const _prompt = 'Você é especialista em transcrição de áudio BR. Transcreva e normalize o áudio: converta valores por extenso em números ("duzentos" → 200, "um conto" → 1000, "cinquenta pila" → 50), complete palavras cortadas pelo contexto, ignore ruídos e foque na voz principal. Contexto: sistema de agenda/salão/barbearia. Ações comuns: agendar, cancelar, registrar gasto, ver faturamento. Retorne APENAS o texto transcrito, sem explicações.';
+      // Detectar audio muito curto — provavel ruido/bolso (< 1KB = menos de ~0.1s)
+      const _bufBytes = Buffer.from(base64, 'base64').length;
+      if (_bufBytes < 1000) {
+        console.log('[Oficial] Audio muito curto ignorado:', _bufBytes, 'bytes');
+        return;
+      }
+
+      const _prompt = `Você é o melhor especialista em transcrição de áudio do Brasil, treinado para entender qualquer sotaque, gíria e situação do dia a dia brasileiro.
+
+REGRAS:
+- Áudio com chiado, eco, vento, barulho → ignore e foque na voz
+- Múltiplas vozes → foque na voz principal (quem fala pro celular)
+- Áudio cortado → complete pelo contexto
+
+SOTAQUES: nordeste (oxe, eita), mineiro (uai, trem), paulista (mano, véi), carioca (cara, saca), sul (bah, tchê)
+
+VALORES — converta SEMPRE por extenso em números:
+- "duzentos" → 200 | "um conto" → 1000 | "uma nota" → 100
+- "cinquenta pila" → 50 | "três pau" → 300 | "meio conto" → 500
+
+DATAS: "amanhã cedo" → amanhã de manhã | "umas dez" → às 10h | "meio dia" → 12h
+
+PALAVRAS INCOMPLETAS — complete: "agend..." → agenda | "cancel..." → cancelar | "regis..." → registra
+
+CONTEXTO — sistema de agenda/salão/barbearia. Preste atenção em:
+- Nomes de clientes brasileiros
+- Serviços: corte, escova, hidratação, barba, manicure, pedicure
+- Pagamento: pix, dinheiro, cartão, débito, crédito
+- Ações: agendar, cancelar, registrar, fechar, bloquear
+
+EXEMPLOS:
+- "Ô Rebeca registra aí duzentos real no pix da Maria" → "Rebeca registra 200 reais no pix da Maria"
+- "Rebeca fecha minha agend amanhã tô cansada" → "Rebeca fecha minha agenda amanhã"
+- "Mano Rebeca encaixa o João pras duas da tarde" → "Rebeca encaixa João às 14h"
+- "Rebeca quanto que eu fiz hoje" → "Rebeca quanto faturei hoje"
+- "Rebeca registra gasto de cinquenta pila em produto" → "Rebeca registra gasto de 50 reais em produto"
+
+RUÍDOS — se o áudio for só ruído/silêncio/música sem comando, retorne exatamente: AUDIO_RUIDO
+
+Retorne APENAS o texto transcrito e normalizado, sem explicações, sem aspas.`;
+
+      let transcricao = null;
+
+      // Tentativa 1: transcrição normal
       const transcResp = await axios.post('https://api.anthropic.com/v1/messages', {
         model: 'claude-haiku-4-5',
-        max_tokens: 1024,
+        max_tokens: 512,
         messages: [{
           role: 'user',
           content: [
@@ -258,9 +301,61 @@ async function _tratarMidia(tipo, telBruto, msg, data, adminId) {
         headers: { 'x-api-key': ANTHROPIC_KEY, 'anthropic-version': '2023-06-01', 'Content-Type': 'application/json' },
         timeout: 60000
       });
-      const transcricao = transcResp.data?.content?.[0]?.text?.trim();
+
+      const _raw = transcResp.data?.content?.[0]?.text?.trim();
+
+      // Limpar ruídos comuns de transcrição automática
+      const _limpo = (_raw || '')
+        .replace(/^(legendado por|traduzido por|transcri[çc][aã]o por|obrigado por assistir|inscreva-se).*/gi, '')
+        .replace(/^(música|aplausos|risos|silêncio|barulho|ruído)$/gi, '')
+        .replace(/\.{3,}/g, '.')
+        .trim();
+
+      if (_limpo && _limpo !== 'AUDIO_RUIDO' && _limpo.length > 1) {
+        transcricao = _limpo;
+      }
+
+      // Tentativa 2: retry com modelo sonnet se transcricao ficou vazia ou muito curta
+      if (!transcricao || transcricao.length < 3) {
+        console.log('[Oficial] Transcricao vazia/curta, tentando Sonnet...');
+        try {
+          const transcResp2 = await axios.post('https://api.anthropic.com/v1/messages', {
+            model: 'claude-sonnet-4-5',
+            max_tokens: 512,
+            messages: [{
+              role: 'user',
+              content: [
+                { type: 'text', text: _prompt },
+                { type: 'document', source: { type: 'base64', media_type: _mediaType, data: base64 } }
+              ]
+            }]
+          }, {
+            headers: { 'x-api-key': ANTHROPIC_KEY, 'anthropic-version': '2023-06-01', 'Content-Type': 'application/json' },
+            timeout: 60000
+          });
+          const _raw2 = transcResp2.data?.content?.[0]?.text?.trim();
+          const _limpo2 = (_raw2 || '')
+            .replace(/^(legendado por|traduzido por|transcri[çc][aã]o por).*/gi, '')
+            .replace(/^(música|aplausos|risos|silêncio|barulho)$/gi, '')
+            .trim();
+          if (_limpo2 && _limpo2 !== 'AUDIO_RUIDO' && _limpo2.length > 1) {
+            transcricao = _limpo2;
+            console.log('[Oficial] Transcricao Sonnet OK:', transcricao.substring(0,80));
+          }
+        } catch(eRetry) { console.log('[Oficial] Retry Sonnet falhou:', eRetry.message); }
+      }
+
       if (transcricao) {
-        console.log('[Oficial] 🎤 Audio transcrito:', transcricao.substring(0,80));
+        console.log('[Oficial] Transcricao final:', transcricao.substring(0,100));
+        // Logar transcricao para suporte
+        try {
+          const { AgendaWhatsappCommandLog } = require('../models/AgendaServico');
+          AgendaWhatsappCommandLog.findOneAndUpdate(
+            { adminId, origem: 'rebeca_oficial', tipoMensagem: 'audio', status: 'recebido' },
+            { $set: { textoTranscrito: transcricao.substring(0,500), status: 'transcrito' } },
+            { sort: { createdAt: -1 } }
+          ).catch(() => {});
+        } catch(_eLog) {}
         await _delegarAoModoDono(telBruto, transcricao, adminId);
         return;
       }
