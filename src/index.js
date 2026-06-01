@@ -284,7 +284,7 @@ app.use('/api/agenda',              require('./routes/agenda-pagamento.routes'))
 // ── Cron: verificar vencimentos diariamente às 9h
 setInterval(async () => {
   const agora = new Date();
-  if (agora.getHours() === 9 && agora.getMinutes() < 5) {
+  if (new Date(agora.getTime() - 3*60*60*1000).getUTCHours() === 9 && agora.getMinutes() < 5) {
     try {
       const res = await fetch('http://localhost:' + (process.env.PORT || 3000) + '/api/agenda/verificar-vencimentos');
       const d = await res.json();

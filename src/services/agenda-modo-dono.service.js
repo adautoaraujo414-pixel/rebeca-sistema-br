@@ -17,7 +17,7 @@ const EVOLUTION_GLOBAL_KEY = process.env.EVOLUTION_API_KEY || null;
 
 // ── Personalidade Rebeca ─────────────────────────────────────────────────────
 function _saudacao() {
-  const h = new Date().getHours();
+  const h = new Date(Date.now() - 3*60*60*1000).getUTCHours();
   if (h >= 5  && h < 12) return 'Bom dia';
   if (h >= 12 && h < 18) return 'Boa tarde';
   return 'Boa noite';
@@ -1544,7 +1544,7 @@ Não tem mais ninguém agendado hoje não! Tá livre o resto do dia. 🎉`);
     const nomeM = msg.match(/(?:encaixa|agenda|agendar|adiciona|marca)\s+(?:a\s+|o\s+)?([A-Za-zÀ-ú]+(?:\s+[A-Za-zÀ-ú]+)?)\s+(?:amanhã|amanha|hoje|às?|as|pra|para|no dia|\d)/i);
     const nome = nomeM ? nomeM[1].trim() : null;
     if (hora && nome) {
-      const dataHora = new Date(dia); dataHora.setHours(hora.h, hora.min, 0, 0);
+      const dataHora = new Date(dia); dataHora.setUTCHours(hora.h + 3, hora.min, 0, 0);
       // Verificar conflito de horário — janela de 30 min
       const _iniConflito = new Date(dataHora.getTime() - 15 * 60000);
       const _fimConflito = new Date(dataHora.getTime() + 15 * 60000);
@@ -2877,6 +2877,7 @@ module.exports = { isDono, enviarBoasVindas, processarComandoDono, notificarDono
 
 // ── LEMBRETE AUTOMÁTICO 30min antes ─────────────────────────────────────────
 async function rodarLembretes() {
+  if (global._lembreteRodando) return; global._lembreteRodando = true; setTimeout(() => { global._lembreteRodando = false; }, 4 * 60 * 1000);
   try {
     const agora = new Date();
     const em30  = new Date(agora.getTime() + 30 * 60000);

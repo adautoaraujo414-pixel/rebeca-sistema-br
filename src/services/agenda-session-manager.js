@@ -38,6 +38,11 @@ function _sessionVazia() {
     ultimoClienteCitado: null,
     ultimoAgendamento: null,
     ultimoTopicoFinanceiro: null,
+    aguardandoConfirmacaoApagar: false,
+    ultimoLancamentoId: null,
+    aguardandoLembrete: false,
+    aguardandoCorrecao: false,
+    aguardandoRecorrente: false,
     timestampUltimaMsg: Date.now()
   };
 }
