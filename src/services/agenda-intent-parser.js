@@ -51,10 +51,16 @@ function _validar(parsed) {
 /**
  * Retorna { intencao, entidades, confianca, resposta_direta, confiancaSuficiente }
  */
+const Anthropic = require('@anthropic-ai/sdk');
+let _claudeParser = null;
+function _getParser() {
+  if (!_claudeParser) _claudeParser = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  return _claudeParser;
+}
+
 async function parseIntent(msg, sessionCtx = {}) {
   try {
-    const Anthropic = require('@anthropic-ai/sdk');
-    const _claude = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+    const _claude = _getParser();
 
     const historicoStr = (sessionCtx.historico || [])
       .slice(-4)
@@ -119,7 +125,7 @@ resposta_direta: preencha APENAS para saudacao/ajuda/fora_escopo com texto curto
 
     const r = await _claude.messages.create({
       model: 'claude-haiku-4-5',
-      max_tokens: 300,
+      max_tokens: 400,
       messages: [{ role: 'user', content: prompt }]
     });
 

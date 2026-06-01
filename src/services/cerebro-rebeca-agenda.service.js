@@ -283,7 +283,7 @@ function _montarContexto(dadosCtx) {
   const _agoraBR2 = new Date(agora.getTime() - 3*60*60*1000);
   const hora = _agoraBR2.getUTCHours() + 'h' + String(_agoraBR2.getUTCMinutes()).padStart(2, '0');
   const dias = ['domingo','segunda','terça','quarta','quinta','sexta','sábado'];
-  const diaSemana = dias[agora.getDay()];
+  const diaSemana = dias[_agoraBR2.getUTCDay()];
 
   return `HORA: ${hora} | DIA: ${diaSemana}
 NEGÓCIO: ${nomeNegocio} | Abre: ${hrAbre} | Fecha: ${hrFecha}
@@ -379,12 +379,14 @@ const CerebroAgenda = {
 
       const exemplosAprendidos = opcoes.exemplosAprendidos || [];
 
-      // Calcular minutos ausente (última msg do histórico)
+      // Calcular minutos ausente usando timestamp da sessão
       const _ultimaMsg = historico && historico.length > 0 ? historico[historico.length - 1] : null;
-      const _minutosAusente = _ultimaMsg && _ultimaMsg.role === 'user'
-        ? 0 : 0; // sessão em memória, sem timestamp — default 0
+      const _tsUltimaMsg = (opcoes.tsUltimaMsg || 0);
+      const _minutosAusente = _tsUltimaMsg > 0
+        ? Math.round((Date.now() - _tsUltimaMsg) / 60000)
+        : 0;
 
-      const userPrompt = `HORA ATUAL: ${hora} | DIA: ${dias[agora.getDay()]} | MINUTOS SEM MSG: ${_minutosAusente}
+      const userPrompt = `HORA ATUAL: ${hora} | DIA: ${dias[_agoraBR2.getUTCDay()]} | MINUTOS SEM MSG: ${_minutosAusente}
 
 CONTEXTO DO NEGÓCIO:
 ${_montarContexto({ ...dadosCtx, nomeNegocio })}${_montarExemplosAprendidos(exemplosAprendidos)}
