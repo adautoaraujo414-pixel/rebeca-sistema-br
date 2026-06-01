@@ -1044,7 +1044,7 @@ Te aviso 30 minutos antes de cada um! 💙`;
         data: _dataAgora(),
         origem: 'whatsapp_dono'
       });
-      await responder(`Anotado! Saída de R$ ${val.toFixed(2).replace('.',',')} em "${catSaida}"${descSaida !== 'Gasto via WhatsApp' ? ' — '+descSaida : ''}. 📝`);
+      await responder(`Anotado! Saída de R$ ${val.toFixed(2).replace('.',',')} em "${catSaida}"${descSaida && descSaida !== 'Gasto via WhatsApp' && descSaida.toLowerCase() !== catSaida.toLowerCase() ? ' — '+descSaida : ''}. 📝`);
       return true;
     }
     await responder(`${_erro(_generoAdmin, _apelidoAdmin)} Me fala assim: *Rebeca, registra um gasto de R$50 em produtos* 💸`);
