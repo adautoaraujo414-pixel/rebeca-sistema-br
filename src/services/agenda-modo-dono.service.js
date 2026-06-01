@@ -84,11 +84,11 @@ function _extrairDescricao(txt, tipo) {
   // Limpar frase de comando completa antes de extrair descrição
   let t = txt
     .replace(/^(rebeca[,\s]+)?/i, '')
-    .replace(/^(lança|registra|anota|coloca|marca|lanca|mete|bota|adiciona)\s+(uma?\s+)?(saída|entrada|despesa|receita|gasto|saida)\s+(de\s+)?/i, '')
+    .replace(/^(lança|registra|anota|coloca|marca|lanca|mete|bota|adiciona)\s+(uma?\s+|a\s+)?(saída|entrada|despesa|receita|gasto|saida)\s+(de\s+)?/i, '')
     .replace(/^(registra|anota|coloca|marca|lanca)\s+/i, '')
     .replace(/^(gastei|paguei|saiu|recebi|entrou|caiu|ganhei|vendi|comprei|cobrei)\s+(de\s+)?/i, '')
     .replace(/(?:r\$\s*)?[\d]+(?:[.,][\d]+)?\s*(?:reais?|conto[s]?)?\s*/i, '')
-    .replace(/^(de\s+|no\s+|na\s+|em\s+|por\s+|pra\s+|para\s+|pro\s+|com\s+)/i, '')
+    .replace(/^(de\s+|no\s+|na\s+|em\s+|por\s+|pra\s+|para\s+|pro\s+|com\s+|via\s+|ao\s+|aos\s+)/i, '')
     .replace(/^(uma?\s+)/i, '')
     .trim();
 
