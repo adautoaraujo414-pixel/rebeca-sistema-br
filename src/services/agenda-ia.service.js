@@ -62,7 +62,7 @@ function _pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 // ── MSGS CENTRALIZADAS ────────────────────────────────────────────────────────
 const MSG = {
   bemVindo(nomeNegocio, linkAgenda) {
-    const hora = new Date().getHours();
+    const hora = new Date(Date.now() - 3*60*60*1000).getUTCHours();
     const saud = hora < 12 ? 'Bom dia' : hora < 18 ? 'Boa tarde' : 'Boa noite';
     return saud + '! Que bom te ver por aqui.\n\nPosso te ajudar com:\n\n1. Marcar horario\n2. Ver servicos\n3. Consultar horarios livres\n4. Ver endereco\n5. Falar com a equipe\n\nSe preferir, acesse a agenda:\n' + linkAgenda;
   },
@@ -395,6 +395,8 @@ const AgendaIAService = {
 
     // Ignorar mensagem propria do bot
     const msgLower = (mensagem || '').toLowerCase().trim();
+    // Audio do cliente sem transcricao — orientar por texto
+    if (!mensagem || !msgLower) { return 'Recebi um audio! Por enquanto so consigo atender por texto. Me conta o que precisa? 😊'; }
     if (!msgLower || msgLower.length < 1) return null;
 
     const intencao = _detectarIntencao(mensagem, conv.etapa);

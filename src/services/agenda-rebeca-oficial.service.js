@@ -188,142 +188,81 @@ async function _apresentarSeNecessario(admin, telBruto) {
 // ─── Mídias ───────────────────────────────────────────────────────
 async function _tratarMidia(tipo, telBruto, msg, data, adminId) {
   if (tipo === 'audio') {
+    const axios = require('axios');
+    const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY || '';
+    const EVOLUTION_URL = (process.env.EVOLUTION_API_URL || '').replace(/\/$/, '');
+    const EVOLUTION_KEY = process.env.EVOLUTION_API_KEY || '';
+    const m = msg?.message || data?.message || {};
+    const audioMsg = m?.audioMessage || {};
+    const mimeType = audioMsg?.mimetype || 'audio/ogg; codecs=opus';
+    const _mediaType = /mp4|m4a/.test(mimeType) ? 'audio/mp4' : 'audio/ogg';
+    let base64 = null;
     try {
+      // Método 1: getBase64FromMediaMessage via Evolution (mais confiável)
+      const instDoc = await _getInstanciaOficial();
+      const nomeInst = instDoc?.nomeInstancia || '';
+      if (nomeInst && EVOLUTION_URL && EVOLUTION_KEY) {
+        try {
+          const r1 = await axios.post(
+            `${EVOLUTION_URL}/chat/getBase64FromMediaMessage/${nomeInst}`,
+            { message: msg, convertToMp4: false },
+            { headers: { apikey: EVOLUTION_KEY }, timeout: 25000 }
+          );
+          base64 = r1.data?.base64 || r1.data?.data?.base64 || null;
+          if (base64) console.log('[Oficial] Audio M1 OK bytes:', base64.length);
+        } catch(e1) { console.log('[Oficial] Audio M1 falhou:', e1.message); }
+      }
+      // Método 2: url direta do payload
+      if (!base64 && audioMsg?.url) {
+        try {
+          const r2 = await axios.get(audioMsg.url, {
+            responseType: 'arraybuffer', timeout: 20000,
+            headers: { 'User-Agent': 'Mozilla/5.0' }
+          });
+          base64 = Buffer.from(r2.data).toString('base64');
+          if (base64) console.log('[Oficial] Audio M2 OK bytes:', base64.length);
+        } catch(e2) { console.log('[Oficial] Audio M2 falhou:', e2.message); }
+      }
+      // Método 3: getBase64 com key (Evolution v2+)
+      if (!base64 && nomeInst && EVOLUTION_URL && EVOLUTION_KEY) {
+        try {
+          const msgKey = msg?.key || {};
+          if (msgKey.id) {
+            const r3 = await axios.post(
+              `${EVOLUTION_URL}/chat/getBase64FromMediaMessage/${nomeInst}`,
+              { message: { key: msgKey, message: m }, convertToMp4: false },
+              { headers: { apikey: EVOLUTION_KEY }, timeout: 25000 }
+            );
+            base64 = r3.data?.base64 || r3.data?.data?.base64 || null;
+            if (base64) console.log('[Oficial] Audio M3 OK');
+          }
+        } catch(e3) { console.log('[Oficial] Audio M3 falhou:', e3.message); }
+      }
+      if (!base64) {
+        await _responderOficial(telBruto, '🎤 Recebi seu áudio, mas não consegui baixar. Me manda em texto! 💙');
+        return;
+      }
       await _responderOficial(telBruto, '🎤 Recebi seu áudio! Deixa eu ouvir... 🔊');
-
-      // Pegar URL do audio no payload
-      const m = msg?.message || data?.message || {};
-      const audioMsg = m?.audioMessage || {};
-      const mediaUrl = audioMsg?.url || audioMsg?.directPath || null;
-
-      if (mediaUrl) {
-        const axios = require('axios');
-        const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY || '';
-
-        // Baixar audio
-        const audioResp = await axios.get(mediaUrl, {
-          responseType: 'arraybuffer',
-          timeout: 45000,
-          headers: { 'User-Agent': 'Mozilla/5.0' }
-        });
-        const base64 = Buffer.from(audioResp.data).toString('base64');
-
-        // Transcrever via Claude Haiku
-        const transcResp = await axios.post('https://api.anthropic.com/v1/messages', {
-          model: 'claude-haiku-4-5',
-          max_tokens: 1024,
-          messages: [{
-            role: 'user',
-            content: [
-              { type: 'text', text: `Você é o melhor especialista em transcrição de áudio do Brasil, treinado para entender qualquer sotaque, gíria e situação do dia a dia brasileiro.
-
-═══ REGRAS DE TRANSCRIÇÃO ═══
-
-🎙️ QUALIDADE DO ÁUDIO:
-- Áudio com chiado, eco, vento, barulho de rua, salão, buzina → ignore tudo e foque na voz
-- Áudio muito baixo ou distante → amplifique mentalmente e transcreva o que dá pra captar
-- Microfone tampado ou abafado → interprete pelos sons captados
-- Áudio cortado no início ou fim → complete pelo contexto da frase
-- Múltiplas vozes ao fundo → foque apenas na voz principal (quem está falando pro celular)
-
-🗣️ SOTAQUES E REGIÕES DO BRASIL:
-- Nordeste: "oxe", "eita", "visse", "arretado", "massa", "num tô entendendo"
-- Minas Gerais: "uai", "trem", "sô", "ocê", "misericórdia"
-- São Paulo: "mano", "véi", "cara", "brother", "firmeza"
-- Rio de Janeiro: "cara", "tipo assim", "saca", "véi", "maluco"
-- Sul: "bah", "tchê", "tri", "guri", "piá"
-- Interior geral: "uai", "fia", "fio", "homi", "muié"
-
-💬 GÍRIAS E EXPRESSÕES INFORMAIS:
-- "manda ver" = pode fazer
-- "bora" = vamos
-- "tá bom" / "tá" = ok / está
-- "né" = não é
-- "ó" = olha
-- "aí" = então / portanto
-- "daí" = depois / então
-- "num" = não
-- "pra" = para
-- "pro" = para o
-- "tô" = estou
-- "tá" = está
-- "vai lá" = pode fazer
-- "deixa quieto" = cancela / ignora
-- "para tudo" = cancela tudo
-- "quanto que deu" = qual o total
-- "faz o seguinte" = execute o seguinte comando
-
-💰 VALORES E NÚMEROS (MUITO IMPORTANTE):
-- "duzentos" → 200
-- "trezentos e cinquenta" → 350
-- "um conto" → 1000
-- "dois conto" → 2000
-- "uma nota" → 100
-- "cinquenta pila" → 50
-- "vinte e cinco reais" → 25
-- "três pau" → 300
-- "cinco pila" → 5
-- Sempre converta valores por extenso para números
-
-📅 DATAS E HORÁRIOS:
-- "amanhã cedo" → amanhã de manhã
-- "de tarde" → à tarde
-- "à tardezinha" → fim da tarde
-- "hoje à noite" → hoje à noite
-- "semana que vem" → semana que vem
-- "essa semana" → essa semana
-- "no fim de semana" → no fim de semana
-- "umas dez" → às 10h
-- "meio dia" → 12h
-- "de manhã cedo" → pela manhã
-
-✂️ PALAVRAS INCOMPLETAS — complete pelo contexto:
-- "agend..." → agenda
-- "clien..." → cliente
-- "regis..." → registra
-- "fatur..." → faturamento
-- "amanhã..." → amanhã
-- "horár..." → horário
-- "cancel..." → cancelar
-
-🏢 CONTEXTO DE NEGÓCIO (sistema de agenda/salão/barbearia):
-Preste atenção especial em:
-- Nomes de clientes (nomes próprios brasileiros)
-- Serviços: corte, escova, hidratação, barba, manicure, pedicure, etc
-- Formas de pagamento: pix, dinheiro, cartão, débito, crédito, transferência
-- Ações: agendar, cancelar, reagendar, registrar, fechar, abrir, bloquear, liberar
-- Períodos: manhã, tarde, noite, hoje, amanhã, essa semana
-
-═══ EXEMPLOS REAIS ═══
-- "Ô Rebeca... registra aí... duzentos real no pix da Maria" → "Rebeca registra 200 reais no pix da Maria"
-- "Rebeca fecha minha agend amanhã tô cansada" → "Rebeca fecha minha agenda amanhã"
-- "Rebeca, uai, quem é o próximo?" → "Rebeca quem é o próximo cliente"
-- "Mano, Rebeca encaixa o João lá pras duas da tarde" → "Rebeca encaixa João às 14h"
-- "Rebeca quanto que eu fiz hoje?" → "Rebeca quanto faturei hoje"
-- "Rebeca para tudo, cancela o dia" → "Rebeca fecha minha agenda hoje"
-- "Bora Rebeca, me fala a agenda da semana" → "Rebeca mostra agenda da semana"
-- "Rebeca, registra um gasto de cinquenta pila em produto" → "Rebeca registra gasto de 50 reais em produto"
-
-Retorne APENAS o texto transcrito e normalizado, sem explicações, sem aspas, sem comentários.` },
-              { type: 'document', source: { type: 'base64', media_type: (base64.startsWith('AAAAIGZ') || base64.startsWith('/w==') ? 'audio/mp4' : 'audio/ogg'), data: base64 } }
-            ]
-          }]
-        }, {
-          headers: {
-            'x-api-key': ANTHROPIC_KEY,
-            'anthropic-version': '2023-06-01',
-            'Content-Type': 'application/json'
-          },
-          timeout: 60000
-        });
-
-        const transcricao = transcResp.data?.content?.[0]?.text?.trim();
-        if (transcricao) {
-          console.log('[Oficial] 🎤 Audio transcrito:', transcricao.substring(0,80));
-          // Processar como texto normal
-          await _delegarAoModoDono(telBruto, transcricao, adminId);
-          return;
-        }
+      const _prompt = 'Você é especialista em transcrição de áudio BR. Transcreva e normalize o áudio: converta valores por extenso em números ("duzentos" → 200, "um conto" → 1000, "cinquenta pila" → 50), complete palavras cortadas pelo contexto, ignore ruídos e foque na voz principal. Contexto: sistema de agenda/salão/barbearia. Ações comuns: agendar, cancelar, registrar gasto, ver faturamento. Retorne APENAS o texto transcrito, sem explicações.';
+      const transcResp = await axios.post('https://api.anthropic.com/v1/messages', {
+        model: 'claude-haiku-4-5',
+        max_tokens: 1024,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'text', text: _prompt },
+            { type: 'document', source: { type: 'base64', media_type: _mediaType, data: base64 } }
+          ]
+        }]
+      }, {
+        headers: { 'x-api-key': ANTHROPIC_KEY, 'anthropic-version': '2023-06-01', 'Content-Type': 'application/json' },
+        timeout: 60000
+      });
+      const transcricao = transcResp.data?.content?.[0]?.text?.trim();
+      if (transcricao) {
+        console.log('[Oficial] 🎤 Audio transcrito:', transcricao.substring(0,80));
+        await _delegarAoModoDono(telBruto, transcricao, adminId);
+        return;
       }
     } catch(e) {
       console.error('[Oficial] Erro ao transcrever audio:', e.message);
@@ -331,6 +270,7 @@ Retorne APENAS o texto transcrito e normalizado, sem explicações, sem aspas, s
     await _responderOficial(telBruto, '🎤 Recebi seu áudio, mas não consegui transcrever. Me manda em texto! 💙');
     return;
   }
+
 
   const r = {
     imagem   : 'Recebi a imagem. Se quiser registrar um gasto, manda valor e categoria por texto. 😊',
