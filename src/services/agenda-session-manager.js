@@ -11,6 +11,7 @@ const MAX_HISTORICO = 10; // máximo de trocas no histórico
 
 // Map principal: chave = `${adminId}:${telefone}`
 const _sessions = new Map();
+const MAX_SESSIONS = 500; // limite de segurança contra crescimento descontrolado
 
 // Limpeza automática a cada 10 minutos
 setInterval(() => {
@@ -47,6 +48,12 @@ function _sessionVazia() {
 function getSession(adminId, telefone) {
   const key = _chave(adminId, telefone);
   if (!_sessions.has(key)) {
+    // Segurança: se ultrapassar limite, limpar as mais antigas
+    if (_sessions.size >= MAX_SESSIONS) {
+      const [oldest] = _sessions.keys();
+      _sessions.delete(oldest);
+      console.warn('[SessionManager] Limite de sessões atingido, limpando mais antiga');
+    }
     _sessions.set(key, _sessionVazia());
   }
   return _sessions.get(key);
@@ -96,7 +103,8 @@ function isConfirmacao(texto) {
  * Detecta se mensagem é negação
  */
 function isNegacao(texto) {
-  return /^\s*(n[aã]o|nao|nel|cancel[ao]|esquece|deixa|para)\s*[!.]?\s*$/i.test(texto.trim());
+  return /^\s*(n[aã]o|nao|nel|cancel[ao]|esquece|deixa|para|nope|nem|jamais)\s*[!.]?\s*$/i.test(texto.trim())
+    || /\b(n[aã]o\s+quero|cancela\s+isso|esquece\s+isso|deixa\s+pra\s+l[aá]|n[aã]o\s+precisa|n[aã]o\s+manda)\b/i.test(texto.trim());
 }
 
 /**
@@ -108,6 +116,7 @@ function detectarAssunto(texto) {
   if (/agenda|agendamento|horário|horario|cliente.*hora|marcou|agendou/.test(t)) return 'agenda';
   if (/lembr[ae]|lembrete|avisa/.test(t)) return 'lembrete';
   if (/cliente|contato|inativo|retorno/.test(t)) return 'cliente';
+  if (/produto|venda|catálogo|catalogo|estoque|compra|pedido/.test(t)) return 'produto';
   return null;
 }
 
