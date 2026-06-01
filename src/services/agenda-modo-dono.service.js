@@ -669,10 +669,14 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
       await responder(`Não encontrei nenhum lançamento pra apagar, ${_chefe(_generoAdmin, _apelidoAdmin)}. 🤔`);
       return true;
     }
-    const tipoLabel = ultimo.tipo === 'receita' ? 'Entrada' : 'Saída';
-    // Primeiro pedido — pedir confirmação
+    const tipoLabel = ultimo.tipo === 'receita' ? '💰 Entrada' : '📝 Saída';
+    const _valorFmt = ultimo.valor.toFixed(2).replace('.',',');
+    const _catLabel = ultimo.categoria || 'outros';
+    const _descLabel = ultimo.descricao && ultimo.descricao !== 'Entrada via WhatsApp' && ultimo.descricao !== 'Gasto via WhatsApp' ? ultimo.descricao : '—';
+    const _dtLabel = new Date(ultimo.createdAt || Date.now());
+    const _dtStr = `${_dtLabel.getDate().toString().padStart(2,'0')}/${(_dtLabel.getMonth()+1).toString().padStart(2,'0')} às ${_dtLabel.getHours().toString().padStart(2,'0')}h${_dtLabel.getMinutes().toString().padStart(2,'0')}`;
     SM.updateSession(adminId, telefone, { aguardandoConfirmacaoApagar: true, ultimoLancamentoId: String(ultimo._id) });
-    await responder(`Encontrei aqui, ${_chefe(_generoAdmin, _apelidoAdmin)}:\n\n${tipoLabel}: *R$ ${ultimo.valor.toFixed(2).replace('.',',')}* em "${ultimo.categoria || 'outros'}"\nDescrição: ${ultimo.descricao || '—'}\n\nConfirma apagar? Responde *sim* ou *não* 😊`);
+    await responder(`Encontrei aqui, ${_chefe(_generoAdmin, _apelidoAdmin)}:\n\n${tipoLabel}: *R$ ${_valorFmt}*\nCategoria: ${_catLabel}\nDescrição: ${_descLabel}\nRegistrado: ${_dtStr}\n\nConfirma apagar? Responde *sim* ou *não* 🗑️`);
     return true;
   }
   // ── REGISTRAR ENTRADA FINANCEIRA ───────────────────────────────────────────
@@ -685,7 +689,7 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
     const descEntrada = _extrairDescricao(msg, 'receita');
     const catEntrada  = _extrairCategoria(msg, _extrairCategoria(descEntrada));
     if (val) {
-      await FinanceiroAgenda.create({
+      const _docEntrada = await FinanceiroAgenda.create({
         adminId: adminObjId,
         tipo: 'receita',
         valor: val,
@@ -694,6 +698,7 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
         data: _dataAgora(),
         origem: 'whatsapp_dono'
       });
+      SM.updateSession(adminId, telefone, { ultimoLancamentoId: String(_docEntrada._id), ultimoLancamentoTipo: 'receita', ultimoLancamentoValor: val, ultimoLancamentoDesc: descEntrada, ultimoLancamentoCat: catEntrada });
       await responder(`Feito! Entrada de R$ ${val.toFixed(2).replace('.',',')} registrada em "${catEntrada}"${descEntrada !== 'Entrada via WhatsApp' ? ' — '+descEntrada : ''}. 💰`);
       return true;
     }
@@ -964,11 +969,12 @@ Te aviso 30 minutos antes de cada um! 💙`;
     if (_nlpVal && _nlpInt === 'saida') {
       const _descNlp = _extrairDescricao(msg, 'despesa');
       const _catFinal = _nlpCat !== 'outros' ? _nlpCat : _extrairCategoria(msg);
-      await FinanceiroAgenda.create({
+      const _docDespNlp = await FinanceiroAgenda.create({
         adminId: adminObjId, tipo: 'despesa', valor: _nlpVal,
         descricao: _descNlp, categoria: _catFinal,
         data: _dataAgora(), origem: 'whatsapp_dono'
       });
+      SM.updateSession(adminId, telefone, { ultimoLancamentoId: String(_docDespNlp._id), ultimoLancamentoTipo: 'despesa', ultimoLancamentoValor: _nlpVal, ultimoLancamentoDesc: _descNlp, ultimoLancamentoCat: _catFinal });
       const _labelSaida = _catFinal !== 'outros' ? _catFinal : (_descNlp !== 'Gasto via WhatsApp' ? _descNlp : 'outros');
       await responder(`Anotado! Saída de R$ ${_nlpVal.toFixed(2).replace('.',',')} em "${_labelSaida}". 📝`);
       return true;
@@ -988,11 +994,12 @@ Te aviso 30 minutos antes de cada um! 💙`;
       }
       if (_temVerbExplicito || _temCatConhecida) {
         const _descAmb = _extrairDescricao(msg, 'despesa');
-        await FinanceiroAgenda.create({
+        const _docAmb = await FinanceiroAgenda.create({
           adminId: adminObjId, tipo: 'despesa', valor: _nlpVal,
           descricao: _descAmb, categoria: _catAmb,
           data: _dataAgora(), origem: 'whatsapp_dono'
         });
+        SM.updateSession(adminId, telefone, { ultimoLancamentoId: String(_docAmb._id), ultimoLancamentoTipo: 'despesa', ultimoLancamentoValor: _nlpVal, ultimoLancamentoDesc: _descAmb, ultimoLancamentoCat: _catAmb });
         const _labelAmb = _catAmb !== 'outros' ? _catAmb : (_descAmb !== 'Gasto via WhatsApp' ? _descAmb : 'outros');
         await responder(`Anotado! Saída de R$ ${_nlpVal.toFixed(2).replace('.',',')} em "${_labelAmb}". 📝`);
         return true;
@@ -1022,11 +1029,12 @@ Te aviso 30 minutos antes de cada um! 💙`;
     if (val) {
       const descSaidaI = _extrairDescricao(msg, 'despesa');
       const catSaidaI  = _extrairCategoria(msg);
-      await FinanceiroAgenda.create({
+      const _docSaidaI = await FinanceiroAgenda.create({
         adminId: adminObjId, tipo: 'despesa', valor: val,
         descricao: descSaidaI, categoria: catSaidaI,
         data: _dataAgora(), origem: 'whatsapp_dono'
       });
+      SM.updateSession(adminId, telefone, { ultimoLancamentoId: String(_docSaidaI._id), ultimoLancamentoTipo: 'despesa', ultimoLancamentoValor: val, ultimoLancamentoDesc: descSaidaI, ultimoLancamentoCat: catSaidaI });
       await responder(`Anotado! Saída de R$ ${val.toFixed(2).replace('.',',')} em "${catSaidaI}"${descSaidaI && descSaidaI !== 'Gasto via WhatsApp' && descSaidaI.toLowerCase() !== catSaidaI.toLowerCase() ? ' — '+descSaidaI : ''}. 📝`);
       return true;
     }
@@ -1037,7 +1045,7 @@ Te aviso 30 minutos antes de cada um! 💙`;
     const descSaida = _extrairDescricao(msg, 'despesa');
     const catSaida  = _extrairCategoria(msg, _extrairCategoria(descSaida));
     if (val) {
-      await FinanceiroAgenda.create({
+      const _docSaidaV = await FinanceiroAgenda.create({
         adminId: adminObjId,
         tipo: 'despesa',
         valor: val,
@@ -1046,6 +1054,7 @@ Te aviso 30 minutos antes de cada um! 💙`;
         data: _dataAgora(),
         origem: 'whatsapp_dono'
       });
+      SM.updateSession(adminId, telefone, { ultimoLancamentoId: String(_docSaidaV._id), ultimoLancamentoTipo: 'despesa', ultimoLancamentoValor: val, ultimoLancamentoDesc: descSaida, ultimoLancamentoCat: catSaida });
       await responder(`Anotado! Saída de R$ ${val.toFixed(2).replace('.',',')} em "${catSaida}"${descSaida && descSaida !== 'Gasto via WhatsApp' && descSaida.toLowerCase() !== catSaida.toLowerCase() ? ' — '+descSaida : ''}. 📝`);
       return true;
     }
@@ -1996,8 +2005,18 @@ ${total>5?'Tá crescendo muito! Continua assim! 🚀':'Todo cliente novo é uma 
         const _lancApagar = await FinanceiroAgenda.findById(_idApagar).lean();
         if (_lancApagar) {
           await FinanceiroAgenda.findByIdAndDelete(_idApagar);
-          const _tpLabel = _lancApagar.tipo === 'receita' ? 'Entrada' : 'Saída';
-          await responder(`Apagado, ${_chefe(_generoAdmin, _apelidoAdmin)}! ✅\n\n${_tpLabel} de R$ ${_lancApagar.valor.toFixed(2).replace('.',',')} removida. Se precisar registrar de novo é só falar. 💙`);
+          const _tpLabel = _lancApagar.tipo === 'receita' ? '💰 Entrada' : '📝 Saída';
+          const _valFmtAp = _lancApagar.valor.toFixed(2).replace('.',',');
+          const _descAp = _lancApagar.descricao && _lancApagar.descricao !== 'Entrada via WhatsApp' && _lancApagar.descricao !== 'Gasto via WhatsApp' ? ' — ' + _lancApagar.descricao : '';
+          // Guardar dados para possível desfazer
+          SM.updateSession(adminId, telefone, {
+            ultimoLancamentoId: null,
+            _lancamentoApagadoTipo: _lancApagar.tipo,
+            _lancamentoApagadoValor: _lancApagar.valor,
+            _lancamentoApagadoDesc: _lancApagar.descricao,
+            _lancamentoApagadoCat: _lancApagar.categoria,
+          });
+          await responder(`Apagado! ✅\n\n${_tpLabel} de *R$ ${_valFmtAp}*${_descAp} foi removida.\n\nSe foi sem querer, fala *desfaz* que eu coloco de volta. 💙`);
           return true;
         }
       }
@@ -2006,6 +2025,35 @@ ${total>5?'Tá crescendo muito! Continua assim! 🚀':'Todo cliente novo é uma 
       await responder(`Ok, ${_chefe(_generoAdmin, _apelidoAdmin)}! Mantive o lançamento. 👍`);
       return true;
     }
+  }
+
+  // ── DESFAZER APAGAMENTO ────────────────────────────────────────────────────
+  if (/\bdesfaz\b|\bdesfazer\b|\bvolta\b.*\blancamento\b|\bcoloca\b.*\bde volta\b|\berrei\b.*\bapagar\b|\bapaguei\b.*\berrado\b/i.test(msgL)) {
+    const _sesDesfaz = SM.getSession(adminId, telefone);
+    if (_sesDesfaz._lancamentoApagadoValor) {
+      const _recriar = await FinanceiroAgenda.create({
+        adminId: adminObjId,
+        tipo: _sesDesfaz._lancamentoApagadoTipo,
+        valor: _sesDesfaz._lancamentoApagadoValor,
+        descricao: _sesDesfaz._lancamentoApagadoDesc || '',
+        categoria: _sesDesfaz._lancamentoApagadoCat || 'outros',
+        data: _dataAgora(),
+        origem: 'whatsapp_dono'
+      });
+      SM.updateSession(adminId, telefone, {
+        ultimoLancamentoId: String(_recriar._id),
+        _lancamentoApagadoTipo: null,
+        _lancamentoApagadoValor: null,
+        _lancamentoApagadoDesc: null,
+        _lancamentoApagadoCat: null,
+      });
+      const _tpDesfaz = _sesDesfaz._lancamentoApagadoTipo === 'receita' ? '💰 Entrada' : '📝 Saída';
+      const _valDesfaz = Number(_sesDesfaz._lancamentoApagadoValor).toFixed(2).replace('.',',');
+      await responder(`Pronto, ${_chefe(_generoAdmin, _apelidoAdmin)}! Coloquei de volta. ✅\n\n${_tpDesfaz} de *R$ ${_valDesfaz}* registrada novamente. 💙`);
+      return true;
+    }
+    await responder(`Não tenho nada recente pra desfazer, ${_chefe(_generoAdmin, _apelidoAdmin)}. 🤔`);
+    return true;
   }
 
   // ── MANDAR PARABÉNS PARA ANIVERSARIANTES ──────────────────────────────────
@@ -2546,11 +2594,12 @@ LEMBRE: você é a pessoa em quem ela mais confia no dia a dia. Esse espaço é 
           .replace(/^(lança|registra|anota|coloca|marca|lanca)\s+[\d.,]+\s*(reais?|r\$)?\s*(de\s+)?(saída|entrada|saida)?\s*(de\s+)?/i, '')
           .replace(/^(e\s+)/i, '').trim();
         const desc = _descRawE && _descRawE.length > 1 ? _descRawE : 'Entrada via WhatsApp';
-        await FinanceiroAgenda.create({
+        const _docCerebroR = await FinanceiroAgenda.create({
           adminId: adminObjId, tipo: 'receita',
           valor: Number(ent.valor), descricao: desc, categoria: cat,
           data: _dataAgora(), origem: 'whatsapp_dono'
         });
+        SM.updateSession(adminId, telefone, { ultimoLancamentoId: String(_docCerebroR._id), ultimoLancamentoTipo: 'receita', ultimoLancamentoValor: Number(ent.valor), ultimoLancamentoDesc: desc, ultimoLancamentoCat: cat });
         const _r = `Feito! Entrada de R$ ${Number(ent.valor).toFixed(2).replace('.',',')} em "${cat}"${desc !== 'Entrada via WhatsApp' ? ' — ' + desc : ''}. 💰`;
         await responder(_r);
         SM.addAssistantMsg(adminId, telefone, _r);
