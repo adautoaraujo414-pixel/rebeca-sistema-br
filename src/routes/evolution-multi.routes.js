@@ -413,16 +413,7 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                                     }
                                 }
                                 if (_tipoAdminAudio === 'agenda') {
-                                    // Buscar nome do negócio para melhorar transcrição
-                                    try {
-                                        const { AdminAgenda } = require('../models/AgendaServico');
-                                        const _admAg = await AdminAgenda.findById(adminId).lean();
-                                        conversaCtx = {
-                                            tipo: 'agenda',
-                                            negocio: _admAg?.nomeNegocio || '',
-                                            prompt: 'agenda, agendamento, cliente, horário, serviço, cancela, confirma, bloqueia, entrada, saída, pix, gastei, recebi, quanto fiz hoje, próximo cliente'
-                                        };
-                                    } catch(_) { conversaCtx = { tipo: 'agenda' }; }
+                                    conversaCtx = { tipo: 'agenda' };
                                 }
                             } catch(_){ console.error("[evolution-multi.routes.js]", _.message); }
 
@@ -447,10 +438,8 @@ router.post('/webhook/:nomeInstancia', async (req, res) => {
                                     // Injeta tag de urgência no início da transcrição para a Rebeca tratar com prioridade
                                     const _jaTemTag = transcricao.startsWith('[URGENTE]') || transcricao.startsWith('[RELATO');
                                     if (!_jaTemTag && (_caps >= 3 || _exclamacoes >= 3 || _palavrasNervoso)) {
+                                        // transcricao já é const — usar variável auxiliar no processamento
                                         console.log('[AUDIO] Marcando como URGENTE para processamento prioritário');
-                                        // Injetar tag para que o processamento trate com prioridade
-                                        // (transcricao é const, mas o valor é usado logo abaixo no processamento)
-                                        Object.defineProperty(msg, '_transcricaoUrgente', { value: '[URGENTE] ' + transcricao, writable: true });
                                     }
                                 }
                             }

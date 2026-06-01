@@ -121,22 +121,7 @@ router.post('/webhook', express.json(), async (req, res) => {
           if (transcricao) {
             await processarComando(telefone, transcricao, msgId);
           } else {
-            // Não passar texto falso — avisar para digitar
-            const { AdminAgenda } = require('../models/AgendaServico');
-            const _telL = telefone.replace(/^55/,'');
-            const _telC = _telL.replace(/^(\d{2})(\d{8})$/,'$19$2');
-            const _adm = await AdminAgenda.findOne({
-              $or:[{telefone:telefone},{telefone:'55'+_telL},{telefone:_telC},{whatsapp:telefone},{whatsapp:'55'+_telL}]
-            }).lean();
-            if (_adm) {
-              const { ModoDono } = require('../services/agenda-modo-dono.service');
-              // Só avisa, não processa como comando
-              const _inst = await require('../models/InstanciaWhatsapp').findOne({ adminId: String(_adm._id), adminTipo: 'agenda' }).lean();
-              if (_inst) {
-                const Evolution = require('../services/evolution-api.service');
-                await Evolution.enviarMensagem(_inst.nomeInstancia, telefone, '🎤 Recebi seu áudio, mas não consegui transcrever agora. Me manda em texto que resolvo na hora! 💙');
-              }
-            }
+            await processarComando(telefone, 'não entendi o áudio enviado', msgId);
           }
         }
       } else if (tipo === 'image') {
@@ -193,7 +178,7 @@ async function transcreverAudio(audioId) {
     form.append('file', audioBuffer, { filename: 'audio.ogg', contentType: 'audio/ogg' });
     form.append('model', 'whisper-1');
     form.append('language', 'pt');
-    form.append('prompt', 'Rebeca, agenda, agendamento, cliente, horário, serviço, entrada, saída, pix, real, reais, cabeleireiro, farmácia, mercado, academia, gastei, paguei, recebi, receita, despesa, cancela, confirma, bloqueia, quanto fiz hoje, oque gastei hoje, resumo do dia, próximo cliente, agenda da semana, clientes inativos, registra, anota, lembra');
+    form.append('prompt', 'Rebeca, agenda, agendamento, cliente, horário, serviço, entrada, saída, pix, real, reais, cabeleireiro, farmácia, mercado, academia, gastei, recebi, cancela, confirma, bloqueia, quanto fiz hoje, resumo do dia');
 
     const whisperR = await axios.post(
       'https://api.openai.com/v1/audio/transcriptions',

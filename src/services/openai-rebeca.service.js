@@ -172,7 +172,7 @@ const OpenAIRebecaService = {
                 const _promptWhisper = _isDelivery
                     ? 'Transcrição fiel em português brasileiro. Contexto: delivery e pedidos de comida. ALIMENTOS: arroz, feijão, frango, carne, peixe, salada, macarrão, sopa, marmita, prato feito, PF. PERSONALIZAÇÕES: sem cebola, sem alho, sem pimenta, mais arroz, menos sal, bem passado, mal passado, sem molho, à parte. REGRAS: transcreva exatamente o que foi dito.'
                     : _isAgenda
-                    ? ('Transcrição fiel em português brasileiro. Contexto: assistente de agenda e financeiro' + (contextoConversa && contextoConversa.negocio ? ' para ' + contextoConversa.negocio : ' para salão/barbearia') + ' chamada Rebeca. COMANDOS DO DONO: agenda de hoje, agenda de amanhã, agenda da semana, próximo cliente, clientes inativos, quanto fiz hoje, oque gastei hoje, quanto faturei, resumo da semana, resumo do mês, registra entrada, registra saída, bloqueia horário, cancela agendamento, confirma agendamento, encaixa cliente, me lembra, lembrete. FINANCEIRO: registra, anota, saída, entrada, gastei, paguei, recebi, ganhei, cobrei, reais, R$, combustível, gasolina, aluguel, condomínio, luz, energia, água, internet, mercado, farmácia, remédio, manicure, pedicure, escova, tintura, botox, progressiva, sobrancelha, depilação, academia, uber, taxi, fornecedor, material, salário, imposto. AGENDA: agenda, encaixa, marca horário, cliente, amanhã, hoje, às, horas, cancelar, confirmar, bloqueia, libera, fecha. LEMBRETES: me lembra, lembrete, não me deixa esquecer, todo dia, toda semana, daqui, minutos. VALORES: preserve números exatos, vírgula decimal (10,50), milhar com ponto (1.200,00). REGRAS: transcreva exatamente o que foi dito, preserve abreviações, não invente palavras.')
+                    ? 'Transcrição fiel em português brasileiro. Contexto: assistente de agenda e financeiro para salão/barbearia chamada Rebeca. CONSULTAS FREQUENTES: como está minha agenda, tem algum cliente hoje, quem tenho amanhã, mostra minha agenda, agenda de hoje, agenda de amanhã. FINANCEIRO: registra, anota, saída, entrada, gastei, paguei, recebi, ganhei, cobrei, reais, R$, combustível, gasolina, diesel, etanol, posto, abasteci, conjstivel, combutivel, aluguel, condomínio, luz, energia, água, internet, wifi, mercado, supermercado, farmácia, remédio, manicure, pedicure, escova, tintura, botox, progressiva, sobrancelha, depilação, academia, uber, taxi, fornecedor, material, salário, imposto. AGENDA: agenda, encaixa, marca horário, cliente, amanhã, hoje, às, horas, cancelar, confirmar. LEMBRETES: me lembra, lembrete, não me deixa esquecer, todo dia, toda semana, toda segunda, daqui, minutos. VALORES: preserve números exatos, vírgula decimal (10,50), milhar com ponto (1.200,00). REGRAS: transcreva exatamente o que foi dito, não corrija erros de pronúncia, preserve abreviações.'
                     : 'Transcrição fiel em português brasileiro. Contexto: corridas e transporte urbano. LOGRADOUROS: Rua, Avenida, Av, Travessa, Alameda, Estrada, Rodovia, Beco, Praça, Vila, Quadra, Setor, Conjunto. REGRAS: (1) Transcreva EXATAMENTE. (2) Siglas letra por letra. (3) Não invente palavras.';
                 formData.append('prompt', _promptWhisper);
                                 const resp = await axios.post('https://api.openai.com/v1/audio/transcriptions', formData, {
@@ -215,13 +215,6 @@ const OpenAIRebecaService = {
             const textoFinal = this.interpretarAudioTranscrito(textoLimpo);
             console.log('[AUDIO] Transcrito final:', textoFinal && textoFinal.substring(0, 100));
             if (textoFinal) {
-                // Agenda: retornar texto puro — raciocinio é só para corridas/delivery
-                // Evita processar áudio do dono como se fosse pedido de corrida
-                const _isAgendaCtx = contextoConversa && contextoConversa.tipo === 'agenda';
-                if (_isAgendaCtx) {
-                    console.log('[AUDIO] Agenda — retornando texto direto sem raciocinar');
-                    return textoFinal;
-                }
                 const raciocinio = await this.raciocionarSobreAudio(textoFinal, contextoConversa);
                 return raciocinio || textoFinal;
             }
