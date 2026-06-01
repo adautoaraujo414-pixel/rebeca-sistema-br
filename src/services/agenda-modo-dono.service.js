@@ -1096,7 +1096,7 @@ ${totalAgs > 0 ? 'Tá saindo bem! 💪' : 'Ainda sem registros esse mês.'}`);
   }
 
   // ── FATURAMENTO ────────────────────────────────────────────────────────────
-  if (/\bfaturei\b|\bfaturamento\b|\bquanto\s*(entrou|fiz|ganhei|recebi|caiu)\b|\bquanto\s*(fiz|ganhei|recebi)\s*hoje\b|\bquanto\s*(?:eu\s*)?(gastei|saiu|foram|ganhei|recebi|faturei)\b|\bquanto\s*entrou\s*(hoje|de|essa|esta)\b|\bquanto\s*(eu\s*)?(gastei|saiu)\s*(hoje|essa|esta|semana)?\b|\bcaixa\s*de\s*hoje\b|\bresultado\s*de\s*hoje\b|\bsaldo\s*de\s*hoje\b|\bquanto\s*t[eê]m?\s*hoje\b|\bcomo\s*t[áa]\s*o\s*caixa\b|\bfiz\s*quanto\b|\bganhei\s*quanto\b|\bessa\s*semana\b.*\b(entrou|gastei|saiu|faturei)\b|\b(entrou|gastei|saiu|faturei)\b.*\bessa\s*semana\b/i.test(msgL)) {
+  if (/\bfaturei\b|\bfaturamento\b|\bquanto\s*(entrou|fiz|ganhei|recebi|caiu)\b|\bquanto\s*(fiz|ganhei|recebi)\s*hoje\b|\bquanto\s*(?:eu\s*)?(gastei|saiu|foram|ganhei|recebi|faturei)\b|\bquanto\s*entrou\s*(hoje|de|essa|esta)\b|\bquanto\s*(eu\s*)?(gastei|saiu)\s*(hoje|essa|esta|semana)?\b|\bcaixa\s*de\s*hoje\b|\bresultado\s*de\s*hoje\b|\bsaldo\s*de\s*hoje\b|\bquanto\s*t[eê]m?\s*hoje\b|\bcomo\s*t[áa]\s*o\s*caixa\b|\bfiz\s*quanto\b|\bganhei\s*quanto\b|\bessa\s*semana\b.*\b(entrou|gastei|saiu|faturei)\b|\b(entrou|gastei|saiu|faturei)\b.*\bessa\s*semana\b|\bo\s*que\s*(gastei|fiz|faturei|entrou|saiu)\b|\boque\s*(gastei|fiz|faturei|entrou|saiu)\b/i.test(msgL)) {
     // Período: semana ou dia — fuso Brasil (UTC-3)
     const _agoraBR = new Date(Date.now() - 3*60*60*1000);
     const _isSemana = /essa\s*semana|esta\s*semana|semana\s*(toda|inteira)?/i.test(msgL);
