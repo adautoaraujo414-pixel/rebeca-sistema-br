@@ -668,15 +668,6 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
       return true;
     }
     const tipoLabel = ultimo.tipo === 'receita' ? 'Entrada' : 'Saída';
-    // Verificar se já está aguardando confirmação de apagar
-    const _sesApagar = SM.getSession(adminId, telefone);
-    if (_sesApagar.aguardandoConfirmacaoApagar) {
-      // Dono confirmou — apagar
-      SM.updateSession(adminId, telefone, { aguardandoConfirmacaoApagar: false, ultimoLancamentoId: null });
-      await FinanceiroAgenda.findByIdAndDelete(ultimo._id);
-      await responder(`Apagado, ${_chefe(_generoAdmin, _apelidoAdmin)}! ✅ ${tipoLabel} de R$ ${ultimo.valor.toFixed(2).replace('.',',')} removida. Se precisar registrar de novo é só falar. 💙`);
-      return true;
-    }
     // Primeiro pedido — pedir confirmação
     SM.updateSession(adminId, telefone, { aguardandoConfirmacaoApagar: true, ultimoLancamentoId: String(ultimo._id) });
     await responder(`Encontrei aqui, ${_chefe(_generoAdmin, _apelidoAdmin)}:\n\n${tipoLabel}: *R$ ${ultimo.valor.toFixed(2).replace('.',',')}* em "${ultimo.categoria || 'outros'}"\nDescrição: ${ultimo.descricao || '—'}\n\nConfirma apagar? Responde *sim* ou *não* 😊`);
@@ -1034,7 +1025,7 @@ Te aviso 30 minutos antes de cada um! 💙`;
         descricao: descSaidaI, categoria: catSaidaI,
         data: _dataAgora(), origem: 'whatsapp_dono'
       });
-      await responder(`Anotado! Saída de R$ ${val.toFixed(2).replace('.',',')} em "${catSaidaI}"${descSaidaI !== 'Gasto via WhatsApp' ? ' — '+descSaidaI : ''}. 📝`);
+      await responder(`Anotado! Saída de R$ ${val.toFixed(2).replace('.',',')} em "${catSaidaI}"${descSaidaI && descSaidaI !== 'Gasto via WhatsApp' && descSaidaI.toLowerCase() !== catSaidaI.toLowerCase() ? ' — '+descSaidaI : ''}. 📝`);
       return true;
     }
   }
