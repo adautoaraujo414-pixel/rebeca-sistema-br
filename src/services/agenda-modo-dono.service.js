@@ -719,7 +719,7 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
         return texto
           // Remover gatilhos de comando
           .replace(/\b(rebeca)[,.]?\s*/gi, '')
-          .replace(/\b(me lembra|me avisa|anota aqui|anota|lembrete|cria?\s*lembrete|nao me deixa esquecer)[,.]?\s*/gi, '')
+          .replace(/\b(me lembr[aei]|me avisa|anota aqui|anota|lembrete|cria?\s*lembrete|nao me deixa esquecer|lembrar)[,.]?\s*/gi, '')
           // Remover dias da semana e datas
           .replace(/\b(amanha|amanhã|hoje|segunda|terca|terça|quarta|quinta|sexta|sabado|sábado|domingo)(-feira)?\b/gi, '')
           .replace(/\bdia\s+\d{1,2}(\/\d{1,2})?\b/gi, '')
@@ -1298,7 +1298,7 @@ ${totalAgs > 0 ? 'Tá saindo bem! 💪' : 'Ainda sem registros esse mês.'}`);
     console.log('[HORARIO-DETECTADO] hora:', JSON.stringify(_horaPend), '| dia:', _diaPend ? _diaPend.toISOString() : null);
 
     // Se parece claramente um novo comando de lembrete, cancelar pendência
-    if (!_diaPend && !_horaPend && _msgApenasAtual.length > 15 && /me\s*lembr[ae]|lembrete|n[aã]o\s*me\s*deixa?\s*esquecer|anota\s*(a[ií])?/i.test(_msgApenasAtual)) {
+    if (!_diaPend && !_horaPend && _msgApenasAtual.length > 15 && /me\s*lembr[aei]|\blembrar\b|lembrete|n[aã]o\s*me\s*deixa?\s*esquecer|anota\s*(a[ií])?/i.test(_msgApenasAtual)) {
       SM.updateSession(adminId, telefone, { aguardandoLembrete: null });
       console.log('[HORARIO-DETECTADO] novo comando detectado — cancelando pendencia');
       // cai para processar como novo lembrete abaixo
@@ -1357,13 +1357,13 @@ ${totalAgs > 0 ? 'Tá saindo bem! 💪' : 'Ainda sem registros esse mês.'}`);
     }
   }
 
-  if (/me\s*lembr[ae]|lembrete|n[aã]o\s*me\s*deixa?\s*esquecer|anota\s*(a[ií])?/i.test(msgL)) {
+  if (/me\s*lembr[aei]|\blembrar\b|lembrete|n[aã]o\s*me\s*deixa?\s*esquecer|anota\s*(a[ií])?/i.test(msgL)) {
     const hora = _parseHora(msgL);
     const dia  = _parseDia(msgL);
 
     // ── Extrair texto: remover gatilho + tudo temporal, pegar o que sobra ────
     const _semGatilho = msg
-      .replace(/^.*?(?:lembrete\s*:?|me\s*lembr[ae]|lembr[ae]|avisa?|anota)\s*(?:de\s+|que\s+)?/i, '')
+      .replace(/^.*?(?:lembrete\s*:?|me\s*lembr[aei]|lembr[aei]|lembrar|avisa?|anota)\s*(?:de\s+|que\s+)?/i, '')
       .trim();
     const _limpo = _semGatilho
       .replace(/(?:^|\s)amanh[aã](?:\s|$)/gi, ' ')

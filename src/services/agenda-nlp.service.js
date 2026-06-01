@@ -246,7 +246,7 @@ function detectarIntencao(txt) {
   if (detectarRecorrente(txt)) return 'recorrente';
 
   // Lembrete explícito
-  if (/lembra|lembrete|nao me deixa esquecer|anota ai/.test(n) &&
+  if (/lembr[ae]|lembrei|lembrar|lembrete|nao me deixa esquecer|anota ai/.test(n) &&
       !/gastei|saiu|paguei|recebi|entrou/.test(n)) {
     return 'lembrete';
   }
