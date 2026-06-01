@@ -2870,8 +2870,7 @@ async function notificarDonoNovoAgendamento(adminId, dadosAg) {
 ` +
       `📆 ${_fmtData(dataHora)} às ${_fmtHora(dataHora)}
 ` +
-      (dadosAg.valor ? `💰 R$ ${Number(dadosAg.valor).toFixed(2)}
-` : '') +
+      (dadosAg.valor ? `💰 R$ ${Number(dadosAg.valor).toFixed(2).replace('.',',')}\n` : '') +
       (dadosAg.nomeProfissional ? `👩 ${dadosAg.nomeProfissional}
 ` : '') +
       `
@@ -2921,7 +2920,7 @@ async function rodarLembretes() {
 
         const hora = _fmtHora(new Date(ag.dataHora));
         await _enviarMsg(instParaEnvio, telDono,
-          `⏰ *Atenção, ${_chefe(_generoAdmin, _apelidoAdmin)}!*\n\n` +
+          `⏰ *Atenção, ${_chefe(admin.modoWhatsappDono?.genero||'', admin.modoWhatsappDono?.apelido||admin.nomeNegocio||'chefe')}!*\n\n` +
           `*${ag.nomeCliente}* tá chegando em uns 30 minutinhos! 😊\n` +
           `🕐 Horário: ${hora}\n` +
           `✂️ Serviço: ${ag.nomeServico || '—'}\n\n` +
@@ -2994,7 +2993,7 @@ async function rodarRelatorioDiario() {
         const motivacao = atendidos > 0 ? 'Arrasou ontem! 🚀' : agsHoje.length > 0 ? `Hoje tem ${agsHoje.length} cliente(s) te esperando! 💪` : 'Bora fazer um ótimo dia! 💙';
 
         await _enviarMsg(instParaEnvio, telDono,
-          `🌅 *Bom dia, ${_chefe(_generoAdmin, _apelidoAdmin)}!*\n\n` +
+          `🌅 *Bom dia, ${_chefe(admin.modoWhatsappDono?.genero||'', admin.modoWhatsappDono?.apelido||admin.nomeNegocio||'chefe')}!*\n\n` +
           `📊 *Ontem (${_fmtData(ontem)}):*\n${resumoOntem}\n\n` +
           `📅 *Agenda de hoje (${_fmtData(hoje)}):*\n${resumoHoje}` +
           resumoLembretes +
@@ -3005,7 +3004,6 @@ async function rodarRelatorioDiario() {
       }
     }
   } catch(e) {
-    console.error('[ModoDono] Erro rodarRelatorioDiario:', e.message);
     console.error('[ModoDono] Erro rodarRelatorioDiario:', e.message);
   }
 }
