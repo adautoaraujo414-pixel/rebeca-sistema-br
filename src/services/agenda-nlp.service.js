@@ -52,7 +52,7 @@ const SINONIMOS = {
   'combust':'combustivel','combustivelive':'combustivel','cumbustivel':'combustivel',
   'conbustivel':'combustivel','combustivil':'combustivel','combuistivel':'combustivel',
   // alimentação
-  'almoco':'alimentacao','almoco':'alimentacao','janta':'alimentacao',
+  'almoco':'alimentacao','janta':'alimentacao',
   'jantar':'alimentacao','cafe':'alimentacao','lanche':'alimentacao',
   'comida':'alimentacao','refeicao':'alimentacao','restaurante':'alimentacao',
   'ifood':'alimentacao','rappi':'alimentacao',
@@ -264,7 +264,7 @@ function detectarIntencao(txt) {
   const temHora = /\d{1,2}\s*h\b|\d{1,2}:\d{2}/.test(n);
   if (temDia && temHora && !/gastei|saiu|paguei|recebi|entrou|saida|entrada|reais/.test(n)) return 'lembrete';
 
-  if (temServico && !/gastei|saiu|paguei|recebi|entrou|saida|entrada/.test(n)) return 'lembrete';
+  if (temServico && (temDia || temHora) && !/gastei|saiu|paguei|recebi|entrou|saida|entrada/.test(n)) return 'lembrete';
 
   // Saída
   const temSaida = /saida|gastei|gasto|paguei|comprei|saiu|debitou|descontou|tirei/.test(n);

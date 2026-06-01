@@ -74,7 +74,7 @@ const MSG = {
     const lista = servicos.map((s, i) => {
       let linha = (i+1) + '. ' + s.nome;
       if (s.duracao) linha += ' — ' + s.duracao + 'min';
-      if (s.preco) linha += ' — R$ ' + Number(s.preco).toFixed(2);
+      if (s.preco) linha += ' — R$ ' + Number(s.preco).toFixed(2).replace('.',',');
       return linha;
     }).join('\n');
     return _pick(_v.abertura) + '\n\nServicos disponiveis:\n\n' + lista + '\n\nQual deles voce prefere?';
@@ -82,7 +82,7 @@ const MSG = {
   preco(servico) {
     if (!servico.preco) return 'Olhei aqui.\n\nEsse servico esta cadastrado,\nmas o valor nao apareceu.\n\nQuer que eu veja os horarios?';
     const dur = servico.duracao ? '\nDuracao: ' + servico.duracao + ' minutos.' : '';
-    return 'Conferi aqui.\n\n' + servico.nome + ' esta como R$ ' + Number(servico.preco).toFixed(2) + '.' + dur + '\n\nQuer ver horarios?';
+    return 'Conferi aqui.\n\n' + servico.nome + ' esta como R$ ' + Number(servico.preco).toFixed(2).replace('.',',') + '.' + dur + '\n\nQuer ver horarios?';
   },
   listaProfissionais(profs) {
     if (!profs.length) return 'Conferi aqui.\n\nNao apareceu profissional cadastrado.\n\nPosso buscar pelo proximo horario livre?';
@@ -150,13 +150,14 @@ const MSG = {
 
 // ── HELPERS ───────────────────────────────────────────────────────────────────
 function _fmtData(d) {
-  try { return new Date(d + 'T12:00:00').toLocaleDateString('pt-BR', { weekday:'long', day:'numeric', month:'long' }); }
+  try { return new Date(d + 'T12:00:00-03:00').toLocaleDateString('pt-BR', { weekday:'long', day:'numeric', month:'long' }); }
   catch(_) { return d || ''; }
 }
 
 function _parseData(texto) {
   const t = (texto || '').toLowerCase().trim();
-  const hoje = new Date();
+  const _agoraBRPD = new Date(Date.now() - 3*60*60*1000);
+  const hoje = new Date(_agoraBRPD.toISOString().slice(0,10) + 'T12:00:00Z');
   const pad = n => String(n).padStart(2,'0');
   const iso = d => d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate());
   if (t.match(/\bhoje\b/)) return iso(hoje);
