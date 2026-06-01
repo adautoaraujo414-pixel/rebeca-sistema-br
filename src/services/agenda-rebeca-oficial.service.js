@@ -25,7 +25,7 @@ const ENV_INSTANCE = (process.env.REBECA_OFICIAL_EVOLUTION_INSTANCE || '').trim(
 const ENV_KEY      = (process.env.REBECA_OFICIAL_EVOLUTION_KEY || process.env.EVOLUTION_API_KEY || '').trim();
 const EVOLUTION_URL = (process.env.EVOLUTION_API_URL || 'https://evolution-api-production-794f.up.railway.app').replace(/\/$/, '');
 
-// Cache de apresentação
+// Cache de apresentação (em memória + banco como fallback)
 const _apresentados = new Set();
 
 // ─── Helpers ──────────────────────────────────────────────────────
@@ -305,7 +305,7 @@ Preste atenção especial em:
 - "Rebeca, registra um gasto de cinquenta pila em produto" → "Rebeca registra gasto de 50 reais em produto"
 
 Retorne APENAS o texto transcrito e normalizado, sem explicações, sem aspas, sem comentários.` },
-              { type: 'document', source: { type: 'base64', media_type: 'audio/ogg', data: base64 } }
+              { type: 'document', source: { type: 'base64', media_type: (base64.startsWith('AAAAIGZ') || base64.startsWith('/w==') ? 'audio/mp4' : 'audio/ogg'), data: base64 } }
             ]
           }]
         }, {
@@ -386,7 +386,7 @@ async function processarMensagemOficial(payload) {
     if (!encontrados.length) {
       console.log(`[Oficial] ❓ Não reconhecido: ${_mask(telNorm)}`);
       await _responderOficial(telBruto,
-        'Olá, eu sou a Rebeca 💙\n\n' +
+        'Oi! Eu sou a Rebeca 💙\n\n' +
         'Não encontrei este número como administrador autorizado de uma Rebeca Agenda.\n\n' +
         'Se você já é cliente, acesse o painel e adicione este número em:\n' +
         '*Configurações → Modo Rebeca pelo WhatsApp*\n\n' +
@@ -444,17 +444,18 @@ async function processarMensagemOficial(payload) {
     if (!cfgBot.foraHorario) {
       const cfg  = admin.config || {};
       const agora = new Date();
-      const hAtual = agora.getHours() * 60 + agora.getMinutes();
+      const _agoraBR = new Date(agora.getTime() - 3*60*60*1000); // UTC-3
+      const hAtual = _agoraBR.getUTCHours() * 60 + _agoraBR.getUTCMinutes();
       const [hAb, mAb] = (cfg.horarioAbertura  || '08:00').split(':').map(Number);
       const [hFe, mFe] = (cfg.horarioFechamento || '18:00').split(':').map(Number);
       const abertura   = hAb * 60 + mAb;
       const fechamento = hFe * 60 + mFe;
-      const diaSemana  = agora.getDay();
+      const diaSemana  = _agoraBR.getUTCDay();
       const diasFunc   = cfg.diasFuncionamento || [1,2,3,4,5,6];
       if (!diasFunc.includes(diaSemana) || hAtual < abertura || hAtual > fechamento) {
         console.log('[Oficial] 🕐 Fora do horario — nao respondendo');
         await _responderOficial(telBruto,
-          `Olá! 😊 No momento estamos fora do horário de atendimento.
+          `Oi! 😊 No momento estamos fora do horário de atendimento.
 
 ` +
           `⏰ Funcionamos de *${cfg.horarioAbertura || '08:00'}* às *${cfg.horarioFechamento || '18:00'}*.
