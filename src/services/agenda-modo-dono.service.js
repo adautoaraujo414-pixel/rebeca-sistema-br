@@ -2874,7 +2874,7 @@ async function notificarDonoNovoAgendamento(adminId, dadosAg) {
       (dadosAg.nomeProfissional ? `👩 ${dadosAg.nomeProfissional}
 ` : '') +
       `
-📊 Essa semana: ${totalSemana} agendamento(s) | R$ ${receitaSemana.toFixed(2)}`;
+📊 Essa semana: ${totalSemana} agendamento(s) | R$ ${receitaSemana.toFixed(2).replace('.',',')}`;
 
     await _enviarMsg(instancia, telDono, msg);
   } catch(e) {
