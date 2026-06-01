@@ -1135,8 +1135,8 @@ ${totalAgs > 0 ? 'Tá saindo bem! 💪' : 'Ainda sem registros esse mês.'}`);
     const leS = Object.entries(catS).map(([k,v])=>`  ${k}: R$ ${v.toFixed(2)}`).join('\n');
     const _labelPeriodo = _isSemana ? `semana de ${_fmtData(iniUTC)} a ${_fmtData(_agoraBR)}` : _fmtData(_agoraBR);
     let rel = `Resumo de ${_labelPeriodo}:\n`;
-    rel += `\nEntradas: R$ ${entradas.toFixed(2)}${leE ? '\n'+leE : ''}`;
-    rel += `\nSaídas: R$ ${saidas.toFixed(2)}${leS ? '\n'+leS : ''}`;
+    rel += `\nEntradas: R$ ${entradas.toFixed(2).replace('.',',')}${leE ? '\n'+leE : ''}`;
+    rel += `\nSaídas: R$ ${saidas.toFixed(2).replace('.',',')}${leS ? '\n'+leS : ''}`;
     rel += `\nResultado: R$ ${(entradas-saidas).toFixed(2)} | Atendimentos: ${agendamentos}`;
     await responder(rel);
     return true;
@@ -2978,7 +2978,7 @@ async function rodarRelatorioDiario() {
         const resultado   = entradas - saidas;
         const sinalRes    = resultado >= 0 ? '📈' : '📉';
         const resumoOntem = atendidos > 0
-          ? `✅ Atendimentos: *${atendidos}*\n💰 Entradas: *R$ ${entradas.toFixed(2)}*\n💸 Gastos: *R$ ${saidas.toFixed(2)}*\n${sinalRes} Resultado: *R$ ${resultado.toFixed(2)}*`
+          ? `✅ Atendimentos: *${atendidos}*\n💰 Entradas: *R$ ${entradas.toFixed(2).replace('.',',')}*\n💸 Gastos: *R$ ${saidas.toFixed(2).replace('.',',')}*\n${sinalRes} Resultado: *R$ ${resultado.toFixed(2).replace('.',',')}*`
           : `📭 Nenhum atendimento registrado`;
 
         const resumoHoje = agsHoje.length > 0
