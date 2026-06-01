@@ -3067,7 +3067,7 @@ async function rodarRelatorioDiario() {
         const motivacao = atendidos > 0 ? 'Arrasou ontem! 🚀' : agsHoje.length > 0 ? `Hoje tem ${agsHoje.length} cliente(s) te esperando! 💪` : 'Bora fazer um ótimo dia! 💙';
 
         await _enviarMsg(instParaEnvio, telDono,
-          `🌅 *Bom dia, ${_chefe(admin.modoWhatsappDono?.genero||'', admin.modoWhatsappDono?.apelido||admin.nomeNegocio||'chefe')}!*\n\n` +
+          `🌅 *Bom dia!* 🌞\n\n` +
           `📊 *Ontem (${_fmtData(ontem)}):*\n${resumoOntem}\n\n` +
           `📅 *Agenda de hoje (${_fmtData(hoje)}):*\n${resumoHoje}` +
           resumoLembretes +
