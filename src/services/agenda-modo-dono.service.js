@@ -3396,12 +3396,17 @@ Faz um tempo que não aparece... temos novidades esperando! Quer marcar um horá
     const instNm  = instancia.nomeInstancia;
     const telFmt  = telefoneCliente.replace(/\D/g,'') + '@s.whatsapp.net';
 
-    await axios.post(`${apiUrl}/message/sendText/${instNm}`, {
-      number: telFmt, text: texto
-    }, {
-      headers: { apikey: apiKey },
-      timeout: 10000
-    });
+    // Suporte Meta API como fallback
+    if (instancia._enviarVia === 'meta' || instancia.nomeInstancia === 'meta_oficial') {
+      await _enviarMsg(instancia, telefoneCliente, texto);
+    } else {
+      await axios.post(`${apiUrl}/message/sendText/${instNm}`, {
+        number: telFmt, text: texto
+      }, {
+        headers: { apikey: apiKey },
+        timeout: 10000
+      });
+    }
     console.log('[NotifCliente] ✅', tipo, '->', telefoneCliente.slice(-4));
   } catch(e) {
     console.error('[NotifCliente] ❌ Erro:', e.message);
@@ -3433,10 +3438,13 @@ async function rodarLembretesClientes() {
         // ── Lembrete 1 dia antes ─────────────────────────────────────────
         // Ajuste fuso Brasil -03:00
         // Fuso Brasil -03:00: meia-noite BR = 03:00 UTC, 23:59 BR = 02:59 UTC do dia seguinte
-        const amanha_ini = new Date(agora.getTime() + 24*60*60*1000);
-        amanha_ini.setUTCHours(3, 0, 0, 0); // 00:00 BRT
-        const amanha_fim = new Date(agora.getTime() + 48*60*60*1000);
-        amanha_fim.setUTCHours(2, 59, 59, 999); // 23:59 BRT do dia seguinte
+        // Amanhã BR: 00:00 BRT (03:00 UTC) até 23:59 BRT (02:59:59 UTC do dia seguinte)
+        const _agoraBR = new Date(agora.getTime() - 3*60*60*1000); // ajuste fuso
+        const _amanhaY = _agoraBR.getUTCFullYear();
+        const _amanhaM = _agoraBR.getUTCMonth();
+        const _amanhaD = _agoraBR.getUTCDate() + 1;
+        const amanha_ini = new Date(Date.UTC(_amanhaY, _amanhaM, _amanhaD, 3, 0, 0, 0));
+        const amanha_fim = new Date(Date.UTC(_amanhaY, _amanhaM, _amanhaD + 1, 2, 59, 59, 999));
 
         const ags1dia = await AgendamentoAgenda.find({
           adminId,
