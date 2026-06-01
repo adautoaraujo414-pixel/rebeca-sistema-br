@@ -4,9 +4,9 @@ let clienteAnthropic = null;
 
 const configIA = {
     apiKey: process.env.ANTHROPIC_API_KEY || '',
-    modelo: process.env.CLAUDE_MODEL || 'claude-haiku-4-5-20251001',
+    modelo: process.env.CLAUDE_MODEL || 'claude-haiku-4-5',
     ativo: true,
-    fallbackModelo: process.env.CLAUDE_FALLBACK_MODEL || 'claude-haiku-4-5-20251001'
+    fallbackModelo: process.env.CLAUDE_FALLBACK_MODEL || 'claude-haiku-4-5'
 };
 
 if (configIA.apiKey) {

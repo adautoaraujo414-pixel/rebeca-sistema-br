@@ -690,7 +690,7 @@ ${_pick(_v.pedirNome)}`;
       const system = 'Voce e a assistente de agendamento da ' + nomeNegocio + '. Tom: brasileiro, educado, mensagens curtas (max 4 linhas). Nunca invente servico, preco ou horario. Se nao souber, mande: ' + linkAgenda + '. SERVICOS REAIS: ' + listaServicos + '. Nunca diga "nao entendi" — sempre conduza para uma acao.';
       conv.historico.push({ role: 'user', content: mensagem });
       if (conv.historico.length > 6) conv.historico = conv.historico.slice(-6);
-      const r = await _claude.messages.create({ model:'claude-haiku-4-5-20251001', max_tokens:200, system, messages: conv.historico });
+      const r = await _claude.messages.create({ model:'claude-haiku-4-5', max_tokens:200, system, messages: conv.historico });
       const resp = r.content[0].text;
       conv.historico.push({ role: 'assistant', content: resp });
       _log(adminId, 'fallback_claude', { telefone });

@@ -71,7 +71,7 @@ router.post('/gerar-imagem-servico', authAgenda, async (req, res) => {
     const { nome, descricao, prompt } = req.body;
     const p = prompt || (nome + (descricao ? '. ' + descricao : ''));
     const msg = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-sonnet-4-5',
       max_tokens: 1024,
       messages: [{
         role: 'user',

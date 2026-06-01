@@ -2424,7 +2424,7 @@ ${_genero === 'feminino' ? '- Ela é mulher — use linguagem feminina' : _gener
 LEMBRE: você é a pessoa em quem ela mais confia no dia a dia. Esse espaço é dela. Cuida bem.`;
 
           const _rForaEscopo = await _cli.messages.create({
-            model: 'claude-haiku-4-5-20251001',
+            model: 'claude-haiku-4-5',
             max_tokens: 200,
             system: _sysForaEscopo,
             messages: _histForaEscopo.length > 0 ? _histForaEscopo : [{ role: 'user', content: msg }]
