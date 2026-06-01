@@ -1064,7 +1064,7 @@ Te aviso 30 minutos antes de cada um! 💙`;
 
 
   // ── FATURAMENTO POR SERVIÇO ──────────────────────────────────────────────────
-  if (/quanto\s*(fiz|faturei|ganhei)\s*(de|com|no)\s+([A-Za-zÀ-ú]+)/i.test(msgL)) {
+  if (/quanto\s*(fiz|faturei|ganhei|recebi)\s*(de|com|no|em)\s+([A-Za-zÀ-ú]+)|oque\s*(fiz|faturei)\s*(de|com|no|em)\s+([A-Za-zÀ-ú]+)/i.test(msgL)) {
     const servicoM = msg.match(/quanto\s*(?:fiz|faturei|ganhei)\s*(?:de|com|no)\s+([A-Za-zÀ-ú\s]+?)(?:\s*(?:esse|este|no|nesse)\s*m[eê]s|\s*hoje|\s*essa\s*semana|$)/i);
     const servicoBusca = servicoM ? servicoM[1].trim() : null;
     if (servicoBusca) {
@@ -1162,7 +1162,7 @@ ${totalAgs > 0 ? 'Tá saindo bem! 💪' : 'Ainda sem registros esse mês.'}`);
     const nomeM2 = msg.match(/cancela\s+(?:a\s+|o\s+)?([A-Za-zÀ-ú]+(?:\s+[A-Za-zÀ-ú]+)?)/i)
                 || msg.match(/desmarca\s+(?:a\s+|o\s+)?([A-Za-zÀ-ú]+(?:\s+[A-Za-zÀ-ú]+)?)/i)
                 || msg.match(/([A-Za-zÀ-ú]+(?:\s+[A-Za-zÀ-ú]+)?)\s+(?:n[aã]o\s+vem|cancelou|desistiu|n[aã]o\s+vai\s+vir)/i);
-    const nomeCli2 = nomeM2 ? nomeM2[1].trim() : null;
+    const nomeCli2 = nomeM2 ? nomeM2[1].trim().replace(/\b(rebeca|agendamento|horario|horário)[,.]?\s*/gi,'').trim() : null;
     if (nomeCli2) {
       const ini = _inicioDia(dia);
       const fim = _fimDia(dia);
@@ -1771,7 +1771,7 @@ Nenhum aniversariante nos próximos 7 dias não. Mas fique de olho! 👀`);
   }
 
   // ── RESUMO SEMANAL ────────────────────────────────────────────────────────
-  if (/resumo\s*d[ao]\s*semana|faturamento\s*d[ao]\s*semana|quanto\s*(fiz|faturei|ganhei|recebi)\s*(essa|na|esta)\s*semana|\bsemana\s*toda\b|\bcomo\s*foi\s*(a\s*)?semana\b|\bbalanço\s*d[ao]\s*semana\b/i.test(msgL)) {
+  if (/resumo\s*d[ao]\s*semana|faturamento\s*d[ao]\s*semana|quanto\s*(fiz|faturei|ganhei|recebi)\s*(essa|na|esta)\s*semana|\bsemana\s*toda\b|\bcomo\s*foi\s*(a\s*)?semana\b|\bbalanço\s*d[ao]\s*semana\b|\bagenda\s*(d[ae]ssa?|da|desta|nessa)\s*semana\b|\bminha\s*agenda\s*(d[ae]ssa?|da|desta)\s*semana\b/i.test(msgL)) {
     const _ini7 = new Date(); _ini7.setUTCDate(_ini7.getUTCDate() - 7); const ini = _inicioDia(_ini7);
     const fim = _fimDia();
     const lanc = await FinanceiroAgenda.find({ adminId: adminObjId, data: { $gte: ini, $lte: fim } }).lean();
@@ -2272,9 +2272,9 @@ ${total>5?'Tá crescendo muito! Continua assim! 🚀':'Todo cliente novo é uma 
           const _d = new Date(l.data).toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit' });
           const _tipo = l.tipo === 'receita' ? '✅' : '❌';
           const _desc = l.descricao && l.descricao !== 'Entrada via WhatsApp' && l.descricao !== 'Saída via WhatsApp' ? ` — ${l.descricao}` : '';
-          return `${_tipo} ${_d} R${Number(l.valor).toFixed(2)} [${l.categoria||'outros'}]${_desc}`;
+          return `${_tipo} ${_d} R$ ${Number(l.valor).toFixed(2).replace('.',',')} [${l.categoria||'outros'}]${_desc}`;
         }).join('\n');
-        await responder(`📊 *Extrato — últimos 30 dias*, ${_chefe(_generoAdmin, _apelidoAdmin)}:\n\n${_linhas}\n\n✅ Entradas: R${_totE.toFixed(2)}\n❌ Saídas: R${_totS.toFixed(2)}\n💰 Saldo: R${(_totE-_totS).toFixed(2)}`);
+        await responder(`📊 *Extrato — últimos 30 dias*, ${_chefe(_generoAdmin, _apelidoAdmin)}:\n\n${_linhas}\n\n✅ Entradas: R$ ${_totE.toFixed(2).replace('.',',')}\n❌ Saídas: R$ ${_totS.toFixed(2).replace('.',',')}\n💰 Saldo: R$ ${(_totE-_totS).toFixed(2).replace('.',',')}`);
         return true;
       }
 
