@@ -152,8 +152,10 @@ async function atenderCliente(telefoneCliente, mensagem, adminId) {
     }
 
     // Montar contexto de horários livres para hoje e amanhã
-    const hoje = new Date();
-    const amanha = new Date(Date.now() + 86400000);
+    // Datas no fuso BR (UTC-3)
+    const _agoraBR = new Date(Date.now() - 3*60*60*1000);
+    const hoje = new Date(_agoraBR.toISOString().slice(0,10) + 'T03:00:00.000Z'); // 00:00 BR
+    const amanha = new Date(hoje.getTime() + 86400000);
     const livresHoje   = await _buscarHorariosLivres(adminId, hoje);
     const livresAmanha = await _buscarHorariosLivres(adminId, amanha);
     const fmtData      = d => d.toLocaleDateString('pt-BR', { weekday:'long', day:'2-digit', month:'long' });
@@ -177,7 +179,7 @@ async function atenderCliente(telefoneCliente, mensagem, adminId) {
 
     const listaProdutos = produtos.length
       ? produtos.map(p => {
-          const preco = p.precoPromocional ? `R$ ${p.precoPromocional.toFixed(2)} (PROMOÇÃO! era R$ ${p.preco.toFixed(2)})` : p.precoCombo ? `R$ ${p.precoCombo.toFixed(2)} (COMBO ESPECIAL)` : `R$ ${p.preco.toFixed(2)}`;
+          const preco = p.precoPromocional ? `R$ ${p.precoPromocional.toFixed(2).replace('.',',')} (PROMOÇÃO! era R$ ${p.preco.toFixed(2).replace('.',',')})` : p.precoCombo ? `R$ ${p.precoCombo.toFixed(2).replace('.',',')} (COMBO ESPECIAL)` : `R$ ${p.preco.toFixed(2).replace('.',',')}`;  
           const est = p.estoque === 0 ? ' [SEM ESTOQUE]' : p.estoque > 0 && p.estoque <= 3 ? ` [ÚLTIMAS ${p.estoque} UNIDADES!]` : p.estoque !== null ? ` [${p.estoque} em estoque]` : '';
           const flags = [p.destaque ? '⭐DESTAQUE' : '', p.combo ? '🎁COMBO' : '', (p.totalVendas||0) > 0 ? `🔥${p.totalVendas} vendas` : ''].filter(Boolean).join(' ');
           return `• *${p.nome}*${flags ? ' ['+flags+']' : ''} — ${preco}${est}${p.descricao ? ' — '+p.descricao : ''}`;
@@ -294,8 +296,8 @@ ${linkAgenda ? '- Agendar online → "Você pode agendar direto pelo link: rebec
 - Produtos com 🔥 vendas → mencione como "o mais pedido aqui é..."` : ''}\n${listaConhecimento ? `\nINFORMAÇÕES DO NEGÓCIO (use para responder dúvidas):\n${listaConhecimento}` : ''}\n`;
         const claude = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
     const r = await claude.messages.create({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 400,
+      model: 'claude-haiku-4-5',
+      max_tokens: 500,
       system: systemPrompt,
       messages: ses.historico
     });
@@ -306,7 +308,7 @@ ${linkAgenda ? '- Agendar online → "Você pode agendar direto pelo link: rebec
     ses.historico.push({ role: 'assistant', content: resposta });
 
     // Detectar se precisa notificar admin
-    const _notificarAdmin = /atendente|humano|falar com|reclamação|reclamacao|problema|urgente/i.test(mensagem);
+    const _notificarAdmin = /atendente|humano|falar com|fala com|me passa|numero de|dono|responsavel|gerente|reclamação|reclamacao|problema|urgente|insatisfeito|absurdo|inaceitável/i.test(mensagem);
 
     console.log('[AtendimentoCliente]', adminId, '|', telefoneCliente, '| notif:', _notificarAdmin);
     // Registrar lead e notificar dono se produto foi mencionado
@@ -345,7 +347,13 @@ ${linkAgenda ? '- Agendar online → "Você pode agendar direto pelo link: rebec
 
   } catch(e) {
     console.error('[AtendimentoCliente] erro:', e.message);
-    return { resposta: 'Oi! Um momento, estou verificando aqui para você 😊', notificarAdmin: false };
+    const _fallbacks = [
+      'Oi! Um momento, estou verificando aqui para você 😊',
+      'Boa! Deixa eu checar isso pra você já já 💙',
+      'Um instante! Vou confirmar essa informação 😊',
+      'Opa! Dá um segundo que já te respondo 💙'
+    ];
+    return { resposta: _fallbacks[Math.floor(Math.random()*_fallbacks.length)], notificarAdmin: false };
   }
 }
 
