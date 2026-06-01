@@ -150,8 +150,12 @@ async function verificarAniversarios() {
         if (!c.dataNascimento) continue;
         const dn = new Date(c.dataNascimento);
         if (dn.getDate() === dia && (dn.getMonth() + 1) === mes) {
+          // Evitar duplicar com rodarLembretesClientes
+          const _anoAtual = String(new Date().getFullYear());
+          if (c.aniversarioAvisado === _anoAtual) continue;
           const msg = MENSAGENS_ANIVERSARIO[0](c.nome.split(' ')[0]);
           await enviarMensagemRecuperacao(instancia._id, c.telefone, msg);
+          await ClienteAgenda.findByIdAndUpdate(c._id, { aniversarioAvisado: _anoAtual });
           console.log(`[ANIVERSARIO] Parabéns enviado para ${c.nome}`);
           await new Promise(r => setTimeout(r, 2000));
         }
