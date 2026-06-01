@@ -717,13 +717,26 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
       // Extrair só o assunto — limpar lixo de áudio e gatilhos
       const _limparTextoLembrete = (texto) => {
         return texto
+          // Remover gatilhos de comando
           .replace(/\b(rebeca)[,.]?\s*/gi, '')
-          .replace(/\b(me lembra|me avisa|anota aqui|anota|lembrete|criar? lembrete|criar? horas?|nao me deixa esquecer)[,.]?\s*/gi, '')
+          .replace(/\b(me lembra|me avisa|anota aqui|anota|lembrete|cria?\s*lembrete|nao me deixa esquecer)[,.]?\s*/gi, '')
+          // Remover dias da semana e datas
           .replace(/\b(amanha|amanhã|hoje|segunda|terca|terça|quarta|quinta|sexta|sabado|sábado|domingo)(-feira)?\b/gi, '')
           .replace(/\bdia\s+\d{1,2}(\/\d{1,2})?\b/gi, '')
+          // Remover horários
           .replace(/\b(as|às|pras?|para)\s+\d{1,2}(:\d{2})?(h|hs|horas?)?\b/gi, '')
           .replace(/\b\d{1,2}(:\d{2})?(h|hs|horas?)\b/gi, '')
-          .replace(/\b(de|do|da|pra|para|que|um|uma|o|a)\b/gi, ' ')
+          // Remover valores monetários — causa do "r r aluguel R$ 10"
+          .replace(/R\$\s*[\d.,]+/gi, '')
+          .replace(/—\s*R\$\s*[\d.,]+/gi, '')
+          .replace(/\b[\d.,]+\s*(reais?|R\$)/gi, '')
+          // Remover "r" solto (resto de "r$" após limpeza parcial)
+          .replace(/\b(r|rs)\s+(r|rs)\b/gi, '')
+          .replace(/\b(r|rs)\s*\$/gi, '')
+          // Remover artigos soltos
+          .replace(/\b(de|do|da|pra|para|que|um|uma|o|a|e)\b/gi, ' ')
+          // Remover separadores soltos
+          .replace(/\s*—\s*/g, ' ')
           .replace(/\s{2,}/g, ' ')
           .replace(/^[,.:;\-\s]+|[,.:;\-\s]+$/g, '')
           .trim();
@@ -3156,6 +3169,8 @@ async function rodarLembretesPessoais() {
         // Buscar apenas lembretes cujo aviso está próximo (janela de 35 min para frente)
         const _agoraLmb = new Date();
         const _em35 = new Date(_agoraLmb.getTime() + 35 * 60000);
+        const _agoraBRLmb = new Date(_agoraLmb.getTime() - 3*60*60*1000);
+        console.log('[LembretesPessoais] agora UTC:', _agoraLmb.toISOString(), '| agora BR:', _agoraBRLmb.getUTCHours() + 'h' + String(_agoraBRLmb.getUTCMinutes()).padStart(2,'0'));
         const pendentes = await LembreteAgenda.find({
           enviado: false,
           dataEvento: { $gte: _agoraLmb, $lte: _em35 }

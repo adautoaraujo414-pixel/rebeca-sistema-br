@@ -553,12 +553,12 @@ const ModoDono = require('./services/agenda-modo-dono.service');
 cron.schedule('*/5 * * * *', () => ModoDono.rodarLembretes());
 // rodarLembretesPessoais e rodarLembretesClientes já rodam via lembretes-clientes.job (a cada 30min)
 // Fix: evitar execução duplicada que causava envio duplo de lembretes
-cron.schedule('0 10 * * *', () => ModoDono.rodarRelatorioDiario());
+cron.schedule('0 10 * * *', () => ModoDono.rodarRelatorioDiario(), { timezone: 'America/Sao_Paulo' }); // 10h BRT
 // Bom dia inteligente — horário aleatório entre 7h e 8h30 (cron às 7h, delay interno)
 const BomDia = require('./services/bomdia-inteligente.service');
-cron.schedule('0 10 * * *', () => BomDia.rodarBomDia());
+cron.schedule('0 10 * * *', () => BomDia.rodarBomDia(), { timezone: 'America/Sao_Paulo' }); // 10h BRT
 // Boas-vindas pendentes — todo dia às 10h05 BRT (10h05 UTC = sem conflito com bom dia)
-cron.schedule('5 10 * * *', () => ModoDono.rodarBoasVindasPendentes());
+cron.schedule('5 10 * * *', () => ModoDono.rodarBoasVindasPendentes(), { timezone: 'America/Sao_Paulo' }); // 10h05 BRT
 console.log('✅ Cron lembretes dono (5min) + relatório diário (7h) + bom dia inteligente (7h) ativos');
 
 
