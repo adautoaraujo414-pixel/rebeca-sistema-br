@@ -81,25 +81,23 @@ function _extrairCategoria(txt, categoriaIntent) {
 }
 // ── Extrair descrição do texto da mensagem ───────────────────────────────────
 function _extrairDescricao(txt, tipo) {
-  const _stopWords = /^(rebeca|oi|ola|por favor|pfv|pf|ai|la|registra|anota|coloca|marca|manda|faz|me|um|uma|de|do|da|em|no|na|pra|para|pro|que|e|com|sem|mais|menos|so|ja|agora|hoje|ontem|amanha|reais|real|rs|gastei|paguei|saiu|recebi|entrou|caiu|ganhei|vendi|comprei|cobrei|saida|entrada)$/i;
-  // Tenta pegar texto após verbo + valor
-  const mAposTipo = txt.match(/(?:recebi|entrou|caiu|ganhei|vendi|fiz|paguei|gastei|saiu|comprei|cobrei|registra|anota|coloca|entrada|saida|despesa|receita)\s+(?:de\s+)?(?:r\$\s*)?[\d.,]+\s*(?:reais?)?\s*(.+)/i);
-  if (mAposTipo && mAposTipo[1]) {
-    // Remover palavras de comando que o áudio pode ter transcrito junto
-    const _semCmd = mAposTipo[1].trim()
-      .replace(/^(e\s+alimentos?|alimentos?|mercado|e\s+mercado|pra\s+(mercado|alimento|feira)|de\s+alimento)\b/i, (m) => {
-        return ''; // virou categoria, não descrição
-      })
-      .trim();
-    if (_semCmd.length > 1 && !_stopWords.test(_semCmd)) return _semCmd;
-  }
-  // Tenta pegar texto após valor
-  const mAposValor = txt.match(/(?:r\$\s*)?[\d.,]+\s*(?:reais?)?\s+(.+)/i);
-  if (mAposValor && mAposValor[1] && mAposValor[1].trim().length > 1 && !_stopWords.test(mAposValor[1].trim())) return mAposValor[1].trim();
-  // Tenta pegar palavras significativas (exceto números e stopwords)
-  const palavras = txt.split(/\s+/).filter(p => !_stopWords.test(p) && !/^[\d.,]+$/.test(p) && p.length > 2);
-  if (palavras.length) return palavras.join(' ');
-  // Fallback
+  // Limpar frase de comando completa antes de extrair descrição
+  let t = txt
+    .replace(/^(rebeca[,\s]+)?/i, '')
+    .replace(/^(lança|registra|anota|coloca|marca|lanca|mete|bota|adiciona)\s+(uma?\s+)?(saída|entrada|despesa|receita|gasto|saida)\s+(de\s+)?/i, '')
+    .replace(/^(registra|anota|coloca|marca|lanca)\s+/i, '')
+    .replace(/^(gastei|paguei|saiu|recebi|entrou|caiu|ganhei|vendi|comprei|cobrei)\s+(de\s+)?/i, '')
+    .replace(/(?:r\$\s*)?[\d]+(?:[.,][\d]+)?\s*(?:reais?|conto[s]?)?\s*/i, '')
+    .replace(/^(de\s+|no\s+|na\s+|em\s+|por\s+|pra\s+|para\s+|pro\s+|com\s+)/i, '')
+    .replace(/^(uma?\s+)/i, '')
+    .trim();
+
+  // Categorias conhecidas que NÃO devem virar descrição (já viram categoria)
+  const _soCategoria = /^(beleza|saude|combustivel|mercado|aluguel|energia|agua|internet|telefone|salario|impostos?|produtos?|alimentacao|transporte|lazer|educacao|limpeza|transferencia|servicos?|outros)$/i;
+  // Palavras que não são descrições úteis
+  const _inutil = /^(pix|dinheiro|especie|cash|via|pelo|pela|pelo|no|na|em|por|pra|para|pro)$/i;
+
+  if (t && t.length > 1 && !_soCategoria.test(t) && !_inutil.test(t)) return t;
   return tipo === 'receita' ? 'Entrada via WhatsApp' : 'Gasto via WhatsApp';
 }
 
@@ -676,12 +674,12 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
       // Dono confirmou — apagar
       SM.updateSession(adminId, telefone, { aguardandoConfirmacaoApagar: false, ultimoLancamentoId: null });
       await FinanceiroAgenda.findByIdAndDelete(ultimo._id);
-      await responder(`Apagado, ${_chefe(_generoAdmin, _apelidoAdmin)}! ✅ ${tipoLabel} de R$ ${ultimo.valor.toFixed(2)} removida. Se precisar registrar de novo é só falar. 💙`);
+      await responder(`Apagado, ${_chefe(_generoAdmin, _apelidoAdmin)}! ✅ ${tipoLabel} de R$ ${ultimo.valor.toFixed(2).replace('.',',')} removida. Se precisar registrar de novo é só falar. 💙`);
       return true;
     }
     // Primeiro pedido — pedir confirmação
     SM.updateSession(adminId, telefone, { aguardandoConfirmacaoApagar: true, ultimoLancamentoId: String(ultimo._id) });
-    await responder(`Encontrei aqui, ${_chefe(_generoAdmin, _apelidoAdmin)}:\n\n${tipoLabel}: *R$ ${ultimo.valor.toFixed(2)}* em "${ultimo.categoria || 'outros'}"\nDescrição: ${ultimo.descricao || '—'}\n\nConfirma apagar? Responde *sim* ou *não* 😊`);
+    await responder(`Encontrei aqui, ${_chefe(_generoAdmin, _apelidoAdmin)}:\n\n${tipoLabel}: *R$ ${ultimo.valor.toFixed(2).replace('.',',')}* em "${ultimo.categoria || 'outros'}"\nDescrição: ${ultimo.descricao || '—'}\n\nConfirma apagar? Responde *sim* ou *não* 😊`);
     return true;
   }
   // ── REGISTRAR ENTRADA FINANCEIRA ───────────────────────────────────────────
@@ -703,7 +701,7 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
         data: _dataAgora(),
         origem: 'whatsapp_dono'
       });
-      await responder(`Feito! Entrada de R$ ${val.toFixed(2)} registrada em "${catEntrada}"${descEntrada !== 'Entrada via WhatsApp' ? ' — '+descEntrada : ''}. 💰`);
+      await responder(`Feito! Entrada de R$ ${val.toFixed(2).replace('.',',')} registrada em "${catEntrada}"${descEntrada !== 'Entrada via WhatsApp' ? ' — '+descEntrada : ''}. 💰`);
       return true;
     }
     await responder(`${_erro(_generoAdmin, _apelidoAdmin)} Me fala assim: *Rebeca, registra uma entrada de R$120 no Pix* 💰`);
@@ -979,7 +977,7 @@ Te aviso 30 minutos antes de cada um! 💙`;
         data: _dataAgora(), origem: 'whatsapp_dono'
       });
       const _labelSaida = _catFinal !== 'outros' ? _catFinal : (_descNlp !== 'Gasto via WhatsApp' ? _descNlp : 'outros');
-      await responder(`Anotado! Saída de R$ ${_nlpVal.toFixed(2)} em "${_labelSaida}". 📝`);
+      await responder(`Anotado! Saída de R$ ${_nlpVal.toFixed(2).replace('.',',')} em "${_labelSaida}". 📝`);
       return true;
     }
     // saida_ambigua: só registra se tiver categoria conhecida E verbo financeiro implícito
@@ -1003,11 +1001,11 @@ Te aviso 30 minutos antes de cada um! 💙`;
           data: _dataAgora(), origem: 'whatsapp_dono'
         });
         const _labelAmb = _catAmb !== 'outros' ? _catAmb : (_descAmb !== 'Gasto via WhatsApp' ? _descAmb : 'outros');
-        await responder(`Anotado! Saída de R$ ${_nlpVal.toFixed(2)} em "${_labelAmb}". 📝`);
+        await responder(`Anotado! Saída de R$ ${_nlpVal.toFixed(2).replace('.',',')} em "${_labelAmb}". 📝`);
         return true;
       }
       // Número solto sem contexto — pede confirmação
-      await responder(`${_chefe(_generoAdmin, _apelidoAdmin)}, vi o valor R$ ${_nlpVal.toFixed(2)} — foi uma saída? Me confirma "sim gasto" ou me fala o que foi 😊`);
+      await responder(`${_chefe(_generoAdmin, _apelidoAdmin)}, vi o valor R$ ${_nlpVal.toFixed(2).replace('.',',')} — foi uma saída? Me confirma "sim gasto" ou me fala o que foi 😊`);
       return true;
     }
 
@@ -1020,7 +1018,7 @@ Te aviso 30 minutos antes de cada um! 💙`;
         data: _dataAgora(), origem: 'whatsapp_dono'
       });
       const _labelEntrada = _catFinalE !== 'outros' ? _catFinalE : (_descNlpE !== 'Entrada via WhatsApp' ? _descNlpE : 'outros');
-      await responder(`Feito! Entrada de R$ ${_nlpVal.toFixed(2)} registrada em "${_labelEntrada}". 💰`);
+      await responder(`Feito! Entrada de R$ ${_nlpVal.toFixed(2).replace('.',',')} registrada em "${_labelEntrada}". 💰`);
       return true;
     }
   }
@@ -1036,7 +1034,7 @@ Te aviso 30 minutos antes de cada um! 💙`;
         descricao: descSaidaI, categoria: catSaidaI,
         data: _dataAgora(), origem: 'whatsapp_dono'
       });
-      await responder(`Anotado! Saída de R$ ${val.toFixed(2)} em "${catSaidaI}"${descSaidaI !== 'Gasto via WhatsApp' ? ' — '+descSaidaI : ''}. 📝`);
+      await responder(`Anotado! Saída de R$ ${val.toFixed(2).replace('.',',')} em "${catSaidaI}"${descSaidaI !== 'Gasto via WhatsApp' ? ' — '+descSaidaI : ''}. 📝`);
       return true;
     }
   }
@@ -1055,7 +1053,7 @@ Te aviso 30 minutos antes de cada um! 💙`;
         data: _dataAgora(),
         origem: 'whatsapp_dono'
       });
-      await responder(`Anotado! Saída de R$ ${val.toFixed(2)} em "${catSaida}"${descSaida !== 'Gasto via WhatsApp' ? ' — '+descSaida : ''}. 📝`);
+      await responder(`Anotado! Saída de R$ ${val.toFixed(2).replace('.',',')} em "${catSaida}"${descSaida !== 'Gasto via WhatsApp' ? ' — '+descSaida : ''}. 📝`);
       return true;
     }
     await responder(`${_erro(_generoAdmin, _apelidoAdmin)} Me fala assim: *Rebeca, registra um gasto de R$50 em produtos* 💸`);
@@ -1088,7 +1086,7 @@ Te aviso 30 minutos antes de cada um! 💙`;
 
 ✂️ *${servicoBusca}* esse mês:
 • ${totalAgs} atendimento(s)
-• R$ ${totalLanc.toFixed(2)} registrado(s)
+• R$ ${totalLanc.toFixed(2).replace('.',',')} registrado(s)
 
 ${totalAgs > 0 ? 'Tá saindo bem! 💪' : 'Ainda sem registros esse mês.'}`);
       return true;
@@ -1131,13 +1129,13 @@ ${totalAgs > 0 ? 'Tá saindo bem! 💪' : 'Ainda sem registros esse mês.'}`);
     });
     const catE = {}; lancamentos.filter(l=>l.tipo==='receita').forEach(l=>{ const c=l.categoria||'outros'; catE[c]=(catE[c]||0)+l.valor; });
     const catS = {}; lancamentos.filter(l=>l.tipo==='despesa').forEach(l=>{ const c=l.categoria||'outros'; catS[c]=(catS[c]||0)+l.valor; });
-    const leE = Object.entries(catE).map(([k,v])=>`  ${k}: R$ ${v.toFixed(2)}`).join('\n');
-    const leS = Object.entries(catS).map(([k,v])=>`  ${k}: R$ ${v.toFixed(2)}`).join('\n');
+    const leE = Object.entries(catE).map(([k,v])=>`  ${k}: R$ ${v.toFixed(2).replace('.',',')}`).join('\n');
+    const leS = Object.entries(catS).map(([k,v])=>`  ${k}: R$ ${v.toFixed(2).replace('.',',')}`).join('\n');
     const _labelPeriodo = _isSemana ? `semana de ${_fmtData(iniUTC)} a ${_fmtData(_agoraBR)}` : _fmtData(_agoraBR);
     let rel = `Resumo de ${_labelPeriodo}:\n`;
     rel += `\nEntradas: R$ ${entradas.toFixed(2).replace('.',',')}${leE ? '\n'+leE : ''}`;
     rel += `\nSaídas: R$ ${saidas.toFixed(2).replace('.',',')}${leS ? '\n'+leS : ''}`;
-    rel += `\nResultado: R$ ${(entradas-saidas).toFixed(2)} | Atendimentos: ${agendamentos}`;
+    rel += `\nResultado: R$ ${(entradas-saidas).toFixed(2).replace('.',',')} | Atendimentos: ${agendamentos}`;
     await responder(rel);
     return true;
   }
@@ -1781,9 +1779,9 @@ Nenhum aniversariante nos próximos 7 dias não. Mas fique de olho! 👀`);
     await responder(`${_saudacao()}, ${_chefe(_generoAdmin, _apelidoAdmin)}! Olha a semana! 📊
 
 ✅ Atendimentos: *${atend}*
-💰 Entradas: *R$ ${entradas.toFixed(2)}*
-💸 Gastos: *R$ ${saidas.toFixed(2)}*
-📈 Resultado: *R$ ${(entradas-saidas).toFixed(2)}*
+💰 Entradas: *R$ ${entradas.toFixed(2).replace('.',',')}*
+💸 Gastos: *R$ ${saidas.toFixed(2).replace('.',',')}*
+📈 Resultado: *R$ ${(entradas-saidas).toFixed(2).replace('.',',')}*
 
 ${(entradas-saidas)>=0?'Semana boa demais! 🚀':'Semana de aprendizado! Próxima vai bombar! 💪'}`);
     return true;
@@ -1801,9 +1799,9 @@ ${(entradas-saidas)>=0?'Semana boa demais! 🚀':'Semana de aprendizado! Próxim
     await responder(`${_saudacao()}, ${_chefe(_generoAdmin, _apelidoAdmin)}! Resumo do mês! 📊
 
 ✅ Atendimentos: *${atend}*
-💰 Entradas: *R$ ${entradas.toFixed(2)}*
-💸 Gastos: *R$ ${saidas.toFixed(2)}*
-📈 Resultado: *R$ ${(entradas-saidas).toFixed(2)}*
+💰 Entradas: *R$ ${entradas.toFixed(2).replace('.',',')}*
+💸 Gastos: *R$ ${saidas.toFixed(2).replace('.',',')}*
+📈 Resultado: *R$ ${(entradas-saidas).toFixed(2).replace('.',',')}*
 🎯 Ticket médio: *R$ ${ticket}*
 
 ${atend>10?'Esse mês tá voando! 🚀':'Ainda dá tempo de bombar! 💪'}`);
@@ -2006,7 +2004,7 @@ ${total>5?'Tá crescendo muito! Continua assim! 🚀':'Todo cliente novo é uma 
         if (_lancApagar) {
           await FinanceiroAgenda.findByIdAndDelete(_idApagar);
           const _tpLabel = _lancApagar.tipo === 'receita' ? 'Entrada' : 'Saída';
-          await responder(`Apagado, ${_chefe(_generoAdmin, _apelidoAdmin)}! ✅\n\n${_tpLabel} de R$ ${_lancApagar.valor.toFixed(2)} removida. Se precisar registrar de novo é só falar. 💙`);
+          await responder(`Apagado, ${_chefe(_generoAdmin, _apelidoAdmin)}! ✅\n\n${_tpLabel} de R$ ${_lancApagar.valor.toFixed(2).replace('.',',')} removida. Se precisar registrar de novo é só falar. 💙`);
           return true;
         }
       }
@@ -2311,15 +2309,15 @@ ${total>5?'Tá crescendo muito! Continua assim! 🚀':'Todo cliente novo é uma 
           _todos.filter(l=>l.tipo==='receita').forEach(l=>{ const c=l.categoria||'outros'; _catE[c]=(_catE[c]||0)+l.valor; });
           const _totS = Object.values(_catS).reduce((a,b)=>a+b,0);
           const _totE = Object.values(_catE).reduce((a,b)=>a+b,0);
-          const _linhasS = Object.entries(_catS).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`  ${k}: R$ ${v.toFixed(2)}`).join('\n');
-          const _linhasE = Object.entries(_catE).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`  ${k}: R$ ${v.toFixed(2)}`).join('\n');
+          const _linhasS = Object.entries(_catS).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`  ${k}: R$ ${v.toFixed(2).replace('.',',')}`).join('\n');
+          const _linhasE = Object.entries(_catE).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`  ${k}: R$ ${v.toFixed(2).replace('.',',')}`).join('\n');
           if (!_todos.length) {
             await responder(`Não encontrei lançamentos ${_labelPer}, \${_chefe(_generoAdmin, _apelidoAdmin)}. 🤷`);
           } else {
             let _r = `📊 *Gastos por categoria — \${_labelPer}*\n\n`;
-            if (_linhasS) _r += `❌ *Saídas: R$ \${_totS.toFixed(2)}*\n\${_linhasS}\n\n`;
-            if (_linhasE) _r += `✅ *Entradas: R$ \${_totE.toFixed(2)}*\n\${_linhasE}\n`;
-            _r += `\n💰 Saldo: R$ \${(_totE-_totS).toFixed(2)}`;
+            if (_linhasS) _r += `❌ *Saídas: R$ \${_totS.toFixed(2).replace('.',',')}*\n\${_linhasS}\n\n`;
+            if (_linhasE) _r += `✅ *Entradas: R$ \${_totE.toFixed(2).replace('.',',')}*\n\${_linhasE}\n`;
+            _r += `\n💰 Saldo: R$ \${(_totE-_totS).toFixed(2).replace('.',',')}`;
             await responder(_r);
           }
           return true;
@@ -2334,10 +2332,10 @@ ${total>5?'Tá crescendo muito! Continua assim! 🚀':'Todo cliente novo é uma 
           if (!_lanc.length) {
             _resp += `\n*\${_cat}*: nenhum lançamento encontrado`;
           } else {
-            _resp += `\n*\${_cat}*: R$ \${_totAbs.toFixed(2)} (\${_lanc.filter(l=>l.tipo==='despesa').length} lançamentos)`;
+            _resp += `\n*\${_cat}*: R$ \${_totAbs.toFixed(2).replace('.',',')} (\${_lanc.filter(l=>l.tipo==='despesa').length} lançamentos)`;
             const _detalhe = _lanc.slice(0,5).map(l => {
               const _dt = new Date(l.data).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
-              return `  \${_dt} R$ \${l.valor.toFixed(2)}\${l.descricao ? ' — '+l.descricao : ''}`;
+              return `  \${_dt} R$ \${l.valor.toFixed(2).replace('.',',')}\${l.descricao ? ' — '+l.descricao : ''}`;
             }).join('\n');
             if (_detalhe) _resp += `\n\${_detalhe}`;
           }
@@ -2522,7 +2520,7 @@ LEMBRE: você é a pessoa em quem ela mais confia no dia a dia. Esse espaço é 
           }
           const lista = prods.map(p => {
             const est = p.estoque === 0 ? ' ❌ sem estoque' : p.estoque ? ` (${p.estoque} un)` : '';
-            const preco = p.precoPromocional ? `R$ ${p.precoPromocional.toFixed(2)} ~~R$ ${p.preco.toFixed(2)}~~` : `R$ ${p.preco.toFixed(2)}`;
+            const preco = p.precoPromocional ? `R$ ${p.precoPromocional.toFixed(2).replace('.',',')} ~~R$ ${p.preco.toFixed(2).replace('.',',')}~~` : `R$ ${p.preco.toFixed(2).replace('.',',')}`;
             return `• *${p.nome}* — ${preco}${est}`;
           }).join('\n');
           const _r = `🛍️ *Produtos encontrados (${prods.length}):*\n\n${lista}`;
@@ -2542,7 +2540,7 @@ LEMBRE: você é a pessoa em quem ela mais confia no dia a dia. Esse espaço é 
           valor: Number(ent.valor), descricao: desc, categoria: cat,
           data: _dataAgora(), origem: 'whatsapp_dono'
         });
-        const _r = `Feito! Entrada de R$ ${Number(ent.valor).toFixed(2)} em "${cat}"${desc !== 'Entrada via WhatsApp' ? ' — ' + desc : ''}. 💰`;
+        const _r = `Feito! Entrada de R$ ${Number(ent.valor).toFixed(2).replace('.',',')} em "${cat}"${desc !== 'Entrada via WhatsApp' ? ' — ' + desc : ''}. 💰`;
         await responder(_r);
         SM.addAssistantMsg(adminId, telefone, _r);
         return true;
@@ -2565,7 +2563,7 @@ LEMBRE: você é a pessoa em quem ela mais confia no dia a dia. Esse espaço é 
           valor: Number(ent.valor), descricao: desc, categoria: cat,
           data: _dataAgora(), origem: 'whatsapp_dono'
         });
-        const _r = `Anotei! Saída de R$ ${Number(ent.valor).toFixed(2)} em "${cat}"${desc ? ' — ' + desc : ''}. 💸`;
+        const _r = `Anotei! Saída de R$ ${Number(ent.valor).toFixed(2).replace('.',',')} em "${cat}"${desc ? ' — ' + desc : ''}. 💸`;
         await responder(_r);
         SM.addAssistantMsg(adminId, telefone, _r);
         return true;
@@ -2796,7 +2794,7 @@ _"${_textoMsg}"_`);
         ]);
         const recSem = finSem.filter(f=>f.tipo==='receita').reduce((s,x)=>s+x.valor,0);
         const despSem = finSem.filter(f=>f.tipo==='despesa').reduce((s,x)=>s+x.valor,0);
-        const _r = `📊 Resumo da semana:\n\n👥 Atendimentos: ${agsSem}\n💰 Receitas: R$ ${recSem.toFixed(2)}\n💸 Despesas: R$ ${despSem.toFixed(2)}\n📈 Resultado: R$ ${(recSem-despSem).toFixed(2)}`;
+        const _r = `📊 Resumo da semana:\n\n👥 Atendimentos: ${agsSem}\n💰 Receitas: R$ ${recSem.toFixed(2).replace('.',',')}\n💸 Despesas: R$ ${despSem.toFixed(2).replace('.',',')}\n📈 Resultado: R$ ${(recSem-despSem).toFixed(2).replace('.',',')}`;
         await responder(_r); SM.addAssistantMsg(adminId, telefone, _r); return true;
       }
 
@@ -2810,7 +2808,7 @@ _"${_textoMsg}"_`);
         ]);
         const recMes = finMes.filter(f=>f.tipo==='receita').reduce((s,x)=>s+x.valor,0);
         const despMes = finMes.filter(f=>f.tipo==='despesa').reduce((s,x)=>s+x.valor,0);
-        const _r = `📊 Resumo do mês:\n\n👥 Atendimentos: ${agsMes}\n💰 Receitas: R$ ${recMes.toFixed(2)}\n💸 Despesas: R$ ${despMes.toFixed(2)}\n📈 Resultado: R$ ${(recMes-despMes).toFixed(2)}`;
+        const _r = `📊 Resumo do mês:\n\n👥 Atendimentos: ${agsMes}\n💰 Receitas: R$ ${recMes.toFixed(2).replace('.',',')}\n💸 Despesas: R$ ${despMes.toFixed(2).replace('.',',')}\n📈 Resultado: R$ ${(recMes-despMes).toFixed(2).replace('.',',')}`;
         await responder(_r); SM.addAssistantMsg(adminId, telefone, _r); return true;
       }
 
