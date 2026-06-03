@@ -414,6 +414,16 @@ app.get('/health', (req, res) => {
 });
 
 // ─────────────────────────────────────────────
+// Rota de disparo manual da saudade
+app.post('/api/admin/disparar-saudade', async (req, res) => {
+  try {
+    await ModoDono.rodarSaudadeRebeca();
+    res.json({ ok: true });
+  } catch(e) {
+    res.status(500).json({ erro: e.message });
+  }
+});
+
 // 23. 404 HANDLER
 // ─────────────────────────────────────────────
 app.use((req, res) => res.status(404).json({ error: 'Rota não encontrada' }));
@@ -561,15 +571,6 @@ cron.schedule('0 10 * * *', () => BomDia.rodarBomDia(), { timezone: 'America/Sao
 cron.schedule('5 10 * * *', () => ModoDono.rodarBoasVindasPendentes(), { timezone: 'America/Sao_Paulo' }); // 10h05 BRT
 cron.schedule('0 14 * * *', () => ModoDono.rodarSaudadeRebeca(), { timezone: 'America/Sao_Paulo' }); // 14h BRT — saudade
 
-// Rota de disparo manual da saudade
-app.post('/api/admin/disparar-saudade', async (req, res) => {
-  try {
-    await ModoDono.rodarSaudadeRebeca();
-    res.json({ ok: true });
-  } catch(e) {
-    res.status(500).json({ erro: e.message });
-  }
-});
 console.log('✅ Cron lembretes dono (5min) + relatório diário (7h) + bom dia inteligente (7h) ativos');
 
 
