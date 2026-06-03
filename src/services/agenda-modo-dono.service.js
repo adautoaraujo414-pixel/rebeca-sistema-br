@@ -3034,7 +3034,7 @@ async function rodarSaudadeRebeca() {
 
         const instancia = admin.instanciaWhatsappId
           ? await (mongoose.models.InstanciaWhatsapp || InstanciaWhatsapp).findById(admin.instanciaWhatsappId).lean()
-          : { origem: 'meta' }; // fallback MetaWA
+          : { _enviarVia: 'meta', apiUrl: 'meta' }; // fallback MetaWA direto
 
         const apelido = (admin.modoWhatsappDono && admin.modoWhatsappDono.apelido) || '';
         const genero  = (admin.modoWhatsappDono && admin.modoWhatsappDono.genero)  || '';
