@@ -913,7 +913,7 @@ Quantas vezes vai repetir? (ex: "6 vezes", "3 meses", "sem prazo")`;
       const _hUTC1 = _horaRec1 ? _horaRec1.h + 3 : 12; // BRT+3=UTC; fallback 9h BRT
       const _mUTC1 = _horaRec1 ? _horaRec1.min : 0;
       const _diasSemana = { domingo:0, segunda:1,'segunda-feira':1, terca:2,'terça':2,'terça-feira':2, quarta:3,'quarta-feira':3, quinta:4,'quinta-feira':4, sexta:5,'sexta-feira':5, sabado:6,'sábado':6 };
-      const _maxOcorrencias = _nVezes || (_rec.tipo === 'diario' ? 30 : 12);
+      const _maxOcorrencias = _nVezes || (_rec.tipo === 'diario' ? 365 : _rec.tipo === 'semanal' ? 52 : _rec.tipo === 'quinzenal' ? 26 : _rec.tipo === 'anual' ? 5 : 12);
 
       for (let i = 0; i < _maxOcorrencias; i++) {
         let _dataEvento = null;
@@ -1001,7 +1001,7 @@ Te aviso 30 minutos antes de cada um! 💙`;
       const _catAmb = _nlpCat !== 'outros' ? _nlpCat : _extrairCategoria(msg);
       const _temCatConhecida = _catAmb !== 'outros';
       // Rejeita se: só número sem categoria nem verbo, ou parece data/hora, ou frase longa de contexto
-      const _pareceData = /\d{1,2}\/\d{1,2}|\d{1,2}h|\d{1,2}:\d{2}/.test(msg);
+      const _pareceData = /\d{1,2}\/\d{1,2}|\d{1,2}h\b|\d{1,2}:\d{2}/.test(msg);
       const _fraseContexto = msg.split(' ').length > 6 && !_temVerbExplicito && !_temCatConhecida;
       if (_pareceData || _fraseContexto) {
         // Não registra — ignora silenciosamente ou pede confirmação
@@ -1054,7 +1054,7 @@ Te aviso 30 minutos antes de cada um! 💙`;
       return true;
     }
   }
-  if (/\bregistra\b.*\bgasto\b|\bmarca\b.*\bgasto\b|\banota\b.*\bgasto\b|\bmarca\b.*\bdespesa\b|\bregistra\b.*\bdespesa\b|\bpaguei\b|\bcomprei\b|\bsaída\b|\bsaida\b|\bdespesa\b|\bgastei\b|\btive\s*gasto\b|\bsaiu\b|\bdebita\b|\bdescontou\b|\baluguel\b|\bluz\b|\bagua\b|\bcombust[ií]vel\b|\bgasolina\b|\buber\b|\binternet\b|\baliment[ao]\b|\blanche\b|\bcaf[eé]\b|\bmaterial\b|\bequipamento\b/i.test(msgL) && !/\bquanto\b/i.test(msgL)) {
+  if (/\bregistra\b.*\bgasto\b|\bmarca\b.*\bgasto\b|\banota\b.*\bgasto\b|\bmarca\b.*\bdespesa\b|\bregistra\b.*\bdespesa\b|\bpaguei\b|\bcomprei\b|\bsaída\b|\bsaida\b|\bdespesa\b|\bgastei\b|\btive\s*gasto\b|\bsaiu\b|\bdebita\b|\bdescontou\b|\bluz\b|\bagua\b|\bcombust[ií]vel\b|\bgasolina\b|\buber\b|\binternet\b|\baliment[ao]\b|\blanche\b|\bcaf[eé]\b|\bmaterial\b|\bequipamento\b/i.test(msgL) && !/\bquanto\b/i.test(msgL) && !/\bentrada\b|\brecebi\b|\bcaiu\b|\bganhei\b/i.test(msgL)) {
     const _msgLimpaS = msg.replace(/[?!]+$/, '').trim();
     const val = _parsarValor(_msgLimpaS);
     const descSaida = _extrairDescricao(msg, 'despesa');
@@ -1163,7 +1163,7 @@ ${totalAgs > 0 ? 'Tá saindo bem! 💪' : 'Ainda sem registros esse mês.'}`);
     const dia  = _parseDia(msgL) || new Date();
     if (hora) {
       const ini = new Date(dia); ini.setUTCHours(hora.h + 3, hora.min - 5, 0, 0);
-      const fim = new Date(dia); fim.setHours(hora.h, hora.min + 5, 0, 0);
+      const fim = new Date(dia); fim.setUTCHours(hora.h + 3, hora.min + 5, 0, 0);
       const ag = await AgendamentoAgenda.findOne({
         adminId: adminObjId, dataHora: { $gte: ini, $lte: fim },
         status: { $ne: 'cancelado' }
