@@ -2403,6 +2403,49 @@ ${total>5?'Tá crescendo muito! Continua assim! 🚀':'Todo cliente novo é uma 
         return true;
       }
 
+      // ── REGISTRAR RECEITA via cérebro ─────────────────────────────────────
+      if (_cerebro.intencao === 'registrar_receita' && ent.valor) {
+        try {
+          const _valR = parseFloat(String(ent.valor).replace(',','.'));
+          if (_valR > 0) {
+            const _descR = ent.descricao || ent.origem || 'Entrada via WhatsApp';
+            const _catR  = ent.categoria || 'outros';
+            const _docR  = await FinanceiroAgenda.create({
+              adminId: adminObjId, tipo: 'receita', valor: _valR,
+              descricao: _descR, categoria: _catR,
+              data: _dataAgora(), origem: 'whatsapp_dono'
+            });
+            SM.updateSession(adminId, telefone, { ultimoLancamentoId: String(_docR._id), ultimoLancamentoTipo: 'receita', ultimoLancamentoValor: _valR });
+            const _rR = `Feito! Entrada de R$ ${_valR.toFixed(2).replace('.',',')} registrada em "${_catR}"${_descR && _descR !== 'Entrada via WhatsApp' ? ' — '+_descR : ''}. 💰`;
+            await responder(_rR);
+            SM.addAssistantMsg(adminId, telefone, _rR);
+            return true;
+          }
+        } catch(_eR) { console.error('[cerebro-receita]', _eR.message); }
+      }
+
+      // ── REGISTRAR DESPESA via cérebro ─────────────────────────────────────
+      if (_cerebro.intencao === 'registrar_despesa' && ent.valor) {
+        try {
+          const _valD = parseFloat(String(ent.valor).replace(',','.'));
+          if (_valD > 0) {
+            const _descD = ent.descricao || 'Gasto via WhatsApp';
+            const _catD  = ent.categoria || 'outros';
+            const _docD  = await FinanceiroAgenda.create({
+              adminId: adminObjId, tipo: 'despesa', valor: _valD,
+              descricao: _descD, categoria: _catD,
+              data: _dataAgora(), origem: 'whatsapp_dono'
+            });
+            SM.updateSession(adminId, telefone, { ultimoLancamentoId: String(_docD._id), ultimoLancamentoTipo: 'despesa', ultimoLancamentoValor: _valD });
+            const _labelD = _catD !== 'outros' ? _catD : (_descD !== 'Gasto via WhatsApp' ? _descD : 'outros');
+            const _rD = `Anotado! Saída de R$ ${_valD.toFixed(2).replace('.',',')} em "${_labelD}"${_descD && _descD !== 'Gasto via WhatsApp' && _descD.toLowerCase() !== _labelD.toLowerCase() ? ' — '+_descD : ''}. 📝`;
+            await responder(_rD);
+            SM.addAssistantMsg(adminId, telefone, _rD);
+            return true;
+          }
+        } catch(_eD) { console.error('[cerebro-despesa]', _eD.message); }
+      }
+
       // ── MODO DE DECISAO — analisa historico do cliente e aconselha o dono ──
       const _precisaDecisao = ModoDecisao.precisaDecisao(msg, _cerebro.intencao);
       if (_precisaDecisao || (_cerebro.intencao === 'fora_escopo' && ModoDecisao._extrairNomeCliente(msg))) {
