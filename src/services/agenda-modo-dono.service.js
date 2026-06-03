@@ -2961,6 +2961,7 @@ async function notificarDonoNovoAgendamento(adminId, dadosAg) {
 // ── SAUDADE REBECA: mensagem dramática pra admins que sumiram 24h ──────────
 async function rodarSaudadeRebeca() {
   try {
+    const mongoose = require('mongoose');
     const { AdminAgenda, InstanciaWhatsapp } = require('../models/AgendaServico');
     const corte = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
@@ -2987,8 +2988,9 @@ async function rodarSaudadeRebeca() {
         const telDono = admin.modoWhatsappDono && admin.modoWhatsappDono.telefonePrincipalNormalizado;
         if (!telDono) { console.log('[SAUDADE-REBECA] sem telefone:', String(admin._id)); continue; }
 
-        const instancia = await InstanciaWhatsapp.findById(admin.instanciaWhatsappId).lean();
-        if (!instancia) { console.log('[SAUDADE-REBECA] sem instancia:', String(admin._id)); continue; }
+        const instancia = admin.instanciaWhatsappId
+          ? await (mongoose.models.InstanciaWhatsapp || InstanciaWhatsapp).findById(admin.instanciaWhatsappId).lean()
+          : { origem: 'meta' }; // fallback MetaWA
 
         const apelido = (admin.modoWhatsappDono && admin.modoWhatsappDono.apelido) || '';
         const genero  = (admin.modoWhatsappDono && admin.modoWhatsappDono.genero)  || '';

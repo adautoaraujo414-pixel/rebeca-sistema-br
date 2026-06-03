@@ -165,7 +165,7 @@ const agendamentoAgendaSchema = new mongoose.Schema({
 
 // Bloqueios de horário
 const bloqueioAgendaSchema = new mongoose.Schema({
-cc  adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'AdminAgenda', required: true },
+  adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'AdminAgenda', required: true },
   profissionalId: { type: mongoose.Schema.Types.ObjectId, ref: 'ProfissionalAgenda' },
   dataHoraInicio: { type: Date, required: true },
   dataHoraFim: { type: Date, required: true },
