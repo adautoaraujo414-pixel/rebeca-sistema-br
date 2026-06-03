@@ -681,7 +681,7 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
   }
   // ── REGISTRAR ENTRADA FINANCEIRA ───────────────────────────────────────────
   if (/\bregistra\b.*\bentrada\b|\bmarca\b.*\bentrada\b|\banota\b.*\bentrada\b|\bcoloca\b.*\bentrada\b|\breceb[ei]\b|\bentrada\b|\bganhei\b|\bcaiu\b|\bentr[ou]\b|\breceit[ao]\b|\bpix\b|\btransfer[eê]ncia\b|\bdinheiro\b.*\bentrou\b|\bvendi\b|\brecebi\b|\bbateu\b|\bveio\b.*\bdinheiro\b|\bdinheiro\b.*\bveio\b|\bfechei\b.*\bvenda\b|\bvenda\b.*\bfechada\b|\bno\s+pix\b|\bpelo\s+pix\b|\bvia\s+pix\b|\bno\s+dinheiro\b/i.test(msgL) && !/\bquanto\b/i.test(msgL) &&
-      !/\bpaguei\b|\bgastei\b|\bsaida\b|\bsa[ií]da\b|\bdespesa\b|\bcombust[ií]vel\b|\bgasolina\b|\baluguel\b|\binternet\b|\bluz\b|\bagua\b|\buber\b/i.test(msgL) &&
+      !/\bpaguei\b|\bgastei\b|\bsaida\b|\bsa[ií]da\b|\bdespesa\b|\bcombust[ií]vel\b|\bgasolina\b|\binternet\b|\bluz\b|\bagua\b|\buber\b/i.test(msgL) &&
       !/apag[ae]u?|exclu[ii]|delet|remov|cancela|desfaz|tira|zera|limpa|[uú]ltim|errei|errou/i.test(msgL)) {
     const _msgLimpa = msg.replace(/[?!]+$/, '').trim();
     // ── Parse de valor: suporta "4 mil", "4k", "4.000,00", "4,000,00" ──
@@ -734,7 +734,7 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
           .replace(/\b(r|rs)\s+(r|rs)\b/gi, '')
           .replace(/\b(r|rs)\s*\$/gi, '')
           // Remover artigos soltos
-          .replace(/\b(de|do|da|pra|para|que|um|uma|o|a|e)\b/gi, ' ')
+          .replace(/(?<=\s|^)(de|do|da|pra|para|que)(?=\s|$)/gi, ' ')
           // Remover separadores soltos
           .replace(/\s*—\s*/g, ' ')
           .replace(/\s{2,}/g, ' ')
@@ -785,12 +785,12 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
     const _sesRecorr = SM.getSession(adminId, telefone);
     if (_sesRecorr.aguardandoRecorrente) {
       const _pendRec = _sesRecorr.aguardandoRecorrente;
-      const _semPrazo = /sem prazo|indeterminado|sempre|indefinido/i.test(msg);
+      const _semPrazo = /sem prazo|indeterminado|sempre|indefinido|para sempre|por tempo|nao tem prazo|não tem prazo|eterno|infinito/i.test(msg);
       // _nMatch: captura quantidade de vezes, excluindo horas/valores
       const _nMatch = msg.match(/(\d+)\s*(?:vez(?:es)?|semana(?:s)?|mes(?:es)?|m[eê]s|repeti[cç])/i) || (!/(?:\d+\s*(?:hora[s]?|h\b|min(?:uto)?s?|reais?|R\$|\$))/i.test(msg) ? msg.match(/(\d+)/) : null);
       const _tipoRec2 = _pendRec.rec.tipo;
       const _nVezesResp = _semPrazo
-        ? (_tipoRec2 === 'semanal' ? 52 : _tipoRec2 === 'diario' ? 30 : _tipoRec2 === 'quinzenal' ? 26 : _tipoRec2 === 'anual' ? 5 : 12)
+        ? (_tipoRec2 === 'semanal' ? 52 : _tipoRec2 === 'diario' ? 365 : _tipoRec2 === 'quinzenal' ? 26 : _tipoRec2 === 'anual' ? 5 : 12)
         : (_nMatch ? parseInt(_nMatch[1]) : _tipoRec2 === 'diario' ? 30 : _tipoRec2 === 'quinzenal' ? 26 : 4);
 
       SM.updateSession(adminId, telefone, { aguardandoRecorrente: null });
@@ -882,7 +882,7 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
       const _valorRec = nlp.valor || null;
 
       // Verificar se o dono disse quantas vezes repetir
-      const _vezesMatch = msg.match(/por\s+(\d+)\s*(semana|mes|mês|vez|vezes|semanas|meses)/i);
+      const _vezesMatch = msg.match(/(\d+)\s*(?:vez(?:es)?|semanas?|m[eê]s(?:es)?|repeti[cç](?:ões|oes)?|dias?)/i);
       const _nVezes = _vezesMatch ? parseInt(_vezesMatch[1]) : null;
 
       // Se não disse quantas vezes → perguntar
@@ -894,6 +894,8 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
         let _descRec = '';
         if (_rec.tipo === 'semanal') _descRec = `toda ${_rec.diaSemana || 'semana'}`;
         else if (_rec.tipo === 'mensal' && _rec.dia) _descRec = `todo dia ${_rec.dia}`;
+        else if (_rec.tipo === 'diario') _descRec = 'todo dia';
+        else if (_rec.tipo === 'anual') _descRec = 'todo ano';
         else _descRec = 'recorrente';
         const _pergRec = `Entendido! 🔔 Vou criar lembrete de *${_textoRec}* ${_descRec}${_valorRec ? ' (R$ '+_valorRec+')' : ''}.
 
