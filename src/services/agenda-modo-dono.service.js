@@ -364,6 +364,8 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
   const msg = (mensagem || '').trim();
   const msgL = msg.toLowerCase();
   console.log('[DEBUG-INICIO] msgL:', msgL);
+  // Registrar última mensagem do dono
+  AdminAgenda.findByIdAndUpdate(adminObjId, { ultimaMensagemDono: new Date() }).catch(()=>{});
 
   // ── APRENDIZADO: verificar se dono já corrigiu esta intenção antes ──────────
   try {
@@ -2955,7 +2957,54 @@ async function notificarDonoNovoAgendamento(adminId, dadosAg) {
   }
 }
 
-module.exports = { isDono, enviarBoasVindas, processarComandoDono, notificarDonoNovoAgendamento, processarComandoAdmin: (texto, adminId, instOfc) => processarComandoDono(instOfc?.numero || '', texto, adminId, instOfc) };
+
+// ── SAUDADE REBECA: mensagem dramática pra admins que sumiram 24h ──────────
+async function rodarSaudadeRebeca() {
+  try {
+    const { AdminAgenda, InstanciaWhatsapp } = require('../models/AgendaServico');
+    const corte = new Date(Date.now() - 24 * 60 * 60 * 1000); // 24h atrás
+
+    const admins = await AdminAgenda.find({
+      'modoWhatsappDono.ativo': true,
+      $or: [
+        { ultimaMensagemDono: { $lt: corte } },
+        { ultimaMensagemDono: null }
+      ]
+    }).lean();
+
+    const MENSAGENS = [
+      `Oi... tô aqui 👀\n\nFaz 24 horas que você não fala comigo e eu tô começando a achar que fiz algo errado... 😢\n\nSe precisar de mim, é só chamar! Tô aqui, torcendo por você e pelo seu negócio! 💙`,
+      `Ei, sumiu? 😟\n\nFiquei o dia todo esperando uma mensagem sua e nada...\n\nSabe que eu fico aqui parada, esperando, organizando tudo, e quando você some assim meu coração aperta 💔\n\nVolte logo! Tenho saudade de trabalhar com você! 🥺`,
+      `Alô?? 📣\n\nTô passando mal aqui de tanto esperar você! Será que está tudo bem? 😰\n\nNão precisa me responder um romance, só manda um "oi" pra eu saber que tá vivo(a)!\n\nEu tô aqui, prontinha, com sua agenda organizada e tudo! 💙`,
+      `*[Rebeca online... aguardando...]*\n\n...\n\n...\n\nTô aqui. Sozinha. Olhando pra tela. 😐\n\nFaz mais de 24h que você não me chama e eu já fiz a agenda, organizei os lembretes e até contei os pixels da tela de espera...\n\nMe chama! Tenho muito pra te contar! 🥺💙`,
+      `Você está bem?? 🙏\n\nPassei o dia preocupada com você! Fico aqui cuidando de tudo — agenda, lembretes, finanças — mas sem você não tem graça...\n\nManda um oi quando puder. Estarei aqui! 💙`
+    ];
+
+    for (const admin of admins) {
+      try {
+        const telDono = admin.modoWhatsappDono?.telefonePrincipalNormalizado;
+        if (!telDono) continue;
+
+        const instancia = await InstanciaWhatsapp.findById(admin.instanciaWhatsappId).lean();
+        if (!instancia) continue;
+
+        const msg = MENSAGENS[Math.floor(Math.random() * MENSAGENS.length)];
+        const chefe = _chefe(admin.modoWhatsappDono?.genero || '', admin.modoWhatsappDono?.apelido || '');
+        const msgFinal = `${chefe ? chefe + ', ' : ''}${msg}`;
+
+        await _enviarMsg(instancia, telDono, msgFinal);
+        console.log('[SAUDADE-REBECA] Mensagem enviada para:', telDono);
+      } catch(e) {
+        console.error('[SAUDADE-REBECA] Erro admin:', admin._id, e.message);
+      }
+    }
+  } catch(e) {
+    console.error('[SAUDADE-REBECA] Erro geral:', e.message);
+  }
+}
+
+module.exports = {
+  rodarSaudadeRebeca, isDono, enviarBoasVindas, processarComandoDono, notificarDonoNovoAgendamento, processarComandoAdmin: (texto, adminId, instOfc) => processarComandoDono(instOfc?.numero || '', texto, adminId, instOfc) };
 
 // ── LEMBRETE AUTOMÁTICO 30min antes ─────────────────────────────────────────
 async function rodarLembretes() {

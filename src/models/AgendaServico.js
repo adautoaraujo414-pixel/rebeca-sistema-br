@@ -64,7 +64,8 @@ const adminAgendaSchema = new mongoose.Schema({
     linkAgenda:     { type: Boolean, default: true  },
     atenderClientes: { type: Boolean, default: false }, // Rebeca atende clientes pelo WhatsApp
   },
-  createdAt: { type: Date, default: Date.now }
+  createdAt: { type: Date, default: Date.now },
+  ultimaMensagemDono: { type: Date, default: null }
 });
 
 // Serviços oferecidos
@@ -164,7 +165,7 @@ const agendamentoAgendaSchema = new mongoose.Schema({
 
 // Bloqueios de horário
 const bloqueioAgendaSchema = new mongoose.Schema({
-  adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'AdminAgenda', required: true },
+cc  adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'AdminAgenda', required: true },
   profissionalId: { type: mongoose.Schema.Types.ObjectId, ref: 'ProfissionalAgenda' },
   dataHoraInicio: { type: Date, required: true },
   dataHoraFim: { type: Date, required: true },
