@@ -569,7 +569,10 @@ const BomDia = require('./services/bomdia-inteligente.service');
 cron.schedule('0 10 * * *', () => BomDia.rodarBomDia(), { timezone: 'America/Sao_Paulo' }); // 10h BRT
 // Boas-vindas pendentes — todo dia às 10h05 BRT (10h05 UTC = sem conflito com bom dia)
 cron.schedule('5 10 * * *', () => ModoDono.rodarBoasVindasPendentes(), { timezone: 'America/Sao_Paulo' }); // 10h05 BRT
-cron.schedule('0 14 * * *', () => ModoDono.rodarSaudadeRebeca(), { timezone: 'America/Sao_Paulo' }); // 14h BRT — saudade
+// Saudade Rebeca — verifica 3x por dia (9h, 14h, 20h BRT)
+cron.schedule('0 9 * * *',  () => ModoDono.rodarSaudadeRebeca(), { timezone: 'America/Sao_Paulo' });
+cron.schedule('0 14 * * *', () => ModoDono.rodarSaudadeRebeca(), { timezone: 'America/Sao_Paulo' });
+cron.schedule('0 20 * * *', () => ModoDono.rodarSaudadeRebeca(), { timezone: 'America/Sao_Paulo' });
 
 console.log('✅ Cron lembretes dono (5min) + relatório diário (7h) + bom dia inteligente (7h) ativos');
 

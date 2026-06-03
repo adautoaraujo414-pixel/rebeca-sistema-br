@@ -3007,13 +3007,20 @@ async function rodarSaudadeRebeca() {
   try {
     const mongoose = require('mongoose');
     const { AdminAgenda, InstanciaWhatsapp } = require('../models/AgendaServico');
-    const corte = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const agora = new Date();
+    const corte24h = new Date(agora.getTime() - 24 * 60 * 60 * 1000);
+    // Não reenviar se já foi enviado hoje (janela de 8h)
+    const corteReenvio = new Date(agora.getTime() - 8 * 60 * 60 * 1000);
 
     const admins = await AdminAgenda.find({
       'modoWhatsappDono.ativo': true,
       $or: [
-        { ultimaMensagemDono: { $lt: corte } },
+        { ultimaMensagemDono: { $lt: corte24h } },
         { ultimaMensagemDono: null }
+      ],
+      $or: [
+        { ultimaSaudadeEnviada: { $lt: corteReenvio } },
+        { ultimaSaudadeEnviada: null }
       ]
     }).lean();
 
@@ -3043,6 +3050,7 @@ async function rodarSaudadeRebeca() {
         const msgFinal = chefe ? (chefe + ', ' + msg) : msg;
 
         await _enviarMsg(instancia, telDono, msgFinal);
+        await AdminAgenda.findByIdAndUpdate(admin._id, { ultimaSaudadeEnviada: new Date() }).catch(()=>{});
         console.log('[SAUDADE-REBECA] enviado para:', telDono, admin.nomeNegocio);
       } catch(e) {
         console.error('[SAUDADE-REBECA] erro admin:', String(admin._id), e.message);

@@ -65,7 +65,8 @@ const adminAgendaSchema = new mongoose.Schema({
     atenderClientes: { type: Boolean, default: false }, // Rebeca atende clientes pelo WhatsApp
   },
   createdAt: { type: Date, default: Date.now },
-  ultimaMensagemDono: { type: Date, default: null }
+  ultimaMensagemDono:   { type: Date, default: null },
+  ultimaSaudadeEnviada: { type: Date, default: null }
 });
 
 // Serviços oferecidos
