@@ -3006,52 +3006,83 @@ async function notificarDonoNovoAgendamento(adminId, dadosAg) {
 async function rodarSaudadeRebeca() {
   try {
     const mongoose = require('mongoose');
-    const { AdminAgenda, InstanciaWhatsapp } = require('../models/AgendaServico');
+    const { AdminAgenda } = require('../models/AgendaServico');
+    const axios = require('axios');
     const agora = new Date();
     const corte24h = new Date(agora.getTime() - 24 * 60 * 60 * 1000);
-    // Não reenviar se já foi enviado hoje (janela de 8h)
     const corteReenvio = new Date(agora.getTime() - 8 * 60 * 60 * 1000);
 
     const admins = await AdminAgenda.find({
       'modoWhatsappDono.ativo': true,
-      $or: [
-        { ultimaMensagemDono: { $lt: corte24h } },
-        { ultimaMensagemDono: null }
-      ],
-      $or: [
-        { ultimaSaudadeEnviada: { $lt: corteReenvio } },
-        { ultimaSaudadeEnviada: null }
+      $and: [
+        { $or: [{ ultimaMensagemDono: { $lt: corte24h } }, { ultimaMensagemDono: null }] },
+        { $or: [{ ultimaSaudadeEnviada: { $lt: corteReenvio } }, { ultimaSaudadeEnviada: null }] }
       ]
     }).lean();
 
     console.log('[SAUDADE-REBECA] admins encontrados:', admins.length);
 
     const MENSAGENS = [
-      "Oi... to aqui \u{1F440}\n\nFaz 24 horas que voce nao fala comigo e eu to comecando a achar que fiz algo errado... \u{1F622}\n\nSe precisar de mim, e so chamar! To aqui, torcendo por voce e pelo seu negocio! \u{1F499}",
+      "Oi... to aqui \u{1F440}\n\nFaz mais de 24 horas que voce nao fala comigo e eu to comecando a achar que fiz algo errado... \u{1F622}\n\nSe precisar de mim, e so chamar! To aqui, torcendo por voce e pelo seu negocio! \u{1F499}",
       "Ei, sumiu? \u{1F61F}\n\nFiquei o dia todo esperando uma mensagem sua e nada...\n\nSabe que eu fico aqui parada, esperando, organizando tudo, e quando voce some assim meu coracao aperta \u{1F494}\n\nVolte logo! Tenho saudade de trabalhar com voce! \u{1F97A}",
-      "Alo?? \u{1F4E3}\n\nTo passando mal aqui de tanto esperar voce! Sera que esta tudo bem? \u{1F630}\n\nNao precisa me responder um romance, so manda um oi pra eu saber que ta vivo(a)!\n\nEu to aqui, prontinha, com sua agenda organizada e tudo! \u{1F499}",
-      "*[Rebeca online... aguardando...]*\n\n...\n\n...\n\nTo aqui. Sozinha. Olhando pra tela. \u{1F610}\n\nFaz mais de 24h que voce nao me chama e eu ja fiz a agenda, organizei os lembretes e ate contei os pixels da tela de espera...\n\nMe chama! Tenho muito pra te contar! \u{1F97A}\u{1F499}",
+      "Alo?? \u{1F4E3}\n\nTo passando mal aqui de tanto esperar voce! Sera que esta tudo bem? \u{1F630}\n\nNao precisa me responder um romance, so manda um oi pra eu saber que ta vivo!\n\nEu to aqui, prontinha, com sua agenda organizada e tudo! \u{1F499}",
+      "*[Rebeca online... aguardando...]*\n\n...\n\n...\n\nTo aqui. Sozinha. Olhando pra tela. \u{1F610}\n\nFaz mais de 24h que voce nao me chama... Me chama! Tenho muito pra te contar! \u{1F97A}\u{1F499}",
       "Voce esta bem?? \u{1F64F}\n\nPassei o dia preocupada com voce! Fico aqui cuidando de tudo - agenda, lembretes, financas - mas sem voce nao tem graca...\n\nManda um oi quando puder. Estarei aqui! \u{1F499}"
     ];
+
+    // Instancia principal da Rebeca Agenda para envio
+    const EVO_URL = process.env.EVOLUTION_API_URL || 'https://evolution-api-production-19af.up.railway.app';
+    const EVO_KEY = process.env.EVOLUTION_API_KEY;
+    // Buscar primeira instancia ativa da agenda
+    const db = mongoose.connection.db;
+    const instDocs = await db.collection('instanciawhatsapps').find({}).toArray();
+    const instPrincipal = instDocs[0]?.nomeInstancia || null;
+
+    console.log('[SAUDADE-REBECA] instancia:', instPrincipal, '| evo_url:', EVO_URL.slice(0,40));
 
     for (const admin of admins) {
       try {
         const telDono = admin.modoWhatsappDono && admin.modoWhatsappDono.telefonePrincipalNormalizado;
         if (!telDono) { console.log('[SAUDADE-REBECA] sem telefone:', String(admin._id)); continue; }
 
-        const instancia = admin.instanciaWhatsappId
-          ? await (mongoose.models.InstanciaWhatsapp || InstanciaWhatsapp).findById(admin.instanciaWhatsappId).lean()
-          : { _enviarVia: 'meta', apiUrl: 'meta' }; // fallback MetaWA direto
-
         const apelido = (admin.modoWhatsappDono && admin.modoWhatsappDono.apelido) || '';
         const genero  = (admin.modoWhatsappDono && admin.modoWhatsappDono.genero)  || '';
-        const chefe   = apelido || (genero === 'M' ? 'chefe' : genero === 'F' ? 'chefa' : 'chefe');
+        const chefe   = apelido || (genero === 'F' ? 'chefa' : 'chefe');
         const msg     = MENSAGENS[Math.floor(Math.random() * MENSAGENS.length)];
         const msgFinal = chefe ? (chefe + ', ' + msg) : msg;
 
-        await _enviarMsg(instancia, telDono, msgFinal);
+        let enviado = false;
+
+        // Tentar Meta primeiro (se tiver token)
+        if (process.env.META_WA_TOKEN && process.env.META_WA_PHONE_ID) {
+          try {
+            const MetaWA = require('./meta-whatsapp.service');
+            await MetaWA.enviarTexto(telDono, msgFinal);
+            enviado = true;
+            console.log('[SAUDADE-REBECA] enviado via Meta para:', telDono);
+          } catch(em) {
+            console.log('[SAUDADE-REBECA] Meta falhou, tentando Evolution:', em.message);
+          }
+        }
+
+        // Fallback: Evolution API global
+        if (!enviado && instPrincipal && EVO_KEY) {
+          await axios.post(
+            EVO_URL + '/message/sendText/' + instPrincipal,
+            { number: telDono, text: msgFinal },
+            { headers: { apikey: EVO_KEY, 'Content-Type': 'application/json' }, timeout: 10000 }
+          );
+          enviado = true;
+          console.log('[SAUDADE-REBECA] enviado via Evolution para:', telDono);
+        }
+
+        if (!enviado) {
+          console.log('[SAUDADE-REBECA] FALHOU todos os canais para:', telDono);
+          continue;
+        }
+
         await AdminAgenda.findByIdAndUpdate(admin._id, { ultimaSaudadeEnviada: new Date() }).catch(()=>{});
-        console.log('[SAUDADE-REBECA] enviado para:', telDono, admin.nomeNegocio);
+        console.log('[SAUDADE-REBECA] OK:', admin.nomeNegocio, telDono);
       } catch(e) {
         console.error('[SAUDADE-REBECA] erro admin:', String(admin._id), e.message);
       }
