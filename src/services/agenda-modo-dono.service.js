@@ -2962,7 +2962,7 @@ async function notificarDonoNovoAgendamento(adminId, dadosAg) {
 async function rodarSaudadeRebeca() {
   try {
     const { AdminAgenda, InstanciaWhatsapp } = require('../models/AgendaServico');
-    const corte = new Date(Date.now() - 24 * 60 * 60 * 1000); // 24h atrás
+    const corte = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
     const admins = await AdminAgenda.find({
       'modoWhatsappDono.ativo': true,
@@ -2972,36 +2972,41 @@ async function rodarSaudadeRebeca() {
       ]
     }).lean();
 
+    console.log('[SAUDADE-REBECA] admins encontrados:', admins.length);
+
     const MENSAGENS = [
-      `Oi... tô aqui 👀\n\nFaz 24 horas que você não fala comigo e eu tô começando a achar que fiz algo errado... 😢\n\nSe precisar de mim, é só chamar! Tô aqui, torcendo por você e pelo seu negócio! 💙`,
-      `Ei, sumiu? 😟\n\nFiquei o dia todo esperando uma mensagem sua e nada...\n\nSabe que eu fico aqui parada, esperando, organizando tudo, e quando você some assim meu coração aperta 💔\n\nVolte logo! Tenho saudade de trabalhar com você! 🥺`,
-      `Alô?? 📣\n\nTô passando mal aqui de tanto esperar você! Será que está tudo bem? 😰\n\nNão precisa me responder um romance, só manda um "oi" pra eu saber que tá vivo(a)!\n\nEu tô aqui, prontinha, com sua agenda organizada e tudo! 💙`,
-      `*[Rebeca online... aguardando...]*\n\n...\n\n...\n\nTô aqui. Sozinha. Olhando pra tela. 😐\n\nFaz mais de 24h que você não me chama e eu já fiz a agenda, organizei os lembretes e até contei os pixels da tela de espera...\n\nMe chama! Tenho muito pra te contar! 🥺💙`,
-      `Você está bem?? 🙏\n\nPassei o dia preocupada com você! Fico aqui cuidando de tudo — agenda, lembretes, finanças — mas sem você não tem graça...\n\nManda um oi quando puder. Estarei aqui! 💙`
+      "Oi... to aqui \u{1F440}\n\nFaz 24 horas que voce nao fala comigo e eu to comecando a achar que fiz algo errado... \u{1F622}\n\nSe precisar de mim, e so chamar! To aqui, torcendo por voce e pelo seu negocio! \u{1F499}",
+      "Ei, sumiu? \u{1F61F}\n\nFiquei o dia todo esperando uma mensagem sua e nada...\n\nSabe que eu fico aqui parada, esperando, organizando tudo, e quando voce some assim meu coracao aperta \u{1F494}\n\nVolte logo! Tenho saudade de trabalhar com voce! \u{1F97A}",
+      "Alo?? \u{1F4E3}\n\nTo passando mal aqui de tanto esperar voce! Sera que esta tudo bem? \u{1F630}\n\nNao precisa me responder um romance, so manda um oi pra eu saber que ta vivo(a)!\n\nEu to aqui, prontinha, com sua agenda organizada e tudo! \u{1F499}",
+      "*[Rebeca online... aguardando...]*\n\n...\n\n...\n\nTo aqui. Sozinha. Olhando pra tela. \u{1F610}\n\nFaz mais de 24h que voce nao me chama e eu ja fiz a agenda, organizei os lembretes e ate contei os pixels da tela de espera...\n\nMe chama! Tenho muito pra te contar! \u{1F97A}\u{1F499}",
+      "Voce esta bem?? \u{1F64F}\n\nPassei o dia preocupada com voce! Fico aqui cuidando de tudo - agenda, lembretes, financas - mas sem voce nao tem graca...\n\nManda um oi quando puder. Estarei aqui! \u{1F499}"
     ];
 
     for (const admin of admins) {
       try {
-        const telDono = admin.modoWhatsappDono?.telefonePrincipalNormalizado;
-        if (!telDono) continue;
+        const telDono = admin.modoWhatsappDono && admin.modoWhatsappDono.telefonePrincipalNormalizado;
+        if (!telDono) { console.log('[SAUDADE-REBECA] sem telefone:', String(admin._id)); continue; }
 
         const instancia = await InstanciaWhatsapp.findById(admin.instanciaWhatsappId).lean();
-        if (!instancia) continue;
+        if (!instancia) { console.log('[SAUDADE-REBECA] sem instancia:', String(admin._id)); continue; }
 
-        const msg = MENSAGENS[Math.floor(Math.random() * MENSAGENS.length)];
-        const chefe = _chefe(admin.modoWhatsappDono?.genero || '', admin.modoWhatsappDono?.apelido || '');
-        const msgFinal = `${chefe ? chefe + ', ' : ''}${msg}`;
+        const apelido = (admin.modoWhatsappDono && admin.modoWhatsappDono.apelido) || '';
+        const genero  = (admin.modoWhatsappDono && admin.modoWhatsappDono.genero)  || '';
+        const chefe   = apelido || (genero === 'M' ? 'chefe' : genero === 'F' ? 'chefa' : 'chefe');
+        const msg     = MENSAGENS[Math.floor(Math.random() * MENSAGENS.length)];
+        const msgFinal = chefe ? (chefe + ', ' + msg) : msg;
 
         await _enviarMsg(instancia, telDono, msgFinal);
-        console.log('[SAUDADE-REBECA] Mensagem enviada para:', telDono);
+        console.log('[SAUDADE-REBECA] enviado para:', telDono, admin.nomeNegocio);
       } catch(e) {
-        console.error('[SAUDADE-REBECA] Erro admin:', admin._id, e.message);
+        console.error('[SAUDADE-REBECA] erro admin:', String(admin._id), e.message);
       }
     }
   } catch(e) {
-    console.error('[SAUDADE-REBECA] Erro geral:', e.message);
+    console.error('[SAUDADE-REBECA] erro geral:', e.message);
   }
 }
+
 
 module.exports = {
   rodarSaudadeRebeca, isDono, enviarBoasVindas, processarComandoDono, notificarDonoNovoAgendamento, processarComandoAdmin: (texto, adminId, instOfc) => processarComandoDono(instOfc?.numero || '', texto, adminId, instOfc) };
