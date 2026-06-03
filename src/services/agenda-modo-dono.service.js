@@ -365,7 +365,8 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
   const msgL = msg.toLowerCase();
   console.log('[DEBUG-INICIO] msgL:', msgL);
   // Registrar última mensagem do dono
-  AdminAgenda.findByIdAndUpdate(adminObjId, { ultimaMensagemDono: new Date() }).catch(()=>{});
+  const _adminObjIdMsg = require('mongoose').Types.ObjectId.isValid(adminId) ? new (require('mongoose').Types.ObjectId)(adminId) : adminId;
+  AdminAgenda.findByIdAndUpdate(_adminObjIdMsg, { ultimaMensagemDono: new Date() }).catch(()=>{});
 
   // ── APRENDIZADO: verificar se dono já corrigiu esta intenção antes ──────────
   try {
