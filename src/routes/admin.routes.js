@@ -142,6 +142,15 @@ router.put('/pontos-referencia/:id', authMiddleware, async (req, res) => {
     } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
+
+router.get('/meta-templates', async (req, res) => {
+  try {
+    const MetaWA = require('../services/meta-whatsapp.service');
+    const templates = await MetaWA.listarTemplates();
+    res.json({ ok: true, total: templates.length, templates });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
 router.delete('/pontos-referencia/:id', authMiddleware, async (req, res) => {
     try {
         await PontoReferencia.findOneAndUpdate({ _id: req.params.id, adminId: req.adminId }, { ativo: false });

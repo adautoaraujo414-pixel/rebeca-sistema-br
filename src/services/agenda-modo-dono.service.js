@@ -3058,7 +3058,26 @@ async function rodarSaudadeRebeca() {
           continue;
         }
 
-        await _enviarMsg(instParaEnvio, telDono, msgFinal);
+        // Tentar texto livre; se Meta bloquear por janela 24h, usar template hello_world
+        let envioOk = false;
+        try {
+          await _enviarMsg(instParaEnvio, telDono, msgFinal);
+          envioOk = true;
+        } catch(eEnvio) {
+          const errData = eEnvio.response?.data || eEnvio.message || '';
+          const erroStr = JSON.stringify(errData);
+          // Código 131026 = fora da janela 24h; 131047 = mensagem não entregue
+          if (erroStr.includes('131026') || erroStr.includes('131047') || erroStr.includes('outside')) {
+            console.log('[SAUDADE-REBECA] janela 24h expirada, tentando template hello_world para:', telDono);
+            const MetaWA = require('./meta-whatsapp.service');
+            const r = await MetaWA.enviarTemplate(telDono, 'hello_world', 'en_US');
+            if (r.sucesso) envioOk = true;
+            else console.log('[SAUDADE-REBECA] template hello_world também falhou:', JSON.stringify(r.erro));
+          } else {
+            console.error('[SAUDADE-REBECA] erro envio:', erroStr);
+          }
+        }
+        if (!envioOk) { console.log('[SAUDADE-REBECA] FALHOU para:', telDono); continue; }
         await AdminAgenda.findByIdAndUpdate(admin._id, { ultimaSaudadeEnviada: new Date() }).catch(()=>{});
         console.log('[SAUDADE-REBECA] enviado para:', telDono, admin.nomeNegocio);
       } catch(e) {

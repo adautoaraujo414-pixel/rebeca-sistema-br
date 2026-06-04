@@ -66,6 +66,26 @@ async function enviarTemplate(telefone, templateName, languageCode, components) 
   }
 }
 
+
+async function listarTemplates() {
+  try {
+    // PHONE_ID é o ID do número; WABA_ID pode ser diferente — tentamos derivar via API
+    const r = await axios.get(
+      `https://graph.facebook.com/v20.0/${PHONE_ID}`,
+      { headers: _headers(), params: { fields: 'id,name' } }
+    );
+    const wabaId = r.data?.id;
+    const r2 = await axios.get(
+      `https://graph.facebook.com/v20.0/${wabaId}/message_templates`,
+      { headers: _headers(), params: { limit: 50 } }
+    );
+    return r2.data?.data || [];
+  } catch(e) {
+    console.error('[MetaWA] listarTemplates erro:', e.response?.data || e.message);
+    return [];
+  }
+}
+
 async function marcarLido(messageId) {
   try {
     await axios.post(`${BASE}/messages`, {
@@ -91,4 +111,4 @@ async function testarConexao() {
   }
 }
 
-module.exports = { enviarTexto, enviarImagem, enviarTemplate, marcarLido, testarConexao, _norm };
+module.exports = { enviarTexto, enviarImagem, enviarTemplate, listarTemplates, marcarLido, testarConexao, _norm };
