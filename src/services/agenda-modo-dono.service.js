@@ -3059,24 +3059,27 @@ async function rodarSaudadeRebeca() {
           continue;
         }
 
+        // Forçar Meta para admins sem instância Evolution válida
+        const instFinal = (instParaEnvio?.apiUrl && instParaEnvio.apiUrl !== 'meta' && instParaEnvio.apiUrl !== 'https://evolution-api.com')
+          ? instParaEnvio
+          : { _enviarVia: 'meta', apiUrl: 'meta', nomeInstancia: 'meta_oficial' };
+        console.log('[SAUDADE-REBECA] canal:', instFinal._enviarVia || instFinal.apiUrl, '| tel:', telDono);
+
         // Tentar texto livre; se Meta bloquear por janela 24h, usar template hello_world
         let envioOk = false;
         try {
-          await _enviarMsg(instParaEnvio, telDono, msgFinal);
+          await _enviarMsg(instFinal, telDono, msgFinal);
           envioOk = true;
         } catch(eEnvio) {
           const errData = eEnvio.response?.data || eEnvio.message || '';
           const erroStr = JSON.stringify(errData);
-          // Código 131026 = fora da janela 24h; 131047 = mensagem não entregue
-          if (erroStr.includes('131026') || erroStr.includes('131047') || erroStr.includes('outside')) {
-            console.log('[SAUDADE-REBECA] janela 24h expirada, tentando template hello_world para:', telDono);
-            const MetaWA = require('./meta-whatsapp.service');
-            const r = await MetaWA.enviarTemplate(telDono, 'hello_world', 'en_US');
-            if (r.sucesso) envioOk = true;
-            else console.log('[SAUDADE-REBECA] template hello_world também falhou:', JSON.stringify(r.erro));
-          } else {
-            console.error('[SAUDADE-REBECA] erro envio:', erroStr);
-          }
+          console.log('[SAUDADE-REBECA] erro no envio:', erroStr.slice(0, 200));
+          // 131026 = fora janela 24h; 131047 = não entregue; qualquer erro Meta tenta template
+          const MetaWA = require('./meta-whatsapp.service');
+          console.log('[SAUDADE-REBECA] tentando template hello_world para:', telDono);
+          const r = await MetaWA.enviarTemplate(telDono, 'hello_world', 'en_US');
+          if (r.sucesso) envioOk = true;
+          else console.log('[SAUDADE-REBECA] hello_world falhou:', JSON.stringify(r.erro));
         }
         if (!envioOk) { console.log('[SAUDADE-REBECA] FALHOU para:', telDono); continue; }
         await AdminAgenda.findByIdAndUpdate(admin._id, { ultimaSaudadeEnviada: new Date() }).catch(()=>{});
