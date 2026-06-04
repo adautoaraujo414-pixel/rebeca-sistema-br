@@ -460,6 +460,30 @@ const leadProdutoAgendaSchema = new mongoose.Schema({
 leadProdutoAgendaSchema.index({ adminId: 1, data: -1 });
 leadProdutoAgendaSchema.index({ adminId: 1, produtoId: 1 });
 
+
+// ── AgendaSessao: persistência de sessão do SessionManager ───────────────────
+const agendaSessaoSchema = new mongoose.Schema({
+  adminId:   { type: mongoose.Schema.Types.ObjectId, required: true },
+  telefone:  { type: String, required: true },
+  updatedAt: { type: Date, default: Date.now },
+  ultimoLancamentoId:        { type: String, default: null },
+  ultimoLancamentoTipo:      { type: String, default: null },
+  ultimoLancamentoValor:     { type: Number, default: null },
+  ultimoLancamentoDesc:      { type: String, default: null },
+  ultimoLancamentoCat:       { type: String, default: null },
+  _lancamentoApagadoTipo:    { type: String, default: null },
+  _lancamentoApagadoValor:   { type: Number, default: null },
+  _lancamentoApagadoDesc:    { type: String, default: null },
+  _lancamentoApagadoCat:     { type: String, default: null },
+  aguardandoConfirmacaoApagar: { type: Boolean, default: false },
+  aguardandoConfirmacao:     { type: Boolean, default: false },
+  ultimaAcaoPendente:        { type: String, default: null },
+  ultimaPerguntaIA:          { type: String, default: null },
+  ultimoClienteCitado:       { type: String, default: null },
+}, { timestamps: false });
+agendaSessaoSchema.index({ adminId: 1, telefone: 1 }, { unique: true });
+agendaSessaoSchema.index({ updatedAt: 1 }, { expireAfterSeconds: 7200 }); // TTL 2h
+
 module.exports = {
   FinanceiroAgenda,
   ContaPagarAgenda,
@@ -481,4 +505,5 @@ module.exports = {
   CarrinhoAgenda: mongoose.model('CarrinhoAgenda', carrinhoAgendaSchema),
   ConhecimentoAgenda: mongoose.model('ConhecimentoAgenda', conhecimentoAgendaSchema),
   LeadProdutoAgenda: mongoose.model('LeadProdutoAgenda', leadProdutoAgendaSchema),
+  AgendaSessao: mongoose.model('AgendaSessao', agendaSessaoSchema),
 };
