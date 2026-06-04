@@ -143,6 +143,7 @@ async function _enviarMsg(instancia, numero, texto, instanciaResposta = null) {
     console.log('[ModoDono] Mensagem enviada para', numero);
   } catch(e) {
     console.error('[ModoDono] Erro ao enviar msg:', e.message);
+    throw e; // relança para que chamadores possam fazer fallback
   }
 }
 

@@ -69,17 +69,27 @@ async function enviarTemplate(telefone, templateName, languageCode, components) 
 
 async function listarTemplates() {
   try {
-    // PHONE_ID é o ID do número; WABA_ID pode ser diferente — tentamos derivar via API
+    // Buscar WABA_ID via phone number info
     const r = await axios.get(
       `https://graph.facebook.com/v20.0/${PHONE_ID}`,
-      { headers: _headers(), params: { fields: 'id,name' } }
+      { headers: _headers(), params: { fields: 'id,verified_name,quality_rating,platform_type,throughput,webhook_configuration,name_status,new_name_status,decision,requested_verified_name,display_phone_number,about' } }
     );
-    const wabaId = r.data?.id;
+    // Buscar via business account
     const r2 = await axios.get(
+      `https://graph.facebook.com/v20.0/${PHONE_ID}/whatsapp_business_profile`,
+      { headers: _headers() }
+    );
+    // Tentar listar templates via PHONE_ID diretamente (alguns configs permitem)
+    const wabaId = process.env.META_WABA_ID || process.env.META_WA_BUSINESS_ACCOUNT_ID;
+    if (!wabaId) {
+      console.log('[MetaWA] META_WABA_ID nao configurado — retornando info do numero:', JSON.stringify(r.data));
+      return [];
+    }
+    const r3 = await axios.get(
       `https://graph.facebook.com/v20.0/${wabaId}/message_templates`,
       { headers: _headers(), params: { limit: 50 } }
     );
-    return r2.data?.data || [];
+    return r3.data?.data || [];
   } catch(e) {
     console.error('[MetaWA] listarTemplates erro:', e.response?.data || e.message);
     return [];
