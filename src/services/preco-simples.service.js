@@ -59,8 +59,19 @@ const PrecoSimplesService = {
             const hora = agora.getHours();
             const diaSemana = agora.getDay();
             
-            const periodo = this.getPeriodo(hora);
+            // Bug A fix: usar horariosSimples do admin se configurado
+            let periodo = this.getPeriodo(hora);
             const tipoDia = this.getTipoDia(diaSemana);
+            if (admin.horariosSimples) {
+                const horaStr = hora.toString().padStart(2,'0') + ':00';
+                for (const [per, cfg] of Object.entries(admin.horariosSimples)) {
+                    if (cfg.inicio && cfg.fim) {
+                        const ini = cfg.inicio, fim = cfg.fim;
+                        if (fim > ini) { if (horaStr >= ini && horaStr < fim) { periodo = per; break; } }
+                        else { if (horaStr >= ini || horaStr < fim) { periodo = per; break; } }
+                    }
+                }
+            }
 
             // Buscar preço configurado ou usar padrão
             const precos = admin.precosSimples || {
@@ -100,6 +111,10 @@ const PrecoSimplesService = {
             if (dados.precoFixo !== undefined) {
                 update.precoFixo = dados.precoFixo;
             }
+            // Bug B fix: garantir que precoFixo.ativo=false é sempre salvo
+            if (dados.precoFixo && dados.precoFixo.ativo === false) {
+                update.precoFixo = dados.precoFixo;
+            }
             if (dados.modoPreco) {
                 update.modoPreco = dados.modoPreco;
             }
@@ -107,7 +122,8 @@ const PrecoSimplesService = {
             // Usar $set com notação de ponto para garantir salvamento de subdocumentos
             const setObj = {};
             if (update.modoPreco) setObj['modoPreco'] = update.modoPreco;
-            if (update.precoFixo) setObj['precoFixo'] = update.precoFixo;
+            // Bug B fix: !== undefined para não ignorar {ativo:false}
+            if (update.precoFixo !== undefined) setObj['precoFixo'] = update.precoFixo;
             if (update.horariosSimples) {
                 ['manha','tarde','noite','madrugada'].forEach(p => {
                     if (update.horariosSimples[p]) {

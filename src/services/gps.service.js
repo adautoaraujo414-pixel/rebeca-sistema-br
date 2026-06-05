@@ -11,7 +11,8 @@ function getMapAdmin(adminId) {
 }
 
 const gpsService = {
-    atualizarLocalizacao: (motoristaId, dados, adminId = 'global') => {
+    atualizarLocalizacao: (motoristaId, dados, adminId) => {
+        if (!adminId) { console.log('[GPS] adminId ausente — rejeitando atualização de', motoristaId); return null; }
         const lat = parseFloat(dados.latitude);
         const lon = parseFloat(dados.longitude);
         const precisao = dados.precisao ? parseFloat(dados.precisao) : null;
@@ -43,11 +44,13 @@ const gpsService = {
         return localizacao;
     },
 
-    obterLocalizacao: (motoristaId, adminId = 'global') => {
+    obterLocalizacao: (motoristaId, adminId) => {
+        if (!adminId) return null;
         return getMapAdmin(adminId).get(motoristaId) || null;
     },
 
-    listarLocalizacoes: (adminId = 'global') => {
+    listarLocalizacoes: (adminId) => {
+        if (!adminId) return [];
         return Array.from(getMapAdmin(adminId).values());
     },
 
@@ -62,7 +65,8 @@ const gpsService = {
         return Math.round(R * c * 100) / 100;
     },
 
-    buscarProximos: (latitude, longitude, raioKm = 10, adminId = 'global') => {
+    buscarProximos: (latitude, longitude, raioKm = 10, adminId) => {
+        if (!adminId) return [];
         const proximos = [];
         getMapAdmin(adminId).forEach((loc) => {
             const distancia = gpsService.calcularDistancia(latitude, longitude, loc.latitude, loc.longitude);
@@ -74,7 +78,8 @@ const gpsService = {
         return proximos;
     },
 
-    removerLocalizacao: (motoristaId, adminId = 'global') => {
+    removerLocalizacao: (motoristaId, adminId) => {
+        if (!adminId) return false;
         return getMapAdmin(adminId).delete(motoristaId);
     }
 };
