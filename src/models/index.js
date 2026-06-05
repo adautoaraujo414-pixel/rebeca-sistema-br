@@ -91,7 +91,7 @@ corrigirIndexes();
 
 Motorista.schema.add({ adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin' } });
 Cliente.schema.add({ adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin' } });
-Corrida.schema.add({ adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin' } });
+// Bug 3 fix: adminId já definido no CorridaSchema — add duplicado removido
 
 console.log('✅ Schemas atualizados com adminId para multi-tenant');
 
@@ -245,16 +245,9 @@ const AdminSchema = new mongoose.Schema({
         tentativasMax: { type: Number, default: 3 }
     },
     // ========== PREÇO FIXO (FESTA/EVENTO) ==========
+    // Bug 2 fix: campos duplicados removidos de dentro de precoFixo
     precoFixo: {
         ativo: { type: Boolean, default: false },
-    testeGratis: { type: Boolean, default: false },
-    dataInicioTeste: Date,
-    dataFimTeste: Date,
-    bloqueado: { type: Boolean, default: false },
-    motivoBloqueio: String,
-    origem: { type: String, default: 'cadastro_manual' }, // cadastro_manual, landing_page
-    tipoAdmin: { type: String, enum: ['transporte', 'delivery', 'multi'], default: 'transporte' },
-    tipoVeiculo: { type: String, enum: ['carro', 'moto'], default: 'carro' }, // modo de atendimento da Rebeca
         valor: { type: Number, default: 15.00 },
         motivo: String // Ex: "Carnaval", "Ano Novo"
     },
@@ -409,7 +402,8 @@ const InstanciaWhatsappSchema = new mongoose.Schema({
     apiUrl: { type: String, default: 'https://evolution-api.com' },
     apiKey: String,
     telefoneConectado: String,
-    status: { type: String, enum: ['desconectado', 'conectando', 'conectado', 'erro'], default: 'desconectado' },
+    // Bug 4 fix: incluir todos os valores usados pelo código e pela Evolution API
+    status: { type: String, enum: ['desconectado', 'conectando', 'conectado', 'erro', 'open', 'connected', 'ativo', 'active', 'close', 'connecting'], default: 'desconectado' },
     qrCode: String,
     qrCodeExpira: Date,
     ultimaConexao: Date,
@@ -465,10 +459,11 @@ const FilaEsperaSchema = new mongoose.Schema({
     posicao: { type: Number, default: 1 },
     status: { type: String, enum: ['aguardando', 'notificado', 'atendido', 'expirado'], default: 'aguardando' },
     adminId: mongoose.Schema.Types.ObjectId,
-    instanciaId: mongoose.Schema.Types.ObjectId
-}, { timestamps: true ,
+    instanciaId: mongoose.Schema.Types.ObjectId,
+    // Bug 1 fix: campos que estavam fora do schema object
     avisado30min: { type: Boolean, default: false },
-    criadoEm: { type: Date, default: Date.now }});
+    criadoEm: { type: Date, default: Date.now }
+}, { timestamps: true });
 
 const FilaEspera = mongoose.model('FilaEspera', FilaEsperaSchema);
 module.exports.FilaEspera = FilaEspera;
