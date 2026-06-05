@@ -242,15 +242,7 @@ router.post('/aceitar', auth, async (req, res) => {
             console.log('[ACEITAR] Sem clienteTelefone na corrida');
         }
         
-        // Remover corrida do mapa de pendentes do DespachoService
-        try {
-            const DespachoService = require('../services/despacho.service');
-            if (DespachoService.corridasPendentes) {
-                DespachoService.corridasPendentes.delete(corridaId.toString());
-                console.log('[ACEITAR] Corrida removida do DespachoService');
-            }
-        } catch(_dp){ console.error("[motorista-app.routes.js]", _dp.message); }
-
+        // (DespachoService já foi limpo acima)
         res.json({ sucesso: true, corrida });
     } catch (e) {
         res.json({ sucesso: false, erro: e.message });
@@ -387,6 +379,13 @@ router.post('/iniciar', auth, async (req, res) => {
 router.post('/finalizar', auth, async (req, res) => {
     const { corridaId, precoFinal } = req.body;
     try {
+        // Bug C fix: verificar que o motorista autenticado é o dono da corrida
+        const { Corrida: _CorridaCheck } = require('../models');
+        const _corridaCheck = await _CorridaCheck.findById(corridaId).select('motoristaId status');
+        if (!_corridaCheck) return res.json({ sucesso: false, erro: 'Corrida não encontrada' });
+        if (String(_corridaCheck.motoristaId) !== String(req.motorista._id)) {
+            return res.status(403).json({ sucesso: false, erro: 'Acesso negado' });
+        }
         const corrida = await CorridaService.finalizar(corridaId, precoFinal);
         const corridaFinal = corrida?.corrida || corrida;
         if (corridaFinal && corridaFinal.clienteTelefone) {
@@ -438,6 +437,11 @@ router.post('/cancelar', auth, async (req, res) => {
     const { corridaId, motivo } = req.body;
     try {
         const corridaAntes = await CorridaService.buscarPorId(corridaId);
+        // Bug D fix: verificar que o motorista autenticado é o dono da corrida
+        if (!corridaAntes) return res.json({ sucesso: false, erro: 'Corrida não encontrada' });
+        if (corridaAntes.motoristaId && String(corridaAntes.motoristaId) !== String(req.motorista._id)) {
+            return res.status(403).json({ sucesso: false, erro: 'Acesso negado' });
+        }
         const resultado = await CorridaService.cancelar(corridaId, motivo || 'Cancelado pelo motorista');
         // Resetar Rebeca para cliente poder pedir nova corrida
         if (corridaAntes && corridaAntes.clienteTelefone) {
