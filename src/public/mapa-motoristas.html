@@ -130,7 +130,7 @@ atualizarMapa();
 window._ivMapa = RebecaRealtime.register("mapa-motoristas", atualizarMapa, 5000, "critica", false);
 document.addEventListener('visibilitychange', function() {
   if (document.hidden) { clearInterval(window._ivMapa); }
-  else { atualizarMapa(); window._ivMapa = // [removido duplicata]; }
+  else { atualizarMapa(); window._ivMapa = RebecaRealtime.register('mapa-motoristas', atualizarMapa, 5000, 'critica', false); }
 });
 </script>
 </body>

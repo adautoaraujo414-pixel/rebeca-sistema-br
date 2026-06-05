@@ -1294,9 +1294,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 return local.endereco;
             }
             if (local.latitude && local.longitude) {
-                return 'Loc: ' + parseFloat(local.latitude).toFixed(4) + ', ' + parseFloat(local.longitude).toFixed(4);
+                // Item 9 fix: mostrar 'Localização GPS' em vez de coordenadas brutas
+                return '📍 Localização GPS (' + parseFloat(local.latitude).toFixed(4) + ', ' + parseFloat(local.longitude).toFixed(4) + ')';
             }
-            return local.endereco || '-';
         }
 
         // Navegacao direta Google Maps (sem confirm)
@@ -1333,14 +1333,15 @@ document.addEventListener('DOMContentLoaded', function() {
             const headerH2 = document.querySelector('#novaCorridaOverlay h2');
             // Carregar foto do cliente
             const avatarDiv = document.querySelector('#novaCorridaOverlay .cliente-avatar');
-            if (corrida.tipo === 'encomenda') {
-                if (headerH2) headerH2.textContent = '📦 NOVA ENCOMENDA!';
-                if (avatarDiv) avatarDiv.textContent = '📦';
-            // Mostrar endereço em texto legível
+            // Mostrar endereço em texto legível (sempre, para todos os tipos)
             const origemEl = document.getElementById('corridaOrigem');
             const destinoEl = document.getElementById('corridaDestino');
             if (origemEl && corridaAtual?.enderecoOrigemTexto) origemEl.textContent = corridaAtual.enderecoOrigemTexto;
             if (destinoEl && corridaAtual?.enderecoDestinoTexto) destinoEl.textContent = corridaAtual.enderecoDestinoTexto;
+
+            if (corrida.tipo === 'encomenda') {
+                if (headerH2) headerH2.textContent = '📦 NOVA ENCOMENDA!';
+                if (avatarDiv) avatarDiv.textContent = '📦';
                 document.getElementById('novaCorridaCliente').textContent = corrida.descricaoEncomenda || 'Encomenda';
                 const infoExtra = [];
                 if (corrida.nomeColeta) infoExtra.push('Procurar: ' + corrida.nomeColeta);
@@ -1476,10 +1477,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 tempoRestante--;
                 document.getElementById('timerProgress').style.width = (tempoRestante / 30 * 100) + '%';
                 if (tempoRestante <= 0) {
+                    toast('⏰ Tempo esgotado — corrida passou para outro motorista', 'warning');
                     recusarCorrida();
                 }
-            }, 1000);
-
             // Som + Vibração + Push Notification
             if (somAtivo) {
                 try { 
@@ -1884,28 +1884,28 @@ document.addEventListener('DOMContentLoaded', function() {
 
         async function cancelarCorrida() {
             if (!confirm('Cancelar esta corrida? O cliente será notificado.')) return;
+            if (!corridaAtual) return;
             const corridaIdCancelar = corridaAtual?._id;
-            // Resetar UI imediatamente para não deixar motorista preso
+            // Bug 5 fix: chamar backend primeiro, só reseta UI se confirmado
+            try {
+                const _resCan = await fetch('/api/motorista-app/cancelar', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                    body: JSON.stringify({ corridaId: corridaIdCancelar, motivo: 'Cancelado pelo motorista' })
+                });
+                const _dataCan = await _resCan.json();
+                if (!_resCan.ok) { toast('Erro ao cancelar: ' + (_dataCan.error || 'tente novamente'), 'error'); return; }
+            } catch (e) {
+                toast('Erro de conexão ao cancelar', 'error'); return;
+            }
             corridaAtual = null;
             motorista.status = 'disponivel';
             atualizarStatusUI();
             document.getElementById('corridaAtiva').classList.remove('active');
             document.getElementById('semCorrida').style.display = 'block';
-            pararPollingChat(); // para polling ao cancelar
+            pararPollingChat();
             toast('Corrida cancelada', 'error');
-            try {
-                await fetch('/api/motorista-app/cancelar', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-                    body: JSON.stringify({ corridaId: corridaIdCancelar, motivo: 'Cancelado pelo motorista' })
-                });
-            } catch (e) {
-                console.log('Erro ao cancelar no backend:', e);
-            }
         }
-
-        // ========== DASHBOARD ==========
-        async function carregarDashboard() {
             try {
                 const res = await fetch('/api/motorista-app/estatisticas', {
                     headers: { 'Authorization': 'Bearer ' + token }
@@ -1980,16 +1980,21 @@ document.addEventListener('DOMContentLoaded', function() {
             const input = document.getElementById('chatInput');
             const texto = input.value.trim();
             if (!texto) return;
-
+            // Item 8 fix: proteção contra duplo clique
+            const btnSend = document.querySelector('.chat-send');
+            if (window._enviandoChat) return;
+            window._enviandoChat = true;
+            if (btnSend) { btnSend.disabled = true; btnSend.textContent = '⏳'; }
+            input.value = '';
             try {
                 await fetch('/api/motorista-app/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
                     body: JSON.stringify({ texto })
                 });
-                input.value = '';
                 carregarChat();
-            } catch (e) {}
+            } catch (e) { input.value = texto; toast('Erro ao enviar', 'error'); }
+            finally { window._enviandoChat = false; if (btnSend) { btnSend.disabled = false; btnSend.textContent = '➤'; } }
         }
 
         // ========== FINANCEIRO ==========

@@ -624,13 +624,13 @@ router.get('/estatisticas', auth, async (req, res) => {
         const ganhosHoje = corridas.reduce((s, c) => s + (c.precoFinal || c.precoEstimado || 0), 0);
         const corridasHoje = corridas.length;
         
-        // Calcular horas online (baseado em tempo entre primeira e última corrida do dia)
+        // Item 10 fix: ordem correta — corridas em desc, então [last] é mais antiga
         let horasOnline = 0;
         if (corridas.length > 0) {
-            const primeira = new Date(corridas[0].createdAt);
-            const ultima = new Date(corridas[corridas.length-1].updatedAt || corridas[corridas.length-1].createdAt);
+            const primeira = new Date(corridas[corridas.length - 1].createdAt);
+            const ultima = new Date(corridas[0].updatedAt || corridas[0].createdAt);
             horasOnline = Math.round((ultima - primeira) / 3600000 * 10) / 10;
-            if (horasOnline < 0.5 && corridas.length > 0) horasOnline = 0.5;
+            if (horasOnline < 0.5) horasOnline = 0.5;
         }
         
         res.json({ ganhosHoje, corridasHoje, horasOnline });

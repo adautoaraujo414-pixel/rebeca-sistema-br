@@ -3,7 +3,7 @@ const MotoristaService = require('./motorista.service');
 
 const CorridaService = {
     async listar(adminId, filtros = {}) {
-        const query = adminId ? { adminId } : {};
+        const query = adminId ? { adminId: String(adminId) } : {};
         if (filtros.status) query.status = filtros.status;
         if (filtros.motoristaId) query.motoristaId = filtros.motoristaId;
         if (filtros.clienteId) query.clienteId = filtros.clienteId;
@@ -174,15 +174,15 @@ const CorridaService = {
     },
     
     async listarPendentes(adminId = null) {
-        const limiteRecente = new Date(Date.now() - 15 * 60 * 1000);
-        const filtro = { status: 'pendente', createdAt: { $gte: limiteRecente } };
-        if (adminId) filtro.adminId = adminId;
+        // Bug 3 fix: sem filtro de 15min — pendente fica visível até ser aceita/cancelada
+        const filtro = { status: 'pendente' };
+        if (adminId) filtro.adminId = String(adminId);
         return await Corrida.find(filtro).sort({ createdAt: -1 }).limit(50);
     },
     
     async listarAtivas(adminId = null) {
         const filtro = { status: { $in: ['pendente', 'aceita', 'aguardando_cliente', 'em_andamento', 'motorista_a_caminho'] } };
-        if (adminId) filtro.adminId = adminId;
+        if (adminId) filtro.adminId = String(adminId);
         return await Corrida.find(filtro).sort({ createdAt: -1 }).limit(50);
     },
 
