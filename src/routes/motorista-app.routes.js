@@ -594,7 +594,7 @@ router.post('/avaria', auth, async (req, res) => {
                 const msg = '⚠️ *AVARIA REPORTADA*\n\n' +
                     '👤 Motorista: *' + req.motorista.nomeCompleto + '*\n' +
                     '📝 ' + descricao + '\n' +
-                    (latitude ? '📍 Loc: ' + latitude + ',' + longitude : '') +
+                    (latitude ? '📍 ' + (latitude ? `https://maps.google.com/?q=${latitude},${longitude}` : 'Localização não disponível') : '') +
                     '\n\n_Reportado agora_';
                 await EvolutionMultiService.enviarMensagem(instancia._id, admin.telefone, msg);
             }

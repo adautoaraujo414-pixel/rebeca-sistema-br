@@ -4,9 +4,9 @@ const { v4: uuidv4 } = require('uuid');
 const MotoristaService = {
     // Listar todos (filtrado por admin)
     async listar(adminId, filtros = {}) {
-        const query = { adminId };
-        if (filtros.status) query.status = filtros.status;
-        if (filtros.ativo !== undefined) query.ativo = filtros.ativo;
+        // Bug 7 fix: garantir que adminId existe antes de query
+        if (!adminId) return [];
+        const query = { adminId: String(adminId) };
         return await Motorista.find(query).sort({ createdAt: -1 });
     },
 

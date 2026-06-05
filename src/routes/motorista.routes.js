@@ -30,6 +30,8 @@ const authMotorista = async (req, res, next) => {
 // Listar motoristas (filtrado por admin)
 router.get('/', async (req, res) => {
     try {
+        // Bug 1 fix: adminId obrigatório para isolamento
+        if (!req.adminId) return res.json([]);
         const motoristas = await MotoristaService.listar(req.adminId);
         res.json(motoristas);
     } catch (e) { res.status(500).json({ erro: e.message }); }
@@ -56,6 +58,10 @@ router.get('/:id', async (req, res) => {
     try {
         const motorista = await MotoristaService.buscarPorId(req.params.id);
         if (!motorista) return res.status(404).json({ erro: 'Nao encontrado' });
+        // Bug 2 fix: verificar que motorista pertence ao admin solicitante
+        if (req.adminId && String(motorista.adminId) !== String(req.adminId)) {
+            return res.status(403).json({ erro: 'Acesso negado' });
+        }
         res.json(motorista);
     } catch (e) { res.status(500).json({ erro: e.message }); }
 });
@@ -126,6 +132,12 @@ router.post('/', async (req, res) => {
 // Atualizar
 router.put('/:id', async (req, res) => {
     try {
+        // Bug 3 fix: verificar que motorista pertence ao admin antes de atualizar
+        const _mot = await MotoristaService.buscarPorId(req.params.id);
+        if (!_mot) return res.status(404).json({ erro: 'Nao encontrado' });
+        if (req.adminId && String(_mot.adminId) !== String(req.adminId)) {
+            return res.status(403).json({ erro: 'Acesso negado' });
+        }
         const motorista = await MotoristaService.atualizar(req.params.id, req.body);
         res.json(motorista);
     } catch (e) { res.status(500).json({ erro: e.message }); }
@@ -134,6 +146,12 @@ router.put('/:id', async (req, res) => {
 // Deletar
 router.delete('/:id', async (req, res) => {
     try {
+        // Bug 4 fix: verificar que motorista pertence ao admin antes de deletar
+        const _motDel = await MotoristaService.buscarPorId(req.params.id);
+        if (!_motDel) return res.status(404).json({ erro: 'Nao encontrado' });
+        if (req.adminId && String(_motDel.adminId) !== String(req.adminId)) {
+            return res.status(403).json({ erro: 'Acesso negado' });
+        }
         await MotoristaService.deletar(req.params.id);
         res.json({ sucesso: true });
     } catch (e) { res.status(500).json({ erro: e.message }); }

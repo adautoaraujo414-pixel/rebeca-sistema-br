@@ -190,9 +190,12 @@ const MotoristaWhatsappService = {
         try {
             const { Corrida, Motorista } = require('../models');
 
-            // Buscar corrida pendente mais recente do admin
+            // Bug 5 fix: buscar corrida pendente do admin E verificar que motorista pertence ao mesmo admin
+            if (String(motorista.adminId) !== String(adminId)) {
+                return motorista.nomeCompleto?.split(' ')[0] + ', você não pertence a esta frota. Contate o suporte.';
+            }
             const corrida = await Corrida.findOne({
-                adminId,
+                adminId: String(adminId),
                 status: 'pendente'
             }).sort({ createdAt: -1 });
 
@@ -329,11 +332,20 @@ const MotoristaWhatsappService = {
             const { InstanciaWhatsapp } = require('../models');
 
             let inst = null;
-            if (instanciaId) {
-                inst = await InstanciaWhatsapp.findById(instanciaId);
+            // Bug 8 fix: priorizar instanciaId da corrida, depois adminId — nunca cross-admin
+            const _instId = instanciaId || corrida?.instanciaId;
+            if (_instId) {
+                inst = await InstanciaWhatsapp.findById(_instId).catch(() => null);
+                // Verificar que a instância pertence ao mesmo admin
+                if (inst && adminId && String(inst.adminId) !== String(adminId)) {
+                    inst = null;
+                }
             }
             if (!inst && adminId) {
-                inst = await InstanciaWhatsapp.findOne({ adminId, status: { $in: ['conectado','open','connected'] } });
+                inst = await InstanciaWhatsapp.findOne({
+                    adminId: String(adminId),
+                    status: { $in: ['conectado','open','connected'] }
+                }).sort({ ultimaConexao: -1 });
             }
             if (!inst) return false;
 
