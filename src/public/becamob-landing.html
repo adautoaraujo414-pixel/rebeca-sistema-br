@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BecaMob — Plataforma de Mobilidade Urbana</title>
+<meta name="description" content="Gerencie sua frota, despache corridas em tempo real e conecte motoristas parceiros. A plataforma completa de mobilidade urbana para empresas brasileiras.">
+<meta property="og:title" content="BecaMob — Plataforma de Mobilidade Urbana">
+<meta property="og:description" content="Despacho inteligente, GPS em tempo real, WhatsApp integrado. A solução completa para sua empresa de transporte.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --noite:#04080f;--dark2:#080f1a;--dark3:#0d1825;
+  --verde:#00e676;--verde-soft:rgba(0,230,118,0.10);--verde-glow:rgba(0,230,118,0.22);
+  --azul:#00b4d8;--azul-soft:rgba(0,180,216,0.10);
+  --dourado:#f0b429;--dourado-soft:rgba(240,180,41,0.10);
+  --branco:#f0f4f8;--cinza:#7a8fa6;
+  --borda:rgba(255,255,255,0.07);--card:rgba(255,255,255,0.035);
+  --radius:18px;--radius-sm:10px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--noite);color:var(--branco);overflow-x:hidden;line-height:1.65}
+
+/* FUNDO ANIMADO */
+.bg-grid{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:linear-gradient(rgba(0,230,118,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,230,118,0.03) 1px,transparent 1px);
+  background-size:60px 60px;animation:gridMove 20s linear infinite}
+@keyframes gridMove{0%{background-position:0 0}100%{background-position:60px 60px}}
+.bg-orbs{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.orb{position:absolute;border-radius:50%;filter:blur(120px);animation:orbFloat 12s ease-in-out infinite}
+.orb1{width:600px;height:600px;background:rgba(0,230,118,0.06);top:-200px;left:-100px;animation-delay:0s}
+.orb2{width:500px;height:500px;background:rgba(0,180,216,0.05);bottom:-150px;right:-100px;animation-delay:4s}
+.orb3{width:400px;height:400px;background:rgba(240,180,41,0.04);top:50%;left:50%;transform:translate(-50%,-50%);animation-delay:8s}
+@keyframes orbFloat{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(30px,-20px) scale(1.05)}66%{transform:translate(-20px,15px) scale(0.97)}}
+
+section,header,footer{position:relative;z-index:1}
+.container{max-width:1180px;margin:0 auto;padding:0 5vw}
+
+/* HEADER */
+header{position:fixed;top:0;left:0;right:0;z-index:100;height:70px;display:flex;align-items:center;justify-content:space-between;padding:0 5vw;background:rgba(4,8,15,0.85);backdrop-filter:blur(24px);border-bottom:1px solid var(--borda);transition:all .3s}
+.logo{font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:900;color:var(--branco);text-decoration:none;letter-spacing:-1px}
+.logo span{color:var(--verde)}
+nav{display:flex;align-items:center;gap:8px}
+nav a{color:var(--cinza);text-decoration:none;font-size:.875rem;font-weight:500;padding:7px 15px;border-radius:8px;transition:all .2s}
+nav a:hover{color:var(--branco);background:var(--card)}
+.btn-nav{background:var(--verde)!important;color:var(--noite)!important;font-weight:700!important;border-radius:50px!important;padding:8px 22px!important}
+.btn-nav:hover{opacity:.88!important;transform:translateY(-1px)}
+.burger{display:none;flex-direction:column;gap:5px;cursor:pointer;background:none;border:none;padding:6px}
+.burger span{display:block;width:24px;height:2px;background:var(--branco);border-radius:2px;transition:all .3s}
+.mob-nav{display:none;position:fixed;top:70px;left:0;right:0;background:rgba(4,8,15,0.98);backdrop-filter:blur(24px);padding:20px 5vw 32px;z-index:99;border-bottom:1px solid var(--borda);flex-direction:column;gap:4px}
+.mob-nav.open{display:flex}
+.mob-nav a{color:var(--cinza);text-decoration:none;font-size:1rem;font-weight:500;padding:13px 0;border-bottom:1px solid var(--borda);transition:color .2s}
+.mob-nav a:hover{color:var(--branco)}
+.mob-nav .btn-mob{margin-top:14px;background:var(--verde);color:var(--noite);text-align:center;border-radius:50px;font-weight:700;padding:14px;display:block;text-decoration:none}
+
+/* HERO */
+#hero{min-height:100vh;display:flex;align-items:center;padding-top:70px}
+.hero-wrap{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center;padding:100px 0 80px}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:var(--verde-soft);border:1px solid var(--verde-glow);color:var(--verde);font-size:.72rem;font-weight:700;padding:6px 16px;border-radius:50px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:28px}
+.pulse{width:7px;height:7px;background:var(--verde);border-radius:50%;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(1.6)}}
+.hero-titulo{font-family:'Syne',sans-serif;font-size:clamp(2.6rem,5vw,4.2rem);font-weight:900;line-height:1.05;color:var(--branco);margin-bottom:24px;letter-spacing:-2px}
+.hero-titulo .verde{color:var(--verde)}
+.hero-titulo .linha2{display:block;color:var(--cinza);font-size:clamp(1.4rem,2.5vw,2rem);font-weight:700;letter-spacing:-1px;margin-top:8px}
+.hero-sub{font-size:1.08rem;color:var(--cinza);margin-bottom:14px;max-width:500px;line-height:1.7}
+.hero-detalhe{font-size:.9rem;color:var(--verde);font-style:italic;margin-bottom:40px;padding-left:14px;border-left:2px solid var(--verde-glow)}
+.hero-btns{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:52px}
+.btn-p{background:var(--verde);color:var(--noite);font-weight:700;font-size:.95rem;padding:15px 34px;border-radius:50px;text-decoration:none;transition:all .2s;display:inline-block}
+.btn-p:hover{transform:translateY(-3px);box-shadow:0 12px 40px rgba(0,230,118,0.3)}
+.btn-g{background:transparent;color:var(--branco);font-weight:600;font-size:.95rem;padding:15px 34px;border-radius:50px;text-decoration:none;border:1px solid var(--borda);transition:all .2s;display:inline-block}
+.btn-g:hover{border-color:var(--verde);background:var(--verde-soft)}
+.hero-stats{display:flex;gap:32px;flex-wrap:wrap}
+.stat{display:flex;flex-direction:column}
+.stat-num{font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:900;color:var(--verde);letter-spacing:-1px}
+.stat-label{font-size:.78rem;color:var(--cinza);font-weight:500}
+
+/* PAINEL MOCKUP */
+.painel-mock{background:rgba(13,24,37,0.9);border:1px solid var(--borda);border-radius:20px;padding:0;overflow:hidden;box-shadow:0 40px 100px rgba(0,0,0,0.6);animation:floatMock 5s ease-in-out infinite}
+@keyframes floatMock{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+.mock-bar{background:rgba(0,230,118,0.08);border-bottom:1px solid var(--borda);padding:12px 18px;display:flex;align-items:center;gap:8px}
+.mock-dot{width:10px;height:10px;border-radius:50%}
+.mock-body{padding:20px}
+.mock-row{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;margin-bottom:8px;background:var(--card);border:1px solid var(--borda)}
+.mock-ico{font-size:1.1rem;width:32px;text-align:center}
+.mock-info{flex:1}
+.mock-nome{font-size:.8rem;font-weight:700;color:var(--branco)}
+.mock-det{font-size:.7rem;color:var(--cinza)}
+.mock-badge{font-size:.65rem;font-weight:700;padding:3px 10px;border-radius:50px}
+.badge-verde{background:var(--verde-soft);color:var(--verde);border:1px solid var(--verde-glow)}
+.badge-azul{background:var(--azul-soft);color:var(--azul)}
+.badge-gold{background:var(--dourado-soft);color:var(--dourado)}
+.mock-mapa{height:120px;background:linear-gradient(135deg,rgba(0,230,118,0.05) 0%,rgba(0,180,216,0.08) 100%);border-radius:10px;margin-top:12px;border:1px solid var(--borda);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.mock-mapa::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Cpath d='M0 50 Q25 20 50 50 T100 50' stroke='rgba(0,230,118,0.2)' fill='none' stroke-width='1.5'/%3E%3Cpath d='M0 70 Q25 40 50 70 T100 70' stroke='rgba(0,180,216,0.15)' fill='none' stroke-width='1'/%3E%3C/svg%3E") repeat}
+.mock-pin{position:relative;z-index:1;font-size:1.4rem;filter:drop-shadow(0 0 8px rgba(0,230,118,0.6))}
+
+/* NÚMEROS */
+#numeros{padding:80px 0;border-top:1px solid var(--borda);border-bottom:1px solid var(--borda)}
+.nums-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0}
+.num-item{text-align:center;padding:40px 20px;border-right:1px solid var(--borda)}
+.num-item:last-child{border-right:none}
+.num-val{font-family:'Syne',sans-serif;font-size:2.8rem;font-weight:900;color:var(--verde);letter-spacing:-2px;display:block;line-height:1}
+.num-desc{font-size:.82rem;color:var(--cinza);margin-top:8px;line-height:1.4}
+
+/* SEÇÃO GENÉRICA */
+.sec-label{font-size:.72rem;text-transform:uppercase;letter-spacing:.13em;color:var(--verde);font-weight:700;display:block;margin-bottom:14px}
+.sec-titulo{font-family:'Syne',sans-serif;font-size:clamp(1.8rem,3.5vw,2.8rem);font-weight:900;color:var(--branco);margin-bottom:18px;letter-spacing:-1.5px;line-height:1.1}
+.sec-sub{font-size:1.05rem;color:var(--cinza);max-width:640px;margin-bottom:56px;line-height:1.7}
+.divisor{width:44px;height:3px;background:linear-gradient(90deg,var(--verde),var(--azul));margin:16px 0 28px;border-radius:2px}
+
+/* PARA QUEM */
+#para-quem{padding:110px 0}
+.pq-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.pq-card{background:var(--card);border:1px solid var(--borda);border-radius:var(--radius);padding:36px 30px;transition:all .35s;position:relative;overflow:hidden;cursor:default}
+.pq-card::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--accent,var(--verde));transform:scaleX(0);transform-origin:left;transition:transform .4s}
+.pq-card:hover::after{transform:scaleX(1)}
+.pq-card:hover{border-color:rgba(0,230,118,0.2);transform:translateY(-6px);box-shadow:0 20px 60px rgba(0,0,0,0.4)}
+.pq-ico{font-size:2.4rem;margin-bottom:16px;display:block}
+.pq-nome{font-family:'Syne',sans-serif;font-size:1.25rem;font-weight:800;color:var(--branco);margin-bottom:10px;letter-spacing:-.5px}
+.pq-desc{font-size:.88rem;color:var(--cinza);line-height:1.65;margin-bottom:18px}
+.pq-lista{list-style:none;display:flex;flex-direction:column;gap:7px}
+.pq-lista li{font-size:.82rem;color:var(--branco);display:flex;align-items:flex-start;gap:8px;line-height:1.4}
+.pq-lista li::before{content:'→';color:var(--verde);font-weight:800;flex-shrink:0}
+
+/* FUNCIONALIDADES */
+#funcionalidades{padding:110px 0;background:linear-gradient(180deg,transparent,rgba(13,24,37,.5) 50%,transparent)}
+.func-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.func-card{background:var(--card);border:1px solid var(--borda);border-radius:var(--radius);padding:28px;transition:all .3s}
+.func-card:hover{border-color:rgba(0,230,118,0.2);transform:translateY(-4px)}
+.func-ico{font-size:1.8rem;margin-bottom:14px;display:block}
+.func-nome{font-size:1rem;font-weight:700;color:var(--branco);margin-bottom:8px}
+.func-desc{font-size:.83rem;color:var(--cinza);line-height:1.6}
+
+/* PARCEIROS */
+#parceiros{padding:110px 0}
+.parc-grid{display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-top:16px}
+.parc-card{border-radius:20px;padding:44px 38px;border:1px solid var(--borda);position:relative;overflow:hidden;transition:all .3s}
+.parc-card:hover{transform:translateY(-5px);box-shadow:0 24px 60px rgba(0,0,0,0.4)}
+.parc-motorista{background:linear-gradient(135deg,rgba(0,230,118,0.07) 0%,rgba(0,180,216,0.04) 100%)}
+.parc-motorista:hover{border-color:rgba(0,230,118,0.3)}
+.parc-frota{background:linear-gradient(135deg,rgba(240,180,41,0.07) 0%,rgba(0,180,216,0.04) 100%)}
+.parc-frota:hover{border-color:rgba(240,180,41,0.3)}
+.parc-tag{display:inline-block;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:5px 14px;border-radius:50px;margin-bottom:20px}
+.tag-verde{background:var(--verde-soft);color:var(--verde);border:1px solid var(--verde-glow)}
+.tag-gold{background:var(--dourado-soft);color:var(--dourado);border:1px solid rgba(240,180,41,0.3)}
+.parc-titulo{font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:900;color:var(--branco);margin-bottom:12px;letter-spacing:-.5px}
+.parc-desc{font-size:.92rem;color:var(--cinza);margin-bottom:24px;line-height:1.7}
+.parc-lista{list-style:none;display:flex;flex-direction:column;gap:9px;margin-bottom:28px}
+.parc-lista li{font-size:.85rem;color:var(--branco);display:flex;align-items:flex-start;gap:9px;line-height:1.4}
+.parc-lista li::before{content:'✓';font-weight:800;flex-shrink:0}
+.parc-motorista .parc-lista li::before{color:var(--verde)}
+.parc-frota .parc-lista li::before{color:var(--dourado)}
+.btn-parc{display:inline-block;font-weight:700;font-size:.9rem;padding:13px 28px;border-radius:50px;text-decoration:none;transition:all .2s}
+.btn-verde{background:var(--verde);color:var(--noite)}
+.btn-verde:hover{opacity:.88;transform:translateY(-2px);box-shadow:0 10px 30px rgba(0,230,118,0.25)}
+.btn-gold{background:var(--dourado);color:var(--noite)}
+.btn-gold:hover{opacity:.88;transform:translateY(-2px);box-shadow:0 10px 30px rgba(240,180,41,0.25)}
+
+/* COMO FUNCIONA */
+#como{padding:110px 0;background:linear-gradient(180deg,transparent,rgba(13,24,37,.5) 50%,transparent)}
+.como-grid{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center}
+.steps{display:flex;flex-direction:column;gap:0;counter-reset:s}
+.step{display:grid;grid-template-columns:52px 1fr;gap:20px;align-items:flex-start;padding:24px 0;border-bottom:1px solid var(--borda)}
+.step:last-child{border-bottom:none}
+.step-n{width:44px;height:44px;border-radius:50%;background:var(--verde-soft);border:1px solid var(--verde-glow);color:var(--verde);font-weight:800;font-size:1rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:'Syne',sans-serif}
+.step-t{font-size:1rem;font-weight:700;color:var(--branco);margin-bottom:5px}
+.step-d{font-size:.85rem;color:var(--cinza);line-height:1.6}
+.como-visual{background:var(--card);border:1px solid var(--borda);border-radius:20px;padding:28px;display:flex;flex-direction:column;gap:14px}
+.cv-item{display:flex;align-items:center;gap:14px;padding:14px;border-radius:12px;background:rgba(255,255,255,0.025);border:1px solid var(--borda);transition:all .3s}
+.cv-item:hover{border-color:var(--verde-glow);background:var(--verde-soft)}
+.cv-ico{font-size:1.3rem;width:38px;text-align:center}
+.cv-txt{flex:1}
+.cv-nome{font-size:.85rem;font-weight:700;color:var(--branco)}
+.cv-det{font-size:.75rem;color:var(--cinza)}
+.cv-status{font-size:.7rem;font-weight:700;padding:3px 10px;border-radius:50px;background:var(--verde-soft);color:var(--verde);border:1px solid var(--verde-glow);white-space:nowrap}
+
+/* WHATSAPP */
+#whatsapp{padding:110px 0}
+.wa-wrap{display:grid;grid-template-columns:1fr 1fr;gap:70px;align-items:center}
+.wa-chat{background:var(--card);border:1px solid var(--borda);border-radius:20px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,0.5)}
+.wa-header{background:rgba(0,230,118,0.1);border-bottom:1px solid var(--borda);padding:16px 20px;display:flex;align-items:center;gap:12px}
+.wa-avatar{width:38px;height:38px;border-radius:50%;background:var(--verde);display:flex;align-items:center;justify-content:center;font-size:1.1rem}
+.wa-nome{font-size:.9rem;font-weight:700;color:var(--branco)}
+.wa-online{font-size:.72rem;color:var(--verde)}
+.wa-msgs{padding:20px;display:flex;flex-direction:column;gap:10px}
+.msg{max-width:80%;padding:10px 14px;border-radius:14px;font-size:.82rem;line-height:1.5}
+.msg-bot{background:rgba(0,230,118,0.12);border:1px solid var(--verde-glow);color:var(--branco);align-self:flex-start;border-radius:4px 14px 14px 14px}
+.msg-user{background:rgba(255,255,255,0.07);border:1px solid var(--borda);color:var(--branco);align-self:flex-end;border-radius:14px 4px 14px 14px}
+.msg-time{font-size:.65rem;color:var(--cinza);margin-top:4px}
+.wa-features{display:flex;flex-direction:column;gap:20px}
+.wa-feat{display:flex;align-items:flex-start;gap:16px;padding:20px;background:var(--card);border:1px solid var(--borda);border-radius:14px;transition:all .3s}
+.wa-feat:hover{border-color:rgba(0,230,118,0.2);transform:translateX(6px)}
+.wa-feat-ico{font-size:1.5rem;flex-shrink:0;width:40px;text-align:center}
+.wa-feat-t{font-size:.92rem;font-weight:700;color:var(--branco);margin-bottom:4px}
+.wa-feat-d{font-size:.8rem;color:var(--cinza);line-height:1.55}
+
+/* SEGURANÇA */
+#seguranca{padding:110px 0;background:linear-gradient(180deg,transparent,rgba(13,24,37,.5) 50%,transparent)}
+.seg-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+.seg-card{background:var(--card);border:1px solid var(--borda);border-radius:var(--radius);padding:30px;transition:all .3s}
+.seg-card:hover{border-color:rgba(0,230,118,0.2);transform:translateY(-4px)}
+.seg-ico{font-size:1.6rem;margin-bottom:12px;display:block}
+.seg-t{font-size:1rem;font-weight:700;color:var(--branco);margin-bottom:8px}
+.seg-d{font-size:.83rem;color:var(--cinza);line-height:1.6}
+
+/* PLANOS */
+#planos{padding:110px 0}
+.planos-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.plano{background:var(--card);border:1px solid var(--borda);border-radius:20px;padding:36px 30px;transition:all .35s;position:relative;overflow:hidden}
+.plano:hover{transform:translateY(-6px);box-shadow:0 24px 60px rgba(0,0,0,0.4)}
+.plano.destaque{border-color:var(--verde-glow);background:linear-gradient(135deg,rgba(0,230,118,0.06) 0%,rgba(0,180,216,0.04) 100%)}
+.plano-tag{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:4px 12px;border-radius:50px;display:inline-block;margin-bottom:18px}
+.plano-nome{font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:900;color:var(--branco);margin-bottom:6px;letter-spacing:-.5px}
+.plano-preco{font-family:'Syne',sans-serif;font-size:2.4rem;font-weight:900;color:var(--verde);letter-spacing:-2px;line-height:1;margin-bottom:4px}
+.plano-preco span{font-size:1rem;color:var(--cinza);font-family:'DM Sans',sans-serif;font-weight:400;letter-spacing:0}
+.plano-periodo{font-size:.78rem;color:var(--cinza);margin-bottom:24px}
+.plano-lista{list-style:none;display:flex;flex-direction:column;gap:9px;margin-bottom:28px}
+.plano-lista li{font-size:.83rem;color:var(--branco);display:flex;align-items:flex-start;gap:8px;line-height:1.4}
+.plano-lista li::before{content:'✓';color:var(--verde);font-weight:800;flex-shrink:0}
+.plano-lista li.off{color:var(--cinza)}
+.plano-lista li.off::before{content:'–';color:var(--cinza)}
+.btn-plano{display:block;text-align:center;font-weight:700;font-size:.9rem;padding:13px;border-radius:50px;text-decoration:none;transition:all .2s}
+.btn-plano-p{background:var(--verde);color:var(--noite)}
+.btn-plano-p:hover{opacity:.88;transform:translateY(-2px);box-shadow:0 10px 30px rgba(0,230,118,0.25)}
+.btn-plano-g{background:var(--card);color:var(--branco);border:1px solid var(--borda)}
+.btn-plano-g:hover{border-color:var(--verde);background:var(--verde-soft)}
+
+/* CTA FINAL */
+#cta{padding:120px 0;text-align:center}
+.cta-wrap{max-width:780px;margin:0 auto}
+.cta-titulo{font-family:'Syne',sans-serif;font-size:clamp(2.2rem,4.5vw,3.6rem);font-weight:900;color:var(--branco);margin-bottom:20px;letter-spacing:-2px;line-height:1.05}
+.cta-titulo .verde{color:var(--verde)}
+.cta-sub{font-size:1.1rem;color:var(--cinza);margin-bottom:44px;line-height:1.7}
+.cta-btns{display:flex;justify-content:center;gap:16px;flex-wrap:wrap}
+
+/* FOOTER */
+footer{padding:60px 0 30px;border-top:1px solid var(--borda)}
+.footer-inner{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:40px;margin-bottom:40px}
+.footer-logo{font-family:'Syne',sans-serif;font-size:1.4rem;font-weight:900;color:var(--branco);text-decoration:none;letter-spacing:-1px}
+.footer-logo span{color:var(--verde)}
+.footer-slogan{font-size:.82rem;color:var(--cinza);margin-top:10px;line-height:1.65;max-width:240px}
+.footer-links{display:flex;flex-direction:column;gap:9px}
+.footer-links strong{color:var(--branco);font-size:.8rem;display:block;margin-bottom:4px}
+.footer-links a{color:var(--cinza);text-decoration:none;font-size:.84rem;transition:color .2s}
+.footer-links a:hover{color:var(--verde)}
+.footer-bottom{font-size:.78rem;color:var(--cinza);padding-top:24px;border-top:1px solid var(--borda);text-align:center}
+.wa-btn-float{position:fixed;bottom:28px;right:28px;z-index:200;background:#25d366;color:#fff;border-radius:50%;width:58px;height:58px;display:flex;align-items:center;justify-content:center;font-size:1.6rem;text-decoration:none;box-shadow:0 8px 30px rgba(37,211,102,0.4);transition:all .3s;animation:waPulse 3s ease-in-out infinite}
+@keyframes waPulse{0%,100%{box-shadow:0 8px 30px rgba(37,211,102,0.4)}50%{box-shadow:0 8px 50px rgba(37,211,102,0.7),0 0 0 12px rgba(37,211,102,0.08)}}
+.wa-btn-float:hover{transform:scale(1.1)}
+
+/* REVEAL */
+.reveal{opacity:0;transform:translateY(24px);transition:opacity .6s ease,transform .6s ease}
+.reveal.visible{opacity:1;transform:none}
+
+/* MOBILE */
+@media(max-width:960px){
+  .hero-wrap{grid-template-columns:1fr;gap:50px;padding:70px 0 60px}
+  .painel-mock{max-width:480px;margin:0 auto}
+  .nums-grid{grid-template-columns:repeat(2,1fr)}
+  .num-item:nth-child(2){border-right:none}
+  .pq-grid{grid-template-columns:1fr}
+  .func-grid{grid-template-columns:1fr 1fr}
+  .parc-grid{grid-template-columns:1fr}
+  .como-grid{grid-template-columns:1fr}
+  .wa-wrap{grid-template-columns:1fr}
+  .seg-grid{grid-template-columns:1fr 1fr}
+  .planos-grid{grid-template-columns:1fr}
+  .footer-inner{grid-template-columns:1fr 1fr;gap:30px}
+  nav .nl{display:none}
+  .burger{display:flex}
+}
+@media(max-width:600px){
+  .func-grid{grid-template-columns:1fr}
+  .seg-grid{grid-template-columns:1fr}
+  .nums-grid{grid-template-columns:1fr 1fr}
+  .footer-inner{grid-template-columns:1fr}
+  .cta-btns{flex-direction:column;align-items:center}
+  .hero-stats{gap:20px}
+}
+</style>
+</head>
+<body>
+
+<div class="bg-grid"></div>
+<div class="bg-orbs">
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+  <div class="orb orb3"></div>
+</div>
+
+<!-- HEADER -->
+<header id="hdr">
+  <a href="#" class="logo">Beca<span>Mob</span></a>
+  <nav>
+    <a href="#para-quem" class="nl">Para quem</a>
+    <a href="#funcionalidades" class="nl">Funcionalidades</a>
+    <a href="#parceiros" class="nl">Seja Parceiro</a>
+    <a href="#planos" class="nl">Planos</a>
+    <a href="admin/login.html" class="btn-nav">Acessar Painel</a>
+    <button class="burger" id="burger"><span></span><span></span><span></span></button>
+  </nav>
+</header>
+<div class="mob-nav" id="mobNav">
+  <a href="#para-quem">Para quem é</a>
+  <a href="#funcionalidades">Funcionalidades</a>
+  <a href="#parceiros">Seja Parceiro</a>
+  <a href="#planos">Planos</a>
+  <a href="#whatsapp">WhatsApp</a>
+  <a href="admin/login.html" class="btn-mob">Acessar Painel →</a>
+</div>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="container">
+    <div class="hero-wrap">
+      <div>
+        <span class="hero-badge"><span class="pulse"></span>Plataforma Ativa — Mobilidade Urbana</span>
+        <h1 class="hero-titulo">
+          Sua frota.<br>
+          <span class="verde">Sob controle.</span>
+          <span class="linha2">Em tempo real.</span>
+        </h1>
+        <p class="hero-sub">BecaMob é a plataforma completa para empresas de transporte — despacho inteligente, GPS ao vivo, comunicação pelo WhatsApp e gestão total da sua frota de motoristas.</p>
+        <p class="hero-detalhe">"Do pedido ao destino, tudo visível, tudo registrado, tudo no painel."</p>
+        <div class="hero-btns">
+          <a href="admin/login.html" class="btn-p">Acessar Painel →</a>
+          <a href="#parceiros" class="btn-g">Seja Parceiro</a>
+        </div>
+        <div class="hero-stats">
+          <div class="stat"><span class="stat-num">100%</span><span class="stat-label">Rastreamento em tempo real</span></div>
+          <div class="stat"><span class="stat-num">24/7</span><span class="stat-label">Atendimento via WhatsApp</span></div>
+          <div class="stat"><span class="stat-num">0%</span><span class="stat-label">Corrida sem registro</span></div>
+        </div>
+      </div>
+      <div class="painel-mock">
+        <div class="mock-bar">
+          <div class="mock-dot" style="background:#ff5f57"></div>
+          <div class="mock-dot" style="background:#febc2e"></div>
+          <div class="mock-dot" style="background:#28c840"></div>
+          <span style="font-size:.72rem;color:var(--cinza);margin-left:8px;font-family:'DM Sans',sans-serif">BecaMob — Painel ao Vivo</span>
+        </div>
+        <div class="mock-body">
+          <div style="font-size:.7rem;color:var(--verde);font-weight:700;margin-bottom:12px;text-transform:uppercase;letter-spacing:.08em">● 4 corridas ativas agora</div>
+          <div class="mock-row">
+            <div class="mock-ico">🚗</div>
+            <div class="mock-info"><div class="mock-nome">Carlos Mendes</div><div class="mock-det">Rua das Flores → Shopping Iguatemi</div></div>
+            <span class="mock-badge badge-verde">Em rota</span>
+          </div>
+          <div class="mock-row">
+            <div class="mock-ico">🚕</div>
+            <div class="mock-info"><div class="mock-nome">Ana Souza</div><div class="mock-det">Av. Paulista → Aeroporto</div></div>
+            <span class="mock-badge badge-azul">A caminho</span>
+          </div>
+          <div class="mock-row">
+            <div class="mock-ico">🚗</div>
+            <div class="mock-info"><div class="mock-nome">Pedro Lima</div><div class="mock-det">Terminal → Bairro Novo</div></div>
+            <span class="mock-badge badge-gold">Aguardando</span>
+          </div>
+          <div class="mock-mapa">
+            <span class="mock-pin">📍</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:14px">
+            <div style="font-size:.72rem;color:var(--cinza)">Corridas hoje: <strong style="color:var(--verde)">47</strong></div>
+            <div style="font-size:.72rem;color:var(--cinza)">Faturamento: <strong style="color:var(--verde)">R$ 2.840</strong></div>
+            <div style="font-size:.72rem;color:var(--cinza)">Motoristas: <strong style="color:var(--verde)">8 ativos</strong></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- NÚMEROS -->
+<section id="numeros">
+  <div class="container">
+    <div class="nums-grid">
+      <div class="num-item reveal">
+        <span class="num-val">+10k</span>
+        <div class="num-desc">Corridas processadas<br>pela plataforma</div>
+      </div>
+      <div class="num-item reveal">
+        <span class="num-val">98%</span>
+        <div class="num-desc">Uptime garantido<br>da plataforma</div>
+      </div>
+      <div class="num-item reveal">
+        <span class="num-val">&lt;2s</span>
+        <div class="num-desc">Tempo de despacho<br>para o motorista</div>
+      </div>
+      <div class="num-item reveal">
+        <span class="num-val">100%</span>
+        <div class="num-desc">Corridas com histórico<br>e rastreamento salvo</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PARA QUEM -->
+<section id="para-quem">
+  <div class="container">
+    <div class="reveal">
+      <span class="sec-label">Para quem é a BecaMob</span>
+      <h2 class="sec-titulo">Construída para quem opera transporte de verdade.</h2>
+      <div class="divisor"></div>
+      <p class="sec-sub">Não importa o tamanho da sua frota — se você tem motoristas, rotas e clientes esperando, a BecaMob foi feita para você.</p>
+    </div>
+    <div class="pq-grid">
+      <div class="pq-card reveal" style="--accent:#00e676">
+        <span class="pq-ico">🏢</span>
+        <div class="pq-nome">Empresas de Transporte</div>
+        <p class="pq-desc">Operações com frota própria que precisam de controle total — despacho, rastreamento, financeiro e relatórios em um só lugar.</p>
+        <ul class="pq-lista">
+          <li>Gestão completa de motoristas e veículos</li>
+          <li>Despacho manual ou automático de corridas</li>
+          <li>Relatórios de desempenho por motorista</li>
+          <li>Controle financeiro da operação</li>
+          <li>Mapa ao vivo com todos os motoristas</li>
+        </ul>
+      </div>
+      <div class="pq-card reveal" style="--accent:#00b4d8">
+        <span class="pq-ico">🚖</span>
+        <div class="pq-nome">Aplicativos Regionais</div>
+        <p class="pq-desc">Plataformas locais que querem competir com os grandes apps mas precisam de infraestrutura robusta sem custo absurdo.</p>
+        <ul class="pq-lista">
+          <li>App próprio para motoristas (Android/iOS)</li>
+          <li>Corrida por WhatsApp para o cliente final</li>
+          <li>Preço dinâmico por horário e demanda</li>
+          <li>Antifraude integrado na plataforma</li>
+          <li>Suporte a múltiplos administradores</li>
+        </ul>
+      </div>
+      <div class="pq-card reveal" style="--accent:#f0b429">
+        <span class="pq-ico">🎓</span>
+        <div class="pq-nome">Transporte Escolar & Corporativo</div>
+        <p class="pq-desc">Rotas fixas, passageiros recorrentes e necessidade de comunicação constante com responsáveis e empresas contratantes.</p>
+        <ul class="pq-lista">
+          <li>Notificações automáticas por WhatsApp</li>
+          <li>Rastreamento compartilhado com responsável</li>
+          <li>Histórico completo de cada viagem</li>
+          <li>Controle de presença e embarque</li>
+          <li>Relatórios mensais para o contratante</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FUNCIONALIDADES -->
+<section id="funcionalidades">
+  <div class="container">
+    <div class="reveal">
+      <span class="sec-label">O que a plataforma entrega</span>
+      <h2 class="sec-titulo">Tudo que sua operação precisa. Em um só painel.</h2>
+      <div class="divisor"></div>
+      <p class="sec-sub">Da solicitação do cliente à finalização da corrida — cada etapa registrada, rastreada e visível para o administrador em tempo real.</p>
+    </div>
+    <div class="func-grid">
+      <div class="func-card reveal"><span class="func-ico">🗺️</span><div class="func-nome">GPS em Tempo Real</div><div class="func-desc">Veja todos os motoristas no mapa ao vivo. Acompanhe cada corrida do início ao fim com rastreamento contínuo e histórico de rota.</div></div>
+      <div class="func-card reveal"><span class="func-ico">⚡</span><div class="func-nome">Despacho Inteligente</div><div class="func-desc">Envie corridas automaticamente para o motorista mais próximo ou escolha manualmente pelo painel. Resposta em menos de 2 segundos.</div></div>
+      <div class="func-card reveal"><span class="func-ico">💬</span><div class="func-nome">WhatsApp Integrado</div><div class="func-desc">Cliente pede a corrida pelo WhatsApp. Rebeca confirma, despacha e atualiza o status automaticamente. Sem app para o cliente instalar.</div></div>
+      <div class="func-card reveal"><span class="func-ico">💰</span><div class="func-nome">Preço Dinâmico</div><div class="func-desc">Configure tarifas por horário, dia da semana, zona geográfica ou demanda. O sistema calcula e aplica automaticamente em cada corrida.</div></div>
+      <div class="func-card reveal"><span class="func-ico">📊</span><div class="func-nome">Painel Financeiro</div><div class="func-desc">Faturamento por período, comissões dos motoristas, corridas por status e relatórios completos exportáveis para análise.</div></div>
+      <div class="func-card reveal"><span class="func-ico">🛡️</span><div class="func-nome">Antifraude</div><div class="func-desc">Detecção automática de corridas suspeitas, motoristas com comportamento irregular e clientes problemáticos. Sua operação protegida.</div></div>
+      <div class="func-card reveal"><span class="func-ico">📍</span><div class="func-nome">Pontos de Referência</div><div class="func-desc">Cadastre zonas, pontos de embarque e localidades com tarifas específicas. Controle total sobre as regiões que sua frota atende.</div></div>
+      <div class="func-card reveal"><span class="func-ico">👥</span><div class="func-nome">Gestão de Motoristas</div><div class="func-desc">Cadastro completo, documentos, histórico de corridas, avaliações e status em tempo real de cada motorista da sua frota.</div></div>
+      <div class="func-card reveal"><span class="func-ico">🔔</span><div class="func-nome">Notificações Automáticas</div><div class="func-desc">Cliente recebe atualização quando o motorista aceitou, chegou, iniciou e finalizou a corrida — tudo pelo WhatsApp automaticamente.</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- PARCEIROS -->
+<section id="parceiros">
+  <div class="container">
+    <div class="reveal">
+      <span class="sec-label">Faça parte da BecaMob</span>
+      <h2 class="sec-titulo">Seja um parceiro. Escolha seu perfil.</h2>
+      <div class="divisor"></div>
+      <p class="sec-sub">Temos dois caminhos para quem quer fazer parte do ecossistema BecaMob — para o motorista que quer mais corridas e para o empresário que quer operar com tecnologia.</p>
+    </div>
+    <div class="parc-grid">
+      <div class="parc-card parc-motorista reveal">
+        <span class="parc-tag tag-verde">🚗 Para Motoristas</span>
+        <div class="parc-titulo">Motorista Parceiro</div>
+        <p class="parc-desc">Cadastre-se na plataforma, receba corridas pelo app e ganhe mais com uma operação organizada, transparente e sem taxa abusiva.</p>
+        <ul class="parc-lista">
+          <li>Receba corridas diretamente no celular</li>
+          <li>GPS integrado — sem precisar de outro app</li>
+          <li>Histórico completo de ganhos e corridas</li>
+          <li>Comunicação direta com o despachante</li>
+          <li>Suporte via WhatsApp a qualquer hora</li>
+          <li>Pagamento transparente sem surpresas</li>
+        </ul>
+        <a href="motorista-app.html" class="btn-parc btn-verde">Quero ser Motorista Parceiro →</a>
+      </div>
+      <div class="parc-card parc-frota reveal">
+        <span class="parc-tag tag-gold">🏢 Para Empresários</span>
+        <div class="parc-titulo">Dono de Frota</div>
+        <p class="parc-desc">Monte sua operação de transporte com a infraestrutura da BecaMob. Tenha seu painel, seus motoristas e seus clientes — com a tecnologia toda pronta.</p>
+        <ul class="parc-lista">
+          <li>Painel administrativo completo e exclusivo</li>
+          <li>Sua marca, seus motoristas, seus clientes</li>
+          <li>WhatsApp próprio integrado à plataforma</li>
+          <li>Configuração de preços e zonas de atuação</li>
+          <li>Relatórios financeiros e de desempenho</li>
+          <li>Suporte técnico dedicado na implantação</li>
+        </ul>
+        <a href="admin/login.html" class="btn-parc btn-gold">Quero criar minha operação →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- COMO FUNCIONA -->
+<section id="como">
+  <div class="container">
+    <div class="reveal">
+      <span class="sec-label">Do pedido ao destino</span>
+      <h2 class="sec-titulo">Como funciona na prática.</h2>
+      <div class="divisor"></div>
+    </div>
+    <div class="como-grid">
+      <div class="steps reveal">
+        <div class="step">
+          <div class="step-n">1</div>
+          <div><div class="step-t">📲 Cliente chama no WhatsApp</div><div class="step-d">O cliente manda mensagem no número da sua empresa. A BecaMob atende automaticamente, coleta origem e destino.</div></div>
+        </div>
+        <div class="step">
+          <div class="step-n">2</div>
+          <div><div class="step-t">⚡ Sistema despacha o motorista</div><div class="step-d">O motorista mais próximo recebe a corrida no app. Aceite em um toque, sem demora, sem confusão.</div></div>
+        </div>
+        <div class="step">
+          <div class="step-n">3</div>
+          <div><div class="step-t">📍 Cliente acompanha em tempo real</div><div class="step-d">A BecaMob avisa quando o motorista aceitou, saiu e chegou — tudo pelo WhatsApp, sem app extra.</div></div>
+        </div>
+        <div class="step">
+          <div class="step-n">4</div>
+          <div><div class="step-t">✅ Corrida finalizada e registrada</div><div class="step-d">Preço calculado, histórico salvo, motorista notificado. Tudo visível no painel do administrador.</div></div>
+        </div>
+        <div class="step">
+          <div class="step-n">5</div>
+          <div><div class="step-t">📊 Relatório automático no painel</div><div class="step-d">Faturamento, corridas, desempenho dos motoristas — tudo consolidado, sem planilha, sem esforço.</div></div>
+        </div>
+      </div>
+      <div class="como-visual reveal">
+        <div style="font-size:.72rem;color:var(--verde);font-weight:700;margin-bottom:6px;text-transform:uppercase;letter-spacing:.08em">● Painel ao vivo</div>
+        <div class="cv-item">
+          <div class="cv-ico">🟢</div>
+          <div class="cv-txt"><div class="cv-nome">Carlos — Corrida aceita</div><div class="cv-det">2 min atrás · Rua das Flores</div></div>
+          <span class="cv-status">Em rota</span>
+        </div>
+        <div class="cv-item">
+          <div class="cv-ico">📍</div>
+          <div class="cv-txt"><div class="cv-nome">Ana — A caminho do cliente</div><div class="cv-det">Agora · 1.2 km</div></div>
+          <span class="cv-status" style="background:var(--azul-soft);color:var(--azul);border-color:var(--azul)">A caminho</span>
+        </div>
+        <div class="cv-item">
+          <div class="cv-ico">✅</div>
+          <div class="cv-txt"><div class="cv-nome">Pedro — Corrida finalizada</div><div class="cv-det">14 min atrás · R$ 28,50</div></div>
+          <span class="cv-status" style="background:var(--dourado-soft);color:var(--dourado);border-color:rgba(240,180,41,.3)">Finalizado</span>
+        </div>
+        <div class="cv-item">
+          <div class="cv-ico">⏳</div>
+          <div class="cv-txt"><div class="cv-nome">Marcos — Aguardando aceite</div><div class="cv-det">Despacho automático ativo</div></div>
+          <span class="cv-status" style="background:rgba(255,255,255,.05);color:var(--cinza);border-color:var(--borda)">Despachando</span>
+        </div>
+        <div style="margin-top:10px;padding:16px;background:rgba(0,230,118,0.05);border:1px solid var(--verde-glow);border-radius:12px">
+          <div style="font-size:.75rem;color:var(--cinza);margin-bottom:6px">Resumo do dia</div>
+          <div style="display:flex;justify-content:space-between">
+            <div style="text-align:center"><div style="font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:900;color:var(--verde)">47</div><div style="font-size:.68rem;color:var(--cinza)">Corridas</div></div>
+            <div style="text-align:center"><div style="font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:900;color:var(--verde)">R$2.840</div><div style="font-size:.68rem;color:var(--cinza)">Faturado</div></div>
+            <div style="text-align:center"><div style="font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:900;color:var(--verde)">8</div><div style="font-size:.68rem;color:var(--cinza)">Motoristas</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WHATSAPP -->
+<section id="whatsapp">
+  <div class="container">
+    <div class="reveal" style="text-align:center;max-width:700px;margin:0 auto 64px">
+      <span class="sec-label">API Oficial Meta — WhatsApp Business</span>
+      <h2 class="sec-titulo">Seu cliente pede a corrida pelo WhatsApp. Simples assim.</h2>
+      <div class="divisor" style="margin:16px auto 0"></div>
+    </div>
+    <div class="wa-wrap">
+      <div class="wa-chat reveal">
+        <div class="wa-header">
+          <div class="wa-avatar">🚗</div>
+          <div><div class="wa-nome">BecaMob Transporte</div><div class="wa-online">● Online agora</div></div>
+        </div>
+        <div class="wa-msgs">
+          <div class="msg msg-user">Oi, quero uma corrida<div class="msg-time">14:22</div></div>
+          <div class="msg msg-bot">Olá! 😊 Fico feliz em ajudar. Qual é o seu endereço de origem?<div class="msg-time">14:22</div></div>
+          <div class="msg msg-user">Rua das Flores, 120<div class="msg-time">14:23</div></div>
+          <div class="msg msg-bot">Perfeito! E qual é o destino?<div class="msg-time">14:23</div></div>
+          <div class="msg msg-user">Shopping Iguatemi<div class="msg-time">14:23</div></div>
+          <div class="msg msg-bot">✅ Corrida confirmada! O motorista Carlos está a caminho — chegada estimada em 4 minutos. 🚗<div class="msg-time">14:24</div></div>
+          <div class="msg msg-bot">📍 Carlos chegou ao local de embarque. Boa viagem!<div class="msg-time">14:28</div></div>
+        </div>
+      </div>
+      <div class="wa-features reveal">
+        <div class="wa-feat">
+          <div class="wa-feat-ico">🔗</div>
+          <div><div class="wa-feat-t">API Oficial Meta — WhatsApp Business</div><div class="wa-feat-d">Integração com a API oficial da Meta. Número verificado, conta business, sem risco de banimento e com suporte a alto volume de mensagens.</div></div>
+        </div>
+        <div class="wa-feat">
+          <div class="wa-feat-ico">🤖</div>
+          <div><div class="wa-feat-t">Atendimento 100% automatizado</div><div class="wa-feat-d">A Rebeca atende, coleta origem e destino, confirma, despacha e notifica — sem precisar de atendente humano no processo.</div></div>
+        </div>
+        <div class="wa-feat">
+          <div class="wa-feat-ico">🔔</div>
+          <div><div class="wa-feat-t">Notificações em cada etapa</div><div class="wa-feat-d">Aceite, chegada, início da corrida e finalização — o cliente recebe atualização automática em cada momento, sem precisar perguntar nada.</div></div>
+        </div>
+        <div class="wa-feat">
+          <div class="wa-feat-ico">📱</div>
+          <div><div class="wa-feat-t">Sem app para o cliente instalar</div><div class="wa-feat-d">O cliente usa o WhatsApp que já tem no celular. Sem fricção, sem cadastro complicado, sem download. A corrida começa em segundos.</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SEGURANÇA -->
+<section id="seguranca">
+  <div class="container">
+    <div class="reveal">
+      <span class="sec-label">Proteção e confiança</span>
+      <h2 class="sec-titulo">Sua operação protegida em cada detalhe.</h2>
+      <div class="divisor"></div>
+      <p class="sec-sub">Antifraude, isolamento de dados por empresa e rastreamento completo — a BecaMob foi construída com segurança desde o primeiro dia.</p>
+    </div>
+    <div class="seg-grid">
+      <div class="seg-card reveal"><span class="seg-ico">🛡️</span><div class="seg-t">Antifraude Integrado</div><div class="seg-d">Detecção automática de corridas suspeitas, localização fora de rota e comportamentos irregulares de motoristas e clientes.</div></div>
+      <div class="seg-card reveal"><span class="seg-ico">🔒</span><div class="seg-d2">Isolamento Total de Dados</div><div class="seg-d">Cada empresa tem seus dados completamente separados. Nenhum motorista, cliente ou corrida vaza entre operações diferentes.</div></div>
+      <div class="seg-card reveal"><span class="seg-ico">📜</span><div class="seg-t">Histórico Permanente</div><div class="seg-d">Toda corrida fica registrada para sempre — GPS, tempo, preço, motorista e cliente. Acesse qualquer corrida de qualquer data.</div></div>
+      <div class="seg-card reveal"><span class="seg-ico">✅</span><div class="seg-t">Validação de Motoristas</div><div class="seg-d">Somente motoristas aprovados pelo administrador recebem corridas. Controle total sobre quem opera na sua frota.</div></div>
+      <div class="seg-card reveal"><span class="seg-ico">🌐</span><div class="seg-t">API Oficial WhatsApp</div><div class="seg-d">Integração exclusiva com a API Business oficial da Meta. Conta verificada, alto volume e sem risco de bloqueio do número.</div></div>
+      <div class="seg-card reveal"><span class="seg-ico">📊</span><div class="seg-t">Auditoria Completa</div><div class="seg-d">Log de todas as ações do sistema — quem despacheu, quando, para qual motorista e qual foi o resultado de cada corrida.</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- PLANOS -->
+<section id="planos">
+  <div class="container">
+    <div class="reveal" style="text-align:center;max-width:650px;margin:0 auto 64px">
+      <span class="sec-label">Planos e preços</span>
+      <h2 class="sec-titulo">Escolha o plano ideal para sua operação.</h2>
+      <div class="divisor" style="margin:16px auto 0"></div>
+    </div>
+    <div class="planos-grid">
+      <div class="plano reveal">
+        <span class="plano-tag" style="background:var(--azul-soft);color:var(--azul);border:1px solid rgba(0,180,216,.25)">Starter</span>
+        <div class="plano-nome">Operação Básica</div>
+        <div class="plano-preco">R$197<span>/mês</span></div>
+        <div class="plano-periodo">Até 5 motoristas ativos</div>
+        <ul class="plano-lista">
+          <li>Painel administrativo completo</li>
+          <li>App do motorista</li>
+          <li>GPS em tempo real</li>
+          <li>Histórico de corridas</li>
+          <li>WhatsApp integrado (até 500 msgs/mês)</li>
+          <li class="off">Preço dinâmico avançado</li>
+          <li class="off">Antifraude automático</li>
+          <li class="off">Relatórios financeiros avançados</li>
+        </ul>
+        <a href="admin/login.html" class="btn-plano btn-plano-g">Começar agora</a>
+      </div>
+      <div class="plano destaque reveal">
+        <span class="plano-tag" style="background:var(--verde-soft);color:var(--verde);border:1px solid var(--verde-glow)">⭐ Mais Popular</span>
+        <div class="plano-nome">Operação Profissional</div>
+        <div class="plano-preco">R$397<span>/mês</span></div>
+        <div class="plano-periodo">Até 20 motoristas ativos</div>
+        <ul class="plano-lista">
+          <li>Tudo do plano Starter</li>
+          <li>Preço dinâmico por horário e zona</li>
+          <li>Antifraude integrado</li>
+          <li>WhatsApp ilimitado (API Oficial Meta)</li>
+          <li>Relatórios financeiros completos</li>
+          <li>Pontos de embarque e zonas de preço</li>
+          <li>Suporte prioritário via WhatsApp</li>
+          <li class="off">Multi-administrador</li>
+        </ul>
+        <a href="admin/login.html" class="btn-plano btn-plano-p">Começar agora</a>
+      </div>
+      <div class="plano reveal">
+        <span class="plano-tag" style="background:var(--dourado-soft);color:var(--dourado);border:1px solid rgba(240,180,41,.25)">Enterprise</span>
+        <div class="plano-nome">Operação Completa</div>
+        <div class="plano-preco" style="font-size:1.6rem;letter-spacing:-1px">Sob consulta</div>
+        <div class="plano-periodo">Motoristas ilimitados</div>
+        <ul class="plano-lista">
+          <li>Tudo do plano Profissional</li>
+          <li>Multi-administrador e sub-contas</li>
+          <li>API dedicada e integrações customizadas</li>
+          <li>SLA de disponibilidade garantido</li>
+          <li>Implantação assistida pela equipe</li>
+          <li>Treinamento da equipe operacional</li>
+          <li>Relatórios customizados por demanda</li>
+          <li>Gerente de conta exclusivo</li>
+        </ul>
+        <a href="https://wa.me/5511999999999?text=Olá,%20quero%20conhecer%20o%20plano%20Enterprise%20da%20BecaMob" target="_blank" class="btn-plano btn-plano-g">Falar com consultor</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA FINAL -->
+<section id="cta">
+  <div class="container">
+    <div class="cta-wrap reveal">
+      <h2 class="cta-titulo">Sua frota merece uma plataforma <span class="verde">de verdade.</span></h2>
+      <p class="cta-sub">Pare de operar no improviso. Com a BecaMob você tem controle total — do primeiro pedido ao relatório do mês — em um painel simples e poderoso.</p>
+      <div class="cta-btns">
+        <a href="admin/login.html" class="btn-p">Acessar o Painel →</a>
+        <a href="#parceiros" class="btn-g">Quero ser Parceiro</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="container">
+    <div class="footer-inner">
+      <div>
+        <a href="#" class="footer-logo">Beca<span>Mob</span></a>
+        <p class="footer-slogan">Plataforma de Mobilidade Urbana para empresas de transporte brasileiras. GPS, despacho, WhatsApp e gestão em um só lugar.</p>
+      </div>
+      <div class="footer-links">
+        <strong>Plataforma</strong>
+        <a href="#funcionalidades">Funcionalidades</a>
+        <a href="#como">Como funciona</a>
+        <a href="#seguranca">Segurança</a>
+        <a href="#planos">Planos</a>
+      </div>
+      <div class="footer-links">
+        <strong>Parceiros</strong>
+        <a href="motorista-app.html">App do Motorista</a>
+        <a href="#parceiros">Dono de Frota</a>
+        <a href="admin/login.html">Painel Admin</a>
+        <a href="rastrear.html">Rastrear Corrida</a>
+      </div>
+      <div class="footer-links">
+        <strong>Rebeca Solutions</strong>
+        <a href="rebeca-landing.html">Página Principal</a>
+        <a href="agenda-landing.html">Rebeca Agenda</a>
+        <a href="rebeca-delivery-landing.html">Rebeca Delivery</a>
+        <a href="/privacidade">Privacidade</a>
+        <a href="/termos">Termos de Uso</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      &copy; 2026 BecaMob — Rebeca Solutions &mdash; Todos os direitos reservados &nbsp;·&nbsp;
+      <a href="/privacidade" style="color:inherit;text-decoration:none">Privacidade</a> &nbsp;·&nbsp;
+      <a href="/termos" style="color:inherit;text-decoration:none">Termos</a>
+    </div>
+  </div>
+</footer>
+
+<!-- BOTÃO WHATSAPP FLUTUANTE -->
+<a href="https://wa.me/5511999999999?text=Olá,%20quero%20saber%20mais%20sobre%20a%20BecaMob" target="_blank" class="wa-btn-float" title="Fale conosco no WhatsApp">💬</a>
+
+<script src="/js/rebeca-monitor.js"></script>
+<script>
+const burger = document.getElementById('burger');
+const mobNav = document.getElementById('mobNav');
+burger.addEventListener('click', () => mobNav.classList.toggle('open'));
+mobNav.querySelectorAll('a').forEach(a => a.addEventListener('click', () => mobNav.classList.remove('open')));
+
+const revealEls = document.querySelectorAll('.reveal');
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach((entry, i) => {
+    if (entry.isIntersecting) {
+      setTimeout(() => entry.target.classList.add('visible'), i * 70);
+      observer.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.07 });
+revealEls.forEach(el => observer.observe(el));
+
+window.addEventListener('scroll', () => {
+  document.getElementById('hdr').style.background = window.scrollY > 40 ? 'rgba(4,8,15,0.98)' : 'rgba(4,8,15,0.85)';
+});
+</script>
+</body>
+</html>
