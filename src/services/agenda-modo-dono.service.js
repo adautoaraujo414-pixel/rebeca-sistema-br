@@ -1544,12 +1544,27 @@ ${totalAgs > 0 ? 'Tá saindo bem! 💪' : 'Ainda sem registros esse mês.'}`);
   }
 
       // ── VER / EXCLUIR LEMBRETES ─────────────────────────────────────────────
-  if (/ver.*lembrete|meus.*lembrete|quais.*lembrete|lista.*lembrete/i.test(msgL)) {
+  if (/ver.*lembrete|meus.*lembrete|quais.*lembrete|lista.*lembrete|lembrete.*futur|lembrete.*pendente|tenho.*lembrete|mostra.*lembrete|\blembretes\b/i.test(msgL)) {
     const admin2 = await AdminAgenda.findById(adminObjId).lean();
     const lembs = (admin2?.config?.lembretes || []).filter(l => !l.enviado).sort((a,b) => new Date(a.dataEvento)-new Date(b.dataEvento));
     if (!lembs.length) { await responder("Nenhum lembrete pendente."); return true; }
     const lista = lembs.map((l,i) => `${i+1}. ${l.texto} — ${_fmtData(new Date(l.dataEvento))} ${l.dataEvento ? "às "+_fmtHora(new Date(l.dataEvento)) : ""}`).join("\n");
-    await responder(`Seus lembretes pendentes:\n${lista}\n\nPara excluir: "cancela lembrete 1"`);
+    await responder(`🔔 *Seus lembretes futuros (${lembs.length}):*\n\n${lista}\n\n📌 Para excluir um: *cancela lembrete 1*\n🗑️ Para excluir todos: *cancela todos os lembretes*`);
+    return true;
+  }
+
+  // ── EXCLUIR TODOS OS LEMBRETES ──────────────────────────────────────────────
+  if (/cancela.*todos.*lembrete|apaga.*todos.*lembrete|exclu.*todos.*lembrete|deleta.*todos.*lembrete|cancela.*lembrete.*todos|limpa.*lembrete|zera.*lembrete/i.test(msgL)) {
+    const admin2 = await AdminAgenda.findById(adminObjId).lean();
+    const lembs = (admin2?.config?.lembretes || []).filter(l => !l.enviado);
+    if (!lembs.length) {
+      await responder(`Não tem nenhum lembrete pendente pra cancelar, ${_chefe(_generoAdmin, _apelidoAdmin)}! 😊`);
+      return true;
+    }
+    await AdminAgenda.findByIdAndUpdate(adminObjId, {
+      $pull: { 'config.lembretes': { enviado: { $ne: true } } }
+    });
+    await responder(`🗑️ Pronto, ${_chefe(_generoAdmin, _apelidoAdmin)}! *${lembs.length} lembrete(s)* cancelado(s). Tá limpo! 💙`);
     return true;
   }
 
