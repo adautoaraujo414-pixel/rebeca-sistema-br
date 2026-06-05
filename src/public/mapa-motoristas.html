@@ -95,7 +95,10 @@ async function atualizarMapa() {
       else offline++;
 
       const nome = loc.nome || motoristas.find(m => String(m.id || m._id) === String(id))?.nome || 'Motorista';
-      const popup = `<b>${nome}</b><br>Status: ${status}<br>Lat: ${lat.toFixed(5)}<br>Lng: ${lng.toFixed(5)}<br>${loc.atualizadoEm ? 'Atualizado: ' + new Date(loc.atualizadoEm).toLocaleTimeString('pt-BR') : ''}`;
+      const _statusLabel = status === 'disponivel' ? '🟢 Disponível' : status === 'em_corrida' ? '🔴 Em corrida' : '⚫ Offline';
+      const _atualizadoStr = loc.atualizadoEm ? '🕐 ' + new Date(loc.atualizadoEm).toLocaleTimeString('pt-BR') : '';
+      const _mapsLink = `<a href="https://maps.google.com/?q=${lat},${lng}" target="_blank" style="color:#38bdf8">📍 Ver no Maps</a>`;
+      const popup = `<b>🚗 ${nome}</b><br>${_statusLabel}<br>${_mapsLink}<br>${_atualizadoStr}`;
 
       if (markers[id]) {
         markers[id].setLatLng([lat, lng]);
@@ -129,8 +132,17 @@ async function atualizarMapa() {
 atualizarMapa();
 window._ivMapa = RebecaRealtime.register("mapa-motoristas", atualizarMapa, 5000, "critica", false);
 document.addEventListener('visibilitychange', function() {
-  if (document.hidden) { clearInterval(window._ivMapa); }
-  else { atualizarMapa(); window._ivMapa = RebecaRealtime.register('mapa-motoristas', atualizarMapa, 5000, 'critica', false); }
+  if (document.hidden) {
+    // Bug F fix: usar RebecaRealtime.unregister se disponível, senão clearInterval como fallback
+    if (typeof RebecaRealtime !== 'undefined' && RebecaRealtime.unregister) {
+      RebecaRealtime.unregister('mapa-motoristas');
+    } else {
+      clearInterval(window._ivMapa);
+    }
+  } else {
+    atualizarMapa();
+    window._ivMapa = RebecaRealtime.register('mapa-motoristas', atualizarMapa, 5000, 'critica', false);
+  }
 });
 </script>
 </body>

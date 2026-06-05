@@ -44,9 +44,10 @@ const MotoristasModule = {
             // Adicionar adminId aos dados
             dados.adminId = adminId;
             
+            const token = localStorage.getItem('token') || '';
             const response = await fetch('/api/motoristas', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
                 body: JSON.stringify(dados)
             });
             
@@ -88,7 +89,15 @@ const MotoristasModule = {
     
     deletar: async function(id) {
         try {
-            await fetch('/api/motoristas/' + id, { method: 'DELETE' });
+            const token = localStorage.getItem('token') || '';
+            const res = await fetch('/api/motoristas/' + id, {
+                method: 'DELETE',
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.error || 'Erro ao deletar motorista');
+            }
             this.motoristas = this.motoristas.filter(m => m._id !== id && m.id !== id);
             return true;
         } catch (error) {

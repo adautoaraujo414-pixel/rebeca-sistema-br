@@ -2,10 +2,17 @@
 const CorridasModule = {
     corridas: [],
     
+    getAdminId: function() {
+        const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
+        return usuario._id || usuario.id || null;
+    },
+
     carregar: async function(filtros = {}) {
         try {
             let url = '/api/corridas';
             const params = new URLSearchParams();
+            const adminId = this.getAdminId();
+            if (adminId) params.append('adminId', adminId);
             if (filtros.status) params.append('status', filtros.status);
             if (filtros.motoristaId) params.append('motoristaId', filtros.motoristaId);
             if (params.toString()) url += '?' + params.toString();
@@ -20,12 +27,13 @@ const CorridasModule = {
     },
     
     buscarPorId: function(id) {
-        return this.corridas.find(c => c.id === id);
+        return this.corridas.find(c => String(c._id || c.id) === String(id));
     },
     
     listarPendentes: async function() {
         try {
-            const response = await fetch('/api/corridas/pendentes');
+            const adminId = this.getAdminId();
+            const response = await fetch('/api/corridas/pendentes' + (adminId ? '?adminId=' + adminId : ''));
             return await response.json();
         } catch (error) {
             console.error('Erro ao listar pendentes:', error);
@@ -35,7 +43,8 @@ const CorridasModule = {
     
     listarAtivas: async function() {
         try {
-            const response = await fetch('/api/corridas/ativas');
+            const adminId = this.getAdminId();
+            const response = await fetch('/api/corridas/ativas' + (adminId ? '?adminId=' + adminId : ''));
             return await response.json();
         } catch (error) {
             console.error('Erro ao listar ativas:', error);
