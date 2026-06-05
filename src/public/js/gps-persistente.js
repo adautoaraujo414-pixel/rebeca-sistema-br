@@ -27,7 +27,8 @@ const GPSPersistente = {
     
     ativarMonitoramento() {
         return new Promise((resolve, reject) => {
-            const opcoes = { enableHighAccuracy: true, timeout: 30000, maximumAge: 0 };
+            // Bug 3 fix: maximumAge 5000ms evita timeouts frequentes em GPS lento
+            const opcoes = { enableHighAccuracy: true, timeout: 30000, maximumAge: 5000 };
             
             navigator.geolocation.getCurrentPosition(
                 (pos) => { this.atualizarPosicao(pos); resolve(true); },

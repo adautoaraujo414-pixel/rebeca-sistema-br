@@ -11,7 +11,9 @@ const MapaTempoReal = {
     
     atualizarMarcadores: async function() {
         try {
-            const response = await fetch('/api/gps-integrado');
+            const _adminId = window._adminId || localStorage.getItem('adminId') || new URLSearchParams(window.location.search).get('adminId');
+            if (!_adminId) { console.warn('[MAPA] adminId não encontrado'); return; }
+            const response = await fetch('/api/gps-integrado?adminId=' + _adminId);
             const motoristas = await response.json();
             
             motoristas.forEach(m => {
