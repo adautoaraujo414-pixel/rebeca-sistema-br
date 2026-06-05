@@ -383,8 +383,8 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
       for (const ap of _aprendidos) {
         const _orig = (ap.mensagem_original || '').toLowerCase();
         // Similaridade: 60%+ das palavras batem
-        const _palavrasOrig = _orig.split(/s+/).filter(p => p.length > 3);
-        const _palavrasMsg  = _msgNorm.split(/s+/).filter(p => p.length > 3);
+        const _palavrasOrig = _orig.split(/\s+/).filter(p => p.length > 3);
+        const _palavrasMsg  = _msgNorm.split(/\s+/).filter(p => p.length > 3);
         if (_palavrasOrig.length === 0) continue;
         const _bate = _palavrasOrig.filter(p => _msgNorm.includes(p)).length;
         const _sim = _bate / _palavrasOrig.length;
