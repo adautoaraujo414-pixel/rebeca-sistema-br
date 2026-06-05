@@ -50,7 +50,8 @@ const LocalidadesPrecosModule = {
     
     excluirLocalidade: async function(id) {
         try {
-            await fetch('/api/localidades/' + id, { method: 'DELETE' });
+            const res = await fetch('/api/localidades/' + id, { method: 'DELETE' });
+            if (!res.ok) { const e = await res.json().catch(()=>({})); throw new Error(e.error || 'Erro ao excluir localidade'); }
             this.localidades = this.localidades.filter(l => l.id !== id);
             return true;
         } catch (error) {
@@ -158,7 +159,8 @@ const LocalidadesPrecosModule = {
     
     excluirRegra: async function(id) {
         try {
-            await fetch('/api/preco-dinamico/regras/' + id, { method: 'DELETE' });
+            const res = await fetch('/api/preco-dinamico/regras/' + id, { method: 'DELETE' });
+            if (!res.ok) { const e = await res.json().catch(()=>({})); throw new Error(e.error || 'Erro ao excluir regra'); }
             this.regrasPreco = this.regrasPreco.filter(r => r.id !== id);
             return true;
         } catch (error) {

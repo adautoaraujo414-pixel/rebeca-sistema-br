@@ -52,8 +52,8 @@ setTimeout(async () => {
 async function recuperarCorridasPendentes() {
     try {
         const { Corrida } = require('../models');
-        const limite = new Date(Date.now() - 15 * 60 * 1000); // 15 min
-        const pendentes = await Corrida.find({ status: 'pendente', createdAt: { $gte: limite } });
+        // Bug 7 fix: sem filtro de 15min — recuperar todas as pendentes do banco
+        const pendentes = await Corrida.find({ status: 'pendente' });
         for (const c of pendentes) {
             const id = c._id.toString();
             if (!corridasPendentes.has(id)) {
@@ -629,14 +629,15 @@ const DespachoService = {
             } catch(e) { console.log('[CENTRAL] Erro ao sair da fila:', e.message); }
         })();
         
-        // Salvar ultimo motorista do cliente
-        try {
-            const RebecaService = require('./rebeca.service');
-            const corrida = CorridaService.buscar(corridaId);
-            if (corrida?.clienteTelefone) {
-                RebecaService.salvarUltimoMotorista(corrida.clienteTelefone, motoristaId, corrida.adminId);
-            }
-        } catch(e) { console.log('[DESPACHO] Erro salvar ultimo motorista:', e.message); }
+        (async () => {
+            try {
+                const RebecaService = require('./rebeca.service');
+                const corrida = await CorridaService.buscarPorId(corridaId);
+                if (corrida?.clienteTelefone) {
+                    RebecaService.salvarUltimoMotorista(corrida.clienteTelefone, motoristaId, corrida.adminId);
+                }
+            } catch(e) { console.log('[DESPACHO] Erro salvar ultimo motorista:', e.message); }
+        })();
 
         return {
             sucesso: true,

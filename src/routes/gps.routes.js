@@ -3,7 +3,8 @@ const router = express.Router();
 const gpsService = require('../services/gps.service');
 
 router.get('/', (req, res) => {
-    const adminId = req.query.adminId || 'global';
+    const adminId = req.query.adminId;
+    if (!adminId) return res.status(400).json({ error: 'adminId obrigatorio' });
     const localizacoes = gpsService.listarLocalizacoes(adminId);
     res.json(localizacoes);
 });
@@ -13,7 +14,8 @@ router.get('/proximos', (req, res) => {
     if (!latitude || !longitude) {
         return res.status(400).json({ error: 'Latitude e longitude obrigatórios' });
     }
-    const adminId = req.query.adminId || 'global';
+    const adminId = req.query.adminId;
+    if (!adminId) return res.status(400).json({ error: 'adminId obrigatorio' });
     const proximos = gpsService.buscarProximos(
         parseFloat(latitude), parseFloat(longitude),
         parseFloat(raio) || 10, adminId
@@ -32,7 +34,8 @@ router.post('/atualizar', (req, res) => {
     if (!motoristaId || !latitude || !longitude) {
         return res.status(400).json({ error: 'Dados incompletos' });
     }
-    const adminId = req.body.adminId || 'global';
+    const adminId = req.body.adminId;
+    if (!adminId) return res.status(400).json({ error: 'adminId obrigatorio' });
     const localizacao = gpsService.atualizarLocalizacao(motoristaId, {
         latitude, longitude, precisao, velocidade
     }, adminId);

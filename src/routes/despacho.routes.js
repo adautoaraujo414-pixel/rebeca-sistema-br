@@ -171,8 +171,8 @@ router.post('/aceitar', (req, res) => {
     CorridaService.atribuirMotorista(corridaId, motoristaId, motoristaNome);
     
     // Atualizar status do motorista
-    MotoristaService.atualizarStatus(motoristaId, 'a_caminho');
-    GPSIntegradoService.atualizarStatus(motoristaId, 'a_caminho');
+    MotoristaService.atualizarStatus(motoristaId, 'em_corrida');
+    GPSIntegradoService.atualizarStatus(motoristaId, 'em_corrida');
     
     LogsService.registrar({ 
         tipo: 'despacho', 

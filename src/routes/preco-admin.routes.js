@@ -18,7 +18,8 @@ router.get('/config', async (req, res) => {
 // Salvar configuração de preços
 router.post('/config', async (req, res) => {
     try {
-        const adminId = req.headers['x-admin-id'] || req.query.adminId || req.body?.adminId;
+        // Bug 6 fix: nunca aceitar adminId do body — só header ou query (evita sobrescrita cross-admin)
+        const adminId = req.headers['x-admin-id'] || req.query.adminId;
         if (!adminId) return res.status(400).json({ erro: 'AdminId obrigatório' });
         
         const resultado = await PrecoAdminService.salvarConfig(adminId, req.body);
