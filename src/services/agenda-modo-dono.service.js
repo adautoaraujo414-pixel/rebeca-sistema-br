@@ -408,7 +408,7 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
   const _session = SM.addUserMsg(adminId, telefone, msg);
   // Persistir snapshot da sessão no banco (sobrevive restart do Render)
   try {
-    const _snapshotKey = String(adminId) + '_' + telefone.replace(/D/g,'');
+    const _snapshotKey = String(adminId) + '_' + telefone.replace(/\D/g,'');
     await AdminAgenda.findByIdAndUpdate(adminObjId, {
       $set: { ['sessaoWhatsapp.' + _snapshotKey.slice(-20)]: {
         ultimaMensagem: msg.substring(0,200),
