@@ -1548,8 +1548,46 @@ ${totalAgs > 0 ? 'Tá saindo bem! 💪' : 'Ainda sem registros esse mês.'}`);
     const admin2 = await AdminAgenda.findById(adminObjId).lean();
     const lembs = (admin2?.config?.lembretes || []).filter(l => !l.enviado).sort((a,b) => new Date(a.dataEvento)-new Date(b.dataEvento));
     if (!lembs.length) { await responder("Nenhum lembrete pendente."); return true; }
-    const lista = lembs.map((l,i) => `${i+1}. ${l.texto} — ${_fmtData(new Date(l.dataEvento))} ${l.dataEvento ? "às "+_fmtHora(new Date(l.dataEvento)) : ""}`).join("\n");
-    await responder(`🔔 *Seus lembretes futuros (${lembs.length}):*\n\n${lista}\n\n📌 Para excluir um: *cancela lembrete 1*\n🗑️ Para excluir todos: *cancela todos os lembretes*`);
+    const _lemNormais = lembs.filter(l => !l.recorrente);
+    const _lemRecs    = lembs.filter(l => l.recorrente);
+    // Agrupar recorrentes por texto único para não listar 12x o mesmo
+    const _recsUnicos = {};
+    _lemRecs.forEach(l => {
+      const _key = l.texto + '|' + (l.recorrente?.tipo || '');
+      if (!_recsUnicos[_key]) _recsUnicos[_key] = { ...l, _count: 0 };
+      _recsUnicos[_key]._count++;
+    });
+    let _partes = [];
+    if (_lemNormais.length) {
+      const _listaN = _lemNormais.map((l,i) => `${i+1}. ${l.texto} — ${_fmtData(new Date(l.dataEvento))} às ${_fmtHora(new Date(l.dataEvento))}`).join('\n');
+      _partes.push(`📅 *Lembretes pontuais (${_lemNormais.length}):*\n${_listaN}`);
+    }
+    if (Object.keys(_recsUnicos).length) {
+      const _listaR = Object.values(_recsUnicos).map((l,i) => {
+        const _tipo = l.recorrente?.tipo === 'semanal' ? `toda ${l.recorrente?.diaSemana || 'semana'}` :
+                      l.recorrente?.tipo === 'mensal'  ? `todo dia ${l.recorrente?.dia || '?'} do mês` :
+                      l.recorrente?.tipo === 'diario'  ? 'todo dia' : l.recorrente?.tipo || 'recorrente';
+        return `${i+1}. ${l.texto} — ${_tipo} (${l._count}x agendado)`;
+      }).join('\n');
+      _partes.push(`🔁 *Lembretes recorrentes (${_lemRecs.length} no total):*\n${_listaR}`);
+    }
+    const _msgLembs = _partes.join('\n\n');
+    await responder(`🔔 *Seus lembretes futuros (${lembs.length}):*\n\n${_msgLembs}\n\n📌 Excluir um: *cancela lembrete 1*\n🗑️ Excluir todos: *cancela todos os lembretes*\n🔁 Excluir só recorrentes: *cancela lembretes recorrentes*`);
+    return true;
+  }
+
+  // ── EXCLUIR LEMBRETES RECORRENTES ───────────────────────────────────────────
+  if (/cancela.*lembrete.*recorrente|apaga.*lembrete.*recorrente|exclu.*lembrete.*recorrente|cancela.*recorrente|limpa.*recorrente/i.test(msgL)) {
+    const admin2 = await AdminAgenda.findById(adminObjId).lean();
+    const lembs = (admin2?.config?.lembretes || []).filter(l => !l.enviado && l.recorrente);
+    if (!lembs.length) {
+      await responder(`Não tem nenhum lembrete recorrente pendente, ${_chefe(_generoAdmin, _apelidoAdmin)}! 😊`);
+      return true;
+    }
+    await AdminAgenda.findByIdAndUpdate(adminObjId, {
+      $pull: { 'config.lembretes': { enviado: { $ne: true }, recorrente: { $exists: true } } }
+    });
+    await responder(`🗑️ Pronto, ${_chefe(_generoAdmin, _apelidoAdmin)}! *${lembs.length} lembrete(s) recorrente(s)* cancelado(s). 💙`);
     return true;
   }
 
