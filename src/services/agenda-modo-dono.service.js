@@ -627,7 +627,7 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
   }
 
   // ── AGENDA DE HOJE ─────────────────────────────────────────────────────────
-  if (/\bagenda\s*(de\s*)?(hoje|amanhã|amanha)\b|\bmostra\s*(minha\s*)?agenda|\bquem\s*(tenho|tem)\s*(hoje|amanhã|amanha)\b|\bhor[aá]rios?\s*(de\s*)?(hoje|amanhã|amanha)\b|\btem\s*algu[eé]m\s*(hoje|amanhã|amanha)\b|\bcomo\s*t[áa]\s*(hoje|amanhã|amanha)\b|\bvou\s*atender\s*quem\b|\bquem\s*[eé]\s*(hoje|amanhã)\b|\bminha\s*agenda\s*(de\s*)?(hoje|amanhã|amanha)\b|\bquantos\s*(clientes\s*)?(tenho|tem)\s*(hoje|amanhã)\b|\bcomo\s*(est[aá]|t[aá]|fica|ficou)\s*(a\s*)?(minha\s*)?(agenda|dia)\b|\btem\s*(algum|alguem|alguém|cliente|horario|horário)\s*(hoje|amanhã|amanha|amanha)\b|\b(ver|veja|checar|conferir|olhar)\s*(minha\s*)?(agenda|horario|horários)\b/i.test(msgL)) {
+  if (!/(cria|criar|me\s*lembra|lembrete|registra|anota|coloca|marca\s+na)/i.test(msgL) && /\bagenda\s*(de\s*)?(hoje|amanhã|amanha)\b|\bmostra\s*(minha\s*)?agenda|\bquem\s*(tenho|tem)\s*(hoje|amanhã|amanha)\b|\bhor[aá]rios?\s*(de\s*)?(hoje|amanhã|amanha)\b|\btem\s*algu[eé]m\s*(hoje|amanhã|amanha)\b|\bcomo\s*t[áa]\s*(hoje|amanhã|amanha)\b|\bvou\s*atender\s*quem\b|\bquem\s*[eé]\s*(hoje|amanhã)\b|\bminha\s*agenda\s*(de\s*)?(hoje|amanhã|amanha)\b|\bquantos\s*(clientes\s*)?(tenho|tem)\s*(hoje|amanhã)\b|\bcomo\s*(est[aá]|t[aá]|fica|ficou)\s*(a\s*)?(minha\s*)?(agenda|dia)\b|\btem\s*(algum|alguem|alguém|cliente|horario|horário)\s*(hoje|amanhã|amanha|amanha)\b|\b(ver|veja|checar|conferir|olhar)\s*(minha\s*)?(agenda|horario|horários)\b/i.test(msgL)) {
     const dia = /amanhã|amanha/i.test(msgL) ? (() => { const d = new Date(); d.setDate(d.getDate()+1); return d; })() : new Date();
     const ini = _inicioDia(dia);
     const fim = _fimDia(dia);
@@ -2220,10 +2220,15 @@ ${total>5?'Tá crescendo muito! Continua assim! 🚀':'Todo cliente novo é uma 
   }
 
   // ── SAUDAÇÃO INFORMAL ────────────────────────────────────────────────────────
-  const _isSaudacao = (t) =>
-    /^(oi+|ol[aá]|hey+|ei|e\s*a[íi]|eai+|opa+|salve+|fala+|beleza|tudo\s*(bem|bom|certo)|como\s*(vai|t[aá])|tchau|at[eé]\s*(logo|mais)|valeu|obrigad|tks|thx|ok|certo|entendi|perfeito|show|[oó]timo|maravilha|legal|massa|bom\s*dia|boa\s*(tarde|noite))/i.test(t.replace(/\brebeca[,.]?\s*/gi,'').trim())
-    || /^(fala\s*(rebeca|a[ií]|comigo|logo)?|e\s*a[ií])\b/i.test(t.trim())
-    || (t.trim().length <= 15 && /^(ok|certo|show|legal|massa|[oó]timo|perfeito|maravilha|valeu|obrigad|tks|thx)/i.test(t.trim()));
+  const _isSaudacao = (t) => {
+    // NUNCA tratar como saudação se contém palavras de ação/comando
+    const _tNorm = t.replace(/\brebeca[,.]?\s*/gi,'').trim();
+    const _temAcao = /agenda|lembrete|agendamento|bloquei|cancela|confirma|encaixa|registra|entrada|sa[ií]da|despesa|receita|quanto|financ|faturei|ganhei|gastei|paguei|recebi|cliente|hor[aá]rio|cria|criar|marca|marcar|lista|ver|mostra|quem|próximo|proximo/i.test(_tNorm);
+    if (_temAcao) return false;
+    return /^(oi+|ol[aá]|hey+|ei|e\s*a[íi]|eai+|opa+|salve+|fala+|beleza|tudo\s*(bem|bom|certo)|como\s*(vai|t[aá])|tchau|at[eé]\s*(logo|mais)|valeu|obrigad|tks|thx|ok|certo|entendi|perfeito|show|[oó]timo|maravilha|legal|massa|bom\s*dia|boa\s*(tarde|noite))/i.test(_tNorm)
+      || /^(fala\s*(rebeca|a[ií]|comigo|logo)?|e\s*a[ií])\b/i.test(t.trim())
+      || (t.trim().length <= 15 && /^(ok|certo|show|legal|massa|[oó]timo|perfeito|maravilha|valeu|obrigad|tks|thx)/i.test(t.trim()));
+  };
 
   // Fix 4: não tratar como saudação se há ação pendente ou aguardando confirmação
   const _sesParaSauda = SM.getSession(adminId, telefone);
@@ -2291,11 +2296,9 @@ ${total>5?'Tá crescendo muito! Continua assim! 🚀':'Todo cliente novo é uma 
       FinanceiroAgenda.find({ adminId: adminObjId, data: { $gte: iniSem, $lte: fim }, tipo: 'receita' }).lean(),
       AdminAgenda.findById(adminObjId).select('config.lembretes').lean().then(a => {
         const todos = (a?.config?.lembretes || []);
-        return todos.filter(l => {
-          if (!l.dataEvento) return false;
-          const d = new Date(l.dataEvento);
-          return d >= ini && d <= fim; // todos do dia, passados e futuros
-        }).sort((a,b) => new Date(a.dataEvento)-new Date(b.dataEvento)).slice(0,10);
+        // Retornar todos os lembretes pendentes (não enviados) — não só do dia de hoje
+        return todos.filter(l => !l.enviado && l.dataEvento)
+          .sort((a,b) => new Date(a.dataEvento)-new Date(b.dataEvento)).slice(0,15);
       }),
       ClienteAgenda.countDocuments({ adminId: adminObjId }).catch(()=>0),
       RetornoAgenda ? RetornoAgenda.countDocuments({ adminId: adminObjId, statusContato: 'pendente' }).catch(()=>0) : Promise.resolve(0)
