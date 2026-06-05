@@ -551,7 +551,15 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
   const _generoAdmin  = admin?.modoWhatsappDono?.genero || '';
 
   const instancia = await InstanciaWhatsapp.findOne({ adminId: adminObjId, adminTipo: 'agenda' }).lean();
-  if (!instancia && !instanciaResposta) return null; // Meta API nao precisa de instancia Evolution
+  // Se não tem instância Evolution mas tem Meta API, criar instância virtual para não deixar dono sem resposta
+  const _instMeta = (!instancia && process.env.META_WA_TOKEN)
+    ? { _enviarVia: 'meta', apiUrl: 'meta', nomeInstancia: 'meta_oficial' }
+    : null;
+  if (!instancia && !instanciaResposta && !_instMeta) {
+    console.warn('[ModoDono] sem canal de envio para', adminId, '— retornando null');
+    return null;
+  }
+  const _instFinal = instancia || _instMeta;
 
   // ── APRENDIZADO: verificar intencao forçada da sessão e redirecionar ─────
   const _sesForc = SM.getSession(adminId, telefone);
@@ -586,7 +594,7 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
   // ───────────────────────────────────────────────────────────────────────────
 
   async function responder(texto) {
-    const _inst = instanciaResposta || instancia;
+    const _inst = instanciaResposta || instancia || _instFinal;
     const _num  = instanciaResposta?.numero || telefone;
     await _enviarMsg(_inst, _num, texto);
   }
