@@ -116,6 +116,11 @@ router.post('/:id/entrar', async (req, res) => {
             return res.status(400).json({ erro: `Central fechada. Funciona ${central.horarioAbertura}–${central.horarioFechamento}` });
         }
 
+        // Bug 4 fix: verificar que motorista pertence ao admin do ponto
+        const motoristaCentral = await Motorista.findById(motoristaId).select('adminId').lean();
+        if (motoristaCentral && String(motoristaCentral.adminId) !== String(central.adminId)) {
+            return res.status(403).json({ erro: 'Motorista não pertence a esta frota' });
+        }
         // Sair de qualquer outra central automaticamente
         await FilaPonto.updateMany({ motoristaId, status: 'aguardando' }, { status: 'saiu' });
 
@@ -146,6 +151,8 @@ router.post('/:id/entrar', async (req, res) => {
 router.post('/:id/sair', async (req, res) => {
     try {
         const { motoristaId } = req.body;
+        if (!motoristaId) return res.status(400).json({ erro: 'motoristaId obrigatório' });
+        // Bug 5 fix: só sair da fila do próprio motorista
         await FilaPonto.updateOne({ pontoId: req.params.id, motoristaId, status: 'aguardando' }, { status: 'saiu' });
         res.json({ sucesso: true });
     } catch(e) { res.status(500).json({ erro: e.message }); }

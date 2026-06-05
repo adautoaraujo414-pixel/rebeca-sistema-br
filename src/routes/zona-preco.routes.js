@@ -38,8 +38,7 @@ router.post('/', authAdmin, async (req, res) => {
 
         const zona = await ZonaPreco.create({
             adminId: req.adminId,
-            lat: lat || req.body.lat,
-            lng: lng || req.body.lng, nome, lat, lng,
+            nome, lat, lng,
             enderecoReferencia: enderecoReferencia || '',
             raioKm, precoFixo,
             diasSemana: diasSemana || [],

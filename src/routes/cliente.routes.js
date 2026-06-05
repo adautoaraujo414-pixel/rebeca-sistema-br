@@ -38,6 +38,11 @@ router.get('/:id', async (req, res) => {
     try {
         const cliente = await ClienteService.buscarPorId(req.params.id);
         if (!cliente) return res.status(404).json({ error: 'Cliente não encontrado' });
+        // Bug 1 fix: verificar que cliente pertence ao admin solicitante
+        const adminId = getAdminId(req);
+        if (adminId && cliente.adminId && String(cliente.adminId) !== String(adminId)) {
+            return res.status(403).json({ error: 'Acesso negado' });
+        }
         res.json(cliente);
     } catch(e) { res.status(500).json({ error: e.message }); }
 });
@@ -54,8 +59,14 @@ router.post('/', async (req, res) => {
 
 router.put('/:id', async (req, res) => {
     try {
+        // Bug 2 fix: verificar posse antes de atualizar
+        const _cli = await ClienteService.buscarPorId(req.params.id);
+        if (!_cli) return res.status(404).json({ error: 'Cliente não encontrado' });
+        const adminId = getAdminId(req);
+        if (adminId && _cli.adminId && String(_cli.adminId) !== String(adminId)) {
+            return res.status(403).json({ error: 'Acesso negado' });
+        }
         const cliente = await ClienteService.atualizar(req.params.id, req.body);
-        if (!cliente) return res.status(404).json({ error: 'Cliente não encontrado' });
         res.json(cliente);
     } catch(e) { res.status(500).json({ error: e.message }); }
 });
@@ -63,16 +74,26 @@ router.put('/:id', async (req, res) => {
 router.put('/:id/bloquear', async (req, res) => {
     try {
         const { motivo } = req.body;
+        const _cliB = await ClienteService.buscarPorId(req.params.id);
+        if (!_cliB) return res.status(404).json({ error: 'Cliente não encontrado' });
+        const adminId = getAdminId(req);
+        if (adminId && _cliB.adminId && String(_cliB.adminId) !== String(adminId)) {
+            return res.status(403).json({ error: 'Acesso negado' });
+        }
         const cliente = await ClienteService.bloquear(req.params.id, motivo);
-        if (!cliente) return res.status(404).json({ error: 'Cliente não encontrado' });
         res.json(cliente);
     } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
 router.put('/:id/desbloquear', async (req, res) => {
     try {
+        const _cliD = await ClienteService.buscarPorId(req.params.id);
+        if (!_cliD) return res.status(404).json({ error: 'Cliente não encontrado' });
+        const adminId = getAdminId(req);
+        if (adminId && _cliD.adminId && String(_cliD.adminId) !== String(adminId)) {
+            return res.status(403).json({ error: 'Acesso negado' });
+        }
         const cliente = await ClienteService.desbloquear(req.params.id);
-        if (!cliente) return res.status(404).json({ error: 'Cliente não encontrado' });
         res.json(cliente);
     } catch(e) { res.status(500).json({ error: e.message }); }
 });
