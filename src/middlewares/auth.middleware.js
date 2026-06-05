@@ -1,6 +1,5 @@
 const validarToken = (req, res, next) => {
     const authHeader = req.headers.authorization;
-    if (process.env.NODE_ENV !== 'production') return next();
     if (!authHeader) return res.status(401).json({ error: 'Token não fornecido' });
     const token = authHeader.replace('Bearer ', '');
     if (!token.startsWith('ADMIN_') && !token.startsWith('MOT_')) {
@@ -12,7 +11,6 @@ const validarToken = (req, res, next) => {
 
 const validarMotorista = (req, res, next) => {
     const authHeader = req.headers.authorization;
-    if (process.env.NODE_ENV !== 'production') return next();
     if (!authHeader) return res.status(401).json({ error: 'Token não fornecido' });
     const token = authHeader.replace('Bearer ', '');
     if (!token.startsWith('MOT_')) return res.status(403).json({ error: 'Acesso negado' });
@@ -22,7 +20,6 @@ const validarMotorista = (req, res, next) => {
 
 const validarAdmin = (req, res, next) => {
     const authHeader = req.headers.authorization;
-    if (process.env.NODE_ENV !== 'production') return next();
     if (!authHeader) return res.status(401).json({ error: 'Token não fornecido' });
     const token = authHeader.replace('Bearer ', '');
     if (!token.startsWith('ADMIN_')) return res.status(403).json({ error: 'Acesso negado' });

@@ -9,7 +9,9 @@ function getAdminId(req) {
 
 router.get('/estatisticas', async (req, res) => {
     try {
-      res.json(await AF.obterEstatisticas(getAdminId(req)));
+      const adminId = getAdminId(req);
+      if (!adminId) return res.status(400).json({ error: 'adminId obrigatório' });
+      res.json(await AF.obterEstatisticas(adminId));
     } catch(e) { console.error("[antifraude.routes.js]", e.message); res.status(500).json({ erro: e.message }); }
 });
 
@@ -100,8 +102,20 @@ router.put('/regras/:id', (req, res) => {
     res.json({ sucesso: true, regra: r });
 });
 
-router.post('/analisar/corrida', (req, res) => res.json(AF.analisarCorrida(req.body)));
-router.post('/analisar/motorista', (req, res) => res.json(AF.analisarMotorista(req.body.motorista, req.body.estatisticas)));
-router.post('/analisar/cliente', (req, res) => res.json(AF.analisarCliente(req.body.cliente, req.body.estatisticas)));
+router.post('/analisar/corrida', (req, res) => {
+    const adminId = getAdminId(req);
+    if (!adminId) return res.status(400).json({ error: 'adminId obrigatório' });
+    res.json(AF.analisarCorrida(req.body));
+});
+router.post('/analisar/motorista', (req, res) => {
+    const adminId = getAdminId(req);
+    if (!adminId) return res.status(400).json({ error: 'adminId obrigatório' });
+    res.json(AF.analisarMotorista(req.body.motorista, req.body.estatisticas));
+});
+router.post('/analisar/cliente', (req, res) => {
+    const adminId = getAdminId(req);
+    if (!adminId) return res.status(400).json({ error: 'adminId obrigatório' });
+    res.json(AF.analisarCliente(req.body.cliente, req.body.estatisticas));
+});
 
 module.exports = router;
