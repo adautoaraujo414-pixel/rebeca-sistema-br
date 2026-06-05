@@ -638,10 +638,25 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
     }).sort({ dataHora: 1 }).lean();
 
     if (!ags.length) {
-      await responder(`${_saudacao()}, ${_chefe(_generoAdmin, _apelidoAdmin)}! 😊\n\nNão tem nenhum agendamento ${/amanhã|amanha/i.test(msgL)?'para amanhã':'pra hoje' } não. Tá livre! 🎉`);
+      // Fix 9: agenda hoje vazia + noite >= 18h BRT → mostrar amanhã automaticamente
+      const _hrBrt = (new Date().getUTCHours() - 3 + 24) % 24;
+      const _pedindoHoje = !/amanhã|amanha/i.test(msgL);
+      if (_pedindoHoje && _hrBrt >= 18) {
+        const _amanha = new Date(); _amanha.setDate(_amanha.getDate() + 1);
+        const _iniA = _inicioDia(_amanha); const _fimA = _fimDia(_amanha);
+        const _agsA = await AgendamentoAgenda.find({
+          adminId: adminObjId, dataHora: { $gte: _iniA, $lte: _fimA },
+          status: { $in: ['pendente','confirmado'] }
+        }).sort({ dataHora: 1 }).lean();
+        if (_agsA.length) {
+          const _listaA = _agsA.map(a => `• ${_fmtHora(new Date(a.dataHora))} — ${a.nomeCliente} (${a.nomeServico})`).join('\n');
+          await responder(`Hoje tá livre, ${_chefe(_generoAdmin, _apelidoAdmin)}! 🎉\n\nMas amanhã tá assim:\n\n${_listaA}\n\n${_agsA.length} agendamento(s). Bora descansar! 💙`);
+          return true;
+        }
+      }
+      await responder(`${_saudacao()}, ${_chefe(_generoAdmin, _apelidoAdmin)}!😊\n\nNão tem nenhum agendamento ${_pedindoHoje ? 'pra hoje' : 'para amanhã'} não. Tá livre! 🎉`);
       return true;
     }
-
     const lista = ags.map(a =>
       `• ${_fmtHora(new Date(a.dataHora))} — ${a.nomeCliente} (${a.nomeServico})`
     ).join('\n');
@@ -1023,6 +1038,17 @@ Te aviso 30 minutos antes de cada um! 💙`;
     if (_nlpVal && _nlpInt === 'saida') {
       const _descNlp = _extrairDescricao(msg, 'despesa');
       const _catFinal = _nlpCat !== 'outros' ? _nlpCat : _extrairCategoria(msg);
+      // Fix 6: pedir confirmação para valores altos (>500) — evita erro de transcrição de áudio
+      if (_nlpVal > 500) {
+        const _vStr = _nlpVal.toFixed(2).replace('.', ',');
+        SM.updateSession(adminId, telefone, {
+          aguardandoConfirmacao: true,
+          ultimaAcaoPendente: 'confirmar_saida_alto',
+          ultimoLancamentoValor: _nlpVal, ultimoLancamentoDesc: _descNlp, ultimoLancamentoCat: _catFinal
+        });
+        await responder(`${_chefe(_generoAdmin, _apelidoAdmin)}, confirma saída de *R$ ${_vStr}* em "${_catFinal}"? Responde *sim* ou *não* 🤔`);
+        return true;
+      }
       const _docDespNlp = await FinanceiroAgenda.create({
         adminId: adminObjId, tipo: 'despesa', valor: _nlpVal,
         descricao: _descNlp, categoria: _catFinal,
@@ -1387,10 +1413,18 @@ ${totalAgs > 0 ? 'Tá saindo bem! 💪' : 'Ainda sem registros esse mês.'}`);
       return true;
 
     } else if (!_diaPend && !_horaPend) {
-      // Não reconheceu hora nem dia — pedir de novo de forma clara
-      console.log('[HORARIO-DETECTADO] nao reconheceu hora — pedindo novamente');
+      // Fix 7: após 2 tentativas sem entender, cancelar estado para não travar
+      const _tentativas = (_pendLemb.tentativas || 0) + 1;
+      if (_tentativas >= 2) {
+        SM.updateSession(adminId, telefone, { aguardandoLembrete: null });
+        const _cancMsg = `Tudo bem, deixa pra lá! 😅 Se quiser o lembrete depois é só falar.`;
+        await responder(_cancMsg);
+        SM.addAssistantMsg(adminId, telefone, _cancMsg);
+        return true;
+      }
+      SM.updateSession(adminId, telefone, { aguardandoLembrete: { ..._pendLemb, tentativas: _tentativas } });
       const _reask = _pendLemb.aguardando === 'hora'
-        ? 'Não entendi o horário. 😅 Me fala assim: *oito horas*, *14h30*, *às 9 da manhã*...'
+        ? 'Não entendi o horário. 😅 Me fala assim: *oito horas*, *14h30*, *às9 da manhã*...'
         : 'Não entendi o dia. 😅 Me fala assim: *hoje*, *amanhã*, *dia 15*...';
       await responder(_reask);
       SM.addAssistantMsg(adminId, telefone, _reask);
