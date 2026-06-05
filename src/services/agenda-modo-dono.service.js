@@ -3069,6 +3069,27 @@ _"${_textoMsg}"_`);
       }
 
     // ── Fallback final — resposta amigável ──
+      // ── listar_lembretes ──────────────────────────────────────────────────────
+      if (_cerebro.intencao === 'listar_lembretes') {
+        const _adminLmb = await AdminAgenda.findById(adminObjId).select('config.lembretes').lean();
+        const _todosLmb = (_adminLmb?.config?.lembretes || [])
+          .filter(l => !l.enviado && l.dataEvento)
+          .sort((a, b) => new Date(a.dataEvento) - new Date(b.dataEvento));
+        if (!_todosLmb.length) {
+          const _r = `Não tem nenhum lembrete pendente, ${_chefe(_generoAdmin, _apelidoAdmin)}! 😊 Tudo limpo por aqui. 💙`;
+          await responder(_r); SM.addAssistantMsg(adminId, telefone, _r); return true;
+        }
+        const _listaLmb = _todosLmb.map((l, i) => {
+          const _dEvento = new Date(l.dataEvento);
+          const _hoje2 = new Date();
+          const _diffDias = Math.ceil((_dEvento - _hoje2) / 86400000);
+          const _quando = _diffDias <= 0 ? 'hoje' : _diffDias === 1 ? 'amanhã' : `em ${_diffDias} dias`;
+          return `${i+1}. ⏰ *${l.texto}*\n   📅 ${_fmtData(_dEvento)} às ${_fmtHora(_dEvento)} (${_quando})`;
+        }).join('\n\n');
+        const _r = `📋 Seus lembretes pendentes (${_todosLmb.length}):\n\n${_listaLmb}\n\nPara cancelar: *cancela lembrete 1* (ou o número)`;
+        await responder(_r); SM.addAssistantMsg(adminId, telefone, _r); return true;
+      }
+
     const _fallback = `${_saudacao()}, ${_chefe(_generoAdmin, _apelidoAdmin)}! 😊\n\nNão tive certeza do que você quis dizer. Tenta de outro jeito ou digita *ajuda*! 💙`;
     await responder(_fallback);
     SM.addAssistantMsg(adminId, telefone, _fallback);
