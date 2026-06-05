@@ -195,6 +195,33 @@ _(ex: "Ju", "Dra. Ana", "pode me chamar de Mari")_`;
 // Data atual — MongoDB salva UTC; filtros já compensam GMT-3
 function _dataAgora() { return new Date(Date.now() - 3*60*60*1000); }
 
+// ── Variações de resposta financeira ─────────────────────────────────────────
+function _respEntrada(val, cat, desc) {
+  const v = val.toFixed(2).replace('.', ',');
+  const d = desc && desc !== 'Entrada via WhatsApp' ? ` — ${desc}` : '';
+  const opts = [
+    `Anotei! 💰 Entrada de R$ ${v} em "${cat}"${d}.`,
+    `Recebido! R$ ${v} em "${cat}"${d}. Tá no caixa! 💰`,
+    `Boa! Entrada de R$ ${v} registrada${d ? ` (${desc})` : ''}. 💰`,
+    `Feito! R$ ${v} entrou em "${cat}"${d}. 💰`,
+    `Anotado! 💰 R$ ${v} de receita${d}. Tudo certo!`,
+  ];
+  return opts[Math.floor(Math.random() * opts.length)];
+}
+
+function _respSaida(val, cat, desc) {
+  const v = val.toFixed(2).replace('.', ',');
+  const d = desc && desc !== 'Gasto via WhatsApp' ? ` — ${desc}` : '';
+  const opts = [
+    `Anotei! 📝 Saída de R$ ${v} em "${cat}"${d}.`,
+    `Registrado! R$ ${v} saiu em "${cat}"${d}. 📝`,
+    `Ok! Gasto de R$ ${v} em "${cat}"${d} anotado. 📝`,
+    `Feito! R$ ${v} de saída em "${cat}"${d}. 📝`,
+    `Anotado! 📝 R$ ${v} de despesa${d}. Beleza!`,
+  ];
+  return opts[Math.floor(Math.random() * opts.length)];
+}
+
 // Helpers de filtro de data — servidor UTC, Brasil UTC-3
 function _inicioDia(d) {
   // Meia-noite BRT = 03:00 UTC
@@ -711,7 +738,7 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
         origem: 'whatsapp_dono'
       });
       SM.updateSession(adminId, telefone, { ultimoLancamentoId: String(_docEntrada._id), ultimoLancamentoTipo: 'receita', ultimoLancamentoValor: val, ultimoLancamentoDesc: descEntrada, ultimoLancamentoCat: catEntrada });
-      await responder(`Feito! Entrada de R$ ${val.toFixed(2).replace('.',',')} registrada em "${catEntrada}"${descEntrada !== 'Entrada via WhatsApp' ? ' — '+descEntrada : ''}. 💰`);
+      await responder(_respEntrada(val, catEntrada, descEntrada));
       return true;
     }
     await responder(`${_erro(_generoAdmin, _apelidoAdmin)} Me fala assim: *Rebeca, registra uma entrada de R$120 no Pix* 💰`);
@@ -1003,7 +1030,7 @@ Te aviso 30 minutos antes de cada um! 💙`;
       });
       SM.updateSession(adminId, telefone, { ultimoLancamentoId: String(_docDespNlp._id), ultimoLancamentoTipo: 'despesa', ultimoLancamentoValor: _nlpVal, ultimoLancamentoDesc: _descNlp, ultimoLancamentoCat: _catFinal });
       const _labelSaida = _catFinal !== 'outros' ? _catFinal : (_descNlp !== 'Gasto via WhatsApp' ? _descNlp : 'outros');
-      await responder(`Anotado! Saída de R$ ${_nlpVal.toFixed(2).replace('.',',')} em "${_labelSaida}". 📝`);
+      await responder(_respSaida(_nlpVal, _labelSaida, null));
       return true;
     }
     // saida_ambigua: só registra se tiver categoria conhecida E verbo financeiro implícito
@@ -1028,7 +1055,7 @@ Te aviso 30 minutos antes de cada um! 💙`;
         });
         SM.updateSession(adminId, telefone, { ultimoLancamentoId: String(_docAmb._id), ultimoLancamentoTipo: 'despesa', ultimoLancamentoValor: _nlpVal, ultimoLancamentoDesc: _descAmb, ultimoLancamentoCat: _catAmb });
         const _labelAmb = _catAmb !== 'outros' ? _catAmb : (_descAmb !== 'Gasto via WhatsApp' ? _descAmb : 'outros');
-        await responder(`Anotado! Saída de R$ ${_nlpVal.toFixed(2).replace('.',',')} em "${_labelAmb}". 📝`);
+        await responder(_respSaida(_nlpVal, _labelAmb, null));
         return true;
       }
       // Número solto sem contexto — pede confirmação
@@ -1045,7 +1072,7 @@ Te aviso 30 minutos antes de cada um! 💙`;
         data: _dataAgora(), origem: 'whatsapp_dono'
       });
       const _labelEntrada = _catFinalE !== 'outros' ? _catFinalE : (_descNlpE !== 'Entrada via WhatsApp' ? _descNlpE : 'outros');
-      await responder(`Feito! Entrada de R$ ${_nlpVal.toFixed(2).replace('.',',')} registrada em "${_labelEntrada}". 💰`);
+      await responder(_respEntrada(_nlpVal, _labelEntrada, null));
       return true;
     }
   }
@@ -1062,7 +1089,7 @@ Te aviso 30 minutos antes de cada um! 💙`;
         data: _dataAgora(), origem: 'whatsapp_dono'
       });
       SM.updateSession(adminId, telefone, { ultimoLancamentoId: String(_docSaidaI._id), ultimoLancamentoTipo: 'despesa', ultimoLancamentoValor: val, ultimoLancamentoDesc: descSaidaI, ultimoLancamentoCat: catSaidaI });
-      await responder(`Anotado! Saída de R$ ${val.toFixed(2).replace('.',',')} em "${catSaidaI}"${descSaidaI && descSaidaI !== 'Gasto via WhatsApp' && descSaidaI.toLowerCase() !== catSaidaI.toLowerCase() ? ' — '+descSaidaI : ''}. 📝`);
+      await responder(_respSaida(val, catSaidaI, descSaidaI));
       return true;
     }
   }
@@ -1082,7 +1109,7 @@ Te aviso 30 minutos antes de cada um! 💙`;
         origem: 'whatsapp_dono'
       });
       SM.updateSession(adminId, telefone, { ultimoLancamentoId: String(_docSaidaV._id), ultimoLancamentoTipo: 'despesa', ultimoLancamentoValor: val, ultimoLancamentoDesc: descSaida, ultimoLancamentoCat: catSaida });
-      await responder(`Anotado! Saída de R$ ${val.toFixed(2).replace('.',',')} em "${catSaida}"${descSaida && descSaida !== 'Gasto via WhatsApp' && descSaida.toLowerCase() !== catSaida.toLowerCase() ? ' — '+descSaida : ''}. 📝`);
+      await responder(_respSaida(val, catSaida, descSaida));
       return true;
     }
     await responder(`${_erro(_generoAdmin, _apelidoAdmin)} Me fala assim: *Rebeca, registra um gasto de R$50 em produtos* 💸`);
@@ -2434,7 +2461,7 @@ ${total>5?'Tá crescendo muito! Continua assim! 🚀':'Todo cliente novo é uma 
               data: _dataAgora(), origem: 'whatsapp_dono'
             });
             SM.updateSession(adminId, telefone, { ultimoLancamentoId: String(_docR._id), ultimoLancamentoTipo: 'receita', ultimoLancamentoValor: _valR });
-            const _rR = `Feito! Entrada de R$ ${_valR.toFixed(2).replace('.',',')} registrada em "${_catR}"${_descR && _descR !== 'Entrada via WhatsApp' ? ' — '+_descR : ''}. 💰`;
+            const _rR = _respEntrada(_valR, _catR, _descR);
             await responder(_rR);
             SM.addAssistantMsg(adminId, telefone, _rR);
             return true;
@@ -2679,7 +2706,7 @@ LEMBRE: você é a pessoa em quem ela mais confia no dia a dia. Esse espaço é 
           data: _dataAgora(), origem: 'whatsapp_dono'
         });
         SM.updateSession(adminId, telefone, { ultimoLancamentoId: String(_docCerebroR._id), ultimoLancamentoTipo: 'receita', ultimoLancamentoValor: Number(ent.valor), ultimoLancamentoDesc: desc, ultimoLancamentoCat: cat });
-        const _r = `Feito! Entrada de R$ ${Number(ent.valor).toFixed(2).replace('.',',')} em "${cat}"${desc !== 'Entrada via WhatsApp' ? ' — ' + desc : ''}. 💰`;
+        const _r = _respEntrada(Number(ent.valor), cat, desc);
         await responder(_r);
         SM.addAssistantMsg(adminId, telefone, _r);
         return true;
@@ -2702,7 +2729,7 @@ LEMBRE: você é a pessoa em quem ela mais confia no dia a dia. Esse espaço é 
           valor: Number(ent.valor), descricao: desc, categoria: cat,
           data: _dataAgora(), origem: 'whatsapp_dono'
         });
-        const _r = `Anotei! Saída de R$ ${Number(ent.valor).toFixed(2).replace('.',',')} em "${cat}"${desc ? ' — ' + desc : ''}. 💸`;
+        const _r = _respSaida(Number(ent.valor), cat, desc);
         await responder(_r);
         SM.addAssistantMsg(adminId, telefone, _r);
         return true;
