@@ -2111,7 +2111,16 @@ ${total>5?'Tá crescendo muito! Continua assim! 🚀':'Todo cliente novo é uma 
     || /^(fala\s*(rebeca|a[ií]|comigo|logo)?|e\s*a[ií])\b/i.test(t.trim())
     || (t.trim().length <= 15 && /^(ok|certo|show|legal|massa|[oó]timo|perfeito|maravilha|valeu|obrigad|tks|thx)/i.test(t.trim()));
 
-  if (_isSaudacao(msgL)) {
+  // Fix 4: não tratar como saudação se há ação pendente ou aguardando confirmação
+  const _sesParaSauda = SM.getSession(adminId, telefone);
+  const _temAcaoPendente = _sesParaSauda.aguardandoConfirmacao ||
+    _sesParaSauda.aguardandoConfirmacaoApagar ||
+    _sesParaSauda.aguardandoLembrete ||
+    _sesParaSauda.aguardandoCorrecao ||
+    _sesParaSauda.aguardandoRecorrente ||
+    !!_sesParaSauda.ultimaAcaoPendente;
+
+  if (_isSaudacao(msgL) && !_temAcaoPendente) {
     const _h = new Date().getHours();
     const _p = _h < 12 ? 'Bom dia' : _h < 18 ? 'Boa tarde' : 'Boa noite';
     // Buscar contexto da agenda para saudação proativa
