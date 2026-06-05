@@ -4,6 +4,8 @@ const gpsIntegradoService = require('../services/gps-integrado.service');
 
 const extrairAdminId = (req, res, next) => {
     req.adminId = req.headers['x-admin-id'] || req.query.adminId;
+    // Bug 2 fix: bloquear requisições sem adminId
+    if (!req.adminId) return res.status(400).json({ error: 'adminId obrigatório' });
     next();
 };
 
@@ -68,6 +70,11 @@ router.get('/status/:status', async (req, res) => {
 router.get('/:id', async (req, res) => {
     try {
         const motorista = await gpsIntegradoService.obterMotorista(req.params.id);
+        if (!motorista) return res.status(404).json({ error: 'Motorista não encontrado' });
+        // Bug 1 fix: verificar que motorista pertence ao admin
+        if (motorista.adminId && String(motorista.adminId) !== String(req.adminId)) {
+            return res.status(403).json({ error: 'Acesso negado' });
+        }
         res.json(motorista);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -76,6 +83,12 @@ router.get('/:id', async (req, res) => {
 
 router.put('/:id', async (req, res) => {
     try {
+        // Bug 1b fix: verificar posse antes de atualizar
+        const _mot = await gpsIntegradoService.obterMotorista(req.params.id);
+        if (!_mot) return res.status(404).json({ error: 'Motorista não encontrado' });
+        if (_mot.adminId && String(_mot.adminId) !== String(req.adminId)) {
+            return res.status(403).json({ error: 'Acesso negado' });
+        }
         const resultado = await gpsIntegradoService.atualizar(req.params.id, req.body);
         res.json(resultado);
     } catch (error) {

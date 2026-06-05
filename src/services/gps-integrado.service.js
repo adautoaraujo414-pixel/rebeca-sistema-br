@@ -2,7 +2,9 @@ const { Motorista } = require('../models');
 
 const gpsIntegradoService = {
     listarTodos: async (adminId) => {
-        const filtro = adminId ? { adminId, ativo: true } : { ativo: true };
+        // Bug 3 fix: adminId obrigatório — nunca retornar todos sem filtro
+        if (!adminId) return [];
+        const filtro = { adminId, ativo: true };
         const motoristas = await Motorista.find(filtro).lean();
         return motoristas.map(m => ({
             id: m._id.toString(),
@@ -49,7 +51,13 @@ const gpsIntegradoService = {
         // Retorna ordenado por distância (fila — mais próximo primeiro)
         return dentroDoRaio;
     },
-    atualizar: async (motoristaId, dados) => {
+    atualizar: async (motoristaId, dados, adminId = null) => {
+        // Bug 4 fix: verificar posse se adminId fornecido
+        const _motCheck = await Motorista.findById(motoristaId).select('adminId').lean();
+        if (!_motCheck) throw new Error('Motorista não encontrado');
+        if (adminId && String(_motCheck.adminId) !== String(adminId)) {
+            throw new Error('Acesso negado');
+        }
         const update = {};
         if (dados.latitude && dados.longitude) {
             update.latitude = dados.latitude;
@@ -75,7 +83,8 @@ const gpsIntegradoService = {
         };
     },
     obterEstatisticas: async (adminId) => {
-        const filtro = adminId ? { adminId, ativo: true } : { ativo: true };
+        if (!adminId) return { disponiveis: 0, emCorrida: 0, offline: 0, totalMotoristas: 0 };
+        const filtro = { adminId, ativo: true };
         const motoristas = await Motorista.find(filtro).lean();
         return {
             disponiveis: motoristas.filter(m => m.status === 'disponivel').length,
