@@ -3140,6 +3140,170 @@ _"${_textoMsg}"_`);
         await responder(_r); SM.addAssistantMsg(adminId, telefone, _r); return true;
       }
 
+
+      // ── financeiro_semana ────────────────────────────────────────────────────
+      if (_cerebro.intencao === 'financeiro_semana') {
+        const _dom = new Date(); _dom.setUTCDate(_dom.getUTCDate() - _dom.getUTCDay());
+        const iniSemF = _inicioDia(_dom); const fimSemF = _fimDia();
+        const finSemF = await FinanceiroAgenda.find({ adminId: adminObjId, data: { $gte: iniSemF, $lte: fimSemF } }).lean();
+        const recSemF = finSemF.filter(f=>f.tipo==='receita').reduce((s,x)=>s+x.valor,0);
+        const despSemF = finSemF.filter(f=>f.tipo==='despesa').reduce((s,x)=>s+x.valor,0);
+        const _r = `📊 Financeiro da semana, ${_chefe(_generoAdmin,_apelidoAdmin)}:\n\n💰 Entradas: R$ ${recSemF.toFixed(2).replace('.',',')}\n💸 Saídas: R$ ${despSemF.toFixed(2).replace('.',',')}\n📈 Resultado: R$ ${(recSemF-despSemF).toFixed(2).replace('.',',')}`;
+        await responder(_r); SM.addAssistantMsg(adminId, telefone, _r); return true;
+      }
+
+      // ── financeiro_mes ───────────────────────────────────────────────────────
+      if (_cerebro.intencao === 'financeiro_mes') {
+        const hoje = new Date();
+        const iniMesF = new Date(Date.UTC(hoje.getUTCFullYear(), hoje.getUTCMonth(), 1));
+        const finMesF = await FinanceiroAgenda.find({ adminId: adminObjId, data: { $gte: iniMesF } }).lean();
+        const recMesF = finMesF.filter(f=>f.tipo==='receita').reduce((s,x)=>s+x.valor,0);
+        const despMesF = finMesF.filter(f=>f.tipo==='despesa').reduce((s,x)=>s+x.valor,0);
+        const _r = `📊 Financeiro do mês, ${_chefe(_generoAdmin,_apelidoAdmin)}:\n\n💰 Entradas: R$ ${recMesF.toFixed(2).replace('.',',')}\n💸 Saídas: R$ ${despMesF.toFixed(2).replace('.',',')}\n📈 Resultado: R$ ${(recMesF-despMesF).toFixed(2).replace('.',',')}`;
+        await responder(_r); SM.addAssistantMsg(adminId, telefone, _r); return true;
+      }
+
+      // ── historico_cliente ────────────────────────────────────────────────────
+      if (_cerebro.intencao === 'historico_cliente') {
+        const _nomeHist = ent.nome_cliente || ent.cliente || null;
+        if (!_nomeHist) {
+          const _r = `Qual cliente você quer ver o histórico? 😊`;
+          await responder(_r); SM.addAssistantMsg(adminId, telefone, _r); return true;
+        }
+        const _agsHist = await AgendamentoAgenda.find({
+          adminId: adminObjId,
+          nomeCliente: { $regex: _nomeHist, $options: 'i' }
+        }).sort({ dataHora: -1 }).limit(10).lean();
+        if (!_agsHist.length) {
+          const _r = `Não encontrei histórico de *${_nomeHist}*, ${_chefe(_generoAdmin,_apelidoAdmin)}. Tem certeza do nome?`;
+          await responder(_r); SM.addAssistantMsg(adminId, telefone, _r); return true;
+        }
+        const _lista = _agsHist.map(a => `• ${_fmtData(new Date(a.dataHora))} ${_fmtHora(new Date(a.dataHora))} — ${a.nomeServico||'serviço'} (${a.status})`).join('\n');
+        const _r = `📋 Histórico de *${_nomeHist}* (${_agsHist.length} visitas):\n\n${_lista}`;
+        await responder(_r); SM.addAssistantMsg(adminId, telefone, _r); return true;
+      }
+
+      // ── retorno_cliente ──────────────────────────────────────────────────────
+      if (_cerebro.intencao === 'retorno_cliente') {
+        try {
+          const RetornoAgenda = require('../models/AgendaServico').RetornoAgenda;
+          if (!RetornoAgenda) throw new Error('modelo nao existe');
+          const retornos = await RetornoAgenda.find({ adminId: adminObjId, statusContato: 'pendente' }).sort({ dataRetorno: 1 }).limit(10).lean();
+          if (!retornos.length) {
+            const _r = `Nenhum cliente aguardando retorno, ${_chefe(_generoAdmin,_apelidoAdmin)}! Tudo em dia. ✅`;
+            await responder(_r); SM.addAssistantMsg(adminId, telefone, _r); return true;
+          }
+          const _lista = retornos.map(r => `• ${r.nomeCliente}${r.dataRetorno ? ' — ' + _fmtData(new Date(r.dataRetorno)) : ''}`).join('\n');
+          const _r = `🔔 Clientes para retornar (${retornos.length}):\n\n${_lista}`;
+          await responder(_r); SM.addAssistantMsg(adminId, telefone, _r); return true;
+        } catch(_eRet) {
+          const _r = `Não tenho dados de retorno configurados ainda, ${_chefe(_generoAdmin,_apelidoAdmin)}.`;
+          await responder(_r); SM.addAssistantMsg(adminId, telefone, _r); return true;
+        }
+      }
+
+      // ── aniversariantes ──────────────────────────────────────────────────────
+      if (_cerebro.intencao === 'aniversariantes') {
+        const _hoje2 = new Date(Date.now() - 3*60*60*1000);
+        const _diaHj = _hoje2.getUTCDate(); const _mesHj = _hoje2.getUTCMonth() + 1;
+        const anivs = await ClienteAgenda.find({
+          adminId: adminObjId,
+          $expr: { $and: [
+            { $eq: [{ $dayOfMonth: '$dataNascimento' }, _diaHj] },
+            { $eq: [{ $month: '$dataNascimento' }, _mesHj] }
+          ]}
+        }).lean();
+        if (!anivs.length) {
+          const _r = `Nenhum aniversariante hoje, ${_chefe(_generoAdmin,_apelidoAdmin)}! 🎂`;
+          await responder(_r); SM.addAssistantMsg(adminId, telefone, _r); return true;
+        }
+        const _lista = anivs.map(c => `🎂 *${c.nome}*${c.telefone ? ' — ' + c.telefone : ''}`).join('\n');
+        const _r = `🎉 Aniversariantes de hoje (${anivs.length}):\n\n${_lista}\n\nQuer que eu mande mensagem pra eles?`;
+        SM.updateSession(adminId, telefone, { aniversariantesLista: anivs.map(c=>({nome:c.nome,telefone:c.telefone||null})) });
+        await responder(_r); SM.addAssistantMsg(adminId, telefone, _r); return true;
+      }
+
+      // ── reagendar_cliente ────────────────────────────────────────────────────
+      if (_cerebro.intencao === 'reagendar_cliente') {
+        const _nomeRe = ent.nome_cliente || ent.cliente || null;
+        const _horaRe = ent.horario || null;
+        const _dataRe = ent.data || null;
+        if (!_nomeRe) {
+          const _r = `Qual cliente você quer reagendar? 😊`;
+          await responder(_r); SM.addAssistantMsg(adminId, telefone, _r); return true;
+        }
+        if (!_horaRe) {
+          const _r = `Para qual horário você quer remarcar *${_nomeRe}*?`;
+          await responder(_r); SM.addAssistantMsg(adminId, telefone, _r); return true;
+        }
+        const _agRe = await AgendamentoAgenda.findOne({
+          adminId: adminObjId,
+          nomeCliente: { $regex: _nomeRe, $options: 'i' },
+          status: { $in: ['pendente','confirmado'] }
+        }).sort({ dataHora: 1 }).lean();
+        if (!_agRe) {
+          const _r = `Não achei agendamento ativo de *${_nomeRe}*, ${_chefe(_generoAdmin,_apelidoAdmin)}.`;
+          await responder(_r); SM.addAssistantMsg(adminId, telefone, _r); return true;
+        }
+        const _diaNovoRe = _dataRe ? _parseDia(_dataRe) : new Date();
+        const _horaNovaRe = _parseHora(_horaRe);
+        if (!_horaNovaRe) {
+          const _r = `Não entendi o horário *${_horaRe}*. Me fala assim: "14h" ou "14:30" 😊`;
+          await responder(_r); SM.addAssistantMsg(adminId, telefone, _r); return true;
+        }
+        const _novaData = new Date(_diaNovoRe);
+        _novaData.setUTCHours(_horaNovaRe.h + 3, _horaNovaRe.min, 0, 0);
+        SM.updateSession(adminId, telefone, {
+          aguardandoConfirmacao: true,
+          ultimaAcaoPendente: { intencao: 'reagendar_executar', entidades: { agId: String(_agRe._id), novaData: _novaData, nomeCliente: _agRe.nomeCliente } }
+        });
+        const _r = `Confirma remarcar *${_agRe.nomeCliente}* de ${_fmtHora(new Date(_agRe.dataHora))} para ${_fmtHora(_novaData)} em ${_fmtData(_novaData)}? Responde *sim* ou *não* 😊`;
+        await responder(_r); SM.addAssistantMsg(adminId, telefone, _r); return true;
+      }
+
+      // ── fechar_dia ───────────────────────────────────────────────────────────
+      if (_cerebro.intencao === 'fechar_dia') {
+        const _diaFechar = ent.data ? _parseDia(ent.data) : new Date();
+        SM.updateSession(adminId, telefone, {
+          aguardandoConfirmacao: true,
+          ultimaAcaoPendente: { intencao: 'fechar_dia_executar', entidades: { dia: _diaFechar } }
+        });
+        const _r = `Confirma fechar a agenda de *${_fmtData(_diaFechar)}*? Isso cancela todos os horários do dia. Responde *sim* ou *não* ⚠️`;
+        await responder(_r); SM.addAssistantMsg(adminId, telefone, _r); return true;
+      }
+
+      // ── saudacao ─────────────────────────────────────────────────────────────
+      if (_cerebro.intencao === 'saudacao') {
+        if (_cerebro.resposta) {
+          await responder(_cerebro.resposta);
+          SM.addAssistantMsg(adminId, telefone, _cerebro.resposta);
+          return true;
+        }
+      }
+
+      // ── ajuda ────────────────────────────────────────────────────────────────
+      if (_cerebro.intencao === 'ajuda') {
+        const _rAjuda = `Oi! Aqui tá tudo que sei fazer por você, ${_chefe(_generoAdmin,_apelidoAdmin)}! 💙\n\n📅 *Agenda*\n• mostra minha agenda de hoje\n• encaixa [nome] às [hora]\n• cancela o [nome] das [hora]\n• bloqueia amanhã das 12h às 14h\n\n💰 *Financeiro*\n• registra entrada de R$120 no Pix\n• registra gasto de R$50 em produtos\n• quanto fiz hoje / essa semana / esse mês\n\n🔔 *Lembretes*\n• me lembra amanhã 9h de ligar pro fornecedor\n• ver meus lembretes\n\n👥 *Clientes*\n• clientes inativos\n• aniversariantes hoje\n• histórico da [nome]\n\n💬 *Mensagens*\n• manda mensagem pra [nome]: [texto]`;
+        await responder(_rAjuda); SM.addAssistantMsg(adminId, telefone, _rAjuda); return true;
+      }
+
+      // ── confirmar_pendente / cancelar_pendente ───────────────────────────────
+      if (_cerebro.intencao === 'confirmar_pendente' || _cerebro.intencao === 'cancelar_pendente') {
+        const _confirmarP = _cerebro.intencao === 'confirmar_pendente';
+        const _sesP = SM.getSession(adminId, telefone);
+        if (_sesP.ultimaAcaoPendente) {
+          if (_confirmarP) {
+            const rConf2 = `Feito, ${_chefe(_generoAdmin,_apelidoAdmin)}! ✅`;
+            await responder(rConf2); SM.addAssistantMsg(adminId, telefone, rConf2);
+          } else {
+            SM.updateSession(adminId, telefone, { ultimaAcaoPendente: null, aguardandoConfirmacao: false });
+            const rNeg2 = `Ok, cancelei! 👍`;
+            await responder(rNeg2); SM.addAssistantMsg(adminId, telefone, rNeg2);
+          }
+          return true;
+        }
+      }
+
     const _fallback = `${_saudacao()}, ${_chefe(_generoAdmin, _apelidoAdmin)}! 😊\n\nNão tive certeza do que você quis dizer. Tenta de outro jeito ou digita *ajuda*! 💙`;
     await responder(_fallback);
     SM.addAssistantMsg(adminId, telefone, _fallback);
