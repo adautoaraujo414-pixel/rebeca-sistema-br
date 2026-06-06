@@ -2656,16 +2656,24 @@ ${total>5?'Tá crescendo muito! Continua assim! 🚀':'Todo cliente novo é uma 
         try {
           const _valD = parseFloat(String(ent.valor).replace(',','.'));
           if (_valD > 0) {
-            const _descD = ent.descricao || 'Gasto via WhatsApp';
+            // Limpar descrição — não salvar frase de comando como descrição
+            let _descRawD = (ent.descricao || ent.origem || '')
+              .replace(/^(lança|registra|anota|coloca|marca|lanca|mete|bota|adiciona)\s+(uma?\s+|a\s+)?(saída|entrada|despesa|receita|gasto|saida)\s+(de\s+)?/i, '')
+              .replace(/^(r\$\s*)?[\d]+([.,][\d]+)?\s*(reais?)?\s*(de\s+)?/i, '')
+              .replace(/^(gastei|paguei|saiu|comprei)\s+(de\s+)?/i, '')
+              .replace(/^(de\s+|no\s+|na\s+|em\s+|por\s+|pra\s+|para\s+|pro\s+|com\s+|via\s+)/i, '')
+              .replace(/^(uma?\s+)/i, '').trim();
+            // Não usar como descrição se é só uma categoria conhecida
+            const _sCatD = /^(beleza|saude|combustivel|mercado|aluguel|energia|agua|internet|telefone|salario|impostos?|produtos?|alimentacao|transporte|lazer|educacao|limpeza|transferencia|servicos?|outros|pix|dinheiro)$/i;
+            const _descD = (_descRawD && _descRawD.length > 1 && !_sCatD.test(_descRawD)) ? _descRawD : '';
             const _catD  = ent.categoria || 'outros';
             const _docD  = await FinanceiroAgenda.create({
               adminId: adminObjId, tipo: 'despesa', valor: _valD,
-              descricao: _descD, categoria: _catD,
+              descricao: _descD || 'Gasto via WhatsApp', categoria: _catD,
               data: _dataAgora(), origem: 'whatsapp_dono'
             });
-            SM.updateSession(adminId, telefone, { ultimoLancamentoId: String(_docD._id), ultimoLancamentoTipo: 'despesa', ultimoLancamentoValor: _valD });
-            const _labelD = _catD !== 'outros' ? _catD : (_descD !== 'Gasto via WhatsApp' ? _descD : 'outros');
-            const _rD = `Anotado! Saída de R$ ${_valD.toFixed(2).replace('.',',')} em "${_labelD}"${_descD && _descD !== 'Gasto via WhatsApp' && _descD.toLowerCase() !== _labelD.toLowerCase() ? ' — '+_descD : ''}. 📝`;
+            SM.updateSession(adminId, telefone, { ultimoLancamentoId: String(_docD._id), ultimoLancamentoTipo: 'despesa', ultimoLancamentoValor: _valD, ultimoLancamentoDesc: _descD, ultimoLancamentoCat: _catD });
+            const _rD = _respSaida(_valD, _catD, _descD);
             await responder(_rD);
             SM.addAssistantMsg(adminId, telefone, _rD);
             return true;
@@ -2879,9 +2887,13 @@ LEMBRE: você é a pessoa em quem ela mais confia no dia a dia. Esse espaço é 
 
       if (_cerebro.intencao === 'registrar_receita' && ent.valor) {
         let _descRawE = (ent.descricao || ent.origem || '')
-          .replace(/^(lança|registra|anota|coloca|marca|lanca)\s+[\d.,]+\s*(reais?|r\$)?\s*(de\s+)?(saída|entrada|saida)?\s*(de\s+)?/i, '')
+          .replace(/^(lança|registra|anota|coloca|marca|lanca|mete|bota|adiciona)\s+(uma?\s+|a\s+)?(saída|entrada|despesa|receita|gasto|saida)\s+(de\s+)?/i, '')
+          .replace(/^(r\$\s*)?[\d]+([.,][\d]+)?\s*(reais?)?\s*(de\s+)?/i, '')
+          .replace(/^(recebi|entrou|caiu|ganhei|vendi|cobrei)\s+(de\s+)?/i, '')
+          .replace(/^(de\s+|no\s+|na\s+|em\s+|por\s+|pra\s+|para\s+|via\s+)/i, '')
           .replace(/^(e\s+)/i, '').trim();
-        const desc = _descRawE && _descRawE.length > 1 ? _descRawE : 'Entrada via WhatsApp';
+        const _sCatE = /^(beleza|saude|combustivel|mercado|aluguel|energia|agua|internet|telefone|salario|impostos?|produtos?|alimentacao|transporte|lazer|educacao|pix|dinheiro|transferencia|servicos?|outros)$/i;
+        const desc = (_descRawE && _descRawE.length > 1 && !_sCatE.test(_descRawE)) ? _descRawE : 'Entrada via WhatsApp';
         const _docCerebroR = await FinanceiroAgenda.create({
           adminId: adminObjId, tipo: 'receita',
           valor: Number(ent.valor), descricao: desc, categoria: cat,
