@@ -2919,10 +2919,12 @@ LEMBRE: você é a pessoa em quem ela mais confia no dia a dia. Esse espaço é 
           .replace(/^(e\s+)?(alimentos?|mercado|combustivel|farmacia|feira|padaria|restaurante|lanche|academia|posto)\s*$/i, '')
           .replace(/^(e\s+)/i, '').trim();
         const desc = _descRaw && _descRaw.length > 1 ? _descRaw : '';
-        await LancamentoAgenda.create({
-          valor: Number(ent.valor), descricao: desc, categoria: cat,
+        const _docDesp2 = await FinanceiroAgenda.create({
+          adminId: adminObjId, tipo: 'despesa',
+          valor: Number(ent.valor), descricao: desc || 'Gasto via WhatsApp', categoria: cat,
           data: _dataAgora(), origem: 'whatsapp_dono'
         });
+        SM.updateSession(adminId, telefone, { ultimoLancamentoId: String(_docDesp2._id), ultimoLancamentoTipo: 'despesa', ultimoLancamentoValor: Number(ent.valor), ultimoLancamentoDesc: desc, ultimoLancamentoCat: cat });
         const _r = _respSaida(Number(ent.valor), cat, desc);
         await responder(_r);
         SM.addAssistantMsg(adminId, telefone, _r);
