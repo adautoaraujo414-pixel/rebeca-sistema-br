@@ -2345,6 +2345,48 @@ ${total>5?'Tá crescendo muito! Continua assim! 🚀':'Todo cliente novo é uma 
       SM.updateSession(adminId, telefone, { ultimaAcaoPendente: null, aguardandoConfirmacao: false });
       console.log('[CONFIRMACAO] estado limpo | _isConfirm:', _isConfirm, '| _pendingAction:', !!_pendingAction);
     }
+    // ── Receiver: reagendar_executar ────────────────────────────────────────────
+    if (_isConfirm && _pendingAction && typeof _pendingAction === 'object' && _pendingAction.intencao === 'reagendar_executar') {
+      const _entRe = _pendingAction.entidades || {};
+      try {
+        await AgendamentoAgenda.findByIdAndUpdate(_entRe.agId, { dataHora: _entRe.novaData });
+        SM.updateSession(adminId, telefone, { ultimaAcaoPendente: null, aguardandoConfirmacao: false });
+        const _rRe = `Remarcado! ✅ *${_entRe.nomeCliente}* reagendado para ${_fmtData(new Date(_entRe.novaData))} às ${_fmtHora(new Date(_entRe.novaData))}. 💙`;
+        await responder(_rRe); SM.addAssistantMsg(adminId, telefone, _rRe); return true;
+      } catch(_eRe) {
+        const _rReErr = `Deu erro ao remarcar, ${_chefe(_generoAdmin,_apelidoAdmin)}. Tenta de novo! 😕`;
+        await responder(_rReErr); SM.addAssistantMsg(adminId, telefone, _rReErr); return true;
+      }
+    }
+    if (_isNeg && _pendingAction && typeof _pendingAction === 'object' && _pendingAction.intencao === 'reagendar_executar') {
+      SM.updateSession(adminId, telefone, { ultimaAcaoPendente: null, aguardandoConfirmacao: false });
+      const _rReNeg = `Ok, cancelei o reagendamento! Se mudar de ideia é só falar. 💙`;
+      await responder(_rReNeg); SM.addAssistantMsg(adminId, telefone, _rReNeg); return true;
+    }
+
+    // ── Receiver: fechar_dia_executar ────────────────────────────────────────────
+    if (_isConfirm && _pendingAction && typeof _pendingAction === 'object' && _pendingAction.intencao === 'fechar_dia_executar') {
+      const _diaFec = _pendingAction.entidades?.dia ? new Date(_pendingAction.entidades.dia) : new Date();
+      const _iniFec = _inicioDia(_diaFec); const _fimFec = _fimDia(_diaFec);
+      try {
+        const _resFec = await AgendamentoAgenda.updateMany(
+          { adminId: adminObjId, dataHora: { $gte: _iniFec, $lte: _fimFec }, status: { $in: ['pendente','confirmado'] } },
+          { $set: { status: 'cancelado', motivoCancelamento: 'dia fechado pelo dono' } }
+        );
+        SM.updateSession(adminId, telefone, { ultimaAcaoPendente: null, aguardandoConfirmacao: false });
+        const _rFec = `Feito! 🔒 Dia *${_fmtData(_diaFec)}* fechado. ${_resFec.modifiedCount} agendamento(s) cancelado(s).`;
+        await responder(_rFec); SM.addAssistantMsg(adminId, telefone, _rFec); return true;
+      } catch(_eFec) {
+        const _rFecErr = `Erro ao fechar o dia, ${_chefe(_generoAdmin,_apelidoAdmin)}. Tenta de novo! 😕`;
+        await responder(_rFecErr); SM.addAssistantMsg(adminId, telefone, _rFecErr); return true;
+      }
+    }
+    if (_isNeg && _pendingAction && typeof _pendingAction === 'object' && _pendingAction.intencao === 'fechar_dia_executar') {
+      SM.updateSession(adminId, telefone, { ultimaAcaoPendente: null, aguardandoConfirmacao: false });
+      const _rFecNeg = `Ok, agenda mantida! 👍`;
+      await responder(_rFecNeg); SM.addAssistantMsg(adminId, telefone, _rFecNeg); return true;
+    }
+
     // ── Confirmar saída de valor alto ──────────────────────────────────────────
     if (_isConfirm && _pendingAction === 'confirmar_saida_alto') {
       const _vAlto = _sesAtual.ultimoLancamentoValor;
