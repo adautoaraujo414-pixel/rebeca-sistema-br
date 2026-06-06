@@ -2435,11 +2435,21 @@ ${total>5?'Tá crescendo muito! Continua assim! 🚀':'Todo cliente novo é uma 
     }
 
     // ── Ação: pedir_info — falta dado essencial ──
-    if (_cerebro.acao === 'pedir_info' && _cerebro.resposta) {
+    if (_cerebro.acao === 'pedir_info' && (_cerebro.resposta || (_cerebro.mensagens && _cerebro.mensagens.length))) {
       if (_cerebro.reacao_emocional) {
         await responder(_cerebro.reacao_emocional);
         SM.addAssistantMsg(adminId, telefone, _cerebro.reacao_emocional);
         await new Promise(r => setTimeout(r, 800));
+      }
+      if (_cerebro.mensagens && _cerebro.mensagens.length > 0) {
+        for (const _msgPi of _cerebro.mensagens) {
+          if (_msgPi && _msgPi.trim()) {
+            await responder(_msgPi);
+            SM.addAssistantMsg(adminId, telefone, _msgPi);
+            await new Promise(r => setTimeout(r, 700));
+          }
+        }
+        return true;
       }
       await responder(_cerebro.resposta);
       SM.addAssistantMsg(adminId, telefone, _cerebro.resposta);
@@ -2447,12 +2457,23 @@ ${total>5?'Tá crescendo muito! Continua assim! 🚀':'Todo cliente novo é uma 
     }
 
     // ── Ação: responder — só consulta/informação ──
-    if (_cerebro.acao === 'responder' && _cerebro.resposta) {
+    if (_cerebro.acao === 'responder' && (_cerebro.resposta || (_cerebro.mensagens && _cerebro.mensagens.length))) {
       // Reação emocional como mensagem SEPARADA — mais natural no WhatsApp
       if (_cerebro.reacao_emocional) {
         await responder(_cerebro.reacao_emocional);
         SM.addAssistantMsg(adminId, telefone, _cerebro.reacao_emocional);
-        await new Promise(r => setTimeout(r, 800)); // pausa natural entre mensagens
+        await new Promise(r => setTimeout(r, 800));
+      }
+      // Múltiplas mensagens (campo mensagens[])
+      if (_cerebro.mensagens && _cerebro.mensagens.length > 0) {
+        for (const _msg of _cerebro.mensagens) {
+          if (_msg && _msg.trim()) {
+            await responder(_msg);
+            SM.addAssistantMsg(adminId, telefone, _msg);
+            await new Promise(r => setTimeout(r, 700));
+          }
+        }
+        return true;
       }
       await responder(_cerebro.resposta);
       SM.addAssistantMsg(adminId, telefone, _cerebro.resposta);

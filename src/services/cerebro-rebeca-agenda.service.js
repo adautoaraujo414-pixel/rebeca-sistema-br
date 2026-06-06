@@ -298,7 +298,7 @@ FINANCEIRO HOJE: Entradas R$ ${Number(entradasHoje).toFixed(2).replace('.',',')}
 RECEITA SEMANA: R$ ${Number(receitaSemana).toFixed(2).replace('.',',')}
 CLIENTES CADASTRADOS: ${totalClientes}
 
-LEMBRETES HOJE:
+LEMBRETES PENDENTES (próximos e futuros):
 ${resumoLembretes || '  nenhum'}`;
 }
 
@@ -343,7 +343,8 @@ function _validar(parsed) {
     resposta: typeof parsed.resposta === 'string' ? parsed.resposta.substring(0, 500) : null,
     requer_confirmacao: parsed.requer_confirmacao === true,
     mensagem_confirmacao: typeof parsed.mensagem_confirmacao === 'string' ? parsed.mensagem_confirmacao.substring(0, 200) : null,
-    reacao_emocional: typeof parsed.reacao_emocional === 'string' ? parsed.reacao_emocional.substring(0, 150) : null
+    reacao_emocional: typeof parsed.reacao_emocional === 'string' ? parsed.reacao_emocional.substring(0, 150) : null,
+    mensagens: Array.isArray(parsed.mensagens) ? parsed.mensagens.filter(m => typeof m === 'string').slice(0, 3) : []
   };
 }
 
