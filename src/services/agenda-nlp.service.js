@@ -39,7 +39,7 @@ const SINONIMOS = {
   'tirei':'saida','foi':'saida','saindo':'saida',
   // verbos de entrada
   'recebi':'entrada','entrou':'entrada','caiu':'entrada','ganhei':'entrada',
-  'fiz':'entrada','vendi':'entrada','veio':'entrada','pix':'entrada',
+  'fiz':'entrada','vendi':'entrada','veio':'entrada',// 'pix':'entrada', -- ambiguo, pode ser pagamento ou recebimento
   'transferencia':'entrada','deposito':'entrada',
   'cobrei':'entrada','cobrado':'entrada','cobrou':'entrada',
   'recebido':'entrada','recebemos':'entrada',

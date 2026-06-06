@@ -166,7 +166,13 @@ function updateSession(adminId, telefone, updates) {
 }
 
 function isConfirmacao(texto) {
-  return /^\s*(sim|s|ok|pode|faz|confirm[ao]|vai|bora|isso|exato|certo|claro|perfeito|ótimo|otimo|manda|envia|salva|registra)\s*[!.]?\s*$/i.test(texto.trim());
+  const t = texto.trim();
+  // Confirmação simples (uma palavra ou com pontuação)
+  if (/^\s*(sim|s|ok|pode|faz|confirm[ao]|vai|bora|isso|exato|certo|claro|perfeito|ótimo|otimo|manda|envia|salva|registra)\s*[!.]?\s*$/i.test(t)) return true;
+  // "sim gasto", "sim pode", "sim registra", "pode confirmar", etc
+  if (/^\s*sim\s+(gasto|pode|registra|foi|isso|confirma|tá|ta|ok|é|e)\s*$/i.test(t)) return true;
+  if (/^\s*(pode|vai|bora)\s+(confirmar|registrar|salvar|anotar)\s*$/i.test(t)) return true;
+  return false;
 }
 
 function isNegacao(texto) {
