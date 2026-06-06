@@ -95,13 +95,12 @@ const REGISTRY = {
   financeiro_semana:  handlerFinanceiroSemana,
   financeiro_mes: ({ dados }) => {
     const { receitaSemana } = dados;
-    // receitaSemana aqui já vem como receita do mês quando intenção é financeiro_mes
-    return `📊 Mês atual:\n\nReceita: R$ \${Number(receitaSemana||0).toFixed(2).replace('.',',')}\n\nPara mais detalhes diga: *resumo do mês*`;
+    return `📊 Mês atual:\n\nReceita: R$ ${Number(receitaSemana||0).toFixed(2).replace('.',',')}\n\nPara mais detalhes diga: *resumo do mês*`;
   },
   agenda_hoje:        handlerAgendaHoje,
   agenda_amanha:      handlerAgendaAmanha,
   proximo_cliente:    handlerProximoCliente,
-  listar_lembretes:   handlerLembretes,
+  // listar_lembretes delegado ao service (busca direto no banco)
   faltaram:           handlerFaltaram,
   relatorio_financeiro: ({ dados }) => {
     const { entradasHoje, saidasHoje, receitaSemana } = dados;
@@ -120,7 +119,7 @@ const DELEGAR_AO_SERVICE = new Set([
   'historico_cliente','encaixar_cliente',
   'cancelar_agendamento','confirmar_agendamento',
   'bloquear_horario','fechar_dia','liberar_agenda',
-  'criar_lembrete','aniversariantes','servicos_mais_pedidos',
+  'criar_lembrete','listar_lembretes','aniversariantes','servicos_mais_pedidos',
   'resumo_semanal','resumo_mensal','mandar_mensagem',
   'relatorio_detalhado','reagendar_cliente','retorno_cliente','liberar_horario',
 ]);
@@ -132,8 +131,9 @@ const DELEGAR_AO_SERVICE = new Set([
 function rotear(intent, ctx) {
   const { intencao, confiancaSuficiente } = intent;
 
-  // Confidence insuficiente para intenções críticas
-  if (!confiancaSuficiente) {
+  // Confidence insuficiente para intenções críticas (exceto saudacao/ajuda/fora_escopo)
+  const _semConfianca = ['saudacao','ajuda','fora_escopo','confirmar_pendente','cancelar_pendente'];
+  if (!confiancaSuficiente && !_semConfianca.includes(intencao)) {
     return handlerConfiancaBaixa({ intent });
   }
 
