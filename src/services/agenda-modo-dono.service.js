@@ -33,12 +33,12 @@ function _chefe(genero, apelido) {
   return opcoes[Math.floor(Math.random() * opcoes.length)];
 }
 
-function _confirmacao() {
+function _confirmacao(genero, apelido) {
   const opcoes = [
     'Maravilha! Já anotei aqui. ✅',
-    'Feito, ' + _chefe(_generoAdmin, _apelidoAdmin) + '! Tá registrado. 💙',
+    'Feito, ' + _chefe(genero||'', apelido||null) + '! Tá registrado. 💙',
     'Prontinho! Já tá no sistema. 🎉',
-    'Pode deixar, ' + _chefe(_generoAdmin, _apelidoAdmin) + '! Já tá anotado. ✅',
+    'Pode deixar, ' + _chefe(genero||'', apelido||null) + '! Já tá anotado. ✅',
     'Ótimo! Já resolvi aqui. 💪'
   ];
   return opcoes[Math.floor(Math.random() * opcoes.length)];
@@ -1069,8 +1069,8 @@ Te aviso 30 minutos antes de cada um! 💙`;
       const _pareceData = /\d{1,2}\/\d{1,2}|\d{1,2}h\b|\d{1,2}:\d{2}/.test(msg);
       const _fraseContexto = msg.split(' ').length > 6 && !_temVerbExplicito && !_temCatConhecida;
       if (_pareceData || _fraseContexto) {
-        // Não registra — ignora silenciosamente ou pede confirmação
-        return false;
+        // Não registra — passa adiante para o cérebro tratar
+        // return false aqui bloquearia a resposta; deixa cair no próximo handler
       }
       if (_temVerbExplicito || _temCatConhecida) {
         const _descAmb = _extrairDescricao(msg, 'despesa');
@@ -2345,8 +2345,37 @@ ${total>5?'Tá crescendo muito! Continua assim! 🚀':'Todo cliente novo é uma 
       SM.updateSession(adminId, telefone, { ultimaAcaoPendente: null, aguardandoConfirmacao: false });
       console.log('[CONFIRMACAO] estado limpo | _isConfirm:', _isConfirm, '| _pendingAction:', !!_pendingAction);
     }
+    // ── Confirmar saída de valor alto ──────────────────────────────────────────
+    if (_isConfirm && _pendingAction === 'confirmar_saida_alto') {
+      const _vAlto = _sesAtual.ultimoLancamentoValor;
+      const _dAlto = _sesAtual.ultimoLancamentoDesc;
+      const _cAlto = _sesAtual.ultimoLancamentoCat || 'outros';
+      if (_vAlto) {
+        const _docAlto = await FinanceiroAgenda.create({
+          adminId: adminObjId, tipo: 'despesa', valor: _vAlto,
+          descricao: _dAlto, categoria: _cAlto,
+          data: _dataAgora(), origem: 'whatsapp_dono'
+        });
+        SM.updateSession(adminId, telefone, {
+          ultimoLancamentoId: String(_docAlto._id),
+          ultimaAcaoPendente: null, aguardandoConfirmacao: false
+        });
+        const _rAlto = _respSaida(_vAlto, _cAlto, _dAlto);
+        await responder(_rAlto);
+        SM.addAssistantMsg(adminId, telefone, _rAlto);
+        return true;
+      }
+    }
+    if (_isNeg && _pendingAction === 'confirmar_saida_alto') {
+      SM.updateSession(adminId, telefone, { ultimaAcaoPendente: null, aguardandoConfirmacao: false });
+      const _rNegAlto = `Ok, cancelei! Se quiser registrar de outro jeito é só falar 💙`;
+      await responder(_rNegAlto);
+      SM.addAssistantMsg(adminId, telefone, _rNegAlto);
+      return true;
+    }
+
     if (_isConfirm && _pendingAction) {
-      const rConf = `${_confirmacao()} Feito, ${_chefe(_generoAdmin, _apelidoAdmin)}! ✅`;
+      const rConf = `${_confirmacao(_generoAdmin, _apelidoAdmin)} Feito, ${_chefe(_generoAdmin, _apelidoAdmin)}! ✅`;
       await responder(rConf);
       SM.addAssistantMsg(adminId, telefone, rConf);
       return true;
