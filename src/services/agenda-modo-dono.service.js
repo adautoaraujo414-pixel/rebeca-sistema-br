@@ -316,8 +316,8 @@ function _parsarValor(txt) {
     .replace(/\b\d{1,2}\s*(?:horas?|h\b)/gi, '')
     .replace(/[àa]s?\s*\d{1,2}[h:]\d{0,2}/gi, '')
     .replace(/\b(?:daqui|em)\s+\d+\s*(?:dias?|semanas?|meses?|anos?)/gi, '');
-  const mNum = _txtSemHora.match(/R?\$\s*([\d.,]+)|([\d.,]+)\s*(?:reais?|conto|reai)\b|^\s*([\d.,]+)\b/i);
-  const raw = mNum ? (mNum[1]||mNum[2]||mNum[3]) : null;
+  const mNum = _txtSemHora.match(/R?\$\s*([\d.,]+)|([\d.,]+)\s*(?:reais?|conto|reai)\b|^\s*([\d.,]+)\b|\b(\d{1,3}(?:\.\d{3})*(?:,\d{1,2})?|\d+(?:,\d{1,2})?)\b/i);
+  const raw = mNum ? (mNum[1]||mNum[2]||mNum[3]||mNum[4]) : null;
 
   if (!raw) return null;
   const parts = raw.split(',');
