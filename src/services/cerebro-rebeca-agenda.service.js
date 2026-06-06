@@ -363,7 +363,7 @@ const CerebroAgenda = {
   },
 
   async raciocinar(msg, dadosCtx = {}, historico = [], opcoes = {}) {
-    const { nomeNegocio = '', nomeDono = '', adminId = '' } = opcoes;
+    const { nomeNegocio = '', nomeDono = '', adminId = '', intencaoForcada = null, exemplosAprendidos = [] } = opcoes;
     try {
       if (!process.env.ANTHROPIC_API_KEY) {
         console.warn('[CerebroAgenda] ANTHROPIC_API_KEY não configurada');
@@ -378,7 +378,7 @@ const CerebroAgenda = {
       const hora = _agoraBR2.getUTCHours() + 'h' + String(_agoraBR2.getUTCMinutes()).padStart(2, '0');
       const dias = ['domingo','segunda','terça','quarta','quinta','sexta','sábado'];
 
-      const exemplosAprendidos = opcoes.exemplosAprendidos || [];
+      // exemplosAprendidos já desestruturado de opcoes acima
 
       // Calcular minutos ausente usando timestamp da sessão
       const _ultimaMsg = historico && historico.length > 0 ? historico[historico.length - 1] : null;
@@ -395,7 +395,7 @@ ${_montarContexto({ ...dadosCtx, nomeNegocio })}${_montarExemplosAprendidos(exem
 HISTÓRICO RECENTE (leia TODO antes de responder):
 ${_montarHistorico(historico)}
 
-MENSAGEM DO DONO AGORA: "${msg.substring(0, 600)}"
+MENSAGEM DO DONO AGORA: "${msg.substring(0, 600)}"${intencaoForcada ? '\nATENÇÃO — INTENÇÃO CORRIGIDA PELO APRENDIZADO: trate esta mensagem como "' + intencaoForcada + '". Prioridade máxima.' : ''}
 
 INSTRUÇÃO: Leia o histórico completo, detecte emoção/humor, responda de forma natural e contextual. Retorne APENAS o JSON.`;
 

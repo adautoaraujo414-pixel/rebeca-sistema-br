@@ -2437,6 +2437,12 @@ ${total>5?'Tá crescendo muito! Continua assim! 🚀':'Todo cliente novo é uma 
     }
 
     // ── CÉREBRO: raciocínio relacional com dados reais ──
+    // Aplicar intencaoForcada do aprendizado (se existir)
+    const _sesParaCerebro = SM.getSession(adminId, telefone);
+    const _intForcCerebro = _sesParaCerebro.intencaoForcada || null;
+    if (_intForcCerebro) {
+      SM.updateSession(adminId, telefone, { intencaoForcada: null });
+    }
     const _dadosCtx = {
       agsHoje, agsAmanha, resumoHoje, resumoAmanha,
       entradasHoje, saidasHoje, receitaSemana,
@@ -2457,7 +2463,8 @@ ${total>5?'Tá crescendo muito! Continua assim! 🚀':'Todo cliente novo é uma 
       nomeNegocio, nomeDono: admin?.nomeResponsavel || admin?.nome || '',
       genero: admin?.modoWhatsappDono?.genero || '',
       adminId: String(adminObjId),
-      exemplosAprendidos: _exemplosAprendidos
+      exemplosAprendidos: _exemplosAprendidos,
+      intencaoForcada: _intForcCerebro || null
     });
 
     SM.updateSession(adminId, telefone, {
