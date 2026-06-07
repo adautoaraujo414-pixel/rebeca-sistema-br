@@ -76,6 +76,8 @@ const NLPService = {
         // Evitar falsos positivos criticos
         if (m === 'nao' || m === 'n') return false;
         // 'para' sozinho cancela, mas 'para o centro/bairro/rua' e destino
+        // 'para' sozinho = cancelar; 'para o centro/rua/bairro' = destino (nao cancela)
+        if (m === 'para') return true;
         if (m.startsWith('para ') && !/^para (cancelar|encerrar|parar)/.test(m)) return false;
         // 'deixa' sozinho ou 'deixa eu' nao cancela — so frases especificas
         if ((m === 'deixa' || m.startsWith('deixa eu') || m.startsWith('deixa me')) && !m.includes('pra la') && !m.includes('assim') && !m.includes('quieto')) return false;
