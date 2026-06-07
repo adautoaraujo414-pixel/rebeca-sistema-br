@@ -69,17 +69,25 @@ const NLPService = {
         const padroes = ['cancelar', 'cancela', 'cancelei', 'cancelado',
             'desistir', 'desisto', 'desistiu',
             'nao quero mais', 'nao quero', 'nao preciso mais', 'nao vou mais',
-            'nao precisa', 'deixa', 'para', 'parar', 'encerrar', 'encerra', 'sair',
-            'deixa pra la', 'esquece', 'esquece tudo',
+            'nao precisa', 'deixa pra la', 'deixa assim', 'deixa quieto',
+            'encerrar', 'encerra', 'sair',
+            'esquece', 'esquece tudo',
             'pode cancelar', 'vou desistir', 'nao ta mais'];
-        // Evitar falsos positivos: 'nao' sozinho nao cancela
+        // Evitar falsos positivos criticos
         if (m === 'nao' || m === 'n') return false;
+        // 'para' sozinho cancela, mas 'para o centro/bairro/rua' e destino
+        if (m.startsWith('para ') && m.length > 5) return false;
+        // 'deixa' sozinho ou 'deixa eu' nao cancela — so frases especificas
+        if ((m === 'deixa' || m.startsWith('deixa eu') || m.startsWith('deixa me')) && !m.includes('pra la') && !m.includes('assim') && !m.includes('quieto')) return false;
         return padroes.some(p => m === p || m.includes(p));
     },
 
     // ==================== SAUDAÇÃO ====================
     eSaudacao(msg) {
         const m = this.normalizar(msg);
+        // Se tem palavra de acao, nao e saudacao
+        const temAcao = /\b(quero|preciso|pedir|corrida|carro|moto|taxi|uber|chama|manda|ir para|ir pro|ir pra|buscar|cancelar|cancela|destino|origem|rua|av |avenida|estrada|alameda)\b/.test(m);
+        if (temAcao) return false;
         const padroes = ['oi', 'ola', 'ola', 'hello', 'hi', 'hey',
             'bom dia', 'boa tarde', 'boa noite', 'boa madrugada',
             'tudo bem', 'tudo bom', 'como vai', 'e ai', 'eai',
