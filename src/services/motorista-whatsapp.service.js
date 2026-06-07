@@ -218,14 +218,26 @@ const MotoristaWhatsappService = {
 
             await Motorista.findByIdAndUpdate(motorista._id, { status: 'em_corrida' });
 
-            // Notificar cliente
-            const nomeMotorista = motorista.nomeCompleto || 'Motorista';
-            const veiculo = motorista.veiculo?.modelo ? motorista.veiculo.modelo + ' ' + (motorista.veiculo.cor || '') + ' - Placa ' + (motorista.veiculo.placa || '') : '';
-            await this.notificarCliente(corrida, adminId, instanciaId,
-                'Otima noticia! Seu motorista *' + nomeMotorista + '* aceitou sua corrida e esta a caminho!' +
-                (veiculo ? '\n\nVeiculo: *' + veiculo + '*' : '') +
-                '\n\nFique de olho! 🚗'
-            );
+            // Notificar cliente com dados completos + link rastreamento
+            const nomeMotorista = (motorista.nomeCompleto || motorista.nome || 'Motorista').split(' ')[0];
+            const _modelo = motorista.veiculo?.modelo || '';
+            const _cor = motorista.veiculo?.cor || '';
+            const _placa = motorista.veiculo?.placa || '';
+            let _tokenAc = corrida.tokenRastreamento;
+            if (!_tokenAc) {
+                const _ch = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+                _tokenAc = Array.from({length:12}, () => _ch[Math.floor(Math.random()*_ch.length)]).join('');
+                await Corrida.findByIdAndUpdate(corrida._id, { tokenRastreamento: _tokenAc });
+            }
+            const _baseUrl = process.env.BASE_URL || 'https://rebeca-sistema-br.onrender.com';
+            const _linkRastr = _baseUrl + '/rastrear/' + corrida._id.toString().slice(-8);
+            let _msgAceite = '🚗 *MOTORISTA A CAMINHO!*\n\n';
+            _msgAceite += '👨‍✈️ *' + nomeMotorista + '*\n';
+            if (_modelo || _cor) _msgAceite += '🚙 ' + [_modelo, _cor].filter(Boolean).join(' ') + '\n';
+            if (_placa) _msgAceite += '🔢 *' + _placa + '*\n';
+            _msgAceite += '\n📲 *Acompanhe em tempo real:*\n' + _linkRastr;
+            _msgAceite += '\n\n💬 Qualquer dúvida fala aqui!';
+            await this.notificarCliente(corrida, adminId, instanciaId, _msgAceite);
 
             const origem = corrida.enderecoOrigemTexto || corrida.origem?.endereco || 'endereco do cliente';
             console.log('[ACEITAR] Corrida', corrida._id, 'aceita por', nomeMotorista);
