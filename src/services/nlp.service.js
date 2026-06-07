@@ -67,11 +67,14 @@ const NLPService = {
     eCancelar(msg) {
         const m = this.normalizar(msg);
         const padroes = ['cancelar', 'cancela', 'cancelei', 'cancelado',
-            'desistir', 'desisto', 'desistiu', 'nao quero mais',
-            'para', 'parar', 'encerrar', 'encerra', 'sair',
+            'desistir', 'desisto', 'desistiu',
+            'nao quero mais', 'nao quero', 'nao preciso mais', 'nao vou mais',
+            'nao precisa', 'deixa', 'para', 'parar', 'encerrar', 'encerra', 'sair',
             'deixa pra la', 'esquece', 'esquece tudo',
-            'nao preciso mais', 'nao vou mais'];
-        return padroes.some(p => m.includes(p));
+            'pode cancelar', 'vou desistir', 'nao ta mais'];
+        // Evitar falsos positivos: 'nao' sozinho nao cancela
+        if (m === 'nao' || m === 'n') return false;
+        return padroes.some(p => m === p || m.includes(p));
     },
 
     // ==================== SAUDAÇÃO ====================
