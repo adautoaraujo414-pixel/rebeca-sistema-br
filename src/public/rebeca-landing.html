@@ -14,6 +14,7 @@
   --verde:#22c27a;--verde-soft:rgba(34,194,122,0.12);
   --roxo:#6366f1;--roxo-soft:rgba(99,102,241,0.12);
   --laranja:#f59e0b;--laranja-soft:rgba(245,158,11,0.12);
+  --vermelho:#ef4444;--vermelho-soft:rgba(239,68,68,0.12);
   --branco:#f4f6f8;--cinza:#8a9ab0;
   --cinza-card:rgba(255,255,255,0.042);--cinza-borda:rgba(255,255,255,0.08);
   --texto:#dce6ef;--texto2:#8a9ab0;
@@ -32,7 +33,7 @@ h1,h2,h3{font-family:'Playfair Display',Georgia,serif;font-weight:700;line-heigh
 section{position:relative;z-index:1}
 .container{max-width:1160px;margin:0 auto;padding:0 5vw}
 
-/* ── HEADER ── */
+/* HEADER */
 header{position:fixed;top:0;left:0;right:0;z-index:100;padding:0 5vw;height:68px;display:flex;align-items:center;justify-content:space-between;background:rgba(8,13,20,0.88);backdrop-filter:blur(20px);border-bottom:1px solid var(--cinza-borda);transition:background .3s}
 .logo{font-family:'Playfair Display',serif;font-size:1.55rem;font-weight:900;font-style:italic;color:var(--branco);text-decoration:none;letter-spacing:-.5px}
 .logo span{color:var(--ciano)}
@@ -49,7 +50,7 @@ nav a:hover{color:var(--branco);background:var(--cinza-card)}
 .mobile-nav a:hover{color:var(--branco)}
 .mobile-nav .btn-mob{margin-top:14px;background:var(--ciano);color:var(--noite);text-align:center;border-radius:50px;font-weight:700;padding:13px;display:block;text-decoration:none}
 
-/* ── HERO ── */
+/* HERO */
 #hero{min-height:100vh;display:flex;align-items:center;padding-top:68px;overflow:hidden}
 .hero-inner{display:grid;grid-template-columns:1fr 1fr;gap:70px;align-items:center;padding:80px 0}
 .hero-badge{display:inline-flex;align-items:center;gap:8px;background:var(--ciano-soft);border:1px solid var(--ciano-glow);color:var(--ciano);font-size:.75rem;font-weight:700;padding:6px 16px;border-radius:50px;letter-spacing:.06em;text-transform:uppercase;margin-bottom:26px}
@@ -79,13 +80,13 @@ nav a:hover{color:var(--branco);background:var(--cinza-card)}
 .fc-sub{font-size:.74rem;color:var(--texto2);margin-top:3px}
 .fc-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px;vertical-align:middle}
 
-/* ── SEÇÃO GENÉRICA ── */
+/* SEÇÃO GENÉRICA */
 .secao-label{font-size:.73rem;text-transform:uppercase;letter-spacing:.13em;color:var(--ciano);font-weight:700;margin-bottom:14px;display:block}
 .secao-titulo{font-size:clamp(1.8rem,3.5vw,2.9rem);color:var(--branco);margin-bottom:18px}
 .secao-texto{font-size:1.05rem;color:var(--texto2);max-width:660px;margin-bottom:52px}
 .divisor{width:48px;height:3px;background:linear-gradient(90deg,var(--ciano),var(--dourado));margin:16px 0 30px;border-radius:2px}
 
-/* ── DORES ── */
+/* DORES */
 #dores{padding:110px 0;background:linear-gradient(180deg,transparent 0%,rgba(13,31,45,0.45) 50%,transparent 100%)}
 .dores-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
 .dor-card{background:var(--cinza-card);border:1px solid var(--cinza-borda);border-radius:var(--radius);padding:26px;transition:border-color .3s,transform .3s}
@@ -94,11 +95,11 @@ nav a:hover{color:var(--branco);background:var(--cinza-card)}
 .dor-nome{font-size:.95rem;font-weight:700;color:var(--branco);margin-bottom:6px}
 .dor-desc{font-size:.82rem;color:var(--texto2);line-height:1.55}
 
-/* ── SOLUÇÕES ── */
+/* SOLUÇÕES */
 #solucoes{padding:110px 0}
 .solucoes-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:26px}
 .sol-card{background:var(--cinza-card);border:1px solid var(--cinza-borda);border-radius:var(--radius);padding:34px;display:flex;flex-direction:column;gap:0;transition:border-color .3s,transform .3s,box-shadow .3s;position:relative;overflow:hidden}
-.sol-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--accent, var(--ciano));transform:scaleX(0);transform-origin:left;transition:transform .4s}
+.sol-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--accent,var(--ciano));transform:scaleX(0);transform-origin:left;transition:transform .4s}
 .sol-card:hover::before{transform:scaleX(1)}
 .sol-card:hover{border-color:rgba(255,255,255,0.13);transform:translateY(-5px);box-shadow:var(--sombra-card)}
 .sol-emoji{font-size:2.4rem;margin-bottom:14px;display:block;line-height:1}
@@ -106,6 +107,7 @@ nav a:hover{color:var(--branco);background:var(--cinza-card)}
 .sol-tag{display:inline-block;font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;padding:4px 12px;border-radius:50px;margin-bottom:16px;background:var(--verde-soft);color:var(--verde);border:1px solid rgba(34,194,122,0.25)}
 .sol-tag.gold{background:var(--dourado-soft);color:var(--dourado);border-color:rgba(201,169,110,0.25)}
 .sol-tag.roxo{background:var(--roxo-soft);color:#a5b4fc;border-color:rgba(99,102,241,0.25)}
+.sol-tag.verde-mob{background:rgba(34,194,122,0.14);color:#4ade80;border-color:rgba(74,222,128,0.3)}
 .sol-desc{font-size:.93rem;color:var(--texto2);margin-bottom:20px;line-height:1.65;flex:1}
 .sol-beneficios{list-style:none;display:flex;flex-direction:column;gap:9px;margin-bottom:24px}
 .sol-beneficios li{font-size:.84rem;color:var(--texto);display:flex;align-items:flex-start;gap:9px;line-height:1.4}
@@ -113,13 +115,23 @@ nav a:hover{color:var(--branco);background:var(--cinza-card)}
 .sol-publico{font-size:.78rem;color:var(--texto2);margin-bottom:18px;padding:10px 14px;background:rgba(255,255,255,0.03);border-radius:var(--radius-sm);border:1px solid var(--cinza-borda);line-height:1.5}
 .sol-publico strong{color:var(--branco)}
 .sol-obs{font-size:.78rem;color:var(--texto2);font-style:italic;margin-bottom:14px}
+
+/* PILL de recursos extras dentro do card BecaMob */
+.sol-pills{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:20px}
+.sol-pill{font-size:.72rem;font-weight:600;padding:4px 11px;border-radius:50px;background:rgba(34,194,122,0.1);color:#4ade80;border:1px solid rgba(74,222,128,0.2)}
+.sol-pill.azul{background:rgba(30,184,208,0.1);color:var(--ciano);border-color:var(--ciano-glow)}
+.sol-pill.gold{background:var(--dourado-soft);color:var(--dourado);border-color:rgba(201,169,110,0.25)}
+
 .btn-sol{display:inline-block;background:var(--ciano);color:var(--noite);font-weight:700;font-size:.875rem;padding:12px 24px;border-radius:50px;text-decoration:none;transition:opacity .2s,transform .2s;text-align:center;margin-top:auto}
 .btn-sol:hover{opacity:.88;transform:translateY(-1px)}
 .btn-sol.off{background:var(--cinza-card);color:var(--cinza);border:1px solid var(--cinza-borda);cursor:default;pointer-events:none}
 .btn-sol.dourado{background:linear-gradient(135deg,var(--dourado),#e8c179)}
 .btn-sol.roxo{background:linear-gradient(135deg,#6366f1,#818cf8)}
+.btn-sol.verde{background:linear-gradient(135deg,#16a34a,#22c27a);color:#fff}
+.btn-sol-secundario{display:inline-block;background:transparent;color:var(--verde);font-weight:600;font-size:.82rem;padding:10px 20px;border-radius:50px;text-decoration:none;border:1px solid rgba(34,194,122,0.35);transition:background .2s,color .2s;text-align:center;margin-top:8px}
+.btn-sol-secundario:hover{background:var(--verde-soft);color:#4ade80}
 
-/* ── COMO FUNCIONA ── */
+/* COMO FUNCIONA */
 #como-funciona{padding:110px 0;background:linear-gradient(180deg,transparent 0%,rgba(13,31,45,0.4) 50%,transparent 100%)}
 .fluxo-wrap{display:flex;flex-direction:column;gap:0;counter-reset:step;margin-top:20px}
 .fluxo-step{display:grid;grid-template-columns:56px 1fr;gap:24px;align-items:flex-start;padding:28px 0;border-bottom:1px solid var(--cinza-borda);position:relative}
@@ -128,7 +140,7 @@ nav a:hover{color:var(--branco);background:var(--cinza-card)}
 .step-titulo{font-size:1.05rem;font-weight:700;color:var(--branco);margin-bottom:5px}
 .step-desc{font-size:.88rem;color:var(--texto2);line-height:1.6}
 
-/* ── DIFERENCIAIS ── */
+/* DIFERENCIAIS */
 #diferenciais{padding:110px 0}
 .dif-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:22px}
 .dif-card{background:var(--cinza-card);border:1px solid var(--cinza-borda);border-radius:var(--radius);padding:38px 32px;transition:border-color .3s}
@@ -137,7 +149,7 @@ nav a:hover{color:var(--branco);background:var(--cinza-card)}
 .dif-titulo{font-size:1.1rem;font-weight:700;color:var(--branco);margin-bottom:10px}
 .dif-texto{font-size:.88rem;color:var(--texto2);line-height:1.65}
 
-/* ── ACESSO ── */
+/* ACESSO */
 #acesso{padding:110px 0;background:linear-gradient(180deg,transparent 0%,rgba(13,31,45,0.5) 50%,transparent 100%)}
 .acesso-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:20px}
 .acesso-card{background:var(--cinza-card);border:1px solid var(--cinza-borda);border-radius:var(--radius);padding:30px 24px;text-align:center;transition:border-color .3s,transform .3s;display:flex;flex-direction:column;align-items:center;gap:12px}
@@ -149,21 +161,23 @@ nav a:hover{color:var(--branco);background:var(--cinza-card)}
 .btn-acesso:hover{background:var(--ciano);color:var(--noite)}
 .btn-acesso.dourado-btn{background:var(--dourado-soft);color:var(--dourado);border-color:rgba(201,169,110,0.3)}
 .btn-acesso.dourado-btn:hover{background:var(--dourado);color:var(--noite)}
+.btn-acesso.verde-btn{background:var(--verde-soft);color:var(--verde);border-color:rgba(34,194,122,0.3)}
+.btn-acesso.verde-btn:hover{background:var(--verde);color:var(--noite)}
 
-/* ── ROADMAP ── */
+/* ROADMAP */
 #roadmap{padding:80px 0}
 .roadmap-chips{display:flex;flex-wrap:wrap;gap:12px;margin-top:10px}
 .chip{background:var(--cinza-card);border:1px solid var(--cinza-borda);color:var(--texto2);font-size:.85rem;padding:10px 20px;border-radius:50px;display:flex;align-items:center;gap:8px;transition:border-color .2s,color .2s;cursor:default}
 .chip:hover{border-color:var(--ciano-glow);color:var(--branco)}
 
-/* ── CTA FINAL ── */
+/* CTA FINAL */
 #cta-final{padding:120px 0;text-align:center}
 .cta-titulo{font-size:clamp(2rem,4vw,3.2rem);color:var(--branco);margin-bottom:20px}
 .cta-titulo em{font-style:italic;color:var(--ciano)}
 .cta-texto{font-size:1.05rem;color:var(--texto2);max-width:600px;margin:0 auto 40px}
 .cta-btns{display:flex;justify-content:center;gap:14px;flex-wrap:wrap}
 
-/* ── FOOTER ── */
+/* FOOTER */
 footer{padding:60px 0 30px;border-top:1px solid var(--cinza-borda)}
 .footer-inner{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:40px;margin-bottom:40px}
 .footer-logo{font-family:'Playfair Display',serif;font-size:1.35rem;font-weight:900;font-style:italic;color:var(--branco);text-decoration:none}
@@ -174,11 +188,11 @@ footer{padding:60px 0 30px;border-top:1px solid var(--cinza-borda)}
 .footer-links a:hover{color:var(--ciano)}
 .footer-bottom{font-size:.78rem;color:var(--texto2);padding-top:24px;border-top:1px solid var(--cinza-borda);text-align:center}
 
-/* ── REVEAL ── */
+/* REVEAL */
 .reveal{opacity:0;transform:translateY(28px);transition:opacity .65s ease,transform .65s ease}
 .reveal.visible{opacity:1;transform:none}
 
-/* ── MOBILE ── */
+/* MOBILE */
 @media(max-width:900px){
   .hero-inner{grid-template-columns:1fr;gap:50px;padding:60px 0}
   .hero-cards{grid-template-columns:1fr 1fr}
@@ -219,7 +233,7 @@ footer{padding:60px 0 30px;border-top:1px solid var(--cinza-borda)}
   <a href="#solucoes" class="btn-mob">Conhecer as Rebecas</a>
 </div>
 
-<!-- ══ HERO ══ -->
+<!-- HERO -->
 <section id="hero">
   <div class="container">
     <div class="hero-inner">
@@ -229,7 +243,7 @@ footer{padding:60px 0 30px;border-top:1px solid var(--cinza-borda)}
           Conheça a <em>Rebeca</em>, a funcionária digital que entende a dor do seu negócio.
         </h1>
         <p class="hero-sub">
-          Agenda, delivery, corridas e educação — quatro sistemas poderosos criados para pequenos negócios brasileiros que precisam de organização, atendimento e clareza para crescer.
+          Agenda, delivery, corridas e educação — quatro sistemas criados para pequenos negócios brasileiros que precisam de organização, atendimento e clareza para crescer.
         </p>
         <p class="hero-frase">"Sua empresa não precisa trabalhar mais pesado. Precisa trabalhar melhor."</p>
         <div class="hero-btns">
@@ -239,7 +253,7 @@ footer{padding:60px 0 30px;border-top:1px solid var(--cinza-borda)}
       </div>
       <div class="hero-cards">
         <div class="float-card">
-          <span class="fc-icon">🗓️</span>
+          <span class="fc-icon">📅</span>
           <div class="fc-label">Agenda</div>
           <div class="fc-text">Horário confirmado</div>
           <div class="fc-sub"><span class="fc-dot" style="background:#1eb8d0"></span>14h30 — Ana Lima</div>
@@ -251,29 +265,29 @@ footer{padding:60px 0 30px;border-top:1px solid var(--cinza-borda)}
           <div class="fc-sub"><span class="fc-dot" style="background:#f59e0b"></span>3 pedidos na fila</div>
         </div>
         <div class="float-card">
-          <span class="fc-icon">🚗</span>
-          <div class="fc-label">Corrida</div>
-          <div class="fc-text">Motorista despachado</div>
-          <div class="fc-sub"><span class="fc-dot" style="background:#22c27a"></span>2 km do destino</div>
+          <span class="fc-icon">🚖</span>
+          <div class="fc-label">BecaMob</div>
+          <div class="fc-text">Motorista a caminho</div>
+          <div class="fc-sub"><span class="fc-dot" style="background:#22c27a"></span>2 km do cliente</div>
         </div>
         <div class="float-card">
-          <span class="fc-icon">🎓</span>
+          <span class="fc-icon">📚</span>
           <div class="fc-label">Beca Estuda</div>
           <div class="fc-text">Aluno no módulo 3</div>
           <div class="fc-sub"><span class="fc-dot" style="background:#a78bfa"></span>Prova em 2 dias</div>
         </div>
         <div class="float-card">
-          <span class="fc-icon">💰</span>
+          <span class="fc-icon">💵</span>
           <div class="fc-label">Financeiro</div>
           <div class="fc-text">Faturamento do dia</div>
           <div class="fc-sub"><span class="fc-dot" style="background:#6366f1"></span>R$ 4.380 registrados</div>
         </div>
         <div class="float-card" style="padding:14px 20px">
           <div style="display:flex;align-items:center;gap:14px">
-            <span style="font-size:1.7rem">🏆</span>
+            <span style="font-size:1.7rem">📍</span>
             <div>
-              <div class="fc-label">Comissão calculada</div>
-              <div class="fc-text" style="font-size:.92rem">Equipe em dia, sem planilha</div>
+              <div class="fc-label">GPS ao vivo</div>
+              <div class="fc-text" style="font-size:.92rem">Cliente rastreando em tempo real</div>
             </div>
           </div>
         </div>
@@ -282,7 +296,7 @@ footer{padding:60px 0 30px;border-top:1px solid var(--cinza-borda)}
   </div>
 </section>
 
-<!-- ══ DORES ══ -->
+<!-- DORES -->
 <section id="dores">
   <div class="container">
     <div class="reveal">
@@ -294,17 +308,17 @@ footer{padding:60px 0 30px;border-top:1px solid var(--cinza-borda)}
     <div class="dores-grid">
       <div class="dor-card reveal"><span class="dor-icon">📵</span><div class="dor-nome">Clientes sem resposta</div><div class="dor-desc">Mensagem que entra, ninguém vê. Cliente some e vai para o concorrente.</div></div>
       <div class="dor-card reveal"><span class="dor-icon">📦</span><div class="dor-nome">Pedidos desorganizados</div><div class="dor-desc">Anotação no papel, pedido errado, cliente insatisfeito toda semana.</div></div>
-      <div class="dor-card reveal"><span class="dor-icon">🗓️</span><div class="dor-nome">Agenda bagunçada</div><div class="dor-desc">Dois clientes no mesmo horário, remarcação sem controle, horário perdido.</div></div>
+      <div class="dor-card reveal"><span class="dor-icon">📋</span><div class="dor-nome">Agenda bagunçada</div><div class="dor-desc">Dois clientes no mesmo horário, remarcação sem controle, horário perdido.</div></div>
       <div class="dor-card reveal"><span class="dor-icon">🚗</span><div class="dor-nome">Corridas sem controle</div><div class="dor-desc">Motorista sumido, despacho confuso, cliente esperando sem saber nada.</div></div>
       <div class="dor-card reveal"><span class="dor-icon">🎓</span><div class="dor-nome">Alunos sem organização</div><div class="dor-desc">Material espalhado, sem cronograma, sem histórico de provas ou progresso.</div></div>
-      <div class="dor-card reveal"><span class="dor-icon">🧮</span><div class="dor-nome">Comissão difícil de calcular</div><div class="dor-desc">Planilha toda semana, confusão no fechamento, desgaste entre equipe e dono.</div></div>
+      <div class="dor-card reveal"><span class="dor-icon">🧮</span><div class="dor-nome">Comissão difícil</div><div class="dor-desc">Planilha toda semana, confusão no fechamento, desgaste entre equipe e dono.</div></div>
       <div class="dor-card reveal"><span class="dor-icon">📊</span><div class="dor-nome">Faturamento sem clareza</div><div class="dor-desc">Sabe que vendeu, mas não sabe quanto entrou, saiu ou sobrou de verdade.</div></div>
       <div class="dor-card reveal"><span class="dor-icon">🌙</span><div class="dor-nome">Oportunidades fora do horário</div><div class="dor-desc">Cliente chamou à meia-noite, empresa dormia. Venda perdida, concorrente ganhou.</div></div>
     </div>
   </div>
 </section>
 
-<!-- ══ SOLUÇÕES ══ -->
+<!-- SOLUÇÕES -->
 <section id="solucoes">
   <div class="container">
     <div class="reveal" style="margin-bottom:64px">
@@ -317,18 +331,18 @@ footer{padding:60px 0 30px;border-top:1px solid var(--cinza-borda)}
 
       <!-- AGENDA -->
       <div class="sol-card reveal" style="--accent:#1eb8d0">
-        <span class="sol-emoji">🗓️</span>
+        <span class="sol-emoji">📅</span>
         <div class="sol-nome">Rebeca Agenda</div>
-        <span class="sol-tag">✦ Disponível agora</span>
-        <p class="sol-desc">Para salões de beleza, barbearias, clínicas, estúdios, consultórios, personal trainers e qualquer negócio que trabalha com horário marcado e precisa de organização.</p>
+        <span class="sol-tag">Disponível agora</span>
+        <p class="sol-desc">Para salões, barbearias, clínicas, estúdios, consultórios e qualquer negócio que trabalha com horário marcado e precisa de organização sem depender de planilha ou caderninho.</p>
         <div class="sol-publico"><strong>Para quem é:</strong> Profissionais liberais, prestadores de serviço, clínicas e estúdios que atendem por agendamento.</div>
         <ul class="sol-beneficios">
           <li>Agenda e confirma atendimentos pelo WhatsApp automaticamente</li>
-          <li>Envia lembretes para o cliente no dia anterior</li>
-          <li>CRM humanizado para reconquistar clientes inativos</li>
+          <li>Lembrete automático para o cliente no dia anterior</li>
+          <li>CRM para reconquistar clientes que sumiram</li>
           <li>Painel completo de profissionais, serviços e horários</li>
           <li>Financeiro integrado — veja quanto entrou hoje</li>
-          <li>Avaliações de clientes com nota e histórico</li>
+          <li>Avaliações com nota, histórico e comentários</li>
         </ul>
         <a href="agenda-landing.html" class="btn-sol">Conhecer Rebeca Agenda →</a>
       </div>
@@ -337,45 +351,56 @@ footer{padding:60px 0 30px;border-top:1px solid var(--cinza-borda)}
       <div class="sol-card reveal" style="--accent:#f59e0b">
         <span class="sol-emoji">🛵</span>
         <div class="sol-nome">Rebeca Delivery</div>
-        <span class="sol-tag">✦ Disponível agora</span>
-        <p class="sol-desc">Para restaurantes, lanchonetes, pizzarias, mercadinhos, açaiterias e todo negócio que recebe pedidos todos os dias e precisa de controle total da operação.</p>
+        <span class="sol-tag">Disponível agora</span>
+        <p class="sol-desc">Para restaurantes, lanchonetes, pizzarias, mercadinhos e todo negócio que recebe pedidos todos os dias e precisa de controle total da operação sem depender de aplicativo de terceiros.</p>
         <div class="sol-publico"><strong>Para quem é:</strong> Donos de restaurante, delivery próprio, dark kitchen e qualquer negócio com cardápio e entrega.</div>
         <ul class="sol-beneficios">
           <li>Recebe e organiza pedidos em tempo real no painel</li>
           <li>Cardápio digital com categorias, fotos e preços</li>
-          <li>Tela de cozinha para preparo organizado sem confusão</li>
+          <li>Tela de cozinha — preparo organizado sem confusão</li>
           <li>Controle de entregadores com status por corrida</li>
           <li>Caixa do dia com histórico de recebimentos</li>
           <li>Financeiro completo — entradas, saídas e resultado</li>
         </ul>
-        <a href="rebeca-delivery-landing.html" class="btn-sol">Conhecer Rebeca Delivery →</a>
+        <a href="rebeca-delivery-landing.html" class="btn-sol" style="background:var(--laranja)">Conhecer Rebeca Delivery →</a>
       </div>
 
-      <!-- CORRIDA -->
+      <!-- BECAMOB -->
       <div class="sol-card reveal" style="--accent:#22c27a">
-        <span class="sol-emoji">🚗</span>
+        <span class="sol-emoji">🚖</span>
         <div class="sol-nome">BecaMob</div>
-        <span class="sol-tag">✦ Disponível agora</span>
-        <p class="sol-desc">Para empresas de transporte, aplicativos regionais, executivos, escolas e qualquer negócio que opera motoristas e precisa de despacho com rastreamento real.</p>
-        <div class="sol-publico"><strong>Para quem é:</strong> Empresas de transporte local, táxi corporativo, aplicativos regionais e serviços com frota de motoristas.</div>
+        <span class="sol-tag verde-mob">Disponível agora</span>
+        <p class="sol-desc">Sistema completo de transporte via WhatsApp para empresas regionais de mototáxi, táxi executivo e frotas. O cliente pede, a Rebeca despacha, o motorista aceita — tudo rastreado em tempo real.</p>
+        <div class="sol-publico"><strong>Para quem é:</strong> Empresas de transporte local, aplicativos regionais, táxi corporativo e frotas de mototáxi.</div>
         <ul class="sol-beneficios">
-          <li>App do motorista com GPS em tempo real</li>
-          <li>Despacho de corridas com mapa ao vivo</li>
-          <li>Cliente acompanha a corrida pelo WhatsApp</li>
-          <li>Histórico completo de corridas por motorista</li>
-          <li>Estatísticas de desempenho e faturamento</li>
-          <li>Controle de antifraude e pontos de referência</li>
+          <li>Cliente pede corrida direto pelo WhatsApp — sem instalar nada</li>
+          <li>Despacho automático para o motorista mais próximo</li>
+          <li>Motorista recebe pelo app: aceita, chega, inicia e finaliza</li>
+          <li>Cliente acompanha nome, placa, modelo e cor do veículo</li>
+          <li>Rastreamento GPS ao vivo com link enviado no WhatsApp</li>
+          <li>Chat cliente-motorista intermediado pela Rebeca</li>
+          <li>Histórico, faturamento e comissão por motorista</li>
+          <li>Antifraude, fila de espera e timeout automático</li>
         </ul>
-        <a href="admin/login.html" class="btn-sol" style="background:var(--verde)">Acessar painel Corrida →</a>
+        <div class="sol-pills">
+          <span class="sol-pill azul">Encomenda / Motoboy</span>
+          <span class="sol-pill azul">Buscar terceiro</span>
+          <span class="sol-pill azul">Cotação prévia</span>
+          <span class="sol-pill">Favoritos casa/trabalho</span>
+          <span class="sol-pill">Avaliação pós-corrida</span>
+          <span class="sol-pill gold">App motorista PWA</span>
+        </div>
+        <a href="becamob-landing.html" class="btn-sol verde">Ver tudo do BecaMob →</a>
+        <a href="admin/login.html" class="btn-sol-secundario">Acessar painel de corridas</a>
       </div>
 
       <!-- BECA ESTUDA -->
       <div class="sol-card reveal" style="--accent:#a78bfa">
-        <span class="sol-emoji">🎓</span>
+        <span class="sol-emoji">📚</span>
         <div class="sol-nome">Beca Estuda</div>
-        <span class="sol-tag roxo">✦ Disponível agora</span>
-        <p class="sol-desc">Para estudantes que precisam de organização real nos estudos — concursos, vestibulares, OAB, ENEM e certificações. Estude com método, cronograma e controle de progresso.</p>
-        <div class="sol-publico"><strong>Para quem é:</strong> Estudantes de concurso, vestibulando, pós-graduandos e profissionais em preparação para provas e certificações.</div>
+        <span class="sol-tag roxo">Disponível agora</span>
+        <p class="sol-desc">Para estudantes que precisam de organização real — concursos, vestibulares, OAB, ENEM e certificações. Estude com método, cronograma e controle de progresso.</p>
+        <div class="sol-publico"><strong>Para quem é:</strong> Concurseiro, vestibulando, pós-graduando e profissional em preparação para provas e certificações.</div>
         <ul class="sol-beneficios">
           <li>Cronograma de estudos inteligente por matéria</li>
           <li>Controle de provas, simulados e gabaritos</li>
@@ -391,8 +416,8 @@ footer{padding:60px 0 30px;border-top:1px solid var(--cinza-borda)}
       <div class="sol-card reveal" style="--accent:#6366f1;opacity:.82">
         <span class="sol-emoji">💰</span>
         <div class="sol-nome">Rebeca Financeiro</div>
-        <span class="sol-tag gold">⏳ Em breve</span>
-        <p class="sol-desc">Para empresas que precisam enxergar com clareza entradas, saídas, contas a pagar, caixa e resultado real — sem depender de planilhas ou suposições.</p>
+        <span class="sol-tag gold">Em breve</span>
+        <p class="sol-desc">Para empresas que precisam enxergar com clareza entradas, saídas, contas a pagar, caixa e resultado real — sem depender de planilhas ou suposições no fechamento do mês.</p>
         <div class="sol-publico"><strong>Para quem é:</strong> Donos de negócio que querem tomar decisão com dados, não com achismo.</div>
         <ul class="sol-beneficios">
           <li>Visão completa de entradas e saídas por período</li>
@@ -408,7 +433,7 @@ footer{padding:60px 0 30px;border-top:1px solid var(--cinza-borda)}
   </div>
 </section>
 
-<!-- ══ COMO FUNCIONA ══ -->
+<!-- COMO FUNCIONA -->
 <section id="como-funciona">
   <div class="container">
     <div class="reveal">
@@ -421,43 +446,43 @@ footer{padding:60px 0 30px;border-top:1px solid var(--cinza-borda)}
       <div class="fluxo-step">
         <div class="step-num">1</div>
         <div>
-          <div class="step-titulo">📲 Cliente chama no WhatsApp</div>
-          <div class="step-desc">A qualquer hora, a Rebeca está disponível para receber a mensagem e entender o que o cliente precisa.</div>
+          <div class="step-titulo">Cliente chama no WhatsApp</div>
+          <div class="step-desc">A qualquer hora, a Rebeca está disponível para receber a mensagem e entender o que o cliente precisa — sem robô genérico, sem menu confuso.</div>
         </div>
       </div>
       <div class="fluxo-step">
         <div class="step-num">2</div>
         <div>
-          <div class="step-titulo">🧠 Rebeca identifica a intenção</div>
-          <div class="step-desc">Entende se é pedido de delivery, agendamento, solicitação de corrida, dúvida ou reclamação — sem confundir.</div>
+          <div class="step-titulo">Rebeca identifica a intenção</div>
+          <div class="step-desc">Entende se é pedido de delivery, agendamento, solicitação de corrida, dúvida ou reclamação — sem confundir, sem travar.</div>
         </div>
       </div>
       <div class="fluxo-step">
         <div class="step-num">3</div>
         <div>
-          <div class="step-titulo">📋 Coleta e organiza a solicitação</div>
-          <div class="step-desc">Coleta os dados necessários, confirma horário, registra o pedido ou despacha a corrida — automaticamente.</div>
+          <div class="step-titulo">Coleta e organiza a solicitação</div>
+          <div class="step-desc">Coleta os dados necessários, confirma horário, registra o pedido ou despacha a corrida — de forma automática e com contexto.</div>
         </div>
       </div>
       <div class="fluxo-step">
         <div class="step-num">4</div>
         <div>
-          <div class="step-titulo">🎯 Envia para o painel certo</div>
-          <div class="step-desc">Agenda, Delivery, Corrida ou Estuda — cada coisa no lugar certo, sem precisar de mais uma pessoa na operação.</div>
+          <div class="step-titulo">Envia para o painel certo</div>
+          <div class="step-desc">Agenda, Delivery, BecaMob ou Estuda — cada coisa no lugar certo, sem precisar de mais uma pessoa gerenciando tudo.</div>
         </div>
       </div>
       <div class="fluxo-step">
         <div class="step-num">5</div>
         <div>
-          <div class="step-titulo">✅ Equipe acompanha com clareza</div>
-          <div class="step-desc">Nada se perde. Tudo visível, organizado e acessível pelo celular ou computador, a qualquer hora.</div>
+          <div class="step-titulo">Equipe acompanha com clareza</div>
+          <div class="step-desc">Nada se perde. Tudo visível, organizado e acessível pelo celular ou computador, a qualquer hora do dia.</div>
         </div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ══ DIFERENCIAIS ══ -->
+<!-- DIFERENCIAIS -->
 <section id="diferenciais">
   <div class="container">
     <div class="reveal">
@@ -486,7 +511,7 @@ footer{padding:60px 0 30px;border-top:1px solid var(--cinza-borda)}
   </div>
 </section>
 
-<!-- ══ ACESSO ══ -->
+<!-- ACESSO -->
 <section id="acesso">
   <div class="container">
     <div class="reveal">
@@ -497,7 +522,7 @@ footer{padding:60px 0 30px;border-top:1px solid var(--cinza-borda)}
     </div>
     <div class="acesso-grid">
       <div class="acesso-card reveal">
-        <div class="acesso-icon">🗓️</div>
+        <div class="acesso-icon">📅</div>
         <div class="acesso-nome">Painel Agenda</div>
         <div class="acesso-desc">Agenda, clientes, profissionais, CRM, financeiro e WhatsApp integrado.</div>
         <a href="agenda-adm.html" class="btn-acesso">Entrar na Agenda</a>
@@ -509,22 +534,34 @@ footer{padding:60px 0 30px;border-top:1px solid var(--cinza-borda)}
         <a href="delivery-admin.html" class="btn-acesso">Entrar no Delivery</a>
       </div>
       <div class="acesso-card reveal">
-        <div class="acesso-icon">🚗</div>
-        <div class="acesso-nome">Painel Corrida</div>
-        <div class="acesso-desc">Motoristas, corridas, mapa ao vivo, despacho e estatísticas.</div>
-        <a href="admin/login.html" class="btn-acesso">Entrar na Corrida</a>
+        <div class="acesso-icon">🚖</div>
+        <div class="acesso-nome">BecaMob — Corridas</div>
+        <div class="acesso-desc">Motoristas, corridas ao vivo, mapa, despacho, histórico e faturamento.</div>
+        <a href="admin/login.html" class="btn-acesso verde-btn">Entrar no BecaMob</a>
       </div>
       <div class="acesso-card reveal">
-        <div class="acesso-icon">🎓</div>
+        <div class="acesso-icon">📱</div>
+        <div class="acesso-nome">App do Motorista</div>
+        <div class="acesso-desc">Aceite corridas, veja o mapa, converse com o cliente e finalize pelo celular.</div>
+        <a href="motorista-app.html" class="btn-acesso verde-btn">Abrir app motorista</a>
+      </div>
+      <div class="acesso-card reveal">
+        <div class="acesso-icon">📚</div>
         <div class="acesso-nome">Beca Estuda</div>
         <div class="acesso-desc">Cronograma, provas, simulados, progresso e revisão de conteúdo.</div>
         <a href="beca-estuda.html" class="btn-acesso dourado-btn">Entrar no Beca Estuda</a>
+      </div>
+      <div class="acesso-card reveal">
+        <div class="acesso-icon">🔗</div>
+        <div class="acesso-nome">Conectar WhatsApp</div>
+        <div class="acesso-desc">Configure seu número, instância e ative o atendimento automático.</div>
+        <a href="conectar-whatsapp.html" class="btn-acesso">Conectar agora</a>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ══ ROADMAP ══ -->
+<!-- ROADMAP -->
 <section id="roadmap">
   <div class="container">
     <div class="reveal">
@@ -535,19 +572,21 @@ footer{padding:60px 0 30px;border-top:1px solid var(--cinza-borda)}
     <div class="roadmap-chips reveal">
       <div class="chip"><span>💰</span> Rebeca Financeiro completo</div>
       <div class="chip"><span>🏆</span> Comissão e desempenho da equipe</div>
-      <div class="chip"><span>📈</span> Relatórios inteligentes</div>
+      <div class="chip"><span>📈</span> Relatórios inteligentes por período</div>
       <div class="chip"><span>🔁</span> Recuperação de clientes inativos</div>
       <div class="chip"><span>👥</span> Indicadores por colaborador</div>
       <div class="chip"><span>💬</span> Mais integrações WhatsApp</div>
       <div class="chip"><span>📦</span> Gestão de estoque</div>
       <div class="chip"><span>🎂</span> Aniversário e fidelização de clientes</div>
       <div class="chip"><span>🤖</span> IA para análise de desempenho</div>
+      <div class="chip"><span>🗺️</span> Mapa de calor de corridas</div>
+      <div class="chip"><span>📲</span> App nativo motorista Android</div>
       <div class="chip"><span>📚</span> Mais cursos no Beca Estuda</div>
     </div>
   </div>
 </section>
 
-<!-- ══ CTA FINAL ══ -->
+<!-- CTA FINAL -->
 <section id="cta-final">
   <div class="container">
     <h2 class="cta-titulo reveal">
@@ -563,7 +602,7 @@ footer{padding:60px 0 30px;border-top:1px solid var(--cinza-borda)}
   </div>
 </section>
 
-<!-- ══ FOOTER ══ -->
+<!-- FOOTER -->
 <footer>
   <div class="container">
     <div class="footer-inner">
@@ -575,14 +614,15 @@ footer{padding:60px 0 30px;border-top:1px solid var(--cinza-borda)}
         <strong style="color:var(--branco);font-size:.8rem;margin-bottom:4px;display:block">Produtos</strong>
         <a href="agenda-landing.html">Rebeca Agenda</a>
         <a href="rebeca-delivery-landing.html">Rebeca Delivery</a>
-        <a href="admin/login.html">BecaMob</a>
+        <a href="becamob-landing.html">BecaMob — Corridas</a>
         <a href="beca-estuda-landing.html">Beca Estuda</a>
       </div>
       <div class="footer-links">
         <strong style="color:var(--branco);font-size:.8rem;margin-bottom:4px;display:block">Acesso</strong>
         <a href="agenda-adm.html">Painel Agenda</a>
         <a href="delivery-admin.html">Painel Delivery</a>
-        <a href="admin/login.html">Painel Corrida</a>
+        <a href="admin/login.html">Painel BecaMob</a>
+        <a href="motorista-app.html">App do Motorista</a>
         <a href="beca-estuda.html">Painel Estuda</a>
         <a href="conectar-whatsapp.html">Conectar WhatsApp</a>
       </div>
@@ -594,8 +634,8 @@ footer{padding:60px 0 30px;border-top:1px solid var(--cinza-borda)}
       </div>
     </div>
     <div class="footer-bottom">
-      &copy; 2026 Rebeca Solutions &mdash; Todos os direitos reservados &nbsp;·&nbsp;
-      <a href="/privacidade" style="color:inherit;text-decoration:none">Privacidade</a> &nbsp;·&nbsp;
+      &copy; 2026 Rebeca Solutions &mdash; Todos os direitos reservados &nbsp;&middot;&nbsp;
+      <a href="/privacidade" style="color:inherit;text-decoration:none">Privacidade</a> &nbsp;&middot;&nbsp;
       <a href="/termos" style="color:inherit;text-decoration:none">Termos</a>
     </div>
   </div>
