@@ -132,8 +132,10 @@ RACIOCÍNIO DE AGENDA:
 
 RACIOCÍNIO DE LEMBRETES — CRÍTICO:
 - CRIAR: "me lembra/anota/lembra de/não me deixa esquecer/cria lembrete" + assunto → criar_lembrete
-- LISTAR: "meus lembretes/o que tenho/tem lembrete/quais são/ainda tem/mais algum" → listar_lembretes
-- REGRA: pergunta sobre lembretes existentes → listar_lembretes. Criar algo novo → criar_lembrete
+- LISTAR: "meus lembretes/o que tenho/tem lembrete/quais são/ainda tem/mais algum/meus lembretes recorrentes/lembretes recorrentes/que lembretes tenho/mostra meus lembretes" → listar_lembretes
+- REGRA CRÍTICA: qualquer pergunta SOBRE lembretes existentes → listar_lembretes. NÃO é criar_lembrete nem recorrente.
+- EXEMPLOS LISTAR: "meus lembretes recorrentes" → listar_lembretes / "tem lembrete?" → listar_lembretes / "quais meus lembretes" → listar_lembretes
+- Criar algo novo → criar_lembrete
 - Texto do lembrete: extrair SÓ o assunto — remover "rebeca", "me lembra", dias, horários, gatilhos
 
 RACIOCÍNIO DE CLIENTES:
