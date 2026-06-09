@@ -928,6 +928,12 @@ async function processarComandoDono(telefone, mensagem, adminId, instanciaRespos
     const _nlpInt = nlp.intencao;
     const _nlpCat = nlp.categoria || 'outros';
 
+    // ── INTERCEPTAR: "meus lembretes recorrentes" → listar, não criar ──────────
+    if (/meus\s+lembretes?\s+recorrentes?|lembretes?\s+recorrentes?|ver\s+recorrentes?|lista.*recorrentes?/i.test(msgL) &&
+        !/me\s+lembra|anota|cria\s+lembrete|todo\s+dia|toda\s+semana|todo\s+m[eê]s/i.test(msgL)) {
+      nlp.intencao = 'listar_lembretes';
+    }
+
     // ── RECORRENTE: "toda sexta pagar raphaela 499", "todo dia 10 aluguel" ────
     if (nlp.intencao === 'recorrente' && nlp.recorrente) {
       const _rec = nlp.recorrente;
