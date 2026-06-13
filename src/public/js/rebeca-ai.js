@@ -103,6 +103,15 @@ window.RebecaAI = (() => {
       const caixa = await fetchSafe('/api/soft/caixa/atual');
       dados.caixaAtual = caixa;
 
+    } else if (produto === 'corridas') {
+      // BecaMob — corridas/mototaxi: não chamar rotas de delivery
+      const [corridas, motoristas] = await Promise.all([
+        fetchSafe('/api/corridas?status=ativa&limit=20'),
+        fetchSafe('/api/motoristas?status=online&limit=50'),
+      ]);
+      dados.corridasAtivas = corridas;
+      dados.motoristasOnline = motoristas;
+
     } else if (produto === 'delivery') {
       const adminId = _adminId();
       const [pedidos, config] = await Promise.all([
