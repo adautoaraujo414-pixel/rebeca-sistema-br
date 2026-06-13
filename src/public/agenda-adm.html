@@ -1892,6 +1892,8 @@ function toast(msg, tipo='ok'){
   el.style.display = 'block';
   setTimeout(()=>el.style.display='none', 2800);
 }
+// Alias — vários módulos usam mostrarToast em vez de toast
+function mostrarToast(msg, tipo='ok'){ toast(msg, tipo); }
 
 function fmt(v){ return 'R$\u00a0'+(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 function fmtData(d){ return d ? new Date(d).toLocaleDateString('pt-BR') : '—'; }
