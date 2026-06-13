@@ -56,6 +56,28 @@ async function _buscarInstancia(corrida) {
     return inst;
 }
 
+// Salvar destino digitado pelo motorista no card da corrida
+router.post('/corrida-ativa/destino', auth, async (req, res) => {
+    try {
+        const { corridaId, destino } = req.body;
+        if (!corridaId || !destino) return res.status(400).json({ erro: 'corridaId e destino obrigatórios' });
+        const { Corrida } = require('../models');
+        const corrida = await Corrida.findById(corridaId);
+        if (!corrida) return res.status(404).json({ erro: 'Corrida não encontrada' });
+        if (String(corrida.motoristaId) !== String(req.motorista._id))
+            return res.status(403).json({ erro: 'Acesso negado' });
+        if (!corrida.destino) corrida.destino = {};
+        if (typeof destino === 'string') {
+            corrida.destino.endereco = destino;
+            corrida.enderecoDestinoTexto = destino;
+        } else {
+            Object.assign(corrida.destino, destino);
+        }
+        await corrida.save();
+        res.json({ sucesso: true, destino: corrida.destino });
+    } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
 router.post('/login', async (req, res) => {
     try {
         const { whatsapp, senha } = req.body;

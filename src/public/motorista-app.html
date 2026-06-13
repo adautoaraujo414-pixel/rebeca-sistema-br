@@ -1913,7 +1913,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (btn) { btn.disabled = false; btn.style.display = 'none'; }
                     atualizarBotoesCorridaAtiva();
                     toast('Corrida iniciada!', 'success'
-                _abrirNavegacaoDestino(););
+                _abrirNavegacaoDestino();
                     setTimeout(() => carregarCorridaAtiva(), 500);
                 } else {
                     toast(data.erro || 'Erro ao iniciar', 'error');
