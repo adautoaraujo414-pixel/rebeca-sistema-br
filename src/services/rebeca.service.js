@@ -4930,6 +4930,7 @@ const filaEsperaFunctions = {
                 prefereMotristaMulher: extras?.prefereMotristaMulher || false,
                 origem,
                 destino,
+                corridaId: extras?.corridaId || null,
                 posicao: aguardando + 1,
                 status: 'aguardando',
                 adminId,
@@ -5011,6 +5012,28 @@ const filaEsperaFunctions = {
             const temDestino = proximo.destino?.endereco || proximo.destino;
 
             let msgFila;
+            // Se já tem corrida criada na fila → despachar direto sem perguntar
+            if (proximo.corridaId) {
+                try {
+                    const { Corrida: CorridaFila } = require('../models');
+                    const cExist = await CorridaFila.findById(proximo.corridaId).lean();
+                    if (cExist && cExist.status === 'pendente' && !cExist.motoristaId) {
+                        const motsDispFila = await MotoristaService.listarDisponiveis(adminId);
+                        if (motsDispFila.length > 0) {
+                            await DespachoService.despacharCorrida(cExist, motsDispFila, adminId);
+                            proximo.status = 'atendido';
+                            await proximo.save();
+                            await EvolutionMultiService.enviarMensagem(instancia._id, proximo.clienteTelefone,
+                                '🎉 Boa notícia! Um motorista ficou disponível e já estou te conectando com ele!');
+                            console.log('[FILA] Corrida existente despachada:', proximo.corridaId);
+                            return proximo;
+                        }
+                    }
+                } catch(eFila) {
+                    console.log('[FILA] Erro despachar corrida existente:', eFila.message);
+                }
+            }
+
             if (temOrigem && temDestino) {
                 msgFila = `🎉 Boa notícia! Um motorista ficou disponível!\n\n📍 Origem: *${temOrigem}*\n🏁 Destino: *${temDestino}*\n\nConfirma a corrida? Responde *SIM* para eu criar agora!`;
             } else if (temOrigem) {
