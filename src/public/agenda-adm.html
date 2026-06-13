@@ -1497,7 +1497,7 @@ document.querySelectorAll('.nav-item').forEach(item => {
           </div>
         </div>
         <div id="lista-avaliacoes" style="display:grid;gap:12px">
-          <div style="color:var(--texto3);font-size:.85em">Em breve...</div>
+          <div style="color:var(--texto3);font-size:.85em;text-align:center;padding:32px">Carregando avaliações...</div>
         </div>
       </div>
 
@@ -2266,6 +2266,7 @@ function irPara(tela){
   if(tela==='profissionais') carregarGridProfissionais();
   if(tela==='servicos') carregarTabelaServicos();
   if(tela==='financeiro') carregarFinanceiro();
+  if(tela==='avaliacoes'){ carregarAvaliacoes(); }
   if(tela==='crm'){ if(typeof crmCarregarDashboard==='function') crmCarregarDashboard(); }
   if(tela==='configuracoes'){ if(typeof modoDonoCarregar==='function') modoDonoCarregar(); }
   if(tela==='whatsapp'){ if(typeof wppIniciar==='function') wppIniciar(); }
@@ -2496,11 +2497,12 @@ async function salvarServico(){
   const foto = (fotoImg && fotoImg.src && fotoImg.src.startsWith('data:')) ? fotoImg.src : null;
   const payload = {nome: document.getElementById('srv-nome').value.trim(), preco: parseFloat(document.getElementById('srv-preco').value)||0, duracao: parseInt(document.getElementById('srv-dur').value)||30, descricao: document.getElementById('srv-desc').value, foto};
   if(!payload.nome) return toast('Informe o nome do serviço', 'erro');
+  let r = null;
   try {
-  const r = await api('/servicos', {method:'POST', body:JSON.stringify(payload)});
+    r = await api('/servicos', {method:'POST', body:JSON.stringify(payload)});
+  } catch(e) { console.error('Erro:', e); toast('Erro ao salvar serviço', 'erro'); return; }
   if(r && r.sucesso){ toast('Serviço salvo ✅'); fecharModal('modal-srv'); srvRemoverFoto(); carregarTabelaServicos(); }
-  else toast('Erro ao salvar serviço', 'erro');
-  } catch(e) { console.error('Erro:', e); toast('Erro ao salvar serviço', 'erro'); }
+  else toast((r && r.erro) || 'Erro ao salvar serviço', 'erro');
 }
 function srvPreviewFoto(input) {
   const file = input.files[0];
@@ -2524,11 +2526,12 @@ function srvRemoverFoto() {
 async function salvarProfissional(){
   const payload = {nome: document.getElementById('prf-nome').value.trim(), cargo: document.getElementById('prf-cargo').value.trim(), telefone: document.getElementById('prf-tel').value.trim()};
   if(!payload.nome) return toast('Informe o nome', 'erro');
+  let r = null;
   try {
-  const r = await api('/profissionais', {method:'POST', body:JSON.stringify(payload)});
-  } catch(e) { console.error('Erro:', e); alert('Erro ao executar ação'); }
+    r = await api('/profissionais', {method:'POST', body:JSON.stringify(payload)});
+  } catch(e) { console.error('Erro:', e); toast('Erro ao salvar profissional', 'erro'); return; }
   if(r && r.sucesso){ toast('Profissional salvo ✅'); fecharModal('modal-prf'); carregarGridProfissionais(); }
-  else toast('Erro ao salvar profissional', 'erro');
+  else toast((r && r.erro) || 'Erro ao salvar profissional', 'erro');
 }
 
 async function salvarConfig(){
@@ -3432,6 +3435,33 @@ async function conexaoVerModelos() {
 let crmAbaAtual = 'retornos';
 let crmRetornosCache = [];
 let crmInativosCache = [];
+
+async function carregarAvaliacoes() {
+  const lista = document.getElementById('lista-avaliacoes');
+  if (!lista) return;
+  lista.innerHTML = '<div style="color:var(--texto3);font-size:.85em;text-align:center;padding:32px">Carregando...</div>';
+  try {
+    const d = await api('/avaliacoes');
+    const avs = d?.avaliacoes || d || [];
+    if (!avs.length) {
+      lista.innerHTML = '<div style="text-align:center;padding:40px"><div style="font-size:2em">⭐</div><div style="color:var(--texto3);margin-top:8px">Nenhuma avaliação ainda</div><div style="font-size:.82em;color:var(--texto4);margin-top:4px">Compartilhe seu link público para receber avaliações</div></div>';
+      return;
+    }
+    lista.innerHTML = avs.map(a => {
+      const estrelas = '★'.repeat(a.nota||5) + '☆'.repeat(5-(a.nota||5));
+      const data = a.criadoEm ? new Date(a.criadoEm).toLocaleDateString('pt-BR') : '';
+      return '<div style="background:#fff;border:1px solid var(--borda);border-radius:var(--radius-lg);padding:16px 20px">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">' +
+        '<span style="font-weight:600">' + (a.clienteNome||'Cliente') + '</span>' +
+        '<span style="color:#f59e0b;font-size:1.1em">' + estrelas + '</span></div>' +
+        (a.comentario ? '<div style="color:var(--texto2);font-size:.88em;line-height:1.5">' + a.comentario + '</div>' : '') +
+        '<div style="color:var(--texto4);font-size:.75em;margin-top:8px">' + data + '</div>' +
+        '</div>';
+    }).join('');
+  } catch(e) {
+    lista.innerHTML = '<div style="color:var(--vermelho);text-align:center;padding:24px">Erro ao carregar avaliações</div>';
+  }
+}
 
 async function crmCarregarDashboard() {
   try {
