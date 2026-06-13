@@ -2199,7 +2199,8 @@ MENSAGEM AO MOTOBOY: incluir tipo de serviço claramente — "CORRIDA", "ENCOMEN
                     telefone, nome, 
                     conversa.dados.calculo?.origem || conversa.dados.origem,
                     conversa.dados.calculo?.destino || conversa.dados.destino,
-                    conversa.adminId, conversa.instanciaId
+                    conversa.adminId, conversa.instanciaId,
+                    { corridaId: conversa.dados._corridaIdParaFila || null }
                 );
                 
                 if (resultado) {
