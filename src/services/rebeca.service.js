@@ -658,6 +658,7 @@ Me manda o endereço de *onde você está*!`;
                 // Oferecer fila de espera
                 const estimativa = await RebecaService.estimarTempoEspera(adminId);
                 conversa.etapa = 'oferecer_fila_espera';
+                conversa.dados._corridaIdParaFila = conversa.dados.corridaId || null;
                 conversa.dados.origemGPS = coords;
                 conversas.set(telefone, conversa);
                 return 'Poxa, no momento todos os nossos motoristas estão em corrida! ' +
@@ -760,6 +761,7 @@ Me manda o endereço de *onde você está*!`;
                             const _motsInt = await MotoristaService.listarDisponiveis(conversa.adminId);
                             if (_motsInt.length === 0) {
                                 conversa.etapa = 'oferecer_fila_espera';
+                conversa.dados._corridaIdParaFila = conversa.dados.corridaId || null;
                                 conversas.set(telefone, conversa);
                                 const _mf = 'Poxa, todos os motoristas estão ocupados agora. Posso te avisar quando um desocupar?';
                                 CerebroRebeca.salvarHistorico(conversa, _mf, 'rebeca');
@@ -967,6 +969,7 @@ Me manda o endereço de *onde você está*!`;
                             if (_motsC.length === 0) {
                                 const _estC = await RebecaService.estimarTempoEspera(conversa.adminId);
                                 conversa.etapa = 'oferecer_fila_espera';
+                conversa.dados._corridaIdParaFila = conversa.dados.corridaId || null;
                                 conversas.set(telefone, conversa);
                                 const _msgFila = 'Poxa, todos os motoristas estão ocupados. ' + (_estC ? _estC.texto : '') + ' Posso te avisar quando um desocupar?';
                                 CerebroRebeca.salvarHistorico(conversa, _msgFila, 'rebeca');
@@ -1089,6 +1092,7 @@ Me manda o endereço de *onde você está*!`;
                         if (_motsEmb.length === 0) {
                             const _estEmb = await RebecaService.estimarTempoEspera(conversa.adminId);
                             conversa.etapa = 'oferecer_fila_espera';
+                conversa.dados._corridaIdParaFila = conversa.dados.corridaId || null;
                             conversas.set(telefone, conversa);
                             return 'Poxa, todos os motoristas estão em corrida! Previsão: ' + _estEmb.texto + '.\n\nPosso te avisar quando um desocupar? Responde *SIM*!';
                         }
@@ -1115,6 +1119,7 @@ Me manda o endereço de *onde você está*!`;
                             if (_motsRacInicio.length === 0) {
                                 const _estRac = await RebecaService.estimarTempoEspera(conversa.adminId);
                                 conversa.etapa = 'oferecer_fila_espera';
+                conversa.dados._corridaIdParaFila = conversa.dados.corridaId || null;
                                 conversas.set(telefone, conversa);
                                 return 'Poxa, todos os motoristas estão em corrida! Previsão: ' + _estRac.texto + '.\n\nPosso te avisar quando um desocupar? Responde *SIM*!';
                             }
@@ -1446,6 +1451,7 @@ MENSAGEM AO MOTOBOY: incluir tipo de serviço claramente — "CORRIDA", "ENCOMEN
                         if (resultadoGPT.intencao === 'VERIFICAR_DISPONIBILIDADE') {
                             if (resultadoGPT.oferecerFila) {
                                 conversa.etapa = 'oferecer_fila_espera';
+                conversa.dados._corridaIdParaFila = conversa.dados.corridaId || null;
                             }
                             conversas.set(telefone, conversa);
                             return resultadoGPT.resposta;
@@ -2662,6 +2668,7 @@ _(ou mande *0* para pular)_`;
                     // Oferecer fila de espera
                     const estimativa2 = await RebecaService.estimarTempoEspera(conversa.adminId);
                     conversa.etapa = 'oferecer_fila_espera';
+                conversa.dados._corridaIdParaFila = conversa.dados.corridaId || null;
                     conversas.set(telefone, conversa);
                     return 'Poxa, no momento todos os nossos motoristas estão em corrida! ' +
                         'A previsão é de ' + estimativa2.texto + ' para um ficar disponível.\n\n' +
@@ -3032,6 +3039,7 @@ _(ou mande *0* para pular)_`;
                 // Oferecer fila de espera
                 const estimativa3 = await RebecaService.estimarTempoEspera(conversa.adminId);
                 conversa.etapa = 'oferecer_fila_espera';
+                conversa.dados._corridaIdParaFila = conversa.dados.corridaId || null;
                 conversas.set(telefone, conversa);
                 return 'Poxa, no momento todos os nossos motoristas estão em corrida! ' +
                     'A previsão é de ' + estimativa3.texto + ' para um ficar disponível.\n\n' +
@@ -3431,6 +3439,7 @@ _(ou mande *0* para pular)_`;
                                 } else {
                                     resposta = 'No momento nossos motoristas estão em corrida. Quer que eu te avise quando um ficar disponível? Responde *SIM* 😊';
                                     conversa.etapa = 'oferecer_fila_espera';
+                conversa.dados._corridaIdParaFila = conversa.dados.corridaId || null;
                                 }
                             } catch(e) {
                                 resposta = 'Sim, estamos funcionando! Me manda sua localização 📍';
@@ -3469,6 +3478,7 @@ _(ou mande *0* para pular)_`;
                                 } else {
                                     resposta = 'No momento nossos motoristas estão em corrida. Quer que eu te avise quando um ficar disponível? Responde *SIM* 😊';
                                     conversa.etapa = 'oferecer_fila_espera';
+                conversa.dados._corridaIdParaFila = conversa.dados.corridaId || null;
                                 }
                             } catch(e) {
                                 resposta = 'Sim, estamos funcionando! Me manda sua localização 📍';
