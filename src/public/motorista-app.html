@@ -511,6 +511,28 @@ document.addEventListener('DOMContentLoaded', function() {
                                         <span style="color:#2e7d32;font-weight:bold;">📌 REFERÊNCIA:</span>
                                         <p id="refDestinoAtivaText" style="margin:4px 0 0 0;color:#333;font-size:14px;"></p>
                                     </div>
+                                    <!-- Campo de pesquisa de destino dentro do app -->
+                                    <div id="boxPesquisaDestinoAtiva" style="display:none;margin-top:10px;">
+                                        <div style="font-size:12px;color:#ffaa00;margin-bottom:6px;">📍 Pergunte ao cliente e pesquise abaixo:</div>
+                                        <div style="position:relative;">
+                                            <input id="inputDestinoAtiva" type="text" placeholder="🔍 Digite o destino..."
+                                                autocomplete="off"
+                                                style="width:100%;box-sizing:border-box;padding:10px 12px;border-radius:10px;border:1.5px solid #4285f4;background:#1a1a2e;color:#fff;font-size:14px;"
+                                                oninput="autocompleteDestinoAtiva(this.value)"
+                                                onkeydown="if(event.key==='Enter'){ event.preventDefault(); confirmarDestinoAtiva(); }" />
+                                            <div id="listaAutoCompleteDestino" style="position:absolute;left:0;right:0;top:100%;background:#1e1e3f;border:1px solid #4285f4;border-radius:0 0 10px 10px;z-index:999;display:none;max-height:180px;overflow-y:auto;"></div>
+                                        </div>
+                                        <div style="display:flex;gap:8px;margin-top:8px;">
+                                            <button onclick="confirmarDestinoAtiva()"
+                                                style="flex:1;padding:10px;background:linear-gradient(135deg,#00ff88,#00cc6a);border:none;border-radius:10px;color:#000;font-weight:bold;cursor:pointer;font-size:14px;">
+                                                ✅ Confirmar destino
+                                            </button>
+                                            <button onclick="navegarDestinoAtiva()"
+                                                style="flex:1;padding:10px;background:linear-gradient(135deg,#4285f4,#1a73e8);border:none;border-radius:10px;color:#fff;font-weight:bold;cursor:pointer;font-size:14px;">
+                                                🗺️ Navegar
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -1675,6 +1697,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             document.getElementById('origemAtiva').textContent = formatarEndereco(corridaAtual.origem);
             document.getElementById('destinoAtiva').textContent = formatarEndereco(corridaAtual.destino);
+            _verificarExibirCampoDestino();
             // Botao navegar destino
             let btnNavDest = document.getElementById('btnNavegarDestino');
             if (!btnNavDest) {
@@ -1810,6 +1833,97 @@ document.addEventListener('DOMContentLoaded', function() {
                 toast('Erro de conexão', 'error');
             }
         }
+
+        // ── Pesquisa de destino na CORRIDA ATIVA (Places autocomplete) ────────
+        let _destinoAtivaTexto = null;
+        let _autoCompleteTimer = null;
+
+        // Mostrar/esconder campo quando corrida não tem destino
+        function _verificarExibirCampoDestino() {
+            const temDestino = corridaAtual?.destino?.endereco || corridaAtual?.enderecoDestinoTexto;
+            const box = document.getElementById('boxPesquisaDestinoAtiva');
+            const btnIniciar = document.getElementById('btnIniciar');
+            if (!box) return;
+            if (!temDestino && corridaAtual?.status === 'motorista_a_caminho') {
+                box.style.display = 'block';
+                // Bloquear INICIAR até ter destino
+                if (btnIniciar) {
+                    btnIniciar.disabled = true;
+                    btnIniciar.title = 'Informe o destino antes de iniciar';
+                    btnIniciar.style.opacity = '0.5';
+                }
+            } else {
+                box.style.display = 'none';
+                if (btnIniciar) {
+                    btnIniciar.disabled = false;
+                    btnIniciar.style.opacity = '1';
+                }
+            }
+        }
+
+        async function autocompleteDestinoAtiva(query) {
+            const lista = document.getElementById('listaAutoCompleteDestino');
+            if (!query || query.length < 3) { lista.style.display='none'; return; }
+            clearTimeout(_autoCompleteTimer);
+            _autoCompleteTimer = setTimeout(async () => {
+                try {
+                    const res = await fetch('/api/motorista-app/autocomplete-endereco?q=' + encodeURIComponent(query), {
+                        headers: { 'Authorization': 'Bearer ' + token }
+                    });
+                    const data = await res.json();
+                    if (!data.sugestoes?.length) { lista.style.display='none'; return; }
+                    lista.innerHTML = data.sugestoes.map((s, i) =>
+                        `<div onclick="selecionarSugestao('${s.replace(/'/g,"\'")}', ${i})"
+                            style="padding:10px 14px;cursor:pointer;border-bottom:1px solid #333;font-size:13px;color:#fff;"
+                            onmouseover="this.style.background='#2a2a4a'" onmouseout="this.style.background=''">${s}</div>`
+                    ).join('');
+                    lista.style.display = 'block';
+                } catch(e) { lista.style.display='none'; }
+            }, 350);
+        }
+
+        function selecionarSugestao(endereco, idx) {
+            document.getElementById('inputDestinoAtiva').value = endereco;
+            document.getElementById('listaAutoCompleteDestino').style.display = 'none';
+            _destinoAtivaTexto = endereco;
+        }
+
+        async function confirmarDestinoAtiva() {
+            const input = document.getElementById('inputDestinoAtiva');
+            const endereco = _destinoAtivaTexto || input?.value?.trim();
+            if (!endereco) return toast('Digite o destino do cliente', 'error');
+            document.getElementById('listaAutoCompleteDestino').style.display = 'none';
+            // Salvar no backend
+            try {
+                const res = await fetch('/api/motorista-app/corrida-ativa/destino', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                    body: JSON.stringify({ corridaId: corridaAtual._id || corridaAtual.id, destino: endereco })
+                });
+                const data = await res.json();
+                if (data.sucesso) {
+                    if (!corridaAtual.destino) corridaAtual.destino = {};
+                    corridaAtual.destino.endereco = endereco;
+                    corridaAtual.enderecoDestinoTexto = endereco;
+                    document.getElementById('destinoAtiva').textContent = endereco;
+                    document.getElementById('boxPesquisaDestinoAtiva').style.display = 'none';
+                    // Liberar botão iniciar
+                    const btnI = document.getElementById('btnIniciar');
+                    if (btnI) { btnI.disabled = false; btnI.style.opacity = '1'; }
+                    toast('✅ Destino confirmado: ' + endereco, 'success');
+                    _destinoAtivaTexto = endereco;
+                } else {
+                    toast(data.erro || 'Erro ao salvar destino', 'error');
+                }
+            } catch(e) { toast('Erro de conexão', 'error'); }
+        }
+
+        function navegarDestinoAtiva() {
+            const endereco = _destinoAtivaTexto || document.getElementById('inputDestinoAtiva')?.value?.trim();
+            if (!endereco) return toast('Digite o destino primeiro', 'error');
+            window.open('https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(endereco) + '&travelmode=driving', '_blank');
+        }
+        // ────────────────────────────────────────────────────────────────────────
 
         // ── Pesquisa de destino no card da corrida ──────────────────────────
         let _destinoDigitado = null;

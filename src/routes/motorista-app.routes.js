@@ -57,6 +57,17 @@ async function _buscarInstancia(corrida) {
 }
 
 // Salvar destino digitado pelo motorista no card da corrida
+// Autocomplete de endereço via Google Places para o motorista pesquisar destino
+router.get('/autocomplete-endereco', auth, async (req, res) => {
+    try {
+        const query = req.query.q;
+        if (!query || query.length < 3) return res.json({ sugestoes: [] });
+        const MapsService = require('../services/maps.service');
+        const sugestoes = await MapsService.autocomplete(query);
+        res.json({ sugestoes: sugestoes || [] });
+    } catch(e) { res.json({ sugestoes: [] }); }
+});
+
 router.post('/corrida-ativa/destino', auth, async (req, res) => {
     try {
         const { corridaId, destino } = req.body;
