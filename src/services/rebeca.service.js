@@ -2959,6 +2959,8 @@ _(ou mande *0* para pular)_`;
             const motoristasAp = await MotoristaService.listarDisponiveis(adminId);
             if (motoristasAp.length === 0) {
                 conversa.etapa = 'oferecer_fila_espera';
+                // Salvar corridaId — evita corrida órfã na fila
+                conversa.dados._corridaIdParaFila = conversa.dados.corridaId || null;
                 conversas.set(telefone, conversa);
                 const estimativaAp = await RebecaService.estimarTempoEspera(conversa.adminId);
                 return 'Poxa, no momento todos os motoristas estão em corrida! ' +
