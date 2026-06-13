@@ -258,6 +258,39 @@ document.addEventListener('DOMContentLoaded', () => {
             if (item) item.click();
         }, 300);
     }
+
+    // ── Polling automático — corridas e motoristas em tempo real ──────────────
+    const _adminToken  = localStorage.getItem('token');
+    const _adminUsuario = JSON.parse(localStorage.getItem('usuario') || '{}');
+    const _adminIdPoll  = _adminUsuario._id || _adminUsuario.id || '';
+
+    async function _pollCorridas() {
+        try {
+            const r = await fetch('/api/corridas?status=ativa&limit=50', {
+                headers: { 'Authorization': _adminToken, 'x-admin-id': _adminIdPoll }
+            });
+            if (!r.ok) return;
+            // Só re-renderiza se a função carregarCorridas existir e a aba estiver visível
+            if (typeof carregarCorridas === 'function' &&
+                document.querySelector('.menu-item[data-page="corridas"]')?.classList.contains('active')) {
+                carregarCorridas();
+            }
+        } catch(_e) {}
+    }
+
+    async function _pollMotoristas() {
+        try {
+            if (typeof carregarMotoristas === 'function' &&
+                document.querySelector('.menu-item[data-page="motoristas"]')?.classList.contains('active')) {
+                carregarMotoristas();
+            }
+        } catch(_e) {}
+    }
+
+    // Corridas: poll a cada 8s | Motoristas: poll a cada 12s
+    setInterval(_pollCorridas,   8000);
+    setInterval(_pollMotoristas, 12000);
+    console.log('[BecaMob] Polling automático iniciado: corridas 8s, motoristas 12s');
 </script>
     <header class="header">
         <button class="menu-toggle" onclick="toggleMenu()">☰</button>

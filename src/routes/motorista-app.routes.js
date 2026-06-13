@@ -86,13 +86,29 @@ router.get('/perfil', auth, async (req, res) => {
 });
 
 // Atualizar GPS
+// Throttle GPS: Map com último timestamp de write no banco por motorista
+const _gpsLastWrite = new Map();
+const GPS_THROTTLE_MS = 5000; // mínimo 5s entre writes no MongoDB
+
 router.post('/gps', auth, async (req, res) => {
     try {
         const { latitude, longitude } = req.body;
-        await MotoristaService.atualizarGPS(req.motorista._id, latitude, longitude);
-        // Atualizar GPS isolado por adminId no serviço de mapa
+        if (!latitude || !longitude) return res.json({ sucesso: false, erro: 'Coordenadas inválidas' });
+
+        const motId = String(req.motorista._id);
+        const agora = Date.now();
+        const ultimo = _gpsLastWrite.get(motId) || 0;
+
+        // Sempre atualiza o serviço em memória (GPS em tempo real no mapa)
         const gpsService = require('../services/gps.service');
-        gpsService.atualizarLocalizacao(String(req.motorista._id), { latitude, longitude }, String(req.motorista.adminId));
+        gpsService.atualizarLocalizacao(motId, { latitude, longitude }, String(req.motorista.adminId));
+
+        // Só escreve no banco se passou o throttle
+        if (agora - ultimo >= GPS_THROTTLE_MS) {
+            _gpsLastWrite.set(motId, agora);
+            await MotoristaService.atualizarGPS(req.motorista._id, latitude, longitude);
+        }
+
         res.json({ sucesso: true });
     } catch(e) { res.json({ sucesso: false, erro: e.message }); }
 });
