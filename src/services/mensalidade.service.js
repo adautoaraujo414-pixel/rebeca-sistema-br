@@ -115,18 +115,21 @@ const MensalidadeService = {
     },
 
     // Verificar vencimentos (chamado pelo cron/scheduler)
-    async verificarVencimentos() {
+    async verificarVencimentos(filtros = {}) {
         const hoje = new Date();
         hoje.setHours(0, 0, 0, 0);
 
-        const config = await this.getConfigFinanceiro();
+        const config = await this.getConfigFinanceiro(filtros?.adminId || null);
         const diasTolerancia = config?.diasTolerancia || 2;
 
-        // Buscar mensalidades pendentes
-        const pendentes = await Mensalidade.find({
-            status: 'pendente',
-            dataVencimento: { $lte: hoje }
-        });
+        // Buscar mensalidades pendentes — filtrado por adminId se fornecido
+        const queryPend = { status: 'pendente', dataVencimento: { $lte: hoje } };
+        if (filtros.adminId) {
+            const motIds = await require('../models').Motorista
+                .find({ adminId: filtros.adminId }).select('_id').lean();
+            queryPend.motoristaId = { $in: motIds.map(m => m._id) };
+        }
+        const pendentes = await Mensalidade.find(queryPend);
 
         const notificacoes = [];
 
@@ -168,11 +171,18 @@ const MensalidadeService = {
     },
 
 
-    // Config Financeiro
-    async getConfigFinanceiro() {
-        let config = await ConfigFinanceiro.findOne();
+    // Config Financeiro — isolada por adminId
+    async getConfigFinanceiro(adminId = null) {
+        const query = adminId ? { adminId } : {};
+        let config = await ConfigFinanceiro.findOne(query);
+        if (!config) {
+            // Fallback: buscar config global (sem adminId)
+            config = await ConfigFinanceiro.findOne({ adminId: { $exists: false } })
+                  || await ConfigFinanceiro.findOne();
+        }
         if (!config) {
             config = await ConfigFinanceiro.create({
+                adminId: adminId || undefined,
                 chavePix: '',
                 valorMensalidade: 100,
                 valorSemanal: 30,
@@ -182,12 +192,13 @@ const MensalidadeService = {
         return config;
     },
 
-    async salvarConfigFinanceiro(dados) {
-        let config = await ConfigFinanceiro.findOne();
+    async salvarConfigFinanceiro(dados, adminId = null) {
+        const query = adminId ? { adminId } : { adminId: { $exists: false } };
+        let config = await ConfigFinanceiro.findOne(query);
         if (config) {
-            return await ConfigFinanceiro.findByIdAndUpdate(config._id, dados, { new: true });
+            return await ConfigFinanceiro.findByIdAndUpdate(config._id, { ...dados, adminId: adminId || config.adminId }, { new: true });
         }
-        return await ConfigFinanceiro.create(dados);
+        return await ConfigFinanceiro.create({ ...dados, adminId: adminId || undefined });
     }
 };
 
