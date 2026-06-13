@@ -456,6 +456,7 @@ const FilaEsperaSchema = new mongoose.Schema({
     clienteNome: String,
     origem: { endereco: String, latitude: Number, longitude: Number },
     destino: { endereco: String, latitude: Number, longitude: Number },
+    corridaId: { type: mongoose.Schema.Types.ObjectId, ref: 'Corrida', default: null },
     posicao: { type: Number, default: 1 },
     status: { type: String, enum: ['aguardando', 'notificado', 'atendido', 'expirado'], default: 'aguardando' },
     adminId: mongoose.Schema.Types.ObjectId,
