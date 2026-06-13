@@ -1710,7 +1710,10 @@ Não tem mais ninguém agendado hoje não! Tá livre o resto do dia. 🎉`);
     const nomeM = msg.match(/(?:encaixa|agenda|agendar|adiciona|marca)\s+(?:a\s+|o\s+)?([A-Za-zÀ-ú]+(?:\s+[A-Za-zÀ-ú]+)?)\s+(?:amanhã|amanha|hoje|às?|as|pra|para|no dia|\d)/i);
     const nome = nomeM ? nomeM[1].trim() : null;
     if (hora && nome) {
-      const dataHora = new Date(dia); dataHora.setUTCHours(hora.h + 3, hora.min, 0, 0);
+      // Converter hora local (UTC-3) para UTC: hora local + 3 = UTC
+      const dataHora = new Date(dia);
+      dataHora.setUTCHours(hora.h + 3, hora.min, 0, 0);
+      const diaFinal = dataHora; // alias para uso na mensagem
       // Verificar conflito de horário — janela de 30 min
       const _iniConflito = new Date(dataHora.getTime() - 15 * 60000);
       const _fimConflito = new Date(dataHora.getTime() + 15 * 60000);
@@ -1771,7 +1774,7 @@ Não tem mais ninguém agendado hoje não! Tá livre o resto do dia. 🎉`);
         `
 Agendado via WhatsApp. 💙`;
 
-      await responder(`Maravilha, ${_chefe(_generoAdmin, _apelidoAdmin)}! 🎉\n\n✅ *${nome}* encaixado às *${_fmtHora(dataHora)}* de ${_fmtData(dia)}!\n\nJá tá na agenda! 💙${telCliente ? '' : '\n\n📱 Se tiver o número dele me passa pra eu enviar lembretes!'}`); 
+      await responder(`Maravilha, ${_chefe(_generoAdmin, _apelidoAdmin)}! 🎉\n\n✅ *${nome}* encaixado às *${_fmtHora(dataHora)}* de ${_fmtData(dataHora)}!\n\nJá tá na agenda! 💙${telCliente ? '' : '\n\n📱 Se tiver o número dele me passa pra eu enviar lembretes!'}`); 
     } else if (nome && !hora) {
       await responder(`Certo, ${_chefe(_generoAdmin, _apelidoAdmin)}! *${nome}* — que horas? 😊`);
     } else if (hora && !nome) {
