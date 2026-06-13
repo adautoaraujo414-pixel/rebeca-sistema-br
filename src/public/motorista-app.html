@@ -1734,6 +1734,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const status = corridaAtual?.status;
             document.getElementById('btnCheguei').style.display = status === 'aceita' ? 'flex' : 'none';
             document.getElementById('btnIniciar').style.display = (status === 'a_caminho' || status === 'aguardando_cliente') ? 'flex' : 'none';
+            _verificarExibirCampoDestino();
             document.getElementById('btnFinalizar').style.display = status === 'em_andamento' ? 'flex' : 'none';
             
             // Renderizar paradas
@@ -1844,7 +1845,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const box = document.getElementById('boxPesquisaDestinoAtiva');
             const btnIniciar = document.getElementById('btnIniciar');
             if (!box) return;
-            if (!temDestino && corridaAtual?.status === 'motorista_a_caminho') {
+            if (!temDestino && (corridaAtual?.status === 'a_caminho' || corridaAtual?.status === 'aguardando_cliente')) {
                 box.style.display = 'block';
                 // Bloquear INICIAR até ter destino
                 if (btnIniciar) {
@@ -2026,8 +2027,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     corridaAtual.status = 'em_andamento';
                     if (btn) { btn.disabled = false; btn.style.display = 'none'; }
                     atualizarBotoesCorridaAtiva();
-                    toast('Corrida iniciada!', 'success'
-                _abrirNavegacaoDestino();
+                    toast('Corrida iniciada!', 'success');
+                    _abrirNavegacaoDestino();
                     setTimeout(() => carregarCorridaAtiva(), 500);
                 } else {
                     toast(data.erro || 'Erro ao iniciar', 'error');
