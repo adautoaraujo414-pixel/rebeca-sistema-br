@@ -1146,7 +1146,7 @@ document.querySelectorAll('.nav-item').forEach(item => {
       </button>
       <div class="header-search">
         <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="11" cy="11" r="8" stroke-width="2"/><path d="M21 21l-4.35-4.35" stroke-width="2"/></svg>
-        <input type="text" placeholder="Buscar clientes, agendamentos, serviços...">
+        <input type="text" id="header-busca" placeholder="Buscar clientes, agendamentos, serviços..." oninput="buscaGlobal(this.value)" onkeydown="if(event.key==='Escape')this.value=buscaGlobal('');">
         <span class="header-search-kbd">Ctrl + K</span>
       </div>
       <div class="header-spacer"></div>
@@ -1894,6 +1894,68 @@ function toast(msg, tipo='ok'){
 }
 // Alias — vários módulos usam mostrarToast em vez de toast
 function mostrarToast(msg, tipo='ok'){ toast(msg, tipo); }
+
+// ── BUSCA GLOBAL ─────────────────────────────────────────────────────────────
+let _buscaTimeout = null;
+function buscaGlobal(q) {
+  q = (q||'').trim().toLowerCase();
+  clearTimeout(_buscaTimeout);
+  if (!q) {
+    // Limpar destaque
+    document.querySelectorAll('.busca-hl').forEach(el => {
+      el.outerHTML = el.textContent;
+    });
+    return;
+  }
+  _buscaTimeout = setTimeout(async () => {
+    // Buscar em agendamentos
+    const dAg = await api('/agendamentos');
+    const ags = (dAg?.agendamentos||dAg||[]).filter(a =>
+      (a.clienteNome||'').toLowerCase().includes(q) ||
+      (a.servicoNome||'').toLowerCase().includes(q) ||
+      (a.profissionalNome||'').toLowerCase().includes(q)
+    );
+    // Buscar em clientes
+    const dCli = await api('/clientes');
+    const clis = (dCli?.clientes||dCli||[]).filter(c =>
+      (c.nome||'').toLowerCase().includes(q) ||
+      (c.telefone||'').toLowerCase().includes(q)
+    );
+    // Mostrar resultado como toast navegável
+    const total = ags.length + clis.length;
+    if (!total) { toast('Nenhum resultado para "' + q + '"'); return; }
+    // Navegar para a tela mais relevante e filtrar
+    if (clis.length >= ags.length) {
+      irPara('clientes');
+      setTimeout(() => {
+        const rows = document.querySelectorAll('#tabela-clientes tr');
+        rows.forEach(r => {
+          const txt = r.textContent.toLowerCase();
+          r.style.display = (!q || txt.includes(q)) ? '' : 'none';
+        });
+      }, 400);
+      toast(clis.length + ' cliente(s) encontrado(s)');
+    } else {
+      irPara('agendamentos');
+      setTimeout(() => {
+        const rows = document.querySelectorAll('#tabela-agendamentos tr');
+        rows.forEach(r => {
+          const txt = r.textContent.toLowerCase();
+          r.style.display = (!q || txt.includes(q)) ? '' : 'none';
+        });
+      }, 400);
+      toast(ags.length + ' agendamento(s) encontrado(s)');
+    }
+  }, 400);
+}
+// Ctrl+K foca na busca
+document.addEventListener('keydown', function(e) {
+  if ((e.ctrlKey||e.metaKey) && e.key === 'k') {
+    e.preventDefault();
+    const b = document.getElementById('header-busca');
+    if (b) { b.focus(); b.select(); }
+  }
+});
 
 function fmt(v){ return 'R$\u00a0'+(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 function fmtData(d){ return d ? new Date(d).toLocaleDateString('pt-BR') : '—'; }
