@@ -2051,24 +2051,25 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
                 const data = await res.json();
                 if (data.sucesso || data.corrida) {
-                    toast('Corrida finalizada! R$ ' + (data.corrida?.precoFinal || 0).toFixed(2), 'success');
+                    const _valorFinal = data.corrida?.precoFinal || data.corrida?.precoEstimado || 0;
+                    toast('✅ Corrida finalizada! R$ ' + _valorFinal.toFixed(2), 'success');
+                    corridaAtual = null;
+                    motorista.status = 'disponivel';
+                    atualizarStatusUI();
+                    document.getElementById('corridaAtiva').classList.remove('active');
+                    document.getElementById('semCorrida').style.display = 'block';
+                    pararPollingChat();
+                    if (btn) { btn.disabled = false; btn.textContent = '✅ FINALIZAR CORRIDA'; }
+                    setTimeout(() => carregarDashboard(), 1500);
                 } else {
                     toast(data.erro || 'Erro ao finalizar', 'error');
+                    if (btn) { btn.disabled = false; btn.textContent = '✅ FINALIZAR CORRIDA'; }
                 }
             } catch (e) {
                 toast('Erro de conexão ao finalizar', 'error');
-                if (btn) { btn.disabled = false; btn.textContent = '✅ FINALIZAR'; }
+                if (btn) { btn.disabled = false; btn.textContent = '✅ FINALIZAR CORRIDA'; }
                 return;
             }
-            // Só reseta UI se backend confirmou
-            corridaAtual = null;
-            motorista.status = 'disponivel';
-            atualizarStatusUI();
-            document.getElementById('corridaAtiva').classList.remove('active');
-            document.getElementById('semCorrida').style.display = 'block';
-            pararPollingChat(); // para polling ao finalizar
-            if (btn) { btn.disabled = false; btn.textContent = '✅ FINALIZAR CORRIDA'; }
-            carregarDashboard();
         }
 
         async function cancelarCorrida() {
