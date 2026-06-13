@@ -583,15 +583,15 @@ const DespachoService = {
             return { sucesso: false, error: 'Corrida não encontrada ou já aceita' };
         }
 
+        // Modo próximo: verificar ANTES do lock para evitar bloqueio desnecessário
+        if (despacho.modo === 'proximo' && despacho.motoristaId?.toString() !== motoristaId?.toString()) {
+            return { sucesso: false, error: 'Esta corrida foi enviada para outro motorista' };
+        }
+
         // Verificar se expirou
         if (new Date(despacho.expiraEm) < new Date()) {
             corridasPendentes.delete(corridaId);
             return { sucesso: false, error: 'Tempo de aceite expirado' };
-        }
-
-        // Modo próximo: verificar se é o motorista certo
-        if (despacho.modo === 'proximo' && despacho.motoristaId?.toString() !== motoristaId?.toString()) {
-            return { sucesso: false, error: 'Esta corrida foi enviada para outro motorista' };
         }
 
         // Registrar aceite

@@ -14,7 +14,19 @@ const CorridaService = {
         return Corrida.findById(id);
     },
 
-    criar(dados) {
+    async criar(dados) {
+        // Proteção duplicata: cliente com corrida ativa não pode solicitar outra
+        if (dados.clienteTelefone) {
+            const ativas = ['pendente','aceita','motorista_a_caminho','aguardando_cliente','em_andamento'];
+            const jaTemAtiva = await Corrida.findOne({
+                clienteTelefone: dados.clienteTelefone,
+                adminId: dados.adminId,
+                status: { $in: ativas }
+            });
+            if (jaTemAtiva) {
+                throw new Error('Cliente já possui corrida ativa. Finalize ou cancele antes de solicitar nova.');
+            }
+        }
         const corrida = new Corrida(dados);
         return corrida.save();
     },
