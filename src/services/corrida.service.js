@@ -68,6 +68,12 @@ const CorridaService = {
         const corrida = await Corrida.findById(corridaId);
         if (!corrida) return { sucesso: false, erro: 'Corrida não encontrada' };
         
+        // Guard: só finaliza se estiver em_andamento
+        if (corrida.status !== 'em_andamento') {
+            console.log('[FINALIZAR] Status inválido para finalizar:', corrida.status, '| corridaId:', corridaId);
+            return { sucesso: false, erro: 'Corrida não está em andamento (status: ' + corrida.status + ')' };
+        }
+        
         corrida.status = 'finalizada';
         corrida.finalizadaEm = new Date();
         corrida._despachoCache = undefined;
@@ -134,6 +140,13 @@ const CorridaService = {
         }
         const corrida = await Corrida.findById(corridaId);
         if (!corrida) return { sucesso: false, erro: 'Corrida não encontrada' };
+        
+        // Guard: não cancelar corrida já finalizada ou já cancelada
+        const naoCancelaveis = ['finalizada', 'cancelada'];
+        if (naoCancelaveis.includes(corrida.status)) {
+            console.log('[CANCELAR] Status não cancelável:', corrida.status, '| corridaId:', corridaId);
+            return { sucesso: false, erro: 'Corrida não pode ser cancelada (status: ' + corrida.status + ')' };
+        }
         
         corrida.status = 'cancelada';
         corrida.canceladaEm = new Date();

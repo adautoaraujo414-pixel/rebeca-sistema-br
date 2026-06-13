@@ -8,6 +8,32 @@ webpush.setVapidDetails('mailto:contato@rebeca.app', VAPID_PUBLIC, VAPID_PRIVATE
 // Subscriptions em memória + persistência no banco
 const subscriptions = new Map();
 
+// Restaurar subscriptions do banco ao iniciar (evita perda no restart do servidor)
+async function restaurarSubscriptions() {
+    try {
+        const { Motorista } = require('../models');
+        const motoristas = await Motorista.find(
+            { pushSubscription: { $exists: true, $ne: null } },
+            { _id: 1, pushSubscription: 1, nomeCompleto: 1 }
+        ).lean();
+        let restaurados = 0;
+        for (const m of motoristas) {
+            try {
+                const sub = JSON.parse(m.pushSubscription);
+                if (sub && sub.endpoint) {
+                    subscriptions.set(m._id.toString(), sub);
+                    restaurados++;
+                }
+            } catch(_e) {}
+        }
+        console.log(`[PUSH] ${restaurados} subscriptions restauradas do banco`);
+    } catch(e) {
+        console.log('[PUSH] Erro restaurar subscriptions:', e.message);
+    }
+}
+// Executar após 5s para garantir que o banco já conectou
+setTimeout(restaurarSubscriptions, 5000);
+
 const PushService = {
     VAPID_PUBLIC,
 
