@@ -1709,7 +1709,7 @@ Não tem mais ninguém agendado hoje não! Tá livre o resto do dia. 🎉`);
     // Extrai nome: verbo + [artigo] + Nome + (data/hora/pra)
     // Padrão 1: "encaixa a Maria amanhã" / "agenda João Silva às 14h"
     // Padrão 2: "marca horário pra Luana hoje" — nome vem depois de "pra/para"
-    const _PALAVRAS_RUIDO = /^(amanhã|amanha|hoje|ontem|às?|as|pra|para|horário|horario|um|uma|no|dia|de|da|do)$/i;
+    const _PALAVRAS_RUIDO = /^(amanhã|amanha|hoje|ontem|às?|as|das?|pra|para|horário|horario|um|uma|no|dia|de|da|do)$/i;
     let nome = null;
     const nomeM1 = msg.match(/(?:encaixa|agenda|agendar|adiciona|marca)\s+(?:a\s+|o\s+)?([A-Za-zÀ-ú]+(?:\s+[A-Za-zÀ-ú]+)?)\s+(?:amanhã|amanha|hoje|às?|as|pra|para|no\s+dia|\d)/i);
     if (nomeM1) {
