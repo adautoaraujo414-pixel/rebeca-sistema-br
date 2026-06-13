@@ -198,9 +198,13 @@ async function atenderCliente(telefoneCliente, mensagem, adminId) {
     if (ses.historico.length > 20) ses.historico.splice(0, 2);
 
     const agora = new Date();
-    const hora = agora.getHours() + 'h' + String(agora.getMinutes()).padStart(2,'0');
-    const diaSemana = ['domingo','segunda','terça','quarta','quinta','sexta','sábado'][agora.getDay()];
-    const periodo = agora.getHours() < 12 ? 'bom dia' : agora.getHours() < 18 ? 'boa tarde' : 'boa noite';
+    // Servidor UTC — converter para BR (UTC-3) para hora/período correto
+    const _agoraBRAtend = new Date(agora.getTime() - 3 * 60 * 60 * 1000);
+    const _hBR = _agoraBRAtend.getUTCHours();
+    const _mBR = _agoraBRAtend.getUTCMinutes();
+    const hora = _hBR + 'h' + String(_mBR).padStart(2,'0');
+    const diaSemana = ['domingo','segunda','terça','quarta','quinta','sexta','sábado'][_agoraBRAtend.getUTCDay()];
+    const periodo = _hBR < 12 ? 'bom dia' : _hBR < 18 ? 'boa tarde' : 'boa noite';
     const _primeiraMsg = ses.historico.length <= 1;
     const _ultimaTs = ses.ultimaTs || 0;
     const _minutosAusente = Math.floor((Date.now() - _ultimaTs) / 60000);
