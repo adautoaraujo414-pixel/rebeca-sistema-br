@@ -63,8 +63,13 @@ router.get('/autocomplete-endereco', auth, async (req, res) => {
         const query = req.query.q;
         if (!query || query.length < 3) return res.json({ sugestoes: [] });
         const MapsService = require('../services/maps.service');
-        const sugestoes = await MapsService.autocomplete(query);
-        res.json({ sugestoes: sugestoes || [] });
+        const resultado = await MapsService.autocomplete(query);
+        // MapsService retorna { sucesso, sugestoes: [{descricao, placeId, ...}] }
+        // Frontend espera array de strings
+        const sugestoes = (resultado?.sugestoes || []).map(s =>
+            typeof s === 'string' ? s : (s.descricao || s.principal || '')
+        ).filter(Boolean);
+        res.json({ sugestoes });
     } catch(e) { res.json({ sugestoes: [] }); }
 });
 
