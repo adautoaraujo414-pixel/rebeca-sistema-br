@@ -575,4 +575,42 @@ router.delete('/excluir-conta', authAgenda, async (req, res) => {
   } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
+// ── AVALIAÇÕES (agendamentos finalizados com nota/comentário) ──
+router.get('/avaliacoes', authAgenda, async (req, res) => {
+  try {
+    const ags = await AgendamentoAgenda.find({
+      adminId: req.adminAgendaId,
+      $or: [
+        { nota: { $exists: true, $ne: null } },
+        { comentario: { $exists: true, $ne: null } },
+        { avaliacao: { $exists: true, $ne: null } }
+      ]
+    }).sort({ dataHora: -1 }).limit(100).lean();
+    const avaliacoes = ags.map(a => ({
+      _id: a._id,
+      clienteNome: a.clienteNome || 'Cliente',
+      nota: a.nota || a.avaliacao || 5,
+      comentario: a.comentario || a.observacao || '',
+      servicoNome: a.servicoNome || '',
+      criadoEm: a.dataHora || a.createdAt
+    }));
+    res.json({ sucesso: true, avaliacoes });
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// ── RECEBER AVALIAÇÃO DO CLIENTE ──
+router.post('/espaco/:adminId/avaliar', async (req, res) => {
+  try {
+    const { agendamentoId, nota, comentario } = req.body;
+    if (!agendamentoId || !nota) return res.status(400).json({ erro: 'Dados incompletos' });
+    const ag = await AgendamentoAgenda.findOneAndUpdate(
+      { _id: agendamentoId, adminId: req.params.adminId },
+      { nota: parseInt(nota), comentario: comentario || '' },
+      { new: true }
+    );
+    if (!ag) return res.status(404).json({ erro: 'Agendamento não encontrado' });
+    res.json({ sucesso: true });
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
 module.exports = router;
