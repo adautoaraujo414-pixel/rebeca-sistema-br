@@ -2463,21 +2463,23 @@ async function salvarAgendamento(){
     status: 'confirmado'
   };
   if(!payload.clienteNome || !payload.dataHora.includes('T')) return toast('Preencha os campos obrigatórios', 'erro');
+  let r = null;
   try {
-  const r = await api('/'+ADMIN_ID+'/agendar', {method:'POST', body:JSON.stringify(payload)});
-  } catch(e) { console.error('Erro:', e); alert('Erro ao executar ação'); }
+    r = await api('/'+ADMIN_ID+'/agendar', {method:'POST', body:JSON.stringify(payload)});
+  } catch(e) { console.error('Erro agendamento:', e); toast('Erro ao criar agendamento', 'erro'); return; }
   if(r && r.sucesso){ toast('Agendamento criado ✅'); fecharModal('modal-ag'); carregarDashboard(); }
-  else toast('Erro ao criar agendamento', 'erro');
+  else toast((r && r.erro) || 'Erro ao criar agendamento', 'erro');
 }
 
 async function salvarCliente(){
   const payload = {nome: document.getElementById('cli-nome').value.trim(), telefone: document.getElementById('cli-tel').value.trim(), email: document.getElementById('cli-email').value.trim()};
   if(!payload.nome) return toast('Informe o nome', 'erro');
+  let r = null;
   try {
-  const r = await api('/clientes', {method:'POST', body:JSON.stringify(payload)});
-  } catch(e) { console.error('Erro:', e); alert('Erro ao executar ação'); }
+    r = await api('/clientes', {method:'POST', body:JSON.stringify(payload)});
+  } catch(e) { console.error('Erro cliente:', e); toast('Erro ao salvar cliente', 'erro'); return; }
   if(r && r.sucesso){ toast('Cliente salvo ✅'); fecharModal('modal-cli'); carregarTabelaClientes(); }
-  else toast('Erro ao salvar cliente', 'erro');
+  else toast((r && r.erro) || 'Erro ao salvar cliente', 'erro');
 }
 
 async function salvarServico(){

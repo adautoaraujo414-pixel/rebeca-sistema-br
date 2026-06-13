@@ -347,14 +347,23 @@ function _parseHora(txt) {
   // 1. Remover data DD/MM para não confundir com hora
   const _txtSemData = txt.replace(/(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?/g, '');
   const _txtSemDia = _txtSemData.replace(/\bdia\s+\d{1,2}\b/gi, '');
+  const _temTarde = /\b(tarde|da\s*tarde)\b/i.test(txt);
+  const _temNoite = /\b(noite|da\s*noite)\b/i.test(txt);
+  const _ajustarHora = (h) => {
+    if ((_temTarde || _temNoite) && h < 12) return h + 12;
+    return h;
+  };
   // "16 horas", "às 16 horas", "16h", "16:00"
   const mHoras = _txtSemDia.match(/(?:às?|as?|à)?\s*(\d{1,2})\s*horas?\b/i);
-  if (mHoras) return { h: parseInt(mHoras[1]), min: 0 };
+  if (mHoras) return { h: _ajustarHora(parseInt(mHoras[1])), min: 0 };
   const m = _txtSemDia.match(/(\d{1,2})h(?:(\d{2})?)?/i) || _txtSemDia.match(/(\d{1,2}):(\d{2})/);
-  if (m) return { h: parseInt(m[1]), min: parseInt(m[2]||'0') };
+  if (m) return { h: _ajustarHora(parseInt(m[1])), min: parseInt(m[2]||'0') };
   // 2. "às 22", "as 8", "à 15" — número após preposição
   const mNum = _txtSemDia.match(/(?:às?|as?|à)\s+(\d{1,2})(?::(\d{2}))?\b/i);
-  if (mNum) return { h: parseInt(mNum[1]), min: parseInt(mNum[2]||'0') };
+  if (mNum) return { h: _ajustarHora(parseInt(mNum[1])), min: parseInt(mNum[2]||'0') };
+  // "3 da tarde", "11 da noite", "8 da manhã" — número solto + período
+  const mPeriodo = txt.match(/(\d{1,2})\s+(?:da\s+)?(?:tarde|noite|manh[ãa])/i);
+  if (mPeriodo) return { h: _ajustarHora(parseInt(mPeriodo[1])), min: 0 };
   // 3. "meia noite", "meio dia"
   if (/meia\s*noite/i.test(txt)) return { h: 0, min: 0 };
   if (/meio\s*dia/i.test(txt)) return { h: 12, min: 0 };
