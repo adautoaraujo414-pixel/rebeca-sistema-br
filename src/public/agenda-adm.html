@@ -1954,8 +1954,10 @@ async function fazerLogin(){
       });
     }
     iniciarApp();
-  // Polling financeiro — atualiza cards a cada 30s
-  setInterval(function(){ if(typeof carregarFinanceiro==='function') carregarFinanceiro(); }, 30000);
+    // Polling financeiro — atualiza cards a cada 30s (usar RebecaPollingManager para evitar acúmulo)
+    if (window.RebecaPollingManager) {
+      RebecaPollingManager.start('financeiro', function(){ if(typeof carregarFinanceiro==='function') carregarFinanceiro(); }, 30000);
+    }
   } catch(e){ erroEl.textContent = 'Erro ao conectar. Tente novamente.'; erroEl.style.display='block'; }
 }
 
@@ -2061,8 +2063,9 @@ async function carregarMetricas(){
       api('/agendamentos'),
       api('/clientes')
     ]);
-    const hoje = new Date().toDateString();
-    const agHoje = (ag?.agendamentos||ag||[]).filter(a => a.dataHora && new Date(a.dataHora).toDateString()===hoje);
+    // Comparar datas no fuso BR (cliente roda no browser do usuário — usar toLocaleDateString pt-BR)
+    const _hojeBR = new Date().toLocaleDateString('pt-BR', {timeZone:'America/Sao_Paulo'});
+    const agHoje = (ag?.agendamentos||ag||[]).filter(a => a.dataHora && new Date(a.dataHora).toLocaleDateString('pt-BR',{timeZone:'America/Sao_Paulo'})===_hojeBR);
     const pendentes = agHoje.filter(a=>a.status==='pendente');
     document.getElementById('m-hoje').textContent = agHoje.length;
     document.getElementById('m-pendentes').textContent = pendentes.length;
@@ -2089,9 +2092,11 @@ async function carregarProximosAgendamentos(){
   try {
     const d = await api('/agendamentos');
     const todos = d?.agendamentos || d || [];
-    const hoje = new Date();
-    hoje.setHours(0,0,0,0);
-    const amanha = new Date(hoje); amanha.setDate(amanha.getDate()+1);
+    // Início do dia em BR: pegar meia-noite BRT como UTC
+    const _agoraBRPx = new Date();
+    const _brStrPx = _agoraBRPx.toLocaleDateString('pt-BR',{timeZone:'America/Sao_Paulo'}).split('/');
+    const hoje = new Date(Date.UTC(parseInt(_brStrPx[2]), parseInt(_brStrPx[1])-1, parseInt(_brStrPx[0]), 3, 0, 0)); // meia-noite BRT = 03:00 UTC
+    const amanha = new Date(hoje); amanha.setUTCDate(amanha.getUTCDate()+1);
     const proximos = todos
       .filter(a => a.dataHora && new Date(a.dataHora) >= hoje && a.status !== 'cancelado')
       .sort((a,b) => new Date(a.dataHora)-new Date(b.dataHora))
@@ -2251,6 +2256,10 @@ function irPara(tela){
   const nav = document.querySelector('[onclick="irPara(\''+tela+'\')"]');
   if(nav) nav.classList.add('ativo');
   document.querySelectorAll('.bottom-nav-item').forEach(b=>b.classList.remove('ativo'));
+  // Marcar item ativo no bottom-nav
+  const bnMap = { dashboard:'bn-inicio', agendamentos:'bn-agenda', servicos:'bn-servicos', configuracoes:'bn-config' };
+  const bnEl = document.getElementById(bnMap[tela]);
+  if(bnEl) bnEl.classList.add('ativo');
   window.scrollTo(0,0);
   if(tela==='agendamentos') carregarTabelaAgendamentos();
   if(tela==='clientes') carregarTabelaClientes();
@@ -4543,10 +4552,15 @@ if (typeof _irParaOriginal === 'undefined') { window._irParaOriginal = typeof ir
 function irPara(tela) {
   const novas = ['produtos','catalogos','conhecimento','leads-produtos','carrinhos'];
   if (novas.includes(tela)) {
+    // Manter telaAtual sincronizado
+    if (typeof telaAtual !== 'undefined') window.telaAtual = tela;
+    document.body.style.overflow = '';
     document.querySelectorAll('.tela').forEach(t => t.classList.remove('ativa'));
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('ativo'));
+    document.querySelectorAll('.bottom-nav-item').forEach(b => b.classList.remove('ativo'));
     const el = document.getElementById('tela-'+tela);
     if (el) el.classList.add('ativa');
+    // Marcar nav-item ativo
     document.querySelectorAll('.nav-item').forEach(n => {
       if (n.onclick && n.onclick.toString().includes("'"+tela+"'")) n.classList.add('ativo');
     });
