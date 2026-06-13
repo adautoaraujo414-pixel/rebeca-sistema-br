@@ -48,11 +48,17 @@ window.RebecaAI = (() => {
            localStorage.getItem('agenda_admin_id') || '';
   }
   function _produto() {
+    const p = window.location.pathname.toLowerCase();
+    if (p.includes('/admin/') || p.includes('becamob') || p.includes('motorista-app')) return 'corridas';
+    if (p.includes('/agenda')) return 'agenda';
+    if (p.includes('/delivery') || p.includes('/cardapio') || p.includes('/cozinha') || p.includes('/garcom')) return 'delivery';
+    if (p.includes('/soft') || p.includes('/loja')) return 'soft';
     const t = document.title.toLowerCase();
     if (t.includes('agenda')) return 'agenda';
-    if (t.includes('delivery') || t.includes('admin')) return 'delivery';
+    if (t.includes('becamob') || t.includes('corrida') || t.includes('motorista')) return 'corridas';
+    if (t.includes('delivery') || t.includes('cardápio')) return 'delivery';
     if (t.includes('soft') || t.includes('loja')) return 'soft';
-    return 'delivery';
+    return 'corridas';
   }
 
   // ── FETCH COM AUTH ──────────────────────────────────────────────────────────
