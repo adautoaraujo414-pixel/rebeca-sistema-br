@@ -39,6 +39,14 @@ async function salvarNumeroSuporte() {
 }
 
 // Carregar número ao abrir aba de configurações
+function logout() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('usuario');
+    localStorage.removeItem('adminId');
+    localStorage.removeItem('becamob_lastPage');
+    window.location.href = '/admin/login.html';
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     const cfgItem = document.querySelector('[data-page="config"]');
     if (cfgItem) cfgItem.addEventListener('click', carregarNumeroSuporte);
@@ -240,6 +248,15 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!token || !adminId) {
         alert('Faça login primeiro!');
         window.location.href = '/admin/login.html';
+    }
+
+    // Restaurar última página visitada
+    const _lastPage = localStorage.getItem('becamob_lastPage');
+    if (_lastPage) {
+        setTimeout(() => {
+            const item = document.querySelector(`.menu-item[data-page="${_lastPage}"]`);
+            if (item) item.click();
+        }, 300);
     }
 </script>
     <header class="header">
@@ -2349,7 +2366,7 @@ async function carregarPrecoAtual() {
     try {
         const _usr = JSON.parse(localStorage.getItem('usuario') || '{}');
         const adminId = _usr._id || _usr.id || localStorage.getItem('adminId') || '';
-        const token = localStorage.getItem('token') || localStorage.getItem('token') || '';
+        const token = localStorage.getItem('token') || '';
         const res = await fetch('/api/admin/preco-atual', {
             headers: { 'Authorization': token, 'x-admin-id': adminId }
         });
@@ -2420,7 +2437,7 @@ async function buscarEnderecoZona() {
     try {
         const res = await fetch('/api/maps/geocodificar', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': localStorage.getItem('token'), 'x-admin-id': (JSON.parse(localStorage.getItem('usuario')||'{}')._id||'') }
+            headers: { 'Content-Type': 'application/json', 'Authorization': localStorage.getItem('token'), 'x-admin-id': (JSON.parse(localStorage.getItem('usuario')||'{}')._id||'') },
             body: JSON.stringify({ endereco: q + ', Brasil' })
         });
         const data = await res.json();
@@ -2555,7 +2572,7 @@ async function iniciarMapaGPS() {
 async function atualizarMapaGPS() {
     try {
         const usr = JSON.parse(localStorage.getItem('usuario') || '{}');
-        const token = localStorage.getItem('token') || localStorage.getItem('token') || '';
+        const token = localStorage.getItem('token') || '';
         // Extrair adminId do token ADMIN_<id>_<timestamp> como fallback
         const adminId = usr._id || usr.id || (token.startsWith('ADMIN_') ? token.split('_')[1] : null);
         
@@ -2667,6 +2684,8 @@ async function atualizarMapaGPS() {
 document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.menu-item').forEach(item => {
         item.addEventListener('click', () => {
+            const pg = item.getAttribute('data-page');
+            if (pg) localStorage.setItem('becamob_lastPage', pg);
             if (item.dataset.page === 'mapa-gps') {
                 setTimeout(() => atualizarMapaGPS(), 300);
                 // Auto-refresh a cada 15s
