@@ -60,26 +60,69 @@ router.get('/', authAgendaMiddleware, async (req, res) => {
 // POST — criar lembrete pelo painel (salva na collection)
 router.post('/', authAgendaMiddleware, async (req, res) => {
   try {
-    const { texto, data, hora, antecedencia } = req.body;
-    if (!texto || !data || !hora) return res.status(400).json({ sucesso: false, mensagem: 'Preencha todos os campos.' });
+    const { texto, data, hora, antecedencia, recorrente, recorrencia } = req.body;
+    if (!texto) return res.status(400).json({ sucesso: false, mensagem: 'Texto obrigatorio.' });
 
-    const [ano, mes, dia] = data.split('-').map(Number);
-    const [h, min]        = hora.split(':').map(Number);
-    // Servidor Render roda UTC; usuário está em BRT (UTC-3), então UTC = hora_usuario + 3
-    const dataEvento      = new Date(Date.UTC(parseInt(ano), parseInt(mes) - 1, parseInt(dia), parseInt(h) + 3, parseInt(min), 0));
-    const dataAviso       = new Date(dataEvento.getTime() - (antecedencia || 30) * 60000);
+    let dataEvento = null, dataAviso = null;
+
+    if (recorrente && recorrencia) {
+      // Lembrete recorrente — calcular proxima ocorrencia
+      const diasMap = { segunda:1, terca:2, quarta:3, quinta:4, sexta:5, sabado:6, domingo:0 };
+      const diaNorm = (recorrencia.diaSemana||'').toLowerCase()
+        .normalize('NFD').replace(/[̀-ͯ]/g,'');
+      const diaAlvo = diasMap[diaNorm] ?? null;
+      if (diaAlvo !== null) {
+        const agora = new Date();
+        const proxData = new Date(agora);
+        const diffDias = (diaAlvo - agora.getDay() + 7) % 7 || 7;
+        proxData.setUTCDate(proxData.getUTCDate() + diffDias);
+        const h = recorrencia.hora ?? 8;
+        const min = recorrencia.minuto ?? 0;
+        proxData.setUTCHours(h + 3, min, 0, 0);
+        dataEvento = proxData;
+        dataAviso = new Date(dataEvento.getTime() - (antecedencia || 30) * 60000);
+      }
+    } else if (data && hora) {
+      const [ano, mes, dia] = data.split('-').map(Number);
+      const [h, min]        = hora.split(':').map(Number);
+      dataEvento = new Date(Date.UTC(ano, mes - 1, dia, h + 3, min, 0));
+      dataAviso  = new Date(dataEvento.getTime() - (antecedencia || 30) * 60000);
+    } else {
+      return res.status(400).json({ sucesso: false, mensagem: 'Informe data+hora ou configure recorrencia.' });
+    }
 
     const lembrete = await LembreteAgenda.create({
       adminId:      req.adminAgendaId,
       texto,
       dataEvento,
       dataAviso,
-      antecedencia: antecedencia || 30
+      antecedencia: antecedencia || 30,
+      recorrente:   !!recorrente,
+      recorrencia:  recorrencia || null,
+      origem:       'painel'
     });
     res.json({ sucesso: true, lembrete });
   } catch(e) {
     res.status(500).json({ sucesso: false, mensagem: e.message });
   }
+});
+
+// PATCH — marcar enviado ou avancar recorrente
+router.patch('/:id/enviado', authAgendaMiddleware, async (req, res) => {
+  try {
+    const lmb = await LembreteAgenda.findOne({ _id: req.params.id, adminId: req.adminAgendaId });
+    if (!lmb) return res.status(404).json({ sucesso: false, mensagem: 'Nao encontrado' });
+    if (lmb.recorrente && lmb.recorrencia) {
+      lmb.dataEvento = new Date(lmb.dataEvento.getTime() + 7 * 24 * 60 * 60 * 1000);
+      lmb.dataAviso  = new Date(lmb.dataEvento.getTime() - (lmb.antecedencia || 30) * 60000);
+      lmb.enviado    = false;
+    } else {
+      lmb.enviado   = true;
+      lmb.dataEnvio = new Date();
+    }
+    await lmb.save();
+    res.json({ sucesso: true, lembrete: lmb });
+  } catch(e) { res.status(500).json({ sucesso: false, mensagem: e.message }); }
 });
 
 // DELETE — remover lembrete
