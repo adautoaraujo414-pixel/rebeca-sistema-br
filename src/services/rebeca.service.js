@@ -4913,9 +4913,13 @@ const filaEsperaFunctions = {
         }
     },
 
-    async adicionarFilaEspera(telefoneCliente, nomeCliente, origem, destino, adminId, instanciaId) {
+    async adicionarFilaEspera(telefoneCliente, nomeCliente, origem, destino, adminId, instanciaId, extras = {}) {
         try {
             const { FilaEspera } = require('../models');
+
+            // Verificar se já está na fila (evitar duplicata)
+            const jaEsta = await FilaEspera.findOne({ clienteTelefone: telefoneCliente, adminId, status: 'aguardando' });
+            if (jaEsta) return { entrada: jaEsta, posicao: jaEsta.posicao, jaNaFila: true };
             
             // Calcular posição na fila
             const aguardando = await FilaEspera.countDocuments({ adminId, status: 'aguardando' });
@@ -4923,7 +4927,7 @@ const filaEsperaFunctions = {
             const entrada = await FilaEspera.create({
                 clienteTelefone: telefoneCliente,
                 clienteNome: nomeCliente,
-                prefereMotristaMulher: dados?.prefereMotristaMulher || false,
+                prefereMotristaMulher: extras?.prefereMotristaMulher || false,
                 origem,
                 destino,
                 posicao: aguardando + 1,
@@ -5002,23 +5006,43 @@ const filaEsperaFunctions = {
             
             if (!instancia) return null;
             
-            // Notificar cliente
-            await EvolutionMultiService.enviarMensagem(
-                instancia._id, 
-                proximo.clienteTelefone,
-                `🎉 Boa notícia! Um motorista acabou de ficar disponível!\n\nDigite o endereço de destino para eu criar sua corrida!`
-            );
+            // Notificar cliente — reaproveitar origem/destino se já salvos
+            const temOrigem  = proximo.origem?.endereco || proximo.origem;
+            const temDestino = proximo.destino?.endereco || proximo.destino;
+
+            let msgFila;
+            if (temOrigem && temDestino) {
+                msgFila = `🎉 Boa notícia! Um motorista ficou disponível!\n\n📍 Origem: *${temOrigem}*\n🏁 Destino: *${temDestino}*\n\nConfirma a corrida? Responde *SIM* para eu criar agora!`;
+            } else if (temOrigem) {
+                msgFila = `🎉 Boa notícia! Um motorista ficou disponível!\n\nSua origem já está salva: *${temOrigem}*\n\nQual o destino?`;
+            } else {
+                msgFila = `🎉 Boa notícia! Um motorista ficou disponível!\n\nMe manda sua localização ou endereço de origem para eu criar sua corrida agora!`;
+            }
+
+            await EvolutionMultiService.enviarMensagem(instancia._id, proximo.clienteTelefone, msgFila);
             
             // Atualizar status
             proximo.status = 'notificado';
             await proximo.save();
             
-            // Atualizar conversa do cliente
+            // Atualizar conversa do cliente — reaproveitar dados salvos
             const conversa = conversas.get(proximo.clienteTelefone);
+            const dadosFila = {
+                origem: proximo.origem || null,
+                destino: proximo.destino || null,
+                vinhadaFila: true
+            };
             if (conversa) {
-                conversa.etapa = 'pedir_origem';
-                conversa.dados = {};
+                conversa.etapa = temOrigem && temDestino ? 'confirmar_corrida' : temOrigem ? 'pedir_destino' : 'pedir_origem';
+                conversa.dados = { ...conversa.dados, ...dadosFila };
                 conversas.set(proximo.clienteTelefone, conversa);
+            } else {
+                conversas.set(proximo.clienteTelefone, {
+                    etapa: temOrigem && temDestino ? 'confirmar_corrida' : 'pedir_origem',
+                    dados: dadosFila,
+                    adminId,
+                    _ultimaAtividade: Date.now()
+                });
             }
             
             console.log('[FILA] Cliente notificado:', proximo.clienteTelefone);
