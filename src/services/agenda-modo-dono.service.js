@@ -1706,9 +1706,26 @@ Não tem mais ninguém agendado hoje não! Tá livre o resto do dia. 🎉`);
   if (/encaixa|marca\s*(um\s*)?hor[aá]rio|adiciona\s*(um\s*)?cliente|\bagenda\b.*\b(cliente|para|pra|amanhã|amanha|hoje|às|as)\b|\bagendar\b/i.test(msgL)) {
     const hora = _parseHora(msgL);
     const dia  = _parseDia(msgL) || new Date();
-    // Extrai nome independente do verbo: encaixa/agenda/marca + [a/o] + Nome + amanhã/às/pra
-    const nomeM = msg.match(/(?:encaixa|agenda|agendar|adiciona|marca)\s+(?:a\s+|o\s+)?([A-Za-zÀ-ú]+(?:\s+[A-Za-zÀ-ú]+)?)\s+(?:amanhã|amanha|hoje|às?|as|pra|para|no dia|\d)/i);
-    const nome = nomeM ? nomeM[1].trim() : null;
+    // Extrai nome: verbo + [artigo] + Nome + (data/hora/pra)
+    // Padrão 1: "encaixa a Maria amanhã" / "agenda João Silva às 14h"
+    // Padrão 2: "marca horário pra Luana hoje" — nome vem depois de "pra/para"
+    const _PALAVRAS_RUIDO = /^(amanhã|amanha|hoje|ontem|às?|as|pra|para|horário|horario|um|uma|no|dia|de|da|do)$/i;
+    let nome = null;
+    const nomeM1 = msg.match(/(?:encaixa|agenda|agendar|adiciona|marca)\s+(?:a\s+|o\s+)?([A-Za-zÀ-ú]+(?:\s+[A-Za-zÀ-ú]+)?)\s+(?:amanhã|amanha|hoje|às?|as|pra|para|no\s+dia|\d)/i);
+    if (nomeM1) {
+      // Limpar palavras de data/hora capturadas no final do grupo
+      const _partes = nomeM1[1].trim().split(/\s+/);
+      const _nomePartes = _partes.filter(p => !_PALAVRAS_RUIDO.test(p));
+      if (_nomePartes.length) nome = _nomePartes.join(' ');
+    }
+    // Padrão 2: "marca horário pra Luana hoje" — nome após pra/para
+    if (!nome) {
+      const nomeM2 = msg.match(/(?:pra|para)\s+([A-Za-zÀ-ú]+(?:\s+[A-Za-zÀ-ú]+)?)\s+(?:amanhã|amanha|hoje|às?|as|\d)/i);
+      if (nomeM2) {
+        const _partes2 = nomeM2[1].trim().split(/\s+/);
+        nome = _partes2.filter(p => !_PALAVRAS_RUIDO.test(p)).join(' ') || null;
+      }
+    }
     if (hora && nome) {
       // Converter hora local (UTC-3) para UTC: hora local + 3 = UTC
       const dataHora = new Date(dia);
