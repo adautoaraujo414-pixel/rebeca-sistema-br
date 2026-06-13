@@ -121,8 +121,9 @@ EXTRAIR CATEGORIA pelo contexto:
   salário/funcionário/pessoal→pessoal / equipamento/máquina→equipamento
 
 RACIOCÍNIO DE AGENDA:
-- "agenda/horários/clientes hoje/amanhã/semana" → consultar
+- "agenda/horários/clientes hoje/amanhã/semana" → consultar (SEM nome de pessoa após "agenda")
 - "encaixa/marca/agenda [nome] [hora]" → encaixar_cliente — execute direto se tiver nome+hora
+- ATENÇÃO: "agenda Carla hoje 10h" → encaixar_cliente (tem nome próprio + hora), NÃO é consultar
 - "cancela [nome]/[hora]" → cancelar_agendamento — SEMPRE confirmar antes
 - "confirma [nome]/[hora]" → confirmar_agendamento
 - "bloqueia [horário]" → bloquear_horario — confirmar antes
@@ -196,6 +197,9 @@ RACIOCÍNIO AVANÇADO — situações reais do dia a dia:
 - Dono: "me lembra toda sexta de pagar 499 pra Raphaela" → criar_lembrete, recorrente:{tipo:semanal,diaSemana:sexta}, valor:499, texto:"pagar Raphaela"
 - Dono: "tem lembrete hoje?" → listar_lembretes (pergunta sobre existentes)
 - Dono: "encaixa a Carla das 15h amanhã pra corte" → encaixar_cliente, nome:"Carla", horario:15:00, data:amanhã, servico:"corte"
+- Dono: "agenda Carla hoje às 10h" → encaixar_cliente, nome:"Carla", horario:10:00, data:hoje
+- Dono: "agenda Patricia quinta às 15h" → encaixar_cliente, nome:"Patricia", horario:15:00, data:quinta
+- Dono: "marca Ana amanhã 9h" → encaixar_cliente, nome:"Ana", horario:9:00, data:amanhã
 - Dono: "cancela o João das 10h" → cancelar_agendamento, confirmar, mensagem:"Confirma cancelar João das 10h?"
 - Dono: "fala pra Ana que confirmei o horário" → mandar_mensagem, nome_cliente:"Ana", texto:"confirmei o horário"
 - Dono: "quanto fiz hoje" → financeiro_hoje, responder usando dados do contexto
