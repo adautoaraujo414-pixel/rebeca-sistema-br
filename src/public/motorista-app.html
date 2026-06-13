@@ -1386,6 +1386,13 @@ document.addEventListener('DOMContentLoaded', function() {
             
             document.getElementById('novaCorridaOrigem').textContent = formatarEndereco(corrida.origem);
             document.getElementById('novaCorridaDestino').textContent = formatarEndereco(corrida.destino);
+            // Mostrar campo de pesquisa de destino se não tiver destino
+            const _semDestino = !corrida.destino?.endereco && !corrida.destino?.latitude;
+            const _inputDestDiv = document.getElementById('inputDestinoCard');
+            if (_inputDestDiv) _inputDestDiv.style.display = _semDestino ? 'block' : 'none';
+            if (!_semDestino) {
+                document.getElementById('inputDestinoTexto').value = '';
+            }
 
             // Mostrar referência da origem em destaque
             const refOrigemBox = document.getElementById('novaCorridaRefOrigem');
@@ -1792,6 +1799,60 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
+        // ── Pesquisa de destino no card da corrida ──────────────────────────
+        let _destinoDigitado = null;
+        function sugerirDestino(query) {
+            const box = document.getElementById('sugestoesDestino');
+            if (!query || query.length < 3) { box.style.display='none'; return; }
+            // Usar Google Maps Places Autocomplete via URL encode
+            box.style.display = 'none';
+            _destinoDigitado = query;
+        }
+
+        function pesquisarDestinoMaps() {
+            const query = document.getElementById('inputDestinoTexto')?.value?.trim();
+            if (!query) return toast('Digite um endereço de destino', 'error');
+            // Salvar destino digitado na corrida atual pendente
+            _destinoDigitado = query;
+            if (corridaAtual) {
+                if (!corridaAtual.destino) corridaAtual.destino = {};
+                corridaAtual.destino.endereco = query;
+                corridaAtual.enderecoDestinoTexto = query;
+                document.getElementById('novaCorridaDestino').textContent = query;
+                document.getElementById('inputDestinoCard').style.display = 'none';
+                // Salvar destino no backend
+                const token = localStorage.getItem('token_motorista') || localStorage.getItem('token');
+                fetch('/api/motorista-app/corrida-ativa/destino', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': token },
+                    body: JSON.stringify({ corridaId: corridaAtual._id || corridaAtual.id, destino: query })
+                }).catch(() => {});
+                toast('✅ Destino salvo: ' + query, 'success');
+            }
+        }
+
+        // Abrir navegação automaticamente ao iniciar corrida
+        function _abrirNavegacaoDestino() {
+            const dest = corridaAtual?.destino;
+            const lat = dest?.latitude || dest?.lat;
+            const lng = dest?.longitude || dest?.lng;
+            const endereco = dest?.endereco || corridaAtual?.enderecoDestinoTexto || _destinoDigitado;
+            if (!lat && !lng && !endereco) return; // sem destino — não forçar abertura
+            setTimeout(() => {
+                const confirmNav = confirm('🗺️ Abrir navegação para o destino?');
+                if (!confirmNav) return;
+                if (lat && lng) {
+                    const waze = 'https://waze.com/ul?ll=' + lat + ',' + lng + '&navigate=yes';
+                    const gmaps = 'https://www.google.com/maps/dir/?api=1&destination=' + lat + ',' + lng + '&travelmode=driving';
+                    // Preferir Google Maps
+                    window.open(gmaps, '_blank');
+                } else if (endereco) {
+                    window.open('https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(endereco) + '&travelmode=driving', '_blank');
+                }
+            }, 800);
+        }
+        // ────────────────────────────────────────────────────────────────────────
+
         function navegarAteCliente() {
             const origem = corridaAtual?.origem;
             if (!origem?.latitude && !origem?.endereco) {
@@ -1839,7 +1900,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     corridaAtual.status = 'em_andamento';
                     if (btn) { btn.disabled = false; btn.style.display = 'none'; }
                     atualizarBotoesCorridaAtiva();
-                    toast('Corrida iniciada!', 'success');
+                    toast('Corrida iniciada!', 'success'
+                _abrirNavegacaoDestino(););
                     setTimeout(() => carregarCorridaAtiva(), 500);
                 } else {
                     toast(data.erro || 'Erro ao iniciar', 'error');
