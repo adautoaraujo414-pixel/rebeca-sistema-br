@@ -1711,7 +1711,7 @@ Não tem mais ninguém agendado hoje não! Tá livre o resto do dia. 🎉`);
     // Padrão 2: "marca horário pra Luana hoje" — nome vem depois de "pra/para"
     const _PALAVRAS_RUIDO = /^(amanhã|amanha|hoje|ontem|às?|as|das?|pra|para|horário|horario|um|uma|no|dia|de|da|do)$/i;
     let nome = null;
-    const nomeM1 = msg.match(/(?:encaixa|agenda|agendar|adiciona|marca)\s+(?:a\s+|o\s+)?([A-Za-zÀ-ú]+(?:\s+[A-Za-zÀ-ú]+)?)\s+(?:amanhã|amanha|hoje|às?|as|pra|para|no\s+dia|\d)/i);
+    const nomeM1 = msg.match(/(?:encaixa|agenda|agendar|adiciona|marca)\s+(?:a\s+|o\s+)?([A-Za-zÀ-ú]+(?:\s+[A-Za-zÀ-ú]+)?)\s+(?:amanhã|amanha|hoje|segunda|ter[çc]a|quarta|quinta|sexta|s[áa]bado|domingo|às?|as|pra|para|no\s+dia|\d)/i);
     if (nomeM1) {
       // Limpar palavras de data/hora capturadas no final do grupo
       const _partes = nomeM1[1].trim().split(/\s+/);
