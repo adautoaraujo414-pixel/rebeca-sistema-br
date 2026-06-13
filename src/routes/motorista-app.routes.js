@@ -482,7 +482,8 @@ router.post('/finalizar', auth, async (req, res) => {
                     })());
             }
         }
-        res.json(corrida);
+        const _corridaObj = corrida?.corrida || corrida;
+        res.json({ sucesso: true, corrida: _corridaObj });
     } catch (e) { res.json({ sucesso: false, erro: e.message }); }
 });
 
