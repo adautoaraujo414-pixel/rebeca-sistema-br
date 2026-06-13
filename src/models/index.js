@@ -458,11 +458,12 @@ const FilaEsperaSchema = new mongoose.Schema({
     destino: { endereco: String, latitude: Number, longitude: Number },
     corridaId: { type: mongoose.Schema.Types.ObjectId, ref: 'Corrida', default: null },
     posicao: { type: Number, default: 1 },
-    status: { type: String, enum: ['aguardando', 'notificado', 'atendido', 'expirado'], default: 'aguardando' },
+    status: { type: String, enum: ['aguardando', 'notificado', 'atendido', 'cancelado', 'expirado'], default: 'aguardando' },
     adminId: mongoose.Schema.Types.ObjectId,
     instanciaId: mongoose.Schema.Types.ObjectId,
     // Bug 1 fix: campos que estavam fora do schema object
     avisado30min: { type: Boolean, default: false },
+    prefereMotristaMulher: { type: Boolean, default: false },
     criadoEm: { type: Date, default: Date.now }
 }, { timestamps: true });
 
