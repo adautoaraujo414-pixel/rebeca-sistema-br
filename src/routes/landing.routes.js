@@ -327,7 +327,7 @@ router.post('/admin/criar', async (req, res) => {
 router.get('/places/autocomplete', async (req, res) => {
     try {
         const input = req.query.input || '';
-        const key = process.env.GOOGLE_PLACES_KEY;
+        const key = process.env.GOOGLE_MAPS_API_KEY;
         if (!key) return res.json({ predictions: [] });
         const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(input)}&types=(cities)&language=pt-BR&components=country:br&key=${key}`;
         const r = await axios.get(url);
@@ -342,7 +342,7 @@ router.get('/places/autocomplete', async (req, res) => {
 router.get('/places/details', async (req, res) => {
     try {
         const place_id = req.query.place_id || '';
-        const key = process.env.GOOGLE_PLACES_KEY;
+        const key = process.env.GOOGLE_MAPS_API_KEY;
         if (!key) return res.json({ result: {} });
         const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${place_id}&fields=address_components&language=pt-BR&key=${key}`;
         const r = await axios.get(url);
