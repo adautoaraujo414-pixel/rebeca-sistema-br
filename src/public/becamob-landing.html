@@ -614,7 +614,6 @@ async function selecionarCidade(placeId, nome, secondary, descricao) {
   document.getElementById('adCidade').value = nome;
   document.getElementById('cidadeSugestoes').style.display = 'none';
   document.getElementById('adCidadeCompleta').value = descricao;
-  // Buscar estado via place details
   try {
     const r = await fetch('/api/landing/places/details?place_id='+placeId);
     const data = await r.json();
@@ -622,9 +621,23 @@ async function selecionarCidade(placeId, nome, secondary, descricao) {
     const uf = comps.find(c => c.types.includes('administrative_area_level_1'));
     const estado = uf ? uf.short_name : '';
     document.getElementById('adEstado').value = estado;
-    const label = document.getElementById('cidadeSelecionada');
-    if (label) { label.textContent = nome + (estado ? ' — ' + estado : ''); label.style.display='block'; }
+    // Mostrar card de confirmação
+    const card = document.getElementById('cidadeSelecionada');
+    document.getElementById('cidadeNomeConfirm').textContent = nome;
+    document.getElementById('cidadeEstadoConfirm').textContent = estado ? estado + ' — Brasil' : 'Brasil';
+    if (card) card.style.display = 'flex';
+    // Preencher nome da central automaticamente se estiver vazio
+    const nomeCentral = document.getElementById('adNomeMarca');
+    if (nomeCentral && !nomeCentral.value) nomeCentral.value = 'BecaMob ' + nome;
   } catch(e) {}
+}
+function limparCidade() {
+  document.getElementById('adCidade').value = '';
+  document.getElementById('adEstado').value = '';
+  document.getElementById('adCidadeCompleta').value = '';
+  document.getElementById('cidadeSelecionada').style.display = 'none';
+  document.getElementById('adNomeMarca').value = '';
+  document.getElementById('adCidade').focus();
 }
 document.addEventListener('click', e => {
   const box = document.getElementById('cidadeSugestoes');
