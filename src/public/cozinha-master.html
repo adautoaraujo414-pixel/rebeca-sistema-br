@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Rebeca Cozinha — Master</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --preto:#090909;--dark1:#111;--dark2:#161616;--dark3:#1e1e1e;--card:#1a1a1a;
+  --borda:rgba(255,255,255,0.07);--laranja:#FF6B00;--laranja2:#E55A00;
+  --laranja-soft:rgba(255,107,0,0.10);--branco:#f4f4f4;--cinza:#777;--cinza2:#333;
+  --radius:12px;--radius-sm:8px;--display:'Syne',sans-serif;--body:'Inter',sans-serif;
+}
+html,body{height:100%}
+body{background:var(--preto);color:var(--branco);font-family:var(--body);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:10px 20px;border-radius:var(--radius-sm);font-family:var(--body);font-size:.88rem;font-weight:600;cursor:pointer;text-decoration:none;transition:all .2s;border:none}
+.btn-laranja{background:var(--laranja);color:#fff}.btn-laranja:hover{background:var(--laranja2)}
+.btn-outline{background:transparent;color:var(--branco);border:1px solid var(--borda)}.btn-outline:hover{border-color:var(--laranja);color:var(--laranja)}
+.btn-danger{background:rgba(255,60,60,.1);color:#ff5555;border:1px solid rgba(255,60,60,.2)}.btn-danger:hover{background:rgba(255,60,60,.2)}
+.btn-sm{padding:7px 14px;font-size:.8rem}
+.input{width:100%;padding:11px 14px;background:var(--dark3);border:1px solid var(--borda);border-radius:var(--radius-sm);color:var(--branco);font-family:var(--body);font-size:.9rem;outline:none;transition:border-color .2s}
+.input:focus{border-color:var(--laranja)}.input::placeholder{color:var(--cinza2)}
+.select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23777' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center}
+.alert{padding:10px 14px;border-radius:var(--radius-sm);font-size:.84rem;font-weight:500}
+.alert-ok{background:rgba(0,200,100,.1);border:1px solid rgba(0,200,100,.25);color:#00c864}
+.alert-erro{background:rgba(255,60,60,.1);border:1px solid rgba(255,60,60,.25);color:#ff5555}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:.72rem;font-weight:600}
+.badge-ok{background:rgba(0,200,100,.1);color:#00c864;border:1px solid rgba(0,200,100,.2)}
+.badge-warn{background:var(--laranja-soft);color:var(--laranja);border:1px solid rgba(255,107,0,.2)}
+.badge-off{background:var(--cinza2);color:var(--cinza);border:1px solid var(--borda)}
+
+/* LAYOUT */
+#loginScreen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px}
+.login-card{background:var(--card);border:1px solid var(--borda);border-radius:var(--radius);padding:40px;width:100%;max-width:380px}
+.login-logo{font-family:var(--display);font-size:1.4rem;font-weight:900;margin-bottom:6px}
+.login-logo span{color:var(--laranja)}
+
+#app{display:none;min-height:100vh;flex-direction:column}
+.topbar{background:var(--dark1);border-bottom:1px solid var(--borda);padding:0 24px;height:58px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.topbar-logo{font-family:var(--display);font-size:1rem;font-weight:900}.topbar-logo span{color:var(--laranja)}
+.topbar-right{display:flex;align-items:center;gap:12px}
+.main{display:grid;grid-template-columns:240px 1fr;flex:1;min-height:0}
+.sidebar{background:var(--dark1);border-right:1px solid var(--borda);padding:20px 12px;display:flex;flex-direction:column;gap:4px;position:sticky;top:58px;height:calc(100vh - 58px);overflow-y:auto}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--radius-sm);color:var(--cinza);font-size:.88rem;font-weight:500;cursor:pointer;transition:all .2s;border:none;background:none;width:100%;text-align:left}
+.nav-item:hover{background:var(--dark3);color:var(--branco)}
+.nav-item.ativo{background:var(--laranja-soft);color:var(--laranja);border:1px solid rgba(255,107,0,.15)}
+.nav-sep{font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:var(--cinza2);padding:14px 12px 6px;font-weight:600}
+.content{padding:28px;overflow-y:auto}
+.page{display:none}.page.ativo{display:block}
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
+.page-titulo{font-family:var(--display);font-size:1.4rem;font-weight:900;letter-spacing:-.5px}
+.card{background:var(--card);border:1px solid var(--borda);border-radius:var(--radius);padding:24px}
+.card-titulo{font-family:var(--display);font-size:.92rem;font-weight:800;margin-bottom:16px;color:var(--branco)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{font-size:.78rem;color:var(--cinza)}
+
+/* STATS */
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+.stat{background:var(--card);border:1px solid var(--borda);border-radius:var(--radius);padding:20px}
+.stat-val{font-family:var(--display);font-size:1.8rem;font-weight:900;color:var(--laranja);line-height:1}
+.stat-label{font-size:.78rem;color:var(--cinza);margin-top:6px}
+
+/* TABELA */
+.tabela{width:100%;border-collapse:collapse}
+.tabela th{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--cinza);font-weight:600;padding:10px 14px;text-align:left;border-bottom:1px solid var(--borda)}
+.tabela td{padding:12px 14px;border-bottom:1px solid var(--borda);font-size:.87rem;vertical-align:middle}
+.tabela tr:last-child td{border-bottom:none}
+.tabela tr:hover td{background:rgba(255,255,255,.02)}
+.tabela-wrap{background:var(--card);border:1px solid var(--borda);border-radius:var(--radius);overflow:hidden}
+
+/* MODAL */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;align-items:center;justify-content:center;padding:20px}
+.modal-bg.open{display:flex}
+.modal{background:var(--dark2);border:1px solid var(--borda);border-radius:var(--radius);padding:28px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto}
+.modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.modal-titulo{font-family:var(--display);font-size:1rem;font-weight:800}
+.modal-close{background:none;border:none;color:var(--cinza);font-size:1.2rem;cursor:pointer;padding:4px}
+.modal-close:hover{color:var(--branco)}
+.modal-form{display:flex;flex-direction:column;gap:14px}
+.modal-footer{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
+
+/* TOGGLE */
+.toggle-row{display:flex;align-items:center;justify-content:space-between;background:var(--dark3);border:1px solid var(--borda);border-radius:var(--radius-sm);padding:11px 14px}
+.toggle-info{display:flex;flex-direction:column;gap:2px}
+.toggle-label{font-size:.88rem;color:var(--branco);font-weight:500}
+.toggle-sub{font-size:.75rem;color:var(--cinza)}
+.toggle{position:relative;width:40px;height:22px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0}
+.slider{position:absolute;inset:0;background:var(--cinza2);border-radius:22px;cursor:pointer;transition:.3s}
+.slider::before{content:'';position:absolute;width:16px;height:16px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.3s}
+.toggle input:checked+.slider{background:var(--laranja)}
+.toggle input:checked+.slider::before{transform:translateX(18px)}
+
+/* IMPRESSORA TIPO */
+.imp-tipos{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:4px}
+.imp-tipo{border:1px solid var(--borda);border-radius:var(--radius-sm);padding:14px;cursor:pointer;transition:all .2s;text-align:center}
+.imp-tipo:hover{border-color:rgba(255,107,0,.3)}
+.imp-tipo.sel{border-color:var(--laranja);background:var(--laranja-soft)}
+.imp-tipo-icon{font-size:1.6rem;margin-bottom:6px}
+.imp-tipo-nome{font-size:.82rem;font-weight:600;color:var(--branco)}
+.imp-tipo-sub{font-size:.72rem;color:var(--cinza);margin-top:2px}
+
+/* STATUS DOT */
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex-shrink:0}
+.dot-ok{background:#00c864;box-shadow:0 0 6px #00c864}
+.dot-off{background:var(--cinza2)}
+.dot-warn{background:var(--laranja);box-shadow:0 0 6px var(--laranja)}
+
+@media(max-width:800px){
+  .main{grid-template-columns:1fr}
+  .sidebar{display:none}
+  .stat-grid{grid-template-columns:1fr 1fr}
+  .grid2,.grid3{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="login-logo">Rebeca<span>Cozinha</span> <span style="font-size:.7rem;color:var(--cinza);font-family:var(--body);font-weight:400">Master</span></div>
+    <p style="color:var(--cinza);font-size:.84rem;margin-bottom:24px">Acesso restrito — somente administrador</p>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div class="field"><label>Senha master</label><input type="password" id="senhaInput" class="input" placeholder="••••••••" onkeydown="if(event.key==='Enter')login()"></div>
+      <div id="loginErro" class="alert alert-erro" style="display:none"></div>
+      <button class="btn btn-laranja" style="width:100%;justify-content:center" onclick="login()">Entrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" style="display:none;flex-direction:column">
+
+  <div class="topbar">
+    <div class="topbar-logo">Rebeca<span>Cozinha</span> <span style="font-size:.7rem;color:var(--cinza);font-family:var(--body);font-weight:400">Master</span></div>
+    <div class="topbar-right">
+      <span style="font-size:.78rem;color:var(--cinza)" id="topStats"></span>
+      <button class="btn btn-outline btn-sm" onclick="logout()">Sair</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div class="nav-sep">Gestão</div>
+      <button class="nav-item ativo" onclick="irPara('restaurantes',this)">🍽️ Restaurantes</button>
+      <button class="nav-item" onclick="irPara('clientes',this)">👤 Clientes</button>
+      <button class="nav-item" onclick="irPara('impressoras',this)">🖨️ Impressoras</button>
+      <button class="nav-item" onclick="irPara('jobs',this)">📋 Jobs recentes</button>
+      <div class="nav-sep">Sistema</div>
+      <button class="nav-item" onclick="irPara('download',this)">⬇️ Servidor local</button>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="content">
+
+      <!-- ── RESTAURANTES ── -->
+      <div class="page ativo" id="page-restaurantes">
+        <div class="page-header">
+          <div class="page-titulo">Restaurantes</div>
+          <button class="btn btn-laranja btn-sm" onclick="abrirModalRestaurante()">+ Novo restaurante</button>
+        </div>
+        <div class="stat-grid" id="statsGerais">
+          <div class="stat"><div class="stat-val" id="s-total">-</div><div class="stat-label">Restaurantes</div></div>
+          <div class="stat"><div class="stat-val" id="s-clientes">-</div><div class="stat-label">Clientes cadastrados</div></div>
+          <div class="stat"><div class="stat-val" id="s-impressoras">-</div><div class="stat-label">Impressoras config.</div></div>
+          <div class="stat"><div class="stat-val" id="s-jobs">-</div><div class="stat-label">Jobs hoje</div></div>
+        </div>
+        <div class="tabela-wrap">
+          <table class="tabela">
+            <thead><tr>
+              <th>Restaurante</th>
+              <th>AdminId</th>
+              <th>Clientes</th>
+              <th>Impressora</th>
+              <th>Status</th>
+              <th></th>
+            </tr></thead>
+            <tbody id="tbRestaurantes"><tr><td colspan="6" style="text-align:center;color:var(--cinza);padding:32px">Carregando...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── CLIENTES ── -->
+      <div class="page" id="page-clientes">
+        <div class="page-header">
+          <div class="page-titulo">Clientes</div>
+          <button class="btn btn-laranja btn-sm" onclick="abrirModalCliente()">+ Novo cliente</button>
+        </div>
+        <div class="card" style="margin-bottom:16px">
+          <div style="display:flex;gap:10px;align-items:center">
+            <select id="filtroRestCliente" class="input select" style="max-width:280px" onchange="carregarClientes()">
+              <option value="">Todos os restaurantes</option>
+            </select>
+            <span style="color:var(--cinza);font-size:.83rem" id="totalClientes"></span>
+          </div>
+        </div>
+        <div class="tabela-wrap">
+          <table class="tabela">
+            <thead><tr><th>Nome</th><th>WhatsApp</th><th>Restaurante</th><th>Cadastrado</th><th></th></tr></thead>
+            <tbody id="tbClientes"><tr><td colspan="5" style="text-align:center;color:var(--cinza);padding:32px">Selecione um restaurante</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── IMPRESSORAS ── -->
+      <div class="page" id="page-impressoras">
+        <div class="page-header">
+          <div class="page-titulo">Impressoras</div>
+          <button class="btn btn-laranja btn-sm" onclick="abrirModalImpressora()">+ Configurar impressora</button>
+        </div>
+        <div class="tabela-wrap">
+          <table class="tabela">
+            <thead><tr><th>Restaurante</th><th>Modo</th><th>IP / Servidor</th><th>Impressora</th><th>Status</th><th></th></tr></thead>
+            <tbody id="tbImpressoras"><tr><td colspan="6" style="text-align:center;color:var(--cinza);padding:32px">Carregando...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── JOBS ── -->
+      <div class="page" id="page-jobs">
+        <div class="page-header">
+          <div class="page-titulo">Jobs recentes</div>
+          <button class="btn btn-outline btn-sm" onclick="carregarJobs()">↺ Atualizar</button>
+        </div>
+        <div class="card" style="margin-bottom:16px">
+          <select id="filtroRestJob" class="input select" style="max-width:280px" onchange="carregarJobs()">
+            <option value="">Todos os restaurantes</option>
+          </select>
+        </div>
+        <div class="tabela-wrap">
+          <table class="tabela">
+            <thead><tr><th>#</th><th>Restaurante</th><th>Texto</th><th>Status</th><th>Horário</th></tr></thead>
+            <tbody id="tbJobs"><tr><td colspan="5" style="text-align:center;color:var(--cinza);padding:32px">Carregando...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── DOWNLOAD ── -->
+      <div class="page" id="page-download">
+        <div class="page-header"><div class="page-titulo">Servidor local</div></div>
+        <div class="grid2" style="max-width:700px">
+          <div class="card">
+            <div class="card-titulo">🖥️ Windows (recomendado)</div>
+            <p style="color:var(--cinza);font-size:.85rem;line-height:1.7;margin-bottom:18px">Instale no PC da cozinha. Auto-inicia com o Windows. Faz polling e imprime automaticamente via USB ou rede local.</p>
+            <a href="/api/cozinha/download-local" class="btn btn-laranja" style="width:100%;justify-content:center">⬇ Baixar .zip (Windows)</a>
+          </div>
+          <div class="card">
+            <div class="card-titulo">📋 Instruções de instalação</div>
+            <ol style="color:var(--cinza);font-size:.84rem;line-height:2;padding-left:18px">
+              <li>Baixe e extraia o .zip na cozinha</li>
+              <li>Execute <strong style="color:var(--branco)">INICIAR-WINDOWS.bat</strong></li>
+              <li>O programa configura o inicio automático</li>
+              <li>Configure o IP do PC aqui no painel master</li>
+              <li>Clique em "Testar" para validar</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- MODAL NOVO RESTAURANTE -->
+<div class="modal-bg" id="modalRestaurante">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-titulo">🍽️ Novo restaurante</div>
+      <button class="modal-close" onclick="fecharModal('modalRestaurante')">✕</button>
+    </div>
+    <div class="modal-form">
+      <div class="field"><label>Nome do restaurante</label><input type="text" id="rNome" class="input" placeholder="Ex: Pizzaria do João"></div>
+      <div class="field"><label>AdminId (MongoDB ObjectId do admin)</label><input type="text" id="rAdminId" class="input" placeholder="ex: 6a15ecb5e2ad56df1ad2a301"><small style="color:var(--cinza);font-size:.74rem">ID do AdminAgenda ou AdminCozinha que representa este restaurante</small></div>
+      <div id="modalRestErro" class="alert alert-erro" style="display:none"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline btn-sm" onclick="fecharModal('modalRestaurante')">Cancelar</button>
+      <button class="btn btn-laranja btn-sm" onclick="salvarRestaurante()">Salvar restaurante</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NOVO CLIENTE -->
+<div class="modal-bg" id="modalCliente">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-titulo">👤 Cadastrar cliente</div>
+      <button class="modal-close" onclick="fecharModal('modalCliente')">✕</button>
+    </div>
+    <div class="modal-form">
+      <div class="field">
+        <label>Restaurante</label>
+        <select id="cRestaurante" class="input select"></select>
+      </div>
+      <div class="field"><label>WhatsApp do cliente (com DDI 55)</label><input type="text" id="cTelefone" class="input" placeholder="553434237000"></div>
+      <div class="field"><label>Nome / Identificação (opcional)</label><input type="text" id="cNome" class="input" placeholder="Ex: Cozinha principal, Mesa 7"></div>
+      <div id="modalClienteErro" class="alert alert-erro" style="display:none"></div>
+      <div id="modalClienteOk" class="alert alert-ok" style="display:none"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline btn-sm" onclick="fecharModal('modalCliente')">Fechar</button>
+      <button class="btn btn-laranja btn-sm" id="btnSalvarCliente" onclick="salvarCliente()">Cadastrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL IMPRESSORA -->
+<div class="modal-bg" id="modalImpressora">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-titulo">🖨️ Configurar impressora</div>
+      <button class="modal-close" onclick="fecharModal('modalImpressora')">✕</button>
+    </div>
+    <div class="modal-form">
+      <div class="field">
+        <label>Restaurante</label>
+        <select id="iRestaurante" class="input select" onchange="carregarImpressoraNoModal()"></select>
+      </div>
+      <div class="imp-tipos">
+        <div class="imp-tipo sel" id="tipoWifi" onclick="setTipoImp('wifi')">
+          <div class="imp-tipo-icon">📶</div>
+          <div class="imp-tipo-nome">WiFi / Rede</div>
+          <div class="imp-tipo-sub">IP direto TCP</div>
+        </div>
+        <div class="imp-tipo" id="tipoLocal" onclick="setTipoImp('local')">
+          <div class="imp-tipo-icon">🖥️</div>
+          <div class="imp-tipo-nome">Servidor local</div>
+          <div class="imp-tipo-sub">PC Windows .exe</div>
+        </div>
+      </div>
+      <!-- WIFI -->
+      <div id="camposWifi">
+        <div class="field"><label>IP da impressora na rede</label><input type="text" id="iIp" class="input" placeholder="192.168.1.100"></div>
+        <div class="field"><label>Porta TCP (padrão 9100)</label><input type="number" id="iPorta" class="input" value="9100"></div>
+      </div>
+      <!-- LOCAL -->
+      <div id="camposLocal" style="display:none;flex-direction:column;gap:14px">
+        <div class="field"><label>IP do PC servidor na rede local</label><input type="text" id="iIpPc" class="input" placeholder="192.168.1.50"></div>
+        <div class="field"><label>Porta do servidor local (padrão 3333)</label><input type="number" id="iPortaPc" class="input" value="3333"></div>
+        <div class="field"><label>IP da impressora (na rede local do PC)</label><input type="text" id="iIpImp" class="input" placeholder="192.168.1.100 ou vazio para USB"></div>
+        <div class="field"><label>Porta impressora (padrão 9100)</label><input type="number" id="iPortaImp" class="input" value="9100"></div>
+      </div>
+      <div class="field"><label>Nome da impressora (identificação)</label><input type="text" id="iNome" class="input" placeholder="Ex: ELGIN i9 Cozinha"></div>
+      <div id="modalImpErro" class="alert alert-erro" style="display:none"></div>
+      <div id="modalImpOk" class="alert alert-ok" style="display:none"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline btn-sm" onclick="testarImpressora()">🖨 Testar</button>
+      <button class="btn btn-outline btn-sm" onclick="fecharModal('modalImpressora')">Fechar</button>
+      <button class="btn btn-laranja btn-sm" onclick="salvarImpressora()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── CONFIG ──
+const TOKEN = 'cozinha-rebeca-2026';
+const SENHA_MASTER = 'rebeca@master2026';
+
+// ── STATE ──
+let _restaurantes = []; // [{adminId, nome}] — armazenado em localStorage
+
+// ── LOGIN ──
+function login() {
+  const s = document.getElementById('senhaInput').value;
+  const err = document.getElementById('loginErro');
+  if (s !== SENHA_MASTER) { err.textContent = 'Senha incorreta.'; err.style.display = 'block'; return; }
+  localStorage.setItem('cz_auth', '1');
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  iniciar();
+}
+function logout() { localStorage.removeItem('cz_auth'); location.reload(); }
+window.addEventListener('load', () => {
+  if (localStorage.getItem('cz_auth') === '1') {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+    iniciar();
+  }
+});
+document.getElementById('senhaInput').addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
+
+// ── RESTAURANTES (localStorage) ──
+function carregarRestaurantesLocal() {
+  try { _restaurantes = JSON.parse(localStorage.getItem('cz_restaurantes') || '[]'); } catch(e) { _restaurantes = []; }
+}
+function salvarRestaurantesLocal() {
+  localStorage.setItem('cz_restaurantes', JSON.stringify(_restaurantes));
+}
+
+// ── NAV ──
+function irPara(pagina, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('ativo'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('ativo'));
+  document.getElementById('page-' + pagina).classList.add('ativo');
+  if (btn) btn.classList.add('ativo');
+  if (pagina === 'restaurantes') carregarTabelaRestaurantes();
+  if (pagina === 'clientes') { popularSelectRestaurantes(); carregarClientes(); }
+  if (pagina === 'impressoras') carregarTabelaImpressoras();
+  if (pagina === 'jobs') { popularSelectRestaurantes('filtroRestJob'); carregarJobs(); }
+}
+
+// ── INIT ──
+async function iniciar() {
+  carregarRestaurantesLocal();
+  await carregarTabelaRestaurantes();
+  popularSelectRestaurantes();
+  popularSelectRestaurantes('filtroRestJob');
+}
+
+// ── POPULAR SELECTS ──
+function popularSelectRestaurantes(id = 'filtroRestCliente') {
+  const sel = document.getElementById(id);
+  if (!sel) return;
+  const val = sel.value;
+  sel.innerHTML = '<option value="">Todos os restaurantes</option>' +
+    _restaurantes.map(r => `<option value="${r.adminId}">${r.nome}</option>`).join('');
+  if (val) sel.value = val;
+}
+function popularSelectModal(id) {
+  const sel = document.getElementById(id);
+  sel.innerHTML = '<option value="">Selecione...</option>' +
+    _restaurantes.map(r => `<option value="${r.adminId}">${r.nome}</option>`).join('');
+}
+
+// ── TABELA RESTAURANTES ──
+async function carregarTabelaRestaurantes() {
+  const tb = document.getElementById('tbRestaurantes');
+  if (!_restaurantes.length) {
+    tb.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--cinza);padding:32px">Nenhum restaurante cadastrado. Clique em "+ Novo restaurante".</td></tr>';
+    atualizarStats(0, 0, 0, 0);
+    return;
+  }
+  tb.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--cinza);padding:20px">Carregando dados...</td></tr>';
+
+  // Buscar dados de cada restaurante em paralelo
+  const rows = await Promise.all(_restaurantes.map(async (r, idx) => {
+    let nClientes = '?', temImp = false, nomeImp = '-', modoImp = '-';
+    try {
+      const rc = await fetch(`/api/cozinha/clientes/${r.adminId}?token=${TOKEN}`);
+      const dc = await rc.json();
+      nClientes = (dc.clientes || []).length;
+    } catch(e) {}
+    try {
+      const ri = await fetch(`/api/cozinha/impressora/${r.adminId}?token=${TOKEN}`);
+      const di = await ri.json();
+      if (di.impressora) {
+        temImp = true;
+        nomeImp = di.impressora.nome || di.impressora.nomeImpressora || '-';
+        modoImp = di.impressora.modoLocal ? '🖥️ Local' : '📶 WiFi';
+      }
+    } catch(e) {}
+    return { r, idx, nClientes, temImp, nomeImp, modoImp };
+  }));
+
+  // Stats
+  const totClientes = rows.reduce((a, r) => a + (parseInt(r.nClientes) || 0), 0);
+  const totImp = rows.filter(r => r.temImp).length;
+  atualizarStats(_restaurantes.length, totClientes, totImp, null);
+
+  tb.innerHTML = rows.map(({ r, idx, nClientes, temImp, nomeImp, modoImp }) => `
+    <tr>
+      <td><strong style="color:var(--branco)">${r.nome}</strong></td>
+      <td><code style="font-size:.75rem;color:var(--cinza);background:var(--dark3);padding:3px 8px;border-radius:6px">${r.adminId.slice(-8)}</code></td>
+      <td><span style="color:${nClientes > 0 ? 'var(--branco)' : 'var(--cinza)'}">${nClientes}</span></td>
+      <td>${temImp ? `<span class="badge badge-ok">${modoImp} ${nomeImp}</span>` : '<span class="badge badge-off">Não configurada</span>'}</td>
+      <td><span class="dot ${temImp && nClientes > 0 ? 'dot-ok' : nClientes > 0 || temImp ? 'dot-warn' : 'dot-off'}"></span></td>
+      <td style="display:flex;gap:6px">
+        <button class="btn btn-outline btn-sm" onclick="editarRestaurante(${idx})">✏️</button>
+        <button class="btn btn-danger btn-sm" onclick="removerRestaurante(${idx})">✕</button>
+      </td>
+    </tr>`).join('');
+}
+
+async function atualizarStats(total, clientes, impressoras, jobs) {
+  document.getElementById('s-total').textContent = total;
+  document.getElementById('s-clientes').textContent = clientes;
+  document.getElementById('s-impressoras').textContent = impressoras;
+  if (jobs !== null) document.getElementById('s-jobs').textContent = jobs;
+  document.getElementById('topStats').textContent = `${total} restaurantes · ${clientes} clientes`;
+}
+
+// ── NOVO RESTAURANTE ──
+function abrirModalRestaurante(idx = null) {
+  document.getElementById('rNome').value = idx !== null ? _restaurantes[idx].nome : '';
+  document.getElementById('rAdminId').value = idx !== null ? _restaurantes[idx].adminId : '';
+  document.getElementById('rAdminId').dataset.editIdx = idx !== null ? idx : '';
+  document.getElementById('modalRestErro').style.display = 'none';
+  abrirModal('modalRestaurante');
+}
+function editarRestaurante(idx) { abrirModalRestaurante(idx); }
+function removerRestaurante(idx) {
+  if (!confirm(`Remover "${_restaurantes[idx].nome}"?`)) return;
+  _restaurantes.splice(idx, 1);
+  salvarRestaurantesLocal();
+  carregarTabelaRestaurantes();
+  popularSelectRestaurantes();
+}
+function salvarRestaurante() {
+  const nome = document.getElementById('rNome').value.trim();
+  const adminId = document.getElementById('rAdminId').value.trim();
+  const erroEl = document.getElementById('modalRestErro');
+  if (!nome || !adminId) { erroEl.textContent = 'Preencha nome e adminId.'; erroEl.style.display = 'block'; return; }
+  if (!/^[a-f0-9]{24}$/i.test(adminId)) { erroEl.textContent = 'AdminId deve ser um ObjectId MongoDB válido (24 chars hex).'; erroEl.style.display = 'block'; return; }
+  const editIdx = document.getElementById('rAdminId').dataset.editIdx;
+  if (editIdx !== '') {
+    _restaurantes[parseInt(editIdx)] = { nome, adminId };
+  } else {
+    if (_restaurantes.find(r => r.adminId === adminId)) { erroEl.textContent = 'Este adminId já está cadastrado.'; erroEl.style.display = 'block'; return; }
+    _restaurantes.push({ nome, adminId });
+  }
+  salvarRestaurantesLocal();
+  fecharModal('modalRestaurante');
+  carregarTabelaRestaurantes();
+  popularSelectRestaurantes();
+  popularSelectRestaurantes('filtroRestJob');
+}
+
+// ── CLIENTES ──
+async function carregarClientes() {
+  const adminId = document.getElementById('filtroRestCliente').value;
+  const tb = document.getElementById('tbClientes');
+  const tot = document.getElementById('totalClientes');
+  if (!adminId && !_restaurantes.length) { tb.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--cinza);padding:32px">Cadastre um restaurante primeiro.</td></tr>'; return; }
+
+  const lista = adminId ? [{ adminId, nome: _restaurantes.find(r => r.adminId === adminId)?.nome || adminId }] : _restaurantes;
+  tb.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--cinza);padding:20px">Carregando...</td></tr>';
+
+  let todos = [];
+  for (const r of lista) {
+    try {
+      const res = await fetch(`/api/cozinha/clientes/${r.adminId}?token=${TOKEN}`);
+      const d = await res.json();
+      (d.clientes || []).forEach(c => todos.push({ ...c, restNome: r.nome }));
+    } catch(e) {}
+  }
+  tot.textContent = `${todos.length} cliente${todos.length !== 1 ? 's' : ''}`;
+  if (!todos.length) { tb.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--cinza);padding:32px">Nenhum cliente cadastrado.</td></tr>'; return; }
+  tb.innerHTML = todos.map(c => `
+    <tr>
+      <td>${c.nome || '<span style="color:var(--cinza)">—</span>'}</td>
+      <td><code style="font-size:.82rem">${formatTel(c.telefone)}</code></td>
+      <td><span style="color:var(--cinza);font-size:.82rem">${c.restNome}</span></td>
+      <td><span style="color:var(--cinza);font-size:.78rem">${new Date(c.criadoEm).toLocaleDateString('pt-BR')}</span></td>
+      <td><button class="btn btn-danger btn-sm" onclick="deletarCliente('${c.adminId}','${c._id}')">✕</button></td>
+    </tr>`).join('');
+}
+
+function abrirModalCliente() {
+  popularSelectModal('cRestaurante');
+  document.getElementById('cTelefone').value = '';
+  document.getElementById('cNome').value = '';
+  document.getElementById('modalClienteErro').style.display = 'none';
+  document.getElementById('modalClienteOk').style.display = 'none';
+  abrirModal('modalCliente');
+}
+async function salvarCliente() {
+  const adminId = document.getElementById('cRestaurante').value;
+  const tel = document.getElementById('cTelefone').value.trim().replace(/\D/g,'');
+  const nome = document.getElementById('cNome').value.trim();
+  const erroEl = document.getElementById('modalClienteErro');
+  const okEl = document.getElementById('modalClienteOk');
+  const btn = document.getElementById('btnSalvarCliente');
+  erroEl.style.display = 'none'; okEl.style.display = 'none';
+  if (!adminId) { erroEl.textContent = 'Selecione o restaurante.'; erroEl.style.display = 'block'; return; }
+  if (!tel || tel.length < 10) { erroEl.textContent = 'WhatsApp inválido.'; erroEl.style.display = 'block'; return; }
+  btn.disabled = true; btn.textContent = 'Cadastrando...';
+  try {
+    const r = await fetch(`/api/cozinha/clientes/${adminId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-cozinha-token': TOKEN },
+      body: JSON.stringify({ telefone: tel, nome })
+    });
+    const d = await r.json();
+    if (!d.sucesso) throw new Error(d.erro || 'Erro ao cadastrar');
+    okEl.textContent = '✓ Cliente cadastrado! Mensagem de boas-vindas enviada via WhatsApp.';
+    okEl.style.display = 'block';
+    document.getElementById('cTelefone').value = '';
+    document.getElementById('cNome').value = '';
+    carregarClientes();
+  } catch(e) { erroEl.textContent = e.message; erroEl.style.display = 'block'; }
+  btn.disabled = false; btn.textContent = 'Cadastrar';
+}
+async function deletarCliente(adminId, id) {
+  if (!confirm('Remover este cliente?')) return;
+  await fetch(`/api/cozinha/clientes/${adminId}/${id}`, { method: 'DELETE', headers: { 'x-cozinha-token': TOKEN } });
+  carregarClientes();
+}
+
+// ── IMPRESSORAS ──
+async function carregarTabelaImpressoras() {
+  const tb = document.getElementById('tbImpressoras');
+  if (!_restaurantes.length) { tb.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--cinza);padding:32px">Cadastre um restaurante primeiro.</td></tr>'; return; }
+  tb.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--cinza);padding:20px">Carregando...</td></tr>';
+  const rows = await Promise.all(_restaurantes.map(async r => {
+    try {
+      const res = await fetch(`/api/cozinha/impressora/${r.adminId}?token=${TOKEN}`);
+      const d = await res.json();
+      return { r, imp: d.impressora };
+    } catch(e) { return { r, imp: null }; }
+  }));
+  tb.innerHTML = rows.map(({ r, imp }) => imp ? `
+    <tr>
+      <td><strong style="color:var(--branco)">${r.nome}</strong></td>
+      <td>${imp.modoLocal ? '<span class="badge badge-warn">🖥️ Servidor local</span>' : '<span class="badge badge-ok">📶 WiFi</span>'}</td>
+      <td><code style="font-size:.78rem">${imp.ip}:${imp.porta}</code></td>
+      <td>${imp.nomeImpressora || imp.nome || '—'}</td>
+      <td><span class="dot dot-ok"></span></td>
+      <td style="display:flex;gap:6px">
+        <button class="btn btn-outline btn-sm" onclick="abrirModalImpressora('${r.adminId}')">✏️</button>
+        <button class="btn btn-outline btn-sm" onclick="testarImpressoraId('${r.adminId}')">🖨 Testar</button>
+      </td>
+    </tr>` : `
+    <tr>
+      <td><strong style="color:var(--branco)">${r.nome}</strong></td>
+      <td colspan="3"><span style="color:var(--cinza);font-size:.83rem">Não configurada</span></td>
+      <td><span class="dot dot-off"></span></td>
+      <td><button class="btn btn-laranja btn-sm" onclick="abrirModalImpressora('${r.adminId}')">Configurar</button></td>
+    </tr>`).join('');
+}
+
+function abrirModalImpressora(adminId = null) {
+  popularSelectModal('iRestaurante');
+  if (adminId) document.getElementById('iRestaurante').value = adminId;
+  document.getElementById('iNome').value = '';
+  document.getElementById('iIp').value = '';
+  document.getElementById('iPorta').value = '9100';
+  document.getElementById('iIpPc').value = '';
+  document.getElementById('iPortaPc').value = '3333';
+  document.getElementById('iIpImp').value = '';
+  document.getElementById('iPortaImp').value = '9100';
+  document.getElementById('modalImpErro').style.display = 'none';
+  document.getElementById('modalImpOk').style.display = 'none';
+  setTipoImp('wifi');
+  if (adminId) carregarImpressoraNoModal();
+  abrirModal('modalImpressora');
+}
+async function carregarImpressoraNoModal() {
+  const adminId = document.getElementById('iRestaurante').value;
+  if (!adminId) return;
+  try {
+    const r = await fetch(`/api/cozinha/impressora/${adminId}?token=${TOKEN}`);
+    const d = await r.json();
+    const imp = d.impressora;
+    if (!imp) return;
+    document.getElementById('iNome').value = imp.nomeImpressora || imp.nome || '';
+    if (imp.modoLocal) {
+      setTipoImp('local');
+      document.getElementById('iIpPc').value = imp.ip || '';
+      document.getElementById('iPortaPc').value = imp.porta || 3333;
+      document.getElementById('iIpImp').value = imp.ipImpressora || '';
+      document.getElementById('iPortaImp').value = imp.portaImpressora || 9100;
+    } else {
+      setTipoImp('wifi');
+      document.getElementById('iIp').value = imp.ip || '';
+      document.getElementById('iPorta').value = imp.porta || 9100;
+    }
+  } catch(e) {}
+}
+function setTipoImp(tipo) {
+  document.getElementById('tipoWifi').classList.toggle('sel', tipo === 'wifi');
+  document.getElementById('tipoLocal').classList.toggle('sel', tipo === 'local');
+  document.getElementById('camposWifi').style.display = tipo === 'wifi' ? 'block' : 'none';
+  document.getElementById('camposLocal').style.display = tipo === 'local' ? 'flex' : 'none';
+  document.getElementById('camposWifi')._tipo = tipo;
+}
+async function salvarImpressora() {
+  const adminId = document.getElementById('iRestaurante').value;
+  const erroEl = document.getElementById('modalImpErro');
+  const okEl = document.getElementById('modalImpOk');
+  const modoLocal = document.getElementById('tipoLocal').classList.contains('sel');
+  erroEl.style.display = 'none'; okEl.style.display = 'none';
+  if (!adminId) { erroEl.textContent = 'Selecione o restaurante.'; erroEl.style.display = 'block'; return; }
+  const body = modoLocal ? {
+    ip: document.getElementById('iIpPc').value.trim(),
+    porta: parseInt(document.getElementById('iPortaPc').value) || 3333,
+    ipImpressora: document.getElementById('iIpImp').value.trim(),
+    portaImpressora: parseInt(document.getElementById('iPortaImp').value) || 9100,
+    modoLocal: true,
+    nome: document.getElementById('iNome').value.trim() || 'Cozinha'
+  } : {
+    ip: document.getElementById('iIp').value.trim(),
+    porta: parseInt(document.getElementById('iPorta').value) || 9100,
+    modoLocal: false,
+    nome: document.getElementById('iNome').value.trim() || 'Cozinha'
+  };
+  if (!body.ip) { erroEl.textContent = 'Informe o IP.'; erroEl.style.display = 'block'; return; }
+  try {
+    const r = await fetch(`/api/cozinha/impressora/${adminId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-cozinha-token': TOKEN },
+      body: JSON.stringify(body)
+    });
+    const d = await r.json();
+    if (!d.sucesso) throw new Error(d.erro);
+    okEl.textContent = '✓ Impressora salva com sucesso!';
+    okEl.style.display = 'block';
+    carregarTabelaImpressoras();
+  } catch(e) { erroEl.textContent = e.message; erroEl.style.display = 'block'; }
+}
+async function testarImpressora() {
+  const adminId = document.getElementById('iRestaurante').value;
+  if (!adminId) return;
+  await testarImpressoraId(adminId, document.getElementById('modalImpOk'), document.getElementById('modalImpErro'));
+}
+async function testarImpressoraId(adminId, okEl = null, erroEl = null) {
+  try {
+    const r = await fetch(`/api/cozinha/impressora/${adminId}/testar`, { method: 'POST', headers: { 'x-cozinha-token': TOKEN } });
+    const d = await r.json();
+    const msg = d.mensagem || (d.sucesso ? 'Job de teste criado! Verifique a impressora.' : d.erro);
+    if (okEl) { okEl.textContent = msg; okEl.style.display = 'block'; }
+    else alert(msg);
+  } catch(e) { if (erroEl) { erroEl.textContent = e.message; erroEl.style.display = 'block'; } }
+}
+
+// ── JOBS ──
+async function carregarJobs() {
+  const tb = document.getElementById('tbJobs');
+  const adminIdFiltro = document.getElementById('filtroRestJob').value;
+  const lista = adminIdFiltro
+    ? [_restaurantes.find(r => r.adminId === adminIdFiltro)].filter(Boolean)
+    : _restaurantes;
+  if (!lista.length) { tb.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--cinza);padding:32px">Nenhum restaurante cadastrado.</td></tr>'; return; }
+  tb.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--cinza);padding:20px">Carregando...</td></tr>';
+  // Jobs: busca os pendentes de cada restaurante (proxy via endpoint existente)
+  let todos = [];
+  for (const r of lista) {
+    try {
+      const res = await fetch(`/api/cozinha/jobs-historico/${r.adminId}?token=${TOKEN}&limite=20`);
+      const d = await res.json();
+      (d.jobs || []).forEach(j => todos.push({ ...j, restNome: r.nome }));
+    } catch(e) {}
+  }
+  document.getElementById('s-jobs').textContent = todos.length;
+  if (!todos.length) { tb.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--cinza);padding:32px">Nenhum job pendente.</td></tr>'; return; }
+  tb.innerHTML = todos.map(j => `
+    <tr>
+      <td><strong style="color:var(--laranja)">#${j.mesa || '-'}</strong></td>
+      <td><span style="font-size:.82rem;color:var(--cinza)">${j.restNome}</span></td>
+      <td style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.83rem">${j.texto}</td>
+      <td><span class="badge ${j.status === 'pendente' ? 'badge-warn' : j.status === 'impresso' ? 'badge-ok' : 'badge-off'}">${j.status}</span></td>
+      <td><span style="font-size:.78rem;color:var(--cinza)">${new Date(j.criadoEm).toLocaleTimeString('pt-BR')}</span></td>
+    </tr>`).join('');
+}
+
+// ── MODAIS ──
+function abrirModal(id) { document.getElementById(id).classList.add('open'); }
+function fecharModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-bg').forEach(m => m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); }));
+
+// ── UTILS ──
+function formatTel(t) {
+  if (!t) return '';
+  t = String(t);
+  if (t.startsWith('55') && t.length >= 12) return '+' + t.slice(0,2) + ' (' + t.slice(2,4) + ') ' + t.slice(4,9) + '-' + t.slice(9);
+  return t;
+}
+</script>
+</body>
+</html>

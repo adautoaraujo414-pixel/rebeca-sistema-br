@@ -209,9 +209,6 @@ router.post('/webhook', async (req, res) => {
         // ─────────────────────────────────────────────────────────────────
 
 
-        // Marcar como lido
-        try { await MetaWA.marcarLido(msg.id, inst); } catch(e) {}
-
         // Buscar instância do admin pelo phoneNumberId (roteamento multi-admin)
         const phoneNumberId = value?.metadata?.phone_number_id;
         const displayPhone  = value?.metadata?.display_phone_number || '';
@@ -234,6 +231,9 @@ router.post('/webhook', async (req, res) => {
             console.log('[MetaWebhook] Instância Meta não encontrada para phoneId:', phoneNumberId);
             return;
         }
+
+        // Marcar como lido (inst já validado aqui)
+        try { await MetaWA.marcarLido(msg.id, inst); } catch(e) {}
 
         // Montar payload no formato que o rebeca.service.js já entende
         const payloadRebeca = {
