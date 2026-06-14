@@ -384,9 +384,15 @@ footer ul a:hover{color:var(--roxo)}
       </div>
       <p style="color:var(--cinza);font-size:.83rem">A central aparece automaticamente na lista ao ser criada.</p>
       <div><label style="display:block;font-size:.83rem;color:var(--cinza);margin-bottom:5px">Nome da central</label><input type="text" id="adNomeMarca" class="input-base" placeholder="Ex: BecaMob Frutal"></div>
-      <div style="display:grid;grid-template-columns:2fr 1fr;gap:12px">
-        <div><label style="display:block;font-size:.83rem;color:var(--cinza);margin-bottom:5px">Cidade</label><input type="text" id="adCidade" class="input-base" placeholder="Ex: Frutal"></div>
-        <div><label style="display:block;font-size:.83rem;color:var(--cinza);margin-bottom:5px">Estado (UF)</label><input type="text" id="adEstado" class="input-base" placeholder="MG" maxlength="2" style="text-transform:uppercase"></div>
+      <div>
+        <label style="display:block;font-size:.83rem;color:var(--cinza);margin-bottom:5px">Cidade</label>
+        <div style="position:relative">
+          <input type="text" id="adCidade" class="input-base" placeholder="Digite o nome da cidade..." autocomplete="off" oninput="buscarCidades(this.value)">
+          <div id="cidadeSugestoes" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--dark2);border:1px solid rgba(124,58,237,.3);border-radius:var(--radius-sm);z-index:99;max-height:200px;overflow-y:auto;margin-top:4px"></div>
+        </div>
+        <input type="hidden" id="adEstado">
+        <input type="hidden" id="adCidadeCompleta">
+        <small id="cidadeSelecionada" style="color:var(--roxo);font-size:.78rem;display:none;margin-top:4px;display:block"></small>
       </div>
       <div><label style="display:block;font-size:.83rem;color:var(--cinza);margin-bottom:5px">WhatsApp da central (com DDD)</label><input type="text" id="adWhatsapp" class="input-base" placeholder="(34) 99999-0000"><small style="color:var(--cinza2);font-size:.75rem">Este numero aparece no card da cidade para os clientes chamarem.</small></div>
       <div><label style="display:block;font-size:.83rem;color:var(--cinza);margin-bottom:5px">E-mail do painel</label><input type="email" id="adEmail" class="input-base" placeholder="central@becamob.com"></div>
@@ -577,5 +583,51 @@ async function criarAdmin(){
   }
 }
 </script>
+
+<script>
+var _cidadeTimer = null;
+async function buscarCidades(q) {
+  const box = document.getElementById('cidadeSugestoes');
+  if (!q || q.length < 2) { box.style.display='none'; return; }
+  clearTimeout(_cidadeTimer);
+  _cidadeTimer = setTimeout(async () => {
+    try {
+      const r = await fetch('/api/landing/places/autocomplete?input='+encodeURIComponent(q));
+      const data = await r.json();
+      const preds = data.predictions || [];
+      if (!preds.length) { box.style.display='none'; return; }
+      box.innerHTML = preds.map(p => `
+        <div onclick="selecionarCidade('${p.place_id}','${p.structured_formatting.main_text.replace(/'/g,"\'")}','${(p.structured_formatting.secondary_text||'').replace(/'/g,"\'")}','${p.description.replace(/'/g,"\'")}')}"
+          style="padding:11px 14px;cursor:pointer;font-size:.88rem;border-bottom:1px solid var(--borda);transition:background .15s"
+          onmouseover="this.style.background='var(--roxo-soft)'" onmouseout="this.style.background=''">
+          <span style="color:var(--branco);font-weight:600">${p.structured_formatting.main_text}</span>
+          <span style="color:var(--cinza);font-size:.8rem"> — ${p.structured_formatting.secondary_text||''}</span>
+        </div>`).join('');
+      box.style.display = 'block';
+    } catch(e) { box.style.display='none'; }
+  }, 300);
+}
+async function selecionarCidade(placeId, nome, secondary, descricao) {
+  document.getElementById('adCidade').value = nome;
+  document.getElementById('cidadeSugestoes').style.display = 'none';
+  document.getElementById('adCidadeCompleta').value = descricao;
+  // Buscar estado via place details
+  try {
+    const r = await fetch('/api/landing/places/details?place_id='+placeId);
+    const data = await r.json();
+    const comps = (data.result && data.result.address_components) || [];
+    const uf = comps.find(c => c.types.includes('administrative_area_level_1'));
+    const estado = uf ? uf.short_name : '';
+    document.getElementById('adEstado').value = estado;
+    const label = document.getElementById('cidadeSelecionada');
+    if (label) { label.textContent = nome + (estado ? ' — ' + estado : ''); label.style.display='block'; }
+  } catch(e) {}
+}
+document.addEventListener('click', e => {
+  const box = document.getElementById('cidadeSugestoes');
+  if (box && !box.contains(e.target) && e.target.id !== 'adCidade') box.style.display='none';
+});
+</script>
+
 </body>
 </html>

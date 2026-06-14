@@ -321,4 +321,35 @@ router.post('/admin/criar', async (req, res) => {
     }
 });
 
+
+// ── GET /api/landing/places/autocomplete ─────────────────────────────
+// Autocomplete de cidades via Google Places
+router.get('/places/autocomplete', async (req, res) => {
+    try {
+        const input = req.query.input || '';
+        const key = process.env.GOOGLE_PLACES_KEY;
+        if (!key) return res.json({ predictions: [] });
+        const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(input)}&types=(cities)&language=pt-BR&components=country:br&key=${key}`;
+        const r = await axios.get(url);
+        res.json({ predictions: r.data.predictions || [] });
+    } catch(e) {
+        res.json({ predictions: [] });
+    }
+});
+
+// ── GET /api/landing/places/details ──────────────────────────────────
+// Detalhes do lugar (para pegar UF do estado)
+router.get('/places/details', async (req, res) => {
+    try {
+        const place_id = req.query.place_id || '';
+        const key = process.env.GOOGLE_PLACES_KEY;
+        if (!key) return res.json({ result: {} });
+        const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${place_id}&fields=address_components&language=pt-BR&key=${key}`;
+        const r = await axios.get(url);
+        res.json({ result: r.data.result || {} });
+    } catch(e) {
+        res.json({ result: {} });
+    }
+});
+
 module.exports = router;
