@@ -1018,24 +1018,53 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 <div class="panel-grid">
                     <div class="panel" style="text-align:center;">
-                        <h2>📱 Conectar WhatsApp</h2>
-                        <p style="color:#666;margin-bottom:20px;">Escaneie o QR Code com seu WhatsApp Business</p>
-                        
-                        <div id="qrCodeBox" style="background:#fff;padding:20px;border-radius:15px;min-height:280px;display:flex;justify-content:center;align-items:center;flex-direction:column;margin-bottom:20px;">
-                            <p style="color:#333;">Clique no botao abaixo para gerar o QR Code</p>
-                        </div>
-                        
-                        <div id="whatsappStatus" style="display:none;"></div>
+                        <h2>📱 Conectar WhatsApp Business</h2>
+                        <p style="color:#666;margin-bottom:20px;">Meta API Oficial — insira o número e as credenciais do Meta Business</p>
+
+                        <!-- STATUS BADGE -->
                         <div id="wppStatusBadge" style="padding:12px;border-radius:8px;margin-bottom:20px;background:#f8d7da;color:#721c24;font-weight:bold;">
                             🔴 Desconectado
                         </div>
-                        
-                        <button class="btn btn-success" onclick="gerarQRCodeAdmin()" id="btnGerarQR" style="font-size:1.1em;padding:15px 30px;">
-                            📷 Gerar QR Code
-                        </button>
-                        <button class="btn btn-danger" onclick="desconectarWhatsApp()" id="btnDesconectar" style="display:none;font-size:1.1em;padding:15px 30px;">
-                            🔌 Desconectar
-                        </button>
+
+                        <!-- FORMULÁRIO META -->
+                        <div id="metaConfigForm" style="text-align:left;">
+                            <div style="margin-bottom:14px;">
+                                <label style="display:block;font-weight:600;margin-bottom:5px;color:#333;">📞 Número WhatsApp Business</label>
+                                <input type="text" id="metaNumeroWpp" placeholder="(14) 99999-0000 ou 5514999990000"
+                                    style="width:100%;padding:12px;border:2px solid #ddd;border-radius:10px;font-size:1em;">
+                                <small style="color:#888;">Número verificado no Meta Business Manager</small>
+                            </div>
+                            <div style="margin-bottom:14px;">
+                                <label style="display:block;font-weight:600;margin-bottom:5px;color:#333;">🔑 Token Permanente Meta</label>
+                                <input type="password" id="metaToken" placeholder="EAAxxxxxxxxxxxxxxx"
+                                    style="width:100%;padding:12px;border:2px solid #ddd;border-radius:10px;font-size:1em;">
+                                <small style="color:#888;">Token de acesso do seu App no Meta Developers</small>
+                            </div>
+                            <div style="margin-bottom:14px;">
+                                <label style="display:block;font-weight:600;margin-bottom:5px;color:#333;">📟 Phone Number ID</label>
+                                <input type="text" id="metaPhoneId" placeholder="1234567890123456"
+                                    style="width:100%;padding:12px;border:2px solid #ddd;border-radius:10px;font-size:1em;">
+                                <small style="color:#888;">ID do número no painel Meta → WhatsApp → Números de telefone</small>
+                            </div>
+                            <button onclick="conectarMetaWhatsApp()" id="btnConectarMeta"
+                                style="width:100%;padding:14px;background:#25D366;color:#fff;border:none;border-radius:10px;font-size:1.05em;font-weight:700;cursor:pointer;margin-bottom:10px;">
+                                ✅ Conectar WhatsApp
+                            </button>
+                            <button onclick="testarConexaoMeta()" id="btnTestarMeta"
+                                style="width:100%;padding:12px;background:#f0f0f0;color:#333;border:1px solid #ddd;border-radius:10px;font-size:0.95em;font-weight:600;cursor:pointer;">
+                                🔔 Enviar Mensagem de Teste
+                            </button>
+                        </div>
+
+                        <!-- RESULTADO -->
+                        <div id="metaResultado" style="display:none;margin-top:15px;padding:14px;border-radius:10px;font-weight:600;"></div>
+
+                        <!-- WEBHOOK INFO -->
+                        <div id="metaWebhookInfo" style="display:none;margin-top:16px;background:#e8f5e9;border:1px solid #a5d6a7;border-radius:10px;padding:14px;text-align:left;">
+                            <p style="font-weight:700;color:#2e7d32;margin-bottom:8px;">⚙️ Configure o Webhook no Meta Business:</p>
+                            <p style="font-size:0.85em;color:#333;word-break:break-all;" id="metaWebhookUrl"></p>
+                            <p style="font-size:0.85em;color:#666;margin-top:6px;">Token de verificação: <strong>becamob-webhook-2026</strong></p>
+                        </div>
                     </div>
                     
                     <div class="panel">
@@ -2137,6 +2166,8 @@ async function testarAnaliseIA() {
     let verificarWppInterval = null;
     
     async function carregarWhatsAppAdmin() {
+        // Carregar status Meta API (novo provider)
+        carregarStatusMetaWhatsApp();
         try {
             // Buscar instancia do admin atual
             const usuario = JSON.parse(localStorage.getItem('usuario') || '{}'); const adminId = usuario._id || usuario.id; if (!adminId) { alert('Sessão expirada!'); window.location.href = '/admin/login.html'; return; } if (!adminId) { alert('Sessão expirada!'); window.location.href = '/admin/login.html'; return; }
@@ -2190,7 +2221,132 @@ async function testarAnaliseIA() {
         }
     }
     
-    async function gerarQRCodeAdmin() {
+    // ── META WHATSAPP — funções do painel ────────────────────────────────
+async function conectarMetaWhatsApp() {
+    const numero  = document.getElementById('metaNumeroWpp')?.value?.trim();
+    const token   = document.getElementById('metaToken')?.value?.trim();
+    const phoneId = document.getElementById('metaPhoneId')?.value?.trim();
+    const resultado = document.getElementById('metaResultado');
+    const webhookInfo = document.getElementById('metaWebhookInfo');
+    const badge = document.getElementById('wppStatusBadge');
+
+    if (!numero) { alert('Informe o número do WhatsApp Business'); return; }
+
+    const btn = document.getElementById('btnConectarMeta');
+    btn.disabled = true;
+    btn.textContent = '⏳ Conectando...';
+    resultado.style.display = 'none';
+
+    try {
+        const body = { numeroWhatsapp: numero };
+        if (token)   body.metaToken   = token;
+        if (phoneId) body.metaPhoneId = phoneId;
+
+        const token_auth = localStorage.getItem('token') || '';
+        const res = await fetch('/api/meta-whatsapp/configurar', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token_auth },
+            body: JSON.stringify(body)
+        });
+        const data = await res.json();
+
+        resultado.style.display = 'block';
+        if (data.sucesso) {
+            resultado.style.background = '#d4edda';
+            resultado.style.color = '#155724';
+            resultado.style.border = '1px solid #c3e6cb';
+            resultado.innerHTML = '✅ ' + (data.mensagem || 'WhatsApp conectado com sucesso!');
+            badge.style.background = '#d4edda';
+            badge.style.color = '#155724';
+            badge.innerHTML = '🟢 Conectado via Meta API';
+            if (document.getElementById('wppStatusText'))
+                document.getElementById('wppStatusText').textContent = 'Conectado';
+            // Mostrar info do webhook
+            if (webhookInfo) {
+                webhookInfo.style.display = 'block';
+                const url = window.location.origin + '/api/meta-whatsapp/webhook';
+                document.getElementById('metaWebhookUrl').textContent = '🔗 URL: ' + url;
+            }
+        } else {
+            resultado.style.background = '#f8d7da';
+            resultado.style.color = '#721c24';
+            resultado.style.border = '1px solid #f5c6cb';
+            resultado.innerHTML = '❌ Erro: ' + (data.erro || 'Falha ao conectar');
+        }
+    } catch(e) {
+        resultado.style.display = 'block';
+        resultado.style.background = '#f8d7da';
+        resultado.style.color = '#721c24';
+        resultado.innerHTML = '❌ Erro de conexão: ' + e.message;
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '✅ Conectar WhatsApp';
+    }
+}
+
+async function testarConexaoMeta() {
+    const token_auth = localStorage.getItem('token') || '';
+    const btn = document.getElementById('btnTestarMeta');
+    btn.disabled = true;
+    btn.textContent = '⏳ Enviando...';
+    try {
+        const res = await fetch('/api/meta-whatsapp/testar', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token_auth }
+        });
+        const data = await res.json();
+        if (data.sucesso) {
+            alert('✅ Mensagem de teste enviada com sucesso!\nID: ' + (data.messageId || 'ok'));
+        } else {
+            alert('❌ Falha no teste: ' + (data.erro || JSON.stringify(data)));
+        }
+    } catch(e) {
+        alert('❌ Erro: ' + e.message);
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '🔔 Enviar Mensagem de Teste';
+    }
+}
+
+async function carregarStatusMetaWhatsApp() {
+    try {
+        const token_auth = localStorage.getItem('token') || '';
+        const res = await fetch('/api/meta-whatsapp/status', {
+            headers: { 'Authorization': 'Bearer ' + token_auth }
+        });
+        const data = await res.json();
+        if (!data.sucesso) return;
+
+        const badge = document.getElementById('wppStatusBadge');
+        if (data.configurado) {
+            // Preencher campos com dados salvos
+            if (data.numero && document.getElementById('metaNumeroWpp'))
+                document.getElementById('metaNumeroWpp').value = data.numero;
+            if (badge) {
+                if (data.status === 'conectado') {
+                    badge.style.background = '#d4edda';
+                    badge.style.color = '#155724';
+                    badge.innerHTML = '🟢 Conectado via Meta API';
+                    if (document.getElementById('wppStatusText'))
+                        document.getElementById('wppStatusText').textContent = 'Conectado';
+                    // Mostrar webhook info
+                    const wi = document.getElementById('metaWebhookInfo');
+                    if (wi) {
+                        wi.style.display = 'block';
+                        const url = window.location.origin + '/api/meta-whatsapp/webhook';
+                        document.getElementById('metaWebhookUrl').textContent = '🔗 URL: ' + url;
+                    }
+                } else {
+                    badge.style.background = '#fff3cd';
+                    badge.style.color = '#856404';
+                    badge.innerHTML = '⚠️ Configurado — verifique o token';
+                }
+            }
+        }
+    } catch(e) { console.log('[Meta] Status check:', e.message); }
+}
+
+async function gerarQRCodeAdmin() {
         const qrBox = document.getElementById('qrCodeBox');
         qrBox.innerHTML = '<div style="border:4px solid #ddd;border-top:4px solid #27ae60;border-radius:50%;width:50px;height:50px;animation:spin 1s linear infinite;"></div><p style="color:#333;margin-top:15px;">Gerando QR Code...</p>';
         document.getElementById('btnGerarQR').disabled = true;

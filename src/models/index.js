@@ -408,6 +408,10 @@ const InstanciaWhatsappSchema = new mongoose.Schema({
     qrCodeExpira: Date,
     ultimaConexao: Date,
     webhookUrl: String,
+    provider: { type: String, enum: ['evolution', 'meta'], default: 'evolution' },
+    metaPhoneId: String,
+    numeroWhatsapp: String,
+    verifyToken: String,
     configuracoes: {
         receberMensagens: { type: Boolean, default: true },
         enviarNotificacoes: { type: Boolean, default: true },
