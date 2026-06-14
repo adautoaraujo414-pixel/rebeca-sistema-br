@@ -318,7 +318,7 @@ async function carregarMotoristas() {
             <td><strong>${x.nomeCompleto||x.nome}</strong></td>
             <td>📱 ${x.whatsapp}</td>
             <td>${x.veiculo?.modelo||''} ${x.veiculo?.cor||''}</td>
-            <td><strong>${x.veiculo?.placa||'-'}</strong></td>
+            <td><strong>${x.veiculo?.placa||'-'}</strong>${(!x.cnh||!x.veiculo?.placa)?'<br><span style="background:#e67e22;color:#fff;font-size:10px;padding:2px 6px;border-radius:8px;margin-top:2px;display:inline-block">📋 Docs pendentes</span>':''}</td>
             <td><span class="badge ${getStatusColor(x.status)}">${formatStatus(x.status)}</span></td>
             <td style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
                 <a href="${link}" target="_blank" class="btn btn-primary btn-sm" title="Abrir app motorista">📱 App</a>

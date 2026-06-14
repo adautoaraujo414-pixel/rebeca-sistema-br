@@ -831,18 +831,7 @@ _Cadastro enviado pela landing page BecaMob_`;
           <input type="text" id="motWhats" required placeholder="(34) 99999-0000"
             style="width:100%;padding:13px;border:1px solid var(--borda);border-radius:var(--radius-sm);font-size:1em;background:var(--dark3);color:var(--branco)">
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-          <div>
-            <label style="display:block;font-weight:600;margin-bottom:6px;color:var(--branco);font-size:.92rem">🪪 Número da CNH</label>
-            <input type="text" id="motCnh" required placeholder="00000000000"
-              style="width:100%;padding:13px;border:1px solid var(--borda);border-radius:var(--radius-sm);font-size:1em;background:var(--dark3);color:var(--branco)">
-          </div>
-          <div>
-            <label style="display:block;font-weight:600;margin-bottom:6px;color:var(--branco);font-size:.92rem">📅 Validade da CNH</label>
-            <input type="date" id="motCnhValidade" required
-              style="width:100%;padding:13px;border:1px solid var(--borda);border-radius:var(--radius-sm);font-size:1em;background:var(--dark3);color:var(--branco)">
-          </div>
-        </div>
+
         <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:16px">
           <div>
             <label style="display:block;font-weight:600;margin-bottom:6px;color:var(--branco);font-size:.92rem">🚗 Modelo do carro</label>
@@ -860,11 +849,7 @@ _Cadastro enviado pela landing page BecaMob_`;
               style="width:100%;padding:13px;border:1px solid var(--borda);border-radius:var(--radius-sm);font-size:1em;background:var(--dark3);color:var(--branco)">
           </div>
         </div>
-        <div>
-          <label style="display:block;font-weight:600;margin-bottom:6px;color:var(--branco);font-size:.92rem">🔢 Placa</label>
-          <input type="text" id="motPlaca" required placeholder="ABC1D23"
-            style="width:100%;padding:13px;border:1px solid var(--borda);border-radius:var(--radius-sm);font-size:1em;background:var(--dark3);color:var(--branco);text-transform:uppercase">
-        </div>
+
         <div>
           <label style="display:block;font-weight:600;margin-bottom:6px;color:var(--branco);font-size:.92rem">💳 Plano de adesão</label>
           <select id="motPlano" style="width:100%;padding:13px;border:1px solid var(--borda);border-radius:var(--radius-sm);font-size:1em;background:var(--dark3);color:var(--branco)">
@@ -1158,12 +1143,11 @@ window.addEventListener('scroll', () => {
         adminId:     document.getElementById('motCidade').value,
         nomeCompleto:document.getElementById('motNome').value.trim(),
         whatsapp:    document.getElementById('motWhats').value.trim(),
-        cnh:         document.getElementById('motCnh').value.trim(),
-        cnhValidade: document.getElementById('motCnhValidade').value,
+
         modeloCarro: document.getElementById('motModelo').value.trim(),
         corCarro:    document.getElementById('motCor').value.trim(),
         anoCarro:    document.getElementById('motAno').value,
-        placa:       document.getElementById('motPlaca').value.trim().toUpperCase(),
+
         plano:       document.getElementById('motPlano').value,
       };
 

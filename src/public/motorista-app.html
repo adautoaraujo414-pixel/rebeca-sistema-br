@@ -1126,6 +1126,8 @@ document.addEventListener('DOMContentLoaded', function() {
             carregarDashboard();
             carregarChat();
             verificarCorridaAtiva();
+            // Verificar documentos pendentes
+            setTimeout(verificarDocsPendentes, 1500);
         }
 
         function fazerLogout() {
@@ -2902,6 +2904,92 @@ function fecharPWABanner(){document.getElementById('pwa-banner').style.display='
     </div>
 </div>
 
+
+<!-- ===== MODAL DOCUMENTOS PENDENTES ===== -->
+<div id="modalDocsPendentes" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:9997;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:#1a1a2e;border:2px solid #f39c12;border-radius:20px;padding:30px;max-width:380px;width:100%;text-align:center;">
+    <div style="font-size:50px;margin-bottom:12px;">📋</div>
+    <h3 style="color:#f39c12;margin-bottom:8px;">Complete seu cadastro</h3>
+    <p style="color:#ccc;font-size:14px;line-height:1.6;margin-bottom:20px;">
+      Para receber corridas, precisamos dos seus documentos. Preencha abaixo:
+    </p>
+    <div style="text-align:left;display:flex;flex-direction:column;gap:12px">
+      <div>
+        <label style="color:#aaa;font-size:12px;display:block;margin-bottom:4px">🪪 Número da CNH</label>
+        <input type="text" id="docCnh" placeholder="00000000000"
+          style="width:100%;background:#0d2137;border:1px solid #333;border-radius:10px;padding:12px;color:#fff;font-size:15px;">
+      </div>
+      <div>
+        <label style="color:#aaa;font-size:12px;display:block;margin-bottom:4px">📅 Validade da CNH</label>
+        <input type="date" id="docCnhValidade"
+          style="width:100%;background:#0d2137;border:1px solid #333;border-radius:10px;padding:12px;color:#fff;font-size:15px;">
+      </div>
+      <div>
+        <label style="color:#aaa;font-size:12px;display:block;margin-bottom:4px">🔢 Placa do veículo</label>
+        <input type="text" id="docPlaca" placeholder="ABC1D23" maxlength="8"
+          style="width:100%;background:#0d2137;border:1px solid #333;border-radius:10px;padding:12px;color:#fff;font-size:15px;text-transform:uppercase;">
+      </div>
+    </div>
+    <div id="docErro" style="display:none;color:#e74c3c;font-size:13px;margin-top:10px;"></div>
+    <button onclick="salvarDocsPendentes()"
+      style="width:100%;margin-top:20px;background:linear-gradient(135deg,#f39c12,#e67e22);color:#000;border:none;padding:14px;border-radius:12px;font-weight:bold;font-size:15px;cursor:pointer;">
+      ✅ Salvar e continuar
+    </button>
+  </div>
+</div>
+
+<script>
+// ===== DOCUMENTOS PENDENTES =====
+function verificarDocsPendentes() {
+  if (!motorista) return;
+  const semCnh   = !motorista.cnh || motorista.cnh.trim() === '';
+  const semPlaca = !motorista.veiculo || !motorista.veiculo.placa || motorista.veiculo.placa.trim() === '';
+  if (semCnh || semPlaca) {
+    document.getElementById('modalDocsPendentes').style.display = 'flex';
+  }
+}
+
+async function salvarDocsPendentes() {
+  const cnh        = (document.getElementById('docCnh')?.value || '').trim();
+  const cnhVal     = (document.getElementById('docCnhValidade')?.value || '').trim();
+  const placa      = (document.getElementById('docPlaca')?.value || '').trim().toUpperCase();
+  const erroEl     = document.getElementById('docErro');
+
+  if (!cnh || !placa) {
+    erroEl.textContent = 'CNH e placa são obrigatórios.';
+    erroEl.style.display = 'block';
+    return;
+  }
+
+  try {
+    const r = await fetch('/api/motorista-app/docs-pendentes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, cnh, cnhValidade: cnhVal, placa })
+    });
+    const data = await r.json();
+
+    if (!data.sucesso) {
+      erroEl.textContent = data.erro || 'Erro ao salvar.';
+      erroEl.style.display = 'block';
+      return;
+    }
+
+    // Atualizar objeto local
+    if (motorista) {
+      motorista.cnh = cnh;
+      if (!motorista.veiculo) motorista.veiculo = {};
+      motorista.veiculo.placa = placa;
+      if (cnhVal) motorista.cnhValidade = cnhVal;
+    }
+
+    document.getElementById('modalDocsPendentes').style.display = 'none';
+  } catch(e) {
+    erroEl.textContent = 'Erro de conexão. Tente novamente.';
+    erroEl.style.display = 'block';
+  }
+}
+</script>
 </body>
 </html>
 

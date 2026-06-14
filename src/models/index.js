@@ -8,7 +8,7 @@ const MotoristaSchema = new mongoose.Schema({
     prefereMotristaMulher: { type: Boolean, default: false },
     status: { type: String, default: 'disponivel' }, latitude: Number, longitude: Number,
     avaliacao: { type: Number, default: 5 }, corridasRealizadas: { type: Number, default: 0 },
-    ativo: { type: Boolean, default: true }, bloqueado: { type: Boolean, default: false }, token: String, senha: String, pushSubscription: String, cidadeAtuacao: String, cnhValidade: Date, observacao: String, plano: { type: String, enum: ['semanal', 'mensal'], default: 'mensal' }, valorMensalidade: { type: Number, default: 100 }, adminId: { type: mongoose.Schema.Types.ObjectId, required: true }, genero: { type: String, enum: ['masculino','feminino','outro'], default: null },
+    ativo: { type: Boolean, default: true }, bloqueado: { type: Boolean, default: false }, token: String, senha: String, pushSubscription: String, cidadeAtuacao: String, cnhValidade: Date, observacao: String, plano: { type: String, enum: ['semanal', 'mensal'], default: 'mensal' }, valorMensalidade: { type: Number, default: 100 }, adminId: { type: mongoose.Schema.Types.ObjectId, required: true }, genero: { type: String, enum: ['masculino','feminino','outro'], default: null }, docsPendentes: { type: Boolean, default: false },
     caixaDia: [{ tipo: String, valor: Number, descricao: String, data: Date }]
 }, { timestamps: true });
 
@@ -284,6 +284,15 @@ const AdminSchema = new mongoose.Schema({
     },
     // ========== USAR PREÇO SIMPLES OU CALCULADO ==========
     modoPreco: { type: String, enum: ['simples', 'calculado'], default: 'simples' },
+    // ========== LANDING PAGE PÚBLICA ==========
+    cidade: { type: String, default: '' },
+    estado: { type: String, default: '' },
+    chavePix: String,
+    tipoChavePix: { type: String, enum: ['cpf','cnpj','email','telefone','aleatoria'], default: 'aleatoria' },
+    valorMensalidade: { type: Number, default: 100 },
+    valorSemanal: { type: Number, default: 30 },
+    whatsappCentral: String,
+    visibleLanding: { type: Boolean, default: true },
     // ========== FAIXAS DE PREÇO PERSONALIZADAS ==========
     faixasPreco: [{
         diaSemana: String,

@@ -913,4 +913,33 @@ router.get('/caixa', auth, async (req, res) => {
     } catch(e) { res.json({ sucesso: false, saldo: 0, transacoes: [] }); }
 });
 
+
+// ── POST /api/motorista-app/docs-pendentes ───────────────────────────
+// Motorista salva CNH e placa pelo app (primeira vez)
+router.post('/docs-pendentes', async (req, res) => {
+    try {
+        const { token, cnh, cnhValidade, placa } = req.body;
+        if (!token) return res.json({ sucesso: false, erro: 'Token obrigatorio' });
+
+        const { Motorista } = require('../models');
+        const motorista = await Motorista.findOne({ token });
+        if (!motorista) return res.json({ sucesso: false, erro: 'Motorista nao encontrado' });
+
+        if (!cnh || !placa) return res.json({ sucesso: false, erro: 'CNH e placa sao obrigatorios' });
+
+        motorista.cnh = cnh.trim();
+        if (cnhValidade) motorista.cnhValidade = new Date(cnhValidade);
+        if (!motorista.veiculo) motorista.veiculo = {};
+        motorista.veiculo.placa = placa.trim().toUpperCase();
+        motorista.docsPendentes = false;
+        await motorista.save();
+
+        console.log('[DocsPendentes] Motorista', motorista.nomeCompleto, 'atualizou CNH e placa');
+        res.json({ sucesso: true });
+    } catch(e) {
+        console.error('[DocsPendentes]', e.message);
+        res.json({ sucesso: false, erro: e.message });
+    }
+});
+
 module.exports = router;
