@@ -187,7 +187,14 @@ router.post('/webhook', async (req, res) => {
                                 if (!cont) cont = await ContadorPedido.create({ adminId: _keyCoz, data: hoje, numero: 0 });
                                 cont.numero += 1;
                                 await cont.save();
-                                const txtFinal = buf.linhas.join('\n');
+                                const txtFinal = buf.linhas.join('\n')
+                            .replace(/[áàãâä]/gi, a => /[A-Z]/.test(a) ? 'A' : 'a')
+                            .replace(/[éèêë]/gi, a => /[A-Z]/.test(a) ? 'E' : 'e')
+                            .replace(/[íìîï]/gi, a => /[A-Z]/.test(a) ? 'I' : 'i')
+                            .replace(/[óòõôö]/gi, a => /[A-Z]/.test(a) ? 'O' : 'o')
+                            .replace(/[úùûü]/gi, a => /[A-Z]/.test(a) ? 'U' : 'u')
+                            .replace(/[ç]/gi, a => /[A-Z]/.test(a) ? 'C' : 'c')
+                            .replace(/[ñ]/gi, a => /[A-Z]/.test(a) ? 'N' : 'n');
                                 await JobImpressao.create({ adminId: _keyCoz, texto: txtFinal, mesa: String(cont.numero), status: 'pendente', instancia: 'cozinha', criadoEm: new Date() });
                                 console.log('[Cozinha-Meta] Job #'+cont.numero+' criado para adminId:', _keyCoz, '| texto:', txtFinal.substring(0,60));
                             } catch(eCozBuf) { console.error('[Cozinha-Meta] Erro buffer:', eCozBuf.message); }
