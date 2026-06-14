@@ -3,35 +3,57 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>BecaMob — Plataforma de Mobilidade Urbana</title>
-<meta name="description" content="Tecnologia de transporte para centrais de corridas. Painel completo, app do motorista e WhatsApp integrado.">
+<title>BecaMob — Rede de Mobilidade Urbana</title>
+<meta name="description" content="Encontre a central BecaMob na sua cidade. Peça sua corrida pelo WhatsApp ou seja um motorista parceiro.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{--preto:#08090d;--dark1:#0e1017;--dark2:#13161f;--dark3:#1a1e2a;--card:#1e2330;--borda:rgba(255,255,255,0.08);--verde:#00e87a;--verde2:#00c968;--branco:#f0f2f7;--cinza:#7a8099;--cinza2:#4a5068;--radius:14px;--radius-sm:8px;--fonte-display:'Syne',sans-serif;--fonte-corpo:'Inter',sans-serif;--max:1200px;--glow:0 0 40px rgba(0,232,122,0.15)}
+:root{
+  --preto:#08090d;
+  --dark1:#0e1017;
+  --dark2:#12111a;
+  --dark3:#1a1825;
+  --card:#1e1c2e;
+  --borda:rgba(255,255,255,0.08);
+  --roxo:#7C3AED;
+  --roxo2:#6D28D9;
+  --roxo-glow:rgba(124,58,237,0.18);
+  --roxo-soft:rgba(124,58,237,0.10);
+  --branco:#f0f2f7;
+  --cinza:#7a8099;
+  --cinza2:#4a5068;
+  --radius:14px;
+  --radius-sm:8px;
+  --fonte-display:'Syne',sans-serif;
+  --fonte-corpo:'Inter',sans-serif;
+  --max:1200px;
+}
 html{scroll-behavior:smooth}
 body{background:var(--preto);color:var(--branco);font-family:var(--fonte-corpo);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
 body::before{content:'';position:fixed;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.015'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/svg%3E");pointer-events:none;z-index:0}
 body>*{position:relative;z-index:1}
 .container{max-width:var(--max);margin:0 auto;padding:0 24px}
 .btn{display:inline-flex;align-items:center;gap:8px;padding:13px 28px;border-radius:var(--radius-sm);font-family:var(--fonte-corpo);font-size:.95rem;font-weight:600;cursor:pointer;text-decoration:none;transition:all .2s;border:none}
-.btn-verde{background:var(--verde);color:#000}.btn-verde:hover{background:var(--verde2);transform:translateY(-1px);box-shadow:var(--glow)}
-.btn-outline{background:transparent;color:var(--branco);border:1px solid var(--borda)}.btn-outline:hover{border-color:var(--verde);color:var(--verde)}
-.sec-label{font-size:.72rem;text-transform:uppercase;letter-spacing:.15em;color:var(--verde);font-weight:600;display:block;margin-bottom:12px}
+.btn-roxo{background:var(--roxo);color:#fff}
+.btn-roxo:hover{background:var(--roxo2);transform:translateY(-1px);box-shadow:0 0 32px var(--roxo-glow)}
+.btn-outline{background:transparent;color:var(--branco);border:1px solid var(--borda)}
+.btn-outline:hover{border-color:var(--roxo);color:var(--roxo)}
+.sec-label{font-size:.72rem;text-transform:uppercase;letter-spacing:.15em;color:var(--roxo);font-weight:600;display:block;margin-bottom:12px}
 .sec-titulo{font-family:var(--fonte-display);font-size:clamp(1.8rem,3.5vw,2.7rem);font-weight:900;color:var(--branco);margin-bottom:16px;line-height:1.1;letter-spacing:-1px}
 .sec-sub{color:var(--cinza);font-size:1rem;max-width:560px;line-height:1.7;margin-bottom:48px}
 .reveal{opacity:0;transform:translateY(28px);transition:opacity .6s ease,transform .6s ease}
 .reveal.visible{opacity:1;transform:none}
 .card{background:var(--card);border:1px solid var(--borda);border-radius:var(--radius);padding:32px}
 .input-base{width:100%;padding:13px 16px;background:var(--dark3);border:1px solid var(--borda);border-radius:var(--radius-sm);color:var(--branco);font-family:var(--fonte-corpo);font-size:.95rem;outline:none;transition:border-color .2s}
-.input-base:focus{border-color:var(--verde)}.input-base::placeholder{color:var(--cinza2)}
+.input-base:focus{border-color:var(--roxo)}
+.input-base::placeholder{color:var(--cinza2)}
 select.input-base option{background:var(--dark2);color:var(--branco)}
 header{position:fixed;top:0;left:0;right:0;z-index:999;padding:0 24px;transition:background .3s}
-header.scrolled{background:rgba(8,9,13,0.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--borda)}
+header.scrolled{background:rgba(8,9,13,0.94);backdrop-filter:blur(16px);border-bottom:1px solid var(--borda)}
 .hdr-inner{max-width:var(--max);margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:64px}
 .logo{font-family:var(--fonte-display);font-size:1.25rem;font-weight:900;color:var(--branco);text-decoration:none;letter-spacing:-.5px}
-.logo span{color:var(--verde)}
+.logo span{color:var(--roxo)}
 nav a{color:var(--cinza);text-decoration:none;font-size:.9rem;font-weight:500;transition:color .2s;margin-left:32px}
 nav a:hover{color:var(--branco)}
 .burger{display:none;flex-direction:column;gap:5px;background:none;border:none;cursor:pointer;padding:4px}
@@ -39,93 +61,107 @@ nav a:hover{color:var(--branco)}
 .mob-menu{display:none;position:fixed;inset:0;background:rgba(8,9,13,.98);z-index:998;flex-direction:column;align-items:center;justify-content:center;gap:32px}
 .mob-menu.open{display:flex}
 .mob-menu a{color:var(--branco);text-decoration:none;font-family:var(--fonte-display);font-size:1.8rem;font-weight:800}
-.mob-menu a:hover{color:var(--verde)}
+.mob-menu a:hover{color:var(--roxo)}
 #hero{min-height:100vh;display:flex;align-items:center;padding:100px 0 80px;position:relative;overflow:hidden}
-.hero-glow{position:absolute;top:0;left:50%;transform:translateX(-50%);width:700px;height:500px;background:radial-gradient(ellipse at center,rgba(0,232,122,.08) 0%,transparent 70%);pointer-events:none}
+.hero-glow{position:absolute;top:-100px;left:50%;transform:translateX(-50%);width:800px;height:600px;background:radial-gradient(ellipse at center,rgba(124,58,237,.1) 0%,transparent 70%);pointer-events:none}
 .hero-grid{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center}
-.hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(0,232,122,.08);border:1px solid rgba(0,232,122,.2);border-radius:20px;padding:6px 16px;font-size:.8rem;font-weight:600;color:var(--verde);margin-bottom:24px}
-.hero-badge::before{content:'';width:6px;height:6px;background:var(--verde);border-radius:50%;animation:pulse 2s infinite}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(124,58,237,.1);border:1px solid rgba(124,58,237,.25);border-radius:20px;padding:6px 16px;font-size:.8rem;font-weight:600;color:var(--roxo);margin-bottom:24px}
+.hero-badge::before{content:'';width:6px;height:6px;background:var(--roxo);border-radius:50%;animation:pulse 2s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 .hero h1{font-family:var(--fonte-display);font-size:clamp(2.4rem,5vw,3.8rem);font-weight:900;line-height:1.05;letter-spacing:-2px;color:var(--branco);margin-bottom:24px}
-.hero h1 em{font-style:normal;color:var(--verde)}
+.hero h1 em{font-style:normal;color:var(--roxo)}
 .hero-sub{color:var(--cinza);font-size:1.05rem;line-height:1.7;margin-bottom:36px;max-width:480px}
 .hero-btns{display:flex;gap:14px;flex-wrap:wrap}
-.hero-visual{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-.hv-card{background:var(--card);border:1px solid var(--borda);border-radius:var(--radius);padding:22px;transition:transform .3s,border-color .3s}
-.hv-card:hover{transform:translateY(-4px);border-color:rgba(0,232,122,.3)}
-.hv-card:first-child{grid-column:1/-1}
-.hv-num{font-family:var(--fonte-display);font-size:1.8rem;font-weight:900;color:var(--verde);line-height:1}
-.hv-label{font-size:.8rem;color:var(--cinza);margin-top:4px}
-.hv-icon{font-size:1.6rem;margin-bottom:10px}
+.hero-mapa{background:var(--card);border:1px solid var(--borda);border-radius:var(--radius);padding:28px;display:flex;flex-direction:column;gap:16px}
+.hm-titulo{font-family:var(--fonte-display);font-size:.85rem;font-weight:800;color:var(--cinza);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px}
+.hm-cidade{display:flex;align-items:center;gap:12px;padding:12px;background:var(--dark3);border-radius:var(--radius-sm);border:1px solid var(--borda)}
+.hm-dot{width:8px;height:8px;background:var(--roxo);border-radius:50%;flex-shrink:0;animation:pulse 2s infinite}
+.hm-nome{font-weight:600;font-size:.9rem;color:var(--branco)}
+.hm-sub{font-size:.78rem;color:var(--cinza)}
+.hm-placeholder{color:var(--cinza2);font-size:.85rem;text-align:center;padding:20px;font-style:italic}
 #numeros{padding:56px 0;border-top:1px solid var(--borda);border-bottom:1px solid var(--borda)}
 .num-grid{display:grid;grid-template-columns:repeat(4,1fr)}
 .num-item{text-align:center;padding:28px 20px;border-right:1px solid var(--borda)}
 .num-item:last-child{border-right:none}
-.num-valor{font-family:var(--fonte-display);font-size:2.4rem;font-weight:900;color:var(--verde);line-height:1}
+.num-valor{font-family:var(--fonte-display);font-size:2.4rem;font-weight:900;color:var(--roxo);line-height:1}
 .num-desc{font-size:.83rem;color:var(--cinza);margin-top:8px}
 section{padding:88px 0}
 .sec-header{margin-bottom:52px}
-.pq-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
-.pq-card{background:var(--card);border:1px solid var(--borda);border-radius:var(--radius);padding:28px;transition:border-color .3s,transform .3s}
-.pq-card:hover{border-color:rgba(0,232,122,.3);transform:translateY(-4px)}
-.pq-icon{font-size:2rem;margin-bottom:14px}
-.pq-card h3{font-family:var(--fonte-display);font-size:1.05rem;font-weight:800;color:var(--branco);margin-bottom:8px}
-.pq-card p{color:var(--cinza);font-size:.9rem;line-height:1.6}
-.func-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
-.func-item{background:var(--card);border:1px solid var(--borda);border-radius:var(--radius);padding:24px;display:flex;gap:16px;align-items:flex-start;transition:border-color .3s}
-.func-item:hover{border-color:rgba(0,232,122,.2)}
-.func-icon{font-size:1.5rem;flex-shrink:0;width:46px;height:46px;background:rgba(0,232,122,.08);border-radius:10px;display:flex;align-items:center;justify-content:center}
-.func-item h3{font-size:.95rem;font-weight:600;color:var(--branco);margin-bottom:4px}
-.func-item p{font-size:.85rem;color:var(--cinza);line-height:1.5}
-.como-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
-.como-step{text-align:center;padding:20px 16px}
-.como-num{width:46px;height:46px;background:var(--verde);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--fonte-display);font-weight:900;font-size:.9rem;color:#000;margin:0 auto 14px}
-.como-step h3{font-size:.95rem;font-weight:600;color:var(--branco);margin-bottom:6px}
-.como-step p{font-size:.83rem;color:var(--cinza);line-height:1.5}
-.cidades-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px}
-.cidade-card{background:var(--card);border:1px solid var(--borda);border-radius:var(--radius);padding:22px;transition:border-color .3s,transform .3s}
-.cidade-card:hover{border-color:rgba(0,232,122,.3);transform:translateY(-3px)}
-.cidade-nome{font-family:var(--fonte-display);font-size:1rem;font-weight:800;color:var(--branco);margin-bottom:4px}
-.cidade-estado{font-size:.8rem;color:var(--verde);margin-bottom:14px}
-.cidade-btn{display:flex;align-items:center;gap:6px;background:rgba(0,232,122,.1);color:var(--verde);border:1px solid rgba(0,232,122,.2);border-radius:8px;padding:9px 14px;font-size:.83rem;font-weight:600;text-decoration:none;transition:background .2s}
-.cidade-btn:hover{background:rgba(0,232,122,.2)}
+.como-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:24px}
+.como-bloco{background:var(--card);border:1px solid var(--borda);border-radius:var(--radius);padding:32px}
+.como-bloco h3{font-family:var(--fonte-display);font-size:1.1rem;font-weight:900;color:var(--branco);margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--borda)}
+.como-passo{display:flex;gap:14px;margin-bottom:16px;align-items:flex-start}
+.como-passo:last-child{margin-bottom:0}
+.passo-num{width:28px;height:28px;background:var(--roxo);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:.78rem;color:#fff;flex-shrink:0;margin-top:2px}
+.passo-txt h4{font-size:.92rem;font-weight:600;color:var(--branco);margin-bottom:2px}
+.passo-txt p{font-size:.83rem;color:var(--cinza);line-height:1.5}
+.cidades-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
+.cidade-card{background:var(--card);border:1px solid var(--borda);border-radius:var(--radius);padding:24px;transition:border-color .3s,transform .3s}
+.cidade-card:hover{border-color:rgba(124,58,237,.4);transform:translateY(-4px);box-shadow:0 8px 32px rgba(124,58,237,.1)}
+.cidade-header{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.cidade-dot{width:10px;height:10px;background:var(--roxo);border-radius:50%;animation:pulse 2s infinite}
+.cidade-nome{font-family:var(--fonte-display);font-size:1.05rem;font-weight:900;color:var(--branco)}
+.cidade-estado{font-size:.78rem;color:var(--cinza);margin-bottom:14px}
+.cidade-btn{display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(124,58,237,.12);color:var(--roxo);border:1px solid rgba(124,58,237,.25);border-radius:var(--radius-sm);padding:10px 14px;font-size:.85rem;font-weight:600;text-decoration:none;transition:all .2s}
+.cidade-btn:hover{background:var(--roxo);color:#fff}
+.func-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.func-item{background:var(--card);border:1px solid var(--borda);border-radius:var(--radius);padding:24px;transition:border-color .3s}
+.func-item:hover{border-color:rgba(124,58,237,.3)}
+.func-icon{font-size:1.6rem;width:48px;height:48px;background:var(--roxo-soft);border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:14px}
+.func-item h3{font-size:.95rem;font-weight:600;color:var(--branco);margin-bottom:6px}
+.func-item p{font-size:.83rem;color:var(--cinza);line-height:1.5}
 .form-etapa{display:none;flex-direction:column;gap:16px}
 .form-etapa.ativa{display:flex}
 .etapa-header{display:flex;align-items:center;gap:12px;margin-bottom:4px}
-.etapa-num{width:30px;height:30px;background:var(--verde);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:.85rem;color:#000;flex-shrink:0}
+.etapa-num{width:30px;height:30px;background:var(--roxo);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:.85rem;color:#fff;flex-shrink:0}
 .etapa-titulo{font-family:var(--fonte-display);font-size:1rem;font-weight:800;color:var(--branco)}
 .progresso{display:flex;gap:4px;margin-bottom:24px}
 .prog-step{flex:1;height:3px;background:var(--dark3);border-radius:2px;transition:background .3s}
-.prog-step.ativo{background:var(--verde)}
-.pix-box{background:var(--dark3);border:1px solid rgba(0,232,122,.2);border-radius:var(--radius-sm);padding:20px;text-align:center}
-.pix-chave{font-family:monospace;font-size:1.1rem;color:var(--verde);font-weight:700;word-break:break-all;margin:8px 0}
+.prog-step.ativo{background:var(--roxo)}
+.pix-box{background:var(--dark3);border:1px solid rgba(124,58,237,.25);border-radius:var(--radius-sm);padding:24px;text-align:center}
+.pix-chave{font-family:monospace;font-size:1.05rem;color:var(--roxo);font-weight:700;word-break:break-all;margin:8px 0}
 .pix-valor{font-size:2rem;font-family:var(--fonte-display);font-weight:900;color:var(--branco);margin:8px 0 4px}
 .upload-area{border:2px dashed var(--borda);border-radius:var(--radius-sm);padding:32px;text-align:center;cursor:pointer;transition:border-color .2s;background:var(--dark3)}
-.upload-area:hover{border-color:var(--verde)}
-.btn-form{background:var(--verde);color:#000;border:none;padding:14px;border-radius:var(--radius-sm);font-weight:700;font-size:1rem;cursor:pointer;width:100%;font-family:var(--fonte-corpo);transition:background .2s}
-.btn-form:hover{background:var(--verde2)}.btn-form:disabled{opacity:.5;cursor:not-allowed}
+.upload-area:hover{border-color:var(--roxo)}
+.btn-form{background:var(--roxo);color:#fff;border:none;padding:14px;border-radius:var(--radius-sm);font-weight:700;font-size:1rem;cursor:pointer;width:100%;font-family:var(--fonte-corpo);transition:background .2s}
+.btn-form:hover{background:var(--roxo2)}
+.btn-form:disabled{opacity:.5;cursor:not-allowed}
 .alert{padding:12px 16px;border-radius:var(--radius-sm);font-size:.88rem;font-weight:500;margin-top:4px}
 .alert-erro{background:rgba(255,80,80,.1);border:1px solid rgba(255,80,80,.25);color:#ff7070}
-.alert-ok{background:rgba(0,232,122,.08);border:1px solid rgba(0,232,122,.2);color:var(--verde)}
-.form-admin{background:var(--card);border:1px solid rgba(0,232,122,.2);border-radius:var(--radius);padding:32px;max-width:480px;display:flex;flex-direction:column;gap:14px}
-#cta{background:linear-gradient(135deg,var(--dark2) 0%,#0a1a10 100%);text-align:center;padding:88px 0;position:relative;overflow:hidden}
-#cta::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at center,rgba(0,232,122,.07),transparent 70%)}
+.alert-ok{background:var(--roxo-soft);border:1px solid rgba(124,58,237,.25);color:var(--roxo)}
+.form-admin{background:var(--card);border:1px solid rgba(124,58,237,.25);border-radius:var(--radius);padding:32px;max-width:480px;display:flex;flex-direction:column;gap:14px}
+#cta{background:linear-gradient(135deg,var(--dark2) 0%,#110a2a 100%);text-align:center;padding:88px 0;position:relative;overflow:hidden}
+#cta::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at center,rgba(124,58,237,.1),transparent 70%)}
 #cta .sec-titulo{max-width:620px;margin:0 auto 14px}
 #cta .sec-sub{margin:0 auto 36px;text-align:center}
 footer{background:var(--dark1);border-top:1px solid var(--borda);padding:48px 0 28px}
 .footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr;gap:48px;margin-bottom:36px}
 .footer-brand{font-family:var(--fonte-display);font-size:1.2rem;font-weight:900;color:var(--branco);margin-bottom:10px}
-.footer-brand span{color:var(--verde)}
+.footer-brand span{color:var(--roxo)}
 .footer-desc{color:var(--cinza);font-size:.87rem;line-height:1.6}
 footer h4{font-size:.78rem;text-transform:uppercase;letter-spacing:.12em;color:var(--cinza2);margin-bottom:14px;font-weight:600}
 footer ul{list-style:none}
 footer ul li{margin-bottom:8px}
 footer ul a{color:var(--cinza);text-decoration:none;font-size:.87rem;transition:color .2s}
-footer ul a:hover{color:var(--verde)}
+footer ul a:hover{color:var(--roxo)}
 .footer-bottom{border-top:1px solid var(--borda);padding-top:22px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
 .footer-bottom p{color:var(--cinza2);font-size:.8rem}
-@media(max-width:900px){.hero-grid{grid-template-columns:1fr;gap:40px}.hero-visual{display:none}.num-grid{grid-template-columns:repeat(2,1fr)}.num-item{border-right:none;border-bottom:1px solid var(--borda)}.pq-grid{grid-template-columns:1fr}.func-grid{grid-template-columns:1fr}.como-grid{grid-template-columns:repeat(2,1fr)}.footer-grid{grid-template-columns:1fr}nav{display:none}.burger{display:flex}}
-@media(max-width:600px){.num-grid{grid-template-columns:1fr 1fr}.hero-btns{flex-direction:column}.btn{width:100%;justify-content:center}.como-grid{grid-template-columns:1fr}}
+@media(max-width:900px){
+  .hero-grid{grid-template-columns:1fr;gap:40px}
+  .como-grid{grid-template-columns:1fr}
+  .func-grid{grid-template-columns:1fr 1fr}
+  .num-grid{grid-template-columns:repeat(2,1fr)}
+  .num-item{border-right:none;border-bottom:1px solid var(--borda)}
+  .footer-grid{grid-template-columns:1fr}
+  nav{display:none}
+  .burger{display:flex}
+}
+@media(max-width:600px){
+  .func-grid{grid-template-columns:1fr}
+  .hero-btns{flex-direction:column}
+  .btn{width:100%;justify-content:center}
+  .num-grid{grid-template-columns:1fr 1fr}
+}
 </style>
 </head>
 <body>
@@ -133,132 +169,147 @@ footer ul a:hover{color:var(--verde)}
   <div class="hdr-inner">
     <a href="#hero" class="logo">Beca<span>Mob</span></a>
     <nav>
-      <a href="#para-quem">Para quem</a>
-      <a href="#funcionalidades">Plataforma</a>
       <a href="#centrais">Cidades</a>
-      <a href="#cadastro-motorista">Motoristas</a>
+      <a href="#como-funciona">Como funciona</a>
+      <a href="#cadastro-motorista">Seja motorista</a>
       <a href="#nova-central">Parceiros</a>
     </nav>
     <button class="burger" id="burger" aria-label="Menu"><span></span><span></span><span></span></button>
   </div>
 </header>
 <div class="mob-menu" id="mobMenu">
-  <a href="#para-quem" class="mob-link">Para quem</a>
-  <a href="#funcionalidades" class="mob-link">Plataforma</a>
   <a href="#centrais" class="mob-link">Cidades</a>
+  <a href="#como-funciona" class="mob-link">Como funciona</a>
   <a href="#cadastro-motorista" class="mob-link">Seja motorista</a>
-  <a href="#nova-central" class="mob-link">Abra uma central</a>
+  <a href="#nova-central" class="mob-link">Parceiros</a>
 </div>
+
 <section id="hero">
   <div class="hero-glow"></div>
   <div class="container">
     <div class="hero-grid">
       <div>
-        <div class="hero-badge">Plataforma ativa em cidades brasileiras</div>
-        <h1>Mobilidade urbana.<br>Do seu jeito, na <em>sua cidade.</em></h1>
-        <p class="hero-sub">BecaMob e a plataforma completa para centrais de corridas. Painel de controle, app do motorista, rastreamento GPS e pedidos via WhatsApp — tudo integrado.</p>
+        <div class="hero-badge">Rede BecaMob em expansao pelo Brasil</div>
+        <h1>Transporte local.<br><em>Simples, rapido</em><br>e no WhatsApp.</h1>
+        <p class="hero-sub">Encontre a central BecaMob da sua cidade, chame sua corrida pelo WhatsApp e acompanhe o motorista em tempo real. Sem app, sem cadastro.</p>
         <div class="hero-btns">
-          <a href="#centrais" class="btn btn-verde">Ver cidades disponíveis</a>
-          <a href="#cadastro-motorista" class="btn btn-outline">Seja motorista parceiro</a>
+          <a href="#centrais" class="btn btn-roxo">Ver centrais disponíveis</a>
+          <a href="#cadastro-motorista" class="btn btn-outline">Quero ser motorista</a>
         </div>
       </div>
-      <div class="hero-visual">
-        <div class="hv-card">
-          <div class="hv-icon">🗺️</div>
-          <div class="hv-num">GPS ao vivo</div>
-          <div class="hv-label">Rastreamento em tempo real do motorista</div>
-        </div>
-        <div class="hv-card">
-          <div class="hv-icon">📱</div>
-          <div class="hv-num">WhatsApp</div>
-          <div class="hv-label">Pedidos via API oficial Meta</div>
-        </div>
-        <div class="hv-card">
-          <div class="hv-icon">⚡</div>
-          <div class="hv-num">menos de 30s</div>
-          <div class="hv-label">Do pedido ao motorista aceito</div>
-        </div>
+      <div class="hero-mapa" id="heroMapa">
+        <div class="hm-titulo">Centrais ativas</div>
+        <div id="heroListaCidades"><div class="hm-placeholder">Carregando centrais...</div></div>
       </div>
     </div>
   </div>
 </section>
+
 <div id="numeros">
   <div class="container">
     <div class="num-grid">
-      <div class="num-item reveal"><div class="num-valor">100%</div><div class="num-desc">Digital — sem papel, sem planilha</div></div>
-      <div class="num-item reveal"><div class="num-valor">24h</div><div class="num-desc">Operacao continua com painel online</div></div>
-      <div class="num-item reveal"><div class="num-valor">PIX</div><div class="num-desc">Mensalidades e pagamentos automaticos</div></div>
-      <div class="num-item reveal"><div class="num-valor">0%</div><div class="num-desc">Comissao por corrida para a plataforma</div></div>
+      <div class="num-item reveal"><div class="num-valor">0%</div><div class="num-desc">Comissao por corrida</div></div>
+      <div class="num-item reveal"><div class="num-valor">PIX</div><div class="num-desc">Mensalidade simples para o motorista</div></div>
+      <div class="num-item reveal"><div class="num-valor">WhatsApp</div><div class="num-desc">Cliente pede sem baixar nada</div></div>
+      <div class="num-item reveal"><div class="num-valor">GPS</div><div class="num-desc">Rastreamento ao vivo da corrida</div></div>
     </div>
   </div>
 </div>
-<section id="para-quem">
-  <div class="container">
-    <div class="sec-header reveal">
-      <span class="sec-label">Para quem e a BecaMob</span>
-      <h2 class="sec-titulo">Feita para quem opera transporte de verdade.</h2>
-      <p class="sec-sub">Nao somos um aplicativo de passageiros. Somos a infraestrutura que as centrais de corridas precisavam.</p>
-    </div>
-    <div class="pq-grid">
-      <div class="pq-card reveal"><div class="pq-icon">🏢</div><h3>Centrais de corridas</h3><p>Gerencie toda sua frota, motoristas e corridas em um unico painel. Sem planilha, sem WhatsApp manual.</p></div>
-      <div class="pq-card reveal"><div class="pq-icon">🚗</div><h3>Motoristas parceiros</h3><p>Receba corridas direto no seu celular. App simples, GPS integrado e pagamentos via PIX.</p></div>
-      <div class="pq-card reveal"><div class="pq-icon">👥</div><h3>Empreendedores locais</h3><p>Abra sua central BecaMob na sua cidade com suporte completo de tecnologia e operacao.</p></div>
-    </div>
-  </div>
-</section>
-<section id="funcionalidades" style="background:var(--dark2)">
-  <div class="container">
-    <div class="sec-header reveal">
-      <span class="sec-label">O que a plataforma entrega</span>
-      <h2 class="sec-titulo">Tudo que sua operacao precisa. Num so lugar.</h2>
-      <p class="sec-sub">Do despacho de corrida ao controle financeiro, a BecaMob cobre todas as etapas.</p>
-    </div>
-    <div class="func-grid">
-      <div class="func-item reveal"><div class="func-icon">📊</div><div><h3>Painel de controle</h3><p>Visao completa da frota, corridas em andamento, motoristas online e faturamento do dia.</p></div></div>
-      <div class="func-item reveal"><div class="func-icon">📱</div><div><h3>App do motorista</h3><p>Aplicativo PWA leve, funciona em qualquer celular Android ou iPhone sem instalacao na loja.</p></div></div>
-      <div class="func-item reveal"><div class="func-icon">💬</div><div><h3>WhatsApp Business</h3><p>Integracao com API oficial Meta. Cliente pede a corrida pelo WhatsApp e recebe confirmacao automatica.</p></div></div>
-      <div class="func-item reveal"><div class="func-icon">🗺️</div><div><h3>GPS em tempo real</h3><p>Rastreamento ao vivo do motorista. Passageiro recebe link de acompanhamento no WhatsApp.</p></div></div>
-      <div class="func-item reveal"><div class="func-icon">💰</div><div><h3>Mensalidades via PIX</h3><p>Cobranca automatica dos motoristas. Controle de inadimplencia e ativacao por comprovante.</p></div></div>
-      <div class="func-item reveal"><div class="func-icon">🤖</div><div><h3>IA integrada</h3><p>Assistente inteligente para despacho automatico, sugestao de precos e relatorios de desempenho.</p></div></div>
-    </div>
-  </div>
-</section>
-<section id="como">
-  <div class="container">
-    <div class="sec-header reveal">
-      <span class="sec-label">Do pedido ao destino</span>
-      <h2 class="sec-titulo">Como funciona na pratica.</h2>
-      <p class="sec-sub">Quatro passos que acontecem em menos de um minuto.</p>
-    </div>
-    <div class="como-grid">
-      <div class="como-step reveal"><div class="como-num">1</div><h3>Cliente pede</h3><p>Manda mensagem no WhatsApp da central com origem e destino.</p></div>
-      <div class="como-step reveal"><div class="como-num">2</div><h3>Central despacha</h3><p>Sistema encontra o motorista mais proximo e envia a corrida automaticamente.</p></div>
-      <div class="como-step reveal"><div class="como-num">3</div><h3>Motorista aceita</h3><p>Motorista ve a corrida no app, confirma e se dirige ao ponto de embarque.</p></div>
-      <div class="como-step reveal"><div class="como-num">4</div><h3>Rastreamento ao vivo</h3><p>Cliente recebe link com GPS do motorista em tempo real ate a chegada.</p></div>
-    </div>
-  </div>
-</section>
+
 <section id="centrais" style="background:var(--dark2)">
   <div class="container">
     <div class="sec-header reveal">
-      <span class="sec-label">Onde estamos</span>
-      <h2 class="sec-titulo">Encontre a central BecaMob na sua cidade.</h2>
-      <p class="sec-sub">Selecione sua cidade e chame um BecaMob agora — voce recebe o rastreamento do motorista em tempo real.</p>
+      <span class="sec-label">Rede de centrais</span>
+      <h2 class="sec-titulo">Sua cidade esta aqui?</h2>
+      <p class="sec-sub">Toque no card da sua cidade para chamar a central direto pelo WhatsApp. Sem app, sem cadastro — so mandar mensagem.</p>
     </div>
-    <div id="cidadesLoading" style="color:var(--cinza);font-size:.95rem;padding:20px 0">Carregando cidades...</div>
+    <div id="cidadesLoading" style="color:var(--cinza);padding:20px 0;font-size:.95rem">Carregando centrais...</div>
     <div id="cidadesGrid" class="cidades-grid" style="display:none"></div>
-    <div id="cidadesVazio" style="display:none;color:var(--cinza)">Ainda nao temos uma central na sua cidade. <a href="#nova-central" style="color:var(--verde);font-weight:600;text-decoration:none">Quer trazer a BecaMob para sua regiao?</a></div>
+    <div id="cidadesVazio" style="display:none;background:var(--card);border:1px solid var(--borda);border-radius:var(--radius);padding:32px;text-align:center;max-width:480px">
+      <div style="font-size:2.5rem;margin-bottom:12px">📍</div>
+      <p style="color:var(--cinza);font-size:.95rem;line-height:1.7">Ainda nao ha uma central na sua cidade.<br>
+      <a href="#nova-central" style="color:var(--roxo);font-weight:600;text-decoration:none">Quer abrir uma? Seja parceiro BecaMob.</a></p>
+    </div>
   </div>
 </section>
+
+<section id="como-funciona">
+  <div class="container">
+    <div class="sec-header reveal">
+      <span class="sec-label">Como funciona</span>
+      <h2 class="sec-titulo">Para cliente e para motorista.</h2>
+      <p class="sec-sub">Dois lados, uma plataforma. O cliente pede facil, o motorista recebe rapido.</p>
+    </div>
+    <div class="como-grid">
+      <div class="como-bloco reveal">
+        <h3>📲 Para quem quer uma corrida</h3>
+        <div class="como-passo">
+          <div class="passo-num">1</div>
+          <div class="passo-txt"><h4>Encontre sua cidade</h4><p>Veja as centrais BecaMob disponiveis aqui na pagina.</p></div>
+        </div>
+        <div class="como-passo">
+          <div class="passo-num">2</div>
+          <div class="passo-txt"><h4>Chame pelo WhatsApp</h4><p>Toque no botao da central da sua cidade e mande uma mensagem com origem e destino.</p></div>
+        </div>
+        <div class="como-passo">
+          <div class="passo-num">3</div>
+          <div class="passo-txt"><h4>Motorista confirmado</h4><p>Em menos de 1 minuto um motorista aceita e vai ate voce.</p></div>
+        </div>
+        <div class="como-passo">
+          <div class="passo-num">4</div>
+          <div class="passo-txt"><h4>Acompanhe em tempo real</h4><p>Voce recebe um link com o GPS do motorista ao vivo.</p></div>
+        </div>
+      </div>
+      <div class="como-bloco reveal">
+        <h3>🚗 Para quem quer trabalhar</h3>
+        <div class="como-passo">
+          <div class="passo-num">1</div>
+          <div class="passo-txt"><h4>Escolha sua cidade</h4><p>Veja as centrais disponiveis e se filie a que fica na sua regiao.</p></div>
+        </div>
+        <div class="como-passo">
+          <div class="passo-num">2</div>
+          <div class="passo-txt"><h4>Preencha o cadastro</h4><p>Nome, carro, WhatsApp e plano. Tudo rapido, sem burocracia.</p></div>
+        </div>
+        <div class="como-passo">
+          <div class="passo-num">3</div>
+          <div class="passo-txt"><h4>Pague a mensalidade via PIX</h4><p>Pague a primeira mensalidade e envie o comprovante pelo formulario.</p></div>
+        </div>
+        <div class="como-passo">
+          <div class="passo-num">4</div>
+          <div class="passo-txt"><h4>Comece a receber corridas</h4><p>Apos aprovacao, seu acesso ao app e liberado pelo WhatsApp.</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="plataforma" style="background:var(--dark2)">
+  <div class="container">
+    <div class="sec-header reveal">
+      <span class="sec-label">Tecnologia da rede</span>
+      <h2 class="sec-titulo">O que cada central tem.</h2>
+      <p class="sec-sub">Cada parceiro BecaMob recebe toda a estrutura tecnologica para operar sua central do zero.</p>
+    </div>
+    <div class="func-grid">
+      <div class="func-item reveal"><div class="func-icon">📊</div><h3>Painel de controle</h3><p>Gestao de motoristas, corridas e financeiro em tempo real.</p></div>
+      <div class="func-item reveal"><div class="func-icon">📱</div><h3>App do motorista</h3><p>PWA leve, funciona em qualquer celular sem instalacao na loja.</p></div>
+      <div class="func-item reveal"><div class="func-icon">💬</div><h3>WhatsApp integrado</h3><p>Pedidos e confirmacoes automaticos via API oficial Meta.</p></div>
+      <div class="func-item reveal"><div class="func-icon">🗺️</div><h3>GPS ao vivo</h3><p>Rastreamento do motorista com link compartilhavel ao cliente.</p></div>
+      <div class="func-item reveal"><div class="func-icon">💰</div><h3>Cobranca via PIX</h3><p>Mensalidades automaticas. Ativacao e desativacao por comprovante.</p></div>
+      <div class="func-item reveal"><div class="func-icon">🤖</div><h3>IA para despacho</h3><p>Distribuicao inteligente de corridas e relatorios de desempenho.</p></div>
+    </div>
+  </div>
+</section>
+
 <section id="cadastro-motorista">
   <div class="container">
     <div class="sec-header reveal">
       <span class="sec-label">Seja motorista parceiro</span>
-      <h2 class="sec-titulo">Cadastre-se e comece a receber corridas.</h2>
-      <p class="sec-sub">Sem taxa de entrada, sem burocracia. Preencha o formulario, pague a mensalidade e ative seu acesso.</p>
+      <h2 class="sec-titulo">Filie-se a uma central e comece a trabalhar.</h2>
+      <p class="sec-sub">Escolha a cidade, preencha seus dados e pague a primeira mensalidade. Seu acesso e liberado em minutos.</p>
     </div>
     <div class="card reveal" style="max-width:580px">
-      <div class="progresso" id="progresso">
+      <div class="progresso">
         <div class="prog-step ativo" id="prog1"></div>
         <div class="prog-step" id="prog2"></div>
         <div class="prog-step" id="prog3"></div>
@@ -286,16 +337,16 @@ footer ul a:hover{color:var(--verde)}
           <div class="pix-chave" id="pixChave">Carregando...</div>
           <div class="pix-valor" id="pixValor">R$ --</div>
           <div style="font-size:.8rem;color:var(--cinza)">Pague e envie o comprovante na proxima etapa</div>
-          <button onclick="copiarPix()" style="background:rgba(0,232,122,.12);color:var(--verde);border:1px solid rgba(0,232,122,.2);border-radius:8px;padding:9px 18px;font-size:.85rem;font-weight:600;cursor:pointer;margin-top:14px;font-family:var(--fonte-corpo)">Copiar chave PIX</button>
+          <button onclick="copiarPix()" style="background:var(--roxo-soft);color:var(--roxo);border:1px solid rgba(124,58,237,.25);border-radius:8px;padding:9px 18px;font-size:.85rem;font-weight:600;cursor:pointer;margin-top:14px;font-family:var(--fonte-corpo)">Copiar chave PIX</button>
         </div>
         <button class="btn-form" onclick="irEtapa3()">Ja paguei — enviar comprovante</button>
         <button onclick="setEtapa(1)" style="background:none;border:none;color:var(--cinza);font-size:.85rem;cursor:pointer;text-align:center;font-family:var(--fonte-corpo)">Voltar</button>
       </div>
       <div class="form-etapa" id="etapa3">
         <div class="etapa-header"><div class="etapa-num">3</div><div class="etapa-titulo">Enviar comprovante</div></div>
-        <div class="upload-area" id="uploadArea" onclick="document.getElementById('inputComprovante').click()">
+        <div class="upload-area" onclick="document.getElementById('inputComprovante').click()">
           <input type="file" id="inputComprovante" accept="image/*,.pdf" style="display:none" onchange="previewComprovante(this)">
-          <div id="uploadTexto"><div style="font-size:2rem;margin-bottom:8px">📎</div><div style="font-size:.9rem;color:var(--cinza)">Toque para selecionar o comprovante</div><div style="font-size:.78rem;color:var(--cinza2);margin-top:4px">JPG, PNG ou PDF — max 8MB</div></div>
+          <div id="uploadTexto"><div style="font-size:2rem;margin-bottom:8px">📎</div><div style="font-size:.9rem;color:var(--cinza)">Toque para selecionar o comprovante</div><div style="font-size:.78rem;color:var(--cinza2);margin-top:4px">JPG, PNG ou PDF</div></div>
         </div>
         <div id="alerta3" class="alert alert-erro" style="display:none"></div>
         <button class="btn-form" id="btnEnviar" onclick="enviarComprovante()">Enviar e finalizar cadastro</button>
@@ -304,24 +355,25 @@ footer ul a:hover{color:var(--verde)}
       <div class="form-etapa" id="etapaSucesso" style="text-align:center;padding:20px 0">
         <div style="font-size:3.5rem;margin-bottom:14px">🎉</div>
         <h3 style="font-family:var(--fonte-display);font-size:1.4rem;font-weight:900;margin-bottom:10px">Cadastro enviado!</h3>
-        <p style="color:var(--cinza);font-size:.95rem;line-height:1.7" id="textoSucesso">Seu comprovante foi recebido. Assim que confirmado, voce recebe o acesso ao app no WhatsApp.</p>
+        <p style="color:var(--cinza);font-size:.95rem;line-height:1.7" id="textoSucesso">Comprovante recebido. Assim que aprovado, voce recebe o acesso no WhatsApp.</p>
       </div>
     </div>
   </div>
 </section>
+
 <section id="nova-central" style="background:var(--dark2)">
   <div class="container">
     <div class="sec-header reveal">
-      <span class="sec-label">Seja um parceiro BecaMob</span>
-      <h2 class="sec-titulo">Abra uma central na sua cidade.</h2>
-      <p class="sec-sub">Area restrita para parceiros autorizados. Use a senha de acesso para liberar o cadastro de nova central.</p>
+      <span class="sec-label">Expanda a rede</span>
+      <h2 class="sec-titulo">Abra uma central BecaMob na sua cidade.</h2>
+      <p class="sec-sub">Area restrita para parceiros autorizados. Use a senha fornecida para criar uma nova central — ela aparece automaticamente na lista de cidades.</p>
     </div>
-    <div style="background:var(--card);border:1px solid var(--borda);border-radius:var(--radius);padding:36px;text-align:center;max-width:460px" id="cadeadoBox" class="reveal">
-      <div style="font-size:3.2rem;margin-bottom:14px">🔒</div>
-      <p style="color:var(--cinza);font-size:.92rem;margin-bottom:20px">Digite a senha para acessar o cadastro de nova central.</p>
-      <div style="display:flex;gap:10px;max-width:300px;margin:0 auto">
-        <input type="password" id="senhaAcesso" class="input-base" placeholder="Senha de acesso" style="flex:1">
-        <button onclick="tentarDesbloquear()" class="btn btn-verde" style="white-space:nowrap;padding:13px 18px">Acessar</button>
+    <div style="background:var(--card);border:1px solid var(--borda);border-radius:var(--radius);padding:40px;text-align:center;max-width:440px" id="cadeadoBox" class="reveal">
+      <div style="font-size:3rem;margin-bottom:14px">🔒</div>
+      <p style="color:var(--cinza);font-size:.92rem;margin-bottom:20px">Acesso exclusivo para parceiros BecaMob autorizados.</p>
+      <div style="display:flex;gap:10px;max-width:280px;margin:0 auto">
+        <input type="password" id="senhaAcesso" class="input-base" placeholder="Senha de parceiro" style="flex:1">
+        <button onclick="tentarDesbloquear()" class="btn btn-roxo" style="white-space:nowrap;padding:13px 18px">Entrar</button>
       </div>
       <div id="cadeadoErro" class="alert alert-erro" style="display:none;margin-top:12px;text-align:left"></div>
     </div>
@@ -330,47 +382,50 @@ footer ul a:hover{color:var(--verde)}
         <span style="font-size:1.3rem">🏙️</span>
         <h3 style="font-family:var(--fonte-display);font-size:1.05rem;font-weight:800">Nova Central BecaMob</h3>
       </div>
-      <p style="color:var(--cinza);font-size:.83rem">A central aparece automaticamente na lista de cidades ao ser criada.</p>
-      <div><label style="display:block;font-size:.83rem;color:var(--cinza);margin-bottom:5px">Nome da marca / central</label><input type="text" id="adNomeMarca" class="input-base" placeholder="Ex: BecaMob Frutal"></div>
+      <p style="color:var(--cinza);font-size:.83rem">A central aparece automaticamente na lista ao ser criada.</p>
+      <div><label style="display:block;font-size:.83rem;color:var(--cinza);margin-bottom:5px">Nome da central</label><input type="text" id="adNomeMarca" class="input-base" placeholder="Ex: BecaMob Frutal"></div>
       <div style="display:grid;grid-template-columns:2fr 1fr;gap:12px">
         <div><label style="display:block;font-size:.83rem;color:var(--cinza);margin-bottom:5px">Cidade</label><input type="text" id="adCidade" class="input-base" placeholder="Ex: Frutal"></div>
         <div><label style="display:block;font-size:.83rem;color:var(--cinza);margin-bottom:5px">Estado (UF)</label><input type="text" id="adEstado" class="input-base" placeholder="MG" maxlength="2" style="text-transform:uppercase"></div>
       </div>
-      <div><label style="display:block;font-size:.83rem;color:var(--cinza);margin-bottom:5px">WhatsApp da central (com DDD)</label><input type="text" id="adWhatsapp" class="input-base" placeholder="(34) 99999-0000"><small style="color:var(--cinza2);font-size:.75rem">Aparece no card da cidade.</small></div>
-      <div><label style="display:block;font-size:.83rem;color:var(--cinza);margin-bottom:5px">E-mail de acesso ao painel</label><input type="email" id="adEmail" class="input-base" placeholder="central@becamob.com"></div>
+      <div><label style="display:block;font-size:.83rem;color:var(--cinza);margin-bottom:5px">WhatsApp da central (com DDD)</label><input type="text" id="adWhatsapp" class="input-base" placeholder="(34) 99999-0000"><small style="color:var(--cinza2);font-size:.75rem">Este numero aparece no card da cidade para os clientes chamarem.</small></div>
+      <div><label style="display:block;font-size:.83rem;color:var(--cinza);margin-bottom:5px">E-mail do painel</label><input type="email" id="adEmail" class="input-base" placeholder="central@becamob.com"></div>
       <div><label style="display:block;font-size:.83rem;color:var(--cinza);margin-bottom:5px">Senha do painel (min. 6 caracteres)</label><input type="password" id="adSenha" class="input-base" placeholder="Minimo 6 caracteres"></div>
       <div id="adminErro" class="alert alert-erro" style="display:none"></div>
       <button class="btn-form" id="btnCriarAdmin" onclick="criarAdmin()">Criar central agora</button>
     </div>
-    <div id="adminSucesso" style="display:none;background:var(--card);border:1px solid rgba(0,232,122,.2);border-radius:var(--radius);padding:36px;max-width:460px;text-align:center">
+    <div id="adminSucesso" style="display:none;background:var(--card);border:1px solid rgba(124,58,237,.3);border-radius:var(--radius);padding:36px;max-width:440px;text-align:center">
       <div style="font-size:2.8rem;margin-bottom:12px">🚀</div>
-      <h3 style="font-family:var(--fonte-display);font-weight:900;font-size:1.2rem;margin-bottom:10px">Central criada com sucesso!</h3>
+      <h3 style="font-family:var(--fonte-display);font-weight:900;font-size:1.2rem;margin-bottom:10px">Central criada!</h3>
       <p id="adminSucessoTexto" style="color:var(--cinza);font-size:.92rem;line-height:1.6;margin-bottom:18px"></p>
-      <a href="/painel-admin.html" class="btn btn-verde">Ir para o painel</a>
+      <a href="/painel-admin.html" class="btn btn-roxo">Ir para o painel</a>
     </div>
   </div>
 </section>
+
 <section id="cta">
   <div class="container" style="position:relative">
-    <span class="sec-label" style="display:block;text-align:center">Pronto para comecar?</span>
-    <h2 class="sec-titulo" style="text-align:center">Sua cidade merece um transporte melhor.</h2>
-    <p class="sec-sub" style="text-align:center">Seja motorista parceiro ou abra sua propria central BecaMob.</p>
+    <span class="sec-label" style="display:block;text-align:center">Faca parte da rede</span>
+    <h2 class="sec-titulo" style="text-align:center;max-width:600px;margin:0 auto 14px">A BecaMob esta crescendo. Sua cidade pode ser a proxima.</h2>
+    <p class="sec-sub" style="text-align:center;margin:0 auto 36px">Seja motorista ou abra sua propria central. A tecnologia e nossa, a operacao e sua.</p>
     <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap">
-      <a href="#cadastro-motorista" class="btn btn-verde">Quero ser motorista</a>
+      <a href="#cadastro-motorista" class="btn btn-roxo">Quero ser motorista</a>
       <a href="#nova-central" class="btn btn-outline">Quero abrir uma central</a>
     </div>
   </div>
 </section>
+
 <footer>
   <div class="container">
     <div class="footer-grid">
-      <div><div class="footer-brand">Beca<span>Mob</span></div><p class="footer-desc">Plataforma de mobilidade urbana para centrais de corridas. Tecnologia acessivel para cidades de todos os tamanhos.</p></div>
-      <div><h4>Plataforma</h4><ul><li><a href="#funcionalidades">Funcionalidades</a></li><li><a href="#como">Como funciona</a></li><li><a href="#centrais">Cidades</a></li></ul></div>
+      <div><div class="footer-brand">Beca<span>Mob</span></div><p class="footer-desc">Rede de mobilidade urbana para cidades brasileiras. Tecnologia para centrais de corridas, motoristas e clientes.</p></div>
+      <div><h4>Rede</h4><ul><li><a href="#centrais">Ver cidades</a></li><li><a href="#como-funciona">Como funciona</a></li><li><a href="#plataforma">Plataforma</a></li></ul></div>
       <div><h4>Faca parte</h4><ul><li><a href="#cadastro-motorista">Seja motorista</a></li><li><a href="#nova-central">Abra uma central</a></li><li><a href="https://wa.me/5534984039955" target="_blank">Fale conosco</a></li></ul></div>
     </div>
-    <div class="footer-bottom"><p>2025 BecaMob. Todos os direitos reservados.</p><p>Feito com tecnologia brasileira</p></div>
+    <div class="footer-bottom"><p>2025 BecaMob. Todos os direitos reservados.</p><p>Tecnologia brasileira para o Brasil</p></div>
   </div>
 </footer>
+
 <script>
 const hdr=document.getElementById('hdr');
 window.addEventListener('scroll',()=>hdr.classList.toggle('scrolled',window.scrollY>40));
@@ -380,29 +435,52 @@ burger.addEventListener('click',()=>mobMenu.classList.toggle('open'));
 document.querySelectorAll('.mob-link').forEach(a=>a.addEventListener('click',()=>mobMenu.classList.remove('open')));
 const obs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');obs.unobserve(e.target);}});},{threshold:0.1});
 document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+
 async function carregarCidades(){
   try{
     const r=await fetch('/api/landing/cidades');
     const data=await r.json();
     const admins=data.admins||[];
     const sel=document.getElementById('motCidade');
-    if(sel){sel.innerHTML=admins.length?'<option value="">Selecione sua cidade</option>'+admins.map(a=>`<option value="${a._id}" data-pix="${a.chavePix||''}" data-tipo="${a.tipoChavePix||''}" data-mensalidade="${a.valorMensalidade||100}" data-semanal="${a.valorSemanal||30}" data-zap="${a.whatsappCentral||''}">${a.cidade||a.nomeMarca} -- ${a.nomeMarca}</option>`).join(''):'<option value="">Nenhuma cidade disponivel</option>';}
+    if(sel){
+      sel.innerHTML=admins.length
+        ?'<option value="">Selecione sua cidade</option>'+admins.map(a=>`<option value="${a._id}" data-pix="${a.chavePix||''}" data-mensalidade="${a.valorMensalidade||100}" data-semanal="${a.valorSemanal||30}" data-zap="${a.whatsappCentral||''}">${a.nomeMarca||a.cidade} -- ${a.cidade}${a.estado?' / '+a.estado:''}</option>`).join('')
+        :'<option value="">Nenhuma cidade disponivel ainda</option>';
+    }
     const loading=document.getElementById('cidadesLoading');
     const grid=document.getElementById('cidadesGrid');
     const vazio=document.getElementById('cidadesVazio');
+    const heroLista=document.getElementById('heroListaCidades');
     if(loading)loading.style.display='none';
-    if(admins.length===0){if(vazio)vazio.style.display='block';return;}
+    if(admins.length===0){
+      if(vazio)vazio.style.display='block';
+      if(heroLista)heroLista.innerHTML='<div class="hm-placeholder">Nenhuma central ativa ainda.<br>Em breve na sua cidade.</div>';
+      return;
+    }
     if(grid){
       grid.style.display='grid';
       grid.innerHTML=admins.map(a=>{
         const num=(a.whatsappCentral||'').replace(/\D/g,'');
         const link=num?`https://wa.me/${num}`:'#cadastro-motorista';
-        return `<div class="cidade-card"><div class="cidade-nome">${a.nomeMarca||a.cidade}</div><div class="cidade-estado">${a.cidade||''}${a.estado?' -- '+a.estado:''}</div><a href="${link}" target="_blank" class="cidade-btn">Chamar no WhatsApp</a></div>`;
+        return `<div class="cidade-card">
+          <div class="cidade-header"><div class="cidade-dot"></div><div class="cidade-nome">${a.nomeMarca||a.cidade}</div></div>
+          <div class="cidade-estado">📍 ${a.cidade||''}${a.estado?' — '+a.estado:''}</div>
+          <a href="${link}" target="_blank" class="cidade-btn">💬 Chamar pelo WhatsApp</a>
+        </div>`;
       }).join('');
+    }
+    if(heroLista){
+      heroLista.innerHTML=admins.slice(0,4).map(a=>`
+        <div class="hm-cidade">
+          <div class="hm-dot"></div>
+          <div><div class="hm-nome">${a.nomeMarca||a.cidade}</div><div class="hm-sub">${a.cidade||''}${a.estado?' — '+a.estado:''}</div></div>
+        </div>`).join('');
+      if(admins.length>4)heroLista.innerHTML+=`<div style="text-align:center;padding:8px 0;font-size:.82rem;color:var(--cinza)">+${admins.length-4} mais cidades</div>`;
     }
   }catch(e){console.error('Erro cidades:',e);}
 }
 carregarCidades();
+
 function irEtapa2(){
   const cidade=document.getElementById('motCidade').value;
   const nome=document.getElementById('motNome').value.trim();
@@ -416,8 +494,7 @@ function irEtapa2(){
   const opt=document.getElementById('motCidade').selectedOptions[0];
   const plano=document.getElementById('motPlano').value;
   const valor=plano==='semanal'?parseFloat(opt.dataset.semanal||30):parseFloat(opt.dataset.mensalidade||100);
-  const pix=opt.dataset.pix||'Sem chave PIX configurada';
-  document.getElementById('pixChave').textContent=pix;
+  document.getElementById('pixChave').textContent=opt.dataset.pix||'Sem chave PIX configurada';
   document.getElementById('pixValor').textContent='R$ '+valor.toFixed(2).replace('.',',');
   setEtapa(2);
 }
@@ -433,14 +510,13 @@ function setEtapa(n){
   if(suc)suc.classList.remove('ativa');
 }
 function copiarPix(){
-  const txt=document.getElementById('pixChave').textContent;
-  navigator.clipboard.writeText(txt).then(()=>{
+  navigator.clipboard.writeText(document.getElementById('pixChave').textContent).then(()=>{
     const btn=event.target;btn.textContent='Copiado!';setTimeout(()=>btn.textContent='Copiar chave PIX',2000);
   });
 }
 function previewComprovante(input){
   if(!input.files[0])return;
-  document.getElementById('uploadTexto').innerHTML=`<div style="font-size:2rem;margin-bottom:6px">OK</div><div style="font-size:.9rem;color:var(--verde);font-weight:600">${input.files[0].name}</div><div style="font-size:.78rem;color:var(--cinza2);margin-top:4px">Toque para trocar</div>`;
+  document.getElementById('uploadTexto').innerHTML=`<div style="font-size:2rem;margin-bottom:6px">✅</div><div style="font-size:.9rem;color:var(--roxo);font-weight:600">${input.files[0].name}</div><div style="font-size:.78rem;color:var(--cinza2);margin-top:4px">Toque para trocar</div>`;
 }
 async function enviarComprovante(){
   const file=document.getElementById('inputComprovante').files[0];
@@ -455,15 +531,14 @@ async function enviarComprovante(){
     const preCad=await fetch('/api/landing/motorista/pre-cadastro',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({adminId,nome:document.getElementById('motNome').value.trim(),whatsapp:document.getElementById('motWhats').value.trim(),modelo:document.getElementById('motModelo').value.trim(),cor:document.getElementById('motCor').value.trim(),ano:document.getElementById('motAno').value.trim(),plano})});
     const preCadData=await preCad.json();
     if(!preCadData.sucesso)throw new Error(preCadData.erro||'Erro no pre-cadastro');
-    const motoristaId=preCadData.motoristaId;
     const fd=new FormData();
-    fd.append('comprovante',file);fd.append('motoristaId',motoristaId);fd.append('adminId',adminId);
+    fd.append('comprovante',file);fd.append('motoristaId',preCadData.motoristaId);fd.append('adminId',adminId);
     const up=await fetch('/api/landing-upload/comprovante',{method:'POST',body:fd});
     const upData=await up.json();
     if(!upData.sucesso)throw new Error(upData.erro||'Erro no upload');
     document.getElementById('etapa3').classList.remove('ativa');
     const suc=document.getElementById('etapaSucesso');suc.classList.add('ativa');suc.style.display='flex';
-    document.getElementById('textoSucesso').textContent=upData.mensagem||'Cadastro enviado! Assim que seu comprovante for aprovado, voce recebe o acesso no WhatsApp.';
+    document.getElementById('textoSucesso').textContent=upData.mensagem||'Comprovante recebido! Voce recebe o acesso no WhatsApp assim que aprovado.';
   }catch(e){
     alerta.textContent=e.message;alerta.style.display='block';
     btn.disabled=false;btn.textContent='Enviar e finalizar cadastro';
@@ -494,10 +569,10 @@ async function criarAdmin(){
     if(!data.sucesso){erroEl.textContent=data.erro||'Erro ao criar central.';erroEl.style.display='block';btn.disabled=false;btn.textContent='Criar central agora';return;}
     document.getElementById('formAdminBox').style.display='none';
     document.getElementById('adminSucesso').style.display='block';
-    document.getElementById('adminSucessoTexto').textContent=data.mensagem||'Central criada! Ja aparece na lista de cidades.';
+    document.getElementById('adminSucessoTexto').textContent=data.mensagem||'Central criada com sucesso!';
     setTimeout(carregarCidades,1500);
   }catch(e){
-    erroEl.textContent='Erro de conexao. Tente novamente.';erroEl.style.display='block';
+    erroEl.textContent='Erro de conexao.';erroEl.style.display='block';
     btn.disabled=false;btn.textContent='Criar central agora';
   }
 }
