@@ -296,6 +296,7 @@ footer{padding:60px 0 30px;border-top:1px solid var(--borda)}
     <a href="#para-quem" class="nl">Para quem</a>
     <a href="#funcionalidades" class="nl">Funcionalidades</a>
     <a href="#parceiros" class="nl">Seja Parceiro</a>
+    <a href="#centrais" class="nl">Centrais</a>
     <a href="#planos" class="nl">Planos</a>
     <a href="admin/login.html" class="btn-nav">Acessar Painel</a>
     <button class="burger" id="burger"><span></span><span></span><span></span></button>
@@ -305,6 +306,7 @@ footer{padding:60px 0 30px;border-top:1px solid var(--borda)}
   <a href="#para-quem">Para quem é</a>
   <a href="#funcionalidades">Funcionalidades</a>
   <a href="#parceiros">Seja Parceiro</a>
+  <a href="#centrais">Centrais</a>
   <a href="#planos">Planos</a>
   <a href="#whatsapp">WhatsApp</a>
   <a href="admin/login.html" class="btn-mob">Acessar Painel →</a>
@@ -646,7 +648,7 @@ footer{padding:60px 0 30px;border-top:1px solid var(--borda)}
 
 
 <!-- CADASTRO MOTORISTA -->
-<section id="cadastro-motorista" style="padding:110px 0;background:linear-gradient(180deg,transparent,rgba(13,24,37,.5) 50%,transparent)">
+<section id="fale-conosco-motorista" style="padding:110px 0;background:linear-gradient(180deg,transparent,rgba(13,24,37,.5) 50%,transparent)">
   <div class="container">
     <div class="reveal" style="text-align:center;max-width:680px;margin:0 auto 52px">
       <span class="sec-label">Seja um motorista parceiro</span>
@@ -797,6 +799,135 @@ _Cadastro enviado pela landing page BecaMob_`;
 </section>
 
 <!-- FOOTER -->
+
+<!-- ====================== ENCONTRE SUA CENTRAL ====================== -->
+<section id="centrais" style="padding:90px 0">
+  <div class="container reveal">
+    <h2 class="sec-titulo">Encontre a central BecaMob mais próxima de você.</h2>
+    <p class="sec-sub">Selecione sua cidade e chame um BecaMob agora — você recebe o link de rastreamento do motorista em tempo real.</p>
+
+    <div id="cidadesLoading" style="color:var(--cinza);font-size:.95rem">Carregando cidades disponíveis...</div>
+    <div id="cidadesGrid" class="pq-grid" style="display:none"></div>
+    <div id="cidadesVazio" style="display:none;color:var(--cinza);font-size:.95rem">
+      Ainda não temos uma central na sua cidade. Quer trazer a BecaMob para sua região?
+      <a href="#parceiros" style="color:var(--verde);font-weight:700;text-decoration:none">Fale com a gente</a>.
+    </div>
+  </div>
+</section>
+
+<!-- ====================== SEJA MOTORISTA PARCEIRO ====================== -->
+<section id="cadastro-motorista" style="padding:90px 0;background:var(--dark2)">
+  <div class="container reveal">
+    <h2 class="sec-titulo">Seja motorista parceiro BecaMob.</h2>
+    <p class="sec-sub">Cadastre-se em poucos minutos, envie o comprovante e comece a receber corridas na sua cidade. Sem burocracia, sem demora.</p>
+
+    <div style="background:var(--card);border:1px solid var(--borda);border-radius:var(--radius);padding:36px;max-width:680px">
+
+      <!-- ETAPA 1: FORMULÁRIO -->
+      <form id="formMotorista" style="display:flex;flex-direction:column;gap:16px">
+        <div>
+          <label style="display:block;font-weight:600;margin-bottom:6px;color:var(--branco);font-size:.92rem">📍 Cidade / Central</label>
+          <select id="motCidade" required style="width:100%;padding:13px;border:1px solid var(--borda);border-radius:var(--radius-sm);font-size:1em;background:var(--dark3);color:var(--branco)">
+            <option value="">Carregando cidades...</option>
+          </select>
+        </div>
+        <div>
+          <label style="display:block;font-weight:600;margin-bottom:6px;color:var(--branco);font-size:.92rem">👤 Nome completo</label>
+          <input type="text" id="motNome" required placeholder="Seu nome completo"
+            style="width:100%;padding:13px;border:1px solid var(--borda);border-radius:var(--radius-sm);font-size:1em;background:var(--dark3);color:var(--branco)">
+        </div>
+        <div>
+          <label style="display:block;font-weight:600;margin-bottom:6px;color:var(--branco);font-size:.92rem">📱 WhatsApp</label>
+          <input type="text" id="motWhats" required placeholder="(34) 99999-0000"
+            style="width:100%;padding:13px;border:1px solid var(--borda);border-radius:var(--radius-sm);font-size:1em;background:var(--dark3);color:var(--branco)">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <div>
+            <label style="display:block;font-weight:600;margin-bottom:6px;color:var(--branco);font-size:.92rem">🪪 Número da CNH</label>
+            <input type="text" id="motCnh" required placeholder="00000000000"
+              style="width:100%;padding:13px;border:1px solid var(--borda);border-radius:var(--radius-sm);font-size:1em;background:var(--dark3);color:var(--branco)">
+          </div>
+          <div>
+            <label style="display:block;font-weight:600;margin-bottom:6px;color:var(--branco);font-size:.92rem">📅 Validade da CNH</label>
+            <input type="date" id="motCnhValidade" required
+              style="width:100%;padding:13px;border:1px solid var(--borda);border-radius:var(--radius-sm);font-size:1em;background:var(--dark3);color:var(--branco)">
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:16px">
+          <div>
+            <label style="display:block;font-weight:600;margin-bottom:6px;color:var(--branco);font-size:.92rem">🚗 Modelo do carro</label>
+            <input type="text" id="motModelo" required placeholder="Ex: Onix 1.0"
+              style="width:100%;padding:13px;border:1px solid var(--borda);border-radius:var(--radius-sm);font-size:1em;background:var(--dark3);color:var(--branco)">
+          </div>
+          <div>
+            <label style="display:block;font-weight:600;margin-bottom:6px;color:var(--branco);font-size:.92rem">🎨 Cor</label>
+            <input type="text" id="motCor" required placeholder="Branco"
+              style="width:100%;padding:13px;border:1px solid var(--borda);border-radius:var(--radius-sm);font-size:1em;background:var(--dark3);color:var(--branco)">
+          </div>
+          <div>
+            <label style="display:block;font-weight:600;margin-bottom:6px;color:var(--branco);font-size:.92rem">📆 Ano</label>
+            <input type="number" id="motAno" required placeholder="2020" min="1980" max="2027"
+              style="width:100%;padding:13px;border:1px solid var(--borda);border-radius:var(--radius-sm);font-size:1em;background:var(--dark3);color:var(--branco)">
+          </div>
+        </div>
+        <div>
+          <label style="display:block;font-weight:600;margin-bottom:6px;color:var(--branco);font-size:.92rem">🔢 Placa</label>
+          <input type="text" id="motPlaca" required placeholder="ABC1D23"
+            style="width:100%;padding:13px;border:1px solid var(--borda);border-radius:var(--radius-sm);font-size:1em;background:var(--dark3);color:var(--branco);text-transform:uppercase">
+        </div>
+        <div>
+          <label style="display:block;font-weight:600;margin-bottom:6px;color:var(--branco);font-size:.92rem">💳 Plano de adesão</label>
+          <select id="motPlano" style="width:100%;padding:13px;border:1px solid var(--borda);border-radius:var(--radius-sm);font-size:1em;background:var(--dark3);color:var(--branco)">
+            <option value="mensal">Mensal</option>
+            <option value="semanal">Semanal</option>
+          </select>
+        </div>
+
+        <button type="submit" id="btnEnviarCadastro" class="btn-p" style="border:none;cursor:pointer;width:100%;text-align:center;margin-top:8px">
+          Continuar para pagamento →
+        </button>
+        <div id="cadastroErro" style="display:none;color:#ff6b6b;font-size:.9rem;text-align:center"></div>
+      </form>
+
+      <!-- ETAPA 2: PAGAMENTO + COMPROVANTE -->
+      <div id="etapaPagamento" style="display:none;flex-direction:column;gap:18px">
+        <div style="text-align:center">
+          <div style="font-size:2.4rem;margin-bottom:8px">✅</div>
+          <h3 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.3rem;margin-bottom:8px">Pré-cadastro realizado!</h3>
+          <p style="color:var(--cinza);font-size:.95rem" id="pagamentoTexto"></p>
+        </div>
+        <div style="background:var(--dark3);border:1px solid var(--verde-glow);border-radius:var(--radius-sm);padding:20px;text-align:center">
+          <div style="font-size:.78rem;color:var(--cinza);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">Valor a pagar</div>
+          <div id="pagamentoValor" style="font-family:'Syne',sans-serif;font-size:2rem;font-weight:900;color:var(--verde);margin-bottom:14px"></div>
+          <div style="font-size:.78rem;color:var(--cinza);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">Chave PIX</div>
+          <div id="pagamentoPix" style="font-family:monospace;font-size:1rem;font-weight:700;color:var(--branco);word-break:break-all;background:rgba(255,255,255,0.04);padding:10px;border-radius:8px"></div>
+        </div>
+        <div>
+          <label style="display:block;font-weight:600;margin-bottom:6px;color:var(--branco);font-size:.92rem">📸 Envie o comprovante de pagamento</label>
+          <input type="file" id="motComprovante" accept="image/*,application/pdf" required
+            style="width:100%;padding:13px;border:1px solid var(--borda);border-radius:var(--radius-sm);font-size:.92rem;background:var(--dark3);color:var(--branco)">
+        </div>
+        <button type="button" id="btnEnviarComprovante" class="btn-p" style="border:none;cursor:pointer;width:100%;text-align:center">
+          Enviar comprovante e liberar acesso →
+        </button>
+        <div id="comprovanteErro" style="display:none;color:#ff6b6b;font-size:.9rem;text-align:center"></div>
+      </div>
+
+      <!-- ETAPA 3: SUCESSO -->
+      <div id="etapaSucesso" style="display:none;text-align:center;flex-direction:column;gap:14px">
+        <div style="font-size:3rem">🚀</div>
+        <h3 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.4rem">Tudo certo!</h3>
+        <p style="color:var(--cinza);font-size:.95rem" id="sucessoTexto"></p>
+        <p style="color:var(--cinza);font-size:.85rem">
+          Em caso de dúvidas ou problemas, fale com o suporte BecaMob:
+          <a href="https://wa.me/5534984039955" target="_blank" style="color:var(--verde);font-weight:700;text-decoration:none">(34) 98403-9955</a>
+        </p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
 <footer>
   <div class="container">
     <div class="footer-inner">
@@ -859,6 +990,204 @@ revealEls.forEach(el => observer.observe(el));
 window.addEventListener('scroll', () => {
   document.getElementById('hdr').style.background = window.scrollY > 40 ? 'rgba(4,8,15,0.98)' : 'rgba(4,8,15,0.85)';
 });
+</script>
+<script>
+// ====================== LANDING: CENTRAIS + CADASTRO MOTORISTA ======================
+(function() {
+  const API_BASE = '';
+
+  // ---- 1. Carregar cidades/centrais ----
+  async function carregarCidades() {
+    const loading = document.getElementById('cidadesLoading');
+    const grid    = document.getElementById('cidadesGrid');
+    const vazio   = document.getElementById('cidadesVazio');
+    const selectCidade = document.getElementById('motCidade');
+
+    try {
+      const r = await fetch(API_BASE + '/api/landing/cidades');
+      const data = await r.json();
+      const cidades = (data && data.sucesso && Array.isArray(data.cidades)) ? data.cidades : [];
+
+      if (loading) loading.style.display = 'none';
+
+      if (!cidades.length) {
+        if (vazio) vazio.style.display = 'block';
+        if (selectCidade) selectCidade.innerHTML = '<option value="">Nenhuma central disponível ainda</option>';
+        return;
+      }
+
+      // Cards de centrais
+      if (grid) {
+        grid.style.display = 'grid';
+        grid.innerHTML = cidades.map(function(c) {
+          const numero = (c.central || '').replace(/\D/g, '');
+          const linkChamar = numero
+            ? 'https://wa.me/' + numero + '?text=' + encodeURIComponent('Olá! Quero chamar um BecaMob agora. 🚗')
+            : '#cadastro-motorista';
+          return '' +
+            '<div class="pq-card reveal" style="background:var(--card);border:1px solid var(--borda);border-radius:var(--radius);padding:28px;text-align:left">' +
+              '<div style="font-family:Syne,sans-serif;font-weight:800;font-size:1.2rem;margin-bottom:6px;color:var(--branco)">' + escapeHtml(c.cidade) + (c.estado ? ' - ' + escapeHtml(c.estado) : '') + '</div>' +
+              '<div style="color:var(--cinza);font-size:.88rem;margin-bottom:18px">' + escapeHtml(c.nomeMarca || 'BecaMob') + '</div>' +
+              '<a href="' + linkChamar + '" target="_blank" class="btn-p" style="display:block;text-align:center;font-size:.9rem;padding:12px 20px">🚗 Chamar um BecaMob agora</a>' +
+            '</div>';
+        }).join('');
+      }
+
+      // Select do formulário de motorista
+      if (selectCidade) {
+        selectCidade.innerHTML = '<option value="">Selecione sua cidade...</option>' +
+          cidades.map(function(c) {
+            return '<option value="' + c.id + '">' + escapeHtml(c.cidade) + (c.estado ? ' - ' + escapeHtml(c.estado) : '') + '</option>';
+          }).join('');
+      }
+    } catch (e) {
+      if (loading) loading.textContent = 'Não foi possível carregar as cidades agora. Tente recarregar a página.';
+      console.error('[Landing] Erro ao carregar cidades:', e);
+    }
+  }
+
+  function escapeHtml(str) {
+    return String(str || '').replace(/[&<>"']/g, function(ch) {
+      return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[ch];
+    });
+  }
+
+  // ---- 2. Pré-cadastro do motorista ----
+  let dadosCadastro = null; // guarda motoristaId, token, etc entre etapas
+
+  const formMotorista = document.getElementById('formMotorista');
+  if (formMotorista) {
+    formMotorista.addEventListener('submit', async function(ev) {
+      ev.preventDefault();
+
+      const erroEl = document.getElementById('cadastroErro');
+      const btn    = document.getElementById('btnEnviarCadastro');
+      if (erroEl) erroEl.style.display = 'none';
+
+      const payload = {
+        adminId:     document.getElementById('motCidade').value,
+        nomeCompleto:document.getElementById('motNome').value.trim(),
+        whatsapp:    document.getElementById('motWhats').value.trim(),
+        cnh:         document.getElementById('motCnh').value.trim(),
+        cnhValidade: document.getElementById('motCnhValidade').value,
+        modeloCarro: document.getElementById('motModelo').value.trim(),
+        corCarro:    document.getElementById('motCor').value.trim(),
+        anoCarro:    document.getElementById('motAno').value,
+        placa:       document.getElementById('motPlaca').value.trim().toUpperCase(),
+        plano:       document.getElementById('motPlano').value,
+      };
+
+      if (!payload.adminId) {
+        if (erroEl) { erroEl.textContent = 'Selecione sua cidade.'; erroEl.style.display = 'block'; }
+        return;
+      }
+
+      if (btn) { btn.disabled = true; btn.textContent = 'Enviando...'; }
+
+      try {
+        const r = await fetch(API_BASE + '/api/landing/motorista/pre-cadastro', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await r.json();
+
+        if (!data.sucesso) {
+          if (erroEl) { erroEl.textContent = data.erro || 'Erro ao realizar pré-cadastro.'; erroEl.style.display = 'block'; }
+          if (btn) { btn.disabled = false; btn.textContent = 'Continuar para pagamento →'; }
+          return;
+        }
+
+        dadosCadastro = data;
+
+        // Mostrar etapa de pagamento
+        formMotorista.style.display = 'none';
+        const etapaPag = document.getElementById('etapaPagamento');
+        if (etapaPag) etapaPag.style.display = 'flex';
+
+        const valorEl = document.getElementById('pagamentoValor');
+        const pixEl   = document.getElementById('pagamentoPix');
+        const textoEl = document.getElementById('pagamentoTexto');
+
+        if (valorEl) valorEl.textContent = 'R$ ' + Number(data.valor || 0).toFixed(2).replace('.', ',') + ' / ' + (data.plano === 'semanal' ? 'semana' : 'mês');
+        if (pixEl)   pixEl.textContent   = data.chavePix || 'Chave PIX não configurada — entre em contato com o suporte.';
+        if (textoEl) textoEl.textContent = data.mensagem || 'Envie o comprovante de pagamento para liberar seu acesso.';
+
+      } catch (e) {
+        if (erroEl) { erroEl.textContent = 'Erro de conexão. Tente novamente.'; erroEl.style.display = 'block'; }
+        if (btn) { btn.disabled = false; btn.textContent = 'Continuar para pagamento →'; }
+        console.error('[Landing] Erro pré-cadastro:', e);
+      }
+    });
+  }
+
+  // ---- 3. Upload do comprovante + ativação ----
+  const btnComprovante = document.getElementById('btnEnviarComprovante');
+  if (btnComprovante) {
+    btnComprovante.addEventListener('click', async function() {
+      const fileInput = document.getElementById('motComprovante');
+      const erroEl    = document.getElementById('comprovanteErro');
+      if (erroEl) erroEl.style.display = 'none';
+
+      if (!fileInput || !fileInput.files || !fileInput.files[0]) {
+        if (erroEl) { erroEl.textContent = 'Selecione o arquivo do comprovante.'; erroEl.style.display = 'block'; }
+        return;
+      }
+      if (!dadosCadastro || !dadosCadastro.motoristaId) {
+        if (erroEl) { erroEl.textContent = 'Sessão expirada. Recarregue a página e tente novamente.'; erroEl.style.display = 'block'; }
+        return;
+      }
+
+      btnComprovante.disabled = true;
+      btnComprovante.textContent = 'Enviando...';
+
+      try {
+        // 1) Upload do arquivo
+        const formData = new FormData();
+        formData.append('arquivo', fileInput.files[0]);
+
+        const rUp = await fetch(API_BASE + '/api/landing-upload/comprovante', {
+          method: 'POST',
+          body: formData
+        });
+        const dataUp = await rUp.json();
+
+        if (!dataUp.sucesso) {
+          throw new Error(dataUp.erro || 'Erro ao enviar arquivo.');
+        }
+
+        // 2) Confirmar comprovante -> ativa motorista + envia token
+        const rConf = await fetch(API_BASE + '/api/landing/motorista/comprovante', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ motoristaId: dadosCadastro.motoristaId, fotoUrl: dataUp.url })
+        });
+        const dataConf = await rConf.json();
+
+        if (!dataConf.sucesso) {
+          throw new Error(dataConf.erro || 'Erro ao confirmar comprovante.');
+        }
+
+        // Mostrar etapa de sucesso
+        const etapaPag = document.getElementById('etapaPagamento');
+        const etapaSuc = document.getElementById('etapaSucesso');
+        const textoSuc = document.getElementById('sucessoTexto');
+        if (etapaPag) etapaPag.style.display = 'none';
+        if (etapaSuc) etapaSuc.style.display = 'flex';
+        if (textoSuc) textoSuc.textContent = dataConf.mensagem || 'Comprovante enviado! Você receberá seu token de acesso no WhatsApp em breve.';
+
+      } catch (e) {
+        if (erroEl) { erroEl.textContent = e.message || 'Erro ao enviar comprovante.'; erroEl.style.display = 'block'; }
+        btnComprovante.disabled = false;
+        btnComprovante.textContent = 'Enviar comprovante e liberar acesso →';
+        console.error('[Landing] Erro comprovante:', e);
+      }
+    });
+  }
+
+  // ---- Iniciar ----
+  carregarCidades();
+})();
 </script>
 </body>
 </html>
