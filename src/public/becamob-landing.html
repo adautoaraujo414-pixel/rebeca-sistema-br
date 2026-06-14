@@ -163,6 +163,7 @@ footer ul a:hover{color:var(--roxo)}
   .num-grid{grid-template-columns:1fr 1fr}
 }
 </style>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDWC83FAQzNip6rceKrbNYbiwmk0USYFDM&libraries=places&language=pt-BR" defer></script>
 </head>
 <body>
 <header id="hdr">
@@ -589,27 +590,38 @@ async function criarAdmin(){
 
 <script>
 var _cidadeTimer = null;
-async function buscarCidades(q) {
-  const box = document.getElementById('cidadeSugestoes');
-  if (!q || q.length < 2) { box.style.display='none'; return; }
-  clearTimeout(_cidadeTimer);
-  _cidadeTimer = setTimeout(async () => {
-    try {
-      const r = await fetch('/api/landing/places/autocomplete?input='+encodeURIComponent(q));
-      const data = await r.json();
-      const preds = data.predictions || [];
-      if (!preds.length) { box.style.display='none'; return; }
-      box.innerHTML = preds.map(p => `
-        <div onclick="selecionarCidade('${p.place_id}','${p.structured_formatting.main_text.replace(/'/g,"\'")}','${(p.structured_formatting.secondary_text||'').replace(/'/g,"\'")}','${p.description.replace(/'/g,"\'")}')}"
-          style="padding:11px 14px;cursor:pointer;font-size:.88rem;border-bottom:1px solid var(--borda);transition:background .15s"
-          onmouseover="this.style.background='var(--roxo-soft)'" onmouseout="this.style.background=''">
-          <span style="color:var(--branco);font-weight:600">${p.structured_formatting.main_text}</span>
-          <span style="color:var(--cinza);font-size:.8rem"> — ${p.structured_formatting.secondary_text||''}</span>
-        </div>`).join('');
-      box.style.display = 'block';
-    } catch(e) { box.style.display='none'; }
-  }, 300);
+function buscarCidades(q) { /* substituido pelo Places Autocomplete nativo */ }
+function initPlacesAutocomplete() {
+  const input = document.getElementById('adCidade');
+  if (!input || !window.google) return;
+  const ac = new google.maps.places.Autocomplete(input, {
+    types: ['(cities)'],
+    componentRestrictions: { country: 'br' },
+    language: 'pt-BR',
+    fields: ['name', 'address_components', 'place_id']
+  });
+  ac.addListener('place_changed', () => {
+    const place = ac.getPlace();
+    const nome = place.name || input.value;
+    const comps = place.address_components || [];
+    const uf = comps.find(c => c.types.includes('administrative_area_level_1'));
+    const estado = uf ? uf.short_name : '';
+    document.getElementById('adEstado').value = estado;
+    document.getElementById('adCidadeCompleta').value = nome + (estado ? ' - ' + estado : '');
+    // Card de confirmação
+    const card = document.getElementById('cidadeSelecionada');
+    document.getElementById('cidadeNomeConfirm').textContent = nome;
+    document.getElementById('cidadeEstadoConfirm').textContent = estado ? estado + ' — Brasil' : 'Brasil';
+    if (card) card.style.display = 'flex';
+    // Preencher nome da central automaticamente
+    const nomeCentral = document.getElementById('adNomeMarca');
+    if (nomeCentral && !nomeCentral.value) nomeCentral.value = 'BecaMob ' + nome;
+    // Esconder dropdown customizado
+    const box = document.getElementById('cidadeSugestoes');
+    if (box) box.style.display = 'none';
+  });
 }
+
 async function selecionarCidade(placeId, nome, secondary, descricao) {
   document.getElementById('adCidade').value = nome;
   document.getElementById('cidadeSugestoes').style.display = 'none';
@@ -645,5 +657,7 @@ document.addEventListener('click', e => {
 });
 </script>
 
+<script>window.addEventListener("load", () => { if(window.google) initPlacesAutocomplete(); else setTimeout(initPlacesAutocomplete, 1500); });
+</script>
 </body>
 </html>
