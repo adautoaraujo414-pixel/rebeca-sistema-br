@@ -190,4 +190,10 @@ router.get('/painel', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/cozinha-painel.html'));
 });
 
+
+// Landing page Rebeca Cozinha
+router.get('/landing', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/rebeca-cozinha-landing.html'));
+});
+
 module.exports = router;
