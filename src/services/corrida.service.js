@@ -218,6 +218,27 @@ const CorridaService = {
     listarTodas(filtros) { return this.listar(null, filtros); },
     obterEstatisticas(adminId) { return this.estatisticas(adminId); },
     corridaAtivaMotorista(motoristaId) { return this.buscarCorridaAtivaMotorista(motoristaId); },
-};
 
+    async avaliar(corridaId, nota, comentario = '') {
+        const { Corrida, Motorista } = require('../models');
+        const corrida = await Corrida.findById(corridaId);
+        if (!corrida) return { sucesso: false, erro: 'Corrida não encontrada' };
+        corrida.avaliacao = { nota: Number(nota), comentario, data: new Date() };
+        await corrida.save();
+        // Recalcular média do motorista
+        if (corrida.motoristaId) {
+            const corridas = await Corrida.find({
+                motoristaId: corrida.motoristaId,
+                'avaliacao.nota': { $exists: true, $gt: 0 }
+            }).select('avaliacao.nota');
+            if (corridas.length > 0) {
+                const soma = corridas.reduce((s, c) => s + (c.avaliacao?.nota || 0), 0);
+                const media = Math.round((soma / corridas.length) * 10) / 10;
+                await Motorista.findByIdAndUpdate(corrida.motoristaId, { mediaAvaliacoes: media, totalAvaliacoes: corridas.length });
+            }
+        }
+        return { sucesso: true, nota, mediaAtualizada: true };
+    },
+
+};
 module.exports = CorridaService;

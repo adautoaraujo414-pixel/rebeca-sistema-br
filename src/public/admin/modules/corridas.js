@@ -13,7 +13,8 @@ const CorridasModule = {
             const params = new URLSearchParams();
             const adminId = this.getAdminId();
             if (adminId) params.append('adminId', adminId);
-            if (filtros.status) params.append('status', filtros.status);
+            const statusFiltro = filtros.status || 'em_andamento,a_caminho,aguardando_cliente';
+            params.append('status', statusFiltro);
             if (filtros.motoristaId) params.append('motoristaId', filtros.motoristaId);
             if (params.toString()) url += '?' + params.toString();
             

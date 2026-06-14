@@ -120,6 +120,26 @@ const MotoristasModule = {
             return {};
         }
     }
+
+    bloquear: async function(motoristaId, bloquear = true) {
+        const adminId = this.getAdminId();
+        const token = localStorage.getItem('token') || '';
+        const res = await fetch('/api/motoristas/' + motoristaId + (bloquear ? '/bloquear' : '/desbloquear'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+            body: JSON.stringify({ adminId })
+        });
+        return res.json();
+    },
+
+    exibirAvaliacao: function(motorista) {
+        const nota = motorista.mediaAvaliacoes || 0;
+        const total = motorista.totalAvaliacoes || 0;
+        if (!nota) return '<span style="color:#888">Sem avaliações</span>';
+        const estrelas = '⭐'.repeat(Math.round(nota));
+        return estrelas + ' ' + nota.toFixed(1) + ' (' + total + ' aval.)';
+    },
+
 };
 
 if (typeof module !== 'undefined') module.exports = MotoristasModule;
