@@ -1026,29 +1026,17 @@ document.addEventListener('DOMContentLoaded', () => {
                             🔴 Desconectado
                         </div>
 
-                        <!-- FORMULÁRIO META -->
+                        <!-- FORMULÁRIO META — só número, token/phoneId vêm do servidor -->
                         <div id="metaConfigForm" style="text-align:left;">
-                            <div style="margin-bottom:14px;">
-                                <label style="display:block;font-weight:600;margin-bottom:5px;color:#333;">📞 Número WhatsApp Business</label>
-                                <input type="text" id="metaNumeroWpp" placeholder="(14) 99999-0000 ou 5514999990000"
-                                    style="width:100%;padding:12px;border:2px solid #ddd;border-radius:10px;font-size:1em;">
-                                <small style="color:#888;">Número verificado no Meta Business Manager</small>
-                            </div>
-                            <div style="margin-bottom:14px;">
-                                <label style="display:block;font-weight:600;margin-bottom:5px;color:#333;">🔑 Token Permanente Meta</label>
-                                <input type="password" id="metaToken" placeholder="EAAxxxxxxxxxxxxxxx"
-                                    style="width:100%;padding:12px;border:2px solid #ddd;border-radius:10px;font-size:1em;">
-                                <small style="color:#888;">Token de acesso do seu App no Meta Developers</small>
-                            </div>
-                            <div style="margin-bottom:14px;">
-                                <label style="display:block;font-weight:600;margin-bottom:5px;color:#333;">📟 Phone Number ID</label>
-                                <input type="text" id="metaPhoneId" placeholder="1234567890123456"
-                                    style="width:100%;padding:12px;border:2px solid #ddd;border-radius:10px;font-size:1em;">
-                                <small style="color:#888;">ID do número no painel Meta → WhatsApp → Números de telefone</small>
+                            <div style="margin-bottom:20px;">
+                                <label style="display:block;font-weight:600;margin-bottom:8px;color:#333;font-size:1.05em;">📞 Número WhatsApp Business</label>
+                                <input type="text" id="metaNumeroWpp" placeholder="(14) 99999-0000"
+                                    style="width:100%;padding:14px;border:2px solid #ddd;border-radius:10px;font-size:1.1em;box-sizing:border-box;">
+                                <small style="color:#888;margin-top:5px;display:block;">Digite o número que vai receber as mensagens dos clientes</small>
                             </div>
                             <button onclick="conectarMetaWhatsApp()" id="btnConectarMeta"
-                                style="width:100%;padding:14px;background:#25D366;color:#fff;border:none;border-radius:10px;font-size:1.05em;font-weight:700;cursor:pointer;margin-bottom:10px;">
-                                ✅ Conectar WhatsApp
+                                style="width:100%;padding:16px;background:#25D366;color:#fff;border:none;border-radius:10px;font-size:1.1em;font-weight:700;cursor:pointer;margin-bottom:10px;">
+                                ✅ Ativar WhatsApp
                             </button>
                             <button onclick="testarConexaoMeta()" id="btnTestarMeta"
                                 style="width:100%;padding:12px;background:#f0f0f0;color:#333;border:1px solid #ddd;border-radius:10px;font-size:0.95em;font-weight:600;cursor:pointer;">
