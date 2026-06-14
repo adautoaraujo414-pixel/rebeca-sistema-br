@@ -928,6 +928,93 @@ _Cadastro enviado pela landing page BecaMob_`;
   </div>
 </section>
 
+
+<!-- ====================== CRIAR ADMIN (PROTEGIDO) ====================== -->
+<section id="nova-central" style="padding:90px 0;background:var(--dark3)">
+  <div class="container reveal">
+    <h2 class="sec-titulo">Abra uma central BecaMob na sua cidade.</h2>
+    <p class="sec-sub">Área restrita — somente parceiros autorizados. Digite a senha para acessar o cadastro.</p>
+
+    <div style="max-width:560px">
+
+      <!-- CADEADO -->
+      <div id="cadeadoBox" style="background:var(--card);border:1px solid var(--borda);border-radius:var(--radius);padding:36px;text-align:center">
+        <div style="font-size:3.5rem;margin-bottom:16px">🔒</div>
+        <p style="color:var(--cinza);font-size:.95rem;margin-bottom:18px">Digite a senha para liberar o cadastro de nova central.</p>
+        <div style="display:flex;gap:10px">
+          <input type="password" id="senhaAcesso" placeholder="••••••"
+            style="flex:1;padding:13px;border:1px solid var(--borda);border-radius:var(--radius-sm);font-size:1em;background:var(--dark3);color:var(--branco)">
+          <button type="button" id="btnDesbloquear" class="btn-p" style="border:none;cursor:pointer;white-space:nowrap">
+            Acessar →
+          </button>
+        </div>
+        <div id="cadeadoErro" style="display:none;color:#ff6b6b;font-size:.88rem;margin-top:10px"></div>
+      </div>
+
+      <!-- FORMULÁRIO DE CRIAÇÃO (oculto até senha correta) -->
+      <div id="formAdminBox" style="display:none;background:var(--card);border:1px solid var(--verde-glow);border-radius:var(--radius);padding:36px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:24px">
+          <span style="font-size:1.5rem">🏙️</span>
+          <h3 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.2rem;color:var(--branco)">Nova Central BecaMob</h3>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div>
+            <label style="display:block;font-weight:600;margin-bottom:5px;color:var(--branco);font-size:.88rem">🏷️ Nome da marca / central</label>
+            <input type="text" id="adNomeMarca" placeholder="Ex: BecaMob Frutal"
+              style="width:100%;padding:12px;border:1px solid var(--borda);border-radius:var(--radius-sm);font-size:.95em;background:var(--dark3);color:var(--branco)">
+          </div>
+          <div style="display:grid;grid-template-columns:2fr 1fr;gap:12px">
+            <div>
+              <label style="display:block;font-weight:600;margin-bottom:5px;color:var(--branco);font-size:.88rem">📍 Cidade</label>
+              <input type="text" id="adCidade" placeholder="Ex: Frutal"
+                style="width:100%;padding:12px;border:1px solid var(--borda);border-radius:var(--radius-sm);font-size:.95em;background:var(--dark3);color:var(--branco)">
+            </div>
+            <div>
+              <label style="display:block;font-weight:600;margin-bottom:5px;color:var(--branco);font-size:.88rem">🗺️ Estado (UF)</label>
+              <input type="text" id="adEstado" placeholder="MG" maxlength="2"
+                style="width:100%;padding:12px;border:1px solid var(--borda);border-radius:var(--radius-sm);font-size:.95em;background:var(--dark3);color:var(--branco);text-transform:uppercase">
+            </div>
+          </div>
+          <div>
+            <label style="display:block;font-weight:600;margin-bottom:5px;color:var(--branco);font-size:.88rem">📱 WhatsApp da central (com DDD)</label>
+            <input type="text" id="adWhatsapp" placeholder="(34) 99999-0000"
+              style="width:100%;padding:12px;border:1px solid var(--borda);border-radius:var(--radius-sm);font-size:.95em;background:var(--dark3);color:var(--branco)">
+            <small style="color:var(--cinza);font-size:.78rem">Aparece nos cards de cidade: "BecaMob Frutal — (34) 99999-0000"</small>
+          </div>
+          <div>
+            <label style="display:block;font-weight:600;margin-bottom:5px;color:var(--branco);font-size:.88rem">📧 E-mail de acesso ao painel</label>
+            <input type="email" id="adEmail" placeholder="central@becamob.com"
+              style="width:100%;padding:12px;border:1px solid var(--borda);border-radius:var(--radius-sm);font-size:.95em;background:var(--dark3);color:var(--branco)">
+          </div>
+          <div>
+            <label style="display:block;font-weight:600;margin-bottom:5px;color:var(--branco);font-size:.88rem">🔒 Senha do painel</label>
+            <input type="password" id="adSenha" placeholder="Mínimo 6 caracteres"
+              style="width:100%;padding:12px;border:1px solid var(--borda);border-radius:var(--radius-sm);font-size:.95em;background:var(--dark3);color:var(--branco)">
+          </div>
+
+          <button type="button" id="btnCriarAdmin" class="btn-p" style="border:none;cursor:pointer;width:100%;text-align:center;margin-top:6px">
+            Criar central agora →
+          </button>
+          <div id="adminErro" style="display:none;color:#ff6b6b;font-size:.88rem;text-align:center"></div>
+        </div>
+      </div>
+
+      <!-- SUCESSO -->
+      <div id="adminSucesso" style="display:none;background:var(--card);border:1px solid var(--verde-glow);border-radius:var(--radius);padding:36px;text-align:center">
+        <div style="font-size:3rem;margin-bottom:12px">🚀</div>
+        <h3 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.3rem;margin-bottom:10px">Central criada!</h3>
+        <p id="adminSucessoTexto" style="color:var(--cinza);font-size:.95rem;margin-bottom:18px"></p>
+        <p style="color:var(--cinza);font-size:.85rem">
+          Acesse o painel para configurar PIX e mensalidades:
+          <a href="/painel-admin.html" style="color:var(--verde);font-weight:700;text-decoration:none">Ir para o painel →</a>
+        </p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
 <footer>
   <div class="container">
     <div class="footer-inner">
@@ -1187,6 +1274,90 @@ window.addEventListener('scroll', () => {
 
   // ---- Iniciar ----
   carregarCidades();
+})();
+</script>
+<script>
+// ====================== CRIAR ADMIN (CADEADO) ======================
+(function() {
+  const SENHA_OK = '121212';
+
+  const btnDesbloquear = document.getElementById('btnDesbloquear');
+  const senhaAcesso    = document.getElementById('senhaAcesso');
+  const cadeadoErro    = document.getElementById('cadeadoErro');
+  const cadeadoBox     = document.getElementById('cadeadoBox');
+  const formAdminBox   = document.getElementById('formAdminBox');
+
+  function tentarDesbloquear() {
+    if (!senhaAcesso) return;
+    if (senhaAcesso.value === SENHA_OK) {
+      cadeadoBox.style.display = 'none';
+      formAdminBox.style.display = 'block';
+    } else {
+      if (cadeadoErro) { cadeadoErro.textContent = 'Senha incorreta.'; cadeadoErro.style.display = 'block'; }
+      senhaAcesso.value = '';
+      senhaAcesso.focus();
+    }
+  }
+
+  if (btnDesbloquear) btnDesbloquear.addEventListener('click', tentarDesbloquear);
+  if (senhaAcesso) senhaAcesso.addEventListener('keydown', function(e) { if (e.key === 'Enter') tentarDesbloquear(); });
+
+  const btnCriarAdmin = document.getElementById('btnCriarAdmin');
+  if (btnCriarAdmin) {
+    btnCriarAdmin.addEventListener('click', async function() {
+      const erroEl = document.getElementById('adminErro');
+      if (erroEl) erroEl.style.display = 'none';
+
+      const nomeMarca     = (document.getElementById('adNomeMarca')?.value || '').trim();
+      const cidade        = (document.getElementById('adCidade')?.value || '').trim();
+      const estado        = (document.getElementById('adEstado')?.value || '').trim().toUpperCase();
+      const whatsappCentral = (document.getElementById('adWhatsapp')?.value || '').trim();
+      const email         = (document.getElementById('adEmail')?.value || '').trim();
+      const senha         = (document.getElementById('adSenha')?.value || '').trim();
+
+      if (!nomeMarca || !cidade || !whatsappCentral || !email || !senha) {
+        if (erroEl) { erroEl.textContent = 'Preencha todos os campos.'; erroEl.style.display = 'block'; }
+        return;
+      }
+      if (senha.length < 6) {
+        if (erroEl) { erroEl.textContent = 'Senha deve ter pelo menos 6 caracteres.'; erroEl.style.display = 'block'; }
+        return;
+      }
+
+      btnCriarAdmin.disabled = true;
+      btnCriarAdmin.textContent = 'Criando central...';
+
+      try {
+        const r = await fetch('/api/landing/admin/criar', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ senhaMaster: SENHA_OK, nomeMarca, cidade, estado, whatsappCentral, email, senha })
+        });
+        const data = await r.json();
+
+        if (!data.sucesso) {
+          if (erroEl) { erroEl.textContent = data.erro || 'Erro ao criar central.'; erroEl.style.display = 'block'; }
+          btnCriarAdmin.disabled = false;
+          btnCriarAdmin.textContent = 'Criar central agora →';
+          return;
+        }
+
+        formAdminBox.style.display = 'none';
+        const sucEl = document.getElementById('adminSucesso');
+        const sucTxt = document.getElementById('adminSucessoTexto');
+        if (sucEl) sucEl.style.display = 'block';
+        if (sucTxt) sucTxt.textContent = data.mensagem || 'Central criada! Ja aparece na lista de cidades.';
+
+        // Recarregar lista de cidades para mostrar a nova central
+        setTimeout(function() { carregarCidades && carregarCidades(); }, 1000);
+
+      } catch(e) {
+        if (erroEl) { erroEl.textContent = 'Erro de conexao. Tente novamente.'; erroEl.style.display = 'block'; }
+        btnCriarAdmin.disabled = false;
+        btnCriarAdmin.textContent = 'Criar central agora →';
+      }
+    });
+  }
 })();
 </script>
 </body>

@@ -274,4 +274,51 @@ router.get('/rastrear/:token', async (req, res) => {
     }
 });
 
+
+// ── POST /api/landing/admin/criar ────────────────────────────────────
+// Cria novo admin de mobilidade — protegido por senha master da landing
+router.post('/admin/criar', async (req, res) => {
+    try {
+        const SENHA_MASTER = '121212';
+        const { senhaMaster, nomeMarca, cidade, estado, whatsappCentral, email, senha } = req.body;
+
+        if (senhaMaster !== SENHA_MASTER) {
+            return res.json({ sucesso: false, erro: 'Senha incorreta.' });
+        }
+        if (!nomeMarca || !cidade || !whatsappCentral || !email || !senha) {
+            return res.json({ sucesso: false, erro: 'Preencha todos os campos obrigatórios.' });
+        }
+
+        const existente = await Admin.findOne({ email: email.toLowerCase() });
+        if (existente) return res.json({ sucesso: false, erro: 'E-mail já cadastrado.' });
+
+        let tel = (whatsappCentral || '').replace(/\D/g, '');
+        if ((tel.length === 11 || tel.length === 10) && !tel.startsWith('55')) tel = '55' + tel;
+
+        const admin = await Admin.create({
+            nome: nomeMarca,
+            email: email.toLowerCase(),
+            senha,
+            empresa: nomeMarca,
+            nomeMarca,
+            cidade,
+            estado: estado || '',
+            whatsappCentral: tel,
+            ativo: true,
+            visibleLanding: true,
+            origem: 'landing_page',
+            tipoAdmin: 'transporte',
+        });
+
+        res.json({
+            sucesso: true,
+            adminId: admin._id,
+            mensagem: '✅ Central criada com sucesso! Já aparece na lista de cidades. Acesse o painel para configurar PIX e mensalidades.',
+        });
+    } catch (e) {
+        console.error('[Landing] Erro criar admin:', e.message);
+        res.json({ sucesso: false, erro: e.message });
+    }
+});
+
 module.exports = router;
