@@ -54,7 +54,7 @@ router.post('/configurar', auth, async (req, res) => {
 
         let boasVindasEnviado = false;
         try {
-            const r = await MetaWA.enviarTexto(numero, msgBoasVindas);
+            const r = await MetaWA.enviarTexto(numero, msgBoasVindas, instancia);
             boasVindasEnviado = r.sucesso;
             console.log('[MetaConfig] Boas-vindas enviado:', r);
         } catch(e) {
