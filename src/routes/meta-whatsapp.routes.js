@@ -159,15 +159,23 @@ router.post('/webhook', async (req, res) => {
         // Marcar como lido
         try { await MetaWA.marcarLido(msg.id); } catch(e) {}
 
-        // Buscar adminId pela instância Meta (phoneNumberId)
+        // Buscar instância do admin pelo phoneNumberId (roteamento multi-admin)
         const phoneNumberId = value?.metadata?.phone_number_id;
-        const inst = await InstanciaWhatsapp.findOne({
-            provider: 'meta',
-            $or: [
-                { metaPhoneId: phoneNumberId },
-                { apiKey: { $exists: true, $ne: '' } }
-            ]
-        });
+        const displayPhone  = value?.metadata?.display_phone_number || '';
+
+        // Busca 1: pelo Phone Number ID (mais preciso)
+        let inst = await InstanciaWhatsapp.findOne({ provider: 'meta', metaPhoneId: phoneNumberId });
+
+        // Busca 2: pelo número exibido (fallback)
+        if (!inst && displayPhone) {
+            const telNorm = displayPhone.replace(/\D/g, '');
+            inst = await InstanciaWhatsapp.findOne({ provider: 'meta', numeroWhatsapp: { $in: [telNorm, '55'+telNorm] } });
+        }
+
+        // Busca 3: última instância Meta ativa (fallback para admin único)
+        if (!inst) {
+            inst = await InstanciaWhatsapp.findOne({ provider: 'meta', status: 'conectado' }).sort({ updatedAt: -1 });
+        }
 
         if (!inst) {
             console.log('[MetaWebhook] Instância Meta não encontrada para phoneId:', phoneNumberId);
@@ -186,16 +194,23 @@ router.post('/webhook', async (req, res) => {
             _metaRaw:    msg,
         };
 
-        // Processar via RebecaService (mesmo fluxo da Evolution)
+        // Processar via RebecaService — mesmo fluxo da Evolution
         try {
             const RebecaService = require('../services/rebeca.service');
             if (RebecaService.processarMensagem) {
+                // Assinatura: processarMensagem(telefone, mensagem, nome, contexto)
                 await RebecaService.processarMensagem(
                     telefone,
                     textoMensagem,
-                    inst._id,
-                    inst.adminId,
-                    { tipo, msgId: msg.id }
+                    'Cliente',
+                    {
+                        instanciaId: inst._id,
+                        adminId:     inst.adminId,
+                        provider:    'meta',
+                        tipo,
+                        msgId:       msg.id,
+                        phoneNumberId,
+                    }
                 );
             }
         } catch(e) {
