@@ -2,12 +2,20 @@
 
 const axios = require('axios');
 
-const TOKEN    = process.env.META_WA_TOKEN;
-const PHONE_ID = process.env.META_WA_PHONE_ID;
-const BASE     = `https://graph.facebook.com/v20.0/${PHONE_ID}`;
+// Credenciais globais (fallback quando não há instância específica)
+const TOKEN_GLOBAL    = process.env.META_WA_TOKEN;
+const PHONE_ID_GLOBAL = process.env.META_WA_PHONE_ID;
 
-function _headers() {
-  return { Authorization: `Bearer ${TOKEN}`, 'Content-Type': 'application/json' };
+// Retorna token e phoneId corretos — prioriza credenciais da instância do admin
+function _creds(inst) {
+  const token   = inst?.apiKey      || TOKEN_GLOBAL;
+  const phoneId = inst?.metaPhoneId || PHONE_ID_GLOBAL;
+  return { token, phoneId, base: `https://graph.facebook.com/v20.0/${phoneId}` };
+}
+
+function _headers(token) {
+  const t = token || TOKEN_GLOBAL;
+  return { Authorization: `Bearer ${t}`, 'Content-Type': 'application/json' };
 }
 
 function _norm(tel) {
@@ -17,14 +25,15 @@ function _norm(tel) {
   return tel;
 }
 
-async function enviarTexto(telefone, texto) {
+async function enviarTexto(telefone, texto, inst) {
   try {
-    const r = await axios.post(`${BASE}/messages`, {
+    const { token, base } = _creds(inst);
+    const r = await axios.post(`${base}/messages`, {
       messaging_product: 'whatsapp',
       to: _norm(telefone),
       type: 'text',
       text: { body: texto }
-    }, { headers: _headers() });
+    }, { headers: _headers(token) });
     return { sucesso: true, messageId: r.data?.messages?.[0]?.id };
   } catch(e) {
     console.error('[MetaWA] enviarTexto erro:', e.response?.data || e.message);
@@ -32,9 +41,10 @@ async function enviarTexto(telefone, texto) {
   }
 }
 
-async function enviarImagem(telefone, imageUrl, legenda) {
+async function enviarImagem(telefone, imageUrl, legenda, inst) {
   try {
-    const r = await axios.post(`${BASE}/messages`, {
+    const { token, base } = _creds(inst);
+    const r = await axios.post(`${base}/messages`, {
       messaging_product: 'whatsapp',
       to: _norm(telefone),
       type: 'image',
@@ -96,24 +106,26 @@ async function listarTemplates() {
   }
 }
 
-async function marcarLido(messageId) {
+async function marcarLido(messageId, inst) {
   try {
-    await axios.post(`${BASE}/messages`, {
+    const { token, base } = _creds(inst);
+    await axios.post(`${base}/messages`, {
       messaging_product: 'whatsapp',
       status: 'read',
       message_id: messageId
-    }, { headers: _headers() });
+    }, { headers: _headers(token) });
     return { sucesso: true };
   } catch(e) {
     return { sucesso: false };
   }
 }
 
-async function testarConexao() {
+async function testarConexao(inst) {
   try {
+    const { token, phoneId } = _creds(inst);
     const r = await axios.get(
-      `https://graph.facebook.com/v20.0/${PHONE_ID}`,
-      { headers: _headers() }
+      `https://graph.facebook.com/v20.0/${phoneId}`,
+      { headers: _headers(token) }
     );
     return { sucesso: true, dados: r.data };
   } catch(e) {

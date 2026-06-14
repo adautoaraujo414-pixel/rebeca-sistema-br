@@ -83,7 +83,7 @@ router.get('/status', auth, async (req, res) => {
         const inst = await InstanciaWhatsapp.findOne({ adminId, provider: 'meta' });
         if (!inst) return res.json({ sucesso: true, configurado: false });
 
-        const conexao = await MetaWA.testarConexao();
+        const conexao = await MetaWA.testarConexao(inst);
         res.json({
             sucesso: true,
             configurado: true,
@@ -105,7 +105,7 @@ router.post('/testar', auth, async (req, res) => {
         if (!inst) return res.json({ sucesso: false, erro: 'WhatsApp Meta não configurado' });
 
         const r = await MetaWA.enviarTexto(inst.numeroWhatsapp,
-            '🔔 Teste BecaMob — conexão Meta WhatsApp funcionando! ✅');
+            '🔔 Teste BecaMob — conexão Meta WhatsApp funcionando! ✅', inst);
         res.json(r);
     } catch(e) {
         res.json({ sucesso: false, erro: e.message });
@@ -157,7 +157,7 @@ router.post('/webhook', async (req, res) => {
         console.log(`[MetaWebhook] 📥 De: ${telefone} | Tipo: ${tipo} | Texto: ${textoMensagem.slice(0,50)}`);
 
         // Marcar como lido
-        try { await MetaWA.marcarLido(msg.id); } catch(e) {}
+        try { await MetaWA.marcarLido(msg.id, inst); } catch(e) {}
 
         // Buscar instância do admin pelo phoneNumberId (roteamento multi-admin)
         const phoneNumberId = value?.metadata?.phone_number_id;
