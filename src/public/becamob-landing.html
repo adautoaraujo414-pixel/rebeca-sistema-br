@@ -589,29 +589,88 @@ async function criarAdmin(){
 
 <script>
 var _cidadeTimer = null;
-async function buscarCidades(q) {
+const MUNICIPIOS_BR = [
+  ["Frutal","MG"],["Guaicara","SP"],["Lins","SP"],["Birigui","SP"],["Aracatuba","SP"],
+  ["Bauru","SP"],["Marilia","SP"],["Presidente Prudente","SP"],["Sao Jose do Rio Preto","SP"],
+  ["Ribeirao Preto","SP"],["Campinas","SP"],["Sorocaba","SP"],["Sao Paulo","SP"],
+  ["Uberlandia","MG"],["Uberaba","MG"],["Belo Horizonte","MG"],["Montes Claros","MG"],
+  ["Governador Valadares","MG"],["Ipatinga","MG"],["Juiz de Fora","MG"],["Pocos de Caldas","MG"],
+  ["Varginha","MG"],["Pouso Alegre","MG"],["Patos de Minas","MG"],["Ituiutaba","MG"],
+  ["Iturama","MG"],["Ituverava","SP"],["Olimpia","SP"],["Catanduva","SP"],["Votuporanga","SP"],
+  ["Fernandopolis","SP"],["Jales","SP"],["Santa Fe do Sul","SP"],["Andradina","SP"],
+  ["Dracena","SP"],["Tupi Paulista","SP"],["Adamantina","SP"],["Lucelia","SP"],
+  ["Osvaldo Cruz","SP"],["Parapua","SP"],["Rinopolis","SP"],["Guaicara","SP"],
+  ["Lencois Paulista","SP"],["Avare","SP"],["Botucatu","SP"],["Tatui","SP"],
+  ["Itapetininga","SP"],["Itapeva","SP"],["Ourinhos","SP"],["Assis","SP"],
+  ["Cianorte","PR"],["Maringa","PR"],["Londrina","PR"],["Curitiba","PR"],
+  ["Cascavel","PR"],["Foz do Iguacu","PR"],["Ponta Grossa","PR"],["Guarapuava","PR"],
+  ["Campo Mourao","PR"],["Umuarama","PR"],["Paranavai","PR"],["Apucarana","PR"],
+  ["Arapongas","PR"],["Cornelio Procopio","PR"],["Jacarezinho","PR"],["Bandeirantes","PR"],
+  ["Goiania","GO"],["Anapolis","GO"],["Rio Verde","GO"],["Jatai","GO"],["Catalao","GO"],
+  ["Itumbiara","GO"],["Caldas Novas","GO"],["Luziania","GO"],["Formosa","GO"],
+  ["Cuiaba","MT"],["Varzea Grande","MT"],["Rondonopolis","MT"],["Sinop","MT"],
+  ["Campo Grande","MS"],["Dourados","MS"],["Tres Lagoas","MS"],["Corumba","MS"],
+  ["Porto Velho","RO"],["Ji-Parana","RO"],["Ariquemes","RO"],
+  ["Manaus","AM"],["Parintins","AM"],["Itacoatiara","AM"],
+  ["Belem","PA"],["Santarem","PA"],["Maraba","PA"],["Castanhal","PA"],
+  ["Sao Luis","MA"],["Imperatriz","MA"],["Caxias","MA"],["Timon","MA"],
+  ["Teresina","PI"],["Parnaiba","PI"],["Picos","PI"],
+  ["Fortaleza","CE"],["Juazeiro do Norte","CE"],["Sobral","CE"],["Caucaia","CE"],
+  ["Natal","RN"],["Mossoro","RN"],["Caico","RN"],
+  ["Joao Pessoa","PB"],["Campina Grande","PB"],["Patos","PB"],
+  ["Recife","PE"],["Caruaru","PE"],["Petrolina","PE"],["Olinda","PE"],["Paulista","PE"],
+  ["Maceio","AL"],["Arapiraca","AL"],
+  ["Aracaju","SE"],["Lagarto","SE"],
+  ["Salvador","BA"],["Feira de Santana","BA"],["Vitoria da Conquista","BA"],
+  ["Ilheus","BA"],["Itabuna","BA"],["Juazeiro","BA"],["Camacari","BA"],
+  ["Vitoria","ES"],["Serra","ES"],["Vila Velha","ES"],["Cariacica","ES"],
+  ["Rio de Janeiro","RJ"],["Niteroi","RJ"],["Duque de Caxias","RJ"],["Nova Iguacu","RJ"],
+  ["Sao Goncalo","RJ"],["Campos dos Goytacazes","RJ"],["Petropolis","RJ"],
+  ["Porto Alegre","RS"],["Caxias do Sul","RS"],["Pelotas","RS"],["Canoas","RS"],
+  ["Santa Maria","RS"],["Gravatai","RS"],["Novo Hamburgo","RS"],["Sao Leopoldo","RS"],
+  ["Passo Fundo","RS"],["Uruguaiana","RS"],["Santa Cruz do Sul","RS"],
+  ["Florianopolis","SC"],["Joinville","SC"],["Blumenau","SC"],["Sao Jose","SC"],
+  ["Chapeco","SC"],["Itajai","SC"],["Criciuma","SC"],["Jaragua do Sul","SC"],
+  ["Macapa","AP"],["Santana","AP"],
+  ["Boa Vista","RR"],
+  ["Rio Branco","AC"],["Cruzeiro do Sul","AC"],
+  ["Palmas","TO"],["Araguaina","TO"],["Gurupi","TO"],
+  ["Brasilia","DF"]
+];
+
+function buscarCidades(q) {
   const box = document.getElementById('cidadeSugestoes');
   if (!q || q.length < 2) { box.style.display='none'; return; }
-  clearTimeout(window._cidadeTimer);
-  window._cidadeTimer = setTimeout(async () => {
-    try {
-      const r = await fetch('/api/landing/places/autocomplete?input='+encodeURIComponent(q));
-      const data = await r.json();
-      const preds = data.predictions || [];
-      if (!preds.length) { box.style.display='none'; return; }
-      box.innerHTML = preds.map(p => {
-        const main = p.structured_formatting?.main_text || p.description;
-        const sec  = p.structured_formatting?.secondary_text || '';
-        return `<div onclick="selecionarCidade('${p.place_id}','${main.replace(/'/g,"\'")}','${sec.replace(/'/g,"\'")}','${p.description.replace(/'/g,"\'")}')"
-          style="padding:12px 16px;cursor:pointer;font-size:.9rem;border-bottom:1px solid var(--borda);display:flex;flex-direction:column;gap:2px"
-          onmouseover="this.style.background='rgba(124,58,237,.15)'" onmouseout="this.style.background=''">
-          <span style="color:var(--branco);font-weight:600">📍 ${main}</span>
-          <span style="color:var(--cinza);font-size:.78rem">${sec}</span>
-        </div>`;
-      }).join('');
-      box.style.display = 'block';
-    } catch(e) { box.style.display='none'; }
-  }, 300);
+  const termo = q.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+  const resultados = MUNICIPIOS_BR.filter(([cidade]) => {
+    const c = cidade.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+    return c.startsWith(termo) || c.includes(termo);
+  }).slice(0, 8);
+  if (!resultados.length) { box.style.display='none'; return; }
+  box.innerHTML = resultados.map(([cidade, uf]) =>
+    `<div onclick="selecionarCidadeLocal('${cidade}','${uf}')"
+      style="padding:12px 16px;cursor:pointer;font-size:.9rem;border-bottom:1px solid var(--borda);display:flex;align-items:center;gap:10px"
+      onmouseover="this.style.background='rgba(124,58,237,.15)'" onmouseout="this.style.background=''">
+      <span style="font-size:1rem">📍</span>
+      <div>
+        <span style="color:var(--branco);font-weight:600">${cidade}</span>
+        <span style="color:var(--cinza);font-size:.8rem"> — ${uf}</span>
+      </div>
+    </div>`
+  ).join('');
+  box.style.display = 'block';
+}
+function selecionarCidadeLocal(cidade, uf) {
+  document.getElementById('adCidade').value = cidade;
+  document.getElementById('adEstado').value = uf;
+  document.getElementById('adCidadeCompleta').value = cidade + ' - ' + uf;
+  document.getElementById('cidadeSugestoes').style.display = 'none';
+  const card = document.getElementById('cidadeSelecionada');
+  document.getElementById('cidadeNomeConfirm').textContent = cidade;
+  document.getElementById('cidadeEstadoConfirm').textContent = uf + ' — Brasil';
+  if (card) card.style.display = 'flex';
+  const nomeCentral = document.getElementById('adNomeMarca');
+  if (nomeCentral && !nomeCentral.value) nomeCentral.value = 'BecaMob ' + cidade;
 }
 
 async function selecionarCidade(placeId, nome, secondary, descricao) {
