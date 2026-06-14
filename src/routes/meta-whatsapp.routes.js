@@ -155,6 +155,52 @@ router.post('/webhook', async (req, res) => {
         if (tipo === 'document') textoMensagem = '[documento]';
 
         console.log(`[MetaWebhook] 📥 De: ${telefone} | Tipo: ${tipo} | Texto: ${textoMensagem.slice(0,50)}`);
+        // ── INTERCEPTOR COZINHA (Meta WhatsApp) ──────────────────────────
+        if (textoMensagem && tipo === 'text') {
+            try {
+                const { ClienteCozinha, ImpressoraCozinha, JobImpressao, ContadorPedido } = require('../models/cozinha.model');
+                const telNorm = telefone.replace(/\D/g, '');
+                console.log('[Cozinha-Meta] Verificando telefone:', telefone, '| norm:', telNorm);
+                const clienteCoz = await ClienteCozinha.findOne({
+                    $or: [
+                        { telefone: telNorm },
+                        { telefone: telefone },
+                        { telefone: '55'+telNorm },
+                        { telefone: telNorm.replace(/^55/,'') }
+                    ]
+                });
+                console.log('[Cozinha-Meta] cliente:', clienteCoz ? 'ENCONTRADO adminId:'+clienteCoz.adminId : 'NAO ENCONTRADO');
+                if (clienteCoz) {
+                    const imp = await ImpressoraCozinha.findOne({ adminId: String(clienteCoz.adminId), ativo: true });
+                    if (imp) {
+                        if (!global._bufCozMeta) global._bufCozMeta = {};
+                        const _keyCoz = String(clienteCoz.adminId);
+                        if (!global._bufCozMeta[_keyCoz]) global._bufCozMeta[_keyCoz] = { linhas: [] };
+                        global._bufCozMeta[_keyCoz].linhas.push(textoMensagem);
+                        clearTimeout(global._bufCozMeta[_keyCoz].t);
+                        global._bufCozMeta[_keyCoz].t = setTimeout(async () => {
+                            const buf = global._bufCozMeta[_keyCoz];
+                            delete global._bufCozMeta[_keyCoz];
+                            try {
+                                const hoje = new Date().toISOString().slice(0,10);
+                                let cont = await ContadorPedido.findOne({ adminId: _keyCoz, data: hoje });
+                                if (!cont) cont = await ContadorPedido.create({ adminId: _keyCoz, data: hoje, numero: 0 });
+                                cont.numero += 1;
+                                await cont.save();
+                                const txtFinal = buf.linhas.join('\n');
+                                await JobImpressao.create({ adminId: _keyCoz, texto: txtFinal, mesa: String(cont.numero), status: 'pendente', instancia: 'cozinha', criadoEm: new Date() });
+                                console.log('[Cozinha-Meta] Job #'+cont.numero+' criado para adminId:', _keyCoz, '| texto:', txtFinal.substring(0,60));
+                            } catch(eCozBuf) { console.error('[Cozinha-Meta] Erro buffer:', eCozBuf.message); }
+                        }, 3000);
+                        return; // não processar via Rebeca
+                    } else {
+                        console.log('[Cozinha-Meta] impressora nao encontrada para adminId:', String(clienteCoz.adminId));
+                    }
+                }
+            } catch(eCozMeta) { console.error('[Cozinha-Meta] Erro interceptor:', eCozMeta.message); }
+        }
+        // ─────────────────────────────────────────────────────────────────
+
 
         // Marcar como lido
         try { await MetaWA.marcarLido(msg.id, inst); } catch(e) {}
