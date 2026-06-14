@@ -6,7 +6,7 @@ const { InstanciaWhatsapp } = require('../models');
 const authMiddleware = require('../middlewares/auth.middleware');
 
 // Middleware auth admin
-const auth = authMiddleware.verificarToken || authMiddleware;
+const auth = authMiddleware.validarToken || authMiddleware.validarAdmin;
 
 // ── POST /api/meta-whatsapp/configurar ────────────────────────────────
 // Admin digita número e credenciais Meta → salva + envia boas-vindas
