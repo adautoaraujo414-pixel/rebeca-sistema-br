@@ -476,7 +476,7 @@ body{background:#0a0a0a;color:#f4f4f4;font-family:'Inter',system-ui,sans-serif;m
   <div class="linha"><span class="linha-label">IP PC servidor (Windows)</span><span class="linha-val"><code>${imp.ip}:${imp.porta}</code></span></div>
   <div class="linha"><span class="linha-label">IP impressora (rede local)</span><span class="linha-val"><code>${imp.ipImpressora}:${imp.portaImpressora}</code></span></div>
   ` : `
-  <div class="linha"><span class="linha-label">IP impressora WiFi</span><span class="linha-val"><code>${imp.ip}:${imp.porta}</code></span></div>
+  <div class="linha"><span class="linha-label">IP impressora WiFi</span><span class="linha-val"><code>${imp ? imp.ip+':'+imp.porta : 'Não configurada'}</code></span></div>
   `}
   <div class="linha"><span class="linha-label">Conexão ativa</span><span class="linha-val">${ativo ? '✅ Sim' : '❌ Não'}</span></div>
 </div>
@@ -511,10 +511,8 @@ ${imp && imp.modoLocal ? `
 </div>
 ` : `
 <div class="aviso">
-  <strong>📶 Modo WiFi / TCP direto</strong><br>
-  A impressora recebe jobs diretamente via TCP.<br><br>
-  <strong>Fluxo:</strong> WhatsApp → Rebeca → Job no banco → servidor envia ESC/POS → impressora WiFi imprime.<br><br>
-  IP da impressora: <strong>${imp.ip}:${imp.porta}</strong>
+  <strong>${imp ? '📶 Modo WiFi / TCP direto' : '⚠️ Impressora não configurada'}</strong><br>
+  ${imp ? 'A impressora recebe jobs diretamente via TCP.<br><br><strong>Fluxo:</strong> WhatsApp → Rebeca → Job no banco → servidor envia ESC/POS → impressora WiFi imprime.<br><br>IP da impressora: <strong>'+imp.ip+':'+imp.porta+'</strong>' : 'Configure a impressora no painel master para começar a receber pedidos.'}
 </div>
 <div style="margin-top:10px;background:#1a1a1a;border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:14px;font-size:.8rem;color:#666;line-height:1.8">
   <strong style="color:#f4f4f4;display:block;margin-bottom:6px">Requisitos WiFi:</strong>
