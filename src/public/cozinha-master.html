@@ -116,6 +116,10 @@ body{background:var(--preto);color:var(--branco);font-family:var(--body);font-si
   .stat-grid{grid-template-columns:1fr 1fr}
   .grid2,.grid3{grid-template-columns:1fr}
 }
+.btn-reimprimir{background:rgba(255,107,0,.15);color:#FF6B00;border:1px solid #FF6B00;
+  border-radius:6px;padding:3px 10px;font-size:.78rem;cursor:pointer;transition:background .2s}
+.btn-reimprimir:hover{background:rgba(255,107,0,.35)}
+.btn-reimprimir:disabled{opacity:.4;cursor:not-allowed}
 </style>
 </head>
 <body>
@@ -236,8 +240,8 @@ body{background:var(--preto);color:var(--branco);font-family:var(--body);font-si
         </div>
         <div class="tabela-wrap">
           <table class="tabela">
-            <thead><tr><th>#</th><th>Restaurante</th><th>Texto</th><th>Status</th><th>Horário</th></tr></thead>
-            <tbody id="tbJobs"><tr><td colspan="5" style="text-align:center;color:var(--cinza);padding:32px">Carregando...</td></tr></tbody>
+            <thead><tr><th>#</th><th>Restaurante</th><th>Texto</th><th>Status</th><th>Horário</th><th>Ação</th></tr></thead>
+            <tbody id="tbJobs"><tr><td colspan="6" style="text-align:center;color:var(--cinza);padding:32px">Carregando...</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -760,7 +764,36 @@ async function carregarJobs() {
       <td style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.83rem">${j.texto}</td>
       <td><span class="badge ${j.status === 'pendente' ? 'badge-warn' : j.status === 'impresso' ? 'badge-ok' : 'badge-off'}">${j.status}</span></td>
       <td><span style="font-size:.78rem;color:var(--cinza)">${new Date(j.criadoEm).toLocaleTimeString('pt-BR')}</span></td>
+      <td><button class="btn-reimprimir" onclick="reimprimirJob('${j._id}', this)" title="Reenviar para fila de impressão">🔁</button></td>
     </tr>`).join('');
+}
+
+// ── REIMPRESSÃO DE JOB ──
+async function reimprimirJob(jobId, btn) {
+  if (!confirm('Reenviar este job para a fila de impressão?')) return;
+  btn.disabled = true;
+  btn.textContent = '⏳';
+  try {
+    const r = await fetch(`/api/cozinha/jobs/${jobId}/reimprimir?token=${TOKEN}`, {
+      method: 'POST',
+      headers: { 'x-cozinha-token': TOKEN, 'Content-Type': 'application/json' }
+    });
+    const d = await r.json();
+    if (d.sucesso) {
+      btn.textContent = '✅';
+      btn.style.color = '#25d366';
+      toast(`✅ Job reenviado para fila! (reimpressão #${d.reimpressoes})`);
+      setTimeout(() => carregarJobs(), 1500);
+    } else {
+      btn.disabled = false;
+      btn.textContent = '🔁';
+      toast('❌ ' + (d.erro || 'Erro ao reimprimir'), false);
+    }
+  } catch(e) {
+    btn.disabled = false;
+    btn.textContent = '🔁';
+    toast('Erro de conexão', false);
+  }
 }
 
 // ── SETUP PWA ──

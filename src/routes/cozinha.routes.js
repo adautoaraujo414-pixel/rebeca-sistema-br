@@ -67,6 +67,30 @@ router.get('/jobs/:adminId', async (req, res) => {
   } catch(e) { res.json({ sucesso: true, jobs: [] }); }
 });
 
+// Reimpressão manual de job (erro ou já impresso) — master reseta para pendente
+router.post('/jobs/:jobId/reimprimir', async (req, res) => {
+  const token = req.query.token || req.headers['x-cozinha-token'];
+  if (token !== (process.env.COZINHA_TOKEN || 'cozinha-rebeca-2026'))
+    return res.status(401).json({ erro: 'Token inválido' });
+  try {
+    const { JobImpressao } = require('../models/cozinha.model');
+    const job = await JobImpressao.findById(req.params.jobId);
+    if (!job) return res.status(404).json({ erro: 'Job não encontrado' });
+    const statusAnterior = job.status;
+    job.status = 'pendente';
+    job.impresso_em = null;
+    job.erro = null;
+    job.reimpressoes = (job.reimpressoes || 0) + 1;
+    job.reimpresso_em = new Date();
+    await job.save();
+    console.log(`[Cozinha] Job ${job._id} reiniciado para pendente (era: ${statusAnterior}, reimpressão #${job.reimpressoes})`);
+    res.json({ sucesso: true, jobId: job._id, statusAnterior, reimpressoes: job.reimpressoes });
+  } catch(e) {
+    console.error('[Cozinha] Erro ao reimprimir job:', e.message);
+    res.status(500).json({ erro: e.message });
+  }
+});
+
 router.post('/jobs/:jobId/confirmar', async (req, res) => {
   const token = req.query.token || req.headers['x-cozinha-token'];
   if (token !== (process.env.COZINHA_TOKEN || 'cozinha-rebeca-2026'))
@@ -135,18 +159,14 @@ router.get('/admins-local', async (req, res) => {
   const token = req.query.token || req.headers['x-cozinha-token'];
   if (token !== (process.env.COZINHA_TOKEN || 'cozinha-rebeca-2026'))
     return res.status(401).json({ erro: 'Token inválido' });
+  // Segurança: adminId OBRIGATÓRIO — impede listagem de todos os restaurantes
+  const adminIdFiltro = req.query.adminId || req.headers['x-admin-id'];
+  if (!adminIdFiltro)
+    return res.status(400).json({ erro: 'adminId obrigatório — use /admins-local/:adminId ou ?adminId=xxx' });
   try {
-    // Se passou adminId específico, retorna só ele — evita confusão entre clientes
-    const adminIdFiltro = req.query.adminId || req.headers['x-admin-id'];
-    let admins;
-    if (adminIdFiltro) {
-      admins = await ImpressoraCozinha.find({ adminId: adminIdFiltro, ativo: true })
-        .select('adminId ip porta ipImpressora portaImpressora nomeImpressora nome').lean();
-      console.log('[Cozinha] admins-local filtrado por adminId:', adminIdFiltro, '→', admins.length, 'resultado(s)');
-    } else {
-      admins = await ImpressoraCozinha.find({ ativo: true })
-        .select('adminId ip porta ipImpressora portaImpressora nomeImpressora nome').lean();
-    }
+    const admins = await ImpressoraCozinha.find({ adminId: String(adminIdFiltro), ativo: true })
+      .select('adminId ip porta ipImpressora portaImpressora nomeImpressora nome').lean();
+    console.log('[Cozinha] admins-local adminId:', adminIdFiltro, '→', admins.length, 'resultado(s)');
     res.json({ sucesso: true, admins });
   } catch(e) { res.status(500).json({ erro: e.message }); }
 });
