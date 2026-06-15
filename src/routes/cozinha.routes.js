@@ -514,13 +514,13 @@ ${imp && imp.modoLocal ? `
   <strong>${imp ? '📶 Modo WiFi / TCP direto' : '⚠️ Impressora não configurada'}</strong><br>
   ${imp ? 'A impressora recebe jobs diretamente via TCP.<br><br><strong>Fluxo:</strong> WhatsApp → Rebeca → Job no banco → servidor envia ESC/POS → impressora WiFi imprime.<br><br>IP da impressora: <strong>'+imp.ip+':'+imp.porta+'</strong>' : 'Configure a impressora no painel master para começar a receber pedidos.'}
 </div>
-<div style="margin-top:10px;background:#1a1a1a;border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:14px;font-size:.8rem;color:#666;line-height:1.8">
+${imp ? `<div style="margin-top:10px;background:#1a1a1a;border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:14px;font-size:.8rem;color:#666;line-height:1.8">
   <strong style="color:#f4f4f4;display:block;margin-bottom:6px">Requisitos WiFi:</strong>
   • Impressora com IP fixo na rede<br>
   • Porta <strong style="color:#FF6B00">${imp.porta}</strong> acessível (TCP raw)<br>
   • Nenhum PC intermediário necessário<br>
   • Compatível: Epson, Bematech, Elgin, Daruma com WiFi
-</div>
+</div>` : ''}
 `}
 
 <script>
