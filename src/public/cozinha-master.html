@@ -253,17 +253,21 @@ body{background:var(--preto);color:var(--branco);font-family:var(--body);font-si
           <div class="card">
             <div class="card-titulo">🖥️ Windows (recomendado)</div>
             <p style="color:var(--cinza);font-size:.85rem;line-height:1.7;margin-bottom:18px">Instale no PC da cozinha. Auto-inicia com o Windows. Faz polling e imprime automaticamente via USB ou rede local.</p>
-            <a href="/api/cozinha/download-local" class="btn btn-laranja" style="width:100%;justify-content:center">⬇ Baixar .zip (Windows)</a>
+            <a href="/api/cozinha/download-local" class="btn btn-laranja" style="width:100%;justify-content:center">⬇ Baixar .zip v10 (Windows)</a>
           </div>
           <div class="card">
             <div class="card-titulo">📋 Instruções de instalação</div>
             <ol style="color:var(--cinza);font-size:.84rem;line-height:2;padding-left:18px">
               <li>Baixe e extraia o .zip na cozinha</li>
-              <li>Execute <strong style="color:var(--branco)">INICIAR-WINDOWS.bat</strong></li>
-              <li>O programa configura o inicio automático</li>
-              <li>Configure o IP do PC aqui no painel master</li>
-              <li>Clique em "Testar" para validar</li>
+              <li>Execute <strong style="color:var(--branco)">CONFIGURAR.bat</strong> como Administrador</li>
+              <li>Informe: nome do restaurante, AdminId e IP da impressora</li>
+              <li>O programa testa a impressora e configura o início automático</li>
+              <li>Verifique em <strong style="color:var(--branco)">http://127.0.0.1:3333/status</strong></li>
+              <li>Teste a impressão em <strong style="color:var(--branco)">http://127.0.0.1:3333/testar</strong></li>
             </ol>
+            <p style="margin-top:14px;font-size:.78rem;color:var(--cinza);background:var(--dark3);padding:10px 12px;border-radius:8px;line-height:1.6">
+              💡 Cada restaurante tem seu próprio <code style="color:var(--laranja)">config.json</code> — nunca se misturam entre si.
+            </p>
           </div>
         </div>
       </div>
