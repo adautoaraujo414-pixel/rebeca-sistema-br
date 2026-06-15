@@ -2,8 +2,6 @@
 const express = require('express');
 const router  = express.Router();
 const { ClienteCozinha, ImpressoraCozinha, AdminCozinha, ContadorPedido } = require('../models/cozinha.model');
-const { imprimirPedido } = require('../services/cozinha-impressora.service');
-const { AdminAgenda } = require('../models/AgendaServico');
 
 // ── AUTH simples por token ────────────────────────────────────────
 const COZINHA_TOKEN = process.env.COZINHA_TOKEN || 'cozinha-rebeca-2026';
@@ -16,6 +14,7 @@ function auth(req, res, next) {
 // ── CONFIG IMPRESSORA ────────────────────────────────────────────
 // ── DOWNLOAD SERVIDOR LOCAL ─────────────────────────────────────────────────
 router.get('/download-local', async (req, res) => {
+  console.log('[Download] .zip baixado de IP:', req.ip || req.headers['x-forwarded-for']);
   const path2 = require('path');
   const fs = require('fs');
   const zipPath = path2.resolve(__dirname, '../downloads/rebeca-cozinha-local.zip');
@@ -213,17 +212,180 @@ router.get('/jobs-historico/:adminId', async (req, res) => {
 });
 
 
-// Painel master da cozinha
+// Painel master da cozinha — protegido por senha master
 router.get('/master', (req, res) => {
+  const s = req.query.s || '';
+  const SENHA_MASTER = process.env.COZINHA_MASTER_SENHA || '95181919';
+  if (!s) {
+    // Tela de login master
+    return res.send(`<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#FF6B00">
+<title>Rebeca Cozinha — Master</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0a0a0a;color:#f4f4f4;font-family:system-ui,sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.card{background:#1a1a1a;border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:32px;width:100%;max-width:340px}
+.logo{font-size:1.1rem;font-weight:900;margin-bottom:4px}.logo span{color:#FF6B00}
+.sub{font-size:.82rem;color:#666;margin-bottom:24px}
+.input{width:100%;padding:12px 14px;background:#222;border:1px solid rgba(255,255,255,.08);border-radius:8px;color:#f4f4f4;font-size:1rem;outline:none;margin-bottom:12px;font-family:inherit}
+.input:focus{border-color:#FF6B00}
+.btn{width:100%;background:#FF6B00;color:#fff;border:none;border-radius:8px;padding:13px;font-size:.95rem;font-weight:700;cursor:pointer;font-family:inherit}
+.btn:active{background:#E55A00}
+.erro{color:#ff5555;font-size:.82rem;margin-top:8px}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">Rebeca<span>Cozinha</span></div>
+  <div class="sub">Painel Master</div>
+  <input type="password" id="s" class="input" placeholder="Senha master" onkeydown="if(event.key==='Enter')entrar()">
+  <button class="btn" onclick="entrar()">Entrar</button>
+</div>
+<script>
+function entrar(){
+  const s=document.getElementById('s').value;
+  if(!s)return;
+  window.location.href='/api/cozinha/master?s='+encodeURIComponent(s);
+}
+</script>
+</body></html>`);
+  }
+  if (s !== SENHA_MASTER) {
+    return res.send(`<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Rebeca Cozinha — Master</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0a0a0a;color:#f4f4f4;font-family:system-ui,sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.card{background:#1a1a1a;border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:32px;width:100%;max-width:340px}
+.logo{font-size:1.1rem;font-weight:900;margin-bottom:4px}.logo span{color:#FF6B00}
+.sub{font-size:.82rem;color:#666;margin-bottom:24px}
+.input{width:100%;padding:12px 14px;background:#222;border:1px solid rgba(255,255,255,.08);border-radius:8px;color:#f4f4f4;font-size:1rem;outline:none;margin-bottom:12px;font-family:inherit}
+.input:focus{border-color:#FF6B00}
+.btn{width:100%;background:#FF6B00;color:#fff;border:none;border-radius:8px;padding:13px;font-size:.95rem;font-weight:700;cursor:pointer;font-family:inherit}
+.btn:active{background:#E55A00}
+.erro{color:#ff5555;font-size:.82rem;margin-top:8px}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">Rebeca<span>Cozinha</span></div>
+  <div class="sub">Painel Master</div>
+  <input type="password" id="s" class="input" placeholder="Senha master" onkeydown="if(event.key==='Enter')entrar()">
+  <button class="btn" onclick="entrar()">Entrar</button>
+  <div class="erro">❌ Senha incorreta.</div>
+</div>
+<script>
+function entrar(){
+  const s=document.getElementById('s').value;
+  if(!s)return;
+  window.location.href='/api/cozinha/master?s='+encodeURIComponent(s);
+}
+</script>
+</body></html>`);
+  }
   res.sendFile(path.join(__dirname, '../public/cozinha-master.html'));
 });
 
 
-// PWA de configuração local — link único por restaurante
+// PWA de configuração local — link único por restaurante (senha 121212)
 router.get('/setup/:adminId', async (req, res) => {
-  const token = req.query.token || req.headers['x-cozinha-token'];
-  if (token !== (process.env.COZINHA_TOKEN || 'cozinha-rebeca-2026'))
-    return res.status(401).json({ erro: 'Token inválido' });
+  // Senha de acesso ao setup do cliente — diferente do token master
+  const senhaSetup = req.query.s || '';
+  if (!senhaSetup) {
+    // Sem senha: mostrar tela de login simples
+    const adminId = req.params.adminId;
+    const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#FF6B00">
+<title>Rebeca Cozinha — Acesso</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0a0a0a;color:#f4f4f4;font-family:system-ui,sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.card{background:#1a1a1a;border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:32px;width:100%;max-width:340px}
+.logo{font-size:1.1rem;font-weight:900;margin-bottom:4px}
+.logo span{color:#FF6B00}
+.sub{font-size:.82rem;color:#666;margin-bottom:24px}
+.input{width:100%;padding:12px 14px;background:#222;border:1px solid rgba(255,255,255,.08);border-radius:8px;color:#f4f4f4;font-size:1rem;outline:none;margin-bottom:12px;font-family:inherit}
+.input:focus{border-color:#FF6B00}
+.btn{width:100%;background:#FF6B00;color:#fff;border:none;border-radius:8px;padding:13px;font-size:.95rem;font-weight:700;cursor:pointer;font-family:inherit}
+.btn:active{background:#E55A00}
+.erro{color:#ff5555;font-size:.82rem;margin-top:8px;display:none}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">Rebeca<span>Cozinha</span></div>
+  <div class="sub">Configuração do sistema</div>
+  <input type="password" id="senha" class="input" placeholder="Senha de acesso" onkeydown="if(event.key==='Enter')entrar()">
+  <button class="btn" onclick="entrar()">Entrar</button>
+  <div class="erro" id="erro">Senha incorreta.</div>
+</div>
+<script>
+function entrar() {
+  const s = document.getElementById('senha').value;
+  if (!s) return;
+  window.location.href = '/api/cozinha/setup/${adminId}?s=' + encodeURIComponent(s);
+}
+</script>
+</body>
+</html>`;
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    return res.send(html);
+  }
+  // Verificar senha do cliente
+  const SENHA_SETUP = process.env.COZINHA_SETUP_SENHA || '121212';
+  if (senhaSetup !== SENHA_SETUP) {
+    const adminId = req.params.adminId;
+    const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#FF6B00">
+<title>Rebeca Cozinha — Acesso</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0a0a0a;color:#f4f4f4;font-family:system-ui,sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.card{background:#1a1a1a;border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:32px;width:100%;max-width:340px}
+.logo{font-size:1.1rem;font-weight:900;margin-bottom:4px}
+.logo span{color:#FF6B00}
+.sub{font-size:.82rem;color:#666;margin-bottom:24px}
+.input{width:100%;padding:12px 14px;background:#222;border:1px solid rgba(255,255,255,.08);border-radius:8px;color:#f4f4f4;font-size:1rem;outline:none;margin-bottom:12px;font-family:inherit}
+.input:focus{border-color:#FF6B00}
+.btn{width:100%;background:#FF6B00;color:#fff;border:none;border-radius:8px;padding:13px;font-size:.95rem;font-weight:700;cursor:pointer;font-family:inherit}
+.btn:active{background:#E55A00}
+.erro{color:#ff5555;font-size:.82rem;margin-top:8px}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">Rebeca<span>Cozinha</span></div>
+  <div class="sub">Configuração do sistema</div>
+  <input type="password" id="senha" class="input" placeholder="Senha de acesso" onkeydown="if(event.key==='Enter')entrar()">
+  <button class="btn" onclick="entrar()">Entrar</button>
+  <div class="erro">❌ Senha incorreta. Tente novamente.</div>
+</div>
+<script>
+function entrar() {
+  const s = document.getElementById('senha').value;
+  if (!s) return;
+  window.location.href = '/api/cozinha/setup/${adminId}?s=' + encodeURIComponent(s);
+}
+</script>
+</body>
+</html>`;
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    return res.send(html);
+  }
   try {
     const { ImpressoraCozinha, ClienteCozinha } = require('../models/cozinha.model');
     const adminId = req.params.adminId;
@@ -243,7 +405,7 @@ router.get('/setup/:adminId', async (req, res) => {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#FF6B00">
-<link rel="manifest" href="/api/cozinha/setup-manifest/${adminId}?token=${token}">
+<link rel="manifest" href="/api/cozinha/setup-manifest/${adminId}">
 <title>Rebeca Cozinha — Configuração</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -290,8 +452,12 @@ body{background:#0a0a0a;color:#f4f4f4;font-family:'Inter',system-ui,sans-serif;m
   <div class="card-titulo">🖨️ Impressora configurada</div>
   <div class="linha"><span class="linha-label">Nome</span><span class="linha-val">${nomeImp}</span></div>
   <div class="linha"><span class="linha-label">Modo de conexão</span><span class="linha-val">${modoImp}</span></div>
-  <div class="linha"><span class="linha-label">IP / Servidor</span><span class="linha-val"><code>${ipImp}:${portaImp}</code></span></div>
-  ${imp && imp.modoLocal ? `<div class="linha"><span class="linha-label">IP impressora</span><span class="linha-val"><code>${ipReal}:${portaReal}</code></span></div>` : ''}
+  ${imp && imp.modoLocal ? `
+  <div class="linha"><span class="linha-label">IP PC servidor (Windows)</span><span class="linha-val"><code>${imp.ip}:${imp.porta}</code></span></div>
+  <div class="linha"><span class="linha-label">IP impressora (rede local)</span><span class="linha-val"><code>${imp.ipImpressora}:${imp.portaImpressora}</code></span></div>
+  ` : `
+  <div class="linha"><span class="linha-label">IP impressora WiFi</span><span class="linha-val"><code>${imp.ip}:${imp.porta}</code></span></div>
+  `}
   <div class="linha"><span class="linha-label">Conexão ativa</span><span class="linha-val">${ativo ? '✅ Sim' : '❌ Não'}</span></div>
 </div>
 
@@ -309,14 +475,33 @@ body{background:#0a0a0a;color:#f4f4f4;font-family:'Inter',system-ui,sans-serif;m
 
 ${imp && imp.modoLocal ? `
 <div class="aviso">
-  <strong>Modo Servidor Local (Windows)</strong><br>
-  Baixe e instale o servidor no PC da cozinha. Ele faz polling automático e imprime via USB ou rede local.
+  <strong>🖥️ Modo Servidor Local (Windows)</strong><br>
+  Um PC Windows fica ligado na cozinha rodando o servidor Rebeca.<br><br>
+  <strong>Fluxo:</strong> WhatsApp → Rebeca → Job no banco → PC da cozinha busca → imprime via ${imp.ipImpressora ? 'rede local ('+imp.ipImpressora+':'+imp.portaImpressora+')' : 'USB'}.<br><br>
+  O PC servidor fica em <strong>${imp.ip}:${imp.porta}</strong> na sua rede local.
 </div>
 <a href="/api/cozinha/download-local" class="btn-baixar">⬇ Baixar Rebeca Cozinha Local (.zip)</a>
+<div style="margin-top:10px;background:#1a1a1a;border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:14px;font-size:.8rem;color:#666;line-height:1.8">
+  <strong style="color:#f4f4f4;display:block;margin-bottom:6px">Passos para instalar:</strong>
+  1. Baixe e extraia o .zip no PC da cozinha<br>
+  2. Execute <strong style="color:#FF6B00">INICIAR-WINDOWS.bat</strong><br>
+  3. O programa inicia sozinho com o Windows<br>
+  4. IP do PC na rede: <code style="color:#FF6B00">${imp.ip}:${imp.porta}</code><br>
+  5. Impressora configurada: <code style="color:#FF6B00">${imp.ipImpressora || 'USB/local'}:${imp.portaImpressora || 9100}</code>
+</div>
 ` : `
 <div class="aviso">
-  <strong>Modo WiFi / TCP direto</strong><br>
-  A impressora recebe jobs diretamente via TCP na porta <strong>${portaImp}</strong>. Certifique-se que o IP <strong>${ipImp}</strong> está acessível externamente.
+  <strong>📶 Modo WiFi / TCP direto</strong><br>
+  A impressora recebe jobs diretamente via TCP.<br><br>
+  <strong>Fluxo:</strong> WhatsApp → Rebeca → Job no banco → servidor envia ESC/POS → impressora WiFi imprime.<br><br>
+  IP da impressora: <strong>${imp.ip}:${imp.porta}</strong>
+</div>
+<div style="margin-top:10px;background:#1a1a1a;border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:14px;font-size:.8rem;color:#666;line-height:1.8">
+  <strong style="color:#f4f4f4;display:block;margin-bottom:6px">Requisitos WiFi:</strong>
+  • Impressora com IP fixo na rede<br>
+  • Porta <strong style="color:#FF6B00">${imp.porta}</strong> acessível (TCP raw)<br>
+  • Nenhum PC intermediário necessário<br>
+  • Compatível: Epson, Bematech, Elgin, Daruma com WiFi
 </div>
 `}
 
@@ -361,6 +546,104 @@ router.get('/setup-manifest/:adminId', (req, res) => {
     theme_color: '#FF6B00',
     icons: [{ src: '/icon-192.png', sizes: '192x192', type: 'image/png' }]
   });
+});
+
+
+// Imprimir via TCP direto na impressora WiFi — chamado pelo PWA local
+router.post('/imprimir-tcp/:adminId', async (req, res) => {
+  const token = req.query.token || req.headers['x-cozinha-token'];
+  if (token !== (process.env.COZINHA_TOKEN || 'cozinha-rebeca-2026'))
+    return res.status(401).json({ erro: 'Token inválido' });
+  const net = require('net');
+  try {
+    const { ImpressoraCozinha, JobImpressao } = require('../models/cozinha.model');
+    const adminId = String(req.params.adminId);
+    const imp = await ImpressoraCozinha.findOne({ adminId, ativo: true });
+    if (!imp) return res.status(404).json({ erro: 'Impressora não configurada' });
+    // Para modo WiFi usa ip:porta da impressora direto
+    // Para modo local usa ipImpressora:portaImpressora
+    const host = imp.modoLocal ? imp.ipImpressora : imp.ip;
+    const porta = imp.modoLocal ? imp.portaImpressora : imp.porta;
+    if (!host) return res.status(400).json({ erro: 'IP da impressora não configurado' });
+
+    const jobId = req.body.jobId;
+    const textoCustom = req.body.texto;
+    let texto = textoCustom;
+
+    // Se veio jobId, busca o texto do banco e marca como impresso
+    if (jobId) {
+      const job = await JobImpressao.findById(jobId);
+      if (!job) return res.status(404).json({ erro: 'Job não encontrado' });
+      texto = job.texto;
+    }
+
+    if (!texto) return res.status(400).json({ erro: 'Texto vazio' });
+
+    // Montar ESC/POS básico
+    const ESC = Buffer.from([0x1B]);
+    const INIT  = Buffer.concat([ESC, Buffer.from([0x40])]);           // ESC @ — init
+    const BOLD  = Buffer.concat([ESC, Buffer.from([0x45, 0x01])]);    // ESC E 1 — bold on
+    const NOBOLD= Buffer.concat([ESC, Buffer.from([0x45, 0x00])]);    // ESC E 0 — bold off
+    const CENTER= Buffer.concat([ESC, Buffer.from([0x61, 0x01])]);    // ESC a 1 — center
+    const LEFT  = Buffer.concat([ESC, Buffer.from([0x61, 0x00])]);    // ESC a 0 — left
+    const CUT   = Buffer.from([0x1D, 0x56, 0x42, 0x00]);             // GS V B 0 — cut
+    const LF    = Buffer.from([0x0A]);
+    const SEP   = Buffer.from('================================\n');
+
+    const now = new Date().toLocaleString('pt-BR', {timeZone:'America/Sao_Paulo'});
+    const linhas = texto.split('\n');
+    const primeiraLinha = linhas[0] || '';
+    const resto = linhas.slice(1).join('\n');
+
+    // Extrair número do pedido e conteúdo
+    const numPedido = job ? (job.mesa || job.numeroPedido || '') : '';
+    const horaBR = new Date().toLocaleTimeString('pt-BR', {timeZone:'America/Sao_Paulo', hour:'2-digit', minute:'2-digit'});
+    const dataBR = new Date().toLocaleDateString('pt-BR', {timeZone:'America/Sao_Paulo'});
+
+    const payload = Buffer.concat([
+      INIT,
+      CENTER,
+      SEP,
+      BOLD,
+      Buffer.from((numPedido ? 'PEDIDO #' + numPedido : primeiraLinha) + '\n'),
+      NOBOLD,
+      Buffer.from('Hora: ' + horaBR + '   ' + dataBR + '\n'),
+      SEP,
+      LEFT,
+      numPedido && resto ? Buffer.from(resto + '\n') :
+        (!numPedido ? Buffer.alloc(0) : Buffer.from(primeiraLinha + '\n')),
+      LF, LF, LF,
+      CUT
+    ]);
+
+    // Conectar via TCP e enviar
+    await new Promise((resolve, reject) => {
+      const client = new net.Socket();
+      const timeout = setTimeout(() => {
+        client.destroy();
+        reject(new Error('Timeout ao conectar na impressora (' + host + ':' + porta + ')'));
+      }, 5000);
+      client.connect(porta, host, () => {
+        client.write(payload, () => {
+          clearTimeout(timeout);
+          client.end();
+          resolve();
+        });
+      });
+      client.on('error', (e) => { clearTimeout(timeout); reject(e); });
+    });
+
+    // Marcar job como impresso se veio jobId
+    if (jobId) {
+      await JobImpressao.findByIdAndUpdate(jobId, { status: 'impresso', impresso_em: new Date() });
+    }
+
+    console.log('[TCP-Print] Impresso em', host + ':' + porta, '| bytes:', payload.length);
+    res.json({ sucesso: true, mensagem: 'Impresso com sucesso em ' + host + ':' + porta, bytes: payload.length });
+  } catch(e) {
+    console.error('[TCP-Print] Erro:', e.message);
+    res.status(500).json({ erro: e.message });
+  }
 });
 
 module.exports = router;

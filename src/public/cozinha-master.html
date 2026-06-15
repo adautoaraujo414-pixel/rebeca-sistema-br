@@ -179,6 +179,7 @@ body{background:var(--preto);color:var(--branco);font-family:var(--body);font-si
               <th>Clientes</th>
               <th>Impressora</th>
               <th>Status</th>
+              <th>Setup</th>
               <th></th>
             </tr></thead>
             <tbody id="tbRestaurantes"><tr><td colspan="6" style="text-align:center;color:var(--cinza);padding:32px">Carregando...</td></tr></tbody>
@@ -471,8 +472,21 @@ async function carregarTabelaRestaurantes() {
       <td><span style="color:${nClientes > 0 ? 'var(--branco)' : 'var(--cinza)'}">${nClientes}</span></td>
       <td>${temImp ? `<span class="badge badge-ok">${modoImp} ${nomeImp}</span>` : '<span class="badge badge-off">Não configurada</span>'}</td>
       <td><span class="dot ${temImp && nClientes > 0 ? 'dot-ok' : nClientes > 0 || temImp ? 'dot-warn' : 'dot-off'}"></span></td>
+      <td>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <a href="/api/cozinha/setup/${r.adminId}" target="_blank" 
+             style="display:inline-flex;align-items:center;gap:5px;background:rgba(255,107,0,.1);border:1px solid rgba(255,107,0,.2);color:var(--laranja);padding:5px 12px;border-radius:20px;font-size:.75rem;font-weight:600;text-decoration:none">
+            📲 Abrir
+          </a>
+          <button onclick="copiarSetup('${r.adminId}')"
+             style="display:inline-flex;align-items:center;gap:4px;background:none;border:1px solid rgba(255,255,255,.08);color:#666;padding:4px 10px;border-radius:20px;font-size:.72rem;font-weight:600;cursor:pointer">
+            🔗 Copiar link
+          </button>
+        </div>
+      </td>
       <td style="display:flex;gap:6px">
         <button class="btn btn-outline btn-sm" onclick="editarRestaurante(${idx})">✏️</button>
+        <button class="btn btn-outline btn-sm" onclick="abrirSetup('${r.adminId}')">📲 Setup</button>
         <button class="btn btn-danger btn-sm" onclick="removerRestaurante(${idx})">✕</button>
       </td>
     </tr>`).join('');
@@ -747,6 +761,17 @@ async function carregarJobs() {
       <td><span class="badge ${j.status === 'pendente' ? 'badge-warn' : j.status === 'impresso' ? 'badge-ok' : 'badge-off'}">${j.status}</span></td>
       <td><span style="font-size:.78rem;color:var(--cinza)">${new Date(j.criadoEm).toLocaleTimeString('pt-BR')}</span></td>
     </tr>`).join('');
+}
+
+// ── SETUP PWA ──
+function abrirSetup(adminId) {
+  // Link limpo — sem token master na URL. Cliente entra com senha 121212
+  const url = `/api/cozinha/setup/${adminId}`;
+  window.open(url, '_blank');
+}
+function copiarSetup(adminId) {
+  const url = `${location.origin}/api/cozinha/setup/${adminId}`;
+  navigator.clipboard.writeText(url).then(() => alert('Link copiado!\n\n' + url));
 }
 
 // ── MODAIS ──

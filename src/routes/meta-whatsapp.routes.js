@@ -177,9 +177,12 @@ router.post('/webhook', async (req, res) => {
                         const _keyCoz = String(clienteCoz.adminId);
                         if (!global._bufCozMeta[_keyCoz]) global._bufCozMeta[_keyCoz] = { linhas: [] };
                         global._bufCozMeta[_keyCoz].linhas.push(textoMensagem);
-                        clearTimeout(global._bufCozMeta[_keyCoz].t);
-                        global._bufCozMeta[_keyCoz].t = setTimeout(async () => {
+
+                        // Disparo antecipado: se atingiu 5 mensagens, imprime já
+                        const _dispararAgora = async () => {
+                            clearTimeout(global._bufCozMeta[_keyCoz]?.t);
                             const buf = global._bufCozMeta[_keyCoz];
+                            if (!buf) return;
                             delete global._bufCozMeta[_keyCoz];
                             try {
                                 const hoje = new Date().toISOString().slice(0,10);
@@ -198,7 +201,18 @@ router.post('/webhook', async (req, res) => {
                                 await JobImpressao.create({ adminId: _keyCoz, texto: txtFinal, mesa: String(cont.numero), status: 'pendente', instancia: 'cozinha', criadoEm: new Date() });
                                 console.log('[Cozinha-Meta] Job #'+cont.numero+' criado para adminId:', _keyCoz, '| texto:', txtFinal.substring(0,60));
                             } catch(eCozBuf) { console.error('[Cozinha-Meta] Erro buffer:', eCozBuf.message); }
-                        }, 3000);
+                        };
+
+                        // Se já tem 5 mensagens, dispara imediatamente
+                        if (global._bufCozMeta[_keyCoz] && 
+                            global._bufCozMeta[_keyCoz].linhas.length >= 5) {
+                            console.log('[Cozinha-Meta] 5 mensagens — disparando imediatamente');
+                            _dispararAgora();
+                        } else {
+                            // Senão, aguarda 10s para agrupar mais mensagens
+                            clearTimeout(global._bufCozMeta[_keyCoz]?.t);
+                            global._bufCozMeta[_keyCoz].t = setTimeout(_dispararAgora, 10000);
+                        }
                         return; // não processar via Rebeca
                     } else {
                         console.log('[Cozinha-Meta] impressora nao encontrada para adminId:', String(clienteCoz.adminId));

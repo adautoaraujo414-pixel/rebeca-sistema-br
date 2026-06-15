@@ -62,9 +62,69 @@ td{padding:9px 8px;border-bottom:1px solid #1a1a1a}
 #statusImp{margin-top:10px;font-size:.82rem}
 .badge-online{display:inline-block;width:8px;height:8px;background:#25d366;border-radius:50%;margin-right:5px;animation:pulse 2s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* ── STATUS IMPRESSORA ONLINE/OFFLINE ── */
+#statusBar{
+  position:fixed;top:0;left:0;right:0;z-index:9999;
+  display:none;align-items:center;justify-content:center;gap:10px;
+  padding:10px 20px;font-size:.88rem;font-weight:700;
+  transition:all .3s ease;
+}
+#statusBar.online{background:#25d366;color:#000;display:flex}
+#statusBar.offline{background:#e74c3c;color:#fff;display:flex}
+#statusBar.alerta{background:#f39c12;color:#000;display:flex}
+.status-dot{width:10px;height:10px;border-radius:50%;background:currentColor;
+  animation:pulse 1.2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+#statusBar .fechar-bar{margin-left:auto;cursor:pointer;opacity:.7;font-size:1rem}
+#statusBar .fechar-bar:hover{opacity:1}
+
+/* ── BADGE DE JOBS PENDENTES ── */
+#badgePendentes{
+  position:fixed;bottom:20px;right:20px;z-index:9998;
+  background:#FF6B00;color:#fff;border-radius:50%;
+  width:52px;height:52px;display:none;align-items:center;
+  justify-content:center;font-size:1.2rem;font-weight:900;
+  box-shadow:0 4px 15px rgba(255,107,0,.5);cursor:pointer;
+  animation:bounce .6s infinite alternate;
+}
+@keyframes bounce{from{transform:scale(1)}to{transform:scale(1.15)}}
+
+/* ── CARD DE JOB PENDENTE ── */
+.job-card{
+  background:#1a1a1a;border:1px solid #2a2a2a;border-radius:12px;
+  padding:16px;margin-bottom:12px;transition:border-color .2s;
+}
+.job-card.urgente{border-color:#FF6B00;animation:glow .8s infinite alternate}
+@keyframes glow{from{box-shadow:none}to{box-shadow:0 0 12px rgba(255,107,0,.4)}}
+.job-card .job-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.job-card .job-num{font-size:1.1rem;font-weight:900;color:#FF6B00}
+.job-card .job-time{font-size:.75rem;color:#555}
+.job-card .job-texto{
+  font-family:monospace;font-size:.82rem;color:#ccc;
+  background:#111;border-radius:8px;padding:10px;
+  white-space:pre-wrap;max-height:120px;overflow-y:auto;
+  margin-bottom:10px;
+}
+.job-card .btn-confirmar{
+  background:#25d366;color:#000;border:none;border-radius:8px;
+  padding:8px 16px;font-size:.85rem;font-weight:700;cursor:pointer;width:100%;
+}
+.job-card .btn-confirmar:hover{background:#1ebe57}
+.job-card .btn-confirmar:disabled{background:#333;color:#555;cursor:not-allowed}
 </style>
 </head>
 <body>
+
+<!-- ── STATUS BAR IMPRESSORA ONLINE/OFFLINE ── -->
+<div id="statusBar">
+  <span class="status-dot"></span>
+  <span id="statusBarMsg">Verificando impressora...</span>
+  <span class="fechar-bar" onclick="fecharStatusBar()">✕</span>
+</div>
+
+<!-- ── BADGE FLUTUANTE JOBS PENDENTES ── -->
+<div id="badgePendentes" onclick="document.getElementById('secaoJobs').scrollIntoView({behavior:'smooth'})"></div>
 
 <!-- ── TELA DE LOGIN ── -->
 <div id="telaLogin">
@@ -102,6 +162,15 @@ td{padding:9px 8px;border-bottom:1px solid #1a1a1a}
     <div class="topbar-right">
       <button class="btn btn-gray btn-sm" onclick="logout()">Sair</button>
     </div>
+  </div>
+
+  <!-- ── FILA DE IMPRESSÃO ── -->
+  <div class="card" id="secaoJobs" style="border-color:#FF6B00;display:none">
+    <h2>🖨️ Fila de Impressão
+      <span id="contadorJobs" style="margin-left:8px;background:#FF6B00;color:#fff;border-radius:20px;padding:2px 10px;font-size:.78rem">0</span>
+      <span id="statusImpressora" style="margin-left:auto;font-size:.78rem;font-weight:400"></span>
+    </h2>
+    <div id="listaJobs" style="color:#555;font-size:.85rem;padding:8px 0">Nenhum job pendente.</div>
   </div>
 
   <!-- Card criar admin -->
@@ -205,7 +274,7 @@ td{padding:9px 8px;border-bottom:1px solid #1a1a1a}
 // ── CREDENCIAIS (simples, client-side — para produção usar JWT) ──
 const USUARIOS = { 'admin': 'cozinha2026', 'rebeca': 'rebeca@cozinha' };
 const BASE = '/api/cozinha';
-const TOKEN = 'cozinha-rebeca-2026';
+const TOKEN = localStorage.getItem('cozinha_token') || new URLSearchParams(location.search).get('token') || '';
 let adminId = '';
 let deferredPrompt = null;
 
@@ -297,6 +366,7 @@ function selecionarAdmin(val) {
   if (adminId) {
     carregarImpressora();
     carregarClientes();
+    iniciarPolling();
   }
 }
 
@@ -307,7 +377,7 @@ async function carregarAdmins() {
     const sel = document.getElementById('selAdmin');
     sel.innerHTML = '<option value="">Selecione...</option>' +
       d.admins.map(a => `<option value="${a._id}">${a.nomeNegocio||a.email}</option>`).join('');
-    sel.onchange = () => { adminId = sel.value; carregarImpressora(); carregarClientes(); };
+    sel.onchange = () => { adminId = sel.value; carregarImpressora(); carregarClientes(); iniciarPolling(); };
     if (d.admins.length === 1) { sel.value = d.admins[0]._id; sel.onchange(); }
   } catch(e) { toast('Erro ao carregar', false); }
 }
@@ -419,6 +489,191 @@ async function remover(id) {
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/cozinha-sw.js').catch(()=>{});
 }
+
+// ── POLLING DE JOBS PENDENTES ─────────────────────────────────────
+let _pollingJobs = null;
+let _falhasConsecutivas = 0;
+const _MAX_FALHAS = 3;
+let _jobsVisiveis = new Set(); // IDs já exibidos (evita re-render desnecessário)
+
+function iniciarPolling() {
+  if (_pollingJobs) return;
+  _pollingJobs = setInterval(verificarJobs, 8000); // a cada 8s
+  verificarJobs(); // imediato
+}
+
+function pararPolling() {
+  clearInterval(_pollingJobs);
+  _pollingJobs = null;
+}
+
+async function verificarJobs() {
+  if (!adminId || !TOKEN) return;
+  try {
+    const r = await fetch(`${BASE}/jobs/${adminId}?token=${TOKEN}&instancia=cozinha`, {
+      headers: { 'x-cozinha-token': TOKEN }
+    });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const d = await r.json();
+    _falhasConsecutivas = 0;
+
+    const jobs = d.jobs || [];
+    atualizarStatusBar('online', `✅ Impressora online — ${jobs.length} job(s) pendente(s)`);
+    renderizarJobs(jobs);
+  } catch(e) {
+    _falhasConsecutivas++;
+    console.warn('[Polling] Falha #' + _falhasConsecutivas + ':', e.message);
+    if (_falhasConsecutivas >= _MAX_FALHAS) {
+      atualizarStatusBar('offline', '🔴 Impressora OFFLINE — sem comunicação com o servidor');
+    } else {
+      atualizarStatusBar('alerta', `⚠️ Falha de conexão (${_falhasConsecutivas}/${_MAX_FALHAS})...`);
+    }
+  }
+}
+
+function atualizarStatusBar(tipo, msg) {
+  const bar = document.getElementById('statusBar');
+  const msgEl = document.getElementById('statusBarMsg');
+  if (!bar || !msgEl) return;
+
+  bar.className = tipo; // 'online' | 'offline' | 'alerta'
+  msgEl.textContent = msg;
+
+  // Online: esconde após 3s se não tiver jobs pendentes
+  if (tipo === 'online') {
+    const nJobs = parseInt(document.getElementById('contadorJobs')?.textContent || '0');
+    if (nJobs === 0) {
+      clearTimeout(bar._hideTimer);
+      bar._hideTimer = setTimeout(() => { bar.className = ''; bar.style.display = 'none'; }, 3000);
+    }
+  } else {
+    // Offline/alerta: mantém visível + vibra se suportado
+    clearTimeout(bar._hideTimer);
+    if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+  }
+
+  // Atualiza badge do topbar (ponto verde/vermelho)
+  const badgeOnline = document.querySelector('.badge-online');
+  if (badgeOnline) {
+    badgeOnline.style.background = tipo === 'online' ? '#25d366' : tipo === 'offline' ? '#e74c3c' : '#f39c12';
+    badgeOnline.style.display = 'inline-block';
+    badgeOnline.style.width = '8px';
+    badgeOnline.style.height = '8px';
+    badgeOnline.style.borderRadius = '50%';
+    badgeOnline.style.marginRight = '6px';
+  }
+}
+
+function fecharStatusBar() {
+  const bar = document.getElementById('statusBar');
+  bar.className = '';
+  bar.style.display = 'none';
+}
+
+function renderizarJobs(jobs) {
+  const secao = document.getElementById('secaoJobs');
+  const lista = document.getElementById('listaJobs');
+  const contador = document.getElementById('contadorJobs');
+  const badge = document.getElementById('badgePendentes');
+  const statusImp = document.getElementById('statusImpressora');
+
+  if (!secao || !lista) return;
+
+  const n = jobs.length;
+  contador.textContent = n;
+  secao.style.display = n > 0 ? 'block' : 'none';
+
+  // Badge flutuante
+  if (badge) {
+    badge.style.display = n > 0 ? 'flex' : 'none';
+    badge.textContent = n > 9 ? '9+' : String(n);
+  }
+
+  // Status impressora no cabeçalho da seção
+  if (statusImp) {
+    statusImp.textContent = n > 0 ? `🟠 ${n} aguardando impressão` : '✅ Fila vazia';
+    statusImp.style.color = n > 0 ? '#FF6B00' : '#25d366';
+  }
+
+  if (n === 0) {
+    lista.innerHTML = '<div style="color:#444;padding:8px 0">✅ Nenhum job pendente.</div>';
+    _jobsVisiveis.clear();
+    return;
+  }
+
+  // Som de notificação para novos jobs
+  const idsAtuais = new Set(jobs.map(j => j._id));
+  const novos = jobs.filter(j => !_jobsVisiveis.has(j._id));
+  if (novos.length > 0 && _jobsVisiveis.size > 0) {
+    // Só toca se já tinha jobs antes (evita som no carregamento inicial)
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.frequency.value = 880;
+      gain.gain.setValueAtTime(0.3, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+      osc.start(); osc.stop(ctx.currentTime + 0.4);
+    } catch(e) {}
+    if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+  }
+  _jobsVisiveis = idsAtuais;
+
+  // Renderizar cards
+  lista.innerHTML = jobs.map((job, idx) => {
+    const criadoEm = job.criadoEm ? new Date(job.criadoEm).toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'}) : '';
+    const urgente = idx === 0 ? 'urgente' : '';
+    const textoLimpo = (job.texto || '').substring(0, 300);
+    return `
+    <div class="job-card ${urgente}" id="job-${job._id}">
+      <div class="job-header">
+        <span class="job-num">📦 PEDIDO #${job.mesa || job.numeroPedido || (idx+1)}</span>
+        <span class="job-time">⏱ ${criadoEm}</span>
+      </div>
+      <div class="job-texto">${textoLimpo}</div>
+      <button class="btn-confirmar" id="btn-${job._id}" onclick="confirmarJob('${job._id}', this)">
+        ✅ Confirmar Impressão
+      </button>
+    </div>`;
+  }).join('');
+}
+
+async function confirmarJob(jobId, btn) {
+  btn.disabled = true;
+  btn.textContent = '⏳ Confirmando...';
+  try {
+    const r = await fetch(`${BASE}/jobs/${jobId}/confirmar?token=${TOKEN}`, {
+      method: 'POST',
+      headers: { 'x-cozinha-token': TOKEN, 'Content-Type': 'application/json' }
+    });
+    const d = await r.json();
+    if (d.sucesso) {
+      const card = document.getElementById('job-' + jobId);
+      if (card) {
+        card.style.opacity = '0.4';
+        card.style.transition = 'opacity .4s';
+        setTimeout(() => card.remove(), 500);
+      }
+      toast('✅ Job confirmado!');
+      _jobsVisiveis.delete(jobId);
+    } else {
+      btn.disabled = false;
+      btn.textContent = '✅ Confirmar Impressão';
+      toast('❌ ' + (d.erro || 'Erro'), false);
+    }
+  } catch(e) {
+    btn.disabled = false;
+    btn.textContent = '✅ Confirmar Impressão';
+    toast('Erro de conexão', false);
+  }
+}
+
+// ── INICIAR POLLING QUANDO APP ESTIVER VISÍVEL ───────────────────
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) pararPolling();
+  else if (adminId) iniciarPolling();
+});
 </script>
 </body>
 </html>
