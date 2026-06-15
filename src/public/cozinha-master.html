@@ -280,12 +280,16 @@ body{background:var(--preto);color:var(--branco);font-family:var(--body);font-si
 <div class="modal-bg" id="modalRestaurante">
   <div class="modal">
     <div class="modal-header">
-      <div class="modal-titulo">🍽️ Novo restaurante</div>
+      <div class="modal-titulo" id="modalRestTitulo">🍽️ Novo restaurante</div>
       <button class="modal-close" onclick="fecharModal('modalRestaurante')">✕</button>
     </div>
     <div class="modal-form">
       <div class="field"><label>Nome do restaurante</label><input type="text" id="rNome" class="input" placeholder="Ex: Pizzaria do João"></div>
-      <div class="field"><label>AdminId (MongoDB ObjectId do admin)</label><input type="text" id="rAdminId" class="input" placeholder="ex: 6a15ecb5e2ad56df1ad2a301"><small style="color:var(--cinza);font-size:.74rem">ID do AdminAgenda ou AdminCozinha que representa este restaurante</small></div>
+      <input type="hidden" id="rAdminId">
+      <div id="rAdminIdPreview" style="display:none;background:var(--dark3);border:1px solid var(--borda);border-radius:8px;padding:10px 14px">
+        <div style="font-size:.72rem;color:var(--cinza);margin-bottom:4px">ID gerado automaticamente</div>
+        <code id="rAdminIdTexto" style="font-size:.82rem;color:var(--laranja)"></code>
+      </div>
       <div id="modalRestErro" class="alert alert-erro" style="display:none"></div>
     </div>
     <div class="modal-footer">
@@ -509,10 +513,20 @@ async function atualizarStats(total, clientes, impressoras, jobs) {
 }
 
 // ── NOVO RESTAURANTE ──
+function gerarObjectId() {
+  // Gera ObjectId válido (24 chars hex) no browser
+  const ts = Math.floor(Date.now() / 1000).toString(16).padStart(8, '0');
+  const rand = Array.from(crypto.getRandomValues(new Uint8Array(8)))
+    .map(b => b.toString(16).padStart(2, '0')).join('');
+  return ts + rand;
+}
 function abrirModalRestaurante(idx = null) {
   document.getElementById('rNome').value = idx !== null ? _restaurantes[idx].nome : '';
-  document.getElementById('rAdminId').value = idx !== null ? _restaurantes[idx].adminId : '';
+  const adminId = idx !== null ? _restaurantes[idx].adminId : gerarObjectId();
+  document.getElementById('rAdminId').value = adminId;
   document.getElementById('rAdminId').dataset.editIdx = idx !== null ? idx : '';
+  document.getElementById('rAdminIdPreview').style.display = 'block';
+  document.getElementById('rAdminIdTexto').textContent = adminId;
   document.getElementById('modalRestErro').style.display = 'none';
   abrirModal('modalRestaurante');
 }
@@ -528,8 +542,8 @@ function salvarRestaurante() {
   const nome = document.getElementById('rNome').value.trim();
   const adminId = document.getElementById('rAdminId').value.trim();
   const erroEl = document.getElementById('modalRestErro');
-  if (!nome || !adminId) { erroEl.textContent = 'Preencha nome e adminId.'; erroEl.style.display = 'block'; return; }
-  if (!/^[a-f0-9]{24}$/i.test(adminId)) { erroEl.textContent = 'AdminId deve ser um ObjectId MongoDB válido (24 chars hex).'; erroEl.style.display = 'block'; return; }
+  if (!nome) { erroEl.textContent = 'Preencha o nome do restaurante.'; erroEl.style.display = 'block'; return; }
+  if (!adminId || !/^[a-f0-9]{24}$/i.test(adminId)) { erroEl.textContent = 'Erro interno: ID inválido. Feche e tente novamente.'; erroEl.style.display = 'block'; return; }
   const editIdx = document.getElementById('rAdminId').dataset.editIdx;
   if (editIdx !== '') {
     _restaurantes[parseInt(editIdx)] = { nome, adminId };
