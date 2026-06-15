@@ -1,0 +1,24 @@
+REBECA COZINHA — Servidor Local v10
+=====================================
+
+INSTALAÇÃO (faça UMA VEZ por restaurante):
+  1. Extraia este .zip numa pasta do PC da cozinha
+  2. Execute CONFIGURAR.bat como Administrador
+  3. Informe o nome do restaurante, AdminId e IP da impressora
+  4. O programa inicia automaticamente com o Windows
+
+COMO FUNCIONA:
+  - Este programa fica rodando em segundo plano no PC da cozinha
+  - A cada 5 segundos busca novos pedidos no servidor Rebeca
+  - Imprime automaticamente na impressora térmica via TCP
+  - Confirma a impressão no servidor
+
+CADA RESTAURANTE TEM SEU PRÓPRIO config.json — nunca se misturam.
+
+VERIFICAR SE ESTÁ FUNCIONANDO:
+  Abra o navegador e acesse: http://127.0.0.1:3333/status
+
+TESTAR IMPRESSÃO:
+  Abra o navegador e acesse: http://127.0.0.1:3333/testar
+
+SUPORTE: rebecasistemas.com.br

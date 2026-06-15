@@ -1,0 +1,10 @@
+{
+  "_comentario": "Gerado pelo CONFIGURAR.bat — nao editar manualmente",
+  "nomeRestaurante": "NOME_DO_RESTAURANTE",
+  "adminId": "ADMIN_ID_DO_RESTAURANTE",
+  "token": "cozinha-rebeca-2026",
+  "servidor": "https://rebecasistemas.com.br",
+  "ipImpressora": "",
+  "portaImpressora": 9100,
+  "intervalo": 5000
+}
