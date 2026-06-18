@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
+const crypto = require('crypto');
+const { S3Client, PutObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
 const { AdminAgenda, FotoAgenda, ServicoAgenda, ProfissionalAgenda, ProdutoAgenda, CatalogoAgenda } = require('../models/AgendaServico');
 
 // ── Auth ─────────────────────────────────────────────
@@ -15,22 +17,30 @@ async function authAgenda(req, res, next) {
   } catch(e) { res.status(500).json({ erro: e.message }); }
 }
 
-// ── Cloudinary ou memória ─────────────────────────────
-const CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME;
-const CLOUD_KEY  = process.env.CLOUDINARY_API_KEY;
-const CLOUD_SEC  = process.env.CLOUDINARY_API_SECRET;
-const USA_CLOUD  = !!(CLOUD_NAME && CLOUD_KEY && CLOUD_SEC);
+// ── Backblaze B2 (S3-compatível) ──────────────────────
+const B2_KEY_ID     = process.env.B2_KEY_ID;
+const B2_APP_KEY    = process.env.B2_APPLICATION_KEY;
+const B2_BUCKET     = process.env.B2_BUCKET_NAME;
+const B2_ENDPOINT   = process.env.B2_ENDPOINT; // ex: s3.us-east-005.backblazeb2.com
+const USA_B2 = !!(B2_KEY_ID && B2_APP_KEY && B2_BUCKET && B2_ENDPOINT);
 
-let cloudinary;
-if (USA_CLOUD) {
-  cloudinary = require('cloudinary').v2;
-  cloudinary.config({ cloud_name: CLOUD_NAME, api_key: CLOUD_KEY, api_secret: CLOUD_SEC });
-  console.log('[Upload] Cloudinary configurado:', CLOUD_NAME);
+let s3;
+if (USA_B2) {
+  // Região vem embutida no endpoint (ex: us-east-005)
+  const regiaoMatch = B2_ENDPOINT.match(/s3\.([a-z0-9-]+)\.backblazeb2\.com/);
+  const regiao = regiaoMatch ? regiaoMatch[1] : 'us-east-005';
+  s3 = new S3Client({
+    endpoint: `https://${B2_ENDPOINT}`,
+    region: regiao,
+    credentials: { accessKeyId: B2_KEY_ID, secretAccessKey: B2_APP_KEY },
+    forcePathStyle: false
+  });
+  console.log('[Upload] Backblaze B2 configurado:', B2_BUCKET, '@', B2_ENDPOINT);
 } else {
-  console.warn('[Upload] ⚠️  Cloudinary não configurado — usando memória temporária');
+  console.warn('[Upload] ⚠️  Backblaze B2 não configurado — usando fallback base64 (não recomendado em produção)');
 }
 
-// Multer: memória (buffer) — funciona com Cloudinary e evita disco
+// Multer: memória (buffer) — nunca grava no disco do servidor
 const upload = multer({
   storage: multer.memoryStorage(),
   fileFilter: (req, file, cb) => {
@@ -42,20 +52,27 @@ const upload = multer({
 
 // ── Upload universal ──────────────────────────────────
 async function uploadImagem(buffer, mimetype, pasta = 'agenda') {
-  if (USA_CLOUD) {
-    return new Promise((resolve, reject) => {
-      const stream = cloudinary.uploader.upload_stream(
-        { folder: `rebeca/${pasta}`, resource_type: 'image', quality: 'auto', fetch_format: 'auto' },
-        (err, result) => err ? reject(err) : resolve(result.secure_url)
-      );
-      const { Readable } = require('stream');
-      const r = new Readable(); r.push(buffer); r.push(null); r.pipe(stream);
-    });
+  if (USA_B2) {
+    const ext = (mimetype.split('/')[1] || 'jpg').replace('jpeg','jpg');
+    const nomeArquivo = `rebeca/${pasta}/${Date.now()}-${crypto.randomBytes(8).toString('hex')}.${ext}`;
+    await s3.send(new PutObjectCommand({
+      Bucket: B2_BUCKET,
+      Key: nomeArquivo,
+      Body: buffer,
+      ContentType: mimetype,
+      ACL: 'public-read'
+    }));
+    return `https://${B2_BUCKET}.${B2_ENDPOINT}/${nomeArquivo}`;
   } else {
-    // Fallback: base64 data URL (temporário, funciona mas não persiste restart)
     const b64 = buffer.toString('base64');
     return `data:${mimetype};base64,${b64}`;
   }
+}
+
+function extrairKeyDaUrl(url) {
+  // https://bucket.endpoint/rebeca/pasta/arquivo.jpg -> rebeca/pasta/arquivo.jpg
+  const idx = url.indexOf('/rebeca/');
+  return idx >= 0 ? url.slice(idx + 1) : null;
 }
 
 // ── Rotas ─────────────────────────────────────────────
@@ -150,10 +167,9 @@ router.delete('/fotos/:id', authAgenda, async (req, res) => {
   try {
     const foto = await FotoAgenda.findOne({ _id: req.params.id, adminId: req.adminAgendaId });
     if (!foto) return res.status(404).json({ erro: 'Foto não encontrada' });
-    // Deletar no Cloudinary se for URL do Cloudinary
-    if (USA_CLOUD && foto.url && foto.url.includes('cloudinary.com')) {
-      const publicId = foto.url.split('/').slice(-1)[0].split('.')[0];
-      await cloudinary.uploader.destroy(`rebeca/galeria/${publicId}`).catch(() => {});
+    if (USA_B2 && foto.url) {
+      const key = extrairKeyDaUrl(foto.url);
+      if (key) await s3.send(new DeleteObjectCommand({ Bucket: B2_BUCKET, Key: key })).catch(() => {});
     }
     await FotoAgenda.findByIdAndDelete(req.params.id);
     res.json({ sucesso: true });
