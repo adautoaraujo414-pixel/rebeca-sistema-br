@@ -119,13 +119,15 @@ router.post('/servicos', authAgenda, async (req, res) => {
 router.put('/servicos/:id', authAgenda, async (req, res) => {
   try {
     const s = await ServicoAgenda.findOneAndUpdate({ _id: req.params.id, adminId: req.adminAgendaId }, req.body, { new: true });
+    if (!s) return res.status(404).json({ erro: 'Serviço não encontrado' });
     res.json({ sucesso: true, servico: s });
   } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
 router.delete('/servicos/:id', authAgenda, async (req, res) => {
   try {
-    await ServicoAgenda.findOneAndDelete({ _id: req.params.id, adminId: req.adminAgendaId });
+    const _del = await ServicoAgenda.findOneAndDelete({ _id: req.params.id, adminId: req.adminAgendaId });
+    if (!_del) return res.status(404).json({ erro: 'Serviço não encontrado' });
     res.json({ sucesso: true });
   } catch(e) { res.status(500).json({ erro: e.message }); }
 });
@@ -163,13 +165,15 @@ router.post('/profissionais', authAgenda, async (req, res) => {
 router.put('/profissionais/:id', authAgenda, async (req, res) => {
   try {
     const p = await ProfissionalAgenda.findOneAndUpdate({ _id: req.params.id, adminId: req.adminAgendaId }, req.body, { new: true });
+    if (!p) return res.status(404).json({ erro: 'Profissional não encontrado' });
     res.json({ sucesso: true, profissional: p });
   } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
 router.delete('/profissionais/:id', authAgenda, async (req, res) => {
   try {
-    await ProfissionalAgenda.findOneAndUpdate({ _id: req.params.id, adminId: req.adminAgendaId }, { ativo: false });
+    const _del = await ProfissionalAgenda.findOneAndUpdate({ _id: req.params.id, adminId: req.adminAgendaId }, { ativo: false });
+    if (!_del) return res.status(404).json({ erro: 'Profissional não encontrado' });
     res.json({ sucesso: true });
   } catch(e) { res.status(500).json({ erro: e.message }); }
 });
@@ -352,13 +356,15 @@ router.put('/agendamentos/:id/status', authAgenda, async (req, res) => {
   try {
     const { status } = req.body;
     const ag = await AgendamentoAgenda.findOneAndUpdate({ _id: req.params.id, adminId: req.adminAgendaId }, { status }, { new: true });
+    if (!ag) return res.status(404).json({ erro: 'Agendamento não encontrado' });
     res.json({ sucesso: true, agendamento: ag });
   } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
 router.delete('/agendamentos/:id', authAgenda, async (req, res) => {
   try {
-    await AgendamentoAgenda.findOneAndUpdate({ _id: req.params.id, adminId: req.adminAgendaId }, { status: 'cancelado' });
+    const _del = await AgendamentoAgenda.findOneAndUpdate({ _id: req.params.id, adminId: req.adminAgendaId }, { status: 'cancelado' });
+    if (!_del) return res.status(404).json({ erro: 'Agendamento não encontrado' });
     res.json({ sucesso: true });
   } catch(e) { res.status(500).json({ erro: e.message }); }
 });
@@ -384,7 +390,8 @@ router.post('/bloqueios', authAgenda, async (req, res) => {
 
 router.delete('/bloqueios/:id', authAgenda, async (req, res) => {
   try {
-    await BloqueioAgenda.findOneAndDelete({ _id: req.params.id, adminId: req.adminAgendaId });
+    const _del = await BloqueioAgenda.findOneAndDelete({ _id: req.params.id, adminId: req.adminAgendaId });
+    if (!_del) return res.status(404).json({ erro: 'Bloqueio não encontrado' });
     res.json({ sucesso: true });
   } catch(e) { res.status(500).json({ erro: e.message }); }
 });
@@ -415,6 +422,7 @@ router.get('/clientes', authAgenda, async (req, res) => {
 router.put('/clientes/:id', authAgenda, async (req, res) => {
   try {
     const c = await ClienteAgenda.findOneAndUpdate({ _id: req.params.id, adminId: req.adminAgendaId }, req.body, { new: true });
+    if (!c) return res.status(404).json({ erro: 'Cliente não encontrado' });
     res.json({ sucesso: true, cliente: c });
   } catch(e) { res.status(500).json({ erro: e.message }); }
 });
@@ -437,7 +445,8 @@ router.post('/fotos', authAgenda, async (req, res) => {
 
 router.delete('/fotos/:id', authAgenda, async (req, res) => {
   try {
-    await FotoAgenda.findOneAndUpdate({ _id: req.params.id, adminId: req.adminAgendaId }, { ativo: false });
+    const _del = await FotoAgenda.findOneAndUpdate({ _id: req.params.id, adminId: req.adminAgendaId }, { ativo: false });
+    if (!_del) return res.status(404).json({ erro: 'Foto não encontrado' });
     res.json({ sucesso: true });
   } catch(e) { res.status(500).json({ erro: e.message }); }
 });

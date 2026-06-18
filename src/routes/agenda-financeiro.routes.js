@@ -126,7 +126,8 @@ router.post('/financeiro', authAgenda, async (req, res) => {
 // DELETE lancamento
 router.delete('/financeiro/:id', authAgenda, async (req, res) => {
   try {
-    await FinanceiroAgenda.findOneAndDelete({ _id: req.params.id, adminId: req.adminId });
+    const _del = await FinanceiroAgenda.findOneAndDelete({ _id: req.params.id, adminId: req.adminAgendaId });
+    if (!_del) return res.status(404).json({ erro: 'Lançamento não encontrado' });
     res.json({ sucesso: true });
   } catch(e) { res.status(500).json({ erro: e.message }); }
 });
@@ -161,13 +162,15 @@ router.put('/contas-pagar/:id', authAgenda, async (req, res) => {
       { _id: req.params.id, adminId: req.adminId },
       req.body, { new: true }
     );
+    if (!conta) return res.status(404).json({ erro: 'Conta a pagar não encontrado' });
     res.json({ sucesso: true, conta });
   } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
 router.delete('/contas-pagar/:id', authAgenda, async (req, res) => {
   try {
-    await ContaPagarAgenda.findOneAndDelete({ _id: req.params.id, adminId: req.adminId });
+    const _del = await ContaPagarAgenda.findOneAndDelete({ _id: req.params.id, adminId: req.adminAgendaId });
+    if (!_del) return res.status(404).json({ erro: 'Conta a pagar não encontrado' });
     res.json({ sucesso: true });
   } catch(e) { res.status(500).json({ erro: e.message }); }
 });
@@ -214,7 +217,8 @@ router.post('/fila-encaixe/notificar/:horario', authAgenda, async (req, res) => 
 
 router.delete('/fila-encaixe/:id', authAgenda, async (req, res) => {
   try {
-    await FilaEncaixeAgenda.findOneAndDelete({ _id: req.params.id, adminId: req.adminId });
+    const _del = await FilaEncaixeAgenda.findOneAndDelete({ _id: req.params.id, adminId: req.adminAgendaId });
+    if (!_del) return res.status(404).json({ erro: 'Item da fila não encontrado' });
     res.json({ sucesso: true });
   } catch(e) { res.status(500).json({ erro: e.message }); }
 });

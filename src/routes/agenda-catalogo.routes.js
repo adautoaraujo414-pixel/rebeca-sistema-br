@@ -62,7 +62,8 @@ router.put('/produtos/:id', authAgenda, async (req, res) => {
 
 router.delete('/produtos/:id', authAgenda, async (req, res) => {
   try {
-    await ProdutoAgenda.findOneAndDelete({ _id: req.params.id, adminId: req.adminAgendaId });
+    const _del = await ProdutoAgenda.findOneAndDelete({ _id: req.params.id, adminId: req.adminAgendaId });
+    if (!_del) return res.status(404).json({ erro: 'Produto não encontrado' });
     res.json({ sucesso: true });
   } catch(e) { res.status(500).json({ erro: e.message }); }
 });
@@ -98,7 +99,8 @@ router.put('/catalogos/:id', authAgenda, async (req, res) => {
 
 router.delete('/catalogos/:id', authAgenda, async (req, res) => {
   try {
-    await CatalogoAgenda.findOneAndDelete({ _id: req.params.id, adminId: req.adminAgendaId });
+    const _del = await CatalogoAgenda.findOneAndDelete({ _id: req.params.id, adminId: req.adminAgendaId });
+    if (!_del) return res.status(404).json({ erro: 'Catálogo não encontrado' });
     res.json({ sucesso: true });
   } catch(e) { res.status(500).json({ erro: e.message }); }
 });
@@ -134,7 +136,8 @@ router.put('/conhecimento/:id', authAgenda, async (req, res) => {
 
 router.delete('/conhecimento/:id', authAgenda, async (req, res) => {
   try {
-    await ConhecimentoAgenda.findOneAndDelete({ _id: req.params.id, adminId: req.adminAgendaId });
+    const _del = await ConhecimentoAgenda.findOneAndDelete({ _id: req.params.id, adminId: req.adminAgendaId });
+    if (!_del) return res.status(404).json({ erro: 'Item de conhecimento não encontrado' });
     res.json({ sucesso: true });
   } catch(e) { res.status(500).json({ erro: e.message }); }
 });
