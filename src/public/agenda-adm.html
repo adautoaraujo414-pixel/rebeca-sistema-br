@@ -1975,17 +1975,26 @@ function badge(status){
 }
 
 async function api(path, opts={}){
-  const r = await fetch(BASE+path, {
-    ...opts,
-    headers:{'Authorization':'Bearer '+(localStorage.getItem('agenda_token')||TOKEN),'Content-Type':'application/json',...(opts.headers||{})}
-  });
-  if(r.status===401){
-    const d = await r.json().catch(()=>({}));
-    if(d.erro==='Token inválido'){ logout(); return null; }
+  try {
+    const r = await fetch(BASE+path, {
+      ...opts,
+      headers:{'Authorization':'Bearer '+(localStorage.getItem('agenda_token')||TOKEN),'Content-Type':'application/json',...(opts.headers||{})}
+    });
+    if(r.status===401){
+      const d = await r.json().catch(()=>({}));
+      if(d.erro==='Token inválido'){ logout(); return null; }
+      return null;
+    }
+    if(!r.ok){
+      const d = await r.json().catch(()=>({}));
+      console.warn('[API] Erro '+r.status+' em '+path+':', d.erro||'sem detalhe');
+      return null;
+    }
+    return r.json();
+  } catch(e) {
+    console.error('[API] Falha de rede em '+path+':', e.message);
     return null;
   }
-  if(!r.ok) return null;
-  return r.json();
 }
 
 // ─── AUTENTICAÇÃO ───
