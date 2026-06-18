@@ -63,7 +63,7 @@ router.post('/login', async (req, res) => {
     if (!admin) return res.status(401).json({ erro: 'Credenciais inválidas' });
     const ok = await bcrypt.compare(senha, admin.senha);
     if (!ok) return res.status(401).json({ erro: 'Credenciais inválidas' });
-    if (!admin.ativo || admin.statusPagamento === 'aguardando_comprovante') return res.status(403).json({ erro: 'Acesso pendente. Envie o comprovante do PIX para liberar sua conta.', pendentePagamento: true });
+    if (!admin.ativo && admin.statusPagamento !== 'trial') return res.status(403).json({ erro: 'Acesso pendente. Entre em contato para liberar sua conta.', pendentePagamento: true }); if (admin.statusPagamento === 'aguardando_comprovante') return res.status(403).json({ erro: 'Acesso pendente. Envie o comprovante do PIX para liberar sua conta.', pendentePagamento: true });
     if (admin.statusPagamento === 'expirado') return res.status(403).json({ erro: 'Plano expirado. Renove seu acesso enviando o comprovante.', expirado: true });
     const token = admin.token || crypto.randomBytes(32).toString('hex');
     if (!admin.token) await AdminAgenda.findByIdAndUpdate(admin._id, { token });

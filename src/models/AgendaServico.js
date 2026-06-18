@@ -55,7 +55,7 @@ const adminAgendaSchema = new mongoose.Schema({
   },
   isRebecaOficial: { type: Boolean, default: false },
   planoExpira: { type: Date },
-  statusPagamento: { type: String, enum: ['pendente','aguardando_comprovante','pago','expirado'], default: 'pendente' },
+  statusPagamento: { type: String, enum: ['pendente','aguardando_comprovante','pago','expirado','trial'], default: 'pendente' },
   comprovantePagamento: { type: String },
   avisadoVencimento: { type: Boolean, default: false },
   configBot: {
