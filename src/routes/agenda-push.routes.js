@@ -6,6 +6,7 @@ function _fimDia(d) { const b = d ? new Date(d) : new Date(); return new Date(Da
 const router = express.Router();
 const webpush = require('web-push');
 const cron = require('node-cron');
+const RODAR_CRONS = process.env.WORKER_ROLE !== 'web'; // mesma flag usada no index.js
 const { AdminAgenda, AgendamentoAgenda, PushSubscriptionAgenda } = require('../models/AgendaServico');
 
 // Configurar VAPID
@@ -121,7 +122,7 @@ async function notificarCliente(telefone, adminId, titulo, corpo, url) {
 }
 
 // ===== CRON: lembrete 24h antes =====
-cron.schedule('0 8 * * *', async () => {
+if (RODAR_CRONS) cron.schedule('0 8 * * *', async () => {
   console.log('[CRON] Verificando lembretes de agendamento...');
   try {
     const agora = new Date();
@@ -162,7 +163,7 @@ cron.schedule('0 8 * * *', async () => {
 });
 
 // ===== CRON: lembrete 2h antes =====
-cron.schedule('0 * * * *', async () => {
+if (RODAR_CRONS) cron.schedule('0 * * * *', async () => {
   try {
     const agora = new Date();
     const em2h = new Date(agora.getTime() + 2 * 60 * 60 * 1000);
