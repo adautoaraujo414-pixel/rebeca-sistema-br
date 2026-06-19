@@ -16,6 +16,8 @@ const path     = require('path');
 const crypto   = require('crypto');
 const mongoose = require('mongoose');
 const cron     = require('node-cron');
+const RODAR_CRONS = process.env.WORKER_ROLE !== 'web'; // false só quando WORKER_ROLE=web (isola crons do processo web)
+console.log('[BOOT] WORKER_ROLE:', process.env.WORKER_ROLE || '(nao definido - padrao atual: web+crons juntos)', '| RODAR_CRONS:', RODAR_CRONS);
 
 // ─────────────────────────────────────────────
 // 3. CONFIG / DATABASE
@@ -456,7 +458,7 @@ app.listen(PORT, () => {
     setTimeout(() => {
       try {
         const lembretesJob = require('./jobs/lembretes-clientes.job');
-        lembretesJob.iniciar();
+        if (RODAR_CRONS) lembretesJob.iniciar();
       } catch(e) {
         console.error('[LembretesJob] Erro ao iniciar:', e.message);
       }
@@ -489,8 +491,10 @@ console.log('✅ Keep-alive Evolution API ativo para:', _evolutionUrl);
 // ─────────────────────────────────────────────
 // 26. SERVIÇOS DE RECUPERAÇÃO / INICIALIZAÇÃO
 // ─────────────────────────────────────────────
-require('./services/agenda-recuperacao.service');
-console.log('🔄 Agenda: recuperação de clientes ativa');
+if (RODAR_CRONS) {
+  require('./services/agenda-recuperacao.service');
+  console.log('🔄 Agenda: recuperação de clientes ativa');
+}
 
 // ─────────────────────────────────────────────
 // 27. CRON JOBS
@@ -498,7 +502,7 @@ console.log('🔄 Agenda: recuperação de clientes ativa');
 
 // Mensalidades — verificar vencimentos a cada 1h
 const MensalidadeService = require('./services/mensalidade.service');
-setInterval(async () => {
+if (RODAR_CRONS) setInterval(async () => {
     try {
         const notificacoes = await MensalidadeService.verificarVencimentos();
         if (notificacoes.length > 0) console.log('📢 Notificações de mensalidade:', notificacoes.length);
@@ -506,7 +510,7 @@ setInterval(async () => {
 }, 60 * 60 * 1000);
 
 // Reativação de clientes inativos — roda 1x por dia às 10h
-setInterval(async () => {
+if (RODAR_CRONS) setInterval(async () => {
     const agora = new Date();
     const _agoraBR = new Date(agora.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
     if (_agoraBR.getHours() !== 10 || _agoraBR.getMinutes() > 5) return;
@@ -549,40 +553,44 @@ console.log('✅ Cron reativação de clientes ativo');
 
 // Agenda — lembretes de agendamento
 const AgendamentoService = require('./services/agendamento.service');
-AgendamentoService.iniciarCron();
+if (RODAR_CRONS) AgendamentoService.iniciarCron();
 console.log('✅ Cron agendamentos ativo');
 
 // Delivery — trial e cardápio
 const DeliveryTrialService = require('./services/delivery-trial.service');
 const CardapioDiaService   = require('./services/cardapio-dia.service');
-cron.schedule('0 6 * * *', () => DeliveryTrialService.verificarTrialsVencidos());
-cron.schedule('0 10 * * *', () => CardapioDiaService.perguntarCardapioAdms());
-DeliveryTrialService.verificarTrialsVencidos();
+if (RODAR_CRONS) {
+  cron.schedule('0 6 * * *', () => DeliveryTrialService.verificarTrialsVencidos());
+  cron.schedule('0 10 * * *', () => CardapioDiaService.perguntarCardapioAdms());
+  DeliveryTrialService.verificarTrialsVencidos();
+}
 console.log('✅ Cron delivery trial ativo');
 console.log('✅ Cron cardápio do dia ativo (7h)');
 
 // Agenda — lembretes pessoais e modo dono
 const ModoDono = require('./services/agenda-modo-dono.service');
-cron.schedule('*/5 * * * *', () => ModoDono.rodarLembretes());
-// rodarLembretesPessoais e rodarLembretesClientes já rodam via lembretes-clientes.job (a cada 30min)
-// Fix: evitar execução duplicada que causava envio duplo de lembretes
-cron.schedule('0 10 * * *', () => ModoDono.rodarRelatorioDiario(), { timezone: 'America/Sao_Paulo' }); // 10h BRT
-// Bom dia inteligente — horário aleatório entre 7h e 8h30 (cron às 7h, delay interno)
 const BomDia = require('./services/bomdia-inteligente.service');
-cron.schedule('0 10 * * *', () => BomDia.rodarBomDia(), { timezone: 'America/Sao_Paulo' }); // 10h BRT
-// Boas-vindas pendentes — todo dia às 10h05 BRT (10h05 UTC = sem conflito com bom dia)
-cron.schedule('5 10 * * *', () => ModoDono.rodarBoasVindasPendentes(), { timezone: 'America/Sao_Paulo' }); // 10h05 BRT
-// Saudade Rebeca — verifica 3x por dia (9h, 14h, 20h BRT)
-cron.schedule('0 9 * * *',  () => ModoDono.rodarSaudadeRebeca(), { timezone: 'America/Sao_Paulo' });
-cron.schedule('0 14 * * *', () => ModoDono.rodarSaudadeRebeca(), { timezone: 'America/Sao_Paulo' });
-cron.schedule('0 20 * * *', () => ModoDono.rodarSaudadeRebeca(), { timezone: 'America/Sao_Paulo' });
+if (RODAR_CRONS) {
+  cron.schedule('*/5 * * * *', () => ModoDono.rodarLembretes());
+  // rodarLembretesPessoais e rodarLembretesClientes já rodam via lembretes-clientes.job (a cada 30min)
+  // Fix: evitar execução duplicada que causava envio duplo de lembretes
+  cron.schedule('0 10 * * *', () => ModoDono.rodarRelatorioDiario(), { timezone: 'America/Sao_Paulo' }); // 10h BRT
+  // Bom dia inteligente — horário aleatório entre 7h e 8h30 (cron às 7h, delay interno)
+  cron.schedule('0 10 * * *', () => BomDia.rodarBomDia(), { timezone: 'America/Sao_Paulo' }); // 10h BRT
+  // Boas-vindas pendentes — todo dia às 10h05 BRT (10h05 UTC = sem conflito com bom dia)
+  cron.schedule('5 10 * * *', () => ModoDono.rodarBoasVindasPendentes(), { timezone: 'America/Sao_Paulo' }); // 10h05 BRT
+  // Saudade Rebeca — verifica 3x por dia (9h, 14h, 20h BRT)
+  cron.schedule('0 9 * * *',  () => ModoDono.rodarSaudadeRebeca(), { timezone: 'America/Sao_Paulo' });
+  cron.schedule('0 14 * * *', () => ModoDono.rodarSaudadeRebeca(), { timezone: 'America/Sao_Paulo' });
+  cron.schedule('0 20 * * *', () => ModoDono.rodarSaudadeRebeca(), { timezone: 'America/Sao_Paulo' });
+}
 
 console.log('✅ Cron lembretes dono (5min) + relatório diário (7h) + bom dia inteligente (7h) ativos');
 
 
 
 // ── CRON TRIAL AGENDA — roda todo dia às 9h BRT ──────────────────
-require('node-cron').schedule('0 12 * * *', async () => {
+if (RODAR_CRONS) require('node-cron').schedule('0 12 * * *', async () => {
   try {
     const { AdminAgenda: _AA, InstanciaWhatsapp: _IW } = require('./models/AgendaServico');
     const agora = new Date();
@@ -706,7 +714,7 @@ Assim que confirmarmos o pagamento, reativamos imediatamente! 💙`;
 }, { timezone: 'America/Sao_Paulo' });
 // ─────────────────────────────────────────────────────────────────
 // ── RESET CONTADOR COZINHA ÀS 15H ────────────────────────────────
-require('node-cron').schedule('0 15 * * *', async () => {
+if (RODAR_CRONS) require('node-cron').schedule('0 15 * * *', async () => {
   try {
     const { ContadorPedido } = require('./models/cozinha.model');
     await ContadorPedido.deleteMany({});
