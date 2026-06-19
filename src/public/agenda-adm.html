@@ -2574,15 +2574,31 @@ async function salvarCliente(){
 async function salvarServico(){
   const btn = document.querySelector('button[onclick="salvarServico()"]');
   if (btn) { if (btn.disabled) return; btn.disabled = true; }
-  const fotoImg = document.getElementById('srv-foto-img');
-  const foto = (fotoImg && fotoImg.src && fotoImg.src.startsWith('data:')) ? fotoImg.src : null;
-  const payload = {nome: document.getElementById('srv-nome').value.trim(), preco: parseFloat(document.getElementById('srv-preco').value)||0, duracao: parseInt(document.getElementById('srv-dur').value)||30, descricao: document.getElementById('srv-desc').value, foto};
+  const fotoInput = document.getElementById('srv-foto-input');
+  const arquivoFoto = (fotoInput && fotoInput.files && fotoInput.files[0]) ? fotoInput.files[0] : null;
+  const payload = {nome: document.getElementById('srv-nome').value.trim(), preco: parseFloat(document.getElementById('srv-preco').value)||0, duracao: parseInt(document.getElementById('srv-dur').value)||30, descricao: document.getElementById('srv-desc').value};
   if(!payload.nome) { if (btn) btn.disabled = false; return toast('Informe o nome do serviço', 'erro'); }
   let r = null;
   try {
     r = await api('/servicos', {method:'POST', body:JSON.stringify(payload)});
   } catch(e) { console.error('Erro:', e); toast('Erro ao salvar serviço', 'erro'); if (btn) btn.disabled = false; return; }
-  if(r && r.sucesso){ toast('Serviço salvo ✅'); fecharModal('modal-srv'); srvRemoverFoto(); carregarTabelaServicos(); }
+  if(r && r.sucesso){
+    const servicoId = r.servico && r.servico._id;
+    if (servicoId && arquivoFoto) {
+      try {
+        const fd = new FormData();
+        fd.append('foto', arquivoFoto);
+        const upRes = await fetch(BASE.replace('/api/agenda', '/api/agenda-upload') + '/servico/' + servicoId + '/foto', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('agenda_token') || TOKEN) },
+          body: fd
+        });
+        const upData = await upRes.json().catch(() => ({}));
+        if (!upData.sucesso) console.warn('[Upload foto servico] erro:', upData.erro);
+      } catch(e) { console.warn('[Upload foto servico] falha de rede:', e.message); }
+    }
+    toast('Serviço salvo ✅'); fecharModal('modal-srv'); srvRemoverFoto(); carregarTabelaServicos();
+  }
   else toast((r && r.erro) || 'Erro ao salvar serviço', 'erro');
   if (btn) btn.disabled = false;
 }
