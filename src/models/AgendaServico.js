@@ -148,6 +148,7 @@ const agendamentoAgendaSchema = new mongoose.Schema({
   adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'AdminAgenda', required: true },
   clienteId: { type: mongoose.Schema.Types.ObjectId, ref: 'ClienteAgenda' },
   servicoId: { type: mongoose.Schema.Types.ObjectId, ref: 'ServicoAgenda' },
+  servicosIds: [{ type: mongoose.Schema.Types.ObjectId, ref: 'ServicoAgenda' }],
   profissionalId: { type: mongoose.Schema.Types.ObjectId, ref: 'ProfissionalAgenda' },
   nomeCliente: { type: String, required: true },
   telefoneCliente: { type: String, required: true },

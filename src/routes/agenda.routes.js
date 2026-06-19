@@ -184,11 +184,18 @@ router.get('/espaco/:adminId/horarios', async (req, res) => {
   try {
     const admin = await AdminAgenda.findById(req.params.adminId);
     if (!admin) return res.status(404).json({ erro: 'Espaço não encontrado' });
-    const { data, servicoId } = req.query;
+    const { data, servicoId, servicoIds } = req.query;
     if (!data) return res.status(400).json({ erro: 'data obrigatória (YYYY-MM-DD)' });
 
-    const servico = servicoId ? await ServicoAgenda.findById(servicoId) : null;
-    const duracao = servico?.duracao || admin.config?.intervaloAgendamento || 30;
+    let duracao;
+    if (servicoIds) {
+      const ids = String(servicoIds).split(',').map(s => s.trim()).filter(Boolean);
+      const servicosMulti = await ServicoAgenda.find({ _id: { $in: ids } });
+      duracao = servicosMulti.reduce((soma, s) => soma + (s.duracao || 0), 0) || admin.config?.intervaloAgendamento || 30;
+    } else {
+      const servico = servicoId ? await ServicoAgenda.findById(servicoId) : null;
+      duracao = servico?.duracao || admin.config?.intervaloAgendamento || 30;
+    }
 
     const cfg = admin.config || {};
     const abertura = cfg.horarioAbertura || '08:00';
@@ -251,7 +258,7 @@ router.get('/espaco/:adminId/horarios', async (req, res) => {
 // ===== AGENDAR (público) =====
 router.post('/espaco/:adminId/agendar', async (req, res) => {
   try {
-    const { nomeCliente, telefoneCliente, telefone, servicoId, profissionalId, observacoes, origem } = req.body;
+    const { nomeCliente, telefoneCliente, telefone, servicoId, servicoIds, profissionalId, observacoes, origem } = req.body;
     // Aceita dataHora completo OU data+hora separados (frontend espaco-digital.html)
     let dataHora = req.body.dataHora;
     if (!dataHora && req.body.data && req.body.hora) {
@@ -261,8 +268,25 @@ router.post('/espaco/:adminId/agendar', async (req, res) => {
     if (!nomeCliente || !telCliente || !dataHora) return res.status(400).json({ erro: 'Dados obrigatórios faltando' });
     const admin = await AdminAgenda.findById(req.params.adminId);
     if (!admin) return res.status(404).json({ erro: 'Espaço não encontrado' });
-    const servico = servicoId ? await ServicoAgenda.findById(servicoId) : null;
     const prof = profissionalId ? await ProfissionalAgenda.findById(profissionalId) : null;
+
+    let servico = null;
+    let servicosMulti = [];
+    let nomeServicoFinal = '';
+    let duracaoFinal = 0;
+    let precoFinal = 0;
+    if (Array.isArray(servicoIds) && servicoIds.length > 0) {
+      servicosMulti = await ServicoAgenda.find({ _id: { $in: servicoIds } });
+      nomeServicoFinal = servicosMulti.map(s => s.nome).join(' + ');
+      duracaoFinal = servicosMulti.reduce((soma, s) => soma + (s.duracao || 0), 0);
+      precoFinal = servicosMulti.reduce((soma, s) => soma + (s.preco || 0), 0);
+      servico = servicosMulti[0] || null;
+    } else {
+      servico = servicoId ? await ServicoAgenda.findById(servicoId) : null;
+      nomeServicoFinal = servico?.nome || '';
+      duracaoFinal = servico?.duracao || 0;
+      precoFinal = servico?.preco || 0;
+    }
 
     // Criar/atualizar cliente
     let cliente = await ClienteAgenda.findOne({ adminId: req.params.adminId, telefone: telCliente });
@@ -272,7 +296,7 @@ router.post('/espaco/:adminId/agendar', async (req, res) => {
 
     // Verificar double-booking
     const dataHoraObj = new Date(dataHora);
-    const durMin = servico?.duracao || admin.config?.intervaloAgendamento || 30;
+    const durMin = duracaoFinal || admin.config?.intervaloAgendamento || 30;
     const dataHoraFim = new Date(dataHoraObj.getTime() + durMin * 60000);
     const conflito = await AgendamentoAgenda.findOne({
       adminId: req.params.adminId,
@@ -293,14 +317,15 @@ router.post('/espaco/:adminId/agendar', async (req, res) => {
     const ag = await AgendamentoAgenda.create({
       adminId: req.params.adminId,
       clienteId: cliente._id,
-      servicoId: servicoId || null,
+      servicoId: (servico && servico._id) || null,
+      servicosIds: servicosMulti.length > 0 ? servicosMulti.map(s => s._id) : undefined,
       profissionalId: profissionalId || null,
       nomeCliente, telefoneCliente: telCliente,
-      nomeServico: servico?.nome || '',
+      nomeServico: nomeServicoFinal,
       nomeProfissional: prof?.nome || '',
       dataHora: new Date(dataHora),
-      duracao: servico?.duracao || 30,
-      preco: servico?.preco || 0,
+      duracao: duracaoFinal || 30,
+      preco: precoFinal || 0,
       observacoes,
       origem: origem || 'site'
     });
