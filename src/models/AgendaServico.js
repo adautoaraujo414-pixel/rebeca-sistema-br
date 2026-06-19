@@ -161,6 +161,8 @@ const agendamentoAgendaSchema = new mongoose.Schema({
   observacoes: { type: String },
   fotoReferencia: { type: String },
   lembreteEnviado: { type: Boolean, default: false },
+  nota: { type: Number, min: 1, max: 5 },
+  comentario: { type: String },
   createdAt: { type: Date, default: Date.now }
 });
 

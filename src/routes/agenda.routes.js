@@ -14,6 +14,7 @@ const {
   FotoAgenda, PreCadastroAgenda,
   ProdutoAgenda, CatalogoAgenda
 } = require('../models/AgendaServico');
+const ModoDono = require('../services/agenda-modo-dono.service');
 
 // ===== AUTH MIDDLEWARE =====
 // auth middleware v2
