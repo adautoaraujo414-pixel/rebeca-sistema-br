@@ -453,8 +453,8 @@ app.post('/api/admin-upgrade-plano', async (req, res) => {
   } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
-app.listen(PORT, () => {
-    // Iniciar job de lembretes APÓS servidor subir
+function _depoisDoBoot() {
+    // Iniciar job de lembretes APÓS servidor subir (ou apos worker iniciar)
     setTimeout(() => {
       try {
         const lembretesJob = require('./jobs/lembretes-clientes.job');
@@ -463,11 +463,22 @@ app.listen(PORT, () => {
         console.error('[LembretesJob] Erro ao iniciar:', e.message);
       }
     }, 5000); // aguarda 5s para DB conectar
-    console.log('🚀 REBECA CORRIDAS v3.4.1 - Sistema Completo');
-    console.log('📡 Porta:', PORT);
-    console.log('🚗 App Motorista: /motorista');
     console.log('💰 Mensalidades: Ativo');
-});
+}
+
+if (process.env.WORKER_ROLE === 'worker') {
+    // Modo worker: nao abre porta HTTP, so roda os crons (RODAR_CRONS=true aqui)
+    console.log('⚙️  REBECA WORKER v3.4.1 - somente jobs/crons em segundo plano (sem HTTP)');
+    _depoisDoBoot();
+} else {
+    // Modo web (padrao atual, com ou sem WORKER_ROLE=web): abre porta HTTP normalmente
+    app.listen(PORT, () => {
+        console.log('🚀 REBECA CORRIDAS v3.4.1 - Sistema Completo');
+        console.log('📡 Porta:', PORT);
+        console.log('🚗 App Motorista: /motorista');
+        _depoisDoBoot();
+    });
+}
 
 // ─────────────────────────────────────────────
 // 25. KEEP-ALIVE (evita hibernação no Render)
