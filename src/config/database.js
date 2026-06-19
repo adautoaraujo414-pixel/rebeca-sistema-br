@@ -5,7 +5,8 @@ const connectDB = async () => {
       serverSelectionTimeoutMS: 30000,
       socketTimeoutMS: 45000,
       connectTimeoutMS: 30000,
-      maxPoolSize: 10,
+      maxPoolSize: 50,
+      minPoolSize: 5,
     });
     console.log(`✅ MongoDB conectado! Host: ${conn.connection.host}`);
     // Migração: dropar índice antigo adminId_1 do ContadorPedido
