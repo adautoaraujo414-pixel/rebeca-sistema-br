@@ -1837,6 +1837,16 @@ document.querySelectorAll('.nav-item').forEach(item => {
       <button class="modal-close" onclick="fecharModal('modal-prf')">×</button>
     </div>
     <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Foto</label>
+        <input type="file" accept="image/*" id="prf-foto-input" style="display:none" onchange="prfPreviewFoto(this)">
+        <div id="prf-foto-preview" style="display:flex;align-items:center;gap:12px">
+          <div onclick="document.getElementById('prf-foto-input').click()" style="width:64px;height:64px;border-radius:50%;background:var(--bg2);border:1.5px dashed var(--border2);display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;flex-shrink:0" id="prf-foto-box">
+            <span style="font-size:1.4rem;color:var(--txt3)">📷</span>
+          </div>
+          <button type="button" class="btn-secondary" onclick="document.getElementById('prf-foto-input').click()" style="padding:8px 14px;font-size:.82rem">Escolher foto</button>
+        </div>
+      </div>
       <div class="form-group"><label class="form-label">Nome completo</label><input class="form-input" id="prf-nome" placeholder="Nome do profissional"></div>
       <div class="form-group"><label class="form-label">Cargo / Especialidade</label><input class="form-input" id="prf-cargo" placeholder="Ex: Barbeiro, Cabeleireira..."></div>
       <div class="form-group"><label class="form-label">Telefone</label><input class="form-input" id="prf-tel" placeholder="(00) 00000-0000"></div>
@@ -2621,16 +2631,48 @@ function srvRemoverFoto() {
   if(prev) prev.style.display = 'none';
 }
 
+function prfPreviewFoto(input){
+  if (!input.files || !input.files[0]) return;
+  const reader = new FileReader();
+  reader.onload = function(e){
+    document.getElementById('prf-foto-box').innerHTML = '<img src="' + e.target.result + '" style="width:100%;height:100%;object-fit:cover">';
+  };
+  reader.readAsDataURL(input.files[0]);
+}
+function prfLimparFoto(){
+  const input = document.getElementById('prf-foto-input');
+  if (input) input.value = '';
+  const box = document.getElementById('prf-foto-box');
+  if (box) box.innerHTML = '<span style="font-size:1.4rem;color:var(--txt3)">📷</span>';
+}
 async function salvarProfissional(){
   const btn = document.querySelector('button[onclick="salvarProfissional()"]');
   if (btn) { if (btn.disabled) return; btn.disabled = true; }
+  const fotoInput = document.getElementById('prf-foto-input');
+  const arquivoFoto = (fotoInput && fotoInput.files && fotoInput.files[0]) ? fotoInput.files[0] : null;
   const payload = {nome: document.getElementById('prf-nome').value.trim(), cargo: document.getElementById('prf-cargo').value.trim(), telefone: document.getElementById('prf-tel').value.trim()};
   if(!payload.nome) { if (btn) btn.disabled = false; return toast('Informe o nome', 'erro'); }
   let r = null;
   try {
     r = await api('/profissionais', {method:'POST', body:JSON.stringify(payload)});
   } catch(e) { console.error('Erro:', e); toast('Erro ao salvar profissional', 'erro'); if (btn) btn.disabled = false; return; }
-  if(r && r.sucesso){ toast('Profissional salvo ✅'); fecharModal('modal-prf'); carregarGridProfissionais(); }
+  if(r && r.sucesso){
+    const profId = r.profissional && r.profissional._id;
+    if (profId && arquivoFoto) {
+      try {
+        const fd = new FormData();
+        fd.append('foto', arquivoFoto);
+        const upRes = await fetch(BASE.replace('/api/agenda', '/api/agenda-upload') + '/profissional/' + profId + '/foto', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('agenda_token') || TOKEN) },
+          body: fd
+        });
+        const upData = await upRes.json().catch(() => ({}));
+        if (!upData.sucesso) console.warn('[Upload foto profissional] erro:', upData.erro);
+      } catch(e) { console.warn('[Upload foto profissional] falha de rede:', e.message); }
+    }
+    toast('Profissional salvo ✅'); fecharModal('modal-prf'); prfLimparFoto(); carregarGridProfissionais();
+  }
   else toast((r && r.erro) || 'Erro ao salvar profissional', 'erro');
   if (btn) btn.disabled = false;
 }
