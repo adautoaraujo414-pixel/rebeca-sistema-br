@@ -310,6 +310,31 @@ input,select{font-family:var(--font-body)}
     </div>
   </div>
 </div>
+<div class="modal-overlay hidden" id="modal-prof">
+  <div class="modal-box" style="max-width:480px">
+    <div class="modal-header">
+      <div class="modal-title" id="mp-titulo">Agendar</div>
+      <button class="modal-close" onclick="fecharModalProf()">✕</button>
+    </div>
+    <div class="modal-field">
+      <div class="modal-label">Escolha os serviços</div>
+      <div id="mp-servicos" style="display:flex;flex-direction:column;gap:8px;max-height:220px;overflow-y:auto"></div>
+    </div>
+    <div id="mp-resumo" class="hidden" style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:12px;margin-bottom:16px;font-size:.85rem;color:var(--txt2)"></div>
+    <div class="modal-field">
+      <div class="modal-label">Data</div>
+      <input class="modal-input" id="mp-data" type="date" onchange="mpCarregarHorarios()">
+    </div>
+    <div class="modal-field">
+      <div class="modal-label">Horário</div>
+      <div id="mp-hrs" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:8px"><div style="color:var(--txt3);font-size:.82rem;grid-column:1/-1;padding:4px 0">Escolha ao menos um serviço.</div></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="fecharModalProf()">Cancelar</button>
+      <button class="btn btn-primary" id="mp-btn" onclick="continuarModalProf()" disabled>Escolha um horário</button>
+    </div>
+  </div>
+</div>
 <div id="page-content" class="hidden">
 <header id="header">
   <div class="container">
@@ -700,14 +725,17 @@ function renderSvcs(lista){
   });
   wrap.appendChild(grid);
 }
+var PROFS_MAP={};
 function renderProfs(lista){
   if(!lista.length){document.getElementById('nav-prof').style.display='none';return}
   show('profissionais');
   var grid=document.getElementById('prof-grid');
   lista.forEach(function(p){
-    var c=document.createElement('div');c.className='prof-card';
+    PROFS_MAP[p._id]=p;
+    var c=document.createElement('div');c.className='prof-card';c.style.cursor='pointer';
     var av=p.foto?'<img src="'+p.foto+'" alt="'+p.nome+'">':'<span>'+(p.nome||'P')[0].toUpperCase()+'</span>';
     c.innerHTML='<div class="prof-avatar">'+av+'</div><div class="prof-nome">'+p.nome+'</div><div class="prof-spec">'+(p.especialidade||p.cargo||'')+'</div>';
+    c.onclick=function(){abrirModalProf(p._id)};
     grid.appendChild(c);
   });
 }
@@ -788,6 +816,80 @@ function abrirModal(){
   document.getElementById('m-nome').focus();
 }
 function fecharModal(){document.getElementById('modal-ag').classList.add('hidden')}
+var MP_PROF=null,MP_SVCS=[],MP_DATA=null,MP_HORA=null,MP_FIM=null;
+function abrirModalProf(profId){
+  MP_PROF=PROFS_MAP[profId];MP_SVCS=[];MP_DATA=null;MP_HORA=null;MP_FIM=null;
+  document.getElementById('mp-titulo').textContent='Agendar com '+(MP_PROF?MP_PROF.nome:'');
+  var wrap=document.getElementById('mp-servicos');wrap.innerHTML='';
+  SERVICOS.forEach(function(s){
+    var row=document.createElement('label');
+    row.style.cssText='display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--radius);cursor:pointer;font-size:.86rem';
+    row.innerHTML='<input type="checkbox" value="'+s._id+'" style="width:17px;height:17px;accent-color:var(--accent)"><span style="flex:1">'+s.nome+(s.duracao?' <span style="color:var(--txt3)">('+fmtMin(s.duracao)+')</span>':'')+'</span><span style="color:var(--accent2);font-weight:600">'+fmt(s.preco)+'</span>';
+    row.querySelector('input').onchange=function(e){mpToggleServico(s._id,e.target.checked)};
+    wrap.appendChild(row);
+  });
+  document.getElementById('mp-resumo').classList.add('hidden');
+  var hoje=new Date().toISOString().split('T')[0];
+  document.getElementById('mp-data').min=hoje;document.getElementById('mp-data').value=hoje;
+  document.getElementById('mp-hrs').innerHTML='<div style="color:var(--txt3);font-size:.82rem;grid-column:1/-1;padding:4px 0">Escolha ao menos um serviço.</div>';
+  var btn=document.getElementById('mp-btn');btn.disabled=true;btn.textContent='Escolha um horário';
+  document.getElementById('modal-prof').classList.remove('hidden');
+}
+function fecharModalProf(){document.getElementById('modal-prof').classList.add('hidden')}
+function mpToggleServico(id,marcado){
+  if(marcado){if(MP_SVCS.indexOf(id)===-1)MP_SVCS.push(id)}
+  else{MP_SVCS=MP_SVCS.filter(function(x){return x!==id})}
+  var resumo=document.getElementById('mp-resumo');
+  if(!MP_SVCS.length){resumo.classList.add('hidden');document.getElementById('mp-hrs').innerHTML='<div style="color:var(--txt3);font-size:.82rem;grid-column:1/-1;padding:4px 0">Escolha ao menos um serviço.</div>';var b=document.getElementById('mp-btn');b.disabled=true;b.textContent='Escolha um horário';return}
+  var selecionados=SERVICOS.filter(function(s){return MP_SVCS.indexOf(s._id)!==-1});
+  var durTotal=selecionados.reduce(function(t,s){return t+(s.duracao||0)},0);
+  var precoTotal=selecionados.reduce(function(t,s){return t+(s.preco||0)},0);
+  resumo.classList.remove('hidden');
+  resumo.innerHTML='<strong>'+selecionados.map(function(s){return s.nome}).join(' + ')+'</strong><br>⏱ Duração total: '+fmtMin(durTotal)+(precoTotal?'<br>💰 Total: '+fmt(precoTotal):'');
+  MP_HORA=null;MP_FIM=null;
+  var btn=document.getElementById('mp-btn');btn.disabled=true;btn.textContent='Escolha um horário';
+  mpCarregarHorarios();
+}
+async function mpCarregarHorarios(){
+  MP_DATA=document.getElementById('mp-data').value;
+  var wrap=document.getElementById('mp-hrs');
+  if(!MP_DATA||!MP_SVCS.length){wrap.innerHTML='<div style="color:var(--txt3);font-size:.82rem;grid-column:1/-1;padding:4px 0">Escolha ao menos um serviço.</div>';return}
+  wrap.innerHTML='<div style="color:var(--txt3);font-size:.82rem;grid-column:1/-1;padding:4px 0">Carregando...</div>';
+  try{
+    var r=await fetch(BASE+'/espaco/'+ADMIN_ID+'/horarios?data='+MP_DATA+'&servicoIds='+MP_SVCS.join(','));
+    var d=await r.json();
+    var hrs=(d&&d.horarios?d.horarios:d||[]).filter(function(h){return!h.ocupado});
+    wrap.innerHTML='';
+    if(!hrs.length){wrap.innerHTML='<div style="color:var(--txt3);font-size:.82rem;grid-column:1/-1;padding:4px 0">Sem horários disponíveis nesta data.</div>';return}
+    var selecionados=SERVICOS.filter(function(s){return MP_SVCS.indexOf(s._id)!==-1});
+    var durTotal=selecionados.reduce(function(t,s){return t+(s.duracao||0)},0);
+    hrs.forEach(function(h){
+      var hora=h.hora||h;
+      var btn=document.createElement('button');btn.className='booking-hr-btn';btn.textContent=hora;
+      btn.onclick=function(){
+        document.querySelectorAll('#mp-hrs .booking-hr-btn').forEach(function(b){b.classList.remove('sel')});
+        btn.classList.add('sel');
+        MP_HORA=hora;
+        var partes=hora.split(':').map(Number);
+        var fimMin=partes[0]*60+partes[1]+durTotal;
+        var fh=Math.floor(fimMin/60).toString().padStart(2,'0'),fm=(fimMin%60).toString().padStart(2,'0');
+        MP_FIM=fh+':'+fm;
+        var mb=document.getElementById('mp-btn');mb.disabled=false;mb.textContent='Início '+MP_HORA+' • Término '+MP_FIM;
+      };
+      wrap.appendChild(btn);
+    });
+  }catch(e){wrap.innerHTML='<div style="color:#ef4444;font-size:.82rem;grid-column:1/-1;padding:4px 0">Erro ao carregar horários.</div>'}
+}
+function continuarModalProf(){
+  if(!MP_HORA||!MP_SVCS.length)return;
+  var selecionados=SERVICOS.filter(function(s){return MP_SVCS.indexOf(s._id)!==-1});
+  var precoTotal=selecionados.reduce(function(t,s){return t+(s.preco||0)},0);
+  MODAL_DATA={servicoIds:MP_SVCS.slice(),profissionalId:MP_PROF?MP_PROF._id:null,data:MP_DATA,hora:MP_HORA};
+  document.getElementById('modal-resumo').innerHTML='<strong>'+selecionados.map(function(s){return s.nome}).join(' + ')+'</strong>'+(MP_PROF?'<br>👤 '+MP_PROF.nome:'')+'<br>📅 '+MP_DATA+' • '+MP_HORA+' às '+MP_FIM+(precoTotal?'<br>💰 '+fmt(precoTotal):'');
+  fecharModalProf();
+  document.getElementById('modal-ag').classList.remove('hidden');
+  document.getElementById('m-nome').focus();
+}
 async function confirmarAgendamento(){
   var nome=document.getElementById('m-nome').value.trim();
   var tel=document.getElementById('m-tel').value.trim();
@@ -796,7 +898,10 @@ async function confirmarAgendamento(){
   if(!tel){toast('Informe seu WhatsApp.','error');return}
   var btn=document.getElementById('modal-btn');btn.textContent='Agendando...';btn.disabled=true;
   try{
-    var r=await fetch(BASE+'/espaco/'+ADMIN_ID+'/agendar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({nomeCliente:nome,telefone:tel,email:email,servicoId:MODAL_DATA.servicoId,data:MODAL_DATA.data,hora:MODAL_DATA.hora})});
+    var corpo={nomeCliente:nome,telefone:tel,email:email,data:MODAL_DATA.data,hora:MODAL_DATA.hora};
+    if(MODAL_DATA.servicoIds&&MODAL_DATA.servicoIds.length){corpo.servicoIds=MODAL_DATA.servicoIds}else{corpo.servicoId=MODAL_DATA.servicoId}
+    if(MODAL_DATA.profissionalId){corpo.profissionalId=MODAL_DATA.profissionalId}
+    var r=await fetch(BASE+'/espaco/'+ADMIN_ID+'/agendar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(corpo)});
     var d=await r.json();
     if(r.ok&&!d.erro){
       fecharModal();
