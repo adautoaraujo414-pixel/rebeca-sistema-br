@@ -2536,6 +2536,8 @@ async function deletarProfissional(id){
 }
 
 async function salvarAgendamento(){
+  const btn = document.querySelector('button[onclick="salvarAgendamento()"]');
+  if (btn) { if (btn.disabled) return; btn.disabled = true; }
   const payload = {
     clienteNome: document.getElementById('ag-cliente').value.trim(),
     clienteTelefone: document.getElementById('ag-tel').value.trim(),
@@ -2545,37 +2547,44 @@ async function salvarAgendamento(){
     observacao: document.getElementById('ag-obs').value,
     status: 'confirmado'
   };
-  if(!payload.clienteNome || !payload.dataHora.includes('T')) return toast('Preencha os campos obrigatórios', 'erro');
+  if(!payload.clienteNome || !payload.dataHora.includes('T')) { if (btn) btn.disabled = false; return toast('Preencha os campos obrigatórios', 'erro'); }
   let r = null;
   try {
     r = await api('/'+ADMIN_ID+'/agendar', {method:'POST', body:JSON.stringify(payload)});
-  } catch(e) { console.error('Erro agendamento:', e); toast('Erro ao criar agendamento', 'erro'); return; }
+  } catch(e) { console.error('Erro agendamento:', e); toast('Erro ao criar agendamento', 'erro'); if (btn) btn.disabled = false; return; }
   if(r && r.sucesso){ toast('Agendamento criado ✅'); fecharModal('modal-ag'); carregarDashboard(); }
   else toast((r && r.erro) || 'Erro ao criar agendamento', 'erro');
+  if (btn) btn.disabled = false;
 }
 
 async function salvarCliente(){
+  const btn = document.querySelector('button[onclick="salvarCliente()"]');
+  if (btn) { if (btn.disabled) return; btn.disabled = true; }
   const payload = {nome: document.getElementById('cli-nome').value.trim(), telefone: document.getElementById('cli-tel').value.trim(), email: document.getElementById('cli-email').value.trim()};
-  if(!payload.nome) return toast('Informe o nome', 'erro');
+  if(!payload.nome) { if (btn) btn.disabled = false; return toast('Informe o nome', 'erro'); }
   let r = null;
   try {
     r = await api('/clientes', {method:'POST', body:JSON.stringify(payload)});
-  } catch(e) { console.error('Erro cliente:', e); toast('Erro ao salvar cliente', 'erro'); return; }
+  } catch(e) { console.error('Erro cliente:', e); toast('Erro ao salvar cliente', 'erro'); if (btn) btn.disabled = false; return; }
   if(r && r.sucesso){ toast('Cliente salvo ✅'); fecharModal('modal-cli'); carregarTabelaClientes(); }
   else toast((r && r.erro) || 'Erro ao salvar cliente', 'erro');
+  if (btn) btn.disabled = false;
 }
 
 async function salvarServico(){
+  const btn = document.querySelector('button[onclick="salvarServico()"]');
+  if (btn) { if (btn.disabled) return; btn.disabled = true; }
   const fotoImg = document.getElementById('srv-foto-img');
   const foto = (fotoImg && fotoImg.src && fotoImg.src.startsWith('data:')) ? fotoImg.src : null;
   const payload = {nome: document.getElementById('srv-nome').value.trim(), preco: parseFloat(document.getElementById('srv-preco').value)||0, duracao: parseInt(document.getElementById('srv-dur').value)||30, descricao: document.getElementById('srv-desc').value, foto};
-  if(!payload.nome) return toast('Informe o nome do serviço', 'erro');
+  if(!payload.nome) { if (btn) btn.disabled = false; return toast('Informe o nome do serviço', 'erro'); }
   let r = null;
   try {
     r = await api('/servicos', {method:'POST', body:JSON.stringify(payload)});
-  } catch(e) { console.error('Erro:', e); toast('Erro ao salvar serviço', 'erro'); return; }
+  } catch(e) { console.error('Erro:', e); toast('Erro ao salvar serviço', 'erro'); if (btn) btn.disabled = false; return; }
   if(r && r.sucesso){ toast('Serviço salvo ✅'); fecharModal('modal-srv'); srvRemoverFoto(); carregarTabelaServicos(); }
   else toast((r && r.erro) || 'Erro ao salvar serviço', 'erro');
+  if (btn) btn.disabled = false;
 }
 function srvPreviewFoto(input) {
   const file = input.files[0];
@@ -2597,17 +2606,22 @@ function srvRemoverFoto() {
 }
 
 async function salvarProfissional(){
+  const btn = document.querySelector('button[onclick="salvarProfissional()"]');
+  if (btn) { if (btn.disabled) return; btn.disabled = true; }
   const payload = {nome: document.getElementById('prf-nome').value.trim(), cargo: document.getElementById('prf-cargo').value.trim(), telefone: document.getElementById('prf-tel').value.trim()};
-  if(!payload.nome) return toast('Informe o nome', 'erro');
+  if(!payload.nome) { if (btn) btn.disabled = false; return toast('Informe o nome', 'erro'); }
   let r = null;
   try {
     r = await api('/profissionais', {method:'POST', body:JSON.stringify(payload)});
-  } catch(e) { console.error('Erro:', e); toast('Erro ao salvar profissional', 'erro'); return; }
+  } catch(e) { console.error('Erro:', e); toast('Erro ao salvar profissional', 'erro'); if (btn) btn.disabled = false; return; }
   if(r && r.sucesso){ toast('Profissional salvo ✅'); fecharModal('modal-prf'); carregarGridProfissionais(); }
   else toast((r && r.erro) || 'Erro ao salvar profissional', 'erro');
+  if (btn) btn.disabled = false;
 }
 
 async function salvarConfig(){
+  const btn = document.querySelector('button[onclick="salvarConfig()"]');
+  if (btn) { if (btn.disabled) return; btn.disabled = true; }
   const payload = {
     nomeNegocio: document.getElementById('cfg-nome').value, segmento: document.getElementById('cfg-segmento').value,
     telefone: document.getElementById('cfg-tel').value, whatsapp: document.getElementById('cfg-wpp').value,
@@ -2619,11 +2633,13 @@ async function salvarConfig(){
       antecedenciaMinima: parseInt(document.getElementById('cfg-ant').value)||60,
     }
   };
+  let r = null;
   try {
-  const r = await api('/perfil', {method:'PUT', body:JSON.stringify(payload)});
-  } catch(e) { console.error('Erro:', e); alert('Erro ao executar ação'); }
+    r = await api('/perfil', {method:'PUT', body:JSON.stringify(payload)});
+  } catch(e) { console.error('Erro:', e); alert('Erro ao executar ação'); if (btn) btn.disabled = false; return; }
   if(r && r.sucesso){ toast('Configurações salvas ✅'); }
   else toast('Erro ao salvar', 'erro');
+  if (btn) btn.disabled = false;
 }
 
 // ─── MODAIS ───
@@ -2648,7 +2664,7 @@ function abrirModalCliente(){ document.getElementById('modal-cli').classList.add
 function abrirModalServico(){ document.getElementById('modal-srv').classList.add('open'); var sy=window.scrollY;document.body.style.position='fixed';document.body.style.top='-'+sy+'px';document.body.style.left='0';document.body.style.right='0';document.body.dataset.scrollY=sy; }
 function abrirModalProfissional(){ document.getElementById('modal-prf').classList.add('open'); var sy=window.scrollY;document.body.style.position='fixed';document.body.style.top='-'+sy+'px';document.body.style.left='0';document.body.style.right='0';document.body.dataset.scrollY=sy; }
 
-function fecharModal(id){
+function _fecharModalLegacy(id){
   document.getElementById(id).classList.remove('open');
   var sy=parseInt(document.body.dataset.scrollY||'0');document.body.style.position='';document.body.style.top='';document.body.style.left='';document.body.style.right='';window.scrollTo(0,sy);
 }
@@ -2678,10 +2694,12 @@ function fecharDrawer(){
 
 // ─── LINK PÚBLICO ───
 function copiarLink(){
+  if(!window._adminId){ toast('Aguarde o carregamento da página', 'erro'); return; }
   const url = window._linkPublico || '';
   navigator.clipboard.writeText(url).then(()=>toast('Link copiado! 🔗'));
 }
 function abrirEspaco(){
+  if(!window._adminId){ toast('Aguarde o carregamento da página', 'erro'); return; }
   window.open('/espaco-digital?id='+window._adminId,'_blank');
 }
 
@@ -3140,14 +3158,16 @@ function abrirNovoLembrete() {
 }
 
 async function salvarLembrete() {
+  const btn = document.querySelector('button[onclick^="salvarLembrete()"]');
+  if (btn) { if (btn.disabled) return; btn.disabled = true; }
   const texto       = document.getElementById('lmb-texto').value.trim();
   const data        = document.getElementById('lmb-data').value;
   const hora        = document.getElementById('lmb-hora').value;
   const antecedencia = parseInt(document.getElementById('lmb-antecedencia').value);
 
-  if (!texto) { toast('Escreve o que você quer lembrar!', 'erro'); return; }
-  if (!data)  { toast('Coloca a data do lembrete!', 'erro'); return; }
-  if (!hora)  { toast('Coloca o horário do evento!', 'erro'); return; }
+  if (!texto) { toast('Escreve o que você quer lembrar!', 'erro'); if (btn) btn.disabled = false; return; }
+  if (!data)  { toast('Coloca a data do lembrete!', 'erro'); if (btn) btn.disabled = false; return; }
+  if (!hora)  { toast('Coloca o horário do evento!', 'erro'); if (btn) btn.disabled = false; return; }
 
   try {
     const r = await fetch('/api/agenda/lembretes', {
@@ -3166,6 +3186,7 @@ async function salvarLembrete() {
       toast(d.mensagem || 'Erro ao salvar', 'erro');
     }
   } catch(e) { toast('Erro de conexão', 'erro'); }
+  if (btn) btn.disabled = false;
 }
 
 async function carregarLembretes() {
@@ -3343,6 +3364,8 @@ function wppRecarregar() {
 }
 
 async function salvarCfgBot() {
+  const btn = document.querySelector('button[onclick="salvarCfgBot()"]');
+  if (btn) { if (btn.disabled) return; btn.disabled = true; }
   var ativo     = document.getElementById('cfg-bot-ativo').checked;
   var fora      = document.getElementById('cfg-bot-fora-horario').checked;
   var link      = document.getElementById('cfg-bot-link').checked;
@@ -3359,6 +3382,7 @@ async function salvarCfgBot() {
   } catch(e) {
     toast('Erro de conexão', 'erro');
   }
+  if (btn) btn.disabled = false;
 }
 
 async function carregarCfgBot() {
@@ -3864,6 +3888,8 @@ async function salvarLancamento() {
   const valor = parseFloat(document.getElementById('fin-valor').value);
   const data = document.getElementById('fin-data').value;
   if (!descricao || !valor || !data) return toast('Preencha descrição, valor e data', 'erro');
+  const btn = document.querySelector('button[onclick="salvarLancamento()"]');
+  if (btn) { if (btn.disabled) return; btn.disabled = true; }
   const payload = {
     tipo: document.getElementById('fin-tipo').value,
     descricao,
@@ -3873,9 +3899,10 @@ async function salvarLancamento() {
     formaPagamento: document.getElementById('fin-pagamento').value,
     observacao: document.getElementById('fin-obs').value
   };
+  let r = null;
   try {
-  const r = await api('/financeiro/lancamento', { method: 'POST', body: JSON.stringify(payload) });
-  } catch(e) { console.error('Erro:', e); alert('Erro ao executar ação'); }
+    r = await api('/financeiro/lancamento', { method: 'POST', body: JSON.stringify(payload) });
+  } catch(e) { console.error('Erro:', e); alert('Erro ao executar ação'); if (btn) btn.disabled = false; return; }
   if (r && (r.sucesso || r._id)) {
     toast('Lançamento salvo ✅');
     fecharModalFinanceiro();
@@ -3884,6 +3911,7 @@ async function salvarLancamento() {
   } else {
     toast('Funcionalidade em preparação — backend não configurado', 'erro');
   }
+  if (btn) btn.disabled = false;
 }
 
 async function deletarLancamento(id) {
@@ -4820,6 +4848,8 @@ async function salvarProduto() {
   if (!nome) { alert('Informe o nome do produto'); return; }
   const preco = _parseMoney(document.getElementById('prod-preco').value);
   if (!preco || preco <= 0) { alert('Informe o preço'); return; }
+  const btn = document.querySelector('button[onclick="salvarProduto()"]');
+  if (btn) { if (btn.disabled) return; btn.disabled = true; }
   const body = {
     nome,
     categoria: document.getElementById('prod-categoria').value.trim(),
@@ -4844,6 +4874,7 @@ async function salvarProduto() {
     if (d.sucesso) { fecharModal('modal-produto'); carregarProdutos(); } 
     else alert(d.erro || 'Erro ao salvar produto');
   } catch(e) { alert('Erro de conexão'); }
+  if (btn) btn.disabled = false;
 }
 
 async function excluirProduto() {
@@ -4919,6 +4950,8 @@ async function salvarCatalogo() {
   const id = document.getElementById('cat-id').value;
   const nome = document.getElementById('cat-nome').value.trim();
   if (!nome) { alert('Informe o nome do catálogo'); return; }
+  const btn = document.querySelector('button[onclick="salvarCatalogo()"]');
+  if (btn) { if (btn.disabled) return; btn.disabled = true; }
   const body = {
     nome,
     descricao: document.getElementById('cat-desc').value.trim(),
@@ -4933,6 +4966,7 @@ async function salvarCatalogo() {
     if (d.sucesso) { fecharModal('modal-catalogo'); carregarCatalogos(); }
     else alert(d.erro || 'Erro ao salvar');
   } catch(e) { alert('Erro de conexão'); }
+  if (btn) btn.disabled = false;
 }
 
 async function excluirCatalogo() {
@@ -5018,6 +5052,8 @@ async function salvarConhecimento() {
   const pergunta = document.getElementById('conh-pergunta').value.trim();
   const resposta = document.getElementById('conh-resposta').value.trim();
   if (!pergunta || !resposta) { alert('Preencha pergunta e resposta'); return; }
+  const btn = document.querySelector('button[onclick="salvarConhecimento()"]');
+  if (btn) { if (btn.disabled) return; btn.disabled = true; }
   const body = {
     tipo: document.getElementById('conh-tipo').value,
     pergunta, resposta,
@@ -5031,6 +5067,7 @@ async function salvarConhecimento() {
     if (d.sucesso) { fecharModal('modal-conhecimento'); carregarConhecimento(); }
     else alert(d.erro || 'Erro ao salvar');
   } catch(e) { alert('Erro de conexão'); }
+  if (btn) btn.disabled = false;
 }
 
 async function excluirConhecimento() {
@@ -5124,7 +5161,10 @@ function removerFotoProduto() { document.getElementById('prod-foto').value = '';
 
 // ══════════════════ MODAL UTILS ══════════════════
 function fecharModal(id) {
-  document.getElementById(id).classList.remove('show');
+  var el = document.getElementById(id);
+  if (!el) return;
+  el.classList.remove('show');
+  if (el.classList.contains('open')) _fecharModalLegacy(id);
 }
 function fecharModalSePano(e, id) {
   if (e.target === document.getElementById(id)) fecharModal(id);
