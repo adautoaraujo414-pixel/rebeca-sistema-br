@@ -547,10 +547,35 @@ router.post('/espaco/:adminId/cliente', async (req, res) => {
   } catch(e) { res.json({ sucesso: false }); }
 });
 
+// Login do profissional (telefone + senha)
+router.post('/profissional-app/login', async (req, res) => {
+  try {
+    const { telefone, senha } = req.body;
+    if (!telefone || !senha) return res.status(400).json({ erro: 'Telefone e senha obrigatórios' });
+    const prof = await ProfissionalAgenda.findOne({ telefone, ativo: true });
+    if (!prof || !prof.senha) return res.status(401).json({ erro: 'Credenciais inválidas' });
+    const ok = await bcrypt.compare(senha, prof.senha);
+    if (!ok) return res.status(401).json({ erro: 'Credenciais inválidas' });
+    res.json({ sucesso: true, token: prof.token, nome: prof.nome });
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// Auth do profissional via token
+async function authProfissional(req, res, next) {
+  try {
+    const token = req.headers.authorization?.replace('Bearer ','') || req.params.token || '';
+    if (!token) return res.status(401).json({ erro: 'Token ausente' });
+    const prof = await ProfissionalAgenda.findOne({ token, ativo: true });
+    if (!prof) return res.status(401).json({ erro: 'Token inválido' });
+    req.profissional = prof;
+    next();
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+}
+
 // Rota pública: profissional ver seus agendamentos pelo token
 router.get('/profissional-app/:token', async (req, res) => {
   try {
-    const { AgendamentoAgenda, AdminAgenda } = require('../models/AgendaServico');
+    const { AgendamentoAgenda, AdminAgenda, FinanceiroAgenda } = require('../models/AgendaServico');
     const prof = await ProfissionalAgenda.findOne({ token: req.params.token, ativo: true });
     if (!prof) return res.status(404).json({ erro: 'Profissional não encontrado' });
     const admin = await AdminAgenda.findById(prof.adminId);
@@ -562,12 +587,108 @@ router.get('/profissional-app/:token', async (req, res) => {
       dataHora: { $gte: hoje, $lte: fim },
       status: { $nin: ['cancelado'] }
     }).sort({ dataHora: 1 });
+
+    // Comissão do mês corrente
+    const inicioMes = new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), 1, 3, 0, 0));
+    const concluidosMes = await AgendamentoAgenda.find({
+      profissionalId: prof._id, status: 'concluido', dataHora: { $gte: inicioMes }
+    });
+    const faturamentoMes = concluidosMes.reduce((s, a) => s + (a.preco || 0), 0);
+    const comissaoMes = faturamentoMes * ((prof.comissaoPercentual || 0) / 100);
+
     res.json({
       sucesso: true,
-      profissional: { nome: prof.nome, foto: prof.foto, cargo: prof.cargo, horario: prof.horario, diasAtendimento: prof.diasAtendimento, atribuicoes: prof.atribuicoes },
+      profissional: { nome: prof.nome, foto: prof.foto, cargo: prof.cargo, horario: prof.horario, diasAtendimento: prof.diasAtendimento, atribuicoes: prof.atribuicoes, comissaoPercentual: prof.comissaoPercentual || 0 },
       negocio: { nome: admin ? admin.nomeNegocio : '', segmento: admin ? admin.segmento : '', logo: admin ? admin.logo : '' },
-      agendamentos
+      agendamentos,
+      financeiro: { faturamentoMes, comissaoMes, atendimentosMes: concluidosMes.length }
     });
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// Profissional cancela um agendamento
+router.put('/profissional-app/:token/agendamento/:id/cancelar', authProfissional, async (req, res) => {
+  try {
+    const { AgendamentoAgenda, AdminAgenda } = require('../models/AgendaServico');
+    const { enviarMensagem } = require('../services/whatsapp.provider');
+    const ag = await AgendamentoAgenda.findOneAndUpdate(
+      { _id: req.params.id, profissionalId: req.profissional._id },
+      { status: 'cancelado' },
+      { new: true }
+    );
+    if (!ag) return res.status(404).json({ erro: 'Agendamento não encontrado' });
+    const admin = await AdminAgenda.findById(req.profissional.adminId);
+    if (admin && ag.telefoneCliente) {
+      const dataFmt = new Date(ag.dataHora).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
+      await enviarMensagem(admin.instanciaWhatsappId, ag.telefoneCliente, `Olá ${ag.nomeCliente || ''} 😊
+
+Seu horário do dia ${dataFmt} com ${req.profissional.nome} precisou ser cancelado. Quer remarcar? É só me responder aqui que eu já organizo um novo horário pra você 💛`);
+    }
+    res.json({ sucesso: true, agendamento: ag });
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// Profissional pede reagendamento — Rebeca intermedia com o cliente
+router.put('/profissional-app/:token/agendamento/:id/reagendar', authProfissional, async (req, res) => {
+  try {
+    const { motivo } = req.body;
+    const { AgendamentoAgenda, AdminAgenda } = require('../models/AgendaServico');
+    const { enviarMensagem } = require('../services/whatsapp.provider');
+    const ag = await AgendamentoAgenda.findOneAndUpdate(
+      { _id: req.params.id, profissionalId: req.profissional._id },
+      { status: 'pendente', observacoes: `[Reagendamento solicitado por ${req.profissional.nome}] ${motivo || ''}` },
+      { new: true }
+    );
+    if (!ag) return res.status(404).json({ erro: 'Agendamento não encontrado' });
+    const admin = await AdminAgenda.findById(req.profissional.adminId);
+    if (admin && ag.telefoneCliente) {
+      const dataFmt = new Date(ag.dataHora).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
+      await enviarMensagem(admin.instanciaWhatsappId, ag.telefoneCliente, `Olá ${ag.nomeCliente || ''} 😊
+
+${req.profissional.nome} precisou remarcar seu horário do dia ${dataFmt}${motivo ? ' (' + motivo + ')' : ''}. Qual seria o melhor dia e horário pra você? Assim que confirmar eu já deixo remarcado 💛`);
+    }
+    if (admin) {
+      await enviarMensagem(admin.instanciaWhatsappId, admin.whatsapp || admin.telefone, `📋 ${req.profissional.nome} pediu reagendamento do atendimento de ${ag.nomeCliente || 'cliente'} (${ag.nomeServico || ''}). Já avisei o cliente e estou aguardando o melhor horário pra remarcar.`);
+    }
+    res.json({ sucesso: true, agendamento: ag });
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// Profissional manda mensagem livre — Rebeca intermedia com o admin
+router.post('/profissional-app/:token/mensagem', authProfissional, async (req, res) => {
+  try {
+    const { texto } = req.body;
+    if (!texto) return res.status(400).json({ erro: 'Mensagem vazia' });
+    const { AdminAgenda } = require('../models/AgendaServico');
+    const { enviarMensagem } = require('../services/whatsapp.provider');
+    const admin = await AdminAgenda.findById(req.profissional.adminId);
+    if (admin) {
+      await enviarMensagem(admin.instanciaWhatsappId, admin.whatsapp || admin.telefone, `💬 Mensagem de ${req.profissional.nome}:
+
+"${texto}"`);
+    }
+    res.json({ sucesso: true });
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// Relatório de faturamento por comissionado (admin)
+router.get('/profissionais/:id/relatorio', authAgenda, async (req, res) => {
+  try {
+    const { AgendamentoAgenda } = require('../models/AgendaServico');
+    const prof = await ProfissionalAgenda.findOne({ _id: req.params.id, adminId: req.adminAgendaId });
+    if (!prof) return res.status(404).json({ erro: 'Profissional não encontrado' });
+    const { mes, ano } = req.query;
+    const agora = new Date(Date.now() - 3*60*60*1000);
+    const m = parseInt(mes) || (agora.getUTCMonth() + 1);
+    const a = parseInt(ano) || agora.getUTCFullYear();
+    const inicio = new Date(Date.UTC(a, m - 1, 1, 3, 0, 0));
+    const fim = new Date(Date.UTC(a, m, 1, 2, 59, 59, 999));
+    const concluidos = await AgendamentoAgenda.find({
+      profissionalId: prof._id, status: 'concluido', dataHora: { $gte: inicio, $lte: fim }
+    }).sort({ dataHora: 1 });
+    const faturamento = concluidos.reduce((s, x) => s + (x.preco || 0), 0);
+    const comissao = faturamento * ((prof.comissaoPercentual || 0) / 100);
+    res.json({ sucesso: true, profissional: prof.nome, comissaoPercentual: prof.comissaoPercentual || 0, totalAtendimentos: concluidos.length, faturamento, comissao, atendimentos: concluidos });
   } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
