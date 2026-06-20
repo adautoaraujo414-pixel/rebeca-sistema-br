@@ -8,6 +8,7 @@
 
 'use strict';
 
+const MetaWA = require('./meta-whatsapp.service'); // resposta via Meta quando provider='meta'
 const axios = require('axios');
 const { AdminAgenda } = require('../models/AgendaServico');
 const { InstanciaWhatsapp } = require('../models');
@@ -90,7 +91,13 @@ async function _getInstanciaOficial() {
     console.error('[Oficial] Erro ao buscar instância oficial no banco:', e.message);
   }
 
-  // Fallback .env
+  // Fallback Meta (quando configurado via variavel de ambiente META_WA_PHONE_ID)
+  if (process.env.META_WA_PHONE_ID && process.env.META_WA_TOKEN) {
+    console.log('[Oficial] 🔌 Usando Meta WhatsApp oficial (env)');
+    return { provider: 'meta', metaPhoneId: process.env.META_WA_PHONE_ID, apiKey: process.env.META_WA_TOKEN };
+  }
+
+  // Fallback Evolution .env
   if (ENV_INSTANCE) {
     console.log(`[Oficial] 🔌 Usando instância oficial do .env: ${ENV_INSTANCE}`);
     return { nomeInstancia: ENV_INSTANCE, apiKey: ENV_KEY, apiUrl: EVOLUTION_URL };
@@ -113,6 +120,15 @@ async function _responderOficial(numero, texto) {
     console.warn('[Oficial] ⚠️  Sem instância oficial configurada — mensagem não enviada');
     return;
   }
+
+  // Resposta via Meta (provider='meta') — usa credenciais globais do .env
+  if (inst.provider === 'meta') {
+    const r = await MetaWA.enviarTexto(numero, texto, null);
+    if (!r.sucesso) console.error('[Oficial] Erro Meta ao responder:', r.erro);
+    else console.log('[Oficial] Resposta enviada via Meta para', numero);
+    return;
+  }
+
   try {
     await axios.post(
       `${inst.apiUrl}/message/sendText/${inst.nomeInstancia}`,
@@ -419,14 +435,81 @@ async function processarMensagemOficial(payload) {
     const encontrados = await _buscarAdminsPorTelefone(telNorm);
 
     if (!encontrados.length) {
-      console.log(`[Oficial] ❓ Não reconhecido: ${_mask(telNorm)}`);
-      await _responderOficial(telBruto,
-        'Oi! Eu sou a Rebeca 💙\n\n' +
-        'Não encontrei este número como administrador autorizado de uma Rebeca Agenda.\n\n' +
-        'Se você já é cliente, acesse o painel e adicione este número em:\n' +
-        '*Configurações → Modo Rebeca pelo WhatsApp*\n\n' +
-        'Se ainda não é cliente, fale com a equipe da Rebeca para conhecer os planos.'
-      );
+      console.log(`[Oficial] ❓ Não reconhecido: ${_mask(telNorm)} — acionando vendedora IA`);
+      // Numero nao cadastrado como admin -> Rebeca age como vendedora inteligente
+      // Identifica o interesse e manda o link da landing page mais adequada
+      try {
+        const Anthropic = require('@anthropic-ai/sdk');
+        const _ai = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+        const LINKS = {
+          agenda:   'https://rebecasistemas.com.br/agenda-cadastro',
+          corridas: 'https://rebecasistemas.com.br/becamob-landing',
+          delivery: 'https://rebecasistemas.com.br/rebeca-delivery-landing',
+          estudos:  'https://rebecasistemas.com.br/beca-estuda-landing',
+          geral:    'https://rebecasistemas.com.br',
+        };
+
+        const SYSTEM_VENDEDORA = `Você é a Rebeca, assistente comercial inteligente de um sistema de gestão para pequenos negócios.
+Você tem 4 produtos principais:
+1. Rebeca Agenda — sistema completo de agendamento online para salões, barbearias, clínicas, estúdios. O cliente agenda pelo WhatsApp, recebe lembretes automáticos, o dono gerencia tudo pelo painel.
+2. BecaMob / Corridas — central de corridas e transporte, painel para despachante, app para motoristas, rastreamento em tempo real.
+3. Rebeca Delivery — sistema de delivery completo: cardápio digital, cozinha, entregadores, caixa, WhatsApp integrado.
+4. Beca Estuda — plataforma de cursos online para pequenos negócios.
+
+Regras:
+- Seja calorosa, objetiva e profissional. Use poucos emojis (1-2 por mensagem).
+- Entenda o interesse da pessoa e fale APENAS do produto mais adequado.
+- SEMPRE termine sua resposta com exatamente uma linha no formato: LINK:agenda OU LINK:corridas OU LINK:delivery OU LINK:estudos OU LINK:geral
+- Não ofereça todos os produtos de uma vez. Foque no que ela parece precisar.
+- Se não entender o interesse, faça UMA pergunta curta e objetiva.
+- Mensagens curtas: no máximo 4 linhas.`;
+
+        // Busca ou cria sessao de conversa de vendas para esse numero
+        const _chaveSessao = 'venda_' + telNorm;
+        if (!global._sessoesVenda) global._sessoesVenda = new Map();
+        const _limpaSessoes = () => {
+          const lim = Date.now() - 2*60*60*1000;
+          for (const [k,v] of global._sessoesVenda) if (v.ts < lim) global._sessoesVenda.delete(k);
+        };
+        _limpaSessoes();
+        if (!global._sessoesVenda.has(_chaveSessao)) {
+          global._sessoesVenda.set(_chaveSessao, { historico: [], ts: Date.now() });
+        }
+        const sessao = global._sessoesVenda.get(_chaveSessao);
+        sessao.ts = Date.now();
+        sessao.historico.push({ role: 'user', content: texto || 'Oi' });
+        if (sessao.historico.length > 20) sessao.historico = sessao.historico.slice(-20);
+
+        const resp = await _ai.messages.create({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 300,
+          system: SYSTEM_VENDEDORA,
+          messages: sessao.historico,
+        });
+
+        const respostaIA = resp.content?.[0]?.text || '';
+        sessao.historico.push({ role: 'assistant', content: respostaIA });
+
+        // Extrai o link indicado pela IA e monta mensagem final
+        const matchLink = respostaIA.match(/LINK:(agenda|corridas|delivery|estudos|geral)/i);
+        const tipoLink  = matchLink ? matchLink[1].toLowerCase() : 'geral';
+        const link      = LINKS[tipoLink] || LINKS.geral;
+        // Remove a linha LINK: da resposta antes de enviar
+        const textoLimpo = respostaIA.replace(/\nLINK:[a-z]+/i, '').replace(/LINK:[a-z]+/i, '').trim();
+        const msgFinal = textoLimpo + (textoLimpo.includes('rebecasistemas') ? '' : `
+
+🔗 ${link}`);
+
+        await _responderOficial(telBruto, msgFinal);
+        console.log('[Oficial] 🤖 Vendedora respondeu para', _mask(telNorm), '| link:', tipoLink);
+      } catch(eVenda) {
+        console.error('[Oficial] Erro vendedora IA:', eVenda.message);
+        // Fallback simples se a IA falhar
+        await _responderOficial(telBruto,
+          'Oi! Sou a Rebeca \u{1F499}\n\nConheca nossos sistemas para o seu negocio:\nhttps://rebecasistemas.com.br'
+        );
+      }
       return;
     }
 
