@@ -241,6 +241,26 @@ router.post('/webhook', async (req, res) => {
             inst = await InstanciaWhatsapp.findOne({ provider: 'meta', status: 'conectado' }).sort({ updatedAt: -1 });
         }
 
+        // ── NUMERO OFICIAL (Modo Dono) — ANTES de qualquer busca de instancia ──
+        // Quando e o numero oficial (META_WA_PHONE_ID), nao precisa de instancia no banco:
+        // roteia direto para processarMensagemOficial que usa credenciais do .env
+        if (process.env.META_WA_PHONE_ID && phoneNumberId === process.env.META_WA_PHONE_ID) {
+            try {
+                const { processarMensagemOficial } = require('../services/agenda-rebeca-oficial.service');
+                await processarMensagemOficial({
+                    data: {
+                        message: {
+                            key: { remoteJid: telefone + '@s.whatsapp.net', fromMe: false },
+                            message: { conversation: textoMensagem }
+                        }
+                    }
+                });
+            } catch(eOficial) {
+                console.error('[MetaWebhook] Erro Modo Dono:', eOficial.message);
+            }
+            return; // nao processa como cliente comum
+        }
+
         if (!inst) {
             console.log('[MetaWebhook] Instância Meta não encontrada para phoneId:', phoneNumberId);
             return;
@@ -261,28 +281,7 @@ router.post('/webhook', async (req, res) => {
             _metaRaw:    msg,
         };
 
-        // ── NUMERO OFICIAL (Modo Dono) — intercepta ANTES do fluxo de cliente ──
-        // Este numero e central: qualquer admin (agenda/corrida/delivery) com
-        // telefone cadastrado pode falar com a Rebeca por aqui em Modo Dono.
-        // Nao afeta os demais numeros (cada admin/agenda/corrida tem o seu).
-        if (process.env.META_WA_PHONE_ID && phoneNumberId === process.env.META_WA_PHONE_ID) {
-            try {
-                const { processarMensagemOficial } = require('../services/agenda-rebeca-oficial.service');
-                await processarMensagemOficial({
-                    data: {
-                        message: {
-                            key: { remoteJid: telefone + '@s.whatsapp.net', fromMe: false },
-                            message: { conversation: textoMensagem }
-                        }
-                    }
-                });
-            } catch(eOficial) {
-                console.error('[MetaWebhook] Erro Modo Dono:', eOficial.message);
-            }
-            return; // nao processa como cliente comum
-        }
-
-        // Processar via RebecaService — mesmo fluxo da Evolution
+// Processar via RebecaService — mesmo fluxo da Evolution
         try {
             const RebecaService = require('../services/rebeca.service');
             if (RebecaService.processarMensagem) {
