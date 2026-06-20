@@ -119,9 +119,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
   <div class="token-card">
     <div class="token-icon">📅</div>
     <h2>Minha Agenda</h2>
-    <p>Digite seu token de acesso fornecido pelo estabelecimento</p>
-    <input type="text" id="input-token" placeholder="Cole seu token aqui..." autocomplete="off">
-    <button class="btn-entrar" onclick="entrarComToken()">Acessar Agenda</button>
+    <p>Entre com o WhatsApp e a senha que a Rebeca te enviou</p>
+    <input type="tel" id="input-telefone" placeholder="Seu WhatsApp (DDD + número)" autocomplete="off">
+    <input type="password" id="input-senha" placeholder="Senha" autocomplete="off">
+    <button class="btn-entrar" onclick="entrarComSenha()">Acessar Agenda</button>
   </div>
 </div>
 
@@ -262,12 +263,21 @@ function minutosAte(dataHora) {
   return Math.floor((new Date(dataHora) - new Date()) / 60000);
 }
 
-async function entrarComToken() {
-  var token = document.getElementById('input-token').value.trim();
-  if (!token) { toast('Digite o token'); return; }
-  TOKEN_PROF = token;
-  localStorage.setItem('prof_token', token);
-  await carregarDados();
+async function entrarComSenha() {
+  var telefone = document.getElementById('input-telefone').value.trim();
+  var senha = document.getElementById('input-senha').value.trim();
+  if (!telefone || !senha) { toast('Preencha WhatsApp e senha'); return; }
+  try {
+    var r = await fetch('/api/agenda/profissional-app/login', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ telefone: telefone, senha: senha })
+    });
+    var d = await r.json();
+    if (!d.sucesso) { toast(d.erro || 'Credenciais inválidas'); return; }
+    TOKEN_PROF = d.token;
+    localStorage.setItem('prof_token', d.token);
+    await carregarDados();
+  } catch(e) { toast('Erro de conexão'); }
 }
 
 async function carregarDados() {
@@ -289,7 +299,7 @@ async function carregarDados() {
     if (!d.sucesso) {
       localStorage.removeItem('prof_token');
       TOKEN_PROF = '';
-      toast('Token inválido');
+      toast('Sessão expirada, entre novamente');
       document.getElementById('tela-token').style.display = 'flex';
       document.getElementById('tela-loading').style.display = 'none';
       return;
