@@ -559,7 +559,12 @@ Regras:
     }
 
     // ── Verificar horario de funcionamento ────────────────────────────────────
-    if (!cfgBot.foraHorario) {
+    // O proprio dono/admin pode usar o Modo Dono a qualquer hora
+    const _ehComandoDono = texto && (
+      texto.trim().startsWith('/') ||
+      /^(fechar|abrir|agenda|financeiro|relatorio|ajuda|menu|oi|ol[aá]|status)/i.test(texto.trim())
+    );
+    if (!cfgBot.foraHorario && !_ehComandoDono) {
       const cfg  = admin.config || {};
       const agora = new Date();
       const _agoraBR = new Date(agora.getTime() - 3*60*60*1000); // UTC-3
