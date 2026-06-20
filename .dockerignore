@@ -1,0 +1,32 @@
+# Dependencias (reinstaladas dentro do build)
+node_modules
+frontend/node_modules
+
+# Controle de versao
+.git
+.gitignore
+
+# Variaveis de ambiente (usar as do Render, nao do .env local)
+.env
+.env.example
+.env.local
+
+# Build outputs que serao gerados no proprio Dockerfile
+frontend/dist
+frontend/build
+
+# Documentacao e scripts locais
+README.md
+backup-dados.bat
+instalar-windows.bat
+docker-compose.yml
+
+# Pastas que nao fazem parte do deploy principal
+backups-internos
+beca-estuda
+cozinha-local
+
+# Arquivos temporarios de desenvolvimento
+*.log
+.DS_Store
+*.py

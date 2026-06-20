@@ -1,11 +1,3 @@
-python3 << 'PYEOF'
-import os
-
-base = '/workspaces/rebeca-sistema-br/src/public'
-for root, dirs, files in os.walk(base):
-    for f in files:
-        print(os.path.join(root, f))
-PYEOF
 import { useState, useEffect } from 'react';
 
 const EMPTY = { nome: '', descricao: '', ativo: true };
