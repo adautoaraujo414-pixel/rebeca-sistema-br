@@ -434,6 +434,10 @@ input,select{font-family:var(--font-body)}
         <h2 class="section-title">Encontre o serviço ideal para você</h2>
         <p class="section-sub">Profissionais qualificados prontos para te atender com excelência.</p>
       </div>
+      <div id="sec-servico-promo" style="display:none;margin-bottom:24px">
+        <div class="pub-sec-titulo">🏷️ Serviços em promoção</div>
+        <div id="svcs-promo-wrap"></div>
+      </div>
       <div id="svcs-wrap"></div>
     </div>
   </div>
@@ -663,6 +667,7 @@ async function init(){
         var vd = await rv.json();
         if(vd.sucesso){
           renderProdutos(vd.produtos||[], vd.secoes||{});
+          renderServicosPromo(vd.secoes && vd.secoes.servicosPromo || []);
           renderCatalogos(vd.catalogos||[]);
         }
       }
@@ -721,6 +726,23 @@ function renderSvcs(lista){
     var c=document.createElement('div');c.className='servico-card';
     var img=s.foto?'<img src="'+s.foto+'" alt="'+s.nome+'" loading="lazy">':'<span>'+(s.emoji||'✂️')+'</span>';
     c.innerHTML='<div class="servico-img">'+img+'</div><div class="servico-body"><div class="servico-nome">'+s.nome+'</div><div class="servico-meta">'+(s.duracao?'⏱ '+fmtMin(s.duracao):'')+'</div><div class="servico-preco">'+(s.preco?fmt(s.preco):'Consultar')+'</div><button class="servico-btn" onclick="irAgendar(\''+s._id+'\')">Ver horários</button></div>';
+    grid.appendChild(c);
+  });
+  wrap.appendChild(grid);
+}
+function renderServicosPromo(lista){
+  var sec=document.getElementById('sec-servico-promo');
+  var wrap=document.getElementById('svcs-promo-wrap');
+  if(!lista||!lista.length){ if(sec) sec.style.display='none'; return; }
+  sec.style.display='';
+  var grid=document.createElement('div');
+  grid.className='servicos-grid';
+  lista.forEach(function(s){
+    var c=document.createElement('div');c.className='servico-card';
+    var img=s.foto?'<img src="'+s.foto+'" alt="'+s.nome+'" loading="lazy">':'<span>'+(s.emoji||'✂️')+'</span>';
+    var descPct=s.preco?Math.round((1-s.precoPromocional/s.preco)*100):0;
+    var precoHtml='<div class="servico-preco"><span class="prod-card-pub-preco">'+fmt(s.precoPromocional)+'</span> <span class="prod-card-pub-preco-old">'+fmt(s.preco)+'</span></div>';
+    c.innerHTML='<div class="servico-img"><div class="pub-badge pub-badge-promo">-'+descPct+'%</div>'+img+'</div><div class="servico-body"><div class="servico-nome">'+s.nome+'</div><div class="servico-meta">'+(s.duracao?'⏱ '+fmtMin(s.duracao):'')+'</div>'+precoHtml+'<button class="servico-btn" onclick="irAgendar(\''+s._id+'\')">📅 Agendar</button></div>';
     grid.appendChild(c);
   });
   wrap.appendChild(grid);

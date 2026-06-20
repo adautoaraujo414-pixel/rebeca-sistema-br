@@ -76,6 +76,7 @@ const servicoAgendaSchema = new mongoose.Schema({
   descricao: { type: String },
   duracao: { type: Number, required: true }, // minutos
   preco: { type: Number, required: true },
+  precoPromocional: { type: Number, default: null },
   categoria: { type: String },
   foto: { type: String },
   ativo: { type: Boolean, default: true },

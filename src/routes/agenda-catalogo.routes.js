@@ -171,10 +171,11 @@ router.get('/espaco/:adminId/vitrine', async (req, res) => {
     ]);
 
     // Separar em seções
-    const promocoes   = todos.filter(p => p.precoPromocional && p.precoPromocional < p.preco);
-    const destaques   = todos.filter(p => p.destaque);
-    const combos      = todos.filter(p => p.combo);
-    const maisPedidos = [...todos].sort((a,b) => (b.totalVendas||0) - (a.totalVendas||0)).filter(p => (p.totalVendas||0) > 0).slice(0, 8);
+    const promocoes      = todos.filter(p => p.precoPromocional && p.precoPromocional < p.preco);
+    const servicosPromo  = servicos.filter(s => s.precoPromocional && s.precoPromocional < s.preco);
+    const destaques      = todos.filter(p => p.destaque);
+    const combos         = todos.filter(p => p.combo);
+    const maisPedidos    = [...todos].sort((a,b) => (b.totalVendas||0) - (a.totalVendas||0)).filter(p => (p.totalVendas||0) > 0).slice(0, 8);
 
     res.json({
       sucesso: true,
@@ -182,7 +183,7 @@ router.get('/espaco/:adminId/vitrine', async (req, res) => {
       servicos,
       produtos: todos,
       catalogos,
-      secoes: { promocoes, destaques, combos, maisPedidos }
+      secoes: { promocoes, servicosPromo, destaques, combos, maisPedidos }
     });
   } catch(e) { res.status(500).json({ erro: e.message }); }
 });

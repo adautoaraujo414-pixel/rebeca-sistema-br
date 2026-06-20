@@ -1304,7 +1304,7 @@ document.querySelectorAll('.nav-item').forEach(item => {
                   <div class="acao-icon">✂️</div>
                   Novo serviço
                 </button>
-                <button class="acao-btn">
+                <button class="acao-btn" onclick="abrirModalPromocoes()">
                   <div class="acao-icon">📢</div>
                   Promoções
                 </button>
@@ -1814,6 +1814,7 @@ document.querySelectorAll('.nav-item').forEach(item => {
         <div class="form-group"><label class="form-label">Preço (R$)</label><input class="form-input" id="srv-preco" type="number" step="0.01" placeholder="0,00"></div>
         <div class="form-group"><label class="form-label">Duração (min)</label><input class="form-input" id="srv-dur" type="number" placeholder="30"></div>
       </div>
+      <div class="form-group"><label class="form-label">Preço promocional (R$) — opcional</label><input class="form-input" id="srv-preco-promo" type="number" step="0.01" placeholder="Deixe vazio se não tiver promoção"></div>
       <div class="form-group"><label class="form-label">Descrição</label><textarea class="form-textarea" id="srv-desc" placeholder="Opcional..."></textarea></div>
       <div class="form-group">
         <label class="form-label">Foto do serviço</label>
@@ -1832,6 +1833,29 @@ document.querySelectorAll('.nav-item').forEach(item => {
     <div class="modal-footer">
       <button class="btn-secondary" onclick="fecharModal('modal-srv')">Cancelar</button>
       <button class="btn-primary" onclick="salvarServico()">Salvar serviço</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal-promo">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-titulo">🏷️ Promoções</div>
+      <button class="modal-close" onclick="fecharModal('modal-promo')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">🛍️ Produtos</label>
+        <div id="promo-lista-produtos" style="display:flex;flex-direction:column;gap:8px"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">✂️ Serviços</label>
+        <div id="promo-lista-servicos" style="display:flex;flex-direction:column;gap:8px"></div>
+      </div>
+      <button class="btn-secondary" style="width:100%" onclick="fecharModal('modal-promo');abrirModalServico()">+ Criar serviço novo já em promoção</button>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="fecharModal('modal-promo')">Fechar</button>
     </div>
   </div>
 </div>
@@ -2592,7 +2616,7 @@ async function salvarServico(){
   if (btn) { if (btn.disabled) return; btn.disabled = true; }
   const fotoInput = document.getElementById('srv-foto-input');
   const arquivoFoto = (fotoInput && fotoInput.files && fotoInput.files[0]) ? fotoInput.files[0] : null;
-  const payload = {nome: document.getElementById('srv-nome').value.trim(), preco: parseFloat(document.getElementById('srv-preco').value)||0, duracao: parseInt(document.getElementById('srv-dur').value)||30, descricao: document.getElementById('srv-desc').value};
+  const payload = {nome: document.getElementById('srv-nome').value.trim(), preco: parseFloat(document.getElementById('srv-preco').value)||0, precoPromocional: parseFloat(document.getElementById('srv-preco-promo').value)||null, duracao: parseInt(document.getElementById('srv-dur').value)||30, descricao: document.getElementById('srv-desc').value};
   if(!payload.nome) { if (btn) btn.disabled = false; return toast('Informe o nome do serviço', 'erro'); }
   let r = null;
   try {
@@ -2726,6 +2750,52 @@ function abrirModalAgendamento(){
 
 function abrirModalCliente(){ document.getElementById('modal-cli').classList.add('open'); var sy=window.scrollY;document.body.style.position='fixed';document.body.style.top='-'+sy+'px';document.body.style.left='0';document.body.style.right='0';document.body.dataset.scrollY=sy; }
 function abrirModalServico(){ document.getElementById('modal-srv').classList.add('open'); var sy=window.scrollY;document.body.style.position='fixed';document.body.style.top='-'+sy+'px';document.body.style.left='0';document.body.style.right='0';document.body.dataset.scrollY=sy; }
+
+async function abrirModalPromocoes(){
+  document.getElementById('modal-promo').classList.add('open');
+  var sy=window.scrollY;document.body.style.position='fixed';document.body.style.top='-'+sy+'px';document.body.style.left='0';document.body.style.right='0';document.body.dataset.scrollY=sy;
+  await carregarPromocoes();
+}
+async function carregarPromocoes(){
+  try {
+    const [rp, rs] = await Promise.all([ api('/produtos?ativo=true'), api('/servicos') ]);
+    renderPromoLista('promo-lista-produtos', (rp && rp.produtos) || [], 'produto');
+    renderPromoLista('promo-lista-servicos', (rs && rs.servicos) || [], 'servico');
+  } catch(e) { console.error('[Promocoes] erro ao carregar:', e); toast('Erro ao carregar itens', 'erro'); }
+}
+function renderPromoLista(elId, itens, tipo){
+  const el = document.getElementById(elId);
+  if (!el) return;
+  if (!itens.length) { el.innerHTML = '<div style="color:var(--texto2);font-size:.85em">Nenhum item cadastrado ainda.</div>'; return; }
+  el.innerHTML = itens.map(function(it){
+    const emPromo = it.precoPromocional && it.precoPromocional < it.preco;
+    return '<div style="display:flex;align-items:center;gap:8px;padding:8px;border:1px solid var(--borda);border-radius:8px;flex-wrap:wrap">'
+      + '<div style="flex:1;min-width:110px"><div style="font-weight:600;font-size:.88em">'+it.nome+'</div><div style="font-size:.78em;color:var(--texto2)">R$ '+(it.preco||0).toFixed(2)+'</div></div>'
+      + '<input type="number" step="0.01" placeholder="Preço promo" value="'+(emPromo?it.precoPromocional:'')+'" id="promo-input-'+tipo+'-'+it._id+'" style="width:100px;padding:6px 8px;border:1px solid var(--borda);border-radius:6px;background:var(--bg);color:var(--texto)">'
+      + '<button class="btn-secondary" style="padding:6px 10px;font-size:.78em" onclick="salvarPromoItem(\''+tipo+'\',\''+it._id+'\')">Salvar</button>'
+      + (emPromo ? '<button class="btn-secondary" style="padding:6px 10px;font-size:.78em;color:var(--vermelho)" onclick="removerPromoItem(\''+tipo+'\',\''+it._id+'\')">Remover</button>' : '')
+      + '</div>';
+  }).join('');
+}
+async function salvarPromoItem(tipo, id){
+  const input = document.getElementById('promo-input-'+tipo+'-'+id);
+  const valor = parseFloat(input.value);
+  if (!valor || valor <= 0) return toast('Informe um valor válido', 'erro');
+  const rota = (tipo === 'produto' ? '/produtos/' : '/servicos/') + id;
+  try {
+    const r = await api(rota, {method:'PUT', body:JSON.stringify({precoPromocional: valor})});
+    if (r && r.sucesso) { toast('Promoção salva ✅'); carregarPromocoes(); }
+    else toast((r && r.erro) || 'Erro ao salvar', 'erro');
+  } catch(e) { toast('Erro ao salvar promoção', 'erro'); }
+}
+async function removerPromoItem(tipo, id){
+  const rota = (tipo === 'produto' ? '/produtos/' : '/servicos/') + id;
+  try {
+    const r = await api(rota, {method:'PUT', body:JSON.stringify({precoPromocional: null})});
+    if (r && r.sucesso) { toast('Promoção removida'); carregarPromocoes(); }
+    else toast((r && r.erro) || 'Erro ao remover', 'erro');
+  } catch(e) { toast('Erro ao remover promoção', 'erro'); }
+}
 function abrirModalProfissional(){ document.getElementById('modal-prf').classList.add('open'); var sy=window.scrollY;document.body.style.position='fixed';document.body.style.top='-'+sy+'px';document.body.style.left='0';document.body.style.right='0';document.body.dataset.scrollY=sy; }
 
 function _fecharModalLegacy(id){

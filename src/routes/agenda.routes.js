@@ -110,9 +110,9 @@ router.get('/servicos', authAgenda, async (req, res) => {
 
 router.post('/servicos', authAgenda, async (req, res) => {
   try {
-    const { nome, descricao, duracao, preco, categoria, foto, ordem } = req.body;
+    const { nome, descricao, duracao, preco, precoPromocional, categoria, foto, ordem } = req.body;
     if (!nome || !duracao || preco === undefined) return res.status(400).json({ erro: 'nome, duracao e preco obrigatórios' });
-    const s = await ServicoAgenda.create({ adminId: req.adminAgendaId, nome, descricao, duracao, preco, categoria, foto, ordem: ordem || 0 });
+    const s = await ServicoAgenda.create({ adminId: req.adminAgendaId, nome, descricao, duracao, preco, precoPromocional: precoPromocional || null, categoria, foto, ordem: ordem || 0 });
     res.json({ sucesso: true, servico: s });
   } catch(e) { res.status(500).json({ erro: e.message }); }
 });
