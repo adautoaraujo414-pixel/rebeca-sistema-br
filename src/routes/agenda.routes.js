@@ -143,10 +143,14 @@ router.get('/profissionais', authAgenda, async (req, res) => {
 
 router.post('/profissionais', authAgenda, async (req, res) => {
   try {
-    const { nome, foto, especialidades, atribuicoes, cargo, telefone, bio, diasAtendimento, horario, ordem } = req.body;
+    const { nome, foto, especialidades, atribuicoes, cargo, telefone, bio, diasAtendimento, horario, ordem, comissaoPercentual } = req.body;
     if (!nome) return res.status(400).json({ erro: 'Nome obrigatório' });
+    if (!telefone) return res.status(400).json({ erro: 'WhatsApp do profissional é obrigatório' });
     const crypto = require('crypto');
+    const bcrypt = require('bcryptjs');
     const token = crypto.randomBytes(24).toString('hex');
+    const senhaGerada = crypto.randomBytes(3).toString('hex'); // ex: a3f9b2
+    const senhaHash = await bcrypt.hash(senhaGerada, 10);
     const p = await ProfissionalAgenda.create({
       adminId: req.adminAgendaId,
       nome, foto, especialidades: especialidades || [],
@@ -155,10 +159,25 @@ router.post('/profissionais', authAgenda, async (req, res) => {
       telefone: telefone || '',
       bio: bio || '',
       token,
+      senha: senhaHash,
+      comissaoPercentual: comissaoPercentual || 0,
       diasAtendimento: diasAtendimento || [1,2,3,4,5],
       horario: horario || { inicio: '08:00', fim: '18:00', almocoInicio: '12:00', almocoFim: '13:00' },
       ordem: ordem || 0
     });
+
+    // Enviar boas-vindas + credenciais via WhatsApp (Rebeca)
+    try {
+      const { AdminAgenda } = require('../models/AgendaServico');
+      const admin = await AdminAgenda.findById(req.adminAgendaId);
+      const { enviarMensagem } = require('../services/whatsapp.provider');
+      const linkApp = `https://${process.env.DOMINIO_AGENDA || 'rebeca.app'}/profissional/${token}`;
+      const msg = `Olá ${nome} 😊\n\nVocê foi cadastrado(a) como profissional de *${admin?.nomeNegocio || 'nosso espaço'}* na plataforma Rebeca!\n\nSeu acesso:\n👤 Usuário: ${telefone}\n🔑 Senha: ${senhaGerada}\n🔗 Link: ${linkApp}\n\nPor ali você vai ver sua agenda, atendimentos do dia, cancelar ou pedir reagendamento e acompanhar sua comissão. Qualquer dúvida, é só me chamar por aqui!`;
+      await enviarMensagem(admin?.instanciaWhatsappId, telefone, msg);
+      p.boasVindasEnviado = true;
+      await p.save();
+    } catch(eMsg) { console.error('[profissionais] erro ao enviar boas-vindas:', eMsg.message); }
+
     res.json({ sucesso: true, profissional: p });
   } catch(e) { res.status(500).json({ erro: e.message }); }
 });

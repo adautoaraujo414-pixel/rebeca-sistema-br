@@ -95,6 +95,9 @@ const profissionalAgendaSchema = new mongoose.Schema({
   telefone: { type: String },
   bio: { type: String },
   token: { type: String },
+  senha: { type: String },
+  comissaoPercentual: { type: Number, default: 0 }, // % sobre cada atendimento
+  boasVindasEnviado: { type: Boolean, default: false },
   diasAtendimento: { type: [Number], default: [1,2,3,4,5] },
   horario: {
     inicio: { type: String, default: '08:00' },
