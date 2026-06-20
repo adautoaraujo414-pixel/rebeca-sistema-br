@@ -559,12 +559,11 @@ Regras:
     }
 
     // ── Verificar horario de funcionamento ────────────────────────────────────
-    // O proprio dono/admin pode usar o Modo Dono a qualquer hora
-    const _ehComandoDono = texto && (
-      texto.trim().startsWith('/') ||
-      /^(fechar|abrir|agenda|financeiro|relatorio|ajuda|menu|oi|ol[aá]|status)/i.test(texto.trim())
-    );
-    if (!cfgBot.foraHorario && !_ehComandoDono) {
+    // O dono que fala pelo numero oficial NUNCA e barrado pelo horario —
+    // a verificacao de horario existe para clientes, nao para o proprio admin.
+    // Como chegamos aqui so se _buscarAdminsPorTelefone encontrou o admin,
+    // simplesmente pulamos a checagem de horario inteira.
+    if (false && !cfgBot.foraHorario) {
       const cfg  = admin.config || {};
       const agora = new Date();
       const _agoraBR = new Date(agora.getTime() - 3*60*60*1000); // UTC-3
