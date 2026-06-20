@@ -102,6 +102,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 
 /* PERFIL */
 .perfil-card { background: #fff; border-radius: 16px; padding: 24px; margin: 16px; box-shadow: 0 2px 8px rgba(0,0,0,.06); text-align: center; }
+.btn-acao-card { flex: 1; border: none; border-radius: 10px; padding: 9px 0; font-size: .8em; font-weight: 700; cursor: pointer; }
 .perfil-foto { width: 80px; height: 80px; border-radius: 50%; border: 4px solid var(--cor); object-fit: cover; margin: 0 auto 12px; display: block; background: #f3f4f6; }
 .perfil-nome { font-size: 1.2em; font-weight: 700; }
 .perfil-cargo { font-size: .85em; color: #6b7280; margin-top: 4px; }
@@ -151,6 +152,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
   <div class="tabs">
     <div class="tab ativo" onclick="mudarTab('hoje')">📅 Hoje</div>
     <div class="tab" onclick="mudarTab('semana')">🗓️ Semana</div>
+    <div class="tab" onclick="mudarTab('comissao')">💰 Comissão</div>
     <div class="tab" onclick="mudarTab('perfil')">👤 Perfil</div>
   </div>
 
@@ -190,6 +192,31 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
     </div>
   </div>
 
+  <!-- TELA COMISSAO -->
+  <div class="tela" id="tela-comissao">
+    <div class="secao" style="padding-top:16px">
+      <div class="stats-row">
+        <div class="stat-mini">
+          <div class="stat-mini-num" id="com-atendimentos">0</div>
+          <div class="stat-mini-label">Atend. no mês</div>
+        </div>
+        <div class="stat-mini">
+          <div class="stat-mini-num" id="com-faturamento">R$0</div>
+          <div class="stat-mini-label">Faturado</div>
+        </div>
+        <div class="stat-mini">
+          <div class="stat-mini-num" id="com-comissao">R$0</div>
+          <div class="stat-mini-label">Sua comissão</div>
+        </div>
+      </div>
+      <div class="perfil-card" style="margin-top:16px">
+        <div style="font-size:.85em;color:#6b7280">Percentual de comissão</div>
+        <div style="font-size:1.6em;font-weight:800;color:var(--cor)" id="com-percentual">0%</div>
+        <div style="font-size:.78em;color:#9ca3af;margin-top:4px">Calculado sobre os atendimentos marcados como concluídos no mês atual</div>
+      </div>
+    </div>
+  </div>
+
   <!-- TELA PERFIL -->
   <div class="tela" id="tela-perfil">
     <div class="perfil-card">
@@ -212,6 +239,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 
       <div class="secao-titulo" style="margin-top:8px">📅 Dias de atendimento</div>
       <div class="dias-chips" id="p-dias"></div>
+    </div>
+
+    <div class="secao">
+      <button class="btn-entrar" style="background:#25d366" onclick="abrirMensagemRebeca()">💬 Falar com a Rebeca</button>
+      <button class="btn-entrar" style="background:#fff;color:#ef4444;border:2px solid #ef4444;margin-top:8px" onclick="sair()">Sair</button>
     </div>
   </div>
 
@@ -395,6 +427,13 @@ function renderizarPainel() {
   // Lista semana
   renderizarListaAgrupada('lista-semana', agSemana);
 
+  // Comissão
+  var fin = DADOS.financeiro || {};
+  document.getElementById('com-atendimentos').textContent = fin.atendimentosMes || 0;
+  document.getElementById('com-faturamento').textContent = 'R$' + Number(fin.faturamentoMes || 0).toFixed(0);
+  document.getElementById('com-comissao').textContent = 'R$' + Number(fin.comissaoMes || 0).toFixed(2);
+  document.getElementById('com-percentual').textContent = (prof.comissaoPercentual || 0) + '%';
+
   // Mostrar painel
   document.getElementById('tela-loading').style.display = 'none';
   document.getElementById('painel').style.display = 'block';
@@ -428,6 +467,10 @@ function renderizarLista(elId, lista, mostrarAviso) {
       '<div class="ag-servico">✂️ ' + (a.nomeServico || 'Serviço não informado') + '</div>' +
       (a.preco ? '<div class="ag-preco">💰 R$ ' + Number(a.preco).toFixed(2) + '</div>' : '') +
       (a.observacoes ? '<div class="ag-obs">"' + a.observacoes + '"</div>' : '') +
+      (a.status !== 'cancelado' ? '<div style="display:flex;gap:8px;margin-top:10px">' +
+        '<button class="btn-acao-card" style="background:#fef3c7;color:#92400e" onclick="acaoReagendar(\'' + a._id + '\')">🔁 Reagendar</button>' +
+        '<button class="btn-acao-card" style="background:#fee2e2;color:#991b1b" onclick="acaoCancelar(\'' + a._id + '\')">✕ Cancelar</button>' +
+      '</div>' : '') +
     '</div>';
   }).join('');
 }
@@ -467,9 +510,54 @@ function renderizarListaAgrupada(elId, lista) {
 function mudarTab(tab) {
   document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('ativo'); });
   document.querySelectorAll('.tela').forEach(function(t) { t.classList.remove('ativa'); });
-  var idx = ['hoje','semana','perfil'].indexOf(tab);
+  var idx = ['hoje','semana','comissao','perfil'].indexOf(tab);
   document.querySelectorAll('.tab')[idx].classList.add('ativo');
   document.getElementById('tela-' + tab).classList.add('ativa');
+}
+
+async function acaoCancelar(id) {
+  if (!confirm('Cancelar este atendimento? O cliente será avisado automaticamente.')) return;
+  try {
+    var r = await fetch('/api/agenda/profissional-app/' + TOKEN_PROF + '/agendamento/' + id + '/cancelar', {
+      method: 'PUT', headers: {'Authorization':'Bearer ' + TOKEN_PROF}
+    });
+    var d = await r.json();
+    if (d.sucesso) { toast('Cancelado, cliente avisado ✅'); carregarDados(); }
+    else toast(d.erro || 'Erro ao cancelar');
+  } catch(e) { toast('Erro de conexão'); }
+}
+
+async function acaoReagendar(id) {
+  var motivo = prompt('Motivo do reagendamento (opcional):') || '';
+  try {
+    var r = await fetch('/api/agenda/profissional-app/' + TOKEN_PROF + '/agendamento/' + id + '/reagendar', {
+      method: 'PUT', headers: {'Authorization':'Bearer ' + TOKEN_PROF, 'Content-Type':'application/json'},
+      body: JSON.stringify({ motivo: motivo })
+    });
+    var d = await r.json();
+    if (d.sucesso) { toast('Cliente avisado, aguardando novo horário ✅'); carregarDados(); }
+    else toast(d.erro || 'Erro ao reagendar');
+  } catch(e) { toast('Erro de conexão'); }
+}
+
+async function abrirMensagemRebeca() {
+  var texto = prompt('O que você quer avisar pra Rebeca repassar ao estabelecimento?');
+  if (!texto) return;
+  try {
+    var r = await fetch('/api/agenda/profissional-app/' + TOKEN_PROF + '/mensagem', {
+      method: 'POST', headers: {'Authorization':'Bearer ' + TOKEN_PROF, 'Content-Type':'application/json'},
+      body: JSON.stringify({ texto: texto })
+    });
+    var d = await r.json();
+    if (d.sucesso) toast('Mensagem enviada ✅');
+    else toast(d.erro || 'Erro ao enviar');
+  } catch(e) { toast('Erro de conexão'); }
+}
+
+function sair() {
+  if (!confirm('Sair da sua conta?')) return;
+  localStorage.removeItem('prof_token');
+  location.reload();
 }
 
 // Init
