@@ -397,14 +397,18 @@ async function _delegarAoModoDono(telBruto, texto, adminId) {
     const ModoDono = require('./agenda-modo-dono.service');
     if (typeof ModoDono.processarComandoAdmin === 'function') {
       const inst = await _getInstanciaOficial();
-      return await ModoDono.processarComandoAdmin(texto, adminId, {
+      // Passar _enviarVia: 'meta' quando provider for Meta — sem isso o ModoDono
+      // tenta Evolution e dá 404
+      const _instResp = {
         canal        : 'rebeca_oficial',
         instance     : inst?.nomeInstancia,
         nomeInstancia: inst?.nomeInstancia,
         apiKey       : inst?.apiKey,
-        apiUrl       : inst?.apiUrl,
-        numero       : telBruto
-      });
+        apiUrl       : inst?.apiUrl || 'meta',
+        numero       : telBruto,
+        _enviarVia   : inst?.provider === 'meta' || !inst?.nomeInstancia ? 'meta' : undefined,
+      };
+      return await ModoDono.processarComandoAdmin(texto, adminId, _instResp);
     }
     console.warn('[Oficial] ⚠️  ModoDono não exporta processarComandoAdmin');
     return false;
