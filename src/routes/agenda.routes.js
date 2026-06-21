@@ -92,10 +92,15 @@ router.patch('/perfil/genero', authAgenda, async (req, res) => {
 
 router.put('/perfil', authAgenda, async (req, res) => {
   try {
-    const campos = ['nome','nomeNegocio','segmento','telefone','whatsapp','logo','descricao','endereco','cidade','instagram','config'];
+    const campos = ['nome','nomeNegocio','segmento','telefone','whatsapp','logo','descricao','endereco','cidade','instagram'];
     const upd = {};
     campos.forEach(c => { if (req.body[c] !== undefined) upd[c] = req.body[c]; });
-    await AdminAgenda.findByIdAndUpdate(req.adminAgendaId, upd);
+    if (req.body.config && typeof req.body.config === 'object') {
+      Object.keys(req.body.config).forEach(k => {
+        if (req.body.config[k] !== undefined) upd['config.' + k] = req.body.config[k];
+      });
+    }
+    await AdminAgenda.findByIdAndUpdate(req.adminAgendaId, { $set: upd });
     res.json({ sucesso: true });
   } catch(e) { res.status(500).json({ erro: e.message }); }
 });
