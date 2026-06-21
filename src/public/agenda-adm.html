@@ -4570,22 +4570,17 @@ carregarFinanceiro = async function() {
         <input type="text" id="prod-palavras" placeholder="Ex: shampoo, cabelo seco, hidratação">
       </div>
       <div class="form-field">
-        <label>Foto do produto</label>
-        <div id="prod-foto-preview" style="display:none;margin-bottom:8px;position:relative;width:120px">
-          <img id="prod-foto-img" src="" alt="Preview" style="width:120px;height:120px;object-fit:cover;border-radius:8px;border:1px solid var(--borda)">
-          <button onclick="removerFotoProduto()" style="position:absolute;top:-8px;right:-8px;width:24px;height:24px;border-radius:50%;background:var(--vermelho);color:#fff;border:none;cursor:pointer;font-size:.75em;display:flex;align-items:center;justify-content:center">✕</button>
-        </div>
+        <label>Fotos do produto</label>
         <input type="hidden" id="prod-foto">
-        <input type="file" id="prod-foto-file" accept="image/*" style="display:none" onchange="uploadFotoProduto(this)">
+        <div id="prod-galeria" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px"></div>
+        <input type="file" id="prod-foto-file" accept="image/*" multiple style="display:none" onchange="uploadFotoProduto(this)">
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <button type="button" class="btn-sec" onclick="document.getElementById('prod-foto-file').click()" style="font-size:.8em;padding:7px 14px">
-            📷 Tirar foto / Galeria
-          </button>
-          <button type="button" class="btn-sec" onclick="document.getElementById('prod-foto-file').click()" style="font-size:.8em;padding:7px 14px">
-            📁 Selecionar arquivo
+            📷 Adicionar fotos
           </button>
         </div>
-        <div id="prod-foto-loading" style="display:none;font-size:.78em;color:var(--texto3);margin-top:6px">⏳ Enviando foto...</div>
+        <div style="font-size:.74em;color:var(--texto3);margin-top:4px">Você pode selecionar várias fotos de uma vez. Clique na ⭐ pra escolher a foto principal (capa).</div>
+        <div id="prod-foto-loading" style="display:none;font-size:.78em;color:var(--texto3);margin-top:6px">⏳ Enviando foto(s)...</div>
         <div id="prod-foto-erro" style="display:none;font-size:.78em;color:var(--vermelho);margin-top:6px"></div>
       </div>
       <div class="form-field">
@@ -4945,7 +4940,8 @@ function abrirModalProduto(prod) {
   document.getElementById('prod-tags').value = '';
   document.getElementById('prod-palavras').value = '';
   document.getElementById('prod-foto').value = '';
-  removerFotoProduto();
+  PROD_GALERIA = [];
+  renderGaleriaProduto();
   document.getElementById('prod-status').value = 'true';
   if(document.getElementById('prod-destaque')) document.getElementById('prod-destaque').value = 'false';
   if(document.getElementById('prod-combo')) document.getElementById('prod-combo').value = 'false';
@@ -4974,7 +4970,8 @@ function editarProduto(id) {
   document.getElementById('prod-tags').value = (p.tags||[]).join(', ');
   document.getElementById('prod-palavras').value = (p.palavrasChave||[]).join(', ');
   document.getElementById('prod-foto').value = p.fotoPrincipal || '';
-  if (p.fotoPrincipal) { mostrarPreviewFoto(p.fotoPrincipal); } else { removerFotoProduto(); }
+  PROD_GALERIA = (p.fotos && p.fotos.length ? p.fotos : (p.fotoPrincipal ? [p.fotoPrincipal] : [])).map(u => ({ url: u }));
+  renderGaleriaProduto();
   document.getElementById('prod-status').value = p.ativo ? 'true' : 'false';
   if(document.getElementById('prod-destaque')) document.getElementById('prod-destaque').value = p.destaque ? 'true' : 'false';
   if(document.getElementById('prod-combo')) { document.getElementById('prod-combo').value = p.combo ? 'true' : 'false'; toggleComboFields(p.combo ? 'true' : 'false'); }
@@ -5315,25 +5312,76 @@ function mudarTabCarrinho(status, btn) {
 
 
 // ══════════════════ UPLOAD FOTO PRODUTO ══════════════════
+var PROD_GALERIA = []; // [{url}]
 async function uploadFotoProduto(input) {
-  const file = input.files[0];
-  if (!file) return;
+  const files = Array.from(input.files || []);
+  if (!files.length) return;
+  const id = document.getElementById('prod-id').value;
+  if (!id) {
+    document.getElementById('prod-foto-erro').textContent = 'Salve o produto primeiro (com nome e preço) antes de adicionar fotos.';
+    document.getElementById('prod-foto-erro').style.display = 'block';
+    input.value = '';
+    return;
+  }
   document.getElementById('prod-foto-loading').style.display = 'block';
   document.getElementById('prod-foto-erro').style.display = 'none';
-  try {
-    const id = document.getElementById('prod-id').value;
-    const endpoint = id ? `/api/agenda-upload/produto/${id}/foto` : '/api/agenda-upload/foto-avulsa';
-    const fd = new FormData();
-    fd.append('foto', file);
-    const r = await fetch(endpoint, { method: 'POST', headers: { 'Authorization': 'Bearer ' + _tok() }, body: fd });
-    const d = await r.json();
-    if (d.sucesso) { document.getElementById('prod-foto').value = d.url; mostrarPreviewFoto(d.url); }
-    else { document.getElementById('prod-foto-erro').textContent = d.erro || 'Erro'; document.getElementById('prod-foto-erro').style.display = 'block'; }
-  } catch(e) { document.getElementById('prod-foto-erro').textContent = 'Erro de conexão'; document.getElementById('prod-foto-erro').style.display = 'block'; }
-  finally { document.getElementById('prod-foto-loading').style.display = 'none'; }
+  for (const file of files) {
+    try {
+      const fd = new FormData();
+      fd.append('foto', file);
+      const r = await fetch(`/api/agenda-upload/produto/${id}/galeria`, { method: 'POST', headers: { 'Authorization': 'Bearer ' + _tok() }, body: fd });
+      const d = await r.json();
+      if (d.sucesso) {
+        PROD_GALERIA = (d.fotos || []).map(u => ({ url: u }));
+        document.getElementById('prod-foto').value = d.fotoPrincipal || '';
+        renderGaleriaProduto();
+      } else {
+        document.getElementById('prod-foto-erro').textContent = d.erro || 'Erro ao enviar uma das fotos';
+        document.getElementById('prod-foto-erro').style.display = 'block';
+      }
+    } catch(e) {
+      document.getElementById('prod-foto-erro').textContent = 'Erro de conexão ao enviar foto';
+      document.getElementById('prod-foto-erro').style.display = 'block';
+    }
+  }
+  document.getElementById('prod-foto-loading').style.display = 'none';
+  input.value = '';
 }
-function mostrarPreviewFoto(url) { document.getElementById('prod-foto-img').src = url; document.getElementById('prod-foto-preview').style.display = 'block'; }
-function removerFotoProduto() { document.getElementById('prod-foto').value = ''; document.getElementById('prod-foto-img').src = ''; document.getElementById('prod-foto-preview').style.display = 'none'; document.getElementById('prod-foto-file').value = ''; }
+function renderGaleriaProduto() {
+  const el = document.getElementById('prod-galeria');
+  const principal = document.getElementById('prod-foto').value;
+  if (!PROD_GALERIA.length) { el.innerHTML = '<div style="font-size:.78em;color:var(--texto3)">Nenhuma foto ainda</div>'; return; }
+  el.innerHTML = PROD_GALERIA.map(f => {
+    const isPrincipal = f.url === principal;
+    return '<div style="position:relative;width:90px">' +
+      '<img src="'+f.url+'" style="width:90px;height:90px;object-fit:cover;border-radius:8px;border:'+(isPrincipal?'2px solid var(--laranja)':'1px solid var(--borda)')+'">' +
+      '<button type="button" onclick="definirFotoPrincipalProduto(\''+f.url+'\')" title="Definir como principal" style="position:absolute;top:-6px;left:-6px;width:22px;height:22px;border-radius:50%;background:'+(isPrincipal?'var(--laranja)':'#fff')+';color:'+(isPrincipal?'#fff':'#999')+';border:1px solid var(--borda);cursor:pointer;font-size:.7em;display:flex;align-items:center;justify-content:center">⭐</button>' +
+      '<button type="button" onclick="removerFotoProduto(\''+f.url+'\')" title="Remover" style="position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:50%;background:var(--vermelho);color:#fff;border:none;cursor:pointer;font-size:.7em;display:flex;align-items:center;justify-content:center">✕</button>' +
+    '</div>';
+  }).join('');
+}
+async function definirFotoPrincipalProduto(url) {
+  const id = document.getElementById('prod-id').value;
+  if (!id) return;
+  try {
+    const r = await fetch(`/api/agenda-upload/produto/${id}/galeria/principal`, { method: 'PUT', headers: { 'Authorization': 'Bearer ' + _tok(), 'Content-Type': 'application/json' }, body: JSON.stringify({ url }) });
+    const d = await r.json();
+    if (d.sucesso) { document.getElementById('prod-foto').value = d.fotoPrincipal; renderGaleriaProduto(); }
+  } catch(e) { toast('Erro ao definir foto principal', 'erro'); }
+}
+async function removerFotoProduto(url) {
+  const id = document.getElementById('prod-id').value;
+  if (!id || !url) { PROD_GALERIA = []; renderGaleriaProduto(); return; }
+  try {
+    const r = await fetch(`/api/agenda-upload/produto/${id}/galeria`, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + _tok(), 'Content-Type': 'application/json' }, body: JSON.stringify({ url }) });
+    const d = await r.json();
+    if (d.sucesso) {
+      PROD_GALERIA = (d.fotos || []).map(u => ({ url: u }));
+      document.getElementById('prod-foto').value = d.fotoPrincipal || '';
+      renderGaleriaProduto();
+    }
+  } catch(e) { toast('Erro ao remover foto', 'erro'); }
+}
 
 // ══════════════════ MODAL UTILS ══════════════════
 function fecharModal(id) {
