@@ -1608,6 +1608,12 @@ document.querySelectorAll('.nav-item').forEach(item => {
             <div><label class="form-label">Intervalo entre agendamentos (min)</label><input class="form-input" type="number" id="cfg-int" value="30"></div>
             <div><label class="form-label">Antecedência mínima (horas)</label><input class="form-input" type="number" id="cfg-ant"></div>
           </div>
+          <div class="form-row">
+            <div>
+              <label class="form-label">Dias que atende</label>
+              <div id="cfg-dias" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px"></div>
+            </div>
+          </div>
           <div class="form-btns">
             <button class="btn-primary" onclick="salvarConfig()">
               <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2zM17 21v-8H7v8M7 3v5h8" stroke-width="2"/></svg>
@@ -2156,9 +2162,26 @@ async function iniciarApp(){
       document.getElementById('cfg-fe').value = ADMIN.config.horarioFechamento || '18:00';
       document.getElementById('cfg-int').value = ADMIN.config.intervaloAgendamento || 30;
       document.getElementById('cfg-ant').value = ADMIN.config.antecedenciaMinima || 60;
+      renderDiasFuncionamento(ADMIN.config.diasFuncionamento || [1,2,3,4,5,6]);
     }
   }
   await carregarDashboard();
+}
+
+var DIAS_SEMANA_LABELS = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+var CFG_DIAS_SELECIONADOS = [1,2,3,4,5,6];
+function renderDiasFuncionamento(diasAtivos){
+  CFG_DIAS_SELECIONADOS = (diasAtivos || []).slice();
+  var el = document.getElementById('cfg-dias');
+  el.innerHTML = DIAS_SEMANA_LABELS.map(function(label, idx){
+    var ativo = CFG_DIAS_SELECIONADOS.indexOf(idx) !== -1;
+    return '<button type="button" onclick="toggleDiaFuncionamento('+idx+')" data-dia="'+idx+'" style="padding:7px 12px;border-radius:8px;border:1.5px solid '+(ativo?'var(--cor)':'var(--border2)')+';background:'+(ativo?'var(--cor)':'transparent')+';color:'+(ativo?'#fff':'var(--txt2)')+';font-size:.8em;font-weight:600;cursor:pointer">'+label+'</button>';
+  }).join('');
+}
+function toggleDiaFuncionamento(idx){
+  var pos = CFG_DIAS_SELECIONADOS.indexOf(idx);
+  if (pos === -1) CFG_DIAS_SELECIONADOS.push(idx); else CFG_DIAS_SELECIONADOS.splice(pos, 1);
+  renderDiasFuncionamento(CFG_DIAS_SELECIONADOS);
 }
 
 // ─── DASHBOARD ───
@@ -2735,6 +2758,7 @@ async function salvarConfig(){
       horarioFechamento: document.getElementById('cfg-fe').value,
       intervaloAgendamento: parseInt(document.getElementById('cfg-int').value)||30,
       antecedenciaMinima: parseInt(document.getElementById('cfg-ant').value)||60,
+      diasFuncionamento: CFG_DIAS_SELECIONADOS.slice(),
     }
   };
   let r = null;
