@@ -3310,42 +3310,6 @@ async function wppCarregarStatus() {
   } catch(e) { console.error('[WPP] Status erro:', e); }
 }
 
-async function wppConectar() {
-  toast('Aguarde...', 'info');
-  try {
-    var r = await fetch('/api/agenda/whatsapp/instancia', {
-      method: 'POST',
-      headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+(localStorage.getItem('agenda_token')||'') },
-      body: JSON.stringify({ nomeInstancia: 'agenda-'+(window._adminId||'').slice(-8) })
-    });
-    var d = await r.json();
-    if(d._id || d.instancia) {
-      _wppInstanciaId = d._id || d.instancia?._id;
-      toast('Instância criada! Escaneie o QR Code.', 'ok');
-      setTimeout(wppCarregarQR, 1500);
-    } else {
-      toast('Erro ao criar instância', 'erro');
-    }
-  } catch(e) { toast('Erro de conexão', 'erro'); }
-}
-
-async function wppCarregarQR() {
-  if(!_wppInstanciaId) return;
-  try {
-    var r = await fetch('/api/agenda/whatsapp/qrcode', { headers: { 'Authorization':'Bearer '+(localStorage.getItem('agenda_token')||'') } });
-    var d = await r.json();
-    var qrWrap = document.getElementById('wpp-qr-wrap');
-    var qrImg = document.getElementById('wpp-qr-img');
-    if(d.qrcode || d.base64) {
-      qrWrap.style.display = 'block';
-      qrImg.innerHTML = '<img src="'+(d.qrcode||d.base64)+'" style="width:180px;height:180px;border-radius:8px">';
-    } else if(d.status === 'open') {
-      qrWrap.style.display = 'none';
-      toast('WhatsApp conectado!', 'ok');
-      wppCarregarStatus();
-    }
-  } catch(e) {}
-}
 
 // ═══ LEMBRETES ═══════════════════════════════════════════════════════════════
 
@@ -3993,142 +3957,6 @@ document.addEventListener('DOMContentLoaded', () => {
 // ═══════════════ /MODO DONO JS ═══════════════
 
 
-// ═══════════════ FINANCEIRO COMPLETO ═══════════════
-let _finPeriodo = 'mes';
-
-function finFiltrar(periodo) {
-  _finPeriodo = periodo;
-  document.querySelectorAll('.fin-filtro').forEach(b => b.classList.remove('ativo'));
-  const btn = document.getElementById('fin-btn-' + periodo);
-  if (btn) btn.classList.add('ativo');
-  carregarFinanceiro();
-  carregarLancamentos();
-}
-
-function _finDatas() {
-  const hoje = new Date();
-  if (_finPeriodo === 'hoje') {
-    const d = hoje.toISOString().split('T')[0];
-    return { de: d, ate: d, mes: hoje.getMonth()+1, ano: hoje.getFullYear() };
-  }
-  if (_finPeriodo === 'semana') {
-    const ini = new Date(hoje); ini.setDate(hoje.getDate() - hoje.getDay());
-    return { de: ini.toISOString().split('T')[0], ate: hoje.toISOString().split('T')[0], mes: hoje.getMonth()+1, ano: hoje.getFullYear() };
-  }
-  if (_finPeriodo === 'periodo') {
-    return { de: document.getElementById('fin-de')?.value, ate: document.getElementById('fin-ate')?.value, mes: hoje.getMonth()+1, ano: hoje.getFullYear() };
-  }
-  return { mes: hoje.getMonth()+1, ano: hoje.getFullYear() };
-}
-
-async function carregarLancamentos() {
-  const el = document.getElementById('financeiro-lancamentos');
-  if (!el) return;
-  el.innerHTML = '<div style="padding:24px;text-align:center;color:var(--texto3);font-size:.85em">Carregando...</div>';
-  try {
-    const { mes, ano, de, ate } = _finDatas();
-    let url = '/financeiro/lancamentos?mes=' + mes + '&ano=' + ano;
-    if (de) url += '&de=' + de;
-    if (ate) url += '&ate=' + ate;
-    const d = await api(url);
-    const lista = d?.lancamentos || d?.dados || [];
-    const total = document.getElementById('fin-total-label');
-    if (total) total.textContent = lista.length + ' lançamento(s)';
-    if (!lista.length) {
-      el.innerHTML = '<div style="padding:32px;text-align:center;color:var(--texto3);font-size:.85em">Nenhum lançamento no período</div>';
-      return;
-    }
-    const corTipo = { entrada: '#16a34a', saida: '#dc2626', despesa: '#dc2626' };
-    const labelTipo = { entrada: 'Receita', saida: 'Despesa', despesa: 'Despesa' };
-    el.innerHTML = '<table style="width:100%;border-collapse:collapse;font-size:.82em">' +
-      '<thead><tr style="background:#f9fafb">' +
-      '<th style="padding:10px 16px;text-align:left;font-weight:700;color:var(--texto2)">Data</th>' +
-      '<th style="padding:10px 16px;text-align:left;font-weight:700;color:var(--texto2)">Descrição</th>' +
-      '<th style="padding:10px 16px;text-align:left;font-weight:700;color:var(--texto2)">Categoria</th>' +
-      '<th style="padding:10px 16px;text-align:left;font-weight:700;color:var(--texto2)">Tipo</th>' +
-      '<th style="padding:10px 16px;text-align:right;font-weight:700;color:var(--texto2)">Valor</th>' +
-      '<th style="padding:10px 16px;text-align:center;font-weight:700;color:var(--texto2)">Ações</th>' +
-      '</tr></thead><tbody>' +
-      lista.map(function(l) {
-        const tipo = l.tipo || 'entrada';
-        const cor = corTipo[tipo] || '#374151';
-        const dt = l.data ? new Date(l.data).toLocaleDateString('pt-BR') : '—';
-        return '<tr style="border-bottom:1px solid #f3f4f6">' +
-          '<td style="padding:10px 16px;color:var(--texto3)">' + dt + '</td>' +
-          '<td style="padding:10px 16px;font-weight:600">' + (l.descricao || l.titulo || '—') + '</td>' +
-          '<td style="padding:10px 16px;color:var(--texto3)">' + (l.categoria || '—') + '</td>' +
-          '<td style="padding:10px 16px"><span style="background:' + cor + '20;color:' + cor + ';padding:2px 8px;border-radius:20px;font-weight:700;font-size:.78em">' + (labelTipo[tipo] || tipo) + '</span></td>' +
-          '<td style="padding:10px 16px;text-align:right;font-weight:700;color:' + cor + '">' + fmt(l.valor || 0) + '</td>' +
-          '<td style="padding:10px 16px;text-align:center"><button onclick="deletarLancamento(\'' + l._id + '\')" style="background:none;border:none;cursor:pointer;color:var(--texto3);font-size:1em" title="Remover">🗑️</button></td>' +
-          '</tr>';
-      }).join('') + '</tbody></table>';
-  } catch(e) {
-    el.innerHTML = '<div style="padding:24px;text-align:center;color:var(--texto3);font-size:.85em">Funcionalidade em preparação. <br><small>Configure o módulo financeiro para começar.</small></div>';
-  }
-}
-
-function abrirModalFinanceiro(tipo) {
-  document.getElementById('fin-tipo').value = tipo || 'entrada';
-  document.getElementById('fin-descricao').value = '';
-  document.getElementById('fin-valor').value = '';
-  document.getElementById('fin-data').value = new Date().toISOString().split('T')[0];
-  document.getElementById('fin-categoria').value = '';
-  document.getElementById('fin-pagamento').value = '';
-  document.getElementById('fin-obs').value = '';
-  document.getElementById('fin-modal-titulo').textContent = tipo === 'despesa' ? '➖ Nova despesa' : '➕ Nova receita';
-  document.getElementById('modal-financeiro').style.display = 'flex';
-}
-
-function fecharModalFinanceiro() {
-  document.getElementById('modal-financeiro').style.display = 'none';
-}
-
-async function salvarLancamento() {
-  const descricao = document.getElementById('fin-descricao').value.trim();
-  const valor = parseFloat(document.getElementById('fin-valor').value);
-  const data = document.getElementById('fin-data').value;
-  if (!descricao || !valor || !data) return toast('Preencha descrição, valor e data', 'erro');
-  const btn = document.querySelector('button[onclick="salvarLancamento()"]');
-  if (btn) { if (btn.disabled) return; btn.disabled = true; }
-  const payload = {
-    tipo: document.getElementById('fin-tipo').value,
-    descricao,
-    valor,
-    data,
-    categoria: document.getElementById('fin-categoria').value,
-    formaPagamento: document.getElementById('fin-pagamento').value,
-    observacao: document.getElementById('fin-obs').value
-  };
-  let r = null;
-  try {
-    r = await api('/financeiro/lancamento', { method: 'POST', body: JSON.stringify(payload) });
-  } catch(e) { console.error('Erro:', e); alert('Erro ao executar ação'); if (btn) btn.disabled = false; return; }
-  if (r && (r.sucesso || r._id)) {
-    toast('Lançamento salvo ✅');
-    fecharModalFinanceiro();
-    carregarFinanceiro();
-    carregarLancamentos();
-  } else {
-    toast('Funcionalidade em preparação — backend não configurado', 'erro');
-  }
-  if (btn) btn.disabled = false;
-}
-
-async function deletarLancamento(id) {
-  if (!confirm('Remover este lançamento?')) return;
-  try {
-  const r = await api('/financeiro/lancamento/' + id, { method: 'DELETE' });
-  } catch(e) { console.error('Erro:', e); alert('Erro ao executar ação'); }
-  if (r && r.sucesso) { toast('Removido ✅'); carregarLancamentos(); }
-  else toast('Erro ao remover', 'erro');
-}
-
-// Sobrescrever carregarFinanceiro para também carregar lançamentos
-const _carregarFinanceiroOrig = carregarFinanceiro;
-carregarFinanceiro = async function() {
-  await _carregarFinanceiroOrig();
-  carregarLancamentos();
-};
 
 // ── Fix: wppIniciar deve também mostrar a tela ──────────────────
 // irPara('whatsapp') já mostra tela-whatsapp, wppIniciar carrega dados
@@ -4433,6 +4261,17 @@ carregarFinanceiro = async function() {
           </div>
           <label class="wpp-toggle">
             <input type="checkbox" id="cfg-bot-link" onchange="salvarCfgBot()">
+            <span class="wpp-toggle-track"></span>
+          </label>
+        </div>
+
+        <div class="wpp-cfg-row">
+          <div class="wpp-cfg-info">
+            <div class="wpp-cfg-nome">Rebeca atende clientes pelo WhatsApp</div>
+            <div class="wpp-cfg-desc">Responde dúvidas, agenda e tira o cliente da espera sem precisar de você</div>
+          </div>
+          <label class="wpp-toggle">
+            <input type="checkbox" id="cfg-bot-atender-clientes" onchange="salvarCfgBot()">
             <span class="wpp-toggle-track"></span>
           </label>
         </div>
