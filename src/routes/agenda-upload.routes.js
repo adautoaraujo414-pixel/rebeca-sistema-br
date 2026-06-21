@@ -140,6 +140,53 @@ router.post('/produto/:id/foto', authAgenda, upload.single('foto'), async (req, 
   } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
+// Produto - galeria (multiplas fotos, adiciona uma por chamada)
+router.post('/produto/:id/galeria', authAgenda, upload.single('foto'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ erro: 'Nenhuma foto enviada' });
+    const url = await uploadImagem(req.file.buffer, req.file.mimetype, 'produtos');
+    const prodAtual = await ProdutoAgenda.findOne({ _id: req.params.id, adminId: req.adminAgendaId });
+    if (!prodAtual) return res.status(404).json({ erro: 'Produto não encontrado' });
+    const update = { $push: { fotos: url } };
+    if (!prodAtual.fotoPrincipal) update.$set = { fotoPrincipal: url };
+    const p = await ProdutoAgenda.findOneAndUpdate(
+      { _id: req.params.id, adminId: req.adminAgendaId }, update, { new: true }
+    );
+    res.json({ sucesso: true, url, fotos: p.fotos, fotoPrincipal: p.fotoPrincipal });
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// Produto - remover foto da galeria
+router.delete('/produto/:id/galeria', authAgenda, async (req, res) => {
+  try {
+    const { url } = req.body;
+    if (!url) return res.status(400).json({ erro: 'URL obrigatória' });
+    const p = await ProdutoAgenda.findOneAndUpdate(
+      { _id: req.params.id, adminId: req.adminAgendaId }, { $pull: { fotos: url } }, { new: true }
+    );
+    if (!p) return res.status(404).json({ erro: 'Produto não encontrado' });
+    if (p.fotoPrincipal === url) {
+      const novaPrincipal = (p.fotos && p.fotos[0]) || '';
+      p.fotoPrincipal = novaPrincipal;
+      await p.save();
+    }
+    res.json({ sucesso: true, fotos: p.fotos, fotoPrincipal: p.fotoPrincipal });
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// Produto - definir foto principal
+router.put('/produto/:id/galeria/principal', authAgenda, async (req, res) => {
+  try {
+    const { url } = req.body;
+    if (!url) return res.status(400).json({ erro: 'URL obrigatória' });
+    const p = await ProdutoAgenda.findOneAndUpdate(
+      { _id: req.params.id, adminId: req.adminAgendaId, fotos: url }, { fotoPrincipal: url }, { new: true }
+    );
+    if (!p) return res.status(404).json({ erro: 'Produto ou foto não encontrado' });
+    res.json({ sucesso: true, fotoPrincipal: p.fotoPrincipal });
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
 // Catálogo
 router.post('/catalogo/:id/foto', authAgenda, upload.single('foto'), async (req, res) => {
   try {
