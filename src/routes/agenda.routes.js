@@ -582,12 +582,13 @@ router.post('/espaco/:adminId/cliente', async (req, res) => {
 // Login do profissional (telefone + senha)
 router.post('/profissional-app/login', async (req, res) => {
   try {
-    const { telefone, senha } = req.body;
-    if (!telefone || !senha) return res.status(400).json({ erro: 'Telefone e senha obrigatórios' });
-    const prof = await ProfissionalAgenda.findOne({ telefone, ativo: true });
-    if (!prof || !prof.senha) return res.status(401).json({ erro: 'Credenciais inválidas' });
-    const ok = await bcrypt.compare(senha, prof.senha);
-    if (!ok) return res.status(401).json({ erro: 'Credenciais inválidas' });
+    const { token, pin } = req.body;
+    if (!token || !pin) return res.status(400).json({ erro: 'Token e PIN obrigatórios' });
+    if (!/^\d{4}$/.test(pin)) return res.status(400).json({ erro: 'PIN deve ter 4 dígitos' });
+    const prof = await ProfissionalAgenda.findOne({ token, ativo: true });
+    if (!prof || !prof.senha) return res.status(401).json({ erro: 'PIN inválido' });
+    const ok = await bcrypt.compare(pin, prof.senha);
+    if (!ok) return res.status(401).json({ erro: 'PIN inválido' });
     res.json({ sucesso: true, token: prof.token, nome: prof.nome });
   } catch(e) { res.status(500).json({ erro: e.message }); }
 });

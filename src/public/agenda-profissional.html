@@ -77,6 +77,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .dias-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 .dia-chip{padding:4px 10px;border-radius:20px;font-size:.72em;font-weight:700;background:#f0fdf4;color:#059669;border:1px solid #bbf7d0}
 .data-sep{font-size:.8em;font-weight:700;color:#6b7280;margin:12px 0 8px;text-transform:uppercase;letter-spacing:.05em}
+.pin-dig{width:56px;height:64px;border:2px solid #e5e7eb;border-radius:14px;font-size:1.6em;font-weight:800;text-align:center;outline:none;color:#1f2937;transition:.15s}
+.pin-dig:focus{border-color:var(--cor);box-shadow:0 0 0 3px rgba(249,115,22,.15)}
+.pin-dig.preenchido{border-color:var(--cor);background:#fff7ed}
 </style>
 </head>
 <body>
@@ -85,12 +88,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 <div id="tela-token" class="token-screen" style="display:none">
   <div class="token-card">
-    <div style="font-size:3em;margin-bottom:16px">📅</div>
+    <div style="font-size:3em;margin-bottom:16px">🔐</div>
     <h2>Minha Agenda</h2>
-    <p>Entre com seu WhatsApp e a senha enviada pela Rebeca</p>
-    <input type="tel" id="inp-tel" placeholder="WhatsApp (DDD + número)" autocomplete="off">
-    <input type="password" id="inp-senha" placeholder="Senha" autocomplete="off">
-    <button class="btn-principal" onclick="entrar()">Acessar Agenda</button>
+    <p>Digite seu PIN de 4 dígitos</p>
+    <div style="display:flex;gap:12px;justify-content:center;margin-bottom:20px">
+      <input type="tel" maxlength="1" class="pin-dig" id="pin0" oninput="pinAvancar(0)" onkeydown="pinVoltar(event,0)">
+      <input type="tel" maxlength="1" class="pin-dig" id="pin1" oninput="pinAvancar(1)" onkeydown="pinVoltar(event,1)">
+      <input type="tel" maxlength="1" class="pin-dig" id="pin2" oninput="pinAvancar(2)" onkeydown="pinVoltar(event,2)">
+      <input type="tel" maxlength="1" class="pin-dig" id="pin3" oninput="pinAvancar(3)" onkeydown="pinVoltar(event,3)">
+    </div>
+    <button class="btn-principal" id="btn-entrar" onclick="entrar()" disabled>Entrar</button>
+    <p id="pin-erro" style="color:#ef4444;font-size:.82em;margin-top:12px;display:none">PIN incorreto. Tente novamente.</p>
   </div>
 </div>
 
@@ -210,18 +218,41 @@ function mostrar(id){
 }
 
 // ---------- LOGIN ----------
+function pinAvancar(i){
+  var el = document.getElementById('pin'+i);
+  var v = el.value.replace(/\D/g,'');
+  el.value = v ? v[0] : '';
+  el.classList.toggle('preenchido', !!el.value);
+  if(el.value && i < 3) document.getElementById('pin'+(i+1)).focus();
+  var pin = [0,1,2,3].map(function(x){ return (document.getElementById('pin'+x).value||''); }).join('');
+  document.getElementById('btn-entrar').disabled = pin.length < 4;
+}
+function pinVoltar(e, i){
+  if(e.key==='Backspace' && !document.getElementById('pin'+i).value && i > 0){
+    var prev = document.getElementById('pin'+(i-1));
+    prev.value=''; prev.classList.remove('preenchido'); prev.focus();
+  }
+}
 async function entrar(){
-  var tel = (document.getElementById('inp-tel').value||'').trim();
-  var sen = (document.getElementById('inp-senha').value||'').trim();
-  if(!tel||!sen){ toast('Preencha WhatsApp e senha'); return; }
+  var pin = [0,1,2,3].map(function(x){ return (document.getElementById('pin'+x).value||''); }).join('');
+  if(pin.length < 4){ toast('Digite os 4 dígitos'); return; }
+  if(!TK){ toast('Link inválido — use o link enviado pelo estabelecimento'); return; }
+  document.getElementById('pin-erro').style.display='none';
   mostrar('tela-loading');
   try{
     var r = await fetch('/api/agenda/profissional-app/login',{
       method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({telefone:tel, senha:sen})
+      body: JSON.stringify({token: TK, pin: pin})
     });
     var d = await r.json();
-    if(!d.sucesso){ toast(d.erro||'Credenciais inválidas'); mostrar('tela-token'); return; }
+    if(!d.sucesso){
+      mostrar('tela-token');
+      document.getElementById('pin-erro').style.display='block';
+      [0,1,2,3].forEach(function(x){ var el=document.getElementById('pin'+x); el.value=''; el.classList.remove('preenchido'); });
+      document.getElementById('pin0').focus();
+      document.getElementById('btn-entrar').disabled=true;
+      return;
+    }
     TK = d.token;
     localStorage.setItem('prof_token', TK);
     await carregar();
