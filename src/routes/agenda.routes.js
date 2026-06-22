@@ -148,13 +148,14 @@ router.get('/profissionais', authAgenda, async (req, res) => {
 
 router.post('/profissionais', authAgenda, async (req, res) => {
   try {
-    const { nome, foto, especialidades, atribuicoes, cargo, telefone, bio, diasAtendimento, horario, ordem, comissaoPercentual } = req.body;
+    const { nome, foto, especialidades, atribuicoes, cargo, telefone, bio, diasAtendimento, horario, ordem, comissaoPercentual, senha } = req.body;
     if (!nome) return res.status(400).json({ erro: 'Nome obrigatório' });
     if (!telefone) return res.status(400).json({ erro: 'WhatsApp do profissional é obrigatório' });
+    if (!senha) return res.status(400).json({ erro: 'Senha de acesso é obrigatória' });
     const crypto = require('crypto');
     const bcrypt = require('bcryptjs');
     const token = crypto.randomBytes(24).toString('hex');
-    const senhaGerada = crypto.randomBytes(3).toString('hex'); // ex: a3f9b2
+    const senhaGerada = senha;
     const senhaHash = await bcrypt.hash(senhaGerada, 10);
     const p = await ProfissionalAgenda.create({
       adminId: req.adminAgendaId,
@@ -377,6 +378,19 @@ router.post('/espaco/:adminId/agendar', async (req, res) => {
         dataHora: ag.dataHora,
         servico: ag.nomeServico
       }).catch(e => console.error('[Agenda] Erro notif cliente:', e.message));
+    }
+
+    // Notificar profissional via WhatsApp sobre o novo agendamento
+    if (prof && prof.telefone) {
+      (async () => {
+        try {
+          const { enviarMensagem } = require('../services/whatsapp.provider');
+          const dataFmt = ag.dataHora.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+          const horaFmt = ag.dataHora.toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit' });
+          const msgProf = `Novo agendamento! 📅 ${dataFmt} às ${horaFmt} - Cliente: ${ag.nomeCliente} - Serviço: ${ag.nomeServico}`;
+          await enviarMensagem(admin?.instanciaWhatsappId, prof.telefone, msgProf);
+        } catch(eProf) { console.error('[Agenda] Erro notif profissional:', eProf.message); }
+      })();
     }
 
     res.json({ sucesso: true, agendamento: ag, mensagem: admin.config?.mensagemConfirmacao || 'Agendamento confirmado! 💛' });

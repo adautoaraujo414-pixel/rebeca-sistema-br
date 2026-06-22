@@ -1888,6 +1888,14 @@ document.querySelectorAll('.nav-item').forEach(item => {
       <div class="form-group"><label class="form-label">Cargo / Especialidade</label><input class="form-input" id="prf-cargo" placeholder="Ex: Barbeiro, Cabeleireira..."></div>
       <div class="form-group"><label class="form-label">WhatsApp do profissional</label><input class="form-input" id="prf-tel" placeholder="(00) 00000-0000"></div>
       <div class="form-group"><label class="form-label">Comissão (%) — sobre cada atendimento concluído</label><input class="form-input" id="prf-comissao" type="number" step="0.1" placeholder="Ex: 40"></div>
+      <div class="form-group" id="prf-senha-grupo"><label class="form-label">Senha de acesso do profissional</label><input class="form-input" id="prf-senha" type="text" placeholder="Defina uma senha"></div>
+      <div class="form-group" id="prf-link-grupo" style="display:none">
+        <label class="form-label">Link de acesso do profissional</label>
+        <div style="display:flex;gap:8px">
+          <input class="form-input" id="prf-link" type="text" readonly style="flex:1">
+          <button type="button" class="btn-secondary" onclick="prfCopiarLink()" style="padding:8px 14px;font-size:.82rem;white-space:nowrap">Copiar</button>
+        </div>
+      </div>
       <div id="prf-aviso-novo" style="font-size:.78em;color:var(--texto3);background:var(--bg2);padding:10px;border-radius:8px">📲 Ao salvar, a Rebeca envia automaticamente um WhatsApp pro profissional com usuário e senha de acesso ao painel dele.</div>
     </div>
     <div class="modal-footer">
@@ -2739,8 +2747,12 @@ async function salvarProfissional(){
     telefone: document.getElementById('prf-tel').value.trim(),
     comissaoPercentual: parseFloat(document.getElementById('prf-comissao').value) || 0
   };
+  if(!id){
+    payload.senha = document.getElementById('prf-senha').value.trim();
+  }
   if(!payload.nome) { if (btn) btn.disabled = false; return toast('Informe o nome', 'erro'); }
   if(!id && !payload.telefone) { if (btn) btn.disabled = false; return toast('Informe o WhatsApp do profissional', 'erro'); }
+  if(!id && !payload.senha) { if (btn) btn.disabled = false; return toast('Defina uma senha de acesso', 'erro'); }
   let r = null;
   try {
     if (id) {
@@ -2764,7 +2776,18 @@ async function salvarProfissional(){
         if (!upData.sucesso) console.warn('[Upload foto profissional] erro:', upData.erro);
       } catch(e) { console.warn('[Upload foto profissional] falha de rede:', e.message); }
     }
-    toast('Profissional salvo ✅'); fecharModal('modal-prf'); prfLimparFoto(); carregarGridProfissionais();
+    if(!id && r.profissional && r.profissional.token){
+      toast('Profissional salvo ✅ Link de acesso enviado por WhatsApp');
+      document.getElementById('prf-senha-grupo').style.display = 'none';
+      document.getElementById('prf-link-grupo').style.display = '';
+      document.getElementById('prf-link').value = (location.origin + '/agenda-profissional.html?token=' + r.profissional.token);
+      document.getElementById('prf-id').value = r.profissional._id;
+      document.getElementById('prf-btn-salvar').textContent = 'Concluir';
+      document.getElementById('prf-modal-titulo').textContent = '✅ Profissional cadastrado';
+      carregarGridProfissionais();
+    } else {
+      toast('Profissional salvo ✅'); fecharModal('modal-prf'); prfLimparFoto(); carregarGridProfissionais();
+    }
   }
   else toast((r && r.erro) || 'Erro ao salvar profissional', 'erro');
   if (btn) btn.disabled = false;
@@ -2864,12 +2887,20 @@ async function removerPromoItem(tipo, id){
     else toast((r && r.erro) || 'Erro ao remover', 'erro');
   } catch(e) { toast('Erro ao remover promoção', 'erro'); }
 }
+function prfCopiarLink(){
+  const inp = document.getElementById('prf-link');
+  inp.select();
+  navigator.clipboard?.writeText(inp.value).then(()=>toast('Link copiado ✅')).catch(()=>{});
+}
 function abrirModalProfissional(){
   document.getElementById('prf-id').value = '';
   document.getElementById('prf-nome').value = '';
   document.getElementById('prf-cargo').value = '';
   document.getElementById('prf-tel').value = '';
   document.getElementById('prf-comissao').value = '';
+  document.getElementById('prf-senha').value = '';
+  document.getElementById('prf-senha-grupo').style.display = '';
+  document.getElementById('prf-link-grupo').style.display = 'none';
   document.getElementById('prf-modal-titulo').textContent = '👤 Novo Profissional';
   document.getElementById('prf-btn-salvar').textContent = 'Salvar profissional';
   document.getElementById('prf-aviso-novo').style.display = '';
@@ -2885,6 +2916,9 @@ function editarProfissional(id){
   document.getElementById('prf-cargo').value = p.cargo || '';
   document.getElementById('prf-tel').value = p.telefone || '';
   document.getElementById('prf-comissao').value = p.comissaoPercentual || '';
+  document.getElementById('prf-senha-grupo').style.display = 'none';
+  document.getElementById('prf-link-grupo').style.display = '';
+  document.getElementById('prf-link').value = (location.origin + '/agenda-profissional.html?token=' + (p.token || ''));
   document.getElementById('prf-modal-titulo').textContent = '✏️ Editar Profissional';
   document.getElementById('prf-btn-salvar').textContent = 'Salvar alterações';
   document.getElementById('prf-aviso-novo').style.display = 'none';
