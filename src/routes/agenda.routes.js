@@ -208,7 +208,7 @@ router.get('/espaco/:adminId/horarios', async (req, res) => {
   try {
     const admin = await AdminAgenda.findById(req.params.adminId);
     if (!admin) return res.status(404).json({ erro: 'Espaço não encontrado' });
-    const { data, servicoId, servicoIds } = req.query;
+    const { data, servicoId, servicoIds, profissionalId } = req.query;
     if (!data) return res.status(400).json({ erro: 'data obrigatória (YYYY-MM-DD)' });
 
     let duracao;
@@ -239,16 +239,20 @@ router.get('/espaco/:adminId/horarios', async (req, res) => {
     // Buscar agendamentos do dia
     const inicioDia = new Date(data + 'T00:00:00-03:00');
     const fimDia = new Date(data + 'T23:59:59-03:00');
-    const agendados = await AgendamentoAgenda.find({
+    const filtroAgendados = {
       adminId: req.params.adminId,
       dataHora: { $gte: inicioDia, $lte: fimDia },
       status: { $nin: ['cancelado'] }
-    });
-    const bloqueios = await BloqueioAgenda.find({
+    };
+    if (profissionalId) filtroAgendados.profissionalId = profissionalId;
+    const agendados = await AgendamentoAgenda.find(filtroAgendados);
+    const filtroBloqueios = {
       adminId: req.params.adminId,
       dataHoraInicio: { $lte: fimDia },
       dataHoraFim: { $gte: inicioDia }
-    });
+    };
+    if (profissionalId) filtroBloqueios.$or = [{ profissionalId: profissionalId }, { profissionalId: null }, { profissionalId: { $exists: false } }];
+    const bloqueios = await BloqueioAgenda.find(filtroBloqueios);
 
     const horarios = [];
     const agora = new Date();

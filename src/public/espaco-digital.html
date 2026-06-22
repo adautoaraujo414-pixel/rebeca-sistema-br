@@ -407,11 +407,19 @@ input,select{font-family:var(--font-body)}
           </div>
         </div>
         <div class="booking-step">
-          <div class="booking-label">2. Escolha a data</div>
+          <div class="booking-label">2. Escolha o profissional</div>
+          <div class="booking-select-wrap">
+            <select class="booking-select" id="bc-prof" onchange="bcMudouProf()">
+              <option value="">Escolha um profissional...</option>
+            </select>
+          </div>
+        </div>
+        <div class="booking-step">
+          <div class="booking-label">3. Escolha a data</div>
           <input type="date" class="booking-input" id="bc-data" onchange="bcCarregarHorarios()">
         </div>
         <div class="booking-step">
-          <div class="booking-label">3. Escolha o horário</div>
+          <div class="booking-label">4. Escolha o horário</div>
           <div class="booking-horarios" id="bc-hrs"><div style="color:var(--txt3);font-size:.82rem;grid-column:1/-1;padding:4px 0">Selecione serviço e data primeiro.</div></div>
         </div>
         <button class="btn btn-primary booking-cta" id="bc-btn" onclick="bcBtnClick()">
@@ -629,7 +637,7 @@ input,select{font-family:var(--font-body)}
 var ADMIN_ID=new URLSearchParams(location.search).get('id')||'';
 var BASE='/api/agenda';
 var SERVICOS=[];
-var SEL_SVC=null,SEL_HR=null,MODAL_DATA={};
+var SEL_SVC=null,SEL_HR=null,SEL_PROF=null,MODAL_DATA={};
 function fmt(v){return v||v===0?'R$ '+Number(v).toFixed(2).replace('.',','):''}
 function fmtMin(m){if(!m)return'';var h=Math.floor(m/60),mn=m%60;return h&&mn?h+'h'+mn+'min':h?h+'h':mn+'min'}
 function stars(n){var f=Math.round(n||0);return'★'.repeat(f)+'☆'.repeat(Math.max(0,5-f))}
@@ -749,6 +757,10 @@ function renderServicosPromo(lista){
 }
 var PROFS_MAP={};
 function renderProfs(lista){
+  var bcSel=document.getElementById('bc-prof');
+  if(bcSel&&lista.length){
+    lista.forEach(function(p){var o=document.createElement('option');o.value=p._id;o.textContent=p.nome;bcSel.appendChild(o)});
+  }
   if(!lista.length){document.getElementById('nav-prof').style.display='none';return}
   show('profissionais');
   var grid=document.getElementById('prof-grid');
@@ -800,7 +812,7 @@ function preencherSel(){
   SERVICOS.forEach(function(s){var o=document.createElement('option');o.value=s._id;o.textContent=s.nome+(s.preco?' — '+fmt(s.preco):'');sel.appendChild(o)});
 }
 function bcBtnClick(){
-  if(SEL_HR&&SEL_SVC){abrirModal();return}
+  if(SEL_HR&&SEL_SVC&&SEL_PROF){abrirModal();return}
   if(!SEL_SVC){
     var sel=document.getElementById('bc-svc');
     sel.style.outline='2px solid #ef4444';
@@ -808,16 +820,24 @@ function bcBtnClick(){
     setTimeout(function(){sel.style.outline=''},2000);
     return;
   }
+  if(!SEL_PROF){
+    var selp=document.getElementById('bc-prof');
+    selp.style.outline='2px solid #ef4444';
+    selp.focus();
+    setTimeout(function(){selp.style.outline=''},2000);
+    return;
+  }
   bcCarregarHorarios();
 }
+function bcMudouProf(){SEL_PROF=document.getElementById('bc-prof').value||null;bcCarregarHorarios()}
 function bcMudouSvc(){SEL_SVC=document.getElementById('bc-svc').value||null;bcCarregarHorarios()}
 async function bcCarregarHorarios(){
   var data=document.getElementById('bc-data').value;
   var wrap=document.getElementById('bc-hrs');
-  if(!data||!SEL_SVC){wrap.innerHTML='<div style="color:var(--txt3);font-size:.82rem;grid-column:1/-1;padding:4px 0">Selecione serviço e data.</div>';return}
+  if(!data||!SEL_SVC||!SEL_PROF){wrap.innerHTML='<div style="color:var(--txt3);font-size:.82rem;grid-column:1/-1;padding:4px 0">Selecione serviço, profissional e data.</div>';return}
   wrap.innerHTML='<div style="color:var(--txt3);font-size:.82rem;grid-column:1/-1;padding:4px 0">Carregando...</div>';
   try{
-    var r=await fetch(BASE+'/espaco/'+ADMIN_ID+'/horarios?data='+data+'&servicoId='+SEL_SVC);
+    var r=await fetch(BASE+'/espaco/'+ADMIN_ID+'/horarios?data='+data+'&servicoId='+SEL_SVC+'&profissionalId='+SEL_PROF);
     var d=await r.json();
     var hrs=(d&&d.horarios?d.horarios:d||[]);
     wrap.innerHTML='';
@@ -940,6 +960,7 @@ async function confirmarAgendamento(){
   var btn=document.getElementById('modal-btn');btn.textContent='Agendando...';btn.disabled=true;
   try{
     var corpo={nomeCliente:nome,telefone:tel,email:email,data:MODAL_DATA.data,hora:MODAL_DATA.hora};
+if(MODAL_DATA.profissionalId){corpo.profissionalId=MODAL_DATA.profissionalId}
     if(MODAL_DATA.servicoIds&&MODAL_DATA.servicoIds.length){corpo.servicoIds=MODAL_DATA.servicoIds}else{corpo.servicoId=MODAL_DATA.servicoId}
     if(MODAL_DATA.profissionalId){corpo.profissionalId=MODAL_DATA.profissionalId}
     var r=await fetch(BASE+'/espaco/'+ADMIN_ID+'/agendar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(corpo)});
