@@ -2457,8 +2457,8 @@ async function carregarTabelaAgendamentos(){
         '<td>'+badge(a.status||'pendente')+'</td>'+
         '<td><div class="tabela-acoes">'+
           (tel?'<button class="btn-tabela wpp" onclick="abrirWpp(\''+tel+'\',\'\')">WhatsApp</button>':'') +
-          '<button class="btn-tabela" onclick="confirmarAg(\''+a._id+'\')">Confirmar</button>'+
-          '<button class="btn-tabela danger" onclick="cancelarAg(\''+a._id+'\')">Cancelar</button>'+
+          (a.status!=='confirmado'&&a.status!=='cancelado'&&a.status!=='concluido'?'<button class="btn-tabela" onclick="confirmarAg(\''+a._id+'\')">Confirmar</button>':'')+
+          (a.status!=='cancelado'&&a.status!=='concluido'?'<button class="btn-tabela danger" onclick="cancelarAg(\''+a._id+'\')">Cancelar</button>':'')+
         '</div></td>'+
       '</tr>';
     }).join('');
