@@ -844,4 +844,78 @@ router.post('/espaco/:adminId/avaliar', async (req, res) => {
   } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
+// ── MINHA CONTA (cliente final: historico + agendamentos futuros) ──
+router.get('/espaco/:adminId/minha-conta', async (req, res) => {
+  try {
+    const telBruto = req.query.telefone || '';
+    const tel = telBruto.replace(/\D/g, '');
+    if (!tel) return res.status(400).json({ erro: 'Informe o WhatsApp' });
+    const cliente = await ClienteAgenda.findOne({ adminId: req.params.adminId, telefone: tel });
+    if (!cliente) return res.status(404).json({ erro: 'Nenhum cadastro encontrado com esse WhatsApp' });
+    const agora = new Date();
+    const todos = await AgendamentoAgenda.find({ adminId: req.params.adminId, clienteId: cliente._id })
+      .sort({ dataHora: -1 }).limit(100).lean();
+    const futuros = todos.filter(a => new Date(a.dataHora) >= agora && a.status !== 'cancelado');
+    const historico = todos.filter(a => new Date(a.dataHora) < agora || a.status === 'cancelado' || a.status === 'concluido');
+    res.json({
+      sucesso: true,
+      cliente: { nome: cliente.nome, telefone: cliente.telefone },
+      futuros: futuros.map(a => ({ _id: a._id, dataHora: a.dataHora, nomeServico: a.nomeServico, nomeProfissional: a.nomeProfissional, status: a.status, preco: a.preco, servicoId: a.servicoId, profissionalId: a.profissionalId, duracao: a.duracao })),
+      historico: historico.slice(0, 20).map(a => ({ _id: a._id, dataHora: a.dataHora, nomeServico: a.nomeServico, nomeProfissional: a.nomeProfissional, status: a.status, preco: a.preco }))
+    });
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+router.put('/espaco/:adminId/minha-conta/cancelar/:agendamentoId', async (req, res) => {
+  try {
+    const telBruto = req.body.telefone || '';
+    const tel = telBruto.replace(/\D/g, '');
+    if (!tel) return res.status(400).json({ erro: 'Informe o WhatsApp' });
+    const cliente = await ClienteAgenda.findOne({ adminId: req.params.adminId, telefone: tel });
+    if (!cliente) return res.status(404).json({ erro: 'Cadastro não encontrado' });
+    const ag = await AgendamentoAgenda.findOne({ _id: req.params.agendamentoId, adminId: req.params.adminId, clienteId: cliente._id });
+    if (!ag) return res.status(404).json({ erro: 'Agendamento não encontrado' });
+    if (ag.status === 'cancelado') return res.status(400).json({ erro: 'Agendamento já está cancelado' });
+    if (ag.status === 'concluido') return res.status(400).json({ erro: 'Não é possível cancelar um atendimento já concluído' });
+    if (new Date(ag.dataHora) < new Date()) return res.status(400).json({ erro: 'Não é possível cancelar um horário que já passou' });
+    ag.status = 'cancelado';
+    await ag.save();
+    res.json({ sucesso: true });
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+router.put('/espaco/:adminId/minha-conta/reagendar/:agendamentoId', async (req, res) => {
+  try {
+    const telBruto = req.body.telefone || '';
+    const tel = telBruto.replace(/\D/g, '');
+    const { data, hora } = req.body;
+    if (!tel) return res.status(400).json({ erro: 'Informe o WhatsApp' });
+    if (!data || !hora) return res.status(400).json({ erro: 'Informe data e horário' });
+    const cliente = await ClienteAgenda.findOne({ adminId: req.params.adminId, telefone: tel });
+    if (!cliente) return res.status(404).json({ erro: 'Cadastro não encontrado' });
+    const ag = await AgendamentoAgenda.findOne({ _id: req.params.agendamentoId, adminId: req.params.adminId, clienteId: cliente._id });
+    if (!ag) return res.status(404).json({ erro: 'Agendamento não encontrado' });
+    if (ag.status === 'cancelado' || ag.status === 'concluido') return res.status(400).json({ erro: 'Este agendamento não pode mais ser alterado' });
+    const novaDataHora = new Date(`${data}T${hora}:00-03:00`);
+    if (novaDataHora < new Date()) return res.status(400).json({ erro: 'Escolha uma data futura' });
+    const admin = await AdminAgenda.findById(req.params.adminId);
+    const durMin = ag.duracao || admin?.config?.intervaloAgendamento || 30;
+    const novaDataHoraFim = new Date(novaDataHora.getTime() + durMin * 60000);
+    const filtroConflito = {
+      adminId: req.params.adminId,
+      _id: { $ne: ag._id },
+      status: { $nin: ['cancelado'] },
+      dataHora: { $lt: novaDataHoraFim },
+      $expr: { $gt: [{ $add: ['$dataHora', { $multiply: [{ $ifNull: ['$duracao', durMin] }, 60000] }] }, novaDataHora] }
+    };
+    if (ag.profissionalId) filtroConflito.profissionalId = ag.profissionalId;
+    const conflito = await AgendamentoAgenda.findOne(filtroConflito);
+    if (conflito) return res.status(409).json({ erro: 'Horário já ocupado. Escolha outro horário.' });
+    ag.dataHora = novaDataHora;
+    ag.status = 'pendente';
+    await ag.save();
+    res.json({ sucesso: true, agendamento: ag });
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
 module.exports = router;

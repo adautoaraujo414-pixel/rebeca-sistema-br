@@ -359,9 +359,12 @@ input,select{font-family:var(--font-body)}
           <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.117.549 4.107 1.513 5.838L0 24l6.335-1.652A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.006-1.366l-.36-.214-3.727.977.995-3.63-.234-.373A9.818 9.818 0 1112 21.818z"/></svg>
           WhatsApp
         </a>
-        <a href="/agenda-adm" class="btn btn-outline">
+        <a href="#" id="btn-minha-conta" class="btn btn-outline" onclick="abrirModalMinhaConta();return false;">
           <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z"/></svg>
-          Entrar
+          Minha Conta
+        </a>
+        <a href="/agenda-adm" class="btn btn-outline" style="opacity:.6;font-size:.78em">
+          Sou profissional
         </a>
       </div>
     </div>
@@ -633,6 +636,59 @@ input,select{font-family:var(--font-body)}
   </div>
 </footer>
 </div>
+
+<div class="modal-overlay hidden" id="modal-conta">
+  <div class="modal-box" style="max-width:480px">
+    <div class="modal-header">
+      <div class="modal-title">Minha Conta</div>
+      <button class="modal-close" onclick="fecharModalConta()">✕</button>
+    </div>
+
+    <div id="mc-passo-tel">
+      <div class="modal-field">
+        <div class="modal-label">Digite seu WhatsApp para acessar seus agendamentos</div>
+        <input class="modal-input" id="mc-tel" placeholder="(11) 99999-9999" type="tel" maxlength="15" oninput="_maskTelCliente(this)">
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-outline" onclick="fecharModalConta()">Cancelar</button>
+        <button class="btn btn-primary" id="mc-btn-buscar" onclick="mcBuscar()">Entrar</button>
+      </div>
+    </div>
+
+    <div id="mc-passo-dados" class="hidden">
+      <div style="margin-bottom:16px">
+        <div style="font-size:1.05em;font-weight:600" id="mc-nome-cliente"></div>
+        <div style="font-size:.82em;color:var(--txt2)" id="mc-tel-cliente"></div>
+      </div>
+
+      <div style="font-weight:600;margin-bottom:8px">Próximos agendamentos</div>
+      <div id="mc-futuros" style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px"></div>
+
+      <div style="font-weight:600;margin-bottom:8px">Histórico</div>
+      <div id="mc-historico" style="display:flex;flex-direction:column;gap:8px;max-height:240px;overflow-y:auto"></div>
+
+      <div class="modal-actions" style="margin-top:20px">
+        <button class="btn btn-outline" onclick="mcSair()">Sair</button>
+      </div>
+    </div>
+
+    <div id="mc-passo-reagendar" class="hidden">
+      <div class="modal-field">
+        <div class="modal-label">Nova data</div>
+        <input type="date" class="modal-input" id="mc-re-data" onchange="mcCarregarHorariosReagendar()">
+      </div>
+      <div class="modal-field">
+        <div class="modal-label">Novo horário</div>
+        <div id="mc-re-horarios" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-outline" onclick="mcVoltarDados()">Voltar</button>
+        <button class="btn btn-primary" id="mc-btn-reagendar" onclick="mcConfirmarReagendamento()" disabled>Confirmar novo horário</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 var ADMIN_ID=new URLSearchParams(location.search).get('id')||'';
 var BASE='/api/agenda';
@@ -945,6 +1001,182 @@ function continuarModalProf(){
   document.getElementById('modal-ag').classList.remove('hidden');
   document.getElementById('m-nome').focus();
 }
+// ===== MINHA CONTA (cliente final) =====
+var MC_TEL = '';
+var MC_AG_REAGENDAR = null;
+var MC_RE_DATA_SEL = '';
+var MC_RE_HORA_SEL = '';
+
+function abrirModalMinhaConta(){
+  document.getElementById('modal-conta').classList.remove('hidden');
+  document.getElementById('mc-passo-tel').classList.remove('hidden');
+  document.getElementById('mc-passo-dados').classList.add('hidden');
+  document.getElementById('mc-passo-reagendar').classList.add('hidden');
+  document.getElementById('mc-tel').value = '';
+  document.getElementById('mc-tel').focus();
+}
+function fecharModalConta(){
+  document.getElementById('modal-conta').classList.add('hidden');
+}
+function mcSair(){
+  MC_TEL = '';
+  abrirModalMinhaConta();
+}
+
+async function mcBuscar(){
+  var telRaw = document.getElementById('mc-tel').value.replace(/\D/g,'');
+  if(telRaw.length !== 10 && telRaw.length !== 11){ toast('Digite um WhatsApp válido com DDD.','error'); return; }
+  var tel = '55'+telRaw;
+  var btn = document.getElementById('mc-btn-buscar');
+  btn.textContent = 'Buscando...'; btn.disabled = true;
+  try{
+    var r = await fetch(BASE+'/espaco/'+ADMIN_ID+'/minha-conta?telefone='+tel);
+    var d = await r.json();
+    btn.textContent = 'Entrar'; btn.disabled = false;
+    if(!d.sucesso){ toast(d.erro||'Nenhum cadastro encontrado com esse WhatsApp.','error'); return; }
+    MC_TEL = tel;
+    mcRenderizar(d);
+  }catch(e){ btn.textContent='Entrar'; btn.disabled=false; toast('Erro ao buscar seus dados.','error'); }
+}
+
+function mcFmtData(iso){
+  var dt = new Date(iso);
+  return dt.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric'})+' às '+dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+}
+function mcStatusLabel(s){
+  if(s==='confirmado') return 'Confirmado';
+  if(s==='concluido') return 'Concluído';
+  if(s==='cancelado') return 'Cancelado';
+  return 'Pendente';
+}
+
+function mcRenderizar(d){
+  document.getElementById('mc-passo-tel').classList.add('hidden');
+  document.getElementById('mc-passo-reagendar').classList.add('hidden');
+  document.getElementById('mc-passo-dados').classList.remove('hidden');
+  document.getElementById('mc-nome-cliente').textContent = d.cliente.nome || 'Cliente';
+  document.getElementById('mc-tel-cliente').textContent = document.getElementById('mc-tel').value;
+
+  var elF = document.getElementById('mc-futuros');
+  if(!d.futuros.length){
+    elF.innerHTML = '<div style="font-size:.85em;color:var(--txt2)">Nenhum agendamento futuro.</div>';
+  } else {
+    elF.innerHTML = d.futuros.map(function(a){
+      return '<div style="border:1px solid var(--border2);border-radius:12px;padding:12px">'+
+        '<div style="display:flex;justify-content:space-between;align-items:start;gap:8px">'+
+          '<div>'+
+            '<div style="font-weight:600">'+(a.nomeServico||'Serviço')+'</div>'+
+            '<div style="font-size:.82em;color:var(--txt2)">'+mcFmtData(a.dataHora)+(a.nomeProfissional?' · '+a.nomeProfissional:'')+'</div>'+
+          '</div>'+
+          '<span style="font-size:.72em;padding:3px 8px;border-radius:6px;background:var(--surface2)">'+mcStatusLabel(a.status)+'</span>'+
+        '</div>'+
+        '<div style="display:flex;gap:8px;margin-top:10px">'+
+          '<button class="btn btn-outline" style="flex:1;padding:7px;font-size:.8em" onclick="mcAbrirReagendar(\''+a._id+'\',\''+(a.servicoId||'')+'\',\''+(a.profissionalId||'')+'\')">Reagendar</button>'+
+          '<button class="btn btn-outline" style="flex:1;padding:7px;font-size:.8em;color:#dc2626" onclick="mcCancelar(\''+a._id+'\')">Cancelar</button>'+
+        '</div>'+
+      '</div>';
+    }).join('');
+  }
+
+  var elH = document.getElementById('mc-historico');
+  if(!d.historico.length){
+    elH.innerHTML = '<div style="font-size:.85em;color:var(--txt2)">Sem histórico ainda.</div>';
+  } else {
+    elH.innerHTML = d.historico.map(function(a){
+      return '<div style="display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid var(--border2);font-size:.85em">'+
+        '<div>'+(a.nomeServico||'Serviço')+'<div style="font-size:.82em;color:var(--txt2)">'+mcFmtData(a.dataHora)+'</div></div>'+
+        '<span style="font-size:.75em;color:var(--txt2);white-space:nowrap">'+mcStatusLabel(a.status)+'</span>'+
+      '</div>';
+    }).join('');
+  }
+}
+
+async function mcCancelar(agendamentoId){
+  if(!confirm('Tem certeza que deseja cancelar este agendamento?')) return;
+  try{
+    var r = await fetch(BASE+'/espaco/'+ADMIN_ID+'/minha-conta/cancelar/'+agendamentoId,{
+      method:'PUT', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ telefone: MC_TEL })
+    });
+    var d = await r.json();
+    if(!d.sucesso){ toast(d.erro||'Não foi possível cancelar.','error'); return; }
+    toast('Agendamento cancelado.','success');
+    mcBuscarSilencioso();
+  }catch(e){ toast('Erro ao cancelar.','error'); }
+}
+
+async function mcBuscarSilencioso(){
+  try{
+    var r = await fetch(BASE+'/espaco/'+ADMIN_ID+'/minha-conta?telefone='+MC_TEL);
+    var d = await r.json();
+    if(d.sucesso) mcRenderizar(d);
+  }catch(e){}
+}
+
+var MC_RE_SERVICO_ID = '';
+var MC_RE_PROF_ID = '';
+function mcAbrirReagendar(agendamentoId, servicoId, profissionalId){
+  MC_AG_REAGENDAR = agendamentoId;
+  MC_RE_SERVICO_ID = servicoId || '';
+  MC_RE_PROF_ID = profissionalId || '';
+  MC_RE_DATA_SEL = ''; MC_RE_HORA_SEL = '';
+  document.getElementById('mc-re-data').value = '';
+  document.getElementById('mc-re-horarios').innerHTML = '';
+  document.getElementById('mc-btn-reagendar').disabled = true;
+  document.getElementById('mc-passo-dados').classList.add('hidden');
+  document.getElementById('mc-passo-reagendar').classList.remove('hidden');
+}
+function mcVoltarDados(){
+  document.getElementById('mc-passo-reagendar').classList.add('hidden');
+  document.getElementById('mc-passo-dados').classList.remove('hidden');
+}
+
+async function mcCarregarHorariosReagendar(){
+  var data = document.getElementById('mc-re-data').value;
+  if(!data) return;
+  var elH = document.getElementById('mc-re-horarios');
+  elH.innerHTML = '<div style="font-size:.82em;color:var(--txt2)">Carregando...</div>';
+  try{
+    var qs = 'data='+data;
+    if(MC_RE_SERVICO_ID) qs += '&servicoId='+MC_RE_SERVICO_ID;
+    if(MC_RE_PROF_ID) qs += '&profissionalId='+MC_RE_PROF_ID;
+    var r = await fetch(BASE+'/espaco/'+ADMIN_ID+'/horarios?'+qs);
+    var d = await r.json();
+    var horarios = d.horarios || d || [];
+    if(!horarios.length){ elH.innerHTML = '<div style="font-size:.82em;color:var(--txt2)">Sem horários disponíveis nesta data.</div>'; return; }
+    elH.innerHTML = horarios.map(function(h){
+      var hora = h.hora || h;
+      return '<button type="button" class="btn btn-outline" style="padding:7px 12px;font-size:.82em" onclick="mcSelecionarHorario(this,\''+hora+'\')">'+hora+'</button>';
+    }).join('');
+  }catch(e){ elH.innerHTML = '<div style="font-size:.82em;color:#dc2626">Erro ao buscar horários.</div>'; }
+}
+function mcSelecionarHorario(btn, hora){
+  MC_RE_DATA_SEL = document.getElementById('mc-re-data').value;
+  MC_RE_HORA_SEL = hora;
+  var todos = btn.parentElement.querySelectorAll('button');
+  todos.forEach(function(b){ b.classList.remove('btn-primary'); b.classList.add('btn-outline'); });
+  btn.classList.remove('btn-outline'); btn.classList.add('btn-primary');
+  document.getElementById('mc-btn-reagendar').disabled = false;
+}
+
+async function mcConfirmarReagendamento(){
+  if(!MC_RE_DATA_SEL || !MC_RE_HORA_SEL) return;
+  var btn = document.getElementById('mc-btn-reagendar');
+  btn.textContent = 'Confirmando...'; btn.disabled = true;
+  try{
+    var r = await fetch(BASE+'/espaco/'+ADMIN_ID+'/minha-conta/reagendar/'+MC_AG_REAGENDAR,{
+      method:'PUT', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ telefone: MC_TEL, data: MC_RE_DATA_SEL, hora: MC_RE_HORA_SEL })
+    });
+    var d = await r.json();
+    btn.textContent = 'Confirmar novo horário'; btn.disabled = false;
+    if(!d.sucesso){ toast(d.erro||'Não foi possível reagendar.','error'); return; }
+    toast('Agendamento atualizado!','success');
+    mcVoltarDados();
+    mcBuscarSilencioso();
+  }catch(e){ btn.textContent='Confirmar novo horário'; btn.disabled=false; toast('Erro ao reagendar.','error'); }
+}
+
 function _maskTelCliente(input){
   var v = input.value.replace(/\D/g,'').slice(0,11);
   if(v.length > 10) input.value = '('+v.slice(0,2)+') '+v.slice(2,7)+'-'+v.slice(7);
