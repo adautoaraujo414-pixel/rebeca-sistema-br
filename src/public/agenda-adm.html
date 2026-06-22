@@ -1888,7 +1888,16 @@ document.querySelectorAll('.nav-item').forEach(item => {
       <div class="form-group"><label class="form-label">Cargo / Especialidade</label><input class="form-input" id="prf-cargo" placeholder="Ex: Barbeiro, Cabeleireira..."></div>
       <div class="form-group"><label class="form-label">WhatsApp do profissional</label><input class="form-input" id="prf-tel" placeholder="(00) 00000-0000"></div>
       <div class="form-group"><label class="form-label">Comissão (%) — sobre cada atendimento concluído</label><input class="form-input" id="prf-comissao" type="number" step="0.1" placeholder="Ex: 40"></div>
-      <div class="form-group" id="prf-senha-grupo"><label class="form-label">Senha de acesso do profissional</label><input class="form-input" id="prf-senha" type="text" placeholder="Defina uma senha"></div>
+      <div class="form-group" id="prf-senha-grupo">
+        <label class="form-label">PIN de acesso (4 dígitos)</label>
+        <div style="display:flex;gap:10px;margin-top:6px">
+          <input class="form-input" id="prf-pin0" type="tel" maxlength="1" style="width:56px;text-align:center;font-size:1.3em;font-weight:700;padding:10px 0" oninput="pAdm(0)" onkeydown="pAdmBack(event,0)">
+          <input class="form-input" id="prf-pin1" type="tel" maxlength="1" style="width:56px;text-align:center;font-size:1.3em;font-weight:700;padding:10px 0" oninput="pAdm(1)" onkeydown="pAdmBack(event,1)">
+          <input class="form-input" id="prf-pin2" type="tel" maxlength="1" style="width:56px;text-align:center;font-size:1.3em;font-weight:700;padding:10px 0" oninput="pAdm(2)" onkeydown="pAdmBack(event,2)">
+          <input class="form-input" id="prf-pin3" type="tel" maxlength="1" style="width:56px;text-align:center;font-size:1.3em;font-weight:700;padding:10px 0" oninput="pAdm(3)" onkeydown="pAdmBack(event,3)">
+        </div>
+        <div style="font-size:.75em;color:#9ca3af;margin-top:6px">O profissional usará esse PIN para entrar pelo link</div>
+      </div>
       <div class="form-group" id="prf-link-grupo" style="display:none">
         <label class="form-label">Link de acesso do profissional</label>
         <div style="display:flex;gap:8px">
@@ -1896,7 +1905,7 @@ document.querySelectorAll('.nav-item').forEach(item => {
           <button type="button" class="btn-secondary" onclick="prfCopiarLink()" style="padding:8px 14px;font-size:.82rem;white-space:nowrap">Copiar</button>
         </div>
       </div>
-      <div id="prf-aviso-novo" style="font-size:.78em;color:var(--texto3);background:var(--bg2);padding:10px;border-radius:8px">📲 Ao salvar, a Rebeca envia automaticamente um WhatsApp pro profissional com usuário e senha de acesso ao painel dele.</div>
+      <div id="prf-aviso-novo" style="font-size:.78em;color:var(--texto3);background:var(--bg2);padding:10px;border-radius:8px">📲 Ao salvar, a Rebeca envia automaticamente um WhatsApp pro profissional com o link de acesso e o PIN cadastrado.</div>
     </div>
     <div class="modal-footer">
       <button class="btn-secondary" onclick="fecharModal('modal-prf')">Cancelar</button>
@@ -2735,6 +2744,18 @@ function prfLimparFoto(){
   const box = document.getElementById('prf-foto-box');
   if (box) box.innerHTML = '<span style="font-size:1.4rem;color:var(--txt3)">📷</span>';
 }
+function pAdm(i){
+  var el=document.getElementById('prf-pin'+i);
+  var v=el.value.replace(/\D/g,'');
+  el.value=v?v[0]:'';
+  if(el.value&&i<3) document.getElementById('prf-pin'+(i+1)).focus();
+}
+function pAdmBack(e,i){
+  if(e.key==='Backspace'&&!document.getElementById('prf-pin'+i).value&&i>0){
+    var p=document.getElementById('prf-pin'+(i-1));
+    p.value=''; p.focus();
+  }
+}
 async function salvarProfissional(){
   const btn = document.getElementById('prf-btn-salvar');
   if (btn) { if (btn.disabled) return; btn.disabled = true; }
@@ -2748,11 +2769,12 @@ async function salvarProfissional(){
     comissaoPercentual: parseFloat(document.getElementById('prf-comissao').value) || 0
   };
   if(!id){
-    payload.senha = document.getElementById('prf-senha').value.trim();
+    var _pin = [0,1,2,3].map(function(x){ return (document.getElementById('prf-pin'+x).value||''); }).join('');
+    if(!/^\d{4}$/.test(_pin)){ if(btn) btn.disabled=false; return toast('PIN deve ter exatamente 4 dígitos', 'erro'); }
+    payload.senha = _pin;
   }
   if(!payload.nome) { if (btn) btn.disabled = false; return toast('Informe o nome', 'erro'); }
   if(!id && !payload.telefone) { if (btn) btn.disabled = false; return toast('Informe o WhatsApp do profissional', 'erro'); }
-  if(!id && !payload.senha) { if (btn) btn.disabled = false; return toast('Defina uma senha de acesso', 'erro'); }
   let r = null;
   try {
     if (id) {
