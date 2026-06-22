@@ -1350,15 +1350,9 @@ ${totalAgs > 0 ? 'Tá saindo bem! 💪' : 'Ainda sem registros esse mês.'}`);
 
   // ── AJUDA ──────────────────────────────────────────────────────────────────
   if (/\bajuda\b|\bcomandos?\b|\bo que\s*(você|voce)\s*(faz|pode)\b/i.test(msgL)) {
-    await responder(
-      `💙 *Comandos disponíveis:*\n\n` +
-      `📅 *Agenda*\n• Rebeca, mostra minha agenda de hoje\n• Rebeca, mostra minha agenda de amanhã\n\n` +
-      `🔒 *Bloqueio*\n• Rebeca, bloqueia amanhã das 12h às 14h\n\n` +
-      `⏰ *Horário*\n• Rebeca, hoje vou trabalhar das 8h às 18h\n\n` +
-      `💰 *Financeiro*\n• Rebeca, registra uma entrada de R$120 no Pix\n• Rebeca, registra um gasto de R$50 em produtos\n• Rebeca, quanto faturei hoje?\n\n` +
-      `✅ *Agendamentos*\n• Rebeca, confirma o agendamento das 14h\n• Rebeca, cancela o agendamento das 14h\n\n` +
-      `👥 *Clientes*\n• Rebeca, clientes inativos`
-    );
+    const _rAjudaRx = `Oi! Aqui tá tudo que sei fazer por você, ${_chefe(_generoAdmin, _apelidoAdmin)}! 💙\n\n📅 *Agenda*\n• mostra minha agenda de hoje\n• encaixa [nome] às [hora]\n• cancela o [nome] das [hora]\n• bloqueia amanhã das 12h às 14h\n\n💰 *Financeiro*\n• registra entrada de R$120 no Pix\n• registra gasto de R$50 em produtos\n• quanto fiz hoje / essa semana / esse mês\n\n🔔 *Lembretes*\n• me lembra amanhã 9h de ligar pro fornecedor\n• ver meus lembretes\n\n👥 *Clientes*\n• clientes inativos\n• aniversariantes hoje\n• histórico da [nome]\n\n💬 *Mensagens*\n• manda mensagem pra [nome]: [texto]`;
+    await responder(_rAjudaRx);
+    SM.addAssistantMsg(adminId, telefone, _rAjudaRx);
     return true;
   }
 
