@@ -167,6 +167,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <img id="p-foto" class="perfil-foto" src="" style="display:none" onerror="this.style.display='none'">
       <div class="perfil-nome" id="p-nome"></div>
       <div class="perfil-cargo" id="p-cargo"></div>
+      <div id="p-especialidades" style="font-size:.78em;color:#9ca3af;margin-top:2px"></div>
       <div class="perfil-bio" id="p-bio"></div>
       <div class="atrib-lista" id="p-atribs"></div>
     </div>
@@ -299,6 +300,7 @@ function renderizar(){
   if(prof.foto){ var pf=document.getElementById('p-foto'); pf.src=prof.foto; pf.style.display='block'; }
   document.getElementById('p-nome').textContent  = prof.nome   || '';
   document.getElementById('p-cargo').textContent = prof.cargo  || '';
+  document.getElementById('p-especialidades').textContent = (prof.especialidades||[]).join(' · ');
   document.getElementById('p-bio').textContent   = prof.bio    || '';
   document.getElementById('p-atribs').innerHTML  = (prof.atribuicoes||[]).map(function(a){ return '<span class="atrib-chip">'+esc(a)+'</span>'; }).join('');
   if(prof.horario){
