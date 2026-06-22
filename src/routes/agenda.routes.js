@@ -177,8 +177,8 @@ router.post('/profissionais', authAgenda, async (req, res) => {
       const { AdminAgenda } = require('../models/AgendaServico');
       const admin = await AdminAgenda.findById(req.adminAgendaId);
       const { enviarMensagem } = require('../services/whatsapp.provider');
-      const linkApp = (process.env.APP_URL || 'https://rebeca-sistema-br.onrender.com') + '/agenda-profissional.html';
-      const msg = `Olá ${nome} 😊\n\nVocê foi cadastrado(a) como profissional de *${admin?.nomeNegocio || 'nosso espaço'}* na plataforma Rebeca!\n\nSeu acesso:\n👤 Usuário (WhatsApp): ${telefone}\n🔑 Senha: ${senhaGerada}\n🔗 Link: ${linkApp}\n\nAbra o link, entre com seu WhatsApp e essa senha. Por ali você vai ver sua agenda, atendimentos do dia, cancelar ou pedir reagendamento e acompanhar sua comissão. Qualquer dúvida, é só me chamar por aqui!`;
+      const linkApp = (process.env.APP_URL || 'https://rebeca-sistema-br.onrender.com') + '/agenda-profissional.html?token=' + token;
+      const msg = `Olá ${nome} 😊\n\nVocê foi cadastrado(a) como profissional de *${admin?.nomeNegocio || 'nosso espaço'}*!\n\n🔗 *Seu link de acesso:*\n${linkApp}\n\n🔑 *Seu PIN:* ${senhaGerada}\n\nClique no link e digite o PIN para acessar sua agenda. Por ali você vê seus atendimentos do dia, pode cancelar ou pedir reagendamento e acompanhar sua comissão. Qualquer dúvida é só chamar!`;
       await enviarMensagem(admin?.instanciaWhatsappId, telefone, msg);
       p.boasVindasEnviado = true;
       await p.save();
