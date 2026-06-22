@@ -370,14 +370,27 @@ router.post('/espaco/:adminId/agendar', async (req, res) => {
       valor: ag.preco
     }).catch(e => console.error('[Agenda] Erro notif dono:', e.message));
 
-    // Notificar cliente via WhatsApp (Meta oficial - unico provider em uso)
+    // Notificar cliente via WhatsApp (template Meta - obrigatorio pois cliente nunca escreveu antes, fora da janela de 24h)
     if (telCliente) {
-      const instMeta = { _enviarVia: 'meta', apiUrl: 'meta', nomeInstancia: 'meta_oficial' };
-      ModoDono.notificarCliente(instMeta, telCliente, 'confirmacao', {
-        nome: ag.nomeCliente,
-        dataHora: ag.dataHora,
-        servico: ag.nomeServico
-      }).catch(e => console.error('[Agenda] Erro notif cliente:', e.message));
+      (async () => {
+        try {
+          const MetaWA = require('../services/meta-whatsapp.service');
+          const dataFmt = ag.dataHora.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+          const horaFmt = ag.dataHora.toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit' });
+          const primeiroNome = (ag.nomeCliente || '').split(' ')[0] || 'Cliente';
+          const components = [{
+            type: 'body',
+            parameters: [
+              { type: 'text', text: primeiroNome },
+              { type: 'text', text: dataFmt },
+              { type: 'text', text: horaFmt },
+              { type: 'text', text: ag.nomeServico || 'Servico' }
+            ]
+          }];
+          const r = await MetaWA.enviarTemplate(telCliente, 'confirmacao_agendamento_v2', 'pt_BR', components);
+          if (!r.sucesso) console.error('[Agenda] Template confirmacao falhou (provavelmente ainda em analise na Meta):', r.erro);
+        } catch(eTpl) { console.error('[Agenda] Erro notif cliente (template):', eTpl.message); }
+      })();
     }
 
     // Notificar profissional via WhatsApp sobre o novo agendamento
