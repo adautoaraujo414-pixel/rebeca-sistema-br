@@ -414,7 +414,7 @@ input,select{font-family:var(--font-body)}
           <div class="booking-label">3. Escolha o horário</div>
           <div class="booking-horarios" id="bc-hrs"><div style="color:var(--txt3);font-size:.82rem;grid-column:1/-1;padding:4px 0">Selecione serviço e data primeiro.</div></div>
         </div>
-        <button class="btn btn-primary booking-cta" id="bc-btn" onclick="abrirModal()" disabled>
+        <button class="btn btn-primary booking-cta" id="bc-btn" onclick="bcBtnClick()">
           <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
           Ver horários disponíveis
         </button>
@@ -799,6 +799,17 @@ function preencherSel(){
   var sel=document.getElementById('bc-svc');
   SERVICOS.forEach(function(s){var o=document.createElement('option');o.value=s._id;o.textContent=s.nome+(s.preco?' — '+fmt(s.preco):'');sel.appendChild(o)});
 }
+function bcBtnClick(){
+  if(SEL_HR&&SEL_SVC){abrirModal();return}
+  if(!SEL_SVC){
+    var sel=document.getElementById('bc-svc');
+    sel.style.outline='2px solid #ef4444';
+    sel.focus();
+    setTimeout(function(){sel.style.outline=''},2000);
+    return;
+  }
+  bcCarregarHorarios();
+}
 function bcMudouSvc(){SEL_SVC=document.getElementById('bc-svc').value||null;bcCarregarHorarios()}
 async function bcCarregarHorarios(){
   var data=document.getElementById('bc-data').value;
@@ -816,7 +827,7 @@ async function bcCarregarHorarios(){
       btn.onclick=function(){
         document.querySelectorAll('.booking-hr-btn').forEach(function(b){b.classList.remove('sel')});
         btn.classList.add('sel');SEL_HR=h.hora||h;
-        var bcBtn=document.getElementById('bc-btn');bcBtn.disabled=false;bcBtn.innerHTML='<svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Agendar às '+SEL_HR;
+        var bcBtn=document.getElementById('bc-btn');bcBtn.innerHTML='<svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Agendar às '+SEL_HR;
       };
       wrap.appendChild(btn);
     });
@@ -928,7 +939,7 @@ async function confirmarAgendamento(){
     if(r.ok&&!d.erro){
       fecharModal();
       toast('✅ Agendamento confirmado! Você receberá confirmação no WhatsApp.','success');
-      SEL_HR=null;var bcBtn=document.getElementById('bc-btn');bcBtn.disabled=true;bcBtn.textContent='Ver horários disponíveis';
+      SEL_HR=null;var bcBtn=document.getElementById('bc-btn');bcBtn.textContent='Ver horários disponíveis';
     }else{toast(d.erro||'Erro ao agendar. Tente novamente.','error')}
   }catch(e){toast('Erro de conexão. Tente novamente.','error')}
   finally{btn.textContent='Confirmar';btn.disabled=false}
