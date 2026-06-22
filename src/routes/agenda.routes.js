@@ -673,13 +673,29 @@ Seu horário do dia ${dataFmt} com ${req.profissional.nome} precisou ser cancela
 // Profissional conclui atendimento
 router.put('/profissional-app/:token/agendamento/:id/concluir', authProfissional, async (req, res) => {
   try {
-    const { AgendamentoAgenda } = require('../models/AgendaServico');
+    const { AgendamentoAgenda, FinanceiroAgenda } = require('../models/AgendaServico');
     const ag = await AgendamentoAgenda.findOneAndUpdate(
       { _id: req.params.id, profissionalId: req.profissional._id, status: { $nin: ['cancelado','concluido'] } },
       { status: 'concluido' },
       { new: true }
     );
     if (!ag) return res.status(404).json({ erro: 'Agendamento não encontrado ou já concluído' });
+    // Gerar receita automática no financeiro, evitando duplicar se a rota for chamada de novo
+    if (ag.preco && ag.preco > 0) {
+      const jaExiste = await FinanceiroAgenda.findOne({ agendamentoId: ag._id, tipo: 'receita' });
+      if (!jaExiste) {
+        await FinanceiroAgenda.create({
+          adminId: ag.adminId,
+          agendamentoId: ag._id,
+          tipo: 'receita',
+          descricao: `${ag.nomeServico || 'Serviço'} — ${ag.nomeCliente || 'Cliente'}`,
+          valor: ag.preco,
+          categoria: 'servico',
+          data: new Date(),
+          pago: true
+        });
+      }
+    }
     res.json({ sucesso: true, agendamento: ag });
   } catch(e) { res.status(500).json({ erro: e.message }); }
 });

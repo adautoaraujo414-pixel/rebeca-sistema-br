@@ -2640,32 +2640,32 @@ ${total>5?'Tá crescendo muito! Continua assim! 🚀':'Todo cliente novo é uma 
           const _linhasS = Object.entries(_catS).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`  ${k}: R$ ${v.toFixed(2).replace('.',',')}`).join('\n');
           const _linhasE = Object.entries(_catE).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`  ${k}: R$ ${v.toFixed(2).replace('.',',')}`).join('\n');
           if (!_todos.length) {
-            await responder(`Não encontrei lançamentos ${_labelPer}, \${_chefe(_generoAdmin, _apelidoAdmin)}. 🤷`);
+            await responder(`Não encontrei lançamentos ${_labelPer}, ${_chefe(_generoAdmin, _apelidoAdmin)}. 🤷`);
           } else {
-            let _r = `📊 *Gastos por categoria — \${_labelPer}*\n\n`;
-            if (_linhasS) _r += `❌ *Saídas: R$ \${_totS.toFixed(2).replace('.',',')}*\n\${_linhasS}\n\n`;
-            if (_linhasE) _r += `✅ *Entradas: R$ \${_totE.toFixed(2).replace('.',',')}*\n\${_linhasE}\n`;
-            _r += `\n💰 Saldo: R$ \${(_totE-_totS).toFixed(2).replace('.',',')}`;
+            let _r = `📊 *Gastos por categoria — ${_labelPer}*\n\n`;
+            if (_linhasS) _r += `❌ *Saídas: R$ ${_totS.toFixed(2).replace('.',',')}*\n${_linhasS}\n\n`;
+            if (_linhasE) _r += `✅ *Entradas: R$ ${_totE.toFixed(2).replace('.',',')}*\n${_linhasE}\n`;
+            _r += `\n💰 Saldo: R$ ${(_totE-_totS).toFixed(2).replace('.',',')}`;
             await responder(_r);
           }
           return true;
         }
 
         // Com categoria específica
-        let _resp = `📊 *\${_labelPer.charAt(0).toUpperCase()+_labelPer.slice(1)}* — gastos por categoria, \${_chefe(_generoAdmin, _apelidoAdmin)}:\n`;
+        let _resp = `📊 *${_labelPer.charAt(0).toUpperCase()+_labelPer.slice(1)}* — gastos por categoria, ${_chefe(_generoAdmin, _apelidoAdmin)}:\n`;
         for (const _cat of _cats) {
           const _lanc = _todos.filter(l => (l.categoria||'outros').toLowerCase() === _cat || (l.descricao||'').toLowerCase().includes(_cat));
           const _tot = _lanc.reduce((s,l)=>s+(l.tipo==='despesa'?l.valor:-l.valor),0);
           const _totAbs = _lanc.filter(l=>l.tipo==='despesa').reduce((s,l)=>s+l.valor,0);
           if (!_lanc.length) {
-            _resp += `\n*\${_cat}*: nenhum lançamento encontrado`;
+            _resp += `\n*${_cat}*: nenhum lançamento encontrado`;
           } else {
-            _resp += `\n*\${_cat}*: R$ \${_totAbs.toFixed(2).replace('.',',')} (\${_lanc.filter(l=>l.tipo==='despesa').length} lançamentos)`;
+            _resp += `\n*${_cat}*: R$ ${_totAbs.toFixed(2).replace('.',',')} (${_lanc.filter(l=>l.tipo==='despesa').length} lançamentos)`;
             const _detalhe = _lanc.slice(0,5).map(l => {
               const _dt = new Date(l.data).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
-              return `  \${_dt} R$ \${l.valor.toFixed(2).replace('.',',')}\${l.descricao ? ' — '+l.descricao : ''}`;
+              return `  ${_dt} R$ ${l.valor.toFixed(2).replace('.',',')}${l.descricao ? ' — '+l.descricao : ''}`;
             }).join('\n');
-            if (_detalhe) _resp += `\n\${_detalhe}`;
+            if (_detalhe) _resp += `\n${_detalhe}`;
           }
         }
         await responder(_resp);
