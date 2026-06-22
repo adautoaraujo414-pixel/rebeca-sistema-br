@@ -3142,14 +3142,14 @@ _"${_textoMsg}"_`;
         const ini30 = _inicioDia(new Date(Date.now() - 30*86400000));
         const ags30 = await AgendamentoAgenda.find({
           adminId: adminObjId, dataHora: { $gte: ini30 },
-          status: { $in: ['confirmado','concluido'] }, servico: { $exists: true, $ne: '' }
+          status: { $in: ['confirmado','concluido'] }, nomeServico: { $exists: true, $ne: '' }
         }).lean();
         if (!ags30.length) {
           const _r = `Sem dados de serviços nos últimos 30 dias ainda.`;
           await responder(_r); SM.addAssistantMsg(adminId, telefone, _r); return true;
         }
         const contagem = {};
-        ags30.forEach(a => { contagem[a.servico] = (contagem[a.servico]||0) + 1; });
+        ags30.forEach(a => { contagem[a.nomeServico] = (contagem[a.nomeServico]||0) + 1; });
         const top = Object.entries(contagem).sort((a,b)=>b[1]-a[1]).slice(0,5);
         const lista = top.map(([s,n],i) => `${i+1}. ${s} — ${n}x`).join('\n');
         const _r = `🏆 Serviços mais pedidos (30 dias):\n\n${lista}`;
@@ -3357,16 +3357,52 @@ _"${_textoMsg}"_`;
       if (_cerebro.intencao === 'confirmar_pendente' || _cerebro.intencao === 'cancelar_pendente') {
         const _confirmarP = _cerebro.intencao === 'confirmar_pendente';
         const _sesP = SM.getSession(adminId, telefone);
-        if (_sesP.ultimaAcaoPendente) {
-          if (_confirmarP) {
-            const rConf2 = `Feito, ${_chefe(_generoAdmin,_apelidoAdmin)}! ✅`;
-            await responder(rConf2); SM.addAssistantMsg(adminId, telefone, rConf2);
-          } else {
-            SM.updateSession(adminId, telefone, { ultimaAcaoPendente: null, aguardandoConfirmacao: false });
-            const rNeg2 = `Ok, cancelei! 👍`;
-            await responder(rNeg2); SM.addAssistantMsg(adminId, telefone, rNeg2);
+        const _acaoP = _sesP.ultimaAcaoPendente;
+        if (_acaoP && typeof _acaoP === 'object') {
+          if (_confirmarP && _acaoP.intencao === 'reagendar_executar') {
+            const _entReP = _acaoP.entidades || {};
+            try {
+              await AgendamentoAgenda.findByIdAndUpdate(_entReP.agId, { dataHora: _entReP.novaData });
+              SM.updateSession(adminId, telefone, { ultimaAcaoPendente: null, aguardandoConfirmacao: false });
+              const _rReP = `Remarcado! ✅ *${_entReP.nomeCliente}* reagendado para ${_fmtData(new Date(_entReP.novaData))} às ${_fmtHora(new Date(_entReP.novaData))}. 💙`;
+              await responder(_rReP); SM.addAssistantMsg(adminId, telefone, _rReP); return true;
+            } catch(_eReP) {
+              const _rReErrP = `Deu erro ao remarcar, ${_chefe(_generoAdmin,_apelidoAdmin)}. Tenta de novo! 😕`;
+              await responder(_rReErrP); SM.addAssistantMsg(adminId, telefone, _rReErrP); return true;
+            }
           }
-          return true;
+          if (!_confirmarP && _acaoP.intencao === 'reagendar_executar') {
+            SM.updateSession(adminId, telefone, { ultimaAcaoPendente: null, aguardandoConfirmacao: false });
+            const _rReNegP = `Ok, cancelei o reagendamento! Se mudar de ideia é só falar. 💙`;
+            await responder(_rReNegP); SM.addAssistantMsg(adminId, telefone, _rReNegP); return true;
+          }
+          if (_confirmarP && _acaoP.intencao === 'fechar_dia_executar') {
+            const _diaFecP = _acaoP.entidades?.dia ? new Date(_acaoP.entidades.dia) : new Date();
+            const _iniFecP = _inicioDia(_diaFecP); const _fimFecP = _fimDia(_diaFecP);
+            try {
+              const _resFecP = await AgendamentoAgenda.updateMany(
+                { adminId: adminObjId, dataHora: { $gte: _iniFecP, $lte: _fimFecP }, status: { $in: ['pendente','confirmado'] } },
+                { $set: { status: 'cancelado', motivoCancelamento: 'dia fechado pelo dono' } }
+              );
+              SM.updateSession(adminId, telefone, { ultimaAcaoPendente: null, aguardandoConfirmacao: false });
+              const _rFecP = `Feito! 🔒 Dia *${_fmtData(_diaFecP)}* fechado. ${_resFecP.modifiedCount} agendamento(s) cancelado(s).`;
+              await responder(_rFecP); SM.addAssistantMsg(adminId, telefone, _rFecP); return true;
+            } catch(_eFecP) {
+              const _rFecErrP = `Erro ao fechar o dia, ${_chefe(_generoAdmin,_apelidoAdmin)}. Tenta de novo! 😕`;
+              await responder(_rFecErrP); SM.addAssistantMsg(adminId, telefone, _rFecErrP); return true;
+            }
+          }
+          if (!_confirmarP && _acaoP.intencao === 'fechar_dia_executar') {
+            SM.updateSession(adminId, telefone, { ultimaAcaoPendente: null, aguardandoConfirmacao: false });
+            const _rFecNegP = `Ok, agenda mantida! 👍`;
+            await responder(_rFecNegP); SM.addAssistantMsg(adminId, telefone, _rFecNegP); return true;
+          }
+          // Acao pendente desconhecida — nao confirma genericamente para nao mentir que foi feito
+          SM.updateSession(adminId, telefone, { ultimaAcaoPendente: null, aguardandoConfirmacao: false });
+          const _rGenP = _confirmarP
+            ? `Hmm, não consegui identificar o que confirmar, ${_chefe(_generoAdmin,_apelidoAdmin)}. Pode repetir o pedido? 😊`
+            : `Ok, cancelei! 👍`;
+          await responder(_rGenP); SM.addAssistantMsg(adminId, telefone, _rGenP); return true;
         }
       }
 
