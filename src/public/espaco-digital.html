@@ -860,11 +860,13 @@ function irAgendar(id){
   window.scrollTo({top:0,behavior:'smooth'});
 }
 function abrirModal(){
-  if(!SEL_HR||!SEL_SVC)return;
+  if(!SEL_HR||!SEL_SVC||!SEL_PROF)return;
   var data=document.getElementById('bc-data').value;
   var svc=SERVICOS.find(function(s){return s._id===SEL_SVC});
-  MODAL_DATA={servicoId:SEL_SVC,data:data,hora:SEL_HR};
-  document.getElementById('modal-resumo').innerHTML='<strong>'+(svc?svc.nome:'Serviço')+'</strong><br>📅 '+data+' às '+SEL_HR+(svc&&svc.preco?'<br>💰 '+fmt(svc.preco):'');
+  var profSel=document.getElementById('bc-prof');
+  var profNome=profSel?profSel.options[profSel.selectedIndex].textContent:'';
+  MODAL_DATA={servicoId:SEL_SVC,profissionalId:SEL_PROF,data:data,hora:SEL_HR};
+  document.getElementById('modal-resumo').innerHTML='<strong>'+(svc?svc.nome:'Serviço')+'</strong>'+(profNome?'<br>👤 '+profNome:'')+'<br>📅 '+data+' às '+SEL_HR+(svc&&svc.preco?'<br>💰 '+fmt(svc.preco):'');
   document.getElementById('modal-ag').classList.remove('hidden');
   document.getElementById('m-nome').focus();
 }
@@ -960,7 +962,6 @@ async function confirmarAgendamento(){
   var btn=document.getElementById('modal-btn');btn.textContent='Agendando...';btn.disabled=true;
   try{
     var corpo={nomeCliente:nome,telefone:tel,email:email,data:MODAL_DATA.data,hora:MODAL_DATA.hora};
-if(MODAL_DATA.profissionalId){corpo.profissionalId=MODAL_DATA.profissionalId}
     if(MODAL_DATA.servicoIds&&MODAL_DATA.servicoIds.length){corpo.servicoIds=MODAL_DATA.servicoIds}else{corpo.servicoId=MODAL_DATA.servicoId}
     if(MODAL_DATA.profissionalId){corpo.profissionalId=MODAL_DATA.profissionalId}
     var r=await fetch(BASE+'/espaco/'+ADMIN_ID+'/agendar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(corpo)});
