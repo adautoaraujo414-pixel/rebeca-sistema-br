@@ -2425,10 +2425,10 @@ async function carregarTabelaAgendamentos(){
     const todos = (d?.agendamentos||d||[]).sort((a,b)=>new Date(b.dataHora)-new Date(a.dataHora)).slice(0,50);
     if(!todos.length){ tbody.innerHTML='<tr><td colspan="6" style="text-align:center;padding:32px"><div class="empty-state-icon">📋</div><div>Nenhum agendamento</div><button class="btn-primary" style="margin-top:12px" onclick="abrirModalAgendamento()">+ Novo agendamento</button></td></tr>'; return; }
     tbody.innerHTML = todos.map(a=>{
-      const tel = limparTel(a.clienteTelefone||(a.clienteId&&a.clienteId.telefone)||'');
-      const cliNome = a.clienteNome||(a.clienteId&&a.clienteId.nome)||'—';
-      const svcNome = a.servicoNome||(a.servicoId&&a.servicoId.nome)||'—';
-      const profNome = a.profissionalNome||(a.profissionalId&&a.profissionalId.nome)||'—';
+      const tel = limparTel(a.telefoneCliente||a.clienteTelefone||(a.clienteId&&a.clienteId.telefone)||'');
+      const cliNome = a.nomeCliente||a.clienteNome||(a.clienteId&&a.clienteId.nome)||'—';
+      const svcNome = a.nomeServico||a.servicoNome||(a.servicoId&&a.servicoId.nome)||'—';
+      const profNome = a.nomeProfissional||a.profissionalNome||(a.profissionalId&&a.profissionalId.nome)||'—';
       return '<tr>'+
         '<td><b>'+fmtHora(a.dataHora)+'</b><br><span style="font-size:.72em;color:var(--texto3)">'+fmtData(a.dataHora)+'</span></td>'+
         '<td><div style="display:flex;align-items:center;gap:8px"><div class="agenda-avatar" style="width:28px;height:28px;font-size:.7em">'+iniciais(cliNome)+'</div><span>'+cliNome+'</span></div></td>'+
