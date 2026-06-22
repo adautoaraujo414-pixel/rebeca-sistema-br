@@ -365,18 +365,14 @@ router.post('/espaco/:adminId/agendar', async (req, res) => {
       valor: ag.preco
     }).catch(e => console.error('[Agenda] Erro notif dono:', e.message));
 
-    // Notificar cliente via WhatsApp
+    // Notificar cliente via WhatsApp (Meta oficial - unico provider em uso)
     if (telCliente) {
-      const { InstanciaWhatsapp } = require('../models/index');
-      InstanciaWhatsapp.findOne({ adminId: req.params.adminId, adminTipo: 'agenda' }).lean()
-        .then(inst => {
-          if (!inst || inst.status !== 'conectado') return;
-          return ModoDono.notificarCliente(inst, telCliente, 'confirmacao', {
-            nome: ag.nomeCliente,
-            dataHora: ag.dataHora,
-            servico: ag.nomeServico
-          });
-        }).catch(e => console.error('[Agenda] Erro notif cliente:', e.message));
+      const instMeta = { _enviarVia: 'meta', apiUrl: 'meta', nomeInstancia: 'meta_oficial' };
+      ModoDono.notificarCliente(instMeta, telCliente, 'confirmacao', {
+        nome: ag.nomeCliente,
+        dataHora: ag.dataHora,
+        servico: ag.nomeServico
+      }).catch(e => console.error('[Agenda] Erro notif cliente:', e.message));
     }
 
     res.json({ sucesso: true, agendamento: ag, mensagem: admin.config?.mensagemConfirmacao || 'Agendamento confirmado! 💛' });
