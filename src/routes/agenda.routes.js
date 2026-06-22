@@ -440,9 +440,26 @@ router.get('/agendamentos', authAgenda, async (req, res) => {
 
 router.put('/agendamentos/:id/status', authAgenda, async (req, res) => {
   try {
-    const { status } = req.body;
-    const ag = await AgendamentoAgenda.findOneAndUpdate({ _id: req.params.id, adminId: req.adminAgendaId }, { status }, { new: true });
-    if (!ag) return res.status(404).json({ erro: 'Agendamento não encontrado' });
+    const { status, motivoCancelamento } = req.body;
+    const agAntes = await AgendamentoAgenda.findOne({ _id: req.params.id, adminId: req.adminAgendaId });
+    const ag = await AgendamentoAgenda.findOneAndUpdate({ _id: req.params.id, adminId:req.adminAgendaId }, { status, ...(motivoCancelamento ? { motivoCancelamento } : {}) }, { new: true });
+    if (!ag) return res.status(404).json({ erro: 'Agendamento n\u00e3o encontrado' });
+    // Notificar cliente se cancelado pelo admin
+    if (status === 'cancelado' && agAntes?.status !== 'cancelado' && ag.telefoneCliente) {
+      try {
+        const { AdminAgenda, InstanciaWhatsapp } = require('../models/AgendaServico');
+        const ModoDono = require('../services/agenda-modo-dono.service');
+        const admin = await AdminAgenda.findById(req.adminAgendaId).lean();
+        const inst = await InstanciaWhatsapp.findOne({ adminId: String(req.adminAgendaId), status: 'conectado' }).lean();
+        const instEnvio = inst || { _enviarVia: 'meta', apiUrl: 'meta', nomeInstancia: 'meta_oficial' };
+        const dataFmt = ag.dataHora ? new Date(ag.dataHora).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '';
+        const horaFmt = ag.dataHora ? new Date(ag.dataHora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '';
+        const nomeNeg = admin?.nomeNegocio || 'nosso espa\u00e7o';
+        const motivo = motivoCancelamento ? `\n\nMotivo: _${motivoCancelamento}_` : '';
+        const msg = `Ol\u00e1 *${ag.nomeCliente || 'cliente'}*! \ud83d\ude0a\n\nInfelizmente precisamos cancelar seu agendamento:\n\n\ud83d\udcc5 *${dataFmt}* \u00e0s *${horaFmt}*\n\ud83d\udd16 ${ag.nomeServico || 'Servi\u00e7o'}${motivo}\n\nSentimos muito pelo inconveniente! Para remarcar, \u00e9 s\u00f3 responder esta mensagem. \ud83d\udc99\n\n_${nomeNeg}_`;
+        await ModoDono._enviarMsg(instEnvio, ag.telefoneCliente, msg).catch(()=>{});
+      } catch(eNotif) { console.error('[CancelAdmin] erro notif cliente:', eNotif.message); }
+    }
     res.json({ sucesso: true, agendamento: ag });
   } catch(e) { res.status(500).json({ erro: e.message }); }
 });
@@ -451,6 +468,29 @@ router.delete('/agendamentos/:id', authAgenda, async (req, res) => {
   try {
     const _del = await AgendamentoAgenda.findOneAndUpdate({ _id: req.params.id, adminId: req.adminAgendaId }, { status: 'cancelado' });
     if (!_del) return res.status(404).json({ erro: 'Agendamento não encontrado' });
+    // Notificar cliente
+    if (_del.telefoneCliente && _del.status !== 'cancelado') {
+      try {
+        const { AdminAgenda, InstanciaWhatsapp } = require('../models/AgendaServico');
+        const ModoDono = require('../services/agenda-modo-dono.service');
+        const admin = await AdminAgenda.findById(req.adminAgendaId).lean();
+        const inst = await InstanciaWhatsapp.findOne({ adminId: String(req.adminAgendaId), status: 'conectado' }).lean();
+        const instEnvio = inst || { _enviarVia: 'meta', apiUrl: 'meta', nomeInstancia: 'meta_oficial' };
+        const dataFmt = _del.dataHora ? new Date(_del.dataHora).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '';
+        const horaFmt = _del.dataHora ? new Date(_del.dataHora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '';
+        const msg = `Olá *${_del.nomeCliente || 'cliente'}*! 😊
+
+Infelizmente precisamos cancelar seu agendamento:
+
+📅 *${dataFmt}* às *${horaFmt}*
+🔖 ${_del.nomeServico || 'Serviço'}
+
+Sentimos muito pelo inconveniente! Para remarcar, é só responder esta mensagem. 💙
+
+_${admin?.nomeNegocio || 'nosso espaço'}_`;
+        await ModoDono._enviarMsg(instEnvio, _del.telefoneCliente, msg).catch(()=>{});
+      } catch(eNotif) { console.error('[DeleteAdmin] erro notif cliente:', eNotif.message); }
+    }
     res.json({ sucesso: true });
   } catch(e) { res.status(500).json({ erro: e.message }); }
 });
