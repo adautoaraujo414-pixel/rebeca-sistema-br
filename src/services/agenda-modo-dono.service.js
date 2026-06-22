@@ -2587,7 +2587,9 @@ ${total>5?'Tá crescendo muito! Continua assim! 🚀':'Todo cliente novo é uma 
           data: { $gte: new Date(Date.now() - 30 * 86400000) }
         }).sort({ data: -1 }).limit(30).lean();
         if (!_lancamentos.length) {
-          await responder(`Não encontrei transações nos últimos 30 dias, ${_chefe(_generoAdmin, _apelidoAdmin)}. 🤷`);
+          const _rNaoEncontrou = `Não encontrei transações nos últimos 30 dias, ${_chefe(_generoAdmin, _apelidoAdmin)}. 🤷`;
+          await responder(_rNaoEncontrou);
+          SM.addAssistantMsg(adminId, telefone, _rNaoEncontrou);
           return true;
         }
         const _entradas = _lancamentos.filter(l => l.tipo === 'receita');
@@ -2600,7 +2602,9 @@ ${total>5?'Tá crescendo muito! Continua assim! 🚀':'Todo cliente novo é uma 
           const _desc = l.descricao && l.descricao !== 'Entrada via WhatsApp' && l.descricao !== 'Saída via WhatsApp' ? ` — ${l.descricao}` : '';
           return `${_tipo} ${_d} R$ ${Number(l.valor).toFixed(2).replace('.',',')} [${l.categoria||'outros'}]${_desc}`;
         }).join('\n');
-        await responder(`📊 *Extrato — últimos 30 dias*, ${_chefe(_generoAdmin, _apelidoAdmin)}:\n\n${_linhas}\n\n✅ Entradas: R$ ${_totE.toFixed(2).replace('.',',')}\n❌ Saídas: R$ ${_totS.toFixed(2).replace('.',',')}\n💰 Saldo: R$ ${(_totE-_totS).toFixed(2).replace('.',',')}`);
+        const _rExtrato = `📊 *Extrato — últimos 30 dias*, ${_chefe(_generoAdmin, _apelidoAdmin)}:\n\n${_linhas}\n\n✅ Entradas: R$ ${_totE.toFixed(2).replace('.',',')}\n❌ Saídas: R$ ${_totS.toFixed(2).replace('.',',')}\n💰 Saldo: R$ ${(_totE-_totS).toFixed(2).replace('.',',')}`;
+        await responder(_rExtrato);
+        SM.addAssistantMsg(adminId, telefone, _rExtrato);
         return true;
       }
 
@@ -2927,52 +2931,6 @@ LEMBRE: você é a pessoa em quem ela mais confia no dia a dia. Esse espaço é 
         }
       }
 
-      if (_cerebro.intencao === 'registrar_receita' && ent.valor) {
-        let _descRawE = (ent.descricao || ent.origem || '')
-          .replace(/^(lança|registra|anota|coloca|marca|lanca|mete|bota|adiciona)\s+(uma?\s+|a\s+)?(saída|entrada|despesa|receita|gasto|saida)\s+(de\s+)?/i, '')
-          .replace(/^(r\$\s*)?[\d]+([.,][\d]+)?\s*(reais?)?\s*(de\s+)?/i, '')
-          .replace(/^(recebi|entrou|caiu|ganhei|vendi|cobrei)\s+(de\s+)?/i, '')
-          .replace(/^(de\s+|no\s+|na\s+|em\s+|por\s+|pra\s+|para\s+|via\s+)/i, '')
-          .replace(/^(e\s+)/i, '').trim();
-        const _sCatE = /^(beleza|saude|combustivel|mercado|aluguel|energia|agua|internet|telefone|salario|impostos?|produtos?|alimentacao|transporte|lazer|educacao|pix|dinheiro|transferencia|servicos?|outros)$/i;
-        const desc = (_descRawE && _descRawE.length > 1 && !_sCatE.test(_descRawE)) ? _descRawE : 'Entrada via WhatsApp';
-        const _docCerebroR = await FinanceiroAgenda.create({
-          adminId: adminObjId, tipo: 'receita',
-          valor: Number(ent.valor), descricao: desc, categoria: cat,
-          data: _dataAgora(), origem: 'whatsapp_dono'
-        });
-        SM.updateSession(adminId, telefone, { ultimoLancamentoId: String(_docCerebroR._id), ultimoLancamentoTipo: 'receita', ultimoLancamentoValor: Number(ent.valor), ultimoLancamentoDesc: desc, ultimoLancamentoCat: cat });
-        const _r = _respEntrada(Number(ent.valor), cat, desc);
-        await responder(_r);
-        SM.addAssistantMsg(adminId, telefone, _r);
-        return true;
-      }
-
-      if (_cerebro.intencao === 'registrar_despesa' && ent.valor) {
-        const cat = ent.categoria || 'outros';
-        // Limpar descrição — não salvar frase de comando como descrição
-        let _descRaw = (ent.descricao || ent.origem || '')
-          // Remover frases de comando que vazaram para a descrição
-          .replace(/^(lança|registra|anota|coloca|marca|lanca|registra\s+saída|registra\s+uma\s+saída)\s+[\d.,]+\s*(reais?|r\$)?\s*(de\s+)?(saída|entrada|saida)?\s*(de\s+)?/i, '')
-          .replace(/^(r\$\s*)?[\d]+([.,][\d]+)?\s*(reais?)?\s*(de\s+)?(saída|entrada|saida)?\s*(de\s+)?/i, '')
-          .replace(/^(pra\s+mim\s+e\s+)/i, '') // "pra mim e Marmita" → "Marmita"
-          .replace(/^(pra\s+mim\s*)/i, '')       // "pra mim" → vazio
-          .replace(/^(para\s+mim\s+e\s+)/i, '')
-          .replace(/^(e\s+)?(alimentos?|mercado|combustivel|farmacia|feira|padaria|restaurante|lanche|academia|posto)\s*$/i, '')
-          .replace(/^(e\s+)/i, '').trim();
-        const desc = _descRaw && _descRaw.length > 1 ? _descRaw : '';
-        const _docDesp2 = await FinanceiroAgenda.create({
-          adminId: adminObjId, tipo: 'despesa',
-          valor: Number(ent.valor), descricao: desc || 'Gasto via WhatsApp', categoria: cat,
-          data: _dataAgora(), origem: 'whatsapp_dono'
-        });
-        SM.updateSession(adminId, telefone, { ultimoLancamentoId: String(_docDesp2._id), ultimoLancamentoTipo: 'despesa', ultimoLancamentoValor: Number(ent.valor), ultimoLancamentoDesc: desc, ultimoLancamentoCat: cat });
-        const _r = _respSaida(Number(ent.valor), cat, desc);
-        await responder(_r);
-        SM.addAssistantMsg(adminId, telefone, _r);
-        return true;
-      }
-
       // ── AVISO DUPLO: "me avisa um dia antes e 30 minutos antes" ─────────────
       if (_cerebro.intencao === 'criar_lembrete' && ent.texto_lembrete) {
         // Detectar pedido de aviso duplo na mensagem original
@@ -3079,7 +3037,9 @@ Te aviso 30 minutos antes! 💙`;
         const _textoMsg = ent.texto_mensagem || ent.mensagem || ent.texto_lembrete || null;
         if (!_nomeCli || !_textoMsg) {
           const _falta = !_nomeCli ? 'Para quem é a mensagem?' : 'Qual o texto da mensagem?';
-          await responder(`${_falta} 😊`);
+          const _rFalta = `${_falta} 😊`;
+          await responder(_rFalta);
+          SM.addAssistantMsg(adminId, telefone, _rFalta);
           return true;
         }
         try {
@@ -3092,23 +3052,31 @@ Te aviso 30 minutos antes! 💙`;
             ]
           }).lean();
           if (!_clienteMsg || !_clienteMsg.telefone) {
-            await responder(`Não achei nenhum cliente com esse nome, ${_chefe(_generoAdmin, _apelidoAdmin)}. Confirma o nome? 😊`);
+            const _rNaoAchou = `Não achei nenhum cliente com esse nome, ${_chefe(_generoAdmin, _apelidoAdmin)}. Confirma o nome? 😊`;
+            await responder(_rNaoAchou);
+            SM.addAssistantMsg(adminId, telefone, _rNaoAchou);
             return true;
           }
           const _telMsg = _normalizarTel(_clienteMsg.telefone);
           const instMsg = await InstanciaWhatsapp.findOne({ adminId: adminObjId, adminTipo: 'agenda' }).lean();
           if (!instMsg) {
-            await responder(`Não consegui encontrar a instância do WhatsApp pra enviar. 😕`);
+            const _rSemInst = `Não consegui encontrar a instância do WhatsApp pra enviar. 😕`;
+            await responder(_rSemInst);
+            SM.addAssistantMsg(adminId, telefone, _rSemInst);
             return true;
           }
           await _enviarMsg(instMsg, _telMsg, _textoMsg);
           console.log('[MANDAR_MSG] Mensagem enviada para', _clienteMsg.nome, _telMsg);
-          await responder(`Mensagem enviada pra *${_clienteMsg.nome}*! ✅
+          const _rSucessoMsg = `Mensagem enviada pra *${_clienteMsg.nome}*! ✅
 
-_"${_textoMsg}"_`);
+_"${_textoMsg}"_`;
+          await responder(_rSucessoMsg);
+          SM.addAssistantMsg(adminId, telefone, _rSucessoMsg);
         } catch(_eMsg) {
           console.error('[MANDAR_MSG] Erro:', _eMsg.message);
-          await responder(`Poxa, tive um probleminha ao enviar. Tenta de novo, ${_chefe(_generoAdmin, _apelidoAdmin)}? 😕`);
+          const _rErroMsg = `Poxa, tive um probleminha ao enviar. Tenta de novo, ${_chefe(_generoAdmin, _apelidoAdmin)}? 😕`;
+          await responder(_rErroMsg);
+          SM.addAssistantMsg(adminId, telefone, _rErroMsg);
         }
         return true;
       }
@@ -3128,7 +3096,7 @@ _"${_textoMsg}"_`);
         agsSem.forEach(a => {
           const d = _fmtData(new Date(a.dataHora));
           if (!dias[d]) dias[d] = [];
-          dias[d].push(`${_fmtHora(new Date(a.dataHora))} — ${a.nomeCliente}${a.servico ? ' ('+a.servico+')' : ''}`);
+          dias[d].push(`${_fmtHora(new Date(a.dataHora))} — ${a.nomeCliente}${a.nomeServico ? ' ('+a.nomeServico+')' : ''}`);
         });
         let txt = `📅 Agenda da semana — ${agsSem.length} agendamento(s):\n\n`;
         Object.entries(dias).forEach(([d,ags]) => { txt += `*${d}*\n${ags.map(x=>'  • '+x).join('\n')}\n\n`; });
