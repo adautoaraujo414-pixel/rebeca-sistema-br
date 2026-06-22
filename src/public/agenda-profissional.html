@@ -367,8 +367,10 @@ function listaHoje(elId, lista){
       '<div class="ag-servico">🔖 '+esc(a.nomeServico||'Serviço não informado')+'</div>'+
       (a.preco?'<div class="ag-preco">💰 R$ '+Number(a.preco).toFixed(2)+'</div>':'')+
       (a.observacoes?'<div class="ag-obs">"'+esc(a.observacoes)+'"</div>':'')+
-      (a.status!=='cancelado'?
+      (a.status==='concluido'?'<div style="margin-top:8px;font-size:.8em;color:#059669;font-weight:700">✅ Concluído</div>':
+       a.status!=='cancelado'?
         '<div class="ag-acoes">'+
+          '<button class="btn-acao" style="background:#d1fae5;color:#065f46" onclick="concluir(\''+a._id+'\')">✅ Concluir</button>'+
           '<button class="btn-acao" style="background:#fef3c7;color:#92400e" onclick="reagendar(\''+a._id+'\')">🔁 Reagendar</button>'+
           '<button class="btn-acao" style="background:#fee2e2;color:#991b1b" onclick="cancelar(\''+a._id+'\')">✕ Cancelar</button>'+
         '</div>':'')+
@@ -415,6 +417,14 @@ function tab(nome, idx){
 }
 
 // ---------- AÇÕES ----------
+async function concluir(id){
+  if(!confirm('Marcar este atendimento como concluído?')) return;
+  try{
+    var r=await fetch('/api/agenda/profissional-app/'+TK+'/agendamento/'+id+'/concluir',{method:'PUT',headers:{'Authorization':'Bearer '+TK}});
+    var d=await r.json();
+    if(d.sucesso){ toast('Atendimento concluído ✅'); carregar(); } else toast(d.erro||'Erro');
+  }catch(e){ toast('Erro de conexão'); }
+}
 async function cancelar(id){
   if(!confirm('Cancelar este atendimento? O cliente será avisado.')) return;
   try{

@@ -190,7 +190,13 @@ router.post('/profissionais', authAgenda, async (req, res) => {
 
 router.put('/profissionais/:id', authAgenda, async (req, res) => {
   try {
-    const p = await ProfissionalAgenda.findOneAndUpdate({ _id: req.params.id, adminId: req.adminAgendaId }, req.body, { new: true });
+    const bcrypt = require('bcryptjs');
+    const updates = { ...req.body };
+    if (updates.senha) {
+      if (!/^\d{4}$/.test(updates.senha)) return res.status(400).json({ erro: 'PIN deve ter exatamente 4 digitos' });
+      updates.senha = await bcrypt.hash(updates.senha, 10);
+    } else { delete updates.senha; }
+    const p = await ProfissionalAgenda.findOneAndUpdate({ _id: req.params.id, adminId: req.adminAgendaId }, updates, { new: true });
     if (!p) return res.status(404).json({ erro: 'Profissional não encontrado' });
     res.json({ sucesso: true, profissional: p });
   } catch(e) { res.status(500).json({ erro: e.message }); }
@@ -327,13 +333,16 @@ router.post('/espaco/:adminId/agendar', async (req, res) => {
     const dataHoraObj = new Date(dataHora);
     const durMin = duracaoFinal || admin.config?.intervaloAgendamento || 30;
     const dataHoraFim = new Date(dataHoraObj.getTime() + durMin * 60000);
-    const conflito = await AgendamentoAgenda.findOne({
+    // Verificar conflito por profissional (se informado) ou geral
+    const filtroConflito = {
       adminId: req.params.adminId,
       status: { $nin: ['cancelado'] },
       dataHora: { $lt: dataHoraFim },
       $expr: { $gt: [{ $add: ['$dataHora', { $multiply: [{ $ifNull: ['$duracao', durMin] }, 60000] }] }, dataHoraObj] }
-    });
-    if (conflito) return res.status(409).json({ erro: 'Horário já ocupado. Escolha outro horário.' });
+    };
+    if (profissionalId) filtroConflito.profissionalId = profissionalId;
+    const conflito = await AgendamentoAgenda.findOne(filtroConflito);
+    if (conflito) return res.status(409).json({ erro: 'Horário já ocupado para este profissional. Escolha outro horário.' });
 
     // Verificar se está bloqueado
     const bloqueado = await BloqueioAgenda.findOne({
@@ -657,6 +666,20 @@ router.put('/profissional-app/:token/agendamento/:id/cancelar', authProfissional
 
 Seu horário do dia ${dataFmt} com ${req.profissional.nome} precisou ser cancelado. Quer remarcar? É só me responder aqui que eu já organizo um novo horário pra você 💛`);
     }
+    res.json({ sucesso: true, agendamento: ag });
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// Profissional conclui atendimento
+router.put('/profissional-app/:token/agendamento/:id/concluir', authProfissional, async (req, res) => {
+  try {
+    const { AgendamentoAgenda } = require('../models/AgendaServico');
+    const ag = await AgendamentoAgenda.findOneAndUpdate(
+      { _id: req.params.id, profissionalId: req.profissional._id, status: { $nin: ['cancelado','concluido'] } },
+      { status: 'concluido' },
+      { new: true }
+    );
+    if (!ag) return res.status(404).json({ erro: 'Agendamento não encontrado ou já concluído' });
     res.json({ sucesso: true, agendamento: ag });
   } catch(e) { res.status(500).json({ erro: e.message }); }
 });

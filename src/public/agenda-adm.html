@@ -1905,6 +1905,9 @@ document.querySelectorAll('.nav-item').forEach(item => {
           <button type="button" class="btn-secondary" onclick="prfCopiarLink()" style="padding:8px 14px;font-size:.82rem;white-space:nowrap">Copiar</button>
         </div>
       </div>
+      <div class="form-group" id="prf-redefinir-grupo" style="display:none">
+        <button type="button" class="btn-secondary" onclick="prfMostrarRedefinirPin()" style="font-size:.85em">🔑 Redefinir PIN deste profissional</button>
+      </div>
       <div id="prf-aviso-novo" style="font-size:.78em;color:var(--texto3);background:var(--bg2);padding:10px;border-radius:8px">📲 Ao salvar, a Rebeca envia automaticamente um WhatsApp pro profissional com o link de acesso e o PIN cadastrado.</div>
     </div>
     <div class="modal-footer">
@@ -2768,10 +2771,16 @@ async function salvarProfissional(){
     telefone: document.getElementById('prf-tel').value.trim(),
     comissaoPercentual: parseFloat(document.getElementById('prf-comissao').value) || 0
   };
-  if(!id){
+  var pinVisivel = document.getElementById('prf-senha-grupo').style.display !== 'none';
+  if(pinVisivel){
     var _pin = [0,1,2,3].map(function(x){ return (document.getElementById('prf-pin'+x).value||''); }).join('');
-    if(!/^\d{4}$/.test(_pin)){ if(btn) btn.disabled=false; return toast('PIN deve ter exatamente 4 dígitos', 'erro'); }
-    payload.senha = _pin;
+    if(!id){
+      if(!/^\d{4}$/.test(_pin)){ if(btn) btn.disabled=false; return toast('PIN deve ter exatamente 4 dígitos', 'erro'); }
+      payload.senha = _pin;
+    } else if(_pin.length > 0){
+      if(!/^\d{4}$/.test(_pin)){ if(btn) btn.disabled=false; return toast('PIN deve ter exatamente 4 dígitos', 'erro'); }
+      payload.senha = _pin;
+    }
   }
   if(!payload.nome) { if (btn) btn.disabled = false; return toast('Informe o nome', 'erro'); }
   if(!id && !payload.telefone) { if (btn) btn.disabled = false; return toast('Informe o WhatsApp do profissional', 'erro'); }
@@ -2914,6 +2923,12 @@ function prfCopiarLink(){
   inp.select();
   navigator.clipboard?.writeText(inp.value).then(()=>toast('Link copiado ✅')).catch(()=>{});
 }
+function prfMostrarRedefinirPin(){
+  [0,1,2,3].forEach(function(x){ var el=document.getElementById('prf-pin'+x); el.value=''; });
+  document.getElementById('prf-senha-grupo').style.display = '';
+  document.getElementById('prf-redefinir-grupo').style.display = 'none';
+  document.getElementById('prf-pin0').focus();
+}
 function abrirModalProfissional(){
   document.getElementById('prf-id').value = '';
   document.getElementById('prf-nome').value = '';
@@ -2923,6 +2938,7 @@ function abrirModalProfissional(){
   document.getElementById('prf-senha').value = '';
   document.getElementById('prf-senha-grupo').style.display = '';
   document.getElementById('prf-link-grupo').style.display = 'none';
+  document.getElementById('prf-redefinir-grupo').style.display = 'none';
   document.getElementById('prf-modal-titulo').textContent = '👤 Novo Profissional';
   document.getElementById('prf-btn-salvar').textContent = 'Salvar profissional';
   document.getElementById('prf-aviso-novo').style.display = '';
@@ -2938,8 +2954,10 @@ function editarProfissional(id){
   document.getElementById('prf-cargo').value = p.cargo || '';
   document.getElementById('prf-tel').value = p.telefone || '';
   document.getElementById('prf-comissao').value = p.comissaoPercentual || '';
+  [0,1,2,3].forEach(function(x){ var el=document.getElementById('prf-pin'+x); if(el) el.value=''; });
   document.getElementById('prf-senha-grupo').style.display = 'none';
   document.getElementById('prf-link-grupo').style.display = '';
+  document.getElementById('prf-redefinir-grupo').style.display = '';
   document.getElementById('prf-link').value = (location.origin + '/agenda-profissional.html?token=' + (p.token || ''));
   document.getElementById('prf-modal-titulo').textContent = '✏️ Editar Profissional';
   document.getElementById('prf-btn-salvar').textContent = 'Salvar alterações';
