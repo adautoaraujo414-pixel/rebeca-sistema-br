@@ -3108,14 +3108,14 @@ _"${_textoMsg}"_`;
         const diasInativo = ent.dias || 30;
         const limite = new Date(Date.now() - diasInativo * 86400000);
         const inativos = await ClienteAgenda.find({
-          adminId: adminObjId, ultimaVisita: { $lt: limite }
-        }).sort({ ultimaVisita: 1 }).limit(10).lean();
+          adminId: adminObjId, ultimoAtendimento: { $lt: limite, $exists: true, $ne: null }
+        }).sort({ ultimoAtendimento: 1 }).limit(10).lean();
         if (!inativos.length) {
           const _r = `Nenhum cliente inativo há mais de ${diasInativo} dias. Tudo em dia! ✅`;
           await responder(_r); SM.addAssistantMsg(adminId, telefone, _r); return true;
         }
         const lista = inativos.map(c => {
-          const dias2 = Math.floor((Date.now() - new Date(c.ultimaVisita)) / 86400000);
+          const dias2 = Math.floor((Date.now() - new Date(c.ultimoAtendimento)) / 86400000);
           return `• ${c.nome} — ${dias2} dias sem aparecer`;
         }).join('\n');
         const _r = `😴 Clientes sumidos (${inativos.length}):\n\n${lista}\n\nQuer que eu mande mensagem pra algum deles?`;
@@ -3126,8 +3126,8 @@ _"${_textoMsg}"_`;
       if (_cerebro.intencao === 'clientes_novos') {
         const ini = _inicioDia(new Date(Date.now() - 30*86400000));
         const novos = await ClienteAgenda.find({
-          adminId: adminObjId, criadoEm: { $gte: ini }
-        }).sort({ criadoEm: -1 }).limit(10).lean();
+          adminId: adminObjId, createdAt: { $gte: ini }
+        }).sort({ createdAt: -1 }).limit(10).lean();
         if (!novos.length) {
           const _r = `Nenhum cliente novo nos últimos 30 dias ainda.`;
           await responder(_r); SM.addAssistantMsg(adminId, telefone, _r); return true;
