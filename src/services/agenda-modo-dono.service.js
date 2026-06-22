@@ -3652,8 +3652,12 @@ async function rodarRelatorioDiario() {
         // Agenda de hoje
         const agsHoje = await AgendamentoAgenda.find({ adminId: String(admin._id), dataHora: { $gte: iniHj, $lte: fimHj }, status: { $in: ['pendente','confirmado'] } }).sort({ dataHora: 1 }).lean();
 
-        // Lembretes do dia
-        const lembretesDia = await LembreteAgenda.find({ adminId: String(admin._id), enviado: false, dataEvento: { $gte: iniHj, $lte: fimHj } }).sort({ dataEvento: 1 }).lean();
+        // Lembretes do dia — duas fontes: LembreteAgenda (painel) + config.lembretes (WhatsApp)
+        const lembretesDiaModel = await LembreteAgenda.find({ adminId: String(admin._id), enviado: false, dataEvento: { $gte: iniHj, $lte: fimHj } }).sort({ dataEvento: 1 }).lean();
+        const lembretesDiaConfig = (admin.config?.lembretes || []).filter(l =>
+          !l.enviado && l.dataEvento && new Date(l.dataEvento) >= iniHj && new Date(l.dataEvento) <= fimHj
+        ).map(l => ({ texto: l.texto, dataEvento: l.dataEvento }));
+        const lembretesDia = [...lembretesDiaModel, ...lembretesDiaConfig].sort((a,b) => new Date(a.dataEvento) - new Date(b.dataEvento));
 
         // Montar mensagem
         const resultado   = entradas - saidas;
