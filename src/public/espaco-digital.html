@@ -808,7 +808,7 @@ async function bcCarregarHorarios(){
   try{
     var r=await fetch(BASE+'/espaco/'+ADMIN_ID+'/horarios?data='+data+'&servicoId='+SEL_SVC);
     var d=await r.json();
-    var hrs=(d&&d.horarios?d.horarios:d||[]).filter(function(h){return!h.ocupado});
+    var hrs=(d&&d.horarios?d.horarios:d||[]);
     wrap.innerHTML='';
     if(!hrs.length){wrap.innerHTML='<div style="color:var(--txt3);font-size:.82rem;grid-column:1/-1;padding:4px 0">Sem horários disponíveis nesta data.</div>';return}
     hrs.forEach(function(h){
@@ -880,7 +880,7 @@ async function mpCarregarHorarios(){
   try{
     var r=await fetch(BASE+'/espaco/'+ADMIN_ID+'/horarios?data='+MP_DATA+'&servicoIds='+MP_SVCS.join(','));
     var d=await r.json();
-    var hrs=(d&&d.horarios?d.horarios:d||[]).filter(function(h){return!h.ocupado});
+    var hrs=(d&&d.horarios?d.horarios:d||[]);
     wrap.innerHTML='';
     if(!hrs.length){wrap.innerHTML='<div style="color:var(--txt3);font-size:.82rem;grid-column:1/-1;padding:4px 0">Sem horários disponíveis nesta data.</div>';return}
     var selecionados=SERVICOS.filter(function(s){return MP_SVCS.indexOf(s._id)!==-1});
