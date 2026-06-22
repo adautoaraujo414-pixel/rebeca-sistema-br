@@ -3,577 +3,434 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Rebeca Agenda - Minha Agenda</title>
+<title>Minha Agenda</title>
 <style>
-:root { --cor: #f97316; --cor2: #ea580c; }
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f8f9fa; color: #1f2937; }
-
-.toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #1f2937; color: #fff; padding: 12px 24px; border-radius: 12px; font-size: .9em; z-index: 9999; display: none; box-shadow: 0 4px 20px rgba(0,0,0,.3); }
-
-/* LOADING */
-.loading-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 16px; }
-.loading-spinner { width: 48px; height: 48px; border: 4px solid #f3f4f6; border-top-color: var(--cor); border-radius: 50%; animation: spin 1s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
-
-/* TOKEN INPUT */
-.token-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; background: linear-gradient(135deg, #fff7ed, #ffedd5); }
-.token-card { background: #fff; border-radius: 20px; padding: 40px 32px; width: 100%; max-width: 400px; box-shadow: 0 8px 40px rgba(249,115,22,.15); text-align: center; }
-.token-icon { font-size: 3em; margin-bottom: 16px; }
-.token-card h2 { font-size: 1.3em; font-weight: 800; color: #1f2937; margin-bottom: 8px; }
-.token-card p { font-size: .85em; color: #6b7280; margin-bottom: 24px; }
-.token-card input { width: 100%; padding: 12px 16px; border: 2px solid #e5e7eb; border-radius: 10px; font-size: 1em; outline: none; margin-bottom: 12px; text-align: center; letter-spacing: .05em; }
-.token-card input:focus { border-color: var(--cor); }
-.btn-entrar { width: 100%; padding: 14px; background: var(--cor); color: #fff; border: none; border-radius: 12px; font-size: 1em; font-weight: 700; cursor: pointer; }
-
-/* PAINEL */
-.painel { display: none; min-height: 100vh; padding-bottom: 90px; }
-
-/* HEADER */
-.header { background: linear-gradient(135deg, var(--cor), var(--cor2)); color: #fff; padding: 16px 20px; position: sticky; top: 0; z-index: 50; box-shadow: 0 2px 12px rgba(249,115,22,.4); }
-.header-top { display: flex; align-items: center; gap: 12px; }
-.header-foto { width: 44px; height: 44px; border-radius: 50%; border: 2px solid rgba(255,255,255,.5); object-fit: cover; background: rgba(255,255,255,.2); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.1em; flex-shrink: 0; overflow: hidden; }
-.header-info { flex: 1; }
-.header-nome { font-weight: 700; font-size: 1em; }
-.header-negocio { font-size: .75em; opacity: .85; }
-.header-data { font-size: .78em; opacity: .8; margin-top: 8px; }
-
-/* STATS */
-.stats-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; padding: 16px; }
-.stat-mini { background: #fff; border-radius: 14px; padding: 14px 10px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,.06); }
-.stat-mini-num { font-size: 1.5em; font-weight: 800; color: var(--cor); }
-.stat-mini-label { font-size: .7em; color: #6b7280; margin-top: 2px; }
-
-/* SEÇÃO */
-.secao { padding: 0 16px 16px; }
-.secao-titulo { font-size: .82em; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
-
-/* CARD AGENDAMENTO */
-.ag-card { background: #fff; border-radius: 16px; padding: 16px; margin-bottom: 10px; box-shadow: 0 2px 8px rgba(0,0,0,.06); border-left: 4px solid #e5e7eb; position: relative; overflow: hidden; }
-.ag-card.pendente { border-left-color: #f59e0b; }
-.ag-card.confirmado { border-left-color: #10b981; }
-.ag-card.agora { border-left-color: var(--cor); background: #fff7ed; }
-.ag-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
-.ag-hora { font-size: 1.1em; font-weight: 800; color: #1f2937; }
-.ag-duracao { font-size: .75em; color: #9ca3af; }
-.ag-badge { font-size: .7em; font-weight: 700; padding: 3px 10px; border-radius: 20px; }
-.ag-badge.pendente { background: #fef3c7; color: #d97706; }
-.ag-badge.confirmado { background: #d1fae5; color: #059669; }
-.ag-badge.agora { background: #fff7ed; color: var(--cor); }
-.ag-cliente { font-weight: 700; font-size: .95em; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
-.ag-servico { font-size: .82em; color: #6b7280; display: flex; align-items: center; gap: 6px; }
-.ag-preco { font-size: .82em; font-weight: 700; color: var(--cor); margin-top: 6px; }
-.ag-obs { font-size: .78em; color: #9ca3af; margin-top: 6px; font-style: italic; }
-.ag-aviso { position: absolute; top: 0; right: 0; background: var(--cor); color: #fff; font-size: .65em; font-weight: 700; padding: 3px 8px; border-radius: 0 0 0 8px; }
-
-/* ALERTA PRÓXIMO */
-.alerta-proximo { background: linear-gradient(135deg, #fff7ed, #ffedd5); border: 2px solid var(--cor); border-radius: 16px; padding: 16px; margin-bottom: 12px; display: flex; align-items: center; gap: 12px; }
-.alerta-icon { font-size: 1.8em; flex-shrink: 0; animation: pulse 2s infinite; }
-@keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.1)} }
-.alerta-info { flex: 1; }
-.alerta-titulo { font-weight: 700; font-size: .9em; color: var(--cor2); }
-.alerta-det { font-size: .8em; color: #92400e; margin-top: 2px; }
-
-/* HORARIO INFO */
-.horario-card { background: #fff; border-radius: 14px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,.06); display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
-.horario-label { font-size: .8em; color: #6b7280; }
-.horario-val { font-weight: 700; font-size: .95em; color: #1f2937; }
-.dias-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-.dia-chip { padding: 4px 10px; border-radius: 20px; font-size: .72em; font-weight: 700; background: #f0fdf4; color: #059669; border: 1px solid #bbf7d0; }
-
-/* EMPTY */
-.empty { text-align: center; padding: 40px 20px; color: #9ca3af; }
-.empty-icon { font-size: 2.5em; margin-bottom: 10px; }
-
-/* TABS */
-.tabs { display: flex; background: #fff; border-bottom: 1px solid #f3f4f6; position: sticky; top: 84px; z-index: 40; }
-.tab { flex: 1; padding: 12px; text-align: center; font-size: .82em; font-weight: 600; color: #9ca3af; cursor: pointer; border-bottom: 2px solid transparent; transition: .2s; }
-.tab.ativo { color: var(--cor); border-bottom-color: var(--cor); }
-
-/* TELA */
-.tela { display: none; }
-.tela.ativa { display: block; }
-
-/* NAV */
-.nav-bottom { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-top: 1px solid #f3f4f6; display: flex; z-index: 100; box-shadow: 0 -2px 16px rgba(0,0,0,.08); padding-bottom: env(safe-area-inset-bottom); }
-.nav-item { flex: 1; padding: 10px 4px 12px; text-align: center; cursor: pointer; border: none; background: transparent; color: #9ca3af; font-size: .65em; font-weight: 600; transition: .2s; display: flex; flex-direction: column; align-items: center; gap: 3px; }
-.nav-item.ativo { color: var(--cor); }
-.nav-icon { font-size: 1.4em; }
-
-/* PERFIL */
-.perfil-card { background: #fff; border-radius: 16px; padding: 24px; margin: 16px; box-shadow: 0 2px 8px rgba(0,0,0,.06); text-align: center; }
-.btn-acao-card { flex: 1; border: none; border-radius: 10px; padding: 9px 0; font-size: .8em; font-weight: 700; cursor: pointer; }
-.perfil-foto { width: 80px; height: 80px; border-radius: 50%; border: 4px solid var(--cor); object-fit: cover; margin: 0 auto 12px; display: block; background: #f3f4f6; }
-.perfil-nome { font-size: 1.2em; font-weight: 700; }
-.perfil-cargo { font-size: .85em; color: #6b7280; margin-top: 4px; }
-.perfil-bio { font-size: .82em; color: #9ca3af; margin-top: 8px; font-style: italic; }
-.atrib-lista { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 12px; }
-.atrib-chip { background: #fff7ed; color: var(--cor); font-size: .75em; font-weight: 600; padding: 4px 12px; border-radius: 20px; border: 1px solid #fed7aa; }
+:root{--cor:#f97316;--cor2:#ea580c}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f8f9fa;color:#1f2937}
+.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#1f2937;color:#fff;padding:12px 24px;border-radius:12px;font-size:.9em;z-index:9999;display:none;box-shadow:0 4px 20px rgba(0,0,0,.3)}
+.loading-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px}
+.spinner{width:48px;height:48px;border:4px solid #f3f4f6;border-top-color:var(--cor);border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.token-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:linear-gradient(135deg,#fff7ed,#ffedd5)}
+.token-card{background:#fff;border-radius:20px;padding:40px 32px;width:100%;max-width:400px;box-shadow:0 8px 40px rgba(249,115,22,.15);text-align:center}
+.token-card h2{font-size:1.3em;font-weight:800;margin-bottom:8px}
+.token-card p{font-size:.85em;color:#6b7280;margin-bottom:24px}
+.token-card input{width:100%;padding:12px 16px;border:2px solid #e5e7eb;border-radius:10px;font-size:1em;outline:none;margin-bottom:12px;text-align:center}
+.token-card input:focus{border-color:var(--cor)}
+.btn-principal{width:100%;padding:14px;background:var(--cor);color:#fff;border:none;border-radius:12px;font-size:1em;font-weight:700;cursor:pointer}
+.painel{display:none;min-height:100vh;padding-bottom:90px}
+.header{background:linear-gradient(135deg,var(--cor),var(--cor2));color:#fff;padding:16px 20px;position:sticky;top:0;z-index:50;box-shadow:0 2px 12px rgba(249,115,22,.4)}
+.header-top{display:flex;align-items:center;gap:12px}
+.h-foto{width:44px;height:44px;border-radius:50%;border:2px solid rgba(255,255,255,.5);background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.1em;flex-shrink:0;overflow:hidden}
+.h-foto img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.h-info{flex:1}
+.h-nome{font-weight:700;font-size:1em}
+.h-negocio{font-size:.75em;opacity:.85}
+.h-data{font-size:.78em;opacity:.8;margin-top:8px}
+.tabs{display:flex;background:#fff;border-bottom:1px solid #f3f4f6;position:sticky;top:84px;z-index:40}
+.tab{flex:1;padding:12px;text-align:center;font-size:.82em;font-weight:600;color:#9ca3af;cursor:pointer;border-bottom:2px solid transparent;transition:.2s}
+.tab.ativo{color:var(--cor);border-bottom-color:var(--cor)}
+.tela{display:none}
+.tela.ativa{display:block}
+.stats-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;padding:16px}
+.stat{background:#fff;border-radius:14px;padding:14px 10px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.stat-num{font-size:1.5em;font-weight:800;color:var(--cor)}
+.stat-label{font-size:.7em;color:#6b7280;margin-top:2px}
+.secao{padding:0 16px 16px}
+.secao-titulo{font-size:.82em;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px}
+.ag-card{background:#fff;border-radius:16px;padding:16px;margin-bottom:10px;box-shadow:0 2px 8px rgba(0,0,0,.06);border-left:4px solid #e5e7eb;position:relative;overflow:hidden}
+.ag-card.pendente{border-left-color:#f59e0b}
+.ag-card.confirmado{border-left-color:#10b981}
+.ag-card.agora{border-left-color:var(--cor);background:#fff7ed}
+.ag-card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.ag-hora{font-size:1.1em;font-weight:800}
+.ag-dur{font-size:.75em;color:#9ca3af}
+.ag-badge{font-size:.7em;font-weight:700;padding:3px 10px;border-radius:20px}
+.ag-badge.pendente{background:#fef3c7;color:#d97706}
+.ag-badge.confirmado{background:#d1fae5;color:#059669}
+.ag-badge.agora{background:#fff7ed;color:var(--cor)}
+.ag-cliente{font-weight:700;font-size:.95em;margin-bottom:4px}
+.ag-servico{font-size:.82em;color:#6b7280}
+.ag-preco{font-size:.82em;font-weight:700;color:var(--cor);margin-top:6px}
+.ag-obs{font-size:.78em;color:#9ca3af;margin-top:6px;font-style:italic}
+.ag-aviso{position:absolute;top:0;right:0;background:var(--cor);color:#fff;font-size:.65em;font-weight:700;padding:3px 8px;border-radius:0 0 0 8px}
+.ag-acoes{display:flex;gap:8px;margin-top:10px}
+.btn-acao{flex:1;border:none;border-radius:10px;padding:9px 0;font-size:.8em;font-weight:700;cursor:pointer}
+.alerta-proximo{background:linear-gradient(135deg,#fff7ed,#ffedd5);border:2px solid var(--cor);border-radius:16px;padding:16px;margin-bottom:12px;display:flex;align-items:center;gap:12px}
+.alerta-icon{font-size:1.8em;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+.alerta-titulo{font-weight:700;font-size:.9em;color:var(--cor2)}
+.alerta-det{font-size:.8em;color:#92400e;margin-top:2px}
+.empty{text-align:center;padding:40px 20px;color:#9ca3af}
+.empty-icon{font-size:2.5em;margin-bottom:10px}
+.perfil-card{background:#fff;border-radius:16px;padding:24px;margin:16px;box-shadow:0 2px 8px rgba(0,0,0,.06);text-align:center}
+.perfil-foto{width:80px;height:80px;border-radius:50%;border:4px solid var(--cor);object-fit:cover;margin:0 auto 12px;display:block;background:#f3f4f6}
+.perfil-nome{font-size:1.2em;font-weight:700}
+.perfil-cargo{font-size:.85em;color:#6b7280;margin-top:4px}
+.perfil-bio{font-size:.82em;color:#9ca3af;margin-top:8px;font-style:italic}
+.atrib-lista{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:12px}
+.atrib-chip{background:#fff7ed;color:var(--cor);font-size:.75em;font-weight:600;padding:4px 12px;border-radius:20px;border:1px solid #fed7aa}
+.horario-card{background:#fff;border-radius:14px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,.06);display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.h-label{font-size:.8em;color:#6b7280}
+.h-val{font-weight:700;font-size:.95em}
+.dias-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.dia-chip{padding:4px 10px;border-radius:20px;font-size:.72em;font-weight:700;background:#f0fdf4;color:#059669;border:1px solid #bbf7d0}
+.data-sep{font-size:.8em;font-weight:700;color:#6b7280;margin:12px 0 8px;text-transform:uppercase;letter-spacing:.05em}
 </style>
 </head>
 <body>
 
 <div class="toast" id="toast"></div>
 
-<!-- TOKEN SCREEN -->
-<div id="tela-token" class="token-screen">
+<div id="tela-token" class="token-screen" style="display:none">
   <div class="token-card">
-    <div class="token-icon">📅</div>
+    <div style="font-size:3em;margin-bottom:16px">📅</div>
     <h2>Minha Agenda</h2>
-    <p>Entre com o WhatsApp e a senha que a Rebeca te enviou</p>
-    <input type="tel" id="input-telefone" placeholder="Seu WhatsApp (DDD + número)" autocomplete="off">
-    <input type="password" id="input-senha" placeholder="Senha" autocomplete="off">
-    <button class="btn-entrar" onclick="entrarComSenha()">Acessar Agenda</button>
+    <p>Entre com seu WhatsApp e a senha enviada pela Rebeca</p>
+    <input type="tel" id="inp-tel" placeholder="WhatsApp (DDD + número)" autocomplete="off">
+    <input type="password" id="inp-senha" placeholder="Senha" autocomplete="off">
+    <button class="btn-principal" onclick="entrar()">Acessar Agenda</button>
   </div>
 </div>
 
-<!-- LOADING -->
-<div id="tela-loading" class="loading-screen" style="display:none">
-  <div class="loading-spinner"></div>
+<div id="tela-loading" class="loading-screen">
+  <div class="spinner"></div>
   <p style="color:#6b7280;font-size:.9em">Carregando sua agenda...</p>
 </div>
 
-<!-- PAINEL -->
 <div id="painel" class="painel">
 
-  <!-- HEADER -->
   <div class="header">
     <div class="header-top">
-      <div class="header-foto" id="h-foto">A</div>
-      <div class="header-info">
-        <div class="header-nome" id="h-nome">Carregando...</div>
-        <div class="header-negocio" id="h-negocio"></div>
+      <div class="h-foto" id="h-foto">A</div>
+      <div class="h-info">
+        <div class="h-nome" id="h-nome">...</div>
+        <div class="h-negocio" id="h-negocio"></div>
       </div>
     </div>
-    <div class="header-data" id="h-data"></div>
+    <div class="h-data" id="h-data"></div>
   </div>
 
-  <!-- TABS -->
   <div class="tabs">
-    <div class="tab ativo" onclick="mudarTab('hoje')">📅 Hoje</div>
-    <div class="tab" onclick="mudarTab('semana')">🗓️ Semana</div>
-    <div class="tab" onclick="mudarTab('comissao')">💰 Comissão</div>
-    <div class="tab" onclick="mudarTab('perfil')">👤 Perfil</div>
+    <div class="tab ativo" onclick="tab('hoje',0)">📅 Hoje</div>
+    <div class="tab" onclick="tab('semana',1)">🗓️ Semana</div>
+    <div class="tab" onclick="tab('comissao',2)">💰 Comissão</div>
+    <div class="tab" onclick="tab('perfil',3)">👤 Perfil</div>
   </div>
 
-  <!-- TELA HOJE -->
   <div class="tela ativa" id="tela-hoje">
     <div class="stats-row">
-      <div class="stat-mini">
-        <div class="stat-mini-num" id="stat-hoje">0</div>
-        <div class="stat-mini-label">Hoje</div>
-      </div>
-      <div class="stat-mini">
-        <div class="stat-mini-num" id="stat-proximo">--</div>
-        <div class="stat-mini-label">Próximo</div>
-      </div>
-      <div class="stat-mini">
-        <div class="stat-mini-num" id="stat-semana">0</div>
-        <div class="stat-mini-label">Na semana</div>
-      </div>
+      <div class="stat"><div class="stat-num" id="s-hoje">0</div><div class="stat-label">Hoje</div></div>
+      <div class="stat"><div class="stat-num" id="s-proximo">--</div><div class="stat-label">Próximo</div></div>
+      <div class="stat"><div class="stat-num" id="s-semana">0</div><div class="stat-label">Na semana</div></div>
     </div>
-
     <div class="secao">
-      <div id="alerta-proximo"></div>
+      <div id="alerta"></div>
       <div class="secao-titulo">📋 Agendamentos de hoje</div>
-      <div id="lista-hoje">
-        <div class="empty"><div class="empty-icon">⟳</div>Carregando...</div>
-      </div>
+      <div id="lista-hoje"></div>
     </div>
   </div>
 
-  <!-- TELA SEMANA -->
   <div class="tela" id="tela-semana">
     <div class="secao" style="padding-top:16px">
       <div class="secao-titulo">🗓️ Próximos 30 dias</div>
-      <div id="lista-semana">
-        <div class="empty"><div class="empty-icon">⟳</div>Carregando...</div>
-      </div>
+      <div id="lista-semana"></div>
     </div>
   </div>
 
-  <!-- TELA COMISSAO -->
   <div class="tela" id="tela-comissao">
     <div class="secao" style="padding-top:16px">
-      <div class="stats-row">
-        <div class="stat-mini">
-          <div class="stat-mini-num" id="com-atendimentos">0</div>
-          <div class="stat-mini-label">Atend. no mês</div>
-        </div>
-        <div class="stat-mini">
-          <div class="stat-mini-num" id="com-faturamento">R$0</div>
-          <div class="stat-mini-label">Faturado</div>
-        </div>
-        <div class="stat-mini">
-          <div class="stat-mini-num" id="com-comissao">R$0</div>
-          <div class="stat-mini-label">Sua comissão</div>
-        </div>
+      <div class="stats-row" style="padding:0 0 16px">
+        <div class="stat"><div class="stat-num" id="c-atend">0</div><div class="stat-label">Atend. no mês</div></div>
+        <div class="stat"><div class="stat-num" id="c-fat">R$0</div><div class="stat-label">Faturado</div></div>
+        <div class="stat"><div class="stat-num" id="c-com">R$0</div><div class="stat-label">Sua comissão</div></div>
       </div>
-      <div class="perfil-card" style="margin-top:16px">
+      <div class="perfil-card" style="margin:0">
         <div style="font-size:.85em;color:#6b7280">Percentual de comissão</div>
-        <div style="font-size:1.6em;font-weight:800;color:var(--cor)" id="com-percentual">0%</div>
-        <div style="font-size:.78em;color:#9ca3af;margin-top:4px">Calculado sobre os atendimentos marcados como concluídos no mês atual</div>
+        <div style="font-size:1.6em;font-weight:800;color:var(--cor)" id="c-pct">0%</div>
+        <div style="font-size:.78em;color:#9ca3af;margin-top:4px">Calculado sobre atendimentos concluídos no mês atual</div>
       </div>
     </div>
   </div>
 
-  <!-- TELA PERFIL -->
   <div class="tela" id="tela-perfil">
     <div class="perfil-card">
-      <img id="p-foto" class="perfil-foto" src="" onerror="this.style.display='none'">
+      <img id="p-foto" class="perfil-foto" src="" style="display:none" onerror="this.style.display='none'">
       <div class="perfil-nome" id="p-nome"></div>
       <div class="perfil-cargo" id="p-cargo"></div>
       <div class="perfil-bio" id="p-bio"></div>
       <div class="atrib-lista" id="p-atribs"></div>
     </div>
-
     <div class="secao">
       <div class="secao-titulo">⏰ Horário de atendimento</div>
       <div class="horario-card">
-        <div><div class="horario-label">Entrada</div><div class="horario-val" id="p-h-inicio">--</div></div>
+        <div><div class="h-label">Entrada</div><div class="h-val" id="p-ini">--</div></div>
         <div style="color:#9ca3af">→</div>
-        <div><div class="horario-label">Saída</div><div class="horario-val" id="p-h-fim">--</div></div>
+        <div><div class="h-label">Saída</div><div class="h-val" id="p-fim">--</div></div>
         <div style="color:#9ca3af">|</div>
-        <div><div class="horario-label">Almoço</div><div class="horario-val" id="p-almoco">--</div></div>
+        <div><div class="h-label">Almoço</div><div class="h-val" id="p-alm">--</div></div>
       </div>
-
       <div class="secao-titulo" style="margin-top:8px">📅 Dias de atendimento</div>
       <div class="dias-chips" id="p-dias"></div>
     </div>
-
     <div class="secao">
-      <button class="btn-entrar" style="background:#25d366" onclick="abrirMensagemRebeca()">💬 Falar com a Rebeca</button>
-      <button class="btn-entrar" style="background:#fff;color:#ef4444;border:2px solid #ef4444;margin-top:8px" onclick="sair()">Sair</button>
+      <button class="btn-principal" style="background:#25d366;margin-bottom:8px" onclick="msgRebeca()">💬 Falar com a Rebeca</button>
+      <button class="btn-principal" style="background:#fff;color:#ef4444;border:2px solid #ef4444" onclick="sair()">Sair</button>
     </div>
   </div>
 
-</div><!-- fim painel -->
+</div>
+
 <script>
-var TOKEN_PROF = localStorage.getItem('prof_token') || '';
+var TK = '';
 var DADOS = null;
-var timerAvisos = null;
+var _timer = null;
 
-// Verificar token na URL
-var urlParams = new URLSearchParams(window.location.search);
-var tokenUrl = urlParams.get('token');
-if (tokenUrl) {
-  TOKEN_PROF = tokenUrl;
-  localStorage.setItem('prof_token', TOKEN_PROF);
-}
+// 1) token na URL tem prioridade
+(function(){
+  var p = new URLSearchParams(window.location.search);
+  var t = p.get('token');
+  if(t){ TK = t; localStorage.setItem('prof_token', t); return; }
+  TK = localStorage.getItem('prof_token') || '';
+})();
 
-function toast(msg) {
+function toast(msg){
   var el = document.getElementById('toast');
   el.textContent = msg;
   el.style.display = 'block';
-  setTimeout(function() { el.style.display = 'none'; }, 2500);
+  setTimeout(function(){ el.style.display='none'; }, 2800);
 }
 
-function formatarData() {
-  var d = new Date();
-  var dias = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
-  var meses = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
-  return dias[d.getDay()] + ', ' + d.getDate() + ' de ' + meses[d.getMonth()];
+function mostrar(id){
+  ['tela-token','tela-loading','painel'].forEach(function(x){
+    document.getElementById(x).style.display = 'none';
+  });
+  var el = document.getElementById(id);
+  el.style.display = (id === 'painel') ? 'block' : 'flex';
 }
 
-function formatarHora(dataHora) {
-  var d = new Date(dataHora);
-  return d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-}
-
-function formatarDataCurta(dataHora) {
-  var d = new Date(dataHora);
-  return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
-}
-
-function isHoje(dataHora) {
-  var d = new Date(dataHora);
-  var hoje = new Date();
-  return d.getDate() === hoje.getDate() && d.getMonth() === hoje.getMonth() && d.getFullYear() === hoje.getFullYear();
-}
-
-function minutosAte(dataHora) {
-  return Math.floor((new Date(dataHora) - new Date()) / 60000);
-}
-
-async function entrarComSenha() {
-  var telefone = document.getElementById('input-telefone').value.trim();
-  var senha = document.getElementById('input-senha').value.trim();
-  if (!telefone || !senha) { toast('Preencha WhatsApp e senha'); return; }
-  try {
-    var r = await fetch('/api/agenda/profissional-app/login', {
-      method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ telefone: telefone, senha: senha })
+// ---------- LOGIN ----------
+async function entrar(){
+  var tel = (document.getElementById('inp-tel').value||'').trim();
+  var sen = (document.getElementById('inp-senha').value||'').trim();
+  if(!tel||!sen){ toast('Preencha WhatsApp e senha'); return; }
+  mostrar('tela-loading');
+  try{
+    var r = await fetch('/api/agenda/profissional-app/login',{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({telefone:tel, senha:sen})
     });
     var d = await r.json();
-    if (!d.sucesso) { toast(d.erro || 'Credenciais inválidas'); return; }
-    TOKEN_PROF = d.token;
-    localStorage.setItem('prof_token', d.token);
-    await carregarDados();
-  } catch(e) { toast('Erro de conexão'); }
+    if(!d.sucesso){ toast(d.erro||'Credenciais inválidas'); mostrar('tela-token'); return; }
+    TK = d.token;
+    localStorage.setItem('prof_token', TK);
+    await carregar();
+  } catch(e){ toast('Erro de conexão'); mostrar('tela-token'); }
 }
 
-async function carregarDados() {
-  if (!TOKEN_PROF) {
-    document.getElementById('tela-token').style.display = 'flex';
-    document.getElementById('tela-loading').style.display = 'none';
-    document.getElementById('painel').style.display = 'none';
-    return;
-  }
-
-  document.getElementById('tela-token').style.display = 'none';
-  document.getElementById('tela-loading').style.display = 'flex';
-  document.getElementById('painel').style.display = 'none';
-
-  try {
-    var r = await fetch('/api/agenda/profissional-app/' + TOKEN_PROF);
+// ---------- CARREGAR ----------
+async function carregar(){
+  if(!TK){ mostrar('tela-token'); return; }
+  mostrar('tela-loading');
+  try{
+    var r = await fetch('/api/agenda/profissional-app/' + TK);
+    if(!r.ok){ throw new Error('status ' + r.status); }
     var d = await r.json();
-
-    if (!d.sucesso) {
-      localStorage.removeItem('prof_token');
-      TOKEN_PROF = '';
+    if(!d.sucesso){
+      localStorage.removeItem('prof_token'); TK='';
       toast('Sessão expirada, entre novamente');
-      document.getElementById('tela-token').style.display = 'flex';
-      document.getElementById('tela-loading').style.display = 'none';
-      return;
+      mostrar('tela-token'); return;
     }
-
     DADOS = d;
-    renderizarPainel();
-
-  } catch(e) {
+    renderizar();
+  } catch(e){
     toast('Erro de conexão');
-    document.getElementById('tela-token').style.display = 'flex';
-    document.getElementById('tela-loading').style.display = 'none';
+    mostrar('tela-token');
   }
 }
 
-function renderizarPainel() {
-  var prof = DADOS.profissional;
-  var neg = DADOS.negocio;
-  var ags = DADOS.agendamentos || [];
+// ---------- RENDERIZAR ----------
+function renderizar(){
+  var prof = DADOS.profissional || {};
+  var neg  = DADOS.negocio     || {};
+  var ags  = DADOS.agendamentos|| [];
+  var fin  = DADOS.financeiro  || {};
 
-  // Header
-  document.getElementById('h-nome').textContent = prof.nome;
-  document.getElementById('h-negocio').textContent = neg.nome || 'Rebeca Agenda';
-  document.getElementById('h-data').textContent = formatarData();
+  // header
+  var hf = document.getElementById('h-foto');
+  if(prof.foto){ hf.innerHTML='<img src="'+prof.foto+'" onerror="this.parentElement.textContent=\''+esc(prof.nome||'?').charAt(0).toUpperCase()+'\'">'; }
+  else { hf.textContent=(prof.nome||'?').charAt(0).toUpperCase(); }
+  document.getElementById('h-nome').textContent    = prof.nome   || '';
+  document.getElementById('h-negocio').textContent = neg.nome    || 'Rebeca Agenda';
+  document.getElementById('h-data').textContent    = diaHoje();
 
-  // Foto header
-  var hFoto = document.getElementById('h-foto');
-  if (prof.foto) {
-    hFoto.innerHTML = '<img src="' + prof.foto + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%" onerror="this.parentElement.textContent=\'' + prof.nome.charAt(0).toUpperCase() + '\'">';
+  // perfil
+  if(prof.foto){ var pf=document.getElementById('p-foto'); pf.src=prof.foto; pf.style.display='block'; }
+  document.getElementById('p-nome').textContent  = prof.nome   || '';
+  document.getElementById('p-cargo').textContent = prof.cargo  || '';
+  document.getElementById('p-bio').textContent   = prof.bio    || '';
+  document.getElementById('p-atribs').innerHTML  = (prof.atribuicoes||[]).map(function(a){ return '<span class="atrib-chip">'+esc(a)+'</span>'; }).join('');
+  if(prof.horario){
+    document.getElementById('p-ini').textContent = prof.horario.inicio      || '--';
+    document.getElementById('p-fim').textContent = prof.horario.fim         || '--';
+    document.getElementById('p-alm').textContent = (prof.horario.almocoInicio||'--')+'-'+(prof.horario.almocoFim||'--');
+  }
+  var DN=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+  document.getElementById('p-dias').innerHTML = (prof.diasAtendimento||[]).map(function(d){ return '<span class="dia-chip">'+DN[d]+'</span>'; }).join('');
+
+  // listas
+  var hoje  = ags.filter(function(a){ return eHoje(a.dataHora); });
+  var resto = ags.filter(function(a){ return !eHoje(a.dataHora); });
+
+  document.getElementById('s-hoje').textContent   = hoje.length;
+  document.getElementById('s-semana').textContent = ags.length;
+
+  var futuros = hoje.filter(function(a){ return minAte(a.dataHora) > -30; });
+  if(futuros.length){
+    document.getElementById('s-proximo').textContent = fHora(futuros[0].dataHora);
+    var mn = minAte(futuros[0].dataHora);
+    document.getElementById('alerta').innerHTML = (mn>=0&&mn<=30)
+      ? '<div class="alerta-proximo"><div class="alerta-icon">⏰</div><div><div class="alerta-titulo">Próximo em '+mn+' min!</div><div class="alerta-det">'+esc(futuros[0].nomeCliente||'Cliente')+' · '+esc(futuros[0].nomeServico||'')+'</div></div></div>'
+      : '';
   } else {
-    hFoto.textContent = prof.nome.charAt(0).toUpperCase();
+    document.getElementById('s-proximo').textContent='--';
+    document.getElementById('alerta').innerHTML='';
   }
 
-  // Perfil
-  var pFoto = document.getElementById('p-foto');
-  if (prof.foto) { pFoto.src = prof.foto; pFoto.style.display = 'block'; }
-  document.getElementById('p-nome').textContent = prof.nome;
-  document.getElementById('p-cargo').textContent = prof.cargo || '';
-  document.getElementById('p-bio').textContent = prof.bio || '';
+  listaHoje('lista-hoje', hoje);
+  listaSemana('lista-semana', resto);
 
-  if (prof.atribuicoes && prof.atribuicoes.length) {
-    document.getElementById('p-atribs').innerHTML = prof.atribuicoes.map(function(a) {
-      return '<span class="atrib-chip">' + a + '</span>';
-    }).join('');
-  }
+  // comissão
+  document.getElementById('c-atend').textContent = fin.atendimentosMes || 0;
+  document.getElementById('c-fat').textContent   = 'R$'+Number(fin.faturamentoMes||0).toFixed(0);
+  document.getElementById('c-com').textContent   = 'R$'+Number(fin.comissaoMes||0).toFixed(2);
+  document.getElementById('c-pct').textContent   = (prof.comissaoPercentual||0)+'%';
 
-  if (prof.horario) {
-    document.getElementById('p-h-inicio').textContent = prof.horario.inicio || '--';
-    document.getElementById('p-h-fim').textContent = prof.horario.fim || '--';
-    document.getElementById('p-almoco').textContent = (prof.horario.almocoInicio || '--') + '-' + (prof.horario.almocoFim || '--');
-  }
+  mostrar('painel');
 
-  var diasNome = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
-  if (prof.diasAtendimento && prof.diasAtendimento.length) {
-    document.getElementById('p-dias').innerHTML = prof.diasAtendimento.map(function(d) {
-      return '<span class="dia-chip">' + diasNome[d] + '</span>';
-    }).join('');
-  }
-
-  // Agendamentos de hoje
-  var agHoje = ags.filter(function(a) { return isHoje(a.dataHora); });
-  var agSemana = ags.filter(function(a) { return !isHoje(a.dataHora); });
-
-  // Stats
-  document.getElementById('stat-hoje').textContent = agHoje.length;
-  document.getElementById('stat-semana').textContent = ags.length;
-
-  // Próximo agendamento
-  var agFuturos = agHoje.filter(function(a) { return minutosAte(a.dataHora) > -30; });
-  if (agFuturos.length) {
-    document.getElementById('stat-proximo').textContent = formatarHora(agFuturos[0].dataHora);
-    // Aviso se próximo em até 30 min
-    var min = minutosAte(agFuturos[0].dataHora);
-    if (min >= 0 && min <= 30) {
-      document.getElementById('alerta-proximo').innerHTML =
-        '<div class="alerta-proximo">' +
-          '<div class="alerta-icon">⏰</div>' +
-          '<div class="alerta-info">' +
-            '<div class="alerta-titulo">Próximo em ' + min + ' min!</div>' +
-            '<div class="alerta-det">' + (agFuturos[0].nomeCliente || 'Cliente') + ' · ' + (agFuturos[0].nomeServico || '') + '</div>' +
-          '</div>' +
-        '</div>';
-    } else {
-      document.getElementById('alerta-proximo').innerHTML = '';
-    }
-  } else {
-    document.getElementById('stat-proximo').textContent = '--';
-    document.getElementById('alerta-proximo').innerHTML = '';
-  }
-
-  // Lista hoje
-  renderizarLista('lista-hoje', agHoje, true);
-  // Lista semana
-  renderizarListaAgrupada('lista-semana', agSemana);
-
-  // Comissão
-  var fin = DADOS.financeiro || {};
-  document.getElementById('com-atendimentos').textContent = fin.atendimentosMes || 0;
-  document.getElementById('com-faturamento').textContent = 'R$' + Number(fin.faturamentoMes || 0).toFixed(0);
-  document.getElementById('com-comissao').textContent = 'R$' + Number(fin.comissaoMes || 0).toFixed(2);
-  document.getElementById('com-percentual').textContent = (prof.comissaoPercentual || 0) + '%';
-
-  // Mostrar painel
-  document.getElementById('tela-loading').style.display = 'none';
-  document.getElementById('painel').style.display = 'block';
-
-  // Auto-refresh a cada 3 min
-  if (timerAvisos) clearInterval(timerAvisos);
-  timerAvisos = RebecaRealtime.register("agenda-prof-dados", carregarDados, 180000, "minima", false);
+  // auto-refresh a cada 3 min (sem dependência externa)
+  if(_timer) clearTimeout(_timer);
+  _timer = setTimeout(carregar, 180000);
 }
 
-function renderizarLista(elId, lista, mostrarAviso) {
+function listaHoje(elId, lista){
   var el = document.getElementById(elId);
-  if (!lista.length) {
-    el.innerHTML = '<div class="empty"><div class="empty-icon">🎉</div>Sem agendamentos hoje<br><span style="font-size:.8em">Aproveite para descansar!</span></div>';
+  if(!lista.length){
+    el.innerHTML='<div class="empty"><div class="empty-icon">🎉</div>Sem agendamentos hoje</div>';
     return;
   }
-  el.innerHTML = lista.map(function(a) {
-    var min = minutosAte(a.dataHora);
-    var isAgora = min >= -60 && min <= 0;
-    var isProximo = min > 0 && min <= 30;
-    var statusClass = isAgora ? 'agora' : (a.status || 'pendente');
-    var badgeText = isAgora ? '▶ Em atendimento' : (isProximo ? '⚡ Em breve' : (a.status === 'confirmado' ? '✓ Confirmado' : '⏳ Pendente'));
-    var badgeClass = isAgora ? 'agora' : (a.status === 'confirmado' ? 'confirmado' : 'pendente');
-    return '<div class="ag-card ' + statusClass + '">' +
-      (isProximo ? '<div class="ag-aviso">Em ' + min + 'min</div>' : '') +
-      '<div class="ag-card-header">' +
-        '<div><div class="ag-hora">' + formatarHora(a.dataHora) + '</div>' +
-        '<div class="ag-duracao">' + (a.duracao ? a.duracao + ' min' : '') + '</div></div>' +
-        '<span class="ag-badge ' + badgeClass + '">' + badgeText + '</span>' +
-      '</div>' +
-      '<div class="ag-cliente">👤 ' + (a.nomeCliente || 'Cliente') + '</div>' +
-      '<div class="ag-servico">🔖 ' + (a.nomeServico || 'Serviço não informado') + '</div>' +
-      (a.preco ? '<div class="ag-preco">💰 R$ ' + Number(a.preco).toFixed(2) + '</div>' : '') +
-      (a.observacoes ? '<div class="ag-obs">"' + a.observacoes + '"</div>' : '') +
-      (a.status !== 'cancelado' ? '<div style="display:flex;gap:8px;margin-top:10px">' +
-        '<button class="btn-acao-card" style="background:#fef3c7;color:#92400e" onclick="acaoReagendar(\'' + a._id + '\')">🔁 Reagendar</button>' +
-        '<button class="btn-acao-card" style="background:#fee2e2;color:#991b1b" onclick="acaoCancelar(\'' + a._id + '\')">✕ Cancelar</button>' +
-      '</div>' : '') +
+  el.innerHTML = lista.map(function(a){
+    var mn = minAte(a.dataHora);
+    var agora = mn>=-60&&mn<=0;
+    var prox  = mn>0&&mn<=30;
+    var sc    = agora?'agora':(a.status||'pendente');
+    var bt    = agora?'▶ Em atendimento':(prox?'⚡ Em breve':(a.status==='confirmado'?'✓ Confirmado':'⏳ Pendente'));
+    var bc    = agora?'agora':(a.status==='confirmado'?'confirmado':'pendente');
+    return '<div class="ag-card '+sc+'">'+
+      (prox?'<div class="ag-aviso">Em '+mn+'min</div>':'')+
+      '<div class="ag-card-top">'+
+        '<div><div class="ag-hora">'+fHora(a.dataHora)+'</div><div class="ag-dur">'+(a.duracao?a.duracao+' min':'')+'</div></div>'+
+        '<span class="ag-badge '+bc+'">'+bt+'</span>'+
+      '</div>'+
+      '<div class="ag-cliente">👤 '+esc(a.nomeCliente||'Cliente')+'</div>'+
+      '<div class="ag-servico">🔖 '+esc(a.nomeServico||'Serviço não informado')+'</div>'+
+      (a.preco?'<div class="ag-preco">💰 R$ '+Number(a.preco).toFixed(2)+'</div>':'')+
+      (a.observacoes?'<div class="ag-obs">"'+esc(a.observacoes)+'"</div>':'')+
+      (a.status!=='cancelado'?
+        '<div class="ag-acoes">'+
+          '<button class="btn-acao" style="background:#fef3c7;color:#92400e" onclick="reagendar(\''+a._id+'\')">🔁 Reagendar</button>'+
+          '<button class="btn-acao" style="background:#fee2e2;color:#991b1b" onclick="cancelar(\''+a._id+'\')">✕ Cancelar</button>'+
+        '</div>':'')+
     '</div>';
   }).join('');
 }
 
-function renderizarListaAgrupada(elId, lista) {
+function listaSemana(elId, lista){
   var el = document.getElementById(elId);
-  if (!lista.length) {
-    el.innerHTML = '<div class="empty"><div class="empty-icon">📭</div>Sem outros agendamentos</div>';
+  if(!lista.length){
+    el.innerHTML='<div class="empty"><div class="empty-icon">📭</div>Sem outros agendamentos</div>';
     return;
   }
-  // Agrupar por data
-  var grupos = {};
-  lista.forEach(function(a) {
-    var key = formatarDataCurta(a.dataHora);
-    if (!grupos[key]) grupos[key] = [];
-    grupos[key].push(a);
+  var grupos={};
+  lista.forEach(function(a){
+    var k=fData(a.dataHora);
+    if(!grupos[k]) grupos[k]=[];
+    grupos[k].push(a);
   });
-  var html = '';
-  Object.keys(grupos).forEach(function(data) {
-    html += '<div style="font-size:.8em;font-weight:700;color:#6b7280;margin:12px 0 8px;text-transform:uppercase;letter-spacing:.05em">📅 ' + data + '</div>';
-    grupos[data].forEach(function(a) {
-      var statusClass = a.status === 'confirmado' ? 'confirmado' : 'pendente';
-      html += '<div class="ag-card ' + statusClass + '">' +
-        '<div class="ag-card-header">' +
-          '<div class="ag-hora">' + formatarHora(a.dataHora) + '</div>' +
-          '<span class="ag-badge ' + statusClass + '">' + (a.status === 'confirmado' ? '✓ Confirmado' : '⏳ Pendente') + '</span>' +
-        '</div>' +
-        '<div class="ag-cliente">👤 ' + (a.nomeCliente || 'Cliente') + '</div>' +
-        '<div class="ag-servico">🔖 ' + (a.nomeServico || '') + '</div>' +
-        (a.preco ? '<div class="ag-preco">💰 R$ ' + Number(a.preco).toFixed(2) + '</div>' : '') +
+  var html='';
+  Object.keys(grupos).forEach(function(dt){
+    html+='<div class="data-sep">📅 '+dt+'</div>';
+    grupos[dt].forEach(function(a){
+      var sc=a.status==='confirmado'?'confirmado':'pendente';
+      html+='<div class="ag-card '+sc+'">'+
+        '<div class="ag-card-top">'+
+          '<div class="ag-hora">'+fHora(a.dataHora)+'</div>'+
+          '<span class="ag-badge '+sc+'">'+(a.status==='confirmado'?'✓ Confirmado':'⏳ Pendente')+'</span>'+
+        '</div>'+
+        '<div class="ag-cliente">👤 '+esc(a.nomeCliente||'Cliente')+'</div>'+
+        '<div class="ag-servico">🔖 '+esc(a.nomeServico||'')+'</div>'+
+        (a.preco?'<div class="ag-preco">💰 R$ '+Number(a.preco).toFixed(2)+'</div>':'')+
       '</div>';
     });
   });
-  el.innerHTML = html;
+  el.innerHTML=html;
 }
 
-function mudarTab(tab) {
-  document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('ativo'); });
-  document.querySelectorAll('.tela').forEach(function(t) { t.classList.remove('ativa'); });
-  var idx = ['hoje','semana','comissao','perfil'].indexOf(tab);
-  document.querySelectorAll('.tab')[idx].classList.add('ativo');
-  document.getElementById('tela-' + tab).classList.add('ativa');
+// ---------- TABS ----------
+function tab(nome, idx){
+  document.querySelectorAll('.tab').forEach(function(t,i){ t.classList.toggle('ativo',i===idx); });
+  document.querySelectorAll('.tela').forEach(function(t){ t.classList.remove('ativa'); });
+  document.getElementById('tela-'+nome).classList.add('ativa');
 }
 
-async function acaoCancelar(id) {
-  if (!confirm('Cancelar este atendimento? O cliente será avisado automaticamente.')) return;
-  try {
-    var r = await fetch('/api/agenda/profissional-app/' + TOKEN_PROF + '/agendamento/' + id + '/cancelar', {
-      method: 'PUT', headers: {'Authorization':'Bearer ' + TOKEN_PROF}
-    });
-    var d = await r.json();
-    if (d.sucesso) { toast('Cancelado, cliente avisado ✅'); carregarDados(); }
-    else toast(d.erro || 'Erro ao cancelar');
-  } catch(e) { toast('Erro de conexão'); }
+// ---------- AÇÕES ----------
+async function cancelar(id){
+  if(!confirm('Cancelar este atendimento? O cliente será avisado.')) return;
+  try{
+    var r=await fetch('/api/agenda/profissional-app/'+TK+'/agendamento/'+id+'/cancelar',{method:'PUT',headers:{'Authorization':'Bearer '+TK}});
+    var d=await r.json();
+    if(d.sucesso){ toast('Cancelado ✅'); carregar(); } else toast(d.erro||'Erro');
+  }catch(e){ toast('Erro de conexão'); }
 }
 
-async function acaoReagendar(id) {
-  var motivo = prompt('Motivo do reagendamento (opcional):') || '';
-  try {
-    var r = await fetch('/api/agenda/profissional-app/' + TOKEN_PROF + '/agendamento/' + id + '/reagendar', {
-      method: 'PUT', headers: {'Authorization':'Bearer ' + TOKEN_PROF, 'Content-Type':'application/json'},
-      body: JSON.stringify({ motivo: motivo })
-    });
-    var d = await r.json();
-    if (d.sucesso) { toast('Cliente avisado, aguardando novo horário ✅'); carregarDados(); }
-    else toast(d.erro || 'Erro ao reagendar');
-  } catch(e) { toast('Erro de conexão'); }
+async function reagendar(id){
+  var motivo=prompt('Motivo do reagendamento (opcional):')||'';
+  try{
+    var r=await fetch('/api/agenda/profissional-app/'+TK+'/agendamento/'+id+'/reagendar',{method:'PUT',headers:{'Authorization':'Bearer '+TK,'Content-Type':'application/json'},body:JSON.stringify({motivo:motivo})});
+    var d=await r.json();
+    if(d.sucesso){ toast('Cliente avisado ✅'); carregar(); } else toast(d.erro||'Erro');
+  }catch(e){ toast('Erro de conexão'); }
 }
 
-async function abrirMensagemRebeca() {
-  var texto = prompt('O que você quer avisar pra Rebeca repassar ao estabelecimento?');
-  if (!texto) return;
-  try {
-    var r = await fetch('/api/agenda/profissional-app/' + TOKEN_PROF + '/mensagem', {
-      method: 'POST', headers: {'Authorization':'Bearer ' + TOKEN_PROF, 'Content-Type':'application/json'},
-      body: JSON.stringify({ texto: texto })
-    });
-    var d = await r.json();
-    if (d.sucesso) toast('Mensagem enviada ✅');
-    else toast(d.erro || 'Erro ao enviar');
-  } catch(e) { toast('Erro de conexão'); }
+async function msgRebeca(){
+  var txt=prompt('Aviso para o estabelecimento:');
+  if(!txt) return;
+  try{
+    var r=await fetch('/api/agenda/profissional-app/'+TK+'/mensagem',{method:'POST',headers:{'Authorization':'Bearer '+TK,'Content-Type':'application/json'},body:JSON.stringify({texto:txt})});
+    var d=await r.json();
+    toast(d.sucesso?'Mensagem enviada ✅':d.erro||'Erro');
+  }catch(e){ toast('Erro de conexão'); }
 }
 
-function sair() {
-  if (!confirm('Sair da sua conta?')) return;
+function sair(){
+  if(!confirm('Sair da conta?')) return;
   localStorage.removeItem('prof_token');
-  location.reload();
+  TK=''; location.reload();
 }
 
-// Init
-if (TOKEN_PROF) {
-  carregarDados();
-} else {
-  document.getElementById('tela-token').style.display = 'flex';
-}
+// ---------- HELPERS ----------
+function esc(s){ var d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+function diaHoje(){ var d=new Date(); var DS=['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado']; var MS=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez']; return DS[d.getDay()]+', '+d.getDate()+' de '+MS[d.getMonth()]; }
+function fHora(dh){ return new Date(dh).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); }
+function fData(dh){ return new Date(dh).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}); }
+function eHoje(dh){ var d=new Date(dh),h=new Date(); return d.getDate()===h.getDate()&&d.getMonth()===h.getMonth()&&d.getFullYear()===h.getFullYear(); }
+function minAte(dh){ return Math.floor((new Date(dh)-new Date())/60000); }
+
+// ---------- INIT ----------
+if(TK){ carregar(); } else { mostrar('tela-token'); }
 </script>
 
-<script src="/js/rebeca-tenant.js"></script>
-<script src="/js/rebeca-security.js"></script>
-<script src="/js/rebeca-realtime.js"></script>
-<script src="/js/rebeca-monitor.js"></script>
-<script src="/js/rebeca-notify.js"></script>
 <script src="/js/rebeca-pwa.js"></script>
-<script src="/js/rebeca-ai.js"></script>
 </body>
 </html>
