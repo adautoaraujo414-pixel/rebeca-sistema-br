@@ -689,7 +689,7 @@ input,select{font-family:var(--font-body)}
 <script>
 var ADMIN_ID=new URLSearchParams(location.search).get('id')||'';
 var BASE='/api/agenda';
-var SERVICOS=[];
+var SERVICOS=[];var PROFS_TODOS=[];
 var SEL_SVC=null,SEL_HR=null,SEL_PROF=null,MODAL_DATA={};
 function fmt(v){return v||v===0?'R$ '+Number(v).toFixed(2).replace('.',','):''}
 function fmtMin(m){if(!m)return'';var h=Math.floor(m/60),mn=m%60;return h&&mn?h+'h'+mn+'min':h?h+'h':mn+'min'}
@@ -810,9 +810,10 @@ function renderServicosPromo(lista){
 }
 var PROFS_MAP={};
 function renderProfs(lista){
+  PROFS_TODOS = lista;
   var bcSel=document.getElementById('bc-prof');
   if(bcSel&&lista.length){
-    lista.forEach(function(p){var o=document.createElement('option');o.value=p._id;o.textContent=p.nome;bcSel.appendChild(o)});
+    lista.forEach(function(p){var o=document.createElement('option');o.value=p._id;o.textContent=p.nome+(p.cargo?' ('+p.cargo+')':'');bcSel.appendChild(o)});
   }
   if(!lista.length){document.getElementById('nav-prof').style.display='none';return}
   show('profissionais');
@@ -821,7 +822,9 @@ function renderProfs(lista){
     PROFS_MAP[p._id]=p;
     var c=document.createElement('div');c.className='prof-card';c.style.cursor='pointer';
     var av=p.foto?'<img src="'+p.foto+'" alt="'+p.nome+'">':'<span>'+(p.nome||'P')[0].toUpperCase()+'</span>';
-    c.innerHTML='<div class="prof-avatar">'+av+'</div><div class="prof-nome">'+p.nome+'</div><div class="prof-spec">'+(p.especialidade||p.cargo||'')+'</div>';
+    var cargo=p.cargo?'<div class="prof-spec">'+p.cargo+'</div>':'';
+    var esp=(p.especialidades&&p.especialidades.length)?'<div style="font-size:.72em;color:var(--txt2);margin-top:2px">'+p.especialidades.slice(0,3).join(' · ')+'</div>':'';
+    c.innerHTML='<div class="prof-avatar">'+av+'</div><div class="prof-nome">'+p.nome+'</div>'+cargo+esp;
     c.onclick=function(){abrirModalProf(p._id)};
     grid.appendChild(c);
   });
@@ -883,7 +886,24 @@ function bcBtnClick(){
   bcCarregarHorarios();
 }
 function bcMudouProf(){SEL_PROF=document.getElementById('bc-prof').value||null;bcCarregarHorarios()}
-function bcMudouSvc(){SEL_SVC=document.getElementById('bc-svc').value||null;bcCarregarHorarios()}
+function bcMudouSvc(){
+  SEL_SVC=document.getElementById('bc-svc').value||null;
+  // Filtrar profissionais pelo servico selecionado
+  var bcSel=document.getElementById('bc-prof');
+  if(bcSel&&PROFS_TODOS.length){
+    var srv=SEL_SVC?SERVICOS.find(function(s){return s._id===SEL_SVC}):null;
+    var ids=srv&&srv.profissionalIds&&srv.profissionalIds.length?srv.profissionalIds:null;
+    var filtrados=ids?PROFS_TODOS.filter(function(p){return ids.indexOf(p._id)>=0||ids.indexOf(String(p._id))>=0}):PROFS_TODOS;
+    // Reconstruir options
+    var anterior=bcSel.value;
+    bcSel.innerHTML='<option value="">Profissional</option>';
+    filtrados.forEach(function(p){var o=document.createElement('option');o.value=p._id;o.textContent=p.nome+(p.cargo?' ('+p.cargo+')':'');bcSel.appendChild(o)});
+    // Manter seleção se ainda disponível
+    if(anterior&&filtrados.find(function(p){return p._id===anterior}))bcSel.value=anterior;
+    else{bcSel.value='';SEL_PROF=null;}
+  }
+  bcCarregarHorarios();
+}
 async function bcCarregarHorarios(){
   var data=document.getElementById('bc-data').value;
   var wrap=document.getElementById('bc-hrs');

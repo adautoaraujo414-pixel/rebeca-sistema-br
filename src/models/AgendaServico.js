@@ -79,6 +79,7 @@ const servicoAgendaSchema = new mongoose.Schema({
   precoPromocional: { type: Number, default: null },
   categoria: { type: String },
   foto: { type: String },
+  profissionalIds: [{ type: mongoose.Schema.Types.ObjectId, ref: 'ProfissionalAgenda' }],
   ativo: { type: Boolean, default: true },
   ordem: { type: Number, default: 0 },
   createdAt: { type: Date, default: Date.now }

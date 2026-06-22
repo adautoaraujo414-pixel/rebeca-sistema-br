@@ -1835,6 +1835,13 @@ document.querySelectorAll('.nav-item').forEach(item => {
           </div>
         </div>
       </div>
+      <div class="form-group">
+        <label class="form-label">Profissionais que realizam este serviço</label>
+        <div id="srv-profissionais-lista" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px">
+          <span style="font-size:.82em;color:var(--texto2)">Carregando...</span>
+        </div>
+        <div style="font-size:.75em;color:var(--texto2);margin-top:4px">Se nenhum for selecionado, todos os profissionais aparecem como opção.</div>
+      </div>
     </div>
     <div class="modal-footer">
       <button class="btn-secondary" onclick="fecharModal('modal-srv')">Cancelar</button>
@@ -2662,21 +2669,21 @@ async function salvarCliente(){
 var EDIT_SRV_ID = null;
 
 function abrirModalEditarServico(s){
-  EDIT_SRV_ID = s._id;
-  document.querySelector('#modal-srv .modal-titulo').textContent = '🔖 Editar Serviço';
-  document.getElementById('srv-nome').value = s.nome || '';
-  document.getElementById('srv-preco').value = s.preco || '';
-  document.getElementById('srv-dur').value = s.duracao || 30;
-  document.getElementById('srv-preco-promo').value = s.precoPromocional || '';
-  document.getElementById('srv-desc').value = s.descricao || '';
-  if(s.foto){
-    document.getElementById('srv-foto-img').src = s.foto;
-    document.getElementById('srv-foto-preview').style.display = 'block';
-  } else {
-    srvRemoverFoto();
-  }
-  document.getElementById('modal-srv').classList.add('open');
-  var sy=window.scrollY;document.body.style.position='fixed';document.body.style.top='-'+sy+'px';document.body.style.left='0';document.body.style.right='0';document.body.dataset.scrollY=sy;
+  // Busca servico atualizado da API para pegar profissionalIds
+  api('/servicos').then(d => {
+    const srv = (d?.servicos || []).find(x => x._id === s._id) || s;
+    if(srv.foto){
+      document.getElementById('srv-foto-img').src = srv.foto;
+      document.getElementById('srv-foto-preview').style.display = 'block';
+    } else { srvRemoverFoto(); }
+    abrirModalServico(srv);
+  }).catch(() => {
+    if(s.foto){
+      document.getElementById('srv-foto-img').src = s.foto;
+      document.getElementById('srv-foto-preview').style.display = 'block';
+    } else { srvRemoverFoto(); }
+    abrirModalServico(s);
+  });
 }
 
 async function salvarServico(){
@@ -2684,7 +2691,8 @@ async function salvarServico(){
   if (btn) { if (btn.disabled) return; btn.disabled = true; }
   const fotoInput = document.getElementById('srv-foto-input');
   const arquivoFoto = (fotoInput && fotoInput.files && fotoInput.files[0]) ? fotoInput.files[0] : null;
-  const payload = {nome: document.getElementById('srv-nome').value.trim(), preco: parseFloat(document.getElementById('srv-preco').value)||0, precoPromocional: parseFloat(document.getElementById('srv-preco-promo').value)||null, duracao: parseInt(document.getElementById('srv-dur').value)||30, descricao: document.getElementById('srv-desc').value};
+  const _srvProfs = Array.from(document.querySelectorAll('#srv-profissionais-lista input[type=checkbox]:checked')).map(cb => cb.value);
+  const payload = {nome: document.getElementById('srv-nome').value.trim(), preco: parseFloat(document.getElementById('srv-preco').value)||0, precoPromocional: parseFloat(document.getElementById('srv-preco-promo').value)||null, duracao: parseInt(document.getElementById('srv-dur').value)||30, descricao: document.getElementById('srv-desc').value, profissionalIds: _srvProfs};
   if(!payload.nome) { if (btn) btn.disabled = false; return toast('Informe o nome do serviço', 'erro'); }
   let r = null;
   try {
@@ -2871,7 +2879,31 @@ function abrirModalAgendamento(){
 }
 
 function abrirModalCliente(){ document.getElementById('modal-cli').classList.add('open'); var sy=window.scrollY;document.body.style.position='fixed';document.body.style.top='-'+sy+'px';document.body.style.left='0';document.body.style.right='0';document.body.dataset.scrollY=sy; }
-function abrirModalServico(){ EDIT_SRV_ID=null; document.querySelector('#modal-srv .modal-titulo').textContent='🔖 Novo Serviço'; document.getElementById('srv-nome').value=''; document.getElementById('srv-preco').value=''; document.getElementById('srv-dur').value=30; document.getElementById('srv-preco-promo').value=''; document.getElementById('srv-desc').value=''; srvRemoverFoto(); document.getElementById('modal-srv').classList.add('open'); var sy=window.scrollY;document.body.style.position='fixed';document.body.style.top='-'+sy+'px';document.body.style.left='0';document.body.style.right='0';document.body.dataset.scrollY=sy; }
+function abrirModalServico(srvData){ 
+  EDIT_SRV_ID = srvData?._id || null;
+  document.querySelector('#modal-srv .modal-titulo').textContent = EDIT_SRV_ID ? '🔖 Editar Serviço' : '🔖 Novo Serviço';
+  document.getElementById('srv-nome').value = srvData?.nome || '';
+  document.getElementById('srv-preco').value = srvData?.preco || '';
+  document.getElementById('srv-dur').value = srvData?.duracao || 30;
+  document.getElementById('srv-preco-promo').value = srvData?.precoPromocional || '';
+  document.getElementById('srv-desc').value = srvData?.descricao || '';
+  srvRemoverFoto();
+  // Carregar profissionais como checkboxes
+  const _listaProf = document.getElementById('srv-profissionais-lista');
+  _listaProf.innerHTML = '<span style="font-size:.82em;color:var(--texto2)">Carregando...</span>';
+  api('/profissionais').then(d => {
+    const profs = d?.profissionais || [];
+    const vinculados = srvData?.profissionalIds || [];
+    if (!profs.length) { _listaProf.innerHTML = '<span style="font-size:.82em;color:var(--texto2)">Nenhum profissional cadastrado.</span>'; return; }
+    _listaProf.innerHTML = profs.map(p => {
+      const checked = vinculados.includes(String(p._id)) ? 'checked' : '';
+      const cargo = p.cargo ? ' <span style="font-size:.72em;color:var(--texto2)">(' + p.cargo + ')</span>' : '';
+      return '<label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:6px 10px;border:1px solid var(--borda);border-radius:8px;font-size:.85em"><input type="checkbox" value="' + p._id + '" ' + checked + '> ' + p.nome + cargo + '</label>';
+    }).join('');
+  }).catch(() => { _listaProf.innerHTML = '<span style="font-size:.82em;color:var(--texto2)">Erro ao carregar profissionais.</span>'; });
+  document.getElementById('modal-srv').classList.add('open');
+  var sy=window.scrollY;document.body.style.position='fixed';document.body.style.top='-'+sy+'px';document.body.style.left='0';document.body.style.right='0';document.body.dataset.scrollY=sy;
+}
 
 async function abrirModalPromocoes(){
   document.getElementById('modal-promo').classList.add('open');
