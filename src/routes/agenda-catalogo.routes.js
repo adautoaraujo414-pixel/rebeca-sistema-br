@@ -165,7 +165,7 @@ router.get('/espaco/:adminId/vitrine', async (req, res) => {
     if (!admin) return res.status(404).json({ erro: 'Espaço não encontrado' });
 
     const [servicos, todos, catalogos] = await Promise.all([
-      ServicoAgenda.find({ adminId, ativo: true }).select('-foto').sort({ ordem: 1 }).lean(),
+      ServicoAgenda.find({ adminId, ativo: true }).sort({ ordem: 1 }).lean(),
       ProdutoAgenda.find({ adminId, ativo: true }).sort({ ordem: 1 }).lean(),
       CatalogoAgenda.find({ adminId, ativo: true }).sort({ ordem: 1 }).lean()
     ]);

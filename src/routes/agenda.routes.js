@@ -108,7 +108,7 @@ router.put('/perfil', authAgenda, async (req, res) => {
 // ===== SERVIÇOS =====
 router.get('/servicos', authAgenda, async (req, res) => {
   try {
-    const servicos = await ServicoAgenda.find({ adminId: req.adminAgendaId }).select('-foto').sort({ ordem: 1, nome: 1 });
+    const servicos = await ServicoAgenda.find({ adminId: req.adminAgendaId }).sort({ ordem: 1, nome: 1 });
     res.json({ sucesso: true, servicos });
   } catch(e) { res.status(500).json({ erro: e.message }); }
 });
@@ -524,7 +524,7 @@ router.get('/espaco/:adminId', async (req, res) => {
     const admin = await AdminAgenda.findById(req.params.adminId).select('-senha -token');
     if (!admin) return res.status(404).json({ erro: 'Espaço não encontrado' });
     const [servicos, profissionais, fotos, produtos, catalogos] = await Promise.all([
-      ServicoAgenda.find({ adminId: req.params.adminId, ativo: true }).select('-foto').sort({ ordem: 1 }),
+      ServicoAgenda.find({ adminId: req.params.adminId, ativo: true }).sort({ ordem: 1 }),
       ProfissionalAgenda.find({ adminId: req.params.adminId, ativo: true }).sort({ ordem: 1 }),
       FotoAgenda.find({ adminId: req.params.adminId, ativo: true }).sort({ ordem: 1 }).limit(20),
       ProdutoAgenda.find({ adminId: req.params.adminId, ativo: true }).sort({ ordem: 1 }).limit(50).lean(),
