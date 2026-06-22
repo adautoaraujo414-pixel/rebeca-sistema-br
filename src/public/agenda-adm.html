@@ -2509,7 +2509,7 @@ async function carregarTabelaServicos(){
       '<td>'+(s.categoria||'—')+'</td>'+
       '<td>'+(s.ativo!==false?'<span class="badge badge-confirmado">Ativo</span>':'<span class="badge badge-cancelado">Inativo</span>')+'</td>'+
       '<td><div class="tabela-acoes">'+
-        '<button class="btn-tabela danger" onclick="deletarServico(\''+s._id+'\')">Remover</button>'+
+        '<button class="btn-tabela" onclick="abrirModalEditarServico('+JSON.stringify(s)+')">Editar</button>'+'<button class="btn-tabela danger" onclick="deletarServico(\''+s._id+'\')">Remover</button>'+
       '</div></td>'+
     '</tr>').join('');
   } catch(e){ tbody.innerHTML='<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--vermelho)">Erro ao carregar</td></tr>'; }
@@ -2639,6 +2639,26 @@ async function salvarCliente(){
   if (btn) btn.disabled = false;
 }
 
+var EDIT_SRV_ID = null;
+
+function abrirModalEditarServico(s){
+  EDIT_SRV_ID = s._id;
+  document.querySelector('#modal-srv .modal-titulo').textContent = '✂️ Editar Serviço';
+  document.getElementById('srv-nome').value = s.nome || '';
+  document.getElementById('srv-preco').value = s.preco || '';
+  document.getElementById('srv-dur').value = s.duracao || 30;
+  document.getElementById('srv-preco-promo').value = s.precoPromocional || '';
+  document.getElementById('srv-desc').value = s.descricao || '';
+  if(s.foto){
+    document.getElementById('srv-foto-img').src = s.foto;
+    document.getElementById('srv-foto-preview').style.display = 'block';
+  } else {
+    srvRemoverFoto();
+  }
+  document.getElementById('modal-srv').classList.add('open');
+  var sy=window.scrollY;document.body.style.position='fixed';document.body.style.top='-'+sy+'px';document.body.style.left='0';document.body.style.right='0';document.body.dataset.scrollY=sy;
+}
+
 async function salvarServico(){
   const btn = document.querySelector('button[onclick="salvarServico()"]');
   if (btn) { if (btn.disabled) return; btn.disabled = true; }
@@ -2648,10 +2668,14 @@ async function salvarServico(){
   if(!payload.nome) { if (btn) btn.disabled = false; return toast('Informe o nome do serviço', 'erro'); }
   let r = null;
   try {
-    r = await api('/servicos', {method:'POST', body:JSON.stringify(payload)});
+    if(EDIT_SRV_ID){
+      r = await api('/servicos/'+EDIT_SRV_ID, {method:'PUT', body:JSON.stringify(payload)});
+    } else {
+      r = await api('/servicos', {method:'POST', body:JSON.stringify(payload)});
+    }
   } catch(e) { console.error('Erro:', e); toast('Erro ao salvar serviço', 'erro'); if (btn) btn.disabled = false; return; }
   if(r && r.sucesso){
-    const servicoId = r.servico && r.servico._id;
+    const servicoId = (r.servico && r.servico._id) || EDIT_SRV_ID;
     if (servicoId && arquivoFoto) {
       try {
         const fd = new FormData();
@@ -2665,7 +2689,7 @@ async function salvarServico(){
         if (!upData.sucesso) console.warn('[Upload foto servico] erro:', upData.erro);
       } catch(e) { console.warn('[Upload foto servico] falha de rede:', e.message); }
     }
-    toast('Serviço salvo ✅'); fecharModal('modal-srv'); srvRemoverFoto(); carregarTabelaServicos();
+    toast('Serviço salvo ✅'); fecharModal('modal-srv'); srvRemoverFoto(); EDIT_SRV_ID=null; document.querySelector('#modal-srv .modal-titulo').textContent='✂️ Novo Serviço'; carregarTabelaServicos();
   }
   else toast((r && r.erro) || 'Erro ao salvar serviço', 'erro');
   if (btn) btn.disabled = false;
@@ -2793,7 +2817,7 @@ function abrirModalAgendamento(){
 }
 
 function abrirModalCliente(){ document.getElementById('modal-cli').classList.add('open'); var sy=window.scrollY;document.body.style.position='fixed';document.body.style.top='-'+sy+'px';document.body.style.left='0';document.body.style.right='0';document.body.dataset.scrollY=sy; }
-function abrirModalServico(){ document.getElementById('modal-srv').classList.add('open'); var sy=window.scrollY;document.body.style.position='fixed';document.body.style.top='-'+sy+'px';document.body.style.left='0';document.body.style.right='0';document.body.dataset.scrollY=sy; }
+function abrirModalServico(){ EDIT_SRV_ID=null; document.querySelector('#modal-srv .modal-titulo').textContent='✂️ Novo Serviço'; document.getElementById('srv-nome').value=''; document.getElementById('srv-preco').value=''; document.getElementById('srv-dur').value=30; document.getElementById('srv-preco-promo').value=''; document.getElementById('srv-desc').value=''; srvRemoverFoto(); document.getElementById('modal-srv').classList.add('open'); var sy=window.scrollY;document.body.style.position='fixed';document.body.style.top='-'+sy+'px';document.body.style.left='0';document.body.style.right='0';document.body.dataset.scrollY=sy; }
 
 async function abrirModalPromocoes(){
   document.getElementById('modal-promo').classList.add('open');
