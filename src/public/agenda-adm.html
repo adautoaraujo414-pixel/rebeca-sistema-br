@@ -2765,8 +2765,12 @@ async function salvarConfig(){
   try {
     r = await api('/perfil', {method:'PUT', body:JSON.stringify(payload)});
   } catch(e) { console.error('Erro:', e); alert('Erro ao executar ação'); if (btn) btn.disabled = false; return; }
-  if(r && r.sucesso){ toast('Configurações salvas ✅'); }
-  else toast('Erro ao salvar', 'erro');
+  if(r && r.sucesso){
+    toast('Configurações salvas ✅');
+    // Atualiza ADMIN em memória para refletir dias/config salvos sem precisar relogar
+    const perfil = await api('/perfil');
+    if(perfil && perfil.admin) ADMIN = perfil.admin;
+  } else toast('Erro ao salvar', 'erro');
   if (btn) btn.disabled = false;
 }
 
