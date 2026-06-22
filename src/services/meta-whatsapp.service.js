@@ -56,8 +56,9 @@ async function enviarImagem(telefone, imageUrl, legenda, inst) {
     return { sucesso: false, erro: e.response?.data || e.message };
   }
 }
-async function enviarTemplate(telefone, templateName, languageCode, components) {
+async function enviarTemplate(telefone, templateName, languageCode, components, inst) {
   try {
+    const { token, base } = _creds(inst);
     const body = {
       messaging_product: 'whatsapp',
       to: _norm(telefone),
@@ -68,7 +69,7 @@ async function enviarTemplate(telefone, templateName, languageCode, components) 
       }
     };
     if (components?.length) body.template.components = components;
-    const r = await axios.post(`${BASE}/messages`, body, { headers: _headers() });
+    const r = await axios.post(`${base}/messages`, body, { headers: _headers(token) });
     return { sucesso: true, messageId: r.data?.messages?.[0]?.id };
   } catch(e) {
     console.error('[MetaWA] enviarTemplate erro:', e.response?.data || e.message);

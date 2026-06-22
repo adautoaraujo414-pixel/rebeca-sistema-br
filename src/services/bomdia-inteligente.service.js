@@ -31,7 +31,7 @@ const FECHAMENTOS = [
   'Qualquer coisa é só chamar! 😊',
   'Pode contar comigo hoje! 💪',
   'Bora arrasar hoje! 🚀',
-  'Vamos nessa! ✂️',
+  'Vamos nessa! 🔖',
   'Tô de olho em tudo por você! 👀',
   'Me chama se precisar de algo! 💙',
 ];

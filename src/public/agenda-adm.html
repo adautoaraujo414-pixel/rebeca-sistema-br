@@ -1301,7 +1301,7 @@ document.querySelectorAll('.nav-item').forEach(item => {
                   Cadastrar cliente
                 </button>
                 <button class="acao-btn" onclick="irPara('servicos')">
-                  <div class="acao-icon">✂️</div>
+                  <div class="acao-icon">🔖</div>
                   Novo serviço
                 </button>
                 <button class="acao-btn" onclick="abrirModalPromocoes()">
@@ -1726,7 +1726,7 @@ document.querySelectorAll('.nav-item').forEach(item => {
     <button class="nav-item" onclick="irParaMob('agendamentos')">📋 Agendamentos</button>
     <button class="nav-item" onclick="irParaMob('clientes')">👥 Clientes</button>
     <button class="nav-item" onclick="irParaMob('profissionais')">👤 Profissionais</button>
-    <button class="nav-item" onclick="irParaMob('servicos')">✂️ Serviços</button>
+    <button class="nav-item" onclick="irParaMob('servicos')">🔖 Serviços</button>
     <button class="nav-item" onclick="irParaMob('financeiro')">💰 Financeiro</button>
     <button class="nav-item" onclick="irParaMob('avaliacoes')">⭐ Avaliações</button>
     <button class="nav-item" id="nav-wpp-mob" onclick="irParaMob('whatsapp')" style="display:none">💬 WhatsApp</button>
@@ -1750,7 +1750,7 @@ document.querySelectorAll('.nav-item').forEach(item => {
   <div class="menu-mobile-header"><span>Menu</span><button onclick="fecharMenuMobile()">✕</button></div>
   <button class="menu-mobile-item" onclick="irPara('dashboard');fecharMenuMobile()">🏠 Início</button>
   <button class="menu-mobile-item" onclick="irPara('agendamentos');fecharMenuMobile()">📅 Agenda</button>
-  <button class="menu-mobile-item" onclick="irPara('servicos');fecharMenuMobile()">✂️ Serviços</button>
+  <button class="menu-mobile-item" onclick="irPara('servicos');fecharMenuMobile()">🔖 Serviços</button>
   <button class="menu-mobile-item" onclick="irPara('clientes');fecharMenuMobile()">👤 Clientes</button>
   <button class="menu-mobile-item" onclick="irPara('financeiro');fecharMenuMobile()">💰 Financeiro</button>
   <button class="menu-mobile-item" onclick="irPara('whatsapp');fecharMenuMobile()">💬 WhatsApp</button>
@@ -1811,7 +1811,7 @@ document.querySelectorAll('.nav-item').forEach(item => {
 <div class="modal-bg" id="modal-srv">
   <div class="modal">
     <div class="modal-header">
-      <div class="modal-titulo">✂️ Novo Serviço</div>
+      <div class="modal-titulo">🔖 Novo Serviço</div>
       <button class="modal-close" onclick="fecharModal('modal-srv')">×</button>
     </div>
     <div class="modal-body">
@@ -1855,7 +1855,7 @@ document.querySelectorAll('.nav-item').forEach(item => {
         <div id="promo-lista-produtos" style="display:flex;flex-direction:column;gap:8px"></div>
       </div>
       <div class="form-group">
-        <label class="form-label">✂️ Serviços</label>
+        <label class="form-label">🔖 Serviços</label>
         <div id="promo-lista-servicos" style="display:flex;flex-direction:column;gap:8px"></div>
       </div>
       <button class="btn-secondary" style="width:100%" onclick="fecharModal('modal-promo');abrirModalServico()">+ Criar serviço novo já em promoção</button>
@@ -2339,7 +2339,7 @@ async function carregarServicosRank(){
     const ags = ag?.agendamentos || ag || [];
     const el = document.getElementById('lista-servicos-rank');
     if(!servicos.length){
-      el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">✂️</div><div class="empty-state-titulo">Nenhum serviço cadastrado</div></div>';
+      el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🔖</div><div class="empty-state-titulo">Nenhum serviço cadastrado</div></div>';
       return;
     }
     // Contar agendamentos por serviço
@@ -2357,7 +2357,7 @@ async function carregarServicosRank(){
     el.innerHTML = ranked.map((s,i) =>
       '<div class="servico-row">'+
         '<div class="servico-rank '+classes[i]+'">'+(i+1)+'</div>'+
-        '<div class="servico-icon">✂️</div>'+
+        '<div class="servico-icon">🔖</div>'+
         '<div class="servico-nome">'+s.nome+'</div>'+
         '<div class="servico-bar-wrap"><div class="servico-bar" style="width:'+(s.qtd/max*100)+'%"></div></div>'+
         '<div class="servico-qtd">'+s.qtd+'</div>'+
@@ -2511,7 +2511,7 @@ async function carregarTabelaServicos(){
     const svcs = d?.servicos||d||[];
     if(!svcs.length){ tbody.innerHTML='<tr><td colspan="6" style="text-align:center;padding:32px">Nenhum serviço cadastrado</td></tr>'; return; }
     tbody.innerHTML = svcs.map(s=>'<tr>'+
-      '<td><div style="display:flex;align-items:center;gap:10px">'+(s.foto?'<img src="'+s.foto+'" style="width:40px;height:40px;object-fit:cover;border-radius:8px;border:1px solid var(--borda);flex-shrink:0">':'<div style="width:40px;height:40px;border-radius:8px;background:var(--cor3);display:flex;align-items:center;justify-content:center;font-size:1.1em;flex-shrink:0">✂️</div>')+'<b>'+s.nome+'</b></div></td>'+
+      '<td><div style="display:flex;align-items:center;gap:10px">'+(s.foto?'<img src="'+s.foto+'" style="width:40px;height:40px;object-fit:cover;border-radius:8px;border:1px solid var(--borda);flex-shrink:0">':'<div style="width:40px;height:40px;border-radius:8px;background:var(--cor3);display:flex;align-items:center;justify-content:center;font-size:1.1em;flex-shrink:0">🔖</div>')+'<b>'+s.nome+'</b></div></td>'+
       '<td>'+(s.duracao||30)+' min</td>'+
       '<td>'+fmt(s.preco)+'</td>'+
       '<td>'+(s.categoria||'—')+'</td>'+
@@ -2651,7 +2651,7 @@ var EDIT_SRV_ID = null;
 
 function abrirModalEditarServico(s){
   EDIT_SRV_ID = s._id;
-  document.querySelector('#modal-srv .modal-titulo').textContent = '✂️ Editar Serviço';
+  document.querySelector('#modal-srv .modal-titulo').textContent = '🔖 Editar Serviço';
   document.getElementById('srv-nome').value = s.nome || '';
   document.getElementById('srv-preco').value = s.preco || '';
   document.getElementById('srv-dur').value = s.duracao || 30;
@@ -2697,7 +2697,7 @@ async function salvarServico(){
         if (!upData.sucesso) console.warn('[Upload foto servico] erro:', upData.erro);
       } catch(e) { console.warn('[Upload foto servico] falha de rede:', e.message); }
     }
-    toast('Serviço salvo ✅'); fecharModal('modal-srv'); srvRemoverFoto(); EDIT_SRV_ID=null; document.querySelector('#modal-srv .modal-titulo').textContent='✂️ Novo Serviço'; carregarTabelaServicos();
+    toast('Serviço salvo ✅'); fecharModal('modal-srv'); srvRemoverFoto(); EDIT_SRV_ID=null; document.querySelector('#modal-srv .modal-titulo').textContent='🔖 Novo Serviço'; carregarTabelaServicos();
   }
   else toast((r && r.erro) || 'Erro ao salvar serviço', 'erro');
   if (btn) btn.disabled = false;
@@ -2840,7 +2840,7 @@ function abrirModalAgendamento(){
 }
 
 function abrirModalCliente(){ document.getElementById('modal-cli').classList.add('open'); var sy=window.scrollY;document.body.style.position='fixed';document.body.style.top='-'+sy+'px';document.body.style.left='0';document.body.style.right='0';document.body.dataset.scrollY=sy; }
-function abrirModalServico(){ EDIT_SRV_ID=null; document.querySelector('#modal-srv .modal-titulo').textContent='✂️ Novo Serviço'; document.getElementById('srv-nome').value=''; document.getElementById('srv-preco').value=''; document.getElementById('srv-dur').value=30; document.getElementById('srv-preco-promo').value=''; document.getElementById('srv-desc').value=''; srvRemoverFoto(); document.getElementById('modal-srv').classList.add('open'); var sy=window.scrollY;document.body.style.position='fixed';document.body.style.top='-'+sy+'px';document.body.style.left='0';document.body.style.right='0';document.body.dataset.scrollY=sy; }
+function abrirModalServico(){ EDIT_SRV_ID=null; document.querySelector('#modal-srv .modal-titulo').textContent='🔖 Novo Serviço'; document.getElementById('srv-nome').value=''; document.getElementById('srv-preco').value=''; document.getElementById('srv-dur').value=30; document.getElementById('srv-preco-promo').value=''; document.getElementById('srv-desc').value=''; srvRemoverFoto(); document.getElementById('modal-srv').classList.add('open'); var sy=window.scrollY;document.body.style.position='fixed';document.body.style.top='-'+sy+'px';document.body.style.left='0';document.body.style.right='0';document.body.dataset.scrollY=sy; }
 
 async function abrirModalPromocoes(){
   document.getElementById('modal-promo').classList.add('open');

@@ -1181,7 +1181,7 @@ Te aviso 30 minutos antes de cada um! 💙`;
       const totalLanc = lanc.reduce((s,l) => s+l.valor, 0);
       await responder(`${_saudacao()}, ${_chefe(_generoAdmin, _apelidoAdmin)}! 📊
 
-✂️ *${servicoBusca}* esse mês:
+🔖 *${servicoBusca}* esse mês:
 • ${totalAgs} atendimento(s)
 • R$ ${totalLanc.toFixed(2).replace('.',',')} registrado(s)
 
@@ -1673,7 +1673,7 @@ Não tem mais ninguém agendado hoje não! Tá livre o resto do dia. 🎉`);
       const _dicaCliente = _totalVisitas === 0 ? '\n\n✨ Primeira vez aqui!' 
         : _totalVisitas === 1 ? '\n\n😊 Segunda visita!'
         : `\n\n💙 ${_totalVisitas}ª visita — cliente fidelizada!`;
-      await responder(`O próximo é ${_chefe(_generoAdmin, _apelidoAdmin)}! 😄\n\n👤 *${ag.nomeCliente}*\n✂️ ${ag.nomeServico || '—'}\n⏰ ${_fmtHora(new Date(ag.dataHora))} (${tempo})${_dicaCliente}`);
+      await responder(`O próximo é ${_chefe(_generoAdmin, _apelidoAdmin)}! 😄\n\n👤 *${ag.nomeCliente}*\n🔖 ${ag.nomeServico || '—'}\n⏰ ${_fmtHora(new Date(ag.dataHora))} (${tempo})${_dicaCliente}`);
     }
     return true;
   }
@@ -1782,7 +1782,7 @@ Não tem mais ninguém agendado hoje não! Tá livre o resto do dia. 🎉`);
 ` +
         `👤 *${nome}*
 ` +
-        `✂️ Serviço: ${servicoEncaixe.charAt(0).toUpperCase() + servicoEncaixe.slice(1)}
+        `🔖 Serviço: ${servicoEncaixe.charAt(0).toUpperCase() + servicoEncaixe.slice(1)}
 ` +
         `📆 ${_fmtData(diaFinal)} às ${_fmtHora(dataHora)}
 ` +
@@ -3453,7 +3453,7 @@ async function notificarDonoNovoAgendamento(adminId, dadosAg) {
 ` +
       `👤 *${dadosAg.nomeCliente}*
 ` +
-      `✂️ ${dadosAg.nomeServico || 'Serviço'}
+      `🔖 ${dadosAg.nomeServico || 'Serviço'}
 ` +
       `📆 ${_fmtData(dataHora)} às ${_fmtHora(dataHora)}
 ` +
@@ -3604,7 +3604,7 @@ async function rodarLembretes() {
           `⏰ *Atenção, ${_chefe(admin.modoWhatsappDono?.genero||'', admin.modoWhatsappDono?.apelido||admin.nomeNegocio||'chefe')}!*\n\n` +
           `*${ag.nomeCliente}* tá chegando em uns 30 minutinhos! 😊\n` +
           `🕐 Horário: ${hora}\n` +
-          `✂️ Serviço: ${ag.nomeServico || '—'}\n\n` +
+          `🔖 Serviço: ${ag.nomeServico || '—'}\n\n` +
           `Se quiser confirmar: *Rebeca, confirma o agendamento das ${hora}* 💙`
         );
 
@@ -3909,7 +3909,7 @@ async function notificarCliente(instancia, telefoneCliente, tipo, dados) {
 Tá na agenda, pode deixar!
 
 📅 *${data}* às *${hora}*
-✂️ *${serv}*
+🔖 *${serv}*
 
 Qualquer coisa é só chamar, tá bom? 💙`,
       `Oi *${nome}*! 💙
@@ -3918,7 +3918,7 @@ Confirmado certinho aqui!
 
 📅 *${data}*
 ⏰ *${hora}*
-✂️ *${serv}*
+🔖 *${serv}*
 
 Te esperamos! 🥰`,
       `*${nome}*, tudo certo! ✅
@@ -3926,7 +3926,7 @@ Te esperamos! 🥰`,
 Seu horário tá marcado:
 
 📅 *${data}* às *${hora}*
-✂️ *${serv}*
+🔖 *${serv}*
 
 Qualquer dúvida pode mandar mensagem! 😊`
     ]),
@@ -3937,7 +3937,7 @@ Qualquer dúvida pode mandar mensagem! 😊`
 Tô passando pra te lembrar que amanhã você tem horário marcado!
 
 ⏰ *${hora}*
-✂️ *${serv}*
+🔖 *${serv}*
 
 Tá esquecendo não né? 😄 Te esperamos! 💙`,
       `*${nome}*, oi! 😊
@@ -3945,7 +3945,7 @@ Tá esquecendo não né? 😄 Te esperamos! 💙`,
 Só passando pra te avisar que amanhã é dia de se cuidar! 💅
 
 ⏰ *${hora}*
-✂️ *${serv}*
+🔖 *${serv}*
 
 Qualquer coisa é só falar! 🥰`,
       `Oi *${nome}*! 👋
@@ -3953,13 +3953,13 @@ Qualquer coisa é só falar! 🥰`,
 Amanhã tem horário com a gente, lembrou?
 
 ⏰ *${hora}*
-✂️ *${serv}*
+🔖 *${serv}*
 
 Se precisar remarcar é só chamar 😉💙`,
       `*${nome}*, amanhã é dia! 🎉
 
 ⏰ *${hora}*
-✂️ *${serv}*
+🔖 *${serv}*
 
 Já deixa a roupa separada! 😂 Brincadeira... mas o horário tá confirmado! 💙`
     ]),
@@ -3968,14 +3968,14 @@ Já deixa a roupa separada! 😂 Brincadeira... mas o horário tá confirmado! �
       `*${nome}*! 🏃 Daqui a pouquinho é hora!
 
 ⏰ *${hora}*
-✂️ *${serv}*
+🔖 *${serv}*
 
 Vem chegando que tô te esperando! 💙`,
       `Oi *${nome}*! ⏰
 
 Só lembrando que em *2 horas* é seu horário:
 
-✂️ *${serv}* às *${hora}*
+🔖 *${serv}* às *${hora}*
 
 Nem precisa correr, mas pode vir chegando! 😄💙`,
       `*${nome}*, chegou a hora! 🥳
@@ -3983,7 +3983,7 @@ Nem precisa correr, mas pode vir chegando! 😄💙`,
 Seu horário é daqui a pouco:
 
 ⏰ *${hora}*
-✂️ *${serv}*
+🔖 *${serv}*
 
 Qualquer imprevisto fala comigo 😊`,
       `Oi *${nome}*! 💅
@@ -3991,7 +3991,7 @@ Qualquer imprevisto fala comigo 😊`,
 Preparada(o) pra arrasar?
 
 ⏰ *${hora}* — já chegando!
-✂️ *${serv}*
+🔖 *${serv}*
 
 Te vejo logo mais! 💙🥰`
     ]),
@@ -4018,7 +4018,7 @@ Qualquer coisa pra reagendar é só mandar mensagem! 🥰`
 Seu horário foi reagendado, fica tranquila(o)!
 
 📅 *${data}* às *${hora}*
-✂️ *${serv}*
+🔖 *${serv}*
 
 Qualquer dúvida pode chamar! 💙`,
       `*${nome}*, tudo resolvido! ✅
@@ -4027,7 +4027,7 @@ Novo horário marcado pra você:
 
 📅 *${data}*
 ⏰ *${hora}*
-✂️ *${serv}*
+🔖 *${serv}*
 
 Te espero! 😊💙`
     ]),

@@ -26,7 +26,7 @@ window.RebecaOnboarding = (() => {
     agenda: [
       { id: 'empresa',   icon: '🏢', label: 'Configurar empresa',        desc: 'Nome, logo e cor da marca' },
       { id: 'whatsapp',  icon: '💬', label: 'Conectar WhatsApp',         desc: 'Ativar atendimento automático' },
-      { id: 'servico',   icon: '✂️',  label: 'Adicionar serviços',        desc: 'O que você oferece e os preços' },
+      { id: 'servico',   icon: '🔖',  label: 'Adicionar serviços',        desc: 'O que você oferece e os preços' },
       { id: 'agenda',    icon: '📅', label: 'Configurar agenda',          desc: 'Horários e disponibilidade' },
       { id: 'equipe',    icon: '👥', label: 'Cadastrar equipe',           desc: 'Profissionais e permissões' },
       { id: 'primeiro',  icon: '🎉', label: 'Primeiro agendamento',       desc: 'Receber o primeiro cliente' },

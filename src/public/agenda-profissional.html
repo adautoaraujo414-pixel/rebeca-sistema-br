@@ -464,7 +464,7 @@ function renderizarLista(elId, lista, mostrarAviso) {
         '<span class="ag-badge ' + badgeClass + '">' + badgeText + '</span>' +
       '</div>' +
       '<div class="ag-cliente">👤 ' + (a.nomeCliente || 'Cliente') + '</div>' +
-      '<div class="ag-servico">✂️ ' + (a.nomeServico || 'Serviço não informado') + '</div>' +
+      '<div class="ag-servico">🔖 ' + (a.nomeServico || 'Serviço não informado') + '</div>' +
       (a.preco ? '<div class="ag-preco">💰 R$ ' + Number(a.preco).toFixed(2) + '</div>' : '') +
       (a.observacoes ? '<div class="ag-obs">"' + a.observacoes + '"</div>' : '') +
       (a.status !== 'cancelado' ? '<div style="display:flex;gap:8px;margin-top:10px">' +
@@ -499,7 +499,7 @@ function renderizarListaAgrupada(elId, lista) {
           '<span class="ag-badge ' + statusClass + '">' + (a.status === 'confirmado' ? '✓ Confirmado' : '⏳ Pendente') + '</span>' +
         '</div>' +
         '<div class="ag-cliente">👤 ' + (a.nomeCliente || 'Cliente') + '</div>' +
-        '<div class="ag-servico">✂️ ' + (a.nomeServico || '') + '</div>' +
+        '<div class="ag-servico">🔖 ' + (a.nomeServico || '') + '</div>' +
         (a.preco ? '<div class="ag-preco">💰 R$ ' + Number(a.preco).toFixed(2) + '</div>' : '') +
       '</div>';
     });
