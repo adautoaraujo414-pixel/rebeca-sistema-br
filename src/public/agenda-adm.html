@@ -1886,6 +1886,7 @@ document.querySelectorAll('.nav-item').forEach(item => {
       </div>
       <div class="form-group"><label class="form-label">Nome completo</label><input class="form-input" id="prf-nome" placeholder="Nome do profissional"></div>
       <div class="form-group"><label class="form-label">Cargo / Especialidade</label><input class="form-input" id="prf-cargo" placeholder="Ex: Barbeiro, Cabeleireira..."></div>
+      <div class="form-group"><label class="form-label">Especialidades (separadas por vírgula)</label><input class="form-input" id="prf-especialidades" placeholder="Ex: Corte masculino, Barba, Nevou..."></div>
       <div class="form-group"><label class="form-label">WhatsApp do profissional</label><input class="form-input" id="prf-tel" placeholder="(00) 00000-0000"></div>
       <div class="form-group"><label class="form-label">Comissão (%) — sobre cada atendimento concluído</label><input class="form-input" id="prf-comissao" type="number" step="0.1" placeholder="Ex: 40"></div>
       <div class="form-group" id="prf-senha-grupo">
@@ -2769,6 +2770,7 @@ async function salvarProfissional(){
   const payload = {
     nome: document.getElementById('prf-nome').value.trim(),
     cargo: document.getElementById('prf-cargo').value.trim(),
+    especialidades: document.getElementById('prf-especialidades').value.split(',').map(s=>s.trim()).filter(Boolean),
     telefone: document.getElementById('prf-tel').value.trim(),
     comissaoPercentual: parseFloat(document.getElementById('prf-comissao').value) || 0
   };
@@ -2958,6 +2960,7 @@ function abrirModalProfissional(){
   document.getElementById('prf-id').value = '';
   document.getElementById('prf-nome').value = '';
   document.getElementById('prf-cargo').value = '';
+  document.getElementById('prf-especialidades').value = '';
   document.getElementById('prf-tel').value = '';
   document.getElementById('prf-comissao').value = '';
   document.getElementById('prf-senha').value = '';
@@ -2977,6 +2980,7 @@ function editarProfissional(id){
   document.getElementById('prf-id').value = p._id;
   document.getElementById('prf-nome').value = p.nome || '';
   document.getElementById('prf-cargo').value = p.cargo || '';
+  document.getElementById('prf-especialidades').value = (p.especialidades||[]).join(', ');
   document.getElementById('prf-tel').value = p.telefone || '';
   document.getElementById('prf-comissao').value = p.comissaoPercentual || '';
   [0,1,2,3].forEach(function(x){ var el=document.getElementById('prf-pin'+x); if(el) el.value=''; });
