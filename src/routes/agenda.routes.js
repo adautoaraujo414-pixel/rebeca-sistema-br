@@ -1088,4 +1088,132 @@ router.get('/crm/clientes-inativos', authAgenda, async (req, res) => {
 });
 
 
+
+// ===== CONEXAO COM CLIENTES =====
+const { ConexaoClienteAgenda, MensagemModeloAgenda } = require('../models/AgendaServico');
+
+// GET /conexao/dashboard-conexao
+router.get('/conexao/dashboard-conexao', authAgenda, async (req, res) => {
+  try {
+    const adminId = req.adminAgendaId;
+    const iniHoje = _iniDia(); const fimHoje = _fimDia();
+    const ini30 = new Date(); ini30.setDate(ini30.getDate() - 30);
+
+    const [posHoje, agradPend, avalPend, semResp, insatisfeitos, inativos] = await Promise.all([
+      AgendamentoAgenda.countDocuments({ adminId, dataHora: { $gte: iniHoje, $lte: fimHoje }, status: 'concluido' }),
+      ConexaoClienteAgenda.countDocuments({ adminId, categoria: { $in: ['agradecimento','pos_atendimento'] }, statusContato: 'sugerido' }),
+      ConexaoClienteAgenda.countDocuments({ adminId, categoria: 'avaliacao', statusContato: 'sugerido' }),
+      ConexaoClienteAgenda.countDocuments({ adminId, statusContato: 'sem_resposta' }),
+      ConexaoClienteAgenda.countDocuments({ adminId, statusContato: 'insatisfeito' }),
+      ClienteAgenda.countDocuments({ adminId, ultimoAtendimento: { $lte: ini30 } })
+    ]);
+
+    res.json({ sucesso: true, cards: {
+      posAtendimentosHoje: posHoje,
+      agradecimentosPendentes: agradPend,
+      avaliacoesPendentes: avalPend,
+      semResposta: semResp,
+      insatisfeitos,
+      inativos30: inativos
+    }});
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// GET /conexao/sugestoes
+router.get('/conexao/sugestoes', authAgenda, async (req, res) => {
+  try {
+    const adminId = req.adminAgendaId;
+    const admin = req.adminAgenda;
+    const msgRetorno = admin.config?.mensagemRetorno || 'Olá {nome}! Faz um tempinho que não te vejo por aqui 😊 Que tal agendar um horário?';
+
+    // Agendamentos concluidos nas ultimas 48h sem conexao registrada
+    const ini48 = new Date(); ini48.setHours(ini48.getHours() - 48);
+    const agRecentes = await AgendamentoAgenda.find({
+      adminId, status: 'concluido', dataHora: { $gte: ini48 }
+    }).sort({ dataHora: -1 }).limit(30);
+
+    // Clientes inativos 30d
+    const ini30 = new Date(); ini30.setDate(ini30.getDate() - 30);
+    const inativos = await ClienteAgenda.find({
+      adminId, ultimoAtendimento: { $lte: ini30 }, telefone: { $exists: true, $ne: '' }
+    }).sort({ ultimoAtendimento: 1 }).limit(20);
+
+    const sugestoes = [];
+
+    for (const ag of agRecentes) {
+      const jaRegistrado = await ConexaoClienteAgenda.findOne({ adminId, agendamentoId: ag._id });
+      if (jaRegistrado) continue;
+      const diasAtras = Math.floor((Date.now() - new Date(ag.dataHora)) / 86400000);
+      const primeiroNome = (ag.nomeCliente || '').split(' ')[0] || 'Cliente';
+      sugestoes.push({
+        clienteId: ag.clienteId,
+        agendamentoId: ag._id,
+        nome: ag.nomeCliente,
+        telefone: ag.telefoneCliente,
+        ultimoServico: ag.nomeServico,
+        ultimoAtendimento: ag.dataHora,
+        profissional: ag.nomeProfissional,
+        categoria: 'pos_atendimento',
+        prioridade: diasAtras === 0 ? 'alta' : 'media',
+        diasAtras,
+        mensagem: `Olá ${primeiroNome}! Tudo bem? Foi um prazer te atender${ag.nomeServico ? ' com ' + ag.nomeServico : ''} 😊 Qualquer dúvida, estou por aqui!`
+      });
+    }
+
+    for (const c of inativos) {
+      const diasAtras = Math.floor((Date.now() - new Date(c.ultimoAtendimento)) / 86400000);
+      const primeiroNome = (c.nome || '').split(' ')[0] || 'Cliente';
+      sugestoes.push({
+        clienteId: c._id,
+        nome: c.nome,
+        telefone: c.telefone,
+        ultimoAtendimento: c.ultimoAtendimento,
+        categoria: 'cliente_inativo',
+        prioridade: diasAtras > 60 ? 'alta' : 'media',
+        diasAtras,
+        mensagem: msgRetorno.replace('{nome}', primeiroNome)
+      });
+    }
+
+    res.json({ sucesso: true, sugestoes });
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// POST /conexao/conexoes
+router.post('/conexao/conexoes', authAgenda, async (req, res) => {
+  try {
+    const { clienteId, agendamentoId, nome, telefone, ultimoServico, ultimoAtendimento, profissional, categoria, mensagemEnviada } = req.body;
+    if (!nome || !telefone) return res.status(400).json({ erro: 'Nome e telefone obrigatórios' });
+    const cx = await ConexaoClienteAgenda.create({
+      adminId: req.adminAgendaId,
+      clienteId: clienteId || undefined,
+      agendamentoId: agendamentoId || undefined,
+      nome, telefone, ultimoServico,
+      ultimoAtendimento: ultimoAtendimento ? new Date(ultimoAtendimento) : undefined,
+      profissional, categoria: categoria || 'pos_atendimento',
+      mensagemEnviada, statusContato: 'enviado', enviadoEm: new Date()
+    });
+    res.json({ sucesso: true, conexao: cx });
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// GET /conexao/modelos
+router.get('/conexao/modelos', authAgenda, async (req, res) => {
+  try {
+    const modelos = await MensagemModeloAgenda.find({ adminId: req.adminAgendaId }).sort({ categoria: 1 });
+    // Se nao tem modelos, retorna padroes
+    if (!modelos.length) {
+      const padroes = [
+        { categoria: 'pos_atendimento', titulo: 'Pós-atendimento', mensagem: 'Olá {nome}! Foi um prazer te atender 😊 Qualquer dúvida, estou por aqui!' },
+        { categoria: 'avaliacao', titulo: 'Pedido de avaliação', mensagem: 'Olá {nome}! O que achou do atendimento? Sua opinião é muito importante para nós ⭐' },
+        { categoria: 'cliente_inativo', titulo: 'Reativação de inativo', mensagem: 'Olá {nome}! Faz um tempinho que não te vejo por aqui 😊 Que tal agendar um horário?' },
+        { categoria: 'aniversario', titulo: 'Aniversário', mensagem: 'Olá {nome}! Hoje é seu dia especial 🎂 Parabéns! Temos um presente especial para você!' },
+      ];
+      return res.json({ sucesso: true, modelos: padroes, total: padroes.length });
+    }
+    res.json({ sucesso: true, modelos, total: modelos.length });
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+
 module.exports = router;
