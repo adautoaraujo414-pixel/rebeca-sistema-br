@@ -974,4 +974,118 @@ router.put('/espaco/:adminId/minha-conta/reagendar/:agendamentoId', async (req, 
   } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
+
+// ===== CRM =====
+const { RetornoAgenda } = require('../models/AgendaServico');
+
+// GET /crm/dashboard
+router.get('/crm/dashboard', authAgenda, async (req, res) => {
+  try {
+    const adminId = req.adminAgendaId;
+    const hoje = new Date();
+    const iniHoje = _iniDia(); const fimHoje = _fimDia();
+    const ini30 = new Date(hoje); ini30.setDate(ini30.getDate() - 30);
+
+    const [pendentes, vencidos, contatosHoje, recuperados, inativos] = await Promise.all([
+      RetornoAgenda.countDocuments({ adminId, statusContato: 'pendente' }),
+      RetornoAgenda.countDocuments({ adminId, statusContato: 'pendente', proximoContatoEm: { $lte: fimHoje } }),
+      RetornoAgenda.countDocuments({ adminId, updatedAt: { $gte: iniHoje, $lte: fimHoje }, statusContato: { $in: ['contatado','agendado'] } }),
+      RetornoAgenda.countDocuments({ adminId, statusContato: 'agendado', updatedAt: { $gte: ini30 } }),
+      ClienteAgenda.countDocuments({ adminId, ultimoAtendimento: { $lte: ini30 } })
+    ]);
+
+    res.json({ sucesso: true, cards: {
+      retornosPendentes: pendentes,
+      retornosHoje: vencidos,
+      contatosHoje,
+      agendamentosRecuperados: recuperados,
+      clientesInativos30: inativos
+    }});
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// GET /crm/retornos
+router.get('/crm/retornos', authAgenda, async (req, res) => {
+  try {
+    const { status } = req.query;
+    const filtro = { adminId: req.adminAgendaId };
+    if (status) filtro.statusContato = status;
+    const retornos = await RetornoAgenda.find(filtro).sort({ proximoContatoEm: 1, createdAt: -1 }).limit(100);
+    const admin = req.adminAgenda;
+    const diasInativo = admin.config?.diasRetornoInativo || 30;
+    const msgPadrao = admin.config?.mensagemRetorno || 'Olá {nome}! Faz um tempinho que não te vejo por aqui 😊 Que tal agendar um horário?';
+
+    const lista = retornos.map(r => {
+      const dias = r.ultimoAtendimentoEm ? Math.floor((Date.now() - new Date(r.ultimoAtendimentoEm)) / 86400000) : null;
+      const msg = msgPadrao.replace('{nome}', r.nome.split(' ')[0]);
+      return { ...r.toObject(), diasSemVir: dias, msgSugerida: msg };
+    });
+
+    res.json({ sucesso: true, retornos: lista });
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// POST /crm/retornos
+router.post('/crm/retornos', authAgenda, async (req, res) => {
+  try {
+    const { clienteId, nome, telefone, tipoRetorno, ultimoServico, ultimoAtendimentoEm, observacaoRetorno } = req.body;
+    if (!nome || !telefone) return res.status(400).json({ erro: 'Nome e telefone obrigatórios' });
+    const ret = await RetornoAgenda.create({
+      adminId: req.adminAgendaId,
+      clienteId: clienteId || undefined,
+      nome, telefone,
+      tipoRetorno: tipoRetorno || 'retorno',
+      ultimoServico, ultimoAtendimentoEm, observacaoRetorno,
+      proximoContatoEm: new Date()
+    });
+    res.json({ sucesso: true, retorno: ret });
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// PATCH /crm/retornos/:id/status
+router.patch('/crm/retornos/:id/status', authAgenda, async (req, res) => {
+  try {
+    const { status, obs } = req.body;
+    const ret = await RetornoAgenda.findOne({ _id: req.params.id, adminId: req.adminAgendaId });
+    if (!ret) return res.status(404).json({ erro: 'Não encontrado' });
+    ret.statusContato = status;
+    ret.updatedAt = new Date();
+    ret.historicoContatos.push({ data: new Date(), status, obs: obs || '' });
+    // Se agendado, marca próximo contato em X dias (config do admin)
+    if (status === 'contatado') {
+      const dias = req.adminAgenda.config?.diasRetornoInativo || 30;
+      const prox = new Date(); prox.setDate(prox.getDate() + dias);
+      ret.proximoContatoEm = prox;
+    }
+    await ret.save();
+    res.json({ sucesso: true });
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// GET /crm/clientes-inativos
+router.get('/crm/clientes-inativos', authAgenda, async (req, res) => {
+  try {
+    const dias = parseInt(req.query.dias) || req.adminAgenda.config?.diasRetornoInativo || 30;
+    const corte = new Date(); corte.setDate(corte.getDate() - dias);
+    const admin = req.adminAgenda;
+    const msgPadrao = admin.config?.mensagemRetorno || 'Olá {nome}! Faz um tempinho que não te vejo por aqui 😊 Que tal agendar um horário?';
+
+    const clientes = await ClienteAgenda.find({
+      adminId: req.adminAgendaId,
+      ultimoAtendimento: { $lte: corte },
+      telefone: { $exists: true, $ne: '' }
+    }).sort({ ultimoAtendimento: 1 }).limit(100);
+
+    const lista = clientes.map(c => {
+      const diasSemVir = Math.floor((Date.now() - new Date(c.ultimoAtendimento)) / 86400000);
+      const msg = msgPadrao.replace('{nome}', c.nome.split(' ')[0]);
+      const acao = diasSemVir > 90 ? 'inativo' : diasSemVir > 60 ? 'manutencao' : 'retorno';
+      return { ...c.toObject(), diasSemVir, msgSugerida: msg, acaoRecomendada: acao };
+    });
+
+    res.json({ sucesso: true, total: lista.length, clientes: lista });
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+
 module.exports = router;
