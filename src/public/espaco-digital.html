@@ -340,7 +340,7 @@ input,select{font-family:var(--font-body)}
   <div class="container">
     <div class="header-inner">
       <div class="header-logo">
-        <div class="header-logo-icon">🗓</div>
+        <div class="header-logo-icon" id="h-logo-icon">🗓</div>
         <div>
           <div class="header-logo-text" id="h-nome">Agenda Digital</div>
           <div class="header-logo-sub" id="h-sub">Agenda Digital</div>
@@ -748,6 +748,10 @@ function renderHeader(p){
   document.getElementById('h-nome').textContent=nome;
   document.getElementById('f-nome').textContent=nome;
   document.getElementById('h-sub').textContent=p.segmento||'Espaço Digital';
+  if(p.logo){
+    var li=document.getElementById('h-logo-icon');
+    if(li){ li.innerHTML='<img src="'+p.logo+'" alt="'+nome+'" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">'; }
+  }
   var hb=document.getElementById('hero-badge');if(hb)hb.textContent='🗓 '+nome;
   var fs=document.getElementById('f-sub');if(fs)fs.textContent=p.segmento||'Espaço Digital';
   if(p.whatsapp){
