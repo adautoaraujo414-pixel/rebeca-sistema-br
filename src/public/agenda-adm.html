@@ -1588,6 +1588,22 @@ document.querySelectorAll('.nav-item').forEach(item => {
         </div>
         <div class="form-card" id="form-config">
           <div class="form-section-title">Dados do negócio</div>
+          <div class="form-row" style="margin-bottom:18px">
+            <div>
+              <label class="form-label">Logo do negócio</label>
+              <div style="display:flex;align-items:center;gap:16px;margin-top:6px">
+                <div id="cfg-logo-preview-wrap" style="width:72px;height:72px;border-radius:14px;background:var(--cor3);display:flex;align-items:center;justify-content:center;overflow:hidden;border:1px solid var(--borda);flex-shrink:0">
+                  <img id="cfg-logo-preview" src="" alt="Logo" style="width:100%;height:100%;object-fit:cover;display:none">
+                  <span id="cfg-logo-placeholder" style="font-size:1.6em">🏷️</span>
+                </div>
+                <div>
+                  <input type="file" id="cfg-logo-input" accept="image/*" style="display:none" onchange="uploadLogoNegocio(this)">
+                  <button type="button" class="btn-secondary" onclick="document.getElementById('cfg-logo-input').click()" id="cfg-logo-btn">Enviar logo</button>
+                  <div style="font-size:.75em;color:var(--texto3);margin-top:6px">PNG ou JPG, recomendado 512x512px</div>
+                </div>
+              </div>
+            </div>
+          </div>
           <div class="form-row cols-2">
             <div><label class="form-label">Nome do negócio</label><input class="form-input" id="cfg-nome" placeholder="Ex: Barbearia Adauto"></div>
             <div><label class="form-label">Segmento</label><input class="form-input" id="cfg-segmento" placeholder="Ex: Barbearia, Salão..."></div>
@@ -1632,17 +1648,6 @@ document.querySelectorAll('.nav-item').forEach(item => {
             <div>
               <label class="form-label">Mensagem de retorno (use {nome} para o nome do cliente)</label>
               <textarea class="form-textarea" id="cfg-msg-retorno" placeholder="Olá {nome}! Faz um tempinho que não te vejo por aqui 😊 Que tal agendar um horário?"></textarea>
-            </div>
-          </div>
-          <div class="form-section-title" style="margin-top:16px">📋 CRM — Retorno de clientes</div>
-          <div class="form-row cols-2">
-            <div>
-              <label class="form-label">Dias sem vir para considerar inativo</label>
-              <input class="form-input" type="number" id="cfg-dias-retorno" min="7" max="365" value="30" placeholder="Ex: 30">
-            </div>
-            <div>
-              <label class="form-label">Mensagem de retorno (use {nome} para o nome)</label>
-              <textarea class="form-textarea" id="cfg-msg-retorno" placeholder="Olá {nome}! Faz um tempinho que não te vejo 😊 Que tal agendar?"></textarea>
             </div>
           </div>
           <div class="form-btns">
@@ -2189,6 +2194,50 @@ async function api(path, opts={}){
     return null;
   }
 }
+async function uploadLogoNegocio(input){
+  const file = input.files && input.files[0];
+  if(!file) return;
+  if(!file.type.startsWith('image/')){ toast('Selecione um arquivo de imagem'); return; }
+  if(file.size > 5*1024*1024){ toast('Imagem muito grande (máx 5MB)'); return; }
+  const btn = document.getElementById('cfg-logo-btn');
+  const textoOriginal = btn.textContent;
+  btn.textContent = 'Enviando...';
+  btn.disabled = true;
+  try {
+    const fd = new FormData();
+    fd.append('foto', file);
+    const r = await fetch(BASE.replace('/api/agenda','/api/agenda-upload')+'/logo', {
+      method:'POST',
+      headers:{'Authorization':'Bearer '+(localStorage.getItem('agenda_token')||TOKEN)},
+      body: fd
+    });
+    const d = await r.json().catch(()=>({}));
+    if(!r.ok || !d.sucesso){ toast('Erro ao enviar logo: '+(d.erro||r.status)); return; }
+    aplicarLogoNoPainel(d.url);
+    toast('Logo atualizada ✅');
+  } catch(e){
+    toast('Falha de rede ao enviar logo');
+  } finally {
+    btn.textContent = textoOriginal;
+    btn.disabled = false;
+    input.value = '';
+  }
+}
+function aplicarLogoNoPainel(url){
+  const prev = document.getElementById('cfg-logo-preview');
+  const ph = document.getElementById('cfg-logo-placeholder');
+  if(prev){ prev.src = url; prev.style.display='block'; }
+  if(ph){ ph.style.display='none'; }
+  document.querySelectorAll('.sidebar-logo-icon').forEach(function(el){
+    el.innerHTML = '<img src="'+url+'" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">';
+  });
+}
+(async function(){
+  try {
+    const p = await api('/perfil');
+    if(p && p.admin && p.admin.logo){ aplicarLogoNoPainel(p.admin.logo); }
+  } catch(e){}
+})();
 
 // ─── AUTENTICAÇÃO ───
 async function fazerLogin(){
