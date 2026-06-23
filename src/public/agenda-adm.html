@@ -1618,6 +1618,15 @@ document.querySelectorAll('.nav-item').forEach(item => {
           <div class="form-row">
             <div><label class="form-label">Descrição</label><textarea class="form-textarea" id="cfg-desc" placeholder="Descreva seu negócio..."></textarea></div>
           </div>
+          <div class="form-section-title" style="margin-top:16px">📸 Conheça nosso espaço (galeria pública)</div>
+          <div style="margin-bottom:18px">
+            <div style="font-size:.78em;color:var(--texto3);margin-bottom:10px">Fotos do seu estabelecimento exibidas na página pública de agendamento.</div>
+            <div id="cfg-galeria-grid" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px"></div>
+            <input type="file" id="cfg-galeria-input" accept="image/*" multiple style="display:none" onchange="uploadFotosGaleria(this)">
+            <button type="button" class="btn-secondary" onclick="document.getElementById('cfg-galeria-input').click()" id="cfg-galeria-btn">📷 Adicionar fotos</button>
+            <div style="font-size:.74em;color:var(--texto3);margin-top:6px">Você pode selecionar várias fotos de uma vez.</div>
+          </div>
+
           <div class="form-section-title" style="margin-top:16px">Horários de funcionamento</div>
           <div class="form-row cols-2">
             <div><label class="form-label">Abertura</label><input class="form-input" type="time" id="cfg-ab" value="08:00"></div>
@@ -2232,6 +2241,64 @@ function aplicarLogoNoPainel(url){
     el.innerHTML = '<img src="'+url+'" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">';
   });
 }
+
+let CFG_GALERIA = [];
+async function carregarGaleriaFotos(){
+  try {
+    const r = await api('/fotos');
+    if(r && r.sucesso){
+      CFG_GALERIA = r.fotos || [];
+      renderGaleriaFotos();
+    }
+  } catch(e){}
+}
+function renderGaleriaFotos(){
+  const el = document.getElementById('cfg-galeria-grid');
+  if(!el) return;
+  if(!CFG_GALERIA.length){ el.innerHTML = '<div style="font-size:.78em;color:var(--texto3)">Nenhuma foto cadastrada ainda.</div>'; return; }
+  el.innerHTML = CFG_GALERIA.map(function(f){
+    return '<div style="position:relative;width:84px;height:84px">' +
+      '<img src="'+f.url+'" style="width:100%;height:100%;object-fit:cover;border-radius:10px;border:1px solid var(--borda)">' +
+      '<button onclick="removerFotoGaleria(\''+f._id+'\')" title="Remover" style="position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:50%;background:var(--vermelho);color:#fff;border:none;cursor:pointer;font-size:.75em;line-height:1">✕</button>' +
+    '</div>';
+  }).join('');
+}
+async function uploadFotosGaleria(input){
+  const files = input.files;
+  if(!files || !files.length) return;
+  const btn = document.getElementById('cfg-galeria-btn');
+  const textoOriginal = btn.textContent;
+  let enviados = 0;
+  btn.disabled = true;
+  for(const file of files){
+    if(!file.type.startsWith('image/')) continue;
+    if(file.size > 5*1024*1024){ toast('Imagem "'+file.name+'" muito grande (máx 5MB)'); continue; }
+    btn.textContent = 'Enviando ('+(enviados+1)+'/'+files.length+')...';
+    try {
+      const fd = new FormData();
+      fd.append('foto', file);
+      const r = await fetch(BASE.replace('/api/agenda','/api/agenda-upload')+'/fotos', {
+        method:'POST',
+        headers:{'Authorization':'Bearer '+(localStorage.getItem('agenda_token')||TOKEN)},
+        body: fd
+      });
+      const d = await r.json().catch(()=>({}));
+      if(r.ok && d.sucesso){ enviados++; }
+    } catch(e){}
+  }
+  btn.textContent = textoOriginal;
+  btn.disabled = false;
+  input.value = '';
+  if(enviados > 0){ toast(enviados+' foto(s) adicionada(s) ✅'); carregarGaleriaFotos(); }
+}
+async function removerFotoGaleria(id){
+  if(!confirm('Remover esta foto da galeria pública?')) return;
+  try {
+    const r = await api('/fotos/'+id, { method: 'DELETE' });
+    if(r && r.sucesso){ toast('Foto removida'); carregarGaleriaFotos(); }
+  } catch(e){ toast('Erro ao remover foto'); }
+}
+carregarGaleriaFotos();
 (async function(){
   try {
     const p = await api('/perfil');
