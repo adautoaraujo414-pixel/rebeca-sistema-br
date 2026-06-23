@@ -379,6 +379,15 @@ router.post('/espaco/:adminId/agendar', async (req, res) => {
       valor: ag.preco
     }).catch(e => console.error('[Agenda] Erro notif dono:', e.message));
 
+    // Notificar profissional via WhatsApp (se houver profissional vinculado)
+    if (profissionalId) {
+      ModoDono.notificarProfissionalNovoAgendamento(req.params.adminId, profissionalId, {
+        nomeCliente: ag.nomeCliente,
+        nomeServico: ag.nomeServico,
+        dataHora: ag.dataHora
+      }).catch(e => console.error('[Agenda] Erro notif profissional:', e.message));
+    }
+
     // Notificar cliente via WhatsApp (template Meta - obrigatorio pois cliente nunca escreveu antes, fora da janela de 24h)
     if (telCliente) {
       (async () => {
