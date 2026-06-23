@@ -1405,6 +1405,16 @@ document.querySelectorAll('.nav-item').forEach(item => {
             <tbody id="tabela-agendamentos"><tr><td colspan="6" style="text-align:center;padding:32px;color:var(--texto3)">Carregando...</td></tr></tbody>
           </table>
         </div>
+        <div class="form-card" style="margin-top:24px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+            <div>
+              <div style="font-weight:700;font-size:1.05em">📋 Fila de Encaixe</div>
+              <div style="font-size:.8em;color:var(--texto3)">Clientes esperando um horário liberar</div>
+            </div>
+            <button class="btn-secondary" onclick="abrirModalFilaEncaixe()" style="padding:8px 14px;font-size:.85em">+ Adicionar à fila</button>
+          </div>
+          <div id="lista-fila-encaixe"><div style="color:var(--texto3);font-size:.85em">Carregando...</div></div>
+        </div>
       </div>
 
       <!-- ═══ CLIENTES ═══ -->
@@ -1958,6 +1968,51 @@ document.querySelectorAll('.nav-item').forEach(item => {
   </div>
 </div>
 
+<div class="modal-bg" id="modal-fila-encaixe">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-titulo">📋 Adicionar à Fila de Encaixe</div>
+      <button class="modal-close" onclick="fecharModal('modal-fila-encaixe')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Nome do cliente *</label>
+        <input class="form-input" id="fila-nome" placeholder="Nome completo">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Telefone (WhatsApp) *</label>
+        <input class="form-input" id="fila-telefone" placeholder="(11) 99999-9999">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Serviço desejado</label>
+        <select class="form-input" id="fila-servico">
+          <option value="">Qualquer serviço</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Profissional preferido</label>
+        <select class="form-input" id="fila-profissional">
+          <option value="">Qualquer profissional</option>
+        </select>
+      </div>
+      <div class="form-group" style="display:flex;gap:10px">
+        <div style="flex:1">
+          <label class="form-label">Data preferida</label>
+          <input class="form-input" id="fila-data" type="date">
+        </div>
+        <div style="flex:1">
+          <label class="form-label">Horário preferido</label>
+          <input class="form-input" id="fila-horario" type="time">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="fecharModal('modal-fila-encaixe')">Cancelar</button>
+      <button class="btn-primary" onclick="salvarFilaEncaixe()">Adicionar à fila</button>
+    </div>
+  </div>
+</div>
+
 <script src="/js/rebeca-polling.js"></script>
 <script src="/js/rebeca-tenant.js"></script>
 <script src="/js/rebeca-security.js"></script>
@@ -2461,7 +2516,7 @@ function irPara(tela){
   const bnEl = document.getElementById(bnMap[tela]);
   if(bnEl) bnEl.classList.add('ativo');
   window.scrollTo(0,0);
-  if(tela==='agendamentos') carregarTabelaAgendamentos();
+  if(tela==='agendamentos') carregarTabelaAgendamentos(); carregarFilaEncaixe();
   if(tela==='clientes') carregarTabelaClientes();
   if(tela==='profissionais') carregarGridProfissionais();
   if(tela==='servicos') carregarTabelaServicos();
@@ -2531,6 +2586,7 @@ async function carregarTabelaClientes(){
 
 var PROFISSIONAIS_CACHE = [];
 var REL_PROF_ID = null;
+var FILA_ENCAIXE_ID = null;
 async function carregarGridProfissionais(){
   const el = document.getElementById('grid-profissionais');
   el.innerHTML = '<div style="color:var(--texto3);font-size:.85em">Carregando...</div>';
@@ -2602,6 +2658,105 @@ async function carregarRelatorioProfissional(){
     }).join('');
   } catch(e){ lista.innerHTML = '<div style="color:var(--vermelho);font-size:.85em">Erro ao carregar relat\u00f3rio.</div>'; }
 }
+
+async function carregarFilaEncaixe(){
+  const el = document.getElementById('lista-fila-encaixe');
+  if(!el) return;
+  el.innerHTML = '<div style="color:var(--texto3);font-size:.85em">Carregando...</div>';
+  try {
+    const d = await api('/fila-encaixe');
+    const fila = d?.fila || [];
+    if(!fila.length){
+      el.innerHTML = '<div class="empty-state" style="padding:20px 0"><div class="empty-state-icon">\u2705</div><div class="empty-state-titulo">Fila vazia</div><div class="empty-state-sub">Nenhum cliente aguardando encaixe</div></div>';
+      return;
+    }
+    el.innerHTML = fila.map(f => {
+      const dataFmt = f.dataPreferida ? new Date(f.dataPreferida).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric'}) : '';
+      const horFmt = f.horarioPreferido || '';
+      const srv = f.servicoId?.nome || '';
+      const prof = f.profissionalId?.nome || '';
+      const badge = f.status === 'notificado'
+        ? '<span style="background:var(--amarelo);color:#000;font-size:.7em;padding:2px 7px;border-radius:20px;font-weight:700">Notificado</span>'
+        : '<span style="background:var(--cor3);color:var(--texto3);font-size:.7em;padding:2px 7px;border-radius:20px">Aguardando</span>';
+      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--borda);gap:10px">' +
+        '<div style="flex:1">' +
+          '<div style="font-weight:600">' + f.nomeCliente + ' ' + badge + '</div>' +
+          '<div style="font-size:.78em;color:var(--texto3);margin-top:3px">' +
+            (srv ? '\ud83d\udd16 ' + srv + '  ' : '') +
+            (prof ? '\ud83d\udc64 ' + prof + '  ' : '') +
+            (dataFmt ? '\ud83d\udcc5 ' + dataFmt + (horFmt ? ' \u00e0s ' + horFmt : '') : '') +
+          '</div>' +
+          '<div style="font-size:.78em;color:var(--texto3)">\ud83d\udcf1 ' + f.telefoneCliente + '</div>' +
+        '</div>' +
+        '<div style="display:flex;gap:6px;flex-shrink:0">' +
+          '<button class="btn-tabela" onclick="notificarFilaEncaixe(\'' + f._id + '\',\'' + (horFmt||'') + '\')">\ud83d\udce8 Notificar</button>' +
+          '<button class="btn-tabela danger" onclick="removerFilaEncaixe(\'' + f._id + '\')">Remover</button>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  } catch(e){ el.innerHTML = '<div style="color:var(--vermelho);font-size:.85em">Erro ao carregar fila.</div>'; }
+}
+
+function abrirModalFilaEncaixe(){
+  document.getElementById('fila-nome').value = '';
+  document.getElementById('fila-telefone').value = '';
+  document.getElementById('fila-data').value = '';
+  document.getElementById('fila-horario').value = '';
+  const selSrv = document.getElementById('fila-servico');
+  selSrv.innerHTML = '<option value="">Qualquer servi\u00e7o</option>';
+  (window.SERVICOS_CACHE||[]).forEach(s => {
+    const o = document.createElement('option'); o.value = s._id; o.textContent = s.nome; selSrv.appendChild(o);
+  });
+  const selProf = document.getElementById('fila-profissional');
+  selProf.innerHTML = '<option value="">Qualquer profissional</option>';
+  (window.PROFISSIONAIS_CACHE||[]).forEach(p => {
+    const o = document.createElement('option'); o.value = p._id; o.textContent = p.nome; selProf.appendChild(o);
+  });
+  document.getElementById('modal-fila-encaixe').classList.add('open');
+  var sy=window.scrollY;document.body.style.position='fixed';document.body.style.top='-'+sy+'px';document.body.style.left='0';document.body.style.right='0';document.body.dataset.scrollY=sy;
+}
+
+async function salvarFilaEncaixe(){
+  const nome = document.getElementById('fila-nome').value.trim();
+  const tel = document.getElementById('fila-telefone').value.trim();
+  if(!nome || !tel){ alert('Nome e telefone s\u00e3o obrigat\u00f3rios.'); return; }
+  const payload = {
+    nomeCliente: nome,
+    telefoneCliente: tel,
+    servicoId: document.getElementById('fila-servico').value || undefined,
+    profissionalId: document.getElementById('fila-profissional').value || undefined,
+    dataPreferida: document.getElementById('fila-data').value || undefined,
+    horarioPreferido: document.getElementById('fila-horario').value || undefined,
+  };
+  try {
+    const r = await api('/fila-encaixe', {method:'POST', body:JSON.stringify(payload)});
+    if(!r?.sucesso) throw new Error(r?.erro||'Erro');
+    fecharModal('modal-fila-encaixe');
+    carregarFilaEncaixe();
+  } catch(e){ alert('Erro ao salvar: ' + e.message); }
+}
+
+async function notificarFilaEncaixe(id, horario){
+  if(!confirm('Notificar o pr\u00f3ximo da fila sobre o hor\u00e1rio ' + (horario||'dispon\u00edvel') + '?')) return;
+  try {
+    const r = await api('/fila-encaixe/notificar/' + encodeURIComponent(horario||'disponivel'), {
+      method:'POST', body:JSON.stringify({ horario: horario||'dispon\u00edvel' })
+    });
+    if(!r?.sucesso) throw new Error(r?.erro||'Erro');
+    alert('Cliente notificado via WhatsApp!');
+    carregarFilaEncaixe();
+  } catch(e){ alert('Erro ao notificar: ' + e.message); }
+}
+
+async function removerFilaEncaixe(id){
+  if(!confirm('Remover este cliente da fila?')) return;
+  try {
+    const r = await api('/fila-encaixe/' + id, {method:'DELETE'});
+    if(!r?.sucesso) throw new Error(r?.erro||'Erro');
+    carregarFilaEncaixe();
+  } catch(e){ alert('Erro ao remover: ' + e.message); }
+}
+
 async function carregarTabelaServicos(){
   const tbody = document.getElementById('tabela-servicos');
   tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--texto3)">Carregando...</td></tr>';
