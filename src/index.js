@@ -560,12 +560,11 @@ if (RODAR_CRONS) setInterval(async () => {
         }
     } catch(e) { console.log('[REATIVAR] Erro:', e.message); }
 }, 60 * 60 * 1000);
-console.log('✅ Cron reativação de clientes ativo');
+if (RODAR_CRONS) console.log(RODAR_CRONS ? '✅ Cron reativação de clientes ativo' : '⏸️  Cron reativação de clientes (desativado neste processo - WORKER_ROLE=web)');
 
 // Agenda — lembretes de agendamento
 const AgendamentoService = require('./services/agendamento.service');
-if (RODAR_CRONS) AgendamentoService.iniciarCron();
-console.log('✅ Cron agendamentos ativo');
+if (RODAR_CRONS) { AgendamentoService.iniciarCron(); console.log(RODAR_CRONS ? '✅ Cron agendamentos ativo' : '⏸️  Cron agendamentos (desativado neste processo - WORKER_ROLE=web)'); }
 
 // Delivery — trial e cardápio
 const DeliveryTrialService = require('./services/delivery-trial.service');
@@ -574,9 +573,9 @@ if (RODAR_CRONS) {
   cron.schedule('0 6 * * *', () => DeliveryTrialService.verificarTrialsVencidos());
   cron.schedule('0 10 * * *', () => CardapioDiaService.perguntarCardapioAdms());
   DeliveryTrialService.verificarTrialsVencidos();
+  console.log('✅ Cron delivery trial ativo');
+  console.log('✅ Cron cardápio do dia ativo (7h)');
 }
-console.log('✅ Cron delivery trial ativo');
-console.log('✅ Cron cardápio do dia ativo (7h)');
 
 // Agenda — lembretes pessoais e modo dono
 const ModoDono = require('./services/agenda-modo-dono.service');
@@ -594,9 +593,8 @@ if (RODAR_CRONS) {
   cron.schedule('0 9 * * *',  () => ModoDono.rodarSaudadeRebeca(), { timezone: 'America/Sao_Paulo' });
   cron.schedule('0 14 * * *', () => ModoDono.rodarSaudadeRebeca(), { timezone: 'America/Sao_Paulo' });
   cron.schedule('0 20 * * *', () => ModoDono.rodarSaudadeRebeca(), { timezone: 'America/Sao_Paulo' });
+  console.log(RODAR_CRONS ? '✅ Cron lembretes dono (5min) + relatório diário (7h) + bom dia inteligente (7h) ativos' : '⏸️  Cron lembretes dono/relatório/bom dia (desativado neste processo - WORKER_ROLE=web)');
 }
-
-console.log('✅ Cron lembretes dono (5min) + relatório diário (7h) + bom dia inteligente (7h) ativos');
 
 
 
