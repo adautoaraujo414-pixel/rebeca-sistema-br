@@ -494,6 +494,7 @@ agendaSessaoSchema.index({ adminId: 1, telefone: 1 }, { unique: true });
 agendaSessaoSchema.index({ updatedAt: 1 }, { expireAfterSeconds: 7200 }); // TTL 2h
 
 module.exports = {
+  PushSubscriptionAgenda,
   FinanceiroAgenda,
   ContaPagarAgenda,
   FilaEncaixeAgenda,
