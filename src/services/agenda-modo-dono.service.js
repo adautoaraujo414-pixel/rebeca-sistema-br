@@ -126,9 +126,9 @@ function isDono(telefoneRemetente, admin) {
 async function _enviarMsg(instancia, numero, texto, instanciaResposta = null) {
   try {
     // Se veio do Meta WhatsApp API, usar MetaWA para responder
-    if (instancia._enviarVia === 'meta' || instancia.apiUrl === 'meta') {
+    if (instancia._enviarVia === 'meta' || instancia.provider === 'meta' || instancia.apiUrl === 'meta') {
       const MetaWA = require('./meta-whatsapp.service');
-      await MetaWA.enviarTexto(numero, texto);
+      await MetaWA.enviarTexto(numero, texto, instancia);
       console.log('[ModoDono] Mensagem enviada via Meta para', numero);
       return;
     }
@@ -3461,7 +3461,26 @@ async function notificarDonoNovoAgendamento(adminId, dadosAg) {
       `
 📊 Essa semana: ${totalSemana} agendamento(s) | R$ ${receitaSemana.toFixed(2).replace('.',',')}`;
 
-    await _enviarMsg(instancia, telDono, msg);
+    // Envia via template aprovado (garante entrega mesmo fora da janela de 24h)
+    if (instancia.provider === 'meta' || instancia._enviarVia === 'meta' || instancia.apiUrl === 'meta') {
+      const MetaWA = require('./meta-whatsapp.service');
+      const dataFmt = _fmtData(dataHora);
+      const horaFmt = _fmtHora(dataHora);
+      await MetaWA.enviarTemplate(telDono, 'novo_agendamento_dono', 'pt_BR', [
+        {
+          type: 'body',
+          parameters: [
+            { type: 'text', text: dadosAg.nomeCliente || 'Cliente' },
+            { type: 'text', text: dadosAg.nomeServico || 'Serviço' },
+            { type: 'text', text: dataFmt },
+            { type: 'text', text: horaFmt },
+            { type: 'text', text: dadosAg.nomeProfissional || 'Não informado' }
+          ]
+        }
+      ], instancia);
+    } else {
+      await _enviarMsg(instancia, telDono, msg);
+    }
   } catch(e) {
     console.error('[ModoDono] Erro ao notificar novo agendamento:', e.message);
   }
