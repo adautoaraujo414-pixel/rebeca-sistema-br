@@ -137,6 +137,13 @@ input,select{font-family:var(--font-body)}
 .aval-stars{color:#f59e0b;font-size:1.1rem;letter-spacing:2px}
 .aval-count{font-size:.82rem;color:var(--txt3);margin-top:2px}
 .aval-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+.galeria-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
+.galeria-item{aspect-ratio:4/3;border-radius:12px;overflow:hidden;cursor:pointer;background:var(--bg2)}
+.galeria-item img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .25s}
+.galeria-item:hover img{transform:scale(1.05)}
+.galeria-lightbox{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:9999;display:flex;align-items:center;justify-content:center;cursor:zoom-out}
+.galeria-lightbox img{max-width:92vw;max-height:88vh;border-radius:8px;object-fit:contain}
+.galeria-lightbox.hidden{display:none}
 .aval-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;transition:var(--transition)}
 .aval-card:hover{border-color:rgba(59,110,248,.2)}
 .aval-quote{font-size:2rem;color:var(--accent);opacity:.4;line-height:1;margin-bottom:8px;font-family:serif}
@@ -557,6 +564,16 @@ input,select{font-family:var(--font-body)}
     <div class="prof-grid" id="prof-grid"></div>
   </div>
 </section>
+<section id="galeria" class="section hidden">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-tag">Nosso espaço</div>
+      <h2 class="section-title">Conheça nosso espaço</h2>
+      <p class="section-sub">Veja um pouco do nosso ambiente e trabalhos.</p>
+    </div>
+    <div class="galeria-grid" id="galeria-grid"></div>
+  </div>
+</section>
 <section id="avaliacoes" class="section hidden">
   <div class="container">
     <div class="aval-header-row">
@@ -596,6 +613,7 @@ input,select{font-family:var(--font-body)}
         <div class="footer-links">
           <a href="#servicos">Serviços</a>
           <a href="#profissionais">Profissionais</a>
+          <a href="#galeria">Nosso espaço</a>
           <a href="#avaliacoes">Avaliações</a>
           <a href="#footer">Contato</a>
         </div>
@@ -717,6 +735,7 @@ async function init(){
     renderHero(perfil,avalList);
     renderSvcs(SERVICOS);
     renderProfs(profList);
+    renderGaleria(dados.fotos||[]);
     renderAvals(avalList);
     renderMet(perfil,avalList);
     renderFooter(perfil);
@@ -832,6 +851,29 @@ function renderProfs(lista){
     c.onclick=function(){abrirModalProf(p._id)};
     grid.appendChild(c);
   });
+}
+function renderGaleria(lista){
+  if(!lista||!lista.length)return;
+  show('galeria');
+  var grid=document.getElementById('galeria-grid');
+  lista.forEach(function(f){
+    var item=document.createElement('div');item.className='galeria-item';
+    item.innerHTML='<img src="'+f.url+'" alt="'+(f.legenda||'Foto do espaço')+'" loading="lazy">';
+    item.onclick=function(){abrirLightbox(f.url)};
+    grid.appendChild(item);
+  });
+}
+function abrirLightbox(url){
+  var lb=document.getElementById('galeria-lightbox');
+  if(!lb){
+    lb=document.createElement('div');
+    lb.id='galeria-lightbox';
+    lb.className='galeria-lightbox';
+    lb.onclick=function(){lb.classList.add('hidden')};
+    document.body.appendChild(lb);
+  }
+  lb.innerHTML='<img src="'+url+'">';
+  lb.classList.remove('hidden');
 }
 function renderAvals(lista){
   if(!lista.length){document.getElementById('nav-aval').style.display='none';return}
