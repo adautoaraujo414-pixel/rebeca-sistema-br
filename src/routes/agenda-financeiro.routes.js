@@ -116,6 +116,7 @@ router.get('/financeiro', authAgenda, async (req, res) => {
 });
 
 // POST lancamento manual
+
 router.post('/financeiro', authAgenda, async (req, res) => {
   try {
     const item = await FinanceiroAgenda.create({ adminId: req.adminId, ...req.body });
@@ -194,22 +195,36 @@ router.post('/fila-encaixe', authAgenda, async (req, res) => {
   } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
-// Quando agendamento cancelado — notificar proximo da fila
+// Quando agendamento cancelado - notificar proximo da fila
 router.post('/fila-encaixe/notificar/:horario', authAgenda, async (req, res) => {
   try {
-    const { horario, data } = req.body;
-    const proximo = await FilaEncaixeAgenda.findOne({
-      adminId: req.adminId, status: 'aguardando'
-    }).sort({ createdAt: 1 });
+    const { horario, data, servicoId, profissionalId } = req.body;
+    const filtro = { adminId: req.adminId, status: 'aguardando' };
+    if (servicoId) filtro.servicoId = servicoId;
+    if (profissionalId) filtro.profissionalId = profissionalId;
+    let proximo = await FilaEncaixeAgenda.findOne(filtro).sort({ createdAt: 1 });
+    // Fallback: se ninguem da fila pediu esse servico/profissional especifico, pega o proximo da fila geral
+    if (!proximo && (servicoId || profissionalId)) {
+      proximo = await FilaEncaixeAgenda.findOne({ adminId: req.adminId, status: 'aguardando' }).sort({ createdAt: 1 });
+    }
     if (!proximo) return res.json({ sucesso: true, mensagem: 'Fila vazia' });
     proximo.status = 'notificado';
     proximo.notificadoEm = new Date();
     proximo.expiradoEm = new Date(Date.now() + 30 * 60000); // 30min para responder
     await proximo.save();
+    const mensagemTexto = `Oi *${proximo.nomeCliente}*! \ud83d\ude0a O hor\u00e1rio das *${horario}*${data ? ' ('+data+')' : ''} acabou de ficar livre! Voc\u00ea quer confirmar esse hor\u00e1rio? Responde aqui que eu j\u00e1 garanto pra voc\u00ea! \ud83d\udc99`;
+    // Envia WhatsApp de fato
+    try {
+      const { AdminAgenda, InstanciaWhatsapp } = require('../models/AgendaServico');
+      const ModoDono = require('../services/agenda-modo-dono.service');
+      const inst = await InstanciaWhatsapp.findOne({ adminId: String(req.adminId), status: 'conectado' }).lean();
+      const instEnvio = inst || { _enviarVia: 'meta', apiUrl: 'meta', nomeInstancia: 'meta_oficial' };
+      await ModoDono._enviarMsg(instEnvio, proximo.telefoneCliente, mensagemTexto).catch(()=>{});
+    } catch(eNotif) { console.error('[FilaEncaixe] erro envio whatsapp:', eNotif.message); }
     res.json({
       sucesso: true,
       notificado: proximo,
-      mensagem: `O horario das ${horario} acabou de liberar, deseja confirmar?`,
+      mensagem: mensagemTexto,
       whatsapp: proximo.telefoneCliente
     });
   } catch(e) { res.status(500).json({ erro: e.message }); }
@@ -217,8 +232,8 @@ router.post('/fila-encaixe/notificar/:horario', authAgenda, async (req, res) => 
 
 router.delete('/fila-encaixe/:id', authAgenda, async (req, res) => {
   try {
-    const _del = await FilaEncaixeAgenda.findOneAndDelete({ _id: req.params.id, adminId: req.adminAgendaId });
-    if (!_del) return res.status(404).json({ erro: 'Item da fila não encontrado' });
+    const _del = await FilaEncaixeAgenda.findOneAndDelete({ _id: req.params.id, adminId: req.adminId });
+    if (!_del) return res.status(404).json({ erro: 'Item da fila n\u00e3o encontrado' });
     res.json({ sucesso: true });
   } catch(e) { res.status(500).json({ erro: e.message }); }
 });
