@@ -7,6 +7,7 @@ const adminAgendaSchema = new mongoose.Schema({
   senha: { type: String, required: true },
   token: { type: String },
   nomeNegocio: { type: String },
+  slug: { type: String, unique: true, sparse: true, index: true },
   segmento: { type: String },
   telefone: { type: String },
   whatsapp: { type: String },

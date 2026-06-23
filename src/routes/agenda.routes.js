@@ -51,8 +51,10 @@ router.post('/cadastro', async (req, res) => {
     const hash = await bcrypt.hash(senha, 10);
     const token = crypto.randomBytes(32).toString('hex');
     const trialExpira = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-    const admin = await AdminAgenda.create({ nome, email, senha: hash, token, nomeNegocio, segmento, telefone, whatsapp, plano: plano || 'espaco_digital_ia', ativo: true, statusPagamento: 'trial', trialExpira, avisadoTrial: false });
-    res.json({ sucesso: true, token, adminId: admin._id });
+    const { gerarSlugUnico } = require('../utils/slug');
+    const slug = await gerarSlugUnico(AdminAgenda, nomeNegocio || nome, null);
+    const admin = await AdminAgenda.create({ nome, email, senha: hash, token, nomeNegocio, segmento, telefone, whatsapp, slug, plano: plano || 'espaco_digital_ia', ativo: true, statusPagamento: 'trial', trialExpira, avisadoTrial: false });
+    res.json({ sucesso: true, token, adminId: admin._id, slug: admin.slug });
   } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
@@ -100,8 +102,17 @@ router.put('/perfil', authAgenda, async (req, res) => {
         if (req.body.config[k] !== undefined) upd['config.' + k] = req.body.config[k];
       });
     }
+    let novoSlug;
+    if (upd.nomeNegocio !== undefined) {
+      const adminAtual = await AdminAgenda.findById(req.adminAgendaId).select('nomeNegocio slug').lean();
+      if (adminAtual && upd.nomeNegocio !== adminAtual.nomeNegocio) {
+        const { gerarSlugUnico } = require('../utils/slug');
+        novoSlug = await gerarSlugUnico(AdminAgenda, upd.nomeNegocio, req.adminAgendaId);
+        upd.slug = novoSlug;
+      }
+    }
     await AdminAgenda.findByIdAndUpdate(req.adminAgendaId, { $set: upd });
-    res.json({ sucesso: true });
+    res.json({ sucesso: true, slug: novoSlug });
   } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
