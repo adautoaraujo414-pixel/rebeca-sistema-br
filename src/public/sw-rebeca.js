@@ -11,7 +11,7 @@
  *   - Background Sync:     Pedidos offline enfileirados
  */
 
-const VERSION    = 'rebeca-v1780235033';
+const VERSION    = 'rebeca-v1780300000';
 const SHELL_KEY  = `${VERSION}-shell`;
 const API_KEY    = `${VERSION}-api`;
 const IMG_KEY    = `${VERSION}-img`;
@@ -124,11 +124,21 @@ async function _networkFirst(request, cacheName, timeoutMs = 8000) {
 async function _staleWhileRevalidate(request, cacheName) {
   const cache  = await caches.open(cacheName);
   const cached = await cache.match(request);
-  const fetchPromise = fetch(request).then(response => {
+  if (cached) {
+    // Atualiza em segundo plano, mas devolve o cache imediatamente (nunca undefined)
+    fetch(request).then(response => {
+      if (response.ok) cache.put(request, response.clone());
+    }).catch(() => {});
+    return cached;
+  }
+  // Sem cache: precisa ir para a rede de verdade, com fallback seguro
+  try {
+    const response = await fetch(request);
     if (response.ok) cache.put(request, response.clone());
     return response;
-  }).catch(() => {});
-  return cached || fetchPromise || _offlineFallback(request);
+  } catch {
+    return _offlineFallback(request);
+  }
 }
 
 function _offlineFallback(request) {
