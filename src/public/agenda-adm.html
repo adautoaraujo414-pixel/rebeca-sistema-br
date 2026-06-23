@@ -1617,6 +1617,34 @@ document.querySelectorAll('.nav-item').forEach(item => {
               <div id="cfg-dias" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px"></div>
             </div>
           </div>
+          <div class="form-section-title" style="margin-top:16px">📋 CRM — Retorno de clientes</div>
+          <div class="form-row cols-2">
+            <div>
+              <label class="form-label">Dias sem vir para considerar inativo</label>
+              <input class="form-input" type="number" id="cfg-dias-retorno" min="7" max="365" value="30" placeholder="Ex: 30">
+            </div>
+            <div>
+              <label class="form-label">Horário para envio automático de retorno</label>
+              <input class="form-input" type="time" id="cfg-horario-retorno" value="10:00">
+            </div>
+          </div>
+          <div class="form-row">
+            <div>
+              <label class="form-label">Mensagem de retorno (use {nome} para o nome do cliente)</label>
+              <textarea class="form-textarea" id="cfg-msg-retorno" placeholder="Olá {nome}! Faz um tempinho que não te vejo por aqui 😊 Que tal agendar um horário?"></textarea>
+            </div>
+          </div>
+          <div class="form-section-title" style="margin-top:16px">📋 CRM — Retorno de clientes</div>
+          <div class="form-row cols-2">
+            <div>
+              <label class="form-label">Dias sem vir para considerar inativo</label>
+              <input class="form-input" type="number" id="cfg-dias-retorno" min="7" max="365" value="30" placeholder="Ex: 30">
+            </div>
+            <div>
+              <label class="form-label">Mensagem de retorno (use {nome} para o nome)</label>
+              <textarea class="form-textarea" id="cfg-msg-retorno" placeholder="Olá {nome}! Faz um tempinho que não te vejo 😊 Que tal agendar?"></textarea>
+            </div>
+          </div>
           <div class="form-btns">
             <button class="btn-primary" onclick="salvarConfig()">
               <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2zM17 21v-8H7v8M7 3v5h8" stroke-width="2"/></svg>
@@ -3081,6 +3109,8 @@ async function salvarConfig(){
       intervaloAgendamento: parseInt(document.getElementById('cfg-int').value)||30,
       antecedenciaMinima: parseInt(document.getElementById('cfg-ant').value)||60,
       diasFuncionamento: CFG_DIAS_SELECIONADOS.slice(),
+      diasRetornoInativo: parseInt(document.getElementById('cfg-dias-retorno')?.value)||30,
+      mensagemRetorno: document.getElementById('cfg-msg-retorno')?.value||'',
     }
   };
   let r = null;

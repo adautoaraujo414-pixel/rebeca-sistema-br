@@ -30,6 +30,7 @@ const adminAgendaSchema = new mongoose.Schema({
     mensagemConfirmacao: { type: String, default: 'Seu horário foi confirmado com sucesso 💛' },
     mensagemLembrete: { type: String, default: 'Lembrete: seu atendimento está chegando 😊' },
     diasRetornoInativo: { type: Number, default: 30 },
+    mensagemRetorno: { type: String, default: 'Olá {nome}! Faz um tempinho que não te vejo por aqui 😊 Que tal agendar um horário?' },
     corPrimaria: { type: String, default: '#f97316' },
     corSecundaria: { type: String, default: '#1f2937' },
     lembretes: { type: [{
