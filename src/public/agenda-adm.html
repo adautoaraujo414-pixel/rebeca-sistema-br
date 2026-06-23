@@ -2791,6 +2791,7 @@ async function carregarTabelaServicos(){
   try {
     const d = await api('/servicos');
     const svcs = d?.servicos||d||[];
+    window._SERVICOS_CACHE = svcs;
     if(!svcs.length){ tbody.innerHTML='<tr><td colspan="6" style="text-align:center;padding:32px">Nenhum serviço cadastrado</td></tr>'; return; }
     tbody.innerHTML = svcs.map(s=>'<tr>'+
       '<td><div style="display:flex;align-items:center;gap:10px">'+(s.foto?'<img src="'+s.foto+'" style="width:40px;height:40px;object-fit:cover;border-radius:8px;border:1px solid var(--borda);flex-shrink:0">':'<div style="width:40px;height:40px;border-radius:8px;background:var(--cor3);display:flex;align-items:center;justify-content:center;font-size:1.1em;flex-shrink:0">🔖</div>')+'<b>'+s.nome+'</b></div></td>'+
@@ -2799,7 +2800,7 @@ async function carregarTabelaServicos(){
       '<td>'+(s.categoria||'—')+'</td>'+
       '<td>'+(s.ativo!==false?'<span class="badge badge-confirmado">Ativo</span>':'<span class="badge badge-cancelado">Inativo</span>')+'</td>'+
       '<td><div class="tabela-acoes">'+
-        '<button class="btn-tabela" onclick="abrirModalEditarServico('+JSON.stringify(s)+')">Editar</button>'+'<button class="btn-tabela danger" onclick="deletarServico(\''+s._id+'\')">Remover</button>'+
+        '<button class="btn-tabela" onclick="abrirModalEditarServicoPorId(\''+s._id+'\')">Editar</button>'+'<button class="btn-tabela danger" onclick="deletarServico(\''+s._id+'\')">Remover</button>'+
       '</div></td>'+
     '</tr>').join('');
   } catch(e){ tbody.innerHTML='<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--vermelho)">Erro ao carregar</td></tr>'; }
@@ -2931,6 +2932,11 @@ async function salvarCliente(){
 
 var EDIT_SRV_ID = null;
 
+function abrirModalEditarServicoPorId(id){
+  const s = (window._SERVICOS_CACHE||[]).find(x=>x._id===id);
+  if(!s){ alert('Serviço não encontrado, recarregue a página.'); return; }
+  abrirModalEditarServico(s);
+}
 function abrirModalEditarServico(s){
   // Busca servico atualizado da API para pegar profissionalIds
   api('/servicos').then(d => {
