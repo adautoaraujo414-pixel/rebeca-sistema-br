@@ -3159,7 +3159,7 @@ function abrirModalServico(srvData){
   _listaProf.innerHTML = '<span style="font-size:.82em;color:var(--texto2)">Carregando...</span>';
   api('/profissionais').then(d => {
     const profs = d?.profissionais || [];
-    const vinculados = srvData?.profissionalIds || [];
+    const vinculados = (srvData?.profissionalIds || []).map(id => String(id));
     if (!profs.length) { _listaProf.innerHTML = '<span style="font-size:.82em;color:var(--texto2)">Nenhum profissional cadastrado.</span>'; return; }
     _listaProf.innerHTML = profs.map(p => {
       const checked = vinculados.includes(String(p._id)) ? 'checked' : '';
