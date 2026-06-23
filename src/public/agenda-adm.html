@@ -1918,6 +1918,46 @@ document.querySelectorAll('.nav-item').forEach(item => {
   </div>
 </div>
 
+<div class="modal-bg" id="modal-relatorio-prof">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-titulo" id="rel-prof-titulo">📊 Relatório</div>
+      <button class="modal-close" onclick="fecharModal('modal-relatorio-prof')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group" style="display:flex;gap:10px;align-items:end">
+        <div style="flex:1">
+          <label class="form-label">Mês</label>
+          <select class="form-input" id="rel-prof-mes"></select>
+        </div>
+        <div style="flex:1">
+          <label class="form-label">Ano</label>
+          <select class="form-input" id="rel-prof-ano"></select>
+        </div>
+        <button class="btn-secondary" onclick="carregarRelatorioProfissional()" style="padding:9px 14px">Filtrar</button>
+      </div>
+      <div id="rel-prof-resumo" style="display:flex;gap:10px;margin:14px 0;flex-wrap:wrap">
+        <div style="flex:1;min-width:120px;background:var(--bg2);border-radius:10px;padding:12px;text-align:center">
+          <div style="font-size:1.3em;font-weight:700" id="rel-prof-qtd">0</div>
+          <div style="font-size:.75em;color:var(--texto3)">Atendimentos</div>
+        </div>
+        <div style="flex:1;min-width:120px;background:var(--bg2);border-radius:10px;padding:12px;text-align:center">
+          <div style="font-size:1.3em;font-weight:700" id="rel-prof-fat">R$ 0</div>
+          <div style="font-size:.75em;color:var(--texto3)">Faturamento</div>
+        </div>
+        <div style="flex:1;min-width:120px;background:var(--cor3);border-radius:10px;padding:12px;text-align:center">
+          <div style="font-size:1.3em;font-weight:700" id="rel-prof-comissao">R$ 0</div>
+          <div style="font-size:.75em;color:var(--texto3)" id="rel-prof-comissao-label">Comissão</div>
+        </div>
+      </div>
+      <div id="rel-prof-lista" style="max-height:300px;overflow-y:auto"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="fecharModal('modal-relatorio-prof')">Fechar</button>
+    </div>
+  </div>
+</div>
+
 <script src="/js/rebeca-polling.js"></script>
 <script src="/js/rebeca-tenant.js"></script>
 <script src="/js/rebeca-security.js"></script>
@@ -2490,6 +2530,7 @@ async function carregarTabelaClientes(){
 }
 
 var PROFISSIONAIS_CACHE = [];
+var REL_PROF_ID = null;
 async function carregarGridProfissionais(){
   const el = document.getElementById('grid-profissionais');
   el.innerHTML = '<div style="color:var(--texto3);font-size:.85em">Carregando...</div>';
@@ -2509,6 +2550,7 @@ async function carregarGridProfissionais(){
         '</div>'+
         '<div style="display:flex;flex-direction:column;gap:6px">'+
           '<button class="btn-tabela" onclick="editarProfissional(\''+p._id+'\')">Editar</button>'+
+          '<button class="btn-tabela" onclick="abrirRelatorioProfissional(\'' + p._id + '\', \'' + encodeURIComponent(p.nome||'') + '\')">\ud83d\udcca Relat\u00f3rio</button>'+
           '<button class="btn-tabela danger" onclick="deletarProfissional(\''+p._id+'\')">Remover</button>'+
         '</div>'+
       '</div>';
@@ -2516,6 +2558,50 @@ async function carregarGridProfissionais(){
   } catch(e){ el.innerHTML='<div style="color:var(--vermelho);font-size:.85em">Erro ao carregar</div>'; }
 }
 
+
+function abrirRelatorioProfissional(id, nomeEncoded){
+  const nome = decodeURIComponent(nomeEncoded||'');
+  document.getElementById('rel-prof-titulo').textContent = '\ud83d\udcca Relat\u00f3rio \u2014 ' + nome;
+  REL_PROF_ID = id;
+  const selMes = document.getElementById('rel-prof-mes');
+  const selAno = document.getElementById('rel-prof-ano');
+  const meses = ['Janeiro','Fevereiro','Mar\u00e7o','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const agora = new Date();
+  selMes.innerHTML = meses.map((m,i)=>'<option value="'+(i+1)+'"'+(i+1===agora.getMonth()+1?' selected':'')+'>'+m+'</option>').join('');
+  const anoAtual = agora.getFullYear();
+  selAno.innerHTML = [anoAtual-1, anoAtual, anoAtual+1].map(a=>'<option value="'+a+'"'+(a===anoAtual?' selected':'')+'>'+a+'</option>').join('');
+  document.getElementById('modal-relatorio-prof').classList.add('open');
+  var sy=window.scrollY;document.body.style.position='fixed';document.body.style.top='-'+sy+'px';document.body.style.left='0';document.body.style.right='0';document.body.dataset.scrollY=sy;
+  carregarRelatorioProfissional();
+}
+async function carregarRelatorioProfissional(){
+  if(!REL_PROF_ID) return;
+  const mes = document.getElementById('rel-prof-mes').value;
+  const ano = document.getElementById('rel-prof-ano').value;
+  const lista = document.getElementById('rel-prof-lista');
+  lista.innerHTML = '<div style="color:var(--texto3);font-size:.85em;padding:10px 0">Carregando...</div>';
+  try {
+    const r = await api('/profissionais/'+REL_PROF_ID+'/relatorio?mes='+mes+'&ano='+ano);
+    if(!r || !r.sucesso){ lista.innerHTML = '<div style="color:var(--vermelho);font-size:.85em">Erro ao carregar relat\u00f3rio.</div>'; return; }
+    document.getElementById('rel-prof-qtd').textContent = r.totalAtendimentos || 0;
+    document.getElementById('rel-prof-fat').textContent = 'R$ ' + (r.faturamento||0).toFixed(2).replace('.',',');
+    document.getElementById('rel-prof-comissao').textContent = 'R$ ' + (r.comissao||0).toFixed(2).replace('.',',');
+    document.getElementById('rel-prof-comissao-label').textContent = 'Comiss\u00e3o (' + (r.comissaoPercentual||0) + '%)';
+    const atendimentos = r.atendimentos || [];
+    if(!atendimentos.length){
+      lista.innerHTML = '<div class="empty-state"><div class="empty-state-icon">\ud83d\udcc5</div><div class="empty-state-titulo">Nenhum atendimento concluido neste m\u00eas</div></div>';
+      return;
+    }
+    lista.innerHTML = atendimentos.map(a=>{
+      const d = a.dataHora ? new Date(a.dataHora) : null;
+      const dataFmt = d ? d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}) + ' ' + d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}) : '';
+      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--borda)">'+
+        '<div><div style="font-weight:600;font-size:.88em">'+(a.nomeServico||'Servi\u00e7o')+'</div><div style="font-size:.75em;color:var(--texto3)">'+dataFmt+' \u00b7 '+(a.nomeCliente||'Cliente')+'</div></div>'+
+        '<div style="font-weight:700;font-size:.9em">R$ '+(a.preco||0).toFixed(2).replace('.',',')+'</div>'+
+      '</div>';
+    }).join('');
+  } catch(e){ lista.innerHTML = '<div style="color:var(--vermelho);font-size:.85em">Erro ao carregar relat\u00f3rio.</div>'; }
+}
 async function carregarTabelaServicos(){
   const tbody = document.getElementById('tabela-servicos');
   tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--texto3)">Carregando...</td></tr>';
