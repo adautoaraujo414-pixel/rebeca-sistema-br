@@ -16,6 +16,16 @@ const {
 } = require('../models/AgendaServico');
 const ModoDono = require('../services/agenda-modo-dono.service');
 
+// Resolve admin por slug OU ObjectId (compatibilidade com links antigos)
+const mongoose = require('mongoose');
+async function resolverAdminPublico(identificador, selectStr) {
+  const ehObjectId = mongoose.Types.ObjectId.isValid(identificador) && /^[0-9a-fA-F]{24}$/.test(identificador);
+  const filtro = ehObjectId ? { _id: identificador } : { slug: identificador };
+  const query = AdminAgenda.findOne(filtro);
+  if (selectStr) query.select(selectStr);
+  return query;
+}
+
 // ===== AUTH MIDDLEWARE =====
 // auth middleware v2
 async function authAgenda(req, res, next) {
@@ -224,8 +234,9 @@ router.delete('/profissionais/:id', authAgenda, async (req, res) => {
 // ===== HORÁRIOS DISPONÍVEIS (público) =====
 router.get('/espaco/:adminId/horarios', async (req, res) => {
   try {
-    const admin = await AdminAgenda.findById(req.params.adminId);
+    const admin = await resolverAdminPublico(req.params.adminId);
     if (!admin) return res.status(404).json({ erro: 'Espaço não encontrado' });
+    req.params.adminId = admin._id.toString();
     const { data, servicoId, servicoIds, profissionalId } = req.query;
     if (!data) return res.status(400).json({ erro: 'data obrigatória (YYYY-MM-DD)' });
 
@@ -617,14 +628,14 @@ router.get('/dashboard', authAgenda, async (req, res) => {
 // ===== ESPAÇO DIGITAL PÚBLICO =====
 router.get('/espaco/:adminId', async (req, res) => {
   try {
-    const admin = await AdminAgenda.findById(req.params.adminId).select('-senha -token');
+    const admin = await resolverAdminPublico(req.params.adminId, '-senha -token');
     if (!admin) return res.status(404).json({ erro: 'Espaço não encontrado' });
     const [servicos, profissionais, fotos, produtos, catalogos] = await Promise.all([
-      ServicoAgenda.find({ adminId: req.params.adminId, ativo: true }).sort({ ordem: 1 }),
-      ProfissionalAgenda.find({ adminId: req.params.adminId, ativo: true }).sort({ ordem: 1 }),
-      FotoAgenda.find({ adminId: req.params.adminId, ativo: true }).sort({ ordem: 1 }).limit(20),
-      ProdutoAgenda.find({ adminId: req.params.adminId, ativo: true }).sort({ ordem: 1 }).limit(50).lean(),
-      CatalogoAgenda.find({ adminId: req.params.adminId, ativo: true }).sort({ ordem: 1 }).lean()
+      ServicoAgenda.find({ adminId: admin._id, ativo: true }).sort({ ordem: 1 }),
+      ProfissionalAgenda.find({ adminId: admin._id, ativo: true }).sort({ ordem: 1 }),
+      FotoAgenda.find({ adminId: admin._id, ativo: true }).sort({ ordem: 1 }).limit(20),
+      ProdutoAgenda.find({ adminId: admin._id, ativo: true }).sort({ ordem: 1 }).limit(50).lean(),
+      CatalogoAgenda.find({ adminId: admin._id, ativo: true }).sort({ ordem: 1 }).lean()
     ]);
     res.json({ sucesso: true, admin, servicos, profissionais, fotos, produtos, catalogos });
   } catch(e) { res.status(500).json({ erro: e.message }); }
@@ -923,6 +934,9 @@ router.post('/espaco/:adminId/avaliar', async (req, res) => {
 // ── MINHA CONTA (cliente final: historico + agendamentos futuros) ──
 router.get('/espaco/:adminId/minha-conta', async (req, res) => {
   try {
+    const adminResolvido = await resolverAdminPublico(req.params.adminId);
+    if (!adminResolvido) return res.status(404).json({ erro: 'Espaço não encontrado' });
+    req.params.adminId = adminResolvido._id.toString();
     const telBruto = req.query.telefone || '';
     const tel = telBruto.replace(/\D/g, '');
     if (!tel) return res.status(400).json({ erro: 'Informe o WhatsApp' });
@@ -944,6 +958,9 @@ router.get('/espaco/:adminId/minha-conta', async (req, res) => {
 
 router.put('/espaco/:adminId/minha-conta/cancelar/:agendamentoId', async (req, res) => {
   try {
+    const adminResolvido = await resolverAdminPublico(req.params.adminId);
+    if (!adminResolvido) return res.status(404).json({ erro: 'Espaço não encontrado' });
+    req.params.adminId = adminResolvido._id.toString();
     const telBruto = req.body.telefone || '';
     const tel = telBruto.replace(/\D/g, '');
     if (!tel) return res.status(400).json({ erro: 'Informe o WhatsApp' });
