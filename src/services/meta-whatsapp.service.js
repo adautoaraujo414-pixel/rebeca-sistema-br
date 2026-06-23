@@ -91,7 +91,7 @@ async function listarTemplates() {
       { headers: _headers() }
     );
     // Tentar listar templates via PHONE_ID diretamente (alguns configs permitem)
-    const wabaId = process.env.META_WABA_ID || process.env.META_WA_BUSINESS_ACCOUNT_ID;
+    const wabaId = process.env.META_WA_WABA_ID || process.env.META_WA_BUSINESS_ACCOUNT_ID;
     if (!wabaId) {
       console.log('[MetaWA] META_WABA_ID nao configurado — retornando info do numero:', JSON.stringify(r.data));
       return [];
