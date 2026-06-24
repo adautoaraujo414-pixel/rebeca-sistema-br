@@ -2389,9 +2389,9 @@ async function iniciarApp(){
     const av = iniciais(ADMIN.nome);
     document.getElementById('h-avatar').textContent = av;
     document.getElementById('mh-avatar').textContent = av;
-    // Link público
-    const slug = ADMIN.nomeNegocio ? ADMIN.nomeNegocio.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'') : ADMIN_ID;
-    const link = window.location.origin+'/espaco-digital?id='+ADMIN_ID;
+    // Link público (usa slug amigavel quando disponivel, senao cai no ID)
+    window._slugPublico = ADMIN.slug || ADMIN_ID;
+    const link = window.location.origin+'/espaco-digital?id='+window._slugPublico;
     document.getElementById('link-publico-url').textContent = link;
     const btnAbrir = document.getElementById('link-publico-abrir');
     if (btnAbrir) btnAbrir.href = link;
@@ -3424,7 +3424,7 @@ function copiarLink(){
 }
 function abrirEspaco(){
   if(!window._adminId){ toast('Aguarde o carregamento da página', 'erro'); return; }
-  window.open('/espaco-digital?id='+window._adminId,'_blank');
+  window.open('/espaco-digital?id='+(window._slugPublico||window._adminId),'_blank');
 }
 
 
@@ -3551,7 +3551,7 @@ function wppCancelar(tel, nomeCliente, servico, data, hora) {
     nomeCliente: nomeCliente,
     nomeNegocio: (ADMIN&&ADMIN.nomeNegocio)||'nossa empresa',
     servico: servico, data: data, hora: hora,
-    linkAgenda: window.location.origin+'/espaco-digital?id='+(window._adminId||'')
+    linkAgenda: window.location.origin+'/espaco-digital?id='+(window._slugPublico||window._adminId||'')
   });
   abrirWpp(tel, msg);
 }
@@ -3562,7 +3562,7 @@ function wppAvaliar(tel, nomeCliente) {
   var msg = buildWhatsappMessage('review_request', {
     nomeCliente: nomeCliente,
     nomeNegocio: (ADMIN&&ADMIN.nomeNegocio)||'nossa empresa',
-    linkAvaliacao: window.location.origin+'/espaco-digital?id='+(window._adminId||'')+'#avaliacoes'
+    linkAvaliacao: window.location.origin+'/espaco-digital?id='+(window._slugPublico||window._adminId||'')+'#avaliacoes'
   });
   abrirWpp(tel, msg);
 }
