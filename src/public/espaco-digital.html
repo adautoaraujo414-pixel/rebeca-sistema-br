@@ -342,6 +342,32 @@ input,select{font-family:var(--font-body)}
     </div>
   </div>
 </div>
+<div class="modal-overlay hidden" id="modal-servico">
+  <div class="modal-box" style="max-width:480px">
+    <div class="modal-header">
+      <div class="modal-title" id="ms-titulo">Agendar</div>
+      <button class="modal-close" onclick="fecharModalServico()">✕</button>
+    </div>
+    <div class="modal-field">
+      <div class="modal-label">Profissional</div>
+      <select class="modal-input" id="ms-prof" onchange="msCarregarHorarios()">
+        <option value="">Qualquer profissional disponível</option>
+      </select>
+    </div>
+    <div class="modal-field">
+      <div class="modal-label">Data</div>
+      <input class="modal-input" id="ms-data" type="date" onchange="msCarregarHorarios()">
+    </div>
+    <div class="modal-field">
+      <div class="modal-label">Horário</div>
+      <div id="ms-hrs" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:8px"><div style="color:var(--txt3);font-size:.82rem;grid-column:1/-1;padding:4px 0">Carregando...</div></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="fecharModalServico()">Cancelar</button>
+      <button class="btn btn-primary" id="ms-btn" onclick="continuarModalServico()" disabled>Escolha um horário</button>
+    </div>
+  </div>
+</div>
 <div id="page-content" class="hidden">
 <header id="header">
   <div class="container">
@@ -972,11 +998,69 @@ async function bcCarregarHorarios(){
     });
   }catch(e){wrap.innerHTML='<div style="color:#ef4444;font-size:.82rem;grid-column:1/-1;padding:4px 0">Erro ao carregar horários.</div>'}
 }
+var MS_SVC=null,MS_DATA=null,MS_HORA=null,MS_FIM=null;
 function irAgendar(id){
-  var sel=document.getElementById('bc-svc');sel.value=id;SEL_SVC=id;
-  document.getElementById('bc-data').value=new Date().toISOString().split('T')[0];
-  bcCarregarHorarios();
-  window.scrollTo({top:0,behavior:'smooth'});
+  MS_SVC=SERVICOS.find(function(s){return s._id===id});
+  if(!MS_SVC){return}
+  MS_DATA=null;MS_HORA=null;MS_FIM=null;
+  document.getElementById('ms-titulo').textContent=MS_SVC.nome;
+  var profSel=document.getElementById('ms-prof');
+  profSel.innerHTML='<option value="">Qualquer profissional disponível</option>';
+  var profsDoServico=(MS_SVC.profissionalIds&&MS_SVC.profissionalIds.length)
+    ? Object.values(PROFS_MAP).filter(function(p){return MS_SVC.profissionalIds.indexOf(p._id)!==-1})
+    : Object.values(PROFS_MAP);
+  profsDoServico.forEach(function(p){
+    var opt=document.createElement('option');opt.value=p._id;opt.textContent=p.nome;
+    profSel.appendChild(opt);
+  });
+  var hoje=new Date().toISOString().split('T')[0];
+  document.getElementById('ms-data').min=hoje;document.getElementById('ms-data').value=hoje;
+  var btn=document.getElementById('ms-btn');btn.disabled=true;btn.textContent='Escolha um horário';
+  document.getElementById('modal-servico').classList.remove('hidden');
+  msCarregarHorarios();
+}
+function fecharModalServico(){document.getElementById('modal-servico').classList.add('hidden')}
+async function msCarregarHorarios(){
+  MS_DATA=document.getElementById('ms-data').value;
+  var profId=document.getElementById('ms-prof').value;
+  var wrap=document.getElementById('ms-hrs');
+  if(!MS_DATA||!MS_SVC){wrap.innerHTML='<div style="color:var(--txt3);font-size:.82rem;grid-column:1/-1;padding:4px 0">Selecione uma data.</div>';return}
+  wrap.innerHTML='<div style="color:var(--txt3);font-size:.82rem;grid-column:1/-1;padding:4px 0">Carregando...</div>';
+  try{
+    var url=BASE+'/espaco/'+ADMIN_ID+'/horarios?data='+MS_DATA+'&servicoId='+MS_SVC._id+(profId?'&profissionalId='+profId:'');
+    var r=await fetch(url);
+    var d=await r.json();
+    var hrs=(d&&d.horarios?d.horarios:d||[]);
+    wrap.innerHTML='';
+    MS_HORA=null;MS_FIM=null;
+    var btn=document.getElementById('ms-btn');btn.disabled=true;btn.textContent='Escolha um horário';
+    if(!hrs.length){wrap.innerHTML='<div style="color:var(--txt3);font-size:.82rem;grid-column:1/-1;padding:4px 0">Sem horários disponíveis nesta data.</div>';return}
+    hrs.forEach(function(h){
+      var hora=h.hora||h;
+      var btnHr=document.createElement('button');btnHr.className='booking-hr-btn';btnHr.textContent=hora;
+      btnHr.onclick=function(){
+        document.querySelectorAll('#ms-hrs .booking-hr-btn').forEach(function(b){b.classList.remove('sel')});
+        btnHr.classList.add('sel');
+        MS_HORA=hora;
+        var partes=hora.split(':').map(Number);
+        var fimMin=partes[0]*60+partes[1]+(MS_SVC.duracao||30);
+        var fh=Math.floor(fimMin/60).toString().padStart(2,'0'),fm=(fimMin%60).toString().padStart(2,'0');
+        MS_FIM=fh+':'+fm;
+        var mb=document.getElementById('ms-btn');mb.disabled=false;mb.textContent='Início '+MS_HORA+' • Término '+MS_FIM;
+      };
+      wrap.appendChild(btnHr);
+    });
+  }catch(e){wrap.innerHTML='<div style="color:#ef4444;font-size:.82rem;grid-column:1/-1;padding:4px 0">Erro ao carregar horários.</div>'}
+}
+function continuarModalServico(){
+  if(!MS_HORA||!MS_SVC)return;
+  var profId=document.getElementById('ms-prof').value||null;
+  var profNome=profId?(PROFS_MAP[profId]?PROFS_MAP[profId].nome:''):'';
+  MODAL_DATA={servicoId:MS_SVC._id,profissionalId:profId,data:MS_DATA,hora:MS_HORA};
+  document.getElementById('modal-resumo').innerHTML='<strong>'+MS_SVC.nome+'</strong>'+(profNome?'<br>👤 '+profNome:'')+'<br>📅 '+MS_DATA+' às '+MS_HORA+(MS_SVC.preco?'<br>💰 '+fmt(MS_SVC.preco):'');
+  fecharModalServico();
+  document.getElementById('modal-ag').classList.remove('hidden');
+  document.getElementById('m-nome').focus();
 }
 function abrirModal(){
   if(!SEL_HR||!SEL_SVC||!SEL_PROF)return;
