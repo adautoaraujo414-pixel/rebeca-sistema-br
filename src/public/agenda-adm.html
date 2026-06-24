@@ -2215,6 +2215,7 @@ document.addEventListener('keydown', function(e) {
 function fmt(v){ return 'R$\u00a0'+(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 function fmtData(d){ return d ? new Date(d).toLocaleDateString('pt-BR') : '—'; }
 function fmtHora(d){ return d ? new Date(d).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}) : '—'; }
+function escHtml(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
 function iniciais(n){ return (n||'?').split(' ').slice(0,2).map(x=>x[0]).join('').toUpperCase(); }
 function limparTel(t){ return (t||'').replace(/\D/g,''); }
 
@@ -3405,7 +3406,10 @@ function abrirModalProfissional(){
   document.getElementById('prf-especialidades').value = '';
   document.getElementById('prf-tel').value = '';
   document.getElementById('prf-comissao').value = '';
-  document.getElementById('prf-senha').value = '';
+  document.getElementById('prf-pin0').value = '';
+  document.getElementById('prf-pin1').value = '';
+  document.getElementById('prf-pin2').value = '';
+  document.getElementById('prf-pin3').value = '';
   document.getElementById('prf-senha-grupo').style.display = '';
   document.getElementById('prf-link-grupo').style.display = 'none';
   document.getElementById('prf-redefinir-grupo').style.display = 'none';
