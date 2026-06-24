@@ -127,7 +127,7 @@ router.post('/financeiro', authAgenda, async (req, res) => {
 // DELETE lancamento
 router.delete('/financeiro/:id', authAgenda, async (req, res) => {
   try {
-    const _del = await FinanceiroAgenda.findOneAndDelete({ _id: req.params.id, adminId: req.adminAgendaId });
+    const _del = await FinanceiroAgenda.findOneAndDelete({ _id: req.params.id, adminId: req.adminId });
     if (!_del) return res.status(404).json({ erro: 'Lançamento não encontrado' });
     res.json({ sucesso: true });
   } catch(e) { res.status(500).json({ erro: e.message }); }
@@ -170,7 +170,7 @@ router.put('/contas-pagar/:id', authAgenda, async (req, res) => {
 
 router.delete('/contas-pagar/:id', authAgenda, async (req, res) => {
   try {
-    const _del = await ContaPagarAgenda.findOneAndDelete({ _id: req.params.id, adminId: req.adminAgendaId });
+    const _del = await ContaPagarAgenda.findOneAndDelete({ _id: req.params.id, adminId: req.adminId });
     if (!_del) return res.status(404).json({ erro: 'Conta a pagar não encontrado' });
     res.json({ sucesso: true });
   } catch(e) { res.status(500).json({ erro: e.message }); }
