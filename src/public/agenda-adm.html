@@ -5836,14 +5836,26 @@ function abrirModalApelido() {
   _modalOpen('modal-apelido');
 }
 async function salvarApelido() {
+  var btn = document.querySelector('#modal-apelido .btn-primary');
   var apelido = (document.getElementById('ma-apelido').value || '').trim();
-  var d = await api('/perfil/apelido', { method: 'PATCH', body: JSON.stringify({ apelido }) });
-  if (d && d.sucesso) {
-    if (ADMIN) ADMIN.apelido = d.apelido;
-    toast('Nome atualizado! 🎉');
-    fecharModal('modal-apelido');
-  } else {
+  console.log('[salvarApelido] enviando apelido:', JSON.stringify(apelido));
+  if (btn) { btn.disabled = true; btn.textContent = 'Salvando...'; }
+  try {
+    var d = await api('/perfil/apelido', { method: 'PATCH', body: JSON.stringify({ apelido }) });
+    console.log('[salvarApelido] resposta recebida:', JSON.stringify(d));
+    if (d && d.sucesso) {
+      if (ADMIN) ADMIN.apelido = d.apelido;
+      toast('Nome atualizado! 🎉');
+      fecharModal('modal-apelido');
+    } else {
+      console.error('[salvarApelido] falhou - resposta nao tem sucesso:true', d);
+      toast('Erro ao salvar nome', 'erro');
+    }
+  } catch (e) {
+    console.error('[salvarApelido] EXCECAO:', e);
     toast('Erro ao salvar nome', 'erro');
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = '<svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M5 13l4 4L19 7" stroke-width="2.5"/></svg> Salvar'; }
   }
 }
 
