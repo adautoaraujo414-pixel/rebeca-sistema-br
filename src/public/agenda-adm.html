@@ -1832,6 +1832,28 @@ document.querySelectorAll('.nav-item').forEach(item => {
 </div>
 
 <!-- ─── MODAIS ─── -->
+<div class="modal-bg" id="modal-apelido">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-titulo">✏️ Alterar nome</div>
+      <button class="modal-close" onclick="fecharModal('modal-apelido')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Como a Rebeca deve te chamar no WhatsApp?</label>
+        <input class="form-input" id="ma-apelido" placeholder="Ex: Adauto, chefe, patrão..." maxlength="30">
+      </div>
+      <div style="font-size:.78em;color:var(--texto3);margin-top:-8px">Deixe em branco para a Rebeca usar um apelido padrão (chefe, patrão, etc).</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="fecharModal('modal-apelido')">Cancelar</button>
+      <button class="btn-primary" onclick="salvarApelido()">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M5 13l4 4L19 7" stroke-width="2.5"/></svg>
+        Salvar
+      </button>
+    </div>
+  </div>
+</div>
 <div class="modal-bg" id="modal-ag">
   <div class="modal">
     <div class="modal-header">
@@ -5794,6 +5816,35 @@ async function removerFotoProduto(url) {
       renderGaleriaProduto();
     }
   } catch(e) { toast('Erro ao remover foto', 'erro'); }
+}
+
+// ══════════════════ MENU PERFIL (header) ══════════════════
+function toggleMenuPerfil(e) {
+  if (e) e.stopPropagation();
+  var menu = document.getElementById('header-perfil-menu');
+  if (!menu) return;
+  menu.classList.toggle('hidden');
+}
+document.addEventListener('click', function(e) {
+  var wrap = document.getElementById('header-perfil-wrap');
+  var menu = document.getElementById('header-perfil-menu');
+  if (!wrap || !menu || menu.classList.contains('hidden')) return;
+  if (!wrap.contains(e.target)) menu.classList.add('hidden');
+});
+function abrirModalApelido() {
+  document.getElementById('ma-apelido').value = (ADMIN && ADMIN.apelido) || '';
+  _modalOpen('modal-apelido');
+}
+async function salvarApelido() {
+  var apelido = (document.getElementById('ma-apelido').value || '').trim();
+  var d = await api('/perfil/apelido', { method: 'PATCH', body: JSON.stringify({ apelido }) });
+  if (d && d.sucesso) {
+    if (ADMIN) ADMIN.apelido = d.apelido;
+    toast('Nome atualizado! 🎉');
+    fecharModal('modal-apelido');
+  } else {
+    toast('Erro ao salvar nome', 'erro');
+  }
 }
 
 // ══════════════════ MODAL UTILS ══════════════════
