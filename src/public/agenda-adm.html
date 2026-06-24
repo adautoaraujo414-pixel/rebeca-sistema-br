@@ -1824,6 +1824,9 @@ document.querySelectorAll('.nav-item').forEach(item => {
   <button class="menu-mobile-item" onclick="irPara('whatsapp');fecharMenuMobile()">💬 WhatsApp</button>
   <button class="menu-mobile-item" onclick="irPara('lembretes');fecharMenuMobile()">🔔 Lembretes</button>
   <button class="menu-mobile-item" onclick="irPara('crm');fecharMenuMobile()">📋 CRM</button>
+  <button class="menu-mobile-item" onclick="irPara('produtos');fecharMenuMobile()">📦 Produtos</button>
+  <button class="menu-mobile-item" onclick="irPara('catalogos');fecharMenuMobile()">🗂️ Catálogos</button>
+  <button class="menu-mobile-item" onclick="irPara('carrinhos');fecharMenuMobile()">🛒 Carrinhos</button>
   <button class="menu-mobile-item" onclick="irPara('relatorios');fecharMenuMobile()">📊 Relatórios</button>
   <button class="menu-mobile-item" onclick="irPara('configuracoes');fecharMenuMobile()">⚙️ Configurações</button>
 </div>
@@ -2426,7 +2429,7 @@ async function iniciarApp(){
     const nome = ADMIN.nomeNegocio || ADMIN.nome || 'Negócio';
     const primeiroNome = (ADMIN.nome||'').split(' ')[0] || 'Olá';
     const nomeExibicao = (ADMIN.apelido && ADMIN.apelido.trim()) ? ADMIN.apelido.trim() : primeiroNome;
-    document.getElementById('pg-saudacao').textContent = 'Olá, '+primeiroNome+'! 👋';
+    document.getElementById('pg-saudacao').textContent = 'Olá, '+nomeExibicao+'! 👋';
     document.getElementById('sb-nome-negocio').textContent = nome;
     document.getElementById('h-nome-negocio').textContent = nome;
     document.getElementById('h-nome').textContent = nomeExibicao;
