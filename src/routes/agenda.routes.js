@@ -333,8 +333,12 @@ router.post('/espaco/:adminId/agendar', async (req, res) => {
     }
     const telCliente = telefoneCliente || telefone;
     if (!nomeCliente || !telCliente || !dataHora) return res.status(400).json({ erro: 'Dados obrigatórios faltando' });
-    const admin = await AdminAgenda.findById(req.params.adminId);
+    const adminParam = req.params.adminId;
+    const admin = mongoose.isValidObjectId(adminParam)
+      ? await AdminAgenda.findById(adminParam)
+      : await AdminAgenda.findOne({ slug: adminParam });
     if (!admin) return res.status(404).json({ erro: 'Espaço não encontrado' });
+    const adminIdReal = admin._id;
     const prof = profissionalId ? await ProfissionalAgenda.findById(profissionalId) : null;
 
     let servico = null;
@@ -356,9 +360,9 @@ router.post('/espaco/:adminId/agendar', async (req, res) => {
     }
 
     // Criar/atualizar cliente
-    let cliente = await ClienteAgenda.findOne({ adminId: req.params.adminId, telefone: telCliente });
+    let cliente = await ClienteAgenda.findOne({ adminId: adminIdReal, telefone: telCliente });
     if (!cliente) {
-      cliente = await ClienteAgenda.create({ adminId: req.params.adminId, nome: nomeCliente, telefone: telCliente });
+      cliente = await ClienteAgenda.create({ adminId: adminIdReal, nome: nomeCliente, telefone: telCliente });
     }
 
     // Verificar double-booking
@@ -367,7 +371,7 @@ router.post('/espaco/:adminId/agendar', async (req, res) => {
     const dataHoraFim = new Date(dataHoraObj.getTime() + durMin * 60000);
     // Verificar conflito por profissional (se informado) ou geral
     const filtroConflito = {
-      adminId: req.params.adminId,
+      adminId: adminIdReal,
       status: { $nin: ['cancelado'] },
       dataHora: { $lt: dataHoraFim },
       $expr: { $gt: [{ $add: ['$dataHora', { $multiply: [{ $ifNull: ['$duracao', durMin] }, 60000] }] }, dataHoraObj] }
@@ -378,14 +382,14 @@ router.post('/espaco/:adminId/agendar', async (req, res) => {
 
     // Verificar se está bloqueado
     const bloqueado = await BloqueioAgenda.findOne({
-      adminId: req.params.adminId,
+      adminId: adminIdReal,
       dataHoraInicio: { $lt: dataHoraFim },
       dataHoraFim: { $gt: dataHoraObj }
     });
     if (bloqueado) return res.status(409).json({ erro: 'Horário bloqueado. Escolha outro horário.' });
 
     const ag = await AgendamentoAgenda.create({
-      adminId: req.params.adminId,
+      adminId: adminIdReal,
       clienteId: cliente._id,
       servicoId: (servico && servico._id) || null,
       servicosIds: servicosMulti.length > 0 ? servicosMulti.map(s => s._id) : undefined,
@@ -403,7 +407,7 @@ router.post('/espaco/:adminId/agendar', async (req, res) => {
     await ClienteAgenda.findByIdAndUpdate(cliente._id, { ultimoAtendimento: new Date(), $inc: { totalAtendimentos: 1 } });
 
     // Notificar dono via WhatsApp
-    ModoDono.notificarDonoNovoAgendamento(req.params.adminId, {
+    ModoDono.notificarDonoNovoAgendamento(adminIdReal, {
       nomeCliente: ag.nomeCliente,
       nomeServico: ag.nomeServico,
       nomeProfissional: ag.nomeProfissional,
@@ -413,7 +417,7 @@ router.post('/espaco/:adminId/agendar', async (req, res) => {
 
     // Notificar profissional via WhatsApp (se houver profissional vinculado)
     if (profissionalId) {
-      ModoDono.notificarProfissionalNovoAgendamento(req.params.adminId, profissionalId, {
+      ModoDono.notificarProfissionalNovoAgendamento(adminIdReal, profissionalId, {
         nomeCliente: ag.nomeCliente,
         nomeServico: ag.nomeServico,
         dataHora: ag.dataHora

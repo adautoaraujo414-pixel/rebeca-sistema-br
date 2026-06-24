@@ -160,9 +160,12 @@ router.get('/leads', authAgenda, async (req, res) => {
 
 router.get('/espaco/:adminId/vitrine', async (req, res) => {
   try {
-    const { adminId } = req.params;
-    const admin = await AdminAgenda.findById(adminId).lean();
+    const adminParam = req.params.adminId;
+    const admin = mongoose.isValidObjectId(adminParam)
+      ? await AdminAgenda.findById(adminParam).lean()
+      : await AdminAgenda.findOne({ slug: adminParam }).lean();
     if (!admin) return res.status(404).json({ erro: 'Espaço não encontrado' });
+    const adminId = admin._id;
 
     const [servicos, todos, catalogos] = await Promise.all([
       ServicoAgenda.find({ adminId, ativo: true }).sort({ ordem: 1 }).lean(),
