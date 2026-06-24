@@ -53,7 +53,8 @@ const adminAgendaSchema = new mongoose.Schema({
     boasVindasOficialEnviadaEm: { type: Date },
     ultimoBomDiaEm: { type: Date },
     frasesBomDiaUsadas: { type: [String], default: [] },
-    genero: { type: String, enum: ['M','F',''], default: '' }
+    genero: { type: String, enum: ['M','F',''], default: '' },
+    apelido: { type: String, default: '', trim: true, maxlength: 30 }
   },
   isRebecaOficial: { type: Boolean, default: false },
   planoExpira: { type: Date },
