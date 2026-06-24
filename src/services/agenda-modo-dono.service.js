@@ -3486,6 +3486,53 @@ async function notificarDonoNovoAgendamento(adminId, dadosAg) {
   }
 }
 
+async function notificarProfissionalNovoAgendamento(adminId, profissionalId, dadosAg) {
+  try {
+    if (!profissionalId) return;
+    const { ProfissionalAgenda } = require('../models/AgendaServico');
+    const prof = await ProfissionalAgenda.findById(profissionalId).lean();
+    if (!prof) return;
+
+    const telProf = _normalizarTel(prof.telefone);
+    if (!telProf) return;
+
+    const instancia = await InstanciaWhatsapp.findOne({ adminId, adminTipo: 'agenda' }).lean();
+    if (!instancia || instancia.status !== 'conectado') return;
+
+    const dataHora = new Date(dadosAg.dataHora);
+    const dataFmt = _fmtData(dataHora);
+    const horaFmt = _fmtHora(dataHora);
+
+    if (instancia.provider === 'meta' || instancia._enviarVia === 'meta' || instancia.apiUrl === 'meta') {
+      const MetaWA = require('./meta-whatsapp.service');
+      await MetaWA.enviarTemplate(telProf, 'novo_agendamento_profissional', 'pt_BR', [
+        {
+          type: 'body',
+          parameters: [
+            { type: 'text', text: dadosAg.nomeCliente || 'Cliente' },
+            { type: 'text', text: dadosAg.nomeServico || 'Serviço' },
+            { type: 'text', text: dataFmt },
+            { type: 'text', text: horaFmt }
+          ]
+        }
+      ], instancia);
+    } else {
+      const msg =
+        `📅 *Novo horário marcado!*
+
+` +
+        `👤 *${dadosAg.nomeCliente}*
+` +
+        `🔖 ${dadosAg.nomeServico || 'Serviço'}
+` +
+        `📆 ${dataFmt} às ${horaFmt}`;
+      await _enviarMsg(instancia, telProf, msg);
+    }
+  } catch(e) {
+    console.error('[ModoDono] Erro ao notificar profissional:', e.message);
+  }
+}
+
 
 // ── SAUDADE REBECA: mensagem dramática pra admins que sumiram 24h ──────────
 async function rodarSaudadeRebeca() {
@@ -3579,7 +3626,7 @@ async function rodarSaudadeRebeca() {
 
 
 module.exports = {
-  rodarSaudadeRebeca, isDono, enviarBoasVindas, processarComandoDono, notificarDonoNovoAgendamento, processarComandoAdmin: (texto, adminId, instOfc) => processarComandoDono(instOfc?.numero || '', texto, adminId, instOfc) };
+  rodarSaudadeRebeca, isDono, enviarBoasVindas, processarComandoDono, notificarDonoNovoAgendamento, notificarProfissionalNovoAgendamento, processarComandoAdmin: (texto, adminId, instOfc) => processarComandoDono(instOfc?.numero || '', texto, adminId, instOfc) };
 
 // ── LEMBRETE AUTOMÁTICO 30min antes ─────────────────────────────────────────
 async function rodarLembretes() {
