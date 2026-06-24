@@ -102,6 +102,16 @@ router.patch('/perfil/genero', authAgenda, async (req, res) => {
   } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 
+// Configurar apelido/nome de chamada do admin (como a Rebeca chama no WhatsApp)
+router.patch('/perfil/apelido', authAgenda, async (req, res) => {
+  try {
+    let { apelido } = req.body;
+    apelido = (apelido || '').toString().trim().slice(0, 30);
+    await AdminAgenda.findByIdAndUpdate(req.adminAgendaId, { 'modoWhatsappDono.apelido': apelido });
+    res.json({ sucesso: true, apelido });
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
 router.put('/perfil', authAgenda, async (req, res) => {
   try {
     const campos = ['nome','nomeNegocio','segmento','telefone','whatsapp','logo','descricao','endereco','cidade','instagram'];
