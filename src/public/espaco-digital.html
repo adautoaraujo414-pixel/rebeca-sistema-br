@@ -805,7 +805,7 @@ function renderHeader(p){
     var li=document.getElementById('h-logo-icon');
     if(li){ li.innerHTML='<img src="'+p.logo+'" alt="'+nome+'" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">'; }
   }
-  var hb=document.getElementById('hero-badge');if(hb)hb.textContent='🗓 '+nome;
+  var hb=document.getElementById('hero-badge');if(hb)hb.style.display='none';
   var fs=document.getElementById('f-sub');if(fs)fs.textContent=p.segmento||'Espaço Digital';
   if(p.whatsapp){
     wppNum=(p.whatsapp||'').replace(/\D/g,'');
