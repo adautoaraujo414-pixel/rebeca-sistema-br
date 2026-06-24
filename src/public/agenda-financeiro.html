@@ -433,7 +433,22 @@ var PROFISSIONAIS = [];
 var tabAtual = 'receitas';
 
 function fmt(v){ return 'R$ '+(parseFloat(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
-function fmtData(d){ try{ return d ? new Date(d).toLocaleDateString('pt-BR') : '---'; }catch(e){ return '---'; } }
+function fmtData(d){
+  try{
+    if(!d) return '---';
+    var s = String(d);
+    var m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if(m) return m[3]+'/'+m[2]+'/'+m[1];
+    return new Date(d).toLocaleDateString('pt-BR');
+  }catch(e){ return '---'; }
+}
+function dataLocal(d){
+  if(!d) return null;
+  var s = String(d);
+  var m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if(m) return new Date(parseInt(m[1]), parseInt(m[2])-1, parseInt(m[3]));
+  return new Date(d);
+}
 function limparTel(t){ return (t||'').replace(/\D/g,''); }
 function iniciais(n){ return (n||'?').split(' ').slice(0,2).map(function(x){ return x[0]; }).join('').toUpperCase(); }
 function escHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
@@ -627,7 +642,7 @@ function carregarContas(){
     var hoje = new Date(); hoje.setHours(0,0,0,0);
     var catIcon = {aluguel:'Casa',agua:'Agua',luz:'Luz',internet:'Net',salario:'Sal',imposto:'Imp',fornecedor:'For',outro:'Out'};
     tbody.innerHTML = contas.map(function(c){
-      var venc = new Date(c.vencimento);
+      var venc = dataLocal(c.vencimento);
       var atrasada = !c.pago && venc < hoje;
       var hojeFlag = !c.pago && venc.toDateString()===hoje.toDateString();
       var statusBadge = c.pago
