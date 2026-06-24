@@ -2425,10 +2425,11 @@ async function iniciarApp(){
   if(ADMIN){
     const nome = ADMIN.nomeNegocio || ADMIN.nome || 'Negócio';
     const primeiroNome = (ADMIN.nome||'').split(' ')[0] || 'Olá';
+    const nomeExibicao = (ADMIN.apelido && ADMIN.apelido.trim()) ? ADMIN.apelido.trim() : primeiroNome;
     document.getElementById('pg-saudacao').textContent = 'Olá, '+primeiroNome+'! 👋';
     document.getElementById('sb-nome-negocio').textContent = nome;
     document.getElementById('h-nome-negocio').textContent = nome;
-    document.getElementById('h-nome').textContent = primeiroNome;
+    document.getElementById('h-nome').textContent = nomeExibicao;
     document.getElementById('mh-nome').textContent = nome;
     document.getElementById('dr-nome').textContent = nome;
     const av = iniciais(ADMIN.nome);
