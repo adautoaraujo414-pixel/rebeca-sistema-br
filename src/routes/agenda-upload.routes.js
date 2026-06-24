@@ -51,7 +51,28 @@ const upload = multer({
 });
 
 // ── Upload universal ──────────────────────────────────
+async function comprimirImagem(buffer, mimetype) {
+  try {
+    // GIFs nao sao reprocessados (perderiam animacao); demais formatos sao
+    // redimensionados e convertidos para JPEG para reduzir uso de memoria/armazenamento.
+    if (mimetype === 'image/gif') return { buffer, mimetype };
+    const sharp = require('sharp');
+    const saida = await sharp(buffer, { failOn: 'none' })
+      .rotate() // aplica orientacao EXIF antes de remove-la
+      .resize({ width: 1600, height: 1600, fit: 'inside', withoutEnlargement: true })
+      .jpeg({ quality: 80, mozjpeg: true })
+      .toBuffer();
+    return { buffer: saida, mimetype: 'image/jpeg' };
+  } catch (e) {
+    console.warn('[Upload] Falha ao comprimir imagem, usando original:', e.message);
+    return { buffer, mimetype };
+  }
+}
+
 async function uploadImagem(buffer, mimetype, pasta = 'agenda') {
+  const comprimida = await comprimirImagem(buffer, mimetype);
+  buffer = comprimida.buffer;
+  mimetype = comprimida.mimetype;
   if (USA_B2) {
     const ext = (mimetype.split('/')[1] || 'jpg').replace('jpeg','jpg');
     const nomeArquivo = `rebeca/${pasta}/${Date.now()}-${crypto.randomBytes(8).toString('hex')}.${ext}`;
