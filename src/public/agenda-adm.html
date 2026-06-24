@@ -5841,6 +5841,8 @@ async function salvarApelido() {
     console.log('[salvarApelido] resposta recebida:', JSON.stringify(d));
     if (d && d.sucesso) {
       if (ADMIN) ADMIN.apelido = d.apelido;
+      var elNome = document.getElementById('h-nome');
+      if (elNome) elNome.textContent = d.apelido || (ADMIN && ADMIN.nome ? ADMIN.nome.split(' ')[0] : 'Olá');
       toast('Nome atualizado! 🎉');
       fecharModal('modal-apelido');
     } else {
@@ -5860,7 +5862,8 @@ function fecharModal(id) {
   var el = document.getElementById(id);
   if (!el) return;
   el.classList.remove('show');
-  if (el.classList.contains('open')) _fecharModalLegacy(id);
+  if (el.classList.contains('open')) { _fecharModalLegacy(id); return; }
+  if (el.style.display === 'flex') _modalClose(id);
 }
 function fecharModalSePano(e, id) {
   if (e.target === document.getElementById(id)) fecharModal(id);
