@@ -5344,14 +5344,14 @@ function renderProdutos() {
   g.innerHTML = lista.map(p => {
     const preco = p.precoPromocional ? `<span class="prod-preco">R$ ${p.precoPromocional.toFixed(2)}</span><span class="prod-preco-old">R$ ${p.preco.toFixed(2)}</span>` : `<span class="prod-preco">R$ ${p.preco.toFixed(2)}</span>`;
     const est = p.estoque === 0 ? '<div class="prod-estoque" style="color:var(--vermelho)">Sem estoque</div>' : p.estoque != null ? `<div class="prod-estoque">${p.estoque} em estoque</div>` : '';
-    const foto = p.fotoPrincipal ? `<img src="${p.fotoPrincipal}" alt="${p.nome}" loading="lazy">` : '📦';
-    const tags = (p.tags||[]).slice(0,3).map(t=>`<span class="prod-tag">${t}</span>`).join('');
+    const foto = p.fotoPrincipal ? `<img src="${p.fotoPrincipal}" alt="${escHtml(p.nome)}" loading="lazy">` : '📦';
+    const tags = (p.tags||[]).slice(0,3).map(t=>`<span class="prod-tag">${escHtml(t)}</span>`).join('');
     const badge = !p.ativo ? '<span class="prod-status-badge inativo">Inativo</span>' : p.estoque===0 ? '<span class="prod-status-badge sem-estoque">Sem estoque</span>' : '<span class="prod-status-badge ativo">Ativo</span>';
     return `<div class="prod-card" onclick="editarProduto('${p._id}')">
       <div class="prod-foto">${foto}</div>
       <div class="prod-info">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:6px;margin-bottom:4px">
-          <div class="prod-nome">${p.nome}</div>${badge}
+          <div class="prod-nome">${escHtml(p.nome)}</div>${badge}
         </div>
         <div>${preco}</div>${est}
         <div class="prod-tags">${tags}</div>
@@ -5415,7 +5415,7 @@ function editarProduto(id) {
   document.getElementById('prod-status').value = p.ativo ? 'true' : 'false';
   if(document.getElementById('prod-destaque')) document.getElementById('prod-destaque').value = p.destaque ? 'true' : 'false';
   if(document.getElementById('prod-combo')) { document.getElementById('prod-combo').value = p.combo ? 'true' : 'false'; toggleComboFields(p.combo ? 'true' : 'false'); }
-  if(document.getElementById('prod-preco-combo')) document.getElementById('prod-preco-combo').value = p.precoCombo || '';
+  if(document.getElementById('prod-preco-combo')) document.getElementById('prod-preco-combo').value = _fmtV(p.precoCombo);
   document.getElementById('btn-excluir-prod').style.display = 'block';
   document.getElementById('modal-produto').classList.add('show');
 }
