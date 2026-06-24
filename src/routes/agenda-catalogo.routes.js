@@ -194,7 +194,12 @@ router.get('/espaco/:adminId/vitrine', async (req, res) => {
 // Busca unificada pública
 router.get('/espaco/:adminId/buscar', async (req, res) => {
   try {
-    const { adminId } = req.params;
+    const adminParam = req.params.adminId;
+    const adminDoc = mongoose.isValidObjectId(adminParam)
+      ? await AdminAgenda.findById(adminParam).select('_id').lean()
+      : await AdminAgenda.findOne({ slug: adminParam }).select('_id').lean();
+    if (!adminDoc) return res.status(404).json({ erro: 'Espaço não encontrado' });
+    const adminId = adminDoc._id;
     const { q } = req.query;
     if (!q) return res.json({ sucesso: true, produtos: [], servicos: [], conhecimento: [] });
 
