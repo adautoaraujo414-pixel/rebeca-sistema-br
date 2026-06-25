@@ -223,7 +223,13 @@ router.get('/espaco/:adminId/buscar', async (req, res) => {
 
 router.get('/espaco/:adminId/carrinho/:sessionId', async (req, res) => {
   try {
-    const { adminId, sessionId } = req.params;
+    const adminParam = req.params.adminId;
+    const { sessionId } = req.params;
+    const adminDoc = mongoose.isValidObjectId(adminParam)
+      ? await AdminAgenda.findById(adminParam).select('_id').lean()
+      : await AdminAgenda.findOne({ slug: adminParam }).select('_id').lean();
+    if (!adminDoc) return res.status(404).json({ erro: 'Espaço não encontrado' });
+    const adminId = adminDoc._id;
     const carrinho = await CarrinhoAgenda.findOne({ adminId, sessionId, status: 'ativo' }).lean();
     res.json({ sucesso: true, carrinho: carrinho || { itens: [], total: 0 } });
   } catch(e) { res.status(500).json({ erro: e.message }); }
@@ -231,7 +237,12 @@ router.get('/espaco/:adminId/carrinho/:sessionId', async (req, res) => {
 
 router.post('/espaco/:adminId/carrinho', async (req, res) => {
   try {
-    const { adminId } = req.params;
+    const adminParam = req.params.adminId;
+    const adminDoc = mongoose.isValidObjectId(adminParam)
+      ? await AdminAgenda.findById(adminParam).select('_id').lean()
+      : await AdminAgenda.findOne({ slug: adminParam }).select('_id').lean();
+    if (!adminDoc) return res.status(404).json({ erro: 'Espaço não encontrado' });
+    const adminId = adminDoc._id;
     const { sessionId, produtoId, quantidade = 1, variacaoSelecionada = '', clienteTelefone = '', clienteNome = '' } = req.body;
 
     const produto = await ProdutoAgenda.findOne({ _id: produtoId, adminId, ativo: true }).lean();
@@ -271,7 +282,13 @@ router.post('/espaco/:adminId/carrinho', async (req, res) => {
 
 router.delete('/espaco/:adminId/carrinho/:sessionId/item/:itemId', async (req, res) => {
   try {
-    const { adminId, sessionId, itemId } = req.params;
+    const adminParam = req.params.adminId;
+    const { sessionId, itemId } = req.params;
+    const adminDoc = mongoose.isValidObjectId(adminParam)
+      ? await AdminAgenda.findById(adminParam).select('_id').lean()
+      : await AdminAgenda.findOne({ slug: adminParam }).select('_id').lean();
+    if (!adminDoc) return res.status(404).json({ erro: 'Espaço não encontrado' });
+    const adminId = adminDoc._id;
     const carrinho = await CarrinhoAgenda.findOne({ adminId, sessionId, status: 'ativo' });
     if (!carrinho) return res.status(404).json({ erro: 'Carrinho não encontrado' });
     carrinho.itens = carrinho.itens.filter(i => String(i._id) !== itemId);
@@ -285,7 +302,13 @@ router.delete('/espaco/:adminId/carrinho/:sessionId/item/:itemId', async (req, r
 // Finalizar carrinho — envia resumo para WhatsApp do admin
 router.post('/espaco/:adminId/carrinho/:sessionId/finalizar', async (req, res) => {
   try {
-    const { adminId, sessionId } = req.params;
+    const adminParam = req.params.adminId;
+    const { sessionId } = req.params;
+    const adminDoc = mongoose.isValidObjectId(adminParam)
+      ? await AdminAgenda.findById(adminParam).select('_id').lean()
+      : await AdminAgenda.findOne({ slug: adminParam }).select('_id').lean();
+    if (!adminDoc) return res.status(404).json({ erro: 'Espaço não encontrado' });
+    const adminId = adminDoc._id;
     const carrinho = await CarrinhoAgenda.findOne({ adminId, sessionId, status: 'ativo' });
     if (!carrinho || !carrinho.itens.length) return res.status(400).json({ erro: 'Carrinho vazio' });
 
