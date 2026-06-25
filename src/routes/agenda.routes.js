@@ -585,7 +585,7 @@ router.post('/clientes', authAgenda, async (req, res) => {
 
 router.get('/clientes', authAgenda, async (req, res) => {
   try {
-    const clientes = await ClienteAgenda.find({ adminId: req.adminAgendaId }).sort({ nome: 1 });
+    const clientes = await ClienteAgenda.find({ adminId: req.adminAgendaId, ativo: { $ne: false } }).sort({ nome: 1 });
     res.json({ sucesso: true, clientes });
   } catch(e) { res.status(500).json({ erro: e.message }); }
 });
@@ -595,6 +595,15 @@ router.put('/clientes/:id', authAgenda, async (req, res) => {
     const c = await ClienteAgenda.findOneAndUpdate({ _id: req.params.id, adminId: req.adminAgendaId }, req.body, { new: true });
     if (!c) return res.status(404).json({ erro: 'Cliente não encontrado' });
     res.json({ sucesso: true, cliente: c });
+  } catch(e) { res.status(500).json({ erro: e.message }); }
+});
+
+// DELETE cliente — inativa (mantem historico de agendamentos vinculado)
+router.delete('/clientes/:id', authAgenda, async (req, res) => {
+  try {
+    const c = await ClienteAgenda.findOneAndUpdate({ _id: req.params.id, adminId: req.adminAgendaId }, { ativo: false }, { new: true });
+    if (!c) return res.status(404).json({ erro: 'Cliente não encontrado' });
+    res.json({ sucesso: true });
   } catch(e) { res.status(500).json({ erro: e.message }); }
 });
 

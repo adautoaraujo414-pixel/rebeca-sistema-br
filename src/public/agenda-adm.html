@@ -3038,10 +3038,14 @@ async function cancelarAg(id){
 async function deletarCliente(id){
   if(!confirm('Remover este cliente?')) return;
   try {
-  await api('/clientes/'+id, {method:'DELETE'});
+    const r = await api('/clientes/'+id, {method:'DELETE'});
+    if (r && r.sucesso) {
+      toast('Cliente removido');
+      carregarTabelaClientes();
+    } else {
+      alert((r && r.erro) || 'Erro ao remover cliente');
+    }
   } catch(e) { console.error('Erro:', e); alert('Erro ao executar ação'); }
-  toast('Cliente removido');
-  carregarTabelaClientes();
 }
 
 async function deletarServico(id){

@@ -130,6 +130,7 @@ const clienteAgendaSchema = new mongoose.Schema({
   totalAtendimentos: { type: Number, default: 0 },
   canalPreferido: { type: String, enum: ['whatsapp','telefone','presencial'], default: 'whatsapp' },
   consentimentoContato: { type: Boolean, default: true },
+  ativo: { type: Boolean, default: true },
   createdAt: { type: Date, default: Date.now }
 });
 
