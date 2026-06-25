@@ -4459,8 +4459,8 @@ async function crmCarregarRetornos() {
       <div class="card" style="margin-bottom:10px;padding:14px">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap">
           <div>
-            <strong>${ret.nome}</strong>
-            <span style="margin-left:8px;font-size:.78em;padding:2px 8px;border-radius:10px;background:${crmTipoCor(ret.tipoRetorno)};color:#fff">${ret.tipoRetorno}</span>
+            <strong>${escHtml(ret.nome)}</strong>
+            <span style="margin-left:8px;font-size:.78em;padding:2px 8px;border-radius:10px;background:${crmTipoCor(ret.tipoRetorno)};color:#fff">${escHtml(ret.tipoRetorno)}</span>
             ${ret.diasSemVir ? `<span style="margin-left:6px;font-size:.78em;color:var(--texto2)">${ret.diasSemVir}d sem vir</span>` : ''}
           </div>
           <div style="display:flex;gap:6px;flex-wrap:wrap">
@@ -4470,9 +4470,9 @@ async function crmCarregarRetornos() {
             <button class="btn-sec" style="font-size:.8em;padding:4px 10px;color:var(--texto2)" onclick="crmStatus('${ret._id}','dispensado')">✕</button>
           </div>
         </div>
-        ${ret.ultimoServico ? `<div style="font-size:.8em;color:var(--texto2);margin-top:4px">Último serviço: ${ret.ultimoServico}</div>` : ''}
-        ${ret.observacaoRetorno ? `<div style="font-size:.8em;color:var(--texto2);margin-top:2px">${ret.observacaoRetorno}</div>` : ''}
-        <div style="font-size:.78em;color:var(--texto2);margin-top:6px;background:var(--bg);padding:8px;border-radius:6px;font-style:italic">"${ret.msgSugerida}"</div>
+        ${ret.ultimoServico ? `<div style="font-size:.8em;color:var(--texto2);margin-top:4px">Último serviço: ${escHtml(ret.ultimoServico)}</div>` : ''}
+        ${ret.observacaoRetorno ? `<div style="font-size:.8em;color:var(--texto2);margin-top:2px">${escHtml(ret.observacaoRetorno)}</div>` : ''}
+        <div style="font-size:.78em;color:var(--texto2);margin-top:6px;background:var(--bg);padding:8px;border-radius:6px;font-style:italic">"${escHtml(ret.msgSugerida)}"</div>
       </div>`).join('');
   } catch(e) { if (load) load.style.display='none'; el.innerHTML='<div style="color:red;padding:20px">Erro ao carregar</div>'; }
 }
@@ -4490,20 +4490,20 @@ async function crmCarregarInativos() {
     }
     crmInativosCache = d.clientes;
     el.innerHTML = `<div style="font-size:.85em;color:var(--texto2);margin-bottom:10px">${d.total} cliente(s) encontrado(s)</div>` +
-      d.clientes.map(c => `
+      d.clientes.map((c, _idx) => `
       <div class="card" style="margin-bottom:10px;padding:14px">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap">
           <div>
-            <strong>${c.nome}</strong>
+            <strong>${escHtml(c.nome)}</strong>
             <span style="margin-left:8px;font-size:.78em;color:var(--texto2)">${c.diasSemVir}d sem vir</span>
-            ${c.ultimoServico ? `<span style="margin-left:6px;font-size:.78em;color:var(--texto2)">• ${c.ultimoServico}</span>` : ''}
+            ${c.ultimoServico ? `<span style="margin-left:6px;font-size:.78em;color:var(--texto2)">• ${escHtml(c.ultimoServico)}</span>` : ''}
           </div>
           <div style="display:flex;gap:6px;flex-wrap:wrap">
             <a href="https://wa.me/${c.telefone.replace(/\D/g,'')}?text=${encodeURIComponent(c.msgSugerida)}" target="_blank" class="btn-sec" style="font-size:.8em;padding:4px 10px">💬 WhatsApp</a>
-            <button class="btn-sec" style="font-size:.8em;padding:4px 10px" onclick="crmCriarRetornoDeInativo(${JSON.stringify(c).replace(/"/g,'&quot;')})">+ Retorno</button>
+            <button class="btn-sec" style="font-size:.8em;padding:4px 10px" onclick="crmCriarRetornoDeInativo(_idx)">+ Retorno</button>
           </div>
         </div>
-        <div style="font-size:.78em;color:var(--texto2);margin-top:6px;background:var(--bg);padding:8px;border-radius:6px;font-style:italic">"${c.msgSugerida}"</div>
+        <div style="font-size:.78em;color:var(--texto2);margin-top:6px;background:var(--bg);padding:8px;border-radius:6px;font-style:italic">"${escHtml(c.msgSugerida)}"</div>
       </div>`).join('');
   } catch(e) { el.innerHTML='<div style="color:red;padding:20px">Erro ao carregar</div>'; }
 }
@@ -4527,17 +4527,21 @@ function crmAba(aba) {
 
 async function crmStatus(id, status) {
   try {
-    await fetch(`/api/agenda/crm/retornos/${id}/status`, {
+    const r = await fetch(`/api/agenda/crm/retornos/${id}/status`, {
       method: 'PATCH',
       headers: { 'Content-Type':'application/json', Authorization: 'Bearer '+TOKEN },
       body: JSON.stringify({ status })
     });
+    const d = await r.json();
+    if (!d?.sucesso) { alert(d?.erro || 'Erro ao atualizar status'); return; }
     crmCarregarRetornos();
     crmCarregarDashboard();
   } catch(e) { alert('Erro ao atualizar status'); }
 }
 
-async function crmCriarRetornoDeInativo(cliente) {
+async function crmCriarRetornoDeInativo(idxOuCliente) {
+  const cliente = (typeof idxOuCliente === 'number') ? crmInativosCache[idxOuCliente] : idxOuCliente;
+  if (!cliente) { alert('Cliente não encontrado. Atualize a lista e tente novamente.'); return; }
   try {
     const r = await fetch('/api/agenda/crm/retornos', {
       method: 'POST',
