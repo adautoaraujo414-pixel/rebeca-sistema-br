@@ -56,6 +56,7 @@ router.post('/cadastro', async (req, res) => {
   try {
     const { nome, email, senha, nomeNegocio, segmento, telefone, whatsapp, plano } = req.body;
     if (!nome || !email || !senha) return res.status(400).json({ erro: 'Campos obrigatórios faltando' });
+    if (senha.length < 6) return res.status(400).json({ erro: 'Senha deve ter no mínimo 6 caracteres' });
     const existe = await AdminAgenda.findOne({ email });
     if (existe) return res.status(400).json({ erro: 'Email já cadastrado' });
     const hash = await bcrypt.hash(senha, 10);

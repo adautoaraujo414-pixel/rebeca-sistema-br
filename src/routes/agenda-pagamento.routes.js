@@ -3,6 +3,7 @@ const express  = require('express');
 const router   = express.Router();
 const crypto   = require('crypto');
 const bcrypt   = require('bcryptjs');
+const mongoose = require('mongoose');
 const { AdminAgenda } = require('../models/AgendaServico');
 const { InstanciaWhatsapp } = require('../models/AgendaServico');
 
@@ -20,6 +21,9 @@ router.post('/comprovante', async (req, res) => {
   try {
     const { adminId, imagemBase64, mediaType } = req.body;
     if (!adminId || !imagemBase64) return res.status(400).json({ erro: 'adminId e imagemBase64 obrigatórios' });
+    if (!mongoose.isValidObjectId(adminId)) return res.status(400).json({ erro: 'adminId inválido' });
+    // Limite de tamanho: ~8MB em base64 (cobre comprovantes normais, evita payloads abusivos)
+    if (imagemBase64.length > 8 * 1024 * 1024) return res.status(400).json({ erro: 'Imagem muito grande. Envie um comprovante com até 8MB.' });
 
     const admin = await AdminAgenda.findById(adminId);
     if (!admin) return res.status(404).json({ erro: 'Conta não encontrada' });
