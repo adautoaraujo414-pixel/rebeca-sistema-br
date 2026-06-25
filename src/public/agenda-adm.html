@@ -1438,6 +1438,16 @@ document.querySelectorAll('.nav-item').forEach(item => {
           </div>
           <div id="lista-fila-encaixe"><div style="color:var(--texto3);font-size:.85em">Carregando...</div></div>
         </div>
+        <div class="form-card" style="margin-top:24px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+            <div>
+              <div style="font-weight:700;font-size:1.05em">🚫 Bloqueios de Horário</div>
+              <div style="font-size:.8em;color:var(--texto3)">Folgas, manutenção ou horários indisponíveis</div>
+            </div>
+            <button class="btn-secondary" onclick="abrirModalBloqueio()" style="padding:8px 14px;font-size:.85em">+ Novo bloqueio</button>
+          </div>
+          <div id="lista-bloqueios"><div style="color:var(--texto3);font-size:.85em">Carregando...</div></div>
+        </div>
       </div>
 
       <!-- ═══ CLIENTES ═══ -->
@@ -2103,6 +2113,40 @@ document.querySelectorAll('.nav-item').forEach(item => {
   </div>
 </div>
 
+<div class="modal-bg" id="modal-bloqueio">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-titulo">🚫 Novo Bloqueio</div>
+      <button class="modal-close" onclick="fecharModal('modal-bloqueio')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group" style="display:flex;gap:10px">
+        <div style="flex:1">
+          <label class="form-label">Início *</label>
+          <input class="form-input" id="bloq-inicio" type="datetime-local">
+        </div>
+        <div style="flex:1">
+          <label class="form-label">Fim *</label>
+          <input class="form-input" id="bloq-fim" type="datetime-local">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Profissional</label>
+        <select class="form-input" id="bloq-profissional">
+          <option value="">Bloquear para todos os profissionais</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Motivo</label>
+        <input class="form-input" id="bloq-motivo" placeholder="Ex: Folga, manutenção, feriado...">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="fecharModal('modal-bloqueio')">Cancelar</button>
+      <button class="btn-primary" onclick="salvarBloqueio()">Salvar bloqueio</button>
+    </div>
+  </div>
+</div>
 <script src="/js/rebeca-polling.js"></script>
 <script src="/js/rebeca-tenant.js"></script>
 <script src="/js/rebeca-security.js"></script>
@@ -2710,7 +2754,7 @@ function irPara(tela){
   const bnEl = document.getElementById(bnMap[tela]);
   if(bnEl) bnEl.classList.add('ativo');
   window.scrollTo(0,0);
-  if(tela==='agendamentos') carregarTabelaAgendamentos(); carregarFilaEncaixe();
+  if(tela==='agendamentos') { carregarTabelaAgendamentos(); carregarFilaEncaixe(); carregarBloqueios(); }
   if(tela==='clientes') carregarTabelaClientes();
   if(tela==='profissionais') carregarGridProfissionais();
   if(tela==='servicos') carregarTabelaServicos();
@@ -2949,6 +2993,74 @@ async function removerFilaEncaixe(id){
     if(!r?.sucesso) throw new Error(r?.erro||'Erro');
     carregarFilaEncaixe();
   } catch(e){ alert('Erro ao remover: ' + e.message); }
+}
+
+async function carregarBloqueios(){
+  const el = document.getElementById('lista-bloqueios');
+  if(!el) return;
+  el.innerHTML = '<div style="color:var(--texto3);font-size:.85em">Carregando...</div>';
+  try {
+    const d = await api('/bloqueios');
+    if(!d?.sucesso) throw new Error(d?.erro||'Erro');
+    const bloqueios = d.bloqueios || [];
+    if(!bloqueios.length){
+      el.innerHTML = '<div class="empty-state" style="padding:20px 0"><div class="empty-state-icon">✅</div><div class="empty-state-titulo">Nenhum bloqueio ativo</div><div class="empty-state-sub">A agenda está livre para todos os horários</div></div>';
+      return;
+    }
+    el.innerHTML = bloqueios.map(b => {
+      const fmtDH = d => d ? new Date(d).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
+      const prof = b.profissionalId?.nome ? '👤 ' + escHtml(b.profissionalId.nome) : '👥 Todos os profissionais';
+      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--borda);gap:10px">' +
+        '<div style="flex:1">' +
+          '<div style="font-weight:600">' + escHtml(b.motivo || 'Sem motivo informado') + '</div>' +
+          '<div style="font-size:.78em;color:var(--texto3);margin-top:3px">📅 ' + fmtDH(b.dataHoraInicio) + ' até ' + fmtDH(b.dataHoraFim) + '</div>' +
+          '<div style="font-size:.78em;color:var(--texto3)">' + prof + '</div>' +
+        '</div>' +
+        '<button class="btn-tabela danger" onclick="deletarBloqueio(\'' + b._id + '\')">Remover</button>' +
+      '</div>';
+    }).join('');
+  } catch(e){ el.innerHTML = '<div style="color:var(--vermelho);font-size:.85em">Erro ao carregar bloqueios.</div>'; }
+}
+
+function abrirModalBloqueio(){
+  document.getElementById('bloq-inicio').value = '';
+  document.getElementById('bloq-fim').value = '';
+  document.getElementById('bloq-motivo').value = '';
+  const selProf = document.getElementById('bloq-profissional');
+  selProf.innerHTML = '<option value="">Bloquear para todos os profissionais</option>';
+  (window.PROFISSIONAIS_CACHE||[]).forEach(p => {
+    const o = document.createElement('option'); o.value = p._id; o.textContent = p.nome; selProf.appendChild(o);
+  });
+  document.getElementById('modal-bloqueio').classList.add('open');
+  var sy=window.scrollY;document.body.style.position='fixed';document.body.style.top='-'+sy+'px';document.body.style.left='0';document.body.style.right='0';document.body.dataset.scrollY=sy;
+}
+
+async function salvarBloqueio(){
+  const inicio = document.getElementById('bloq-inicio').value;
+  const fim = document.getElementById('bloq-fim').value;
+  if(!inicio || !fim){ alert('Informe inicio e fim do bloqueio.'); return; }
+  if(new Date(fim) <= new Date(inicio)){ alert('O fim do bloqueio deve ser depois do inicio.'); return; }
+  const payload = {
+    dataHoraInicio: inicio,
+    dataHoraFim: fim,
+    motivo: document.getElementById('bloq-motivo').value.trim(),
+    profissionalId: document.getElementById('bloq-profissional').value || undefined
+  };
+  try {
+    const r = await api('/bloqueios', {method:'POST', body:JSON.stringify(payload)});
+    if(!r?.sucesso) throw new Error(r?.erro||'Erro');
+    fecharModal('modal-bloqueio');
+    carregarBloqueios();
+  } catch(e){ alert('Erro ao salvar bloqueio: ' + e.message); }
+}
+
+async function deletarBloqueio(id){
+  if(!confirm('Remover este bloqueio?')) return;
+  try {
+    const r = await api('/bloqueios/' + id, {method:'DELETE'});
+    if(!r?.sucesso) throw new Error(r?.erro||'Erro');
+    carregarBloqueios();
+  } catch(e){ alert('Erro ao remover bloqueio: ' + e.message); }
 }
 
 async function carregarTabelaServicos(){
