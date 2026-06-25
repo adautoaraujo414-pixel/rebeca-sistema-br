@@ -3050,18 +3050,24 @@ async function deletarCliente(id){
 
 async function deletarServico(id){
   if(!confirm('Remover este serviço?')) return;
-  await api('/servicos/'+id, {method:'DELETE'});
-  toast('Serviço removido');
-  carregarTabelaServicos();
+  const r = await api('/servicos/'+id, {method:'DELETE'});
+  if (r && r.sucesso) {
+    toast('Serviço removido');
+    carregarTabelaServicos();
+  } else {
+    alert((r && r.erro) || 'Erro ao remover serviço');
+  }
 }
 
 async function deletarProfissional(id){
   if(!confirm('Remover este profissional?')) return;
-  try {
-  await api('/profissionais/'+id, {method:'DELETE'});
-  } catch(e) { console.error('Erro:', e); alert('Erro ao executar ação'); }
-  toast('Profissional removido');
-  carregarGridProfissionais();
+  const r = await api('/profissionais/'+id, {method:'DELETE'});
+  if (r && r.sucesso) {
+    toast('Profissional removido');
+    carregarGridProfissionais();
+  } else {
+    alert((r && r.erro) || 'Erro ao remover profissional');
+  }
 }
 
 async function salvarAgendamento(){
@@ -3339,8 +3345,8 @@ function abrirModalServico(srvData){
     if (!profs.length) { _listaProf.innerHTML = '<span style="font-size:.82em;color:var(--texto2)">Nenhum profissional cadastrado.</span>'; return; }
     _listaProf.innerHTML = profs.map(p => {
       const checked = vinculados.includes(String(p._id)) ? 'checked' : '';
-      const cargo = p.cargo ? ' <span style="font-size:.72em;color:var(--texto2)">(' + p.cargo + ')</span>' : '';
-      return '<label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:6px 10px;border:1px solid var(--borda);border-radius:8px;font-size:.85em"><input type="checkbox" value="' + p._id + '" ' + checked + '> ' + p.nome + cargo + '</label>';
+      const cargo = p.cargo ? ' <span style="font-size:.72em;color:var(--texto2)">(' + escHtml(p.cargo) + ')</span>' : '';
+      return '<label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:6px 10px;border:1px solid var(--borda);border-radius:8px;font-size:.85em"><input type="checkbox" value="' + p._id + '" ' + checked + '> ' + escHtml(p.nome) + cargo + '</label>';
     }).join('');
   }).catch(() => { _listaProf.innerHTML = '<span style="font-size:.82em;color:var(--texto2)">Erro ao carregar profissionais.</span>'; });
   document.getElementById('modal-srv').classList.add('open');
