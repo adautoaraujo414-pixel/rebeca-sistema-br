@@ -325,51 +325,11 @@ input,select,textarea{font-family:'Inter',sans-serif}
     padding-right:max(16px,env(safe-area-inset-right))!important;
   }
 
-  /* ── Proximos Agendamentos — empilha em 2 linhas, evita colisao de texto ── */
-  .agenda-row{
-    flex-wrap:wrap!important;
-    row-gap:8px!important;
-    padding:12px 14px!important;
-  }
-  .agenda-hora{
-    order:1;
-    min-width:auto!important;
-  }
-  .agenda-cliente{
-    order:2;
-    flex:1 1 auto!important;
-    min-width:0!important;
-  }
-  .agenda-nome{
-    overflow:hidden;
-    text-overflow:ellipsis;
-    white-space:nowrap;
-  }
-  .agenda-servico{
-    overflow:hidden;
-    text-overflow:ellipsis;
-    white-space:nowrap;
-  }
-  .agenda-status{
-    order:3;
-    margin-left:0!important;
-  }
-  .agenda-wpp{
-    order:4;
-  }
-  .agenda-prof{
-    order:5;
-    flex:1 0 100%!important;
-    padding-left:44px!important;
-    box-sizing:border-box!important;
-  }
-  .agenda-prof-nome{
-    overflow:hidden;
-    text-overflow:ellipsis;
-    white-space:nowrap;
+  /* ── Proximos Agendamentos: mobile ── */
+  .agenda-row{padding:10px 12px!important}
+  .agenda-cliente{min-width:0!important;overflow:hidden!important}
+  .agenda-prof{display:none!important}
 }
-  }
-
 @media(max-width:480px){
   .metrics{grid-template-columns:1fr!important}
   .page-grid-4{grid-template-columns:1fr!important}
