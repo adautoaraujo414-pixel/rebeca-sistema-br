@@ -2618,12 +2618,11 @@ async function carregarProximosAgendamentos(){
         '<div class="agenda-cliente">'+
           '<div class="agenda-avatar">'+iniciais(cliNome)+'</div>'+
           '<div style="min-width:0;flex:1">'+
-            '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">'+
-              '<span class="agenda-nome">'+escHtml(cliNome)+'</span>'+
+            '<div style="display:flex;align-items:center;gap:6px;min-width:0">'+
+              '<span class="agenda-nome" style="font-weight:600;font-size:.95em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+escHtml(cliNome)+'</span>'+
               badge(a.status||'pendente')+
             '</div>'+
-            '<div class="agenda-servico">'+escHtml(svcNome)+'</div>'+
-            '<div style="font-size:.75em;color:var(--texto3);margin-top:1px">'+escHtml(profNome)+'</div>'+
+            '<div class="agenda-servico" style="font-size:.8em;color:var(--texto2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%">'+escHtml(svcNome)+' · '+escHtml(profNome)+'</div>'+
           '</div>'+
         '</div>'+
         (tel ? '<div style="flex-shrink:0">'+wppBtn+'</div>' : '')+
