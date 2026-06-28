@@ -32,11 +32,15 @@ async function authAgenda(req, res, next) {
   try {
     const token = req.headers.authorization?.replace('Bearer ','') || '';
     if (!token) return res.status(401).json({ erro: 'Token ausente' });
-    // Busca sem filtro ativo — permite gerenciar conta mesmo com status pendente
     const admin = await AdminAgenda.findOne({ token });
     if (!admin) return res.status(401).json({ erro: 'Token inválido' });
     req.adminAgenda = admin;
     req.adminAgendaId = admin._id.toString();
+    // Conta desativada só pode ler o proprio perfil (ex: tela de pagamento/reativacao)
+    const rotaPerfilSomenteLeitura = req.method === 'GET' && req.path === '/perfil';
+    if (admin.ativo === false && !rotaPerfilSomenteLeitura) {
+      return res.status(403).json({ erro: 'conta_desativada', msg: 'Conta desativada. Entre em contato para reativar.' });
+    }
     next();
   } catch(e) { res.status(500).json({ erro: e.message }); }
 }
