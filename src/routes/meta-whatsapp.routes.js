@@ -202,17 +202,9 @@ router.post('/webhook', async (req, res) => {
                                 console.log('[Cozinha-Meta] Job #'+cont.numero+' criado para adminId:', _keyCoz, '| texto:', txtFinal.substring(0,60));
                             } catch(eCozBuf) { console.error('[Cozinha-Meta] Erro buffer:', eCozBuf.message); }
                         };
-
-                        // Se já tem 5 mensagens, dispara imediatamente
-                        if (global._bufCozMeta[_keyCoz] && 
-                            global._bufCozMeta[_keyCoz].linhas.length >= 5) {
-                            console.log('[Cozinha-Meta] 5 mensagens — disparando imediatamente');
-                            _dispararAgora();
-                        } else {
-                            // Senão, aguarda 10s para agrupar mais mensagens
-                            clearTimeout(global._bufCozMeta[_keyCoz]?.t);
-                            global._bufCozMeta[_keyCoz].t = setTimeout(_dispararAgora, 10000);
-                        }
+                        // Aguarda 10s para agrupar todas as mensagens numa folha so
+                        clearTimeout(global._bufCozMeta[_keyCoz]?.t);
+                        global._bufCozMeta[_keyCoz].t = setTimeout(_dispararAgora,10000);
                         return; // não processar via Rebeca
                     } else {
                         console.log('[Cozinha-Meta] impressora nao encontrada para adminId:', String(clienteCoz.adminId));
