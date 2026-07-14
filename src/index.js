@@ -13,6 +13,7 @@ process.on('unhandledRejection', (reason) => { console.error('[FATAL] Unhandled 
 const express  = require('express');
 const cors     = require('cors');
 const path     = require('path');
+const { attachImpressoraWebSocket } = require('./services/impressora-websocket.service');
 const crypto   = require('crypto');
 const mongoose = require('mongoose');
 const cron     = require('node-cron');
@@ -471,10 +472,13 @@ if (process.env.WORKER_ROLE === 'worker') {
     _depoisDoBoot();
 } else {
     // Modo web (padrao atual, com ou sem WORKER_ROLE=web): abre porta HTTP normalmente
-    app.listen(PORT, () => {
+    const server = require('http').createServer(app);
+    attachImpressoraWebSocket(server);
+    server.listen(PORT, () => {
         console.log('🚀 REBECA CORRIDAS v3.4.1 - Sistema Completo');
         console.log('📡 Porta:', PORT);
         console.log('🚗 App Motorista: /motorista');
+        console.log('🖨️  Impressora WS: /ws/impressora');
         _depoisDoBoot();
     });
 }
