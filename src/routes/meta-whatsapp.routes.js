@@ -214,6 +214,28 @@ router.post('/webhook', async (req, res) => {
         }
         // ─────────────────────────────────────────────────────────────────
 
+        // ── INTERCEPTOR IMPRESSORA WEBSOCKET (isolado, novo cliente) ────────
+        if (textoMensagem && tipo === 'text') {
+            try {
+                const { imprimirParaTelefone } = require('../services/impressora-roteador.service');
+                const resultado = await imprimirParaTelefone({
+                    telefone: telefone,
+                    cliente: telefone,
+                    texto: textoMensagem,
+                    dataHora: new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }),
+                });
+                if (resultado.ok) {
+                    console.log('[Impressora-WS-Meta] Impresso para adminId:', resultado.adminId);
+                    return; // não processar via Rebeca, ja foi direto pra impressora
+                } else {
+                    console.log('[Impressora-WS-Meta] Nao impresso (segue fluxo normal):', resultado.motivo);
+                }
+            } catch (eImpMeta) {
+                console.error('[Impressora-WS-Meta] Erro interceptor:', eImpMeta.message);
+            }
+        }
+        // ─────────────────────────────────────────────────────────────────
+
 
         // Buscar instância do admin pelo phoneNumberId (roteamento multi-admin)
         const phoneNumberId = value?.metadata?.phone_number_id;
