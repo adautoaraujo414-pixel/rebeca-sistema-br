@@ -49,26 +49,61 @@ function attachImpressoraWebSocket(server) {
 
   wss.on('connection', (ws, req) => {
     const ip = req.socket.remoteAddress;
-    console.log('[Impressora-WS] Nova conexao de impressora:', ip);
+    const url = new URL(req.url, 'http://localhost');
+    const adminId = url.searchParams.get('adminId');
 
-    ultimaConexao = ws;
-    // TODO: quando tivermos mais de um cliente, a impressora precisa
-    // mandar um identificador (adminId) na conexao. Por enquanto
-    // guardamos so a ultima conexao (funciona pra 1 cliente).
+    console.log('[Impressora-WS] Nova conexao de impressora:', ip, '| adminId:', adminId || '(nenhum - modo legado)');
 
-    ws.on('message', (msg) => {
-      console.log('[Impressora-WS] Mensagem recebida da impressora:', msg.toString());
+    ws.isAlive = true;
+    ws.on('pong', () => { ws.isAlive = true; });
+
+    if (adminId) {
+      const anterior = impressorasConectadas.get(adminId);
+      if (anterior && anterior !== ws) {
+        console.log('[Impressora-WS] Substituindo conexao antiga. adminId:', adminId);
+        try { anterior.terminate(); } catch (e) {}
+      }
+      impressorasConectadas.set(adminId, ws);
+      console.log('[Impressora-WS] Bridges com adminId conectados:', [...impressorasConectadas.keys()]);
+    } else {
+      ultimaConexao = ws;
+    }
+
+    ws.on('message', (msg, isBinary) => {
+      if (!isBinary) {
+        try {
+          const parsed = JSON.parse(msg.toString());
+          if (parsed.tipo === 'resultado_impressao') {
+            console.log('[Impressora-WS] Confirmacao do bridge. adminId:', adminId, parsed);
+            return;
+          }
+        } catch (e) {}
+      }
+      console.log('[Impressora-WS] Mensagem recebida da impressora:', isBinary ? '[binario]' : msg.toString());
     });
 
     ws.on('close', () => {
-      console.log('[Impressora-WS] Impressora desconectou:', ip);
+      console.log('[Impressora-WS] Impressora desconectou:', ip, '| adminId:', adminId || '(nenhum)');
       if (ultimaConexao === ws) ultimaConexao = null;
+      if (adminId) {
+        const atual = impressorasConectadas.get(adminId);
+        if (atual === ws) impressorasConectadas.delete(adminId);
+      }
     });
 
     ws.on('error', (erro) => {
       console.error('[Impressora-WS] Erro na conexao:', erro.message);
     });
   });
+
+  const heartbeatInterval = setInterval(() => {
+    wss.clients.forEach((ws) => {
+      if (ws.isAlive === false) return ws.terminate();
+      ws.isAlive = false;
+      ws.ping();
+    });
+  }, 30000);
+  wss.on('close', () => clearInterval(heartbeatInterval));
 
   console.log('[Impressora-WS] Servidor WebSocket pronto em /ws/impressora');
 }

@@ -214,21 +214,50 @@ router.post('/webhook', async (req, res) => {
         }
         // ─────────────────────────────────────────────────────────────────
 
-        // ── INTERCEPTOR IMPRESSORA WEBSOCKET (isolado, novo cliente) ────────
+        // ── INTERCEPTOR IMPRESSORA WEBSOCKET (isolado por adminId, buffer 5s) ────────
         if (textoMensagem && tipo === 'text') {
             try {
-                const { imprimirParaTelefone } = require('../services/impressora-roteador.service');
-                const resultado = await imprimirParaTelefone({
-                    telefone: telefone,
-                    cliente: telefone,
-                    texto: textoMensagem,
-                    dataHora: new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }),
-                });
-                if (resultado.ok) {
-                    console.log('[Impressora-WS-Meta] Impresso para adminId:', resultado.adminId);
-                    return; // não processar via Rebeca, ja foi direto pra impressora
+                const { imprimirParaTelefone, buscarAdminIdPorTelefone } = require('../services/impressora-roteador.service');
+                const adminIdWS = await buscarAdminIdPorTelefone(telefone);
+
+                console.log('[Impressora-WS-Meta] Telefone original:', telefone, '| adminId encontrado:', adminIdWS || '(nao cadastrado)');
+
+                if (adminIdWS) {
+                    if (!global._bufImpressoraWS) global._bufImpressoraWS = {};
+                    if (!global._bufImpressoraWS[adminIdWS]) global._bufImpressoraWS[adminIdWS] = { linhas: [], telefone, cliente: telefone };
+
+                    global._bufImpressoraWS[adminIdWS].linhas.push(textoMensagem);
+                    console.log('[Impressora-WS-Meta] Mensagem bufferizada para adminId:', adminIdWS, '| total linhas:', global._bufImpressoraWS[adminIdWS].linhas.length);
+
+                    clearTimeout(global._bufImpressoraWS[adminIdWS].t);
+                    global._bufImpressoraWS[adminIdWS].t = setTimeout(async () => {
+                        const buf = global._bufImpressoraWS[adminIdWS];
+                        if (!buf) return;
+                        delete global._bufImpressoraWS[adminIdWS];
+
+                        const textoFinal = buf.linhas.join('\n');
+                        console.log('[Impressora-WS-Meta] Disparando job agrupado para adminId:', adminIdWS, '| linhas:', buf.linhas.length);
+
+                        try {
+                            const resultado = await imprimirParaTelefone({
+                                telefone: buf.telefone,
+                                cliente: buf.cliente,
+                                texto: textoFinal,
+                                dataHora: new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }),
+                            });
+                            if (resultado.ok) {
+                                console.log('[Impressora-WS-Meta] Impresso com sucesso. adminId:', resultado.adminId);
+                            } else {
+                                console.log('[Impressora-WS-Meta] Falha ao imprimir. adminId:', adminIdWS, '| motivo:', resultado.motivo);
+                            }
+                        } catch (eDisparo) {
+                            console.error('[Impressora-WS-Meta] Erro ao disparar impressao agrupada:', eDisparo.message);
+                        }
+                    }, 5000);
+
+                    return; // não processar via Rebeca, ja foi encaminhado para o buffer da impressora
                 } else {
-                    console.log('[Impressora-WS-Meta] Nao impresso (segue fluxo normal):', resultado.motivo);
+                    console.log('[Impressora-WS-Meta] Telefone nao cadastrado nesse sistema, segue fluxo normal.');
                 }
             } catch (eImpMeta) {
                 console.error('[Impressora-WS-Meta] Erro interceptor:', eImpMeta.message);
