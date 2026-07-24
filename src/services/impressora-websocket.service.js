@@ -15,23 +15,45 @@ const { ThermalPrinter, PrinterTypes } = require('node-thermal-printer');
 const impressorasConectadas = new Map();
 let ultimaConexao = null;
 
-function montarBufferEscPos({ cliente, telefone, texto, dataHora }) {
+let contadorPedido = 0;
+let diaContadorAtual = null;
+
+function diaDeNegocioAtual() {
+  const agora = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+  if (agora.getHours() < 6) {
+    agora.setDate(agora.getDate() - 1);
+  }
+  return agora.toISOString().slice(0, 10);
+}
+
+function proximoNumeroPedido() {
+  const diaAtual = diaDeNegocioAtual();
+  if (diaAtual !== diaContadorAtual) {
+    diaContadorAtual = diaAtual;
+    contadorPedido = 0;
+    console.log('[Impressora-WS] Contador de pedidos zerado. Novo dia de negocio:', diaAtual);
+  }
+  contadorPedido += 1;
+  return contadorPedido;
+}
+
+function montarBufferEscPos({ numeroPedido, texto, dataHora }) {
   const printer = new ThermalPrinter({
     type: PrinterTypes.EPSON,
-    interface: 'tcp://127.0.0.1:9100', // nao é usado, so pra instanciar
+    interface: 'tcp://127.0.0.1:9100',
     width: 32,
     removeSpecialCharacters: false,
   });
 
   printer.alignCenter();
   printer.bold(true);
-  printer.println('NOVO PEDIDO - WHATSAPP');
+  printer.setTextSize(1, 1);
+  printer.println(`PEDIDO #${numeroPedido}`);
+  printer.setTextNormal();
   printer.bold(false);
   printer.drawLine();
 
   printer.alignLeft();
-  if (cliente) printer.println(`Cliente: ${cliente}`);
-  if (telefone) printer.println(`Telefone: ${telefone}`);
   printer.println(`Data: ${dataHora || new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}`);
   printer.drawLine();
 
@@ -117,9 +139,10 @@ function imprimir({ cliente, telefone, texto, dataHora, adminId }) {
   }
 
   try {
-    const buffer = montarBufferEscPos({ cliente, telefone, texto, dataHora });
+    const numeroPedido = proximoNumeroPedido();
+    const buffer = montarBufferEscPos({ numeroPedido, texto, dataHora });
     conexao.send(buffer, { binary: true });
-    console.log('[Impressora-WS] Buffer enviado para a impressora.');
+    console.log('[Impressora-WS] Buffer enviado para a impressora. Pedido #' + numeroPedido);
     return true;
   } catch (erro) {
     console.error('[Impressora-WS] ERRO ao montar/enviar buffer:', erro.message);
