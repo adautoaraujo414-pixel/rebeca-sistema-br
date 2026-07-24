@@ -13,11 +13,36 @@ function normalizarTelefone(telefone) {
   return telefone.replace(/\D/g, ''); // so numeros
 }
 
+function gerarVariantesTelefone(tel) {
+  // Gera variantes com e sem o 9o digito, para celulares BR no formato 55DDNNNNNNNNN
+  const variantes = new Set([tel]);
+
+  // Formato: 55 + DD (2 digitos) + numero (8 ou 9 digitos)
+  const match = tel.match(/^55(\d{2})(\d{8,9})$/);
+  if (match) {
+    const ddd = match[1];
+    const numero = match[2];
+    if (numero.length === 9 && numero[0] === '9') {
+      variantes.add('55' + ddd + numero.slice(1)); // remove o 9
+    } else if (numero.length === 8) {
+      variantes.add('55' + ddd + '9' + numero); // adiciona o 9
+    }
+  }
+
+  return [...variantes];
+}
+
 async function buscarAdminIdPorTelefone(telefone) {
   const tel = normalizarTelefone(telefone);
   if (!tel) return null;
 
-  const cadastro = await ImpressoraCadastro.findOne({ telefone: tel, ativo: true });
+  const variantes = gerarVariantesTelefone(tel);
+  const cadastro = await ImpressoraCadastro.findOne({ telefone: { $in: variantes }, ativo: true });
+
+  if (cadastro) {
+    console.log('[Impressora-Roteador] Telefone', tel, 'encontrado via variante:', cadastro.telefone);
+  }
+
   return cadastro ? cadastro.adminId : null;
 }
 
