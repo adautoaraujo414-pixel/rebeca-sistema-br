@@ -37,7 +37,7 @@ function proximoNumeroPedido() {
   return contadorPedido;
 }
 
-function montarBufferEscPos({ numeroPedido, texto, dataHora }) {
+function montarBufferEscPos({ numeroPedido, texto, dataHora, via }) {
   const printer = new ThermalPrinter({
     type: PrinterTypes.EPSON,
     interface: 'tcp://127.0.0.1:9100',
@@ -61,6 +61,10 @@ function montarBufferEscPos({ numeroPedido, texto, dataHora }) {
   printer.println(texto || '[sem conteudo]');
 
   printer.drawLine();
+  printer.alignCenter();
+  printer.println(via || '');
+  printer.newLine();
+
   printer.cut();
 
   return printer.getBuffer();
@@ -140,9 +144,13 @@ function imprimir({ cliente, telefone, texto, dataHora, adminId }) {
 
   try {
     const numeroPedido = proximoNumeroPedido();
-    const buffer = montarBufferEscPos({ numeroPedido, texto, dataHora });
-    conexao.send(buffer, { binary: true });
-    console.log('[Impressora-WS] Buffer enviado para a impressora. Pedido #' + numeroPedido);
+
+    const buffer1via = montarBufferEscPos({ numeroPedido, texto, dataHora, via: '1a VIA - COZINHA' });
+    const buffer2via = montarBufferEscPos({ numeroPedido, texto, dataHora, via: '2a VIA - CONTROLE' });
+    const bufferCompleto = Buffer.concat([buffer1via, buffer2via]);
+
+    conexao.send(bufferCompleto, { binary: true });
+    console.log('[Impressora-WS] Buffer enviado para a impressora (1a e 2a via). Pedido #' + numeroPedido);
     return true;
   } catch (erro) {
     console.error('[Impressora-WS] ERRO ao montar/enviar buffer:', erro.message);
