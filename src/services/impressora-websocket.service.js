@@ -37,6 +37,50 @@ function proximoNumeroPedido() {
   return contadorPedido;
 }
 
+const filaPendente = new Map();
+
+function enfileirarJob(adminId, job) {
+  if (!adminId) return;
+  if (!filaPendente.has(adminId)) filaPendente.set(adminId, []);
+  filaPendente.get(adminId).push(job);
+  console.log('[Impressora-WS] Job enfileirado. adminId:', adminId, '| Pedido #' + job.numeroPedido, '| fila atual:', filaPendente.get(adminId).length);
+}
+
+function processarFila(adminId) {
+  const fila = filaPendente.get(adminId);
+  if (!fila || fila.length === 0) return;
+  console.log('[Impressora-WS] Processando fila pendente. adminId:', adminId, '| jobs:', fila.length);
+  const pendentes = [...fila];
+  filaPendente.set(adminId, []);
+  for (const job of pendentes) {
+    const enviado = tentarEnviar(adminId, job);
+    if (!enviado) {
+      enfileirarJob(adminId, job);
+    }
+  }
+}
+
+function tentarEnviar(adminId, jobData) {
+  const texto = jobData.texto;
+  const dataHora = jobData.dataHora;
+  const numeroPedido = jobData.numeroPedido;
+  const conexao = (adminId && impressorasConectadas.get(adminId)) || ultimaConexao;
+  if (!conexao || conexao.readyState !== WebSocket.OPEN) {
+    return false;
+  }
+  try {
+    const buffer1via = montarBufferEscPos({ numeroPedido, texto, dataHora, via: '1a VIA - COZINHA' });
+    const buffer2via = montarBufferEscPos({ numeroPedido, texto, dataHora, via: '2a VIA - CONTROLE' });
+    const bufferCompleto = Buffer.concat([buffer1via, buffer2via]);
+    conexao.send(bufferCompleto, { binary: true });
+    console.log('[Impressora-WS] Buffer enviado para a impressora (1a e 2a via). Pedido #' + numeroPedido);
+    return true;
+  } catch (erro) {
+    console.error('[Impressora-WS] ERRO ao montar/enviar buffer:', erro.message);
+    return false;
+  }
+}
+
 function montarBufferEscPos({ numeroPedido, texto, dataHora, via }) {
   const printer = new ThermalPrinter({
     type: PrinterTypes.EPSON,
@@ -91,6 +135,7 @@ function attachImpressoraWebSocket(server) {
       }
       impressorasConectadas.set(adminId, ws);
       console.log('[Impressora-WS] Bridges com adminId conectados:', [...impressorasConectadas.keys()]);
+      processarFila(adminId);
     } else {
       ultimaConexao = ws;
     }
@@ -135,27 +180,15 @@ function attachImpressoraWebSocket(server) {
 }
 
 function imprimir({ cliente, telefone, texto, dataHora, adminId }) {
-  const conexao = (adminId && impressorasConectadas.get(adminId)) || ultimaConexao;
+  const numeroPedido = proximoNumeroPedido();
+  const enviado = tentarEnviar(adminId, { texto, dataHora, numeroPedido });
 
-  if (!conexao || conexao.readyState !== WebSocket.OPEN) {
-    console.error('[Impressora-WS] ERRO: nenhuma impressora conectada no momento.');
-    return false;
+  if (!enviado) {
+    console.log('[Impressora-WS] Impressora offline no momento, job enfileirado. adminId:', adminId, '| Pedido #' + numeroPedido);
+    enfileirarJob(adminId, { texto, dataHora, numeroPedido });
   }
 
-  try {
-    const numeroPedido = proximoNumeroPedido();
-
-    const buffer1via = montarBufferEscPos({ numeroPedido, texto, dataHora, via: '1a VIA - COZINHA' });
-    const buffer2via = montarBufferEscPos({ numeroPedido, texto, dataHora, via: '2a VIA - CONTROLE' });
-    const bufferCompleto = Buffer.concat([buffer1via, buffer2via]);
-
-    conexao.send(bufferCompleto, { binary: true });
-    console.log('[Impressora-WS] Buffer enviado para a impressora (1a e 2a via). Pedido #' + numeroPedido);
-    return true;
-  } catch (erro) {
-    console.error('[Impressora-WS] ERRO ao montar/enviar buffer:', erro.message);
-    return false;
-  }
+  return true;
 }
 
 function impressoraConectada() {
