@@ -321,6 +321,7 @@ app.use('/api/meta-whatsapp', require('./routes/meta-whatsapp.routes'));
 app.use('/api/landing', require('./routes/landing.routes'));
 app.use('/api/landing-upload', require('./routes/landing-upload.routes'));
 app.use('/api/cozinha',        require('./routes/cozinha.routes'));
+app.use('/api/impressora',      require('./routes/impressora.routes'));
 // PWA Cozinha
 app.get('/cozinha-manifest.json', (req,res) => res.sendFile(require('path').join(__dirname,'public/cozinha-manifest.json')));
 app.get('/cozinha-sw.js',         (req,res) => res.sendFile(require('path').join(__dirname,'public/cozinha-sw.js')));
