@@ -60,8 +60,18 @@ function processarFila(adminId) {
   }
 }
 
+function limparTextoParaImpressora(texto) {
+  if (!texto) return '';
+  return texto
+    .replace(/[\u{1F000}-\u{1FFFF}]/gu, '')
+    .replace(/[\u2600-\u27BF]/g, '')
+    .replace(/[\u2190-\u21FF]/g, '')
+    .replace(/[\uFE0F\u200D\u20E3]/g, '')
+    .trim();
+}
+
 function tentarEnviar(adminId, jobData) {
-  const texto = jobData.texto;
+  const texto = limparTextoParaImpressora(jobData.texto);
   const dataHora = jobData.dataHora;
   const numeroPedido = jobData.numeroPedido;
   const conexao = (adminId && impressorasConectadas.get(adminId)) || ultimaConexao;
@@ -76,8 +86,8 @@ function tentarEnviar(adminId, jobData) {
     console.log('[Impressora-WS] Buffer enviado para a impressora (1a e 2a via). Pedido #' + numeroPedido);
     return true;
   } catch (erro) {
-    console.error('[Impressora-WS] ERRO ao montar/enviar buffer:', erro.message);
-    return false;
+    console.error('[Impressora-WS] ERRO CRITICO ao montar buffer (pedido descartado da fila, nao sera retentado):', erro.message);
+    return true;
   }
 }
 
@@ -86,7 +96,7 @@ function montarBufferEscPos({ numeroPedido, texto, dataHora, via }) {
     type: PrinterTypes.EPSON,
     interface: 'tcp://127.0.0.1:9100',
     width: 32,
-    removeSpecialCharacters: false,
+    removeSpecialCharacters: true,
   });
 
   printer.alignCenter();
