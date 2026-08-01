@@ -58,14 +58,45 @@ router.get('/jobs/:adminId', async (req, res) => {
   try {
     const { JobImpressao } = require('../models/cozinha.model');
     const _adminIdStr = String(req.params.adminId);
-    // instancia = 'cozinha' (default) ou 'caixa' — cada PC só pega seus jobs
     const _instancia = req.query.instancia || 'cozinha';
-    const jobs = await JobImpressao.find({ adminId: _adminIdStr, status: 'pendente', instancia: _instancia })
-      .sort({ criadoEm: 1 }).limit(5).lean();
+
+    const agora = new Date();
+
+    const LIMITE_EXPIRACAO_HORAS = 4;
+    const corteExpiracao = new Date(agora.getTime() - LIMITE_EXPIRACAO_HORAS * 60 * 60 * 1000);
+    const expirados = await JobImpressao.updateMany(
+      { adminId: _adminIdStr, instancia: _instancia, status: 'pendente', criadoEm: { $lt: corteExpiracao } },
+      { $set: { status: 'expirado', expirado_em: agora } }
+    );
+    if (expirados.modifiedCount > 0) {
+      console.log(`[Cozinha] ${expirados.modifiedCount} job(s) antigo(s) expirado(s) automaticamente para adminId: ${_adminIdStr}`);
+    }
+
+    const LIMITE_TRAVADO_MINUTOS = 3;
+    const corteTravado = new Date(agora.getTime() - LIMITE_TRAVADO_MINUTOS * 60 * 1000);
+    await JobImpressao.updateMany(
+      { adminId: _adminIdStr, instancia: _instancia, status: 'enviado', enviado_em: { $lt: corteTravado } },
+      { $set: { status: 'pendente' } }
+    );
+
+    const jobs = await JobImpressao.find({
+      adminId: _adminIdStr, status: 'pendente', instancia: _instancia,
+      criadoEm: { $gte: corteExpiracao }
+    }).sort({ criadoEm: 1 }).limit(5).lean();
+
+    if (jobs.length > 0) {
+      const ids = jobs.map(j => j._id);
+      await JobImpressao.updateMany(
+        { _id: { $in: ids } },
+        { $set: { status: 'enviado', enviado_em: agora } }
+      );
+    }
+
     console.log('[Cozinha] /jobs', _adminIdStr, 'instancia:', _instancia, '→', jobs.length, 'pendentes');
     res.json({ sucesso: true, jobs });
   } catch(e) { res.json({ sucesso: true, jobs: [] }); }
 });
+
 
 // Reimpressão manual de job (erro ou já impresso) — master reseta para pendente
 router.post('/jobs/:jobId/reimprimir', async (req, res) => {
@@ -414,11 +445,8 @@ function entrar() {
     // Retorna HTML inline com os dados do restaurante
     const nomeImp = imp ? (imp.nomeImpressora || imp.nome || 'Impressora') : 'Não configurada';
     const modoImp = imp ? (imp.modoLocal ? 'Servidor Local (Windows)' : 'WiFi / TCP direto') : '-';
-    const ipImp   = imp ? imp.ip : '-';
-    const portaImp = imp ? imp.porta : '-';
-    const ipReal  = imp && imp.modoLocal ? imp.ipImpressora : '-';
-    const portaReal = imp && imp.modoLocal ? imp.portaImpressora : '-';
     const ativo   = imp ? imp.ativo : false;
+    const TOKEN_COZINHA = process.env.COZINHA_TOKEN || 'cozinha-rebeca-2026';
     const html = `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -514,31 +542,148 @@ ${imp && imp.modoLocal ? `
   <strong>${imp ? '📶 Modo WiFi / TCP direto' : '⚠️ Impressora não configurada'}</strong><br>
   ${imp ? 'A impressora recebe jobs diretamente via TCP.<br><br><strong>Fluxo:</strong> WhatsApp → Rebeca → Job no banco → servidor envia ESC/POS → impressora WiFi imprime.<br><br>IP da impressora: <strong>'+imp.ip+':'+imp.porta+'</strong>' : 'Configure a impressora no painel master para começar a receber pedidos.'}
 </div>
-${imp ? `<div style="margin-top:10px;background:#1a1a1a;border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:14px;font-size:.8rem;color:#666;line-height:1.8">
-  <strong style="color:#f4f4f4;display:block;margin-bottom:6px">Requisitos WiFi:</strong>
-  • Impressora com IP fixo na rede<br>
-  • Porta <strong style="color:#FF6B00">${imp.porta}</strong> acessível (TCP raw)<br>
-  • Nenhum PC intermediário necessário<br>
-  • Compatível: Epson, Bematech, Elgin, Daruma com WiFi
-</div>` : ''}
 `}
+<!-- FORMULÁRIO CONFIGURAR IMPRESSORA -->
+<div class="card" id="cardConfig">
+  <div class="card-titulo">⚙️ Configurar impressora</div>
+
+  <div style="display:flex;gap:10px;margin-bottom:16px">
+    <div onclick="setModo('wifi')" id="btnWifi" style="flex:1;text-align:center;padding:12px;border-radius:8px;cursor:pointer;border:2px solid #FF6B00;background:rgba(255,107,0,.1);font-size:.82rem;font-weight:600;color:#FF6B00">
+      📶 WiFi / Rede
+    </div>
+    <div onclick="setModo('local')" id="btnLocal" style="flex:1;text-align:center;padding:12px;border-radius:8px;cursor:pointer;border:1px solid rgba(255,255,255,.08);background:transparent;font-size:.82rem;font-weight:600;color:#666">
+      🖥️ PC Windows
+    </div>
+  </div>
+
+  <div id="camposWifi" style="display:flex;flex-direction:column;gap:10px">
+    <input id="cfgIp" type="text" placeholder="IP da impressora (ex: 192.168.1.100)" style="width:100%;padding:12px;background:#222;border:1px solid rgba(255,255,255,.08);border-radius:8px;color:#f4f4f4;font-size:.88rem;outline:none;font-family:inherit">
+    <input id="cfgPorta" type="number" placeholder="Porta TCP (padrão 9100)" value="9100" style="width:100%;padding:12px;background:#222;border:1px solid rgba(255,255,255,.08);border-radius:8px;color:#f4f4f4;font-size:.88rem;outline:none;font-family:inherit">
+    <input id="cfgNome" type="text" placeholder="Nome da impressora (ex: Elgin i9)" style="width:100%;padding:12px;background:#222;border:1px solid rgba(255,255,255,.08);border-radius:8px;color:#f4f4f4;font-size:.88rem;outline:none;font-family:inherit">
+  </div>
+
+  <div id="camposLocal" style="display:none;flex-direction:column;gap:10px">
+    <input id="cfgIpPc" type="text" placeholder="IP do PC Windows na rede (ex: 192.168.1.50)" style="width:100%;padding:12px;background:#222;border:1px solid rgba(255,255,255,.08);border-radius:8px;color:#f4f4f4;font-size:.88rem;outline:none;font-family:inherit">
+    <input id="cfgPortaPc" type="number" placeholder="Porta do PC (padrão 3333)" value="3333" style="width:100%;padding:12px;background:#222;border:1px solid rgba(255,255,255,.08);border-radius:8px;color:#f4f4f4;font-size:.88rem;outline:none;font-family:inherit">
+    <input id="cfgIpImp" type="text" placeholder="IP da impressora na rede local" style="width:100%;padding:12px;background:#222;border:1px solid rgba(255,255,255,.08);border-radius:8px;color:#f4f4f4;font-size:.88rem;outline:none;font-family:inherit">
+    <input id="cfgPortaImp" type="number" placeholder="Porta impressora (padrão 9100)" value="9100" style="width:100%;padding:12px;background:#222;border:1px solid rgba(255,255,255,.08);border-radius:8px;color:#f4f4f4;font-size:.88rem;outline:none;font-family:inherit">
+    <input id="cfgNomeLocal" type="text" placeholder="Nome da impressora" style="width:100%;padding:12px;background:#222;border:1px solid rgba(255,255,255,.08);border-radius:8px;color:#f4f4f4;font-size:.88rem;outline:none;font-family:inherit">
+  </div>
+
+  <div id="msgImp" style="display:none;margin-top:10px;padding:10px 12px;border-radius:8px;font-size:.82rem"></div>
+  <div style="display:flex;gap:8px;margin-top:12px">
+    <button onclick="salvarImpressora()" style="flex:1;background:#FF6B00;color:#fff;border:none;border-radius:8px;padding:13px;font-size:.9rem;font-weight:700;cursor:pointer;font-family:inherit">💾 Salvar</button>
+    <button onclick="testarImpressora()" style="flex:1;background:#222;color:#f4f4f4;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:13px;font-size:.9rem;font-weight:700;cursor:pointer;font-family:inherit">🖨️ Testar</button>
+  </div>
+</div>
+
+<!-- BAIXAR APP / PWA -->
+<div class="card">
+  <div class="card-titulo">📲 Instalar app na cozinha</div>
+  <p style="font-size:.82rem;color:#666;line-height:1.6;margin-bottom:14px">Instale o app no celular ou tablet da cozinha para receber pedidos com som e vibração, mesmo com a tela bloqueada.</p>
+  <div id="btnPWA" style="display:none">
+    <button onclick="instalarPWA()" style="width:100%;background:#FF6B00;color:#fff;border:none;border-radius:8px;padding:13px;font-size:.9rem;font-weight:700;cursor:pointer;margin-bottom:10px;font-family:inherit">📲 Adicionar à tela inicial</button>
+  </div>
+  <a href="/api/cozinha/painel?adminId=${adminId}" target="_blank" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;background:#222;color:#f4f4f4;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:13px;font-size:.9rem;font-weight:700;text-decoration:none;margin-bottom:10px">🍽️ Abrir painel da cozinha</a>
+  <a href="/api/cozinha/download-local" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;background:#222;color:#f4f4f4;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:13px;font-size:.9rem;font-weight:700;text-decoration:none">🖥️ Baixar servidor Windows (.zip)</a>
+</div>
 
 <script>
-// PWA install prompt
+const _ADMIN_ID = '${adminId}';
+const _TOKEN = '${TOKEN_COZINHA}';
+let _modoLocal = false;
 let deferredPrompt;
+
+// PWA
 window.addEventListener('beforeinstallprompt', e => {
   e.preventDefault();
   deferredPrompt = e;
-  const btn = document.createElement('button');
-  btn.className = 'btn-baixar';
-  btn.style.marginTop = '10px';
-  btn.style.background = '#222';
-  btn.style.border = '1px solid rgba(255,107,0,.3)';
-  btn.textContent = '📲 Adicionar à tela inicial';
-  btn.onclick = () => { deferredPrompt.prompt(); deferredPrompt = null; btn.remove(); };
-  document.body.appendChild(btn);
+  document.getElementById('btnPWA').style.display = 'block';
 });
-// Auto-refresh status a cada 30s
+function instalarPWA() {
+  if (deferredPrompt) { deferredPrompt.prompt(); deferredPrompt = null; }
+}
+
+// Modo impressora
+function setModo(modo) {
+  _modoLocal = modo === 'local';
+  document.getElementById('btnWifi').style.border = _modoLocal ? '1px solid rgba(255,255,255,.08)' : '2px solid #FF6B00';
+  document.getElementById('btnWifi').style.background = _modoLocal ? 'transparent' : 'rgba(255,107,0,.1)';
+  document.getElementById('btnWifi').style.color = _modoLocal ? '#666' : '#FF6B00';
+  document.getElementById('btnLocal').style.border = _modoLocal ? '2px solid #FF6B00' : '1px solid rgba(255,255,255,.08)';
+  document.getElementById('btnLocal').style.background = _modoLocal ? 'rgba(255,107,0,.1)' : 'transparent';
+  document.getElementById('btnLocal').style.color = _modoLocal ? '#FF6B00' : '#666';
+  document.getElementById('camposWifi').style.display = _modoLocal ? 'none' : 'flex';
+  document.getElementById('camposLocal').style.display = _modoLocal ? 'flex' : 'none';
+}
+
+// Salvar impressora
+async function salvarImpressora() {
+  const msg = document.getElementById('msgImp');
+  const body = _modoLocal ? {
+    ip: document.getElementById('cfgIpPc').value.trim(),
+    porta: parseInt(document.getElementById('cfgPortaPc').value) || 3333,
+    ipImpressora: document.getElementById('cfgIpImp').value.trim(),
+    portaImpressora: parseInt(document.getElementById('cfgPortaImp').value) || 9100,
+    nome: document.getElementById('cfgNomeLocal').value.trim() || 'Cozinha',
+    modoLocal: true
+  } : {
+    ip: document.getElementById('cfgIp').value.trim(),
+    porta: parseInt(document.getElementById('cfgPorta').value) || 9100,
+    nome: document.getElementById('cfgNome').value.trim() || 'Cozinha',
+    modoLocal: false
+  };
+  if (!body.ip) {
+    msg.style.display='block'; msg.style.background='rgba(255,60,60,.1)'; msg.style.border='1px solid rgba(255,60,60,.2)'; msg.style.color='#ff5555';
+    msg.textContent = '❌ Informe o IP.'; return;
+  }
+  msg.style.display='block'; msg.style.background='rgba(255,107,0,.08)'; msg.style.border='1px solid rgba(255,107,0,.15)'; msg.style.color='#aaa';
+  msg.textContent = '⏳ Salvando...';
+  try {
+    const r = await fetch('/api/cozinha/impressora/' + _ADMIN_ID, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-cozinha-token': _TOKEN },
+      body: JSON.stringify(body)
+    });
+    const d = await r.json();
+    if (d.sucesso) {
+      msg.style.background='rgba(0,200,100,.1)'; msg.style.border='1px solid rgba(0,200,100,.2)'; msg.style.color='#00c864';
+      msg.textContent = '✅ Impressora salva! Recarregando...';
+      setTimeout(() => location.reload(), 1500);
+    } else {
+      msg.style.background='rgba(255,60,60,.1)'; msg.style.border='1px solid rgba(255,60,60,.2)'; msg.style.color='#ff5555';
+      msg.textContent = '❌ ' + (d.erro || 'Erro ao salvar');
+    }
+  } catch(e) {
+    msg.style.background='rgba(255,60,60,.1)'; msg.style.border='1px solid rgba(255,60,60,.2)'; msg.style.color='#ff5555';
+    msg.textContent = '❌ Erro de conexão';
+  }
+}
+
+// Testar impressora
+async function testarImpressora() {
+  const msg = document.getElementById('msgImp');
+  msg.style.display='block'; msg.style.background='rgba(255,107,0,.08)'; msg.style.border='1px solid rgba(255,107,0,.15)'; msg.style.color='#aaa';
+  msg.textContent = '⏳ Enviando teste...';
+  try {
+    const r = await fetch('/api/cozinha/impressora/' + _ADMIN_ID + '/testar', {
+      method: 'POST', headers: { 'x-cozinha-token': _TOKEN }
+    });
+    const d = await r.json();
+    if (d.sucesso || d.mensagem) {
+      msg.style.background='rgba(0,200,100,.1)'; msg.style.border='1px solid rgba(0,200,100,.2)'; msg.style.color='#00c864';
+      msg.textContent = '✅ ' + (d.mensagem || 'Teste enviado!');
+    } else {
+      msg.style.background='rgba(255,60,60,.1)'; msg.style.border='1px solid rgba(255,60,60,.2)'; msg.style.color='#ff5555';
+      msg.textContent = '❌ ' + (d.erro || 'Erro no teste');
+    }
+  } catch(e) {
+    msg.style.background='rgba(255,60,60,.1)'; msg.style.border='1px solid rgba(255,60,60,.2)'; msg.style.color='#ff5555';
+    msg.textContent = '❌ Erro de conexão';
+  }
+}
+
+// Auto-refresh a cada 30s
 setInterval(() => location.reload(), 30000);
 </script>
 </body>
