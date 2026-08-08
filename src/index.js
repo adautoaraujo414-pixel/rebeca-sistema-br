@@ -119,6 +119,7 @@ app.get('/manifest-admin.json', (req, res) => res.sendFile(path.join(__dirname, 
 app.get('/',         (req, res) => res.sendFile(path.join(__dirname, 'public', 'rebeca-landing.html')));
 app.get('/rebeca',   (req, res) => res.sendFile(path.join(__dirname, 'public', 'rebeca-landing.html')));
 app.get('/rebeca-delivery', (req, res) => res.sendFile(path.join(__dirname, 'public', 'rebeca-delivery-landing.html')));
+app.get('/becamob', (req, res) => res.sendFile(path.join(__dirname, 'public', 'becamob-landing.html')));
 
 // Redirects legados
 app.get('/cadastro-admin', (req, res) => res.redirect('/'));
