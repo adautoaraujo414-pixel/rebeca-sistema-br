@@ -6,6 +6,7 @@ const validarToken = (req, res, next) => {
         return res.status(401).json({ error: 'Token inválido' });
     }
     req.tokenData = { tipo: token.startsWith('ADMIN_') ? 'admin' : 'motorista', token };
+    if (token.startsWith('ADMIN_')) req.adminId = token.split('_')[1];
     next();
 };
 

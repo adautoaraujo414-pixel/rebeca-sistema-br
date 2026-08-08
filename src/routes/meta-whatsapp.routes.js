@@ -13,7 +13,7 @@ const auth = authMiddleware.validarToken || authMiddleware.validarAdmin;
 router.post('/configurar', auth, async (req, res) => {
     try {
         const { numeroWhatsapp, metaToken, metaPhoneId, metaVerifyToken } = req.body;
-        const adminId = req.usuario?._id || req.usuario?.id || req.body.adminId;
+        const adminId = req.adminId || req.body.adminId;
 
         if (!numeroWhatsapp) return res.json({ sucesso: false, erro: 'Número WhatsApp obrigatório' });
 
@@ -79,7 +79,7 @@ router.post('/configurar', auth, async (req, res) => {
 // ── GET /api/meta-whatsapp/status ─────────────────────────────────────
 router.get('/status', auth, async (req, res) => {
     try {
-        const adminId = req.usuario?._id || req.usuario?.id;
+        const adminId = req.adminId;
         const inst = await InstanciaWhatsapp.findOne({ adminId, provider: 'meta' });
         if (!inst) return res.json({ sucesso: true, configurado: false });
 
@@ -100,7 +100,7 @@ router.get('/status', auth, async (req, res) => {
 // ── POST /api/meta-whatsapp/testar ────────────────────────────────────
 router.post('/testar', auth, async (req, res) => {
     try {
-        const adminId = req.usuario?._id || req.usuario?.id;
+        const adminId = req.adminId;
         const inst = await InstanciaWhatsapp.findOne({ adminId, provider: 'meta' });
         if (!inst) return res.json({ sucesso: false, erro: 'WhatsApp Meta não configurado' });
 
