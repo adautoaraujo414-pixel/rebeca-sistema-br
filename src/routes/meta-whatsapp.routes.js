@@ -113,6 +113,20 @@ router.post('/testar', auth, async (req, res) => {
     }
 });
 
+// ── POST /api/meta-whatsapp/desconectar ───────────────────────────────
+router.post('/desconectar', auth, async (req, res) => {
+    try {
+        const adminId = req.adminId;
+        const inst = await InstanciaWhatsapp.findOne({ adminId, provider: 'meta' });
+        if (!inst) return res.json({ sucesso: false, erro: 'WhatsApp Meta não configurado' });
+        inst.status = 'desconectado';
+        await inst.save();
+        res.json({ sucesso: true, mensagem: 'WhatsApp desconectado.' });
+    } catch(e) {
+        res.json({ sucesso: false, erro: e.message });
+    }
+});
+
 // ── GET /api/meta-whatsapp/webhook ────────────────────────────────────
 // Verificação do webhook pelo Meta
 router.get('/webhook', (req, res) => {
