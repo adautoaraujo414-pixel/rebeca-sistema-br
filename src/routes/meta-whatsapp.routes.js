@@ -155,21 +155,8 @@ router.post('/webhook', async (req, res) => {
         if (tipo === 'document') textoMensagem = '[documento]';
 
         console.log(`[MetaWebhook] 📥 De: ${telefone} | Tipo: ${tipo} | Texto: ${textoMensagem.slice(0,50)}`);
-
-        // ── Identifica se a mensagem e para um numero do BecaMob (Corridas) ──
-        // Isola BecaMob dos interceptores de Cozinha/Impressora, que checam so o telefone do cliente
-        let isBecaMob = false;
-        try {
-            const phoneNumberIdPreCheck = value?.metadata?.phone_number_id;
-            if (phoneNumberIdPreCheck) {
-                const instBecaMobCheck = await InstanciaWhatsapp.findOne({ provider: 'meta', metaPhoneId: phoneNumberIdPreCheck, adminTipo: 'corrida' });
-                isBecaMob = !!instBecaMobCheck;
-                if (isBecaMob) console.log('[MetaWebhook] Numero identificado como BecaMob (corrida) — pulando interceptores Cozinha/Impressora');
-            }
-        } catch (eCheckBecaMob) { console.error('[MetaWebhook] Erro ao checar isBecaMob:', eCheckBecaMob.message); }
-
         // ── INTERCEPTOR COZINHA (Meta WhatsApp) ──────────────────────────
-        if (textoMensagem && tipo === 'text' && !isBecaMob) {
+        if (textoMensagem && tipo === 'text') {
             try {
                 const { ClienteCozinha, ImpressoraCozinha, JobImpressao, ContadorPedido } = require('../models/cozinha.model');
                 const telNorm = telefone.replace(/\D/g, '');
@@ -228,7 +215,7 @@ router.post('/webhook', async (req, res) => {
         // ─────────────────────────────────────────────────────────────────
 
         // ── INTERCEPTOR IMPRESSORA WEBSOCKET (isolado por adminId, buffer 5s) ────────
-        if (textoMensagem && tipo === 'text' && !isBecaMob) {
+        if (textoMensagem && tipo === 'text') {
             try {
                 const { imprimirParaTelefone, buscarAdminIdPorTelefone } = require('../services/impressora-roteador.service');
                 const adminIdWS = await buscarAdminIdPorTelefone(telefone);
