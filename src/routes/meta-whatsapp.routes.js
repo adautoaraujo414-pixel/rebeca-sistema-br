@@ -37,7 +37,8 @@ router.post('/configurar', auth, async (req, res) => {
 
         // Usar token/phoneId do .env se não informado
         if (!dadosInst.apiKey)      dadosInst.apiKey     = process.env.META_WA_TOKEN || '';
-        if (!dadosInst.metaPhoneId) dadosInst.metaPhoneId = process.env.META_WA_PHONE_ID || '';
+        // Removido fallback perigoso: nao preencher metaPhoneId com o numero oficial quando o admin nao informa.
+        // O webhook ja tem busca de reserva por numeroWhatsapp (linha ~280), que cobre esse caso sem colidir com o numero oficial.
 
         const instancia = await InstanciaWhatsapp.findOneAndUpdate(
             { adminId, provider: 'meta' },
