@@ -121,6 +121,15 @@ app.get('/rebeca',   (req, res) => res.sendFile(path.join(__dirname, 'public', '
 app.get('/rebeca-delivery', (req, res) => res.sendFile(path.join(__dirname, 'public', 'rebeca-delivery-landing.html')));
 app.get('/becamob', (req, res) => res.sendFile(path.join(__dirname, 'public', 'becamob-landing.html')));
 
+// Links curtos do Arquemestre (app de marcenaria): /arquemestre abre a loja certa pelo celular, /grupo abre o WhatsApp
+app.get(['/arquemestre', '/arquemestre/app'], (req, res) => {
+  const ua = String(req.headers['user-agent'] || '');
+  if (/iPhone|iPad|iPod/i.test(ua)) return res.redirect(302, 'https://apps.apple.com/br/app/id6829800820');
+  if (/Android/i.test(ua)) return res.redirect(302, 'https://play.google.com/store/apps/details?id=br.com.arque.measure');
+  return res.redirect(302, 'https://adautoaraujo414-pixel.github.io/Arqueiro-measure/app.html');
+});
+app.get(['/grupo', '/arquemestre/grupo'], (req, res) => res.redirect(302, 'https://chat.whatsapp.com/GuFrvUlnDOyH7t1Hi3gdi9'));
+
 // Redirects legados
 app.get('/cadastro-admin', (req, res) => res.redirect('/'));
 app.get('/parceiro',       (req, res) => res.redirect('/'));
